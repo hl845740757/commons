@@ -6,12 +6,11 @@
 
     <groupId>cn.wjybxx.commons</groupId>
     <artifactId>base-parent</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
 
     <name>Base-Parent</name>
-    <description>game tools and framework</description>
-    <url>https://github.com/hl845740757/commons</url>
+    <description>Base模块父Pom</description>
 
     <modules>
         <module>apt-base</module>
@@ -48,10 +47,9 @@
     </developers>
 
     <properties>
-        <!-- java版本，最终会升级为jdk21 -->
+		<revision>1.0-SNAPSHOT</revision>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <!-- mvn命令默认gbk编码导致中文注释异常，需要通过这里设置 -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
 
@@ -65,17 +63,37 @@
 
     <!-- 基础依赖/全局依赖 -->
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305 -->
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>${jsr305.version}</version>
-            <optional>true</optional>
-        </dependency>
+
     </dependencies>
 
     <build>
         <plugins>
+            <!-- 模块版本同步 -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.5.0</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- 指定参数-parameters，否则test目录下文件编译异常 -->
             <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
             <plugin>

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.common.annotations;
+package cn.wjybxx.common.apt;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

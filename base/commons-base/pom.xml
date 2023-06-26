@@ -6,8 +6,21 @@
     <parent>
         <groupId>cn.wjybxx.commons</groupId>
         <artifactId>base-parent</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
     <artifactId>commons-base</artifactId>
+
+    <name>Commons-Base</name>
+    <description>基础模块</description>
+
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305 -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>${jsr305.version}</version>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
 
 </project>

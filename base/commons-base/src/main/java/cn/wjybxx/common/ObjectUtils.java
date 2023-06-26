@@ -16,6 +16,7 @@
 
 package cn.wjybxx.common;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -41,6 +42,10 @@ public class ObjectUtils {
 
     // region equals/hash/toString
 
+    public static int hashCode(Object first) {
+        return Objects.hashCode(first);
+    }
+
     public static int hashCode(Object first, Object second) {
         int result = Objects.hashCode(first);
         result = 31 * result + Objects.hashCode(second);
@@ -52,6 +57,10 @@ public class ObjectUtils {
         result = 31 * result + Objects.hashCode(second);
         result = 31 * result + Objects.hashCode(third);
         return result;
+    }
+
+    public static int hashCode(Object... args) {
+        return Arrays.hashCode(args);
     }
 
     public static String toString(Object object, String nullDef) {

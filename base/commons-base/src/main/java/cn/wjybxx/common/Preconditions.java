@@ -191,11 +191,11 @@ public class Preconditions {
         return value;
     }
 
-    public static <T extends CharSequence> T checkNotContainsWhiteSpace(T value) {
-        return checkNotContainsWhiteSpace(value, null);
+    public static <T extends CharSequence> T checkNoneWhiteSpace(T value) {
+        return checkNoneWhiteSpace(value, null);
     }
 
-    public static <T extends CharSequence> T checkNotContainsWhiteSpace(T value, @Nullable String desc) {
+    public static <T extends CharSequence> T checkNoneWhiteSpace(T value, @Nullable String desc) {
         if (ObjectUtils.containsWhitespace(value)) {
             throw new IllegalArgumentException(String.format("%s cant contain whitespace", nullToDef(desc, "value")));
         }
