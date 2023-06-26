@@ -12,22 +12,18 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.squareup</groupId>
+            <artifactId>javapoet</artifactId>
+            <version>1.13.0</version>
+        </dependency>
+        <!-- 需要自行注册
+        <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service</artifactId>
             <version>1.0.1</version>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>com.squareup</groupId>
-            <artifactId>javapoet</artifactId>
-            <version>1.13.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>cn.wjybxx.commons</groupId>
-            <artifactId>commons-base</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+        -->
     </dependencies>
 
 </project>
