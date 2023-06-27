@@ -189,11 +189,9 @@ public class AptUtils {
      * 通过名字查找对应的方法
      */
     public static ExecutableElement findMethodByName(TypeElement typeElement, String methodName) {
-        return typeElement.getEnclosedElements()
+        return (ExecutableElement) typeElement.getEnclosedElements()
                 .stream()
-                .filter(e -> e.getKind() == ElementKind.METHOD)
-                .map(e -> (ExecutableElement) e)
-                .filter(e -> e.getSimpleName().toString().equals(methodName))
+                .filter(e -> e.getKind() == ElementKind.METHOD && e.getSimpleName().toString().equals(methodName))
                 .findFirst()
                 .orElse(null);
     }
@@ -202,11 +200,9 @@ public class AptUtils {
      * 通过名字查找对应的字段
      */
     public static VariableElement findFieldByName(TypeElement typeElement, String field) {
-        return typeElement.getEnclosedElements()
+        return (VariableElement) typeElement.getEnclosedElements()
                 .stream()
-                .filter(e -> e.getKind() == ElementKind.FIELD)
-                .map(e -> (VariableElement) e)
-                .filter(e -> e.getSimpleName().toString().equals(field))
+                .filter(e -> e.getKind() == ElementKind.FIELD && e.getSimpleName().toString().equals(field))
                 .findFirst()
                 .orElse(null);
     }
@@ -217,7 +213,7 @@ public class AptUtils {
      */
     public static List<TypeElement> flatInherit(TypeElement typeElement) {
         assert typeElement.getKind() == ElementKind.CLASS;
-        final List<TypeElement> result = new ArrayList<>();
+        final List<TypeElement> result = new ArrayList<>(4);
         result.add(typeElement);
 
         for (TypeMirror typeMirror = typeElement.getSuperclass(); typeMirror.getKind() != TypeKind.NONE; ) {
@@ -243,21 +239,20 @@ public class AptUtils {
     public static List<TypeMirror> findAllInterfaces(Types typeUtil, Elements elementUtil, TypeElement typeElement) {
         // 避免每次都查找
         TypeMirror objectTypeMirror = getTypeMirrorOfClass(elementUtil, Object.class);
-        List<TypeMirror> result = new ArrayList<>();
+        // 直接接口一定是不重复的，但直接接口的父接口可能会和直接接口重复
+        List<TypeMirror> result = new ArrayList<>(typeElement.getInterfaces());
         for (TypeMirror sup : typeElement.getInterfaces()) { // 这里不能遍历result，迭代的时候会变化
-            result.add(sup); // 直接接口一定是不重复的
             recursiveFindInterfaces(typeUtil, objectTypeMirror, result, sup);
         }
         return result;
     }
 
     private static void recursiveFindInterfaces(Types typeUtil, TypeMirror objectMirror, List<TypeMirror> typeMirrors, TypeMirror current) {
-        // 这里要过滤Object
         for (TypeMirror sup : typeUtil.directSupertypes(current)) {
-            if (isSameTypeIgnoreTypeParameter(typeUtil, objectMirror, sup)) {
+            if (isSameTypeIgnoreTypeParameter(typeUtil, objectMirror, sup)) { // 这里要过滤Object
                 continue;
             }
-            if (containsTypeMirror(typeUtil, typeMirrors, sup)) {
+            if (containsTypeMirror(typeUtil, typeMirrors, sup)) { // 这里要排除重复
                 continue;
             }
             typeMirrors.add(sup);
@@ -445,13 +440,12 @@ public class AptUtils {
         return elementUtils.getTypeElement(clazz.getCanonicalName()).asType();
     }
 
-    /**
-     * 是否是基本类型的boolean
-     */
+    /** 是否是基本类型的boolean */
     public static boolean isPrimitiveBoolean(TypeMirror typeMirror) {
         return typeMirror.getKind() == TypeKind.BOOLEAN;
     }
 
+    /** 是否是数组类型 */
     public static boolean isArrayType(TypeMirror typeMirror) {
         return typeMirror.getKind() == TypeKind.ARRAY;
     }
@@ -474,29 +468,6 @@ public class AptUtils {
     }
 
     /**
-     * 是否是指定基本类型数组
-     *
-     * @param typeMirror    类型信息
-     * @param primitiveType 基本类型
-     * @return true/false
-     */
-    public static boolean isTargetPrimitiveArrayType(TypeMirror typeMirror, TypeKind primitiveType) {
-        return typeMirror.accept(new SimpleTypeVisitor8<Boolean, Void>() {
-
-            @Override
-            public Boolean visitArray(ArrayType t, Void aVoid) {
-                return t.getComponentType().getKind() == primitiveType;
-            }
-
-            @Override
-            protected Boolean defaultAction(TypeMirror e, Void aVoid) {
-                return false;
-            }
-
-        }, null);
-    }
-
-    /**
      * 获取第一个泛型参数
      */
     @Nullable
@@ -504,8 +475,7 @@ public class AptUtils {
         return typeMirror.accept(new SimpleTypeVisitor8<TypeMirror, Void>() {
             @Override
             public TypeMirror visitDeclared(DeclaredType t, Void aVoid) {
-                if (t.getTypeArguments().size() == 0) {
-                    // 未声明泛型参数
+                if (t.getTypeArguments().size() == 0) { // 未声明泛型参数
                     return null;
                 } else {
                     return t.getTypeArguments().get(0);

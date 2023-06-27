@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
  * 标记一个类是有状态的
  *
  * @author wjybxx
- * date - 2023/6/26
+ * date 2023/4/15
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
