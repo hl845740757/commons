@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.common.apt;
+package cn.wjybxx.common.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -22,7 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 用于标注关联的源文件
+ * 用于注解处理器标注关联的源文件
  * 保留策略修改为Runtime，我们可以在运行时查找关联的类，从而进行动态绑定
  *
  * @author wjybxx

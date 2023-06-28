@@ -17,6 +17,11 @@
     <!-- 基础依赖/全局依赖 -->
     <dependencies>
         <dependency>
+            <groupId>cn.wjybxx.commons</groupId>
+            <artifactId>annotations</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.squareup</groupId>
             <artifactId>javapoet</artifactId>
             <version>${javapoet.version}</version>
@@ -29,13 +34,6 @@
             <optional>true</optional>
         </dependency>
         -->
-        <!-- https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305 -->
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>${jsr305.version}</version>
-            <optional>true</optional>
-        </dependency>
     </dependencies>
 
 </project>

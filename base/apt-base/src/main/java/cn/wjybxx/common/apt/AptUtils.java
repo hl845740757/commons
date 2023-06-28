@@ -16,6 +16,7 @@
 
 package cn.wjybxx.common.apt;
 
+import cn.wjybxx.common.annotations.SourceFileRef;
 import com.squareup.javapoet.*;
 
 import javax.annotation.Nonnull;
@@ -48,6 +49,7 @@ public class AptUtils {
     public static final Modifier[] PUBLIC_STATIC = {Modifier.PUBLIC, Modifier.STATIC};
     public static final Modifier[] PUBLIC_STATIC_FINAL = {Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL};
     public static final Modifier[] PRIVATE_STATIC_FINAL = {Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL};
+
     /**
      * 由于生成的代码不能很好的处理泛型等信息，因此需要抑制警告
      */
@@ -58,7 +60,7 @@ public class AptUtils {
     public static final AnnotationSpec NONNULL_ANNOTATION = AnnotationSpec.builder(Nonnull.class)
             .build();
 
-    public static final ClassName CLASS_NAME_SOURCE_REF = ClassName.get("cn.wjybxx.common.annotations", "SourceFileRef");
+    private static final ClassName CLASS_NAME_SOURCE_REF = ClassName.get(SourceFileRef.class);
 
     private AptUtils() {
 
@@ -76,6 +78,10 @@ public class AptUtils {
                 .build();
     }
 
+    /**
+     * 添加一个指向源代码文件的引用
+     * 方便查看文件的依赖
+     */
     public static AnnotationSpec newSourceFileRefAnnotation(TypeName sourceFileTypeName) {
         return AnnotationSpec.builder(CLASS_NAME_SOURCE_REF)
                 .addMember("value", "$T.class", sourceFileTypeName)

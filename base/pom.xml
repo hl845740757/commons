@@ -10,11 +10,11 @@
     <packaging>pom</packaging>
 
     <name>Base-Parent</name>
-    <description>Base模块父Pom</description>
+    <description>所有Base模块的父Pom</description>
 
     <modules>
         <module>apt-base</module>
-        <module>commons-base</module>
+        <module>annotations</module>
     </modules>
 
     <!-- 证书 -->
@@ -63,7 +63,13 @@
 
     <!-- 基础依赖/全局依赖 -->
     <dependencies>
-
+        <!-- https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305 -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>${jsr305.version}</version>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
 
     <build>
