@@ -36,7 +36,7 @@ import java.util.*;
  * date 2023/4/13
  */
 @AutoService(Processor.class)
-class CodecProcessor extends MyAbstractProcessor {
+public class CodecProcessor extends MyAbstractProcessor {
 
     // region 常量
     public static final String CNAME_FIELD_IMPL = "cn.wjybxx.common.codec.FieldImpl";
@@ -672,7 +672,7 @@ class CodecProcessor extends MyAbstractProcessor {
     }
 
     /** 是否是托管写的字段 */
-    public static boolean isAutoWriteField(VariableElement variableElement, AptClassImpl aptClassImpl, AptFieldImpl aptFieldImpl) {
+    static boolean isAutoWriteField(VariableElement variableElement, AptClassImpl aptClassImpl, AptFieldImpl aptFieldImpl) {
         if (aptClassImpl.isSingleton) {
             return false;
         }
@@ -688,7 +688,7 @@ class CodecProcessor extends MyAbstractProcessor {
     }
 
     /** 是否是托管写的字段 */
-    public static boolean isAutoReadField(VariableElement variableElement, AptClassImpl aptClassImpl, AptFieldImpl aptFieldImpl) {
+    static boolean isAutoReadField(VariableElement variableElement, AptClassImpl aptClassImpl, AptFieldImpl aptFieldImpl) {
         if (aptClassImpl.isSingleton) {
             return false;
         }

@@ -16,6 +16,7 @@
 
 package cn.wjybxx.common.excel;
 
+import cn.wjybxx.common.TestUtil;
 import cn.wjybxx.common.codec.ConvertOptions;
 import cn.wjybxx.common.codec.TypeArgInfo;
 import cn.wjybxx.common.codec.TypeMeta;
@@ -43,7 +44,7 @@ public class ReadExcelTest {
 
     @Test
     void test() {
-        File projectDir = Utils.findProjectDir("BigCat");
+        File projectDir = Utils.findProjectDir(TestUtil.rootDirName);
 
         Map<String, Sheet> sheetMap = ExcelUtils.readExcel(new File(projectDir.getPath() + "\\doc\\test.xlsx"));
         Sheet skillSheet = sheetMap.get("Skill");

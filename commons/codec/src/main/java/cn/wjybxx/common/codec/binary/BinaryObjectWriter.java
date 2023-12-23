@@ -23,7 +23,6 @@ import cn.wjybxx.dson.io.DsonChunk;
 import cn.wjybxx.dson.text.INumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
-import com.google.protobuf.MessageLite;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -119,8 +118,6 @@ public interface BinaryObjectWriter extends AutoCloseable {
     ConvertOptions options();
 
     void writeName(int name);
-
-    void writeMessage(int name, int binaryType, MessageLite messageLite);
 
     void writeValueBytes(int name, DsonType dsonType, byte[] data);
 

@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.common.codec.codecs;
+package cn.wjybxx.common.pb;
 
 import cn.wjybxx.common.codec.PojoCodecImpl;
 import cn.wjybxx.common.codec.TypeArgInfo;
 import cn.wjybxx.common.codec.binary.BinaryObjectReader;
 import cn.wjybxx.common.codec.binary.BinaryObjectWriter;
 import cn.wjybxx.common.codec.binary.BinaryPojoCodecScanIgnore;
+import cn.wjybxx.common.codec.codecs.EnumLiteCodec;
 import cn.wjybxx.common.codec.document.DocumentObjectReader;
 import cn.wjybxx.common.codec.document.DocumentObjectWriter;
 import cn.wjybxx.common.codec.document.DocumentPojoCodecScanIgnore;
@@ -34,6 +35,7 @@ import javax.annotation.Nonnull;
 
 /**
  * MessageEnum会写为具有int32字段的Object
+ * (和{@link EnumLiteCodec}相同)
  *
  * @author wjybxx
  * date 2023/4/2

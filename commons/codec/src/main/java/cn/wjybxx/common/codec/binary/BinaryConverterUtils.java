@@ -18,16 +18,10 @@ package cn.wjybxx.common.codec.binary;
 
 import cn.wjybxx.common.codec.*;
 import cn.wjybxx.common.codec.codecs.*;
-import cn.wjybxx.common.pb.ProtobufUtils;
-import com.google.protobuf.MessageLite;
-import com.google.protobuf.ProtocolMessageEnum;
 
 import javax.annotation.Nullable;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 /**
  * @author wjybxx
@@ -137,51 +131,4 @@ public class BinaryConverterUtils extends ConverterUtils {
         }
     }
 
-    // region 特殊类型支持：protobuf,集合,map
-
-    public static List<? extends BinaryPojoCodecImpl<?>> scanProtobuf(final Set<Class<?>> allProtoBufClasses) {
-        final List<BinaryPojoCodecImpl<?>> allPojoCodecList = new ArrayList<>(allProtoBufClasses.size());
-        // 解析parser
-        for (Class<?> clazz : allProtoBufClasses) {
-            allPojoCodecList.add(createProtobufCodec(clazz));
-        }
-        return allPojoCodecList;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static BinaryPojoCodecImpl<?> createProtobufCodec(Class<?> clazz) {
-        // protoBuf消息
-        if (MessageLite.class.isAssignableFrom(clazz)) {
-            return createMessageCodec((Class<? extends MessageLite>) clazz);
-        }
-        if (ProtocolMessageEnum.class.isAssignableFrom(clazz)) {
-            return createMessageEnumCodec((Class<? extends ProtocolMessageEnum>) clazz);
-        }
-        throw new IllegalArgumentException("Unsupported class " + clazz);
-    }
-
-    public static <T extends MessageLite> MessageCodec<T> createMessageCodec(Class<T> messageClazz) {
-        final var enumLiteMap = ProtobufUtils.findParser(messageClazz);
-        return new MessageCodec<>(messageClazz, enumLiteMap);
-    }
-
-    public static <T extends ProtocolMessageEnum> MessageEnumCodec<T> createMessageEnumCodec(Class<T> messageClazz) {
-        final var enumLiteMap = ProtobufUtils.findMapper(messageClazz);
-        return new MessageEnumCodec<>(messageClazz, enumLiteMap);
-    }
-
-    /** @param lookup 外部缓存实例，避免每次创建的开销 */
-    public static <T extends Collection<?>> CollectionCodec<T> createCollectionCodec(MethodHandles.Lookup lookup, Class<T> clazz) throws Throwable {
-        Constructor<T> constructor = clazz.getConstructor();
-        Supplier<T> factory = noArgConstructorToSupplier(lookup, constructor);
-        return new CollectionCodec<>(clazz, factory);
-    }
-
-    public static <T extends Map<?, ?>> MapCodec<T> createMapCodec(MethodHandles.Lookup lookup, Class<T> clazz) throws Throwable {
-        Constructor<T> constructor = clazz.getConstructor();
-        Supplier<T> factory = noArgConstructorToSupplier(lookup, constructor);
-        return new MapCodec<>(clazz, factory);
-    }
-
-    // endregion
 }

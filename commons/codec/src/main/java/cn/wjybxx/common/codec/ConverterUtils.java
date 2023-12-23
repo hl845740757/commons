@@ -16,6 +16,8 @@
 
 package cn.wjybxx.common.codec;
 
+import cn.wjybxx.common.codec.codecs.CollectionCodec;
+import cn.wjybxx.common.codec.codecs.MapCodec;
 import cn.wjybxx.dson.text.*;
 
 import javax.annotation.Nullable;
@@ -251,6 +253,31 @@ public class ConverterUtils {
             return TypeArgInfo.of(componentType);
         }
         return TypeArgInfo.OBJECT;
+    }
+
+    /** @param lookup 外部缓存实例，避免每次创建的开销 */
+    public static <T extends Collection<?>> CollectionCodec<T> createCollectionCodec(MethodHandles.Lookup lookup, Class<T> clazz) {
+        try {
+            Constructor<T> constructor = clazz.getConstructor();
+            Supplier<T> factory = noArgConstructorToSupplier(lookup, constructor);
+            return new CollectionCodec<>(clazz, factory);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T extends Map<?, ?>> MapCodec<T> createMapCodec(MethodHandles.Lookup lookup, Class<T> clazz) throws Throwable {
+        try {
+            Constructor<T> constructor = clazz.getConstructor();
+            Supplier<T> factory = noArgConstructorToSupplier(lookup, constructor);
+            return new MapCodec<>(clazz, factory);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // endregion

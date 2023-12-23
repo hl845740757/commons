@@ -26,7 +26,6 @@ import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dson.types.ObjectRef;
 import cn.wjybxx.dson.types.OffsetTimestamp;
-import com.google.protobuf.MessageLite;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -65,12 +64,6 @@ public class DefaultDocumentObjectWriter implements DocumentObjectWriter {
     @Override
     public void writeName(String name) {
         writer.writeName(name);
-    }
-
-    @Override
-    public void writeMessage(String name, int binaryType, MessageLite messageLite) {
-        Objects.requireNonNull(messageLite);
-        writer.writeMessage(name, binaryType, messageLite);
     }
 
     @Override

@@ -23,7 +23,6 @@ import cn.wjybxx.common.codec.TypeArgInfo;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.types.ObjectRef;
 import cn.wjybxx.dson.types.OffsetTimestamp;
-import com.google.protobuf.Parser;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -169,8 +168,6 @@ public interface DocumentObjectReader extends AutoCloseable {
     void skipValue();
 
     void skipToEndOfObject();
-
-    <T> T readMessage(String name, int binaryType, @Nonnull Parser<T> parser);
 
     byte[] readValueAsBytes(String name);
 

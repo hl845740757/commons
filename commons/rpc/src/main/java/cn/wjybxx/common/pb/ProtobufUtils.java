@@ -16,6 +16,7 @@
 
 package cn.wjybxx.common.pb;
 
+import cn.wjybxx.common.codec.PojoCodecImpl;
 import com.google.protobuf.*;
 
 import javax.annotation.Nonnull;
@@ -79,4 +80,25 @@ public class ProtobufUtils {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public static PojoCodecImpl<?> createProtobufCodec(Class<?> clazz) {
+        // protoBuf消息
+        if (MessageLite.class.isAssignableFrom(clazz)) {
+            return createMessageCodec((Class<? extends MessageLite>) clazz);
+        }
+        if (ProtocolMessageEnum.class.isAssignableFrom(clazz)) {
+            return createMessageEnumCodec((Class<? extends ProtocolMessageEnum>) clazz);
+        }
+        throw new IllegalArgumentException("Unsupported class " + clazz);
+    }
+
+    public static <T extends MessageLite> MessageCodec<T> createMessageCodec(Class<T> messageClazz) {
+        final var enumLiteMap = ProtobufUtils.findParser(messageClazz);
+        return new MessageCodec<>(messageClazz, enumLiteMap);
+    }
+
+    public static <T extends ProtocolMessageEnum> MessageEnumCodec<T> createMessageEnumCodec(Class<T> messageClazz) {
+        final var enumLiteMap = ProtobufUtils.findMapper(messageClazz);
+        return new MessageEnumCodec<>(messageClazz, enumLiteMap);
+    }
 }

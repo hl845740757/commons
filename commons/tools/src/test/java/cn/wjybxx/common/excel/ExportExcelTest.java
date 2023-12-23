@@ -16,6 +16,7 @@
 
 package cn.wjybxx.common.excel;
 
+import cn.wjybxx.common.TestUtil;
 import cn.wjybxx.common.tools.excel.ExcelExporter;
 import cn.wjybxx.common.tools.excel.ExcelExporterOptions;
 import cn.wjybxx.common.tools.util.ExecutorMgr;
@@ -33,7 +34,7 @@ public class ExportExcelTest {
 
     @Test
     void test() throws IOException {
-        File projectDir = Utils.findProjectDir("BigCat");
+        File projectDir = Utils.findProjectDir(TestUtil.rootDirName);
         ExcelExporterOptions options = new ExcelExporterOptions()
                 .setExcelDir(projectDir.getPath() + "/doc")
                 .setOutDir(projectDir.getPath() + "/commons/testres/temp")

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.common.codec.codecs;
+package cn.wjybxx.common.pb;
 
 import cn.wjybxx.common.codec.PojoCodecImpl;
 import cn.wjybxx.common.codec.TypeArgInfo;
@@ -26,6 +26,7 @@ import cn.wjybxx.common.codec.document.DocumentObjectWriter;
 import cn.wjybxx.common.codec.document.DocumentPojoCodecScanIgnore;
 import cn.wjybxx.dson.DsonBinary;
 import cn.wjybxx.dson.text.ObjectStyle;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
 
@@ -57,22 +58,32 @@ public class MessageCodec<T extends MessageLite> implements PojoCodecImpl<T> {
 
     @Override
     public void writeObject(BinaryObjectWriter writer, T instance, TypeArgInfo<?> typeArgInfo) {
-        writer.writeMessage(0, writer.options().pbBinaryType, instance);
+        writer.writeBytes(0, writer.options().pbBinaryType, instance.toByteArray());
     }
 
     @Override
     public T readObject(BinaryObjectReader reader, TypeArgInfo<?> typeArgInfo) {
-        return reader.readMessage(0, reader.options().pbBinaryType, parser);
+        byte[] bytes = reader.readBytes(0);
+        try {
+            return parser.parseFrom(bytes);
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void writeObject(DocumentObjectWriter writer, T instance, TypeArgInfo<?> typeArgInfo, ObjectStyle style) {
-        writer.writeMessage("value", writer.options().pbBinaryType, instance);
+        writer.writeBytes("data", writer.options().pbBinaryType, instance.toByteArray());
     }
 
     @Override
     public T readObject(DocumentObjectReader reader, TypeArgInfo<?> typeArgInfo) {
-        return reader.readMessage("value", reader.options().pbBinaryType, parser);
+        byte[] bytes = reader.readBytes("data");
+        try {
+            return parser.parseFrom(bytes);
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

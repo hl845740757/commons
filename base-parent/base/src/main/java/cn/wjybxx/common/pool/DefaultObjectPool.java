@@ -83,7 +83,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
 
         // 先调用reset，避免reset出现异常导致添加脏对象到缓存池中 -- 断言是否在池中还是有较大开销
         resetPolicy.reset(object);
-//        assert !containsRef(freeObjects, object);
+//        assert !CollectionUtils.containsRef(freeObjects, e);
 
         if (freeObjects.size() < maxCapacity) {
             freeObjects.add(object);
@@ -106,7 +106,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
                     continue;
                 }
                 resetPolicy.reset(e);
-//                assert !containsRef(freeObjects, e);
+//                assert !CollectionUtils.containsRef(freeObjects, e);
                 if (freeObjects.size() < maxCapacity) {
                     freeObjects.add(e);
                 }
@@ -117,19 +117,12 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
                     continue;
                 }
                 resetPolicy.reset(e);
-//                assert !containsRef(freeObjects, e);
+//                assert !CollectionUtils.containsRef(freeObjects, e);
                 if (freeObjects.size() < maxCapacity) {
                     freeObjects.add(e);
                 }
             }
         }
-    }
-
-    private static boolean containsRef(ArrayList<?> freeObjects, Object e) {
-        for (int i = 0, freeObjectsSize = freeObjects.size(); i < freeObjectsSize; i++) {
-            if (freeObjects.get(i) == e) return true;
-        }
-        return false;
     }
 
     @Override

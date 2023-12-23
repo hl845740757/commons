@@ -20,7 +20,6 @@ import cn.wjybxx.common.codec.*;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.types.ObjectRef;
 import cn.wjybxx.dson.types.OffsetTimestamp;
-import com.google.protobuf.Parser;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
@@ -94,11 +93,6 @@ abstract class AbstractObjectReader implements DocumentObjectReader {
     @Override
     public void skipToEndOfObject() {
         reader.skipToEndOfObject();
-    }
-
-    @Override
-    public <T> T readMessage(String name, int binaryType, @Nonnull Parser<T> parser) {
-        return readName(name) ? reader.readMessage(name, binaryType, parser) : null;
     }
 
     @Override

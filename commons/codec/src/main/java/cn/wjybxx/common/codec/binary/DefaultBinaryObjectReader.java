@@ -20,7 +20,6 @@ import cn.wjybxx.common.codec.*;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.types.ObjectRef;
 import cn.wjybxx.dson.types.OffsetTimestamp;
-import com.google.protobuf.Parser;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -138,11 +137,6 @@ public class DefaultBinaryObjectReader implements BinaryObjectReader {
     @Override
     public void skipToEndOfObject() {
         reader.skipToEndOfObject();
-    }
-
-    @Override
-    public <T> T readMessage(int name, int binaryType, @Nonnull Parser<T> parser) {
-        return readName(name) ? reader.readMessage(name, binaryType, parser) : null;
     }
 
     @Override

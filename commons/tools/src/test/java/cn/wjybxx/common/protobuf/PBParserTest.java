@@ -42,7 +42,7 @@ public class PBParserTest {
 
     /** 该测试部走自动化测试 */
     public static void main(String[] args) throws IOException {
-        File projectDir = Utils.findProjectDir("BigCat");
+        File projectDir = Utils.findProjectDir("commons");
 
         PBParserOptions options = new PBParserOptions();
         options.setProtoDir(projectDir.getPath() + "/commons/testres/")

@@ -14,35 +14,21 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.common;
+package cn.wjybxx.common.annotation;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * 负值处理策略
+ * 用于标识一个只读在完成初始化以后是只读的，即：安全发布后可用于多线程访问
  *
  * @author wjybxx
- * date 2023/4/6
+ * date 2023/4/4
  */
-public enum NegativeChecker {
-
-    /** 允许负数值 */
-    SUCCESS,
-    /** 失败 - 抛出异常 */
-    FAILURE,
-    /** 转为0 */
-    ZERO,
-    /** 转为1 */
-    ONE;
-
-    public long check(long value) {
-        if (value >= 0) {
-            return value;
-        }
-        return switch (this) {
-            case SUCCESS -> value;
-            case FAILURE -> throw new IllegalArgumentException("value must be gte 0, but found: " + value);
-            case ZERO -> 0;
-            case ONE -> 1;
-        };
-    }
+@Target({ElementType.TYPE, ElementType.FIELD})
+@Retention(RetentionPolicy.SOURCE)
+public @interface ReadOnlyAfterInit {
 
 }

@@ -34,6 +34,11 @@
             <version>${apt.version}</version>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.25.1</version>
+        </dependency>
     </dependencies>
 
 </project>

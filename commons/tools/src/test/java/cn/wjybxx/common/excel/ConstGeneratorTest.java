@@ -16,6 +16,7 @@
 
 package cn.wjybxx.common.excel;
 
+import cn.wjybxx.common.TestUtil;
 import cn.wjybxx.common.tools.excel.gen.ConstantGenerator;
 import cn.wjybxx.common.tools.excel.gen.EnumGenerator;
 import cn.wjybxx.common.tools.excel.gen.SheetEnumValue;
@@ -34,7 +35,7 @@ public class ConstGeneratorTest {
 
     @Test
     void test() throws IOException {
-        File projectDir = Utils.findProjectDir("BigCat");
+        File projectDir = Utils.findProjectDir(TestUtil.rootDirName);
         String javaOut = projectDir.getPath() + "/commons/tools/src/test/java";
         String javaPackage = "cn.wjybxx.common.temp.cfg2";
         {

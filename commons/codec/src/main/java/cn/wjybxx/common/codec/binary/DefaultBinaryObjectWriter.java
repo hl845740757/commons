@@ -19,7 +19,6 @@ package cn.wjybxx.common.codec.binary;
 import cn.wjybxx.common.codec.*;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.io.DsonChunk;
-import com.google.protobuf.MessageLite;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -58,12 +57,6 @@ public class DefaultBinaryObjectWriter implements BinaryObjectWriter {
     @Override
     public void writeName(int name) {
         writer.writeName(name);
-    }
-
-    @Override
-    public void writeMessage(int name, int binaryType, MessageLite messageLite) {
-        Objects.requireNonNull(messageLite);
-        writer.writeMessage(name, binaryType, messageLite);
     }
 
     @Override

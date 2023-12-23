@@ -12,11 +12,7 @@
     <artifactId>core</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>cn.wjybxx.commons</groupId>
-            <artifactId>base</artifactId>
-            <version>${base.version}</version>
-        </dependency>
+        <!-- 序列化组件太基础 -->
         <dependency>
             <groupId>cn.wjybxx.dson</groupId>
             <artifactId>dson-core</artifactId>

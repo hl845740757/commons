@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.function.Supplier;
 
 /**
- * 对象池
+ * 简单对象池
  * (其实acquire和release是比较合适的命名; get和return通常也是一对，get更容易实现supplier接口)
  *
  * @author wjybxx
