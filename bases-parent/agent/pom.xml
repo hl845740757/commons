@@ -5,20 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>cn.wjybxx.commons</groupId>
-        <artifactId>commons-parent</artifactId>
+        <artifactId>bases-parent</artifactId>
         <version>${revision}</version>
     </parent>
 
     <artifactId>agent</artifactId>
     <name>Agent</name>
     <description>热更新Agent模块；保持最小jar包</description>
-
-    <properties>
-        <!-- agent无需Jdk21 -->
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
-    </properties>
 
 </project>

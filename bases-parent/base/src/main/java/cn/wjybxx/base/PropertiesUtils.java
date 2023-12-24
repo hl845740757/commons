@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.common.props;
-
-import cn.wjybxx.base.CollectionUtils;
-import org.apache.commons.lang3.math.NumberUtils;
+package cn.wjybxx.base;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,48 +28,6 @@ import java.util.Set;
 @SuppressWarnings("unused")
 public class PropertiesUtils {
 
-    // region
-
-    public static int getInt(Properties properties, String key) {
-        String v = properties.getProperty(key);
-        return NumberUtils.toInt(v);
-    }
-
-    public static int getInt(Properties properties, String key, int def) {
-        String v = properties.getProperty(key);
-        return NumberUtils.toInt(v, def);
-    }
-
-    public static long getLong(Properties properties, String key) {
-        String v = properties.getProperty(key);
-        return NumberUtils.toLong(v);
-    }
-
-    public static long getLong(Properties properties, String key, long def) {
-        String v = properties.getProperty(key);
-        return NumberUtils.toLong(v, def);
-    }
-
-    public static float getFloat(Properties properties, String key) {
-        String v = properties.getProperty(key);
-        return NumberUtils.toFloat(v);
-    }
-
-    public static float getFloat(Properties properties, String key, float def) {
-        String v = properties.getProperty(key);
-        return NumberUtils.toFloat(v, def);
-    }
-
-    public static double getDouble(Properties properties, String key) {
-        String v = properties.getProperty(key);
-        return NumberUtils.toDouble(v);
-    }
-
-    public static double getDouble(Properties properties, String key, double def) {
-        String v = properties.getProperty(key);
-        return NumberUtils.toDouble(v, def);
-    }
-
     public static String getString(Properties properties, String key) {
         return properties.getProperty(key);
     }
@@ -81,41 +36,100 @@ public class PropertiesUtils {
         return properties.getProperty(key, def);
     }
 
-    public static short getShort(Properties properties, String key) {
+    // region convert
+
+    public static int getInt(Properties properties, String key) {
+        return getInt(properties, key, 0);
+    }
+
+    public static int getInt(Properties properties, String key, int def) {
         String v = properties.getProperty(key);
-        return NumberUtils.toShort(v);
+        if (ObjectUtils.isEmpty(v)) {
+            return def;
+        }
+        try {
+            return Integer.parseInt(v);
+        } catch (NumberFormatException ignore) {
+            return def;
+        }
+    }
+
+    public static long getLong(Properties properties, String key) {
+        return getLong(properties, key, 0);
+    }
+
+    public static long getLong(Properties properties, String key, long def) {
+        String v = properties.getProperty(key);
+        if (ObjectUtils.isEmpty(v)) {
+            return def;
+        }
+        try {
+            return Long.parseLong(v);
+        } catch (NumberFormatException ignore) {
+            return def;
+        }
+    }
+
+    public static float getFloat(Properties properties, String key) {
+        return getFloat(properties, key, 0f);
+    }
+
+    public static float getFloat(Properties properties, String key, float def) {
+        String v = properties.getProperty(key);
+        if (ObjectUtils.isEmpty(v)) {
+            return def;
+        }
+        try {
+            return Float.parseFloat(v);
+        } catch (NumberFormatException ignore) {
+            return def;
+        }
+    }
+
+    public static double getDouble(Properties properties, String key) {
+        return getDouble(properties, key, 0d);
+    }
+
+    public static double getDouble(Properties properties, String key, double def) {
+        String v = properties.getProperty(key);
+        if (ObjectUtils.isEmpty(v)) {
+            return def;
+        }
+        try {
+            return Double.parseDouble(v);
+        } catch (NumberFormatException ignore) {
+            return def;
+        }
+    }
+
+    public static short getShort(Properties properties, String key) {
+        return getShort(properties, key, (short) 0);
     }
 
     public static short getShort(Properties properties, String key, short def) {
         String v = properties.getProperty(key);
-        return NumberUtils.toShort(v, def);
-    }
-
-    public static byte getByte(Properties properties, String key) {
-        String v = properties.getProperty(key);
-        return NumberUtils.toByte(v);
-    }
-
-    public static byte getByte(Properties properties, String key, byte def) {
-        String v = properties.getProperty(key);
-        return NumberUtils.toByte(v, def);
+        if (ObjectUtils.isEmpty(v)) {
+            return def;
+        }
+        try {
+            return Short.parseShort(v);
+        } catch (NumberFormatException ignore) {
+            return def;
+        }
     }
 
     public static boolean getBool(Properties properties, String key) {
-        String v = properties.getProperty(key);
-        return toBoolean(v, false);
+        return getBool(properties, key, false);
     }
 
     public static boolean getBool(Properties properties, String key, boolean def) {
         String v = properties.getProperty(key);
+        if (ObjectUtils.isEmpty(v)) {
+            return def;
+        }
         return toBoolean(v, def);
     }
 
-    public static boolean toBoolean(String value) {
-        return toBoolean(value, false);
-    }
-
-    // Commons3中对Bool的解析不符合我们的期望
     public static boolean toBoolean(String value, boolean def) {
         if (value == null || value.isEmpty()) {
             return def;

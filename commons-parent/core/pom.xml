@@ -15,7 +15,7 @@
         <dependency>
             <groupId>cn.wjybxx.commons</groupId>
             <artifactId>base</artifactId>
-            <version>${project.version}</version>
+            <version>${base.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/it.unimi.dsi/fastutil-core -->
         <dependency>

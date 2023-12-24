@@ -41,5 +41,4 @@ build/
 */.flattened-pom.xml
 
 ### 临时目录
-/testres/temp
-tools/src/test/java/cn/wjybxx/common/temp/
+**/temp/*

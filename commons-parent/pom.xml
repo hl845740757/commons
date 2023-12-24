@@ -14,10 +14,6 @@
     <url>https://github.com/hl845740757/commons</url>
 
     <modules>
-        <module>agent</module>
-        <module>base</module>
-        <module>apt-base</module>
-
         <module>core</module>
         <module>concurrent</module>
         <module>config</module>
@@ -65,15 +61,14 @@
             <artifactId>jsr305</artifactId>
             <version>${jsr305.version}</version>
         </dependency>
-
-        <!-- 测试依赖 -->
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
-            <scope>test</scope>
         </dependency>
+
+        <!-- 测试依赖 -->
         <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -106,13 +101,17 @@
         <junit.version>5.10.1</junit.version>
 
         <!-- 子模块依赖 -->
+        <base.version>1.0.rc1</base.version>
         <dson.version>1.2.rc4</dson.version>
+
         <fastutil.version>8.5.12</fastutil.version>
         <commons-lang3.version>3.14.0</commons-lang3.version>
-        <commons-codec.version>1.16.0</commons-codec.version>
         <commons-io.version>2.15.1</commons-io.version>
+        <commons-codec.version>1.16.0</commons-codec.version>
+
         <guava.version>33.0.0-jre</guava.version>
         <pb.version>3.25.1</pb.version>
+
         <javapoet.version>1.13.0</javapoet.version>
         <disruptor.version>3.4.4</disruptor.version>
         <jctools.version>4.0.1</jctools.version>
@@ -199,7 +198,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.4.1</version>
+                        <version>3.5.0</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -209,10 +208,7 @@
                                 </goals>
                                 <!-- 注释不是特别规范，避免打包中断 -->
                                 <configuration>
-                                    <!-- <additionalJOption>-Xdoclint:none</additionalJOption> -->
                                     <doclint>none</doclint>
-                                    <charset>UTF-8</charset>
-                                    <locale>zh_CN</locale>
                                 </configuration>
                             </execution>
                         </executions>

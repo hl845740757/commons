@@ -16,67 +16,67 @@
 
 package cn.wjybxx.common.props;
 
+import cn.wjybxx.base.PropertiesUtils;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author wjybxx
  * date 2023/4/15
  */
-public class PropertiesImpl implements IProperties {
+class PropertiesWrapper implements IProperties {
 
-    private final Map<String, String> params;
+    private final Properties params;
 
-    public PropertiesImpl() {
-        this.params = new LinkedHashMap<>();
-    }
-
-    private PropertiesImpl(Map<String, String> params) {
-        this.params = Objects.requireNonNull(params);
-    }
-
-    public static PropertiesImpl ofMap(Map<String, String> properties) {
-        return new PropertiesImpl(new LinkedHashMap<>(properties)); // 使用LinkedHashMap保留原始顺序
-    }
-
-    public static PropertiesImpl wrapMap(Map<String, String> properties) {
-        return new PropertiesImpl(properties);
-    }
-
-    public static PropertiesImpl ofProperties(Properties properties) {
-        return new PropertiesImpl(PropertiesUtils.toMap(properties));
+    PropertiesWrapper(Properties params) {
+        this.params = params;
     }
 
     @Nullable
     @Override
     public String getAsString(String key) {
-        return params.get(key);
+        return params.getProperty(key);
     }
 
     @Override
     public String get(Object key) {
-        return params.get(key);
+        if (key instanceof String sk) {
+            return params.getProperty(sk);
+        }
+        Object value = params.get(key);
+        if (value instanceof String sv) {
+            return sv;
+        }
+        return null;
     }
 
     @Nonnull
     @Override
     public Set<String> keySet() {
-        return Collections.unmodifiableSet(params.keySet());
+        // 这是个高开销操作
+        return params.stringPropertyNames();
     }
 
+    @Nonnull
     @Override
     public Collection<String> values() {
-        return Collections.unmodifiableCollection(params.values());
+        // 开销更高
+        return PropertiesUtils.toMap(params).values();
     }
 
+    @Nonnull
     @Override
     public Set<Entry<String, String>> entrySet() {
-        return Collections.unmodifiableSet(params.entrySet());
+        // 开销更高
+        return PropertiesUtils.toMap(params).entrySet();
     }
 
     //
-
     @Override
     public int size() {
         return params.size();
@@ -99,12 +99,12 @@ public class PropertiesImpl implements IProperties {
 
     @Override
     public String put(String key, String value) {
-        return params.put(key, value);
+        return (String) params.put(key, value);
     }
 
     @Override
     public String remove(Object key) {
-        return params.remove(key);
+        return (String) params.remove(key);
     }
 
     @Override

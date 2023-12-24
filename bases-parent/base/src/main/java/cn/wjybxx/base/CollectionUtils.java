@@ -605,7 +605,7 @@ public class CollectionUtils {
 
     /** @throws NoSuchElementException 如果map为空 */
     public static <K> K firstKey(Map<K, ?> map) {
-        // jdk21 LinkedHashMap总算可以获取首个键值对了...
+        // JDK21无需调用该方法
         if (map instanceof SequencedMap<K, ?> sequencedMap) {
             return sequencedMap.firstEntry().getKey();
         } else {
