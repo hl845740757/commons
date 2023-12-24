@@ -16,6 +16,7 @@
 
 package cn.wjybxx.common.time;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +54,7 @@ import java.util.concurrent.TimeUnit;
  * date 2023/4/4
  */
 @SuppressWarnings("unused")
+@NotThreadSafe
 public class StopWatch {
 
     /** 停表的名字 */
@@ -63,11 +65,11 @@ public class StopWatch {
     private long startTimeNanos;
     /** 总耗时 */
     private long elapsedNanos;
+
     /** 当前步骤已耗时 */
     private long stepElapsedNanos;
-
+    /** 历史步骤耗时 */
     private final List<Item> itemList = new ArrayList<>();
-    private final StringBuilder sb = new StringBuilder(32);
 
     /**
      * @param name 推荐命名格式{@code ClassName:MethodName}
@@ -76,9 +78,10 @@ public class StopWatch {
         this.name = Objects.requireNonNull(name, "name");
     }
 
-    /**
-     * @return 一个已启动的计时器
-     */
+    public static StopWatch create(String name) {
+        return new StopWatch(name);
+    }
+
     public static StopWatch createStarted(String name) {
         final StopWatch sw = new StopWatch(name);
         sw.start();
@@ -168,7 +171,7 @@ public class StopWatch {
      * 停止计时后，{@link #elapsed()}将获得一个稳定的时间值。
      */
     public void stop() {
-        if (state == State.STOPPED) {
+        if (!isStarted()) {
             return;
         }
         if (state == State.RUNNING) {
@@ -190,7 +193,6 @@ public class StopWatch {
         startTimeNanos = 0;
         elapsedNanos = stepElapsedNanos = 0;
         itemList.clear();
-        sb.setLength(0);
     }
 
     /**
@@ -255,18 +257,20 @@ public class StopWatch {
      * (获得了一个规律，也失去了一个规律，可能并不如未排序的log看着舒服)
      */
     public String getSortedLog() {
-        // 排序开销还算比较小
-        itemList.sort(null);
-        sb.setLength(0);
-        return toString(sb);
+        if (itemList.size() > 0) {
+            // 排序开销还算比较小
+            ArrayList<Item> copiedItems = new ArrayList<>(itemList);
+            copiedItems.sort(null);
+            return toString(copiedItems);
+        }
+        return toString(itemList);
     }
 
     /**
      * 获取最终log。
      */
     public String getLog() {
-        sb.setLength(0);
-        return toString(sb);
+        return toString(itemList);
     }
 
     /**
@@ -280,12 +284,12 @@ public class StopWatch {
      */
     @Override
     public String toString() {
-        // toString可能被多个地方调用
-        return toString(new StringBuilder(32));
+        return toString(itemList);
     }
 
-    private String toString(final StringBuilder sb) {
-        final List<Item> itemList = this.itemList;
+    /** @param itemList 避免排序修改数据 */
+    private String toString(List<Item> itemList) {
+        StringBuilder sb = new StringBuilder(32);
         // 总耗时
         sb.append("StopWatch[").append(name).append('=').append(elapsedNanos / TimeUtils.NANOS_PER_MILLI).append("ms]");
         // 每个步骤耗时

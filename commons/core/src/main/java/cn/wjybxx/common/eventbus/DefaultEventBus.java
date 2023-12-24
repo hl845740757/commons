@@ -92,7 +92,7 @@ public class DefaultEventBus implements EventBus {
         if (childKey == null) {
             EventBusUtils.addHandler(handlerMap, masterKey, handler);
         } else {
-            if (CollectionUtils.isNotEmptyCollection(childKey)) {
+            if (EventBusUtils.isNotEmptyCollection(childKey)) {
                 for (Object c : (Collection<?>) childKey) {
                     final ComposeEventKey key = new ComposeEventKey(masterKey, c);
                     EventBusUtils.addHandler(handlerMap, key, handler);
@@ -112,7 +112,7 @@ public class DefaultEventBus implements EventBus {
             EventBusUtils.removeHandler(handlerMap, masterKey, handler);
         } else {
             final ComposeEventKey composeEventKey = keyPool.get();
-            if (CollectionUtils.isNotEmptyCollection(childKey)) {
+            if (EventBusUtils.isNotEmptyCollection(childKey)) {
                 for (Object c : (Collection<?>) childKey) {
                     composeEventKey.init(masterKey, c);
                     EventBusUtils.removeHandler(handlerMap, composeEventKey, handler);

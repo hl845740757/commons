@@ -44,7 +44,15 @@ public class BoundedArrayDeque<E> implements Deque<E> {
         if (this.capacity == capacity) {
             return;
         }
-        if (capacity < arrayDeque.size()) {
+        if (capacity == 0) {
+            if (arrayDeque.size() > 0
+                    && overflowBehavior != DequeOverflowBehavior.DISCARD_HEAD
+                    && overflowBehavior != DequeOverflowBehavior.DISCARD_TAIL) {
+                throw new IllegalStateException("queue is full");
+            }
+            arrayDeque.clear();
+
+        } else if (capacity < arrayDeque.size()) {
             switch (overflowBehavior) {
                 case DISCARD_HEAD -> {
                     while (arrayDeque.size() > capacity) {
@@ -56,7 +64,7 @@ public class BoundedArrayDeque<E> implements Deque<E> {
                         arrayDeque.pollLast();
                     }
                 }
-                default -> throw new IllegalStateException();
+                default -> throw new IllegalStateException("queue is full");
             }
         }
         this.capacity = capacity;

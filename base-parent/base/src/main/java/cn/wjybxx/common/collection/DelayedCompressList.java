@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.collection;
 
-import cn.wjybxx.common.ArrayUtils;
+import cn.wjybxx.common.CollectionUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -55,7 +55,7 @@ import java.util.function.Predicate;
  */
 public interface DelayedCompressList<E> {
 
-    int INDEX_NOT_FOUND = ArrayUtils.INDEX_NOT_FOUND;
+    int INDEX_NOT_FOUND = CollectionUtils.INDEX_NOT_FOUND;
 
     // 迭代api
 

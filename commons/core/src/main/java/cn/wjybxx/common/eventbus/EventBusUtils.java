@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
@@ -36,6 +38,11 @@ public class EventBusUtils {
 
     private EventBusUtils() {
 
+    }
+
+    /** 是否是非空集合 */
+    public static boolean isNotEmptyCollection(@Nullable Object obj) {
+        return obj instanceof Collection<?> && ((Collection<?>) obj).size() > 0;
     }
 
     /**

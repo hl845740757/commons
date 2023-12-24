@@ -49,7 +49,6 @@
 
     <properties>
         <revision>1.0.rc1</revision>
-        <!-- java版本，最终会升级为jdk21 -->
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -94,7 +94,7 @@ public class DefaultEventBusX implements EventBus {
             sourceKey = null;
         }
         // 子键集合处理
-        if (CollectionUtils.isNotEmptyCollection(childKey)) {
+        if (EventBusUtils.isNotEmptyCollection(childKey)) {
             for (Object c : (Collection<?>) childKey) {
                 final ComposeEventKey key = new ComposeEventKey(sourceKey, masterKey, c);
                 EventBusUtils.addHandler(handlerMap, key, handler);
@@ -119,7 +119,7 @@ public class DefaultEventBusX implements EventBus {
         }
         // 子键集合处理
         final ComposeEventKey composeEventKey = keyPool.get();
-        if (CollectionUtils.isNotEmptyCollection(childKey)) {
+        if (EventBusUtils.isNotEmptyCollection(childKey)) {
             for (Object c : (Collection<?>) childKey) {
                 composeEventKey.init(sourceKey, masterKey, c);
                 EventBusUtils.removeHandler(handlerMap, composeEventKey, handler);
