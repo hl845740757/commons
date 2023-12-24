@@ -16,11 +16,7 @@
     <modules>
         <module>core</module>
         <module>concurrent</module>
-        <module>config</module>
         <module>mongo</module>
-
-        <!-- 外部工具模块，非运行时模块，开发期工具 -->
-        <module>tools</module>
     </modules>
 
     <!-- 证书 -->
