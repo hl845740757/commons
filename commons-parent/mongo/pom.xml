@@ -8,11 +8,11 @@
         <artifactId>commons-parent</artifactId>
         <version>${revision}</version>
     </parent>
-
     <artifactId>mongo</artifactId>
 
+    <!-- 暂时不发布 -->
     <properties>
-        <bson.version>4.10.2</bson.version>
+        <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
 
     <dependencies>

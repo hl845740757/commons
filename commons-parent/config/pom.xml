@@ -8,8 +8,11 @@
         <artifactId>commons-parent</artifactId>
         <version>${revision}</version>
     </parent>
-
     <artifactId>config</artifactId>
+
+    <properties>
+        <maven.deploy.skip>false</maven.deploy.skip>
+    </properties>
 
     <dependencies>
         <dependency>

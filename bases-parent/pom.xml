@@ -48,14 +48,30 @@
         </developer>
     </developers>
 
-    <dependencies>
-        <!-- https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305 -->
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>${jsr305.version}</version>
-        </dependency>
+    <properties>
+        <revision>1.0.rc1</revision>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+        <!-- mvn命令默认gbk编码导致中文注释异常，需要通过这里设置 -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
+        <!-- 父模块不发布，子模块需要变更为false -->
+        <maven.deploy.skip>true</maven.deploy.skip>
 
+        <!-- 基础依赖-->
+        <slf4j.version>2.0.9</slf4j.version>
+        <jsr305.version>3.0.2</jsr305.version>
+        <logback.version>1.4.14</logback.version>
+        <junit.version>5.10.1</junit.version>
+
+        <!-- 子模块依赖 -->
+        <javapoet.version>1.13.0</javapoet.version>
+        <guava.version>33.0.0-jre</guava.version>
+    </properties>
+
+    <!-- 基础依赖/全局依赖 -->
+    <dependencies>
         <!-- 测试依赖 -->
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
         <dependency>
@@ -79,26 +95,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <!-- 基础依赖/全局依赖 -->
-    <properties>
-        <revision>1.0.rc1</revision>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <!-- mvn命令默认gbk编码导致中文注释异常，需要通过这里设置 -->
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
-
-        <!-- 基础依赖-->
-        <slf4j.version>2.0.9</slf4j.version>
-        <jsr305.version>3.0.2</jsr305.version>
-        <logback.version>1.4.14</logback.version>
-        <junit.version>5.10.1</junit.version>
-
-        <!-- 子模块依赖 -->
-        <javapoet.version>1.13.0</javapoet.version>
-        <guava.version>33.0.0-jre</guava.version>
-    </properties>
 
     <build>
         <plugins>

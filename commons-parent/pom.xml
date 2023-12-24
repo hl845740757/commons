@@ -88,9 +88,12 @@
         <revision>1.0.rc1</revision>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <!-- mvn命令默认gbk编码导致中文注释异常，需要通过这里设置 -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
+        <!-- 父模块不发布，子模块需要变更为false -->
+        <maven.deploy.skip>true</maven.deploy.skip>
 
         <!-- 基础依赖-->
         <slf4j.version>2.0.9</slf4j.version>
@@ -108,8 +111,10 @@
         <commons-codec.version>1.16.0</commons-codec.version>
 
         <guava.version>33.0.0-jre</guava.version>
+        <guice.version>7.0.0</guice.version>
         <pb.version>3.25.1</pb.version>
 
+        <bson.version>4.10.2</bson.version>
         <javapoet.version>1.13.0</javapoet.version>
         <disruptor.version>3.4.4</disruptor.version>
         <jctools.version>4.0.1</jctools.version>

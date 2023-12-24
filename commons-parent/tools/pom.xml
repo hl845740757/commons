@@ -11,7 +11,7 @@
 
     <artifactId>tools</artifactId>
     <properties>
-        <guice.version>7.0.0</guice.version>
+        <maven.deploy.skip>false</maven.deploy.skip>
     </properties>
 
     <dependencies>

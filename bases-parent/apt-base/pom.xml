@@ -13,12 +13,22 @@
     <name>Apt-Base</name>
     <description>注解处理器的基础模块</description>
 
+    <properties>
+        <maven.deploy.skip>false</maven.deploy.skip>
+    </properties>
+
     <dependencies>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>${jsr305.version}</version>
+        </dependency>
         <dependency>
             <groupId>cn.wjybxx.commons</groupId>
             <artifactId>base</artifactId>
             <version>${project.version}</version>
         </dependency>
+
         <dependency>
             <groupId>com.squareup</groupId>
             <artifactId>javapoet</artifactId>
@@ -27,7 +37,7 @@
         <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service</artifactId>
-            <version>1.0.1</version>
+            <version>1.1.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>

@@ -13,4 +13,8 @@
     <name>Agent</name>
     <description>热更新Agent模块；保持最小jar包</description>
 
+    <properties>
+        <maven.deploy.skip>false</maven.deploy.skip>
+    </properties>
+
 </project>
