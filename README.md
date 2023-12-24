@@ -30,6 +30,12 @@ A：请将各个模块 target/generated-sources/annotations 设置为源代码�
 
 base项目中的模块是个人所有开源项目都可能依赖的基础模块，
 
+### agent模块
+
+agent是基于Java Instrumentation 的热更新模块，仅包含一个Agent类；由于Agent需要以Jar的方式被加载，因此作为独立的模块打包是有利的。
+
+ps：Agent不太会产生变化，将其放在base项目下，仅是为了方便一起打包和发布。
+
 ### base模块
 
 base模块包括一些基础的工具类和注解，这些基础工具和注解被其它commons模块依赖，也被apt模块依赖。
@@ -39,11 +45,11 @@ base模块包括一些基础的工具类和注解，这些基础工具和注解�
 
 ps：不引入commons-lang3和guava，是因为这些基础库的类文件实在太多。
 
-### agent模块
+### concurrent
 
-agent是基于Java Instrumentation 的热更新模块，仅包含一个Agent类；由于Agent需要以Jar的方式被加载，因此作为独立的模块打包是有利的。
+并发工具库，提供事件循环，Future等实现。
 
-ps：Agent不太会产生变化，将其放在base项目下，仅是为了方便一起打包和发布。
+ps：计划重写现在的并发工具库，统一接口，去除对JCtools和Disruptor库的依赖。
 
 ## 工具项目(commons)
 
@@ -51,7 +57,7 @@ ps：Agent不太会产生变化，将其放在base项目下，仅是为了方便
 
 对base模块进行一定丰富后的模块，存在一些外部依赖。
 
-### concurrent
+### concurrent(将重写)
 
 并发工具库，提供事件循环，Future等实现。
 

@@ -226,7 +226,7 @@ public class StopWatch {
     }
 
     /** 获取当前已有的步骤耗时信息 */
-    public List<Map.Entry<String, Duration>> allStepElapsed() {
+    public List<Map.Entry<String, Duration>> listStepElapsed() {
         List<Map.Entry<String, Duration>> result = new ArrayList<>(itemList.size());
         for (Item item : itemList) {
             result.add(Map.entry(item.stepName, Duration.ofNanos(item.elapsedNanos)));

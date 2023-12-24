@@ -34,7 +34,7 @@ public class TimeProviders {
      *
      * @return timeProvider - threadSafe
      */
-    public static TimeProvider systemTimeProvider() {
+    public static TimeProvider systemMillisProvider() {
         return SystemTimeProvider.INSTANCE;
     }
 
@@ -43,7 +43,7 @@ public class TimeProviders {
      *
      * @return timeProvider - threadSafe
      */
-    public static TimeProvider systemNanoTimeProvider() {
+    public static TimeProvider systemNanosProvider() {
         return SystemNanoTimeProvider.INSTANCE;
     }
 

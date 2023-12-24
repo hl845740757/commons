@@ -53,18 +53,16 @@ public class BoundedArrayDeque<E> implements Deque<E> {
             arrayDeque.clear();
 
         } else if (capacity < arrayDeque.size()) {
-            switch (overflowBehavior) {
-                case DISCARD_HEAD -> {
-                    while (arrayDeque.size() > capacity) {
-                        arrayDeque.pollFirst();
-                    }
+            if (overflowBehavior == DequeOverflowBehavior.DISCARD_HEAD) {
+                while (arrayDeque.size() > capacity) {
+                    arrayDeque.pollFirst();
                 }
-                case DISCARD_TAIL -> {
-                    while (arrayDeque.size() > capacity) {
-                        arrayDeque.pollLast();
-                    }
+            } else if (overflowBehavior == DequeOverflowBehavior.DISCARD_TAIL) {
+                while (arrayDeque.size() > capacity) {
+                    arrayDeque.pollLast();
                 }
-                default -> throw new IllegalStateException("queue is full");
+            } else {
+                throw new IllegalStateException("queue is full");
             }
         }
         this.capacity = capacity;

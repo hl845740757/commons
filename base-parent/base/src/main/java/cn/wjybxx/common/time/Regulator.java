@@ -23,6 +23,7 @@ package cn.wjybxx.common.time;
  * @author wjybxx
  * date 2023/4/4
  */
+@SuppressWarnings("unused")
 public class Regulator {
 
     /** 仅执行一次 */
@@ -176,28 +177,13 @@ public class Regulator {
         this.lastUpdateTime = curTime;
     }
 
-    public long getFirstDelay() {
-        return firstDelay;
-    }
-
-    public void setFirstDelay(long firstDelay) {
-        this.firstDelay = checkFirstDelay(this.type, firstDelay);
-    }
-
-    public long getPeriod() {
-        return period;
-    }
-
-    public void setPeriod(long period) {
-        this.period = checkPeriod(period);
-    }
-
     /** @return 如果是周期性任务则返回true */
     public boolean isPeriodic() {
         return period != 0;
     }
 
     /**
+     * 获取上次成功更新的时间戳
      * 它的具体含义取悦于更新时使用的{@code curTime}的含义。
      */
     public long getLastUpdateTime() {
@@ -214,9 +200,7 @@ public class Regulator {
         return deltaTime;
     }
 
-    /**
-     * 触发次数
-     */
+    /** 已触发次数 */
     public int getCount() {
         return count;
     }
@@ -230,4 +214,21 @@ public class Regulator {
         this.context = context;
         return this;
     }
+
+    public long getFirstDelay() {
+        return firstDelay;
+    }
+
+    public void setFirstDelay(long firstDelay) {
+        this.firstDelay = checkFirstDelay(this.type, firstDelay);
+    }
+
+    public long getPeriod() {
+        return period;
+    }
+
+    public void setPeriod(long period) {
+        this.period = checkPeriod(period);
+    }
+
 }
