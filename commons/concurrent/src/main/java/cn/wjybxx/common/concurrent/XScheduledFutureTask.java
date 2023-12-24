@@ -16,8 +16,8 @@
 
 package cn.wjybxx.common.concurrent;
 
-import cn.wjybxx.common.ThreadUtils;
-import cn.wjybxx.common.collection.IndexedElement;
+import cn.wjybxx.base.ThreadUtils;
+import cn.wjybxx.base.collection.IndexedElement;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;

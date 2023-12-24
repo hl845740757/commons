@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.concurrent;
 
-import cn.wjybxx.common.MathCommon;
+import cn.wjybxx.base.MathCommon;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;

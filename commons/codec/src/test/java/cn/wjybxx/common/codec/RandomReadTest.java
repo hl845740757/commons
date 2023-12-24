@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.codec;
 
-import cn.wjybxx.common.OptionalBool;
+import cn.wjybxx.base.OptionalBool;
 import cn.wjybxx.common.codec.binary.*;
 import cn.wjybxx.common.codec.document.*;
 import cn.wjybxx.dson.DsonLites;

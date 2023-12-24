@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.concurrent;
 
-import cn.wjybxx.common.ThreadUtils;
+import cn.wjybxx.base.ThreadUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

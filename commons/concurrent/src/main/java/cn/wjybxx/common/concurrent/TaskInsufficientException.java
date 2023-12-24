@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.concurrent;
 
-import cn.wjybxx.common.ex.NoLogRequiredException;
+import cn.wjybxx.base.ex.NoLogRequiredException;
 
 /**
  * 该异常表示{@link FutureCombiner}监听的任务数不足以到达成功条件

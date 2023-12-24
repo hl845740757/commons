@@ -16,8 +16,8 @@
 
 package cn.wjybxx.common.tools.excel;
 
-import cn.wjybxx.common.CollectionUtils;
-import cn.wjybxx.common.ObjectUtils;
+import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.common.config.Header;
 import cn.wjybxx.common.config.Sheet;
 import cn.wjybxx.common.config.SheetCell;

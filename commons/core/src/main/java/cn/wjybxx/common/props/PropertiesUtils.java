@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.props;
 
-import cn.wjybxx.common.CollectionUtils;
+import cn.wjybxx.base.CollectionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.HashMap;

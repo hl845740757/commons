@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.tools.util;
 
-import cn.wjybxx.common.ObjectUtils;
+import cn.wjybxx.base.ObjectUtils;
 import it.unimi.dsi.fastutil.chars.CharPredicate;
 
 import java.io.BufferedReader;

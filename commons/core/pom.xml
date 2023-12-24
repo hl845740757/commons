@@ -21,7 +21,7 @@
         <!-- 我们的APT工具，默认不传递 -->
         <dependency>
             <groupId>cn.wjybxx.commons</groupId>
-            <artifactId>apt-commons</artifactId>
+            <artifactId>commons-apt</artifactId>
             <version>${apt.version}</version>
             <optional>true</optional>
         </dependency>

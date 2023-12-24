@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.pb;
 
-import cn.wjybxx.common.annotation.StableName;
+import cn.wjybxx.base.annotation.StableName;
 import cn.wjybxx.common.rpc.RpcMethodKey;
 import cn.wjybxx.common.rpc.RpcRequest;
 import cn.wjybxx.common.rpc.RpcResponse;

@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.concurrent;
 
-import cn.wjybxx.common.annotation.MarkInterface;
+import cn.wjybxx.base.annotation.MarkInterface;
 
 /**
  * 事件循环的模块

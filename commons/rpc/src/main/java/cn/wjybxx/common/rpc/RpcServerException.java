@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.rpc;
 
-import cn.wjybxx.common.ex.ErrorCodeException;
+import cn.wjybxx.base.ex.ErrorCodeException;
 
 /**
  * 表示服务器的异常

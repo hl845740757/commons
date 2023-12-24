@@ -16,8 +16,8 @@
 
 package cn.wjybxx.common.mongo;
 
-import cn.wjybxx.common.CollectionUtils;
-import cn.wjybxx.common.time.TimeUtils;
+import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.time.TimeUtils;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.types.ObjectRef;
 import cn.wjybxx.dson.types.OffsetTimestamp;

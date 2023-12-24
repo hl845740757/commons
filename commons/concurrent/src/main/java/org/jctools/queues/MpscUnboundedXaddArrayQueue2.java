@@ -16,7 +16,7 @@
 
 package org.jctools.queues;
 
-import cn.wjybxx.common.annotation.Internal;
+import cn.wjybxx.base.annotation.Internal;
 import org.jctools.util.PortableJvmInfo;
 
 /**

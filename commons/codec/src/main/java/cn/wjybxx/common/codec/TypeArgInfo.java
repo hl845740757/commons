@@ -17,7 +17,7 @@
 package cn.wjybxx.common.codec;
 
 
-import cn.wjybxx.common.annotation.StableName;
+import cn.wjybxx.base.annotation.StableName;
 
 import javax.annotation.concurrent.Immutable;
 import java.util.*;

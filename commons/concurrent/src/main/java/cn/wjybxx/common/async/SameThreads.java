@@ -18,7 +18,7 @@ package cn.wjybxx.common.async;
 
 import cn.wjybxx.common.NegativeChecker;
 import cn.wjybxx.common.concurrent.FutureUtils;
-import cn.wjybxx.common.time.TimeProvider;
+import cn.wjybxx.base.time.TimeProvider;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;

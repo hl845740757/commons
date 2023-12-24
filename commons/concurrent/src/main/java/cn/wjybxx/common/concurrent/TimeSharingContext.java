@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.concurrent;
 
-import cn.wjybxx.common.annotation.Internal;
+import cn.wjybxx.base.annotation.Internal;
 
 /**
  * @author wjybxx

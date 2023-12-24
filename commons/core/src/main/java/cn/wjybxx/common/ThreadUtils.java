@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common;
 
-import cn.wjybxx.common.time.TimeUtils;
+import cn.wjybxx.base.time.TimeUtils;
 
 import java.util.Set;
 import java.util.concurrent.locks.LockSupport;
@@ -126,7 +126,7 @@ public class ThreadUtils {
     public static String getCallerInfo(Predicate<StackWalker.StackFrame> filter) {
         // 暂时使用getDeclaringClass过滤自己，这样可以降低开销，但对该类中的其它方法可能产生影响，如果以后有影响则需要改为名字判断
         return STACK_WALKER.walk(stackFrameStream -> stackFrameStream
-                        .filter(stackFrame -> stackFrame.getDeclaringClass() != ThreadUtils.class)
+                        .filter(stackFrame -> stackFrame.getDeclaringClass() != cn.wjybxx.base.ThreadUtils.class)
                         .filter(filter)
                         .findFirst()
                         .map(Object::toString))

@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.config;
 
-import cn.wjybxx.common.CollectionUtils;
+import cn.wjybxx.base.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;

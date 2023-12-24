@@ -16,9 +16,9 @@
 
 package cn.wjybxx.common.eventbus;
 
-import cn.wjybxx.common.CollectionUtils;
-import cn.wjybxx.common.pool.DefaultObjectPool;
-import cn.wjybxx.common.pool.ObjectPool;
+import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.pool.DefaultObjectPool;
+import cn.wjybxx.base.pool.ObjectPool;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;

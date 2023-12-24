@@ -16,9 +16,9 @@
 
 package cn.wjybxx.common.codec;
 
-import cn.wjybxx.common.EnumLite;
-import cn.wjybxx.common.EnumLiteMap;
-import cn.wjybxx.common.EnumUtils;
+import cn.wjybxx.base.EnumLite;
+import cn.wjybxx.base.EnumLiteMap;
+import cn.wjybxx.base.EnumUtils;
 import cn.wjybxx.common.codec.binary.BinaryObjectReader;
 import cn.wjybxx.common.codec.binary.BinaryObjectWriter;
 import cn.wjybxx.common.codec.binary.BinarySerializable;

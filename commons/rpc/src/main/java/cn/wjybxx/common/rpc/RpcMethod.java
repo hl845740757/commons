@@ -17,7 +17,7 @@
 package cn.wjybxx.common.rpc;
 
 
-import cn.wjybxx.common.annotation.StableName;
+import cn.wjybxx.base.annotation.StableName;
 import cn.wjybxx.common.codec.TypeMeta;
 
 import java.lang.annotation.ElementType;

@@ -15,7 +15,7 @@
  */
 package cn.wjybxx.common.btree;
 
-import cn.wjybxx.common.collection.SmallArrayList;
+import cn.wjybxx.base.collection.SmallArrayList;
 
 import java.util.List;
 import java.util.Objects;

@@ -1,6 +1,6 @@
 package cn.wjybxx.common.temp;
 
-import cn.wjybxx.common.CollectionUtils;
+import cn.wjybxx.base.CollectionUtils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;

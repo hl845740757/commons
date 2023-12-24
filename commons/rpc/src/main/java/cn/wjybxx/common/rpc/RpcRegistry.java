@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.rpc;
 
-import cn.wjybxx.common.annotation.StableName;
+import cn.wjybxx.base.annotation.StableName;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 import javax.annotation.Nonnull;

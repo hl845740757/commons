@@ -16,8 +16,7 @@
 
 package cn.wjybxx.common.tools.protobuf;
 
-import cn.wjybxx.common.CollectionUtils;
-import cn.wjybxx.common.ObjectUtils;
+import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.common.tools.util.Line;
 import cn.wjybxx.common.tools.util.LineIterator;
 import cn.wjybxx.common.tools.util.Utils;

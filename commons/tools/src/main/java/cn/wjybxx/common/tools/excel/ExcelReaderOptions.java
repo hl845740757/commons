@@ -17,7 +17,7 @@
 package cn.wjybxx.common.tools.excel;
 
 import cn.wjybxx.common.FunctionUtils;
-import cn.wjybxx.common.ObjectUtils;
+import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.common.config.DefaultValueParser;
 
 import javax.annotation.Nonnull;

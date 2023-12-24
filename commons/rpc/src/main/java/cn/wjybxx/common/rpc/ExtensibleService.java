@@ -16,7 +16,7 @@
 package cn.wjybxx.common.rpc;
 
 
-import cn.wjybxx.common.ExtensibleObject;
+import cn.wjybxx.base.ExtensibleObject;
 
 import javax.annotation.Nonnull;
 import java.util.Map;

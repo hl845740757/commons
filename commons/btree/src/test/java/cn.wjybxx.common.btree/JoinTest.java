@@ -18,7 +18,7 @@ package cn.wjybxx.common.btree;
 import cn.wjybxx.common.btree.branch.Join;
 import cn.wjybxx.common.btree.branch.JoinPolicy;
 import cn.wjybxx.common.btree.branch.join.*;
-import cn.wjybxx.common.ex.InfiniteLoopException;
+import cn.wjybxx.base.ex.InfiniteLoopException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

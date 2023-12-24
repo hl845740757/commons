@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.codec;
 
-import cn.wjybxx.common.OptionalBool;
+import cn.wjybxx.base.OptionalBool;
 import cn.wjybxx.common.codec.binary.BinaryConverter;
 import cn.wjybxx.common.codec.codecs.MapCodec;
 import cn.wjybxx.dson.DsonReaderSettings;

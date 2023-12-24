@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.rpc;
 
-import cn.wjybxx.common.annotation.StableName;
+import cn.wjybxx.base.annotation.StableName;
 
 /**
  * rpc上下文基础接口。

@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common;
 
-import cn.wjybxx.common.annotation.AutoFields;
+import cn.wjybxx.base.annotation.AutoFields;
 import cn.wjybxx.common.eventbus.DefaultEventBus;
 import cn.wjybxx.common.eventbus.Subscribe;
 import org.junit.jupiter.api.Assertions;

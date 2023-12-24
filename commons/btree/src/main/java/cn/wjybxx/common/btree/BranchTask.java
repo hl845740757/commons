@@ -15,8 +15,8 @@
  */
 package cn.wjybxx.common.btree;
 
-import cn.wjybxx.common.CollectionUtils;
-import cn.wjybxx.common.annotation.VisibleForTesting;
+import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.annotation.VisibleForTesting;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;

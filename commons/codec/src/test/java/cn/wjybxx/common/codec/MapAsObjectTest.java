@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.codec;
 
-import cn.wjybxx.common.OptionalBool;
+import cn.wjybxx.base.OptionalBool;
 import cn.wjybxx.common.codec.document.DefaultDocumentConverter;
 import cn.wjybxx.common.codec.document.DocumentConverter;
 import org.junit.jupiter.api.Assertions;

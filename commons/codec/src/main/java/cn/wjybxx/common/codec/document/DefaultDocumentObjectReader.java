@@ -17,8 +17,8 @@
 package cn.wjybxx.common.codec.document;
 
 import cn.wjybxx.common.codec.TypeArgInfo;
-import cn.wjybxx.common.pool.DefaultObjectPool;
-import cn.wjybxx.common.pool.ObjectPool;
+import cn.wjybxx.base.pool.DefaultObjectPool;
+import cn.wjybxx.base.pool.ObjectPool;
 import cn.wjybxx.dson.*;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 

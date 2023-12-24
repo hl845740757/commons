@@ -17,7 +17,7 @@ package cn.wjybxx.common.btree;
 
 import cn.wjybxx.common.btree.decorator.*;
 import cn.wjybxx.common.btree.leaf.Failure;
-import cn.wjybxx.common.ex.InfiniteLoopException;
+import cn.wjybxx.base.ex.InfiniteLoopException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;

@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.tools.util;
 
-import cn.wjybxx.common.MathCommon;
+import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.common.concurrent.DefaultThreadFactory;
 
 import java.util.List;

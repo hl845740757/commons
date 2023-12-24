@@ -17,7 +17,7 @@
 package cn.wjybxx.common.eventbus;
 
 
-import cn.wjybxx.common.annotation.StableName;
+import cn.wjybxx.base.annotation.StableName;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

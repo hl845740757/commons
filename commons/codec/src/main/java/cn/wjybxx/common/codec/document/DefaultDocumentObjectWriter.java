@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.codec.document;
 
-import cn.wjybxx.common.EnumLite;
+import cn.wjybxx.base.EnumLite;
 import cn.wjybxx.common.codec.*;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.io.DsonChunk;

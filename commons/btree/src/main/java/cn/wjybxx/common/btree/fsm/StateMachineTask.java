@@ -15,16 +15,16 @@
  */
 package cn.wjybxx.common.btree.fsm;
 
-import cn.wjybxx.common.ObjectUtils;
+import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.common.btree.Decorator;
 import cn.wjybxx.common.btree.Status;
 import cn.wjybxx.common.btree.Task;
 import cn.wjybxx.common.btree.branch.Join;
 import cn.wjybxx.common.codec.binary.BinarySerializable;
 import cn.wjybxx.common.codec.document.DocumentSerializable;
-import cn.wjybxx.common.collection.BoundedArrayDeque;
-import cn.wjybxx.common.collection.DequeOverflowBehavior;
-import cn.wjybxx.common.collection.EmptyDequeue;
+import cn.wjybxx.base.collection.BoundedArrayDeque;
+import cn.wjybxx.base.collection.DequeOverflowBehavior;
+import cn.wjybxx.base.collection.EmptyDequeue;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

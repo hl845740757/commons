@@ -30,7 +30,7 @@
 
         <dependency>
             <groupId>cn.wjybxx.commons</groupId>
-            <artifactId>apt-commons</artifactId>
+            <artifactId>commons-apt</artifactId>
             <version>${apt.version}</version>
             <optional>true</optional>
         </dependency>

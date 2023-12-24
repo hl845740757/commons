@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.tools.excel.gen;
 
-import cn.wjybxx.common.CollectionUtils;
+import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.common.tools.util.GenClassUtils;
 import com.squareup.javapoet.*;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;

@@ -17,15 +17,15 @@
 package cn.wjybxx.common.async;
 
 import cn.wjybxx.common.NegativeChecker;
-import cn.wjybxx.common.ThreadUtils;
-import cn.wjybxx.common.collection.DefaultIndexedPriorityQueue;
-import cn.wjybxx.common.collection.IndexedElement;
-import cn.wjybxx.common.collection.IndexedPriorityQueue;
+import cn.wjybxx.base.ThreadUtils;
+import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
+import cn.wjybxx.base.collection.IndexedElement;
+import cn.wjybxx.base.collection.IndexedPriorityQueue;
 import cn.wjybxx.common.concurrent.FutureUtils;
 import cn.wjybxx.common.concurrent.TimeSharingContext;
 import cn.wjybxx.common.concurrent.TimeSharingTask;
 import cn.wjybxx.common.concurrent.TimeSharingTimeoutException;
-import cn.wjybxx.common.time.TimeProvider;
+import cn.wjybxx.base.time.TimeProvider;
 
 import javax.annotation.Nonnull;
 import java.util.Comparator;

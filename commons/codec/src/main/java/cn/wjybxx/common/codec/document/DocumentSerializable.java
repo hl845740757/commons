@@ -16,8 +16,8 @@
 
 package cn.wjybxx.common.codec.document;
 
-import cn.wjybxx.common.EnumLite;
-import cn.wjybxx.common.EnumUtils;
+import cn.wjybxx.base.EnumLite;
+import cn.wjybxx.base.EnumUtils;
 import cn.wjybxx.common.codec.ClassImpl;
 import cn.wjybxx.common.codec.FieldImpl;
 

@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.concurrent;
 
-import cn.wjybxx.common.ex.NoLogRequiredException;
+import cn.wjybxx.base.ex.NoLogRequiredException;
 
 import java.util.concurrent.TimeoutException;
 

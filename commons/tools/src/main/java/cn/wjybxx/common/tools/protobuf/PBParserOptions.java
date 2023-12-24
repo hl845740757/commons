@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.tools.protobuf;
 
-import cn.wjybxx.common.ObjectUtils;
+import cn.wjybxx.base.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;

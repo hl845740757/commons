@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.codec.codecs;
 
-import cn.wjybxx.common.EnumLite;
+import cn.wjybxx.base.EnumLite;
 import cn.wjybxx.common.codec.PojoCodecImpl;
 import cn.wjybxx.common.codec.TypeArgInfo;
 import cn.wjybxx.common.codec.binary.BinaryObjectReader;

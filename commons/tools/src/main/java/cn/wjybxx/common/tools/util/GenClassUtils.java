@@ -16,11 +16,11 @@
 
 package cn.wjybxx.common.tools.util;
 
-import cn.wjybxx.common.CollectionUtils;
-import cn.wjybxx.common.EnumLite;
-import cn.wjybxx.common.EnumLiteMap;
-import cn.wjybxx.common.EnumUtils;
-import cn.wjybxx.common.annotation.SourceFileRef;
+import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.EnumLite;
+import cn.wjybxx.base.EnumLiteMap;
+import cn.wjybxx.base.EnumUtils;
+import cn.wjybxx.base.annotation.SourceFileRef;
 import cn.wjybxx.common.codec.binary.BinarySerializable;
 import com.squareup.javapoet.*;
 

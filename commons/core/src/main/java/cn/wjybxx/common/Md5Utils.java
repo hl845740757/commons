@@ -16,6 +16,7 @@
 
 package cn.wjybxx.common;
 
+import cn.wjybxx.base.CaseMode;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 

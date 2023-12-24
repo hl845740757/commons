@@ -17,7 +17,7 @@
 package cn.wjybxx.common.tools.excel;
 
 import cn.wjybxx.common.CloseableUtils;
-import cn.wjybxx.common.CollectionUtils;
+import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.common.config.Sheet;
 import com.monitorjbl.xlsx.StreamingReader;
 import org.apache.commons.lang3.StringUtils;

@@ -17,7 +17,7 @@
 package cn.wjybxx.common.concurrent;
 
 import cn.wjybxx.common.FunctionUtils;
-import cn.wjybxx.common.ThreadUtils;
+import cn.wjybxx.base.ThreadUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

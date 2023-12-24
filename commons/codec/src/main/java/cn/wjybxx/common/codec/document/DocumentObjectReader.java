@@ -16,8 +16,8 @@
 
 package cn.wjybxx.common.codec.document;
 
-import cn.wjybxx.common.CollectionUtils;
-import cn.wjybxx.common.annotation.StableName;
+import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.annotation.StableName;
 import cn.wjybxx.common.codec.ConvertOptions;
 import cn.wjybxx.common.codec.TypeArgInfo;
 import cn.wjybxx.dson.*;

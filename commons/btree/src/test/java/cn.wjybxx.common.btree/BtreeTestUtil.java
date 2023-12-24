@@ -17,7 +17,7 @@ package cn.wjybxx.common.btree;
 
 import cn.wjybxx.common.btree.decorator.Inverter;
 import cn.wjybxx.common.btree.leaf.WaitFrame;
-import cn.wjybxx.common.ex.InfiniteLoopException;
+import cn.wjybxx.base.ex.InfiniteLoopException;
 
 import java.util.Random;
 import java.util.random.RandomGenerator;

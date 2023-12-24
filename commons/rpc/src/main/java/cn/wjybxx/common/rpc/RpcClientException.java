@@ -17,7 +17,7 @@
 package cn.wjybxx.common.rpc;
 
 import cn.wjybxx.common.concurrent.FutureUtils;
-import cn.wjybxx.common.ex.ErrorCodeException;
+import cn.wjybxx.base.ex.ErrorCodeException;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;

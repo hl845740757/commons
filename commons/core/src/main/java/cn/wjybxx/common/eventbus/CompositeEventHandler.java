@@ -16,8 +16,8 @@
 
 package cn.wjybxx.common.eventbus;
 
-import cn.wjybxx.common.CollectionUtils;
-import cn.wjybxx.common.collection.DelayedCompressList;
+import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.collection.DelayedCompressList;
 
 import javax.annotation.Nonnull;
 

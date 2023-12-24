@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.rpc;
 
-import cn.wjybxx.common.ex.ErrorCodeException;
+import cn.wjybxx.base.ex.ErrorCodeException;
 
 /**
  * 0~100留给底层扩展，其它区间段，可以自定义。

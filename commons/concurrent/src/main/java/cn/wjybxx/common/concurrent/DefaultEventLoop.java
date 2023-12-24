@@ -16,10 +16,10 @@
 
 package cn.wjybxx.common.concurrent;
 
-import cn.wjybxx.common.MathCommon;
-import cn.wjybxx.common.annotation.Beta;
-import cn.wjybxx.common.collection.DefaultIndexedPriorityQueue;
-import cn.wjybxx.common.collection.IndexedPriorityQueue;
+import cn.wjybxx.base.MathCommon;
+import cn.wjybxx.base.annotation.Beta;
+import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
+import cn.wjybxx.base.collection.IndexedPriorityQueue;
 import cn.wjybxx.common.concurrent.ext.MpscSequenceBarrier;
 import com.lmax.disruptor.*;
 import org.jctools.queues.IndexedQueueSizeUtil;
