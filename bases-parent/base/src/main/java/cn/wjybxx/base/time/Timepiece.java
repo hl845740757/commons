@@ -25,7 +25,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * date 2023/4/4
  */
 @NotThreadSafe
-public interface Timepiece extends CachedTimeProvider {
+public interface Timepiece extends TimeProvider {
 
     @Override
     long getTime();
@@ -33,14 +33,14 @@ public interface Timepiece extends CachedTimeProvider {
     /**
      * （这其实只是个工具方法，提供在底层，是因为使用的较为普遍）
      *
-     * @return 当前帧和前一帧之间的时间跨度（毫秒）
+     * @return 当前帧和前一帧之间的时间跨度
      */
     long getDeltaTime();
 
     /**
      * 累加时间
      *
-     * @param deltaTime 时间增量（毫秒），如果该值小于0，则会被修正为0
+     * @param deltaTime 时间增量，如果该值小于0，则会被修正为0
      */
     void update(long deltaTime);
 
@@ -49,21 +49,18 @@ public interface Timepiece extends CachedTimeProvider {
      *
      * @param curTime 当前时间
      */
-    @Override
     void setTime(long curTime);
 
     /**
      * 在不修改当前时间戳的情况下修改deltaTime
      * （仅仅用在补偿的时候，慎用）
-     *
-     * @param deltaTime 必须大于等于0，且不超过累积时间
      */
     void setDeltaTime(long deltaTime);
 
     /**
      * 重新启动计时器
      *
-     * @param curTime   不可小于0
+     * @param curTime   当前时间
      * @param deltaTime 时间间隔
      */
     void restart(long curTime, long deltaTime);

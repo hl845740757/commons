@@ -26,9 +26,9 @@ import java.util.Map;
  * date 2023/4/1
  */
 @FunctionalInterface
-public interface ResetPolicy<V> {
+public interface ResetPolicy<T> {
 
-    void reset(V object);
+    void reset(T object);
 
     ResetPolicy<? super Collection<?>> CLEAR = Collection::clear;
     ResetPolicy<? super Map<?, ?>> CLEAR_MAP = Map::clear;

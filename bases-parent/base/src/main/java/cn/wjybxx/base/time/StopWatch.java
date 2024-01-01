@@ -78,28 +78,39 @@ public class StopWatch {
         this.name = Objects.requireNonNull(name, "name");
     }
 
+    /** 创建一个停表 */
     public static StopWatch create(String name) {
         return new StopWatch(name);
     }
 
+    /** 创建一个已启动的停表 */
     public static StopWatch createStarted(String name) {
         final StopWatch sw = new StopWatch(name);
         sw.start();
         return sw;
     }
 
+    /** 停表的名字 */
+    public String getName() {
+        return name;
+    }
+
+    /** 停表是否已启动，且尚未停止 */
     public boolean isStarted() {
         return state == State.RUNNING || state == State.SUSPENDED;
     }
 
+    /** 停表是否处于运行状态 */
     public boolean isRunning() {
         return state == State.RUNNING;
     }
 
+    /** 停表是否处于挂起/暂停状态 */
     public boolean isSuspended() {
         return state == State.SUSPENDED;
     }
 
+    /** 停表是否已停止 */
     public boolean isStopped() {
         return state == State.STOPPED;
     }
@@ -109,10 +120,8 @@ public class StopWatch {
     /**
      * 开始计时。
      * 重复调用start之前，必须调用{@link #reset()}
-     *
-     * @return this
      */
-    public StopWatch start() {
+    public void start() {
         if (isStarted()) {
             throw new IllegalStateException("Stopwatch is running. ");
         }
@@ -120,7 +129,6 @@ public class StopWatch {
         startTimeNanos = System.nanoTime();
         elapsedNanos = stepElapsedNanos = 0;
         itemList.clear();
-        return this;
     }
 
     /**
@@ -183,6 +191,7 @@ public class StopWatch {
     }
 
     /**
+     * 重置停表
      * 注意：为了安全起见，请要么在代码的开始重置，要么在finally块中重置。
      */
     public void reset() {
@@ -212,6 +221,7 @@ public class StopWatch {
         return Duration.ofNanos(elapsedNanos());
     }
 
+    /** 获取开始到现在消耗的总时间 */
     public long elapsed(TimeUnit desiredUnit) {
         return desiredUnit.convert(elapsedNanos(), TimeUnit.NANOSECONDS);
     }
@@ -221,6 +231,7 @@ public class StopWatch {
         return Duration.ofNanos(stepElapsedNanos());
     }
 
+    /** 获取当前步骤已消耗的时间 */
     public long stepElapsed(TimeUnit desiredUnit) {
         return desiredUnit.convert(stepElapsedNanos(), TimeUnit.NANOSECONDS);
     }
@@ -291,7 +302,9 @@ public class StopWatch {
     private String toString(List<Item> itemList) {
         StringBuilder sb = new StringBuilder(32);
         // 总耗时
-        sb.append("StopWatch[").append(name).append('=').append(elapsedNanos / TimeUtils.NANOS_PER_MILLI).append("ms]");
+        sb.append("StopWatch[").append(name).append('=')
+                .append(elapsedNanos / TimeUtils.NANOS_PER_MILLI)
+                .append("ms]");
         // 每个步骤耗时
         sb.append('[');
         for (int i = 0; i < itemList.size(); i++) {
@@ -299,7 +312,9 @@ public class StopWatch {
             if (i > 0) {
                 sb.append(',');
             }
-            sb.append(item.stepName).append('=').append(item.elapsedNanos / TimeUtils.NANOS_PER_MILLI).append("ms");
+            sb.append(item.stepName).append('=')
+                    .append(item.elapsedNanos / TimeUtils.NANOS_PER_MILLI)
+                    .append("ms");
         }
         sb.append(']');
         return sb.toString();
@@ -332,10 +347,9 @@ public class StopWatch {
             if (timeCompareResult != 0) {
                 // 时间逆序
                 return -1 * timeCompareResult;
-            } else {
-                // 字母自然序
-                return stepName.compareTo(that.stepName);
             }
+            // 字母自然序
+            return stepName.compareTo(that.stepName);
         }
     }
 

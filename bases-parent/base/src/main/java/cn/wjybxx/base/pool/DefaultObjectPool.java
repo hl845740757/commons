@@ -38,11 +38,11 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
 
     /** 默认不能无限缓存 */
     private static final int DEFAULT_MAX_CAPACITY = 1024;
-    private final ArrayList<T> freeObjects;
-    private final int maxCapacity;
 
     private final Supplier<? extends T> factory;
     private final ResetPolicy<? super T> resetPolicy;
+    private final ArrayList<T> freeObjects;
+    private final int maxCapacity;
 
     public DefaultObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy) {
         this(factory, resetPolicy, 16, DEFAULT_MAX_CAPACITY);
@@ -80,11 +80,9 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
         if (object == null) {
             throw new IllegalArgumentException("object cannot be null.");
         }
-
         // 先调用reset，避免reset出现异常导致添加脏对象到缓存池中 -- 断言是否在池中还是有较大开销
         resetPolicy.reset(object);
 //        assert !CollectionUtils.containsRef(freeObjects, e);
-
         if (freeObjects.size() < maxCapacity) {
             freeObjects.add(object);
         }
@@ -101,25 +99,25 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
         final ResetPolicy<? super T> resetPolicy = this.resetPolicy;
         if (objects instanceof ArrayList<? extends T> arrayList) {
             for (int i = 0, n = arrayList.size(); i < n; i++) {
-                T e = arrayList.get(i);
-                if (null == e) {
+                T obj = arrayList.get(i);
+                if (null == obj) {
                     continue;
                 }
-                resetPolicy.reset(e);
-//                assert !CollectionUtils.containsRef(freeObjects, e);
+                resetPolicy.reset(obj);
+//                assert !CollectionUtils.containsRef(freeObjects, obj);
                 if (freeObjects.size() < maxCapacity) {
-                    freeObjects.add(e);
+                    freeObjects.add(obj);
                 }
             }
         } else {
-            for (T e : objects) {
-                if (null == e) {
+            for (T obj : objects) {
+                if (null == obj) {
                     continue;
                 }
-                resetPolicy.reset(e);
-//                assert !CollectionUtils.containsRef(freeObjects, e);
+                resetPolicy.reset(obj);
+//                assert !CollectionUtils.containsRef(freeObjects, obj);
                 if (freeObjects.size() < maxCapacity) {
-                    freeObjects.add(e);
+                    freeObjects.add(obj);
                 }
             }
         }

@@ -21,7 +21,8 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * 相比与使用特定对象作为缓存，使用该缓存池可避免递归调用带来的bug。
+ * 只缓存单个对象对象池
+ * 相比直接使用共享对象，使用该缓存池可避免递归调用带来的bug
  *
  * @author wjybxx
  * date 2023/4/1
@@ -64,13 +65,13 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
         if (objects == null) {
             throw new IllegalArgumentException("objects cannot be null.");
         }
-        for (T v : objects) {
-            if (null == v) {
+        for (T obj : objects) {
+            if (null == obj) {
                 continue;
             }
-            assert v != this.value;
-            resetPolicy.reset(v);
-            this.value = v;
+            assert obj != this.value;
+            resetPolicy.reset(obj);
+            this.value = obj;
         }
     }
 

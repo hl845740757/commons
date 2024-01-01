@@ -117,7 +117,7 @@ public class TimeProviders {
         private long time;
 
         private UnsharableCachedTimeProvider(long time) {
-            setTime(time);
+            this.time = time;
         }
 
         public void setTime(long curTime) {
