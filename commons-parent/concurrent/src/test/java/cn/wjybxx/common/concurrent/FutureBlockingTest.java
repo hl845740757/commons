@@ -16,7 +16,6 @@
 
 package cn.wjybxx.common.concurrent;
 
-import cn.wjybxx.common.FunctionUtils;
 import cn.wjybxx.base.ThreadUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +43,7 @@ public class FutureBlockingTest {
 
     @Test
     void timedWait() throws InterruptedException {
-        consumer.execute(FunctionUtils.emptyRunnable()); // 唤醒线程
+        consumer.execute(() -> {}); // 唤醒线程
 
         ThreadUtils.sleepQuietly(1000);
         consumer.shutdown();

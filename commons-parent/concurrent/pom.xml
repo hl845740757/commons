@@ -15,6 +15,18 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>cn.wjybxx.commons</groupId>
+            <artifactId>base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons-lang3.version}</version>
+        </dependency>
+
+
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -23,9 +35,10 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>cn.wjybxx.commons</groupId>
-            <artifactId>core</artifactId>
-            <version>${project.version}</version>
+            <groupId>it.unimi.dsi</groupId>
+            <artifactId>fastutil-core</artifactId>
+            <version>${fastutil.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
