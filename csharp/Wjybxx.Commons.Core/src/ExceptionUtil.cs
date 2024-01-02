@@ -54,11 +54,22 @@ public static class ExceptionUtil
 
     #region factory
 
+    /// <summary>
+    /// 创建一个索引溢出异常
+    /// </summary>
+    /// <param name="index">索引值</param>
+    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static IndexOutOfRangeException IndexOutOfRange(int index) {
         return new IndexOutOfRangeException("Index out of range: " + index);
     }
 
+    /// <summary>
+    /// 创建一个索引溢出异常
+    /// </summary>
+    /// <param name="index">创建一个索引溢出异常</param>
+    /// <param name="length">数组的长度</param>
+    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static IndexOutOfRangeException IndexOutOfRange(int index, int length) {
         return new IndexOutOfRangeException($"Index out of range: {index}, {length}");

@@ -8,7 +8,7 @@
 
         <AssemblyName>Wjybxx.Commons.Core</AssemblyName>
         <PackageId>Wjybxx.Commons.Core</PackageId>
-        <PackageVersion>1.0.3</PackageVersion>
+        <PackageVersion>1.0.4</PackageVersion>
 
         <Title>Wjybxx.Commons.Core</Title>
         <Description>基础库之核心包，包含LinkedDictionary等集合实现</Description>

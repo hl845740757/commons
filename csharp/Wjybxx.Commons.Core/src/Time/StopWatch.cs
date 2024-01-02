@@ -163,11 +163,12 @@ public sealed class StopWatch
         }
     }
 
-    /**
-    /// 如果希望停止计时，则调用该方法。
+    /// <summary>
+    /// 停止计时。
     /// 停止计时后，{@link #elapsed()}将获得一个稳定的时间值。
-     */
-    public void Stop() {
+    /// </summary>
+    /// <param name="stepName">最后一步的名字，为null则不记录</param>
+    public void Stop(string? stepName = null) {
         if (!IsStarted) {
             return;
         }
@@ -175,6 +176,10 @@ public sealed class StopWatch
             long delta = ObjectUtil.SystemTicks() - _startTimeNanos;
             _elapsedNanos += delta;
             _stepElapsedNanos += delta;
+            if (stepName != null) {
+                _itemList.Add(new Item(stepName, _stepElapsedNanos));
+                _stepElapsedNanos = 0;
+            }
         }
         _state = State.Stopped;
     }
@@ -310,7 +315,7 @@ public sealed class StopWatch
         Stopped = 3
     }
 
-    private class Item : IComparable<Item>
+    private readonly struct Item : IComparable<Item>
     {
         internal readonly string stepName;
         internal readonly long elapsedNanos;

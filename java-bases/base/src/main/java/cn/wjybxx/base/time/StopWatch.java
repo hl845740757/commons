@@ -174,11 +174,18 @@ public class StopWatch {
         }
     }
 
-    /**
-     * 如果希望停止计时，则调用该方法。
-     * 停止计时后，{@link #elapsed()}将获得一个稳定的时间值。
-     */
+    /** 停止计时 */
     public void stop() {
+        stop(null);
+    }
+
+    /**
+     * 停止计时。
+     * 停止计时后，{@link #elapsed()}将获得一个稳定的时间值。
+     *
+     * @param stepName 最后一步的名字，如果为null则不记录
+     */
+    public void stop(String stepName) {
         if (!isStarted()) {
             return;
         }
@@ -186,6 +193,10 @@ public class StopWatch {
             long delta = System.nanoTime() - startTimeNanos;
             elapsedNanos += delta;
             stepElapsedNanos += delta;
+            if (stepName != null) {
+                itemList.add(new Item(stepName, stepElapsedNanos));
+                stepElapsedNanos = 0;
+            }
         }
         state = State.STOPPED;
     }
@@ -268,7 +279,7 @@ public class StopWatch {
      * (获得了一个规律，也失去了一个规律，可能并不如未排序的log看着舒服)
      */
     public String getSortedLog() {
-        if (itemList.size() > 0) {
+        if (!itemList.isEmpty()) {
             // 排序开销还算比较小
             ArrayList<Item> copiedItems = new ArrayList<>(itemList);
             copiedItems.sort(null);
