@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <ImplicitUsings>false</ImplicitUsings>
+        <Nullable>annotations</Nullable>
+        <LangVersion>10</LangVersion>
+        <RootNamespace>Wjybxx.Commons</RootNamespace>
+
+        <AssemblyName>Wjybxx.Commons.Concurrent</AssemblyName>
+        <PackageId>Wjybxx.Commons.Concurrent</PackageId>
+        <PackageVersion>1.0.0-alpha</PackageVersion>
+
+        <Title>Wjybxx.Commons.Concurrent</Title>
+        <Description>并发基础库；提供事件循环和基于事件循环的await语法</Description>
+        <PackageTags>wjybxx;concurrent;eventloop</PackageTags>
+
+        <Authors>wjybxx(845740757@qq.com)</Authors>
+        <Copyright>Copyright 2023 wjybxx(845740757@qq.com)</Copyright>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/hl845740757/csharp-commons</PackageProjectUrl>
+        <PackageReleaseNotes>https://github.com/hl845740757/csharp-commons/releases</PackageReleaseNotes>
+
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <NeutralLanguage>zh-Hans</NeutralLanguage>
+
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <EmbedAllSources>true</EmbedAllSources>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <TargetFrameworks>net6.0;net7.0;</TargetFrameworks>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+</Project>

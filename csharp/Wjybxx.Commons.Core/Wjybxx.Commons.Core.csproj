@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <ImplicitUsings>false</ImplicitUsings>
+        <Nullable>annotations</Nullable>
+        <LangVersion>10</LangVersion>
+        <RootNamespace>Wjybxx.Commons</RootNamespace>
+
+        <AssemblyName>Wjybxx.Commons.Core</AssemblyName>
+        <PackageId>Wjybxx.Commons.Core</PackageId>
+        <PackageVersion>1.0.3</PackageVersion>
+
+        <Title>Wjybxx.Commons.Core</Title>
+        <Description>基础库之核心包，包含LinkedDictionary等集合实现</Description>
+        <PackageTags>wjybxx;collections;LinkedDictionary;</PackageTags>
+
+        <Authors>wjybxx(845740757@qq.com)</Authors>
+        <Owners>wjybxx(845740757@qq.com)</Owners>
+        <Copyright>Copyright 2023 wjybxx(845740757@qq.com)</Copyright>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/hl845740757/csharp-commons</PackageProjectUrl>
+        <PackageReleaseNotes>https://github.com/hl845740757/csharp-commons/releases</PackageReleaseNotes>
+
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <NeutralLanguage>zh-Hans</NeutralLanguage>
+
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <EmbedAllSources>true</EmbedAllSources>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <TargetFrameworks>net6.0;net7.0;</TargetFrameworks>		
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+</Project>
