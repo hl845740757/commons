@@ -17,6 +17,7 @@
         <module>agent</module>
         <module>base</module>
         <module>apt-base</module>
+		<module>concurrent</module>
     </modules>
 
     <!-- 证书 -->
@@ -55,7 +56,7 @@
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
-        <!-- 父模块不发布，子模块需要变更为false -->
+        <!-- 父模块不发布，子模块需要变更为false，不好使... -->
         <maven.deploy.skip>true</maven.deploy.skip>
 
         <!-- 基础依赖-->
@@ -66,7 +67,18 @@
 
         <!-- 子模块依赖 -->
         <javapoet.version>1.13.0</javapoet.version>
-        <guava.version>33.0.0-jre</guava.version>
+        <fastutil.version>8.5.12</fastutil.version>
+        
+		<commons-lang3.version>3.14.0</commons-lang3.version>
+        <commons-io.version>2.15.1</commons-io.version>
+        <commons-codec.version>1.16.0</commons-codec.version>		
+		
+		<guava.version>33.0.0-jre</guava.version>
+        <pb.version>3.25.1</pb.version>
+		
+        <bson.version>4.10.2</bson.version>		
+        <disruptor.version>3.4.4</disruptor.version>
+        <jctools.version>4.0.1</jctools.version>		
     </properties>
 
     <!-- 基础依赖/全局依赖 -->

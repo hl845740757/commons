@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>cn.wjybxx.commons</groupId>
-        <artifactId>commons-parent</artifactId>
+        <artifactId>bases-parent</artifactId>
         <version>${revision}</version>
     </parent>
     <artifactId>concurrent</artifactId>
