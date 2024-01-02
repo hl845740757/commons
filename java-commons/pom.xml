@@ -15,7 +15,6 @@
 
     <modules>
         <module>core</module>
-        <module>concurrent</module>
         <module>mongo</module>
     </modules>
 
@@ -48,6 +47,42 @@
         </developer>
     </developers>
 
+    <!-- 基础依赖/全局依赖 -->
+    <properties>
+        <revision>1.0.rc1</revision>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
+        <!-- 父模块不发布，子模块需要变更为false -->
+        <maven.deploy.skip>true</maven.deploy.skip>
+
+        <!-- 基础依赖-->
+        <slf4j.version>2.0.9</slf4j.version>
+        <jsr305.version>3.0.2</jsr305.version>
+        <logback.version>1.4.14</logback.version>
+        <junit.version>5.10.1</junit.version>
+
+        <!-- 子模块依赖 -->
+        <base.version>1.0.rc1</base.version>
+        <dson.version>1.4.rc1</dson.version>
+
+        <fastutil.version>8.5.12</fastutil.version>
+        <commons-lang3.version>3.14.0</commons-lang3.version>
+        <commons-io.version>2.15.1</commons-io.version>
+        <commons-codec.version>1.16.0</commons-codec.version>
+
+        <guava.version>33.0.0-jre</guava.version>
+        <guice.version>7.0.0</guice.version>
+        <pb.version>3.25.1</pb.version>
+
+        <bson.version>4.10.2</bson.version>
+        <javapoet.version>1.13.0</javapoet.version>
+        <disruptor.version>3.4.4</disruptor.version>
+        <jctools.version>4.0.1</jctools.version>
+    </properties>
+
     <dependencies>
         <!-- https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305 -->
         <dependency>
@@ -79,41 +114,6 @@
         </dependency>
     </dependencies>
 
-    <!-- 基础依赖/全局依赖 -->
-    <properties>
-        <revision>1.0.rc1</revision>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
-        <!-- 父模块不发布，子模块需要变更为false -->
-        <maven.deploy.skip>true</maven.deploy.skip>
-
-        <!-- 基础依赖-->
-        <slf4j.version>2.0.9</slf4j.version>
-        <jsr305.version>3.0.2</jsr305.version>
-        <logback.version>1.4.14</logback.version>
-        <junit.version>5.10.1</junit.version>
-
-        <!-- 子模块依赖 -->
-        <base.version>1.0.rc1</base.version>
-        <dson.version>1.2.rc4</dson.version>
-
-        <fastutil.version>8.5.12</fastutil.version>
-        <commons-lang3.version>3.14.0</commons-lang3.version>
-        <commons-io.version>2.15.1</commons-io.version>
-        <commons-codec.version>1.16.0</commons-codec.version>
-
-        <guava.version>33.0.0-jre</guava.version>
-        <guice.version>7.0.0</guice.version>
-        <pb.version>3.25.1</pb.version>
-
-        <bson.version>4.10.2</bson.version>
-        <javapoet.version>1.13.0</javapoet.version>
-        <disruptor.version>3.4.4</disruptor.version>
-        <jctools.version>4.0.1</jctools.version>
-    </properties>
 
     <build>
         <plugins>
