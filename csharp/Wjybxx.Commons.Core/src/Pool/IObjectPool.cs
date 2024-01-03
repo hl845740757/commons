@@ -22,6 +22,7 @@ namespace Wjybxx.Commons.Pool;
 
 /// <summary>
 /// 简单对象池抽象
+/// 线程安全性取决于具体实现
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public interface IObjectPool<T> where T : class
@@ -35,6 +36,7 @@ public interface IObjectPool<T> where T : class
 
     /// <summary>
     /// 将对象放入缓存池
+    /// （为保持和Java一致，不直接命名Return）
     /// </summary>
     /// <param name="obj"></param>
     void ReturnOne(T obj);
@@ -50,17 +52,8 @@ public interface IObjectPool<T> where T : class
     }
 
     /// <summary>
-    /// 缓存池缓存对象数量上限
-    /// </summary>
-    int MaxCount { get; }
-
-    /// <summary>
-    /// 当前池中可用对象数
-    /// </summary>
-    int IdleCount { get; }
-
-    /// <summary>
-    /// 删除此池中的所有可用对象
+    /// 删除此池中的所有对象
+    /// (可空实现)
     /// </summary>
     void Clear();
 }

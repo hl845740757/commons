@@ -11,6 +11,7 @@ module wjybxx.base {
     exports cn.wjybxx.base.annotation;
     exports cn.wjybxx.base.collection;
     exports cn.wjybxx.base.ex;
+    exports cn.wjybxx.base.io;
     exports cn.wjybxx.base.pool;
     exports cn.wjybxx.base.reflect;
     exports cn.wjybxx.base.time;

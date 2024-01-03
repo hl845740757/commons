@@ -40,7 +40,7 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public T get() {
+    public T rent() {
         T result = this.value;
         if (result != null) {
             this.value = null;
@@ -73,16 +73,6 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
             resetPolicy.reset(obj);
             this.value = obj;
         }
-    }
-
-    @Override
-    public int maxCount() {
-        return 1;
-    }
-
-    @Override
-    public int idleCount() {
-        return value == null ? 0 : 1;
     }
 
     @Override

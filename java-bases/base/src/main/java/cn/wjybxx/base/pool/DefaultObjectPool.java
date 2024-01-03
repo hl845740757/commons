@@ -16,6 +16,8 @@
 
 package cn.wjybxx.base.pool;
 
+import cn.wjybxx.base.MathCommon;
+
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,7 +39,7 @@ import java.util.function.Supplier;
 public final class DefaultObjectPool<T> implements ObjectPool<T> {
 
     /** 默认不能无限缓存 */
-    private static final int DEFAULT_MAX_CAPACITY = 1024;
+    private static final int DEFAULT_POOL_SIZE = 1024;
 
     private final Supplier<? extends T> factory;
     private final ResetPolicy<? super T> resetPolicy;
@@ -45,34 +47,31 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
     private final int maxCapacity;
 
     public DefaultObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy) {
-        this(factory, resetPolicy, 16, DEFAULT_MAX_CAPACITY);
-    }
-
-    public DefaultObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy, int initialCapacity) {
-        this(factory, resetPolicy, initialCapacity, Math.max(DEFAULT_MAX_CAPACITY, initialCapacity));
+        this(factory, resetPolicy, DEFAULT_POOL_SIZE);
     }
 
     /**
-     * @param factory         对象创建工厂
-     * @param resetPolicy     重置方法
-     * @param initialCapacity 支持0 - 0表示默认不初始化
-     * @param maxCapacity     支持0 - 0表示不缓存对象
+     * @param factory     对象创建工厂
+     * @param resetPolicy 重置方法
+     * @param poolSize    缓存池大小；0表示不缓存对象
      */
-    public DefaultObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy, int initialCapacity, int maxCapacity) {
-        if (initialCapacity < 0 || initialCapacity > maxCapacity) {
-            throw new IllegalArgumentException("initialCapacity: " + initialCapacity + ", maxCapacity: " + maxCapacity);
+    public DefaultObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy, int poolSize) {
+        if (poolSize < 0) {
+            throw new IllegalArgumentException("poolSize: " + poolSize);
         }
-        this.freeObjects = new ArrayList<>(initialCapacity);
-        this.maxCapacity = maxCapacity;
         this.factory = Objects.requireNonNull(factory, "factory");
         this.resetPolicy = Objects.requireNonNull(resetPolicy, "resetPolicy");
+        this.maxCapacity = poolSize;
+        this.freeObjects = new ArrayList<>(MathCommon.clamp(poolSize, 0, 10));
     }
 
     @Override
-    public T get() {
-        // 从最后一个开始删除可避免复制
-        final ArrayList<T> freeObjects = this.freeObjects;
-        return freeObjects.size() == 0 ? factory.get() : freeObjects.remove(freeObjects.size() - 1);
+    public T rent() {
+        int size = freeObjects.size();
+        if (size > 0) {
+            return freeObjects.remove(size - 1); // 可避免拷贝
+        }
+        return factory.get();
     }
 
     @Override
@@ -121,16 +120,6 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
                 }
             }
         }
-    }
-
-    @Override
-    public int maxCount() {
-        return maxCapacity;
-    }
-
-    @Override
-    public int idleCount() {
-        return freeObjects.size();
     }
 
     @Override

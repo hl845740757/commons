@@ -19,6 +19,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Pool;
@@ -28,6 +29,7 @@ namespace Wjybxx.Commons.Pool;
 /// 相比直接使用共享对象，使用该缓存池可避免递归调用带来的bug
 /// </summary>
 /// <typeparam name="T"></typeparam>
+[NotThreadSafe]
 public class SingleObjectPool<T> : IObjectPool<T> where T : class
 {
     private readonly Func<T> _factory;
@@ -77,10 +79,6 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
             this._value = obj;
         }
     }
-
-    public int MaxCount => 1;
-
-    public int IdleCount => _value == null ? 0 : 1;
 
     public void Clear() {
         _value = null;

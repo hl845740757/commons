@@ -22,18 +22,25 @@ import java.util.function.Supplier;
 
 /**
  * 简单对象池
- * (其实acquire和release是比较合适的命名; get和return通常也是一对，get更容易实现supplier接口)
+ * (其实acquire和release是比较合适的命名; rent和return通常也是一对)
  *
  * @author wjybxx
  * date 2023/4/1
  */
 public interface ObjectPool<T> extends Supplier<T> {
 
+    /** 该接口仅用于适配，一般业务不建议使用 */
+    @Override
+    default T get() {
+        return rent();
+    }
+
     /**
+     * 从池中租借一个对象
+     *
      * @return 如果池中有可用的对象，则返回缓存的对象，否则返回一个新的对象
      */
-    @Override
-    T get();
+    T rent();
 
     /**
      * 将指定的对象放入池中 - 重置策略却决于{@link ResetPolicy}。
@@ -54,17 +61,8 @@ public interface ObjectPool<T> extends Supplier<T> {
     }
 
     /**
-     * @return 缓存池缓存对象数量上限
-     */
-    int maxCount();
-
-    /**
-     * @return 当前池中可用对象数
-     */
-    int idleCount();
-
-    /**
-     * 删除此池中的所有可用对象
+     * 删除此池中的所有对象
+     * （可空实现）
      */
     void clear();
 

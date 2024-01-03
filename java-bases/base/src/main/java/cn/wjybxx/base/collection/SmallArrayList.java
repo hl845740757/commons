@@ -53,4 +53,20 @@ public class SmallArrayList<E> extends ArrayList<E> {
         super.add(index, element);
     }
 
+    @Override
+    public void addFirst(E element) {
+        if (isEmpty()) {
+            ensureCapacity(INIT_CAPACITY);
+        }
+        super.addFirst(element);
+    }
+
+    @Override
+    public void addLast(E element) {
+        if (isEmpty()) {
+            ensureCapacity(INIT_CAPACITY);
+        }
+        super.addLast(element);
+    }
+
 }

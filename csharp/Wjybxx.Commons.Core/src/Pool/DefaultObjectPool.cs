@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Pool;
@@ -33,30 +34,31 @@ namespace Wjybxx.Commons.Pool;
 /// 2.如果池化的对象是List这类会扩容的对象，则只有栈顶部分的对象会扩容较大。
 /// </summary>
 /// <typeparam name="T"></typeparam>
+[NotThreadSafe]
 public class DefaultObjectPool<T> : IObjectPool<T> where T : class
 {
     /** 默认不无限缓存 */
-    private const int DefaultMaxCapacity = 1024;
+    private const int DefaultPoolSize = 1024;
 
     private readonly Func<T> _factory;
     private readonly Action<T> _resetPolicy;
+    private readonly int _poolSize;
     private readonly Stack<T> _freeObjects;
-    private readonly int _maxCapacity;
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="factory">对象创建工厂</param>
     /// <param name="resetPolicy">重置方法</param>
-    /// <param name="initialCapacity">初始大小；0表示默认不初始化</param>
-    /// <param name="maxCapacity">最大缓存数；0表示不缓存对象</param>
-    public DefaultObjectPool(Func<T> factory, Action<T> resetPolicy,
-                             int initialCapacity = 0, int maxCapacity = DefaultMaxCapacity) {
-        this._factory = factory;
-        this._resetPolicy = resetPolicy;
-        this._freeObjects = new Stack<T>(initialCapacity);
-        this._maxCapacity = maxCapacity;
+    /// <param name="poolSize">池大小；0表示不缓存对象</param>
+    public DefaultObjectPool(Func<T> factory, Action<T> resetPolicy, int poolSize = DefaultPoolSize) {
+        this._factory = factory ?? throw new ArgumentNullException(nameof(factory));
+        this._resetPolicy = resetPolicy ?? throw new ArgumentNullException(nameof(resetPolicy));
+        this._poolSize = poolSize;
+        this._freeObjects = new Stack<T>(Math.Clamp(poolSize, 0, 10));
     }
+
+    public int PoolSize => _poolSize;
 
     public T Rent() {
         if (_freeObjects.TryPop(out T result)) {
@@ -71,7 +73,7 @@ public class DefaultObjectPool<T> : IObjectPool<T> where T : class
         }
         // 先调用reset，避免reset出现异常导致添加脏对象到缓存池中 -- 断言是否在池中还是有较大开销
         _resetPolicy(obj);
-        if (_freeObjects.Count < _maxCapacity) {
+        if (_freeObjects.Count < _poolSize) {
             _freeObjects.Push(obj);
         }
     }
@@ -81,7 +83,7 @@ public class DefaultObjectPool<T> : IObjectPool<T> where T : class
             throw new ArgumentException("objects cannot be null.");
         }
         Stack<T> freeObjects = this._freeObjects;
-        int maxCapacity = this._maxCapacity;
+        int maxCapacity = this._poolSize;
         Action<T> resetPolicy = this._resetPolicy;
         if (objects is List<T> arrayList) {
             for (int i = 0, n = arrayList.Count; i < n; i++) {
@@ -106,11 +108,7 @@ public class DefaultObjectPool<T> : IObjectPool<T> where T : class
             }
         }
     }
-
-    public int MaxCount => _maxCapacity;
-
-    public int IdleCount => _freeObjects.Count;
-
+    
     public void Clear() {
         _freeObjects.Clear();
     }
