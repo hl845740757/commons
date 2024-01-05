@@ -284,9 +284,9 @@ public sealed class StopWatch
     /** @param itemList 避免排序修改数据 */
     private string ToString(List<Item> itemList) {
         StringBuilder sb = new StringBuilder(32);
-        // 总耗时
+        // 总耗时 - 此时可能正在运行
         sb.Append("StopWatch[").Append(_name).Append('=')
-            .Append(_elapsedNanos / DatetimeUtil.TicksPerMillisecond)
+            .Append(ElapsedNanos() / DatetimeUtil.TicksPerMillisecond)
             .Append("ms]");
         // 每个步骤耗时
         sb.Append('[');

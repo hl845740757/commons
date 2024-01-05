@@ -33,14 +33,23 @@ public class StringBuilderPool : IObjectPool<StringBuilder>
 {
     private readonly int _poolSize;
     private readonly int _initCapacity;
+    private readonly int _maxCapacity;
     private readonly Stack<StringBuilder> _freeBuilders;
 
-    public StringBuilderPool(int poolSize, int initCapacity) {
-        if (poolSize < 0 || initCapacity < 0) {
-            throw new ArgumentException($"{nameof(poolSize)}: {poolSize}, {nameof(initCapacity)}: {initCapacity}");
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="poolSize">池大小</param>
+    /// <param name="initCapacity">Builder的初始空间</param>
+    /// <param name="maxCapacity">Builder的最大空间，超过空间的Builder不会被回收复用</param>
+    public StringBuilderPool(int poolSize, int initCapacity, int maxCapacity = int.MaxValue) {
+        if (poolSize < 0 || initCapacity < 0 || maxCapacity < 0) {
+            throw new ArgumentException(
+                $"{nameof(poolSize)}: {poolSize}, {nameof(initCapacity)}: {initCapacity}, {nameof(maxCapacity)}: {maxCapacity}");
         }
         this._poolSize = poolSize;
         this._initCapacity = initCapacity;
+        this._maxCapacity = maxCapacity;
         this._freeBuilders = new Stack<StringBuilder>(Math.Clamp(poolSize, 0, 10));
     }
 
@@ -53,7 +62,7 @@ public class StringBuilderPool : IObjectPool<StringBuilder>
 
     public void ReturnOne(StringBuilder sb) {
         if (sb == null) throw new ArgumentNullException(nameof(sb));
-        if (_freeBuilders.Count < _poolSize) {
+        if (_freeBuilders.Count < _poolSize && sb.Length <= _maxCapacity) {
             sb.Length = 0;
             _freeBuilders.Push(sb);
         }

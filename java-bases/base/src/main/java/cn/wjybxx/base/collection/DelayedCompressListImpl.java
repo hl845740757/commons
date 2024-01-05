@@ -23,7 +23,10 @@ public final class DelayedCompressListImpl<E> implements DelayedCompressList<E> 
     private final ArrayList<E> children;
     private int recursionDepth;
 
-    /** 记录删除的元素的范围，避免迭代所有 */
+    /**
+     * 记录删除的元素的范围，避免迭代所有
+     * 如果迭代期间删除元素较少，也可以记录下标
+     */
     private transient int firstIndex = INDEX_NOT_FOUND;
     private transient int lastIndex = INDEX_NOT_FOUND;
 

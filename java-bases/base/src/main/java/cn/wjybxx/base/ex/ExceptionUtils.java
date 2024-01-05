@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * 异常工具类
  * <p>
- * 这里部分修改在Commons-Lang3，为避免依赖，我们选择拷贝代码。
+ * 这里部分修改自Commons-Lang3，为避免依赖，我们选择拷贝代码。
  * 我用的最多的就是{@link #rethrow(Throwable)}...
  *
  * @author wjybxx
@@ -32,13 +32,13 @@ import java.util.List;
  */
 public class ExceptionUtils {
 
-    // region
-
+    /** 获取异常的根 */
     public static Throwable getRootCause(final Throwable throwable) {
         final List<Throwable> list = getThrowableList(throwable);
-        return list.isEmpty() ? null : list.get(list.size() - 1);
+        return list.isEmpty() ? null : list.getLast();
     }
 
+    /** 展开异常信息 */
     public static List<Throwable> getThrowableList(Throwable throwable) {
         final List<Throwable> list = new ArrayList<>(4);
         while (throwable != null && !CollectionUtils.containsRef(list, throwable)) {
@@ -48,7 +48,15 @@ public class ExceptionUtils {
         return list;
     }
 
-    // endregion
+    /** 是否是受检异常 */
+    public static boolean isChecked(final Throwable throwable) {
+        return !(throwable instanceof Error || throwable instanceof RuntimeException);
+    }
+
+    /** 是否是非受检异常 -- 通常指运行时异常 */
+    public static boolean isUnchecked(final Throwable throwable) {
+        return (throwable instanceof Error || throwable instanceof RuntimeException);
+    }
 
     /**
      * 抛出原始异常，消除编译时警告
@@ -56,7 +64,7 @@ public class ExceptionUtils {
      * @param <R> 方法正常执行的返回值类型
      */
     public static <R> R rethrow(final Throwable throwable) {
-        return ExceptionUtils.throwAsRuntimeException(throwable);
+        return ExceptionUtils.throwAsUncheckedException(throwable);
     }
 
     /**
@@ -64,17 +72,9 @@ public class ExceptionUtils {
      */
     public static <T extends Throwable> T throwUnchecked(final T throwable) {
         if (isUnchecked(throwable)) {
-            return ExceptionUtils.throwAsRuntimeException(throwable);
+            return ExceptionUtils.throwAsUncheckedException(throwable);
         }
         return throwable; // 返回异常
-    }
-
-    public static boolean isChecked(final Throwable throwable) {
-        return throwable != null && !(throwable instanceof Error) && !(throwable instanceof RuntimeException);
-    }
-
-    public static boolean isUnchecked(final Throwable throwable) {
-        return (throwable instanceof Error || throwable instanceof RuntimeException);
     }
 
     /**
@@ -82,7 +82,7 @@ public class ExceptionUtils {
      * @param <T> 异常类型约束
      */
     @SuppressWarnings("unchecked")
-    private static <R, T extends Throwable> R throwAsRuntimeException(final Throwable throwable) throws T {
+    private static <R, T extends Throwable> R throwAsUncheckedException(final Throwable throwable) throws T {
         throw (T) throwable;
     }
 

@@ -24,7 +24,7 @@ namespace Wjybxx.Commons.Collections;
 /// <summary>
 /// 集合工具类
 /// </summary>
-public static class CollectionUtil
+public static partial class CollectionUtil
 {
     /** 元素不存在时的索引 */
     public const int IndexNotFound = -1;

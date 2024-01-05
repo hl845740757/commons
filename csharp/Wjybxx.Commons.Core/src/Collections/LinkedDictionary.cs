@@ -910,6 +910,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
         public virtual bool IsReadOnly => true;
         public int Count => _dictionary.Count;
+        public bool IsEmpty => _dictionary.IsEmpty;
 
         public abstract bool Contains(T item);
 

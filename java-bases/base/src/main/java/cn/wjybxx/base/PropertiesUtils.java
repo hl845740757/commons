@@ -25,8 +25,9 @@ import java.util.Set;
  * @author wjybxx
  * date - 2023/4/17
  */
-@SuppressWarnings("unused")
 public class PropertiesUtils {
+
+    // region convert
 
     public static String getString(Properties properties, String key) {
         return properties.getProperty(key);
@@ -35,8 +36,6 @@ public class PropertiesUtils {
     public static String getString(Properties properties, String key, String def) {
         return properties.getProperty(key, def);
     }
-
-    // region convert
 
     public static int getInt(Properties properties, String key) {
         return getInt(properties, key, 0);
@@ -134,7 +133,7 @@ public class PropertiesUtils {
         if (value == null || value.isEmpty()) {
             return def;
         }
-        value = value.trim().toLowerCase();
+        value = value.trim().toLowerCase(); // 固定转小写
         if (value.isEmpty()) {
             return def;
         }

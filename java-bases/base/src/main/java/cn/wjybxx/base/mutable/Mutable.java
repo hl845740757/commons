@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.common;
+package cn.wjybxx.base.mutable;
 
 /**
- * 可变性校验
+ * 为基础值类型提高可变性
  *
  * @author wjybxx
- * date - 2023/10/4
+ * date - 2024/1/4
  */
-public interface MutabilityValidator {
+public interface Mutable<T> {
+
+    /** 获取当前值 */
+    T getValue();
 
     /**
-     * @throws UnsupportedOperationException if not mutable.
+     * @throws NullPointerException 如果实现类禁止参数为null
+     * @throws ClassCastException   如果value的类型与
      */
-    void ensureMutable();
-
-    MutabilityValidator IMMUTABLE = () -> {
-        throw new UnsupportedOperationException();
-    };
-
+    void setValue(T value);
 }

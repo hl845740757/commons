@@ -12,15 +12,20 @@ module wjybxx.base {
     exports cn.wjybxx.base.collection;
     exports cn.wjybxx.base.ex;
     exports cn.wjybxx.base.io;
+    exports cn.wjybxx.base.mutable;
     exports cn.wjybxx.base.pool;
     exports cn.wjybxx.base.reflect;
     exports cn.wjybxx.base.time;
+    exports cn.wjybxx.base.tuple;
 
     opens cn.wjybxx.base;
     opens cn.wjybxx.base.annotation;
     opens cn.wjybxx.base.collection;
     opens cn.wjybxx.base.ex;
+    opens cn.wjybxx.base.io;
+    opens cn.wjybxx.base.mutable;
     opens cn.wjybxx.base.pool;
     opens cn.wjybxx.base.reflect;
     opens cn.wjybxx.base.time;
+    opens cn.wjybxx.base.tuple;
 }

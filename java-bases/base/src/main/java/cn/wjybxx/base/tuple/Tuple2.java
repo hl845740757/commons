@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.common.pair;
+package cn.wjybxx.base.tuple;
 
 import java.util.Map;
 import java.util.Objects;

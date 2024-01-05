@@ -16,23 +16,25 @@
 
 #endregion
 
-using System;
-
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Attributes;
+namespace Wjybxx.Commons;
 
 /// <summary>
-/// 用于标注类文件是生成的
+/// 排序类型枚举
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-public class GeneratedAttribute : Attribute
+public enum SortOrder
 {
     /// <summary>
-    /// 生成类文件的处理器的限定名
+    /// 无序
     /// </summary>
-    public readonly string Processor;
+    None = 0,
 
-    public GeneratedAttribute(string processor) {
-        Processor = processor;
-    }
+    /// <summary>
+    /// 升序
+    /// </summary>
+    Ascending = 1,
+
+    /// <summary>
+    /// 降序
+    /// </summary>
+    Descending = -1,
 }

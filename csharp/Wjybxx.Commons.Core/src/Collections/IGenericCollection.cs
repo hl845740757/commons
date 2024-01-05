@@ -40,7 +40,7 @@ public interface IGenericCollection<T> : ICollection<T>, IReadOnlyCollection<T>
     /// 对于非并发集合而言，通过Count判断为空的开销可忽略；但对于并发集合，可能不能直接得到Count;
     /// 在接口层提供IsEmpty对于并发集合是有利的。
     /// </summary>
-    bool IsEmpty => Count == 0;
+    bool IsEmpty { get; }
 
     /// <summary>
     /// 调整空间
