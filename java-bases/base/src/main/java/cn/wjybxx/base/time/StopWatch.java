@@ -312,9 +312,9 @@ public class StopWatch {
     /** @param itemList 避免排序修改数据 */
     private String toString(List<Item> itemList) {
         StringBuilder sb = new StringBuilder(32);
-        // 总耗时
+        // 总耗时 - 此时可能正在运行
         sb.append("StopWatch[").append(name).append('=')
-                .append(elapsedNanos / TimeUtils.NANOS_PER_MILLI)
+                .append(elapsedNanos() / TimeUtils.NANOS_PER_MILLI)
                 .append("ms]");
         // 每个步骤耗时
         sb.append('[');

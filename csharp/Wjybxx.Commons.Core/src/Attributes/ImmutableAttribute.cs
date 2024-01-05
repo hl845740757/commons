@@ -1,5 +1,4 @@
-﻿#region LICENSE
-
+#region LICENSE
 // Copyright 2023-2024 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,26 +12,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 #endregion
 
 using System;
 
-#pragma warning disable CS1591
 namespace Wjybxx.Commons.Attributes;
 
 /// <summary>
-/// 用于标注类文件是生成的
+/// 用于注解一个类/结构是不可变对象
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-public class GeneratedAttribute : Attribute
+public class ImmutableAttribute : Attribute
 {
-    /// <summary>
-    /// 生成类文件的处理器的限定名
-    /// </summary>
-    public readonly string Processor;
-
-    public GeneratedAttribute(string processor) {
-        Processor = processor;
-    }
+    
 }

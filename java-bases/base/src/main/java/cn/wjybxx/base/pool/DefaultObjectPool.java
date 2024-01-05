@@ -43,8 +43,8 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
 
     private final Supplier<? extends T> factory;
     private final ResetPolicy<? super T> resetPolicy;
+    private final int poolSize;
     private final ArrayList<T> freeObjects;
-    private final int maxCapacity;
 
     public DefaultObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy) {
         this(factory, resetPolicy, DEFAULT_POOL_SIZE);
@@ -61,8 +61,12 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
         }
         this.factory = Objects.requireNonNull(factory, "factory");
         this.resetPolicy = Objects.requireNonNull(resetPolicy, "resetPolicy");
-        this.maxCapacity = poolSize;
+        this.poolSize = poolSize;
         this.freeObjects = new ArrayList<>(MathCommon.clamp(poolSize, 0, 10));
+    }
+
+    public int getPoolSize() {
+        return poolSize;
     }
 
     @Override
@@ -82,7 +86,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
         // 先调用reset，避免reset出现异常导致添加脏对象到缓存池中 -- 断言是否在池中还是有较大开销
         resetPolicy.reset(object);
 //        assert !CollectionUtils.containsRef(freeObjects, e);
-        if (freeObjects.size() < maxCapacity) {
+        if (freeObjects.size() < poolSize) {
             freeObjects.add(object);
         }
     }
@@ -94,7 +98,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
         }
 
         final ArrayList<T> freeObjects = this.freeObjects;
-        final int maxCapacity = this.maxCapacity;
+        final int poolSize = this.poolSize;
         final ResetPolicy<? super T> resetPolicy = this.resetPolicy;
         if (objects instanceof ArrayList<? extends T> arrayList) {
             for (int i = 0, n = arrayList.size(); i < n; i++) {
@@ -104,7 +108,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
                 }
                 resetPolicy.reset(obj);
 //                assert !CollectionUtils.containsRef(freeObjects, obj);
-                if (freeObjects.size() < maxCapacity) {
+                if (freeObjects.size() < poolSize) {
                     freeObjects.add(obj);
                 }
             }
@@ -115,7 +119,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
                 }
                 resetPolicy.reset(obj);
 //                assert !CollectionUtils.containsRef(freeObjects, obj);
-                if (freeObjects.size() < maxCapacity) {
+                if (freeObjects.size() < poolSize) {
                     freeObjects.add(obj);
                 }
             }

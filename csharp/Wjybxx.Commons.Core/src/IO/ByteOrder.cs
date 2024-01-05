@@ -16,23 +16,20 @@
 
 #endregion
 
-using System;
-
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Attributes;
+namespace Wjybxx.Commons.IO;
 
 /// <summary>
-/// 用于标注类文件是生成的
+/// 字节序
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
-public class GeneratedAttribute : Attribute
+public enum ByteOrder : byte
 {
     /// <summary>
-    /// 生成类文件的处理器的限定名
+    /// 小端（C#默认是小端）
     /// </summary>
-    public readonly string Processor;
+    LittleEndian = 0,
 
-    public GeneratedAttribute(string processor) {
-        Processor = processor;
-    }
+    /// <summary>
+    /// 大端（网络字节序）
+    /// </summary>
+    BigEndian = 1,
 }

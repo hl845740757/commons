@@ -19,8 +19,6 @@ package cn.wjybxx.base.io;
 import cn.wjybxx.base.PropertiesUtils;
 import cn.wjybxx.base.pool.ObjectPool;
 
-import java.util.ArrayDeque;
-import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -33,41 +31,38 @@ public class LocalByteArrayPool implements ObjectPool<byte[]> {
 
     public static final LocalByteArrayPool INSTANCE = new LocalByteArrayPool();
 
-    /** 字节数组不能扩容，因此需要提前规划 */
-    private static final int BUFFER_SIZE;
-    /** 池化数量 */
-    private static final int POOL_SIZE;
-    /** 不再额外封装 */
-    private static final ThreadLocal<ArrayDeque<byte[]>> LOCAL_BUFFER_QUEUE;
-
-    static {
-        Properties properties = System.getProperties();
-        BUFFER_SIZE = PropertiesUtils.getInt(properties, "cn.wjybxx.base.io.buffer_size", 64 * 1024);
-        POOL_SIZE = PropertiesUtils.getInt(properties, "cn.wjybxx.base.io.buffer_poolsize", 4);
-        LOCAL_BUFFER_QUEUE = ThreadLocal.withInitial(() -> new ArrayDeque<>(POOL_SIZE));
-    }
-
     @Override
     public byte[] rent() {
-        // 使用栈式结构，更容易发现问题
-        final byte[] buffer = LOCAL_BUFFER_QUEUE.get().pollLast();
-        if (buffer != null) {
-            return buffer;
-        }
-        return new byte[BUFFER_SIZE];
+        return THREAD_LOCAL_INST.get().rent();
     }
 
     @Override
     public void returnOne(byte[] buffer) {
-        Objects.requireNonNull(buffer, "buffer");
-        final ArrayDeque<byte[]> queue = LOCAL_BUFFER_QUEUE.get();
-        if (queue.size() < POOL_SIZE) {
-            queue.addLast(buffer);
-        }
+        THREAD_LOCAL_INST.get().returnOne(buffer);
     }
 
     @Override
     public void clear() {
 
     }
+
+    /** 获取线程本地实例 - 慎用 */
+    public static SimpleByteArrayPool localInst() {
+        return THREAD_LOCAL_INST.get();
+    }
+
+    /** 池化数量 */
+    private static final int POOL_SIZE;
+    /** 字节数组不能扩容，因此需要提前规划 */
+    private static final int BUFFER_SIZE;
+    /** 封装以便我们可以在某些时候去除包装 */
+    private static final ThreadLocal<SimpleByteArrayPool> THREAD_LOCAL_INST;
+
+    static {
+        Properties properties = System.getProperties();
+        POOL_SIZE = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalByteArrayPool.PoolSize", 4);
+        BUFFER_SIZE = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalByteArrayPool.BufferSize", 64 * 1024);
+        THREAD_LOCAL_INST = ThreadLocal.withInitial(() -> new SimpleByteArrayPool(POOL_SIZE, BUFFER_SIZE));
+    }
+
 }

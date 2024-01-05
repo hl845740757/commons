@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.common.pair;
+package cn.wjybxx.base.tuple;
 
 import java.util.Objects;
 
@@ -26,11 +26,13 @@ import java.util.Objects;
  */
 public final class Tuple3<A, B, C> {
 
-    private final Tuple2<A, B> tuple2;
+    private final A first;
+    private final B second;
     private final C third;
 
     public Tuple3(A first, B second, C third) {
-        this.tuple2 = new Tuple2<>(first, second);
+        this.first = first;
+        this.second = second;
         this.third = third;
     }
 
@@ -39,15 +41,15 @@ public final class Tuple3<A, B, C> {
     }
 
     public Tuple2<A, B> asTuple2() {
-        return tuple2;
+        return new Tuple2<>(first, second);
     }
 
     public A getFirst() {
-        return tuple2.getFirst();
+        return first;
     }
 
     public B getSecond() {
-        return tuple2.getSecond();
+        return second;
     }
 
     public C getThird() {
@@ -61,13 +63,15 @@ public final class Tuple3<A, B, C> {
 
         Tuple3<?, ?, ?> tuple3 = (Tuple3<?, ?, ?>) o;
 
-        if (!tuple2.equals(tuple3.tuple2)) return false;
+        if (!Objects.equals(first, tuple3.first)) return false;
+        if (!Objects.equals(second, tuple3.second)) return false;
         return Objects.equals(third, tuple3.third);
     }
 
     @Override
     public int hashCode() {
-        int result = tuple2.hashCode();
+        int result = first != null ? first.hashCode() : 0;
+        result = 31 * result + (second != null ? second.hashCode() : 0);
         result = 31 * result + (third != null ? third.hashCode() : 0);
         return result;
     }
@@ -75,10 +79,9 @@ public final class Tuple3<A, B, C> {
     @Override
     public String toString() {
         return "Tuple3{" +
-                "first=" + tuple2.getFirst() +
-                ", second=" + tuple2.getSecond() +
+                "first=" + first +
+                ", second=" + second +
                 ", third=" + third +
                 '}';
     }
-
 }

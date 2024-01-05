@@ -171,6 +171,25 @@ public static class ObjectUtil
             _ => throw new AssertionError()
         };
     }
+    
+    /// <summary>
+    /// 获取字符串的UTF-8编码结果
+    /// (经常找不到地方...)
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static byte[] GetUtf8Bytes(string value) {
+        return Encoding.UTF8.GetBytes(value);
+    }
+
+    /// <summary>
+    /// 将utf8字节数组转为字符串
+    /// </summary>
+    /// <param name="data">utf8字节</param>
+    /// <returns></returns>
+    public static string GetUtf8String(byte[] data) {
+        return Encoding.UTF8.GetString(data);
+    }
 
     #endregion
 }

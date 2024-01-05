@@ -22,57 +22,64 @@ import cn.wjybxx.base.pool.ObjectPool;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * @author wjybxx
- * date - 2023/8/9
+ * date 2023/3/31
  */
 @NotThreadSafe
-public class StringBuilderPool implements ObjectPool<StringBuilder> {
+public class SimpleByteArrayPool implements ObjectPool<byte[]> {
 
     private final int poolSize;
-    private final int initCapacity;
-    private final int maxCapacity;
-    private final List<StringBuilder> freeBuilders;
+    private final int bufferSize;
+    private final boolean clear;
+    private final List<byte[]> freeBuffers;
 
-
-    public StringBuilderPool(int poolSize, int initCapacity) {
-        this(poolSize, initCapacity, Integer.MAX_VALUE);
+    public SimpleByteArrayPool(int poolSize, int bufferSize) {
+        this(poolSize, bufferSize, false);
     }
 
-    public StringBuilderPool(int poolSize, int initCapacity, int maxCapacity) {
-        if (poolSize < 0 || initCapacity < 0 || maxCapacity < 0) {
+    /**
+     * @param poolSize   池大小
+     * @param bufferSize 数组大小
+     * @param clear      字节素组归入池中时是否clear
+     */
+    public SimpleByteArrayPool(int poolSize, int bufferSize, boolean clear) {
+        if (poolSize < 0 || bufferSize < 0) {
             throw new IllegalArgumentException();
         }
         this.poolSize = poolSize;
-        this.initCapacity = initCapacity;
-        this.maxCapacity = maxCapacity;
-        this.freeBuilders = new ArrayList<>(MathCommon.clamp(poolSize, 0, 10));
+        this.bufferSize = bufferSize;
+        this.clear = clear;
+        this.freeBuffers = new ArrayList<>(MathCommon.clamp(poolSize, 0, 10));
     }
 
     @Nonnull
     @Override
-    public StringBuilder rent() {
-        int size = freeBuilders.size();
+    public byte[] rent() {
+        int size = freeBuffers.size();
         if (size > 0) {
-            return freeBuilders.remove(size - 1);
+            return freeBuffers.remove(size - 1);
         }
-        return new StringBuilder(initCapacity);
+        return new byte[bufferSize];
     }
 
     @Override
-    public void returnOne(StringBuilder builder) {
-        Objects.requireNonNull(builder);
-        if (freeBuilders.size() < poolSize && builder.length() <= maxCapacity) {
-            builder.setLength(0);
-            freeBuilders.add(builder);
+    public void returnOne(byte[] buffer) {
+        Objects.requireNonNull(buffer);
+        if (freeBuffers.size() < poolSize) {
+            if (clear) {
+                Arrays.fill(buffer, (byte) 0);
+            }
+            freeBuffers.add(buffer);
         }
     }
 
     @Override
     public void clear() {
-        freeBuilders.clear();
+        freeBuffers.clear();
     }
 }
