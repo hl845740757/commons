@@ -23,9 +23,9 @@ namespace Wjybxx.Commons.IO;
 
 /// <summary>
 /// 字节数组IO操作工具类
-/// C#10不支持逻辑右移，但这里使用算术右移是等价的
+/// 1.C#10不支持逻辑右移，但这里使用算术右移是等价的
 /// </summary>
-public class ByteBufferUtil
+public static class ByteBufferUtil
 {
     /// <summary>
     /// 检查buffer参数

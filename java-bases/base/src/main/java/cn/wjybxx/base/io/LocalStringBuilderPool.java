@@ -56,7 +56,7 @@ public class LocalStringBuilderPool implements ObjectPool<StringBuilder> {
     /**
      * 每个线程缓存的StringBuilder数量，
      * 同时使用多个Builder实例的情况很少，因此只缓存少量实例即可
-     * */
+     */
     private static final int POOL_SIZE;
     /**
      * StringBuilder的初始空间，
@@ -68,6 +68,8 @@ public class LocalStringBuilderPool implements ObjectPool<StringBuilder> {
      * 超过限定值的Builder不会被复用
      */
     private static final int MAX_CAPACITY;
+    /** 封装以便我们可以在某些时候去除包装 */
+    private static final ThreadLocal<StringBuilderPool> THREAD_LOCAL_INST;
 
     static {
         // 全小写看着费劲...因此使用大驼峰
@@ -75,10 +77,7 @@ public class LocalStringBuilderPool implements ObjectPool<StringBuilder> {
         POOL_SIZE = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalStringBuilderPool.PoolSize", 8);
         INIT_CAPACITY = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalStringBuilderPool.InitCapacity", 4096);
         MAX_CAPACITY = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalStringBuilderPool.MaxCapacity", Integer.MAX_VALUE);
+        THREAD_LOCAL_INST = ThreadLocal.withInitial(() -> new StringBuilderPool(POOL_SIZE, INIT_CAPACITY, MAX_CAPACITY));
     }
-
-    /** 封装以便我们可以在某些时候去除包装 */
-    private static final ThreadLocal<StringBuilderPool> THREAD_LOCAL_INST = ThreadLocal.withInitial(
-            () -> new StringBuilderPool(POOL_SIZE, INIT_CAPACITY));
 
 }

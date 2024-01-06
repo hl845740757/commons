@@ -51,20 +51,24 @@ public class LocalStringBuilderPool : IObjectPool<StringBuilder>
     /// 每个线程缓存的StringBuilder数量
     /// 同时使用多个Builder实例的情况很少，因此只缓存少量实例即可
     /// </summary>
-    private static readonly int PoolSize = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.LocalStringBuilderPool.PoolSize", 8);
+    private static readonly int PoolSize;
     /// <summary>
     /// StringBuilder的初始空间
     /// IO操作通常需要较大缓存空间，初始值给大一些
     /// </summary>
-    private static readonly int InitCapacity = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.LocalStringBuilderPool.InitCapacity", 4096);
+    private static readonly int InitCapacity;
     /// <summary>
     /// StringBuilder的最大空间
     /// 超过限定值的Builder不会被复用
     /// </summary>
-    private static readonly int MaxCapacity = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.LocalStringBuilderPool.MaxCapacity", Array.MaxLength);
-
+    private static readonly int MaxCapacity;
     /** 封装以便我们可以在某些时候去除包装 */
-    private static readonly ThreadLocal<StringBuilderPool> ThreadLocalInst = new(
-        () => new StringBuilderPool(PoolSize, InitCapacity, MaxCapacity)
-    );
+    private static readonly ThreadLocal<StringBuilderPool> ThreadLocalInst;
+
+    static LocalStringBuilderPool() {
+        PoolSize = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.LocalStringBuilderPool.PoolSize", 8);
+        InitCapacity = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.LocalStringBuilderPool.InitCapacity", 4096);
+        MaxCapacity = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.LocalStringBuilderPool.MaxCapacity", int.MaxValue);
+        ThreadLocalInst = new ThreadLocal<StringBuilderPool>(() => new StringBuilderPool(PoolSize, InitCapacity, MaxCapacity));
+    }
 }

@@ -30,18 +30,18 @@ import java.util.Objects;
  * date 2023/3/31
  */
 @NotThreadSafe
-public class SimpleByteArrayPool implements ObjectPool<byte[]> {
+public class SimpleCharArrayPool implements ObjectPool<char[]> {
 
     private final int poolSize;
     private final int initCapacity;
     private final int maxCapacity;
-    private final List<byte[]> freeBuffers;
+    private final List<char[]> freeBuffers;
 
     /**
      * @param poolSize   池大小
      * @param initCapacity 数组大小
      */
-    public SimpleByteArrayPool(int poolSize, int initCapacity) {
+    public SimpleCharArrayPool(int poolSize, int initCapacity) {
         this(poolSize, initCapacity, Integer.MAX_VALUE);
     }
 
@@ -50,7 +50,7 @@ public class SimpleByteArrayPool implements ObjectPool<byte[]> {
      * @param initCapacity 数组初始大小
      * @param maxCapacity  数组最大大小 -- 超过大小的字节数组不会放入池中
      */
-    public SimpleByteArrayPool(int poolSize, int initCapacity, int maxCapacity) {
+    public SimpleCharArrayPool(int poolSize, int initCapacity, int maxCapacity) {
         if (poolSize < 0 || initCapacity < 0 || maxCapacity < 0) {
             throw new IllegalArgumentException();
         }
@@ -62,16 +62,16 @@ public class SimpleByteArrayPool implements ObjectPool<byte[]> {
 
     @Nonnull
     @Override
-    public byte[] rent() {
+    public char[] rent() {
         int size = freeBuffers.size();
         if (size > 0) {
             return freeBuffers.remove(size - 1);
         }
-        return new byte[initCapacity];
+        return new char[initCapacity];
     }
 
     @Override
-    public void returnOne(byte[] buffer) {
+    public void returnOne(char[] buffer) {
         Objects.requireNonNull(buffer);
         if (freeBuffers.size() < poolSize && buffer.length <= maxCapacity) {
             freeBuffers.add(buffer);

@@ -23,7 +23,7 @@ package cn.wjybxx.base;
  * @author wjybxx
  * date - 2024/1/5
  */
-public class SystemProps {
+public class SystemPropsUtils {
 
     /** 工作目录 */
     public static final String WORKING_DIR = System.getProperty("user.dir");
