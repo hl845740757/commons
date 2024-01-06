@@ -51,6 +51,6 @@ public class SharedArrayPool<T> : IObjectPool<T[]>
         Shared.Return(obj);
     }
 
-    public void Clear() {
+    public void FreeAll() {
     }
 }

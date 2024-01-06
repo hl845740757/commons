@@ -89,7 +89,7 @@ public class Bson2DsonUtils {
             case BOOLEAN -> BsonBoolean.valueOf(dsonValue.asBool());
             case STRING -> new BsonString(dsonValue.asString());
             case BINARY -> {
-                DsonBinary binary = dsonValue.asBinary();
+                DsonBinary binary = dsonValue.asDsonBinary();
                 yield new BsonBinary((byte) binary.getType(), binary.getData());
             }
             case EXT_INT32 -> {

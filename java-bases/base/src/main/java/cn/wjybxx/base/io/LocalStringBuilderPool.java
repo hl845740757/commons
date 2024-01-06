@@ -16,11 +16,10 @@
 
 package cn.wjybxx.base.io;
 
-import cn.wjybxx.base.PropertiesUtils;
+import cn.wjybxx.base.SystemPropsUtils;
 import cn.wjybxx.base.pool.ObjectPool;
 
 import javax.annotation.Nonnull;
-import java.util.Properties;
 
 /**
  * 基于ThreadLocal的Builder池
@@ -44,7 +43,7 @@ public class LocalStringBuilderPool implements ObjectPool<StringBuilder> {
     }
 
     @Override
-    public void clear() {
+    public void freeAll() {
 
     }
 
@@ -73,10 +72,9 @@ public class LocalStringBuilderPool implements ObjectPool<StringBuilder> {
 
     static {
         // 全小写看着费劲...因此使用大驼峰
-        Properties properties = System.getProperties();
-        POOL_SIZE = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalStringBuilderPool.PoolSize", 8);
-        INIT_CAPACITY = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalStringBuilderPool.InitCapacity", 4096);
-        MAX_CAPACITY = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalStringBuilderPool.MaxCapacity", Integer.MAX_VALUE);
+        POOL_SIZE = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalStringBuilderPool.PoolSize", 8);
+        INIT_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalStringBuilderPool.InitCapacity", 4096);
+        MAX_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalStringBuilderPool.MaxCapacity", Integer.MAX_VALUE);
         THREAD_LOCAL_INST = ThreadLocal.withInitial(() -> new StringBuilderPool(POOL_SIZE, INIT_CAPACITY, MAX_CAPACITY));
     }
 

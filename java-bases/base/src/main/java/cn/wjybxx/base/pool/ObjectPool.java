@@ -61,9 +61,9 @@ public interface ObjectPool<T> extends Supplier<T> {
     }
 
     /**
-     * 删除此池中的所有对象
+     * 释放此池中的所有对象
      * （可空实现）
      */
-    void clear();
+    void freeAll();
 
 }

@@ -16,9 +16,7 @@
 
 package cn.wjybxx.base.io;
 
-import cn.wjybxx.base.PropertiesUtils;
-
-import java.util.Properties;
+import cn.wjybxx.base.SystemPropsUtils;
 
 /**
  * 基于ThreadLocal的简单buffer池
@@ -52,7 +50,7 @@ public class LocalCharArrayPool implements ArrayPool<char[]> {
     }
 
     @Override
-    public void clear() {
+    public void freeAll() {
 
     }
 
@@ -71,10 +69,9 @@ public class LocalCharArrayPool implements ArrayPool<char[]> {
     private static final ThreadLocal<SimpleArrayPool<char[]>> THREAD_LOCAL_INST;
 
     static {
-        Properties properties = System.getProperties();
-        POOL_SIZE = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalCharArrayPool.PoolSize", 4);
-        INIT_CAPACITY = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalCharArrayPool.InitCapacity", 1024);
-        MAX_CAPACITY = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalCharArrayPool.MaxCapacity", 64 * 1024);
+        POOL_SIZE = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalCharArrayPool.PoolSize", 4);
+        INIT_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalCharArrayPool.InitCapacity", 1024);
+        MAX_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalCharArrayPool.MaxCapacity", 64 * 1024);
         THREAD_LOCAL_INST = ThreadLocal.withInitial(() -> new SimpleArrayPool<>(char[].class, POOL_SIZE, INIT_CAPACITY, MAX_CAPACITY));
     }
 

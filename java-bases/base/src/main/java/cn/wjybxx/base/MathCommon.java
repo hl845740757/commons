@@ -28,6 +28,7 @@ public class MathCommon {
     public static final float FLOAT_ROUNDING_ERROR = 0.00001f;
     public static final float DOUBLE_ROUNDING_ERROR = 0.000000001f;
 
+    /** 32位无符号整数的最大值 */
     public static final long UINT32_MAX_VALUE = (1L << 32) - 1;
     /** 48位无符号整数的最大值 */
     public static final long UINT48_MAX_VALUE = (1L << 48) - 1;
@@ -80,7 +81,7 @@ public class MathCommon {
         return (x & 1) == 1;
     }
 
-    /** 判断一个数是否是有效的uint33*/
+    /** 判断一个数是否是有效的uint32 */
     public static boolean isUint32(long value) {
         return value >= 0 && value <= UINT32_MAX_VALUE;
     }

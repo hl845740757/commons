@@ -28,6 +28,10 @@ import cn.wjybxx.base.pool.ObjectPool;
  */
 public interface ArrayPool<T> extends ObjectPool<T> {
 
+    /** 返回池中一个默认大小的数组 */
+    @Override
+    T rent();
+
     /**
      * 注意：返回的字节数组可能大于期望的数组长度
      *
@@ -36,17 +40,18 @@ public interface ArrayPool<T> extends ObjectPool<T> {
      */
     T rent(int minimumLength);
 
-    /** 归还数组到池，默认情况下不清理数据 */
+    /**
+     * 归还数组到池
+     * 是否清理数组取决于配置和实现
+     */
     @Override
-    default void returnOne(T array) {
-        returnOne(array, false);
-    }
+    void returnOne(T array);
 
     /**
      * 归还数组到池
      *
      * @param array 租借的对象
-     * @param clear 是否清理数组
+     * @param clear 是否清理数组 - 只有当前池默认不清理的情况下，该参数才有效用。
      */
     void returnOne(T array, boolean clear);
 }

@@ -71,7 +71,7 @@ public final class StringBuilderPool implements ObjectPool<StringBuilder> {
     }
 
     @Override
-    public void clear() {
+    public void freeAll() {
         freeBuilders.clear();
     }
 }

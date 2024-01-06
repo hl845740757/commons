@@ -37,18 +37,10 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
     private final int poolSize;
     private final int initCapacity;
     private final int maxCapacity;
+    private final boolean clear;
 
     private final TreeSet<Node<T>> freeArrays;
     private final Consumer<T> clearHandler;
-
-    /**
-     * @param arrayType    数组类型
-     * @param poolSize     池大小
-     * @param initCapacity 数组大小
-     */
-    public SimpleArrayPool(Class<T> arrayType, int poolSize, int initCapacity) {
-        this(arrayType, poolSize, initCapacity, Integer.MAX_VALUE);
-    }
 
     /**
      * @param arrayType    数组类型
@@ -57,6 +49,17 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
      * @param maxCapacity  数组最大大小 -- 超过大小的数组不会放入池中
      */
     public SimpleArrayPool(Class<T> arrayType, int poolSize, int initCapacity, int maxCapacity) {
+        this(arrayType, poolSize, initCapacity, maxCapacity, false);
+    }
+
+    /**
+     * @param arrayType    数组类型
+     * @param poolSize     池大小
+     * @param initCapacity 数组初始大小
+     * @param maxCapacity  数组最大大小 -- 超过大小的数组不会放入池中
+     * @param clear        是否清理归还到池中数组
+     */
+    public SimpleArrayPool(Class<T> arrayType, int poolSize, int initCapacity, int maxCapacity, boolean clear) {
         if (arrayType.getComponentType() == null) {
             throw new IllegalArgumentException("arrayType");
         }
@@ -67,6 +70,7 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
         this.poolSize = poolSize;
         this.initCapacity = initCapacity;
         this.maxCapacity = maxCapacity;
+        this.clear = clear;
 
         this.clearHandler = findClearHandler(arrayType);
         this.freeArrays = new TreeSet<>(COMPARATOR);
@@ -95,11 +99,15 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
 
     @Override
     public void returnOne(T array) {
-        returnOne(array, false);
+        returnOneImpl(array, this.clear);
     }
 
     @Override
     public void returnOne(T array, boolean clear) {
+        returnOneImpl(array, this.clear || clear);
+    }
+
+    private void returnOneImpl(T array, boolean clear) {
         int length = Array.getLength(array);
         if (freeArrays.size() < poolSize && length <= maxCapacity) {
             if (clear) {
@@ -110,7 +118,7 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
     }
 
     @Override
-    public void clear() {
+    public void freeAll() {
         freeArrays.clear();
     }
 
@@ -178,28 +186,28 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
         if (componentType == byte.class) {
             return (Consumer<T>) clear_byteArray;
         }
-        if (arrayType == char.class) {
+        if (componentType == char.class) {
             return (Consumer<T>) clear_charArray;
         }
-        if (arrayType == int.class) {
+        if (componentType == int.class) {
             return (Consumer<T>) clear_intArray;
         }
-        if (arrayType == long.class) {
+        if (componentType == long.class) {
             return (Consumer<T>) clear_longArray;
         }
-        if (arrayType == float.class) {
+        if (componentType == float.class) {
             return (Consumer<T>) clear_floatArray;
         }
-        if (arrayType == double.class) {
+        if (componentType == double.class) {
             return (Consumer<T>) clear_doubleArray;
         }
-        if (arrayType == short.class) {
+        if (componentType == short.class) {
             return (Consumer<T>) clear_shortArray;
         }
-        if (arrayType == boolean.class) {
+        if (componentType == boolean.class) {
             return (Consumer<T>) clear_boolArray;
         }
-        throw new IllegalArgumentException("Unsupported arrayType: " + arrayType);
+        throw new IllegalArgumentException("Unsupported arrayType: " + arrayType.getSimpleName());
     }
 
     private static final Consumer<Object> clear_objectArray = array -> Arrays.fill((Object[]) array, null);

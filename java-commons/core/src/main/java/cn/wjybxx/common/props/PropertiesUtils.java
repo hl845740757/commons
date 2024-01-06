@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base;
+package cn.wjybxx.common.props;
+
+import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.ObjectUtils;
 
 import java.util.HashMap;
 import java.util.Map;

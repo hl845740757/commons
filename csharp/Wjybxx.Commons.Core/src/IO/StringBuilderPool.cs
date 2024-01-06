@@ -68,7 +68,7 @@ public class StringBuilderPool : IObjectPool<StringBuilder>
         }
     }
 
-    public void Clear() {
+    public void FreeAll() {
         _freeBuilders.Clear();
     }
 }

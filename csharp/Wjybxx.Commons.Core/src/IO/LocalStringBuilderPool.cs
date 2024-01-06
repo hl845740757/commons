@@ -39,7 +39,7 @@ public class LocalStringBuilderPool : IObjectPool<StringBuilder>
         ThreadLocalInst.Value!.ReturnOne(sb);
     }
 
-    public void Clear() {
+    public void FreeAll() {
     }
 
     /** 获取线程本地实例 - 慎用；定义为实例方法，以免和{@link #INSTANCE}的提示冲突 */
