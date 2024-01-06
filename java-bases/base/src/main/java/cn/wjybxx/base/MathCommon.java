@@ -28,6 +28,14 @@ public class MathCommon {
     public static final float FLOAT_ROUNDING_ERROR = 0.00001f;
     public static final float DOUBLE_ROUNDING_ERROR = 0.000000001f;
 
+    public static final long UINT32_MAX_VALUE = (1L << 32) - 1;
+    /** 48位无符号整数的最大值 */
+    public static final long UINT48_MAX_VALUE = (1L << 48) - 1;
+    /** 有符号48位整数的最大值(140737488355327L) */
+    public static final long INT48_MAX_VALUE = (1L << 47) - 1;
+    /** 有符号48位整数的最小值(-140737488355328L) */
+    public static final long INT48_MIN_VALUE = -INT48_MAX_VALUE - 1;
+
     public static final int INT_MASK4 = 0xFF_00_00_00;
     public static final int INT_MASK3 = 0x00_FF_00_00;
     public static final int INT_MASK2 = 0x00_00_FF_00;
@@ -70,6 +78,21 @@ public class MathCommon {
     /** @return 如果给定参数是【奇数】则返回true */
     public static boolean isOdd(final int x) {
         return (x & 1) == 1;
+    }
+
+    /** 判断一个数是否是有效的uint33*/
+    public static boolean isUint32(long value) {
+        return value >= 0 && value <= UINT32_MAX_VALUE;
+    }
+
+    /** 判断一个数是否是有效的uint48 */
+    public static boolean isUInt48(long value) {
+        return value >= 0 && value <= UINT48_MAX_VALUE;
+    }
+
+    /** 判断一个数是否是有效的int48 */
+    public static boolean isInt48(long value) {
+        return value >= INT48_MIN_VALUE && value <= INT48_MAX_VALUE;
     }
 
     // region 聚合拆解

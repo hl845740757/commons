@@ -126,10 +126,33 @@ public class ByteBufferUtil
     }
 
     /// <summary>
-    /// 大端：向buffer中写入一个Int48
+    /// 大端：向buffer中写入一个UInt32
+    /// </summary>
+    public static void SetUInt32(byte[] buffer, int index, uint value) {
+        buffer[index] = (byte)(value >> 24);
+        buffer[index + 1] = (byte)(value >> 16);
+        buffer[index + 2] = (byte)(value >> 8);
+        buffer[index + 3] = (byte)value;
+    }
+
+    /// <summary>
+    /// 大端：从buffer中读取一个UInt32
+    /// </summary>
+    public static uint GetUInt32(byte[] buffer, int index) {
+        return (((buffer[index] & 0xffU) << 24)
+                | ((buffer[index + 1] & 0xffU) << 16)
+                | ((buffer[index + 2] & 0xffU) << 8)
+                | ((buffer[index + 3] & 0xffU)));
+    }
+
+    /// <summary>
+    /// 大端：向buffer中写入一个UInt48
     /// (写入long的低48位)
     /// </summary>
-    public static void SetInt48(byte[] buffer, int index, long value) {
+    public static void SetUInt48(byte[] buffer, int index, long value) {
+        if (!MathCommon.IsUInt48(value)) {
+            throw new ArgumentException($"{nameof(value)}: {value}");
+        }
         buffer[index] = (byte)(value >> 40);
         buffer[index + 1] = (byte)(value >> 32);
         buffer[index + 2] = (byte)(value >> 24);
@@ -139,10 +162,10 @@ public class ByteBufferUtil
     }
 
     /// <summary>
-    /// 大端：从buffer中读取一个Int48
+    /// 大端：从buffer中读取一个UInt48
     /// (写入long的低48位)
     /// </summary>
-    public static long GetInt48(byte[] buffer, int index) {
+    public static long GetUInt48(byte[] buffer, int index) {
         return (((buffer[index] & 0xffL) << 40)
                 | ((buffer[index + 1] & 0xffL) << 32)
                 | ((buffer[index + 2] & 0xffL) << 24)
@@ -220,10 +243,33 @@ public class ByteBufferUtil
     }
 
     /// <summary>
-    /// 小端：向buffer中写入一个Int48
+    /// 小端：向buffer中写入一个UInt32
+    /// </summary>
+    public static void SetUInt32LE(byte[] buffer, int index, uint value) {
+        buffer[index] = (byte)value;
+        buffer[index + 1] = (byte)(value >> 8);
+        buffer[index + 2] = (byte)(value >> 16);
+        buffer[index + 3] = (byte)(value >> 24);
+    }
+
+    /// <summary>
+    /// 小端：从buffer中读取一个Int32
+    /// </summary>
+    public static uint GetUInt32LE(byte[] buffer, int index) {
+        return (((buffer[index] & 0xffU))
+                | ((buffer[index + 1] & 0xffU) << 8)
+                | ((buffer[index + 2] & 0xffU) << 16)
+                | ((buffer[index + 3] & 0xffU) << 24));
+    }
+    
+    /// <summary>
+    /// 小端：向buffer中写入一个UInt48
     /// (写入long的低48位)
     /// </summary>
-    public static void SetInt48LE(byte[] buffer, int index, long value) {
+    public static void SetUInt48LE(byte[] buffer, int index, long value) {
+        if (!MathCommon.IsUInt48(value)) {
+            throw new ArgumentException($"{nameof(value)}: {value}");
+        }
         buffer[index] = (byte)value;
         buffer[index + 1] = (byte)(value >> 8);
         buffer[index + 2] = (byte)(value >> 16);
@@ -233,10 +279,10 @@ public class ByteBufferUtil
     }
 
     /// <summary>
-    /// 小端：从buffer中读取一个Int48
+    /// 小端：从buffer中读取一个UInt48
     /// (写入long的低48位)
     /// </summary>
-    public static long GetInt48LE(byte[] buffer, int index) {
+    public static long GetUInt48LE(byte[] buffer, int index) {
         return (((buffer[index] & 0xffL))
                 | ((buffer[index + 1] & 0xffL) << 8)
                 | ((buffer[index + 2] & 0xffL) << 16)
