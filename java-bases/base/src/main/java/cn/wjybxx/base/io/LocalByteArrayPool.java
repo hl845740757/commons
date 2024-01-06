@@ -41,6 +41,11 @@ public class LocalByteArrayPool implements ArrayPool<byte[]> {
     }
 
     @Override
+    public byte[] rent(int minimumLength, boolean clear) {
+        return THREAD_LOCAL_INST.get().rent(minimumLength, clear);
+    }
+
+    @Override
     public void returnOne(byte[] array) {
         THREAD_LOCAL_INST.get().returnOne(array);
     }
@@ -71,7 +76,7 @@ public class LocalByteArrayPool implements ArrayPool<byte[]> {
 
     static {
         POOL_SIZE = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalByteArrayPool.PoolSize", 4);
-        INIT_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalByteArrayPool.InitCapacity", 64 * 1024);
+        INIT_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalByteArrayPool.InitCapacity", 4096);
         MAX_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalByteArrayPool.MaxCapacity", 1024 * 1024);
         THREAD_LOCAL_INST = ThreadLocal.withInitial(() -> new SimpleArrayPool<>(byte[].class, POOL_SIZE, INIT_CAPACITY, MAX_CAPACITY));
     }

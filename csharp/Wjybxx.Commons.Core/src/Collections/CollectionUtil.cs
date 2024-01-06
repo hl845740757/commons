@@ -43,7 +43,7 @@ public static partial class CollectionUtil
         }
         return int.MaxValue;
     }
-    
+
     /** behavior是否允许丢弃队列的首部 */
     public static bool AllowDiscardHead(this DequeOverflowBehavior behavior) {
         return behavior == DequeOverflowBehavior.CircleBuffer

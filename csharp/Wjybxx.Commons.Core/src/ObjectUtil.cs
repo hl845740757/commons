@@ -171,7 +171,7 @@ public static class ObjectUtil
             _ => throw new AssertionError()
         };
     }
-    
+
     /// <summary>
     /// 获取字符串的UTF-8编码结果
     /// (经常找不到地方...)

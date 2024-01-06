@@ -40,8 +40,13 @@ public class LocalCharArrayPool implements ArrayPool<char[]> {
     }
 
     @Override
-    public void returnOne(char[] buffer) {
-        THREAD_LOCAL_INST.get().returnOne(buffer);
+    public char[] rent(int minimumLength, boolean clear) {
+        return THREAD_LOCAL_INST.get().rent(minimumLength, clear);
+    }
+
+    @Override
+    public void returnOne(char[] array) {
+        THREAD_LOCAL_INST.get().returnOne(array);
     }
 
     @Override

@@ -261,7 +261,7 @@ public static class ByteBufferUtil
                 | ((buffer[index + 2] & 0xffU) << 16)
                 | ((buffer[index + 3] & 0xffU) << 24));
     }
-    
+
     /// <summary>
     /// 小端：向buffer中写入一个UInt48
     /// (写入long的低48位)

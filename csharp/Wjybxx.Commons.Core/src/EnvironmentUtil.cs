@@ -92,8 +92,8 @@ public class EnvironmentUtil
     /// <param name="varName">变量名</param>
     /// <param name="def">默认值</param>
     /// <returns></returns>
-    public static float GetFloatVar(string key, float def = 0) {
-        string rawValue = Environment.GetEnvironmentVariable(key);
+    public static float GetFloatVar(string varName, float def = 0) {
+        string rawValue = Environment.GetEnvironmentVariable(varName);
         if (string.IsNullOrEmpty(rawValue)) {
             return def;
         }

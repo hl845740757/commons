@@ -4,6 +4,11 @@ csharp公共库，包含集合等基础组件;nuget搜索'wjybxx'即可查看到
 
 ## ReleaseNotes
 
+### 1.0.6
+1. 增加ArrayPool，变更ObjectPool的Clear方法为FreeAll
+2. 增加环境变量工具类
+3. 增加BufferUtil
+
 ### 1.0.5
 1. 添加StringBuilderPool，为Dson仓库服务
 2. ObjectPool接口删除不必要方法

@@ -31,6 +31,9 @@ namespace Wjybxx.Commons.IO;
 [NotThreadSafe]
 public class StringBuilderPool : IObjectPool<StringBuilder>
 {
+    private const int DefaultInitCapacity = 1024;
+    private const int DefaultMaxCapacity = 64 * 1024;
+
     private readonly int _poolSize;
     private readonly int _initCapacity;
     private readonly int _maxCapacity;
@@ -42,7 +45,9 @@ public class StringBuilderPool : IObjectPool<StringBuilder>
     /// <param name="poolSize">池大小</param>
     /// <param name="initCapacity">Builder的初始空间</param>
     /// <param name="maxCapacity">Builder的最大空间，超过空间的Builder不会被回收复用</param>
-    public StringBuilderPool(int poolSize, int initCapacity, int maxCapacity = int.MaxValue) {
+    public StringBuilderPool(int poolSize,
+                             int initCapacity = DefaultInitCapacity,
+                             int maxCapacity = DefaultMaxCapacity) {
         if (poolSize < 0 || initCapacity < 0 || maxCapacity < 0) {
             throw new ArgumentException(
                 $"{nameof(poolSize)}: {poolSize}, {nameof(initCapacity)}: {initCapacity}, {nameof(maxCapacity)}: {maxCapacity}");

@@ -73,8 +73,8 @@ public class LocalStringBuilderPool implements ObjectPool<StringBuilder> {
     static {
         // 全小写看着费劲...因此使用大驼峰
         POOL_SIZE = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalStringBuilderPool.PoolSize", 8);
-        INIT_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalStringBuilderPool.InitCapacity", 4096);
-        MAX_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalStringBuilderPool.MaxCapacity", Integer.MAX_VALUE);
+        INIT_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalStringBuilderPool.InitCapacity", 1024);
+        MAX_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalStringBuilderPool.MaxCapacity", 64 * 1024);
         THREAD_LOCAL_INST = ThreadLocal.withInitial(() -> new StringBuilderPool(POOL_SIZE, INIT_CAPACITY, MAX_CAPACITY));
     }
 

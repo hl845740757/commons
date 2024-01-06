@@ -68,7 +68,7 @@ public class ArrayPoolTest {
         int minLen = 64;
         int maxLen = 1024;
         SimpleArrayPool<T> arrayPool = new SimpleArrayPool<>(arrayType, 4, minLen, maxLen);
-        T object = arrayPool.rent(1024);
+        T object = arrayPool.rent(1024, true);
         arrayPool.returnOne(object, true);
     }
 }

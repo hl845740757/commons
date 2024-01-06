@@ -33,6 +33,8 @@ import java.util.function.Consumer;
 @NotThreadSafe
 public final class SimpleArrayPool<T> implements ArrayPool<T> {
 
+    private static final int DEFAULT_MAX_CAPACITY = 1024 * 1024;
+
     private final Class<T> arrayType;
     private final int poolSize;
     private final int initCapacity;
@@ -41,6 +43,15 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
 
     private final TreeSet<Node<T>> freeArrays;
     private final Consumer<T> clearHandler;
+
+    /**
+     * @param arrayType    数组类型
+     * @param poolSize     池大小
+     * @param initCapacity 数组初始大小
+     */
+    public SimpleArrayPool(Class<T> arrayType, int poolSize, int initCapacity) {
+        this(arrayType, poolSize, initCapacity, DEFAULT_MAX_CAPACITY, false);
+    }
 
     /**
      * @param arrayType    数组类型
@@ -57,7 +68,7 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
      * @param poolSize     池大小
      * @param initCapacity 数组初始大小
      * @param maxCapacity  数组最大大小 -- 超过大小的数组不会放入池中
-     * @param clear        是否清理归还到池中数组
+     * @param clear        数组归还到池时是否清理
      */
     public SimpleArrayPool(Class<T> arrayType, int poolSize, int initCapacity, int maxCapacity, boolean clear) {
         if (arrayType.getComponentType() == null) {
@@ -87,12 +98,21 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
         return (T) Array.newInstance(arrayType.getComponentType(), initCapacity);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public T rent(int minimumLength) {
+        return rent(minimumLength, false);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public T rent(int minimumLength, boolean clear) {
         Node<T> ceilingNode = freeArrays.ceiling(new LengthNode<>(minimumLength));
         if (ceilingNode != null) {
-            return ceilingNode.array();
+            T array = ceilingNode.array();
+            if (!this.clear && clear) { // 默认不清理的情况下用户请求有效
+                clearHandler.accept(array);
+            }
+            return array;
         }
         return (T) Array.newInstance(arrayType.getComponentType(), minimumLength);
     }
@@ -104,7 +124,7 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
 
     @Override
     public void returnOne(T array, boolean clear) {
-        returnOneImpl(array, this.clear || clear);
+        returnOneImpl(array, this.clear || clear); // 默认不清理的情况下用户请求有效
     }
 
     private void returnOneImpl(T array, boolean clear) {
@@ -177,8 +197,12 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
 
     // region clear handle
 
+    public static boolean isRefArray(Class<?> arrayType) {
+        return !arrayType.getComponentType().isPrimitive();
+    }
+
     @SuppressWarnings("unchecked")
-    public Consumer<T> findClearHandler(Class<T> arrayType) {
+    public static <T> Consumer<T> findClearHandler(Class<T> arrayType) {
         Class<?> componentType = arrayType.getComponentType();
         if (!componentType.isPrimitive()) {
             return (Consumer<T>) clear_objectArray;

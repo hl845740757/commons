@@ -67,8 +67,8 @@ public class LocalStringBuilderPool : IObjectPool<StringBuilder>
 
     static LocalStringBuilderPool() {
         PoolSize = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.LocalStringBuilderPool.PoolSize", 8);
-        InitCapacity = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.LocalStringBuilderPool.InitCapacity", 4096);
-        MaxCapacity = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.LocalStringBuilderPool.MaxCapacity", int.MaxValue);
+        InitCapacity = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.LocalStringBuilderPool.InitCapacity", 1024);
+        MaxCapacity = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.LocalStringBuilderPool.MaxCapacity", 64 * 1024);
         ThreadLocalInst = new ThreadLocal<StringBuilderPool>(() => new StringBuilderPool(PoolSize, InitCapacity, MaxCapacity));
     }
 }

@@ -33,12 +33,20 @@ public interface ArrayPool<T> extends ObjectPool<T> {
     T rent();
 
     /**
-     * 注意：返回的字节数组可能大于期望的数组长度
+     * 1.返回的字节数组可能大于期望的数组长度4
+     * 2.默认情况下不清理
      *
      * @param minimumLength 期望的最小数组长度
      * @return 池化的字节数组
      */
     T rent(int minimumLength);
+
+    /**
+     * @param minimumLength 期望的最小数组长度
+     * @param clear         返回前是否先清理，这对于共享池来说比较重要
+     * @return 池化的字节数组
+     */
+    T rent(int minimumLength, boolean clear);
 
     /**
      * 归还数组到池

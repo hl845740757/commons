@@ -42,7 +42,7 @@ public static partial class CollectionUtil
         if (ReferenceEquals(self, other)) {
             return true;
         }
-        
+
         if (self.Count != other.Count) {
             return false;
         }
@@ -75,7 +75,7 @@ public static partial class CollectionUtil
         if (typeof(TValue).IsValueType) {
             return ContentEquals(self, other, EqualityComparer<TValue>.Default);
         }
-        
+
         if (self.Count != other.Count) {
             return false;
         }
@@ -117,7 +117,7 @@ public static partial class CollectionUtil
         if (ReferenceEquals(self, other)) {
             return true;
         }
-        
+
         if (self.Count != other.Count) {
             return false;
         }
