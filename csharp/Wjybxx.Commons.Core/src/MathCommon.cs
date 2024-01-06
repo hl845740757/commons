@@ -71,6 +71,41 @@ public static class MathCommon
 
     #endregion
 
+    #region shift
+
+    // c#没有一开始就支持逻辑右移...C#11提供了逻辑右移，但目前.NET6是主流
+    /// <summary>
+    /// 逻辑右移
+    /// </summary>
+    /// <param name="val"></param>
+    /// <param name="offset">偏移量</param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException">offset非法</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int LogicalShiftRight(int val, int offset) {
+        if (offset < 0) throw new ArgumentException("invalid offset " + offset);
+        if (offset == 0) return val;
+        uint uval = (uint)val;
+        return (int)(uval >> offset);
+    }
+
+    /// <summary>
+    /// 逻辑右移
+    /// </summary>
+    /// <param name="val"></param>
+    /// <param name="offset">偏移量</param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException">offset非法</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long LogicalShiftRight(long val, int offset) {
+        if (offset < 0) throw new ArgumentException("invalid offset " + offset);
+        if (offset == 0) return val;
+        ulong uval = (ulong)val;
+        return (long)(uval >> offset);
+    }
+
+    #endregion
+
     #region min/max
 
     public static int Min(int a, int b, int c) {
