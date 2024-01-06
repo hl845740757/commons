@@ -51,6 +51,10 @@ public class MutableDouble extends Number implements MutableNumber<Double>, Comp
         this.value = value;
     }
 
+    public void setValue(final double value) {
+        this.value = value;
+    }
+
     @Override
     public int intValue() {
         return (int) value;

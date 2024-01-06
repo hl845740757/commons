@@ -51,6 +51,10 @@ public class MutableInt extends Number implements MutableNumber<Integer>, Compar
         this.value = value;
     }
 
+    public void setValue(final int value) {
+        this.value = value;
+    }
+
     @Override
     public int intValue() {
         return value;

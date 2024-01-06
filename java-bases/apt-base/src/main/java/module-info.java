@@ -6,8 +6,8 @@ module wjybxx.commons.aptbase {
     requires jsr305;
     requires com.squareup.javapoet;
 
-    requires java.compiler;
-    requires wjybxx.commons.base;
+    requires transitive java.compiler;
+    requires transitive wjybxx.commons.base;
 
     exports cn.wjybxx.apt;
     opens cn.wjybxx.apt;
