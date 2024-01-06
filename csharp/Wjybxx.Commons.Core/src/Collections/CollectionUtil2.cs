@@ -19,14 +19,17 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Wjybxx.Commons.Collections;
 
 /// <summary>
-/// 该类用于实现Equals
+/// 该类用于实现Equals和ToString
 /// </summary>
 public static partial class CollectionUtil
 {
+    #region equals
+
     /// <summary>
     /// 比较两个Set集合的内容是否相等
     /// </summary>
@@ -59,10 +62,8 @@ public static partial class CollectionUtil
     /// <summary>
     /// 比较两个字典的内容是否相等，忽略KV顺序
     /// </summary>
-    /// <param name="self"></param>
+    /// <param name="self">不可为Null</param>
     /// <param name="other"></param>
-    /// <typeparam name="TKey"></typeparam>
-    /// <typeparam name="TValue"></typeparam>
     /// <returns></returns>
     public static bool ContentEquals<TKey, TValue>(IDictionary<TKey, TValue> self, IDictionary<TKey, TValue>? other) {
         if (self == null) throw new ArgumentNullException(nameof(self));
@@ -101,11 +102,9 @@ public static partial class CollectionUtil
     /// <summary>
     /// 比较两个字典的内容是否相等，忽略KV顺序
     /// </summary>
-    /// <param name="self"></param>
+    /// <param name="self">不可为Null</param>
     /// <param name="other"></param>
     /// <param name="comparer">value的比较器，用于避免装箱</param>
-    /// <typeparam name="TKey"></typeparam>
-    /// <typeparam name="TValue"></typeparam>
     /// <returns></returns>
     public static bool ContentEquals<TKey, TValue>(IDictionary<TKey, TValue> self, IDictionary<TKey, TValue>? other,
                                                    IEqualityComparer<TValue> comparer) {
@@ -139,4 +138,65 @@ public static partial class CollectionUtil
         }
         return matchCount == self.Count;
     }
+
+    #endregion
+
+    #region ToString
+
+    /// <summary>
+    /// 打印集合的详细信息
+    /// （暂不递归）
+    /// </summary>
+    public static string ToString<T>(ICollection<T> collection) {
+        if (collection == null) throw new ArgumentNullException(nameof(collection));
+        StringBuilder sb = new StringBuilder(64);
+        sb.Append('[');
+        foreach (T value in collection) {
+            if (sb.Length > 0) {
+                sb.Append(',');
+            }
+            if (value == null) {
+                sb.Append("null");
+            } else {
+                sb.Append(value.ToString());
+            }
+        }
+        sb.Append(']');
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// 打印字典的详细信息
+    /// （暂不递归）
+    /// <code>
+    /// [[k1=v1], [k1=v2],[k3=v3]... ]
+    /// </code>
+    /// </summary>
+    public static string ToString<TKey, TValue>(IDictionary<TKey, TValue> dictionary) {
+        if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
+        StringBuilder sb = new StringBuilder(64);
+        sb.Append('[');
+        foreach (KeyValuePair<TKey, TValue> pair in dictionary) {
+            if (sb.Length > 0) {
+                sb.Append(',');
+            }
+            sb.Append('[');
+            if (pair.Key == null) {
+                sb.Append("null=");
+            } else {
+                sb.Append(pair.Key.ToString());
+                sb.Append('=');
+            }
+            if (pair.Value == null) {
+                sb.Append("null");
+            } else {
+                sb.Append(pair.Value.ToString());
+            }
+            sb.Append(']');
+        }
+        sb.Append(']');
+        return sb.ToString();
+    }
+
+    #endregion
 }

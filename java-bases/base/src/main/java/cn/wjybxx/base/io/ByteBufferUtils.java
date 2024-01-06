@@ -24,14 +24,22 @@ import java.nio.Buffer;
  * @author wjybxx
  * date - 2024/1/6
  */
+@SuppressWarnings("unused")
 public class ByteBufferUtils {
 
+    /**
+     * 检查buffer参数
+     *
+     * @param buffer 要检查的数组
+     * @param offset 数据的起始索引
+     * @param length 数据的长度
+     */
     public static void checkBuffer(byte[] buffer, int offset, int length) {
         checkBuffer(buffer.length, offset, length);
     }
 
     /**
-     * 允许{@code offset + length == bufferLength}
+     * 检查buffer参数
      *
      * @param bufferLength buffer数组的长度
      * @param offset       数据的起始索引
@@ -44,6 +52,12 @@ public class ByteBufferUtils {
         }
     }
 
+    /**
+     * 检查buffer参数
+     *
+     * @param bufferLength buffer数组的长度
+     * @param offset       数据的起始索引
+     */
     public static void checkBuffer(int bufferLength, int offset) {
         if (offset < 0 || offset > bufferLength) {
             throw new IllegalArgumentException(String.format("Array range is invalid. Buffer.length=%d, offset=%d",
