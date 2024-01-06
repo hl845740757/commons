@@ -19,13 +19,14 @@ package cn.wjybxx.base.io;
 import cn.wjybxx.base.pool.ObjectPool;
 
 /**
- * Java不是真泛型，不能直接定义ArrayPool，
- * 不过对于IO操作而言，绝大多数情况下使用字节数组的池就可以。
+ * 数组池
+ * Java不是真泛型，因此泛型不是数组元素的类型，而是数组的类型。
  *
+ * @param <T> 数组的类型
  * @author wjybxx
  * date - 2024/1/3
  */
-public interface ByteArrayPool extends ObjectPool<byte[]> {
+public interface ArrayPool<T> extends ObjectPool<T> {
 
     /**
      * 注意：返回的字节数组可能大于期望的数组长度
@@ -33,17 +34,19 @@ public interface ByteArrayPool extends ObjectPool<byte[]> {
      * @param minimumLength 期望的最小数组长度
      * @return 池化的字节数组
      */
-    byte[] rent(int minimumLength);
+    T rent(int minimumLength);
 
     /** 归还数组到池，默认情况下不清理数据 */
     @Override
-    void returnOne(byte[] buffer);
+    default void returnOne(T array) {
+        returnOne(array, false);
+    }
 
     /**
      * 归还数组到池
      *
-     * @param buffer 租借的对象
-     * @param clear  是否清理数组
+     * @param array 租借的对象
+     * @param clear 是否清理数组
      */
-    void returnOne(byte[] buffer, boolean clear);
+    void returnOne(T array, boolean clear);
 }

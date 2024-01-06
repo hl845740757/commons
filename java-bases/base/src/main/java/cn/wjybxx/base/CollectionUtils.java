@@ -502,10 +502,16 @@ public class CollectionUtils {
 
     // region set
 
+    /**
+     * @see HashSet#newHashSet(int)
+     */
     public static <E> HashSet<E> newHashSet(int size) {
         return new HashSet<>(capacity(size));
     }
 
+    /**
+     * @see LinkedHashSet#newLinkedHashSet(int)
+     */
     public static <E> LinkedHashSet<E> newLinkedHashSet(int size) {
         return new LinkedHashSet<>(capacity(size));
     }
@@ -544,7 +550,11 @@ public class CollectionUtils {
 
     // region map
 
-    /** 创建一个能存储指定元素数量的HashMap */
+    /**
+     * 创建一个能存储指定元素数量的HashMap
+     *
+     * @see HashMap#newHashMap(int)
+     */
     public static <K, V> HashMap<K, V> newHashMap(int size) {
         return new HashMap<>(capacity(size));
     }
@@ -563,7 +573,11 @@ public class CollectionUtils {
         return map;
     }
 
-    /** 创建一个能存储指定元素数量的LinkedHashMap */
+    /**
+     * 创建一个能存储指定元素数量的LinkedHashMap
+     *
+     * @see LinkedHashMap#newLinkedHashMap(int)
+     */
     public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(int size) {
         return new LinkedHashMap<>(capacity(size));
     }
@@ -717,7 +731,7 @@ public class CollectionUtils {
      * @return 是否成功删除了一个元素
      */
     public static <E> boolean removeFirstMatch(Collection<E> collection, Predicate<? super E> predicate) {
-        if (collection.size() == 0) {
+        if (collection.isEmpty()) {
             return false;
         }
         if (collection instanceof RandomAccess) {
@@ -774,15 +788,13 @@ public class CollectionUtils {
     // region 减少库依赖的方法
 
     /** 计算hash结构的默认数组大小 */
-    public static int capacity(int expectedSize) {
-        Preconditions.checkNonNegative(expectedSize, "expectedSize");
-        if (expectedSize < 3) {
+    public static int capacity(int numMappings) {
+        Preconditions.checkNonNegative(numMappings, "numMappings");
+        if (numMappings < 3) {
             return 4;
         }
-        if (expectedSize < MathCommon.MAX_POWER_OF_TWO) {
-            return (int) ((float) expectedSize / 0.75F + 1.0F);
-        }
-        return Integer.MAX_VALUE;
+        // 改用JDK19 HashMap中的算法
+        return (int) Math.ceil(numMappings / 0.75D);
     }
 
     // endregion

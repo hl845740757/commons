@@ -42,8 +42,8 @@ public class LocalStringBuilderPool : IObjectPool<StringBuilder>
     public void Clear() {
     }
 
-    /** 获取线程本地实例 - 慎用 */
-    public static StringBuilderPool LocalInst() {
+    /** 获取线程本地实例 - 慎用；定义为实例方法，以免和{@link #INSTANCE}的提示冲突 */
+    public StringBuilderPool LocalInst() {
         return ThreadLocalInst.Value!;
     }
 

@@ -30,13 +30,12 @@ import java.util.Objects;
  * date - 2023/8/9
  */
 @NotThreadSafe
-public class StringBuilderPool implements ObjectPool<StringBuilder> {
+public final class StringBuilderPool implements ObjectPool<StringBuilder> {
 
     private final int poolSize;
     private final int initCapacity;
     private final int maxCapacity;
     private final List<StringBuilder> freeBuilders;
-
 
     public StringBuilderPool(int poolSize, int initCapacity) {
         this(poolSize, initCapacity, Integer.MAX_VALUE);

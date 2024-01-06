@@ -17,18 +17,18 @@
 package cn.wjybxx.base.io;
 
 import cn.wjybxx.base.PropertiesUtils;
-import cn.wjybxx.base.pool.ObjectPool;
 
 import java.util.Properties;
 
 /**
  * 基于ThreadLocal的简单buffer池
  * (默认不支持扩容，因此用途有限 -- 外部可以归还扩容后的数组)
+ * (netty的ByteBuf池化是做得比较好的)
  *
  * @author wjybxx
  * date 2023/3/31
  */
-public class LocalByteArrayPool implements ObjectPool<byte[]> {
+public class LocalByteArrayPool implements ArrayPool<byte[]> {
 
     public static final LocalByteArrayPool INSTANCE = new LocalByteArrayPool();
 
@@ -38,8 +38,18 @@ public class LocalByteArrayPool implements ObjectPool<byte[]> {
     }
 
     @Override
-    public void returnOne(byte[] buffer) {
-        THREAD_LOCAL_INST.get().returnOne(buffer);
+    public byte[] rent(int minimumLength) {
+        return THREAD_LOCAL_INST.get().rent(minimumLength);
+    }
+
+    @Override
+    public void returnOne(byte[] array) {
+        THREAD_LOCAL_INST.get().returnOne(array);
+    }
+
+    @Override
+    public void returnOne(byte[] array, boolean clear) {
+        THREAD_LOCAL_INST.get().returnOne(array, clear);
     }
 
     @Override
@@ -47,8 +57,8 @@ public class LocalByteArrayPool implements ObjectPool<byte[]> {
 
     }
 
-    /** 获取线程本地实例 - 慎用 */
-    public static SimpleByteArrayPool localInst() {
+    /** 获取线程本地实例 - 慎用；定义为实例方法，以免和{@link #INSTANCE}的提示冲突 */
+    public SimpleArrayPool<byte[]> localInst() {
         return THREAD_LOCAL_INST.get();
     }
 
@@ -59,14 +69,14 @@ public class LocalByteArrayPool implements ObjectPool<byte[]> {
     /** 池中可放入的最大字节数组 */
     private static final int MAX_CAPACITY;
     /** 封装以便我们可以在某些时候去除包装 */
-    private static final ThreadLocal<SimpleByteArrayPool> THREAD_LOCAL_INST;
+    private static final ThreadLocal<SimpleArrayPool<byte[]>> THREAD_LOCAL_INST;
 
     static {
         Properties properties = System.getProperties();
         POOL_SIZE = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalByteArrayPool.PoolSize", 4);
         INIT_CAPACITY = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalByteArrayPool.InitCapacity", 64 * 1024);
         MAX_CAPACITY = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalByteArrayPool.MaxCapacity", 1024 * 1024);
-        THREAD_LOCAL_INST = ThreadLocal.withInitial(() -> new SimpleByteArrayPool(POOL_SIZE, INIT_CAPACITY, MAX_CAPACITY));
+        THREAD_LOCAL_INST = ThreadLocal.withInitial(() -> new SimpleArrayPool<>(byte[].class, POOL_SIZE, INIT_CAPACITY, MAX_CAPACITY));
     }
 
 }

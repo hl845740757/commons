@@ -17,7 +17,6 @@
 package cn.wjybxx.base.io;
 
 import cn.wjybxx.base.PropertiesUtils;
-import cn.wjybxx.base.pool.ObjectPool;
 
 import java.util.Properties;
 
@@ -28,7 +27,7 @@ import java.util.Properties;
  * @author wjybxx
  * date 2023/3/31
  */
-public class LocalCharArrayPool implements ObjectPool<char[]> {
+public class LocalCharArrayPool implements ArrayPool<char[]> {
 
     public static final LocalCharArrayPool INSTANCE = new LocalCharArrayPool();
 
@@ -38,8 +37,18 @@ public class LocalCharArrayPool implements ObjectPool<char[]> {
     }
 
     @Override
+    public char[] rent(int minimumLength) {
+        return THREAD_LOCAL_INST.get().rent(minimumLength);
+    }
+
+    @Override
     public void returnOne(char[] buffer) {
         THREAD_LOCAL_INST.get().returnOne(buffer);
+    }
+
+    @Override
+    public void returnOne(char[] array, boolean clear) {
+        THREAD_LOCAL_INST.get().returnOne(array, clear);
     }
 
     @Override
@@ -47,8 +56,8 @@ public class LocalCharArrayPool implements ObjectPool<char[]> {
 
     }
 
-    /** 获取线程本地实例 - 慎用 */
-    public static SimpleCharArrayPool localInst() {
+    /** 获取线程本地实例 - 慎用；定义为实例方法，以免和{@link #INSTANCE}的提示冲突 */
+    public SimpleArrayPool<char[]> localInst() {
         return THREAD_LOCAL_INST.get();
     }
 
@@ -59,14 +68,14 @@ public class LocalCharArrayPool implements ObjectPool<char[]> {
     /** 池中可放入的最大char数组 */
     private static final int MAX_CAPACITY;
     /** 封装以便我们可以在某些时候去除包装 */
-    private static final ThreadLocal<SimpleCharArrayPool> THREAD_LOCAL_INST;
+    private static final ThreadLocal<SimpleArrayPool<char[]>> THREAD_LOCAL_INST;
 
     static {
         Properties properties = System.getProperties();
         POOL_SIZE = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalCharArrayPool.PoolSize", 4);
         INIT_CAPACITY = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalCharArrayPool.InitCapacity", 1024);
         MAX_CAPACITY = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalCharArrayPool.MaxCapacity", 64 * 1024);
-        THREAD_LOCAL_INST = ThreadLocal.withInitial(() -> new SimpleCharArrayPool(POOL_SIZE, INIT_CAPACITY, MAX_CAPACITY));
+        THREAD_LOCAL_INST = ThreadLocal.withInitial(() -> new SimpleArrayPool<>(char[].class, POOL_SIZE, INIT_CAPACITY, MAX_CAPACITY));
     }
 
 }
