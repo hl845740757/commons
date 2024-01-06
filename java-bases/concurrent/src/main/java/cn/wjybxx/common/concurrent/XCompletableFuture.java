@@ -16,7 +16,7 @@
 
 package cn.wjybxx.common.concurrent;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
+import cn.wjybxx.base.ex.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

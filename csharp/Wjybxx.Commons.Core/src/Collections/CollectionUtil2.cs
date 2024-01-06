@@ -151,8 +151,11 @@ public static partial class CollectionUtil
         if (collection == null) throw new ArgumentNullException(nameof(collection));
         StringBuilder sb = new StringBuilder(64);
         sb.Append('[');
+        bool first = true;
         foreach (T value in collection) {
-            if (sb.Length > 0) {
+            if (first) {
+                first = false;
+            } else {
                 sb.Append(',');
             }
             if (value == null) {
@@ -176,8 +179,11 @@ public static partial class CollectionUtil
         if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
         StringBuilder sb = new StringBuilder(64);
         sb.Append('[');
+        bool first = true;
         foreach (KeyValuePair<TKey, TValue> pair in dictionary) {
-            if (sb.Length > 0) {
+            if (first) {
+                first = false;
+            } else {
                 sb.Append(',');
             }
             sb.Append('[');
