@@ -62,7 +62,7 @@ public class DateTimeTest
     [Test]
     public void TestOffsetParse() {
         int hour = 8;
-        int seconds = 8 * 3600;
+        int seconds = hour * 3600;
 
         Assert.That(DatetimeUtil.ParseOffset("+8"), Is.EqualTo(seconds));
         Assert.That(DatetimeUtil.ParseOffset("+08"), Is.EqualTo(seconds));
