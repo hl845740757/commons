@@ -39,7 +39,7 @@ public class DefaultArrayPool<T> : IArrayPool<T>
     /// </summary>
     /// <param name="initCapacity">默认分配空间</param>
     /// <param name="maxCapacity">最近数组长度；超过大小的数组不会放入池中</param>
-    /// <param name="clear">数组规划到池中时是否清理</param>
+    /// <param name="clear">数组归还到池中时是否清理</param>
     /// <exception cref="ArgumentException"></exception>
     public DefaultArrayPool(int initCapacity, int maxCapacity, bool clear = false) {
         if (initCapacity < 0 || maxCapacity < 0) {
@@ -48,6 +48,23 @@ public class DefaultArrayPool<T> : IArrayPool<T>
         _initCapacity = initCapacity;
         _clear = clear;
         _arrayPool = ArrayPool<T>.Create(maxCapacity, 16);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="arrayPool">被代理的池</param>
+    /// <param name="initCapacity">默认分配空间</param>
+    /// <param name="clear">数组归还到池中时是否清理</param>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="ArgumentNullException"></exception>
+    public DefaultArrayPool(ArrayPool<T> arrayPool, int initCapacity, bool clear = false) {
+        if (initCapacity < 0) {
+            throw new ArgumentException($"{nameof(initCapacity)}: {initCapacity}");
+        }
+        _initCapacity = initCapacity;
+        _clear = clear;
+        _arrayPool = arrayPool ?? throw new ArgumentNullException(nameof(arrayPool));
     }
 
     public T[] Rent() {

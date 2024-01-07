@@ -16,7 +16,6 @@
 
 #endregion
 
-using System;
 using System.Text;
 using System.Threading;
 using Wjybxx.Commons.Pool;
