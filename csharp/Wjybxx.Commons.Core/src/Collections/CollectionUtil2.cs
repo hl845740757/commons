@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Wjybxx.Commons.Collections;
@@ -32,12 +33,22 @@ public static partial class CollectionUtil
 
     /// <summary>
     /// 比较两个Set集合的内容是否相等
+    /// (该接口用于支持系统接口)
     /// </summary>
-    /// <param name="self"></param>
-    /// <param name="other"></param>
-    /// <typeparam name="TKey"></typeparam>
-    /// <returns></returns>
-    public static bool ContentEquals<TKey>(IGenericSet<TKey> self, IGenericSet<TKey>? other) {
+    /// <returns>如果链各个集合大小相等，且value相同则返回true</returns>
+    public static bool ContentEquals<TKey>(this IGenericSet<TKey> self, ISet<TKey>? other) {
+        return SetEquals(self, other);
+    }
+
+    /// <summary>
+    /// 比较两个Set集合的内容是否相等
+    /// </summary>
+    /// <returns>如果链各个集合大小相等，且value相同则返回true</returns>
+    public static bool ContentEquals<TKey>(this IGenericSet<TKey> self, IGenericSet<TKey>? other) {
+        return SetEquals(self, other);
+    }
+
+    private static bool SetEquals<TKey>(ICollection<TKey> self, ICollection<TKey>? other) {
         if (self == null) throw new ArgumentNullException(nameof(self));
         if (other == null) {
             return false;
@@ -58,73 +69,35 @@ public static partial class CollectionUtil
         }
         return matchCount == self.Count;
     }
-
+    
     /// <summary>
     /// 比较两个字典的内容是否相等，忽略KV顺序
-    /// </summary>
-    /// <param name="self">不可为Null</param>
-    /// <param name="other"></param>
-    /// <returns></returns>
-    public static bool ContentEquals<TKey, TValue>(IDictionary<TKey, TValue> self, IDictionary<TKey, TValue>? other) {
-        if (self == null) throw new ArgumentNullException(nameof(self));
-        if (other == null) {
-            return false;
-        }
-        if (ReferenceEquals(self, other)) {
-            return true;
-        }
-        if (typeof(TValue).IsValueType) {
-            return ContentEquals(self, other, EqualityComparer<TValue>.Default);
-        }
-
-        if (self.Count != other.Count) {
-            return false;
-        }
-        int matchCount = 0;
-        foreach (KeyValuePair<TKey, TValue> pair in self) {
-            try {
-                // 部分字典key为null直接抛出异常，而不是返回false...
-                if (!other.TryGetValue(default!, out TValue value)) {
-                    return false;
-                }
-                if (!pair.Value.Equals(value)) {
-                    return false;
-                }
-                matchCount++;
-            }
-            catch (ArgumentException) {
-                return false;
-            }
-        }
-        return matchCount == self.Count;
-    }
-
-    /// <summary>
-    /// 比较两个字典的内容是否相等，忽略KV顺序
+    /// 1.真泛型下无法简单递归，因此依赖value自身也调用该方法...
+    /// 2.由于支持系统库类型，因此不设定为扩展方法
     /// </summary>
     /// <param name="self">不可为Null</param>
     /// <param name="other"></param>
     /// <param name="comparer">value的比较器，用于避免装箱</param>
     /// <returns></returns>
-    public static bool ContentEquals<TKey, TValue>(IDictionary<TKey, TValue> self, IDictionary<TKey, TValue>? other,
-                                                   IEqualityComparer<TValue> comparer) {
+    public static bool ContentEquals<TKey, TValue>(IDictionary<TKey, TValue> self,
+                                                   IDictionary<TKey, TValue>? other,
+                                                   IEqualityComparer<TValue>? comparer = null) {
         if (self == null) throw new ArgumentNullException(nameof(self));
-        if (comparer == null) throw new ArgumentNullException(nameof(comparer));
         if (other == null) {
             return false;
         }
         if (ReferenceEquals(self, other)) {
             return true;
         }
-
         if (self.Count != other.Count) {
             return false;
         }
+        comparer ??= EqualityComparer<TValue>.Default;
         int matchCount = 0;
         foreach (KeyValuePair<TKey, TValue> pair in self) {
             try {
                 // 部分字典key为null直接抛出异常，而不是返回false...
-                if (!other.TryGetValue(default!, out TValue value)) {
+                if (!other.TryGetValue(pair.Key, out TValue value)) {
                     return false;
                 }
                 if (!comparer.Equals(pair.Value, value)) {

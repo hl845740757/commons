@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Collections;
 
@@ -122,6 +123,53 @@ public static partial class CollectionUtil
         return IndexOfRef(list, element) >= 0;
     }
 
+    /// <summary>
+    /// 交换两个位置的元素
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Swap<T>(T[] list, int i, int j) {
+        T a = list[i];
+        T b = list[j];
+        list[i] = b;
+        list[j] = a;
+    }
+
+    /// <summary>
+    /// 洗牌算法
+    /// </summary>
+    /// <param name="list">要打乱的列表</param>
+    /// <param name="rnd">随机种子</param>
+    /// <typeparam name="T"></typeparam>
+    public static void Shuffle<T>(T[] list, Random? rnd = null) {
+        rnd ??= Random.Shared;
+        int size = list.Length;
+        for (int i = size; i > 1; i--) {
+            Swap(list, i - 1, rnd.Next(i));
+        }
+    }
+
+    /// <summary>
+    /// 交换两个位置的元素
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Swap<T>(Span<T> list, int i, int j) {
+        T a = list[i];
+        T b = list[j];
+        list[i] = b;
+        list[j] = a;
+    }
+
+    /// <summary>
+    /// 洗牌算法
+    /// </summary>
+    public static void Shuffle<T>(Span<T> list, Random? rnd = null) {
+        rnd ??= Random.Shared;
+        int size = list.Length;
+        for (int i = size; i > 1; i--) {
+            Swap(list, i - 1, rnd.Next(i));
+        }
+    }
+
     #endregion
 
     #region list
@@ -184,6 +232,33 @@ public static partial class CollectionUtil
         }
         list.RemoveAt(index);
         return true;
+    }
+
+    /// <summary>
+    /// 交换两个位置的元素
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Swap<T>(IList<T> list, int i, int j) {
+        T a = list[i];
+        T b = list[j];
+        list[i] = b;
+        list[j] = a;
+    }
+
+    /// <summary>
+    /// 洗牌算法
+    /// 1.尽量只用于数组列表
+    /// 2.DotNet8开始自带洗牌算法
+    /// </summary>
+    /// <param name="list">要打乱的列表</param>
+    /// <param name="rnd">随机种子</param>
+    /// <typeparam name="T"></typeparam>
+    public static void Shuffle<T>(IList<T> list, Random? rnd = null) {
+        rnd ??= Random.Shared;
+        int size = list.Count;
+        for (int i = size; i > 1; i--) {
+            Swap(list, i - 1, rnd.Next(i));
+        }
     }
 
     /** 创建一个单元素的List */

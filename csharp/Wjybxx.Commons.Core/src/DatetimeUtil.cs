@@ -178,6 +178,24 @@ public static class DatetimeUtil
         return new TimeOnly(millis * TicksPerMillisecond);
     }
 
+    /// <summary>
+    /// 获取日期时间的日期部分
+    /// </summary>
+    /// <param name="dateTime"></param>
+    /// <returns></returns>
+    public static DateOnly ToDateOnly(this in DateTime dateTime) {
+        return new DateOnly(dateTime.Year, dateTime.Month, dateTime.Day);
+    }
+
+    /// <summary>
+    /// 获取日期时间的时间部分
+    /// </summary>
+    /// <param name="dateTime"></param>
+    /// <returns></returns>
+    public static TimeOnly ToTimeOnly(this in DateTime dateTime) {
+        return new TimeOnly(dateTime.Hour, dateTime.Minute, dateTime.Second);
+    }
+
     #endregion
 
     #region parse/format
@@ -231,6 +249,7 @@ public static class DatetimeUtil
 
     /// <summary>
     /// 解析时区偏移
+    /// 支持的格式包括：<code>Z, ±H, ±HH, ±H:mm, ±HH:mm, ±HH:mm:ss</code>
     /// </summary>
     /// <param name="offsetString"></param>
     /// <returns>时区偏移秒数</returns>
@@ -278,11 +297,7 @@ public static class DatetimeUtil
     /// <summary>
     /// 格式化时间偏移
     /// 可能的结果：
-    /// <code>
-    /// Z
-    /// ±HH:mm
-    /// ±HH:mm:ss
-    /// </code>
+    /// <code> Z, ±HH:mm, ±HH:mm:ss</code>
     /// </summary>
     /// <param name="offsetSeconds">时区偏移秒数</param>
     /// <returns></returns>

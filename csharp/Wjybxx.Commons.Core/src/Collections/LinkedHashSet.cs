@@ -61,7 +61,9 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
 
     public LinkedHashSet(ICollection<TKey> src)
         : this(src.Count, HashCommon.DefaultLoadFactor) {
-        AddRange(src);
+        foreach (var key in src) {
+            Add(key);
+        }
     }
 
     public LinkedHashSet(IEqualityComparer<TKey> comparer)
@@ -153,6 +155,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
         return TryInsert(key, InsertionOrder.Tail, InsertionBehavior.None);
     }
 
+    [Obsolete("Instead AddAll")]
     public bool AddRange(IEnumerable<TKey> collection) {
         if (collection == null) throw new ArgumentNullException(nameof(collection));
         if (collection is ICollection<TKey> c) {
