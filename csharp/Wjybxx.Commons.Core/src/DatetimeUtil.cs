@@ -243,27 +243,22 @@ public static class DatetimeUtil
             throw new ArgumentException("Invalid offsetString, plus/minus not found when expected: " + offsetString);
         }
         // 不想写得太复杂，补全后解析
+        StringBuilder sb = new StringBuilder(offsetString, 9);
         switch (offsetString.Length) {
             case 2: { // ±H
-                offsetString = new StringBuilder(offsetString, 9)
-                    .Insert(1, '0')
-                    .Append(":00:00")
-                    .ToString();
+                sb.Insert(1, '0').Append(":00:00");
                 break;
             }
             case 3: { // ±HH
-                offsetString += ":00:00";
+                sb.Append(":00:00");
                 break;
             }
             case 5: { // ±H:mm
-                offsetString = new StringBuilder(offsetString, 9)
-                    .Insert(1, '0')
-                    .Append(":00")
-                    .ToString();
+                sb.Insert(1, '0').Append(":00");
                 break;
             }
             case 6: { // ±HH:mm
-                offsetString += ":00";
+                sb.Append(":00");
                 break;
             }
             case 9: { // ±HH:mm:ss
@@ -273,7 +268,7 @@ public static class DatetimeUtil
                 throw new ArgumentException("Invalid offsetString: " + offsetString);
             }
         }
-        int seconds = ToSecondOfDay(ParseTime(offsetString.Substring(1)));
+        int seconds = ToSecondOfDay(ParseTime(sb.ToString(1, 8)));
         if (offsetString[0] == '+') {
             return seconds;
         }

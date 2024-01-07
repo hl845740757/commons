@@ -202,6 +202,34 @@ public static class ByteBufferUtil
                 | ((buffer[index + 7] & 0xffL)));
     }
 
+    /// <summary>
+    /// 大端：向buffer中写入一个UInt64
+    /// </summary>
+    public static void SetUInt64(byte[] buffer, int index, ulong value) {
+        buffer[index] = (byte)(value >> 56);
+        buffer[index + 1] = (byte)(value >> 48);
+        buffer[index + 2] = (byte)(value >> 40);
+        buffer[index + 3] = (byte)(value >> 32);
+        buffer[index + 4] = (byte)(value >> 24);
+        buffer[index + 5] = (byte)(value >> 16);
+        buffer[index + 6] = (byte)(value >> 8);
+        buffer[index + 7] = (byte)value;
+    }
+
+    /// <summary>
+    /// 大端：从buffer中读取一个UInt64
+    /// </summary>
+    public static ulong GetUInt64(byte[] buffer, int index) {
+        return (((buffer[index] & 0xffUL) << 56)
+                | ((buffer[index + 1] & 0xffUL) << 48)
+                | ((buffer[index + 2] & 0xffUL) << 40)
+                | ((buffer[index + 3] & 0xffUL) << 32)
+                | ((buffer[index + 4] & 0xffUL) << 24)
+                | ((buffer[index + 5] & 0xffUL) << 16)
+                | ((buffer[index + 6] & 0xffUL) << 8)
+                | ((buffer[index + 7] & 0xffUL)));
+    }
+
     #endregion
 
     #region 小端编码
@@ -317,6 +345,35 @@ public static class ByteBufferUtil
                 | ((buffer[index + 5] & 0xffL) << 40)
                 | ((buffer[index + 6] & 0xffL) << 48)
                 | ((buffer[index + 7] & 0xffL) << 56));
+    }
+
+
+    /// <summary>
+    /// 小端：向buffer中写入一个UInt64
+    /// </summary>
+    public static void SetUInt64LE(byte[] buffer, int index, ulong value) {
+        buffer[index] = (byte)value;
+        buffer[index + 1] = (byte)(value >> 8);
+        buffer[index + 2] = (byte)(value >> 16);
+        buffer[index + 3] = (byte)(value >> 24);
+        buffer[index + 4] = (byte)(value >> 32);
+        buffer[index + 5] = (byte)(value >> 40);
+        buffer[index + 6] = (byte)(value >> 48);
+        buffer[index + 7] = (byte)(value >> 56);
+    }
+
+    /// <summary>
+    /// 小端：从buffer中读取一个UInt64
+    /// </summary>
+    public static ulong GetUInt64LE(byte[] buffer, int index) {
+        return (((buffer[index] & 0xffUL))
+                | ((buffer[index + 1] & 0xffUL) << 8)
+                | ((buffer[index + 2] & 0xffUL) << 16)
+                | ((buffer[index + 3] & 0xffUL) << 24)
+                | ((buffer[index + 4] & 0xffUL) << 32)
+                | ((buffer[index + 5] & 0xffUL) << 40)
+                | ((buffer[index + 6] & 0xffUL) << 48)
+                | ((buffer[index + 7] & 0xffUL) << 56));
     }
 
     #endregion

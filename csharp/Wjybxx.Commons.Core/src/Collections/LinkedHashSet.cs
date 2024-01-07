@@ -625,6 +625,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
         node.next = _head;
         _head!.prev = node;
         _head = node;
+        _version++;
     }
 
     private void MoveToLast(Node node) {
@@ -643,6 +644,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
         node.prev = _tail;
         _tail!.next = node;
         _tail = node;
+        _version++;
     }
 
     #endregion

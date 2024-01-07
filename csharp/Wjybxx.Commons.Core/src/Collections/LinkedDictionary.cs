@@ -861,6 +861,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         node.next = _head;
         _head!.prev = node;
         _head = node;
+        _version++;
     }
 
     private void MoveToLast(Node node) {
@@ -879,6 +880,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         node.prev = _tail;
         _tail!.next = node;
         _tail = node;
+        _version++;
     }
 
     #endregion
