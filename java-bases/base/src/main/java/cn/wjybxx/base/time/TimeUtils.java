@@ -41,36 +41,41 @@ public class TimeUtils {
     /** 系统时区 */
     public static final ZoneOffset ZONE_OFFSET_SYSTEM = ZoneOffset.systemDefault().getRules().getOffset(LocalDateTime.now());
 
-    /** 一秒的毫秒数 */
-    public static final long SEC = 1000;
-    /** 一分的毫秒数 */
-    public static final long MINUTE = 60 * SEC;
-    /** 一小时的毫秒数 */
-    public static final long HOUR = 60 * MINUTE;
-    /** 一天的毫秒数 */
-    public static final long DAY = 24 * HOUR;
-    /** 一周的毫秒数 */
-    public static final long WEEK = 7 * DAY;
-
-    // 基础单位
-    public static final int MILLIS_PER_SECOND = 1000;
-    public static final int SECONDS_PER_MINUTE = 60;
-    public static final int MINUTES_PER_HOUR = 60;
-    public static final int HOURS_PER_DAY = 24;
-    public static final int DAYS_PER_WEEK = 7;
-
+    /** 1毫秒的纳秒数 */
     public static final long NANOS_PER_MILLI = 1000_000L;
+    /** 1秒的纳秒数 */
     public static final long NANOS_PER_SECOND = 1000_000_000L;
+    /** 1分钟的纳秒数 */
     public static final long NANOS_PER_MINUTES = NANOS_PER_SECOND * 60L;
+    /** 1小时的纳秒数 */
     public static final long NANOS_PER_HOURS = NANOS_PER_MINUTES * 60L;
+    /** 1天的纳秒数 */
     public static final long NANOS_PER_DAY = NANOS_PER_HOURS * 24L;
 
+    /** 1秒的毫秒数 */
+    public static final int MILLIS_PER_SECOND = 1000;
+    /** 1分钟的毫秒数 */
+    public static final int MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND;
+    /** 1小时的毫秒数 */
+    public static final int MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE;
+    /** 1天的毫秒数 */
+    public static final int MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
+    /** 1周的毫秒数 */
+    public static final int MILLIS_PER_WEEK = 7 * MILLIS_PER_DAY;
+
+    /** 1分钟的秒数 */
+    public static final int SECONDS_PER_MINUTE = 60;
+    /** 1小时的秒数 */
     public static final int SECONDS_PER_HOUR = 3600;
+    /** 1天的秒数 */
     public static final int SECONDS_PER_DAY = 3600 * 24;
+    /** 1周的秒数 */
     public static final int SECONDS_PER_WEEK = SECONDS_PER_DAY * 7;
 
-    public static final int MINUTES_PER_DAY = 60 * 24;
-    public static final int MINUTES_PER_WEEK = 60 * 24 * 7;
+    /** 1天的小时数 */
+    public static final int HOURS_PER_DAY = 24;
+    /** 1周的小时数 */
+    public static final int HOURS_PER_WEEK = 24 * 7;
 
     /**
      * 一天的开始：午夜 00:00:00

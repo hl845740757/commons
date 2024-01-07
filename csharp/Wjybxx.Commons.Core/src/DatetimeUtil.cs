@@ -30,16 +30,27 @@ public static class DatetimeUtil
     /** 1秒对应的tick数 */
     public const long TicksPerSecond = TicksPerMillisecond * 1000;
 
+    /** 1毫秒的纳秒数 */
+    public const long NanosPerMilli = 1000_000;
+    /** 1秒的纳秒数 */
+    public const long NanosPerSecond = 1000_000_000;
+    /** 1小时的纳秒数 */
+    public const long NanosPerMinutes = NanosPerSecond * 60L;
+    /** 一小时的纳秒数 */
+    public const long NanosPerHours = NanosPerMinutes * 60L;
+    /** 一天的纳秒数 */
+    public const long NanosPerDay = NanosPerHours * 24L;
+
     /** 1秒的毫秒数 */
-    public const int MillisPerSecond = 1000;
+    public const long MillisPerSecond = 1000;
     /** 1分钟的毫秒数 */
-    public const int MillisPerMinute = MillisPerSecond * 60;
+    public const long MillisPerMinute = MillisPerSecond * 60;
     /** 1小时的毫秒数 */
-    public const int MillisPerHour = MillisPerMinute * 60;
+    public const long MillisPerHour = MillisPerMinute * 60;
     /** 1天的毫秒数 */
-    public const int MillisPerDay = MillisPerHour * 24;
+    public const long MillisPerDay = MillisPerHour * 24;
     /** 1周的毫秒数 */
-    public const int MillisPerWeek = MillisPerDay * 7;
+    public const long MillisPerWeek = MillisPerDay * 7;
 
     /** 1分钟的秒数 */
     public const int SecondsPerMinute = 60;
@@ -56,6 +67,15 @@ public static class DatetimeUtil
     public static readonly TimeSpan ZoneOffsetCst = TimeSpan.FromHours(8);
     /** 系统的时区偏移 */
     public static readonly TimeSpan ZoneOffsetSystem = TimeZoneInfo.Local.BaseUtcOffset;
+
+    /** Unix纪元时间 */
+    public static readonly DateTime UnixEpoch = DateTime.UnixEpoch;
+    /** Unix纪元日期 */
+    public static readonly DateOnly DateUnixEpoch = new DateOnly(1970, 1, 1);
+    /** 一天的开始时间 -- 毫秒 */
+    public static readonly TimeOnly TimeStartOfDay = new TimeOnly(0, 0, 0);
+    /** 一天的结束时间 -- 毫秒 */
+    public static readonly TimeOnly TimeEndOfDay = new TimeOnly(23, 59, 59, 999);
 
     /// <summary>
     /// 获取当前的Unix时间戳(毫秒)
@@ -78,7 +98,7 @@ public static class DatetimeUtil
     /// </summary>
     /// <param name="dateTime"></param>
     /// <returns></returns>
-    public static long ToEpochSeconds(DateTime dateTime) {
+    public static long ToEpochSeconds(in DateTime dateTime) {
         return (long)dateTime.Subtract(DateTime.UnixEpoch).TotalSeconds;
     }
 
@@ -87,7 +107,7 @@ public static class DatetimeUtil
     /// </summary>
     /// <param name="dateTime"></param>
     /// <returns></returns>
-    public static long ToEpochMillis(DateTime dateTime) {
+    public static long ToEpochMillis(in DateTime dateTime) {
         return (long)dateTime.Subtract(DateTime.UnixEpoch).TotalMilliseconds;
     }
 
@@ -114,7 +134,25 @@ public static class DatetimeUtil
     /// </summary>
     /// <param name="dateTime">日期时间</param>
     /// <returns></returns>
-    public static int LengthOfMonth(DateTime dateTime) {
+    public static int LengthOfMonth(in DateTime dateTime) {
         return DateTime.DaysInMonth(dateTime.Year, dateTime.Month);
+    }
+
+    /// <summary>
+    /// 将时间转换为当天的总秒数
+    /// </summary>
+    /// <param name="timeOnly"></param>
+    /// <returns></returns>
+    public static int ToSecondOfDay(in TimeOnly timeOnly) {
+        return (int)(timeOnly.Ticks / TicksPerSecond);
+    }
+
+    /// <summary>
+    /// 将时间转换为当天的总毫秒数
+    /// </summary>
+    /// <param name="timeOnly"></param>
+    /// <returns></returns>
+    public static long ToMillisOfDay(in TimeOnly timeOnly) {
+        return timeOnly.Ticks / TicksPerMillisecond;
     }
 }
