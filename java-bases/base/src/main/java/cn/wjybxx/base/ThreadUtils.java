@@ -36,9 +36,7 @@ public class ThreadUtils {
             StackWalker.Option.SHOW_REFLECT_FRAMES,
             StackWalker.Option.RETAIN_CLASS_REFERENCE));
 
-    /**
-     * 恢复中断
-     */
+    /** 恢复中断 */
     public static void recoveryInterrupted() {
         try {
             Thread.currentThread().interrupt();
@@ -46,9 +44,7 @@ public class ThreadUtils {
         }
     }
 
-    /**
-     * 如果是中断异常，则恢复线程中断状态。
-     */
+    /** 如果是中断异常，则恢复线程中断状态，否则不产生效用 */
     public static void recoveryInterrupted(Throwable t) {
         if (t instanceof InterruptedException) {
             try {

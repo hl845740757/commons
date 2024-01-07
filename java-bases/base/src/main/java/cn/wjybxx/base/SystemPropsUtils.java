@@ -26,6 +26,7 @@ import java.util.Properties;
 /**
  * 系统属性工具类
  * 除了系统属性外，我们不会再使用properties格式的配置文件，会选择json或dson.
+ * (我自身的项目一律会使用dson)
  *
  * @author wjybxx
  * date - 2024/1/5

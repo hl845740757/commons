@@ -32,16 +32,13 @@ public static partial class CollectionUtil
     /// <summary>
     /// 计算hash结构的空间
     /// </summary>
-    /// <param name="expectedCount">期望的元素数量</param>
+    /// <param name="numMappings">期望的元素数量</param>
     /// <returns></returns>
-    public static int Capacity(int expectedCount) {
-        if (expectedCount < 3) {
+    public static int Capacity(int numMappings) {
+        if (numMappings < 3) {
             return 4;
         }
-        if (expectedCount < MathCommon.MaxPowerOfTwo) {
-            return (int)(expectedCount / 0.75F + 1.0F);
-        }
-        return int.MaxValue;
+        return (int)Math.Ceiling(numMappings / 0.75d);
     }
 
     /** behavior是否允许丢弃队列的首部 */

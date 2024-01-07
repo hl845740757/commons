@@ -17,6 +17,8 @@
 #endregion
 
 using System;
+using System.Globalization;
+using System.Text;
 
 namespace Wjybxx.Commons;
 
@@ -72,9 +74,9 @@ public static class DatetimeUtil
     public static readonly DateTime UnixEpoch = DateTime.UnixEpoch;
     /** Unix纪元日期 */
     public static readonly DateOnly DateUnixEpoch = new DateOnly(1970, 1, 1);
-    /** 一天的开始时间 -- 毫秒 */
+    /** 一天的开始时间 */
     public static readonly TimeOnly TimeStartOfDay = new TimeOnly(0, 0, 0);
-    /** 一天的结束时间 -- 毫秒 */
+    /** 一天的结束时间 -- 精确到毫秒 */
     public static readonly TimeOnly TimeEndOfDay = new TimeOnly(23, 59, 59, 999);
 
     /// <summary>
@@ -92,6 +94,17 @@ public static class DatetimeUtil
     public static long CurrentEpochSeconds() {
         return (long)DateTime.UtcNow.Subtract(DateTime.UnixEpoch).TotalSeconds;
     }
+
+    /// <summary>
+    /// 获取给定日期所属月份的天数
+    /// </summary>
+    /// <param name="dateTime">日期时间</param>
+    /// <returns></returns>
+    public static int LengthOfMonth(in DateTime dateTime) {
+        return DateTime.DaysInMonth(dateTime.Year, dateTime.Month);
+    }
+
+    #region 时间戳转换
 
     /// <summary>
     /// 转unix秒时间戳
@@ -130,21 +143,21 @@ public static class DatetimeUtil
     }
 
     /// <summary>
-    /// 获取给定日期所属月份的天数
-    /// </summary>
-    /// <param name="dateTime">日期时间</param>
-    /// <returns></returns>
-    public static int LengthOfMonth(in DateTime dateTime) {
-        return DateTime.DaysInMonth(dateTime.Year, dateTime.Month);
-    }
-
-    /// <summary>
     /// 将时间转换为当天的总秒数
     /// </summary>
     /// <param name="timeOnly"></param>
     /// <returns></returns>
     public static int ToSecondOfDay(in TimeOnly timeOnly) {
         return (int)(timeOnly.Ticks / TicksPerSecond);
+    }
+
+    /// <summary>
+    /// 秒数转时间
+    /// </summary>
+    /// <param name="seconds">一天内的秒数</param>
+    /// <returns></returns>
+    public static TimeOnly TimeOfDaySeconds(int seconds) {
+        return new TimeOnly(seconds * TicksPerSecond);
     }
 
     /// <summary>
@@ -155,4 +168,141 @@ public static class DatetimeUtil
     public static long ToMillisOfDay(in TimeOnly timeOnly) {
         return timeOnly.Ticks / TicksPerMillisecond;
     }
+
+    /// <summary>
+    /// 毫秒数转时间
+    /// </summary>
+    /// <param name="millis">一天内的毫秒数</param>
+    /// <returns></returns>
+    public static TimeOnly TimeOfDayMillis(int millis) {
+        return new TimeOnly(millis * TicksPerMillisecond);
+    }
+
+    #endregion
+
+    #region parse/format
+
+    /// <summary>
+    /// 解析日期时间
+    /// </summary>
+    public static DateTime ParseDateTime(string datetimeString) {
+        return DateTime.ParseExact(datetimeString, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// 解析日期
+    /// </summary>
+    public static DateOnly ParseDate(string dateString) {
+        return DateOnly.ParseExact(dateString, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// 解析时间
+    /// </summary>
+    public static TimeOnly ParseTime(string timeString) {
+        return TimeOnly.ParseExact(timeString, "HH:mm:ss", CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// 格式化日期时间为ISO-8601格式
+    /// 固定为:<code>yyyy-MM-ddTHH:mm:ss</code>
+    /// </summary>
+    /// <param name="dateTime"></param>
+    /// <returns></returns>
+    public static string FormatDateTime(DateTime dateTime) {
+        return dateTime.ToString("s");
+    }
+
+    /// <summary>
+    /// 格式化日期为ISO-8601格式
+    /// 固定为:<code>"yyyy-MM-dd"</code>格式
+    /// </summary>
+    public static string FormatDate(DateOnly dateTime) {
+        return dateTime.ToString("O");
+    }
+
+    /// <summary>
+    /// 格式化时间为ISO-8601格式
+    /// 固定为:<code>HH:mm:ss</code>格式
+    /// </summary>
+    public static string FormatTime(TimeOnly dateTime) {
+        return dateTime.ToString("HH:mm:ss");
+    }
+
+    /// <summary>
+    /// 解析时区偏移
+    /// </summary>
+    /// <param name="offsetString"></param>
+    /// <returns>时区偏移秒数</returns>
+    /// <exception cref="ArgumentException"></exception>
+    public static int ParseOffset(string offsetString) {
+        if (offsetString == "Z" || offsetString == "z") {
+            return 0;
+        }
+        if (offsetString[0] != '+' && offsetString[0] != '-') {
+            throw new ArgumentException("Invalid offsetString, plus/minus not found when expected: " + offsetString);
+        }
+        // 不想写得太复杂，补全后解析
+        switch (offsetString.Length) {
+            case 2: { // ±H
+                offsetString = new StringBuilder(offsetString, 9)
+                    .Insert(1, '0')
+                    .Append(":00:00")
+                    .ToString();
+                break;
+            }
+            case 3: { // ±HH
+                offsetString += ":00:00";
+                break;
+            }
+            case 5: { // ±H:mm
+                offsetString = new StringBuilder(offsetString, 9)
+                    .Insert(1, '0')
+                    .Append(":00")
+                    .ToString();
+                break;
+            }
+            case 6: { // ±HH:mm
+                offsetString += ":00";
+                break;
+            }
+            case 9: { // ±HH:mm:ss
+                break;
+            }
+            default: {
+                throw new ArgumentException("Invalid offsetString: " + offsetString);
+            }
+        }
+        int seconds = ToSecondOfDay(ParseTime(offsetString.Substring(1)));
+        if (offsetString[0] == '+') {
+            return seconds;
+        }
+        return -1 * seconds;
+    }
+
+    /// <summary>
+    /// 格式化时间偏移
+    /// 可能的结果：
+    /// <code>
+    /// Z
+    /// ±HH:mm
+    /// ±HH:mm:ss
+    /// </code>
+    /// </summary>
+    /// <param name="offsetSeconds">时区偏移秒数</param>
+    /// <returns></returns>
+    public static string FormatOffset(int offsetSeconds) {
+        if (offsetSeconds == 0) {
+            return "Z";
+        }
+        string sign = offsetSeconds < 0 ? "-" : "+";
+        string offsetString = FormatTime(TimeOfDaySeconds(Math.Abs(offsetSeconds)));
+        if (offsetSeconds % 60 == 0) { // 没有秒部分
+            return sign + offsetString.Substring(0, 5);
+        } else {
+            return sign + offsetString;
+        }
+    }
+
+    #endregion
 }

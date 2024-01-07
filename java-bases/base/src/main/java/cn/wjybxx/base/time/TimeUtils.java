@@ -68,9 +68,16 @@ public class TimeUtils {
     /** 1小时的秒数 */
     public static final int SECONDS_PER_HOUR = 3600;
     /** 1天的秒数 */
-    public static final int SECONDS_PER_DAY = 3600 * 24;
+    public static final int SECONDS_PER_DAY = SECONDS_PER_HOUR * 24;
     /** 1周的秒数 */
     public static final int SECONDS_PER_WEEK = SECONDS_PER_DAY * 7;
+
+    /** 1小时的分钟数 */
+    public static final int MINUTES_PER_HOUR = 60;
+    /** 1天的分钟数 */
+    public static final int MINUTES_PER_DAY = MINUTES_PER_HOUR * 24;
+    /** 1周的分钟数 */
+    public static final int MINUTES_PER_WEEK = MINUTES_PER_DAY * 7;
 
     /** 1天的小时数 */
     public static final int HOURS_PER_DAY = 24;
@@ -110,11 +117,19 @@ public class TimeUtils {
     }
 
     public static long toMillisOfDay(LocalTime time) {
-        return time.toSecondOfDay() * 1000L + time.getNano() / NANOS_PER_MILLI;
+        return time.toNanoOfDay() / NANOS_PER_MILLI;
+    }
+
+    public static LocalTime timeOfDayMillis(long millis) {
+        return LocalTime.ofNanoOfDay(millis * NANOS_PER_MILLI);
     }
 
     public static int toSecondOfDay(LocalTime time) {
         return time.toSecondOfDay();
+    }
+
+    public static LocalTime timeOfDaySeconds(int seconds) {
+        return LocalTime.ofSecondOfDay(seconds);
     }
 
     /**

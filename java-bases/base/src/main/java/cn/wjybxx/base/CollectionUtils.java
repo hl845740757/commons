@@ -794,7 +794,7 @@ public class CollectionUtils {
             return 4;
         }
         // 改用JDK19 HashMap中的算法
-        return (int) Math.ceil(numMappings / 0.75D);
+        return (int) Math.ceil(numMappings / 0.75d);
     }
 
     // endregion
