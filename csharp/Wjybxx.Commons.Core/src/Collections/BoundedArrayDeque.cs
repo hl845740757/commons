@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Collections;
@@ -27,6 +28,7 @@ namespace Wjybxx.Commons.Collections;
 /// <summary>
 /// 有界双端队列，固定大小不扩容，可以指定溢出策略
 /// </summary>
+[NotThreadSafe]
 public class BoundedArrayDeque<T> : IDeque<T>
 {
     /** 元素类型是否是引用类型 */

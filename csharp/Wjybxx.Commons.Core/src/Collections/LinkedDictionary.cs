@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Collections;
@@ -42,6 +43,7 @@ namespace Wjybxx.Commons.Collections;
 /// <typeparam name="TKey">键的类型，允许为null</typeparam>
 /// <typeparam name="TValue">值的类型，允许为null</typeparam>
 [Serializable]
+[NotThreadSafe]
 public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>, ISerializable
 {
     // C#的泛型是独立的类，因此缓存是独立的

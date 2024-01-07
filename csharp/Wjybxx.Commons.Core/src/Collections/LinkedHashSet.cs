@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Collections;
@@ -34,6 +35,7 @@ namespace Wjybxx.Commons.Collections;
 /// </summary>
 /// <typeparam name="TKey">元素类型，允许为null</typeparam>
 [Serializable]
+[NotThreadSafe]
 public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
 {
     /** len = 2^n + 1，额外的槽用于存储nullKey；总是延迟分配空间，以减少创建空实例的开销 */

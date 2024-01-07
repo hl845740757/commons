@@ -97,7 +97,7 @@ public static partial class CollectionUtil
     public static int LastIndexOfRef<T>(T?[] list, object? element, int? startIndex = null) where T : class {
         int sindex;
         if (startIndex.HasValue) {
-            sindex = Math.Min(list.Length, startIndex.Value);
+            sindex = Math.Min(list.Length - 1, startIndex.Value);
         } else {
             sindex = list.Length - 1;
         }
