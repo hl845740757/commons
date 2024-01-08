@@ -19,8 +19,7 @@
 namespace Wjybxx.Commons.Collections;
 
 /// <summary>
-/// AddFirst在元素已存在时将移动到Set的首部
-/// AddLast在元素已存在时将移动到Set的尾部
+/// 序列集合
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public interface ISequencedSet<T> : ISequencedCollection<T>, IGenericSet<T>
