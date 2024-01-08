@@ -51,6 +51,10 @@ public class MutableFloat extends Number implements MutableNumber<Float>, Compar
         this.value = value;
     }
 
+    public void setValue(final float value) {
+        this.value = value;
+    }
+
     @Override
     public int intValue() {
         return (int) value;

@@ -4,7 +4,7 @@
  * @author wjybxx
  * date - 2023/12/24
  */
-module wjybxx.base {
+module wjybxx.commons.base {
     requires jsr305;
 
     exports cn.wjybxx.base;

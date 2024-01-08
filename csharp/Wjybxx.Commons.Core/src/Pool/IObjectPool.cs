@@ -55,5 +55,5 @@ public interface IObjectPool<T> where T : class
     /// 删除此池中的所有对象
     /// (可空实现)
     /// </summary>
-    void Clear();
+    void FreeAll();
 }

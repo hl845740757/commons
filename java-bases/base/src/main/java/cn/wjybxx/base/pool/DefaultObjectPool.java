@@ -127,7 +127,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public void clear() {
+    public void freeAll() {
         freeObjects.clear();
     }
 

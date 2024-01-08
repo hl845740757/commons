@@ -108,8 +108,8 @@ public class DefaultObjectPool<T> : IObjectPool<T> where T : class
             }
         }
     }
-    
-    public void Clear() {
+
+    public void FreeAll() {
         _freeObjects.Clear();
     }
 }

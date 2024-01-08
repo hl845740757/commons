@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Collections;
@@ -36,6 +37,7 @@ namespace Wjybxx.Commons.Collections;
 /// 1.有一定的转发开销。
 /// 2.查找或随机访问的效率低；不过，我们通常都是队首队尾操作，因此影响较小。
 /// </summary>
+[NotThreadSafe]
 public class MultiChunkDeque<T> : IDeque<T>
 {
     private const int MinChunkSize = 4;

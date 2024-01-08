@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Collections;
 
@@ -32,18 +33,15 @@ public static partial class CollectionUtil
     /// <summary>
     /// 计算hash结构的空间
     /// </summary>
-    /// <param name="expectedCount">期望的元素数量</param>
+    /// <param name="numMappings">期望的元素数量</param>
     /// <returns></returns>
-    public static int Capacity(int expectedCount) {
-        if (expectedCount < 3) {
+    public static int Capacity(int numMappings) {
+        if (numMappings < 3) {
             return 4;
         }
-        if (expectedCount < MathCommon.MaxPowerOfTwo) {
-            return (int)(expectedCount / 0.75F + 1.0F);
-        }
-        return int.MaxValue;
+        return (int)Math.Ceiling(numMappings / 0.75d);
     }
-    
+
     /** behavior是否允许丢弃队列的首部 */
     public static bool AllowDiscardHead(this DequeOverflowBehavior behavior) {
         return behavior == DequeOverflowBehavior.CircleBuffer
@@ -100,7 +98,7 @@ public static partial class CollectionUtil
     public static int LastIndexOfRef<T>(T?[] list, object? element, int? startIndex = null) where T : class {
         int sindex;
         if (startIndex.HasValue) {
-            sindex = Math.Min(list.Length, startIndex.Value);
+            sindex = Math.Min(list.Length - 1, startIndex.Value);
         } else {
             sindex = list.Length - 1;
         }
@@ -123,6 +121,53 @@ public static partial class CollectionUtil
     /** 查询List中是否包含指定对象引用 */
     public static bool ContainsRef<T>(T[] list, T element) where T : class {
         return IndexOfRef(list, element) >= 0;
+    }
+
+    /// <summary>
+    /// 交换两个位置的元素
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Swap<T>(T[] list, int i, int j) {
+        T a = list[i];
+        T b = list[j];
+        list[i] = b;
+        list[j] = a;
+    }
+
+    /// <summary>
+    /// 洗牌算法
+    /// </summary>
+    /// <param name="list">要打乱的列表</param>
+    /// <param name="rnd">随机种子</param>
+    /// <typeparam name="T"></typeparam>
+    public static void Shuffle<T>(T[] list, Random? rnd = null) {
+        rnd ??= Random.Shared;
+        int size = list.Length;
+        for (int i = size; i > 1; i--) {
+            Swap(list, i - 1, rnd.Next(i));
+        }
+    }
+
+    /// <summary>
+    /// 交换两个位置的元素
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Swap<T>(Span<T> list, int i, int j) {
+        T a = list[i];
+        T b = list[j];
+        list[i] = b;
+        list[j] = a;
+    }
+
+    /// <summary>
+    /// 洗牌算法
+    /// </summary>
+    public static void Shuffle<T>(Span<T> list, Random? rnd = null) {
+        rnd ??= Random.Shared;
+        int size = list.Length;
+        for (int i = size; i > 1; i--) {
+            Swap(list, i - 1, rnd.Next(i));
+        }
     }
 
     #endregion
@@ -187,6 +232,33 @@ public static partial class CollectionUtil
         }
         list.RemoveAt(index);
         return true;
+    }
+
+    /// <summary>
+    /// 交换两个位置的元素
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Swap<T>(IList<T> list, int i, int j) {
+        T a = list[i];
+        T b = list[j];
+        list[i] = b;
+        list[j] = a;
+    }
+
+    /// <summary>
+    /// 洗牌算法
+    /// 1.尽量只用于数组列表
+    /// 2.DotNet8开始自带洗牌算法
+    /// </summary>
+    /// <param name="list">要打乱的列表</param>
+    /// <param name="rnd">随机种子</param>
+    /// <typeparam name="T"></typeparam>
+    public static void Shuffle<T>(IList<T> list, Random? rnd = null) {
+        rnd ??= Random.Shared;
+        int size = list.Count;
+        for (int i = size; i > 1; i--) {
+            Swap(list, i - 1, rnd.Next(i));
+        }
     }
 
     /** 创建一个单元素的List */

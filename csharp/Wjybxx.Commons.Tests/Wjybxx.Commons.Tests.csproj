@@ -5,6 +5,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>annotations</Nullable>
 
+        <AssemblyName>Wjybxx.Commons.Tests</AssemblyName>
+        <PackageId>Wjybxx.Commons.Tests</PackageId>
+        
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
         <RootNamespace>Commons.Tests</RootNamespace>

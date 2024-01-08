@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Collections;
@@ -34,6 +35,7 @@ namespace Wjybxx.Commons.Collections;
 /// </summary>
 /// <typeparam name="TKey">元素类型，允许为null</typeparam>
 [Serializable]
+[NotThreadSafe]
 public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
 {
     /** len = 2^n + 1，额外的槽用于存储nullKey；总是延迟分配空间，以减少创建空实例的开销 */
@@ -59,7 +61,9 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
 
     public LinkedHashSet(ICollection<TKey> src)
         : this(src.Count, HashCommon.DefaultLoadFactor) {
-        AddRange(src);
+        foreach (var key in src) {
+            Add(key);
+        }
     }
 
     public LinkedHashSet(IEqualityComparer<TKey> comparer)
@@ -151,6 +155,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
         return TryInsert(key, InsertionOrder.Tail, InsertionBehavior.None);
     }
 
+    [Obsolete("Instead AddAll")]
     public bool AddRange(IEnumerable<TKey> collection) {
         if (collection == null) throw new ArgumentNullException(nameof(collection));
         if (collection is ICollection<TKey> c) {
@@ -625,6 +630,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
         node.next = _head;
         _head!.prev = node;
         _head = node;
+        _version++;
     }
 
     private void MoveToLast(Node node) {
@@ -643,6 +649,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
         node.prev = _tail;
         _tail!.next = node;
         _tail = node;
+        _version++;
     }
 
     #endregion

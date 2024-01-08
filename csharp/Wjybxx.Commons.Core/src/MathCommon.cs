@@ -27,6 +27,29 @@ namespace Wjybxx.Commons;
 /// </summary>
 public static class MathCommon
 {
+    #region INT48
+
+    /** 48位无符号整数的最大值 */
+    public const long UInt48MaxValue = (1L << 48) - 1;
+    /** 有符号48位整数的最大值(140737488355327L) */
+    public const long Int48MaxValue = (1L << 47) - 1;
+    /** 有符号48位整数的最小值(-140737488355328L) */
+    public const long Int48MinValue = -Int48MaxValue - 1;
+
+    /** 判断一个数是否是有效的uint48 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsUInt48(long value) {
+        return value >= 0 && value <= UInt48MaxValue;
+    }
+
+    /** 判断一个数是否是有效的int48 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsInt48(long value) {
+        return value >= Int48MinValue && value <= Int48MaxValue;
+    }
+
+    #endregion
+
     #region power2
 
     public const int MaxPowerOfTwo = 1 << 30;
@@ -67,6 +90,41 @@ public static class MathCommon
         num = (num >> 16) | num;
         num = (num >> 32) | num;
         return ++num;
+    }
+
+    #endregion
+
+    #region shift
+
+    // c#没有一开始就支持逻辑右移...C#11提供了逻辑右移，但目前.NET6是主流
+    /// <summary>
+    /// 逻辑右移
+    /// </summary>
+    /// <param name="val"></param>
+    /// <param name="offset">偏移量</param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException">offset非法</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int LogicalShiftRight(int val, int offset) {
+        if (offset < 0) throw new ArgumentException("invalid offset " + offset);
+        if (offset == 0) return val;
+        uint uval = (uint)val;
+        return (int)(uval >> offset);
+    }
+
+    /// <summary>
+    /// 逻辑右移
+    /// </summary>
+    /// <param name="val"></param>
+    /// <param name="offset">偏移量</param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException">offset非法</exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long LogicalShiftRight(long val, int offset) {
+        if (offset < 0) throw new ArgumentException("invalid offset " + offset);
+        if (offset == 0) return val;
+        ulong uval = (ulong)val;
+        return (long)(uval >> offset);
     }
 
     #endregion
@@ -119,6 +177,8 @@ public static class MathCommon
 
     #endregion
 
+    #region clamp
+
     /** 将value约束到[0, 1]范围 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Clamp01(float value) {
@@ -134,4 +194,6 @@ public static class MathCommon
         if (value >= 1d) return 1d;
         return value;
     }
+
+    #endregion
 }

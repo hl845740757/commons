@@ -65,7 +65,7 @@
         <junit.version>5.10.1</junit.version>
 
         <!-- 子模块依赖 -->
-        <base.version>1.0.rc1</base.version>
+        <base.version>1.0.2</base.version>
         <dson.version>1.4.rc1</dson.version>
 
         <fastutil.version>8.5.12</fastutil.version>

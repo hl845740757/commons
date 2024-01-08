@@ -121,8 +121,7 @@ public class PropertiesLoader {
     /** 从普通文件中读取原始的配置 */
     public static Properties loadRawPropertiesFromFile(@Nonnull String path) throws IOException {
         Objects.requireNonNull(path);
-        File file = new File(path);
-        return loadRawPropertiesFromFile(file);
+        return loadRawPropertiesFromFile(new File(path));
     }
 
     public static Properties loadRawPropertiesFromFile(@Nonnull File file) throws IOException {
@@ -144,6 +143,7 @@ public class PropertiesLoader {
     }
 
     public static Properties loadRawPropertiesFromJar(String path, ClassLoader classLoader) throws IOException {
+        Objects.requireNonNull(path);
         final URL resource = classLoader.getResource(path);
         if (resource == null) {
             throw new FileNotFoundException(path);

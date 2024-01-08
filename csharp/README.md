@@ -2,9 +2,23 @@
 
 csharp公共库，包含集合等基础组件;nuget搜索'wjybxx'即可查看到相关库。
 
+注意： 1.0.x 尚属于快速迭代版本，等**基础工具基本完备的时候，会更新到 1.1.x 版本**。因为我还有几个项目没有完成，会把遇见的一些基础工具迁移到这里，或在这里实现。
+
 ## ReleaseNotes
 
+### 1.0.7
+
+1. bugfix - LinkedDictionary/LinkedHashSet移动元素到首尾时未更新version
+2. DateTime工具类
+
+### 1.0.6
+
+1. 增加ArrayPool，变更ObjectPool的Clear方法为FreeAll
+2. 增加环境变量工具类
+3. 增加BufferUtil
+
 ### 1.0.5
+
 1. 添加StringBuilderPool，为Dson仓库服务
 2. ObjectPool接口删除不必要方法
 
@@ -27,7 +41,6 @@ csharp公共库，包含集合等基础组件;nuget搜索'wjybxx'即可查看到
 ### 1.0.1
 
 1. BoundedArrayDeque fix Count为0时SetCapacity导致的head下标错误。
-
 
 ## Collections
 

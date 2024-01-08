@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Collections;
@@ -42,6 +43,7 @@ namespace Wjybxx.Commons.Collections;
 /// <typeparam name="TKey">键的类型，允许为null</typeparam>
 /// <typeparam name="TValue">值的类型，允许为null</typeparam>
 [Serializable]
+[NotThreadSafe]
 public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>, ISerializable
 {
     // C#的泛型是独立的类，因此缓存是独立的
@@ -861,6 +863,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         node.next = _head;
         _head!.prev = node;
         _head = node;
+        _version++;
     }
 
     private void MoveToLast(Node node) {
@@ -879,6 +882,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         node.prev = _tail;
         _tail!.next = node;
         _tail = node;
+        _version++;
     }
 
     #endregion

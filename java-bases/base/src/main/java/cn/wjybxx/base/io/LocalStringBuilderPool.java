@@ -16,11 +16,10 @@
 
 package cn.wjybxx.base.io;
 
-import cn.wjybxx.base.PropertiesUtils;
+import cn.wjybxx.base.SystemPropsUtils;
 import cn.wjybxx.base.pool.ObjectPool;
 
 import javax.annotation.Nonnull;
-import java.util.Properties;
 
 /**
  * 基于ThreadLocal的Builder池
@@ -44,19 +43,19 @@ public class LocalStringBuilderPool implements ObjectPool<StringBuilder> {
     }
 
     @Override
-    public void clear() {
+    public void freeAll() {
 
     }
 
-    /** 获取线程本地实例 - 慎用 */
-    public static StringBuilderPool localInst() {
+    /** 获取线程本地实例 - 慎用；定义为实例方法，以免和{@link #INSTANCE}的提示冲突 */
+    public StringBuilderPool localInst() {
         return THREAD_LOCAL_INST.get();
     }
 
     /**
      * 每个线程缓存的StringBuilder数量，
      * 同时使用多个Builder实例的情况很少，因此只缓存少量实例即可
-     * */
+     */
     private static final int POOL_SIZE;
     /**
      * StringBuilder的初始空间，
@@ -68,17 +67,15 @@ public class LocalStringBuilderPool implements ObjectPool<StringBuilder> {
      * 超过限定值的Builder不会被复用
      */
     private static final int MAX_CAPACITY;
+    /** 封装以便我们可以在某些时候去除包装 */
+    private static final ThreadLocal<StringBuilderPool> THREAD_LOCAL_INST;
 
     static {
         // 全小写看着费劲...因此使用大驼峰
-        Properties properties = System.getProperties();
-        POOL_SIZE = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalStringBuilderPool.PoolSize", 8);
-        INIT_CAPACITY = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalStringBuilderPool.InitCapacity", 4096);
-        MAX_CAPACITY = PropertiesUtils.getInt(properties, "Wjybxx.Commons.IO.LocalStringBuilderPool.MaxCapacity", Integer.MAX_VALUE);
+        POOL_SIZE = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalStringBuilderPool.PoolSize", 8);
+        INIT_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalStringBuilderPool.InitCapacity", 1024);
+        MAX_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalStringBuilderPool.MaxCapacity", 64 * 1024);
+        THREAD_LOCAL_INST = ThreadLocal.withInitial(() -> new StringBuilderPool(POOL_SIZE, INIT_CAPACITY, MAX_CAPACITY));
     }
-
-    /** 封装以便我们可以在某些时候去除包装 */
-    private static final ThreadLocal<StringBuilderPool> THREAD_LOCAL_INST = ThreadLocal.withInitial(
-            () -> new StringBuilderPool(POOL_SIZE, INIT_CAPACITY));
 
 }

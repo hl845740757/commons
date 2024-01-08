@@ -76,7 +76,7 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public void clear() {
+    public void freeAll() {
         value = null;
     }
 

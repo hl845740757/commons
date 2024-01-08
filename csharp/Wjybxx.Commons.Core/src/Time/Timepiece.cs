@@ -34,7 +34,7 @@ public class Timepiece : ITimepiece
 
     public long Current => _time;
     public long DeltaTime => _deltaTime;
-    
+
     public void Update(long deltaTime) {
         if (deltaTime <= 0) {
             this._deltaTime = 0;

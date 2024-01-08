@@ -18,8 +18,8 @@ package cn.wjybxx.common.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.annotation.Internal;
+import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.base.time.CachedTimeProvider;
-import org.apache.commons.lang3.mutable.MutableObject;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;

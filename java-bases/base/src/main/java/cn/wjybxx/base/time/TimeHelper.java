@@ -206,7 +206,7 @@ public final class TimeHelper {
         final LocalDateTime startOfDay = toLocalDateTimeIgnoreMs(epochMilli)
                 .with(TimeUtils.START_OF_DAY);
         final int deltaDay = startOfDay.getDayOfWeek().getValue() - DayOfWeek.MONDAY.getValue();
-        return toEpochMillis(startOfDay) - (deltaDay * TimeUtils.DAY);
+        return toEpochMillis(startOfDay) - (deltaDay * TimeUtils.MILLIS_PER_DAY);
     }
 
     /**
@@ -215,7 +215,7 @@ public final class TimeHelper {
      * @param epochMilli 指定时间戳，用于确定所在的周
      */
     public long getTimeEndOfWeek(long epochMilli) {
-        return getTimeBeginOfWeek(epochMilli) + TimeUtils.WEEK - 1;
+        return getTimeBeginOfWeek(epochMilli) + TimeUtils.MILLIS_PER_WEEK - 1;
     }
 
     /**
@@ -310,7 +310,7 @@ public final class TimeHelper {
      */
     public int differWeeks(long time1, long time2) {
         final long deltaTime = getTimeBeginOfWeek(time1) - getTimeBeginOfWeek(time2);
-        return (int) Math.abs(deltaTime / TimeUtils.WEEK);
+        return (int) Math.abs(deltaTime / TimeUtils.MILLIS_PER_WEEK);
     }
 
     /**
