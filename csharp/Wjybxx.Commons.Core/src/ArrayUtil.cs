@@ -19,7 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Wjybxx.Commons.Collections;
+namespace Wjybxx.Commons;
 
 /// <summary>
 /// 数组工具类
