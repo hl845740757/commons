@@ -25,6 +25,7 @@ namespace Wjybxx.Commons.IO;
 
 /// <summary>
 /// 基于ThreadLocal的Builder池
+/// （该类保留以实现兼容和扩展）
 /// </summary>
 public class LocalStringBuilderPool : IObjectPool<StringBuilder>
 {

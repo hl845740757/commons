@@ -25,7 +25,7 @@ namespace Wjybxx.Commons.Pool;
 /// 线程安全性取决于具体实现
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface IObjectPool<T> where T : class
+public interface IObjectPool<T>
 {
     /// <summary>
     /// 从对象池中租借一个对象
@@ -46,7 +46,7 @@ public interface IObjectPool<T> where T : class
     /// </summary>
     /// <param name="objects"></param>
     void ReturnAll(Collection<T?> objects) {
-        foreach (var obj in objects) {
+        foreach (T obj in objects) {
             if (obj != null) ReturnOne(obj);
         }
     }

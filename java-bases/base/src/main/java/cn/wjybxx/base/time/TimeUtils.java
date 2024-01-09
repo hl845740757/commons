@@ -53,15 +53,15 @@ public class TimeUtils {
     public static final long NANOS_PER_DAY = NANOS_PER_HOURS * 24L;
 
     /** 1秒的毫秒数 */
-    public static final int MILLIS_PER_SECOND = 1000;
+    public static final long MILLIS_PER_SECOND = 1000;
     /** 1分钟的毫秒数 */
-    public static final int MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND;
+    public static final long MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND;
     /** 1小时的毫秒数 */
-    public static final int MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE;
+    public static final long MILLIS_PER_HOUR = 60 * MILLIS_PER_MINUTE;
     /** 1天的毫秒数 */
-    public static final int MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
+    public static final long MILLIS_PER_DAY = 24 * MILLIS_PER_HOUR;
     /** 1周的毫秒数 */
-    public static final int MILLIS_PER_WEEK = 7 * MILLIS_PER_DAY;
+    public static final long MILLIS_PER_WEEK = 7 * MILLIS_PER_DAY;
 
     /** 1分钟的秒数 */
     public static final int SECONDS_PER_MINUTE = 60;

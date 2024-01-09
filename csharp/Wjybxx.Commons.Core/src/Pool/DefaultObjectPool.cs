@@ -35,7 +35,7 @@ namespace Wjybxx.Commons.Pool;
 /// </summary>
 /// <typeparam name="T"></typeparam>
 [NotThreadSafe]
-public class DefaultObjectPool<T> : IObjectPool<T> where T : class
+public class DefaultObjectPool<T> : IObjectPool<T>
 {
     /** 默认不无限缓存 */
     private const int DefaultPoolSize = 1024;
