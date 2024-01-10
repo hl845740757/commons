@@ -56,10 +56,14 @@ public class ArrayObjectPool<T> : IObjectPool<RecycleHandle<T>>
     }
 
     public void ReturnOne(RecycleHandle<T> obj) {
+        var array = (T[])obj.ctx;
         if (_filter == null || _filter.Invoke(obj.Value)) {
             _resetPolicy.Invoke(obj.Value);
-            _arrayPool.Return((T[])obj.ctx);
+        } else {
+            array[0] = default; // 清理对象
         }
+        // 数组必须归还
+        _arrayPool.Return(array);
     }
 
     public void FreeAll() {
