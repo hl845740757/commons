@@ -57,27 +57,23 @@ public class UniScheduledExecutorImpl extends AbstractUniScheduledExecutor imple
     }
 
     @Override
-    public boolean tick() {
-        final IndexedPriorityQueue<UniScheduledPromiseTask<?>> taskQueue = this.taskQueue;
-        if (taskQueue.isEmpty()) {
-            return false;
-        }
-
-        // 需要缓存下来，一来用于task计算下次调度时间，一来避免优先级错乱
+    public void update() {
+        // 需要缓存下来，一来用于计算下次调度时间，一来避免优先级错乱
         final long curTime = timeProvider.getTime();
         tickTime = curTime;
 
         // 记录最后一个任务id，避免执行本次tick期间添加的任务
-        long barrierTaskId = sequencer;
+        final long barrierTaskId = sequencer;
+        final IndexedPriorityQueue<UniScheduledPromiseTask<?>> taskQueue = this.taskQueue;
         UniScheduledPromiseTask<?> queueTask;
         while ((queueTask = taskQueue.peek()) != null) {
             // 优先级最高的任务不需要执行，那么后面的也不需要执行
             if (curTime < queueTask.getNextTriggerTime()) {
-                return false;
+                return;
             }
             // 本次tick期间新增的任务，不立即执行，避免死循环或占用过多cpu
             if (queueTask.getId() > barrierTaskId) {
-                return true;
+                return;
             }
 
             taskQueue.poll();
@@ -91,7 +87,12 @@ public class UniScheduledExecutorImpl extends AbstractUniScheduledExecutor imple
                 }
             }
         }
-        return false;
+    }
+
+    @Override
+    public boolean needMoreTicks() {
+        UniScheduledPromiseTask<?> queueTask = taskQueue.peek();
+        return queueTask != null && queueTask.getNextTriggerTime() <= tickTime;
     }
 
     @Override

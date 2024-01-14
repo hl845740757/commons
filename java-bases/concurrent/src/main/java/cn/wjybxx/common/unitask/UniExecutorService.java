@@ -35,7 +35,7 @@ import java.util.function.Function;
  * <h3>限制单帧任务数</h3>
  * 由于是在当前线程执行对应的逻辑，因而必须限制单帧执行的任务数，以避免占用过多的资源，同时，限定单帧任务数可避免死循环。
  * <h3>外部驱动</h3>
- * 由于仍然是在当前线程执行，因此需要外部进行驱动，外部需要定时调用{@link #tick()}
+ * 由于仍然是在当前线程执行，因此需要外部进行驱动，外部需要定时调用{@link #update()}
  * <h3>指定执行阶段</h3>
  * 如果Executor支持在特定的阶段执行给定的任务，需要响应{@link TaskOption#MASK_SCHEDULE_PHASE}指定的阶段。
  *
@@ -46,13 +46,18 @@ import java.util.function.Function;
 public interface UniExecutorService extends IExecutor {
 
     /**
-     * Q：返回值的意义？
-     * A：为避免死循环或占用过多cpu，单次tick可能存在一些限制（即：屏障），
-     * 如果外部确实想处理更多的任务，则可以根据该值判断是否继续运行。
+     * 心跳方法
+     * 外部需要每一帧调用该方法以执行任务。
+     */
+    void update();
+
+    /**
+     * 为避免死循环或占用过多cpu，单次{@link #update()}可能存在一些限制，因此可能未执行所有的可执行任务。
+     * 该方法用于探测是否还有可执行的任务，如果外部可以分配更多的资源。
      *
      * @return 如果还有可执行任务则返回true，否则返回false
      */
-    boolean tick();
+    boolean needMoreTicks();
 
     // region lifecycle
 

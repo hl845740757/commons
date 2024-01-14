@@ -58,7 +58,7 @@ public class SameThreads {
     }
 
     /**
-     * 返回的{@link UniScheduledExecutor#tick()}默认不执行tick过程中新增加的任务
+     * 返回的{@link UniScheduledExecutor#update()}默认不执行tick过程中新增加的任务
      *
      * @param timeProvider 用于调度器获取当前时间
      */

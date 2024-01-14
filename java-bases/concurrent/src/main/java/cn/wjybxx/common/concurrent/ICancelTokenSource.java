@@ -16,7 +16,6 @@
 
 package cn.wjybxx.common.concurrent;
 
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -59,14 +58,19 @@ public interface ICancelTokenSource extends ICancelToken {
 
     /**
      * 在一段时间后发送取消命令
-     * (将由默认的调度器调度)
+     *
+     * @param cancelCode 取消码
+     * @param millisecondsDelay 延迟时间(毫秒) -- 单线程版的话，真实单位取决于约定。
      */
-    void cancelAfter(int cancelCode, long time, TimeUnit timeUnit);
+    void cancelAfter(int cancelCode, long millisecondsDelay);
 
     /**
      * 在一段时间后发送取消命令
-     * (由用户指定的Executor调度--通常为了更及时的取消)
+     *
+     * @param cancelCode 取消码
+     * @param delay 延迟时间
+     * @param timeUnit 时间单位
      */
-    void cancelAfter(int cancelCode, long time, TimeUnit timeUnit, ScheduledExecutorService executorService);
+    void cancelAfter(int cancelCode, long delay, TimeUnit timeUnit);
 
 }

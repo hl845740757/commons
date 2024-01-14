@@ -66,7 +66,7 @@ public class DefaultUniExecutor extends AbstractUniExecutor {
     }
 
     @Override
-    public boolean tick() {
+    public void update() {
         final int batchSize = this.countLimit;
         final long nanosPerFrame = this.nanoTimeLimit;
         final Deque<Runnable> taskQueue = this.taskQueue;
@@ -102,8 +102,11 @@ public class DefaultUniExecutor extends AbstractUniExecutor {
         if (isShuttingDown() && taskQueue.isEmpty()) {
             state = EventLoopState.ST_TERMINATED;
             terminationPromise.trySetResult(null);
-            return false;
         }
+    }
+
+    @Override
+    public boolean needMoreTicks() {
         return !taskQueue.isEmpty();
     }
 
