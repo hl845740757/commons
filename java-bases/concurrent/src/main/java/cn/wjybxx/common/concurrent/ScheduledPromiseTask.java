@@ -20,6 +20,7 @@ import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.collection.IndexedElement;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -34,7 +35,7 @@ import java.util.function.Function;
  */
 final class ScheduledPromiseTask<V>
         extends PromiseTask<V>
-        implements IScheduledFuture<V>, IndexedElement {
+        implements IScheduledFuture<V>, IndexedElement, Consumer<Object> {
 
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
     private long id;
@@ -322,23 +323,33 @@ final class ScheduledPromiseTask<V>
     public void registerCancellation() {
         // 需要监听来自future取消... 无论有没有ctx
         if (!TaskOption.isEnabled(options, TaskOption.IGNORE_FUTURE_CANCEL)) {
-            promise.onCompleted(f -> {
-                if (f.isCancelled()) {
-                    eventLoop().removeScheduled(this);
-                    closeRegistration();
-                }
-            }, 0);
+            promise.onCompleted(this, 0);
         }
-
         ICancelToken cancelToken = promise.ctx().cancelToken();
         if (promise.ctx().cancelToken() == ICancelToken.NONE) {
             return;
         }
-        cancelRegistration = cancelToken.register((token) -> {
-            if (promise.trySetCancelled() && !token.isWithoutRemove()) {
+        cancelRegistration = cancelToken.register(this);
+    }
+
+    @Override
+    public void accept(Object futureOrToken) {
+        if (futureOrToken == promise) {
+            if (!promise.isCancelled()) {
+                return;
+            }
+            // 这里难以识别是被谁取消的，但trySetCancelled的异常无堆栈的，而通过Future的取消是有堆栈的...
+            CancellationException ex = (CancellationException) promise.exceptionNow(false);
+            if (ex != StacklessCancellationException.INSTANCE) {
                 eventLoop().removeScheduled(this);
             }
-        });
+        } else {
+            // 用户通过令牌发起取消
+            ICancelToken cancelToken = promise.ctx().cancelToken();
+            if (promise.trySetCancelled() && cancelToken.isWithoutRemove()) {
+                eventLoop().removeScheduled(this);
+            }
+        }
     }
 
     private void closeRegistration() {

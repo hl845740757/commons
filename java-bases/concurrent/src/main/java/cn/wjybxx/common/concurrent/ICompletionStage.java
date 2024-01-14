@@ -85,8 +85,7 @@ public interface ICompletionStage<T> {
     /**
      * 当前计算绑定的上下文
      * 1.在添加下游任务时，如果没有显式指定Context，将继承当前Future的上下文。
-     * 2.如果用户显式指定null，将被替换为{@link IContext#NONE}。
-     * 3.因此下游任务中的ctx参数永远不为null。
+     * 2.因此下游任务中的ctx参数永远不为null。
      */
     @Nonnull
     IContext ctx();
@@ -146,7 +145,7 @@ public interface ICompletionStage<T> {
      * {@link CompletionStage#thenCompose(Function)}
      * {@link #composeApply(BiFunction)}
      *
-     * @param ctx     上下文，如果为null，则继承当前Stage的上下文
+     * @param ctx     上下文，如果为null，则继承当前Stage的上下文 -- 要覆盖请使用{@link IContext#NONE}
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOption}
      */
     <U> ICompletionStage<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn,

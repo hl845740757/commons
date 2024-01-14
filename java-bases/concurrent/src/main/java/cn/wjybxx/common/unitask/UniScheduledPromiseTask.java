@@ -34,7 +34,7 @@ import java.util.function.Function;
 @ThreadSafe
 public final class UniScheduledPromiseTask<V>
         extends UniPromiseTask<V>
-        implements UniScheduledFuture<V>, IndexedElement {
+        implements UniScheduledFuture<V>, IndexedElement, Consumer<Object> {
 
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
     private long id;
@@ -320,11 +320,17 @@ public final class UniScheduledPromiseTask<V>
         if (promise.ctx().cancelToken() == ICancelToken.NONE) {
             return;
         }
-        cancelRegistration = cancelToken.register((token) -> {
-            if (promise.trySetCancelled() && !token.isWithoutRemove()) {
-                eventLoop().removeScheduled(this);
-            }
-        });
+        cancelRegistration = cancelToken.register(this);
+    }
+
+    @Override
+    public void accept(Object futureOrToken) {
+        assert futureOrToken != promise; // UniFuture没有取消接口
+        // 用户通过令牌发起取消
+        ICancelToken cancelToken = promise.ctx().cancelToken();
+        if (promise.trySetCancelled() && cancelToken.isWithoutRemove()) {
+            eventLoop().removeScheduled(this);
+        }
     }
 
     private void closeRegistration() {
