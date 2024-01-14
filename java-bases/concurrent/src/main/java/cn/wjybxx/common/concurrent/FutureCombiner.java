@@ -16,37 +16,47 @@
 
 package cn.wjybxx.common.concurrent;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
- * 在调用选择方法之前，你可以添加任意的{@link CompletableFuture}以进行监听。
- * 调用任意的选择方法后，当前combiner无法继续选择（理论上可以做到支持，但暂时还无需求）。
+ * 在调用选择方法之前，你可以添加任意的{@link IFuture}以进行监听。
+ * 调用任意的选择方法后，当前combiner无法继续选择（理论上可以做到支持，但暂时还无需求 -- 主要还是开销大）。
  *
  * @author wjybxx
  * date 2023/4/12
  */
-@NotThreadSafe
-public interface FutureCombiner {
+public class FutureCombiner {
 
-    /**
-     * 添加一个要监听的future
-     *
-     * @return this
-     */
-    FutureCombiner add(CompletionStage<?> future);
+    private ChildListener childrenListener = new ChildListener();
+    private IPromise<Object> aggregatePromise;
+    private int futureCount;
 
-    default FutureCombiner addAll(CompletionStage<?>... futures) {
-        for (CompletionStage<?> future : futures) {
+    public FutureCombiner() {
+    }
+
+    public FutureCombiner add(ICompletionStage<?> future) {
+        Objects.requireNonNull(future);
+        ChildListener childrenListener = this.childrenListener;
+        if (childrenListener == null) {
+            throw new IllegalStateException("Adding futures is not allowed after finished adding");
+        }
+        ++futureCount;
+        future.toFuture().onCompleted(childrenListener, 0);
+        return this;
+    }
+
+    public FutureCombiner addAll(ICompletionStage<?>... futures) {
+        for (ICompletionStage<?> future : futures) {
             this.add(future);
         }
         return this;
     }
 
-    default FutureCombiner addAll(Collection<? extends CompletionStage<?>> futures) {
-        for (CompletionStage<?> future : futures) {
+    public FutureCombiner addAll(Collection<? extends ICompletionStage<?>> futures) {
+        for (ICompletionStage<?> future : futures) {
             this.add(future);
         }
         return this;
@@ -56,20 +66,39 @@ public interface FutureCombiner {
      * 获取监听的future数量
      * 注意：future计数是不去重的，一个future反复添加会反复计数
      */
-    int futureCount();
+    public int futureCount() {
+        return futureCount;
+    }
+
+    /**
+     * 设置接收结果的Promise
+     * 如果在执行操作前没有指定Promise，将创建{@link Promise}实例。
+     *
+     * @return this
+     */
+    public FutureCombiner setAggregatePromise(IPromise<Object> aggregatePromise) {
+        this.aggregatePromise = aggregatePromise;
+        return this;
+    }
 
     /**
      * 重置状态，使得可以重新添加future和选择
      */
-    void clear();
+    public void clear() {
+        childrenListener = new ChildListener();
+        aggregatePromise = null;
+        futureCount = 0;
+    }
 
-    // region 选择方法 - 终结方法
+    // region select
 
     /**
      * 返回的promise在任意future进入完成状态时进入完成状态
      * 返回的promise与首个完成future的结果相同（不准确）
      */
-    XCompletableFuture<Object> anyOf();
+    public IPromise<Object> anyOf() {
+        return finish(AggregateOptions.anyOf());
+    }
 
     /**
      * 成功N个触发成功
@@ -85,7 +114,9 @@ public interface FutureCombiner {
      * @param successRequire 期望成成功的任务数
      * @param lazy           是否在所有任务都进入完成状态之后才触发成功或失败
      */
-    XCompletableFuture<Object> selectN(int successRequire, boolean lazy);
+    public IPromise<Object> selectN(int successRequire, boolean lazy) {
+        return finish(AggregateOptions.selectN(successRequire, lazy));
+    }
 
     /**
      * 要求所有的future都成功时才进入成功状态；
@@ -93,7 +124,7 @@ public interface FutureCombiner {
      *
      * @param lazy 是否在所有任务都进入完成状态之后才触发成功或失败
      */
-    default XCompletableFuture<Object> selectAll(boolean lazy) {
+    public IPromise<Object> selectAll(boolean lazy) {
         return selectN(futureCount(), lazy);
     }
 
@@ -101,8 +132,127 @@ public interface FutureCombiner {
      * 要求所有的future都成功时才进入成功状态
      * 一旦有任务失败则立即失败
      */
-    default XCompletableFuture<Object> selectAll() {
+    public IPromise<Object> selectAll() {
         return selectN(futureCount(), false);
     }
 
+    // region 内部实现
+
+    private IPromise<Object> finish(AggregateOptions options) {
+        Objects.requireNonNull(options);
+        ChildListener childrenListener = this.childrenListener;
+        if (childrenListener == null) {
+            throw new IllegalStateException("Already finished");
+        }
+        this.childrenListener = null;
+
+        IPromise<Object> aggregatePromise = this.aggregatePromise;
+        if (aggregatePromise == null) {
+            aggregatePromise = new Promise<>();
+        } else {
+            this.aggregatePromise = null;
+        }
+
+        // 数据存储在ChildListener上有助于扩展
+        childrenListener.futureCount = this.futureCount;
+        childrenListener.options = options;
+        childrenListener.aggregatePromise = aggregatePromise;
+        childrenListener.checkComplete();
+        return aggregatePromise;
+    }
+
+    private static class ChildListener implements Consumer<IFuture<?>> {
+
+        private final AtomicInteger succeedCount = new AtomicInteger();
+        private final AtomicInteger doneCount = new AtomicInteger();
+
+        /** 非volatile，虽然存在竞争，但重复赋值是安全的，通过promise发布到其它线程 */
+        private Object result;
+        private Throwable cause;
+
+        /** 非volatile，其可见性由{@link #aggregatePromise}保证 */
+        private int futureCount;
+        private AggregateOptions options;
+        private volatile IPromise<Object> aggregatePromise;
+
+        @Override
+        public void accept(IFuture<?> future) {
+            if (future.isFailed()) {
+                accept(null, future.exceptionNow(false));
+            } else {
+                accept(future.resultNow(), null);
+            }
+        }
+
+        public void accept(Object r, Throwable throwable) {
+            // 我们先增加succeedCount，再增加doneCount，读取时先读取doneCount，再读取succeedCount，
+            // 就可以保证succeedCount是比doneCount更新的值，才可以提前判断是否立即失败
+            if (throwable == null) {
+                result = encodeValue(r);
+                succeedCount.incrementAndGet();
+            } else {
+                cause = throwable;
+            }
+            doneCount.incrementAndGet();
+
+            IPromise<Object> aggregatePromise = this.aggregatePromise;
+            if (aggregatePromise != null && !aggregatePromise.isDone() && checkComplete()) {
+                result = null;
+                cause = null;
+            }
+        }
+
+        boolean checkComplete() {
+            // 字段的读取顺序不可以调整
+            final int doneCount = this.doneCount.get();
+            final int succeedCount = this.succeedCount.get();
+            if (doneCount < succeedCount) { // 退出竞争，另一个线程来完成
+                return false;
+            }
+            // 没有任务，立即完成
+            if (futureCount == 0) {
+                return aggregatePromise.trySetResult(null);
+            }
+            if (options.isAnyOf()) {
+                if (doneCount == 0) {
+                    return false;
+                }
+                if (result != null) { // anyOf下尽量返回成功
+                    return aggregatePromise.trySetResult(decodeValue(result));
+                } else {
+                    return aggregatePromise.trySetException(cause);
+                }
+            }
+
+            // 懒模式需要等待所有任务完成
+            if (options.lazy && doneCount < futureCount) {
+                return false;
+            }
+            // 包含了require小于等于0的情况
+            final int successRequire = options.successRequire;
+            if (succeedCount >= successRequire) {
+                return aggregatePromise.trySetResult(null);
+            }
+            // 剩余的任务不足以达到成功，则立即失败；包含了require大于futureCount的情况
+            if (succeedCount + (futureCount - doneCount) < successRequire) {
+                if (cause == null) {
+                    cause = TaskInsufficientException.create(futureCount, doneCount, succeedCount, successRequire);
+                }
+                return aggregatePromise.trySetException(cause);
+            }
+            return false;
+        }
+    }
+
+    private static final Object NIL = new Object();
+
+    private static Object encodeValue(Object val) {
+        return val == null ? NIL : val;
+    }
+
+    private static Object decodeValue(Object r) {
+        return r == NIL ? null : r;
+    }
+
+    // endregion
 }

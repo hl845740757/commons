@@ -20,6 +20,8 @@ import cn.wjybxx.base.ex.NoLogRequiredException;
 import java.util.concurrent.TimeoutException;
 
 /**
+ * 不打印堆栈的超时异常
+ *
  * @author wjybxx
  * date 2023/4/3
  */

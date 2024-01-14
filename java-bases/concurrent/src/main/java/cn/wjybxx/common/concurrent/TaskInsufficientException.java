@@ -37,7 +37,8 @@ public class TaskInsufficientException extends RuntimeException implements NoLog
         return this;
     }
 
-    public static TaskInsufficientException create(int futureCount, int doneCount, int succeedCount, int successRequire) {
+    public static TaskInsufficientException create(int futureCount, int doneCount, int succeedCount,
+                                                   int successRequire) {
         final String msg = String.format("futureCount :%d, doneCount %d, succeedCount: %d, successRequire :%d",
                 futureCount, doneCount, succeedCount, successRequire);
         return new TaskInsufficientException(msg);

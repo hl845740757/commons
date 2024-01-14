@@ -18,10 +18,10 @@ package cn.wjybxx.common.concurrent;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 事件循环线程组，它管理着一组{@link EventLoop}。
@@ -29,7 +29,7 @@ import java.util.concurrent.*;
  *
  * <h1>时序约定</h1>
  * 1.{@link EventLoopGroup}代表着一组线程，不对任务的执行时序提供任何保证，用户只能通过工具自行协调。<br>
- * 2.{@link #execute(Runnable)}{@link #submit(Runnable)}系列方法的时序等同于{@code schedule(task, 0, TimeUnit.SECONDS)}
+ * 2.{@link #execute(Runnable)}{@link #submit(Callable)}系列方法的时序等同于{@code schedule(task, 0, TimeUnit.SECONDS)}
  * <p>
  * Q: 为什么在接口层不提供严格的时序约定？<br>
  * A: 如果在接口层定义了严格的时序约定，实现类就会受到限制。
@@ -41,7 +41,7 @@ import java.util.concurrent.*;
  * date 2023/4/7
  */
 @ThreadSafe
-public interface EventLoopGroup extends ScheduledExecutorService, Iterable<EventLoop> {
+public interface EventLoopGroup extends IScheduledExecutorService, Iterable<EventLoop> {
 
     /**
      * 选择一个 {@link EventLoop}用于接下来的调度
@@ -53,6 +53,7 @@ public interface EventLoopGroup extends ScheduledExecutorService, Iterable<Event
     @Nonnull
     @Override
     Iterator<EventLoop> iterator();
+
     // ------------------------------ 生命周期相关方法 ----------------------------
 
     /**
@@ -61,6 +62,7 @@ public interface EventLoopGroup extends ScheduledExecutorService, Iterable<Event
      *
      * @return 如果该{@link EventLoopGroup}管理的所有{@link EventLoop}正在关闭或已关闭则返回true
      */
+    @Override
     boolean isShuttingDown();
 
     /**
@@ -81,6 +83,13 @@ public interface EventLoopGroup extends ScheduledExecutorService, Iterable<Event
     boolean isTerminated();
 
     /**
+     * 返回等待线程终止的future。
+     * 返回的{@link IFuture}会在该Group管理的所有{@link EventLoop}终止后进入完成状态。
+     */
+    @Override
+    IFuture<?> terminationFuture();
+
+    /**
      * 等待EventLoopGroup进入终止状态
      * 等同于在{@link #terminationFuture()}进行阻塞操作。
      *
@@ -91,14 +100,6 @@ public interface EventLoopGroup extends ScheduledExecutorService, Iterable<Event
      */
     @Override
     boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException;
-
-    /**
-     * 返回等待线程终止的future。
-     * 返回的{@link CompletableFuture}会在该Group管理的所有{@link EventLoop}终止后收到通知.
-     * <p>
-     * （TODO Future是否可以返回所有被丢弃的任务，以修正shutdownNow？可能导致内存泄漏）
-     */
-    ICompletableFuture<?> terminationFuture();
 
     /**
      * 请求关闭 ExecutorService，不再接收新的任务。
@@ -112,14 +113,9 @@ public interface EventLoopGroup extends ScheduledExecutorService, Iterable<Event
     void shutdown();
 
     /**
-     * JDK文档：
-     * 请求关闭 ExecutorService，<b>尝试取消所有正在执行的任务，停止所有待执行的任务，并不再接收新的任务。</b>
-     * 如果 ExecutorService 已经关闭，则方法不产生任何效果。
+     * {@inheritDoc}
      * <p>
-     * 该方法会立即返回，如果想等待 ExecutorService 进入终止状态，可以使用{@link #awaitTermination(long, TimeUnit)}
-     * 或{@link #terminationFuture()} 进行等待
-     * <p>
-     * 注意：不保证标准的实现，只保证尽快的关闭，基于以下原因：
+     * 在EventLoop架构下不保证标准的实现，只保证尽快的关闭。基于以下原因：
      * <li>1. 可能无法安全的获取所有的任务(EventLoop架构属于多生产者单消费者模型，会尽量的避免其它线程消费数据)</li>
      * <li>2. 剩余任务数可能过多</li>
      *
@@ -128,61 +124,6 @@ public interface EventLoopGroup extends ScheduledExecutorService, Iterable<Event
     @Nonnull
     @Override
     List<Runnable> shutdownNow();
-
-    // region 基础任务调度
-
-    @Override
-    void execute(Runnable command);
-
-    @Nonnull
-    @Override
-    ICompletableFuture<?> submit(Runnable task);
-
-    @Nonnull
-    @Override
-    <V> ICompletableFuture<V> submit(Runnable task, V result);
-
-    @Nonnull
-    @Override
-    <V> ICompletableFuture<V> submit(Callable<V> task);
-
-    @Override
-    IScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit);
-
-    @Override
-    <V> IScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit);
-
-    @Override
-    IScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit);
-
-    /**
-     * @throws IllegalArgumentException initialDelay < 0
-     */
-    @Override
-    IScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit);
-
-    /** 通过builder执行更加灵活的任务 */
-    <V> IScheduledFuture<V> schedule(ScheduleBuilder<V> builder);
-
-    // endregion
-
-    // region 不情愿的api
-    // 个人觉得jdk将这几个api定义在接口里不好
-
-    @Nonnull
-    @Override
-    <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException;
-
-    @Nonnull
-    @Override
-    <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException;
-
-    @Nonnull
-    @Override
-    <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException;
-
-    @Override
-    <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException;
 
     // endregion
 }

@@ -27,7 +27,8 @@ import java.util.concurrent.Executor;
 public interface SingleThreadExecutor extends Executor {
 
     /***
-     * 测试当前线程是否是{@link java.util.concurrent.Executor}所在线程。
+     * 测试当前线程是否是{@link Executor}所在线程。
+     * <p>
      * 主要作用:
      * 1. 判断是否可访问线程封闭的数据。
      * 2. 防止死锁。
@@ -35,5 +36,14 @@ public interface SingleThreadExecutor extends Executor {
      * 更多可参考{@link EventLoop#inEventLoop()}
      */
     boolean inEventLoop();
+
+    /**
+     * Executor虽然约定为单线程的，但不一定整个生命周期都绑定在同一个线程上。
+     * <p>
+     * 更多可参考{@link EventLoop#inEventLoop(Thread)}
+     *
+     * @param thread 捕获的线程
+     */
+    boolean inEventLoop(Thread thread);
 
 }

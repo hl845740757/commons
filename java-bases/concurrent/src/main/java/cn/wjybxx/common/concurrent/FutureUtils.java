@@ -17,7 +17,6 @@
 package cn.wjybxx.common.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
-import cn.wjybxx.base.annotation.Internal;
 import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.base.time.CachedTimeProvider;
 
@@ -26,7 +25,8 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.util.Objects;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * @author wjybxx
@@ -65,50 +65,61 @@ public class FutureUtils {
 
     // region future工具方法
 
-    public static <V> XCompletableFuture<V> toXCompletableFuture(CompletionStage<V> stage) {
-        if (stage instanceof ICompletableFuture<V> future) {
-            return future.toCompletableFuture();
-        }
-        XCompletableFuture<V> future = new XCompletableFuture<>();
-        setFuture(future, stage);
+    public static <V> IPromise<V> fromJDKFuture(CompletionStage<V> stage) {
+        IPromise<V> promise = new Promise<>();
+        stage.whenComplete(((v, throwable) -> {
+            if (throwable != null) {
+                promise.trySetException(throwable);
+            } else {
+                promise.trySetResult(v);
+            }
+        }));
+        return promise;
+    }
+
+    public static <V> CompletableFuture<V> toJDKFuture(ICompletionStage<V> stage) {
+        CompletableFuture<V> future = new CompletableFuture<>();
+        stage.whenComplete(((ctx, v, throwable) -> {
+            if (throwable != null) {
+                future.completeExceptionally(throwable);
+            } else {
+                future.complete(v);
+            }
+        }));
         return future;
     }
 
-    public static <V> void setFuture(CompletableFuture<? super V> output, CompletionStage<V> input) {
+    public static <V> void setFuture(IPromise<? super V> output, ICompletionStage<V> input) {
         Objects.requireNonNull(output, "output");
-        input.whenComplete((v, throwable) -> {
+        input.whenComplete((ctx, v, throwable) -> {
             if (throwable != null) {
-                output.completeExceptionally(throwable);
+                output.trySetException(throwable);
             } else {
-                output.complete(v);
+                output.trySetResult(v);
             }
         });
     }
 
-    public static <V> void setFutureAsync(CompletableFuture<? super V> output, CompletionStage<V> input, @Nullable Executor executor) {
-        Objects.requireNonNull(output, "output");
-        if (executor == null) {
-            input.whenCompleteAsync((v, throwable) -> {
-                if (throwable != null) {
-                    output.completeExceptionally(throwable);
-                } else {
-                    output.complete(v);
-                }
-            });
-        } else {
-            input.whenCompleteAsync((v, throwable) -> {
-                if (throwable != null) {
-                    output.completeExceptionally(throwable);
-                } else {
-                    output.complete(v);
-                }
-            }, executor);
-        }
+    public static <V> void setFutureAsync(Executor executor, IPromise<? super V> output, ICompletionStage<V> input) {
+        setFutureAsync(executor, output, input, 0);
     }
 
-    public static <V> XCompletableFuture<V> setFutureAsync(EventLoop eventLoop, CompletionStage<V> input) {
-        XCompletableFuture<V> result = eventLoop.newPromise();
-        setFutureAsync(result, input, eventLoop);
+    public static <V> void setFutureAsync(Executor executor, IPromise<? super V> output, ICompletionStage<V> input, int options) {
+        Objects.requireNonNull(output, "output");
+        Objects.requireNonNull(executor, "executor");
+        input.whenCompleteAsync(executor, (ctx, v, throwable) -> {
+            if (throwable != null) {
+                output.trySetException(throwable);
+            } else {
+                output.trySetResult(v);
+            }
+        }, null, options);
+    }
+
+    /** 由{@link EventLoop}通知返回的{@link IPromise} */
+    public static <V> IPromise<V> toEventLoopPromise(EventLoop eventLoop, ICompletionStage<V> input) {
+        IPromise<V> result = eventLoop.newPromise();
+        setFutureAsync(eventLoop, result, input, TaskOption.STAGE_TRY_INLINE);
         return result;
     }
 
@@ -178,56 +189,35 @@ public class FutureUtils {
         return true; // 循环外isDone
     }
 
-    @Internal
-    public static boolean completeTerminationFuture(XCompletableFuture<?> terminationFuture) {
-        TerminateFutureContext terminationFutureCtx = (TerminateFutureContext) terminationFuture.getCtx();
-        return terminationFutureCtx.terminate(terminationFuture);
-    }
-
-    @Internal
-    public static boolean completeTerminationFuture(XCompletableFuture<?> terminationFuture, Throwable cause) {
-        TerminateFutureContext terminationFutureCtx = (TerminateFutureContext) terminationFuture.getCtx();
-        return terminationFutureCtx.terminate(terminationFuture, cause);
-    }
-
     // endregion
 
     // region future工厂方法
-    public static <V> XCompletableFuture<V> newPromise() {
-        return new XCompletableFuture<>();
+    public static <V> IPromise<V> newPromise() {
+        return new Promise<>();
     }
 
-    public static <V> XCompletableFuture<V> newSucceededFuture(V result) {
-        XCompletableFuture<V> future = new XCompletableFuture<>(ObtrudeClosedFutureContext.ONLY_SELF);
-        future.internal_doComplete(result);
-        return future;
+    public static <V> IPromise<V> newPromise(Executor executor) {
+        return new Promise<>(executor);
     }
 
-    public static <V> XCompletableFuture<V> newFailedFuture(Throwable cause) {
-        XCompletableFuture<V> future = new XCompletableFuture<>(ObtrudeClosedFutureContext.ONLY_SELF);
-        future.internal_doCompleteExceptionally(cause);
-        return future;
+    public static <V> IPromise<V> newPromise(Executor executor, IContext ctx) {
+        return new Promise<>(executor, ctx);
+    }
+
+    public static <V> IPromise<V> newSucceededFuture(V result) {
+        return Promise.succeededPromise(result);
+    }
+
+    public static <V> IPromise<V> newFailedFuture(Throwable cause) {
+        return Promise.failedPromise(cause);
     }
 
     public static FutureCombiner newCombiner() {
-        return new DefaultFutureCombiner();
+        return new FutureCombiner();
     }
 
-    public static FutureCombiner newCombiner(EventLoop eventLoop) {
-        return new DefaultFutureCombiner(eventLoop::newPromise);
-    }
-
-    public static FutureCombiner newCombiner(Supplier<XCompletableFuture<Object>> factory) {
-        return new DefaultFutureCombiner(factory);
-    }
-
-    /** @param downward 是否向下流动 */
-    public static FutureContext obtrdeClosedFutureContext(boolean downward) {
-        if (downward) {
-            return ObtrudeClosedFutureContext.DOWNWARD;
-        } else {
-            return ObtrudeClosedFutureContext.ONLY_SELF;
-        }
+    public static JDKFutureCombiner newJdkCombiner() {
+        return new JDKFutureCombiner();
     }
 
     // endregion
@@ -236,15 +226,15 @@ public class FutureUtils {
         return executor instanceof EventLoop eventLoop && eventLoop.inEventLoop();
     }
 
-    public static void ensureInEventLoop(EventLoop eventLoop, String msg) {
-        if (!eventLoop.inEventLoop()) {
-            throw new GuardedOperationException(msg);
-        }
-    }
-
     public static void ensureInEventLoop(EventLoop eventLoop) {
         if (!eventLoop.inEventLoop()) {
             throw new GuardedOperationException("Must be called from EventLoop thread");
+        }
+    }
+
+    public static void ensureInEventLoop(EventLoop eventLoop, String msg) {
+        if (!eventLoop.inEventLoop()) {
+            throw new GuardedOperationException(msg);
         }
     }
 
@@ -265,67 +255,76 @@ public class FutureUtils {
         return new EventLoopTimeProvider(eventLoop, curTime);
     }
 
+    // region submit
+
+    public static <V> IFuture<V> submitFunc(Executor executor, Function<? super IContext, V> task, IContext ctx) {
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(executor, ctx));
+        executor.execute(futureTask);
+        return futureTask.future();
+    }
+
+    public static <V> IFuture<V> submitFunc(IExecutor executor, Function<? super IContext, V> task, IContext ctx, int options) {
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(executor, ctx));
+        executor.execute(futureTask, options);
+        return futureTask.future();
+    }
+
+    public static IFuture<?> submitAction(Executor executor, Consumer<? super IContext> task, IContext ctx) {
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(executor, ctx));
+        executor.execute(futureTask);
+        return futureTask.future();
+    }
+
+    public static IFuture<?> submitAction(IExecutor executor, Consumer<? super IContext> task, IContext ctx, int options) {
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(executor, ctx));
+        executor.execute(futureTask, options);
+        return futureTask.future();
+    }
+
+    public static <V> IFuture<V> submitCall(Executor executor, Callable<V> task) {
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(executor));
+        executor.execute(futureTask);
+        return futureTask.future();
+    }
+
+    public static <V> IFuture<V> submitCall(IExecutor executor, Callable<V> task, int options) {
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(executor));
+        executor.execute(futureTask, options);
+        return futureTask.future();
+    }
+
+    public static IFuture<?> submitRun(Executor executor, Runnable action) {
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(action, newPromise(executor));
+        executor.execute(futureTask);
+        return futureTask.future();
+    }
+
+    public static IFuture<?> submitRun(IExecutor executor, Runnable action, int options) {
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(action, newPromise(executor));
+        executor.execute(futureTask, options);
+        return futureTask.future();
+    }
+
+    public static void execute(Executor executor, Consumer<? super IContext> action, IContext ctx) {
+        executor.execute(toRunnable(action, ctx));
+    }
+
+    public static void execute(IExecutor executor, Consumer<? super IContext> action, IContext ctx, int options) {
+        executor.execute(toRunnable(action, ctx), options);
+    }
+
+    // endregion
+
     // region callable适配
 
-    public static final Object CONTINUE = new Object();
-
-    public static <V> Callable<V> toCallable(Runnable task, V result) {
-        Objects.requireNonNull(task);
-        return new RunnableAdapter<>(task, result);
-    }
-
-    public static <V> Callable<V> toCallable(TimeSharingTask<V> task) {
-        Objects.requireNonNull(task);
-        return new TimeSharingAdapter<>(task);
-    }
-
-    public static boolean isTimeSharing(Callable<?> task) {
-        return task.getClass() == TimeSharingAdapter.class;
-    }
-
-    public static Object unwrapTask(Object task) {
-        if (task == null) {
-            return null;
-        }
-        if (task instanceof RunnableAdapter<?> adapter) {
-            return adapter.task;
-        }
-        if (task instanceof TimeSharingAdapter<?> adapter) {
-            return adapter.task;
-        }
-        return task;
+    public static Runnable toRunnable(Consumer<? super IContext> action, IContext ctx) {
+        Objects.requireNonNull(action, "action");
+        return new Run2(action, ctx);
     }
 
     // endregion
 
     // region 适配类
-
-    private static class ObtrudeClosedFutureContext implements FutureContext {
-
-        private static final ObtrudeClosedFutureContext ONLY_SELF = new ObtrudeClosedFutureContext(false);
-        private static final ObtrudeClosedFutureContext DOWNWARD = new ObtrudeClosedFutureContext(true);
-
-        final boolean downward;
-
-        private ObtrudeClosedFutureContext(boolean downward) {
-            this.downward = downward;
-        }
-
-        @Override
-        public FutureContext downContext(XCompletableFuture<?> future, Executor actionExecutor) {
-            return downward ? this : null;
-        }
-
-        @Override
-        public <T> void obtrudeValue(XCompletableFuture<T> future, T value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void obtrudeException(XCompletableFuture<?> future, Throwable ex) {
-            throw new UnsupportedOperationException();
-        }
-    }
 
     @ThreadSafe
     private static class EventLoopTimeProvider implements CachedTimeProvider {
@@ -359,49 +358,28 @@ public class FutureUtils {
         }
     }
 
-    private static class RunnableAdapter<T> implements Callable<T> {
+    private static class Run2 implements Runnable {
 
-        final Runnable task;
-        final T result;
+        private Consumer<? super IContext> action;
+        private IContext ctx;
 
-        public RunnableAdapter(Runnable task, T result) {
-            this.task = task;
-            this.result = result;
+        public Run2(Consumer<? super IContext> action, IContext ctx) {
+            this.action = action;
+            this.ctx = ctx;
         }
 
         @Override
-        public T call() throws Exception {
-            task.run();
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "Runnable2CallbackAdapter{task=" + task + '}';
-        }
-    }
-
-    private static class TimeSharingAdapter<V> implements Callable<V> {
-
-        final TimeSharingTask<V> task;
-
-        private TimeSharingAdapter(TimeSharingTask<V> task) {
-            this.task = task;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public V call() throws Exception {
-            ResultHolder<V> resultHolder = task.step();
-            if (resultHolder == null) {
-                return (V) CONTINUE;
+        public void run() {
+            Consumer<? super IContext> action = this.action;
+            IContext ctx = this.ctx;
+            {
+                this.action = null;
+                this.ctx = null;
             }
-            return resultHolder.result;
-        }
-
-        @Override
-        public String toString() {
-            return "TimeSharingAdapter{task=" + task + '}';
+            if (ctx != null && ctx.cancelToken().isCancelling()) {
+                throw new CancellationException();
+            }
+            action.accept(ctx);
         }
     }
     // endregion

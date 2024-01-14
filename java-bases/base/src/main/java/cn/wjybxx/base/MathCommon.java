@@ -16,6 +16,8 @@
 
 package cn.wjybxx.base;
 
+import java.util.Random;
+
 /**
  * @author wjybxx
  * date 2023/3/31
@@ -51,6 +53,8 @@ public class MathCommon {
     public static final long LONG_MASK2 = 0x00_00_00_00_00_00_FF_00L;
     public static final long LONG_MASK1 = 0x00_00_00_00_00_00_00_FFL;
 
+    public static final Random SHARED_RANDOM = new Random();
+
     protected MathCommon() {
     }
 
@@ -82,7 +86,7 @@ public class MathCommon {
     }
 
     /** 判断一个数是否是有效的uint32 */
-    public static boolean isUint32(long value) {
+    public static boolean isUInt32(long value) {
         return value >= 0 && value <= UINT32_MAX_VALUE;
     }
 

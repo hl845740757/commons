@@ -17,31 +17,35 @@
 package cn.wjybxx.common.concurrent;
 
 import java.util.concurrent.Delayed;
+import java.util.concurrent.RunnableScheduledFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 1.该接口仅用于JDK兼容（类型兼容），不建议用户使用。
+ * 2.这里的接口不保底对用户线程的可见性，甚至仅仅是不抛异常而已。
+ *
  * @author wjybxx
  * date 2023/4/9
  */
-public interface IScheduledFuture<V> extends ICompletableFuture<V>, ScheduledFuture<V> {
+@SuppressWarnings("NullableProblems")
+public interface IScheduledFuture<V> extends IFuture<V>, ScheduledFuture<V> {
 
     /**
-     * 是否是周期性任务
-     */
-    boolean isPeriodic();
-
-    /**
+     * 该接口的可见性取决于实现，在某些情况下该接口不提供完全的可见性，查询可能是不准确的。
      * {@inheritDoc}
-     * 注意：该接口不对用户保证可见性，通常是无意义的；因为这是以消费者的时间轴计算的，在多线程/分布式下，服务方的时间与本地时间不能完全一致。
      */
     @Override
     long getDelay(TimeUnit unit);
 
     /**
-     * {@inheritDoc}
-     * 注意：用户最好不要比较两个Future的大小，会涉及两个多线程对象之间的比较，不保证用户比较结果的稳定性
+     * JDK的{@link ScheduledFuture}继承{@link Delayed}是个错误，
+     * 让{@link RunnableScheduledFuture}继承{@link Delayed}都还好。
+     * {@link ScheduledFuture}继承{@link Delayed}暴露了实现，也限制了实现。
+     *
+     * @deprecated 该接口并不是提供给用户的，用户不应当调用该方法，实现类也不一定实现该方法。
      */
+    @Deprecated
     @Override
     int compareTo(Delayed o);
 

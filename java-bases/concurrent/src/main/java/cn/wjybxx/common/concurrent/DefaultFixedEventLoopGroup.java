@@ -16,6 +16,7 @@
 
 package cn.wjybxx.common.concurrent;
 
+import cn.wjybxx.base.func.TriConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,6 @@ import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -33,8 +33,7 @@ import java.util.function.Consumer;
 public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implements FixedEventLoopGroup {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultFixedEventLoopGroup.class);
-
-    private final XCompletableFuture<?> terminationFuture = new XCompletableFuture<>(new TerminateFutureContext());
+    private final IPromise<Void> terminationFuture = new Promise<>();
 
     private final EventLoop[] children;
     private final List<EventLoop> readonlyChildren;
@@ -75,8 +74,8 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
     // -------------------------------------  子类生命周期管理 --------------------------------
 
     @Override
-    public ICompletableFuture<?> terminationFuture() {
-        return terminationFuture;
+    public IFuture<?> terminationFuture() {
+        return terminationFuture.asReadonly();
     }
 
     @Override
@@ -161,7 +160,7 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
     //
 
     /** 子节点终结状态监听器 */
-    private class ChildrenTerminateListener implements BiConsumer<Object, Throwable> {
+    private class ChildrenTerminateListener implements TriConsumer<IContext, Object, Throwable> {
 
         /** 已关闭的子节点数量 */
         private final AtomicInteger terminatedChildren = new AtomicInteger(0);
@@ -171,14 +170,14 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
         }
 
         @Override
-        public void accept(Object o, Throwable throwable) {
+        public void accept(IContext ctx, Object o, Throwable throwable) {
             if (terminatedChildren.incrementAndGet() == children.length) {
                 try {
                     invokeTerminationHook();
                 } catch (Throwable e) {
                     logger.error("terminateHook caught exception!", e);
                 } finally {
-                    FutureUtils.completeTerminationFuture(terminationFuture);
+                    terminationFuture.trySetResult(null);
                 }
             }
         }

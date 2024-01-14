@@ -20,6 +20,8 @@ import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * 默认的实现仅仅是简单的将任务分配给某个{@link EventLoop}执行
@@ -27,55 +29,146 @@ import java.util.concurrent.*;
  * @author wjybxx
  * date 2023/4/8
  */
+@SuppressWarnings("deprecation")
 public abstract class AbstractEventLoopGroup implements EventLoopGroup {
+
+    @Override
+    public void execute(Runnable command, int options) {
+        select().execute(command, options);
+    }
 
     @Override
     public void execute(@Nonnull Runnable command) {
         select().execute(command);
     }
 
+    @Override
+    public void execute(Consumer<? super IContext> action, IContext ctx) {
+        select().execute(FutureUtils.toRunnable(action, ctx));
+    }
+
+    @Override
+    public void execute(Consumer<? super IContext> action, IContext ctx, int options) {
+        select().execute(FutureUtils.toRunnable(action, ctx), options);
+    }
+
+    // region submit
+    @Override
+    public <V> IPromise<V> newPromise(IContext ctx) {
+        return new Promise<>(this, ctx);
+    }
+
+    @Override
+    public <V> IPromise<V> newPromise() {
+        return new Promise<>(this, null);
+    }
+
+    @Override
+    public <V> IFuture<V> submit(@Nonnull TaskBuilder<V> builder) {
+        return select().submit(builder);
+    }
+
     @Nonnull
     @Override
-    public ICompletableFuture<?> submit(@Nonnull Runnable task) {
+    public <T> IFuture<T> submit(@Nonnull Callable<T> task) {
         return select().submit(task);
     }
 
     @Nonnull
     @Override
-    public <T> ICompletableFuture<T> submit(@Nonnull Runnable task, T result) {
+    public IFuture<?> submit(@Nonnull Runnable task) {
+        return select().submit(task);
+    }
+
+    @Nonnull
+    @Override
+    public <T> IFuture<T> submit(@Nonnull Runnable task, T result) {
         return select().submit(task, result);
     }
 
-    @Nonnull
     @Override
-    public <T> ICompletableFuture<T> submit(@Nonnull Callable<T> task) {
-        return select().submit(task);
+    public <V> IFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx) {
+        return select().submitFunc(task, ctx);
     }
 
     @Override
-    public IScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
-        return select().schedule(command, delay, unit);
+    public <V> IFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx, int options) {
+        return select().submitFunc(task, ctx, options);
     }
 
     @Override
-    public <V> IScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
-        return select().schedule(callable, delay, unit);
+    public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
+        return select().submitAction(task, ctx);
     }
 
     @Override
-    public IScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
-        return select().scheduleWithFixedDelay(command, initialDelay, delay, unit);
+    public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
+        return select().submitAction(task, ctx, options);
     }
 
     @Override
-    public IScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
-        return select().scheduleAtFixedRate(command, initialDelay, period, unit);
+    public <V> IFuture<V> submitCall(Callable<V> task) {
+        return select().submitCall(task);
     }
 
     @Override
-    public <V> IScheduledFuture<V> schedule(ScheduleBuilder<V> builder) {
+    public <V> IFuture<V> submitCall(Callable<V> task, int options) {
+        return select().submitCall(task, options);
+    }
+
+    @Override
+    public IFuture<?> submitRun(Runnable task) {
+        return select().submitRun(task);
+    }
+
+    @Override
+    public IFuture<?> submitRun(Runnable task, int options) {
+        return select().submitRun(task, options);
+    }
+
+    // endregion
+
+    // region schedule
+
+    @Override
+    public <V> IScheduledFuture<V> schedule(ScheduledBuilder<V> builder) {
         return select().schedule(builder);
     }
+
+    @Override
+    public IScheduledFuture<?> scheduleAction(Consumer<? super IContext> task, IContext ctx, long delay, TimeUnit unit) {
+        return select().scheduleAction(task, ctx, delay, unit);
+    }
+
+    @Override
+    public <V> IScheduledFuture<V> scheduleFunc(Function<? super IContext, V> task, IContext ctx, long delay, TimeUnit unit) {
+        return select().scheduleFunc(task, ctx, delay, unit);
+    }
+
+    @Nonnull
+    @Override
+    public IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
+        return select().schedule(task, delay, unit);
+    }
+
+    @Nonnull
+    @Override
+    public <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
+        return select().schedule(task, delay, unit);
+    }
+
+    @Nonnull
+    @Override
+    public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
+        return select().scheduleWithFixedDelay(task, initialDelay, delay, unit);
+    }
+
+    @Nonnull
+    @Override
+    public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
+        return select().scheduleAtFixedRate(task, initialDelay, period, unit);
+    }
+    // endregion
 
     // 以下API并不常用，因此不做优化
 

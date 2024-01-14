@@ -65,7 +65,7 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
     private long p1, p2, p3, p4, p5, p6, p7, p8;
 
     /** 线程状态 */
-    private volatile int state = ST_NOT_STARTED;
+    private volatile int state = EventLoopState.ST_UNSTARTED;
     @SuppressWarnings("unused")
     private long p9, p10, p11, p12, p13, p14, p15, p16;
 
@@ -82,7 +82,7 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
     private final MpscUnboundedXaddArrayQueue2.OfferHooker<Runnable> translator;
 
     /** 周期性任务队列 -- 都是先于taskQueue中的任务提交的 -- 暂不提供带缓存行填充的实现 */
-    private final IndexedPriorityQueue<XScheduledFutureTask<?>> scheduledTaskQueue;
+    private final IndexedPriorityQueue<ScheduledPromiseTask<?>> scheduledTaskQueue;
     /** 批量执行任务的大小 */
     private final int taskBatchSize;
     /** 任务拒绝策略 */
@@ -94,8 +94,8 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
 
     private final Thread thread;
     private final Worker worker;
-    private final XCompletableFuture<?> terminationFuture = new XCompletableFuture<>(new TerminateFutureContext(this));
-    private final XCompletableFuture<?> runningFuture = new XCompletableFuture<>(new TerminateFutureContext(this));
+    private final IPromise<Void> terminationFuture = new Promise<>(this, null);
+    private final IPromise<Void> runningFuture = new Promise<>(this, null);
 
     @SuppressWarnings("unused")
     private long p25, p26, p27, p28, p29, p30, p31, p32;
@@ -112,7 +112,7 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
         this.sequencer = new MpscSequencer(waitStrategy, ringBuffer);
         this.translator = new Translator();
 
-        this.scheduledTaskQueue = new DefaultIndexedPriorityQueue<>(XScheduledFutureTask::compareTo, 64);
+        this.scheduledTaskQueue = new DefaultIndexedPriorityQueue<>(ScheduledPromiseTask::compareToExplicitly, 64);
         this.taskBatchSize = MathCommon.clamp(builder.getBatchSize(), MIN_BATCH_SIZE, MAX_BATCH_SIZE);
         this.rejectedExecutionHandler = Objects.requireNonNull(builder.getRejectedExecutionHandler());
         this.agent = Objects.requireNonNullElse(builder.getAgent(), EmptyAgent.getInstance());
@@ -130,42 +130,42 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
     // region 状态查询
 
     @Override
-    public State getState() {
-        return State.valueOf(state);
+    public EventLoopState state() {
+        return EventLoopState.valueOf(state);
     }
 
     @Override
     public boolean isRunning() {
-        return state == ST_RUNNING;
+        return state == EventLoopState.ST_RUNNING;
     }
 
     @Override
     public final boolean isShuttingDown() {
-        return state >= ST_SHUTTING_DOWN;
+        return state >= EventLoopState.ST_SHUTTING_DOWN;
     }
 
     @Override
     public final boolean isShutdown() {
-        return state >= ST_SHUTDOWN;
+        return state >= EventLoopState.ST_SHUTDOWN;
     }
 
     @Override
     public final boolean isTerminated() {
-        return state == ST_TERMINATED;
+        return state == EventLoopState.ST_TERMINATED;
+    }
+
+    @Override
+    public final IFuture<?> terminationFuture() {
+        return terminationFuture.asReadonly();
     }
 
     @Override
     public final boolean awaitTermination(long timeout, @Nonnull TimeUnit unit) throws InterruptedException {
-        return terminationFuture().await(timeout, unit);
+        return terminationFuture.await(timeout, unit);
     }
 
     @Override
-    public final ICompletableFuture<?> terminationFuture() {
-        return terminationFuture;
-    }
-
-    @Override
-    public ICompletableFuture<?> runningFuture() {
+    public IFuture<?> runningFuture() {
         return runningFuture;
     }
 
@@ -211,8 +211,10 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
     // region 任务提交
 
     @Override
-    public void execute(@Nonnull Runnable task) {
-        Objects.requireNonNull(task, "task");
+    public void execute(Runnable task, int options) {
+        if (options != 0 && task instanceof PromiseTask<?> promiseTask) {
+            promiseTask.setOptions(options);
+        }
         if (isShuttingDown()) {
             rejectedExecutionHandler.rejected(task, this);
             return;
@@ -227,11 +229,12 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
             if (isShuttingDown()) {
                 return _invalidRunnable;
             }
-            if (task instanceof XScheduledFutureTask<?> futureTask) {
+            if (task instanceof ScheduledPromiseTask<?> futureTask) {
                 futureTask.setId(sequence); // nice
-                if (futureTask.isEnable(TaskFeature.LOW_PRIORITY)) {
+                if (futureTask.isEnable(TaskOption.LOW_PRIORITY)) {
                     futureTask.setQueueId(LOWER_PRIORITY_QUEUE_ID);
                 }
+                futureTask.registerCancellation();
             }
             return task;
         }
@@ -249,7 +252,7 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
     }
 
     @Override
-    final void reSchedulePeriodic(XScheduledFutureTask<?> futureTask, boolean triggered) {
+    final void reSchedulePeriodic(ScheduledPromiseTask<?> futureTask, boolean triggered) {
         assert inEventLoop();
         if (isShuttingDown()) {
             futureTask.cancel(false);
@@ -259,7 +262,7 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
     }
 
     @Override
-    final void removeScheduled(XScheduledFutureTask<?> futureTask) {
+    final void removeScheduled(ScheduledPromiseTask<?> futureTask) {
         if (inEventLoop()) {
             scheduledTaskQueue.removeTyped(futureTask);
         } else {
@@ -268,7 +271,7 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
     }
 
     @Override
-    protected final long nanoTime() {
+    protected final long tickTime() {
         return nanoTime;
     }
 
@@ -277,25 +280,25 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
     // region 线程状态切换
 
     @Override
-    public ICompletableFuture<?> start() {
+    public IFuture<?> start() {
         ensureThreadStarted();
-        return runningFuture;
+        return runningFuture.asReadonly();
     }
 
     @Override
     public void shutdown() {
         if (!runningFuture.isDone()) {
-            FutureUtils.completeTerminationFuture(runningFuture, new StartFailedException("Shutdown"));
+            runningFuture.trySetException(new StartFailedException("Shutdown"));
         }
 
         int expectedState = state;
         for (; ; ) {
-            if (expectedState >= ST_SHUTTING_DOWN) {
+            if (expectedState >= EventLoopState.ST_SHUTTING_DOWN) {
                 // 已被其它线程关闭
                 return;
             }
 
-            int realState = compareAndExchangeState(expectedState, ST_SHUTTING_DOWN);
+            int realState = compareAndExchangeState(expectedState, EventLoopState.ST_SHUTTING_DOWN);
             if (realState == expectedState) {
                 // CAS成功，当前线程负责了关闭
                 ensureThreadTerminable(expectedState);
@@ -310,25 +313,24 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
     @Override
     public List<Runnable> shutdownNow() {
         shutdown();
-        advanceRunState(ST_SHUTDOWN);
+        advanceRunState(EventLoopState.ST_SHUTDOWN);
         // 这里不能操作ringBuffer中的数据，不能打破[多生产者单消费者]的架构
         return Collections.emptyList();
     }
 
     private void ensureThreadStarted() {
-        if (state == ST_NOT_STARTED
-                && STATE.compareAndSet(this, ST_NOT_STARTED, ST_STARTING)) {
+        if (state == EventLoopState.ST_UNSTARTED
+                && STATE.compareAndSet(this, EventLoopState.ST_UNSTARTED, EventLoopState.ST_STARTING)) {
             thread.start();
         }
     }
 
     private void ensureThreadTerminable(int oldState) {
-        if (oldState == ST_NOT_STARTED) {
+        if (oldState == EventLoopState.ST_UNSTARTED) {
             // TODO 是否需要启动线程，进行更彻底的清理？
-            state = ST_TERMINATED;
-
-            FutureUtils.completeTerminationFuture(runningFuture, new StartFailedException("Termination"));
-            FutureUtils.completeTerminationFuture(terminationFuture);
+            state = EventLoopState.ST_TERMINATED;
+            runningFuture.trySetException(new StartFailedException("Stillborn"));
+            terminationFuture.trySetResult(null);
         } else {
             // 等待策略是根据alert信号判断EventLoop是否已开始关闭的，因此即使inEventLoop也需要alert，否则可能丢失信号，在waitFor处无法停止
             worker.sequenceBarrier.alert();
@@ -375,29 +377,27 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
         public void run() {
             outer:
             try {
-                if (runningFuture.isDone()) {
+                if (!runningFuture.trySetComputing()) {
                     break outer;
                 }
 
                 nanoTime = System.nanoTime();
                 agent.onStart();
 
-                advanceRunState(ST_RUNNING);
-                FutureUtils.completeTerminationFuture(runningFuture);
-
-                if (runningFuture.isSucceeded()) {
+                advanceRunState(EventLoopState.ST_RUNNING);
+                if (runningFuture.trySetResult(null)) {
                     loop();
                 }
             } catch (Throwable e) {
                 logger.error("thread exit due to exception!", e);
                 if (!runningFuture.isDone()) { // 启动失败
-                    FutureUtils.completeTerminationFuture(runningFuture, new StartFailedException("StartFailed", e));
+                    runningFuture.trySetException(new StartFailedException("StartFailed", e));
                 }
             } finally {
                 // 如果是非正常退出，需要切换到正在关闭状态 - 告知其它线程，已经开始关闭
-                advanceRunState(ST_SHUTTING_DOWN);
+                advanceRunState(EventLoopState.ST_SHUTTING_DOWN);
                 if (!runningFuture.isSucceeded()) {
-                    advanceRunState(ST_SHUTDOWN); // 启动失败直接进入清理状态，丢弃所有提交的任务
+                    advanceRunState(EventLoopState.ST_SHUTDOWN); // 启动失败直接进入清理状态，丢弃所有提交的任务
                 }
 
                 try {
@@ -405,7 +405,7 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
                     cleanRingBuffer();
                 } finally {
                     // 标记为已进入最终清理阶段
-                    advanceRunState(ST_SHUTDOWN);
+                    advanceRunState(EventLoopState.ST_SHUTDOWN);
 
                     // 退出前进行必要的清理，释放系统资源
                     try {
@@ -414,8 +414,8 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
                         logger.error("thread clean caught exception!", e);
                     } finally {
                         // 设置为终止状态
-                        state = ST_TERMINATED;
-                        FutureUtils.completeTerminationFuture(terminationFuture);
+                        state = EventLoopState.ST_TERMINATED;
+                        terminationFuture.trySetResult(null);
                     }
                 }
             }
@@ -493,10 +493,10 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
          */
         private void processScheduledQueue(long tickTime, int limit, boolean shuttingDownMode) {
             final DefaultEventLoop eventLoop = DefaultEventLoop.this;
-            final IndexedPriorityQueue<XScheduledFutureTask<?>> taskQueue = eventLoop.scheduledTaskQueue;
+            final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue = eventLoop.scheduledTaskQueue;
 
             long count = 0;
-            XScheduledFutureTask<?> queueTask;
+            ScheduledPromiseTask<?> queueTask;
             while ((queueTask = taskQueue.peek()) != null) {
                 if (queueTask.isDone()) {
                     taskQueue.poll(); // 未及时删除的任务
@@ -513,7 +513,7 @@ public class DefaultEventLoop extends AbstractScheduledEventLoop {
                 if (shuttingDownMode) {
                     // 关闭模式下，不执行低优先级任务，不再重复执行任务
                     if (preQueueId == LOWER_PRIORITY_QUEUE_ID || queueTask.trigger(tickTime)) {
-                        queueTask.cancelWithoutRemove(false);
+                        queueTask.cancelWithoutRemove();
                     }
                 } else {
                     // 非关闭模式下，检测批处理限制 -- 这里暂不响应关闭

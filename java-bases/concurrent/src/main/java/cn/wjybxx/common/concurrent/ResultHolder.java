@@ -22,12 +22,17 @@ package cn.wjybxx.common.concurrent;
  */
 public final class ResultHolder<V> {
 
-    private static final ResultHolder<?> EMPTY = new ResultHolder<>(null);
+    public static final ResultHolder<?> EMPTY = new ResultHolder<>(null);
+    public static final ResultHolder<?> CONTINUE = new ResultHolder<>(null);
 
-    public final V result;
+    private final V result;
 
     private ResultHolder(V result) {
         this.result = result;
+    }
+
+    public V getResult() {
+        return result;
     }
 
     public V orElse(V def) {

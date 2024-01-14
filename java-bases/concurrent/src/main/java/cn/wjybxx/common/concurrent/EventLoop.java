@@ -19,7 +19,7 @@ package cn.wjybxx.common.concurrent;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
-import java.util.concurrent.CompletableFuture;
+import java.util.Objects;
 
 /**
  * 事件循环
@@ -102,7 +102,7 @@ public interface EventLoop extends FixedEventLoopGroup, SingleThreadExecutor {
      *        }
      * }
      * </pre>
-     * 假设现在有3个线程：A、B、C，他们进行了约定，线程A投递任务后，告诉线程B，线程B投递后告诉线程C，线程C再投递，以期望任务按照A、B、C的顺序处理。
+     * 假设现在有3个线程：A、B、C，它们进行了约定，线程A投递任务后，告诉线程B，线程B投递后告诉线程C，线程C再投递，以期望任务按照A、B、C的顺序处理。
      * 在某个巧合下，线程C可能就是执行者线程，结果C的任务可能在A和B的任务之前被处理，从而破坏了外部约定的时序。
      * <p>
      * 该方法一定要慎用，它有时候是无害的，有时候则是有害的，因此必须想明白是否需要提供全局时序保证！
@@ -119,6 +119,7 @@ public interface EventLoop extends FixedEventLoopGroup, SingleThreadExecutor {
      * (有一个经典的示例：Netty的GlobalEventExecutor)
      * 2.该方法可用于任务检测是否切换了线程，以确保任务运行在固定的线程中
      */
+    @Override
     boolean inEventLoop(Thread thread);
 
     /**
@@ -135,34 +136,33 @@ public interface EventLoop extends FixedEventLoopGroup, SingleThreadExecutor {
      */
     EventLoopModule mainModule();
 
-    /**
-     * 创建一个线程绑定的future以执行任务，返回的future将禁止在当前EventLoop上执行阻塞操作。
-     *
-     * @see CompletableFuture#completedFuture(Object)
-     * @see CompletableFuture#failedFuture(Throwable)
-     */
-    <V> XCompletableFuture<V> newPromise();
-
-    default <V> XCompletableFuture<V> newSucceededFuture(V result) {
-        XCompletableFuture<V> promise = newPromise();
-        promise.complete(result);
-        return promise;
-    }
-
-    default <V> XCompletableFuture<V> newFailedFuture(Throwable cause) {
-        XCompletableFuture<V> promise = newPromise();
-        promise.completeExceptionally(cause);
-        return promise;
-    }
-
+    /** @throws GuardedOperationException 如果当前不在EventLoop所在线程 */
     default void ensureInEventLoop() {
-        if (!inEventLoop()) throw new GuardedOperationException();
+        if (!inEventLoop()) {
+            throw new GuardedOperationException();
+        }
+    }
+
+    /** @throws GuardedOperationException 如果当前不在EventLoop所在线程 */
+    default void ensureInEventLoop(String method) {
+        Objects.requireNonNull(method);
+        if (!inEventLoop()) {
+            throw new GuardedOperationException("Calling " + method + " must in the EventLoop");
+        }
+    }
+
+    /** @throws BlockingOperationException 如果当前在EventLoop所在线程 */
+    default void throwIfInEventLoop(String method) {
+        Objects.requireNonNull(method);
+        if (inEventLoop()) {
+            throw new BlockingOperationException("Calling " + method + " from within the EventLoop is not allowed");
+        }
     }
 
     // endregion
 
     /** @return EventLoop的当前状态 */
-    State getState();
+    EventLoopState state();
 
     /** 是否处于运行状态 */
     boolean isRunning();
@@ -175,7 +175,7 @@ public interface EventLoop extends FixedEventLoopGroup, SingleThreadExecutor {
      * 2.如果EventLoop未启动直接关闭，则Future进入失败完成状态
      * 3.EventLoop关闭时，Future保持之前的结果
      */
-    ICompletableFuture<?> runningFuture();
+    IFuture<?> runningFuture();
 
     /**
      * 主动启动EventLoop
@@ -184,55 +184,7 @@ public interface EventLoop extends FixedEventLoopGroup, SingleThreadExecutor {
      *
      * @return {@link #runningFuture()}
      */
-    ICompletableFuture<?> start();
-
-    // region State枚举
-    enum State {
-
-        /** 初始状态 -- 已创建，但尚未启动 */
-        INIT(0),
-        /** 启动中 */
-        STARTING(1),
-        /** 启动成功，运行中 */
-        RUNNING(2),
-        /** 正在关闭 */
-        SHUTTING_DOWN(3),
-        /** 二阶段关闭状态，终止前的清理工作 */
-        SHUTDOWN(4),
-        /** 终止 */
-        TERMINATED(5);
-
-        public final int number;
-
-        State(int number) {
-            this.number = number;
-        }
-
-        public static State valueOf(int number) {
-            return switch (number) {
-                case 0 -> INIT;
-                case 1 -> STARTING;
-                case 2 -> RUNNING;
-                case 3 -> SHUTTING_DOWN;
-                case 4 -> SHUTDOWN;
-                case 5 -> TERMINATED;
-                default -> throw new IllegalArgumentException("invalid number: " + number);
-            };
-        }
-    }
-
-    /** 初始状态，未启动状态 */
-    int ST_NOT_STARTED = 0;
-    /** 启动中 */
-    int ST_STARTING = 1;
-    /** 运行状态 */
-    int ST_RUNNING = 2;
-    /** 正在关闭状态 */
-    int ST_SHUTTING_DOWN = 3;
-    /** 已关闭状态，正在进行最后的清理 */
-    int ST_SHUTDOWN = 4;
-    /** 终止状态 */
-    int ST_TERMINATED = 5;
+    IFuture<?> start();
 
     // endregion
 }

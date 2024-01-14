@@ -26,7 +26,7 @@ import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 测试{@link ScheduleBuilder}
+ * 测试{@link ScheduledBuilder}
  *
  * @author wjybxx
  * date 2023/4/11
@@ -60,7 +60,7 @@ public class ScheduleTest2 {
         consumer.terminationFuture().join();
     }
 
-    ResultHolder<String> timeSharingJoinString() {
+    ResultHolder<String> timeSharingJoinString(IContext ctx) {
         joiner.add(stringList.get(index++));
         if (index >= stringList.size()) {
             return ResultHolder.succeeded(joiner.toString());
@@ -68,26 +68,26 @@ public class ScheduleTest2 {
         return null;
     }
 
-    ResultHolder<String> untilJoinStringSuccess() {
+    ResultHolder<String> untilJoinStringSuccess(IContext ctx) {
         ResultHolder<String> holder;
         //noinspection StatementWithEmptyBody
-        while ((holder = timeSharingJoinString()) == null) {
+        while ((holder = timeSharingJoinString(null)) == null) {
         }
         return holder;
     }
 
     @Test
     void testOnlyOnceFail() {
-        IScheduledFuture<String> future = consumer.schedule(ScheduleBuilder.newTimeSharing(this::timeSharingJoinString)
+        IScheduledFuture<String> future = consumer.schedule(ScheduledBuilder.newTimeSharing(this::timeSharingJoinString)
                 .setOnlyOnce(0));
 
-        future.awaitUninterruptedly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.cause() instanceof TimeSharingTimeoutException);
+        future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
+        Assertions.assertTrue(future.exceptionNow() instanceof TimeSharingTimeoutException);
     }
 
     @Test
     void testOnlyOnceSuccess() {
-        String result = consumer.schedule(ScheduleBuilder.newTimeSharing(this::untilJoinStringSuccess)
+        String result = consumer.schedule(ScheduledBuilder.newTimeSharing(this::untilJoinStringSuccess)
                         .setOnlyOnce(0))
                 .join();
 
@@ -96,7 +96,7 @@ public class ScheduleTest2 {
 
     @Test
     void testCallableSuccess() {
-        String result = consumer.schedule(ScheduleBuilder.newCallable(() -> untilJoinStringSuccess().result)
+        String result = consumer.schedule(ScheduledBuilder.newCallable(() -> untilJoinStringSuccess(IContext.NONE).getResult())
                         .setOnlyOnce(0))
                 .join();
 
@@ -106,7 +106,7 @@ public class ScheduleTest2 {
     //
     @Test
     void testTimeSharingComplete() {
-        String result = consumer.schedule(ScheduleBuilder.newTimeSharing(this::timeSharingJoinString)
+        String result = consumer.schedule(ScheduledBuilder.newTimeSharing(this::timeSharingJoinString)
                         .setFixedDelay(0, 200))
                 .join();
 
@@ -115,33 +115,33 @@ public class ScheduleTest2 {
 
     @Test
     void testTimeSharingTimeout() {
-        IScheduledFuture<String> future = consumer.schedule(ScheduleBuilder.newTimeSharing(this::timeSharingJoinString)
+        IScheduledFuture<String> future = consumer.schedule(ScheduledBuilder.newTimeSharing(this::timeSharingJoinString)
                 .setFixedDelay(0, 200)
-                .setTimeoutByCount(1));
+                .setTimeoutCount(1));
 
-        future.awaitUninterruptedly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.cause() instanceof TimeSharingTimeoutException);
+        future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
+        Assertions.assertTrue(future.exceptionNow() instanceof TimeSharingTimeoutException);
     }
 
     @Test
     void testRunnableTimeout() {
-        IScheduledFuture<?> future = consumer.schedule(ScheduleBuilder.newRunnable(() -> {
+        IScheduledFuture<?> future = consumer.schedule(ScheduledBuilder.newRunnable(() -> {
                 })
                 .setFixedDelay(0, 200)
-                .setTimeoutByCount(1));
+                .setTimeoutCount(1));
 
-        future.awaitUninterruptedly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.cause() instanceof TimeSharingTimeoutException);
+        future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
+        Assertions.assertTrue(future.exceptionNow() instanceof TimeSharingTimeoutException);
     }
 
     @Test
     void testCallableTimeout() {
-        IScheduledFuture<?> future = consumer.schedule(ScheduleBuilder.newCallable(() -> "hello world")
+        IScheduledFuture<?> future = consumer.schedule(ScheduledBuilder.newCallable(() -> "hello world")
                 .setFixedDelay(0, 200)
-                .setTimeoutByCount(1));
+                .setTimeoutCount(1));
 
-        future.awaitUninterruptedly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.cause() instanceof TimeSharingTimeoutException);
+        future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
+        Assertions.assertTrue(future.exceptionNow() instanceof TimeSharingTimeoutException);
     }
 
 }

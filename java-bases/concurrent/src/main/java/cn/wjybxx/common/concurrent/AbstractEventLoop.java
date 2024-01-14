@@ -24,28 +24,43 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * @author wjybxx
  * date 2023/4/7
  */
+@SuppressWarnings({"NullableProblems", "RedundantMethodOverride"})
 public abstract class AbstractEventLoop extends AbstractExecutorService implements EventLoop {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractEventLoop.class);
 
     protected final EventLoopGroup parent;
     protected final Collection<EventLoop> selfCollection = Collections.singleton(this);
-    protected final EventLoopFutureContext futureContext;
 
     protected AbstractEventLoop(@Nullable EventLoopGroup parent) {
         this.parent = parent;
-        this.futureContext = new EventLoopFutureContext(this);
     }
 
-    public AbstractEventLoop(EventLoopGroup parent, EventLoopFutureContext futureContext) {
-        this.parent = parent;
-        this.futureContext = futureContext;
+    @Override
+    public abstract void execute(Runnable command, int options);
+
+    @Override
+    public void execute(Runnable command) {
+        execute(command, 0);
     }
+
+    @Override
+    public void execute(Consumer<? super IContext> action, IContext ctx) {
+        execute(FutureUtils.toRunnable(action, ctx));
+    }
+
+    @Override
+    public void execute(Consumer<? super IContext> action, IContext ctx, int options) {
+        execute(FutureUtils.toRunnable(action, ctx), options);
+    }
+
+    // region EventLoop
 
     @Nullable
     @Override
@@ -71,43 +86,127 @@ public abstract class AbstractEventLoop extends AbstractExecutorService implemen
     }
 
     @Override
-    public <V> XCompletableFuture<V> newPromise() {
-        return new XCompletableFuture<>(futureContext);
+    public final void ensureInEventLoop() {
+        if (!inEventLoop()) {
+            throw new GuardedOperationException();
+        }
     }
 
     @Override
-    public void ensureInEventLoop() {
-        if (!inEventLoop()) throw new GuardedOperationException();
-    }
-// --------------------------------------- 任务提交 ----------------------------------------
-
-    @Override
-    protected final <T> RunnableFuture<T> newTaskFor(@Nonnull Runnable runnable, T value) {
-        return new XFutureTask<>(futureContext, runnable, value);
+    public final void ensureInEventLoop(String method) {
+        Objects.requireNonNull(method);
+        if (!inEventLoop()) {
+            throw new GuardedOperationException("Calling " + method + " must in the EventLoop");
+        }
     }
 
     @Override
-    protected final <T> RunnableFuture<T> newTaskFor(@Nonnull Callable<T> callable) {
-        return new XFutureTask<>(futureContext, callable);
+    public final void throwIfInEventLoop(String method) {
+        if (inEventLoop()) {
+            throw new BlockingOperationException("Calling " + method + " from within the EventLoop is not allowed");
+        }
     }
 
-    @Nonnull
+    // endregion
+
+    // region submit
+
     @Override
-    public final ICompletableFuture<?> submit(@Nonnull Runnable task) {
-        return (ICompletableFuture<?>) super.submit(task);
+    public <V> IPromise<V> newPromise(IContext ctx) {
+        return new Promise<>(this, ctx);
     }
 
-    @Nonnull
     @Override
-    public final <T> ICompletableFuture<T> submit(@Nonnull Runnable task, T result) {
-        return (ICompletableFuture<T>) super.submit(task, result);
+    public <V> IPromise<V> newPromise() {
+        return new Promise<>(this, null);
     }
 
-    @Nonnull
     @Override
-    public final <T> ICompletableFuture<T> submit(@Nonnull Callable<T> task) {
-        return (ICompletableFuture<T>) super.submit(task);
+    public <V> IFuture<V> submit(@Nonnull TaskBuilder<V> builder) {
+        PromiseTask<V> futureTask = PromiseTask.ofBuilder(builder, newPromise(builder.getCtx()));
+        execute(futureTask, builder.getOptions());
+        return futureTask.future();
     }
+
+    @Override
+    public <T> IFuture<T> submit(Callable<T> task) {
+        PromiseTask<T> futureTask = PromiseTask.ofCallable(task, newPromise(null));
+        execute(futureTask, 0);
+        return futureTask.future();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public IFuture<?> submit(Runnable task) {
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, newPromise(null));
+        execute(futureTask, 0);
+        return futureTask.future();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public <T> IFuture<T> submit(Runnable task, T result) {
+        return submit(Executors.callable(task, result));
+    }
+
+    @Override
+    public <V> IFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx) {
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(ctx));
+        execute(futureTask, 0);
+        return futureTask.future();
+    }
+
+    @Override
+    public <V> IFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx, int options) {
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(ctx));
+        execute(futureTask, options);
+        return futureTask.future();
+    }
+
+    @Override
+    public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(ctx));
+        execute(futureTask, 0);
+        return futureTask.future();
+    }
+
+    @Override
+    public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(ctx));
+        execute(futureTask, options);
+        return futureTask.future();
+    }
+
+    @Override
+    public <V> IFuture<V> submitCall(Callable<V> task) {
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(null));
+        execute(futureTask, 0);
+        return futureTask.future();
+    }
+
+    @Override
+    public <V> IFuture<V> submitCall(Callable<V> task, int options) {
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(null));
+        execute(futureTask, options);
+        return futureTask.future();
+    }
+
+    @Override
+    public IFuture<?> submitRun(Runnable task) {
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, newPromise(null));
+        execute(futureTask, 0);
+        return futureTask.future();
+    }
+
+    /** 该方法可能和{@link ExecutorService#submit(Runnable, Object)}冲突，因此我们要带后缀 */
+    @Override
+    public IFuture<?> submitRun(Runnable task, int options) {
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, newPromise(null));
+        execute(futureTask, options);
+        return futureTask.future();
+    }
+
+    // endregion
 
     // -------------------------------------- invoke阻塞调用检测 --------------------------------------
     @Nonnull
@@ -139,12 +238,6 @@ public abstract class AbstractEventLoop extends AbstractExecutorService implemen
                                          long timeout, @Nonnull TimeUnit unit) throws InterruptedException {
         throwIfInEventLoop("invokeAll");
         return super.invokeAll(tasks, timeout, unit);
-    }
-
-    protected final void throwIfInEventLoop(String method) {
-        if (inEventLoop()) {
-            throw new BlockingOperationException("Calling " + method + " from within the EventLoop is not allowed");
-        }
     }
 
     // ---------------------------------------- 迭代 ---------------------------------------

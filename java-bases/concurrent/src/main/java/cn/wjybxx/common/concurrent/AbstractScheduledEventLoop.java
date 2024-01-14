@@ -17,90 +17,92 @@
 package cn.wjybxx.common.concurrent;
 
 import javax.annotation.Nullable;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
+ * 子类需要在{@link #execute(Runnable, int)}的时候为任务赋值id和options
+ *
  * @author wjybxx
  * date - 2023/4/7
  */
+@SuppressWarnings("NullableProblems")
 abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
 
     public AbstractScheduledEventLoop(@Nullable EventLoopGroup parent) {
         super(parent);
     }
 
-    public AbstractScheduledEventLoop(EventLoopGroup parent, EventLoopFutureContext futureContext) {
-        super(parent, futureContext);
+    // region schedule
+
+    @Override
+    public <V> IScheduledFuture<V> schedule(ScheduledBuilder<V> builder) {
+        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofBuilder(builder, newPromise(builder.getCtx()), 0, tickTime());
+        execute(promiseTask, builder.getOptions());
+        return promiseTask;
     }
 
     @Override
-    public IScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
-        Objects.requireNonNull(command);
-        Objects.requireNonNull(unit);
-        delay = Math.max(0, delay);
-
-        XScheduledFutureTask<Object> futureTask = XScheduledFutureTask.ofRunnable(futureContext, command, 0, triggerTime(delay, unit));
-        execute(futureTask);
-        return futureTask;
+    public <V> IScheduledFuture<V> scheduleFunc(Function<? super IContext, V> task, IContext ctx, long delay, TimeUnit unit) {
+        long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
+        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, newPromise(ctx), 0, triggerTime);
+        execute(promiseTask, 0);
+        return promiseTask;
     }
 
     @Override
-    public <V> IScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
-        Objects.requireNonNull(callable);
-        Objects.requireNonNull(unit);
-        delay = Math.max(0, delay);
-
-        XScheduledFutureTask<V> futureTask = XScheduledFutureTask.ofCallable(futureContext, callable, 0, triggerTime(delay, unit));
-        execute(futureTask);
-        return futureTask;
+    public IScheduledFuture<?> scheduleAction(Consumer<? super IContext> task, IContext ctx, long delay, TimeUnit unit) {
+        long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofConsumer(task, newPromise(ctx), 0, triggerTime);
+        execute(promiseTask, 0);
+        return promiseTask;
     }
 
     @Override
-    public IScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
-        Objects.requireNonNull(command);
-        Objects.requireNonNull(unit);
-        initialDelay = Math.max(0, initialDelay);
-        ScheduleBuilder.validatePeriod(delay);
-
-        XScheduledFutureTask<Object> futureTask = XScheduledFutureTask.ofPeriodic(futureContext, command,
-                0, triggerTime(initialDelay, unit), -unit.toNanos(delay));// fixedDelay将period转负
-        execute(futureTask);
-        return futureTask;
+    public IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
+        long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofRunnable(task, newPromise(), 0, triggerTime);
+        execute(promiseTask, 0);
+        return promiseTask;
     }
 
     @Override
-    public IScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
-        Objects.requireNonNull(command);
-        Objects.requireNonNull(unit);
-        ScheduleBuilder.validateInitialDelay(initialDelay); // fixedRate禁止负延迟输入
-        ScheduleBuilder.validatePeriod(period);
-
-        XScheduledFutureTask<Object> futureTask = XScheduledFutureTask.ofPeriodic(futureContext, command,
-                0, triggerTime(initialDelay, unit), unit.toNanos(period)); // fixedRate保持period为正
-        execute(futureTask);
-        return futureTask;
+    public <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
+        long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
+        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofCallable(task, newPromise(), 0, triggerTime);
+        execute(promiseTask, 0);
+        return promiseTask;
     }
 
     @Override
-    public <V> IScheduledFuture<V> schedule(ScheduleBuilder<V> builder) {
-        Objects.requireNonNull(builder);
-        XScheduledFutureTask<V> futureTask = XScheduledFutureTask.ofBuilder(futureContext, builder, 0, nanoTime());
-        execute(futureTask);
-        return futureTask;
+    public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
+        ScheduledBuilder<?> sb = ScheduledBuilder.newRunnable(task)
+                .setFixedRate(initialDelay, period, unit);
+
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(sb, newPromise(), 0, tickTime());
+        execute(promiseTask, 0);
+        return promiseTask;
     }
 
-    final long triggerTime(long delay, TimeUnit unit) {
-        return nanoTime() + unit.toNanos(delay);
+    @Override
+    public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
+        ScheduledBuilder<?> sb = ScheduledBuilder.newRunnable(task)
+                .setFixedDelay(initialDelay, delay, unit);
+
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(sb, newPromise(), 0, tickTime());
+        execute(promiseTask, 0);
+        return promiseTask;
     }
+    // endregion
 
     /**
      * 当前线程的时间 -- 纳秒（非时间戳）
      * 1. 可以使用缓存的时间，也可以使用{@link System#nanoTime()}实时查询，只要不破坏任务的执行约定即可。
      * 2. 如果使用缓存时间，接口中并不约定时间的更新时机，也不约定一个大循环只更新一次。也就是说，线程可能在任意时间点更新缓存的时间，只要不破坏线程安全性和约定的任务时序。
      */
-    protected abstract long nanoTime();
+    protected abstract long tickTime();
 
     /**
      * 请求将当前任务重新压入队列
@@ -109,12 +111,12 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
      *
      * @param triggered 是否是执行之后压入队列；通常用于在执行成功之后降低优先级
      */
-    abstract void reSchedulePeriodic(XScheduledFutureTask<?> futureTask, boolean triggered);
+    abstract void reSchedulePeriodic(ScheduledPromiseTask<?> futureTask, boolean triggered);
 
     /**
      * 请求删除给定的任务
      * 1.可能从其它线程调用，需考虑线程安全问题
      */
-    abstract void removeScheduled(XScheduledFutureTask<?> futureTask);
+    abstract void removeScheduled(ScheduledPromiseTask<?> futureTask);
 
 }

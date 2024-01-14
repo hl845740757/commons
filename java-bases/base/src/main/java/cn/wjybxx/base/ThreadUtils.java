@@ -36,6 +36,12 @@ public class ThreadUtils {
             StackWalker.Option.SHOW_REFLECT_FRAMES,
             StackWalker.Option.RETAIN_CLASS_REFERENCE));
 
+    /** 清除中断 */
+    public static void clearInterrupted() {
+        //noinspection ResultOfMethodCallIgnored
+        Thread.interrupted();
+    }
+
     /** 恢复中断 */
     public static void recoveryInterrupted() {
         try {
@@ -71,6 +77,8 @@ public class ThreadUtils {
      * @param sleepMillis 要睡眠的时间(毫秒)
      */
     public static void sleepQuietly(long sleepMillis) {
+        // 这步不能省略，还未查明原因，有时会立即从park中醒来，但线程并没有被中断...
+        LockSupport.parkNanos(1);
         LockSupport.parkNanos(sleepMillis * TimeUtils.NANOS_PER_MILLI);
     }
 

@@ -62,17 +62,19 @@ public class Counter {
 
     public Runnable newTask(int type, long sequence) {
         if (type <= 0) throw new IllegalArgumentException("invalid type " + type);
-        return new CounterTask(type, sequence);
+        return new CounterTask(this, type, sequence);
     }
 
     /** 可能被添加为fixedRate之类 */
-    private class CounterTask implements Runnable {
+    private static class CounterTask implements Runnable {
 
+        final Counter counter;
         final int type;
         final long sequence;
         private boolean first = true;
 
-        private CounterTask(int type, long sequence) {
+        private CounterTask(Counter counter, int type, long sequence) {
+            this.counter = counter;
             this.type = type;
             this.sequence = sequence;
         }
@@ -81,7 +83,7 @@ public class Counter {
         public void run() {
             if (first) {
                 first = false;
-                count(type, sequence);
+                counter.count(type, sequence);
             }
         }
 

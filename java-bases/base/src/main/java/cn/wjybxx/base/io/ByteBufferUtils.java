@@ -122,7 +122,7 @@ public class ByteBufferUtils {
 
     /** 大端：向buffer中写入一个Int32 */
     public static void setUInt32(byte[] buffer, int index, long value) {
-        if (!MathCommon.isUint32(value)) {
+        if (!MathCommon.isUInt32(value)) {
             throw new IllegalArgumentException("value: " + value);
         }
         buffer[index] = (byte) (value >>> 24);
@@ -219,7 +219,7 @@ public class ByteBufferUtils {
 
     /** 小端：向buffer中写入一个Int32 */
     public static void setUInt32LE(byte[] buffer, int index, long value) {
-        if (!MathCommon.isUint32(value)) {
+        if (!MathCommon.isUInt32(value)) {
             throw new IllegalArgumentException("value: " + value);
         }
         buffer[index] = (byte) value;

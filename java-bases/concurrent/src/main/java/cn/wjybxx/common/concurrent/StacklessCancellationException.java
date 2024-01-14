@@ -20,6 +20,8 @@ import cn.wjybxx.base.ex.NoLogRequiredException;
 import java.util.concurrent.CancellationException;
 
 /**
+ * 不打印堆栈的取消异常
+ *
  * @author wjybxx
  * date 2023/4/3
  */
