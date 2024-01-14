@@ -1415,7 +1415,7 @@ public class Promise<T> implements IPromise<T> {
      * @param <V> 输入值类型
      * @param <U> 输入值类型
      */
-    static abstract class UniCompletion<V, U> extends Completion {
+    private static abstract class UniCompletion<V, U> extends Completion {
 
         Executor executor;
         int options;

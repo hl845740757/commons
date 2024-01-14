@@ -1107,7 +1107,7 @@ public class UniPromise<T> implements UniFuture<T> {
      * @param <V> 输入值类型
      * @param <U> 输入值类型
      */
-    static abstract class UniCompletion<V, U> extends Completion {
+    private static abstract class UniCompletion<V, U> extends Completion {
 
         int executor;
         int options;

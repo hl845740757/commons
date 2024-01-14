@@ -334,10 +334,7 @@ final class ScheduledPromiseTask<V>
 
     @Override
     public void accept(Object futureOrToken) {
-        if (futureOrToken == promise) {
-            if (!promise.isCancelled()) {
-                return;
-            }
+        if (promise.isCancelled()) {
             // 这里难以识别是被谁取消的，但trySetCancelled的异常无堆栈的，而通过Future的取消是有堆栈的...
             CancellationException ex = (CancellationException) promise.exceptionNow(false);
             if (ex != StacklessCancellationException.INSTANCE) {

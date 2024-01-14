@@ -17,11 +17,10 @@
 package cn.wjybxx.common.unitask;
 
 import cn.wjybxx.base.time.TimeProvider;
-import cn.wjybxx.common.concurrent.FutureUtils;
-import cn.wjybxx.common.concurrent.IContext;
-import cn.wjybxx.common.concurrent.IExecutor;
+import cn.wjybxx.common.concurrent.*;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -31,11 +30,38 @@ import java.util.function.Function;
  * @author wjybxx
  * date 2023/4/3
  */
-public class SameThreads {
+public class UniFutureUtils {
 
     // region 异常处理
 
     // endregion
+
+    public static <V> CompletableFuture<V> toJdkFuture(UniCompletionStage<V> uniFuture) {
+        CompletableFuture<V> future = new CompletableFuture<>();
+        uniFuture.toFuture().onCompleted(f -> {
+            if (f.isSucceeded()) {
+                future.complete(f.resultNow());
+            } else {
+                future.completeExceptionally(f.exceptionNow(false));
+            }
+        }, 0);
+        return future;
+    }
+
+    // 逆向转换则是不安全的
+    public static <V> IPromise<V> toFuture(UniCompletionStage<V> uniFuture) {
+        IPromise<V> future = new Promise<>();
+        uniFuture.toFuture().onCompleted(f -> {
+            if (f.isSucceeded()) {
+                future.trySetResult(f.resultNow());
+            } else {
+                future.trySetException(f.exceptionNow(false));
+            }
+        }, 0);
+        return future;
+    }
+
+    // region factory
 
     public static <V> UniPromise<V> newPromise(Executor executor) {
         return new UniPromise<>(executor);
