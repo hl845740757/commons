@@ -82,22 +82,7 @@ public final class CancelCodeBuilder {
     }
 
     public int build() {
-        return checkCode(code);
+        return ICancelToken.checkCode(code);
     }
 
-    // region 可对外
-
-    /**
-     * 检查取消码的合法性
-     *
-     * @return argument
-     */
-    public static int checkCode(int code) {
-        if (ICancelToken.reason(code) == 0) {
-            throw new IllegalArgumentException("reason is absent");
-        }
-        return code;
-    }
-
-    //endregion
 }

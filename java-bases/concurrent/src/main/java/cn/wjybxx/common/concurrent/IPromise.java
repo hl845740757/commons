@@ -73,15 +73,28 @@ public interface IPromise<T> extends IFuture<T> {
      */
     void setException(Throwable cause);
 
+
     /**
      * 将Future置为已取消状态，如果future已进入完成状态，则返回false
-     * (不记录堆栈)
+     *
+     * @param code 相关的取消码
+     */
+    boolean trySetCancelled(int code);
+
+    /**
+     * 将Future置为已取消状态，如果future已进入完成状态，则抛出{@link IllegalStateException}
+     *
+     * @param code 相关的取消码
+     */
+    void setCancelled(int code);
+
+    /**
+     * 将Future置为已取消状态，如果future已进入完成状态，则返回false
      */
     boolean trySetCancelled();
 
     /**
      * 将Future置为已取消状态，如果future已进入完成状态，则抛出{@link IllegalStateException}
-     * (不记录堆栈)
      */
     void setCancelled();
 

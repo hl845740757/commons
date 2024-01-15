@@ -319,7 +319,7 @@ public class FutureUtils {
 
     public static Runnable toRunnable(Consumer<? super IContext> action, IContext ctx) {
         Objects.requireNonNull(action, "action");
-        return new Run2(action, ctx);
+        return new Run1(action, ctx);
     }
 
     // endregion
@@ -358,12 +358,12 @@ public class FutureUtils {
         }
     }
 
-    private static class Run2 implements Runnable {
+    private static class Run1 implements Runnable {
 
         private Consumer<? super IContext> action;
         private IContext ctx;
 
-        public Run2(Consumer<? super IContext> action, IContext ctx) {
+        public Run1(Consumer<? super IContext> action, IContext ctx) {
             this.action = action;
             this.ctx = ctx;
         }
@@ -376,8 +376,8 @@ public class FutureUtils {
                 this.action = null;
                 this.ctx = null;
             }
-            if (ctx != null && ctx.cancelToken().isCancelling()) {
-                throw new CancellationException();
+            if (ctx != null) {
+                ctx.cancelToken().checkCancel();
             }
             action.accept(ctx);
         }

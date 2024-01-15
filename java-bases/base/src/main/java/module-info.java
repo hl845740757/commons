@@ -11,6 +11,7 @@ module wjybxx.commons.base {
     exports cn.wjybxx.base.annotation;
     exports cn.wjybxx.base.collection;
     exports cn.wjybxx.base.ex;
+    exports cn.wjybxx.base.function;
     exports cn.wjybxx.base.io;
     exports cn.wjybxx.base.mutable;
     exports cn.wjybxx.base.pool;
@@ -22,6 +23,7 @@ module wjybxx.commons.base {
     opens cn.wjybxx.base.annotation;
     opens cn.wjybxx.base.collection;
     opens cn.wjybxx.base.ex;
+    opens cn.wjybxx.base.function;
     opens cn.wjybxx.base.io;
     opens cn.wjybxx.base.mutable;
     opens cn.wjybxx.base.pool;

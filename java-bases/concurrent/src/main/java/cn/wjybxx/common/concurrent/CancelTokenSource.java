@@ -19,7 +19,6 @@ package cn.wjybxx.common.concurrent;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.Objects;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -195,8 +194,9 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     @Override
     public void checkCancel() {
+        int code = this.code;
         if (code != 0) {
-            throw new CancellationException();
+            throw new BetterCancellationException(code);
         }
     }
 

@@ -115,14 +115,16 @@ public interface ICancelToken {
      * 如果收到取消信号，则抛出{@link CancellationException}
      */
     default void checkCancel() {
-        if (cancelCode() != 0) {
-            throw new CancellationException();
+        int code = cancelCode();
+        if (code != 0) {
+            throw new BetterCancellationException(code);
         }
     }
 
     /**
      * 添加的action将在Context收到取消信号时执行
-     * （支持取消的的任务可以监听取消信号以唤醒线程）
+     * 1.如果已收到取消请求，则给定的action会立即执行。
+     * 2.如果尚未收到取消请求，则给定action会在收到请求时执行。
      */
     IRegistration register(Consumer<? super ICancelToken> action);
 
@@ -198,6 +200,18 @@ public interface ICancelToken {
     /** 取消指令中是否要求了无需删除 */
     static boolean isWithoutRemove(int code) {
         return (code & MASK_WITHOUT_REMOVE) != 0;
+    }
+
+    /**
+     * 检查取消码的合法性
+     *
+     * @return argument
+     */
+    static int checkCode(int code) {
+        if (reason(code) == 0) {
+            throw new IllegalArgumentException("reason is absent");
+        }
+        return code;
     }
 
     // endregion

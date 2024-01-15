@@ -17,23 +17,26 @@ package cn.wjybxx.common.concurrent;
 
 import cn.wjybxx.base.ex.NoLogRequiredException;
 
-import java.util.concurrent.CancellationException;
-
 /**
  * 不打印堆栈的取消异常
  *
  * @author wjybxx
  * date 2023/4/3
  */
-public class StacklessCancellationException extends CancellationException implements NoLogRequiredException {
+public class StacklessCancellationException extends BetterCancellationException implements NoLogRequiredException {
 
     public static StacklessCancellationException INSTANCE = new StacklessCancellationException();
 
     public StacklessCancellationException() {
+        super(1);
     }
 
-    public StacklessCancellationException(String message) {
-        super(message);
+    public StacklessCancellationException(int code) {
+        super(code);
+    }
+
+    public StacklessCancellationException(int code, String message) {
+        super(code, message);
     }
 
     public final Throwable fillInStackTrace() {

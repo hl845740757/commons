@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base;
+package cn.wjybxx.base.function;
 
 import java.util.function.*;
 

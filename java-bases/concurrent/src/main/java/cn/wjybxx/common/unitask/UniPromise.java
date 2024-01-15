@@ -331,8 +331,10 @@ public class UniPromise<T> implements UniFuture<T> {
         }
     }
 
-    public final boolean trySetCancelled() {
-        Throwable cause = StacklessCancellationException.INSTANCE;
+    public boolean trySetCancelled(int code) {
+        Throwable cause = code == 1
+                ? StacklessCancellationException.INSTANCE :
+                new StacklessCancellationException(code);
         if (internalComplete(new AltResult(cause))) {
             postComplete(this); // 不记录日志
             return true;
@@ -340,8 +342,18 @@ public class UniPromise<T> implements UniFuture<T> {
         return false;
     }
 
+    public void setCancelled(int code) {
+        if (!trySetCancelled(code)) {
+            throw new IllegalStateException("Already complete");
+        }
+    }
+
+    public final boolean trySetCancelled() {
+        return trySetCancelled(1);
+    }
+
     public final void setCancelled() {
-        if (!trySetCancelled()) {
+        if (!trySetCancelled(1)) {
             throw new IllegalStateException("Already complete");
         }
     }

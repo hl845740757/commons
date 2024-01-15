@@ -21,7 +21,6 @@ import cn.wjybxx.common.concurrent.*;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -37,7 +36,7 @@ import java.util.function.Consumer;
  * date - 2024/1/8
  */
 @Beta
-public final class UniCancelToken implements ICancelTokenSource {
+public final class UniCancelTokenSource implements ICancelTokenSource {
 
     /**
      * 取消码
@@ -54,11 +53,11 @@ public final class UniCancelToken implements ICancelTokenSource {
     /** 用户线程 */
     private final UniScheduledExecutor executor;
 
-    public UniCancelToken(UniScheduledExecutor executor) {
+    public UniCancelTokenSource(UniScheduledExecutor executor) {
         this.executor = Objects.requireNonNull(executor);
     }
 
-    public UniCancelToken(UniScheduledExecutor executor, int code) {
+    public UniCancelTokenSource(UniScheduledExecutor executor, int code) {
         this.executor = Objects.requireNonNull(executor);
         if (code != 0) {
             checkCode(code);
@@ -125,10 +124,10 @@ public final class UniCancelToken implements ICancelTokenSource {
 
     private static class Canceller implements Consumer<Object>, IContext {
 
-        final UniCancelToken source;
+        final UniCancelTokenSource source;
         final int cancelCode;
 
-        private Canceller(UniCancelToken source, int cancelCode) {
+        private Canceller(UniCancelTokenSource source, int cancelCode) {
             this.source = source;
             this.cancelCode = cancelCode;
         }
@@ -194,8 +193,9 @@ public final class UniCancelToken implements ICancelTokenSource {
 
     @Override
     public void checkCancel() {
+        int code = this.code;
         if (code != 0) {
-            throw new CancellationException();
+            throw new BetterCancellationException(code);
         }
     }
 
@@ -252,7 +252,7 @@ public final class UniCancelToken implements ICancelTokenSource {
             child.cancel(code);
             return TOMBSTONE;
         }
-        CallbackNode callbackNode = new CallbackNode(nextId(), this, TYPE_TOKEN, child);
+        CallbackNode callbackNode = new CallbackNode(nextId(), this, TYPE_CHILD, child);
         if (pushCompletion(callbackNode)) {
             return callbackNode;
         }
@@ -267,7 +267,7 @@ public final class UniCancelToken implements ICancelTokenSource {
         }
     }
 
-    private static void notifyListener(UniCancelToken source,
+    private static void notifyListener(UniCancelTokenSource source,
                                        Consumer<? super ICancelToken> action) {
         try {
             action.accept(source);
@@ -276,7 +276,7 @@ public final class UniCancelToken implements ICancelTokenSource {
         }
     }
 
-    private static void notifyListener(UniCancelToken source,
+    private static void notifyListener(UniCancelTokenSource source,
                                        CancelTokenListener action) {
         try {
             action.onCancelRequest(source);
@@ -325,7 +325,7 @@ public final class UniCancelToken implements ICancelTokenSource {
         return next;
     }
 
-    private static void postComplete(UniCancelToken source) {
+    private static void postComplete(UniCancelTokenSource source) {
         CallbackNode next = null;
         outer:
         while (true) {
@@ -346,7 +346,7 @@ public final class UniCancelToken implements ICancelTokenSource {
         }
     }
 
-    private static CallbackNode clearListeners(UniCancelToken source, CallbackNode onto) {
+    private static CallbackNode clearListeners(UniCancelTokenSource source, CallbackNode onto) {
         CallbackNode head = source.stack;
         if (head == TOMBSTONE) {
             return onto;
@@ -395,7 +395,7 @@ public final class UniCancelToken implements ICancelTokenSource {
         /** 唯一id */
         final long id;
         /** 暂非final，暂不允许用户访问 */
-        UniCancelToken source;
+        UniCancelTokenSource source;
         /** 任务的类型 -- 不想过多的子类实现 */
         int type;
         /** 用户回调 -- 通知和清理时置为{@link #TOMBSTONE} */
@@ -406,14 +406,14 @@ public final class UniCancelToken implements ICancelTokenSource {
             source = null;
         }
 
-        public CallbackNode(long id, UniCancelToken source, int type, Object action) {
+        public CallbackNode(long id, UniCancelTokenSource source, int type, Object action) {
             this.id = id;
             this.source = source;
             this.type = type;
             this.action = action;
         }
 
-        public UniCancelToken tryFire(int mode) {
+        public UniCancelTokenSource tryFire(int mode) {
             Object action = this.action;
             if (action == TOMBSTONE) {
                 return null;
@@ -421,7 +421,7 @@ public final class UniCancelToken implements ICancelTokenSource {
             if (!casAction2Tombstone(action)) {
                 return null; // 当前节点被取消
             }
-            UniCancelToken source = this.source;
+            UniCancelTokenSource source = this.source;
             this.source = null;
 
             switch (type) {
@@ -450,8 +450,8 @@ public final class UniCancelToken implements ICancelTokenSource {
             }
         }
 
-        private static UniCancelToken notifyChild(UniCancelToken source, int mode, ICancelTokenSource child) {
-            if (!(child instanceof UniCancelToken childSource)) {
+        private static UniCancelTokenSource notifyChild(UniCancelTokenSource source, int mode, ICancelTokenSource child) {
+            if (!(child instanceof UniCancelTokenSource childSource)) {
                 child.cancel(source.code);
                 return null;
             }
@@ -483,7 +483,7 @@ public final class UniCancelToken implements ICancelTokenSource {
                 return;
             }
             if (casAction2Tombstone(action)) {
-                UniCancelToken source = this.source;
+                UniCancelTokenSource source = this.source;
                 if (this == source.stack) {
                     source.removeClosedNode(this);
                 }

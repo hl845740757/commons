@@ -18,7 +18,8 @@ package cn.wjybxx.base;
 
 
 /**
- * 比特选项工具类
+ * 比特标记工具类
+ * tips: Commons-Lang3有个{@code BitField}类
  *
  * @author wjybxx
  * date - 2023/4/17
@@ -27,28 +28,14 @@ public class BitFlags {
 
     //region int
 
-    /** 是否启用了所有选项 */
+    /** 是否设置了任意bit */
     public static boolean isSet(int flags, int mask) {
-        return (flags & mask) == mask;
-    }
-
-    /**
-     * 是否未启用选项。
-     * 1.禁用任意bit即为未启用；
-     * 2.和{@link #isSet(int, int)}相反关系
-     */
-    public static boolean isNotSet(int flags, int mask) {
-        return (flags & mask) != mask;
-    }
-
-    /** 是否启用了任意选项 */
-    public static boolean isAnySet(int flags, int mask) {
         return (flags & mask) != 0;
     }
 
-    /** 是否禁用了所有选项 */
-    public static boolean isAllNotSet(int flags, int mask) {
-        return (flags & mask) == 0;
+    /** 是否设置了所有bit */
+    public static boolean isAllSet(int flags, int mask) {
+        return (flags & mask) == mask;
     }
 
     /** 启用指定bit */
@@ -61,6 +48,7 @@ public class BitFlags {
         return (flags & ~mask);
     }
 
+    /** 设置指定bit位 -- 全0或全1 */
     public static int set(int flags, int mask, boolean enable) {
         if (enable) {
             return (flags | mask);
@@ -71,12 +59,14 @@ public class BitFlags {
 
     /** 是否设置了指定下标的bit */
     public static boolean isSetAt(int flags, int idx) {
-        return isSet(flags, 1 << idx);
+        int mask = 1 << idx;
+        return (flags & mask) != 0;
     }
 
     /** 是否未设置指定下标的bit */
     public static boolean isNotSetAt(int flags, int idx) {
-        return isNotSet(flags, 1 << idx);
+        int mask = 1 << idx;
+        return (flags & mask) == 0;
     }
 
     /** 设置指定下标的bit */
@@ -89,32 +79,31 @@ public class BitFlags {
         }
     }
 
+    /**
+     * @param mask   字段的掩码
+     * @param offset 需要偏移的bit数
+     */
+    public static int getField(int flags, int mask, int offset) {
+        return (flags & mask) >> offset;
+    }
+
+    public static int setField(int flags, int mask, int offset, int value) {
+        int rawValue = (value << offset) & mask; // & mask 去除非法位
+        return flags & rawValue;
+    }
+
     // endregion
 
     // region long
 
-    /** 是否启用了所有选项 */
+    /** 是否设置了任意bit */
     public static boolean isSet(long flags, long mask) {
-        return (flags & mask) == mask;
-    }
-
-    /**
-     * 是否未启用选项。
-     * 1.禁用任意bit即为未启用；
-     * 2.和{@link #isSet(long, long)}相反关系
-     */
-    public static boolean isNotSet(long flags, long mask) {
-        return (flags & mask) != mask;
-    }
-
-    /** 是否启用了任意选项 */
-    public static boolean isAnySet(long flags, long mask) {
         return (flags & mask) != 0;
     }
 
-    /** 是否禁用了所有选项 */
-    public static boolean isAllNotSet(long flags, long mask) {
-        return (flags & mask) == 0;
+    /** 是否设置了所有bit */
+    public static boolean isAllSet(long flags, long mask) {
+        return (flags & mask) == mask;
     }
 
     /** 启用指定bit */
@@ -127,6 +116,7 @@ public class BitFlags {
         return (flags & ~mask);
     }
 
+    /** 设置指定bit位 -- 全0或全1 */
     public static long set(long flags, long mask, boolean enable) {
         if (enable) {
             return (flags | mask);
@@ -137,12 +127,14 @@ public class BitFlags {
 
     /** 是否设置了指定下标的bit */
     public static boolean isSetAt(long flags, long idx) {
-        return isSet(flags, 1L << idx);
+        long mask = 1L << idx;
+        return (flags & mask) != 0;
     }
 
     /** 是否未设置指定下标的bit */
     public static boolean isNotSetAt(long flags, long idx) {
-        return isNotSet(flags, 1L << idx);
+        long mask = 1L << idx;
+        return (flags & mask) == 0;
     }
 
     /** 设置指定下标的bit */
@@ -153,6 +145,19 @@ public class BitFlags {
         } else {
             return (flags & ~mask);
         }
+    }
+
+    /**
+     * @param mask   字段的掩码
+     * @param offset 需要偏移的bit数
+     */
+    public static long getField(long flags, long mask, int offset) {
+        return (flags & mask) >> offset;
+    }
+
+    public static long setField(long flags, long mask, int offset, long value) {
+        long rawValue = (value << offset) & mask; // & mask 去除非法位
+        return flags & rawValue;
     }
     // endregion
 
