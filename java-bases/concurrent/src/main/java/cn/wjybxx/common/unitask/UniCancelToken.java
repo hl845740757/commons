@@ -17,8 +17,6 @@
 package cn.wjybxx.common.unitask;
 
 import cn.wjybxx.common.concurrent.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
@@ -39,8 +37,6 @@ import java.util.function.Consumer;
  * date - 2024/1/8
  */
 public final class UniCancelToken implements ICancelTokenSource {
-
-    private static final Logger logger = LoggerFactory.getLogger(UniCancelToken.class);
 
     /**
      * 取消码
@@ -267,7 +263,7 @@ public final class UniCancelToken implements ICancelTokenSource {
         try {
             action.run();
         } catch (Throwable ex) {
-            logger.warn("CancelTokenListener caught exception", ex);
+            FutureLogger.logCause(ex, "CancelTokenListener caught exception");
         }
     }
 
@@ -276,7 +272,7 @@ public final class UniCancelToken implements ICancelTokenSource {
         try {
             action.accept(source);
         } catch (Throwable ex) {
-            logger.warn("CancelTokenListener caught exception", ex);
+            FutureLogger.logCause(ex, "CancelTokenListener caught exception");
         }
     }
 
@@ -286,7 +282,7 @@ public final class UniCancelToken implements ICancelTokenSource {
         try {
             action.accept(source, ctx);
         } catch (Throwable ex) {
-            logger.warn("CancelTokenListener caught exception", ex);
+            FutureLogger.logCause(ex, "CancelTokenListener caught exception");
         }
     }
 

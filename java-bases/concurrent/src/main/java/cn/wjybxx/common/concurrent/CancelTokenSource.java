@@ -16,9 +16,6 @@
 
 package cn.wjybxx.common.concurrent;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.Objects;
@@ -41,7 +38,6 @@ import java.util.function.Consumer;
  */
 public final class CancelTokenSource implements ICancelTokenSource {
 
-    private static final Logger logger = LoggerFactory.getLogger(CancelTokenSource.class);
     private static final ScheduledThreadPoolExecutor delayer;
 
     static {
@@ -270,7 +266,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         try {
             action.run();
         } catch (Throwable ex) {
-            logger.warn("CancelTokenListener caught exception", ex);
+            FutureLogger.logCause(ex, "CancelTokenListener caught exception");
         }
     }
 
@@ -279,7 +275,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         try {
             action.accept(source);
         } catch (Throwable ex) {
-            logger.warn("CancelTokenListener caught exception", ex);
+            FutureLogger.logCause(ex, "CancelTokenListener caught exception");
         }
     }
 
@@ -289,7 +285,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         try {
             action.accept(source, ctx);
         } catch (Throwable ex) {
-            logger.warn("CancelTokenListener caught exception", ex);
+            FutureLogger.logCause(ex, "CancelTokenListener caught exception");
         }
     }
 

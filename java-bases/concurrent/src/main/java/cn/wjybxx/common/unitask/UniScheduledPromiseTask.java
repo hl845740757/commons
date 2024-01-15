@@ -325,8 +325,8 @@ public final class UniScheduledPromiseTask<V>
 
     @Override
     public void accept(Object futureOrToken) {
-        assert futureOrToken != promise; // UniFuture没有取消接口
-        // 用户通过令牌发起取消
+        // 用户通过令牌发起取消 - UniFuture没有取消接口
+        assert futureOrToken != promise;
         ICancelToken cancelToken = promise.ctx().cancelToken();
         if (promise.trySetCancelled() && cancelToken.isWithoutRemove()) {
             eventLoop().removeScheduled(this);

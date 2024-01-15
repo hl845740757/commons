@@ -341,8 +341,11 @@ final class ScheduledPromiseTask<V>
                 eventLoop().removeScheduled(this);
             }
         } else {
-            // 用户通过令牌发起取消
             ICancelToken cancelToken = promise.ctx().cancelToken();
+            if (!cancelToken.isCancelling()) {
+                return;
+            }
+            // 用户通过令牌发起取消
             if (promise.trySetCancelled() && cancelToken.isWithoutRemove()) {
                 eventLoop().removeScheduled(this);
             }
