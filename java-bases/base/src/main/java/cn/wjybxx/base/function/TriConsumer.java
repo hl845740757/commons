@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.func;
+package cn.wjybxx.base.function;
 
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * @author wjybxx
  * date - 2024/1/10
  */
 @FunctionalInterface
-public interface TriFunction<T, U, V, R> {
+public interface TriConsumer<T, U, V> {
 
-    R apply(T t, U u, V v);
+    void accept(T k, U v, V s);
 
-    default <W> TriFunction<T, U, V, W> andThen(final Function<? super R, ? extends W> after) {
+    default TriConsumer<T, U, V> andThen(final TriConsumer<? super T, ? super U, ? super V> after) {
         Objects.requireNonNull(after);
-        return (final T t, final U u, final V v) -> after.apply(apply(t, u, v));
+        return (final T t, final U u, final V v) -> {
+            accept(t, u, v);
+            after.accept(t, u, v);
+        };
     }
-
 }

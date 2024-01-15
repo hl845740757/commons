@@ -35,7 +35,6 @@ public class FutureLoggerTest {
         });
     }
 
-    /** trace应该是打印不出来的 */
     @Test
     void testWarn() {
         FutureLogger.setLogLevel(Level.WARN);

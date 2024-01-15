@@ -16,8 +16,8 @@
 
 package cn.wjybxx.common.unitask;
 
-import cn.wjybxx.base.func.TriConsumer;
-import cn.wjybxx.base.func.TriFunction;
+import cn.wjybxx.base.function.TriConsumer;
+import cn.wjybxx.base.function.TriFunction;
 import cn.wjybxx.common.concurrent.FutureState;
 import cn.wjybxx.common.concurrent.IContext;
 

@@ -90,7 +90,7 @@ public interface ICancelToken {
 
     /**
      * 取消的原因
-     * (1~10为底层使用，10以上为用户自定义)
+     * (1~10为底层使用，10以上为用户自定义)T
      */
     default int reason() {
         return reason(cancelCode());
