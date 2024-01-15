@@ -16,7 +16,6 @@
 
 package cn.wjybxx.common.concurrent;
 
-import cn.wjybxx.base.ThreadUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +60,7 @@ public class ScheduleCancelTest {
         }
         // 测试关闭Future的取消监听
         {
-            ScheduledBuilder<?> builder = ScheduledBuilder.newRunnable(() -> {})
+            ScheduledTaskBuilder<?> builder = ScheduledTaskBuilder.newRunnable(() -> {})
                     .enable(TaskOption.IGNORE_FUTURE_CANCEL)
                     .setOnlyOnce(1000);
 

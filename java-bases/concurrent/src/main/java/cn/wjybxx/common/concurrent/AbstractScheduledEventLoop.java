@@ -38,7 +38,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
     // region schedule
 
     @Override
-    public <V> IScheduledFuture<V> schedule(ScheduledBuilder<V> builder) {
+    public <V> IScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder) {
         ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofBuilder(builder, newPromise(builder.getCtx()), 0, tickTime());
         execute(promiseTask, builder.getOptions());
         return promiseTask;
@@ -78,7 +78,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
 
     @Override
     public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
-        ScheduledBuilder<?> sb = ScheduledBuilder.newRunnable(task)
+        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newRunnable(task)
                 .setFixedRate(initialDelay, period, unit);
 
         ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(sb, newPromise(), 0, tickTime());
@@ -88,7 +88,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
 
     @Override
     public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
-        ScheduledBuilder<?> sb = ScheduledBuilder.newRunnable(task)
+        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newRunnable(task)
                 .setFixedDelay(initialDelay, delay, unit);
 
         ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(sb, newPromise(), 0, tickTime());

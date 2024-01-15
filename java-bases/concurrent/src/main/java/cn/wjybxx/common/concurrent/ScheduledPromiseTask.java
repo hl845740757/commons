@@ -56,7 +56,7 @@ final class ScheduledPromiseTask<V>
      * @param id              任务的id
      * @param nextTriggerTime 任务的首次触发时间
      */
-    private ScheduledPromiseTask(ScheduledBuilder<V> builder, IPromise<V> promise,
+    private ScheduledPromiseTask(ScheduledTaskBuilder<V> builder, IPromise<V> promise,
                                  long id, long nextTriggerTime, long period, TimeoutContext timeoutContext) {
         super(builder, promise);
         this.id = id;
@@ -112,7 +112,7 @@ final class ScheduledPromiseTask<V>
 
     public static <V> ScheduledPromiseTask<V> ofBuilder(TaskBuilder<V> builder, IPromise<V> promise,
                                                         long id, long tickTime) {
-        if (builder instanceof ScheduledBuilder<V> sb) {
+        if (builder instanceof ScheduledTaskBuilder<V> sb) {
             return ofBuilder(sb, promise, id, tickTime);
         }
         return new ScheduledPromiseTask<>(builder.getTask(), promise, builder.getType(),
@@ -126,7 +126,7 @@ final class ScheduledPromiseTask<V>
      * @param tickTime 当前时间(nanos)
      * @return PromiseTask
      */
-    public static <V> ScheduledPromiseTask<V> ofBuilder(ScheduledBuilder<V> builder, IPromise<V> promise,
+    public static <V> ScheduledPromiseTask<V> ofBuilder(ScheduledTaskBuilder<V> builder, IPromise<V> promise,
                                                         long id, long tickTime) {
         TimeUnit timeUnit = builder.getTimeUnit();
         // 并发库中不支持插队，初始延迟强制转0
@@ -219,7 +219,7 @@ final class ScheduledPromiseTask<V>
      */
     public boolean trigger(long tickTime) {
         final int scheduleType = getScheduleType();
-        if (scheduleType == ScheduledBuilder.SCHEDULE_ONCE) {
+        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
             super.run();
             return false;
         }
@@ -245,7 +245,7 @@ final class ScheduledPromiseTask<V>
         TimeoutContext timeoutContext = this.timeoutContext;
         try {
             if (timeoutContext != null) {
-                timeoutContext.beforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledBuilder.SCHEDULE_FIXED_RATE);
+                timeoutContext.beforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE);
                 if (TaskOption.isEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeoutContext.isTimeout()) {
                     promise.trySetException(TimeSharingTimeoutException.INSTANCE);
                     clear();
@@ -291,7 +291,7 @@ final class ScheduledPromiseTask<V>
     }
 
     private boolean canCaughtException(Throwable ex) {
-        if (getScheduleType() == ScheduledBuilder.SCHEDULE_ONCE) {
+        if (getScheduleType() == ScheduledTaskBuilder.SCHEDULE_ONCE) {
             return false;
         }
         if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
@@ -303,7 +303,7 @@ final class ScheduledPromiseTask<V>
 
     private void setNextRunTime(long tickTime, TimeoutContext timeoutContext, int scheduleType) {
         long maxDelay = timeoutContext != null ? timeoutContext.getTimeLeft() : Long.MAX_VALUE;
-        if (scheduleType == ScheduledBuilder.SCHEDULE_FIXED_RATE) {
+        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
             // 逻辑时间
             nextTriggerTime = nextTriggerTime + Math.min(maxDelay, period);
         } else {

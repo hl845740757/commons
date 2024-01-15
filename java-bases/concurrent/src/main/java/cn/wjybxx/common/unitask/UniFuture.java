@@ -30,9 +30,8 @@ import java.util.function.Consumer;
  * 单线程版的{@link IFuture}
  * 1. 由于涉及到readonly问题，该抽象不能省去。
  * 2. 该接口中的方法尽量保持和{@link IFuture}相同，更易用。
- *
- * <h3>命名</h3>
- * 取名是编程一大难题，单线程的Future我一直没找到合适的名字，不过写客户端会用户到 UniTask ，我决定也用这个名了。
+ * <p>
+ * 关于命名：单线程的Future我也写过几版了，但一直没有找到简短又表意清晰的名字，由于客户端开发会用到 UniTask，我决定放弃思考，就用这个名。。。
  *
  * @author wjybxx
  * date 2023/4/3

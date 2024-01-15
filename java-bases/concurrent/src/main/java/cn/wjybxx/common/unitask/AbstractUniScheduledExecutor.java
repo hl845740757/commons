@@ -17,7 +17,7 @@
 package cn.wjybxx.common.unitask;
 
 import cn.wjybxx.common.concurrent.IContext;
-import cn.wjybxx.common.concurrent.ScheduledBuilder;
+import cn.wjybxx.common.concurrent.ScheduledTaskBuilder;
 import cn.wjybxx.common.concurrent.TaskBuilder;
 
 import javax.annotation.Nonnull;
@@ -38,7 +38,7 @@ public abstract class AbstractUniScheduledExecutor
     // region schedule
 
     @Override
-    public <V> UniScheduledFuture<V> schedule(ScheduledBuilder<V> builder) {
+    public <V> UniScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder) {
         UniPromise<V> promise = newPromise(builder.getCtx());
         UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofBuilder(builder, promise, 0, tickTime());
         execute(promiseTask, builder.getOptions());
@@ -79,7 +79,7 @@ public abstract class AbstractUniScheduledExecutor
 
     @Override
     public UniScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
-        ScheduledBuilder<?> sb = ScheduledBuilder.newRunnable(task)
+        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newRunnable(task)
                 .setFixedRate(initialDelay, period);
 
         UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofBuilder(sb, newPromise(), 0, tickTime());
@@ -89,7 +89,7 @@ public abstract class AbstractUniScheduledExecutor
 
     @Override
     public UniScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay) {
-        ScheduledBuilder<?> sb = ScheduledBuilder.newRunnable(task)
+        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newRunnable(task)
                 .setFixedDelay(initialDelay, delay);
 
         UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofBuilder(sb, newPromise(), 0, tickTime());

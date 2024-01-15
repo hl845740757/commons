@@ -173,11 +173,11 @@ public final class UniFutureCombiner {
         private UniPromise<Object> aggregatePromise;
 
         @Override
-        public void accept(UniFuture<?> uniFuture) {
-            if (uniFuture.isFailed()) {
-                accept(null, uniFuture.exceptionNow(false));
+        public void accept(UniFuture<?> future) {
+            if (future.isFailed()) {
+                accept(null, future.exceptionNow(false));
             } else {
-                accept(uniFuture.resultNow(), null);
+                accept(future.resultNow(), null);
             }
         }
 

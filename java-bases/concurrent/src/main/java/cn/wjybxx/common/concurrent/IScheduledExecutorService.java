@@ -39,7 +39,7 @@ public interface IScheduledExecutorService extends IExecutorService, ScheduledEx
      * @param <V>     任务的结果类型
      * @return future
      */
-    <V> IScheduledFuture<V> schedule(ScheduledBuilder<V> builder);
+    <V> IScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder);
 
     /**
      * 延迟指定时间后执行给定的任务

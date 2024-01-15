@@ -30,7 +30,7 @@ import java.util.function.Function;
  * date 2023/4/14
  */
 @NotThreadSafe
-public final class ScheduledBuilder<V> extends TaskBuilder<V> {
+public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
 
     /** 执行一次 */
     public static final byte SCHEDULE_ONCE = 0;
@@ -47,58 +47,58 @@ public final class ScheduledBuilder<V> extends TaskBuilder<V> {
     private long timeout = -1;
     private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 
-    private ScheduledBuilder(int type, Object task) {
+    private ScheduledTaskBuilder(int type, Object task) {
         super(type, task);
     }
 
-    private ScheduledBuilder(int type, Object task, IContext ctx) {
+    private ScheduledTaskBuilder(int type, Object task, IContext ctx) {
         super(type, task, ctx);
     }
 
-    public ScheduledBuilder(TaskBuilder<? extends V> taskBuilder) {
+    public ScheduledTaskBuilder(TaskBuilder<? extends V> taskBuilder) {
         super(taskBuilder);
     }
 
     // region factory
 
-    public static ScheduledBuilder<?> newRunnable(Runnable task) {
+    public static ScheduledTaskBuilder<?> newRunnable(Runnable task) {
         Objects.requireNonNull(task);
-        return new ScheduledBuilder<>(TYPE_RUNNABLE, task);
+        return new ScheduledTaskBuilder<>(TYPE_RUNNABLE, task);
     }
 
-    public static <V> ScheduledBuilder<V> newCallable(Callable<V> task) {
+    public static <V> ScheduledTaskBuilder<V> newCallable(Callable<V> task) {
         Objects.requireNonNull(task);
-        return new ScheduledBuilder<>(TYPE_CALLABLE, task);
+        return new ScheduledTaskBuilder<>(TYPE_CALLABLE, task);
     }
 
-    public static <V> ScheduledBuilder<V> newFunc(Function<IContext, V> task) {
+    public static <V> ScheduledTaskBuilder<V> newFunc(Function<IContext, V> task) {
         Objects.requireNonNull(task);
-        return new ScheduledBuilder<>(TYPE_FUNCTION, task, IContext.NONE);
+        return new ScheduledTaskBuilder<>(TYPE_FUNCTION, task, IContext.NONE);
     }
 
-    public static <V> ScheduledBuilder<V> newFunc(Function<IContext, V> task, IContext ctx) {
+    public static <V> ScheduledTaskBuilder<V> newFunc(Function<IContext, V> task, IContext ctx) {
         Objects.requireNonNull(task);
-        return new ScheduledBuilder<>(TYPE_FUNCTION, task, ctx);
+        return new ScheduledTaskBuilder<>(TYPE_FUNCTION, task, ctx);
     }
 
-    public static <V> ScheduledBuilder<V> newAction(Consumer<IContext> task) {
+    public static <V> ScheduledTaskBuilder<V> newAction(Consumer<IContext> task) {
         Objects.requireNonNull(task);
-        return new ScheduledBuilder<>(TYPE_CONSUMER, task, IContext.NONE);
+        return new ScheduledTaskBuilder<>(TYPE_CONSUMER, task, IContext.NONE);
     }
 
-    public static <V> ScheduledBuilder<V> newAction(Consumer<IContext> task, IContext ctx) {
+    public static <V> ScheduledTaskBuilder<V> newAction(Consumer<IContext> task, IContext ctx) {
         Objects.requireNonNull(task);
-        return new ScheduledBuilder<>(TYPE_CONSUMER, task, ctx);
+        return new ScheduledTaskBuilder<>(TYPE_CONSUMER, task, ctx);
     }
 
-    public static <V> ScheduledBuilder<V> newTimeSharing(TimeSharingTask<V> task) {
+    public static <V> ScheduledTaskBuilder<V> newTimeSharing(TimeSharingTask<V> task) {
         Objects.requireNonNull(task);
-        return new ScheduledBuilder<>(TYPE_TIMESHARING, task, IContext.NONE);
+        return new ScheduledTaskBuilder<>(TYPE_TIMESHARING, task, IContext.NONE);
     }
 
-    public static <V> ScheduledBuilder<V> newTimeSharing(TimeSharingTask<V> task, IContext ctx) {
+    public static <V> ScheduledTaskBuilder<V> newTimeSharing(TimeSharingTask<V> task, IContext ctx) {
         Objects.requireNonNull(task);
-        return new ScheduledBuilder<>(TYPE_TIMESHARING, task, ctx);
+        return new ScheduledTaskBuilder<>(TYPE_TIMESHARING, task, ctx);
     }
 
     // region 调度方式
@@ -123,14 +123,14 @@ public final class ScheduledBuilder<V> extends TaskBuilder<V> {
         return scheduleType == SCHEDULE_ONCE;
     }
 
-    public ScheduledBuilder<V> setOnlyOnce(long delay) {
+    public ScheduledTaskBuilder<V> setOnlyOnce(long delay) {
         this.scheduleType = SCHEDULE_ONCE;
         this.initialDelay = delay;
         this.period = 0;
         return this;
     }
 
-    public ScheduledBuilder<V> setOnlyOnce(long delay, TimeUnit unit) {
+    public ScheduledTaskBuilder<V> setOnlyOnce(long delay, TimeUnit unit) {
         setOnlyOnce(delay);
         this.timeUnit = Objects.requireNonNull(unit);
         return this;
@@ -140,7 +140,7 @@ public final class ScheduledBuilder<V> extends TaskBuilder<V> {
         return scheduleType == SCHEDULE_FIXED_DELAY;
     }
 
-    public ScheduledBuilder<V> setFixedDelay(long initialDelay, long period) {
+    public ScheduledTaskBuilder<V> setFixedDelay(long initialDelay, long period) {
         validatePeriod(period);
         this.scheduleType = SCHEDULE_FIXED_DELAY;
         this.initialDelay = initialDelay;
@@ -148,7 +148,7 @@ public final class ScheduledBuilder<V> extends TaskBuilder<V> {
         return this;
     }
 
-    public ScheduledBuilder<V> setFixedDelay(long initialDelay, long period, TimeUnit unit) {
+    public ScheduledTaskBuilder<V> setFixedDelay(long initialDelay, long period, TimeUnit unit) {
         setFixedDelay(initialDelay, period);
         this.timeUnit = Objects.requireNonNull(unit);
         return this;
@@ -158,7 +158,7 @@ public final class ScheduledBuilder<V> extends TaskBuilder<V> {
         return scheduleType == SCHEDULE_FIXED_RATE;
     }
 
-    public ScheduledBuilder<V> setFixedRate(long initialDelay, long period) {
+    public ScheduledTaskBuilder<V> setFixedRate(long initialDelay, long period) {
         validateInitialDelay(initialDelay);
         validatePeriod(period);
         this.scheduleType = SCHEDULE_FIXED_RATE;
@@ -167,7 +167,7 @@ public final class ScheduledBuilder<V> extends TaskBuilder<V> {
         return this;
     }
 
-    public ScheduledBuilder<V> setFixedRate(long initialDelay, long period, TimeUnit unit) {
+    public ScheduledTaskBuilder<V> setFixedRate(long initialDelay, long period, TimeUnit unit) {
         setFixedRate(initialDelay, period);
         this.timeUnit = Objects.requireNonNull(unit);
         return this;
@@ -181,7 +181,7 @@ public final class ScheduledBuilder<V> extends TaskBuilder<V> {
      * 2. 我们总是在执行任务后检查是否超时，以确保至少会执行一次
      * 3. 超时是一个不准确的调度，不保证超时后能立即结束
      */
-    public ScheduledBuilder<V> setTimeout(long timeout) {
+    public ScheduledTaskBuilder<V> setTimeout(long timeout) {
         if (timeout < -1) {
             throw new IllegalArgumentException("invalid timeout " + timeout);
         }
@@ -195,7 +195,7 @@ public final class ScheduledBuilder<V> extends TaskBuilder<V> {
      *
      * @param count 期望的执行次数
      */
-    public ScheduledBuilder<V> setTimeoutCount(int count) {
+    public ScheduledTaskBuilder<V> setTimeoutCount(int count) {
         if (count < 1) {
             throw new IllegalArgumentException("invalid count " + count);
         }
@@ -218,7 +218,7 @@ public final class ScheduledBuilder<V> extends TaskBuilder<V> {
     }
 
     /** 设置时间单位 */
-    public ScheduledBuilder<V> setTimeUnit(TimeUnit timeUnit) {
+    public ScheduledTaskBuilder<V> setTimeUnit(TimeUnit timeUnit) {
         this.timeUnit = Objects.requireNonNull(timeUnit);
         return this;
     }
@@ -230,25 +230,25 @@ public final class ScheduledBuilder<V> extends TaskBuilder<V> {
     // endregion
 
     @Override
-    public ScheduledBuilder<V> enable(int taskOption) {
+    public ScheduledTaskBuilder<V> enable(int taskOption) {
         super.enable(taskOption);
         return this;
     }
 
     @Override
-    public ScheduledBuilder<V> disable(int taskOption) {
+    public ScheduledTaskBuilder<V> disable(int taskOption) {
         super.disable(taskOption);
         return this;
     }
 
     @Override
-    public ScheduledBuilder<V> setSchedulePhase(int phase) {
+    public ScheduledTaskBuilder<V> setSchedulePhase(int phase) {
         super.setSchedulePhase(phase);
         return this;
     }
 
     @Override
-    public ScheduledBuilder<V> setOptions(int options) {
+    public ScheduledTaskBuilder<V> setOptions(int options) {
         super.setOptions(options);
         return this;
     }

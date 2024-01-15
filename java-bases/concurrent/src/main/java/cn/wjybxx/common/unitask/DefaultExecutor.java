@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * @author wjybxx
  * date 2023/4/3
  */
-public class DefaultUniExecutor extends AbstractUniExecutor {
+public class DefaultExecutor extends AbstractUniExecutor {
 
     private final Deque<Runnable> taskQueue = new ArrayDeque<>();
     private final UniPromise<Void> terminationPromise = new UniPromise<>(this);
@@ -40,11 +40,11 @@ public class DefaultUniExecutor extends AbstractUniExecutor {
     private final int countLimit;
     private final long nanoTimeLimit;
 
-    public DefaultUniExecutor() {
+    public DefaultExecutor() {
         this(-1, -1, TimeUnit.NANOSECONDS);
     }
 
-    public DefaultUniExecutor(int countLimit) {
+    public DefaultExecutor(int countLimit) {
         this(countLimit, -1, TimeUnit.NANOSECONDS);
     }
 
@@ -52,7 +52,7 @@ public class DefaultUniExecutor extends AbstractUniExecutor {
      * @param countLimit 每帧允许运行的最大任务数，-1表示不限制；不可以为0
      * @param timeLimit  每帧允许的最大时间，-1表示不限制；不可以为0
      */
-    public DefaultUniExecutor(int countLimit, long timeLimit, TimeUnit timeUnit) {
+    public DefaultExecutor(int countLimit, long timeLimit, TimeUnit timeUnit) {
         ensureNegativeOneOrPositive(countLimit, "countLimit");
         ensureNegativeOneOrPositive(timeLimit, "timeLimit");
         this.countLimit = countLimit;

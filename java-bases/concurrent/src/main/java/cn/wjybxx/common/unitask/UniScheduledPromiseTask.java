@@ -55,7 +55,7 @@ public final class UniScheduledPromiseTask<V>
      * @param id              任务的id
      * @param nextTriggerTime 任务的首次触发时间
      */
-    private UniScheduledPromiseTask(ScheduledBuilder<V> builder, UniPromise<V> promise,
+    private UniScheduledPromiseTask(ScheduledTaskBuilder<V> builder, UniPromise<V> promise,
                                     long id, long nextTriggerTime, long period, TimeoutContext timeoutContext) {
         super(builder, promise);
         this.id = id;
@@ -109,7 +109,7 @@ public final class UniScheduledPromiseTask<V>
 
     public static <V> UniScheduledPromiseTask<V> ofBuilder(TaskBuilder<V> builder, UniPromise<V> promise,
                                                            long id, long tickTime) {
-        if (builder instanceof ScheduledBuilder<V> sb) {
+        if (builder instanceof ScheduledTaskBuilder<V> sb) {
             return ofBuilder(sb, promise, id, tickTime);
         }
         return new UniScheduledPromiseTask<>(builder.getTask(), promise, builder.getType(),
@@ -123,7 +123,7 @@ public final class UniScheduledPromiseTask<V>
      * @param tickTime 当前时间(没有单位)
      * @return PromiseTask
      */
-    public static <V> UniScheduledPromiseTask<V> ofBuilder(ScheduledBuilder<V> builder, UniPromise<V> promise,
+    public static <V> UniScheduledPromiseTask<V> ofBuilder(ScheduledTaskBuilder<V> builder, UniPromise<V> promise,
                                                            long id, long tickTime) {
         // 理论上单线程下是可以支持插队的，但插队会导致较强的依赖，暂时先不支持
         final long initialDelay = Math.max(0, builder.getInitialDelay());
@@ -215,7 +215,7 @@ public final class UniScheduledPromiseTask<V>
      */
     public boolean trigger(long tickTime) {
         final int scheduleType = getScheduleType();
-        if (scheduleType == ScheduledBuilder.SCHEDULE_ONCE) {
+        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
             super.run();
             return false;
         }
@@ -241,7 +241,7 @@ public final class UniScheduledPromiseTask<V>
         TimeoutContext timeoutContext = this.timeoutContext;
         try {
             if (timeoutContext != null) {
-                timeoutContext.beforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledBuilder.SCHEDULE_FIXED_RATE);
+                timeoutContext.beforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE);
                 if (TaskOption.isEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeoutContext.isTimeout()) {
                     promise.trySetException(TimeSharingTimeoutException.INSTANCE);
                     clear();
@@ -287,7 +287,7 @@ public final class UniScheduledPromiseTask<V>
     }
 
     private boolean canCaughtException(Throwable ex) {
-        if (getScheduleType() == ScheduledBuilder.SCHEDULE_ONCE) {
+        if (getScheduleType() == ScheduledTaskBuilder.SCHEDULE_ONCE) {
             return false;
         }
         if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
@@ -299,7 +299,7 @@ public final class UniScheduledPromiseTask<V>
 
     private void setNextRunTime(long tickTime, TimeoutContext timeoutContext, int scheduleType) {
         long maxDelay = timeoutContext != null ? timeoutContext.getTimeLeft() : Long.MAX_VALUE;
-        if (scheduleType == ScheduledBuilder.SCHEDULE_FIXED_RATE) {
+        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
             // 逻辑时间
             nextTriggerTime = nextTriggerTime + Math.min(maxDelay, period);
         } else {

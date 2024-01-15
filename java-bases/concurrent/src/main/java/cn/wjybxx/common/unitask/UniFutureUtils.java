@@ -72,7 +72,7 @@ public class UniFutureUtils {
     }
 
     public static UniExecutorService newExecutor() {
-        return new DefaultUniExecutor();
+        return new DefaultExecutor();
     }
 
     /**
@@ -80,7 +80,7 @@ public class UniFutureUtils {
      * @param timeLimit  每帧允许的最大时间，-1表示不限制；不可以为0
      */
     public static UniExecutorService newExecutor(int countLimit, long timeLimit, TimeUnit timeUnit) {
-        return new DefaultUniExecutor(countLimit, timeLimit, timeUnit);
+        return new DefaultExecutor(countLimit, timeLimit, timeUnit);
     }
 
     /**
@@ -89,11 +89,11 @@ public class UniFutureUtils {
      * @param timeProvider 用于调度器获取当前时间
      */
     public static UniScheduledExecutor newScheduledExecutor(TimeProvider timeProvider) {
-        return new UniScheduledExecutorImpl(timeProvider);
+        return new DefaultScheduledExecutor(timeProvider);
     }
 
     public static UniScheduledExecutor newScheduledExecutor(TimeProvider timeProvider, int initCapacity) {
-        return new UniScheduledExecutorImpl(timeProvider, initCapacity);
+        return new DefaultScheduledExecutor(timeProvider, initCapacity);
     }
 
     // endregion

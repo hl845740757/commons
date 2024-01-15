@@ -34,11 +34,13 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
+ * 声明{@link IFuture}接口加快instanceof测试
+ *
  * @author wjybxx
  * date - 2024/1/10
  */
 @ThreadSafe
-public class Promise<T> implements IPromise<T> {
+public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     /** 1毫秒多少纳秒 */
     private static final long NANO_PER_MILLISECOND = 1000_000L;

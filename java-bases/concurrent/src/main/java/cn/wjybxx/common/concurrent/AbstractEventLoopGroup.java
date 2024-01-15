@@ -131,7 +131,7 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
     // region schedule
 
     @Override
-    public <V> IScheduledFuture<V> schedule(ScheduledBuilder<V> builder) {
+    public <V> IScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder) {
         return select().schedule(builder);
     }
 

@@ -30,7 +30,7 @@ import java.util.Objects;
  * @author wjybxx
  * date 2023/4/3
  */
-public class UniScheduledExecutorImpl extends AbstractUniScheduledExecutor implements UniScheduledExecutor {
+public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor implements UniScheduledExecutor {
 
     private static final Comparator<UniScheduledPromiseTask<?>> queueTaskComparator = UniScheduledPromiseTask::compareToExplicitly;
     private static final int DEFAULT_INITIAL_CAPACITY = 16;
@@ -46,11 +46,11 @@ public class UniScheduledExecutorImpl extends AbstractUniScheduledExecutor imple
     /** 当前帧的时间戳，缓存下来以避免在tick的过程中产生变化 */
     private long tickTime;
 
-    public UniScheduledExecutorImpl(TimeProvider timeProvider) {
+    public DefaultScheduledExecutor(TimeProvider timeProvider) {
         this(timeProvider, DEFAULT_INITIAL_CAPACITY);
     }
 
-    public UniScheduledExecutorImpl(TimeProvider timeProvider, int initCapacity) {
+    public DefaultScheduledExecutor(TimeProvider timeProvider, int initCapacity) {
         this.timeProvider = Objects.requireNonNull(timeProvider, "timeProvider");
         this.taskQueue = new DefaultIndexedPriorityQueue<>(queueTaskComparator, initCapacity);
         this.tickTime = timeProvider.getTime();
@@ -77,9 +77,7 @@ public class UniScheduledExecutorImpl extends AbstractUniScheduledExecutor imple
             }
 
             taskQueue.poll();
-            queueTask.run();
-
-            if (queueTask.isPeriodic() && !queueTask.isDone()) {
+            if (queueTask.trigger(tickTime)) {
                 if (isShutdown()) { // 已请求关闭
                     queueTask.cancelWithoutRemove();
                 } else {

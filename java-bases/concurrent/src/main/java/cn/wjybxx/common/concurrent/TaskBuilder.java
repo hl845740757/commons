@@ -29,7 +29,7 @@ import java.util.function.Function;
  * date - 2024/1/11
  */
 @NotThreadSafe
-public sealed class TaskBuilder<V> permits ScheduledBuilder {
+public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     public static final int TYPE_RUNNABLE = 0;
     public static final int TYPE_CALLABLE = 1;
@@ -155,10 +155,10 @@ public sealed class TaskBuilder<V> permits ScheduledBuilder {
         return options;
     }
 
-    public ScheduledBuilder<V> toScheduledBuilder() {
-        if (this instanceof ScheduledBuilder<V> sb) {
+    public ScheduledTaskBuilder<V> toScheduledBuilder() {
+        if (this instanceof ScheduledTaskBuilder<V> sb) {
             return sb;
         }
-        return new ScheduledBuilder<>(this);
+        return new ScheduledTaskBuilder<>(this);
     }
 }

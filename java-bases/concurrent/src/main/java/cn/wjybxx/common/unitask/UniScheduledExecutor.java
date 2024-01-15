@@ -17,7 +17,7 @@
 package cn.wjybxx.common.unitask;
 
 import cn.wjybxx.common.concurrent.IContext;
-import cn.wjybxx.common.concurrent.ScheduledBuilder;
+import cn.wjybxx.common.concurrent.ScheduledTaskBuilder;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.concurrent.Callable;
@@ -53,7 +53,7 @@ public interface UniScheduledExecutor extends UniExecutorService {
      * @param <V>     任务的结果类型
      * @return future
      */
-    <V> UniScheduledFuture<V> schedule(ScheduledBuilder<V> builder);
+    <V> UniScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder);
 
     /**
      * 延迟指定时间后执行给定的任务
