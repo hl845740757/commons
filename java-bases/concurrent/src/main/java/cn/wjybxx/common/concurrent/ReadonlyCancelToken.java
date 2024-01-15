@@ -18,7 +18,6 @@ package cn.wjybxx.common.concurrent;
 
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -82,8 +81,8 @@ public final class ReadonlyCancelToken implements ICancelToken {
     }
 
     @Override
-    public IRegistration register(BiConsumer<? super ICancelToken, ? super IContext> action, IContext ctx) {
-        return cancelToken.register(action, ctx);
+    public IRegistration registerTyped(CancelTokenListener action) {
+        return cancelToken.registerTyped(action);
     }
 
     @Override

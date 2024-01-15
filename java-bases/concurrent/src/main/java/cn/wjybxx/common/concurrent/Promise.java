@@ -1470,7 +1470,8 @@ public class Promise<T> implements IPromise<T> {
             return true;
         }
         // 判断是否需要传递选项
-        if (!TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)
+        if (options != 0
+                && !TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)
                 && e instanceof IExecutor exe) {
             exe.execute(completion, options);
         } else {

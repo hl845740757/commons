@@ -37,7 +37,7 @@ public final class UniFutureCombiner {
     private int futureCount;
 
     public UniFutureCombiner(Executor executor) {
-        this.executor = executor;
+        this.executor = Objects.requireNonNull(executor);
     }
 
     //region

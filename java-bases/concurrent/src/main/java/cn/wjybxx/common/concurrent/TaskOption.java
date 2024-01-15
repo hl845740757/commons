@@ -126,18 +126,12 @@ public final class TaskOption {
         return (flags & option) == option;
     }
 
-    /** 是否禁用了所有选项 */
+    /**
+     * 是否未启用选项。
+     * 1.禁用任意bit即为未启用；
+     * 2.和{@link #isEnabled(int, int)}相反关系
+     */
     public static boolean isDisabled(int flags, int option) {
-        return (flags & option) == 0;
-    }
-
-    /** 是否启用了任意选项 */
-    public static boolean isAnyEnabled(int flags, int option) {
-        return (flags & option) != 0;
-    }
-
-    /** 是否禁用了任意选项 */
-    public static boolean isAnyDisabled(int flags, int option) {
         return (flags & option) != option;
     }
 

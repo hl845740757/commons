@@ -19,7 +19,6 @@ package cn.wjybxx.common.concurrent;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -128,18 +127,15 @@ public interface ICancelToken {
     IRegistration register(Consumer<? super ICancelToken> action);
 
     /**
-     * 添加的action将在Context收到取消信号时执行
-     * （支持取消的的任务可以监听取消信号以唤醒线程）
-     *
-     * @param ctx 上下文-主要是取消令牌
-     * @return 监听器关联的id；如果为0表示注册失败，通常表示令牌不会被取消，或已经被取消
-     */
-    IRegistration register(BiConsumer<? super ICancelToken, ? super IContext> action, IContext ctx);
-
-    /**
      * 添加一个完成时固定执行的行为 -- 忽略取消信息。
      */
     IRegistration registerRun(Runnable action);
+
+    /**
+     * 添加一个特定类型的监听器
+     * (用于特殊需求时避免额外的闭包)
+     */
+    IRegistration registerTyped(CancelTokenListener action);
 
     /**
      * 添加子token

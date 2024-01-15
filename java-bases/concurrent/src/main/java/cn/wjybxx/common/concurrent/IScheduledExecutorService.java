@@ -45,7 +45,7 @@ public interface IScheduledExecutorService extends IExecutorService, ScheduledEx
      * 延迟指定时间后执行给定的任务
      *
      * @param task 要执行的任务
-     * @param ctx 上下文-主要是取消令牌
+     * @param ctx  上下文-主要是取消令牌
      */
     <V> IScheduledFuture<V> scheduleFunc(Function<? super IContext, V> task, IContext ctx,
                                          long delay, TimeUnit unit);
@@ -54,7 +54,7 @@ public interface IScheduledExecutorService extends IExecutorService, ScheduledEx
      * 延迟指定时间后执行给定的任务
      *
      * @param task 要执行的任务
-     * @param ctx 上下文-主要是取消令牌
+     * @param ctx  上下文-主要是取消令牌
      */
     IScheduledFuture<?> scheduleAction(Consumer<? super IContext> task, IContext ctx,
                                        long delay, TimeUnit unit);

@@ -16,7 +16,6 @@
 
 package cn.wjybxx.common.concurrent;
 
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -76,12 +75,12 @@ final class UncancellableToken implements ICancelToken {
     }
 
     @Override
-    public IRegistration register(BiConsumer<? super ICancelToken, ? super IContext> action, IContext ctx) {
+    public IRegistration registerRun(Runnable action) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration registerRun(Runnable action) {
+    public IRegistration registerTyped(CancelTokenListener action) {
         return TOMBSTONE;
     }
 

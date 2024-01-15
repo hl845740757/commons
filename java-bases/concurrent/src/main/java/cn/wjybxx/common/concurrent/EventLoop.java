@@ -151,14 +151,6 @@ public interface EventLoop extends FixedEventLoopGroup, SingleThreadExecutor {
         }
     }
 
-    /** @throws BlockingOperationException 如果当前在EventLoop所在线程 */
-    default void throwIfInEventLoop(String method) {
-        Objects.requireNonNull(method);
-        if (inEventLoop()) {
-            throw new BlockingOperationException("Calling " + method + " from within the EventLoop is not allowed");
-        }
-    }
-
     // endregion
 
     /** @return EventLoop的当前状态 */

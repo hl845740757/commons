@@ -59,7 +59,7 @@ public interface ICancelTokenSource extends ICancelToken {
     /**
      * 在一段时间后发送取消命令
      *
-     * @param cancelCode 取消码
+     * @param cancelCode        取消码
      * @param millisecondsDelay 延迟时间(毫秒) -- 单线程版的话，真实单位取决于约定。
      */
     void cancelAfter(int cancelCode, long millisecondsDelay);
@@ -68,8 +68,8 @@ public interface ICancelTokenSource extends ICancelToken {
      * 在一段时间后发送取消命令
      *
      * @param cancelCode 取消码
-     * @param delay 延迟时间
-     * @param timeUnit 时间单位
+     * @param delay      延迟时间
+     * @param timeUnit   时间单位
      */
     void cancelAfter(int cancelCode, long delay, TimeUnit timeUnit);
 

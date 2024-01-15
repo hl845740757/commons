@@ -951,7 +951,7 @@ public class UniPromise<T> implements UniFuture<T> {
     static final int NESTED = -1;
 
     // 刻意与上面的Mode一致，即使手滑按错了，逻辑也是对的。
-    /** 用于表示任务已申领权限  */
+    /** 用于表示任务已申领权限 */
     private static final int EXE_CLAIMED = NESTED;
     /** 表示这是一个同步任务 */
     private static final int EXE_SYNC = SYNC;
@@ -1162,7 +1162,8 @@ public class UniPromise<T> implements UniFuture<T> {
             return true;
         }
         // 判断是否需要传递选项
-        if (!TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)
+        if (options != 0
+                && !TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)
                 && e instanceof IExecutor exe) {
             exe.execute(completion, options);
         } else {

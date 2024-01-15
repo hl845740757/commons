@@ -16,6 +16,7 @@
 
 package cn.wjybxx.common.unitask;
 
+import cn.wjybxx.base.annotation.Beta;
 import cn.wjybxx.common.concurrent.*;
 
 import javax.annotation.Nonnull;
@@ -23,7 +24,6 @@ import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -36,6 +36,7 @@ import java.util.function.Consumer;
  * @author wjybxx
  * date - 2024/1/8
  */
+@Beta
 public final class UniCancelToken implements ICancelTokenSource {
 
     /**
@@ -213,14 +214,13 @@ public final class UniCancelToken implements ICancelTokenSource {
     }
 
     @Override
-    public IRegistration register(BiConsumer<? super ICancelToken, ? super IContext> action, IContext ctx) {
+    public IRegistration registerRun(Runnable action) {
         Objects.requireNonNull(action, "action");
-        Objects.requireNonNull(ctx);
         if (code != 0) {
-            notifyListener(this, action, ctx);
+            notifyListener(action);
             return TOMBSTONE;
         }
-        CallbackNode callbackNode = new CallbackNode(nextId(), this, ctx, action);
+        CallbackNode callbackNode = new CallbackNode(nextId(), this, TYPE_RUNNABLE, action);
         if (pushCompletion(callbackNode)) {
             return callbackNode;
         }
@@ -228,10 +228,10 @@ public final class UniCancelToken implements ICancelTokenSource {
     }
 
     @Override
-    public IRegistration registerRun(Runnable action) {
+    public IRegistration registerTyped(CancelTokenListener action) {
         Objects.requireNonNull(action, "action");
         if (code != 0) {
-            notifyListener(action);
+            notifyListener(this, action);
             return TOMBSTONE;
         }
         CallbackNode callbackNode = new CallbackNode(nextId(), this, TYPE_RUNNABLE, action);
@@ -277,10 +277,9 @@ public final class UniCancelToken implements ICancelTokenSource {
     }
 
     private static void notifyListener(UniCancelToken source,
-                                       BiConsumer<? super ICancelToken, ? super IContext> action,
-                                       IContext ctx) {
+                                       CancelTokenListener action) {
         try {
-            action.accept(source, ctx);
+            action.onCancelRequest(source);
         } catch (Throwable ex) {
             FutureLogger.logCause(ex, "CancelTokenListener caught exception");
         }
@@ -370,12 +369,15 @@ public final class UniCancelToken implements ICancelTokenSource {
 
     // endregion
 
-    /** 表示回调是无上下文的普通回调 -- {@link #register(Consumer)} */
-    private static final IContext TYPE_CONSUMER = new Context<>(null);
-    /** 表示回调是{@link Runnable} --{@link #registerRun(Runnable)} */
-    private static final IContext TYPE_RUNNABLE = new Context<>(null);
-    /** 表示回调是子token -- {@link #registerChild(ICancelTokenSource)} */
-    private static final IContext TYPE_TOKEN = new Context<>(null);
+    /** {@link #register(Consumer)} */
+    private static final int TYPE_CONSUMER = 0;
+    /** {@link #registerRun(Runnable)} */
+    private static final int TYPE_RUNNABLE = 1;
+    /** {@link #registerTyped(CancelTokenListener)} */
+    private static final int TYPE_TYPED = 2;
+    /** {@link #registerChild(ICancelTokenSource)} */
+    private static final int TYPE_CHILD = 3;
+
 
     /** 分配唯一id */
     private static final AtomicLong idAllocator = new AtomicLong(1);
@@ -388,16 +390,15 @@ public final class UniCancelToken implements ICancelTokenSource {
 
     private static class CallbackNode implements IRegistration {
 
+        CallbackNode next;
+
+        /** 唯一id */
         final long id;
         /** 暂非final，暂不允许用户访问 */
         UniCancelToken source;
-        CallbackNode next;
-        IContext ctx;
-        /**
-         * 用户传入的回调。
-         * 1.通知或删除时会将其更新为 {@link #TOMBSTONE} -- 延迟删除节点。
-         * 2.其类型通过{@link #ctx}来测定
-         */
+        /** 任务的类型 -- 不想过多的子类实现 */
+        int type;
+        /** 用户回调 -- 通知和清理时置为{@link #TOMBSTONE} */
         Object action;
 
         public CallbackNode() {
@@ -405,10 +406,10 @@ public final class UniCancelToken implements ICancelTokenSource {
             source = null;
         }
 
-        public CallbackNode(long id, UniCancelToken source, IContext ctx, Object action) {
+        public CallbackNode(long id, UniCancelToken source, int type, Object action) {
             this.id = id;
             this.source = source;
-            this.ctx = ctx;
+            this.type = type;
             this.action = action;
         }
 
@@ -421,27 +422,32 @@ public final class UniCancelToken implements ICancelTokenSource {
                 return null; // 当前节点被取消
             }
             UniCancelToken source = this.source;
-            IContext ctx = this.ctx;
-            this.ctx = null;
             this.source = null;
 
-            // 用户普遍不关注取消码，所以runnable和consumer放前部测试
-            if (ctx == TYPE_RUNNABLE) {
-                Runnable castAction = (Runnable) action;
-                notifyListener(castAction);
-            } else if (ctx == TYPE_CONSUMER) {
-                @SuppressWarnings("unchecked") var castAction = (Consumer<? super ICancelToken>) action;
-                notifyListener(source, castAction);
-            } else if (ctx == TYPE_TOKEN) {
-                return notifyChild(source, mode, (ICancelTokenSource) action);
-            } else {
-                if (ctx.cancelToken().isCancelling()) {
+            switch (type) {
+                case TYPE_CONSUMER -> {
+                    @SuppressWarnings("unchecked") var castAction = (Consumer<? super ICancelToken>) action;
+                    notifyListener(source, castAction);
                     return null;
                 }
-                @SuppressWarnings("unchecked") var castAction = (BiConsumer<? super ICancelToken, ? super IContext>) action;
-                notifyListener(source, castAction, ctx);
+                case TYPE_RUNNABLE -> {
+                    Runnable castAction = (Runnable) action;
+                    notifyListener(castAction);
+                    return null;
+                }
+                case TYPE_CHILD -> {
+                    ICancelTokenSource childSource = (ICancelTokenSource) action;
+                    return notifyChild(source, mode, childSource);
+                }
+                case TYPE_TYPED -> {
+                    CancelTokenListener listener = (CancelTokenListener) action;
+                    notifyListener(source, listener);
+                    return null;
+                }
+                default -> {
+                    throw new AssertionError();
+                }
             }
-            return null;
         }
 
         private static UniCancelToken notifyChild(UniCancelToken source, int mode, ICancelTokenSource child) {
@@ -481,7 +487,6 @@ public final class UniCancelToken implements ICancelTokenSource {
                 if (this == source.stack) {
                     source.removeClosedNode(this);
                 }
-                this.ctx = null;
                 this.source = null;
             }
         }

@@ -100,7 +100,6 @@ public abstract class AbstractEventLoop extends AbstractExecutorService implemen
         }
     }
 
-    @Override
     public final void throwIfInEventLoop(String method) {
         if (inEventLoop()) {
             throw new BlockingOperationException("Calling " + method + " from within the EventLoop is not allowed");

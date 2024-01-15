@@ -68,7 +68,6 @@ public interface IExecutor extends Executor {
     /**
      * {@link Consumer}和{@link Runnable}的lambda差异足够大，因此选择重载。
      *
-     *
      * @param action 要执行的任务
      * @param ctx    任务绑定的上下文
      * @throws NullPointerException       如果任务为null
