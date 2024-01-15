@@ -16,10 +16,10 @@
 
 package cn.wjybxx.common.concurrent;
 
-import cn.wjybxx.base.SystemPropsUtils;
 import cn.wjybxx.base.ex.NoLogRequiredException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -39,7 +39,7 @@ public final class FutureLogger {
 
     private static final Logger logger = LoggerFactory.getLogger(Promise.class);
     /**
-     * 是否记录日志
+     * 日志等级
      * <p>
      * 在使用{@link CompletableFuture}的过程中，有一个头疼的问题：出现异常时毫无表现，排查错误异常困难。
      * 由于异常默认会被捕获传递，因此只有链的末尾才可以准确记录错误日志；
@@ -51,8 +51,17 @@ public final class FutureLogger {
      * 如果继续使用{@link CompletableFuture}，那么安全的方式就是继承它，然后将用户的每一个Action都封装一层，在其抛出异常时先记录日志，再抛出。
      * 但这种方式代码丑陋且低效。
      */
-    private static final boolean logCause = SystemPropsUtils.getBool("cn.wjybxx.concurrent.FutureLogger.logCause", true);
+    private static volatile Level logLevel = Level.INFO;
     private static final Set<Class<?>> noLogRequiredExceptions = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    public static Level getLogLevel() {
+        return logLevel;
+    }
+
+    /** @param logLevel 日志等级 */
+    public static void setLogLevel(Level logLevel) {
+        FutureLogger.logLevel = Objects.requireNonNull(logLevel);
+    }
 
     /** 添加一个无需自动记录日志的异常 */
     public static void addNoLogRequiredException(Class<? extends Throwable> ex) {
@@ -83,7 +92,7 @@ public final class FutureLogger {
     }
 
     private static boolean testException(Throwable x) {
-        if (!logCause || x == null) {
+        if (x == null) {
             return false;
         }
         return !(x instanceof NoLogRequiredException)
@@ -91,24 +100,29 @@ public final class FutureLogger {
                 && !noLogRequiredExceptions.contains(x.getClass());
     }
 
-    public static void logCause(Throwable x, String message) {
-        Objects.requireNonNull(message);
-        if (testException(x)) {
-            try {
-                logger.warn(message, x);
-            } catch (Throwable ignore) {
-                // 万一日志挂了...
-            }
-        }
+    public static void logCause(Throwable ex) {
+        logCause(ex, null);
     }
 
-    public static void logCause(Throwable x) {
-        if (testException(x)) {
-            try {
-                logger.warn("future completed with exception", x);
-            } catch (Throwable ignore) {
-                // 万一日志挂了...
+    public static void logCause(Throwable ex, String message) {
+        Objects.requireNonNull(ex);
+        if (message == null) message = "future completed with exception";
+
+        Level logLevel = FutureLogger.logLevel;
+        if (!logger.isEnabledForLevel(logLevel) || !testException(ex)) {
+            return;
+        }
+        try {
+//            logger.atLevel(logLevel).setCause(ex).log(message);
+            switch (logLevel) {
+                case TRACE -> logger.trace(message, ex);
+                case DEBUG -> logger.debug(message, ex);
+                case INFO -> logger.info(message, ex);
+                case WARN -> logger.warn(message, ex);
+                case ERROR -> logger.error(message, ex);
             }
+        } catch (Throwable ignore) {
+            // 万一日志挂了...
         }
     }
 }
