@@ -164,4 +164,45 @@ public class ObjectUtils {
 
     // endregion
 
+    // region exception
+
+    /** 是否是受检异常 */
+    public static boolean isChecked(final Throwable throwable) {
+        return !(throwable instanceof Error || throwable instanceof RuntimeException);
+    }
+
+    /** 是否是非受检异常 -- 通常指运行时异常 */
+    public static boolean isUnchecked(final Throwable throwable) {
+        return (throwable instanceof Error || throwable instanceof RuntimeException);
+    }
+
+    /**
+     * 抛出原始异常，消除编译时警告
+     *
+     * @param <R> 方法正常执行的返回值类型
+     */
+    public static <R> R rethrow(final Throwable throwable) {
+        return throwAsUncheckedException(throwable);
+    }
+
+    /**
+     * 如果异常是非受检异常，则直接抛出，否则返回异常对象。
+     */
+    public static <T extends Throwable> T throwUnchecked(final T throwable) {
+        if (isUnchecked(throwable)) {
+            return throwAsUncheckedException(throwable);
+        }
+        return throwable; // 返回异常
+    }
+
+    /**
+     * @param <R> 方法正常执行的返回值类型
+     * @param <T> 异常类型约束
+     */
+    @SuppressWarnings("unchecked")
+    private static <R, T extends Throwable> R throwAsUncheckedException(final Throwable throwable) throws T {
+        throw (T) throwable;
+    }
+
+    // endregion
 }

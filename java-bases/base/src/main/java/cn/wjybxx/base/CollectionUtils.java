@@ -81,7 +81,7 @@ public class CollectionUtils {
         if (elements == null || elements.isEmpty()) {
             return def;
         }
-        return elements.get(0);
+        return elements.getFirst();
     }
 
     public static <E> E lastOrDefault(List<E> elements, E def) {
@@ -118,7 +118,7 @@ public class CollectionUtils {
 
     /** 移除list中第一个匹配的元素 -- 最好是数组列表 */
     public static <E> boolean removeFirstMatch(List<E> list, Predicate<? super E> predicate) {
-        if (list.size() == 0) {
+        if (list.isEmpty()) {
             return false;
         }
         final int index = indexOfCustom(list, predicate);
@@ -131,7 +131,7 @@ public class CollectionUtils {
 
     /** 移除List中最后一个匹配的元素  -- 最好是数组列表 */
     public static <E> boolean removeLastMatch(List<E> list, Predicate<? super E> predicate) {
-        if (list.size() == 0) {
+        if (list.isEmpty()) {
             return false;
         }
         final int index = lastIndexOfCustom(list, predicate);

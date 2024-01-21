@@ -54,6 +54,7 @@ public class MutableLong extends Number implements MutableNumber<Long>, Comparab
     public void setValue(final long value) {
         this.value = value;
     }
+
     @Override
     public int intValue() {
         return (int) value;

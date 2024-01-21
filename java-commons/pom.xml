@@ -79,8 +79,6 @@
 
         <bson.version>4.10.2</bson.version>
         <javapoet.version>1.13.0</javapoet.version>
-        <disruptor.version>3.4.4</disruptor.version>
-        <jctools.version>4.0.1</jctools.version>
     </properties>
 
     <dependencies>

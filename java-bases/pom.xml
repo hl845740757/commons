@@ -17,7 +17,8 @@
         <module>agent</module>
         <module>base</module>
         <module>apt-base</module>
-		<module>concurrent</module>
+        <module>disruptor</module>
+        <module>concurrent</module>
     </modules>
 
     <!-- 证书 -->
@@ -72,13 +73,7 @@
 		<commons-lang3.version>3.14.0</commons-lang3.version>
         <commons-io.version>2.15.1</commons-io.version>
         <commons-codec.version>1.16.0</commons-codec.version>		
-		
 		<guava.version>33.0.0-jre</guava.version>
-        <pb.version>3.25.1</pb.version>
-		
-        <bson.version>4.10.2</bson.version>		
-        <disruptor.version>3.4.4</disruptor.version>
-        <jctools.version>4.0.1</jctools.version>		
     </properties>
 
     <!-- 基础依赖/全局依赖 -->

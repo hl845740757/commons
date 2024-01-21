@@ -88,8 +88,13 @@ public class BitFlags {
     }
 
     public static int setField(int flags, int mask, int offset, int value) {
-        int rawValue = (value << offset) & mask; // & mask 去除非法位
-        return flags & rawValue;
+        int offsetValue = (value << offset) & mask; // & mask 去除非法位
+        flags &= ~mask; // 去除旧值
+        return flags & offsetValue;
+    }
+
+    public static int unsetField(int flags, int mask) {
+        return flags & ~mask;
     }
 
     // endregion
@@ -156,8 +161,13 @@ public class BitFlags {
     }
 
     public static long setField(long flags, long mask, int offset, long value) {
-        long rawValue = (value << offset) & mask; // & mask 去除非法位
-        return flags & rawValue;
+        long offsetValue = (value << offset) & mask; // & mask 去除非法位
+        flags &= ~mask; // 去除旧值
+        return flags & offsetValue;
+    }
+
+    public static long unsetField(long flags, long mask) {
+        return flags & ~mask;
     }
     // endregion
 

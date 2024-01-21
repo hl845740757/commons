@@ -43,7 +43,7 @@ public abstract class AbstractConstant<T extends AbstractConstant<T>> implements
     private final long uniqueId;
 
     protected AbstractConstant(Builder<?> builder) {
-        this.id = builder.checkedGetId();
+        this.id = builder.getIdOrThrow();
         this.name = Objects.requireNonNull(builder.getName());
         this.uniqueId = uniqueIdGenerator.incrementAndGet();
     }

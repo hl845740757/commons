@@ -78,7 +78,7 @@ public interface Constant<T extends Constant<T>> extends Comparable<T> {
             return this;
         }
 
-        public int checkedGetId() {
+        public int getIdOrThrow() {
             if (this.id == null) {
                 throw new IllegalStateException("id has not been initialized");
             }

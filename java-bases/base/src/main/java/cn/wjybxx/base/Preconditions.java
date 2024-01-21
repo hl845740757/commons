@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.RandomAccess;
 
-import static cn.wjybxx.base.ObjectUtils.nullToDef;
 import static cn.wjybxx.base.ObjectUtils.toStringIfNotNull;
 
 /**
@@ -196,7 +195,7 @@ public class Preconditions {
         if (desc == null) {
             return String.format("value expected between range[%d, %d], but found: %d", min, max, v);
         } else {
-            return String.format("%s expected between range[%d, %d], but found: %d", nullToDef(desc, "value"), min, max, v);
+            return String.format("%s expected between range[%d, %d], but found: %d", desc, min, max, v);
         }
     }
     // endregion
@@ -209,7 +208,7 @@ public class Preconditions {
 
     public static String checkNotEmpty(String value, @Nullable String desc) {
         if (ObjectUtils.isEmpty(value)) {
-            throw new IllegalArgumentException(String.format("%s cant be empty", nullToDef(desc, "value")));
+            throwArgumentException("value cant be empty", "%s cant be empty", desc);
         }
         return value;
     }
@@ -220,7 +219,7 @@ public class Preconditions {
 
     public static String checkNotBlank(String value, @Nullable String desc) {
         if (ObjectUtils.isBlank(value)) {
-            throw new IllegalArgumentException(String.format("%s cant be blank", nullToDef(desc, "value")));
+            throwArgumentException("value cant be blank", "%s cant be blank", desc);
         }
         return value;
     }
@@ -231,7 +230,7 @@ public class Preconditions {
 
     public static String checkNoneWhiteSpace(String value, @Nullable String desc) {
         if (ObjectUtils.containsWhitespace(value)) {
-            throw new IllegalArgumentException(String.format("%s cant contain whitespace", nullToDef(desc, "value")));
+            throwArgumentException("value cant contains whitespace", "%s cant contains whitespace", desc);
         }
         return value;
     }
@@ -246,7 +245,7 @@ public class Preconditions {
 
     public static void checkNotEmpty(Collection<?> collection, @Nullable String desc) {
         if (collection == null || collection.isEmpty()) {
-            throw new IllegalArgumentException(String.format("%s cant be empty", nullToDef(desc, "collection")));
+            throwArgumentException("collection cant be empty", "%s cant be empty", desc);
         }
     }
 
@@ -256,23 +255,27 @@ public class Preconditions {
 
     public static void checkNotEmpty(Object[] array, @Nullable String desc) {
         if (array == null || array.length == 0) {
-            throw new IllegalArgumentException(String.format("%s cant be empty", nullToDef(desc, "array")));
+            throwArgumentException("array cant be empty", "%s cant be empty", desc);
         }
     }
 
     /** 检查集合里是否存在null，如果元素里存在null则抛出异常 */
     public static void checkNullElements(Collection<?> c) {
+        checkNullElements(c, null);
+    }
+
+    public static void checkNullElements(Collection<?> c, @Nullable String desc) {
         if (c instanceof RandomAccess) {
             List<?> list = (List<?>) c;
             for (int i = 0; i < list.size(); i++) {
                 if (list.get(i) == null) {
-                    throw new IllegalArgumentException("collection contains null values");
+                    throwArgumentException("collection contains null elements", "%s contains null elements", desc);
                 }
             }
         } else {
             for (Object element : c) {
                 if (element == null) {
-                    throw new IllegalArgumentException("collection contains null values");
+                    throwArgumentException("collection contains null elements", "%s contains null elements", desc);
                 }
             }
         }
@@ -280,10 +283,23 @@ public class Preconditions {
 
     /** 检查数组里是否存在null，如果元素里存在null则抛出异常 */
     public static void checkNullElements(Object[] array) {
+        checkNullElements(array, null);
+    }
+
+    /** 检查数组里是否存在null，如果元素里存在null则抛出异常 */
+    public static void checkNullElements(Object[] array, String desc) {
         for (Object element : array) {
             if (element == null) {
-                throw new IllegalArgumentException("array contains null values");
+                throwArgumentException("array contains null elements", "%s contains null elements", desc);
             }
+        }
+    }
+
+    private static void throwArgumentException(String defaultMsg, String formatMsg, String desc) {
+        if (desc == null) {
+            throw new IllegalArgumentException(defaultMsg);
+        } else {
+            throw new IllegalArgumentException(formatMsg.formatted(desc));
         }
     }
     // endregion
@@ -303,6 +319,7 @@ public class Preconditions {
     }
 
     private static String badElementIndex(int index, int size, String desc) {
+        if (desc == null) desc = "value";
         if (index < 0) {
             return String.format("%s (%s) must not be negative", desc, index);
         } else if (size < 0) {
