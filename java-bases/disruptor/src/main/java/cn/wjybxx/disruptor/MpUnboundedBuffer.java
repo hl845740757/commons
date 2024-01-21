@@ -67,40 +67,6 @@ abstract class MpUnboundedBufferFields<E> {
     private long p51, p52, p53, p54, p55, p56, p57, p58;
     // endregion
 
-    /** chunkSize对应的掩码 */
-    protected final int chunkMask;
-    /** chunk的size对应的右移偏移量 -- 用于快速计算sequence对应的chunk索引 */
-    protected final int chunkShift;
-    /** 最大缓存块数 */
-    protected final int maxPooledChunks;
-    /** 事件工厂 */
-    protected final EventFactory<? extends E> factory;
-
-    /**
-     * @param chunkSize       单个块大小
-     * @param maxPooledChunks 缓存块数量
-     * @param factory         事件工厂
-     */
-    public MpUnboundedBufferFields(int chunkSize,
-                                   int maxPooledChunks,
-                                   EventFactory<? extends E> factory) {
-        if (maxPooledChunks < 0) {
-            throw new IllegalArgumentException("Expecting a positive maxPooledChunks, but got:" + maxPooledChunks);
-        }
-        chunkSize = Util.nextPowerOfTwo(chunkSize);
-        this.chunkMask = chunkSize - 1;
-        this.chunkShift = Integer.numberOfTrailingZeros(chunkSize);
-        this.maxPooledChunks = maxPooledChunks;
-        this.factory = Objects.requireNonNull(factory, "factory");
-
-        MpUnboundedBufferChunk<E> firstChunk = new MpUnboundedBufferChunk<>(chunkSize, 0, null);
-        firstChunk.fill(factory);
-
-        soTailChunk(firstChunk);
-        soHeadChunk(firstChunk);
-        soProducerChunk(firstChunk);
-    }
-
     // region producer
 
     /** loadVolatileProducerChunk */
@@ -186,6 +152,15 @@ abstract class MpUnboundedBufferFields<E> {
  */
 public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> implements DataProvider<E> {
 
+    /** chunkSize对应的掩码 */
+    private final int chunkMask;
+    /** chunk的size对应的右移偏移量 -- 用于快速计算sequence对应的chunk索引 */
+    private final int chunkShift;
+    /** 最大缓存块数 */
+    private final int maxPooledChunks;
+    /** 事件工厂 */
+    private final EventFactory<? extends E> factory;
+
     /**
      * @param chunkSize       单个块大小
      * @param maxPooledChunks 缓存块数量
@@ -194,7 +169,21 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
     public MpUnboundedBuffer(int chunkSize,
                              int maxPooledChunks,
                              EventFactory<? extends E> factory) {
-        super(chunkSize, maxPooledChunks, factory);
+        if (maxPooledChunks < 0) {
+            throw new IllegalArgumentException("Expecting a positive maxPooledChunks, but got:" + maxPooledChunks);
+        }
+        chunkSize = Util.nextPowerOfTwo(chunkSize);
+        this.chunkMask = chunkSize - 1;
+        this.chunkShift = Integer.numberOfTrailingZeros(chunkSize);
+        this.maxPooledChunks = maxPooledChunks;
+        this.factory = Objects.requireNonNull(factory, "factory");
+
+        MpUnboundedBufferChunk<E> firstChunk = new MpUnboundedBufferChunk<>(chunkSize, 0, null);
+        firstChunk.fill(factory);
+
+        soTailChunk(firstChunk);
+        soHeadChunk(firstChunk);
+        soProducerChunk(firstChunk);
     }
 
     /** 只能用在初始化的时候 */
@@ -394,8 +383,7 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
 
     /**
      * 尝试将head更新到下一个chunk
-     * 1. public以允许用户自行控制回收时机
-     * 2. 这段代码其实才是最复杂的。。。
+     * (public以允许用户自行控制回收时机)
      *
      * @param gatingSequence 最慢的消费者进度(已消费)
      * @return 是否成功触发回收
@@ -408,7 +396,7 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         if (!tryLockHead()) {
             return false;
         }
-        // 注意：在竞争lock成功后，head可能是过期的！必须重新检查回收条件 -- 查了1天的bug，好久没写多线程代码了...
+        // 注意：在竞争lock成功后，head可能是过期的！必须重新检查回收条件
         MpUnboundedBufferChunk<E> nextChunk;
         if (gatingSequence < (headChunk = lvHeadChunk()).maxSequence()
                 || (nextChunk = headChunk.lvNext()) == null) {

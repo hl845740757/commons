@@ -15,8 +15,6 @@
  */
 package cn.wjybxx.disruptor;
 
-import cn.wjybxx.base.ex.NoLogRequiredException;
-
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -25,7 +23,7 @@ import java.util.concurrent.TimeoutException;
  * @author wjybxx
  * date 2023/4/3
  */
-public class StacklessTimeoutException extends TimeoutException implements NoLogRequiredException {
+public class StacklessTimeoutException extends TimeoutException {
 
     public static StacklessTimeoutException INSTANCE = new StacklessTimeoutException();
 

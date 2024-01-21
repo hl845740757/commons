@@ -13,15 +13,6 @@
     <name>Base</name>
     <description>被业务代码和Apt都依赖的基础组件</description>
 
-    <dependencies>
-        <!-- https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305 -->
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>${jsr305.version}</version>
-        </dependency>
-    </dependencies>
-
     <!-- 启用发布 -->
     <profiles>
         <profile>

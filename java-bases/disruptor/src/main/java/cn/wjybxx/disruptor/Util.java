@@ -16,8 +16,6 @@
 
 package cn.wjybxx.disruptor;
 
-import cn.wjybxx.base.Preconditions;
-
 import java.lang.invoke.VarHandle;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -102,7 +100,7 @@ public final class Util {
     public static <T extends SequenceBarrier> void addBarriers(VarHandle varHandle,
                                                                T current,
                                                                SequenceBarrier... barriersToAdd) {
-        Preconditions.checkNullElements(barriersToAdd, "barriersToAdd");
+        checkNullElements(barriersToAdd, "barriersToAdd");
 
         long cursorSequence;
         SequenceBarrier[] oldBarriers;
@@ -217,4 +215,25 @@ public final class Util {
         }
         return -1;
     }
+
+    // region assertion
+
+    /** 检查数组里是否存在null，如果元素里存在null则抛出异常 */
+    public static void checkNullElements(Object[] array, String desc) {
+        for (Object element : array) {
+            if (element == null) {
+                throwArgumentException("array contains null elements", "%s contains null elements", desc);
+            }
+        }
+    }
+
+    private static void throwArgumentException(String defaultMsg, String formatMsg, String desc) {
+        if (desc == null) {
+            throw new IllegalArgumentException(defaultMsg);
+        } else {
+            throw new IllegalArgumentException(formatMsg.formatted(desc));
+        }
+    }
+
+    // endregion
 }

@@ -16,8 +16,6 @@
 
 package cn.wjybxx.disruptor;
 
-import cn.wjybxx.base.annotation.VisibleForTesting;
-
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.Arrays;
@@ -105,7 +103,6 @@ public final class RingBuffer<E> extends RingBufferFields<E> implements DataProv
     }
 
     /** 用于测试 */
-    @VisibleForTesting
     public Stream<E> stream() {
         return toStream();
     }

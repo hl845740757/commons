@@ -22,9 +22,6 @@ import java.util.concurrent.locks.LockSupport;
 
 abstract class SingleProducerSequencerPad extends RingBufferSequencer {
 
-    /**
-     * 缓冲行填充，保护 {@link SingleProducerSequencerFields#produced}、{@link SingleProducerSequencerFields#cachedGating}
-     */
     private long p1, p2, p3, p4, p5, p6, p7;
     private long p8, p9, p10, p11, p12, p13, p14, p15;
 
@@ -70,9 +67,6 @@ abstract class SingleProducerSequencerFields extends SingleProducerSequencerPad 
  */
 public class SingleProducerSequencer extends SingleProducerSequencerFields {
 
-    /**
-     * 缓冲行填充，保护 {@link SingleProducerSequencerFields#produced}、{@link SingleProducerSequencerFields#cachedGating}
-     */
     private long p1, p2, p3, p4, p5, p6, p7;
     private long p8, p9, p10, p11, p12, p13, p14, p15;
 

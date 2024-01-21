@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
  * 2. 不继承{@link ProducerBarrier}是为了避免暴露不必要的接口给等待策略等。
  *
  * <h3>安全停止</h3>
- * 要安全停止整个系统，必须跳跃所有消费者的{@link ConsumerBarrier#alert()}方法停止生产者，
+ * 要安全停止整个系统，必须跳跃所有消费者的{@link ConsumerBarrier#alert()}方法停止消费者，
  * 然后调用{@link ProducerBarrier#removeDependentBarrier(SequenceBarrier)}从生产者要追踪的屏障中删除。
  * 否则会导致死锁！！！
  * ps: {@code Sequencer}默认不追踪所有的{@link SequenceBarrier}，因此依赖用户进行管理。

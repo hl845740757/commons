@@ -4,7 +4,6 @@
  */
 module wjybxx.commons.disruptor {
     requires jsr305;
-    requires transitive wjybxx.commons.base;
 
     exports cn.wjybxx.disruptor;
     opens cn.wjybxx.disruptor;

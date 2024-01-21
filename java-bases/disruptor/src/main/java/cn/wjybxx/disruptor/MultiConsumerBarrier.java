@@ -16,8 +16,6 @@
 
 package cn.wjybxx.disruptor;
 
-import cn.wjybxx.base.Preconditions;
-
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
@@ -48,7 +46,7 @@ public class MultiConsumerBarrier implements ConsumerBarrier {
                                 WaitStrategy waitStrategy,
                                 SequenceBarrier... dependentBarriers) {
         Objects.requireNonNull(dependentBarriers, "dependentBarriers");
-        Preconditions.checkNullElements(dependentBarriers, "dependentBarriers");
+        Util.checkNullElements(dependentBarriers, "dependentBarriers");
         // 如果未显式指定前置依赖，则添加生产者依赖
         if (dependentBarriers.length == 0) {
             dependentBarriers = new SequenceBarrier[1];
