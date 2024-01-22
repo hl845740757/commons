@@ -18,6 +18,7 @@ package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.disruptor.MpUnboundedEventSequencer;
+import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,28 +28,60 @@ import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
 /**
- * 测试多生产者使用{@link DisruptorEventLoop#publish(long)}和{@link DisruptorEventLoop#execute(Runnable)}混合发布任务的时序
+ * 测试多生产者使用{@link DisruptorEventLoop#execute(Runnable)}发布任务的时序
  *
  * @author wjybxx
  * date 2023/4/11
  */
-public class UnboundedBufferTest5 {
+public class DisruptorEventLoopMpExecuteTest {
 
     private static final int PRODUCER_COUNT = 4;
 
     private Counter counter;
-    private DisruptorEventLoop consumer;
-    private List<Thread> producerList;
+    private EventLoop consumer;
+    private List<Producer> producerList;
     private volatile boolean alert;
 
     @BeforeEach
     void setUp() {
-        CounterAgent agent = new CounterAgent();
-        counter = agent.getCounter();
+        counter = null;
+        consumer = null;
+        producerList = null;
+        alert = false;
+    }
 
+    @Test
+    void testRingBuffer() throws InterruptedException {
+        counter = new Counter();
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
-                .setAgent(new CounterAgent())
+                .setEventSequencer(RingBufferEventSequencer.<RingBufferEvent>newMultiProducer()
+                        .setFactory(RingBufferEvent::new)
+                        .build())
+                .build();
+
+        producerList = new ArrayList<>(PRODUCER_COUNT);
+        for (int i = 1; i <= PRODUCER_COUNT; i++) {
+            producerList.add(new Producer(i));
+        }
+        producerList.forEach(Thread::start);
+
+        ThreadUtils.sleepQuietly(5000);
+        consumer.shutdown();
+        alert = true;
+
+        consumer.terminationFuture().join();
+        producerList.forEach(ThreadUtils::joinUninterruptedly);
+
+        Assertions.assertTrue(counter.getSequenceMap().size() > 0, "Counter.sequenceMap.size == 0");
+        Assertions.assertTrue(counter.getErrorMsgList().isEmpty(), counter.getErrorMsgList()::toString);
+    }
+
+    @Test
+    void testUnboundedBuffer() throws InterruptedException {
+        counter = new Counter();
+        consumer = EventLoopBuilder.newDisruptBuilder()
+                .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setEventSequencer(MpUnboundedEventSequencer.<RingBufferEvent>newBuilder()
                         .setFactory(RingBufferEvent::new)
                         .build())
@@ -56,23 +89,15 @@ public class UnboundedBufferTest5 {
 
         producerList = new ArrayList<>(PRODUCER_COUNT);
         for (int i = 1; i <= PRODUCER_COUNT; i++) {
-            if (i > PRODUCER_COUNT / 2) {
-                producerList.add(new Producer2(i));
-            } else {
-                producerList.add(new Producer(i));
-            }
+            producerList.add(new Producer(i));
         }
         producerList.forEach(Thread::start);
-    }
 
-    @Test
-    void timedWait() throws InterruptedException {
         ThreadUtils.sleepQuietly(5000);
-
         consumer.shutdown();
-        consumer.terminationFuture().join();
-
         alert = true;
+
+        consumer.terminationFuture().join();
         producerList.forEach(ThreadUtils::joinUninterruptedly);
 
         Assertions.assertTrue(counter.getSequenceMap().size() > 0, "Counter.sequenceMap.size == 0");
@@ -93,39 +118,7 @@ public class UnboundedBufferTest5 {
 
         @Override
         public void run() {
-            DisruptorEventLoop consumer = UnboundedBufferTest5.this.consumer;
-            long localSequence = 0;
-            while (!alert && localSequence < 1000000) {
-                long sequence = consumer.nextSequence();
-                if (sequence < 0) {
-                    break;
-                }
-                try {
-                    RingBufferEvent event = consumer.getEvent(sequence);
-                    event.setType(type);
-                    event.longVal1 = localSequence++;
-                } finally {
-                    consumer.publish(sequence);
-                }
-            }
-        }
-    }
-
-    private class Producer2 extends Thread {
-
-        private final int type;
-
-        public Producer2(int type) {
-            super("Producer-" + type);
-            this.type = type;
-            if (type <= 0) { // 0是系统任务
-                throw new IllegalArgumentException();
-            }
-        }
-
-        @Override
-        public void run() {
-            DisruptorEventLoop consumer = UnboundedBufferTest5.this.consumer;
+            EventLoop consumer = DisruptorEventLoopMpExecuteTest.this.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
                 try {

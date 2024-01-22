@@ -389,26 +389,30 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
      * @return 是否成功触发回收
      */
     public boolean tryMoveHeadToNext(long gatingSequence) {
+        // 注意：不可以回收生产者当前块，否则会导致生产者append产生竞争
         MpUnboundedBufferChunk<E> headChunk = lvHeadChunk();
-        if (gatingSequence < headChunk.maxSequence() || headChunk.lvNext() == null) {
-            return false; // 当前块未完全消费或生产者尚未生产新的块
+        MpUnboundedBufferChunk<E> producerChunk = lvProducerChunk();
+        if (gatingSequence < headChunk.maxSequence()
+                || headChunk.lvChunkIndex() >= producerChunk.lvChunkIndex()) { // ROTATION is ok
+            return false;
         }
         if (!tryLockHead()) {
             return false;
         }
-        // 注意：在竞争lock成功后，head可能是过期的！必须重新检查回收条件
-        MpUnboundedBufferChunk<E> nextChunk;
-        if (gatingSequence < (headChunk = lvHeadChunk()).maxSequence()
-                || (nextChunk = headChunk.lvNext()) == null) {
+        // 注意：在竞争lock成功后，head可能是过期的！必须重新检查回收条件 -- 这期间producerChunk的索引不会变化
+        headChunk = lvHeadChunk();
+        producerChunk = lvProducerChunk();
+        if (gatingSequence < headChunk.maxSequence()
+                || headChunk.lvChunkIndex() >= producerChunk.lvChunkIndex()) {
             unlockHead();
             return false;
         }
-
         // 注意：观察到的消费者序号可能跨越了多个块，因此可能需要回收多个块
+        MpUnboundedBufferChunk<E> nextChunk = headChunk.lvNext();
         nextChunk.soPrev(null);
         while (gatingSequence >= nextChunk.maxSequence()) {
             MpUnboundedBufferChunk<E> tempNext = nextChunk.lvNext();
-            if (tempNext == null) {
+            if (tempNext == null || tempNext.lvChunkIndex() >= producerChunk.lvChunkIndex()) {
                 break;
             }
             nextChunk = tempNext;

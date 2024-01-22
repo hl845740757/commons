@@ -18,6 +18,7 @@ package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.disruptor.MpUnboundedEventSequencer;
+import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,7 @@ import org.junit.jupiter.api.Test;
  * @author wjybxx
  * date 2023/4/11
  */
-public class UnboundedBufferTest3 {
+public class DisruptorEventLoopSpPublishTest {
 
     private Counter counter;
     private DisruptorEventLoop consumer;
@@ -37,6 +38,40 @@ public class UnboundedBufferTest3 {
 
     @BeforeEach
     void setUp() {
+        counter = null;
+        consumer = null;
+        producer = null;
+        alert = false;
+    }
+
+    @Test
+    void testRingBuffer() throws InterruptedException {
+        CounterAgent agent = new CounterAgent();
+        counter = agent.getCounter();
+
+        consumer = EventLoopBuilder.newDisruptBuilder()
+                .setThreadFactory(new DefaultThreadFactory("consumer"))
+                .setAgent(agent)
+                .setEventSequencer(RingBufferEventSequencer.<RingBufferEvent>newMultiProducer()
+                        .setFactory(RingBufferEvent::new)
+                        .build())
+                .build();
+        producer = new Producer();
+        producer.start();
+
+        ThreadUtils.sleepQuietly(5000);
+        alert = true;
+        producer.join();
+
+        consumer.shutdown();
+        consumer.terminationFuture().join();
+
+        Assertions.assertTrue(counter.getSequenceMap().size() > 0, "Counter.sequenceMap.size == 0");
+        Assertions.assertTrue(counter.getErrorMsgList().isEmpty(), counter.getErrorMsgList()::toString);
+    }
+
+    @Test
+    void testUnboundedBuffer() throws InterruptedException {
         CounterAgent agent = new CounterAgent();
         counter = agent.getCounter();
 
@@ -50,10 +85,7 @@ public class UnboundedBufferTest3 {
 
         producer = new Producer();
         producer.start();
-    }
 
-    @Test
-    void timedWait() throws InterruptedException {
         ThreadUtils.sleepQuietly(5000);
         alert = true;
         producer.join();
@@ -73,7 +105,7 @@ public class UnboundedBufferTest3 {
 
         @Override
         public void run() {
-            DisruptorEventLoop consumer = UnboundedBufferTest3.this.consumer;
+            DisruptorEventLoop consumer = DisruptorEventLoopSpPublishTest.this.consumer;
             long sequence = -1;
             while (!alert && sequence < 1000000) {
                 sequence = consumer.nextSequence();

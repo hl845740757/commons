@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
+import cn.wjybxx.disruptor.MpUnboundedEventSequencer;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +33,7 @@ import java.util.concurrent.RejectedExecutionException;
  * @author wjybxx
  * date 2023/4/11
  */
-public class RingBufferTest5 {
+public class DisruptorEventLoopMpMixTest {
 
     private static final int PRODUCER_COUNT = 4;
 
@@ -43,6 +44,14 @@ public class RingBufferTest5 {
 
     @BeforeEach
     void setUp() {
+        counter = null;
+        consumer = null;
+        producerList = null;
+        alert = false;
+    }
+
+    @Test
+    void testRingBuffer() throws InterruptedException {
         CounterAgent agent = new CounterAgent();
         counter = agent.getCounter();
 
@@ -63,12 +72,41 @@ public class RingBufferTest5 {
             }
         }
         producerList.forEach(Thread::start);
+
+        ThreadUtils.sleepQuietly(5000);
+        consumer.shutdown();
+        consumer.terminationFuture().join();
+
+        alert = true;
+        producerList.forEach(ThreadUtils::joinUninterruptedly);
+
+        Assertions.assertTrue(counter.getSequenceMap().size() > 0, "Counter.sequenceMap.size == 0");
+        Assertions.assertTrue(counter.getErrorMsgList().isEmpty(), counter.getErrorMsgList()::toString);
     }
 
     @Test
-    void timedWait() throws InterruptedException {
-        ThreadUtils.sleepQuietly(5000);
+    void testUnboundedBuffer() throws InterruptedException {
+        CounterAgent agent = new CounterAgent();
+        counter = agent.getCounter();
+        consumer = EventLoopBuilder.newDisruptBuilder()
+                .setThreadFactory(new DefaultThreadFactory("consumer"))
+                .setAgent(new CounterAgent())
+                .setEventSequencer(MpUnboundedEventSequencer.<RingBufferEvent>newBuilder()
+                        .setFactory(RingBufferEvent::new)
+                        .build())
+                .build();
 
+        producerList = new ArrayList<>(PRODUCER_COUNT);
+        for (int i = 1; i <= PRODUCER_COUNT; i++) {
+            if (i > PRODUCER_COUNT / 2) {
+                producerList.add(new Producer2(i));
+            } else {
+                producerList.add(new Producer(i));
+            }
+        }
+        producerList.forEach(Thread::start);
+
+        ThreadUtils.sleepQuietly(5000);
         consumer.shutdown();
         consumer.terminationFuture().join();
 
@@ -93,7 +131,7 @@ public class RingBufferTest5 {
 
         @Override
         public void run() {
-            DisruptorEventLoop consumer = RingBufferTest5.this.consumer;
+            DisruptorEventLoop consumer = DisruptorEventLoopMpMixTest.this.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
                 long sequence = consumer.nextSequence();
@@ -125,7 +163,7 @@ public class RingBufferTest5 {
 
         @Override
         public void run() {
-            DisruptorEventLoop consumer = RingBufferTest5.this.consumer;
+            DisruptorEventLoop consumer = DisruptorEventLoopMpMixTest.this.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
                 try {

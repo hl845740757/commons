@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
+import cn.wjybxx.disruptor.MpUnboundedEventSequencer;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,28 +25,38 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.RejectedExecutionException;
 
 /**
- * 测试多生产者使用{@link DisruptorEventLoop#execute(Runnable)}发布任务的时序
+ * 测试多生产者使用{@link DisruptorEventLoop#publish(long)}发布任务的时序
  *
  * @author wjybxx
  * date 2023/4/11
  */
-public class RingBufferTest2 {
+public class DisruptorEventLoopMpPublishTest {
 
     private static final int PRODUCER_COUNT = 4;
 
     private Counter counter;
-    private EventLoop consumer;
+    private DisruptorEventLoop consumer;
     private List<Producer> producerList;
     private volatile boolean alert;
 
     @BeforeEach
     void setUp() {
-        counter = new Counter();
+        counter = null;
+        consumer = null;
+        producerList = null;
+        alert = false;
+    }
+
+    @Test
+    void testRingBuffer() throws InterruptedException {
+        CounterAgent agent = new CounterAgent();
+        counter = agent.getCounter();
+
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
+                .setAgent(agent)
                 .setEventSequencer(RingBufferEventSequencer.<RingBufferEvent>newMultiProducer()
                         .setFactory(RingBufferEvent::new)
                         .build())
@@ -56,17 +67,42 @@ public class RingBufferTest2 {
             producerList.add(new Producer(i));
         }
         producerList.forEach(Thread::start);
+
+        ThreadUtils.sleepQuietly(5000);
+        consumer.shutdown();
+        consumer.terminationFuture().join();
+
+        alert = true;
+        producerList.forEach(ThreadUtils::joinUninterruptedly);
+
+        Assertions.assertTrue(counter.getSequenceMap().size() > 0, "Counter.sequenceMap.size == 0");
+        Assertions.assertTrue(counter.getErrorMsgList().isEmpty(), counter.getErrorMsgList()::toString);
     }
 
-    //    @RepeatedTest(5)
     @Test
-    void timedWait() throws InterruptedException {
+    void testUnboundedBuffer() throws InterruptedException {
+        CounterAgent agent = new CounterAgent();
+        counter = agent.getCounter();
+
+        consumer = EventLoopBuilder.newDisruptBuilder()
+                .setThreadFactory(new DefaultThreadFactory("consumer"))
+                .setAgent(agent)
+                .setEventSequencer(MpUnboundedEventSequencer.<RingBufferEvent>newBuilder()
+                        .setFactory(RingBufferEvent::new)
+                        .build())
+                .build();
+
+        producerList = new ArrayList<>(PRODUCER_COUNT);
+        for (int i = 1; i <= PRODUCER_COUNT; i++) {
+            producerList.add(new Producer(i));
+        }
+        producerList.forEach(Thread::start);
+
         ThreadUtils.sleepQuietly(5000);
-
         consumer.shutdown();
-        alert = true;
-
         consumer.terminationFuture().join();
+
+        alert = true;
         producerList.forEach(ThreadUtils::joinUninterruptedly);
 
         Assertions.assertTrue(counter.getSequenceMap().size() > 0, "Counter.sequenceMap.size == 0");
@@ -87,14 +123,19 @@ public class RingBufferTest2 {
 
         @Override
         public void run() {
-            EventLoop consumer = RingBufferTest2.this.consumer;
+            DisruptorEventLoop consumer = DisruptorEventLoopMpPublishTest.this.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
-                try {
-                    consumer.execute(counter.newTask(type, localSequence++));
-                } catch (RejectedExecutionException ignore) {
-                    assert alert;
+                long sequence = consumer.nextSequence();
+                if (sequence < 0) {
                     break;
+                }
+                try {
+                    RingBufferEvent event = consumer.getEvent(sequence);
+                    event.setType(type);
+                    event.longVal1 = localSequence++;
+                } finally {
+                    consumer.publish(sequence);
                 }
             }
         }
