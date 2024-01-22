@@ -36,7 +36,7 @@ abstract class MpUnboundedBufferFields<E> {
     /**
      * 链表的首部
      * 1. 可能没有消费者在该块，但消费者都从该块开始查询 -- 消费者高频访问。
-     * 2. 由【生产者】更新，生产者观察到消费者进入新块时，负责回收当前块。
+     * 2. 由【生产者】更新，生产者观察到消费者进入新块时，或自身进入新块时，尝试回收当前块。
      */
     private volatile MpUnboundedBufferChunk<E> headChunk;
 
@@ -339,7 +339,7 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         if (!casProducerChunk(currentChunk, ROTATION)) {
             return null;
         }
-        // 获得更新chunk权限，这期间其它生产者需要等待
+        // 获得更新producerChunk权限，这期间其它生产者需要等待
         for (long i = 1; i <= chunksToAppend; i++) {
             MpUnboundedBufferChunk<E> newChunk = newOrPooledChunk(currentChunk, currentChunkIndex + i);
             currentChunk.soNext(newChunk);
@@ -410,12 +410,9 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         // 注意：观察到的消费者序号可能跨越了多个块，因此可能需要回收多个块
         MpUnboundedBufferChunk<E> nextChunk = headChunk.lvNext();
         nextChunk.soPrev(null);
-        while (gatingSequence >= nextChunk.maxSequence()) {
-            MpUnboundedBufferChunk<E> tempNext = nextChunk.lvNext();
-            if (tempNext == null || tempNext.lvChunkIndex() >= producerChunk.lvChunkIndex()) {
-                break;
-            }
-            nextChunk = tempNext;
+        while (gatingSequence >= nextChunk.maxSequence()
+                && nextChunk.lvChunkIndex() < producerChunk.lvChunkIndex()) {
+            nextChunk = nextChunk.lvNext();
             nextChunk.soPrev(null);
         }
         // 我们立即发布新的head，以允许消费者获取最新的数据
