@@ -96,15 +96,15 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         VH_RESULT.setRelease(this, result);
     }
 
-    public static <V> Promise<V> succeededPromise(V result) {
+    public static <V> Promise<V> completedPromise(V result) {
         return new Promise<>(null, null, result == null ? NIL : result);
     }
 
-    public static <V> Promise<V> succeededPromise(V result, IExecutor executor) {
+    public static <V> Promise<V> completedPromise(V result, Executor executor) {
         return new Promise<>(executor, IContext.NONE, encodeValue(result));
     }
 
-    public static <V> Promise<V> succeededPromise(V result, IExecutor executor, IContext ctx) {
+    public static <V> Promise<V> completedPromise(V result, Executor executor, IContext ctx) {
         return new Promise<>(executor, ctx, encodeValue(result));
     }
 
@@ -113,12 +113,12 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         return new Promise<>(null, null, new AltResult(cause));
     }
 
-    public static <V> Promise<V> failedPromise(Throwable cause, IExecutor executor) {
+    public static <V> Promise<V> failedPromise(Throwable cause, Executor executor) {
         Objects.requireNonNull(cause);
         return new Promise<>(executor, IContext.NONE, new AltResult(cause));
     }
 
-    public static <V> Promise<V> failedPromise(Throwable cause, IExecutor executor, IContext ctx) {
+    public static <V> Promise<V> failedPromise(Throwable cause, Executor executor, IContext ctx) {
         Objects.requireNonNull(cause);
         return new Promise<>(executor, ctx, new AltResult(cause));
     }

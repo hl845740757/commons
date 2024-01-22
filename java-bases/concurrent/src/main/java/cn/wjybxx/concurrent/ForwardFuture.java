@@ -22,10 +22,7 @@ import cn.wjybxx.base.function.TriFunction;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -52,7 +49,12 @@ public class ForwardFuture<V> implements IFuture<V> {
         return this; // 不能转发
     }
 
-    // region ctx
+    @Override
+    public CompletableFuture<V> toCompletableFuture() {
+        return future.toCompletableFuture();
+    }
+
+    // region future
 
     @Nonnull
     @Override
@@ -76,10 +78,6 @@ public class ForwardFuture<V> implements IFuture<V> {
     public boolean cancel(boolean mayInterruptIfRunning) {
         return future.cancel(mayInterruptIfRunning);
     }
-
-    // endregion
-
-    // region state
 
     @Override
     public State state() {
@@ -184,6 +182,11 @@ public class ForwardFuture<V> implements IFuture<V> {
     @Override
     public V join() {
         return future.join();
+    }
+
+    @Override
+    public boolean tryTransferTo(IPromise<? super V> output) {
+        return future.tryTransferTo(output);
     }
 
     @Override

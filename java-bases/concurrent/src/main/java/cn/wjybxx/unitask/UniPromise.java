@@ -92,20 +92,20 @@ public class UniPromise<T> implements UniFuture<T> {
         this.result = result;
     }
 
-    public static <V> UniPromise<V> succeededPromise(V result, IExecutor executor) {
+    public static <V> UniPromise<V> completedPromise(V result, Executor executor) {
         return new UniPromise<>(executor, IContext.NONE, encodeValue(result));
     }
 
-    public static <V> UniPromise<V> succeededPromise(V result, IExecutor executor, IContext ctx) {
+    public static <V> UniPromise<V> completedPromise(V result, Executor executor, IContext ctx) {
         return new UniPromise<>(executor, ctx, encodeValue(result));
     }
 
-    public static <V> UniPromise<V> failedPromise(Throwable cause, IExecutor executor) {
+    public static <V> UniPromise<V> failedPromise(Throwable cause, Executor executor) {
         Objects.requireNonNull(cause);
         return new UniPromise<>(executor, IContext.NONE, new AltResult(cause));
     }
 
-    public static <V> UniPromise<V> failedPromise(Throwable cause, IExecutor executor, IContext ctx) {
+    public static <V> UniPromise<V> failedPromise(Throwable cause, Executor executor, IContext ctx) {
         Objects.requireNonNull(cause);
         return new UniPromise<>(executor, ctx, new AltResult(cause));
     }

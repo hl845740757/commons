@@ -261,11 +261,11 @@ public class FutureUtils {
         return new Promise<>(executor, ctx);
     }
 
-    public static <V> IPromise<V> newSucceededFuture(V result) {
-        return Promise.succeededPromise(result);
+    public static <V> IPromise<V> completedFuture(V result) {
+        return Promise.completedPromise(result);
     }
 
-    public static <V> IPromise<V> newFailedFuture(Throwable cause) {
+    public static <V> IPromise<V> failedFuture(Throwable cause) {
         return Promise.failedPromise(cause);
     }
 
@@ -393,7 +393,7 @@ public class FutureUtils {
                 .anyOf();
     }
 
-    public static IFuture<?> allOf(IFuture<?> futures) {
+    public static IFuture<?> allOf(IFuture<?>... futures) {
         return new FutureCombiner()
                 .addAll(futures)
                 .selectAll();

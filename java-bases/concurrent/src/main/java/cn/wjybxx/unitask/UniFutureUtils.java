@@ -71,6 +71,14 @@ public class UniFutureUtils {
         return new UniPromise<>(executor, ctx);
     }
 
+    public static <V> UniPromise<V> failedFuture(Throwable ex, Executor executor) {
+        return UniPromise.failedPromise(ex, executor);
+    }
+
+    public static <V> UniPromise<V> completedFuture(V result, Executor executor) {
+        return UniPromise.completedPromise(result, executor);
+    }
+
     public static UniExecutorService newExecutor() {
         return new DefaultExecutor();
     }
