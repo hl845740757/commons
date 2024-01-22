@@ -245,23 +245,23 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public <U> UniCompletionStage<U> thenHandle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return future.thenHandle(fn, ctx, options);
+    public <U> UniCompletionStage<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return future.handle(fn, ctx, options);
     }
 
     @Override
-    public <U> UniCompletionStage<U> thenHandle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn) {
-        return future.thenHandle(fn);
+    public <U> UniCompletionStage<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn) {
+        return future.handle(fn);
     }
 
     @Override
-    public <U> UniCompletionStage<U> thenHandleAsync(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn) {
-        return future.thenHandleAsync(fn);
+    public <U> UniCompletionStage<U> handleAsync(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn) {
+        return future.handleAsync(fn);
     }
 
     @Override
-    public <U> UniCompletionStage<U> thenHandleAsync(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return future.thenHandleAsync(fn, ctx, options);
+    public <U> UniCompletionStage<U> handleAsync(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return future.handleAsync(fn, ctx, options);
     }
 
     @Override

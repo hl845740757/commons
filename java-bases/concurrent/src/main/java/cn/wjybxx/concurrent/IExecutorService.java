@@ -166,13 +166,13 @@ public interface IExecutorService extends ExecutorService, IExecutor {
         return submitCall(Executors.callable(task, result));
     }
 
-    default <V> IFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx) {
+    default <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx) {
         PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(ctx));
         execute(futureTask, 0);
         return futureTask.future();
     }
 
-    default <V> IFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx, int options) {
+    default <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx, int options) {
         PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(ctx));
         execute(futureTask, options);
         return futureTask.future();
@@ -190,13 +190,13 @@ public interface IExecutorService extends ExecutorService, IExecutor {
         return futureTask.future();
     }
 
-    default <V> IFuture<V> submitCall(Callable<V> task) {
+    default <V> IFuture<V> submitCall(Callable<? extends V> task) {
         PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(null));
         execute(futureTask, 0);
         return futureTask.future();
     }
 
-    default <V> IFuture<V> submitCall(Callable<V> task, int options) {
+    default <V> IFuture<V> submitCall(Callable<? extends V> task, int options) {
         PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(null));
         execute(futureTask, options);
         return futureTask.future();

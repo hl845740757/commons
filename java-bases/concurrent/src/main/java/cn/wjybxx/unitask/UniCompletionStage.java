@@ -305,15 +305,15 @@ public interface UniCompletionStage<T> {
      * @param ctx     上下文，如果为null，则继承当前Stage的上下文
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOption}
      */
-    <U> UniCompletionStage<U> thenHandle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
-                                         @Nullable IContext ctx, int options);
+    <U> UniCompletionStage<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
+                                     @Nullable IContext ctx, int options);
 
-    <U> UniCompletionStage<U> thenHandle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
+    <U> UniCompletionStage<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
 
-    <U> UniCompletionStage<U> thenHandleAsync(
+    <U> UniCompletionStage<U> handleAsync(
             TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
 
-    <U> UniCompletionStage<U> thenHandleAsync(
+    <U> UniCompletionStage<U> handleAsync(
             TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
             @Nullable IContext ctx, int options);
     // endregion
@@ -322,7 +322,7 @@ public interface UniCompletionStage<T> {
 
     /**
      * 该方法返回一个新的{@code Future}，无论当前{@code Future}执行成功还是失败，给定的操作都将执行，且返回的{@code Future}始终以相同的结果进入完成状态。
-     * 与方法{@link #thenHandle(TriFunction)}不同，此方法不是为转换完成结果而设计的，因此提供的操作不应引发异常。<br>
+     * 与方法{@link #handle(TriFunction)}不同，此方法不是为转换完成结果而设计的，因此提供的操作不应引发异常。<br>
      * 1.如果确实出现了异常，则仅仅记录一个日志，不向下传播(这里与JDK实现不同)。
      * 2.如果用户主动取消了返回的Future，则结果可能不同。
      * <p>

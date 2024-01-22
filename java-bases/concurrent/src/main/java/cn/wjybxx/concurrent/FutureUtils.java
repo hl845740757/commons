@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
+import cn.wjybxx.base.function.TriFunction;
 import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.base.time.CachedTimeProvider;
 
@@ -27,6 +28,7 @@ import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author wjybxx
@@ -34,7 +36,7 @@ import java.util.function.Function;
  */
 public class FutureUtils {
 
-    private static final BiFunction<Object, Throwable, Object> FALLBACK_NULL_IF_FAILED = (o, throwable) -> {
+    private static final TriFunction<IContext, Object, Throwable, Object> EXCEPTION_TO_NULL = (ctx, o, throwable) -> {
         if (throwable != null) {
             return null;
         } else {
@@ -48,8 +50,8 @@ public class FutureUtils {
      * 如果future失败则返回null
      */
     @SuppressWarnings("unchecked")
-    public static <V> BiFunction<V, Throwable, V> fallbackNullIfFailed() {
-        return (BiFunction<V, Throwable, V>) FALLBACK_NULL_IF_FAILED;
+    public static <V> BiFunction<V, Throwable, V> treatExceptionAsNull() {
+        return (BiFunction<V, Throwable, V>) EXCEPTION_TO_NULL;
     }
 
     /**
@@ -61,6 +63,24 @@ public class FutureUtils {
         }
         return t;
     }
+
+    public static Throwable getCause(CompletableFuture<?> future) {
+        if (future.isCompletedExceptionally()) {
+            // 捕获异常的开销更大...我们这相当于一个visitor
+            MutableObject<Throwable> causeHolder = new MutableObject<>();
+            future.whenComplete((v, cause) -> causeHolder.setValue(cause));
+            return FutureUtils.unwrapCompletionException(causeHolder.getValue());
+        }
+        return null;
+    }
+
+    public static Throwable getCause(IFuture<?> future) {
+        if (future.isFailedOrCancelled()) {
+            return future.exceptionNow(false);
+        }
+        return null;
+    }
+
     // endregion
 
     // region future工具方法
@@ -89,9 +109,44 @@ public class FutureUtils {
         return future;
     }
 
+    // region set-future
+
+    public static <V> void setFuture(CompletableFuture<? super V> output, CompletionStage<V> input) {
+        Objects.requireNonNull(output, "output");
+        input.whenComplete((v, throwable) -> {
+            if (throwable != null) {
+                output.completeExceptionally(throwable);
+            } else {
+                output.complete(v);
+            }
+        });
+    }
+
+    public static <V> void setFutureAsync(Executor executor, CompletableFuture<? super V> output, CompletionStage<V> input) {
+        input.whenCompleteAsync(((v, throwable) -> {
+            if (throwable != null) {
+                output.completeExceptionally(throwable);
+            } else {
+                output.complete(v);
+            }
+        }), executor);
+    }
+
+
     public static <V> void setFuture(IPromise<? super V> output, ICompletionStage<V> input) {
         Objects.requireNonNull(output, "output");
         input.whenComplete((ctx, v, throwable) -> {
+            if (throwable != null) {
+                output.trySetException(throwable);
+            } else {
+                output.trySetResult(v);
+            }
+        });
+    }
+
+    public static <V> void setFuture(IPromise<? super V> output, CompletionStage<V> input) {
+        Objects.requireNonNull(output, "output");
+        input.whenComplete((v, throwable) -> {
             if (throwable != null) {
                 output.trySetException(throwable);
             } else {
@@ -116,6 +171,16 @@ public class FutureUtils {
         }, null, options);
     }
 
+    public static <V> void setFutureAsync(Executor executor, IPromise<? super V> output, CompletionStage<V> input) {
+        input.whenCompleteAsync(((v, throwable) -> {
+            if (throwable != null) {
+                output.trySetException(throwable);
+            } else {
+                output.trySetResult(v);
+            }
+        }), executor);
+    }
+
     /** 由{@link EventLoop}通知返回的{@link IPromise} */
     public static <V> IPromise<V> toEventLoopPromise(EventLoop eventLoop, ICompletionStage<V> input) {
         IPromise<V> result = eventLoop.newPromise();
@@ -123,15 +188,7 @@ public class FutureUtils {
         return result;
     }
 
-    public static Throwable getCause(CompletableFuture<?> future) {
-        if (future.isCompletedExceptionally()) {
-            // 捕获异常的开销更大...我们这相当于一个visitor
-            MutableObject<Throwable> causeHolder = new MutableObject<>();
-            future.whenComplete((v, cause) -> causeHolder.setValue(cause));
-            return FutureUtils.unwrapCompletionException(causeHolder.getValue());
-        }
-        return null;
-    }
+    // endregion
 
     /** @return 如果future在指定时间内进入了完成状态，则返回true */
     public static boolean await(CompletableFuture<?> future, long timeout, TimeUnit unit) throws InterruptedException {
@@ -222,6 +279,8 @@ public class FutureUtils {
 
     // endregion
 
+    // region eventloop
+
     public static boolean inEventLoop(@Nullable Executor executor) {
         return executor instanceof EventLoop eventLoop && eventLoop.inEventLoop();
     }
@@ -254,16 +313,17 @@ public class FutureUtils {
     public static CachedTimeProvider newTimeProvider(EventLoop eventLoop, long curTime) {
         return new EventLoopTimeProvider(eventLoop, curTime);
     }
+    // endregion
 
     // region submit
 
-    public static <V> IFuture<V> submitFunc(Executor executor, Function<? super IContext, V> task, IContext ctx) {
+    public static <V> IFuture<V> submitFunc(Executor executor, Function<? super IContext, ? extends V> task, IContext ctx) {
         PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(executor, ctx));
         executor.execute(futureTask);
         return futureTask.future();
     }
 
-    public static <V> IFuture<V> submitFunc(IExecutor executor, Function<? super IContext, V> task, IContext ctx, int options) {
+    public static <V> IFuture<V> submitFunc(IExecutor executor, Function<? super IContext, ? extends V> task, IContext ctx, int options) {
         PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(executor, ctx));
         executor.execute(futureTask, options);
         return futureTask.future();
@@ -281,13 +341,13 @@ public class FutureUtils {
         return futureTask.future();
     }
 
-    public static <V> IFuture<V> submitCall(Executor executor, Callable<V> task) {
+    public static <V> IFuture<V> submitCall(Executor executor, Callable<? extends V> task) {
         PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(executor));
         executor.execute(futureTask);
         return futureTask.future();
     }
 
-    public static <V> IFuture<V> submitCall(IExecutor executor, Callable<V> task, int options) {
+    public static <V> IFuture<V> submitCall(IExecutor executor, Callable<? extends V> task, int options) {
         PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(executor));
         executor.execute(futureTask, options);
         return futureTask.future();
@@ -311,6 +371,32 @@ public class FutureUtils {
 
     public static void execute(IExecutor executor, Consumer<? super IContext> action, IContext ctx, int options) {
         executor.execute(toRunnable(action, ctx), options);
+    }
+
+    // endregion
+
+    // region jdk-风格
+
+    public static <T> IFuture<T> callAsync(Executor executor, Callable<? extends T> supplier) {
+        Objects.requireNonNull(supplier);
+        return submitCall(executor, supplier);
+    }
+
+    public static <T> IFuture<T> supplyAsync(Executor executor, Supplier<? extends T> supplier) {
+        Objects.requireNonNull(supplier);
+        return submitCall(executor, supplier::get);
+    }
+
+    public static IFuture<?> anyOf(IFuture<?> futures) {
+        return new FutureCombiner()
+                .addAll(futures)
+                .anyOf();
+    }
+
+    public static IFuture<?> allOf(IFuture<?> futures) {
+        return new FutureCombiner()
+                .addAll(futures)
+                .selectAll();
     }
 
     // endregion

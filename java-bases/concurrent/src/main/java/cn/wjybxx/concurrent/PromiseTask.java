@@ -95,11 +95,11 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
         return new PromiseTask<>(action, promise, TaskBuilder.TYPE_RUNNABLE);
     }
 
-    public static <V> PromiseTask<V> ofCallable(Callable<V> action, IPromise<V> promise) {
+    public static <V> PromiseTask<V> ofCallable(Callable<? extends V> action, IPromise<V> promise) {
         return new PromiseTask<>(action, promise, TaskBuilder.TYPE_CALLABLE);
     }
 
-    public static <V> PromiseTask<V> ofFunction(Function<? super IContext, V> action, IPromise<V> promise) {
+    public static <V> PromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IPromise<V> promise) {
         return new PromiseTask<>(action, promise, TaskBuilder.TYPE_FUNCTION);
     }
 
@@ -456,23 +456,23 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
     }
 
     @Override
-    public <U> ICompletionStage<U> thenHandle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenHandle(fn, ctx, options);
+    public <U> ICompletionStage<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.handle(fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenHandle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
-        return promise.thenHandle(fn);
+    public <U> ICompletionStage<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+        return promise.handle(fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
-        return promise.thenHandleAsync(executor, fn);
+    public <U> ICompletionStage<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+        return promise.handleAsync(executor, fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenHandleAsync(executor, fn, ctx, options);
+    public <U> ICompletionStage<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.handleAsync(executor, fn, ctx, options);
     }
 
     @Override

@@ -87,12 +87,12 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
     }
 
     @Override
-    public <V> IFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx) {
+    public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx) {
         return select().submitFunc(task, ctx);
     }
 
     @Override
-    public <V> IFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx, int options) {
+    public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx, int options) {
         return select().submitFunc(task, ctx, options);
     }
 
@@ -107,12 +107,12 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
     }
 
     @Override
-    public <V> IFuture<V> submitCall(Callable<V> task) {
+    public <V> IFuture<V> submitCall(Callable<? extends V> task) {
         return select().submitCall(task);
     }
 
     @Override
-    public <V> IFuture<V> submitCall(Callable<V> task, int options) {
+    public <V> IFuture<V> submitCall(Callable<? extends V> task, int options) {
         return select().submitCall(task, options);
     }
 

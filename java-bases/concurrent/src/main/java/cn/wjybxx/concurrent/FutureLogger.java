@@ -52,6 +52,7 @@ public final class FutureLogger {
      * 但这种方式代码丑陋且低效。
      */
     private static volatile Level logLevel = Level.INFO;
+    private static volatile LogHandler handler;
     private static final Set<Class<?>> noLogRequiredExceptions = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     public static Level getLogLevel() {
@@ -61,6 +62,15 @@ public final class FutureLogger {
     /** @param logLevel 日志等级 */
     public static void setLogLevel(Level logLevel) {
         FutureLogger.logLevel = Objects.requireNonNull(logLevel);
+    }
+
+    public static LogHandler getHandler() {
+        return handler;
+    }
+
+    /** 设置异常处理器 */
+    public static void setHandler(LogHandler handler) {
+        FutureLogger.handler = handler;
     }
 
     /** 添加一个无需自动记录日志的异常 */
@@ -113,6 +123,11 @@ public final class FutureLogger {
             return;
         }
         try {
+            LogHandler handler = FutureLogger.handler;
+            if (handler != null) {
+                handler.logCause(logLevel, ex, message);
+                return;
+            }
 //            logger.atLevel(logLevel).setCause(ex).log(message);
             switch (logLevel) {
                 case TRACE -> logger.trace(message, ex);
@@ -124,5 +139,13 @@ public final class FutureLogger {
         } catch (Throwable ignore) {
             // 万一日志挂了...
         }
+    }
+
+    /** 该handler只应该处理日志 */
+    @FunctionalInterface
+    public interface LogHandler {
+
+        void logCause(Level logLevel, Throwable ex, String message);
+
     }
 }

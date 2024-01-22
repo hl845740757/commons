@@ -391,23 +391,23 @@ public class ForwardFuture<V> implements IFuture<V> {
     }
 
     @Override
-    public <U> ICompletionStage<U> thenHandle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return future.thenHandle(fn, ctx, options);
+    public <U> ICompletionStage<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return future.handle(fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenHandle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
-        return future.thenHandle(fn);
+    public <U> ICompletionStage<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+        return future.handle(fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
-        return future.thenHandleAsync(executor, fn);
+    public <U> ICompletionStage<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+        return future.handleAsync(executor, fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return future.thenHandleAsync(executor, fn, ctx, options);
+    public <U> ICompletionStage<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return future.handleAsync(executor, fn, ctx, options);
     }
 
     @Override

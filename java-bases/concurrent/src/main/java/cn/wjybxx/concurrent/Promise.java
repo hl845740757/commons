@@ -641,30 +641,30 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region compose-apply
 
     @Override
-    public <U> ICompletionStage<U> composeApply(BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+    public <U> Promise<U> composeApply(BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
         return uniComposeApply(null, fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeApply(BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn) {
+    public <U> Promise<U> composeApply(BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn) {
         return uniComposeApply(null, fn, null, 0);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn) {
+    public <U> Promise<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeApply(executor, fn, null, 0);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+    public <U> Promise<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeApply(executor, fn, ctx, options);
     }
 
-    private <U> ICompletionStage<U> uniComposeApply(Executor executor,
-                                                    BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn,
-                                                    @Nullable IContext ctx, int options) {
+    private <U> Promise<U> uniComposeApply(Executor executor,
+                                           BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn,
+                                           @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
         if (ctx == null) ctx = this._ctx;
@@ -678,32 +678,32 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region compose-call
 
     @Override
-    public <U> ICompletionStage<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn,
-                                               @Nullable IContext ctx, int options) {
+    public <U> Promise<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn,
+                                      @Nullable IContext ctx, int options) {
         return uniComposeCall(null, fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn) {
+    public <U> Promise<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn) {
         return uniComposeCall(null, fn, null, 0);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn) {
+    public <U> Promise<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeCall(executor, fn, null, 0);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn,
-                                                    @Nullable IContext ctx, int options) {
+    public <U> Promise<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn,
+                                           @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeCall(executor, fn, ctx, options);
     }
 
-    private <U> ICompletionStage<U> uniComposeCall(Executor executor,
-                                                   Function<? super IContext, ? extends ICompletionStage<U>> fn,
-                                                   @Nullable IContext ctx, int options) {
+    private <U> Promise<U> uniComposeCall(Executor executor,
+                                          Function<? super IContext, ? extends ICompletionStage<U>> fn,
+                                          @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
         if (ctx == null) ctx = this._ctx;
@@ -717,36 +717,36 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region compose-catching
 
     @Override
-    public <X extends Throwable> ICompletionStage<T> composeCatching(Class<X> exceptionType,
-                                                                     BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback,
-                                                                     @Nullable IContext ctx, int options) {
+    public <X extends Throwable> Promise<T> composeCatching(Class<X> exceptionType,
+                                                            BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback,
+                                                            @Nullable IContext ctx, int options) {
         return uniComposeCatching(null, exceptionType, fallback, ctx, options);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<T> composeCatching(Class<X> exceptionType,
-                                                                     BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback) {
+    public <X extends Throwable> Promise<T> composeCatching(Class<X> exceptionType,
+                                                            BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback) {
         return uniComposeCatching(null, exceptionType, fallback, null, 0);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<T> composeCatchingAsync(Executor executor, Class<X> exceptionType,
-                                                                          BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback) {
+    public <X extends Throwable> Promise<T> composeCatchingAsync(Executor executor, Class<X> exceptionType,
+                                                                 BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeCatching(executor, exceptionType, fallback, null, 0);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<T> composeCatchingAsync(Executor executor, Class<X> exceptionType,
-                                                                          BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback,
-                                                                          @Nullable IContext ctx, int options) {
+    public <X extends Throwable> Promise<T> composeCatchingAsync(Executor executor, Class<X> exceptionType,
+                                                                 BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback,
+                                                                 @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeCatching(executor, exceptionType, fallback, ctx, options);
     }
 
-    private <X extends Throwable> ICompletionStage<T> uniComposeCatching(Executor executor, Class<X> exceptionType,
-                                                                         BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback,
-                                                                         @Nullable IContext ctx, int options) {
+    private <X extends Throwable> Promise<T> uniComposeCatching(Executor executor, Class<X> exceptionType,
+                                                                BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback,
+                                                                @Nullable IContext ctx, int options) {
         Objects.requireNonNull(exceptionType);
         Objects.requireNonNull(fallback);
 
@@ -761,32 +761,32 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region compose-handle
 
     @Override
-    public <U> ICompletionStage<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
-                                                 @Nullable IContext ctx, int options) {
+    public <U> Promise<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
+                                        @Nullable IContext ctx, int options) {
         return uniComposeHandle(null, fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn) {
+    public <U> Promise<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn) {
         return uniComposeHandle(null, fn, null, 0);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn) {
+    public <U> Promise<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeHandle(executor, fn, null, 0);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
-                                                      @Nullable IContext ctx, int options) {
+    public <U> Promise<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
+                                             @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeHandle(executor, fn, ctx, options);
     }
 
-    private <U> ICompletionStage<U> uniComposeHandle(Executor executor,
-                                                     TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
-                                                     @Nullable IContext ctx, int options) {
+    private <U> Promise<U> uniComposeHandle(Executor executor,
+                                            TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
+                                            @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
         if (ctx == null) ctx = this._ctx;
@@ -800,29 +800,29 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-apply
 
     @Override
-    public <U> ICompletionStage<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options) {
+    public <U> Promise<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options) {
         return uniApply(null, fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn) {
+    public <U> Promise<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn) {
         return uniApply(null, fn, null, 0);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn) {
+    public <U> Promise<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn) {
         Objects.requireNonNull(executor, "executor");
         return uniApply(executor, fn, null, 0);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options) {
+    public <U> Promise<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniApply(executor, fn, ctx, options);
     }
 
-    private <U> ICompletionStage<U> uniApply(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn,
-                                             @Nullable IContext ctx, int options) {
+    private <U> Promise<U> uniApply(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn,
+                                    @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
         if (ctx == null) ctx = this._ctx;
@@ -835,29 +835,29 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-accept
 
     @Override
-    public ICompletionStage<Void> thenAccept(BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options) {
+    public Promise<Void> thenAccept(BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options) {
         return uniAccept(null, action, ctx, options);
     }
 
     @Override
-    public ICompletionStage<Void> thenAccept(BiConsumer<? super IContext, ? super T> action) {
+    public Promise<Void> thenAccept(BiConsumer<? super IContext, ? super T> action) {
         return uniAccept(null, action, null, 0);
     }
 
     @Override
-    public ICompletionStage<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super T> action) {
+    public Promise<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super T> action) {
         Objects.requireNonNull(executor, "executor");
         return uniAccept(executor, action, null, 0);
     }
 
     @Override
-    public ICompletionStage<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options) {
+    public Promise<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniAccept(executor, action, ctx, options);
     }
 
-    private ICompletionStage<Void> uniAccept(Executor executor, BiConsumer<? super IContext, ? super T> action,
-                                             @Nullable IContext ctx, int options) {
+    private Promise<Void> uniAccept(Executor executor, BiConsumer<? super IContext, ? super T> action,
+                                    @Nullable IContext ctx, int options) {
         Objects.requireNonNull(action);
 
         if (ctx == null) ctx = this._ctx;
@@ -871,28 +871,28 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-call
 
     @Override
-    public <U> ICompletionStage<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
+    public <U> Promise<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
         return uniCall(null, fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenCall(Function<? super IContext, ? extends U> fn) {
+    public <U> Promise<U> thenCall(Function<? super IContext, ? extends U> fn) {
         return uniCall(null, fn, null, 0);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn) {
+    public <U> Promise<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn) {
         Objects.requireNonNull(executor, "executor");
         return uniCall(executor, fn, null, 0);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
+    public <U> Promise<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniCall(executor, fn, ctx, options);
     }
 
-    private <U> ICompletionStage<U> uniCall(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
+    private <U> Promise<U> uniCall(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
         if (ctx == null) ctx = this._ctx;
@@ -906,28 +906,28 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-run
 
     @Override
-    public ICompletionStage<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
+    public Promise<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
         return uniRun(null, action, ctx, options);
     }
 
     @Override
-    public ICompletionStage<Void> thenRun(Consumer<? super IContext> action) {
+    public Promise<Void> thenRun(Consumer<? super IContext> action) {
         return uniRun(null, action, null, 0);
     }
 
     @Override
-    public ICompletionStage<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action) {
+    public Promise<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action) {
         Objects.requireNonNull(executor, "executor");
         return uniRun(executor, action, null, 0);
     }
 
     @Override
-    public ICompletionStage<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
+    public Promise<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniRun(executor, action, ctx, options);
     }
 
-    private ICompletionStage<Void> uniRun(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
+    private Promise<Void> uniRun(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(action);
 
         if (ctx == null) ctx = this._ctx;
@@ -940,36 +940,36 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-catching
 
     @Override
-    public <X extends Throwable> ICompletionStage<T> catching(Class<X> exceptionType,
-                                                              BiFunction<? super IContext, ? super X, ? extends T> fallback,
-                                                              @Nullable IContext ctx, int options) {
+    public <X extends Throwable> Promise<T> catching(Class<X> exceptionType,
+                                                     BiFunction<? super IContext, ? super X, ? extends T> fallback,
+                                                     @Nullable IContext ctx, int options) {
         return uniCatching(null, exceptionType, fallback, ctx, options);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<T> catching(Class<X> exceptionType,
-                                                              BiFunction<? super IContext, ? super X, ? extends T> fallback) {
+    public <X extends Throwable> Promise<T> catching(Class<X> exceptionType,
+                                                     BiFunction<? super IContext, ? super X, ? extends T> fallback) {
         return uniCatching(null, exceptionType, fallback, null, 0);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<T> catchingAsync(Executor executor, Class<X> exceptionType,
-                                                                   BiFunction<? super IContext, ? super X, ? extends T> fallback) {
+    public <X extends Throwable> Promise<T> catchingAsync(Executor executor, Class<X> exceptionType,
+                                                          BiFunction<? super IContext, ? super X, ? extends T> fallback) {
         Objects.requireNonNull(executor, "executor");
         return uniCatching(executor, exceptionType, fallback, null, 0);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<T> catchingAsync(Executor executor, Class<X> exceptionType,
-                                                                   BiFunction<? super IContext, ? super X, ? extends T> fallback,
-                                                                   @Nullable IContext ctx, int options) {
+    public <X extends Throwable> Promise<T> catchingAsync(Executor executor, Class<X> exceptionType,
+                                                          BiFunction<? super IContext, ? super X, ? extends T> fallback,
+                                                          @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniCatching(executor, exceptionType, fallback, ctx, options);
     }
 
-    private <X extends Throwable> ICompletionStage<T> uniCatching(Executor executor, Class<X> exceptionType,
-                                                                  BiFunction<? super IContext, ? super X, ? extends T> fallback,
-                                                                  @Nullable IContext ctx, int options) {
+    private <X extends Throwable> Promise<T> uniCatching(Executor executor, Class<X> exceptionType,
+                                                         BiFunction<? super IContext, ? super X, ? extends T> fallback,
+                                                         @Nullable IContext ctx, int options) {
         Objects.requireNonNull(exceptionType, "exceptionType");
         Objects.requireNonNull(fallback, "fallback");
 
@@ -983,31 +983,31 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-handle
 
     @Override
-    public <U> ICompletionStage<U> thenHandle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
-                                              @Nullable IContext ctx, int options) {
+    public <U> Promise<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
+                                 @Nullable IContext ctx, int options) {
         return uniHandle(null, fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenHandle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn) {
+    public <U> Promise<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn) {
         return uniHandle(null, fn, null, 0);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn) {
+    public <U> Promise<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn) {
         return uniHandle(executor, fn, null, 0);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
-                                                   @Nullable IContext ctx, int options) {
+    public <U> Promise<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
+                                      @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniHandle(executor, fn, ctx, options);
     }
 
-    private <U> ICompletionStage<U> uniHandle(Executor executor,
-                                              TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
-                                              @Nullable IContext ctx, int options) {
+    private <U> Promise<U> uniHandle(Executor executor,
+                                     TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
+                                     @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
         if (ctx == null) ctx = this._ctx;
@@ -1020,29 +1020,29 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region uni-when
 
     @Override
-    public ICompletionStage<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options) {
+    public Promise<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options) {
         return uniWhenComplete(null, action, ctx, options);
     }
 
     @Override
-    public ICompletionStage<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action) {
+    public Promise<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action) {
         return uniWhenComplete(null, action, null, 0);
     }
 
     @Override
-    public ICompletionStage<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action) {
+    public Promise<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action) {
         return uniWhenComplete(executor, action, null, 0);
     }
 
     @Override
-    public ICompletionStage<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options) {
+    public Promise<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniWhenComplete(executor, action, ctx, options);
     }
 
-    private ICompletionStage<T> uniWhenComplete(Executor executor,
-                                                TriConsumer<? super IContext, ? super T, ? super Throwable> action,
-                                                @Nullable IContext ctx, int options) {
+    private Promise<T> uniWhenComplete(Executor executor,
+                                       TriConsumer<? super IContext, ? super T, ? super Throwable> action,
+                                       @Nullable IContext ctx, int options) {
         Objects.requireNonNull(action);
 
         if (ctx == null) ctx = this._ctx;

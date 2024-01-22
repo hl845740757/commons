@@ -112,20 +112,10 @@ public class FutureCombiner {
      * 如果lazy为true，则等待所有任务完成之后才触发成功或失败。
      *
      * @param successRequire 期望成成功的任务数
-     * @param lazy           是否在所有任务都进入完成状态之后才触发成功或失败
+     * @param failFast       是否在不满足条件时立即失败
      */
-    public IPromise<Object> selectN(int successRequire, boolean lazy) {
-        return finish(AggregateOptions.selectN(successRequire, lazy));
-    }
-
-    /**
-     * 要求所有的future都成功时才进入成功状态；
-     * 任意任务失败，最终结果都表现为失败
-     *
-     * @param lazy 是否在所有任务都进入完成状态之后才触发成功或失败
-     */
-    public IPromise<Object> selectAll(boolean lazy) {
-        return selectN(futureCount(), lazy);
+    public IPromise<Object> selectN(int successRequire, boolean failFast) {
+        return finish(AggregateOptions.selectN(successRequire, failFast));
     }
 
     /**
@@ -133,7 +123,17 @@ public class FutureCombiner {
      * 一旦有任务失败则立即失败
      */
     public IPromise<Object> selectAll() {
-        return selectN(futureCount(), false);
+        return selectN(futureCount(), true);
+    }
+
+    /**
+     * 要求所有的future都成功时才进入成功状态；
+     * 任意任务失败，最终结果都表现为失败
+     *
+     * @param failFast 是否在不满足条件时立即失败
+     */
+    public IPromise<Object> selectAll(boolean failFast) {
+        return selectN(futureCount(), failFast);
     }
 
     // region 内部实现
@@ -225,7 +225,7 @@ public class FutureCombiner {
             }
 
             // 懒模式需要等待所有任务完成
-            if (options.lazy && doneCount < futureCount) {
+            if (!options.failFast && doneCount < futureCount) {
                 return false;
             }
             // 包含了require小于等于0的情况

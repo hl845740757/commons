@@ -29,12 +29,12 @@ public final class AggregateOptions {
 
     private final boolean anyOf;
     public final int successRequire;
-    public final boolean lazy;
+    public final boolean failFast;
 
-    AggregateOptions(boolean anyOf, int successRequire, boolean lazy) {
+    AggregateOptions(boolean anyOf, int successRequire, boolean failFast) {
         this.anyOf = anyOf;
         this.successRequire = successRequire;
-        this.lazy = lazy;
+        this.failFast = failFast;
     }
 
     public boolean isAnyOf() {
@@ -47,10 +47,10 @@ public final class AggregateOptions {
         return ANY;
     }
 
-    public static AggregateOptions selectN(int successRequire, boolean lazy) {
+    public static AggregateOptions selectN(int successRequire, boolean failFast) {
         if (successRequire < 0) {
             throw new IllegalArgumentException("successRequire < 0");
         }
-        return new AggregateOptions(false, successRequire, lazy);
+        return new AggregateOptions(false, successRequire, failFast);
     }
 }

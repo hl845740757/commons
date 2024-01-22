@@ -421,20 +421,20 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.catchingAsync(exceptionType, fallback, ctx, options);
     }
 
-    public <U> UniCompletionStage<U> thenHandle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenHandle(fn, ctx, options);
+    public <U> UniCompletionStage<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.handle(fn, ctx, options);
     }
 
-    public <U> UniCompletionStage<U> thenHandle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
-        return promise.thenHandle(fn);
+    public <U> UniCompletionStage<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+        return promise.handle(fn);
     }
 
-    public <U> UniCompletionStage<U> thenHandleAsync(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
-        return promise.thenHandleAsync(fn);
+    public <U> UniCompletionStage<U> handleAsync(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+        return promise.handleAsync(fn);
     }
 
-    public <U> UniCompletionStage<U> thenHandleAsync(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenHandleAsync(fn, ctx, options);
+    public <U> UniCompletionStage<U> handleAsync(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.handleAsync(fn, ctx, options);
     }
 
     public UniCompletionStage<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {

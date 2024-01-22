@@ -149,14 +149,14 @@ public abstract class AbstractEventLoop extends AbstractExecutorService implemen
     }
 
     @Override
-    public <V> IFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx) {
+    public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx) {
         PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(ctx));
         execute(futureTask, 0);
         return futureTask.future();
     }
 
     @Override
-    public <V> IFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx, int options) {
+    public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx, int options) {
         PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(ctx));
         execute(futureTask, options);
         return futureTask.future();
@@ -177,14 +177,14 @@ public abstract class AbstractEventLoop extends AbstractExecutorService implemen
     }
 
     @Override
-    public <V> IFuture<V> submitCall(Callable<V> task) {
+    public <V> IFuture<V> submitCall(Callable<? extends V> task) {
         PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(null));
         execute(futureTask, 0);
         return futureTask.future();
     }
 
     @Override
-    public <V> IFuture<V> submitCall(Callable<V> task, int options) {
+    public <V> IFuture<V> submitCall(Callable<? extends V> task, int options) {
         PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(null));
         execute(futureTask, options);
         return futureTask.future();
