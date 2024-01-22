@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
+import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -33,9 +34,11 @@ public class EventLoopStartTest {
                 .setParent(null)
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setAgent(new Agent(thr, delay))
+                .setEventSequencer(RingBufferEventSequencer
+                        .newMultiProducer(RingBufferEvent::new)
+                        .build())
                 .build();
     }
-
 
     @Test
     void testSucceeded() {
@@ -69,7 +72,7 @@ public class EventLoopStartTest {
         eventLoop.shutdownNow();
     }
 
-    private static class Agent implements EventLoopAgent {
+    private static class Agent implements EventLoopAgent<IAgentEvent> {
 
         final boolean thr;
         final long delay;
@@ -92,7 +95,7 @@ public class EventLoopStartTest {
         }
 
         @Override
-        public void onEvent(RingBufferEvent event) throws Exception {
+        public void onEvent(IAgentEvent event) throws Exception {
 
         }
 

@@ -18,22 +18,22 @@ package cn.wjybxx.concurrent;
 
 
 import cn.wjybxx.disruptor.EventSequencer;
-import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import cn.wjybxx.disruptor.WaitStrategy;
 
 import java.util.concurrent.ThreadFactory;
 
 /**
+ * @param <T> 内部事件类型
  * @author wjybxx
  * date 2023/4/11
  */
-public abstract class EventLoopBuilder {
+public abstract class EventLoopBuilder<T extends IAgentEvent> {
 
     private EventLoopGroup parent;
     private RejectedExecutionHandler rejectedExecutionHandler = RejectedExecutionHandlers.abort();
     private ThreadFactory threadFactory;
 
-    private EventLoopAgent agent;
+    private EventLoopAgent<? super T> agent;
     private EventLoopModule mainModule;
     private int batchSize = 8192;
 
@@ -43,7 +43,7 @@ public abstract class EventLoopBuilder {
         return parent;
     }
 
-    public EventLoopBuilder setParent(EventLoopGroup parent) {
+    public EventLoopBuilder<T> setParent(EventLoopGroup parent) {
         this.parent = parent;
         return this;
     }
@@ -52,7 +52,7 @@ public abstract class EventLoopBuilder {
         return threadFactory;
     }
 
-    public EventLoopBuilder setThreadFactory(ThreadFactory threadFactory) {
+    public EventLoopBuilder<T> setThreadFactory(ThreadFactory threadFactory) {
         this.threadFactory = threadFactory;
         return this;
     }
@@ -61,17 +61,17 @@ public abstract class EventLoopBuilder {
         return rejectedExecutionHandler;
     }
 
-    public EventLoopBuilder setRejectedExecutionHandler(RejectedExecutionHandler rejectedExecutionHandler) {
+    public EventLoopBuilder<T> setRejectedExecutionHandler(RejectedExecutionHandler rejectedExecutionHandler) {
         this.rejectedExecutionHandler = rejectedExecutionHandler;
         return this;
     }
 
     /** EventLoop的内部代理 */
-    public EventLoopAgent getAgent() {
+    public EventLoopAgent<? super T> getAgent() {
         return agent;
     }
 
-    public EventLoopBuilder setAgent(EventLoopAgent agent) {
+    public EventLoopBuilder<T> setAgent(EventLoopAgent<? super T> agent) {
         this.agent = agent;
         return this;
     }
@@ -81,7 +81,7 @@ public abstract class EventLoopBuilder {
         return mainModule;
     }
 
-    public EventLoopBuilder setMainModule(EventLoopModule mainModule) {
+    public EventLoopBuilder<T> setMainModule(EventLoopModule mainModule) {
         this.mainModule = mainModule;
         return this;
     }
@@ -91,73 +91,75 @@ public abstract class EventLoopBuilder {
         return batchSize;
     }
 
-    public EventLoopBuilder setBatchSize(int batchSize) {
+    public EventLoopBuilder<T> setBatchSize(int batchSize) {
         this.batchSize = batchSize;
         return this;
     }
     //
 
-    public static DisruptorBuilder newDisruptBuilder() {
-        return new DisruptorBuilder();
+    public static <T extends IAgentEvent> DisruptorBuilder<T> newDisruptBuilder() {
+        return new DisruptorBuilder<>();
+    }
+
+    public static <T extends IAgentEvent> DisruptorBuilder<T> newDisruptBuilder(EventSequencer<? extends T> eventSequencer) {
+        return new DisruptorBuilder<T>()
+                .setEventSequencer(eventSequencer);
     }
 
     //
 
-    public static class DisruptorBuilder extends EventLoopBuilder {
+    public static class DisruptorBuilder<T extends IAgentEvent> extends EventLoopBuilder<T> {
 
-        private EventSequencer<RingBufferEvent> eventSequencer;
+        private EventSequencer<? extends T> eventSequencer;
         private WaitStrategy waitStrategy;
         private boolean cleanBufferOnExit = true;
 
         //
 
         @Override
-        public DisruptorBuilder setParent(EventLoopGroup parent) {
+        public DisruptorBuilder<T> setParent(EventLoopGroup parent) {
             super.setParent(parent);
             return this;
         }
 
         @Override
-        public DisruptorBuilder setRejectedExecutionHandler(RejectedExecutionHandler rejectedExecutionHandler) {
+        public DisruptorBuilder<T> setRejectedExecutionHandler(RejectedExecutionHandler rejectedExecutionHandler) {
             super.setRejectedExecutionHandler(rejectedExecutionHandler);
             return this;
         }
 
         @Override
-        public DisruptorBuilder setThreadFactory(ThreadFactory threadFactory) {
+        public DisruptorBuilder<T> setThreadFactory(ThreadFactory threadFactory) {
             super.setThreadFactory(threadFactory);
             return this;
         }
 
         @Override
-        public DisruptorBuilder setAgent(EventLoopAgent agent) {
+        public DisruptorBuilder<T> setAgent(EventLoopAgent<? super T> agent) {
             super.setAgent(agent);
             return this;
         }
 
         @Override
-        public DisruptorBuilder setMainModule(EventLoopModule mainModule) {
+        public DisruptorBuilder<T> setMainModule(EventLoopModule mainModule) {
             super.setMainModule(mainModule);
             return this;
         }
 
-        public DisruptorBuilder setBatchSize(int batchSize) {
+        public DisruptorBuilder<T> setBatchSize(int batchSize) {
             super.setBatchSize(batchSize);
             return this;
         }
 
         @Override
-        public DisruptorEventLoop build() {
+        public DisruptorEventLoop<T> build() {
             if (getThreadFactory() == null) {
                 setThreadFactory(new DefaultThreadFactory("DisruptorEventLoop"));
             }
             if (eventSequencer == null) {
-                eventSequencer = RingBufferEventSequencer.<RingBufferEvent>newMultiProducer()
-                        .setFactory(RingBufferEvent::new)
-                        .setBufferSize(8192)
-                        .build();
+                throw new IllegalStateException("eventSequencer is null");
             }
-            return new DisruptorEventLoop(this);
+            return new DisruptorEventLoop<>(this);
         }
 
         //
@@ -166,11 +168,11 @@ public abstract class EventLoopBuilder {
          * 事件序列生成器
          * 注意：应当避免使用无超时的等待策略，EventLoop需要处理定时任务，不能一直等待生产者。
          */
-        public EventSequencer<RingBufferEvent> getEventSequencer() {
+        public EventSequencer<? extends T> getEventSequencer() {
             return eventSequencer;
         }
 
-        public DisruptorBuilder setEventSequencer(EventSequencer<RingBufferEvent> eventSequencer) {
+        public DisruptorBuilder<T> setEventSequencer(EventSequencer<? extends T> eventSequencer) {
             this.eventSequencer = eventSequencer;
             return this;
         }
@@ -180,7 +182,7 @@ public abstract class EventLoopBuilder {
             return waitStrategy;
         }
 
-        public DisruptorBuilder setWaitStrategy(WaitStrategy waitStrategy) {
+        public DisruptorBuilder<T> setWaitStrategy(WaitStrategy waitStrategy) {
             this.waitStrategy = waitStrategy;
             return this;
         }
@@ -194,7 +196,7 @@ public abstract class EventLoopBuilder {
             return cleanBufferOnExit;
         }
 
-        public DisruptorBuilder setCleanBufferOnExit(boolean cleanBufferOnExit) {
+        public DisruptorBuilder<T> setCleanBufferOnExit(boolean cleanBufferOnExit) {
             this.cleanBufferOnExit = cleanBufferOnExit;
             return this;
         }

@@ -47,7 +47,7 @@ abstract class RingBufferFields<E> extends RingBufferPad {
      */
     final int bufferSize;
 
-    public RingBufferFields(EventFactory<E> eventFactory, int bufferSize) {
+    public RingBufferFields(EventFactory<? extends E> eventFactory, int bufferSize) {
         Objects.requireNonNull(eventFactory, "eventFactory");
         if (!Util.isPowerOfTwo(bufferSize)) {
             throw new IllegalArgumentException("bufferSize must be a power of 2");
@@ -62,7 +62,7 @@ abstract class RingBufferFields<E> extends RingBufferPad {
 
     private static final VarHandle VH_ELEMENTS = MethodHandles.arrayElementVarHandle(Object[].class);
 
-    private void fill(EventFactory<E> eventFactory) {
+    private void fill(EventFactory<? extends E> eventFactory) {
         for (int i = 0; i < bufferSize; i++) {
             entries[BUFFER_PAD + i] = eventFactory.newInstance();
         }
@@ -94,7 +94,7 @@ public final class RingBuffer<E> extends RingBufferFields<E> implements DataProv
     private long p1, p2, p3, p4, p5, p6, p7;
     private long p8, p9, p10, p11, p12, p13, p14, p15;
 
-    public RingBuffer(EventFactory<E> eventFactory, int bufferSize) {
+    public RingBuffer(EventFactory<? extends E> eventFactory, int bufferSize) {
         super(eventFactory, bufferSize);
     }
 

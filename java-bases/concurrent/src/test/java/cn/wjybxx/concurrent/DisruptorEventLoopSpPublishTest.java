@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 public class DisruptorEventLoopSpPublishTest {
 
     private Counter counter;
-    private DisruptorEventLoop consumer;
+    private DisruptorEventLoop<RingBufferEvent> consumer;
     private Producer producer;
     private volatile boolean alert;
 
@@ -49,11 +49,11 @@ public class DisruptorEventLoopSpPublishTest {
         CounterAgent agent = new CounterAgent();
         counter = agent.getCounter();
 
-        consumer = EventLoopBuilder.newDisruptBuilder()
+        consumer = EventLoopBuilder.<RingBufferEvent>newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setAgent(agent)
-                .setEventSequencer(RingBufferEventSequencer.<RingBufferEvent>newMultiProducer()
-                        .setFactory(RingBufferEvent::new)
+                .setEventSequencer(RingBufferEventSequencer
+                        .newMultiProducer(RingBufferEvent::new)
                         .build())
                 .build();
         producer = new Producer();
@@ -75,11 +75,11 @@ public class DisruptorEventLoopSpPublishTest {
         CounterAgent agent = new CounterAgent();
         counter = agent.getCounter();
 
-        consumer = EventLoopBuilder.newDisruptBuilder()
+        consumer = EventLoopBuilder.<RingBufferEvent>newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setAgent(agent)
-                .setEventSequencer(MpUnboundedEventSequencer.<RingBufferEvent>newBuilder()
-                        .setFactory(RingBufferEvent::new)
+                .setEventSequencer(MpUnboundedEventSequencer
+                        .newBuilder(RingBufferEvent::new)
                         .build())
                 .build();
 
@@ -105,7 +105,7 @@ public class DisruptorEventLoopSpPublishTest {
 
         @Override
         public void run() {
-            DisruptorEventLoop consumer = DisruptorEventLoopSpPublishTest.this.consumer;
+            DisruptorEventLoop<RingBufferEvent> consumer = DisruptorEventLoopSpPublishTest.this.consumer;
             long sequence = -1;
             while (!alert && sequence < 1000000) {
                 sequence = consumer.nextSequence();

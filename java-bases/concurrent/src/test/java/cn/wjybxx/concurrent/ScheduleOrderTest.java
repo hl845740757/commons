@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
+import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,13 +34,16 @@ import java.util.concurrent.TimeUnit;
 public class ScheduleOrderTest {
 
     private Counter counter;
-    private DisruptorEventLoop consumer;
+    private EventLoop consumer;
 
     @BeforeEach
     void setUp() {
         counter = new Counter();
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
+                .setEventSequencer(RingBufferEventSequencer
+                        .newMultiProducer(RingBufferEvent::new)
+                        .build())
                 .build();
     }
 

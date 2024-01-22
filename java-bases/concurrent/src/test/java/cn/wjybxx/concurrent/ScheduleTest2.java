@@ -16,6 +16,7 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +36,7 @@ public class ScheduleTest2 {
 
     private final List<String> stringList = List.of("hello", "world", "a", "b", "c");
 
-    private DisruptorEventLoop consumer;
+    private EventLoop consumer;
     private StringJoiner joiner;
     private int index = 0;
 
@@ -45,6 +46,9 @@ public class ScheduleTest2 {
     void setUp() {
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
+                .setEventSequencer(RingBufferEventSequencer
+                        .newMultiProducer(RingBufferEvent::new)
+                        .build())
                 .build();
 
         joiner = new StringJoiner(",");

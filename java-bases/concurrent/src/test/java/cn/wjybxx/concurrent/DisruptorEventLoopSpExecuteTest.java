@@ -51,8 +51,8 @@ public class DisruptorEventLoopSpExecuteTest {
         counter = new Counter();
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
-                .setEventSequencer(RingBufferEventSequencer.<RingBufferEvent>newMultiProducer()
-                        .setFactory(RingBufferEvent::new)
+                .setEventSequencer(RingBufferEventSequencer
+                        .newMultiProducer(RingBufferEvent::new)
                         .build())
                 .build();
         producer = new Producer(1);
@@ -74,8 +74,8 @@ public class DisruptorEventLoopSpExecuteTest {
         counter = new Counter();
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
-                .setEventSequencer(MpUnboundedEventSequencer.<RingBufferEvent>newBuilder()
-                        .setFactory(RingBufferEvent::new)
+                .setEventSequencer(MpUnboundedEventSequencer
+                        .newBuilder(RingBufferEvent::new)
                         .build())
                 .build();
         producer = new Producer(1);

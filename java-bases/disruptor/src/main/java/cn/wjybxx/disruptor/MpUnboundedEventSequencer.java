@@ -182,6 +182,11 @@ public class MpUnboundedEventSequencer<E> implements EventSequencer<E> {
         return new Builder<>();
     }
 
+    public static <E> Builder<E> newBuilder(EventFactory<? extends E> factory) {
+        return new Builder<E>()
+                .setFactory(factory);
+    }
+
     public static class Builder<E> extends EventSequencerBuilder<E> {
 
         private int chunkSize = 1024;
@@ -213,7 +218,7 @@ public class MpUnboundedEventSequencer<E> implements EventSequencer<E> {
         }
 
         @Override
-        public Builder<E> setFactory(EventFactory<E> factory) {
+        public Builder<E> setFactory(EventFactory<? extends E> factory) {
             return (Builder<E>) super.setFactory(factory);
         }
 

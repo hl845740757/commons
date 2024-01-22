@@ -25,7 +25,7 @@ package cn.wjybxx.concurrent;
  * @author wjybxx
  * date 2023/4/10
  */
-public interface EventLoopAgent {
+public interface EventLoopAgent<T> {
 
     /**
      * 在构造EventLoop的过程中将调用该方法注入实例
@@ -43,9 +43,9 @@ public interface EventLoopAgent {
 
     /***
      * 收到一个用户自定义事件或任务
-     * {@link RingBufferEvent#getType()}大于0的事件
+     * {@link IAgentEvent#getType()}大于0的事件
      */
-    void onEvent(RingBufferEvent event) throws Exception;
+    void onEvent(T event) throws Exception;
 
     /**
      * 当事件循环等待较长时间或处理完一批事件之后都将调用该方法

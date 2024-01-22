@@ -25,7 +25,7 @@ import java.util.concurrent.locks.Condition;
  */
 public abstract class EventSequencerBuilder<E> {
 
-    private EventFactory<E> factory;
+    private EventFactory<? extends E> factory;
     private long producerSleepNanos = 1;
     private WaitStrategy waitStrategy = TimeoutSleepingWaitStrategy.INSTANCE;
     private SequenceBlocker blocker;
@@ -34,11 +34,11 @@ public abstract class EventSequencerBuilder<E> {
     public abstract EventSequencer<E> build();
 
     /** 事件对象工厂 */
-    public EventFactory<E> getFactory() {
+    public EventFactory<? extends E> getFactory() {
         return factory;
     }
 
-    public EventSequencerBuilder<E> setFactory(EventFactory<E> factory) {
+    public EventSequencerBuilder<E> setFactory(EventFactory<? extends E> factory) {
         this.factory = factory;
         return this;
     }

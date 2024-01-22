@@ -16,8 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import java.util.Objects;
-
 /**
  * 被缓存的事件对象
  * 1.用于Disruptor或类似的系统，当我们缓存对象时，更适合将字段展开以提高内存利用率
@@ -30,10 +28,7 @@ import java.util.Objects;
  * @author wjybxx
  * date 2023/4/10
  */
-public final class RingBufferEvent implements Runnable {
-
-    public static final int TYPE_INVALID = -1;
-    public static final int TYPE_RUNNABLE = 0;
+public final class RingBufferEvent implements IAgentEvent {
 
     private int type = TYPE_INVALID;
     public Object obj0;
@@ -76,59 +71,44 @@ public final class RingBufferEvent implements Runnable {
         obj2 = null;
     }
 
-    /**
-     * 重置所有的基础值
-     * 通常用于用户避免逻辑错误
-     */
-    public void cleanPrimitives() {
+    /** 清理所有数据 */
+    public void cleanAll() {
+        clean();
         intVal1 = 0;
         intVal2 = 0;
         longVal1 = 0;
         longVal2 = 0;
     }
 
-    /** 清理所有数据 */
-    public void cleanAll() {
-        clean();
-        cleanPrimitives();
-    }
-
+    @Override
     public int getType() {
         return type;
     }
 
     /**
      * 用户不可以发布负类型的事件，否则可能影响事件循环的工作
-     * 如果用户发布 0 类型事件，则必须赋值{@link #obj0}
+     * <p>
+     * 1.如果用户发布 0 类型事件，则必须赋值{@link #obj0}
+     * 2.注意：虽然开放接口约定事件类型必须大于等于0，但由于clean的存在，用户忘记赋值的情况下仍然可能为 -1，事件循环的实现者需要注意。
      */
+    @Override
     public void setType(int type) {
-        if (type < 0) {
-            throw new IllegalArgumentException("invalid type " + type);
-        }
         this.type = type;
-    }
-
-    /**
-     * 开放给事件循环实现的接口，允许发布任意类型的事件
-     * 注意：虽然开放接口约定事件类型必须大于等于0，但由于clean的存在，用户忘记赋值的情况下仍然可能为 -1，事件循环的实现者需要注意。
-     * 使用两个接口虽不能彻底解决问题，但可以缩小问题的范围。
-     */
-    public void internal_setType(int type) {
-        this.type = type;
-    }
-
-    public void setExecuteEvent(Runnable task) {
-        type = 0;
-        obj1 = Objects.requireNonNull(task);
-    }
-
-    public Runnable castObj0ToRunnable() {
-        return (Runnable) obj0;
     }
 
     @Override
-    public void run() {
+    public Object getObj0() {
+        return obj0;
+    }
 
+    @Override
+    public void setObj0(Object obj0) {
+        this.obj0 = obj0;
+    }
+
+    @Override
+    public Runnable castObj0ToRunnable() {
+        return (Runnable) obj0;
     }
 
     @Override

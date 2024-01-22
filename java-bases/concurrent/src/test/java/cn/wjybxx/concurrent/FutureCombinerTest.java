@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ex.NoLogRequiredException;
+import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +43,9 @@ public class FutureCombinerTest {
                 .setEventLoopFactory((parent, index) -> EventLoopBuilder.newDisruptBuilder()
                         .setParent(parent)
                         .setThreadFactory(threadFactory)
+                        .setEventSequencer(RingBufferEventSequencer
+                                .newMultiProducer(RingBufferEvent::new)
+                                .build())
                         .build())
                 .build();
     }

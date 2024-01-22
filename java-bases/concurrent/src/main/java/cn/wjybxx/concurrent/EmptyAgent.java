@@ -20,12 +20,13 @@ package cn.wjybxx.concurrent;
  * @author wjybxx
  * date 2023/4/11
  */
-public final class EmptyAgent implements EventLoopAgent {
+public final class EmptyAgent<T> implements EventLoopAgent<T> {
 
-    private static final EmptyAgent INSTANCE = new EmptyAgent();
+    private static final EmptyAgent<?> INSTANCE = new EmptyAgent<>();
 
-    public static EmptyAgent getInstance() {
-        return INSTANCE;
+    @SuppressWarnings("unchecked")
+    public static <T> EmptyAgent<T> getInstance() {
+        return (EmptyAgent<T>) INSTANCE;
     }
 
     @Override
@@ -39,7 +40,7 @@ public final class EmptyAgent implements EventLoopAgent {
     }
 
     @Override
-    public void onEvent(RingBufferEvent event) throws Exception {
+    public void onEvent(Object event) throws Exception {
 
     }
 

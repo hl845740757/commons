@@ -46,7 +46,7 @@ import java.util.concurrent.locks.LockSupport;
  * @author wjybxx
  * date 2023/4/10
  */
-public class DisruptorEventLoop extends AbstractScheduledEventLoop {
+public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduledEventLoop {
 
     private static final int MIN_BATCH_SIZE = 64;
     private static final int MAX_BATCH_SIZE = 64 * 1024;
@@ -57,44 +57,41 @@ public class DisruptorEventLoop extends AbstractScheduledEventLoop {
 
     private static final int TYPE_CLEAN_DEADLINE = -2;
     private static final Runnable _emptyRunnable = () -> {};
-    private static final Runnable _invalidRunnable = () -> {};
 
     // 填充开始 - 字段定义顺序不要随意调整
     @SuppressWarnings("unused")
     private long p1, p2, p3, p4, p5, p6, p7, p8;
-    /** 线程状态 */
-    private volatile int state = EventLoopState.ST_UNSTARTED;
-    @SuppressWarnings("unused")
-    private long p9, p10, p11, p12, p13, p14, p15, p16;
-    /** 线程本地时间 -- 纳秒 */
+    /** 线程本地时间 -- 纳秒；时间的更新频率极高，进行缓存行填充隔离 */
     private volatile long nanoTime;
     @SuppressWarnings("unused")
-    private long p17, p18, p19, p20, p21, p22, p23, p24;
+    private long p9, p10, p11, p12, p13, p14, p15, p16;
+    /** 线程状态 */
+    private volatile int state = EventLoopState.ST_UNSTARTED;
 
-    /** 事件队列 */
-    private final EventSequencer<RingBufferEvent> eventSequencer;
-    /** 周期性任务队列 -- 都是先于RingBuffer中的任务提交的 -- 暂不提供带缓存行填充的实现 */
+    /** 周期性任务队列 -- 既有的任务都是先于Sequencer中的任务提交的 */
     private final IndexedPriorityQueue<ScheduledPromiseTask<?>> scheduledTaskQueue;
+    /** 事件队列 */
+    private final EventSequencer<? extends T> eventSequencer;
     /** 批量执行任务的大小 */
     private final int taskBatchSize;
     /** 内部代理 */
-    private final EventLoopAgent agent;
+    private final EventLoopAgent<? super T> agent;
     /** 外部门面 */
     private final EventLoopModule mainModule;
     /** 任务拒绝策略 */
     private final RejectedExecutionHandler rejectedExecutionHandler;
 
-    /** 退出时是否清理buffer */
+    /** 退出时是否清理buffer -- 可清理意味着是消费链的末尾 */
     private final boolean cleanBufferOnExit;
     /** 缓存值 -- 减少运行时测试 */
-    private final MpUnboundedEventSequencer<RingBufferEvent> mpUnboundedEventSequencer;
+    private final MpUnboundedEventSequencer<?> mpUnboundedEventSequencer;
 
     private final Thread thread;
     private final Worker worker;
     private final IPromise<Void> terminationFuture = new Promise<>(this, null);
     private final IPromise<Void> runningFuture = new Promise<>(this, null);
 
-    public DisruptorEventLoop(EventLoopBuilder.DisruptorBuilder builder) {
+    public DisruptorEventLoop(EventLoopBuilder.DisruptorBuilder<T> builder) {
         super(builder.getParent());
         ThreadFactory threadFactory = Objects.requireNonNull(builder.getThreadFactory(), "threadFactory");
 
@@ -107,7 +104,7 @@ public class DisruptorEventLoop extends AbstractScheduledEventLoop {
         this.agent = Objects.requireNonNullElse(builder.getAgent(), EmptyAgent.getInstance());
         this.mainModule = builder.getMainModule();
         this.cleanBufferOnExit = builder.isCleanBufferOnExit();
-        if (cleanBufferOnExit && eventSequencer instanceof MpUnboundedEventSequencer<RingBufferEvent> mpUnboundedEventSequencer) {
+        if (cleanBufferOnExit && eventSequencer instanceof MpUnboundedEventSequencer<?> mpUnboundedEventSequencer) {
             this.mpUnboundedEventSequencer = mpUnboundedEventSequencer;
         } else {
             this.mpUnboundedEventSequencer = null;
@@ -204,7 +201,7 @@ public class DisruptorEventLoop extends AbstractScheduledEventLoop {
     }
 
     /** EventLoop绑定的Agent（代理） */
-    public EventLoopAgent getAgent() {
+    public EventLoopAgent<? super T> getAgent() {
         return agent;
     }
 
@@ -267,20 +264,15 @@ public class DisruptorEventLoop extends AbstractScheduledEventLoop {
             eventSequencer.publish(sequence);
             rejectedExecutionHandler.rejected(task, this);
         } else {
-            RingBufferEvent event = eventSequencer.producerGet(sequence);
-            if (task.getClass() == RingBufferEvent.class) { // 相对instanceof更快
-                RingBufferEvent userEvent = (RingBufferEvent) task;
-                event.copyFrom(userEvent);
-            } else {
-                event.internal_setType(0);
-                event.obj0 = task;
-                if (task instanceof ScheduledPromiseTask<?> futureTask) {
-                    futureTask.setId(sequence); // nice
-                    if (futureTask.isEnable(TaskOption.LOW_PRIORITY)) {
-                        futureTask.setQueueId(LOWER_PRIORITY_QUEUE_ID);
-                    }
-                    futureTask.registerCancellation();
+            IAgentEvent event = eventSequencer.producerGet(sequence);
+            event.setType(0);
+            event.setObj0(task);
+            if (task instanceof ScheduledPromiseTask<?> futureTask) {
+                futureTask.setId(sequence); // nice
+                if (futureTask.isEnable(TaskOption.LOW_PRIORITY)) {
+                    futureTask.setQueueId(LOWER_PRIORITY_QUEUE_ID);
                 }
+                futureTask.registerCancellation();
             }
             eventSequencer.publish(sequence);
 
@@ -291,7 +283,7 @@ public class DisruptorEventLoop extends AbstractScheduledEventLoop {
         }
     }
 
-    public final RingBufferEvent getEvent(long sequence) {
+    public final T getEvent(long sequence) {
         checkSequence(sequence);
         return eventSequencer.producerGet(sequence);
     }
@@ -681,9 +673,9 @@ public class DisruptorEventLoop extends AbstractScheduledEventLoop {
 
         /** @return curSequence */
         private long runTaskBatch(final long batchBeginSequence, final long batchEndSequence) {
-            EventSequencer<RingBufferEvent> eventSequencer = DisruptorEventLoop.this.eventSequencer;
-            EventLoopAgent agent = DisruptorEventLoop.this.agent;
-            RingBufferEvent event;
+            EventSequencer<? extends T> eventSequencer = DisruptorEventLoop.this.eventSequencer;
+            EventLoopAgent<? super T> agent = DisruptorEventLoop.this.agent;
+            T event;
             for (long curSequence = batchBeginSequence; curSequence <= batchEndSequence; curSequence++) {
                 event = eventSequencer.consumerGet(curSequence);
                 try {
@@ -728,8 +720,8 @@ public class DisruptorEventLoop extends AbstractScheduledEventLoop {
 
         private void cleanBuffer() {
             final long startTimeMillis = System.currentTimeMillis();
-            final EventSequencer<RingBufferEvent> eventSequencer = DisruptorEventLoop.this.eventSequencer;
-            final EventLoopAgent agent = DisruptorEventLoop.this.agent;
+            final EventSequencer<? extends T> eventSequencer = DisruptorEventLoop.this.eventSequencer;
+            final EventLoopAgent<? super T> agent = DisruptorEventLoop.this.agent;
 
             // 处理延迟任务
             nanoTime = System.nanoTime();
@@ -750,7 +742,7 @@ public class DisruptorEventLoop extends AbstractScheduledEventLoop {
                 while (!producerBarrier.isPublished(nextSequence)) {
                     Thread.onSpinWait(); // 等待发布
                 }
-                final RingBufferEvent event = eventSequencer.consumerGet(nextSequence);
+                final T event = eventSequencer.consumerGet(nextSequence);
                 try {
                     if (event.getType() < 0) { // 生产者在观察到关闭时发布了不连续的数据
                         nullCount++;

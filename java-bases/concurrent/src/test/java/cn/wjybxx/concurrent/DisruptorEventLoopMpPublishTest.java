@@ -37,7 +37,7 @@ public class DisruptorEventLoopMpPublishTest {
     private static final int PRODUCER_COUNT = 4;
 
     private Counter counter;
-    private DisruptorEventLoop consumer;
+    private DisruptorEventLoop<RingBufferEvent> consumer;
     private List<Producer> producerList;
     private volatile boolean alert;
 
@@ -54,11 +54,11 @@ public class DisruptorEventLoopMpPublishTest {
         CounterAgent agent = new CounterAgent();
         counter = agent.getCounter();
 
-        consumer = EventLoopBuilder.newDisruptBuilder()
+        consumer = EventLoopBuilder.<RingBufferEvent>newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setAgent(agent)
-                .setEventSequencer(RingBufferEventSequencer.<RingBufferEvent>newMultiProducer()
-                        .setFactory(RingBufferEvent::new)
+                .setEventSequencer(RingBufferEventSequencer
+                        .newMultiProducer(RingBufferEvent::new)
                         .build())
                 .build();
 
@@ -84,11 +84,11 @@ public class DisruptorEventLoopMpPublishTest {
         CounterAgent agent = new CounterAgent();
         counter = agent.getCounter();
 
-        consumer = EventLoopBuilder.newDisruptBuilder()
+        consumer = EventLoopBuilder.<RingBufferEvent>newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setAgent(agent)
-                .setEventSequencer(MpUnboundedEventSequencer.<RingBufferEvent>newBuilder()
-                        .setFactory(RingBufferEvent::new)
+                .setEventSequencer(MpUnboundedEventSequencer
+                        .newBuilder(RingBufferEvent::new)
                         .build())
                 .build();
 
@@ -123,7 +123,7 @@ public class DisruptorEventLoopMpPublishTest {
 
         @Override
         public void run() {
-            DisruptorEventLoop consumer = DisruptorEventLoopMpPublishTest.this.consumer;
+            DisruptorEventLoop<RingBufferEvent> consumer = DisruptorEventLoopMpPublishTest.this.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
                 long sequence = consumer.nextSequence();

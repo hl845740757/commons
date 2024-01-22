@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
+import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,9 @@ public class FutureBlockingTest {
                         .setParent(parent)
                         .setThreadFactory(new DefaultThreadFactory("consumer"))
                         .setAgent(new Agent())
+                        .setEventSequencer(RingBufferEventSequencer
+                                .newMultiProducer(RingBufferEvent::new)
+                                .build())
                         .build())
                 .build();
     }
@@ -50,7 +54,7 @@ public class FutureBlockingTest {
         consumer.terminationFuture().join();
     }
 
-    private static class Agent implements EventLoopAgent {
+    private static class Agent implements EventLoopAgent<IAgentEvent> {
 
         EventLoop eventLoop;
 
@@ -67,7 +71,7 @@ public class FutureBlockingTest {
         }
 
         @Override
-        public void onEvent(RingBufferEvent event) throws Exception {
+        public void onEvent(IAgentEvent event) throws Exception {
 
         }
 
