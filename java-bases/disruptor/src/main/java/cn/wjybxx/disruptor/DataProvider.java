@@ -36,4 +36,17 @@ public interface DataProvider<T> {
     /** 该接口用于优化消费者查询数据 */
     T consumerGet(long sequence);
 
+    /**
+     * 该接口用于生产者填充数据
+     * 1. 当拷贝既有数据成本较高时可替换既有对象
+     * 2. set不提供特殊的内存语义，因此只应该生产者调用
+     */
+    void producerSet(long sequence, T data);
+
+    /**
+     * 该接口用于消费者覆盖数据(通常用于删除数据)
+     * 1.当使用无界队列需要即使清理内存时使用。
+     * 2.set不提供特殊的内存语义，因此只应该由末尾的消费者调用
+     */
+    void consumerSet(long sequence, T data);
 }

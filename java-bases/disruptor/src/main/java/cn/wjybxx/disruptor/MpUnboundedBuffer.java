@@ -252,6 +252,37 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         return cChunk.lvElement(seqChunkOffset);
     }
 
+    @Override
+    public void producerSet(long sequence, E data) {
+        Objects.requireNonNull(data);
+        if (sequence < 0) {
+            throw new IllegalArgumentException();
+        }
+        final int seqChunkOffset = (int) (sequence & chunkMask);
+        final long seqChunkIndex = sequence >> chunkShift;
+
+        MpUnboundedBufferChunk<E> pChunk = lvProducerChunk();
+        if (pChunk.lvChunkIndex() != seqChunkIndex) {
+            pChunk = producerChunkForIndex(pChunk, seqChunkIndex);
+        }
+        pChunk.spElement(seqChunkOffset, data);
+    }
+
+    @Override
+    public void consumerSet(long sequence, E data) {
+        if (sequence < 0) {
+            throw new IllegalArgumentException();
+        }
+        final int seqChunkOffset = (int) (sequence & chunkMask);
+        final long seqChunkIndex = sequence >> chunkShift;
+
+        MpUnboundedBufferChunk<E> cChunk = lvHeadChunk();
+        if (cChunk.lvChunkIndex() != seqChunkIndex) {
+            cChunk = consumerChunkForIndex(cChunk, seqChunkIndex);
+        }
+        cChunk.spElement(seqChunkOffset, data);
+    }
+
     /** 获取生产者sequence对应的chunk -- 生产者再获得序号后应当调用该方法触发扩容 */
     public MpUnboundedBufferChunk<E> producerChunkForSequence(long sequence) {
         if (sequence < 0) {

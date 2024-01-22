@@ -75,6 +75,16 @@ public class MpUnboundedEventSequencer<E> implements EventSequencer<E> {
     }
 
     @Override
+    public void producerSet(long sequence, E data) {
+        buffer.producerSet(sequence, data);
+    }
+
+    @Override
+    public void consumerSet(long sequence, E data) {
+        buffer.consumerSet(sequence, data);
+    }
+
+    @Override
     public int capacity() {
         return UNBOUNDED_CAPACITY;
     }

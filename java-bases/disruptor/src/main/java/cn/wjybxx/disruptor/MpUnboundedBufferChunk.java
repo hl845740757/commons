@@ -104,6 +104,11 @@ public final class MpUnboundedBufferChunk<E> {
 
     // endregion
 
+    /** store plain element */
+    public final void spElement(int index, E e) {
+        VH_ELEMENTS.set(buffer, index, e);
+    }
+
     /** store ordered element */
     public final void soElement(int index, E e) {
         VH_ELEMENTS.setRelease(buffer, index, e);

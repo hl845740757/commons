@@ -36,7 +36,9 @@ import java.util.concurrent.locks.LockSupport;
 
 /**
  * 基于Disruptor框架的事件循环。
- * 这个实现持有私有的RingBuffer，可以有最好的性能。
+ * 1.这个实现持有私有的RingBuffer，可以有最好的性能。
+ * 2.可以通过{@link #nextSequence()}和{@link #publish(long)}发布特殊的事件。
+ * 3.也可以让Task实现{@link EventTranslator}，从而拷贝数据到既有事件对象上。
  * <p>
  * 关于时序正确性：
  * 1.由于{@link #scheduledTaskQueue}的任务都是从{@link RingBuffer}中拉取出来的，因此都是先于{@link RingBuffer}中剩余的任务的。
@@ -264,15 +266,24 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             eventSequencer.publish(sequence);
             rejectedExecutionHandler.rejected(task, this);
         } else {
-            IAgentEvent event = eventSequencer.producerGet(sequence);
-            event.setType(0);
-            event.setObj0(task);
-            if (task instanceof ScheduledPromiseTask<?> futureTask) {
-                futureTask.setId(sequence); // nice
-                if (futureTask.isEnable(TaskOption.LOW_PRIORITY)) {
-                    futureTask.setQueueId(LOWER_PRIORITY_QUEUE_ID);
+            T event = eventSequencer.producerGet(sequence);
+            if (task instanceof EventTranslator<?>) {
+                try {
+                    @SuppressWarnings("unchecked") EventTranslator<? super T> translator = (EventTranslator<? super T>) task;
+                    translator.translateTo(event, sequence);
+                } catch (Throwable e) {
+                    logger.warn("translateTo caught exception", e);
                 }
-                futureTask.registerCancellation();
+            } else {
+                event.setType(0);
+                event.setObj0(task);
+                if (task instanceof ScheduledPromiseTask<?> futureTask) {
+                    futureTask.setId(sequence); // nice
+                    if (futureTask.isEnable(TaskOption.LOW_PRIORITY)) {
+                        futureTask.setQueueId(LOWER_PRIORITY_QUEUE_ID);
+                    }
+                    futureTask.registerCancellation();
+                }
             }
             eventSequencer.publish(sequence);
 

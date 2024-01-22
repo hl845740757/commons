@@ -74,6 +74,12 @@ abstract class RingBufferFields<E> extends RingBufferPad {
         return (E) VH_ELEMENTS.get(entries, BUFFER_PAD + index);
     }
 
+    @SuppressWarnings("unchecked")
+    protected final void setElement(long sequence, E event) {
+        int index = (int) (sequence & indexMask);
+        VH_ELEMENTS.set(entries, BUFFER_PAD + index, event);
+    }
+
     /** 用于debug和测试 */
     protected final Stream<E> toStream() {
         @SuppressWarnings("unchecked") E[] elements = (E[]) entries;
@@ -120,5 +126,16 @@ public final class RingBuffer<E> extends RingBufferFields<E> implements DataProv
     @Override
     public E consumerGet(long sequence) {
         return elementAt(sequence);
+    }
+
+    @Override
+    public void producerSet(long sequence, E data) {
+        Objects.requireNonNull(data);
+        setElement(sequence, data);
+    }
+
+    @Override
+    public void consumerSet(long sequence, E data) {
+        setElement(sequence, data);
     }
 }
