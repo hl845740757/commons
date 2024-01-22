@@ -255,7 +255,7 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
         clear();
     }
 
-    // region 转发适配
+    // region future
 
     @Override
     @Nonnull
@@ -273,226 +273,6 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
     @Nonnull
     public IFuture<V> toFuture() {
         return promise.toFuture();
-    }
-
-    @Override
-    public <U> ICompletionStage<U> composeApply(BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeApply(fn, ctx, options);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> composeApply(BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn) {
-        return promise.composeApply(fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn) {
-        return promise.composeApplyAsync(executor, fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeApplyAsync(executor, fn, ctx, options);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeCall(fn, ctx, options);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn) {
-        return promise.composeCall(fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn) {
-        return promise.composeCallAsync(executor, fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeCallAsync(executor, fn, ctx, options);
-    }
-
-    @Override
-    public <X extends Throwable> ICompletionStage<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
-        return promise.composeCatching(exceptionType, fallback, ctx, options);
-    }
-
-    @Override
-    public <X extends Throwable> ICompletionStage<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback) {
-        return promise.composeCatching(exceptionType, fallback);
-    }
-
-    @Override
-    public <X extends Throwable> ICompletionStage<V> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback) {
-        return promise.composeCatchingAsync(executor, exceptionType, fallback);
-    }
-
-    @Override
-    public <X extends Throwable> ICompletionStage<V> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
-        return promise.composeCatchingAsync(executor, exceptionType, fallback, ctx, options);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeHandle(fn, ctx, options);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn) {
-        return promise.composeHandle(fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn) {
-        return promise.composeHandleAsync(executor, fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeHandleAsync(executor, fn, ctx, options);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenApply(fn, ctx, options);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn) {
-        return promise.thenApply(fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends U> fn) {
-        return promise.thenApplyAsync(executor, fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenApplyAsync(executor, fn, ctx, options);
-    }
-
-    @Override
-    public ICompletionStage<Void> thenAccept(BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
-        return promise.thenAccept(action, ctx, options);
-    }
-
-    @Override
-    public ICompletionStage<Void> thenAccept(BiConsumer<? super IContext, ? super V> action) {
-        return promise.thenAccept(action);
-    }
-
-    @Override
-    public ICompletionStage<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super V> action) {
-        return promise.thenAcceptAsync(executor, action);
-    }
-
-    @Override
-    public ICompletionStage<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
-        return promise.thenAcceptAsync(executor, action, ctx, options);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenCall(fn, ctx, options);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> thenCall(Function<? super IContext, ? extends U> fn) {
-        return promise.thenCall(fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn) {
-        return promise.thenCallAsync(executor, fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenCallAsync(executor, fn, ctx, options);
-    }
-
-    @Override
-    public ICompletionStage<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
-        return promise.thenRun(action, ctx, options);
-    }
-
-    @Override
-    public ICompletionStage<Void> thenRun(Consumer<? super IContext> action) {
-        return promise.thenRun(action);
-    }
-
-    @Override
-    public ICompletionStage<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action) {
-        return promise.thenRunAsync(executor, action);
-    }
-
-    @Override
-    public ICompletionStage<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
-        return promise.thenRunAsync(executor, action, ctx, options);
-    }
-
-    @Override
-    public <X extends Throwable> ICompletionStage<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
-        return promise.catching(exceptionType, fallback, ctx, options);
-    }
-
-    @Override
-    public <X extends Throwable> ICompletionStage<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
-        return promise.catching(exceptionType, fallback);
-    }
-
-    @Override
-    public <X extends Throwable> ICompletionStage<V> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
-        return promise.catchingAsync(executor, exceptionType, fallback);
-    }
-
-    @Override
-    public <X extends Throwable> ICompletionStage<V> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
-        return promise.catchingAsync(executor, exceptionType, fallback, ctx, options);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.handle(fn, ctx, options);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
-        return promise.handle(fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
-        return promise.handleAsync(executor, fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.handleAsync(executor, fn, ctx, options);
-    }
-
-    @Override
-    public ICompletionStage<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
-        return promise.whenComplete(action, ctx, options);
-    }
-
-    @Override
-    public ICompletionStage<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
-        return promise.whenComplete(action);
-    }
-
-    @Override
-    public ICompletionStage<V> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
-        return promise.whenCompleteAsync(executor, action);
-    }
-
-    @Override
-    public ICompletionStage<V> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
-        return promise.whenCompleteAsync(executor, action, ctx, options);
     }
 
     @Override
@@ -634,6 +414,230 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
     @Override
     public void onCompletedAsync(Executor executor, Consumer<? super IFuture<V>> action, int options) {
         promise.onCompletedAsync(executor, action, options);
+    }
+
+    // endregion
+
+    // region stage
+
+    @Override
+    public <U> IFuture<U> composeApply(BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeApply(fn, ctx, options);
+    }
+
+    @Override
+    public <U> IFuture<U> composeApply(BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn) {
+        return promise.composeApply(fn);
+    }
+
+    @Override
+    public <U> IFuture<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn) {
+        return promise.composeApplyAsync(executor, fn);
+    }
+
+    @Override
+    public <U> IFuture<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeApplyAsync(executor, fn, ctx, options);
+    }
+
+    @Override
+    public <U> IFuture<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeCall(fn, ctx, options);
+    }
+
+    @Override
+    public <U> IFuture<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn) {
+        return promise.composeCall(fn);
+    }
+
+    @Override
+    public <U> IFuture<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn) {
+        return promise.composeCallAsync(executor, fn);
+    }
+
+    @Override
+    public <U> IFuture<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeCallAsync(executor, fn, ctx, options);
+    }
+
+    @Override
+    public <X extends Throwable> IFuture<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
+        return promise.composeCatching(exceptionType, fallback, ctx, options);
+    }
+
+    @Override
+    public <X extends Throwable> IFuture<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback) {
+        return promise.composeCatching(exceptionType, fallback);
+    }
+
+    @Override
+    public <X extends Throwable> IFuture<V> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback) {
+        return promise.composeCatchingAsync(executor, exceptionType, fallback);
+    }
+
+    @Override
+    public <X extends Throwable> IFuture<V> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
+        return promise.composeCatchingAsync(executor, exceptionType, fallback, ctx, options);
+    }
+
+    @Override
+    public <U> IFuture<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeHandle(fn, ctx, options);
+    }
+
+    @Override
+    public <U> IFuture<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn) {
+        return promise.composeHandle(fn);
+    }
+
+    @Override
+    public <U> IFuture<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn) {
+        return promise.composeHandleAsync(executor, fn);
+    }
+
+    @Override
+    public <U> IFuture<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeHandleAsync(executor, fn, ctx, options);
+    }
+
+    @Override
+    public <U> IFuture<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.thenApply(fn, ctx, options);
+    }
+
+    @Override
+    public <U> IFuture<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn) {
+        return promise.thenApply(fn);
+    }
+
+    @Override
+    public <U> IFuture<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends U> fn) {
+        return promise.thenApplyAsync(executor, fn);
+    }
+
+    @Override
+    public <U> IFuture<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.thenApplyAsync(executor, fn, ctx, options);
+    }
+
+    @Override
+    public IFuture<Void> thenAccept(BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
+        return promise.thenAccept(action, ctx, options);
+    }
+
+    @Override
+    public IFuture<Void> thenAccept(BiConsumer<? super IContext, ? super V> action) {
+        return promise.thenAccept(action);
+    }
+
+    @Override
+    public IFuture<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super V> action) {
+        return promise.thenAcceptAsync(executor, action);
+    }
+
+    @Override
+    public IFuture<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
+        return promise.thenAcceptAsync(executor, action, ctx, options);
+    }
+
+    @Override
+    public <U> IFuture<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.thenCall(fn, ctx, options);
+    }
+
+    @Override
+    public <U> IFuture<U> thenCall(Function<? super IContext, ? extends U> fn) {
+        return promise.thenCall(fn);
+    }
+
+    @Override
+    public <U> IFuture<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn) {
+        return promise.thenCallAsync(executor, fn);
+    }
+
+    @Override
+    public <U> IFuture<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.thenCallAsync(executor, fn, ctx, options);
+    }
+
+    @Override
+    public IFuture<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
+        return promise.thenRun(action, ctx, options);
+    }
+
+    @Override
+    public IFuture<Void> thenRun(Consumer<? super IContext> action) {
+        return promise.thenRun(action);
+    }
+
+    @Override
+    public IFuture<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action) {
+        return promise.thenRunAsync(executor, action);
+    }
+
+    @Override
+    public IFuture<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
+        return promise.thenRunAsync(executor, action, ctx, options);
+    }
+
+    @Override
+    public <X extends Throwable> IFuture<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
+        return promise.catching(exceptionType, fallback, ctx, options);
+    }
+
+    @Override
+    public <X extends Throwable> IFuture<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
+        return promise.catching(exceptionType, fallback);
+    }
+
+    @Override
+    public <X extends Throwable> IFuture<V> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
+        return promise.catchingAsync(executor, exceptionType, fallback);
+    }
+
+    @Override
+    public <X extends Throwable> IFuture<V> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
+        return promise.catchingAsync(executor, exceptionType, fallback, ctx, options);
+    }
+
+    @Override
+    public <U> IFuture<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.handle(fn, ctx, options);
+    }
+
+    @Override
+    public <U> IFuture<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+        return promise.handle(fn);
+    }
+
+    @Override
+    public <U> IFuture<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+        return promise.handleAsync(executor, fn);
+    }
+
+    @Override
+    public <U> IFuture<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.handleAsync(executor, fn, ctx, options);
+    }
+
+    @Override
+    public IFuture<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
+        return promise.whenComplete(action, ctx, options);
+    }
+
+    @Override
+    public IFuture<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
+        return promise.whenComplete(action);
+    }
+
+    @Override
+    public IFuture<V> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
+        return promise.whenCompleteAsync(executor, action);
+    }
+
+    @Override
+    public IFuture<V> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
+        return promise.whenCompleteAsync(executor, action, ctx, options);
     }
 
     // endregion

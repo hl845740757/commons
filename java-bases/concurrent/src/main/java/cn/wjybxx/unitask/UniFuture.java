@@ -16,15 +16,20 @@
 
 package cn.wjybxx.unitask;
 
+import cn.wjybxx.base.function.TriConsumer;
+import cn.wjybxx.base.function.TriFunction;
 import cn.wjybxx.concurrent.*;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * 单线程版的{@link IFuture}
@@ -213,4 +218,139 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
     void onCompletedAsync(Consumer<? super UniFuture<T>> action, int options);
     // endregion
 
+    // region 重写签名
+
+    @Override
+    <U> UniFuture<U> composeApply(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
+
+    @Override
+    <U> UniFuture<U> composeApply(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn);
+
+    @Override
+    <U> UniFuture<U> composeApplyAsync(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn);
+
+    @Override
+    <U> UniFuture<U> composeApplyAsync(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
+
+    @Override
+    <U> UniFuture<U> composeCall(Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
+
+    @Override
+    <U> UniFuture<U> composeCall(Function<? super IContext, ? extends UniCompletionStage<U>> fn);
+
+    @Override
+    <U> UniFuture<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn);
+
+    @Override
+    <U> UniFuture<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
+
+    @Override
+    <X extends Throwable> UniFuture<T> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback, @Nullable IContext ctx, int options);
+
+    @Override
+    <X extends Throwable> UniFuture<T> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback);
+
+    @Override
+    <X extends Throwable> UniFuture<T> composeCatchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback);
+
+    @Override
+    <X extends Throwable> UniFuture<T> composeCatchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback, @Nullable IContext ctx, int options);
+
+    @Override
+    <U> UniFuture<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
+
+    @Override
+    <U> UniFuture<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn);
+
+    @Override
+    <U> UniFuture<U> composeHandleAsync(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn);
+
+    @Override
+    <U> UniFuture<U> composeHandleAsync(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
+
+    @Override
+    <U> UniFuture<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options);
+
+    @Override
+    <U> UniFuture<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn);
+
+    @Override
+    <U> UniFuture<U> thenApplyAsync(BiFunction<? super IContext, ? super T, ? extends U> fn);
+
+    @Override
+    <U> UniFuture<U> thenApplyAsync(BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options);
+
+    @Override
+    UniFuture<Void> thenAccept(BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options);
+
+    @Override
+    UniFuture<Void> thenAccept(BiConsumer<? super IContext, ? super T> action);
+
+    @Override
+    UniFuture<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super T> action);
+
+    @Override
+    UniFuture<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options);
+
+    @Override
+    <U> UniFuture<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options);
+
+    @Override
+    <U> UniFuture<U> thenCall(Function<? super IContext, ? extends U> fn);
+
+    @Override
+    <U> UniFuture<U> thenCallAsync(Function<? super IContext, ? extends U> fn);
+
+    @Override
+    <U> UniFuture<U> thenCallAsync(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options);
+
+    @Override
+    UniFuture<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options);
+
+    @Override
+    UniFuture<Void> thenRun(Consumer<? super IContext> action);
+
+    @Override
+    UniFuture<Void> thenRunAsync(Consumer<? super IContext> action);
+
+    @Override
+    UniFuture<Void> thenRunAsync(Consumer<? super IContext> action, @Nullable IContext ctx, int options);
+
+    @Override
+    <X extends Throwable> UniFuture<T> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback, @Nullable IContext ctx, int options);
+
+    @Override
+    <X extends Throwable> UniFuture<T> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback);
+
+    @Override
+    <X extends Throwable> UniFuture<T> catchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback);
+
+    @Override
+    <X extends Throwable> UniFuture<T> catchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback, @Nullable IContext ctx, int options);
+
+    @Override
+    <U> UniFuture<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options);
+
+    @Override
+    <U> UniFuture<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
+
+    @Override
+    <U> UniFuture<U> handleAsync(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
+
+    @Override
+    <U> UniFuture<U> handleAsync(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options);
+
+    @Override
+    UniFuture<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options);
+
+    @Override
+    UniFuture<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action);
+
+    @Override
+    UniFuture<T> whenCompleteAsync(TriConsumer<? super IContext, ? super T, ? super Throwable> action);
+
+    @Override
+    UniFuture<T> whenCompleteAsync(TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options);
+
+    // endregion
 }

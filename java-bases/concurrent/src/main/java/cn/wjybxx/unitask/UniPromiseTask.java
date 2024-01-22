@@ -260,7 +260,7 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         clear();
     }
 
-    // region 代理转发
+    // region future
 
     @Nonnull
     public IContext ctx() {
@@ -275,182 +275,6 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
     @Nonnull
     public UniFuture<V> toFuture() {
         return promise.toFuture();
-    }
-
-    public <U> UniCompletionStage<U> composeApply(BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeApply(fn, ctx, options);
-    }
-
-    public <U> UniCompletionStage<U> composeApply(BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn) {
-        return promise.composeApply(fn);
-    }
-
-    public <U> UniCompletionStage<U> composeApplyAsync(BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn) {
-        return promise.composeApplyAsync(fn);
-    }
-
-    public <U> UniCompletionStage<U> composeApplyAsync(BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeApplyAsync(fn, ctx, options);
-    }
-
-    public <U> UniCompletionStage<U> composeCall(Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeCall(fn, ctx, options);
-    }
-
-    public <U> UniCompletionStage<U> composeCall(Function<? super IContext, ? extends UniCompletionStage<U>> fn) {
-        return promise.composeCall(fn);
-    }
-
-    public <U> UniCompletionStage<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn) {
-        return promise.composeCallAsync(fn);
-    }
-
-    public <U> UniCompletionStage<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeCallAsync(fn, ctx, options);
-    }
-
-    public <X extends Throwable> UniCompletionStage<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
-        return promise.composeCatching(exceptionType, fallback, ctx, options);
-    }
-
-    public <X extends Throwable> UniCompletionStage<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback) {
-        return promise.composeCatching(exceptionType, fallback);
-    }
-
-    public <X extends Throwable> UniCompletionStage<V> composeCatchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback) {
-        return promise.composeCatchingAsync(exceptionType, fallback);
-    }
-
-    public <X extends Throwable> UniCompletionStage<V> composeCatchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
-        return promise.composeCatchingAsync(exceptionType, fallback, ctx, options);
-    }
-
-    public <U> UniCompletionStage<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeHandle(fn, ctx, options);
-    }
-
-    public <U> UniCompletionStage<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn) {
-        return promise.composeHandle(fn);
-    }
-
-    public <U> UniCompletionStage<U> composeHandleAsync(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn) {
-        return promise.composeHandleAsync(fn);
-    }
-
-    public <U> UniCompletionStage<U> composeHandleAsync(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeHandleAsync(fn, ctx, options);
-    }
-
-    public <U> UniCompletionStage<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenApply(fn, ctx, options);
-    }
-
-    public <U> UniCompletionStage<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn) {
-        return promise.thenApply(fn);
-    }
-
-    public <U> UniCompletionStage<U> thenApplyAsync(BiFunction<? super IContext, ? super V, ? extends U> fn) {
-        return promise.thenApplyAsync(fn);
-    }
-
-    public <U> UniCompletionStage<U> thenApplyAsync(BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenApplyAsync(fn, ctx, options);
-    }
-
-    public UniCompletionStage<Void> thenAccept(BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
-        return promise.thenAccept(action, ctx, options);
-    }
-
-    public UniCompletionStage<Void> thenAccept(BiConsumer<? super IContext, ? super V> action) {
-        return promise.thenAccept(action);
-    }
-
-    public UniCompletionStage<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super V> action) {
-        return promise.thenAcceptAsync(action);
-    }
-
-    public UniCompletionStage<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
-        return promise.thenAcceptAsync(action, ctx, options);
-    }
-
-    public <U> UniCompletionStage<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenCall(fn, ctx, options);
-    }
-
-    public <U> UniCompletionStage<U> thenCall(Function<? super IContext, ? extends U> fn) {
-        return promise.thenCall(fn);
-    }
-
-    public <U> UniCompletionStage<U> thenCallAsync(Function<? super IContext, ? extends U> fn) {
-        return promise.thenCallAsync(fn);
-    }
-
-    public <U> UniCompletionStage<U> thenCallAsync(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenCallAsync(fn, ctx, options);
-    }
-
-    public UniCompletionStage<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
-        return promise.thenRun(action, ctx, options);
-    }
-
-    public UniCompletionStage<Void> thenRun(Consumer<? super IContext> action) {
-        return promise.thenRun(action);
-    }
-
-    public UniCompletionStage<Void> thenRunAsync(Consumer<? super IContext> action) {
-        return promise.thenRunAsync(action);
-    }
-
-    public UniCompletionStage<Void> thenRunAsync(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
-        return promise.thenRunAsync(action, ctx, options);
-    }
-
-    public <X extends Throwable> UniCompletionStage<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
-        return promise.catching(exceptionType, fallback, ctx, options);
-    }
-
-    public <X extends Throwable> UniCompletionStage<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
-        return promise.catching(exceptionType, fallback);
-    }
-
-    public <X extends Throwable> UniCompletionStage<V> catchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
-        return promise.catchingAsync(exceptionType, fallback);
-    }
-
-    public <X extends Throwable> UniCompletionStage<V> catchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
-        return promise.catchingAsync(exceptionType, fallback, ctx, options);
-    }
-
-    public <U> UniCompletionStage<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.handle(fn, ctx, options);
-    }
-
-    public <U> UniCompletionStage<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
-        return promise.handle(fn);
-    }
-
-    public <U> UniCompletionStage<U> handleAsync(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
-        return promise.handleAsync(fn);
-    }
-
-    public <U> UniCompletionStage<U> handleAsync(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.handleAsync(fn, ctx, options);
-    }
-
-    public UniCompletionStage<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
-        return promise.whenComplete(action, ctx, options);
-    }
-
-    public UniCompletionStage<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
-        return promise.whenComplete(action);
-    }
-
-    public UniCompletionStage<V> whenCompleteAsync(TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
-        return promise.whenCompleteAsync(action);
-    }
-
-    public UniCompletionStage<V> whenCompleteAsync(TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
-        return promise.whenCompleteAsync(action, ctx, options);
     }
 
     public UniFuture<V> asReadonly() {
@@ -536,6 +360,187 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
     public void onCompletedAsync(Consumer<? super UniFuture<V>> action, int options) {
         promise.onCompletedAsync(action, options);
     }
+
+    // endregion
+
+    // region stage
+
+    public <U> UniPromise<U> composeApply(BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeApply(fn, ctx, options);
+    }
+
+    public <U> UniPromise<U> composeApply(BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn) {
+        return promise.composeApply(fn);
+    }
+
+    public <U> UniPromise<U> composeApplyAsync(BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn) {
+        return promise.composeApplyAsync(fn);
+    }
+
+    public <U> UniPromise<U> composeApplyAsync(BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeApplyAsync(fn, ctx, options);
+    }
+
+    public <U> UniPromise<U> composeCall(Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeCall(fn, ctx, options);
+    }
+
+    public <U> UniPromise<U> composeCall(Function<? super IContext, ? extends UniCompletionStage<U>> fn) {
+        return promise.composeCall(fn);
+    }
+
+    public <U> UniPromise<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn) {
+        return promise.composeCallAsync(fn);
+    }
+
+    public <U> UniPromise<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeCallAsync(fn, ctx, options);
+    }
+
+    public <X extends Throwable> UniPromise<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
+        return promise.composeCatching(exceptionType, fallback, ctx, options);
+    }
+
+    public <X extends Throwable> UniPromise<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback) {
+        return promise.composeCatching(exceptionType, fallback);
+    }
+
+    public <X extends Throwable> UniPromise<V> composeCatchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback) {
+        return promise.composeCatchingAsync(exceptionType, fallback);
+    }
+
+    public <X extends Throwable> UniPromise<V> composeCatchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
+        return promise.composeCatchingAsync(exceptionType, fallback, ctx, options);
+    }
+
+    public <U> UniPromise<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeHandle(fn, ctx, options);
+    }
+
+    public <U> UniPromise<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn) {
+        return promise.composeHandle(fn);
+    }
+
+    public <U> UniPromise<U> composeHandleAsync(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn) {
+        return promise.composeHandleAsync(fn);
+    }
+
+    public <U> UniPromise<U> composeHandleAsync(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeHandleAsync(fn, ctx, options);
+    }
+
+    public <U> UniPromise<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.thenApply(fn, ctx, options);
+    }
+
+    public <U> UniPromise<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn) {
+        return promise.thenApply(fn);
+    }
+
+    public <U> UniPromise<U> thenApplyAsync(BiFunction<? super IContext, ? super V, ? extends U> fn) {
+        return promise.thenApplyAsync(fn);
+    }
+
+    public <U> UniPromise<U> thenApplyAsync(BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.thenApplyAsync(fn, ctx, options);
+    }
+
+    public UniPromise<Void> thenAccept(BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
+        return promise.thenAccept(action, ctx, options);
+    }
+
+    public UniPromise<Void> thenAccept(BiConsumer<? super IContext, ? super V> action) {
+        return promise.thenAccept(action);
+    }
+
+    public UniPromise<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super V> action) {
+        return promise.thenAcceptAsync(action);
+    }
+
+    public UniPromise<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
+        return promise.thenAcceptAsync(action, ctx, options);
+    }
+
+    public <U> UniPromise<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.thenCall(fn, ctx, options);
+    }
+
+    public <U> UniPromise<U> thenCall(Function<? super IContext, ? extends U> fn) {
+        return promise.thenCall(fn);
+    }
+
+    public <U> UniPromise<U> thenCallAsync(Function<? super IContext, ? extends U> fn) {
+        return promise.thenCallAsync(fn);
+    }
+
+    public <U> UniPromise<U> thenCallAsync(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.thenCallAsync(fn, ctx, options);
+    }
+
+    public UniPromise<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
+        return promise.thenRun(action, ctx, options);
+    }
+
+    public UniPromise<Void> thenRun(Consumer<? super IContext> action) {
+        return promise.thenRun(action);
+    }
+
+    public UniPromise<Void> thenRunAsync(Consumer<? super IContext> action) {
+        return promise.thenRunAsync(action);
+    }
+
+    public UniPromise<Void> thenRunAsync(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
+        return promise.thenRunAsync(action, ctx, options);
+    }
+
+    public <X extends Throwable> UniPromise<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
+        return promise.catching(exceptionType, fallback, ctx, options);
+    }
+
+    public <X extends Throwable> UniPromise<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
+        return promise.catching(exceptionType, fallback);
+    }
+
+    public <X extends Throwable> UniPromise<V> catchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
+        return promise.catchingAsync(exceptionType, fallback);
+    }
+
+    public <X extends Throwable> UniPromise<V> catchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
+        return promise.catchingAsync(exceptionType, fallback, ctx, options);
+    }
+
+    public <U> UniPromise<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.handle(fn, ctx, options);
+    }
+
+    public <U> UniPromise<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+        return promise.handle(fn);
+    }
+
+    public <U> UniPromise<U> handleAsync(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+        return promise.handleAsync(fn);
+    }
+
+    public <U> UniPromise<U> handleAsync(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.handleAsync(fn, ctx, options);
+    }
+
+    public UniPromise<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
+        return promise.whenComplete(action, ctx, options);
+    }
+
+    public UniPromise<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
+        return promise.whenComplete(action);
+    }
+
+    public UniPromise<V> whenCompleteAsync(TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
+        return promise.whenCompleteAsync(action);
+    }
+
+    public UniPromise<V> whenCompleteAsync(TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
+        return promise.whenCompleteAsync(action, ctx, options);
+    }
+
 
     // endregion
 }

@@ -211,222 +211,222 @@ public class ForwardFuture<V> implements IFuture<V> {
     // region stage
 
     @Override
-    public <U> ICompletionStage<U> composeApply(BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+    public <U> IFuture<U> composeApply(BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
         return future.composeApply(fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeApply(BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn) {
+    public <U> IFuture<U> composeApply(BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn) {
         return future.composeApply(fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn) {
+    public <U> IFuture<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn) {
         return future.composeApplyAsync(executor, fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+    public <U> IFuture<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
         return future.composeApplyAsync(executor, fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+    public <U> IFuture<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
         return future.composeCall(fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn) {
+    public <U> IFuture<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn) {
         return future.composeCall(fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn) {
+    public <U> IFuture<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn) {
         return future.composeCallAsync(executor, fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+    public <U> IFuture<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
         return future.composeCallAsync(executor, fn, ctx, options);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
+    public <X extends Throwable> IFuture<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
         return future.composeCatching(exceptionType, fallback, ctx, options);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback) {
+    public <X extends Throwable> IFuture<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback) {
         return future.composeCatching(exceptionType, fallback);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<V> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback) {
+    public <X extends Throwable> IFuture<V> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback) {
         return future.composeCatchingAsync(executor, exceptionType, fallback);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<V> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
+    public <X extends Throwable> IFuture<V> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
         return future.composeCatchingAsync(executor, exceptionType, fallback, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+    public <U> IFuture<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
         return future.composeHandle(fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn) {
+    public <U> IFuture<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn) {
         return future.composeHandle(fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn) {
+    public <U> IFuture<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn) {
         return future.composeHandleAsync(executor, fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+    public <U> IFuture<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
         return future.composeHandleAsync(executor, fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
+    public <U> IFuture<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
         return future.thenApply(fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn) {
+    public <U> IFuture<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn) {
         return future.thenApply(fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends U> fn) {
+    public <U> IFuture<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends U> fn) {
         return future.thenApplyAsync(executor, fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
+    public <U> IFuture<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
         return future.thenApplyAsync(executor, fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return future.thenCall(fn, ctx, options);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> thenCall(Function<? super IContext, ? extends U> fn) {
-        return future.thenCall(fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn) {
-        return future.thenCallAsync(executor, fn);
-    }
-
-    @Override
-    public <U> ICompletionStage<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return future.thenCallAsync(executor, fn, ctx, options);
-    }
-
-    @Override
-    public ICompletionStage<Void> thenAccept(BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
+    public IFuture<Void> thenAccept(BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
         return future.thenAccept(action, ctx, options);
     }
 
     @Override
-    public ICompletionStage<Void> thenAccept(BiConsumer<? super IContext, ? super V> action) {
+    public IFuture<Void> thenAccept(BiConsumer<? super IContext, ? super V> action) {
         return future.thenAccept(action);
     }
 
     @Override
-    public ICompletionStage<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super V> action) {
+    public IFuture<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super V> action) {
         return future.thenAcceptAsync(executor, action);
     }
 
     @Override
-    public ICompletionStage<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
+    public IFuture<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
         return future.thenAcceptAsync(executor, action, ctx, options);
     }
 
     @Override
-    public ICompletionStage<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
+    public <U> IFuture<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return future.thenCall(fn, ctx, options);
+    }
+
+    @Override
+    public <U> IFuture<U> thenCall(Function<? super IContext, ? extends U> fn) {
+        return future.thenCall(fn);
+    }
+
+    @Override
+    public <U> IFuture<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn) {
+        return future.thenCallAsync(executor, fn);
+    }
+
+    @Override
+    public <U> IFuture<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return future.thenCallAsync(executor, fn, ctx, options);
+    }
+
+    @Override
+    public IFuture<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
         return future.thenRun(action, ctx, options);
     }
 
     @Override
-    public ICompletionStage<Void> thenRun(Consumer<? super IContext> action) {
+    public IFuture<Void> thenRun(Consumer<? super IContext> action) {
         return future.thenRun(action);
     }
 
     @Override
-    public ICompletionStage<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action) {
+    public IFuture<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action) {
         return future.thenRunAsync(executor, action);
     }
 
     @Override
-    public ICompletionStage<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
+    public IFuture<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
         return future.thenRunAsync(executor, action, ctx, options);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
+    public <X extends Throwable> IFuture<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
         return future.catching(exceptionType, fallback, ctx, options);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
+    public <X extends Throwable> IFuture<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
         return future.catching(exceptionType, fallback);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<V> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
+    public <X extends Throwable> IFuture<V> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
         return future.catchingAsync(executor, exceptionType, fallback);
     }
 
     @Override
-    public <X extends Throwable> ICompletionStage<V> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
+    public <X extends Throwable> IFuture<V> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
         return future.catchingAsync(executor, exceptionType, fallback, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+    public <U> IFuture<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
         return future.handle(fn, ctx, options);
     }
 
     @Override
-    public <U> ICompletionStage<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+    public <U> IFuture<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
         return future.handle(fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+    public <U> IFuture<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
         return future.handleAsync(executor, fn);
     }
 
     @Override
-    public <U> ICompletionStage<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+    public <U> IFuture<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
         return future.handleAsync(executor, fn, ctx, options);
     }
 
     @Override
-    public ICompletionStage<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
+    public IFuture<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
         return future.whenComplete(action, ctx, options);
     }
 
     @Override
-    public ICompletionStage<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
+    public IFuture<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
         return future.whenComplete(action);
     }
 
     @Override
-    public ICompletionStage<V> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
+    public IFuture<V> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
         return future.whenCompleteAsync(executor, action);
     }
 
     @Override
-    public ICompletionStage<V> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
+    public IFuture<V> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
         return future.whenCompleteAsync(executor, action, ctx, options);
     }
 
