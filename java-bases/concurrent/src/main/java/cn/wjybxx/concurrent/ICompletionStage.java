@@ -25,6 +25,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -39,7 +40,10 @@ import java.util.function.Function;
  * 如果觉得总是通过提交任务保证线程有额外的开销，或者可能导致时序问题，可使用{@link TaskOption#STAGE_TRY_INLINE}选项，
  * Future在通知时，会判断是否已在目标线程，如果已在目标线程则同步执行，否则提交任务异步执行。
  * <p>
- * 注意！Async方法只保证给定的Action在目标线程执行，而不能保证其后续操作所在的线程。
+ * 注意:
+ * 1. Async方法只保证给定的Action在目标线程执行，而不能保证其后续操作所在的线程。<br>
+ * 2. 如果用于执行任务的Executor已关闭，则切换线程会失败，任务会以{@link RejectedExecutionException}失败<br>
+ *
  * <h3>小心Compose</h3>
  * Compose操作，最容易犯的错误是：认为{@code ComposeAsync}的下游任务在给定的Executor中执行。
  * Compose操作，不论是否是Async方法，都不能直接保证下游任务的执行线程；Compose操作的下游任务总是由使返回的Future进入完成状态的线程通知；

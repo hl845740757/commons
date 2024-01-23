@@ -2096,6 +2096,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 // UniWhenComplete与其它节点不同，需要保持相同的结果 -- 因此这里不处理取消
+                // 注意：如果异步执行的executor已关闭，则无法切换到目标线程执行
                 Object r = input.result;
                 try {
                     if (mode <= 0 && !claim()) {
@@ -2106,10 +2107,14 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     } else {
                         action.accept(output._ctx, input.decodeValue(r), null);
                     }
+                    setCompleted = output.completeRelay(r);
                 } catch (Throwable e) {
                     FutureLogger.logCause(e, "UniWhenComplete caught an exception");
-                } finally {
-                    setCompleted = output.completeRelay(r);
+                    if (e instanceof RejectedExecutionException) {
+                        setCompleted = output.trySetException(e);
+                    } else {
+                        setCompleted = output.completeRelay(r);
+                    }
                 }
             }
             // help gc
