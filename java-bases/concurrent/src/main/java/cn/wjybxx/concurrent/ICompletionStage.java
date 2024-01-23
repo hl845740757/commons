@@ -384,6 +384,8 @@ public interface ICompletionStage<T> {
      * 与方法{@link #handle(TriFunction)}不同，此方法不是为转换完成结果而设计的，因此提供的操作不应引发异常。<br>
      * 1.如果确实出现了异常，则仅仅记录一个日志，不向下传播(这里与JDK实现不同)。
      * 2.如果用户主动取消了返回的Future，则结果可能不同。
+     * 3.异步情况下，如果目标Executor已开始关闭，则结果可能不同。
+     * 4.建议whenComplete用在链的末尾，不要传递返回的Future给其它对象，否则可能导致安全问题。
      * <p>
      * {@link CompletionStage#whenComplete(BiConsumer)}
      *

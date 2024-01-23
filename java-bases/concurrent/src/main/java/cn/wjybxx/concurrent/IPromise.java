@@ -73,7 +73,6 @@ public interface IPromise<T> extends IFuture<T> {
      */
     void setException(Throwable cause);
 
-
     /**
      * 将Future置为已取消状态，如果future已进入完成状态，则返回false
      *

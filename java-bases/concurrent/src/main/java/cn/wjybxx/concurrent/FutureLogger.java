@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 
 /**
  * 该类用于打印并发库中的错误日志
@@ -105,8 +106,10 @@ public final class FutureLogger {
         if (x == null) {
             return false;
         }
-        return !(x instanceof NoLogRequiredException)
-                && !(x instanceof CancellationException)
+        // 并发中的正常异常都不打印
+        return !(x instanceof CancellationException)
+                && !(x instanceof TimeoutException)
+                && !(x instanceof NoLogRequiredException)
                 && !noLogRequiredExceptions.contains(x.getClass());
     }
 
@@ -141,7 +144,7 @@ public final class FutureLogger {
         }
     }
 
-    /** 该handler只应该处理日志 */
+    /** 该handler只应该输出日志 */
     @FunctionalInterface
     public interface LogHandler {
 

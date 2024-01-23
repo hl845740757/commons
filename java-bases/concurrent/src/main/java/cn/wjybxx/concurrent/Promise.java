@@ -2091,17 +2091,25 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             boolean setCompleted;
             tryComplete:
             {
-                if (output.isDone()) { // 用户取消可能导致与上游结果不同
+                // 用户取消或目标executor已关闭，可能导致与上游结果不同
+                if (output.isDone()) {
                     setCompleted = false;
                     break tryComplete;
                 }
-                // UniWhenComplete与其它节点不同，需要保持相同的结果 -- 因此这里不处理取消
-                // 注意：如果异步执行的executor已关闭，则无法切换到目标线程执行
-                Object r = input.result;
+                if (output._ctx.cancelToken().isCancelling()) {
+                    setCompleted = output.completeCancelled();
+                    break tryComplete;
+                }
                 try {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
+                } catch (Throwable ex) {
+                    setCompleted = output.trySetException(ex);
+                    break tryComplete;
+                }
+                Object r = input.result;
+                try {
                     if (r instanceof AltResult altResult) {
                         action.accept(output._ctx, null, altResult.cause);
                     } else {
@@ -2110,11 +2118,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = output.completeRelay(r);
                 } catch (Throwable e) {
                     FutureLogger.logCause(e, "UniWhenComplete caught an exception");
-                    if (e instanceof RejectedExecutionException) {
-                        setCompleted = output.trySetException(e);
-                    } else {
-                        setCompleted = output.completeRelay(r);
-                    }
+                    setCompleted = output.completeRelay(r);
                 }
             }
             // help gc
