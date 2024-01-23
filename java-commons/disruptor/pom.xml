@@ -3,23 +3,17 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>cn.wjybxx.commons</groupId>
+        <artifactId>commons-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
 
-    <groupId>cn.wjybxx.commons</groupId>
-    <artifactId>commons-parent</artifactId>
-    <version>${revision}</version>
-    <packaging>pom</packaging>
+    <groupId>cn.wjybxx.disruptor</groupId>
+    <artifactId>disruptor</artifactId>
 
-    <name>Bases-Parent</name>
-    <description>Wjybxx.Commons</description>
-    <url>https://github.com/hl845740757/commons</url>
-
-    <modules>
-        <module>agent</module>
-        <module>base</module>
-        <module>apt-base</module>
-        <module>disruptor</module>
-        <module>concurrent</module>
-    </modules>
+    <description>Improved Disruptor</description>
+    <url>https://github.com/hl845740757/disruptor2</url>
 
     <!-- 证书 -->
     <licenses>
@@ -32,13 +26,13 @@
     <!-- 供应者信息 -->
     <scm>
         <url>https://github.com/hl845740757/commons</url>
-        <connection>scm:git:https://github.com/hl845740757/commons.git</connection>
+        <connection>scm:git:https://github.com/hl845740757/disruptor2.git</connection>
         <developerConnection>https://github.com/hl845740757</developerConnection>
     </scm>
     <!-- issue -->
     <issueManagement>
         <system>Github Issue</system>
-        <url>https://github.com/hl845740757/commons/issues</url>
+        <url>https://github.com/hl845740757/disruptor2/issues</url>
     </issueManagement>
     <!-- 开发者信息 -->
     <developers>
@@ -51,56 +45,14 @@
     </developers>
 
     <properties>
-        <revision>1.0.2</revision>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
-        <!-- 父模块不发布，子模块需要变更为false，不好使... -->
-        <maven.deploy.skip>true</maven.deploy.skip>
-
-        <!-- 基础依赖-->
-        <slf4j.version>2.0.9</slf4j.version>
-        <jsr305.version>3.0.2</jsr305.version>
-        <logback.version>1.4.14</logback.version>
-        <junit.version>5.10.1</junit.version>
-
-        <!-- 子模块依赖 -->
-        <javapoet.version>1.13.0</javapoet.version>
-        <fastutil.version>8.5.12</fastutil.version>
-        
-		<commons-lang3.version>3.14.0</commons-lang3.version>
-        <commons-io.version>2.15.1</commons-io.version>
-        <commons-codec.version>1.16.0</commons-codec.version>		
-		<guava.version>33.0.0-jre</guava.version>
     </properties>
 
-    <!-- 基础依赖/全局依赖 -->
     <dependencies>
-        <!-- 测试依赖 -->
-        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-
         <!-- https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305 -->
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
@@ -111,32 +63,6 @@
 
     <build>
         <plugins>
-            <!-- 模块版本同步 -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.5.0</version>
-                <configuration>
-                    <updatePomFile>true</updatePomFile>
-                    <flattenMode>oss</flattenMode>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>flatten</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>flatten</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>flatten.clean</id>
-                        <phase>clean</phase>
-                        <goals>
-                            <goal>clean</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <!-- 指定参数-parameters，否则test目录下文件编译异常 -->
             <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
             <plugin>
@@ -228,6 +154,9 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-deploy-plugin</artifactId>
                         <version>3.1.0</version>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>

@@ -5,20 +5,17 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>cn.wjybxx.commons</groupId>
-    <artifactId>commons-parent</artifactId>
+    <artifactId>tools-parent</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
 
-    <name>Bases-Parent</name>
+    <name>Commons-Parent</name>
     <description>Wjybxx.Commons</description>
     <url>https://github.com/hl845740757/commons</url>
 
     <modules>
-        <module>agent</module>
-        <module>base</module>
-        <module>apt-base</module>
-        <module>disruptor</module>
-        <module>concurrent</module>
+        <module>core</module>
+        <module>mongo</module>
     </modules>
 
     <!-- 证书 -->
@@ -50,14 +47,15 @@
         </developer>
     </developers>
 
+    <!-- 基础依赖/全局依赖 -->
     <properties>
-        <revision>1.0.2</revision>
+        <revision>1.0.rc1</revision>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
-        <!-- 父模块不发布，子模块需要变更为false，不好使... -->
+        <!-- 父模块不发布，子模块需要变更为false -->
         <maven.deploy.skip>true</maven.deploy.skip>
 
         <!-- 基础依赖-->
@@ -67,25 +65,37 @@
         <junit.version>5.10.1</junit.version>
 
         <!-- 子模块依赖 -->
-        <javapoet.version>1.13.0</javapoet.version>
+        <base.version>1.0.2</base.version>
+        <dson.version>1.4.rc1</dson.version>
+
         <fastutil.version>8.5.12</fastutil.version>
-        
-		<commons-lang3.version>3.14.0</commons-lang3.version>
+        <commons-lang3.version>3.14.0</commons-lang3.version>
         <commons-io.version>2.15.1</commons-io.version>
-        <commons-codec.version>1.16.0</commons-codec.version>		
-		<guava.version>33.0.0-jre</guava.version>
+        <commons-codec.version>1.16.0</commons-codec.version>
+
+        <guava.version>33.0.0-jre</guava.version>
+        <guice.version>7.0.0</guice.version>
+        <pb.version>3.25.1</pb.version>
+
+        <bson.version>4.10.2</bson.version>
+        <javapoet.version>1.13.0</javapoet.version>
     </properties>
 
-    <!-- 基础依赖/全局依赖 -->
     <dependencies>
-        <!-- 测试依赖 -->
+        <!-- https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305 -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>${jsr305.version}</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
-            <scope>test</scope>
         </dependency>
+
+        <!-- 测试依赖 -->
         <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -100,14 +110,8 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305 -->
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>${jsr305.version}</version>
-        </dependency>
     </dependencies>
+
 
     <build>
         <plugins>
@@ -228,6 +232,9 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-deploy-plugin</artifactId>
                         <version>3.1.0</version>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
