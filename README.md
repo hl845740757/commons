@@ -42,12 +42,11 @@ ps：不引入commons-lang3和guava，是因为这些基础库的类文件实在
 
 ### disruptor模块
 
-为了解决Disruptor的一些问题，重写了LMAX的Disruotor，实现了自己的版本。我的版本少了许多不必要的抽象，
-也拥有更好更容易理解的抽象。
+为了解决Disruptor的一些问题，重写了LMAX的Disruptor，实现了自己的版本。我的版本少了许多不必要的抽象，
+也拥有更好更容易理解的抽象 -- 后面可能发布为单独的库。
 
 ### concurrent模块
 
-1. 重写了Disruptor框架，修正了LMAX的一些设计，更容易理解和使用 -- 后面可能发布为单独的库。
-2. 重写了Future和Promise，优化了死锁检测和上下文传递的问题。
-3. 得益于新的Disruptor框架，EventLoop无需因为队列的问题而重复实现。
+1. 重写了Future和Promise，优化了死锁检测和上下文传递的问题。
+2. 得益于新的Disruptor框架，EventLoop无需因为队列的问题而重复实现。
 
