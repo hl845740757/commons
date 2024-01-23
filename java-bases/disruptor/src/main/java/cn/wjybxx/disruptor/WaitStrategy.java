@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2024 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,15 +30,18 @@ public interface WaitStrategy {
      * 等待给定的序号可用
      * 实现类通过{@link ProducerBarrier#sequence()}}和{@link ConsumerBarrier#dependentSequence()}进行等待。
      *
-     * @param sequence  期望生产或消费的序号
-     * @param sequencer 序号生成器，用于条件等待策略依赖策略感知生产者进度，以及获取{@link SequenceBlocker}。
-     * @param barrier   序号屏障 - 用于检测终止信号和查询依赖等。
+     * @param sequence        期望生产或消费的序号
+     * @param producerBarrier 用于条件等待策略依赖策略感知生产者进度
+     * @param blocker         用于条件等待策略阻塞等待生产者
+     * @param barrier         序号屏障 - 用于检测终止信号和查询依赖等。
      * @return 当前可用的序号
      * @throws AlertException       if a status change has occurred for the Disruptor
      * @throws InterruptedException if the thread needs awaking on a condition variable.
      * @throws TimeoutException     if a timeout occurs while waiting for the supplied sequence.
      */
-    long waitFor(long sequence, Sequencer sequencer, ConsumerBarrier barrier)
-            throws AlertException, InterruptedException, TimeoutException;
+    long waitFor(long sequence,
+                 ProducerBarrier producerBarrier,
+                 SequenceBlocker blocker,
+                 ConsumerBarrier barrier) throws AlertException, InterruptedException, TimeoutException;
 
 }

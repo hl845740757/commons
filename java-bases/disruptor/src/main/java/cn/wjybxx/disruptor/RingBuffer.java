@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2024 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import java.util.stream.Stream;
 
 abstract class RingBufferPad {
 
-    private long p1, p2, p3, p4, p5, p6, p7;
-    private long p8, p9, p10, p11, p12, p13, p14, p15;
+    private long p1, p2, p3, p4, p5, p6, p7, p8;
+    private long p9, p10, p11, p12, p13, p14, p15;
 }
 
 abstract class RingBufferFields<E> extends RingBufferPad {
@@ -97,8 +97,8 @@ abstract class RingBufferFields<E> extends RingBufferPad {
  */
 public final class RingBuffer<E> extends RingBufferFields<E> implements DataProvider<E> {
 
-    private long p1, p2, p3, p4, p5, p6, p7;
-    private long p8, p9, p10, p11, p12, p13, p14, p15;
+    private long p1, p2, p3, p4, p5, p6, p7, p8;
+    private long p9, p10, p11, p12, p13, p14, p15, p16;
 
     public RingBuffer(EventFactory<? extends E> eventFactory, int bufferSize) {
         super(eventFactory, bufferSize);

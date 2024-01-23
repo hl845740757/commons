@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2024 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,12 +44,11 @@ public class TimeoutBlockingWaitStrategy implements WaitStrategy {
     }
 
     @Override
-    public long waitFor(long sequence, Sequencer sequencer, ConsumerBarrier barrier)
+    public long waitFor(long sequence, ProducerBarrier producerBarrier, SequenceBlocker blocker, ConsumerBarrier barrier)
             throws AlertException, InterruptedException, TimeoutException {
 
+        Objects.requireNonNull(blocker, "blocker is null");
         long nanos = timeoutInNanos;
-        SequenceBlocker blocker = Objects.requireNonNull(sequencer.getBlocker());
-        ProducerBarrier producerBarrier = sequencer.getProducerBarrier();
         // 先通过条件锁等待生产者发布数据
         long availableSequence;
         // 阻塞式等待生产者

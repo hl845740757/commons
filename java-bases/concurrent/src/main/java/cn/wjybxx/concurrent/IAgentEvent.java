@@ -34,7 +34,9 @@ public interface IAgentEvent {
 
     /**
      * 设置事件的类型
-     * 注意：应当慎用负数类型，否则可能导致{@link EventLoop}异常
+     *
+     * @apiNote 应当慎用负数类型，否否则可能影响事件循环的工作。
+     * @implNote 由于clean的存在，用户忘记赋值的情况下仍然可能为 -1，事件循环的实现者需要注意
      */
     void setType(int type);
 
@@ -50,7 +52,10 @@ public interface IAgentEvent {
      */
     Runnable castObj0ToRunnable();
 
-    /** 清理事件的引用数据 -- 避免内存泄漏 */
+    /**
+     * 清理事件的引用数据 -- 避免内存泄漏
+     * ps:事件循环每处理完事件就会调用该方法以避免内存泄漏
+     */
     void clean();
 
     /** 清理事件的所有数据 -- 基础值也重置 */

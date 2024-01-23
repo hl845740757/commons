@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2024 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.concurrent.TimeoutException;
 public class BusySpinWaitStrategy implements WaitStrategy {
 
     @Override
-    public long waitFor(long sequence, Sequencer sequencer, ConsumerBarrier barrier)
+    public long waitFor(long sequence, ProducerBarrier producerBarrier, SequenceBlocker blocker, ConsumerBarrier barrier)
             throws AlertException, InterruptedException, TimeoutException {
 
         long availableSequence;

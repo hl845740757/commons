@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2024 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.util.concurrent.locks.LockSupport;
 /**
  * 多生产者模型下的序号生成器
  * <p>
- * 注意: 使用该序号生成器时，在调用{@link WaitStrategy#waitFor(long, Sequencer, ConsumerBarrier)}
+ * 注意: 使用该序号生成器时，在调用{@link WaitStrategy#waitFor(long, ProducerBarrier, SequenceBlocker, ConsumerBarrier)}
  * 后必须调用{@link ProducerBarrier#getHighestPublishedSequence(long, long)}
  * 确定真正可用的序号。因为多生产者模型下，生产者之间是无锁的，预分配序号，那么真正填充的数据可能是非连续的。
  * <p>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2024 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ package cn.wjybxx.disruptor;
  * <p>
  * 1. 组可以单线程的或多线程的，外部不关注；外部只关注其关联的屏障{@link ConsumerBarrier}。
  * 2. 屏障负责管理进度信息，消费者负责真正的消费。
+ * 3. 该接口只是一个示例实现，Barrier并没有依赖该接口 -- 依赖是反转的。
  *
  * @author wjybxx
  * date - 2024/1/18

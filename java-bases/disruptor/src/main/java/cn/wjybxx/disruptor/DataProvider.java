@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2024 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public interface DataProvider<T> {
 
     /**
      * 该接口用于消费者覆盖数据(通常用于删除数据)
-     * 1.当使用无界队列需要即使清理内存时使用。
+     * 1.当使用无界队列需要即时清理内存时使用。
      * 2.set不提供特殊的内存语义，因此只应该由末尾的消费者调用
      */
     void consumerSet(long sequence, T data);

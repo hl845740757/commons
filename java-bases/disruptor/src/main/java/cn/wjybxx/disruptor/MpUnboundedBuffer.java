@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2024 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -420,11 +420,9 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
      * @return 是否成功触发回收
      */
     public boolean tryMoveHeadToNext(long gatingSequence) {
-        // 注意：不可以回收生产者当前块，否则会导致生产者append产生竞争
         MpUnboundedBufferChunk<E> headChunk = lvHeadChunk();
         MpUnboundedBufferChunk<E> producerChunk = lvProducerChunk();
-        if (gatingSequence < headChunk.maxSequence()
-                || headChunk.lvChunkIndex() >= producerChunk.lvChunkIndex()) { // ROTATION is ok
+        if (!isRecyclable(gatingSequence, headChunk, producerChunk)) {
             return false;
         }
         if (!tryLockHead()) {
@@ -433,16 +431,14 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         // 注意：在竞争lock成功后，head可能是过期的！必须重新检查回收条件 -- 这期间producerChunk的索引不会变化
         headChunk = lvHeadChunk();
         producerChunk = lvProducerChunk();
-        if (gatingSequence < headChunk.maxSequence()
-                || headChunk.lvChunkIndex() >= producerChunk.lvChunkIndex()) {
+        if (!isRecyclable(gatingSequence, headChunk, producerChunk)) {
             unlockHead();
             return false;
         }
         // 注意：观察到的消费者序号可能跨越了多个块，因此可能需要回收多个块
         MpUnboundedBufferChunk<E> nextChunk = headChunk.lvNext();
         nextChunk.soPrev(null);
-        while (gatingSequence >= nextChunk.maxSequence()
-                && nextChunk.lvChunkIndex() < producerChunk.lvChunkIndex()) {
+        while (isRecyclable(gatingSequence, nextChunk, producerChunk)) {
             nextChunk = nextChunk.lvNext();
             nextChunk.soPrev(null);
         }
@@ -488,6 +484,12 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         }
         unlockHead();
         return true;
+    }
+
+    private static <E> boolean isRecyclable(long gatingSequence, MpUnboundedBufferChunk<E> chunk, MpUnboundedBufferChunk<E> producerChunk) {
+        // 不可以回收生产者当前块，否则会导致生产者append产生竞争
+        return gatingSequence >= chunk.maxSequence()
+                && chunk.lvChunkIndex() < producerChunk.lvChunkIndex(); // ROTATION is ok
     }
 
 }

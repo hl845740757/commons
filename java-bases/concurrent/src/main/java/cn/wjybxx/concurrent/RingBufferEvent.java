@@ -60,10 +60,6 @@ public final class RingBufferEvent implements IAgentEvent {
         this.obj2 = src.obj2;
     }
 
-    /**
-     * 清除所有的对象引用
-     * 事件循环每处理完事件就会调用该方法以避免内存泄漏
-     */
     public void clean() {
         type = TYPE_INVALID;
         obj0 = null;
@@ -71,7 +67,6 @@ public final class RingBufferEvent implements IAgentEvent {
         obj2 = null;
     }
 
-    /** 清理所有数据 */
     public void cleanAll() {
         clean();
         intVal1 = 0;
@@ -85,12 +80,6 @@ public final class RingBufferEvent implements IAgentEvent {
         return type;
     }
 
-    /**
-     * 用户不可以发布负类型的事件，否则可能影响事件循环的工作
-     * <p>
-     * 1.如果用户发布 0 类型事件，则必须赋值{@link #obj0}
-     * 2.注意：虽然开放接口约定事件类型必须大于等于0，但由于clean的存在，用户忘记赋值的情况下仍然可能为 -1，事件循环的实现者需要注意。
-     */
     @Override
     public void setType(int type) {
         this.type = type;

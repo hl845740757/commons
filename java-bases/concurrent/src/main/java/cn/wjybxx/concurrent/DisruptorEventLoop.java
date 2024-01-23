@@ -131,12 +131,12 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     // region 状态查询
 
     @Override
-    public EventLoopState state() {
+    public final EventLoopState state() {
         return EventLoopState.valueOf(state);
     }
 
     @Override
-    public boolean isRunning() {
+    public final boolean isRunning() {
         return state == EventLoopState.ST_RUNNING;
     }
 
@@ -166,7 +166,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     }
 
     @Override
-    public IFuture<?> runningFuture() {
+    public final IFuture<?> runningFuture() {
         return runningFuture.asReadonly();
     }
 
@@ -271,8 +271,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 try {
                     @SuppressWarnings("unchecked") EventTranslator<? super T> translator = (EventTranslator<? super T>) task;
                     translator.translateTo(event, sequence);
-                } catch (Throwable e) {
-                    logger.warn("translateTo caught exception", e);
+                } catch (Throwable ex) {
+                    logger.warn("translateTo caught exception", ex);
                 }
             } else {
                 event.setType(0);
@@ -431,17 +431,13 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         if (!runningFuture.isDone()) {
             runningFuture.trySetException(new StartFailedException("Shutdown"));
         }
-
         int expectedState = state;
         for (; ; ) {
             if (expectedState >= EventLoopState.ST_SHUTTING_DOWN) {
-                // 已被其它线程关闭
                 return;
             }
-
             int realState = compareAndExchangeState(expectedState, EventLoopState.ST_SHUTTING_DOWN);
             if (realState == expectedState) {
-                // CAS成功，当前线程负责了关闭
                 ensureThreadTerminable(expectedState);
                 return;
             }
@@ -555,7 +551,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                     if (cleanBufferOnExit) {
                         cleanBuffer();
                     }
-                    scheduledTaskQueue.clear();
+                    scheduledTaskQueue.clearIgnoringIndexes();
                 } finally {
                     removeFromGatingBarriers();
                     // 标记为已进入最终清理阶段
@@ -565,7 +561,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                     try {
                         agent.onShutdown();
                     } catch (Throwable e) {
-                        logger.error("thread clean caught exception!", e);
+                        logger.error("thread exit caught exception!", e);
                     } finally {
                         // 设置为终止状态
                         state = EventLoopState.ST_TERMINATED;
@@ -581,36 +577,37 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
 
             final Sequence sequence = this.sequence;
             long nextSequence = sequence.getVolatile() + 1L;
-            long availableSequence;
-            long batchEndSequence;
+            long availableSequence = -1;
 
             // 不使用while(true)避免有大量任务堆积的时候长时间无法退出
             while (!isShuttingDown()) {
-                nanoTime = System.nanoTime();
                 try {
-                    // 等待生产者生产数据
-                    availableSequence = sequenceBarrier.waitFor(nextSequence);
+                    nanoTime = System.nanoTime();
+                    processScheduledQueue(nanoTime, taskBatchSize, false);
 
                     // 多生产者模型下不可频繁调用waitFor，会在查询可用sequence时产生巨大的开销，因此查询之后本地切割为小批次，避免用户循环得不到执行
-                    while (nextSequence <= availableSequence) {
-                        nanoTime = System.nanoTime();
-                        processScheduledQueue(nanoTime, taskBatchSize, false);
+                    if (availableSequence < nextSequence) {
+                        availableSequence = sequenceBarrier.waitFor(nextSequence);
+                    }
 
-                        batchEndSequence = Math.min(availableSequence, nextSequence + taskBatchSize - 1);
-                        nextSequence = runTaskBatch(nextSequence, batchEndSequence) + 1;
-                        sequence.setRelease(nextSequence - 1);
+                    long batchEndSequence = Math.min(availableSequence, nextSequence + taskBatchSize - 1);
+                    if (nextSequence <= batchEndSequence) {
+                        long curSequence = runTaskBatch(nextSequence, batchEndSequence);
+                        sequence.setRelease(curSequence);
 
-                        if (nextSequence != batchEndSequence + 1) { // 未消费完毕，应当是开始退出了
-                            assert isShuttingDown();
+                        nextSequence = curSequence + 1;
+                        if (nextSequence <= batchEndSequence) {
+                            assert isShuttingDown(); // 未消费完毕，应当是开始退出了
                             break;
                         }
-                        invokeAgentUpdate();
                     }
+
+                    invokeAgentUpdate();
                 } catch (AlertException | InterruptedException e) {
-                    // 请求了关闭 -- BatchEventProcessor实现中并没有处理等待过程中的中断异常
                     if (isShuttingDown()) {
                         break;
                     }
+                    logger.warn("receive a confusing signal", e);
                 } catch (TimeoutException e) {
                     // 优先先响应关闭，若未关闭，表用户主动退出等待，执行一次用户循环
                     if (isShuttingDown()) {
@@ -631,9 +628,9 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 agent.update();
             } catch (Throwable t) {
                 if (t instanceof VirtualMachineError) {
-                    logger.error("loopOnce caught exception", t);
+                    logger.error("agent.update caught exception", t);
                 } else {
-                    logger.warn("loopOnce caught exception", t);
+                    logger.warn("agent.update caught exception", t);
                 }
             }
         }
@@ -646,7 +643,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
          * @param shuttingDownMode 是否是退出模式
          */
         private void processScheduledQueue(long tickTime, int limit, boolean shuttingDownMode) {
-            final DisruptorEventLoop eventLoop = DisruptorEventLoop.this;
+            final DisruptorEventLoop<T> eventLoop = DisruptorEventLoop.this;
             final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue = eventLoop.scheduledTaskQueue;
 
             long count = 0;
@@ -670,7 +667,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         queueTask.cancelWithoutRemove();
                     }
                 } else {
-                    // 非关闭模式下，检测批处理限制 -- 这里暂不响应关闭
+                    // 非关闭模式下，检测批处理限制 -- 这里暂不响应关闭；高优先级任务必须执行，否则可能导致时序错误
                     count++;
                     if (queueTask.trigger(tickTime)) {
                         taskQueue.offer(queueTask);
@@ -702,14 +699,14 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                     }
                 } catch (Throwable t) {
                     logCause(t);
-                    if (t instanceof InterruptedException && isShuttingDown()) {
-                        return curSequence; // 响应关闭，避免丢失中断信号
+                    if (isShuttingDown()) { // 可能是中断或Alert，检查关闭信号
+                        return curSequence;
                     }
                 } finally {
                     event.clean();
                 }
 
-                // 避免长时间不发布sequence阻塞生产者，最后一个sequence外部发布
+                // 避免长时间不发布sequence阻塞生产者，每消费一批就发布一次sequence
                 if (((curSequence - batchBeginSequence) & BATCH_PUBLISH_THRESHOLD) == 0
                         && curSequence < batchEndSequence) {
                     sequence.setRelease(curSequence);
