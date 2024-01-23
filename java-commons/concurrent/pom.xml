@@ -8,7 +8,10 @@
         <artifactId>commons-parent</artifactId>
         <version>${revision}</version>
     </parent>
+    
     <artifactId>concurrent</artifactId>
+    <name>Concurrent</name>
+    <description>并发工具包，更好的Future和EventLoop</description>
 
     <properties>
         <maven.deploy.skip>false</maven.deploy.skip>
