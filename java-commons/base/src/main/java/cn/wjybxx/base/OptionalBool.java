@@ -41,7 +41,9 @@ public enum OptionalBool implements EnumLite {
 
     //
     public static OptionalBool valueOf(Boolean value) {
-        if (value == null) return EMPTY;
+        if (value == null) {
+            return EMPTY;
+        }
         return value ? TRUE : FALSE;
     }
 

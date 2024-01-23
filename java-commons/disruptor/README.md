@@ -3,7 +3,7 @@
 我为了统一抽象，以及解决Disruptor的一些问题，参考了Disruptor的一些设计实现了自己的版本。我的版本少了许多不必要的抽象，
 也拥有更好更容易理解的抽象。
 
-先上架构图：![Disruptor架构图](https://github.com/hl845740757/commons/blob/dev/doc/res/MyDisruptor.png)
+先上架构图：![Disruptor架构图](https://github.com/hl845740757/commons/blob/dev/docs/res/MyDisruptor.png)
 
 ### 与LMAX的Disruptor差异
 

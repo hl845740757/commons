@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.common.mongo;
+package cn.wjybxx.mongo.codec;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;

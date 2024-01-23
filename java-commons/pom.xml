@@ -9,7 +9,7 @@
     <version>${revision}</version>
     <packaging>pom</packaging>
 
-    <name>Bases-Parent</name>
+    <name>Commons-Parent</name>
     <description>Wjybxx.Commons</description>
     <url>https://github.com/hl845740757/commons</url>
 
@@ -19,6 +19,7 @@
         <module>apt-base</module>
         <module>disruptor</module>
         <module>concurrent</module>
+        <module>mongo-codec</module>
     </modules>
 
     <!-- 证书 -->
@@ -74,6 +75,8 @@
         <commons-io.version>2.15.1</commons-io.version>
         <commons-codec.version>1.16.0</commons-codec.version>		
 		<guava.version>33.0.0-jre</guava.version>
+
+        <bson.version>4.11.1</bson.version>
     </properties>
 
     <!-- 基础依赖/全局依赖 -->

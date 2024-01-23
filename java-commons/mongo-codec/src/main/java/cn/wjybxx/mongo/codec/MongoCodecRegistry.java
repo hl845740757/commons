@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.common.mongo;
+package cn.wjybxx.mongo.codec;
 
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistries;
@@ -40,8 +40,9 @@ public class MongoCodecRegistry implements CodecRegistry {
             adapterList.add(new MongoCodecAdapter<>(this, mongoCodec));
         }
         CodecRegistry customCodecRegistry = CodecRegistries.fromCodecs(adapterList);
-        if (builder.moreCodecRegistries.size() > 0) {
-            ArrayList<CodecRegistry> codecRegistries = new ArrayList<>(builder.moreCodecRegistries.size() + 1);
+        int size = builder.moreCodecRegistries.size();
+        if (size > 0) {
+            ArrayList<CodecRegistry> codecRegistries = new ArrayList<>(size + 1);
             codecRegistries.addAll(builder.moreCodecRegistries);
             codecRegistries.add(customCodecRegistry);
             delegated = CodecRegistries.fromRegistries(codecRegistries);
