@@ -105,6 +105,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         this.rejectedExecutionHandler = Objects.requireNonNull(builder.getRejectedExecutionHandler());
         this.agent = Objects.requireNonNullElse(builder.getAgent(), EmptyAgent.getInstance());
         this.mainModule = builder.getMainModule();
+
         this.cleanBufferOnExit = builder.isCleanBufferOnExit();
         if (cleanBufferOnExit && eventSequencer instanceof MpUnboundedEventSequencer<?> mpUnboundedEventSequencer) {
             this.mpUnboundedEventSequencer = mpUnboundedEventSequencer;

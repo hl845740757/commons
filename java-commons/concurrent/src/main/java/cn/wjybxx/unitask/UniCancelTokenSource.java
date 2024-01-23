@@ -83,29 +83,42 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         return this;
     }
 
-    /** 删除监听器 -- 正向查找删除 */
-    public boolean unregisterFirst(Object listener) {
-        CallbackNode node = this.head;
-        while ((node != null)) {
-            if (node.action == listener) {
-                removeNode(node);
-                return true;
-            }
-            node = node.next;
-        }
-        return false;
+    /**
+     * 删除监听器
+     * 通常而言逆向查找更容易匹配：Task的停止顺序通常和Task的启动顺序相反，因此后注册的监听器会先删除。
+     * 因此默认逆向查找匹配的监听器。
+     *
+     * @param listener 监听器引用
+     */
+    public boolean unregister(Object listener) {
+        return unregister(listener, false);
     }
 
-    /** 删除监听器 -- 默认情况下逆序查找以提高效率 */
-    public boolean unregister(Object listener) {
-        // 逆向查找更容易匹配 -- 与Task的启动顺序和停止顺序相关
-        CallbackNode node = this.tail;
-        while ((node != null)) {
-            if (node.action == listener) {
-                removeNode(node);
-                return true;
+    /**
+     * 删除监听器
+     *
+     * @param listener        监听器引用
+     * @param firstOccurrence 是否正向删除
+     */
+    public boolean unregister(Object listener, boolean firstOccurrence) {
+        if (firstOccurrence) {
+            CallbackNode node = this.head;
+            while ((node != null)) {
+                if (node.action == listener) {
+                    removeNode(node);
+                    return true;
+                }
+                node = node.next;
             }
-            node = node.prev;
+        } else {
+            CallbackNode node = this.tail;
+            while ((node != null)) {
+                if (node.action == listener) {
+                    removeNode(node);
+                    return true;
+                }
+                node = node.prev;
+            }
         }
         return false;
     }

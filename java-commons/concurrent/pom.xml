@@ -21,9 +21,9 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>cn.wjybxx.disruptor</groupId>
+            <groupId>cn.wjybxx.commons</groupId>
             <artifactId>disruptor</artifactId>
-            <version>${project.version}</version>
+            <version>${mydisruptor.verion}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
