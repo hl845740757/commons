@@ -63,14 +63,8 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     public CancelTokenSource(int code) {
         if (code != 0) {
-            checkCode(code);
+            ICancelToken.checkCode(code);
             VH_CODE.setRelease(this, code);
-        }
-    }
-
-    private static void checkCode(int code) {
-        if (ICancelToken.reason(code) == 0) {
-            throw new IllegalArgumentException("reason == 0");
         }
     }
 
@@ -91,7 +85,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
      */
     @Override
     public int cancel(int cancelCode) {
-        checkCode(cancelCode);
+        ICancelToken.checkCode(cancelCode);
         int preCode = internalCancel(cancelCode);
         if (preCode != 0) {
             return preCode;
@@ -375,7 +369,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     // endregion
 
-    // region
+    // region internal
 
     private static final VarHandle VH_CODE;
     private static final VarHandle VH_STACK;
@@ -391,7 +385,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
             throw new ExceptionInInitializerError(e);
         }
     }
-    // endregion
 
     /** {@link #register(Consumer)} */
     private static final int TYPE_CONSUMER = 0;
@@ -511,5 +504,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
             }
         }
     }
+    // endregion
 
 }

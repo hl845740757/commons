@@ -31,9 +31,8 @@ import java.util.function.Consumer;
  * <h3>实现说明</h3>
  * 1. 去除了{@link #code}等的volatile操作，变更为普通字段。
  * 2. 默认时间单位为毫秒。
- * 3. 增加了重置状态的方法 -- 这对行为树这里应用非常有效。
- * <p>
- * TODO 实现为双向链表，更高效的删除
+ * 3. 增加了重置状态的方法 -- 这对行为树这类应用非常有效。
+ * 4. 去除了递归通知的优化 -- 单线程下我们需要支持用户通过监听器引用取消注册；另外，我们假设子token的情况很少。
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -47,41 +46,75 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
      * - 非0表示收到取消信号
      */
     private int code;
-    /**
-     * 当前对象上的所有监听器，使用栈方式存储
-     * 如果{@code stack}为{@link #TOMBSTONE}，表明当前Future已完成，且正在进行通知，或已通知完毕。
-     */
-    private CallbackNode stack;
+
+    /** 监听器的首部 */
+    private CallbackNode head;
+    /** 监听器的尾部 */
+    private CallbackNode tail;
 
     /** 用户线程 -- 如果为null，将禁止延迟取消操作 */
-    private final UniScheduledExecutor executor;
+    private UniScheduledExecutor executor;
 
     public UniCancelTokenSource() {
-        executor = null;
+        this.executor = null;
     }
 
     public UniCancelTokenSource(UniScheduledExecutor executor) {
         this.executor = executor;
     }
 
+    public UniCancelTokenSource(int code) {
+        this(null, code);
+    }
+
     public UniCancelTokenSource(UniScheduledExecutor executor, int code) {
         this.executor = executor;
         if (code != 0) {
-            checkCode(code);
-            this.code = code;
+            this.code = ICancelToken.checkCode(code);
         }
     }
 
-    private static void checkCode(int code) {
-        if (ICancelToken.reason(code) == 0) {
-            throw new IllegalArgumentException("reason == 0");
+    public UniScheduledExecutor getExecutor() {
+        return executor;
+    }
+
+    public UniCancelTokenSource setExecutor(UniScheduledExecutor executor) {
+        this.executor = executor;
+        return this;
+    }
+
+    /** 删除监听器 -- 正向查找删除 */
+    public boolean unregisterFirst(Object listener) {
+        CallbackNode node = this.head;
+        while ((node != null)) {
+            if (node.action == listener) {
+                removeNode(node);
+                return true;
+            }
+            node = node.next;
         }
+        return false;
+    }
+
+    /** 删除监听器 -- 默认情况下逆序查找以提高效率 */
+    public boolean unregister(Object listener) {
+        // 逆向查找更容易匹配 -- 与Task的启动顺序和停止顺序相关
+        CallbackNode node = this.tail;
+        while ((node != null)) {
+            if (node.action == listener) {
+                removeNode(node);
+                return true;
+            }
+            node = node.prev;
+        }
+        return false;
     }
 
     /** 重置状态，以供复用 */
     public void reset() {
         code = 0;
-        stack = null;
+        head = null;
+        tail = null;
     }
 
     @Override
@@ -100,7 +133,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
      * @throws UnsupportedOperationException 如果context是只读的
      */
     public int cancel(int cancelCode) {
-        checkCode(cancelCode);
+        ICancelToken.checkCode(cancelCode);
         int preCode = internalCancel(cancelCode);
         if (preCode != 0) {
             return preCode;
@@ -315,66 +348,68 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     }
 
     /** @return 是否压栈成功 */
-    private boolean pushCompletion(CallbackNode newHead) {
+    private boolean pushCompletion(CallbackNode node) {
         if (isCancelling()) {
-            newHead.tryFire(UniPromise.SYNC);
+            node.tryFire(UniPromise.SYNC);
             return false;
         }
-        newHead.next = this.stack;
-        this.stack = newHead;
+        CallbackNode tail = this.tail;
+        if (tail == null) {
+            this.head = this.tail = node;
+        } else {
+            tail.next = node;
+            node.prev = tail;
+            this.tail = node;
+        }
         return true;
     }
 
-    /** @return newestHead */
-    private CallbackNode removeClosedNode(CallbackNode expectedHead) {
-        CallbackNode next = expectedHead.next;
-        while (next != null && next.action == TOMBSTONE) {
-            next = next.next;
+    /** 删除node -- 修正指针 */
+    private void removeNode(CallbackNode node) {
+        if (this.head == this.tail) {
+            assert this.head == node;
+            this.head = this.tail = null;
+        } else if (node == this.head) {
+            // 首节点
+            this.head = node.next;
+            this.head.prev = null;
+        } else if (node == this.tail) {
+            // 尾节点
+            this.tail = node.prev;
+            this.tail.next = null;
+        } else {
+            // 中间节点
+            CallbackNode prev = node.prev;
+            CallbackNode next = node.next;
+            prev.next = next;
+            next.prev = prev;
         }
-        stack = next;
-        return next;
     }
 
+    private CallbackNode popListener() {
+        CallbackNode head = this.head;
+        if (head == null) {
+            return null;
+        }
+        if (head == this.tail) {
+            this.head = this.tail = null;
+        } else {
+            this.head = head.next;
+            this.head.prev = null;
+        }
+        return head;
+    }
+
+    @SuppressWarnings("resource")
     private static void postComplete(UniCancelTokenSource source) {
-        CallbackNode next = null;
-        outer:
-        while (true) {
-            // 将当前future上的监听器添加到next前面
-            next = clearListeners(source, next);
-
-            while (next != null) {
-                CallbackNode curr = next;
-                next = next.next;
-                curr.next = null; // help gc
-
-                source = curr.tryFire(UniPromise.NESTED);
-                if (source != null) {
-                    continue outer;
-                }
+        CallbackNode next;
+        UniCancelTokenSource child;
+        while ((next = source.popListener()) != null) {
+            child = next.tryFire(UniPromise.NESTED);
+            if (child != null) {
+                postComplete(child); // 递归
             }
-            break;
         }
-    }
-
-    private static CallbackNode clearListeners(UniCancelTokenSource source, CallbackNode onto) {
-        CallbackNode head = source.stack;
-        if (head == TOMBSTONE) {
-            return onto;
-        }
-
-        CallbackNode ontoHead = onto;
-        while (head != null) {
-            CallbackNode tmpHead = head;
-            head = head.next;
-
-            if (tmpHead.action == TOMBSTONE) {
-                continue; // 跳过被删除节点
-            }
-
-            tmpHead.next = ontoHead;
-            ontoHead = tmpHead;
-        }
-        return ontoHead;
     }
 
     // endregion
@@ -388,7 +423,6 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     /** {@link #registerChild(ICancelTokenSource)} */
     private static final int TYPE_CHILD = 3;
 
-
     /** 分配唯一id */
     private static final AtomicLong idAllocator = new AtomicLong(1);
 
@@ -400,6 +434,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     private static class CallbackNode implements IRegistration {
 
+        CallbackNode prev;
         CallbackNode next;
 
         /** 唯一id */
@@ -495,9 +530,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             }
             if (casAction2Tombstone(action)) {
                 UniCancelTokenSource source = this.source;
-                if (this == source.stack) {
-                    source.removeClosedNode(this);
-                }
+                source.removeNode(this);
                 this.source = null;
             }
         }

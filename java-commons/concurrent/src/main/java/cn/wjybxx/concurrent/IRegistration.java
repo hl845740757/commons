@@ -18,7 +18,8 @@ package cn.wjybxx.concurrent;
 
 /**
  * 注册监听器产生的句柄。
- * 用户可通过{@link #close()}取消注册。
+ * 1. 用户可通过{@link #close()}取消注册。
+ * 2. 不建议复用该对象。
  * <p>
  * 友情提醒：如果在句柄接口上提供了获取主题(Subject)的接口，转发实现一定要小心，小心封装泄漏。
  *
@@ -29,9 +30,7 @@ public interface IRegistration extends AutoCloseable {
 
     /**
      * {@inheritDoc}
-     * <p>
-     * 1.重复调用不应该抛出异常 -- 视为已关闭。
-     * 2.不建议复用该对象。
+     * 重复调用不应该抛出异常 -- 视为已关闭。
      */
     @Override
     void close();

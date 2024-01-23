@@ -16,6 +16,7 @@
 
 package cn.wjybxx.base.function;
 
+import java.util.Objects;
 import java.util.function.*;
 
 /**
@@ -23,7 +24,6 @@ import java.util.function.*;
  * date 2023/3/31
  */
 public class FunctionUtils {
-
 
     private static final IntConsumer _emptyIntConsumer = v -> {};
     private static final LongConsumer _emptyLongConsumer = v -> {};
@@ -38,6 +38,10 @@ public class FunctionUtils {
     private static final Predicate<?> _alwaysFalse = v -> false;
     private static final BiPredicate<?, ?> _biAlwaysTrue = (t, u) -> true;
     private static final BiPredicate<?, ?> _biAlwaysFalse = (t, u) -> false;
+
+    private static final Function<?, String> _toString = Object::toString;
+    private static final Predicate<?> _notNull = Objects::nonNull;
+    private static final Predicate<?> _isNull = Objects::isNull;
 
     // region 单例
 
@@ -90,6 +94,21 @@ public class FunctionUtils {
     @SuppressWarnings("unchecked")
     public static <T, U> BiPredicate<T, U> biAlwaysFalse() {
         return (BiPredicate<T, U>) _biAlwaysFalse;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Function<T, String> toStringFunction() {
+        return (Function<T, String>) _toString;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Predicate<T> isNull() {
+        return (Predicate<T>) _isNull;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Predicate<T> notNull() {
+        return (Predicate<T>) _notNull;
     }
     // endregion
 

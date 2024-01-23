@@ -22,12 +22,13 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * 主要封装与时区相关的方法
+ * (去除继承限制，子类应当保持实现为不可变)
  *
  * @author wjybxx
  * date 2023/4/1
  */
 @Immutable
-public final class TimeHelper {
+public class TimeHelper {
 
     /**
      * 中国时区对应的辅助类实例（不直接开放，避免造成混乱）
@@ -44,9 +45,9 @@ public final class TimeHelper {
      */
     public static final TimeHelper SYSTEM = new TimeHelper(TimeUtils.ZONE_OFFSET_SYSTEM);
 
-    private final ZoneOffset zoneOffset;
+    protected final ZoneOffset zoneOffset;
 
-    private TimeHelper(ZoneOffset zoneOffset) {
+    protected TimeHelper(ZoneOffset zoneOffset) {
         this.zoneOffset = zoneOffset;
     }
 

@@ -16,6 +16,7 @@
 
 package cn.wjybxx.base;
 
+import javax.annotation.CheckForNull;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -205,4 +206,42 @@ public class ObjectUtils {
     }
 
     // endregion
+
+    private static final Double DOUBLE_DEFAULT = 0d;
+    private static final Float FLOAT_DEFAULT = 0f;
+
+    /** 获取一个类型的默认值 */
+    @SuppressWarnings("unchecked")
+    @CheckForNull
+    public static <T> T defaultValue(Class<T> type) {
+        Objects.requireNonNull(type);
+        if (type.isPrimitive()) {
+            if (type == int.class) {
+                return (T) Integer.valueOf(0);
+            }
+            if (type == long.class) {
+                return (T) Long.valueOf(0L);
+            }
+            if (type == float.class) {
+                return (T) FLOAT_DEFAULT;
+            }
+            if (type == double.class) {
+                return (T) DOUBLE_DEFAULT;
+            }
+            if (type == boolean.class) {
+                return (T) Boolean.FALSE;
+            }
+            if (type == byte.class) {
+                return (T) Byte.valueOf((byte) 0);
+            }
+            if (type == short.class) {
+                return (T) Short.valueOf((short) 0);
+            }
+            if (type == char.class) {
+                return (T) Character.valueOf('\0');
+            }
+            throw new IllegalArgumentException("void");
+        }
+        return null;
+    }
 }

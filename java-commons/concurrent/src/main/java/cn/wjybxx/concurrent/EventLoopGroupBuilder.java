@@ -28,12 +28,14 @@ public class EventLoopGroupBuilder {
     private Runnable terminationHook;
 
     //
+
+    /** 创建一个默认的builder - 最终将构建{@link FixedEventLoopGroup} */
     public static EventLoopGroupBuilder newBuilder() {
         return new EventLoopGroupBuilder();
     }
     //
 
-    public FixedEventLoopGroup build() {
+    public EventLoopGroup build() {
         return new DefaultFixedEventLoopGroup(this);
     }
 
