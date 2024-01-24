@@ -24,6 +24,6 @@ package cn.wjybxx.concurrent;
  */
 public interface CancelTokenListener {
 
-    void onCancelRequest(ICancelToken cancelToken);
+    void onCancelRequested(ICancelToken cancelToken);
 
 }

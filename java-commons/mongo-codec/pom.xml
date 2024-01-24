@@ -27,10 +27,6 @@
     <artifactId>mongo-codec</artifactId>
     <description>mongo-codec适配器</description>
 
-    <properties>
-        <maven.deploy.skip>false</maven.deploy.skip>
-    </properties>
-
     <dependencies>
         <!-- https://mvnrepository.com/artifact/org.mongodb/bson -->
         <dependency>

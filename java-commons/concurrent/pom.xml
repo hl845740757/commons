@@ -13,10 +13,6 @@
     <name>Concurrent</name>
     <description>并发工具包，更好的Future和EventLoop</description>
 
-    <properties>
-        <maven.deploy.skip>false</maven.deploy.skip>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>cn.wjybxx.commons</groupId>
@@ -26,7 +22,7 @@
         <dependency>
             <groupId>cn.wjybxx.commons</groupId>
             <artifactId>disruptor</artifactId>
-            <version>${mydisruptor.verion}</version>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->

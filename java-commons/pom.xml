@@ -52,7 +52,7 @@
     </developers>
 
     <properties>
-        <revision>1.0.3</revision>
+        <revision>1.0.5</revision>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
@@ -76,7 +76,6 @@
         <commons-codec.version>1.16.0</commons-codec.version>		
 		<guava.version>33.0.0-jre</guava.version>
 
-        <mydisruptor.verion>1.0.0</mydisruptor.verion>
         <bson.version>4.11.1</bson.version>
     </properties>
 

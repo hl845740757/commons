@@ -827,7 +827,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                action.onCancelRequest(source);
+                action.onCancelRequested(source);
             } catch (Throwable ex) {
                 FutureLogger.logCause(ex, "UniNotify caught an exception");
             }
@@ -838,7 +838,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
         static void fireNow(CancelTokenSource source, CancelTokenListener action) {
             try {
-                action.onCancelRequest(source);
+                action.onCancelRequested(source);
             } catch (Throwable ex) {
                 FutureLogger.logCause(ex, "UniNotify caught an exception");
             }
