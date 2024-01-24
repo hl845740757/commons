@@ -62,7 +62,7 @@ public class EventLoopStartTest {
 
     @Test
     void testDelayFailed() {
-        EventLoop eventLoop = newEventLoop(true, 3);
+        EventLoop eventLoop = newEventLoop(true, 100);
         Assertions.assertThrowsExactly(CompletionException.class, () -> {
             eventLoop.start();
             eventLoop.shutdown();

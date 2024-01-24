@@ -233,17 +233,26 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
      */
     void onCompleted(BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context, int options);
 
+    void onCompleted(BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context);
+
+    void onCompletedAsync(Executor executor,
+                          BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context);
+
     void onCompletedAsync(Executor executor,
                           BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context, int options);
 
     /**
      * 最原始的Future监听接口
-     * 该接口在{@link #onCompleted(BiConsumer, IContext, int)}的基础上减少一些开销
+     * 该接口在{@link #onCompleted(BiConsumer, IContext, int)}的基础上减少一些开销，不支持ctx参数
      */
     void onCompleted(Consumer<? super IFuture<T>> action, int options);
 
-    void onCompletedAsync(Executor executor,
-                          Consumer<? super IFuture<T>> action, int options);
+    void onCompleted(Consumer<? super IFuture<T>> action);
+
+    void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action);
+
+    void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action, int options);
+
     // endregion
 
 

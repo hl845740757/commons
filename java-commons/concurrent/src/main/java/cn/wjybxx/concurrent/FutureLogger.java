@@ -121,7 +121,7 @@ public final class FutureLogger {
         Objects.requireNonNull(ex);
         if (message == null) message = "future completed with exception";
 
-        Level logLevel = FutureLogger.logLevel;
+        Level logLevel = ex instanceof VirtualMachineError ? Level.ERROR : FutureLogger.logLevel;
         if (!logger.isEnabledForLevel(logLevel) || !testException(ex)) {
             return;
         }

@@ -155,6 +155,16 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
+    public void onCompleted(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context) {
+        future.onCompleted(action, context);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context) {
+        future.onCompletedAsync(executor, action, context);
+    }
+
+    @Override
     public void onCompletedAsync(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context, int options) {
         future.onCompletedAsync(action, context, options);
     }
@@ -165,9 +175,20 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
+    public void onCompleted(Consumer<? super UniFuture<T>> action) {
+        future.onCompleted(action);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, Consumer<? super UniFuture<T>> action) {
+        future.onCompletedAsync(executor, action);
+    }
+
+    @Override
     public void onCompletedAsync(Consumer<? super UniFuture<T>> action, int options) {
         future.onCompletedAsync(action, options);
     }
+
     // endregion
 
     // region stage

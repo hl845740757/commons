@@ -195,6 +195,16 @@ public class ForwardFuture<V> implements IFuture<V> {
     }
 
     @Override
+    public void onCompleted(BiConsumer<? super IContext, ? super IFuture<V>> action, @Nonnull IContext context) {
+        future.onCompleted(action, context);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super IFuture<V>> action, @Nonnull IContext context) {
+        future.onCompletedAsync(executor, action, context);
+    }
+
+    @Override
     public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super IFuture<V>> action, @Nonnull IContext context, int options) {
         future.onCompletedAsync(executor, action, context, options);
     }
@@ -202,6 +212,16 @@ public class ForwardFuture<V> implements IFuture<V> {
     @Override
     public void onCompleted(Consumer<? super IFuture<V>> action, int options) {
         future.onCompleted(action, options);
+    }
+
+    @Override
+    public void onCompleted(Consumer<? super IFuture<V>> action) {
+        future.onCompleted(action);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<V>> action) {
+        future.onCompletedAsync(executor, action);
     }
 
     @Override

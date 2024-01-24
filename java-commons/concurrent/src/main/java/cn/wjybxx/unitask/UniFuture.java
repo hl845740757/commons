@@ -18,7 +18,10 @@ package cn.wjybxx.unitask;
 
 import cn.wjybxx.base.function.TriConsumer;
 import cn.wjybxx.base.function.TriFunction;
-import cn.wjybxx.concurrent.*;
+import cn.wjybxx.concurrent.BlockingOperationException;
+import cn.wjybxx.concurrent.FutureState;
+import cn.wjybxx.concurrent.IContext;
+import cn.wjybxx.concurrent.IFuture;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -26,6 +29,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -188,7 +192,7 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
      * 将当前future的结果传输到目标promise
      * 如果当前future已完成，且目标promise尚未完成，则尝试传输结果到promise
      * <p>
-     * {@link IPromise#tryTransferFrom(IFuture)}
+     * {@link UniPromise#tryTransferFrom(UniFuture)}
      *
      * @return 当且仅当future使目标promise进入完成状态时返回true。
      */
@@ -207,13 +211,23 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
      */
     void onCompleted(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context, int options);
 
+
+    void onCompleted(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context);
+
+    void onCompletedAsync(Executor executor,
+                          BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context);
+
     void onCompletedAsync(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context, int options);
 
     /**
      * 最原始的Future监听接口
-     * 该接口在{@link #onCompleted(BiConsumer, IContext, int)}的基础上减少一些开销
+     * 该接口在{@link #onCompleted(BiConsumer, IContext, int)}的基础上减少一些开销，不支持ctx参数
      */
     void onCompleted(Consumer<? super UniFuture<T>> action, int options);
+
+    void onCompleted(Consumer<? super UniFuture<T>> action);
+
+    void onCompletedAsync(Executor executor, Consumer<? super UniFuture<T>> action);
 
     void onCompletedAsync(Consumer<? super UniFuture<T>> action, int options);
     // endregion

@@ -402,6 +402,16 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
     }
 
     @Override
+    public void onCompleted(BiConsumer<? super IContext, ? super IFuture<V>> action, @Nonnull IContext context) {
+        promise.onCompleted(action, context);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super IFuture<V>> action, @Nonnull IContext context) {
+        promise.onCompletedAsync(executor, action, context);
+    }
+
+    @Override
     public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super IFuture<V>> action, @Nonnull IContext context, int options) {
         promise.onCompletedAsync(executor, action, context, options);
     }
@@ -409,6 +419,16 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
     @Override
     public void onCompleted(Consumer<? super IFuture<V>> action, int options) {
         promise.onCompleted(action, options);
+    }
+
+    @Override
+    public void onCompleted(Consumer<? super IFuture<V>> action) {
+        promise.onCompleted(action);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<V>> action) {
+        promise.onCompletedAsync(executor, action);
     }
 
     @Override

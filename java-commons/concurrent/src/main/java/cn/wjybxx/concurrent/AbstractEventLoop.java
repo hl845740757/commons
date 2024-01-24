@@ -207,7 +207,7 @@ public abstract class AbstractEventLoop extends AbstractExecutorService implemen
 
     // endregion
 
-    // -------------------------------------- invoke阻塞调用检测 --------------------------------------
+    // region invoke
     @Nonnull
     @Override
     public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
@@ -238,8 +238,9 @@ public abstract class AbstractEventLoop extends AbstractExecutorService implemen
         throwIfInEventLoop("invokeAll");
         return super.invokeAll(tasks, timeout, unit);
     }
+    // endregion
 
-    // ---------------------------------------- 迭代 ---------------------------------------
+    // region iteration
 
     @Nonnull
     @Override
@@ -257,26 +258,5 @@ public abstract class AbstractEventLoop extends AbstractExecutorService implemen
         return selfCollection.spliterator();
     }
 
-    // ---------------------------------------- 工具方法 ---------------------------------------
-
-    protected static void safeExecute(Runnable task) {
-        try {
-            task.run();
-        } catch (Throwable t) {
-            if (t instanceof VirtualMachineError) {
-                logger.error("A task raised an exception. Task: {}", task, t);
-            } else {
-                logger.warn("A task raised an exception. Task: {}", task, t);
-            }
-        }
-    }
-
-    protected static void logCause(Throwable t) {
-        if (t instanceof VirtualMachineError) {
-            logger.error("A task raised an exception.", t);
-        } else {
-            logger.warn("A task raised an exception.", t);
-        }
-    }
-
+    // endregion
 }

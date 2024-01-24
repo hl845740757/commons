@@ -107,7 +107,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             Completion node = this.head;
             while ((node != null)) {
                 if (node.action == listener) {
-                    removeNode(node);
+                    node.close();
                     return true;
                 }
                 node = node.next;
@@ -116,7 +116,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             Completion node = this.tail;
             while ((node != null)) {
                 if (node.action == listener) {
-                    removeNode(node);
+                    node.close();
                     return true;
                 }
                 node = node.prev;

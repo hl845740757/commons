@@ -70,18 +70,18 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     /** 线程状态 */
     private volatile int state = EventLoopState.ST_UNSTARTED;
 
-    /** 周期性任务队列 -- 既有的任务都是先于Sequencer中的任务提交的 */
-    private final IndexedPriorityQueue<ScheduledPromiseTask<?>> scheduledTaskQueue;
     /** 事件队列 */
     private final EventSequencer<? extends T> eventSequencer;
+    /** 周期性任务队列 -- 既有的任务都是先于Sequencer中的任务提交的 */
+    private final IndexedPriorityQueue<ScheduledPromiseTask<?>> scheduledTaskQueue;
     /** 批量执行任务的大小 */
     private final int taskBatchSize;
+    /** 任务拒绝策略 */
+    private final RejectedExecutionHandler rejectedExecutionHandler;
     /** 内部代理 */
     private final EventLoopAgent<? super T> agent;
     /** 外部门面 */
     private final EventLoopModule mainModule;
-    /** 任务拒绝策略 */
-    private final RejectedExecutionHandler rejectedExecutionHandler;
 
     /** 退出时是否清理buffer -- 可清理意味着是消费链的末尾 */
     private final boolean cleanBufferOnExit;
@@ -99,16 +99,16 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
 
         this.nanoTime = System.nanoTime();
         this.eventSequencer = Objects.requireNonNull(builder.getEventSequencer());
-
         this.scheduledTaskQueue = new DefaultIndexedPriorityQueue<>(ScheduledPromiseTask::compareToExplicitly, 64);
+
         this.taskBatchSize = MathCommon.clamp(builder.getBatchSize(), MIN_BATCH_SIZE, MAX_BATCH_SIZE);
         this.rejectedExecutionHandler = Objects.requireNonNull(builder.getRejectedExecutionHandler());
         this.agent = Objects.requireNonNullElse(builder.getAgent(), EmptyAgent.getInstance());
         this.mainModule = builder.getMainModule();
 
         this.cleanBufferOnExit = builder.isCleanBufferOnExit();
-        if (cleanBufferOnExit && eventSequencer instanceof MpUnboundedEventSequencer<?> mpUnboundedEventSequencer) {
-            this.mpUnboundedEventSequencer = mpUnboundedEventSequencer;
+        if (cleanBufferOnExit && eventSequencer instanceof MpUnboundedEventSequencer<?> unboundedBuffer) {
+            this.mpUnboundedEventSequencer = unboundedBuffer;
         } else {
             this.mpUnboundedEventSequencer = null;
         }
@@ -210,7 +210,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
 
     /** 仅用于测试 */
     @VisibleForTesting
-    public ConsumerBarrier getConsumerBarrier() {
+    public ConsumerBarrier getBarrier() {
         return worker.barrier;
     }
 
@@ -699,7 +699,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         logger.warn("user published invalid event: " + event); // 用户发布了非法数据
                     }
                 } catch (Throwable t) {
-                    logCause(t);
+                    FutureLogger.logCause(t,"A task raised an exception.");
                     if (isShuttingDown()) { // 可能是中断或Alert，检查关闭信号
                         return curSequence;
                     }
@@ -737,12 +737,14 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             processScheduledQueue(nanoTime, 0, true);
             scheduledTaskQueue.clearIgnoringIndexes();
 
-            // 在新的架构下，EventSequencer可能是无界队列，这种情况下我们采用笨方法来清理 -- 兼容两种模式
+            // 在新的架构下，EventSequencer可能是无界队列，这种情况下我们采用笨方法来清理；
             // 从当前序列开始消费，一直消费到最新的cursor，然后将自己从gatingBarrier中删除 -- 此时不论有界无界，生产者都将醒来。
             long nullCount = 0;
             long taskCount = 0;
             long discardCount = 0;
+
             final ProducerBarrier producerBarrier = eventSequencer.producerBarrier();
+            final Sequence sequence = this.sequence;
             while (true) {
                 long nextSequence = sequence.getVolatile() + 1;
                 if (nextSequence > producerBarrier.sequence()) {
@@ -769,15 +771,15 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         event.castObj0ToRunnable().run();
                     }
                 } catch (Throwable t) {
-                    logCause(t);
+                    FutureLogger.logCause(t,"A task raised an exception.");
                 } finally {
                     event.cleanAll();
                     sequence.setRelease(nextSequence);
                 }
-                if (mpUnboundedEventSequencer != null &&
-                        !mpUnboundedEventSequencer.inSameChunk(nextSequence - 1, nextSequence)) {
-                    mpUnboundedEventSequencer.tryMoveHeadToNext(nextSequence);
-                }
+            }
+            // 清理内存
+            if (mpUnboundedEventSequencer != null) {
+                mpUnboundedEventSequencer.tryMoveHeadToNext(sequence.getVolatile());
             }
             logger.info("cleanBuffer success!  nullCount = {}, taskCount = {}, discardCount {}, cost timeMillis = {}",
                     nullCount, taskCount, discardCount, (System.currentTimeMillis() - startTimeMillis));

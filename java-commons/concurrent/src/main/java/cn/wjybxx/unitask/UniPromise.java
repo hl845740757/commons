@@ -897,6 +897,16 @@ public class UniPromise<T> implements UniFuture<T> {
     }
 
     @Override
+    public void onCompleted(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context) {
+        uniOnCompletedFuture1(0, action, context, 0);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context) {
+        uniOnCompletedFuture1(EXE_ASYNC, action, context, 0);
+    }
+
+    @Override
     public void onCompletedAsync(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context, int options) {
         uniOnCompletedFuture1(EXE_ASYNC, action, context, options);
     }
@@ -917,7 +927,17 @@ public class UniPromise<T> implements UniFuture<T> {
 
     @Override
     public void onCompleted(Consumer<? super UniFuture<T>> action, int options) {
-        uniOnCompletedFuture2(EXE_SYNC, action, options);
+        uniOnCompletedFuture2(0, action, options);
+    }
+
+    @Override
+    public void onCompleted(Consumer<? super UniFuture<T>> action) {
+        uniOnCompletedFuture2(0, action, 0);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, Consumer<? super UniFuture<T>> action) {
+        uniOnCompletedFuture2(EXE_ASYNC, action, 0);
     }
 
     @Override

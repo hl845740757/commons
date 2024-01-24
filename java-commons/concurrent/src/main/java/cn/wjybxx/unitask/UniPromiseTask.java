@@ -349,12 +349,28 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         promise.onCompleted(action, context, options);
     }
 
+    public void onCompleted(BiConsumer<? super IContext, ? super UniFuture<V>> action, @Nonnull IContext context) {
+        promise.onCompleted(action, context);
+    }
+
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super UniFuture<V>> action, @Nonnull IContext context) {
+        promise.onCompletedAsync(executor, action, context);
+    }
+
     public void onCompletedAsync(BiConsumer<? super IContext, ? super UniFuture<V>> action, @Nonnull IContext context, int options) {
         promise.onCompletedAsync(action, context, options);
     }
 
     public void onCompleted(Consumer<? super UniFuture<V>> action, int options) {
         promise.onCompleted(action, options);
+    }
+
+    public void onCompleted(Consumer<? super UniFuture<V>> action) {
+        promise.onCompleted(action);
+    }
+
+    public void onCompletedAsync(Executor executor, Consumer<? super UniFuture<V>> action) {
+        promise.onCompletedAsync(executor, action);
     }
 
     public void onCompletedAsync(Consumer<? super UniFuture<V>> action, int options) {

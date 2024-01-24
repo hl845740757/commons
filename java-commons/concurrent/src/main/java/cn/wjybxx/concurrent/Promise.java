@@ -1060,6 +1060,18 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     }
 
     @Override
+    public void onCompleted(BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context) {
+        uniOnCompletedFuture1(null, action, context, 0);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context) {
+        Objects.requireNonNull(executor, "executor");
+        uniOnCompletedFuture1(executor, action, context, 0);
+    }
+
+
+    @Override
     public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context, int options) {
         Objects.requireNonNull(executor, "executor");
         uniOnCompletedFuture1(executor, action, context, options);
@@ -1082,6 +1094,17 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     @Override
     public void onCompleted(Consumer<? super IFuture<T>> action, int options) {
         uniOnCompletedFuture2(null, action, options);
+    }
+
+    @Override
+    public void onCompleted(Consumer<? super IFuture<T>> action) {
+        uniOnCompletedFuture2(null, action, 0);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action) {
+        Objects.requireNonNull(executor);
+        uniOnCompletedFuture2(executor, action, 0);
     }
 
     @Override
