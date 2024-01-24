@@ -293,8 +293,7 @@ public final class UniScheduledPromiseTask<V>
         if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
             return false;
         }
-        return TaskOption.isEnabled(options, TaskOption.CAUGHT_THROWABLE)
-                || (TaskOption.isEnabled(options, TaskOption.CAUGHT_EXCEPTION) && ex instanceof Exception);
+        return TaskOption.isEnabled(options, TaskOption.CAUGHT_EXCEPTION);
     }
 
     private void setNextRunTime(long tickTime, TimeoutContext timeoutContext, int scheduleType) {

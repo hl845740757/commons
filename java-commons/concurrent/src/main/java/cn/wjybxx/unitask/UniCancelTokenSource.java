@@ -22,7 +22,6 @@ import cn.wjybxx.concurrent.*;
 import javax.annotation.Nonnull;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 /**
@@ -266,7 +265,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             notifyListener(this, action);
             return TOMBSTONE;
         }
-        CallbackNode callbackNode = new CallbackNode(nextId(), this, TYPE_CONSUMER, action);
+        CallbackNode callbackNode = new CallbackNode(this, TYPE_CONSUMER, action);
         if (pushCompletion(callbackNode)) {
             return callbackNode;
         }
@@ -280,7 +279,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             notifyListener(action);
             return TOMBSTONE;
         }
-        CallbackNode callbackNode = new CallbackNode(nextId(), this, TYPE_RUNNABLE, action);
+        CallbackNode callbackNode = new CallbackNode(this, TYPE_RUNNABLE, action);
         if (pushCompletion(callbackNode)) {
             return callbackNode;
         }
@@ -294,7 +293,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             notifyListener(this, action);
             return TOMBSTONE;
         }
-        CallbackNode callbackNode = new CallbackNode(nextId(), this, TYPE_RUNNABLE, action);
+        CallbackNode callbackNode = new CallbackNode(this, TYPE_RUNNABLE, action);
         if (pushCompletion(callbackNode)) {
             return callbackNode;
         }
@@ -312,7 +311,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             child.cancel(code);
             return TOMBSTONE;
         }
-        CallbackNode callbackNode = new CallbackNode(nextId(), this, TYPE_CHILD, child);
+        CallbackNode callbackNode = new CallbackNode(this, TYPE_CHILD, child);
         if (pushCompletion(callbackNode)) {
             return callbackNode;
         }
@@ -436,24 +435,14 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     /** {@link #registerChild(ICancelTokenSource)} */
     private static final int TYPE_CHILD = 3;
 
-    /** 分配唯一id */
-    private static final AtomicLong idAllocator = new AtomicLong(1);
-
-    private static long nextId() {
-        return idAllocator.getAndIncrement();
-    }
-
     private static final CallbackNode TOMBSTONE = new CallbackNode();
 
     private static class CallbackNode implements IRegistration {
 
-        CallbackNode prev;
-        CallbackNode next;
-
-        /** 唯一id */
-        final long id;
         /** 暂非final，暂不允许用户访问 */
         UniCancelTokenSource source;
+        CallbackNode prev;
+        CallbackNode next;
 
         /** 任务的类型 -- 不想过多的子类实现 */
         int type;
@@ -461,12 +450,10 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         Object action;
 
         public CallbackNode() {
-            id = 0; // TOMBSTONE
             source = null;
         }
 
-        public CallbackNode(long id, UniCancelTokenSource source, int type, Object action) {
-            this.id = id;
+        public CallbackNode(UniCancelTokenSource source, int type, Object action) {
             this.source = source;
             this.type = type;
             this.action = action;

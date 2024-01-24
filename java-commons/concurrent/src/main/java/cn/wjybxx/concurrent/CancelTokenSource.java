@@ -22,7 +22,6 @@ import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 /**
@@ -201,7 +200,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
             notifyListener(this, action);
             return TOMBSTONE;
         }
-        CallbackNode callbackNode = new CallbackNode(nextId(), this, TYPE_CONSUMER, action);
+        CallbackNode callbackNode = new CallbackNode(this, TYPE_CONSUMER, action);
         if (pushCompletion(callbackNode)) {
             return callbackNode;
         }
@@ -215,7 +214,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
             notifyListener(action);
             return TOMBSTONE;
         }
-        CallbackNode callbackNode = new CallbackNode(nextId(), this, TYPE_RUNNABLE, action);
+        CallbackNode callbackNode = new CallbackNode(this, TYPE_RUNNABLE, action);
         if (pushCompletion(callbackNode)) {
             return callbackNode;
         }
@@ -229,7 +228,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
             notifyListener(this, action);
             return TOMBSTONE;
         }
-        CallbackNode callbackNode = new CallbackNode(nextId(), this, TYPE_TYPED, action);
+        CallbackNode callbackNode = new CallbackNode(this, TYPE_TYPED, action);
         if (pushCompletion(callbackNode)) {
             return callbackNode;
         }
@@ -247,7 +246,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
             child.cancel(code);
             return TOMBSTONE;
         }
-        CallbackNode callbackNode = new CallbackNode(nextId(), this, TYPE_CHILD, child);
+        CallbackNode callbackNode = new CallbackNode(this, TYPE_CHILD, child);
         if (pushCompletion(callbackNode)) {
             return callbackNode;
         }
@@ -395,24 +394,15 @@ public final class CancelTokenSource implements ICancelTokenSource {
     /** {@link #registerChild(ICancelTokenSource)} */
     private static final int TYPE_CHILD = 3;
 
-    /** 分配唯一id */
-    private static final AtomicLong idAllocator = new AtomicLong(1);
-
-    private static long nextId() {
-        return idAllocator.getAndIncrement();
-    }
-
     private static final CallbackNode TOMBSTONE = new CallbackNode();
 
+    /** 不需要复用对象的情况下无需分配唯一id */
     private static class CallbackNode implements IRegistration {
 
-        /** 非volatile，由栈顶的cas更新保证可见性 */
-        CallbackNode next;
-
-        /** 唯一id */
-        final long id;
         /** 暂非final，暂不允许用户访问 */
         CancelTokenSource source;
+        /** 非volatile，由栈顶的cas更新保证可见性 */
+        CallbackNode next;
 
         /** 任务的类型 -- 不想过多的子类实现 */
         int type;
@@ -420,12 +410,10 @@ public final class CancelTokenSource implements ICancelTokenSource {
         volatile Object action;
 
         public CallbackNode() {
-            id = 0; // TOMBSTONE
             source = null;
         }
 
-        public CallbackNode(long id, CancelTokenSource source, int type, Object action) {
-            this.id = id;
+        public CallbackNode(CancelTokenSource source, int type, Object action) {
             this.source = source;
             this.type = type;
             VH_ACTION.setRelease(this, action);

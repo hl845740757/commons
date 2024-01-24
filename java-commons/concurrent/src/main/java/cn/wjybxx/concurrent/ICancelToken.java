@@ -68,7 +68,7 @@ public interface ICancelToken {
      */
     ICancelToken asReadonly();
 
-    // region
+    // region code
 
     /**
      * 取消码
@@ -120,6 +120,9 @@ public interface ICancelToken {
             throw new BetterCancellationException(code);
         }
     }
+    // endregion
+
+    // region 监听器
 
     /**
      * 添加的action将在Context收到取消信号时执行
@@ -148,7 +151,7 @@ public interface ICancelToken {
 
     // endregion
 
-    // region code
+    // region static
 
     /**
      * 原因的掩码

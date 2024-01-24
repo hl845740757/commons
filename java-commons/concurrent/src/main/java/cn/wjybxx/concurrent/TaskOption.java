@@ -75,16 +75,10 @@ public final class TaskOption {
     public static final int LOCAL_ORDER = 1 << 9;
 
     /**
-     * 延时任务：捕获{@link Exception}类异常
-     * 在出现异常后继续执行；只适用无需结果的周期性任务；
+     * 延时任务：在出现异常后继续执行。
+     * 注意：只适用无需结果的周期性任务 -- 分时任务会失败。
      */
-    public static final int CAUGHT_EXCEPTION = 1 << 10;
-
-    /**
-     * 延时任务：捕获{@link Throwable}类异常，即所有的异常
-     * 在出现异常后继续执行；只适用无需结果的周期性任务；
-     */
-    public static final int CAUGHT_THROWABLE = 1 << 11;
+    public static final int CAUGHT_EXCEPTION = 1 << 11;
     /**
      * 延时任务：在执行任务前检测超时
      * 1. 也就是说在已经超时的情况下不执行任务。
