@@ -16,6 +16,8 @@
 
 package cn.wjybxx.concurrent;
 
+import java.util.concurrent.Executor;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -33,6 +35,8 @@ final class UncancellableToken implements ICancelToken {
     public ICancelToken asReadonly() {
         return this;
     }
+
+    // region code
 
     @Override
     public int cancelCode() {
@@ -69,26 +73,130 @@ final class UncancellableToken implements ICancelToken {
 
     }
 
-    @Override
-    public IRegistration register(Consumer<? super ICancelToken> action) {
-        return TOMBSTONE;
-    }
+    // endregion
 
-    @Override
-    public IRegistration registerRun(Runnable action) {
-        return TOMBSTONE;
-    }
-
-    @Override
-    public IRegistration registerTyped(CancelTokenListener action) {
-        return TOMBSTONE;
-    }
-
-    @Override
-    public IRegistration registerChild(ICancelTokenSource child) {
-        return TOMBSTONE;
-    }
+    // region 监听器
 
     private static final IRegistration TOMBSTONE = () -> {};
 
+    @Override
+    public IRegistration thenAccept(Consumer<? super ICancelToken> action, int options) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenAccept(Consumer<? super ICancelToken> action) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenAcceptAsync(Executor executor, Consumer<? super ICancelToken> action) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenAcceptAsync(Executor executor, Consumer<? super ICancelToken> action, int options) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenRun(Runnable action, int options) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenRun(Runnable action) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenRunAsync(Executor executor, Runnable action) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenRunAsync(Executor executor, Runnable action, int options) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenRun(Consumer<? super IContext> action, IContext ctx, int options) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenRun(Consumer<? super IContext> action, IContext ctx) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenRunAsync(Executor executor, Consumer<? super IContext> action, IContext ctx) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenRunAsync(Executor executor, Consumer<? super IContext> action, IContext ctx, int options) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenNotify(CancelTokenListener action, int options) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenNotify(CancelTokenListener action) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenNotifyAsync(Executor executor, CancelTokenListener action) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenNotifyAsync(Executor executor, CancelTokenListener action, int options) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenTransferTo(ICancelTokenSource child, int options) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenTransferTo(ICancelTokenSource child) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child) {
+        return TOMBSTONE;
+    }
+
+    @Override
+    public IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child, int options) {
+        return TOMBSTONE;
+    }
+    // endregion
 }

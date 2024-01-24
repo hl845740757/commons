@@ -20,8 +20,10 @@ import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.mutable.MutableInt;
 import cn.wjybxx.base.mutable.MutableObject;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,12 +36,17 @@ import java.util.concurrent.TimeUnit;
  */
 public class CancelTokenTest {
 
+    @BeforeAll
+    static void beforeAll() {
+        LoggerFactory.getILoggerFactory(); // init
+    }
+
     @Test
     void testRegisterBeforeCancel() {
         CancelTokenSource cts = new CancelTokenSource();
         {
             final MutableObject<String> signal = new MutableObject<>();
-            cts.registerRun(() -> {
+            cts.thenRun(() -> {
                 signal.setValue("cancelled");
             });
             Assertions.assertNull(signal.getValue());
@@ -54,7 +61,7 @@ public class CancelTokenTest {
         CancelTokenSource cts = new CancelTokenSource(1);
         {
             final MutableObject<String> signal = new MutableObject<>();
-            cts.registerRun(() -> {
+            cts.thenRun(() -> {
                 signal.setValue("cancelled");
             });
             Assertions.assertNotNull(signal.getValue());
@@ -66,13 +73,13 @@ public class CancelTokenTest {
         final MutableObject<String> signal = new MutableObject<>();
         CancelTokenSource child = new CancelTokenSource();
         {
-            child.registerRun(() -> {
+            child.thenRun(() -> {
                 signal.setValue("cancelled");
             });
             Assertions.assertNull(signal.getValue());
         }
         CancelTokenSource cts = new CancelTokenSource();
-        cts.registerChild(child);
+        cts.thenTransferTo(child);
         cts.cancel(1);
 
         Assertions.assertNotNull(signal.getValue());
@@ -84,7 +91,7 @@ public class CancelTokenTest {
         CancelTokenSource cts = new CancelTokenSource(0);
         {
             final MutableObject<String> signal = new MutableObject<>();
-            IRegistration handle = cts.registerRun(() -> {
+            IRegistration handle = cts.thenRun(() -> {
                 signal.setValue("cancelled");
             });
             handle.close();
@@ -104,7 +111,7 @@ public class CancelTokenTest {
             final int count = 5;
             List<IRegistration> registrationList = new ArrayList<>(count);
             for (int i = 0; i < count; i++) {
-                registrationList.add(cts.registerRun(counter::increment));
+                registrationList.add(cts.thenRun(counter::increment));
             }
             // 打乱顺序，然后随机取消一部分
             Collections.shuffle(registrationList);
@@ -125,7 +132,7 @@ public class CancelTokenTest {
         cts.cancel(1);
 
         Thread thread = Thread.currentThread();
-        cts.registerRun(thread::interrupt);
+        cts.thenRun(thread::interrupt);
 
         boolean interrupted;
         try {
@@ -143,7 +150,7 @@ public class CancelTokenTest {
         cts.cancelAfter(1, 100, TimeUnit.MILLISECONDS);
 
         Thread thread = Thread.currentThread();
-        cts.registerRun(thread::interrupt);
+        cts.thenRun(thread::interrupt);
 
         boolean interrupted;
         try {

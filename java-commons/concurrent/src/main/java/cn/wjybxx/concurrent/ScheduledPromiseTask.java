@@ -328,7 +328,7 @@ final class ScheduledPromiseTask<V>
         if (promise.ctx().cancelToken() == ICancelToken.NONE) {
             return;
         }
-        cancelRegistration = cancelToken.register(this);
+        cancelRegistration = cancelToken.thenAccept(this);
     }
 
     @Override

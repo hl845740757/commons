@@ -382,12 +382,8 @@ public interface ICompletionStage<T> {
     /**
      * 该方法返回一个新的{@code Future}，无论当前{@code Future}执行成功还是失败，给定的操作都将执行，且返回的{@code Future}始终以相同的结果进入完成状态。
      * 与方法{@link #handle(TriFunction)}不同，此方法不是为转换完成结果而设计的，因此提供的操作不应引发异常。<br>
-     * 1.如果确实出现了异常，则仅仅记录一个日志，不向下传播(这里与JDK实现不同)。
-     * 2.如果用户主动取消了返回的Future，则结果可能不同。
-     * 3.异步情况下，如果目标Executor已开始关闭，则结果可能不同。
-     * 4.建议whenComplete用在链的末尾，不要传递返回的Future给其它对象，否则可能导致安全问题。
-     * <p>
-     * {@link CompletionStage#whenComplete(BiConsumer)}
+     * 1.如果action出现了异常，则仅仅记录一个日志，不向下传播(这里与JDK实现不同) -- 应当避免抛出异常。
+     * 2.如果用户主动取消了返回的Future，或者用于异步执行的Executor已关闭，则不会以相同的结果进入完成状态。
      *
      * @param ctx     上下文，如果为null，则继承当前Stage的上下文
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOption}

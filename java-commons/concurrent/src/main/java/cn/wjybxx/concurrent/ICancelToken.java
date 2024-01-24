@@ -17,8 +17,10 @@
 package cn.wjybxx.concurrent;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -44,7 +46,7 @@ import java.util.function.Consumer;
  *      cancelToken.checkCancel();
  *      // 在执行阻塞操作前监听取消信号以唤醒线程
  *      Thread thread = Thread.currentThread();
- *      var handle = cancelToken.register(token -> {
+ *      var handle = cancelToken.thenAccept(token -> {
  *          thread.interrupt();
  *      })
  *      // 如果handle已被通知，那么线程已处于中断状态，阻塞操作会立即被中断
@@ -53,6 +55,10 @@ import java.util.function.Consumer;
  *      }
  *   }
  * }</pre>
+ *
+ * <h3>监听器</h3>
+ * 1. accept系列方法表示接收token参数；run方法表示不接收token参数；
+ * 2. async表示目标action需要异步执行，方法的首个参数为executor；
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -124,30 +130,100 @@ public interface ICancelToken {
 
     // region 监听器
 
+    // region accept
+
     /**
      * 添加的action将在Context收到取消信号时执行
      * 1.如果已收到取消请求，则给定的action会立即执行。
      * 2.如果尚未收到取消请求，则给定action会在收到请求时执行。
      */
-    IRegistration register(Consumer<? super ICancelToken> action);
+    IRegistration thenAccept(Consumer<? super ICancelToken> action, int options);
 
-    /**
-     * 添加一个完成时固定执行的行为 -- 忽略取消信息。
-     */
-    IRegistration registerRun(Runnable action);
+    IRegistration thenAccept(Consumer<? super ICancelToken> action);
+
+    IRegistration thenAcceptAsync(Executor executor,
+                                  Consumer<? super ICancelToken> action);
+
+    IRegistration thenAcceptAsync(Executor executor,
+                                  Consumer<? super ICancelToken> action, int options);
+
+    // endregion
+
+    // region accept-ctx
+
+    IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options);
+
+    IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx);
+
+    IRegistration thenAcceptAsync(Executor executor,
+                                  BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx);
+
+    IRegistration thenAcceptAsync(Executor executor,
+                                  BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options);
+
+    // endregion
+
+    // region run
+
+    IRegistration thenRun(Runnable action, int options);
+
+    IRegistration thenRun(Runnable action);
+
+    IRegistration thenRunAsync(Executor executor, Runnable action);
+
+    IRegistration thenRunAsync(Executor executor, Runnable action, int options);
+
+    // endregion
+
+    // region run-ctx
+
+    IRegistration thenRun(Consumer<? super IContext> action, IContext ctx, int options);
+
+    IRegistration thenRun(Consumer<? super IContext> action, IContext ctx);
+
+    IRegistration thenRunAsync(Executor executor,
+                               Consumer<? super IContext> action, IContext ctx);
+
+    IRegistration thenRunAsync(Executor executor,
+                               Consumer<? super IContext> action, IContext ctx, int options);
+
+    // endregion
+
+    // region notify
 
     /**
      * 添加一个特定类型的监听器
-     * (用于特殊需求时避免额外的闭包)
+     * (用于特殊需求时避免额外的闭包 - task经常需要监听取消令牌)
      */
-    IRegistration registerTyped(CancelTokenListener action);
+    IRegistration thenNotify(CancelTokenListener action, int options);
+
+    IRegistration thenNotify(CancelTokenListener action);
+
+    IRegistration thenNotifyAsync(Executor executor, CancelTokenListener action);
+
+    IRegistration thenNotifyAsync(Executor executor, CancelTokenListener action, int options);
+
+    // endregion
+
+    // region transferTo
 
     /**
-     * 添加子token
+     * 该接口用于方便构建子上下文
      * 1.子token会在当前token进入取消状态时被取消
      * 2.该接口本质是一个快捷方法，但允许子类优化
+     *
+     * @param child   接收结果的子token
+     * @param options 调度选项
      */
-    IRegistration registerChild(ICancelTokenSource child);
+    IRegistration thenTransferTo(ICancelTokenSource child, int options);
+
+    IRegistration thenTransferTo(ICancelTokenSource child);
+
+    IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child);
+
+    IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child, int options);
+
+    // endregion
 
     // endregion
 

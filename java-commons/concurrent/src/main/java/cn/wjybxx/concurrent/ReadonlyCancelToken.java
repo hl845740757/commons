@@ -18,6 +18,8 @@ package cn.wjybxx.concurrent;
 
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executor;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -44,6 +46,8 @@ public final class ReadonlyCancelToken implements ICancelToken {
             throw new CancellationException();
         }
     }
+
+    // region 转发
 
     @Override
     public int cancelCode() {
@@ -76,22 +80,125 @@ public final class ReadonlyCancelToken implements ICancelToken {
     }
 
     @Override
-    public IRegistration register(Consumer<? super ICancelToken> action) {
-        return cancelToken.register(action);
+    public IRegistration thenAccept(Consumer<? super ICancelToken> action, int options) {
+        return cancelToken.thenAccept(action, options);
     }
 
     @Override
-    public IRegistration registerTyped(CancelTokenListener action) {
-        return cancelToken.registerTyped(action);
+    public IRegistration thenAccept(Consumer<? super ICancelToken> action) {
+        return cancelToken.thenAccept(action);
     }
 
     @Override
-    public IRegistration registerRun(Runnable action) {
-        return cancelToken.registerRun(action);
+    public IRegistration thenAcceptAsync(Executor executor, Consumer<? super ICancelToken> action) {
+        return cancelToken.thenAcceptAsync(executor, action);
     }
 
     @Override
-    public IRegistration registerChild(ICancelTokenSource child) {
-        return cancelToken.registerChild(child);
+    public IRegistration thenAcceptAsync(Executor executor, Consumer<? super ICancelToken> action, int options) {
+        return cancelToken.thenAcceptAsync(executor, action, options);
     }
+
+    @Override
+    public IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options) {
+        return cancelToken.thenAccept(action, ctx, options);
+    }
+
+    @Override
+    public IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
+        return cancelToken.thenAccept(action, ctx);
+    }
+
+    @Override
+    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
+        return cancelToken.thenAcceptAsync(executor, action, ctx);
+    }
+
+    @Override
+    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options) {
+        return cancelToken.thenAcceptAsync(executor, action, ctx, options);
+    }
+
+    @Override
+    public IRegistration thenRun(Runnable action, int options) {
+        return cancelToken.thenRun(action, options);
+    }
+
+    @Override
+    public IRegistration thenRun(Runnable action) {
+        return cancelToken.thenRun(action);
+    }
+
+    @Override
+    public IRegistration thenRunAsync(Executor executor, Runnable action) {
+        return cancelToken.thenRunAsync(executor, action);
+    }
+
+    @Override
+    public IRegistration thenRunAsync(Executor executor, Runnable action, int options) {
+        return cancelToken.thenRunAsync(executor, action, options);
+    }
+
+    @Override
+    public IRegistration thenRun(Consumer<? super IContext> action, IContext ctx, int options) {
+        return cancelToken.thenRun(action, ctx, options);
+    }
+
+    @Override
+    public IRegistration thenRun(Consumer<? super IContext> action, IContext ctx) {
+        return cancelToken.thenRun(action, ctx);
+    }
+
+    @Override
+    public IRegistration thenRunAsync(Executor executor, Consumer<? super IContext> action, IContext ctx) {
+        return cancelToken.thenRunAsync(executor, action, ctx);
+    }
+
+    @Override
+    public IRegistration thenRunAsync(Executor executor, Consumer<? super IContext> action, IContext ctx, int options) {
+        return cancelToken.thenRunAsync(executor, action, ctx, options);
+    }
+
+    @Override
+    public IRegistration thenNotify(CancelTokenListener action, int options) {
+        return cancelToken.thenNotify(action, options);
+    }
+
+    @Override
+    public IRegistration thenNotify(CancelTokenListener action) {
+        return cancelToken.thenNotify(action);
+    }
+
+    @Override
+    public IRegistration thenNotifyAsync(Executor executor, CancelTokenListener action) {
+        return cancelToken.thenNotifyAsync(executor, action);
+    }
+
+    @Override
+    public IRegistration thenNotifyAsync(Executor executor, CancelTokenListener action, int options) {
+        return cancelToken.thenNotifyAsync(executor, action, options);
+    }
+
+    @Override
+    public IRegistration thenTransferTo(ICancelTokenSource child, int options) {
+        return cancelToken.thenTransferTo(child, options);
+    }
+
+    @Override
+    public IRegistration thenTransferTo(ICancelTokenSource child) {
+        return cancelToken.thenTransferTo(child);
+    }
+
+    @Override
+    public IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child) {
+        return cancelToken.thenTransferToAsync(executor, child);
+    }
+
+    @Override
+    public IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child, int options) {
+        return cancelToken.thenTransferToAsync(executor, child, options);
+    }
+
+    // endregion
+
 }
