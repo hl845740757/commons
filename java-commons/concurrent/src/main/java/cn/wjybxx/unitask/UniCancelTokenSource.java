@@ -58,7 +58,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     private UniScheduledExecutor executor;
 
     public UniCancelTokenSource() {
-        this.executor = null;
+
     }
 
     public UniCancelTokenSource(int code) {

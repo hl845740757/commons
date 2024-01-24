@@ -359,5 +359,37 @@ public class FutureTest {
     }
     // endregion
 
+    // region handle
+
+    @Test
+    void testHandle() {
+        final String first = "abc";
+        final String fallbackResult = "fallback:" + first;
+        IExecutor executor = (command, options) -> command.run();
+        FutureUtils.submitCall(executor, () -> first, 0)
+                .handle((ctx, v, ex) -> {
+                    if (ex != null) {
+                        return fallbackResult;
+                    }
+                    return v;
+                })
+                .thenAccept((ctx, v) -> {
+                    Assertions.assertEquals(first, v);
+                })
+                .join();
+
+        FutureUtils.submitCall(executor, () -> {throw new RuntimeException();}, 0)
+                .handle((ctx, v, ex) -> {
+                    if (ex != null) {
+                        return fallbackResult;
+                    }
+                    return v;
+                })
+                .thenAccept((ctx, v) -> {
+                    Assertions.assertEquals(fallbackResult, v);
+                })
+                .join();
+    }
+
     // endregion
 }
