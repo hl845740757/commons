@@ -75,19 +75,19 @@ public class UniPromise<T> implements UniFuture<T> {
     private final IContext _ctx;
 
     public UniPromise(Executor executor) {
-        this._executor = Objects.requireNonNull(executor);
+        this._executor = Objects.requireNonNull(executor, "executor");
         this._ctx = IContext.NONE;
     }
 
     public UniPromise(Executor executor, IContext ctx) {
-        this._executor = Objects.requireNonNull(executor);
+        this._executor = Objects.requireNonNull(executor, "executor");
         this._ctx = ctx == null ? IContext.NONE : ctx;
     }
 
     // region factory
 
     private UniPromise(Executor executor, IContext ctx, Object result) {
-        this._executor = Objects.requireNonNull(executor);
+        this._executor = Objects.requireNonNull(executor, "executor");
         this._ctx = ctx == null ? IContext.NONE : ctx;
         this.result = result;
     }

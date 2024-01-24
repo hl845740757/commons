@@ -168,20 +168,22 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
      * @throws IllegalStateException 如果未绑定executor
      */
     public void cancelAfter(int cancelCode, long millisecondsDelay) {
-        if (executor == null) {
-            throw new IllegalStateException("delayer is not set");
-        }
-        if (this.code == 0) {
-            Canceller canceller = new Canceller(this, cancelCode);
-            executor.scheduleAction(canceller, canceller, millisecondsDelay);
-            // executor会自动监听延时任务的cancelToken
-        }
+        cancelAfter(cancelCode, millisecondsDelay, executor);
     }
 
     @Override
     public void cancelAfter(int cancelCode, long delay, TimeUnit timeUnit) {
-        long millisecondsDelay = timeUnit.toMillis(delay);
-        cancelAfter(cancelCode, millisecondsDelay);
+        cancelAfter(cancelCode, timeUnit.toMillis(delay), executor);
+    }
+
+    /** @param executor 用于延迟调度的executor */
+    public void cancelAfter(int cancelCode, long delay, UniScheduledExecutor executor) {
+        if (executor == null) throw new IllegalArgumentException("delayer is null");
+        if (this.code == 0) {
+            Canceller canceller = new Canceller(this, cancelCode);
+            executor.scheduleAction(canceller, canceller, delay);
+            // executor会自动监听延时任务的cancelToken
+        }
     }
 
     private static class Canceller implements Consumer<Object>, IContext {
@@ -887,6 +889,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
         @Override
         public UniCancelTokenSource tryFire(int mode) {
+            UniCancelTokenSource output;
             try {
                 if (mode <= 0 && !claim()) {
                     return null; // 下次执行
@@ -895,13 +898,14 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
                 if (child == null) {
                     return null;
                 }
-                return fireNow(source, mode, child);
+                output = fireNow(source, mode, child);
             } catch (Throwable ex) {
+                output = null;
                 FutureLogger.logCause(ex, "UniTransferTo caught an exception");
             }
             // help gc
             clear();
-            return null;
+            return output;
         }
 
         static UniCancelTokenSource fireNow(UniCancelTokenSource source, int mode,

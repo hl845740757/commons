@@ -20,10 +20,7 @@ import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.Objects;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -115,7 +112,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     @Override
     public void cancelAfter(int cancelCode, long millisecondsDelay) {
-        cancelAfter(cancelCode, millisecondsDelay, TimeUnit.MILLISECONDS);
+        cancelAfter(cancelCode, millisecondsDelay, TimeUnit.MILLISECONDS, delayer);
     }
 
     /**
@@ -124,9 +121,14 @@ public final class CancelTokenSource implements ICancelTokenSource {
      */
     @Override
     public void cancelAfter(int cancelCode, long delay, TimeUnit timeUnit) {
+        cancelAfter(cancelCode, delay, timeUnit, delayer);
+    }
+
+    public void cancelAfter(int cancelCode, long delay, TimeUnit timeUnit, ScheduledExecutorService executor) {
+        if (executor == null) throw new IllegalArgumentException("delayer is null");
         if (this.code == 0) {
             Canceller canceller = new Canceller(this, cancelCode);
-            canceller.future = delayer.schedule(canceller, delay, timeUnit);
+            canceller.future = executor.schedule(canceller, delay, timeUnit);
             // jdk的scheduler不会响应取消令牌，我们通过Future及时取消定时任务 -- 未来更换实现后可避免
             this.thenAccept(canceller);
         }
@@ -852,6 +854,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
         @Override
         public CancelTokenSource tryFire(int mode) {
+            CancelTokenSource output;
             try {
                 if (mode <= 0 && !claim()) {
                     return null; // 下次执行
@@ -860,13 +863,14 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 if (child == null) {
                     return null;
                 }
-                return fireNow(source, mode, child);
+                output = fireNow(source, mode, child);
             } catch (Throwable ex) {
+                output = null;
                 FutureLogger.logCause(ex, "UniTransferTo caught an exception");
             }
             // help gc
             clear();
-            return null;
+            return output;
         }
 
         static CancelTokenSource fireNow(CancelTokenSource source, int mode,

@@ -203,15 +203,20 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         return Math.max(0, (int) count);
     }
 
-    /** EventLoop绑定的Agent（代理） */
-    public EventLoopAgent<? super T> getAgent() {
-        return agent;
-    }
-
     /** 仅用于测试 */
     @VisibleForTesting
     public ConsumerBarrier getBarrier() {
         return worker.barrier;
+    }
+
+    /** EventLoop绑定的事件生成器 - 可用于发布事件 */
+    public EventSequencer<? extends T> getEventSequencer() {
+        return eventSequencer;
+    }
+
+    /** EventLoop绑定的Agent（代理） */
+    public EventLoopAgent<? super T> getAgent() {
+        return agent;
     }
 
     @Override
@@ -699,7 +704,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         logger.warn("user published invalid event: " + event); // 用户发布了非法数据
                     }
                 } catch (Throwable t) {
-                    FutureLogger.logCause(t,"A task raised an exception.");
+                    FutureLogger.logCause(t, "A task raised an exception.");
                     if (isShuttingDown()) { // 可能是中断或Alert，检查关闭信号
                         return curSequence;
                     }
@@ -771,7 +776,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         event.castObj0ToRunnable().run();
                     }
                 } catch (Throwable t) {
-                    FutureLogger.logCause(t,"A task raised an exception.");
+                    FutureLogger.logCause(t, "A task raised an exception.");
                 } finally {
                     event.cleanAll();
                     sequence.setRelease(nextSequence);

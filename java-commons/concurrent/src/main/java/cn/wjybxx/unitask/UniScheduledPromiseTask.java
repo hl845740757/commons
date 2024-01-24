@@ -343,7 +343,7 @@ public final class UniScheduledPromiseTask<V>
 
     @Override
     public long getDelay() {
-        return nextTriggerTime;
+        return Math.max(0, nextTriggerTime - eventLoop().tickTime());
     }
 
     public int compareToExplicitly(UniScheduledPromiseTask<?> other) {

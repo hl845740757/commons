@@ -211,7 +211,6 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
      */
     void onCompleted(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context, int options);
 
-
     void onCompleted(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context);
 
     void onCompletedAsync(Executor executor,
