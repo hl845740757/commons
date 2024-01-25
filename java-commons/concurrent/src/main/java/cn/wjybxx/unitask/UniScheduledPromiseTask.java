@@ -311,7 +311,7 @@ public final class UniScheduledPromiseTask<V>
 
     public void cancelWithoutRemove() {
         closeRegistration();
-        promise.trySetCancelled();
+        promise.trySetCancelled(ICancelToken.REASON_SHUTDOWN);
     }
 
     public void registerCancellation() {

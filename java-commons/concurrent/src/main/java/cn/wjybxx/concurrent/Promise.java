@@ -366,8 +366,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     @Override
     public boolean trySetCancelled(int code) {
         Throwable cause = code == 1
-                ? StacklessCancellationException.INSTANCE :
-                new StacklessCancellationException(code);
+                ? StacklessCancellationException.INSTANCE
+                : new StacklessCancellationException(code);
         if (internalComplete(new AltResult(cause))) {
             postComplete(this); // 不记录日志
             return true;

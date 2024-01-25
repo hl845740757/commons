@@ -316,7 +316,7 @@ final class ScheduledPromiseTask<V>
 
     public void cancelWithoutRemove() {
         closeRegistration();
-        promise.trySetCancelled();
+        promise.trySetCancelled(ICancelToken.REASON_SHUTDOWN);
     }
 
     public void registerCancellation() {

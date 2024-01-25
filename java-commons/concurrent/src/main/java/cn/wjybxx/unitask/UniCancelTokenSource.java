@@ -90,23 +90,23 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
      * 通常而言逆向查找更容易匹配：Task的停止顺序通常和Task的启动顺序相反，因此后注册的监听器会先删除。
      * 因此默认逆向查找匹配的监听器。
      *
-     * @param listener 监听器引用
+     * @param action 用户回调行为的引用
      */
-    public boolean unregister(Object listener) {
-        return unregister(listener, false);
+    public boolean unregister(Object action) {
+        return unregister(action, false);
     }
 
     /**
      * 删除监听器
      *
-     * @param listener        监听器引用
+     * @param action          用户回调行为的引用
      * @param firstOccurrence 是否正向删除
      */
-    public boolean unregister(Object listener, boolean firstOccurrence) {
+    public boolean unregister(Object action, boolean firstOccurrence) {
         if (firstOccurrence) {
             Completion node = this.head;
             while ((node != null)) {
-                if (node.action == listener) {
+                if (node.action == action) {
                     node.close();
                     return true;
                 }
@@ -115,7 +115,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         } else {
             Completion node = this.tail;
             while ((node != null)) {
-                if (node.action == listener) {
+                if (node.action == action) {
                     node.close();
                     return true;
                 }
@@ -128,8 +128,23 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     /** 重置状态，以供复用 */
     public void reset() {
         code = 0;
-        head = null;
+
+        Completion node;
+        while ((node = head) != null){
+            head = node.next;
+            node.action = TOMBSTONE;
+            node.clear();
+        }
         tail = null;
+    }
+
+    @Override
+    public UniCancelTokenSource newChild() {
+        UniCancelTokenSource child = new UniCancelTokenSource(executor, code);
+        if (code == 0) {
+            thenTransferTo(child);
+        }
+        return child;
     }
 
     @Override
@@ -270,34 +285,34 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     @Override
     public IRegistration thenAccept(Consumer<? super ICancelToken> action, int options) {
-        return uniAccept1(null, action, options);
+        return uniAccept(null, action, options);
     }
 
     @Override
     public IRegistration thenAccept(Consumer<? super ICancelToken> action) {
-        return uniAccept1(null, action, 0);
+        return uniAccept(null, action, 0);
     }
 
     @Override
     public IRegistration thenAcceptAsync(Executor executor, Consumer<? super ICancelToken> action) {
         Objects.requireNonNull(executor, "executor");
-        return uniAccept1(executor, action, 0);
+        return uniAccept(executor, action, 0);
     }
 
     @Override
     public IRegistration thenAcceptAsync(Executor executor, Consumer<? super ICancelToken> action, int options) {
         Objects.requireNonNull(executor, "executor");
-        return uniAccept1(executor, action, options);
+        return uniAccept(executor, action, options);
     }
 
-    private IRegistration uniAccept1(Executor executor, Consumer<? super ICancelToken> action,
-                                     int options) {
+    private IRegistration uniAccept(Executor executor, Consumer<? super ICancelToken> action,
+                                    int options) {
         Objects.requireNonNull(action);
         if (isCancelling()) {
-            UniAccept1.fireNow(this, action);
+            UniAccept.fireNow(this, action);
             return TOMBSTONE;
         }
-        Completion completion = new UniAccept1(executor, options, this, action);
+        Completion completion = new UniAccept(executor, options, this, action);
         return pushCompletion(completion) ? completion : TOMBSTONE;
     }
 
@@ -307,35 +322,35 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     @Override
     public IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options) {
-        return uniAccept2(null, action, ctx, options);
+        return uniAcceptCtx(null, action, ctx, options);
     }
 
     @Override
     public IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
-        return uniAccept2(null, action, ctx, 0);
+        return uniAcceptCtx(null, action, ctx, 0);
     }
 
     @Override
     public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
         Objects.requireNonNull(executor, "executor");
-        return uniAccept2(executor, action, ctx, 0);
+        return uniAcceptCtx(executor, action, ctx, 0);
     }
 
     @Override
     public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
-        return uniAccept2(executor, action, ctx, options);
+        return uniAcceptCtx(executor, action, ctx, options);
     }
 
-    private IRegistration uniAccept2(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action,
-                                     IContext ctx, int options) {
+    private IRegistration uniAcceptCtx(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action,
+                                       IContext ctx, int options) {
         Objects.requireNonNull(action);
         if (ctx == null) ctx = IContext.NONE;
         if (isCancelling()) {
-            UniAccept2.fireNow(this, action, ctx);
+            UniAcceptCtx.fireNow(this, action, ctx);
             return TOMBSTONE;
         }
-        Completion completion = new UniAccept2(executor, options, this, action, ctx);
+        Completion completion = new UniAcceptCtx(executor, options, this, action, ctx);
         return pushCompletion(completion) ? completion : TOMBSTONE;
     }
 
@@ -345,33 +360,33 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     @Override
     public IRegistration thenRun(Runnable action, int options) {
-        return uniRun1(null, action, options);
+        return uniRun(null, action, options);
     }
 
     @Override
     public IRegistration thenRun(Runnable action) {
-        return uniRun1(null, action, 0);
+        return uniRun(null, action, 0);
     }
 
     @Override
     public IRegistration thenRunAsync(Executor executor, Runnable action) {
         Objects.requireNonNull(executor, "executor");
-        return uniRun1(executor, action, 0);
+        return uniRun(executor, action, 0);
     }
 
     @Override
     public IRegistration thenRunAsync(Executor executor, Runnable action, int options) {
         Objects.requireNonNull(executor, "executor");
-        return uniRun1(executor, action, options);
+        return uniRun(executor, action, options);
     }
 
-    private IRegistration uniRun1(Executor executor, Runnable action, int options) {
+    private IRegistration uniRun(Executor executor, Runnable action, int options) {
         Objects.requireNonNull(action);
         if (isCancelling()) {
-            UniRun1.fireNow(action);
+            UniRun.fireNow(action);
             return TOMBSTONE;
         }
-        Completion completion = new UniRun1(executor, options, this, action);
+        Completion completion = new UniRun(executor, options, this, action);
         return pushCompletion(completion) ? completion : TOMBSTONE;
     }
 
@@ -381,34 +396,34 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     @Override
     public IRegistration thenRun(Consumer<? super IContext> action, IContext ctx, int options) {
-        return uniRun2(null, action, ctx, options);
+        return uniRunCtx(null, action, ctx, options);
     }
 
     @Override
     public IRegistration thenRun(Consumer<? super IContext> action, IContext ctx) {
-        return uniRun2(null, action, ctx, 0);
+        return uniRunCtx(null, action, ctx, 0);
     }
 
     @Override
     public IRegistration thenRunAsync(Executor executor, Consumer<? super IContext> action, IContext ctx) {
         Objects.requireNonNull(executor, "executor");
-        return uniRun2(executor, action, ctx, 0);
+        return uniRunCtx(executor, action, ctx, 0);
     }
 
     @Override
     public IRegistration thenRunAsync(Executor executor, Consumer<? super IContext> action, IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
-        return uniRun2(executor, action, ctx, options);
+        return uniRunCtx(executor, action, ctx, options);
     }
 
-    private IRegistration uniRun2(Executor executor, Consumer<? super IContext> action, IContext ctx, int options) {
+    private IRegistration uniRunCtx(Executor executor, Consumer<? super IContext> action, IContext ctx, int options) {
         Objects.requireNonNull(action);
         if (ctx == null) ctx = IContext.NONE;
         if (isCancelling()) {
-            UniRun2.fireNow(action, ctx);
+            UniRunCtx.fireNow(action, ctx);
             return TOMBSTONE;
         }
-        Completion completion = new UniRun2(executor, options, this, action, ctx);
+        Completion completion = new UniRunCtx(executor, options, this, action, ctx);
         return pushCompletion(completion) ? completion : TOMBSTONE;
     }
 
@@ -661,8 +676,10 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
         /** 注意：不能修改{@link #action}的引用 */
         protected void clear() {
-            executor = null;
             source = null;
+            prev = null;
+            next = null;
+            executor = null;
         }
 
     }
@@ -675,10 +692,10 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         }
     };
 
-    private static class UniAccept1 extends Completion {
+    private static class UniAccept extends Completion {
 
-        public UniAccept1(Executor executor, int options, UniCancelTokenSource source,
-                          Consumer<? super ICancelToken> action) {
+        public UniAccept(Executor executor, int options, UniCancelTokenSource source,
+                         Consumer<? super ICancelToken> action) {
             super(executor, options, source, action);
         }
 
@@ -694,7 +711,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
                 }
                 action.accept(source);
             } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniAccept1 caught an exception");
+                FutureLogger.logCause(ex, "UniAccept caught an exception");
             }
             // help gc
             clear();
@@ -705,17 +722,17 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             try {
                 action.accept(source);
             } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniAccept1 caught an exception");
+                FutureLogger.logCause(ex, "UniAccept caught an exception");
             }
         }
     }
 
-    private static class UniAccept2 extends Completion {
+    private static class UniAcceptCtx extends Completion {
 
         IContext ctx;
 
-        public UniAccept2(Executor executor, int options, UniCancelTokenSource source,
-                          BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
+        public UniAcceptCtx(Executor executor, int options, UniCancelTokenSource source,
+                            BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
             super(executor, options, source, action);
             this.ctx = ctx;
         }
@@ -742,7 +759,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
                 }
                 action.accept(ctx, source);
             } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniAccept2 caught an exception");
+                FutureLogger.logCause(ex, "UniAcceptCtx caught an exception");
             }
             // help gc
             clear();
@@ -755,16 +772,16 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             try {
                 action.accept(ctx, source);
             } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniAccept2 caught an exception");
+                FutureLogger.logCause(ex, "UniAcceptCtx caught an exception");
             }
         }
 
     }
 
-    private static class UniRun1 extends Completion {
+    private static class UniRun extends Completion {
 
-        public UniRun1(Executor executor, int options, UniCancelTokenSource source,
-                       Runnable action) {
+        public UniRun(Executor executor, int options, UniCancelTokenSource source,
+                      Runnable action) {
             super(executor, options, source, action);
         }
 
@@ -780,7 +797,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
                 }
                 action.run();
             } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniRun1 caught an exception");
+                FutureLogger.logCause(ex, "UniRun caught an exception");
             }
             // help gc
             clear();
@@ -791,17 +808,17 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             try {
                 action.run();
             } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniRun1 caught an exception");
+                FutureLogger.logCause(ex, "UniRun caught an exception");
             }
         }
     }
 
-    private static class UniRun2 extends Completion {
+    private static class UniRunCtx extends Completion {
 
         IContext ctx;
 
-        public UniRun2(Executor executor, int options, UniCancelTokenSource source,
-                       Consumer<? super IContext> action, IContext ctx) {
+        public UniRunCtx(Executor executor, int options, UniCancelTokenSource source,
+                         Consumer<? super IContext> action, IContext ctx) {
             super(executor, options, source, action);
             this.ctx = ctx;
         }
@@ -828,7 +845,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
                 }
                 action.accept(ctx);
             } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniRun2 caught an exception");
+                FutureLogger.logCause(ex, "UniRunCtx caught an exception");
             }
             // help gc
             clear();
@@ -840,7 +857,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             try {
                 action.accept(ctx);
             } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniRun2 caught an exception");
+                FutureLogger.logCause(ex, "UniRunCtx caught an exception");
             }
         }
     }
