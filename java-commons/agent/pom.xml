@@ -8,10 +8,11 @@
         <artifactId>commons-parent</artifactId>
         <version>${revision}</version>
     </parent>
-
     <artifactId>agent</artifactId>
+
     <name>Agent</name>
     <description>热更新Agent模块；保持最小jar包</description>
+    <url>https://github.com/hl845740757/commons</url>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>

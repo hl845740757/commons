@@ -29,8 +29,6 @@ namespace Wjybxx.Commons.Collections;
 /// </summary>
 public static partial class CollectionUtil
 {
-    #region internal
-
     internal static InvalidOperationException CollectionFullException() {
         return new InvalidOperationException("Collection is full");
     }
@@ -42,6 +40,4 @@ public static partial class CollectionUtil
     internal static KeyNotFoundException KeyNotFoundException(object? key) {
         return new KeyNotFoundException(key == null ? "null" : key.ToString());
     }
-
-    #endregion
 }

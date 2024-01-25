@@ -8,10 +8,11 @@
         <artifactId>commons-parent</artifactId>
         <version>${revision}</version>
     </parent>
-    
     <artifactId>concurrent</artifactId>
+
     <name>Concurrent</name>
     <description>并发工具包，更好的Future和EventLoop</description>
+    <url>https://github.com/hl845740757/commons</url>
 
     <dependencies>
         <dependency>

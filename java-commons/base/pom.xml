@@ -8,8 +8,9 @@
         <artifactId>commons-parent</artifactId>
         <version>${revision}</version>
     </parent>
-
     <artifactId>base</artifactId>
+
     <name>Base</name>
     <description>被业务代码和Apt都依赖的基础组件</description>
+    <url>https://github.com/hl845740757/commons</url>
 </project>

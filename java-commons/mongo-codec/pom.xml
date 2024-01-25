@@ -25,7 +25,10 @@
         <version>${revision}</version>
     </parent>
     <artifactId>mongo-codec</artifactId>
+
+    <name>Mongo-Codec</name>
     <description>mongo-codec适配器</description>
+    <url>https://github.com/hl845740757/commons</url>
 
     <dependencies>
         <!-- https://mvnrepository.com/artifact/org.mongodb/bson -->

@@ -26,9 +26,9 @@ namespace Wjybxx.Commons.Collections;
 public readonly struct PutResult<TValue>
 {
     private readonly bool _isInsert;
-    private readonly TValue _prevValue;
+    private readonly TValue? _prevValue;
 
-    public PutResult(bool isInsert, TValue prevValue) {
+    public PutResult(bool isInsert, TValue? prevValue) {
         _isInsert = isInsert;
         _prevValue = prevValue;
     }
@@ -42,5 +42,5 @@ public readonly struct PutResult<TValue>
     /// Key关联的旧值
     /// （Insert下是关联的默认值）
     /// </summary>
-    public TValue PrevValue => _prevValue;
+    public TValue? PrevValue => _prevValue;
 }

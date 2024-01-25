@@ -8,10 +8,11 @@
         <artifactId>commons-parent</artifactId>
         <version>${revision}</version>
     </parent>
-
     <artifactId>apt-base</artifactId>
+
     <name>Apt-Base</name>
     <description>注解处理器的基础模块</description>
+    <url>https://github.com/hl845740757/commons</url>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

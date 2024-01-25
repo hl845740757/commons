@@ -66,7 +66,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     /** 用于代替key自身的equals和hashcode计算；这一点C#的设计做的要好些 */
     private IEqualityComparer<TKey> _keyComparer;
     /** key不存在时的默认值  */
-    private TValue _defValue;
+    private TValue? _defValue;
 
     private KeyCollection? _keys;
     private ValueCollection? _values;
@@ -105,7 +105,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     /// <summary>
     /// 默认值会序列化
     /// </summary>
-    public TValue DefaultValue {
+    public TValue? DefaultValue {
         get => _defValue;
         set => _defValue = value;
     }
