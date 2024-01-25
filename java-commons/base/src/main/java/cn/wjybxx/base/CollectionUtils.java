@@ -17,7 +17,6 @@
 package cn.wjybxx.base;
 
 import cn.wjybxx.base.collection.DelayedCompressList;
-import cn.wjybxx.base.collection.DelayedCompressListImpl;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -52,15 +51,15 @@ public class CollectionUtils {
 
     // region 特殊工厂
     public static <E> DelayedCompressList<E> newDelayedCompressList() {
-        return new DelayedCompressListImpl<>();
+        return new DelayedCompressList<>();
     }
 
     public static <E> DelayedCompressList<E> newDelayedCompressList(int initCapacity) {
-        return new DelayedCompressListImpl<>(initCapacity);
+        return new DelayedCompressList<>(initCapacity);
     }
 
     public static <E> DelayedCompressList<E> newDelayedCompressList(Collection<? extends E> src) {
-        return new DelayedCompressListImpl<>(src);
+        return new DelayedCompressList<>(src);
     }
     // endregion
 
