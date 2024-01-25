@@ -52,13 +52,10 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
 
     private static final int MIN_BATCH_SIZE = 64;
     private static final int MAX_BATCH_SIZE = 64 * 1024;
-    private static final int BATCH_PUBLISH_THRESHOLD = 1024;
+    private static final int BATCH_PUBLISH_THRESHOLD = 1024 - 1;
 
     private static final int HIGHER_PRIORITY_QUEUE_ID = 0;
     private static final int LOWER_PRIORITY_QUEUE_ID = 1;
-
-    private static final int TYPE_CLEAN_DEADLINE = -2;
-    private static final Runnable _emptyRunnable = () -> {};
 
     // 填充开始 - 字段定义顺序不要随意调整
     @SuppressWarnings("unused")
@@ -75,7 +72,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     /** 周期性任务队列 -- 既有的任务都是先于Sequencer中的任务提交的 */
     private final IndexedPriorityQueue<ScheduledPromiseTask<?>> scheduledTaskQueue;
     /** 批量执行任务的大小 */
-    private final int taskBatchSize;
+    private final int batchSize;
     /** 任务拒绝策略 */
     private final RejectedExecutionHandler rejectedExecutionHandler;
     /** 内部代理 */
@@ -101,7 +98,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         this.eventSequencer = Objects.requireNonNull(builder.getEventSequencer());
         this.scheduledTaskQueue = new DefaultIndexedPriorityQueue<>(ScheduledPromiseTask::compareToExplicitly, 64);
 
-        this.taskBatchSize = MathCommon.clamp(builder.getBatchSize(), MIN_BATCH_SIZE, MAX_BATCH_SIZE);
+        this.batchSize = MathCommon.clamp(builder.getBatchSize(), MIN_BATCH_SIZE, MAX_BATCH_SIZE);
         this.rejectedExecutionHandler = Objects.requireNonNull(builder.getRejectedExecutionHandler());
         this.agent = Objects.requireNonNullElse(builder.getAgent(), EmptyAgent.getInstance());
         this.mainModule = builder.getMainModule();
@@ -245,10 +242,10 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 rejectedExecutionHandler.rejected(task, this);
                 return;
             }
-            tryPublish(task, sequence);
+            tryPublish(task, sequence, options);
         } else {
             // 其它线程调用，可能阻塞
-            tryPublish(task, eventSequencer.next(1));
+            tryPublish(task, eventSequencer.next(1), options);
         }
     }
 
@@ -266,7 +263,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
      * 又因为{@link #isShuttingDown()}为true一定在{@link Worker#cleanBuffer()}之前，
      * 因此，如果sequence是在{@link #isShuttingDown()}为true之前申请到的，那么sequence一定是有效的，否则可能有效，也可能无效。
      */
-    private void tryPublish(@Nonnull Runnable task, long sequence) {
+    private void tryPublish(@Nonnull Runnable task, long sequence, int options) {
         if (isShuttingDown()) {
             // 先发布sequence，避免拒绝逻辑可能产生的阻塞，不可以覆盖数据
             eventSequencer.publish(sequence);
@@ -296,6 +293,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             // 确保线程已启动 -- ringBuffer私有的情况下才可以测试 sequence == 0
             if (sequence == 0 && !inEventLoop()) {
                 ensureThreadStarted();
+            } else if (TaskOption.isEnabled(options, TaskOption.WAKEUP_THREAD)) {
+                wakeup();
             }
         }
     }
@@ -578,8 +577,9 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         }
 
         private void loop() {
-            final ConsumerBarrier sequenceBarrier = this.barrier;
-            final int taskBatchSize = DisruptorEventLoop.this.taskBatchSize;
+            final ConsumerBarrier barrier = this.barrier;
+            final int taskBatchSize = DisruptorEventLoop.this.batchSize;
+            final var mpUnboundedEventSequencer = DisruptorEventLoop.this.mpUnboundedEventSequencer;
 
             final Sequence sequence = this.sequence;
             long nextSequence = sequence.getVolatile() + 1L;
@@ -593,17 +593,20 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
 
                     // 多生产者模型下不可频繁调用waitFor，会在查询可用sequence时产生巨大的开销，因此查询之后本地切割为小批次，避免用户循环得不到执行
                     if (availableSequence < nextSequence) {
-                        availableSequence = sequenceBarrier.waitFor(nextSequence);
+                        availableSequence = barrier.waitFor(nextSequence);
                     }
 
                     long batchEndSequence = Math.min(availableSequence, nextSequence + taskBatchSize - 1);
                     if (nextSequence <= batchEndSequence) {
                         long curSequence = runTaskBatch(nextSequence, batchEndSequence);
                         sequence.setRelease(curSequence);
-
+                        // 无界队列尝试主动回收块
+                        if (mpUnboundedEventSequencer != null) {
+                            mpUnboundedEventSequencer.tryMoveHeadToNext(curSequence);
+                        }
                         nextSequence = curSequence + 1;
                         if (nextSequence <= batchEndSequence) {
-                            assert isShuttingDown(); // 未消费完毕，应当是开始退出了
+                            assert isShuttingDown();
                             break;
                         }
                     }
@@ -704,22 +707,12 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         logger.warn("user published invalid event: " + event); // 用户发布了非法数据
                     }
                 } catch (Throwable t) {
-                    FutureLogger.logCause(t, "A task raised an exception.");
+                    logCause(t);
                     if (isShuttingDown()) { // 可能是中断或Alert，检查关闭信号
                         return curSequence;
                     }
                 } finally {
                     event.clean();
-                }
-
-                // 避免长时间不发布sequence阻塞生产者，每消费一批就发布一次sequence
-                if (((curSequence - batchBeginSequence) & BATCH_PUBLISH_THRESHOLD) == 0
-                        && curSequence < batchEndSequence) {
-                    sequence.setRelease(curSequence);
-                    // 如果是无界队列，则尝试主动回收chunk
-                    if (mpUnboundedEventSequencer != null) {
-                        mpUnboundedEventSequencer.tryMoveHeadToNext(curSequence);
-                    }
                 }
             }
             return batchEndSequence;
@@ -776,7 +769,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         event.castObj0ToRunnable().run();
                     }
                 } catch (Throwable t) {
-                    FutureLogger.logCause(t, "A task raised an exception.");
+                    logCause(t);
                 } finally {
                     event.cleanAll();
                     sequence.setRelease(nextSequence);

@@ -14,7 +14,6 @@
     <description>热更新Agent模块；保持最小jar包</description>
 
     <properties>
-        <maven.deploy.skip>false</maven.deploy.skip>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
     </properties>

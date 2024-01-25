@@ -259,4 +259,12 @@ public abstract class AbstractEventLoop extends AbstractExecutorService implemen
     }
 
     // endregion
+
+    protected static void logCause(Throwable t) {
+        if (t instanceof VirtualMachineError) {
+            logger.error("A task raised an exception.", t);
+        } else {
+            logger.warn("A task raised an exception.", t);
+        }
+    }
 }

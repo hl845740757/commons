@@ -35,7 +35,7 @@ public abstract class EventLoopBuilder<T extends IAgentEvent> {
 
     private EventLoopAgent<? super T> agent;
     private EventLoopModule mainModule;
-    private int batchSize = 8192;
+    private int batchSize = 1024;
 
     public abstract EventLoop build();
 
@@ -86,7 +86,11 @@ public abstract class EventLoopBuilder<T extends IAgentEvent> {
         return this;
     }
 
-    /** 每次最多处理多少个事件就尝试执行一次{@link EventLoopAgent#update()}方法 */
+    /**
+     * 每次最多处理多少个事件就尝试执行一次{@link EventLoopAgent#update()}方法
+     * 该值越小：线程间的同步开销越多；越不容易阻塞生产者（有界Buffer）；EventLoop更容易响应取消；
+     * 该值越大：消费者的吞吐量越好，生产者的吞吐量则会降低（有界Buffer）；EventLoop对关闭信号的响应越慢。
+     */
     public int getBatchSize() {
         return batchSize;
     }

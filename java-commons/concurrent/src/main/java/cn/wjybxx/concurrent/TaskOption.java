@@ -75,6 +75,12 @@ public final class TaskOption {
     public static final int LOCAL_ORDER = 1 << 9;
 
     /**
+     * 唤醒事件循环线程
+     * 事件循环线程可能阻塞某些操作上，如果一个任务需要EventLoop及时处理，则可以启用该选项唤醒线程。
+     */
+    public static final int WAKEUP_THREAD = 1 << 10;
+
+    /**
      * 延时任务：在出现异常后继续执行。
      * 注意：只适用无需结果的周期性任务 -- 分时任务会失败。
      */
