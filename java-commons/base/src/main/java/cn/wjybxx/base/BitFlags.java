@@ -90,7 +90,7 @@ public class BitFlags {
     public static int setField(int flags, int mask, int offset, int value) {
         int offsetValue = (value << offset) & mask; // & mask 去除非法位
         flags &= ~mask; // 去除旧值
-        return flags & offsetValue;
+        return flags | offsetValue;
     }
 
     public static int unsetField(int flags, int mask) {
@@ -163,7 +163,7 @@ public class BitFlags {
     public static long setField(long flags, long mask, int offset, long value) {
         long offsetValue = (value << offset) & mask; // & mask 去除非法位
         flags &= ~mask; // 去除旧值
-        return flags & offsetValue;
+        return flags | offsetValue;
     }
 
     public static long unsetField(long flags, long mask) {

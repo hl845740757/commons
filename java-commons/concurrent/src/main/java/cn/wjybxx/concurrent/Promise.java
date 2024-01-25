@@ -1085,7 +1085,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             return;
         }
         if (this.isDone() && executor == null) { // listener避免不必要的插入
-            UniOnCompleteFuture1.onCompleted(context, this, action, null);
+            UniOnCompleteFuture1.fireNow(context, this, action, null);
         } else {
             pushCompletion(new UniOnCompleteFuture1<>(executor, options, this, context, action));
         }
@@ -1120,7 +1120,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             return;
         }
         if (this.isDone() && executor == null) { // listener避免不必要的插入
-            UniOnCompleteFuture2.onCompleted(this, action, null);
+            UniOnCompleteFuture2.fireNow(this, action, null);
         } else {
             pushCompletion(new UniOnCompleteFuture2<>(executor, options, this, action));
         }
@@ -2202,7 +2202,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     break tryComplete;
                 }
                 // 异步模式下已经claim
-                if (!onCompleted(ctx, input, action, mode > 0 ? null : this)) {
+                if (!fireNow(ctx, input, action, mode > 0 ? null : this)) {
                     return null;
                 }
             }
@@ -2214,9 +2214,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             return null;
         }
 
-        static <V> boolean onCompleted(IContext ctx, Promise<V> input,
-                                       BiConsumer<? super IContext, ? super IFuture<V>> action,
-                                       UniOnCompleteFuture1<V> c) {
+        static <V> boolean fireNow(IContext ctx, Promise<V> input,
+                                   BiConsumer<? super IContext, ? super IFuture<V>> action,
+                                   UniOnCompleteFuture1<V> c) {
             try {
                 if (c != null && !c.claim()) {
                     return false;
@@ -2243,7 +2243,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             // 异步模式下已经claim
-            if (!onCompleted(input, action, mode > 0 ? null : this)) {
+            if (!fireNow(input, action, mode > 0 ? null : this)) {
                 return null;
             }
             // help gc
@@ -2253,9 +2253,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             return null;
         }
 
-        static <V> boolean onCompleted(Promise<V> input,
-                                       Consumer<? super IFuture<V>> action,
-                                       UniOnCompleteFuture2<V> c) {
+        static <V> boolean fireNow(Promise<V> input,
+                                   Consumer<? super IFuture<V>> action,
+                                   UniOnCompleteFuture2<V> c) {
             try {
                 if (c != null && !c.claim()) {
                     return false;

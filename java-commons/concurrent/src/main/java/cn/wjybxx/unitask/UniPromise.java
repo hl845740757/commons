@@ -919,7 +919,7 @@ public class UniPromise<T> implements UniFuture<T> {
             return;
         }
         if (this.isDone() && executor == EXE_SYNC) { // listener避免不必要的插入
-            UniOnCompleteFuture1.onCompleted(context, this, action, null);
+            UniOnCompleteFuture1.fireNow(context, this, action, null);
         } else {
             pushCompletion(new UniOnCompleteFuture1<>(executor, options, this, context, action));
         }
@@ -952,7 +952,7 @@ public class UniPromise<T> implements UniFuture<T> {
             return;
         }
         if (this.isDone() && executor == EXE_SYNC) { // listener避免不必要的插入
-            UniOnCompleteFuture2.onCompleted(this, action, null);
+            UniOnCompleteFuture2.fireNow(this, action, null);
         } else {
             pushCompletion(new UniOnCompleteFuture2<>(executor, options, this, action));
         }
@@ -1886,7 +1886,7 @@ public class UniPromise<T> implements UniFuture<T> {
                     break tryComplete;
                 }
                 // 异步模式下已经claim
-                if (!onCompleted(ctx, input, action, mode > 0 ? null : this)) {
+                if (!fireNow(ctx, input, action, mode > 0 ? null : this)) {
                     return null;
                 }
             }
@@ -1897,9 +1897,9 @@ public class UniPromise<T> implements UniFuture<T> {
             return null;
         }
 
-        static <V> boolean onCompleted(IContext ctx, UniPromise<V> input,
-                                       BiConsumer<? super IContext, ? super UniFuture<V>> action,
-                                       UniOnCompleteFuture1<V> c) {
+        static <V> boolean fireNow(IContext ctx, UniPromise<V> input,
+                                   BiConsumer<? super IContext, ? super UniFuture<V>> action,
+                                   UniOnCompleteFuture1<V> c) {
             try {
                 if (c != null && !c.claim()) {
                     return false;
@@ -1926,7 +1926,7 @@ public class UniPromise<T> implements UniFuture<T> {
         UniPromise<?> tryFire(int mode) {
             final UniPromise<V> input = this.input;
             // 异步模式下已经claim
-            if (!onCompleted(input, action, mode > 0 ? null : this)) {
+            if (!fireNow(input, action, mode > 0 ? null : this)) {
                 return null;
             }
             // help gc
@@ -1935,9 +1935,9 @@ public class UniPromise<T> implements UniFuture<T> {
             return null;
         }
 
-        static <V> boolean onCompleted(UniPromise<V> input,
-                                       Consumer<? super UniFuture<V>> action,
-                                       UniOnCompleteFuture2<V> c) {
+        static <V> boolean fireNow(UniPromise<V> input,
+                                   Consumer<? super UniFuture<V>> action,
+                                   UniOnCompleteFuture2<V> c) {
             try {
                 if (c != null && !c.claim()) {
                     return false;

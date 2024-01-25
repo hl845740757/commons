@@ -154,6 +154,7 @@ public class MathCommon {
     // endregion
 
     // region clamp
+
     public static int clamp(int value, int min, int max) {
         if (value < min) return min;
         if (value > max) return max;
@@ -176,6 +177,18 @@ public class MathCommon {
         if (value < min) return min;
         if (value > max) return max;
         return value;
+    }
+
+    public static int clamp(long value, int min, int max) {
+        if (value < min) return min;
+        if (value > max) return max;
+        return (int) value;
+    }
+
+    public static float clamp(double value, float min, float max) {
+        if (value < min) return min;
+        if (value > max) return max;
+        return (float) value;
     }
 
     public static float clamp01(float value) {
