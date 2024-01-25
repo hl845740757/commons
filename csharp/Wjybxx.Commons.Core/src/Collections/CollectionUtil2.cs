@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Collections;
 
@@ -35,6 +36,7 @@ public static partial class CollectionUtil
     /// (该接口用于支持系统接口)
     /// </summary>
     /// <returns>如果链各个集合大小相等，且value相同则返回true</returns>
+    [Beta]
     public static bool ContentEquals<TKey>(this IGenericSet<TKey> self, ISet<TKey>? other) {
         return SetEquals(self, other);
     }
@@ -43,6 +45,7 @@ public static partial class CollectionUtil
     /// 比较两个Set集合的内容是否相等
     /// </summary>
     /// <returns>如果链各个集合大小相等，且value相同则返回true</returns>
+    [Beta]
     public static bool ContentEquals<TKey>(this IGenericSet<TKey> self, IGenericSet<TKey>? other) {
         return SetEquals(self, other);
     }
@@ -68,7 +71,7 @@ public static partial class CollectionUtil
         }
         return matchCount == self.Count;
     }
-    
+
     /// <summary>
     /// 比较两个字典的内容是否相等，忽略KV顺序
     /// 1.真泛型下无法简单递归，因此依赖value自身也调用该方法...
@@ -78,6 +81,7 @@ public static partial class CollectionUtil
     /// <param name="other"></param>
     /// <param name="comparer">value的比较器，用于避免装箱</param>
     /// <returns></returns>
+    [Beta]
     public static bool ContentEquals<TKey, TValue>(IDictionary<TKey, TValue> self,
                                                    IDictionary<TKey, TValue>? other,
                                                    IEqualityComparer<TValue>? comparer = null) {
@@ -119,6 +123,7 @@ public static partial class CollectionUtil
     /// 打印集合的详细信息
     /// （暂不递归）
     /// </summary>
+    [Beta]
     public static string ToString<T>(ICollection<T> collection) {
         if (collection == null) throw new ArgumentNullException(nameof(collection));
         StringBuilder sb = new StringBuilder(64);
@@ -147,6 +152,7 @@ public static partial class CollectionUtil
     /// [[k1=v1], [k1=v2],[k3=v3]... ]
     /// </code>
     /// </summary>
+    [Beta]
     public static string ToString<TKey, TValue>(IDictionary<TKey, TValue> dictionary) {
         if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
         StringBuilder sb = new StringBuilder(64);

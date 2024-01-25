@@ -27,8 +27,9 @@ namespace Wjybxx.Commons.Pool;
 /// 基于<see cref="ArrayPool{T}"/>封装实现的对象池，获得了系统库的高性能和线程安全性。
 /// </summary>
 /// <typeparam name="T"></typeparam>
+[Beta]
 [ThreadSafe]
-public class ArrayObjectPool<T> : IObjectPool<RecycleHandle<T>>
+public class ArrayObjectPool<T> : IObjectPool<RecycleHandle<T>> where T : class
 {
     private readonly Func<T> _factory;
     private readonly Action<T> _resetPolicy;
@@ -52,7 +53,7 @@ public class ArrayObjectPool<T> : IObjectPool<RecycleHandle<T>>
         if (array[0] == null) {
             array[0] = _factory.Invoke();
         }
-        return new RecycleHandle<T>(array[0], array);
+        return new RecycleHandle<T>(array[0], array, this);
     }
 
     public void ReturnOne(RecycleHandle<T> obj) {
@@ -60,7 +61,7 @@ public class ArrayObjectPool<T> : IObjectPool<RecycleHandle<T>>
         if (_filter == null || _filter.Invoke(obj.Value)) {
             _resetPolicy.Invoke(obj.Value);
         } else {
-            array[0] = default; // 清理对象
+            array[0] = null; // 清理对象
         }
         // 数组必须归还
         _arrayPool.Return(array);

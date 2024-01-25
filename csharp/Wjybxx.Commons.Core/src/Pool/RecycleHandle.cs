@@ -19,14 +19,15 @@
 using System;
 using System.Threading;
 
+#pragma warning disable CS1591
+
 namespace Wjybxx.Commons.Pool;
 
 /// <summary>
 /// 对象回收句柄
-/// TODO 通过dispose回收
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public readonly struct RecycleHandle<T> : IDisposable
+public struct RecycleHandle<T> : IDisposable where T : class
 {
     /// <summary>
     /// 池化的对象
@@ -36,12 +37,18 @@ public readonly struct RecycleHandle<T> : IDisposable
     /// 附加上下文
     /// </summary>
     internal readonly object ctx;
+    /// <summary>
+    /// 归属的池
+    /// </summary>
+    internal ArrayObjectPool<T> pool;
 
-    internal RecycleHandle(T value, object ctx) {
+    internal RecycleHandle(T value, object ctx, ArrayObjectPool<T> pool) {
         Value = value;
         this.ctx = ctx;
+        this.pool = pool;
     }
 
     public void Dispose() {
+        pool.ReturnOne(this); // TODO 重复归还检测
     }
 }

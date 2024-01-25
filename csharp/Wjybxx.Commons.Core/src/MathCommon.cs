@@ -179,6 +179,22 @@ public static class MathCommon
 
     #region clamp
 
+    /** 将long值约束到int区间[min, max] */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int Clamp(long value, int min, int max) {
+        if (value < min) return min;
+        if (value > max) return max;
+        return (int)value;
+    }
+
+    /** 将double值约束到float区间[min, max] */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static float Clamp(double value, float min, float max) {
+        if (value < min) return min;
+        if (value > max) return max;
+        return (float)value;
+    }
+
     /** 将value约束到[0, 1]范围 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Clamp01(float value) {
