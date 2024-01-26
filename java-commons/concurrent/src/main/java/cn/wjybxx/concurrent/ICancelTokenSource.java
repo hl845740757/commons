@@ -36,7 +36,6 @@ public interface ICancelTokenSource extends ICancelToken {
      * @param cancelCode 取消码；reason部分需大于0；辅助类{@link CancelCodeBuilder}
      * @return 如果Token已被取消，则返回旧值（非0）；如果Token尚未被取消，则将Token更新为取消状态，并返回0。
      * @throws IllegalArgumentException      如果code小于等于0；或reason部分为0
-     * @throws UnsupportedOperationException 如果context是只读的
      */
     int cancel(int cancelCode);
 

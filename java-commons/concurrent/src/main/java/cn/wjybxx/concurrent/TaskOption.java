@@ -114,6 +114,11 @@ public final class TaskOption {
      */
     public static final int STAGE_NON_TRANSITIVE = 1 << 17;
 
+    /**
+     * 不检查Stage中{@link Context}中的取消信号。
+     */
+    public static final int STAGE_UNCANCELLABLE = 1 << 18;
+
     // region util
 
     /** 用户可用的选项的掩码 */

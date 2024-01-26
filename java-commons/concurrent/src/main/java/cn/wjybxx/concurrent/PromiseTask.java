@@ -392,11 +392,6 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
     }
 
     @Override
-    public boolean tryTransferTo(IPromise<? super V> output) {
-        return promise.tryTransferTo(output);
-    }
-
-    @Override
     public void onCompleted(BiConsumer<? super IContext, ? super IFuture<V>> action, @Nonnull IContext context, int options) {
         promise.onCompleted(action, context, options);
     }

@@ -185,11 +185,6 @@ public class ForwardFuture<V> implements IFuture<V> {
     }
 
     @Override
-    public boolean tryTransferTo(IPromise<? super V> output) {
-        return future.tryTransferTo(output);
-    }
-
-    @Override
     public void onCompleted(BiConsumer<? super IContext, ? super IFuture<V>> action, @Nonnull IContext context, int options) {
         future.onCompleted(action, context, options);
     }

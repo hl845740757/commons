@@ -178,6 +178,14 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
     @Override
     T get(long timeout, @Nonnull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException;
 
+    /**
+     * 阻塞到任务完成
+     *
+     * @throws CompletionException   计算失败
+     * @throws CancellationException 被取消
+     */
+    T join();
+
     /** @return 如果任务在这期间进入了完成状态，则返回true */
     boolean await(long timeout, TimeUnit unit) throws InterruptedException;
 
@@ -198,29 +206,9 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
      */
     IFuture<T> awaitUninterruptibly();
 
-    /**
-     * 阻塞到任务完成
-     *
-     * @throws CompletionException   计算失败
-     * @throws CancellationException 被取消
-     */
-    T join();
-
     // endregion
 
     // region 其它
-
-    /**
-     * 将当前future的结果传输到目标promise
-     * 如果当前future已完成，且目标promise尚未完成，则尝试传输结果到promise
-     * <p>
-     * {@link IPromise#tryTransferFrom(IFuture)}
-     *
-     * @return 当且仅当future使目标promise进入完成状态时返回true。
-     */
-    default boolean tryTransferTo(IPromise<? super T> output) {
-        return output.tryTransferFrom(this);
-    }
 
     /**
      * 1. 给定的Action将在Future关联的任务完成时执行，无论成功或失败都将执行。
@@ -254,7 +242,6 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
     void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action, int options);
 
     // endregion
-
 
     // region 重写签名
 

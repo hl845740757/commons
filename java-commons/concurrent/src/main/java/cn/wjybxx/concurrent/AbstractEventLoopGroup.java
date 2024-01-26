@@ -54,17 +54,17 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
 
     // region submit
     @Override
-    public <V> IPromise<V> newPromise(IContext ctx) {
+    public <T> IPromise<T> newPromise(IContext ctx) {
         return new Promise<>(this, ctx);
     }
 
     @Override
-    public <V> IPromise<V> newPromise() {
+    public <T> IPromise<T> newPromise() {
         return new Promise<>(this, null);
     }
 
     @Override
-    public <V> IFuture<V> submit(@Nonnull TaskBuilder<V> builder) {
+    public <T> IFuture<T> submit(@Nonnull TaskBuilder<T> builder) {
         return select().submit(builder);
     }
 

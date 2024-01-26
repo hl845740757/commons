@@ -71,7 +71,7 @@ public interface IExecutorService extends ExecutorService, IExecutor {
     IFuture<?> terminationFuture();
 
     /**
-     * 等待EventLoopGroup进入终止状态
+     * 等待 ExecutorService 进入终止状态
      * 等同于在{@link #terminationFuture()}进行阻塞操作。
      *
      * @param timeout 时间度量
@@ -117,7 +117,7 @@ public interface IExecutorService extends ExecutorService, IExecutor {
      * @param ctx 任务关联的上下文
      * @implNote 通常应该绑定当前executor
      */
-    default <V> IPromise<V> newPromise(IContext ctx) {
+    default <T> IPromise<T> newPromise(IContext ctx) {
         return new Promise<>(this, ctx);
     }
 
@@ -127,12 +127,12 @@ public interface IExecutorService extends ExecutorService, IExecutor {
      *
      * @implNote 通常应该绑定当前executor
      */
-    default <V> IPromise<V> newPromise() {
+    default <T> IPromise<T> newPromise() {
         return new Promise<>(this, null);
     }
 
-    default <V> IFuture<V> submit(@Nonnull TaskBuilder<V> builder) {
-        PromiseTask<V> futureTask = PromiseTask.ofBuilder(builder, newPromise(builder.getCtx()));
+    default <T> IFuture<T> submit(@Nonnull TaskBuilder<T> builder) {
+        PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, newPromise(builder.getCtx()));
         execute(futureTask, builder.getOptions());
         return futureTask.future();
     }

@@ -42,7 +42,7 @@ public interface IExecutor extends Executor {
      * 2.选项可参考{@link TaskOption}
      *
      * @param command 要执行的任务
-     * @param options 任务的调度特征值
+     * @param options 任务的调度特征值，见{@link TaskOption}
      * @throws NullPointerException       如果任务为null
      * @throws RejectedExecutionException 如果Executor已开始关闭
      * @implNote 实现类如果不支持选项，应该保守调度。

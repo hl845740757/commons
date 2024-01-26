@@ -111,18 +111,18 @@ public abstract class AbstractEventLoop extends AbstractExecutorService implemen
     // region submit
 
     @Override
-    public <V> IPromise<V> newPromise(IContext ctx) {
+    public <T> IPromise<T> newPromise(IContext ctx) {
         return new Promise<>(this, ctx);
     }
 
     @Override
-    public <V> IPromise<V> newPromise() {
+    public <T> IPromise<T> newPromise() {
         return new Promise<>(this, null);
     }
 
     @Override
-    public <V> IFuture<V> submit(@Nonnull TaskBuilder<V> builder) {
-        PromiseTask<V> futureTask = PromiseTask.ofBuilder(builder, newPromise(builder.getCtx()));
+    public <T> IFuture<T> submit(@Nonnull TaskBuilder<T> builder) {
+        PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, newPromise(builder.getCtx()));
         execute(futureTask, builder.getOptions());
         return futureTask.future();
     }

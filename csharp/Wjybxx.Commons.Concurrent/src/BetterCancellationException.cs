@@ -20,38 +20,43 @@ using System;
 using System.Runtime.Serialization;
 
 #pragma warning disable CS1591
-namespace Wjybxx.Commons.Ex;
+namespace Wjybxx.Commons;
 
 /// <summary>
-/// 包含错误码的异常
+/// 记录了取消码的异常
 /// </summary>
-public class ErrorCodeException : Exception, IErrorCodeException, NoLogRequiredException
+public class BetterCancellationException : OperationCanceledException
 {
-    private readonly int errorCode;
-
-    public ErrorCodeException(int errorCode) {
-        this.errorCode = errorCode;
-    }
-
-    public ErrorCodeException(int errorCode, string? message) : base(message) {
-        this.errorCode = errorCode;
-    }
-
     /// <summary>
-    /// 错误码
+    /// 取消码
     /// </summary>
-    public int ErrorCode => errorCode;
+    public readonly int Code;
+
+    public BetterCancellationException(int code) {
+        this.Code = ICancelToken.checkCode(code);
+    }
+
+    public BetterCancellationException(int code, string? message)
+        : base(message) {
+        this.Code = ICancelToken.checkCode(code);
+    }
+
+    public BetterCancellationException(int code, string? message, Exception? innerException)
+        : base(message, innerException) {
+        this.Code = ICancelToken.checkCode(code);
+    }
 
     #region serial
 
-    protected ErrorCodeException(SerializationInfo info, StreamingContext context)
+    protected BetterCancellationException(SerializationInfo info, StreamingContext context)
         : base(info, context) {
-        this.errorCode = info.GetInt32("code");
+        this.Code = info.GetInt32("code");
     }
+
 
     public override void GetObjectData(SerializationInfo info, StreamingContext context) {
         base.GetObjectData(info, context);
-        info.AddValue("code", errorCode);
+        info.AddValue("code", Code);
     }
 
     #endregion

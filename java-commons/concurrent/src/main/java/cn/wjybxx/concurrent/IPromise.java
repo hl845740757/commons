@@ -100,8 +100,6 @@ public interface IPromise<T> extends IFuture<T> {
     /**
      * 将目标future的结果传输到当前Promise
      * 如果目标future已完成，且当前promise尚未完成，则尝试传输结果到promise
-     * <p>
-     * {@link IFuture#tryTransferTo(IPromise)}
      *
      * @return 当且仅当由目标future使当前promise进入完成状态时返回true。
      */
