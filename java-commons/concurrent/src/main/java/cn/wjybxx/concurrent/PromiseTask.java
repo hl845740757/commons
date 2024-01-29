@@ -130,11 +130,6 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
         return TaskOption.isEnabled(options, taskOption);
     }
 
-    @Override
-    public final IFuture<V> future() {
-        return promise;
-    }
-
     /** 获取绑定的任务 */
     protected final Object getAction() {
         return action;
@@ -185,6 +180,8 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
     }
 
     // endregion
+
+    // region core
 
     /** 运行分时任务 */
     @SuppressWarnings("unchecked")
@@ -255,6 +252,29 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
         clear();
     }
 
+    @Override
+    public IFuture<V> future() {
+        return promise;
+    }
+
+    @Override
+    @Nonnull
+    public IFuture<V> toFuture() {
+        return this;
+    }
+
+    @Override
+    public IFuture<V> await() throws InterruptedException {
+        promise.await();
+        return this;
+    }
+
+    @Override
+    public IFuture<V> awaitUninterruptibly() {
+        promise.awaitUninterruptibly();
+        return this;
+    }
+
     // region future
 
     @Override
@@ -267,12 +287,6 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
     @Nullable
     public Executor executor() {
         return promise.executor();
-    }
-
-    @Override
-    @Nonnull
-    public IFuture<V> toFuture() {
-        return promise.toFuture();
     }
 
     @Override
@@ -374,16 +388,6 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
     @Override
     public boolean awaitUninterruptibly(long timeout, TimeUnit unit) {
         return promise.awaitUninterruptibly(timeout, unit);
-    }
-
-    @Override
-    public IFuture<V> await() throws InterruptedException {
-        return promise.await();
-    }
-
-    @Override
-    public IFuture<V> awaitUninterruptibly() {
-        return promise.awaitUninterruptibly();
     }
 
     @Override

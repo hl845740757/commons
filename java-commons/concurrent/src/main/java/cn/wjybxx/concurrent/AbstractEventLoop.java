@@ -31,15 +31,17 @@ import java.util.function.Function;
  * date 2023/4/7
  */
 @SuppressWarnings({"NullableProblems", "RedundantMethodOverride"})
-public abstract class AbstractEventLoop extends AbstractExecutorService implements EventLoop {
+public abstract class AbstractEventLoop implements EventLoop {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractEventLoop.class);
 
     protected final EventLoopGroup parent;
     protected final Collection<EventLoop> selfCollection = Collections.singleton(this);
+    private final ExecutorServiceAdapter adapter;
 
     protected AbstractEventLoop(@Nullable EventLoopGroup parent) {
         this.parent = parent;
+        this.adapter = new ExecutorServiceAdapter(this);
     }
 
     @Override
@@ -208,36 +210,34 @@ public abstract class AbstractEventLoop extends AbstractExecutorService implemen
     // endregion
 
     // region invoke
+
     @Nonnull
     @Override
-    public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+    public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
         throwIfInEventLoop("invokeAny");
-        return super.invokeAny(tasks);
+        return adapter.invokeAny(tasks);
     }
 
-    @Nonnull
     @Override
-    public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> tasks, long timeout, @Nonnull TimeUnit unit)
-            throws InterruptedException, ExecutionException, TimeoutException {
+    public <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         throwIfInEventLoop("invokeAny");
-        return super.invokeAny(tasks, timeout, unit);
+        return adapter.invokeAny(tasks, timeout, unit);
     }
 
     @Nonnull
     @Override
-    public <T> List<Future<T>> invokeAll(@Nonnull Collection<? extends Callable<T>> tasks)
-            throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
         throwIfInEventLoop("invokeAll");
-        return super.invokeAll(tasks);
+        return adapter.invokeAll(tasks);
     }
 
     @Nonnull
     @Override
-    public <T> List<Future<T>> invokeAll(@Nonnull Collection<? extends Callable<T>> tasks,
-                                         long timeout, @Nonnull TimeUnit unit) throws InterruptedException {
+    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
         throwIfInEventLoop("invokeAll");
-        return super.invokeAll(tasks, timeout, unit);
+        return adapter.invokeAll(tasks, timeout, unit);
     }
+
     // endregion
 
     // region iteration
@@ -267,4 +267,5 @@ public abstract class AbstractEventLoop extends AbstractExecutorService implemen
             logger.warn("A task raised an exception.", t);
         }
     }
+
 }

@@ -50,7 +50,7 @@ public class ForwardFuture<V> implements IFuture<V> {
 
     @Override
     @Nonnull
-    public final ForwardFuture<V> toFuture() {
+    public ForwardFuture<V> toFuture() {
         return this; // 不能转发
     }
 

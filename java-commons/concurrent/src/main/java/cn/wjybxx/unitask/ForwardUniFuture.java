@@ -165,11 +165,6 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public void onCompletedAsync(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context, int options) {
-        future.onCompletedAsync(action, context, options);
-    }
-
-    @Override
     public void onCompleted(Consumer<? super UniFuture<T>> action, int options) {
         future.onCompleted(action, options);
     }
@@ -184,14 +179,19 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
         future.onCompletedAsync(executor, action);
     }
 
-    @Override
-    public void onCompletedAsync(Consumer<? super UniFuture<T>> action, int options) {
-        future.onCompletedAsync(action, options);
-    }
-
     // endregion
 
     // region stage
+
+    @Override
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context, int options) {
+        future.onCompletedAsync(executor, action, context, options);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, Consumer<? super UniFuture<T>> action, int options) {
+        future.onCompletedAsync(executor, action, options);
+    }
 
     @Override
     public <U> UniFuture<U> composeApply(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
@@ -204,13 +204,13 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public <U> UniFuture<U> composeApplyAsync(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn) {
-        return future.composeApplyAsync(fn);
+    public <U> UniFuture<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn) {
+        return future.composeApplyAsync(executor, fn);
     }
 
     @Override
-    public <U> UniFuture<U> composeApplyAsync(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return future.composeApplyAsync(fn, ctx, options);
+    public <U> UniFuture<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return future.composeApplyAsync(executor, fn, ctx, options);
     }
 
     @Override
@@ -224,13 +224,13 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public <U> UniFuture<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn) {
-        return future.composeCallAsync(fn);
+    public <U> UniFuture<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends UniCompletionStage<U>> fn) {
+        return future.composeCallAsync(executor, fn);
     }
 
     @Override
-    public <U> UniFuture<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return future.composeCallAsync(fn, ctx, options);
+    public <U> UniFuture<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return future.composeCallAsync(executor, fn, ctx, options);
     }
 
     @Override
@@ -244,13 +244,13 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public <X extends Throwable> UniFuture<T> composeCatchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback) {
-        return future.composeCatchingAsync(exceptionType, fallback);
+    public <X extends Throwable> UniFuture<T> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback) {
+        return future.composeCatchingAsync(executor, exceptionType, fallback);
     }
 
     @Override
-    public <X extends Throwable> UniFuture<T> composeCatchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback, @Nullable IContext ctx, int options) {
-        return future.composeCatchingAsync(exceptionType, fallback, ctx, options);
+    public <X extends Throwable> UniFuture<T> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback, @Nullable IContext ctx, int options) {
+        return future.composeCatchingAsync(executor, exceptionType, fallback, ctx, options);
     }
 
     @Override
@@ -264,13 +264,13 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public <U> UniFuture<U> composeHandleAsync(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn) {
-        return future.composeHandleAsync(fn);
+    public <U> UniFuture<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn) {
+        return future.composeHandleAsync(executor, fn);
     }
 
     @Override
-    public <U> UniFuture<U> composeHandleAsync(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return future.composeHandleAsync(fn, ctx, options);
+    public <U> UniFuture<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return future.composeHandleAsync(executor, fn, ctx, options);
     }
 
     @Override
@@ -284,13 +284,13 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public <U> UniFuture<U> thenApplyAsync(BiFunction<? super IContext, ? super T, ? extends U> fn) {
-        return future.thenApplyAsync(fn);
+    public <U> UniFuture<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn) {
+        return future.thenApplyAsync(executor, fn);
     }
 
     @Override
-    public <U> UniFuture<U> thenApplyAsync(BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return future.thenApplyAsync(fn, ctx, options);
+    public <U> UniFuture<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return future.thenApplyAsync(executor, fn, ctx, options);
     }
 
     @Override
@@ -304,13 +304,13 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public UniFuture<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super T> action) {
-        return future.thenAcceptAsync(action);
+    public UniFuture<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super T> action) {
+        return future.thenAcceptAsync(executor, action);
     }
 
     @Override
-    public UniFuture<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options) {
-        return future.thenAcceptAsync(action, ctx, options);
+    public UniFuture<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options) {
+        return future.thenAcceptAsync(executor, action, ctx, options);
     }
 
     @Override
@@ -324,13 +324,13 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public <U> UniFuture<U> thenCallAsync(Function<? super IContext, ? extends U> fn) {
-        return future.thenCallAsync(fn);
+    public <U> UniFuture<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn) {
+        return future.thenCallAsync(executor, fn);
     }
 
     @Override
-    public <U> UniFuture<U> thenCallAsync(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return future.thenCallAsync(fn, ctx, options);
+    public <U> UniFuture<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return future.thenCallAsync(executor, fn, ctx, options);
     }
 
     @Override
@@ -344,13 +344,13 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public UniFuture<Void> thenRunAsync(Consumer<? super IContext> action) {
-        return future.thenRunAsync(action);
+    public UniFuture<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action) {
+        return future.thenRunAsync(executor, action);
     }
 
     @Override
-    public UniFuture<Void> thenRunAsync(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
-        return future.thenRunAsync(action, ctx, options);
+    public UniFuture<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
+        return future.thenRunAsync(executor, action, ctx, options);
     }
 
     @Override
@@ -364,13 +364,13 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public <X extends Throwable> UniFuture<T> catchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback) {
-        return future.catchingAsync(exceptionType, fallback);
+    public <X extends Throwable> UniFuture<T> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback) {
+        return future.catchingAsync(executor, exceptionType, fallback);
     }
 
     @Override
-    public <X extends Throwable> UniFuture<T> catchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback, @Nullable IContext ctx, int options) {
-        return future.catchingAsync(exceptionType, fallback, ctx, options);
+    public <X extends Throwable> UniFuture<T> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback, @Nullable IContext ctx, int options) {
+        return future.catchingAsync(executor, exceptionType, fallback, ctx, options);
     }
 
     @Override
@@ -384,13 +384,13 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public <U> UniFuture<U> handleAsync(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn) {
-        return future.handleAsync(fn);
+    public <U> UniFuture<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn) {
+        return future.handleAsync(executor, fn);
     }
 
     @Override
-    public <U> UniFuture<U> handleAsync(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return future.handleAsync(fn, ctx, options);
+    public <U> UniFuture<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return future.handleAsync(executor, fn, ctx, options);
     }
 
     @Override
@@ -404,14 +404,14 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     }
 
     @Override
-    public UniFuture<T> whenCompleteAsync(TriConsumer<? super IContext, ? super T, ? super Throwable> action) {
-        return future.whenCompleteAsync(action);
+    public UniFuture<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action) {
+        return future.whenCompleteAsync(executor, action);
     }
 
     @Override
-    public UniFuture<T> whenCompleteAsync(TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options) {
-        return future.whenCompleteAsync(action, ctx, options);
+    public UniFuture<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options) {
+        return future.whenCompleteAsync(executor, action, ctx, options);
     }
-    
+
     // endregion
 }

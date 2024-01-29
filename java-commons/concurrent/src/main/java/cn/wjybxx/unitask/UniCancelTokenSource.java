@@ -130,7 +130,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         code = 0;
 
         Completion node;
-        while ((node = head) != null){
+        while ((node = head) != null) {
             head = node.next;
             node.action = TOMBSTONE;
             node.clear();

@@ -1492,10 +1492,10 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 throw StacklessCancellationException.INSTANCE;
             }
             this.executor = CLAIMED;
-            if (e == null) {
-                return true;
+            if (e != null) {
+                return submit(this, e, options);
             }
-            return submit(this, e, options);
+            return true;
         }
 
     }
@@ -2174,10 +2174,10 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 return true;
             }
             this.executor = CLAIMED;
-            if (e == null) {
-                return true;
+            if (e != null) {
+                return submit(this, e, options);
             }
-            return submit(this, e, options);
+            return true;
         }
     }
 

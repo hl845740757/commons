@@ -62,7 +62,6 @@ public interface UniCompletionStage<T> {
      * 1.请务必确保是单线程的。
      * 2.下游自动继承当前任务的Executor。
      */
-    @Nonnull
     Executor executor();
 
     /**
@@ -93,9 +92,9 @@ public interface UniCompletionStage<T> {
 
     <U> UniCompletionStage<U> composeApply(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn);
 
-    <U> UniCompletionStage<U> composeApplyAsync(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn);
+    <U> UniCompletionStage<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn);
 
-    <U> UniCompletionStage<U> composeApplyAsync(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn,
+    <U> UniCompletionStage<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn,
                                                 @Nullable IContext ctx, int options);
 
     /**
@@ -117,9 +116,9 @@ public interface UniCompletionStage<T> {
 
     <U> UniCompletionStage<U> composeCall(Function<? super IContext, ? extends UniCompletionStage<U>> fn);
 
-    <U> UniCompletionStage<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn);
+    <U> UniCompletionStage<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends UniCompletionStage<U>> fn);
 
-    <U> UniCompletionStage<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn,
+    <U> UniCompletionStage<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends UniCompletionStage<U>> fn,
                                                @Nullable IContext ctx, int options);
 
     /**
@@ -143,11 +142,11 @@ public interface UniCompletionStage<T> {
                                           BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback);
 
     <X extends Throwable>
-    UniCompletionStage<T> composeCatchingAsync(Class<X> exceptionType,
+    UniCompletionStage<T> composeCatchingAsync(Executor executor, Class<X> exceptionType,
                                                BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback);
 
     <X extends Throwable>
-    UniCompletionStage<T> composeCatchingAsync(Class<X> exceptionType,
+    UniCompletionStage<T> composeCatchingAsync(Executor executor, Class<X> exceptionType,
                                                BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback,
                                                @Nullable IContext ctx, int options);
 
@@ -165,9 +164,9 @@ public interface UniCompletionStage<T> {
 
     <U> UniCompletionStage<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn);
 
-    <U> UniCompletionStage<U> composeHandleAsync(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn);
+    <U> UniCompletionStage<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn);
 
-    <U> UniCompletionStage<U> composeHandleAsync(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn,
+    <U> UniCompletionStage<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn,
                                                  @Nullable IContext ctx, int options);
     // endregion
 
@@ -187,9 +186,9 @@ public interface UniCompletionStage<T> {
 
     <U> UniCompletionStage<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn);
 
-    <U> UniCompletionStage<U> thenApplyAsync(BiFunction<? super IContext, ? super T, ? extends U> fn);
+    <U> UniCompletionStage<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn);
 
-    <U> UniCompletionStage<U> thenApplyAsync(BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> UniCompletionStage<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options);
 
     // endregion
 
@@ -209,9 +208,9 @@ public interface UniCompletionStage<T> {
 
     UniCompletionStage<Void> thenAccept(BiConsumer<? super IContext, ? super T> action);
 
-    UniCompletionStage<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super T> action);
+    UniCompletionStage<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super T> action);
 
-    UniCompletionStage<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options);
+    UniCompletionStage<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options);
 
     // endregion
 
@@ -229,9 +228,9 @@ public interface UniCompletionStage<T> {
 
     <U> UniCompletionStage<U> thenCall(Function<? super IContext, ? extends U> fn);
 
-    <U> UniCompletionStage<U> thenCallAsync(Function<? super IContext, ? extends U> fn);
+    <U> UniCompletionStage<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn);
 
-    <U> UniCompletionStage<U> thenCallAsync(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> UniCompletionStage<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options);
     // endregion
 
     // region run
@@ -250,9 +249,9 @@ public interface UniCompletionStage<T> {
 
     UniCompletionStage<Void> thenRun(Consumer<? super IContext> action);
 
-    UniCompletionStage<Void> thenRunAsync(Consumer<? super IContext> action);
+    UniCompletionStage<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action);
 
-    UniCompletionStage<Void> thenRunAsync(Consumer<? super IContext> action, @Nullable IContext ctx, int options);
+    UniCompletionStage<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options);
     // endregion
 
     // region catching-异常处理
@@ -282,11 +281,11 @@ public interface UniCompletionStage<T> {
                                    BiFunction<? super IContext, ? super X, ? extends T> fallback);
 
     <X extends Throwable>
-    UniCompletionStage<T> catchingAsync(Class<X> exceptionType,
+    UniCompletionStage<T> catchingAsync(Executor executor, Class<X> exceptionType,
                                         BiFunction<? super IContext, ? super X, ? extends T> fallback);
 
     <X extends Throwable>
-    UniCompletionStage<T> catchingAsync(Class<X> exceptionType,
+    UniCompletionStage<T> catchingAsync(Executor executor, Class<X> exceptionType,
                                         BiFunction<? super IContext, ? super X, ? extends T> fallback,
                                         @Nullable IContext ctx, int options);
     // endregion
@@ -310,12 +309,12 @@ public interface UniCompletionStage<T> {
 
     <U> UniCompletionStage<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
 
-    <U> UniCompletionStage<U> handleAsync(
-            TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
+    <U> UniCompletionStage<U> handleAsync(Executor executor,
+                                          TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
 
-    <U> UniCompletionStage<U> handleAsync(
-            TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
-            @Nullable IContext ctx, int options);
+    <U> UniCompletionStage<U> handleAsync(Executor executor,
+                                          TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
+                                          @Nullable IContext ctx, int options);
     // endregion
 
     // region when-简单监听
@@ -336,9 +335,9 @@ public interface UniCompletionStage<T> {
 
     UniCompletionStage<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action);
 
-    UniCompletionStage<T> whenCompleteAsync(TriConsumer<? super IContext, ? super T, ? super Throwable> action);
+    UniCompletionStage<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action);
 
-    UniCompletionStage<T> whenCompleteAsync(TriConsumer<? super IContext, ? super T, ? super Throwable> action,
+    UniCompletionStage<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action,
                                             @Nullable IContext ctx, int options);
     // endregion
 

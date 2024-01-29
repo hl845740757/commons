@@ -27,7 +27,6 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.RunnableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -35,13 +34,12 @@ import java.util.function.Function;
 
 /**
  * 这个实现没有特殊逻辑，可开放给用户
- * 实现{@link RunnableFuture}是为了适配JDK的实现类，实际上更建议组合。
  *
  * @author wjybxx
  * date - 2024/1/8
  */
 @NotThreadSafe
-public class UniPromiseTask<V> implements UniFutureTask<V> {
+public class UniPromiseTask<V> implements UniFutureTask<V>, UniFuture<V> {
 
     /**
      * queueId的掩码 -- 8bit，最大255。
@@ -134,11 +132,6 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
 
     public final boolean isEnable(int taskOption) {
         return TaskOption.isEnabled(options, taskOption);
-    }
-
-    @Override
-    public final UniFuture<V> future() {
-        return promise;
     }
 
     /** 获取绑定的任务 */
@@ -260,6 +253,16 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         clear();
     }
 
+    @Override
+    public UniFuture<V> future() {
+        return promise;
+    }
+
+    @Nonnull
+    public UniFuture<V> toFuture() {
+        return this;
+    }
+
     // region future
 
     @Nonnull
@@ -267,14 +270,9 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.ctx();
     }
 
-    @Nonnull
+    @Nullable
     public Executor executor() {
         return promise.executor();
-    }
-
-    @Nonnull
-    public UniFuture<V> toFuture() {
-        return promise.toFuture();
     }
 
     public UniFuture<V> asReadonly() {
@@ -357,8 +355,8 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         promise.onCompletedAsync(executor, action, context);
     }
 
-    public void onCompletedAsync(BiConsumer<? super IContext, ? super UniFuture<V>> action, @Nonnull IContext context, int options) {
-        promise.onCompletedAsync(action, context, options);
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super UniFuture<V>> action, @Nonnull IContext context, int options) {
+        promise.onCompletedAsync(executor, action, context, options);
     }
 
     public void onCompleted(Consumer<? super UniFuture<V>> action, int options) {
@@ -373,8 +371,8 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         promise.onCompletedAsync(executor, action);
     }
 
-    public void onCompletedAsync(Consumer<? super UniFuture<V>> action, int options) {
-        promise.onCompletedAsync(action, options);
+    public void onCompletedAsync(Executor executor, Consumer<? super UniFuture<V>> action, int options) {
+        promise.onCompletedAsync(executor, action, options);
     }
 
     // endregion
@@ -389,12 +387,12 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.composeApply(fn);
     }
 
-    public <U> UniPromise<U> composeApplyAsync(BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn) {
-        return promise.composeApplyAsync(fn);
+    public <U> UniPromise<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn) {
+        return promise.composeApplyAsync(executor, fn);
     }
 
-    public <U> UniPromise<U> composeApplyAsync(BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeApplyAsync(fn, ctx, options);
+    public <U> UniPromise<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeApplyAsync(executor, fn, ctx, options);
     }
 
     public <U> UniPromise<U> composeCall(Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
@@ -405,12 +403,12 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.composeCall(fn);
     }
 
-    public <U> UniPromise<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn) {
-        return promise.composeCallAsync(fn);
+    public <U> UniPromise<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends UniCompletionStage<U>> fn) {
+        return promise.composeCallAsync(executor, fn);
     }
 
-    public <U> UniPromise<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeCallAsync(fn, ctx, options);
+    public <U> UniPromise<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeCallAsync(executor, fn, ctx, options);
     }
 
     public <X extends Throwable> UniPromise<V> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
@@ -421,12 +419,12 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.composeCatching(exceptionType, fallback);
     }
 
-    public <X extends Throwable> UniPromise<V> composeCatchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback) {
-        return promise.composeCatchingAsync(exceptionType, fallback);
+    public <X extends Throwable> UniPromise<V> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback) {
+        return promise.composeCatchingAsync(executor, exceptionType, fallback);
     }
 
-    public <X extends Throwable> UniPromise<V> composeCatchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
-        return promise.composeCatchingAsync(exceptionType, fallback, ctx, options);
+    public <X extends Throwable> UniPromise<V> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback, @Nullable IContext ctx, int options) {
+        return promise.composeCatchingAsync(executor, exceptionType, fallback, ctx, options);
     }
 
     public <U> UniPromise<U> composeHandle(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
@@ -437,12 +435,12 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.composeHandle(fn);
     }
 
-    public <U> UniPromise<U> composeHandleAsync(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn) {
-        return promise.composeHandleAsync(fn);
+    public <U> UniPromise<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn) {
+        return promise.composeHandleAsync(executor, fn);
     }
 
-    public <U> UniPromise<U> composeHandleAsync(TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
-        return promise.composeHandleAsync(fn, ctx, options);
+    public <U> UniPromise<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+        return promise.composeHandleAsync(executor, fn, ctx, options);
     }
 
     public <U> UniPromise<U> thenApply(BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
@@ -453,12 +451,12 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.thenApply(fn);
     }
 
-    public <U> UniPromise<U> thenApplyAsync(BiFunction<? super IContext, ? super V, ? extends U> fn) {
-        return promise.thenApplyAsync(fn);
+    public <U> UniPromise<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends U> fn) {
+        return promise.thenApplyAsync(executor, fn);
     }
 
-    public <U> UniPromise<U> thenApplyAsync(BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenApplyAsync(fn, ctx, options);
+    public <U> UniPromise<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super V, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.thenApplyAsync(executor, fn, ctx, options);
     }
 
     public UniPromise<Void> thenAccept(BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
@@ -469,12 +467,12 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.thenAccept(action);
     }
 
-    public UniPromise<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super V> action) {
-        return promise.thenAcceptAsync(action);
+    public UniPromise<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super V> action) {
+        return promise.thenAcceptAsync(executor, action);
     }
 
-    public UniPromise<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
-        return promise.thenAcceptAsync(action, ctx, options);
+    public UniPromise<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super V> action, @Nullable IContext ctx, int options) {
+        return promise.thenAcceptAsync(executor, action, ctx, options);
     }
 
     public <U> UniPromise<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
@@ -485,12 +483,12 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.thenCall(fn);
     }
 
-    public <U> UniPromise<U> thenCallAsync(Function<? super IContext, ? extends U> fn) {
-        return promise.thenCallAsync(fn);
+    public <U> UniPromise<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn) {
+        return promise.thenCallAsync(executor, fn);
     }
 
-    public <U> UniPromise<U> thenCallAsync(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.thenCallAsync(fn, ctx, options);
+    public <U> UniPromise<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.thenCallAsync(executor, fn, ctx, options);
     }
 
     public UniPromise<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
@@ -501,12 +499,12 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.thenRun(action);
     }
 
-    public UniPromise<Void> thenRunAsync(Consumer<? super IContext> action) {
-        return promise.thenRunAsync(action);
+    public UniPromise<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action) {
+        return promise.thenRunAsync(executor, action);
     }
 
-    public UniPromise<Void> thenRunAsync(Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
-        return promise.thenRunAsync(action, ctx, options);
+    public UniPromise<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
+        return promise.thenRunAsync(executor, action, ctx, options);
     }
 
     public <X extends Throwable> UniPromise<V> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
@@ -517,12 +515,12 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.catching(exceptionType, fallback);
     }
 
-    public <X extends Throwable> UniPromise<V> catchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
-        return promise.catchingAsync(exceptionType, fallback);
+    public <X extends Throwable> UniPromise<V> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
+        return promise.catchingAsync(executor, exceptionType, fallback);
     }
 
-    public <X extends Throwable> UniPromise<V> catchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
-        return promise.catchingAsync(exceptionType, fallback, ctx, options);
+    public <X extends Throwable> UniPromise<V> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback, @Nullable IContext ctx, int options) {
+        return promise.catchingAsync(executor, exceptionType, fallback, ctx, options);
     }
 
     public <U> UniPromise<U> handle(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
@@ -533,12 +531,12 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.handle(fn);
     }
 
-    public <U> UniPromise<U> handleAsync(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
-        return promise.handleAsync(fn);
+    public <U> UniPromise<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn) {
+        return promise.handleAsync(executor, fn);
     }
 
-    public <U> UniPromise<U> handleAsync(TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
-        return promise.handleAsync(fn, ctx, options);
+    public <U> UniPromise<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super V, Throwable, ? extends U> fn, @Nullable IContext ctx, int options) {
+        return promise.handleAsync(executor, fn, ctx, options);
     }
 
     public UniPromise<V> whenComplete(TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
@@ -549,14 +547,13 @@ public class UniPromiseTask<V> implements UniFutureTask<V> {
         return promise.whenComplete(action);
     }
 
-    public UniPromise<V> whenCompleteAsync(TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
-        return promise.whenCompleteAsync(action);
+    public UniPromise<V> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
+        return promise.whenCompleteAsync(executor, action);
     }
 
-    public UniPromise<V> whenCompleteAsync(TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
-        return promise.whenCompleteAsync(action, ctx, options);
+    public UniPromise<V> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super V, ? super Throwable> action, @Nullable IContext ctx, int options) {
+        return promise.whenCompleteAsync(executor, action, ctx, options);
     }
-
 
     // endregion
 }

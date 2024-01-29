@@ -261,12 +261,20 @@ public class FutureUtils {
         return new Promise<>(executor, ctx);
     }
 
-    public static <V> IPromise<V> completedFuture(V result) {
+    public static <V> IFuture<V> completedFuture(V result) {
         return Promise.completedPromise(result);
     }
 
-    public static <V> IPromise<V> failedFuture(Throwable cause) {
+    public static <V> IFuture<V> completedFuture(V result, Executor executor) {
+        return Promise.completedPromise(result, executor);
+    }
+
+    public static <V> IFuture<V> failedFuture(Throwable cause) {
         return Promise.failedPromise(cause);
+    }
+
+    public static <V> IFuture<V> failedFuture(Throwable cause, Executor executor) {
+        return Promise.failedPromise(cause, executor);
     }
 
     public static FutureCombiner newCombiner() {

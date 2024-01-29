@@ -213,10 +213,9 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
 
     void onCompleted(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context);
 
-    void onCompletedAsync(Executor executor,
-                          BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context);
+    void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context);
 
-    void onCompletedAsync(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context, int options);
+    void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context, int options);
 
     /**
      * 最原始的Future监听接口
@@ -228,7 +227,7 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
 
     void onCompletedAsync(Executor executor, Consumer<? super UniFuture<T>> action);
 
-    void onCompletedAsync(Consumer<? super UniFuture<T>> action, int options);
+    void onCompletedAsync(Executor executor, Consumer<? super UniFuture<T>> action, int options);
     // endregion
 
     // region 重写签名
@@ -240,10 +239,10 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
     <U> UniFuture<U> composeApply(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn);
 
     @Override
-    <U> UniFuture<U> composeApplyAsync(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn);
+    <U> UniFuture<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn);
 
     @Override
-    <U> UniFuture<U> composeApplyAsync(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
+    <U> UniFuture<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
 
     @Override
     <U> UniFuture<U> composeCall(Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
@@ -252,10 +251,10 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
     <U> UniFuture<U> composeCall(Function<? super IContext, ? extends UniCompletionStage<U>> fn);
 
     @Override
-    <U> UniFuture<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn);
+    <U> UniFuture<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends UniCompletionStage<U>> fn);
 
     @Override
-    <U> UniFuture<U> composeCallAsync(Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
+    <U> UniFuture<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
 
     @Override
     <X extends Throwable> UniFuture<T> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback, @Nullable IContext ctx, int options);
@@ -264,10 +263,10 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
     <X extends Throwable> UniFuture<T> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback);
 
     @Override
-    <X extends Throwable> UniFuture<T> composeCatchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback);
+    <X extends Throwable> UniFuture<T> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback);
 
     @Override
-    <X extends Throwable> UniFuture<T> composeCatchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback, @Nullable IContext ctx, int options);
+    <X extends Throwable> UniFuture<T> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback, @Nullable IContext ctx, int options);
 
     @Override
     <U> UniFuture<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
@@ -276,10 +275,10 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
     <U> UniFuture<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn);
 
     @Override
-    <U> UniFuture<U> composeHandleAsync(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn);
+    <U> UniFuture<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn);
 
     @Override
-    <U> UniFuture<U> composeHandleAsync(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
+    <U> UniFuture<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options);
 
     @Override
     <U> UniFuture<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options);
@@ -288,10 +287,10 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
     <U> UniFuture<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn);
 
     @Override
-    <U> UniFuture<U> thenApplyAsync(BiFunction<? super IContext, ? super T, ? extends U> fn);
+    <U> UniFuture<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn);
 
     @Override
-    <U> UniFuture<U> thenApplyAsync(BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> UniFuture<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options);
 
     @Override
     UniFuture<Void> thenAccept(BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options);
@@ -300,10 +299,10 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
     UniFuture<Void> thenAccept(BiConsumer<? super IContext, ? super T> action);
 
     @Override
-    UniFuture<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super T> action);
+    UniFuture<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super T> action);
 
     @Override
-    UniFuture<Void> thenAcceptAsync(BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options);
+    UniFuture<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options);
 
     @Override
     <U> UniFuture<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options);
@@ -312,10 +311,10 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
     <U> UniFuture<U> thenCall(Function<? super IContext, ? extends U> fn);
 
     @Override
-    <U> UniFuture<U> thenCallAsync(Function<? super IContext, ? extends U> fn);
+    <U> UniFuture<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn);
 
     @Override
-    <U> UniFuture<U> thenCallAsync(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> UniFuture<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options);
 
     @Override
     UniFuture<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options);
@@ -324,10 +323,10 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
     UniFuture<Void> thenRun(Consumer<? super IContext> action);
 
     @Override
-    UniFuture<Void> thenRunAsync(Consumer<? super IContext> action);
+    UniFuture<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action);
 
     @Override
-    UniFuture<Void> thenRunAsync(Consumer<? super IContext> action, @Nullable IContext ctx, int options);
+    UniFuture<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options);
 
     @Override
     <X extends Throwable> UniFuture<T> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback, @Nullable IContext ctx, int options);
@@ -336,10 +335,10 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
     <X extends Throwable> UniFuture<T> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback);
 
     @Override
-    <X extends Throwable> UniFuture<T> catchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback);
+    <X extends Throwable> UniFuture<T> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback);
 
     @Override
-    <X extends Throwable> UniFuture<T> catchingAsync(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback, @Nullable IContext ctx, int options);
+    <X extends Throwable> UniFuture<T> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback, @Nullable IContext ctx, int options);
 
     @Override
     <U> UniFuture<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options);
@@ -348,10 +347,10 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
     <U> UniFuture<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
 
     @Override
-    <U> UniFuture<U> handleAsync(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
+    <U> UniFuture<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
 
     @Override
-    <U> UniFuture<U> handleAsync(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> UniFuture<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options);
 
     @Override
     UniFuture<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options);
@@ -360,10 +359,10 @@ public interface UniFuture<T> extends UniCompletionStage<T> {
     UniFuture<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action);
 
     @Override
-    UniFuture<T> whenCompleteAsync(TriConsumer<? super IContext, ? super T, ? super Throwable> action);
+    UniFuture<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action);
 
     @Override
-    UniFuture<T> whenCompleteAsync(TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options);
+    UniFuture<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options);
 
     // endregion
 }

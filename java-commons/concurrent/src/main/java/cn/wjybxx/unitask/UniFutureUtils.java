@@ -63,6 +63,10 @@ public class UniFutureUtils {
 
     // region factory
 
+    public static <V> UniPromise<V> newPromise() {
+        return new UniPromise<>();
+    }
+
     public static <V> UniPromise<V> newPromise(Executor executor) {
         return new UniPromise<>(executor);
     }
@@ -71,12 +75,20 @@ public class UniFutureUtils {
         return new UniPromise<>(executor, ctx);
     }
 
-    public static <V> UniPromise<V> failedFuture(Throwable ex, Executor executor) {
-        return UniPromise.failedPromise(ex, executor);
+    public static <V> UniFuture<V> completedFuture(V result) {
+        return UniPromise.completedPromise(result);
     }
 
-    public static <V> UniPromise<V> completedFuture(V result, Executor executor) {
+    public static <V> UniFuture<V> completedFuture(V result, Executor executor) {
         return UniPromise.completedPromise(result, executor);
+    }
+
+    public static <V> UniFuture<V> failedFuture(Throwable ex) {
+        return UniPromise.failedPromise(ex);
+    }
+
+    public static <V> UniFuture<V> failedFuture(Throwable ex, Executor executor) {
+        return UniPromise.failedPromise(ex, executor);
     }
 
     public static UniExecutorService newExecutor() {
