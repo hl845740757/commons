@@ -412,7 +412,6 @@ public class ForwardUniFuture<T> implements UniFuture<T> {
     public UniFuture<T> whenCompleteAsync(TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options) {
         return future.whenCompleteAsync(action, ctx, options);
     }
-
-
+    
     // endregion
 }

@@ -44,14 +44,26 @@ public class ForwardFuture<V> implements IFuture<V> {
     }
 
     @Override
+    public CompletableFuture<V> toCompletableFuture() {
+        return future.toCompletableFuture();
+    }
+
+    @Override
     @Nonnull
-    public final IFuture<V> toFuture() {
+    public final ForwardFuture<V> toFuture() {
         return this; // 不能转发
     }
 
     @Override
-    public CompletableFuture<V> toCompletableFuture() {
-        return future.toCompletableFuture();
+    public ForwardFuture<V> await() throws InterruptedException {
+        future.await();
+        return this; // 返回this
+    }
+
+    @Override
+    public ForwardFuture<V> awaitUninterruptibly() {
+        future.awaitUninterruptibly();
+        return this; // 返回this
     }
 
     // region future
@@ -167,16 +179,6 @@ public class ForwardFuture<V> implements IFuture<V> {
     @Override
     public boolean awaitUninterruptibly(long timeout, TimeUnit unit) {
         return future.awaitUninterruptibly(timeout, unit);
-    }
-
-    @Override
-    public IFuture<V> await() throws InterruptedException {
-        return future.await();
-    }
-
-    @Override
-    public IFuture<V> awaitUninterruptibly() {
-        return future.awaitUninterruptibly();
     }
 
     @Override
