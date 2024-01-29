@@ -36,7 +36,7 @@ public class UniFutureUtils {
 
     // endregion
 
-    public static <V> CompletableFuture<V> toJdkFuture(UniCompletionStage<V> uniFuture) {
+    public static <V> CompletableFuture<V> toJdkFuture(IFuture<V> uniFuture) {
         CompletableFuture<V> future = new CompletableFuture<>();
         uniFuture.toFuture().onCompleted(f -> {
             if (f.isSucceeded()) {
@@ -49,7 +49,7 @@ public class UniFutureUtils {
     }
 
     // 逆向转换则是不安全的
-    public static <V> IPromise<V> toFuture(UniCompletionStage<V> uniFuture) {
+    public static <V> IPromise<V> toFuture(IFuture<V> uniFuture) {
         IPromise<V> future = new Promise<>();
         uniFuture.toFuture().onCompleted(f -> {
             if (f.isSucceeded()) {
@@ -75,19 +75,19 @@ public class UniFutureUtils {
         return new UniPromise<>(executor, ctx);
     }
 
-    public static <V> UniFuture<V> completedFuture(V result) {
+    public static <V> IFuture<V> completedFuture(V result) {
         return UniPromise.completedPromise(result);
     }
 
-    public static <V> UniFuture<V> completedFuture(V result, Executor executor) {
+    public static <V> IFuture<V> completedFuture(V result, Executor executor) {
         return UniPromise.completedPromise(result, executor);
     }
 
-    public static <V> UniFuture<V> failedFuture(Throwable ex) {
+    public static <V> IFuture<V> failedFuture(Throwable ex) {
         return UniPromise.failedPromise(ex);
     }
 
-    public static <V> UniFuture<V> failedFuture(Throwable ex, Executor executor) {
+    public static <V> IFuture<V> failedFuture(Throwable ex, Executor executor) {
         return UniPromise.failedPromise(ex, executor);
     }
 
@@ -120,50 +120,50 @@ public class UniFutureUtils {
 
     // region submit
 
-    public static <V> UniFuture<V> submitFunc(Executor executor, Function<? super IContext, V> task, IContext ctx) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofFunction(task, newPromise(executor, ctx));
+    public static <V> IFuture<V> submitFunc(Executor executor, Function<? super IContext, V> task, IContext ctx) {
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(executor, ctx));
         executor.execute(futureTask);
         return futureTask.future();
     }
 
-    public static <V> UniFuture<V> submitFunc(IExecutor executor, Function<? super IContext, V> task, IContext ctx, int options) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofFunction(task, newPromise(executor, ctx));
+    public static <V> IFuture<V> submitFunc(IExecutor executor, Function<? super IContext, V> task, IContext ctx, int options) {
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(executor, ctx));
         executor.execute(futureTask, options);
         return futureTask.future();
     }
 
-    public static UniFuture<?> submitAction(Executor executor, Consumer<? super IContext> task, IContext ctx) {
-        UniPromiseTask<?> futureTask = UniPromiseTask.ofConsumer(task, newPromise(executor, ctx));
+    public static IFuture<?> submitAction(Executor executor, Consumer<? super IContext> task, IContext ctx) {
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(executor, ctx));
         executor.execute(futureTask);
         return futureTask.future();
     }
 
-    public static UniFuture<?> submitAction(IExecutor executor, Consumer<? super IContext> task, IContext ctx, int options) {
-        UniPromiseTask<?> futureTask = UniPromiseTask.ofConsumer(task, newPromise(executor, ctx));
+    public static IFuture<?> submitAction(IExecutor executor, Consumer<? super IContext> task, IContext ctx, int options) {
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(executor, ctx));
         executor.execute(futureTask, options);
         return futureTask.future();
     }
 
-    public static <V> UniFuture<V> submitCall(Executor executor, Callable<V> task) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofCallable(task, newPromise(executor));
+    public static <V> IFuture<V> submitCall(Executor executor, Callable<V> task) {
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(executor));
         executor.execute(futureTask);
         return futureTask.future();
     }
 
-    public static <V> UniFuture<V> submitCall(IExecutor executor, Callable<V> task, int options) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofCallable(task, newPromise(executor));
+    public static <V> IFuture<V> submitCall(IExecutor executor, Callable<V> task, int options) {
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(executor));
         executor.execute(futureTask, options);
         return futureTask.future();
     }
 
-    public static UniFuture<?> submitRun(Executor executor, Runnable action) {
-        UniPromiseTask<?> futureTask = UniPromiseTask.ofRunnable(action, newPromise(executor));
+    public static IFuture<?> submitRun(Executor executor, Runnable action) {
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(action, newPromise(executor));
         executor.execute(futureTask);
         return futureTask.future();
     }
 
-    public static UniFuture<?> submitRun(IExecutor executor, Runnable action, int options) {
-        UniPromiseTask<?> futureTask = UniPromiseTask.ofRunnable(action, newPromise(executor));
+    public static IFuture<?> submitRun(IExecutor executor, Runnable action, int options) {
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(action, newPromise(executor));
         executor.execute(futureTask, options);
         return futureTask.future();
     }

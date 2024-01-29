@@ -18,6 +18,7 @@ package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.collection.IndexedElement;
+import cn.wjybxx.disruptor.StacklessTimeoutException;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -178,7 +179,7 @@ final class ScheduledPromiseTask<V>
     }
 
     @Override
-    protected void clear() {
+    public void clear() {
         super.clear();
         timeoutContext = null;
         closeRegistration();
@@ -198,8 +199,7 @@ final class ScheduledPromiseTask<V>
         IPromise<V> promise = this.promise;
         // 未及时从队列删除；不要尝试优化，可能尚未到触发时间
         if (promise.isDone() || promise.ctx().cancelToken().isCancelling()) {
-            promise.trySetCancelled();
-            eventLoop.removeScheduled(this);
+            cancelWithoutRemove(ICancelToken.REASON_DEFAULT);
             return;
         }
         long tickTime = eventLoop.tickTime();
@@ -247,16 +247,15 @@ final class ScheduledPromiseTask<V>
             if (timeoutContext != null) {
                 timeoutContext.beforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE);
                 if (TaskOption.isEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeoutContext.isTimeout()) {
-                    promise.trySetException(TimeSharingTimeoutException.INSTANCE);
+                    promise.trySetException(StacklessTimeoutException.INSTANCE);
                     clear();
                     return false;
                 }
             }
             // 周期性任务，只有分时任务可以有结果
             if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
-                ResultHolder<V> resultHolder = runTimeSharing();
-                if (resultHolder != null) {
-                    promise.trySetResult(resultHolder.getResult());
+                runTimeSharing();
+                if (promise.isDone()) {
                     clear();
                     return false;
                 }
@@ -271,7 +270,7 @@ final class ScheduledPromiseTask<V>
             }
             // 未被取消的情况下检测超时
             if (timeoutContext != null && timeoutContext.isTimeout()) {
-                promise.trySetException(TimeSharingTimeoutException.INSTANCE);
+                promise.trySetException(StacklessTimeoutException.INSTANCE);
                 clear();
                 return false;
             }
@@ -285,9 +284,9 @@ final class ScheduledPromiseTask<V>
                 return true;
             }
             promise.trySetException(ex);
+            clear();
+            return false;
         }
-        clear();
-        return false;
     }
 
     private boolean canCaughtException(Throwable ex) {
@@ -315,8 +314,12 @@ final class ScheduledPromiseTask<V>
     // region cancel
 
     public void cancelWithoutRemove() {
+        cancelWithoutRemove(ICancelToken.REASON_SHUTDOWN);
+    }
+
+    public void cancelWithoutRemove(int code) {
         closeRegistration();
-        promise.trySetCancelled(ICancelToken.REASON_SHUTDOWN);
+        promise.trySetCancelled(code);
     }
 
     public void registerCancellation() {
@@ -336,7 +339,7 @@ final class ScheduledPromiseTask<V>
         if (promise.isCancelled()) {
             // 这里难以识别是被谁取消的，但trySetCancelled的异常无堆栈的，而通过Future的取消是有堆栈的...
             CancellationException ex = (CancellationException) promise.exceptionNow(false);
-            if (ex != StacklessCancellationException.INSTANCE) {
+            if (!(ex instanceof BetterCancellationException)) {
                 eventLoop().removeScheduled(this);
             }
         } else {

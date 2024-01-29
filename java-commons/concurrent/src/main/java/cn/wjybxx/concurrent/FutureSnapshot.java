@@ -28,44 +28,44 @@ import java.util.concurrent.CancellationException;
 @Beta
 public final class FutureSnapshot<T> {
 
-    private final FutureState state;
+    private final TaskStatus status;
     private final Object result;
 
-    private FutureSnapshot(FutureState state, Object result) {
-        this.state = state;
+    private FutureSnapshot(TaskStatus status, Object result) {
+        this.status = status;
         this.result = result;
     }
 
-    public FutureState state() {
-        return state;
+    public TaskStatus state() {
+        return status;
     }
 
     public boolean isDone() {
-        return state.isDone();
+        return status.isDone();
     }
 
     public boolean isPending() {
-        return state == FutureState.PENDING;
+        return status == TaskStatus.PENDING;
     }
 
     public boolean isComputing() {
-        return state == FutureState.COMPUTING;
+        return status == TaskStatus.COMPUTING;
     }
 
     public boolean isSucceeded() {
-        return state == FutureState.SUCCESS;
+        return status == TaskStatus.SUCCESS;
     }
 
     public boolean isFailed() {
-        return state == FutureState.FAILED;
+        return status == TaskStatus.FAILED;
     }
 
     public boolean isCancelled() {
-        return state == FutureState.CANCELLED;
+        return status == TaskStatus.CANCELLED;
     }
 
     public boolean isFailedOrCancelled() {
-        return state.isFailedOrCancelled();
+        return status.isFailedOrCancelled();
     }
 
     /**
@@ -76,7 +76,7 @@ public final class FutureSnapshot<T> {
      */
     @SuppressWarnings("unchecked")
     public T getResult() {
-        if (state == FutureState.SUCCESS) {
+        if (status == TaskStatus.SUCCESS) {
             return (T) result;
         }
         return null;
@@ -84,7 +84,7 @@ public final class FutureSnapshot<T> {
 
     /** @return 非成功完成时返回null */
     public Throwable getException() {
-        if (state.isFailedOrCancelled()) {
+        if (status.isFailedOrCancelled()) {
             return (Throwable) result;
         }
         return null;
@@ -92,15 +92,15 @@ public final class FutureSnapshot<T> {
 
     // region factory
     /** 排队中 */
-    private static final FutureSnapshot<?> PENDING = new FutureSnapshot<>(FutureState.PENDING, null);
+    private static final FutureSnapshot<?> PENDING = new FutureSnapshot<>(TaskStatus.PENDING, null);
     /** 计算中 */
-    private static final FutureSnapshot<?> COMPUTING = new FutureSnapshot<>(FutureState.COMPUTING, null);
+    private static final FutureSnapshot<?> COMPUTING = new FutureSnapshot<>(TaskStatus.COMPUTING, null);
     /** 成功但没有结果 */
-    private static final FutureSnapshot<?> NIL = new FutureSnapshot<>(FutureState.SUCCESS, null);
+    private static final FutureSnapshot<?> NIL = new FutureSnapshot<>(TaskStatus.SUCCESS, null);
 
     public static <T> FutureSnapshot<T> of(IFuture<T> future) {
-        FutureState state = future.futureState();
-        return switch (state) {
+        TaskStatus status = future.status();
+        return switch (status) {
             case PENDING -> pending();
             case COMPUTING -> computing();
             case SUCCESS -> succeeded(future.getNow());
@@ -128,15 +128,15 @@ public final class FutureSnapshot<T> {
         if (result == null) {
             return (FutureSnapshot<U>) NIL;
         }
-        return new FutureSnapshot<>(FutureState.SUCCESS, result);
+        return new FutureSnapshot<>(TaskStatus.SUCCESS, result);
     }
 
     public static <U> FutureSnapshot<U> failed(Throwable ex) {
         Objects.requireNonNull(ex);
         if (ex instanceof CancellationException) {
-            return new FutureSnapshot<>(FutureState.CANCELLED, ex);
+            return new FutureSnapshot<>(TaskStatus.CANCELLED, ex);
         }
-        return new FutureSnapshot<>(FutureState.FAILED, ex);
+        return new FutureSnapshot<>(TaskStatus.FAILED, ex);
     }
     // endregion
 

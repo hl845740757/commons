@@ -20,6 +20,8 @@ import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
 import cn.wjybxx.base.time.TimeProvider;
 import cn.wjybxx.concurrent.EventLoopState;
+import cn.wjybxx.concurrent.IFuture;
+import cn.wjybxx.concurrent.PromiseTask;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -38,7 +40,7 @@ public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor imple
     private final TimeProvider timeProvider;
     private final IndexedPriorityQueue<UniScheduledPromiseTask<?>> taskQueue;
     private final UniPromise<Void> terminationPromise = new UniPromise<>(this);
-    private final UniFuture<Void> terminationFuture = terminationPromise.asReadonly();
+    private final IFuture<Void> terminationFuture = terminationPromise.asReadonly();
     private int state = EventLoopState.ST_UNSTARTED;
 
     /** 为任务分配唯一id，确保先入先出 */
@@ -97,7 +99,7 @@ public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor imple
     public void execute(Runnable command, int options) {
         if (isShuttingDown()) {
             // 暂时直接取消
-            if (command instanceof UniPromiseTask<?> promiseTask) {
+            if (command instanceof PromiseTask<?> promiseTask) {
                 promiseTask.getPromise().trySetCancelled();
             }
             return;
@@ -160,7 +162,7 @@ public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor imple
     }
 
     @Override
-    public UniFuture<?> terminationFuture() {
+    public IFuture<?> terminationFuture() {
         return terminationFuture;
     }
     // endregion

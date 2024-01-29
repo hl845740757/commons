@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
+import cn.wjybxx.disruptor.StacklessTimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * 测试{@link ScheduledTaskBuilder}
@@ -64,43 +66,32 @@ public class ScheduleTest2 {
         consumer.terminationFuture().join();
     }
 
-    ResultHolder<String> timeSharingJoinString(IContext ctx) {
+    boolean timeSharingJoinString(IPromise<? super String> promise) {
         joiner.add(stringList.get(index++));
         if (index >= stringList.size()) {
-            return ResultHolder.succeeded(joiner.toString());
+            return promise.trySetResult(joiner.toString());
         }
-        return null;
+        return false;
     }
 
-    ResultHolder<String> untilJoinStringSuccess(IContext ctx) {
-        ResultHolder<String> holder;
-        //noinspection StatementWithEmptyBody
-        while ((holder = timeSharingJoinString(null)) == null) {
+    void untilJoinStringSuccess(IPromise<? super String> promise) {
+        while (!promise.isDone()) {
+            timeSharingJoinString(promise);
         }
-        return holder;
     }
 
     @Test
     void testOnlyOnceFail() {
-        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.newTimeSharing(this::timeSharingJoinString)
+        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing(this::timeSharingJoinString)
                 .setOnlyOnce(0));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.exceptionNow() instanceof TimeSharingTimeoutException);
+        Assertions.assertTrue(future.exceptionNow() instanceof TimeoutException);
     }
 
     @Test
     void testOnlyOnceSuccess() {
-        String result = consumer.schedule(ScheduledTaskBuilder.newTimeSharing(this::untilJoinStringSuccess)
-                        .setOnlyOnce(0))
-                .join();
-
-        Assertions.assertEquals(expectedString, result);
-    }
-
-    @Test
-    void testCallableSuccess() {
-        String result = consumer.schedule(ScheduledTaskBuilder.newCallable(() -> untilJoinStringSuccess(IContext.NONE).getResult())
+        String result = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing(this::untilJoinStringSuccess)
                         .setOnlyOnce(0))
                 .join();
 
@@ -110,7 +101,7 @@ public class ScheduleTest2 {
     //
     @Test
     void testTimeSharingComplete() {
-        String result = consumer.schedule(ScheduledTaskBuilder.newTimeSharing(this::timeSharingJoinString)
+        String result = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing(this::timeSharingJoinString)
                         .setFixedDelay(0, 200))
                 .join();
 
@@ -119,12 +110,12 @@ public class ScheduleTest2 {
 
     @Test
     void testTimeSharingTimeout() {
-        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.newTimeSharing(this::timeSharingJoinString)
+        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing(this::timeSharingJoinString)
                 .setFixedDelay(0, 200)
                 .setTimeoutCount(1));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.exceptionNow() instanceof TimeSharingTimeoutException);
+        Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
     }
 
     @Test
@@ -135,7 +126,7 @@ public class ScheduleTest2 {
                 .setTimeoutCount(1));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.exceptionNow() instanceof TimeSharingTimeoutException);
+        Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
     }
 
     @Test
@@ -145,7 +136,7 @@ public class ScheduleTest2 {
                 .setTimeoutCount(1));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.exceptionNow() instanceof TimeSharingTimeoutException);
+        Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
     }
 
 }

@@ -33,7 +33,7 @@ public interface IPromise<T> extends IFuture<T> {
      * 只有成功将future从pending状态更新为computing状态时返回true
      */
     default boolean trySetComputing() {
-        return trySetComputing2() == FutureState.PENDING;
+        return trySetComputing2() == TaskStatus.PENDING;
     }
 
     /**
@@ -42,7 +42,7 @@ public interface IPromise<T> extends IFuture<T> {
      *
      * @return 之前的状态
      */
-    FutureState trySetComputing2();
+    TaskStatus trySetComputing2();
 
     /**
      * 将future置为计算中状态，如果future之前不处于pending状态，则抛出{@link IllegalStateException}

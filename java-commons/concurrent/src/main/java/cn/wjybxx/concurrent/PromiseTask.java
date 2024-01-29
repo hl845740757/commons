@@ -18,6 +18,7 @@ package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.function.TriConsumer;
 import cn.wjybxx.base.function.TriFunction;
+import cn.wjybxx.disruptor.StacklessTimeoutException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -29,8 +30,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * 这个实现没有特殊逻辑，可开放给用户
- * 实现{@link RunnableFuture}是为了适配JDK的实现类，实际上更建议组合。
+ * 1.实现{@link RunnableFuture}是为了适配JDK的实现类，实际上更建议组合。
+ * 2.该类的数据是（部分）开放的，以支持不同的扩展。
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -42,27 +43,27 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
      * 1.放在低8位，减少运算，queueId的计算频率高于其它部分。
      * 2.大于{@link TaskOption}的中的64阶段。
      */
-    static final int maskQueueId = 0xFF;
+    protected static final int maskQueueId = 0xFF;
     /** 任务类型的掩码 -- 4bit，可省去大量的instanceof测试 */
-    static final int maskTaskType = 0x0F00;
+    protected static final int maskTaskType = 0x0F00;
     /** 调度类型的掩码 -- 4bit，最大16种 */
-    static final int maskScheduleType = 0xF000;
+    protected static final int maskScheduleType = 0xF000;
     /** 是否已经声明任务的归属权 */
-    static final int maskClaimed = 1 << 16;
+    protected static final int maskClaimed = 1 << 16;
 
-    static final int offsetQueueId = 0;
-    static final int offsetTaskType = 8;
-    static final int offsetScheduleType = 12;
-    static final int maxQueueId = 255;
+    protected static final int offsetQueueId = 0;
+    protected static final int offsetTaskType = 8;
+    protected static final int offsetScheduleType = 12;
+    protected static final int maxQueueId = 255;
 
     /** 用户的任务 */
     private Object action;
     /** 用户可能在任务完成后继续访问，因此不能清理 */
-    final IPromise<V> promise;
+    protected final IPromise<V> promise;
     /** 控制标记 */
-    int ctl;
+    protected int ctl;
     /** 调度选项 */
-    int options;
+    protected int options;
 
     /**
      * @param action  用户的任务，支持的类型见{@link TaskBuilder#taskType(Object)}
@@ -83,7 +84,7 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
         this(builder.getTask(), promise, builder.getType());
     }
 
-    PromiseTask(Object action, IPromise<V> promise, int taskType) {
+    public PromiseTask(Object action, IPromise<V> promise, int taskType) {
         this.action = Objects.requireNonNull(action, "action");
         this.promise = Objects.requireNonNull(promise, "promise");
         this.ctl |= (taskType << offsetTaskType);
@@ -126,52 +127,53 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
         return options;
     }
 
+    /** 任务是否启用了指定选项 */
     public boolean isEnable(int taskOption) {
         return TaskOption.isEnabled(options, taskOption);
     }
 
     /** 获取绑定的任务 */
-    protected final Object getAction() {
+    public final Object getAction() {
         return action;
     }
 
-    /** 开放给外部子类 */
-    protected final IPromise<V> getPromise() {
+    /** 获取任务绑的Promise */
+    public final IPromise<V> getPromise() {
         return promise;
     }
 
     /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
-    protected final int getTaskType() {
+    public final int getTaskType() {
         return (ctl & maskTaskType) >> offsetTaskType;
     }
 
     /** 获取任务的调度类型 */
-    protected int getScheduleType() {
+    public final int getScheduleType() {
         return (ctl & maskScheduleType) >> offsetScheduleType;
     }
 
     /** 设置任务的调度类型 -- 应该在添加到队列之前设置 */
-    protected void setScheduleType(int scheduleType) {
+    public final void setScheduleType(int scheduleType) {
         ctl |= (scheduleType << offsetScheduleType);
     }
 
     /** 是否已经声明任务的归属权 */
-    protected boolean isClaimed() {
+    public final boolean isClaimed() {
         return (ctl & maskClaimed) != 0;
     }
 
     /** 将任务标记为已申领 */
-    protected void setClaimed() {
+    public final void setClaimed() {
         ctl |= maskClaimed;
     }
 
     /** 获取任务所属的队列id */
-    protected int getQueueId() {
+    public final int getQueueId() {
         return (ctl & maskQueueId);
     }
 
     /** @param queueId 队列id，范围 [0, 255] */
-    protected void setQueueId(int queueId) {
+    public final void setQueueId(int queueId) {
         if (queueId < 0 || queueId > maxQueueId) {
             throw new IllegalArgumentException("queueId: " + maxQueueId);
         }
@@ -183,11 +185,15 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
 
     // region core
 
+    public void clear() {
+        action = null;
+    }
+
     /** 运行分时任务 */
     @SuppressWarnings("unchecked")
-    protected final ResultHolder<V> runTimeSharing() throws Exception {
+    protected final void runTimeSharing() throws Exception {
         TimeSharingTask<V> task = (TimeSharingTask<V>) action;
-        return task.step(promise.ctx());
+        task.step(promise);
     }
 
     /** 运行其它类型任务 */
@@ -219,10 +225,6 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
         }
     }
 
-    protected void clear() {
-        action = null;
-    }
-
     @Override
     public void run() {
         IPromise<V> promise = this.promise;
@@ -235,11 +237,9 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
             try {
                 if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
                     @SuppressWarnings("unchecked") TimeSharingTask<V> task = (TimeSharingTask<V>) action;
-                    ResultHolder<V> holder = task.step(promise.ctx());
-                    if (holder != null) {
-                        promise.trySetResult(holder.getResult());
-                    } else {
-                        promise.trySetException(TimeSharingTimeoutException.INSTANCE);
+                    task.step(promise);
+                    if (!promise.isDone()) {
+                        promise.trySetException(StacklessTimeoutException.INSTANCE);
                     }
                 } else {
                     V result = runTask();
@@ -306,8 +306,8 @@ public class PromiseTask<V> implements IFutureTask<V>, RunnableFuture<V>, IFutur
     }
 
     @Override
-    public FutureState futureState() {
-        return promise.futureState();
+    public TaskStatus status() {
+        return promise.status();
     }
 
     @Override

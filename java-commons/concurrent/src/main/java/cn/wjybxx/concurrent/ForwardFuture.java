@@ -97,8 +97,8 @@ public class ForwardFuture<V> implements IFuture<V> {
     }
 
     @Override
-    public FutureState futureState() {
-        return future.futureState();
+    public TaskStatus status() {
+        return future.status();
     }
 
     @Override

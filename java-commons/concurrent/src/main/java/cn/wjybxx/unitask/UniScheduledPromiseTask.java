@@ -19,9 +19,12 @@ package cn.wjybxx.unitask;
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.collection.IndexedElement;
 import cn.wjybxx.concurrent.*;
+import cn.wjybxx.disruptor.StacklessTimeoutException;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -33,8 +36,8 @@ import java.util.function.Function;
  */
 @ThreadSafe
 public final class UniScheduledPromiseTask<V>
-        extends UniPromiseTask<V>
-        implements UniScheduledFuture<V>, IndexedElement, Consumer<Object> {
+        extends PromiseTask<V>
+        implements IScheduledFuture<V>, IndexedElement, Consumer<Object> {
 
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
     private long id;
@@ -101,10 +104,10 @@ public final class UniScheduledPromiseTask<V>
     }
 
     /** 计算任务的触发时间 */
-    public static long triggerTime(long delay, long tickTime) {
+    public static long triggerTime(long delay, TimeUnit timeUnit, long tickTime) {
         // 理论上单线程下是可以支持插队的，但插队会导致较强的依赖，暂时先不支持
         final long initialDelay = Math.max(0, delay);
-        return tickTime + initialDelay;
+        return tickTime + timeUnit.toMillis(initialDelay);
     }
 
     public static <V> UniScheduledPromiseTask<V> ofBuilder(TaskBuilder<V> builder, UniPromise<V> promise,
@@ -174,7 +177,7 @@ public final class UniScheduledPromiseTask<V>
     }
 
     @Override
-    protected void clear() {
+    public void clear() {
         super.clear();
         timeoutContext = null;
         closeRegistration();
@@ -191,11 +194,10 @@ public final class UniScheduledPromiseTask<V>
     @Override
     public void run() {
         AbstractUniScheduledExecutor eventLoop = eventLoop();
-        UniPromise<V> promise = this.promise;
+        IPromise<V> promise = this.promise;
         // 未及时从队列删除；不要尝试优化，可能尚未到触发时间
         if (promise.isDone() || promise.ctx().cancelToken().isCancelling()) {
-            promise.trySetCancelled();
-            eventLoop.removeScheduled(this);
+            cancelWithoutRemove(ICancelToken.REASON_DEFAULT);
             return;
         }
         long tickTime = eventLoop.tickTime();
@@ -220,7 +222,7 @@ public final class UniScheduledPromiseTask<V>
             return false;
         }
 
-        UniPromise<V> promise = this.promise;
+        IPromise<V> promise = this.promise;
         // 检测取消信号 -- 还要检测来自future的取消...
         if (promise.ctx().cancelToken().isCancelling()) {
             promise.trySetCancelled();
@@ -243,16 +245,15 @@ public final class UniScheduledPromiseTask<V>
             if (timeoutContext != null) {
                 timeoutContext.beforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE);
                 if (TaskOption.isEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeoutContext.isTimeout()) {
-                    promise.trySetException(TimeSharingTimeoutException.INSTANCE);
+                    promise.trySetException(StacklessTimeoutException.INSTANCE);
                     clear();
                     return false;
                 }
             }
             // 周期性任务，只有分时任务可以有结果
             if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
-                ResultHolder<V> resultHolder = runTimeSharing();
-                if (resultHolder != null) {
-                    promise.trySetResult(resultHolder.getResult());
+                runTimeSharing();
+                if (promise.isDone()) {
                     clear();
                     return false;
                 }
@@ -267,7 +268,7 @@ public final class UniScheduledPromiseTask<V>
             }
             // 未被取消的情况下检测超时
             if (timeoutContext != null && timeoutContext.isTimeout()) {
-                promise.trySetException(TimeSharingTimeoutException.INSTANCE);
+                promise.trySetException(StacklessTimeoutException.INSTANCE);
                 clear();
                 return false;
             }
@@ -281,9 +282,9 @@ public final class UniScheduledPromiseTask<V>
                 return true;
             }
             promise.trySetException(ex);
+            clear();
+            return false;
         }
-        clear();
-        return false;
     }
 
     private boolean canCaughtException(Throwable ex) {
@@ -310,8 +311,12 @@ public final class UniScheduledPromiseTask<V>
     // region cancel
 
     public void cancelWithoutRemove() {
+        cancelWithoutRemove(ICancelToken.REASON_SHUTDOWN);
+    }
+
+    public void cancelWithoutRemove(int code) {
         closeRegistration();
-        promise.trySetCancelled(ICancelToken.REASON_SHUTDOWN);
+        promise.trySetCancelled(code);
     }
 
     public void registerCancellation() {
@@ -342,8 +347,9 @@ public final class UniScheduledPromiseTask<V>
     // endregion
 
     @Override
-    public long getDelay() {
-        return Math.max(0, nextTriggerTime - eventLoop().tickTime());
+    public long getDelay(TimeUnit unit) {
+        long delay = Math.max(0, nextTriggerTime - eventLoop().tickTime());
+        return unit.convert(delay, TimeUnit.NANOSECONDS);
     }
 
     public int compareToExplicitly(UniScheduledPromiseTask<?> other) {
@@ -359,6 +365,15 @@ public final class UniScheduledPromiseTask<V>
             return r;
         }
         return Long.compare(id, other.id);
+    }
+
+    @Deprecated
+    @Override
+    public int compareTo(Delayed other) {
+        if (this == other) {
+            return 0;
+        }
+        throw new IllegalStateException("who???");
     }
 
 }

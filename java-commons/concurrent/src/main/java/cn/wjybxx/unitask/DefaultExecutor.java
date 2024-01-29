@@ -17,6 +17,8 @@
 package cn.wjybxx.unitask;
 
 import cn.wjybxx.concurrent.EventLoopState;
+import cn.wjybxx.concurrent.IFuture;
+import cn.wjybxx.concurrent.PromiseTask;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ public class DefaultExecutor extends AbstractUniExecutor {
 
     private final Deque<Runnable> taskQueue = new ArrayDeque<>();
     private final UniPromise<Void> terminationPromise = new UniPromise<>(this);
-    private final UniFuture<Void> terminationFuture = terminationPromise.asReadonly();
+    private final IFuture<Void> terminationFuture = terminationPromise.asReadonly();
     private int state = EventLoopState.ST_UNSTARTED;
 
     private final int countLimit;
@@ -112,7 +114,8 @@ public class DefaultExecutor extends AbstractUniExecutor {
 
     @Override
     public void execute(Runnable command, int options) {
-        if (options != 0 && (command instanceof UniPromiseTask<?> promiseTask)) {
+        // 暂不处理shutdown问题
+        if (options != 0 && (command instanceof PromiseTask<?> promiseTask)) {
             promiseTask.setOptions(options);
         }
         taskQueue.offer(command);
@@ -152,7 +155,7 @@ public class DefaultExecutor extends AbstractUniExecutor {
     }
 
     @Override
-    public UniFuture<?> terminationFuture() {
+    public IFuture<?> terminationFuture() {
         return terminationFuture;
     }
     // endregion

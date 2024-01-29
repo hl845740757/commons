@@ -67,22 +67,31 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         return new TaskBuilder<>(TYPE_RUNNABLE, task);
     }
 
-    public static <V> TaskBuilder<V> newCallable(Callable<V> task) {
-        Objects.requireNonNull(task);
+    public static <V> TaskBuilder<V> newCallable(Callable<? extends V> task) {
         return new TaskBuilder<>(TYPE_CALLABLE, task);
     }
 
-    public static <V> TaskBuilder<V> newFunc(Function<IContext, V> task, IContext ctx) {
-        Objects.requireNonNull(task);
+    public static <V> TaskBuilder<V> newFunc(Function<IContext, ? extends V> task) {
+        return new TaskBuilder<>(TYPE_FUNCTION, task, IContext.NONE);
+    }
+
+    public static <V> TaskBuilder<V> newFunc(Function<IContext, ? extends V> task, IContext ctx) {
         return new TaskBuilder<>(TYPE_FUNCTION, task, ctx);
     }
 
+    public static <V> TaskBuilder<V> newAction(Consumer<IContext> task) {
+        return new TaskBuilder<>(TYPE_CONSUMER, task, IContext.NONE);
+    }
+
     public static <V> TaskBuilder<V> newAction(Consumer<IContext> task, IContext ctx) {
-        Objects.requireNonNull(task);
         return new TaskBuilder<>(TYPE_CONSUMER, task, ctx);
     }
 
-    public static <V> TaskBuilder<V> newTimeSharing(TimeSharingTask<V> task, IContext ctx) {
+    public static <V> TaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task) {
+        return new TaskBuilder<>(TYPE_TIMESHARING, task, IContext.NONE);
+    }
+
+    public static <V> TaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task, IContext ctx) {
         return new TaskBuilder<>(TYPE_TIMESHARING, task, ctx);
     }
 

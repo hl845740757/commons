@@ -57,45 +57,48 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
     boolean cancel(boolean mayInterruptIfRunning);
 
     // region 状态查询
+
+    /** @deprecated {@link #status()} */
+    @Deprecated
     @Override
     State state();
 
-    /** 获取更为详细的future枚举值 */
-    FutureState futureState();
+    /** future关联的任务的状态 */
+    TaskStatus status();
 
     /**
      * 如果future关联的任务仍处于等待执行的状态，则返回true
      * （换句话说，如果任务仍在排队，则返回true）
      */
     default boolean isPending() {
-        return futureState() == FutureState.PENDING;
+        return status() == TaskStatus.PENDING;
     }
 
     /** 如果future关联的任务正在执行中，则返回true */
     default boolean isComputing() {
-        return futureState() == FutureState.COMPUTING;
+        return status() == TaskStatus.COMPUTING;
     }
 
     /** 如果future已进入完成状态(成功、失败、被取消)，则返回true */
     @Override
     default boolean isDone() {
-        return futureState().isDone();
+        return status().isDone();
     }
 
     /** 如果future关联的任务在正常完成被取消，则返回true。 */
     @Override
     default boolean isCancelled() {
-        return futureState() == FutureState.CANCELLED;
+        return status() == TaskStatus.CANCELLED;
     }
 
     /** 如果future已进入完成状态，且是成功完成，则返回true。 */
     default boolean isSucceeded() {
-        return futureState() == FutureState.SUCCESS;
+        return status() == TaskStatus.SUCCESS;
     }
 
     /** 如果future已进入完成状态，且是失败状态，则返回true */
     default boolean isFailed() {
-        return futureState() == FutureState.FAILED;
+        return status() == TaskStatus.FAILED;
     }
 
     /**
@@ -103,7 +106,7 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
      * 但有些时候，我们需要将取消也视为失败的一种，因此需要快捷的方法。
      */
     default boolean isFailedOrCancelled() {
-        return futureState().isFailedOrCancelled();
+        return status().isFailedOrCancelled();
     }
 
     // endregion
@@ -163,6 +166,7 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
      * 获取导致任务失败的异常，可获取取消异常
      *
      * @param throwIfCancelled 任务取消的状态下是否抛出状态异常
+     * @throws IllegalStateException 如果任务不是失败完成状态
      */
     Throwable exceptionNow(boolean throwIfCancelled);
 

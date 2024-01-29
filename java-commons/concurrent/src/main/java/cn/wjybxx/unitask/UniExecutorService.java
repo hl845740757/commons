@@ -17,15 +17,14 @@
 package cn.wjybxx.unitask;
 
 
-import cn.wjybxx.concurrent.*;
+import cn.wjybxx.concurrent.IExecutorService;
+import cn.wjybxx.concurrent.TaskOption;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
+import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.concurrent.*;
 
 /**
  * 用于在当前线程延迟执行任务的Executor -- {@link IExecutorService}。
@@ -43,7 +42,7 @@ import java.util.function.Function;
  * date 2023/4/3
  */
 @NotThreadSafe
-public interface UniExecutorService extends IExecutor {
+public interface UniExecutorService extends IExecutorService {
 
     /**
      * 心跳方法
@@ -59,146 +58,31 @@ public interface UniExecutorService extends IExecutor {
      */
     boolean needMoreTicks();
 
-    // region lifecycle
 
-    /**
-     * 查询{@link EventLoopGroup}是否处于正在关闭状态。
-     * 正在关闭状态下，拒绝接收新任务，当执行完所有任务后，进入关闭状态。
-     *
-     * @return 如果该{@link EventLoopGroup}管理的所有{@link EventLoop}正在关闭或已关闭则返回true
-     */
-    boolean isShuttingDown();
+    // region 废弃api
 
-    /**
-     * 查询{@link EventLoopGroup}是否处于关闭状态。
-     * 关闭状态下，拒绝接收新任务，执行退出前的清理操作，执行完清理操作后，进入终止状态。
-     *
-     * @return 如果已关闭，则返回true
-     */
-    boolean isShutdown();
-
-    /**
-     * 是否已进入终止状态，一旦进入终止状态，表示生命周期真正结束。
-     *
-     * @return 如果已处于终止状态，则返回true
-     */
-    boolean isTerminated();
-
-    /**
-     * 返回Future将在Executor终止时进入完成状态。
-     * 1. 返回Future应当是只读的，{@link UniFuture#asReadonly()}
-     * 2. 用户可以在该Future上等待。
-     */
-    UniFuture<?> terminationFuture();
-
-    /**
-     * 请求关闭 ExecutorService，不再接收新的任务。
-     * ExecutorService在执行完现有任务后，进入关闭状态。
-     * 如果 ExecutorService 正在关闭，或已经关闭，则方法不产生任何效果。
-     * <p>
-     * 该方法会立即返回，如果想等待 ExecutorService 进入终止状态，
-     * 可以通过{@link #terminationFuture()}监听进入完成状态事件。
-     */
-    void shutdown();
-
-    /**
-     * JDK文档：
-     * 请求关闭 ExecutorService，<b>尝试取消所有正在执行的任务，停止所有待执行的任务，并不再接收新的任务。</b>
-     * 如果 ExecutorService 已经关闭，则方法不产生任何效果。
-     * <p>
-     * 该方法会立即返回，如果想等待 ExecutorService 进入终止状态，
-     * 可以通过{@link #terminationFuture()}监听进入完成状态事件。
-     *
-     * @return 被取消的任务
-     */
-    List<Runnable> shutdownNow();
-
-    // endregion
-
-    // region submit
-
-    /**
-     * 创建一个promise以用于任务调度
-     * 如果当前Executor是{@link SingleThreadExecutor}，返回的future将禁止在当前EventLoop上执行阻塞操作。
-     *
-     * @param ctx 任务关联的上下文
-     * @implNote 通常应该绑定当前executor
-     */
-    default <V> UniPromise<V> newPromise(IContext ctx) {
-        return new UniPromise<>(this, ctx);
+    @Nonnull
+    @Override
+    default <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
+        throw new UnsupportedOperationException();
     }
 
-    /**
-     * 创建一个promise以用于任务调度
-     * 如果当前Executor是{@link SingleThreadExecutor}，返回的future将禁止在当前EventLoop上执行阻塞操作。
-     *
-     * @implNote 通常应该绑定当前executor
-     */
-    default <V> UniPromise<V> newPromise() {
-        return new UniPromise<>(this, null);
+    @Nonnull
+    @Override
+    default <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
+        throw new UnsupportedOperationException();
     }
 
-    default <V> UniFuture<V> submit(@Nonnull TaskBuilder<V> builder) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofBuilder(builder, newPromise(builder.getCtx()));
-        execute(futureTask, builder.getOptions());
-        return futureTask.future();
+    @Nonnull
+    @Override
+    default <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+        throw new UnsupportedOperationException();
     }
 
-    default <T> UniFuture<T> submit(Callable<T> task) {
-        UniPromiseTask<T> futureTask = UniPromiseTask.ofCallable(task, newPromise(null));
-        execute(futureTask, 0);
-        return futureTask.future();
-    }
-
-    default <V> UniFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofFunction(task, newPromise(ctx));
-        execute(futureTask, 0);
-        return futureTask.future();
-    }
-
-    default <V> UniFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx, int options) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofFunction(task, newPromise(ctx));
-        execute(futureTask, options);
-        return futureTask.future();
-    }
-
-    default UniFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
-        UniPromiseTask<?> futureTask = UniPromiseTask.ofConsumer(task, newPromise(ctx));
-        execute(futureTask, 0);
-        return futureTask.future();
-    }
-
-    default UniFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
-        UniPromiseTask<?> futureTask = UniPromiseTask.ofConsumer(task, newPromise(ctx));
-        execute(futureTask, options);
-        return futureTask.future();
-    }
-
-    default <V> UniFuture<V> submitCall(Callable<V> task) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofCallable(task, newPromise(null));
-        execute(futureTask, 0);
-        return futureTask.future();
-    }
-
-    default <V> UniFuture<V> submitCall(Callable<V> task, int options) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofCallable(task, newPromise(null));
-        execute(futureTask, options);
-        return futureTask.future();
-    }
-
-    default UniFuture<?> submitRun(Runnable task) {
-        UniPromiseTask<?> futureTask = UniPromiseTask.ofRunnable(task, newPromise(null));
-        execute(futureTask, 0);
-        return futureTask.future();
-    }
-
-    /** 该方法可能和{@link ExecutorService#submit(Runnable, Object)}冲突，因此我们要带后缀 */
-    default UniFuture<?> submitRun(Runnable task, int options) {
-        UniPromiseTask<?> futureTask = UniPromiseTask.ofRunnable(task, newPromise(null));
-        execute(futureTask, options);
-        return futureTask.future();
+    @Override
+    default <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        throw new UnsupportedOperationException();
     }
 
     // endregion
-
 }

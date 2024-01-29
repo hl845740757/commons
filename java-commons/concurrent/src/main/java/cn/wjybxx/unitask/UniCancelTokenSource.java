@@ -183,20 +183,20 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
      * @throws IllegalStateException 如果未绑定executor
      */
     public void cancelAfter(int cancelCode, long millisecondsDelay) {
-        cancelAfter(cancelCode, millisecondsDelay, executor);
+        cancelAfter(cancelCode, millisecondsDelay, TimeUnit.MILLISECONDS, executor);
     }
 
     @Override
     public void cancelAfter(int cancelCode, long delay, TimeUnit timeUnit) {
-        cancelAfter(cancelCode, timeUnit.toMillis(delay), executor);
+        cancelAfter(cancelCode, delay, timeUnit, executor);
     }
 
     /** @param executor 用于延迟调度的executor */
-    public void cancelAfter(int cancelCode, long delay, UniScheduledExecutor executor) {
+    public void cancelAfter(int cancelCode, long delay, TimeUnit timeUnit, UniScheduledExecutor executor) {
         if (executor == null) throw new IllegalArgumentException("delayer is null");
         if (this.code == 0) {
             Canceller canceller = new Canceller(this, cancelCode);
-            executor.scheduleAction(canceller, canceller, delay);
+            executor.scheduleAction(canceller, canceller, delay, timeUnit);
             // executor会自动监听延时任务的cancelToken
         }
     }

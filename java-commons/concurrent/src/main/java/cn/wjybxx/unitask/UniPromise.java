@@ -39,11 +39,17 @@ import java.util.function.Function;
  * 1.去除{@link #result}等的volatile操作，变更为普通字段。
  * 2.去除了阻塞操作Awaiter的支持。
  *
+ * <h3>Async的含义</h3>
+ * 既然是单线程的，又何来异步一说？这里的异步是指不立即执行给定的行为，而是提交到Executor等待调度。<br>
+ * 这有什么作用？有几个作用：
+ * 1.让出CPU，避免过多的任务集中处理。
+ * 2.延迟到特定阶段执行 -- 通过{@link TaskOption}指定。
+ *
  * @author wjybxx
  * date - 2024/1/10
  */
 @NotThreadSafe
-public class UniPromise<T> implements UniFuture<T> {
+public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
     /** 表示任务开始运行 */
     private static final Object COMPUTING = new Object();
@@ -180,13 +186,13 @@ public class UniPromise<T> implements UniFuture<T> {
     }
 
     @Override
-    public UniFuture<T> asReadonly() {
-        return new ReadonlyUniFuture<>(this);
+    public IFuture<T> asReadonly() {
+        return new ReadOnlyFuture<>(this);
     }
 
     @Nonnull
     @Override
-    public UniFuture<T> toFuture() {
+    public IFuture<T> toFuture() {
         return this;
     }
 
@@ -224,28 +230,47 @@ public class UniPromise<T> implements UniFuture<T> {
     }
 
     @Override
-    public final FutureState futureState() {
-        return futureState(result);
-    }
-
-    private static FutureState futureState(Object r) {
-        if (r == null) {
-            return FutureState.PENDING;
-        }
-        if (r == COMPUTING) {
-            return FutureState.COMPUTING;
+    public final State state() {
+        Object r = result;
+        if (r == null || r == COMPUTING) {
+            return State.RUNNING;
         }
         if (r == NIL) {
-            return FutureState.SUCCESS;
+            return State.SUCCESS;
         }
         if (r instanceof AltResult altResult) {
             if (altResult.cause instanceof CancellationException) {
-                return FutureState.CANCELLED;
+                return State.CANCELLED;
             } else {
-                return FutureState.FAILED;
+                return State.FAILED;
             }
         }
-        return FutureState.SUCCESS;
+        return State.SUCCESS;
+    }
+
+    @Override
+    public final TaskStatus status() {
+        return futureState(result);
+    }
+
+    private static TaskStatus futureState(Object r) {
+        if (r == null) {
+            return TaskStatus.PENDING;
+        }
+        if (r == COMPUTING) {
+            return TaskStatus.COMPUTING;
+        }
+        if (r == NIL) {
+            return TaskStatus.SUCCESS;
+        }
+        if (r instanceof AltResult altResult) {
+            if (altResult.cause instanceof CancellationException) {
+                return TaskStatus.CANCELLED;
+            } else {
+                return TaskStatus.FAILED;
+            }
+        }
+        return TaskStatus.SUCCESS;
     }
 
     @Override
@@ -287,6 +312,7 @@ public class UniPromise<T> implements UniFuture<T> {
 
     // region 状态更新
 
+    @Override
     public final boolean trySetComputing() {
         Object preResult = this.result;
         if (preResult == null) {
@@ -295,7 +321,8 @@ public class UniPromise<T> implements UniFuture<T> {
         return preResult == null;
     }
 
-    public final FutureState trySetComputing2() {
+    @Override
+    public final TaskStatus trySetComputing2() {
         Object preResult = this.result;
         if (preResult == null) {
             this.result = COMPUTING;
@@ -303,12 +330,14 @@ public class UniPromise<T> implements UniFuture<T> {
         return futureState(preResult);
     }
 
+    @Override
     public final void setComputing() {
         if (!trySetComputing()) {
             throw new IllegalStateException("Already computing");
         }
     }
 
+    @Override
     public final boolean trySetResult(T result) {
         if (internalComplete(encodeValue(result))) {
             postComplete(this);
@@ -317,12 +346,14 @@ public class UniPromise<T> implements UniFuture<T> {
         return false;
     }
 
+    @Override
     public final void setResult(T result) {
         if (!trySetResult(result)) {
             throw new IllegalStateException("Already complete");
         }
     }
 
+    @Override
     public final boolean trySetException(@Nonnull Throwable cause) {
         Objects.requireNonNull(cause, "cause");
         if (internalComplete(new AltResult(cause))) {
@@ -333,12 +364,14 @@ public class UniPromise<T> implements UniFuture<T> {
         return false;
     }
 
+    @Override
     public final void setException(@Nonnull Throwable cause) {
         if (!trySetException(cause)) {
             throw new IllegalStateException("Already complete");
         }
     }
 
+    @Override
     public boolean trySetCancelled(int code) {
         Throwable cause = code == 1
                 ? StacklessCancellationException.INSTANCE
@@ -350,23 +383,42 @@ public class UniPromise<T> implements UniFuture<T> {
         return false;
     }
 
+    @Override
     public void setCancelled(int code) {
         if (!trySetCancelled(code)) {
             throw new IllegalStateException("Already complete");
         }
     }
 
+    @Override
     public final boolean trySetCancelled() {
         return trySetCancelled(1);
     }
 
+    @Override
     public final void setCancelled() {
         if (!trySetCancelled(1)) {
             throw new IllegalStateException("Already complete");
         }
     }
 
-    public final boolean tryTransferFrom(UniFuture<? extends T> input) {
+    @Deprecated
+    @Override
+    public final boolean cancel(boolean mayInterruptIfRunning) {
+        // 由于要创建异常，先测试一下result
+        Object r = result;
+        if (isDone0(r)) {
+            return isCancelled0(r);
+        }
+        if (trySetException(new CancellationException())) {
+            return true;
+        }
+        // 可能被其它线程取消
+        return isCancelled();
+    }
+
+    @Override
+    public final boolean tryTransferFrom(IFuture<? extends T> input) {
         Objects.requireNonNull(input);
         if (isDone()) {
             return false;
@@ -486,12 +538,53 @@ public class UniPromise<T> implements UniFuture<T> {
     }
 
     @Override
+    public final T get(long timeout, @Nonnull TimeUnit unit) throws InterruptedException, ExecutionException {
+        final Object r = result;
+        if (isDone0(r)) {
+            return reportGet(r);
+        }
+        throw new BlockingOperationException("get");
+    }
+
+    @Override
     public final T join() throws CompletionException {
         final Object r = result;
         if (isDone0(r)) {
             return reportJoin(r);
         }
         throw new BlockingOperationException("Join");
+    }
+
+    @Override
+    public final UniPromise<T> await() {
+        if (isDone()) {
+            return this;
+        }
+        throw new BlockingOperationException("await");
+    }
+
+    @Override
+    public final UniPromise<T> awaitUninterruptibly() {
+        if (isDone()) {
+            return this;
+        }
+        throw new BlockingOperationException("awaitUninterruptibly");
+    }
+
+    @Override
+    public final boolean await(long timeout, @Nonnull TimeUnit unit) {
+        if (isDone()) {
+            return true;
+        }
+        throw new BlockingOperationException("await");
+    }
+
+    @Override
+    public final boolean awaitUninterruptibly(long timeout, @Nonnull TimeUnit unit) {
+        if (isDone()) {
+            return true;
+        }
+        throw new BlockingOperationException("awaitUninterruptibly");
     }
 
     // endregion
@@ -506,29 +599,29 @@ public class UniPromise<T> implements UniFuture<T> {
     // region compose-apply
 
     @Override
-    public <U> UniPromise<U> composeApply(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+    public <U> UniPromise<U> composeApply(BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
         return uniComposeApply(null, fn, ctx, options);
     }
 
     @Override
-    public <U> UniPromise<U> composeApply(BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn) {
+    public <U> UniPromise<U> composeApply(BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn) {
         return uniComposeApply(null, fn, null, 0);
     }
 
     @Override
-    public <U> UniPromise<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn) {
+    public <U> UniPromise<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeApply(executor, fn, null, 0);
     }
 
     @Override
-    public <U> UniPromise<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn, @Nullable IContext ctx, int options) {
+    public <U> UniPromise<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeApply(executor, fn, ctx, options);
     }
 
     private <U> UniPromise<U> uniComposeApply(Executor executor,
-                                              BiFunction<? super IContext, ? super T, ? extends UniCompletionStage<U>> fn,
+                                              BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn,
                                               @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
@@ -543,31 +636,31 @@ public class UniPromise<T> implements UniFuture<T> {
     // region compose-call
 
     @Override
-    public <U> UniPromise<U> composeCall(Function<? super IContext, ? extends UniCompletionStage<U>> fn,
+    public <U> UniPromise<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn,
                                          @Nullable IContext ctx, int options) {
         return uniComposeCall(null, fn, ctx, options);
     }
 
     @Override
-    public <U> UniPromise<U> composeCall(Function<? super IContext, ? extends UniCompletionStage<U>> fn) {
+    public <U> UniPromise<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn) {
         return uniComposeCall(null, fn, null, 0);
     }
 
     @Override
-    public <U> UniPromise<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends UniCompletionStage<U>> fn) {
+    public <U> UniPromise<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeCall(executor, fn, null, 0);
     }
 
     @Override
-    public <U> UniPromise<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends UniCompletionStage<U>> fn,
+    public <U> UniPromise<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn,
                                               @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeCall(executor, fn, ctx, options);
     }
 
     private <U> UniPromise<U> uniComposeCall(Executor executor,
-                                             Function<? super IContext, ? extends UniCompletionStage<U>> fn,
+                                             Function<? super IContext, ? extends ICompletionStage<U>> fn,
                                              @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
@@ -583,34 +676,34 @@ public class UniPromise<T> implements UniFuture<T> {
 
     @Override
     public <X extends Throwable> UniPromise<T> composeCatching(Class<X> exceptionType,
-                                                               BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback,
+                                                               BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback,
                                                                @Nullable IContext ctx, int options) {
         return uniComposeCatching(null, exceptionType, fallback, ctx, options);
     }
 
     @Override
     public <X extends Throwable> UniPromise<T> composeCatching(Class<X> exceptionType,
-                                                               BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback) {
+                                                               BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback) {
         return uniComposeCatching(null, exceptionType, fallback, null, 0);
     }
 
     @Override
     public <X extends Throwable> UniPromise<T> composeCatchingAsync(Executor executor, Class<X> exceptionType,
-                                                                    BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback) {
+                                                                    BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeCatching(executor, exceptionType, fallback, null, 0);
     }
 
     @Override
     public <X extends Throwable> UniPromise<T> composeCatchingAsync(Executor executor, Class<X> exceptionType,
-                                                                    BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback,
+                                                                    BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback,
                                                                     @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeCatching(executor, exceptionType, fallback, ctx, options);
     }
 
     private <X extends Throwable> UniPromise<T> uniComposeCatching(Executor executor, Class<X> exceptionType,
-                                                                   BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<T>> fallback,
+                                                                   BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback,
                                                                    @Nullable IContext ctx, int options) {
         Objects.requireNonNull(exceptionType);
         Objects.requireNonNull(fallback);
@@ -626,31 +719,31 @@ public class UniPromise<T> implements UniFuture<T> {
     // region compose-handle
 
     @Override
-    public <U> UniPromise<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn,
+    public <U> UniPromise<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
                                            @Nullable IContext ctx, int options) {
         return uniComposeHandle(null, fn, ctx, options);
     }
 
     @Override
-    public <U> UniPromise<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn) {
+    public <U> UniPromise<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn) {
         return uniComposeHandle(null, fn, null, 0);
     }
 
     @Override
-    public <U> UniPromise<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn) {
+    public <U> UniPromise<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeHandle(executor, fn, null, 0);
     }
 
     @Override
-    public <U> UniPromise<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn,
+    public <U> UniPromise<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
                                                 @Nullable IContext ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniComposeHandle(executor, fn, ctx, options);
     }
 
     private <U> UniPromise<U> uniComposeHandle(Executor executor,
-                                               TriFunction<? super IContext, ? super T, ? super Throwable, ? extends UniCompletionStage<U>> fn,
+                                               TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
                                                @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
@@ -920,29 +1013,29 @@ public class UniPromise<T> implements UniFuture<T> {
     // region onComplete
 
     @Override
-    public void onCompleted(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context, int options) {
+    public void onCompleted(BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context, int options) {
         uniOnCompletedFuture1(null, action, context, options);
     }
 
     @Override
-    public void onCompleted(BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context) {
+    public void onCompleted(BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context) {
         uniOnCompletedFuture1(null, action, context, 0);
     }
 
     @Override
-    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context) {
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context) {
         Objects.requireNonNull(executor, "executor");
         uniOnCompletedFuture1(executor, action, context, 0);
     }
 
 
     @Override
-    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context, int options) {
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context, int options) {
         Objects.requireNonNull(executor, "executor");
         uniOnCompletedFuture1(executor, action, context, options);
     }
 
-    private void uniOnCompletedFuture1(Executor executor, BiConsumer<? super IContext, ? super UniFuture<T>> action, @Nonnull IContext context, int options) {
+    private void uniOnCompletedFuture1(Executor executor, BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context, int options) {
         Objects.requireNonNull(action, "action");
         Objects.requireNonNull(context, "context");
         if (action instanceof Completion completion) { // 主要是Relay
@@ -957,28 +1050,28 @@ public class UniPromise<T> implements UniFuture<T> {
     }
 
     @Override
-    public void onCompleted(Consumer<? super UniFuture<T>> action, int options) {
+    public void onCompleted(Consumer<? super IFuture<T>> action, int options) {
         uniOnCompletedFuture2(null, action, options);
     }
 
     @Override
-    public void onCompleted(Consumer<? super UniFuture<T>> action) {
+    public void onCompleted(Consumer<? super IFuture<T>> action) {
         uniOnCompletedFuture2(null, action, 0);
     }
 
     @Override
-    public void onCompletedAsync(Executor executor, Consumer<? super UniFuture<T>> action) {
+    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action) {
         Objects.requireNonNull(executor);
         uniOnCompletedFuture2(executor, action, 0);
     }
 
     @Override
-    public void onCompletedAsync(Executor executor, Consumer<? super UniFuture<T>> action, int options) {
+    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action, int options) {
         Objects.requireNonNull(executor);
         uniOnCompletedFuture2(executor, action, options);
     }
 
-    private void uniOnCompletedFuture2(Executor executor, Consumer<? super UniFuture<T>> action, int options) {
+    private void uniOnCompletedFuture2(Executor executor, Consumer<? super IFuture<T>> action, int options) {
         Objects.requireNonNull(action, "action");
         if (action instanceof Completion completion) { // 主要是Relay
             pushCompletion(completion);
@@ -1245,7 +1338,7 @@ public class UniPromise<T> implements UniFuture<T> {
         return null;
     }
 
-    private static <U> boolean tryTransferTo(final UniFuture<? extends U> input, final UniPromise<U> output) {
+    private static <U> boolean tryTransferTo(final IFuture<? extends U> input, final UniPromise<U> output) {
         if (input instanceof UniPromise<? extends U> promise) {
             Object r = promise.result;
             if (isDone0(r)) {
@@ -1254,7 +1347,7 @@ public class UniPromise<T> implements UniFuture<T> {
             return false;
         }
         // 有可能是Readonly或其它实现
-        FutureState state = input.futureState();
+        TaskStatus state = input.status();
         switch (state) {
             case PENDING, COMPUTING -> {
                 return false;
@@ -1270,24 +1363,24 @@ public class UniPromise<T> implements UniFuture<T> {
         }
     }
 
-    private static class UniRelay<V> extends Completion implements Consumer<UniFuture<? extends V>> {
+    private static class UniRelay<V> extends Completion implements Consumer<IFuture<? extends V>> {
 
-        UniFuture<? extends V> input;
+        IFuture<? extends V> input;
         UniPromise<V> output;
 
-        public UniRelay(UniFuture<? extends V> input, UniPromise<V> output) {
+        public UniRelay(IFuture<? extends V> input, UniPromise<V> output) {
             this.input = input;
             this.output = output;
         }
 
         @Override
-        public void accept(UniFuture<? extends V> iFuture) {
+        public void accept(IFuture<? extends V> iFuture) {
             tryFire(SYNC);
         }
 
         @Override
         UniPromise<?> tryFire(int mode) {
-            final UniFuture<? extends V> input = this.input;
+            final IFuture<? extends V> input = this.input;
             final UniPromise<V> output = this.output;
             boolean setCompleted;
             tryComplete:
@@ -1311,10 +1404,10 @@ public class UniPromise<T> implements UniFuture<T> {
 
     private static class UniComposeApply<V, U> extends UniCompletion<V, U> {
 
-        BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn;
+        BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn;
 
         public UniComposeApply(Executor executor, int options, UniPromise<V> input, UniPromise<U> output,
-                               BiFunction<? super IContext, ? super V, ? extends UniCompletionStage<U>> fn) {
+                               BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn) {
             super(executor, options, input, output);
             this.fn = fn;
         }
@@ -1343,7 +1436,7 @@ public class UniPromise<T> implements UniFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    UniFuture<U> relay = fn.apply(output._ctx, input.decodeValue(r)).toFuture();
+                    IFuture<U> relay = fn.apply(output._ctx, input.decodeValue(r)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1362,10 +1455,10 @@ public class UniPromise<T> implements UniFuture<T> {
 
     private static class UniComposeCall<V, U> extends UniCompletion<V, U> {
 
-        Function<? super IContext, ? extends UniCompletionStage<U>> fn;
+        Function<? super IContext, ? extends ICompletionStage<U>> fn;
 
         public UniComposeCall(Executor executor, int options, UniPromise<V> input, UniPromise<U> output,
-                              Function<? super IContext, ? extends UniCompletionStage<U>> fn) {
+                              Function<? super IContext, ? extends ICompletionStage<U>> fn) {
             super(executor, options, input, output);
             this.fn = fn;
         }
@@ -1394,7 +1487,7 @@ public class UniPromise<T> implements UniFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    UniFuture<U> relay = fn.apply(output._ctx).toFuture();
+                    IFuture<U> relay = fn.apply(output._ctx).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1414,10 +1507,10 @@ public class UniPromise<T> implements UniFuture<T> {
     private static class UniComposeCathing<X extends Throwable, V> extends UniCompletion<V, V> {
 
         Class<X> exceptionType;
-        BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback;
+        BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback;
 
         public UniComposeCathing(Executor executor, int options, UniPromise<V> input, UniPromise<V> output,
-                                 Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends UniCompletionStage<V>> fallback) {
+                                 Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback) {
             super(executor, options, input, output);
             this.exceptionType = exceptionType;
             this.fallback = fallback;
@@ -1447,7 +1540,7 @@ public class UniPromise<T> implements UniFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    UniFuture<V> relay = fallback.apply(output._ctx, exceptionType.cast(altResult.cause)).toFuture();
+                    IFuture<V> relay = fallback.apply(output._ctx, exceptionType.cast(altResult.cause)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1467,10 +1560,10 @@ public class UniPromise<T> implements UniFuture<T> {
 
     private static class UniComposeHandle<V, U> extends UniCompletion<V, U> {
 
-        TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn;
+        TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn;
 
         public UniComposeHandle(Executor executor, int options, UniPromise<V> input, UniPromise<U> output,
-                                TriFunction<? super IContext, ? super V, ? super Throwable, ? extends UniCompletionStage<U>> fn) {
+                                TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn) {
             super(executor, options, input, output);
             this.fn = fn;
         }
@@ -1495,7 +1588,7 @@ public class UniPromise<T> implements UniFuture<T> {
                         return null; // 等待下次执行
                     }
                     Object r = input.result;
-                    UniFuture<U> relay;
+                    IFuture<U> relay;
                     if (r instanceof AltResult altResult) {
                         relay = fn.apply(output._ctx, null, altResult.cause).toFuture();
                     } else {
@@ -1898,10 +1991,10 @@ public class UniPromise<T> implements UniFuture<T> {
     private static class UniOnCompleteFuture1<V> extends UniOnComplete<V> {
 
         IContext ctx;
-        BiConsumer<? super IContext, ? super UniFuture<V>> action;
+        BiConsumer<? super IContext, ? super IFuture<V>> action;
 
         public UniOnCompleteFuture1(Executor executor, int options, UniPromise<V> input, IContext ctx,
-                                    BiConsumer<? super IContext, ? super UniFuture<V>> action) {
+                                    BiConsumer<? super IContext, ? super IFuture<V>> action) {
             super(executor, options, input);
             this.ctx = ctx;
             this.action = action;
@@ -1929,7 +2022,7 @@ public class UniPromise<T> implements UniFuture<T> {
         }
 
         static <V> boolean fireNow(IContext ctx, UniPromise<V> input,
-                                   BiConsumer<? super IContext, ? super UniFuture<V>> action,
+                                   BiConsumer<? super IContext, ? super IFuture<V>> action,
                                    UniOnCompleteFuture1<V> c) {
             try {
                 if (c != null && !c.claim()) {
@@ -1945,10 +2038,10 @@ public class UniPromise<T> implements UniFuture<T> {
 
     private static class UniOnCompleteFuture2<V> extends UniOnComplete<V> {
 
-        Consumer<? super UniFuture<V>> action;
+        Consumer<? super IFuture<V>> action;
 
         public UniOnCompleteFuture2(Executor executor, int options, UniPromise<V> input,
-                                    Consumer<? super UniFuture<V>> action) {
+                                    Consumer<? super IFuture<V>> action) {
             super(executor, options, input);
             this.action = action;
         }
@@ -1968,7 +2061,7 @@ public class UniPromise<T> implements UniFuture<T> {
         }
 
         static <V> boolean fireNow(UniPromise<V> input,
-                                   Consumer<? super UniFuture<V>> action,
+                                   Consumer<? super IFuture<V>> action,
                                    UniOnCompleteFuture2<V> c) {
             try {
                 if (c != null && !c.claim()) {

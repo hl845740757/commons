@@ -247,28 +247,28 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     }
 
     @Override
-    public final FutureState futureState() {
+    public final TaskStatus status() {
         return futureState(result);
     }
 
-    private static FutureState futureState(Object r) {
+    private static TaskStatus futureState(Object r) {
         if (r == null) {
-            return FutureState.PENDING;
+            return TaskStatus.PENDING;
         }
         if (r == COMPUTING) {
-            return FutureState.COMPUTING;
+            return TaskStatus.COMPUTING;
         }
         if (r == NIL) {
-            return FutureState.SUCCESS;
+            return TaskStatus.SUCCESS;
         }
         if (r instanceof AltResult altResult) {
             if (altResult.cause instanceof CancellationException) {
-                return FutureState.CANCELLED;
+                return TaskStatus.CANCELLED;
             } else {
-                return FutureState.FAILED;
+                return TaskStatus.FAILED;
             }
         }
-        return FutureState.SUCCESS;
+        return TaskStatus.SUCCESS;
     }
 
     @Override
@@ -317,7 +317,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     }
 
     @Override
-    public final FutureState trySetComputing2() {
+    public final TaskStatus trySetComputing2() {
         Object preResult = VH_RESULT.compareAndExchange(this, null, COMPUTING);
         return futureState(preResult);
     }
@@ -1540,7 +1540,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             return false;
         }
         // 有可能是Readonly或其它实现
-        FutureState state = input.futureState();
+        TaskStatus state = input.status();
         switch (state) {
             case PENDING, COMPUTING -> {
                 return false;

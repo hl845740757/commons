@@ -17,7 +17,7 @@
 package cn.wjybxx.concurrent;
 
 /**
- * 可分时运行的任务
+ * 可分时运行的任务 - 需要长时间运行才能得出结果的任务。
  *
  * @author wjybxx
  * date 2023/4/3
@@ -26,12 +26,12 @@ package cn.wjybxx.concurrent;
 public interface TimeSharingTask<V> {
 
     /**
-     * null可能是一个合理的返回值，因此需要处理。
-     * 封装的代价并不高，因为此类任务并不常见，而且只在完成时封装。
+     * 单步执行一次。
+     * 1.Executor在执行该方法之前会调用{@link IPromise#trySetComputing()}，因此任务内部无需再次调用。
+     * 2.任务在完成时需要将Promise置为完成状态！
      *
-     * @param ctx 上下文；用户可以通过上下文检测取消信号
-     * @return 如果返回值不为null，则表示已完成；返回null表示还需要运行。
+     * @param promise 用于获取任务上下文和设置结果
      */
-    ResultHolder<V> step(IContext ctx) throws Exception;
+    void step(IPromise<? super V> promise) throws Exception;
 
 }

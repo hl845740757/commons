@@ -16,13 +16,13 @@
 
 package cn.wjybxx.unitask;
 
-import cn.wjybxx.concurrent.FutureUtils;
-import cn.wjybxx.concurrent.IContext;
+import cn.wjybxx.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -30,6 +30,7 @@ import java.util.function.Function;
  * @author wjybxx
  * date 2023/4/7
  */
+@SuppressWarnings("NullableProblems")
 public abstract class AbstractUniExecutor implements UniExecutorService {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractUniExecutor.class);
@@ -52,6 +53,14 @@ public abstract class AbstractUniExecutor implements UniExecutorService {
         execute(FutureUtils.toRunnable(action, ctx), options);
     }
 
+    @Override
+    public boolean awaitTermination(long timeout, TimeUnit unit) {
+        if (isTerminated()) {
+            return true;
+        }
+        throw new BlockingOperationException("awaitTermination");
+    }
+
     // region submit
     @Override
     public <V> UniPromise<V> newPromise(IContext ctx) {
@@ -64,65 +73,65 @@ public abstract class AbstractUniExecutor implements UniExecutorService {
     }
 
     @Override
-    public <T> UniFuture<T> submit(Callable<T> task) {
-        UniPromiseTask<T> futureTask = UniPromiseTask.ofCallable(task, newPromise(null));
+    public <T> IFuture<T> submit(Callable<T> task) {
+        PromiseTask<T> futureTask = PromiseTask.ofCallable(task, newPromise(null));
         execute(futureTask, 0);
         return futureTask.future();
     }
 
     @Override
-    public <V> UniFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofFunction(task, newPromise(ctx));
+    public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx) {
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(ctx));
         execute(futureTask, 0);
         return futureTask.future();
     }
 
     @Override
-    public <V> UniFuture<V> submitFunc(Function<? super IContext, V> task, IContext ctx, int options) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofFunction(task, newPromise(ctx));
+    public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx, int options) {
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(ctx));
         execute(futureTask, options);
         return futureTask.future();
     }
 
     @Override
-    public UniFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
-        UniPromiseTask<?> futureTask = UniPromiseTask.ofConsumer(task, newPromise(ctx));
+    public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(ctx));
         execute(futureTask, 0);
         return futureTask.future();
     }
 
     @Override
-    public UniFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
-        UniPromiseTask<?> futureTask = UniPromiseTask.ofConsumer(task, newPromise(ctx));
+    public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(ctx));
         execute(futureTask, options);
         return futureTask.future();
     }
 
     @Override
-    public <V> UniFuture<V> submitCall(Callable<V> task) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofCallable(task, newPromise(null));
+    public <V> IFuture<V> submitCall(Callable<? extends V> task) {
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(null));
         execute(futureTask, 0);
         return futureTask.future();
     }
 
     @Override
-    public <V> UniFuture<V> submitCall(Callable<V> task, int options) {
-        UniPromiseTask<V> futureTask = UniPromiseTask.ofCallable(task, newPromise(null));
+    public <V> IFuture<V> submitCall(Callable<? extends V> task, int options) {
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(null));
         execute(futureTask, options);
         return futureTask.future();
     }
 
     @Override
-    public UniFuture<?> submitRun(Runnable task) {
-        UniPromiseTask<?> futureTask = UniPromiseTask.ofRunnable(task, newPromise(null));
+    public IFuture<?> submitRun(Runnable task) {
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, newPromise(null));
         execute(futureTask, 0);
         return futureTask.future();
     }
 
     /** 该方法可能和{@link ExecutorService#submit(Runnable, Object)}冲突，因此我们要带后缀 */
     @Override
-    public UniFuture<?> submitRun(Runnable task, int options) {
-        UniPromiseTask<?> futureTask = UniPromiseTask.ofRunnable(task, newPromise(null));
+    public IFuture<?> submitRun(Runnable task, int options) {
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, newPromise(null));
         execute(futureTask, options);
         return futureTask.future();
     }

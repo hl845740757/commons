@@ -17,6 +17,7 @@
 package cn.wjybxx.unitask;
 
 import cn.wjybxx.concurrent.AggregateOptions;
+import cn.wjybxx.concurrent.IFuture;
 import cn.wjybxx.concurrent.Promise;
 import cn.wjybxx.concurrent.TaskInsufficientException;
 
@@ -41,7 +42,7 @@ public final class UniFutureCombiner {
     }
 
     //region
-    public UniFutureCombiner add(UniFuture<?> future) {
+    public UniFutureCombiner add(IFuture<?> future) {
         Objects.requireNonNull(future);
         ChildListener childrenListener = this.childrenListener;
         if (childrenListener == null) {
@@ -145,22 +146,21 @@ public final class UniFutureCombiner {
         return aggregatePromise;
     }
 
-    public UniFutureCombiner addAll(UniFuture<?>... futures) {
-        for (UniFuture<?> future : futures) {
+    public UniFutureCombiner addAll(IFuture<?>... futures) {
+        for (IFuture<?> future : futures) {
             this.add(future);
         }
         return this;
     }
 
-    public UniFutureCombiner addAll(Collection<? extends UniFuture<?>> futures) {
-        for (UniFuture<?> future : futures) {
+    public UniFutureCombiner addAll(Collection<? extends IFuture<?>> futures) {
+        for (IFuture<?> future : futures) {
             this.add(future);
         }
         return this;
     }
 
-
-    private static class ChildListener implements Consumer<UniFuture<?>> {
+    private static class ChildListener implements Consumer<IFuture<?>> {
 
         private int succeedCount;
         private int doneCount;
@@ -173,7 +173,7 @@ public final class UniFutureCombiner {
         private UniPromise<Object> aggregatePromise;
 
         @Override
-        public void accept(UniFuture<?> future) {
+        public void accept(IFuture<?> future) {
             if (future.isFailed()) {
                 accept(null, future.exceptionNow(false));
             } else {

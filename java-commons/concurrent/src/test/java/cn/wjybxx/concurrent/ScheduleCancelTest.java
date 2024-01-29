@@ -60,7 +60,7 @@ public class ScheduleCancelTest {
             }, context, 1000, TimeUnit.MILLISECONDS);
 
             cts.cancel(1);
-            Assertions.assertTrue(future.isCancelled(), () -> future.futureState().name());
+            Assertions.assertTrue(future.isCancelled(), () -> future.status().name());
         }
         // 测试关闭Future的取消监听
         {
@@ -72,7 +72,7 @@ public class ScheduleCancelTest {
 //            long skipped = ScheduledPromiseTask.skippedRegister.get();
 //            Assertions.assertTrue(skipped >0, "skipped: " + skipped);
 //            future.cancel(false);
-//            Assertions.assertTrue(!future.isCancelled(), () -> future.futureState().name());
+//            Assertions.assertTrue(!future.isCancelled(), () -> future.status().name());
         }
         consumer.shutdown();
         consumer.terminationFuture().join();

@@ -19,13 +19,14 @@ package cn.wjybxx.concurrent;
 import java.util.concurrent.Future.State;
 
 /**
- * JDK设定的任务状态{@link State}并未将【等待中】和【执行中】这两种状态分开，这其实是不好的，
- * 用户有时是需要感知着两种状态的 -- JDK不区分可能是为了兼容。
+ * JDK设定的任务状态{@link State}并未将【等待中】和【执行中】这两种状态分开，
+ * 大多数情况下这种设定并没有影响，但在涉及取消时，将等待中和执行中分开是有利的。
+ * ps: JDK不区分可能是为了兼容。
  *
  * @author wjybxx
  * date - 2024/1/9
  */
-public enum FutureState {
+public enum TaskStatus {
 
     /** 任务尚在队列中等待 */
     PENDING(0),
@@ -44,7 +45,7 @@ public enum FutureState {
 
     private final int value;
 
-    FutureState(int value) {
+    TaskStatus(int value) {
         this.value = value;
     }
 

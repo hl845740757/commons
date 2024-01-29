@@ -16,29 +16,10 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.ex.NoLogRequiredException;
-
-import java.util.concurrent.TimeoutException;
-
 /**
- * 该异常表示一个可分时运行的任务超时了。
- *
  * @author wjybxx
- * date 2023/4/3
+ * date - 2024/1/29
  */
-public class TimeSharingTimeoutException extends TimeoutException implements NoLogRequiredException {
-
-    public static final TimeSharingTimeoutException INSTANCE = new TimeSharingTimeoutException("task is timeout");
-
-    public TimeSharingTimeoutException() {
-    }
-
-    public TimeSharingTimeoutException(String message) {
-        super(message);
-    }
-
-    public final Throwable fillInStackTrace() {
-        return this;
-    }
+public interface IScheduledPromise<V> extends IScheduledFuture<V>, IPromise<V> {
 
 }

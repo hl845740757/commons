@@ -62,42 +62,35 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     // region factory
 
     public static ScheduledTaskBuilder<?> newRunnable(Runnable task) {
-        Objects.requireNonNull(task);
         return new ScheduledTaskBuilder<>(TYPE_RUNNABLE, task);
     }
 
-    public static <V> ScheduledTaskBuilder<V> newCallable(Callable<V> task) {
-        Objects.requireNonNull(task);
+    public static <V> ScheduledTaskBuilder<V> newCallable(Callable<? extends V> task) {
         return new ScheduledTaskBuilder<>(TYPE_CALLABLE, task);
     }
 
-    public static <V> ScheduledTaskBuilder<V> newFunc(Function<IContext, V> task) {
-        Objects.requireNonNull(task);
+    public static <V> ScheduledTaskBuilder<V> newFunc(Function<IContext, ? extends V> task) {
         return new ScheduledTaskBuilder<>(TYPE_FUNCTION, task, IContext.NONE);
     }
 
-    public static <V> ScheduledTaskBuilder<V> newFunc(Function<IContext, V> task, IContext ctx) {
-        Objects.requireNonNull(task);
+    public static <V> ScheduledTaskBuilder<V> newFunc(Function<IContext, ? extends V> task, IContext ctx) {
         return new ScheduledTaskBuilder<>(TYPE_FUNCTION, task, ctx);
     }
 
     public static <V> ScheduledTaskBuilder<V> newAction(Consumer<IContext> task) {
-        Objects.requireNonNull(task);
         return new ScheduledTaskBuilder<>(TYPE_CONSUMER, task, IContext.NONE);
     }
 
     public static <V> ScheduledTaskBuilder<V> newAction(Consumer<IContext> task, IContext ctx) {
-        Objects.requireNonNull(task);
         return new ScheduledTaskBuilder<>(TYPE_CONSUMER, task, ctx);
     }
 
-    public static <V> ScheduledTaskBuilder<V> newTimeSharing(TimeSharingTask<V> task) {
-        Objects.requireNonNull(task);
+    // PECS -- Task消费泛型参数
+    public static <V> ScheduledTaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task) {
         return new ScheduledTaskBuilder<>(TYPE_TIMESHARING, task, IContext.NONE);
     }
 
-    public static <V> ScheduledTaskBuilder<V> newTimeSharing(TimeSharingTask<V> task, IContext ctx) {
-        Objects.requireNonNull(task);
+    public static <V> ScheduledTaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task, IContext ctx) {
         return new ScheduledTaskBuilder<>(TYPE_TIMESHARING, task, ctx);
     }
 
