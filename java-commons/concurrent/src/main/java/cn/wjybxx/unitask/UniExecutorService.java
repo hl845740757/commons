@@ -58,7 +58,6 @@ public interface UniExecutorService extends IExecutorService {
      */
     boolean needMoreTicks();
 
-
     // region 废弃api
 
     @Nonnull

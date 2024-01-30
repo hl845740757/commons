@@ -19,9 +19,6 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.CancellationException;
 
 /**
- * promise由任务的的创建者和执行者共同持有，它们都有权将任务置为完成状态。
- * （唯独任务自身不具备这个权限）
- *
  * @author wjybxx
  * date - 2023/11/6
  */

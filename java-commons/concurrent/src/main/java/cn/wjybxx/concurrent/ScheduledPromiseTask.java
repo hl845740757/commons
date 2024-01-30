@@ -22,7 +22,6 @@ import cn.wjybxx.disruptor.StacklessTimeoutException;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -34,9 +33,8 @@ import java.util.function.Function;
  * @author wjybxx
  * date - 2024/1/8
  */
-final class ScheduledPromiseTask<V>
-        extends PromiseTask<V>
-        implements IScheduledFuture<V>, IndexedElement, Consumer<Object> {
+final class ScheduledPromiseTask<V> extends PromiseTask<V>
+        implements IScheduledFutureTask<V>, IndexedElement, Consumer<Object> {
 
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
     private long id;
@@ -57,7 +55,7 @@ final class ScheduledPromiseTask<V>
      * @param id              任务的id
      * @param nextTriggerTime 任务的首次触发时间
      */
-    private ScheduledPromiseTask(ScheduledTaskBuilder<V> builder, IPromise<V> promise,
+    private ScheduledPromiseTask(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise,
                                  long id, long nextTriggerTime, long period, TimeoutContext timeoutContext) {
         super(builder, promise);
         this.id = id;
@@ -65,12 +63,13 @@ final class ScheduledPromiseTask<V>
         this.period = period;
         this.timeoutContext = timeoutContext;
         setScheduleType(builder.getScheduleType());
+        promise.setTask(this);
     }
 
     /**
      * 用于简单情况下的对象创建
      */
-    ScheduledPromiseTask(Object action, IPromise<V> promise, int taskType,
+    ScheduledPromiseTask(Object action, IScheduledPromise<V> promise, int taskType,
                          long id, long nextTriggerTime, long period,
                          int scheduleType) {
         super(action, promise, taskType);
@@ -78,40 +77,34 @@ final class ScheduledPromiseTask<V>
         this.nextTriggerTime = nextTriggerTime;
         this.period = period;
         setScheduleType(scheduleType);
+        promise.setTask(this);
     }
 
-    public static ScheduledPromiseTask<?> ofRunnable(Runnable action, IPromise<?> promise,
+    public static ScheduledPromiseTask<?> ofRunnable(Runnable action, IScheduledPromise<?> promise,
                                                      long id, long nextTriggerTime) {
         return new ScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_RUNNABLE,
                 id, nextTriggerTime, 0, 0);
     }
 
-    public static <V> ScheduledPromiseTask<V> ofCallable(Callable<? extends V> action, IPromise<V> promise,
+    public static <V> ScheduledPromiseTask<V> ofCallable(Callable<? extends V> action, IScheduledPromise<V> promise,
                                                          long id, long nextTriggerTime) {
         return new ScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_CALLABLE,
                 id, nextTriggerTime, 0, 0);
     }
 
-    public static <V> ScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IPromise<V> promise,
+    public static <V> ScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IScheduledPromise<V> promise,
                                                          long id, long nextTriggerTime) {
         return new ScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_FUNCTION,
                 id, nextTriggerTime, 0, 0);
     }
 
-    public static ScheduledPromiseTask<?> ofConsumer(Consumer<? super IContext> action, IPromise<?> promise,
+    public static ScheduledPromiseTask<?> ofConsumer(Consumer<? super IContext> action, IScheduledPromise<?> promise,
                                                      long id, long nextTriggerTime) {
         return new ScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_CONSUMER,
                 id, nextTriggerTime, 0, 0);
     }
 
-    /** 计算任务的触发时间 */
-    public static long triggerTime(long delay, TimeUnit timeUnit, long tickTime) {
-        // 并发库中不支持插队，初始延迟强制转0
-        final long initialDelay = Math.max(0, delay);
-        return tickTime + timeUnit.toNanos(initialDelay);
-    }
-
-    public static <V> ScheduledPromiseTask<V> ofBuilder(TaskBuilder<V> builder, IPromise<V> promise,
+    public static <V> ScheduledPromiseTask<V> ofBuilder(TaskBuilder<V> builder, IScheduledPromise<V> promise,
                                                         long id, long tickTime) {
         if (builder instanceof ScheduledTaskBuilder<V> sb) {
             return ofBuilder(sb, promise, id, tickTime);
@@ -127,7 +120,7 @@ final class ScheduledPromiseTask<V>
      * @param tickTime 当前时间(nanos)
      * @return PromiseTask
      */
-    public static <V> ScheduledPromiseTask<V> ofBuilder(ScheduledTaskBuilder<V> builder, IPromise<V> promise,
+    public static <V> ScheduledPromiseTask<V> ofBuilder(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise,
                                                         long id, long tickTime) {
         TimeUnit timeUnit = builder.getTimeUnit();
         // 并发库中不支持插队，初始延迟强制转0
@@ -163,11 +156,6 @@ final class ScheduledPromiseTask<V>
         this.nextTriggerTime = nextTriggerTime;
     }
 
-    /** 是否是循环任务 */
-    public boolean isPeriodic() {
-        return getScheduleType() != 0;
-    }
-
     @Override
     public int collectionIndex(Object collection) {
         return queueIndex;
@@ -176,6 +164,17 @@ final class ScheduledPromiseTask<V>
     @Override
     public void collectionIndex(Object collection, int index) {
         this.queueIndex = index;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public IScheduledFuture<V> future() {
+        return (IScheduledFuture<V>) promise;
+    }
+
+    @Override
+    public IScheduledPromise<V> getPromise() {
+        return (IScheduledPromise<V>) promise;
     }
 
     @Override
@@ -363,6 +362,13 @@ final class ScheduledPromiseTask<V>
     }
     // endregion
 
+    /** 计算任务的触发时间 */
+    public static long triggerTime(long delay, TimeUnit timeUnit, long tickTime) {
+        // 并发库中不支持插队，初始延迟强制转0
+        final long initialDelay = Math.max(0, delay);
+        return tickTime + timeUnit.toNanos(initialDelay);
+    }
+
     @Override
     public long getDelay(TimeUnit unit) {
         long delay = Math.max(0, nextTriggerTime - eventLoop().tickTime());
@@ -382,15 +388,6 @@ final class ScheduledPromiseTask<V>
             return r;
         }
         return Long.compare(id, other.id);
-    }
-
-    @Deprecated
-    @Override
-    public int compareTo(Delayed other) {
-        if (this == other) {
-            return 0;
-        }
-        throw new IllegalStateException("who???");
     }
 
 }

@@ -658,7 +658,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             long count = 0;
             ScheduledPromiseTask<?> queueTask;
             while ((queueTask = taskQueue.peek()) != null) {
-                if (queueTask.isDone()) {
+                if (queueTask.future().isDone()) {
                     taskQueue.poll(); // 未及时删除的任务
                     continue;
                 }

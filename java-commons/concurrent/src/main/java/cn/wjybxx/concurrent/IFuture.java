@@ -28,7 +28,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * 一定要阅读{@link ICompletionStage}中关于上下文和线程控制的说明、
+ * 1.Future是任务和用户之间通信的媒介。
+ * 2.Task可通过Promise向用户传递信息，用户可通过Future主动查询Task的状态。
+ * 3.任务和用户之间需要特殊的交互时，需要特殊的Future进行粘合。
+ * <p>
+ * ps：一定要阅读{@link ICompletionStage}中关于上下文和线程控制的说明、
  *
  * @author wjybxx
  * date - 2023/11/6

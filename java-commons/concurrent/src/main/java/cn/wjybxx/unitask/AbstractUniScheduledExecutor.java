@@ -36,45 +36,54 @@ public abstract class AbstractUniScheduledExecutor
         implements UniScheduledExecutor {
 
     // region schedule
-    // region schedule
+
+    @Override
+    public <V> IScheduledPromise<V> newScheduledPromise() {
+        return new UniScheduledPromise<>(this);
+    }
+
+    @Override
+    public <V> IScheduledPromise<V> newScheduledPromise(IContext ctx) {
+        return new UniScheduledPromise<>(this, ctx);
+    }
 
     @Override
     public <V> IScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder) {
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofBuilder(builder, newPromise(builder.getCtx()), 0, tickTime());
+        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(builder.getCtx()), 0, tickTime());
         execute(promiseTask, builder.getOptions());
-        return promiseTask;
+        return promiseTask.future();
     }
 
     @Override
     public <V> IScheduledFuture<V> scheduleFunc(Function<? super IContext, V> task, IContext ctx, long delay, TimeUnit unit) {
         long triggerTime = UniScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofFunction(task, newPromise(ctx), 0, triggerTime);
+        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofFunction(task, newScheduledPromise(ctx), 0, triggerTime);
         execute(promiseTask, 0);
-        return promiseTask;
+        return promiseTask.future();
     }
 
     @Override
     public IScheduledFuture<?> scheduleAction(Consumer<? super IContext> task, IContext ctx, long delay, TimeUnit unit) {
         long triggerTime = UniScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofConsumer(task, newPromise(ctx), 0, triggerTime);
+        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofConsumer(task, newScheduledPromise(ctx), 0, triggerTime);
         execute(promiseTask, 0);
-        return promiseTask;
+        return promiseTask.future();
     }
 
     @Override
     public IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
         long triggerTime = UniScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofRunnable(task, newPromise(), 0, triggerTime);
+        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofRunnable(task, newScheduledPromise(), 0, triggerTime);
         execute(promiseTask, 0);
-        return promiseTask;
+        return promiseTask.future();
     }
 
     @Override
     public <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
         long triggerTime = UniScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofCallable(task, newPromise(), 0, triggerTime);
+        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofCallable(task, newScheduledPromise(), 0, triggerTime);
         execute(promiseTask, 0);
-        return promiseTask;
+        return promiseTask.future();
     }
 
     @Override
@@ -82,9 +91,9 @@ public abstract class AbstractUniScheduledExecutor
         ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newRunnable(task)
                 .setFixedRate(initialDelay, period, unit);
 
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofBuilder(sb, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofBuilder(sb, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, 0);
-        return promiseTask;
+        return promiseTask.future();
     }
 
     @Override
@@ -92,9 +101,9 @@ public abstract class AbstractUniScheduledExecutor
         ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newRunnable(task)
                 .setFixedDelay(initialDelay, delay, unit);
 
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofBuilder(sb, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofBuilder(sb, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, 0);
-        return promiseTask;
+        return promiseTask.future();
     }
     // endregion
 
@@ -106,82 +115,82 @@ public abstract class AbstractUniScheduledExecutor
 
     @Override
     public <V> IFuture<V> submit(@Nonnull TaskBuilder<V> builder) {
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofBuilder(builder, newPromise(builder.getCtx()), 0, tickTime());
+        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(builder.getCtx()), 0, tickTime());
         execute(promiseTask, builder.getOptions());
         return promiseTask.future();
     }
 
     @Override
     public void execute(Consumer<? super IContext> action, IContext ctx) {
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofConsumer(action, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofConsumer(action, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, 0);
     }
 
     @Override
     public void execute(Consumer<? super IContext> action, IContext ctx, int options) {
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofConsumer(action, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofConsumer(action, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, options);
     }
 
     @Override
     public <T> IFuture<T> submit(Callable<T> task) {
-        UniScheduledPromiseTask<T> promiseTask = UniScheduledPromiseTask.ofCallable(task, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<T> promiseTask = UniScheduledPromiseTask.ofCallable(task, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, 0);
         return promiseTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx) {
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofFunction(task, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofFunction(task, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, 0);
         return promiseTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx, int options) {
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofFunction(task, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofFunction(task, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, options);
         return promiseTask.future();
     }
 
     @Override
     public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofConsumer(task, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofConsumer(task, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, 0);
         return promiseTask.future();
     }
 
     @Override
     public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofConsumer(task, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofConsumer(task, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, options);
         return promiseTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitCall(Callable<? extends V> task) {
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofCallable(task, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofCallable(task, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, 0);
         return promiseTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitCall(Callable<? extends V> task, int options) {
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofCallable(task, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofCallable(task, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, options);
         return promiseTask.future();
     }
 
     @Override
     public IFuture<?> submitRun(Runnable task) {
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofRunnable(task, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofRunnable(task, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, 0);
         return promiseTask.future();
     }
 
     @Override
     public IFuture<?> submitRun(Runnable task, int options) {
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofRunnable(task, newPromise(), 0, tickTime());
+        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofRunnable(task, newScheduledPromise(), 0, tickTime());
         execute(promiseTask, options);
         return promiseTask.future();
     }

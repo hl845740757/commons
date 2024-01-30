@@ -18,6 +18,8 @@ package cn.wjybxx.concurrent;
 
 /**
  * 可分时运行的任务 - 需要长时间运行才能得出结果的任务。
+ * 1.分时任务代表着所有需要自定义管理状态的任务。
+ * 2.除了设置Promise的结果外，Task还可以约定特殊的Promise以向外部传递其它信息，比如：任务的进度。
  *
  * @author wjybxx
  * date 2023/4/3
@@ -30,7 +32,7 @@ public interface TimeSharingTask<V> {
      * 1.Executor在执行该方法之前会调用{@link IPromise#trySetComputing()}，因此任务内部无需再次调用。
      * 2.任务在完成时需要将Promise置为完成状态！
      *
-     * @param promise 用于获取任务上下文和设置结果
+     * @param promise 用于获取任务上下文和设置结果 -- 外部消费promise的结果，因此是super
      */
     void step(IPromise<? super V> promise) throws Exception;
 

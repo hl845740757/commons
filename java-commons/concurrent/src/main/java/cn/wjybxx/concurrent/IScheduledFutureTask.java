@@ -16,6 +16,8 @@
 
 package cn.wjybxx.concurrent;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author wjybxx
  * date - 2024/1/29
@@ -24,5 +26,11 @@ public interface IScheduledFutureTask<V> extends IFutureTask<V> {
 
     @Override
     IScheduledFuture<V> future();
+
+    /**
+     * 获取任务下次执行的延迟。
+     * ps：该接口的可见性取决于实现，某些实现不提供即时的可见性，查询可能是不准确的。
+     */
+    long getDelay(TimeUnit unit);
 
 }

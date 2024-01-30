@@ -63,13 +63,13 @@ public abstract class AbstractUniExecutor implements UniExecutorService {
 
     // region submit
     @Override
-    public <V> UniPromise<V> newPromise(IContext ctx) {
-        return new UniPromise<>(this, ctx);
+    public <V> UniPromise<V> newPromise() {
+        return new UniPromise<>(this, null);
     }
 
     @Override
-    public <V> UniPromise<V> newPromise() {
-        return new UniPromise<>(this, null);
+    public <V> UniPromise<V> newPromise(IContext ctx) {
+        return new UniPromise<>(this, ctx);
     }
 
     @Override

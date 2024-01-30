@@ -23,7 +23,6 @@ import cn.wjybxx.disruptor.StacklessTimeoutException;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -37,7 +36,7 @@ import java.util.function.Function;
 @ThreadSafe
 public final class UniScheduledPromiseTask<V>
         extends PromiseTask<V>
-        implements IScheduledFuture<V>, IndexedElement, Consumer<Object> {
+        implements IScheduledFutureTask<V>, IndexedElement, Consumer<Object> {
 
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
     private long id;
@@ -58,7 +57,7 @@ public final class UniScheduledPromiseTask<V>
      * @param id              任务的id
      * @param nextTriggerTime 任务的首次触发时间
      */
-    private UniScheduledPromiseTask(ScheduledTaskBuilder<V> builder, UniPromise<V> promise,
+    private UniScheduledPromiseTask(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise,
                                     long id, long nextTriggerTime, long period, TimeoutContext timeoutContext) {
         super(builder, promise);
         this.id = id;
@@ -66,10 +65,11 @@ public final class UniScheduledPromiseTask<V>
         this.period = period;
         this.timeoutContext = timeoutContext;
         setScheduleType(builder.getScheduleType());
+        promise.setTask(this);
     }
 
     /** 用于简单情况下的创建 */
-    UniScheduledPromiseTask(Object action, UniPromise<V> promise, int taskType,
+    UniScheduledPromiseTask(Object action, IScheduledPromise<V> promise, int taskType,
                             long id, long nextTriggerTime, long period,
                             int scheduleType) {
         super(action, promise, taskType);
@@ -77,40 +77,34 @@ public final class UniScheduledPromiseTask<V>
         this.nextTriggerTime = nextTriggerTime;
         this.period = period;
         setScheduleType(scheduleType);
+        promise.setTask(this);
     }
 
-    public static UniScheduledPromiseTask<?> ofRunnable(Runnable action, UniPromise<?> promise,
+    public static UniScheduledPromiseTask<?> ofRunnable(Runnable action, IScheduledPromise<?> promise,
                                                         long id, long nextTriggerTime) {
         return new UniScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_RUNNABLE,
                 id, nextTriggerTime, 0, 0);
     }
 
-    public static <V> UniScheduledPromiseTask<V> ofCallable(Callable<? extends V> action, UniPromise<V> promise,
+    public static <V> UniScheduledPromiseTask<V> ofCallable(Callable<? extends V> action, IScheduledPromise<V> promise,
                                                             long id, long nextTriggerTime) {
         return new UniScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_CALLABLE,
                 id, nextTriggerTime, 0, 0);
     }
 
-    public static <V> UniScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, UniPromise<V> promise,
+    public static <V> UniScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IScheduledPromise<V> promise,
                                                             long id, long nextTriggerTime) {
         return new UniScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_FUNCTION,
                 id, nextTriggerTime, 0, 0);
     }
 
-    public static UniScheduledPromiseTask<?> ofConsumer(Consumer<? super IContext> action, UniPromise<?> promise,
+    public static UniScheduledPromiseTask<?> ofConsumer(Consumer<? super IContext> action, IScheduledPromise<?> promise,
                                                         long id, long nextTriggerTime) {
         return new UniScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_CONSUMER,
                 id, nextTriggerTime, 0, 0);
     }
 
-    /** 计算任务的触发时间 */
-    public static long triggerTime(long delay, TimeUnit timeUnit, long tickTime) {
-        // 理论上单线程下是可以支持插队的，但插队会导致较强的依赖，暂时先不支持
-        final long initialDelay = Math.max(0, delay);
-        return tickTime + timeUnit.toMillis(initialDelay);
-    }
-
-    public static <V> UniScheduledPromiseTask<V> ofBuilder(TaskBuilder<V> builder, UniPromise<V> promise,
+    public static <V> UniScheduledPromiseTask<V> ofBuilder(TaskBuilder<V> builder, IScheduledPromise<V> promise,
                                                            long id, long tickTime) {
         if (builder instanceof ScheduledTaskBuilder<V> sb) {
             return ofBuilder(sb, promise, id, tickTime);
@@ -126,7 +120,7 @@ public final class UniScheduledPromiseTask<V>
      * @param tickTime 当前时间(没有单位)
      * @return PromiseTask
      */
-    public static <V> UniScheduledPromiseTask<V> ofBuilder(ScheduledTaskBuilder<V> builder, UniPromise<V> promise,
+    public static <V> UniScheduledPromiseTask<V> ofBuilder(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise,
                                                            long id, long tickTime) {
         // 理论上单线程下是可以支持插队的，但插队会导致较强的依赖，暂时先不支持
         final long initialDelay = Math.max(0, builder.getInitialDelay());
@@ -161,11 +155,6 @@ public final class UniScheduledPromiseTask<V>
         this.nextTriggerTime = nextTriggerTime;
     }
 
-    /** 是否是循环任务 */
-    public boolean isPeriodic() {
-        return getScheduleType() != 0;
-    }
-
     @Override
     public int collectionIndex(Object collection) {
         return queueIndex;
@@ -174,6 +163,17 @@ public final class UniScheduledPromiseTask<V>
     @Override
     public void collectionIndex(Object collection, int index) {
         this.queueIndex = index;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public IScheduledFuture<V> future() {
+        return (IScheduledFuture<V>) promise;
+    }
+
+    @Override
+    public IScheduledPromise<V> getPromise() {
+        return (IScheduledPromise<V>) promise;
     }
 
     @Override
@@ -346,10 +346,17 @@ public final class UniScheduledPromiseTask<V>
     }
     // endregion
 
+    /** 计算任务的触发时间 */
+    public static long triggerTime(long delay, TimeUnit timeUnit, long tickTime) {
+        // 理论上单线程下是可以支持插队的，但插队会导致较强的依赖，暂时先不支持
+        final long initialDelay = Math.max(0, delay);
+        return tickTime + timeUnit.toMillis(initialDelay);
+    }
+
     @Override
     public long getDelay(TimeUnit unit) {
         long delay = Math.max(0, nextTriggerTime - eventLoop().tickTime());
-        return unit.convert(delay, TimeUnit.NANOSECONDS);
+        return unit.convert(delay, TimeUnit.MILLISECONDS);
     }
 
     public int compareToExplicitly(UniScheduledPromiseTask<?> other) {
@@ -365,15 +372,6 @@ public final class UniScheduledPromiseTask<V>
             return r;
         }
         return Long.compare(id, other.id);
-    }
-
-    @Deprecated
-    @Override
-    public int compareTo(Delayed other) {
-        if (this == other) {
-            return 0;
-        }
-        throw new IllegalStateException("who???");
     }
 
 }

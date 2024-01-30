@@ -111,7 +111,7 @@ public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor imple
                 promiseTask.registerCancellation();
             }
         } else {
-            UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofRunnable(command, newPromise(), ++sequencer, tickTime);
+            UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofRunnable(command, newScheduledPromise(), ++sequencer, tickTime);
             promiseTask.setOptions(options);
             delayExecute(promiseTask);
         }

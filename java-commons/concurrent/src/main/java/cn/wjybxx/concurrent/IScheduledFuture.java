@@ -32,7 +32,8 @@ import java.util.concurrent.TimeUnit;
 public interface IScheduledFuture<V> extends IFuture<V>, ScheduledFuture<V> {
 
     /**
-     * 该接口的可见性取决于实现，在某些情况下该接口不提供完全的可见性，查询可能是不准确的。
+     * 获取任务下次执行的延迟。
+     * ps：该接口的可见性取决于实现，某些实现不提供即时的可见性，查询可能是不准确的。
      * {@inheritDoc}
      */
     @Override
@@ -47,6 +48,8 @@ public interface IScheduledFuture<V> extends IFuture<V>, ScheduledFuture<V> {
      */
     @Deprecated
     @Override
-    int compareTo(Delayed o);
+    default int compareTo(Delayed o) {
+        throw new UnsupportedOperationException();
+    }
 
 }

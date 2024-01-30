@@ -113,13 +113,13 @@ public abstract class AbstractEventLoop implements EventLoop {
     // region submit
 
     @Override
-    public <T> IPromise<T> newPromise(IContext ctx) {
-        return new Promise<>(this, ctx);
+    public <T> IPromise<T> newPromise() {
+        return new Promise<>(this, null);
     }
 
     @Override
-    public <T> IPromise<T> newPromise() {
-        return new Promise<>(this, null);
+    public <T> IPromise<T> newPromise(IContext ctx) {
+        return new Promise<>(this, ctx);
     }
 
     @Override
