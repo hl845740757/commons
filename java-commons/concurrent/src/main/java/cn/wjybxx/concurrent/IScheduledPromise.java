@@ -17,7 +17,7 @@
 package cn.wjybxx.concurrent;
 
 /**
- * Promise需要了解任务的状态以支持用户的查询
+ * 定时任务关联的Promise
  *
  * @author wjybxx
  * date - 2024/1/29
@@ -25,9 +25,11 @@ package cn.wjybxx.concurrent;
 public interface IScheduledPromise<V> extends IScheduledFuture<V>, IPromise<V> {
 
     /**
-     * 注入关联的任务 -- 由于存在双向依赖，因此需要延迟注入
+     * 注入关联的任务.
+     * 1.Promise需要了解任务的状态以支持用户的查询;
+     * 2.由于存在双向依赖，因此需要延迟注入;
      *
-     * @param task promise关联的任务 -- 外部填充task的结果，因此是extends
+     * @param task promise关联的任务
      */
     void setTask(IScheduledFutureTask<? extends V> task);
 

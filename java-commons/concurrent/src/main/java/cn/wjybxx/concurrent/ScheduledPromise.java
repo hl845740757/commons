@@ -41,6 +41,7 @@ public class ScheduledPromise<T> extends Promise<T> implements IScheduledPromise
 
     @Override
     public void setTask(IScheduledFutureTask<? extends T> task) {
+        assert task.future() == this;
         this.task = Objects.requireNonNull(task);
     }
 

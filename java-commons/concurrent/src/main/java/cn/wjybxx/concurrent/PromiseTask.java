@@ -20,6 +20,7 @@ import cn.wjybxx.disruptor.StacklessTimeoutException;
 
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -45,6 +46,10 @@ public class PromiseTask<V> implements IFutureTask<V> {
     protected static final int maskScheduleType = 0xF000;
     /** 是否已经声明任务的归属权 */
     protected static final int maskClaimed = 1 << 16;
+    /** 分时任务是否已启动 */
+    protected static final int maskStarted = 1 << 17;
+    /** 分时任务是否已停止 */
+    protected static final int maskStopped = 1 << 18;
 
     protected static final int offsetQueueId = 0;
     protected static final int offsetTaskType = 8;
@@ -83,6 +88,11 @@ public class PromiseTask<V> implements IFutureTask<V> {
         this.action = Objects.requireNonNull(action, "action");
         this.promise = Objects.requireNonNull(promise, "promise");
         this.ctl |= (taskType << offsetTaskType);
+        // 注入promise
+        if (taskType == TaskBuilder.TYPE_TIMESHARING) {
+            @SuppressWarnings("unchecked") TimeSharingTask<V> timeSharingTask = (TimeSharingTask<V>) action;
+            timeSharingTask.inject(promise);
+        }
     }
 
     // region factory
@@ -132,6 +142,20 @@ public class PromiseTask<V> implements IFutureTask<V> {
         return action;
     }
 
+    /** 获取任务所属的队列id */
+    public final int getQueueId() {
+        return (ctl & maskQueueId);
+    }
+
+    /** @param queueId 队列id，范围 [0, 255] */
+    public final void setQueueId(int queueId) {
+        if (queueId < 0 || queueId > maxQueueId) {
+            throw new IllegalArgumentException("queueId: " + maxQueueId);
+        }
+        ctl &= ~maskQueueId;
+        ctl |= (queueId);
+    }
+
     /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
     public final int getTaskType() {
         return (ctl & maskTaskType) >> offsetTaskType;
@@ -162,18 +186,14 @@ public class PromiseTask<V> implements IFutureTask<V> {
         ctl |= maskClaimed;
     }
 
-    /** 获取任务所属的队列id */
-    public final int getQueueId() {
-        return (ctl & maskQueueId);
+    /** 分时任务是否启动 */
+    public final boolean isStarted() {
+        return (ctl & maskStarted) != 0;
     }
 
-    /** @param queueId 队列id，范围 [0, 255] */
-    public final void setQueueId(int queueId) {
-        if (queueId < 0 || queueId > maxQueueId) {
-            throw new IllegalArgumentException("queueId: " + maxQueueId);
-        }
-        ctl &= ~maskQueueId;
-        ctl |= (queueId);
+    /** 将分时任务标记为已启动 */
+    public final void setStarted() {
+        ctl |= maskStarted;
     }
 
     /** 允许子类重写返回值类型 */
@@ -199,7 +219,20 @@ public class PromiseTask<V> implements IFutureTask<V> {
     @SuppressWarnings("unchecked")
     protected final void runTimeSharing() throws Exception {
         TimeSharingTask<V> task = (TimeSharingTask<V>) action;
-        task.step(promise);
+        if (!isStarted()) {
+            IPromise<V> promise = this.promise;
+            task.start(promise);
+            setStarted();
+
+            if (promise.isDone()) {
+                stopTask(task, promise);
+                return;
+            }
+            // 需要捕获task -- 避免和clear冲突，我们使用另一个对象来捕获上下文；同时绑定回调线程为当前Executor
+            StopInvoker<V> invoker = new StopInvoker<>(task);
+            promise.onCompletedAsync(promise.executor(), invoker, TaskOption.STAGE_TRY_INLINE);
+        }
+        task.update(promise);
     }
 
     /** 运行其它类型任务 */
@@ -242,8 +275,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
         if (promise.trySetComputing()) {
             try {
                 if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
-                    @SuppressWarnings("unchecked") TimeSharingTask<V> task = (TimeSharingTask<V>) action;
-                    task.step(promise);
+                    runTimeSharing();
                     if (!promise.isDone()) {
                         promise.trySetException(StacklessTimeoutException.INSTANCE);
                     }
@@ -258,5 +290,27 @@ public class PromiseTask<V> implements IFutureTask<V> {
         clear();
     }
 
+    private static class StopInvoker<V> implements Consumer<Future<?>> {
 
+        TimeSharingTask<V> task;
+
+        public StopInvoker(TimeSharingTask<V> task) {
+            this.task = task;
+        }
+
+        @Override
+        public void accept(Future<?> future) {
+            @SuppressWarnings("unchecked") IPromise<V> promise = (IPromise<V>) future;
+            stopTask(task, promise);
+            task = null;
+        }
+    }
+
+    private static <V> void stopTask(TimeSharingTask<V> task, IPromise<V> promise) {
+        try {
+            task.stop(promise);
+        } catch (Throwable ex) {
+            FutureLogger.logCause(ex, "task.stop caught exception");
+        }
+    }
 }

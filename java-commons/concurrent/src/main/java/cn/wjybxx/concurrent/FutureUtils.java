@@ -290,16 +290,16 @@ public class FutureUtils {
     // region eventloop
 
     public static boolean inEventLoop(@Nullable Executor executor) {
-        return executor instanceof EventLoop eventLoop && eventLoop.inEventLoop();
+        return executor instanceof SingleThreadExecutor eventLoop && eventLoop.inEventLoop();
     }
 
-    public static void ensureInEventLoop(EventLoop eventLoop) {
+    public static void ensureInEventLoop(SingleThreadExecutor eventLoop) {
         if (!eventLoop.inEventLoop()) {
             throw new GuardedOperationException("Must be called from EventLoop thread");
         }
     }
 
-    public static void ensureInEventLoop(EventLoop eventLoop, String msg) {
+    public static void ensureInEventLoop(SingleThreadExecutor eventLoop, String msg) {
         if (!eventLoop.inEventLoop()) {
             throw new GuardedOperationException(msg);
         }

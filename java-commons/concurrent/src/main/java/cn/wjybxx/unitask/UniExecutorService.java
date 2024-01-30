@@ -18,6 +18,7 @@ package cn.wjybxx.unitask;
 
 
 import cn.wjybxx.concurrent.IExecutorService;
+import cn.wjybxx.concurrent.SingleThreadExecutor;
 import cn.wjybxx.concurrent.TaskOption;
 
 import javax.annotation.Nonnull;
@@ -42,7 +43,7 @@ import java.util.concurrent.*;
  * date 2023/4/3
  */
 @NotThreadSafe
-public interface UniExecutorService extends IExecutorService {
+public interface UniExecutorService extends IExecutorService, SingleThreadExecutor {
 
     /**
      * 心跳方法

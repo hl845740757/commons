@@ -45,6 +45,7 @@ public class UniScheduledPromise<T> extends UniPromise<T> implements IScheduledP
 
     @Override
     public void setTask(IScheduledFutureTask<? extends T> task) {
+        assert task.future() == this;
         this.task = Objects.requireNonNull(task);
     }
 

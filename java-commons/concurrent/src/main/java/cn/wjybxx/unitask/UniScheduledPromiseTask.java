@@ -21,8 +21,11 @@ import cn.wjybxx.base.collection.IndexedElement;
 import cn.wjybxx.concurrent.*;
 import cn.wjybxx.disruptor.StacklessTimeoutException;
 
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -329,11 +332,21 @@ public final class UniScheduledPromiseTask<V>
 
     @Override
     public void accept(Object futureOrToken) {
-        // 用户通过令牌发起取消 - UniFuture没有取消接口
-        assert futureOrToken != promise;
-        ICancelToken cancelToken = promise.ctx().cancelToken();
-        if (promise.trySetCancelled() && cancelToken.isWithoutRemove()) {
-            eventLoop().removeScheduled(this);
+        if (promise.isCancelled()) {
+            // 这里难以识别是被谁取消的，但trySetCancelled的异常无堆栈的，而Future.cancel的异常是有堆栈的...
+            CancellationException ex = (CancellationException) promise.exceptionNow(false);
+            if (!(ex instanceof StacklessCancellationException)) {
+                eventLoop().removeScheduled(this);
+            }
+        } else {
+            ICancelToken cancelToken = promise.ctx().cancelToken();
+            if (!cancelToken.isCancelling()) {
+                return;
+            }
+            // 用户通过令牌发起取消
+            if (promise.trySetCancelled() && !cancelToken.isWithoutRemove()) {
+                eventLoop().removeScheduled(this);
+            }
         }
     }
 
@@ -354,9 +367,14 @@ public final class UniScheduledPromiseTask<V>
     }
 
     @Override
-    public long getDelay(TimeUnit unit) {
+    public long getDelay(@Nonnull TimeUnit unit) {
         long delay = Math.max(0, nextTriggerTime - eventLoop().tickTime());
         return unit.convert(delay, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public int compareTo(@Nonnull Delayed o) {
+        return compareToExplicitly((UniScheduledPromiseTask<?>) o);
     }
 
     public int compareToExplicitly(UniScheduledPromiseTask<?> other) {

@@ -16,24 +16,54 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.annotation.Beta;
+
 /**
  * 可分时运行的任务 - 需要长时间运行才能得出结果的任务。
- * 1.分时任务代表着所有需要自定义管理状态的任务。
- * 2.除了设置Promise的结果外，Task还可以约定特殊的Promise以向外部传递其它信息，比如：任务的进度。
+ * 1. 分时任务代表着所有需要自定义管理状态的任务。
+ * 2. 除了设置Promise的结果外，Task还可以约定特殊的Promise以向外部传递其它信息，比如：任务的进度。
+ * 3. 该接口上不稳定，避免用于非EventLoop架构。
  *
  * @author wjybxx
  * date 2023/4/3
  */
+@Beta
 @FunctionalInterface
 public interface TimeSharingTask<V> {
+
+    /** 任务在添加到Executor之前进行绑定 */
+    default void inject(IPromise<? super V> promise) {
+
+    }
+
+    /**
+     * 任务开始前调用
+     * 1. start和update是连续执行的。
+     * 2. start抛出异常会导致任务直接结束。
+     *
+     * @param promise 获取任务的上下文
+     */
+    default void start(IPromise<? super V> promise) {
+
+    }
 
     /**
      * 单步执行一次。
      * 1.Executor在执行该方法之前会调用{@link IPromise#trySetComputing()}，因此任务内部无需再次调用。
      * 2.任务在完成时需要将Promise置为完成状态！
      *
-     * @param promise 用于获取任务上下文和设置结果 -- 外部消费promise的结果，因此是super
+     * @param promise 用于获取任务上下文和设置结果
      */
-    void step(IPromise<? super V> promise) throws Exception;
+    void update(IPromise<? super V> promise) throws Exception;
 
+    /**
+     * 任务结束时调用
+     * 1.只有在成功执行{@link #start(IPromise)}的情况下才会调用
+     * 2.会在start所在的executor调用 -- 如果目标executor已关闭则不会执行。
+     *
+     * @param promise 获取任务的上下文
+     */
+    default void stop(IPromise<? super V> promise) {
+
+    }
 }

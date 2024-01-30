@@ -54,6 +54,16 @@ public abstract class AbstractUniExecutor implements UniExecutorService {
     }
 
     @Override
+    public boolean inEventLoop() {
+        return true;
+    }
+
+    @Override
+    public boolean inEventLoop(Thread thread) {
+        return true;
+    }
+
+    @Override
     public boolean awaitTermination(long timeout, TimeUnit unit) {
         if (isTerminated()) {
             return true;

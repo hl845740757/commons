@@ -20,8 +20,10 @@ import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.collection.IndexedElement;
 import cn.wjybxx.disruptor.StacklessTimeoutException;
 
+import javax.annotation.Nonnull;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -33,7 +35,7 @@ import java.util.function.Function;
  * @author wjybxx
  * date - 2024/1/8
  */
-final class ScheduledPromiseTask<V> extends PromiseTask<V>
+public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         implements IScheduledFutureTask<V>, IndexedElement, Consumer<Object> {
 
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
@@ -69,9 +71,9 @@ final class ScheduledPromiseTask<V> extends PromiseTask<V>
     /**
      * 用于简单情况下的对象创建
      */
-    ScheduledPromiseTask(Object action, IScheduledPromise<V> promise, int taskType,
-                         long id, long nextTriggerTime, long period,
-                         int scheduleType) {
+    private ScheduledPromiseTask(Object action, IScheduledPromise<V> promise, int taskType,
+                                 long id, long nextTriggerTime, long period,
+                                 int scheduleType) {
         super(action, promise, taskType);
         this.id = id;
         this.nextTriggerTime = nextTriggerTime;
@@ -336,9 +338,9 @@ final class ScheduledPromiseTask<V> extends PromiseTask<V>
     @Override
     public void accept(Object futureOrToken) {
         if (promise.isCancelled()) {
-            // 这里难以识别是被谁取消的，但trySetCancelled的异常无堆栈的，而通过Future的取消是有堆栈的...
+            // 这里难以识别是被谁取消的，但trySetCancelled的异常无堆栈的，而Future.cancel的异常是有堆栈的...
             CancellationException ex = (CancellationException) promise.exceptionNow(false);
-            if (!(ex instanceof BetterCancellationException)) {
+            if (!(ex instanceof StacklessCancellationException)) {
                 eventLoop().removeScheduled(this);
             }
         } else {
@@ -347,7 +349,7 @@ final class ScheduledPromiseTask<V> extends PromiseTask<V>
                 return;
             }
             // 用户通过令牌发起取消
-            if (promise.trySetCancelled() && cancelToken.isWithoutRemove()) {
+            if (promise.trySetCancelled() && !cancelToken.isWithoutRemove()) {
                 eventLoop().removeScheduled(this);
             }
         }
@@ -370,9 +372,14 @@ final class ScheduledPromiseTask<V> extends PromiseTask<V>
     }
 
     @Override
-    public long getDelay(TimeUnit unit) {
+    public long getDelay(@Nonnull TimeUnit unit) {
         long delay = Math.max(0, nextTriggerTime - eventLoop().tickTime());
         return unit.convert(delay, TimeUnit.NANOSECONDS);
+    }
+
+    @Override
+    public int compareTo(@Nonnull Delayed o) {
+        return compareToExplicitly((ScheduledPromiseTask<?>) o);
     }
 
     public int compareToExplicitly(ScheduledPromiseTask<?> other) {

@@ -215,7 +215,6 @@ public abstract class AbstractUniScheduledExecutor
 
     /**
      * 请求删除给定的任务
-     * 1.可能从其它线程调用，需考虑线程安全问题
      */
     protected abstract void removeScheduled(UniScheduledPromiseTask<?> futureTask);
 

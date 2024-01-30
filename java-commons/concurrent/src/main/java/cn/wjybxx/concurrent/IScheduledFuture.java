@@ -17,13 +17,12 @@
 package cn.wjybxx.concurrent;
 
 import java.util.concurrent.Delayed;
-import java.util.concurrent.RunnableScheduledFuture;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 1.该接口仅用于JDK兼容（类型兼容），不建议用户使用。
- * 2.这里的接口不保证对用户线程的可见性，甚至仅仅是不抛异常而已。
+ * 定时任务关联的Future。
+ * ps：不能立即获得结果的任务，都应该关联该类型的Future。
  *
  * @author wjybxx
  * date 2023/4/9
@@ -41,8 +40,7 @@ public interface IScheduledFuture<V> extends IFuture<V>, ScheduledFuture<V> {
 
     /**
      * JDK的{@link ScheduledFuture}继承{@link Delayed}是个错误，
-     * 让{@link RunnableScheduledFuture}继承{@link Delayed}都还好。
-     * {@link ScheduledFuture}继承{@link Delayed}暴露了实现，也限制了实现。
+     * 允许用户查询任务的下次执行延迟是合理的，但暴露的{@code compareTo}则是不必要的，这为Future增加了不必要的职责。
      *
      * @deprecated 该接口并不是提供给用户的，用户不应当调用该方法，实现类也不一定实现该方法。
      */

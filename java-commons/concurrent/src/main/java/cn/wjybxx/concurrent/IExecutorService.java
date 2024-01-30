@@ -202,13 +202,13 @@ public interface IExecutorService extends ExecutorService, IExecutor {
         return futureTask.future();
     }
 
+    /** 该方法可能和{@link ExecutorService#submit(Runnable, Object)}冲突，因此我们要带后缀 */
     default IFuture<?> submitRun(Runnable task) {
         PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, newPromise(null));
         execute(futureTask, 0);
         return futureTask.future();
     }
 
-    /** 该方法可能和{@link ExecutorService#submit(Runnable, Object)}冲突，因此我们要带后缀 */
     default IFuture<?> submitRun(Runnable task, int options) {
         PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, newPromise(null));
         execute(futureTask, options);

@@ -16,21 +16,32 @@
 
 package cn.wjybxx.concurrent;
 
+import javax.annotation.Nonnull;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 可获取结果的延时任务
+ *
  * @author wjybxx
  * date - 2024/1/29
  */
-public interface IScheduledFutureTask<V> extends IFutureTask<V> {
+public interface IScheduledFutureTask<V> extends IFutureTask<V>, Delayed {
 
     @Override
     IScheduledFuture<V> future();
+
+    /** 关联的任务是否是周期性任务 */
+    boolean isPeriodic();
 
     /**
      * 获取任务下次执行的延迟。
      * ps：该接口的可见性取决于实现，某些实现不提供即时的可见性，查询可能是不准确的。
      */
-    long getDelay(TimeUnit unit);
+    @Override
+    long getDelay(@Nonnull TimeUnit unit);
+
+    @Override
+    int compareTo(@Nonnull Delayed o);
 
 }
