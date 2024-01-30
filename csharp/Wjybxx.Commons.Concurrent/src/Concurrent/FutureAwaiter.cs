@@ -21,14 +21,15 @@ using System.Runtime.CompilerServices;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons;
+namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// Future的等待器
 /// 实现<see cref="IFuture{T}"/>是因为C#原生库不支持await传参，因此我们需要预构建Awaiter。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public readonly struct FutureAwaiter<T> : IFuture<T>, ICriticalNotifyCompletion
+[AsyncMethodBuilder(typeof(FutureAwaiterMethodBuilder<>))]
+public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
 {
     private static readonly Action<IFuture<T>, object> Invoker = (_, state) => ((Action)state).Invoke();
 
@@ -49,16 +50,19 @@ public readonly struct FutureAwaiter<T> : IFuture<T>, ICriticalNotifyCompletion
         this.options = options;
     }
 
+    // 1.IsCompleted
     public bool IsCompleted => future.IsDone;
 
+    // 2. GetResult
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetResult() {
         return future.Get();
     }
 
+    // 3. OnCompleted
     /// <summary>
-    /// 添加一个完成时的回调。
-    /// 通常而言，该接口由StateMachine调用，因此接口参数类型限定为<see cref="Action"/>
+    /// 添加一个Future完成时的回调。
+    /// ps：通常而言，该接口由StateMachine调用，因此接口参数为<see cref="Action"/>。
     /// </summary>
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
@@ -77,55 +81,8 @@ public readonly struct FutureAwaiter<T> : IFuture<T>, ICriticalNotifyCompletion
         }
     }
 
+    // 用于构建绑定Executor的Awaiter
     public FutureAwaiter<T> GetAwaiter() {
         return this;
     }
-
-    public FutureAwaiter<T> GetAwaiter(IExecutor executor, int options = 0) {
-        if (ReferenceEquals(this.executor, executor) && this.options == options) {
-            return this;
-        }
-        if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return new FutureAwaiter<T>(future, executor);
-    }
-
-
-    #region 转发
-
-    public IContext Context => future.Context;
-    public IExecutor Executor => future.Executor;
-
-    public IFuture<T> AsReadonly() {
-        return future.AsReadonly();
-    }
-
-    public FutureState State => future.State;
-
-    public bool IsPending => future.IsPending;
-
-    public bool IsComputing => future.IsComputing;
-
-    public bool IsDone => future.IsDone;
-
-    public bool IsCancelled => future.IsCancelled;
-
-    public bool IsSucceeded => future.IsSucceeded;
-
-    public bool IsFailed => future.IsFailed;
-
-    public bool IsFailedOrCancelled => future.IsFailedOrCancelled;
-
-    public bool GetNow(out T result) {
-        return future.GetNow(out result);
-    }
-
-    public T ResultNow() {
-        return future.ResultNow();
-    }
-
-    public Exception ExceptionNow(bool throwIfCancelled = true) {
-        return future.ExceptionNow(throwIfCancelled);
-    }
-
-    #endregion
 }

@@ -17,85 +17,69 @@
 #endregion
 
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons;
+namespace Wjybxx.Commons.Concurrent;
 
 public struct AsyncFutureMethodBuilder<T>
 {
     private IPromise<T> promise;
 
+    public AsyncFutureMethodBuilder(IPromise<T> promise) {
+        this.promise = promise ?? throw new ArgumentNullException(nameof(promise));
+    }
+
     // 1. Static Create method.
     public static AsyncFutureMethodBuilder<T> Create() {
-        return default;
+        return new AsyncFutureMethodBuilder<T>(new Promise<T>());
     }
 
     // 2. TaskLike Task property.
-    public UniTask<T> Task {
+    public IFuture<T> Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get {
-            if (runnerPromise != null) {
-                return runnerPromise.Task;
-            } else if (ex != null) {
-                return UniTask.FromException<T>(ex);
-            } else {
-                return UniTask.FromResult(result);
-            }
-        }
+        get => promise;
     }
 
-    // 3. SetException
+    // 3. SetException -- 同步完成时
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetException(Exception exception) {
-        if (runnerPromise == null) {
-            ex = exception;
-        } else {
-            runnerPromise.SetException(exception);
-        }
+        promise.TrySetException(exception);
     }
 
-    // 4. SetResult
+    // 4. SetResult -- 同步完成时
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetResult(T result) {
-        if (runnerPromise == null) {
-            this.result = result;
-        } else {
-            runnerPromise.SetResult(result);
-        }
+        promise.TrySetResult(result);
     }
 
-    // 5. AwaitOnCompleted
+    // 5. AwaitOnCompleted -- 异步完成时
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AwaitOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
-        if (runnerPromise == null) {
-            AsyncUniTask<TStateMachine, T>.SetStateMachine(ref stateMachine, ref runnerPromise);
-        }
-
-        awaiter.OnCompleted(runnerPromise.MoveNext);
+        awaiter.OnCompleted(stateMachine.MoveNext);
     }
 
-    // 6. AwaitUnsafeOnCompleted
+    // 6. AwaitUnsafeOnCompleted -- 异步完成时
     [SecuritySafeCritical]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AwaitUnsafeOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
-        if (runnerPromise == null) {
-            AsyncUniTask<TStateMachine, T>.SetStateMachine(ref stateMachine, ref runnerPromise);
-        }
-
-        awaiter.UnsafeOnCompleted(runnerPromise.MoveNext);
+        awaiter.UnsafeOnCompleted(stateMachine.MoveNext);
     }
 
     // 7. Start
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Start<TStateMachine>(ref TStateMachine stateMachine) where TStateMachine : IAsyncStateMachine {
         stateMachine.MoveNext();
+    }
+
+    // 8. SetStateMachine
+    public void SetStateMachine(IAsyncStateMachine stateMachine) {
+        // don't use boxed stateMachine.
     }
 }

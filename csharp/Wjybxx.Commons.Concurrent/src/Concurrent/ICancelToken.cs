@@ -18,7 +18,7 @@
 
 using System;
 
-namespace Wjybxx.Commons;
+namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 

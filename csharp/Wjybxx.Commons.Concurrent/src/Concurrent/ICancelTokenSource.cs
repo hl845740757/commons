@@ -18,7 +18,7 @@
 
 using System;
 
-namespace Wjybxx.Commons;
+namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 取消令牌源由任务的创建者（发起者）持有，具备取消权限。

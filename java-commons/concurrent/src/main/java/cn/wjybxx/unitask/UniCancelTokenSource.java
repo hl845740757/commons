@@ -21,6 +21,7 @@ import cn.wjybxx.concurrent.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +41,7 @@ import java.util.function.Consumer;
  * date - 2024/1/8
  */
 @Beta
+@NotThreadSafe
 public final class UniCancelTokenSource implements ICancelTokenSource {
 
     /**

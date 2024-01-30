@@ -25,7 +25,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 用于在当前线程延迟执行任务的Executor -- {@link IExecutorService}。
@@ -61,26 +63,30 @@ public interface UniExecutorService extends IExecutorService, SingleThreadExecut
 
     // region 废弃api
 
+    @Deprecated
     @Nonnull
     @Override
-    default <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
+    default <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Nonnull
     @Override
-    default <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException {
+    default <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Nonnull
     @Override
-    default <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException, ExecutionException {
+    default <T> T invokeAny(Collection<? extends Callable<T>> tasks) {
         throw new UnsupportedOperationException();
     }
 
+    @Deprecated
     @Override
-    default <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    default <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) {
         throw new UnsupportedOperationException();
     }
 

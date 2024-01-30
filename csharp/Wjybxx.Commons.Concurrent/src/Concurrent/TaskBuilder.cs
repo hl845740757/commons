@@ -14,7 +14,7 @@
 // limitations under the License.
 #endregion
 
-namespace Wjybxx.Commons;
+namespace Wjybxx.Commons.Concurrent;
 
 public class TaskBuilder<T>
 {

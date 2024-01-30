@@ -18,7 +18,7 @@
 
 using System;
 
-namespace Wjybxx.Commons;
+namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 
@@ -33,7 +33,7 @@ public interface IPromise<T> : IFuture<T>
     /// </summary>
     /// <returns></returns>
     bool TrySetComputing() {
-        return TrySetComputing2() == FutureState.PENDING;
+        return TrySetComputing2() == TaskStatus.PENDING;
     }
 
     /// <summary>
@@ -41,7 +41,7 @@ public interface IPromise<T> : IFuture<T>
     /// 该接口有更好的返回值，不过一般情况下还是推荐<see cref="TrySetComputing"/>
     /// </summary>
     /// <returns>之前的状态</returns>
-    FutureState TrySetComputing2();
+    TaskStatus TrySetComputing2();
 
     /// <summary>
     /// 将future置为计算中状态，如果future之前不处于pending状态，则抛出<see cref="IllegalStateException"/>

@@ -19,7 +19,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Wjybxx.Commons;
+namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 异步任务的执行器

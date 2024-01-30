@@ -20,7 +20,7 @@ using System;
 using System.Runtime.Serialization;
 
 #pragma warning disable CS1591
-namespace Wjybxx.Commons;
+namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 记录了取消码的异常
@@ -52,7 +52,6 @@ public class BetterCancellationException : OperationCanceledException
         : base(info, context) {
         this.Code = info.GetInt32("code");
     }
-
 
     public override void GetObjectData(SerializationInfo info, StreamingContext context) {
         base.GetObjectData(info, context);

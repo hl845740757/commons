@@ -21,6 +21,7 @@ import cn.wjybxx.concurrent.IFuture;
 import cn.wjybxx.concurrent.Promise;
 import cn.wjybxx.concurrent.TaskInsufficientException;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.Executor;
@@ -30,6 +31,7 @@ import java.util.function.Consumer;
  * @author wjybxx
  * date 2023/4/3
  */
+@NotThreadSafe
 public final class UniFutureCombiner {
 
     private ChildListener childrenListener = new ChildListener();

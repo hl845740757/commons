@@ -22,7 +22,7 @@ import cn.wjybxx.concurrent.*;
 import cn.wjybxx.disruptor.StacklessTimeoutException;
 
 import javax.annotation.Nonnull;
-import javax.annotation.concurrent.ThreadSafe;
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Delayed;
@@ -36,7 +36,7 @@ import java.util.function.Function;
  * @author wjybxx
  * date - 2024/1/8
  */
-@ThreadSafe
+@NotThreadSafe
 public final class UniScheduledPromiseTask<V>
         extends PromiseTask<V>
         implements IScheduledFutureTask<V>, IndexedElement, Consumer<Object> {

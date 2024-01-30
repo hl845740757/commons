@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Wjybxx.Commons;
+namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 

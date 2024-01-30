@@ -1353,7 +1353,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                 return false;
             }
             case SUCCESS -> {
-                return output.completeValue(input.getNow());
+                return output.completeValue(input.resultNow());
             }
             case FAILED, CANCELLED -> {
                 Throwable ex = input.exceptionNow(false);

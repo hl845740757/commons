@@ -1,5 +1,4 @@
 ﻿#region LICENSE
-
 // Copyright 2023-2024 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +12,27 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 #endregion
 
-namespace Wjybxx.Commons;
+using System;
+using System.Runtime.Serialization;
+
+namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// <see cref="IExecutor"/>中调度的任务的抽象
-/// ps：可认为是Java的Runnable。
+/// 该异常表示在计算的过程中出现异常
 /// </summary>
-public interface ITask
+public class CompletionException : Exception
 {
+    public CompletionException() {
+    }
+
+    protected CompletionException(SerializationInfo info, StreamingContext context) : base(info, context) {
+    }
+
+    public CompletionException(string? message) : base(message) {
+    }
+
+    public CompletionException(string? message, Exception? innerException) : base(message, innerException) {
+    }
 }

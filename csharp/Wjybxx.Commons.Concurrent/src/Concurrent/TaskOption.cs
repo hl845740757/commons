@@ -17,7 +17,7 @@
 #endregion
 
 #pragma warning disable CS1591
-namespace Wjybxx.Commons;
+namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 任务的调度选项
@@ -109,10 +109,7 @@ public class TaskOption
     /// 仅用于{@link ICompletionStage}
     ///</summary>
     public const int STAGE_NON_TRANSITIVE = 1 << 17;
-    /**
-     * 不检查Stage中{@link Context}中的取消信号。
-     */
-    public const int STAGE_UNCANCELLABLE = 1 << 18;
+
     // region util
 
     /// <summary> 用户可用的选项的掩码 ///</summary>

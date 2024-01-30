@@ -36,4 +36,8 @@
     <ItemGroup>
       <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="src\Single" />
+    </ItemGroup>
 </Project>

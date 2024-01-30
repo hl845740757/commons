@@ -16,41 +16,41 @@
 
 #endregion
 
-namespace Wjybxx.Commons;
+namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// Future关联的任务的状态
 /// </summary>
-public enum FutureState : byte
+public enum TaskStatus : byte
 {
     /** 任务尚在队列中等待 */
     PENDING = 0,
 
     /** 任务已开始执行 */
-    COMPUTING = (1),
+    COMPUTING = 1,
 
     /** 任务执行成功 - 完成状态 */
-    SUCCESS = (2),
+    SUCCESS = 2,
 
     /** 任务执行失败 - 完成状态 */
-    FAILED = (3),
+    FAILED = 3,
 
     /** 任务被取消 - 完成状态 */
-    CANCELLED = (4)
+    CANCELLED = 4
 }
 
 /// <summary>
 /// Future状态枚举的扩展
 /// </summary>
-public static class FutureStateExtension
+public static class StatusExtensions
 {
     /** 是否表示完成状态 */
-    public static bool IsDone(this FutureState state) {
+    public static bool IsDone(this TaskStatus state) {
         return (byte)state >= 2;
     }
 
     /** 是否表示失败或被取消 */
-    public static bool IsFailedOrCancelled(this FutureState state) {
+    public static bool IsFailedOrCancelled(this TaskStatus state) {
         return (byte)state >= 3;
     }
 }

@@ -20,6 +20,7 @@ import cn.wjybxx.concurrent.IContext;
 import cn.wjybxx.concurrent.IScheduledFutureTask;
 import cn.wjybxx.concurrent.IScheduledPromise;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  * @author wjybxx
  * date - 2024/1/30
  */
+@NotThreadSafe
 public class UniScheduledPromise<T> extends UniPromise<T> implements IScheduledPromise<T> {
 
     private IScheduledFutureTask<? extends T> task;

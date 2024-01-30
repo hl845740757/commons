@@ -106,18 +106,12 @@ public final class TaskOption {
      * 仅用于{@link ICompletionStage}
      */
     public static final int STAGE_TRY_INLINE = 1 << 16;
-
     /**
      * 默认情况下，如果一个异步任务的Executor是{@link IExecutor}类型，options将传递给Executor。
      * 如果期望禁用传递，可设置改选项。
      * 仅用于{@link ICompletionStage}
      */
     public static final int STAGE_NON_TRANSITIVE = 1 << 17;
-
-    /**
-     * 不检查Stage中{@link Context}中的取消信号。
-     */
-    public static final int STAGE_UNCANCELLABLE = 1 << 18;
 
     // region util
 
