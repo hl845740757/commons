@@ -625,7 +625,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                               @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
-        if (ctx == null) ctx = this._ctx;
+        if (ctx == null) ctx = this._ctx.withoutCancelToken();
         UniPromise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniComposeApply<>(executor, options, this, promise, fn));
         return promise;
@@ -664,7 +664,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                              @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
-        if (ctx == null) ctx = this._ctx;
+        if (ctx == null) ctx = this._ctx.withoutCancelToken();
         UniPromise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniComposeCall<>(executor, options, this, promise, fn));
         return promise;
@@ -708,7 +708,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(exceptionType);
         Objects.requireNonNull(fallback);
 
-        if (ctx == null) ctx = this._ctx;
+        if (ctx == null) ctx = this._ctx.withoutCancelToken();
         UniPromise<T> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniComposeCathing<>(executor, options, this, promise, exceptionType, fallback));
         return promise;
@@ -747,7 +747,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                                @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
-        if (ctx == null) ctx = this._ctx;
+        if (ctx == null) ctx = this._ctx.withoutCancelToken();
         UniPromise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniComposeHandle<>(executor, options, this, promise, fn));
         return promise;
@@ -783,7 +783,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                        @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
-        if (ctx == null) ctx = this._ctx;
+        if (ctx == null) ctx = this._ctx.withoutCancelToken();
         UniPromise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniApply<>(executor, options, this, promise, fn));
         return promise;
@@ -818,7 +818,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                        @Nullable IContext ctx, int options) {
         Objects.requireNonNull(action);
 
-        if (ctx == null) ctx = this._ctx;
+        if (ctx == null) ctx = this._ctx.withoutCancelToken();
         UniPromise<Void> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniAccept<>(executor, options, this, promise, action));
         return promise;
@@ -853,7 +853,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     private <U> UniPromise<U> uniCall(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
-        if (ctx == null) ctx = this._ctx;
+        if (ctx == null) ctx = this._ctx.withoutCancelToken();
         UniPromise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniCall<>(executor, options, this, promise, fn));
         return promise;
@@ -888,7 +888,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     private UniPromise<Void> uniRun(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(action);
 
-        if (ctx == null) ctx = this._ctx;
+        if (ctx == null) ctx = this._ctx.withoutCancelToken();
         UniPromise<Void> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniRun<>(executor, options, this, promise, action));
         return promise;
@@ -931,7 +931,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(exceptionType, "exceptionType");
         Objects.requireNonNull(fallback, "fallback");
 
-        if (ctx == null) ctx = this._ctx;
+        if (ctx == null) ctx = this._ctx.withoutCancelToken();
         UniPromise<T> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniCathing<>(executor, options, this, promise, exceptionType, fallback));
         return promise;
@@ -968,7 +968,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                         @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
-        if (ctx == null) ctx = this._ctx;
+        if (ctx == null) ctx = this._ctx.withoutCancelToken();
         UniPromise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniHandle<>(executor, options, this, promise, fn));
         return promise;
@@ -1003,7 +1003,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                           @Nullable IContext ctx, int options) {
         Objects.requireNonNull(action);
 
-        if (ctx == null) ctx = this._ctx;
+        if (ctx == null) ctx = this._ctx.withoutCancelToken();
         UniPromise<T> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniWhenComplete<>(executor, options, this, promise, action));
         return promise;

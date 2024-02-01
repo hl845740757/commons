@@ -17,12 +17,13 @@
 #endregion
 
 using System;
+
 #pragma warning disable CS1591
 
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 
+/// 该实现主要用于屏蔽Promise中的写接口。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public class ForwardFuture<T> : IFuture<T>
@@ -32,14 +33,36 @@ public class ForwardFuture<T> : IFuture<T>
     public ForwardFuture(IFuture<T> future) {
         this.future = future ?? throw new ArgumentNullException(nameof(future));
     }
-    
+
+    #region 小心
+
+    public IFuture<T> AsReadonly() {
+        return this; // Csharp的Future没有取消接口，因此返回this即可
+    }
+
+    public IFuture<T> Await() {
+        future.Await();
+        return this;
+    }
+
+    public IFuture<T> AwaitUninterruptibly() {
+        future.AwaitUninterruptibly();
+        return this;
+    }
+
+    public FutureAwaiter<T> GetAwaiter() {
+        return future.GetAwaiter();
+    }
+
+    public ValueFuture<T> GetAwaiter(IExecutor executor, int options = 0) {
+        return future.GetAwaiter(executor, options);
+    }
+
+    #endregion
+
     #region 转发
 
     public IExecutor? Executor => future.Executor;
-
-    public IFuture<T> AsReadonly() {
-        return future.AsReadonly();
-    }
 
     public TaskStatus Status => future.Status;
 
@@ -57,8 +80,12 @@ public class ForwardFuture<T> : IFuture<T>
 
     public bool IsFailedOrCancelled => future.IsFailedOrCancelled;
 
-    public bool GetNow(out T result) {
-        return future.GetNow(out result);
+    public bool Await(TimeSpan timeout) {
+        return future.Await(timeout);
+    }
+
+    public bool AwaitUninterruptibly(TimeSpan timeout) {
+        return future.AwaitUninterruptibly(timeout);
     }
 
     public T ResultNow() {
@@ -67,6 +94,38 @@ public class ForwardFuture<T> : IFuture<T>
 
     public Exception ExceptionNow(bool throwIfCancelled = true) {
         return future.ExceptionNow(throwIfCancelled);
+    }
+
+    public T Get() {
+        return future.Get();
+    }
+
+    public T Join() {
+        return future.Join();
+    }
+
+    public void OnCompleted(Action<IFuture<T>> continuation, int options = 0) {
+        future.OnCompleted(continuation, options);
+    }
+
+    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>> continuation, int options = 0) {
+        future.OnCompletedAsync(executor, continuation, options);
+    }
+
+    public void OnCompleted(Action<IFuture<T>, object> continuation, object state, int options = 0) {
+        future.OnCompleted(continuation, state, options);
+    }
+
+    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object> continuation, object state, int options = 0) {
+        future.OnCompletedAsync(executor, continuation, state, options);
+    }
+
+    public void OnCompleted(Action<IFuture<T>, AsyncContext> continuation, AsyncContext context, int options = 0) {
+        future.OnCompleted(continuation, context, options);
+    }
+
+    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, AsyncContext> continuation, AsyncContext context, int options = 0) {
+        future.OnCompletedAsync(executor, continuation, context, options);
     }
 
     #endregion

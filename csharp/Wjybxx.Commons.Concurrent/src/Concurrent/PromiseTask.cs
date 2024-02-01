@@ -57,7 +57,7 @@ public class PromiseTask<T, S> : Promise<T>, IFutureTask<T> where S : IAsyncStat
     /// <summary>
     /// 任务关联的Future
     /// </summary>
-    public IPromise<T> Future => this;
+    public IFuture<T> Future => this;
 
     /// <summary>
     /// 用于驱动StateMachine的Action委托

@@ -24,12 +24,55 @@ using System.Runtime.CompilerServices;
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
+/// 原始类型Future的等待器
+/// awaiter默认不返回结果。
+/// </summary>
+public readonly struct FutureAwaiter : ICriticalNotifyCompletion
+{
+    private static readonly Action<IFuture, object> Invoker = (_, state) => ((Action)state).Invoke();
+
+    private readonly IFuture future;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="future">需要等待的future</param>
+    /// <exception cref="ArgumentNullException"></exception>
+    public FutureAwaiter(IFuture future) {
+        this.future = future ?? throw new ArgumentNullException(nameof(future));
+    }
+
+    // 1.IsCompleted
+    public bool IsCompleted => future.IsDone;
+
+    // 2. GetResult
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void GetResult() {
+        future.Await();
+    }
+
+    // 3. OnCompleted
+    /// <summary>
+    /// 添加一个Future完成时的回调。
+    /// ps：通常而言，该接口由StateMachine调用，因此接口参数为<see cref="Action"/>。
+    /// </summary>
+    /// <param name="continuation">回调任务</param>
+    public void OnCompleted(Action continuation) {
+        future.OnCompleted(Invoker, continuation);
+    }
+
+    public void UnsafeOnCompleted(Action continuation) {
+        future.OnCompleted(Invoker, continuation);
+    }
+}
+
+/// <summary>
 /// Future的等待器
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
 {
-    private static readonly Action<object> Invoker = (state) => ((Action)state).Invoke();
+    private static readonly Action<IFuture<T>, object> Invoker = (_, state) => ((Action)state).Invoke();
 
     private readonly IFuture<T> future;
 
@@ -37,8 +80,6 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// 
     /// </summary>
     /// <param name="future">需要等待的future</param>
-    /// <param name="executor">回调线程</param>
-    /// <param name="options">调度选项</param>
     /// <exception cref="ArgumentNullException"></exception>
     public FutureAwaiter(IFuture<T> future) {
         this.future = future ?? throw new ArgumentNullException(nameof(future));

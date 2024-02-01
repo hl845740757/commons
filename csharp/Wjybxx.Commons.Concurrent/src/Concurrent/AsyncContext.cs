@@ -16,19 +16,31 @@
 
 #endregion
 
-using System;
-
 namespace Wjybxx.Commons.Concurrent;
 
-public class Promise<T> : IPromise<T>, IFuture<T>
+/// <summary>
+/// 异步回调上下文
+/// 
+/// ps：该结构体用于避免过多的方法扩展。
+/// </summary>
+public readonly struct AsyncContext
 {
+    /// <summary>
+    /// 取消令牌
+    /// </summary>
+    public readonly ICancelToken? CancelToken;
+    /// <summary>
+    /// 回调参数
+    /// </summary>
+    public readonly object? State;
 
-
-    public static Promise<T> CompletedPromise(T result) {
-    }
-    
-    public static Promise<T> FailedPromise(Exception ex) {
-        if (ex == null) throw new ArgumentNullException(nameof(ex));
-        
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="cancelToken">取消令牌</param>
+    /// <param name="state">回调参数</param>
+    public AsyncContext(ICancelToken? cancelToken, object? state = null) {
+        CancelToken = cancelToken;
+        State = state;
     }
 }

@@ -27,16 +27,14 @@ namespace Wjybxx.Commons.Concurrent;
 /// 2. 绑定Awaiter的回调线程。
 /// 
 /// </summary>
-/// <typeparam name="T"></typeparam>
-[AsyncMethodBuilder(typeof(AsyncFutureMethodBuilder<>))]
-public readonly struct ValueFuture<T>
+public readonly struct ValueFuture
 {
 #nullable disable
-    private readonly IFuture<T> _future;
+    private readonly IFuture _future;
     private readonly IExecutor _executor;
     private readonly int _options;
 
-    private readonly T _result;
+    private readonly object _result;
     private readonly Exception _ex;
 #nullable enable
 
@@ -45,7 +43,7 @@ public readonly struct ValueFuture<T>
     /// </summary>
     /// <param name="result"></param>
     /// <param name="ex"></param>
-    private ValueFuture(T? result, Exception? ex) {
+    private ValueFuture(object? result, Exception? ex) {
         this._future = null;
         this._executor = null;
         this._options = 0;
@@ -60,7 +58,7 @@ public readonly struct ValueFuture<T>
     /// <param name="future"></param>
     /// <param name="executor">awaiter的回调线程</param>
     /// <param name="options">awaiter的调度选项</param>
-    public ValueFuture(IFuture<T> future, IExecutor? executor = null, int options = 0) {
+    public ValueFuture(IFuture future, IExecutor? executor = null, int options = 0) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _executor = executor;
         _options = options;
@@ -72,10 +70,18 @@ public readonly struct ValueFuture<T>
     /// <summary>
     /// 创建一个成功完成的Promise
     /// </summary>
+    /// <returns></returns>
+    public static ValueFuture FromResult() {
+        return new ValueFuture((object)null, null);
+    }
+
+    /// <summary>
+    /// 创建一个成功完成的Promise
+    /// </summary>
     /// <param name="result"></param>
     /// <returns></returns>
-    public static ValueFuture<T> FromResult(T result) {
-        return new ValueFuture<T>(result, null);
+    public static ValueFuture FromResult(object result) {
+        return new ValueFuture(result, null);
     }
 
     /// <summary>
@@ -84,9 +90,9 @@ public readonly struct ValueFuture<T>
     /// <param name="ex"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static ValueFuture<T> FromException(Exception ex) {
+    public static ValueFuture FromException(Exception ex) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
-        return new ValueFuture<T>(default, ex);
+        return new ValueFuture(default, ex);
     }
 
     /// <summary>
@@ -95,64 +101,50 @@ public readonly struct ValueFuture<T>
     /// <param name="ex"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static ValueFuture<T> FromCancelled(OperationCanceledException? ex = null) {
+    public static ValueFuture FromCancelled(OperationCanceledException? ex = null) {
         if (ex == null) {
             ex = new BetterCancellationException(1);
         }
-        return new ValueFuture<T>(default, ex);
+        return new ValueFuture(default, ex);
     }
 
     #region awaiter
 
     /// <summary>
+    /// 返回被代理的Future或装箱的Future
+    /// </summary>
+    public IFuture AsFuture() => _future ?? this;
+
+    /// <summary>
     /// 获取用于等待的Awaiter
     /// </summary>
     /// <returns></returns>
-    public ValueFutureAwaiter<T> GetAwaiter() {
-        return new ValueFutureAwaiter<T>(in this, _executor, _options);
+    public ValueFutureAwaiter GetAwaiter() {
+        return new ValueFutureAwaiter(in this, _executor, _options);
     }
 
     /// <summary>
-    /// 获取用在给定线程等待的Awaiter
+    /// 获取用于等待的Awaiter
     /// </summary>
-    /// <param name="executor">等待线程</param>
-    /// <param name="options">等待线程</param>
+    /// <returns></returns>
+    FutureAwaiter IFuture.GetAwaiter() {
+        return new FutureAwaiter(AsFuture());
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="executor"></param>
+    /// <param name="options"></param>
     /// <returns></returns>
     public ValueFuture<T> GetAwaiter(IExecutor executor, int options = 0) {
-        return new ValueFuture<T>(AsFuture(), executor, options);
-    }
-
-    /// <summary>
-    /// 转换为正常的Future
-    /// </summary>
-    public IFuture<T> AsFuture() {
-        if (_future != null) {
-            return _future;
-        }
-        if (_ex != null) {
-            return Promise<T>.FailedPromise(_ex);
-        }
-        return Promise<T>.CompletedPromise(_result);
+        return new ValueFuture<T>(AsFuture(), _executor, _options);
     }
 
     #endregion
 
-    #region 状态查询
 
-    public TaskStatus Status {
-        get {
-            if (_future != null) {
-                return _future.Status;
-            }
-            if (_ex == null) {
-                return TaskStatus.SUCCESS;
-            }
-            if (_ex is OperationCanceledException) {
-                return TaskStatus.CANCELLED;
-            }
-            return TaskStatus.FAILED;
-        }
-    }
+    #region state
 
     /// <summary>
     /// 如果future关联的任务仍处于等待执行的状态，则返回true
@@ -183,14 +175,53 @@ public readonly struct ValueFuture<T>
 
     #endregion
 
-    public T Get() {
-        if (_future != null) {
-            return _future.Get();
+    public IExecutor? Executor => _future?.Executor;
+
+    public TaskStatus Status {
+        get {
+            if (_future != null) {
+                return _future.Status;
+            }
+            if (_ex != null) {
+                if (_ex is OperationCanceledException) {
+                    return TaskStatus.CANCELLED;
+                }
+                return TaskStatus.FAILED;
+            }
+            return TaskStatus.SUCCESS;
         }
-        if (_ex == null) {
-            return _result;
-        }
-        throw _ex;
+    }
+
+    public object ResultNow() {
+        throw new NotImplementedException();
+    }
+
+    public Exception ExceptionNow(bool throwIfCancelled = true) {
+        throw new NotImplementedException();
+    }
+
+    public object Get() {
+        throw new NotImplementedException();
+    }
+
+    public object Join() {
+        throw new NotImplementedException();
+    }
+
+    public bool Await(TimeSpan timeout) {
+        throw new NotImplementedException();
+    }
+
+    public bool AwaitUninterruptibly(TimeSpan timeout) {
+        throw new NotImplementedException();
+    }
+
+    IFuture<T> IFuture<T>.Await() {
+        throw new NotImplementedException();
+    }
+
+    IFuture<T> IFuture<T>.AwaitUninterruptibly() {
+        throw new NotImplementedException();
     }
 
     public void OnCompleted(Action<IFuture<T>> continuation, int options = 0) {
@@ -215,5 +246,57 @@ public readonly struct ValueFuture<T>
 
     public void OnCompletedAsync(IExecutor executor, Action<object> continuation, object state, int options = 0) {
         throw new NotImplementedException();
+    }
+}
+
+public class ValueFutureAwaiter : INotifyCompletion
+{
+    private static readonly Action<object> Invoker = (state) => ((Action)state).Invoke();
+
+    private readonly ValueFuture future;
+    private readonly IExecutor? executor;
+    private readonly int options;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="future"></param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项</param>
+    public ValueFutureAwaiter(in ValueFuture future, IExecutor? executor = null, int options = 0) {
+        this.future = future;
+        this.executor = executor;
+        this.options = options;
+    }
+
+    // 1.IsCompleted
+    public bool IsCompleted => future.IsDone;
+
+    // 2. GetResult
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void GetResult() {
+        future.Await();
+    }
+
+    // 3. OnCompleted
+    /// <summary>
+    /// 添加一个Future完成时的回调。
+    /// ps：通常而言，该接口由StateMachine调用，因此接口参数为<see cref="Action"/>。
+    /// </summary>
+    /// <param name="continuation">回调任务</param>
+    public void OnCompleted(Action continuation) {
+        if (executor == null) {
+            future.OnCompleted(Invoker, continuation, options);
+        } else {
+            future.OnCompletedAsync(executor, Invoker, continuation, options);
+        }
+    }
+
+    public void UnsafeOnCompleted(Action continuation) {
+        if (executor == null) {
+            future.OnCompleted(Invoker, continuation, options);
+        } else {
+            future.OnCompletedAsync(executor, Invoker, continuation, options);
+        }
     }
 }

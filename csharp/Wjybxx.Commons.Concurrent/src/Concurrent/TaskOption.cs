@@ -97,12 +97,15 @@ public class TaskOption
     ///</summary>
     public const int IGNORE_FUTURE_CANCEL = 1 << 13;
 
+    /**
+     * 如果一个异步任务不需要自动检测{@link IContext}中的取消信号，可启用该属性。
+     */
+    public const int STAGE_UNCANCELLABLE = 15;
     /// <summary>
     /// 如果一个异步任务当前已在目标{@link SingleThreadExecutor}线程，则立即执行，而不提交任务。
     /// 仅用于{@link ICompletionStage}
     ///</summary>
     public const int STAGE_TRY_INLINE = 1 << 16;
-
     /// <summary>
     /// 默认情况下，如果一个异步任务的Executor是{@link IExecutor}类型，options将传递给Executor。
     /// 如果期望禁用传递，可设置改选项。

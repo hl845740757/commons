@@ -43,7 +43,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     /** 提前计算的，逻辑上的下次触发时间 - 非volatile，不对用户开放 */
     private long nextTriggerTime;
     /** 任务的执行间隔 - 不再有特殊意义 */
-    private final long period;
+    private long period;
     /** 超时信息 */
     private TimeoutContext timeoutContext;
 

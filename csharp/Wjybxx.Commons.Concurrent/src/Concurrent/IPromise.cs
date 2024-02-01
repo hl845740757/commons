@@ -23,8 +23,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// <summary>
 /// 
 /// </summary>
-/// <typeparam name="T">任务的结果类型</typeparam>
-public interface IPromise<T> : IFuture<T>
+public interface IPromise : IFuture
 {
 #nullable disable
     /// <summary>
@@ -52,14 +51,16 @@ public interface IPromise<T> : IFuture<T>
     /// <summary>
     /// 尝试将future置为成功完成状态，如果future已进入完成状态，则返回false
     /// </summary>
-    bool TrySetResult(T result);
+    /// <exception cref="InvalidCastException">如果数据类型不兼容</exception>
+    bool TrySetResult(object result);
 
     /// <summary>
     /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
     /// </summary>
     /// <param name="result"></param>
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
-    void SetResult(T result);
+    /// <exception cref="InvalidCastException">如果数据类型不兼容</exception>
+    void SetResult(object result);
 
     /// <summary>
     /// 尝试将future置为失败完成状态，如果future已进入完成状态，则返回false
@@ -95,5 +96,55 @@ public interface IPromise<T> : IFuture<T>
     /// </summary>
     /// <param name="input"></param>
     /// <returns>当且仅当由目标future使当前promise进入完成状态时返回true</returns>
+    bool TryTransferFrom(IFuture input);
+}
+
+/// <summary>
+/// 
+/// </summary>
+/// <typeparam name="T">任务的结果类型</typeparam>
+public interface IPromise<T> : IFuture<T>, IPromise
+{
+    /// <summary>
+    /// 尝试将future置为成功完成状态，如果future已进入完成状态，则返回false
+    /// </summary>
+    bool TrySetResult(T result);
+
+    /// <summary>
+    /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
+    /// </summary>
+    /// <param name="result"></param>
+    /// <exception cref="IllegalStateException">如果Future已完成</exception>
+    void SetResult(T result);
+
+    /// <summary>
+    /// 将目标future的结果传输到当前Promise
+    /// 如果目标future已完成，且当前promise尚未完成，则尝试传输结果到promise
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns>当且仅当由目标future使当前promise进入完成状态时返回true</returns>
     bool TryTransferFrom(IFuture<T> input);
+
+    #region 接口适配
+
+    bool IPromise.TrySetResult(object result) {
+        return TrySetResult((T)result);
+    }
+
+    void IPromise.SetResult(object result) {
+        SetResult((T)result);
+    }
+
+    bool IPromise.TryTransferFrom(IFuture input) {
+        if (input.IsDone) {
+            if (input.IsSucceeded) {
+                return TrySetResult((T)input.ResultNow());
+            }
+            Exception cause = input.ExceptionNow(false);
+            return TrySetException(cause);
+        }
+        return false;
+    }
+
+    #endregion
 }

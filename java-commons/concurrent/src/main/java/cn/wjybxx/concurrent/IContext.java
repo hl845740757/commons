@@ -71,4 +71,11 @@ public interface IContext {
      */
     Object sharedProps();
 
+    /**
+     * 去除取消令牌 -- 将取消令牌替换为{@link ICancelToken#NONE}
+     *
+     * @return 如果当前取消令牌已是不可取消的令牌，则可返回自身。
+     */
+    IContext withoutCancelToken();
+
 }

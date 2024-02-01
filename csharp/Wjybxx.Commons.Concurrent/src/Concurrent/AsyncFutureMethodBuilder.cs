@@ -31,10 +31,9 @@ namespace Wjybxx.Commons.Concurrent;
 public struct AsyncFutureMethodBuilder<T>
 {
     /// <summary>
-    /// 当任务未同步完成时有值
+    /// 当任务异步完成时有值
     /// </summary>
     private IFutureTask<T>? _futureTask;
-
     /// <summary>
     /// 任务同步失败时有值
     /// </summary>
@@ -43,6 +42,11 @@ public struct AsyncFutureMethodBuilder<T>
     /// 如果futureTask和ex都为null，表示任务已同步完成
     /// </summary>
     private T? _result;
+
+    // 避免将FutureTask中的接口声明为Promise
+    private static IPromise<T> GetPromise(IFutureTask<T> futureTask) {
+        return (IPromise<T>)futureTask.Future;
+    }
 
     // 1. Static Create method 
     public static AsyncFutureMethodBuilder<T> Create() {
@@ -70,21 +74,21 @@ public struct AsyncFutureMethodBuilder<T>
         }
     }
 
-    // 4. SetException -- 同步完成时
+    // 4. SetException -- 同步或异步完成时
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetException(Exception exception) {
         if (_futureTask != null) {
-            _futureTask.Future.TrySetException(exception);
+            GetPromise(_futureTask).TrySetException(exception);
         } else {
             this._ex = exception;
         }
     }
 
-    // 5. SetResult -- 同步完成时
+    // 5. SetResult -- 同步或异步完成时
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetResult(T result) {
         if (_futureTask != null) {
-            _futureTask.Future.TrySetResult(result);
+            GetPromise(_futureTask).TrySetResult(result);
         } else {
             this._result = result;
         }
@@ -95,9 +99,8 @@ public struct AsyncFutureMethodBuilder<T>
     public void AwaitOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
-        
         if (_futureTask == null) {
-            PromiseTask<T,TStateMachine> promiseTask = new PromiseTask<T, TStateMachine>();
+            PromiseTask<T, TStateMachine> promiseTask = new PromiseTask<T, TStateMachine>();
             promiseTask.SetStateMachine(ref stateMachine);
             _futureTask = promiseTask;
         }
@@ -110,9 +113,8 @@ public struct AsyncFutureMethodBuilder<T>
     public void AwaitUnsafeOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
-        
         if (_futureTask == null) {
-            PromiseTask<T,TStateMachine> promiseTask = new PromiseTask<T, TStateMachine>();
+            PromiseTask<T, TStateMachine> promiseTask = new PromiseTask<T, TStateMachine>();
             promiseTask.SetStateMachine(ref stateMachine);
             _futureTask = promiseTask;
         }

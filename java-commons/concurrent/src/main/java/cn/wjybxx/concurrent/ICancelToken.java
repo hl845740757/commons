@@ -211,6 +211,8 @@ public interface ICancelToken {
      * 该接口用于方便构建子上下文
      * 1.子token会在当前token进入取消状态时被取消
      * 2.该接口本质是一个快捷方法，但允许子类优化
+     * <p>
+     * 注意：在Future体系下，child是上游任务；而在行为树这类体系下，child是下游任务。
      *
      * @param child   接收结果的子token
      * @param options 调度选项

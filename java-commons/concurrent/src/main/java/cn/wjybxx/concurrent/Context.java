@@ -127,28 +127,65 @@ public class Context<T> implements IContext {
         return new Context<>(null, null, null, cancelToken);
     }
 
-    // endregion
-
-    // region 创建子上下文
-
     /** 用于子类重写 */
     protected Context<T> newContext(Context<T> parent, T blackboard, Object sharedProps, ICancelToken cancelToken) {
         return new Context<>(parent, blackboard, sharedProps, cancelToken);
     }
 
-    public Context<T> withBlackboard(T blackboard) {
+    // endregion
+
+    // region 创建子上下文
+
+    public Context<T> childWithBlackboard(T blackboard) {
         return newContext(this, blackboard, sharedProps, cancelToken);
+    }
+
+    public Context<T> childWithBlackboard(T blackboard, Object sharedProps) {
+
+        return newContext(this, blackboard, sharedProps, cancelToken);
+    }
+
+    public Context<T> childWithBlackboard(T blackboard, Object sharedProps, ICancelToken cancelToken) {
+        return newContext(this, blackboard, sharedProps, cancelToken);
+    }
+
+    public Context<T> childWithCancelToken(ICancelToken cancelToken) {
+        return newContext(this, blackboard, sharedProps, cancelToken);
+    }
+
+    // endregion
+
+    // region with
+
+    public Context<T> withBlackboard(T blackboard) {
+        if (blackboard == this.blackboard) {  // 较大概率
+            return this;
+        }
+        return newContext(parent, blackboard, sharedProps, cancelToken);
     }
 
     public Context<T> withBlackboard(T blackboard, Object sharedProps) {
-        return newContext(this, blackboard, sharedProps, cancelToken);
+
+        return newContext(parent, blackboard, sharedProps, cancelToken);
     }
 
     public Context<T> withBlackboard(T blackboard, Object sharedProps, ICancelToken cancelToken) {
-        return newContext(this, blackboard, sharedProps, cancelToken);
+        return newContext(parent, blackboard, sharedProps, cancelToken);
     }
 
     public Context<T> withCancelToken(ICancelToken cancelToken) {
+        if (cancelToken == this.cancelToken) { // 较大概率
+            return this;
+        }
+        return newContext(parent, blackboard, sharedProps, cancelToken);
+    }
+
+    /** 去掉取消令牌 */
+    @Override
+    public Context<T> withoutCancelToken() {
+        if (this.cancelToken == ICancelToken.NONE) { // 较大概率
+            return this;
+        }
         return newContext(this, blackboard, sharedProps, cancelToken);
     }
 

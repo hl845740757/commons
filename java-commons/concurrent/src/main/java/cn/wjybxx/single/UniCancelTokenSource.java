@@ -236,6 +236,10 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             return null;
         }
 
+        @Override
+        public IContext withoutCancelToken() {
+            return this;
+        }
     }
 
     // endregion

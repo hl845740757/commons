@@ -22,7 +22,7 @@ import cn.wjybxx.base.annotation.Beta;
  * 可分时运行的任务 - 需要长时间运行才能得出结果的任务。
  * 1. 分时任务代表着所有需要自定义管理状态的任务。
  * 2. 除了设置Promise的结果外，Task还可以约定特殊的Promise以向外部传递其它信息，比如：任务的进度。
- * 3. 该接口上不稳定，避免用于非EventLoop架构。
+ * 3. 该接口尚不稳定，避免用于非EventLoop架构。
  *
  * @author wjybxx
  * date 2023/4/3
