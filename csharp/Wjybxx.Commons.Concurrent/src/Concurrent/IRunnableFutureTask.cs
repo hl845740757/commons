@@ -16,24 +16,31 @@
 
 #endregion
 
+using System;
+using System.Runtime.CompilerServices;
+
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// <see cref="IExecutor"/>中调度的任务的抽象。
-/// 1.该接口暴露给Executor的扩展类，不是用户使用的类 -- 用户面向Action等委托类型即可。
-/// 2.
 /// 
-/// ps：可认为是Java的Runnable。
 /// </summary>
-public interface ITask
+/// <typeparam name="T">任务的结果类型</typeparam>
+/// <typeparam name="S">状态机的类型</typeparam>
+public interface IRunnableFutureTask<T, S> : IFutureTask<T> where S : IAsyncStateMachine
 {
+    
     /// <summary>
-    /// 任务的调度选项
+    /// 用于驱动StateMachine的Action委托
+    /// 
+    /// ps：定义为属性以允许实现类进行一些优化，比如：插入代理，缓存实例。
     /// </summary>
-    int Options { get; set; }
+    Action MoveToNext { get; }
 
     /// <summary>
-    /// 任务的逻辑
+    /// 设置关联的异步状态机
+    /// 
+    /// PS：<see cref="ITask.Run"/>用于驱动状态机前进
     /// </summary>
-    void Run();
+    /// <param name="stateMachine"></param>
+    void SetStateMachine(ref S stateMachine);
 }

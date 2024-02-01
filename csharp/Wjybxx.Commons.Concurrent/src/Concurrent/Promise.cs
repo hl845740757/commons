@@ -20,4 +20,6 @@ namespace Wjybxx.Commons.Concurrent;
 
 public class Promise<T> : IPromise<T>, IFuture<T>
 {
+    
+    
 }

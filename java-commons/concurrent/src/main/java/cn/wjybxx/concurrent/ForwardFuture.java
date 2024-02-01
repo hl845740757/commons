@@ -91,6 +91,7 @@ public class ForwardFuture<V> implements IFuture<V> {
         return future.cancel(mayInterruptIfRunning);
     }
 
+    @Deprecated
     @Override
     public State state() {
         return future.state();

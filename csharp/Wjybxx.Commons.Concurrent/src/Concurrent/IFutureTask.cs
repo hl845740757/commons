@@ -16,18 +16,29 @@
 
 #endregion
 
+using System;
+using System.Runtime.CompilerServices;
+
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// FutureTask是Executor压入的可获取结果的任务类型
-/// 1.该接口暴露给Executor的扩展类，不是用户使用的类。
-/// 2.需要获取结果的任务，我们将调度选项保存下来；普通任务的调度选项可能在execute。
+/// FutureTask是Executor压入的可获取结果的任务类型。
+/// 1. 该接口暴露给Executor的扩展类，不是用户使用的类。
+/// 2. 需要获取结果的任务，我们将调度选项保存下来；普通任务的调度选项可能在execute。
 /// </summary>
-/// <typeparam name="T"></typeparam>
-public interface IFutureTask<T> : ITask
+public interface IFutureTask<T> : ITask, IAsyncStateMachine
 {
     /// <summary>
     /// 任务关联的Future
+    ///
+    /// ps：由于要支持外部赋值，因此类型声明为Promise。
     /// </summary>
-    IFuture<T> Future { get; }
+    IPromise<T> Future { get; }
+
+    /// <summary>
+    /// 用于驱动StateMachine的Action委托
+    /// 
+    /// ps：定义为属性以允许实现类进行一些优化，比如：插入代理，缓存实例。
+    /// </summary>
+    Action MoveToNext { get; }
 }

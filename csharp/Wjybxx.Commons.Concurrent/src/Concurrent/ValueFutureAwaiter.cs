@@ -19,29 +19,26 @@
 using System;
 using System.Runtime.CompilerServices;
 
-#pragma warning disable CS1591
-
 namespace Wjybxx.Commons.Concurrent;
 
-/// <summary>
-/// Future的等待器
-/// </summary>
-/// <typeparam name="T"></typeparam>
-public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
+public class ValueFutureAwaiter<T> : INotifyCompletion
 {
     private static readonly Action<object> Invoker = (state) => ((Action)state).Invoke();
 
-    private readonly IFuture<T> future;
+    private readonly ValueFuture<T> future;
+    private readonly IExecutor? executor;
+    private readonly int options;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="future">需要等待的future</param>
-    /// <param name="executor">回调线程</param>
-    /// <param name="options">调度选项</param>
-    /// <exception cref="ArgumentNullException"></exception>
-    public FutureAwaiter(IFuture<T> future) {
-        this.future = future ?? throw new ArgumentNullException(nameof(future));
+    /// <param name="future"></param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项</param>
+    public ValueFutureAwaiter(in ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
+        this.future = future;
+        this.executor = executor;
+        this.options = options;
     }
 
     // 1.IsCompleted
@@ -60,10 +57,18 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// </summary>
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
-        future.OnCompleted(Invoker, continuation);
+        if (executor == null) {
+            future.OnCompleted(Invoker, continuation, options);
+        } else {
+            future.OnCompletedAsync(executor, Invoker, continuation, options);
+        }
     }
 
     public void UnsafeOnCompleted(Action continuation) {
-        future.OnCompleted(Invoker, continuation);
+        if (executor == null) {
+            future.OnCompleted(Invoker, continuation, options);
+        } else {
+            future.OnCompletedAsync(executor, Invoker, continuation, options);
+        }
     }
 }

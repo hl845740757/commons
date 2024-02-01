@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.unitask;
+package cn.wjybxx.single;
 
 import cn.wjybxx.concurrent.EventLoopState;
 import cn.wjybxx.concurrent.IFuture;

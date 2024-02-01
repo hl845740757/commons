@@ -35,8 +35,7 @@ public class ForwardFuture<T> : IFuture<T>
     
     #region 转发
 
-    public IContext Context => future.Context;
-    public IExecutor Executor => future.Executor;
+    public IExecutor? Executor => future.Executor;
 
     public IFuture<T> AsReadonly() {
         return future.AsReadonly();

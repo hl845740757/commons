@@ -23,23 +23,20 @@ using System.Threading;
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 
+///
+/// ps：
+/// 1. 在我的设计中，Future是不重用的，因此获取结果等接口无token参数。
+/// 2. 要支持显式的异步编程，需要将Future暴露给用户，也就无法轻易重用。
 /// </summary>
 /// <typeparam name="T">任务的结果类型</typeparam>
 [AsyncMethodBuilder(typeof(AsyncFutureMethodBuilder<>))]
 public interface IFuture<T>
 {
-    #region ctx
-
-    /// <summary>
-    /// 任务绑定的上下文
-    /// </summary>
-    IContext Context { get; }
-
     /// <summary>
     /// 任务绑定的线程
+    /// ps:主要用于检测死锁。
     /// </summary>
-    IExecutor Executor { get; }
+    IExecutor? Executor { get; }
 
     /// <summary>
     /// 返回只读的Future视图，
@@ -51,8 +48,6 @@ public interface IFuture<T>
     /// </summary>
     /// <returns></returns>
     IFuture<T> AsReadonly();
-
-    #endregion
 
     #region State
 
@@ -190,7 +185,8 @@ public interface IFuture<T>
     #region asyncbuilder
 
     /// <summary>
-    /// 获取真实的用于等待的Awaiter
+    /// 获取用于等待的Awaiter
+    /// 默认在使Future进入完成状态的线程执行回调，即同步执行回调。
     /// </summary>
     /// <returns></returns>
     FutureAwaiter<T> GetAwaiter() {
@@ -209,11 +205,11 @@ public interface IFuture<T>
     ///     await future.GetAwaiter(eventLoop, TaskOption.STAGE_TRY_INLINE);
     /// </code>
     /// </summary>
-    /// <param name="executor">回调线程</param>
-    /// <param name="options">延续任务的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
     /// <returns></returns>
-    FutureAwaiter<T> GetAwaiter(IExecutor executor, int options = 0) {
-        return new FutureAwaiter<T>(this, executor, options);
+    ValueFuture<T> GetAwaiter(IExecutor executor, int options = 0) {
+        return new ValueFuture<T>(this, executor, options);
     }
 
     /// <summary>
@@ -252,6 +248,26 @@ public interface IFuture<T>
     /// <param name="state">回调参数</param>
     /// <param name="options">调度选项</param>
     void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object> continuation, object state, int options = 0);
+
+    /// <summary>
+    /// 添加一个监听器
+    /// 1. 该接口通常应该由<see cref="FutureAwaiter{T}"/>调用。
+    /// </summary>
+    /// <param name="continuation">回调</param>
+    /// <param name="state">回调参数</param>
+    /// <param name="options">调度选项</param>
+    void OnCompleted(Action<object> continuation, object state, int options = 0);
+
+    /// <summary>
+    /// 添加一个监听器
+    /// 1. 该接口通常应该由<see cref="FutureAwaiter{T}"/>调用。
+    /// 2. 如果state是<see cref="IContext"/>类型，默认会在执行回调前会检查Context中的取消信号。
+    /// </summary>
+    /// <param name="executor">回调线程</param>
+    /// <param name="continuation">回调</param>
+    /// <param name="state">回调参数</param>
+    /// <param name="options">调度选项</param>
+    void OnCompletedAsync(IExecutor executor, Action<object> continuation, object state, int options = 0);
 
     #endregion
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.unitask;
+package cn.wjybxx.single;
 
 import cn.wjybxx.base.function.TriConsumer;
 import cn.wjybxx.base.function.TriFunction;
@@ -1309,6 +1309,13 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
     // region compose-x
 
+    private static boolean isCancelling(IContext ctx, int options) {
+        if (TaskOption.isEnabled(options, TaskOption.STAGE_UNCANCELLABLE)) {
+            return false;
+        }
+        return ctx.cancelToken().isCancelling();
+    }
+
     private static boolean submit(Completion completion, Executor e, int options) {
         // 尝试内联
         if (TaskOption.isEnabled(options, TaskOption.STAGE_TRY_INLINE)
@@ -1389,7 +1396,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (isCancelling(output._ctx, 0)) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1423,7 +1430,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (isCancelling(output._ctx, options)) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1474,7 +1481,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (isCancelling(output._ctx, options)) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1527,7 +1534,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (isCancelling(output._ctx, options)) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1579,7 +1586,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (isCancelling(output._ctx, options)) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1635,7 +1642,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (isCancelling(output._ctx, options)) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1682,7 +1689,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (isCancelling(output._ctx, options)) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1730,7 +1737,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (isCancelling(output._ctx, options)) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1777,7 +1784,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (isCancelling(output._ctx, options)) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1827,7 +1834,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (isCancelling(output._ctx, options)) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1876,7 +1883,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (isCancelling(output._ctx, options)) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1926,7 +1933,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (isCancelling(output._ctx, options)) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -2005,7 +2012,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
             final UniPromise<V> input = this.input;
             tryComplete:
             {
-                if (ctx.cancelToken().isCancelling()) {
+                if (isCancelling(ctx, options)) {
                     break tryComplete;
                 }
                 // 异步模式下已经claim

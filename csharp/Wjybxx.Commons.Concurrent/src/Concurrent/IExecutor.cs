@@ -43,7 +43,7 @@ public interface IExecutor
     /// 调度器在执行之前会检测任务的取消信号，如果已收到取消信号则放弃执行。
     /// </summary>
     /// <param name="action">要执行的任务</param>
-    /// <param name="context">任务关联的上下文</param>
+    /// <param name="cancelToken">任务关联的取消令牌</param>
     /// <param name="options">任务的调度特征值，见<see cref="TaskOption"/></param>
-    void Execute(Action<IContext> action, IContext context, int options = 0);
+    void Execute(Action<ICancelToken> action, ICancelToken cancelToken, int options = 0);
 }

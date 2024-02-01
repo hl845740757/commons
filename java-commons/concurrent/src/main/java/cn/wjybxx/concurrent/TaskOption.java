@@ -102,6 +102,10 @@ public final class TaskOption {
     public static final int IGNORE_FUTURE_CANCEL = 1 << 13;
 
     /**
+     * 如果一个异步任务不需要自动检测{@link IContext}中的取消信号，可启用该属性。
+     */
+    public static final int STAGE_UNCANCELLABLE = 15;
+    /**
      * 如果一个异步任务当前已在目标{@link SingleThreadExecutor}线程，则立即执行，而不提交任务。
      * 仅用于{@link ICompletionStage}
      */
