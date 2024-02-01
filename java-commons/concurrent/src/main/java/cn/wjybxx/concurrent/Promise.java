@@ -638,6 +638,13 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         return new Promise<>(exe, ctx);
     }
 
+    protected IContext inheritContext(int options) {
+        if (TaskOption.isEnabled(options, TaskOption.STAGE_INHERIT_TOKEN)) {
+            return _ctx;
+        }
+        return _ctx.withoutCancelToken();
+    }
+
     // region compose-apply
 
     @Override
@@ -667,7 +674,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                                            @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
-        if (ctx == null) ctx = this._ctx.withoutCancelToken();
+        if (ctx == null) ctx = inheritContext(options);
         Promise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniComposeApply<>(executor, options, this, promise, fn));
         return promise;
@@ -706,7 +713,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                                           @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
-        if (ctx == null) ctx = this._ctx.withoutCancelToken();
+        if (ctx == null) ctx = inheritContext(options);
         Promise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniComposeCall<>(executor, options, this, promise, fn));
         return promise;
@@ -750,7 +757,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(exceptionType);
         Objects.requireNonNull(fallback);
 
-        if (ctx == null) ctx = this._ctx.withoutCancelToken();
+        if (ctx == null) ctx = inheritContext(options);
         Promise<T> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniComposeCathing<>(executor, options, this, promise, exceptionType, fallback));
         return promise;
@@ -789,7 +796,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                                             @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
-        if (ctx == null) ctx = this._ctx.withoutCancelToken();
+        if (ctx == null) ctx = inheritContext(options);
         Promise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniComposeHandle<>(executor, options, this, promise, fn));
         return promise;
@@ -825,7 +832,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                                     @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
-        if (ctx == null) ctx = this._ctx.withoutCancelToken();
+        if (ctx == null) ctx = inheritContext(options);
         Promise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniApply<>(executor, options, this, promise, fn));
         return promise;
@@ -860,7 +867,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                                     @Nullable IContext ctx, int options) {
         Objects.requireNonNull(action);
 
-        if (ctx == null) ctx = this._ctx.withoutCancelToken();
+        if (ctx == null) ctx = inheritContext(options);
         Promise<Void> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniAccept<>(executor, options, this, promise, action));
         return promise;
@@ -895,7 +902,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     private <U> Promise<U> uniCall(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
-        if (ctx == null) ctx = this._ctx.withoutCancelToken();
+        if (ctx == null) ctx = inheritContext(options);
         Promise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniCall<>(executor, options, this, promise, fn));
         return promise;
@@ -930,7 +937,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     private Promise<Void> uniRun(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options) {
         Objects.requireNonNull(action);
 
-        if (ctx == null) ctx = this._ctx.withoutCancelToken();
+        if (ctx == null) ctx = inheritContext(options);
         Promise<Void> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniRun<>(executor, options, this, promise, action));
         return promise;
@@ -973,7 +980,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(exceptionType, "exceptionType");
         Objects.requireNonNull(fallback, "fallback");
 
-        if (ctx == null) ctx = this._ctx.withoutCancelToken();
+        if (ctx == null) ctx = inheritContext(options);
         Promise<T> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniCathing<>(executor, options, this, promise, exceptionType, fallback));
         return promise;
@@ -1010,7 +1017,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                                      @Nullable IContext ctx, int options) {
         Objects.requireNonNull(fn);
 
-        if (ctx == null) ctx = this._ctx.withoutCancelToken();
+        if (ctx == null) ctx = inheritContext(options);
         Promise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniHandle<>(executor, options, this, promise, fn));
         return promise;
@@ -1045,7 +1052,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                                        @Nullable IContext ctx, int options) {
         Objects.requireNonNull(action);
 
-        if (ctx == null) ctx = this._ctx.withoutCancelToken();
+        if (ctx == null) ctx = inheritContext(options);
         Promise<T> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
         pushCompletion(new UniWhenComplete<>(executor, options, this, promise, action));
         return promise;
@@ -1502,13 +1509,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     // region compose-x
 
-    private static boolean isCancelling(IContext ctx, int options) {
-        if (TaskOption.isEnabled(options, TaskOption.STAGE_UNCANCELLABLE)) {
-            return false;
-        }
-        return ctx.cancelToken().isCancelling();
-    }
-
     private static boolean submit(Completion completion, Executor e, int options) {
         // 尝试内联
         if (TaskOption.isEnabled(options, TaskOption.STAGE_TRY_INLINE)
@@ -1589,7 +1589,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (isCancelling(output._ctx, 0)) {
+                if (output._ctx.cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1623,7 +1623,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (isCancelling(output._ctx, options)) {
+                if (output._ctx.cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1674,7 +1674,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (isCancelling(output._ctx, options)) {
+                if (output._ctx.cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1727,7 +1727,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (isCancelling(output._ctx, options)) {
+                if (output._ctx.cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1779,7 +1779,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (isCancelling(output._ctx, options)) {
+                if (output._ctx.cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1835,7 +1835,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (isCancelling(output._ctx, options)) {
+                if (output._ctx.cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1882,7 +1882,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (isCancelling(output._ctx, options)) {
+                if (output._ctx.cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1930,7 +1930,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (isCancelling(output._ctx, options)) {
+                if (output._ctx.cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1977,7 +1977,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (isCancelling(output._ctx, options)) {
+                if (output._ctx.cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -2027,7 +2027,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (isCancelling(output._ctx, options)) {
+                if (output._ctx.cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -2076,7 +2076,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (isCancelling(output._ctx, options)) {
+                if (output._ctx.cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -2126,7 +2126,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (isCancelling(output._ctx, options)) {
+                if (output._ctx.cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -2205,7 +2205,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             final Promise<V> input = this.input;
             tryComplete:
             {
-                if (isCancelling(ctx, options)) {
+                if (ctx.cancelToken().isCancelling()) {
                     break tryComplete;
                 }
                 // 异步模式下已经claim

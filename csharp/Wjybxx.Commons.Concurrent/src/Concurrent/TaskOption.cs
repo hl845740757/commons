@@ -98,9 +98,10 @@ public class TaskOption
     public const int IGNORE_FUTURE_CANCEL = 1 << 13;
 
     /**
-     * 如果一个异步任务不需要自动检测{@link IContext}中的取消信号，可启用该属性。
+     * 该选项表示异步任务需要继承上游任务的取消令牌。
+     * 注意： 在显式指定了上下文的情况下无效。
      */
-    public const int STAGE_UNCANCELLABLE = 15;
+    public const int STAGE_INHERIT_CANCEL_TOKEN = 15;
     /// <summary>
     /// 如果一个异步任务当前已在目标{@link SingleThreadExecutor}线程，则立即执行，而不提交任务。
     /// 仅用于{@link ICompletionStage}

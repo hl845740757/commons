@@ -43,7 +43,17 @@ public interface IExecutor
     /// 调度器在执行之前会检测任务的取消信号，如果已收到取消信号则放弃执行。
     /// </summary>
     /// <param name="action">要执行的任务</param>
-    /// <param name="cancelToken">任务关联的取消令牌</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">任务的调度特征值，见<see cref="TaskOption"/></param>
-    void Execute(Action<ICancelToken> action, ICancelToken cancelToken, int options = 0);
+    void Execute(Action action, ICancelToken cancelToken, int options = 0);
+
+    /// <summary>
+    /// 在将来的某个时间执行给定的命令。
+    /// 命令可以在新线程中执行，也可以在池线程中执行，或者在调用线程中执行，这由Executor实现决定。
+    /// 调度器在执行之前会检测任务的取消信号，如果已收到取消信号则放弃执行。
+    /// </summary>
+    /// <param name="action">要执行的任务</param>
+    /// <param name="context">任务上下文</param>
+    /// <param name="options">任务的调度特征值，见<see cref="TaskOption"/></param>
+    void Execute(Action<TaskContext> action, TaskContext context, int options = 0);
 }

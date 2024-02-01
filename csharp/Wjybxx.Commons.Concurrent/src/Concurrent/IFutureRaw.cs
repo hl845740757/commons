@@ -220,7 +220,7 @@ public interface IFuture
     /// <param name="continuation">回调</param>
     /// <param name="context">上下文</param>
     /// <param name="options">调度选项</param>
-    void OnCompleted(Action<IFuture, AsyncContext> continuation, AsyncContext context, int options = 0);
+    void OnCompleted(Action<IFuture, TaskContext> continuation, TaskContext context, int options = 0);
 
     /// <summary>
     /// 添加一个监听器  -- 接收future和context参数
@@ -229,7 +229,7 @@ public interface IFuture
     /// <param name="continuation">回调</param>
     /// <param name="context">上下文</param>
     /// <param name="options">调度选项</param>
-    void OnCompletedAsync(IExecutor executor, Action<IFuture, AsyncContext> continuation, AsyncContext context, int options = 0);
+    void OnCompletedAsync(IExecutor executor, Action<IFuture, TaskContext> continuation, TaskContext context, int options = 0);
 
     #endregion
 }

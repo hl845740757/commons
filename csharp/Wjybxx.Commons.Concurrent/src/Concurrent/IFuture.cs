@@ -161,7 +161,7 @@ public interface IFuture<T> : IFuture
     /// <param name="continuation">回调</param>
     /// <param name="context">上下文</param>
     /// <param name="options">调度选项</param>
-    void OnCompleted(Action<IFuture<T>, AsyncContext> continuation, AsyncContext context, int options = 0);
+    void OnCompleted(Action<IFuture<T>, TaskContext> continuation, TaskContext context, int options = 0);
 
     /// <summary>
     /// 添加一个监听器  -- 接收future和context参数
@@ -170,7 +170,7 @@ public interface IFuture<T> : IFuture
     /// <param name="continuation">回调</param>
     /// <param name="context">上下文</param>
     /// <param name="options">调度选项</param>
-    void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, AsyncContext> continuation, AsyncContext context, int options = 0);
+    void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, TaskContext> continuation, TaskContext context, int options = 0);
 
     #endregion
 
@@ -204,11 +204,11 @@ public interface IFuture<T> : IFuture
         OnCompletedAsync(executor, continuation, state, options);
     }
 
-    void IFuture.OnCompleted(Action<IFuture, AsyncContext> continuation, AsyncContext context, int options) {
+    void IFuture.OnCompleted(Action<IFuture, TaskContext> continuation, TaskContext context, int options) {
         OnCompleted(continuation, context, options);
     }
 
-    void IFuture.OnCompletedAsync(IExecutor executor, Action<IFuture, AsyncContext> continuation, AsyncContext context, int options) {
+    void IFuture.OnCompletedAsync(IExecutor executor, Action<IFuture, TaskContext> continuation, TaskContext context, int options) {
         OnCompletedAsync(executor, continuation, context, options);
     }
 

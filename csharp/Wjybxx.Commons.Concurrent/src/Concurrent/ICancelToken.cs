@@ -25,6 +25,11 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public interface ICancelToken
 {
+    /// <summary>
+    /// 表示不可取消的令牌
+    /// </summary>
+    static readonly ICancelToken NONE = UncancellableToken.Inst;
+
     /**
      * 返回一个只读的{@link ICancelToken}试图，返回的实例会在当前Token被取消时取消。
      * 其作用类似{@link IFuture#asReadonly()}

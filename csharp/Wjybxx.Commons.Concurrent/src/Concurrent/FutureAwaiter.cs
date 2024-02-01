@@ -49,6 +49,9 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void GetResult() {
         future.Await();
+        if (future.IsFailedOrCancelled) {
+            throw future.ExceptionNow(false);
+        }
     }
 
     // 3. OnCompleted

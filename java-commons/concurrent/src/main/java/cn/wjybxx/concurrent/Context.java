@@ -173,6 +173,7 @@ public class Context<T> implements IContext {
         return newContext(parent, blackboard, sharedProps, cancelToken);
     }
 
+    /** 使用给定取消令牌 */
     public Context<T> withCancelToken(ICancelToken cancelToken) {
         if (cancelToken == this.cancelToken) { // 较大概率
             return this;

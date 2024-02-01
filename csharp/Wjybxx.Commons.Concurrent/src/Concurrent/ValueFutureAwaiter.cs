@@ -21,10 +21,9 @@ using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Concurrent;
 
+
 public class ValueFutureAwaiter<T> : INotifyCompletion
 {
-    private static readonly Action<object> Invoker = (state) => ((Action)state).Invoke();
-
     private readonly ValueFuture<T> future;
     private readonly IExecutor? executor;
     private readonly int options;
@@ -48,6 +47,52 @@ public class ValueFutureAwaiter<T> : INotifyCompletion
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetResult() {
         return future.Get();
+    }
+
+    // 3. OnCompleted
+    public void OnCompleted(Action continuation) {
+        if (executor == null) {
+            future.OnCompleted(continuation, options);
+        } else {
+            future.OnCompletedAsync(executor, continuation, options);
+        }
+    }
+
+    public void UnsafeOnCompleted(Action continuation) {
+        if (executor == null) {
+            future.OnCompleted(continuation, options);
+        } else {
+            future.OnCompletedAsync(executor, continuation, options);
+        }
+    }
+}
+
+public class ValueFutureAwaiter : INotifyCompletion
+{
+
+    private readonly ValueFuture future;
+    private readonly IExecutor? executor;
+    private readonly int options;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="future"></param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项</param>
+    public ValueFutureAwaiter(in ValueFuture future, IExecutor? executor = null, int options = 0) {
+        this.future = future;
+        this.executor = executor;
+        this.options = options;
+    }
+
+    // 1.IsCompleted
+    public bool IsCompleted => future.IsDone;
+
+    // 2. GetResult
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void GetResult() {
+        future.Await();
     }
 
     // 3. OnCompleted
