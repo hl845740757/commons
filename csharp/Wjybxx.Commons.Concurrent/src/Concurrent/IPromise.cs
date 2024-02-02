@@ -89,14 +89,6 @@ public interface IPromise : IFuture
     /// <param name="code">相关的取消码</param>
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
     void SetCancelled(int code = ICancelToken.REASON_DEFAULT);
-
-    /// <summary>
-    /// 将目标future的结果传输到当前Promise
-    /// 如果目标future已完成，且当前promise尚未完成，则尝试传输结果到promise
-    /// </summary>
-    /// <param name="input"></param>
-    /// <returns>当且仅当由目标future使当前promise进入完成状态时返回true</returns>
-    bool TryTransferFrom(IFuture input);
 }
 
 /// <summary>
@@ -117,14 +109,6 @@ public interface IPromise<T> : IFuture<T>, IPromise
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
     void SetResult(T result);
 
-    /// <summary>
-    /// 将目标future的结果传输到当前Promise
-    /// 如果目标future已完成，且当前promise尚未完成，则尝试传输结果到promise
-    /// </summary>
-    /// <param name="input"></param>
-    /// <returns>当且仅当由目标future使当前promise进入完成状态时返回true</returns>
-    bool TryTransferFrom(IFuture<T> input);
-
     #region 接口适配
 
     bool IPromise.TrySetResult(object result) {
@@ -133,17 +117,6 @@ public interface IPromise<T> : IFuture<T>, IPromise
 
     void IPromise.SetResult(object result) {
         SetResult((T)result);
-    }
-
-    bool IPromise.TryTransferFrom(IFuture input) {
-        if (input.IsDone) {
-            if (input.IsSucceeded) {
-                return TrySetResult((T)input.ResultNow());
-            }
-            Exception cause = input.ExceptionNow(false);
-            return TrySetException(cause);
-        }
-        return false;
     }
 
     #endregion

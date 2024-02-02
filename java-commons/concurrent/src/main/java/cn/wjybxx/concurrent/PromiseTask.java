@@ -124,10 +124,12 @@ public class PromiseTask<V> implements IFutureTask<V> {
      * 1.executor应当在调度任务之前设置options
      * 2.该接口为了避免对提交的任务进行二次封装。
      */
+    @Override
     public final void setOptions(int options) {
         this.options = options;
     }
 
+    @Override
     public final int getOptions() {
         return options;
     }

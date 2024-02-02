@@ -88,8 +88,9 @@ public interface ICompletionStage<T> {
 
     /**
      * 当前计算绑定的上下文
-     * 1.在添加下游任务时，如果没有显式指定Context，将继承当前Future的上下文。
-     * 2.因此下游任务中的ctx参数永远不为null。
+     * 1.在添加下游任务时，如果没有显式指定Context，将继承当前任务的上下文 -- 默认不继承取消令牌！
+     * 2.如果root任务未显式指定上下文，将使用{@link IContext#NONE}。
+     * 3.因此下游任务中的ctx参数永远不为null。
      */
     @Nonnull
     IContext ctx();

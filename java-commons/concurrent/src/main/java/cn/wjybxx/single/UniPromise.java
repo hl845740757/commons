@@ -373,9 +373,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
     @Override
     public boolean trySetCancelled(int code) {
-        Throwable cause = code == 1
-                ? StacklessCancellationException.INSTANCE
-                : new StacklessCancellationException(code);
+        Throwable cause = StacklessCancellationException.instOf(code);
         if (internalComplete(new AltResult(cause))) {
             postComplete(this); // 不记录日志
             return true;
@@ -1198,7 +1196,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     }
 
     private boolean completeCancelled() {
-        return internalComplete(new AltResult(StacklessCancellationException.INSTANCE));
+        return internalComplete(new AltResult(StacklessCancellationException.INST1));
     }
 
     /**
@@ -1303,7 +1301,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                 return true;
             }
             if (!output.trySetComputing()) { // 被用户取消
-                throw StacklessCancellationException.INSTANCE;
+                throw StacklessCancellationException.INST1;
             }
             this.executor = CLAIMED;
             if (e != null) {

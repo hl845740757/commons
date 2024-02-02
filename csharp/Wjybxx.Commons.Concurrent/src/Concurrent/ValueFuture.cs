@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent;
 
@@ -284,7 +285,7 @@ public readonly struct ValueFuture
     /// </summary>
     /// <param name="result"></param>
     /// <returns></returns>
-    public static ValueFuture FromResult(object result) {
+    public static ValueFuture FromResult(object? result = null) {
         return new ValueFuture(result, null);
     }
 
@@ -307,7 +308,7 @@ public readonly struct ValueFuture
     /// <exception cref="ArgumentNullException"></exception>
     public static ValueFuture FromCancelled(OperationCanceledException? ex = null) {
         if (ex == null) {
-            ex = new BetterCancellationException(1);
+            ex = new OperationCanceledException();
         }
         return new ValueFuture(null, ex);
     }

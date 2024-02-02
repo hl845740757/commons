@@ -38,6 +38,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="src\Disruptor" />
       <Folder Include="src\Single" />
     </ItemGroup>
 </Project>

@@ -16,30 +16,25 @@
 
 #endregion
 
-using System;
-using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 
 /// </summary>
-/// <typeparam name="T">任务的结果类型</typeparam>
-/// <typeparam name="S">状态机的类型</typeparam>
-public interface IRunnableFutureTask<T, S> : IFutureTask<T> where S : IAsyncStateMachine
+public interface ISingleThreadExecutor : IExecutor
 {
     /// <summary>
-    /// 用于驱动StateMachine的Action委托
-    /// 
-    /// ps：定义为属性以允许实现类进行一些优化，比如：插入代理，缓存实例。
+    /// 查询当前是否在EventLoop所属的线程
     /// </summary>
-    Action MoveToNext { get; }
+    /// <returns>如果在EventLoop所属的线程则返回true；否则返回false</returns>
+    bool InEventLoop();
 
     /// <summary>
-    /// 设置关联的异步状态机
-    /// 
-    /// PS：<see cref="ITask.Run"/>用于驱动状态机前进
+    /// 测试给定线程是否是EventLoop线程
+    /// 注意：EventLoop接口约定是单线程的，不会并发执行提交的任务，但不约定整个生命周期都在同一个线程上，以允许在空闲的时候销毁线程。
     /// </summary>
-    /// <param name="stateMachine"></param>
-    void SetStateMachine(ref S stateMachine);
+    /// <param name="thread">要测试的线程</param>
+    bool InEventLoop(Thread thread);
 }

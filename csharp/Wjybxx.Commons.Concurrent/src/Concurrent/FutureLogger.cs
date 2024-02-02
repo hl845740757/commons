@@ -20,6 +20,9 @@ using System;
 
 namespace Wjybxx.Commons.Concurrent;
 
+/// <summary>
+/// 用于记录Future异步执行过程中的异常，用于排查错误
+/// </summary>
 public sealed class FutureLogger
 {
     public static void LogCause(Exception ex, string? message = null) {

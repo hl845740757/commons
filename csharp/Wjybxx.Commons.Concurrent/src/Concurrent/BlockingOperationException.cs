@@ -17,29 +17,26 @@
 #endregion
 
 using System;
-using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 
+#pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 
+/// 如果一个操作可能导致死锁状态将抛出该异常.
+/// 通常是因为监听者和执行者在同一个线程，监听者尝试阻塞等待结果。
 /// </summary>
-/// <typeparam name="T">任务的结果类型</typeparam>
-/// <typeparam name="S">状态机的类型</typeparam>
-public interface IRunnableFutureTask<T, S> : IFutureTask<T> where S : IAsyncStateMachine
+public class BlockingOperationException : Exception
 {
-    /// <summary>
-    /// 用于驱动StateMachine的Action委托
-    /// 
-    /// ps：定义为属性以允许实现类进行一些优化，比如：插入代理，缓存实例。
-    /// </summary>
-    Action MoveToNext { get; }
+    public BlockingOperationException() {
+    }
 
-    /// <summary>
-    /// 设置关联的异步状态机
-    /// 
-    /// PS：<see cref="ITask.Run"/>用于驱动状态机前进
-    /// </summary>
-    /// <param name="stateMachine"></param>
-    void SetStateMachine(ref S stateMachine);
+    protected BlockingOperationException(SerializationInfo info, StreamingContext context) : base(info, context) {
+    }
+
+    public BlockingOperationException(string? message) : base(message) {
+    }
+
+    public BlockingOperationException(string? message, Exception? innerException) : base(message, innerException) {
+    }
 }

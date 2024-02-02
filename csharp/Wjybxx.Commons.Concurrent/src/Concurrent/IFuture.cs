@@ -115,6 +115,7 @@ public interface IFuture<T> : IFuture
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
     /// <returns></returns>
     new ValueFuture<T> GetAwaiter(IExecutor executor, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
         return new ValueFuture<T>(this, executor, options);
     }
 

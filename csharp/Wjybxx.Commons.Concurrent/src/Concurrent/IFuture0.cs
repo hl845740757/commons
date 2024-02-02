@@ -25,7 +25,7 @@ namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 1. 该非泛型接口用于支持统一操作，不提供具体实现。
-/// 2. void可通过int或bool类型泛型替代。
+/// 2. void可通过byte/int泛型替代。
 /// 3. C#由于支持async/await语法，因此未像<see cref="Task{TResult}"/>一样提供大量的回调接口；一方面是async/await代码更易读，另一方面是真泛型下实现成本太高。
 /// </summary>
 [AsyncMethodBuilder(typeof(AsyncFutureMethodBuilder))]
@@ -123,21 +123,6 @@ public interface IFuture
     object Join();
 
     /// <summary>
-    /// 阻塞到任务完成或超时
-    /// </summary>
-    /// <param name="timeout">等待时长</param>
-    /// <exception cref="ThreadInterruptedException">线程被中断</exception>
-    /// <returns>任务在这期间是否进入了完成状态</returns>
-    bool Await(TimeSpan timeout);
-
-    /// <summary>
-    /// 阻塞到任务完成或超时，等待期间不响应中断
-    /// </summary>
-    /// <param name="timeout">等待时长</param>
-    /// <returns></returns>
-    bool AwaitUninterruptibly(TimeSpan timeout);
-
-    /// <summary>
     /// 阻塞到任务完成
     /// </summary>
     /// <exception cref="ThreadInterruptedException">线程被中断</exception>
@@ -149,6 +134,23 @@ public interface IFuture
     /// </summary>
     /// <returns>this</returns>
     IFuture AwaitUninterruptibly();
+
+    /// <summary>
+    /// 阻塞到任务完成或超时
+    /// </summary>
+    /// <param name="timeout">等待时长</param>
+    /// <exception cref="ThreadInterruptedException">线程被中断</exception>
+    /// <exception cref="ArgumentException">如果等待时间小于0</exception>
+    /// <returns>任务在这期间是否进入了完成状态</returns>
+    bool Await(TimeSpan timeout);
+
+    /// <summary>
+    /// 阻塞到任务完成或超时，等待期间不响应中断
+    /// </summary>
+    /// <param name="timeout">等待时长</param>
+    /// <exception cref="ArgumentException">如果等待时间小于0</exception>
+    /// <returns>任务在这期间是否进入了完成状态</returns>
+    bool AwaitUninterruptibly(TimeSpan timeout);
 
     #endregion
 
@@ -179,6 +181,7 @@ public interface IFuture
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
     /// <returns></returns>
     ValueFuture GetAwaiter(IExecutor executor, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
         return new ValueFuture(this, executor, options);
     }
 

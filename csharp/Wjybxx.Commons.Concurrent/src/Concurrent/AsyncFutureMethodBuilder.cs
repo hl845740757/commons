@@ -31,21 +31,14 @@ public struct AsyncFutureMethodBuilder
 {
     /// <summary>
     /// 当任务异步完成时有值
+    /// 
+    /// ps:如果task和ex都为null，表示任务已同步完成
     /// </summary>
-    private IFutureTask? _futureTask;
+    private IStateMachineTask? _task;
     /// <summary>
-    /// 任务同步失败时有值
+    /// 任务失败的原因 -- 任务同步失败时有值
     /// </summary>
     private Exception? _ex;
-    /// <summary>
-    /// 如果futureTask和ex都为null，表示任务已同步完成
-    /// </summary>
-    private object? _result;
-
-    // 避免将FutureTask中的接口声明为Promise
-    private static IPromise GetPromise(IFutureTask futureTask) {
-        return (IPromise)futureTask.Future;
-    }
 
     // 1. Static Create method 
     public static AsyncFutureMethodBuilder Create() {
@@ -63,21 +56,21 @@ public struct AsyncFutureMethodBuilder
     public ValueFuture Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
-            if (_futureTask != null) {
-                return new ValueFuture(_futureTask.Future);
+            if (_task != null) {
+                return new ValueFuture(_task.Future);
             }
             if (_ex != null) {
                 return ValueFuture.FromException(_ex);
             }
-            return ValueFuture.FromResult(_result);
+            return ValueFuture.FromResult();
         }
     }
 
     // 4. SetException -- 同步或异步完成时
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetException(Exception exception) {
-        if (_futureTask != null) {
-            GetPromise(_futureTask).TrySetException(exception);
+        if (_task != null) {
+            _task.SetException(exception);
         } else {
             this._ex = exception;
         }
@@ -85,39 +78,33 @@ public struct AsyncFutureMethodBuilder
 
     // 5. SetResult -- 同步或异步完成时
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetResult(T result) {
-        if (_futureTask != null) {
-            GetPromise(_futureTask).TrySetResult(result);
-        } else {
-            this._result = result;
+    public void SetResult() {
+        if (_task != null) {
+            _task.SetResult();
         }
     }
 
-    // 6. AwaitOnCompleted -- 异步完成时
+    // 6. AwaitOnCompleted -- 未同步完成时/需要异步执行时
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AwaitOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
-        if (_futureTask == null) {
-            PromiseTask<T, TStateMachine> promiseTask = new PromiseTask<T, TStateMachine>();
-            promiseTask.SetStateMachine(ref stateMachine);
-            _futureTask = promiseTask;
+        if (_task == null) {
+            _task = new StateMachineTask<TStateMachine>(ref stateMachine);
         }
-        awaiter.OnCompleted(_futureTask.MoveToNext);
+        awaiter.OnCompleted(_task.MoveToNext);
     }
 
-    // 6. AwaitUnsafeOnCompleted -- 异步完成时
+    // 6. AwaitUnsafeOnCompleted -- 未同步完成时/需要异步执行时
     [SecuritySafeCritical]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AwaitUnsafeOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
-        if (_futureTask == null) {
-            PromiseTask<T, TStateMachine> promiseTask = new PromiseTask<T, TStateMachine>();
-            promiseTask.SetStateMachine(ref stateMachine);
-            _futureTask = promiseTask;
+        if (_task == null) {
+            _task = new StateMachineTask<TStateMachine>(ref stateMachine);
         }
-        awaiter.UnsafeOnCompleted(_futureTask.MoveToNext);
+        awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }
 
     // 8. SetStateMachine
@@ -133,21 +120,18 @@ public struct AsyncFutureMethodBuilder<T>
 {
     /// <summary>
     /// 当任务异步完成时有值
+    ///
+    /// ps:如果task和ex都为null，表示任务已同步完成
     /// </summary>
-    private IFutureTask<T>? _futureTask;
+    private IStateMachineTask<T>? _task;
     /// <summary>
-    /// 任务同步失败时有值
+    /// 任务失败的原因 -- 任务同步失败时有值
     /// </summary>
     private Exception? _ex;
     /// <summary>
-    /// 如果futureTask和ex都为null，表示任务已同步完成
+    /// 任务的执行结果 -- 任务同步成功时有值
     /// </summary>
     private T? _result;
-
-    // 避免将FutureTask中的接口声明为Promise
-    private static IPromise<T> GetPromise(IFutureTask<T> futureTask) {
-        return (IPromise<T>)futureTask.Future;
-    }
 
     // 1. Static Create method 
     public static AsyncFutureMethodBuilder<T> Create() {
@@ -165,8 +149,8 @@ public struct AsyncFutureMethodBuilder<T>
     public ValueFuture<T> Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
-            if (_futureTask != null) {
-                return new ValueFuture<T>(_futureTask.Future);
+            if (_task != null) {
+                return new ValueFuture<T>(_task.Future);
             }
             if (_ex != null) {
                 return ValueFuture<T>.FromException(_ex);
@@ -178,8 +162,8 @@ public struct AsyncFutureMethodBuilder<T>
     // 4. SetException -- 同步或异步完成时
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetException(Exception exception) {
-        if (_futureTask != null) {
-            GetPromise(_futureTask).TrySetException(exception);
+        if (_task != null) {
+            _task.SetException(exception);
         } else {
             this._ex = exception;
         }
@@ -188,38 +172,34 @@ public struct AsyncFutureMethodBuilder<T>
     // 5. SetResult -- 同步或异步完成时
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetResult(T result) {
-        if (_futureTask != null) {
-            GetPromise(_futureTask).TrySetResult(result);
+        if (_task != null) {
+            _task.SetResult(result);
         } else {
             this._result = result;
         }
     }
 
-    // 6. AwaitOnCompleted -- 异步完成时
+    // 6. AwaitOnCompleted -- 未同步完成时/需要异步执行时
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AwaitOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
-        if (_futureTask == null) {
-            PromiseTask<T, TStateMachine> promiseTask = new PromiseTask<T, TStateMachine>();
-            promiseTask.SetStateMachine(ref stateMachine);
-            _futureTask = promiseTask;
+        if (_task == null) {
+            _task = new StateMachineTask<T, TStateMachine>(ref stateMachine);
         }
-        awaiter.OnCompleted(_futureTask.MoveToNext);
+        awaiter.OnCompleted(_task.MoveToNext);
     }
 
-    // 6. AwaitUnsafeOnCompleted -- 异步完成时
+    // 6. AwaitUnsafeOnCompleted -- 未同步完成时/需要异步执行时
     [SecuritySafeCritical]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AwaitUnsafeOnCompleted<TAwaiter, TStateMachine>(ref TAwaiter awaiter, ref TStateMachine stateMachine)
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
-        if (_futureTask == null) {
-            PromiseTask<T, TStateMachine> promiseTask = new PromiseTask<T, TStateMachine>();
-            promiseTask.SetStateMachine(ref stateMachine);
-            _futureTask = promiseTask;
+        if (_task == null) {
+            _task = new StateMachineTask<T, TStateMachine>(ref stateMachine);
         }
-        awaiter.UnsafeOnCompleted(_futureTask.MoveToNext);
+        awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }
 
     // 8. SetStateMachine

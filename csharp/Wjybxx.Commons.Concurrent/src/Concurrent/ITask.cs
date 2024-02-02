@@ -19,18 +19,18 @@
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// <see cref="IExecutor"/>中调度的任务的抽象。
-/// 1.该接口暴露给Executor的扩展类，不是用户使用的类 -- 用户面向Action等委托类型即可。
-/// 2.
+/// Task是<see cref="IExecutor"/>中调度的任务的抽象。
+/// 1. 该接口暴露给Executor的扩展类，不是用户使用的类 -- 用户面向Action等委托类型即可。
+/// 2. C#的委托类型过于狭窄，难以扩展，因此我们需要一个接口类型来表达队列中的任务。
+/// 3. 该接口的实例通常不应该被序列化。
 /// 
-/// ps：可认为是Java的Runnable。
 /// </summary>
 public interface ITask
 {
     /// <summary>
     /// 任务的调度选项
     /// </summary>
-    int Options { get; set; }
+    int Options { get; }
 
     /// <summary>
     /// 任务的逻辑

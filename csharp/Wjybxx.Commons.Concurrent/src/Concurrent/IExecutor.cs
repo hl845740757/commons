@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Wjybxx.Commons.Concurrent;
@@ -30,30 +31,63 @@ namespace Wjybxx.Commons.Concurrent;
 public interface IExecutor
 {
     /// <summary>
+    /// 获取当前Executor的<see cref="TaskScheduler"/>视图。
+    /// 
+    /// ps: 该接口仅用于和系统库的Task协作，用于执行Task的延续任务，其它时候避免使用。
+    /// </summary>
+    /// <returns></returns>
+    TaskScheduler AsScheduler();
+
+    /// <summary>
+    /// 调度一个受信任的Task类型，Executor不会再对其进行封装
+    /// </summary>
+    /// <param name="task">要调度的任务</param>
+    void Execute(ITask task);
+
+    #region 辅助方法
+
+    /// C#的lambda是基于委托的，而Java的lambda是基于函数式接口的；
+    /// 在java端，只要方法参数是函数式接口，用户就可以传递lambda；在C#端，只有方法参数是委托类型，才可以使用lambda；
+    /// 支持lambda是必要的，因此我们需要提供一些辅助方法来简化使用；
+    /// <summary>
     /// 在将来的某个时间执行给定的命令。
     /// 命令可以在新线程中执行，也可以在池线程中执行，或者在调用线程中执行，这由Executor实现决定。
     /// </summary>
     /// <param name="action">要执行的任务</param>
     /// <param name="options">任务的调度特征值，见<see cref="TaskOption"/></param>
-    void Execute(Action action, int options = 0);
+    void Execute(Action action, int options = 0) {
+        Execute(Executors.BoxAction(action, options));
+    }
 
     /// <summary>
-    /// 在将来的某个时间执行给定的命令。
-    /// 命令可以在新线程中执行，也可以在池线程中执行，或者在调用线程中执行，这由Executor实现决定。
-    /// 调度器在执行之前会检测任务的取消信号，如果已收到取消信号则放弃执行。
+    /// 调度器在执行之前会检测取消信号，如果已收到取消信号则放弃执行。
     /// </summary>
     /// <param name="action">要执行的任务</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">任务的调度特征值，见<see cref="TaskOption"/></param>
-    void Execute(Action action, ICancelToken cancelToken, int options = 0);
+    void Execute(Action action, CancellationToken cancelToken, int options = 0) {
+        Execute(Executors.BoxAction(action, cancelToken, options));
+    }
 
     /// <summary>
-    /// 在将来的某个时间执行给定的命令。
-    /// 命令可以在新线程中执行，也可以在池线程中执行，或者在调用线程中执行，这由Executor实现决定。
-    /// 调度器在执行之前会检测任务的取消信号，如果已收到取消信号则放弃执行。
+    /// 调度器在执行之前会检测取消信号，如果已收到取消信号则放弃执行。
+    /// </summary>
+    /// <param name="action">要执行的任务</param>
+    /// <param name="cancelToken">取消令牌</param>
+    /// <param name="options">任务的调度特征值，见<see cref="TaskOption"/></param>
+    void Execute(Action action, ICancelToken cancelToken, int options = 0) {
+        Execute(Executors.BoxAction(action, cancelToken, options));
+    }
+
+    /// <summary>
+    /// 调度器在执行之前会检测Context中的取消信号，如果已收到取消信号则放弃执行。
     /// </summary>
     /// <param name="action">要执行的任务</param>
     /// <param name="context">任务上下文</param>
     /// <param name="options">任务的调度特征值，见<see cref="TaskOption"/></param>
-    void Execute(Action<TaskContext> action, TaskContext context, int options = 0);
+    void Execute(Action<TaskContext> action, TaskContext context, int options = 0) {
+        Execute(Executors.BoxAction(action, context, options));
+    }
+
+    #endregion
 }

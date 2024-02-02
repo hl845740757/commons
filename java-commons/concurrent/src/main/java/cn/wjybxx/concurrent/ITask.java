@@ -16,27 +16,26 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.annotation.Beta;
+
 /**
- * FutureTask是Executor压入的可获取结果的任务类型
+ * Task是Executor中调度的任务抽象。
  * 1.该接口暴露给Executor的扩展类，不是用户使用的类。
- * 2.需要获取结果的任务，我们将调度选项保存下来；普通任务的调度选项可能仅在execute时使用。
- * 3.该接口的实例通常是不应该被序列化的
+ * 2.该接口的实例通常是不应该被序列化的
+ * <p>
+ * 实际上，Task不继承Runnable会更好，这样更具有识别度；也可以避免{@link IExecutor#execute(Runnable, int)}的歧义问题。
+ * 但如果不继承{@link Runnable}，则我们总要对用户的任务进行封装，这可能产生较多的开销 —— 因此我们仍然继承{@link Runnable}接口。
  *
  * @author wjybxx
- * date - 2023/11/16
+ * date - 2024/2/2
  */
-public interface IFutureTask<V> extends ITask {
+@Beta
+public interface ITask extends Runnable {
 
-    /**
-     * 用于获取结果的句柄
-     * Executor通常返回的是{@link IPromise}，可调用{@link IFuture#asReadonly()}关闭写接口。
-     */
-    IFuture<V> future();
+    /** 任务的调度选项 */
+    int getOptions();
 
-    /**
-     * run方法应当使{@link #future()}进入完成状态
-     */
-    @Override
-    void run();
+    /** 设置任务的调度选项 */
+    void setOptions(int options);
 
 }

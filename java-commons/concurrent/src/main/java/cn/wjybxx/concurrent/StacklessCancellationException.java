@@ -23,13 +23,12 @@ import cn.wjybxx.base.ex.NoLogRequiredException;
  * @author wjybxx
  * date 2023/4/3
  */
-public class StacklessCancellationException extends BetterCancellationException implements NoLogRequiredException {
+public final class StacklessCancellationException extends BetterCancellationException implements NoLogRequiredException {
 
-    public static StacklessCancellationException INSTANCE = new StacklessCancellationException();
-
-    public StacklessCancellationException() {
-        super(1);
-    }
+    public static final StacklessCancellationException INST1 = new StacklessCancellationException(1);
+    private static final StacklessCancellationException INST2 = new StacklessCancellationException(2);
+    private static final StacklessCancellationException INST3 = new StacklessCancellationException(3);
+    private static final StacklessCancellationException INST4 = new StacklessCancellationException(4);
 
     public StacklessCancellationException(int code) {
         super(code);
@@ -39,8 +38,17 @@ public class StacklessCancellationException extends BetterCancellationException 
         super(code, message);
     }
 
-    public final Throwable fillInStackTrace() {
+    public Throwable fillInStackTrace() {
         return this;
     }
 
+    public static StacklessCancellationException instOf(int code) {
+        return switch (code) {
+            case 1 -> INST1;
+            case 2 -> INST2;
+            case 3 -> INST3;
+            case 4 -> INST4;
+            default -> new StacklessCancellationException(code);
+        };
+    }
 }

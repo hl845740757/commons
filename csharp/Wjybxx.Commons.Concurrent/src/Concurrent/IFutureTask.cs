@@ -16,8 +16,6 @@
 
 #endregion
 
-using System;
-
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
@@ -31,13 +29,6 @@ public interface IFutureTask : ITask
     /// 任务关联的Future
     /// </summary>
     IFuture Future { get; }
-
-    /// <summary>
-    /// 用于驱动StateMachine的Action委托
-    /// 
-    /// ps：定义为属性以允许实现类进行一些优化，比如：插入代理，缓存实例。
-    /// </summary>
-    Action MoveToNext { get; }
 }
 
 /// <summary>

@@ -21,7 +21,6 @@ using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Concurrent;
 
-
 public class ValueFutureAwaiter<T> : INotifyCompletion
 {
     private readonly ValueFuture<T> future;
@@ -69,7 +68,6 @@ public class ValueFutureAwaiter<T> : INotifyCompletion
 
 public class ValueFutureAwaiter : INotifyCompletion
 {
-
     private readonly ValueFuture future;
     private readonly IExecutor? executor;
     private readonly int options;

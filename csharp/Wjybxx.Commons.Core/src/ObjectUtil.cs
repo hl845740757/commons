@@ -53,6 +53,13 @@ public static class ObjectUtil
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long SystemTicks() => Stopwatch.GetTimestamp();
 
+    /// <summary>
+    /// 系统tick对应的毫秒时间戳
+    /// 注意：不是Unix时间戳！
+    /// </summary>
+    /// <returns></returns>
+    public static long SystemTickMillis() => Stopwatch.GetTimestamp() / DatetimeUtil.TicksPerMillisecond;
+
     #region string
 
     /// <summary>
