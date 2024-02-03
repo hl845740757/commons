@@ -101,17 +101,17 @@ public class ValueFutureAwaiter : INotifyCompletion
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
         if (executor == null) {
-            future.OnCompleted(Invoker, continuation, options);
+            future.OnCompleted(continuation, options);
         } else {
-            future.OnCompletedAsync(executor, Invoker, continuation, options);
+            future.OnCompletedAsync(executor, continuation, options);
         }
     }
 
     public void UnsafeOnCompleted(Action continuation) {
         if (executor == null) {
-            future.OnCompleted(Invoker, continuation, options);
+            future.OnCompleted(continuation, options);
         } else {
-            future.OnCompletedAsync(executor, Invoker, continuation, options);
+            future.OnCompletedAsync(executor, continuation, options);
         }
     }
 }

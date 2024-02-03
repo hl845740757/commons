@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,16 +26,25 @@ using System.Threading.Tasks;
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
+/// 该类解决两个问题：
+/// 1. 解决泛型类的常量不共享问题。
+/// 2. 提取公共代码（监听器管理）。
 ///
-/// 1. 该类用于解决泛型数据共享问题，用户不应该使用该类。
-/// 2. 由于C#禁止超类的访问权限小于子类，该类只能定义为Public...
+/// 注意：用户不应该使用该类 - 由于C#禁止超类的访问权限小于子类，该类只能定义为Public...
 /// </summary>
-public abstract class Promise
+public abstract class Completable
 {
     /// <summary>
-    /// 重载future中
+    /// 是否处于宽松完成状态-结果已可获取，或即将可用。
+    /// 处于已完成，或发布结果中也可返回true。
     /// </summary>
-    public abstract bool IsDone { get; }
+    protected abstract bool IsRelaxedCompleted { get; }
+
+    /// <summary>
+    /// 是否已严格完成-结果已可获取.
+    /// 如果存在中间状态，则需要返回false。
+    /// </summary>
+    protected abstract bool IsStrictlyCompleted { get; }
 
     #region notify
 
@@ -42,7 +52,7 @@ public abstract class Promise
     /// 当前对象上的所有监听器，使用栈方式存储
     /// 如果{@code stack}为{@link #TOMBSTONE}，表明当前Future已完成，且正在进行通知，或已通知完毕。
     /// </summary>
-    protected volatile Completion stack;
+    protected volatile Completion? stack;
 
     // Modes for Completion.tryFire. Signedness matters.
     /**
@@ -80,7 +90,7 @@ public abstract class Promise
 
     /// <returns>压栈成功则返回true，否则返回false</returns>
     protected bool PushCompletion(Completion newHead) {
-        if (IsDone) {
+        if (IsStrictlyCompleted) {
             newHead.TryFire(SYNC);
             return false;
         }
@@ -99,7 +109,7 @@ public abstract class Promise
         return false;
     }
 
-    protected static void PostComplete(Promise future) {
+    protected static void PostComplete(Completable future) {
         Completion next = null;
         outer:
         while (true) {
@@ -127,7 +137,7 @@ public abstract class Promise
     /// A: Future的监听器构成了一棵树，在不进行优化的情况下，遍历监听器是一个【前序遍历】过程，这会产生很深的方法栈，从而影响性能。
     /// 该操作将子节点的监听器提升为当前节点的兄弟节点(插在前方)，从而将树形遍历优化为【线性遍历】，从而降低了栈深度，提高了性能。
     /// </summary>
-    private static Completion? ClearListeners(Promise promise, Completion? onto) {
+    private static Completion? ClearListeners(Completable promise, Completion? onto) {
         // 我们需要进行三件事
         // 1. 原子方式将当前Listeners赋值为TOMBSTONE，因为pushCompletion添加的监听器的可见性是由CAS提供的。
         // 2. 将当前栈内元素逆序，因为即使在接口层进行了说明（不提供监听器执行时序保证），但仍然有人依赖于监听器的执行时序(期望先添加的先执行)
@@ -187,7 +197,7 @@ public abstract class Promise
         /// 2. mode指示可以调用{@link #postComplete(Promise)}方法时，则直接推送其进入完成状态的事件。
         /// </summary>
         /// <param name="mode"></param>
-        protected internal abstract Promise? TryFire(int mode);
+        protected internal abstract Completable? TryFire(int mode);
     }
 
     /// <summary>
@@ -199,7 +209,7 @@ public abstract class Promise
     {
         public override int Options => 0;
 
-        protected internal override Promise? TryFire(int mode) {
+        protected internal override Completable? TryFire(int mode) {
             throw new NotImplementedException();
         }
     }
@@ -207,23 +217,23 @@ public abstract class Promise
     /// <summary>
     /// 用于在Future上等待的节点
     /// </summary>
-    protected sealed class Awaiter : Completion
+    protected abstract class Awaiter : Completion
     {
-        private readonly IFuture future;
+        private readonly object future;
         private int waiterCount;
 
-        public Awaiter(IFuture future) {
+        public Awaiter(object future) {
             this.future = future ?? throw new ArgumentNullException(nameof(future));
         }
 
         public override int Options => 0;
 
-        protected internal override Promise? TryFire(int mode) {
+        protected internal override Completable? TryFire(int mode) {
             ReleaseWaiters();
             return null;
         }
 
-        internal void ReleaseWaiters() {
+        public void ReleaseWaiters() {
             Monitor.Enter(future);
             try {
                 if (waiterCount > 0) {
@@ -235,22 +245,28 @@ public abstract class Promise
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void IncWaiter() {
             waiterCount++;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DecWaiter() {
             waiterCount--;
         }
 
+        /// <summary>
+        /// 给定对象是否已进入完成状态（或即将完成）
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        protected abstract bool IsRelaxedCompleted(object obj);
+
         public void Await() {
-            if (future.IsDone) {
-                return;
-            }
             Monitor.Enter(future);
             IncWaiter();
             try {
-                while (!future.IsDone) {
+                while (!IsRelaxedCompleted(future)) {
                     Monitor.Wait(future);
                 }
             }
@@ -261,14 +277,11 @@ public abstract class Promise
         }
 
         public void AwaitUninterruptibly() {
-            if (future.IsDone) {
-                return;
-            }
             Monitor.Enter(future);
             IncWaiter();
             bool interrupted = false;
             try {
-                while (!future.IsDone) {
+                while (!IsRelaxedCompleted(future)) {
                     try {
                         Monitor.Wait(future);
                     }
@@ -297,7 +310,7 @@ public abstract class Promise
             Monitor.Enter(future);
             IncWaiter();
             try {
-                while (!future.IsDone) {
+                while (!IsRelaxedCompleted(future)) {
                     int remainMillis = MathCommon.Clamp(deadline - ObjectUtil.SystemTicks(), 0, int.MaxValue);
                     if (remainMillis <= 0) {
                         return false;
@@ -323,7 +336,7 @@ public abstract class Promise
             Monitor.Enter(future);
             IncWaiter();
             try {
-                while (!future.IsDone) {
+                while (!IsRelaxedCompleted(future)) {
                     int remainMillis = MathCommon.Clamp(deadline - ObjectUtil.SystemTicks(), 0, int.MaxValue);
                     if (remainMillis <= 0) {
                         return false;

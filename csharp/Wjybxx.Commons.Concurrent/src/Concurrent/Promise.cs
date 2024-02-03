@@ -31,7 +31,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// PS：重复编码不仅仅是指Promise，与Promise相关的各个体系都需要双份...
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class Promise<T> : Promise, IPromise<T>, IFuture<T>
+public class Promise<T> : Completable, IPromise<T>, IFuture<T>
 {
     private const int ST_PENDING = (int)TaskStatus.PENDING;
     private const int ST_COMPUTING = (int)TaskStatus.COMPUTING;
@@ -58,11 +58,24 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
         _executor = executor;
     }
 
-    public static Promise<T> CompletedPromise(T result) {
+    private Promise(IExecutor? executor, T result, Exception? ex) {
+        this._executor = executor;
+        if (ex == null) {
+            this._result = result;
+            this._state = ST_SUCCESS;
+        } else {
+            this._ex = ex;
+            this._state = ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
+        }
     }
 
-    public static Promise<T> FailedPromise(Exception ex) {
+    public static Promise<T> CompletedPromise(T result, IExecutor? executor = null) {
+        return new Promise<T>(executor, result, null);
+    }
+
+    public static Promise<T> FailedPromise(Exception ex, IExecutor? executor = null) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
+        return new Promise<T>(executor, default, ex);
     }
 
     #region internal
@@ -116,8 +129,8 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
         return new CompletionException(null, ex);
     }
 
-    /** 获取当前状态（宽松），如果处于发布中状态，则返回即将进入的状态 */
-    private int RelaxedState() {
+    /** 获取当前状态，如果处于发布中状态，则返回即将进入的状态 */
+    private int PeekState() {
         int state = _state;
         if (state < 0) {
             state *= -1;
@@ -125,8 +138,8 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
         return state;
     }
 
-    /** 获取当前状态（严格），如果处于发布中状态，则等待目标线程发布完毕 */
-    private int StrictState() {
+    /** 获取当前状态，如果处于发布中状态，则等待目标线程发布完毕 */
+    private int PollState() {
         int state = _state;
         if (state < 0) {
             // busy spin -- 该过程通常很快，因此自旋等待即可
@@ -157,15 +170,26 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
         return state >= ST_FAILED;
     }
 
-    public TaskStatus Status => (TaskStatus)RelaxedState();
-    public bool IsPending => RelaxedState() == ST_PENDING;
-    public bool IsComputing => RelaxedState() == ST_COMPUTING;
-    public bool IsCancelled => RelaxedState() == ST_CANCELLED;
-    public bool IsSucceeded => RelaxedState() == ST_SUCCESS;
-    public bool IsFailed => RelaxedState() == ST_FAILED;
+    public TaskStatus Status => (TaskStatus)PeekState();
+    public bool IsPending => PeekState() == ST_PENDING;
+    public bool IsComputing => PeekState() == ST_COMPUTING;
+    public bool IsCancelled => PeekState() == ST_CANCELLED;
+    public bool IsSucceeded => PeekState() == ST_SUCCESS;
+    public bool IsFailed => PeekState() == ST_FAILED;
 
-    public sealed override bool IsDone => RelaxedState() >= ST_SUCCESS;
-    public bool IsFailedOrCancelled => RelaxedState() >= ST_FAILED;
+    public bool IsDone => PeekState() >= ST_SUCCESS;
+    public bool IsFailedOrCancelled => PeekState() >= ST_FAILED;
+
+    protected sealed override bool IsRelaxedCompleted => PeekState() >= ST_SUCCESS;
+    protected sealed override bool IsStrictlyCompleted {
+        get {
+            int state = _state;
+            if (state < 0) { //任务尚未真正完成时需要返回false
+                return false;
+            }
+            return state >= ST_SUCCESS;
+        }
+    }
 
     #endregion
 
@@ -207,7 +231,7 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
     public bool TrySetException(Exception cause) {
         if (cause == null) throw new ArgumentNullException(nameof(cause));
         if (InternalSetException(cause)) {
-            FutureLogger.LogCause(cause);
+            FutureLogger.LogCause(cause); // 记录日志
             PostComplete(this);
             return true;
         }
@@ -239,7 +263,7 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
     #region 非阻塞结果查询
 
     public T ResultNow() {
-        int state = StrictState();
+        int state = PollState();
         return state switch
         {
             ST_SUCCESS => _result,
@@ -250,13 +274,13 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
     }
 
     public Exception ExceptionNow(bool throwIfCancelled = true) {
-        int state = StrictState();
+        int state = PollState();
         return state switch
         {
             ST_FAILED => _ex!,
             ST_CANCELLED when throwIfCancelled => throw _ex!,
             ST_CANCELLED => _ex!,
-            ST_SUCCESS => throw new IllegalStateException("Task completed with a result");
+            ST_SUCCESS => throw new IllegalStateException("Task completed with a result"),
             _ => throw new IllegalStateException("Task has not completed")
         };
     }
@@ -285,29 +309,29 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
     }
 
     public T Get() {
-        int state = StrictState();
+        int state = PollState();
         if (IsDone0(state)) {
             return ReportJoin(state);
         }
         Await();
-        return ReportJoin(StrictState());
+        return ReportJoin(PollState());
     }
 
     public T Join() {
-        int state = StrictState();
+        int state = PollState();
         if (IsDone0(state)) {
             return ReportJoin(state);
         }
         AwaitUninterruptibly();
-        return ReportJoin(StrictState());
+        return ReportJoin(PollState());
     }
 
-    private Awaiter? TryPushAwaiter() {
+    private FutureAwaiter? TryPushAwaiter() {
         Completion head = stack;
-        if (head is Awaiter awaiter) {
+        if (head is FutureAwaiter awaiter) {
             return awaiter; // 阻塞操作不多，而且通常集中在调用链的首尾
         }
-        awaiter = new Awaiter(this);
+        awaiter = new FutureAwaiter(this);
         return PushCompletion(awaiter) ? awaiter : null;
     }
 
@@ -316,7 +340,7 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
             return this;
         }
         CheckDeadlock();
-        Awaiter awaiter = TryPushAwaiter();
+        FutureAwaiter awaiter = TryPushAwaiter();
         if (awaiter != null) {
             awaiter.Await();
         }
@@ -328,7 +352,7 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
             return this;
         }
         CheckDeadlock();
-        Awaiter awaiter = TryPushAwaiter();
+        FutureAwaiter awaiter = TryPushAwaiter();
         if (awaiter != null) {
             awaiter.AwaitUninterruptibly();
         }
@@ -340,7 +364,7 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
             return true;
         }
         CheckDeadlock();
-        Awaiter awaiter = TryPushAwaiter();
+        FutureAwaiter awaiter = TryPushAwaiter();
         if (awaiter != null) {
             return awaiter.Await(timeout);
         }
@@ -352,7 +376,7 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
             return true;
         }
         CheckDeadlock();
-        Awaiter awaiter = TryPushAwaiter();
+        FutureAwaiter awaiter = TryPushAwaiter();
         if (awaiter != null) {
             return awaiter.AwaitUninterruptibly(timeout);
         }
@@ -362,6 +386,20 @@ public class Promise<T> : Promise, IPromise<T>, IFuture<T>
     #endregion
 
     #region async
+
+    /// <summary>
+    /// 用于在Future上等待的节点
+    /// </summary>
+    protected sealed class FutureAwaiter : Awaiter
+    {
+        public FutureAwaiter(object future) : base(future) {
+        }
+
+        protected override bool IsRelaxedCompleted(object obj) {
+            IFuture future = (IFuture)obj;
+            return future.IsDone;
+        }
+    }
 
     #endregion
 }

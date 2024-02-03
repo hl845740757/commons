@@ -205,11 +205,11 @@ public interface IFuture<T> : IFuture
         OnCompletedAsync(executor, continuation, state, options);
     }
 
-    void IFuture.OnCompleted(Action<IFuture, TaskContext> continuation, TaskContext context, int options) {
+    void IFuture.OnCompleted(Action<IFuture, TaskContext> continuation, in TaskContext context, int options) {
         OnCompleted(continuation, context, options);
     }
 
-    void IFuture.OnCompletedAsync(IExecutor executor, Action<IFuture, TaskContext> continuation, TaskContext context, int options) {
+    void IFuture.OnCompletedAsync(IExecutor executor, Action<IFuture, TaskContext> continuation, in TaskContext context, int options) {
         OnCompletedAsync(executor, continuation, context, options);
     }
 

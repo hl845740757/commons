@@ -81,11 +81,12 @@ public interface IExecutor
 
     /// <summary>
     /// 调度器在执行之前会检测Context中的取消信号，如果已收到取消信号则放弃执行。
+    /// ps：用户接收context参数，可在执行中检测取消信号。
     /// </summary>
     /// <param name="action">要执行的任务</param>
     /// <param name="context">任务上下文</param>
     /// <param name="options">任务的调度特征值，见<see cref="TaskOption"/></param>
-    void Execute(Action<TaskContext> action, TaskContext context, int options = 0) {
+    void Execute(Action<TaskContext> action, in TaskContext context, int options = 0) {
         Execute(Executors.BoxAction(action, context, options));
     }
 
