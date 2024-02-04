@@ -232,8 +232,10 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             rejectedExecutionHandler.rejected(task, this);
             return;
         }
-        if (options != 0 && task instanceof PromiseTask<?> promiseTask) {
-            promiseTask.setOptions(options);
+        if (options != 0) {
+            if (task instanceof ITask trustedTask) {
+                trustedTask.setOptions(options);
+            } // else 暂时不需要保存
         }
         if (inEventLoop()) {
             // 当前线程调用，需要使用tryNext以避免死锁

@@ -22,6 +22,8 @@ namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 该接口表示基于异步状态机的任务
+///
+/// 暂时先不考虑复用对象问题。
 /// </summary>
 public interface IStateMachineTask : ITask
 {

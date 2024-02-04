@@ -75,7 +75,7 @@ public abstract class APromise
     internal const int NESTED = -1;
 
     /** 用于表示任务已申领权限 */
-    protected static readonly IExecutor CLAIMED = new MockExecutor();
+    internal static readonly IExecutor CLAIMED = new MockExecutor();
 
     private class MockExecutor : IExecutor
     {

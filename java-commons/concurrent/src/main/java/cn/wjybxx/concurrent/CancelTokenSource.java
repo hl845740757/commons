@@ -417,7 +417,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private IRegistration uniTransferTo(Executor executor, ICancelTokenSource child, int options) {
         Objects.requireNonNull(child, "child");
         if (isCancelling()) {
-            UniTransferTo.fireNow(this, Promise.SYNC, child);
+            UniTransferTo.fireNow(this, SYNC, child);
             return TOMBSTONE;
         }
         Completion completion = new UniTransferTo(executor, options, this, child);
@@ -428,7 +428,28 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     // endregion
 
-    // region core
+    // region internal
+
+    private static final VarHandle VH_CODE;
+    private static final VarHandle VH_STACK;
+    private static final VarHandle VH_ACTION;
+
+    static {
+        try {
+            MethodHandles.Lookup l = MethodHandles.lookup();
+            VH_CODE = l.findVarHandle(CancelTokenSource.class, "code", int.class);
+            VH_STACK = l.findVarHandle(CancelTokenSource.class, "stack", Completion.class);
+            VH_ACTION = l.findVarHandle(Completion.class, "action", Object.class);
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
+    private static final int SYNC = Promise.SYNC;
+    private static final int ASYNC = Promise.ASYNC;
+    private static final int NESTED = Promise.NESTED;
+    private static final Executor CLAIMED = Promise.CLAIMED;
+
 
     /** @return preCode */
     private int internalCancel(int cancelCode) {
@@ -436,10 +457,21 @@ public final class CancelTokenSource implements ICancelTokenSource {
         return (int) VH_CODE.compareAndExchange(this, 0, cancelCode);
     }
 
+    /** @return newestHead */
+    private Completion removeClosedNode(Completion expectedHead) {
+        // 无需循环尝试，因为每个线程的逻辑是一样的
+        Completion next = expectedHead.next;
+        while (next != null && next.action == TOMBSTONE) {
+            next = next.next;
+        }
+        Completion realHead = (Completion) VH_STACK.compareAndExchange(this, expectedHead, next);
+        return realHead == expectedHead ? next : realHead;
+    }
+
     /** @return 是否压栈成功 */
     private boolean pushCompletion(Completion newHead) {
         if (isCancelling()) {
-            newHead.tryFire(Promise.SYNC);
+            newHead.tryFire(SYNC);
             return false;
         }
         Completion expectedHead = stack;
@@ -453,19 +485,8 @@ public final class CancelTokenSource implements ICancelTokenSource {
             expectedHead = realHead; // retry
         }
         newHead.next = null;
-        newHead.tryFire(Promise.SYNC);
+        newHead.tryFire(SYNC);
         return false;
-    }
-
-    /** @return newestHead */
-    private Completion removeClosedNode(Completion expectedHead) {
-        // 无需循环尝试，因为每个线程的逻辑是一样的
-        Completion next = expectedHead.next;
-        while (next != null && next.action == TOMBSTONE) {
-            next = next.next;
-        }
-        Completion realHead = (Completion) VH_STACK.compareAndExchange(this, expectedHead, next);
-        return realHead == expectedHead ? next : realHead;
     }
 
     private static void postComplete(CancelTokenSource source) {
@@ -480,7 +501,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 next = next.next;
                 curr.next = null; // help gc
 
-                source = curr.tryFire(Promise.NESTED);
+                source = curr.tryFire(NESTED);
                 if (source != null) {
                     continue outer;
                 }
@@ -513,27 +534,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
         return ontoHead;
     }
 
-    // endregion
-
-    // region internal
-
-    private static final VarHandle VH_CODE;
-    private static final VarHandle VH_STACK;
-    private static final VarHandle VH_ACTION;
-
-    static {
-        try {
-            MethodHandles.Lookup l = MethodHandles.lookup();
-            VH_CODE = l.findVarHandle(CancelTokenSource.class, "code", int.class);
-            VH_STACK = l.findVarHandle(CancelTokenSource.class, "stack", Completion.class);
-            VH_ACTION = l.findVarHandle(Completion.class, "action", Object.class);
-        } catch (ReflectiveOperationException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
-
-    private static final Executor CLAIMED = Runnable::run;
-
     private static boolean submit(Completion completion, Executor e, int options) {
         // 尝试内联
         if (TaskOption.isEnabled(options, TaskOption.STAGE_TRY_INLINE)
@@ -547,13 +547,14 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 && e instanceof IExecutor exe) {
             exe.execute(completion, options);
         } else {
+            completion.setOptions(0);
             e.execute(completion);
         }
         return false;
     }
 
     /** 不需要复用对象的情况下无需分配唯一id */
-    private static abstract class Completion implements IRegistration, Runnable {
+    private static abstract class Completion implements IRegistration, ITask {
 
         /** 非volatile，由栈顶的cas更新保证可见性 */
         Completion next;
@@ -580,8 +581,18 @@ public final class CancelTokenSource implements ICancelTokenSource {
         }
 
         @Override
+        public int getOptions() {
+            return options;
+        }
+
+        @Override
+        public void setOptions(int options) {
+            this.options = options;
+        }
+
+        @Override
         public final void run() {
-            tryFire(Promise.ASYNC);
+            tryFire(ASYNC);
         }
 
         public abstract CancelTokenSource tryFire(int mode);

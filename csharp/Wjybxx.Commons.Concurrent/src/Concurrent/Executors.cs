@@ -79,7 +79,7 @@ public static class Executors
         public int Options => options;
 
         public void Run() {
-            if (cancelToken.isCancelling()) {
+            if (cancelToken.IsCancelling()) {
                 return;
             }
             action();
@@ -101,7 +101,7 @@ public static class Executors
         public int Options => options;
 
         public void Run() {
-            if (context.CancelToken.isCancelling()) {
+            if (context.CancelToken.IsCancelling()) {
                 return;
             }
             action(context);

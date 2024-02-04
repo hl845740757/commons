@@ -31,15 +31,7 @@ public interface ICancelTokenSource : ICancelToken
     /// <param name="cancelCode">取消码；reason部分需大于0；辅助类{@link CancelCodeBuilder}</param>
     /// <exception cref="ArgumentException">如果code小于等于0；或reason部分为0</exception>
     /// <returns>Token的当前值；如果Token已被取消，则非0；如果Token尚未被取消，则返回0。</returns>
-    int cancel(int cancelCode);
-
-    /// <summary>
-    /// 使用默认原因取消
-    /// </summary>
-    /// <returns>Token的当前值；如果Token已被取消，则非0；如果Token尚未被取消，则返回0。</returns>
-    int cancel() {
-        return cancel(REASON_DEFAULT); // 末位1，默认情况
-    }
+    int cancel(int cancelCode = REASON_DEFAULT);
 
     /// <summary>
     /// 在一段时间后发送取消命令

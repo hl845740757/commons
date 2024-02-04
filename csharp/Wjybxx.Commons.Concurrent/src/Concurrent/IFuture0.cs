@@ -206,7 +206,7 @@ public interface IFuture
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
     /// <param name="options">调度选项</param>
-    void OnCompleted(Action<IFuture, object> continuation, object state, int options = 0);
+    void OnCompleted(Action<IFuture, object> continuation, object? state, int options = 0);
 
     /// <summary>
     /// 添加一个监听器  -- 接收future和state参数
@@ -215,7 +215,7 @@ public interface IFuture
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
     /// <param name="options">调度选项</param>
-    void OnCompletedAsync(IExecutor executor, Action<IFuture, object> continuation, object state, int options = 0);
+    void OnCompletedAsync(IExecutor executor, Action<IFuture, object> continuation, object? state, int options = 0);
 
     /// <summary>
     /// 添加一个监听器 -- 接收future和context参数

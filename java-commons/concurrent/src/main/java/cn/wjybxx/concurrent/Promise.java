@@ -1131,8 +1131,22 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     }
 
     // endregion
+    // endregion
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    private static final VarHandle VH_RESULT;
+    private static final VarHandle VH_STACK;
+
+    static {
+        try {
+            MethodHandles.Lookup l = MethodHandles.lookup();
+            VH_RESULT = l.findVarHandle(Promise.class, "result", Object.class);
+            VH_STACK = l.findVarHandle(Promise.class, "stack", Completion.class);
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     // Modes for Completion.tryFire. Signedness matters.
     /**
@@ -1155,7 +1169,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     static final int NESTED = -1;
 
     /** 用于表示任务已申领权限 */
-    private static final Executor CLAIMED = Runnable::run;
+    static final Executor CLAIMED = Runnable::run;
 
     /** @return 是否压栈成功 */
     private boolean pushCompletion(Completion newHead) {
@@ -1176,22 +1190,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         newHead.next = null;
         newHead.tryFire(SYNC);
         return false;
-    }
-
-    /**
-     * @param output       下游节点
-     * @param mode         通知模式
-     * @param setCompleted 是否成功使promise进入完成状态
-     */
-    private static <U> Promise<U> postFire(Promise<U> output, int mode, boolean setCompleted) {
-        if (!setCompleted) { // 未竞争成功
-            return null;
-        }
-        if (mode < 0) { // 嵌套模式
-            return output;
-        }
-        postComplete(output);
-        return null;
     }
 
     /**
@@ -1257,19 +1255,39 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         return ontoHead;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    private static final VarHandle VH_RESULT;
-    private static final VarHandle VH_STACK;
-
-    static {
-        try {
-            MethodHandles.Lookup l = MethodHandles.lookup();
-            VH_RESULT = l.findVarHandle(Promise.class, "result", Object.class);
-            VH_STACK = l.findVarHandle(Promise.class, "stack", Completion.class);
-        } catch (ReflectiveOperationException e) {
-            throw new ExceptionInInitializerError(e);
+    /**
+     * @param output       下游节点
+     * @param mode         通知模式
+     * @param setCompleted 是否成功使promise进入完成状态
+     */
+    private static <U> Promise<U> postFire(Promise<U> output, int mode, boolean setCompleted) {
+        if (!setCompleted) { // 未竞争成功
+            return null;
         }
+        if (mode < 0) { // 嵌套模式
+            return output;
+        }
+        postComplete(output);
+        return null;
+    }
+
+    private static boolean submit(Completion completion, Executor e, int options) {
+        // 尝试内联
+        if (TaskOption.isEnabled(options, TaskOption.STAGE_TRY_INLINE)
+                && e instanceof SingleThreadExecutor eventLoop
+                && eventLoop.inEventLoop()) {
+            return true;
+        }
+        // 判断是否需要传递选项
+        if (options != 0
+                && !TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)
+                && e instanceof IExecutor exe) {
+            exe.execute(completion, options);
+        } else {
+            completion.setOptions(0);
+            e.execute(completion);
+        }
+        return false;
     }
 
     // 开放给Completion的方法
@@ -1315,7 +1333,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     /**
      * 实现{@link Runnable}接口是因为可能需要在另一个线程执行。
      */
-    private static abstract class Completion implements Runnable {
+    private static abstract class Completion implements ITask {
 
         /** 非volatile，通过{@link Promise#stack}的原子更新来保证可见性 */
         Completion next;
@@ -1342,6 +1360,17 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     /** 表示stack已被清理 */
     private static final Completion TOMBSTONE = new Completion() {
+
+        @Override
+        public int getOptions() {
+            return 0;
+        }
+
+        @Override
+        public void setOptions(int options) {
+
+        }
+
         @Override
         Promise<Object> tryFire(int mode) {
             return null;
@@ -1359,6 +1388,16 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
         public Awaiter(IFuture<?> future) {
             this.future = future;
+        }
+
+        @Override
+        public int getOptions() {
+            return 0;
+        }
+
+        @Override
+        public void setOptions(int options) {
+
         }
 
         @Override
@@ -1489,6 +1528,16 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             this.options = options;
         }
 
+        @Override
+        public int getOptions() {
+            return options;
+        }
+
+        @Override
+        public void setOptions(int options) {
+            this.options = options;
+        }
+
         /**
          * 当{@link Completion}满足触发条件时，如果是{@link #SYNC}和{@link #NESTED}模式，则调用该方法抢占执行权限。
          * 如果{@link Completion}有多个触发条件，则可能并发调用{@link #tryFire(int)}，而只有一个线程应该执行特定逻辑。
@@ -1521,24 +1570,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     }
 
     // region compose-x
-
-    private static boolean submit(Completion completion, Executor e, int options) {
-        // 尝试内联
-        if (TaskOption.isEnabled(options, TaskOption.STAGE_TRY_INLINE)
-                && e instanceof SingleThreadExecutor eventLoop
-                && eventLoop.inEventLoop()) {
-            return true;
-        }
-        // 判断是否需要传递选项
-        if (options != 0
-                && !TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)
-                && e instanceof IExecutor exe) {
-            exe.execute(completion, options);
-        } else {
-            e.execute(completion);
-        }
-        return false;
-    }
 
     private static <U> boolean tryTransferTo(final IFuture<? extends U> input, final Promise<U> output) {
         if (input instanceof Promise<? extends U> promise) {
@@ -1573,6 +1604,16 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         public UniRelay(IFuture<? extends V> input, Promise<V> output) {
             this.input = input;
             this.output = output;
+        }
+
+        @Override
+        public int getOptions() {
+            return 0;
+        }
+
+        @Override
+        public void setOptions(int options) {
+
         }
 
         @Override
@@ -2175,6 +2216,16 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             this.options = options;
             this.executor = executor;
             this.input = input;
+        }
+
+        @Override
+        public int getOptions() {
+            return options;
+        }
+
+        @Override
+        public void setOptions(int options) {
+            this.options = options;
         }
 
         final boolean claim() {

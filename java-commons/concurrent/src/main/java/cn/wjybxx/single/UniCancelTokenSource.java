@@ -495,7 +495,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     private IRegistration uniTransferTo(Executor executor, ICancelTokenSource child, int options) {
         Objects.requireNonNull(child, "child");
         if (isCancelling()) {
-            UniTransferTo.fireNow(this, UniPromise.SYNC, child);
+            UniTransferTo.fireNow(this, SYNC, child);
             return TOMBSTONE;
         }
         Completion completion = new UniTransferTo(executor, options, this, child);
@@ -508,6 +508,10 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     // region core
 
+    private static final int SYNC = UniPromise.SYNC;
+    private static final int ASYNC = UniPromise.ASYNC;
+    private static final int NESTED = UniPromise.NESTED;
+
     /** @return preCode */
     private int internalCancel(int cancelCode) {
 //        assert cancelCode != 0;
@@ -517,23 +521,6 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             return 0;
         }
         return preCode;
-    }
-
-    /** @return 是否压栈成功 */
-    private boolean pushCompletion(Completion node) {
-        if (isCancelling()) {
-            node.tryFire(UniPromise.SYNC);
-            return false;
-        }
-        Completion tail = this.tail;
-        if (tail == null) {
-            this.head = this.tail = node;
-        } else {
-            tail.next = node;
-            node.prev = tail;
-            this.tail = node;
-        }
-        return true;
     }
 
     /** 删除node -- 修正指针 */
@@ -572,20 +559,33 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         return head;
     }
 
+    /** @return 是否压栈成功 */
+    private boolean pushCompletion(Completion node) {
+        if (isCancelling()) {
+            node.tryFire(SYNC);
+            return false;
+        }
+        Completion tail = this.tail;
+        if (tail == null) {
+            this.head = this.tail = node;
+        } else {
+            tail.next = node;
+            node.prev = tail;
+            this.tail = node;
+        }
+        return true;
+    }
+
     private static void postComplete(UniCancelTokenSource source) {
         Completion next;
         UniCancelTokenSource child;
         while ((next = source.popListener()) != null) {
-            child = next.tryFire(UniPromise.NESTED);
+            child = next.tryFire(NESTED);
             if (child != null) {
                 postComplete(child); // 递归
             }
         }
     }
-
-    // endregion
-
-    private static final Executor CLAIMED = Runnable::run;
 
     private static boolean submit(Completion completion, Executor e, int options) {
         // 尝试内联
@@ -600,13 +600,16 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
                 && e instanceof IExecutor exe) {
             exe.execute(completion, options);
         } else {
+            completion.setOptions(0);
             e.execute(completion);
         }
         return false;
     }
 
+    // endregion
+
     /** 不需要复用对象的情况下无需分配唯一id */
-    private static abstract class Completion implements IRegistration, Runnable {
+    private static abstract class Completion implements IRegistration, ITask {
 
         UniCancelTokenSource source;
         Completion next;
@@ -633,8 +636,18 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         }
 
         @Override
+        public int getOptions() {
+            return options;
+        }
+
+        @Override
+        public void setOptions(int options) {
+            this.options = options;
+        }
+
+        @Override
         public final void run() {
-            tryFire(UniPromise.ASYNC);
+            tryFire(ASYNC);
         }
 
         public abstract UniCancelTokenSource tryFire(int mode);
@@ -920,7 +933,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         }
 
         static UniCancelTokenSource fireNow(UniCancelTokenSource source, int mode,
-                                         ICancelTokenSource child) {
+                                            ICancelTokenSource child) {
             if (!(child instanceof UniCancelTokenSource childSource)) {
                 child.cancel(source.code);
                 return null;

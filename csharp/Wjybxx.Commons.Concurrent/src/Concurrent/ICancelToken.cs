@@ -34,11 +34,10 @@ public interface ICancelToken
      * 返回一个只读的{@link ICancelToken}试图，返回的实例会在当前Token被取消时取消。
      * 其作用类似{@link IFuture#asReadonly()}
      */
-    ICancelToken asReadonly();
+    ICancelToken AsReadonly();
 
-    // region code
+    #region code
 
-    //
     /// <summary>
     /// 取消码
     /// 1. 按bit位存储信息，包括是否请求中断，是否超时，紧急程度等
@@ -46,54 +45,49 @@ public interface ICancelToken
     /// 3. 不为0表示已发起取消请求
     /// 4. 取消时至少赋值一个信息，reason通常应该赋值
     /// </summary>
-    /// <returns></returns>
-    int cancelCode();
+    /// <value></value>
+    int CancelCode { get; }
 
     /// <summary>
     /// 是否已收到取消信号
     /// 任务的执行者将持有该令牌，在调度任务前会检测取消信号；如果任务已经开始，则由用户的任务自身检测取消和中断信号。
+    ///
+    /// ps:c#的方法名不能和属性名相同，因此这几个接口不定义为属性、
     /// </summary>
     /// <returns></returns>
-    bool isCancelling() {
-        return cancelCode() != 0;
-    }
+    bool IsCancelling() => CancelCode != 0;
 
     /**
      * 取消的原因
      * (1~10为底层使用，10以上为用户自定义)T
      */
-    int reason() {
-        return reason(cancelCode());
-    }
+    int Reason() => Reason(CancelCode);
 
     /** 取消的紧急程度 */
-    int degree() {
-        return degree(cancelCode());
-    }
+    int Degree() => Degree(CancelCode);
 
     /** 取消指令中是否要求了中断线程 */
-    bool isInterruptible() {
-        return isInterruptible(cancelCode());
-    }
+    bool IsInterruptible() => isInterruptible(CancelCode);
 
     /** 取消指令中是否要求了无需删除 */
-    bool isWithoutRemove() {
-        return isWithoutRemove(cancelCode());
+    bool IsWithoutRemove() {
+        return IsWithoutRemove(CancelCode);
     }
 
     /**
      * 检测取消信号
      * 如果收到取消信号，则抛出{@link CancellationException}
      */
-    void checkCancel() {
-        int code = cancelCode();
+    void CheckCancel() {
+        int code = CancelCode;
         if (code != 0) {
             throw new BetterCancellationException(code);
         }
     }
-    // endregion
 
-    // region 监听器
+    #endregion
+
+    #region 监听器
 
     // region accept
 
@@ -163,9 +157,9 @@ public interface ICancelToken
 
     // endregion
 
-    // endregion
+    #endregion
 
-    // region static
+    #region static
 
     /**
      * 原因的掩码
@@ -200,12 +194,12 @@ public interface ICancelToken
     const int REASON_SHUTDOWN = 3;
 
     /** 计算取消码中的原因 */
-    static int reason(int code) {
+    static int Reason(int code) {
         return code & MASK_REASON;
     }
 
     /** 计算取消码终归的紧急程度 */
-    static int degree(int code) {
+    static int Degree(int code) {
         return (code & MASK_DEGREE) >> OFFSET_DEGREE;
     }
 
@@ -215,7 +209,7 @@ public interface ICancelToken
     }
 
     /** 取消指令中是否要求了无需删除 */
-    static bool isWithoutRemove(int code) {
+    static bool IsWithoutRemove(int code) {
         return (code & MASK_WITHOUT_REMOVE) != 0;
     }
 
@@ -224,12 +218,12 @@ public interface ICancelToken
      *
      * @return argument
      */
-    static int checkCode(int code) {
-        if (reason(code) == 0) {
+    static int CheckCode(int code) {
+        if (Reason(code) == 0) {
             throw new ArgumentException("reason is absent");
         }
         return code;
     }
 
-    // endregion
+    #endregion
 }

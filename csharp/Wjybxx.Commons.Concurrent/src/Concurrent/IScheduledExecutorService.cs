@@ -16,35 +16,11 @@
 
 #endregion
 
-using System;
-
-#pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
+/// 提供定时任务支持的Executor
 /// </summary>
-/// <typeparam name="T">结果类型</typeparam>
-public class PromiseTask<T> : Promise<T>, IFutureTask<T>
+public interface IScheduledExecutorService : IExecutorService
 {
-    private Delegate _action;
-    private int _options;
-
-    public PromiseTask(IExecutor executor, Delegate action, int options = 0)
-        : base(executor) {
-        _action = action;
-        _options = options;
-    }
-
-    public void Run() {
-    }
-
-    /// <summary>
-    /// 任务的调度选项
-    /// </summary>
-    public int Options => _options;
-
-    /// <summary>
-    /// 任务关联的Future
-    /// </summary>
-    public IFuture<T> Future => this;
 }

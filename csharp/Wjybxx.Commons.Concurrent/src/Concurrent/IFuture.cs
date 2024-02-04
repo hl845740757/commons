@@ -137,16 +137,16 @@ public interface IFuture<T> : IFuture
     void OnCompletedAsync(IExecutor executor, Action<IFuture<T>> continuation, int options = 0);
 
     /// <summary>
-    /// 添加一个监听器
+    /// 添加一个监听器 -- 接收future和state参数
     /// 1. 该接口通常应该由<see cref="FutureAwaiter{T}"/>调用。
     /// </summary>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
     /// <param name="options">调度选项</param>
-    void OnCompleted(Action<IFuture<T>, object> continuation, object state, int options = 0);
+    void OnCompleted(Action<IFuture<T>, object> continuation, object? state, int options = 0);
 
     /// <summary>
-    /// 添加一个监听器
+    /// 添加一个监听器 -- 接收future和state参数
     /// 1. 该接口通常应该由<see cref="FutureAwaiter{T}"/>调用。
     /// 2. 如果state是<see cref="IContext"/>类型，默认会在执行回调前会检查Context中的取消信号。
     /// </summary>
@@ -154,7 +154,7 @@ public interface IFuture<T> : IFuture
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
     /// <param name="options">调度选项</param>
-    void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object> continuation, object state, int options = 0);
+    void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object> continuation, object? state, int options = 0);
 
     /// <summary>
     /// 添加一个监听器 -- 接收future和context参数
@@ -197,11 +197,11 @@ public interface IFuture<T> : IFuture
         OnCompletedAsync(executor, continuation, options);
     }
 
-    void IFuture.OnCompleted(Action<IFuture, object> continuation, object state, int options) {
+    void IFuture.OnCompleted(Action<IFuture, object> continuation, object? state, int options) {
         OnCompleted(continuation, state, options);
     }
 
-    void IFuture.OnCompletedAsync(IExecutor executor, Action<IFuture, object> continuation, object state, int options) {
+    void IFuture.OnCompletedAsync(IExecutor executor, Action<IFuture, object> continuation, object? state, int options) {
         OnCompletedAsync(executor, continuation, state, options);
     }
 

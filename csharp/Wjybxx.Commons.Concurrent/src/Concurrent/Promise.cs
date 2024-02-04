@@ -51,7 +51,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
     private T _result;
     /** 任务执行失败时的结果 -- 可见性由state保证 */
     private Exception? _ex;
-
+    /** 任务绑定的线程 -- 不一定是执行线程 */
     private readonly IExecutor? _executor;
 
     public Promise(IExecutor? executor = null) {
@@ -153,7 +153,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
 
     #region 上下文
 
-    public IExecutor Executor => _executor;
+    public IExecutor? Executor => _executor;
 
     public IFuture<T> AsReadonly() => new ForwardFuture<T>(this);
 
@@ -396,7 +396,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         PushUniOnCompleted1(executor, continuation, options);
     }
-    
+
     public void OnCompleted(Action<IFuture<T>, object> continuation, object state, int options = 0) {
         PushUniOnCompleted2(null, continuation, state, options);
     }
@@ -423,7 +423,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
             PushCompletion(new UniOnCompleted1<T>(executor, options, this, continuation));
         }
     }
-    
+
     private void PushUniOnCompleted2(IExecutor? executor, Action<IFuture<T>, object> continuation, object? state, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsDone && executor == null) {
@@ -481,7 +481,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
             set => options = value;
         }
 
-        protected internal bool claim() {
+        protected bool Claim() {
             IExecutor e = this.executor;
             if (e == CLAIMED) {
                 return true;
@@ -504,7 +504,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
         }
 
         protected internal override APromise? TryFire(int mode) {
-            var input = this.input;
+            Promise<V>? input = this.input;
             {
                 // 异步模式下已经claim
                 if (!FireNow(input, action, mode > 0 ? null : this)) {
@@ -521,7 +521,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
         public static bool FireNow(Promise<V> input, Action<IFuture<V>> action,
                                    UniOnCompleted1<V>? c) {
             try {
-                if (c != null && !c.claim()) {
+                if (c != null && !c.Claim()) {
                     return false;
                 }
                 action(input);
@@ -546,7 +546,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
         }
 
         protected internal override APromise? TryFire(int mode) {
-            var input = this.input;
+            Promise<V>? input = this.input;
             {
                 // 异步模式下已经claim
                 if (!FireNow(input, action, state, mode > 0 ? null : this)) {
@@ -557,6 +557,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
             this.executor = null;
             this.input = null!;
             this.action = null!;
+            this.state = null;
             return null;
         }
 
@@ -564,7 +565,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
                                    Action<IFuture<V>, object> action, object? state,
                                    UniOnCompleted2<V>? c) {
             try {
-                if (c != null && !c.claim()) {
+                if (c != null && !c.Claim()) {
                     return false;
                 }
                 action(input, state);
@@ -589,9 +590,9 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
         }
 
         protected internal override APromise? TryFire(int mode) {
-            var input = this.input;
+            Promise<V>? input = this.input;
             {
-                if (context.CancelToken.isCancelling()) {
+                if (context.CancelToken.IsCancelling()) {
                     goto outer;
                 }
                 // 异步模式下已经claim
@@ -611,7 +612,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
                                    Action<IFuture<V>, TaskContext> action, in TaskContext context,
                                    UniOnCompleted3<V>? c) {
             try {
-                if (c != null && !c.claim()) {
+                if (c != null && !c.Claim()) {
                     return false;
                 }
                 action(input, context);

@@ -20,58 +20,49 @@ using System;
 
 namespace Wjybxx.Commons.Concurrent;
 
+/// <summary>
+/// 不可取消的令牌
+/// </summary>
 sealed class UncancellableToken : ICancelToken
 {
     public static readonly UncancellableToken Inst = new UncancellableToken();
 
-    public ICancelToken asReadonly() {
-        return this;
-    }
+    public ICancelToken AsReadonly => this;
 
     #region token
 
-    public int cancelCode() {
-        return 0;
-    }
+    public int CancelCode => 0;
 
-    public bool isCancelling() {
-        return false;
-    }
+    public bool IsCancelling() => false;
 
-    public int reason() {
-        return 0;
-    }
+    public int Reason() => 0;
 
-    public int degree() {
-        return 0;
-    }
+    public int Degree() => 0;
 
-    public bool isInterruptible() {
-        return false;
-    }
+    public bool IsInterruptible() => false;
 
-    public bool isWithoutRemove() {
-        return false;
-    }
+    public bool IsWithoutRemove => false;
 
-    public void checkCancel() {
+    public void CheckCancel() {
     }
 
     #endregion
 
+    #region 监听器
+
     public IRegistration thenAccept(Action<ICancelToken> action, int options = 0) {
-        throw new NotImplementedException();
+        return TOMBSTONE;
     }
 
     public IRegistration thenAcceptAsync(IExecutor executor, Action<ICancelToken> action, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenAccept(Action<IContext, ICancelToken> action, IContext ctx, int options = 0) {
+    public IRegistration thenAccept(Action<ICancelToken, object?> action, object? ctx, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenAcceptAsync(IExecutor executor, Action<IContext, ICancelToken> action, IContext ctx, int options = 0) {
+    public IRegistration thenAcceptAsync(IExecutor executor, Action<ICancelToken, object?> action, object? ctx, int options = 0) {
         return TOMBSTONE;
     }
 
@@ -83,11 +74,11 @@ sealed class UncancellableToken : ICancelToken
         return TOMBSTONE;
     }
 
-    public IRegistration thenRun(Action<IContext> action, IContext ctx, int options = 0) {
+    public IRegistration thenRun(Action<object?> action, object? ctx, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenRunAsync(IExecutor executor, Action<IContext> action, IContext ctx, int options = 0) {
+    public IRegistration thenRunAsync(IExecutor executor, Action<object?> action, object? ctx, int options = 0) {
         return TOMBSTONE;
     }
 
@@ -106,6 +97,8 @@ sealed class UncancellableToken : ICancelToken
     public IRegistration thenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
         return TOMBSTONE;
     }
+
+    #endregion
 
     private static readonly IRegistration TOMBSTONE = new MockRegistration();
 
