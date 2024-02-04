@@ -179,7 +179,7 @@ public class CancelTokenTest {
         Context<String> rootCtx = Context.ofBlackboard("root");
         {
             final MutableObject<String> signal = new MutableObject<>();
-            cts.thenAccept((ctx, token) -> {
+            cts.thenAccept((token, ctx) -> {
                 Assertions.assertSame(rootCtx, ctx);
                 Assertions.assertSame(cts, token);
                 signal.setValue("cancelled");
@@ -280,7 +280,7 @@ public class CancelTokenTest {
         Context<String> rootCtx = Context.ofBlackboard("root");
         {
             final Promise<String> signal = new Promise<>();
-            cts.thenAcceptAsync(globalEventLoop, (ctx, token) -> {
+            cts.thenAcceptAsync(globalEventLoop, (token, ctx) -> {
                 Assertions.assertTrue(globalEventLoop.inEventLoop());
                 Assertions.assertSame(rootCtx, ctx);
                 Assertions.assertSame(cts, token);

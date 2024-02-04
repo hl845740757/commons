@@ -194,12 +194,6 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
      */
     T join();
 
-    /** @return 如果任务在这期间进入了完成状态，则返回true */
-    boolean await(long timeout, TimeUnit unit) throws InterruptedException;
-
-    /** @return 如果任务在这期间进入了完成状态，则返回true */
-    boolean awaitUninterruptibly(long timeout, TimeUnit unit);
-
     /**
      * 阻塞到任务完成
      *
@@ -214,32 +208,24 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
      */
     IFuture<T> awaitUninterruptibly();
 
+    /** @return 如果任务在这期间进入了完成状态，则返回true */
+    boolean await(long timeout, TimeUnit unit) throws InterruptedException;
+
+    /** @return 如果任务在这期间进入了完成状态，则返回true */
+    boolean awaitUninterruptibly(long timeout, TimeUnit unit);
+
     // endregion
 
-    // region 其它
+    // region 旧式回调
 
     /**
+     * 最原始的Future监听接口
      * 1. 给定的Action将在Future关联的任务完成时执行，无论成功或失败都将执行。
      * 2. 该操作不是链式调用，不会继承上下文！不会继承上下文！不会继承上下文！
      * 3. 通常只用于一些特殊功能 -- 比如大规模监听时减少开销。
      * 4. 暂不设定返回会为this，以免以后需要封装用于删除的句柄等
      *
-     * @param context 如果是有效的上下文，执行前会检测取消信号
      * @param options 调度选项，可为0
-     */
-    void onCompleted(BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context, int options);
-
-    void onCompleted(BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context);
-
-    void onCompletedAsync(Executor executor,
-                          BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context);
-
-    void onCompletedAsync(Executor executor,
-                          BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context, int options);
-
-    /**
-     * 最原始的Future监听接口
-     * 该接口在{@link #onCompleted(BiConsumer, IContext, int)}的基础上减少一些开销，不支持ctx参数
      */
     void onCompleted(Consumer<? super IFuture<T>> action, int options);
 
@@ -248,6 +234,17 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
     void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action);
 
     void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action, int options);
+
+    /** 该接口支持Context参数，可响应取消 */
+    void onCompleted(BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context, int options);
+
+    void onCompleted(BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context);
+
+    void onCompletedAsync(Executor executor,
+                          BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context);
+
+    void onCompletedAsync(Executor executor,
+                          BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context, int options);
 
     // endregion
 
@@ -384,7 +381,6 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
 
     @Override
     IFuture<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options);
-
 
     // endregion
 }

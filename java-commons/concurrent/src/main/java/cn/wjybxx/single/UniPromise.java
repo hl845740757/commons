@@ -1018,29 +1018,63 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     // region onComplete
 
     @Override
-    public void onCompleted(BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context, int options) {
-        uniOnCompletedFuture1(null, action, context, options);
+    public void onCompleted(Consumer<? super IFuture<T>> action, int options) {
+        uniOnCompleted1(null, action, options);
     }
 
     @Override
-    public void onCompleted(BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context) {
-        uniOnCompletedFuture1(null, action, context, 0);
+    public void onCompleted(Consumer<? super IFuture<T>> action) {
+        uniOnCompleted1(null, action, 0);
     }
 
     @Override
-    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context) {
+    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action) {
+        Objects.requireNonNull(executor);
+        uniOnCompleted1(executor, action, 0);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action, int options) {
+        Objects.requireNonNull(executor);
+        uniOnCompleted1(executor, action, options);
+    }
+
+    private void uniOnCompleted1(Executor executor, Consumer<? super IFuture<T>> action, int options) {
+        Objects.requireNonNull(action, "action");
+        if (action instanceof Completion completion) { // 主要是Relay
+            pushCompletion(completion);
+            return;
+        }
+        if (this.isDone() && executor == null) { // listener避免不必要的插入
+            UniOnComplete1.fireNow(this, action, null);
+        } else {
+            pushCompletion(new UniOnComplete1<>(executor, options, this, action));
+        }
+    }
+
+    @Override
+    public void onCompleted(BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context, int options) {
+        uniOnCompleted2(null, action, context, options);
+    }
+
+    @Override
+    public void onCompleted(BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context) {
+        uniOnCompleted2(null, action, context, 0);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context) {
         Objects.requireNonNull(executor, "executor");
-        uniOnCompletedFuture1(executor, action, context, 0);
+        uniOnCompleted2(executor, action, context, 0);
     }
-
 
     @Override
-    public void onCompletedAsync(Executor executor, BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context, int options) {
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context, int options) {
         Objects.requireNonNull(executor, "executor");
-        uniOnCompletedFuture1(executor, action, context, options);
+        uniOnCompleted2(executor, action, context, options);
     }
 
-    private void uniOnCompletedFuture1(Executor executor, BiConsumer<? super IContext, ? super IFuture<T>> action, @Nonnull IContext context, int options) {
+    private void uniOnCompleted2(Executor executor, BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context, int options) {
         Objects.requireNonNull(action, "action");
         Objects.requireNonNull(context, "context");
         if (action instanceof Completion completion) { // 主要是Relay
@@ -1048,47 +1082,11 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
             return;
         }
         if (this.isDone() && executor == null) { // listener避免不必要的插入
-            UniOnCompleteFuture1.fireNow(context, this, action, null);
+            UniOnComplete2.fireNow(this, action, context, null);
         } else {
-            pushCompletion(new UniOnCompleteFuture1<>(executor, options, this, context, action));
+            pushCompletion(new UniOnComplete2<>(executor, options, this, action, context));
         }
     }
-
-    @Override
-    public void onCompleted(Consumer<? super IFuture<T>> action, int options) {
-        uniOnCompletedFuture2(null, action, options);
-    }
-
-    @Override
-    public void onCompleted(Consumer<? super IFuture<T>> action) {
-        uniOnCompletedFuture2(null, action, 0);
-    }
-
-    @Override
-    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action) {
-        Objects.requireNonNull(executor);
-        uniOnCompletedFuture2(executor, action, 0);
-    }
-
-    @Override
-    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action, int options) {
-        Objects.requireNonNull(executor);
-        uniOnCompletedFuture2(executor, action, options);
-    }
-
-    private void uniOnCompletedFuture2(Executor executor, Consumer<? super IFuture<T>> action, int options) {
-        Objects.requireNonNull(action, "action");
-        if (action instanceof Completion completion) { // 主要是Relay
-            pushCompletion(completion);
-            return;
-        }
-        if (this.isDone() && executor == null) { // listener避免不必要的插入
-            UniOnCompleteFuture2.fireNow(this, action, null);
-        } else {
-            pushCompletion(new UniOnCompleteFuture2<>(executor, options, this, action));
-        }
-    }
-
     // endregion
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1125,6 +1123,22 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         newHead.next = this.stack;
         this.stack = newHead;
         return true;
+    }
+
+    /**
+     * @param output       下游节点
+     * @param mode         通知模式
+     * @param setCompleted 是否成功使promise进入完成状态
+     */
+    private static <U> UniPromise<U> postFire(UniPromise<U> output, int mode, boolean setCompleted) {
+        if (!setCompleted) { // 未竞争成功
+            return null;
+        }
+        if (mode < 0) { // 嵌套模式
+            return output;
+        }
+        postComplete(output);
+        return null;
     }
 
     /**
@@ -1330,17 +1344,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
             e.execute(completion);
         }
         return false;
-    }
-
-    private static <U> UniPromise<U> postFire(UniPromise<U> output, int mode, boolean setCompleted) {
-        if (!setCompleted) { // 未竞争成功
-            return null;
-        }
-        if (mode < 0) { // 嵌套模式
-            return output;
-        }
-        postComplete(output);
-        return null;
     }
 
     private static <U> boolean tryTransferTo(final IFuture<? extends U> input, final UniPromise<U> output) {
@@ -1993,60 +1996,12 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         }
     }
 
-    private static class UniOnCompleteFuture1<V> extends UniOnComplete<V> {
-
-        IContext ctx;
-        BiConsumer<? super IContext, ? super IFuture<V>> action;
-
-        public UniOnCompleteFuture1(Executor executor, int options, UniPromise<V> input, IContext ctx,
-                                    BiConsumer<? super IContext, ? super IFuture<V>> action) {
-            super(executor, options, input);
-            this.ctx = ctx;
-            this.action = action;
-        }
-
-        @Override
-        UniPromise<?> tryFire(int mode) {
-            final UniPromise<V> input = this.input;
-            tryComplete:
-            {
-                if (ctx.cancelToken().isCancelling()) {
-                    break tryComplete;
-                }
-                // 异步模式下已经claim
-                if (!fireNow(ctx, input, action, mode > 0 ? null : this)) {
-                    return null;
-                }
-            }
-            // help gc
-            this.ctx = null;
-            this.executor = null;
-            this.input = null;
-            this.action = null;
-            return null;
-        }
-
-        static <V> boolean fireNow(IContext ctx, UniPromise<V> input,
-                                   BiConsumer<? super IContext, ? super IFuture<V>> action,
-                                   UniOnCompleteFuture1<V> c) {
-            try {
-                if (c != null && !c.claim()) {
-                    return false;
-                }
-                action.accept(ctx, input);
-            } catch (Throwable e) {
-                FutureLogger.logCause(e, "UniOnCompleteFuture1 caught an exception");
-            }
-            return true;
-        }
-    }
-
-    private static class UniOnCompleteFuture2<V> extends UniOnComplete<V> {
+    private static class UniOnComplete1<V> extends UniOnComplete<V> {
 
         Consumer<? super IFuture<V>> action;
 
-        public UniOnCompleteFuture2(Executor executor, int options, UniPromise<V> input,
-                                    Consumer<? super IFuture<V>> action) {
+        public UniOnComplete1(Executor executor, int options, UniPromise<V> input,
+                              Consumer<? super IFuture<V>> action) {
             super(executor, options, input);
             this.action = action;
         }
@@ -2067,18 +2022,67 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
         static <V> boolean fireNow(UniPromise<V> input,
                                    Consumer<? super IFuture<V>> action,
-                                   UniOnCompleteFuture2<V> c) {
+                                   UniOnComplete1<V> c) {
             try {
                 if (c != null && !c.claim()) {
                     return false;
                 }
                 action.accept(input);
             } catch (Throwable e) {
-                FutureLogger.logCause(e, "UniOnCompleteFuture2 caught an exception");
+                FutureLogger.logCause(e, "UniOnComplete1 caught an exception");
             }
             return true;
         }
     }
+
+  private static class UniOnComplete2<V> extends UniOnComplete<V> {
+
+        BiConsumer<? super IFuture<V>, ? super IContext> action;
+        IContext ctx;
+
+        public UniOnComplete2(Executor executor, int options, UniPromise<V> input,
+                              BiConsumer<? super IFuture<V>, ? super IContext> action, IContext ctx) {
+            super(executor, options, input);
+            this.action = action;
+            this.ctx = ctx;
+        }
+
+        @Override
+        UniPromise<?> tryFire(int mode) {
+            final UniPromise<V> input = this.input;
+            tryComplete:
+            {
+                if (ctx.cancelToken().isCancelling()) {
+                    break tryComplete;
+                }
+                // 异步模式下已经claim
+                if (!fireNow(input, action, ctx, mode > 0 ? null : this)) {
+                    return null;
+                }
+            }
+            // help gc
+            this.executor = null;
+            this.input = null;
+            this.action = null;
+            this.ctx = null;
+            return null;
+        }
+
+        static <V> boolean fireNow(UniPromise<V> input,
+                                   BiConsumer<? super IFuture<V>, ? super IContext> action, IContext ctx,
+                                   UniOnComplete2<V> c) {
+            try {
+                if (c != null && !c.claim()) {
+                    return false;
+                }
+                action.accept(input, ctx);
+            } catch (Throwable e) {
+                FutureLogger.logCause(e, "UniOnComplete2 caught an exception");
+            }
+            return true;
+        }
+    }
+
     // endregion
 
 }

@@ -100,22 +100,22 @@ public final class ReadonlyCancelToken implements ICancelToken {
     }
 
     @Override
-    public IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options) {
+    public IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx, int options) {
         return cancelToken.thenAccept(action, ctx, options);
     }
 
     @Override
-    public IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
+    public IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx) {
         return cancelToken.thenAccept(action, ctx);
     }
 
     @Override
-    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
+    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super ICancelToken, Object> action, Object ctx) {
         return cancelToken.thenAcceptAsync(executor, action, ctx);
     }
 
     @Override
-    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options) {
+    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super ICancelToken, Object> action, Object ctx, int options) {
         return cancelToken.thenAcceptAsync(executor, action, ctx, options);
     }
 
@@ -140,22 +140,22 @@ public final class ReadonlyCancelToken implements ICancelToken {
     }
 
     @Override
-    public IRegistration thenRun(Consumer<? super IContext> action, IContext ctx, int options) {
+    public IRegistration thenRun(Consumer<Object> action, Object ctx, int options) {
         return cancelToken.thenRun(action, ctx, options);
     }
 
     @Override
-    public IRegistration thenRun(Consumer<? super IContext> action, IContext ctx) {
+    public IRegistration thenRun(Consumer<Object> action, Object ctx) {
         return cancelToken.thenRun(action, ctx);
     }
 
     @Override
-    public IRegistration thenRunAsync(Executor executor, Consumer<? super IContext> action, IContext ctx) {
+    public IRegistration thenRunAsync(Executor executor, Consumer<Object> action, Object ctx) {
         return cancelToken.thenRunAsync(executor, action, ctx);
     }
 
     @Override
-    public IRegistration thenRunAsync(Executor executor, Consumer<? super IContext> action, IContext ctx, int options) {
+    public IRegistration thenRunAsync(Executor executor, Consumer<Object> action, Object ctx, int options) {
         return cancelToken.thenRunAsync(executor, action, ctx, options);
     }
 

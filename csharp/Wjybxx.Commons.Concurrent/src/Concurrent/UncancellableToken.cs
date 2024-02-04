@@ -16,9 +16,102 @@
 
 #endregion
 
+using System;
+
 namespace Wjybxx.Commons.Concurrent;
 
 sealed class UncancellableToken : ICancelToken
 {
     public static readonly UncancellableToken Inst = new UncancellableToken();
+
+    public ICancelToken asReadonly() {
+        return this;
+    }
+
+    #region token
+
+    public int cancelCode() {
+        return 0;
+    }
+
+    public bool isCancelling() {
+        return false;
+    }
+
+    public int reason() {
+        return 0;
+    }
+
+    public int degree() {
+        return 0;
+    }
+
+    public bool isInterruptible() {
+        return false;
+    }
+
+    public bool isWithoutRemove() {
+        return false;
+    }
+
+    public void checkCancel() {
+    }
+
+    #endregion
+
+    public IRegistration thenAccept(Action<ICancelToken> action, int options = 0) {
+        throw new NotImplementedException();
+    }
+
+    public IRegistration thenAcceptAsync(IExecutor executor, Action<ICancelToken> action, int options = 0) {
+        return TOMBSTONE;
+    }
+
+    public IRegistration thenAccept(Action<IContext, ICancelToken> action, IContext ctx, int options = 0) {
+        return TOMBSTONE;
+    }
+
+    public IRegistration thenAcceptAsync(IExecutor executor, Action<IContext, ICancelToken> action, IContext ctx, int options = 0) {
+        return TOMBSTONE;
+    }
+
+    public IRegistration thenRun(Action action, int options = 0) {
+        return TOMBSTONE;
+    }
+
+    public IRegistration thenRunAsync(IExecutor executor, Action action, int options = 0) {
+        return TOMBSTONE;
+    }
+
+    public IRegistration thenRun(Action<IContext> action, IContext ctx, int options = 0) {
+        return TOMBSTONE;
+    }
+
+    public IRegistration thenRunAsync(IExecutor executor, Action<IContext> action, IContext ctx, int options = 0) {
+        return TOMBSTONE;
+    }
+
+    public IRegistration thenNotify(CancelTokenListener action, int options = 0) {
+        return TOMBSTONE;
+    }
+
+    public IRegistration thenNotifyAsync(IExecutor executor, CancelTokenListener action, int options = 0) {
+        return TOMBSTONE;
+    }
+
+    public IRegistration thenTransferTo(ICancelTokenSource child, int options = 0) {
+        return TOMBSTONE;
+    }
+
+    public IRegistration thenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
+        return TOMBSTONE;
+    }
+
+    private static readonly IRegistration TOMBSTONE = new MockRegistration();
+
+    private class MockRegistration : IRegistration
+    {
+        public void Dispose() {
+        }
+    }
 }

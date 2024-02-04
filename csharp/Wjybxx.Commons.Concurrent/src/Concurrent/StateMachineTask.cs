@@ -19,6 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
+#pragma warning disable CS0108, CS0114
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
@@ -59,7 +60,7 @@ internal sealed class StateMachineTask<S> : Promise<byte>, IStateMachineTask whe
     /// <summary>
     /// 任务关联的Future
     /// </summary>
-    public IPromise<byte> Future => this;
+    public IFuture Future => this;
 
     /// <summary>
     /// 用于驱动StateMachine的Action委托
@@ -69,7 +70,10 @@ internal sealed class StateMachineTask<S> : Promise<byte>, IStateMachineTask whe
     public void SetResult() {
         TrySetResult(1);
     }
-    
+
+    public void SetException(Exception exception) {
+        TrySetException(exception);
+    }
 }
 
 /// <summary>
@@ -110,7 +114,7 @@ internal sealed class StateMachineTask<T, S> : Promise<T>, IStateMachineTask<T> 
     /// <summary>
     /// 任务关联的Future
     /// </summary>
-    public IPromise<T> Future => this;
+    public IFuture<T> Future => this;
 
     /// <summary>
     /// 用于驱动StateMachine的Action委托

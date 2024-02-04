@@ -90,7 +90,7 @@ public class ValueFutureAwaiter : INotifyCompletion
     // 2. GetResult
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void GetResult() {
-        future.Await();
+        future.Get();
     }
 
     // 3. OnCompleted
@@ -101,17 +101,17 @@ public class ValueFutureAwaiter : INotifyCompletion
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
         if (executor == null) {
-            future.OnCompleted(continuation, options);
+            future.OnCompleted(Invoker, continuation, options);
         } else {
-            future.OnCompletedAsync(executor, continuation, options);
+            future.OnCompletedAsync(executor, Invoker, continuation, options);
         }
     }
 
     public void UnsafeOnCompleted(Action continuation) {
         if (executor == null) {
-            future.OnCompleted(continuation, options);
+            future.OnCompleted(Invoker, continuation, options);
         } else {
-            future.OnCompletedAsync(executor, continuation, options);
+            future.OnCompletedAsync(executor, Invoker, continuation, options);
         }
     }
 }

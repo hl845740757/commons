@@ -111,10 +111,10 @@ public interface ICancelToken
 
     // region accept-ctx
 
-    IRegistration thenAccept(Action<IContext, ICancelToken> action, IContext ctx, int options = 0);
+    IRegistration thenAccept(Action<ICancelToken, object> action, object? state, int options = 0);
 
     IRegistration thenAcceptAsync(IExecutor executor,
-                                  Action<IContext, ICancelToken> action, IContext ctx, int options = 0);
+                                  Action<ICancelToken, object> action, object? state, int options = 0);
 
     // endregion
 
@@ -128,10 +128,10 @@ public interface ICancelToken
 
     // region run-ctx
 
-    IRegistration thenRun(Action<IContext> action, IContext ctx, int options = 0);
+    IRegistration thenRun(Action<object> action, object? state, int options = 0);
 
     IRegistration thenRunAsync(IExecutor executor,
-                               Action<IContext> action, IContext ctx, int options = 0);
+                               Action<object> action, object? state, int options = 0);
 
     // endregion
 
@@ -206,7 +206,7 @@ public interface ICancelToken
 
     /** 计算取消码终归的紧急程度 */
     static int degree(int code) {
-        return (code & MASK_DEGREE) >>> OFFSET_DEGREE;
+        return (code & MASK_DEGREE) >> OFFSET_DEGREE;
     }
 
     /** 取消指令中是否要求了中断线程 */

@@ -151,15 +151,15 @@ public interface ICancelToken {
 
     // region accept-ctx
 
-    IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options);
+    IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx, int options);
 
-    IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx);
-
-    IRegistration thenAcceptAsync(Executor executor,
-                                  BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx);
+    IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx);
 
     IRegistration thenAcceptAsync(Executor executor,
-                                  BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options);
+                                  BiConsumer<? super ICancelToken, Object> action, Object ctx);
+
+    IRegistration thenAcceptAsync(Executor executor,
+                                  BiConsumer<? super ICancelToken, Object> action, Object ctx, int options);
 
     // endregion
 
@@ -177,15 +177,15 @@ public interface ICancelToken {
 
     // region run-ctx
 
-    IRegistration thenRun(Consumer<? super IContext> action, IContext ctx, int options);
+    IRegistration thenRun(Consumer<Object> action, Object ctx, int options);
 
-    IRegistration thenRun(Consumer<? super IContext> action, IContext ctx);
-
-    IRegistration thenRunAsync(Executor executor,
-                               Consumer<? super IContext> action, IContext ctx);
+    IRegistration thenRun(Consumer<Object> action, Object ctx);
 
     IRegistration thenRunAsync(Executor executor,
-                               Consumer<? super IContext> action, IContext ctx, int options);
+                               Consumer<Object> action, Object ctx);
+
+    IRegistration thenRunAsync(Executor executor,
+                               Consumer<Object> action, Object ctx, int options);
 
     // endregion
 

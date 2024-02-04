@@ -22,16 +22,13 @@ namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 该接口表示基于异步状态机的任务
-///
-/// 该接口借鉴了UniTask的设计，<see cref="Future"/>返回的是<see cref="ValueFuture"/>，
-/// 以允许底层实现为更轻量级的
 /// </summary>
 public interface IStateMachineTask : ITask
 {
     /// <summary>
-    /// 异步任务关联的Promise
+    /// 异步任务关联的Future
     /// </summary>
-    ValueFuture Future { get; }
+    IFuture Future { get; }
 
     /// <summary>
     /// 用于驱动StateMachine的Action委托
@@ -44,6 +41,8 @@ public interface IStateMachineTask : ITask
 
     /// <summary>
     /// 设置任务成功完成
+    /// 
+    /// ps：该接口用于避免装箱等
     /// </summary>
     void SetResult();
 
@@ -61,9 +60,9 @@ public interface IStateMachineTask : ITask
 public interface IStateMachineTask<T> : ITask
 {
     /// <summary>
-    /// 异步任务关联的Promise
+    /// 异步任务关联的Future
     /// </summary>
-    ValueFuture<T> Future { get; }
+    IFuture<T> Future { get; }
 
     /// <summary>
     /// 用于驱动StateMachine的Action委托

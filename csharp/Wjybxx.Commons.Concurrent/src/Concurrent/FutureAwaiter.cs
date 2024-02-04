@@ -50,7 +50,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     public void GetResult() {
         future.Await();
         if (future.IsFailedOrCancelled) {
-            throw future.ExceptionNow(false);
+            future.Get(); // 抛出异常
         }
     }
 

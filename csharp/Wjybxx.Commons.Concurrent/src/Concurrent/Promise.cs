@@ -31,7 +31,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// PS：重复编码不仅仅是指Promise，与Promise相关的各个体系都需要双份...
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class Promise<T> : Completable, IPromise<T>, IFuture<T>
+public class Promise<T> : APromise, IPromise<T>, IFuture<T>
 {
     private const int ST_PENDING = (int)TaskStatus.PENDING;
     private const int ST_COMPUTING = (int)TaskStatus.COMPUTING;
@@ -181,6 +181,7 @@ public class Promise<T> : Completable, IPromise<T>, IFuture<T>
     public bool IsFailedOrCancelled => PeekState() >= ST_FAILED;
 
     protected sealed override bool IsRelaxedCompleted => PeekState() >= ST_SUCCESS;
+
     protected sealed override bool IsStrictlyCompleted {
         get {
             int state = _state;
@@ -326,12 +327,12 @@ public class Promise<T> : Completable, IPromise<T>, IFuture<T>
         return ReportJoin(PollState());
     }
 
-    private FutureAwaiter? TryPushAwaiter() {
+    private Awaiter? TryPushAwaiter() {
         Completion head = stack;
-        if (head is FutureAwaiter awaiter) {
+        if (head is Awaiter awaiter) {
             return awaiter; // 阻塞操作不多，而且通常集中在调用链的首尾
         }
-        awaiter = new FutureAwaiter(this);
+        awaiter = new Awaiter(this);
         return PushCompletion(awaiter) ? awaiter : null;
     }
 
@@ -340,7 +341,7 @@ public class Promise<T> : Completable, IPromise<T>, IFuture<T>
             return this;
         }
         CheckDeadlock();
-        FutureAwaiter awaiter = TryPushAwaiter();
+        Awaiter awaiter = TryPushAwaiter();
         if (awaiter != null) {
             awaiter.Await();
         }
@@ -352,7 +353,7 @@ public class Promise<T> : Completable, IPromise<T>, IFuture<T>
             return this;
         }
         CheckDeadlock();
-        FutureAwaiter awaiter = TryPushAwaiter();
+        Awaiter awaiter = TryPushAwaiter();
         if (awaiter != null) {
             awaiter.AwaitUninterruptibly();
         }
@@ -364,7 +365,7 @@ public class Promise<T> : Completable, IPromise<T>, IFuture<T>
             return true;
         }
         CheckDeadlock();
-        FutureAwaiter awaiter = TryPushAwaiter();
+        Awaiter awaiter = TryPushAwaiter();
         if (awaiter != null) {
             return awaiter.Await(timeout);
         }
@@ -376,7 +377,7 @@ public class Promise<T> : Completable, IPromise<T>, IFuture<T>
             return true;
         }
         CheckDeadlock();
-        FutureAwaiter awaiter = TryPushAwaiter();
+        Awaiter awaiter = TryPushAwaiter();
         if (awaiter != null) {
             return awaiter.AwaitUninterruptibly(timeout);
         }
@@ -387,17 +388,238 @@ public class Promise<T> : Completable, IPromise<T>, IFuture<T>
 
     #region async
 
-    /// <summary>
-    /// 用于在Future上等待的节点
-    /// </summary>
-    protected sealed class FutureAwaiter : Awaiter
+    public void OnCompleted(Action<IFuture<T>> continuation, int options = 0) {
+        PushUniOnCompleted1(null, continuation, options);
+    }
+
+    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>> continuation, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        PushUniOnCompleted1(executor, continuation, options);
+    }
+    
+    public void OnCompleted(Action<IFuture<T>, object> continuation, object state, int options = 0) {
+        PushUniOnCompleted2(null, continuation, state, options);
+    }
+
+    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object> continuation, object state, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        PushUniOnCompleted2(executor, continuation, state, options);
+    }
+
+    public void OnCompleted(Action<IFuture<T>, TaskContext> continuation, TaskContext context, int options = 0) {
+        PushUniOnCompleted3(null, continuation, context, options);
+    }
+
+    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, TaskContext> continuation, TaskContext context, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        PushUniOnCompleted3(executor, continuation, context, options);
+    }
+
+    private void PushUniOnCompleted1(IExecutor? executor, Action<IFuture<T>> continuation, int options = 0) {
+        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
+        if (IsDone && executor == null) {
+            UniOnCompleted1<T>.FireNow(this, continuation, null);
+        } else {
+            PushCompletion(new UniOnCompleted1<T>(executor, options, this, continuation));
+        }
+    }
+    
+    private void PushUniOnCompleted2(IExecutor? executor, Action<IFuture<T>, object> continuation, object? state, int options = 0) {
+        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
+        if (IsDone && executor == null) {
+            UniOnCompleted2<T>.FireNow(this, continuation, state, null);
+        } else {
+            PushCompletion(new UniOnCompleted2<T>(executor, options, this, continuation, state));
+        }
+    }
+
+    private void PushUniOnCompleted3(IExecutor? executor, Action<IFuture<T>, TaskContext> continuation, TaskContext context, int options = 0) {
+        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
+        if (IsDone && executor == null) {
+            UniOnCompleted3<T>.FireNow(this, continuation, context, null);
+        } else {
+            PushCompletion(new UniOnCompleted3<T>(executor, options, this, continuation, context));
+        }
+    }
+
+    #endregion
+
+    #region completion
+
+    private static bool Submit(Completion completion, IExecutor e, int options) {
+        // 尝试内联
+        if (TaskOption.isEnabled(options, TaskOption.STAGE_TRY_INLINE)
+            && e is ISingleThreadExecutor eventLoop
+            && eventLoop.InEventLoop()) {
+            return true;
+        }
+        // 判断是否需要传递选项
+        if (options != 0
+            && !TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)) {
+            e.Execute(completion);
+        } else {
+            completion.Options = 0;
+            e.Execute(completion);
+        }
+        return false;
+    }
+
+    private abstract class UniOnCompleted<V> : Completion
     {
-        public FutureAwaiter(object future) : base(future) {
+        protected IExecutor? executor;
+        protected int options;
+        protected Promise<V> input;
+
+        protected UniOnCompleted(IExecutor? executor, int options, Promise<V> input) {
+            this.executor = executor;
+            this.options = options;
+            this.input = input;
         }
 
-        protected override bool IsRelaxedCompleted(object obj) {
-            IFuture future = (IFuture)obj;
-            return future.IsDone;
+        public override int Options {
+            get => options;
+            set => options = value;
+        }
+
+        protected internal bool claim() {
+            IExecutor e = this.executor;
+            if (e == CLAIMED) {
+                return true;
+            }
+            this.executor = CLAIMED;
+            if (e != null) {
+                return Submit(this, e, options);
+            }
+            return true;
+        }
+    }
+
+    private class UniOnCompleted1<V> : UniOnCompleted<V>
+    {
+        private Action<IFuture<V>> action;
+
+        public UniOnCompleted1(IExecutor? executor, int options, Promise<V> input, Action<IFuture<V>> action)
+            : base(executor, options, input) {
+            this.action = action;
+        }
+
+        protected internal override APromise? TryFire(int mode) {
+            var input = this.input;
+            {
+                // 异步模式下已经claim
+                if (!FireNow(input, action, mode > 0 ? null : this)) {
+                    return null;
+                }
+            }
+            // help gc
+            this.executor = null;
+            this.input = null!;
+            this.action = null!;
+            return null;
+        }
+
+        public static bool FireNow(Promise<V> input, Action<IFuture<V>> action,
+                                   UniOnCompleted1<V>? c) {
+            try {
+                if (c != null && !c.claim()) {
+                    return false;
+                }
+                action(input);
+            }
+            catch (Exception e) {
+                FutureLogger.LogCause(e, "UniOnCompleted1 caught an exception");
+            }
+            return true;
+        }
+    }
+
+    private class UniOnCompleted2<V> : UniOnCompleted<V>
+    {
+        private Action<IFuture<V>, object> action;
+        private object? state;
+
+        public UniOnCompleted2(IExecutor? executor, int options, Promise<V> input,
+                               Action<IFuture<V>, object> action, object? state)
+            : base(executor, options, input) {
+            this.action = action;
+            this.state = state;
+        }
+
+        protected internal override APromise? TryFire(int mode) {
+            var input = this.input;
+            {
+                // 异步模式下已经claim
+                if (!FireNow(input, action, state, mode > 0 ? null : this)) {
+                    return null;
+                }
+            }
+            // help gc
+            this.executor = null;
+            this.input = null!;
+            this.action = null!;
+            return null;
+        }
+
+        public static bool FireNow(Promise<V> input,
+                                   Action<IFuture<V>, object> action, object? state,
+                                   UniOnCompleted2<V>? c) {
+            try {
+                if (c != null && !c.claim()) {
+                    return false;
+                }
+                action(input, state);
+            }
+            catch (Exception e) {
+                FutureLogger.LogCause(e, "UniOnCompleted2 caught an exception");
+            }
+            return true;
+        }
+    }
+
+    private class UniOnCompleted3<V> : UniOnCompleted<V>
+    {
+        private Action<IFuture<V>, TaskContext> action;
+        private TaskContext context;
+
+        public UniOnCompleted3(IExecutor? executor, int options, Promise<V> input,
+                               Action<IFuture<V>, TaskContext> action, in TaskContext context)
+            : base(executor, options, input) {
+            this.action = action;
+            this.context = context;
+        }
+
+        protected internal override APromise? TryFire(int mode) {
+            var input = this.input;
+            {
+                if (context.CancelToken.isCancelling()) {
+                    goto outer;
+                }
+                // 异步模式下已经claim
+                if (!FireNow(input, action, context, mode > 0 ? null : this)) {
+                    return null;
+                }
+            }
+            outer:
+            // help gc
+            this.executor = null;
+            this.input = null!;
+            this.action = null!;
+            return null;
+        }
+
+        public static bool FireNow(Promise<V> input,
+                                   Action<IFuture<V>, TaskContext> action, in TaskContext context,
+                                   UniOnCompleted3<V>? c) {
+            try {
+                if (c != null && !c.claim()) {
+                    return false;
+                }
+                action(input, context);
+            }
+            catch (Exception e) {
+                FutureLogger.LogCause(e, "UniOnCompleted2 caught an exception");
+            }
+            return true;
         }
     }
 

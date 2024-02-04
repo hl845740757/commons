@@ -249,31 +249,30 @@ public final class CancelTokenSource implements ICancelTokenSource {
     // region uni-accept-ctx
 
     @Override
-    public IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options) {
+    public IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx, int options) {
         return uniAcceptCtx(null, action, ctx, options);
     }
 
     @Override
-    public IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
+    public IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx) {
         return uniAcceptCtx(null, action, ctx, 0);
     }
 
     @Override
-    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
+    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super ICancelToken, Object> action, Object ctx) {
         Objects.requireNonNull(executor, "executor");
         return uniAcceptCtx(executor, action, ctx, 0);
     }
 
     @Override
-    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options) {
+    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super ICancelToken, Object> action, Object ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniAcceptCtx(executor, action, ctx, options);
     }
 
-    private IRegistration uniAcceptCtx(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action,
-                                       IContext ctx, int options) {
+    private IRegistration uniAcceptCtx(Executor executor, BiConsumer<? super ICancelToken, Object> action,
+                                       Object ctx, int options) {
         Objects.requireNonNull(action);
-        if (ctx == null) ctx = IContext.NONE;
         if (isCancelling()) {
             UniAcceptCtx.fireNow(this, action, ctx);
             return TOMBSTONE;
@@ -323,30 +322,29 @@ public final class CancelTokenSource implements ICancelTokenSource {
     // region uni-run-ctx
 
     @Override
-    public IRegistration thenRun(Consumer<? super IContext> action, IContext ctx, int options) {
+    public IRegistration thenRun(Consumer<Object> action, Object ctx, int options) {
         return uniRunCtx(null, action, ctx, options);
     }
 
     @Override
-    public IRegistration thenRun(Consumer<? super IContext> action, IContext ctx) {
+    public IRegistration thenRun(Consumer<Object> action, Object ctx) {
         return uniRunCtx(null, action, ctx, 0);
     }
 
     @Override
-    public IRegistration thenRunAsync(Executor executor, Consumer<? super IContext> action, IContext ctx) {
+    public IRegistration thenRunAsync(Executor executor, Consumer<Object> action, Object ctx) {
         Objects.requireNonNull(executor, "executor");
         return uniRunCtx(executor, action, ctx, 0);
     }
 
     @Override
-    public IRegistration thenRunAsync(Executor executor, Consumer<? super IContext> action, IContext ctx, int options) {
+    public IRegistration thenRunAsync(Executor executor, Consumer<Object> action, Object ctx, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniRunCtx(executor, action, ctx, options);
     }
 
-    private IRegistration uniRunCtx(Executor executor, Consumer<? super IContext> action, IContext ctx, int options) {
+    private IRegistration uniRunCtx(Executor executor, Consumer<Object> action, Object ctx, int options) {
         Objects.requireNonNull(action);
-        if (ctx == null) ctx = IContext.NONE;
         if (isCancelling()) {
             UniRunCtx.fireNow(action, ctx);
             return TOMBSTONE;
@@ -684,10 +682,10 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private static class UniAcceptCtx extends Completion {
 
-        IContext ctx;
+        Object ctx;
 
         public UniAcceptCtx(Executor executor, int options, CancelTokenSource source,
-                            BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
+                            BiConsumer<? super ICancelToken, Object> action, Object ctx) {
             super(executor, options, source, action);
             this.ctx = ctx;
         }
@@ -700,19 +698,15 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
         @Override
         public CancelTokenSource tryFire(int mode) {
-            tryComplete:
             try {
-                if (ctx.cancelToken().isCancelling()) {
-                    break tryComplete;
-                }
                 if (mode <= 0 && !claim()) {
                     return null; // 下次执行
                 }
-                @SuppressWarnings("unchecked") var action = (BiConsumer<? super IContext, ? super ICancelToken>) popAction();
+                @SuppressWarnings("unchecked") var action = (BiConsumer<? super ICancelToken, Object>) popAction();
                 if (action == null) {
                     return null;
                 }
-                action.accept(ctx, source);
+                action.accept(source, ctx);
             } catch (Throwable ex) {
                 FutureLogger.logCause(ex, "UniAcceptCtx caught an exception");
             }
@@ -722,10 +716,9 @@ public final class CancelTokenSource implements ICancelTokenSource {
         }
 
         static void fireNow(CancelTokenSource source,
-                            BiConsumer<? super IContext, ? super ICancelToken> action,
-                            IContext ctx) {
+                            BiConsumer<? super ICancelToken, Object> action, Object ctx) {
             try {
-                action.accept(ctx, source);
+                action.accept(source, ctx);
             } catch (Throwable ex) {
                 FutureLogger.logCause(ex, "UniAcceptCtx caught an exception");
             }
@@ -770,10 +763,10 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private static class UniRunCtx extends Completion {
 
-        IContext ctx;
+        Object ctx;
 
         public UniRunCtx(Executor executor, int options, CancelTokenSource source,
-                         Consumer<? super IContext> action, IContext ctx) {
+                         Consumer<Object> action, Object ctx) {
             super(executor, options, source, action);
             this.ctx = ctx;
         }
@@ -786,15 +779,11 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
         @Override
         public CancelTokenSource tryFire(int mode) {
-            tryComplete:
             try {
-                if (ctx.cancelToken().isCancelling()) {
-                    break tryComplete;
-                }
                 if (mode <= 0 && !claim()) {
                     return null; // 下次执行
                 }
-                @SuppressWarnings("unchecked") var action = (Consumer<? super IContext>) popAction();
+                @SuppressWarnings("unchecked") var action = (Consumer<Object>) popAction();
                 if (action == null) {
                     return null;
                 }
@@ -807,8 +796,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
             return null;
         }
 
-        static void fireNow(Consumer<? super IContext> action,
-                            IContext ctx) {
+        static void fireNow(Consumer<Object> action, Object ctx) {
             try {
                 action.accept(ctx);
             } catch (Throwable ex) {

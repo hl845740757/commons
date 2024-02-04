@@ -16,7 +16,7 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent;;
+namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 该接口用于特殊需求时减少闭包

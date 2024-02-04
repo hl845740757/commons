@@ -100,22 +100,22 @@ final class UncancellableToken implements ICancelToken {
     }
 
     @Override
-    public IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options) {
+    public IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx, int options) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenAccept(BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
+    public IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx) {
+    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super ICancelToken, Object> action, Object ctx) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super ICancelToken> action, IContext ctx, int options) {
+    public IRegistration thenAcceptAsync(Executor executor, BiConsumer<? super ICancelToken, Object> action, Object ctx, int options) {
         return TOMBSTONE;
     }
 
@@ -140,22 +140,22 @@ final class UncancellableToken implements ICancelToken {
     }
 
     @Override
-    public IRegistration thenRun(Consumer<? super IContext> action, IContext ctx, int options) {
+    public IRegistration thenRun(Consumer<Object> action, Object ctx, int options) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenRun(Consumer<? super IContext> action, IContext ctx) {
+    public IRegistration thenRun(Consumer<Object> action, Object ctx) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenRunAsync(Executor executor, Consumer<? super IContext> action, IContext ctx) {
+    public IRegistration thenRunAsync(Executor executor, Consumer<Object> action, Object ctx) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenRunAsync(Executor executor, Consumer<? super IContext> action, IContext ctx, int options) {
+    public IRegistration thenRunAsync(Executor executor, Consumer<Object> action, Object ctx, int options) {
         return TOMBSTONE;
     }
 
