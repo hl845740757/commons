@@ -226,16 +226,11 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     // region 任务提交
 
     @Override
-    public void execute(Runnable task, int options) {
+    public void execute(Runnable task) {
         Objects.requireNonNull(task, "task");
         if (isShuttingDown()) {
             rejectedExecutionHandler.rejected(task, this);
             return;
-        }
-        if (options != 0) {
-            if (task instanceof ITask trustedTask) {
-                trustedTask.setOptions(options);
-            } // else 暂时不需要保存
         }
         if (inEventLoop()) {
             // 当前线程调用，需要使用tryNext以避免死锁
@@ -244,10 +239,10 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 rejectedExecutionHandler.rejected(task, this);
                 return;
             }
-            tryPublish(task, sequence, options);
+            tryPublish(task, sequence);
         } else {
             // 其它线程调用，可能阻塞
-            tryPublish(task, eventSequencer.next(1), options);
+            tryPublish(task, eventSequencer.next(1));
         }
     }
 
@@ -265,7 +260,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
      * 又因为{@link #isShuttingDown()}为true一定在{@link Worker#cleanBuffer()}之前，
      * 因此，如果sequence是在{@link #isShuttingDown()}为true之前申请到的，那么sequence一定是有效的，否则可能有效，也可能无效。
      */
-    private void tryPublish(@Nonnull Runnable task, long sequence, int options) {
+    private void tryPublish(@Nonnull Runnable task, long sequence) {
         if (isShuttingDown()) {
             // 先发布sequence，避免拒绝逻辑可能产生的阻塞，不可以覆盖数据
             eventSequencer.publish(sequence);
@@ -292,11 +287,13 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             }
             eventSequencer.publish(sequence);
 
-            // 确保线程已启动 -- ringBuffer私有的情况下才可以测试 sequence == 0
-            if (sequence == 0 && !inEventLoop()) {
-                ensureThreadStarted();
-            } else if (TaskOption.isEnabled(options, TaskOption.WAKEUP_THREAD)) {
-                wakeup();
+            if (!inEventLoop()) {
+                // 确保线程已启动 -- ringBuffer私有的情况下才可以测试 sequence == 0
+                if (sequence == 0) {
+                    ensureThreadStarted();
+                } else if (task instanceof ITask task2 && TaskOption.isEnabled(task2.getOptions(), TaskOption.WAKEUP_THREAD)) {
+                    wakeup();
+                }
             }
         }
     }

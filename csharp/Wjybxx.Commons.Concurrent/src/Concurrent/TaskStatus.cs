@@ -16,6 +16,8 @@
 
 #endregion
 
+using System.Runtime.CompilerServices;
+
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
@@ -45,11 +47,13 @@ public enum TaskStatus : byte
 public static class StatusExtensions
 {
     /** 是否表示完成状态 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsDone(this TaskStatus state) {
         return (byte)state >= 2;
     }
 
     /** 是否表示失败或被取消 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsFailedOrCancelled(this TaskStatus state) {
         return (byte)state >= 3;
     }

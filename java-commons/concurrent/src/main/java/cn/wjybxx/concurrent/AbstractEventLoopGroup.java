@@ -33,23 +33,23 @@ import java.util.function.Function;
 public abstract class AbstractEventLoopGroup implements EventLoopGroup {
 
     @Override
-    public void execute(Runnable command, int options) {
-        select().execute(command, options);
-    }
-
-    @Override
     public void execute(@Nonnull Runnable command) {
         select().execute(command);
     }
 
     @Override
+    public void execute(Runnable command, int options) {
+        select().execute(command, options);
+    }
+
+    @Override
     public void execute(Consumer<? super IContext> action, IContext ctx) {
-        select().execute(FutureUtils.toRunnable(action, ctx));
+        select().execute(action, ctx);
     }
 
     @Override
     public void execute(Consumer<? super IContext> action, IContext ctx, int options) {
-        select().execute(FutureUtils.toRunnable(action, ctx), options);
+        select().execute(action, ctx, options);
     }
 
     // region submit
@@ -72,18 +72,6 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
     @Override
     public <T> IFuture<T> submit(@Nonnull Callable<T> task) {
         return select().submit(task);
-    }
-
-    @Nonnull
-    @Override
-    public IFuture<?> submit(@Nonnull Runnable task) {
-        return select().submit(task);
-    }
-
-    @Nonnull
-    @Override
-    public <T> IFuture<T> submit(@Nonnull Runnable task, T result) {
-        return select().submit(task, result);
     }
 
     @Override

@@ -26,6 +26,13 @@ namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// Future的异步方法构建器
+///
+/// 1. Builder创建Future，Future创建Awaiter。
+/// 2. Builder创建StateMachineTask
+///
+/// ps：
+/// 1. 由于Builder缺少上下文，因此创建Task时无法指定线程。
+/// 2. C#选择的方案导致了太多的上下文传递问题。
 /// </summary>
 public struct AsyncFutureMethodBuilder
 {
@@ -34,7 +41,7 @@ public struct AsyncFutureMethodBuilder
     /// 
     /// ps:如果task和ex都为null，表示任务已同步完成
     /// </summary>
-    private IStateMachineTask? _task;
+    private IStateMachineTask<byte>? _task;
     /// <summary>
     /// 任务失败的原因 -- 任务同步失败时有值
     /// </summary>
@@ -80,7 +87,7 @@ public struct AsyncFutureMethodBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetResult() {
         if (_task != null) {
-            _task.SetResult();
+            _task.SetResult(0);
         }
     }
 
@@ -90,7 +97,7 @@ public struct AsyncFutureMethodBuilder
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            _task = new StateMachineTask<TStateMachine>(ref stateMachine);
+            _task = new StateMachineTask<byte, TStateMachine>(ref stateMachine);
         }
         awaiter.OnCompleted(_task.MoveToNext);
     }
@@ -102,7 +109,7 @@ public struct AsyncFutureMethodBuilder
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            _task = new StateMachineTask<TStateMachine>(ref stateMachine);
+            _task = new StateMachineTask<byte, TStateMachine>(ref stateMachine);
         }
         awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }

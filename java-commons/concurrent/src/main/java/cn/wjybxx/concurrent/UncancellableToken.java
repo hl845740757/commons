@@ -36,6 +36,10 @@ final class UncancellableToken implements ICancelToken {
         return this;
     }
 
+    @Override
+    public boolean canBeCancelled() {
+        return false;
+    }
     // region code
 
     @Override

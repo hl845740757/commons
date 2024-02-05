@@ -20,7 +20,6 @@ using System;
 using System.Threading;
 
 #pragma warning disable CS1591
-
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
@@ -28,6 +27,9 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public sealed class CancelTokenSource : ICancelTokenSource
 {
+    /// <summary>
+    /// 默认的延迟调度器
+    /// </summary>
     private static readonly IScheduledExecutorService delayer;
 
     private volatile int code;
@@ -76,7 +78,8 @@ public sealed class CancelTokenSource : ICancelTokenSource
         throw new NotImplementedException();
     }
 
-    public void CancelAfter(int cancelCode, TimeSpan timeSpan, IScheduledExecutorService executor) {
+    public void CancelAfter(int cancelCode, TimeSpan timeSpan, IScheduledExecutorService delayer) {
+        if (delayer == null) throw new ArgumentNullException(nameof(delayer));
     }
 
     #endregion
@@ -256,8 +259,11 @@ public sealed class CancelTokenSource : ICancelTokenSource
     private const int ASYNC = APromise.ASYNC;
     private const int NESTED = APromise.NESTED;
 
-
-    /** 栈顶回调被删除时尝试删除更多的节点 */
+    /// <summary>
+    /// 栈顶回调被删除时尝试删除更多的节点
+    /// </summary>
+    /// <param name="expectedHead">当前的head</param>
+    /// <returns>最新栈顶，可能是<see cref="TOMBSTONE"/></returns>
     private Completion? RemoveClosedNode(Completion expectedHead) {
         Completion? next = expectedHead.next;
         while (next != null && next.action == TOMBSTONE) {
@@ -275,6 +281,12 @@ public sealed class CancelTokenSource : ICancelTokenSource
         Completion expectedHead = stack;
         Completion realHead;
         while (expectedHead != TOMBSTONE) {
+            // 处理延迟删除
+            if (expectedHead != null && expectedHead.action == TOMBSTONE) {
+                expectedHead = RemoveClosedNode(expectedHead);
+                continue;
+            }
+            
             newHead.next = expectedHead;
             realHead = Interlocked.CompareExchange(ref this.stack, newHead, expectedHead);
             if (realHead == expectedHead) { // success
@@ -361,8 +373,8 @@ public sealed class CancelTokenSource : ICancelTokenSource
         protected CancelTokenSource source;
         /**
          * 用户回调
-         * 1.通知和清理时置为{@link #TOMBSTONE}
-         * 2.子类在执行action之前需要调用{@link #popAction()}竞争。
+         * 1.通知和清理时置为<see cref="TOMBSTONE"/>
+         * 2.子类在执行action之前需要调用<see cref="PopAction"/>竞争。
          */
         internal object action;
 
@@ -422,7 +434,6 @@ public sealed class CancelTokenSource : ICancelTokenSource
             if (action == null) {
                 return;
             }
-            CancelTokenSource source = this.source;
             if (this == source.stack) {
                 source.RemoveClosedNode(this);
             }

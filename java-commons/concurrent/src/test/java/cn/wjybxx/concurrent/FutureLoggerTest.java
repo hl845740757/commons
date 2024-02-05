@@ -29,7 +29,7 @@ public class FutureLoggerTest {
     @Test
     void testTrace() {
         FutureLogger.setLogLevel(Level.TRACE);
-        IExecutor executor = (command, options) -> command.run();
+        IExecutor executor = Runnable::run;
         FutureUtils.submitCall(executor, () -> {
             throw new RuntimeException("Trace");
         });
@@ -38,7 +38,7 @@ public class FutureLoggerTest {
     @Test
     void testWarn() {
         FutureLogger.setLogLevel(Level.WARN);
-        IExecutor executor = (command, options) -> command.run();
+        IExecutor executor = Runnable::run;
         FutureUtils.submitCall(executor, () -> {
             throw new RuntimeException("Warn");
         });

@@ -24,7 +24,7 @@ namespace Wjybxx.Commons.Attributes;
 /// <summary>
 /// 用于标注类文件是生成的
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
+[AttributeUsage(AttributeTargets.All)]
 public class GeneratedAttribute : Attribute
 {
     /// <summary>
@@ -33,6 +33,6 @@ public class GeneratedAttribute : Attribute
     public readonly string Processor;
 
     public GeneratedAttribute(string processor) {
-        Processor = processor;
+        Processor = processor ?? throw new ArgumentNullException(nameof(processor));
     }
 }

@@ -83,18 +83,6 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
         return status() == TaskStatus.COMPUTING;
     }
 
-    /** 如果future已进入完成状态(成功、失败、被取消)，则返回true */
-    @Override
-    default boolean isDone() {
-        return status().isDone();
-    }
-
-    /** 如果future关联的任务在正常完成被取消，则返回true。 */
-    @Override
-    default boolean isCancelled() {
-        return status() == TaskStatus.CANCELLED;
-    }
-
     /** 如果future已进入完成状态，且是成功完成，则返回true。 */
     default boolean isSucceeded() {
         return status() == TaskStatus.SUCCESS;
@@ -103,6 +91,18 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
     /** 如果future已进入完成状态，且是失败状态，则返回true */
     default boolean isFailed() {
         return status() == TaskStatus.FAILED;
+    }
+
+    /** 如果future关联的任务在正常完成被取消，则返回true。 */
+    @Override
+    default boolean isCancelled() {
+        return status() == TaskStatus.CANCELLED;
+    }
+
+    /** 如果future已进入完成状态(成功、失败、被取消)，则返回true */
+    @Override
+    default boolean isDone() {
+        return status().isDone();
     }
 
     /**

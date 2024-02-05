@@ -43,11 +43,13 @@ public class FutureTest {
         return globalEventLoop.getBarrier().sequence();
     }
 
+    private static final IExecutor immediateExecutor = Runnable::run;
+
     // region basic
 
     @Test
     void testCtx() {
-        IExecutor executor = (command, options) -> command.run();
+        IExecutor executor = immediateExecutor;
         IContext rootCtx = new Context<>("efg");
         FutureUtils.submitFunc(executor, (context -> {
                     Assertions.assertSame(rootCtx, context);
@@ -61,14 +63,14 @@ public class FutureTest {
         CancelTokenSource cts = new CancelTokenSource(1);
         IContext rootCtx = Context.ofCancelToken(cts);
 
-        IExecutor executor = (command, options) -> command.run();
+        IExecutor executor = immediateExecutor;
         IFuture<String> future = FutureUtils.submitFunc(executor, ctx -> "hello", rootCtx);
         Assertions.assertTrue(future.isCancelled());
     }
 
     @Test
     void testAwait() throws InterruptedException {
-        PromiseTask<String> promiseTask = PromiseTask.ofCallable(() -> "hello", new Promise<>());
+        PromiseTask<String> promiseTask = PromiseTask.ofCallable(() -> "hello", 0, new Promise<>());
         globalEventLoop.schedule(promiseTask, 10, TimeUnit.MILLISECONDS);
 
         Assertions.assertTrue(promiseTask.future().await(100, TimeUnit.SECONDS));
@@ -92,7 +94,7 @@ public class FutureTest {
     @Test
     void testAccept() {
         final String first = "abc";
-        IExecutor executor = (command, options) -> command.run();
+        IExecutor executor = immediateExecutor;
         FutureUtils.submitCall(executor, () -> first, 0)
                 .thenAccept((context, r) -> {
                     Assertions.assertEquals(first, r);
@@ -144,7 +146,7 @@ public class FutureTest {
     @Test
     void testApply() {
         final String first = "abc";
-        IExecutor executor = (command, options) -> command.run();
+        IExecutor executor = immediateExecutor;
         String r2 = FutureUtils.submitCall(executor, () -> first, 0)
                 .thenApply((ctx, r) -> StringUtils.reverse(r))
                 .resultNow();
@@ -197,7 +199,7 @@ public class FutureTest {
     @Test
     void testCatching() {
         final String first = "abc";
-        IExecutor executor = (command, options) -> command.run();
+        IExecutor executor = immediateExecutor;
         FutureUtils.submitCall(executor, () -> {throw new RuntimeException();})
                 .catching(RuntimeException.class, (ctx, ex) -> first)
                 .thenAccept((ctx, s) -> {
@@ -254,7 +256,7 @@ public class FutureTest {
     @Test
     void testWhenComplete() {
         final String first = "abc";
-        IExecutor executor = (command, options) -> command.run();
+        IExecutor executor = immediateExecutor;
         FutureUtils.submitCall(executor, () -> first, 0)
                 .whenComplete((k, v, s) -> {})
                 .thenAccept((iContext, s) -> {
@@ -312,7 +314,7 @@ public class FutureTest {
     @Test
     void testOnComplete() {
         final String first = "abc";
-        IExecutor executor = (command, options) -> command.run();
+        IExecutor executor = immediateExecutor;
         IFuture<String> future = FutureUtils.submitCall(executor, () -> first, 0);
 
         future.onCompleted((f) -> {
@@ -365,7 +367,7 @@ public class FutureTest {
     void testHandle() {
         final String first = "abc";
         final String fallbackResult = "fallback:" + first;
-        IExecutor executor = (command, options) -> command.run();
+        IExecutor executor = immediateExecutor;
         FutureUtils.submitCall(executor, () -> first, 0)
                 .handle((ctx, v, ex) -> {
                     if (ex != null) {

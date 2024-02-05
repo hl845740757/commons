@@ -25,7 +25,13 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public sealed class FutureLogger
 {
+    /// <summary>
+    /// 记录Future框架出现的异常
+    /// </summary>
+    /// <param name="ex">异常</param>
+    /// <param name="message">信息</param>
     public static void LogCause(Exception ex, string? message = null) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
+        message = message ?? "Future caught an exception";
     }
 }

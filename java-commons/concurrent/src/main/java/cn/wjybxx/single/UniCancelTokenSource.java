@@ -154,6 +154,11 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         return new ReadonlyCancelToken(this);
     }
 
+    @Override
+    public boolean canBeCancelled() {
+        return true;
+    }
+
     // region tokenSource
 
     /**
@@ -599,7 +604,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         if (options != 0
                 && !TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)
                 && e instanceof IExecutor exe) {
-            exe.execute(completion, options);
+            exe.execute(completion);
         } else {
             completion.setOptions(0);
             e.execute(completion);
@@ -641,7 +646,6 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             return options;
         }
 
-        @Override
         public void setOptions(int options) {
             this.options = options;
         }

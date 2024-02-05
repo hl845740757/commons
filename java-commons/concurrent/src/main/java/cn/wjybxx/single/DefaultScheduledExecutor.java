@@ -96,7 +96,7 @@ public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor imple
     }
 
     @Override
-    public void execute(Runnable command, int options) {
+    public void execute(Runnable command) {
         if (isShuttingDown()) {
             // 暂时直接取消
             if (command instanceof PromiseTask<?> promiseTask) {
@@ -106,13 +106,11 @@ public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor imple
         }
         if (command instanceof UniScheduledPromiseTask<?> promiseTask) {
             promiseTask.setId(++sequencer);
-            promiseTask.setOptions(options);
             if (delayExecute(promiseTask)) {
                 promiseTask.registerCancellation();
             }
         } else {
-            UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofRunnable(command, newScheduledPromise(), ++sequencer, tickTime);
-            promiseTask.setOptions(options);
+            UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofRunnable(command, 0, newScheduledPromise(), ++sequencer, tickTime);
             delayExecute(promiseTask);
         }
     }

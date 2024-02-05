@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Attributes;
 /// <summary>
 /// 用于注解一个类/结构是不可变对象
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
+[AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class | AttributeTargets.Struct)]
 public class ImmutableAttribute : Attribute
 {
 }

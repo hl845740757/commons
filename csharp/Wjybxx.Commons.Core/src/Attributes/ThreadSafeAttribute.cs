@@ -23,6 +23,7 @@ namespace Wjybxx.Commons.Attributes;
 /// <summary>
 /// 该注解表示被注解的类是线程安全的
 /// </summary>
+[AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class | AttributeTargets.Struct)]
 public class ThreadSafeAttribute : Attribute
 {
 }

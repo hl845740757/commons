@@ -74,6 +74,13 @@ public interface ICancelToken {
      */
     ICancelToken asReadonly();
 
+    /**
+     * 当前token是否可以进入取消状态
+     *
+     * @return 如果当前token可以进入取消状态则返回true
+     */
+    boolean canBeCancelled();
+
     // region code
 
     /**

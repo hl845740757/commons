@@ -113,10 +113,12 @@ public class DefaultExecutor extends AbstractUniExecutor {
     }
 
     @Override
-    public void execute(Runnable command, int options) {
-        // 暂不处理shutdown问题
-        if (options != 0 && (command instanceof PromiseTask<?> promiseTask)) {
-            promiseTask.setOptions(options);
+    public void execute(Runnable command) {
+        if (isShutdown()) {
+            if (command instanceof PromiseTask<?> promiseTask) {
+                promiseTask.getPromise().trySetCancelled();
+            }
+            return;
         }
         taskQueue.offer(command);
     }

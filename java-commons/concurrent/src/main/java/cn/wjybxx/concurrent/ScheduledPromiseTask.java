@@ -68,42 +68,38 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         promise.setTask(this);
     }
 
-    /**
-     * 用于简单情况下的对象创建
-     */
-    private ScheduledPromiseTask(Object action, IScheduledPromise<V> promise, int taskType,
-                                 long id, long nextTriggerTime, long period,
-                                 int scheduleType) {
-        super(action, promise, taskType);
+    /** 用于简单情况下的对象创建 */
+    private ScheduledPromiseTask(Object action, int options, IScheduledPromise<V> promise, int taskType,
+                                 long id, long nextTriggerTime) {
+        super(action, options, promise, taskType);
         this.id = id;
         this.nextTriggerTime = nextTriggerTime;
-        this.period = period;
-        setScheduleType(scheduleType);
+        this.period = 0;
         promise.setTask(this);
     }
 
-    public static ScheduledPromiseTask<?> ofRunnable(Runnable action, IScheduledPromise<?> promise,
+    public static ScheduledPromiseTask<?> ofRunnable(Runnable action, int options, IScheduledPromise<?> promise,
                                                      long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_RUNNABLE,
-                id, nextTriggerTime, 0, 0);
+        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_RUNNABLE,
+                id, nextTriggerTime);
     }
 
-    public static <V> ScheduledPromiseTask<V> ofCallable(Callable<? extends V> action, IScheduledPromise<V> promise,
+    public static <V> ScheduledPromiseTask<V> ofCallable(Callable<? extends V> action, int options, IScheduledPromise<V> promise,
                                                          long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_CALLABLE,
-                id, nextTriggerTime, 0, 0);
+        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_CALLABLE,
+                id, nextTriggerTime);
     }
 
-    public static <V> ScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IScheduledPromise<V> promise,
+    public static <V> ScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, int options, IScheduledPromise<V> promise,
                                                          long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_FUNCTION,
-                id, nextTriggerTime, 0, 0);
+        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNCTION,
+                id, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<?> ofConsumer(Consumer<? super IContext> action, IScheduledPromise<?> promise,
+    public static ScheduledPromiseTask<?> ofConsumer(Consumer<? super IContext> action, int options, IScheduledPromise<?> promise,
                                                      long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_CONSUMER,
-                id, nextTriggerTime, 0, 0);
+        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_CONSUMER,
+                id, nextTriggerTime);
     }
 
     public static <V> ScheduledPromiseTask<V> ofBuilder(TaskBuilder<V> builder, IScheduledPromise<V> promise,
@@ -111,8 +107,8 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         if (builder instanceof ScheduledTaskBuilder<V> sb) {
             return ofBuilder(sb, promise, id, tickTime);
         }
-        return new ScheduledPromiseTask<>(builder.getTask(), promise, builder.getType(),
-                id, tickTime, 0, 0);
+        return new ScheduledPromiseTask<>(builder.getTask(), builder.getOptions(), promise, builder.getType(),
+                id, tickTime);
     }
 
     /**
@@ -232,12 +228,12 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
             clear();
             return false;
         }
-        if ((options & maskClaimed) == 0) {
+        if ((ctl & maskClaimed) == 0) {
             if (!promise.trySetComputing()) {
                 clear();
                 return false;
             }
-            options |= maskClaimed;
+            ctl |= maskClaimed;
         } else if (!promise.isComputing()) {
             clear();
             return false;

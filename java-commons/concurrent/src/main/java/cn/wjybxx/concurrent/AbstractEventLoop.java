@@ -45,21 +45,21 @@ public abstract class AbstractEventLoop implements EventLoop {
     }
 
     @Override
-    public abstract void execute(Runnable command, int options);
+    public abstract void execute(Runnable command);
 
     @Override
-    public void execute(Runnable command) {
-        execute(command, 0);
+    public void execute(Runnable command, int options) {
+        execute(FutureUtils.toTask(command, options));
     }
 
     @Override
     public void execute(Consumer<? super IContext> action, IContext ctx) {
-        execute(FutureUtils.toRunnable(action, ctx));
+        execute(FutureUtils.toTask(action, ctx, 0));
     }
 
     @Override
     public void execute(Consumer<? super IContext> action, IContext ctx, int options) {
-        execute(FutureUtils.toRunnable(action, ctx), options);
+        execute(FutureUtils.toTask(action, ctx, options));
     }
 
     // region EventLoop
@@ -124,86 +124,72 @@ public abstract class AbstractEventLoop implements EventLoop {
 
     @Override
     public <T> IFuture<T> submit(@Nonnull TaskBuilder<T> builder) {
-        PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, newPromise(builder.getCtx()));
-        execute(futureTask, builder.getOptions());
+        PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, newPromise(null));
+        execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <T> IFuture<T> submit(Callable<T> task) {
-        PromiseTask<T> futureTask = PromiseTask.ofCallable(task, newPromise(null));
-        execute(futureTask, 0);
+        PromiseTask<T> futureTask = PromiseTask.ofCallable(task, 0, newPromise(null));
+        execute(futureTask);
         return futureTask.future();
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public IFuture<?> submit(Runnable task) {
-        PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, newPromise(null));
-        execute(futureTask, 0);
-        return futureTask.future();
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public <T> IFuture<T> submit(Runnable task, T result) {
-        return submit(Executors.callable(task, result));
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(ctx));
-        execute(futureTask, 0);
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, newPromise(ctx));
+        execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx, int options) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(ctx));
-        execute(futureTask, options);
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, newPromise(ctx));
+        execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
-        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(ctx));
-        execute(futureTask, 0);
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, 0, newPromise(ctx));
+        execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
-        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(ctx));
-        execute(futureTask, options);
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, options, newPromise(ctx));
+        execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitCall(Callable<? extends V> task) {
-        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(null));
-        execute(futureTask, 0);
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, 0, newPromise(null));
+        execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitCall(Callable<? extends V> task, int options) {
-        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(null));
-        execute(futureTask, options);
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, options, newPromise(null));
+        execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public IFuture<?> submitRun(Runnable task) {
-        PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, newPromise(null));
-        execute(futureTask, 0);
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, 0, newPromise(null));
+        execute(futureTask);
         return futureTask.future();
     }
 
     /** 该方法可能和{@link ExecutorService#submit(Runnable, Object)}冲突，因此我们要带后缀 */
     @Override
     public IFuture<?> submitRun(Runnable task, int options) {
-        PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, newPromise(null));
-        execute(futureTask, options);
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, options, newPromise(null));
+        execute(futureTask);
         return futureTask.future();
     }
 

@@ -26,59 +26,6 @@ namespace Wjybxx.Commons.Concurrent;
 /// C#的开发者总喜欢优化GC问题...
 /// 为了减少GC管理的对象，我们继承<see cref="Promise{T}"/>；继承Promise可能带来一些扩展性问题，但StateMachineTask通常是无需扩展的，因此影响较小。
 /// </summary>
-/// <typeparam name="S">状态机类型</typeparam>
-internal sealed class StateMachineTask<S> : Promise<byte>, IStateMachineTask where S : IAsyncStateMachine
-{
-    /// <summary>
-    /// 任务状态机
-    /// </summary>
-    private S _stateMachine;
-    /// <summary>
-    /// 驱动状态机的委托（延迟分配）
-    /// </summary>
-    private Action _moveToNext;
-    /// <summary>
-    /// 任务的调度选项
-    /// </summary>
-    private int _options;
-
-    public StateMachineTask(ref S stateMachine, int options = 0) {
-        _stateMachine = stateMachine;
-        _options = options;
-        _moveToNext = Run;
-    }
-
-    public void Run() {
-        _stateMachine.MoveNext();
-    }
-
-    /// <summary>
-    /// 任务的调度选项
-    /// </summary>
-    public int Options => _options;
-
-    /// <summary>
-    /// 任务关联的Future
-    /// </summary>
-    public IFuture Future => this;
-
-    /// <summary>
-    /// 用于驱动StateMachine的Action委托
-    /// </summary>
-    public Action MoveToNext => _moveToNext;
-
-    public void SetResult() {
-        TrySetResult(1);
-    }
-
-    public void SetException(Exception exception) {
-        TrySetException(exception);
-    }
-}
-
-/// <summary>
-/// 
-/// </summary>
 /// <typeparam name="T">任务的结果类型</typeparam>
 /// <typeparam name="S">状态机类型</typeparam>
 internal sealed class StateMachineTask<T, S> : Promise<T>, IStateMachineTask<T> where S : IAsyncStateMachine

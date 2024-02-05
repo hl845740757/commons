@@ -1209,7 +1209,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         if (options != 0
                 && !TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)
                 && e instanceof IExecutor exe) {
-            exe.execute(completion, options);
+            exe.execute(completion);
         } else {
             completion.setOptions(0);
             e.execute(completion);
@@ -1266,6 +1266,9 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
         /** 非volatile，通过{@link UniPromise#stack}的原子更新来保证可见性 */
         Completion next;
+
+        /** 设置任务的调度选项 - 避免再次封装 */
+        public abstract void setOptions(int options);
 
         @Override
         public final void run() {

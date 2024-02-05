@@ -46,7 +46,7 @@ public final class UniScheduledPromiseTask<V>
     /** 提前计算的，逻辑上的下次触发时间 - 非volatile，不对用户开放 */
     private long nextTriggerTime;
     /** 任务的执行间隔 - 不再有特殊意义 */
-    private final long period;
+    private long period;
     /** 超时信息 */
     private TimeoutContext timeoutContext;
 
@@ -72,39 +72,37 @@ public final class UniScheduledPromiseTask<V>
     }
 
     /** 用于简单情况下的创建 */
-    UniScheduledPromiseTask(Object action, IScheduledPromise<V> promise, int taskType,
-                            long id, long nextTriggerTime, long period,
-                            int scheduleType) {
-        super(action, promise, taskType);
+    UniScheduledPromiseTask(Object action, int options, IScheduledPromise<V> promise, int taskType,
+                            long id, long nextTriggerTime) {
+        super(action, options, promise, taskType);
         this.id = id;
         this.nextTriggerTime = nextTriggerTime;
-        this.period = period;
-        setScheduleType(scheduleType);
+        this.period = 0;
         promise.setTask(this);
     }
 
-    public static UniScheduledPromiseTask<?> ofRunnable(Runnable action, IScheduledPromise<?> promise,
+    public static UniScheduledPromiseTask<?> ofRunnable(Runnable action, int options, IScheduledPromise<?> promise,
                                                         long id, long nextTriggerTime) {
-        return new UniScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_RUNNABLE,
-                id, nextTriggerTime, 0, 0);
+        return new UniScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_RUNNABLE,
+                id, nextTriggerTime);
     }
 
-    public static <V> UniScheduledPromiseTask<V> ofCallable(Callable<? extends V> action, IScheduledPromise<V> promise,
+    public static <V> UniScheduledPromiseTask<V> ofCallable(Callable<? extends V> action, int options, IScheduledPromise<V> promise,
                                                             long id, long nextTriggerTime) {
-        return new UniScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_CALLABLE,
-                id, nextTriggerTime, 0, 0);
+        return new UniScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_CALLABLE,
+                id, nextTriggerTime);
     }
 
-    public static <V> UniScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IScheduledPromise<V> promise,
+    public static <V> UniScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, int options, IScheduledPromise<V> promise,
                                                             long id, long nextTriggerTime) {
-        return new UniScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_FUNCTION,
-                id, nextTriggerTime, 0, 0);
+        return new UniScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNCTION,
+                id, nextTriggerTime);
     }
 
-    public static UniScheduledPromiseTask<?> ofConsumer(Consumer<? super IContext> action, IScheduledPromise<?> promise,
+    public static UniScheduledPromiseTask<?> ofConsumer(Consumer<? super IContext> action, int options, IScheduledPromise<?> promise,
                                                         long id, long nextTriggerTime) {
-        return new UniScheduledPromiseTask<>(action, promise, TaskBuilder.TYPE_CONSUMER,
-                id, nextTriggerTime, 0, 0);
+        return new UniScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_CONSUMER,
+                id, nextTriggerTime);
     }
 
     public static <V> UniScheduledPromiseTask<V> ofBuilder(TaskBuilder<V> builder, IScheduledPromise<V> promise,
@@ -112,8 +110,8 @@ public final class UniScheduledPromiseTask<V>
         if (builder instanceof ScheduledTaskBuilder<V> sb) {
             return ofBuilder(sb, promise, id, tickTime);
         }
-        return new UniScheduledPromiseTask<>(builder.getTask(), promise, builder.getType(),
-                id, tickTime, 0, 0);
+        return new UniScheduledPromiseTask<>(builder.getTask(), builder.getOptions(), promise, builder.getType(),
+                id, tickTime);
     }
 
     /**
@@ -232,12 +230,12 @@ public final class UniScheduledPromiseTask<V>
             clear();
             return false;
         }
-        if ((options & maskClaimed) == 0) {
+        if ((ctl & maskClaimed) == 0) {
             if (!promise.trySetComputing()) {
                 clear();
                 return false;
             }
-            options |= maskClaimed;
+            ctl |= maskClaimed;
         } else if (!promise.isComputing()) {
             clear();
             return false;

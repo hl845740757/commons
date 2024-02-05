@@ -153,7 +153,10 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
 
     #region 上下文
 
-    public IExecutor? Executor => _executor;
+    /// <summary>
+    /// 允许重写，Executor可能存储在其它地方
+    /// </summary>
+    public virtual IExecutor? Executor => _executor;
 
     public IFuture<T> AsReadonly() => new ForwardFuture<T>(this);
 
@@ -166,16 +169,12 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
         return state >= ST_SUCCESS;
     }
 
-    private static bool IsFailedOrCancelled0(int state) {
-        return state >= ST_FAILED;
-    }
-
     public TaskStatus Status => (TaskStatus)PeekState();
     public bool IsPending => PeekState() == ST_PENDING;
     public bool IsComputing => PeekState() == ST_COMPUTING;
-    public bool IsCancelled => PeekState() == ST_CANCELLED;
     public bool IsSucceeded => PeekState() == ST_SUCCESS;
     public bool IsFailed => PeekState() == ST_FAILED;
+    public bool IsCancelled => PeekState() == ST_CANCELLED;
 
     public bool IsDone => PeekState() >= ST_SUCCESS;
     public bool IsFailedOrCancelled => PeekState() >= ST_FAILED;
@@ -286,7 +285,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
         };
     }
 
-    /** 上报future的执行结果 -- 取消意外的异常都将被包装为<see cref="CompletionException"/> */
+    /** 上报future的执行结果 -- 取消以外的异常都将被包装为<see cref="CompletionException"/> */
     private T ReportJoin(int state) {
         Debug.Assert(state > 0);
         if (state == ST_SUCCESS) {
@@ -303,8 +302,8 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
     #region 阻塞结果查询
 
     // virtual 以支持重写
-    protected virtual void CheckDeadlock() {
-        if (_executor is ISingleThreadExecutor se && se.InEventLoop()) {
+    protected void CheckDeadlock() {
+        if (Executor is ISingleThreadExecutor se && se.InEventLoop()) {
             throw new BlockingOperationException();
         }
     }
@@ -382,6 +381,14 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
             return awaiter.AwaitUninterruptibly(timeout);
         }
         return true;
+    }
+
+    public FutureAwaiter<T> GetAwaiter() {
+        return new FutureAwaiter<T>(this);
+    }
+
+    public ValueFuture<T> GetAwaiter(IExecutor executor, int options = 0) {
+        return new ValueFuture<T>(this, executor, options);
     }
 
     #endregion

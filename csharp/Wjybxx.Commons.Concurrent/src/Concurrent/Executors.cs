@@ -31,22 +31,22 @@ public static class Executors
         return new ActionWrapper1(action, options);
     }
 
+    public static ITask BoxAction(Action action, CancellationToken cancelToken, int options) {
+        if (action == null) throw new ArgumentNullException(nameof(action));
+        return new ActionWrapper2(action, cancelToken, options);
+    }
+
     public static ITask BoxAction(Action action, ICancelToken cancelToken, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (cancelToken == null) throw new ArgumentNullException(nameof(cancelToken));
-        return new ActionWrapper2(action, cancelToken, options);
+        return new ActionWrapper3(action, cancelToken, options);
     }
 
     public static ITask BoxAction(Action<TaskContext> action, TaskContext context, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        return new ActionWrapper3(action, context, options);
+        return new ActionWrapper4(action, context, options);
     }
-
-    public static ITask BoxAction(Action action, CancellationToken cancelToken, int options) {
-        if (action == null) throw new ArgumentNullException(nameof(action));
-        return new ActionWrapper4(action, cancelToken, options);
-    }
-
+    
     private class ActionWrapper1 : ITask
     {
         private readonly Action action;
@@ -67,10 +67,32 @@ public static class Executors
     private class ActionWrapper2 : ITask
     {
         private readonly Action action;
+        private readonly CancellationToken cancelToken;
+        private readonly int options;
+
+        public ActionWrapper2(Action action, CancellationToken cancelToken, int options) {
+            this.action = action;
+            this.cancelToken = cancelToken;
+            this.options = options;
+        }
+
+        public int Options => options;
+
+        public void Run() {
+            if (cancelToken.IsCancellationRequested) {
+                return;
+            }
+            action();
+        }
+    }
+
+    private class ActionWrapper3 : ITask
+    {
+        private readonly Action action;
         private readonly ICancelToken cancelToken;
         private readonly int options;
 
-        public ActionWrapper2(Action action, ICancelToken cancelToken, int options) {
+        public ActionWrapper3(Action action, ICancelToken cancelToken, int options) {
             this.action = action;
             this.cancelToken = cancelToken;
             this.options = options;
@@ -86,13 +108,13 @@ public static class Executors
         }
     }
 
-    private class ActionWrapper3 : ITask
+    private class ActionWrapper4 : ITask
     {
         private readonly Action<TaskContext> action;
         private readonly TaskContext context;
         private readonly int options;
 
-        public ActionWrapper3(Action<TaskContext> action, TaskContext context, int options) {
+        public ActionWrapper4(Action<TaskContext> action, TaskContext context, int options) {
             this.action = action;
             this.context = context;
             this.options = options;
@@ -107,26 +129,5 @@ public static class Executors
             action(context);
         }
     }
-
-    private class ActionWrapper4 : ITask
-    {
-        private readonly Action action;
-        private readonly CancellationToken cancelToken;
-        private readonly int options;
-
-        public ActionWrapper4(Action action, CancellationToken cancelToken, int options) {
-            this.action = action;
-            this.cancelToken = cancelToken;
-            this.options = options;
-        }
-
-        public int Options => options;
-
-        public void Run() {
-            if (cancelToken.IsCancellationRequested) {
-                return;
-            }
-            action();
-        }
-    }
+    
 }

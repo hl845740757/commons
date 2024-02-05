@@ -34,7 +34,7 @@ public class ForwardFuture<T> : IFuture<T>
         this.future = future ?? throw new ArgumentNullException(nameof(future));
     }
 
-    #region 小心
+    #region 不可直接转发
 
     public IFuture<T> AsReadonly() {
         return this; // Csharp的Future没有取消接口，因此返回this即可
@@ -51,11 +51,11 @@ public class ForwardFuture<T> : IFuture<T>
     }
 
     public FutureAwaiter<T> GetAwaiter() {
-        return future.GetAwaiter();
+        return new FutureAwaiter<T>(this); // 不可转发，避免封装泄漏
     }
 
     public ValueFuture<T> GetAwaiter(IExecutor executor, int options = 0) {
-        return future.GetAwaiter(executor, options);
+        return new ValueFuture<T>(this, executor, options); // 不可转发，避免封装泄漏
     }
 
     #endregion

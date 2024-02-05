@@ -36,6 +36,20 @@ public interface IExecutor extends Executor {
      * 在将来的某个时间执行给定的命令。
      * 命令可以在新线程中执行，也可以在池线程中执行，或者在调用线程中执行，这由Executor实现决定。
      * {@link Executor#execute(Runnable)}
+     *
+     * @param command 要执行的任务，注意{@link ITask}类型
+     * @throws NullPointerException       如果任务为null
+     * @throws RejectedExecutionException 如果Executor已开始关闭
+     * @apiNote 该接口默认不测试任务的类型，不会尝试去解析任务潜在的options -- 保证确定性。
+     */
+    @SuppressWarnings("NullableProblems")
+    @Override
+    void execute(Runnable command);
+
+    /**
+     * 在将来的某个时间执行给定的命令。
+     * 命令可以在新线程中执行，也可以在池线程中执行，或者在调用线程中执行，这由Executor实现决定。
+     * {@link Executor#execute(Runnable)}
      * <p>
      * 任务的调度特征值
      * 1.Executor需要感知用户任务的一些属性，以实现更好的管理。
@@ -47,22 +61,8 @@ public interface IExecutor extends Executor {
      * @throws RejectedExecutionException 如果Executor已开始关闭
      * @implNote 实现类如果不支持选项，应该保守调度。
      */
-    void execute(Runnable command, int options);
-
-    /**
-     * 在将来的某个时间执行给定的命令。
-     * 命令可以在新线程中执行，也可以在池线程中执行，或者在调用线程中执行，这由Executor实现决定。
-     * {@link Executor#execute(Runnable)}
-     *
-     * @param command 要执行的任务
-     * @throws NullPointerException       如果任务为null
-     * @throws RejectedExecutionException 如果Executor已开始关闭
-     * @apiNote 该接口默认不测试任务的类型，不会尝试去解析任务潜在的options -- 保证确定性。
-     */
-    @SuppressWarnings("NullableProblems")
-    @Override
-    default void execute(Runnable command) {
-        execute(command, 0);
+    default void execute(Runnable command, int options) {
+        execute(FutureUtils.toTask(command, options));
     }
 
     /**
@@ -74,10 +74,10 @@ public interface IExecutor extends Executor {
      * @throws RejectedExecutionException 如果Executor已开始关闭
      */
     default void execute(Consumer<? super IContext> action, IContext ctx) {
-        execute(FutureUtils.toRunnable(action, ctx), 0);
+        execute(FutureUtils.toTask(action, ctx, 0));
     }
 
     default void execute(Consumer<? super IContext> action, IContext ctx, int options) {
-        execute(FutureUtils.toRunnable(action, ctx), options);
+        execute(FutureUtils.toTask(action, ctx, options));
     }
 }

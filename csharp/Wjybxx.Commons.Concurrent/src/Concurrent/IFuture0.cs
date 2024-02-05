@@ -25,8 +25,10 @@ namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 1. 该非泛型接口用于支持统一操作，不提供具体实现。
-/// 2. void可通过byte/int泛型替代。
+/// 2. void可通过byte/int/bool泛型替代 -- 推荐byte。
 /// 3. C#由于支持async/await语法，因此未像<see cref="Task{TResult}"/>一样提供大量的回调接口；一方面是async/await代码更易读，另一方面是真泛型下实现成本太高。
+/// 4. 在我的设计中，Future是不重用的，因此获取结果等接口无token参数。
+/// 5. 要支持显式的异步编程，需要将Future暴露给用户，也就无法管理Future生命周期，也就无法轻易重用。
 /// </summary>
 [AsyncMethodBuilder(typeof(AsyncFutureMethodBuilder))]
 public interface IFuture
@@ -62,17 +64,17 @@ public interface IFuture
     /** 如果future关联的任务正在执行中，则返回true */
     bool IsComputing => Status == TaskStatus.COMPUTING;
 
-    /** 如果future已进入完成状态(成功、失败、被取消)，则返回true */
-    bool IsDone => Status.IsDone();
-
-    /** 如果future关联的任务在正常完成被取消，则返回true。 */
-    bool IsCancelled => Status == TaskStatus.CANCELLED;
-
     /** 如果future已进入完成状态，且是成功完成，则返回true。 */
     bool IsSucceeded => Status == TaskStatus.SUCCESS;
 
     /** 如果future已进入完成状态，且是失败状态，则返回true */
     bool IsFailed => Status == TaskStatus.FAILED;
+
+    /** 如果future关联的任务在正常完成被取消，则返回true。 */
+    bool IsCancelled => Status == TaskStatus.CANCELLED;
+
+    /** 如果future已进入完成状态(成功、失败、被取消)，则返回true */
+    bool IsDone => Status.IsDone();
 
     /**
      * 在JDK的约定中，取消和failed是分离的，我们仍保持这样的约定；

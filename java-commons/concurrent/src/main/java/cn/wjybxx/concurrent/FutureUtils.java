@@ -329,72 +329,74 @@ public class FutureUtils {
     public static <T> IFuture<T> submit(IExecutor executor, @Nonnull TaskBuilder<T> builder) {
         IPromise<T> promise = newPromise(executor, builder.getCtx());
         PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, promise);
-        executor.execute(futureTask, builder.getOptions());
+        executor.execute(futureTask);
         return promise;
     }
 
     public static <V> IFuture<V> submitFunc(Executor executor, Function<? super IContext, ? extends V> task, IContext ctx) {
         IPromise<V> promise = newPromise(executor, ctx);
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, promise);
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, promise);
         executor.execute(futureTask);
         return promise;
     }
 
     public static <V> IFuture<V> submitFunc(IExecutor executor, Function<? super IContext, ? extends V> task, IContext ctx, int options) {
         IPromise<V> promise = newPromise(executor, ctx);
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, promise);
-        executor.execute(futureTask, options);
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, promise);
+        executor.execute(futureTask);
         return promise;
     }
 
     public static IFuture<?> submitAction(Executor executor, Consumer<? super IContext> task, IContext ctx) {
         IPromise<Object> promise = newPromise(executor, ctx);
-        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, promise);
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, 0, promise);
         executor.execute(futureTask);
         return promise;
     }
 
     public static IFuture<?> submitAction(IExecutor executor, Consumer<? super IContext> task, IContext ctx, int options) {
         IPromise<Object> promise = newPromise(executor, ctx);
-        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, promise);
-        executor.execute(futureTask, options);
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, options, promise);
+        executor.execute(futureTask);
         return promise;
     }
 
     public static <V> IFuture<V> submitCall(Executor executor, Callable<? extends V> task) {
         IPromise<V> promise = newPromise(executor);
-        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, promise);
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, 0, promise);
         executor.execute(futureTask);
         return promise;
     }
 
     public static <V> IFuture<V> submitCall(IExecutor executor, Callable<? extends V> task, int options) {
         IPromise<V> promise = newPromise(executor);
-        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, promise);
-        executor.execute(futureTask, options);
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, options, promise);
+        executor.execute(futureTask);
         return promise;
     }
 
     public static IFuture<?> submitRun(Executor executor, Runnable action) {
         IPromise<Object> promise = newPromise(executor);
-        PromiseTask<?> futureTask = PromiseTask.ofRunnable(action, promise);
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(action, 0, promise);
         executor.execute(futureTask);
         return promise;
     }
 
     public static IFuture<?> submitRun(IExecutor executor, Runnable action, int options) {
         IPromise<Object> promise = newPromise(executor);
-        PromiseTask<?> futureTask = PromiseTask.ofRunnable(action, promise);
-        executor.execute(futureTask, options);
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(action, options, promise);
+        executor.execute(futureTask);
         return promise;
     }
 
     public static void execute(Executor executor, Consumer<? super IContext> action, IContext ctx) {
-        executor.execute(toRunnable(action, ctx));
+        ITask futureTask = toTask(action, ctx, 0);
+        executor.execute(futureTask);
     }
 
     public static void execute(IExecutor executor, Consumer<? super IContext> action, IContext ctx, int options) {
-        executor.execute(toRunnable(action, ctx), options);
+        ITask futureTask = toTask(action, ctx, options);
+        executor.execute(futureTask);
     }
 
     // endregion
@@ -425,11 +427,17 @@ public class FutureUtils {
 
     // endregion
 
-    // region callable适配
+    // region task适配
 
-    public static Runnable toRunnable(Consumer<? super IContext> action, IContext ctx) {
+    public static ITask toTask(Runnable action, int options) {
+        // 注意：不论options是否为0都需要封装，否则action为ITask类型时将产生错误
         Objects.requireNonNull(action, "action");
-        return new Run1(action, ctx);
+        return new Task1(action, options);
+    }
+
+    public static ITask toTask(Consumer<? super IContext> action, IContext ctx, int options) {
+        Objects.requireNonNull(action, "action");
+        return new Task3(action, ctx, options);
     }
 
     // endregion
@@ -468,14 +476,46 @@ public class FutureUtils {
         }
     }
 
-    private static class Run1 implements Runnable {
+    private static class Task1 implements ITask {
+
+        private Runnable action;
+        private final int options;
+
+        public Task1(Runnable action, int options) {
+            this.action = action;
+            this.options = options;
+        }
+
+        @Override
+        public int getOptions() {
+            return options;
+        }
+
+        @Override
+        public void run() {
+            Runnable action = this.action;
+            {
+                this.action = null;
+            }
+            action.run();
+        }
+    }
+
+    private static class Task3 implements ITask {
 
         private Consumer<? super IContext> action;
         private IContext ctx;
+        private final int options;
 
-        public Run1(Consumer<? super IContext> action, IContext ctx) {
+        public Task3(Consumer<? super IContext> action, IContext ctx, int options) {
             this.action = action;
             this.ctx = ctx;
+            this.options = options;
+        }
+
+        @Override
+        public int getOptions() {
+            return options;
         }
 
         @Override
@@ -486,8 +526,8 @@ public class FutureUtils {
                 this.action = null;
                 this.ctx = null;
             }
-            if (ctx != null) {
-                ctx.cancelToken().checkCancel();
+            if (ctx != null && ctx.cancelToken().isCancelling()) {
+                return; // 抛出异常没有意义，检测信号即可
             }
             action.accept(ctx);
         }

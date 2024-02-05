@@ -131,23 +131,29 @@ public interface IExecutorService extends ExecutorService, IExecutor {
         return new Promise<>(this, ctx);
     }
 
-    default <T> IFuture<T> submit(@Nonnull TaskBuilder<T> builder) {
-        PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, newPromise(builder.getCtx()));
-        execute(futureTask, builder.getOptions());
-        return futureTask.future();
-    }
+    <T> IFuture<T> submit(@Nonnull TaskBuilder<T> builder);
 
-    /** {@inheritDoc} */
     @Override
-    default <T> IFuture<T> submit(@Nonnull Callable<T> task) {
-        PromiseTask<T> futureTask = PromiseTask.ofCallable(task, newPromise(null));
-        execute(futureTask, 0);
-        return futureTask.future();
-    }
+    <T> IFuture<T> submit(@Nonnull Callable<T> task);
+
+    <T> IFuture<T> submitFunc(Function<? super IContext, ? extends T> task, IContext ctx);
+
+    <T> IFuture<T> submitFunc(Function<? super IContext, ? extends T> task, IContext ctx, int options);
+
+    IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx);
+
+    IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options);
+
+    <T> IFuture<T> submitCall(Callable<? extends T> task);
+
+    <T> IFuture<T> submitCall(Callable<? extends T> task, int options);
+
+    /** 该方法可能和{@link ExecutorService#submit(Runnable, Object)}冲突，因此我们要带后缀 */
+    IFuture<?> submitRun(Runnable task);
+
+    IFuture<?> submitRun(Runnable task, int options);
 
     /**
-     * {@inheritDoc}
-     * <p>
      * 从Java引入lambda开始，对接收函数式接口的方法进行重载时，必须要具备明显的差异才可。
      * 如果接口的差异过小，建议使用不同的方法名，而不是重载。
      *
@@ -164,55 +170,6 @@ public interface IExecutorService extends ExecutorService, IExecutor {
     @Override
     default <T> IFuture<T> submit(@Nonnull Runnable task, T result) {
         return submitCall(Executors.callable(task, result));
-    }
-
-    default <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(ctx));
-        execute(futureTask, 0);
-        return futureTask.future();
-    }
-
-    default <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx, int options) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(ctx));
-        execute(futureTask, options);
-        return futureTask.future();
-    }
-
-    default IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
-        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(ctx));
-        execute(futureTask, 0);
-        return futureTask.future();
-    }
-
-    default IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
-        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(ctx));
-        execute(futureTask, options);
-        return futureTask.future();
-    }
-
-    default <V> IFuture<V> submitCall(Callable<? extends V> task) {
-        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(null));
-        execute(futureTask, 0);
-        return futureTask.future();
-    }
-
-    default <V> IFuture<V> submitCall(Callable<? extends V> task, int options) {
-        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(null));
-        execute(futureTask, options);
-        return futureTask.future();
-    }
-
-    /** 该方法可能和{@link ExecutorService#submit(Runnable, Object)}冲突，因此我们要带后缀 */
-    default IFuture<?> submitRun(Runnable task) {
-        PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, newPromise(null));
-        execute(futureTask, 0);
-        return futureTask.future();
-    }
-
-    default IFuture<?> submitRun(Runnable task, int options) {
-        PromiseTask<?> futureTask = PromiseTask.ofRunnable(task, newPromise(null));
-        execute(futureTask, options);
-        return futureTask.future();
     }
 
     // endregion

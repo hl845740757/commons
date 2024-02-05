@@ -21,13 +21,11 @@ import cn.wjybxx.disruptor.StacklessTimeoutException;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.RunnableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * 1.实现{@link RunnableFuture}是为了适配JDK的实现类，实际上更建议组合。
- * 2.该类的数据是（部分）开放的，以支持不同的扩展。
+ * ps：该类的数据是（部分）开放的，以支持不同的扩展。
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -60,32 +58,31 @@ public class PromiseTask<V> implements IFutureTask<V> {
     private Object action;
     /** 用户可能在任务完成后继续访问，因此不能清理 */
     protected final IPromise<V> promise;
+    /** 调度选项 */
+    protected final int options;
     /** 控制标记 */
     protected int ctl;
-    /** 调度选项 */
-    protected int options;
 
     /**
      * @param action  用户的任务，支持的类型见{@link TaskBuilder#taskType(Object)}
+     * @param options 任务的调度选项
      * @param promise 任务关联的promise
      */
-    public PromiseTask(Object action, IPromise<V> promise) {
-        this(action, promise, TaskBuilder.taskType(action));
+    public PromiseTask(Object action, int options, IPromise<V> promise) {
+        this(action, options, promise, TaskBuilder.taskType(action));
     }
 
     /**
-     * 注意：此时并不会保存任务的options，options应当由executor在放入队列前设置到该task。
-     * {@link #setOptions(int)}
-     *
      * @param builder 任务构建器
      * @param promise 任务关联的promise
      */
     public PromiseTask(TaskBuilder<V> builder, IPromise<V> promise) {
-        this(builder.getTask(), promise, builder.getType());
+        this(builder.getTask(), builder.getOptions(), promise, builder.getType());
     }
 
-    public PromiseTask(Object action, IPromise<V> promise, int taskType) {
+    public PromiseTask(Object action, int options, IPromise<V> promise, int taskType) {
         this.action = Objects.requireNonNull(action, "action");
+        this.options = options;
         this.promise = Objects.requireNonNull(promise, "promise");
         this.ctl |= (taskType << offsetTaskType);
         // 注入promise
@@ -97,20 +94,20 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     // region factory
 
-    public static PromiseTask<?> ofRunnable(Runnable action, IPromise<?> promise) {
-        return new PromiseTask<>(action, promise, TaskBuilder.TYPE_RUNNABLE);
+    public static PromiseTask<?> ofRunnable(Runnable action, int options, IPromise<?> promise) {
+        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_RUNNABLE);
     }
 
-    public static <V> PromiseTask<V> ofCallable(Callable<? extends V> action, IPromise<V> promise) {
-        return new PromiseTask<>(action, promise, TaskBuilder.TYPE_CALLABLE);
+    public static <V> PromiseTask<V> ofCallable(Callable<? extends V> action, int options, IPromise<V> promise) {
+        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_CALLABLE);
     }
 
-    public static <V> PromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IPromise<V> promise) {
-        return new PromiseTask<>(action, promise, TaskBuilder.TYPE_FUNCTION);
+    public static <V> PromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, int options, IPromise<V> promise) {
+        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNCTION);
     }
 
-    public static PromiseTask<?> ofConsumer(Consumer<? super IContext> action, IPromise<?> promise) {
-        return new PromiseTask<>(action, promise, TaskBuilder.TYPE_CONSUMER);
+    public static PromiseTask<?> ofConsumer(Consumer<? super IContext> action, int options, IPromise<?> promise) {
+        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_CONSUMER);
     }
 
     public static <V> PromiseTask<V> ofBuilder(TaskBuilder<V> builder, IPromise<V> promise) {
@@ -119,15 +116,6 @@ public class PromiseTask<V> implements IFutureTask<V> {
     // endregion
 
     // region open
-
-    /**
-     * 1.executor应当在调度任务之前设置options
-     * 2.该接口为了避免对提交的任务进行二次封装。
-     */
-    @Override
-    public final void setOptions(int options) {
-        this.options = options;
-    }
 
     @Override
     public final int getOptions() {

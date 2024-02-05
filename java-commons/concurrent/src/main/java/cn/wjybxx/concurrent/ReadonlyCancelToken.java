@@ -17,7 +17,6 @@
 package cn.wjybxx.concurrent;
 
 import java.util.Objects;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -40,11 +39,8 @@ public final class ReadonlyCancelToken implements ICancelToken {
     }
 
     @Override
-    public void checkCancel() {
-        // 避免不必要的转发
-        if (cancelToken.isCancelling()) {
-            throw new CancellationException();
-        }
+    public boolean canBeCancelled() {
+        return cancelToken.canBeCancelled();
     }
 
     // region 转发
@@ -77,6 +73,11 @@ public final class ReadonlyCancelToken implements ICancelToken {
     @Override
     public boolean isWithoutRemove() {
         return cancelToken.isWithoutRemove();
+    }
+
+    @Override
+    public void checkCancel() {
+        cancelToken.checkCancel();
     }
 
     @Override

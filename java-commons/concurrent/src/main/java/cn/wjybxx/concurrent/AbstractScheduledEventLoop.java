@@ -50,39 +50,39 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
     @Override
     public <V> IScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder) {
         ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(builder.getCtx()), 0, tickTime());
-        execute(promiseTask, builder.getOptions());
+        execute(promiseTask);
         return promiseTask.future();
     }
 
     @Override
     public <V> IScheduledFuture<V> scheduleFunc(Function<? super IContext, V> task, IContext ctx, long delay, TimeUnit unit) {
         long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, newScheduledPromise(ctx), 0, triggerTime);
-        execute(promiseTask, 0);
+        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, 0, newScheduledPromise(ctx), 0, triggerTime);
+        execute(promiseTask);
         return promiseTask.future();
     }
 
     @Override
     public IScheduledFuture<?> scheduleAction(Consumer<? super IContext> task, IContext ctx, long delay, TimeUnit unit) {
         long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofConsumer(task, newScheduledPromise(ctx), 0, triggerTime);
-        execute(promiseTask, 0);
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofConsumer(task, 0, newScheduledPromise(ctx), 0, triggerTime);
+        execute(promiseTask);
         return promiseTask.future();
     }
 
     @Override
     public IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
         long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofRunnable(task, newScheduledPromise(), 0, triggerTime);
-        execute(promiseTask, 0);
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofRunnable(task, 0, newScheduledPromise(), 0, triggerTime);
+        execute(promiseTask);
         return promiseTask.future();
     }
 
     @Override
     public <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
         long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofCallable(task, newScheduledPromise(), 0, triggerTime);
-        execute(promiseTask, 0);
+        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofCallable(task, 0, newScheduledPromise(), 0, triggerTime);
+        execute(promiseTask);
         return promiseTask.future();
     }
 
@@ -92,7 +92,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
                 .setFixedRate(initialDelay, period, unit);
 
         ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(sb, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask, 0);
+        execute(promiseTask);
         return promiseTask.future();
     }
 
@@ -102,7 +102,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
                 .setFixedDelay(initialDelay, delay, unit);
 
         ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(sb, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask, 0);
+        execute(promiseTask);
         return promiseTask.future();
     }
     // endregion

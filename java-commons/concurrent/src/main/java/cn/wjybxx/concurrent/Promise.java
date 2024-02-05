@@ -227,6 +227,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 && altResult.cause instanceof CancellationException;
     }
 
+    @Deprecated
     @Override
     public final State state() {
         Object r = result;
@@ -282,8 +283,13 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     }
 
     @Override
-    public final boolean isDone() {
-        return isDone0(result);
+    public boolean isSucceeded() {
+        return isSucceeded0(result);
+    }
+
+    @Override
+    public final boolean isFailed() {
+        return isFailed0(result);
     }
 
     @Override
@@ -292,13 +298,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     }
 
     @Override
-    public boolean isSucceeded() {
-        return isSucceeded0(result);
-    }
-
-    @Override
-    public final boolean isFailed() {
-        return isFailed0(result);
+    public final boolean isDone() {
+        return isDone0(result);
     }
 
     @Override
@@ -1282,7 +1283,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         if (options != 0
                 && !TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)
                 && e instanceof IExecutor exe) {
-            exe.execute(completion, options);
+            exe.execute(completion);
         } else {
             completion.setOptions(0);
             e.execute(completion);
@@ -1337,6 +1338,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
         /** 非volatile，通过{@link Promise#stack}的原子更新来保证可见性 */
         Completion next;
+
+        /** 设置任务的调度选项 - 避免再次封装 */
+        public abstract void setOptions(int options);
 
         @Override
         public final void run() {

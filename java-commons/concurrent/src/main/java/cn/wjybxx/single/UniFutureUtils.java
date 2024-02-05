@@ -19,6 +19,7 @@ package cn.wjybxx.single;
 import cn.wjybxx.base.time.TimeProvider;
 import cn.wjybxx.concurrent.*;
 
+import javax.annotation.Nonnull;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -120,62 +121,78 @@ public class UniFutureUtils {
 
     // region submit
 
-    public static <V> IFuture<V> submitFunc(Executor executor, Function<? super IContext, V> task, IContext ctx) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(executor, ctx));
+    public static <T> IFuture<T> submit(IExecutor executor, @Nonnull TaskBuilder<T> builder) {
+        IPromise<T> promise = newPromise(executor, builder.getCtx());
+        PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, promise);
         executor.execute(futureTask);
-        return futureTask.future();
+        return promise;
     }
 
-    public static <V> IFuture<V> submitFunc(IExecutor executor, Function<? super IContext, V> task, IContext ctx, int options) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, newPromise(executor, ctx));
-        executor.execute(futureTask, options);
-        return futureTask.future();
+    public static <V> IFuture<V> submitFunc(Executor executor, Function<? super IContext, ? extends V> task, IContext ctx) {
+        IPromise<V> promise = newPromise(executor, ctx);
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, promise);
+        executor.execute(futureTask);
+        return promise;
+    }
+
+    public static <V> IFuture<V> submitFunc(IExecutor executor, Function<? super IContext, ? extends V> task, IContext ctx, int options) {
+        IPromise<V> promise = newPromise(executor, ctx);
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, promise);
+        executor.execute(futureTask);
+        return promise;
     }
 
     public static IFuture<?> submitAction(Executor executor, Consumer<? super IContext> task, IContext ctx) {
-        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(executor, ctx));
+        IPromise<Object> promise = newPromise(executor, ctx);
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, 0, promise);
         executor.execute(futureTask);
-        return futureTask.future();
+        return promise;
     }
 
     public static IFuture<?> submitAction(IExecutor executor, Consumer<? super IContext> task, IContext ctx, int options) {
-        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, newPromise(executor, ctx));
-        executor.execute(futureTask, options);
-        return futureTask.future();
-    }
-
-    public static <V> IFuture<V> submitCall(Executor executor, Callable<V> task) {
-        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(executor));
+        IPromise<Object> promise = newPromise(executor, ctx);
+        PromiseTask<?> futureTask = PromiseTask.ofConsumer(task, options, promise);
         executor.execute(futureTask);
-        return futureTask.future();
+        return promise;
     }
 
-    public static <V> IFuture<V> submitCall(IExecutor executor, Callable<V> task, int options) {
-        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, newPromise(executor));
-        executor.execute(futureTask, options);
-        return futureTask.future();
+    public static <V> IFuture<V> submitCall(Executor executor, Callable<? extends V> task) {
+        IPromise<V> promise = newPromise(executor);
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, 0, promise);
+        executor.execute(futureTask);
+        return promise;
+    }
+
+    public static <V> IFuture<V> submitCall(IExecutor executor, Callable<? extends V> task, int options) {
+        IPromise<V> promise = newPromise(executor);
+        PromiseTask<V> futureTask = PromiseTask.ofCallable(task, options, promise);
+        executor.execute(futureTask);
+        return promise;
     }
 
     public static IFuture<?> submitRun(Executor executor, Runnable action) {
-        PromiseTask<?> futureTask = PromiseTask.ofRunnable(action, newPromise(executor));
+        IPromise<Object> promise = newPromise(executor);
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(action, 0, promise);
         executor.execute(futureTask);
-        return futureTask.future();
+        return promise;
     }
 
     public static IFuture<?> submitRun(IExecutor executor, Runnable action, int options) {
-        PromiseTask<?> futureTask = PromiseTask.ofRunnable(action, newPromise(executor));
-        executor.execute(futureTask, options);
-        return futureTask.future();
+        IPromise<Object> promise = newPromise(executor);
+        PromiseTask<?> futureTask = PromiseTask.ofRunnable(action, options, promise);
+        executor.execute(futureTask);
+        return promise;
     }
 
     public static void execute(Executor executor, Consumer<? super IContext> action, IContext ctx) {
-        executor.execute(FutureUtils.toRunnable(action, ctx));
+        ITask futureTask = FutureUtils.toTask(action, ctx, 0);
+        executor.execute(futureTask);
     }
 
     public static void execute(IExecutor executor, Consumer<? super IContext> action, IContext ctx, int options) {
-        executor.execute(FutureUtils.toRunnable(action, ctx), options);
+        ITask futureTask = FutureUtils.toTask(action, ctx, options);
+        executor.execute(futureTask);
     }
-
     // endregion
 
 }

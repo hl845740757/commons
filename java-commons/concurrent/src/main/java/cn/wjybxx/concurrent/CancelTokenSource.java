@@ -79,6 +79,11 @@ public final class CancelTokenSource implements ICancelTokenSource {
         return new ReadonlyCancelToken(this);
     }
 
+    @Override
+    public boolean canBeCancelled() {
+        return true;
+    }
+
     // region tokenSource
 
     /**
@@ -457,7 +462,11 @@ public final class CancelTokenSource implements ICancelTokenSource {
         return (int) VH_CODE.compareAndExchange(this, 0, cancelCode);
     }
 
-    /** 栈顶回调被删除时尝试删除更多的节点 */
+    /**
+     * 栈顶回调被删除时尝试删除更多的节点
+     *
+     * @return 最新栈顶 -- 可能是{@link #TOMBSTONE}
+     */
     private Completion removeClosedNode(Completion expectedHead) {
         Completion next = expectedHead.next;
         while (next != null && next.action == TOMBSTONE) {
@@ -476,6 +485,12 @@ public final class CancelTokenSource implements ICancelTokenSource {
         Completion expectedHead = stack;
         Completion realHead;
         while (expectedHead != TOMBSTONE) {
+            // 处理延迟删除
+            if (expectedHead != null && expectedHead.action == TOMBSTONE) {
+                expectedHead = removeClosedNode(expectedHead);
+                continue;
+            }
+
             newHead.next = expectedHead;
             realHead = (Completion) VH_STACK.compareAndExchange(this, expectedHead, newHead);
             if (realHead == expectedHead) { // success
@@ -492,7 +507,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
         Completion next = null;
         outer:
         while (true) {
-            // 将当前future上的监听器添加到next前面
             next = clearListeners(source, next);
 
             while (next != null) {
@@ -544,7 +558,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         if (options != 0
                 && !TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)
                 && e instanceof IExecutor exe) {
-            exe.execute(completion, options);
+            exe.execute(completion);
         } else {
             completion.setOptions(0);
             e.execute(completion);
@@ -584,7 +598,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
             return options;
         }
 
-        @Override
         public void setOptions(int options) {
             this.options = options;
         }
@@ -632,7 +645,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
             if (action == null) {
                 return;
             }
-            CancelTokenSource source = this.source;
             if (this == source.stack) {
                 source.removeClosedNode(this);
             }

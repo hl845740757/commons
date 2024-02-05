@@ -202,7 +202,7 @@ public readonly struct ValueFuture<T>
     private static readonly Action<IFuture<T>, object> Invoker = (_, state) => ((Action)state).Invoke();
 
     /// <summary>
-    /// 用于Awaiter注册回调
+    /// 用于Awaiter注册回调（外部需要捕获异常）
     /// </summary>
     /// <param name="continuation">回调</param>
     /// <param name="options">调度选项</param>
@@ -216,7 +216,7 @@ public readonly struct ValueFuture<T>
     }
 
     /// <summary>
-    /// 用于Awaiter注册回调
+    /// 用于Awaiter注册回调（外部需要捕获异常）
     /// </summary>
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
@@ -228,13 +228,7 @@ public readonly struct ValueFuture<T>
         if (_future != null) {
             _future.OnCompletedAsync(executor, Invoker, continuation, options);
         } else {
-            try {
-                executor.Execute(continuation, options);
-            }
-            catch (RejectedExecutionException e) {
-                FutureLogger.LogCause(e, "continuation was rejected by target executor");
-            }
-            // catch 在当前线程执行了给定的任务且抛出了异常，则直接抛出
+            executor.Execute(continuation, options);
         }
     }
 }
@@ -266,7 +260,7 @@ public readonly struct ValueFuture
     }
 
     /// <summary>
-    /// 用于封装为完成的Future
+    /// 主要用于封装线程切换
     /// </summary>
     /// <param name="future"></param>
     /// <param name="executor">awaiter的回调线程</param>
@@ -412,7 +406,7 @@ public readonly struct ValueFuture
     private static readonly Action<IFuture, object> Invoker = (_, state) => ((Action)state).Invoke();
 
     /// <summary>
-    /// 用于Awaiter注册回调
+    /// 用于Awaiter注册回调（外部需要捕获异常）
     /// </summary>
     /// <param name="continuation">回调</param>
     /// <param name="options">调度选项</param>
@@ -426,7 +420,7 @@ public readonly struct ValueFuture
     }
 
     /// <summary>
-    /// 用于Awaiter注册回调
+    /// 用于Awaiter注册回调（外部需要捕获异常）
     /// </summary>
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
@@ -438,13 +432,7 @@ public readonly struct ValueFuture
         if (_future != null) {
             _future.OnCompletedAsync(executor, Invoker, continuation, options);
         } else {
-            try {
-                executor.Execute(continuation, options);
-            }
-            catch (RejectedExecutionException e) {
-                FutureLogger.LogCause(e, "continuation was rejected by target executor");
-            }
-            // catch 在当前线程执行了给定的任务且抛出了异常，则直接抛出
+            executor.Execute(continuation, options);
         }
     }
 }

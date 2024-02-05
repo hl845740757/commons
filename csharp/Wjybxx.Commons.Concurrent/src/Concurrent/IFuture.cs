@@ -24,9 +24,6 @@ namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 ///
-/// ps：
-/// 1. 在我的设计中，Future是不重用的，因此获取结果等接口无token参数。
-/// 2. 要支持显式的异步编程，需要将Future暴露给用户，也就无法轻易重用。
 /// </summary>
 /// <typeparam name="T">任务的结果类型</typeparam>
 [AsyncMethodBuilder(typeof(AsyncFutureMethodBuilder<>))]
