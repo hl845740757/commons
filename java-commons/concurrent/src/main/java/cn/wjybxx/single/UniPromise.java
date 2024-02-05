@@ -141,7 +141,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         }
     }
 
-    private static <T> Object encodeValue(T value) {
+    private static Object encodeValue(Object value) {
         return (value == null) ? NIL : value;
     }
 
@@ -1113,7 +1113,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     static final int NESTED = -1;
 
     /** 用于表示任务已申领权限 */
-    private static final Executor CLAIMED = Runnable::run;
+    static final Executor CLAIMED = Runnable::run;
 
     /** @return 是否压栈成功 */
     private boolean pushCompletion(Completion newHead) {

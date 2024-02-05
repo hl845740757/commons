@@ -136,7 +136,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         }
     }
 
-    private static <T> Object encodeValue(T value) {
+    private static Object encodeValue(Object value) {
         return (value == null) ? NIL : value;
     }
 

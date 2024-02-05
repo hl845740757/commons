@@ -19,9 +19,15 @@
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 该接口用于特殊需求时减少闭包
+/// 取消令牌监听器。
+///
+/// ps：该接口用于特殊需求时减少闭包。
 /// </summary>
-public interface CancelTokenListener
+public interface ICancelTokenListener
 {
-    void onCancelRequested(ICancelToken cancelToken);
+    /// <summary>
+    /// 该方法在取消令牌收到取消信号时执行
+    /// </summary>
+    /// <param name="cancelToken">收到取消信号的令牌</param>
+    void OnCancelRequested(ICancelToken cancelToken);
 }

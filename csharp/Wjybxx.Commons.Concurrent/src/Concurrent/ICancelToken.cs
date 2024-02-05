@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+#pragma warning disable CS1591
 
 namespace Wjybxx.Commons.Concurrent;
 
@@ -52,7 +53,7 @@ public interface ICancelToken
     /// 是否已收到取消信号
     /// 任务的执行者将持有该令牌，在调度任务前会检测取消信号；如果任务已经开始，则由用户的任务自身检测取消和中断信号。
     ///
-    /// ps:c#的方法名不能和属性名相同，因此这几个接口不定义为属性、
+    /// ps:c#的方法名不能和属性名相同，因此这几个接口不定义为属性 - 这也是属性坑爹的一点。
     /// </summary>
     /// <returns></returns>
     bool IsCancelling() => CancelCode != 0;
@@ -96,35 +97,35 @@ public interface ICancelToken
      * 1.如果已收到取消请求，则给定的action会立即执行。
      * 2.如果尚未收到取消请求，则给定action会在收到请求时执行。
      */
-    IRegistration thenAccept(Action<ICancelToken> action, int options = 0);
+    IRegistration ThenAccept(Action<ICancelToken> action, int options = 0);
 
-    IRegistration thenAcceptAsync(IExecutor executor,
+    IRegistration ThenAcceptAsync(IExecutor executor,
                                   Action<ICancelToken> action, int options = 0);
 
     // endregion
 
     // region accept-ctx
 
-    IRegistration thenAccept(Action<ICancelToken, object> action, object? state, int options = 0);
+    IRegistration ThenAccept(Action<ICancelToken, object> action, object? state, int options = 0);
 
-    IRegistration thenAcceptAsync(IExecutor executor,
+    IRegistration ThenAcceptAsync(IExecutor executor,
                                   Action<ICancelToken, object> action, object? state, int options = 0);
 
     // endregion
 
     // region run
 
-    IRegistration thenRun(Action action, int options = 0);
+    IRegistration ThenRun(Action action, int options = 0);
 
-    IRegistration thenRunAsync(IExecutor executor, Action action, int options = 0);
+    IRegistration ThenRunAsync(IExecutor executor, Action action, int options = 0);
 
     // endregion
 
     // region run-ctx
 
-    IRegistration thenRun(Action<object> action, object? state, int options = 0);
+    IRegistration ThenRun(Action<object> action, object? state, int options = 0);
 
-    IRegistration thenRunAsync(IExecutor executor,
+    IRegistration ThenRunAsync(IExecutor executor,
                                Action<object> action, object? state, int options = 0);
 
     // endregion
@@ -135,9 +136,9 @@ public interface ICancelToken
      * 添加一个特定类型的监听器
      * (用于特殊需求时避免额外的闭包 - task经常需要监听取消令牌)
      */
-    IRegistration thenNotify(CancelTokenListener action, int options = 0);
+    IRegistration ThenNotify(ICancelTokenListener action, int options = 0);
 
-    IRegistration thenNotifyAsync(IExecutor executor, CancelTokenListener action, int options = 0);
+    IRegistration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, int options = 0);
 
     // endregion
 
@@ -151,9 +152,9 @@ public interface ICancelToken
      * @param child   接收结果的子token
      * @param options 调度选项
      */
-    IRegistration thenTransferTo(ICancelTokenSource child, int options = 0);
+    IRegistration ThenTransferTo(ICancelTokenSource child, int options = 0);
 
-    IRegistration thenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0);
+    IRegistration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0);
 
     // endregion
 

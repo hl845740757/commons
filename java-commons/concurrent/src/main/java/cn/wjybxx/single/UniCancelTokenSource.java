@@ -314,7 +314,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     private IRegistration uniAccept(Executor executor, Consumer<? super ICancelToken> action,
                                     int options) {
         Objects.requireNonNull(action);
-        if (isCancelling()) {
+        if (isCancelling() && executor == null) {
             UniAccept.fireNow(this, action);
             return TOMBSTONE;
         }
@@ -351,7 +351,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     private IRegistration uniAcceptCtx(Executor executor, BiConsumer<? super ICancelToken, Object> action,
                                        Object ctx, int options) {
         Objects.requireNonNull(action);
-        if (isCancelling()) {
+        if (isCancelling() && executor == null) {
             UniAcceptCtx.fireNow(this, action, ctx);
             return TOMBSTONE;
         }
@@ -387,7 +387,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     private IRegistration uniRun(Executor executor, Runnable action, int options) {
         Objects.requireNonNull(action);
-        if (isCancelling()) {
+        if (isCancelling() && executor == null) {
             UniRun.fireNow(action);
             return TOMBSTONE;
         }
@@ -423,7 +423,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     private IRegistration uniRunCtx(Executor executor, Consumer<Object> action, Object ctx, int options) {
         Objects.requireNonNull(action);
-        if (isCancelling()) {
+        if (isCancelling() && executor == null) {
             UniRunCtx.fireNow(action, ctx);
             return TOMBSTONE;
         }
@@ -458,7 +458,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     }
 
     private IRegistration uniNotify(Executor executor, CancelTokenListener action, int options) {
-        if (isCancelling()) {
+        if (isCancelling() && executor == null) {
             UniNotify.fireNow(this, action);
             return TOMBSTONE;
         }
@@ -494,7 +494,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     private IRegistration uniTransferTo(Executor executor, ICancelTokenSource child, int options) {
         Objects.requireNonNull(child, "child");
-        if (isCancelling()) {
+        if (isCancelling() && executor == null) {
             UniTransferTo.fireNow(this, SYNC, child);
             return TOMBSTONE;
         }
@@ -511,6 +511,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     private static final int SYNC = UniPromise.SYNC;
     private static final int ASYNC = UniPromise.ASYNC;
     private static final int NESTED = UniPromise.NESTED;
+    private static final Executor CLAIMED = UniPromise.CLAIMED;
 
     /** @return preCode */
     private int internalCancel(int cancelCode) {

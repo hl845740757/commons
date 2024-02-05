@@ -50,51 +50,51 @@ sealed class UncancellableToken : ICancelToken
 
     #region 监听器
 
-    public IRegistration thenAccept(Action<ICancelToken> action, int options = 0) {
+    public IRegistration ThenAccept(Action<ICancelToken> action, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenAcceptAsync(IExecutor executor, Action<ICancelToken> action, int options = 0) {
+    public IRegistration ThenAcceptAsync(IExecutor executor, Action<ICancelToken> action, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenAccept(Action<ICancelToken, object?> action, object? ctx, int options = 0) {
+    public IRegistration ThenAccept(Action<ICancelToken, object?> action, object? ctx, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenAcceptAsync(IExecutor executor, Action<ICancelToken, object?> action, object? ctx, int options = 0) {
+    public IRegistration ThenAcceptAsync(IExecutor executor, Action<ICancelToken, object?> action, object? ctx, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenRun(Action action, int options = 0) {
+    public IRegistration ThenRun(Action action, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenRunAsync(IExecutor executor, Action action, int options = 0) {
+    public IRegistration ThenRunAsync(IExecutor executor, Action action, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenRun(Action<object?> action, object? ctx, int options = 0) {
+    public IRegistration ThenRun(Action<object?> action, object? ctx, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenRunAsync(IExecutor executor, Action<object?> action, object? ctx, int options = 0) {
+    public IRegistration ThenRunAsync(IExecutor executor, Action<object?> action, object? ctx, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenNotify(CancelTokenListener action, int options = 0) {
+    public IRegistration ThenNotify(ICancelTokenListener action, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenNotifyAsync(IExecutor executor, CancelTokenListener action, int options = 0) {
+    public IRegistration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenTransferTo(ICancelTokenSource child, int options = 0) {
+    public IRegistration ThenTransferTo(ICancelTokenSource child, int options = 0) {
         return TOMBSTONE;
     }
 
-    public IRegistration thenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
+    public IRegistration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
         return TOMBSTONE;
     }
 

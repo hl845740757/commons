@@ -54,51 +54,51 @@ public sealed class ReadonlyCancelToken : ICancelToken
         cancelToken.CheckCancel();
     }
 
-    public IRegistration thenAccept(Action<ICancelToken> action, int options = 0) {
-        return cancelToken.thenAccept(action, options);
+    public IRegistration ThenAccept(Action<ICancelToken> action, int options = 0) {
+        return cancelToken.ThenAccept(action, options);
     }
 
-    public IRegistration thenAcceptAsync(IExecutor executor, Action<ICancelToken> action, int options = 0) {
-        return cancelToken.thenAcceptAsync(executor, action, options);
+    public IRegistration ThenAcceptAsync(IExecutor executor, Action<ICancelToken> action, int options = 0) {
+        return cancelToken.ThenAcceptAsync(executor, action, options);
     }
 
-    public IRegistration thenAccept(Action<ICancelToken, object> action, object? state, int options = 0) {
-        return cancelToken.thenAccept(action, state, options);
+    public IRegistration ThenAccept(Action<ICancelToken, object> action, object? state, int options = 0) {
+        return cancelToken.ThenAccept(action, state, options);
     }
 
-    public IRegistration thenAcceptAsync(IExecutor executor, Action<ICancelToken, object> action, object? state, int options = 0) {
-        return cancelToken.thenAcceptAsync(executor, action, state, options);
+    public IRegistration ThenAcceptAsync(IExecutor executor, Action<ICancelToken, object> action, object? state, int options = 0) {
+        return cancelToken.ThenAcceptAsync(executor, action, state, options);
     }
 
-    public IRegistration thenRun(Action action, int options = 0) {
-        return cancelToken.thenRun(action, options);
+    public IRegistration ThenRun(Action action, int options = 0) {
+        return cancelToken.ThenRun(action, options);
     }
 
-    public IRegistration thenRunAsync(IExecutor executor, Action action, int options = 0) {
-        return cancelToken.thenRunAsync(executor, action, options);
+    public IRegistration ThenRunAsync(IExecutor executor, Action action, int options = 0) {
+        return cancelToken.ThenRunAsync(executor, action, options);
     }
 
-    public IRegistration thenRun(Action<object> action, object? state, int options = 0) {
-        return cancelToken.thenRun(action, state, options);
+    public IRegistration ThenRun(Action<object> action, object? state, int options = 0) {
+        return cancelToken.ThenRun(action, state, options);
     }
 
-    public IRegistration thenRunAsync(IExecutor executor, Action<object> action, object? state, int options = 0) {
-        return cancelToken.thenRunAsync(executor, action, state, options);
+    public IRegistration ThenRunAsync(IExecutor executor, Action<object> action, object? state, int options = 0) {
+        return cancelToken.ThenRunAsync(executor, action, state, options);
     }
 
-    public IRegistration thenNotify(CancelTokenListener action, int options = 0) {
-        return cancelToken.thenNotify(action, options);
+    public IRegistration ThenNotify(ICancelTokenListener action, int options = 0) {
+        return cancelToken.ThenNotify(action, options);
     }
 
-    public IRegistration thenNotifyAsync(IExecutor executor, CancelTokenListener action, int options = 0) {
-        return cancelToken.thenNotifyAsync(executor, action, options);
+    public IRegistration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, int options = 0) {
+        return cancelToken.ThenNotifyAsync(executor, action, options);
     }
 
-    public IRegistration thenTransferTo(ICancelTokenSource child, int options = 0) {
-        return cancelToken.thenTransferTo(child, options);
+    public IRegistration ThenTransferTo(ICancelTokenSource child, int options = 0) {
+        return cancelToken.ThenTransferTo(child, options);
     }
 
-    public IRegistration thenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
-        return cancelToken.thenTransferToAsync(executor, child, options);
+    public IRegistration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
+        return cancelToken.ThenTransferToAsync(executor, child, options);
     }
 }
