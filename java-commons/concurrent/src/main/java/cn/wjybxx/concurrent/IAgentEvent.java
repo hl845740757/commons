@@ -40,6 +40,12 @@ public interface IAgentEvent {
      */
     void setType(int type);
 
+    /** 事件或任务的调度选项 */
+    int getOptions();
+
+    /** event上冗余存储options，以支持非{@link Runnable}自定义事件中的选项 */
+    void setOptions(int options);
+
     /** 获取事件的第一个参数 */
     Object getObj0();
 

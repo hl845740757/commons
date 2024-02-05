@@ -32,6 +32,7 @@ public final class RingBufferEvent implements IAgentEvent {
 
     private int type = TYPE_INVALID;
     public Object obj0;
+    public int options;
 
     // 扩展字段
     public int intVal1;
@@ -60,13 +61,17 @@ public final class RingBufferEvent implements IAgentEvent {
         this.obj2 = src.obj2;
     }
 
+    @Override
     public void clean() {
         type = TYPE_INVALID;
+        options = 0;
         obj0 = null;
+
         obj1 = null;
         obj2 = null;
     }
 
+    @Override
     public void cleanAll() {
         clean();
         intVal1 = 0;
@@ -83,6 +88,16 @@ public final class RingBufferEvent implements IAgentEvent {
     @Override
     public void setType(int type) {
         this.type = type;
+    }
+
+    @Override
+    public int getOptions() {
+        return options;
+    }
+
+    @Override
+    public void setOptions(int options) {
+        this.options = options;
     }
 
     @Override

@@ -277,6 +277,9 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             } else {
                 event.setType(0);
                 event.setObj0(task);
+                if (task instanceof ITask innerTask) {
+                    event.setOptions(innerTask.getOptions());
+                }
                 if (task instanceof ScheduledPromiseTask<?> futureTask) {
                     futureTask.setId(sequence); // nice
                     if (futureTask.isEnable(TaskOption.LOW_PRIORITY)) {
@@ -291,7 +294,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 // 确保线程已启动 -- ringBuffer私有的情况下才可以测试 sequence == 0
                 if (sequence == 0) {
                     ensureThreadStarted();
-                } else if (task instanceof ITask task2 && TaskOption.isEnabled(task2.getOptions(), TaskOption.WAKEUP_THREAD)) {
+                } else if (TaskOption.isEnabled(event.getOptions(), TaskOption.WAKEUP_THREAD)) {
                     wakeup();
                 }
             }
