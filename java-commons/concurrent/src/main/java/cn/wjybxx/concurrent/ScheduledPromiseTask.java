@@ -224,7 +224,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         IPromise<V> promise = this.promise;
         // 检测取消信号 -- 还要检测来自future的取消...
         if (promise.ctx().cancelToken().isCancelling()) {
-            promise.trySetCancelled();
+            trySetCancelled(promise);
             clear();
             return false;
         }
@@ -261,7 +261,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
             }
             // 任务执行后检测取消
             if (promise.ctx().cancelToken().isCancelling() || !promise.isComputing()) {
-                promise.trySetCancelled();
+                trySetCancelled(promise);
                 clear();
                 return false;
             }
@@ -310,13 +310,15 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     // region cancel
 
+    /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */
     public void cancelWithoutRemove() {
         cancelWithoutRemove(ICancelToken.REASON_SHUTDOWN);
     }
 
+    /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */
     public void cancelWithoutRemove(int code) {
-        closeRegistration();
-        promise.trySetCancelled(code);
+        trySetCancelled(promise, code);
+        clear();
     }
 
     public void registerCancellation() {
@@ -345,7 +347,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
                 return;
             }
             // 用户通过令牌发起取消
-            if (promise.trySetCancelled() && !cancelToken.isWithoutRemove()) {
+            if (promise.trySetCancelled(cancelToken.cancelCode()) && !cancelToken.isWithoutRemove()) {
                 eventLoop().removeScheduled(this);
             }
         }

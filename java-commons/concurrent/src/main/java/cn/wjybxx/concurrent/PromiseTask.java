@@ -56,10 +56,10 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     /** 用户的任务 */
     private Object action;
-    /** 用户可能在任务完成后继续访问，因此不能清理 */
-    protected final IPromise<V> promise;
     /** 调度选项 */
     protected final int options;
+    /** 用户可能在任务完成后继续访问，因此不能清理 */
+    protected final IPromise<V> promise;
     /** 控制标记 */
     protected int ctl;
 
@@ -258,7 +258,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     public void run() {
         IPromise<V> promise = this.promise;
         if (promise.ctx().cancelToken().isCancelling()) {
-            promise.trySetCancelled();
+            trySetCancelled(promise);
             clear();
             return;
         }
@@ -278,6 +278,18 @@ public class PromiseTask<V> implements IFutureTask<V> {
             }
         }
         clear();
+    }
+
+    protected static void trySetCancelled(IPromise<?> promise) {
+        int cancelCode = promise.ctx().cancelToken().cancelCode();
+        assert cancelCode != 0;
+        promise.trySetCancelled(cancelCode);
+    }
+
+    protected static void trySetCancelled(IPromise<?> promise, int def) {
+        int cancelCode = promise.ctx().cancelToken().cancelCode();
+        if (cancelCode == 0) cancelCode = def;
+        promise.trySetCancelled(cancelCode);
     }
 
     private static class StopInvoker<V> implements Consumer<Future<?>> {

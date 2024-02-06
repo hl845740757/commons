@@ -270,6 +270,11 @@ public interface ICancelToken {
     /** Executor关闭 -- Executor关闭不一定会取消任务 */
     int REASON_SHUTDOWN = 3;
 
+    /** 取消码是否表示已收到取消信号 */
+    static boolean isCancelling(int code) {
+        return code != 0;
+    }
+
     /** 计算取消码中的原因 */
     static int reason(int code) {
         return code & MASK_REASON;

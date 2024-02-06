@@ -179,12 +179,14 @@ public class MathCommon {
         return value;
     }
 
+    /** 将long值约束到int范围 */
     public static int clamp(long value, int min, int max) {
         if (value < min) return min;
         if (value > max) return max;
         return (int) value;
     }
 
+    /** 将double值约束到float范围 */
     public static float clamp(double value, float min, float max) {
         if (value < min) return min;
         if (value > max) return max;

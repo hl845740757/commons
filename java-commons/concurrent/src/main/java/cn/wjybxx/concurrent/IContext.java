@@ -72,7 +72,8 @@ public interface IContext {
     Object sharedProps();
 
     /**
-     * 去除取消令牌 -- 将取消令牌替换为{@link ICancelToken#NONE}
+     * 去除取消令牌 -- 将取消令牌替换为{@link ICancelToken#NONE}。
+     * 注意：不是创建子上下文，而是同级上下文。
      *
      * @return 如果当前取消令牌已是不可取消的令牌，则可返回自身。
      * @implNote 应当返回相同类型

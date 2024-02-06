@@ -226,23 +226,29 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     // region 任务提交
 
     @Override
-    public void execute(Runnable task) {
-        Objects.requireNonNull(task, "task");
+    public void execute(Runnable command) {
+        int options = command instanceof ITask task ? task.getOptions() : 0;
+        execute(command, options);
+    }
+
+    @Override
+    public void execute(Runnable command, int options) {
+        Objects.requireNonNull(command, "command");
         if (isShuttingDown()) {
-            rejectedExecutionHandler.rejected(task, this);
+            rejectedExecutionHandler.rejected(command, this);
             return;
         }
         if (inEventLoop()) {
             // 当前线程调用，需要使用tryNext以避免死锁
             long sequence = eventSequencer.tryNext(1);
             if (sequence == -1) {
-                rejectedExecutionHandler.rejected(task, this);
+                rejectedExecutionHandler.rejected(command, this);
                 return;
             }
-            tryPublish(task, sequence);
+            tryPublish(command, sequence, options);
         } else {
             // 其它线程调用，可能阻塞
-            tryPublish(task, eventSequencer.next(1));
+            tryPublish(command, eventSequencer.next(1), options);
         }
     }
 
@@ -260,7 +266,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
      * 又因为{@link #isShuttingDown()}为true一定在{@link Worker#cleanBuffer()}之前，
      * 因此，如果sequence是在{@link #isShuttingDown()}为true之前申请到的，那么sequence一定是有效的，否则可能有效，也可能无效。
      */
-    private void tryPublish(@Nonnull Runnable task, long sequence) {
+    private void tryPublish(@Nonnull Runnable task, long sequence, int options) {
         if (isShuttingDown()) {
             // 先发布sequence，避免拒绝逻辑可能产生的阻塞，不可以覆盖数据
             eventSequencer.publish(sequence);
@@ -277,9 +283,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             } else {
                 event.setType(0);
                 event.setObj0(task);
-                if (task instanceof ITask innerTask) {
-                    event.setOptions(innerTask.getOptions());
-                }
+                event.setOptions(options);
                 if (task instanceof ScheduledPromiseTask<?> futureTask) {
                     futureTask.setId(sequence); // nice
                     if (futureTask.isEnable(TaskOption.LOW_PRIORITY)) {
@@ -294,7 +298,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 // 确保线程已启动 -- ringBuffer私有的情况下才可以测试 sequence == 0
                 if (sequence == 0) {
                     ensureThreadStarted();
-                } else if (TaskOption.isEnabled(event.getOptions(), TaskOption.WAKEUP_THREAD)) {
+                } else if (TaskOption.isEnabled(options, TaskOption.WAKEUP_THREAD)) {
                     wakeup();
                 }
             }

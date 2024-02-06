@@ -43,7 +43,11 @@ public interface IAgentEvent {
     /** 事件或任务的调度选项 */
     int getOptions();
 
-    /** event上冗余存储options，以支持非{@link Runnable}自定义事件中的选项 */
+    /**
+     * 将options存储在Event上。
+     * 1.以支持自定义事件中的调度选项 -- 冗余存储，解除耦合。
+     * 2.可避免对{@link Runnable}的封装。
+     */
     void setOptions(int options);
 
     /** 获取事件的第一个参数 */

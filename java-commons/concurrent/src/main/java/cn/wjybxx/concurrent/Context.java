@@ -141,7 +141,6 @@ public class Context<T> implements IContext {
     }
 
     public Context<T> childWithBlackboard(T blackboard, Object sharedProps) {
-
         return newContext(this, blackboard, sharedProps, cancelToken);
     }
 
@@ -165,7 +164,6 @@ public class Context<T> implements IContext {
     }
 
     public Context<T> withBlackboard(T blackboard, Object sharedProps) {
-
         return newContext(parent, blackboard, sharedProps, cancelToken);
     }
 

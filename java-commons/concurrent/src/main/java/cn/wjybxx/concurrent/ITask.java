@@ -22,6 +22,7 @@ import cn.wjybxx.base.annotation.Beta;
  * Task是Executor中调度的任务抽象。
  * 1. 该接口暴露给Executor的扩展类，用户尽量避免直接实现该接口。
  * 2. 该接口的实例通常是不应该被序列化的。
+ * 3. 对Task进行封装（装饰）时要万分小心。
  * <p>
  * Task不继承{@link Runnable}有更好的识别度，也可以避免{@link IExecutor#execute(Runnable, int)}的歧义问题。
  * 但不继承的情况下，我们总是要对用户的任务进行封装，这可能产生较多的开销。

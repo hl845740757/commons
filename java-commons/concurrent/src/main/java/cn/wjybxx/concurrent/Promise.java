@@ -1302,7 +1302,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     }
 
     private boolean completeCancelled() {
-        return internalComplete(new AltResult(StacklessCancellationException.INST1));
+        int cancelCode = _ctx.cancelToken().cancelCode();
+        return internalComplete(new AltResult(StacklessCancellationException.instOf(cancelCode)));
     }
 
     /**

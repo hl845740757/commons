@@ -22,7 +22,7 @@ package cn.wjybxx.concurrent;
  * @author wjybxx
  * date - 2024/1/22
  */
-public class MiniAgentEvent implements IAgentEvent{
+public final class MiniAgentEvent implements IAgentEvent {
 
     private int type = TYPE_INVALID;
     public Object obj0;

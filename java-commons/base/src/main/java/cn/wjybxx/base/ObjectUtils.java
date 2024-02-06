@@ -16,7 +16,6 @@
 
 package cn.wjybxx.base;
 
-import javax.annotation.CheckForNull;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -92,6 +91,10 @@ public class ObjectUtils {
             }
         }
         return true;
+    }
+
+    public static boolean isBlank(String string) {
+        return string == null || string.isBlank();
     }
 
     /** 空字符串转默认字符串 */
@@ -212,7 +215,6 @@ public class ObjectUtils {
 
     /** 获取一个类型的默认值 */
     @SuppressWarnings("unchecked")
-    @CheckForNull
     public static <T> T defaultValue(Class<T> type) {
         Objects.requireNonNull(type);
         if (type.isPrimitive()) {
