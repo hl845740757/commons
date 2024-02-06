@@ -85,16 +85,6 @@ public interface IPromise<T> extends IFuture<T> {
     void setCancelled(int code);
 
     /**
-     * 将Future置为已取消状态，如果future已进入完成状态，则返回false
-     */
-    boolean trySetCancelled();
-
-    /**
-     * 将Future置为已取消状态，如果future已进入完成状态，则抛出{@link IllegalStateException}
-     */
-    void setCancelled();
-
-    /**
      * 将目标future的结果传输到当前Promise
      * 如果目标future已完成，且当前promise尚未完成，则尝试传输结果到promise
      *

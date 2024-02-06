@@ -17,9 +17,11 @@
 package cn.wjybxx.single;
 
 import cn.wjybxx.concurrent.EventLoopState;
+import cn.wjybxx.concurrent.ICancelToken;
 import cn.wjybxx.concurrent.IFuture;
 import cn.wjybxx.concurrent.PromiseTask;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -116,7 +118,7 @@ public class DefaultExecutor extends AbstractUniExecutor {
     public void execute(Runnable command) {
         if (isShutdown()) {
             if (command instanceof PromiseTask<?> promiseTask) {
-                promiseTask.getPromise().trySetCancelled();
+                promiseTask.getPromise().trySetCancelled(ICancelToken.REASON_SHUTDOWN);
             }
             return;
         }
@@ -132,6 +134,7 @@ public class DefaultExecutor extends AbstractUniExecutor {
         }
     }
 
+    @Nonnull
     @Override
     public List<Runnable> shutdownNow() {
         ArrayList<Runnable> result = new ArrayList<>(taskQueue);

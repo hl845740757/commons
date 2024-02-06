@@ -95,8 +95,9 @@ public final class ExecutorServiceAdapter extends AbstractExecutorService {
         @Override
         public void run() {
             IPromise<V> promise = this.promise;
-            if (promise.ctx().cancelToken().isCancelling()) {
-                promise.trySetCancelled();
+            ICancelToken cancelToken = promise.ctx().cancelToken();
+            if (cancelToken.isCancelling()) {
+                promise.trySetCancelled(cancelToken.cancelCode());
                 return;
             }
             if (promise.trySetComputing()) {

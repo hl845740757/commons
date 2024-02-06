@@ -21,8 +21,8 @@ using System;
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 1. 该非泛型接口用于支持统一操作，不提供具体实现。
-/// 2. void可通过byte/int泛型替代。
+/// 1. 该非泛型接口用于支持统一操作，不提供特殊实现。
+/// 2. void可通过byte/int/bool泛型替代 -- 推荐byte。
 /// </summary>
 public interface IPromise : IFuture
 {
@@ -82,14 +82,14 @@ public interface IPromise : IFuture
     /// </summary>
     /// <param name="code">相关的取消码</param>
     /// <returns></returns>
-    bool TrySetCancelled(int code = ICancelToken.REASON_DEFAULT);
+    bool TrySetCancelled(int code);
 
     /// <summary>
     /// 将Future置为已取消状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
     /// </summary>
     /// <param name="code">相关的取消码</param>
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
-    void SetCancelled(int code = ICancelToken.REASON_DEFAULT);
+    void SetCancelled(int code);
 }
 
 /// <summary>

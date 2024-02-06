@@ -61,21 +61,12 @@ public interface IExecutor
 
     /// <summary>
     /// 调度器在执行之前会检测取消信号，如果已收到取消信号则放弃执行。
+    /// ps:该接口用于兼容老系统的使用者。
     /// </summary>
     /// <param name="action">要执行的任务</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">任务的调度特征值，见<see cref="TaskOption"/></param>
     void Execute(Action action, CancellationToken cancelToken, int options = 0) {
-        Execute(Executors.BoxAction(action, cancelToken, options));
-    }
-
-    /// <summary>
-    /// 调度器在执行之前会检测取消信号，如果已收到取消信号则放弃执行。
-    /// </summary>
-    /// <param name="action">要执行的任务</param>
-    /// <param name="cancelToken">取消令牌</param>
-    /// <param name="options">任务的调度特征值，见<see cref="TaskOption"/></param>
-    void Execute(Action action, ICancelToken cancelToken, int options = 0) {
         Execute(Executors.BoxAction(action, cancelToken, options));
     }
 

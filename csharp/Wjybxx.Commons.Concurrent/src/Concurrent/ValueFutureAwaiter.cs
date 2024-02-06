@@ -22,7 +22,7 @@ using System.Runtime.CompilerServices;
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
 
-public class ValueFutureAwaiter<T> : INotifyCompletion
+public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
 {
     private readonly ValueFuture<T> future;
     private readonly IExecutor? executor;
@@ -39,6 +39,11 @@ public class ValueFutureAwaiter<T> : INotifyCompletion
         this.executor = executor;
         this.options = options;
     }
+
+    /// <summary>
+    /// 回调任务的线程
+    /// </summary>
+    public IExecutor? Executor => executor;
 
     // 1.IsCompleted
     public bool IsCompleted => future.IsDone;
@@ -67,7 +72,7 @@ public class ValueFutureAwaiter<T> : INotifyCompletion
     }
 }
 
-public class ValueFutureAwaiter : INotifyCompletion
+public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
 {
     private readonly ValueFuture future;
     private readonly IExecutor? executor;
@@ -84,6 +89,11 @@ public class ValueFutureAwaiter : INotifyCompletion
         this.executor = executor;
         this.options = options;
     }
+
+    /// <summary>
+    /// 回调任务的线程
+    /// </summary>
+    public IExecutor? Executor => executor;
 
     // 1.IsCompleted
     public bool IsCompleted => future.IsDone;

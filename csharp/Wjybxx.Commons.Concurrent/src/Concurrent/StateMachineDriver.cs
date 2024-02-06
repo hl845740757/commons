@@ -28,7 +28,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 /// <typeparam name="T">任务的结果类型</typeparam>
 /// <typeparam name="S">状态机类型</typeparam>
-internal sealed class StateMachineTask<T, S> : Promise<T>, IStateMachineTask<T> where S : IAsyncStateMachine
+internal sealed class StateMachineDriver<T, S> : Promise<T>, IStateMachineDriver<T> where S : IAsyncStateMachine
 {
     /// <summary>
     /// 任务状态机
@@ -38,14 +38,9 @@ internal sealed class StateMachineTask<T, S> : Promise<T>, IStateMachineTask<T> 
     /// 驱动状态机的委托（延迟分配）
     /// </summary>
     private Action _moveToNext;
-    /// <summary>
-    /// 任务的调度选项
-    /// </summary>
-    private int _options;
 
-    public StateMachineTask(ref S stateMachine, int options = 0) {
+    public StateMachineDriver(IExecutor? executor, ref S stateMachine) : base(executor) {
         _stateMachine = stateMachine;
-        _options = options;
         _moveToNext = Run;
     }
 
@@ -54,14 +49,9 @@ internal sealed class StateMachineTask<T, S> : Promise<T>, IStateMachineTask<T> 
     }
 
     /// <summary>
-    /// 任务的调度选项
-    /// </summary>
-    public int Options => _options;
-
-    /// <summary>
     /// 任务关联的Future
     /// </summary>
-    public IFuture<T> Future => this;
+    public IPromise<T> Promise => this;
 
     /// <summary>
     /// 用于驱动StateMachine的Action委托

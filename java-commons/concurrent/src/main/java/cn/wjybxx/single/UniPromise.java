@@ -388,18 +388,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         }
     }
 
-    @Override
-    public final boolean trySetCancelled() {
-        return trySetCancelled(1);
-    }
-
-    @Override
-    public final void setCancelled() {
-        if (!trySetCancelled(1)) {
-            throw new IllegalStateException("Already complete");
-        }
-    }
-
     @Deprecated
     @Override
     public final boolean cancel(boolean mayInterruptIfRunning) {

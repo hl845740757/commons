@@ -20,9 +20,11 @@ import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
 import cn.wjybxx.base.time.TimeProvider;
 import cn.wjybxx.concurrent.EventLoopState;
+import cn.wjybxx.concurrent.ICancelToken;
 import cn.wjybxx.concurrent.IFuture;
 import cn.wjybxx.concurrent.PromiseTask;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -96,11 +98,11 @@ public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor imple
     }
 
     @Override
-    public void execute(Runnable command) {
+    public void execute(@Nonnull Runnable command) {
         if (isShuttingDown()) {
             // 暂时直接取消
             if (command instanceof PromiseTask<?> promiseTask) {
-                promiseTask.getPromise().trySetCancelled();
+                promiseTask.getPromise().trySetCancelled(ICancelToken.REASON_SHUTDOWN);
             }
             return;
         }
@@ -111,7 +113,9 @@ public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor imple
             }
         } else {
             UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofRunnable(command, 0, newScheduledPromise(), ++sequencer, tickTime);
-            delayExecute(promiseTask);
+            if (delayExecute(promiseTask)) {
+                promiseTask.registerCancellation();
+            }
         }
     }
 

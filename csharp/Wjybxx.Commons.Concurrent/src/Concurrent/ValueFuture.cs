@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// 
 /// </summary>
 /// <typeparam name="T"></typeparam>
-[AsyncMethodBuilder(typeof(AsyncFutureMethodBuilder<>))]
+[AsyncMethodBuilder(typeof(AsyncValueFutureMethodBuilder<>))]
 public readonly struct ValueFuture<T>
 {
 #nullable disable
@@ -44,15 +44,13 @@ public readonly struct ValueFuture<T>
     /// <summary>
     /// 创建已完成的Future
     /// </summary>
-    /// <param name="result"></param>
-    /// <param name="ex"></param>
-    private ValueFuture(T? result, Exception? ex) {
-        this._future = null;
-        this._executor = null;
-        this._options = 0;
-
+    private ValueFuture(T? result, Exception? ex, IExecutor? executor = null, int options = 0) {
         this._result = result;
         this._ex = ex;
+
+        this._future = null;
+        this._executor = executor;
+        this._options = options;
     }
 
     /// <summary>
@@ -73,54 +71,49 @@ public readonly struct ValueFuture<T>
     /// <summary>
     /// 创建一个成功完成的Future
     /// </summary>
-    /// <param name="result"></param>
+    /// <param name="result">任务的结果</param>
+    /// <param name="executor">Awaiter的执行线程</param>
+    /// <param name="options">Awaiter的调度选项</param>
     /// <returns></returns>
-    public static ValueFuture<T> FromResult(T result) {
-        return new ValueFuture<T>(result, null);
+    public static ValueFuture<T> FromResult(T result, IExecutor? executor = null, int options = 0) {
+        return new ValueFuture<T>(result, null, executor, options);
     }
 
     /// <summary>
     /// 创建一个已经失败的Future
     /// </summary>
-    /// <param name="ex"></param>
+    /// <param name="ex">任务失败的原因</param>
+    /// <param name="executor">Awaiter的执行线程</param>
+    /// <param name="options">Awaiter的调度选项</param>
     /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    public static ValueFuture<T> FromException(Exception ex) {
+    public static ValueFuture<T> FromException(Exception ex, IExecutor? executor = null, int options = 0) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
-        return new ValueFuture<T>(default, ex);
+        return new ValueFuture<T>(default, ex, executor, options);
+    }
+
+    /// <summary>
+    /// 创建一个被取消的Future
+    /// </summary>
+    /// <param name="code">取消码</param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项</param>
+    /// <returns></returns>
+    public static ValueFuture<T> FromCancelled(int code, IExecutor? executor = null, int options = 0) {
+        return new ValueFuture<T>(default, new StacklessCancellationException(code), executor, options);
     }
 
     /// <summary>
     /// 创建一个被取消的Future
     /// </summary>
     /// <param name="ex"></param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项</param>
     /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    public static ValueFuture<T> FromCancelled(OperationCanceledException? ex = null) {
+    public static ValueFuture<T> FromCancelled(OperationCanceledException? ex = null, IExecutor? executor = null, int options = 0) {
         if (ex == null) {
             ex = new BetterCancellationException(1);
         }
-        return new ValueFuture<T>(default, ex);
-    }
-
-    #region awaiter
-
-    /// <summary>
-    /// 获取用于等待的Awaiter
-    /// </summary>
-    /// <returns></returns>
-    public ValueFutureAwaiter<T> GetAwaiter() {
-        return new ValueFutureAwaiter<T>(in this, _executor, _options);
-    }
-
-    /// <summary>
-    /// 获取用在给定线程等待的Awaiter
-    /// </summary>
-    /// <param name="executor">等待线程</param>
-    /// <param name="options">等待线程</param>
-    /// <returns></returns>
-    public ValueFuture<T> GetAwaiter(IExecutor executor, int options = 0) {
-        return new ValueFuture<T>(AsFuture(), executor, options);
+        return new ValueFuture<T>(default, ex, executor, options);
     }
 
     /// <summary>
@@ -136,10 +129,11 @@ public readonly struct ValueFuture<T>
         return Promise<T>.CompletedPromise(_result);
     }
 
-    #endregion
-
     #region 状态查询
 
+    /// <summary>
+    /// Future关联的任务的状态
+    /// </summary>
     public TaskStatus Status {
         get {
             if (_future != null) {
@@ -184,6 +178,9 @@ public readonly struct ValueFuture<T>
 
     #endregion
 
+
+    #region awaiter支持
+
     /// <summary>
     /// 获取任务的执行结果
     /// </summary>
@@ -193,10 +190,33 @@ public readonly struct ValueFuture<T>
         if (_future != null) {
             return _future.Get();
         }
-        if (_ex == null) {
-            return _result;
+        if (_ex != null) {
+            throw _ex;
         }
-        throw _ex;
+        return _result;
+    }
+
+    /// <summary>
+    /// Awaiter的回调线程
+    /// </summary>
+    private IExecutor? AwaiterExecutor => _executor ?? _future?.Executor;
+
+    /// <summary>
+    /// 获取用于等待的Awaiter
+    /// </summary>
+    /// <returns></returns>
+    public ValueFutureAwaiter<T> GetAwaiter() {
+        return new ValueFutureAwaiter<T>(in this, AwaiterExecutor, _options);
+    }
+
+    /// <summary>
+    /// 获取用在给定线程等待的Awaiter
+    /// </summary>
+    /// <param name="executor">等待线程</param>
+    /// <param name="options">等待线程</param>
+    /// <returns></returns>
+    public ValueFuture<T> GetAwaiter(IExecutor executor, int options = 0) {
+        return new ValueFuture<T>(AsFuture(), executor, options);
     }
 
     private static readonly Action<IFuture<T>, object> Invoker = (_, state) => ((Action)state).Invoke();
@@ -231,9 +251,11 @@ public readonly struct ValueFuture<T>
             executor.Execute(continuation, options);
         }
     }
+
+    #endregion
 }
 
-[AsyncMethodBuilder(typeof(AsyncFutureMethodBuilder))]
+[AsyncMethodBuilder(typeof(AsyncValueFutureMethodBuilder))]
 public readonly struct ValueFuture
 {
 #nullable disable
@@ -241,90 +263,81 @@ public readonly struct ValueFuture
     private readonly IExecutor _executor;
     private readonly int _options;
 
-    private readonly object _result;
     private readonly Exception _ex;
 #nullable enable
 
     /// <summary>
     /// 创建已完成的Future
     /// </summary>
-    /// <param name="result"></param>
-    /// <param name="ex"></param>
-    private ValueFuture(object? result, Exception? ex) {
-        this._future = null;
-        this._executor = null;
-        this._options = 0;
-
-        this._result = result;
+    private ValueFuture(Exception? ex, IExecutor? executor = null, int options = 0) {
         this._ex = ex;
+
+        this._future = null;
+        this._executor = executor;
+        this._options = options;
     }
 
     /// <summary>
     /// 主要用于封装线程切换
     /// </summary>
-    /// <param name="future"></param>
+    /// <param name="future">关联的Future</param>
     /// <param name="executor">awaiter的回调线程</param>
     /// <param name="options">awaiter的调度选项</param>
     public ValueFuture(IFuture future, IExecutor? executor = null, int options = 0) {
+        _ex = null;
+
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _executor = executor;
         _options = options;
-
-        _result = default;
-        _ex = null;
     }
 
     /// <summary>
     /// 创建一个成功完成的Future
     /// </summary>
-    /// <param name="result"></param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项</param>
     /// <returns></returns>
-    public static ValueFuture FromResult(object? result = null) {
-        return new ValueFuture(result, null);
+    public static ValueFuture FromResult(IExecutor? executor = null, int options = 0) {
+        return new ValueFuture((Exception?)null, executor, options);
     }
 
     /// <summary>
     /// 创建一个已经失败的Future
     /// </summary>
-    /// <param name="ex"></param>
+    /// <param name="ex">任务失败的原因</param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项</param>
+    /// <returns></returns>
+    public static ValueFuture FromException(Exception ex, IExecutor? executor = null, int options = 0) {
+        if (ex == null) throw new ArgumentNullException(nameof(ex));
+        return new ValueFuture(ex, executor, options);
+    }
+
+    /// <summary>
+    /// 创建一个被取消的Future
+    /// </summary>
+    /// <param name="code">取消码</param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项</param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static ValueFuture FromException(Exception ex) {
-        if (ex == null) throw new ArgumentNullException(nameof(ex));
-        return new ValueFuture(null, ex);
+    public static ValueFuture FromCancelled(int code, IExecutor? executor = null, int options = 0) {
+        return new ValueFuture(new StacklessCancellationException(code), executor, options);
     }
 
     /// <summary>
     /// 创建一个被取消的Future
     /// </summary>
     /// <param name="ex"></param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项</param>
     /// <returns></returns>
     /// <exception cref="ArgumentNullException"></exception>
-    public static ValueFuture FromCancelled(OperationCanceledException? ex = null) {
+    public static ValueFuture FromCancelled(OperationCanceledException? ex = null, IExecutor? executor = null, int options = 0) {
         if (ex == null) {
             ex = new OperationCanceledException();
         }
-        return new ValueFuture(null, ex);
-    }
-
-    #region awaiter
-
-    /// <summary>
-    /// 获取用于等待的Awaiter
-    /// </summary>
-    /// <returns></returns>
-    public ValueFutureAwaiter GetAwaiter() {
-        return new ValueFutureAwaiter(in this, _executor, _options);
-    }
-
-    /// <summary>
-    /// 获取用在给定线程等待的Awaiter
-    /// </summary>
-    /// <param name="executor">等待线程</param>
-    /// <param name="options">等待线程</param>
-    /// <returns></returns>
-    public ValueFuture GetAwaiter(IExecutor executor, int options = 0) {
-        return new ValueFuture(AsFuture(), executor, options);
+        return new ValueFuture(ex, executor, options);
     }
 
     /// <summary>
@@ -335,15 +348,16 @@ public readonly struct ValueFuture
             return _future;
         }
         if (_ex != null) {
-            return Promise<object>.FailedPromise(_ex);
+            return Promise<byte>.FailedPromise(_ex);
         }
-        return Promise<object>.CompletedPromise(_result);
+        return Promise<byte>.CompletedPromise(1);
     }
-
-    #endregion
 
     #region 状态查询
 
+    /// <summary>
+    /// Future关联的任务的状态
+    /// </summary>
     public TaskStatus Status {
         get {
             if (_future != null) {
@@ -388,22 +402,50 @@ public readonly struct ValueFuture
 
     #endregion
 
+    #region awiter支持
+
     /// <summary>
     /// 获取任务的执行结果
     /// </summary>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public object Get() {
+    public void Get() {
         if (_future != null) {
-            return _future.Get();
+            _future.Await();
+            if (_future.IsFailedOrCancelled) {
+                _future.Get(); // 抛出异常
+            }
         }
-        if (_ex == null) {
-            return _result;
+        if (_ex != null) {
+            throw _ex;
         }
-        throw _ex;
     }
 
     private static readonly Action<IFuture, object> Invoker = (_, state) => ((Action)state).Invoke();
+
+    /// <summary>
+    /// Awaiter的回调线程
+    /// </summary>
+    private IExecutor? AwaiterExecutor => _executor ?? _future?.Executor;
+
+    /// <summary>
+    /// 获取用于等待的Awaiter
+    /// </summary>
+    /// <returns></returns>
+    public ValueFutureAwaiter GetAwaiter() {
+        return new ValueFutureAwaiter(in this, AwaiterExecutor, _options);
+    }
+
+    /// <summary>
+    /// 获取用在给定线程等待的Awaiter
+    /// </summary>
+    /// <param name="executor">等待线程</param>
+    /// <param name="options">等待线程</param>
+    /// <returns></returns>
+    public ValueFuture GetAwaiter(IExecutor executor, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return new ValueFuture(AsFuture(), executor, options);
+    }
 
     /// <summary>
     /// 用于Awaiter注册回调（外部需要捕获异常）
@@ -435,4 +477,6 @@ public readonly struct ValueFuture
             executor.Execute(continuation, options);
         }
     }
+
+    #endregion
 }

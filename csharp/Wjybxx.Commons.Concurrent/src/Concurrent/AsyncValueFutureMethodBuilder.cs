@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.Concurrent;
 ///
 /// ps：AsyncMethodBuilder的作用只有一个：封装StateMachine的回调（驱动StateMachine），接收StateMachine的执行结果。
 /// </summary>
-public struct AsyncFutureMethodBuilder
+public struct AsyncValueFutureMethodBuilder
 {
     /// <summary>
     /// 当任务异步完成时有值
@@ -43,8 +43,8 @@ public struct AsyncFutureMethodBuilder
     private Exception? _ex;
 
     // 1. Static Create method 
-    public static AsyncFutureMethodBuilder Create() {
-        return new AsyncFutureMethodBuilder();
+    public static AsyncValueFutureMethodBuilder Create() {
+        return new AsyncValueFutureMethodBuilder();
     }
 
     // 2. Start -- 创建后立即调用
@@ -55,16 +55,16 @@ public struct AsyncFutureMethodBuilder
     }
 
     // 3. TaskLike Task property -- 返回给方法调用者；其实命名Future更自然
-    public IFuture Task {
+    public ValueFuture Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (_task != null) {
-                return _task.Promise;
+                return new ValueFuture(_task.Promise);
             }
             if (_ex != null) {
-                return Promise<byte>.FailedPromise(_ex);
+                return ValueFuture.FromException(_ex);
             }
-            return Promise<byte>.CompletedPromise(1);
+            return ValueFuture.FromResult();
         }
     }
 
@@ -129,7 +129,7 @@ public struct AsyncFutureMethodBuilder
 /// Future的异步方法构建器
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public struct AsyncFutureMethodBuilder<T>
+public struct AsyncValueFutureMethodBuilder<T>
 {
     /// <summary>
     /// 当任务异步完成时有值
@@ -147,8 +147,8 @@ public struct AsyncFutureMethodBuilder<T>
     private T? _result;
 
     // 1. Static Create method 
-    public static AsyncFutureMethodBuilder<T> Create() {
-        return new AsyncFutureMethodBuilder<T>();
+    public static AsyncValueFutureMethodBuilder<T> Create() {
+        return new AsyncValueFutureMethodBuilder<T>();
     }
 
     // 2. Start -- 创建后立即调用
@@ -159,16 +159,16 @@ public struct AsyncFutureMethodBuilder<T>
     }
 
     // 3. TaskLike Task property -- 返回给方法调用者；其实命名Future更自然
-    public IFuture<T> Task {
+    public ValueFuture<T> Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (_task != null) {
-                return _task.Promise;
+                return new ValueFuture<T>(_task.Promise);
             }
             if (_ex != null) {
-                return Promise<T>.FailedPromise(_ex);
+                return ValueFuture<T>.FromException(_ex);
             }
-            return Promise<T>.CompletedPromise(_result);
+            return ValueFuture<T>.FromResult(_result);
         }
     }
 

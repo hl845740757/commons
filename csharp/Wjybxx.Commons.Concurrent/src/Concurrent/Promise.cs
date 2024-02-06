@@ -31,7 +31,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// PS：重复编码不仅仅是指Promise，与Promise相关的各个体系都需要双份...
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class Promise<T> : APromise, IPromise<T>, IFuture<T>
+public class Promise<T> : APromise, IPromise<T>
 {
     private const int ST_PENDING = (int)TaskStatus.PENDING;
     private const int ST_COMPUTING = (int)TaskStatus.COMPUTING;
@@ -45,6 +45,8 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
     /// 为了避免对结果的装箱，我们将result和exception分离为两个字段；分为两个字段其实占用了更多的内存，但减少了GC管理的对象 —— 这在GC拉胯的虚拟机中还是有收益的。。。
     /// 由于不能对结果装箱，我们需要显式的state字段来记录状态，这导致我们不能原子的更新state和result，因此必然存在一个发布中状态。
     /// 我们通过【负数状态】表示正在发布中，这样既可以表明正在发布中，还可以表示即将进入的状态。
+    ///
+    /// ps:另一种可行的方案是通过<see cref="_ex"/>字段来表示状态，但正常完成时还是存在中间状态。
     /// </summary>
     private volatile int _state;
     /** 任务成功执行时的结果 -- 可见性由state保证 */
@@ -244,7 +246,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
         }
     }
 
-    public bool TrySetCancelled(int code = ICancelToken.REASON_DEFAULT) {
+    public bool TrySetCancelled(int code) {
         if (InternalSetException(StacklessCancellationException.InstOf(code))) {
             PostComplete(this);
             return true;
@@ -252,7 +254,7 @@ public class Promise<T> : APromise, IPromise<T>, IFuture<T>
         return false;
     }
 
-    public void SetCancelled(int code = ICancelToken.REASON_DEFAULT) {
+    public void SetCancelled(int code) {
         if (!TrySetCancelled(code)) {
             throw new IllegalStateException("Already complete");
         }

@@ -42,6 +42,11 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
         this.future = future ?? throw new ArgumentNullException(nameof(future));
     }
 
+    /// <summary>
+    /// 回调任务的线程
+    /// </summary>
+    internal IExecutor? Executor => future.Executor;
+
     // 1.IsCompleted
     public bool IsCompleted => future.IsDone;
 
@@ -87,6 +92,11 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     public FutureAwaiter(IFuture<T> future) {
         this.future = future ?? throw new ArgumentNullException(nameof(future));
     }
+
+    /// <summary>
+    /// 回调任务的线程
+    /// </summary>
+    internal IExecutor? Executor => future.Executor;
 
     // 1.IsCompleted
     public bool IsCompleted => future.IsDone;

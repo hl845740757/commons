@@ -18,40 +18,27 @@
 
 using System;
 
-#pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
+/// 该接口表示异步状态机的驱动类。
 /// </summary>
-/// <typeparam name="T">结果类型</typeparam>
-public class PromiseTask<T> : Promise<T>, IFutureTask<T>
+/// <typeparam name="T"></typeparam>
+internal interface IStateMachineDriver<T>
 {
-    private Delegate _action;
-    private int _options;
-
-    public PromiseTask(IExecutor executor, Delegate action, int options = 0)
-        : base(executor) {
-        _action = action;
-        _options = options;
-    }
-
-    public void Run() {
-        try {
-            object value = _action.DynamicInvoke();
-            TrySetResult((T)value);
-        }
-        catch (Exception ex) {
-            TrySetException(ex);
-        }
-    }
+    /// <summary>
+    /// 异步任务关联的Promise
+    ///
+    /// ps:暂时先不考虑复用对象问题，未来再考虑优化。
+    /// </summary>
+    IPromise<T> Promise { get; }
 
     /// <summary>
-    /// 任务的调度选项
+    /// 用于驱动StateMachine的Action委托
+    /// 
+    /// ps：
+    /// 1. 定义为属性以允许实现类进行一些优化，比如：缓存实例。
+    /// 2. 通常应该是Run方法的委托。
     /// </summary>
-    public int Options => _options;
-
-    /// <summary>
-    /// 任务关联的Future
-    /// </summary>
-    public IFuture<T> Future => this;
+    Action MoveToNext { get; }
 }

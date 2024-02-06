@@ -70,7 +70,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     /** 任务绑定的executor */
     private final Executor _executor;
-    /** 任务绑定的上下文 */
+    /** 任务绑定的上下文 -- 冗余存储，解除和task的依赖 */
     private final IContext _ctx;
 
     public Promise() {
@@ -377,18 +377,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     @Override
     public void setCancelled(int code) {
         if (!trySetCancelled(code)) {
-            throw new IllegalStateException("Already complete");
-        }
-    }
-
-    @Override
-    public final boolean trySetCancelled() {
-        return trySetCancelled(1);
-    }
-
-    @Override
-    public final void setCancelled() {
-        if (!trySetCancelled(1)) {
             throw new IllegalStateException("Already complete");
         }
     }
