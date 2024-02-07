@@ -52,6 +52,26 @@ public abstract class APromise
     /// </summary>
     protected abstract bool IsStrictlyCompleted { get; }
 
+    #region state
+
+    /** 表示任务已进入执行阶段 */
+    internal static readonly Exception EX_COMPUTING = new AltException();
+    /** 表示任务已成功完成，但正在发布执行结果 */
+    internal static readonly Exception EX_PUBLISHING = new AltException();
+    /** 表示任务已成功完成，且结果已可见 */
+    internal static readonly Exception EX_SUCCESS = new AltException();
+
+    private class AltException : Exception
+    {
+        public AltException() {
+        }
+
+        public override string? StackTrace => null;
+    }
+
+    #endregion
+
+
     #region notify
 
     // Modes for Completion.tryFire. Signedness matters.

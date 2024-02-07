@@ -39,21 +39,19 @@ public class Promise<T> : APromise, IPromise<T>
     private const int ST_FAILED = (int)TaskStatus.FAILED;
     private const int ST_CANCELLED = (int)TaskStatus.CANCELLED;
 
-    /// <summary>
-    /// 任务的执行状态。
-    ///
-    /// 为了避免对结果的装箱，我们将result和exception分离为两个字段；分为两个字段其实占用了更多的内存，但减少了GC管理的对象 —— 这在GC拉胯的虚拟机中还是有收益的。。。
-    /// 由于不能对结果装箱，我们需要显式的state字段来记录状态，这导致我们不能原子的更新state和result，因此必然存在一个发布中状态。
-    /// 我们通过【负数状态】表示正在发布中，这样既可以表明正在发布中，还可以表示即将进入的状态。
-    ///
-    /// ps:另一种可行的方案是通过<see cref="_ex"/>字段来表示状态，但正常完成时还是存在中间状态。
-    /// </summary>
-    private volatile int _state;
-    /** 任务成功执行时的结果 -- 可见性由state保证 */
+    /** 任务成功执行时的结果 -- 可见性由<see cref="_ex"/>保证 */
     private T _result;
-    /** 任务执行失败时的结果 -- 可见性由state保证 */
-    private Exception? _ex;
-    /** 任务绑定的线程 -- 不一定是执行线程 */
+    /// <summary>
+    /// 任务失败完成时的结果，也包含了任务的状态。
+    /// 
+    /// 1. 如果为null，表示尚未开始。
+    /// 2. 如果为<see cref="APromise.EX_COMPUTING"/>，表示正在计算。
+    /// 3. 如果为<see cref="APromise.EX_PUBLISHING"/>，表示成功，但正在发布成功结果。
+    /// 4. 如果为<see cref="APromise.EX_SUCCESS"/>，表示成功，且结果已可见。
+    /// 5. 如果为其它异常，表示任务失败或取消。
+    /// </summary>
+    private volatile Exception? _ex;
+    /** 任务绑定的线程 -- 其实不一定是执行线程 */
     private readonly IExecutor? _executor;
 
     public Promise(IExecutor? executor = null) {
@@ -64,39 +62,43 @@ public class Promise<T> : APromise, IPromise<T>
         this._executor = executor;
         if (ex == null) {
             this._result = result;
-            this._state = ST_SUCCESS;
+            this._ex = EX_SUCCESS;
         } else {
+            this._result = default;
             this._ex = ex;
-            this._state = ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
         }
     }
 
-    public static Promise<T> CompletedPromise(T result, IExecutor? executor = null) {
+    public static Promise<T> FromResult(T result, IExecutor? executor = null) {
         return new Promise<T>(executor, result, null);
     }
 
-    public static Promise<T> FailedPromise(Exception ex, IExecutor? executor = null) {
+    public static Promise<T> FromException(Exception ex, IExecutor? executor = null) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
+        return new Promise<T>(executor, default, ex);
+    }
+
+    public static Promise<T> FromCancelled(int code, IExecutor? executor = null) {
+        Exception ex = StacklessCancellationException.InstOf(code);
         return new Promise<T>(executor, default, ex);
     }
 
     #region internal
 
     private bool InternalSetResult(T result) {
-        // c#的CAS和java参数顺序相反...
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
-        int preStatus = Interlocked.CompareExchange(ref _state, -ST_SUCCESS, ST_PENDING);
-        if (preStatus == ST_PENDING) {
+        Exception preEx = Interlocked.CompareExchange(ref _ex, EX_PUBLISHING, null);
+        if (preEx == null) {
             _result = result;
-            _state = ST_SUCCESS;
+            _ex = EX_SUCCESS;
             return true;
         }
-        // 任务可能处于Computing状态，重试
-        if (preStatus == ST_COMPUTING) {
-            preStatus = Interlocked.CompareExchange(ref _state, -ST_SUCCESS, ST_COMPUTING);
-            if (preStatus == ST_COMPUTING) {
+        if (preEx == EX_COMPUTING) {
+            // 任务可能处于Computing状态，重试
+            preEx = Interlocked.CompareExchange(ref _ex, EX_PUBLISHING, EX_COMPUTING);
+            if (preEx == EX_COMPUTING) {
                 _result = result;
-                _state = ST_SUCCESS;
+                _ex = EX_SUCCESS;
                 return true;
             }
         }
@@ -104,51 +106,63 @@ public class Promise<T> : APromise, IPromise<T>
     }
 
     private bool InternalSetException(Exception exception) {
-        int targetState = exception is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
-        // 先测试Pending状态
-        int preStatus = Interlocked.CompareExchange(ref _state, -targetState, ST_PENDING);
-        if (preStatus == ST_PENDING) {
-            _ex = exception;
-            _state = targetState;
+        Debug.Assert(exception != null);
+        // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
+        Exception preEx = Interlocked.CompareExchange(ref _ex, exception, null);
+        if (preEx == null) {
             return true;
         }
-        // 任务可能处于Computing状态，重试
-        if (preStatus == ST_COMPUTING) {
-            preStatus = Interlocked.CompareExchange(ref _state, -targetState, ST_COMPUTING);
-            if (preStatus == ST_COMPUTING) {
-                _ex = exception;
-                _state = targetState;
+        if (preEx == EX_COMPUTING) {
+            // 任务可能处于Computing状态，重试
+            preEx = Interlocked.CompareExchange(ref _ex, exception, EX_COMPUTING);
+            if (preEx == EX_COMPUTING) {
                 return true;
             }
         }
         return false;
     }
 
-    private static CompletionException EncodeException(Exception ex) {
-        if (ex is CompletionException ex2) {
-            return ex2;
-        }
-        return new CompletionException(null, ex);
-    }
-
-    /** 获取当前状态，如果处于发布中状态，则返回即将进入的状态 */
-    private int PeekState() {
-        int state = _state;
-        if (state < 0) {
-            state *= -1;
-        }
-        return state;
-    }
-
     /** 获取当前状态，如果处于发布中状态，则等待目标线程发布完毕 */
     private int PollState() {
-        int state = _state;
-        if (state < 0) {
-            // busy spin -- 该过程通常很快，因此自旋等待即可
-            while ((state = _state) < 0) {
-            }
+        Exception ex = _ex;
+        if (ex == null) {
+            return ST_PENDING;
         }
-        return state;
+        if (ex == EX_COMPUTING) {
+            return ST_COMPUTING;
+        }
+        if (ex == EX_PUBLISHING) {
+            // busy spin -- 该过程通常很快，因此自旋等待即可
+            while ((ex = _ex) == EX_PUBLISHING) {
+            }
+            return ST_SUCCESS;
+        }
+        if (ex == EX_SUCCESS) {
+            return ST_SUCCESS;
+        }
+        return ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
+    }
+
+    /// <summary>
+    /// 获取当前状态
+    /// </summary>
+    /// <param name="ex">当前的状态信息</param>
+    /// <param name="strict">如果为true，则即将完成的情况也返回计算中</param>
+    /// <returns></returns>
+    private static int PeekState(Exception? ex, bool strict = false) {
+        if (ex == null) {
+            return ST_PENDING;
+        }
+        if (ex == EX_COMPUTING) {
+            return ST_COMPUTING;
+        }
+        if (ex == EX_PUBLISHING) {
+            return strict ? ST_COMPUTING : ST_SUCCESS;
+        }
+        if (ex == EX_SUCCESS) {
+            return ST_SUCCESS;
+        }
+        return ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
     }
 
     #endregion
@@ -171,43 +185,31 @@ public class Promise<T> : APromise, IPromise<T>
         return state >= ST_SUCCESS;
     }
 
-    public TaskStatus Status => (TaskStatus)PeekState();
-    public bool IsPending => PeekState() == ST_PENDING;
-    public bool IsComputing => PeekState() == ST_COMPUTING;
-    public bool IsSucceeded => PeekState() == ST_SUCCESS;
-    public bool IsFailed => PeekState() == ST_FAILED;
-    public bool IsCancelled => PeekState() == ST_CANCELLED;
+    public TaskStatus Status => (TaskStatus)PeekState(_ex);
+    public bool IsPending => _ex == null;
+    public bool IsComputing => _ex == EX_COMPUTING;
+    public bool IsSucceeded => PeekState(_ex) == ST_SUCCESS;
+    public bool IsFailed => PeekState(_ex) == ST_FAILED;
+    public bool IsCancelled => PeekState(_ex) == ST_CANCELLED;
 
-    public bool IsDone => PeekState() >= ST_SUCCESS;
-    public bool IsFailedOrCancelled => PeekState() >= ST_FAILED;
+    public bool IsDone => PeekState(_ex) >= ST_SUCCESS;
+    public bool IsFailedOrCancelled => PeekState(_ex) >= ST_FAILED;
 
-    protected sealed override bool IsRelaxedCompleted => PeekState() >= ST_SUCCESS;
-
-    protected sealed override bool IsStrictlyCompleted {
-        get {
-            int state = _state;
-            if (state < 0) { //任务尚未真正完成时需要返回false
-                return false;
-            }
-            return state >= ST_SUCCESS;
-        }
-    }
+    protected sealed override bool IsRelaxedCompleted => PeekState(_ex) >= ST_SUCCESS;
+    protected sealed override bool IsStrictlyCompleted => PeekState(_ex, true) >= ST_SUCCESS;
 
     #endregion
 
     #region 状态更新
 
     public bool TrySetComputing() {
-        int preState = Interlocked.CompareExchange(ref _state, ST_COMPUTING, ST_PENDING);
-        return preState == ST_PENDING;
+        Exception preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
+        return preState == null;
     }
 
     public TaskStatus TrySetComputing2() {
-        int preState = Interlocked.CompareExchange(ref _state, ST_COMPUTING, ST_PENDING);
-        if (preState < 0) {
-            preState *= -1;
-        }
-        return (TaskStatus)preState;
+        Exception preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
+        return (TaskStatus)PeekState(preState, false);
     }
 
     public void SetComputing() {

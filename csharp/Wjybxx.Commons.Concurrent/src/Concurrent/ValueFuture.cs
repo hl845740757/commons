@@ -25,11 +25,12 @@ namespace Wjybxx.Commons.Concurrent;
 /// <summary>
 /// ValueFuture有以下作用：
 /// 1. 优化在已完成任务上的等待。
-/// 2. 绑定Awaiter的回调线程。
+/// 2. 绑定Awaiter的回调线程 == C#的await关键字不支持传参，只能曲线救国。
+/// 3. 统一await的返回值类型 -- 可通过<see cref="AsFuture"/>转换为真正的Future类型。
 /// 
 /// </summary>
 /// <typeparam name="T"></typeparam>
-[AsyncMethodBuilder(typeof(AsyncValueFutureMethodBuilder<>))]
+[AsyncMethodBuilder(typeof(AsyncFutureMethodBuilder<>))]
 public readonly struct ValueFuture<T>
 {
 #nullable disable
@@ -124,9 +125,9 @@ public readonly struct ValueFuture<T>
             return _future;
         }
         if (_ex != null) {
-            return Promise<T>.FailedPromise(_ex);
+            return Promise<T>.FromException(_ex);
         }
-        return Promise<T>.CompletedPromise(_result);
+        return Promise<T>.FromResult(_result);
     }
 
     #region 状态查询
@@ -255,7 +256,7 @@ public readonly struct ValueFuture<T>
     #endregion
 }
 
-[AsyncMethodBuilder(typeof(AsyncValueFutureMethodBuilder))]
+[AsyncMethodBuilder(typeof(AsyncFutureMethodBuilder))]
 public readonly struct ValueFuture
 {
 #nullable disable
@@ -342,15 +343,17 @@ public readonly struct ValueFuture
 
     /// <summary>
     /// 转换为正常的Future
+    ///
+    /// 注意：应避免重复调用该方法。
     /// </summary>
     public IFuture AsFuture() {
         if (_future != null) {
             return _future;
         }
         if (_ex != null) {
-            return Promise<byte>.FailedPromise(_ex);
+            return Promise<byte>.FromException(_ex);
         }
-        return Promise<byte>.CompletedPromise(1);
+        return Promise<byte>.FromResult(1);
     }
 
     #region 状态查询

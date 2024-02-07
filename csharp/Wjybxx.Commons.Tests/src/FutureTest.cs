@@ -47,7 +47,7 @@ public class FutureTest
         Console.WriteLine("count: " + CountAsync().Get());
     }
 
-    private static async IFuture<int> CountAsync() {
+    private static async ValueFuture<int> CountAsync() {
         IFutureTask<int> task = new PromiseTask<int>(Executor, () => 1);
         Executor.Execute(task);
         return await task.Future;

@@ -55,16 +55,16 @@ public struct AsyncFutureMethodBuilder
     }
 
     // 3. TaskLike Task property -- 返回给方法调用者；其实命名Future更自然
-    public IFuture Task {
+    public ValueFuture Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (_task != null) {
-                return _task.Promise;
+                return new ValueFuture(_task.Promise);
             }
             if (_ex != null) {
-                return Promise<byte>.FailedPromise(_ex);
+                return ValueFuture.FromException(_ex);
             }
-            return Promise<byte>.CompletedPromise(1);
+            return ValueFuture.FromResult();
         }
     }
 
@@ -159,16 +159,16 @@ public struct AsyncFutureMethodBuilder<T>
     }
 
     // 3. TaskLike Task property -- 返回给方法调用者；其实命名Future更自然
-    public IFuture<T> Task {
+    public ValueFuture<T> Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (_task != null) {
-                return _task.Promise;
+                return new ValueFuture<T>(_task.Promise);
             }
             if (_ex != null) {
-                return Promise<T>.FailedPromise(_ex);
+                return ValueFuture<T>.FromException(_ex);
             }
-            return Promise<T>.CompletedPromise(_result);
+            return ValueFuture<T>.FromResult(_result);
         }
     }
 
