@@ -26,21 +26,28 @@ namespace Wjybxx.Commons.Concurrent;
 public readonly struct TaskContext
 {
     /// <summary>
+    /// 状态参数 -- 状态参数用于支持私有变量，不同任务的State通常不同。
+    /// </summary>
+    public readonly object? State;
+
+    /// <summary>
     /// 取消令牌 -- 如果未指定，则默认赋值为<see cref="ICancelToken.NONE"/>
     /// </summary>
     public readonly ICancelToken CancelToken;
     /// <summary>
-    /// 任务参数
+    /// 任务黑板 -- 黑板用于支持读写共享变量，不同任务可能指向同一个对象。 
     /// </summary>
-    public readonly object? State;
+    public readonly object? Blackboard;
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="cancelToken">取消令牌</param>
     /// <param name="state">回调参数</param>
-    public TaskContext(ICancelToken? cancelToken = null, object? state = null) {
-        CancelToken = cancelToken ?? ICancelToken.NONE;
+    /// <param name="blackboard">任务黑板</param>
+    public TaskContext(object? state, ICancelToken? cancelToken = null, object? blackboard = null) {
         State = state;
+        CancelToken = cancelToken ?? ICancelToken.NONE;
+        Blackboard = blackboard;
     }
 }

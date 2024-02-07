@@ -36,6 +36,8 @@ public sealed class ReadonlyCancelToken : ICancelToken
         return this;
     }
 
+    public bool CanBeCancelled => cancelToken.CanBeCancelled;
+
     public int CancelCode => cancelToken.CancelCode;
 
     public bool IsCancelling() => cancelToken.IsCancelling();

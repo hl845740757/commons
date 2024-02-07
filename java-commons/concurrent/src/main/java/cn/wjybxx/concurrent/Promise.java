@@ -170,9 +170,10 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     // region ctx
 
+    /** 允许重写 */
     @Nonnull
     @Override
-    public final IContext ctx() {
+    public IContext ctx() {
         return _ctx;
     }
 
@@ -626,10 +627,11 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     }
 
     protected IContext inheritContext(int options) {
+        final IContext ctx = ctx();
         if (TaskOption.isEnabled(options, TaskOption.STAGE_INHERIT_TOKEN)) {
-            return _ctx;
+            return ctx;
         }
-        return _ctx.withoutCancelToken();
+        return ctx.withoutCancelToken();
     }
 
     // region compose-apply
@@ -1213,7 +1215,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
      * A: Future的监听器构成了一棵树，在不进行优化的情况下，遍历监听器是一个【前序遍历】过程，这会产生很深的方法栈，从而影响性能。
      * 该操作将子节点的监听器提升为当前节点的兄弟节点(插在前方)，从而将树形遍历优化为【线性遍历】，从而降低了栈深度，提高了性能。
      * <p>
-     * ps:参考自Guava中的Future实现 -- JDK的实现太复杂，看不懂...
+     * ps:
+     * 1.参考自Guava中的Future实现 -- JDK的实现太复杂，看不懂...
+     * 2.这将导致无法通过Future删除回调。
      */
     private static <T> Completion clearListeners(Promise<T> promise, Completion onto) {
         // 我们需要进行三件事
@@ -1290,7 +1294,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     }
 
     private boolean completeCancelled() {
-        int cancelCode = _ctx.cancelToken().cancelCode();
+        int cancelCode = ctx().cancelToken().cancelCode();
         return internalComplete(new AltResult(StacklessCancellationException.instOf(cancelCode)));
     }
 
@@ -1625,7 +1629,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1659,7 +1663,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1672,7 +1676,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<U> relay = fn.apply(output._ctx, input.decodeValue(r)).toFuture();
+                    IFuture<U> relay = fn.apply(output.ctx(), input.decodeValue(r)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1710,7 +1714,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1723,7 +1727,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<U> relay = fn.apply(output._ctx).toFuture();
+                    IFuture<U> relay = fn.apply(output.ctx()).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1763,7 +1767,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1776,7 +1780,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<V> relay = fallback.apply(output._ctx, exceptionType.cast(altResult.cause)).toFuture();
+                    IFuture<V> relay = fallback.apply(output.ctx(), exceptionType.cast(altResult.cause)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1815,7 +1819,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1826,9 +1830,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     Object r = input.result;
                     IFuture<U> relay;
                     if (r instanceof AltResult altResult) {
-                        relay = fn.apply(output._ctx, null, altResult.cause).toFuture();
+                        relay = fn.apply(output.ctx(), null, altResult.cause).toFuture();
                     } else {
-                        relay = fn.apply(output._ctx, input.decodeValue(r), null).toFuture();
+                        relay = fn.apply(output.ctx(), input.decodeValue(r), null).toFuture();
                     }
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
@@ -1871,7 +1875,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1884,7 +1888,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    setCompleted = output.completeValue(fn.apply(output._ctx, input.decodeValue(r)));
+                    setCompleted = output.completeValue(fn.apply(output.ctx(), input.decodeValue(r)));
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
@@ -1918,7 +1922,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1931,7 +1935,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    action.accept(output._ctx, input.decodeValue(r));
+                    action.accept(output.ctx(), input.decodeValue(r));
                     setCompleted = output.completeNull();
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -1966,7 +1970,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1979,7 +1983,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    setCompleted = output.completeValue(fn.apply(output._ctx));
+                    setCompleted = output.completeValue(fn.apply(output.ctx()));
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
@@ -2013,7 +2017,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -2026,7 +2030,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    action.accept(output._ctx);
+                    action.accept(output.ctx());
                     setCompleted = output.completeNull();
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -2063,7 +2067,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -2076,7 +2080,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    V fr = fallback.apply(output._ctx, exceptionType.cast(altResult.cause));
+                    V fr = fallback.apply(output.ctx(), exceptionType.cast(altResult.cause));
                     setCompleted = output.completeValue(fr);
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -2112,7 +2116,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -2123,9 +2127,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     Object r = input.result;
                     U relay;
                     if (r instanceof AltResult altResult) {
-                        relay = fn.apply(output._ctx, null, altResult.cause);
+                        relay = fn.apply(output.ctx(), null, altResult.cause);
                     } else {
-                        relay = fn.apply(output._ctx, input.decodeValue(r), null);
+                        relay = fn.apply(output.ctx(), input.decodeValue(r), null);
                     }
                     setCompleted = output.completeValue(relay);
                 } catch (Throwable e) {
@@ -2162,7 +2166,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -2177,9 +2181,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 Object r = input.result;
                 try {
                     if (r instanceof AltResult altResult) {
-                        action.accept(output._ctx, null, altResult.cause);
+                        action.accept(output.ctx(), null, altResult.cause);
                     } else {
-                        action.accept(output._ctx, input.decodeValue(r), null);
+                        action.accept(output.ctx(), input.decodeValue(r), null);
                     }
                     setCompleted = output.completeRelay(r);
                 } catch (Throwable e) {

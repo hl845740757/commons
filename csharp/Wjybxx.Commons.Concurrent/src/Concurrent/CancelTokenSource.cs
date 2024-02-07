@@ -58,6 +58,8 @@ public sealed class CancelTokenSource : ICancelTokenSource
         return new ReadonlyCancelToken(this);
     }
 
+    public bool CanBeCancelled => true;
+
     #region tokenSource
 
     public int Cancel(int cancelCode = ICancelToken.REASON_DEFAULT) {
@@ -286,7 +288,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
                 expectedHead = RemoveClosedNode(expectedHead);
                 continue;
             }
-            
+
             newHead.next = expectedHead;
             realHead = Interlocked.CompareExchange(ref this.stack, newHead, expectedHead);
             if (realHead == expectedHead) { // success

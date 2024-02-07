@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.single;
+package cn.wjybxx.unitask;
 
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;

@@ -55,19 +55,11 @@ public abstract class APromise
     #region state
 
     /** 表示任务已进入执行阶段 */
-    internal static readonly Exception EX_COMPUTING = new AltException();
+    internal static readonly object EX_COMPUTING = new object();
     /** 表示任务已成功完成，但正在发布执行结果 */
-    internal static readonly Exception EX_PUBLISHING = new AltException();
+    internal static readonly object EX_PUBLISHING = new object();
     /** 表示任务已成功完成，且结果已可见 */
-    internal static readonly Exception EX_SUCCESS = new AltException();
-
-    private class AltException : Exception
-    {
-        public AltException() {
-        }
-
-        public override string? StackTrace => null;
-    }
+    internal static readonly object EX_SUCCESS = new object();
 
     #endregion
 
@@ -156,6 +148,8 @@ public abstract class APromise
     /// Q: 这步操作是要干什么？
     /// A: Future的监听器构成了一棵树，在不进行优化的情况下，遍历监听器是一个【前序遍历】过程，这会产生很深的方法栈，从而影响性能。
     /// 该操作将子节点的监听器提升为当前节点的兄弟节点(插在前方)，从而将树形遍历优化为【线性遍历】，从而降低了栈深度，提高了性能。
+    ///
+    /// PS：这将导致无法通过Future删除回调。
     /// </summary>
     private static Completion? ClearListeners(APromise promise, Completion? onto) {
         // 我们需要进行三件事

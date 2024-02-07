@@ -50,7 +50,7 @@ public class Promise<T> : APromise, IPromise<T>
     /// 4. 如果为<see cref="APromise.EX_SUCCESS"/>，表示成功，且结果已可见。
     /// 5. 如果为其它异常，表示任务失败或取消。
     /// </summary>
-    private volatile Exception? _ex;
+    private volatile object? _ex;
     /** 任务绑定的线程 -- 其实不一定是执行线程 */
     private readonly IExecutor? _executor;
 
@@ -87,7 +87,7 @@ public class Promise<T> : APromise, IPromise<T>
 
     private bool InternalSetResult(T result) {
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
-        Exception preEx = Interlocked.CompareExchange(ref _ex, EX_PUBLISHING, null);
+        object preEx = Interlocked.CompareExchange(ref _ex, EX_PUBLISHING, null);
         if (preEx == null) {
             _result = result;
             _ex = EX_SUCCESS;
@@ -108,7 +108,7 @@ public class Promise<T> : APromise, IPromise<T>
     private bool InternalSetException(Exception exception) {
         Debug.Assert(exception != null);
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
-        Exception preEx = Interlocked.CompareExchange(ref _ex, exception, null);
+        object preEx = Interlocked.CompareExchange(ref _ex, exception, null);
         if (preEx == null) {
             return true;
         }
@@ -124,7 +124,7 @@ public class Promise<T> : APromise, IPromise<T>
 
     /** 获取当前状态，如果处于发布中状态，则等待目标线程发布完毕 */
     private int PollState() {
-        Exception ex = _ex;
+        object ex = _ex;
         if (ex == null) {
             return ST_PENDING;
         }
@@ -149,7 +149,7 @@ public class Promise<T> : APromise, IPromise<T>
     /// <param name="ex">当前的状态信息</param>
     /// <param name="strict">如果为true，则即将完成的情况也返回计算中</param>
     /// <returns></returns>
-    private static int PeekState(Exception? ex, bool strict = false) {
+    private static int PeekState(object? ex, bool strict = false) {
         if (ex == null) {
             return ST_PENDING;
         }
@@ -190,7 +190,7 @@ public class Promise<T> : APromise, IPromise<T>
     public bool IsComputing => _ex == EX_COMPUTING;
     public bool IsSucceeded => PeekState(_ex) == ST_SUCCESS;
     public bool IsFailed => PeekState(_ex) == ST_FAILED;
-    public bool IsCancelled => PeekState(_ex) == ST_CANCELLED;
+    public bool IsCancelled => _ex is OperationCanceledException;
 
     public bool IsDone => PeekState(_ex) >= ST_SUCCESS;
     public bool IsFailedOrCancelled => PeekState(_ex) >= ST_FAILED;
@@ -203,12 +203,12 @@ public class Promise<T> : APromise, IPromise<T>
     #region 状态更新
 
     public bool TrySetComputing() {
-        Exception preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
+        object preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
         return preState == null;
     }
 
     public TaskStatus TrySetComputing2() {
-        Exception preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
+        object preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
         return (TaskStatus)PeekState(preState, false);
     }
 
@@ -281,9 +281,9 @@ public class Promise<T> : APromise, IPromise<T>
         int state = PollState();
         return state switch
         {
-            ST_FAILED => _ex!,
-            ST_CANCELLED when throwIfCancelled => throw _ex!,
-            ST_CANCELLED => _ex!,
+            ST_FAILED => (Exception)_ex!,
+            ST_CANCELLED when throwIfCancelled => throw (Exception)_ex!,
+            ST_CANCELLED => (Exception)_ex!,
             ST_SUCCESS => throw new IllegalStateException("Task completed with a result"),
             _ => throw new IllegalStateException("Task has not completed")
         };
@@ -296,9 +296,9 @@ public class Promise<T> : APromise, IPromise<T>
             return _result;
         }
         if (state == ST_CANCELLED) {
-            throw _ex!;
+            throw (Exception)_ex!;
         }
-        throw new CompletionException(null, _ex);
+        throw new CompletionException(null, (Exception)_ex);
     }
 
     #endregion

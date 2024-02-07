@@ -10,8 +10,8 @@ module wjybxx.commons.concurrent {
     requires wjybxx.commons.disruptor;
 
     exports cn.wjybxx.concurrent;
-    exports cn.wjybxx.single;
+    exports cn.wjybxx.unitask;
 
     opens cn.wjybxx.concurrent;
-    opens cn.wjybxx.single;
+    opens cn.wjybxx.unitask;
 }

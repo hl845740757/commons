@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+
 #pragma warning disable CS1591
 
 namespace Wjybxx.Commons.Concurrent;
@@ -36,6 +37,12 @@ public interface ICancelToken
      * 其作用类似{@link IFuture#asReadonly()}
      */
     ICancelToken AsReadonly();
+
+    /// <summary>
+    /// Token是否可以进入取消状态
+    /// </summary>
+    /// <returns></returns>
+    bool CanBeCancelled { get; }
 
     #region code
 

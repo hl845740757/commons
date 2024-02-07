@@ -114,12 +114,20 @@ public interface IExecutorService : IExecutor
 
     /// <summary>
     /// 提交一个任务
+    ///
+    /// 注意：使用ref仅为了避免防御性拷贝，不会修改对象的状态 —— in关键字可能产生拷贝。
+    /// </summary>
+    /// <param name="builder">任务构建器</param>
+    /// <returns></returns>
+    IFuture<T> Submit<T>(ref TaskBuilder<T> builder);
+
+    /// <summary>
+    /// 提交一个任务
     /// </summary>
     /// <param name="action">待执行的函数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    IFuture Submit(Action action, ICancelToken? cancelToken = null, int options = 0);
+    IFuture Submit(Action action, int options = 0);
 
     /// <summary>
     /// 提交一个任务
@@ -134,10 +142,9 @@ public interface IExecutorService : IExecutor
     /// 提交一个任务
     /// </summary>
     /// <param name="action">待执行的函数</param>
-    /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    IFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken? cancelToken = null, int options = 0);
+    IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0);
 
     /// <summary>
     /// 提交一个任务

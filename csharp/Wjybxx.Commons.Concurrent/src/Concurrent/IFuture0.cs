@@ -189,6 +189,8 @@ public interface IFuture
 
     /// <summary>
     /// 添加一个监听器 -- 接收future参数
+    ///
+    /// 回调将在使Future完成的线程同步执行。
     /// </summary>
     /// <param name="continuation">回调</param>
     /// <param name="options">调度选项</param>
@@ -196,6 +198,8 @@ public interface IFuture
 
     /// <summary>
     /// 添加一个监听器 -- 接收future参数
+    ///
+    /// 回调将在给定的Executor线程执行。
     /// </summary>
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>

@@ -29,6 +29,8 @@ sealed class UncancellableToken : ICancelToken
 
     public ICancelToken AsReadonly() => this;
 
+    public bool CanBeCancelled => false;
+
     #region token
 
     public int CancelCode => 0;

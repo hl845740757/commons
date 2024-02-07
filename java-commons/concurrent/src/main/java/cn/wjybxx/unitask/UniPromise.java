@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.single;
+package cn.wjybxx.unitask;
 
 import cn.wjybxx.base.function.TriConsumer;
 import cn.wjybxx.base.function.TriFunction;
@@ -172,9 +172,10 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
     // region ctx
 
+    /** 允许重写 */
     @Nonnull
     @Override
-    public final IContext ctx() {
+    public IContext ctx() {
         return _ctx;
     }
 
@@ -583,10 +584,11 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     }
 
     protected IContext inheritContext(int options) {
+        IContext ctx = ctx();
         if (TaskOption.isEnabled(options, TaskOption.STAGE_INHERIT_TOKEN)) {
-            return _ctx;
+            return ctx;
         }
-        return _ctx.withoutCancelToken();
+        return ctx.withoutCancelToken();
     }
 
     // region compose-apply
@@ -1218,7 +1220,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     }
 
     private boolean completeCancelled() {
-        int cancelCode = _ctx.cancelToken().cancelCode();
+        int cancelCode = ctx().cancelToken().cancelCode();
         return internalComplete(new AltResult(StacklessCancellationException.instOf(cancelCode)));
     }
 
@@ -1422,7 +1424,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1456,7 +1458,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1469,7 +1471,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<U> relay = fn.apply(output._ctx, input.decodeValue(r)).toFuture();
+                    IFuture<U> relay = fn.apply(output.ctx(), input.decodeValue(r)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1507,7 +1509,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1520,7 +1522,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<U> relay = fn.apply(output._ctx).toFuture();
+                    IFuture<U> relay = fn.apply(output.ctx()).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1560,7 +1562,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1573,7 +1575,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<V> relay = fallback.apply(output._ctx, exceptionType.cast(altResult.cause)).toFuture();
+                    IFuture<V> relay = fallback.apply(output.ctx(), exceptionType.cast(altResult.cause)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1612,7 +1614,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1623,9 +1625,9 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     Object r = input.result;
                     IFuture<U> relay;
                     if (r instanceof AltResult altResult) {
-                        relay = fn.apply(output._ctx, null, altResult.cause).toFuture();
+                        relay = fn.apply(output.ctx(), null, altResult.cause).toFuture();
                     } else {
-                        relay = fn.apply(output._ctx, input.decodeValue(r), null).toFuture();
+                        relay = fn.apply(output.ctx(), input.decodeValue(r), null).toFuture();
                     }
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
@@ -1668,7 +1670,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1681,7 +1683,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    setCompleted = output.completeValue(fn.apply(output._ctx, input.decodeValue(r)));
+                    setCompleted = output.completeValue(fn.apply(output.ctx(), input.decodeValue(r)));
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
@@ -1715,7 +1717,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1728,7 +1730,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    action.accept(output._ctx, input.decodeValue(r));
+                    action.accept(output.ctx(), input.decodeValue(r));
                     setCompleted = output.completeNull();
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -1763,7 +1765,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1776,7 +1778,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    setCompleted = output.completeValue(fn.apply(output._ctx));
+                    setCompleted = output.completeValue(fn.apply(output.ctx()));
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
@@ -1810,7 +1812,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1823,7 +1825,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    action.accept(output._ctx);
+                    action.accept(output.ctx());
                     setCompleted = output.completeNull();
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -1860,7 +1862,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1873,7 +1875,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    V fr = fallback.apply(output._ctx, exceptionType.cast(altResult.cause));
+                    V fr = fallback.apply(output.ctx(), exceptionType.cast(altResult.cause));
                     setCompleted = output.completeValue(fr);
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -1909,7 +1911,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1920,9 +1922,9 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     Object r = input.result;
                     U relay;
                     if (r instanceof AltResult altResult) {
-                        relay = fn.apply(output._ctx, null, altResult.cause);
+                        relay = fn.apply(output.ctx(), null, altResult.cause);
                     } else {
-                        relay = fn.apply(output._ctx, input.decodeValue(r), null);
+                        relay = fn.apply(output.ctx(), input.decodeValue(r), null);
                     }
                     setCompleted = output.completeValue(relay);
                 } catch (Throwable e) {
@@ -1959,7 +1961,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output._ctx.cancelToken().isCancelling()) {
+                if (output.ctx().cancelToken().isCancelling()) {
                     setCompleted = output.completeCancelled();
                     break tryComplete;
                 }
@@ -1974,9 +1976,9 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                 Object r = input.result;
                 try {
                     if (r instanceof AltResult altResult) {
-                        action.accept(output._ctx, null, altResult.cause);
+                        action.accept(output.ctx(), null, altResult.cause);
                     } else {
-                        action.accept(output._ctx, input.decodeValue(r), null);
+                        action.accept(output.ctx(), input.decodeValue(r), null);
                     }
                     setCompleted = output.completeRelay(r);
                 } catch (Throwable e) {
