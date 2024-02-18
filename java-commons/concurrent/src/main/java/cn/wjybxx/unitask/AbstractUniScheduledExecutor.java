@@ -88,7 +88,7 @@ public abstract class AbstractUniScheduledExecutor
 
     @Override
     public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
-        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newRunnable(task)
+        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newAction(task)
                 .setFixedRate(initialDelay, period, unit);
 
         UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofBuilder(sb, newScheduledPromise(), 0, tickTime());
@@ -98,7 +98,7 @@ public abstract class AbstractUniScheduledExecutor
 
     @Override
     public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
-        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newRunnable(task)
+        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newAction(task)
                 .setFixedDelay(initialDelay, delay, unit);
 
         UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofBuilder(sb, newScheduledPromise(), 0, tickTime());

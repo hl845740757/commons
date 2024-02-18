@@ -61,28 +61,20 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
 
     // region factory
 
-    public static ScheduledTaskBuilder<?> newRunnable(Runnable task) {
-        return new ScheduledTaskBuilder<>(TYPE_RUNNABLE, task);
-    }
-
-    public static <V> ScheduledTaskBuilder<V> newCallable(Callable<? extends V> task) {
-        return new ScheduledTaskBuilder<>(TYPE_CALLABLE, task);
-    }
-
-    public static <V> ScheduledTaskBuilder<V> newFunc(Function<IContext, ? extends V> task) {
-        return new ScheduledTaskBuilder<>(TYPE_FUNCTION, task, IContext.NONE);
-    }
-
-    public static <V> ScheduledTaskBuilder<V> newFunc(Function<IContext, ? extends V> task, IContext ctx) {
-        return new ScheduledTaskBuilder<>(TYPE_FUNCTION, task, ctx);
-    }
-
-    public static <V> ScheduledTaskBuilder<V> newAction(Consumer<IContext> task) {
-        return new ScheduledTaskBuilder<>(TYPE_CONSUMER, task, IContext.NONE);
+    public static ScheduledTaskBuilder<?> newAction(Runnable task) {
+        return new ScheduledTaskBuilder<>(TYPE_ACTION, task);
     }
 
     public static <V> ScheduledTaskBuilder<V> newAction(Consumer<IContext> task, IContext ctx) {
-        return new ScheduledTaskBuilder<>(TYPE_CONSUMER, task, ctx);
+        return new ScheduledTaskBuilder<>(TYPE_ACTION_CTX, task, ctx);
+    }
+
+    public static <V> ScheduledTaskBuilder<V> newFunc(Callable<? extends V> task) {
+        return new ScheduledTaskBuilder<>(TYPE_FUNC, task);
+    }
+
+    public static <V> ScheduledTaskBuilder<V> newFunc(Function<IContext, ? extends V> task, IContext ctx) {
+        return new ScheduledTaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
     }
 
     // PECS -- Task消费泛型参数

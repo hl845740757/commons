@@ -95,19 +95,19 @@ public class PromiseTask<V> implements IFutureTask<V> {
     // region factory
 
     public static PromiseTask<?> ofRunnable(Runnable action, int options, IPromise<?> promise) {
-        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_RUNNABLE);
+        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION);
     }
 
     public static <V> PromiseTask<V> ofCallable(Callable<? extends V> action, int options, IPromise<V> promise) {
-        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_CALLABLE);
+        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC);
     }
 
     public static <V> PromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, int options, IPromise<V> promise) {
-        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNCTION);
+        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC_CTX);
     }
 
     public static PromiseTask<?> ofConsumer(Consumer<? super IContext> action, int options, IPromise<?> promise) {
-        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_CONSUMER);
+        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX);
     }
 
     public static <V> PromiseTask<V> ofBuilder(TaskBuilder<V> builder, IPromise<V> promise) {
@@ -230,20 +230,20 @@ public class PromiseTask<V> implements IFutureTask<V> {
     protected final V runTask() throws Exception {
         int type = (ctl & maskTaskType) >> offsetTaskType;
         switch (type) {
-            case TaskBuilder.TYPE_RUNNABLE -> {
+            case TaskBuilder.TYPE_ACTION -> {
                 Runnable task = (Runnable) action;
                 task.run();
                 return null;
             }
-            case TaskBuilder.TYPE_CALLABLE -> {
+            case TaskBuilder.TYPE_FUNC -> {
                 Callable<V> task = (Callable<V>) action;
                 return task.call();
             }
-            case TaskBuilder.TYPE_FUNCTION -> {
+            case TaskBuilder.TYPE_FUNC_CTX -> {
                 Function<IContext, V> task = (Function<IContext, V>) action;
                 return task.apply(promise.ctx());
             }
-            case TaskBuilder.TYPE_CONSUMER -> {
+            case TaskBuilder.TYPE_ACTION_CTX -> {
                 Consumer<IContext> task = (Consumer<IContext>) action;
                 task.accept(promise.ctx());
                 return null;

@@ -26,19 +26,19 @@ namespace Wjybxx.Commons.Concurrent;
 public enum TaskStatus : byte
 {
     /** 任务尚在队列中等待 */
-    PENDING = 0,
+    Pending = 0,
 
     /** 任务已开始执行 */
-    COMPUTING = 1,
+    Computing = 1,
 
     /** 任务执行成功 - 完成状态 */
-    SUCCESS = 2,
+    Success = 2,
 
     /** 任务执行失败 - 完成状态 */
-    FAILED = 3,
+    Failed = 3,
 
     /** 任务被取消 - 完成状态 */
-    CANCELLED = 4
+    Cancelled = 4
 }
 
 /// <summary>

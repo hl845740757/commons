@@ -80,25 +80,25 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     public static ScheduledPromiseTask<?> ofRunnable(Runnable action, int options, IScheduledPromise<?> promise,
                                                      long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_RUNNABLE,
+        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION,
                 id, nextTriggerTime);
     }
 
     public static <V> ScheduledPromiseTask<V> ofCallable(Callable<? extends V> action, int options, IScheduledPromise<V> promise,
                                                          long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_CALLABLE,
+        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC,
                 id, nextTriggerTime);
     }
 
     public static <V> ScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, int options, IScheduledPromise<V> promise,
                                                          long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNCTION,
+        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC_CTX,
                 id, nextTriggerTime);
     }
 
     public static ScheduledPromiseTask<?> ofConsumer(Consumer<? super IContext> action, int options, IScheduledPromise<?> promise,
                                                      long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_CONSUMER,
+        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX,
                 id, nextTriggerTime);
     }
 

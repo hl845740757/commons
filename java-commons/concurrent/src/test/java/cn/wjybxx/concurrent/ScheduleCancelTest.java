@@ -64,7 +64,7 @@ public class ScheduleCancelTest {
         }
         // 测试关闭Future的取消监听
         {
-            ScheduledTaskBuilder<?> builder = ScheduledTaskBuilder.newRunnable(() -> {})
+            ScheduledTaskBuilder<?> builder = ScheduledTaskBuilder.newAction(() -> {})
                     .enable(TaskOption.IGNORE_FUTURE_CANCEL)
                     .setOnlyOnce(1000);
 

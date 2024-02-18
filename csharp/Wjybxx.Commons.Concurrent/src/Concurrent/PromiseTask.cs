@@ -64,6 +64,8 @@ public class PromiseTask<T> : Promise<T>, IFutureTask<T>
         this.options = options;
     }
 
+    #region Props
+
     /// <summary>
     /// 任务的调度选项
     /// </summary>
@@ -74,6 +76,76 @@ public class PromiseTask<T> : Promise<T>, IFutureTask<T>
     /// </summary>
     public IFuture<T> Future => this;
 
+    /// <summary>
+    /// 获取任务关联的Promise -- 开放给子类。
+    /// </summary>
+    public IPromise<T> Promise => this;
+
+    /** 任务是否启用了指定选项 */
+    public bool isEnable(int taskOption) {
+        return TaskOption.isEnabled(options, taskOption);
+    }
+
+    /** 获取绑定的任务 */
+    public object getAction() {
+        return _action;
+    }
+
+    /** 获取任务所属的队列id */
+    public int getQueueId() {
+        return (ctl & maskQueueId);
+    }
+
+    /** @param queueId 队列id，范围 [0, 255] */
+    public void setQueueId(int queueId) {
+        if (queueId < 0 || queueId > maxQueueId) {
+            throw new ArgumentException("queueId: " + maxQueueId);
+        }
+        ctl &= ~maskQueueId;
+        ctl |= (queueId);
+    }
+
+    /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
+    public int getTaskType() {
+        return (ctl & maskTaskType) >> offsetTaskType;
+    }
+
+    /** 获取任务的调度类型 */
+    public int getScheduleType() {
+        return (ctl & maskScheduleType) >> offsetScheduleType;
+    }
+
+    /** 设置任务的调度类型 -- 应该在添加到队列之前设置 */
+    public void setScheduleType(int scheduleType) {
+        ctl |= (scheduleType << offsetScheduleType);
+    }
+
+    /** 是否是循环任务 */
+    public bool isPeriodic() {
+        return getScheduleType() != 0;
+    }
+
+    /** 是否已经声明任务的归属权 */
+    public bool isClaimed() {
+        return (ctl & maskClaimed) != 0;
+    }
+
+    /** 将任务标记为已申领 */
+    public void setClaimed() {
+        ctl |= maskClaimed;
+    }
+
+    /** 分时任务是否启动 */
+    public bool isStarted() {
+        return (ctl & maskStarted) != 0;
+    }
+
+    /** 将分时任务标记为已启动 */
+    public void setStarted() {
+        ctl |= maskStarted;
+    }
+
+    #endregion
 
     public void Run() {
         try {

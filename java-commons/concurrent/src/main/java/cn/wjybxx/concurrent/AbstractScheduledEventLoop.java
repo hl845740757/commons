@@ -88,7 +88,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
 
     @Override
     public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
-        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newRunnable(task)
+        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newAction(task)
                 .setFixedRate(initialDelay, period, unit);
 
         ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(sb, newScheduledPromise(), 0, tickTime());
@@ -98,7 +98,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
 
     @Override
     public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
-        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newRunnable(task)
+        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newAction(task)
                 .setFixedDelay(initialDelay, delay, unit);
 
         ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(sb, newScheduledPromise(), 0, tickTime());

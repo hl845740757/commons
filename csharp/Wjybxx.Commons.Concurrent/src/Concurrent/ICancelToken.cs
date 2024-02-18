@@ -75,7 +75,7 @@ public interface ICancelToken
     int Degree() => Degree(CancelCode);
 
     /** 取消指令中是否要求了中断线程 */
-    bool IsInterruptible() => isInterruptible(CancelCode);
+    bool IsInterruptible() => IsInterruptible(CancelCode);
 
     /** 取消指令中是否要求了无需删除 */
     bool IsWithoutRemove() {
@@ -212,7 +212,7 @@ public interface ICancelToken
     }
 
     /** 取消指令中是否要求了中断线程 */
-    static bool isInterruptible(int code) {
+    static bool IsInterruptible(int code) {
         return (code & MASK_INTERRUPT) != 0;
     }
 

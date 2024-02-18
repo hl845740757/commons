@@ -96,7 +96,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     public int Degree() => ICancelToken.Degree(code);
 
-    public bool IsInterruptible() => ICancelToken.isInterruptible(code);
+    public bool IsInterruptible() => ICancelToken.IsInterruptible(code);
 
     public bool IsWithoutRemove() {
         return ICancelToken.IsWithoutRemove(code);

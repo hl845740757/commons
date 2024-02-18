@@ -120,7 +120,7 @@ public class ScheduleTest2 {
 
     @Test
     void testRunnableTimeout() {
-        IScheduledFuture<?> future = consumer.schedule(ScheduledTaskBuilder.newRunnable(() -> {
+        IScheduledFuture<?> future = consumer.schedule(ScheduledTaskBuilder.newAction(() -> {
                 })
                 .setFixedDelay(0, 200)
                 .setTimeoutCount(1));
@@ -131,7 +131,7 @@ public class ScheduleTest2 {
 
     @Test
     void testCallableTimeout() {
-        IScheduledFuture<?> future = consumer.schedule(ScheduledTaskBuilder.newCallable(() -> "hello world")
+        IScheduledFuture<?> future = consumer.schedule(ScheduledTaskBuilder.newFunc(() -> "hello world")
                 .setFixedDelay(0, 200)
                 .setTimeoutCount(1));
 

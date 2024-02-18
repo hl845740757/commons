@@ -44,6 +44,16 @@ public interface IContext
     ICancelToken CancelToken { get; }
 
 #nullable disable
+
+    /// <summary>
+    /// 任务绑定的状态
+    /// 1.任务之间不共享
+    /// 2.运行时可能为null
+    ///
+    /// ps：该属性是为了迎合C#的编程风格而设计的。
+    /// </summary>
+    object State { get; }
+
     /// <summary>
     /// 任务运行时依赖的黑板（主要上下文）
     /// 1.每个任务可有独立的黑板（数据）；
@@ -64,4 +74,14 @@ public interface IContext
     /// </summary>
     /// <returns></returns>
     object SharedProps { get; }
+
+#nullable enable
+
+    /// <summary>
+    /// 去除与任务绑定的属性，保留可多任务共享的属性。
+    /// 需要去除的属性：取消令牌，任务绑定（或捕获）的属性。
+    /// 注意：不是创建子上下文，而是同级上下文；通常用于下游任务继承上下文。
+    /// </summary>
+    /// <returns></returns>
+    IContext ToSharable();
 }

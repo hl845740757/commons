@@ -136,20 +136,33 @@ public class TaskOption
     }
 
     /// <summary>
-    /// 
+    /// 启用特定调度选项
     /// </summary>
-    /// <param name="flags"></param>
-    /// <param name="option"></param>
-    /// <returns></returns>
-    public static int enable(int flags, int option) {
+    /// <param name="flags">当前flags</param>
+    /// <param name="option">要启用的选项</param>
+    /// <returns>新的flags</returns>
+    public static int Enable(int flags, int option) {
         return flags | option;
     }
 
-    public static int disable(int flags, int option) {
+    /// <summary>
+    /// 禁用特定调度选项
+    /// </summary>
+    /// <param name="flags">当前flags</param>
+    /// <param name="option">要禁用的选项</param>
+    /// <returns>新的flags</returns>
+    public static int Disable(int flags, int option) {
         return (flags & ~option);
     }
 
-    public static int setEnable(int flags, int option, bool enable) {
+    /// <summary>
+    /// 启用或关闭特定选项
+    /// </summary>
+    /// <param name="flags">当前flags</param>
+    /// <param name="option">要启用或禁用的选项</param>
+    /// <param name="enable">开启或禁用</param>
+    /// <returns></returns>
+    public static int SetEnable(int flags, int option, bool enable) {
         if (enable) {
             return (flags | option);
         } else {

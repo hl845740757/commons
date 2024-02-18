@@ -225,6 +225,11 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             }
         }
 
+        @Override
+        public Object state() {
+            return null;
+        }
+
         @Nonnull
         @Override
         public ICancelToken cancelToken() {
@@ -242,7 +247,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         }
 
         @Override
-        public IContext withoutCancelToken() {
+        public IContext toSharable() {
             return this;
         }
     }

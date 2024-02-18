@@ -32,32 +32,32 @@ import java.util.Objects;
 public class Context<T> implements IContext {
 
     private final Context<T> parent;
+    private final Object state;
     private final ICancelToken cancelToken;
+
     private final T blackboard;
     private final Object sharedProps;
 
     public Context(T blackboard) {
-        this(null, blackboard, null, null);
+        this(null, null, null, blackboard, null);
     }
 
     public Context(T blackboard, Object sharedProps) {
-        this(null, blackboard, sharedProps, null);
-    }
-
-    public Context(T blackboard, Object sharedProps, ICancelToken cancelToken) {
-        this(null, blackboard, sharedProps, cancelToken);
+        this(null, null, null, blackboard, sharedProps);
     }
 
     /**
      * 一般不建议直接调用该方法，而是通过{@link #withBlackboard(Object)}等创建子上下文，否则无法处理上下文继承问题。
      *
      * @param parent      父节点
+     * @param state       任务绑定的状态
+     * @param cancelToken 取消令牌
      * @param blackboard  黑板
      * @param sharedProps 共享属性
-     * @param cancelToken 取消令牌
      */
-    public Context(Context<T> parent, T blackboard, Object sharedProps, ICancelToken cancelToken) {
+    public Context(Context<T> parent, Object state, ICancelToken cancelToken, T blackboard, Object sharedProps) {
         this.parent = parent;
+        this.state = state;
         this.cancelToken = ObjectUtils.nullToDef(cancelToken, ICancelToken.NONE);
         this.blackboard = blackboard;
         this.sharedProps = sharedProps;
@@ -90,6 +90,11 @@ public class Context<T> implements IContext {
         return parent;
     }
 
+    @Override
+    public Object state() {
+        return state;
+    }
+
     @Nonnull
     @Override
     public ICancelToken cancelToken() {
@@ -110,83 +115,98 @@ public class Context<T> implements IContext {
     // region factory
 
     public static <U> Context<U> ofBlackboard(U blackboard) {
-        return new Context<>(null, blackboard, null, null);
+        return new Context<>(null, null, null, blackboard, null);
     }
 
     public static <U> Context<U> ofBlackboard(U blackboard, Object sharedProps) {
-        return new Context<>(null, blackboard, sharedProps, null);
+        return new Context<>(null, null, null, blackboard, sharedProps);
     }
 
-    public static <U> Context<U> ofBlackboard(U blackboard, Object sharedProps, ICancelToken cancelToken) {
-        return new Context<>(null, blackboard, sharedProps, cancelToken);
+    public static <U> Context<U> ofState(Object state) {
+        return new Context<>(null, state, null, null, null);
     }
 
-    /** 创建一个仅包含取消令牌的上下文 */
+    public static <U> Context<U> ofState(Object state, ICancelToken cancelToken) {
+        return new Context<>(null, state, cancelToken, null, null);
+    }
+
+    public static <U> Context<U> ofState(Object state, ICancelToken cancelToken, U blackboard, Object sharedProps) {
+        return new Context<>(null, state, cancelToken, blackboard, sharedProps);
+    }
+
     public static <U> Context<U> ofCancelToken(ICancelToken cancelToken) {
         Objects.requireNonNull(cancelToken);
-        return new Context<>(null, null, null, cancelToken);
+        return new Context<>(null, null, cancelToken, null, null);
     }
 
-    /** 用于子类重写 */
-    protected Context<T> newContext(Context<T> parent, T blackboard, Object sharedProps, ICancelToken cancelToken) {
-        return new Context<>(parent, blackboard, sharedProps, cancelToken);
+    /**
+     * 用于子类重写
+     *
+     * @param parent      父节点
+     * @param state       任务绑定的状态
+     * @param cancelToken 取消令牌
+     * @param blackboard  黑板
+     * @param sharedProps 共享属性
+     */
+    protected Context<T> newContext(Context<T> parent,
+                                    Object state, ICancelToken cancelToken,
+                                    T blackboard, Object sharedProps) {
+        return new Context<>(parent, state, cancelToken, blackboard, sharedProps);
     }
 
     // endregion
 
-    // region 创建子上下文
+    // region child
+
+    public Context<T> childWithState(Object state) {
+        return newContext(this, state, cancelToken, blackboard, sharedProps);
+    }
+
+    public Context<T> childWithState(Object state, ICancelToken cancelToken) {
+        return newContext(this, state, cancelToken, blackboard, sharedProps);
+    }
 
     public Context<T> childWithBlackboard(T blackboard) {
-        return newContext(this, blackboard, sharedProps, cancelToken);
+        return newContext(this, null, cancelToken, blackboard, sharedProps);
     }
 
     public Context<T> childWithBlackboard(T blackboard, Object sharedProps) {
-        return newContext(this, blackboard, sharedProps, cancelToken);
+        return newContext(this, null, cancelToken, blackboard, sharedProps);
     }
 
-    public Context<T> childWithBlackboard(T blackboard, Object sharedProps, ICancelToken cancelToken) {
-        return newContext(this, blackboard, sharedProps, cancelToken);
-    }
-
-    public Context<T> childWithCancelToken(ICancelToken cancelToken) {
-        return newContext(this, blackboard, sharedProps, cancelToken);
+    public Context<T> childWith(Object state, ICancelToken cancelToken, T blackboard, Object sharedProps) {
+        return newContext(this, state, cancelToken, blackboard, sharedProps);
     }
 
     // endregion
 
     // region with
 
+    /** 使用给定取消令牌 */
+    public Context<T> withState(Object state) {
+        return newContext(parent, state, cancelToken, blackboard, sharedProps);
+    }
+
+    public Context<T> withState(Object state, ICancelToken cancelToken) {
+        return newContext(parent, state, cancelToken, blackboard, sharedProps);
+    }
+
     public Context<T> withBlackboard(T blackboard) {
-        if (blackboard == this.blackboard) {  // 较大概率
-            return this;
-        }
-        return newContext(parent, blackboard, sharedProps, cancelToken);
+        return newContext(parent, state, cancelToken, blackboard, sharedProps);
     }
 
     public Context<T> withBlackboard(T blackboard, Object sharedProps) {
-        return newContext(parent, blackboard, sharedProps, cancelToken);
-    }
-
-    public Context<T> withBlackboard(T blackboard, Object sharedProps, ICancelToken cancelToken) {
-        return newContext(parent, blackboard, sharedProps, cancelToken);
-    }
-
-    /** 使用给定取消令牌 */
-    public Context<T> withCancelToken(ICancelToken cancelToken) {
-        if (cancelToken == this.cancelToken) { // 较大概率
-            return this;
-        }
-        return newContext(parent, blackboard, sharedProps, cancelToken);
-    }
-
-    /** 去掉取消令牌 */
-    @Override
-    public Context<T> withoutCancelToken() {
-        if (this.cancelToken == ICancelToken.NONE) { // 较大概率
-            return this;
-        }
-        return newContext(this, blackboard, sharedProps, cancelToken);
+        return newContext(parent, state, cancelToken, blackboard, sharedProps);
     }
 
     // endregion
+
+    @Override
+    public Context<T> toSharable() {
+        if (this.cancelToken == ICancelToken.NONE) { // 较大概率
+            return this;
+        }
+        return newContext(this, , cancelToken, blackboard, sharedProps);
+    }
+
 }

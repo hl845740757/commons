@@ -139,14 +139,17 @@ public final class TaskOption {
         return (flags & option) != option;
     }
 
+    /** 启用特定调度选项 */
     public static int enable(int flags, int option) {
         return flags | option;
     }
 
+    /** 禁用特定调度选项 */
     public static int disable(int flags, int option) {
         return (flags & ~option);
     }
 
+    /** 启用或关闭特定选项 */
     public static int setEnable(int flags, int option, boolean enable) {
         if (enable) {
             return (flags | option);

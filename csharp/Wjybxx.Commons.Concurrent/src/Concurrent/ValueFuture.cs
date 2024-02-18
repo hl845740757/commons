@@ -141,12 +141,12 @@ public readonly struct ValueFuture<T>
                 return _future.Status;
             }
             if (_ex == null) {
-                return TaskStatus.SUCCESS;
+                return TaskStatus.Success;
             }
             if (_ex is OperationCanceledException) {
-                return TaskStatus.CANCELLED;
+                return TaskStatus.Cancelled;
             }
-            return TaskStatus.FAILED;
+            return TaskStatus.Failed;
         }
     }
 
@@ -154,22 +154,22 @@ public readonly struct ValueFuture<T>
     /// 如果future关联的任务仍处于等待执行的状态，则返回true
     /// （换句话说，如果任务仍在排队，则返回true）
     /// </summary>
-    public bool IsPending => Status == TaskStatus.PENDING;
+    public bool IsPending => Status == TaskStatus.Pending;
 
     /** 如果future关联的任务正在执行中，则返回true */
-    public bool IsComputing => Status == TaskStatus.COMPUTING;
+    public bool IsComputing => Status == TaskStatus.Computing;
 
     /** 如果future已进入完成状态(成功、失败、被取消)，则返回true */
     public bool IsDone => Status.IsDone();
 
     /** 如果future关联的任务在正常完成被取消，则返回true。 */
-    public bool IsCancelled => Status == TaskStatus.CANCELLED;
+    public bool IsCancelled => Status == TaskStatus.Cancelled;
 
     /** 如果future已进入完成状态，且是成功完成，则返回true。 */
-    public bool IsSucceeded => Status == TaskStatus.SUCCESS;
+    public bool IsSucceeded => Status == TaskStatus.Success;
 
     /** 如果future已进入完成状态，且是失败状态，则返回true */
-    public bool IsFailed => Status == TaskStatus.FAILED;
+    public bool IsFailed => Status == TaskStatus.Failed;
 
     /**
      * 在JDK的约定中，取消和failed是分离的，我们仍保持这样的约定；
@@ -367,12 +367,12 @@ public readonly struct ValueFuture
                 return _future.Status;
             }
             if (_ex == null) {
-                return TaskStatus.SUCCESS;
+                return TaskStatus.Success;
             }
             if (_ex is OperationCanceledException) {
-                return TaskStatus.CANCELLED;
+                return TaskStatus.Cancelled;
             }
-            return TaskStatus.FAILED;
+            return TaskStatus.Failed;
         }
     }
 
@@ -380,22 +380,22 @@ public readonly struct ValueFuture
     /// 如果future关联的任务仍处于等待执行的状态，则返回true
     /// （换句话说，如果任务仍在排队，则返回true）
     /// </summary>
-    public bool IsPending => Status == TaskStatus.PENDING;
+    public bool IsPending => Status == TaskStatus.Pending;
 
     /** 如果future关联的任务正在执行中，则返回true */
-    public bool IsComputing => Status == TaskStatus.COMPUTING;
+    public bool IsComputing => Status == TaskStatus.Computing;
 
     /** 如果future已进入完成状态(成功、失败、被取消)，则返回true */
     public bool IsDone => Status.IsDone();
 
     /** 如果future关联的任务在正常完成被取消，则返回true。 */
-    public bool IsCancelled => Status == TaskStatus.CANCELLED;
+    public bool IsCancelled => Status == TaskStatus.Cancelled;
 
     /** 如果future已进入完成状态，且是成功完成，则返回true。 */
-    public bool IsSucceeded => Status == TaskStatus.SUCCESS;
+    public bool IsSucceeded => Status == TaskStatus.Success;
 
     /** 如果future已进入完成状态，且是失败状态，则返回true */
-    public bool IsFailed => Status == TaskStatus.FAILED;
+    public bool IsFailed => Status == TaskStatus.Failed;
 
     /**
      * 在JDK的约定中，取消和failed是分离的，我们仍保持这样的约定；

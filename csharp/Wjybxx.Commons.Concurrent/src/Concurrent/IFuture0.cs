@@ -59,19 +59,19 @@ public interface IFuture
     /// 如果future关联的任务仍处于等待执行的状态，则返回true
     /// （换句话说，如果任务仍在排队，则返回true）
     /// </summary>
-    bool IsPending => Status == TaskStatus.PENDING;
+    bool IsPending => Status == TaskStatus.Pending;
 
     /** 如果future关联的任务正在执行中，则返回true */
-    bool IsComputing => Status == TaskStatus.COMPUTING;
+    bool IsComputing => Status == TaskStatus.Computing;
 
     /** 如果future已进入完成状态，且是成功完成，则返回true。 */
-    bool IsSucceeded => Status == TaskStatus.SUCCESS;
+    bool IsSucceeded => Status == TaskStatus.Success;
 
     /** 如果future已进入完成状态，且是失败状态，则返回true */
-    bool IsFailed => Status == TaskStatus.FAILED;
+    bool IsFailed => Status == TaskStatus.Failed;
 
     /** 如果future关联的任务在正常完成被取消，则返回true。 */
-    bool IsCancelled => Status == TaskStatus.CANCELLED;
+    bool IsCancelled => Status == TaskStatus.Cancelled;
 
     /** 如果future已进入完成状态(成功、失败、被取消)，则返回true */
     bool IsDone => Status.IsDone();

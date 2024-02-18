@@ -31,10 +31,10 @@ import java.util.function.Function;
 @NotThreadSafe
 public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
-    public static final int TYPE_RUNNABLE = 0;
-    public static final int TYPE_CALLABLE = 1;
-    public static final int TYPE_FUNCTION = 2;
-    public static final int TYPE_CONSUMER = 3;
+    public static final int TYPE_ACTION = 0;
+    public static final int TYPE_ACTION_CTX = 1;
+    public static final int TYPE_FUNC = 2;
+    public static final int TYPE_FUNC_CTX = 3;
     public static final int TYPE_TIMESHARING = 4;
 
     private final int type;
@@ -63,28 +63,20 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     // region factory
 
-    public static TaskBuilder<?> newRunnable(Runnable task) {
-        return new TaskBuilder<>(TYPE_RUNNABLE, task);
-    }
-
-    public static <V> TaskBuilder<V> newCallable(Callable<? extends V> task) {
-        return new TaskBuilder<>(TYPE_CALLABLE, task);
-    }
-
-    public static <V> TaskBuilder<V> newFunc(Function<IContext, ? extends V> task) {
-        return new TaskBuilder<>(TYPE_FUNCTION, task, IContext.NONE);
-    }
-
-    public static <V> TaskBuilder<V> newFunc(Function<IContext, ? extends V> task, IContext ctx) {
-        return new TaskBuilder<>(TYPE_FUNCTION, task, ctx);
-    }
-
-    public static <V> TaskBuilder<V> newAction(Consumer<IContext> task) {
-        return new TaskBuilder<>(TYPE_CONSUMER, task, IContext.NONE);
+    public static TaskBuilder<?> newAction(Runnable task) {
+        return new TaskBuilder<>(TYPE_ACTION, task);
     }
 
     public static <V> TaskBuilder<V> newAction(Consumer<IContext> task, IContext ctx) {
-        return new TaskBuilder<>(TYPE_CONSUMER, task, ctx);
+        return new TaskBuilder<>(TYPE_ACTION_CTX, task, ctx);
+    }
+
+    public static <V> TaskBuilder<V> newFunc(Callable<? extends V> task) {
+        return new TaskBuilder<>(TYPE_FUNC, task);
+    }
+
+    public static <V> TaskBuilder<V> newFunc(Function<IContext, ? extends V> task, IContext ctx) {
+        return new TaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
     }
 
     public static <V> TaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task) {
@@ -99,16 +91,16 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
     public static int taskType(Object action) {
         Objects.requireNonNull(action);
         if (action instanceof Runnable) {
-            return TYPE_RUNNABLE;
+            return TYPE_ACTION;
         }
         if (action instanceof Callable<?>) {
-            return TYPE_CALLABLE;
+            return TYPE_FUNC;
         }
         if (action instanceof Function<?, ?>) {
-            return TYPE_FUNCTION;
+            return TYPE_FUNC_CTX;
         }
         if (action instanceof Consumer<?>) {
-            return TYPE_CONSUMER;
+            return TYPE_ACTION_CTX;
         }
         if (action instanceof TimeSharingTask<?>) {
             return TYPE_TIMESHARING;

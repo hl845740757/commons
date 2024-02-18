@@ -33,7 +33,7 @@ public interface IPromise : IFuture
     /// </summary>
     /// <returns></returns>
     bool TrySetComputing() {
-        return TrySetComputing2() == TaskStatus.PENDING;
+        return TrySetComputing2() == TaskStatus.Pending;
     }
 
     /// <summary>

@@ -33,11 +33,11 @@ namespace Wjybxx.Commons.Concurrent;
 /// <typeparam name="T"></typeparam>
 public class Promise<T> : APromise, IPromise<T>
 {
-    private const int ST_PENDING = (int)TaskStatus.PENDING;
-    private const int ST_COMPUTING = (int)TaskStatus.COMPUTING;
-    private const int ST_SUCCESS = (int)TaskStatus.SUCCESS;
-    private const int ST_FAILED = (int)TaskStatus.FAILED;
-    private const int ST_CANCELLED = (int)TaskStatus.CANCELLED;
+    private const int ST_PENDING = (int)TaskStatus.Pending;
+    private const int ST_COMPUTING = (int)TaskStatus.Computing;
+    private const int ST_SUCCESS = (int)TaskStatus.Success;
+    private const int ST_FAILED = (int)TaskStatus.Failed;
+    private const int ST_CANCELLED = (int)TaskStatus.Cancelled;
 
     /** 任务成功执行时的结果 -- 可见性由<see cref="_ex"/>保证 */
     private T _result;
@@ -51,6 +51,7 @@ public class Promise<T> : APromise, IPromise<T>
     /// 5. 如果为其它异常，表示任务失败或取消。
     /// </summary>
     private volatile object? _ex;
+    
     /** 任务绑定的线程 -- 其实不一定是执行线程 */
     private readonly IExecutor? _executor;
 

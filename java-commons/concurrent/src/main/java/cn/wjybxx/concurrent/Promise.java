@@ -631,7 +631,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         if (TaskOption.isEnabled(options, TaskOption.STAGE_INHERIT_TOKEN)) {
             return ctx;
         }
-        return ctx.withoutCancelToken();
+        return ctx.toSharable();
     }
 
     // region compose-apply

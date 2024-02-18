@@ -16,8 +16,10 @@
 
 #endregion
 
+using System;
 using System.Threading;
 
+#pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
@@ -62,6 +64,7 @@ public class DefaultThreadFactory : ThreadFactory
     }
 
     public Thread NewThread(ThreadStart loop) {
+        if (loop == null) throw new ArgumentNullException(nameof(loop));
         Thread thread = new Thread(loop);
         thread.Name = $"{_prefix}{Interlocked.Increment(ref _idSequencer)}";
 

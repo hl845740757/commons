@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// 
 /// ps：该结构体用于避免过多的方法扩展。
 /// </summary>
-public readonly struct TaskContext
+public readonly struct TaskContext : IContext
 {
     /// <summary>
     /// 状态参数 -- 状态参数用于支持私有变量，不同任务的State通常不同。

@@ -44,8 +44,15 @@ public interface IContext {
     IContext NONE = Context.ofCancelToken(ICancelToken.NONE);
 
     /**
+     * 任务绑定的状态
+     * 1.任务之间通常不共享 -- 私有属性。
+     * 2.运行时可能为null。
+     */
+    Object state();
+
+    /**
      * 任务绑定的取消令牌（取消上下文）
-     * 1.每个任务可有独立的取消信号；
+     * 1.每个任务可有独立的取消信号 -- 私有属性。
      * 2.运行时不为null；
      */
     @Nonnull
@@ -72,12 +79,13 @@ public interface IContext {
     Object sharedProps();
 
     /**
-     * 去除取消令牌 -- 将取消令牌替换为{@link ICancelToken#NONE}。
-     * 注意：不是创建子上下文，而是同级上下文。
+     * 去除与任务绑定的属性，保留可多任务共享的属性。
+     * 需要去除的属性：取消令牌，任务绑定（或捕获）的属性。
+     * 注意：不是创建子上下文，而是同级上下文；通常用于下游任务继承上下文。
      *
-     * @return 如果当前取消令牌已是不可取消的令牌，则可返回自身。
+     * @return 如果当前上下文已是可共享的，则可返回自身。
      * @implNote 应当返回相同类型
      */
-    IContext withoutCancelToken();
+    IContext toSharable();
 
 }
