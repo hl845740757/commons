@@ -37,6 +37,11 @@ namespace Wjybxx.Commons.Concurrent;
 public interface IContext
 {
     /// <summary>
+    /// 空上下文
+    /// </summary>
+    public static readonly IContext NONE = Context<object>.OfCancelToken(ICancelToken.NONE);
+
+    /// <summary>
     /// 任务绑定的取消令牌（取消上下文）
     /// 1.每个任务可有独立的取消信号；
     /// 2.运行时不为null；
@@ -79,7 +84,7 @@ public interface IContext
 
     /// <summary>
     /// 去除与任务绑定的属性，保留可多任务共享的属性。
-    /// 需要去除的属性：取消令牌，任务绑定（或捕获）的属性。
+    /// 需要去除的属性：取消令牌，任务绑定的状态。
     /// 注意：不是创建子上下文，而是同级上下文；通常用于下游任务继承上下文。
     /// </summary>
     /// <returns></returns>

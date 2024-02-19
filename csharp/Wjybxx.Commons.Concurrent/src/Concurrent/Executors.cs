@@ -43,7 +43,7 @@ public static class Executors
         return new ActionWrapper3(action, cancelToken, options);
     }
 
-    public static ITask BoxAction(Action<TaskContext> action, TaskContext context, int options) {
+    public static ITask BoxAction(Action<IContext> action, IContext context, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         return new ActionWrapper4(action, context, options);
     }
@@ -111,11 +111,11 @@ public static class Executors
 
     private class ActionWrapper4 : ITask
     {
-        private readonly Action<TaskContext> action;
-        private readonly TaskContext context;
+        private readonly Action<IContext> action;
+        private readonly IContext context;
         private readonly int options;
 
-        public ActionWrapper4(Action<TaskContext> action, TaskContext context, int options) {
+        public ActionWrapper4(Action<IContext> action, IContext context, int options) {
             this.action = action;
             this.context = context;
             this.options = options;

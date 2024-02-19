@@ -48,7 +48,7 @@ public class FutureTest
     }
 
     private static async IFuture<int> CountAsync() {
-        IFutureTask<int> task = new PromiseTask<int>(Executor, () => 1);
+        IFutureTask<int> task = new PromiseTask<int>(() => 1, 0, new Promise<int>());
         Executor.Execute(task);
         return await task.Future;
     }

@@ -18,6 +18,8 @@
 
 using System;
 
+#pragma warning disable CS1591
+
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
@@ -30,7 +32,7 @@ public interface TaskBuilder
     /// </summary>
     public const int TYPE_ACTION = 0;
     /// <summary>
-    /// 表示委托类型为<see cref="Action{TaskContext}"/>
+    /// 表示委托类型为<see cref="Action{IContext}"/>
     /// </summary>
     public const int TYPE_ACTION_CTX = 1;
 
@@ -39,9 +41,29 @@ public interface TaskBuilder
     /// </summary>
     public const int TYPE_FUNC = 2;
     /// <summary>
-    /// 表示委托类型为<see cref="Func{TaskContext,TResult}"/>
+    /// 表示委托类型为<see cref="Func{IContext,TResult}"/>
     /// </summary>
     public const int TYPE_FUNC_CTX = 3;
+
+    public static int TaskType(object task) {
+        if (task is Action) {
+            return TaskBuilder.TYPE_ACTION;
+        }
+        Type type = task.GetType();
+        if (type.IsGenericType) {
+            Type genericTypeDefinition = type.GetGenericTypeDefinition();
+            if (genericTypeDefinition == typeof(Action<>) && type.GetGenericArguments()[0] == typeof(IContext)) {
+                return TYPE_ACTION_CTX;
+            }
+            if (genericTypeDefinition == typeof(Func<>)) {
+                return TYPE_FUNC;
+            }
+            if (genericTypeDefinition == typeof(Func<,>) && type.GetGenericArguments()[0] == typeof(IContext)) {
+                return TYPE_FUNC_CTX;
+            }
+        }
+        throw new ArgumentException("unsupported task type: " + type);
+    }
 }
 
 /// <summary>
@@ -51,41 +73,42 @@ public interface TaskBuilder
 public struct TaskBuilder<T> : TaskBuilder
 {
     private readonly int type;
-    private readonly Delegate action;
-    private readonly TaskContext context;
+    private readonly object task;
+    private readonly IContext? context;
     private int options;
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="type">任务的类型</param>
-    /// <param name="action">委托</param>
+    /// <param name="task">委托</param>
     /// <param name="context">任务的上下文</param>
-    private TaskBuilder(int type, Delegate action, TaskContext context = default) {
+    private TaskBuilder(int type, object task, IContext? context = null) {
         this.type = type;
-        this.action = action;
+        this.task = task;
         this.context = context;
+        this.options = 0;
     }
 
-    public static ref TaskBuilder<T> newFunc(Func<T> func) {
-        ref TaskBuilder<T> builder = new TaskBuilder<T>(TaskBuilder.TYPE_FUNC, func, null);
-        return ref builder;
+    #region factory
+
+    public static TaskBuilder<T> NewAction(Action action) {
+        return new TaskBuilder<T>(TaskBuilder.TYPE_ACTION, action);
     }
 
-    public static ref TaskBuilder<T> newFunc(Func<T> func, IContext context) {
-        ref TaskBuilder<T> builder = new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_CTX, func, context);
-        return ref builder;
+    public static TaskBuilder<T> NewAction(Action<IContext> action, IContext context) {
+        return new TaskBuilder<T>(TaskBuilder.TYPE_ACTION_CTX, action, context);
     }
 
-    public static ref TaskBuilder<T> newAction(Action func) {
-        ref TaskBuilder<T> builder = new TaskBuilder<T>(TaskBuilder.TYPE_ACTION, func, null);
-        return ref builder;
+    public static TaskBuilder<T> NewFunc(Func<T> func) {
+        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC, func);
     }
 
-    public static ref TaskBuilder<T> newAction(Action<T> func) {
-        ref TaskBuilder<T> builder = new TaskBuilder<T>(TaskBuilder.TYPE_ACTION_CTX, func, null);
-        return ref builder;
+    public static TaskBuilder<T> NewFunc(Func<IContext, T> func, IContext context) {
+        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_CTX, func, context);
     }
+
+    #endregion
 
     /// <summary>
     /// 任务的类型
@@ -95,12 +118,12 @@ public struct TaskBuilder<T> : TaskBuilder
     /// <summary>
     /// 委托
     /// </summary>
-    public Delegate Action => action;
+    public object Task => task;
 
     /// <summary>
     /// 委托的上下文
     /// </summary>
-    public TaskContext Context => context;
+    public IContext? Context => context;
 
     /// <summary>
     /// 任务的调度选项

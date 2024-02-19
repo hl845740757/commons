@@ -27,6 +27,23 @@ public interface ISingleThreadExecutor : IExecutor
 {
     /// <summary>
     /// 查询当前是否在EventLoop所属的线程
+    ///
+    /// 主要作用:
+    /// 1.判断是否可访问线程封闭的数据。
+    /// 2.防止死锁。
+    ///
+    /// 警告：如果用户基于该测试实现分支逻辑，则可能导致时序错误，eg：
+    /// <code>
+    /// 	if(eventLoop.inEventLoop()) {
+    ///     	doSomething();
+    ///     } else {
+    ///         eventLoop.execute(() -> doSomething());
+    ///     }
+    /// </code>
+    /// 假设现在有3个线程：A、B、C，它们进行了约定，线程A投递任务后，告诉线程B，线程B投递后告诉线程C，线程C再投递，以期望任务按照A、B、C的顺序处理。
+    /// 在某个巧合下，线程C可能就是执行者线程，结果C的任务可能在A和B的任务之前被处理，从而破坏了外部约定的时序。
+    /// 
+    /// 该方法一定要慎用，它有时候是无害的，有时候则是有害的，因此必须想明白是否需要提供全局时序保证！
     /// </summary>
     /// <returns>如果在EventLoop所属的线程则返回true；否则返回false</returns>
     bool InEventLoop();

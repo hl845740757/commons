@@ -68,9 +68,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     @SuppressWarnings("unused")
     private volatile Completion stack;
 
-    /** 任务绑定的executor */
+    /** 任务关联的executor -- 其实不一定是执行线程 */
     private final Executor _executor;
-    /** 任务绑定的上下文 -- 冗余存储，解除和task的依赖 */
+    /** 任务关联的上下文 -- 冗余存储，解除和task的依赖 */
     private final IContext _ctx;
 
     public Promise() {

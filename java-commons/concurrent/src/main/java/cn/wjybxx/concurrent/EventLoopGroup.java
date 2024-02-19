@@ -44,12 +44,14 @@ import java.util.concurrent.TimeUnit;
 public interface EventLoopGroup extends IScheduledExecutorService, Iterable<EventLoop> {
 
     /**
-     * 选择一个 {@link EventLoop}用于接下来的调度
+     * 选择一个 {@link EventLoop}用于接下来的任务调度
      */
     @Nonnull
     EventLoop select();
 
-    /** @implNote 实现时需要实现为不可变集合 */
+    /**
+     * 注意；如果包含不定数量的EventLoop，返回的是快照。
+     */
     @Nonnull
     @Override
     Iterator<EventLoop> iterator();

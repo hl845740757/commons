@@ -51,16 +51,20 @@ public class Promise<T> : APromise, IPromise<T>
     /// 5. 如果为其它异常，表示任务失败或取消。
     /// </summary>
     private volatile object? _ex;
-    
+
     /** 任务绑定的线程 -- 其实不一定是执行线程 */
     private readonly IExecutor? _executor;
+    /** 任务关联的上下文 -- 冗余存储，解除和task的依赖 */
+    private readonly IContext _ctx;
 
-    public Promise(IExecutor? executor = null) {
+    public Promise(IExecutor? executor = null, IContext? context = null) {
         _executor = executor;
+        _ctx = context ?? IContext.NONE;
     }
 
-    private Promise(IExecutor? executor, T result, Exception? ex) {
+    private Promise(IExecutor? executor, IContext? context, T result, Exception? ex) {
         this._executor = executor;
+        _ctx = context ?? IContext.NONE;
         if (ex == null) {
             this._result = result;
             this._ex = EX_SUCCESS;
@@ -70,18 +74,18 @@ public class Promise<T> : APromise, IPromise<T>
         }
     }
 
-    public static Promise<T> FromResult(T result, IExecutor? executor = null) {
-        return new Promise<T>(executor, result, null);
+    public static Promise<T> FromResult(T result, IExecutor? executor = null, IContext? context = null) {
+        return new Promise<T>(executor, context, result, null);
     }
 
-    public static Promise<T> FromException(Exception ex, IExecutor? executor = null) {
+    public static Promise<T> FromException(Exception ex, IExecutor? executor = null, IContext? context = null) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
-        return new Promise<T>(executor, default, ex);
+        return new Promise<T>(executor, context, default, ex);
     }
 
-    public static Promise<T> FromCancelled(int code, IExecutor? executor = null) {
+    public static Promise<T> FromCancelled(int code, IExecutor? executor = null, IContext? context = null) {
         Exception ex = StacklessCancellationException.InstOf(code);
-        return new Promise<T>(executor, default, ex);
+        return new Promise<T>(executor, context, default, ex);
     }
 
     #region internal
@@ -174,6 +178,8 @@ public class Promise<T> : APromise, IPromise<T>
     /// 允许重写，Executor可能存储在其它地方
     /// </summary>
     public virtual IExecutor? Executor => _executor;
+
+    public IContext Context => _ctx;
 
     public IFuture<T> AsReadonly() => new ForwardFuture<T>(this);
 
@@ -418,11 +424,11 @@ public class Promise<T> : APromise, IPromise<T>
         PushUniOnCompleted2(executor, continuation, state, options);
     }
 
-    public void OnCompleted(Action<IFuture<T>, TaskContext> continuation, TaskContext context, int options = 0) {
+    public void OnCompleted(Action<IFuture<T>, IContext> continuation, IContext context, int options = 0) {
         PushUniOnCompleted3(null, continuation, context, options);
     }
 
-    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, TaskContext> continuation, TaskContext context, int options = 0) {
+    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, IContext> continuation, IContext context, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         PushUniOnCompleted3(executor, continuation, context, options);
     }
@@ -445,7 +451,7 @@ public class Promise<T> : APromise, IPromise<T>
         }
     }
 
-    private void PushUniOnCompleted3(IExecutor? executor, Action<IFuture<T>, TaskContext> continuation, TaskContext context, int options = 0) {
+    private void PushUniOnCompleted3(IExecutor? executor, Action<IFuture<T>, IContext> continuation, IContext context, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsDone && executor == null) {
             UniOnCompleted3<T>.FireNow(this, continuation, context, null);
@@ -591,11 +597,11 @@ public class Promise<T> : APromise, IPromise<T>
 
     private class UniOnCompleted3<V> : UniOnCompleted<V>
     {
-        private Action<IFuture<V>, TaskContext> action;
-        private TaskContext context;
+        private Action<IFuture<V>, IContext> action;
+        private IContext context;
 
         public UniOnCompleted3(IExecutor? executor, int options, Promise<V> input,
-                               Action<IFuture<V>, TaskContext> action, in TaskContext context)
+                               Action<IFuture<V>, IContext> action, in IContext context)
             : base(executor, options, input) {
             this.action = action;
             this.context = context;
@@ -621,7 +627,7 @@ public class Promise<T> : APromise, IPromise<T>
         }
 
         public static bool FireNow(Promise<V> input,
-                                   Action<IFuture<V>, TaskContext> action, in TaskContext context,
+                                   Action<IFuture<V>, IContext> action, in IContext context,
                                    UniOnCompleted3<V>? c) {
             try {
                 if (c != null && !c.Claim()) {

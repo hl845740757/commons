@@ -41,8 +41,8 @@ public interface FixedEventLoopGroup extends EventLoopGroup {
     EventLoop select(int key);
 
     /**
-     * 返回{@link EventLoop}的数量。
+     * {@link EventLoop}的数量。
      */
-    int numChildren();
+    int childCount();
 
 }

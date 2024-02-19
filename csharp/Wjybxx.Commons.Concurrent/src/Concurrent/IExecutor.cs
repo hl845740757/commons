@@ -66,7 +66,7 @@ public interface IExecutor
     /// <param name="action">要执行的任务</param>
     /// <param name="context">任务上下文</param>
     /// <param name="options">任务的调度特征值，见<see cref="TaskOption"/></param>
-    void Execute(Action<TaskContext> action, in TaskContext context, int options = 0) {
+    void Execute(Action<IContext> action, in IContext context, int options = 0) {
         Execute(Executors.BoxAction(action, context, options));
     }
 

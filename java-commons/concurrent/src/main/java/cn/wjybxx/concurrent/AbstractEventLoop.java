@@ -83,7 +83,7 @@ public abstract class AbstractEventLoop implements EventLoop {
     }
 
     @Override
-    public int numChildren() {
+    public int childCount() {
         return 1;
     }
 

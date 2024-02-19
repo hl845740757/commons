@@ -136,7 +136,7 @@ public interface IExecutorService : IExecutor
     /// <param name="context">任务上下文</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    IFuture Submit(Action<TaskContext> action, in TaskContext context, int options = 0);
+    IFuture Submit(Action<IContext> action, in IContext context, int options = 0);
 
     /// <summary>
     /// 提交一个任务
@@ -153,7 +153,7 @@ public interface IExecutorService : IExecutor
     /// <param name="context">任务上下文</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    IFuture<T> SubmitFunc<T>(Func<TaskContext, T> action, in TaskContext context, int options = 0);
+    IFuture<T> SubmitFunc<T>(Func<IContext, T> action, in IContext context, int options = 0);
 
     #endregion
 }

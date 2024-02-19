@@ -43,7 +43,7 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
     public DefaultFixedEventLoopGroup(EventLoopGroupBuilder builder) {
         int numberChildren = builder.getNumberChildren();
         if (numberChildren < 1) {
-            throw new IllegalArgumentException("numberChildren must greater than 0");
+            throw new IllegalArgumentException("childCount must greater than 0");
         }
         EventLoopFactory eventLoopFactory = builder.getEventLoopFactory();
         if (eventLoopFactory == null) {
@@ -138,7 +138,7 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
     }
 
     @Override
-    public int numChildren() {
+    public int childCount() {
         return children.length;
     }
 

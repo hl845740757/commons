@@ -27,6 +27,9 @@ sealed class UncancellableToken : ICancelToken
 {
     public static readonly UncancellableToken Inst = new UncancellableToken();
 
+    private UncancellableToken() {
+    }
+
     public ICancelToken AsReadonly() => this;
 
     public bool CanBeCancelled => false;

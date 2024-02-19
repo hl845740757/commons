@@ -49,19 +49,26 @@ public class PromiseTask<T> : Promise<T>, IFutureTask<T>
     protected const int maxQueueId = 255;
 
     /** 用户的委托 */
-    private Delegate _action;
-    /** 任务上下文 */
-    private TaskContext _context;
+    private object action;
     /** 任务的调度选项 */
     protected readonly int options;
+    /** 任务关联的promise - 用户可能在任务完成后继续访问，因此不能清理 */
+    protected readonly IPromise<T> promise;
     /** 任务的控制标记 */
     private int ctl;
 
-    public PromiseTask(IExecutor executor, Delegate action, in TaskContext context, int options = 0)
-        : base(executor) {
-        _action = action;
-        _context = context;
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="executor">任务的执行线程</param>
+    /// <param name="context">任务绑定的上下文</param>
+    /// <param name="action">任务</param>
+    /// <param name="options">任务的调度选项</param>
+    /// <param name="promise"></param>
+    public PromiseTask(object action, int options, Promise<T> promise) {
+        this.action = action ?? throw new ArgumentNullException(nameof(action));
         this.options = options;
+        this.promise = promise ?? throw new ArgumentNullException(nameof(promise));
     }
 
     #region Props
@@ -88,7 +95,7 @@ public class PromiseTask<T> : Promise<T>, IFutureTask<T>
 
     /** 获取绑定的任务 */
     public object getAction() {
-        return _action;
+        return action;
     }
 
     /** 获取任务所属的队列id */
@@ -149,7 +156,7 @@ public class PromiseTask<T> : Promise<T>, IFutureTask<T>
 
     public void Run() {
         try {
-            object value = _action.DynamicInvoke();
+            object value = action.DynamicInvoke();
             TrySetResult((T)value);
         }
         catch (Exception ex) {

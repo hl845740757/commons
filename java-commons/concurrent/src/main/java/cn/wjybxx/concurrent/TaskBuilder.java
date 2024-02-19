@@ -88,24 +88,24 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
     }
 
     /** 计算任务的类型 */
-    public static int taskType(Object action) {
-        Objects.requireNonNull(action);
-        if (action instanceof Runnable) {
+    public static int taskType(Object task) {
+        Objects.requireNonNull(task);
+        if (task instanceof Runnable) {
             return TYPE_ACTION;
         }
-        if (action instanceof Callable<?>) {
-            return TYPE_FUNC;
-        }
-        if (action instanceof Function<?, ?>) {
-            return TYPE_FUNC_CTX;
-        }
-        if (action instanceof Consumer<?>) {
+        if (task instanceof Consumer<?>) {
             return TYPE_ACTION_CTX;
         }
-        if (action instanceof TimeSharingTask<?>) {
+        if (task instanceof Callable<?>) {
+            return TYPE_FUNC;
+        }
+        if (task instanceof Function<?, ?>) {
+            return TYPE_FUNC_CTX;
+        }
+        if (task instanceof TimeSharingTask<?>) {
             return TYPE_TIMESHARING;
         }
-        throw new IllegalArgumentException("unsupported task type: " + action.getClass());
+        throw new IllegalArgumentException("unsupported task type: " + task.getClass());
     }
     // endregion
 

@@ -79,7 +79,7 @@ public class Context<T> : IContext where T : class
     /// <summary>
     /// 父上下文
     /// </summary>
-    public Context<T>? Parent { get; }
+    public virtual Context<T>? Parent { get; }
 
     /// <summary>
     /// 根上下文
@@ -107,7 +107,7 @@ public class Context<T> : IContext where T : class
     /// <param name="sharedProps">共享属性</param>
     /// <returns></returns>
     protected virtual Context<T> NewContext(Context<T>? parent,
-                                            object? state, ICancelToken cancelToken,
+                                            object? state, ICancelToken? cancelToken,
                                             T? blackboard, object? sharedProps) {
         return new Context<T>(parent, state, cancelToken, blackboard, sharedProps);
     }
@@ -144,7 +144,7 @@ public class Context<T> : IContext where T : class
     #region child
 
     public Context<T> ChildWithState(object state) {
-        return NewContext(this, state, CancelToken, Blackboard, SharedProps);
+        return NewContext(this, state, null, Blackboard, SharedProps);
     }
 
     public Context<T> ChildWithState(object state, ICancelToken cancelToken) {
@@ -152,11 +152,11 @@ public class Context<T> : IContext where T : class
     }
 
     public Context<T> ChildWithBlackboard(T blackboard) {
-        return NewContext(this, null, CancelToken, blackboard, SharedProps);
+        return NewContext(this, null, null, blackboard, SharedProps);
     }
 
     public Context<T> ChildWithBlackboard(T blackboard, object sharedProps) {
-        return NewContext(this, null, CancelToken, blackboard, sharedProps);
+        return NewContext(this, null, null, blackboard, sharedProps);
     }
 
     public Context<T> ChildWith(object state, ICancelToken cancelToken, T blackboard, object sharedProps) {
@@ -168,7 +168,7 @@ public class Context<T> : IContext where T : class
     #region with
 
     public Context<T> WithState(object state) {
-        return NewContext(Parent, state, CancelToken, Blackboard, SharedProps);
+        return NewContext(Parent, state, null, Blackboard, SharedProps);
     }
 
     public Context<T> WithState(object state, ICancelToken cancelToken) {
@@ -176,13 +176,16 @@ public class Context<T> : IContext where T : class
     }
 
     public Context<T> WithBlackboard(T blackboard) {
-        return NewContext(Parent, State, CancelToken, blackboard, SharedProps);
+        return NewContext(Parent, null, null, blackboard, SharedProps);
     }
 
     public Context<T> WithBlackboard(T blackboard, object sharedProps) {
-        return NewContext(Parent, State, CancelToken, blackboard, sharedProps);
+        return NewContext(Parent, null, null, blackboard, sharedProps);
     }
 
+    public Context<T> With(object state, ICancelToken cancelToken, T blackboard, object sharedProps) {
+        return NewContext(Parent, state, cancelToken, blackboard, sharedProps);
+    }
     #endregion
 
     public Context<T> ToSharable() {

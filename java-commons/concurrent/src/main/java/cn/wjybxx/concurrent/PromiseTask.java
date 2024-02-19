@@ -58,7 +58,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     private Object action;
     /** 调度选项 */
     protected final int options;
-    /** 用户可能在任务完成后继续访问，因此不能清理 */
+    /** 任务关联的promise - 用户可能在任务完成后继续访问，因此不能清理 */
     protected final IPromise<V> promise;
     /** 控制标记 */
     protected int ctl;

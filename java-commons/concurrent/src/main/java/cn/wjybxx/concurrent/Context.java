@@ -159,7 +159,7 @@ public class Context<T> implements IContext {
     // region child
 
     public Context<T> childWithState(Object state) {
-        return newContext(this, state, cancelToken, blackboard, sharedProps);
+        return newContext(this, state, null, blackboard, sharedProps);
     }
 
     public Context<T> childWithState(Object state, ICancelToken cancelToken) {
@@ -167,11 +167,11 @@ public class Context<T> implements IContext {
     }
 
     public Context<T> childWithBlackboard(T blackboard) {
-        return newContext(this, null, cancelToken, blackboard, sharedProps);
+        return newContext(this, null, null, blackboard, sharedProps);
     }
 
     public Context<T> childWithBlackboard(T blackboard, Object sharedProps) {
-        return newContext(this, null, cancelToken, blackboard, sharedProps);
+        return newContext(this, null, null, blackboard, sharedProps);
     }
 
     public Context<T> childWith(Object state, ICancelToken cancelToken, T blackboard, Object sharedProps) {
@@ -184,7 +184,7 @@ public class Context<T> implements IContext {
 
     /** 使用给定取消令牌 */
     public Context<T> withState(Object state) {
-        return newContext(parent, state, cancelToken, blackboard, sharedProps);
+        return newContext(parent, state, null, blackboard, sharedProps);
     }
 
     public Context<T> withState(Object state, ICancelToken cancelToken) {
@@ -192,10 +192,14 @@ public class Context<T> implements IContext {
     }
 
     public Context<T> withBlackboard(T blackboard) {
-        return newContext(parent, state, cancelToken, blackboard, sharedProps);
+        return newContext(parent, null, null, blackboard, sharedProps);
     }
 
     public Context<T> withBlackboard(T blackboard, Object sharedProps) {
+        return newContext(parent, null, null, blackboard, sharedProps);
+    }
+
+    public Context<T> with(Object state, ICancelToken cancelToken, T blackboard, Object sharedProps) {
         return newContext(parent, state, cancelToken, blackboard, sharedProps);
     }
 
@@ -203,10 +207,10 @@ public class Context<T> implements IContext {
 
     @Override
     public Context<T> toSharable() {
-        if (this.cancelToken == ICancelToken.NONE) { // 较大概率
+        if (this.state == null && this.cancelToken == ICancelToken.NONE) { // 较大概率
             return this;
         }
-        return newContext(this, , cancelToken, blackboard, sharedProps);
+        return newContext(this, null, ICancelToken.NONE, blackboard, sharedProps);
     }
 
 }
