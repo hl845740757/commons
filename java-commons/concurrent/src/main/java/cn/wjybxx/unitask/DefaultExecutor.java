@@ -19,7 +19,7 @@ package cn.wjybxx.unitask;
 import cn.wjybxx.concurrent.EventLoopState;
 import cn.wjybxx.concurrent.ICancelToken;
 import cn.wjybxx.concurrent.IFuture;
-import cn.wjybxx.concurrent.PromiseTask;
+import cn.wjybxx.concurrent.IFutureTask;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayDeque;
@@ -117,8 +117,8 @@ public class DefaultExecutor extends AbstractUniExecutor {
     @Override
     public void execute(Runnable command) {
         if (isShutdown()) {
-            if (command instanceof PromiseTask<?> promiseTask) {
-                promiseTask.getPromise().trySetCancelled(ICancelToken.REASON_SHUTDOWN);
+            if (command instanceof IFutureTask<?> promiseTask) {
+                promiseTask.future().trySetCancelled(ICancelToken.REASON_SHUTDOWN);
             }
             return;
         }

@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
@@ -24,7 +25,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// <summary>
 /// </summary>
 /// <typeparam name="T">结果类型</typeparam>
-public class PromiseTask<T> : Promise<T>, IFutureTask<T>
+public class PromiseTask<T> : IFutureTask<T>
 {
     /**
      * queueId的掩码 -- 8bit，最大255。
@@ -49,7 +50,7 @@ public class PromiseTask<T> : Promise<T>, IFutureTask<T>
     protected const int maxQueueId = 255;
 
     /** 用户的委托 */
-    private object action;
+    private object task;
     /** 任务的调度选项 */
     protected readonly int options;
     /** 任务关联的promise - 用户可能在任务完成后继续访问，因此不能清理 */
@@ -60,16 +61,48 @@ public class PromiseTask<T> : Promise<T>, IFutureTask<T>
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="executor">任务的执行线程</param>
-    /// <param name="context">任务绑定的上下文</param>
     /// <param name="action">任务</param>
     /// <param name="options">任务的调度选项</param>
     /// <param name="promise"></param>
-    public PromiseTask(object action, int options, Promise<T> promise) {
-        this.action = action ?? throw new ArgumentNullException(nameof(action));
+    public PromiseTask(object action, int options, IPromise<T> promise)
+        : this(action, options, promise, TaskBuilder.TaskType(action)) {
+    }
+
+    public PromiseTask(ref TaskBuilder<T> builder, IPromise<T> promise)
+        : this(builder.Task, builder.Options, promise, builder.Type) {
+    }
+
+    public PromiseTask(object action, int options, IPromise<T> promise, int taskType) {
+        this.task = action ?? throw new ArgumentNullException(nameof(action));
         this.options = options;
         this.promise = promise ?? throw new ArgumentNullException(nameof(promise));
+        this.ctl |= (taskType << offsetTaskType);
+        // 注入promise
     }
+
+    #region factory
+
+    public static PromiseTask<T> OfAction(Action action, int options, IPromise<T> promise) {
+        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_ACTION);
+    }
+
+    public static PromiseTask<T> OfAction(Action<IContext> action, int options, IPromise<T> promise) {
+        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX);
+    }
+
+    public static PromiseTask<T> OfFunction(Func<T> action, int options, IPromise<T> promise) {
+        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_FUNC);
+    }
+
+    public static PromiseTask<T> OfFunction(Func<IContext, T> action, int options, IPromise<T> promise) {
+        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_FUNC_CTX);
+    }
+
+    public static PromiseTask<T> OfBuilder(ref TaskBuilder<T> builder, IPromise<T> promise) {
+        return new PromiseTask<T>(ref builder, promise);
+    }
+
+    #endregion
 
     #region Props
 
@@ -79,14 +112,10 @@ public class PromiseTask<T> : Promise<T>, IFutureTask<T>
     public int Options => options;
 
     /// <summary>
-    /// 任务关联的Future
+    /// 获取任务关联的Promise
+    /// 允许子类修改返回值类型。
     /// </summary>
-    public IFuture<T> Future => this;
-
-    /// <summary>
-    /// 获取任务关联的Promise -- 开放给子类。
-    /// </summary>
-    public IPromise<T> Promise => this;
+    public virtual IPromise<T> Future => promise;
 
     /** 任务是否启用了指定选项 */
     public bool isEnable(int taskOption) {
@@ -94,8 +123,8 @@ public class PromiseTask<T> : Promise<T>, IFutureTask<T>
     }
 
     /** 获取绑定的任务 */
-    public object getAction() {
-        return action;
+    public object getTask() {
+        return task;
     }
 
     /** 获取任务所属的队列id */
@@ -154,13 +183,66 @@ public class PromiseTask<T> : Promise<T>, IFutureTask<T>
 
     #endregion
 
+    protected void Clear() {
+        task = null!;
+    }
+
+    /** 运行可直接得出结果的任务 */
+    protected T RunTask() {
+        int type = (ctl & maskTaskType) >> offsetTaskType;
+        switch (type) {
+            case TaskBuilder.TYPE_ACTION: {
+                Action task = (Action)this.task;
+                task();
+                return default;
+            }
+            case TaskBuilder.TYPE_ACTION_CTX: {
+                Action<IContext> task = (Action<IContext>)this.task;
+                task(promise.Context);
+                return default;
+            }
+            case TaskBuilder.TYPE_FUNC: {
+                Func<T> task = (Func<T>)this.task;
+                return task();
+            }
+            case TaskBuilder.TYPE_FUNC_CTX: {
+                Func<IContext, T> task = (Func<IContext, T>)this.task;
+                return task(promise.Context);
+            }
+            default: {
+                throw new AssertionError("type: " + type);
+            }
+        }
+    }
+
     public void Run() {
-        try {
-            object value = action.DynamicInvoke();
-            TrySetResult((T)value);
+        IPromise<T> promise = this.promise;
+        if (promise.Context.CancelToken.IsCancelling()) {
+            TrySetCancelled(promise);
+            Clear();
+            return;
         }
-        catch (Exception ex) {
-            TrySetException(ex);
+        if (promise.TrySetComputing()) {
+            try {
+                T value = RunTask();
+                promise.TrySetResult(value);
+            }
+            catch (Exception e) {
+                promise.TrySetException(e);
+            }
         }
+        Clear();
+    }
+
+    protected static void TrySetCancelled(IPromise promise) {
+        int cancelCode = promise.Context.CancelToken.CancelCode;
+        Debug.Assert(cancelCode != 0);
+        promise.TrySetCancelled(cancelCode);
+    }
+
+    protected static void TrySetCancelled(IPromise promise, int def) {
+        int cancelCode = promise.Context.CancelToken.CancelCode;
+        if (cancelCode == 0) cancelCode = def;
+        promise.TrySetCancelled(cancelCode);
     }
 }

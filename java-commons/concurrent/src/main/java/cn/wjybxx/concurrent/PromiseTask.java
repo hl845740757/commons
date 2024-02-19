@@ -55,7 +55,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     protected static final int maxQueueId = 255;
 
     /** 用户的任务 */
-    private Object action;
+    private Object task;
     /** 调度选项 */
     protected final int options;
     /** 任务关联的promise - 用户可能在任务完成后继续访问，因此不能清理 */
@@ -64,12 +64,12 @@ public class PromiseTask<V> implements IFutureTask<V> {
     protected int ctl;
 
     /**
-     * @param action  用户的任务，支持的类型见{@link TaskBuilder#taskType(Object)}
+     * @param task    用户的任务，支持的类型见{@link TaskBuilder#taskType(Object)}
      * @param options 任务的调度选项
      * @param promise 任务关联的promise
      */
-    public PromiseTask(Object action, int options, IPromise<V> promise) {
-        this(action, options, promise, TaskBuilder.taskType(action));
+    public PromiseTask(Object task, int options, IPromise<V> promise) {
+        this(task, options, promise, TaskBuilder.taskType(task));
     }
 
     /**
@@ -80,34 +80,34 @@ public class PromiseTask<V> implements IFutureTask<V> {
         this(builder.getTask(), builder.getOptions(), promise, builder.getType());
     }
 
-    public PromiseTask(Object action, int options, IPromise<V> promise, int taskType) {
-        this.action = Objects.requireNonNull(action, "action");
+    public PromiseTask(Object task, int options, IPromise<V> promise, int taskType) {
+        this.task = Objects.requireNonNull(task, "action");
         this.options = options;
         this.promise = Objects.requireNonNull(promise, "promise");
         this.ctl |= (taskType << offsetTaskType);
         // 注入promise
         if (taskType == TaskBuilder.TYPE_TIMESHARING) {
-            @SuppressWarnings("unchecked") TimeSharingTask<V> timeSharingTask = (TimeSharingTask<V>) action;
+            @SuppressWarnings("unchecked") TimeSharingTask<V> timeSharingTask = (TimeSharingTask<V>) task;
             timeSharingTask.inject(promise);
         }
     }
 
     // region factory
 
-    public static PromiseTask<?> ofRunnable(Runnable action, int options, IPromise<?> promise) {
+    public static PromiseTask<?> ofAction(Runnable action, int options, IPromise<?> promise) {
         return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION);
     }
 
-    public static <V> PromiseTask<V> ofCallable(Callable<? extends V> action, int options, IPromise<V> promise) {
+    public static PromiseTask<?> ofAction(Consumer<? super IContext> action, int options, IPromise<?> promise) {
+        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX);
+    }
+
+    public static <V> PromiseTask<V> ofFunction(Callable<? extends V> action, int options, IPromise<V> promise) {
         return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC);
     }
 
     public static <V> PromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, int options, IPromise<V> promise) {
         return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC_CTX);
-    }
-
-    public static PromiseTask<?> ofConsumer(Consumer<? super IContext> action, int options, IPromise<?> promise) {
-        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX);
     }
 
     public static <V> PromiseTask<V> ofBuilder(TaskBuilder<V> builder, IPromise<V> promise) {
@@ -128,8 +128,8 @@ public class PromiseTask<V> implements IFutureTask<V> {
     }
 
     /** 获取绑定的任务 */
-    public final Object getAction() {
-        return action;
+    public final Object getTask() {
+        return task;
     }
 
     /** 获取任务所属的队列id */
@@ -186,14 +186,9 @@ public class PromiseTask<V> implements IFutureTask<V> {
         ctl |= maskStarted;
     }
 
-    /** 允许子类重写返回值类型 */
-    @Override
-    public IFuture<V> future() {
-        return promise;
-    }
-
     /** 获取任务绑的Promise - 允许子类重写返回值类型 */
-    public IPromise<V> getPromise() {
+    @Override
+    public IPromise<V> future() {
         return promise;
     }
 
@@ -202,13 +197,13 @@ public class PromiseTask<V> implements IFutureTask<V> {
     // region core
 
     public void clear() {
-        action = null;
+        task = null;
     }
 
     /** 运行分时任务 */
     @SuppressWarnings("unchecked")
     protected final void runTimeSharing() throws Exception {
-        TimeSharingTask<V> task = (TimeSharingTask<V>) action;
+        TimeSharingTask<V> task = (TimeSharingTask<V>) this.task;
         if (!isStarted()) {
             IPromise<V> promise = this.promise;
             task.start(promise);
@@ -231,20 +226,20 @@ public class PromiseTask<V> implements IFutureTask<V> {
         int type = (ctl & maskTaskType) >> offsetTaskType;
         switch (type) {
             case TaskBuilder.TYPE_ACTION -> {
-                Runnable task = (Runnable) action;
+                Runnable task = (Runnable) this.task;
                 task.run();
                 return null;
             }
             case TaskBuilder.TYPE_FUNC -> {
-                Callable<V> task = (Callable<V>) action;
+                Callable<V> task = (Callable<V>) this.task;
                 return task.call();
             }
             case TaskBuilder.TYPE_FUNC_CTX -> {
-                Function<IContext, V> task = (Function<IContext, V>) action;
+                Function<IContext, V> task = (Function<IContext, V>) this.task;
                 return task.apply(promise.ctx());
             }
             case TaskBuilder.TYPE_ACTION_CTX -> {
-                Consumer<IContext> task = (Consumer<IContext>) action;
+                Consumer<IContext> task = (Consumer<IContext>) this.task;
                 task.accept(promise.ctx());
                 return null;
             }

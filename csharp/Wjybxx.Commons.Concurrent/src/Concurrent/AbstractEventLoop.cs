@@ -1,0 +1,200 @@
+﻿#region LICENSE
+
+// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#endregion
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Threading;
+using System.Threading.Tasks;
+
+#pragma warning disable CS1591
+namespace Wjybxx.Commons.Concurrent;
+
+/// <summary>
+/// 
+/// </summary>
+public abstract class AbstractEventLoop : IEventLoop
+{
+    private readonly IEventLoopGroup? _parent;
+    private readonly IList<IEventLoop> _selfCollection;
+    private readonly SynchronizationContext _syncContext;
+    private readonly TaskScheduler _scheduler;
+
+    protected AbstractEventLoop(IEventLoopGroup? parent) {
+        _parent = parent;
+        _selfCollection = ImmutableList.Create<IEventLoop>(this);
+
+        _syncContext = new ExecutorSynchronizationContext(this);
+        _scheduler = new ExecutorTaskScheduler(this);
+    }
+
+    public SynchronizationContext AsSyncContext() => _syncContext;
+
+    public TaskScheduler AsScheduler() => _scheduler;
+
+    // 允许子类转换类型
+    public virtual IEventLoopGroup? Parent => _parent;
+
+    // 允许子类转换类型
+    public virtual IEventLoop Select() => this;
+
+    // 允许子类转换类型
+    public virtual IEventLoop Select(int key) => this;
+
+    public abstract IEventLoopModule MainModule { get; }
+
+    public int ChildCount => 1;
+
+    IEnumerator IEnumerable.GetEnumerator() {
+        return _selfCollection.GetEnumerator();
+    }
+
+    public IEnumerator<IEventLoop> GetEnumerator() {
+        return _selfCollection.GetEnumerator();
+    }
+
+    #region 生命周期
+
+    public abstract IFuture Start();
+
+    public abstract void Shutdown();
+
+    public abstract List<ITask> ShutdownNow();
+
+    public abstract EventLoopState State { get; }
+
+    public abstract IFuture RunningFuture { get; }
+
+    public abstract IFuture TerminationFuture { get; }
+
+    public abstract bool InEventLoop();
+
+    public abstract bool InEventLoop(Thread thread);
+
+    public abstract void Wakeup();
+
+    public virtual bool IsRunning => State == EventLoopState.Running;
+
+    public virtual bool IsShuttingDown => State >= EventLoopState.ShuttingDown;
+
+    public virtual bool IsShutdown => State >= EventLoopState.Shutdown;
+
+    public virtual bool IsTerminated => State >= EventLoopState.Terminated;
+
+    public void EnsureInEventLoop() {
+        if (!InEventLoop()) {
+            throw new GuardedOperationException();
+        }
+    }
+
+    public void EnsureInEventLoop(string method) {
+        if (method == null) throw new ArgumentNullException(nameof(method));
+        if (!InEventLoop()) {
+            throw new GuardedOperationException("Calling " + method + " must in the EventLoop");
+        }
+    }
+
+    /** 如果当前在事件循环异常则抛出异常 */
+    public void ThrowIfInEventLoop(string method) {
+        if (method == null) throw new ArgumentNullException(nameof(method));
+        if (InEventLoop()) {
+            throw new BlockingOperationException("Calling " + method + " from within the EventLoop is not allowed");
+        }
+    }
+
+    #endregion
+
+    #region Submit调度
+
+    public abstract void Execute(ITask task);
+
+    public virtual IPromise<T> NewPromise<T>(IContext? ctx = null) => new Promise<T>(this, ctx);
+
+    public virtual IPromise NewPromise(IContext? ctx = null) => new Promise<byte>(this, ctx);
+
+    public virtual IFuture<T> Submit<T>(ref TaskBuilder<T> builder) {
+        PromiseTask<T> promiseTask = PromiseTask<T>.OfBuilder(ref builder, NewPromise<T>(builder.Context));
+        Execute(promiseTask);
+        return promiseTask.Future;
+    }
+
+    public virtual IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
+        PromiseTask<T> promiseTask = PromiseTask<T>.OfFunction(action, options, NewPromise<T>());
+        Execute(promiseTask);
+        return promiseTask.Future;
+    }
+
+    public virtual IFuture<T> SubmitFunc<T>(Func<IContext, T> action, IContext context, int options = 0) {
+        PromiseTask<T> promiseTask = PromiseTask<T>.OfFunction(action, options, NewPromise<T>(context));
+        Execute(promiseTask);
+        return promiseTask.Future;
+    }
+
+    public virtual IFuture SubmitAction(Action action, int options = 0) {
+        PromiseTask<byte> promiseTask = PromiseTask<byte>.OfAction(action, options, NewPromise<byte>());
+        Execute(promiseTask);
+        return promiseTask.Future;
+    }
+
+    public virtual IFuture SubmitAction(Action<IContext> action, IContext context, int options = 0) {
+        PromiseTask<byte> promiseTask = PromiseTask<byte>.OfAction(action, options, NewPromise<byte>(context));
+        Execute(promiseTask);
+        return promiseTask.Future;
+    }
+
+    #endregion
+
+    #region Schedule调度
+
+    // 默认不支持定时任务
+
+    public virtual IScheduledPromise<T> NewScheduledPromise<T>(IContext? context = null) => new ScheduledPromise<T>(this, context);
+
+    public virtual IScheduledPromise NewScheduledPromise(IContext? context = null) => new ScheduledPromise<object>(this, context);
+
+    public virtual IFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder) {
+        throw new NotImplementedException();
+    }
+
+    public virtual IFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
+        throw new NotImplementedException();
+    }
+
+    public virtual IFuture ScheduleAction(Action<IContext> action, TimeSpan delay, IContext context) {
+        throw new NotImplementedException();
+    }
+
+    public virtual IFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
+        throw new NotImplementedException();
+    }
+
+    public virtual IFuture<TResult> ScheduleFunc<TResult>(Func<IContext, TResult> action, TimeSpan delay, IContext context) {
+        throw new NotImplementedException();
+    }
+
+    public virtual IFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+        throw new NotImplementedException();
+    }
+
+    public virtual IFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+        throw new NotImplementedException();
+    }
+
+    #endregion
+}

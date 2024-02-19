@@ -125,6 +125,11 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
 
     // ------------------------------------- 迭代 ----------------------------
 
+    @Override
+    public int childCount() {
+        return children.length;
+    }
+
     @Nonnull
     @Override
     public EventLoop select() {
@@ -135,11 +140,6 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
     @Override
     public EventLoop select(int key) {
         return chooser.select(key);
-    }
-
-    @Override
-    public int childCount() {
-        return children.length;
     }
 
     @Nonnull

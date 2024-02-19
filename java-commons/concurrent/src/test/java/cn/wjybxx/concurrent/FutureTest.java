@@ -70,7 +70,7 @@ public class FutureTest {
 
     @Test
     void testAwait() throws InterruptedException {
-        PromiseTask<String> promiseTask = PromiseTask.ofCallable(() -> "hello", 0, new Promise<>());
+        PromiseTask<String> promiseTask = PromiseTask.ofFunction(() -> "hello", 0, new Promise<>());
         globalEventLoop.schedule(promiseTask, 10, TimeUnit.MILLISECONDS);
 
         Assertions.assertTrue(promiseTask.future().await(100, TimeUnit.SECONDS));
@@ -79,7 +79,7 @@ public class FutureTest {
 
     @Test
     void testBlockingOp() {
-        Throwable ex = globalEventLoop.submitRun(() -> {
+        Throwable ex = globalEventLoop.submitAction(() -> {
                     Promise<Object> promise = new Promise<>(globalEventLoop);
                     promise.join();
                 })
@@ -95,7 +95,7 @@ public class FutureTest {
     void testAccept() {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
-        FutureUtils.submitCall(executor, () -> first, 0)
+        FutureUtils.submitFunc(executor, () -> first, 0)
                 .thenAccept((context, r) -> {
                     Assertions.assertEquals(first, r);
                 })
@@ -106,7 +106,7 @@ public class FutureTest {
     void testAcceptAsync() {
         final String first = "abc";
         MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitCall(() -> {
+        globalEventLoop.submitFunc(() -> {
                     sequence.setValue(curSequence());
                     return first;
                 })
@@ -125,7 +125,7 @@ public class FutureTest {
     void testAcceptAsyncInline() {
         final String first = "abc"; // 怎么测？？？
         MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitCall(() -> {
+        globalEventLoop.submitFunc(() -> {
                     sequence.setValue(curSequence());
                     return first;
                 })
@@ -147,7 +147,7 @@ public class FutureTest {
     void testApply() {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
-        String r2 = FutureUtils.submitCall(executor, () -> first, 0)
+        String r2 = FutureUtils.submitFunc(executor, () -> first, 0)
                 .thenApply((ctx, r) -> StringUtils.reverse(r))
                 .resultNow();
         Assertions.assertEquals(StringUtils.reverse(first), r2);
@@ -157,7 +157,7 @@ public class FutureTest {
     void testApplyAsync() {
         final String first = "abc";
         MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitCall(() -> {
+        globalEventLoop.submitFunc(() -> {
                     sequence.setValue(curSequence());
                     return first;
                 })
@@ -177,7 +177,7 @@ public class FutureTest {
     void testApplyAsyncInline() {
         final String first = "abc"; // 怎么测？？？
         MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitCall(() -> {
+        globalEventLoop.submitFunc(() -> {
                     sequence.setValue(curSequence());
                     return first;
                 })
@@ -200,7 +200,7 @@ public class FutureTest {
     void testCatching() {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
-        FutureUtils.submitCall(executor, () -> {throw new RuntimeException();})
+        FutureUtils.submitFunc(executor, () -> {throw new RuntimeException();})
                 .catching(RuntimeException.class, (ctx, ex) -> first)
                 .thenAccept((ctx, s) -> {
                     Assertions.assertEquals(first, s);
@@ -211,7 +211,7 @@ public class FutureTest {
     void testCatchingAsync() {
         final String first = "abc";
         MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitCall(() -> {
+        globalEventLoop.submitFunc(() -> {
                     sequence.setValue(curSequence());
                     throw new RuntimeException();
                 })
@@ -232,7 +232,7 @@ public class FutureTest {
     void testCatchingAsyncInline() {
         final String first = "abc"; // 怎么测？？？
         MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitCall(() -> {
+        globalEventLoop.submitFunc(() -> {
                     sequence.setValue(curSequence());
                     throw new RuntimeException();
                 })
@@ -257,7 +257,7 @@ public class FutureTest {
     void testWhenComplete() {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
-        FutureUtils.submitCall(executor, () -> first, 0)
+        FutureUtils.submitFunc(executor, () -> first, 0)
                 .whenComplete((k, v, s) -> {})
                 .thenAccept((iContext, s) -> {
                     Assertions.assertEquals(first, s);
@@ -268,7 +268,7 @@ public class FutureTest {
     void testWhenCompleteAsync() {
         final String first = "abc";
         MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitCall(() -> {
+        globalEventLoop.submitFunc(() -> {
                     sequence.setValue(curSequence());
                     return first;
                 })
@@ -290,7 +290,7 @@ public class FutureTest {
     void testWhenCompleteAsyncInline() {
         final String first = "abc"; // 怎么测？？？
         MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitCall(() -> {
+        globalEventLoop.submitFunc(() -> {
                     sequence.setValue(curSequence());
                     return first;
                 })
@@ -315,7 +315,7 @@ public class FutureTest {
     void testOnComplete() {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
-        IFuture<String> future = FutureUtils.submitCall(executor, () -> first, 0);
+        IFuture<String> future = FutureUtils.submitFunc(executor, () -> first, 0);
 
         future.onCompleted((f) -> {
             Assertions.assertEquals(first, f.resultNow());
@@ -326,7 +326,7 @@ public class FutureTest {
     void testOnCompleteAsync() {
         final String first = "abc";
         MutableLong sequence = new MutableLong(0);
-        IFuture<String> future = globalEventLoop.submitCall(() -> {
+        IFuture<String> future = globalEventLoop.submitFunc(() -> {
             sequence.setValue(curSequence());
             return first;
         });
@@ -345,7 +345,7 @@ public class FutureTest {
     void testOnCompleteAsyncInline() {
         final String first = "abc"; // 怎么测？？？
         MutableLong sequence = new MutableLong(0);
-        IFuture<String> future = globalEventLoop.submitCall(() -> {
+        IFuture<String> future = globalEventLoop.submitFunc(() -> {
             sequence.setValue(curSequence());
             return first;
         });
@@ -368,7 +368,7 @@ public class FutureTest {
         final String first = "abc";
         final String fallbackResult = "fallback:" + first;
         IExecutor executor = immediateExecutor;
-        FutureUtils.submitCall(executor, () -> first, 0)
+        FutureUtils.submitFunc(executor, () -> first, 0)
                 .handle((ctx, v, ex) -> {
                     if (ex != null) {
                         return fallbackResult;
@@ -380,7 +380,7 @@ public class FutureTest {
                 })
                 .join();
 
-        FutureUtils.submitCall(executor, () -> {throw new RuntimeException();}, 0)
+        FutureUtils.submitFunc(executor, () -> {throw new RuntimeException();}, 0)
                 .handle((ctx, v, ex) -> {
                     if (ex != null) {
                         return fallbackResult;

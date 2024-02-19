@@ -75,6 +75,16 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
     }
 
     @Override
+    public <V> IFuture<V> submitFunc(Callable<? extends V> task) {
+        return select().submitFunc(task);
+    }
+
+    @Override
+    public <V> IFuture<V> submitFunc(Callable<? extends V> task, int options) {
+        return select().submitFunc(task, options);
+    }
+
+    @Override
     public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx) {
         return select().submitFunc(task, ctx);
     }
@@ -85,6 +95,16 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
     }
 
     @Override
+    public IFuture<?> submitAction(Runnable task) {
+        return select().submitAction(task);
+    }
+
+    @Override
+    public IFuture<?> submitAction(Runnable task, int options) {
+        return select().submitAction(task, options);
+    }
+
+    @Override
     public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
         return select().submitAction(task, ctx);
     }
@@ -92,26 +112,6 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
     @Override
     public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
         return select().submitAction(task, ctx, options);
-    }
-
-    @Override
-    public <V> IFuture<V> submitCall(Callable<? extends V> task) {
-        return select().submitCall(task);
-    }
-
-    @Override
-    public <V> IFuture<V> submitCall(Callable<? extends V> task, int options) {
-        return select().submitCall(task, options);
-    }
-
-    @Override
-    public IFuture<?> submitRun(Runnable task) {
-        return select().submitRun(task);
-    }
-
-    @Override
-    public IFuture<?> submitRun(Runnable task, int options) {
-        return select().submitRun(task, options);
     }
 
     // endregion

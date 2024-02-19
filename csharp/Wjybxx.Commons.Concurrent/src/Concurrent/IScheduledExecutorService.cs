@@ -27,6 +27,20 @@ namespace Wjybxx.Commons.Concurrent;
 public interface IScheduledExecutorService : IExecutorService
 {
     /// <summary>
+    /// 创建一个promise以用于任务调度
+    /// </summary>
+    /// <param name="context"></param>
+    /// <returns></returns>
+    IScheduledPromise<T> NewScheduledPromise<T>(IContext? context = null);
+
+    /// <summary>
+    /// 创建一个promise以用于任务调度
+    /// </summary>
+    /// <param name="context"></param>
+    /// <returns></returns>
+    IScheduledPromise NewScheduledPromise(IContext? context = null);
+
+    /// <summary>
     ///
     /// 注意：使用ref仅为了避免防御性拷贝，不会修改对象的状态 —— in关键字可能产生拷贝。
     /// </summary>
@@ -42,36 +56,36 @@ public interface IScheduledExecutorService : IExecutorService
     /// </summary>
     /// <param name="action">要调度的任务</param>
     /// <param name="delay">执行延迟</param>
-    /// <param name="context">上下文</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    IFuture Schedule(Action action, TimeSpan delay, in IContext context = default);
+    IFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null);
+
+    /// <summary>
+    /// 在给定的延迟之后执行给定的委托（接收上下文参数）
+    /// </summary>
+    /// <param name="action">要调度的任务</param>
+    /// <param name="delay">执行延迟</param>
+    /// <param name="context">上下文</param>
+    /// <returns></returns>11
+    IFuture ScheduleAction(Action<IContext> action, TimeSpan delay, IContext context);
 
     /// <summary>
     /// 在给定的延迟之后执行给定的委托
     /// </summary>
     /// <param name="action">要调度的任务</param>
     /// <param name="delay">执行延迟</param>
-    /// <param name="context">上下文</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    IFuture Schedule(Action<IContext> action, TimeSpan delay, in IContext context);
+    IFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null);
 
     /// <summary>
-    /// 在给定的延迟之后执行给定的委托
+    /// 在给定的延迟之后执行给定的委托（接收上下文参数）
     /// </summary>
     /// <param name="action">要调度的任务</param>
     /// <param name="delay">执行延迟</param>
     /// <param name="context">上下文</param>
     /// <returns></returns>
-    IFuture<TResult> Schedule<TResult>(Func<TResult> action, TimeSpan delay, in IContext context = default);
-
-    /// <summary>
-    /// 在给定的延迟之后执行给定的委托
-    /// </summary>
-    /// <param name="action">要调度的任务</param>
-    /// <param name="delay">执行延迟</param>
-    /// <param name="context">上下文</param>
-    /// <returns></returns>
-    IFuture<TResult> Schedule<TResult>(Func<IContext, TResult> action, TimeSpan delay, in IContext context);
+    IFuture<TResult> ScheduleFunc<TResult>(Func<IContext, TResult> action, TimeSpan delay, IContext context);
 
     /// <summary>
     /// 按固定延迟执行任务，FixedDelay只保证两次任务的执行间隔一定大于等于给定延迟
@@ -79,20 +93,9 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="action">要调度的任务</param>
     /// <param name="delay">首次执行延迟</param>
     /// <param name="period">后续执行间隔</param>
-    /// <param name="context">上下文</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    IFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, in IContext context = default);
-
-
-    /// <summary>
-    /// 按固定延迟执行任务，FixedDelay只保证两次任务的执行间隔一定大于等于给定延迟
-    /// </summary>
-    /// <param name="action">要调度的任务</param>
-    /// <param name="delay">首次执行延迟</param>
-    /// <param name="period">后续执行间隔</param>
-    /// <param name="context">上下文</param>
-    /// <returns></returns>
-    IFuture ScheduleWithFixedDelay(Action<IContext> action, TimeSpan delay, TimeSpan period, in IContext context);
+    IFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
 
     /// <summary>
     /// 按给定频率执行任务，FixedRate
@@ -101,20 +104,9 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="action">要调度的任务</param>
     /// <param name="delay">首次执行延迟</param>
     /// <param name="period">后续执行间隔</param>
-    /// <param name="context">上下文</param>
+    /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    IFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, in IContext context = default);
-
-    /// <summary>
-    /// 按给定频率执行任务，FixedRate
-    /// 
-    /// </summary>
-    /// <param name="action">要调度的任务</param>
-    /// <param name="delay">首次执行延迟</param>
-    /// <param name="period">后续执行间隔</param>
-    /// <param name="context">上下文</param>
-    /// <returns></returns>
-    IFuture ScheduleAtFixedRate(Action<IContext> action, TimeSpan delay, TimeSpan period, in IContext context);
+    IFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
 
     #endregion
 }

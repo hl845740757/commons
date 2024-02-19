@@ -23,7 +23,9 @@ using System.Threading;
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-///
+/// 1.Future是任务和用户之间通信的媒介。
+/// 2.Task可通过Promise向用户传递信息，用户可通过Future主动查询Task的状态。
+/// 3.任务和用户之间需要特殊的交互时，需要特殊的Future进行粘合。
 /// </summary>
 /// <typeparam name="T">任务的结果类型</typeparam>
 [AsyncMethodBuilder(typeof(AsyncFutureMethodBuilder<>))]

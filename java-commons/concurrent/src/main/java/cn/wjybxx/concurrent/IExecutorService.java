@@ -25,10 +25,7 @@ import java.util.function.Function;
 
 /**
  * 命名：我们使用清晰的命名后缀，以免使用lambda时的语义不清。
- * 1. {@link Runnable}的方法后缀为Run - 为了避免签名上的冲突。
- * 2. {@link Consumer}的方法后缀为Action
- * 3. {@link Callable}的方法后缀为Call
- * 4. {@link Function}的方法后缀为Func
+ * Action表示无返回值的函数，Function表示有返回值的函数。
  *
  * @author wjybxx
  * date - 2024/1/9
@@ -136,40 +133,39 @@ public interface IExecutorService extends ExecutorService, IExecutor {
     @Override
     <T> IFuture<T> submit(@Nonnull Callable<T> task);
 
+    <T> IFuture<T> submitFunc(Callable<? extends T> task);
+
+    <T> IFuture<T> submitFunc(Callable<? extends T> task, int options);
+
     <T> IFuture<T> submitFunc(Function<? super IContext, ? extends T> task, IContext ctx);
 
     <T> IFuture<T> submitFunc(Function<? super IContext, ? extends T> task, IContext ctx, int options);
+
+    IFuture<?> submitAction(Runnable task);
+
+    IFuture<?> submitAction(Runnable task, int options);
 
     IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx);
 
     IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options);
 
-    <T> IFuture<T> submitCall(Callable<? extends T> task);
-
-    <T> IFuture<T> submitCall(Callable<? extends T> task, int options);
-
-    /** 该方法可能和{@link ExecutorService#submit(Runnable, Object)}冲突，因此我们要带后缀 */
-    IFuture<?> submitRun(Runnable task);
-
-    IFuture<?> submitRun(Runnable task, int options);
-
     /**
      * 从Java引入lambda开始，对接收函数式接口的方法进行重载时，必须要具备明显的差异才可。
      * 如果接口的差异过小，建议使用不同的方法名，而不是重载。
      *
-     * @deprecated {{@link #submitRun(Runnable)}}
+     * @deprecated {{@link #submitAction(Runnable)}}
      */
     @Deprecated
     @Override
     default IFuture<?> submit(@Nonnull Runnable task) {
-        return submitRun(task);
+        return submitAction(task);
     }
 
-    /** @deprecated {{@link #submitCall(Callable)}} */
+    /** @deprecated {{@link #submitFunc(Callable)}} */
     @Deprecated
     @Override
     default <T> IFuture<T> submit(@Nonnull Runnable task, T result) {
-        return submitCall(Executors.callable(task, result));
+        return submitFunc(Executors.callable(task, result));
     }
 
     // endregion

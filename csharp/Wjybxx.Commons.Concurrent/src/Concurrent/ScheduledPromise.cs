@@ -16,26 +16,21 @@
 
 #endregion
 
+using System.Diagnostics;
+
+#pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
 
-/// <summary>
-/// 固定数量 EventLoop 的事件循环线程组
-/// 它提供了相同key选择相同 EventLoop 的方法。
-/// </summary>
-public interface IFixedEventLoopGroup : IEventLoopGroup
+public class ScheduledPromise<T> : Promise<T>, IScheduledPromise<T>
 {
-    /// <summary>
-    /// EventLoop的数量
-    /// </summary>
-    /// <value></value>
-    int ChildCount { get; }
+    private IScheduledFutureTask<T> _task;
 
-    /// <summary>
-    /// 选择一个<see cref="IEventLoop"/>用于接下来的任务调度。
-    ///
-    /// 实现约定：相同的key返回相同的对象。
-    /// </summary>
-    /// <param name="key">计算索引的键</param>
-    /// <returns></returns>
-    IEventLoop Select(int key);
+    public ScheduledPromise(IExecutor? executor = null, IContext? context = null)
+        : base(executor, context) {
+    }
+
+    public void SetTask(IScheduledFutureTask<T> task) {
+        Debug.Assert(task.Future == this);
+        this._task = task;
+    }
 }

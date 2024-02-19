@@ -30,6 +30,11 @@ import javax.annotation.concurrent.ThreadSafe;
 public interface FixedEventLoopGroup extends EventLoopGroup {
 
     /**
+     * {@link EventLoop}的数量。
+     */
+    int childCount();
+
+    /**
      * 通过一个键选择一个{@link EventLoop}
      * 这提供了第二种绑定线程的方式，第一种方式是通过{@link #select()}分配一个线程，让业务对象持有{@link EventLoop}的引用。
      * 现在，你可以为用户分配一个键，通过键建立虚拟绑定。
@@ -39,10 +44,5 @@ public interface FixedEventLoopGroup extends EventLoopGroup {
      */
     @Nonnull
     EventLoop select(int key);
-
-    /**
-     * {@link EventLoop}的数量。
-     */
-    int childCount();
 
 }

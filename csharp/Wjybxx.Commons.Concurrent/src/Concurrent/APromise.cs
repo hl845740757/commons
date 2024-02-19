@@ -91,6 +91,10 @@ public abstract class APromise
 
     private class MockExecutor : IExecutor
     {
+        public SynchronizationContext AsSyncContext() {
+            throw new NotImplementedException();
+        }
+
         public TaskScheduler AsScheduler() {
             throw new NotImplementedException();
         }

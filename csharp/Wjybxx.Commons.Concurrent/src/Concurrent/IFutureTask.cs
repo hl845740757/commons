@@ -27,8 +27,9 @@ public interface IFutureTask : ITask
 {
     /// <summary>
     /// 任务关联的Future
+    /// 注意：返回给用户时应当转换为<see cref="IFuture"/>类型。
     /// </summary>
-    IFuture Future { get; }
+    IPromise Future { get; }
 }
 
 /// <summary>
@@ -41,7 +42,7 @@ public interface IFutureTask<T> : IFutureTask
     /// <summary>
     /// 任务关联的Future
     /// </summary>
-    new IFuture<T> Future { get; }
+    new IPromise<T> Future { get; }
 
-    IFuture IFutureTask.Future => Future;
+    IPromise IFutureTask.Future => Future;
 }

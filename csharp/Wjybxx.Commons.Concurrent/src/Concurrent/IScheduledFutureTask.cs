@@ -19,23 +19,22 @@
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 固定数量 EventLoop 的事件循环线程组
-/// 它提供了相同key选择相同 EventLoop 的方法。
+/// 定时任务
 /// </summary>
-public interface IFixedEventLoopGroup : IEventLoopGroup
+public interface IScheduledFutureTask : IFutureTask
 {
-    /// <summary>
-    /// EventLoop的数量
-    /// </summary>
-    /// <value></value>
-    int ChildCount { get; }
+    IScheduledPromise Future { get; }
 
-    /// <summary>
-    /// 选择一个<see cref="IEventLoop"/>用于接下来的任务调度。
-    ///
-    /// 实现约定：相同的key返回相同的对象。
-    /// </summary>
-    /// <param name="key">计算索引的键</param>
-    /// <returns></returns>
-    IEventLoop Select(int key);
+    IPromise IFutureTask.Future => Future;
+}
+
+public interface IScheduledFutureTask<T> : IScheduledFutureTask, IFutureTask<T>
+{
+    IScheduledPromise<T> Future { get; }
+
+    IPromise IFutureTask.Future => Future;
+
+    IPromise<T> IFutureTask<T>.Future => Future;
+
+    IScheduledPromise IScheduledFutureTask.Future => Future;
 }

@@ -18,6 +18,7 @@
 
 using System;
 using System.Threading;
+
 #pragma warning disable CS1591
 
 namespace Wjybxx.Commons.Concurrent;
@@ -47,7 +48,7 @@ public static class Executors
         if (action == null) throw new ArgumentNullException(nameof(action));
         return new ActionWrapper4(action, context, options);
     }
-    
+
     private class ActionWrapper1 : ITask
     {
         private readonly Action action;
@@ -130,5 +131,4 @@ public static class Executors
             action(context);
         }
     }
-    
 }

@@ -39,7 +39,7 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     private final int type;
     private final Object task;
-    private final IContext ctx;
+    private IContext ctx;
     private int options = 0;
 
     protected TaskBuilder(int type, Object task) {
@@ -135,6 +135,15 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     public TaskBuilder<V> setOptions(int options) {
         this.options = options;
+        return this;
+    }
+
+    /**
+     * 委托的上下文
+     * 即使用户的委托不接收ctx，executor也可能需要
+     */
+    public TaskBuilder<V> setCtx(IContext ctx) {
+        this.ctx = ctx == null ? IContext.NONE : ctx;
         return this;
     }
 

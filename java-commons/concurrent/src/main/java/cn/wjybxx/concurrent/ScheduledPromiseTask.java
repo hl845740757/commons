@@ -78,13 +78,19 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         promise.setTask(this);
     }
 
-    public static ScheduledPromiseTask<?> ofRunnable(Runnable action, int options, IScheduledPromise<?> promise,
-                                                     long id, long nextTriggerTime) {
+    public static ScheduledPromiseTask<?> ofAction(Runnable action, int options, IScheduledPromise<?> promise,
+                                                   long id, long nextTriggerTime) {
         return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION,
                 id, nextTriggerTime);
     }
 
-    public static <V> ScheduledPromiseTask<V> ofCallable(Callable<? extends V> action, int options, IScheduledPromise<V> promise,
+    public static ScheduledPromiseTask<?> ofAction(Consumer<? super IContext> action, int options, IScheduledPromise<?> promise,
+                                                   long id, long nextTriggerTime) {
+        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX,
+                id, nextTriggerTime);
+    }
+
+    public static <V> ScheduledPromiseTask<V> ofFunction(Callable<? extends V> action, int options, IScheduledPromise<V> promise,
                                                          long id, long nextTriggerTime) {
         return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC,
                 id, nextTriggerTime);
@@ -93,12 +99,6 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     public static <V> ScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, int options, IScheduledPromise<V> promise,
                                                          long id, long nextTriggerTime) {
         return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC_CTX,
-                id, nextTriggerTime);
-    }
-
-    public static ScheduledPromiseTask<?> ofConsumer(Consumer<? super IContext> action, int options, IScheduledPromise<?> promise,
-                                                     long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX,
                 id, nextTriggerTime);
     }
 
@@ -164,14 +164,8 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         this.queueIndex = index;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public IScheduledFuture<V> future() {
-        return (IScheduledFuture<V>) promise;
-    }
-
-    @Override
-    public IScheduledPromise<V> getPromise() {
+    public IScheduledPromise<V> future() {
         return (IScheduledPromise<V>) promise;
     }
 

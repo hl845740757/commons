@@ -16,6 +16,8 @@
 
 #endregion
 
+using System;
+
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
@@ -60,6 +62,13 @@ public interface IEventLoop : IFixedEventLoopGroup, ISingleThreadExecutor
     IEventLoopGroup? Parent { get; }
 
     /// <summary>
+    /// 事件循环的主模块，
+    /// 主模块是事件循环的外部策略实现，用于暴露特殊的业务接口
+    ///（Agent对内，MainModule对外，都是为了避免继承扩展带来的局限性）
+    /// </summary>
+    IEventLoopModule MainModule { get; }
+
+    /// <summary>
     /// 唤醒线程
     /// 如果当前EventLoop线程陷入了阻塞状态，则将线程从阻塞中唤醒；
     /// 通常用于通知及时处理任务和响应关闭。
@@ -84,15 +93,11 @@ public interface IEventLoop : IFixedEventLoopGroup, ISingleThreadExecutor
     /// </summary>
     EventLoopState State { get; }
 
-    /// <summary>
-    /// 事件循环的主模块，
-    /// 主模块是事件循环的外部策略实现，用于暴露特殊的业务接口
-    ///（Agent对内，MainModule对外，都是为了避免继承扩展带来的局限性）
-    /// </summary>
-    IEventLoopModule MainModule { get; }
-
     #region 状态查询
 
+    /// <summary>
+    /// 事件循环是否处于运行中状态
+    /// </summary>
     bool IsRunning => State == EventLoopState.Running;
 
     /// <summary>
@@ -116,7 +121,17 @@ public interface IEventLoop : IFixedEventLoopGroup, ISingleThreadExecutor
             throw new GuardedOperationException();
         }
     }
-    
+
+    /// <summary>
+    /// 测试是否在事件循环线程内，如果不在事件循环线程内则抛出异常
+    /// </summary>
+    /// <exception cref="GuardedOperationException"></exception>
+    void EnsureInEventLoop(string method) {
+        if (method == null) throw new ArgumentNullException(nameof(method));
+        if (!InEventLoop()) {
+            throw new GuardedOperationException("Calling " + method + " must in the EventLoop");
+        }
+    }
 
     #endregion
 }

@@ -238,6 +238,12 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         return this;
     }
 
+    @Override
+    public TaskBuilder<V> setCtx(IContext ctx) {
+        super.setCtx(ctx);
+        return this;
+    }
+
     /** 适用于禁止初始延迟小于0的情况 */
     public static void validateInitialDelay(long initialDelay) {
         if (initialDelay < 0) {

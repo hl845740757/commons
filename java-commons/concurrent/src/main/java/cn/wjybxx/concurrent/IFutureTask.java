@@ -29,9 +29,9 @@ public interface IFutureTask<V> extends ITask {
 
     /**
      * 用于获取结果的句柄
-     * Executor通常返回的是{@link IPromise}，可调用{@link IFuture#asReadonly()}关闭写接口。
+     * 注意：返回给用户时应当转为{@link IFuture}类型。
      */
-    IFuture<V> future();
+    IPromise<V> future();
 
     /**
      * run方法应当使{@link #future()}进入完成状态

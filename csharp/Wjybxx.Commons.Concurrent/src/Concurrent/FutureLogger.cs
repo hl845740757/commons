@@ -26,7 +26,7 @@ namespace Wjybxx.Commons.Concurrent;
 public sealed class FutureLogger
 {
     private static volatile ILogHandler Handler;
-    
+
     /// <summary>
     /// 记录Future框架出现的异常
     /// </summary>
@@ -36,7 +36,7 @@ public sealed class FutureLogger
         if (ex == null) throw new ArgumentNullException(nameof(ex));
         message = message ?? "Future caught an exception";
     }
-    
+
     /// <summary>
     /// Future日志处理器
     /// 注意：该handler只应该输出日志。

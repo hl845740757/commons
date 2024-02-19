@@ -81,13 +81,19 @@ public final class UniScheduledPromiseTask<V>
         promise.setTask(this);
     }
 
-    public static UniScheduledPromiseTask<?> ofRunnable(Runnable action, int options, IScheduledPromise<?> promise,
-                                                        long id, long nextTriggerTime) {
+    public static UniScheduledPromiseTask<?> ofAction(Runnable action, int options, IScheduledPromise<?> promise,
+                                                      long id, long nextTriggerTime) {
         return new UniScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION,
                 id, nextTriggerTime);
     }
 
-    public static <V> UniScheduledPromiseTask<V> ofCallable(Callable<? extends V> action, int options, IScheduledPromise<V> promise,
+    public static UniScheduledPromiseTask<?> ofAction(Consumer<? super IContext> action, int options, IScheduledPromise<?> promise,
+                                                      long id, long nextTriggerTime) {
+        return new UniScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX,
+                id, nextTriggerTime);
+    }
+
+    public static <V> UniScheduledPromiseTask<V> ofFunction(Callable<? extends V> action, int options, IScheduledPromise<V> promise,
                                                             long id, long nextTriggerTime) {
         return new UniScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC,
                 id, nextTriggerTime);
@@ -96,12 +102,6 @@ public final class UniScheduledPromiseTask<V>
     public static <V> UniScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, int options, IScheduledPromise<V> promise,
                                                             long id, long nextTriggerTime) {
         return new UniScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC_CTX,
-                id, nextTriggerTime);
-    }
-
-    public static UniScheduledPromiseTask<?> ofConsumer(Consumer<? super IContext> action, int options, IScheduledPromise<?> promise,
-                                                        long id, long nextTriggerTime) {
-        return new UniScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX,
                 id, nextTriggerTime);
     }
 
@@ -166,14 +166,8 @@ public final class UniScheduledPromiseTask<V>
         this.queueIndex = index;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public IScheduledFuture<V> future() {
-        return (IScheduledFuture<V>) promise;
-    }
-
-    @Override
-    public IScheduledPromise<V> getPromise() {
+    public IScheduledPromise<V> future() {
         return (IScheduledPromise<V>) promise;
     }
 

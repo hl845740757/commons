@@ -22,7 +22,7 @@ import cn.wjybxx.base.time.TimeProvider;
 import cn.wjybxx.concurrent.EventLoopState;
 import cn.wjybxx.concurrent.ICancelToken;
 import cn.wjybxx.concurrent.IFuture;
-import cn.wjybxx.concurrent.PromiseTask;
+import cn.wjybxx.concurrent.IFutureTask;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -101,8 +101,8 @@ public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor imple
     public void execute(@Nonnull Runnable command) {
         if (isShuttingDown()) {
             // 暂时直接取消
-            if (command instanceof PromiseTask<?> promiseTask) {
-                promiseTask.getPromise().trySetCancelled(ICancelToken.REASON_SHUTDOWN);
+            if (command instanceof IFutureTask<?> promiseTask) {
+                promiseTask.future().trySetCancelled(ICancelToken.REASON_SHUTDOWN);
             }
             return;
         }
@@ -112,7 +112,7 @@ public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor imple
                 promiseTask.registerCancellation();
             }
         } else {
-            UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofRunnable(command, 0, newScheduledPromise(), ++sequencer, tickTime);
+            UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofAction(command, 0, newScheduledPromise(), ++sequencer, tickTime);
             if (delayExecute(promiseTask)) {
                 promiseTask.registerCancellation();
             }

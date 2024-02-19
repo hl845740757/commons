@@ -186,6 +186,7 @@ public class Context<T> : IContext where T : class
     public Context<T> With(object state, ICancelToken cancelToken, T blackboard, object sharedProps) {
         return NewContext(Parent, state, cancelToken, blackboard, sharedProps);
     }
+
     #endregion
 
     public Context<T> ToSharable() {

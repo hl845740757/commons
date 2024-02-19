@@ -31,12 +31,22 @@ namespace Wjybxx.Commons.Concurrent;
 public interface IExecutor
 {
     /// <summary>
+    /// 获取当前Executor绑定的同步上下文（视图）
+    /// 
+    /// 1.实现类应当返回同一个实例。
+    /// 2.一般而言，外部不应该调用SyncContext中Post以外的方法
+    /// 3.一个简单的工具类<see cref="ExecutorSynchronizationContext"/>
+    /// </summary>
+    SynchronizationContext AsSyncContext();
+
+    /// <summary>
     /// 获取当前Executor的<see cref="TaskScheduler"/>视图。
     /// 
     /// ps: 该接口仅用于和系统库的Task协作，用于执行Task的延续任务，其它时候避免使用。
     /// </summary>
     /// <returns></returns>
     TaskScheduler AsScheduler();
+
 
     /// <summary>
     /// 调度一个受信任的Task类型，Executor不会再对其进行封装

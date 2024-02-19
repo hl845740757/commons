@@ -69,7 +69,9 @@ public interface IExecutorService : IExecutor
     /// <param name="timeout">超时时间</param>
     /// <exception cref="ThreadInterruptedException">如果等待期间被中断</exception>
     /// <returns>在方法返回前是否已进入终止状态</returns>
-    bool AwaitTermination(TimeSpan timeout);
+    bool AwaitTermination(TimeSpan timeout) {
+        return TerminationFuture.Await(timeout);
+    }
 
     /// <summary>
     /// 请求关闭 ExecutorService，不再接收新的任务。
@@ -102,7 +104,7 @@ public interface IExecutorService : IExecutor
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns>Promise</returns>
-    IPromise<T> NewPromise<T>() => new Promise<T>(this);
+    IPromise<T> NewPromise<T>(IContext? ctx = null) => new Promise<T>(this, ctx);
 
     /// <summary>
     /// 创建一个与当前Executor绑定的Promise
@@ -110,7 +112,7 @@ public interface IExecutorService : IExecutor
     /// 注意：通常不应该使用该Promise的结果。
     /// </summary>
     /// <returns>Promise</returns>
-    IPromise NewPromise() => new Promise<byte>(this);
+    IPromise NewPromise(IContext? ctx = null) => new Promise<byte>(this, ctx);
 
     /// <summary>
     /// 提交一个任务
@@ -127,7 +129,7 @@ public interface IExecutorService : IExecutor
     /// <param name="action">待执行的函数</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    IFuture Submit(Action action, int options = 0);
+    IFuture SubmitAction(Action action, int options = 0);
 
     /// <summary>
     /// 提交一个任务
@@ -136,7 +138,7 @@ public interface IExecutorService : IExecutor
     /// <param name="context">任务上下文</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    IFuture Submit(Action<IContext> action, in IContext context, int options = 0);
+    IFuture SubmitAction(Action<IContext> action, IContext context, int options = 0);
 
     /// <summary>
     /// 提交一个任务
@@ -153,7 +155,7 @@ public interface IExecutorService : IExecutor
     /// <param name="context">任务上下文</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    IFuture<T> SubmitFunc<T>(Func<IContext, T> action, in IContext context, int options = 0);
+    IFuture<T> SubmitFunc<T>(Func<IContext, T> action, IContext context, int options = 0);
 
     #endregion
 }

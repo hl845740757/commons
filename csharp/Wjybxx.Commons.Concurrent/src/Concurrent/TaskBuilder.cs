@@ -74,7 +74,7 @@ public struct TaskBuilder<T> : TaskBuilder
 {
     private readonly int type;
     private readonly object task;
-    private readonly IContext? context;
+    private IContext? context;
     private int options;
 
     /// <summary>
@@ -122,8 +122,12 @@ public struct TaskBuilder<T> : TaskBuilder
 
     /// <summary>
     /// 委托的上下文
+    /// 即使用户的委托不接收ctx，executor也可能需要
     /// </summary>
-    public IContext? Context => context;
+    public IContext? Context {
+        get => context;
+        set => context = value;
+    }
 
     /// <summary>
     /// 任务的调度选项

@@ -19,23 +19,21 @@
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 固定数量 EventLoop 的事件循环线程组
-/// 它提供了相同key选择相同 EventLoop 的方法。
+/// 定时任务关联的Promise
+///
+/// ps：暂未迁移java中的方法，待到必要时再迁移。
 /// </summary>
-public interface IFixedEventLoopGroup : IEventLoopGroup
+public interface IScheduledPromise : IPromise
+{
+}
+
+public interface IScheduledPromise<T> : IScheduledPromise, IPromise<T>
 {
     /// <summary>
-    /// EventLoop的数量
+    /// 注入关联的任务.
+    /// 1.Promise需要了解任务的状态以支持用户的查询;
+    /// 2.由于存在双向依赖，因此需要延迟注入;
     /// </summary>
-    /// <value></value>
-    int ChildCount { get; }
-
-    /// <summary>
-    /// 选择一个<see cref="IEventLoop"/>用于接下来的任务调度。
-    ///
-    /// 实现约定：相同的key返回相同的对象。
-    /// </summary>
-    /// <param name="key">计算索引的键</param>
-    /// <returns></returns>
-    IEventLoop Select(int key);
+    /// <param name="task">关联的任务</param>
+    void SetTask(IScheduledFutureTask<T> task);
 }
