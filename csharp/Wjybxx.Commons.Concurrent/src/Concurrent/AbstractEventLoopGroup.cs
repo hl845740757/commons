@@ -41,8 +41,6 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     public abstract IEventLoop Select();
 
-    public abstract void Execute(ITask task);
-
     #region 生命周期
 
     public abstract void Shutdown();
@@ -61,27 +59,31 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     #region submit
 
-    public IPromise<T> NewPromise<T>(IContext? ctx = null) => new Promise<T>(this, ctx);
+    public virtual void Execute(ITask task) {
+        Select().Execute(task);
+    }
 
-    public IPromise NewPromise(IContext? ctx = null) => new Promise<byte>(this, ctx);
+    public virtual IPromise<T> NewPromise<T>(IContext? ctx = null) => new Promise<T>(this, ctx);
 
-    public IFuture<T> Submit<T>(ref TaskBuilder<T> builder) {
+    public virtual IPromise NewPromise(IContext? ctx = null) => new Promise<byte>(this, ctx);
+
+    public virtual IFuture<T> Submit<T>(ref TaskBuilder<T> builder) {
         return Select().Submit(ref builder);
     }
 
-    public IFuture SubmitAction(Action action, int options = 0) {
+    public virtual IFuture SubmitAction(Action action, int options = 0) {
         return Select().SubmitAction(action, options);
     }
 
-    public IFuture SubmitAction(Action<IContext> action, IContext context, int options = 0) {
+    public virtual IFuture SubmitAction(Action<IContext> action, IContext context, int options = 0) {
         return Select().SubmitAction(action, context, options);
     }
 
-    public IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
+    public virtual IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
         return Select().SubmitFunc(action, options);
     }
 
-    public IFuture<T> SubmitFunc<T>(Func<IContext, T> action, IContext context, int options = 0) {
+    public virtual IFuture<T> SubmitFunc<T>(Func<IContext, T> action, IContext context, int options = 0) {
         return Select().SubmitFunc(action, context, options);
     }
 
@@ -89,41 +91,41 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     #region schedule
 
-    public IScheduledPromise<T> NewScheduledPromise<T>(IContext? context = null) => new ScheduledPromise<T>(this, context);
+    public virtual IScheduledPromise<T> NewScheduledPromise<T>(IContext? context = null) => new ScheduledPromise<T>(this, context);
 
-    public IScheduledPromise NewScheduledPromise(IContext? context = null) => new ScheduledPromise<object>(this, context);
-    
-    public IFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder) {
+    public virtual IScheduledPromise NewScheduledPromise(IContext? context = null) => new ScheduledPromise<object>(this, context);
+
+    public virtual IScheduledFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder) {
         return Select().Schedule(ref builder);
     }
 
-    public IFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
+    public virtual IScheduledFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
         return Select().ScheduleAction(action, delay, cancelToken);
     }
 
-    public IFuture ScheduleAction(Action<IContext> action, TimeSpan delay, IContext context) {
+    public virtual IScheduledFuture ScheduleAction(Action<IContext> action, TimeSpan delay, IContext context) {
         return Select().ScheduleAction(action, delay, context);
     }
 
-    public IFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
+    public virtual IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
         return Select().ScheduleFunc(action, delay, cancelToken);
     }
 
-    public IFuture<TResult> ScheduleFunc<TResult>(Func<IContext, TResult> action, TimeSpan delay, IContext context) {
+    public virtual IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<IContext, TResult> action, TimeSpan delay, IContext context) {
         return Select().ScheduleFunc(action, delay, context);
     }
 
-    public IFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+    public virtual IScheduledFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
         return Select().ScheduleWithFixedDelay(action, delay, period, cancelToken);
     }
 
-    public IFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+    public virtual IScheduledFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
         return Select().ScheduleAtFixedRate(action, delay, period, cancelToken);
     }
 
     #endregion
 
-    #region misc
+    #region 迭代
 
     IEnumerator IEnumerable.GetEnumerator() {
         return GetEnumerator();

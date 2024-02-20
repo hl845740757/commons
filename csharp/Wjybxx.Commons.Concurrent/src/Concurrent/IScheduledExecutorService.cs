@@ -42,12 +42,12 @@ public interface IScheduledExecutorService : IExecutorService
 
     /// <summary>
     ///
-    /// 注意：使用ref仅为了避免防御性拷贝，不会修改对象的状态 —— in关键字可能产生拷贝。
+    /// 注意：使用ref仅为了避免防御性拷贝，不会修改对象的状态 —— in关键字仍可能产生拷贝。
     /// </summary>
     /// <param name="builder">任务构建器</param>
     /// <typeparam name="TResult"></typeparam>
     /// <returns></returns>
-    IFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder);
+    IScheduledFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder);
 
     #region action
 
@@ -58,7 +58,7 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="delay">执行延迟</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    IFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null);
+    IScheduledFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null);
 
     /// <summary>
     /// 在给定的延迟之后执行给定的委托（接收上下文参数）
@@ -67,7 +67,7 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="delay">执行延迟</param>
     /// <param name="context">上下文</param>
     /// <returns></returns>11
-    IFuture ScheduleAction(Action<IContext> action, TimeSpan delay, IContext context);
+    IScheduledFuture ScheduleAction(Action<IContext> action, TimeSpan delay, IContext context);
 
     /// <summary>
     /// 在给定的延迟之后执行给定的委托
@@ -76,7 +76,7 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="delay">执行延迟</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    IFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null);
+    IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null);
 
     /// <summary>
     /// 在给定的延迟之后执行给定的委托（接收上下文参数）
@@ -85,7 +85,7 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="delay">执行延迟</param>
     /// <param name="context">上下文</param>
     /// <returns></returns>
-    IFuture<TResult> ScheduleFunc<TResult>(Func<IContext, TResult> action, TimeSpan delay, IContext context);
+    IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<IContext, TResult> action, TimeSpan delay, IContext context);
 
     /// <summary>
     /// 按固定延迟执行任务，FixedDelay只保证两次任务的执行间隔一定大于等于给定延迟
@@ -95,7 +95,7 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="period">后续执行间隔</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    IFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
+    IScheduledFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
 
     /// <summary>
     /// 按给定频率执行任务，FixedRate
@@ -106,7 +106,7 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="period">后续执行间隔</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    IFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
+    IScheduledFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
 
     #endregion
 }

@@ -45,6 +45,26 @@ public interface TaskBuilder
     /// </summary>
     public const int TYPE_FUNC_CTX = 3;
 
+    #region factory
+
+    public static TaskBuilder<object> NewAction(Action action) {
+        return new TaskBuilder<object>(TaskBuilder.TYPE_ACTION, action);
+    }
+
+    public static TaskBuilder<object> NewAction(Action<IContext> action, IContext context) {
+        return new TaskBuilder<object>(TaskBuilder.TYPE_ACTION_CTX, action, context);
+    }
+
+    public static TaskBuilder<T> NewFunc<T>(Func<T> func) {
+        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC, func);
+    }
+
+    public static TaskBuilder<T> NewFunc<T>(Func<IContext, T> func, IContext context) {
+        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_CTX, func, context);
+    }
+
+    #endregion
+
     public static int TaskType(object task) {
         if (task is Action) {
             return TaskBuilder.TYPE_ACTION;
@@ -83,7 +103,7 @@ public struct TaskBuilder<T> : TaskBuilder
     /// <param name="type">任务的类型</param>
     /// <param name="task">委托</param>
     /// <param name="context">任务的上下文</param>
-    private TaskBuilder(int type, object task, IContext? context = null) {
+    internal TaskBuilder(int type, object task, IContext? context = null) {
         this.type = type;
         this.task = task;
         this.context = context;
@@ -91,22 +111,6 @@ public struct TaskBuilder<T> : TaskBuilder
     }
 
     #region factory
-
-    public static TaskBuilder<T> NewAction(Action action) {
-        return new TaskBuilder<T>(TaskBuilder.TYPE_ACTION, action);
-    }
-
-    public static TaskBuilder<T> NewAction(Action<IContext> action, IContext context) {
-        return new TaskBuilder<T>(TaskBuilder.TYPE_ACTION_CTX, action, context);
-    }
-
-    public static TaskBuilder<T> NewFunc(Func<T> func) {
-        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC, func);
-    }
-
-    public static TaskBuilder<T> NewFunc(Func<IContext, T> func, IContext context) {
-        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_CTX, func, context);
-    }
 
     #endregion
 

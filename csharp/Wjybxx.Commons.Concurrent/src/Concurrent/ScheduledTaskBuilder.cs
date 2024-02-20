@@ -16,37 +16,252 @@
 
 #endregion
 
+using System;
+
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
+
+public interface ScheduledTaskBuilder
+{
+    /** 执行一次 */
+    public const byte SCHEDULE_ONCE = 0;
+
+    /** 固定延迟 -- 两次执行的间隔大于等于给定的延迟 */
+    public const byte SCHEDULE_FIXED_DELAY = 1;
+
+    /** 固定频率 -- 执行次数 */
+    public const byte SCHEDULE_FIXED_RATE = 2;
+
+    /** 动态延迟 -- 每次执行后计算下一次的延迟 */
+    public const byte SCHEDULE_DYNAMIC_DELAY = 3;
+
+    /** 适用于禁止初始延迟小于0的情况 */
+    public static void ValidateInitialDelay(long initialDelay) {
+        if (initialDelay < 0) {
+            throw new ArgumentException($"initialDelay: {initialDelay} (expected: >= 0)");
+        }
+    }
+
+    public static void ValidatePeriod(long period) {
+        if (period == 0) {
+            throw new ArgumentException("period: 0 (expected: != 0)");
+        }
+    }
+
+    #region factory
+
+    public static ScheduledTaskBuilder<object> NewAction(Action task) {
+        TaskBuilder<object> taskBuilder = TaskBuilder.NewAction(task);
+        return new ScheduledTaskBuilder<object>(ref taskBuilder);
+    }
+
+    public static ScheduledTaskBuilder<object> NewAction(Action<IContext> task, IContext ctx) {
+        TaskBuilder<object> taskBuilder = TaskBuilder.NewAction(task, ctx);
+        return new ScheduledTaskBuilder<object>(ref taskBuilder);
+    }
+
+    public static ScheduledTaskBuilder<T> NewFunc<T>(Func<T> task) {
+        TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task);
+        return new ScheduledTaskBuilder<T>(ref taskBuilder);
+    }
+
+    public static ScheduledTaskBuilder<T> NewFunc<T>(Func<IContext, T> task, IContext ctx) {
+        TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task, ctx);
+        return new ScheduledTaskBuilder<T>(ref taskBuilder);
+    }
+
+    #endregion
+}
 
 /// <summary>
 /// 定时任务构建器
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public struct ScheduledTaskBuilder<T>
+public struct ScheduledTaskBuilder<T> : ScheduledTaskBuilder, TaskBuilder
 {
     /** 不能为readonly否则调用方法会产生拷贝 */
     private TaskBuilder<T> _core;
 
-    private ScheduledTaskBuilder(TaskBuilder<T> core) {
+    private byte scheduleType = 0;
+    private long initialDelay = 0;
+    private long period = 0;
+    private long timeout = -1;
+    /** 时间单位 -- 默认毫秒 */
+    private TimeSpan timeunit = TimeSpan.FromMilliseconds(1);
+
+    internal ScheduledTaskBuilder(ref TaskBuilder<T> core) {
         _core = core;
     }
+
+    #region 代理
 
     public int Type => _core.Type;
 
     public object Task => _core.Task;
 
-    public IContext? Context => _core.Context;
+    public IContext? Context {
+        get => _core.Context;
+        set => _core.Context = value;
+    }
 
-    public int Options => _core.Options;
+    public int Options {
+        get => _core.Options;
+        set => _core.Options = value;
+    }
 
+    /// <summary>
+    /// 启用特定任务选项
+    /// </summary>
+    /// <param name="taskOption"></param>
     public void Enable(int taskOption) {
         _core.Enable(taskOption);
     }
 
+    /// <summary>
+    /// 关闭特定任务选项
+    /// </summary>
+    /// <param name="taskOption"></param>
     public void Disable(int taskOption) {
         _core.Disable(taskOption);
     }
 
-    public int SchedulePhase => _core.SchedulePhase;
+    public int SchedulePhase {
+        get => _core.SchedulePhase;
+        set => _core.SchedulePhase = value;
+    }
+
+    #endregion
+
+    #region schedule
+
+    public byte ScheduleType => scheduleType;
+
+    public long InitialDelay => initialDelay;
+
+    public long Period => period;
+
+    public TimeSpan Timeunit {
+        get => timeunit;
+        set {
+            if (value.Ticks <= 0) {
+                throw new ArgumentException("invalid timeunit");
+            }
+            timeunit = value;
+        }
+    }
+
+    /** 是否是周期性任务 */
+    public bool IsPeriodic => scheduleType != 0;
+
+    public bool IsOnlyOnce => scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE;
+
+    /// <summary>
+    /// 设置任务为单次执行
+    /// </summary>
+    /// <param name="delay">触发延迟</param>
+    public void SetOnlyOnce(long delay) {
+        this.scheduleType = ScheduledTaskBuilder.SCHEDULE_ONCE;
+        this.initialDelay = delay;
+        this.period = default;
+    }
+
+    /// <summary>
+    /// 设置任务为单次执行
+    /// </summary>
+    /// <param name="delay">触发延迟</param>
+    /// <param name="timeunit">时间单位</param>
+    public void SetOnlyOnce(long delay, TimeSpan timeunit) {
+        SetOnlyOnce(delay);
+        Timeunit = timeunit;
+    }
+
+    public bool IsFixedDelay => scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_DELAY;
+
+    /// <summary>
+    /// 设置任务为固定延迟执行
+    /// </summary>
+    /// <param name="initialDelay">首次延迟</param>
+    /// <param name="period">循环周期</param>
+    public void SetFixedDelay(long initialDelay, long period) {
+        ScheduledTaskBuilder.ValidatePeriod(period);
+        this.scheduleType = ScheduledTaskBuilder.SCHEDULE_FIXED_DELAY;
+        this.initialDelay = initialDelay;
+        this.period = period;
+    }
+
+    /// <summary>
+    /// 设置任务为固定延迟执行
+    /// </summary>
+    /// <param name="initialDelay"></param>
+    /// <param name="period"></param>
+    /// <param name="timeunit">时间单位</param>
+    public void SetFixedDelay(long initialDelay, long period, TimeSpan timeunit) {
+        SetFixedDelay(initialDelay, period);
+        Timeunit = timeunit;
+    }
+
+    public bool IsFixedRate => scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE;
+
+    /// <summary>
+    /// 设置任务为固定频率执行（会补帧）
+    /// </summary>
+    /// <param name="initialDelay">首次延迟</param>
+    /// <param name="period">循环周期</param>
+    public void SetFixedRate(long initialDelay, long period) {
+        ScheduledTaskBuilder.ValidateInitialDelay(initialDelay);
+        ScheduledTaskBuilder.ValidatePeriod(period);
+        this.scheduleType = ScheduledTaskBuilder.SCHEDULE_FIXED_RATE;
+        this.initialDelay = initialDelay;
+        this.period = period;
+    }
+
+    /// <summary>
+    /// 设置任务为固定频率执行（会补帧）
+    /// </summary>
+    /// <param name="initialDelay">首次延迟</param>
+    /// <param name="period">循环周期</param>
+    /// <param name="timeunit">时间单位</param>
+    public void SetFixedRate(long initialDelay, long period, TimeSpan timeunit) {
+        SetFixedRate(initialDelay, period);
+        Timeunit = timeunit;
+    }
+
+    /// <summary>
+    /// 1. -1表示无限制，大于等于0表示有限制
+    /// 2. 我们总是在执行任务后检查是否超时，以确保至少会执行一次
+    /// 3. 超时是一个不准确的调度，不保证超时后能立即结束
+    /// </summary>
+    /// <exception cref="ArgumentException"></exception>
+    public long Timeout {
+        get => timeout;
+        set {
+            if (value < -1) {
+                throw new ArgumentException("invalid timeout: " + timeout);
+            }
+            timeout = value;
+        }
+    }
+
+    /// <summary>
+    /// 是否设置了超时时间
+    /// </summary>
+    public bool HasTimeout => timeout >= 0;
+
+    /// <summary>
+    /// 通过预估执行次数限制超时时间
+    /// 该方法对于fixedRate类型的任务有帮助
+    /// </summary>
+    /// <param name="count"></param>
+    public void SetTimeoutByCount(int count) {
+        if (count < 1) {
+            throw new ArithmeticException("invalid count: " + count);
+        }
+        if (count == 1) {
+            this.timeout = Math.Max(0, initialDelay);
+        } else {
+            this.timeout = Math.Max(0, initialDelay + (count - 1) * Period);
+        }
+    }
+
+    #endregion
 }

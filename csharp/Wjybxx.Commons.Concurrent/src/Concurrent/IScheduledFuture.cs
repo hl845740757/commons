@@ -16,23 +16,18 @@
 
 #endregion
 
-#pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 定时任务关联的Promise
+/// 返回给用户的Future
+///
+/// ps：暂未迁移java中的方法，待到必要时再迁移。
 /// </summary>
-public interface IScheduledPromise : IPromise, IScheduledFuture
+public interface IScheduledFuture : IFuture
 {
 }
 
-public interface IScheduledPromise<T> : IScheduledPromise, IPromise<T>, IScheduledFuture<T>
+public interface IScheduledFuture<T> : IScheduledFuture, IFuture<T>
 {
-    /// <summary>
-    /// 注入关联的任务.
-    /// 1.Promise需要了解任务的状态以支持用户的查询;
-    /// 2.由于存在双向依赖，因此需要延迟注入;
-    /// </summary>
-    /// <param name="task">关联的任务</param>
-    void SetTask(IScheduledFutureTask<T> task);
+    
 }

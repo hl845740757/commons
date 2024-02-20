@@ -59,7 +59,7 @@ public class TimeoutBlockingWaitStrategy implements WaitStrategy {
                     barrier.checkAlert();
                     nanos = blocker.awaitNanos(nanos);
                     if (nanos <= 0) {
-                        throw StacklessTimeoutException.INSTANCE;
+                        throw StacklessTimeoutException.INST;
                     }
                 }
             } finally {

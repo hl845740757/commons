@@ -78,7 +78,7 @@ public class TimeoutSleepingWaitStrategy implements WaitStrategy {
                 --counter;
                 LockSupport.parkNanos(sleepTimeNs);
             } else {
-                throw StacklessTimeoutException.INSTANCE;
+                throw StacklessTimeoutException.INST;
             }
         }
         return availableSequence;

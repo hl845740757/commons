@@ -76,18 +76,18 @@ public abstract class AbstractEventLoop : IEventLoop
     public abstract void Shutdown();
 
     public abstract List<ITask> ShutdownNow();
-
-    public abstract EventLoopState State { get; }
-
-    public abstract IFuture RunningFuture { get; }
-
-    public abstract IFuture TerminationFuture { get; }
-
+    
     public abstract bool InEventLoop();
 
     public abstract bool InEventLoop(Thread thread);
 
     public abstract void Wakeup();
+
+    public abstract IFuture RunningFuture { get; }
+
+    public abstract IFuture TerminationFuture { get; }
+
+    public abstract EventLoopState State { get; }
 
     public virtual bool IsRunning => State == EventLoopState.Running;
 
@@ -168,31 +168,31 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public virtual IScheduledPromise NewScheduledPromise(IContext? context = null) => new ScheduledPromise<object>(this, context);
 
-    public virtual IFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder) {
+    public virtual IScheduledFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder) {
         throw new NotImplementedException();
     }
 
-    public virtual IFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
+    public virtual IScheduledFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
         throw new NotImplementedException();
     }
 
-    public virtual IFuture ScheduleAction(Action<IContext> action, TimeSpan delay, IContext context) {
+    public virtual IScheduledFuture ScheduleAction(Action<IContext> action, TimeSpan delay, IContext context) {
         throw new NotImplementedException();
     }
 
-    public virtual IFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
+    public virtual IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
         throw new NotImplementedException();
     }
 
-    public virtual IFuture<TResult> ScheduleFunc<TResult>(Func<IContext, TResult> action, TimeSpan delay, IContext context) {
+    public virtual IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<IContext, TResult> action, TimeSpan delay, IContext context) {
         throw new NotImplementedException();
     }
 
-    public virtual IFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+    public virtual IScheduledFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
         throw new NotImplementedException();
     }
 
-    public virtual IFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+    public virtual IScheduledFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
         throw new NotImplementedException();
     }
 

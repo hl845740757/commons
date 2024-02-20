@@ -122,7 +122,7 @@ public class TaskOption
     public const int MASK_RESERVED_OPTIONS = unchecked((int)0xFF00_0000);
 
     /// <summary> 是否启用了所有选项 ///</summary>
-    public static bool isEnabled(int flags, int option) {
+    public static bool IsEnabled(int flags, int option) {
         return (flags & option) == option;
     }
 
@@ -131,7 +131,7 @@ public class TaskOption
     /// 1.禁用任意bit即为未启用；
     /// 2.和{@link #isEnabled(int, int)}相反关系
     ///</summary>
-    public static bool isDisabled(int flags, int option) {
+    public static bool IsDisabled(int flags, int option) {
         return (flags & option) != option;
     }
 
@@ -171,7 +171,7 @@ public class TaskOption
     }
 
     /// <summary> 获取任务的调度阶段 ///</summary>
-    public static int schedulePhase(int options) {
+    public static int SchedulePhase(int options) {
         return options & MASK_SCHEDULE_PHASE;
     }
 

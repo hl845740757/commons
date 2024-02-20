@@ -286,7 +286,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 event.setOptions(options);
                 if (task instanceof ScheduledPromiseTask<?> futureTask) {
                     futureTask.setId(sequence); // nice
-                    if (futureTask.isEnable(TaskOption.LOW_PRIORITY)) {
+                    if (futureTask.isEnabled(TaskOption.LOW_PRIORITY)) {
                         futureTask.setQueueId(LOWER_PRIORITY_QUEUE_ID);
                     }
                     futureTask.registerCancellation();

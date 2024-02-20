@@ -112,7 +112,7 @@ public class ScheduleTest2 {
     void testTimeSharingTimeout() {
         IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing(this::timeSharingJoinString)
                 .setFixedDelay(0, 200)
-                .setTimeoutCount(1));
+                .setTimeoutByCount(1));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
         Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
@@ -123,7 +123,7 @@ public class ScheduleTest2 {
         IScheduledFuture<?> future = consumer.schedule(ScheduledTaskBuilder.newAction(() -> {
                 })
                 .setFixedDelay(0, 200)
-                .setTimeoutCount(1));
+                .setTimeoutByCount(1));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
         Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
@@ -133,7 +133,7 @@ public class ScheduleTest2 {
     void testCallableTimeout() {
         IScheduledFuture<?> future = consumer.schedule(ScheduledTaskBuilder.newFunc(() -> "hello world")
                 .setFixedDelay(0, 200)
-                .setTimeoutCount(1));
+                .setTimeoutByCount(1));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
         Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);

@@ -181,8 +181,8 @@ public class Context<T> implements IContext {
     // endregion
 
     // region with
+    // with不会共享state和取消令牌
 
-    /** 使用给定取消令牌 */
     public Context<T> withState(Object state) {
         return newContext(parent, state, null, blackboard, sharedProps);
     }

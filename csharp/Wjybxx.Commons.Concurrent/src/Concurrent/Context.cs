@@ -166,6 +166,7 @@ public class Context<T> : IContext where T : class
     #endregion
 
     #region with
+    // with不会共享state和取消令牌
 
     public Context<T> WithState(object state) {
         return NewContext(Parent, state, null, Blackboard, SharedProps);

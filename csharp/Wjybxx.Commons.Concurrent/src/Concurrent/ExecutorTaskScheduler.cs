@@ -82,9 +82,9 @@ public class ExecutorTaskScheduler : TaskScheduler
 
     private class TaskWrapper : ITask
     {
-        private ExecutorTaskScheduler _taskScheduler;
-        private Task _task;
-        private int _options;
+        private readonly ExecutorTaskScheduler _taskScheduler;
+        private readonly Task _task;
+        private readonly int _options;
 
         public TaskWrapper(ExecutorTaskScheduler taskScheduler, Task task, int options) {
             _taskScheduler = taskScheduler;

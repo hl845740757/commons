@@ -16,23 +16,27 @@
 
 #endregion
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
+using System;
+using System.Threading;
+
+namespace Wjybxx.Commons;
 
 /// <summary>
-/// 定时任务关联的Promise
+/// 线程工具类
 /// </summary>
-public interface IScheduledPromise : IPromise, IScheduledFuture
+public static class ThreadUtil
 {
-}
+    /** 如果是中断异常，则恢复线程中断状态，否则不产生效用 */
+    public static void RecoveryInterrupted(Exception t) {
+        if (t is ThreadInterruptedException) {
+            Thread.CurrentThread.Interrupt();
+        }
+    }
 
-public interface IScheduledPromise<T> : IScheduledPromise, IPromise<T>, IScheduledFuture<T>
-{
-    /// <summary>
-    /// 注入关联的任务.
-    /// 1.Promise需要了解任务的状态以支持用户的查询;
-    /// 2.由于存在双向依赖，因此需要延迟注入;
-    /// </summary>
-    /// <param name="task">关联的任务</param>
-    void SetTask(IScheduledFutureTask<T> task);
+    /**
+     * 检查线程中断状态 -- 如果线程被中断，则抛出中断异常。
+     */
+    public static void CheckInterrupted() {
+        // c# 居然不支持查询线程的中断信号...
+    }
 }

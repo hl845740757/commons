@@ -180,7 +180,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
      *
      * @param count 期望的执行次数
      */
-    public ScheduledTaskBuilder<V> setTimeoutCount(int count) {
+    public ScheduledTaskBuilder<V> setTimeoutByCount(int count) {
         if (count < 1) {
             throw new IllegalArgumentException("invalid count " + count);
         }

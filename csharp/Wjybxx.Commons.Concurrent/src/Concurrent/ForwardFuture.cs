@@ -62,6 +62,7 @@ public class ForwardFuture<T> : IFuture<T>
 
     #region 转发
 
+    public IContext Context => future.Context;
     public IExecutor? Executor => future.Executor;
 
     public TaskStatus Status => future.Status;

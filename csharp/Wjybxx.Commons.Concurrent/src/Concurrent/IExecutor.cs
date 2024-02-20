@@ -47,7 +47,6 @@ public interface IExecutor
     /// <returns></returns>
     TaskScheduler AsScheduler();
 
-
     /// <summary>
     /// 调度一个受信任的Task类型，Executor不会再对其进行封装
     /// </summary>

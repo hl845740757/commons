@@ -16,23 +16,30 @@
 
 #endregion
 
+using System;
+using System.Runtime.Serialization;
+
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 定时任务关联的Promise
+/// 不捕获堆栈的超时异常
 /// </summary>
-public interface IScheduledPromise : IPromise, IScheduledFuture
+public class StacklessTimeoutException : TimeoutException
 {
-}
+    public static readonly StacklessTimeoutException Inst = new StacklessTimeoutException();
+    
+    public StacklessTimeoutException() {
+    }
 
-public interface IScheduledPromise<T> : IScheduledPromise, IPromise<T>, IScheduledFuture<T>
-{
-    /// <summary>
-    /// 注入关联的任务.
-    /// 1.Promise需要了解任务的状态以支持用户的查询;
-    /// 2.由于存在双向依赖，因此需要延迟注入;
-    /// </summary>
-    /// <param name="task">关联的任务</param>
-    void SetTask(IScheduledFutureTask<T> task);
+    protected StacklessTimeoutException(SerializationInfo info, StreamingContext context) : base(info, context) {
+    }
+
+    public StacklessTimeoutException(string? message) : base(message) {
+    }
+
+    public StacklessTimeoutException(string? message, Exception? innerException) : base(message, innerException) {
+    }
+
+    public override string? StackTrace => null;
 }

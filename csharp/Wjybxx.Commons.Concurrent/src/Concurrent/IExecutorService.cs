@@ -117,7 +117,7 @@ public interface IExecutorService : IExecutor
     /// <summary>
     /// 提交一个任务
     ///
-    /// 注意：使用ref仅为了避免防御性拷贝，不会修改对象的状态 —— in关键字可能产生拷贝。
+    /// 注意：使用ref仅为了避免防御性拷贝，不会修改对象的状态 —— in关键字仍可能产生拷贝。
     /// </summary>
     /// <param name="builder">任务构建器</param>
     /// <returns></returns>

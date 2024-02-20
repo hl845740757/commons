@@ -23,6 +23,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// <summary>
 /// 1. 该非泛型接口用于支持统一操作，不提供特殊实现。
 /// 2. void可通过byte/int/bool泛型替代 -- 推荐byte。
+/// 3. 只有null是安全的，其它值都不一定安全。
 /// </summary>
 public interface IPromise : IFuture
 {

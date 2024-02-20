@@ -25,8 +25,8 @@ namespace Wjybxx.Commons.Concurrent;
 /// 事件循环
 /// 它是单线程的，它保证任务不会并发执行，且任务的执行顺序和提交顺序一致。
 ///
-/// <h2>时序</h2>
-/// 在{@link EventLoopGroup}的基础上，我们提供这样的时序保证：
+/// <h3>时序</h3>
+/// 在<see cref="IEventLoopGroup"/>的基础上，我们提供这样的时序保证：
 /// 1.如果 task1 的执行时间小于等于 task2 的执行时间，且 task1 先提交成功，则保证 task1 在 task2 之前执行。
 /// 它可以表述为：不保证后提交的高优先级的任务能先执行。
 /// 还可以表述为：消费者按照提交成功顺序执行是合法的。
@@ -112,6 +112,8 @@ public interface IEventLoop : IFixedEventLoopGroup, ISingleThreadExecutor
 
     bool IExecutorService.IsTerminated => State >= EventLoopState.Terminated;
 
+    #endregion
+
     /// <summary>
     /// 测试是否在事件循环线程内，如果不在事件循环线程内则抛出异常
     /// </summary>
@@ -132,8 +134,6 @@ public interface IEventLoop : IFixedEventLoopGroup, ISingleThreadExecutor
             throw new GuardedOperationException("Calling " + method + " must in the EventLoop");
         }
     }
-
-    #endregion
 }
 
 /// <summary>

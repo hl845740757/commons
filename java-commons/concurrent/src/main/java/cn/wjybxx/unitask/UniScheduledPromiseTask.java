@@ -39,7 +39,7 @@ import java.util.function.Function;
 @NotThreadSafe
 public final class UniScheduledPromiseTask<V>
         extends PromiseTask<V>
-        implements IScheduledFutureTask<V>, IndexedElement, Consumer<Object> {
+        implements IScheduledFutureTask<V>, IndexedElement, Consumer<Object>, CancelTokenListener {
 
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
     private long id;
@@ -172,6 +172,11 @@ public final class UniScheduledPromiseTask<V>
     }
 
     @Override
+    public boolean isPeriodic() {
+        return getScheduleType() != 0;
+    }
+
+    @Override
     public void clear() {
         super.clear();
         timeoutContext = null;
@@ -224,12 +229,12 @@ public final class UniScheduledPromiseTask<V>
             clear();
             return false;
         }
-        if ((ctl & maskClaimed) == 0) {
+        if (!isClaimed()) {
             if (!promise.trySetComputing()) {
                 clear();
                 return false;
             }
-            ctl |= maskClaimed;
+            setClaimed();
         } else if (!promise.isComputing()) {
             clear();
             return false;
@@ -240,7 +245,7 @@ public final class UniScheduledPromiseTask<V>
             if (timeoutContext != null) {
                 timeoutContext.beforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE);
                 if (TaskOption.isEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeoutContext.isTimeout()) {
-                    promise.trySetException(StacklessTimeoutException.INSTANCE);
+                    promise.trySetException(StacklessTimeoutException.INST);
                     clear();
                     return false;
                 }
@@ -263,7 +268,7 @@ public final class UniScheduledPromiseTask<V>
             }
             // 未被取消的情况下检测超时
             if (timeoutContext != null && timeoutContext.isTimeout()) {
-                promise.trySetException(StacklessTimeoutException.INSTANCE);
+                promise.trySetException(StacklessTimeoutException.INST);
                 clear();
                 return false;
             }
@@ -295,11 +300,9 @@ public final class UniScheduledPromiseTask<V>
     private void setNextRunTime(long tickTime, TimeoutContext timeoutContext, int scheduleType) {
         long maxDelay = timeoutContext != null ? timeoutContext.getTimeLeft() : Long.MAX_VALUE;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
-            // 逻辑时间
-            nextTriggerTime = nextTriggerTime + Math.min(maxDelay, period);
+            nextTriggerTime = nextTriggerTime + Math.min(maxDelay, period); // 逻辑时间
         } else {
-            // 真实时间
-            nextTriggerTime = tickTime + Math.min(maxDelay, period);
+            nextTriggerTime = tickTime + Math.min(maxDelay, period); // 真实时间
         }
     }
 
@@ -317,11 +320,15 @@ public final class UniScheduledPromiseTask<V>
     }
 
     public void registerCancellation() {
+        // 需要监听来自future取消... 无论有没有ctx
+        if (!TaskOption.isEnabled(options, TaskOption.IGNORE_FUTURE_CANCEL)) {
+            promise.onCompleted(this, 0);
+        }
         ICancelToken cancelToken = promise.ctx().cancelToken();
-        if (promise.ctx().cancelToken() == ICancelToken.NONE) {
+        if (cancelToken == ICancelToken.NONE) {
             return;
         }
-        cancelRegistration = cancelToken.thenAccept(this);
+        cancelRegistration = cancelToken.thenNotify(this);
     }
 
     @Override
@@ -332,15 +339,14 @@ public final class UniScheduledPromiseTask<V>
             if (!(ex instanceof StacklessCancellationException)) {
                 eventLoop().removeScheduled(this);
             }
-        } else {
-            ICancelToken cancelToken = promise.ctx().cancelToken();
-            if (!cancelToken.isCancelling()) {
-                return;
-            }
-            // 用户通过令牌发起取消
-            if (promise.trySetCancelled(cancelToken.cancelCode()) && !cancelToken.isWithoutRemove()) {
-                eventLoop().removeScheduled(this);
-            }
+        }
+    }
+
+    @Override
+    public void onCancelRequested(ICancelToken cancelToken) {
+        // 用户通过令牌发起取消
+        if (promise.trySetCancelled(cancelToken.cancelCode()) && !cancelToken.isWithoutRemove()) {
+            eventLoop().removeScheduled(this);
         }
     }
 

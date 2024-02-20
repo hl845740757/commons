@@ -23,32 +23,67 @@ using System.Diagnostics;
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
+/// 接口用于定义常量和工具方法
 /// </summary>
-/// <typeparam name="T">结果类型</typeparam>
-public class PromiseTask<T> : IFutureTask<T>
+public interface PromiseTask
 {
     /**
      * queueId的掩码 -- 8bit，最大255。
      * 1.放在低8位，减少运算，queueId的计算频率高于其它部分。
      * 2.大于{@link TaskOption}的中的64阶段。
      */
-    protected const int maskQueueId = 0xFF;
+    protected const int MaskQueueId = 0xFF;
     /** 任务类型的掩码 -- 4bit，可省去大量的instanceof测试 */
-    protected const int maskTaskType = 0x0F00;
+    protected const int MaskTaskType = 0x0F00;
     /** 调度类型的掩码 -- 4bit，最大16种 */
-    protected const int maskScheduleType = 0xF000;
+    protected const int MaskScheduleType = 0xF000;
     /** 是否已经声明任务的归属权 */
-    protected const int maskClaimed = 1 << 16;
+    protected const int MaskClaimed = 1 << 16;
     /** 分时任务是否已启动 */
-    protected const int maskStarted = 1 << 17;
+    protected const int MaskStarted = 1 << 17;
     /** 分时任务是否已停止 */
-    protected const int maskStopped = 1 << 18;
+    protected const int MaskStopped = 1 << 18;
+    /** 延时任务有超时时间 -- 识别结构体的有效性 */
+    protected const int MaskTimeout = 1 << 20;
 
-    protected const int offsetQueueId = 0;
-    protected const int offsetTaskType = 8;
-    protected const int offsetScheduleType = 12;
-    protected const int maxQueueId = 255;
+    protected const int OffsetQueueId = 0;
+    /** 任务类型的偏移量 */
+    protected const int OffsetTaskType = 8;
+    /** 调度类型的偏移量 */
+    protected const int OffsetScheduleType = 12;
+    /** 最大队列id */
+    protected const int MaxQueueId = 255;
 
+    #region factory
+
+    public static PromiseTask<T> OfAction<T>(Action action, int options, IPromise<T> promise) {
+        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_ACTION);
+    }
+
+    public static PromiseTask<T> OfAction<T>(Action<IContext> action, int options, IPromise<T> promise) {
+        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX);
+    }
+
+    public static PromiseTask<T> OfFunction<T>(Func<T> action, int options, IPromise<T> promise) {
+        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_FUNC);
+    }
+
+    public static PromiseTask<T> OfFunction<T>(Func<IContext, T> action, int options, IPromise<T> promise) {
+        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_FUNC_CTX);
+    }
+
+    public static PromiseTask<T> OfBuilder<T>(ref TaskBuilder<T> builder, IPromise<T> promise) {
+        return new PromiseTask<T>(ref builder, promise);
+    }
+
+    #endregion
+}
+
+/// <summary>
+/// </summary>
+/// <typeparam name="T">结果类型</typeparam>
+public class PromiseTask<T> : IFutureTask<T>, PromiseTask
+{
     /** 用户的委托 */
     private object task;
     /** 任务的调度选项 */
@@ -56,7 +91,7 @@ public class PromiseTask<T> : IFutureTask<T>
     /** 任务关联的promise - 用户可能在任务完成后继续访问，因此不能清理 */
     protected readonly IPromise<T> promise;
     /** 任务的控制标记 */
-    private int ctl;
+    protected int ctl;
 
     /// <summary>
     /// 
@@ -76,33 +111,9 @@ public class PromiseTask<T> : IFutureTask<T>
         this.task = action ?? throw new ArgumentNullException(nameof(action));
         this.options = options;
         this.promise = promise ?? throw new ArgumentNullException(nameof(promise));
-        this.ctl |= (taskType << offsetTaskType);
-        // 注入promise
+        this.ctl |= (taskType << PromiseTask.OffsetTaskType);
+        // 分时任务注入promise
     }
-
-    #region factory
-
-    public static PromiseTask<T> OfAction(Action action, int options, IPromise<T> promise) {
-        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_ACTION);
-    }
-
-    public static PromiseTask<T> OfAction(Action<IContext> action, int options, IPromise<T> promise) {
-        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX);
-    }
-
-    public static PromiseTask<T> OfFunction(Func<T> action, int options, IPromise<T> promise) {
-        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_FUNC);
-    }
-
-    public static PromiseTask<T> OfFunction(Func<IContext, T> action, int options, IPromise<T> promise) {
-        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_FUNC_CTX);
-    }
-
-    public static PromiseTask<T> OfBuilder(ref TaskBuilder<T> builder, IPromise<T> promise) {
-        return new PromiseTask<T>(ref builder, promise);
-    }
-
-    #endregion
 
     #region Props
 
@@ -118,78 +129,79 @@ public class PromiseTask<T> : IFutureTask<T>
     public virtual IPromise<T> Future => promise;
 
     /** 任务是否启用了指定选项 */
-    public bool isEnable(int taskOption) {
-        return TaskOption.isEnabled(options, taskOption);
+    public bool IsEnabled(int taskOption) {
+        return TaskOption.IsEnabled(options, taskOption);
     }
 
     /** 获取绑定的任务 */
-    public object getTask() {
-        return task;
-    }
+    public object Task => task;
 
-    /** 获取任务所属的队列id */
-    public int getQueueId() {
-        return (ctl & maskQueueId);
-    }
-
-    /** @param queueId 队列id，范围 [0, 255] */
-    public void setQueueId(int queueId) {
-        if (queueId < 0 || queueId > maxQueueId) {
-            throw new ArgumentException("queueId: " + maxQueueId);
+    /// <summary>
+    /// 任务所属的队列id
+    /// 注意：队列id范围 [0, 255]
+    /// </summary>
+    /// <exception cref="ArgumentException"></exception>
+    public int QueueId {
+        get => (ctl & PromiseTask.MaskQueueId);
+        set {
+            if (value < 0 || value > PromiseTask.MaxQueueId) {
+                throw new ArgumentException("queueId: " + PromiseTask.MaxQueueId);
+            }
+            ctl &= ~PromiseTask.MaskQueueId;
+            ctl |= (value);
         }
-        ctl &= ~maskQueueId;
-        ctl |= (queueId);
     }
 
     /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
-    public int getTaskType() {
-        return (ctl & maskTaskType) >> offsetTaskType;
-    }
+    public int TaskType => (ctl & PromiseTask.MaskTaskType) >> PromiseTask.OffsetTaskType;
 
-    /** 获取任务的调度类型 */
-    public int getScheduleType() {
-        return (ctl & maskScheduleType) >> offsetScheduleType;
-    }
-
-    /** 设置任务的调度类型 -- 应该在添加到队列之前设置 */
-    public void setScheduleType(int scheduleType) {
-        ctl |= (scheduleType << offsetScheduleType);
-    }
-
-    /** 是否是循环任务 */
-    public bool isPeriodic() {
-        return getScheduleType() != 0;
+    /** 任务的调度类型 -- 应该在添加到队列之前设置 */
+    public int ScheduleType {
+        get => (ctl & PromiseTask.MaskScheduleType) >> PromiseTask.OffsetScheduleType;
+        set => ctl |= (value << PromiseTask.OffsetScheduleType);
     }
 
     /** 是否已经声明任务的归属权 */
-    public bool isClaimed() {
-        return (ctl & maskClaimed) != 0;
-    }
+    public bool IsClaimed => (ctl & PromiseTask.MaskClaimed) != 0;
 
     /** 将任务标记为已申领 */
-    public void setClaimed() {
-        ctl |= maskClaimed;
+    public void SetClaimed() {
+        ctl |= PromiseTask.MaskClaimed;
     }
 
     /** 分时任务是否启动 */
-    public bool isStarted() {
-        return (ctl & maskStarted) != 0;
+    public bool IsStarted() {
+        return (ctl & PromiseTask.MaskStarted) != 0;
     }
 
     /** 将分时任务标记为已启动 */
-    public void setStarted() {
-        ctl |= maskStarted;
+    public void SetStarted() {
+        ctl |= PromiseTask.MaskStarted;
+    }
+
+    /** 获取ctl中的某个bit */
+    protected bool GetCtlBit(int mask) {
+        return (ctl & mask) != 0;
+    }
+
+    /** 设置ctl中的某个bit */
+    protected void SetCtlBit(int mask, bool value) {
+        if (value) {
+            ctl |= mask;
+        } else {
+            ctl &= ~mask;
+        }
     }
 
     #endregion
 
-    protected void Clear() {
+    protected virtual void Clear() {
         task = null!;
     }
 
     /** 运行可直接得出结果的任务 */
     protected T RunTask() {
-        int type = (ctl & maskTaskType) >> offsetTaskType;
+        int type = (ctl & PromiseTask.MaskTaskType) >> PromiseTask.OffsetTaskType;
         switch (type) {
             case TaskBuilder.TYPE_ACTION: {
                 Action task = (Action)this.task;

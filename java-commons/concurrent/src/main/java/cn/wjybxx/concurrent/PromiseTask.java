@@ -48,10 +48,15 @@ public class PromiseTask<V> implements IFutureTask<V> {
     protected static final int maskStarted = 1 << 17;
     /** 分时任务是否已停止 */
     protected static final int maskStopped = 1 << 18;
+    /** 延时任务有超时时间 */
+    protected static final int maskTimeout = 1 << 20;
 
     protected static final int offsetQueueId = 0;
+    /** 任务类型的偏移量 */
     protected static final int offsetTaskType = 8;
+    /** 调度类型的偏移量 */
     protected static final int offsetScheduleType = 12;
+    /** 最大队列id */
     protected static final int maxQueueId = 255;
 
     /** 用户的任务 */
@@ -123,7 +128,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     }
 
     /** 任务是否启用了指定选项 */
-    public boolean isEnable(int taskOption) {
+    public boolean isEnabled(int taskOption) {
         return TaskOption.isEnabled(options, taskOption);
     }
 
@@ -161,11 +166,6 @@ public class PromiseTask<V> implements IFutureTask<V> {
         ctl |= (scheduleType << offsetScheduleType);
     }
 
-    /** 是否是循环任务 */
-    public final boolean isPeriodic() {
-        return getScheduleType() != 0;
-    }
-
     /** 是否已经声明任务的归属权 */
     public final boolean isClaimed() {
         return (ctl & maskClaimed) != 0;
@@ -184,6 +184,20 @@ public class PromiseTask<V> implements IFutureTask<V> {
     /** 将分时任务标记为已启动 */
     public final void setStarted() {
         ctl |= maskStarted;
+    }
+
+    /** 获取ctl中的某个bit */
+    protected boolean getCtlBit(int mask) {
+        return (ctl & mask) != 0;
+    }
+
+    /** 设置ctl中的某个bit */
+    protected void setCtlBit(int mask, boolean value) {
+        if (value) {
+            ctl |= mask;
+        } else {
+            ctl &= ~mask;
+        }
     }
 
     /** 获取任务绑的Promise - 允许子类重写返回值类型 */
@@ -262,7 +276,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
                 if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
                     runTimeSharing();
                     if (!promise.isDone()) {
-                        promise.trySetException(StacklessTimeoutException.INSTANCE);
+                        promise.trySetException(StacklessTimeoutException.INST);
                     }
                 } else {
                     V result = runTask();
