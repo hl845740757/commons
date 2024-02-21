@@ -29,6 +29,7 @@ public final class CancelCodeBuilder {
     public CancelCodeBuilder() {
     }
 
+    /** 取消的原因 */
     public int getReason() {
         return ICancelToken.reason(code);
     }
@@ -42,6 +43,7 @@ public final class CancelCodeBuilder {
         return this;
     }
 
+    /** 紧急程度 */
     public int getDegree() {
         return ICancelToken.degree(code);
     }
@@ -55,12 +57,13 @@ public final class CancelCodeBuilder {
         return this;
     }
 
+    /** 是否中断线程 */
     public boolean isInterruptible() {
         return ICancelToken.isInterruptible(code);
     }
 
-    public CancelCodeBuilder setInterruptible(boolean interruptible) {
-        if (interruptible) {
+    public CancelCodeBuilder setInterruptible(boolean value) {
+        if (value) {
             code |= ICancelToken.MASK_INTERRUPT;
         } else {
             code &= (~ICancelToken.MASK_INTERRUPT);
@@ -68,6 +71,7 @@ public final class CancelCodeBuilder {
         return this;
     }
 
+    /** 是否无需立即从任务队列中删除 */
     public boolean isWithoutRemove() {
         return ICancelToken.isWithoutRemove(code);
     }

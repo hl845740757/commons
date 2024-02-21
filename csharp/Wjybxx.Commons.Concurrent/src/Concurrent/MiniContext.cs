@@ -20,7 +20,7 @@
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 该实现类不应当暴露给用户的委托。
+/// 只包含取消令牌的context，该类实例通常不暴露给用户的Action
 /// </summary>
 public sealed class MiniContext : IContext
 {
@@ -47,9 +47,6 @@ public sealed class MiniContext : IContext
     public object? SharedProps => null;
 
     public IContext ToSharable() {
-        if (CancelToken == ICancelToken.NONE) {
-            return this;
-        }
         return Sharable;
     }
 }

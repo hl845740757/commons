@@ -18,6 +18,7 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 #pragma warning disable CS1591
 
@@ -28,6 +29,8 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public static class Executors
 {
+    #region box
+
     public static ITask BoxAction(Action action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         return new ActionWrapper1(action, options);
@@ -48,6 +51,60 @@ public static class Executors
         if (action == null) throw new ArgumentNullException(nameof(action));
         return new ActionWrapper4(action, context, options);
     }
+
+    #endregion
+
+    #region EventLoop
+
+    /// <summary>
+    /// 测试Executor是否是事件循环，且当前线程是否在事件循环线程内
+    /// </summary>
+    /// <param name="executor"></param>
+    /// <returns></returns>
+    public static bool InEventLoop(this IExecutor executor) {
+        if (executor is ISingleThreadExecutor singleThreadExecutor) {
+            return singleThreadExecutor.InEventLoop();
+        }
+        return false;
+    }
+
+    #endregion
+
+    #region system
+
+    public static void FlatSetPromise<TResult>(TaskCompletionSource<TResult> promise, Task<Task<TResult>> task) {
+        if (task.IsCompleted) {
+            FlatSetPromise0(promise, task);
+        } else {
+            task.ContinueWith((t, obj) => FlatSetPromise0((TaskCompletionSource<TResult>)obj, t), promise);
+        }
+    }
+
+    private static void FlatSetPromise0<TResult>(TaskCompletionSource<TResult> promise, Task<Task<TResult>> task) {
+        if (task.IsCanceled) {
+            promise.TrySetCanceled();
+        } else if (task.IsFaulted) {
+            promise.TrySetException(task.Exception!);
+        } else {
+            SetPromise(promise, task.Result);
+        }
+    }
+
+    public static void SetPromise<TResult>(TaskCompletionSource<TResult> promise, Task<TResult> task) {
+        if (task.IsCanceled) {
+            promise.TrySetCanceled();
+        } else if (task.IsFaulted) {
+            promise.TrySetException(task.Exception!);
+        } else {
+            promise.TrySetResult(task.Result);
+        }
+    }
+
+    /** 用于忽略警告 */
+    public static void Forget(this Task task) {
+    }
+
+    #endregion
 
     private class ActionWrapper1 : ITask
     {

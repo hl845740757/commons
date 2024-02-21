@@ -129,31 +129,31 @@ public abstract class AbstractEventLoop : IEventLoop
     public virtual IPromise NewPromise(IContext? ctx = null) => new Promise<byte>(this, ctx);
 
     public virtual IFuture<T> Submit<T>(ref TaskBuilder<T> builder) {
-        PromiseTask<T> promiseTask = PromiseTask<T>.OfBuilder(ref builder, NewPromise<T>(builder.Context));
+        PromiseTask<T> promiseTask = PromiseTask.OfBuilder(ref builder, NewPromise<T>(builder.Context));
         Execute(promiseTask);
         return promiseTask.Future;
     }
 
     public virtual IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
-        PromiseTask<T> promiseTask = PromiseTask<T>.OfFunction(action, options, NewPromise<T>());
+        PromiseTask<T> promiseTask = PromiseTask.OfFunction(action, options, NewPromise<T>());
         Execute(promiseTask);
         return promiseTask.Future;
     }
 
     public virtual IFuture<T> SubmitFunc<T>(Func<IContext, T> action, IContext context, int options = 0) {
-        PromiseTask<T> promiseTask = PromiseTask<T>.OfFunction(action, options, NewPromise<T>(context));
+        PromiseTask<T> promiseTask = PromiseTask.OfFunction(action, options, NewPromise<T>(context));
         Execute(promiseTask);
         return promiseTask.Future;
     }
 
     public virtual IFuture SubmitAction(Action action, int options = 0) {
-        PromiseTask<byte> promiseTask = PromiseTask<byte>.OfAction(action, options, NewPromise<byte>());
+        PromiseTask<object> promiseTask = PromiseTask.OfAction(action, options, NewPromise<object>());
         Execute(promiseTask);
         return promiseTask.Future;
     }
 
     public virtual IFuture SubmitAction(Action<IContext> action, IContext context, int options = 0) {
-        PromiseTask<byte> promiseTask = PromiseTask<byte>.OfAction(action, options, NewPromise<byte>(context));
+        PromiseTask<object> promiseTask = PromiseTask.OfAction(action, options, NewPromise<object>(context));
         Execute(promiseTask);
         return promiseTask.Future;
     }

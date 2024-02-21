@@ -16,31 +16,17 @@
 
 #endregion
 
-using System;
-
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 该接口表示异步状态机的驱动类。
-///
-/// ps：在c#中，Awaiter和StateMachine其实仅仅用于封装回调；Driver是Future和回调之间的桥梁。
+/// 任务被事件循环拒绝时的策略
 /// </summary>
-/// <typeparam name="T"></typeparam>
-internal interface IStateMachineDriver<T>
+public interface RejectedExecutionHandler
 {
     /// <summary>
-    /// 异步任务关联的Promise
-    ///
-    /// ps:暂时先不考虑复用对象问题，未来再考虑优化。
+    /// 当任务被拒绝时调用
     /// </summary>
-    IPromise<T> Promise { get; }
-
-    /// <summary>
-    /// 用于驱动StateMachine
-    /// 
-    /// ps：
-    /// 1. 定义为属性以允许实现类进行一些优化，比如：缓存实例。
-    /// 2. 通常应该是Run方法的委托。
-    /// </summary>
-    Action MoveToNext { get; }
+    /// <param name="task">被拒绝的任务</param>
+    /// <param name="eventLoop">拒绝任务的事件循环</param>
+    void Rejected(ITask task, IEventLoop eventLoop);
 }

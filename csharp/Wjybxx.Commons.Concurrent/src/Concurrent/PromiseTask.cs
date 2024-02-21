@@ -56,12 +56,12 @@ public interface PromiseTask
 
     #region factory
 
-    public static PromiseTask<T> OfAction<T>(Action action, int options, IPromise<T> promise) {
-        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_ACTION);
+    public static PromiseTask<object> OfAction(Action action, int options, IPromise<object> promise) {
+        return new PromiseTask<object>(action, options, promise, TaskBuilder.TYPE_ACTION);
     }
 
-    public static PromiseTask<T> OfAction<T>(Action<IContext> action, int options, IPromise<T> promise) {
-        return new PromiseTask<T>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX);
+    public static PromiseTask<object> OfAction(Action<IContext> action, int options, IPromise<object> promise) {
+        return new PromiseTask<object>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX);
     }
 
     public static PromiseTask<T> OfFunction<T>(Func<T> action, int options, IPromise<T> promise) {

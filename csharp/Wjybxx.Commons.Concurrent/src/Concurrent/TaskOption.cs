@@ -16,6 +16,8 @@
 
 #endregion
 
+using System.Diagnostics;
+
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
 
@@ -170,9 +172,24 @@ public class TaskOption
         }
     }
 
-    /// <summary> 获取任务的调度阶段 ///</summary>
+    /// <summary>
+    /// 获取任务的调度阶段
+    /// </summary>
     public static int SchedulePhase(int options) {
         return options & MASK_SCHEDULE_PHASE;
+    }
+
+    /// <summary>
+    /// 设置调度阶段
+    /// </summary>
+    /// <param name="options">当前options</param>
+    /// <param name="phase">调度阶段</param>
+    /// <returns>新的options</returns>
+    public static int SetSchedulePhase(int options, int phase) {
+        Debug.Assert(phase >= 0 && phase <= MASK_SCHEDULE_PHASE);
+        options &= ~MASK_SCHEDULE_PHASE;
+        options |= phase;
+        return options;
     }
 
     // endregion

@@ -163,5 +163,13 @@ public final class TaskOption {
         return options & MASK_SCHEDULE_PHASE;
     }
 
+    /** 设置任务的调度阶段 */
+    public static int setSchedulePhase(int options, int phase) {
+        assert (phase >= 0 && phase <= MASK_SCHEDULE_PHASE);
+        options &= ~MASK_SCHEDULE_PHASE;
+        options |= phase;
+        return options;
+    }
+
     // endregion
 }

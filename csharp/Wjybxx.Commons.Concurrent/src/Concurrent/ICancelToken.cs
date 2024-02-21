@@ -33,8 +33,8 @@ public interface ICancelToken
     static readonly ICancelToken NONE = UncancellableToken.Inst;
 
     /**
-     * 返回一个只读的{@link ICancelToken}试图，返回的实例会在当前Token被取消时取消。
-     * 其作用类似{@link IFuture#asReadonly()}
+     * 返回一个只读的<see cref="ICancelToken"/>试图，返回的实例会在当前Token被取消时取消。
+     * 其作用类似<see cref="IFuture.AsReadonly"/>。
      */
     ICancelToken AsReadonly();
 
@@ -155,9 +155,6 @@ public interface ICancelToken
      * 该接口用于方便构建子上下文
      * 1.子token会在当前token进入取消状态时被取消
      * 2.该接口本质是一个快捷方法，但允许子类优化
-     *
-     * @param child   接收结果的子token
-     * @param options 调度选项
      */
     IRegistration ThenTransferTo(ICancelTokenSource child, int options = 0);
 

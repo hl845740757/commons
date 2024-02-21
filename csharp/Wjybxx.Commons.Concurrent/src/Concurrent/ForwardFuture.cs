@@ -24,6 +24,8 @@ namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// 该实现主要用于屏蔽Promise中的写接口。
+///
+/// ps:Csharp的Future没有取消接口，因此无需显式的Readonly实现。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public class ForwardFuture<T> : IFuture<T>
@@ -37,7 +39,7 @@ public class ForwardFuture<T> : IFuture<T>
     #region 不可直接转发
 
     public IFuture<T> AsReadonly() {
-        return this; // Csharp的Future没有取消接口，因此返回this即可
+        return this;
     }
 
     public IFuture<T> Await() {

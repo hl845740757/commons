@@ -27,10 +27,16 @@ public class FutureTest
 
     private class ImmediateExecutor : IExecutor
     {
+        private readonly SynchronizationContext synchronizationContext;
         private readonly TaskScheduler scheduler;
 
         public ImmediateExecutor() {
+            synchronizationContext = new ExecutorSynchronizationContext(this);
             scheduler = new ExecutorTaskScheduler(this);
+        }
+
+        public SynchronizationContext AsSyncContext() {
+            return synchronizationContext;
         }
 
         public TaskScheduler AsScheduler() {
