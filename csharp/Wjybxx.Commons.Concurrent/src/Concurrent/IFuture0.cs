@@ -34,14 +34,6 @@ namespace Wjybxx.Commons.Concurrent;
 public interface IFuture
 {
     /// <summary>
-    /// 任务关联的上下文 -- 冗余存储，解除和task的依赖。
-    /// 1.在添加下游任务时，如果没有显式指定Context，将继承当前任务上下文的共享属性。
-    /// 2.如果root任务未显式指定上下文，将使用{@link IContext#NONE}。
-    /// 3.因此下游任务中的ctx参数永远不为null。
-    /// </summary>
-    IContext Context { get; }
-
-    /// <summary>
     /// 任务关联的线程。
     ///
     /// 1.对于异步任务，Executor是其执行线程；而对于同步任务，Executor不一定是其执行线程 -- 继承得来的而已。

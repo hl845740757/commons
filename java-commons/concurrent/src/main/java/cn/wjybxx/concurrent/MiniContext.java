@@ -17,7 +17,6 @@
 package cn.wjybxx.concurrent;
 
 import javax.annotation.Nonnull;
-import java.util.Objects;
 
 /**
  * 满足最小需要的Context实现。

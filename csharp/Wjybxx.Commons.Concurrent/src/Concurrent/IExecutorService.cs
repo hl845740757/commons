@@ -104,7 +104,7 @@ public interface IExecutorService : IExecutor
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns>Promise</returns>
-    IPromise<T> NewPromise<T>(IContext? ctx = null) => new Promise<T>(this, ctx);
+    IPromise<T> NewPromise<T>(IContext? ctx = null) => new Promise<T>(this);
 
     /// <summary>
     /// 创建一个与当前Executor绑定的Promise
@@ -112,7 +112,7 @@ public interface IExecutorService : IExecutor
     /// 注意：通常不应该使用该Promise的结果。
     /// </summary>
     /// <returns>Promise</returns>
-    IPromise NewPromise(IContext? ctx = null) => new Promise<byte>(this, ctx);
+    IPromise NewPromise(IContext? ctx = null) => new Promise<byte>(this);
 
     /// <summary>
     /// 提交一个任务

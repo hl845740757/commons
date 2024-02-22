@@ -28,7 +28,7 @@ namespace Wjybxx.Commons.Concurrent;
 public class StacklessTimeoutException : TimeoutException
 {
     public static readonly StacklessTimeoutException Inst = new StacklessTimeoutException();
-    
+
     public StacklessTimeoutException() {
     }
 

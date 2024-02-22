@@ -18,6 +18,9 @@
 
 namespace Wjybxx.Commons.Concurrent;
 
+/// <summary>
+/// EventLoop选择器
+/// </summary>
 public interface IEventLoopChooser
 {
     /**

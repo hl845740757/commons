@@ -54,17 +54,17 @@ public class Promise<T> : APromise, IPromise<T>
 
     /** 任务绑定的线程 -- 其实不一定是执行线程 */
     private readonly IExecutor? _executor;
-    /** 任务关联的上下文 -- 冗余存储，解除和task的依赖 */
-    private readonly IContext _ctx;
 
-    public Promise(IExecutor? executor = null, IContext? context = null) {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="executor">任务关联的线程，死锁检测等</param>
+    public Promise(IExecutor? executor = null) {
         _executor = executor;
-        _ctx = context ?? IContext.NONE;
     }
 
-    private Promise(IExecutor? executor, IContext? context, T result, Exception? ex) {
+    private Promise(IExecutor? executor, T result, Exception? ex) {
         this._executor = executor;
-        _ctx = context ?? IContext.NONE;
         if (ex == null) {
             this._result = result;
             this._ex = EX_SUCCESS;
@@ -74,18 +74,18 @@ public class Promise<T> : APromise, IPromise<T>
         }
     }
 
-    public static Promise<T> FromResult(T result, IExecutor? executor = null, IContext? context = null) {
-        return new Promise<T>(executor, context, result, null);
+    public static Promise<T> FromResult(T result, IExecutor? executor = null) {
+        return new Promise<T>(executor, result, null);
     }
 
-    public static Promise<T> FromException(Exception ex, IExecutor? executor = null, IContext? context = null) {
+    public static Promise<T> FromException(Exception ex, IExecutor? executor = null) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
-        return new Promise<T>(executor, context, default, ex);
+        return new Promise<T>(executor, default, ex);
     }
 
-    public static Promise<T> FromCancelled(int code, IExecutor? executor = null, IContext? context = null) {
+    public static Promise<T> FromCancelled(int code, IExecutor? executor = null) {
         Exception ex = StacklessCancellationException.InstOf(code);
-        return new Promise<T>(executor, context, default, ex);
+        return new Promise<T>(executor, default, ex);
     }
 
     #region internal
@@ -178,8 +178,6 @@ public class Promise<T> : APromise, IPromise<T>
     /// 允许重写，Executor可能存储在其它地方
     /// </summary>
     public virtual IExecutor? Executor => _executor;
-
-    public IContext Context => _ctx;
 
     public IFuture<T> AsReadonly() => new ForwardFuture<T>(this);
 

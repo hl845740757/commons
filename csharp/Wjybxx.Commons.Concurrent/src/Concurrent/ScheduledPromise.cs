@@ -25,8 +25,8 @@ public class ScheduledPromise<T> : Promise<T>, IScheduledPromise<T>
 {
     private IScheduledFutureTask<T> _task;
 
-    public ScheduledPromise(IExecutor? executor = null, IContext? context = null)
-        : base(executor, context) {
+    public ScheduledPromise(IExecutor? executor = null)
+        : base(executor) {
     }
 
     public void SetTask(IScheduledFutureTask<T> task) {

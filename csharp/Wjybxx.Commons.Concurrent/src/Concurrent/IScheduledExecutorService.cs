@@ -29,16 +29,14 @@ public interface IScheduledExecutorService : IExecutorService
     /// <summary>
     /// 创建一个promise以用于任务调度
     /// </summary>
-    /// <param name="context"></param>
     /// <returns></returns>
-    IScheduledPromise<T> NewScheduledPromise<T>(IContext? context = null);
+    IScheduledPromise<T> NewScheduledPromise<T>();
 
     /// <summary>
     /// 创建一个promise以用于任务调度
     /// </summary>
-    /// <param name="context"></param>
     /// <returns></returns>
-    IScheduledPromise NewScheduledPromise(IContext? context = null);
+    IScheduledPromise NewScheduledPromise();
 
     /// <summary>
     ///

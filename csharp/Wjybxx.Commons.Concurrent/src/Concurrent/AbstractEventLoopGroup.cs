@@ -63,9 +63,9 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         Select().Execute(task);
     }
 
-    public virtual IPromise<T> NewPromise<T>(IContext? ctx = null) => new Promise<T>(this, ctx);
+    public virtual IPromise<T> NewPromise<T>(IContext? ctx = null) => new Promise<T>(this);
 
-    public virtual IPromise NewPromise(IContext? ctx = null) => new Promise<byte>(this, ctx);
+    public virtual IPromise NewPromise(IContext? ctx = null) => new Promise<byte>(this);
 
     public virtual IFuture<T> Submit<T>(ref TaskBuilder<T> builder) {
         return Select().Submit(ref builder);
@@ -91,9 +91,9 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     #region schedule
 
-    public virtual IScheduledPromise<T> NewScheduledPromise<T>(IContext? context = null) => new ScheduledPromise<T>(this, context);
+    public virtual IScheduledPromise<T> NewScheduledPromise<T>() => new ScheduledPromise<T>(this);
 
-    public virtual IScheduledPromise NewScheduledPromise(IContext? context = null) => new ScheduledPromise<object>(this, context);
+    public virtual IScheduledPromise NewScheduledPromise() => new ScheduledPromise<object>(this);
 
     public virtual IScheduledFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder) {
         return Select().Schedule(ref builder);

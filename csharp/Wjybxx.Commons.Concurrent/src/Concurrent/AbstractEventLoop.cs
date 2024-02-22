@@ -76,7 +76,7 @@ public abstract class AbstractEventLoop : IEventLoop
     public abstract void Shutdown();
 
     public abstract List<ITask> ShutdownNow();
-    
+
     public abstract bool InEventLoop();
 
     public abstract bool InEventLoop(Thread thread);
@@ -124,12 +124,12 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public abstract void Execute(ITask task);
 
-    public virtual IPromise<T> NewPromise<T>(IContext? ctx = null) => new Promise<T>(this, ctx);
+    public virtual IPromise<T> NewPromise<T>() => new Promise<T>(this);
 
-    public virtual IPromise NewPromise(IContext? ctx = null) => new Promise<byte>(this, ctx);
+    public virtual IPromise NewPromise() => new Promise<byte>(this);
 
     public virtual IFuture<T> Submit<T>(ref TaskBuilder<T> builder) {
-        PromiseTask<T> promiseTask = PromiseTask.OfBuilder(ref builder, NewPromise<T>(builder.Context));
+        PromiseTask<T> promiseTask = PromiseTask.OfBuilder(ref builder, NewPromise<T>());
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -141,7 +141,7 @@ public abstract class AbstractEventLoop : IEventLoop
     }
 
     public virtual IFuture<T> SubmitFunc<T>(Func<IContext, T> action, IContext context, int options = 0) {
-        PromiseTask<T> promiseTask = PromiseTask.OfFunction(action, options, NewPromise<T>(context));
+        PromiseTask<T> promiseTask = PromiseTask.OfFunction(action, context, options, NewPromise<T>());
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -153,7 +153,7 @@ public abstract class AbstractEventLoop : IEventLoop
     }
 
     public virtual IFuture SubmitAction(Action<IContext> action, IContext context, int options = 0) {
-        PromiseTask<object> promiseTask = PromiseTask.OfAction(action, options, NewPromise<object>(context));
+        PromiseTask<object> promiseTask = PromiseTask.OfAction(action, context, options, NewPromise<object>());
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -164,9 +164,9 @@ public abstract class AbstractEventLoop : IEventLoop
 
     // 默认不支持定时任务
 
-    public virtual IScheduledPromise<T> NewScheduledPromise<T>(IContext? context = null) => new ScheduledPromise<T>(this, context);
+    public virtual IScheduledPromise<T> NewScheduledPromise<T>() => new ScheduledPromise<T>(this);
 
-    public virtual IScheduledPromise NewScheduledPromise(IContext? context = null) => new ScheduledPromise<object>(this, context);
+    public virtual IScheduledPromise NewScheduledPromise() => new ScheduledPromise<object>(this);
 
     public virtual IScheduledFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder) {
         throw new NotImplementedException();

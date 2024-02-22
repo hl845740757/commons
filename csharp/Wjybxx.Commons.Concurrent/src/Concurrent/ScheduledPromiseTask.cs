@@ -35,31 +35,31 @@ public interface ScheduledPromiseTask
 
     public static ScheduledPromiseTask<object> OfAction(Action action, int options, IScheduledPromise<object> promise,
                                                         long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<object>(action, options, promise, TaskBuilder.TYPE_ACTION,
+        return new ScheduledPromiseTask<object>(action, null, options, promise, TaskBuilder.TYPE_ACTION,
             id, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<object> OfAction(Action<IContext> action, int options, IScheduledPromise<object> promise,
+    public static ScheduledPromiseTask<object> OfAction(Action<IContext> action, IContext context, int options, IScheduledPromise<object> promise,
                                                         long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<object>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX,
+        return new ScheduledPromiseTask<object>(action, context, options, promise, TaskBuilder.TYPE_ACTION_CTX,
             id, nextTriggerTime);
     }
 
     public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, int options, IScheduledPromise<T> promise,
                                                         long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, options, promise, TaskBuilder.TYPE_FUNC,
+        return new ScheduledPromiseTask<T>(action, null, options, promise, TaskBuilder.TYPE_FUNC,
             id, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<T> OfFunction<T>(Func<IContext, T> action, int options, IScheduledPromise<T> promise,
+    public static ScheduledPromiseTask<T> OfFunction<T>(Func<IContext, T> action, IContext context, int options, IScheduledPromise<T> promise,
                                                         long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, options, promise, TaskBuilder.TYPE_FUNC_CTX,
+        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC_CTX,
             id, nextTriggerTime);
     }
 
     public static ScheduledPromiseTask<T> OfBuilder<T>(ref TaskBuilder<T> builder, IScheduledPromise<T> promise,
                                                        long id, long tickTime) {
-        return new ScheduledPromiseTask<T>(builder.Task, builder.Options, promise, builder.Type,
+        return new ScheduledPromiseTask<T>(builder.Task, builder.Context, builder.Options, promise, builder.Type,
             id, tickTime);
     }
 
@@ -109,7 +109,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
 
     internal ScheduledPromiseTask(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
                                   long id, long nextTriggerTime, long period, TimeoutContext? timeoutContext)
-        : base(builder.Task, builder.Options, promise, builder.Type) {
+        : base(builder.Task, builder.Context, builder.Options, promise, builder.Type) {
         this.id = id;
         this.nextTriggerTime = nextTriggerTime;
         this.period = period;
@@ -126,9 +126,9 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     }
 
     /** 用于简单情况下的对象创建 */
-    internal ScheduledPromiseTask(object action, int options, IScheduledPromise<T> promise, int taskType,
+    internal ScheduledPromiseTask(object action, IContext? context, int options, IScheduledPromise<T> promise, int taskType,
                                   long id, long nextTriggerTime)
-        : base(action, options, promise, taskType) {
+        : base(action, context, options, promise, taskType) {
         this.id = id;
         this.nextTriggerTime = nextTriggerTime;
         this.period = 0;
@@ -180,7 +180,8 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     public void Run() {
         AbstractScheduledEventLoop eventLoop = EventLoop;
         IPromise<T> promise = this.promise;
-        if (promise.IsDone || promise.Context.CancelToken.IsCancelling()) {
+        IContext context = this.context;
+        if (promise.IsDone || context.CancelToken.IsCancelling()) {
             CancelWithoutRemove(ICancelToken.REASON_DEFAULT);
             return;
         }
@@ -202,8 +203,9 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         }
 
         IPromise<T> promise = this.promise;
-        if (promise.Context.CancelToken.IsCancelling()) {
-            TrySetCancelled(promise);
+        IContext context = this.context;
+        if (context.CancelToken.IsCancelling()) {
+            TrySetCancelled(promise, context);
             Clear();
             return false;
         }
@@ -233,8 +235,8 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
             RunTask();
 
             // 任务执行后检测取消
-            if (promise.Context.CancelToken.IsCancelling() || !promise.IsComputing) {
-                TrySetCancelled(promise);
+            if (context.CancelToken.IsCancelling() || !promise.IsComputing) {
+                TrySetCancelled(promise, context);
                 Clear();
                 return false;
             }
@@ -281,14 +283,14 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
 
     /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */
     public void CancelWithoutRemove(int code = ICancelToken.REASON_SHUTDOWN) {
-        TrySetCancelled(promise, code);
+        TrySetCancelled(promise, context, code);
         Clear();
     }
 
     /** 监听取消令牌中的取消信号 */
     public void RegisterCancellation() {
         // C# 的future中无取消方法，因此只需要监听取消令牌
-        ICancelToken cancelToken = promise.Context.CancelToken;
+        ICancelToken cancelToken = context.CancelToken;
         if (cancelToken == ICancelToken.NONE) {
             return;
         }
