@@ -34,7 +34,7 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
 
     public override IScheduledFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
         long triggerTime = ScheduledPromiseTask.TriggerTime(delay, TickTime);
-        MiniContext context = MiniContext.Create(cancelToken);
+        MiniContext context = MiniContext.OfCancelToken(cancelToken);
 
         ScheduledPromiseTask<object> promiseTask = ScheduledPromiseTask.OfAction(action, 0, NewScheduledPromise<object>(context), 0, triggerTime);
         Execute(promiseTask);
@@ -51,7 +51,7 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
 
     public override IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
         long triggerTime = ScheduledPromiseTask.TriggerTime(delay, TickTime);
-        MiniContext context = MiniContext.Create(cancelToken);
+        MiniContext context = MiniContext.OfCancelToken(cancelToken);
 
         ScheduledPromiseTask<TResult> promiseTask = ScheduledPromiseTask.OfFunction(action, 0, NewScheduledPromise<TResult>(context), 0, triggerTime);
         Execute(promiseTask);
@@ -67,7 +67,7 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
     }
 
     public override IScheduledFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
-        MiniContext context = MiniContext.Create(cancelToken);
+        MiniContext context = MiniContext.OfCancelToken(cancelToken);
         ScheduledTaskBuilder<object> builder = ScheduledTaskBuilder.NewAction(action);
         builder.SetFixedDelay(delay.Ticks, period.Ticks, new TimeSpan(1));
         builder.Context = context;
@@ -78,7 +78,7 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
     }
 
     public override IScheduledFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
-        MiniContext context = MiniContext.Create(cancelToken);
+        MiniContext context = MiniContext.OfCancelToken(cancelToken);
         ScheduledTaskBuilder<object> builder = ScheduledTaskBuilder.NewAction(action);
         builder.SetFixedRate(delay.Ticks, period.Ticks, new TimeSpan(1));
         builder.Context = context;

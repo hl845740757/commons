@@ -114,18 +114,7 @@ public interface IExecutorService extends ExecutorService, IExecutor {
      * @implNote 通常应该绑定当前executor
      */
     default <T> IPromise<T> newPromise() {
-        return new Promise<>(this, null);
-    }
-
-    /**
-     * 创建一个promise以用于任务调度
-     * 如果当前Executor是{@link SingleThreadExecutor}，返回的future将禁止在当前EventLoop上执行阻塞操作。
-     *
-     * @param ctx 任务关联的上下文
-     * @implNote 通常应该绑定当前executor
-     */
-    default <T> IPromise<T> newPromise(IContext ctx) {
-        return new Promise<>(this, ctx);
+        return new Promise<>(this);
     }
 
     <T> IFuture<T> submit(@Nonnull TaskBuilder<T> builder);

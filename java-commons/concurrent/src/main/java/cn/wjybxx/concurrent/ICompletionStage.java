@@ -87,15 +87,6 @@ import java.util.function.Function;
 public interface ICompletionStage<T> {
 
     /**
-     * 当前计算绑定的上下文 -- 冗余存储，解除和task的依赖。
-     * 1.在添加下游任务时，如果没有显式指定Context，将继承当前任务上下文的共享属性。
-     * 2.如果root任务未显式指定上下文，将使用{@link IContext#NONE}。
-     * 3.因此下游任务中的ctx参数永远不为null。
-     */
-    @Nonnull
-    IContext ctx();
-
-    /**
      * 任务绑定的Executor
      * 1.对于异步任务，Executor是其执行线程；而对于同步任务，Executor不一定是其执行线程 -- 继承得来的而已。
      * 2.在添加下游任务时，如果没有显式指定Executor，将继承当前Stage的Executor。
@@ -131,12 +122,13 @@ public interface ICompletionStage<T> {
      * <p>
      * {@link CompletionStage#thenCompose(Function)}
      *
-     * @param ctx     上下文，如果为null，则继承当前Stage的上下文
+     * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOption}
      */
     <U> ICompletionStage<U> composeApply(BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn,
                                          @Nullable IContext ctx, int options);
 
+    /** @param fn 的ctx参数为{@link IContext#NONE} */
     <U> ICompletionStage<U> composeApply(BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn);
 
     <U> ICompletionStage<U> composeApplyAsync(Executor executor,
@@ -157,7 +149,7 @@ public interface ICompletionStage<T> {
      * {@link CompletionStage#thenCompose(Function)}
      * {@link #composeApply(BiFunction)}
      *
-     * @param ctx     上下文，如果为null，则继承当前Stage的上下文 -- 要覆盖请使用{@link IContext#NONE}
+     * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOption}
      */
     <U> ICompletionStage<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn,
@@ -180,7 +172,7 @@ public interface ICompletionStage<T> {
      * 如果当前{@code Future}执行失败，则其异常信息将作为指定操作的执行参数，返回的{@code Future}的结果取决于指定操作的执行结果。
      *
      * @param fallback 恢复函数
-     * @param ctx      上下文，如果为null，则继承当前Stage的上下文
+     * @param ctx      上下文，如果为null，则替换为NONE
      * @param options  调度选项，默认使用0即可，可参考{@link TaskOption}
      */
     <X extends Throwable>
@@ -207,7 +199,7 @@ public interface ICompletionStage<T> {
      * 该方法返回一个新的{@code Future}，它的结果由当前{@code Future}驱动。
      * 不论当前{@code Future}成功还是失败，都将执行给定的操作，返回的{@code Future}的结果取决于指定操作的执行结果。
      *
-     * @param ctx     上下文，如果为null，则继承当前Stage的上下文
+     * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOption}
      */
     <U> ICompletionStage<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
@@ -232,7 +224,7 @@ public interface ICompletionStage<T> {
      * <p>
      * {@link CompletionStage#thenApply(Function)}
      *
-     * @param ctx     上下文，如果为null，则继承当前Stage的上下文
+     * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOption}
      */
     <U> ICompletionStage<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options);
@@ -256,7 +248,7 @@ public interface ICompletionStage<T> {
      * <p>
      * {@link CompletionStage#thenAccept(Consumer)}
      *
-     * @param ctx     上下文，如果为null，则继承当前Stage的上下文
+     * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOption}
      */
     ICompletionStage<Void> thenAccept(BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options);
@@ -278,7 +270,7 @@ public interface ICompletionStage<T> {
      * 如果当前{@code Future}执行失败，则返回的{@code Future}将以相同的原因失败，且指定的动作不会执行。
      * 如果当前{@code Future}执行成功，则执行给定的操作，返回的{@code Future}的结果取决于指定操作的执行结果。
      *
-     * @param ctx     上下文，如果为null，则继承当前Stage的上下文
+     * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOption}
      */
     <U> ICompletionStage<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options);
@@ -301,7 +293,7 @@ public interface ICompletionStage<T> {
      * <p>
      * {@link CompletionStage#thenRun(Runnable)}
      *
-     * @param ctx     上下文，如果为null，则继承当前Stage的上下文
+     * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOption}
      */
     ICompletionStage<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options);
@@ -329,7 +321,7 @@ public interface ICompletionStage<T> {
      *
      * @param exceptionType 能处理的异常类型
      * @param fallback      异常恢复函数
-     * @param ctx           上下文，如果为null，则继承当前Stage的上下文
+     * @param ctx           上下文，如果为null，则替换为NONE
      * @param options       调度选项，默认使用0即可，可参考{@link TaskOption}
      */
     <X extends Throwable>
@@ -362,7 +354,7 @@ public interface ICompletionStage<T> {
      * <p>
      * {@link CompletionStage#handle(BiFunction)}
      *
-     * @param ctx     上下文，如果为null，则继承当前Stage的上下文
+     * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOption}
      */
     <U> ICompletionStage<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
@@ -386,7 +378,7 @@ public interface ICompletionStage<T> {
      * 1.如果action出现了异常，则仅仅记录一个日志，不向下传播(这里与JDK实现不同) -- 应当避免抛出异常。
      * 2.如果用户主动取消了返回的Future，或者用于异步执行的Executor已关闭，则不会以相同的结果进入完成状态。
      *
-     * @param ctx     上下文，如果为null，则继承当前Stage的上下文
+     * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOption}
      */
     ICompletionStage<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action,

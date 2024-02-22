@@ -45,7 +45,7 @@ public class ForwardFuture<V> implements IFuture<V> {
 
     @Override
     public CompletableFuture<V> toCompletableFuture() {
-        return future.toCompletableFuture();
+        return future.toCompletableFuture(); // 避免额外封装
     }
 
     @Override
@@ -67,12 +67,6 @@ public class ForwardFuture<V> implements IFuture<V> {
     }
 
     // region future
-
-    @Nonnull
-    @Override
-    public IContext ctx() {
-        return future.ctx();
-    }
 
     @Override
     @Nullable

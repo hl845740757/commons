@@ -32,7 +32,7 @@ import cn.wjybxx.base.annotation.Beta;
 public interface TimeSharingTask<V> {
 
     /** 任务在添加到Executor之前进行绑定 */
-    default void inject(IPromise<? super V> promise) {
+    default void inject(IContext ctx, IPromise<? super V> promise) {
 
     }
 
@@ -41,9 +41,10 @@ public interface TimeSharingTask<V> {
      * 1. start和update是连续执行的。
      * 2. start抛出异常会导致任务直接结束。
      *
-     * @param promise 获取任务的上下文
+     * @param ctx 任务的上下文
+     * @param promise 关联的promise
      */
-    default void start(IPromise<? super V> promise) {
+    default void start(IContext ctx, IPromise<? super V> promise) {
 
     }
 
@@ -52,18 +53,20 @@ public interface TimeSharingTask<V> {
      * 1.Executor在执行该方法之前会调用{@link IPromise#trySetComputing()}，因此任务内部无需再次调用。
      * 2.任务在完成时需要将Promise置为完成状态！
      *
-     * @param promise 用于获取任务上下文和设置结果
+     * @param ctx     任务的上下文
+     * @param promise 关联的promise
      */
-    void update(IPromise<? super V> promise) throws Exception;
+    void update(IContext ctx, IPromise<? super V> promise) throws Exception;
 
     /**
      * 任务结束时调用
-     * 1.只有在成功执行{@link #start(IPromise)}的情况下才会调用
+     * 1.只有在成功执行{@link #start(IContext, IPromise)}的情况下才会调用
      * 2.会在start所在的executor调用 -- 如果目标executor已关闭则不会执行。
      *
-     * @param promise 获取任务的上下文
+     * @param ctx     任务的上下文
+     * @param promise 关联的promise
      */
-    default void stop(IPromise<? super V> promise) {
+    default void stop(IContext ctx, IPromise<? super V> promise) {
 
     }
 }

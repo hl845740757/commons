@@ -35,10 +35,6 @@ public class ScheduledPromise<T> extends Promise<T> implements IScheduledPromise
         super(executor);
     }
 
-    public ScheduledPromise(Executor executor, IContext ctx) {
-        super(executor, ctx);
-    }
-
     @Override
     public void setTask(IScheduledFutureTask<? extends T> task) {
         assert task.future() == this;

@@ -77,80 +77,75 @@ public abstract class AbstractUniExecutor implements UniExecutorService {
     // region submit
     @Override
     public <V> UniPromise<V> newPromise() {
-        return new UniPromise<>(this, null);
-    }
-
-    @Override
-    public <V> UniPromise<V> newPromise(IContext ctx) {
-        return new UniPromise<>(this, ctx);
+        return new UniPromise<>(this);
     }
 
     @Override
     public <T> IFuture<T> submit(@Nonnull TaskBuilder<T> builder) {
-        PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, newPromise(null));
+        PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <T> IFuture<T> submit(Callable<T> task) {
-        PromiseTask<T> futureTask = PromiseTask.ofFunction(task, 0, newPromise(null));
+        PromiseTask<T> futureTask = PromiseTask.ofFunction(task, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Callable<? extends V> task) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, newPromise(null));
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Callable<? extends V> task, int options) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, newPromise(null));
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, newPromise(ctx));
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, ctx, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx, int options) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, newPromise(ctx));
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, ctx, options, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public IFuture<?> submitAction(Runnable task) {
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, 0, newPromise(null));
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public IFuture<?> submitAction(Runnable task, int options) {
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, options, newPromise(null));
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, options, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, 0, newPromise(ctx));
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, ctx, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, options, newPromise(ctx));
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, ctx, options, newPromise());
         execute(futureTask);
         return futureTask.future();
     }

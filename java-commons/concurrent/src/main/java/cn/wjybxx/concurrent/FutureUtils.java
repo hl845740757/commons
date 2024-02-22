@@ -258,10 +258,6 @@ public class FutureUtils {
         return new Promise<>(executor);
     }
 
-    public static <V> IPromise<V> newPromise(Executor executor, IContext ctx) {
-        return new Promise<>(executor, ctx);
-    }
-
     public static <V> IFuture<V> completedFuture(V result) {
         return Promise.completedPromise(result);
     }
@@ -327,7 +323,7 @@ public class FutureUtils {
     // region submit
 
     public static <T> IFuture<T> submit(IExecutor executor, @Nonnull TaskBuilder<T> builder) {
-        IPromise<T> promise = newPromise(executor, builder.getCtx());
+        IPromise<T> promise = newPromise(executor);
         PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, promise);
         executor.execute(futureTask);
         return promise;
@@ -348,15 +344,15 @@ public class FutureUtils {
     }
 
     public static <V> IFuture<V> submitFunc(Executor executor, Function<? super IContext, ? extends V> task, IContext ctx) {
-        IPromise<V> promise = newPromise(executor, ctx);
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, promise);
+        IPromise<V> promise = newPromise(executor);
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, ctx, 0, promise);
         executor.execute(futureTask);
         return promise;
     }
 
     public static <V> IFuture<V> submitFunc(IExecutor executor, Function<? super IContext, ? extends V> task, IContext ctx, int options) {
-        IPromise<V> promise = newPromise(executor, ctx);
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, promise);
+        IPromise<V> promise = newPromise(executor);
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, ctx, options, promise);
         executor.execute(futureTask);
         return promise;
     }
@@ -376,15 +372,15 @@ public class FutureUtils {
     }
 
     public static IFuture<?> submitAction(Executor executor, Consumer<? super IContext> task, IContext ctx) {
-        IPromise<Object> promise = newPromise(executor, ctx);
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, 0, promise);
+        IPromise<Object> promise = newPromise(executor);
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, ctx, 0, promise);
         executor.execute(futureTask);
         return promise;
     }
 
     public static IFuture<?> submitAction(IExecutor executor, Consumer<? super IContext> task, IContext ctx, int options) {
-        IPromise<Object> promise = newPromise(executor, ctx);
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, options, promise);
+        IPromise<Object> promise = newPromise(executor);
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, ctx, options, promise);
         executor.execute(futureTask);
         return promise;
     }

@@ -43,17 +43,6 @@ public interface IScheduledExecutorService extends IExecutorService, ScheduledEx
     }
 
     /**
-     * 创建一个promise以用于任务调度
-     * 如果当前Executor是{@link SingleThreadExecutor}，返回的future将禁止在当前EventLoop上执行阻塞操作。
-     *
-     * @param ctx 任务关联的上下文
-     * @implNote 通常应该绑定当前executor
-     */
-    default <V> IScheduledPromise<V> newScheduledPromise(IContext ctx) {
-        return new ScheduledPromise<>(this, ctx);
-    }
-
-    /**
      * 为避免过多的参数和重载方法，我们通过Builder构建更为复杂的任务。
      *
      * @param builder 任务构建器。

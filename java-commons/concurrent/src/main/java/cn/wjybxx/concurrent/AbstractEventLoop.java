@@ -114,59 +114,54 @@ public abstract class AbstractEventLoop implements EventLoop {
 
     @Override
     public <T> IPromise<T> newPromise() {
-        return new Promise<>(this, null);
-    }
-
-    @Override
-    public <T> IPromise<T> newPromise(IContext ctx) {
-        return new Promise<>(this, ctx);
+        return new Promise<>(this);
     }
 
     @Override
     public <T> IFuture<T> submit(@Nonnull TaskBuilder<T> builder) {
-        PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, newPromise(null));
+        PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <T> IFuture<T> submit(Callable<T> task) {
-        PromiseTask<T> futureTask = PromiseTask.ofFunction(task, 0, newPromise(null));
+        PromiseTask<T> futureTask = PromiseTask.ofFunction(task, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Callable<? extends V> task) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, newPromise(null));
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Callable<? extends V> task, int options) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, newPromise(null));
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, newPromise(ctx));
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, ctx, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx, int options) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, newPromise(ctx));
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, ctx, options, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public IFuture<?> submitAction(Runnable task) {
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, 0, newPromise(null));
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
@@ -174,21 +169,21 @@ public abstract class AbstractEventLoop implements EventLoop {
     /** 该方法可能和{@link ExecutorService#submit(Runnable, Object)}冲突，因此我们要带后缀 */
     @Override
     public IFuture<?> submitAction(Runnable task, int options) {
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, options, newPromise(null));
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, options, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, 0, newPromise(ctx));
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, ctx, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, options, newPromise(ctx));
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, ctx, options, newPromise());
         execute(futureTask);
         return futureTask.future();
     }

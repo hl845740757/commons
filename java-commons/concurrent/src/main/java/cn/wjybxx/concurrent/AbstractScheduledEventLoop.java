@@ -43,13 +43,8 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
     }
 
     @Override
-    public <V> IScheduledPromise<V> newScheduledPromise(IContext ctx) {
-        return new ScheduledPromise<>(this, ctx);
-    }
-
-    @Override
     public <V> IScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder) {
-        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(builder.getCtx()), 0, tickTime());
+        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(), 0, tickTime());
         execute(promiseTask);
         return promiseTask.future();
     }
@@ -57,7 +52,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
     @Override
     public <V> IScheduledFuture<V> scheduleFunc(Function<? super IContext, V> task, IContext ctx, long delay, TimeUnit unit) {
         long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, 0, newScheduledPromise(ctx), 0, triggerTime);
+        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, ctx, 0, newScheduledPromise(), 0, triggerTime);
         execute(promiseTask);
         return promiseTask.future();
     }
@@ -65,7 +60,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
     @Override
     public IScheduledFuture<?> scheduleAction(Consumer<? super IContext> task, IContext ctx, long delay, TimeUnit unit) {
         long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(task, 0, newScheduledPromise(ctx), 0, triggerTime);
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(task, ctx, 0, newScheduledPromise(), 0, triggerTime);
         execute(promiseTask);
         return promiseTask.future();
     }

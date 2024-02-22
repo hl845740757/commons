@@ -17,33 +17,42 @@
 package cn.wjybxx.concurrent;
 
 import javax.annotation.Nonnull;
+import java.util.Objects;
 
 /**
- * 只包含取消令牌的context，该类实例通常不暴露给用户的Action
+ * 满足最小需要的Context实现。
  *
  * @author wjybxx
  * date - 2024/2/21
  */
-public class MiniContext implements IContext {
+public final class MiniContext implements IContext {
 
-    private static final MiniContext SHARABLE = new MiniContext(ICancelToken.NONE);
+    public static final MiniContext SHARABLE = new MiniContext(null, ICancelToken.NONE);
 
     private final ICancelToken cancelToken;
+    private final Object state;
 
-    private MiniContext(ICancelToken cancelToken) {
+    private MiniContext(Object state, ICancelToken cancelToken) {
+        this.state = state;
         this.cancelToken = cancelToken == null ? ICancelToken.NONE : cancelToken;
     }
 
-    public static MiniContext create(ICancelToken cancelToken) {
-        if (cancelToken == null || cancelToken == ICancelToken.NONE) {
-            return SHARABLE;
-        }
-        return new MiniContext(cancelToken);
+    public static MiniContext ofState(Object state) {
+        if (state == null) return SHARABLE;
+        return new MiniContext(state, null);
+    }
+
+    public static MiniContext ofState(Object state, ICancelToken cancelToken) {
+        return new MiniContext(state, cancelToken);
+    }
+
+    public static MiniContext ofCancelToken(ICancelToken cancelToken) {
+        return new MiniContext(null, cancelToken);
     }
 
     @Override
     public Object state() {
-        return null;
+        return state;
     }
 
     @Nonnull

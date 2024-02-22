@@ -24,25 +24,38 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public sealed class MiniContext : IContext
 {
-    private static readonly MiniContext Sharable = new MiniContext(ICancelToken.NONE);
+    private static readonly MiniContext Sharable = new MiniContext(null, ICancelToken.NONE);
+
+#nullable disable
+    /// <summary>
+    /// 状态参数 -- 状态参数用于支持私有变量，不同任务的State通常不同。
+    /// </summary>
+    public object State { get; }
 
     /// <summary>
     /// 取消令牌 -- 如果未指定，则默认赋值为<see cref="ICancelToken.NONE"/>
     /// </summary>
     public ICancelToken CancelToken { get; }
+#nullable enable
 
-    private MiniContext(ICancelToken? cancelToken) {
+    private MiniContext(object? state, ICancelToken? cancelToken) {
+        State = state;
         CancelToken = cancelToken ?? ICancelToken.NONE;
     }
 
-    public static MiniContext Create(ICancelToken? cancelToken) {
-        if (cancelToken == null || cancelToken == ICancelToken.NONE) {
-            return Sharable;
-        }
-        return new MiniContext(cancelToken);
+    public static MiniContext OfState(object? state) {
+        if (state == null) return Sharable;
+        return new MiniContext(state, null);
     }
 
-    public object? State => null;
+    public static MiniContext OfState(object? state, ICancelToken cancelToken) {
+        return new MiniContext(state, cancelToken);
+    }
+
+    public static MiniContext OfCancelToken(ICancelToken? cancelToken) {
+        return new MiniContext(null, cancelToken);
+    }
+
     public object? Blackboard => null;
     public object? SharedProps => null;
 

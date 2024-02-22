@@ -87,8 +87,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
 
     private final Thread thread;
     private final Worker worker;
-    private final IPromise<Void> terminationFuture = new Promise<>(this, null);
-    private final IPromise<Void> runningFuture = new Promise<>(this, null);
+    private final IPromise<Void> terminationFuture = new Promise<>(this);
+    private final IPromise<Void> runningFuture = new Promise<>(this);
 
     public DisruptorEventLoop(EventLoopBuilder.DisruptorBuilder<T> builder) {
         super(builder.getParent());

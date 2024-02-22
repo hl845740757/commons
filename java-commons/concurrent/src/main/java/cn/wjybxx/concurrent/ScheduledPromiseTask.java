@@ -69,9 +69,9 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     }
 
     /** 用于简单情况下的对象创建 */
-    private ScheduledPromiseTask(Object action, int options, IScheduledPromise<V> promise, int taskType,
+    private ScheduledPromiseTask(Object action, IContext ctx, int options, IScheduledPromise<V> promise, int taskType,
                                  long id, long nextTriggerTime) {
-        super(action, options, promise, taskType);
+        super(action, ctx, options, promise, taskType);
         this.id = id;
         this.nextTriggerTime = nextTriggerTime;
         this.period = 0;
@@ -80,25 +80,25 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     public static ScheduledPromiseTask<?> ofAction(Runnable action, int options, IScheduledPromise<?> promise,
                                                    long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION,
+        return new ScheduledPromiseTask<>(action, null, options, promise, TaskBuilder.TYPE_ACTION,
                 id, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<?> ofAction(Consumer<? super IContext> action, int options, IScheduledPromise<?> promise,
+    public static ScheduledPromiseTask<?> ofAction(Consumer<? super IContext> action, IContext ctx, int options, IScheduledPromise<?> promise,
                                                    long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX,
+        return new ScheduledPromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION_CTX,
                 id, nextTriggerTime);
     }
 
     public static <V> ScheduledPromiseTask<V> ofFunction(Callable<? extends V> action, int options, IScheduledPromise<V> promise,
                                                          long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC,
+        return new ScheduledPromiseTask<>(action, null, options, promise, TaskBuilder.TYPE_FUNC,
                 id, nextTriggerTime);
     }
 
-    public static <V> ScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, int options, IScheduledPromise<V> promise,
+    public static <V> ScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IContext ctx, int options, IScheduledPromise<V> promise,
                                                          long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC_CTX,
+        return new ScheduledPromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_FUNC_CTX,
                 id, nextTriggerTime);
     }
 
@@ -107,7 +107,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         if (builder instanceof ScheduledTaskBuilder<V> sb) {
             return ofBuilder(sb, promise, id, tickTime);
         }
-        return new ScheduledPromiseTask<>(builder.getTask(), builder.getOptions(), promise, builder.getType(),
+        return new ScheduledPromiseTask<>(builder.getTask(), builder.getCtx(), builder.getOptions(), promise, builder.getType(),
                 id, tickTime);
     }
 
@@ -194,7 +194,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         AbstractScheduledEventLoop eventLoop = eventLoop();
         IPromise<V> promise = this.promise;
         // 未及时从队列删除；不要尝试优化，可能尚未到触发时间
-        if (promise.isDone() || promise.ctx().cancelToken().isCancelling()) {
+        if (promise.isDone() || ctx.cancelToken().isCancelling()) {
             cancelWithoutRemove(ICancelToken.REASON_DEFAULT);
             return;
         }
@@ -221,9 +221,10 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         }
 
         IPromise<V> promise = this.promise;
+        IContext ctx = this.ctx;
         // 检测取消信号 -- 还要检测来自future的取消...
-        if (promise.ctx().cancelToken().isCancelling()) {
-            trySetCancelled(promise);
+        if (ctx.cancelToken().isCancelling()) {
+            trySetCancelled(promise, ctx);
             clear();
             return false;
         }
@@ -259,8 +260,8 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
                 runTask();
             }
             // 任务执行后检测取消
-            if (promise.ctx().cancelToken().isCancelling() || !promise.isComputing()) {
-                trySetCancelled(promise);
+            if (ctx.cancelToken().isCancelling() || !promise.isComputing()) {
+                trySetCancelled(promise, ctx);
                 clear();
                 return false;
             }
@@ -314,7 +315,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */
     public void cancelWithoutRemove(int code) {
-        trySetCancelled(promise, code);
+        trySetCancelled(promise, ctx, code);
         clear();
     }
 
@@ -324,7 +325,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         if (!TaskOption.isEnabled(options, TaskOption.IGNORE_FUTURE_CANCEL)) {
             promise.onCompleted(this, 0);
         }
-        ICancelToken cancelToken = promise.ctx().cancelToken();
+        ICancelToken cancelToken = ctx.cancelToken();
         if (cancelToken == ICancelToken.NONE) {
             return;
         }

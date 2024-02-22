@@ -41,10 +41,6 @@ public class UniScheduledPromise<T> extends UniPromise<T> implements IScheduledP
         super(executor);
     }
 
-    public UniScheduledPromise(Executor executor, IContext ctx) {
-        super(executor, ctx);
-    }
-
     @Override
     public void setTask(IScheduledFutureTask<? extends T> task) {
         assert task.future() == this;

@@ -61,6 +61,8 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     /** 用户的任务 */
     private Object task;
+    /** 任务上下文 */
+    protected IContext ctx;
     /** 调度选项 */
     protected final int options;
     /** 任务关联的promise - 用户可能在任务完成后继续访问，因此不能清理 */
@@ -70,11 +72,12 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     /**
      * @param task    用户的任务，支持的类型见{@link TaskBuilder#taskType(Object)}
+     * @param ctx     任务关联的上下文
      * @param options 任务的调度选项
      * @param promise 任务关联的promise
      */
-    public PromiseTask(Object task, int options, IPromise<V> promise) {
-        this(task, options, promise, TaskBuilder.taskType(task));
+    public PromiseTask(Object task, IContext ctx, int options, IPromise<V> promise) {
+        this(task, ctx, options, promise, TaskBuilder.taskType(task));
     }
 
     /**
@@ -82,37 +85,38 @@ public class PromiseTask<V> implements IFutureTask<V> {
      * @param promise 任务关联的promise
      */
     public PromiseTask(TaskBuilder<V> builder, IPromise<V> promise) {
-        this(builder.getTask(), builder.getOptions(), promise, builder.getType());
+        this(builder.getTask(), builder.getCtx(), builder.getOptions(), promise, builder.getType());
     }
 
-    public PromiseTask(Object task, int options, IPromise<V> promise, int taskType) {
+    public PromiseTask(Object task, IContext ctx, int options, IPromise<V> promise, int taskType) {
         this.task = Objects.requireNonNull(task, "action");
+        this.ctx = ctx == null ? IContext.NONE : ctx;
         this.options = options;
         this.promise = Objects.requireNonNull(promise, "promise");
         this.ctl |= (taskType << offsetTaskType);
         // 注入promise
         if (taskType == TaskBuilder.TYPE_TIMESHARING) {
             @SuppressWarnings("unchecked") TimeSharingTask<V> timeSharingTask = (TimeSharingTask<V>) task;
-            timeSharingTask.inject(promise);
+            timeSharingTask.inject(ctx, promise);
         }
     }
 
     // region factory
 
     public static PromiseTask<?> ofAction(Runnable action, int options, IPromise<?> promise) {
-        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION);
+        return new PromiseTask<>(action, null, options, promise, TaskBuilder.TYPE_ACTION);
     }
 
-    public static PromiseTask<?> ofAction(Consumer<? super IContext> action, int options, IPromise<?> promise) {
-        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_ACTION_CTX);
+    public static PromiseTask<?> ofAction(Consumer<? super IContext> action, IContext ctx, int options, IPromise<?> promise) {
+        return new PromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION_CTX);
     }
 
     public static <V> PromiseTask<V> ofFunction(Callable<? extends V> action, int options, IPromise<V> promise) {
-        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC);
+        return new PromiseTask<>(action, null, options, promise, TaskBuilder.TYPE_FUNC);
     }
 
-    public static <V> PromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, int options, IPromise<V> promise) {
-        return new PromiseTask<>(action, options, promise, TaskBuilder.TYPE_FUNC_CTX);
+    public static <V> PromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IContext ctx, int options, IPromise<V> promise) {
+        return new PromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_FUNC_CTX);
     }
 
     public static <V> PromiseTask<V> ofBuilder(TaskBuilder<V> builder, IPromise<V> promise) {
@@ -212,6 +216,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     public void clear() {
         task = null;
+        ctx = null;
     }
 
     /** 运行分时任务 */
@@ -220,18 +225,19 @@ public class PromiseTask<V> implements IFutureTask<V> {
         TimeSharingTask<V> task = (TimeSharingTask<V>) this.task;
         if (!isStarted()) {
             IPromise<V> promise = this.promise;
-            task.start(promise);
+            IContext ctx = this.ctx;
+            task.start(ctx, promise);
             setStarted();
 
             if (promise.isDone()) {
-                stopTask(task, promise);
+                stopTask(task, promise, ctx);
                 return;
             }
             // 需要捕获task -- 避免和clear冲突，我们使用另一个对象来捕获上下文；同时绑定回调线程为当前Executor
-            StopInvoker<V> invoker = new StopInvoker<>(task);
+            StopInvoker<V> invoker = new StopInvoker<>(task, ctx);
             promise.onCompletedAsync(promise.executor(), invoker, TaskOption.STAGE_TRY_INLINE);
         }
-        task.update(promise);
+        task.update(ctx, promise);
     }
 
     /** 运行其它类型任务 */
@@ -250,11 +256,11 @@ public class PromiseTask<V> implements IFutureTask<V> {
             }
             case TaskBuilder.TYPE_FUNC_CTX -> {
                 Function<IContext, V> task = (Function<IContext, V>) this.task;
-                return task.apply(promise.ctx());
+                return task.apply(ctx);
             }
             case TaskBuilder.TYPE_ACTION_CTX -> {
                 Consumer<IContext> task = (Consumer<IContext>) this.task;
-                task.accept(promise.ctx());
+                task.accept(ctx);
                 return null;
             }
             default -> {
@@ -266,8 +272,9 @@ public class PromiseTask<V> implements IFutureTask<V> {
     @Override
     public void run() {
         IPromise<V> promise = this.promise;
-        if (promise.ctx().cancelToken().isCancelling()) {
-            trySetCancelled(promise);
+        IContext ctx = this.ctx;
+        if (ctx.cancelToken().isCancelling()) {
+            trySetCancelled(promise, ctx);
             clear();
             return;
         }
@@ -289,14 +296,14 @@ public class PromiseTask<V> implements IFutureTask<V> {
         clear();
     }
 
-    protected static void trySetCancelled(IPromise<?> promise) {
-        int cancelCode = promise.ctx().cancelToken().cancelCode();
+    protected static void trySetCancelled(IPromise<?> promise, IContext ctx) {
+        int cancelCode = ctx.cancelToken().cancelCode();
         assert cancelCode != 0;
         promise.trySetCancelled(cancelCode);
     }
 
-    protected static void trySetCancelled(IPromise<?> promise, int def) {
-        int cancelCode = promise.ctx().cancelToken().cancelCode();
+    protected static void trySetCancelled(IPromise<?> promise, IContext ctx, int def) {
+        int cancelCode = ctx.cancelToken().cancelCode();
         if (cancelCode == 0) cancelCode = def;
         promise.trySetCancelled(cancelCode);
     }
@@ -304,22 +311,24 @@ public class PromiseTask<V> implements IFutureTask<V> {
     private static class StopInvoker<V> implements Consumer<Future<?>> {
 
         TimeSharingTask<V> task;
+        IContext ctx;
 
-        public StopInvoker(TimeSharingTask<V> task) {
+        public StopInvoker(TimeSharingTask<V> task, IContext ctx) {
             this.task = task;
+            this.ctx = ctx;
         }
 
         @Override
         public void accept(Future<?> future) {
             @SuppressWarnings("unchecked") IPromise<V> promise = (IPromise<V>) future;
-            stopTask(task, promise);
+            stopTask(task, promise, ctx);
             task = null;
         }
     }
 
-    private static <V> void stopTask(TimeSharingTask<V> task, IPromise<V> promise) {
+    private static <V> void stopTask(TimeSharingTask<V> task, IPromise<V> promise, IContext ctx) {
         try {
-            task.stop(promise);
+            task.stop(ctx, promise);
         } catch (Throwable ex) {
             FutureLogger.logCause(ex, "task.stop caught exception");
         }

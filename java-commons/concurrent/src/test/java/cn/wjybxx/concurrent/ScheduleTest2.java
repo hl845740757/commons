@@ -82,7 +82,7 @@ public class ScheduleTest2 {
 
     @Test
     void testOnlyOnceFail() {
-        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing(this::timeSharingJoinString)
+        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, promise) -> timeSharingJoinString(promise))
                 .setOnlyOnce(0));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
@@ -91,7 +91,7 @@ public class ScheduleTest2 {
 
     @Test
     void testOnlyOnceSuccess() {
-        String result = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing(this::untilJoinStringSuccess)
+        String result = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, promise) -> untilJoinStringSuccess(promise))
                         .setOnlyOnce(0))
                 .join();
 
@@ -101,7 +101,7 @@ public class ScheduleTest2 {
     //
     @Test
     void testTimeSharingComplete() {
-        String result = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing(this::timeSharingJoinString)
+        String result = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, promise) -> timeSharingJoinString(promise))
                         .setFixedDelay(0, 200))
                 .join();
 
@@ -110,7 +110,7 @@ public class ScheduleTest2 {
 
     @Test
     void testTimeSharingTimeout() {
-        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing(this::timeSharingJoinString)
+        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, promise) -> timeSharingJoinString(promise))
                 .setFixedDelay(0, 200)
                 .setTimeoutByCount(1));
 

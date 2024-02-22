@@ -67,61 +67,42 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
      */
     @SuppressWarnings("unused")
     private volatile Completion stack;
-
     /** 任务关联的executor -- 其实不一定是执行线程 */
     private final Executor _executor;
-    /** 任务关联的上下文 -- 冗余存储，解除和task的依赖 */
-    private final IContext _ctx;
 
     public Promise() {
         this._executor = null;
-        this._ctx = IContext.NONE;
     }
 
     public Promise(Executor executor) {
         this._executor = executor;
-        this._ctx = IContext.NONE;
-    }
-
-    public Promise(Executor executor, IContext ctx) {
-        this._executor = executor;
-        this._ctx = ctx == null ? IContext.NONE : ctx;
     }
 
     // region factory
 
-    private Promise(Executor executor, IContext ctx, Object result) {
+    private Promise(Executor executor, Object result) {
         this._executor = executor;
-        this._ctx = ctx == null ? IContext.NONE : ctx;
         VH_RESULT.setRelease(this, result);
     }
 
     public static <V> Promise<V> completedPromise(V result) {
-        return new Promise<>(null, null, result == null ? NIL : result);
+        return new Promise<>(null, result == null ? NIL : result);
     }
 
     public static <V> Promise<V> completedPromise(V result, Executor executor) {
-        return new Promise<>(executor, IContext.NONE, encodeValue(result));
-    }
-
-    public static <V> Promise<V> completedPromise(V result, Executor executor, IContext ctx) {
-        return new Promise<>(executor, ctx, encodeValue(result));
+        return new Promise<>(executor, encodeValue(result));
     }
 
     public static <V> Promise<V> failedPromise(Throwable cause) {
         Objects.requireNonNull(cause);
-        return new Promise<>(null, null, new AltResult(cause));
+        return new Promise<>(null, new AltResult(cause));
     }
 
     public static <V> Promise<V> failedPromise(Throwable cause, Executor executor) {
         Objects.requireNonNull(cause);
-        return new Promise<>(executor, IContext.NONE, new AltResult(cause));
+        return new Promise<>(executor, new AltResult(cause));
     }
 
-    public static <V> Promise<V> failedPromise(Throwable cause, Executor executor, IContext ctx) {
-        Objects.requireNonNull(cause);
-        return new Promise<>(executor, ctx, new AltResult(cause));
-    }
     // endregion
 
     // region internal
@@ -169,13 +150,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // endregion
 
     // region ctx
-
-    /** 允许重写 */
-    @Nonnull
-    @Override
-    public IContext ctx() {
-        return _ctx;
-    }
 
     /** 允许重写 */
     @Nullable
@@ -622,16 +596,12 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region 链式调用
     // 暂不做已完成情况下的优化--降低代码复杂度；另外向已完成的Future添加监听器的情况不常见(至少比例是低的)
 
-    protected <U> Promise<U> newIncompletePromise(IContext ctx, Executor exe) {
-        return new Promise<>(exe, ctx);
+    protected <U> Promise<U> newIncompletePromise(Executor exe) {
+        return new Promise<>(exe);
     }
 
     protected IContext inheritContext(int options) {
-        final IContext ctx = ctx();
-        if (TaskOption.isEnabled(options, TaskOption.STAGE_INHERIT_TOKEN)) {
-            return ctx;
-        }
-        return ctx.toSharable();
+        return IContext.NONE;
     }
 
     // region compose-apply
@@ -664,8 +634,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(fn);
 
         if (ctx == null) ctx = inheritContext(options);
-        Promise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
-        pushCompletion(new UniComposeApply<>(executor, options, this, promise, fn));
+        Promise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
+        pushCompletion(new UniComposeApply<>(executor, ctx, options, this, promise, fn));
         return promise;
     }
 
@@ -703,8 +673,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(fn);
 
         if (ctx == null) ctx = inheritContext(options);
-        Promise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
-        pushCompletion(new UniComposeCall<>(executor, options, this, promise, fn));
+        Promise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
+        pushCompletion(new UniComposeCall<>(executor, ctx, options, this, promise, fn));
         return promise;
     }
 
@@ -747,8 +717,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(fallback);
 
         if (ctx == null) ctx = inheritContext(options);
-        Promise<T> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
-        pushCompletion(new UniComposeCathing<>(executor, options, this, promise, exceptionType, fallback));
+        Promise<T> promise = newIncompletePromise(executor == null ? this.executor() : executor);
+        pushCompletion(new UniComposeCathing<>(executor, ctx, options, this, promise, exceptionType, fallback));
         return promise;
     }
 
@@ -786,8 +756,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(fn);
 
         if (ctx == null) ctx = inheritContext(options);
-        Promise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
-        pushCompletion(new UniComposeHandle<>(executor, options, this, promise, fn));
+        Promise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
+        pushCompletion(new UniComposeHandle<>(executor, ctx, options, this, promise, fn));
         return promise;
     }
 
@@ -822,8 +792,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(fn);
 
         if (ctx == null) ctx = inheritContext(options);
-        Promise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
-        pushCompletion(new UniApply<>(executor, options, this, promise, fn));
+        Promise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
+        pushCompletion(new UniApply<>(executor, ctx, options, this, promise, fn));
         return promise;
     }
     // endregion
@@ -857,8 +827,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(action);
 
         if (ctx == null) ctx = inheritContext(options);
-        Promise<Void> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
-        pushCompletion(new UniAccept<>(executor, options, this, promise, action));
+        Promise<Void> promise = newIncompletePromise(executor == null ? this.executor() : executor);
+        pushCompletion(new UniAccept<>(executor, ctx, options, this, promise, action));
         return promise;
     }
     // endregion
@@ -892,8 +862,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(fn);
 
         if (ctx == null) ctx = inheritContext(options);
-        Promise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
-        pushCompletion(new UniCall<>(executor, options, this, promise, fn));
+        Promise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
+        pushCompletion(new UniCall<>(executor, ctx, options, this, promise, fn));
         return promise;
     }
 
@@ -927,8 +897,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(action);
 
         if (ctx == null) ctx = inheritContext(options);
-        Promise<Void> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
-        pushCompletion(new UniRun<>(executor, options, this, promise, action));
+        Promise<Void> promise = newIncompletePromise(executor == null ? this.executor() : executor);
+        pushCompletion(new UniRun<>(executor, ctx, options, this, promise, action));
         return promise;
     }
     // endregion
@@ -970,8 +940,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(fallback, "fallback");
 
         if (ctx == null) ctx = inheritContext(options);
-        Promise<T> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
-        pushCompletion(new UniCathing<>(executor, options, this, promise, exceptionType, fallback));
+        Promise<T> promise = newIncompletePromise(executor == null ? this.executor() : executor);
+        pushCompletion(new UniCathing<>(executor, ctx, options, this, promise, exceptionType, fallback));
         return promise;
     }
     // endregion
@@ -1007,8 +977,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(fn);
 
         if (ctx == null) ctx = inheritContext(options);
-        Promise<U> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
-        pushCompletion(new UniHandle<>(executor, options, this, promise, fn));
+        Promise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
+        pushCompletion(new UniHandle<>(executor, ctx, options, this, promise, fn));
         return promise;
     }
     // endregion
@@ -1042,8 +1012,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Objects.requireNonNull(action);
 
         if (ctx == null) ctx = inheritContext(options);
-        Promise<T> promise = newIncompletePromise(ctx, executor == null ? this.executor() : executor);
-        pushCompletion(new UniWhenComplete<>(executor, options, this, promise, action));
+        Promise<T> promise = newIncompletePromise(executor == null ? this.executor() : executor);
+        pushCompletion(new UniWhenComplete<>(executor, ctx, options, this, promise, action));
         return promise;
     }
     // endregion
@@ -1293,8 +1263,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         return internalComplete(encodeValue(value));
     }
 
-    private boolean completeCancelled() {
-        int cancelCode = ctx().cancelToken().cancelCode();
+    private boolean completeCancelled(IContext ctx) {
+        int cancelCode = ctx.cancelToken().cancelCode();
         return internalComplete(new AltResult(StacklessCancellationException.instOf(cancelCode)));
     }
 
@@ -1514,12 +1484,14 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     private static abstract class UniCompletion<V, U> extends Completion {
 
         Executor executor;
+        IContext ctx;
         int options;
         Promise<V> input;
         Promise<U> output;
 
-        public UniCompletion(Executor executor, int options, Promise<V> input, Promise<U> output) {
+        public UniCompletion(Executor executor, IContext context, int options, Promise<V> input, Promise<U> output) {
             this.executor = executor;
+            this.ctx = context;
             this.input = input;
             this.output = output;
             this.options = options;
@@ -1629,10 +1601,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output.ctx().cancelToken().isCancelling()) {
-                    setCompleted = output.completeCancelled();
-                    break tryComplete;
-                }
                 setCompleted = tryTransferTo(input, output);
             }
             // help gc
@@ -1646,9 +1614,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
         BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn;
 
-        public UniComposeApply(Executor executor, int options, Promise<V> input, Promise<U> output,
+        public UniComposeApply(Executor executor, IContext ctx, int options, Promise<V> input, Promise<U> output,
                                BiFunction<? super IContext, ? super V, ? extends ICompletionStage<U>> fn) {
-            super(executor, options, input, output);
+            super(executor, ctx, options, input, output);
             this.fn = fn;
         }
 
@@ -1656,6 +1624,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<U> output = this.output;
+            final IContext ctx = this.ctx;
             boolean setCompleted;
             tryComplete:
             {
@@ -1663,8 +1632,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output.ctx().cancelToken().isCancelling()) {
-                    setCompleted = output.completeCancelled();
+                if (ctx.cancelToken().isCancelling()) {
+                    setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
                 Object r = input.result;
@@ -1676,7 +1645,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<U> relay = fn.apply(output.ctx(), input.decodeValue(r)).toFuture();
+                    IFuture<U> relay = fn.apply(ctx, input.decodeValue(r)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1686,6 +1655,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 }
             }
             // help gc
+            this.ctx = null;
             this.input = null;
             this.output = null;
             this.fn = null;
@@ -1697,9 +1667,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
         Function<? super IContext, ? extends ICompletionStage<U>> fn;
 
-        public UniComposeCall(Executor executor, int options, Promise<V> input, Promise<U> output,
+        public UniComposeCall(Executor executor, IContext ctx, int options, Promise<V> input, Promise<U> output,
                               Function<? super IContext, ? extends ICompletionStage<U>> fn) {
-            super(executor, options, input, output);
+            super(executor, ctx, options, input, output);
             this.fn = fn;
         }
 
@@ -1707,6 +1677,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<U> output = this.output;
+            final IContext ctx = this.ctx;
             boolean setCompleted;
             tryComplete:
             {
@@ -1714,8 +1685,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output.ctx().cancelToken().isCancelling()) {
-                    setCompleted = output.completeCancelled();
+                if (ctx.cancelToken().isCancelling()) {
+                    setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
                 Object r = input.result;
@@ -1727,7 +1698,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<U> relay = fn.apply(output.ctx()).toFuture();
+                    IFuture<U> relay = fn.apply(ctx).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1737,6 +1708,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 }
             }
             // help gc
+            this.ctx = null;
             this.input = null;
             this.output = null;
             this.fn = null;
@@ -1749,9 +1721,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Class<X> exceptionType;
         BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback;
 
-        public UniComposeCathing(Executor executor, int options, Promise<V> input, Promise<V> output,
+        public UniComposeCathing(Executor executor, IContext ctx, int options, Promise<V> input, Promise<V> output,
                                  Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<V>> fallback) {
-            super(executor, options, input, output);
+            super(executor, ctx, options, input, output);
             this.exceptionType = exceptionType;
             this.fallback = fallback;
         }
@@ -1760,6 +1732,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<V> output = this.output;
+            final IContext ctx = this.ctx;
             boolean setCompleted;
             tryComplete:
             {
@@ -1767,8 +1740,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output.ctx().cancelToken().isCancelling()) {
-                    setCompleted = output.completeCancelled();
+                if (ctx.cancelToken().isCancelling()) {
+                    setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
                 Object r = input.result;
@@ -1780,7 +1753,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    IFuture<V> relay = fallback.apply(output.ctx(), exceptionType.cast(altResult.cause)).toFuture();
+                    IFuture<V> relay = fallback.apply(ctx, exceptionType.cast(altResult.cause)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
                         relay.onCompleted(new UniRelay<>(relay, output), 0);
@@ -1790,6 +1763,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 }
             }
             // help gc
+            this.ctx = null;
             this.input = null;
             this.output = null;
             this.exceptionType = null;
@@ -1802,9 +1776,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
         TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn;
 
-        public UniComposeHandle(Executor executor, int options, Promise<V> input, Promise<U> output,
+        public UniComposeHandle(Executor executor, IContext ctx, int options, Promise<V> input, Promise<U> output,
                                 TriFunction<? super IContext, ? super V, ? super Throwable, ? extends ICompletionStage<U>> fn) {
-            super(executor, options, input, output);
+            super(executor, ctx, options, input, output);
             this.fn = fn;
         }
 
@@ -1812,6 +1786,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<U> output = this.output;
+            final IContext ctx = this.ctx;
             boolean setCompleted;
             tryComplete:
             {
@@ -1819,8 +1794,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output.ctx().cancelToken().isCancelling()) {
-                    setCompleted = output.completeCancelled();
+                if (ctx.cancelToken().isCancelling()) {
+                    setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
                 try {
@@ -1830,9 +1805,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     Object r = input.result;
                     IFuture<U> relay;
                     if (r instanceof AltResult altResult) {
-                        relay = fn.apply(output.ctx(), null, altResult.cause).toFuture();
+                        relay = fn.apply(ctx, null, altResult.cause).toFuture();
                     } else {
-                        relay = fn.apply(output.ctx(), input.decodeValue(r), null).toFuture();
+                        relay = fn.apply(ctx, input.decodeValue(r), null).toFuture();
                     }
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
@@ -1843,6 +1818,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 }
             }
             // help gc
+            this.ctx = null;
             this.input = null;
             this.output = null;
             this.fn = null;
@@ -1858,9 +1834,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
         BiFunction<? super IContext, ? super V, ? extends U> fn;
 
-        public UniApply(Executor executor, int options, Promise<V> input, Promise<U> output,
+        public UniApply(Executor executor, IContext ctx, int options, Promise<V> input, Promise<U> output,
                         BiFunction<? super IContext, ? super V, ? extends U> fn) {
-            super(executor, options, input, output);
+            super(executor, ctx, options, input, output);
             this.fn = fn;
         }
 
@@ -1868,6 +1844,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<U> output = this.output;
+            final IContext ctx = this.ctx;
             boolean setCompleted;
             tryComplete:
             {
@@ -1875,8 +1852,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output.ctx().cancelToken().isCancelling()) {
-                    setCompleted = output.completeCancelled();
+                if (ctx.cancelToken().isCancelling()) {
+                    setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
                 Object r = input.result;
@@ -1888,12 +1865,13 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    setCompleted = output.completeValue(fn.apply(output.ctx(), input.decodeValue(r)));
+                    setCompleted = output.completeValue(fn.apply(ctx, input.decodeValue(r)));
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
             }
             // help gc
+            this.ctx = null;
             this.input = null;
             this.output = null;
             this.fn = null;
@@ -1905,9 +1883,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
         BiConsumer<? super IContext, ? super V> action;
 
-        public UniAccept(Executor executor, int options, Promise<V> input, Promise<Void> output,
+        public UniAccept(Executor executor, IContext ctx, int options, Promise<V> input, Promise<Void> output,
                          BiConsumer<? super IContext, ? super V> action) {
-            super(executor, options, input, output);
+            super(executor, ctx, options, input, output);
             this.action = action;
         }
 
@@ -1915,6 +1893,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<Void> output = this.output;
+            final IContext ctx = this.ctx;
             boolean setCompleted;
             tryComplete:
             {
@@ -1922,8 +1901,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output.ctx().cancelToken().isCancelling()) {
-                    setCompleted = output.completeCancelled();
+                if (ctx.cancelToken().isCancelling()) {
+                    setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
                 Object r = input.result;
@@ -1935,13 +1914,14 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    action.accept(output.ctx(), input.decodeValue(r));
+                    action.accept(ctx, input.decodeValue(r));
                     setCompleted = output.completeNull();
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
             }
             // help gc
+            this.ctx = null;
             this.input = null;
             this.output = null;
             this.action = null;
@@ -1953,9 +1933,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
         Function<? super IContext, ? extends U> fn;
 
-        public UniCall(Executor executor, int options, Promise<V> input, Promise<U> output,
+        public UniCall(Executor executor, IContext ctx, int options, Promise<V> input, Promise<U> output,
                        Function<? super IContext, ? extends U> fn) {
-            super(executor, options, input, output);
+            super(executor, ctx, options, input, output);
             this.fn = fn;
         }
 
@@ -1963,6 +1943,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<U> output = this.output;
+            final IContext ctx = this.ctx;
             boolean setCompleted;
             tryComplete:
             {
@@ -1970,8 +1951,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output.ctx().cancelToken().isCancelling()) {
-                    setCompleted = output.completeCancelled();
+                if (ctx.cancelToken().isCancelling()) {
+                    setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
                 Object r = input.result;
@@ -1983,12 +1964,13 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    setCompleted = output.completeValue(fn.apply(output.ctx()));
+                    setCompleted = output.completeValue(fn.apply(ctx));
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
             }
             // help gc
+            this.ctx = null;
             this.input = null;
             this.output = null;
             this.fn = null;
@@ -2000,9 +1982,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
         Consumer<? super IContext> action;
 
-        public UniRun(Executor executor, int options, Promise<V> input, Promise<Void> output,
+        public UniRun(Executor executor, IContext ctx, int options, Promise<V> input, Promise<Void> output,
                       Consumer<? super IContext> action) {
-            super(executor, options, input, output);
+            super(executor, ctx, options, input, output);
             this.action = action;
         }
 
@@ -2010,6 +1992,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<Void> output = this.output;
+            final IContext ctx = this.ctx;
             boolean setCompleted;
             tryComplete:
             {
@@ -2017,8 +2000,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output.ctx().cancelToken().isCancelling()) {
-                    setCompleted = output.completeCancelled();
+                if (ctx.cancelToken().isCancelling()) {
+                    setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
                 Object r = input.result;
@@ -2030,13 +2013,14 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    action.accept(output.ctx());
+                    action.accept(ctx);
                     setCompleted = output.completeNull();
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
             }
             // help gc
+            this.ctx = null;
             this.input = null;
             this.output = null;
             this.action = null;
@@ -2049,9 +2033,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Class<X> exceptionType;
         BiFunction<? super IContext, ? super X, ? extends V> fallback;
 
-        public UniCathing(Executor executor, int options, Promise<V> input, Promise<V> output,
+        public UniCathing(Executor executor, IContext ctx, int options, Promise<V> input, Promise<V> output,
                           Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends V> fallback) {
-            super(executor, options, input, output);
+            super(executor, ctx, options, input, output);
             this.exceptionType = exceptionType;
             this.fallback = fallback;
         }
@@ -2060,6 +2044,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<V> output = this.output;
+            final IContext ctx = this.ctx;
             boolean setCompleted;
             tryComplete:
             {
@@ -2067,8 +2052,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output.ctx().cancelToken().isCancelling()) {
-                    setCompleted = output.completeCancelled();
+                if (ctx.cancelToken().isCancelling()) {
+                    setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
                 Object r = input.result;
@@ -2080,13 +2065,14 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     if (mode <= 0 && !claim()) {
                         return null; // 等待下次执行
                     }
-                    V fr = fallback.apply(output.ctx(), exceptionType.cast(altResult.cause));
+                    V fr = fallback.apply(ctx, exceptionType.cast(altResult.cause));
                     setCompleted = output.completeValue(fr);
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
                 }
             }
             // help gc
+            this.ctx = null;
             this.input = null;
             this.output = null;
             this.exceptionType = null;
@@ -2099,9 +2085,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
         TriFunction<? super IContext, ? super V, ? super Throwable, ? extends U> fn;
 
-        public UniHandle(Executor executor, int options, Promise<V> input, Promise<U> output,
+        public UniHandle(Executor executor, IContext ctx, int options, Promise<V> input, Promise<U> output,
                          TriFunction<? super IContext, ? super V, ? super Throwable, ? extends U> fn) {
-            super(executor, options, input, output);
+            super(executor, ctx, options, input, output);
             this.fn = fn;
         }
 
@@ -2109,6 +2095,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<U> output = this.output;
+            final IContext ctx = this.ctx;
             boolean setCompleted;
             tryComplete:
             {
@@ -2116,8 +2103,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output.ctx().cancelToken().isCancelling()) {
-                    setCompleted = output.completeCancelled();
+                if (ctx.cancelToken().isCancelling()) {
+                    setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
                 try {
@@ -2127,9 +2114,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     Object r = input.result;
                     U relay;
                     if (r instanceof AltResult altResult) {
-                        relay = fn.apply(output.ctx(), null, altResult.cause);
+                        relay = fn.apply(ctx, null, altResult.cause);
                     } else {
-                        relay = fn.apply(output.ctx(), input.decodeValue(r), null);
+                        relay = fn.apply(ctx, input.decodeValue(r), null);
                     }
                     setCompleted = output.completeValue(relay);
                 } catch (Throwable e) {
@@ -2137,6 +2124,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 }
             }
             // help gc
+            this.ctx = null;
             this.input = null;
             this.output = null;
             this.fn = null;
@@ -2148,9 +2136,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
         TriConsumer<? super IContext, ? super V, ? super Throwable> action;
 
-        public UniWhenComplete(Executor executor, int options, Promise<V> input, Promise<V> output,
+        public UniWhenComplete(Executor executor, IContext ctx, int options, Promise<V> input, Promise<V> output,
                                TriConsumer<? super IContext, ? super V, ? super Throwable> action) {
-            super(executor, options, input, output);
+            super(executor, ctx, options, input, output);
             this.action = action;
         }
 
@@ -2158,6 +2146,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         Promise<?> tryFire(int mode) {
             final Promise<V> input = this.input;
             final Promise<V> output = this.output;
+            final IContext ctx = this.ctx;
             boolean setCompleted;
             tryComplete:
             {
@@ -2166,8 +2155,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (output.ctx().cancelToken().isCancelling()) {
-                    setCompleted = output.completeCancelled();
+                if (ctx.cancelToken().isCancelling()) {
+                    setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
                 try {
@@ -2181,9 +2170,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 Object r = input.result;
                 try {
                     if (r instanceof AltResult altResult) {
-                        action.accept(output.ctx(), null, altResult.cause);
+                        action.accept(ctx, null, altResult.cause);
                     } else {
-                        action.accept(output.ctx(), input.decodeValue(r), null);
+                        action.accept(ctx, input.decodeValue(r), null);
                     }
                     setCompleted = output.completeRelay(r);
                 } catch (Throwable e) {
@@ -2192,6 +2181,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 }
             }
             // help gc
+            this.ctx = null;
             this.input = null;
             this.output = null;
             this.action = null;

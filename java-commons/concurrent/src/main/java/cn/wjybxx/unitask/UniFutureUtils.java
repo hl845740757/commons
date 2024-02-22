@@ -130,28 +130,28 @@ public class UniFutureUtils {
 
     public static <V> IFuture<V> submitFunc(Executor executor, Function<? super IContext, ? extends V> task, IContext ctx) {
         IPromise<V> promise = newPromise(executor, ctx);
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, promise);
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, ctx, 0, promise);
         executor.execute(futureTask);
         return promise;
     }
 
     public static <V> IFuture<V> submitFunc(IExecutor executor, Function<? super IContext, ? extends V> task, IContext ctx, int options) {
         IPromise<V> promise = newPromise(executor, ctx);
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, promise);
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, ctx, options, promise);
         executor.execute(futureTask);
         return promise;
     }
 
     public static IFuture<?> submitAction(Executor executor, Consumer<? super IContext> task, IContext ctx) {
         IPromise<Object> promise = newPromise(executor, ctx);
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, 0, promise);
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, ctx, 0, promise);
         executor.execute(futureTask);
         return promise;
     }
 
     public static IFuture<?> submitAction(IExecutor executor, Consumer<? super IContext> task, IContext ctx, int options) {
         IPromise<Object> promise = newPromise(executor, ctx);
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, options, promise);
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, ctx, options, promise);
         executor.execute(futureTask);
         return promise;
     }
