@@ -19,7 +19,7 @@
 using NUnit.Framework;
 using Wjybxx.Commons;
 
-namespace Commons.Tests;
+namespace Commons.Tests.Core;
 
 public class DateTimeTest
 {

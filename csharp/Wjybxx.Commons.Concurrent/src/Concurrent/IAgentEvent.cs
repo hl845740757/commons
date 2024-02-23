@@ -19,7 +19,9 @@
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// <see cref="IEventLoopAgent{T}"/>接收的事件类型
+/// <see cref="IEventLoopAgent{T}"/>接收的事件类型。
+///
+/// ps：实现类可能还需要实现<see cref="ITask"/>。
 /// </summary>
 public interface IAgentEvent
 {

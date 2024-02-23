@@ -58,6 +58,7 @@ public static class ObjectUtil
     /// 注意：不是Unix时间戳！
     /// </summary>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long SystemTickMillis() => Stopwatch.GetTimestamp() / DatetimeUtil.TicksPerMillisecond;
 
     #region string
@@ -155,6 +156,7 @@ public static class ObjectUtil
     /// </summary>
     /// <param name="caseMode"></param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CaseMode Invert(this CaseMode caseMode) {
         return caseMode switch
         {
@@ -170,6 +172,7 @@ public static class ObjectUtil
     /// <param name="caseMode">大小写模式</param>
     /// <param name="value">要转换的字符串</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string ToCase(this CaseMode caseMode, string value) {
         return caseMode switch
         {
@@ -185,6 +188,7 @@ public static class ObjectUtil
     /// </summary>
     /// <param name="value"></param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte[] GetUtf8Bytes(string value) {
         return Encoding.UTF8.GetBytes(value);
     }
@@ -194,6 +198,7 @@ public static class ObjectUtil
     /// </summary>
     /// <param name="data">utf8字节</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string GetUtf8String(byte[] data) {
         return Encoding.UTF8.GetString(data);
     }

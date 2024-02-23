@@ -56,7 +56,7 @@ public class CancelTokenTest {
 
     private static ICancelTokenSource newTokenSource() {
         if ((mode.incrementAndGet() & 1) == 0) {
-            return newTokenSource();
+            return new CancelTokenSource();
         } else {
             return new UniCancelTokenSource();
         }

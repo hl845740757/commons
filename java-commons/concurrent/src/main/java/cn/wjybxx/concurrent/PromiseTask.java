@@ -97,7 +97,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
         // 注入promise
         if (taskType == TaskBuilder.TYPE_TIMESHARING) {
             @SuppressWarnings("unchecked") TimeSharingTask<V> timeSharingTask = (TimeSharingTask<V>) task;
-            timeSharingTask.inject(ctx, promise);
+            timeSharingTask.inject(this.ctx, this.promise);
         }
     }
 

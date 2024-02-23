@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using Wjybxx.Commons.Collections;
 
 #pragma warning disable CS0108, CS0114
 
@@ -29,7 +30,7 @@ namespace Wjybxx.Commons.Concurrent;
 ///
 /// 部分属性定义在这里，以支持排序等
 /// </summary>
-public interface IScheduledFutureTask : IFutureTask
+public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 {
     IScheduledPromise Future { get; }
 

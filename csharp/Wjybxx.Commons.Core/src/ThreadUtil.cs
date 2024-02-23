@@ -40,7 +40,7 @@ public static class ThreadUtil
 
     /** 清除线程中断状态 */
     public static bool ClearInterrupt() {
-        Thread currentThread = Thread.CurrentThread;
+        // c# 居然不支持查询线程的中断信号...
         try {
             Thread.Sleep(0);
             return false;

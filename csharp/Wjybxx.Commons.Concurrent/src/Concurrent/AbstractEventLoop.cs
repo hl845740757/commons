@@ -57,7 +57,7 @@ public abstract class AbstractEventLoop : IEventLoop
     // 允许子类转换类型
     public virtual IEventLoop Select(int key) => this;
 
-    public abstract IEventLoopModule MainModule { get; }
+    public abstract IEventLoopModule? MainModule { get; }
 
     public int ChildCount => 1;
 
@@ -120,9 +120,25 @@ public abstract class AbstractEventLoop : IEventLoop
 
     #endregion
 
-    #region Submit调度
+    #region Execute
 
     public abstract void Execute(ITask task);
+
+    public void Execute(Action action, int options = 0) {
+        Execute(Executors.BoxAction(action, options));
+    }
+
+    public void Execute(Action<IContext> action, in IContext context, int options = 0) {
+        Execute(Executors.BoxAction(action, context, options));
+    }
+
+    public void Execute(Action action, CancellationToken cancelToken, int options = 0) {
+        Execute(Executors.BoxAction(action, cancelToken, options));
+    }
+
+    #endregion
+
+    #region Submit
 
     public virtual IPromise<T> NewPromise<T>() => new Promise<T>(this);
 
@@ -160,7 +176,7 @@ public abstract class AbstractEventLoop : IEventLoop
 
     #endregion
 
-    #region Schedule调度
+    #region Schedule
 
     // 默认不支持定时任务
 

@@ -18,7 +18,7 @@
 
 using NUnit.Framework;
 
-namespace Commons.Tests;
+namespace Commons.Tests.Core;
 
 /// <summary>
 /// 测试结构体的防御性拷贝

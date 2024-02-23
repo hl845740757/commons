@@ -19,7 +19,7 @@
 using NUnit.Framework;
 using Wjybxx.Commons.Concurrent;
 
-namespace Commons.Tests;
+namespace Commons.Tests.Core;
 
 public class FutureTest
 {
@@ -53,8 +53,8 @@ public class FutureTest
         Console.WriteLine("count: " + CountAsync().Get());
     }
 
-    private static async IFuture<int> CountAsync() {
-        IFutureTask<int> task = new PromiseTask<int>(() => 1, 0, new Promise<int>());
+    private static async ValueFuture<int> CountAsync() {
+        IFutureTask<int> task = PromiseTask.OfFunction(() => 1, null, 0, new Promise<int>(Executor));
         Executor.Execute(task);
         return await task.Future;
     }

@@ -34,10 +34,22 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
+        <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="src\Disruptor" />
+        <Folder Include="src\Disruptor" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Serilog" Version="3.1.1" />
+        <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
+        <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.1-dev-00572" />
+        <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.0-dev-00806" />
+        <PackageReference Include="Serilog.Enrichers.Process" Version="2.0.2" />
+        <PackageReference Include="Serilog.Enrichers.Thread" Version="3.2.0-dev-00756" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
+        <PackageReference Include="Serilog.Sinks.File" Version="5.0.1-dev-00972" />
+<!--        <PackageReference Include="Serilog.Sinks.Confluent.Kafka" Version="1.10.0" />-->
     </ItemGroup>
 </Project>

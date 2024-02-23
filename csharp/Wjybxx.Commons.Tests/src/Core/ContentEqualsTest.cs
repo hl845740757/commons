@@ -19,7 +19,7 @@
 using NUnit.Framework;
 using Wjybxx.Commons.Collections;
 
-namespace Commons.Tests;
+namespace Commons.Tests.Core;
 
 /// <summary>
 /// 测试实现的Set和字典的相等性是否正确

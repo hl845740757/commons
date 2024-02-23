@@ -37,7 +37,7 @@ public class Context<T> : IContext where T : class
     public object State { get; }
 
     /// <summary>
-    /// 取消令牌 -- 如果未指定，则默认赋值为<see cref="ICancelToken.NONE"/>
+    /// 取消令牌
     /// </summary>
     public ICancelToken CancelToken { get; }
 
@@ -198,5 +198,4 @@ public class Context<T> : IContext where T : class
         return NewContext(Parent, null, ICancelToken.NONE, Blackboard, SharedProps);
     }
 
-    IContext IContext.ToSharable() => ToSharable();
 }

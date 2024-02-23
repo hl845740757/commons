@@ -137,14 +137,6 @@ public interface IEventLoop : IFixedEventLoopGroup, ISingleThreadExecutor
 }
 
 /// <summary>
-/// 事件循环的模块
-/// 该接口在最抽象层仅仅作为标记接口
-/// </summary>
-public interface IEventLoopModule
-{
-}
-
-/// <summary>
 /// 事件循环的生命周期标识
 /// </summary>
 public enum EventLoopState

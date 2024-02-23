@@ -551,10 +551,11 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                     runningFuture.trySetException(new StartFailedException("StartFailed", e));
                 }
             } finally {
-                // 如果是非正常退出，需要切换到正在关闭状态 - 告知其它线程，已经开始关闭
-                advanceRunState(EventLoopState.ST_SHUTTING_DOWN);
-                if (!runningFuture.isSucceeded()) {
-                    advanceRunState(EventLoopState.ST_SHUTDOWN); // 启动失败直接进入清理状态，丢弃所有提交的任务
+                if (runningFuture.isSucceeded()) {
+                    advanceRunState(EventLoopState.ST_SHUTTING_DOWN);
+                } else {
+                    // 启动失败直接进入清理状态，丢弃所有提交的任务
+                    advanceRunState(EventLoopState.ST_SHUTDOWN);
                 }
 
                 try {

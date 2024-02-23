@@ -1,4 +1,4 @@
-﻿#region LICENSE
+#region LICENSE
 
 // Copyright 2023-2024 wjybxx(845740757@qq.com)
 // 
@@ -16,23 +16,12 @@
 
 #endregion
 
-using System.Text;
-using NUnit.Framework;
-using Wjybxx.Commons.IO;
-using Wjybxx.Commons.Pool;
+namespace Wjybxx.Commons.Concurrent;
 
-namespace Commons.Tests;
-
-public class StringBuilderPoolTest
+/// <summary>
+/// 事件循环的模块
+/// 该接口在最抽象层仅仅作为标记接口
+/// </summary>
+public interface IEventLoopModule
 {
-    [Test]
-    public void Test() {
-        ArrayObjectPool<StringBuilder> pool = new ArrayObjectPool<StringBuilder>(
-            () => new StringBuilder(),
-            builder => builder.Length = 0,
-            builder => builder.Length <= 8192);
-
-        RecycleHandle<StringBuilder> recycleHandle = pool.Rent();
-        pool.ReturnOne(recycleHandle);
-    }
 }
