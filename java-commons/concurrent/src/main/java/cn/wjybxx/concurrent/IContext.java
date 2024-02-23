@@ -78,14 +78,4 @@ public interface IContext {
      */
     Object sharedProps();
 
-    /**
-     * 去除与任务绑定的属性，保留可多任务共享的属性。
-     * 需要去除的属性：取消令牌，任务绑定的状态。
-     * 注意：不是创建子上下文，而是同级上下文；通常用于下游任务继承上下文。
-     *
-     * @return 如果当前上下文已是可共享的，则可返回自身。
-     * @implNote 应当返回相同类型
-     */
-    IContext toSharable();
-
 }

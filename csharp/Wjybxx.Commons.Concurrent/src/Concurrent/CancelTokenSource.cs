@@ -82,6 +82,28 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     public void CancelAfter(int cancelCode, TimeSpan timeSpan, IScheduledExecutorService delayer) {
         if (delayer == null) throw new ArgumentNullException(nameof(delayer));
+        delayer.ScheduleAction(Callback, timeSpan, new Context(this, cancelCode));
+    }
+
+    private static void Callback(IContext rawContext) {
+        Context context = (Context)rawContext;
+        context.source.Cancel(context.cancelCode);
+    }
+
+    private class Context : IContext
+    {
+        internal readonly CancelTokenSource source;
+        internal readonly int cancelCode;
+
+        public Context(CancelTokenSource source, int cancelCode) {
+            this.source = source;
+            this.cancelCode = cancelCode;
+        }
+
+        public ICancelToken CancelToken => source;
+        public object? State => null;
+        public object? Blackboard => null;
+        public object? SharedProps => null;
     }
 
     #endregion

@@ -57,12 +57,6 @@ public interface IAgentEvent {
     void setObj0(Object obj);
 
     /**
-     * 将事件的第一个参数转为{@link Runnable}类型
-     * 这是{@link #getObj0()}的快捷方法
-     */
-    Runnable castObj0ToRunnable();
-
-    /**
      * 清理事件的引用数据 -- 避免内存泄漏
      * ps:事件循环每处理完事件就会调用该方法以避免内存泄漏
      */

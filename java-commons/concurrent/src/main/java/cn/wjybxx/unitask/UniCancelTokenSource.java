@@ -246,10 +246,6 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             return null;
         }
 
-        @Override
-        public IContext toSharable() {
-            return this;
-        }
     }
 
     // endregion

@@ -205,12 +205,4 @@ public class Context<T> implements IContext {
 
     // endregion
 
-    @Override
-    public Context<T> toSharable() {
-        if (this.state == null && this.cancelToken == ICancelToken.NONE) { // 较大概率
-            return this;
-        }
-        return newContext(this, null, ICancelToken.NONE, blackboard, sharedProps);
-    }
-
 }

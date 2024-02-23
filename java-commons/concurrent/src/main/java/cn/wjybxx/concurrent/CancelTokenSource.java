@@ -142,11 +142,11 @@ public final class CancelTokenSource implements ICancelTokenSource {
             Canceller canceller = new Canceller(this, cancelCode);
             canceller.future = executor.schedule(canceller, delay, timeUnit);
             // jdk的scheduler不会响应取消令牌，我们通过Future及时取消定时任务 -- 未来更换实现后可避免
-            this.thenAccept(canceller);
+            this.thenNotify(canceller);
         }
     }
 
-    private static class Canceller implements Runnable, Consumer<ICancelToken> {
+    private static class Canceller implements Runnable, CancelTokenListener {
 
         final CancelTokenSource source;
         final int cancelCode;
@@ -163,7 +163,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         }
 
         @Override
-        public void accept(ICancelToken cancelToken) {
+        public void onCancelRequested(ICancelToken cancelToken) {
             future.cancel(false);
         }
     }

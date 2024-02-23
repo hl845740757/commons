@@ -111,11 +111,6 @@ public final class RingBufferEvent implements IAgentEvent {
     }
 
     @Override
-    public Runnable castObj0ToRunnable() {
-        return (Runnable) obj0;
-    }
-
-    @Override
     public String toString() {
         return "RingBufferEvent{" +
                 "type=" + type +

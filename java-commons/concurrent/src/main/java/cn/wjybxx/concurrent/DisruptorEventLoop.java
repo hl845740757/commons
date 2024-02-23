@@ -705,7 +705,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                     if (event.getType() > 0) {
                         agent.onEvent(event);
                     } else if (event.getType() == 0) {
-                        event.castObj0ToRunnable().run();
+                        Runnable runnable = (Runnable) event.getObj0();
+                        runnable.run();
                     } else {
                         if (isShuttingDown()) { // 生产者在观察到关闭时发布了不连续的数据
                             return curSequence;
@@ -772,7 +773,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                     if (event.getType() > 0) {
                         agent.onEvent(event);
                     } else {
-                        event.castObj0ToRunnable().run();
+                        Runnable runnable = (Runnable) event.getObj0();
+                        runnable.run();
                     }
                 } catch (Throwable t) {
                     logCause(t);

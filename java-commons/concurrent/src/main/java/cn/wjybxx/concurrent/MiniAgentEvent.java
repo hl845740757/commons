@@ -70,8 +70,4 @@ public final class MiniAgentEvent implements IAgentEvent {
         this.options = options;
     }
 
-    @Override
-    public Runnable castObj0ToRunnable() {
-        return (Runnable) obj0;
-    }
 }

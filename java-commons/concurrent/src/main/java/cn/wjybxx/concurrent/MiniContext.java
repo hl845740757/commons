@@ -70,9 +70,4 @@ public final class MiniContext implements IContext {
         return null;
     }
 
-    @Override
-    public IContext toSharable() {
-        return SHARABLE;
-    }
-
 }
