@@ -70,7 +70,7 @@ public class FutureTest {
 
     @Test
     void testAwait() throws InterruptedException {
-        PromiseTask<String> promiseTask = PromiseTask.ofFunction(() -> "hello", 0, new Promise<>());
+        PromiseTask<String> promiseTask = PromiseTask.ofFunction(() -> "hello", null, 0, new Promise<>());
         globalEventLoop.schedule(promiseTask, 10, TimeUnit.MILLISECONDS);
 
         Assertions.assertTrue(promiseTask.future().await(100, TimeUnit.SECONDS));

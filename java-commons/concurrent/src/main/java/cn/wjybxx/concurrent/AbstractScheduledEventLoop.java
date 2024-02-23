@@ -68,7 +68,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
     @Override
     public IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
         long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(task, 0, newScheduledPromise(), 0, triggerTime);
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(task, null, 0, newScheduledPromise(), 0, triggerTime);
         execute(promiseTask);
         return promiseTask.future();
     }
@@ -76,7 +76,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
     @Override
     public <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
         long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, 0, newScheduledPromise(), 0, triggerTime);
+        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, null, 0, newScheduledPromise(), 0, triggerTime);
         execute(promiseTask);
         return promiseTask.future();
     }

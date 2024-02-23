@@ -36,7 +36,7 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
         long triggerTime = ScheduledPromiseTask.TriggerTime(delay, TickTime);
         MiniContext context = MiniContext.OfCancelToken(cancelToken);
 
-        ScheduledPromiseTask<object> promiseTask = ScheduledPromiseTask.OfAction(action, 0, NewScheduledPromise<object>(), 0, triggerTime);
+        ScheduledPromiseTask<object> promiseTask = ScheduledPromiseTask.OfAction(action, context, 0, NewScheduledPromise<object>(), 0, triggerTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -53,7 +53,7 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
         long triggerTime = ScheduledPromiseTask.TriggerTime(delay, TickTime);
         MiniContext context = MiniContext.OfCancelToken(cancelToken);
 
-        ScheduledPromiseTask<TResult> promiseTask = ScheduledPromiseTask.OfFunction(action, 0, NewScheduledPromise<TResult>(), 0, triggerTime);
+        ScheduledPromiseTask<TResult> promiseTask = ScheduledPromiseTask.OfFunction(action, context, 0, NewScheduledPromise<TResult>(), 0, triggerTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }

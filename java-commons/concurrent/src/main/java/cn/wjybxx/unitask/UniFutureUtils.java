@@ -158,28 +158,28 @@ public class UniFutureUtils {
 
     public static <V> IFuture<V> submitCall(Executor executor, Callable<? extends V> task) {
         IPromise<V> promise = newPromise(executor);
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, promise);
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, null, 0, promise);
         executor.execute(futureTask);
         return promise;
     }
 
     public static <V> IFuture<V> submitCall(IExecutor executor, Callable<? extends V> task, int options) {
         IPromise<V> promise = newPromise(executor);
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, promise);
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, null, options, promise);
         executor.execute(futureTask);
         return promise;
     }
 
     public static IFuture<?> submitRun(Executor executor, Runnable action) {
         IPromise<Object> promise = newPromise(executor);
-        PromiseTask<?> futureTask = PromiseTask.ofAction(action, 0, promise);
+        PromiseTask<?> futureTask = PromiseTask.ofAction(action, null, 0, promise);
         executor.execute(futureTask);
         return promise;
     }
 
     public static IFuture<?> submitRun(IExecutor executor, Runnable action, int options) {
         IPromise<Object> promise = newPromise(executor);
-        PromiseTask<?> futureTask = PromiseTask.ofAction(action, options, promise);
+        PromiseTask<?> futureTask = PromiseTask.ofAction(action, null, options, promise);
         executor.execute(futureTask);
         return promise;
     }

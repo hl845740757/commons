@@ -78,9 +78,9 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         promise.setTask(this);
     }
 
-    public static ScheduledPromiseTask<?> ofAction(Runnable action, int options, IScheduledPromise<?> promise,
+    public static ScheduledPromiseTask<?> ofAction(Runnable action, IContext ctx, int options, IScheduledPromise<?> promise,
                                                    long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, null, options, promise, TaskBuilder.TYPE_ACTION,
+        return new ScheduledPromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION,
                 id, nextTriggerTime);
     }
 
@@ -90,9 +90,9 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
                 id, nextTriggerTime);
     }
 
-    public static <V> ScheduledPromiseTask<V> ofFunction(Callable<? extends V> action, int options, IScheduledPromise<V> promise,
+    public static <V> ScheduledPromiseTask<V> ofFunction(Callable<? extends V> action, IContext ctx, int options, IScheduledPromise<V> promise,
                                                          long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<>(action, null, options, promise, TaskBuilder.TYPE_FUNC,
+        return new ScheduledPromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_FUNC,
                 id, nextTriggerTime);
     }
 

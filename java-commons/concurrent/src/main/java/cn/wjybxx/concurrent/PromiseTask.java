@@ -103,16 +103,16 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     // region factory
 
-    public static PromiseTask<?> ofAction(Runnable action, int options, IPromise<?> promise) {
-        return new PromiseTask<>(action, null, options, promise, TaskBuilder.TYPE_ACTION);
+    public static PromiseTask<?> ofAction(Runnable action, IContext ctx, int options, IPromise<?> promise) {
+        return new PromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION);
     }
 
     public static PromiseTask<?> ofAction(Consumer<? super IContext> action, IContext ctx, int options, IPromise<?> promise) {
         return new PromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION_CTX);
     }
 
-    public static <V> PromiseTask<V> ofFunction(Callable<? extends V> action, int options, IPromise<V> promise) {
-        return new PromiseTask<>(action, null, options, promise, TaskBuilder.TYPE_FUNC);
+    public static <V> PromiseTask<V> ofFunction(Callable<? extends V> action, IContext ctx, int options, IPromise<V> promise) {
+        return new PromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_FUNC);
     }
 
     public static <V> PromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IContext ctx, int options, IPromise<V> promise) {

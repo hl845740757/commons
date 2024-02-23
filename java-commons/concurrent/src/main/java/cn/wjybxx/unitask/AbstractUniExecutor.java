@@ -89,21 +89,21 @@ public abstract class AbstractUniExecutor implements UniExecutorService {
 
     @Override
     public <T> IFuture<T> submit(Callable<T> task) {
-        PromiseTask<T> futureTask = PromiseTask.ofFunction(task, 0, newPromise());
+        PromiseTask<T> futureTask = PromiseTask.ofFunction(task, null, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Callable<? extends V> task) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, newPromise());
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, null, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Callable<? extends V> task, int options) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, newPromise());
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, null, options, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
@@ -124,14 +124,14 @@ public abstract class AbstractUniExecutor implements UniExecutorService {
 
     @Override
     public IFuture<?> submitAction(Runnable task) {
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, 0, newPromise());
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, null, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public IFuture<?> submitAction(Runnable task, int options) {
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, options, newPromise());
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, null, options, newPromise());
         execute(futureTask);
         return futureTask.future();
     }

@@ -33,9 +33,9 @@ public interface ScheduledPromiseTask
 {
     #region factory
 
-    public static ScheduledPromiseTask<object> OfAction(Action action, int options, IScheduledPromise<object> promise,
+    public static ScheduledPromiseTask<object> OfAction(Action action, IContext context, int options, IScheduledPromise<object> promise,
                                                         long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<object>(action, null, options, promise, TaskBuilder.TYPE_ACTION,
+        return new ScheduledPromiseTask<object>(action, context, options, promise, TaskBuilder.TYPE_ACTION,
             id, nextTriggerTime);
     }
 
@@ -45,9 +45,9 @@ public interface ScheduledPromiseTask
             id, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, int options, IScheduledPromise<T> promise,
+    public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, IContext context, int options, IScheduledPromise<T> promise,
                                                         long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, null, options, promise, TaskBuilder.TYPE_FUNC,
+        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC,
             id, nextTriggerTime);
     }
 

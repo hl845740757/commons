@@ -56,19 +56,19 @@ public interface PromiseTask
 
     #region factory
 
-    public static PromiseTask<object> OfAction(Action action, int options, IPromise<object> promise) {
-        return new PromiseTask<object>(action, null, options, promise, TaskBuilder.TYPE_ACTION);
+    public static PromiseTask<object> OfAction(Action action, IContext? context, int options, IPromise<object> promise) {
+        return new PromiseTask<object>(action, context, options, promise, TaskBuilder.TYPE_ACTION);
     }
 
-    public static PromiseTask<object> OfAction(Action<IContext> action, IContext context, int options, IPromise<object> promise) {
+    public static PromiseTask<object> OfAction(Action<IContext> action, IContext? context, int options, IPromise<object> promise) {
         return new PromiseTask<object>(action, context, options, promise, TaskBuilder.TYPE_ACTION_CTX);
     }
 
-    public static PromiseTask<T> OfFunction<T>(Func<T> action, int options, IPromise<T> promise) {
-        return new PromiseTask<T>(action, null, options, promise, TaskBuilder.TYPE_FUNC);
+    public static PromiseTask<T> OfFunction<T>(Func<T> action, IContext? context, int options, IPromise<T> promise) {
+        return new PromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC);
     }
 
-    public static PromiseTask<T> OfFunction<T>(Func<IContext, T> action, IContext context, int options, IPromise<T> promise) {
+    public static PromiseTask<T> OfFunction<T>(Func<IContext, T> action, IContext? context, int options, IPromise<T> promise) {
         return new PromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC_CTX);
     }
 

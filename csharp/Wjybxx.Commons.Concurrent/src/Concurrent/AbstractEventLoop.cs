@@ -135,7 +135,7 @@ public abstract class AbstractEventLoop : IEventLoop
     }
 
     public virtual IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
-        PromiseTask<T> promiseTask = PromiseTask.OfFunction(action, options, NewPromise<T>());
+        PromiseTask<T> promiseTask = PromiseTask.OfFunction(action, null, options, NewPromise<T>());
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -147,7 +147,7 @@ public abstract class AbstractEventLoop : IEventLoop
     }
 
     public virtual IFuture SubmitAction(Action action, int options = 0) {
-        PromiseTask<object> promiseTask = PromiseTask.OfAction(action, options, NewPromise<object>());
+        PromiseTask<object> promiseTask = PromiseTask.OfAction(action, null, options, NewPromise<object>());
         Execute(promiseTask);
         return promiseTask.Future;
     }

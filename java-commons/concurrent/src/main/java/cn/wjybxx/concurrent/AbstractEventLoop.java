@@ -126,21 +126,21 @@ public abstract class AbstractEventLoop implements EventLoop {
 
     @Override
     public <T> IFuture<T> submit(Callable<T> task) {
-        PromiseTask<T> futureTask = PromiseTask.ofFunction(task, 0, newPromise());
+        PromiseTask<T> futureTask = PromiseTask.ofFunction(task, null, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Callable<? extends V> task) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, 0, newPromise());
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, null, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
 
     @Override
     public <V> IFuture<V> submitFunc(Callable<? extends V> task, int options) {
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, options, newPromise());
+        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, null, options, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
@@ -161,7 +161,7 @@ public abstract class AbstractEventLoop implements EventLoop {
 
     @Override
     public IFuture<?> submitAction(Runnable task) {
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, 0, newPromise());
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, null, 0, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
@@ -169,7 +169,7 @@ public abstract class AbstractEventLoop implements EventLoop {
     /** 该方法可能和{@link ExecutorService#submit(Runnable, Object)}冲突，因此我们要带后缀 */
     @Override
     public IFuture<?> submitAction(Runnable task, int options) {
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, options, newPromise());
+        PromiseTask<?> futureTask = PromiseTask.ofAction(task, null, options, newPromise());
         execute(futureTask);
         return futureTask.future();
     }
