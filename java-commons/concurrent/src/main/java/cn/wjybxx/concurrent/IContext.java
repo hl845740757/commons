@@ -41,7 +41,7 @@ public interface IContext {
      * 1. 建议使用空上下文代替null
      * 2. 可以通过该对象创建子上下文
      */
-    IContext NONE = Context.ofCancelToken(ICancelToken.NONE);
+    IContext NONE = MiniContext.ofCancelToken(ICancelToken.NONE);
 
     /**
      * 任务绑定的状态

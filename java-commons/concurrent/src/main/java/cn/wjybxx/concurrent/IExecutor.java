@@ -40,7 +40,6 @@ public interface IExecutor extends Executor {
      * @param command 要执行的任务，注意{@link ITask}类型
      * @throws NullPointerException       如果任务为null
      * @throws RejectedExecutionException 如果Executor已开始关闭
-     * @apiNote 该接口默认不测试任务的类型，不会尝试去解析任务潜在的options -- 保证确定性。
      */
     @SuppressWarnings("NullableProblems")
     @Override

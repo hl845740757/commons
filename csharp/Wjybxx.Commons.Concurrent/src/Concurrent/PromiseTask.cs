@@ -233,6 +233,11 @@ public class PromiseTask<T> : IFutureTask<T>, PromiseTask
                 Func<IContext, T> task = (Func<IContext, T>)this.task;
                 return task(context);
             }
+            case TaskBuilder.TYPE_TASK: {
+                ITask task = (ITask)this.task;
+                task.Run();
+                return default;
+            }
             default: {
                 throw new AssertionError("type: " + type);
             }

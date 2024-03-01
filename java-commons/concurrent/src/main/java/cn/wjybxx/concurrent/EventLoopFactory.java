@@ -22,6 +22,6 @@ package cn.wjybxx.concurrent;
  */
 public interface EventLoopFactory {
 
-    EventLoop newChild(EventLoopGroup parent, int index);
+    EventLoop newChild(EventLoopGroup parent, int index, Object extraInfo);
 
 }

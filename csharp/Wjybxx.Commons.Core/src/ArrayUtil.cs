@@ -24,7 +24,7 @@ namespace Wjybxx.Commons;
 /// <summary>
 /// 数组工具类
 /// </summary>
-public class ArrayUtil
+public static class ArrayUtil
 {
     /// <summary>
     /// 拷贝数组

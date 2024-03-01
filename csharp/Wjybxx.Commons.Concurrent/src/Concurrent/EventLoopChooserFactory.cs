@@ -24,7 +24,8 @@ using System.Threading;
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 
+/// 用于创建事件循环选择器。
+/// ps：实现为接口是不必要的。
 /// </summary>
 public class EventLoopChooserFactory
 {

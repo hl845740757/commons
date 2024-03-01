@@ -39,7 +39,7 @@ public interface IContext
     /// <summary>
     /// 空上下文
     /// </summary>
-    public static readonly IContext NONE = Context<object>.OfCancelToken(ICancelToken.NONE);
+    public static readonly IContext NONE = MiniContext.OfCancelToken(ICancelToken.NONE);
 
     /// <summary>
     /// 任务绑定的取消令牌（取消上下文）

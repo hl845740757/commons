@@ -33,9 +33,13 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     public static final int TYPE_ACTION = 0;
     public static final int TYPE_ACTION_CTX = 1;
+
     public static final int TYPE_FUNC = 2;
     public static final int TYPE_FUNC_CTX = 3;
+
     public static final int TYPE_TIMESHARING = 4;
+    @Deprecated
+    public static final int TYPE_TASK = 5; // java端不使用，用于C#
 
     private final int type;
     private final Object task;

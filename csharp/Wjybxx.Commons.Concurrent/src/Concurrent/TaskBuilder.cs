@@ -45,6 +45,13 @@ public interface TaskBuilder
     /// </summary>
     public const int TYPE_FUNC_CTX = 3;
 
+    /** 分时任务 - 暂未移植到C# */
+    public const int TYPE_TIMESHARING = 4;
+    /// <summary>
+    /// 表示委托类型为<see cref="ITask"/>，通常表示二次封装
+    /// </summary>
+    public const int TYPE_TASK = 5;
+
     #region factory
 
     public static TaskBuilder<object> NewAction(Action action) {
@@ -63,11 +70,24 @@ public interface TaskBuilder
         return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_CTX, func, context);
     }
 
+    public static TaskBuilder<object> NewTask(ITask task) {
+        return new TaskBuilder<object>(TaskBuilder.TYPE_TASK, task);
+    }
+
     #endregion
 
+    /// <summary>
+    /// 计算Task的类型
+    /// </summary>
+    /// <param name="task"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
     public static int TaskType(object task) {
         if (task is Action) {
-            return TaskBuilder.TYPE_ACTION;
+            return TYPE_ACTION;
+        }
+        if (task is ITask) {
+            return TYPE_TASK;
         }
         Type type = task.GetType();
         if (type.IsGenericType) {
@@ -105,7 +125,7 @@ public struct TaskBuilder<T> : TaskBuilder
     /// <param name="context">任务的上下文</param>
     internal TaskBuilder(int type, object task, IContext? context = null) {
         this.type = type;
-        this.task = task;
+        this.task = task ?? throw new ArgumentNullException(nameof(task));
         this.context = context;
         this.options = 0;
     }

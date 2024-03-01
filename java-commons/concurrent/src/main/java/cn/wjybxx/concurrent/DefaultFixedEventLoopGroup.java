@@ -41,8 +41,8 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
     private final Runnable terminationHook;
 
     public DefaultFixedEventLoopGroup(EventLoopGroupBuilder builder) {
-        int numberChildren = builder.getNumberChildren();
-        if (numberChildren < 1) {
+        int numChildren = builder.getNumChildren();
+        if (numChildren < 1) {
             throw new IllegalArgumentException("childCount must greater than 0");
         }
         EventLoopFactory eventLoopFactory = builder.getEventLoopFactory();
@@ -54,9 +54,9 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
             chooserFactory = new DefaultChooserFactory();
         }
 
-        children = new EventLoop[numberChildren];
-        for (int i = 0; i < numberChildren; i++) {
-            EventLoop eventLoop = Objects.requireNonNull(eventLoopFactory.newChild(this, i));
+        children = new EventLoop[numChildren];
+        for (int i = 0; i < numChildren; i++) {
+            EventLoop eventLoop = Objects.requireNonNull(eventLoopFactory.newChild(this, i, null));
             if (eventLoop.parent() != this) throw new IllegalStateException("the parent of child is illegal");
             children[i] = eventLoop;
         }
@@ -90,7 +90,7 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
 
     @Override
     public boolean isTerminated() {
-        return Arrays.stream(children).allMatch(EventLoop::isTerminated);
+        return terminationFuture.isDone();
     }
 
     @Override

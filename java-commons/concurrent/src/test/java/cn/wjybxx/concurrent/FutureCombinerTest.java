@@ -39,8 +39,8 @@ public class FutureCombinerTest {
     void setUp() {
         DefaultThreadFactory threadFactory = new DefaultThreadFactory("consumer");
         consumer = EventLoopGroupBuilder.newBuilder()
-                .setNumberChildren(4)
-                .setEventLoopFactory((parent, index) -> EventLoopBuilder.newDisruptBuilder()
+                .setNumChildren(4)
+                .setEventLoopFactory((parent, index, extra) -> EventLoopBuilder.newDisruptBuilder()
                         .setParent(parent)
                         .setThreadFactory(threadFactory)
                         .setEventSequencer(RingBufferEventSequencer

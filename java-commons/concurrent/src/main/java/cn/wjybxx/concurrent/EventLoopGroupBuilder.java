@@ -22,7 +22,7 @@ package cn.wjybxx.concurrent;
  */
 public class EventLoopGroupBuilder {
 
-    private int numberChildren = 1;
+    private int numChildren = 1;
     private EventLoopFactory eventLoopFactory;
     private EventLoopChooserFactory chooserFactory;
     private Runnable terminationHook;
@@ -39,12 +39,12 @@ public class EventLoopGroupBuilder {
         return new DefaultFixedEventLoopGroup(this);
     }
 
-    public int getNumberChildren() {
-        return numberChildren;
+    public int getNumChildren() {
+        return numChildren;
     }
 
-    public EventLoopGroupBuilder setNumberChildren(int numberChildren) {
-        this.numberChildren = numberChildren;
+    public EventLoopGroupBuilder setNumChildren(int numChildren) {
+        this.numChildren = numChildren;
         return this;
     }
 

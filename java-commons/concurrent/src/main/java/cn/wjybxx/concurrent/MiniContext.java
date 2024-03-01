@@ -46,6 +46,7 @@ public final class MiniContext implements IContext {
     }
 
     public static MiniContext ofCancelToken(ICancelToken cancelToken) {
+        if (cancelToken == ICancelToken.NONE) return SHARABLE;
         return new MiniContext(null, cancelToken);
     }
 

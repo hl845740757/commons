@@ -70,6 +70,11 @@ public interface ScheduledTaskBuilder
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
+    public static ScheduledTaskBuilder<object> NewTask(ITask task) {
+        TaskBuilder<object> taskBuilder = TaskBuilder.NewTask(task);
+        return new ScheduledTaskBuilder<object>(ref taskBuilder);
+    }
+
     #endregion
 }
 
