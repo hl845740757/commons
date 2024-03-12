@@ -169,11 +169,11 @@ public class Context<T> : IContext where T : class
 
     // with不会共享state和取消令牌
 
-    public Context<T> WithState(object state) {
-        return NewContext(Parent, state, null, Blackboard, SharedProps);
-    }
-
-    public Context<T> WithState(object state, ICancelToken cancelToken) {
+    public Context<T> WithState(object state, ICancelToken? cancelToken = null) {
+        if (cancelToken == null) cancelToken = ICancelToken.NONE;
+        if (state == this.State && cancelToken == this.CancelToken) {
+            return this;
+        }
         return NewContext(Parent, state, cancelToken, Blackboard, SharedProps);
     }
 

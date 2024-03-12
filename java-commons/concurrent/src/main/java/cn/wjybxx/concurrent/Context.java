@@ -184,10 +184,14 @@ public class Context<T> implements IContext {
     // with不会共享state和取消令牌
 
     public Context<T> withState(Object state) {
-        return newContext(parent, state, null, blackboard, sharedProps);
+        return withState(state, null);
     }
 
     public Context<T> withState(Object state, ICancelToken cancelToken) {
+        if (cancelToken == null) cancelToken = ICancelToken.NONE;
+        if (state == this.state && cancelToken == this.cancelToken) {
+            return this;
+        }
         return newContext(parent, state, cancelToken, blackboard, sharedProps);
     }
 
