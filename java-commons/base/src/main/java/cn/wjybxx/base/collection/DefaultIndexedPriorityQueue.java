@@ -27,7 +27,8 @@ import static cn.wjybxx.base.collection.IndexedElement.INDEX_NOT_FOUNT;
  * @author wjybxx
  * date 2023/4/3
  */
-public class DefaultIndexedPriorityQueue<T extends IndexedElement> extends AbstractQueue<T>
+public class DefaultIndexedPriorityQueue<T extends IndexedElement>
+        extends AbstractQueue<T>
         implements IndexedPriorityQueue<T> {
 
     private static final IndexedElement[] EMPTY_ARRAY = new IndexedElement[0];

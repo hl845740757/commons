@@ -64,7 +64,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     private volatile long nanoTime;
     @SuppressWarnings("unused")
     private long p9, p10, p11, p12, p13, p14, p15, p16;
-    /** 线程状态 */
+    /** 线程状态 -- 变化不频繁，不缓存行填充 */
     private volatile int state = EventLoopState.ST_UNSTARTED;
 
     /** 事件队列 */

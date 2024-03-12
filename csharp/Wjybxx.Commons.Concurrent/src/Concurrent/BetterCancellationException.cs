@@ -60,39 +60,3 @@ public class BetterCancellationException : OperationCanceledException
 
     #endregion
 }
-
-/// <summary>
-/// 不打印堆栈的取消异常
-/// </summary>
-public sealed class StacklessCancellationException : BetterCancellationException
-{
-    public static readonly StacklessCancellationException Inst1 = new StacklessCancellationException(1);
-    private static readonly StacklessCancellationException Inst2 = new StacklessCancellationException(2);
-    private static readonly StacklessCancellationException Inst3 = new StacklessCancellationException(3);
-    private static readonly StacklessCancellationException Inst4 = new StacklessCancellationException(4);
-
-    public StacklessCancellationException(int code) : base(code) {
-    }
-
-    public StacklessCancellationException(int code, string? message) : base(code, message) {
-    }
-
-    public StacklessCancellationException(int code, string? message, Exception? innerException) : base(code, message, innerException) {
-    }
-
-    public StacklessCancellationException(SerializationInfo info, StreamingContext context) : base(info, context) {
-    }
-
-    public override string? StackTrace => null;
-
-    public static StacklessCancellationException InstOf(int code) {
-        return code switch
-        {
-            1 => Inst1,
-            2 => Inst2,
-            3 => Inst3,
-            4 => Inst4,
-            _ => new StacklessCancellationException(code)
-        };
-    }
-}

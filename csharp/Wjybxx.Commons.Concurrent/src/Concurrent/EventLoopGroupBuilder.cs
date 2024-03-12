@@ -27,6 +27,10 @@ public class EventLoopGroupBuilder
     private IEventLoopFactory? eventLoopFactory;
     private EventLoopChooserFactory? chooserFactory;
 
+    public virtual IEventLoopGroup Build() {
+        return new FixedEventLoopGroup(this);
+    }
+
     public int NumChildren {
         get => numChildren;
         set => numChildren = value;
@@ -40,9 +44,5 @@ public class EventLoopGroupBuilder
     public EventLoopChooserFactory? ChooserFactory {
         get => chooserFactory;
         set => chooserFactory = value;
-    }
-
-    public virtual IEventLoopGroup Build() {
-        return new FixedEventLoopGroup(this);
     }
 }

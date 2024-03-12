@@ -197,5 +197,4 @@ public class Context<T> : IContext where T : class
         }
         return NewContext(Parent, null, ICancelToken.NONE, Blackboard, SharedProps);
     }
-
 }

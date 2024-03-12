@@ -252,6 +252,8 @@ public interface ICancelToken {
     int MASK_INTERRUPT = 1 << 28;
     /** 告知任务无需执行删除逻辑 -- 慎用 */
     int MASK_WITHOUT_REMOVE = 1 << 29;
+    /** 表示取消信号来自Future的取消接口 */
+    int MASK_FROM_FUTURE = 1 << 30;
 
     /** 最大取消原因 */
     int MAX_REASON = MASK_REASON;
@@ -293,6 +295,11 @@ public interface ICancelToken {
     /** 取消指令中是否要求了无需删除 */
     static boolean isWithoutRemove(int code) {
         return (code & MASK_WITHOUT_REMOVE) != 0;
+    }
+
+    /** 取消信号是否来自future接口 */
+    static boolean isFromFuture(int code) {
+        return (code & MASK_FROM_FUTURE) != 0;
     }
 
     /**

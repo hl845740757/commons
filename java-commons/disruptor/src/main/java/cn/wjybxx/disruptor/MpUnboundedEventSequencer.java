@@ -188,6 +188,8 @@ public class MpUnboundedEventSequencer<E> implements EventSequencer<E> {
     }
     // endregion
 
+    // region builder
+
     public static <E> Builder<E> newBuilder() {
         return new Builder<>();
     }
@@ -252,4 +254,6 @@ public class MpUnboundedEventSequencer<E> implements EventSequencer<E> {
             return (Builder<E>) super.disableBlocker();
         }
     }
+
+    // endregion
 }

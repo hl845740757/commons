@@ -53,7 +53,7 @@ public interface IContext {
     /**
      * 任务绑定的取消令牌（取消上下文）
      * 1.每个任务可有独立的取消信号 -- 私有属性。
-     * 2.运行时不为null；
+     * 2.运行时不为null - 可返回{@link ICancelToken#NONE}。
      */
     @Nonnull
     ICancelToken cancelToken();

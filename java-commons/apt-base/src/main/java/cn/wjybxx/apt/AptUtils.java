@@ -16,6 +16,7 @@
 
 package cn.wjybxx.apt;
 
+import cn.wjybxx.base.annotation.Beta;
 import cn.wjybxx.base.annotation.SourceFileRef;
 import com.squareup.javapoet.*;
 
@@ -124,7 +125,7 @@ public class AptUtils {
      * @param processorType 注解处理器
      * @return 代码生成信息注解
      */
-    public static AnnotationSpec newProcessorInfoAnnotation(Class<? extends AbstractProcessor> processorType) {
+    public static AnnotationSpec newProcessorInfoAnnotation(Class<?> processorType) {
         return AnnotationSpec.builder(Generated.class)
                 .addMember("value", "$S", processorType.getCanonicalName())
                 .build();
@@ -325,6 +326,7 @@ public class AptUtils {
     }
 
     /** 注意：无法保证顺序 -- 这个方法还不太稳定 */
+    @Beta
     public static List<TypeMirror> findAllInterfaces(Types typeUtil, Elements elementUtil, TypeElement typeElement) {
         // 避免每次都查找
         TypeMirror objectTypeMirror = getTypeMirrorOfClass(elementUtil, Object.class);

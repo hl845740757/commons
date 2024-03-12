@@ -21,7 +21,9 @@ namespace Wjybxx.Commons.Concurrent;
 /// <summary>
 /// <see cref="IEventLoopAgent{T}"/>接收的事件类型。
 ///
-/// ps：实现类可能还需要实现<see cref="ITask"/>。
+/// 注意：
+/// 1.实现类最好保持为简单的数据类，不要赋予逻辑。
+/// 2.特定事件循环下，实现类可能还需要实现<see cref="ITask"/>。
 /// </summary>
 public interface IAgentEvent
 {

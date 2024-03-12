@@ -210,8 +210,6 @@ public class RingBufferEventSequencer<E> implements EventSequencer<E> {
                 .setFactory(factory);
     }
 
-    // endregion
-
     public static class Builder<E> extends EventSequencerBuilder<E> {
 
         private ProducerType producerType = ProducerType.MULTI;
@@ -267,4 +265,6 @@ public class RingBufferEventSequencer<E> implements EventSequencer<E> {
             return (Builder<E>) super.disableBlocker();
         }
     }
+
+    // endregion
 }

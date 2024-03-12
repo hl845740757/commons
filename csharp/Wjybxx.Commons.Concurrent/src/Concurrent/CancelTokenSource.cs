@@ -30,7 +30,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
     /// <summary>
     /// 默认的延迟调度器
     /// </summary>
-    private static readonly IScheduledExecutorService delayer = new DefaultEventLoop(EventLoopBuilder.NewBuilder(new DefaultThreadFactory("Delayer")));
+    private static readonly IScheduledExecutorService Delayer = new DefaultEventLoop(EventLoopBuilder.NewBuilder(new DefaultThreadFactory("Delayer")));
 
     private volatile int code;
     private volatile Completion? stack;
@@ -73,11 +73,11 @@ public sealed class CancelTokenSource : ICancelTokenSource
     }
 
     public void CancelAfter(int cancelCode, long millisecondsDelay) {
-        CancelAfter(cancelCode, TimeSpan.FromMilliseconds(millisecondsDelay), delayer);
+        CancelAfter(cancelCode, TimeSpan.FromMilliseconds(millisecondsDelay), Delayer);
     }
 
     public void CancelAfter(int cancelCode, TimeSpan timeSpan) {
-        CancelAfter(cancelCode, timeSpan, delayer);
+        CancelAfter(cancelCode, timeSpan, Delayer);
     }
 
     public void CancelAfter(int cancelCode, TimeSpan timeSpan, IScheduledExecutorService delayer) {

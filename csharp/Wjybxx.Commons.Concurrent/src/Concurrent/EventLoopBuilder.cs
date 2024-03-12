@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+
 #pragma warning disable CS1591
 
 namespace Wjybxx.Commons.Concurrent;
@@ -47,7 +48,7 @@ public class EventLoopBuilder
         return builder;
     }
 
-    public IEventLoop Build() {
+    public virtual IEventLoop Build() {
         return new DefaultEventLoop(this);
     }
 
@@ -84,7 +85,7 @@ public class EventLoopBuilder
         get => _mainModule;
         set => _mainModule = value;
     }
-    
+
     /// <summary>
     /// 最多连续处理多少个事件必须执行一次Update
     /// </summary>

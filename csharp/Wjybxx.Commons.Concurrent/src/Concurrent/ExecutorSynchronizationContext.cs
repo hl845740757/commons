@@ -39,7 +39,7 @@ public class ExecutorSynchronizationContext : SynchronizationContext
         _executor.Execute(new PostCallbackWrapper(d, state));
     }
 
-    protected internal class PostCallbackWrapper : ITask
+    protected class PostCallbackWrapper : ITask
     {
         private readonly SendOrPostCallback _callback;
         private readonly object? _state;
