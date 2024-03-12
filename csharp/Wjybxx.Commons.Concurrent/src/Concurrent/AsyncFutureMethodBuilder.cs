@@ -55,16 +55,16 @@ public struct AsyncFutureMethodBuilder
     }
 
     // 3. TaskLike Task property -- 返回给方法调用者；其实命名Future更自然
-    public ValueFuture Task {
+    public IFuture Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (_task != null) {
-                return new ValueFuture(_task.Promise);
+                return _task.Promise;
             }
             if (_ex != null) {
-                return ValueFuture.FromException(_ex);
+                return Promise<object>.FromException(_ex);
             }
-            return ValueFuture.FromResult();
+            return Promise<object>.FromResult(null);
         }
     }
 
@@ -114,9 +114,6 @@ public struct AsyncFutureMethodBuilder
         if (awaiter is FutureAwaiter futureAwaiter) {
             return futureAwaiter.Executor;
         }
-        if (awaiter is ValueFutureAwaiter futureAwaiter2) {
-            return futureAwaiter2.Executor;
-        }
         return null;
     }
 
@@ -159,16 +156,16 @@ public struct AsyncFutureMethodBuilder<T>
     }
 
     // 3. TaskLike Task property -- 返回给方法调用者；其实命名Future更自然
-    public ValueFuture<T> Task {
+    public IFuture<T> Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (_task != null) {
-                return new ValueFuture<T>(_task.Promise);
+                return _task.Promise;
             }
             if (_ex != null) {
-                return ValueFuture<T>.FromException(_ex);
+                return Promise<T>.FromException(_ex);
             }
-            return ValueFuture<T>.FromResult(_result);
+            return Promise<T>.FromResult(_result);
         }
     }
 
@@ -219,9 +216,6 @@ public struct AsyncFutureMethodBuilder<T>
         // 这里进行类型测试可能会产生copy，但没办法... C#的委托还是要输java的函数式接口一筹
         if (awaiter is FutureAwaiter<T> futureAwaiter) {
             return futureAwaiter.Executor;
-        }
-        if (awaiter is ValueFutureAwaiter<T> futureAwaiter2) {
-            return futureAwaiter2.Executor;
         }
         return null;
     }

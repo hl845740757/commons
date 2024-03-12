@@ -25,7 +25,23 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public sealed class FutureLogger
 {
-    private static volatile ILogHandler Handler;
+    /// <summary>
+    /// Future异常日志处理器
+    /// </summary>
+    private static volatile ILogHandler? Handler;
+
+    /// <summary>
+    /// 获取日志处理器
+    /// </summary>
+    public static ILogHandler? GetHandler => Handler;
+
+    /// <summary>
+    /// 设置日志处理器
+    /// </summary>
+    /// <param name="handler"></param>
+    public static void SetHandler(ILogHandler? handler) {
+        Handler = handler;
+    }
 
     /// <summary>
     /// 记录Future框架出现的异常
@@ -35,6 +51,11 @@ public sealed class FutureLogger
     public static void LogCause(Exception ex, string? message = null) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
         message = message ?? "Future caught an exception";
+        if (Handler != null) {
+            Handler.LogCause(ex, message);
+        } else {
+            // TODO 打印日志
+        }
     }
 
     /// <summary>

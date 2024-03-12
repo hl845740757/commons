@@ -396,10 +396,6 @@ public class Promise<T> : APromise, IPromise<T>
         return new FutureAwaiter<T>(this);
     }
 
-    public ValueFuture<T> GetAwaiter(IExecutor executor, int options = 0) {
-        return new ValueFuture<T>(this, executor, options);
-    }
-
     #endregion
 
     #region async

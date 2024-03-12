@@ -56,10 +56,6 @@ public class ForwardFuture<T> : IFuture<T>
         return new FutureAwaiter<T>(this); // 不可转发，避免封装泄漏
     }
 
-    public ValueFuture<T> GetAwaiter(IExecutor executor, int options = 0) {
-        return new ValueFuture<T>(this, executor, options); // 不可转发，避免封装泄漏
-    }
-
     #endregion
 
     #region 转发

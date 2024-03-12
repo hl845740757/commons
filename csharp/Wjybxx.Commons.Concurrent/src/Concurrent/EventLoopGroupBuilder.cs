@@ -16,6 +16,7 @@
 
 #endregion
 
+#pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
 
 public class EventLoopGroupBuilder
