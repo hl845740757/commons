@@ -1124,7 +1124,9 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
      * A: Future的监听器构成了一棵树，在不进行优化的情况下，遍历监听器是一个【前序遍历】过程，这会产生很深的方法栈，从而影响性能。
      * 该操作将子节点的监听器提升为当前节点的兄弟节点(插在前方)，从而将树形遍历优化为【线性遍历】，从而降低了栈深度，提高了性能。
      * <p>
-     * ps:参考自Guava中的Future实现 -- JDK的实现太复杂，看不懂...
+     * ps:
+     * 1.参考自Guava中的Future实现 -- JDK的实现太复杂，看不懂...
+     * 2.这将导致无法通过Future删除回调 -- 只能通过取消令牌取消执行。
      */
     private static <T> Completion clearListeners(UniPromise<T> promise, Completion onto) {
         // 我们需要进行三件事

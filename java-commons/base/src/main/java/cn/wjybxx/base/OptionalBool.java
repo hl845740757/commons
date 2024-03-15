@@ -52,6 +52,15 @@ public enum OptionalBool implements EnumLite {
     }
     //
 
+    /** 获取装箱值 */
+    public Boolean toBoxBool() {
+        return switch (this) {
+            case FALSE -> Boolean.FALSE;
+            case TRUE -> Boolean.TRUE;
+            case EMPTY -> null;
+        };
+    }
+
     public boolean getAsBool() {
         if (this == EMPTY) {
             throw new NoSuchElementException("No value present");
