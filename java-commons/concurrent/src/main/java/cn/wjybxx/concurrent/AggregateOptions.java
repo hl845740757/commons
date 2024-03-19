@@ -43,10 +43,17 @@ public final class AggregateOptions {
 
     private static final AggregateOptions ANY = new AggregateOptions(true, 0, false);
 
+    /** 任意一个完成 */
     public static AggregateOptions anyOf() {
         return ANY;
     }
 
+    /**
+     * 成功完成n个
+     *
+     * @param successRequire 需要成功完成的数量
+     * @param failFast       是否快速失败
+     */
     public static AggregateOptions selectN(int successRequire, boolean failFast) {
         if (successRequire < 0) {
             throw new IllegalArgumentException("successRequire < 0");
