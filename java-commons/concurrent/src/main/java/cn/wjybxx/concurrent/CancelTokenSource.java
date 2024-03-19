@@ -68,13 +68,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
     }
 
     @Override
-    public CancelTokenSource newChild() {
-        CancelTokenSource child = new CancelTokenSource();
-        thenTransferTo(child);
-        return child;
-    }
-
-    @Override
     public ICancelToken asReadonly() {
         return new ReadonlyCancelToken(this);
     }

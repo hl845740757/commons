@@ -57,19 +57,19 @@ public interface PromiseTask
     #region factory
 
     public static PromiseTask<object> OfAction(Action action, IContext? context, int options, IPromise<object> promise) {
-        return new PromiseTask<object>(action, context, options, promise, TaskBuilder.TYPE_ACTION);
+        return new PromiseTask<object>(action, context, options, promise, TaskBuilder.TypeAction);
     }
 
     public static PromiseTask<object> OfAction(Action<IContext> action, IContext? context, int options, IPromise<object> promise) {
-        return new PromiseTask<object>(action, context, options, promise, TaskBuilder.TYPE_ACTION_CTX);
+        return new PromiseTask<object>(action, context, options, promise, TaskBuilder.TypeActionCtx);
     }
 
     public static PromiseTask<T> OfFunction<T>(Func<T> action, IContext? context, int options, IPromise<T> promise) {
-        return new PromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC);
+        return new PromiseTask<T>(action, context, options, promise, TaskBuilder.TypeFunc);
     }
 
     public static PromiseTask<T> OfFunction<T>(Func<IContext, T> action, IContext? context, int options, IPromise<T> promise) {
-        return new PromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC_CTX);
+        return new PromiseTask<T>(action, context, options, promise, TaskBuilder.TypeFuncCtx);
     }
 
     public static PromiseTask<T> OfBuilder<T>(ref TaskBuilder<T> builder, IPromise<T> promise) {
@@ -215,25 +215,25 @@ public class PromiseTask<T> : IFutureTask<T>, PromiseTask
     protected T RunTask() {
         int type = (ctl & PromiseTask.MaskTaskType) >> PromiseTask.OffsetTaskType;
         switch (type) {
-            case TaskBuilder.TYPE_ACTION: {
+            case TaskBuilder.TypeAction: {
                 Action task = (Action)this.task;
                 task();
                 return default;
             }
-            case TaskBuilder.TYPE_FUNC: {
+            case TaskBuilder.TypeFunc: {
                 Func<T> task = (Func<T>)this.task;
                 return task();
             }
-            case TaskBuilder.TYPE_ACTION_CTX: {
+            case TaskBuilder.TypeActionCtx: {
                 Action<IContext> task = (Action<IContext>)this.task;
                 task(context);
                 return default;
             }
-            case TaskBuilder.TYPE_FUNC_CTX: {
+            case TaskBuilder.TypeFuncCtx: {
                 Func<IContext, T> task = (Func<IContext, T>)this.task;
                 return task(context);
             }
-            case TaskBuilder.TYPE_TASK: {
+            case TaskBuilder.TypeTask: {
                 ITask task = (ITask)this.task;
                 task.Run();
                 return default;

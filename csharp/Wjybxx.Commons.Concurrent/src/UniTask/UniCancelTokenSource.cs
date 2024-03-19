@@ -20,36 +20,99 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Wjybxx.Commons.Concurrent;
 
 #pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
+
+namespace Wjybxx.Commons.UniTask;
 
 /// <summary>
-/// 取消令牌
+/// 单线程的取消令牌
+///
+/// <h3>实现说明</h3>
+/// 1. 去除了{@link #code}等的volatile操作，变更为普通字段。
+/// 2. 默认时间单位为毫秒。
+/// 3. 增加了重置状态的方法 -- 这对行为树这类应用非常有效。
+/// 4. 去除了递归通知的优化 -- 单线程下我们需要支持用户通过监听器引用取消注册；另外，我们假设子token的情况很少。
 /// </summary>
-public sealed class CancelTokenSource : ICancelTokenSource
+public class UniCancelTokenSource : ICancelTokenSource
 {
-    /// <summary>
-    /// 默认的延迟调度器
-    /// </summary>
-    private static readonly IScheduledExecutorService Delayer = new DefaultEventLoop(EventLoopBuilder.NewBuilder(new DefaultThreadFactory("Delayer")));
+    /** 取消码 -- 0表示未收到信号 */
+    private int code;
+    /** 监听器的首部 */
+    private Completion? head;
+    /** 监听器的尾部 */
+    private Completion? tail;
 
-    private volatile int code;
-    private volatile Completion? stack;
+    /** 用于延迟执行取消 */
+    private IUniScheduledExecutor? executor;
 
-    public CancelTokenSource() {
+    public UniCancelTokenSource() {
     }
 
-    public CancelTokenSource(int code) {
+    public UniCancelTokenSource(int code)
+        : this(null, code) {
+    }
+
+    public UniCancelTokenSource(IUniScheduledExecutor? executor, int code = 0) {
+        this.executor = executor;
         if (code != 0) {
             this.code = ICancelToken.CheckCode(code);
         }
     }
 
-    public CancelTokenSource NewChild() {
-        CancelTokenSource child = new CancelTokenSource();
+    public IUniScheduledExecutor? Executor {
+        get => executor;
+        set => executor = value;
+    }
+
+    /// <summary>
+    /// 删除监听器
+    /// 通常而言逆向查找更容易匹配：Task的停止顺序通常和Task的启动顺序相反，因此后注册的监听器会先删除。
+    /// 因此默认逆向查找匹配的监听器。
+    /// </summary>
+    /// <param name="action">用户回调行为的引用</param>
+    /// <param name="firstOccurrence">是否正向删除</param>
+    /// <returns></returns>
+    public bool Unregister(object action, bool firstOccurrence = false) {
+        if (firstOccurrence) {
+            Completion node = this.head;
+            while ((node != null)) {
+                if (node.action == action) {
+                    node.Dispose();
+                    return true;
+                }
+                node = node.next;
+            }
+        } else {
+            Completion node = this.tail;
+            while ((node != null)) {
+                if (node.action == action) {
+                    node.Dispose();
+                    return true;
+                }
+                node = node.prev;
+            }
+        }
+        return false;
+    }
+
+    public UniCancelTokenSource NewChild() {
+        UniCancelTokenSource child = new UniCancelTokenSource();
         ThenTransferTo(child);
         return child;
+    }
+
+    /** 重置状态，以供复用 */
+    public void Reset() {
+        code = 0;
+        Completion node;
+        while ((node = head) != null) {
+            head = node.next;
+            node.action = TOMBSTONE;
+            node.Clear();
+        }
+        tail = null;
     }
 
     public ICancelToken AsReadonly() {
@@ -71,11 +134,11 @@ public sealed class CancelTokenSource : ICancelTokenSource
     }
 
     public void CancelAfter(int cancelCode, long millisecondsDelay) {
-        CancelAfter(cancelCode, TimeSpan.FromMilliseconds(millisecondsDelay), Delayer);
+        CancelAfter(cancelCode, TimeSpan.FromMilliseconds(millisecondsDelay), executor!);
     }
 
     public void CancelAfter(int cancelCode, TimeSpan timeSpan) {
-        CancelAfter(cancelCode, timeSpan, Delayer);
+        CancelAfter(cancelCode, timeSpan, executor!);
     }
 
     public void CancelAfter(int cancelCode, TimeSpan timeSpan, IScheduledExecutorService delayer) {
@@ -90,10 +153,10 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private class Context : IContext
     {
-        internal readonly CancelTokenSource source;
+        internal readonly UniCancelTokenSource source;
         internal readonly int cancelCode;
 
-        public Context(CancelTokenSource source, int cancelCode) {
+        public Context(UniCancelTokenSource source, int cancelCode) {
             this.source = source;
             this.cancelCode = cancelCode;
         }
@@ -284,91 +347,77 @@ public sealed class CancelTokenSource : ICancelTokenSource
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int InternalCancel(int cancelCode) {
         Debug.Assert(cancelCode != 0);
-        return Interlocked.CompareExchange(ref code, cancelCode, 0);
-    }
-
-    /// <summary>
-    /// 栈顶回调被删除时尝试删除更多的节点
-    /// </summary>
-    /// <param name="expectedHead">当前的head</param>
-    /// <returns>最新栈顶，可能是<see cref="TOMBSTONE"/></returns>
-    private Completion? RemoveClosedNode(Completion expectedHead) {
-        Completion? next = expectedHead.next;
-        while (next != null && next.action == TOMBSTONE) {
-            next = next.next;
+        int preCode = this.code;
+        if (preCode == 0) {
+            this.code = cancelCode;
+            return 0;
         }
-        Completion realHead = Interlocked.CompareExchange(ref this.stack, next, expectedHead);
-        return realHead == expectedHead ? next : realHead;
+        return preCode;
     }
 
-    private bool PushCompletion(Completion newHead) {
+
+    /** 删除node -- 修正指针 */
+    private void RemoveNode(Completion node) {
+        if (this.head == this.tail) {
+            Debug.Assert(this.head == node);
+            this.head = this.tail = null;
+        } else if (node == this.head) {
+            // 首节点
+            this.head = node.next!;
+            this.head.prev = null;
+        } else if (node == this.tail) {
+            // 尾节点
+            this.tail = node.prev!;
+            this.tail.next = null;
+        } else {
+            // 中间节点
+            Completion prev = node.prev!;
+            Completion next = node.next!;
+            prev.next = next;
+            next.prev = prev;
+        }
+    }
+
+    /** 弹出一个监听器 */
+    private Completion? PopListener() {
+        Completion head = this.head;
+        if (head == null) {
+            return null;
+        }
+        if (head == this.tail) {
+            this.head = this.tail = null;
+        } else {
+            this.head = head.next;
+            this.head!.prev = null;
+        }
+        return head;
+    }
+
+    private bool PushCompletion(Completion node) {
         if (IsCancelling()) {
-            newHead.TryFire(SYNC);
+            node.TryFire(SYNC);
             return false;
         }
-        Completion expectedHead = stack;
-        Completion realHead;
-        while (expectedHead != TOMBSTONE) {
-            // 处理延迟删除
-            if (expectedHead != null && expectedHead.action == TOMBSTONE) {
-                expectedHead = RemoveClosedNode(expectedHead);
-                continue;
-            }
-
-            newHead.next = expectedHead;
-            realHead = Interlocked.CompareExchange(ref this.stack, newHead, expectedHead);
-            if (realHead == expectedHead) { // success
-                return true;
-            }
-            expectedHead = realHead; // retry
+        Completion tail = this.tail;
+        if (tail == null) {
+            this.head = this.tail = node;
+        } else {
+            tail.next = node;
+            node.prev = tail;
+            this.tail = node;
         }
-        newHead.next = null;
-        newHead.TryFire(SYNC);
-        return false;
+        return true;
     }
 
-    private static void PostComplete(CancelTokenSource source) {
-        Completion next = null;
-        outer:
-        while (true) {
-            next = ClearListeners(source, next);
-
-            while (next != null) {
-                Completion curr = next;
-                next = next.next;
-                curr.next = null; // help gc
-
-                source = curr.TryFire(NESTED);
-                if (source != null) {
-                    goto outer;
-                }
+    private static void PostComplete(UniCancelTokenSource source) {
+        Completion next;
+        UniCancelTokenSource child;
+        while ((next = source.PopListener()) != null) {
+            child = next.TryFire(NESTED);
+            if (child != null) {
+                PostComplete(child); // 递归
             }
-            break;
         }
-    }
-
-    private static Completion? ClearListeners(CancelTokenSource source, Completion? onto) {
-        Completion head;
-        do {
-            head = source.stack;
-            if (head == TOMBSTONE) {
-                return onto;
-            }
-        } while (Interlocked.CompareExchange(ref source.stack, TOMBSTONE, head) != head);
-
-        Completion ontoHead = onto;
-        while (head != null) {
-            Completion tmpHead = head;
-            head = head.next;
-
-            if (tmpHead.action == TOMBSTONE) {
-                continue; // 跳过被删除节点
-            }
-
-            tmpHead.next = ontoHead;
-            ontoHead = tmpHead;
-        }
-        return ontoHead;
     }
 
     private static bool Submit(Completion completion, IExecutor e, int options) {
@@ -393,12 +442,12 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private abstract class Completion : ITask, IRegistration
     {
-        /** 非volatile，由栈顶的cas更新保证可见性 */
+        internal UniCancelTokenSource source;
         internal Completion? next;
+        internal Completion? prev;
 
         protected IExecutor? executor;
         protected int options;
-        protected CancelTokenSource source;
         /**
          * 用户回调
          * 1.通知和清理时置为<see cref="TOMBSTONE"/>
@@ -412,7 +461,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
             action = null!;
         }
 
-        protected Completion(IExecutor? executor, int options, CancelTokenSource source, object action) {
+        protected Completion(IExecutor? executor, int options, UniCancelTokenSource source, object action) {
             this.executor = executor;
             this.options = options;
             this.source = source;
@@ -428,7 +477,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
             TryFire(ASYNC);
         }
 
-        protected internal abstract CancelTokenSource? TryFire(int mode);
+        protected internal abstract UniCancelTokenSource? TryFire(int mode);
 
         protected bool Claim() {
             IExecutor e = this.executor;
@@ -451,10 +500,8 @@ public sealed class CancelTokenSource : ICancelTokenSource
             if (action == TOMBSTONE) { // 已被取消
                 return null;
             }
-            if (Interlocked.CompareExchange(ref this.action, TOMBSTONE, action) == action) {
-                return action;
-            }
-            return null; // 竞争失败-被取消或通知
+            this.action = TOMBSTONE;
+            return action;
         }
 
         public void Dispose() {
@@ -462,9 +509,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
             if (action == null) {
                 return;
             }
-            if (this == source.stack) {
-                source.RemoveClosedNode(this);
-            }
+            source.RemoveNode(this);
             Clear();
         }
 
@@ -472,9 +517,11 @@ public sealed class CancelTokenSource : ICancelTokenSource
         /// 清理对象上的数据，help gc
         /// 注意：不可修改action的引用
         /// </summary>
-        protected virtual void Clear() {
-            executor = null!;
+        protected internal virtual void Clear() {
             source = null!;
+            prev = null;
+            next = null;
+            executor = null;
         }
     }
 
@@ -488,18 +535,18 @@ public sealed class CancelTokenSource : ICancelTokenSource
         public MockCompletion() : base() {
         }
 
-        protected internal override CancelTokenSource? TryFire(int mode) {
+        protected internal override UniCancelTokenSource? TryFire(int mode) {
             throw new NotImplementedException();
         }
     }
 
     private class UniAccept : Completion
     {
-        public UniAccept(IExecutor? executor, int options, CancelTokenSource source, Action<ICancelToken> action)
+        public UniAccept(IExecutor? executor, int options, UniCancelTokenSource source, Action<ICancelToken> action)
             : base(executor, options, source, action) {
         }
 
-        protected internal override CancelTokenSource? TryFire(int mode) {
+        protected internal override UniCancelTokenSource? TryFire(int mode) {
             try {
                 if (mode <= 0 && !Claim()) {
                     return null; // 下次执行
@@ -518,7 +565,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
             return null;
         }
 
-        internal static void FireNow(CancelTokenSource source, Action<ICancelToken> action) {
+        internal static void FireNow(UniCancelTokenSource source, Action<ICancelToken> action) {
             try {
                 action(source);
             }
@@ -532,13 +579,13 @@ public sealed class CancelTokenSource : ICancelTokenSource
     {
         private object? state;
 
-        public UniAcceptCtx(IExecutor? executor, int options, CancelTokenSource source,
+        public UniAcceptCtx(IExecutor? executor, int options, UniCancelTokenSource source,
                             Action<ICancelToken, object> action, object? state)
             : base(executor, options, source, action) {
             this.state = state;
         }
 
-        protected internal override CancelTokenSource? TryFire(int mode) {
+        protected internal override UniCancelTokenSource? TryFire(int mode) {
             try {
                 if (mode <= 0 && !Claim()) {
                     return null; // 下次执行
@@ -557,7 +604,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
             return null;
         }
 
-        internal static void FireNow(CancelTokenSource source,
+        internal static void FireNow(UniCancelTokenSource source,
                                      Action<ICancelToken, object> action, object? state) {
             try {
                 action(source, state);
@@ -570,11 +617,11 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private class UniRun : Completion
     {
-        public UniRun(IExecutor? executor, int options, CancelTokenSource source, Action action)
+        public UniRun(IExecutor? executor, int options, UniCancelTokenSource source, Action action)
             : base(executor, options, source, action) {
         }
 
-        protected internal override CancelTokenSource? TryFire(int mode) {
+        protected internal override UniCancelTokenSource? TryFire(int mode) {
             try {
                 if (mode <= 0 && !Claim()) {
                     return null; // 下次执行
@@ -593,7 +640,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
             return null;
         }
 
-        internal static void FireNow(CancelTokenSource source, Action action) {
+        internal static void FireNow(UniCancelTokenSource source, Action action) {
             try {
                 action();
             }
@@ -607,13 +654,13 @@ public sealed class CancelTokenSource : ICancelTokenSource
     {
         private object? state;
 
-        public UniRunCtx(IExecutor? executor, int options, CancelTokenSource source,
+        public UniRunCtx(IExecutor? executor, int options, UniCancelTokenSource source,
                          Action<object> action, object? state)
             : base(executor, options, source, action) {
             this.state = state;
         }
 
-        protected internal override CancelTokenSource? TryFire(int mode) {
+        protected internal override UniCancelTokenSource? TryFire(int mode) {
             try {
                 if (mode <= 0 && !Claim()) {
                     return null; // 下次执行
@@ -632,7 +679,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
             return null;
         }
 
-        internal static void FireNow(CancelTokenSource source, Action<object> action, object? state) {
+        internal static void FireNow(UniCancelTokenSource source, Action<object> action, object? state) {
             try {
                 action(state);
             }
@@ -644,12 +691,12 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private class UniNotify : Completion
     {
-        public UniNotify(IExecutor? executor, int options, CancelTokenSource source,
+        public UniNotify(IExecutor? executor, int options, UniCancelTokenSource source,
                          ICancelTokenListener action)
             : base(executor, options, source, action) {
         }
 
-        protected internal override CancelTokenSource? TryFire(int mode) {
+        protected internal override UniCancelTokenSource? TryFire(int mode) {
             try {
                 if (mode <= 0 && !Claim()) {
                     return null; // 下次执行
@@ -668,7 +715,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
             return null;
         }
 
-        internal static void FireNow(CancelTokenSource source, ICancelTokenListener action) {
+        internal static void FireNow(UniCancelTokenSource source, ICancelTokenListener action) {
             try {
                 action.OnCancelRequested(source);
             }
@@ -680,13 +727,13 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private class UniTransferTo : Completion
     {
-        public UniTransferTo(IExecutor? executor, int options, CancelTokenSource source,
+        public UniTransferTo(IExecutor? executor, int options, UniCancelTokenSource source,
                              ICancelTokenSource action)
             : base(executor, options, source, action) {
         }
 
-        protected internal override CancelTokenSource? TryFire(int mode) {
-            CancelTokenSource output;
+        protected internal override UniCancelTokenSource? TryFire(int mode) {
+            UniCancelTokenSource output;
             try {
                 if (mode <= 0 && !Claim()) {
                     return null; // 下次执行
@@ -706,9 +753,9 @@ public sealed class CancelTokenSource : ICancelTokenSource
             return output;
         }
 
-        internal static CancelTokenSource? FireNow(CancelTokenSource source, int mode,
-                                                   ICancelTokenSource child) {
-            if (child is not CancelTokenSource childSource) {
+        internal static UniCancelTokenSource? FireNow(UniCancelTokenSource source, int mode,
+                                                      ICancelTokenSource child) {
+            if (child is not UniCancelTokenSource childSource) {
                 child.Cancel(source.code);
                 return null;
             }

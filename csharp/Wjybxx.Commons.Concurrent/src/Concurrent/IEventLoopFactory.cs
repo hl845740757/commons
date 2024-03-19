@@ -37,11 +37,11 @@ public interface IEventLoopFactory
 }
 
 /// <summary>
-/// 默认实现循环工厂实现
+/// 默认事件循环工厂实现
 /// </summary>
 public class EventLoopFactory : IEventLoopFactory
 {
-    private ThreadFactory threadFactory;
+    private readonly ThreadFactory threadFactory;
 
     public EventLoopFactory(ThreadFactory threadFactory) {
         this.threadFactory = threadFactory ?? throw new ArgumentNullException(nameof(threadFactory));

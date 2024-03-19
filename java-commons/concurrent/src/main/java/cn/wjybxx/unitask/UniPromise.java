@@ -298,8 +298,9 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         Object preResult = this.result;
         if (preResult == null) {
             this.result = COMPUTING;
+            return true;
         }
-        return preResult == null;
+        return false;
     }
 
     @Override
@@ -307,6 +308,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         Object preResult = this.result;
         if (preResult == null) {
             this.result = COMPUTING;
+            return TaskStatus.PENDING;
         }
         return futureState(preResult);
     }
@@ -519,7 +521,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         if (isDone0(r)) {
             return reportJoin(r);
         }
-        throw new BlockingOperationException("Join");
+        throw new BlockingOperationException("join");
     }
 
     @Override

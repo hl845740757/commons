@@ -35,25 +35,25 @@ public interface ScheduledPromiseTask
 
     public static ScheduledPromiseTask<object> OfAction(Action action, IContext context, int options, IScheduledPromise<object> promise,
                                                         long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<object>(action, context, options, promise, TaskBuilder.TYPE_ACTION,
+        return new ScheduledPromiseTask<object>(action, context, options, promise, TaskBuilder.TypeAction,
             id, nextTriggerTime);
     }
 
     public static ScheduledPromiseTask<object> OfAction(Action<IContext> action, IContext context, int options, IScheduledPromise<object> promise,
                                                         long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<object>(action, context, options, promise, TaskBuilder.TYPE_ACTION_CTX,
+        return new ScheduledPromiseTask<object>(action, context, options, promise, TaskBuilder.TypeActionCtx,
             id, nextTriggerTime);
     }
 
     public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, IContext context, int options, IScheduledPromise<T> promise,
                                                         long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC,
+        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeFunc,
             id, nextTriggerTime);
     }
 
     public static ScheduledPromiseTask<T> OfFunction<T>(Func<IContext, T> action, IContext context, int options, IScheduledPromise<T> promise,
                                                         long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC_CTX,
+        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeFuncCtx,
             id, nextTriggerTime);
     }
 
@@ -197,7 +197,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
 
     public bool Trigger(long tickTime) {
         int scheduleType = ScheduleType;
-        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
+        if (scheduleType == ScheduledTaskBuilder.ScheduleOnce) {
             base.Run();
             return false;
         }
@@ -223,7 +223,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         ref TimeoutContext timeoutContext = ref this.timeoutContext;
         try {
             if (HasTimeout) {
-                timeoutContext.BeforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE);
+                timeoutContext.BeforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledTaskBuilder.ScheduleFixedRate);
                 if (TaskOption.IsEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeoutContext.IsTimeout()) {
                     promise.TrySetException(StacklessTimeoutException.Inst);
                     Clear();
@@ -264,7 +264,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     }
 
     private bool CanCaughtException(Exception ex) {
-        if (ScheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
+        if (ScheduleType == ScheduledTaskBuilder.ScheduleOnce) {
             return false;
         }
         return TaskOption.IsEnabled(options, TaskOption.CAUGHT_EXCEPTION);
@@ -272,7 +272,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
 
     private void SetNextRunTime(long tickTime, ref TimeoutContext timeoutContext, int scheduleType) {
         long maxDelay = HasTimeout ? timeoutContext.timeLeft : long.MaxValue;
-        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
+        if (scheduleType == ScheduledTaskBuilder.ScheduleFixedRate) {
             nextTriggerTime = nextTriggerTime + Math.Min(maxDelay, period); // 逻辑时间
         } else {
             nextTriggerTime = tickTime + Math.Min(maxDelay, period); // 真实时间

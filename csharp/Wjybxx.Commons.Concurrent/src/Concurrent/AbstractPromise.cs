@@ -32,7 +32,7 @@ namespace Wjybxx.Commons.Concurrent;
 ///
 /// 注意：用户不应该使用该类 - 由于C#禁止超类的访问权限小于子类，该类只能定义为Public...
 /// </summary>
-public abstract class APromise
+public abstract class AbstractPromise
 {
     /// <summary>
     /// 当前对象上的所有监听器，使用栈方式存储
@@ -104,6 +104,10 @@ public abstract class APromise
         }
     }
 
+    /// <summary>
+    /// 添加一个回调
+    /// </summary>
+    /// <param name="newHead"></param>
     /// <returns>压栈成功则返回true，否则返回false</returns>
     protected bool PushCompletion(Completion newHead) {
         if (IsStrictlyCompleted) {
@@ -125,7 +129,11 @@ public abstract class APromise
         return false;
     }
 
-    protected static void PostComplete(APromise future) {
+    /// <summary>
+    /// 推送Future完成事件
+    /// </summary>
+    /// <param name="future"></param>
+    protected static void PostComplete(AbstractPromise future) {
         Completion next = null;
         outer:
         while (true) {
@@ -155,7 +163,7 @@ public abstract class APromise
     ///
     /// PS：这将导致无法通过Future删除回调 -- 只能通过取消令牌取消执行。
     /// </summary>
-    private static Completion? ClearListeners(APromise promise, Completion? onto) {
+    private static Completion? ClearListeners(AbstractPromise promise, Completion? onto) {
         // 我们需要进行三件事
         // 1. 原子方式将当前Listeners赋值为TOMBSTONE，因为pushCompletion添加的监听器的可见性是由CAS提供的。
         // 2. 将当前栈内元素逆序，因为即使在接口层进行了说明（不提供监听器执行时序保证），但仍然有人依赖于监听器的执行时序(期望先添加的先执行)
@@ -215,7 +223,7 @@ public abstract class APromise
         /// 2. mode指示可以调用{@link #postComplete(Promise)}方法时，则直接推送其进入完成状态的事件。
         /// </summary>
         /// <param name="mode"></param>
-        protected internal abstract APromise? TryFire(int mode);
+        protected internal abstract AbstractPromise? TryFire(int mode);
     }
 
     /// <summary>
@@ -230,7 +238,7 @@ public abstract class APromise
             set => throw new AssertionError();
         }
 
-        protected internal override APromise? TryFire(int mode) {
+        protected internal override AbstractPromise? TryFire(int mode) {
             throw new NotImplementedException();
         }
     }
@@ -252,7 +260,7 @@ public abstract class APromise
             set => throw new AssertionError();
         }
 
-        protected internal override APromise? TryFire(int mode) {
+        protected internal override AbstractPromise? TryFire(int mode) {
             ReleaseWaiters();
             return null;
         }

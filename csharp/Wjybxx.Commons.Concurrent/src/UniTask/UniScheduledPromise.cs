@@ -17,17 +17,23 @@
 #endregion
 
 using System.Diagnostics;
+using Wjybxx.Commons.Concurrent;
 
 #pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
 
-public class ScheduledPromise<T> : Promise<T>, IScheduledPromise<T>
+namespace Wjybxx.Commons.UniTask;
+
+/// <summary>
+/// 单线程版本定时任务的Promise
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public class UniScheduledPromise<T> : UniPromise<T>, IScheduledPromise<T>
 {
 #nullable disable
     private IScheduledFutureTask<T> _task;
 #nullable enable
-    
-    public ScheduledPromise(IExecutor? executor = null)
+
+    public UniScheduledPromise(IExecutor? executor = null)
         : base(executor) {
     }
 

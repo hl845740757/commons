@@ -30,48 +30,48 @@ public interface TaskBuilder
     /// <summary>
     /// 表示委托类型为<see cref="Action"/>
     /// </summary>
-    public const int TYPE_ACTION = 0;
+    public const int TypeAction = 0;
     /// <summary>
     /// 表示委托类型为<see cref="Action{IContext}"/>
     /// </summary>
-    public const int TYPE_ACTION_CTX = 1;
+    public const int TypeActionCtx = 1;
 
     /// <summary>
     /// 表示委托类型为<see cref="Func{TResult}"/>
     /// </summary>
-    public const int TYPE_FUNC = 2;
+    public const int TypeFunc = 2;
     /// <summary>
     /// 表示委托类型为<see cref="Func{IContext,TResult}"/>
     /// </summary>
-    public const int TYPE_FUNC_CTX = 3;
+    public const int TypeFuncCtx = 3;
 
     /** 分时任务 - 暂未移植到C# */
     public const int TYPE_TIMESHARING = 4;
     /// <summary>
     /// 表示委托类型为<see cref="ITask"/>，通常表示二次封装
     /// </summary>
-    public const int TYPE_TASK = 5;
+    public const int TypeTask = 5;
 
     #region factory
 
     public static TaskBuilder<object> NewAction(Action action) {
-        return new TaskBuilder<object>(TaskBuilder.TYPE_ACTION, action);
+        return new TaskBuilder<object>(TaskBuilder.TypeAction, action);
     }
 
     public static TaskBuilder<object> NewAction(Action<IContext> action, IContext context) {
-        return new TaskBuilder<object>(TaskBuilder.TYPE_ACTION_CTX, action, context);
+        return new TaskBuilder<object>(TaskBuilder.TypeActionCtx, action, context);
     }
 
     public static TaskBuilder<T> NewFunc<T>(Func<T> func) {
-        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC, func);
+        return new TaskBuilder<T>(TaskBuilder.TypeFunc, func);
     }
 
     public static TaskBuilder<T> NewFunc<T>(Func<IContext, T> func, IContext context) {
-        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_CTX, func, context);
+        return new TaskBuilder<T>(TaskBuilder.TypeFuncCtx, func, context);
     }
 
     public static TaskBuilder<object> NewTask(ITask task) {
-        return new TaskBuilder<object>(TaskBuilder.TYPE_TASK, task);
+        return new TaskBuilder<object>(TaskBuilder.TypeTask, task);
     }
 
     #endregion
@@ -84,22 +84,22 @@ public interface TaskBuilder
     /// <exception cref="ArgumentException"></exception>
     public static int TaskType(object task) {
         if (task is Action) {
-            return TYPE_ACTION;
+            return TypeAction;
         }
         if (task is ITask) {
-            return TYPE_TASK;
+            return TypeTask;
         }
         Type type = task.GetType();
         if (type.IsGenericType) {
             Type genericTypeDefinition = type.GetGenericTypeDefinition();
             if (genericTypeDefinition == typeof(Action<>) && type.GetGenericArguments()[0] == typeof(IContext)) {
-                return TYPE_ACTION_CTX;
+                return TypeActionCtx;
             }
             if (genericTypeDefinition == typeof(Func<>)) {
-                return TYPE_FUNC;
+                return TypeFunc;
             }
             if (genericTypeDefinition == typeof(Func<,>) && type.GetGenericArguments()[0] == typeof(IContext)) {
-                return TYPE_FUNC_CTX;
+                return TypeFuncCtx;
             }
         }
         throw new ArgumentException("unsupported task type: " + type);

@@ -37,8 +37,7 @@ import java.util.function.Function;
  * date - 2024/1/8
  */
 @NotThreadSafe
-public final class UniScheduledPromiseTask<V>
-        extends PromiseTask<V>
+public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
         implements IScheduledFutureTask<V>, IndexedElement, Consumer<Object>, CancelTokenListener {
 
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */

@@ -50,7 +50,6 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
      * - 非0表示收到取消信号
      */
     private int code;
-
     /** 监听器的首部 */
     private Completion head;
     /** 监听器的尾部 */
@@ -127,10 +126,22 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         return false;
     }
 
+    /**
+     * 创建一个子token，子token会在当前token被取消时取消。
+     * 1.该接口是构建实例和{@link #thenTransferTo(ICancelTokenSource)}的快捷方法。
+     * 2.该接口用于快速构建子上下文。
+     */
+    public UniCancelTokenSource newChild() {
+        UniCancelTokenSource child = new UniCancelTokenSource(executor, code);
+        if (code == 0) {
+            thenTransferTo(child);
+        }
+        return child;
+    }
+
     /** 重置状态，以供复用 */
     public void reset() {
         code = 0;
-
         Completion node;
         while ((node = head) != null) {
             head = node.next;
@@ -138,15 +149,6 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             node.clear();
         }
         tail = null;
-    }
-
-    @Override
-    public UniCancelTokenSource newChild() {
-        UniCancelTokenSource child = new UniCancelTokenSource(executor, code);
-        if (code == 0) {
-            thenTransferTo(child);
-        }
-        return child;
     }
 
     @Override
@@ -692,7 +694,6 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             if (action == null) {
                 return;
             }
-            UniCancelTokenSource source = this.source;
             source.removeNode(this);
             clear();
         }

@@ -19,19 +19,29 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using Wjybxx.Commons.Concurrent;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.Concurrent;
+namespace Wjybxx.Commons.UniTask;
 
 /// <summary>
-/// Promise不会实现两份（泛型和非泛型），那会导致大量的重复代码，有非常高的维护成本。
-/// 在不需要结果的情况下，可以选择将泛型参数定义为byte或int，尽可能减少开销即可。
+/// 单线程版本的<see cref="IPromise{T}"/>
+///
+/// <h3>单线程化做的变动</h3>
+/// 1.去除{@link #result}等的volatile操作，变更为普通字段。
+/// 2.去除了阻塞操作Awaiter的支持。
+/// 3.去除了state的中间状态 -- 可对比<see cref="UniPromise{T}"/>
+///
+/// <h3>Async的含义</h3>
+/// 既然是单线程的，又何来异步一说？这里的异步是指不立即执行给定的行为，而是提交到Executor等待调度。
+/// 这有什么作用？有几个作用：
+/// 1.让出CPU，避免过多的任务集中处理。
+/// 2.延迟到特定阶段执行 -- 通过<see cref="TaskOption"/>指定。
 /// 
-/// PS：重复编码不仅仅是指Promise，与Promise相关的各个体系都需要双份...
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class Promise<T> : AbstractPromise, IPromise<T>
+public class UniPromise<T> : AbstractUniPromise, IPromise<T>
 {
     private const int ST_PENDING = (int)TaskStatus.Pending;
     private const int ST_COMPUTING = (int)TaskStatus.Computing;
@@ -45,12 +55,11 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     /// 任务失败完成时的结果，也包含了任务的状态。
     /// 
     /// 1. 如果为null，表示尚未开始。
-    /// 2. 如果为<see cref="AbstractPromise.EX_COMPUTING"/>，表示正在计算。
-    /// 3. 如果为<see cref="AbstractPromise.EX_PUBLISHING"/>，表示成功，但正在发布成功结果。
-    /// 4. 如果为<see cref="AbstractPromise.EX_SUCCESS"/>，表示成功，且结果已可见。
-    /// 5. 如果为其它异常，表示任务失败或取消。
+    /// 2. 如果为<see cref="AbstractUniPromise.EX_COMPUTING"/>，表示正在计算。
+    /// 3. 如果为<see cref="AbstractUniPromise.EX_SUCCESS"/>，表示成功，且结果已可见。
+    /// 4. 如果为其它异常，表示任务失败或取消。
     /// </summary>
-    private volatile object? _ex;
+    private object? _ex;
 
     /** 任务绑定的线程 -- 其实不一定是执行线程 */
     private readonly IExecutor? _executor;
@@ -59,11 +68,11 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     /// 
     /// </summary>
     /// <param name="executor">任务关联的线程，死锁检测等</param>
-    public Promise(IExecutor? executor = null) {
+    public UniPromise(IExecutor? executor = null) {
         _executor = executor;
     }
 
-    private Promise(IExecutor? executor, T result, Exception? ex) {
+    private UniPromise(IExecutor? executor, T result, Exception? ex) {
         this._executor = executor;
         if (ex == null) {
             this._result = result;
@@ -74,55 +83,38 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         }
     }
 
-    public static Promise<T> FromResult(T result, IExecutor? executor = null) {
-        return new Promise<T>(executor, result, null);
+    public static UniPromise<T> FromResult(T result, IExecutor? executor = null) {
+        return new UniPromise<T>(executor, result, null);
     }
 
-    public static Promise<T> FromException(Exception ex, IExecutor? executor = null) {
+    public static UniPromise<T> FromException(Exception ex, IExecutor? executor = null) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
-        return new Promise<T>(executor, default, ex);
+        return new UniPromise<T>(executor, default, ex);
     }
 
-    public static Promise<T> FromCancelled(int code, IExecutor? executor = null) {
+    public static UniPromise<T> FromCancelled(int code, IExecutor? executor = null) {
         Exception ex = StacklessCancellationException.InstOf(code);
-        return new Promise<T>(executor, default, ex);
+        return new UniPromise<T>(executor, default, ex);
     }
 
     #region internal
 
     private bool InternalSetResult(T result) {
-        // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
-        object preEx = Interlocked.CompareExchange(ref _ex, EX_PUBLISHING, null);
-        if (preEx == null) {
-            _result = result;
-            _ex = EX_SUCCESS;
+        object preEx = this._ex;
+        if (preEx == null || preEx == EX_COMPUTING) {
+            this._result = result;
+            this._ex = EX_SUCCESS;
             return true;
-        }
-        if (preEx == EX_COMPUTING) {
-            // 任务可能处于Computing状态，重试
-            preEx = Interlocked.CompareExchange(ref _ex, EX_PUBLISHING, EX_COMPUTING);
-            if (preEx == EX_COMPUTING) {
-                _result = result;
-                _ex = EX_SUCCESS;
-                return true;
-            }
         }
         return false;
     }
 
     private bool InternalSetException(Exception exception) {
         Debug.Assert(exception != null);
-        // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
-        object preEx = Interlocked.CompareExchange(ref _ex, exception, null);
-        if (preEx == null) {
+        object preEx = this._ex;
+        if (preEx == null || preEx == EX_COMPUTING) {
+            this._ex = exception;
             return true;
-        }
-        if (preEx == EX_COMPUTING) {
-            // 任务可能处于Computing状态，重试
-            preEx = Interlocked.CompareExchange(ref _ex, exception, EX_COMPUTING);
-            if (preEx == EX_COMPUTING) {
-                return true;
-            }
         }
         return false;
     }
@@ -135,12 +127,6 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         }
         if (ex == EX_COMPUTING) {
             return ST_COMPUTING;
-        }
-        if (ex == EX_PUBLISHING) {
-            // busy spin -- 该过程通常很快，因此自旋等待即可
-            while ((ex = _ex) == EX_PUBLISHING) {
-            }
-            return ST_SUCCESS;
         }
         if (ex == EX_SUCCESS) {
             return ST_SUCCESS;
@@ -161,9 +147,6 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         if (ex == EX_COMPUTING) {
             return ST_COMPUTING;
         }
-        if (ex == EX_PUBLISHING) {
-            return strict ? ST_COMPUTING : ST_SUCCESS;
-        }
         if (ex == EX_SUCCESS) {
             return ST_SUCCESS;
         }
@@ -182,6 +165,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     public IFuture<T> AsReadonly() => new ForwardFuture<T>(this);
 
     #endregion
+
 
     #region 状态查询
 
@@ -208,13 +192,21 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     #region 状态更新
 
     public bool TrySetComputing() {
-        object preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
-        return preState == null;
+        object preEx = this._ex;
+        if (preEx == null) {
+            this._ex = EX_COMPUTING;
+            return true;
+        }
+        return false;
     }
 
     public TaskStatus TrySetComputing2() {
-        object preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
-        return (TaskStatus)PeekState(preState, false);
+        object preEx = this._ex;
+        if (preEx == null) {
+            this._ex = EX_COMPUTING;
+            return ST_PENDING;
+        }
+        return (TaskStatus)PeekState(preEx);
     }
 
     public void SetComputing() {
@@ -322,8 +314,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         if (IsDone0(state)) {
             return ReportJoin(state);
         }
-        Await();
-        return ReportJoin(PollState());
+        throw new BlockingOperationException("Get");
     }
 
     public T Join() {
@@ -331,65 +322,35 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         if (IsDone0(state)) {
             return ReportJoin(state);
         }
-        AwaitUninterruptibly();
-        return ReportJoin(PollState());
-    }
-
-    private Awaiter? TryPushAwaiter() {
-        Completion head = stack;
-        if (head is Awaiter awaiter) {
-            return awaiter; // 阻塞操作不多，而且通常集中在调用链的首尾
-        }
-        awaiter = new Awaiter(this);
-        return PushCompletion(awaiter) ? awaiter : null;
+        throw new BlockingOperationException("Join");
     }
 
     public IFuture<T> Await() {
         if (IsDone) {
             return this;
         }
-        CheckDeadlock();
-        Awaiter awaiter = TryPushAwaiter();
-        if (awaiter != null) {
-            awaiter.Await();
-        }
-        return this;
+        throw new BlockingOperationException("Await");
     }
 
     public IFuture<T> AwaitUninterruptibly() {
         if (IsDone) {
             return this;
         }
-        CheckDeadlock();
-        Awaiter awaiter = TryPushAwaiter();
-        if (awaiter != null) {
-            awaiter.AwaitUninterruptibly();
-        }
-        return this;
+        throw new BlockingOperationException("AwaitUninterruptibly");
     }
 
     public bool Await(TimeSpan timeout) {
         if (IsDone) {
             return true;
         }
-        CheckDeadlock();
-        Awaiter awaiter = TryPushAwaiter();
-        if (awaiter != null) {
-            return awaiter.Await(timeout);
-        }
-        return true;
+        throw new BlockingOperationException("Await");
     }
 
     public bool AwaitUninterruptibly(TimeSpan timeout) {
         if (IsDone) {
             return true;
         }
-        CheckDeadlock();
-        Awaiter awaiter = TryPushAwaiter();
-        if (awaiter != null) {
-            return awaiter.AwaitUninterruptibly(timeout);
-        }
-        return true;
+        throw new BlockingOperationException("AwaitUninterruptibly");
     }
 
     public FutureAwaiter<T> GetAwaiter() {
@@ -480,9 +441,9 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     {
         protected IExecutor? executor;
         protected int options;
-        protected Promise<V> input;
+        protected UniPromise<V> input;
 
-        protected UniOnCompleted(IExecutor? executor, int options, Promise<V> input) {
+        protected UniOnCompleted(IExecutor? executor, int options, UniPromise<V> input) {
             this.executor = executor;
             this.options = options;
             this.input = input;
@@ -510,13 +471,13 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     {
         private Action<IFuture<V>> action;
 
-        public UniOnCompleted1(IExecutor? executor, int options, Promise<V> input, Action<IFuture<V>> action)
+        public UniOnCompleted1(IExecutor? executor, int options, UniPromise<V> input, Action<IFuture<V>> action)
             : base(executor, options, input) {
             this.action = action;
         }
 
-        protected internal override AbstractPromise? TryFire(int mode) {
-            Promise<V>? input = this.input;
+        protected internal override AbstractUniPromise? TryFire(int mode) {
+            UniPromise<V>? input = this.input;
             {
                 // 异步模式下已经claim
                 if (!FireNow(input, action, mode > 0 ? null : this)) {
@@ -530,7 +491,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             return null;
         }
 
-        public static bool FireNow(Promise<V> input, Action<IFuture<V>> action,
+        public static bool FireNow(UniPromise<V> input, Action<IFuture<V>> action,
                                    UniOnCompleted1<V>? c) {
             try {
                 if (c != null && !c.Claim()) {
@@ -550,15 +511,15 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         private Action<IFuture<V>, object> action;
         private object? state;
 
-        public UniOnCompleted2(IExecutor? executor, int options, Promise<V> input,
+        public UniOnCompleted2(IExecutor? executor, int options, UniPromise<V> input,
                                Action<IFuture<V>, object> action, object? state)
             : base(executor, options, input) {
             this.action = action;
             this.state = state;
         }
 
-        protected internal override AbstractPromise? TryFire(int mode) {
-            Promise<V>? input = this.input;
+        protected internal override AbstractUniPromise? TryFire(int mode) {
+            UniPromise<V>? input = this.input;
             {
                 // 异步模式下已经claim
                 if (!FireNow(input, action, state, mode > 0 ? null : this)) {
@@ -573,7 +534,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             return null;
         }
 
-        public static bool FireNow(Promise<V> input,
+        public static bool FireNow(UniPromise<V> input,
                                    Action<IFuture<V>, object> action, object? state,
                                    UniOnCompleted2<V>? c) {
             try {
@@ -594,15 +555,15 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         private Action<IFuture<V>, IContext> action;
         private IContext context;
 
-        public UniOnCompleted3(IExecutor? executor, int options, Promise<V> input,
+        public UniOnCompleted3(IExecutor? executor, int options, UniPromise<V> input,
                                Action<IFuture<V>, IContext> action, in IContext context)
             : base(executor, options, input) {
             this.action = action;
             this.context = context;
         }
 
-        protected internal override AbstractPromise? TryFire(int mode) {
-            Promise<V>? input = this.input;
+        protected internal override AbstractUniPromise? TryFire(int mode) {
+            UniPromise<V>? input = this.input;
             {
                 if (context.CancelToken.IsCancelling()) {
                     goto outer;
@@ -620,7 +581,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             return null;
         }
 
-        public static bool FireNow(Promise<V> input,
+        public static bool FireNow(UniPromise<V> input,
                                    Action<IFuture<V>, IContext> action, in IContext context,
                                    UniOnCompleted3<V>? c) {
             try {

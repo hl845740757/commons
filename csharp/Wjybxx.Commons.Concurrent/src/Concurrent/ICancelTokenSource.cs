@@ -46,12 +46,4 @@ public interface ICancelTokenSource : ICancelToken
     /// <param name="cancelCode">取消码</param>
     /// <param name="timeSpan">延迟时间</param>
     void CancelAfter(int cancelCode, TimeSpan timeSpan);
-
-    /// <summary>
-    /// 创建一个子token，子token会在当前token被取消时取消。
-    /// 1.该接口是构建实例和<see cref="ICancelToken.ThenTransferTo"/>的快捷方法。
-    /// 2.该接口用于快速构建子上下文。
-    /// </summary>
-    /// <returns></returns>
-    ICancelTokenSource NewChild();
 }
