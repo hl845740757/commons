@@ -360,16 +360,13 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
     }
 
     // 暂不实现复杂的等待策略，暂使用简单的sleep等待
-    private const int WaitRetries = 200;
-    private const int YieldThreshold = 100;
+    // ConcurrentQueue的TryDequeue性能不好，不能频繁调用
+    private const int WaitRetries = 10;
 
     private bool WaitTask(ConcurrentQueue<ITask> taskQueue, out ITask task) {
         int waitCounter = WaitRetries;
         while (!taskQueue.TryDequeue(out task)) {
             waitCounter--;
-            if (waitCounter > YieldThreshold) {
-                continue; // busy spin
-            }
             if (waitCounter > 0) {
                 Thread.Yield(); // yield
                 continue;

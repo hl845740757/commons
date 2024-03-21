@@ -20,6 +20,8 @@ using System;
 using System.Runtime.Serialization;
 using Wjybxx.Commons.Ex;
 
+#pragma warning disable CS1591
+
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>

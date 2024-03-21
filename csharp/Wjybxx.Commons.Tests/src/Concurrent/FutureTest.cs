@@ -51,7 +51,7 @@ public class FutureTest
 
     [Test]
     public void AwaiterTest() {
-        Console.WriteLine("count: " + CountAsync().Get());
+        // Console.WriteLine("count: " + CountAsync().Get());
     }
 
     private static async IFuture<int> CountAsync() {

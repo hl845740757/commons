@@ -54,26 +54,27 @@ public class FutureCombiner
         return this;
     }
 
-    /**
-     * 获取监听的future数量
-     * 注意：future计数是不去重的，一个future反复添加会反复计数
-     */
+    /// <summary>
+    /// 获取监听的future数量
+    /// 注意：future计数是不去重的，一个future反复添加会反复计数
+    /// </summary>
     public int FutureCount => futureCount;
 
-    /**
-     * 设置接收结果的Promise
-     * 如果在执行操作前没有指定Promise，将创建{@link Promise}实例。
-     *
-     * @return this
-     */
+    //
+    /// <summary>
+    /// 设置接收结果的Promise
+    /// 如果在执行操作前没有指定Promise，将创建<see cref="Promise{T}"/>实例。
+    /// </summary>
+    /// <param name="aggregatePromise"></param>
+    /// <returns></returns>
     public FutureCombiner SetAggregatePromise(IPromise<object> aggregatePromise) {
         this.aggregatePromise = aggregatePromise;
         return this;
     }
 
-    /**
-     * 重置状态，使得可以重新添加future和选择
-     */
+    /// <summary>
+    /// 重置状态，使得可以重新添加future和选择
+    /// </summary>
     public void Clear() {
         childrenListener = new ChildListener();
         aggregatePromise = null;
@@ -82,38 +83,42 @@ public class FutureCombiner
 
     // region select
 
-    /**
-     * 返回的promise在任意future进入完成状态时进入完成状态
-     * 返回的promise与首个完成future的结果相同（不准确）
-     */
+    /// <summary>
+    /// 返回的promise在任意future进入完成状态时进入完成状态
+    /// 返回的promise与首个完成future的结果相同（不准确）
+    /// </summary>
+    /// <returns></returns>
     public IPromise<object> AnyOf() {
         return Finish(AggregateOptions.AnyOf());
     }
 
-    /**
-     * 成功N个触发成功
-     * 如果触发失败，只随机记录一个Future的异常信息，而不记录所有的异常信息
-     * <p>
-     * 1.如果require等于【0】，则必定会成功。
-     * 2.如果require大于监听的future数量，必定会失败。
-     * 3.如果require小于监听的future数量，当成功任务数达到期望时触发成功。
-     * <p>
-     * 如果lazy为false，则满足成功/失败条件时立即触发完成；
-     * 如果lazy为true，则等待所有任务完成之后才触发成功或失败。
-     *
-     * @param successRequire 期望成成功的任务数
-     * @param failFast       是否在不满足条件时立即失败
-     */
+    /// <summary>
+    /// 成功N个触发成功
+    ///
+    /// 如果触发失败，只随机记录一个Future的异常信息，而不记录所有的异常信息。
+    /// <p>
+    /// 1.如果require等于【0】，则必定会成功。
+    /// 2.如果require大于监听的future数量，必定会失败。
+    /// 3.如果require小于监听的future数量，当成功任务数达到期望时触发成功。
+    /// </p>
+    /// <p>
+    /// 如果lazy为false，则满足成功/失败条件时立即触发完成；
+    /// 如果lazy为true，则等待所有任务完成之后才触发成功或失败。
+    /// </p>
+    /// </summary>
+    /// <param name="successRequire">期望成成功的任务数</param>
+    /// <param name="failFast">是否在不满足条件时立即失败</param>
+    /// <returns></returns>
     public IPromise<object> SelectN(int successRequire, bool failFast) {
         return Finish(AggregateOptions.SelectN(successRequire, failFast));
     }
 
-    /**
-     * 要求所有的future都成功时才进入成功状态；
-     * 任意任务失败，最终结果都表现为失败
-     *
-     * @param failFast 是否在不满足条件时立即失败
-     */
+    /// <summary>
+    /// 要求所有的future都成功时才进入成功状态；
+    /// 任意任务失败，最终结果都表现为失败。
+    /// </summary>
+    /// <param name="failFast">是否在不满足条件时立即失败</param>
+    /// <returns></returns>
     public IPromise<object> SelectAll(bool failFast = true) {
         return SelectN(FutureCount, failFast);
     }
