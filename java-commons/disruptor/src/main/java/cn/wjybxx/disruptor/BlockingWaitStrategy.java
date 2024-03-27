@@ -37,7 +37,7 @@ public class BlockingWaitStrategy implements WaitStrategy {
 
     @Override
     public long waitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier)
-            throws AlertException, InterruptedException, TimeoutException {
+            throws TimeoutException, AlertException, InterruptedException {
         SequenceBlocker blocker = Objects.requireNonNull(producerBarrier.getBlocker(), "blocker is null");
         // 先通过条件锁等待生产者发布数据
         if (producerBarrier.sequence() < sequence) {

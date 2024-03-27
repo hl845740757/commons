@@ -33,7 +33,7 @@ public class BusySpinWaitStrategy implements WaitStrategy {
 
     @Override
     public long waitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier)
-            throws AlertException, InterruptedException, TimeoutException {
+            throws TimeoutException, AlertException, InterruptedException {
 
         long availableSequence;
         while ((availableSequence = barrier.dependentSequence()) < sequence) {

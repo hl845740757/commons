@@ -40,6 +40,6 @@ public interface WaitStrategy {
      */
     long waitFor(long sequence,
                  ProducerBarrier producerBarrier,
-                 ConsumerBarrier barrier) throws AlertException, InterruptedException, TimeoutException;
+                 ConsumerBarrier barrier) throws TimeoutException, AlertException, InterruptedException;
 
 }

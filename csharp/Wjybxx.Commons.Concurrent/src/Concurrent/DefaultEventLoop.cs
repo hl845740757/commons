@@ -73,6 +73,8 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
     private readonly IFuture _runningFuture;
     private readonly IFuture _terminationFuture;
 
+    /** 等待任务时的自旋次数 */
+    private readonly int _waitTaskSpinTries;
     /** 最多连续处理多少个事件（任务）就需要执行一次update */
     private readonly int _taskBatchSize;
     /** 任务的拒绝策略 */
@@ -358,13 +360,10 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
             }
         }
     }
-
-    // 暂不实现复杂的等待策略，暂使用简单的sleep等待
-    // ConcurrentQueue的TryDequeue性能不好，不能频繁调用
-    private const int WaitRetries = 10;
-
+    
     private bool WaitTask(ConcurrentQueue<ITask> taskQueue, out ITask task) {
-        int waitCounter = WaitRetries;
+        // Dequeue的性能不是很好，不能频繁调用
+        int waitCounter = _waitTaskSpinTries;
         while (!taskQueue.TryDequeue(out task)) {
             waitCounter--;
             if (waitCounter > 0) {

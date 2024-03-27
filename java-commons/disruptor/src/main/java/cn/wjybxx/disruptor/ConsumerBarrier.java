@@ -51,7 +51,7 @@ public interface ConsumerBarrier extends SequenceBarrier {
      * @throws InterruptedException if the thread needs awaking on a condition variable.
      * @throws TimeoutException     if a timeout occurs while waiting for the supplied sequence.
      */
-    long waitFor(long sequence) throws AlertException, InterruptedException, TimeoutException;
+    long waitFor(long sequence) throws TimeoutException, AlertException, InterruptedException;
 
     /**
      * 【当前屏障】是否收到了特殊信号

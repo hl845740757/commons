@@ -33,6 +33,7 @@ public class EventLoopBuilder
 
     private IEventLoopAgent<IAgentEvent>? _agent = EmptyAgent<IAgentEvent>.Inst;
     private IEventLoopModule? _mainModule;
+    private int _waitTaskSpinTries = 10;
     private int _batchSize = 1024;
 
     private EventLoopBuilder() {
@@ -84,6 +85,14 @@ public class EventLoopBuilder
     public IEventLoopModule? MainModule {
         get => _mainModule;
         set => _mainModule = value;
+    }
+
+    /// <summary>
+    /// 等待任务时的自旋次数
+    /// </summary>
+    public int WaitTaskSpinTries {
+        get => _waitTaskSpinTries;
+        set => _waitTaskSpinTries = value;
     }
 
     /// <summary>

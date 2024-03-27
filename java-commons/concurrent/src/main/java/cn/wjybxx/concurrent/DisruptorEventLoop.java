@@ -619,11 +619,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                     }
 
                     invokeAgentUpdate();
-                } catch (AlertException | InterruptedException e) {
-                    if (isShuttingDown()) {
-                        break;
-                    }
-                    logger.warn("receive a confusing signal", e);
                 } catch (TimeoutException e) {
                     // 优先先响应关闭，若未关闭，表用户主动退出等待，执行一次用户循环
                     if (isShuttingDown()) {
@@ -632,6 +627,11 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                     nanoTime = System.nanoTime();
                     processScheduledQueue(nanoTime, taskBatchSize, false);
                     invokeAgentUpdate();
+                } catch (AlertException | InterruptedException e) {
+                    if (isShuttingDown()) {
+                        break;
+                    }
+                    logger.warn("receive a confusing signal", e);
                 } catch (Throwable e) {
                     // 不好的等待策略实现
                     logger.error("bad waitStrategy impl", e);

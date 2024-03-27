@@ -54,7 +54,7 @@ public class SleepingWaitStrategy implements WaitStrategy {
 
     @Override
     public long waitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier)
-            throws AlertException, InterruptedException, TimeoutException {
+            throws TimeoutException, AlertException, InterruptedException {
 
         int counter = spinTries + yieldTries;
         long availableSequence;

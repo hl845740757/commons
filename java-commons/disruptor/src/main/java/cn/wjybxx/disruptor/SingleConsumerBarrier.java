@@ -57,7 +57,7 @@ public class SingleConsumerBarrier implements ConsumerBarrier {
     // region consumer
 
     @Override
-    public long waitFor(long sequence) throws AlertException, InterruptedException, TimeoutException {
+    public long waitFor(long sequence) throws TimeoutException, AlertException, InterruptedException {
         checkAlert();
 
         // available是生产者或前置消费者的进度

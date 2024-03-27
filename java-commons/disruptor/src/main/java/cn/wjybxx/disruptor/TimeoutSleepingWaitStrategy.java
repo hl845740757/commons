@@ -38,10 +38,10 @@ public class TimeoutSleepingWaitStrategy implements WaitStrategy {
     /** 默认实例 */
     public static final TimeoutSleepingWaitStrategy INSTANCE = new TimeoutSleepingWaitStrategy();
 
-    private static final int SPIN_TRIES = 100;
-    private static final int YIELD_TRIES = 100;
-    private static final int SLEEP_TRIES = 1000;
-    private static final int SLEEP_NANOS = 1000; // 共1毫秒
+    private static final int SPIN_TRIES = 10;
+    private static final int YIELD_TRIES = 10;
+    private static final int SLEEP_TRIES = 10;
+    private static final int SLEEP_NANOS = 100_000; // 10次共1毫秒，更小的值通常意义不大，取决于操作系统
 
     private final int spinTries;
     private final int yieldTries;
@@ -52,6 +52,13 @@ public class TimeoutSleepingWaitStrategy implements WaitStrategy {
         this(SPIN_TRIES, YIELD_TRIES, SLEEP_TRIES, SLEEP_NANOS, TimeUnit.NANOSECONDS);
     }
 
+    /**
+     * @param spinTries  自旋次数
+     * @param yieldTries yield次数
+     * @param sleepTries 睡眠次数
+     * @param sleepTime  每次睡眠次数
+     * @param unit       事件单位
+     */
     public TimeoutSleepingWaitStrategy(int spinTries, int yieldTries,
                                        int sleepTries, long sleepTime, TimeUnit unit) {
         this.spinTries = spinTries;
@@ -62,14 +69,16 @@ public class TimeoutSleepingWaitStrategy implements WaitStrategy {
 
     @Override
     public long waitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier)
-            throws AlertException, InterruptedException, TimeoutException {
+            throws TimeoutException, AlertException, InterruptedException {
 
         int counter = spinTries + yieldTries + sleepTries;
+        int yieldThreshold = yieldTries + sleepTries;
+
         long availableSequence;
         while ((availableSequence = barrier.dependentSequence()) < sequence) {
             barrier.checkAlert();
 
-            if (counter > yieldTries) {
+            if (counter > yieldThreshold) {
                 --counter;
             } else if (counter > sleepTries) {
                 --counter;
