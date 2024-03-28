@@ -476,6 +476,12 @@ public sealed class CancelTokenSource : ICancelTokenSource
             executor = null!;
             source = null!;
         }
+
+        protected bool IsCancelling(object? ctx) {
+            return TaskOption.IsEnabled(options, TaskOption.STAGE_CHECK_OBJECT_CTX)
+                   && ctx is IContext ctx2
+                   && ctx2.CancelToken.IsCancelling();
+        }
     }
 
     /// <summary>
@@ -547,7 +553,9 @@ public sealed class CancelTokenSource : ICancelTokenSource
                 if (action == null) {
                     return null;
                 }
-                action(source, state);
+                if (!IsCancelling(state)) {
+                    action(source, state);
+                }
             }
             catch (Exception ex) {
                 FutureLogger.LogCause(ex, "UniAcceptCtx caught an exception");
@@ -622,7 +630,9 @@ public sealed class CancelTokenSource : ICancelTokenSource
                 if (action == null) {
                     return null;
                 }
-                action(state);
+                if (!IsCancelling(state)) {
+                    action(state);
+                }
             }
             catch (Exception ex) {
                 FutureLogger.LogCause(ex, "UniRunCtx caught an exception");

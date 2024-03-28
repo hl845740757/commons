@@ -706,6 +706,11 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             executor = null;
         }
 
+        protected boolean isCancelling(Object ctx) {
+            return TaskOption.isEnabled(options, TaskOption.STAGE_CHECK_OBJECT_CTX)
+                    && ctx instanceof IContext ctx2
+                    && ctx2.cancelToken().isCancelling();
+        }
     }
     // endregion
 
@@ -777,7 +782,9 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                action.accept(source, ctx);
+                if (!isCancelling(ctx)) {
+                    action.accept(source, ctx);
+                }
             } catch (Throwable ex) {
                 FutureLogger.logCause(ex, "UniAcceptCtx caught an exception");
             }
@@ -858,7 +865,9 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                action.accept(ctx);
+                if (!isCancelling(ctx)) {
+                    action.accept(ctx);
+                }
             } catch (Throwable ex) {
                 FutureLogger.logCause(ex, "UniRunCtx caught an exception");
             }

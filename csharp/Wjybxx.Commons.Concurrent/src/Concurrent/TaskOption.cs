@@ -115,6 +115,11 @@ public static class TaskOption
     /// 仅用于{@link ICompletionStage}
     ///</summary>
     public const int STAGE_NON_TRANSITIVE = 1 << 17;
+    /// <summary>
+    /// 当回调接收的是Object类型的ctx，而不是{@link IContext}类型的ctx时，
+    /// 也尝试检测obj实例是否为{@link IContext}类型，并检测取消信号。
+    /// </summary>
+    public const int STAGE_CHECK_OBJECT_CTX = 1 << 18;
 
     // region util
 

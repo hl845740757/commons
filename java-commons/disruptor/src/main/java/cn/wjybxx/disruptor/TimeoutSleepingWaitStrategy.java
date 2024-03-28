@@ -56,8 +56,8 @@ public class TimeoutSleepingWaitStrategy implements WaitStrategy {
      * @param spinTries  自旋次数
      * @param yieldTries yield次数
      * @param sleepTries 睡眠次数
-     * @param sleepTime  每次睡眠次数
-     * @param unit       事件单位
+     * @param sleepTime  睡眠次数
+     * @param unit       时间单位
      */
     public TimeoutSleepingWaitStrategy(int spinTries, int yieldTries,
                                        int sleepTries, long sleepTime, TimeUnit unit) {

@@ -112,28 +112,6 @@ public class FutureUtils {
 
     // region set-future
 
-    public static <V> void setFuture(CompletableFuture<? super V> output, CompletionStage<V> input) {
-        Objects.requireNonNull(output, "output");
-        input.whenComplete((v, throwable) -> {
-            if (throwable != null) {
-                output.completeExceptionally(throwable);
-            } else {
-                output.complete(v);
-            }
-        });
-    }
-
-    public static <V> void setFutureAsync(Executor executor, CompletableFuture<? super V> output, CompletionStage<V> input) {
-        input.whenCompleteAsync(((v, throwable) -> {
-            if (throwable != null) {
-                output.completeExceptionally(throwable);
-            } else {
-                output.complete(v);
-            }
-        }), executor);
-    }
-
-
     public static <V> void setFuture(IPromise<? super V> output, ICompletionStage<V> input) {
         Objects.requireNonNull(output, "output");
         input.whenComplete((ctx, v, throwable) -> {
@@ -180,6 +158,53 @@ public class FutureUtils {
                 output.trySetResult(v);
             }
         }), executor);
+    }
+
+    //
+    public static <V> void setFuture(CompletableFuture<? super V> output, CompletionStage<V> input) {
+        Objects.requireNonNull(output, "output");
+        input.whenComplete((v, throwable) -> {
+            if (throwable != null) {
+                output.completeExceptionally(throwable);
+            } else {
+                output.complete(v);
+            }
+        });
+    }
+
+    public static <V> void setFuture(CompletableFuture<? super V> output, ICompletionStage<V> input) {
+        Objects.requireNonNull(output, "output");
+        input.whenComplete((ctx, v, throwable) -> {
+            if (throwable != null) {
+                output.completeExceptionally(throwable);
+            } else {
+                output.complete(v);
+            }
+        });
+    }
+
+    public static <V> void setFutureAsync(Executor executor, CompletableFuture<? super V> output, CompletionStage<V> input) {
+        input.whenCompleteAsync(((v, throwable) -> {
+            if (throwable != null) {
+                output.completeExceptionally(throwable);
+            } else {
+                output.complete(v);
+            }
+        }), executor);
+    }
+
+    public static <V> void setFutureAsync(Executor executor, CompletableFuture<? super V> output, ICompletionStage<V> input) {
+        setFutureAsync(executor, output, input, 0);
+    }
+
+    public static <V> void setFutureAsync(Executor executor, CompletableFuture<? super V> output, ICompletionStage<V> input, int options) {
+        input.whenCompleteAsync(executor, ((ctx, v, throwable) -> {
+            if (throwable != null) {
+                output.completeExceptionally(throwable);
+            } else {
+                output.complete(v);
+            }
+        }), null, options);
     }
 
     /** 由{@link EventLoop}通知返回的{@link IPromise} */
