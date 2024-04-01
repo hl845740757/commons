@@ -58,9 +58,11 @@ public class FutureTest
         IFutureTask<int> task = PromiseTask.OfFunction(() => 1, null, 0, new Promise<int>(Executor));
         Executor.Execute(task);
 
+        await Executor.SwitchTo();
+        
         // 确保回调在目标指定线程 --- 任务已完成的情况下，无法控制回调线程。。。
         // int value = await task.Future.GetAwaiter(globalEventLoop, TaskOption.STAGE_TRY_INLINE);
-        // Assert.IsTrue(globalEventLoop.InEventLoop(), "globalEventLoop.InEventLoop() == false");
+        Assert.IsTrue(globalEventLoop.InEventLoop(), "globalEventLoop.InEventLoop() == false");
 
         return await task.Future;
     }

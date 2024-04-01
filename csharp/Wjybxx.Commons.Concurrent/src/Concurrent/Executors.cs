@@ -17,8 +17,10 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Sources;
 
 #pragma warning disable CS1591
 
@@ -104,7 +106,19 @@ public static class Executors
     public static void Forget(this Task task) {
     }
 
+    /** 切换到给定线程 */
+    public static ValueTask SwitchTo(this IExecutor executor) {
+        if (InEventLoop(executor)) {
+            return ValueTask.CompletedTask;
+        }
+        SwitchExecutorTask task = new SwitchExecutorTask();
+        executor.Execute(task);
+        return task.Task;
+    }
+
     #endregion
+
+    #region box-class
 
     private class ActionWrapper1 : ITask
     {
@@ -188,4 +202,46 @@ public static class Executors
             action(context);
         }
     }
+
+    #endregion
+
+    #region switcher
+
+    private class SwitchExecutorTask : ITask, IValueTaskSource
+    {
+        private ManualResetValueTaskSourceCore<byte> _core = new ManualResetValueTaskSourceCore<byte>();
+
+        public SwitchExecutorTask() {
+        }
+
+        public void GetResult(short token) {
+            _core.GetResult(token);
+        }
+
+        public ValueTaskSourceStatus GetStatus(short token) {
+            return _core.GetStatus(token);
+        }
+
+        public void OnCompleted(Action<object?> continuation, object? state, short token, ValueTaskSourceOnCompletedFlags flags) {
+            _core.OnCompleted(continuation, state, token, flags);
+        }
+
+        public int Options => 0;
+
+        public void Run() {
+            _core.SetResult(1);
+        }
+
+        public void SetException(Exception ex) {
+            _core.SetException(ex);
+        }
+
+        public void SetResult() {
+            _core.SetResult(1);
+        }
+
+        public ValueTask Task => new ValueTask(this, _core.Version);
+    }
+
+    #endregion
 }

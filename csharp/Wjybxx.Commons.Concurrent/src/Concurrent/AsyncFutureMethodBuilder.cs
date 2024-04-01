@@ -54,7 +54,7 @@ public struct AsyncFutureMethodBuilder
         stateMachine.MoveNext();
     }
 
-    // 3. TaskLike Task property -- 返回给方法调用者；其实命名Future更自然
+    // 3. TaskLike Task property -- 返回给方法调用者；Start后调用；其实命名Future更自然
     public IFuture Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
@@ -155,7 +155,7 @@ public struct AsyncFutureMethodBuilder<T>
         stateMachine.MoveNext();
     }
 
-    // 3. TaskLike Task property -- 返回给方法调用者；其实命名Future更自然
+    // 3. TaskLike Task property -- 返回给方法调用者；Start后调用；其实命名Future更自然
     public IFuture<T> Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
