@@ -132,7 +132,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     }
 
     /** 任务是否启用了指定选项 */
-    public boolean isEnabled(int taskOption) {
+    public final boolean isEnabled(int taskOption) {
         return TaskOption.isEnabled(options, taskOption);
     }
 
@@ -166,37 +166,37 @@ public class PromiseTask<V> implements IFutureTask<V> {
     }
 
     /** 设置任务的调度类型 -- 应该在添加到队列之前设置 */
-    public final void setScheduleType(int scheduleType) {
+    protected final void setScheduleType(int scheduleType) {
         ctl |= (scheduleType << offsetScheduleType);
     }
 
     /** 是否已经声明任务的归属权 */
-    public final boolean isClaimed() {
+    protected final boolean isClaimed() {
         return (ctl & maskClaimed) != 0;
     }
 
     /** 将任务标记为已申领 */
-    public final void setClaimed() {
+    protected final void setClaimed() {
         ctl |= maskClaimed;
     }
 
     /** 分时任务是否启动 */
-    public final boolean isStarted() {
+    protected final boolean isStarted() {
         return (ctl & maskStarted) != 0;
     }
 
     /** 将分时任务标记为已启动 */
-    public final void setStarted() {
+    protected final void setStarted() {
         ctl |= maskStarted;
     }
 
     /** 获取ctl中的某个bit */
-    protected boolean getCtlBit(int mask) {
+    protected final boolean getCtlBit(int mask) {
         return (ctl & mask) != 0;
     }
 
     /** 设置ctl中的某个bit */
-    protected void setCtlBit(int mask, boolean value) {
+    protected final void setCtlBit(int mask, boolean value) {
         if (value) {
             ctl |= mask;
         } else {

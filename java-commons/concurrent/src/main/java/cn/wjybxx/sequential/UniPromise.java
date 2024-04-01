@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.unitask;
+package cn.wjybxx.sequential;
 
 import cn.wjybxx.base.function.TriConsumer;
 import cn.wjybxx.base.function.TriFunction;
@@ -81,11 +81,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     }
 
     public UniPromise(Executor executor) {
-        this._executor = executor;
-    }
-
-    @Deprecated
-    public UniPromise(Executor executor, IContext ctx) {
         this._executor = executor;
     }
 

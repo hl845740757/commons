@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.unitask;
+package cn.wjybxx.sequential;
 
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.collection.IndexedElement;

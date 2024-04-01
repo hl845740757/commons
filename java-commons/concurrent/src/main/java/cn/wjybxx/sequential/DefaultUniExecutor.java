@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.unitask;
+package cn.wjybxx.sequential;
 
 import cn.wjybxx.concurrent.EventLoopState;
 import cn.wjybxx.concurrent.ICancelToken;
@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  * @author wjybxx
  * date 2023/4/3
  */
-public class DefaultExecutor extends AbstractUniExecutor {
+public class DefaultUniExecutor extends AbstractUniExecutor {
 
     private final Deque<Runnable> taskQueue = new ArrayDeque<>();
     private final UniPromise<Void> terminationPromise = new UniPromise<>(this);
@@ -44,11 +44,11 @@ public class DefaultExecutor extends AbstractUniExecutor {
     private final int countLimit;
     private final long nanoTimeLimit;
 
-    public DefaultExecutor() {
+    public DefaultUniExecutor() {
         this(-1, -1, TimeUnit.NANOSECONDS);
     }
 
-    public DefaultExecutor(int countLimit) {
+    public DefaultUniExecutor(int countLimit) {
         this(countLimit, -1, TimeUnit.NANOSECONDS);
     }
 
@@ -56,7 +56,7 @@ public class DefaultExecutor extends AbstractUniExecutor {
      * @param countLimit 每帧允许运行的最大任务数，-1表示不限制；不可以为0
      * @param timeLimit  每帧允许的最大时间，-1表示不限制；不可以为0
      */
-    public DefaultExecutor(int countLimit, long timeLimit, TimeUnit timeUnit) {
+    public DefaultUniExecutor(int countLimit, long timeLimit, TimeUnit timeUnit) {
         ensureNegativeOneOrPositive(countLimit, "countLimit");
         ensureNegativeOneOrPositive(timeLimit, "timeLimit");
         this.countLimit = countLimit;

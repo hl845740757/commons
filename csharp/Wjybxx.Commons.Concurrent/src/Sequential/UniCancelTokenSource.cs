@@ -19,12 +19,11 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Wjybxx.Commons.Concurrent;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.UniTask;
+namespace Wjybxx.Commons.Sequential;
 
 /// <summary>
 /// 单线程的取消令牌

@@ -66,11 +66,15 @@ public class FutureUtils {
     }
 
     public static Throwable getCause(CompletableFuture<?> future) {
+        // jdk21 支持直接获取普通异常
         if (future.isCompletedExceptionally()) {
-            // 捕获异常的开销更大...我们这相当于一个visitor
-            MutableObject<Throwable> causeHolder = new MutableObject<>();
+            return future.exceptionNow();
+        }
+        // jdk 不支持直接获取取消异常
+        if (future.isCancelled()) {
+            MutableObject<Throwable> causeHolder = new MutableObject<>(); // visitor
             future.whenComplete((v, cause) -> causeHolder.setValue(cause));
-            return FutureUtils.unwrapCompletionException(causeHolder.getValue());
+            return causeHolder.getValue();
         }
         return null;
     }

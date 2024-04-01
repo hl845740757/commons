@@ -20,7 +20,7 @@ import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.mutable.MutableInt;
 import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
-import cn.wjybxx.unitask.UniCancelTokenSource;
+import cn.wjybxx.sequential.UniCancelTokenSource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.RepeatedTest;

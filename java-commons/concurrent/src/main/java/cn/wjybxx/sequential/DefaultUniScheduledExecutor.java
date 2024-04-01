@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.unitask;
+package cn.wjybxx.sequential;
 
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
@@ -34,7 +34,7 @@ import java.util.Objects;
  * @author wjybxx
  * date 2023/4/3
  */
-public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor implements UniScheduledExecutor {
+public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor implements UniScheduledExecutor {
 
     private static final Comparator<UniScheduledPromiseTask<?>> queueTaskComparator = UniScheduledPromiseTask::compareToExplicitly;
     private static final int DEFAULT_INITIAL_CAPACITY = 16;
@@ -50,11 +50,11 @@ public class DefaultScheduledExecutor extends AbstractUniScheduledExecutor imple
     /** 当前帧的时间戳，缓存下来以避免在tick的过程中产生变化 */
     private long tickTime;
 
-    public DefaultScheduledExecutor(TimeProvider timeProvider) {
+    public DefaultUniScheduledExecutor(TimeProvider timeProvider) {
         this(timeProvider, DEFAULT_INITIAL_CAPACITY);
     }
 
-    public DefaultScheduledExecutor(TimeProvider timeProvider, int initCapacity) {
+    public DefaultUniScheduledExecutor(TimeProvider timeProvider, int initCapacity) {
         this.timeProvider = Objects.requireNonNull(timeProvider, "timeProvider");
         this.taskQueue = new DefaultIndexedPriorityQueue<>(queueTaskComparator, initCapacity);
         this.tickTime = timeProvider.getTime();

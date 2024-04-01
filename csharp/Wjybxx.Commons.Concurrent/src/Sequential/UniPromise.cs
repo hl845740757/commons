@@ -18,12 +18,11 @@
 
 using System;
 using System.Diagnostics;
-using System.Threading;
 using Wjybxx.Commons.Concurrent;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.UniTask;
+namespace Wjybxx.Commons.Sequential;
 
 /// <summary>
 /// 单线程版本的<see cref="IPromise{T}"/>

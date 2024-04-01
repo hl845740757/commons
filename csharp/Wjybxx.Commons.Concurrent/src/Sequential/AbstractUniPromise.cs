@@ -21,7 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Wjybxx.Commons.Concurrent;
 
-namespace Wjybxx.Commons.UniTask;
+namespace Wjybxx.Commons.Sequential;
 
 /// <summary>
 /// 该类解决两个问题：

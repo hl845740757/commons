@@ -18,7 +18,7 @@
 
 using Wjybxx.Commons.Concurrent;
 
-namespace Wjybxx.Commons.UniTask;
+namespace Wjybxx.Commons.Sequential;
 
 /// <summary>
 /// 用于在当前线程延迟执行任务的Executor -- <see cref="IExecutorService"/>。

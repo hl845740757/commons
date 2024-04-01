@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.unitask;
+package cn.wjybxx.sequential;
 
 import cn.wjybxx.concurrent.IScheduledExecutorService;
 
