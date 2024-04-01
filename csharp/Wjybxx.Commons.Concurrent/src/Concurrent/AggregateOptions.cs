@@ -51,7 +51,7 @@ internal struct AggregateOptions
     /// <param name="failFast">是否快速失败</param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public static AggregateOptions SelectN(int successRequire, bool failFast=true) {
+    public static AggregateOptions SelectN(int successRequire, bool failFast = true) {
         if (successRequire < 0) {
             throw new ArgumentException("successRequire < 0");
         }

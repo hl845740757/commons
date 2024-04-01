@@ -41,15 +41,7 @@ public interface IContext
     /// </summary>
     public static readonly IContext NONE = MiniContext.OfCancelToken(ICancelToken.NONE);
 
-    /// <summary>
-    /// 任务绑定的取消令牌（取消上下文）
-    /// 1.每个任务可有独立的取消信号；
-    /// 2.运行时不为null -- 不要返回null，使用<see cref="NONE"/>代替。
-    /// </summary>
-    ICancelToken CancelToken { get; }
-
 #nullable disable
-
     /// <summary>
     /// 任务绑定的状态
     /// 1.任务之间不共享
@@ -58,6 +50,13 @@ public interface IContext
     /// ps：该属性是为了迎合C#的编程风格而设计的。
     /// </summary>
     object State { get; }
+
+    /// <summary>
+    /// 任务绑定的取消令牌（取消上下文）
+    /// 1.每个任务可有独立的取消信号；
+    /// 2.运行时不为null -- 不要返回null，使用<see cref="NONE"/>代替。
+    /// </summary>
+    ICancelToken CancelToken { get; }
 
     /// <summary>
     /// 任务运行时依赖的黑板（主要上下文）

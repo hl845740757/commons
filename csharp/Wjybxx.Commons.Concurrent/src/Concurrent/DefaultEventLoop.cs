@@ -360,7 +360,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
             }
         }
     }
-    
+
     private bool WaitTask(ConcurrentQueue<ITask> taskQueue, out ITask task) {
         // Dequeue的性能不是很好，不能频繁调用
         int waitCounter = _waitTaskSpinTries;

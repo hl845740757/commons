@@ -26,7 +26,7 @@ public class ScheduledPromise<T> : Promise<T>, IScheduledPromise<T>
 #nullable disable
     private IScheduledFutureTask<T> _task;
 #nullable enable
-    
+
     public ScheduledPromise(IExecutor? executor = null)
         : base(executor) {
     }
