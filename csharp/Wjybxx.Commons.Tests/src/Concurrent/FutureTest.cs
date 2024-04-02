@@ -58,17 +58,17 @@ public class FutureTest
     private static async IFuture<int> CountAsync() {
         IFutureTask<int> task = PromiseTask.OfFunction(() => 1, null, 0, new Promise<int>(Executor));
         Executor.Execute(task);
+        IPromise<int> future = task.Future;
 
         await globalEventLoop;
-        if (!globalEventLoop.InEventLoop()) {
-            throw new IllegalStateException();
-        }
-        await Executor;
-        
-        // 确保回调在目标指定线程 --- 任务已完成的情况下，无法控制回调线程。。。
-        // int value = await task.Future.GetAwaiter(globalEventLoop, TaskOption.STAGE_TRY_INLINE);
-        Assert.IsTrue(globalEventLoop.InEventLoop(), "globalEventLoop.InEventLoop() == false");
+        Assert.IsTrue(globalEventLoop.InEventLoop(), "1. globalEventLoop.InEventLoop() == false");
 
-        return await task.Future;
+        await future.GetAwaitable(globalEventLoop);
+        Assert.IsTrue(globalEventLoop.InEventLoop(), "2. globalEventLoop.InEventLoop() == false");
+
+        await future.GetAwaitable(globalEventLoop, TaskOption.STAGE_TRY_INLINE);
+        Assert.IsTrue(globalEventLoop.InEventLoop(), "3. globalEventLoop.InEventLoop() == false");
+
+        return await future;
     }
 }

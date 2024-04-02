@@ -102,6 +102,23 @@ public interface IFuture<T> : IFuture
     }
 
     /// <summary>
+    /// 获取在指定线程上执行回调的Awaiter
+    ///
+    /// c#的编译器并未支持该功能，因此需要用户显式调用该方法再await，示例如下：
+    /// <code>
+    ///     // await后的代码将在eventLoop线程执行
+    ///     await future.GetAwaitable(eventLoop); 
+    ///
+    ///     // 如果future是在eventLoop线程完成的，则同步执行await后的代码，不通过提交异步任务切换线程 
+    ///     await future.GetAwaitable(eventLoop, TaskOption.STAGE_TRY_INLINE);
+    /// </code>
+    /// </summary>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
+    /// <returns></returns>
+    new FutureAwaitable<T> GetAwaitable(IExecutor executor, int options = 0) => new FutureAwaitable<T>(this, executor, options);
+
+    /// <summary>
     /// 添加一个监听器
     /// 1. 该接口通常应该由<see cref="FutureAwaiter{T}"/>调用。
     /// </summary>

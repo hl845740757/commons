@@ -93,5 +93,9 @@ public interface IExecutor
 
     #endregion
 
+    /// <summary>
+    /// 用于支持<code>await executor</code>语法
+    /// </summary>
+    /// <returns></returns>
     ExecutorAwaiter GetAwaiter() => new ExecutorAwaiter(this);
 }

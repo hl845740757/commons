@@ -95,6 +95,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
         _runningFuture = _runningPromise.AsReadonly();
         _terminationFuture = _terminationPromise.AsReadonly();
 
+        _waitTaskSpinTries = builder.WaitTaskSpinTries;
         _taskBatchSize = Math.Clamp(builder.BatchSize, MIN_BATCH_SIZE, MAX_BATCH_SIZE);
         _rejectedExecutionHandler = builder.RejectedExecutionHandler ?? RejectedExecutionHandlers.Abort;
         _agent = builder.Agent ?? EmptyAgent<IAgentEvent>.Inst;
