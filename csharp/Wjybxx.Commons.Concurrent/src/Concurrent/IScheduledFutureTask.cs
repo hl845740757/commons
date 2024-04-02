@@ -72,7 +72,8 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 
     /// <summary>
     /// 监听取消令牌中的取消信号
-    /// 该方法由EventLoop调用，通常在Task成功压入队列后调用。
+    /// 1. 该方法由EventLoop调用，通常在Task成功压入队列后调用。
+    /// 2. 可检测是否已注册。
     /// </summary>
     void RegisterCancellation();
 

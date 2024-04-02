@@ -331,6 +331,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
             // 在出队列时分配id，可保证先进入队列的任务的id越小，保证id的有序性 -- 否则我们需要实现自己的并发队列
             if (task is IScheduledFutureTask scheduledTask && scheduledTask.Id == 0) {
                 scheduledTask.Id = _idSequencer++;
+                scheduledTask.RegisterCancellation();
             }
 
             // 更新时间戳，更新时间后必须先执行定时任务队列

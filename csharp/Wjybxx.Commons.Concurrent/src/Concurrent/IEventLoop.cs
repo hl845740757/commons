@@ -142,9 +142,9 @@ public interface IEventLoop : IFixedEventLoopGroup, ISingleThreadExecutor
 public enum EventLoopState
 {
     /// <summary>
-    /// 初始状态
+    /// 已创建，但尚未启动
     /// </summary>
-    Init = 0,
+    Unstarted = 0,
 
     /// <summary>
     /// 启动中

@@ -104,15 +104,15 @@ public interface IExecutorService : IExecutor
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns>Promise</returns>
-    IPromise<T> NewPromise<T>() => new Promise<T>(this);
+    IPromise<T> NewPromise<T>();
 
     /// <summary>
     /// 创建一个与当前Executor绑定的Promise
     ///
-    /// 注意：通常不应该使用该Promise的结果。
+    /// 注意：通常不应该使用该Promise的结果，真实泛型可能是byte/int/object。
     /// </summary>
     /// <returns>Promise</returns>
-    IPromise NewPromise() => new Promise<byte>(this);
+    IPromise NewPromise();
 
     /// <summary>
     /// 提交一个任务

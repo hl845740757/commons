@@ -19,63 +19,66 @@
 using System;
 using System.Threading;
 using Wjybxx.Commons.Collections;
-
-#pragma warning disable CS0108, CS0114
+using Wjybxx.Commons.Concurrent;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.Concurrent;
+namespace Wjybxx.Commons.Sequential;
 
 /// <summary>
 /// 接口用于定义常量和工具方法
+///
+/// 与<see cref="ScheduledPromiseTask{T}"/>的区别？
+/// 1. 时间单位不同，ticks => millis；
+/// 2. 依赖的Executor不同。
 /// </summary>
-public interface ScheduledPromiseTask
+public interface UniScheduledPromiseTask
 {
     #region factory
 
-    public static ScheduledPromiseTask<T> OfTask<T>(ITask task, IContext? context, int options, IScheduledPromise<T> promise,
-                                                    long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(task, context, options, promise, TaskBuilder.TypeTask,
-            id, nextTriggerTime);
-    }
-    
-    public static ScheduledPromiseTask<T> OfAction<T>(Action action, IContext? context, int options, IScheduledPromise<T> promise,
-                                                      long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeAction,
+    public static UniScheduledPromiseTask<T> OfTask<T>(ITask task, IContext? context, int options, IScheduledPromise<T> promise,
+                                                       long id, long nextTriggerTime) {
+        return new UniScheduledPromiseTask<T>(task, context, options, promise, TaskBuilder.TypeTask,
             id, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<T> OfAction<T>(Action<IContext> action, IContext? context, int options, IScheduledPromise<T> promise,
-                                                      long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeActionCtx,
+    public static UniScheduledPromiseTask<T> OfAction<T>(Action action, IContext? context, int options, IScheduledPromise<T> promise,
+                                                         long id, long nextTriggerTime) {
+        return new UniScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeAction,
             id, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, IContext? context, int options, IScheduledPromise<T> promise,
-                                                        long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeFunc,
+    public static UniScheduledPromiseTask<T> OfAction<T>(Action<IContext> action, IContext? context, int options, IScheduledPromise<T> promise,
+                                                         long id, long nextTriggerTime) {
+        return new UniScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeActionCtx,
             id, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<T> OfFunction<T>(Func<IContext, T> action, IContext? context, int options, IScheduledPromise<T> promise,
-                                                        long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeFuncCtx,
+    public static UniScheduledPromiseTask<T> OfFunction<T>(Func<T> action, IContext? context, int options, IScheduledPromise<T> promise,
+                                                           long id, long nextTriggerTime) {
+        return new UniScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeFunc,
             id, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<T> OfBuilder<T>(ref TaskBuilder<T> builder, IScheduledPromise<T> promise,
-                                                       long id, long tickTime) {
-        return new ScheduledPromiseTask<T>(builder.Task, builder.Context, builder.Options, promise, builder.Type,
+    public static UniScheduledPromiseTask<T> OfFunction<T>(Func<IContext, T> action, IContext? context, int options, IScheduledPromise<T> promise,
+                                                           long id, long nextTriggerTime) {
+        return new UniScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeFuncCtx,
+            id, nextTriggerTime);
+    }
+
+    public static UniScheduledPromiseTask<T> OfBuilder<T>(ref TaskBuilder<T> builder, IScheduledPromise<T> promise,
+                                                          long id, long tickTime) {
+        return new UniScheduledPromiseTask<T>(builder.Task, builder.Context, builder.Options, promise, builder.Type,
             id, tickTime);
     }
 
-    public static ScheduledPromiseTask<T> OfBuilder<T>(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
-                                                       long id, long tickTime) {
+    public static UniScheduledPromiseTask<T> OfBuilder<T>(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
+                                                          long id, long tickTime) {
         TimeSpan timeUnit = builder.Timeunit;
         // 并发库中不支持插队，初始延迟强制转0
         long initialDelay = Math.Max(0, builder.InitialDelay);
-        long triggerTime = tickTime + initialDelay * timeUnit.Ticks;
-        long period = builder.Period * timeUnit.Ticks;
+        long triggerTime = tickTime + initialDelay * timeUnit.Milliseconds;
+        long period = builder.Period * timeUnit.Milliseconds;
 
         long timeout = builder.Timeout;
         TimeoutContext? timeoutContext;
@@ -84,19 +87,20 @@ public interface ScheduledPromiseTask
         } else {
             timeoutContext = null;
         }
-        return new ScheduledPromiseTask<T>(ref builder, promise, id, triggerTime, period, timeoutContext);
+        return new UniScheduledPromiseTask<T>(ref builder, promise, id, triggerTime, period, timeoutContext);
     }
 
     #endregion
 
-    /** 计算任务的触发时间 -- Ticks */
+
+    /** 计算任务的触发时间 -- 毫秒 */
     public static long TriggerTime(TimeSpan delay, long tickTime) {
-        return Math.Max(0, delay.Ticks + tickTime);
+        return Math.Max(0, delay.Milliseconds + tickTime);
     }
 }
 
-public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
-    IIndexedElement, ScheduledPromiseTask, ICancelTokenListener
+public class UniScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
+    IIndexedElement, UniScheduledPromiseTask, ICancelTokenListener
 {
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
     private long id;
@@ -112,8 +116,8 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
     private IRegistration? cancelRegistration;
 
-    internal ScheduledPromiseTask(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
-                                  long id, long nextTriggerTime, long period, TimeoutContext? timeoutContext)
+    internal UniScheduledPromiseTask(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
+                                     long id, long nextTriggerTime, long period, TimeoutContext? timeoutContext)
         : base(builder.Task, builder.Context, builder.Options, promise, builder.Type) {
         this.id = id;
         this.nextTriggerTime = nextTriggerTime;
@@ -131,8 +135,8 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     }
 
     /** 用于简单情况下的对象创建 */
-    internal ScheduledPromiseTask(object action, IContext? context, int options, IScheduledPromise<T> promise, int taskType,
-                                  long id, long nextTriggerTime)
+    internal UniScheduledPromiseTask(object action, IContext? context, int options, IScheduledPromise<T> promise, int taskType,
+                                     long id, long nextTriggerTime)
         : base(action, context, options, promise, taskType) {
         this.id = id;
         this.nextTriggerTime = nextTriggerTime;
@@ -179,11 +183,11 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
 
     #region core
 
-    private AbstractScheduledEventLoop EventLoop => (AbstractScheduledEventLoop)promise.Executor!;
+    private AbstractUniScheduledExecutor EventLoop => (AbstractUniScheduledExecutor)promise.Executor!;
 
     /** 该方法在任务出队列的时候调用 */
     public void Run() {
-        AbstractScheduledEventLoop eventLoop = EventLoop;
+        AbstractUniScheduledExecutor eventLoop = EventLoop;
         IPromise<T> promise = this.promise;
         IContext context = this.context;
         if (promise.IsDone || context.CancelToken.IsCancelling()) {

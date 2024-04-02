@@ -62,7 +62,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
 
     @Override
     public void update() {
-        // 需要缓存下来，一来用于计算下次调度时间，一来避免优先级错乱
+        // 需要缓存下来，一来用于计算下次调度时间，二来避免优先级错乱
         final long curTime = timeProvider.getTime();
         tickTime = curTime;
 
@@ -120,7 +120,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
     }
 
     private boolean delayExecute(UniScheduledPromiseTask<?> futureTask) {
-        if (isShutdown()) {
+        if (isShuttingDown()) {
             // 默认直接取消，暂不添加拒绝处理器
             futureTask.cancelWithoutRemove();
             return false;
@@ -142,7 +142,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
     @Override
     public List<Runnable> shutdownNow() {
         ArrayList<Runnable> result = new ArrayList<>(taskQueue);
-        taskQueue.clear();
+        taskQueue.clearIgnoringIndexes();
         state = EventLoopState.ST_TERMINATED;
         terminationPromise.trySetResult(null);
         return result;

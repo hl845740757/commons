@@ -34,6 +34,8 @@ public interface IScheduledExecutorService : IExecutorService
 
     /// <summary>
     /// 创建一个promise以用于任务调度
+    ///
+    /// 注意：通常不应该使用该Promise的结果，真实泛型可能是byte/int/object。
     /// </summary>
     /// <returns></returns>
     IScheduledPromise NewScheduledPromise();

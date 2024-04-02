@@ -32,6 +32,9 @@ import java.util.function.Function;
 
 /**
  * 定时任务的Task抽象
+ * 与{@link ScheduledPromiseTask}的几个区别：
+ * 1. 时间精度为毫秒。
+ * 2. 依赖的Executor类型不同。
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -305,6 +308,7 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
             nextTriggerTime = tickTime + Math.min(maxDelay, period); // 真实时间
         }
     }
+    // endregion
 
     // region cancel
 
@@ -319,13 +323,14 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
         clear();
     }
 
+    /** 监听取消令牌中的取消信号 */
     public void registerCancellation() {
         // 需要监听来自future取消... 无论有没有ctx
         if (!TaskOption.isEnabled(options, TaskOption.IGNORE_FUTURE_CANCEL)) {
             promise.onCompleted(this, 0);
         }
         ICancelToken cancelToken = ctx.cancelToken();
-        if (cancelToken.canBeCancelled()) {
+        if (cancelRegistration == null && cancelToken.canBeCancelled()) {
             cancelRegistration = cancelToken.thenNotify(this);
         }
     }

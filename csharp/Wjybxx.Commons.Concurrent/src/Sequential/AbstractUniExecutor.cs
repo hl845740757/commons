@@ -31,7 +31,7 @@ public abstract class AbstractUniExecutor : IUniExecutorService
     private readonly SynchronizationContext _syncContext;
     private readonly TaskScheduler _scheduler;
 
-    protected AbstractUniExecutor(IEventLoopGroup? parent) {
+    protected AbstractUniExecutor() {
         _syncContext = new ExecutorSynchronizationContext(this);
         _scheduler = new ExecutorTaskScheduler(this);
     }
@@ -46,9 +46,9 @@ public abstract class AbstractUniExecutor : IUniExecutorService
 
     public abstract List<ITask> ShutdownNow();
 
-    public abstract bool InEventLoop();
+    public bool InEventLoop() => true;
 
-    public abstract bool InEventLoop(Thread thread);
+    public bool InEventLoop(Thread thread) => true;
 
     public abstract IFuture TerminationFuture { get; }
 
@@ -68,15 +68,15 @@ public abstract class AbstractUniExecutor : IUniExecutorService
 
     public abstract void Execute(ITask task);
 
-    public void Execute(Action action, int options = 0) {
+    public virtual void Execute(Action action, int options = 0) {
         Execute(Executors.BoxAction(action, options));
     }
 
-    public void Execute(Action<IContext> action, in IContext context, int options = 0) {
+    public virtual void Execute(Action<IContext> action, in IContext context, int options = 0) {
         Execute(Executors.BoxAction(action, context, options));
     }
 
-    public void Execute(Action action, CancellationToken cancelToken, int options = 0) {
+    public virtual void Execute(Action action, CancellationToken cancelToken, int options = 0) {
         Execute(Executors.BoxAction(action, cancelToken, options));
     }
 
@@ -107,13 +107,13 @@ public abstract class AbstractUniExecutor : IUniExecutorService
     }
 
     public virtual IFuture SubmitAction(Action action, int options = 0) {
-        PromiseTask<object> promiseTask = PromiseTask.OfAction(action, null, options, NewPromise<object>());
+        PromiseTask<byte> promiseTask = PromiseTask.OfAction(action, null, options, NewPromise<byte>());
         Execute(promiseTask);
         return promiseTask.Future;
     }
 
     public virtual IFuture SubmitAction(Action<IContext> action, IContext context, int options = 0) {
-        PromiseTask<object> promiseTask = PromiseTask.OfAction(action, context, options, NewPromise<object>());
+        PromiseTask<byte> promiseTask = PromiseTask.OfAction(action, context, options, NewPromise<byte>());
         Execute(promiseTask);
         return promiseTask.Future;
     }

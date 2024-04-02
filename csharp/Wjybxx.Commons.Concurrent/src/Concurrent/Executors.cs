@@ -31,25 +31,35 @@ public static class Executors
 {
     #region box
 
-    public static ITask BoxAction(Action action, int options) {
+    public static ITask BoxAction(Action action, int options = 0) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         return new ActionWrapper1(action, options);
     }
 
-    public static ITask BoxAction(Action action, CancellationToken cancelToken, int options) {
+    public static ITask BoxAction(Action action, CancellationToken cancelToken, int options = 0) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         return new ActionWrapper2(action, cancelToken, options);
     }
 
-    public static ITask BoxAction(Action action, ICancelToken cancelToken, int options) {
+    public static ITask BoxAction(Action action, ICancelToken cancelToken, int options = 0) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (cancelToken == null) throw new ArgumentNullException(nameof(cancelToken));
         return new ActionWrapper3(action, cancelToken, options);
     }
 
-    public static ITask BoxAction(Action<IContext> action, IContext context, int options) {
+    public static ITask BoxAction(Action<IContext> action, IContext context, int options = 0) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         return new ActionWrapper4(action, context, options);
+    }
+
+    public static Action CancellableAction(Action action, CancellationToken cancelToken) {
+        if (action == null) throw new ArgumentNullException(nameof(action));
+        return () => {
+            if (cancelToken.IsCancellationRequested) {
+                return;
+            }
+            action.Invoke();
+        };
     }
 
     #endregion

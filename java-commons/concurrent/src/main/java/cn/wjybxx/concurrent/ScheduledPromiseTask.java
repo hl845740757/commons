@@ -326,7 +326,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
             promise.onCompleted(this, 0);
         }
         ICancelToken cancelToken = ctx.cancelToken();
-        if (cancelToken.canBeCancelled()) {
+        if (cancelRegistration == null && cancelToken.canBeCancelled()) {
             cancelRegistration = cancelToken.thenNotify(this);
         }
     }
