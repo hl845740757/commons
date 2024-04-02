@@ -110,7 +110,7 @@ public struct AsyncFutureMethodBuilder
     }
 
     private static IExecutor? AwaiterExecutor<TAwaiter>(ref TAwaiter awaiter) where TAwaiter : INotifyCompletion {
-        // 这里进行类型测试可能会产生copy，但没办法... C#的委托还是要输java的函数式接口一筹
+        // 这里进行类型测试可能会产生copy，但没办法...
         if (awaiter is FutureAwaiter futureAwaiter) {
             return futureAwaiter.Executor;
         }
@@ -213,7 +213,7 @@ public struct AsyncFutureMethodBuilder<T>
     }
 
     private static IExecutor? AwaiterExecutor<TAwaiter>(ref TAwaiter awaiter) where TAwaiter : INotifyCompletion {
-        // 这里进行类型测试可能会产生copy，但没办法... C#的委托还是要输java的函数式接口一筹
+        // 这里进行类型测试可能会产生copy，但没办法...
         if (awaiter is FutureAwaiter<T> futureAwaiter) {
             return futureAwaiter.Executor;
         }

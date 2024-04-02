@@ -87,7 +87,7 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="future">需要等待的future</param>
+    /// <param name="future">需要等待的future</param> 
     /// <exception cref="ArgumentNullException"></exception>
     public FutureAwaiter(IFuture<T> future) {
         this.future = future ?? throw new ArgumentNullException(nameof(future));

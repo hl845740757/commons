@@ -39,7 +39,7 @@ internal interface IStateMachineDriver<T>
     /// 用于驱动StateMachine
     /// 
     /// ps：
-    /// 1. 定义为属性以允许实现类进行一些优化，比如：缓存实例。
+    /// 1. 定义为属性以允许实现类进行一些优化，比如：缓存实例，代理。
     /// 2. 通常应该是Run方法的委托。
     /// </summary>
     Action MoveToNext { get; }

@@ -17,6 +17,7 @@
 #endregion
 
 using NUnit.Framework;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Concurrent;
 
 namespace Commons.Tests.Core;
@@ -51,14 +52,18 @@ public class FutureTest
 
     [Test]
     public void AwaiterTest() {
-        // Console.WriteLine("count: " + CountAsync().Get());
+        Console.WriteLine("count: " + CountAsync().Get());
     }
 
     private static async IFuture<int> CountAsync() {
         IFutureTask<int> task = PromiseTask.OfFunction(() => 1, null, 0, new Promise<int>(Executor));
         Executor.Execute(task);
 
-        await Executor.SwitchTo();
+        await globalEventLoop;
+        if (!globalEventLoop.InEventLoop()) {
+            throw new IllegalStateException();
+        }
+        await Executor;
         
         // 确保回调在目标指定线程 --- 任务已完成的情况下，无法控制回调线程。。。
         // int value = await task.Future.GetAwaiter(globalEventLoop, TaskOption.STAGE_TRY_INLINE);

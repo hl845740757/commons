@@ -92,4 +92,6 @@ public interface IExecutor
     }
 
     #endregion
+
+    ExecutorAwaiter GetAwaiter() => new ExecutorAwaiter(this);
 }
