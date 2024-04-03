@@ -81,4 +81,8 @@ public interface ICancelTokenSource extends ICancelToken {
      * @return 取消令牌
      */
     ICancelTokenSource newInstance(boolean copyCode);
+
+    default ICancelTokenSource newInstance() {
+        return newInstance(false);
+    }
 }

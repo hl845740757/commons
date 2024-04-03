@@ -92,7 +92,7 @@ public struct AsyncFutureMethodBuilder
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            _task = new StateMachineDriver<byte, TStateMachine>(AwaiterExecutor(ref awaiter), ref stateMachine);
+            StateMachineDriver<byte, TStateMachine>.SetStateMachine(AwaiterExecutor(ref awaiter), ref stateMachine, ref _task);
         }
         awaiter.OnCompleted(_task.MoveToNext);
     }
@@ -104,7 +104,7 @@ public struct AsyncFutureMethodBuilder
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            _task = new StateMachineDriver<byte, TStateMachine>(AwaiterExecutor(ref awaiter), ref stateMachine);
+            StateMachineDriver<byte, TStateMachine>.SetStateMachine(AwaiterExecutor(ref awaiter), ref stateMachine, ref _task);
         }
         awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }
@@ -195,7 +195,7 @@ public struct AsyncFutureMethodBuilder<T>
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            _task = new StateMachineDriver<T, TStateMachine>(AwaiterExecutor(ref awaiter), ref stateMachine);
+            StateMachineDriver<T, TStateMachine>.SetStateMachine(AwaiterExecutor(ref awaiter), ref stateMachine, ref _task);
         }
         awaiter.OnCompleted(_task.MoveToNext);
     }
@@ -207,7 +207,7 @@ public struct AsyncFutureMethodBuilder<T>
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            _task = new StateMachineDriver<T, TStateMachine>(AwaiterExecutor(ref awaiter), ref stateMachine);
+            StateMachineDriver<T, TStateMachine>.SetStateMachine(AwaiterExecutor(ref awaiter), ref stateMachine, ref _task);
         }
         awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }

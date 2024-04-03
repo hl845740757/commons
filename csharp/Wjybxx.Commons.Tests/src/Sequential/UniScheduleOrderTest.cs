@@ -16,6 +16,8 @@
 
 #endregion
 
+using System;
+using System.Threading;
 using Commons.Tests.Concurrent;
 using NUnit.Framework;
 using Wjybxx.Commons.Sequential;

@@ -16,6 +16,9 @@
 
 #endregion
 
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using Wjybxx.Commons.Concurrent;
 
@@ -23,12 +26,13 @@ namespace Commons.Tests.Concurrent;
 
 public class FutureTest
 {
-    private static readonly IEventLoop globalEventLoop = EventLoopBuilder.NewBuilder(new DefaultThreadFactory("consumer")).Build();
+    private static readonly IEventLoop globalEventLoop = EventLoopBuilder.NewBuilder(new DefaultThreadFactory("consumer", true)).Build();
     private static readonly IExecutor Executor = new ImmediateExecutor();
 
     [Test]
     public void TestFutureAwaitable() {
-        Console.WriteLine("TestFutureAwaitable: " + CountAsync().Get());
+        int v = CountAsync().Get();
+        Console.WriteLine("TestFutureAwaitable: " + v);
     }
 
     private static async IFuture<int> CountAsync() {
@@ -43,7 +47,7 @@ public class FutureTest
 
         await future.GetAwaitable(globalEventLoop, TaskOption.STAGE_TRY_INLINE);
         Assert.IsTrue(globalEventLoop.InEventLoop(), "2. globalEventLoop.InEventLoop() == false");
-
+        
         return await future;
     }
 
@@ -54,6 +58,7 @@ public class FutureTest
 
     private static async Task<int> CountAsync2() {
         Task<int> future = Task.Run(() => 1, CancellationToken.None);
+        future.Wait();
         Assert.IsFalse(globalEventLoop.InEventLoop(), "0. before globalEventLoop.InEventLoop() == true");
 
         await future.GetAwaitable(globalEventLoop);

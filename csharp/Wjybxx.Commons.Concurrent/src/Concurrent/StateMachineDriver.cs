@@ -38,9 +38,14 @@ internal sealed class StateMachineDriver<T, S> : Promise<T>, IStateMachineDriver
     /// </summary>
     private Action _moveToNext;
 
-    public StateMachineDriver(IExecutor? executor, ref S stateMachine) : base(executor) {
-        _stateMachine = stateMachine;
+    public StateMachineDriver(IExecutor? executor) : base(executor) {
         _moveToNext = Run;
+    }
+    
+    public static void SetStateMachine(IExecutor? executor, ref S stateMachine, ref IStateMachineDriver<T> driver) {
+        StateMachineDriver<T,S> result = new StateMachineDriver<T, S>(executor);
+        driver = result; // set driver before copy
+        result._stateMachine = stateMachine; // copy struct... 从栈拷贝到堆，ref也没用，不错一次不知道...
     }
 
     public void Run() {
