@@ -40,7 +40,7 @@ public readonly struct ExecutorAwaiter : ICriticalNotifyCompletion
     public bool IsCompleted => Executors.InEventLoop(_executor);
 
     // 2. GetResult
-    // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此内部空实现 -- 不可手动调用，不会阻塞
+    // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此空实现安全 -- 不可手动调用，不会阻塞
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void GetResult() {
     }

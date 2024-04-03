@@ -27,8 +27,8 @@ public class FutureTest
     private static readonly IExecutor Executor = new ImmediateExecutor();
 
     [Test]
-    public void AwaiterTest() {
-        Console.WriteLine("count: " + CountAsync().Get());
+    public void TestFutureAwaitable() {
+        Console.WriteLine("TestFutureAwaitable: " + CountAsync().Get());
     }
 
     private static async IFuture<int> CountAsync() {
@@ -36,15 +36,40 @@ public class FutureTest
         Executor.Execute(task);
         IPromise<int> future = task.Future;
 
-        await globalEventLoop;
+        await future.GetAwaitable(globalEventLoop);
         Assert.IsTrue(globalEventLoop.InEventLoop(), "1. globalEventLoop.InEventLoop() == false");
 
-        await future.GetAwaitable(globalEventLoop);
+        await future.GetAwaitable(globalEventLoop, TaskOption.STAGE_TRY_INLINE);
         Assert.IsTrue(globalEventLoop.InEventLoop(), "2. globalEventLoop.InEventLoop() == false");
 
+        return await future;
+    }
+
+    [Test]
+    public void TestTaskAwaitable() {
+        Console.WriteLine("TestTaskAwaitable: " + CountAsync2().Result);
+    }
+
+    private static async Task<int> CountAsync2() {
+        Task<int> future = Task.Run(() => 1, CancellationToken.None);
+
+        await future.GetAwaitable(globalEventLoop);
+        Assert.IsTrue(globalEventLoop.InEventLoop(), "1. globalEventLoop.InEventLoop() == false");
+
         await future.GetAwaitable(globalEventLoop, TaskOption.STAGE_TRY_INLINE);
-        Assert.IsTrue(globalEventLoop.InEventLoop(), "3. globalEventLoop.InEventLoop() == false");
+        Assert.IsTrue(globalEventLoop.InEventLoop(), "2. globalEventLoop.InEventLoop() == false");
 
         return await future;
+    }
+
+    [Test]
+    public void TestExecutorAwait() {
+        AwaitExecutor();
+    }
+
+    private async void AwaitExecutor() {
+        Assert.IsFalse(globalEventLoop.InEventLoop(), "before globalEventLoop.InEventLoop()");
+        await globalEventLoop;
+        Assert.IsTrue(globalEventLoop.InEventLoop(), "after globalEventLoop.InEventLoop()");
     }
 }

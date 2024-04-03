@@ -114,6 +114,50 @@ public static class Executors
     public static void Forget(this Task task) {
     }
 
+    public static bool IsFailedOrCancelled(this Task task) {
+        return task.IsCanceled || task.IsFaulted;
+    }
+
+    /// <summary>
+    /// 获取在指定线程上执行回调的Awaiter
+    /// 
+    /// c#的编译器并未支持该功能，因此需要用户显式调用该方法再await，示例如下：
+    /// <code>
+    ///     // await后的代码将在eventLoop线程执行
+    ///     await future.GetAwaitable(eventLoop); 
+    /// 
+    ///     // 如果future是在eventLoop线程完成的，则同步执行await后的代码，不通过提交异步任务切换线程 
+    ///     await future.GetAwaitable(eventLoop, TaskOption.STAGE_TRY_INLINE);
+    /// </code>
+    /// </summary>
+    /// <param name="task">要等待的Task</param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
+    public static TaskAwaitable GetAwaitable(this Task task, IExecutor executor, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return new TaskAwaitable(task, executor, options);
+    }
+
+    /// <summary>
+    /// 获取在指定线程上执行回调的Awaiter
+    /// 
+    /// c#的编译器并未支持该功能，因此需要用户显式调用该方法再await，示例如下：
+    /// <code>
+    ///     // await后的代码将在eventLoop线程执行
+    ///     await future.GetAwaitable(eventLoop); 
+    /// 
+    ///     // 如果future是在eventLoop线程完成的，则同步执行await后的代码，不通过提交异步任务切换线程 
+    ///     await future.GetAwaitable(eventLoop, TaskOption.STAGE_TRY_INLINE);
+    /// </code>
+    /// </summary>
+    /// <param name="task">要等待的Task</param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
+    public static TaskAwaitable<T> GetAwaitable<T>(this Task<T> task, IExecutor executor, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return new TaskAwaitable<T>(task, executor, options);
+    }
+
     #endregion
 
     #region box-class

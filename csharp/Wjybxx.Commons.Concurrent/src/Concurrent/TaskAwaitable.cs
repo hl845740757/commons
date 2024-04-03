@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 #pragma warning disable CS1591
 
@@ -27,13 +28,13 @@ namespace Wjybxx.Commons.Concurrent;
 /// 用于绑定回调线程
 /// 注意：不可手动获取<see cref="GetAwaiter"/>。
 /// </summary>
-public readonly struct FutureAwaitable
+public readonly struct TaskAwaitable
 {
-    private readonly IFuture _future;
+    private readonly Task _future;
     private readonly IExecutor _executor;
     private readonly int _options;
 
-    public FutureAwaitable(IFuture future, IExecutor executor, int options) {
+    public TaskAwaitable(Task future, IExecutor executor, int options) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _options = options;
@@ -43,13 +44,13 @@ public readonly struct FutureAwaitable
 
     public readonly struct Awaiter : ICriticalNotifyCompletion
     {
-        private static readonly Action<IFuture, object> Invoker = (_, state) => ((Action)state).Invoke();
+        private static readonly Action<Task, object> Invoker = (_, state) => ((Action)state).Invoke();
 
-        private readonly IFuture _future;
+        private readonly Task _future;
         private readonly IExecutor _executor;
         private readonly int _options;
 
-        internal Awaiter(IFuture future, IExecutor executor, int options) {
+        internal Awaiter(Task future, IExecutor executor, int options) {
             _future = future;
             _executor = executor;
             _options = options;
@@ -57,7 +58,7 @@ public readonly struct FutureAwaitable
 
         // 1.IsCompleted
         // IsCompleted只在Start后调用一次，EventLoop可以通过接口查询是否已在线程中
-        public bool IsCompleted => _future.IsDone
+        public bool IsCompleted => _future.IsCompleted
                                    && TaskOption.IsEnabled(_options, TaskOption.STAGE_TRY_INLINE)
                                    && Executors.InEventLoop(_executor);
 
@@ -65,10 +66,8 @@ public readonly struct FutureAwaitable
         // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中 -- 不可手动调用
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetResult() {
-            _future.Await();
-            if (_future.IsFailedOrCancelled) {
-                _future.Get(); // 抛出异常
-            }
+            _future.Wait();
+            _future.GetAwaiter().GetResult();
         }
 
         // 3. OnCompleted
@@ -79,12 +78,12 @@ public readonly struct FutureAwaitable
         /// <param name="continuation">回调任务</param>
         public void OnCompleted(Action continuation) {
             if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-            _future.OnCompletedAsync(_executor, Invoker, continuation, 0);
+            _future.ContinueWith(Invoker, continuation, _executor.AsScheduler());
         }
 
         public void UnsafeOnCompleted(Action continuation) {
             if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-            _future.OnCompletedAsync(_executor, Invoker, continuation, 0);
+            _future.ContinueWith(Invoker, continuation, _executor.AsScheduler());
         }
     }
 }
@@ -93,13 +92,13 @@ public readonly struct FutureAwaitable
 /// 用于绑定回调线程
 /// 注意：不可手动获取<see cref="GetAwaiter"/>。
 /// </summary>
-public readonly struct FutureAwaitable<T>
+public readonly struct TaskAwaitable<T>
 {
-    private readonly IFuture<T> _future;
+    private readonly Task<T> _future;
     private readonly IExecutor _executor;
     private readonly int _options;
 
-    public FutureAwaitable(IFuture<T> future, IExecutor executor, int options) {
+    public TaskAwaitable(Task<T> future, IExecutor executor, int options) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _options = options;
@@ -109,13 +108,13 @@ public readonly struct FutureAwaitable<T>
 
     public readonly struct Awaiter : ICriticalNotifyCompletion
     {
-        private static readonly Action<IFuture<T>, object> Invoker = (_, state) => ((Action)state).Invoke();
+        private static readonly Action<Task<T>, object> Invoker = (_, state) => ((Action)state).Invoke();
 
-        private readonly IFuture<T> _future;
+        private readonly Task<T> _future;
         private readonly IExecutor _executor;
         private readonly int _options;
 
-        internal Awaiter(IFuture<T> future, IExecutor executor, int options) {
+        internal Awaiter(Task<T> future, IExecutor executor, int options) {
             _future = future;
             _executor = executor;
             _options = options;
@@ -123,7 +122,7 @@ public readonly struct FutureAwaitable<T>
 
         // 1.IsCompleted
         // IsCompleted只在Start后调用一次，EventLoop可以通过接口查询是否已在线程中
-        public bool IsCompleted => _future.IsDone
+        public bool IsCompleted => _future.IsCompleted
                                    && TaskOption.IsEnabled(_options, TaskOption.STAGE_TRY_INLINE)
                                    && Executors.InEventLoop(_executor);
 
@@ -131,7 +130,8 @@ public readonly struct FutureAwaitable<T>
         // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中 -- 不可手动调用
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T GetResult() {
-            return _future.Get();
+            _future.Wait();
+            return _future.Result;
         }
 
         // 3. OnCompleted
@@ -142,12 +142,12 @@ public readonly struct FutureAwaitable<T>
         /// <param name="continuation">回调任务</param>
         public void OnCompleted(Action continuation) {
             if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-            _future.OnCompletedAsync(_executor, Invoker, continuation, 0);
+            _future.ContinueWith(Invoker, continuation, _executor.AsScheduler());
         }
 
         public void UnsafeOnCompleted(Action continuation) {
             if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-            _future.OnCompletedAsync(_executor, Invoker, continuation, 0);
+            _future.ContinueWith(Invoker, continuation, _executor.AsScheduler());
         }
     }
 }
