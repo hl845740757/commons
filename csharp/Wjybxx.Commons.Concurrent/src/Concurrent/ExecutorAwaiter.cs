@@ -27,7 +27,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// 用于支持await切换到指定executor线程。
 /// PS：如果当前已在目标Executor线程，则没有开销。
 /// </summary>
-public struct ExecutorAwaiter : ICriticalNotifyCompletion
+public readonly struct ExecutorAwaiter : ICriticalNotifyCompletion
 {
     private readonly IExecutor _executor;
 

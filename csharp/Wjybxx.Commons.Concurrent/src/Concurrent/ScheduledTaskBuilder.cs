@@ -47,14 +47,14 @@ public interface ScheduledTaskBuilder
 
     #region factory
 
-    public static ScheduledTaskBuilder<object> NewAction(Action task) {
-        TaskBuilder<object> taskBuilder = TaskBuilder.NewAction(task);
-        return new ScheduledTaskBuilder<object>(ref taskBuilder);
+    public static ScheduledTaskBuilder<T> NewAction<T>(Action task) {
+        TaskBuilder<T> taskBuilder = TaskBuilder.NewAction<T>(task);
+        return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
-    public static ScheduledTaskBuilder<object> NewAction(Action<IContext> task, IContext ctx) {
-        TaskBuilder<object> taskBuilder = TaskBuilder.NewAction(task, ctx);
-        return new ScheduledTaskBuilder<object>(ref taskBuilder);
+    public static ScheduledTaskBuilder<T> NewAction<T>(Action<IContext> task, IContext ctx) {
+        TaskBuilder<T> taskBuilder = TaskBuilder.NewAction<T>(task, ctx);
+        return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
     public static ScheduledTaskBuilder<T> NewFunc<T>(Func<T> task) {
@@ -67,9 +67,9 @@ public interface ScheduledTaskBuilder
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
-    public static ScheduledTaskBuilder<object> NewTask(ITask task) {
-        TaskBuilder<object> taskBuilder = TaskBuilder.NewTask(task);
-        return new ScheduledTaskBuilder<object>(ref taskBuilder);
+    public static ScheduledTaskBuilder<T> NewTask<T>(ITask task) {
+        TaskBuilder<T> taskBuilder = TaskBuilder.NewTask<T>(task);
+        return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
     #endregion

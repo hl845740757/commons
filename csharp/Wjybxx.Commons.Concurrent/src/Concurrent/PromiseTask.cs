@@ -248,7 +248,7 @@ public class PromiseTask<T> : IFutureTask<T>, PromiseTask
         }
     }
 
-    public void Run() {
+    public virtual void Run() {
         IPromise<T> promise = this.promise;
         IContext context = this.context;
         if (context.CancelToken.IsCancelling()) {

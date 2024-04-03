@@ -54,12 +54,12 @@ public interface TaskBuilder
 
     #region factory
 
-    public static TaskBuilder<object> NewAction(Action action) {
-        return new TaskBuilder<object>(TaskBuilder.TypeAction, action);
+    public static TaskBuilder<T> NewAction<T>(Action action) {
+        return new TaskBuilder<T>(TaskBuilder.TypeAction, action);
     }
 
-    public static TaskBuilder<object> NewAction(Action<IContext> action, IContext context) {
-        return new TaskBuilder<object>(TaskBuilder.TypeActionCtx, action, context);
+    public static TaskBuilder<T> NewAction<T>(Action<IContext> action, IContext context) {
+        return new TaskBuilder<T>(TaskBuilder.TypeActionCtx, action, context);
     }
 
     public static TaskBuilder<T> NewFunc<T>(Func<T> func) {
@@ -70,8 +70,8 @@ public interface TaskBuilder
         return new TaskBuilder<T>(TaskBuilder.TypeFuncCtx, func, context);
     }
 
-    public static TaskBuilder<object> NewTask(ITask task) {
-        return new TaskBuilder<object>(TaskBuilder.TypeTask, task);
+    public static TaskBuilder<T> NewTask<T>(ITask task) {
+        return new TaskBuilder<T>(TaskBuilder.TypeTask, task);
     }
 
     #endregion

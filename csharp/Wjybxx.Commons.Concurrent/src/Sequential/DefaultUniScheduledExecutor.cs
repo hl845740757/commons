@@ -80,7 +80,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
         }
     }
 
-    public override bool NeedMoreTicks() {
+    public override bool NeedMoreUpdate() {
         if (taskQueue.TryPeekHead(out IScheduledFutureTask queueTask)) {
             return queueTask.NextTriggerTime <= tickTime;
         }

@@ -74,18 +74,17 @@ public interface UniScheduledPromiseTask
 
     public static UniScheduledPromiseTask<T> OfBuilder<T>(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
                                                           long id, long tickTime) {
-        // 单位最少1毫秒
-        long timeUnit = Math.Max(1, builder.Timeunit.Ticks / TimeSpan.TicksPerMillisecond);
+        long timeUnit = Math.Max(1, builder.Timeunit.Ticks);
 
-        // 并发库中不支持插队，初始延迟强制转0
-        long initialDelay = Math.Max(0, builder.InitialDelay * timeUnit);
+        // 并发库中不支持插队，初始延迟强制转0 -- tick转毫秒
+        long initialDelay = Math.Max(0, builder.InitialDelay * timeUnit) / TimeSpan.TicksPerMillisecond;
+        long period = Math.Max(1, (builder.Period * timeUnit) / TimeSpan.TicksPerMillisecond);
         long triggerTime = tickTime + initialDelay;
-        long period = builder.Period * timeUnit;
 
-        long timeout = builder.Timeout;
         TimeoutContext? timeoutContext;
-        if (builder.IsPeriodic && timeout != -1) {
-            timeoutContext = new TimeoutContext(timeout * timeUnit, tickTime);
+        if (builder.IsPeriodic && builder.Timeout != -1) {
+            long timeout = builder.Timeout * timeUnit / TimeSpan.TicksPerMillisecond;
+            timeoutContext = new TimeoutContext(timeout, tickTime);
         } else {
             timeoutContext = null;
         }
@@ -187,7 +186,7 @@ public class UniScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T
     private AbstractUniScheduledExecutor EventLoop => (AbstractUniScheduledExecutor)promise.Executor!;
 
     /** 该方法在任务出队列的时候调用 */
-    public void Run() {
+    public override void Run() {
         AbstractUniScheduledExecutor eventLoop = EventLoop;
         IPromise<T> promise = this.promise;
         IContext context = this.context;

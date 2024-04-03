@@ -19,7 +19,6 @@
 using System;
 using System.Runtime.CompilerServices;
 
-#pragma warning disable CS0108, CS0114
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>

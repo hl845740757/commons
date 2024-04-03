@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.concurrent;
+package cn.wjybxx.sequential;
 
 import cn.wjybxx.base.ThreadUtils;
-import cn.wjybxx.disruptor.RingBufferEventSequencer;
+import cn.wjybxx.base.time.TimeProviders;
+import cn.wjybxx.concurrent.Counter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,29 +28,22 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author wjybxx
- * date 2023/4/11
+ * date - 2024/4/3
  */
-public class ScheduleOrderTest {
+public class UniScheduleOrderTest {
 
     private Counter counter;
-    private EventLoop consumer;
+    private UniScheduledExecutor consumer;
 
     @BeforeEach
     void setUp() {
         counter = new Counter();
-        consumer = EventLoopBuilder.newDisruptBuilder()
-                .setThreadFactory(new DefaultThreadFactory("consumer"))
-                .setEventSequencer(RingBufferEventSequencer
-                        .newMultiProducer(RingBufferEvent::new)
-                        .build())
-                .build();
+        consumer = new DefaultUniScheduledExecutor(TimeProviders.systemMillisProvider());
     }
 
     /** 测试initDelay相同时，任务是否按照按提交顺序执行 */
     @Test
     void testScheduleOrder() {
-        consumer.start().join();
-
         final ThreadLocalRandom random = ThreadLocalRandom.current();
         final TimeUnit milliseconds = TimeUnit.MILLISECONDS;
         for (int i = 0; i < 100; i++) {
@@ -61,9 +55,11 @@ public class ScheduleOrderTest {
             }
         }
 
-        ThreadUtils.sleepQuietly(3000);
-        consumer.shutdown();
-        consumer.terminationFuture().join();
+        for (int i = 0; i < 100; i++) {
+            consumer.update();
+            ThreadUtils.sleepQuietly(1);
+        }
+        consumer.shutdownNow();
 
         Assertions.assertTrue(!counter.getSequenceMap().isEmpty(), "Counter.sequenceMap.size == 0");
         Assertions.assertTrue(counter.getErrorMsgList().isEmpty(), counter.getErrorMsgList()::toString);
@@ -72,8 +68,6 @@ public class ScheduleOrderTest {
     /** 测试execute和schedule(0)的顺序 */
     @Test
     void testExecuteScheduleOrder() {
-        consumer.start().join();
-
         final ThreadLocalRandom random = ThreadLocalRandom.current();
         final TimeUnit milliseconds = TimeUnit.MILLISECONDS;
         for (int i = 0; i < 100; i++) {
@@ -85,12 +79,13 @@ public class ScheduleOrderTest {
             }
         }
 
-        ThreadUtils.sleepQuietly(3000);
-        consumer.shutdown();
-        consumer.terminationFuture().join();
+        for (int i = 0; i < 100; i++) {
+            consumer.update();
+            ThreadUtils.sleepQuietly(1);
+        }
+        consumer.shutdownNow();
 
         Assertions.assertTrue(!counter.getSequenceMap().isEmpty(), "Counter.sequenceMap.size == 0");
         Assertions.assertTrue(counter.getErrorMsgList().isEmpty(), counter.getErrorMsgList()::toString);
     }
-
 }

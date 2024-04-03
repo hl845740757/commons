@@ -20,8 +20,6 @@ using System;
 using System.Collections.Generic;
 using Wjybxx.Commons.Collections;
 
-#pragma warning disable CS0108, CS0114
-
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
 
@@ -32,7 +30,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 {
-    IScheduledPromise Future { get; }
+    new IScheduledPromise Future { get; }
 
     IPromise IFutureTask.Future => Future;
 
@@ -82,7 +80,7 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 
 public interface IScheduledFutureTask<T> : IScheduledFutureTask, IFutureTask<T>
 {
-    IScheduledPromise<T> Future { get; }
+    new IScheduledPromise<T> Future { get; }
 
     IPromise IFutureTask.Future => Future;
 

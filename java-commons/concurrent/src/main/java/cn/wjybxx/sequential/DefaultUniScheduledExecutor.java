@@ -92,7 +92,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
     }
 
     @Override
-    public boolean needMoreTicks() {
+    public boolean needMoreUpdate() {
         UniScheduledPromiseTask<?> queueTask = taskQueue.peek();
         return queueTask != null && queueTask.getNextTriggerTime() <= tickTime;
     }

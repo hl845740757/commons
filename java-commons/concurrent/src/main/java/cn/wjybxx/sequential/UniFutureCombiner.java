@@ -16,10 +16,7 @@
 
 package cn.wjybxx.sequential;
 
-import cn.wjybxx.concurrent.AggregateOptions;
-import cn.wjybxx.concurrent.IFuture;
-import cn.wjybxx.concurrent.Promise;
-import cn.wjybxx.concurrent.TaskInsufficientException;
+import cn.wjybxx.concurrent.*;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Collection;
@@ -28,6 +25,10 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 /**
+ * 单线程化改动：
+ * 1.计数变量改为普通变量
+ * 2.Promise的默认实例为{@link UniPromise}
+ *
  * @author wjybxx
  * date 2023/4/3
  */
@@ -36,7 +37,7 @@ public final class UniFutureCombiner {
 
     private ChildListener childrenListener = new ChildListener();
     private final Executor executor;
-    private UniPromise<Object> aggregatePromise;
+    private IPromise<Object> aggregatePromise;
     private int futureCount;
 
     public UniFutureCombiner(Executor executor) {
@@ -69,7 +70,7 @@ public final class UniFutureCombiner {
      *
      * @return this
      */
-    public UniFutureCombiner setAggregatePromise(UniPromise<Object> aggregatePromise) {
+    public UniFutureCombiner setAggregatePromise(IPromise<Object> aggregatePromise) {
         this.aggregatePromise = aggregatePromise;
         return this;
     }
@@ -90,7 +91,7 @@ public final class UniFutureCombiner {
      * 返回的promise在任意future进入完成状态时进入完成状态
      * 返回的promise与首个future的结果相同
      */
-    public UniPromise<Object> anyOf() {
+    public IPromise<Object> anyOf() {
         return finish(AggregateOptions.anyOf());
     }
 
@@ -100,7 +101,7 @@ public final class UniFutureCombiner {
      *
      * @param failFast 是否在不满足条件时立即失败
      */
-    public UniPromise<Object> selectN(int successRequire, boolean failFast) {
+    public IPromise<Object> selectN(int successRequire, boolean failFast) {
         return finish(AggregateOptions.selectN(successRequire, failFast));
     }
 
@@ -108,7 +109,7 @@ public final class UniFutureCombiner {
      * 要求所有的future都成功时才进入成功状态
      * 一旦有任务失败则立即失败
      */
-    public UniPromise<Object> selectAll() {
+    public IPromise<Object> selectAll() {
         return selectN(futureCount(), true);
     }
 
@@ -118,7 +119,7 @@ public final class UniFutureCombiner {
      *
      * @param failFast 是否在不满足条件时立即失败
      */
-    public UniPromise<Object> selectAll(boolean failFast) {
+    public IPromise<Object> selectAll(boolean failFast) {
         return selectN(futureCount(), failFast);
     }
 
@@ -126,7 +127,7 @@ public final class UniFutureCombiner {
 
     // region 内部实现
 
-    private UniPromise<Object> finish(AggregateOptions options) {
+    private IPromise<Object> finish(AggregateOptions options) {
         Objects.requireNonNull(options);
         ChildListener childrenListener = this.childrenListener;
         if (childrenListener == null) {
@@ -134,7 +135,7 @@ public final class UniFutureCombiner {
         }
         this.childrenListener = null;
 
-        UniPromise<Object> aggregatePromise = this.aggregatePromise;
+        IPromise<Object> aggregatePromise = this.aggregatePromise;
         if (aggregatePromise == null) {
             aggregatePromise = new UniPromise<>(executor);
         } else {
@@ -172,7 +173,7 @@ public final class UniFutureCombiner {
 
         private int futureCount;
         private AggregateOptions options;
-        private UniPromise<Object> aggregatePromise;
+        private IPromise<Object> aggregatePromise;
 
         @Override
         public void accept(IFuture<?> future) {
@@ -192,7 +193,7 @@ public final class UniFutureCombiner {
             }
             doneCount++;
 
-            UniPromise<Object> aggregatePromise = this.aggregatePromise;
+            IPromise<Object> aggregatePromise = this.aggregatePromise;
             if (aggregatePromise != null && !aggregatePromise.isDone() && checkComplete()) {
                 result = null;
                 cause = null;

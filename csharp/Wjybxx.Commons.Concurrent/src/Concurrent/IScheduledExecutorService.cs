@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent;
 

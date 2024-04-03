@@ -68,22 +68,22 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
 
     public override IScheduledFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
         MiniContext context = MiniContext.OfCancelToken(cancelToken);
-        ScheduledTaskBuilder<object> builder = ScheduledTaskBuilder.NewAction(action);
+        ScheduledTaskBuilder<byte> builder = ScheduledTaskBuilder.NewAction<byte>(action);
         builder.SetFixedDelay(delay.Ticks, period.Ticks, new TimeSpan(1));
         builder.Context = context;
 
-        ScheduledPromiseTask<object> promiseTask = ScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<object>(), 0, TickTime);
+        ScheduledPromiseTask<byte> promiseTask = ScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<byte>(), 0, TickTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }
 
     public override IScheduledFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
         MiniContext context = MiniContext.OfCancelToken(cancelToken);
-        ScheduledTaskBuilder<object> builder = ScheduledTaskBuilder.NewAction(action);
+        ScheduledTaskBuilder<byte> builder = ScheduledTaskBuilder.NewAction<byte>(action);
         builder.SetFixedRate(delay.Ticks, period.Ticks, new TimeSpan(1));
         builder.Context = context;
 
-        ScheduledPromiseTask<object> promiseTask = ScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<object>(), 0, TickTime);
+        ScheduledPromiseTask<byte> promiseTask = ScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<byte>(), 0, TickTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }

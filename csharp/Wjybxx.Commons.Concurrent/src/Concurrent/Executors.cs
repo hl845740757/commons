@@ -71,7 +71,7 @@ public static class Executors
     /// </summary>
     /// <param name="executor"></param>
     /// <returns></returns>
-    public static bool InEventLoop(this IExecutor executor) {
+    public static bool InEventLoop(IExecutor executor) {
         if (executor is ISingleThreadExecutor singleThreadExecutor) {
             return singleThreadExecutor.InEventLoop();
         }

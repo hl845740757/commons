@@ -77,22 +77,22 @@ public abstract class AbstractUniScheduledExecutor : AbstractUniExecutor, IUniSc
 
     public virtual IScheduledFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
         MiniContext context = MiniContext.OfCancelToken(cancelToken);
-        ScheduledTaskBuilder<object> builder = ScheduledTaskBuilder.NewAction(action);
+        ScheduledTaskBuilder<byte> builder = ScheduledTaskBuilder.NewAction<byte>(action);
         builder.SetFixedDelay(delay.Ticks, period.Ticks, new TimeSpan(1));
         builder.Context = context;
 
-        UniScheduledPromiseTask<object> promiseTask = UniScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<object>(), 0, TickTime);
+        UniScheduledPromiseTask<byte> promiseTask = UniScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<byte>(), 0, TickTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }
 
     public virtual IScheduledFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
         MiniContext context = MiniContext.OfCancelToken(cancelToken);
-        ScheduledTaskBuilder<object> builder = ScheduledTaskBuilder.NewAction(action);
+        ScheduledTaskBuilder<byte> builder = ScheduledTaskBuilder.NewAction<byte>(action);
         builder.SetFixedRate(delay.Ticks, period.Ticks, new TimeSpan(1));
         builder.Context = context;
 
-        UniScheduledPromiseTask<object> promiseTask = UniScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<object>(), 0, TickTime);
+        UniScheduledPromiseTask<byte> promiseTask = UniScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<byte>(), 0, TickTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }

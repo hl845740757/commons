@@ -56,7 +56,7 @@ public abstract class AbstractUniExecutor : IUniExecutorService
 
     public abstract void Update();
 
-    public abstract bool NeedMoreTicks();
+    public abstract bool NeedMoreUpdate();
 
     #endregion
 

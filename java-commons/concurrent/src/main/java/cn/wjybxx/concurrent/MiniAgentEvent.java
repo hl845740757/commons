@@ -25,8 +25,8 @@ package cn.wjybxx.concurrent;
 public final class MiniAgentEvent implements IAgentEvent {
 
     private int type = TYPE_INVALID;
-    public Object obj0;
-    public int options;
+    private Object obj0;
+    private int options;
 
     @Override
     public void clean() {

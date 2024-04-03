@@ -17,10 +17,7 @@
 #endregion
 
 using System;
-using System.Threading;
 using Wjybxx.Commons.Collections;
-
-#pragma warning disable CS0108, CS0114
 
 #pragma warning disable CS1591
 
@@ -71,18 +68,17 @@ public interface ScheduledPromiseTask
 
     public static ScheduledPromiseTask<T> OfBuilder<T>(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
                                                        long id, long tickTime) {
-        // 时间单位最少1tick
         long timeUnit = Math.Max(1, builder.Timeunit.Ticks);
 
         // 并发库中不支持插队，初始延迟强制转0
-        long initialDelay = Math.Max(0, builder.InitialDelay);
-        long triggerTime = tickTime + initialDelay * timeUnit;
-        long period = builder.Period * timeUnit;
+        long initialDelay = Math.Max(0, builder.InitialDelay * timeUnit);
+        long period = Math.Max(1, builder.Period * timeUnit);
+        long triggerTime = tickTime + initialDelay;
 
-        long timeout = builder.Timeout;
         TimeoutContext? timeoutContext;
-        if (builder.IsPeriodic && timeout != -1) {
-            timeoutContext = new TimeoutContext(timeout * timeUnit, tickTime);
+        if (builder.IsPeriodic && builder.Timeout != -1) {
+            long timeout = builder.Timeout * timeUnit;
+            timeoutContext = new TimeoutContext(timeout, tickTime);
         } else {
             timeoutContext = null;
         }
@@ -184,7 +180,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     private AbstractScheduledEventLoop EventLoop => (AbstractScheduledEventLoop)promise.Executor!;
 
     /** 该方法在任务出队列的时候调用 */
-    public void Run() {
+    public override void Run() {
         AbstractScheduledEventLoop eventLoop = EventLoop;
         IPromise<T> promise = this.promise;
         IContext context = this.context;

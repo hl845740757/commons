@@ -62,12 +62,11 @@ public class ScheduleCancelTest {
             cts.cancel(1);
             Assertions.assertTrue(future.isCancelled(), () -> future.status().name());
         }
-        // 测试关闭Future的取消监听
+        // 测试关闭Future的取消监听 -- 含特殊统计代码
         {
-            ScheduledTaskBuilder<?> builder = ScheduledTaskBuilder.newAction(() -> {})
-                    .enable(TaskOption.IGNORE_FUTURE_CANCEL)
-                    .setOnlyOnce(1000);
-
+//            ScheduledTaskBuilder<?> builder = ScheduledTaskBuilder.newAction(() -> {})
+//                    .enable(TaskOption.IGNORE_FUTURE_CANCEL)
+//                    .setOnlyOnce(1000);
 //            IScheduledFuture<?> future = consumer.schedule(builder);
 //            long skipped = ScheduledPromiseTask.skippedRegister.get();
 //            Assertions.assertTrue(skipped >0, "skipped: " + skipped);

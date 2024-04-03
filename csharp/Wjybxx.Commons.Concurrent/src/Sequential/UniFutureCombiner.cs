@@ -19,24 +19,28 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Wjybxx.Commons.Concurrent;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.Concurrent;
+namespace Wjybxx.Commons.Sequential;
 
 /// <summary>
-/// Future聚合器
+/// 单线程化改动：
+/// 1.计数变量改为普通变量，去除volatile操作
+/// 2.Promise的默认实例为<see cref="UniPromise{T}"/>
+/// 
 /// </summary>
-public sealed class FutureCombiner
+public sealed class UniFutureCombiner
 {
     private ChildListener childrenListener = new ChildListener();
     private IPromise<object>? aggregatePromise;
     private int futureCount;
 
-    public FutureCombiner() {
+    public UniFutureCombiner() {
     }
 
-    public FutureCombiner Add(IFuture future) {
+    public UniFutureCombiner Add(IFuture future) {
         if (future == null) throw new ArgumentNullException(nameof(future));
         ChildListener childrenListener = this.childrenListener;
         if (childrenListener == null) {
@@ -47,7 +51,7 @@ public sealed class FutureCombiner
         return this;
     }
 
-    public FutureCombiner AddAll(IEnumerable<IFuture> futures) {
+    public UniFutureCombiner AddAll(IEnumerable<IFuture> futures) {
         foreach (IFuture future in futures) {
             Add(future);
         }
@@ -63,11 +67,11 @@ public sealed class FutureCombiner
     //
     /// <summary>
     /// 设置接收结果的Promise
-    /// 如果在执行操作前没有指定Promise，将创建<see cref="Promise{T}"/>实例。
+    /// 如果在执行操作前没有指定Promise，将创建<see cref="UniPromise{T}"/>实例。
     /// </summary>
     /// <param name="aggregatePromise"></param>
     /// <returns></returns>
-    public FutureCombiner SetAggregatePromise(IPromise<object> aggregatePromise) {
+    public UniFutureCombiner SetAggregatePromise(IPromise<object> aggregatePromise) {
         this.aggregatePromise = aggregatePromise;
         return this;
     }
@@ -134,7 +138,7 @@ public sealed class FutureCombiner
 
         IPromise<object> aggregatePromise = this.aggregatePromise;
         if (aggregatePromise == null) {
-            aggregatePromise = new Promise<object>();
+            aggregatePromise = new UniPromise<object>();
         } else {
             this.aggregatePromise = null;
         }
@@ -155,8 +159,8 @@ public sealed class FutureCombiner
 
     private class ChildListener
     {
-        private volatile int succeedCount = 0;
-        private volatile int doneCount = 0;
+        private int succeedCount = 0;
+        private int doneCount = 0;
 
         /** 非volatile，虽然存在竞争，但重复赋值是安全的，通过promise发布到其它线程 */
         private object? result;
@@ -180,11 +184,11 @@ public sealed class FutureCombiner
             // 就可以保证succeedCount是比doneCount更新的值，才可以提前判断是否立即失败
             if (throwable == null) {
                 result = EncodeValue(r);
-                Interlocked.Increment(ref succeedCount);
+                succeedCount++;
             } else {
                 cause = throwable;
             }
-            Interlocked.Increment(ref doneCount);
+            doneCount++;
 
             IPromise<object> aggregatePromise = this.aggregatePromise;
             if (aggregatePromise != null && !aggregatePromise.IsDone && CheckComplete()) {

@@ -122,14 +122,14 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
                                                         long id, long tickTime) {
         TimeUnit timeUnit = builder.getTimeUnit();
         // 并发库中不支持插队，初始延迟强制转0
-        final long initialDelay = Math.max(0, builder.getInitialDelay());
-        final long triggerTime = tickTime + timeUnit.toNanos(initialDelay);
-        final long period = timeUnit.toNanos(builder.getPeriod());
+        final long initialDelay = Math.max(0, timeUnit.toMillis(builder.getInitialDelay()));
+        final long period = Math.max(1, timeUnit.toNanos(builder.getPeriod()));
+        final long triggerTime = tickTime + initialDelay;
 
-        final long timeout = builder.getTimeout();
         TimeoutContext timeoutContext;
-        if (builder.isPeriodic() && timeout != -1) {
-            timeoutContext = new TimeoutContext(timeUnit.toNanos(timeout), tickTime);
+        if (builder.isPeriodic() && builder.getTimeout() != -1) {
+            long timeout = timeUnit.toNanos(builder.getTimeout());
+            timeoutContext = new TimeoutContext(timeout, tickTime);
         } else {
             timeoutContext = null;
         }

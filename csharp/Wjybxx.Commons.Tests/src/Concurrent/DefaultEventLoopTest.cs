@@ -66,7 +66,7 @@ public class DefaultEventLoopTest
         foreach (Thread thread in producerList) {
             thread.Join();
         }
-        
+
         Assert.IsTrue(counter.sequenceMap.Count > 0, "counter.sequenceMap.Count == 0");
         Assert.IsTrue(counter.errorMsgList.Count == 0, CollectionUtil.ToString(counter.errorMsgList));
     }

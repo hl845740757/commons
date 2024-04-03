@@ -125,14 +125,15 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
      */
     public static <V> UniScheduledPromiseTask<V> ofBuilder(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise,
                                                            long id, long tickTime) {
+        TimeUnit timeUnit = builder.getTimeUnit();
         // 理论上单线程下是可以支持插队的，但插队会导致较强的依赖，暂时先不支持
-        final long initialDelay = Math.max(0, builder.getInitialDelay());
+        final long initialDelay = Math.max(0, timeUnit.toMillis(builder.getInitialDelay()));
+        final long period = Math.max(1, timeUnit.toMillis(builder.getPeriod()));
         final long triggerTime = tickTime + initialDelay;
-        final long period = builder.getPeriod();
 
-        final long timeout = builder.getTimeout();
         TimeoutContext timeoutContext;
-        if (builder.isPeriodic() && timeout != -1) {
+        if (builder.isPeriodic() && builder.getTimeout() != -1) {
+            long timeout = timeUnit.toMillis(builder.getTimeout());
             timeoutContext = new TimeoutContext(timeout, tickTime);
         } else {
             timeoutContext = null;

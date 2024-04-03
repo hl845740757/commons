@@ -45,9 +45,11 @@ public interface IUniExecutorService : IExecutorService
     void Update();
 
     /// <summary>
+    /// 是否需要更多的Update。
+    /// 
     /// 为避免死循环或占用过多cpu，单次<see cref="Update"/>可能存在一些限制，因此可能未执行所有的可执行任务。
     /// 该方法用于探测是否还有可执行的任务，如果外部可以分配更多的资源。
     /// </summary>
     /// <returns>如果还有可执行任务则返回true，否则返回false</returns>
-    bool NeedMoreTicks();
+    bool NeedMoreUpdate();
 }

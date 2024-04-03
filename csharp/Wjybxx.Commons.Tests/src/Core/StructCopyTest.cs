@@ -28,10 +28,13 @@ public class StructCopyTest
     private struct Value
     {
         internal int x;
+
         public Value(int x) {
             this.x = x;
         }
+
         public int X => x;
+
         public void Increment() {
             x++;
         }

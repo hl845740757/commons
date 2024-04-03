@@ -17,38 +17,14 @@
 #endregion
 
 using NUnit.Framework;
-using Wjybxx.Commons;
 using Wjybxx.Commons.Concurrent;
 
-namespace Commons.Tests.Core;
+namespace Commons.Tests.Concurrent;
 
 public class FutureTest
 {
     private static readonly IEventLoop globalEventLoop = EventLoopBuilder.NewBuilder(new DefaultThreadFactory("consumer")).Build();
     private static readonly IExecutor Executor = new ImmediateExecutor();
-
-    private class ImmediateExecutor : IExecutor
-    {
-        private readonly SynchronizationContext synchronizationContext;
-        private readonly TaskScheduler scheduler;
-
-        public ImmediateExecutor() {
-            synchronizationContext = new ExecutorSynchronizationContext(this);
-            scheduler = new ExecutorTaskScheduler(this);
-        }
-
-        public SynchronizationContext AsSyncContext() {
-            return synchronizationContext;
-        }
-
-        public TaskScheduler AsScheduler() {
-            return scheduler;
-        }
-
-        public void Execute(ITask task) {
-            task.Run();
-        }
-    }
 
     [Test]
     public void AwaiterTest() {

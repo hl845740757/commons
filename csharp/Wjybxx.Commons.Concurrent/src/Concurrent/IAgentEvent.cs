@@ -27,6 +27,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public interface IAgentEvent
 {
+#nullable disable
     /** 表示事件无效 */
     const int TYPE_INVALID = -1;
     /** 表示普通的任务 */

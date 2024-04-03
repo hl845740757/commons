@@ -57,12 +57,14 @@ public interface UniExecutorService extends IExecutorService {
     void update();
 
     /**
+     * 是否需要更多的Update。
+     * <p>
      * 为避免死循环或占用过多cpu，单次{@link #update()}可能存在一些限制，因此可能未执行所有的可执行任务。
      * 该方法用于探测是否还有可执行的任务，如果外部可以分配更多的资源。
      *
      * @return 如果还有可执行任务则返回true，否则返回false
      */
-    boolean needMoreTicks();
+    boolean needMoreUpdate();
 
     // region 废弃api
 

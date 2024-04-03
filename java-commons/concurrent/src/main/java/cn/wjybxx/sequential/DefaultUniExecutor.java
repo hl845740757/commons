@@ -110,7 +110,7 @@ public class DefaultUniExecutor extends AbstractUniExecutor {
     }
 
     @Override
-    public boolean needMoreTicks() {
+    public boolean needMoreUpdate() {
         return !taskQueue.isEmpty();
     }
 

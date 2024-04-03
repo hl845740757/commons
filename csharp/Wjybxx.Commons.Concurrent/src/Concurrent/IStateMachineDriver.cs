@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.Concurrent;
 internal interface IStateMachineDriver<T>
 {
     /// <summary>
-    /// 异步任务关联的Promise
+    /// 接收状态机结果的Promise
     ///
     /// ps:暂时先不考虑复用对象问题，未来再考虑优化。
     /// </summary>
