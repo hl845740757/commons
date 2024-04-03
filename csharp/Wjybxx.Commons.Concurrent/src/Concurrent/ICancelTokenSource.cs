@@ -46,4 +46,13 @@ public interface ICancelTokenSource : ICancelToken
     /// <param name="cancelCode">取消码</param>
     /// <param name="timeSpan">延迟时间</param>
     void CancelAfter(int cancelCode, TimeSpan timeSpan);
+
+    /// <summary>
+    /// 创建一个同类型实例。
+    /// 1.原型对象，避免具体类型依赖。
+    /// 2.默认情况下，其它上下文应当拷贝。
+    /// </summary>
+    /// <param name="copyCode">是否拷贝取消码</param>
+    /// <returns>新的同类型实例</returns>
+    ICancelTokenSource NewInstance(bool copyCode = false);
 }

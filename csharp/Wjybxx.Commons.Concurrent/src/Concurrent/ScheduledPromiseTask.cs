@@ -38,7 +38,7 @@ public interface ScheduledPromiseTask
         return new ScheduledPromiseTask<T>(task, context, options, promise, TaskBuilder.TypeTask,
             id, nextTriggerTime);
     }
-    
+
     public static ScheduledPromiseTask<T> OfAction<T>(Action action, IContext? context, int options, IScheduledPromise<T> promise,
                                                       long id, long nextTriggerTime) {
         return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeAction,
@@ -71,16 +71,18 @@ public interface ScheduledPromiseTask
 
     public static ScheduledPromiseTask<T> OfBuilder<T>(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
                                                        long id, long tickTime) {
-        TimeSpan timeUnit = builder.Timeunit;
+        // 时间单位最少1tick
+        long timeUnit = Math.Max(1, builder.Timeunit.Ticks);
+
         // 并发库中不支持插队，初始延迟强制转0
         long initialDelay = Math.Max(0, builder.InitialDelay);
-        long triggerTime = tickTime + initialDelay * timeUnit.Ticks;
-        long period = builder.Period * timeUnit.Ticks;
+        long triggerTime = tickTime + initialDelay * timeUnit;
+        long period = builder.Period * timeUnit;
 
         long timeout = builder.Timeout;
         TimeoutContext? timeoutContext;
         if (builder.IsPeriodic && timeout != -1) {
-            timeoutContext = new TimeoutContext(timeout * timeUnit.Ticks, tickTime);
+            timeoutContext = new TimeoutContext(timeout * timeUnit, tickTime);
         } else {
             timeoutContext = null;
         }

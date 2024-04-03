@@ -72,4 +72,13 @@ public interface ICancelTokenSource extends ICancelToken {
      */
     void cancelAfter(int cancelCode, long delay, TimeUnit timeUnit);
 
+    /**
+     * 创建一个同类型实例。
+     * 1.原型对象，避免具体类型依赖。
+     * 2.默认情况下，其它上下文应当拷贝。
+     *
+     * @param copyCode 是否拷贝当前取消码
+     * @return 取消令牌
+     */
+    ICancelTokenSource newInstance(boolean copyCode);
 }

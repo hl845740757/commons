@@ -20,6 +20,7 @@ package cn.wjybxx.concurrent;
  * {@link EventLoopAgent}接收的事件类型
  * <p>
  * 注意：实现类最好保持为简单的数据类，不要赋予逻辑。
+ *
  * @author wjybxx
  * date - 2024/1/22
  */

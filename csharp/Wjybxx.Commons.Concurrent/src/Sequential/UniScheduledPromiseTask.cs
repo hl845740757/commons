@@ -74,16 +74,18 @@ public interface UniScheduledPromiseTask
 
     public static UniScheduledPromiseTask<T> OfBuilder<T>(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
                                                           long id, long tickTime) {
-        TimeSpan timeUnit = builder.Timeunit;
+        // 单位最少1毫秒
+        long timeUnit = Math.Max(1, builder.Timeunit.Ticks / TimeSpan.TicksPerMillisecond);
+
         // 并发库中不支持插队，初始延迟强制转0
-        long initialDelay = Math.Max(0, builder.InitialDelay);
-        long triggerTime = tickTime + initialDelay * timeUnit.Milliseconds;
-        long period = builder.Period * timeUnit.Milliseconds;
+        long initialDelay = Math.Max(0, builder.InitialDelay * timeUnit);
+        long triggerTime = tickTime + initialDelay;
+        long period = builder.Period * timeUnit;
 
         long timeout = builder.Timeout;
         TimeoutContext? timeoutContext;
         if (builder.IsPeriodic && timeout != -1) {
-            timeoutContext = new TimeoutContext(timeout * timeUnit.Ticks, tickTime);
+            timeoutContext = new TimeoutContext(timeout * timeUnit, tickTime);
         } else {
             timeoutContext = null;
         }
@@ -92,10 +94,9 @@ public interface UniScheduledPromiseTask
 
     #endregion
 
-
     /** 计算任务的触发时间 -- 毫秒 */
     public static long TriggerTime(TimeSpan delay, long tickTime) {
-        return Math.Max(0, delay.Milliseconds + tickTime);
+        return Math.Max(0, (long)delay.TotalMilliseconds + tickTime);
     }
 }
 

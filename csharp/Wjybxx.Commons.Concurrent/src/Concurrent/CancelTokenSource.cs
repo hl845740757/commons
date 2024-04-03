@@ -46,17 +46,17 @@ public sealed class CancelTokenSource : ICancelTokenSource
         }
     }
 
-    public CancelTokenSource NewChild() {
-        CancelTokenSource child = new CancelTokenSource();
-        ThenTransferTo(child);
-        return child;
-    }
-
     public ICancelToken AsReadonly() {
         return new ReadonlyCancelToken(this);
     }
 
     public bool CanBeCancelled => true;
+
+    ICancelTokenSource ICancelTokenSource.NewInstance(bool copyCode) => NewInstance(copyCode);
+
+    public CancelTokenSource NewInstance(bool copyCode = false) {
+        return new CancelTokenSource(copyCode ? code : 0);
+    }
 
     #region tokenSource
 
