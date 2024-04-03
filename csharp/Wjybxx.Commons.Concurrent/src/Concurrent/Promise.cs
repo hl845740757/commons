@@ -458,7 +458,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region completion
 
-    private static bool Submit(Completion completion, IExecutor e, int options) {
+    private static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
         if (TaskOption.IsEnabled(options, TaskOption.STAGE_TRY_INLINE)
             && e is ISingleThreadExecutor eventLoop
@@ -500,7 +500,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             this.executor = CLAIMED;
             if (e != null) {
-                return Submit(this, e, options);
+                return TryInline(this, e, options);
             }
             return true;
         }

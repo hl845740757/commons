@@ -31,6 +31,7 @@ namespace Wjybxx.Commons.Sequential;
 /// 1.去除{@link #result}等的volatile操作，变更为普通字段。
 /// 2.去除了阻塞操作Awaiter的支持。
 /// 3.去除了state的中间状态 -- 可对比<see cref="UniPromise{T}"/>
+/// 4.<see cref="TryInline"/>对executor的检测调整
 ///
 /// <h3>Async的含义</h3>
 /// 既然是单线程的，又何来异步一说？这里的异步是指不立即执行给定的行为，而是提交到Executor等待调度。
@@ -418,12 +419,16 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
 
     #region completion
 
-    private static bool Submit(Completion completion, IExecutor e, int options) {
+    private static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (TaskOption.IsEnabled(options, TaskOption.STAGE_TRY_INLINE)
-            && e is ISingleThreadExecutor eventLoop
-            && eventLoop.InEventLoop()) {
-            return true;
+        if (TaskOption.IsEnabled(options, TaskOption.STAGE_TRY_INLINE)) {
+            if (e is IUniExecutorService) { // uni-executor支持
+                return true;
+            }
+            if (e is ISingleThreadExecutor eventLoop
+                && eventLoop.InEventLoop()) {
+                return true;
+            }
         }
         // 判断是否需要传递选项
         if (options != 0
@@ -460,7 +465,7 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
             }
             this.executor = CLAIMED;
             if (e != null) {
-                return Submit(this, e, options);
+                return TryInline(this, e, options);
             }
             return true;
         }

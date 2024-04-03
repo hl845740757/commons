@@ -1234,7 +1234,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         return null;
     }
 
-    private static boolean submit(Completion completion, Executor e, int options) {
+    private static boolean tryInline(Completion completion, Executor e, int options) {
         // 尝试内联
         if (TaskOption.isEnabled(options, TaskOption.STAGE_TRY_INLINE)
                 && e instanceof SingleThreadExecutor eventLoop
@@ -1531,7 +1531,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             }
             this.executor = CLAIMED;
             if (e != null) {
-                return submit(this, e, options);
+                return tryInline(this, e, options);
             }
             return true;
         }
@@ -2222,7 +2222,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             }
             this.executor = CLAIMED;
             if (e != null) {
-                return submit(this, e, options);
+                return tryInline(this, e, options);
             }
             return true;
         }

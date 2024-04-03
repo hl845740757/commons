@@ -36,6 +36,7 @@ import java.util.function.Consumer;
  * 2. 默认时间单位为毫秒。
  * 3. 增加了重置状态的方法 -- 这对行为树这类应用非常有效。
  * 4. 去除了递归通知的优化 -- 单线程下我们需要支持用户通过监听器引用取消注册；另外，我们假设子token的情况很少。
+ * 5. {@link #tryInline}对executor的检测调整
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -596,12 +597,16 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         }
     }
 
-    private static boolean submit(Completion completion, Executor e, int options) {
+    private static boolean tryInline(Completion completion, Executor e, int options) {
         // 尝试内联
-        if (TaskOption.isEnabled(options, TaskOption.STAGE_TRY_INLINE)
-                && e instanceof SingleThreadExecutor eventLoop
-                && eventLoop.inEventLoop()) {
-            return true;
+        if (TaskOption.isEnabled(options, TaskOption.STAGE_TRY_INLINE)) {
+            if (e instanceof UniExecutorService) { // uni-executor支持
+                return true;
+            }
+            if (e instanceof SingleThreadExecutor eventLoop
+                    && eventLoop.inEventLoop()) {
+                return true;
+            }
         }
         // 判断是否需要传递选项
         if (options != 0
@@ -670,7 +675,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
             if (e == null) {
                 return true;
             }
-            return submit(this, e, options);
+            return tryInline(this, e, options);
         }
 
         /**

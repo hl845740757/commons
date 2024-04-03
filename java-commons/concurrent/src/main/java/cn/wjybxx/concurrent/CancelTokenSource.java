@@ -540,7 +540,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         return ontoHead;
     }
 
-    private static boolean submit(Completion completion, Executor e, int options) {
+    private static boolean tryInline(Completion completion, Executor e, int options) {
         // 尝试内联
         if (TaskOption.isEnabled(options, TaskOption.STAGE_TRY_INLINE)
                 && e instanceof SingleThreadExecutor eventLoop
@@ -612,7 +612,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
             if (e == null) {
                 return true;
             }
-            return submit(this, e, options);
+            return tryInline(this, e, options);
         }
 
         /**
@@ -726,7 +726,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                if (!isCancelling(ctx)){
+                if (!isCancelling(ctx)) {
                     action.accept(source, ctx);
                 }
             } catch (Throwable ex) {
@@ -809,7 +809,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                if (!isCancelling(ctx)){
+                if (!isCancelling(ctx)) {
                     action.accept(ctx);
                 }
             } catch (Throwable ex) {

@@ -36,7 +36,7 @@ namespace Wjybxx.Commons.Sequential;
 /// <h3>指定执行阶段</h3>
 /// 如果Executor支持在特定的阶段执行给定的任务，需要响应{@link TaskOption#MASK_SCHEDULE_PHASE}指定的阶段。
 /// </summary>
-public interface IUniExecutorService : IExecutorService, ISingleThreadExecutor
+public interface IUniExecutorService : IExecutorService
 {
     /// <summary>
     /// 心跳方法

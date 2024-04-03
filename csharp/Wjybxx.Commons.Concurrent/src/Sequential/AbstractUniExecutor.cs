@@ -46,10 +46,6 @@ public abstract class AbstractUniExecutor : IUniExecutorService
 
     public abstract List<ITask> ShutdownNow();
 
-    public bool InEventLoop() => true;
-
-    public bool InEventLoop(Thread thread) => true;
-
     public abstract IFuture TerminationFuture { get; }
 
     public abstract bool IsShuttingDown { get; }

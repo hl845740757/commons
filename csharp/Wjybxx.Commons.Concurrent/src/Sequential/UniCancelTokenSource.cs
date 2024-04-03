@@ -33,6 +33,7 @@ namespace Wjybxx.Commons.Sequential;
 /// 2. 默认时间单位为毫秒。
 /// 3. 增加了重置状态的方法 -- 这对行为树这类应用非常有效。
 /// 4. 去除了递归通知的优化 -- 单线程下我们需要支持用户通过监听器引用取消注册；另外，我们假设子token的情况很少。
+/// 5.<see cref="TryInline"/>对executor的检测调整
 /// </summary>
 public class UniCancelTokenSource : ICancelTokenSource
 {
@@ -419,12 +420,16 @@ public class UniCancelTokenSource : ICancelTokenSource
         }
     }
 
-    private static bool Submit(Completion completion, IExecutor e, int options) {
+    private static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (TaskOption.IsEnabled(options, TaskOption.STAGE_TRY_INLINE)
-            && e is ISingleThreadExecutor eventLoop
-            && eventLoop.InEventLoop()) {
-            return true;
+        if (TaskOption.IsEnabled(options, TaskOption.STAGE_TRY_INLINE)) {
+            if (e is IUniExecutorService) { // uni-executor支持
+                return true;
+            }
+            if (e is ISingleThreadExecutor eventLoop
+                && eventLoop.InEventLoop()) {
+                return true;
+            }
         }
         // 判断是否需要传递选项
         if (options != 0
@@ -485,7 +490,7 @@ public class UniCancelTokenSource : ICancelTokenSource
             }
             this.executor = CLAIMED;
             if (e != null) {
-                return Submit(this, e, options);
+                return TryInline(this, e, options);
             }
             return true;
         }
