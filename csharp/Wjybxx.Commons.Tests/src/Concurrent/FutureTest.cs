@@ -34,7 +34,9 @@ public class FutureTest
     private static async IFuture<int> CountAsync() {
         IFutureTask<int> task = PromiseTask.OfFunction(() => 1, null, 0, new Promise<int>(Executor));
         Executor.Execute(task);
+
         IPromise<int> future = task.Future;
+        Assert.IsFalse(globalEventLoop.InEventLoop(), "0. before globalEventLoop.InEventLoop() == true");
 
         await future.GetAwaitable(globalEventLoop);
         Assert.IsTrue(globalEventLoop.InEventLoop(), "1. globalEventLoop.InEventLoop() == false");
@@ -52,6 +54,7 @@ public class FutureTest
 
     private static async Task<int> CountAsync2() {
         Task<int> future = Task.Run(() => 1, CancellationToken.None);
+        Assert.IsFalse(globalEventLoop.InEventLoop(), "0. before globalEventLoop.InEventLoop() == true");
 
         await future.GetAwaitable(globalEventLoop);
         Assert.IsTrue(globalEventLoop.InEventLoop(), "1. globalEventLoop.InEventLoop() == false");

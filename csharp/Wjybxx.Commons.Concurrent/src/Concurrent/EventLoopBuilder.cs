@@ -40,8 +40,19 @@ public class EventLoopBuilder
     }
 
     /// <summary>
-    /// 尽量使用静态方法创建，以避免依赖具体的类型
+    /// 创建一个Builder
+    /// 
+    /// ps:尽量使用静态方法创建，以避免依赖具体的类型
     /// </summary>
+    /// <returns></returns>
+    public static EventLoopBuilder NewBuilder() {
+        return new EventLoopBuilder();
+    }
+
+    /// <summary>
+    /// 创建一个Builder
+    /// </summary>
+    /// <param name="threadFactory">线程工厂</param>
     /// <returns></returns>
     public static EventLoopBuilder NewBuilder(ThreadFactory threadFactory) {
         EventLoopBuilder builder = new EventLoopBuilder();

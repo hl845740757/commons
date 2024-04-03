@@ -67,6 +67,12 @@ public static class Executors
     #region EventLoop
 
     /// <summary>
+    /// 用于支持<code>await executor</code>语法
+    /// </summary>
+    /// <returns></returns>
+    public static ExecutorAwaiter GetAwaiter(this IExecutor executor) => new ExecutorAwaiter(executor);
+
+    /// <summary>
     /// 测试Executor是否是事件循环，且当前线程是否在事件循环线程内
     /// </summary>
     /// <param name="executor"></param>
