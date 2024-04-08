@@ -68,12 +68,7 @@ C#的Concurrent包，个人用得非常难受。究其原因：上下文(sync/ex
 
 ## ReleaseNotes
 
-
-### 1.0.9
-
-完善concurrent包，修复1.0.8中的一些bug。
-
-### 1.0.8
+### 1.0.8~1.0.10
 
 concurrent库初版
 
