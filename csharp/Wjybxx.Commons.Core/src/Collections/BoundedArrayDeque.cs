@@ -215,8 +215,11 @@ public class BoundedArrayDeque<T> : IDeque<T>
         int head = _head;
         if (head >= 0) {
             head = Dec(head, elements.Length);
-            if (head == _tail && !_overflowBehavior.AllowDiscardTail()) {
-                return false;
+            if (head == _tail) {
+                if (!_overflowBehavior.AllowDiscardTail()) {
+                    return false;
+                }
+                _tail = Dec(_tail, elements.Length);
             }
             elements[head] = item;
             _head = head;
@@ -236,8 +239,11 @@ public class BoundedArrayDeque<T> : IDeque<T>
         int tail = _tail;
         if (tail >= 0) {
             tail = Inc(tail, elements.Length);
-            if (tail == _head && !_overflowBehavior.AllowDiscardHead()) {
-                return false;
+            if (tail == _head) {
+                if (!_overflowBehavior.AllowDiscardHead()) {
+                    return false;
+                }
+                _head = Inc(_head, elements.Length);
             }
             elements[tail] = item;
             _tail = tail;

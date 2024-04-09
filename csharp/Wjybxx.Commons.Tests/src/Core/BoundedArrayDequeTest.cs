@@ -27,7 +27,7 @@ namespace Commons.Tests.Core;
 public class BoundedArrayDequeTest
 {
     private const int QueueCapacity = 5;
-    private const int NumberCount = QueueCapacity * 3;
+    private const int NumberCount = QueueCapacity * 3 + 2; // 不能刚好是整倍，会遗漏某些情况
 
     private static List<int> RandomNumbers() {
         List<int> numbers = new List<int>(NumberCount);
