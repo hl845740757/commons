@@ -68,6 +68,10 @@ C#的Concurrent包，个人用得非常难受。究其原因：上下文(sync/ex
 
 ## ReleaseNotes
 
+### 1.0.11
+
+1. bugfix - 修复BoundedArrayDeque溢出时索引更新错误，修复队列迭代可能无法退出的问题。
+
 ### 1.0.8~1.0.10
 
 concurrent库初版

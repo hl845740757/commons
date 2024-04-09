@@ -52,6 +52,11 @@ public class BoundedArrayDequeTest
                 int number = enumerator.Current;
                 Assert.That(number, Is.EqualTo(numbers[index++]));
             }
+            // 测试下标访问
+            index = 0;
+            for (; index < QueueCapacity; index++) {
+                Assert.That(deque[index], Is.EqualTo(numbers[index]));
+            }
         }
         // 逆序迭代
         {
@@ -61,23 +66,10 @@ public class BoundedArrayDequeTest
                 int number = enumerator.Current;
                 Assert.That(number, Is.EqualTo(numbers[index--]));
             }
-        }
-    }
-
-    [Test]
-    public void QueueTest() {
-        List<int> numbers = RandomNumbers();
-        BoundedArrayDeque<int> deque = new BoundedArrayDeque<int>(QueueCapacity);
-        for (int i = 0; i < QueueCapacity; i++) {
-            deque.Enqueue(numbers[i]);
-        }
-        // 一边删除一边插入
-        for (int i = 0; i < NumberCount; i++) {
-            int value = deque.Dequeue();
-            Assert.That(value, Is.EqualTo(numbers[i]));
-            // 
-            if (i + QueueCapacity < NumberCount) {
-                deque.Enqueue(numbers[i + QueueCapacity]);
+            // 测试下标访问
+            index = QueueCapacity - 1;
+            for (; index >= 0; index--) {
+                Assert.That(deque[index], Is.EqualTo(numbers[index]));
             }
         }
     }
@@ -113,6 +105,27 @@ public class BoundedArrayDequeTest
     }
 
     /// <summary>
+    /// 普通队列
+    /// </summary>
+    [Test]
+    public void QueueTest() {
+        List<int> numbers = RandomNumbers();
+        BoundedArrayDeque<int> deque = new BoundedArrayDeque<int>(QueueCapacity);
+        for (int i = 0; i < QueueCapacity; i++) {
+            deque.Enqueue(numbers[i]);
+        }
+        // 一边删除一边插入
+        for (int i = 0; i < NumberCount; i++) {
+            int value = deque.Dequeue();
+            Assert.That(value, Is.EqualTo(numbers[i]));
+            // 
+            if (i + QueueCapacity < NumberCount) {
+                deque.Enqueue(numbers[i + QueueCapacity]);
+            }
+        }
+    }
+
+    /// <summary>
     /// 普通的栈
     /// </summary>
     [Test]
@@ -127,6 +140,69 @@ public class BoundedArrayDequeTest
         for (int i = 0; i < QueueCapacity; i++) {
             int value = deque.Pop();
             Assert.That(value, Is.EqualTo(stackOrder[i]));
+        }
+    }
+
+    /// <summary>
+    /// 测试容量调整 - 扩容
+    /// </summary>
+    [Test]
+    public void TestSetCapacity() {
+        List<int> numbers = RandomNumbers();
+        // 先插入5个
+        BoundedArrayDeque<int> deque = new BoundedArrayDeque<int>(QueueCapacity);
+        for (int i = 0; i < QueueCapacity; i++) {
+            deque.Enqueue(numbers[i]);
+        }
+        // 容量调整后再填充满
+        int newCapacity = QueueCapacity * 2 + 3;
+        deque.SetCapacity(newCapacity);
+        for (int i = QueueCapacity; i < newCapacity; i++) {
+            deque.Enqueue(numbers[i]);
+        }
+        // 测试相等性
+        for (int i = 0; i < newCapacity; i++) {
+            Assert.That(deque[i], Is.EqualTo(numbers[i]));
+        }
+    }
+    
+    /// <summary>
+    /// 测试容量调整
+    /// </summary>
+    [Test]
+    public void TestSetCapacityDiscardHead() {
+        int maxCapacity = QueueCapacity * 2 + 3;
+        List<int> numbers = RandomNumbers().GetRange(0, maxCapacity);
+        BoundedArrayDeque<int> deque = new BoundedArrayDeque<int>(maxCapacity);
+        for (int i = 0; i < maxCapacity; i++) {
+            deque.Enqueue(numbers[i]);
+        }
+        // 缩小容量
+        deque.SetCapacity(QueueCapacity, DequeOverflowBehavior.DiscardHead);
+        numbers = numbers.GetRange(maxCapacity - QueueCapacity, QueueCapacity);
+        // 测试相等性
+        for (int i = 0; i < QueueCapacity; i++) {
+            Assert.That(deque[i], Is.EqualTo(numbers[i]));
+        }
+    }
+    
+    /// <summary>
+    /// 测试容量调整 -- 收缩，丢弃尾部
+    /// </summary>
+    [Test]
+    public void TestSetCapacityDiscardTail() {
+        int maxCapacity = QueueCapacity * 2 + 3;
+        List<int> numbers = RandomNumbers().GetRange(0, maxCapacity);
+        BoundedArrayDeque<int> deque = new BoundedArrayDeque<int>(maxCapacity);
+        for (int i = 0; i < maxCapacity; i++) {
+            deque.Enqueue(numbers[i]);
+        }
+        // 缩小容量
+        deque.SetCapacity(QueueCapacity, DequeOverflowBehavior.DiscardTail);
+        numbers = numbers.GetRange(0, QueueCapacity);
+        // 测试相等性
+        for (int i = 0; i < QueueCapacity; i++) {
+            Assert.That(deque[i], Is.EqualTo(numbers[i]));
         }
     }
 }

@@ -26,16 +26,18 @@ namespace Commons.Tests.Core;
 
 public class MultiChunkDequeTest
 {
-    private const int NumberCount = 32;
+    private const int NumberCount = 64;
 
     private static List<int> RandomNumbers() {
-        List<int> numbers = new List<int>(NumberCount);
-        for (int i = 0; i < NumberCount; i++) {
+        // 去重，变删除元素时导致的不稳定性
+        ISet<int> numbers = new HashSet<int>(NumberCount);
+        while (numbers.Count < NumberCount) {
             numbers.Add(Random.Shared.Next());
         }
-        return numbers;
+        return new List<int>(numbers);
     }
 
+    [Repeat(10)]
     [Test]
     public void DequeTest() {
         List<int> numbers = RandomNumbers();
@@ -43,6 +45,15 @@ public class MultiChunkDequeTest
         foreach (int number in numbers) {
             deque.AddLast(number);
         }
+        // 随机删除X个元素，不为整倍数
+        int delCount = (NumberCount / 2) - 1;
+        for (int i = 0; i < delCount; i++) {
+            int idx = Random.Shared.Next(numbers.Count);
+            int value = numbers[idx];
+            numbers.RemoveAt(idx);
+            deque.Remove(value);
+        }
+
         // 顺序迭代
         {
             int index = 0;

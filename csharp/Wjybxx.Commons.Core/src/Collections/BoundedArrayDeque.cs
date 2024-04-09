@@ -32,7 +32,7 @@ namespace Wjybxx.Commons.Collections;
 public class BoundedArrayDeque<T> : IDeque<T>
 {
     /** 元素类型是否是引用类型 */
-    private static readonly bool ValueIsRefType = typeof(T).IsValueType;
+    private static readonly bool ValueIsRefType = !typeof(T).IsValueType;
 
     private T[] _elements;
     private readonly DequeOverflowBehavior _overflowBehavior;
@@ -555,7 +555,7 @@ public class BoundedArrayDeque<T> : IDeque<T>
         private readonly BoundedArrayDeque<T> _arrayDeque;
         private readonly bool _reversed;
         private int _version;
-        private int _cursor;
+        private int _cursor; // 下一个元素
         private T? _current;
 
         public DequeItr(BoundedArrayDeque<T> arrayDeque, bool reversed) {
@@ -576,16 +576,18 @@ public class BoundedArrayDeque<T> : IDeque<T>
                 return false;
             }
             _current = _arrayDeque._elements[_cursor];
-            // 避免一直迭代
+            // 需避免一直迭代，到达另一端时结束
             if (_reversed) {
-                _cursor = Dec(_cursor, _arrayDeque._elements.Length);
-                if (_cursor == _arrayDeque._tail) {
-                    _cursor = -1;
-                }
-            } else {
-                _cursor = Inc(_cursor, _arrayDeque._elements.Length);
                 if (_cursor == _arrayDeque._head) {
                     _cursor = -1;
+                } else {
+                    _cursor = Dec(_cursor, _arrayDeque._elements.Length);
+                }
+            } else {
+                if (_cursor == _arrayDeque._tail) {
+                    _cursor = -1;
+                } else { 
+                    _cursor = Inc(_cursor, _arrayDeque._elements.Length);
                 }
             }
             return true;
