@@ -16,8 +16,6 @@
 
 package cn.wjybxx.base;
 
-import java.util.Objects;
-
 /**
  * 常量
  * <p>
@@ -65,12 +63,11 @@ public interface Constant<T extends Constant<T>> extends Comparable<T> {
         private final String name;
 
         public Builder(String name) {
-            this.name = ConstantPool.checkName(name);
+            this.name = checkName(name);
         }
 
-        /** id通常由管理常量的常量池分配 */
-        public Builder<T> setId(Integer id) {
-            Objects.requireNonNull(id, "id");
+        /** 设置常量的id - id通常由管理常量的常量池分配 */
+        public Builder<T> setId(int id) {
             if (this.id != null) {
                 throw new IllegalStateException("id cannot be initialized repeatedly");
             }
@@ -95,6 +92,14 @@ public interface Constant<T extends Constant<T>> extends Comparable<T> {
 
         public abstract T build();
 
+    }
+
+    /** 检查name的合法性 */
+    static String checkName(String name) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("name is empty ");
+        }
+        return name;
     }
 
     // endregion

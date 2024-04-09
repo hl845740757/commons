@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
+ * 常量池快照字典。
  * 由于{@link ConstantPool}是可变的，这使得有些查询是高开销的，比如：{@link ConstantPool#values()}
  *
  * @author wjybxx
@@ -77,14 +78,19 @@ public class ConstantMap<T extends Constant<T>> {
         return constant;
     }
 
-    /** @return 常量池的名字，和{@link #values()}的顺序一致 */
-    public final List<String> names() {
-        return immutableNames;
+    /** 常量对象数 */
+    public final int size() {
+        return constants.size();
     }
 
     /** @return 已排序的不可变常量集合 */
     public final List<T> values() {
         return immutableValues;
+    }
+
+    /** @return 常量的名字集合，和{@link #values()}的顺序一致 */
+    public final List<String> names() {
+        return immutableNames;
     }
 
 }

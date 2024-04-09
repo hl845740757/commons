@@ -67,21 +67,13 @@ public class ConstantPool<T extends Constant<T>> {
         return new ConstantPool<>(factory, firstId);
     }
 
-    /** 检查name的合法性 */
-    public static String checkName(String name) {
-        if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("name is empty ");
-        }
-        return name;
-    }
-
     /**
      * 获取给定名字对应的常量。
      * 1.如果给定的常量存在，则返回存在的常量。
      * 2.如果关联的常量不存在，但可以默认创建，则创建一个新的常量并返回，否则抛出异常。
      */
     public final T valueOf(String name) {
-        checkName(name);
+        Constant.checkName(name);
         if (factory == null) {
             return getOrThrow(name);
         } else {
@@ -93,7 +85,7 @@ public class ConstantPool<T extends Constant<T>> {
      * 创建一个常量，如果已存在关联的常量，则抛出异常。
      */
     public final T newInstance(String name) {
-        checkName(name);
+        Constant.checkName(name);
         if (factory == null) {
             throw new IllegalStateException("builder required");
         }
@@ -114,7 +106,7 @@ public class ConstantPool<T extends Constant<T>> {
      * @return 如果给定名字存在关联的常量，则返回true
      */
     public final boolean exists(String name) {
-        checkName(name);
+        Constant.checkName(name);
         return constants.containsKey(name);
     }
 
@@ -125,7 +117,7 @@ public class ConstantPool<T extends Constant<T>> {
      */
     @Nullable
     public final T get(String name) {
-        checkName(name);
+        Constant.checkName(name);
         return constants.get(name);
     }
 
@@ -137,7 +129,7 @@ public class ConstantPool<T extends Constant<T>> {
      * @throws IllegalArgumentException 如果不存在对应的常量
      */
     public final T getOrThrow(String name) {
-        checkName(name);
+        Constant.checkName(name);
         final T constant = constants.get(name);
         if (null == constant) {
             throw new IllegalArgumentException(name + " does not exist");
@@ -173,6 +165,8 @@ public class ConstantPool<T extends Constant<T>> {
     public final ConstantMap<T> newConstantMap() {
         return new ConstantMap<>(this);
     }
+
+    // region internal
 
     /**
      * 通过名字获取已存在的常量，或者当其不存在时创建新的常量，仅支持简单常量。
@@ -218,6 +212,8 @@ public class ConstantPool<T extends Constant<T>> {
         }
         return result;
     }
+
+    // endregion
 
     private static class SimpleBuilder<T> extends Constant.Builder<T> {
 
