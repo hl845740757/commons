@@ -32,31 +32,31 @@ public interface ScheduledPromiseTask
 
     public static ScheduledPromiseTask<T> OfTask<T>(ITask task, IContext? context, int options, IScheduledPromise<T> promise,
                                                     long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(task, context, options, promise, TaskBuilder.TypeTask,
+        return new ScheduledPromiseTask<T>(task, context, options, promise, TaskBuilder.TYPE_TASK,
             id, nextTriggerTime);
     }
 
     public static ScheduledPromiseTask<T> OfAction<T>(Action action, IContext? context, int options, IScheduledPromise<T> promise,
                                                       long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeAction,
+        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_ACTION,
             id, nextTriggerTime);
     }
 
     public static ScheduledPromiseTask<T> OfAction<T>(Action<IContext> action, IContext? context, int options, IScheduledPromise<T> promise,
                                                       long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeActionCtx,
+        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_ACTION_CTX,
             id, nextTriggerTime);
     }
 
     public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, IContext? context, int options, IScheduledPromise<T> promise,
                                                         long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeFunc,
+        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC,
             id, nextTriggerTime);
     }
 
     public static ScheduledPromiseTask<T> OfFunction<T>(Func<IContext, T> action, IContext? context, int options, IScheduledPromise<T> promise,
                                                         long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TypeFuncCtx,
+        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC_CTX,
             id, nextTriggerTime);
     }
 
@@ -102,7 +102,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     private long nextTriggerTime;
     /** 任务的执行间隔 - 不再有特殊意义 */
     private long period;
-    /** 超时信息 - 有效性见<see cref="PromiseTask.MaskTimeout"/> */
+    /** 超时信息 - 有效性见<see cref="PromiseTask.MASK_TIMEOUT"/> */
     private TimeoutContext timeoutContext;
 
     /** 在队列中的下标 */
@@ -151,6 +151,8 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         set => nextTriggerTime = value;
     }
 
+    public bool IsTriggered => GetCtlBit(PromiseTask.MASK_TRIGGERED);
+
     public override IScheduledPromise<T> Future => (IScheduledPromise<T>)promise;
 
     public bool IsPeriodic => ScheduleType != 0;
@@ -169,8 +171,8 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     }
 
     private bool HasTimeout {
-        get => (ctl & PromiseTask.MaskTimeout) != 0;
-        set => SetCtlBit(PromiseTask.MaskTimeout, value);
+        get => (ctl & PromiseTask.MASK_TIMEOUT) != 0;
+        set => SetCtlBit(PromiseTask.MASK_TIMEOUT, value);
     }
 
     #endregion
@@ -190,17 +192,20 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         }
         long tickTime = eventLoop.TickTime;
         if (tickTime < nextTriggerTime) { // 显式测试一次，适应多种EventLoop
-            eventLoop.ReSchedulePeriodic(this, false);
+            eventLoop.ReschedulePeriodic(this, false);
             return;
         }
         if (Trigger(tickTime)) {
-            eventLoop.ReSchedulePeriodic(this, true);
+            eventLoop.ReschedulePeriodic(this, true);
         }
     }
 
     public bool Trigger(long tickTime) {
+        // 标记为已触发
+        SetCtlBit(PromiseTask.MASK_TRIGGERED, true);
+        
         int scheduleType = ScheduleType;
-        if (scheduleType == ScheduledTaskBuilder.ScheduleOnce) {
+        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
             base.Run();
             return false;
         }
@@ -226,7 +231,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         ref TimeoutContext timeoutContext = ref this.timeoutContext;
         try {
             if (HasTimeout) {
-                timeoutContext.BeforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledTaskBuilder.ScheduleFixedRate);
+                timeoutContext.BeforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE);
                 if (TaskOption.IsEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeoutContext.IsTimeout()) {
                     promise.TrySetException(StacklessTimeoutException.Inst);
                     Clear();
@@ -267,7 +272,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     }
 
     private bool CanCaughtException(Exception ex) {
-        if (ScheduleType == ScheduledTaskBuilder.ScheduleOnce) {
+        if (ScheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
             return false;
         }
         return TaskOption.IsEnabled(options, TaskOption.CAUGHT_EXCEPTION);
@@ -275,7 +280,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
 
     private void SetNextRunTime(long tickTime, ref TimeoutContext timeoutContext, int scheduleType) {
         long maxDelay = HasTimeout ? timeoutContext.timeLeft : long.MaxValue;
-        if (scheduleType == ScheduledTaskBuilder.ScheduleFixedRate) {
+        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
             nextTriggerTime = nextTriggerTime + Math.Min(maxDelay, period); // 逻辑时间
         } else {
             nextTriggerTime = tickTime + Math.Min(maxDelay, period); // 真实时间

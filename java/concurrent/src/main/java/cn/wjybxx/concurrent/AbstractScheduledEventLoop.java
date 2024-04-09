@@ -83,20 +83,20 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
 
     @Override
     public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
-        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newAction(task)
+        ScheduledTaskBuilder<?> builder = ScheduledTaskBuilder.newAction(task)
                 .setFixedDelay(initialDelay, delay, unit);
 
-        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(sb, newScheduledPromise(), 0, tickTime());
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(), 0, tickTime());
         execute(promiseTask);
         return promiseTask.future();
     }
 
     @Override
     public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
-        ScheduledTaskBuilder<?> sb = ScheduledTaskBuilder.newAction(task)
+        ScheduledTaskBuilder<?> builder = ScheduledTaskBuilder.newAction(task)
                 .setFixedRate(initialDelay, period, unit);
 
-        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(sb, newScheduledPromise(), 0, tickTime());
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(), 0, tickTime());
         execute(promiseTask);
         return promiseTask.future();
     }
@@ -106,6 +106,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
      * 当前线程的时间 -- 纳秒（非时间戳）
      * 1. 可以使用缓存的时间，也可以使用{@link System#nanoTime()}实时查询，只要不破坏任务的执行约定即可。
      * 2. 如果使用缓存时间，接口中并不约定时间的更新时机，也不约定一个大循环只更新一次。也就是说，线程可能在任意时间点更新缓存的时间，只要不破坏线程安全性和约定的任务时序。
+     * 3. 可能从其它线程查询。
      */
     abstract long tickTime();
 
@@ -116,7 +117,7 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
      *
      * @param triggered 是否是执行之后压入队列；通常用于在执行成功之后降低优先级
      */
-    abstract void reSchedulePeriodic(ScheduledPromiseTask<?> futureTask, boolean triggered);
+    abstract void reschedulePeriodic(ScheduledPromiseTask<?> futureTask, boolean triggered);
 
     /**
      * 请求删除给定的任务

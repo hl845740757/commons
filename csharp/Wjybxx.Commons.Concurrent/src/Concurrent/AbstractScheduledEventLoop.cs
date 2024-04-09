@@ -100,7 +100,7 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
     /// </summary>
     /// <param name="scheduledTask"></param>
     /// <param name="triggered">是否是执行之后再次压入队列</param>
-    protected internal abstract void ReSchedulePeriodic(IScheduledFutureTask scheduledTask, bool triggered);
+    protected internal abstract void ReschedulePeriodic(IScheduledFutureTask scheduledTask, bool triggered);
 
     /// <summary>
     /// 请求删除给定的任务

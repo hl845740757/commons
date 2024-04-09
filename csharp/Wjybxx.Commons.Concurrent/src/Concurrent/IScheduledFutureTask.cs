@@ -54,6 +54,11 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     long NextTriggerTime { get; }
 
     /// <summary>
+    /// 是否已完成首次出发
+    /// </summary>
+    bool IsTriggered { get; }
+
+    /// <summary>
     /// 外部确定性触发
     /// 该方法由EventLoop调用，不需要回调的方式重新压入队列，而是返回bool值告知EventLoop是否需要继续执行
     /// </summary>
@@ -104,6 +109,14 @@ public sealed class ScheduledTaskComparator : IComparer<IScheduledFutureTask>
         if (result != 0) {
             return result;
         }
+        // 未触发的放前面
+        result = lhs.IsTriggered.CompareTo(rhs.IsTriggered);
+        if (result != 0) {
+            return result;
+        }
+        // 再按优先级排序
+        
+        // 再按id排序
         result = lhs.Id.CompareTo(rhs.Id);
         if (result == 0) {
             throw new InvalidOperationException($"lhs.id: {lhs.Id}, rhs.id: {rhs.Id}");

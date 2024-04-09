@@ -286,9 +286,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 event.setOptions(options);
                 if (task instanceof ScheduledPromiseTask<?> futureTask) {
                     futureTask.setId(sequence); // nice
-                    if (futureTask.isEnabled(TaskOption.LOW_PRIORITY)) {
-                        futureTask.setQueueId(LOWER_PRIORITY_QUEUE_ID);
-                    }
                     futureTask.registerCancellation();
                 }
             }
@@ -405,7 +402,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     }
 
     @Override
-    final void reSchedulePeriodic(ScheduledPromiseTask<?> futureTask, boolean triggered) {
+    final void reschedulePeriodic(ScheduledPromiseTask<?> futureTask, boolean triggered) {
         assert inEventLoop();
         if (isShuttingDown()) {
             futureTask.cancelWithoutRemove();
@@ -596,7 +593,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             while (!isShuttingDown()) {
                 try {
                     nanoTime = System.nanoTime();
-                    processScheduledQueue(nanoTime, taskBatchSize, false);
+                    processScheduledQueue(nanoTime, false);
 
                     // 多生产者模型下不可频繁调用waitFor，会在查询可用sequence时产生巨大的开销，因此查询之后本地切割为小批次，避免用户循环得不到执行
                     if (availableSequence < nextSequence) {
@@ -625,7 +622,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         break;
                     }
                     nanoTime = System.nanoTime();
-                    processScheduledQueue(nanoTime, taskBatchSize, false);
+                    processScheduledQueue(nanoTime, false);
                     invokeAgentUpdate();
                 } catch (AlertException | InterruptedException e) {
                     if (isShuttingDown()) {
@@ -655,41 +652,37 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
          * 处理周期性任务，传入的限制只有在遇见低优先级任务的时候才生效，因此限制为0则表示遇见低优先级任务立即结束
          * (为避免时序错误，处理周期性任务期间不响应关闭，不容易安全实现)
          *
-         * @param limit            批量执行的任务数限制
          * @param shuttingDownMode 是否是退出模式
          */
-        private void processScheduledQueue(long tickTime, int limit, boolean shuttingDownMode) {
+        private void processScheduledQueue(long tickTime, boolean shuttingDownMode) {
             final DisruptorEventLoop<T> eventLoop = DisruptorEventLoop.this;
             final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue = eventLoop.scheduledTaskQueue;
 
-            long count = 0;
             ScheduledPromiseTask<?> queueTask;
             while ((queueTask = taskQueue.peek()) != null) {
                 if (queueTask.future().isDone()) {
                     taskQueue.poll(); // 未及时删除的任务
                     continue;
                 }
-
                 // 优先级最高的任务不需要执行，那么后面的也不需要执行
                 if (tickTime < queueTask.getNextTriggerTime()) {
                     return;
                 }
+                // 响应关闭
+                if (isShutdown()) {
+                    return;
+                }
 
-                int preQueueId = queueTask.getQueueId();
                 taskQueue.poll();
                 if (shuttingDownMode) {
-                    // 关闭模式下，不执行低优先级任务，不再重复执行任务
-                    if (preQueueId == LOWER_PRIORITY_QUEUE_ID || queueTask.trigger(tickTime)) {
+                    // 关闭模式下，不再重复执行任务
+                    if (queueTask.isTriggered() || queueTask.trigger(tickTime)) {
                         queueTask.cancelWithoutRemove();
                     }
                 } else {
-                    // 非关闭模式下，检测批处理限制 -- 这里暂不响应关闭；高优先级任务必须执行，否则可能导致时序错误
-                    count++;
+                    // 非关闭模式下，任务必须执行，否则可能导致时序错误
                     if (queueTask.trigger(tickTime)) {
                         taskQueue.offer(queueTask);
-                    }
-                    if (preQueueId == LOWER_PRIORITY_QUEUE_ID && (count >= limit)) {
-                        return;
                     }
                 }
             }
@@ -740,7 +733,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
 
             // 处理延迟任务
             nanoTime = System.nanoTime();
-            processScheduledQueue(nanoTime, 0, true);
+            processScheduledQueue(nanoTime, true);
             scheduledTaskQueue.clearIgnoringIndexes();
 
             // 在新的架构下，EventSequencer可能是无界队列，这种情况下我们采用笨方法来清理；

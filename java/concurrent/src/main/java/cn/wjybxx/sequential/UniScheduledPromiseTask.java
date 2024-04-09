@@ -159,6 +159,10 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
         this.nextTriggerTime = nextTriggerTime;
     }
 
+    public boolean isTriggered() {
+        return getCtlBit(MASK_TRIGGERED);
+    }
+
     @Override
     public int collectionIndex(Object collection) {
         return queueIndex;
@@ -219,6 +223,9 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
      * @return 如果需要再压入队列则返回true
      */
     public boolean trigger(long tickTime) {
+        // 标记为已触发过
+        setCtlBit(MASK_TRIGGERED, true);
+
         final int scheduleType = getScheduleType();
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
             super.run();
@@ -386,14 +393,16 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
         if (other == this) {
             return 0;
         }
-        int r = Integer.compare(getQueueId(), other.getQueueId());
+        int r = Long.compare(nextTriggerTime, other.nextTriggerTime);
         if (r != 0) {
             return r;
         }
-        r = Long.compare(nextTriggerTime, other.nextTriggerTime);
+        // 未触发的放前面
+        r = Boolean.compare(isTriggered(), other.isTriggered());
         if (r != 0) {
             return r;
         }
+        // 再按id排序
         return Long.compare(id, other.id);
     }
 

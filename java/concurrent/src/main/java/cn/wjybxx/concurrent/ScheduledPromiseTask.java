@@ -122,7 +122,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
                                                         long id, long tickTime) {
         TimeUnit timeUnit = builder.getTimeUnit();
         // 并发库中不支持插队，初始延迟强制转0
-        final long initialDelay = Math.max(0, timeUnit.toMillis(builder.getInitialDelay()));
+        final long initialDelay = Math.max(0, timeUnit.toNanos(builder.getInitialDelay()));
         final long period = Math.max(1, timeUnit.toNanos(builder.getPeriod()));
         final long triggerTime = tickTime + initialDelay;
 
@@ -152,6 +152,10 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     public void setNextTriggerTime(long nextTriggerTime) {
         this.nextTriggerTime = nextTriggerTime;
+    }
+
+    public boolean isTriggered() {
+        return getCtlBit(MASK_TRIGGERED);
     }
 
     @Override
@@ -200,11 +204,11 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         }
         long tickTime = eventLoop.tickTime();
         if (tickTime < nextTriggerTime) { // 显式测试一次，适应多种EventLoop
-            eventLoop.reSchedulePeriodic(this, false);
+            eventLoop.reschedulePeriodic(this, false);
             return;
         }
         if (trigger(tickTime)) {
-            eventLoop.reSchedulePeriodic(this, true);
+            eventLoop.reschedulePeriodic(this, true);
         }
     }
 
@@ -214,6 +218,9 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
      * @return 如果需要再压入队列则返回true
      */
     public boolean trigger(long tickTime) {
+        // 标记为已触发
+        setCtlBit(MASK_TRIGGERED, true);
+
         final int scheduleType = getScheduleType();
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
             super.run();
@@ -381,15 +388,21 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         if (other == this) {
             return 0;
         }
-        int r = Integer.compare(getQueueId(), other.getQueueId());
+        int r = Long.compare(nextTriggerTime, other.nextTriggerTime);
         if (r != 0) {
             return r;
         }
-        r = Long.compare(nextTriggerTime, other.nextTriggerTime);
+        // 未触发的放前面
+        r = Boolean.compare(isTriggered(), other.isTriggered());
         if (r != 0) {
             return r;
         }
-        return Long.compare(id, other.id);
+        // 再按id排序
+        r = Long.compare(id, other.id);
+        if (r == 0) {
+            throw new IllegalStateException("lhs.id: %d, rhs.id: %d".formatted(id, other.id));
+        }
+        return r;
     }
 
 }

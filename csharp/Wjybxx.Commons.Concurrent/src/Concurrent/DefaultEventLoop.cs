@@ -156,7 +156,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
         }
     }
 
-    protected internal override void ReSchedulePeriodic(IScheduledFutureTask scheduledTask, bool triggered) {
+    protected internal override void ReschedulePeriodic(IScheduledFutureTask scheduledTask, bool triggered) {
         Debug.Assert(InEventLoop());
         if (IsShuttingDown) {
             scheduledTask.CancelWithoutRemove();
@@ -403,22 +403,22 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
                 taskQueue.Dequeue(); // 未及时删除的任务
                 continue;
             }
-
             // 优先级最高的任务不需要执行，那么后面的也不需要执行
             if (tickTime < queueTask.NextTriggerTime) {
                 return;
             }
-
-            if (IsShutdown) { // 丢弃任务
+            // 响应关闭
+            if (IsShutdown) {
                 return;
             }
             taskQueue.Dequeue();
             if (shuttingDown) {
-                // 关闭模式下触发后不再压入队列
-                if (queueTask.Trigger(tickTime)) {
+                // 关闭模式下，不再重复执行任务
+                if (queueTask.IsTriggered || queueTask.Trigger(tickTime)) {
                     queueTask.CancelWithoutRemove();
                 }
             } else {
+                // 非关闭模式下，任务必须执行，否则可能导致时序错误
                 if (queueTask.Trigger(tickTime)) {
                     taskQueue.Enqueue(queueTask);
                 }

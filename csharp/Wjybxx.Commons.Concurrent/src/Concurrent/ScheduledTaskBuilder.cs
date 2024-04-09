@@ -24,13 +24,13 @@ namespace Wjybxx.Commons.Concurrent;
 public interface ScheduledTaskBuilder
 {
     /** 执行一次 */
-    public const byte ScheduleOnce = 0;
+    public const byte SCHEDULE_ONCE = 0;
     /** 固定延迟 -- 两次执行的间隔大于等于给定的延迟 */
-    public const byte ScheduleFixedDelay = 1;
+    public const byte SCHEDULE_FIXED_DELAY = 1;
     /** 固定频率 -- 执行次数 */
-    public const byte ScheduleFixedRate = 2;
+    public const byte SCHEDULE_FIXED_RATE = 2;
     /** 动态延迟 -- 每次执行后计算下一次的延迟 */
-    public const byte ScheduleDynamicDelay = 3;
+    public const byte SCHEDULE_DYNAMIC_DELAY = 3;
 
     /** 适用于禁止初始延迟小于0的情况 */
     public static void ValidateInitialDelay(long initialDelay) {
@@ -155,14 +155,14 @@ public struct ScheduledTaskBuilder<T> : ScheduledTaskBuilder, TaskBuilder
     /** 是否是周期性任务 */
     public bool IsPeriodic => scheduleType != 0;
 
-    public bool IsOnlyOnce => scheduleType == ScheduledTaskBuilder.ScheduleOnce;
+    public bool IsOnlyOnce => scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE;
 
     /// <summary>
     /// 设置任务为单次执行
     /// </summary>
     /// <param name="delay">触发延迟</param>
     public void SetOnlyOnce(long delay) {
-        this.scheduleType = ScheduledTaskBuilder.ScheduleOnce;
+        this.scheduleType = ScheduledTaskBuilder.SCHEDULE_ONCE;
         this.initialDelay = delay;
         this.period = default;
     }
@@ -177,7 +177,7 @@ public struct ScheduledTaskBuilder<T> : ScheduledTaskBuilder, TaskBuilder
         Timeunit = timeunit;
     }
 
-    public bool IsFixedDelay => scheduleType == ScheduledTaskBuilder.ScheduleFixedDelay;
+    public bool IsFixedDelay => scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_DELAY;
 
     /// <summary>
     /// 设置任务为固定延迟执行
@@ -186,7 +186,7 @@ public struct ScheduledTaskBuilder<T> : ScheduledTaskBuilder, TaskBuilder
     /// <param name="period">循环周期</param>
     public void SetFixedDelay(long initialDelay, long period) {
         ScheduledTaskBuilder.ValidatePeriod(period);
-        this.scheduleType = ScheduledTaskBuilder.ScheduleFixedDelay;
+        this.scheduleType = ScheduledTaskBuilder.SCHEDULE_FIXED_DELAY;
         this.initialDelay = initialDelay;
         this.period = period;
     }
@@ -202,7 +202,7 @@ public struct ScheduledTaskBuilder<T> : ScheduledTaskBuilder, TaskBuilder
         Timeunit = timeunit;
     }
 
-    public bool IsFixedRate => scheduleType == ScheduledTaskBuilder.ScheduleFixedRate;
+    public bool IsFixedRate => scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE;
 
     /// <summary>
     /// 设置任务为固定频率执行（会补帧）
@@ -212,7 +212,7 @@ public struct ScheduledTaskBuilder<T> : ScheduledTaskBuilder, TaskBuilder
     public void SetFixedRate(long initialDelay, long period) {
         ScheduledTaskBuilder.ValidateInitialDelay(initialDelay);
         ScheduledTaskBuilder.ValidatePeriod(period);
-        this.scheduleType = ScheduledTaskBuilder.ScheduleFixedRate;
+        this.scheduleType = ScheduledTaskBuilder.SCHEDULE_FIXED_RATE;
         this.initialDelay = initialDelay;
         this.period = period;
     }

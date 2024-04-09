@@ -52,7 +52,7 @@ public class Counter {
 
         long nextSequence = sequenceMap.get(type);
         if (sequence != nextSequence) {
-            if (errorMsgList.size() < 100) { // 避免toString爆炸
+            if (errorMsgList.size() < 10) { // 避免toString爆炸
                 errorMsgList.add(String.format("code2, event.type: %d, nextSequence: %d (expected: = %d)",
                         type, sequence, nextSequence));
             }
@@ -86,6 +86,5 @@ public class Counter {
                 counter.count(type, sequence);
             }
         }
-
     }
 }

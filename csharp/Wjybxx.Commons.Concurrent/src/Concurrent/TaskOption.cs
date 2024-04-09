@@ -27,11 +27,17 @@ namespace Wjybxx.Commons.Concurrent;
 public static class TaskOption
 {
     /// <summary>
-    /// 低6位用于存储任务的调度阶段，取值[0, 63]，使用低6位可以避免位移。
+    /// 低6位用于存储任务的调度阶段，取值[0, 31]，使用低位可以避免位移。
     /// 1.用于指定异步任务的调度时机。
     /// 2.主要用于{@link EventLoop}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
     ///</summary>
-    public const int MASK_SCHEDULE_PHASE = (1 << 6) - 1;
+    public const int MASK_SCHEDULE_PHASE = 31;
+
+    /// <summary>
+    /// 延时任务的优先级，取值[0, 31]。
+    /// 1.当任务的触发时间相同时，按照优先级排序，值越低优先级越高。
+    /// </summary>
+    public const int MASK_PRIORITY = 31 << 5;
 
     /// <summary>
     /// 是否是【低优先级】的【延时任务】
@@ -46,7 +52,7 @@ public static class TaskOption
     /// </code>
     /// 注意：EventLoop可以不支持该特性，低优先任务延迟是可选优化项
     ///</summary>
-    public const int LOW_PRIORITY = 1 << 6;
+    public const int LOW_PRIORITY = 1 << 10;
     /// <summary>
     /// 是否是【中优先级】的【延时任务】
     /// 中优先级任务是指：需要保证【首次执行】和非延时任务之间的时序，进入循环阶段后可变为低优先级的任务。
@@ -58,37 +64,37 @@ public static class TaskOption
     /// </code>
     /// 注意：EventLoop可以不支持该特性，低优先任务延迟是可选优化项
     ///</summary>
-    public const int MIDDLE_PRIORITY = 1 << 7;
+    public const int MIDDLE_PRIORITY = 1 << 11;
 
     /// <summary>
     /// 在执行该任务前必须先处理一次定时任务队列
     /// EventLoop收到具有该特征的任务时，需要更新时间戳，尝试执行该任务之前的所有定时任务。
     ///</summary>
-    public const int SCHEDULE_BARRIER = 1 << 8;
+    public const int SCHEDULE_BARRIER = 1 << 12;
 
     /// <summary>
     /// 本地序（可以与其它线程无序）
     /// 对于EventLoop内部的任务，启用该特征值可跳过全局队列，这在EventLoop是有界的情况下可以避免死锁或阻塞。
     ///</summary>
-    public const int LOCAL_ORDER = 1 << 9;
+    public const int LOCAL_ORDER = 1 << 13;
 
     /// <summary>
     /// 唤醒事件循环线程
     /// 事件循环线程可能阻塞某些操作上，如果一个任务需要EventLoop及时处理，则可以启用该选项唤醒线程。
     ///</summary>
-    public const int WAKEUP_THREAD = 1 << 10;
+    public const int WAKEUP_THREAD = 1 << 14;
 
     /// <summary>
     /// 延时任务：在出现异常后继续执行。
     /// 注意：只适用无需结果的周期性任务 -- 分时任务会失败。
     ///</summary>
-    public const int CAUGHT_EXCEPTION = 1 << 11;
+    public const int CAUGHT_EXCEPTION = 1 << 15;
     /// <summary>
     /// 延时任务：在执行任务前检测超时
     /// 1. 也就是说在已经超时的情况下不执行任务。
     /// 2. 在执行后一定会检测一次超时。
     ///</summary>
-    public const int TIMEOUT_BEFORE_RUN = 1 << 12;
+    public const int TIMEOUT_BEFORE_RUN = 1 << 16;
     /// <summary>
     /// 延时任务：忽略来自future的取消
     /// 1. 由于要和jdk保持兼容，默认是需要监听来自Future的取消信号的。
@@ -97,29 +103,29 @@ public static class TaskOption
     /// 
     /// ps:监听取消信号的目的在于及时从队列中删除任务。
     ///</summary>
-    public const int IGNORE_FUTURE_CANCEL = 1 << 13;
+    public const int IGNORE_FUTURE_CANCEL = 1 << 17;
 
     /**
      * 该选项表示异步任务需要继承上游任务的取消令牌。
      * 注意： 在显式指定了上下文的情况下无效。
      */
-    public const int STAGE_INHERIT_CANCEL_TOKEN = 15;
+    public const int STAGE_INHERIT_CANCEL_TOKEN = 18;
     /// <summary>
     /// 如果一个异步任务当前已在目标{@link SingleThreadExecutor}线程，则立即执行，而不提交任务。
     /// 仅用于{@link ICompletionStage}
     ///</summary>
-    public const int STAGE_TRY_INLINE = 1 << 16;
+    public const int STAGE_TRY_INLINE = 1 << 19;
     /// <summary>
     /// 默认情况下，如果一个异步任务的Executor是{@link IExecutor}类型，options将传递给Executor。
     /// 如果期望禁用传递，可设置改选项。
     /// 仅用于{@link ICompletionStage}
     ///</summary>
-    public const int STAGE_NON_TRANSITIVE = 1 << 17;
+    public const int STAGE_NON_TRANSITIVE = 1 << 20;
     /// <summary>
     /// 当回调接收的是Object类型的ctx，而不是{@link IContext}类型的ctx时，
     /// 也尝试检测obj实例是否为{@link IContext}类型，并检测取消信号。
     /// </summary>
-    public const int STAGE_CHECK_OBJECT_CTX = 1 << 18;
+    public const int STAGE_CHECK_OBJECT_CTX = 1 << 21;
 
     // region util
 

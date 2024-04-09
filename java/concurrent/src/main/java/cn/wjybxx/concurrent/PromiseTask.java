@@ -33,31 +33,33 @@ import java.util.function.Function;
 public class PromiseTask<V> implements IFutureTask<V> {
 
     /**
-     * queueId的掩码 -- 8bit，最大255。
-     * 1.放在低8位，减少运算，queueId的计算频率高于其它部分。
+     * 优先级的掩码 -- 8bit，最大255。
+     * 1.放在低8位，减少运算，优先级的计算频率高于其它部分。
      * 2.大于{@link TaskOption}的中的64阶段。
      */
-    protected static final int maskQueueId = 0xFF;
+    protected static final int MASK_PRIORITY = 0xFF;
     /** 任务类型的掩码 -- 4bit，可省去大量的instanceof测试 */
-    protected static final int maskTaskType = 0x0F00;
+    protected static final int MASK_TASK_TYPE = 0x0F00;
     /** 调度类型的掩码 -- 4bit，最大16种 */
-    protected static final int maskScheduleType = 0xF000;
+    protected static final int MASK_SCHEDULE_TYPE = 0xF000;
     /** 是否已经声明任务的归属权 */
-    protected static final int maskClaimed = 1 << 16;
+    protected static final int MASK_CLAIMED = 1 << 16;
     /** 分时任务是否已启动 */
-    protected static final int maskStarted = 1 << 17;
+    protected static final int MASK_STARTED = 1 << 17;
     /** 分时任务是否已停止 */
-    protected static final int maskStopped = 1 << 18;
+    protected static final int MASK_STOPPED = 1 << 18;
     /** 延时任务有超时时间 */
-    protected static final int maskTimeout = 1 << 20;
+    protected static final int MASK_TIMEOUT = 1 << 20;
+    /** 延时任务已触发过 */
+    protected static final int MASK_TRIGGERED = 1 << 21;
 
-    protected static final int offsetQueueId = 0;
+    protected static final int OFFSET_PRIORITY = 0;
     /** 任务类型的偏移量 */
-    protected static final int offsetTaskType = 8;
+    protected static final int OFFSET_TASK_TYPE = 8;
     /** 调度类型的偏移量 */
-    protected static final int offsetScheduleType = 12;
+    protected static final int OFFSET_SCHEDULE_TYPE = 12;
     /** 最大队列id */
-    protected static final int maxQueueId = 255;
+    protected static final int MAX_PRIORITY = 255;
 
     /** 用户的任务 */
     private Object task;
@@ -93,7 +95,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
         this.ctx = ctx == null ? IContext.NONE : ctx;
         this.options = options;
         this.promise = Objects.requireNonNull(promise, "promise");
-        this.ctl |= (taskType << offsetTaskType);
+        this.ctl |= (taskType << OFFSET_TASK_TYPE);
         // 注入promise
         if (taskType == TaskBuilder.TYPE_TIMESHARING) {
             @SuppressWarnings("unchecked") TimeSharingTask<V> timeSharingTask = (TimeSharingTask<V>) task;
@@ -142,52 +144,52 @@ public class PromiseTask<V> implements IFutureTask<V> {
     }
 
     /** 获取任务所属的队列id */
-    public final int getQueueId() {
-        return (ctl & maskQueueId);
+    public final int getPriority() {
+        return (ctl & MASK_PRIORITY);
     }
 
-    /** @param queueId 队列id，范围 [0, 255] */
-    public final void setQueueId(int queueId) {
-        if (queueId < 0 || queueId > maxQueueId) {
-            throw new IllegalArgumentException("queueId: " + maxQueueId);
+    /** @param priority 任务的优先级，范围 [0, 255] */
+    public final void setPriority(int priority) {
+        if (priority < 0 || priority > MAX_PRIORITY) {
+            throw new IllegalArgumentException("priority: " + MAX_PRIORITY);
         }
-        ctl &= ~maskQueueId;
-        ctl |= (queueId);
+        ctl &= ~MASK_PRIORITY;
+        ctl |= (priority);
     }
 
     /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
     public final int getTaskType() {
-        return (ctl & maskTaskType) >> offsetTaskType;
+        return (ctl & MASK_TASK_TYPE) >> OFFSET_TASK_TYPE;
     }
 
     /** 获取任务的调度类型 */
     public final int getScheduleType() {
-        return (ctl & maskScheduleType) >> offsetScheduleType;
+        return (ctl & MASK_SCHEDULE_TYPE) >> OFFSET_SCHEDULE_TYPE;
     }
 
     /** 设置任务的调度类型 -- 应该在添加到队列之前设置 */
     protected final void setScheduleType(int scheduleType) {
-        ctl |= (scheduleType << offsetScheduleType);
+        ctl |= (scheduleType << OFFSET_SCHEDULE_TYPE);
     }
 
     /** 是否已经声明任务的归属权 */
     protected final boolean isClaimed() {
-        return (ctl & maskClaimed) != 0;
+        return (ctl & MASK_CLAIMED) != 0;
     }
 
     /** 将任务标记为已申领 */
     protected final void setClaimed() {
-        ctl |= maskClaimed;
+        ctl |= MASK_CLAIMED;
     }
 
     /** 分时任务是否启动 */
     protected final boolean isStarted() {
-        return (ctl & maskStarted) != 0;
+        return (ctl & MASK_STARTED) != 0;
     }
 
     /** 将分时任务标记为已启动 */
     protected final void setStarted() {
-        ctl |= maskStarted;
+        ctl |= MASK_STARTED;
     }
 
     /** 获取ctl中的某个bit */
@@ -243,7 +245,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     /** 运行其它类型任务 */
     @SuppressWarnings("unchecked")
     protected final V runTask() throws Exception {
-        int type = (ctl & maskTaskType) >> offsetTaskType;
+        int type = (ctl & MASK_TASK_TYPE) >> OFFSET_TASK_TYPE;
         switch (type) {
             case TaskBuilder.TYPE_ACTION -> {
                 Runnable task = (Runnable) this.task;
