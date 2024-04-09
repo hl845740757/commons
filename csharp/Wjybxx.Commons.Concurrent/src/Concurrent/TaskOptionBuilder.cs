@@ -50,11 +50,8 @@ public struct TaskOptionBuilder
     /// 设置任务的调度阶段
     /// </summary>
     public int SchedulePhase {
-        get => TaskOption.SchedulePhase(options);
-        set {
-            options &= ~ TaskOption.MASK_SCHEDULE_PHASE;
-            options |= value;
-        }
+        get => TaskOption.GetSchedulePhase(options);
+        set => options = TaskOption.SetSchedulePhase(options, value);
     }
 
     /// <summary>

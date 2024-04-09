@@ -16,7 +16,9 @@
 
 #endregion
 
+using System;
 using System.Diagnostics;
+using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
@@ -37,6 +39,7 @@ public static class TaskOption
     /// 延时任务的优先级，取值[0, 31]。
     /// 1.当任务的触发时间相同时，按照优先级排序，值越低优先级越高。
     /// </summary>
+    [Beta]
     public const int MASK_PRIORITY = 31 << 5;
 
     /// <summary>
@@ -186,7 +189,7 @@ public static class TaskOption
     /// <summary>
     /// 获取任务的调度阶段
     /// </summary>
-    public static int SchedulePhase(int options) {
+    public static int GetSchedulePhase(int options) {
         return options & MASK_SCHEDULE_PHASE;
     }
 
@@ -197,7 +200,9 @@ public static class TaskOption
     /// <param name="phase">调度阶段</param>
     /// <returns>新的options</returns>
     public static int SetSchedulePhase(int options, int phase) {
-        Debug.Assert(phase >= 0 && phase <= MASK_SCHEDULE_PHASE);
+        if (phase < 0 || phase > MASK_SCHEDULE_PHASE) {
+            throw new ArgumentException("phase: " + phase);
+        }
         options &= ~MASK_SCHEDULE_PHASE;
         options |= phase;
         return options;

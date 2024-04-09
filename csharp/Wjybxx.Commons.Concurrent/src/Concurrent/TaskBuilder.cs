@@ -181,10 +181,7 @@ public struct TaskBuilder<T> : TaskBuilder
     /// 设置options中任务期望的调度阶段
     /// </summary>
     public int SchedulePhase {
-        get => options & TaskOption.MASK_SCHEDULE_PHASE;
-        set {
-            this.options &= ~TaskOption.MASK_SCHEDULE_PHASE;
-            this.options |= value;
-        }
+        get => TaskOption.GetSchedulePhase(options);
+        set => options = TaskOption.SetSchedulePhase(options, value);
     }
 }

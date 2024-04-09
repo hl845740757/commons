@@ -16,6 +16,8 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.annotation.Beta;
+
 /**
  * 任务调度选项
  * 注意：用户只可使用低24位的option，高8位预留给系统，系统可能去除用户的高位bit信息。
@@ -36,6 +38,7 @@ public final class TaskOption {
      * 延时任务的优先级，取值[0, 31]
      * 1.当任务的触发时间相同时，按照优先级排序，值越低优先级越高。
      */
+    @Beta
     public static final int MASK_PRIORITY = 31 << 5;
 
     /**
@@ -170,13 +173,15 @@ public final class TaskOption {
     }
 
     /** 获取任务的调度阶段 */
-    public static int schedulePhase(int options) {
+    public static int getSchedulePhase(int options) {
         return options & MASK_SCHEDULE_PHASE;
     }
 
     /** 设置任务的调度阶段 */
     public static int setSchedulePhase(int options, int phase) {
-        assert (phase >= 0 && phase <= MASK_SCHEDULE_PHASE);
+        if (phase < 0 || phase > MASK_SCHEDULE_PHASE) {
+            throw new IllegalArgumentException("phase: " + phase);
+        }
         options &= ~MASK_SCHEDULE_PHASE;
         options |= phase;
         return options;

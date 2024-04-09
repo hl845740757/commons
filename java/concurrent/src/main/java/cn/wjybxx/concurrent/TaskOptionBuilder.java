@@ -38,16 +38,12 @@ public class TaskOptionBuilder {
 
     /** 获取任务的阶段 */
     public int getSchedulePhase() {
-        return options & TaskOption.MASK_SCHEDULE_PHASE;
+        return TaskOption.getSchedulePhase(options);
     }
 
     /** @param phase 任务的调度阶段 */
     public TaskOptionBuilder setSchedulePhase(int phase) {
-        if (phase < 0 || phase > TaskOption.MASK_SCHEDULE_PHASE) {
-            throw new IllegalArgumentException("phase: " + phase);
-        }
-        this.options &= ~TaskOption.MASK_SCHEDULE_PHASE;
-        this.options |= phase;
+        this.options = TaskOption.setSchedulePhase(options, phase);
         return this;
     }
 

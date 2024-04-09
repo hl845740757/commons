@@ -123,17 +123,14 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         return this;
     }
 
+    /** 获取任务的调度阶段 */
     public int getSchedulePhase() {
-        return options & TaskOption.MASK_SCHEDULE_PHASE;
+        return TaskOption.getSchedulePhase(options);
     }
 
     /** @param phase 任务的调度阶段 */
     public TaskBuilder<V> setSchedulePhase(int phase) {
-        if (phase < 0 || phase > TaskOption.MASK_SCHEDULE_PHASE) {
-            throw new IllegalArgumentException("phase: " + phase);
-        }
-        this.options &= ~TaskOption.MASK_SCHEDULE_PHASE;
-        this.options |= phase;
+        this.options = TaskOption.setSchedulePhase(options, phase);
         return this;
     }
 
