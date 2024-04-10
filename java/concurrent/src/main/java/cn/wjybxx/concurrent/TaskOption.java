@@ -20,7 +20,6 @@ import cn.wjybxx.base.annotation.Beta;
 
 /**
  * 任务调度选项
- * 注意：用户只可使用低24位的option，高8位预留给系统，系统可能去除用户的高位bit信息。
  *
  * @author wjybxx
  * date 2023/4/14
@@ -28,52 +27,25 @@ import cn.wjybxx.base.annotation.Beta;
 public final class TaskOption {
 
     /**
-     * 低6位用于存储任务的调度阶段，取值[0, 31]，使用低位可以避免位移。
-     * 1.用于指定异步任务的调度时机。
-     * 2.主要用于{@link EventLoop}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
+     * 低位用于存储任务的调度阶段，取值[0, 63]，使用低位可以避免位移。
+     * 1. 用于指定异步任务的调度时机。
+     * 2. 主要用于{@link EventLoop}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
      */
-    public static final int MASK_SCHEDULE_PHASE = 31;
+    public static final int MASK_SCHEDULE_PHASE = 63;
 
     /**
-     * 延时任务的优先级，取值[0, 31]
-     * 1.当任务的触发时间相同时，按照优先级排序，值越低优先级越高。
+     * 延时任务的优先级，取值[0, 15]
+     * 1. 当任务的触发时间相同时，按照优先级排序，值越低优先级越高。
+     * 2. 由于0需要表示未设置优先级，因此Executor会对值进行偏移，通常而言是减1。
+     * 3. 优先级值的约定取决于各自的实现。
      */
     @Beta
-    public static final int MASK_PRIORITY = 31 << 5;
+    public static final int MASK_PRIORITY = 15 << 6;
 
     /**
-     * 是否是【低优先级】的【延时任务】
-     * 1. 定时任务默认是高优先级，普通提交的任务一样；
-     * 2. 低优先级任务是指：无需保证和非延时任务之间的执行时序，且在退出前可以不执行的任务；
-     * 3. 也就是说：让EventLoop优先级处理一般业务，空闲时再处理这些定时任务。
-     * 以代码说明：
-     * <pre>{@code
-     *      // 该任务可能在后续任务之后执行
-     *      executor.schedule(task, 0, timeunit, LOW_PRIORITY);
-     *      executor.submit(task);
-     * }</pre>
-     *
-     * @apiNote EventLoop可以不支持该特性，低优先任务延迟是可选优化项
-     */
-    public static final int LOW_PRIORITY = 1 << 10;
-
-    /**
-     * 是否是【中优先级】的【延时任务】
-     * 中优先级任务是指：需要保证【首次执行】和非延时任务之间的时序，进入循环阶段后可变为低优先级的任务。
-     * 以代码说明：
-     * <pre>{@code
-     *      // 该任务将在下一个submit之前执行，但进入循环阶段后，优先级低于非延时任务
-     *      executor.scheduleWithFixedDelay(task, 0, 1000, timeunit, MIDDLE_PRIORITY);
-     *      executor.submit(task);
-     * }</pre>
-     *
-     * @apiNote EventLoop可以不支持该特性，低优先任务延迟是可选优化项
-     */
-    public static final int MIDDLE_PRIORITY = 1 << 11;
-
-    /**
-     * 在执行该任务前必须先处理一次定时任务队列
-     * EventLoop收到具有该特征的任务时，需要更新时间戳，尝试执行该任务之前的所有定时任务。
+     * 事件循环在执行该任务前必须先处理一次定时任务队列。
+     * 1. EventLoop收到具有该特征的任务时，需要更新时间戳，尝试执行该任务之前的所有定时任务。
+     * 2. 该选项不一定能保证时序，因为存在时序依赖的任务可能同时提交成功。
      */
     public static final int SCHEDULE_BARRIER = 1 << 12;
 
@@ -133,11 +105,13 @@ public final class TaskOption {
     public static final int STAGE_CHECK_OBJECT_CTX = 1 << 21;
 
     // region util
+    /** 优先级的存储偏移量 */
+    public static final int OFFSET_PRIORITY = 6;
 
-    /** 用户可用的选项的掩码 */
-    public static final int MASK_USER_OPTIONS = 0x00FF_FFFF;
-    /** 保留选项的掩码 */
-    public static final int MASK_RESERVED_OPTIONS = 0xFF00_0000;
+    /** 调度阶段的最大值 */
+    public static final int MAX_SCHEDULE_PHASE = MASK_SCHEDULE_PHASE;
+    /** 优先级的最大值 */
+    public static final int MAX_PRIORITY = MASK_PRIORITY >> OFFSET_PRIORITY;
 
     /** 是否启用了所有选项 */
     public static boolean isEnabled(int flags, int option) {
@@ -187,5 +161,19 @@ public final class TaskOption {
         return options;
     }
 
+    /** 获取任务的优先级 */
+    public static int getPriority(int options) {
+        return (options & MASK_PRIORITY) >> OFFSET_PRIORITY;
+    }
+
+    /** 设置优先级 */
+    public static int setPriority(int options, int priority) {
+        if (priority < 0 || priority > MAX_PRIORITY) {
+            throw new IllegalArgumentException("priority: " + priority);
+        }
+        options &= ~MASK_PRIORITY;
+        options |= (priority << OFFSET_PRIORITY);
+        return options;
+    }
     // endregion
 }

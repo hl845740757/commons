@@ -54,7 +54,7 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     long NextTriggerTime { get; }
 
     /// <summary>
-    /// 是否已完成首次出发
+    /// 是否已完成首次触发
     /// </summary>
     bool IsTriggered { get; }
 

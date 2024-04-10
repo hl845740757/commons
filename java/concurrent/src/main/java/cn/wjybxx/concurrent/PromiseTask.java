@@ -32,16 +32,13 @@ import java.util.function.Function;
  */
 public class PromiseTask<V> implements IFutureTask<V> {
 
-    /**
-     * 优先级的掩码 -- 8bit，最大255。
-     * 1.放在低8位，减少运算，优先级的计算频率高于其它部分。
-     * 2.大于{@link TaskOption}的中的64阶段。
-     */
-    protected static final int MASK_PRIORITY = 0xFF;
-    /** 任务类型的掩码 -- 4bit，可省去大量的instanceof测试 */
-    protected static final int MASK_TASK_TYPE = 0x0F00;
-    /** 调度类型的掩码 -- 4bit，最大16种 */
-    protected static final int MASK_SCHEDULE_TYPE = 0xF000;
+    /** 优先级的掩码 - 4bit，求值频率较高，放在低位 */
+    protected static final int MASK_PRIORITY = 0x0F;
+    /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
+    protected static final int MASK_TASK_TYPE = 0xF0;
+    /** 调度类型的掩码 -- 4bit，最大16种，可支持复杂的调度 */
+    protected static final int MASK_SCHEDULE_TYPE = 0x0F00;
+
     /** 是否已经声明任务的归属权 */
     protected static final int MASK_CLAIMED = 1 << 16;
     /** 分时任务是否已启动 */
@@ -55,11 +52,11 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     protected static final int OFFSET_PRIORITY = 0;
     /** 任务类型的偏移量 */
-    protected static final int OFFSET_TASK_TYPE = 8;
+    protected static final int OFFSET_TASK_TYPE = 4;
     /** 调度类型的偏移量 */
-    protected static final int OFFSET_SCHEDULE_TYPE = 12;
-    /** 最大队列id */
-    protected static final int MAX_PRIORITY = 255;
+    protected static final int OFFSET_SCHEDULE_TYPE = 8;
+    /** 最大优先级 */
+    protected static final int MAX_PRIORITY = MASK_PRIORITY;
 
     /** 用户的任务 */
     private Object task;
@@ -143,43 +140,9 @@ public class PromiseTask<V> implements IFutureTask<V> {
         return task;
     }
 
-    /** 获取任务所属的队列id */
-    public final int getPriority() {
-        return (ctl & MASK_PRIORITY);
-    }
-
-    /** @param priority 任务的优先级，范围 [0, 255] */
-    public final void setPriority(int priority) {
-        if (priority < 0 || priority > MAX_PRIORITY) {
-            throw new IllegalArgumentException("priority: " + MAX_PRIORITY);
-        }
-        ctl &= ~MASK_PRIORITY;
-        ctl |= (priority);
-    }
-
     /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
     public final int getTaskType() {
         return (ctl & MASK_TASK_TYPE) >> OFFSET_TASK_TYPE;
-    }
-
-    /** 获取任务的调度类型 */
-    public final int getScheduleType() {
-        return (ctl & MASK_SCHEDULE_TYPE) >> OFFSET_SCHEDULE_TYPE;
-    }
-
-    /** 设置任务的调度类型 -- 应该在添加到队列之前设置 */
-    protected final void setScheduleType(int scheduleType) {
-        ctl |= (scheduleType << OFFSET_SCHEDULE_TYPE);
-    }
-
-    /** 是否已经声明任务的归属权 */
-    protected final boolean isClaimed() {
-        return (ctl & MASK_CLAIMED) != 0;
-    }
-
-    /** 将任务标记为已申领 */
-    protected final void setClaimed() {
-        ctl |= MASK_CLAIMED;
     }
 
     /** 分时任务是否启动 */

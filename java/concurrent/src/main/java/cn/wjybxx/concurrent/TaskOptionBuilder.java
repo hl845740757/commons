@@ -47,6 +47,17 @@ public class TaskOptionBuilder {
         return this;
     }
 
+    /** 获取任务优先级 */
+    public int getPriority() {
+        return TaskOption.getPriority(options);
+    }
+
+    /** 设置任务的优先级 */
+    public TaskOptionBuilder setPriority(int priority) {
+        options = TaskOption.setPriority(options, priority);
+        return this;
+    }
+
     public int getOptions() {
         return options;
     }

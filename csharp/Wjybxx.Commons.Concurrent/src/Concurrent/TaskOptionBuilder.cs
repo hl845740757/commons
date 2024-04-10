@@ -55,6 +55,14 @@ public struct TaskOptionBuilder
     }
 
     /// <summary>
+    /// 设置任务的优先级
+    /// </summary>
+    public int Priority {
+        get => TaskOption.GetPriority(options);
+        set => options = TaskOption.SetPriority(options, value);
+    }
+
+    /// <summary>
     /// 最终options
     /// </summary>
     public int Options {

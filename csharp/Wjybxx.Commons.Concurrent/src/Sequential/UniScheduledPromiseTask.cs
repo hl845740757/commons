@@ -156,8 +156,39 @@ public class UniScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T
         get => nextTriggerTime;
         set => nextTriggerTime = value;
     }
-    
-    public bool IsTriggered => GetCtlBit(PromiseTask.MASK_TRIGGERED);
+
+    /** 任务的调度类型 -- 应该在添加到队列之前设置 */
+    public int ScheduleType {
+        get => (ctl & PromiseTask.MASK_SCHEDULE_TYPE) >> PromiseTask.OFFSET_SCHEDULE_TYPE;
+        set => ctl |= (value << PromiseTask.OFFSET_SCHEDULE_TYPE);
+    }
+
+    /// <summary>
+    /// 任务的优先级，范围 [0, 255]
+    /// </summary>
+    /// <exception cref="ArgumentException"></exception>
+    public int Priority {
+        get => (ctl & PromiseTask.MASK_PRIORITY);
+        set {
+            if (value < 0 || value > PromiseTask.MAX_PRIORITY) {
+                throw new ArgumentException("priority: " + PromiseTask.MAX_PRIORITY);
+            }
+            ctl &= ~PromiseTask.MASK_PRIORITY;
+            ctl |= (value);
+        }
+    }
+
+    /** 是否已经声明任务的归属权 */
+    public bool IsClaimed => (ctl & PromiseTask.MASK_CLAIMED) != 0;
+
+    /** 将任务标记为已申领 */
+    public void SetClaimed() {
+        ctl |= PromiseTask.MASK_CLAIMED;
+    }
+
+    private void SetTriggered() => ctl |= PromiseTask.MASK_TRIGGERED;
+
+    public bool IsTriggered => (ctl & PromiseTask.MASK_TRIGGERED) != 0;
 
     public override IScheduledPromise<T> Future => (IScheduledPromise<T>)promise;
 
@@ -208,8 +239,8 @@ public class UniScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T
 
     public bool Trigger(long tickTime) {
         // 标记为已触发
-        SetCtlBit(PromiseTask.MASK_TRIGGERED, true);
-        
+        SetTriggered();
+
         int scheduleType = ScheduleType;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
             base.Run();

@@ -86,6 +86,22 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         return new ScheduledTaskBuilder<>(TYPE_TIMESHARING, task, ctx);
     }
 
+    /** 适用于禁止初始延迟小于0的情况 */
+    public static void validateInitialDelay(long initialDelay) {
+        if (initialDelay < 0) {
+            throw new IllegalArgumentException(
+                    String.format("initialDelay: %d (expected: >= 0)", initialDelay));
+        }
+    }
+
+    public static void validatePeriod(long period) {
+        if (period == 0) {
+            throw new IllegalArgumentException("period: 0 (expected: != 0)");
+        }
+    }
+
+    // endregion
+
     // region 调度方式
 
     public int getScheduleType() {
@@ -214,6 +230,8 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
 
     // endregion
 
+    // region overrides
+
     @Override
     public ScheduledTaskBuilder<V> enable(int taskOption) {
         super.enable(taskOption);
@@ -232,6 +250,11 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         return this;
     }
 
+    public ScheduledTaskBuilder<V> setPriority(int priority) {
+        super.setPriority(priority);
+        return this;
+    }
+
     @Override
     public ScheduledTaskBuilder<V> setOptions(int options) {
         super.setOptions(options);
@@ -244,19 +267,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         return this;
     }
 
-    /** 适用于禁止初始延迟小于0的情况 */
-    public static void validateInitialDelay(long initialDelay) {
-        if (initialDelay < 0) {
-            throw new IllegalArgumentException(
-                    String.format("initialDelay: %d (expected: >= 0)", initialDelay));
-        }
-    }
-
-    public static void validatePeriod(long period) {
-        if (period == 0) {
-            throw new IllegalArgumentException("period: 0 (expected: != 0)");
-        }
-    }
+    // endregion
 
     // endregion
 

@@ -29,7 +29,7 @@ import java.util.function.Function;
  * date - 2024/1/11
  */
 @NotThreadSafe
-public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
+public sealed class TaskBuilder<V> extends TaskOptionBuilder permits ScheduledTaskBuilder {
 
     public static final int TYPE_ACTION = 0;
     public static final int TYPE_ACTION_CTX = 1;
@@ -44,7 +44,6 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
     private final int type;
     private final Object task;
     private IContext ctx;
-    private int options = 0;
 
     protected TaskBuilder(int type, Object task) {
         this.task = Objects.requireNonNull(task);
@@ -59,10 +58,10 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
     }
 
     protected TaskBuilder(TaskBuilder<? extends V> taskBuilder) {
+        super.setOptions(taskBuilder.getOptions());
         this.task = taskBuilder.task;
         this.type = taskBuilder.type;
         this.ctx = taskBuilder.ctx;
-        this.options = taskBuilder.options;
     }
 
     // region factory
@@ -113,40 +112,7 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
     }
     // endregion
 
-    public TaskBuilder<V> enable(int taskOption) {
-        this.options = TaskOption.enable(options, taskOption);
-        return this;
-    }
-
-    public TaskBuilder<V> disable(int taskOption) {
-        this.options = TaskOption.disable(options, taskOption);
-        return this;
-    }
-
-    /** 获取任务的调度阶段 */
-    public int getSchedulePhase() {
-        return TaskOption.getSchedulePhase(options);
-    }
-
-    /** @param phase 任务的调度阶段 */
-    public TaskBuilder<V> setSchedulePhase(int phase) {
-        this.options = TaskOption.setSchedulePhase(options, phase);
-        return this;
-    }
-
-    public TaskBuilder<V> setOptions(int options) {
-        this.options = options;
-        return this;
-    }
-
-    /**
-     * 委托的上下文
-     * 即使用户的委托不接收ctx，executor也可能需要
-     */
-    public TaskBuilder<V> setCtx(IContext ctx) {
-        this.ctx = ctx == null ? IContext.NONE : ctx;
-        return this;
-    }
+    // region props
 
     /** 任务的类型 */
     public int getType() {
@@ -157,14 +123,50 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         return task;
     }
 
+    /** 任务的上下文 */
     public IContext getCtx() {
         return ctx;
     }
 
-    /** 任务的调度选项 */
-    public int getOptions() {
-        return options;
+    /**
+     * 任务的上下文
+     * 即使用户的任务不接收ctx，executor也可能需要
+     */
+    public TaskBuilder<V> setCtx(IContext ctx) {
+        this.ctx = ctx == null ? IContext.NONE : ctx;
+        return this;
     }
+
+    // endregion
+
+    // region options
+
+    public TaskBuilder<V> enable(int taskOption) {
+        super.enable(taskOption);
+        return this;
+    }
+
+    public TaskBuilder<V> disable(int taskOption) {
+        super.disable(taskOption);
+        return this;
+    }
+
+    public TaskBuilder<V> setSchedulePhase(int phase) {
+        super.setSchedulePhase(phase);
+        return this;
+    }
+
+    public TaskBuilder<V> setPriority(int priority) {
+        super.setPriority(priority);
+        return this;
+    }
+
+    public TaskBuilder<V> setOptions(int options) {
+        super.setOptions(options);
+        return this;
+    }
+
+    // endregion
 
     public ScheduledTaskBuilder<V> toScheduledBuilder() {
         if (this instanceof ScheduledTaskBuilder<V> sb) {

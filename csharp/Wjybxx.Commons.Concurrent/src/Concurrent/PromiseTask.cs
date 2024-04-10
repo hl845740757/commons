@@ -27,16 +27,13 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public interface PromiseTask
 {
-    /**
-     * 优先级的掩码 -- 8bit，最大255。
-     * 1.放在低8位，减少运算，优先级的计算频率高于其它部分。
-     * 2.大于{@link TaskOption}的中的64阶段。
-     */
-    protected const int MASK_PRIORITY = 0xFF;
-    /** 任务类型的掩码 -- 4bit，可省去大量的instanceof测试 */
-    protected const int MASK_TASK_TYPE = 0x0F00;
-    /** 调度类型的掩码 -- 4bit，最大16种 */
-    protected const int MASK_SCHEDULE_TYPE = 0xF000;
+    /** 优先级的掩码 - 4bit，求值频率较高，放在低位 */
+    protected const int MASK_PRIORITY = 0x0F;
+    /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
+    protected const int MASK_TASK_TYPE = 0xF0;
+    /** 调度类型的掩码 -- 4bit，最大16种，可支持复杂的调度 */
+    protected const int MASK_SCHEDULE_TYPE = 0x0F00;
+
     /** 是否已经声明任务的归属权 */
     protected const int MASK_CLAIMED = 1 << 16;
     /** 分时任务是否已启动 */
@@ -50,11 +47,11 @@ public interface PromiseTask
 
     protected const int OFFSET_PRIORITY = 0;
     /** 任务类型的偏移量 */
-    protected const int OFFSET_TASK_TYPE = 8;
+    protected const int OFFSET_TASK_TYPE = 4;
     /** 调度类型的偏移量 */
-    protected const int OFFSET_SCHEDULE_TYPE = 12;
-    /** 最大队列id */
-    protected const int MAX_QUEUE_ID = 255;
+    protected const int OFFSET_SCHEDULE_TYPE = 8;
+    /** 最大优先级 */
+    protected const int MAX_PRIORITY = MASK_PRIORITY;
 
     #region factory
 
@@ -154,37 +151,8 @@ public class PromiseTask<T> : IFutureTask<T>, PromiseTask
     /** 获取绑定的任务 */
     public object Task => task;
 
-    /// <summary>
-    /// 任务的优先级，范围 [0, 255]
-    /// </summary>
-    /// <exception cref="ArgumentException"></exception>
-    public int Priority {
-        get => (ctl & PromiseTask.MASK_PRIORITY);
-        set {
-            if (value < 0 || value > PromiseTask.MAX_QUEUE_ID) {
-                throw new ArgumentException("priority: " + PromiseTask.MAX_QUEUE_ID);
-            }
-            ctl &= ~PromiseTask.MASK_PRIORITY;
-            ctl |= (value);
-        }
-    }
-
     /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
     public int TaskType => (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
-
-    /** 任务的调度类型 -- 应该在添加到队列之前设置 */
-    public int ScheduleType {
-        get => (ctl & PromiseTask.MASK_SCHEDULE_TYPE) >> PromiseTask.OFFSET_SCHEDULE_TYPE;
-        set => ctl |= (value << PromiseTask.OFFSET_SCHEDULE_TYPE);
-    }
-
-    /** 是否已经声明任务的归属权 */
-    public bool IsClaimed => (ctl & PromiseTask.MASK_CLAIMED) != 0;
-
-    /** 将任务标记为已申领 */
-    public void SetClaimed() {
-        ctl |= PromiseTask.MASK_CLAIMED;
-    }
 
     /** 分时任务是否启动 */
     public bool IsStarted() {

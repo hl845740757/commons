@@ -127,9 +127,20 @@ public struct ScheduledTaskBuilder<T> : ScheduledTaskBuilder, TaskBuilder
         _core.Disable(taskOption);
     }
 
+    /// <summary>
+    /// 设置任务的调度阶段
+    /// </summary>
     public int SchedulePhase {
         get => _core.SchedulePhase;
         set => _core.SchedulePhase = value;
+    }
+
+    /// <summary>
+    /// 设置任务的优先级
+    /// </summary>
+    public int Priority {
+        get => _core.Priority;
+        set => _core.Priority = value;
     }
 
     #endregion

@@ -29,49 +29,24 @@ namespace Wjybxx.Commons.Concurrent;
 public static class TaskOption
 {
     /// <summary>
-    /// 低6位用于存储任务的调度阶段，取值[0, 31]，使用低位可以避免位移。
-    /// 1.用于指定异步任务的调度时机。
-    /// 2.主要用于{@link EventLoop}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
+    /// 低位用于存储任务的调度阶段，取值[0, 63]，使用低位可以避免位移。
+    /// 1. 用于指定异步任务的调度时机。
+    /// 2. 主要用于{@link EventLoop}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
     ///</summary>
-    public const int MASK_SCHEDULE_PHASE = 31;
+    public const int MASK_SCHEDULE_PHASE = 63;
 
     /// <summary>
-    /// 延时任务的优先级，取值[0, 31]。
-    /// 1.当任务的触发时间相同时，按照优先级排序，值越低优先级越高。
+    /// 延时任务的优先级，取值[0, 15]。
+    /// 1. 当任务的触发时间相同时，按照优先级排序，值越低优先级越高。
+    /// 2. 由于0需要表示未设置优先级，因此Executor会对值进行偏移，通常而言是减1。
+    /// 3. 优先级值的约定取决于各自的实现。
     /// </summary>
-    [Beta]
-    public const int MASK_PRIORITY = 31 << 5;
+    [Beta] public const int MASK_PRIORITY = 15 << 6;
 
     /// <summary>
-    /// 是否是【低优先级】的【延时任务】
-    /// 1. 定时任务默认是高优先级，普通提交的任务一样；
-    /// 2. 低优先级任务是指：无需保证和非延时任务之间的执行时序，且在退出前可以不执行的任务；
-    /// 3. 也就是说：让EventLoop优先级处理一般业务，空闲时再处理这些定时任务。
-    /// 以代码说明：
-    /// <code>
-    ///      // 该任务可能在后续任务之后执行
-    ///      executor.schedule(task, 0, timeunit, LOW_PRIORITY);
-    ///      executor.submit(task);
-    /// </code>
-    /// 注意：EventLoop可以不支持该特性，低优先任务延迟是可选优化项
-    ///</summary>
-    public const int LOW_PRIORITY = 1 << 10;
-    /// <summary>
-    /// 是否是【中优先级】的【延时任务】
-    /// 中优先级任务是指：需要保证【首次执行】和非延时任务之间的时序，进入循环阶段后可变为低优先级的任务。
-    /// 以代码说明：
-    /// <code>
-    ///      // 该任务将在下一个submit之前执行，但进入循环阶段后，优先级低于非延时任务
-    ///      executor.scheduleWithFixedDelay(task, 0, 1000, timeunit, MIDDLE_PRIORITY);
-    ///      executor.submit(task);
-    /// </code>
-    /// 注意：EventLoop可以不支持该特性，低优先任务延迟是可选优化项
-    ///</summary>
-    public const int MIDDLE_PRIORITY = 1 << 11;
-
-    /// <summary>
-    /// 在执行该任务前必须先处理一次定时任务队列
-    /// EventLoop收到具有该特征的任务时，需要更新时间戳，尝试执行该任务之前的所有定时任务。
+    /// 事件循环在执行该任务前必须先处理一次定时任务队列。
+    /// 1. EventLoop收到具有该特征的任务时，需要更新时间戳，尝试执行该任务之前的所有定时任务。
+    /// 2. 该选项不一定能保证时序，因为存在时序依赖的任务可能同时提交成功。
     ///</summary>
     public const int SCHEDULE_BARRIER = 1 << 12;
 
@@ -130,12 +105,15 @@ public static class TaskOption
     /// </summary>
     public const int STAGE_CHECK_OBJECT_CTX = 1 << 21;
 
-    // region util
+    #region util
 
-    /// <summary> 用户可用的选项的掩码 ///</summary>
-    public const int MASK_USER_OPTIONS = 0x00FF_FFFF;
-    /// <summary> 保留选项的掩码 ///</summary>
-    public const int MASK_RESERVED_OPTIONS = unchecked((int)0xFF00_0000);
+    /** 优先级的存储偏移量 */
+    public const int OFFSET_PRIORITY = 6;
+
+    /** 调度阶段的最大值 */
+    public const int MAX_SCHEDULE_PHASE = MASK_SCHEDULE_PHASE;
+    /** 优先级的最大值 */
+    public const int MAX_PRIORITY = MASK_PRIORITY >> OFFSET_PRIORITY;
 
     /// <summary> 是否启用了所有选项 ///</summary>
     public static bool IsEnabled(int flags, int option) {
@@ -200,7 +178,7 @@ public static class TaskOption
     /// <param name="phase">调度阶段</param>
     /// <returns>新的options</returns>
     public static int SetSchedulePhase(int options, int phase) {
-        if (phase < 0 || phase > MASK_SCHEDULE_PHASE) {
+        if (phase < 0 || phase > MAX_SCHEDULE_PHASE) {
             throw new ArgumentException("phase: " + phase);
         }
         options &= ~MASK_SCHEDULE_PHASE;
@@ -208,5 +186,29 @@ public static class TaskOption
         return options;
     }
 
-    // endregion
+    /// <summary>
+    /// 获取任务的优先级
+    /// </summary>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    public static int GetPriority(int options) {
+        return (options & MASK_PRIORITY) >> OFFSET_PRIORITY;
+    }
+
+    /// <summary>
+    /// 设置优先级
+    /// </summary>
+    /// <param name="options"></param>
+    /// <param name="priority"></param>
+    /// <returns></returns>
+    public static int SetPriority(int options, int priority) {
+        if (priority < 0 || priority > MAX_PRIORITY) {
+            throw new ArgumentException("priority: " + priority);
+        }
+        options &= ~MASK_PRIORITY;
+        options |= (priority << OFFSET_PRIORITY);
+        return options;
+    }
+
+    #endregion
 }

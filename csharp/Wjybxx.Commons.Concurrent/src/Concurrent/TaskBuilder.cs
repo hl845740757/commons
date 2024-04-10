@@ -115,7 +115,7 @@ public struct TaskBuilder<T> : TaskBuilder
     private readonly int type;
     private readonly object task;
     private IContext? context;
-    private int options;
+    private TaskOptionBuilder optionBuilder;
 
     /// <summary>
     /// 
@@ -127,7 +127,7 @@ public struct TaskBuilder<T> : TaskBuilder
         this.type = type;
         this.task = task ?? throw new ArgumentNullException(nameof(task));
         this.context = context;
-        this.options = 0;
+        this.optionBuilder = default;
     }
 
     #region factory
@@ -145,8 +145,8 @@ public struct TaskBuilder<T> : TaskBuilder
     public object Task => task;
 
     /// <summary>
-    /// 委托的上下文
-    /// 即使用户的委托不接收ctx，executor也可能需要
+    /// 任务的上下文
+    /// 即使用户的任务不接收ctx，executor也可能需要
     /// </summary>
     public IContext? Context {
         get => context;
@@ -157,8 +157,8 @@ public struct TaskBuilder<T> : TaskBuilder
     /// 任务的调度选项
     /// </summary>
     public int Options {
-        get => options;
-        set => options = value;
+        get => optionBuilder.Options;
+        set => optionBuilder.Options = value;
     }
 
     /// <summary>
@@ -166,7 +166,7 @@ public struct TaskBuilder<T> : TaskBuilder
     /// </summary>
     /// <param name="taskOption"></param>
     public void Enable(int taskOption) {
-        this.options = TaskOption.Enable(options, taskOption);
+        optionBuilder.Enable(taskOption);
     }
 
     /// <summary>
@@ -174,14 +174,22 @@ public struct TaskBuilder<T> : TaskBuilder
     /// </summary>
     /// <param name="taskOption"></param>
     public void Disable(int taskOption) {
-        this.options = TaskOption.Disable(options, taskOption);
+        optionBuilder.Disable(taskOption);
     }
 
     /// <summary>
-    /// 设置options中任务期望的调度阶段
+    /// 设置任务的调度阶段
     /// </summary>
     public int SchedulePhase {
-        get => TaskOption.GetSchedulePhase(options);
-        set => options = TaskOption.SetSchedulePhase(options, value);
+        get => optionBuilder.SchedulePhase;
+        set => optionBuilder.SchedulePhase = value;
+    }
+
+    /// <summary>
+    /// 设置任务的优先级
+    /// </summary>
+    public int Priority {
+        get => optionBuilder.Priority;
+        set => optionBuilder.Priority = value;
     }
 }

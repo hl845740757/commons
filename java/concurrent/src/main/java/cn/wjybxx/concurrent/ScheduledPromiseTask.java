@@ -154,8 +154,48 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         this.nextTriggerTime = nextTriggerTime;
     }
 
+    /** 获取任务的调度类型 */
+    public int getScheduleType() {
+        return (ctl & MASK_SCHEDULE_TYPE) >> OFFSET_SCHEDULE_TYPE;
+    }
+
+    /** 设置任务的调度类型 -- 应该在添加到队列之前设置 */
+    private void setScheduleType(int scheduleType) {
+        ctl |= (scheduleType << OFFSET_SCHEDULE_TYPE);
+    }
+
+    /** 是否已经声明任务的归属权 */
+    private boolean isClaimed() {
+        return (ctl & MASK_CLAIMED) != 0;
+    }
+
+    /** 将任务标记为已申领 */
+    private void setClaimed() {
+        ctl |= MASK_CLAIMED;
+    }
+
+    /** 获取任务所属的队列id */
+    public int getPriority() {
+        return (ctl & MASK_PRIORITY);
+    }
+
+    /** @param priority 任务的优先级，范围 [0, 255] */
+    public void setPriority(int priority) {
+        if (priority < 0 || priority > MAX_PRIORITY) {
+            throw new IllegalArgumentException("priority: " + MAX_PRIORITY);
+        }
+        ctl &= ~MASK_PRIORITY;
+        ctl |= (priority);
+    }
+
+    /** 将任务标记为已触发过 */
+    public void setTriggered() {
+        ctl |= MASK_TRIGGERED;
+    }
+
+    /** 任务是否触发过 */
     public boolean isTriggered() {
-        return getCtlBit(MASK_TRIGGERED);
+        return (ctl & MASK_TRIGGERED) != 0;
     }
 
     @Override
@@ -219,7 +259,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
      */
     public boolean trigger(long tickTime) {
         // 标记为已触发
-        setCtlBit(MASK_TRIGGERED, true);
+        setTriggered();
 
         final int scheduleType = getScheduleType();
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
