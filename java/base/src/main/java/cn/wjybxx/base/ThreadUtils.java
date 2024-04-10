@@ -37,9 +37,8 @@ public class ThreadUtils {
             StackWalker.Option.RETAIN_CLASS_REFERENCE));
 
     /** 清除中断 */
-    public static void clearInterrupted() {
-        //noinspection ResultOfMethodCallIgnored
-        Thread.interrupted();
+    public static boolean clearInterrupted() {
+        return Thread.interrupted();
     }
 
     /** 恢复中断 */

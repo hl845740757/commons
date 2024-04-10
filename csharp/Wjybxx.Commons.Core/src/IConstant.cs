@@ -47,7 +47,6 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
     /// <summary>
     /// 常量对象构建器
     /// </summary>
-    /// <typeparam name="T"></typeparam>
     public abstract class Builder
     {
         private int? _id;
