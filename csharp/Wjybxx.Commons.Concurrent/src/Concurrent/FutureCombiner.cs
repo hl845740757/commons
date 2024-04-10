@@ -235,7 +235,7 @@ public sealed class FutureCombiner
         }
     }
 
-    private static object NIL = new object();
+    private static readonly object NIL = new object();
 
     private static object EncodeValue(object? val) {
         return val == null ? NIL : val;

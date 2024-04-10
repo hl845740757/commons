@@ -26,17 +26,17 @@ public static class RejectedExecutionHandlers
     /// <summary>
     /// 抛出拒绝异常
     /// </summary>
-    public static readonly RejectedExecutionHandler Abort = new AbortHandler();
+    public static readonly RejectedExecutionHandler ABORT = new AbortHandler();
 
     /// <summary>
     /// 丢弃被拒绝的任务
     /// </summary>
-    public static readonly RejectedExecutionHandler Discard = new DiscardHandler();
+    public static readonly RejectedExecutionHandler DISCARD = new DiscardHandler();
 
     /// <summary>
     /// 在调用者线程执行任务（同步立即执行）
     /// </summary>
-    public static readonly RejectedExecutionHandler CallerRuns = new CallerRun();
+    public static readonly RejectedExecutionHandler CALLER_RUNS = new CallerRun();
 
     private class AbortHandler : RejectedExecutionHandler
     {

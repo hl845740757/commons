@@ -24,7 +24,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public sealed class MiniContext : IContext
 {
-    public static readonly MiniContext Sharable = new MiniContext(null, ICancelToken.NONE);
+    public static readonly MiniContext SHARABLE = new MiniContext(null, ICancelToken.NONE);
 
 #nullable disable
     /// <summary>
@@ -44,7 +44,7 @@ public sealed class MiniContext : IContext
     }
 
     public static MiniContext OfState(object? state) {
-        if (state == null) return Sharable;
+        if (state == null) return SHARABLE;
         return new MiniContext(state, null);
     }
 
@@ -53,7 +53,7 @@ public sealed class MiniContext : IContext
     }
 
     public static MiniContext OfCancelToken(ICancelToken? cancelToken) {
-        if (cancelToken == ICancelToken.NONE) return Sharable;
+        if (cancelToken == ICancelToken.NONE) return SHARABLE;
         return new MiniContext(null, cancelToken);
     }
 
@@ -61,6 +61,6 @@ public sealed class MiniContext : IContext
     public object? SharedProps => null;
 
     public IContext ToSharable() {
-        return Sharable;
+        return SHARABLE;
     }
 }

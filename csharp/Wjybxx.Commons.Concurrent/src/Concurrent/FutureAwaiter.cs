@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public readonly struct FutureAwaiter : ICriticalNotifyCompletion
 {
-    private static readonly Action<IFuture, object> Invoker = (_, state) => ((Action)state).Invoke();
+    private static readonly Action<IFuture, object> INVOKER = (_, state) => ((Action)state).Invoke();
 
     private readonly IFuture future;
 
@@ -66,11 +66,11 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     /// </summary>
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
-        future.OnCompleted(Invoker, continuation);
+        future.OnCompleted(INVOKER, continuation);
     }
 
     public void UnsafeOnCompleted(Action continuation) {
-        future.OnCompleted(Invoker, continuation);
+        future.OnCompleted(INVOKER, continuation);
     }
 }
 
@@ -80,7 +80,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
 /// <typeparam name="T"></typeparam>
 public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
 {
-    private static readonly Action<IFuture<T>, object> Invoker = (_, state) => ((Action)state).Invoke();
+    private static readonly Action<IFuture<T>, object> INVOKER = (_, state) => ((Action)state).Invoke();
 
     private readonly IFuture<T> future;
 
@@ -114,10 +114,10 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// </summary>
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
-        future.OnCompleted(Invoker, continuation);
+        future.OnCompleted(INVOKER, continuation);
     }
 
     public void UnsafeOnCompleted(Action continuation) {
-        future.OnCompleted(Invoker, continuation);
+        future.OnCompleted(INVOKER, continuation);
     }
 }

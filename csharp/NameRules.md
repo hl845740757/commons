@@ -2,25 +2,25 @@
 
 公共认知：
 
-1. 小写表示变量，下划线强调私有。
-2. 大写表示方法，以及实质为方法的属性。
+1. **小写表示变量**，下划线强调私有。
+2. **大写表示方法**，以及实质为方法的属性。
 3. 下划线可用于方法分组。
 
 指导思想：
 
-1. 不同概念的东西就应该使用不同的命名规则 —— 字段和方法。
+1. **不同概念的东西就应该使用不同的命名规则** —— 字段和方法。
 2. 相似概念的东西就应该使用类似的命名规则 —— 属性和方法。
 
 ---
 
-## 私有变量(private)
+## 实例私有变量\(private)
 
-1. _lowerCamelCase
+1. _lowerCamelCase \(强调私有)
 2. lowerCamelCase
 
 私有变量推荐使用下划线前缀，开放给其它类的internal变量建议使用小驼峰。
 
-## 开放变量(not private)
+## 实例开放变量\(not private)
 
 1. lowerCamelCase
 
@@ -39,23 +39,31 @@
     }
 ```
 
-## 静态变量
+## 静态私有变量\(private)
 
-1. UpperCamelCase
-2. s_UpperCamelCase
+1. lowerCamelCase
+2. ALL_UPPER \(类似常量)
+3. _lowerCamelCase \(强调私有)
 
-一般情况下使用大驼峰，当需要避免命名冲突的时候可使用`s_`作用域前缀。
+## 静态开放变量\(not private)
+
+1. lowerCamelCase
+2. ALL_UPPER \(类似常量)
+
+Q：为什么不使用C#推荐的大驼峰风格？  
+A：对于静态字段和非静态字段，我们已经在使用方式上存在了明显区别，因此仍建议命名突显方法和字段的区别，即：**小驼峰表示字段，大驼峰表示方法和属性**。
 
 ```csharp
-    // 静态变量使用大驼峰
-    public static readonly Object Nil = new Object()l
-    // 's_'前缀可避免命名冲突，类似包括 'g_'
-    public static int s_Count = 0;
+    // 普通静态字段
+    public static int count = 0;
+    // 类似常量
+    public static readonly Object NIL = new Object();
+    
 ```
 
 ## 常量
 
-1. ALL_UPPER
+1. ALL_UPPER \(和其它语言一致)
 2. UpperCamelCase
 
 全大写加下划线风格主要为保持和其它语言一致，避免切换语言时带来的额外负担。
@@ -83,7 +91,7 @@
 ## 方法
 
 1. UpperCamelCase
-2. UpperCamelCase_UpperCamelCase （用于分组）
+2. UpperCamelCase_UpperCamelCase （强调分组）
 
 一般情况下，方法和属性都应该遵循大驼峰命名规则。
 

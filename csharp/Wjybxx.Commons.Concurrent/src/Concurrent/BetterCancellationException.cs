@@ -30,7 +30,7 @@ public class BetterCancellationException : OperationCanceledException
     /// <summary>
     /// 取消码
     /// </summary>
-    public readonly int Code;
+    public int Code { get; }
 
     public BetterCancellationException(int code) {
         this.Code = ICancelToken.CheckCode(code);

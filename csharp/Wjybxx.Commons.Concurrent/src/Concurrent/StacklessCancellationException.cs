@@ -27,10 +27,10 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public sealed class StacklessCancellationException : BetterCancellationException
 {
-    public static readonly StacklessCancellationException Inst1 = new StacklessCancellationException(1);
-    private static readonly StacklessCancellationException Inst2 = new StacklessCancellationException(2);
-    private static readonly StacklessCancellationException Inst3 = new StacklessCancellationException(3);
-    private static readonly StacklessCancellationException Inst4 = new StacklessCancellationException(4);
+    public static readonly StacklessCancellationException INST1 = new StacklessCancellationException(1);
+    private static readonly StacklessCancellationException INST2 = new StacklessCancellationException(2);
+    private static readonly StacklessCancellationException INST3 = new StacklessCancellationException(3);
+    private static readonly StacklessCancellationException INST4 = new StacklessCancellationException(4);
 
     public StacklessCancellationException(int code) : base(code) {
     }
@@ -49,10 +49,10 @@ public sealed class StacklessCancellationException : BetterCancellationException
     public static StacklessCancellationException InstOf(int code) {
         return code switch
         {
-            1 => Inst1,
-            2 => Inst2,
-            3 => Inst3,
-            4 => Inst4,
+            1 => INST1,
+            2 => INST2,
+            3 => INST3,
+            4 => INST4,
             _ => new StacklessCancellationException(code)
         };
     }

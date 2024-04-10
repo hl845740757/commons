@@ -26,7 +26,7 @@ namespace Wjybxx.Commons.Concurrent;
 public class EmptyAgent<TEvent> : IEventLoopAgent<TEvent> where TEvent : IAgentEvent
 {
     /** 默认实例 */
-    public static readonly EmptyAgent<TEvent> Inst = new EmptyAgent<TEvent>();
+    public static readonly EmptyAgent<TEvent> INST = new EmptyAgent<TEvent>();
 
     private EmptyAgent() {
     }

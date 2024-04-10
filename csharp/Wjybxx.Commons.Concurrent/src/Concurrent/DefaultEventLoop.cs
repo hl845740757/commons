@@ -97,8 +97,8 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
 
         _waitTaskSpinTries = builder.WaitTaskSpinTries;
         _taskBatchSize = Math.Clamp(builder.BatchSize, MIN_BATCH_SIZE, MAX_BATCH_SIZE);
-        _rejectedExecutionHandler = builder.RejectedExecutionHandler ?? RejectedExecutionHandlers.Abort;
-        _agent = builder.Agent ?? EmptyAgent<IAgentEvent>.Inst;
+        _rejectedExecutionHandler = builder.RejectedExecutionHandler ?? RejectedExecutionHandlers.ABORT;
+        _agent = builder.Agent ?? EmptyAgent<IAgentEvent>.INST;
         _mainModule = builder.MainModule;
     }
 

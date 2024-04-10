@@ -270,7 +270,7 @@ public class UniScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T
             if (HasTimeout) {
                 timeoutContext.BeforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE);
                 if (TaskOption.IsEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeoutContext.IsTimeout()) {
-                    promise.TrySetException(StacklessTimeoutException.Inst);
+                    promise.TrySetException(StacklessTimeoutException.INST);
                     Clear();
                     return false;
                 }
@@ -287,7 +287,7 @@ public class UniScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T
             }
             // 未被取消的情况下检测超时
             if (HasTimeout && timeoutContext.IsTimeout()) {
-                promise.TrySetException(StacklessTimeoutException.Inst);
+                promise.TrySetException(StacklessTimeoutException.INST);
                 Clear();
                 return false;
             }

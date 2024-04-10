@@ -28,10 +28,10 @@ namespace Wjybxx.Commons.Concurrent;
 public class EventLoopBuilder
 {
     private IEventLoopGroup? _parent;
-    private RejectedExecutionHandler _rejectedExecutionHandler = RejectedExecutionHandlers.Abort;
+    private RejectedExecutionHandler _rejectedExecutionHandler = RejectedExecutionHandlers.ABORT;
     private ThreadFactory? _threadFactory;
 
-    private IEventLoopAgent<IAgentEvent>? _agent = EmptyAgent<IAgentEvent>.Inst;
+    private IEventLoopAgent<IAgentEvent>? _agent = EmptyAgent<IAgentEvent>.INST;
     private IEventLoopModule? _mainModule;
     private int _waitTaskSpinTries = 10;
     private int _batchSize = 1024;

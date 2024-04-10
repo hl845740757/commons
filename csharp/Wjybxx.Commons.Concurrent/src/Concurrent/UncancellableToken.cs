@@ -25,7 +25,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 sealed class UncancellableToken : ICancelToken
 {
-    public static readonly UncancellableToken Inst = new UncancellableToken();
+    public static readonly UncancellableToken INST = new UncancellableToken();
 
     private UncancellableToken() {
     }
