@@ -19,10 +19,7 @@ package cn.wjybxx.sequential;
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
 import cn.wjybxx.base.time.TimeProvider;
-import cn.wjybxx.concurrent.EventLoopState;
-import cn.wjybxx.concurrent.ICancelToken;
-import cn.wjybxx.concurrent.IFuture;
-import cn.wjybxx.concurrent.IFutureTask;
+import cn.wjybxx.concurrent.*;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -102,7 +99,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
         if (isShuttingDown()) {
             // 暂时直接取消
             if (command instanceof IFutureTask<?> promiseTask) {
-                promiseTask.future().trySetCancelled(ICancelToken.REASON_SHUTDOWN);
+                promiseTask.future().trySetCancelled(CancelCodes.REASON_SHUTDOWN);
             }
             return;
         }

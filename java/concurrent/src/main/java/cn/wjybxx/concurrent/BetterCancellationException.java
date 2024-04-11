@@ -30,12 +30,12 @@ public class BetterCancellationException extends CancellationException {
 
     public BetterCancellationException(int code) {
         super(formatMessage(code, null));
-        this.code = ICancelToken.checkCode(code);
+        this.code = CancelCodes.checkCode(code);
     }
 
     public BetterCancellationException(int code, String message) {
         super(formatMessage(code, message));
-        this.code = ICancelToken.checkCode(code);
+        this.code = CancelCodes.checkCode(code);
     }
 
     /** 取消码 */

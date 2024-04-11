@@ -57,7 +57,7 @@ public class UniCancelTokenSource : ICancelTokenSource
     public UniCancelTokenSource(IUniScheduledExecutor? executor, int code = 0) {
         this.executor = executor;
         if (code != 0) {
-            this.code = ICancelToken.CheckCode(code);
+            this.code = CancelCodes.CheckCode(code);
         }
     }
 
@@ -138,8 +138,8 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     #region tokenSource
 
-    public int Cancel(int cancelCode = ICancelToken.REASON_DEFAULT) {
-        ICancelToken.CheckCode(cancelCode);
+    public int Cancel(int cancelCode = CancelCodes.REASON_DEFAULT) {
+        CancelCodes.CheckCode(cancelCode);
         int preCode = InternalCancel(cancelCode);
         if (preCode != 0) {
             return preCode;
@@ -188,17 +188,15 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     public int CancelCode => code;
 
-    public bool IsCancelling() => code != 0;
+    public bool IsCancelling => code != 0;
 
-    public int Reason() => ICancelToken.Reason(code);
+    public int Reason => CancelCodes.GetReason(code);
 
-    public int Degree() => ICancelToken.Degree(code);
+    public int Degree => CancelCodes.GetDegree(code);
 
-    public bool IsInterruptible() => ICancelToken.IsInterruptible(code);
+    public bool IsInterruptible => CancelCodes.IsInterruptible(code);
 
-    public bool IsWithoutRemove() {
-        return ICancelToken.IsWithoutRemove(code);
-    }
+    public bool IsWithoutRemove => CancelCodes.IsWithoutRemove(code);
 
     public void CheckCancel() {
         int code = this.code;
@@ -224,7 +222,7 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     private IRegistration PushUniAccept(IExecutor? executor, Action<ICancelToken> action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelling() && executor == null) {
+        if (IsCancelling && executor == null) {
             UniAccept.FireNow(this, action);
             return TOMBSTONE;
         }
@@ -247,7 +245,7 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     private IRegistration PushUniAcceptCtx(IExecutor? executor, Action<ICancelToken, object> action, object? state, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelling() && executor == null) {
+        if (IsCancelling && executor == null) {
             UniAcceptCtx.FireNow(this, action, state);
             return TOMBSTONE;
         }
@@ -270,7 +268,7 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     private IRegistration PushUniRun(IExecutor? executor, Action action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelling() && executor == null) {
+        if (IsCancelling && executor == null) {
             UniRun.FireNow(this, action);
             return TOMBSTONE;
         }
@@ -293,7 +291,7 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     private IRegistration PushUniRunCtx(IExecutor? executor, Action<object> action, object? state, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelling() && executor == null) {
+        if (IsCancelling && executor == null) {
             UniRunCtx.FireNow(this, action, state);
             return TOMBSTONE;
         }
@@ -316,7 +314,7 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     private IRegistration PushUniNotify(IExecutor? executor, ICancelTokenListener action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelling() && executor == null) {
+        if (IsCancelling && executor == null) {
             UniNotify.FireNow(this, action);
             return TOMBSTONE;
         }
@@ -339,7 +337,7 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     private IRegistration PushUniTransfer(IExecutor? executor, ICancelTokenSource action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelling() && executor == null) {
+        if (IsCancelling && executor == null) {
             UniTransferTo.FireNow(this, SYNC, action);
             return TOMBSTONE;
         }
@@ -409,7 +407,7 @@ public class UniCancelTokenSource : ICancelTokenSource
     }
 
     private bool PushCompletion(Completion node) {
-        if (IsCancelling()) {
+        if (IsCancelling) {
             node.TryFire(SYNC);
             return false;
         }
@@ -546,7 +544,7 @@ public class UniCancelTokenSource : ICancelTokenSource
         protected bool IsCancelling(object? ctx) {
             return TaskOption.IsEnabled(options, TaskOption.STAGE_CHECK_OBJECT_CTX)
                    && ctx is IContext ctx2
-                   && ctx2.CancelToken.IsCancelling();
+                   && ctx2.CancelToken.IsCancelling;
         }
     }
 

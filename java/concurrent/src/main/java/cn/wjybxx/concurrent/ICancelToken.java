@@ -19,7 +19,6 @@ package cn.wjybxx.concurrent;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -86,7 +85,7 @@ public interface ICancelToken {
     /**
      * 取消码
      * 1. 按bit位存储信息，包括是否请求中断，是否超时，紧急程度等
-     * 2. 低20位为取消原因；高12位为特殊信息 {@link #MASK_REASON}
+     * 2. 低20位为取消原因；高12位为特殊信息 {@link CancelCodes#MASK_REASON}
      * 3. 不为0表示已发起取消请求
      * 4. 取消时至少赋值一个信息，reason通常应该赋值
      */
@@ -105,22 +104,22 @@ public interface ICancelToken {
      * (1~10为底层使用，10以上为用户自定义)T
      */
     default int reason() {
-        return reason(cancelCode());
+        return CancelCodes.getReason(cancelCode());
     }
 
     /** 取消的紧急程度 */
     default int degree() {
-        return degree(cancelCode());
+        return CancelCodes.getDegree(cancelCode());
     }
 
     /** 取消指令中是否要求了中断线程 */
     default boolean isInterruptible() {
-        return isInterruptible(cancelCode());
+        return CancelCodes.isInterruptible(cancelCode());
     }
 
     /** 取消指令中是否要求了无需删除 */
     default boolean isWithoutRemove() {
-        return isWithoutRemove(cancelCode());
+        return CancelCodes.isWithoutRemove(cancelCode());
     }
 
     /**
@@ -233,86 +232,6 @@ public interface ICancelToken {
     IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child, int options);
 
     // endregion
-
-    // endregion
-
-    // region static
-
-    /**
-     * 原因的掩码
-     * 1.如果cancelCode不包含其它信息，就等于reason
-     * 2.设定为20位，可达到100W
-     */
-    int MASK_REASON = 0xFFFFF;
-    /** 紧迫程度的掩码（4it）-- 0表示未指定 */
-    int MASK_DEGREE = 0x00F0_0000;
-    /** 预留4bit */
-    int MASK_REVERSED = 0x0F00_0000;
-    /** 中断的掩码 （1bit） */
-    int MASK_INTERRUPT = 1 << 28;
-    /** 告知任务无需执行删除逻辑 -- 慎用 */
-    int MASK_WITHOUT_REMOVE = 1 << 29;
-    /** 表示取消信号来自Future的取消接口 */
-    int MASK_FROM_FUTURE = 1 << 30;
-
-    /** 最大取消原因 */
-    int MAX_REASON = MASK_REASON;
-    /** 最大紧急程度 */
-    int MAX_DEGREE = 15;
-
-    /** 取消原因的偏移量 */
-    int OFFSET_REASON = 0;
-    /** 紧急度的偏移量 */
-    int OFFSET_DEGREE = 20;
-
-    /** 默认原因 */
-    int REASON_DEFAULT = 1;
-    /** 执行超时 -- {@link ICancelTokenSource#cancelAfter(int, long, TimeUnit)}就可使用 */
-    int REASON_TIMEOUT = 2;
-    /** Executor关闭 -- Executor关闭不一定会取消任务 */
-    int REASON_SHUTDOWN = 3;
-
-    /** 取消码是否表示已收到取消信号 */
-    static boolean isCancelling(int code) {
-        return code != 0;
-    }
-
-    /** 计算取消码中的原因 */
-    static int reason(int code) {
-        return code & MASK_REASON;
-    }
-
-    /** 计算取消码终归的紧急程度 */
-    static int degree(int code) {
-        return (code & MASK_DEGREE) >>> OFFSET_DEGREE;
-    }
-
-    /** 取消指令中是否要求了中断线程 */
-    static boolean isInterruptible(int code) {
-        return (code & MASK_INTERRUPT) != 0;
-    }
-
-    /** 取消指令中是否要求了无需删除 */
-    static boolean isWithoutRemove(int code) {
-        return (code & MASK_WITHOUT_REMOVE) != 0;
-    }
-
-    /** 取消信号是否来自future接口 */
-    static boolean isFromFuture(int code) {
-        return (code & MASK_FROM_FUTURE) != 0;
-    }
-
-    /**
-     * 检查取消码的合法性
-     *
-     * @return argument
-     */
-    static int checkCode(int code) {
-        if (reason(code) == 0) {
-            throw new IllegalArgumentException("reason is absent");
-        }
-        return code;
-    }
 
     // endregion
 

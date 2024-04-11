@@ -217,8 +217,8 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         AbstractScheduledEventLoop eventLoop = EventLoop;
         IPromise<T> promise = this.promise;
         IContext context = this.context;
-        if (promise.IsDone || context.CancelToken.IsCancelling()) {
-            CancelWithoutRemove(ICancelToken.REASON_DEFAULT);
+        if (promise.IsDone || context.CancelToken.IsCancelling) {
+            CancelWithoutRemove(CancelCodes.REASON_DEFAULT);
             return;
         }
         long tickTime = eventLoop.TickTime;
@@ -243,7 +243,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
 
         IPromise<T> promise = this.promise;
         IContext context = this.context;
-        if (context.CancelToken.IsCancelling()) {
+        if (context.CancelToken.IsCancelling) {
             TrySetCancelled(promise, context);
             Clear();
             return false;
@@ -274,7 +274,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
             RunTask();
 
             // 任务执行后检测取消
-            if (context.CancelToken.IsCancelling() || !promise.IsComputing) {
+            if (context.CancelToken.IsCancelling || !promise.IsComputing) {
                 TrySetCancelled(promise, context);
                 Clear();
                 return false;
@@ -321,7 +321,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     }
 
     /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */
-    public void CancelWithoutRemove(int code = ICancelToken.REASON_SHUTDOWN) {
+    public void CancelWithoutRemove(int code = CancelCodes.REASON_SHUTDOWN) {
         TrySetCancelled(promise, context, code);
         Clear();
     }
@@ -340,7 +340,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
 
     public void OnCancelRequested(ICancelToken cancelToken) {
         // 用户通过令牌发起取消
-        if (promise.TrySetCancelled(cancelToken.CancelCode) && !cancelToken.IsWithoutRemove()) {
+        if (promise.TrySetCancelled(cancelToken.CancelCode) && !cancelToken.IsWithoutRemove) {
             EventLoop.RemoveScheduled(this);
         }
     }

@@ -244,7 +244,7 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
         IPromise<V> promise = this.promise;
         // 未及时从队列删除；不要尝试优化，可能尚未到触发时间
         if (promise.isDone() || ctx.cancelToken().isCancelling()) {
-            cancelWithoutRemove(ICancelToken.REASON_DEFAULT);
+            cancelWithoutRemove(CancelCodes.REASON_DEFAULT);
             return;
         }
         long tickTime = eventLoop.tickTime();
@@ -362,7 +362,7 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
 
     /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */
     public void cancelWithoutRemove() {
-        cancelWithoutRemove(ICancelToken.REASON_SHUTDOWN);
+        cancelWithoutRemove(CancelCodes.REASON_SHUTDOWN);
     }
 
     /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */

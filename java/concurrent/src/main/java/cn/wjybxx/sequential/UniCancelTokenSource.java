@@ -74,7 +74,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     public UniCancelTokenSource(UniScheduledExecutor executor, int code) {
         this.executor = executor;
         if (code != 0) {
-            this.code = ICancelToken.checkCode(code);
+            this.code = CancelCodes.checkCode(code);
         }
     }
 
@@ -177,7 +177,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
      * @throws UnsupportedOperationException 如果context是只读的
      */
     public int cancel(int cancelCode) {
-        ICancelToken.checkCode(cancelCode);
+        CancelCodes.checkCode(cancelCode);
         int preCode = internalCancel(cancelCode);
         if (preCode != 0) {
             return preCode;
@@ -188,7 +188,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     /** 使用默认原因取消 */
     public int cancel() {
-        return cancel(REASON_DEFAULT);
+        return cancel(CancelCodes.REASON_DEFAULT);
     }
 
     /**
@@ -271,22 +271,22 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     @Override
     public int reason() {
-        return ICancelToken.reason(code);
+        return CancelCodes.getReason(code);
     }
 
     @Override
     public int degree() {
-        return ICancelToken.degree(code);
+        return CancelCodes.getDegree(code);
     }
 
     @Override
     public boolean isInterruptible() {
-        return ICancelToken.isInterruptible(code);
+        return CancelCodes.isInterruptible(code);
     }
 
     @Override
     public boolean isWithoutRemove() {
-        return ICancelToken.isWithoutRemove(code);
+        return CancelCodes.isWithoutRemove(code);
     }
 
     @Override

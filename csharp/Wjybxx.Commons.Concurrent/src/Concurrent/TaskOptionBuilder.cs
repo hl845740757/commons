@@ -33,17 +33,17 @@ public struct TaskOptionBuilder
     /// <summary>
     /// 启用选项
     /// </summary>
-    /// <param name="taskOption"></param>
-    public void Enable(int taskOption) {
-        options |= taskOption;
+    /// <param name="optionMask"></param>
+    public void Enable(int optionMask) {
+        options |= optionMask;
     }
 
     /// <summary>
     /// 禁用选项
     /// </summary>
-    /// <param name="taskOption"></param>
-    public void Disable(int taskOption) {
-        options &= ~taskOption;
+    /// <param name="optionMask"></param>
+    public void Disable(int optionMask) {
+        options &= ~optionMask;
     }
 
     /// <summary>

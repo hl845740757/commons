@@ -184,7 +184,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
 
     public override void Shutdown() {
         if (!_runningPromise.IsDone) { // 尚未启动成功就关闭
-            _runningPromise.TrySetCancelled(ICancelToken.REASON_SHUTDOWN);
+            _runningPromise.TrySetCancelled(CancelCodes.REASON_SHUTDOWN);
         }
         int expectedState = _state;
         for (;;) {
@@ -224,7 +224,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
         if (oldState == ST_NOT_STARTED) {
             _state = ST_TERMINATED;
 
-            _runningPromise.TrySetCancelled(ICancelToken.REASON_SHUTDOWN);
+            _runningPromise.TrySetCancelled(CancelCodes.REASON_SHUTDOWN);
             _terminationPromise.TrySetResult(null);
         } else {
             // 在C#的实现中，暂未实现复杂的生产者消费者协调策略，因此此处暂只需要唤醒线程

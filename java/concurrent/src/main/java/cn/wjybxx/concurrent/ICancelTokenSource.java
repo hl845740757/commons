@@ -41,7 +41,7 @@ public interface ICancelTokenSource extends ICancelToken {
 
     /** 使用默认原因取消 */
     default int cancel() {
-        return cancel(REASON_DEFAULT); // 末位1，默认情况
+        return cancel(CancelCodes.REASON_DEFAULT); // 末位1，默认情况
     }
 
     /**
@@ -51,8 +51,8 @@ public interface ICancelTokenSource extends ICancelToken {
      */
     default int cancel(boolean mayInterruptIfRunning) {
         return cancel(mayInterruptIfRunning
-                ? (REASON_DEFAULT & MASK_INTERRUPT)
-                : REASON_DEFAULT);
+                ? (CancelCodes.REASON_DEFAULT & CancelCodes.MASK_INTERRUPT)
+                : CancelCodes.REASON_DEFAULT);
     }
 
     /**

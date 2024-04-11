@@ -16,6 +16,8 @@
 
 #endregion
 
+using System.Runtime.CompilerServices;
+
 namespace Wjybxx.Commons;
 
 /// <summary>
@@ -23,29 +25,34 @@ namespace Wjybxx.Commons;
 /// </summary>
 public class BitFlags
 {
-    //region int
+    #region int
 
     /** 是否设置了任意bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsSet(int flags, int mask) {
         return (flags & mask) != 0;
     }
 
     /** 是否设置了所有bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsAllSet(int flags, int mask) {
         return (flags & mask) == mask;
     }
 
     /** 启用指定bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Set(int flags, int mask) {
         return flags | mask;
     }
 
     /** 删除指定bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Unset(int flags, int mask) {
         return (flags & ~mask);
     }
 
     /** 设置指定bit位 -- 全0或全1 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Set(int flags, int mask, bool enable) {
         if (enable) {
             return (flags | mask);
@@ -55,18 +62,21 @@ public class BitFlags
     }
 
     /** 是否设置了指定下标的bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsSetAt(int flags, int idx) {
         int mask = 1 << idx;
         return (flags & mask) != 0;
     }
 
     /** 是否未设置指定下标的bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsNotSetAt(int flags, int idx) {
         int mask = 1 << idx;
         return (flags & mask) == 0;
     }
 
     /** 设置指定下标的bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int SetAt(int flags, int idx, bool enable) {
         int mask = 1 << idx;
         if (enable) {
@@ -83,6 +93,7 @@ public class BitFlags
     /// <param name="mask">字段的掩码</param>
     /// <param name="offset">需要偏移的bit数</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetField(int flags, int mask, int offset) {
         return (flags & mask) >> offset;
     }
@@ -95,6 +106,7 @@ public class BitFlags
     /// <param name="offset">需要偏移的bit数</param>
     /// <param name="value">字段的值</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int SetField(int flags, int mask, int offset, int value) {
         int offsetValue = (value << offset) & mask; // & mask 去除非法位
         flags &= ~mask; // 去除旧值
@@ -107,35 +119,41 @@ public class BitFlags
     /// <param name="flags">flags当前值</param>
     /// <param name="mask">字段的掩码</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int UnsetField(int flags, int mask) {
         return flags & ~mask;
     }
 
-    // endregion
+    #endregion
 
-    // region long
+    #region long
 
     /** 是否设置了任意bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsSet(long flags, long mask) {
         return (flags & mask) != 0;
     }
 
     /** 是否设置了所有bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsAllSet(long flags, long mask) {
         return (flags & mask) == mask;
     }
 
     /** 启用指定bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long Set(long flags, long mask) {
         return flags | mask;
     }
 
     /** 删除指定bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long Unset(long flags, long mask) {
         return (flags & ~mask);
     }
 
     /** 设置指定bit位 -- 全0或全1 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long Set(long flags, long mask, bool enable) {
         if (enable) {
             return (flags | mask);
@@ -145,18 +163,21 @@ public class BitFlags
     }
 
     /** 是否设置了指定下标的bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsSetAt(long flags, int idx) {
         long mask = 1L << idx;
         return (flags & mask) != 0;
     }
 
     /** 是否未设置指定下标的bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsNotSetAt(long flags, int idx) {
         long mask = 1L << idx;
         return (flags & mask) == 0;
     }
 
     /** 设置指定下标的bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long SetAt(long flags, int idx, bool enable) {
         long mask = 1L << idx;
         if (enable) {
@@ -173,6 +194,7 @@ public class BitFlags
     /// <param name="mask">字段的掩码</param>
     /// <param name="offset">需要偏移的bit数</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long GetField(long flags, long mask, int offset) {
         return (flags & mask) >> offset;
     }
@@ -185,6 +207,7 @@ public class BitFlags
     /// <param name="offset">需要偏移的bit数</param>
     /// <param name="value">字段的值</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long SetField(long flags, long mask, int offset, long value) {
         long offsetValue = (value << offset) & mask; // & mask 去除非法位
         flags &= ~mask; // 去除旧值
@@ -197,8 +220,10 @@ public class BitFlags
     /// <param name="flags">flags当前值</param>
     /// <param name="mask">字段的掩码</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long UnsetField(long flags, long mask) {
         return flags & ~mask;
     }
-    // endregion
+
+    #endregion
 }

@@ -38,13 +38,13 @@ sealed class UncancellableToken : ICancelToken
 
     public int CancelCode => 0;
 
-    public bool IsCancelling() => false;
+    public bool IsCancelling => false;
 
-    public int Reason() => 0;
+    public int Reason => 0;
 
-    public int Degree() => 0;
+    public int Degree => 0;
 
-    public bool IsInterruptible() => false;
+    public bool IsInterruptible => false;
 
     public bool IsWithoutRemove => false;
 

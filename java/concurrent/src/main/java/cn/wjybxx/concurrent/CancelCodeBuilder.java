@@ -24,69 +24,63 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public final class CancelCodeBuilder {
 
-    private int code = ICancelToken.REASON_DEFAULT;
+    private int code = CancelCodes.REASON_DEFAULT;
 
     public CancelCodeBuilder() {
     }
 
+    /** 启用选项 */
+    public void Enable(int optionMask) {
+        code |= optionMask;
+    }
+
+    /** 禁用选项 */
+    public void Disable(int optionMask) {
+        code &= ~optionMask;
+    }
+
     /** 取消的原因 */
     public int getReason() {
-        return ICancelToken.reason(code);
+        return CancelCodes.getReason(code);
     }
 
     public CancelCodeBuilder setReason(int reason) {
-        if (reason <= 0 || reason > ICancelToken.MAX_REASON) {
-            throw new IllegalArgumentException("reason");
-        }
-        code &= (~ICancelToken.MASK_REASON);
-        code |= reason;
+        code = CancelCodes.setReason(code, reason);
         return this;
     }
 
     /** 紧急程度 */
     public int getDegree() {
-        return ICancelToken.degree(code);
+        return CancelCodes.getDegree(code);
     }
 
     public CancelCodeBuilder setDegree(int degree) {
-        if (degree < 0 || degree > ICancelToken.MAX_DEGREE) {
-            throw new IllegalArgumentException("degree");
-        }
-        code &= (~ICancelToken.MASK_DEGREE);
-        code |= (degree << ICancelToken.OFFSET_DEGREE);
+        code = CancelCodes.setDegree(code, degree);
         return this;
     }
 
     /** 是否中断线程 */
     public boolean isInterruptible() {
-        return ICancelToken.isInterruptible(code);
+        return CancelCodes.isInterruptible(code);
     }
 
     public CancelCodeBuilder setInterruptible(boolean value) {
-        if (value) {
-            code |= ICancelToken.MASK_INTERRUPT;
-        } else {
-            code &= (~ICancelToken.MASK_INTERRUPT);
-        }
+        code = CancelCodes.setInterruptible(code, value);
         return this;
     }
 
     /** 是否无需立即从任务队列中删除 */
     public boolean isWithoutRemove() {
-        return ICancelToken.isWithoutRemove(code);
+        return CancelCodes.isWithoutRemove(code);
     }
 
     public CancelCodeBuilder setWithoutRemove(boolean value) {
-        if (value) {
-            code |= ICancelToken.MASK_WITHOUT_REMOVE;
-        } else {
-            code &= (~ICancelToken.MASK_WITHOUT_REMOVE);
-        }
+        code = CancelCodes.setWithoutRemove(code, value);
         return this;
     }
 
     public int build() {
-        return ICancelToken.checkCode(code);
+        return CancelCodes.checkCode(code);
     }
 
 }

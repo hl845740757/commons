@@ -71,7 +71,7 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     /// 该方法由EventLoop调用，不需要以回调的方式从EventLoop中删除。
     /// </summary>
     /// <param name="code"></param>
-    void CancelWithoutRemove(int code = ICancelToken.REASON_SHUTDOWN);
+    void CancelWithoutRemove(int code = CancelCodes.REASON_SHUTDOWN);
 
     /// <summary>
     /// 监听取消令牌中的取消信号

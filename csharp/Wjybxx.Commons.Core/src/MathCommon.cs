@@ -56,11 +56,13 @@ public static class MathCommon
     public const long LongMaxPowerOfTwo = 1L << 62;
 
     /** 判断一个数是否是2的整次幂 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsPowerOfTwo(int x) {
         return x > 0 && (x & (x - 1)) == 0;
     }
 
     /** 计算num最接近下一个整2次幂；如果自身是2的整次幂，则会返回自身 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int NextPowerOfTwo(int num) {
         if (num < 1) {
             return 1;
@@ -78,6 +80,7 @@ public static class MathCommon
     }
 
     /** 计算num最接近下一个整2次幂；如果自身是2的整次幂，则会返回自身 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long NextPowerOfTwo(long num) {
         if (num < 1) {
             return 1;
@@ -131,45 +134,53 @@ public static class MathCommon
 
     #region min/max
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Min(int a, int b, int c) {
         if (a > b) a = b;
         if (a > c) a = c;
         return a;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Max(int a, int b, int c) {
         if (a < b) a = b;
         if (a < c) a = c;
         return a;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long Min(long a, long b, long c) {
         if (a > b) a = b;
         if (a > c) a = c;
         return a;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long Max(long a, long b, long c) {
         if (a < b) a = b;
         if (a < c) a = c;
         return a;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Min(float a, float b, float c) {
         float r = Math.Min(a, b);
         return Math.Min(r, c);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Max(float a, float b, float c) {
         float r = Math.Max(a, b);
         return Math.Max(r, c);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double Min(double a, double b, double c) {
         double r = Math.Min(a, b);
         return Math.Min(r, c);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double Max(double a, double b, double c) {
         double r = Math.Max(a, b);
         return Math.Max(r, c);

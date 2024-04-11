@@ -62,7 +62,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     public CancelTokenSource(int code) {
         if (code != 0) {
-            ICancelToken.checkCode(code);
+            CancelCodes.checkCode(code);
             VH_CODE.setRelease(this, code);
         }
     }
@@ -94,7 +94,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
      */
     @Override
     public int cancel(int cancelCode) {
-        ICancelToken.checkCode(cancelCode);
+        CancelCodes.checkCode(cancelCode);
         int preCode = internalCancel(cancelCode);
         if (preCode != 0) {
             return preCode;
@@ -106,7 +106,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     /** 使用默认原因取消 */
     @Override
     public int cancel() {
-        return cancel(REASON_DEFAULT);
+        return cancel(CancelCodes.REASON_DEFAULT);
     }
 
     /**
@@ -116,8 +116,8 @@ public final class CancelTokenSource implements ICancelTokenSource {
      */
     public int cancel(boolean mayInterruptIfRunning) {
         return cancel(mayInterruptIfRunning
-                ? (REASON_DEFAULT & MASK_INTERRUPT)
-                : REASON_DEFAULT);
+                ? (CancelCodes.REASON_DEFAULT & CancelCodes.MASK_INTERRUPT)
+                : CancelCodes.REASON_DEFAULT);
     }
 
     @Override
@@ -182,22 +182,22 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     @Override
     public int reason() {
-        return ICancelToken.reason(code);
+        return CancelCodes.getReason(code);
     }
 
     @Override
     public int degree() {
-        return ICancelToken.degree(code);
+        return CancelCodes.getDegree(code);
     }
 
     @Override
     public boolean isInterruptible() {
-        return ICancelToken.isInterruptible(code);
+        return CancelCodes.isInterruptible(code);
     }
 
     @Override
     public boolean isWithoutRemove() {
-        return ICancelToken.isWithoutRemove(code);
+        return CancelCodes.isWithoutRemove(code);
     }
 
     @Override

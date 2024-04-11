@@ -91,7 +91,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
         if (IsShuttingDown) {
             // 暂时直接取消
             if (task is IFutureTask futureTask) {
-                futureTask.Future.SetCancelled(ICancelToken.REASON_SHUTDOWN);
+                futureTask.Future.SetCancelled(CancelCodes.REASON_SHUTDOWN);
             }
             return;
         }

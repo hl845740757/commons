@@ -40,17 +40,15 @@ public sealed class ReadonlyCancelToken : ICancelToken
 
     public int CancelCode => cancelToken.CancelCode;
 
-    public bool IsCancelling() => cancelToken.IsCancelling();
+    public bool IsCancelling => cancelToken.IsCancelling;
 
-    public int Reason() => cancelToken.Reason();
+    public int Reason => cancelToken.Reason;
 
-    public int Degree() => cancelToken.Degree();
+    public int Degree => cancelToken.Degree;
 
-    public bool IsInterruptible() => cancelToken.IsInterruptible();
+    public bool IsInterruptible => cancelToken.IsInterruptible;
 
-    public bool IsWithoutRemove() {
-        return cancelToken.IsWithoutRemove();
-    }
+    public bool IsWithoutRemove => cancelToken.IsWithoutRemove;
 
     public void CheckCancel() {
         cancelToken.CheckCancel();

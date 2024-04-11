@@ -89,6 +89,7 @@ public static class ArrayUtil
     }
 
     /** 查询List中是否包含指定对象引用 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool ContainsRef<T>(T[] list, T element) where T : class {
         return IndexOfRef(list, element) >= 0;
     }

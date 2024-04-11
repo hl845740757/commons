@@ -569,7 +569,7 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         protected internal override AbstractUniPromise? TryFire(int mode) {
             UniPromise<V>? input = this.input;
             {
-                if (context.CancelToken.IsCancelling()) {
+                if (context.CancelToken.IsCancelling) {
                     goto outer;
                 }
                 // 异步模式下已经claim

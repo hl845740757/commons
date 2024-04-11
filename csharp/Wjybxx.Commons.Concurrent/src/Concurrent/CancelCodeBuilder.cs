@@ -26,24 +26,34 @@ namespace Wjybxx.Commons.Concurrent;
 /// </summary>
 public struct CancelCodeBuilder
 {
-    private int code = ICancelToken.REASON_DEFAULT;
+    private int code = CancelCodes.REASON_DEFAULT;
 
     public CancelCodeBuilder() {
     }
 
     /// <summary>
+    /// 启用选项
+    /// </summary>
+    /// <param name="optionMask"></param>
+    public void Enable(int optionMask) {
+        code |= optionMask;
+    }
+
+    /// <summary>
+    /// 禁用选项
+    /// </summary>
+    /// <param name="optionMask"></param>
+    public void Disable(int optionMask) {
+        code &= ~optionMask;
+    }
+    
+    /// <summary>
     /// 取消的原因
     /// </summary>
     /// <exception cref="ArgumentException"></exception>
     public int Reason {
-        get => ICancelToken.Reason(code);
-        set {
-            if (value <= 0 || value > ICancelToken.MAX_REASON) {
-                throw new ArgumentException("reason");
-            }
-            code &= (~ICancelToken.MASK_REASON);
-            code |= value;
-        }
+        get => CancelCodes.GetReason(code);
+        set => code = CancelCodes.SetReason(code, value);
     }
 
     /// <summary>
@@ -51,42 +61,24 @@ public struct CancelCodeBuilder
     /// </summary>
     /// <exception cref="ArgumentException"></exception>
     public int Degree {
-        get => ICancelToken.Degree(code);
-        set {
-            if (value < 0 || value > ICancelToken.MAX_DEGREE) {
-                throw new ArgumentException("degree");
-            }
-            code &= (~ICancelToken.MASK_DEGREE);
-            code |= (value << ICancelToken.OFFSET_DEGREE);
-        }
+        get => CancelCodes.GetDegree(code);
+        set => code = CancelCodes.SetDegree(code, value);
     }
 
     /// <summary>
     /// 是否中断线程
     /// </summary>
     public bool IsInterruptible {
-        get => ICancelToken.IsInterruptible(code);
-        set {
-            if (value) {
-                code |= ICancelToken.MASK_INTERRUPT;
-            } else {
-                code &= (~ICancelToken.MASK_INTERRUPT);
-            }
-        }
+        get => CancelCodes.IsInterruptible(code);
+        set => code = CancelCodes.SetInterruptible(code, value);
     }
 
     /// <summary>
     /// 是否无需立即从任务队列中删除
     /// </summary>
     public bool IsWithoutRemove {
-        get => ICancelToken.IsWithoutRemove(code);
-        set {
-            if (value) {
-                code |= ICancelToken.MASK_WITHOUT_REMOVE;
-            } else {
-                code &= (~ICancelToken.MASK_WITHOUT_REMOVE);
-            }
-        }
+        get => CancelCodes.IsWithoutRemove(code);
+        set => code = CancelCodes.SetWithoutRemove(code, value);
     }
 
     /// <summary>

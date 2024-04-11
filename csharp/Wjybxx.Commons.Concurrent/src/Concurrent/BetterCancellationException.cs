@@ -33,17 +33,17 @@ public class BetterCancellationException : OperationCanceledException
     public int Code { get; }
 
     public BetterCancellationException(int code) {
-        this.Code = ICancelToken.CheckCode(code);
+        this.Code = CancelCodes.CheckCode(code);
     }
 
     public BetterCancellationException(int code, string? message)
         : base(message) {
-        this.Code = ICancelToken.CheckCode(code);
+        this.Code = CancelCodes.CheckCode(code);
     }
 
     public BetterCancellationException(int code, string? message, Exception? innerException)
         : base(message, innerException) {
-        this.Code = ICancelToken.CheckCode(code);
+        this.Code = CancelCodes.CheckCode(code);
     }
 
     #region serial

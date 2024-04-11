@@ -604,7 +604,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         protected internal override AbstractPromise? TryFire(int mode) {
             Promise<V>? input = this.input;
             {
-                if (context.CancelToken.IsCancelling()) {
+                if (context.CancelToken.IsCancelling) {
                     goto outer;
                 }
                 // 异步模式下已经claim
