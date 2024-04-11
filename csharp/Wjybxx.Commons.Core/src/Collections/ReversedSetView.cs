@@ -29,10 +29,10 @@ public class ReversedSequenceSetView<TKey> : ReversedCollectionView<TKey>, ISequ
         base(hashSet) {
     }
 
-    private ISequencedSet<TKey> Delegated => (ISequencedSet<TKey>)_delegated;
+    private ISequencedSet<TKey> Delegated => (ISequencedSet<TKey>)delegated;
 
     public override ISequencedSet<TKey> Reversed() {
-        return (ISequencedSet<TKey>)_delegated;
+        return (ISequencedSet<TKey>)delegated;
     }
 
     public new virtual bool Add(TKey item) {

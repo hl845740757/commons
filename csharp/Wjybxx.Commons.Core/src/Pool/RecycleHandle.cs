@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Threading;
 
 #pragma warning disable CS1591
 
@@ -27,12 +26,12 @@ namespace Wjybxx.Commons.Pool;
 /// 对象回收句柄
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public struct RecycleHandle<T> : IDisposable where T : class
+public readonly struct RecycleHandle<T> : IDisposable where T : class
 {
     /// <summary>
     /// 池化的对象
     /// </summary>
-    public readonly T Value;
+    public readonly T value;
     /// <summary>
     /// 附加上下文
     /// </summary>
@@ -40,10 +39,10 @@ public struct RecycleHandle<T> : IDisposable where T : class
     /// <summary>
     /// 归属的池
     /// </summary>
-    internal ArrayObjectPool<T> pool;
+    internal readonly ArrayObjectPool<T> pool;
 
     internal RecycleHandle(T value, object ctx, ArrayObjectPool<T> pool) {
-        Value = value;
+        this.value = value;
         this.ctx = ctx;
         this.pool = pool;
     }

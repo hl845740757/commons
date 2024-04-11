@@ -36,13 +36,14 @@ public interface IArrayPool<T> : IObjectPool<T[]>
     /// 1. 默认最大只保存1M大小的数组
     /// 2. 默认不执行清理(稳定API)
     /// </summary>
-    public static readonly IArrayPool<T> Shared = new DefaultArrayPool<T>(4096, 1024 * 1024);
+    public static IArrayPool<T> Shared { get; } = new DefaultArrayPool<T>(4096, 1024 * 1024);
+
     /// <summary>
     /// 基于对系统库的共享数组池封装后的数组池
     /// 1. 最大空间取决于系统库设置
     /// 2. 默认不执行清理(稳定API)
     /// </summary>
-    public static readonly IArrayPool<T> SystemShared = new DefaultArrayPool<T>(ArrayPool<T>.Shared, 4096);
+    public static IArrayPool<T> SystemShared { get; } = new DefaultArrayPool<T>(ArrayPool<T>.Shared, 4096);
 
     /// <summary>
     /// 从池中租借一个数组

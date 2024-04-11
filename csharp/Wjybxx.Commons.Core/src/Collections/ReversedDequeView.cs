@@ -31,10 +31,10 @@ public class ReversedDequeView<TKey> : ReversedCollectionView<TKey>, IDeque<TKey
         base(deque) {
     }
 
-    private IDeque<TKey> Delegated => (IDeque<TKey>)_delegated;
+    private IDeque<TKey> Delegated => (IDeque<TKey>)delegated;
 
     public override IDeque<TKey> Reversed() {
-        return (IDeque<TKey>)_delegated;
+        return (IDeque<TKey>)delegated;
     }
 
     #region dequeue

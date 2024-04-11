@@ -183,7 +183,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     private void SetTriggered() => ctl |= PromiseTask.MASK_TRIGGERED;
 
     public bool IsTriggered => (ctl & PromiseTask.MASK_TRIGGERED) != 0;
-    
+
     public override IScheduledPromise<T> Future => (IScheduledPromise<T>)promise;
 
     public bool IsPeriodic => ScheduleType != 0;

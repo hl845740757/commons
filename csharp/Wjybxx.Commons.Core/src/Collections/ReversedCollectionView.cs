@@ -28,40 +28,40 @@ namespace Wjybxx.Commons.Collections;
 /// <typeparam name="TKey">元素的类型</typeparam>
 public class ReversedCollectionView<TKey> : ISequencedCollection<TKey>
 {
-    protected readonly ISequencedCollection<TKey> _delegated;
+    protected readonly ISequencedCollection<TKey> delegated;
 
     public ReversedCollectionView(ISequencedCollection<TKey> delegated) {
-        _delegated = delegated ?? throw new ArgumentNullException(nameof(delegated));
+        this.delegated = delegated ?? throw new ArgumentNullException(nameof(delegated));
     }
 
-    public int Count => _delegated.Count;
-    public bool IsEmpty => _delegated.IsEmpty;
+    public int Count => delegated.Count;
+    public bool IsEmpty => delegated.IsEmpty;
     public bool IsReadOnly => false;
 
     public virtual ISequencedCollection<TKey> Reversed() {
-        return _delegated;
+        return delegated;
     }
 
     public void AdjustCapacity(int expectedCount) {
-        _delegated.AdjustCapacity(expectedCount);
+        delegated.AdjustCapacity(expectedCount);
     }
 
     #region get
 
-    public TKey PeekFirst() => _delegated.PeekLast();
+    public TKey PeekFirst() => delegated.PeekLast();
 
-    public TKey PeekLast() => _delegated.PeekFirst();
+    public TKey PeekLast() => delegated.PeekFirst();
 
     public bool TryPeekFirst(out TKey item) {
-        return _delegated.TryPeekLast(out item);
+        return delegated.TryPeekLast(out item);
     }
 
     public bool TryPeekLast(out TKey item) {
-        return _delegated.TryPeekFirst(out item);
+        return delegated.TryPeekFirst(out item);
     }
 
     public bool Contains(TKey item) {
-        return _delegated.Contains(item);
+        return delegated.Contains(item);
     }
 
     #endregion
@@ -69,15 +69,15 @@ public class ReversedCollectionView<TKey> : ISequencedCollection<TKey>
     #region add
 
     public virtual void Add(TKey item) {
-        _delegated.Add(item); // 允许重写-部分集合的Add是隐含方向的
+        delegated.Add(item); // 允许重写-部分集合的Add是隐含方向的
     }
 
     public void AddFirst(TKey item) {
-        _delegated.AddLast(item);
+        delegated.AddLast(item);
     }
 
     public void AddLast(TKey item) {
-        _delegated.AddFirst(item);
+        delegated.AddFirst(item);
     }
 
     #endregion
@@ -85,27 +85,27 @@ public class ReversedCollectionView<TKey> : ISequencedCollection<TKey>
     #region remove
 
     public bool Remove(TKey item) {
-        return _delegated.Remove(item);
+        return delegated.Remove(item);
     }
 
     public TKey RemoveFirst() {
-        return _delegated.RemoveLast();
+        return delegated.RemoveLast();
     }
 
     public TKey RemoveLast() {
-        return _delegated.RemoveFirst();
+        return delegated.RemoveFirst();
     }
 
     public bool TryRemoveFirst(out TKey item) {
-        return _delegated.TryRemoveLast(out item);
+        return delegated.TryRemoveLast(out item);
     }
 
     public bool TryRemoveLast(out TKey item) {
-        return _delegated.TryRemoveFirst(out item);
+        return delegated.TryRemoveFirst(out item);
     }
 
     public void Clear() {
-        _delegated.Clear();
+        delegated.Clear();
     }
 
     #endregion
@@ -113,11 +113,11 @@ public class ReversedCollectionView<TKey> : ISequencedCollection<TKey>
     #region copyto
 
     public void CopyTo(TKey[] array, int arrayIndex) {
-        _delegated.CopyTo(array, arrayIndex, true);
+        delegated.CopyTo(array, arrayIndex, true);
     }
 
     public void CopyTo(TKey[] array, int arrayIndex, bool reversed) {
-        _delegated.CopyTo(array, arrayIndex, !reversed); // 取反
+        delegated.CopyTo(array, arrayIndex, !reversed); // 取反
     }
 
     #endregion
@@ -125,11 +125,11 @@ public class ReversedCollectionView<TKey> : ISequencedCollection<TKey>
     #region itr
 
     public IEnumerator<TKey> GetEnumerator() {
-        return _delegated.GetReversedEnumerator();
+        return delegated.GetReversedEnumerator();
     }
 
     public IEnumerator<TKey> GetReversedEnumerator() {
-        return _delegated.GetEnumerator();
+        return delegated.GetEnumerator();
     }
 
     #endregion

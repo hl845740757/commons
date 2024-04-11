@@ -115,7 +115,7 @@ public sealed class ScheduledTaskComparator : IComparer<IScheduledFutureTask>
             return result;
         }
         // 再按优先级排序
-        
+
         // 再按id排序
         result = lhs.Id.CompareTo(rhs.Id);
         if (result == 0) {

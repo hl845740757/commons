@@ -32,7 +32,7 @@ public class ReversedDictionaryView<TKey, TValue> : ReversedCollectionView<KeyVa
         : base(delegated) {
     }
 
-    private ISequencedDictionary<TKey, TValue> Delegated => (ISequencedDictionary<TKey, TValue>)_delegated;
+    private ISequencedDictionary<TKey, TValue> Delegated => (ISequencedDictionary<TKey, TValue>)delegated;
 
     public ISequencedCollection<TKey> Keys => Delegated.Keys;
     public ISequencedCollection<TValue> Values => Delegated.Values;

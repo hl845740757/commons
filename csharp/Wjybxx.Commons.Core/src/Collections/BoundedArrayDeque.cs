@@ -32,7 +32,7 @@ namespace Wjybxx.Commons.Collections;
 public class BoundedArrayDeque<T> : IDeque<T>
 {
     /** 元素类型是否是引用类型 */
-    private static readonly bool ValueIsRefType = !typeof(T).IsValueType;
+    private static readonly bool valueIsRefType = !typeof(T).IsValueType;
 
     private T[] _elements;
     private readonly DequeOverflowBehavior _overflowBehavior;
@@ -125,7 +125,7 @@ public class BoundedArrayDeque<T> : IDeque<T>
             CopyTo(elements, 0);
         }
 
-        if (ValueIsRefType) {
+        if (valueIsRefType) {
             Clear(); // help gc
         }
 
@@ -586,7 +586,7 @@ public class BoundedArrayDeque<T> : IDeque<T>
             } else {
                 if (_cursor == _arrayDeque._tail) {
                     _cursor = -1;
-                } else { 
+                } else {
                     _cursor = Inc(_cursor, _arrayDeque._elements.Length);
                 }
             }

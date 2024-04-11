@@ -58,8 +58,8 @@ public class ArrayObjectPool<T> : IObjectPool<RecycleHandle<T>> where T : class
 
     public void ReturnOne(RecycleHandle<T> obj) {
         var array = (T[])obj.ctx;
-        if (_filter == null || _filter.Invoke(obj.Value)) {
-            _resetPolicy.Invoke(obj.Value);
+        if (_filter == null || _filter.Invoke(obj.value)) {
+            _resetPolicy.Invoke(obj.value);
         } else {
             array[0] = null; // 清理对象
         }

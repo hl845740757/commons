@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+
 #pragma warning disable CS1591
 
 namespace Wjybxx.Commons.Collections;
@@ -29,9 +30,8 @@ namespace Wjybxx.Commons.Collections;
 /// <typeparam name="T"></typeparam>
 public class EmptyDequeue<T> : IDeque<T>
 {
-    /** 静态单例 */
-    public static readonly EmptyDequeue<T> Instance = new EmptyDequeue<T>();
-    
+    public static EmptyDequeue<T> Instance { get; } = new EmptyDequeue<T>();
+
     public bool IsReadOnly => true;
     public int Count => 0;
     public bool IsEmpty => true;

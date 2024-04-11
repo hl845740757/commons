@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.IO;
 /// </summary>
 public class LocalStringBuilderPool : IObjectPool<StringBuilder>
 {
-    public static readonly LocalStringBuilderPool Instance = new();
+    public static LocalStringBuilderPool Instance { get; } = new();
 
     public StringBuilder Rent() {
         return ThreadLocalInst.Value!.Rent();

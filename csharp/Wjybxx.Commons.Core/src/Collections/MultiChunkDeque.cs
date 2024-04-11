@@ -41,7 +41,7 @@ namespace Wjybxx.Commons.Collections;
 public class MultiChunkDeque<T> : IDeque<T>
 {
     private const int MinChunkSize = 4;
-    private static readonly Stack<Chunk> EmptyChunkPool = new();
+    private static readonly Stack<Chunk> EMPTY_CHUNK_POOL = new();
 
     private readonly int _chunkSize;
     private readonly int _poolSize;
@@ -65,7 +65,7 @@ public class MultiChunkDeque<T> : IDeque<T>
         if (poolSize < 0) throw new ArgumentOutOfRangeException(nameof(chunkSize));
         _chunkSize = chunkSize;
         _poolSize = poolSize;
-        _chunkPool = poolSize > 0 ? new Stack<Chunk>(poolSize) : EmptyChunkPool;
+        _chunkPool = poolSize > 0 ? new Stack<Chunk>(poolSize) : EMPTY_CHUNK_POOL;
     }
 
     public bool IsReadOnly => false;

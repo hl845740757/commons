@@ -28,7 +28,7 @@ namespace Wjybxx.Commons.Collections;
 /// <typeparam name="T"></typeparam>
 public sealed class NullEquality<T> : IEqualityComparer<T>
 {
-    public static readonly NullEquality<T> Default = new();
+    public static NullEquality<T> Default { get; } = new();
 
     public bool Equals(T? x, T? y) {
         // 通常是因为左参为null，期望右边为null
