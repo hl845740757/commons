@@ -28,7 +28,7 @@ public class BitFlags {
 
     //region int
 
-    /** 是否设置了任意bit */
+    /** 是否设置了mask关联的任意bit */
     public static boolean isAnySet(int flags, int mask) {
         return (flags & mask) != 0;
     }
@@ -101,12 +101,12 @@ public class BitFlags {
 
     // region long
 
-    /** 是否设置了任意bit */
+    /** 是否设置了mask关联的任意bit */
     public static boolean isAnySet(long flags, long mask) {
         return (flags & mask) != 0;
     }
 
-    /** 是否设置了所有bit */
+    /** 是否设置了mask关联的所有bit */
     public static boolean isSet(long flags, long mask) {
         return (flags & mask) == mask;
     }

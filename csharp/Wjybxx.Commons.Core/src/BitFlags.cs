@@ -27,15 +27,15 @@ public class BitFlags
 {
     #region int
 
-    /** 是否设置了任意bit */
+    /** 是否设置了mask关联的任意bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsSet(int flags, int mask) {
+    public static bool IsAnySet(int flags, int mask) {
         return (flags & mask) != 0;
     }
 
-    /** 是否设置了所有bit */
+    /** 是否设置了mask关联的所有bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsAllSet(int flags, int mask) {
+    public static bool IsSet(int flags, int mask) {
         return (flags & mask) == mask;
     }
 
@@ -128,15 +128,15 @@ public class BitFlags
 
     #region long
 
-    /** 是否设置了任意bit */
+    /** 是否设置了mask关联的任意bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsSet(long flags, long mask) {
+    public static bool IsAnySet(long flags, long mask) {
         return (flags & mask) != 0;
     }
 
-    /** 是否设置了所有bit */
+    /** 是否设置了mask关联的所有bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsAllSet(long flags, long mask) {
+    public static bool IsSet(long flags, long mask) {
         return (flags & mask) == mask;
     }
 

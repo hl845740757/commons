@@ -6,7 +6,7 @@ csharp公共库，包含集合等基础组件;nuget搜索'wjybxx'即可查看到
 
 ## 命名规则
 
-由于我频繁在Java和C#之间切换，因此统一的命名规则对我来说很必要，但这可能让仅写C#的开发者不适应。具体的命名规则可见：[命名规则](https://github.com/hl845740757/commons/blob/dev/csharp/NameRules.md)
+由于我频繁在Java和C#之间切换，因此统一的命名规则对我来说很必要，但这可能让仅写C#的开发者不适应。具体的命名规则可见：[C#命名规范](https://github.com/hl845740757/commons/blob/dev/csharp/NameRules.md)
 
 ---
 
@@ -71,6 +71,10 @@ C#的Concurrent包，个人用得非常难受。究其原因：上下文(sync/ex
 ---
 
 ## ReleaseNotes
+
+### 1.0.12
+
+1. 统一命名规范，具体可见[C#命名规范](https://github.com/hl845740757/commons/blob/dev/csharp/NameRules.md)
 
 ### 1.0.11
 
