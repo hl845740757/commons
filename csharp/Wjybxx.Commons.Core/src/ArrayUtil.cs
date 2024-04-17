@@ -27,6 +27,26 @@ namespace Wjybxx.Commons;
 public static class ArrayUtil
 {
     /// <summary>
+    /// 比较两个数组的相等性 -- 比较所有元素
+    /// </summary>
+    /// <param name="objA"></param>
+    /// <param name="objB"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static bool Equals<T>(T[]? objA, T[]? objB) {
+        if (objA == objB) {
+            return true;
+        }
+        if (objA == null || objB == null) {
+            return false;
+        }
+        ReadOnlySpan<T> first = objA;
+        ReadOnlySpan<T> second = objB;
+        return first.SequenceEqual(second);
+    }
+
+    
+    /// <summary>
     /// 拷贝数组
     /// </summary>
     /// <param name="src">原始四组</param>
