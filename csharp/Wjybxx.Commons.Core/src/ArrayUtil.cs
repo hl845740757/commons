@@ -45,7 +45,7 @@ public static class ArrayUtil
         return first.SequenceEqual(second);
     }
 
-    
+
     /// <summary>
     /// 拷贝数组
     /// </summary>
