@@ -64,6 +64,19 @@ public static class ObjectUtil
     #region string
 
     /// <summary>
+    /// 通过索引区间获取子字符串。
+    /// C#的字符串接口和Java差异较大，这里提供一个适配方法。
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="start"></param>
+    /// <param name="end"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string Substring2(string value, int start, int end) {
+        return value.Substring(start, end - start + 1);
+    }
+
+    /// <summary>
     /// 获取字符串的长度，如果字符为null，则返回0
     /// </summary>
     /// <param name="value"></param>
