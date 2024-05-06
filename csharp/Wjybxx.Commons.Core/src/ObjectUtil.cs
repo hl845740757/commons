@@ -48,10 +48,11 @@ public static class ObjectUtil
 
     /// <summary>
     /// 获取系统的tick数
+    /// (稳定值与平台无关)
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long SystemTicks() => Stopwatch.GetTimestamp();
+    public static long SystemTicks() => (long)(Stopwatch.GetTimestamp() * s_tickFrequency);
 
     /// <summary>
     /// 系统tick对应的毫秒时间戳
@@ -59,7 +60,13 @@ public static class ObjectUtil
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long SystemTickMillis() => Stopwatch.GetTimestamp() / DatetimeUtil.TicksPerMillisecond;
+    public static long SystemTickMillis() => (long)(Stopwatch.GetTimestamp() * s_millis_tickFrequency);
+
+    /// <summary>
+    /// 'Frequency'存储的是在当前平台上，1秒对应多少个原始tick -- 依赖平台。
+    /// </summary>
+    private static readonly double s_tickFrequency = (double)DatetimeUtil.TicksPerSecond / Stopwatch.Frequency;
+    private static readonly double s_millis_tickFrequency = (double)DatetimeUtil.TicksPerMillisecond / Stopwatch.Frequency;
 
     #region string
 
