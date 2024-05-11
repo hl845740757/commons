@@ -665,7 +665,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
 
     #region view
 
-    private class SetIterator : IUnsafeIterator<TKey>
+    private class SetIterator : IUnsafeIterator<TKey>, ISequentialEnumerator<TKey>
     {
         private readonly LinkedHashSet<TKey> _hashSet;
         private readonly bool _reversed;
@@ -682,6 +682,10 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
 
             _nextNode = _reversed ? _hashSet._tail : _hashSet._head;
             _current = default;
+        }
+
+        public bool HasNext() {
+            return _nextNode != null;
         }
 
         public bool MoveNext() {

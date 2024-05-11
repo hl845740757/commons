@@ -367,18 +367,52 @@ public class MultiChunkDeque<T> : IDeque<T>
 
     #endregion
 
-    private class DequeItr : IEnumerator<T>
+    private class DequeItr : ISequentialEnumerator<T>
     {
         private readonly MultiChunkDeque<T> _deque;
         private readonly bool _reversed;
 
         private Chunk? _chunk;
-        private IEnumerator<T>? _chunkItr;
+        private ISequentialEnumerator<T>? _chunkItr;
 
         public DequeItr(MultiChunkDeque<T> deque, bool reversed) {
             this._deque = deque;
             this._reversed = reversed;
             this.Reset();
+        }
+
+        public bool HasNext() {
+            // 测试时可以更新chunk和chunkItr，只要我们不迭代chunk内数据
+            if (_chunkItr == null) {
+                return false;
+            }
+            if (_chunkItr.HasNext()) {
+                return true;
+            }
+            if (_reversed) {
+                // 可能是个空块
+                while (_chunk!.prev != null) {
+                    _chunk = _chunk.prev;
+                    _chunkItr = (ISequentialEnumerator<T>)_chunk.GetReversedEnumerator();
+                    if (_chunkItr.HasNext()) {
+                        return true;
+                    }
+                }
+                this._chunk = null;
+                this._chunkItr = null;
+                return false;
+            } else {
+                while (_chunk!.next != null) {
+                    _chunk = _chunk.next;
+                    _chunkItr = (ISequentialEnumerator<T>)_chunk.GetEnumerator();
+                    if (_chunkItr.HasNext()) {
+                        return true;
+                    }
+                }
+                this._chunk = null;
+                this._chunkItr = null;
+                return false;
+            }
         }
 
         public bool MoveNext() {
@@ -392,7 +426,18 @@ public class MultiChunkDeque<T> : IDeque<T>
                 // 可能是个空块
                 while (_chunk!.prev != null) {
                     _chunk = _chunk.prev;
-                    _chunkItr = _chunk.GetReversedEnumerator();
+                    _chunkItr = (ISequentialEnumerator<T>)_chunk.GetReversedEnumerator();
+                    if (_chunkItr.MoveNext()) {
+                        return true;
+                    }
+                }
+                this._chunk = null;
+                this._chunkItr = null;
+                return false;
+            } else {
+                while (_chunk!.next != null) {
+                    _chunk = _chunk.next;
+                    _chunkItr = (ISequentialEnumerator<T>)_chunk.GetEnumerator();
                     if (_chunkItr.MoveNext()) {
                         return true;
                     }
@@ -401,16 +446,6 @@ public class MultiChunkDeque<T> : IDeque<T>
                 this._chunkItr = null;
                 return false;
             }
-            while (_chunk!.next != null) {
-                _chunk = _chunk.next;
-                _chunkItr = _chunk.GetEnumerator();
-                if (_chunkItr.MoveNext()) {
-                    return true;
-                }
-            }
-            this._chunk = null;
-            this._chunkItr = null;
-            return false;
         }
 
         public void Reset() {
@@ -419,10 +454,10 @@ public class MultiChunkDeque<T> : IDeque<T>
                 this._chunkItr = null;
             } else if (_reversed) {
                 this._chunk = _deque._tailChunk;
-                this._chunkItr = _chunk!.GetReversedEnumerator();
+                this._chunkItr = (ISequentialEnumerator<T>)_chunk!.GetReversedEnumerator();
             } else {
                 this._chunk = _deque._headChunk;
-                this._chunkItr = _chunk!.GetEnumerator();
+                this._chunkItr = (ISequentialEnumerator<T>)_chunk!.GetEnumerator();
             }
         }
 

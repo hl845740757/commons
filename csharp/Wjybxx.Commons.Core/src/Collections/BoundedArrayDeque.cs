@@ -550,7 +550,7 @@ public class BoundedArrayDeque<T> : IDeque<T>
         return $"{nameof(_overflowBehavior)}: {_overflowBehavior}, {nameof(_head)}: {_head}, {nameof(_tail)}: {_tail}, {nameof(Count)}: {Count}";
     }
 
-    private class DequeItr : IEnumerator<T>
+    private class DequeItr : ISequentialEnumerator<T>
     {
         private readonly BoundedArrayDeque<T> _arrayDeque;
         private readonly bool _reversed;
@@ -565,6 +565,10 @@ public class BoundedArrayDeque<T> : IDeque<T>
 
             _cursor = _reversed ? _arrayDeque._tail : _arrayDeque._head;
             _current = default;
+        }
+
+        public bool HasNext() {
+            return _cursor >= 0;
         }
 
         public bool MoveNext() {

@@ -279,7 +279,7 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
     }
 
     /** 这里暂没有按照优先级迭代，实现较为麻烦；由于未有序迭代，这里也没支持删除 */
-    private class Itr : IEnumerator<T>
+    private class Itr : ISequentialEnumerator<T>
     {
         private readonly IndexedPriorityQueue<T> _queue;
         private int _index = -1;
@@ -288,6 +288,10 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
         public Itr(IndexedPriorityQueue<T> queue) {
             _queue = queue;
             _current = null;
+        }
+
+        public bool HasNext() {
+            return _index + 1 < _queue._count;
         }
 
         public bool MoveNext() {

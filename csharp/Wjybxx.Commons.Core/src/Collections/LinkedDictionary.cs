@@ -1133,7 +1133,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
     #region itr
 
-    private abstract class AbstractIterator<T> : IEnumerator<T>
+    private abstract class AbstractIterator<T> : ISequentialEnumerator<T>
     {
         private readonly LinkedDictionary<TKey, TValue> _dictionary;
         private readonly bool _reversed;
@@ -1150,6 +1150,10 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
             _nextNode = _reversed ? _dictionary._tail : _dictionary._head;
             _current = default;
+        }
+
+        public bool HasNext() {
+            return _nextNode != null;
         }
 
         public bool MoveNext() {

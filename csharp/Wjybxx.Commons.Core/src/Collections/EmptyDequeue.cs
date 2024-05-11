@@ -119,8 +119,12 @@ public class EmptyDequeue<T> : IDeque<T>
 
     private static readonly Iterator Itr = new Iterator();
 
-    private class Iterator : IEnumerator<T>
+    private class Iterator : ISequentialEnumerator<T>
     {
+        public bool HasNext() {
+            return false;
+        }
+
         public bool MoveNext() {
             return false;
         }
