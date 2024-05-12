@@ -29,7 +29,7 @@ public interface ISequentialEnumerator<out T> : IEnumerator<T>
     /// <summary>
     /// 是否还有下一个元素。
     /// 
-    /// 注意：如果返回true，<see cref="IEnumerator{T}.MoveNext"/>也应当返回true。
+    /// 注意：如果返回true，则MoveNext也应当返回true。
     /// </summary>
     /// <returns></returns>
     bool HasNext();

@@ -72,6 +72,12 @@ C#的Concurrent包，个人用得非常难受。究其原因：上下文(sync/ex
 
 ## ReleaseNotes
 
+### 1.0.13
+
+1. bugfix - MultiChunkQueue TryRemove* 接口在队列为空时抛出异常.
+2. bugfix - 获取系统Tick在不同平台单位不一致问题。
+3. 增加新的枚举器接口 - `ISequentialEnumerator`允许测试还有下一个元素。
+
 ### 1.0.12
 
 1. 统一命名规范，具体可见[C#命名规范](https://github.com/hl845740757/commons/blob/dev/csharp/NameRules.md)
