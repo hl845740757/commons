@@ -39,9 +39,9 @@ public readonly struct RecycleHandle<T> : IDisposable where T : class
     /// <summary>
     /// 归属的池
     /// </summary>
-    internal readonly ArrayObjectPool<T> pool;
+    internal readonly ConcurrentObjectPool<T> pool;
 
-    internal RecycleHandle(T value, object ctx, ArrayObjectPool<T> pool) {
+    internal RecycleHandle(T value, object ctx, ConcurrentObjectPool<T> pool) {
         this.value = value;
         this.ctx = ctx;
         this.pool = pool;

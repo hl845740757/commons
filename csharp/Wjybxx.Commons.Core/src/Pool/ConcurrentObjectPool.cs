@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.Pool;
 /// <typeparam name="T"></typeparam>
 [Beta]
 [ThreadSafe]
-public class ArrayObjectPool<T> : IObjectPool<RecycleHandle<T>> where T : class
+public class ConcurrentObjectPool<T> : IObjectPool<RecycleHandle<T>> where T : class
 {
     private readonly Func<T> _factory;
     private readonly Action<T> _resetPolicy;
@@ -42,7 +42,7 @@ public class ArrayObjectPool<T> : IObjectPool<RecycleHandle<T>> where T : class
     /// <param name="factory">对象创建工厂</param>
     /// <param name="resetPolicy">重置方法</param>
     /// <param name="filter">回收对象的过滤器</param>
-    public ArrayObjectPool(Func<T> factory, Action<T> resetPolicy, Func<T, bool>? filter = null) {
+    public ConcurrentObjectPool(Func<T> factory, Action<T> resetPolicy, Func<T, bool>? filter = null) {
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         _resetPolicy = resetPolicy ?? throw new ArgumentNullException(nameof(resetPolicy));
         _filter = filter;

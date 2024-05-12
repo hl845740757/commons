@@ -26,7 +26,7 @@ public class StringBuilderPoolTest
 {
     [Test]
     public void Test() {
-        ArrayObjectPool<StringBuilder> pool = new ArrayObjectPool<StringBuilder>(
+        ConcurrentObjectPool<StringBuilder> pool = new ConcurrentObjectPool<StringBuilder>(
             () => new StringBuilder(),
             builder => builder.Length = 0,
             builder => builder.Length <= 8192);

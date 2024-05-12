@@ -159,7 +159,8 @@ public class MultiChunkDeque<T> : IDeque<T>
     public bool TryRemoveFirst(out T item) {
         Chunk headChunk = _headChunk;
         if (headChunk == null) {
-            throw CollectionUtil.CollectionEmptyException();
+            item = default;
+            return false;
         }
         if (headChunk.TryRemoveFirst(out item)) {
             _count--;
@@ -175,7 +176,8 @@ public class MultiChunkDeque<T> : IDeque<T>
     public bool TryRemoveLast(out T item) {
         Chunk tailChunk = _tailChunk;
         if (tailChunk == null) {
-            throw CollectionUtil.CollectionEmptyException();
+            item = default;
+            return false;
         }
         if (tailChunk.TryRemoveLast(out item)) {
             _count--;
