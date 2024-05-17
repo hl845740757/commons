@@ -45,7 +45,7 @@ import java.util.Objects;
  */
 @Beta
 public class TypeParameterFinder {
-    
+
     /**
      * 获取包含泛型信息的超类(或接口)
      *
@@ -54,6 +54,9 @@ public class TypeParameterFinder {
      */
     public static <T> Type getGenericSuperType(final Class<T> thisClass, final Class<? super T> superClazzOrInterface) {
         assert superClazzOrInterface.isAssignableFrom(thisClass);
+        if (thisClass == superClazzOrInterface) {
+            throw new IllegalArgumentException("thisClass == superClazzOrInterface");
+        }
         if (superClazzOrInterface.isInterface()) {
             Class<? super T> directChildClass = findInterfaceDirectChildClass(thisClass, superClazzOrInterface);
             return getGenericInterface(directChildClass, superClazzOrInterface);
