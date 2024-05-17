@@ -45,6 +45,25 @@ import java.util.Objects;
  */
 @Beta
 public class TypeParameterFinder {
+    
+    /**
+     * 获取包含泛型信息的超类(或接口)
+     *
+     * @param thisClass             当前类
+     * @param superClazzOrInterface 目标超类后接口
+     */
+    public static <T> Type getGenericSuperType(final Class<T> thisClass, final Class<? super T> superClazzOrInterface) {
+        assert superClazzOrInterface.isAssignableFrom(thisClass);
+        if (superClazzOrInterface.isInterface()) {
+            Class<? super T> directChildClass = findInterfaceDirectChildClass(thisClass, superClazzOrInterface);
+            return getGenericInterface(directChildClass, superClazzOrInterface);
+        }
+        Class<?> currentClass = thisClass;
+        while (currentClass.getSuperclass() != superClazzOrInterface) {
+            currentClass = currentClass.getSuperclass();
+        }
+        return currentClass.getGenericSuperclass();
+    }
 
     /**
      * 从instance所属的类开始，查找在superClazzOrInterfaced定义的泛型参数typeParamName的具体类型
@@ -82,7 +101,6 @@ public class TypeParameterFinder {
             throw new IllegalArgumentException("typeParam " + typeParamName + " is declared in self class: " + thisClass.getSimpleName()
                     + ", only support find superClassOrInterface typeParam.");
         }
-
         ensureTypeParameterExist(superClazzOrInterface, typeParamName);
 
         if (superClazzOrInterface.isInterface()) {
@@ -98,30 +116,26 @@ public class TypeParameterFinder {
      * 确保泛型参数在该类型中进行了定义
      *
      * @param parametrizedSuperInterface 超类/接口对应的Class对象
-     * @param typeParamName              泛型参数名
+     * @param typeVarName                泛型参数名
      */
-    private static void ensureTypeParameterExist(Class<?> parametrizedSuperInterface, String typeParamName) {
-        TypeVariable<? extends Class<?>>[] typeParameters = parametrizedSuperInterface.getTypeParameters();
-        for (TypeVariable<? extends Class<?>> typeVariable : typeParameters) {
-            if (typeVariable.getName().equals(typeParamName)) {
-                return;
-            }
+    private static void ensureTypeParameterExist(Class<?> parametrizedSuperInterface, String typeVarName) {
+        if (indexTypeParam(parametrizedSuperInterface, typeVarName) < 0) {
+            throw new IllegalArgumentException("typeVarName " + typeVarName +
+                    " is not declared in superClazz/interface " + parametrizedSuperInterface.getSimpleName());
         }
-        throw new IllegalArgumentException("typeParamName " + typeParamName +
-                " is not declared in superClazz/interface " + parametrizedSuperInterface.getSimpleName());
     }
 
     /**
      * 从当前类开始，寻找最近通向泛型接口的通路。
      *
-     * @param thisClass                  起始查找类
-     * @param parametrizedSuperInterface 定义泛型参数的超类或接口
-     * @param typeParamName              泛型参数的名字
+     * @param thisClass             起始查找类
+     * @param parametrizedInterface 定义泛型参数的超类或接口
+     * @param typeParamName         泛型参数的名字
      * @return 泛型参数的距离类型
      */
-    private static <T> Class<?> findInterfaceTypeParameter(final Class<T> thisClass, Class<? super T> parametrizedSuperInterface, String typeParamName) {
-        final Class<? super T> directChildClass = findInterfaceDirectChildClass(thisClass, parametrizedSuperInterface);
-        return parseTypeParameter(thisClass, directChildClass, parametrizedSuperInterface, typeParamName);
+    private static <T> Class<?> findInterfaceTypeParameter(final Class<T> thisClass, Class<? super T> parametrizedInterface, String typeParamName) {
+        final Class<? super T> directChildClass = findInterfaceDirectChildClass(thisClass, parametrizedInterface);
+        return parseTypeParameter(thisClass, directChildClass, parametrizedInterface, typeParamName);
     }
 
     /**
@@ -131,20 +145,20 @@ public class TypeParameterFinder {
      * 当子类和父类实现相同的接口时，或实现多个接口时，对同一个泛型变量进行约束时，子类的泛型参数约束必定是所有约束的子集。
      * 当指定具体类型以后，任意一条通路结果都是正确的。
      *
-     * @param currentClazzOrInterface    递归到的当前类或接口
-     * @param parametrizedSuperInterface 起始class继承的接口或实现的接口
+     * @param currentClazzOrInterface 递归到的当前类或接口
+     * @param parametrizedInterface   起始class继承的接口或实现的接口
      * @return actualType
      */
-    private static <T> Class<? super T> findInterfaceDirectChildClass(Class<? super T> currentClazzOrInterface, Class<? super T> parametrizedSuperInterface) {
-        if (!parametrizedSuperInterface.isAssignableFrom(currentClazzOrInterface)) {
+    private static <T> Class<? super T> findInterfaceDirectChildClass(Class<? super T> currentClazzOrInterface, Class<? super T> parametrizedInterface) {
+        if (!parametrizedInterface.isAssignableFrom(currentClazzOrInterface)) {
             throw new IllegalArgumentException("currentClazzOrInterface=" + currentClazzOrInterface.getSimpleName()
-                    + " ,parametrizedSuperInterface=" + parametrizedSuperInterface.getSimpleName());
+                    + " ,parametrizedInterface=" + parametrizedInterface.getSimpleName());
         }
 
         // 查询直接实现/继承的接口
         Class<?>[] implementationInterfaces = currentClazzOrInterface.getInterfaces();
         for (Class<?> clazz : implementationInterfaces) {
-            if (clazz == parametrizedSuperInterface) {
+            if (clazz == parametrizedInterface) {
                 // 找到了直接实现类/直接子接口
                 return currentClazzOrInterface;
             }
@@ -153,23 +167,23 @@ public class TypeParameterFinder {
         // 因为指定了泛型的具体类型，那么任意一个路径达到目标类都能获取到相同结果
         // 如果超类 是 目标类的子类或实现类，就在超类体系中查找，更快更简单(因为超类只有一个)
         Class<? super T> superclass = currentClazzOrInterface.getSuperclass();
-        if (null != superclass && parametrizedSuperInterface.isAssignableFrom(superclass)) {
-            return findInterfaceDirectChildClass(superclass, parametrizedSuperInterface);
+        if (null != superclass && parametrizedInterface.isAssignableFrom(superclass)) {
+            return findInterfaceDirectChildClass(superclass, parametrizedInterface);
         }
 
         // 这里，currentClazzOrInterface继承或实现的接口中必定存在目标接口的子接口
-        assert parametrizedSuperInterface.isInterface() : "currentClazzOrInterface " + currentClazzOrInterface.getSimpleName() + " i";
+        assert parametrizedInterface.isInterface() : "currentClazzOrInterface " + currentClazzOrInterface.getSimpleName() + " i";
         for (Class<?> oneSuperInterface : implementationInterfaces) {
-            if (parametrizedSuperInterface.isAssignableFrom(oneSuperInterface)) {
+            if (parametrizedInterface.isAssignableFrom(oneSuperInterface)) {
                 // 任意一个通路上去
                 @SuppressWarnings({"unchecked"})
                 Class<? super T> superInterface = (Class<? super T>) oneSuperInterface;
-                return findInterfaceDirectChildClass(superInterface, parametrizedSuperInterface);
+                return findInterfaceDirectChildClass(superInterface, parametrizedInterface);
             }
         }
 
         // 这里走不到
-        throw new RuntimeException();
+        throw new AssertionError();
     }
 
     /**
@@ -184,86 +198,77 @@ public class TypeParameterFinder {
      */
     private static <T> Class<?> parseTypeParameter(final Class<? extends T> thisClass, final Class<? super T> directChildClass,
                                                    final Class<? super T> parametrizedSuperInterface, final String typeParamName) {
-        int typeParamIndex = -1;
         // 获取的是声明的泛型变量 类名/接口名之后的<>
-        TypeVariable<?>[] typeParams = parametrizedSuperInterface.getTypeParameters();
-        for (int i = 0; i < typeParams.length; i++) {
-            if (typeParamName.equals(typeParams[i].getName())) {
-                typeParamIndex = i;
-                break;
-            }
-        }
-
+        int typeParamIndex = indexTypeParam(parametrizedSuperInterface, typeParamName);
         assert typeParamIndex >= 0;
 
         // 这里的实现是在接口中查找，而netty的实现是在超类中查找
-        Type genericSuperInterface = null;
-        Class<?>[] extendsOrImpInterfaces = directChildClass.getInterfaces();
-        for (int index = 0; index < extendsOrImpInterfaces.length; index++) {
-            if (extendsOrImpInterfaces[index] == parametrizedSuperInterface) {
-                genericSuperInterface = directChildClass.getGenericInterfaces()[index];
-                break;
-            }
-        }
-
-        assert null != genericSuperInterface : "genericSuperInterface";
-
+        Type genericSuperInterface = getGenericInterface(directChildClass, parametrizedSuperInterface);
         if (!(genericSuperInterface instanceof ParameterizedType)) {
             // 1. 直接子类忽略了该接口中所有泛型参数，会导致获取到不是 ParameterizedType，而是一个普通的class对象
-            // 因为忽略了泛型参数，那么就是Object
             return Object.class;
         }
 
         // 2. 直接子类对父接口中至少一个泛型参数进行了保留或指定了具体类型，会导致获取到的是ParameterizedType
-        // 获取到的信息是一个Type类型，可以进行嵌套，所有需要对其具体类型进行判断
         Type[] actualTypeParams = ((ParameterizedType) genericSuperInterface).getActualTypeArguments();
         Type actualTypeParam = actualTypeParams[typeParamIndex];
-
-        if (actualTypeParam instanceof ParameterizedType) {
-            // 3.真实类型也是个泛型接口，获取其原始类型 rawType
-            actualTypeParam = ((ParameterizedType) actualTypeParam).getRawType();
+        if (actualTypeParam instanceof ParameterizedType parameterizedType) {
+            actualTypeParam = parameterizedType.getRawType();
         }
-
-        if (actualTypeParam instanceof Class) {
-            // 4.成功找到
-            return (Class<?>) actualTypeParam;
+        if (actualTypeParam instanceof Class<?> clazz) {
+            return clazz;
         }
-
-        if (actualTypeParam instanceof GenericArrayType) {
-            // 5.泛型参数的真实类型是个数组，获取数组的元素类型
-            Type componentType = ((GenericArrayType) actualTypeParam).getGenericComponentType();
-            if (componentType instanceof ParameterizedType) {
-                componentType = ((ParameterizedType) componentType).getRawType();
+        if (actualTypeParam instanceof GenericArrayType arrayType) {
+            // 数组的元素只能是普通类型和参数化类型
+            Type componentType = arrayType.getGenericComponentType();
+            if (componentType instanceof ParameterizedType parameterizedType) {
+                componentType = parameterizedType.getRawType();
             }
-            // 这里好像没做完全的处理，但是考虑全面会很复杂
-            if (componentType instanceof Class) {
+            if (componentType instanceof Class<?>) {
                 return Array.newInstance((Class<?>) componentType, 0).getClass();
             }
         }
 
-        if (actualTypeParam instanceof TypeVariable) {
-            // 6.真实类型是另一个泛型参数，即子接口仍然用泛型参数表示父接口中的泛型参数，可能原封不动的保留了，也可能添加了边界，也可能换了个名
+        if (actualTypeParam instanceof TypeVariable<?> typeVar) {
+            // 3.真实类型是另一个泛型参数，即子接口仍然用泛型参数表示父接口中的泛型参数，可能原封不动的保留了，也可能添加了边界，也可能换了个名
             // Resolved type parameter points to another type parameter.
-            TypeVariable<?> v = (TypeVariable<?>) actualTypeParam;
-            if (!(v.getGenericDeclaration() instanceof Class)) {
-                // 7.新泛型参数(换名后的参数名)的类型如果不是class/interface，则返回Object。
-                // 科普：可以声明(定义)泛型变量的有：类/接口 方法 构造器
+            if (!(typeVar.getGenericDeclaration() instanceof Class<?> genericDeclarationClass)) {
+                // 4.新泛型参数(换名后的参数名)的类型如果不是class/interface，则返回Object。
                 return Object.class;
             }
 
-            Class<?> genericDeclarationClass = (Class<?>) v.getGenericDeclaration();
             if (parametrizedSuperInterface.isAssignableFrom(thisClass)) {
-                // 8.实例对象的某个超类或接口仍然用泛型参数表示目标泛型参数，则需要重新查找被重新定义的泛型参数
+                // 5.实例对象的某个超类或接口仍然用泛型参数表示目标泛型参数，则需要重新查找被重新定义的泛型参数
                 @SuppressWarnings("unchecked")
-                Class<? super T> newSuperClazzOrInerface = (Class<? super T>) genericDeclarationClass;
-                return findTypeParameterUnsafe(thisClass, newSuperClazzOrInerface, v.getName());
+                Class<? super T> newSuperClazzOrInterface = (Class<? super T>) genericDeclarationClass;
+                return findTypeParameterUnsafe(thisClass, newSuperClazzOrInterface, typeVar.getName());
             } else {
-                // 9.泛型参数来自另一个继承体系,停止查找
+                // 5.泛型参数来自另一个继承体系,停止查找
                 return Object.class;
             }
         }
 
         return fail(thisClass, typeParamName);
+    }
+
+    private static <T> Type getGenericInterface(Class<? super T> directChildClass, Class<? super T> superInterface) {
+        Class<?>[] extendsOrImpInterfaces = directChildClass.getInterfaces();
+        for (int index = 0; index < extendsOrImpInterfaces.length; index++) {
+            if (extendsOrImpInterfaces[index] == superInterface) {
+                return directChildClass.getGenericInterfaces()[index];
+            }
+        }
+        throw new AssertionError("genericSuperInterface");
+    }
+
+    private static int indexTypeParam(Class<?> clazz, String typeVarName) {
+        final TypeVariable<?>[] typeParams = clazz.getTypeParameters();
+        for (int idx = 0; idx < typeParams.length; idx++) {
+            if (typeVarName.equals(typeParams[idx].getName())) {
+                return idx;
+            }
+        }
+        return -1;
     }
 
     private static Class<?> fail(Class<?> type, String typeParamName) {
@@ -278,15 +283,7 @@ public class TypeParameterFinder {
         Class<?> currentClass = thisClass;
         for (; ; ) {
             if (currentClass.getSuperclass() == parametrizedSuperclass) {
-                int typeParamIndex = -1;
-                TypeVariable<?>[] typeParams = currentClass.getSuperclass().getTypeParameters();
-                for (int i = 0; i < typeParams.length; i++) {
-                    if (typeParamName.equals(typeParams[i].getName())) {
-                        typeParamIndex = i;
-                        break;
-                    }
-                }
-
+                int typeParamIndex = indexTypeParam(parametrizedSuperclass, typeParamName);
                 if (typeParamIndex < 0) {
                     throw new IllegalStateException(
                             "unknown type parameter '" + typeParamName + "': " + parametrizedSuperclass);
@@ -298,16 +295,15 @@ public class TypeParameterFinder {
                 }
 
                 Type[] actualTypeParams = ((ParameterizedType) genericSuperType).getActualTypeArguments();
-
                 Type actualTypeParam = actualTypeParams[typeParamIndex];
-                if (actualTypeParam instanceof ParameterizedType) {
-                    actualTypeParam = ((ParameterizedType) actualTypeParam).getRawType();
+                if (actualTypeParam instanceof ParameterizedType parameterizedType) {
+                    actualTypeParam = parameterizedType.getRawType();
                 }
-                if (actualTypeParam instanceof Class) {
-                    return (Class<?>) actualTypeParam;
+                if (actualTypeParam instanceof Class<?> clazz) {
+                    return clazz;
                 }
-                if (actualTypeParam instanceof GenericArrayType) {
-                    Type componentType = ((GenericArrayType) actualTypeParam).getGenericComponentType();
+                if (actualTypeParam instanceof GenericArrayType arrayType) {
+                    Type componentType = arrayType.getGenericComponentType();
                     if (componentType instanceof ParameterizedType) {
                         componentType = ((ParameterizedType) componentType).getRawType();
                     }
@@ -315,16 +311,15 @@ public class TypeParameterFinder {
                         return Array.newInstance((Class<?>) componentType, 0).getClass();
                     }
                 }
-                if (actualTypeParam instanceof TypeVariable) {
+                if (actualTypeParam instanceof TypeVariable<?> typeVar) {
                     // Resolved type parameter points to another type parameter.
-                    TypeVariable<?> v = (TypeVariable<?>) actualTypeParam;
                     currentClass = thisClass;
-                    if (!(v.getGenericDeclaration() instanceof Class)) {
+                    if (!(typeVar.getGenericDeclaration() instanceof Class)) {
                         return Object.class;
                     }
 
-                    parametrizedSuperclass = (Class<?>) v.getGenericDeclaration();
-                    typeParamName = v.getName();
+                    parametrizedSuperclass = (Class<?>) typeVar.getGenericDeclaration();
+                    typeParamName = typeVar.getName();
                     if (parametrizedSuperclass.isAssignableFrom(thisClass)) {
                         continue;
                     } else {
@@ -340,4 +335,5 @@ public class TypeParameterFinder {
             }
         }
     }
+
 }

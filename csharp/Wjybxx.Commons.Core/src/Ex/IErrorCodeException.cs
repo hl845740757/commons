@@ -27,4 +27,9 @@ public interface IErrorCodeException
     /// 异常对应的错误码
     /// </summary>
     int ErrorCode { get; }
+
+    /// <summary>
+    /// 附加信息
+    /// </summary>
+    string? Message { get; }
 }

@@ -22,7 +22,10 @@ import com.squareup.javapoet.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.annotation.processing.*;
+import javax.annotation.processing.Filer;
+import javax.annotation.processing.Generated;
+import javax.annotation.processing.Messager;
+import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.lang.model.type.*;

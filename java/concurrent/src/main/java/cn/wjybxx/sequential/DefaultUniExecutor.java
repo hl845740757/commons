@@ -16,7 +16,10 @@
 
 package cn.wjybxx.sequential;
 
-import cn.wjybxx.concurrent.*;
+import cn.wjybxx.concurrent.CancelCodes;
+import cn.wjybxx.concurrent.EventLoopState;
+import cn.wjybxx.concurrent.IFuture;
+import cn.wjybxx.concurrent.IFutureTask;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayDeque;

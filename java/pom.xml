@@ -68,11 +68,11 @@
         <!-- 子模块依赖 -->
         <javapoet.version>1.13.0</javapoet.version>
         <fastutil.version>8.5.12</fastutil.version>
-        
-		<commons-lang3.version>3.14.0</commons-lang3.version>
+
+        <commons-lang3.version>3.14.0</commons-lang3.version>
         <commons-io.version>2.15.1</commons-io.version>
-        <commons-codec.version>1.16.0</commons-codec.version>		
-		<guava.version>33.0.0-jre</guava.version>
+        <commons-codec.version>1.16.0</commons-codec.version>
+        <guava.version>33.0.0-jre</guava.version>
 
         <bson.version>4.11.1</bson.version>
     </properties>
