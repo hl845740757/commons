@@ -33,33 +33,28 @@ import java.util.stream.Collectors;
  */
 public class BeanUtils {
 
-    /**
-     * 判断一个类是否包含无参构造方法
-     */
+    /** 判断一个类是否包含无参构造方法 */
     public static boolean containsNoArgsConstructor(TypeElement typeElement) {
         return getNoArgsConstructor(typeElement) != null;
     }
 
+    /** 判断一个类是否包含指定参数的单参构造方法 */
     public static boolean containsOneArgsConstructor(Types typeUtils, TypeElement typeElement, TypeMirror argType) {
         return getOneArgsConstructor(typeUtils, typeElement, argType) != null;
     }
 
-    /**
-     * 查找无参构造方法
-     */
+    /** 查找无参构造方法 */
     @Nullable
     public static ExecutableElement getNoArgsConstructor(TypeElement typeElement) {
         return typeElement.getEnclosedElements().stream()
                 .filter(e -> e.getKind() == ElementKind.CONSTRUCTOR)
                 .map(e -> (ExecutableElement) e)
-                .filter(e -> e.getParameters().size() == 0)
+                .filter(e -> e.getParameters().isEmpty())
                 .findFirst()
                 .orElse(null);
     }
 
-    /**
-     * 查找单参数的构造方法
-     */
+    /** 查找单参数的构造方法 */
     @Nullable
     public static ExecutableElement getOneArgsConstructor(Types typeUtils, TypeElement typeElement, TypeMirror argType) {
         return typeElement.getEnclosedElements().stream()
@@ -134,11 +129,15 @@ public class BeanUtils {
         final String setterMethodName = BeanUtils.setterMethodName(fieldName, AptUtils.isPrimitiveBoolean(variableElement.asType()));
         final String setterMethodName2 = "set" + BeanUtils.firstCharToUpperCase(fieldName);
         return allFieldsAndMethodWithInherit.stream()
-                .filter(e -> !e.getModifiers().contains(Modifier.PRIVATE))
                 .filter(e -> e.getKind() == ElementKind.METHOD)
                 .map(e -> (ExecutableElement) e)
-                .filter(e -> e.getParameters().size() == 1)
                 .filter(e -> {
+                    if (!e.getModifiers().contains(Modifier.PUBLIC)) {
+                        return false;
+                    }
+                    if (e.getParameters().size() != 1) {
+                        return false;
+                    }
                     String mName = e.getSimpleName().toString();
                     return mName.equals(setterMethodName) || mName.equals(setterMethodName2);
                 })
@@ -157,11 +156,15 @@ public class BeanUtils {
         final String getterMethodName = BeanUtils.getterMethodName(fieldName, AptUtils.isPrimitiveBoolean(variableElement.asType()));
         final String getterMethodName2 = "get" + BeanUtils.firstCharToUpperCase(fieldName);
         return allFieldsAndMethodWithInherit.stream()
-                .filter(e -> !e.getModifiers().contains(Modifier.PRIVATE))
                 .filter(e -> e.getKind() == ElementKind.METHOD)
                 .map(e -> (ExecutableElement) e)
-                .filter(e -> e.getParameters().size() == 0)
                 .filter(e -> {
+                    if (!e.getModifiers().contains(Modifier.PUBLIC)) {
+                        return false;
+                    }
+                    if (e.getParameters().size() != 0) {
+                        return false;
+                    }
                     String mName = e.getSimpleName().toString();
                     return mName.equals(getterMethodName) || mName.equals(getterMethodName2);
                 })
@@ -178,7 +181,7 @@ public class BeanUtils {
      * @return 首字符大写的字符串
      */
     public static String firstCharToUpperCase(@Nonnull String str) {
-        if (str.length() == 0) {
+        if (str.isEmpty()) {
             return str;
         }
         char firstChar = str.charAt(0);
@@ -197,7 +200,7 @@ public class BeanUtils {
      * @return 首字符小写的字符串
      */
     public static String firstCharToLowerCase(@Nonnull String str) {
-        if (str.length() == 0) {
+        if (str.isEmpty()) {
             return str;
         }
         char firstChar = str.charAt(0);
@@ -268,7 +271,7 @@ public class BeanUtils {
      * 查询名字的第一个或第二个字符是否是大写
      */
     private static boolean isFirstOrSecondCharUpperCase(String name) {
-        if (name.length() < 1) {
+        if (name.isEmpty()) {
             return false;
         }
         // 下划线开头的也需要特殊处理...

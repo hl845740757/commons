@@ -144,6 +144,9 @@ public class AptUtils {
                 .build();
     }
 
+    /**
+     * 筛选出java源文件 - 去除带有注解的class文件，用于避免二次处理某个文件。
+     */
     public static Set<TypeElement> selectSourceFile(RoundEnvironment env, Elements elementUtils, TypeElement annoType) {
         return env.getElementsAnnotatedWith(annoType).stream()
                 .filter(e -> e.getKind().isClass() || e.getKind().isInterface())
@@ -152,6 +155,9 @@ public class AptUtils {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * 筛选出java源文件 - 去除带有注解的class文件，用于避免二次处理某个文件。
+     */
     public static Set<TypeElement> selectSourceFileAny(RoundEnvironment env, Elements elementUtils, TypeElement... annoType) {
         return env.getElementsAnnotatedWithAny(annoType).stream()
                 .filter(e -> e.getKind().isClass() || e.getKind().isInterface())
