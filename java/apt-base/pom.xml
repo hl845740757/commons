@@ -30,5 +30,25 @@
             <artifactId>base</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <!-- apt-base模块并未使用，其它apt模块通常会用到 -->
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service</artifactId>
+            <version>1.1.1</version>
+            <optional>true</optional>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
 </project>
