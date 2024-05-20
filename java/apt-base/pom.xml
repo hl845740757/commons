@@ -20,21 +20,22 @@
     </properties>
 
     <dependencies>
-    <dependency>
-        <groupId>com.squareup</groupId>
-        <artifactId>javapoet</artifactId>
-        <version>${javapoet.version}</version>
-    </dependency>
-    <dependency>
-        <groupId>cn.wjybxx.commons</groupId>
-        <artifactId>base</artifactId>
-        <version>${project.version}</version>
-    </dependency>
-    <!-- 只包含注解即可 -->
-    <!-- 使用Java9模块化功能后，需要在编译插件中通过 annotationProcessorPaths 指定注解处理器的路径，否则无法注解处理器无法生效 -->
-    <dependency>
-        <groupId>com.google.auto.service</groupId>
-        <artifactId>auto-service-annotations</artifactId>
-        <version>1.1.1</version>
-    </dependency>
+        <dependency>
+            <groupId>com.squareup</groupId>
+            <artifactId>javapoet</artifactId>
+            <version>${javapoet.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>cn.wjybxx.commons</groupId>
+            <artifactId>base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- 只包含注解即可 -->
+        <!-- 使用Java9模块化功能后，需要在编译插件中通过 annotationProcessorPaths 指定注解处理器的路径，否则无法注解处理器无法生效 -->
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service-annotations</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+    </dependencies>
 </project>
