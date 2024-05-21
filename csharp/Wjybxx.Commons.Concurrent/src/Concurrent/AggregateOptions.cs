@@ -20,7 +20,7 @@ using System;
 
 namespace Wjybxx.Commons.Concurrent;
 
-internal struct AggregateOptions
+internal readonly struct AggregateOptions
 {
     private readonly bool anyOf;
     public readonly int successRequire;

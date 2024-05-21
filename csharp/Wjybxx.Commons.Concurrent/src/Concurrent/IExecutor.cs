@@ -53,7 +53,6 @@ public interface IExecutor
     /// <param name="task">要调度的任务</param>
     void Execute(ITask task);
 
-
     #region 辅助方法
 
     /// C#的lambda是基于委托的，而Java的lambda是基于函数式接口的；

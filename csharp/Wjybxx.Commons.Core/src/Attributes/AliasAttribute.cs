@@ -18,6 +18,8 @@
 
 using System;
 
+#pragma warning disable CS1591
+
 namespace Wjybxx.Commons.Attributes;
 
 /// <summary>
@@ -26,4 +28,12 @@ namespace Wjybxx.Commons.Attributes;
 [AttributeUsage(AttributeTargets.All)]
 public class AliasAttribute : Attribute
 {
+    /// <summary>
+    /// 别名
+    /// </summary>
+    public string[] Values { get; }
+
+    public AliasAttribute(string[] values) {
+        Values = values;
+    }
 }

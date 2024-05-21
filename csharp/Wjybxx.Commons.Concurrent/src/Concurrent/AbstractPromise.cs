@@ -63,7 +63,6 @@ public abstract class AbstractPromise
 
     #endregion
 
-
     #region notify
 
     // Modes for Completion.tryFire. Signedness matters.

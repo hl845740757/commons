@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// <summary>
 /// 
 /// </summary>
-public class CancelCodes
+public static class CancelCodes
 {
     /**
      * 原因的掩码

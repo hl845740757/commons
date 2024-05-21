@@ -3,8 +3,8 @@
  * date - 2024/1/6
  */
 module wjybxx.commons.aptbase {
-    requires jsr305;
-    requires com.squareup.javapoet;
+    requires transitive jsr305; // 存在运行时依赖
+    requires transitive com.squareup.javapoet; // 基础工具传递下去
 
     requires transitive java.compiler;
     requires transitive wjybxx.commons.base;

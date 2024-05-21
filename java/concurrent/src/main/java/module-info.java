@@ -4,7 +4,7 @@
  */
 module wjybxx.commons.concurrent {
     requires jsr305;
-    requires org.slf4j;
+    requires transitive org.slf4j;
 
     requires transitive wjybxx.commons.base;
     requires transitive wjybxx.commons.disruptor;

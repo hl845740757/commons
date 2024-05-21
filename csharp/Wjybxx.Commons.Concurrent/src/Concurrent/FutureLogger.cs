@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Serilog;
 
 namespace Wjybxx.Commons.Concurrent;
 
@@ -55,6 +56,7 @@ public sealed class FutureLogger
             _handler.LogCause(ex, message);
         } else {
             // TODO 打印日志
+            Log.Logger.Information(ex, message);
         }
     }
 
