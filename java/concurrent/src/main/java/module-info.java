@@ -6,8 +6,8 @@ module wjybxx.commons.concurrent {
     requires jsr305;
     requires org.slf4j;
 
-    requires wjybxx.commons.base;
-    requires wjybxx.commons.disruptor;
+    requires transitive wjybxx.commons.base;
+    requires transitive wjybxx.commons.disruptor;
 
     exports cn.wjybxx.concurrent;
     exports cn.wjybxx.sequential;

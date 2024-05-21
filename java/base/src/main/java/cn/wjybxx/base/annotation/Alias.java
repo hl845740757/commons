@@ -34,6 +34,6 @@ import java.lang.annotation.Target;
 })
 public @interface Alias {
 
-    String value();
+    String[] value();
 
 }

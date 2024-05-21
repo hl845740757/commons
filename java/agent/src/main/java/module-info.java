@@ -4,7 +4,7 @@
  */
 module wjybxx.commons.agent {
     requires jdk.attach;
-    requires java.instrument;
+    requires transitive java.instrument; // 运行时必须
 
     exports cn.wjybxx.agent;
     opens cn.wjybxx.agent;

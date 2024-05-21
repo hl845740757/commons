@@ -10,7 +10,7 @@
     </parent>
     <artifactId>disruptor</artifactId>
 
-    <name>Wjybxx-Disruptor</name>
+    <name>Disruptor</name>
     <description>重写Lmax的Disruptor，保留其核心，更好的抽象和扩展性</description>
     <url>https://github.com/hl845740757/commons</url>
 
