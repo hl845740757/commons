@@ -43,6 +43,7 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
 
     private final TreeSet<Node<T>> freeArrays;
     private final Consumer<T> clearHandler;
+    private long sequence;
 
     public SimpleArrayPool(ArrayPoolBuilder.SimpleArrayPoolBuilder<T> builder) {
         this(builder.getArrayType(), builder.getPoolSize(),
@@ -132,7 +133,7 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
             if (clear) {
                 clearHandler.accept(array);
             }
-            freeArrays.add(new ArrayNode<>(array, length));
+            freeArrays.add(new ArrayNode<>(array, length, sequence++));
         }
     }
 

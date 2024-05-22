@@ -26,6 +26,7 @@ import java.lang.reflect.Array;
 import java.util.Map;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 /**
@@ -57,6 +58,7 @@ public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
 
     private final ConcurrentNavigableMap<Node<T>, Boolean> freeArrays;
     private final Consumer<T> clearHandler;
+    private final AtomicLong sequence = new AtomicLong(0);
 
     public ConcurrentArrayPool(ArrayPoolBuilder.ConcurrentArrayPoolBuilder<T> builder) {
         Class<T> arrayType = builder.getArrayType();
@@ -125,7 +127,7 @@ public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
                 clearHandler.accept(array);
             }
         }
-        freeArrays.put(new ArrayNode<>(array, length), Boolean.TRUE);
+        freeArrays.put(new ArrayNode<>(array, length, sequence.incrementAndGet()), Boolean.TRUE);
     }
 
     @Override

@@ -28,7 +28,6 @@ import java.util.function.Consumer;
  */
 class ArrayPoolCore {
 
-    public static final Comparator<Node<?>> COMPARATOR = Comparator.comparingInt(Node::length);
     private static final Consumer<Object> clear_objectArray = array -> Arrays.fill((Object[]) array, null);
     private static final Consumer<Object> clear_charArray = array -> Arrays.fill((char[]) array, (char) 0);
     private static final Consumer<Object> clear_intArray = array -> Arrays.fill((int[]) array, 0);
@@ -77,22 +76,34 @@ class ArrayPoolCore {
         throw new IllegalArgumentException("Unsupported arrayType: " + arrayType.getSimpleName());
     }
 
+    public static final Comparator<Node<?>> COMPARATOR = (left, right) -> {
+        final int r = Integer.compare(left.length(), right.length());
+        if (r != 0) {
+            return r;
+        }
+        return Long.compare(left.sequence(), right.sequence());
+    };
+
     interface Node<T> {
 
         T array();
 
         int length();
+
+        long sequence();
     }
 
     public static class ArrayNode<T> implements Node<T> {
 
         final T array;
         final int length;
+        final long sequence;
 
         /** @param length 缓存下来以避免反射调用 */
-        public ArrayNode(T array, int length) {
+        public ArrayNode(T array, int length, long sequence) {
             this.array = array;
             this.length = length;
+            this.sequence = sequence;
         }
 
         @Override
@@ -103,6 +114,11 @@ class ArrayPoolCore {
         @Override
         public int length() {
             return length;
+        }
+
+        @Override
+        public long sequence() {
+            return sequence;
         }
     }
 
@@ -122,6 +138,11 @@ class ArrayPoolCore {
         @Override
         public int length() {
             return length;
+        }
+
+        @Override
+        public long sequence() {
+            return 0;
         }
     }
 }

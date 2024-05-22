@@ -35,6 +35,7 @@ public class ArrayPoolTest {
                         .setClear(false)
                         .build(),
                 minLen, maxLen);
+
         test(ArrayPoolBuilder.newConcurrentBuilder(byte[].class)
                         .setDefCapacity(minLen)
                         .setMaxCapacity(maxLen)
