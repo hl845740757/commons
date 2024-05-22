@@ -17,7 +17,7 @@
 #endregion
 
 using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Wjybxx.Commons.Attributes;
 
@@ -66,7 +66,7 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
         this._value = obj;
     }
 
-    public void ReleaseAll(Collection<T?> objects) {
+    public void ReleaseAll(IEnumerable<T?> objects) {
         if (objects == null) {
             throw new ArgumentException("objects cannot be null.");
         }

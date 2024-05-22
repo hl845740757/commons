@@ -24,12 +24,11 @@ import java.util.Objects;
  */
 public abstract class ArrayPoolBuilder<T> {
 
-    private static final int DEFAULT_MAX_CAPACITY = 1024 * 1024;
-
     private final Class<T> arrayType;
+    private int poolSize = 16;
+    private int defCapacity = 4096;
+    private int maxCapacity = 64 * 1024;
     private boolean clear;
-    private int defCapacity = 8192;
-    private int maxCapacity = DEFAULT_MAX_CAPACITY;
 
     public ArrayPoolBuilder(Class<T> arrayType) {
         this.arrayType = Objects.requireNonNull(arrayType, "arrayType");
@@ -41,6 +40,16 @@ public abstract class ArrayPoolBuilder<T> {
 
     public Class<T> getArrayType() {
         return arrayType;
+    }
+
+    /** 对象池大小 - 等于0则不缓存 */
+    public int getPoolSize() {
+        return poolSize;
+    }
+
+    public ArrayPoolBuilder<T> setPoolSize(int poolSize) {
+        this.poolSize = poolSize;
+        return this;
     }
 
     /** 数组在归还时是否清理数组内容 */
@@ -87,8 +96,6 @@ public abstract class ArrayPoolBuilder<T> {
 
     public static class SimpleArrayPoolBuilder<T> extends ArrayPoolBuilder<T> {
 
-        private int poolSize = 16;
-
         public SimpleArrayPoolBuilder(Class<T> arrayType) {
             super(arrayType);
         }
@@ -116,13 +123,9 @@ public abstract class ArrayPoolBuilder<T> {
             return this;
         }
 
-        /** 对象池大小 - 等于0则不缓存 */
-        public int getPoolSize() {
-            return poolSize;
-        }
-
+        @Override
         public SimpleArrayPoolBuilder<T> setPoolSize(int poolSize) {
-            this.poolSize = poolSize;
+            super.setPoolSize(poolSize);
             return this;
         }
     }
@@ -153,6 +156,12 @@ public abstract class ArrayPoolBuilder<T> {
         @Override
         public ConcurrentArrayPoolBuilder<T> setClear(boolean clear) {
             super.setClear(clear);
+            return this;
+        }
+
+        @Override
+        public ConcurrentArrayPoolBuilder<T> setPoolSize(int poolSize) {
+            super.setPoolSize(poolSize);
             return this;
         }
     }

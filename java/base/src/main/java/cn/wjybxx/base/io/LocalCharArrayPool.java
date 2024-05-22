@@ -74,6 +74,7 @@ public class LocalCharArrayPool implements ArrayPool<char[]> {
     private static final ThreadLocal<SimpleArrayPool<char[]>> THREAD_LOCAL_INST;
 
     static {
+        // CharArray使用的频率不多，不池化太多
         POOL_SIZE = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalCharArrayPool.PoolSize", 4);
         INIT_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalCharArrayPool.InitCapacity", 1024);
         MAX_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalCharArrayPool.MaxCapacity", 64 * 1024);

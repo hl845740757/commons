@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
@@ -78,7 +77,7 @@ public class DefaultObjectPool<T> : IObjectPool<T>
         }
     }
 
-    public void ReleaseAll(Collection<T?> objects) {
+    public void ReleaseAll(IEnumerable<T?> objects) {
         if (objects == null) {
             throw new ArgumentException("objects cannot be null.");
         }

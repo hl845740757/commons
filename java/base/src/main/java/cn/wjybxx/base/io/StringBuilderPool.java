@@ -41,6 +41,11 @@ public final class StringBuilderPool implements ObjectPool<StringBuilder> {
         this(poolSize, initCapacity, Integer.MAX_VALUE);
     }
 
+    /**
+     * @param poolSize     缓存池大小
+     * @param initCapacity 分配新builder的初始长度
+     * @param maxCapacity  可缓存的builder的最大长度
+     */
     public StringBuilderPool(int poolSize, int initCapacity, int maxCapacity) {
         if (poolSize < 0 || initCapacity < 0 || maxCapacity < 0) {
             throw new IllegalArgumentException();

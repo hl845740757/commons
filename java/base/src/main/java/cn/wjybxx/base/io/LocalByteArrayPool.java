@@ -75,9 +75,10 @@ public class LocalByteArrayPool implements ArrayPool<byte[]> {
     private static final ThreadLocal<SimpleArrayPool<byte[]>> THREAD_LOCAL_INST;
 
     static {
-        POOL_SIZE = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalByteArrayPool.PoolSize", 4);
-        INIT_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalByteArrayPool.InitCapacity", 4096);
-        MAX_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalByteArrayPool.MaxCapacity", 1024 * 1024);
+        // 全小写看着费劲...因此使用大驼峰
+        POOL_SIZE = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalByteArrayPool.PoolSize", 16);
+        INIT_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalByteArrayPool.InitCapacity", 1024);
+        MAX_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.LocalByteArrayPool.MaxCapacity", 512 * 1024);
         THREAD_LOCAL_INST = ThreadLocal.withInitial(() -> new SimpleArrayPool<>(byte[].class, POOL_SIZE, INIT_CAPACITY, MAX_CAPACITY));
     }
 
