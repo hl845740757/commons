@@ -21,76 +21,68 @@ import cn.wjybxx.base.io.ArrayPoolCore.LengthNode;
 import cn.wjybxx.base.io.ArrayPoolCore.Node;
 
 import javax.annotation.Nonnull;
-import javax.annotation.concurrent.NotThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 import java.lang.reflect.Array;
-import java.util.TreeSet;
+import java.util.Map;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
 
 /**
- * 简单数组池实现
+ * 简单并发数组池实现
  *
  * @author wjybxx
  * date - 2024/1/6
  */
-@NotThreadSafe
-public final class SimpleArrayPool<T> implements ArrayPool<T> {
+@ThreadSafe
+public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
+
+    /** 全局共享字节数组池 */
+    public static final ConcurrentArrayPool<byte[]> SHARED_BYTE_ARRAY_POOL = ArrayPoolBuilder.newConcurrentBuilder(byte[].class)
+            .setDefCapacity(4096)
+            .setMaxCapacity(1024 * 1024)
+            .setClear(false)
+            .build();
+    /** 全局共享char数组池 */
+    public static final ConcurrentArrayPool<char[]> SHARED_CHAR_ARRAY_POOL = ArrayPoolBuilder.newConcurrentBuilder(char[].class)
+            .setDefCapacity(4096)
+            .setMaxCapacity(1024 * 1024)
+            .setClear(false)
+            .build();
 
     private final Class<T> arrayType;
     private final int defCapacity;
     private final int maxCapacity;
     private final boolean clear;
-    private final int poolSize;
 
-    private final TreeSet<Node<T>> freeArrays;
+    private final ConcurrentNavigableMap<Node<T>, Boolean> freeArrays;
     private final Consumer<T> clearHandler;
 
-    public SimpleArrayPool(ArrayPoolBuilder.SimpleArrayPoolBuilder<T> builder) {
-        this(builder.getArrayType(), builder.getPoolSize(),
-                builder.getDefCapacity(), builder.getMaxCapacity(),
-                builder.isClear());
-    }
-
-    /**
-     * @param arrayType   数组类型
-     * @param poolSize    池大小
-     * @param defCapacity 默认数组大小
-     * @param maxCapacity 数组最大大小 -- 超过大小的数组不会放入池中
-     */
-    public SimpleArrayPool(Class<T> arrayType, int poolSize, int defCapacity, int maxCapacity) {
-        this(arrayType, poolSize, defCapacity, maxCapacity, false);
-    }
-
-    /**
-     * @param arrayType   数组类型
-     * @param poolSize    池大小
-     * @param defCapacity 默认数组大小
-     * @param maxCapacity 数组最大大小 -- 超过大小的数组不会放入池中
-     * @param clear       数组归还到池时是否清理
-     */
-    public SimpleArrayPool(Class<T> arrayType, int poolSize, int defCapacity, int maxCapacity, boolean clear) {
+    public ConcurrentArrayPool(ArrayPoolBuilder.ConcurrentArrayPoolBuilder<T> builder) {
+        Class<T> arrayType = builder.getArrayType();
         if (arrayType.getComponentType() == null) {
             throw new IllegalArgumentException("arrayType");
         }
-        if (defCapacity <= 0 || maxCapacity < 0 || poolSize < 0) {
+        if (builder.getDefCapacity() <= 0 || builder.getMaxCapacity() <= 0) {
             throw new IllegalArgumentException();
         }
+
         this.arrayType = arrayType;
-        this.poolSize = poolSize;
-        this.defCapacity = defCapacity;
-        this.maxCapacity = maxCapacity;
-        this.clear = clear;
+        this.defCapacity = builder.getDefCapacity();
+        this.maxCapacity = builder.getMaxCapacity();
+        this.clear = builder.isClear();
 
         this.clearHandler = ArrayPoolCore.findClearHandler(arrayType);
-        this.freeArrays = new TreeSet<>(ArrayPoolCore.COMPARATOR);
+        this.freeArrays = new ConcurrentSkipListMap<>(ArrayPoolCore.COMPARATOR);
     }
 
     @SuppressWarnings("unchecked")
     @Nonnull
     @Override
     public T acquire() {
-        Node<T> minNode = freeArrays.pollFirst();
-        if (minNode != null) {
-            return minNode.array();
+        Map.Entry<Node<T>, Boolean> firstEntry = freeArrays.pollFirstEntry();
+        if (firstEntry != null) {
+            return firstEntry.getKey().array();
         }
         return (T) Array.newInstance(arrayType.getComponentType(), defCapacity);
     }
@@ -103,7 +95,7 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
     @SuppressWarnings("unchecked")
     @Override
     public T acquire(int minimumLength, boolean clear) {
-        Node<T> ceilingNode = freeArrays.ceiling(new LengthNode<>(minimumLength));
+        Node<T> ceilingNode = freeArrays.ceilingKey(new LengthNode<>(minimumLength));
         if (ceilingNode != null) {
             freeArrays.remove(ceilingNode);
 
@@ -128,12 +120,12 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
 
     private void releaseImpl(T array, boolean clear) {
         int length = Array.getLength(array);
-        if (freeArrays.size() < poolSize && length <= maxCapacity) {
+        if (length <= maxCapacity) {
             if (clear) {
                 clearHandler.accept(array);
             }
-            freeArrays.add(new ArrayNode<>(array, length));
         }
+        freeArrays.put(new ArrayNode<>(array, length), Boolean.TRUE);
     }
 
     @Override

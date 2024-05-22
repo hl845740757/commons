@@ -26,18 +26,32 @@ import org.junit.jupiter.api.Test;
 public class ArrayPoolTest {
 
     @Test
-    void testRent() {
+    void testSimpleArrayPool() {
         int minLen = 64;
         int maxLen = 1024;
+        test(ArrayPoolBuilder.newSimpleBuilder(byte[].class)
+                        .setDefCapacity(minLen)
+                        .setMaxCapacity(maxLen)
+                        .setClear(false)
+                        .build(),
+                minLen, maxLen);
+        test(ArrayPoolBuilder.newConcurrentBuilder(byte[].class)
+                        .setDefCapacity(minLen)
+                        .setMaxCapacity(maxLen)
+                        .setClear(false)
+                        .build(),
+                minLen, maxLen);
+    }
 
-        SimpleArrayPool<byte[]> arrayPool = new SimpleArrayPool<>(byte[].class, 4, minLen, maxLen);
+    private static void test(ArrayPool<byte[]> arrayPool, int minLen, int maxLen) {
         {
-            Assertions.assertEquals(arrayPool.acquire().length, minLen);
+            byte[] array = arrayPool.acquire();
+            Assertions.assertEquals(array.length, minLen);
+            arrayPool.release(array);
         }
+        byte[] leak_array = arrayPool.acquire(1023);
         {
-            byte[] array = arrayPool.acquire(1023);
-            Assertions.assertEquals(array.length, 1023);
-//            arrayPool.returnOne(array); // 不放入池中，以测试后续是否返回1024的数组
+            Assertions.assertEquals(leak_array.length, 1023);
         }
         {
             byte[] array = arrayPool.acquire(maxLen);
@@ -49,6 +63,19 @@ public class ArrayPoolTest {
             Assertions.assertEquals(array.length, maxLen);
             arrayPool.release(array);
         }
+        // clear
+        {
+            byte[] array = arrayPool.acquire(maxLen);
+            Assertions.assertEquals(array.length, maxLen);
+            arrayPool.release(array, true);
+        }
+        {
+            byte[] array = arrayPool.acquire(1023);
+            Assertions.assertEquals(array.length, maxLen);
+            arrayPool.release(array, true);
+        }
+        //
+        arrayPool.release(leak_array);
     }
 
     @Test

@@ -31,22 +31,22 @@ namespace Wjybxx.Commons.IO;
 [ThreadSafe]
 public class DefaultArrayPool<T> : IArrayPool<T>
 {
-    private readonly int _initCapacity;
+    private readonly int _defCapacity;
     private readonly bool _clear;
     private readonly ArrayPool<T> _arrayPool;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="initCapacity">默认分配空间</param>
+    /// <param name="defCapacity">默认分配空间</param>
     /// <param name="maxCapacity">最近数组长度；超过大小的数组不会放入池中</param>
     /// <param name="clear">数组归还到池中时是否清理</param>
     /// <exception cref="ArgumentException"></exception>
-    public DefaultArrayPool(int initCapacity, int maxCapacity, bool clear = false) {
-        if (initCapacity < 0 || maxCapacity < 0) {
-            throw new ArgumentException($"{nameof(initCapacity)}: {initCapacity}, {nameof(maxCapacity)}: {maxCapacity}");
+    public DefaultArrayPool(int defCapacity, int maxCapacity, bool clear = false) {
+        if (defCapacity < 0 || maxCapacity < 0) {
+            throw new ArgumentException($"{nameof(defCapacity)}: {defCapacity}, {nameof(maxCapacity)}: {maxCapacity}");
         }
-        _initCapacity = initCapacity;
+        _defCapacity = defCapacity;
         _clear = clear;
         _arrayPool = ArrayPool<T>.Create(maxCapacity, 16);
     }
@@ -55,21 +55,21 @@ public class DefaultArrayPool<T> : IArrayPool<T>
     /// 
     /// </summary>
     /// <param name="arrayPool">被代理的池</param>
-    /// <param name="initCapacity">默认分配空间</param>
+    /// <param name="defCapacity">默认分配空间</param>
     /// <param name="clear">数组归还到池中时是否清理</param>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
-    public DefaultArrayPool(ArrayPool<T> arrayPool, int initCapacity, bool clear = false) {
-        if (initCapacity < 0) {
-            throw new ArgumentException($"{nameof(initCapacity)}: {initCapacity}");
+    public DefaultArrayPool(ArrayPool<T> arrayPool, int defCapacity, bool clear = false) {
+        if (defCapacity < 0) {
+            throw new ArgumentException($"{nameof(defCapacity)}: {defCapacity}");
         }
-        _initCapacity = initCapacity;
+        _defCapacity = defCapacity;
         _clear = clear;
         _arrayPool = arrayPool ?? throw new ArgumentNullException(nameof(arrayPool));
     }
 
     public T[] Acquire() {
-        return _arrayPool.Rent(_initCapacity);
+        return _arrayPool.Rent(_defCapacity);
     }
 
     public T[] Acquire(int minimumLength, bool clear = false) {
