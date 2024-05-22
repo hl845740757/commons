@@ -33,17 +33,17 @@ public class LocalStringBuilderPool implements ObjectPool<StringBuilder> {
 
     @Nonnull
     @Override
-    public StringBuilder rent() {
-        return THREAD_LOCAL_INST.get().rent();
+    public StringBuilder acquire() {
+        return THREAD_LOCAL_INST.get().acquire();
     }
 
     @Override
-    public void returnOne(StringBuilder builder) {
-        THREAD_LOCAL_INST.get().returnOne(builder);
+    public void release(StringBuilder builder) {
+        THREAD_LOCAL_INST.get().release(builder);
     }
 
     @Override
-    public void freeAll() {
+    public void clear() {
 
     }
 

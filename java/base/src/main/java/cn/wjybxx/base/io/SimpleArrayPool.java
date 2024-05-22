@@ -90,7 +90,7 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
     @SuppressWarnings("unchecked")
     @Nonnull
     @Override
-    public T rent() {
+    public T acquire() {
         Node<T> minNode = freeArrays.pollFirst();
         if (minNode != null) {
             return minNode.array();
@@ -99,13 +99,13 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
     }
 
     @Override
-    public T rent(int minimumLength) {
-        return rent(minimumLength, false);
+    public T acquire(int minimumLength) {
+        return acquire(minimumLength, false);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public T rent(int minimumLength, boolean clear) {
+    public T acquire(int minimumLength, boolean clear) {
         Node<T> ceilingNode = freeArrays.ceiling(new LengthNode<>(minimumLength));
         if (ceilingNode != null) {
             T array = ceilingNode.array();
@@ -118,12 +118,12 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
     }
 
     @Override
-    public void returnOne(T array) {
+    public void release(T array) {
         returnOneImpl(array, this.clear);
     }
 
     @Override
-    public void returnOne(T array, boolean clear) {
+    public void release(T array, boolean clear) {
         returnOneImpl(array, this.clear || clear); // 默认不清理的情况下用户请求有效
     }
 
@@ -138,7 +138,7 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
     }
 
     @Override
-    public void freeAll() {
+    public void clear() {
         freeArrays.clear();
     }
 

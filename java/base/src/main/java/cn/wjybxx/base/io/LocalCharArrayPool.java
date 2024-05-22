@@ -30,32 +30,32 @@ public class LocalCharArrayPool implements ArrayPool<char[]> {
     public static final LocalCharArrayPool INSTANCE = new LocalCharArrayPool();
 
     @Override
-    public char[] rent() {
-        return THREAD_LOCAL_INST.get().rent();
+    public char[] acquire() {
+        return THREAD_LOCAL_INST.get().acquire();
     }
 
     @Override
-    public char[] rent(int minimumLength) {
-        return THREAD_LOCAL_INST.get().rent(minimumLength);
+    public char[] acquire(int minimumLength) {
+        return THREAD_LOCAL_INST.get().acquire(minimumLength);
     }
 
     @Override
-    public char[] rent(int minimumLength, boolean clear) {
-        return THREAD_LOCAL_INST.get().rent(minimumLength, clear);
+    public char[] acquire(int minimumLength, boolean clear) {
+        return THREAD_LOCAL_INST.get().acquire(minimumLength, clear);
     }
 
     @Override
-    public void returnOne(char[] array) {
-        THREAD_LOCAL_INST.get().returnOne(array);
+    public void release(char[] array) {
+        THREAD_LOCAL_INST.get().release(array);
     }
 
     @Override
-    public void returnOne(char[] array, boolean clear) {
-        THREAD_LOCAL_INST.get().returnOne(array, clear);
+    public void release(char[] array, boolean clear) {
+        THREAD_LOCAL_INST.get().release(array, clear);
     }
 
     @Override
-    public void freeAll() {
+    public void clear() {
 
     }
 

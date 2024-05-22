@@ -47,7 +47,7 @@ public class FutureTest
 
         await future.GetAwaitable(globalEventLoop, TaskOption.STAGE_TRY_INLINE);
         Assert.IsTrue(globalEventLoop.InEventLoop(), "2. globalEventLoop.InEventLoop() == false");
-        
+
         return await future;
     }
 

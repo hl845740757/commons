@@ -608,6 +608,11 @@ public class UniCancelTokenSource : ICancelTokenSource
             this.state = state;
         }
 
+        protected internal override void Clear() {
+            base.Clear();
+            state = null;
+        }
+
         protected internal override UniCancelTokenSource? TryFire(int mode) {
             try {
                 if (mode <= 0 && !Claim()) {
@@ -683,6 +688,11 @@ public class UniCancelTokenSource : ICancelTokenSource
                          Action<object> action, object? state)
             : base(executor, options, source, action) {
             this.state = state;
+        }
+
+        protected internal override void Clear() {
+            base.Clear();
+            state = null;
         }
 
         protected internal override UniCancelTokenSource? TryFire(int mode) {

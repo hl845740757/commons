@@ -16,7 +16,7 @@
 
 #endregion
 
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 
 namespace Wjybxx.Commons.Pool;
 
@@ -32,28 +32,34 @@ public interface IObjectPool<T>
     /// 如果池中有可用的对象，则返回缓存的对象，否则返回一个新的对象
     /// </summary>
     /// <returns></returns>
-    T Rent();
+    T Acquire();
 
     /// <summary>
     /// 将对象放入缓存池
     /// （为保持和Java一致，不直接命名Return）
     /// </summary>
     /// <param name="obj"></param>
-    void ReturnOne(T obj);
+    void Release(T obj);
 
     /// <summary>
     /// 将对象放入缓存池
     /// </summary>
     /// <param name="objects"></param>
-    void ReturnAll(Collection<T?> objects) {
-        foreach (T obj in objects) {
-            if (obj != null) ReturnOne(obj);
+    void ReleaseAll(IEnumerable<T?> objects) {
+        if (objects is List<T> list) { // Struct Enumerator
+            foreach (T obj in list) {
+                if (obj != null) Release(obj);
+            }
+        } else {
+            foreach (T obj in objects) {
+                if (obj != null) Release(obj);
+            }
         }
     }
 
     /// <summary>
     /// 删除此池中的所有对象
-    /// (可空实现)
+    /// （如果属于特殊资源，可不清理）
     /// </summary>
-    void FreeAll();
+    void Clear();
 }

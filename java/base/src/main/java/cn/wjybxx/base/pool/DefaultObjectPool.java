@@ -70,7 +70,12 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public T rent() {
+    public T get() {
+        return acquire();
+    }
+
+    @Override
+    public T acquire() {
         int size = freeObjects.size();
         if (size > 0) {
             return freeObjects.remove(size - 1); // 可避免拷贝
@@ -79,7 +84,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public void returnOne(T object) {
+    public void release(T object) {
         if (object == null) {
             throw new IllegalArgumentException("object cannot be null.");
         }
@@ -92,7 +97,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public void returnAll(Collection<? extends T> objects) {
+    public void releaseAll(Collection<? extends T> objects) {
         if (objects == null) {
             throw new IllegalArgumentException("objects cannot be null.");
         }
@@ -127,7 +132,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public void freeAll() {
+    public void clear() {
         freeObjects.clear();
     }
 

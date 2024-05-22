@@ -53,14 +53,7 @@ public interface IArrayPool<T> : IObjectPool<T[]>
     /// <param name="minimumLength">期望的最小数组长度</param>
     /// <param name="clear">返回前是否先清理，这对于共享池来说比较重要</param>
     /// <returns>池化的字节数组</returns>
-    T[] Rent(int minimumLength, bool clear = false);
-
-    /// <summary>
-    /// 归还一个数组到池中
-    /// 是否清理数组取决于配置和实现
-    /// </summary>
-    /// <param name="array"></param>
-    new void ReturnOne(T[] array);
+    T[] Acquire(int minimumLength, bool clear = false);
 
     /// <summary>
     /// 归还一个数组到池中 - 可选择清理
@@ -68,13 +61,5 @@ public interface IArrayPool<T> : IObjectPool<T[]>
     /// <param name="array">租借的数组</param>
     /// <param name="clear">是否需要清理</param>
     /// <returns></returns>
-    void ReturnOne(T[] array, bool clear);
-
-    #region 接口适配
-
-    void IObjectPool<T[]>.ReturnOne(T[] obj) {
-        ReturnOne(obj);
-    }
-
-    #endregion
+    void Release(T[] array, bool clear);
 }

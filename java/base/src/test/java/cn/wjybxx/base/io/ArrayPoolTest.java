@@ -32,22 +32,22 @@ public class ArrayPoolTest {
 
         SimpleArrayPool<byte[]> arrayPool = new SimpleArrayPool<>(byte[].class, 4, minLen, maxLen);
         {
-            Assertions.assertEquals(arrayPool.rent().length, minLen);
+            Assertions.assertEquals(arrayPool.acquire().length, minLen);
         }
         {
-            byte[] array = arrayPool.rent(1023);
+            byte[] array = arrayPool.acquire(1023);
             Assertions.assertEquals(array.length, 1023);
 //            arrayPool.returnOne(array); // 不放入池中，以测试后续是否返回1024的数组
         }
         {
-            byte[] array = arrayPool.rent(maxLen);
+            byte[] array = arrayPool.acquire(maxLen);
             Assertions.assertEquals(array.length, maxLen);
-            arrayPool.returnOne(array);
+            arrayPool.release(array);
         }
         {
-            byte[] array = arrayPool.rent(1023);
+            byte[] array = arrayPool.acquire(1023);
             Assertions.assertEquals(array.length, maxLen);
-            arrayPool.returnOne(array);
+            arrayPool.release(array);
         }
     }
 
@@ -68,7 +68,7 @@ public class ArrayPoolTest {
         int minLen = 64;
         int maxLen = 1024;
         SimpleArrayPool<T> arrayPool = new SimpleArrayPool<>(arrayType, 4, minLen, maxLen);
-        T object = arrayPool.rent(1024, true);
-        arrayPool.returnOne(object, true);
+        T object = arrayPool.acquire(1024, true);
+        arrayPool.release(object, true);
     }
 }

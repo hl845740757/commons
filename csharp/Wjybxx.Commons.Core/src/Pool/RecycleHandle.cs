@@ -48,6 +48,6 @@ public readonly struct RecycleHandle<T> : IDisposable where T : class
     }
 
     public void Dispose() {
-        pool.ReturnOne(this); // TODO 重复归还检测
+        pool.Release(this); // TODO 重复归还检测
     }
 }

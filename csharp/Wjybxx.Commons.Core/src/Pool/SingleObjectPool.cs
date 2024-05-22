@@ -47,7 +47,7 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
         this._resetPolicy = resetPolicy ?? throw new ArgumentNullException(nameof(resetPolicy));
     }
 
-    public T Rent() {
+    public T Acquire() {
         T result = this._value;
         if (result != null) {
             this._value = null;
@@ -57,7 +57,7 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
         return result;
     }
 
-    public void ReturnOne(T obj) {
+    public void Release(T obj) {
         if (obj == null) {
             throw new ArgumentException("object cannot be null.");
         }
@@ -66,7 +66,7 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
         this._value = obj;
     }
 
-    public void ReturnAll(Collection<T?> objects) {
+    public void ReleaseAll(Collection<T?> objects) {
         if (objects == null) {
             throw new ArgumentException("objects cannot be null.");
         }
@@ -80,7 +80,7 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
         }
     }
 
-    public void FreeAll() {
+    public void Clear() {
         _value = null;
     }
 }

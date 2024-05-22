@@ -30,7 +30,7 @@ public interface ArrayPool<T> extends ObjectPool<T> {
 
     /** 返回池中一个默认大小的数组 */
     @Override
-    T rent();
+    T acquire();
 
     /**
      * 1.返回的字节数组可能大于期望的数组长度4
@@ -39,21 +39,21 @@ public interface ArrayPool<T> extends ObjectPool<T> {
      * @param minimumLength 期望的最小数组长度
      * @return 池化的字节数组
      */
-    T rent(int minimumLength);
+    T acquire(int minimumLength);
 
     /**
      * @param minimumLength 期望的最小数组长度
      * @param clear         返回前是否先清理，这对于共享池来说比较重要
      * @return 池化的字节数组
      */
-    T rent(int minimumLength, boolean clear);
+    T acquire(int minimumLength, boolean clear);
 
     /**
      * 归还数组到池
      * 是否清理数组取决于配置和实现
      */
     @Override
-    void returnOne(T array);
+    void release(T array);
 
     /**
      * 归还数组到池
@@ -61,5 +61,5 @@ public interface ArrayPool<T> extends ObjectPool<T> {
      * @param array 租借的对象
      * @param clear 是否清理数组 - 只有当前池默认不清理的情况下，该参数才有效用。
      */
-    void returnOne(T array, boolean clear);
+    void release(T array, boolean clear);
 }

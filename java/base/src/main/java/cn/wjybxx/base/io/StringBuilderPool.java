@@ -53,7 +53,7 @@ public final class StringBuilderPool implements ObjectPool<StringBuilder> {
 
     @Nonnull
     @Override
-    public StringBuilder rent() {
+    public StringBuilder acquire() {
         int size = freeBuilders.size();
         if (size > 0) {
             return freeBuilders.remove(size - 1);
@@ -62,7 +62,7 @@ public final class StringBuilderPool implements ObjectPool<StringBuilder> {
     }
 
     @Override
-    public void returnOne(StringBuilder builder) {
+    public void release(StringBuilder builder) {
         Objects.requireNonNull(builder);
         if (freeBuilders.size() < poolSize && builder.length() <= maxCapacity) {
             builder.setLength(0);
@@ -71,7 +71,7 @@ public final class StringBuilderPool implements ObjectPool<StringBuilder> {
     }
 
     @Override
-    public void freeAll() {
+    public void clear() {
         freeBuilders.clear();
     }
 }

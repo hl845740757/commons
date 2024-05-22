@@ -31,15 +31,15 @@ public class LocalStringBuilderPool : IObjectPool<StringBuilder>
 {
     public static LocalStringBuilderPool Instance { get; } = new();
 
-    public StringBuilder Rent() {
-        return ThreadLocalInst.Value!.Rent();
+    public StringBuilder Acquire() {
+        return ThreadLocalInst.Value!.Acquire();
     }
 
-    public void ReturnOne(StringBuilder sb) {
-        ThreadLocalInst.Value!.ReturnOne(sb);
+    public void Release(StringBuilder sb) {
+        ThreadLocalInst.Value!.Release(sb);
     }
 
-    public void FreeAll() {
+    public void Clear() {
     }
 
     /** 获取线程本地实例 - 慎用；定义为实例方法，以免和{@link #INSTANCE}的提示冲突 */

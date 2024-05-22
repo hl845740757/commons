@@ -48,7 +48,7 @@ public class ConcurrentObjectPool<T> : IObjectPool<RecycleHandle<T>> where T : c
         _filter = filter;
     }
 
-    public RecycleHandle<T> Rent() {
+    public RecycleHandle<T> Acquire() {
         T[] array = _arrayPool.Rent(1);
         if (array[0] == null) {
             array[0] = _factory.Invoke();
@@ -56,7 +56,7 @@ public class ConcurrentObjectPool<T> : IObjectPool<RecycleHandle<T>> where T : c
         return new RecycleHandle<T>(array[0], array, this);
     }
 
-    public void ReturnOne(RecycleHandle<T> obj) {
+    public void Release(RecycleHandle<T> obj) {
         var array = (T[])obj.ctx;
         if (_filter == null || _filter.Invoke(obj.value)) {
             _resetPolicy.Invoke(obj.value);
@@ -67,6 +67,6 @@ public class ConcurrentObjectPool<T> : IObjectPool<RecycleHandle<T>> where T : c
         _arrayPool.Return(array);
     }
 
-    public void FreeAll() {
+    public void Clear() {
     }
 }

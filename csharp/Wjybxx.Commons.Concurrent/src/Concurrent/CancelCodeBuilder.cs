@@ -46,7 +46,7 @@ public struct CancelCodeBuilder
     public void Disable(int optionMask) {
         code &= ~optionMask;
     }
-    
+
     /// <summary>
     /// 取消的原因
     /// </summary>

@@ -68,11 +68,11 @@ public class DefaultArrayPool<T> : IArrayPool<T>
         _arrayPool = arrayPool ?? throw new ArgumentNullException(nameof(arrayPool));
     }
 
-    public T[] Rent() {
+    public T[] Acquire() {
         return _arrayPool.Rent(_initCapacity);
     }
 
-    public T[] Rent(int minimumLength, bool clear = false) {
+    public T[] Acquire(int minimumLength, bool clear = false) {
         T[] array = _arrayPool.Rent(minimumLength);
         if (!this._clear && clear) { // 默认不清理的情况下用户请求有效
             Array.Clear(array);
@@ -80,14 +80,14 @@ public class DefaultArrayPool<T> : IArrayPool<T>
         return array;
     }
 
-    public void ReturnOne(T[] obj) {
+    public void Release(T[] obj) {
         _arrayPool.Return(obj, _clear);
     }
 
-    public void ReturnOne(T[] obj, bool clear) {
+    public void Release(T[] obj, bool clear) {
         _arrayPool.Return(obj, _clear || clear); // 默认不清理的情况下用户请求有效
     }
 
-    public void FreeAll() {
+    public void Clear() {
     }
 }

@@ -165,7 +165,7 @@ public class BoundedArrayDequeTest
             Assert.That(deque[i], Is.EqualTo(numbers[i]));
         }
     }
-    
+
     /// <summary>
     /// 测试容量调整
     /// </summary>
@@ -185,7 +185,7 @@ public class BoundedArrayDequeTest
             Assert.That(deque[i], Is.EqualTo(numbers[i]));
         }
     }
-    
+
     /// <summary>
     /// 测试容量调整 -- 收缩，丢弃尾部
     /// </summary>

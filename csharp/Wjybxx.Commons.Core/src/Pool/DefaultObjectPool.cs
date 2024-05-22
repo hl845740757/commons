@@ -60,14 +60,14 @@ public class DefaultObjectPool<T> : IObjectPool<T>
 
     public int PoolSize => _poolSize;
 
-    public T Rent() {
+    public T Acquire() {
         if (_freeObjects.TryPop(out T result)) {
             return result;
         }
         return _factory();
     }
 
-    public void ReturnOne(T obj) {
+    public void Release(T obj) {
         if (obj == null) {
             throw new ArgumentException("object cannot be null.");
         }
@@ -78,7 +78,7 @@ public class DefaultObjectPool<T> : IObjectPool<T>
         }
     }
 
-    public void ReturnAll(Collection<T?> objects) {
+    public void ReleaseAll(Collection<T?> objects) {
         if (objects == null) {
             throw new ArgumentException("objects cannot be null.");
         }
@@ -109,7 +109,7 @@ public class DefaultObjectPool<T> : IObjectPool<T>
         }
     }
 
-    public void FreeAll() {
+    public void Clear() {
         _freeObjects.Clear();
     }
 }

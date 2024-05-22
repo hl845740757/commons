@@ -31,7 +31,7 @@ public class StringBuilderPoolTest
             builder => builder.Length = 0,
             builder => builder.Length <= 8192);
 
-        RecycleHandle<StringBuilder> recycleHandle = pool.Rent();
-        pool.ReturnOne(recycleHandle);
+        RecycleHandle<StringBuilder> recycleHandle = pool.Acquire();
+        pool.Release(recycleHandle);
     }
 }

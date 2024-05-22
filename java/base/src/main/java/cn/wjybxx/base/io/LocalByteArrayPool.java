@@ -31,32 +31,32 @@ public class LocalByteArrayPool implements ArrayPool<byte[]> {
     public static final LocalByteArrayPool INSTANCE = new LocalByteArrayPool();
 
     @Override
-    public byte[] rent() {
-        return THREAD_LOCAL_INST.get().rent();
+    public byte[] acquire() {
+        return THREAD_LOCAL_INST.get().acquire();
     }
 
     @Override
-    public byte[] rent(int minimumLength) {
-        return THREAD_LOCAL_INST.get().rent(minimumLength);
+    public byte[] acquire(int minimumLength) {
+        return THREAD_LOCAL_INST.get().acquire(minimumLength);
     }
 
     @Override
-    public byte[] rent(int minimumLength, boolean clear) {
-        return THREAD_LOCAL_INST.get().rent(minimumLength, clear);
+    public byte[] acquire(int minimumLength, boolean clear) {
+        return THREAD_LOCAL_INST.get().acquire(minimumLength, clear);
     }
 
     @Override
-    public void returnOne(byte[] array) {
-        THREAD_LOCAL_INST.get().returnOne(array);
+    public void release(byte[] array) {
+        THREAD_LOCAL_INST.get().release(array);
     }
 
     @Override
-    public void returnOne(byte[] array, boolean clear) {
-        THREAD_LOCAL_INST.get().returnOne(array, clear);
+    public void release(byte[] array, boolean clear) {
+        THREAD_LOCAL_INST.get().release(array, clear);
     }
 
     @Override
-    public void freeAll() {
+    public void clear() {
 
     }
 

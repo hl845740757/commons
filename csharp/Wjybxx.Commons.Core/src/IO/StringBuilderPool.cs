@@ -58,14 +58,14 @@ public class StringBuilderPool : IObjectPool<StringBuilder>
         this._freeBuilders = new Stack<StringBuilder>(Math.Clamp(poolSize, 0, 10));
     }
 
-    public StringBuilder Rent() {
+    public StringBuilder Acquire() {
         if (_freeBuilders.TryPop(out StringBuilder sb)) {
             return sb;
         }
         return new StringBuilder(_initCapacity);
     }
 
-    public void ReturnOne(StringBuilder sb) {
+    public void Release(StringBuilder sb) {
         if (sb == null) throw new ArgumentNullException(nameof(sb));
         if (_freeBuilders.Count < _poolSize && sb.Length <= _maxCapacity) {
             sb.Length = 0;
@@ -73,7 +73,7 @@ public class StringBuilderPool : IObjectPool<StringBuilder>
         }
     }
 
-    public void FreeAll() {
+    public void Clear() {
         _freeBuilders.Clear();
     }
 }

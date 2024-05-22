@@ -40,7 +40,12 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public T rent() {
+    public T get() {
+        return acquire();
+    }
+
+    @Override
+    public T acquire() {
         T result = this.value;
         if (result != null) {
             this.value = null;
@@ -51,7 +56,7 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public void returnOne(T object) {
+    public void release(T object) {
         if (object == null) {
             throw new IllegalArgumentException("object cannot be null.");
         }
@@ -61,7 +66,7 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public void returnAll(Collection<? extends T> objects) {
+    public void releaseAll(Collection<? extends T> objects) {
         if (objects == null) {
             throw new IllegalArgumentException("objects cannot be null.");
         }
@@ -76,7 +81,7 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public void freeAll() {
+    public void clear() {
         value = null;
     }
 
