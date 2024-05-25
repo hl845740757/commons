@@ -415,8 +415,11 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     final void removeScheduled(ScheduledPromiseTask<?> futureTask) {
         if (inEventLoop()) {
             scheduledTaskQueue.removeTyped(futureTask);
+        } else if (mpUnboundedEventSequencer != null) {
+            execute(() -> scheduledTaskQueue.removeTyped(futureTask));
         }
         // else 等待任务超时弹出时再删除 -- 延迟删除可能存在内存泄漏，但压任务又可能导致阻塞（有界队列）
+        // TODO 是否存储在待移除并发集合里？
     }
 
     @Override

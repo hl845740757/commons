@@ -48,13 +48,15 @@ public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
 
     /** 全局共享字节数组池 */
     public static final ConcurrentArrayPool<byte[]> SHARED_BYTE_ARRAY_POOL = ArrayPoolBuilder.newConcurrentBuilder(byte[].class)
+            .setPoolSize(16)
             .setDefCapacity(4096)
-            .setMaxCapacity(64 * 1024)
+            .setMaxCapacity(512 * 1024)
             .setClear(false)
             .build();
-    /** 全局共享char数组池 */
+    /** 全局共享char数组池 -- charArray的使用频率稍低 */
     public static final ConcurrentArrayPool<char[]> SHARED_CHAR_ARRAY_POOL = ArrayPoolBuilder.newConcurrentBuilder(char[].class)
-            .setDefCapacity(4096)
+            .setPoolSize(16)
+            .setDefCapacity(1024)
             .setMaxCapacity(64 * 1024)
             .setClear(false)
             .build();
