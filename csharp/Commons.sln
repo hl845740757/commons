@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Tests", "Wjy
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Concurrent", "Wjybxx.Commons.Concurrent\Wjybxx.Commons.Concurrent.csproj", "{255C40F9-8835-4FAA-ABCB-FABD969254C6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Apt", "Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj", "{F74A7DE9-2D52-4A2F-9AF9-6EA085FF728E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{255C40F9-8835-4FAA-ABCB-FABD969254C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{255C40F9-8835-4FAA-ABCB-FABD969254C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{255C40F9-8835-4FAA-ABCB-FABD969254C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F74A7DE9-2D52-4A2F-9AF9-6EA085FF728E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F74A7DE9-2D52-4A2F-9AF9-6EA085FF728E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F74A7DE9-2D52-4A2F-9AF9-6EA085FF728E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F74A7DE9-2D52-4A2F-9AF9-6EA085FF728E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

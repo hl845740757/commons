@@ -79,7 +79,7 @@ public static class ObjectUtil
     /// <param name="end"></param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string Substring2(string value, int start, int end) {
+    public static string Substring2(this string value, int start, int end) {
         return value.Substring(start, end - start + 1);
     }
 

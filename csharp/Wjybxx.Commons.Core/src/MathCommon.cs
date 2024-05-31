@@ -27,6 +27,16 @@ namespace Wjybxx.Commons;
 /// </summary>
 public static class MathCommon
 {
+    /** 测试给定的参数是否是【偶数】 */
+    public static bool IsEven(int x) {
+        return (x & 1) == 0;
+    }
+
+    /** 测试给定的参数是否是【奇数】 */
+    public static bool IsOdd(int x) {
+        return (x & 1) == 1;
+    }
+
     #region INT48
 
     /** 48位无符号整数的最大值 */
@@ -93,6 +103,92 @@ public static class MathCommon
         num = (num >> 16) | num;
         num = (num >> 32) | num;
         return ++num;
+    }
+
+    #endregion
+
+    #region bitcount
+
+    private const uint INT_M1 = 0x55555555;
+    private const uint INT_M2 = 0x33333333;
+    private const uint INT_M4 = 0x0f0f0f0f;
+    private const uint INT_M8 = 0x00ff00ff;
+    private const uint INT_M16 = 0x0000ffff;
+
+    /** 计算int32值中1的数量 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BitCount(int n) {
+        return BitCount((uint)n);
+    }
+
+    /** 计算int32值中1的数量 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BitCount(uint n) {
+        n = (n & INT_M1) + ((n >> 1) & INT_M1);
+        n = (n & INT_M2) + ((n >> 2) & INT_M2);
+        n = (n & INT_M4) + ((n >> 4) & INT_M4);
+        n = (n & INT_M8) + ((n >> 8) & INT_M8);
+        n = (n & INT_M16) + ((n >> 16) & INT_M16);
+        return (int)n;
+    }
+
+    private const ulong LONG_M1 = 0x5555555555555555;
+    private const ulong LONG_M2 = 0x3333333333333333;
+    private const ulong LONG_M4 = 0x0f0f0f0f0f0f0f0f;
+    private const ulong LONG_M8 = 0x00ff00ff00ff00ff;
+    private const ulong LONG_M16 = 0x0000ffff0000ffff;
+    private const ulong LONG_M32 = 0x00000000ffffffff;
+
+    /** 计算int64值中1的数量 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BitCount(long n) {
+        return BitCount((ulong)n);
+    }
+
+    /** 计算int64值中1的数量 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BitCount(ulong n) {
+        n = (n & LONG_M1) + ((n >> 1) & LONG_M1);
+        n = (n & LONG_M2) + ((n >> 2) & LONG_M2);
+        n = (n & LONG_M4) + ((n >> 4) & LONG_M4);
+        n = (n & LONG_M8) + ((n >> 8) & LONG_M8);
+        n = (n & LONG_M16) + ((n >> 16) & LONG_M16);
+        n = (n & LONG_M32) + ((n >> 32) & LONG_M32);
+        return (int)n;
+    }
+
+    /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BitCountFast(int n) {
+        return BitCountFast((uint)n);
+    }
+
+    /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BitCountFast(uint n) {
+        int c = 0;
+        while (n != 0) {
+            n &= (n - 1); // 清除最低位的1
+            c++;
+        }
+        return c;
+    }
+
+    /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BitCountFast(long n) {
+        return BitCountFast((ulong)n);
+    }
+
+    /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BitCountFast(ulong n) {
+        int c = 0;
+        while (n != 0) {
+            n &= (n - 1); // 清除最低位的1
+            c++;
+        }
+        return c;
     }
 
     #endregion

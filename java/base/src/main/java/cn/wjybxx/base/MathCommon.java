@@ -58,6 +58,36 @@ public class MathCommon {
     protected MathCommon() {
     }
 
+    /** @return 如果给定参数是【偶数】则返回true */
+    public static boolean isEven(final int x) {
+        return (x & 1) == 0;
+    }
+
+    /** @return 如果给定参数是【奇数】则返回true */
+    public static boolean isOdd(final int x) {
+        return (x & 1) == 1;
+    }
+
+    // region uint48
+
+    /** 判断一个数是否是有效的uint32 */
+    public static boolean isUInt32(long value) {
+        return value >= 0 && value <= UINT32_MAX_VALUE;
+    }
+
+    /** 判断一个数是否是有效的uint48 */
+    public static boolean isUInt48(long value) {
+        return value >= 0 && value <= UINT48_MAX_VALUE;
+    }
+
+    /** 判断一个数是否是有效的int48 */
+    public static boolean isInt48(long value) {
+        return value >= INT48_MIN_VALUE && value <= INT48_MAX_VALUE;
+    }
+    // endregion
+
+    // region power2
+
     /** 判断一个值是否是2的整次幂 */
     public static boolean isPowerOfTwo(int x) {
         return x > 0 && (x & (x - 1)) == 0;
@@ -75,30 +105,65 @@ public class MathCommon {
         return 1L << (64 - Long.numberOfLeadingZeros(num - 1));
     }
 
-    /** @return 如果给定参数是【偶数】则返回true */
-    public static boolean isEven(final int x) {
-        return (x & 1) == 0;
+    // endregion
+
+    // region bitCount
+
+    private static final int INT_M1 = 0x55555555;
+    private static final int INT_M2 = 0x33333333;
+    private static final int INT_M4 = 0x0f0f0f0f;
+    private static final int INT_M8 = 0x00ff00ff;
+    private static final int INT_M16 = 0x0000ffff;
+
+    /** 计算int32值中1的数量 */
+    public static int bitCount(int n) {
+        n = (n & INT_M1) + ((n >>> 1) & INT_M1);
+        n = (n & INT_M2) + ((n >>> 2) & INT_M2);
+        n = (n & INT_M4) + ((n >>> 4) & INT_M4);
+        n = (n & INT_M8) + ((n >>> 8) & INT_M8);
+        n = (n & INT_M16) + ((n >>> 16) & INT_M16);
+        return n;
     }
 
-    /** @return 如果给定参数是【奇数】则返回true */
-    public static boolean isOdd(final int x) {
-        return (x & 1) == 1;
+    private static final long LONG_M1 = 0x5555555555555555L;
+    private static final long LONG_M2 = 0x3333333333333333L;
+    private static final long LONG_M4 = 0x0f0f0f0f0f0f0f0fL;
+    private static final long LONG_M8 = 0x00ff00ff00ff00ffL;
+    private static final long LONG_M16 = 0x0000ffff0000ffffL;
+    private static final long LONG_M32 = 0x00000000ffffffffL;
+
+    /** 计算int64值中1的数量 */
+    public static int bitCount(long n) {
+        n = (n & LONG_M1) + ((n >>> 1) & LONG_M1);
+        n = (n & LONG_M2) + ((n >>> 2) & LONG_M2);
+        n = (n & LONG_M4) + ((n >>> 4) & LONG_M4);
+        n = (n & LONG_M8) + ((n >>> 8) & LONG_M8);
+        n = (n & LONG_M16) + ((n >>> 16) & LONG_M16);
+        n = (n & LONG_M32) + ((n >>> 32) & LONG_M32);
+        return (int) n;
     }
 
-    /** 判断一个数是否是有效的uint32 */
-    public static boolean isUInt32(long value) {
-        return value >= 0 && value <= UINT32_MAX_VALUE;
+    /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
+    public static int BitCountFast(int n) {
+        int c = 0;
+        while (n != 0) {
+            n &= (n - 1); // 清除最低位的1
+            c++;
+        }
+        return c;
     }
 
-    /** 判断一个数是否是有效的uint48 */
-    public static boolean isUInt48(long value) {
-        return value >= 0 && value <= UINT48_MAX_VALUE;
+    /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
+    public static int BitCountFast(long n) {
+        int c = 0;
+        while (n != 0) {
+            n &= (n - 1); // 清除最低位的1
+            c++;
+        }
+        return c;
     }
 
-    /** 判断一个数是否是有效的int48 */
-    public static boolean isInt48(long value) {
-        return value >= INT48_MIN_VALUE && value <= INT48_MAX_VALUE;
-    }
+    // endregion
 
     // region 聚合拆解
 

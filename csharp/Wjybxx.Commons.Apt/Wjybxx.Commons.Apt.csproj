@@ -6,13 +6,13 @@
         <LangVersion>10</LangVersion>
         <RootNamespace>Wjybxx.Commons</RootNamespace>
 
-        <AssemblyName>Wjybxx.Commons.Core</AssemblyName>
-        <PackageId>Wjybxx.Commons.Core</PackageId>
-        <PackageVersion>1.0.14</PackageVersion>
+        <AssemblyName>Wjybxx.Commons.Apt</AssemblyName>
+        <PackageId>Wjybxx.Commons.Apt</PackageId>
+        <PackageVersion>1.0.13</PackageVersion>
 
-        <Title>Wjybxx.Commons.Core</Title>
-        <Description>基础库之核心包，包含LinkedDictionary等集合实现</Description>
-        <PackageTags>wjybxx;collections;LinkedDictionary;</PackageTags>
+        <Title>Wjybxx.Commons.Apt</Title>
+        <Description>注解处理器工具，结构化代码生成工具</Description>
+        <PackageTags>SourceGenerator</PackageTags>
 
         <Authors>wjybxx(845740757@qq.com)</Authors>
         <Owners>wjybxx(845740757@qq.com)</Owners>
@@ -24,14 +24,15 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <NeutralLanguage>zh-Hans</NeutralLanguage>
 
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-        <EmbedAllSources>true</EmbedAllSources> <!-- 嵌入源代码 -->
+<!--        <PackageReadmeFile>README.md</PackageReadmeFile>-->
+        <EmbedAllSources>true</EmbedAllSources>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <TargetFrameworks>net6.0;net7.0;</TargetFrameworks>	<!-- 果断时间再添加net8.0 -->
+        <TargetFrameworks>net6.0;net7.0;</TargetFrameworks>
     </PropertyGroup>
+    
 
     <ItemGroup>
-        <None Include="..\README.md" Pack="true" PackagePath="\" />
+      <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
     </ItemGroup>
 
 </Project>
