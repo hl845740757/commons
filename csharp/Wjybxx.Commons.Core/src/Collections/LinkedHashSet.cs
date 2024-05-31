@@ -92,6 +92,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
     public bool IsReadOnly => false;
     public int Count => _count;
     public bool IsEmpty => _count == 0;
+    internal int Capacity => _mask + 1;
 
     #region peek
 

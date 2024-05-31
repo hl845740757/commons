@@ -29,7 +29,7 @@ public class MultiChunkDequeTest
     private const int NumberCount = 64;
 
     private static List<int> RandomNumbers() {
-        // 去重，变删除元素时导致的不稳定性
+        // 去重，避免删除元素时导致的不稳定性
         ISet<int> numbers = new HashSet<int>(NumberCount);
         while (numbers.Count < NumberCount) {
             numbers.Add(Random.Shared.Next());

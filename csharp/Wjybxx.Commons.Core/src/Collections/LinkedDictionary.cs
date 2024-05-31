@@ -101,6 +101,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     public bool IsReadOnly => false;
     public int Count => _count;
     public bool IsEmpty => _count == 0;
+    internal int Capacity => _mask + 1;
 
     /// <summary>
     /// 默认值会序列化

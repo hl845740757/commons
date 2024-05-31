@@ -143,7 +143,7 @@ public static partial class CollectionUtil
     /// （暂不递归）
     /// </summary>
     [Beta]
-    public static string ToString<T>(ICollection<T> collection) {
+    public static string ToString<T>(IEnumerable<T> collection) {
         if (collection == null) throw new ArgumentNullException(nameof(collection));
         StringBuilder sb = new StringBuilder(64);
         sb.Append('[');
