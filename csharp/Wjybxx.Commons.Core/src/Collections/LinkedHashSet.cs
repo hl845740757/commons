@@ -350,12 +350,20 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
         return new ReversedSequenceSetView<TKey>(this);
     }
 
-    public IEnumerator<TKey> GetEnumerator() {
-        return new SetIterator(this, false);
+    IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator() {
+        return new Enumerator(this, false);
     }
 
-    public IEnumerator<TKey> GetReversedEnumerator() {
-        return new SetIterator(this, true);
+    IEnumerator<TKey> ISequencedCollection<TKey>.GetReversedEnumerator() {
+        return new Enumerator(this, true);
+    }
+
+    public Enumerator GetEnumerator() {
+        return new Enumerator(this, false);
+    }
+
+    public Enumerator GetReversedEnumerator() {
+        return new Enumerator(this, true);
     }
 
     #endregion
@@ -666,23 +674,24 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
 
     #region view
 
-    private class SetIterator : IUnsafeIterator<TKey>, ISequentialEnumerator<TKey>
+    public struct Enumerator : IUnsafeIterator<TKey>, ISequentialEnumerator<TKey>
     {
         private readonly LinkedHashSet<TKey> _hashSet;
         private readonly bool _reversed;
         private int _version;
 
-        private Node? _currNode;
         private Node? _nextNode;
+        private Node? _currNode;
         private TKey _current;
 
-        internal SetIterator(LinkedHashSet<TKey> hashSet, bool reversed) {
+        internal Enumerator(LinkedHashSet<TKey> hashSet, bool reversed) {
             _hashSet = hashSet;
             _reversed = reversed;
             _version = hashSet._version;
 
             _nextNode = _reversed ? _hashSet._tail : _hashSet._head;
             _current = default;
+            _currNode = null;
         }
 
         public bool HasNext() {

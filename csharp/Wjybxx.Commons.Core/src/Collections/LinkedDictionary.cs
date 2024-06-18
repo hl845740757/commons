@@ -581,12 +581,21 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         return new ReversedDictionaryView<TKey, TValue>(this);
     }
 
-    public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() {
-        return new PairIterator(this, false);
+
+    IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() {
+        return new PairEnumerator(this, false);
     }
 
-    public IEnumerator<KeyValuePair<TKey, TValue>> GetReversedEnumerator() {
-        return new PairIterator(this, true);
+    IEnumerator<KeyValuePair<TKey, TValue>> ISequencedCollection<KeyValuePair<TKey, TValue>>.GetReversedEnumerator() {
+        return new PairEnumerator(this, true);
+    }
+
+    public PairEnumerator GetEnumerator() {
+        return new PairEnumerator(this, false);
+    }
+
+    public PairEnumerator GetReversedEnumerator() {
+        return new PairEnumerator(this, true);
     }
 
     #endregion
@@ -1017,11 +1026,11 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         }
 
         public override IEnumerator<TKey> GetEnumerator() {
-            return new KeyIterator(_dictionary, _reversed);
+            return new KeyEnumerator(_dictionary, _reversed);
         }
 
         public override IEnumerator<TKey> GetReversedEnumerator() {
-            return new KeyIterator(_dictionary, !_reversed);
+            return new KeyEnumerator(_dictionary, !_reversed);
         }
     }
 
@@ -1070,11 +1079,11 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         }
 
         public override IEnumerator<TValue> GetEnumerator() {
-            return new ValueIterator(_dictionary, _reversed);
+            return new ValueEnumerator(_dictionary, _reversed);
         }
 
         public override IEnumerator<TValue> GetReversedEnumerator() {
-            return new ValueIterator(_dictionary, !_reversed);
+            return new ValueEnumerator(_dictionary, !_reversed);
         }
     }
 
@@ -1134,23 +1143,28 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
     #region itr
 
-    private abstract class AbstractIterator<T> : ISequentialEnumerator<T>
+    /// <summary>
+    /// 注意：在修改为结构体组合模式后，外部在调用MoveNext后需要显式设置 _current 字段。
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    private struct Enumerator<T> : ISequentialEnumerator<T>
     {
         private readonly LinkedDictionary<TKey, TValue> _dictionary;
         private readonly bool _reversed;
         private int _version;
 
-        private Node? _currNode;
         private Node? _nextNode;
-        private T _current;
+        internal Node? _currNode;
+        internal T _current;
 
-        protected AbstractIterator(LinkedDictionary<TKey, TValue> dictionary, bool reversed) {
+        public Enumerator(LinkedDictionary<TKey, TValue> dictionary, bool reversed) {
             _dictionary = dictionary;
             _reversed = reversed;
             _version = dictionary._version;
 
             _nextNode = _reversed ? _dictionary._tail : _dictionary._head;
             _current = default;
+            _currNode = null;
         }
 
         public bool HasNext() {
@@ -1168,11 +1182,9 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             Node node = _currNode = _nextNode;
             _nextNode = _reversed ? node.prev : node.next;
             // 其实这期间node的value可能变化，安全的话应该每次创建新的Pair，但c#系统库没这么干
-            _current = CurrentOfNode(node);
+            // _current = CurrentOfNode(node);
             return true;
         }
-
-        protected abstract T CurrentOfNode(Node node);
 
         public void Remove() {
             if (_version != _dictionary._version) {
@@ -1203,43 +1215,147 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         }
     }
 
-    private class PairIterator : AbstractIterator<KeyValuePair<TKey, TValue>>, IUnsafeIterator<KeyValuePair<TKey, TValue>>
+    public struct PairEnumerator : ISequentialEnumerator<KeyValuePair<TKey, TValue>>, IUnsafeIterator<KeyValuePair<TKey, TValue>>
     {
-        public PairIterator(LinkedDictionary<TKey, TValue> dictionary, bool reversed) : base(dictionary, reversed) {
+        private Enumerator<KeyValuePair<TKey, TValue>> _core;
+
+        public PairEnumerator(LinkedDictionary<TKey, TValue> dictionary, bool reversed) {
+            _core = new Enumerator<KeyValuePair<TKey, TValue>>(dictionary, reversed);
         }
 
-        protected override KeyValuePair<TKey, TValue> CurrentOfNode(Node node) {
-            return new KeyValuePair<TKey, TValue>(node.key, node.value);
+        public bool HasNext() {
+            return _core.HasNext();
+        }
+
+        public bool MoveNext() {
+            if (_core.MoveNext()) {
+                _core._current = _core._currNode!.AsPair();
+                return true;
+            }
+            return false;
+        }
+
+        public void Remove() {
+            _core.Remove();
+        }
+
+        public void Reset() {
+            _core.Reset();
+        }
+
+        public KeyValuePair<TKey, TValue> Current => _core.Current;
+        object IEnumerator.Current => ((IEnumerator)_core).Current;
+
+        public void Dispose() {
+            _core.Dispose();
         }
     }
 
-    private class KeyIterator : AbstractIterator<TKey>
+    public struct KeyEnumerator : ISequentialEnumerator<TKey>
     {
-        public KeyIterator(LinkedDictionary<TKey, TValue> dictionary, bool reversed) : base(dictionary, reversed) {
+        private Enumerator<TKey> _core;
+
+        public KeyEnumerator(LinkedDictionary<TKey, TValue> dictionary, bool reversed) {
+            _core = new Enumerator<TKey>(dictionary, reversed);
         }
 
-        protected override TKey CurrentOfNode(Node node) {
-            return node.key;
+        public bool HasNext() {
+            return _core.HasNext();
+        }
+
+        public bool MoveNext() {
+            if (_core.MoveNext()) {
+                _core._current = _core._currNode!.key;
+                return true;
+            }
+            return false;
+        }
+
+        public void Remove() {
+            _core.Remove();
+        }
+
+        public void Reset() {
+            _core.Reset();
+        }
+
+        public TKey Current => _core.Current;
+        object IEnumerator.Current => ((IEnumerator)_core).Current;
+
+        public void Dispose() {
+            _core.Dispose();
         }
     }
 
-    private class ValueIterator : AbstractIterator<TValue>
+    public struct UnsafeKeyIterator : ISequentialEnumerator<TKey>, IUnsafeIterator<TKey>
     {
-        public ValueIterator(LinkedDictionary<TKey, TValue> dictionary, bool reversed) : base(dictionary, reversed) {
+        private Enumerator<TKey> _core;
+
+        public UnsafeKeyIterator(LinkedDictionary<TKey, TValue> dictionary, bool reversed) {
+            _core = new Enumerator<TKey>(dictionary, reversed);
         }
 
-        protected override TValue CurrentOfNode(Node node) {
-            return node.value;
+        public bool HasNext() {
+            return _core.HasNext();
+        }
+
+        public bool MoveNext() {
+            if (_core.MoveNext()) {
+                _core._current = _core._currNode!.key;
+                return true;
+            }
+            return false;
+        }
+
+        public void Remove() {
+            _core.Remove();
+        }
+
+        public void Reset() {
+            _core.Reset();
+        }
+
+        public TKey Current => _core.Current;
+        object IEnumerator.Current => ((IEnumerator)_core).Current;
+
+        public void Dispose() {
+            _core.Dispose();
         }
     }
 
-    private class UnsafeKeyIterator : AbstractIterator<TKey>, IUnsafeIterator<TKey>
+    public struct ValueEnumerator : ISequentialEnumerator<TValue>
     {
-        public UnsafeKeyIterator(LinkedDictionary<TKey, TValue> dictionary, bool reversed) : base(dictionary, reversed) {
+        private Enumerator<TValue> _core;
+
+        public ValueEnumerator(LinkedDictionary<TKey, TValue> dictionary, bool reversed) {
+            _core = new Enumerator<TValue>(dictionary, reversed);
         }
 
-        protected override TKey CurrentOfNode(Node node) {
-            return node.key;
+        public bool HasNext() {
+            return _core.HasNext();
+        }
+
+        public bool MoveNext() {
+            if (_core.MoveNext()) {
+                _core._current = _core._currNode!.value;
+                return true;
+            }
+            return false;
+        }
+
+        public void Remove() {
+            _core.Remove();
+        }
+
+        public void Reset() {
+            _core.Reset();
+        }
+
+        public TValue Current => _core.Current;
+        object IEnumerator.Current => ((IEnumerator)_core).Current;
+
+        public void Dispose() {
+            _core.Dispose();
         }
     }
 
