@@ -97,7 +97,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
     #region peek
 
     public TKey PeekFirst() {
-        if (_head == null) throw CollectionUtil.CollectionEmptyException();
+        if (_head == null) throw ThrowHelper.CollectionEmptyException();
         return _head.key;
     }
 
@@ -111,7 +111,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
     }
 
     public TKey PeekLast() {
-        if (_tail == null) throw CollectionUtil.CollectionEmptyException();
+        if (_tail == null) throw ThrowHelper.CollectionEmptyException();
         return _tail.key;
     }
 
@@ -188,7 +188,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
 
     public TKey RemoveFirst() {
         if (_count == 0) {
-            throw CollectionUtil.CollectionEmptyException();
+            throw ThrowHelper.CollectionEmptyException();
         }
         TryRemoveFirst(out TKey r);
         return r;
@@ -212,7 +212,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
 
     public TKey RemoveLast() {
         if (_count == 0) {
-            throw CollectionUtil.CollectionEmptyException();
+            throw ThrowHelper.CollectionEmptyException();
         }
         TryRemoveLast(out TKey r);
         return r;
@@ -262,7 +262,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
     public bool NextKey(TKey key, out TKey next) {
         var node = GetNode(key);
         if (node == null) {
-            throw CollectionUtil.KeyNotFoundException(key);
+            throw ThrowHelper.KeyNotFoundException(key);
         }
         if (node.next != null) {
             next = node.next.key;
@@ -282,7 +282,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
     public bool PrevKey(TKey key, out TKey prev) {
         var node = GetNode(key);
         if (node == null) {
-            throw CollectionUtil.KeyNotFoundException(key);
+            throw ThrowHelper.KeyNotFoundException(key);
         }
         if (node.prev != null) {
             prev = node.prev.key;

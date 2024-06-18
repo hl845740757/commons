@@ -165,14 +165,14 @@ public class BoundedArrayDeque<T> : IDeque<T>
 
     public T PeekFirst() {
         if (_head < 0) {
-            throw CollectionUtil.CollectionEmptyException();
+            throw ThrowHelper.CollectionEmptyException();
         }
         return _elements[_head];
     }
 
     public T PeekLast() {
         if (_tail < 0) {
-            throw CollectionUtil.CollectionEmptyException();
+            throw ThrowHelper.CollectionEmptyException();
         }
         return _elements[_tail];
     }
@@ -197,13 +197,13 @@ public class BoundedArrayDeque<T> : IDeque<T>
 
     public void AddFirst(T item) {
         if (!TryAddFirst(item)) {
-            throw CollectionUtil.CollectionFullException();
+            throw ThrowHelper.CollectionFullException();
         }
     }
 
     public void AddLast(T item) {
         if (!TryAddLast(item)) {
-            throw CollectionUtil.CollectionFullException();
+            throw ThrowHelper.CollectionFullException();
         }
     }
 
@@ -259,14 +259,14 @@ public class BoundedArrayDeque<T> : IDeque<T>
         if (TryRemoveFirst(out T item)) {
             return item;
         }
-        throw CollectionUtil.CollectionEmptyException();
+        throw ThrowHelper.CollectionEmptyException();
     }
 
     public T RemoveLast() {
         if (TryRemoveLast(out T item)) {
             return item;
         }
-        throw CollectionUtil.CollectionEmptyException();
+        throw ThrowHelper.CollectionEmptyException();
     }
 
     public bool TryRemoveFirst(out T item) {

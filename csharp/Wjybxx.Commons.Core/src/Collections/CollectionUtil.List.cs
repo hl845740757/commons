@@ -31,17 +31,17 @@ public static partial class CollectionUtil
 {
     #region factory
 
-    /** 创建一个单元素的List */
+    /** 创建一个元素的List */
     public static List<T> NewList<T>(T first) {
         return new List<T>(1) { first };
     }
 
-    /** 创建2个单元素的List */
+    /** 创建2个元素的List */
     public static List<T> NewList<T>(T first, T second) {
         return new List<T>(2) { first, second };
     }
 
-    /** 创建3个单元素的List */
+    /** 创建3个元素的List */
     public static List<T> NewList<T>(T first, T second, T third) {
         return new List<T>(3) { first, second, third };
     }
@@ -114,7 +114,7 @@ public static partial class CollectionUtil
     /// 交换两个位置的元素
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Swap<T>(IList<T> list, int i, int j) {
+    public static void Swap<T>(this IList<T> list, int i, int j) {
         T a = list[i];
         T b = list[j];
         list[i] = b;
@@ -148,7 +148,7 @@ public static partial class CollectionUtil
         if (count > 0) {
             return list[0];
         }
-        throw CollectionEmptyException();
+        throw ThrowHelper.CollectionEmptyException();
     }
 
     /// <summary>
@@ -162,7 +162,7 @@ public static partial class CollectionUtil
         if (count > 0) {
             return list[count - 1];
         }
-        throw CollectionEmptyException();
+        throw ThrowHelper.CollectionEmptyException();
     }
 
     /// <summary>

@@ -40,11 +40,11 @@ public class EmptyDequeue<T> : IDeque<T>
     }
 
     public T PeekFirst() {
-        throw CollectionUtil.CollectionEmptyException();
+        throw ThrowHelper.CollectionEmptyException();
     }
 
     public T PeekLast() {
-        throw CollectionUtil.CollectionEmptyException();
+        throw ThrowHelper.CollectionEmptyException();
     }
 
     public bool TryPeekFirst(out T item) {
@@ -78,11 +78,11 @@ public class EmptyDequeue<T> : IDeque<T>
     }
 
     public T RemoveFirst() {
-        throw CollectionUtil.CollectionEmptyException();
+        throw ThrowHelper.CollectionEmptyException();
     }
 
     public T RemoveLast() {
-        throw CollectionUtil.CollectionEmptyException();
+        throw ThrowHelper.CollectionEmptyException();
     }
 
     public bool TryRemoveFirst(out T item) {

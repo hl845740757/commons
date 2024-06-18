@@ -76,7 +76,7 @@ public class MultiChunkDeque<T> : IDeque<T>
 
     public T PeekFirst() {
         if (_headChunk == null) {
-            throw CollectionUtil.CollectionEmptyException();
+            throw ThrowHelper.CollectionEmptyException();
         }
         return _headChunk.PeekFirst();
     }
@@ -91,7 +91,7 @@ public class MultiChunkDeque<T> : IDeque<T>
 
     public T PeekLast() {
         if (_tailChunk == null) {
-            throw CollectionUtil.CollectionEmptyException();
+            throw ThrowHelper.CollectionEmptyException();
         }
         return _tailChunk.PeekLast();
     }
@@ -116,14 +116,14 @@ public class MultiChunkDeque<T> : IDeque<T>
         if (TryRemoveFirst(out T item)) { // 调用tryRemove减少维护代码
             return item;
         }
-        throw CollectionUtil.CollectionEmptyException();
+        throw ThrowHelper.CollectionEmptyException();
     }
 
     public T RemoveLast() {
         if (TryRemoveLast(out T item)) {
             return item;
         }
-        throw CollectionUtil.CollectionEmptyException();
+        throw ThrowHelper.CollectionEmptyException();
     }
 
     public bool TryAddFirst(T item) {

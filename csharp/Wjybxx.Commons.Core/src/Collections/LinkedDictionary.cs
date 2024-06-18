@@ -141,7 +141,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     public TValue this[TKey key] {
         get {
             Node? node = GetNode(key);
-            if (node == null) throw CollectionUtil.KeyNotFoundException(key);
+            if (node == null) throw ThrowHelper.KeyNotFoundException(key);
             return node.value;
         }
         set => TryPut(key, value, PutBehavior.None);
@@ -161,7 +161,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     }
 
     public KeyValuePair<TKey, TValue> PeekFirst() {
-        if (_head == null) throw CollectionUtil.CollectionEmptyException();
+        if (_head == null) throw ThrowHelper.CollectionEmptyException();
         return _head.AsPair();
     }
 
@@ -175,12 +175,12 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     }
 
     public KeyValuePair<TKey, TValue> PeekLast() {
-        if (_tail == null) throw CollectionUtil.CollectionEmptyException();
+        if (_tail == null) throw ThrowHelper.CollectionEmptyException();
         return _tail.AsPair();
     }
 
     public TKey PeekFirstKey() {
-        if (_head == null) throw CollectionUtil.CollectionEmptyException();
+        if (_head == null) throw ThrowHelper.CollectionEmptyException();
         return _head.key;
     }
 
@@ -194,7 +194,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     }
 
     public TKey PeekLastKey() {
-        if (_tail == null) throw CollectionUtil.CollectionEmptyException();
+        if (_tail == null) throw ThrowHelper.CollectionEmptyException();
         return _tail.key;
     }
 
@@ -327,7 +327,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
     public KeyValuePair<TKey, TValue> RemoveFirst() {
         if (_count == 0) {
-            throw CollectionUtil.CollectionEmptyException();
+            throw ThrowHelper.CollectionEmptyException();
         }
         TryRemoveFirst(out KeyValuePair<TKey, TValue> r);
         return r;
@@ -351,7 +351,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
     public KeyValuePair<TKey, TValue> RemoveLast() {
         if (_count == 0) {
-            throw CollectionUtil.CollectionEmptyException();
+            throw ThrowHelper.CollectionEmptyException();
         }
         TryRemoveLast(out KeyValuePair<TKey, TValue> r);
         return r;
@@ -399,7 +399,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     public TValue GetAndMoveToFirst(TKey key) {
         var node = GetNode(key);
         if (node == null) {
-            throw CollectionUtil.KeyNotFoundException(key);
+            throw ThrowHelper.KeyNotFoundException(key);
         }
         MoveToFirst(node);
         return node.value;
@@ -430,7 +430,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     public TValue GetAndMoveToLast(TKey key) {
         var node = GetNode(key);
         if (node == null) {
-            throw CollectionUtil.KeyNotFoundException(key);
+            throw ThrowHelper.KeyNotFoundException(key);
         }
         MoveToLast(node);
         return node.value;
@@ -459,11 +459,11 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     /// <param name="key">当前键</param>
     /// <param name="next">接收下一个键</param>
     /// <returns></returns>
-    /// <exception cref="CollectionUtil.KeyNotFoundException">如果当前键不存在</exception>
+    /// <exception cref="ThrowHelper.KeyNotFoundException">如果当前键不存在</exception>
     public bool NextKey(TKey key, out TKey next) {
         var node = GetNode(key);
         if (node == null) {
-            throw CollectionUtil.KeyNotFoundException(key);
+            throw ThrowHelper.KeyNotFoundException(key);
         }
         if (node.next != null) {
             next = node.next.key;
@@ -479,11 +479,11 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     /// <param name="key">当前键</param>
     /// <param name="prev">接收前一个键</param>
     /// <returns></returns>
-    /// <exception cref="CollectionUtil.KeyNotFoundException">如果当前键不存在</exception>
+    /// <exception cref="ThrowHelper.KeyNotFoundException">如果当前键不存在</exception>
     public bool PrevKey(TKey key, out TKey prev) {
         var node = GetNode(key);
         if (node == null) {
-            throw CollectionUtil.KeyNotFoundException(key);
+            throw ThrowHelper.KeyNotFoundException(key);
         }
         if (node.prev != null) {
             prev = node.prev.key;
@@ -1041,7 +1041,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         }
 
         private static TValue CheckNodeValue(Node? node) {
-            if (node == null) throw CollectionUtil.CollectionEmptyException();
+            if (node == null) throw ThrowHelper.CollectionEmptyException();
             return node.value;
         }
 
