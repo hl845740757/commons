@@ -317,12 +317,20 @@ public class MultiChunkDeque<T> : IDeque<T>
 
     #region itr
 
-    public IEnumerator<T> GetEnumerator() {
-        return new DequeItr(this, false);
+    IEnumerator<T> IEnumerable<T>.GetEnumerator() {
+        return new Enumerator(this, false);
     }
 
-    public IEnumerator<T> GetReversedEnumerator() {
-        return new DequeItr(this, true);
+    IEnumerator<T> ISequencedCollection<T>.GetReversedEnumerator() {
+        return new Enumerator(this, true);
+    }
+
+    public Enumerator GetEnumerator() {
+        return new Enumerator(this, false);
+    }
+
+    public Enumerator GetReversedEnumerator() {
+        return new Enumerator(this, true);
     }
 
     public void CopyTo(T[] array, int arrayIndex, bool reversed = false) {
@@ -369,7 +377,7 @@ public class MultiChunkDeque<T> : IDeque<T>
 
     #endregion
 
-    private class DequeItr : ISequentialEnumerator<T>
+    public struct Enumerator : ISequentialEnumerator<T>
     {
         private readonly MultiChunkDeque<T> _deque;
         private readonly bool _reversed;
@@ -377,9 +385,12 @@ public class MultiChunkDeque<T> : IDeque<T>
         private Chunk? _chunk;
         private ISequentialEnumerator<T>? _chunkItr;
 
-        public DequeItr(MultiChunkDeque<T> deque, bool reversed) {
+        public Enumerator(MultiChunkDeque<T> deque, bool reversed) {
             this._deque = deque;
             this._reversed = reversed;
+
+            this._chunk = null;
+            this._chunkItr = null;
             this.Reset();
         }
 

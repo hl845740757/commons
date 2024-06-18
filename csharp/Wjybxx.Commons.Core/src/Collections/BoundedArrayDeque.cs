@@ -463,12 +463,20 @@ public class BoundedArrayDeque<T> : IDeque<T>
 
     #region itr
 
-    public IEnumerator<T> GetEnumerator() {
-        return new DequeItr(this, false);
+    IEnumerator<T> IEnumerable<T>.GetEnumerator() {
+        return new Enumerator(this, false);
     }
 
-    public IEnumerator<T> GetReversedEnumerator() {
-        return new DequeItr(this, true);
+    IEnumerator<T> ISequencedCollection<T>.GetReversedEnumerator() {
+        return new Enumerator(this, true);
+    }
+
+    public Enumerator GetEnumerator() {
+        return new Enumerator(this, false);
+    }
+
+    public Enumerator GetReversedEnumerator() {
+        return new Enumerator(this, true);
     }
 
     public void CopyTo(T[] array, int arrayIndex, bool reversed = false) {
@@ -550,7 +558,7 @@ public class BoundedArrayDeque<T> : IDeque<T>
         return $"{nameof(_overflowBehavior)}: {_overflowBehavior}, {nameof(_head)}: {_head}, {nameof(_tail)}: {_tail}, {nameof(Count)}: {Count}";
     }
 
-    private class DequeItr : ISequentialEnumerator<T>
+    public struct Enumerator : ISequentialEnumerator<T>
     {
         private readonly BoundedArrayDeque<T> _arrayDeque;
         private readonly bool _reversed;
@@ -558,7 +566,7 @@ public class BoundedArrayDeque<T> : IDeque<T>
         private int _cursor; // 下一个元素
         private T? _current;
 
-        public DequeItr(BoundedArrayDeque<T> arrayDeque, bool reversed) {
+        public Enumerator(BoundedArrayDeque<T> arrayDeque, bool reversed) {
             _arrayDeque = arrayDeque;
             _reversed = reversed;
             _version = arrayDeque._version;

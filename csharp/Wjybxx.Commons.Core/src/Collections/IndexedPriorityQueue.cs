@@ -191,8 +191,12 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
         return GetEnumerator();
     }
 
-    public IEnumerator<T> GetEnumerator() {
-        return new Itr(this);
+    IEnumerator<T> IEnumerable<T>.GetEnumerator() {
+        return GetEnumerator();
+    }
+
+    public Enumerator GetEnumerator() {
+        return new Enumerator(this);
     }
 
     #endregion
@@ -279,14 +283,15 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
     }
 
     /** 这里暂没有按照优先级迭代，实现较为麻烦；由于未有序迭代，这里也没支持删除 */
-    private class Itr : ISequentialEnumerator<T>
+    public struct Enumerator : ISequentialEnumerator<T>
     {
         private readonly IndexedPriorityQueue<T> _queue;
-        private int _index = -1;
+        private int _index;
         private T? _current;
 
-        public Itr(IndexedPriorityQueue<T> queue) {
+        public Enumerator(IndexedPriorityQueue<T> queue) {
             _queue = queue;
+            _index = -1;
             _current = null;
         }
 
