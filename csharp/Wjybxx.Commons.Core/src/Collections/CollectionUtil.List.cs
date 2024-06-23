@@ -138,6 +138,40 @@ public static partial class CollectionUtil
     }
 
     /// <summary>
+    /// 拼接两个List为新的List
+    /// </summary>
+    /// <param name="lhs"></param>
+    /// <param name="rhs"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static List<T> Concat<T>(IList<T>? lhs, IList<T>? rhs) {
+        List<T> result = new List<T>(Count(lhs) + Count(rhs));
+        if (lhs != null && lhs.Count > 0) {
+            result.AddRange(lhs);
+        }
+        if (rhs != null && rhs.Count > 0) {
+            result.AddRange(rhs);
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// 拼接多个List为单个List
+    /// </summary>
+    /// <param name="listArray"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static List<T> Concat<T>(params IList<T>?[] listArray) {
+        List<T> result = new List<T>();
+        foreach (IList<T> list in listArray) {
+            if (list != null && list.Count > 0) {
+                result.AddRange(list);
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
     /// 获取List的首个元素
     /// </summary>
     /// <exception cref="ArgumentNullException">如果List为null</exception>

@@ -525,10 +525,6 @@ public class CollectionUtils {
         if ((src == null || src.isEmpty())) {
             return Set.of();
         }
-        if (src instanceof EnumSet<?> enumSet) {
-            // EnumSet使用代理的方式更好，但要先拷贝保证不可变
-            return (Set<E>) Collections.unmodifiableSet(enumSet.clone());
-        }
         // 在Set的copy方法中会先调用new HashSet拷贝数据。
         // 我们进行一次判断并显式调用toArray可减少一次不必要的拷贝
         if (src.getClass() == HashSet.class) {
@@ -538,13 +534,24 @@ public class CollectionUtils {
         }
     }
 
-    /** 用于需要保持元素顺序的场景 */
+    /** 转换为不可变的{@link LinkedHashSet}，用于需要保持元素顺序的场景 */
     public static <E> Set<E> toImmutableLinkedHashSet(@Nullable Collection<E> src) {
         if (src == null || src.isEmpty()) {
             return Set.of();
         }
         return Collections.unmodifiableSet(new LinkedHashSet<>(src));
     }
+
+    /** 转换为不可变的{@link EnumSet}，用户需要保持高效查询效率的场景 */
+    public static <E extends Enum<E>> Set<E> toImmutableEnumSet(@Nullable Collection<E> src, Class<E> keyType) {
+        if (src == null || src.isEmpty()) {
+            return Set.of();
+        }
+        EnumSet<E> enumSet = EnumSet.noneOf(keyType);
+        enumSet.addAll(src);
+        return Collections.unmodifiableSet(enumSet);
+    }
+
     // endregion
 
     // region map
@@ -646,16 +653,24 @@ public class CollectionUtils {
         return out;
     }
 
-    @SuppressWarnings("unchecked")
+    /** @param src 不支持key或value为null */
     @Nonnull
     public static <K, V> Map<K, V> toImmutableMap(@Nullable Map<K, V> src) {
         if ((src == null || src.isEmpty())) {
             return Map.of();
         }
-        if (src instanceof EnumMap<?, ?> enumMap) { // EnumMap使用代理的方式更好，但要先拷贝保证不可变
-            return (Map<K, V>) Collections.unmodifiableMap(enumMap.clone());
-        }
         return Map.copyOf(src);
+    }
+
+    /** @param src 不支持key或value为null */
+    @Nonnull
+    public static <K, V> Map<K, List<V>> toImmutableMultiMap(@Nullable Map<K, ? extends Collection<V>> src) {
+        if ((src == null || src.isEmpty())) {
+            return Map.of();
+        }
+        final Map<K, List<V>> copiedMap = new HashMap<>();
+        src.forEach((k, v) -> copiedMap.put(k, List.copyOf(v)));
+        return Map.copyOf(copiedMap);
     }
 
     /** 转换为不可变的{@link LinkedHashMap}，通常用于需要保留Key的顺序的场景 */
@@ -665,6 +680,40 @@ public class CollectionUtils {
         }
         return Collections.unmodifiableMap(new LinkedHashMap<>(src));
     }
+
+    /** 转换为不可变的{@link LinkedHashMap}，通常用于需要保留Key的顺序的场景 */
+    @Nonnull
+    public static <K, V> Map<K, List<V>> toImmutableMultiLinkedHashMap(@Nullable Map<K, ? extends Collection<V>> src) {
+        if ((src == null || src.isEmpty())) {
+            return Map.of();
+        }
+        final Map<K, List<V>> copiedMap = new LinkedHashMap<>();
+        src.forEach((k, v) -> copiedMap.put(k, List.copyOf(v)));
+        return Collections.unmodifiableMap(copiedMap);
+    }
+
+    /** 转换为不可变的{@link EnumMap}，用于需要保持高效查询的场景 */
+    @Nonnull
+    public static <K extends Enum<K>, V> Map<K, V> toImmutableEnumMap(@Nullable Map<K, V> src, Class<K> keyType) {
+        if ((src == null || src.isEmpty())) {
+            return Map.of();
+        }
+        EnumMap<K, V> copiedMap = new EnumMap<>(keyType);
+        copiedMap.putAll(src);
+        return Collections.unmodifiableMap(copiedMap);
+    }
+
+    /** 转换为不可变的{@link EnumMap}，用于需要保持高效查询的场景 */
+    @Nonnull
+    public static <K extends Enum<K>, V> Map<K, List<V>> toImmutableMultiEnumMap(@Nullable Map<K, ? extends Collection<V>> src, Class<K> keyType) {
+        if ((src == null || src.isEmpty())) {
+            return Map.of();
+        }
+        EnumMap<K, List<V>> copiedMap = new EnumMap<>(keyType);
+        src.forEach((k, vs) -> copiedMap.put(k, List.copyOf(vs)));
+        return Collections.unmodifiableMap(copiedMap);
+    }
+
     // endregion
 
     // region 通用扩展

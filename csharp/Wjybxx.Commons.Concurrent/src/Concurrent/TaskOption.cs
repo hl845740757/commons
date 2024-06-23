@@ -89,19 +89,18 @@ public static class TaskOption
      */
     public const int STAGE_INHERIT_CANCEL_TOKEN = 18;
     /// <summary>
-    /// 如果一个异步任务当前已在目标{@link SingleThreadExecutor}线程，则立即执行，而不提交任务。
+    /// 如果一个异步任务当前已在目标<see cref="ISingleThreadExecutor"/>线程，则立即执行，而不提交任务。
     /// 仅用于{@link ICompletionStage}
     ///</summary>
     public const int STAGE_TRY_INLINE = 1 << 19;
     /// <summary>
-    /// 默认情况下，如果一个异步任务的Executor是{@link IExecutor}类型，options将传递给Executor。
+    /// 默认情况下，如果一个异步任务的Executor是<see cref="IExecutor"/>类型，options将传递给Executor。
     /// 如果期望禁用传递，可设置改选项。
     /// 仅用于{@link ICompletionStage}
     ///</summary>
     public const int STAGE_NON_TRANSITIVE = 1 << 20;
     /// <summary>
-    /// 当回调接收的是Object类型的ctx，而不是{@link IContext}类型的ctx时，
-    /// 也尝试检测obj实例是否为{@link IContext}类型，并检测取消信号。
+    /// 当回调形参接收的是Object类型的ctx时，也尝试检测obj实例是否为{@link IContext}类型，并检测取消信号。
     /// </summary>
     public const int STAGE_CHECK_OBJECT_CTX = 1 << 21;
 

@@ -49,6 +49,7 @@ public class ConstantPool<T extends Constant<T>> {
     private final ConcurrentMap<String, T> constants = new ConcurrentHashMap<>();
     private final ConstantFactory<? extends T> factory;
     private final AtomicInteger idGenerator;
+    private final AtomicInteger cacheIndexGenerator = new AtomicInteger(0);
 
     private ConstantPool(ConstantFactory<? extends T> factory, int firstId) {
         this.factory = factory;
@@ -65,6 +66,14 @@ public class ConstantPool<T extends Constant<T>> {
      */
     public static <T extends Constant<T>> ConstantPool<T> newPool(ConstantFactory<? extends T> factory, int firstId) {
         return new ConstantPool<>(factory, firstId);
+    }
+
+    /**
+     * 获取下一个用于高速缓存的index.
+     * 注意：cacheIndex和id是独立的，通常用于为特殊的{@link Constant}建立高速索引。
+     */
+    private final int nextCacheIndex() {
+        return cacheIndexGenerator.getAndIncrement();
     }
 
     /**
@@ -202,8 +211,12 @@ public class ConstantPool<T extends Constant<T>> {
 
     private T newConstant(Constant.Builder<? extends T> builder) {
         final int id = idGenerator.getAndIncrement();
-        final T result = builder.setId(id)
-                .build();
+        builder.setId(id);
+        if (builder.isRequireCacheIndex()) {
+            builder.setCacheIndex(cacheIndexGenerator.getAndIncrement());
+        }
+
+        final T result = builder.build();
         // 校验实现
         Objects.requireNonNull(result, "result");
         if (result.id() != id || !Objects.equals(result.name(), builder.getName())) {

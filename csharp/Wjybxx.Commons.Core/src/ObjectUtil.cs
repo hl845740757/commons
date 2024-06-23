@@ -75,12 +75,12 @@ public static class ObjectUtil
     /// C#的字符串接口和Java差异较大，这里提供一个适配方法。
     /// </summary>
     /// <param name="value"></param>
-    /// <param name="start"></param>
-    /// <param name="end"></param>
+    /// <param name="start">开始索引 inclusive</param>
+    /// <param name="end">结束索引 exclusive</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string Substring2(this string value, int start, int end) {
-        return value.Substring(start, end - start + 1);
+        return value.Substring(start, end - start);
     }
 
     /// <summary>

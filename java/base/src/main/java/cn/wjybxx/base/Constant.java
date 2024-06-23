@@ -62,6 +62,9 @@ public interface Constant<T extends Constant<T>> extends Comparable<T> {
         private Integer id;
         private final String name;
 
+        private int cacheIndex = -1;
+        private boolean requireCacheIndex;
+
         public Builder(String name) {
             this.name = checkName(name);
         }
@@ -88,6 +91,30 @@ public interface Constant<T extends Constant<T>> extends Comparable<T> {
 
         public String getName() {
             return name;
+        }
+
+        /** 设置高速缓存索引 -- 该方法由{@link ConstantPool}调用 */
+        public Builder<T> setCacheIndex(int cacheIndex) {
+            this.cacheIndex = cacheIndex;
+            return this;
+        }
+
+        /**
+         * 获取分配的高速缓存索引 -- -1表示未设置。
+         * 注意：{@link ConstantPool}仅仅分配index，而真正的实现在于常量的使用者。
+         */
+        public int getCacheIndex() {
+            return cacheIndex;
+        }
+
+        public boolean isRequireCacheIndex() {
+            return requireCacheIndex;
+        }
+
+        /** 设置是否需要分配高速缓存索引 */
+        public Builder<T> setRequireCacheIndex(boolean requireCacheIndex) {
+            this.requireCacheIndex = requireCacheIndex;
+            return this;
         }
 
         public abstract T build();

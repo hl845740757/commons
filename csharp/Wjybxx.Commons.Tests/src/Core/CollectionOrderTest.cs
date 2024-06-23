@@ -26,9 +26,12 @@ namespace Commons.Tests.Core;
 /// <summary>
 /// 测试<see cref="HashSet{T}"/>和ImmutableSet是否保持插入序（只插入的情况下）
 ///
-/// 结论：只插入的情况下HashSet保持了插入序（已存在的元素不后移），<see cref="ImmutableHashSet"/>不能保持原来的数据。
+/// 1. <see cref="HashSet{T}"/>保持插入序。
+/// 2. <see cref="ImmutableHashSet{T}"/>不能保持插入序 -- 不能保持原始Set序。
+/// 3. <see cref="Dictionary{TKey,TValue}"/>保持插入序。
+/// 4. <see cref="ImmutableDictionary{TKey,TValue}"/>不能保持插入序 -- 不能保持原始字典序。
 /// </summary>
-public class SetOrderTest
+public class CollectionOrderTest
 {
     [Test]
     public void TestHashSet() {
@@ -63,6 +66,44 @@ public class SetOrderTest
 
         HashSet<int>.Enumerator rawItr = keySet.GetEnumerator();
         ImmutableHashSet<int>.Enumerator immutableItr = keySet.ToImmutableHashSet().GetEnumerator();
+        while (rawItr.MoveNext()) {
+            immutableItr.MoveNext();
+            Assert.That(rawItr.Current, Is.EqualTo(immutableItr.Current));
+        }
+    }
+
+    [Test]
+    public void TestDictionary() {
+        int expectedCount = 10000;
+        List<int> keyList = new List<int>(expectedCount);
+        Dictionary<int, int> dictionary = new Dictionary<int, int>(expectedCount / 6); // 顺便测试扩容
+        while (dictionary.Count < expectedCount) {
+            var next = Random.Shared.Next();
+            if (dictionary.TryAdd(next, next)) {
+                keyList.Add(next);
+            }
+        }
+        Assert.That(dictionary.Count, Is.EqualTo(keyList.Count));
+
+        int index = 0;
+        foreach (KeyValuePair<int, int> pair in dictionary) {
+            int expectedKey = keyList[index++];
+            int realKey = pair.Key;
+            Assert.That(realKey, Is.EqualTo(expectedKey));
+        }
+    }
+
+    // [Test]
+    public void TestImmutableDic() {
+        int expectedCount = 10000;
+        Dictionary<int, int> keySet = new Dictionary<int, int>(expectedCount / 6); // 要测试扩容
+        while (keySet.Count < expectedCount) {
+            var next = Random.Shared.Next();
+            keySet.TryAdd(next, next);
+        }
+
+        var rawItr = keySet.GetEnumerator();
+        var immutableItr = keySet.ToImmutableDictionary().GetEnumerator();
         while (rawItr.MoveNext()) {
             immutableItr.MoveNext();
             Assert.That(rawItr.Current, Is.EqualTo(immutableItr.Current));

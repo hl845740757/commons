@@ -60,6 +60,24 @@ public static partial class CollectionUtil
     #region collection
 
     /// <summary>
+    /// 判断集合是否为空或null
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsNullOrEmpty<T>(ICollection<T>? self) => self == null || self.Count == 0;
+
+    /// <summary>
+    /// 判断集合是否为空
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsEmpty<T>(this ICollection<T> self) => self.Count == 0;
+
+    /// <summary>
+    /// 获取集合的数量，如果集合为null，则返回0
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int Count<T>(ICollection<T>? self) => self == null ? 0 : self.Count;
+    
+    /// <summary>
     /// 批量Add元素
     /// </summary>
     public static void AddAll<T>(this ICollection<T> self, IEnumerable<T> items) {
@@ -174,6 +192,24 @@ public static partial class CollectionUtil
 
     #region dictionary
 
+    /// <summary>
+    /// 判断字典是否为空或null
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsNullOrEmpty<K, V>(IDictionary<K, V>? self) => self == null || self.Count == 0;
+
+    /// <summary>
+    /// 判断字典是否为空
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsEmpty<K, V>(this IDictionary<K, V> self) => self.Count == 0;
+
+    /// <summary>
+    /// 获取集合的数量，如果集合为null，则返回0
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int Count<K, V>(IDictionary<K, V>? self) => self == null ? 0 : self.Count;
+    
     /// <summary>
     /// 批量添加元素 -- 如果Key已存在，则覆盖
     /// </summary>
