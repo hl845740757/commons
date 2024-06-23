@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Wjybxx.Commons.Attributes;
+using Wjybxx.Commons.Collections;
 
 #pragma warning disable CS1591
 
@@ -41,7 +42,7 @@ namespace Wjybxx.Commons.Apt;
 /// $] 结束语句。
 /// </summary>
 [Immutable]
-public class CodeBlock : IEquatable<CodeBlock>
+public class CodeBlock
 {
     /// <summary>
     /// 是否为单行表达式风格
@@ -74,42 +75,9 @@ public class CodeBlock : IEquatable<CodeBlock>
     /// </summary>
     public static bool IsNullOrEmpty(CodeBlock? codeBlock) => codeBlock == null || codeBlock.IsEmpty;
 
-    #region equals
-
-    public bool Equals(CodeBlock? other) {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return formatParts.SequenceEqual(other.formatParts) && args.SequenceEqual(other.args); // 无法递归
-    }
-
-    public override bool Equals(object? obj) {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != this.GetType()) return false;
-        return Equals((CodeBlock)obj);
-    }
-
-    public override int GetHashCode() {
-        return HashCode.Combine(formatParts, args);
-    }
-
-    public static bool operator ==(CodeBlock? left, CodeBlock? right) {
-        return Equals(left, right);
-    }
-
-    public static bool operator !=(CodeBlock? left, CodeBlock? right) {
-        return !Equals(left, right);
-    }
-
-    #endregion
-
-    #region toString
-
     public override string ToString() {
-        return $""; // TODO
+        return CollectionUtil.ToString(formatParts); // TODO
     }
-
-    #endregion
 
     #region builder
 

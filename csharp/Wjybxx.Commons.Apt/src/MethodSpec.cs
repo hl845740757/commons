@@ -87,6 +87,19 @@ public class MethodSpec : ISpecification
         return new Builder(Kind.Constructor, "<init>");
     }
 
+    public Builder ToBuilder() {
+        Builder builder = new Builder(kind, name, modifiers)
+            .AddDocument(document)
+            .AddAttributes(attributes)
+            .AddTypeVariables(typeVariables)
+            .Returns(returnType)
+            .AddParameters(parameters);
+        builder.explicitBaseType = explicitBaseType;
+        builder.varargs = varargs;
+        builder.code = code;
+        return builder;
+    }
+
     public static Builder Overriding(MethodInfo methodInfo) {
         if (methodInfo.IsFinal || methodInfo.IsStatic || methodInfo.IsPrivate) {
             throw new ArgumentException("cannot override method with modifiers: " + methodInfo.Attributes);

@@ -242,6 +242,7 @@ public class ClassName : TypeName
         if (type.Namespace == null || type.IsArray || type.IsGenericParameter || type.IsPrimitive) {
             throw new ArgumentException("invalid type: " + type);
         }
+        if (type == typeof(ValueType)) return VALUE_TYPE;
         if (type == typeof(Attribute)) return ATTRIBUTE;
         if (type == typeof(Nullable<>)) return NULLABLE;
         if (type == typeof(Span<>)) return SPAN;

@@ -45,6 +45,11 @@ public class NamespaceSpec : ISpecification
 
     public static Builder NewBuilder(string name) => new Builder(name);
 
+    public Builder ToBuilder() {
+        return new Builder(name)
+            .AddSpecs(nestedSpecs);
+    }
+    
     public class Builder
     {
         public readonly string name;

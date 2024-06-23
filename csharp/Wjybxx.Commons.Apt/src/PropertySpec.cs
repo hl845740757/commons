@@ -51,7 +51,7 @@ public class PropertySpec : ISpecification
         this.initializer = builder.initializer;
         this.getter = builder.setter;
         this.setter = builder.setter;
-        this.setterModifiers = builder.setterModifierses;
+        this.setterModifiers = builder.setterModifiers;
     }
 
     public string Name => name;
@@ -59,7 +59,7 @@ public class PropertySpec : ISpecification
 
     #region builder
 
-    public static Builder NewBuilder(TypeName type, String name, Modifiers modifiers = 0) {
+    public static Builder NewBuilder(TypeName type, string name, Modifiers modifiers = 0) {
         return new Builder(type, name, modifiers);
     }
 
@@ -76,7 +76,7 @@ public class PropertySpec : ISpecification
         internal CodeBlock? initializer;
         internal CodeBlock? getter;
         internal CodeBlock? setter;
-        public Modifiers setterModifierses;
+        public Modifiers setterModifiers;
 
         internal Builder(TypeName type, string name, Modifiers modifiers) {
             this.type = type ?? throw new ArgumentNullException(nameof(type));
@@ -163,7 +163,7 @@ public class PropertySpec : ISpecification
         }
 
         public Builder AddSetterModifiers(Modifiers modifiers) {
-            this.setterModifierses |= modifiers;
+            this.setterModifiers |= modifiers;
             return this;
         }
     }

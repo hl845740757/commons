@@ -112,11 +112,14 @@ public class TypeSpec : ISpecification
         return NewEnumBuilder(className.simpleName);
     }
 
-    public static TypeSpec NewDelegator(MethodSpec methodSpec) {
+    public static Builder NewDelegatorBuilder(MethodSpec methodSpec) {
         if (methodSpec == null) throw new ArgumentNullException(nameof(methodSpec));
         return new Builder(Kind.Delegator, methodSpec.name)
-            .AddMethod(methodSpec)
-            .Build();
+            .AddMethod(methodSpec);
+    }
+
+    public static TypeSpec NewDelegator(MethodSpec methodSpec) {
+        return NewDelegatorBuilder(methodSpec).Build();
     }
 
     /// <summary>
@@ -134,6 +137,16 @@ public class TypeSpec : ISpecification
     public static Builder NewAttributeBuilder(ClassName className) {
         if (className == null) throw new ArgumentNullException(nameof(className));
         return NewAttributeBuilder(className.simpleName);
+    }
+
+    public Builder ToBuilder() {
+        return new Builder(kind, name)
+            .AddModifiers(modifiers)
+            .AddDocument(document)
+            .AddAttributes(attributes)
+            .AddTypeVariables(typeVariables)
+            .AddBaseClasses(baseClasses)
+            .AddSpecs(nestedSpecs);
     }
 
     #endregion

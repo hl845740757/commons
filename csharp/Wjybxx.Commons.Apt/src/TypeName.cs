@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
@@ -191,9 +190,6 @@ public class TypeName : IEquatable<TypeName>
         // 特殊引用类型
         if (type == typeof(string)) return STRING;
         if (type == typeof(object)) return OBJECT;
-        if (type == typeof(ValueType)) return ClassName.VALUE_TYPE;
-        if (type == typeof(Nullable<>)) return ClassName.NULLABLE;
-        if (type == typeof(Span<>)) return ClassName.SPAN;
         return ClassName.Get(type);
     }
 
