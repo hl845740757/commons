@@ -62,7 +62,7 @@ public class TimeProviders {
 
     /**
      * 创建一个基于deltaTime更新的时间提供器，用在一些特殊的场合。
-     * 你需要调用{@link Timepiece#update(long)}更新时间值。
+     * 你需要调用{@link Timepiece#update(int)}更新时间值。
      *
      * @return timeProvider -- {@link NotThreadSafe}
      */
@@ -142,7 +142,8 @@ public class TimeProviders {
     private static class UnsharableTimepiece implements Timepiece {
 
         private long time;
-        private long deltaTime;
+        private int deltaTime;
+        private int frameCount;
 
         @Override
         public long getTime() {
@@ -150,18 +151,24 @@ public class TimeProviders {
         }
 
         @Override
-        public long getDeltaTime() {
+        public int getDeltaTime() {
             return deltaTime;
         }
 
         @Override
-        public void update(long deltaTime) {
+        public int getFrameCount() {
+            return frameCount;
+        }
+
+        @Override
+        public void update(int deltaTime) {
             if (deltaTime <= 0) {
                 this.deltaTime = 0;
             } else {
                 this.deltaTime = deltaTime;
                 this.time += deltaTime;
             }
+            this.frameCount++;
         }
 
         @Override
@@ -170,19 +177,40 @@ public class TimeProviders {
         }
 
         @Override
-        public void setDeltaTime(long deltaTime) {
+        public void setDeltaTime(int deltaTime) {
             checkDeltaTime(deltaTime);
             this.deltaTime = deltaTime;
         }
 
         @Override
-        public void restart(long curTime, long deltaTime) {
-            checkDeltaTime(deltaTime);
-            this.time = curTime;
-            this.deltaTime = deltaTime;
+        public void setFrameCount(int frameCount) {
+            checkFrameCount(frameCount);
+            this.frameCount = frameCount;
         }
 
-        private static void checkDeltaTime(long deltaTime) {
+        @Override
+        public void restart(long curTime, int deltaTime, int frameCount) {
+            checkDeltaTime(deltaTime);
+            checkFrameCount(frameCount);
+            this.time = curTime;
+            this.deltaTime = deltaTime;
+            this.frameCount = frameCount;
+        }
+
+        @Override
+        public void restart() {
+            this.time = 0;
+            this.deltaTime = 0;
+            this.frameCount = 0;
+        }
+
+        private static void checkFrameCount(int frameCount) {
+            if (frameCount < 0) {
+                throw new IllegalArgumentException("frameCount must gte 0,  value " + frameCount);
+            }
+        }
+
+        private static void checkDeltaTime(int deltaTime) {
             if (deltaTime < 0) {
                 throw new IllegalArgumentException("deltaTime must gte 0,  value " + deltaTime);
             }

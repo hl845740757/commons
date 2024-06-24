@@ -76,7 +76,7 @@ public static partial class CollectionUtil
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Count<T>(ICollection<T>? self) => self == null ? 0 : self.Count;
-    
+
     /// <summary>
     /// 批量Add元素
     /// </summary>
@@ -209,7 +209,21 @@ public static partial class CollectionUtil
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Count<K, V>(IDictionary<K, V>? self) => self == null ? 0 : self.Count;
-    
+
+    /// <summary>
+    /// 批量添加元素 -- 如果Key已存在，则抛出异常
+    /// </summary>
+    public static void AddAll<TKey, TValue>(this IGenericDictionary<TKey, TValue> self, IEnumerable<KeyValuePair<TKey, TValue>> pairs) {
+        if (self == null) throw new ArgumentNullException(nameof(self));
+        if (pairs == null) throw new ArgumentNullException(nameof(pairs));
+        if (pairs is ICollection<KeyValuePair<TKey, TValue>> collection) {
+            self.AdjustCapacity(self.Count + collection.Count);
+        }
+        foreach (KeyValuePair<TKey, TValue> pair in pairs) {
+            self.Add(pair.Key, pair.Value);
+        }
+    }
+
     /// <summary>
     /// 批量添加元素 -- 如果Key已存在，则覆盖
     /// </summary>

@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Time;
@@ -27,39 +28,64 @@ namespace Wjybxx.Commons.Time;
 public class Timepiece : ITimepiece
 {
     private long _time;
-    private long _deltaTime;
+    private int _deltaTime;
+    private int _frameCount;
 
     public Timepiece() {
     }
 
     public long Current => _time;
-    public long DeltaTime => _deltaTime;
+    public int DeltaTime => _deltaTime;
 
-    public void Update(long deltaTime) {
+    public int FrameCount => _frameCount;
+
+    public void Update(int deltaTime) {
         if (deltaTime <= 0) {
             this._deltaTime = 0;
         } else {
             this._deltaTime = deltaTime;
             this._time += deltaTime;
         }
+        _frameCount++;
     }
 
     public void SetCurrent(long time) {
         this._time = time;
     }
 
-    public void SetDeltaTime(long deltaTime) {
+    public void SetDeltaTime(int deltaTime) {
         CheckDeltaTime(deltaTime);
         this._deltaTime = deltaTime;
     }
 
-    public void Restart(long curTime, long deltaTime) {
-        CheckDeltaTime(deltaTime);
-        this._time = curTime;
-        this._deltaTime = deltaTime;
+    public void SetFrameCount(int frameCount) {
+        CheckFrameCount(frameCount);
+        this._frameCount = frameCount;
     }
 
-    private static void CheckDeltaTime(long deltaTime) {
+    public void Restart() {
+        this._time = 0;
+        this._deltaTime = 0;
+        this._frameCount = 0;
+    }
+
+    public void Restart(long currentTime, int deltaTime = 0, int frameCount = 0) {
+        CheckDeltaTime(deltaTime);
+        CheckFrameCount(frameCount);
+        this._time = currentTime;
+        this._deltaTime = deltaTime;
+        this._frameCount = frameCount;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void CheckFrameCount(int frameCount) {
+        if (frameCount < 0) {
+            throw new ArgumentException("frameCount must gte 0,  value " + frameCount);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void CheckDeltaTime(int deltaTime) {
         if (deltaTime < 0) {
             throw new ArgumentException("deltaTime must gte 0,  value " + deltaTime);
         }
