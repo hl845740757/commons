@@ -24,12 +24,15 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <NeutralLanguage>zh-Hans</NeutralLanguage>
 
-<!--        <PackageReadmeFile>README.md</PackageReadmeFile>-->
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <EmbedAllSources>true</EmbedAllSources>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <TargetFrameworks>net6.0;net7.0;</TargetFrameworks>
     </PropertyGroup>
-    
+
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />

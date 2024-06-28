@@ -70,58 +70,121 @@ C#的Concurrent包，个人用得非常难受。究其原因：上下文(sync/ex
 
 ---
 
+## APT包
+
+APT包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
+我在java端使用javapoet生成各类辅助类已有5年左右的历史，这是个非常好用的轮子的，但C#端没有合适的等价物，于是自己移植了一版。
+
+用言语解释javapoet不够直观，我们直接看生成代码生成器和生成的代码（可运行测试用例）。
+
+`GeneratorTest`测试类（生成器）。
+
+```csharp
+    private static TypeSpec BuildClassType() {
+        TypeName dictionaryTypeName = TypeName.Get(typeof(LinkedDictionary<string, object>));
+        AttributeSpec processorAttribute = AttributeSpec.NewBuilder(ClassName.Get(typeof(GeneratedAttribute)))
+            .Constructor(CodeBlock.Of("$S", "GeneratorTest")) // 字符串$S
+            .Build();
+
+        TypeSpec classType = TypeSpec.NewClassBuilder("ClassBean")
+            .AddModifiers(Modifiers.Public)
+            .AddAttribute(processorAttribute)
+            // 字段
+            .AddField(TypeName.INT, "age", Modifiers.Private)
+            .AddField(TypeName.STRING, "name", Modifiers.Private)
+            .AddSpec(FieldSpec.NewBuilder(dictionaryTypeName, "blackboard", Modifiers.Public | Modifiers.Readonly)
+                .Initializer("new $T()", dictionaryTypeName)
+                .Build())
+            // 属性
+            .AddSpec(PropertySpec.NewBuilder(TypeName.INT, "Age", Modifiers.Public)
+                .Getter(CodeBlock.Of("age").WithExpressionStyle(true))
+                .Setter(CodeBlock.Of("age = value").WithExpressionStyle(true))
+                .Build())
+            .AddSpec(PropertySpec.NewBuilder(TypeName.BOOL, "IsOnline", Modifiers.Private)
+                .Initializer("$L", false)
+                .Build()
+            )
+            // 构造函数
+            .AddSpec(MethodSpec.NewConstructorBuilder()
+                .AddModifiers(Modifiers.Public)
+                .ConstructorInvoker(CodeBlock.Of("this($L, $S)", 29, "wjybxx"))
+                .Build())
+            .AddSpec(MethodSpec.NewConstructorBuilder()
+                .AddModifiers(Modifiers.Public)
+                .AddParameter(TypeName.INT, "age")
+                .AddParameter(TypeName.STRING, "name")
+                .Code(CodeBlock.NewBuilder()
+                    .AddStatement("this.age = age")
+                    .AddStatement("this.name = name")
+                    .Build())
+                .Build())
+            // 普通方法
+            .AddSpec(MethodSpec.NewMethodBuilder("SumNullable")
+                .AddDocument("求空int的和")
+                .AddModifiers(Modifiers.Public | Modifiers.Extern)
+                .Returns(TypeName.INT.MakeNullableType())
+                .AddParameter(TypeName.INT.MakeNullableType(), "a")
+                .AddParameter(TypeName.INT, "b")
+                .Build())
+            .AddSpec(MethodSpec.NewMethodBuilder("SumRef")
+                .AddDocument("求ref int的和")
+                .AddModifiers(Modifiers.Public | Modifiers.Extern)
+                .Returns(TypeName.INT)
+                .AddParameter(TypeName.INT.MakeByRefType(), "a")
+                .AddParameter(TypeName.INT.MakeByRefType(ByRefTypeName.Kind.In), "b")
+                .Build())
+            .Build();
+        return classType;
+    }
+```
+
+以下是测试`GeneratorTest`类生成的代码。
+
+```csharp
+    using Wjybxx.Commons.Attributes;
+    using Wjybxx.Commons.Collections;
+    
+    namespace Wjybxx.Commons.Apt;
+    
+    [GeneratedAttribute("GeneratorTest")]
+    public class ClassBean 
+    {
+      private int age;
+      private string name;
+      public readonly LinkedDictionary<string, object> blackboard = new LinkedDictionary<string, object>();
+      public int Age {
+        get => age;
+        set => age = value;
+      }
+      private bool IsOnline { get; set; } = false;
+    
+      public ClassBean()
+       : this(29, "wjybxx") {
+      }
+      public ClassBean(int age, string name)  {
+        this.age = age;
+        this.name = name;
+      }
+    
+      /// <summary>
+      /// 求空int的和
+      /// </summary>
+      public extern int? SumNullable(int? a, int b);
+    
+      /// <summary>
+      /// 求ref int的和
+      /// </summary>
+      public extern int SumRef(ref int a, in int b);
+    }
+```
+
+## 个人公众号(游戏开发)
+
+![写代码的诗人](https://github.com/hl845740757/commons/blob/dev/docs/res/qrcode_for_wjybxx.jpg)
+
 ## ReleaseNotes
 
-### 1.0.13
+### 1.0.15
 
-1. bugfix - MultiChunkQueue TryRemove* 接口在队列为空时抛出异常.
-2. bugfix - 获取系统Tick在不同平台单位不一致问题。
-3. 增加新的枚举器接口 - `ISequentialEnumerator`允许测试还有下一个元素。
-
-### 1.0.12
-
-1. 统一命名规范，具体可见[C#命名规范](https://github.com/hl845740757/commons/blob/dev/csharp/NameRules.md)
-
-### 1.0.11
-
-1. bugfix - 修复BoundedArrayDeque溢出时索引更新错误，修复队列迭代可能无法退出的问题。
-
-### 1.0.8~1.0.10
-
-concurrent库初版
-
-### 1.0.7
-
-1. bugfix - LinkedDictionary/LinkedHashSet移动元素到首尾时未更新version
-2. DateTime工具类
-
-### 1.0.6
-
-1. 增加ArrayPool，变更ObjectPool的Clear方法为FreeAll
-2. 增加环境变量工具类
-3. 增加BufferUtil
-
-### 1.0.5
-
-1. 添加StringBuilderPool，为Dson仓库服务
-2. ObjectPool接口删除不必要方法
-
-### 1.0.4
-
-1. 迁移仓库，和Java Commons仓库合并。
-2. Build更改为Release
-
-### 1.0.3
-
-1. 移植Time工具包
-2. 增加部分常用异常
-3. 增加轻量级对象池
-
-### 1.0.2
-
-1. Collection增加IsEmpty方法
-2. 增加少量DateTime工具方法
-
-### 1.0.1
-
-1. BoundedArrayDeque fix Count为0时SetCapacity导致的head下标错误。
+1. APT库相关支持（部分工具方法）
+2. 集合的默认迭代器修改为结构体类型，并对外开放

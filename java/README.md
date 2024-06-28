@@ -31,3 +31,7 @@ ps：不引入commons-lang3和guava，是因为这些基础库的类文件实在
 
 1. 重写了Future和Promise，优化了死锁检测和上下文传递的问题。
 2. 得益于新的Disruptor框架，EventLoop无需因为队列的问题而重复实现。
+
+## 个人公众号(游戏开发)
+
+![写代码的诗人](https://github.com/hl845740757/commons/blob/dev/docs/res/qrcode_for_wjybxx.jpg)
