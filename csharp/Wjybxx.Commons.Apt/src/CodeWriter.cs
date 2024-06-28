@@ -614,7 +614,6 @@ public class CodeWriter
             if (HasConstraints(methodSpec.typeVariables)) {
                 Emit(" ");
                 EmitTypeVariableConstraints(methodSpec.typeVariables);
-                Emit(" ");
             }
 
             if (delegator
@@ -666,14 +665,14 @@ public class CodeWriter
             return;
         }
         if (methodSpec.code!.expressionStyle) {
-            Emit(" => ");
+            Emit("=> ");
             Emit(methodSpec.code);
             EmitIfLastCharNot(';'); // 代码可能包含';'
             Emit("\n");
             return;
         }
 
-        Emit(" {\n");
+        Emit("{\n");
         {
             Indent();
             Emit(methodSpec.code!, true); // 代码本身可能包含换行符
@@ -884,9 +883,9 @@ public class CodeWriter
     private void EmitAttribute(AttributeSpec attributeSpec) {
         Emit("[");
         EmitTypeName(attributeSpec.type, true);
-        if (!attributeSpec.constructor!.IsEmpty) {
+        if (!CodeBlock.IsNullOrEmpty(attributeSpec.constructor)) {
             Emit("(");
-            Emit(attributeSpec.constructor);
+            Emit(attributeSpec.constructor!);
             Emit(")");
         } else if (attributeSpec.props.Count > 0) {
             Emit("(");

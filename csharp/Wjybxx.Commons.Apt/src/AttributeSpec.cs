@@ -52,7 +52,7 @@ public class AttributeSpec : ISpecification
         this.constructor = builder.constructor;
         this.props = builder.props.ToImmutableList();
 
-        if (!constructor.IsEmpty && props.Count > 0) {
+        if (!CodeBlock.IsNullOrEmpty(constructor) && props.Count > 0) {
             throw new ArgumentException();
         }
     }

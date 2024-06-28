@@ -25,6 +25,12 @@ using Wjybxx.Commons.Collections;
 
 namespace Commons.Tests.Apt;
 
+public class MyCodeAttribute : Attribute
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+}
+
 public class GeneratorTest
 {
     private static List<ISpecification> NewLicenseRegion() {
@@ -72,9 +78,15 @@ public class GeneratorTest
             .Constructor(CodeBlock.Of("$S", "GeneratorTest")) // 字符串$S
             .Build();
 
+        AttributeSpec attributeSpec = AttributeSpec.NewBuilder(ClassName.Get(typeof(MyCodeAttribute)))
+            .AddMember("Name", CodeBlock.Of("$S","wjybxx"))
+            .AddMember("Age", CodeBlock.Of("29"))
+            .Build();
+
         TypeSpec classType = TypeSpec.NewClassBuilder("ClassBean")
             .AddModifiers(Modifiers.Public)
             .AddAttribute(processorAttribute)
+            .AddAttribute(attributeSpec)
             // 字段
             .AddField(TypeName.INT, "age", Modifiers.Private)
             .AddField(TypeName.STRING, "name", Modifiers.Private)
@@ -105,6 +117,16 @@ public class GeneratorTest
                     .Build())
                 .Build())
             // 普通方法
+            .AddSpec(MethodSpec.NewMethodBuilder("Sum")
+                .AddDocument("求int的和")
+                .AddModifiers(Modifiers.Public)
+                .Returns(TypeName.INT)
+                .AddParameter(TypeName.INT ,"a")
+                .AddParameter(TypeName.INT, "b")
+                .Code(CodeBlock.NewBuilder()
+                    .AddStatement("return a + b")
+                    .Build())
+                .Build())
             .AddSpec(MethodSpec.NewMethodBuilder("SumNullable")
                 .AddDocument("求空int的和")
                 .AddModifiers(Modifiers.Public | Modifiers.Extern)
