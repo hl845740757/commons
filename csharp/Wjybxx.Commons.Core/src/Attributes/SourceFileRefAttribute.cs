@@ -31,9 +31,9 @@ public class SourceFileRefAttribute : Attribute
     /// <summary>
     /// 原始Class的类型
     /// </summary>
-    public readonly Type SourceType;
+    public readonly Type sourceType;
 
     public SourceFileRefAttribute(Type sourceType) {
-        this.SourceType = sourceType ?? throw new ArgumentNullException(nameof(sourceType));
+        this.sourceType = sourceType ?? throw new ArgumentNullException(nameof(sourceType));
     }
 }

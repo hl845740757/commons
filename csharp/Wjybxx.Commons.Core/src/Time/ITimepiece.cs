@@ -69,7 +69,7 @@ public interface ITimepiece : ITimeProvider
     /// <param name="deltaTime">时间间隔</param>
     /// <param name="frameCount">当前帧号</param>
     void Restart(long currentTime, int deltaTime = 0, int frameCount = 0);
-    
+
     /// <summary>
     /// 重新启动计时器
     /// </summary>

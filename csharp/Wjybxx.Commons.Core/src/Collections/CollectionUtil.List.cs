@@ -48,10 +48,18 @@ public static partial class CollectionUtil
 
     #endregion
 
-    #region list
+    #region ref
 
-    /** 查对象引用在数组中的下标 */
-    public static int IndexOfRef<T>(this IList<T?> list, object? element, int startIndex = 0) where T : class {
+#nullable disable
+    /// <summary>
+    /// 正向查找指定引用所在的下标
+    /// </summary>
+    /// <param name="list"></param>
+    /// <param name="element">要查找的元素</param>
+    /// <param name="startIndex">开始下标</param>
+    /// <typeparam name="T">元素所在的下标，-1表示不存在</typeparam>
+    /// <returns></returns>
+    public static int IndexOfRef<T>(this IList<T> list, object element, int startIndex = 0) where T : class {
         if (startIndex < 0) {
             startIndex = 0;
         }
@@ -71,8 +79,15 @@ public static partial class CollectionUtil
         return -1;
     }
 
-    /** 查对象引用在数组中的下标 */
-    public static int LastIndexOfRef<T>(this IList<T?> list, object? element, int? startIndex = null) where T : class {
+    /// <summary>
+    /// 逆向查找指定引用所在的下标
+    /// </summary>
+    /// <param name="list"></param>
+    /// <param name="element">要查找的元素</param>
+    /// <param name="startIndex">开始下标</param>
+    /// <typeparam name="T">元素所在的下标，-1表示不存在</typeparam>
+    /// <returns></returns>
+    public static int LastIndexOfRef<T>(this IList<T> list, object element, int? startIndex = null) where T : class {
         int sindex;
         if (startIndex.HasValue) {
             sindex = Math.Min(list.Count, startIndex.Value);
@@ -96,11 +111,11 @@ public static partial class CollectionUtil
     }
 
     /** 查询List中是否包含指定对象引用 */
-    public static bool ContainsRef<T>(this IList<T> list, T element) where T : class {
+    public static bool ContainsRef<T>(this IList<T> list, object element) where T : class {
         return IndexOfRef(list, element) >= 0;
     }
 
-    /** 根据引用删除元素 */
+    /** 从List中删除指定引用 */
     public static bool RemoveRef<T>(this IList<T> list, object element) where T : class {
         int index = IndexOfRef(list, element);
         if (index < 0) {
@@ -109,6 +124,122 @@ public static partial class CollectionUtil
         list.RemoveAt(index);
         return true;
     }
+#nullable enable
+
+    #endregion
+
+    #region indexOfCustom
+
+#nullable disable
+    /// <summary>
+    /// 正向查找指定引用所在的下标
+    /// </summary>
+    /// <param name="list"></param>
+    /// <param name="filter">筛选条件</param>
+    /// <param name="startIndex">开始下标</param>
+    /// <typeparam name="T">元素所在的下标，-1表示不存在</typeparam>
+    /// <returns></returns>
+    public static int IndexOfCustom<T>(this IList<T> list, Func<T, bool> filter, int startIndex = 0) where T : class {
+        if (startIndex < 0) {
+            startIndex = 0;
+        }
+        for (int idx = startIndex, size = list.Count; idx < size; idx++) {
+            if (filter(list[idx])) {
+                return idx;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// 逆向查找指定引用所在的下标
+    /// </summary>
+    /// <param name="list"></param>
+    /// <param name="filter">筛选条件</param>
+    /// <param name="startIndex">开始下标</param>
+    /// <typeparam name="T">元素所在的下标，-1表示不存在</typeparam>
+    /// <returns></returns>
+    public static int LastIndexOfCustom<T>(this IList<T> list, Func<T, bool> filter, int? startIndex = null) where T : class {
+        int sindex;
+        if (startIndex.HasValue) {
+            sindex = Math.Min(list.Count, startIndex.Value);
+        } else {
+            sindex = list.Count - 1;
+        }
+        for (int idx = sindex; idx >= 0; idx--) {
+            if (filter(list[idx])) {
+                return idx;
+            }
+        }
+        return -1;
+    }
+#nullable enable
+
+    #endregion
+
+    #region peek
+
+    /// <summary>
+    /// 获取List的首个元素
+    /// </summary>
+    /// <exception cref="ArgumentNullException">如果List为null</exception>
+    /// <exception cref="InvalidOperationException">如果集合为空</exception>
+    public static T PeekFirst<T>(this IList<T> list) {
+        if (list == null) throw new ArgumentNullException(nameof(list));
+        int count = list.Count;
+        if (count > 0) {
+            return list[0];
+        }
+        throw ThrowHelper.CollectionEmptyException();
+    }
+
+    /// <summary>
+    /// 获取List的最后一个元素
+    /// </summary>
+    /// <exception cref="ArgumentNullException">如果List为null</exception>
+    /// <exception cref="InvalidOperationException">如果集合为空</exception>
+    public static T PeekLast<T>(this IList<T> list) {
+        if (list == null) throw new ArgumentNullException(nameof(list));
+        int count = list.Count;
+        if (count > 0) {
+            return list[count - 1];
+        }
+        throw ThrowHelper.CollectionEmptyException();
+    }
+
+    /// <summary>
+    /// 获取List的首个元素
+    /// </summary>
+    /// <exception cref="ArgumentNullException">如果List为null</exception>
+    public static bool TryPeekFirst<T>(this IList<T> list, out T? value) {
+        if (list == null) throw new ArgumentNullException(nameof(list));
+        int count = list.Count;
+        if (count > 0) {
+            value = list[0];
+            return true;
+        }
+        value = default;
+        return false;
+    }
+
+    /// <summary>
+    /// 获取List的最后一个元素
+    /// </summary>
+    /// <exception cref="ArgumentNullException">如果List为null</exception>
+    public static bool TryPeekLast<T>(this IList<T> list, out T? value) {
+        if (list == null) throw new ArgumentNullException(nameof(list));
+        int count = list.Count;
+        if (count > 0) {
+            value = list[count - 1];
+            return true;
+        }
+        value = default;
+        return false;
+    }
+
+    #endregion
+
+    #region misc
 
     /// <summary>
     /// 交换两个位置的元素
@@ -163,70 +294,12 @@ public static partial class CollectionUtil
     /// <returns></returns>
     public static List<T> Concat<T>(params IList<T>?[] listArray) {
         List<T> result = new List<T>();
-        foreach (IList<T> list in listArray) {
+        foreach (IList<T>? list in listArray) {
             if (list != null && list.Count > 0) {
                 result.AddRange(list);
             }
         }
         return result;
-    }
-
-    /// <summary>
-    /// 获取List的首个元素
-    /// </summary>
-    /// <exception cref="ArgumentNullException">如果List为null</exception>
-    /// <exception cref="InvalidOperationException">如果集合为空</exception>
-    public static T PeekFirst<T>(this IList<T> list) {
-        if (list == null) throw new ArgumentNullException(nameof(list));
-        int count = list.Count;
-        if (count > 0) {
-            return list[0];
-        }
-        throw ThrowHelper.CollectionEmptyException();
-    }
-
-    /// <summary>
-    /// 获取List的最后一个元素
-    /// </summary>
-    /// <exception cref="ArgumentNullException">如果List为null</exception>
-    /// <exception cref="InvalidOperationException">如果集合为空</exception>
-    public static T PeekLast<T>(this IList<T> list) {
-        if (list == null) throw new ArgumentNullException(nameof(list));
-        int count = list.Count;
-        if (count > 0) {
-            return list[count - 1];
-        }
-        throw ThrowHelper.CollectionEmptyException();
-    }
-
-    /// <summary>
-    /// 获取List的首个元素
-    /// </summary>
-    /// <exception cref="ArgumentNullException">如果List为null</exception>
-    public static bool TryPeekFirst<T>(this IList<T> list, out T value) {
-        if (list == null) throw new ArgumentNullException(nameof(list));
-        int count = list.Count;
-        if (count > 0) {
-            value = list[0];
-            return true;
-        }
-        value = default;
-        return false;
-    }
-
-    /// <summary>
-    /// 获取List的最后一个元素
-    /// </summary>
-    /// <exception cref="ArgumentNullException">如果List为null</exception>
-    public static bool TryPeekLast<T>(this IList<T> list, out T value) {
-        if (list == null) throw new ArgumentNullException(nameof(list));
-        int count = list.Count;
-        if (count > 0) {
-            value = list[count - 1];
-            return true;
-        }
-        value = default;
-        return false;
     }
 
     #endregion

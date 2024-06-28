@@ -35,23 +35,32 @@ public class PropertySpec : ISpecification
     public readonly string name;
     public readonly Modifiers modifiers;
     public readonly CodeBlock document;
-    public readonly IList<TypeSpec> attributes;
+    public readonly CodeBlock headerCode;
+    public readonly IList<AttributeSpec> attributes;
 
     public readonly CodeBlock? initializer; // 自动属性的默认值
     public readonly CodeBlock? getter; // getter代码块（可选）
     public readonly CodeBlock? setter; // setter代码块（可选）
     public readonly Modifiers setterModifiers; // setter修饰符
 
+    public readonly bool hasGetter; // 是否有getter
+    public readonly bool hasSetter; // 是否有setter
+
     public PropertySpec(Builder builder) {
-        this.type = builder.type;
-        this.name = builder.name;
-        this.modifiers = builder.modifiers;
-        this.attributes = Util.ToImmutableList(builder.attributes);
-        this.document = builder.document.Build();
-        this.initializer = builder.initializer;
-        this.getter = builder.setter;
-        this.setter = builder.setter;
-        this.setterModifiers = builder.setterModifiers;
+        type = builder.type;
+        name = builder.name;
+        modifiers = builder.modifiers;
+        document = builder.document.Build();
+        headerCode = builder.headerCode.Build();
+        attributes = Util.ToImmutableList(builder.attributes);
+
+        initializer = builder.initializer;
+        getter = builder.getter;
+        setter = builder.setter;
+        setterModifiers = builder.setterModifiers;
+
+        hasGetter = builder.hasGetter;
+        hasSetter = builder.hasSetter;
     }
 
     public string Name => name;
@@ -63,6 +72,22 @@ public class PropertySpec : ISpecification
         return new Builder(type, name, modifiers);
     }
 
+    public Builder ToBuilder() {
+        Builder builder = new Builder(type, name, modifiers)
+            .AddDocument(document)
+            .AddHeaderCode(headerCode)
+            .AddAttributes(attributes);
+
+        builder.initializer = initializer;
+        builder.getter = getter;
+        builder.setter = setter;
+        builder.setterModifiers = setterModifiers;
+
+        builder.hasGetter = hasGetter;
+        builder.hasSetter = hasSetter;
+        return builder;
+    }
+
     #endregion
 
     public class Builder
@@ -71,16 +96,20 @@ public class PropertySpec : ISpecification
         public readonly string name;
         public Modifiers modifiers;
         public readonly CodeBlock.Builder document = CodeBlock.NewBuilder();
-        public readonly List<TypeSpec> attributes = new List<TypeSpec>();
+        public readonly CodeBlock.Builder headerCode = CodeBlock.NewBuilder();
+        public readonly List<AttributeSpec> attributes = new List<AttributeSpec>();
 
         internal CodeBlock? initializer;
         internal CodeBlock? getter;
         internal CodeBlock? setter;
         public Modifiers setterModifiers;
 
+        public bool hasGetter = true;
+        public bool hasSetter = true;
+
         internal Builder(TypeName type, string name, Modifiers modifiers) {
             this.type = type ?? throw new ArgumentNullException(nameof(type));
-            this.name = name ?? throw new ArgumentNullException(nameof(name));
+            this.name = Util.CheckNotBlank(name, "name is blank");
             this.modifiers = modifiers;
         }
 
@@ -108,7 +137,17 @@ public class PropertySpec : ISpecification
             return this;
         }
 
-        public Builder AddAttribute(TypeSpec attributeSpec) {
+        public Builder AddHeaderCode(string format, params object[] args) {
+            headerCode.Add(format, args);
+            return this;
+        }
+
+        public Builder AddHeaderCode(CodeBlock codeBlock) {
+            headerCode.Add(codeBlock);
+            return this;
+        }
+
+        public Builder AddAttribute(AttributeSpec attributeSpec) {
             if (attributeSpec == null) throw new ArgumentNullException(nameof(attributeSpec));
             this.attributes.Add(attributeSpec);
             return this;
@@ -116,13 +155,13 @@ public class PropertySpec : ISpecification
 
         public Builder AddAttribute(ClassName attributeSpec) {
             if (attributeSpec == null) throw new ArgumentNullException(nameof(attributeSpec));
-            this.attributes.Add(TypeSpec.NewAttributeBuilder(attributeSpec).Build());
+            this.attributes.Add(AttributeSpec.NewBuilder(attributeSpec).Build());
             return this;
         }
 
-        public Builder AddAttributes(IEnumerable<TypeSpec> attributeSpecs) {
+        public Builder AddAttributes(IEnumerable<AttributeSpec> attributeSpecs) {
             if (attributeSpecs == null) throw new ArgumentNullException(nameof(attributeSpecs));
-            foreach (TypeSpec spec in attributeSpecs) {
+            foreach (AttributeSpec spec in attributeSpecs) {
                 if (spec == null) throw new ArgumentException("null element");
                 this.attributes.Add(spec);
             }
@@ -148,6 +187,7 @@ public class PropertySpec : ISpecification
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
             if (this.getter != null) throw new IllegalStateException("getter was already set");
             this.getter = codeBlock;
+            this.hasGetter = true;
             return this;
         }
 
@@ -159,6 +199,17 @@ public class PropertySpec : ISpecification
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
             if (this.setter != null) throw new IllegalStateException("setter was already set");
             this.setter = codeBlock;
+            this.hasSetter = true;
+            return this;
+        }
+
+        public Builder HasGetter(bool value = true) {
+            this.hasGetter = value;
+            return this;
+        }
+
+        public Builder HasSetter(bool value = true) {
+            this.hasSetter = value;
             return this;
         }
 

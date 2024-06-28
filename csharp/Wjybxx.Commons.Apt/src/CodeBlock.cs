@@ -20,7 +20,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 
@@ -46,13 +45,17 @@ public class CodeBlock
 {
     /// <summary>
     /// 是否为单行表达式风格
+    /// (该顺序默认只在属性和方法中生效)
     /// <code>
     /// public int sum(int x, int y) => x + y;
     /// </code>
     /// </summary>
     public readonly bool expressionStyle;
-    private readonly IList<string> formatParts;
-    private readonly IList<object> args;
+    /// <summary>
+    /// 拆解后的format，包含'$L'这样的表达式和普通字符串
+    /// </summary>
+    public readonly IList<string> formatParts;
+    public readonly IList<object?> args;
 
     private CodeBlock(Builder builder) {
         this.expressionStyle = builder.expressionStyle;
@@ -60,7 +63,14 @@ public class CodeBlock
         this.args = Util.ToImmutableList(builder.args);
     }
 
+    private CodeBlock(bool expressionStyle, CodeBlock codeBlock) {
+        this.expressionStyle = expressionStyle;
+        this.formatParts = codeBlock.formatParts;
+        this.args = codeBlock.args;
+    }
+
     private CodeBlock() {
+        this.expressionStyle = false;
         this.formatParts = ImmutableList<string>.Empty;
         this.args = ImmutableList<object>.Empty;
     }
@@ -75,19 +85,28 @@ public class CodeBlock
     /// </summary>
     public static bool IsNullOrEmpty(CodeBlock? codeBlock) => codeBlock == null || codeBlock.IsEmpty;
 
+    /// <summary>
+    /// 拷贝
+    /// </summary>
+    /// <param name="expressionStyle"></param>
+    /// <returns></returns>
+    public CodeBlock WithExpressionStyle(bool expressionStyle) {
+        return new CodeBlock(expressionStyle, this);
+    }
+
+    /// <summary>
+    /// 空代码块
+    /// </summary>
+    public static CodeBlock Empty { get; } = new CodeBlock();
+
     public override string ToString() {
         return CollectionUtil.ToString(formatParts); // TODO
     }
 
     #region builder
 
-    public static CodeBlock NewEmpty() {
-        return new CodeBlock();
-    }
-
     public static CodeBlock Of(string format, params object[] args) {
-        return NewBuilder().Add(format, args)
-            .Build();
+        return new Builder().Add(format, args).Build(); // 需要拆解format
     }
 
     public static Builder NewBuilder(string format, params object[] args) {
@@ -97,6 +116,10 @@ public class CodeBlock
     public static Builder NewBuilder() {
         return new Builder();
     }
+
+    public Builder ToBuilder() => new Builder()
+        .ExpressionStyle(expressionStyle)
+        .Add(this);
 
     #endregion
 
@@ -109,7 +132,9 @@ public class CodeBlock
         internal Builder() {
         }
 
-        public CodeBlock Build() => new CodeBlock(this);
+        public CodeBlock Build() {
+            return IsEmpty ? CodeBlock.Empty : new CodeBlock(this);
+        }
 
         public bool IsEmpty => formatParts.Count == 0;
 
@@ -128,6 +153,7 @@ public class CodeBlock
         /// </summary>
         /// <returns></returns>
         public Builder Clear() {
+            expressionStyle = false;
             formatParts.Clear();
             args.Clear();
             return this;
@@ -139,6 +165,9 @@ public class CodeBlock
         /// <param name="codeBlock"></param>
         /// <returns></returns>
         public Builder Add(CodeBlock codeBlock) {
+            if (codeBlock.IsEmpty) {
+                return this;
+            }
             formatParts.AddRange(codeBlock.formatParts);
             args.AddRange(codeBlock.args);
             return this;
@@ -210,7 +239,7 @@ public class CodeBlock
 
             if (hasRelative) {
                 Util.CheckArgument(relativeParameterCount >= args.Length,
-                    "unused arguments: expected %s, received %s", relativeParameterCount, args.Length);
+                    "unused arguments: expected {0}, received {1}", relativeParameterCount, args.Length);
             }
             if (hasIndexed) {
                 List<string> unused = new List<string>();
@@ -220,7 +249,7 @@ public class CodeBlock
                     }
                 }
                 string s = unused.Count == 1 ? "" : "s";
-                Util.CheckArgument(unused.Count == 0, "unused argument%s: %s", s, string.Join(", ", unused));
+                Util.CheckArgument(unused.Count == 0, "unused argument{0}: {1}", s, string.Join(", ", unused));
             }
             return this;
         }
@@ -255,8 +284,15 @@ public class CodeBlock
         }
 
         private static string ArgToName(object o) {
-            if (o is string str) return str;
-            if (o is ISpecification specification) return specification.Name;
+            if (o is string str) {
+                return str;
+            }
+            if (o is ISpecification specification) {
+                string name = specification.Name;
+                if (name != null) {
+                    return name;
+                }
+            }
             throw new ArgumentException("expected name but was " + o);
         }
 
@@ -297,7 +333,6 @@ public class CodeBlock
             return this;
         }
 
-
         public Builder EndControlFlow(string controlFlow, params object[] args) {
             Unindent();
             Add("} " + controlFlow + ";\n", args);
@@ -315,6 +350,39 @@ public class CodeBlock
             return AddStatement("$L", codeBlock);
         }
 
+        #endregion
+
+        public Builder AddNewLine(int count = 1) {
+            for (int i = 0; i < count; i++) {
+                this.formatParts.Add("\n");
+            }
+            return this;
+        }
+
+        public Builder AddType(Type type) {
+            AddType(TypeName.Get(type));
+            return this;
+        }
+
+        public Builder AddType(TypeName type) {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            formatParts.Add("$T");
+            args.Add(type);
+            return this;
+        }
+
+        public Builder AddString(string s) {
+            formatParts.Add("$S");
+            args.Add(s);
+            return this;
+        }
+
+        public Builder AddLiteral(string s) {
+            formatParts.Add("$L");
+            args.Add(s);
+            return this;
+        }
+
         public Builder Indent() {
             this.formatParts.Add("$>");
             return this;
@@ -324,7 +392,5 @@ public class CodeBlock
             this.formatParts.Add("$<");
             return this;
         }
-
-        #endregion
     }
 }

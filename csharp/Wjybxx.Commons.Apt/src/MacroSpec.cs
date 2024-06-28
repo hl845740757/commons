@@ -46,16 +46,15 @@ public class MacroSpec : ISpecification, IEquatable<MacroSpec>
     public MacroSpec(string name, IList<string>? arguments = null) {
         this.name = name ?? throw new ArgumentNullException(nameof(name));
         this.arguments = Util.ToImmutableList(arguments);
-        CheckArguments();
     }
 
     public MacroSpec(string name, params string[] arguments) {
         this.name = name ?? throw new ArgumentNullException(nameof(name));
         this.arguments = ImmutableList.CreateRange(arguments);
-        CheckArguments();
     }
 
     private void CheckArguments() {
+        // 参数为空字符串是安全的
         foreach (string argument in arguments) {
             if (string.IsNullOrWhiteSpace(argument)) {
                 throw new ArgumentException("argument cant be blank");

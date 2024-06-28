@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Text;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
@@ -31,7 +30,9 @@ namespace Wjybxx.Commons.Apt;
 /// <summary>
 /// 表示一个class或struct的类型名。
 /// 
-/// 注意：无法通过名字判断是否是结构体或引用类型。
+/// 注意：
+/// 1.无法通过名字判断是否是结构体或引用类型。
+/// 2.ClassName始终通过<see cref="WithAttributes"/>方法设置属性，避免工厂方法参数过多。
 /// </summary>
 [Immutable]
 public class ClassName : TypeName
@@ -41,6 +42,7 @@ public class ClassName : TypeName
     public static readonly ClassName ATTRIBUTE = InternalGet(typeof(Attribute));
     public static readonly ClassName NULLABLE = InternalGet(typeof(Nullable<>));
     public static readonly ClassName SPAN = InternalGet(typeof(Span<>));
+    public static readonly ClassName VOID_CLASS = InternalGet(typeof(VoidClass));
 
     /// <summary>
     /// namespace
@@ -58,15 +60,17 @@ public class ClassName : TypeName
     /// </summary>
     public readonly string simpleName;
     /// <summary>
-    /// 泛型参数（包含从外部类拷贝来的）
+    /// 所有泛型参数（包含从外部类拷贝来的）
     /// </summary>
     public readonly IList<TypeName> typeArguments;
     /// <summary>
-    /// 当前类声明的泛型参数
+    /// 当前类声明的泛型参数（生成代码时只使用这部分）
     /// </summary>
     public readonly IList<TypeName> declaredTypeArguments;
 
-    internal ClassName(string ns, ClassName? enclosingClassName, string simpleName, IList<TypeName>? typeArguments) {
+    private ClassName(string ns, ClassName? enclosingClassName, string simpleName, IList<TypeName>? typeArguments,
+                      TypeNameAttributes attributes = TypeNameAttributes.None)
+        : base(attributes) {
         if (string.IsNullOrWhiteSpace(ns)) throw new ArgumentException("namespace cant be blank");
         if (simpleName.EndsWith("[]")) throw new ArgumentException("SimpleName cant be array name");
 
@@ -118,6 +122,11 @@ public class ClassName : TypeName
     /// 是否是已构造泛型（具体泛型）
     /// </summary>
     public bool IsConstructedGenericType => IsGenericType && GetTypeVariableCount() == 0;
+
+    /// <summary>
+    /// 是否是系统的<see cref="Nullable{T}"/>结构体
+    /// </summary>
+    public new bool IsNullableStruct => simpleName == "Nullable" && ns == "System";
 
     /// <summary>
     /// 获取顶层类类名
@@ -194,6 +203,10 @@ public class ClassName : TypeName
         return sb.ToString();
     }
 
+    public override ClassName WithAttributes(TypeNameAttributes attributes) {
+        return new ClassName(ns, enclosingClassName, simpleName, typeArguments, attributes);
+    }
+
     /// <summary>
     /// 创建一个同级类类名
     /// </summary>
@@ -217,6 +230,24 @@ public class ClassName : TypeName
             typeArguments = CollectionUtil.Concat(this.typeArguments, typeArguments);
         }
         return new ClassName(ns, this, name, typeArguments);
+    }
+
+    /// <summary>
+    /// 构建真实泛型。
+    /// 注意：必须从外部类开始构造，参数只接收该类显式定义的泛型参数。
+    /// </summary>
+    /// <param name="actualTypeArguments">长度必须等于类显式</param>
+    /// <returns></returns>
+    public ClassName WithActualTypeVariables(params TypeName[] actualTypeArguments) {
+        if (actualTypeArguments.Length != declaredTypeArguments.Count) {
+            throw new ArgumentException();
+        }
+        if (enclosingClassName == null || enclosingClassName.typeArguments.Count == 0) {
+            return new ClassName(ns, enclosingClassName, simpleName, actualTypeArguments, attributes); // 需保留attributes
+        } else {
+            List<TypeName> typeArguments = CollectionUtil.Concat(enclosingClassName.typeArguments, actualTypeArguments);
+            return new ClassName(ns, enclosingClassName, simpleName, typeArguments, attributes);
+        }
     }
 
     #region Get/Parse
@@ -246,6 +277,7 @@ public class ClassName : TypeName
         if (type == typeof(Attribute)) return ATTRIBUTE;
         if (type == typeof(Nullable<>)) return NULLABLE;
         if (type == typeof(Span<>)) return SPAN;
+        if (type == typeof(VoidClass)) return VOID_CLASS;
         return InternalGet(type);
     }
 
@@ -281,7 +313,7 @@ public class ClassName : TypeName
     // 但对C#来说，导入没有问题
 
     /// <summary>
-    /// 判断目标类型是否是当前类的直接内部类 。
+    /// 判断目标类型是否是当前类的直接内部类。
     ///
     /// 虽然C#没有导入问题，但和Java一样，对于直接内部类，访问时最好是去除外部类前缀。
     /// 这是个可选优化项，不影响代码的正确性。

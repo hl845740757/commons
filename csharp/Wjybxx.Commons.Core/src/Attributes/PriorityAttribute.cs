@@ -30,9 +30,9 @@ public class PriorityAttribute : Attribute
     /// <summary>
     /// 优先级
     /// </summary>
-    public readonly int Value;
+    public readonly int value;
 
     public PriorityAttribute(int value) {
-        this.Value = value;
+        this.value = value;
     }
 }

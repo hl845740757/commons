@@ -35,9 +35,10 @@ public class PointerTypeName : TypeName
     /// </summary>
     public readonly TypeName targetType;
 
-    internal PointerTypeName(TypeName targetType) {
+    private PointerTypeName(TypeName targetType, TypeNameAttributes attributes)
+        : base(attributes) {
         // 指针排在ref前System.Int32*&
-        if (targetType is RefTypeName) throw new ArgumentException("targetType cant be ref");
+        if (targetType is ByRefTypeName) throw new ArgumentException("targetType cant be ref");
         this.targetType = targetType ?? throw new ArgumentNullException(nameof(targetType));
     }
 
@@ -45,10 +46,22 @@ public class PointerTypeName : TypeName
     /// 反射名追加星号
     /// </summary>
     /// <returns></returns>
-    public override string ReflectionName() => targetType.ReflectionName() + "&";
+    public override string ReflectionName() => targetType.ReflectionName() + "*";
 
     protected override string ToStringImpl() {
         return $"{GetType().Name}, {nameof(targetType)}: {targetType}";
+    }
+
+    public override PointerTypeName WithAttributes(TypeNameAttributes attributes) {
+        return new PointerTypeName(targetType, attributes);
+    }
+
+    public static PointerTypeName Of(TypeName targetType, TypeNameAttributes attributes = TypeNameAttributes.None) {
+        return new PointerTypeName(targetType, attributes);
+    }
+
+    public static PointerTypeName Of(Type targetType, TypeNameAttributes attributes = TypeNameAttributes.None) {
+        return new PointerTypeName(TypeName.Get(targetType), attributes);
     }
 
     /// <summary>
@@ -63,11 +76,13 @@ public class PointerTypeName : TypeName
         return root;
     }
 
-    public static PointerTypeName Of(TypeName targetType) {
-        return new PointerTypeName(targetType);
-    }
-
-    public static PointerTypeName Of(Type targetType) {
-        return new PointerTypeName(TypeName.Get(targetType));
+    public int GetPointerRank() {
+        int r = 1;
+        TypeName root = targetType;
+        while (root is PointerTypeName nested) {
+            root = nested.targetType;
+            r++;
+        }
+        return r;
     }
 }

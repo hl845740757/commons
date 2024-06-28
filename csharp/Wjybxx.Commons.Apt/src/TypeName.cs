@@ -25,7 +25,7 @@ using Wjybxx.Commons.Attributes;
 namespace Wjybxx.Commons.Apt;
 
 /// <summary>
-/// 类型名
+/// 类型名，TypeName用于表示对其它类型的引用。
 /// （这里的实现并不完整，只用于简单的代码生成）
 /// （继承是为了节省内存，否则需要实现为标签类）
 /// </summary>
@@ -52,16 +52,24 @@ public class TypeName : IEquatable<TypeName>
     public static readonly TypeName VOID = new TypeName("void"); // void不可作为泛型参数
 
     private readonly string? keyword;
-    /** toString缓存 */
+    public readonly TypeNameAttributes attributes;
+
     private string? cachedString;
 
-    private TypeName(string keyword) {
+    private TypeName(string keyword, TypeNameAttributes attributes = TypeNameAttributes.None) {
         this.keyword = keyword;
+        this.attributes = attributes;
     }
 
-    internal TypeName() {
+    internal TypeName(TypeNameAttributes attributes) {
         this.keyword = null;
+        this.attributes = attributes;
     }
+
+    /// <summary>
+    /// 一般业务不要依赖该属性，只应该用在生成代码时
+    /// </summary>
+    public string? Internal_Keyword => keyword;
 
     /// <summary>
     /// 非基础类型的关键字
@@ -115,7 +123,7 @@ public class TypeName : IEquatable<TypeName>
     /// <returns></returns>
     public sealed override string ToString() {
         if (cachedString == null) {
-            cachedString = ToStringImpl();
+            cachedString = ToStringImpl() + "NRT: " + attributes;
         }
         return cachedString;
     }
@@ -123,7 +131,19 @@ public class TypeName : IEquatable<TypeName>
     /** 注意：ToString影响Equals测试 */
     protected virtual string ToStringImpl() {
         if (keyword == null) throw new AssertionError();
-        return $"{GetType().Name}, {nameof(keyword)}: {keyword}";
+        return $"{GetType().Name}, keyword: {keyword}";
+    }
+
+    /// <summary>
+    /// 增加约束<see cref="TypeNameAttributes"/>
+    /// </summary>
+    /// <param name="attributes"></param>
+    /// <returns></returns>
+    public virtual TypeName WithAttributes(TypeNameAttributes attributes) {
+        if (keyword != null) {
+            return new TypeName(keyword, attributes);
+        }
+        throw new NotImplementedException();
     }
 
     #region equals
@@ -147,6 +167,49 @@ public class TypeName : IEquatable<TypeName>
 
     #endregion
 
+    #region make
+
+    /// <summary>
+    /// 构建一个数组类型
+    /// </summary>
+    /// <returns></returns>
+    public ArrayTypeName MakeArrayType() {
+        return ArrayTypeName.Of(this);
+    }
+
+    /// <summary>
+    /// 构建引用传值类型
+    /// </summary>
+    /// <param name="kind">引用类型</param>
+    /// <returns></returns>
+    public ByRefTypeName MakeByRefType(ByRefTypeName.Kind kind = ByRefTypeName.Kind.Ref) {
+        if (this is ByRefTypeName) {
+            throw new IllegalStateException();
+        }
+        return ByRefTypeName.Of(this, kind);
+    }
+
+    /// <summary>
+    /// 构造一个引用类型
+    /// </summary>
+    /// <returns></returns>
+    public PointerTypeName MakePointerType() {
+        return PointerTypeName.Of(this);
+    }
+
+    /// <summary>
+    /// 构造一个Nullable结构体,。
+    /// <see cref="Nullable{T}"/>
+    /// </summary>
+    /// <returns></returns>
+    public ClassName MakeNullableType() {
+        return ClassName.NULLABLE.WithActualTypeVariables(this);
+    }
+
+    #endregion
+
+    #region parse/get
+
     /// <summary>
     /// 通过反射类型信息获取TypeName
     /// </summary>
@@ -157,7 +220,7 @@ public class TypeName : IEquatable<TypeName>
             string typeName = type.ToString();
             Type targetType = Type.GetType(typeName.Substring(0, typeName.Length - 1));
             if (targetType == null) throw new ArgumentException("unsupported ref type: " + type);
-            return type.IsByRef ? RefTypeName.Of(targetType) : PointerTypeName.Of(targetType);
+            return type.IsByRef ? ByRefTypeName.Of(targetType) : PointerTypeName.Of(targetType);
         }
         // 数组
         if (type.IsArray) {
@@ -197,14 +260,33 @@ public class TypeName : IEquatable<TypeName>
     /// 获取引用或指针的最终目标类型
     /// </summary>
     /// <param name="typeName"></param>
+    /// <param name="includeArray"></param>
     /// <returns></returns>
-    public static TypeName GetRootTargetType(TypeName typeName) {
-        if (typeName is RefTypeName refTypeName) {
-            typeName = refTypeName.targetType; // 引用类型的目标类型可能是指针
+    public static TypeName GetRootTargetType(TypeName typeName, bool includeArray = false) {
+        // System.String[]*[]&
+        if (typeName is ByRefTypeName refTypeName) { // ref总是在末尾
+            typeName = refTypeName.targetType;
+        }
+        if (includeArray && typeName is ArrayTypeName arrayTypeName) { // 考虑指针的数组...
+            typeName = arrayTypeName.GetRootElementType();
         }
         if (typeName is PointerTypeName pointerTypeName) {
-            return pointerTypeName.GetRootTargetType();
+            typeName = pointerTypeName.GetRootTargetType();
+        }
+        if (includeArray && typeName is ArrayTypeName arrayTypeName2) { // 考虑数组的指针
+            typeName = arrayTypeName2.GetRootElementType();
         }
         return typeName;
     }
+
+    /// <summary>
+    /// 是否是<see cref="Nullable"/>结构体
+    /// </summary>
+    /// <param name="typeName"></param>
+    /// <returns></returns>
+    public static bool IsNullableStruct(TypeName typeName) {
+        return typeName is ClassName className && className.IsNullableStruct;
+    }
+
+    #endregion
 }

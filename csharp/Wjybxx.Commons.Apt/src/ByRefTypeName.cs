@@ -24,21 +24,34 @@ using Wjybxx.Commons.Attributes;
 namespace Wjybxx.Commons.Apt;
 
 /// <summary>
-/// 引用类型
-/// <code>ref int, ref int* </code>
+/// 传递对象的引用
+/// <code>ref int, ref int* , in int, out int</code>
 /// </summary>
 [Immutable]
-public class RefTypeName : TypeName
+public class ByRefTypeName : TypeName
 {
     /// <summary>
     /// 原始类型
     /// </summary>
     public readonly TypeName targetType;
+    /// <summary>
+    /// 引用的修饰符
+    /// </summary>
+    public readonly Kind kind;
 
-    internal RefTypeName(TypeName targetType) {
+    private ByRefTypeName(TypeName targetType, Kind kind, TypeNameAttributes attributes)
+        : base(attributes) {
         // 引用不能出现嵌套，但引用的目标类型可能是指针
-        if (targetType is RefTypeName) throw new ArgumentException("targetType cant be ref");
+        if (targetType is ByRefTypeName) throw new ArgumentException("targetType cant be ref");
         this.targetType = targetType ?? throw new ArgumentNullException(nameof(targetType));
+        this.kind = kind;
+    }
+
+    public enum Kind
+    {
+        Ref,
+        In,
+        Out,
     }
 
     /// <summary>
@@ -51,11 +64,15 @@ public class RefTypeName : TypeName
         return $"{GetType().Name}, {nameof(targetType)}: {targetType}";
     }
 
-    public static RefTypeName Of(TypeName targetType) {
-        return new RefTypeName(targetType);
+    public override ByRefTypeName WithAttributes(TypeNameAttributes attributes) {
+        return new ByRefTypeName(targetType, kind, attributes);
     }
 
-    public static RefTypeName Of(Type targetType) {
-        return new RefTypeName(TypeName.Get(targetType));
+    public static ByRefTypeName Of(TypeName targetType, Kind kind = Kind.Ref, TypeNameAttributes attributes = TypeNameAttributes.None) {
+        return new ByRefTypeName(targetType, kind, attributes);
+    }
+
+    public static ByRefTypeName Of(Type targetType, Kind kind = Kind.Ref, TypeNameAttributes attributes = TypeNameAttributes.None) {
+        return new ByRefTypeName(TypeName.Get(targetType), kind, attributes);
     }
 }

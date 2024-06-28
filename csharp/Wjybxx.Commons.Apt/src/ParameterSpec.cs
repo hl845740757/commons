@@ -27,25 +27,27 @@ namespace Wjybxx.Commons.Apt;
 
 /// <summary>
 /// 方法参数
+/// 注意：方法参数的 ref/in/out 不是单纯的修饰符，而是修改了字段的类型。
 /// </summary>
 [Immutable]
 public class ParameterSpec : ISpecification
 {
     public readonly TypeName type;
     public readonly string name;
-    public readonly Modifiers modifiers;
-    public readonly CodeBlock document;
-    public readonly IList<TypeSpec> attributes; // 暂时不想支持代码生成
+    public readonly Modifiers modifiers; // c#其实没有 -- ref/in/out其实是修改了type
+    public readonly CodeBlock document; // 暂时可能不生成
+    public readonly IList<AttributeSpec> attributes; // 暂时不想支持代码生成
 
     public readonly CodeBlock? defaultValue; // 默认值
 
     private ParameterSpec(Builder builder) {
-        this.type = builder.type;
-        this.name = builder.name;
-        this.modifiers = builder.modifiers;
-        this.attributes = Util.ToImmutableList(builder.attributes);
-        this.document = builder.document.Build();
-        this.defaultValue = builder.defaultValue;
+        type = builder.type;
+        name = builder.name;
+        modifiers = builder.modifiers;
+        attributes = Util.ToImmutableList(builder.attributes);
+        document = builder.document.Build();
+
+        defaultValue = builder.defaultValue;
     }
 
     public string Name => name;
@@ -64,13 +66,7 @@ public class ParameterSpec : ISpecification
     }
 
     public static ParameterSpec Get(ParameterInfo parameterInfo) {
-        // 这里存在引用类型的问题。..
-        TypeName typeName = TypeName.Get(parameterInfo.ParameterType);
-        if (typeName is RefTypeName refTypeName) {
-            typeName = refTypeName.targetType;
-        }
-        return NewBuilder(typeName, parameterInfo.Name!)
-            .AddModifiers(InRefOut(parameterInfo))
+        return NewBuilder(TypeName.Get(parameterInfo.ParameterType), parameterInfo.Name!)
             .Build();
     }
 
@@ -81,16 +77,6 @@ public class ParameterSpec : ISpecification
             result.Add(Get(parameterInfo));
         }
         return result;
-    }
-
-    private static Modifiers InRefOut(ParameterInfo parameter) {
-        // in、ref、out ，类型名后面会带有 & 符号
-        if (parameter.ParameterType.IsByRef) {
-            return parameter.IsIn ? Modifiers.In
-                : parameter.IsOut ? Modifiers.Out
-                : Modifiers.Ref;
-        }
-        return Modifiers.None;
     }
 
     /// <summary>
@@ -111,13 +97,13 @@ public class ParameterSpec : ISpecification
         public readonly string name;
         public Modifiers modifiers;
         public readonly CodeBlock.Builder document = CodeBlock.NewBuilder();
-        public readonly List<TypeSpec> attributes = new List<TypeSpec>();
+        public readonly List<AttributeSpec> attributes = new List<AttributeSpec>();
 
         public CodeBlock? defaultValue;
 
         internal Builder(TypeName type, string name, Modifiers modifiers) {
-            this.type = type;
-            this.name = name;
+            this.type = type ?? throw new ArgumentNullException(nameof(type));
+            this.name = Util.CheckNotBlank(name, "name is blank");
             this.modifiers = modifiers;
         }
 
@@ -145,7 +131,7 @@ public class ParameterSpec : ISpecification
             return this;
         }
 
-        public Builder AddAttribute(TypeSpec attributeSpec) {
+        public Builder AddAttribute(AttributeSpec attributeSpec) {
             if (attributeSpec == null) throw new ArgumentNullException(nameof(attributeSpec));
             this.attributes.Add(attributeSpec);
             return this;
@@ -153,13 +139,13 @@ public class ParameterSpec : ISpecification
 
         public Builder AddAttribute(ClassName attributeSpec) {
             if (attributeSpec == null) throw new ArgumentNullException(nameof(attributeSpec));
-            this.attributes.Add(TypeSpec.NewAttributeBuilder(attributeSpec).Build());
+            this.attributes.Add(AttributeSpec.NewBuilder(attributeSpec).Build());
             return this;
         }
 
-        public Builder AddAttributes(IEnumerable<TypeSpec> attributeSpecs) {
+        public Builder AddAttributes(IEnumerable<AttributeSpec> attributeSpecs) {
             if (attributeSpecs == null) throw new ArgumentNullException(nameof(attributeSpecs));
-            foreach (TypeSpec spec in attributeSpecs) {
+            foreach (AttributeSpec spec in attributeSpecs) {
                 if (spec == null) throw new ArgumentException("null element");
                 this.attributes.Add(spec);
             }

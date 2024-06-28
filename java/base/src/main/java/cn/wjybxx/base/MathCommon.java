@@ -281,6 +281,18 @@ public class MathCommon {
         long r = (long) value + delta;
         return clamp(r, min, max);
     }
+
+    /** 求两个int的乘积，溢出时clamp到int范围 */
+    public static int multiplyAndClamp(int value, int delta) {
+        long r = (long) value * delta;
+        return clamp(r, Integer.MIN_VALUE, Integer.MAX_VALUE);
+    }
+
+    /** 求两个int的乘积，同时clamp到给定的范围 */
+    public static int multiplyAndClamp(int value, int delta, int min, int max) {
+        long r = (long) value * delta;
+        return clamp(r, min, max);
+    }
     // endregion
 
     // region min,max

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
@@ -36,12 +37,22 @@ public class NamespaceSpec : ISpecification
     public readonly IList<ISpecification> nestedSpecs;
 
     private NamespaceSpec(string name, IList<ISpecification> nestedSpecs) {
-        this.name = name;
+        this.name = Util.CheckNotBlank(name, "name is blank");
         this.nestedSpecs = Util.ToImmutableList(nestedSpecs);
     }
 
     public string Name => name;
     public SpecType SpecType => SpecType.Namespace;
+
+    #region builder
+
+    public static NamespaceSpec Of(string name, params ISpecification[] nestedSpecs) {
+        return new NamespaceSpec(name, ImmutableList.CreateRange(nestedSpecs));
+    }
+
+    public static NamespaceSpec Of(string name, IList<ISpecification> nestedSpecs) {
+        return new NamespaceSpec(name, nestedSpecs);
+    }
 
     public static Builder NewBuilder(string name) => new Builder(name);
 
@@ -49,14 +60,16 @@ public class NamespaceSpec : ISpecification
         return new Builder(name)
             .AddSpecs(nestedSpecs);
     }
-    
+
+    #endregion
+
     public class Builder
     {
         public readonly string name;
         public readonly List<ISpecification> nestedSpecs = new List<ISpecification>();
 
         internal Builder(string name) {
-            this.name = name ?? throw new ArgumentNullException(nameof(name));
+            this.name = Util.CheckNotBlank(name, "name is blank");
         }
 
         public NamespaceSpec Build() {

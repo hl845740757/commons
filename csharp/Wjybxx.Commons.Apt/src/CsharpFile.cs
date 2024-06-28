@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+
 #pragma warning disable CS1591
 
 namespace Wjybxx.Commons.Apt;
@@ -29,12 +30,10 @@ namespace Wjybxx.Commons.Apt;
 public class CsharpFile
 {
     public readonly string name;
-    public readonly CodeBlock document; // 文件注释
     public readonly IList<ISpecification> nestedSpecs;
 
     private CsharpFile(Builder builder) {
         this.name = builder.name;
-        this.document = builder.document.Build();
         this.nestedSpecs = Util.ToImmutableList(builder.nestedSpecs);
     }
 
@@ -43,7 +42,6 @@ public class CsharpFile
     public class Builder
     {
         public readonly string name;
-        public readonly CodeBlock.Builder document = CodeBlock.NewBuilder();
         public readonly List<ISpecification> nestedSpecs = new List<ISpecification>();
 
         internal Builder(string name) {
@@ -54,16 +52,6 @@ public class CsharpFile
             return new CsharpFile(this);
         }
 
-        public Builder AddDocument(string format, params object[] args) {
-            document.Add(format, args);
-            return this;
-        }
-
-        public Builder AddDocument(CodeBlock codeBlock) {
-            document.Add(codeBlock);
-            return this;
-        }
-        
         public Builder AddSpecs(IEnumerable<ISpecification> specs) {
             if (specs == null) throw new ArgumentNullException(nameof(specs));
             foreach (ISpecification spec in specs) {

@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
@@ -27,6 +26,7 @@ namespace Wjybxx.Commons.Apt;
 
 /// <summary>
 /// 字段(或事件)
+/// 注意：C#的事件本身并不是字段，但实在不想整那么复杂了...
 /// </summary>
 [Immutable]
 public class FieldSpec : ISpecification
@@ -36,19 +36,24 @@ public class FieldSpec : ISpecification
     public readonly string name;
     public readonly Modifiers modifiers;
     public readonly CodeBlock document;
-    public readonly IList<TypeSpec> attributes;
+    public readonly CodeBlock headerCode;
+    public readonly IList<AttributeSpec> attributes;
 
     public readonly CodeBlock? initializer; // 初始化块
 
     private FieldSpec(Builder builder) {
-        this.kind = builder.kind;
-        this.type = builder.type;
-        this.name = builder.name;
-        this.modifiers = builder.modifiers;
-        this.attributes = Util.ToImmutableList(builder.attributes);
-        this.document = builder.document.Build();
-        this.initializer = builder.initializer;
+        kind = builder.kind;
+        type = builder.type;
+        name = builder.name;
+        modifiers = builder.modifiers;
+        attributes = Util.ToImmutableList(builder.attributes);
+        document = builder.document.Build();
+        headerCode = builder.headerCode.Build();
+
+        initializer = builder.initializer;
     }
+
+    public bool IsEvent => kind == Kind.Event;
 
     public string Name => name;
     public SpecType SpecType => SpecType.Field;
@@ -104,14 +109,15 @@ public class FieldSpec : ISpecification
         public readonly string name;
         public Modifiers modifiers;
         public readonly CodeBlock.Builder document = CodeBlock.NewBuilder();
-        public readonly List<TypeSpec> attributes = new List<TypeSpec>();
+        public readonly CodeBlock.Builder headerCode = CodeBlock.NewBuilder();
+        public readonly List<AttributeSpec> attributes = new List<AttributeSpec>();
 
         internal CodeBlock? initializer;
 
         internal Builder(Kind kind, TypeName type, string name, Modifiers modifiers) {
             this.kind = kind;
             this.type = type ?? throw new ArgumentNullException(nameof(type));
-            this.name = name ?? throw new ArgumentNullException(nameof(name));
+            this.name = Util.CheckNotBlank(name, "name is blank");
             this.modifiers = modifiers;
         }
 
@@ -139,7 +145,17 @@ public class FieldSpec : ISpecification
             return this;
         }
 
-        public Builder AddAttribute(TypeSpec attributeSpec) {
+        public Builder AddHeaderCode(string format, params object[] args) {
+            headerCode.Add(format, args);
+            return this;
+        }
+
+        public Builder AddHeaderCode(CodeBlock codeBlock) {
+            headerCode.Add(codeBlock);
+            return this;
+        }
+
+        public Builder AddAttribute(AttributeSpec attributeSpec) {
             if (attributeSpec == null) throw new ArgumentNullException(nameof(attributeSpec));
             this.attributes.Add(attributeSpec);
             return this;
@@ -147,13 +163,13 @@ public class FieldSpec : ISpecification
 
         public Builder AddAttribute(ClassName attributeSpec) {
             if (attributeSpec == null) throw new ArgumentNullException(nameof(attributeSpec));
-            this.attributes.Add(TypeSpec.NewAttributeBuilder(attributeSpec).Build());
+            this.attributes.Add(AttributeSpec.NewBuilder(attributeSpec).Build());
             return this;
         }
 
-        public Builder AddAttributes(IEnumerable<TypeSpec> attributeSpecs) {
+        public Builder AddAttributes(IEnumerable<AttributeSpec> attributeSpecs) {
             if (attributeSpecs == null) throw new ArgumentNullException(nameof(attributeSpecs));
-            foreach (TypeSpec spec in attributeSpecs) {
+            foreach (AttributeSpec spec in attributeSpecs) {
                 if (spec == null) throw new ArgumentException("null element");
                 this.attributes.Add(spec);
             }

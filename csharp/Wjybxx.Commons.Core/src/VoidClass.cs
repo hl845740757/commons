@@ -16,24 +16,14 @@
 
 #endregion
 
-using System;
-
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Attributes;
+namespace Wjybxx.Commons;
 
 /// <summary>
-/// 该属性用于为字段和方法等定义别名
+/// 由于C#的void不能作为泛型参数，又没有内置的Void代替物，我们使用该类型表示Void。
 /// </summary>
-[AttributeUsage(AttributeTargets.All)]
-public class AliasAttribute : Attribute
+public sealed class VoidClass
 {
-    /// <summary>
-    /// 别名，默认空数组
-    /// </summary>
-    public string[] values;
-
-    public AliasAttribute(string[]? values) {
-        this.values = values ?? Array.Empty<string>();
+    private VoidClass() {
+        throw new AssertionError();
     }
 }

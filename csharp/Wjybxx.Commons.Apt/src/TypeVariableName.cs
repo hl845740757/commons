@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using Wjybxx.Commons.Attributes;
-using Wjybxx.Commons.Collections;
 
 #pragma warning disable CS1591
 
@@ -42,16 +41,11 @@ public class TypeVariableName : TypeName
     /// 泛型约束（类型上界）
     /// </summary>
     public readonly IList<TypeName> bounds;
-    /// <summary>
-    /// 泛型属性 -- notnull, class, struct, new()
-    /// （无法获得引用类型的notnull约束）
-    /// </summary>
-    public readonly GenericParameterAttributes attributes;
 
-    internal TypeVariableName(string name, IList<TypeName>? bounds, GenericParameterAttributes attributes) {
+    private TypeVariableName(string name, IList<TypeName>? bounds, TypeNameAttributes attributes)
+        : base(attributes) {
         this.name = name ?? throw new ArgumentNullException(nameof(name));
         this.bounds = Util.ToImmutableList(bounds);
-        this.attributes = attributes;
     }
 
     /// <summary>
@@ -72,15 +66,9 @@ public class TypeVariableName : TypeName
         return sb.ToString();
     }
 
-    /// <summary>
-    /// 约束是否为值类型
-    /// </summary>
-    public bool IsValueTypeConstraint => (attributes & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0;
-
-    /// <summary>
-    /// 是否约束为引用类型
-    /// </summary>
-    public bool IsReferenceTypeConstraint => (attributes & GenericParameterAttributes.ReferenceTypeConstraint) != 0;
+    public override TypeName WithAttributes(TypeNameAttributes attributes) {
+        return new TypeVariableName(name, bounds, attributes);
+    }
 
     /// <summary>
     /// 添加新的约束
@@ -106,33 +94,7 @@ public class TypeVariableName : TypeName
         return new TypeVariableName(name, newBounds, attributes);
     }
 
-    /// <summary>
-    /// 替换泛型属性
-    /// </summary>
-    /// <param name="attributes"></param>
-    /// <returns>新的对象</returns>
-    public TypeVariableName WithAttributes(GenericParameterAttributes attributes) {
-        return new TypeVariableName(name, bounds, attributes);
-    }
-
-    /// <summary>
-    /// 其它工厂方法应当调用该方法统一处理约束
-    /// </summary>
-    /// <param name="name">泛型名</param>
-    /// <param name="bounds">泛型约束</param>
-    /// <param name="attributes">泛型属性</param>
-    /// <returns></returns>
-    private static TypeVariableName Of(string name, IList<TypeName>? bounds, GenericParameterAttributes attributes) {
-        if (bounds == null || bounds.Count == 0) {
-            return new TypeVariableName(name, bounds, attributes);
-        } else {
-            List<TypeName> visibleBounds = new List<TypeName>(bounds);
-            // 统一去除ValueType和Object -- 不能直接作为泛型约束
-            visibleBounds.Remove(TypeName.OBJECT);
-            visibleBounds.Remove(ClassName.VALUE_TYPE);
-            return new TypeVariableName(name, visibleBounds, attributes);
-        }
-    }
+    #region parse/get
 
     /// <summary>
     /// 构建泛型变量名
@@ -140,9 +102,8 @@ public class TypeVariableName : TypeName
     /// <param name="name">泛型名</param>
     /// <param name="attributes">泛型属性</param>
     /// <returns></returns>
-    public static TypeVariableName Get(string name,
-                                       GenericParameterAttributes attributes = GenericParameterAttributes.None) {
-        return Of(name, null, attributes);
+    public static TypeVariableName Get(string name, TypeNameAttributes attributes = TypeNameAttributes.None) {
+        return InternalGet(name, null, attributes);
     }
 
     /// <summary>
@@ -152,14 +113,15 @@ public class TypeVariableName : TypeName
     /// <param name="bounds">泛型约束</param>
     /// <param name="attributes">泛型属性</param>
     /// <returns></returns>
-    public static TypeVariableName Get(string name, IList<TypeName> bounds,
-                                       GenericParameterAttributes attributes = GenericParameterAttributes.None) {
-        return Of(name, bounds, attributes);
+    public static TypeVariableName Get(string name, IList<TypeName> bounds, TypeNameAttributes attributes = TypeNameAttributes.None) {
+        return InternalGet(name, bounds, attributes);
     }
 
     /// <summary>
     /// 通过泛型变量Type实例解析信息
-    /// 注意：C#的泛型参数使用struct关键字约束时，会添加<see cref="ValueType"/>为上界，会自动去除。
+    /// 注意：
+    /// 1. C#的泛型参数使用struct关键字约束时，会添加<see cref="ValueType"/>为上界，会自动去除。
+    /// 2. 反射无法获取NotNull约束
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
@@ -173,8 +135,50 @@ public class TypeVariableName : TypeName
         foreach (Type constraint in constraints) {
             bounds.Add(TypeName.Get(constraint));
         }
-        return Of(type.Name, bounds, type.GenericParameterAttributes);
+        // 转换Attributes
+        TypeNameAttributes attributes = TypeNameAttributes.None;
+        if ((type.GenericParameterAttributes & GenericParameterAttributes.ReferenceTypeConstraint) != 0) {
+            attributes |= TypeNameAttributes.ReferenceTypeConstraint;
+        }
+        if ((type.GenericParameterAttributes & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0) {
+            attributes |= TypeNameAttributes.NotNullableValueTypeConstraint;
+        }
+        if ((type.GenericParameterAttributes & GenericParameterAttributes.DefaultConstructorConstraint) != 0) {
+            attributes |= TypeNameAttributes.DefaultConstructorConstraint;
+        }
+        return InternalGet(type.Name, bounds, attributes);
     }
+
+    /// <summary>
+    /// 其它工厂方法应当调用该方法统一处理约束
+    /// </summary>
+    /// <param name="name">泛型名</param>
+    /// <param name="bounds">泛型约束</param>
+    /// <param name="attributes">泛型属性</param>
+    /// <returns></returns>
+    private static TypeVariableName InternalGet(string name, IList<TypeName>? bounds, TypeNameAttributes attributes) {
+        if (bounds == null || bounds.Count == 0) {
+            return new TypeVariableName(name, bounds, attributes);
+        } else {
+            List<TypeName> visibleBounds = new List<TypeName>(bounds);
+            // 统一去除ValueType和Object -- 不能直接作为泛型约束
+            visibleBounds.Remove(TypeName.OBJECT);
+            visibleBounds.Remove(ClassName.VALUE_TYPE);
+            return new TypeVariableName(name, visibleBounds, attributes);
+        }
+    }
+
+    #endregion
+
+    /// <summary>
+    /// 约束是否为值类型
+    /// </summary>
+    public bool IsValueTypeConstraint => (attributes & TypeNameAttributes.NotNullableValueTypeConstraint) != 0;
+
+    /// <summary>
+    /// 是否约束为引用类型
+    /// </summary>
+    public bool IsReferenceTypeConstraint => (attributes & TypeNameAttributes.ReferenceTypeConstraint) != 0;
 
     /// <summary>
     /// 是否包含约束条件 
@@ -190,16 +194,20 @@ public class TypeVariableName : TypeName
         if (attributes == 0 && bounds.Count == 0) {
             throw new IllegalStateException("none constraints");
         }
-        if ((attributes & GenericParameterAttributes.NotNullableValueTypeConstraint) != 0) {
+        if ((attributes & TypeNameAttributes.NotNullableValueTypeConstraint) != 0) {
             return "struct";
         }
         StringBuilder sb = new StringBuilder(32);
         int count = 0;
-        if ((attributes & GenericParameterAttributes.ReferenceTypeConstraint) != 0) {
+        if ((attributes & TypeNameAttributes.ReferenceTypeConstraint) != 0) {
             sb.Append("class");
             count++;
         }
-        if ((attributes & GenericParameterAttributes.DefaultConstructorConstraint) != 0) {
+        if ((attributes & TypeNameAttributes.NotNullableReferenceType) != 0) {
+            sb.Append("notnull");
+            count++;
+        }
+        if ((attributes & TypeNameAttributes.DefaultConstructorConstraint) != 0) {
             if (count++ > 0) sb.Append(", ");
             sb.Append("new()");
         }

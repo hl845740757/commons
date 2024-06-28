@@ -21,7 +21,7 @@ using System.Reflection;
 using NUnit.Framework;
 using Wjybxx.Commons.Collections;
 
-namespace Commons.Tests.Core;
+namespace Commons.Tests.Apt;
 
 /// <summary>
 /// 通过<see cref="GenericParameterAttributes"/>和<see cref="GenericParameterAttributes"/>来测试泛型信息，

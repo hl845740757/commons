@@ -46,7 +46,8 @@ public class ArrayTypeName : TypeName
     /// </summary>
     public readonly TypeName elementType;
 
-    internal ArrayTypeName(TypeName elementType) {
+    private ArrayTypeName(TypeName elementType, TypeNameAttributes attributes = TypeNameAttributes.None)
+        : base(attributes) {
         this.elementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
     }
 
@@ -58,6 +59,18 @@ public class ArrayTypeName : TypeName
 
     protected override string ToStringImpl() {
         return $"{GetType().Name}, {nameof(elementType)}: {elementType}";
+    }
+
+    public override ArrayTypeName WithAttributes(TypeNameAttributes attributes) {
+        return new ArrayTypeName(elementType, attributes);
+    }
+
+    public static ArrayTypeName Of(TypeName elementType, TypeNameAttributes attributes = TypeNameAttributes.None) {
+        return new ArrayTypeName(elementType, attributes);
+    }
+
+    public static ArrayTypeName Of(Type elementType, TypeNameAttributes attributes = TypeNameAttributes.None) {
+        return new ArrayTypeName(TypeName.Get(elementType), attributes);
     }
 
     /// <summary>
@@ -80,22 +93,9 @@ public class ArrayTypeName : TypeName
         int r = 1;
         TypeName root = elementType;
         while (root is ArrayTypeName nested) {
-            root = nested;
+            root = nested.elementType;
             r++;
         }
         return r;
-    }
-
-    /// <summary>
-    /// 构建数组类型名
-    /// </summary>
-    /// <param name="elementType"></param>
-    /// <returns></returns>
-    public static ArrayTypeName Of(TypeName elementType) {
-        return new ArrayTypeName(elementType);
-    }
-
-    public static ArrayTypeName Of(Type elementType) {
-        return new ArrayTypeName(TypeName.Get(elementType));
     }
 }

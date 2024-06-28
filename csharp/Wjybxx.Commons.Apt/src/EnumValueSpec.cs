@@ -39,11 +39,24 @@ public class EnumValueSpec : IEquatable<EnumValueSpec>, ISpecification
     public EnumValueSpec(string name, int? number = null, CodeBlock? document = null) {
         this.name = name ?? throw new ArgumentNullException(nameof(name));
         this.number = number;
-        this.document = document ?? CodeBlock.NewEmpty();
+        this.document = document ?? CodeBlock.Empty;
     }
 
     public string Name => name;
     public SpecType SpecType => SpecType.EnumValue;
+
+    #region builder
+
+    public static Builder NewBuilder(string name, int? number = null) {
+        return new Builder(name, number);
+    }
+
+    public Builder ToBuilder() {
+        return new Builder(name, number)
+            .AddDocument(document);
+    }
+
+    #endregion
 
     #region equals
 
@@ -69,4 +82,30 @@ public class EnumValueSpec : IEquatable<EnumValueSpec>, ISpecification
     }
 
     #endregion
+
+    public class Builder
+    {
+        public readonly string name;
+        public readonly int? number;
+        public readonly CodeBlock.Builder document = CodeBlock.NewBuilder();
+
+        internal Builder(string name, int? number) {
+            this.name = name ?? throw new ArgumentNullException(nameof(name));
+            this.number = number;
+        }
+
+        public EnumValueSpec Build() {
+            return new EnumValueSpec(name, number, document.Build());
+        }
+
+        public Builder AddDocument(string format, params object[] args) {
+            document.Add(format, args);
+            return this;
+        }
+
+        public Builder AddDocument(CodeBlock codeBlock) {
+            document.Add(codeBlock);
+            return this;
+        }
+    }
 }

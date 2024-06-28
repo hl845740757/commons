@@ -26,8 +26,10 @@ namespace Wjybxx.Commons.Apt;
 /// 表示类型导入(using xxx)
 /// </summary>
 [Immutable]
-public class UsingSpec : IEquatable<UsingSpec>, ISpecification
+public class ImportSpec : IEquatable<ImportSpec>, ISpecification
 {
+    public static readonly ImportSpec System = new ImportSpec("System", null);
+
     /** 原始的命名空间 -- namespace是关键字，取名总是犯难 */
     public readonly string name;
     /** 命名空间别名 */
@@ -38,17 +40,28 @@ public class UsingSpec : IEquatable<UsingSpec>, ISpecification
     /// </summary>
     /// <param name="name">命名空间</param>
     /// <param name="alias">别名</param>
-    public UsingSpec(string name, string? alias) {
-        this.name = name ?? throw new ArgumentNullException(nameof(name));
-        this.alias = alias;
+    public ImportSpec(string name, string? alias) {
+        this.name = Util.CheckNotBlank(name, "name is blank");
+        this.alias = string.IsNullOrWhiteSpace(alias) ? null : alias;
     }
 
     public string Name => name;
-    public SpecType SpecType => SpecType.Using;
+    public SpecType SpecType => SpecType.Import;
+
+    /// <summary>
+    /// 构建子命名空间
+    /// </summary>
+    /// <param name="childName"></param>
+    /// <param name="alias"></param>
+    /// <returns></returns>
+    public ImportSpec Nested(string childName, string? alias = null) {
+        if (childName == null) throw new ArgumentNullException(nameof(childName));
+        return new ImportSpec(name + "." + childName, alias);
+    }
 
     #region equals
 
-    public bool Equals(UsingSpec? other) {
+    public bool Equals(ImportSpec? other) {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
         return name == other.name && alias == other.alias;
@@ -58,7 +71,7 @@ public class UsingSpec : IEquatable<UsingSpec>, ISpecification
         if (ReferenceEquals(null, obj)) return false;
         if (ReferenceEquals(this, obj)) return true;
         if (obj.GetType() != this.GetType()) return false;
-        return Equals((UsingSpec)obj);
+        return Equals((ImportSpec)obj);
     }
 
     public override int GetHashCode() {

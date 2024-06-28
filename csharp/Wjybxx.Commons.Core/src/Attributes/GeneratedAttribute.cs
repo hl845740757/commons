@@ -30,9 +30,9 @@ public class GeneratedAttribute : Attribute
     /// <summary>
     /// 生成类文件的处理器的限定名
     /// </summary>
-    public readonly string Processor;
+    public readonly string processor;
 
     public GeneratedAttribute(string processor) {
-        Processor = processor ?? throw new ArgumentNullException(nameof(processor));
+        this.processor = processor ?? throw new ArgumentNullException(nameof(processor));
     }
 }

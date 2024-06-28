@@ -19,9 +19,9 @@
 using System;
 using System.Reflection;
 using NUnit.Framework;
-using Wjybxx.Commons.Collections;
+using Wjybxx.Commons.Apt;
 
-namespace Commons.Tests.Core;
+namespace Commons.Tests.Apt;
 
 /// <summary>
 /// 了解信息的存储方式后，我们才可以正确生成Codec代码。
@@ -96,6 +96,19 @@ public class GenericTypeTest1
         Console.WriteLine(FormatTypeInfo(parameterInfo.ParameterType)); // IsByRef: True, IsByRefLike: False, IsPointer: False
     }
 
+
+    /** 测试引用类型使用ref修饰符是否会有变化 */
+    [Test]
+    public void TestRefStringArgumentMethod() {
+        var type = typeof(GenericTypeTest1);
+        MethodInfo methodInfo = type.GetMethod("ReStringArgMethod", BindingFlags.NonPublic | BindingFlags.Static);
+        ParameterInfo parameterInfo = methodInfo!.GetParameters()[0];
+        Console.WriteLine(parameterInfo); // System.String& val
+        Console.WriteLine(FormatTypeInfo(parameterInfo.ParameterType)); // IsByRef: True, IsByRefLike: False, IsPointer: False
+    }
+
+    #region MyRegion
+
     private static void InArgMethod(in int val) {
     }
 
@@ -113,6 +126,18 @@ public class GenericTypeTest1
     // 还能这样吗...指针*可连续N个
     private static unsafe void RefPointArgMethod(ref int* val) {
     }
+
+
+    private static void ReStringArgMethod(ref string val) {
+    }
+
+    // private static unsafe void ReStringArrayArgMethod(ref string[]* val) {
+    // }
+    //
+    // private static unsafe void ReStringArrayArgMethod2(ref string[]*[] val) {
+    // }
+
+    #endregion
 
     private static string FormatTypeInfo(Type type) {
         return $"IsByRef: {type.IsByRef}, IsByRefLike: {type.IsByRefLike}, IsPointer: {type.IsPointer}";

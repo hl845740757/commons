@@ -23,14 +23,14 @@ namespace Wjybxx.Commons.Apt;
 ///
 /// Q：为什么造该接口？
 /// A：因为宏可能出现在文件的任意位置，我们需要保证用户的定义顺序，需要使用List来装所有元素。
-/// 发现如果支持宏，根据Spec生成代码和直接用<see cref="CodeBlock"/>生成代码相比，也没简单多少。。。
+/// (宏导致代码的复杂度急剧攀升，心里一万只草泥马奔过...我怎么就心血来潮写这工具)
 /// </summary>
 public interface ISpecification
 {
     /// <summary>
     /// 规格名
     /// </summary>
-    public string Name { get; }
+    public string? Name { get; }
 
     /// <summary>
     /// 规格类型
@@ -69,6 +69,10 @@ public enum SpecType : byte
     Parameter,
 
     /// <summary>
+    /// 属性（注解）
+    /// </summary>
+    Attribute,
+    /// <summary>
     /// 命名空间
     /// </summary>
     Namespace,
@@ -79,7 +83,7 @@ public enum SpecType : byte
     /// <summary>
     /// 导入
     /// </summary>
-    Using,
+    Import,
     /// <summary>
     /// 任意代码
     /// </summary>

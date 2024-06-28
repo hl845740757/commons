@@ -27,6 +27,8 @@ namespace Wjybxx.Commons.Apt;
 /// <see cref="FieldAttributes"/>
 /// <see cref="MethodAttributes"/>
 /// <see cref="PropertyAttributes"/>等枚举信息过多，不直观。
+///
+/// 注意：方法参数的ref/in/out不是单纯的修饰符，而是修改了字段的类型，因此需要使用<see cref="ByRefTypeName"/>。
 /// </summary>
 [Flags]
 public enum Modifiers
@@ -72,33 +74,41 @@ public enum Modifiers
     /// </summary>
     Sealed = 0x0080,
 
-    /// <summary>
-    /// 静态类/字段/方法/属性 static
-    /// </summary>
-    Static = 0X0100,
+    // 声明顺序 
+    // public new static extern unsafe 
+
     /// <summary>
     /// 隐藏父类的方法(new关键字)
     /// </summary>
-    Hide = 0x0200,
+    Hide = 0x0100,
     /// <summary>
-    /// setter方法特殊修饰符（init关键字）
+    /// 静态类/字段/方法/属性 static
     /// </summary>
-    Init = 0x0400,
+    Static = 0X0200,
+    /// <summary>                   
+    /// 外部方法                        
+    /// </summary>                  
+    Extern = 0x400,
+    /// <summary>                   
+    /// 方法使用了指针                     
+    /// </summary>                  
+    Unsafe = 0x800,
+
+    /// <summary>
+    /// 只读
+    /// </summary>
+    Readonly = 0x1000,
     /// <summary>
     /// 分部类/方法(建议只用在类上)
     /// </summary>
-    Partial = 0x800,
-    
+    Partial = 0x2000,
     /// <summary>
-    /// 方法参数包含in修饰
+    /// 异步方法
     /// </summary>
-    In = 0x1000,
+    Async = 0x4000,
     /// <summary>
-    /// 方法参数包含out修饰
+    /// 操作符重载（方法名即符号）
+    /// C#的操作符重载是生成了特殊的方法名来实现的，但我们使用Modifier更简单点，也更容易扩展
     /// </summary>
-    Out = 0x2000,
-    /// <summary>
-    /// 方法参数包含ref修饰 -- 方法返回值也有ref...
-    /// </summary>
-    Ref = 0x4000,
+    Operator = 0x8000,
 }

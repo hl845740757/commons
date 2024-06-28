@@ -40,7 +40,8 @@ public class TypeSpec : ISpecification
     public readonly string name;
     public readonly Modifiers modifiers;
     public readonly CodeBlock document;
-    public readonly IList<TypeSpec> attributes;
+    public readonly CodeBlock headerCode; // 文档后，类定义前的自定义代码
+    public readonly IList<AttributeSpec> attributes; // 这里仅表示非宏管理注解
 
     public readonly IList<TypeVariableName> typeVariables; // 泛型参数
     public readonly IList<TypeName> baseClasses; // 超类和接口
@@ -51,11 +52,19 @@ public class TypeSpec : ISpecification
         name = builder.name;
         modifiers = builder.modifiers;
         document = builder.document.Build();
+        headerCode = builder.headerCode.Build();
         attributes = Util.ToImmutableList(builder.attributes);
 
         typeVariables = Util.ToImmutableList(builder.typeVariables);
         baseClasses = Util.ToImmutableList(builder.baseClasses);
         nestedSpecs = Util.ToImmutableList(builder.nestedSpecs);
+
+        // 委托检查
+        if (kind == Kind.Delegator) {
+            if (nestedSpecs.Count != 1 || nestedSpecs[0].SpecType != SpecType.Method) {
+                throw new IllegalStateException("Delegator method is absent");
+            }
+        }
     }
 
     public string Name => name;
@@ -67,7 +76,11 @@ public class TypeSpec : ISpecification
         Struct,
         Interface,
         Enum,
-        Delegator, // C#委托是Type，不是Method；每一个委托都定义了一个类型
+        /// <summary>
+        /// C#委托是Type，不是Method；每一个委托都定义了一个类型。
+        /// C#委托只允许有一个嵌套成员，即方法定义。
+        /// </summary>
+        Delegator,
     }
 
     #region builder
@@ -122,27 +135,11 @@ public class TypeSpec : ISpecification
         return NewDelegatorBuilder(methodSpec).Build();
     }
 
-    /// <summary>
-    /// 注意：C#的属性就是普通的Class，只是超类是特殊的
-    /// </summary>
-    /// <param name="name"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    public static Builder NewAttributeBuilder(string name) {
-        if (name == null) throw new ArgumentNullException(nameof(name));
-        return new Builder(Kind.Class, name)
-            .AddBaseClass(ClassName.ATTRIBUTE);
-    }
-
-    public static Builder NewAttributeBuilder(ClassName className) {
-        if (className == null) throw new ArgumentNullException(nameof(className));
-        return NewAttributeBuilder(className.simpleName);
-    }
-
     public Builder ToBuilder() {
         return new Builder(kind, name)
             .AddModifiers(modifiers)
             .AddDocument(document)
+            .AddHeaderCode(headerCode)
             .AddAttributes(attributes)
             .AddTypeVariables(typeVariables)
             .AddBaseClasses(baseClasses)
@@ -157,7 +154,8 @@ public class TypeSpec : ISpecification
         public readonly string name;
         public Modifiers modifiers;
         public readonly CodeBlock.Builder document = CodeBlock.NewBuilder();
-        public readonly List<TypeSpec> attributes = new List<TypeSpec>();
+        public readonly CodeBlock.Builder headerCode = CodeBlock.NewBuilder();
+        public readonly List<AttributeSpec> attributes = new List<AttributeSpec>();
 
         public readonly List<TypeName> baseClasses = new List<TypeName>();
         public readonly List<TypeVariableName> typeVariables = new List<TypeVariableName>();
@@ -165,7 +163,7 @@ public class TypeSpec : ISpecification
 
         internal Builder(Kind kind, string name) {
             this.kind = kind;
-            this.name = name ?? throw new ArgumentNullException(nameof(name));
+            this.name = Util.CheckNotBlank(name, "name is blank");
         }
 
         public TypeSpec Build() {
@@ -187,7 +185,17 @@ public class TypeSpec : ISpecification
             return this;
         }
 
-        public Builder AddAttribute(TypeSpec attributeSpec) {
+        public Builder AddHeaderCode(string format, params object[] args) {
+            headerCode.Add(format, args);
+            return this;
+        }
+
+        public Builder AddHeaderCode(CodeBlock codeBlock) {
+            headerCode.Add(codeBlock);
+            return this;
+        }
+
+        public Builder AddAttribute(AttributeSpec attributeSpec) {
             if (attributeSpec == null) throw new ArgumentNullException(nameof(attributeSpec));
             this.attributes.Add(attributeSpec);
             return this;
@@ -195,15 +203,15 @@ public class TypeSpec : ISpecification
 
         public Builder AddAttribute(ClassName attributeSpec) {
             if (attributeSpec == null) throw new ArgumentNullException(nameof(attributeSpec));
-            this.attributes.Add(TypeSpec.NewAttributeBuilder(attributeSpec).Build());
+            this.attributes.Add(AttributeSpec.NewBuilder(attributeSpec).Build());
             return this;
         }
 
-        public Builder AddAttributes(IEnumerable<TypeSpec> attributeSpecs) {
+        public Builder AddAttributes(IEnumerable<AttributeSpec> attributeSpecs) {
             if (attributeSpecs == null) throw new ArgumentNullException(nameof(attributeSpecs));
-            foreach (TypeSpec attribute in attributeSpecs) {
-                if (attribute == null) throw new ArgumentException("attribute == null");
-                this.attributes.Add(attribute);
+            foreach (AttributeSpec spec in attributeSpecs) {
+                if (spec == null) throw new ArgumentException("attribute == null");
+                this.attributes.Add(spec);
             }
             return this;
         }

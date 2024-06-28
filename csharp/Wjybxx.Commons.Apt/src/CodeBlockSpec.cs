@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+
 #pragma warning disable CS1591
 
 namespace Wjybxx.Commons.Apt;
@@ -26,20 +27,36 @@ namespace Wjybxx.Commons.Apt;
 /// </summary>
 public class CodeBlockSpec : ISpecification
 {
-    public readonly string name;
     public readonly CodeBlock code;
+    public readonly Kind kind;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="name">代码块的名字</param>
     /// <param name="code">代码</param>
+    /// <param name="kind">代码的类型</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public CodeBlockSpec(string name, CodeBlock code) {
-        this.name = name ?? throw new ArgumentNullException(nameof(name));
+    public CodeBlockSpec(CodeBlock code, Kind kind = Kind.Code) {
         this.code = code ?? throw new ArgumentNullException(nameof(code));
+        this.kind = kind;
     }
 
-    public string Name => name;
+    public string? Name => null;
     public SpecType SpecType => SpecType.CodeBlock;
+
+    public enum Kind : byte
+    {
+        /// <summary>
+        /// 普通代码
+        /// </summary>
+        Code = 0,
+        /// <summary>
+        /// 注释 -- 双斜杠
+        /// </summary>
+        Comment,
+        /// <summary>
+        /// 文档 -- 三斜杠
+        /// </summary>
+        Document,
+    }
 }

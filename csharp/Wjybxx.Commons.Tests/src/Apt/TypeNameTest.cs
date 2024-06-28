@@ -22,7 +22,7 @@ using System.Numerics;
 using NUnit.Framework;
 using Wjybxx.Commons.Apt;
 
-namespace Commons.Tests.Core;
+namespace Commons.Tests.Apt;
 
 /// <summary>
 /// 测试<see cref="TypeName"/>的解析算法

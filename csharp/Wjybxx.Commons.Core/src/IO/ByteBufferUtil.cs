@@ -237,7 +237,7 @@ public static class ByteBufferUtil
     /// <summary>
     /// 小端：向buffer中写入一个Int16
     /// </summary>
-    public static void SetInt16LE(byte[] buffer, int index, int value) {
+    public static void SetInt16LE(byte[] buffer, int index, short value) {
         buffer[index] = (byte)value;
         buffer[index + 1] = (byte)(value >> 8);
     }

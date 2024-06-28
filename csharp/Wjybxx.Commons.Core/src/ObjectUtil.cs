@@ -17,7 +17,9 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -221,6 +223,22 @@ public static class ObjectUtil
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string GetUtf8String(byte[] data) {
         return Encoding.UTF8.GetString(data);
+    }
+
+    /// <summary>
+    /// 获取字符串的所有行，仅支持 \n 和 \r\n
+    /// </summary>
+    /// <param name="str"></param>
+    /// <returns></returns>
+    public static List<string> Lines(this string str) {
+        List<string> result = new List<string>();
+        using (StringReader reader = new StringReader(str)) {
+            string line;
+            while ((line = reader.ReadLine()) != null) {
+                result.Add(line);
+            }
+        }
+        return result;
     }
 
     #endregion

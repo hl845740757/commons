@@ -20,7 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Reflection;
+using System.IO;
 using System.Text;
 
 namespace Wjybxx.Commons.Apt;
@@ -28,6 +28,11 @@ namespace Wjybxx.Commons.Apt;
 internal class Util
 {
     #region 断言
+
+    public static string CheckNotBlank(string value, string msg) {
+        if (string.IsNullOrWhiteSpace(value)) throw new ArgumentException(msg);
+        return value;
+    }
 
     public static T CheckNotNull<T>(T reference, string format, params object[] args) {
         if (reference == null) throw new NullReferenceException(string.Format(format, args));
@@ -47,9 +52,10 @@ internal class Util
     /** C#的<see cref="ToImmutableList{T}"/>是二叉平衡树... */
     public static IList<T> ToImmutableList<T>(ICollection<T>? collection) {
         if (collection == null) return ImmutableList<T>.Empty;
+        if (collection is ImmutableList<T> immutableList) return immutableList;
         return ImmutableList.CreateRange(collection);
     }
-    
+
     /** 求两个Set的并集 */
     public static HashSet<T> Union<T>(ISet<T> a, ISet<T> b) {
         HashSet<T> result = new HashSet<T>(a);
@@ -63,6 +69,8 @@ internal class Util
             throw new ArgumentException($"modifiers {modifiers} must contain one of {mutuallyExclusive}");
         }
     }
+
+    #region 字面量
 
     /** 将给定char转换为字符串字面量 -- c#其实包含 @ 字面量字符串 */
     public static string CharacterLiteralWithoutSingleQuotes(char c) {
@@ -115,6 +123,8 @@ internal class Util
         return "\\u" + v.ToString("X").Substring2(1, 5);
     }
 
+    #endregion
+
     /// <summary>
     /// 将Ascii码字符串转为BitArray
     /// </summary>
@@ -126,5 +136,56 @@ internal class Util
             r.Set(charArray[i], true);
         }
         return r;
+    }
+
+    /** 数组符号 -- 最大支持9阶，我都没见过3阶以上的数组... */
+    private static readonly string[] arrayRankSymbols =
+    {
+        "[]",
+        "[][]",
+        "[][][]",
+        "[][][][]",
+        "[][][][][]",
+        "[][][][][][]",
+        "[][][][][][][]",
+        "[][][][][][][][]",
+        "[][][][][][][][][]"
+    };
+
+    /// <summary>
+    /// 获取数组阶数对应的符号
+    /// </summary>
+    /// <param name="rank"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public static string ArrayRankSymbol(int rank) {
+        if (rank < 1 || rank > arrayRankSymbols.Length) {
+            throw new ArgumentException("rank: " + rank);
+        }
+        return arrayRankSymbols[rank - 1];
+    }
+
+    /** 指针符号 -- 最大支持6阶 */
+    private static readonly string[] pointerRankSymbols =
+    {
+        "*",
+        "**",
+        "***",
+        "****",
+        "*****",
+        "******",
+    };
+
+    /// <summary>
+    /// 获取数组阶数对应的符号
+    /// </summary>
+    /// <param name="rank"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public static string PointerRankSymbol(int rank) {
+        if (rank < 1 || rank > pointerRankSymbols.Length) {
+            throw new ArgumentException("rank: " + rank);
+        }
+        return pointerRankSymbols[rank - 1];
     }
 }
