@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
@@ -119,13 +120,15 @@ public class MethodSpec : ISpecification
         if (methodInfo.IsAssembly) modifiers |= Modifiers.Internal;
         if (methodInfo.IsPrivate) modifiers |= Modifiers.Private;
         if (methodInfo.IsFamily) modifiers |= Modifiers.Protected;
-
-        modifiers |= Modifiers.Override;
-        builder.AddModifiers(modifiers);
+        // async关键字是注解
+        if (methodInfo.GetCustomAttributes()
+            .Any(e => e is AsyncStateMachineAttribute)) {
+            modifiers |= Modifiers.Async;
+        }
 
         // 拷贝泛型参数
         if (methodInfo.IsGenericMethod) {
-            foreach (var genericArgument in methodInfo.GetGenericArguments()) {
+            foreach (Type genericArgument in methodInfo.GetGenericArguments()) {
                 builder.AddTypeVariable(TypeVariableName.Get(genericArgument));
             }
         }
@@ -136,10 +139,24 @@ public class MethodSpec : ISpecification
         if (parameterInfos.Length > 0) {
             builder.AddParameters(ParameterSpec.ParametersOf(methodInfo));
             // 处理params修饰符
-            bool hasParamsModifier = parameterInfos[parameterInfos.Length - 1].CustomAttributes
-                .Any(e => e.GetType() == typeof(ParamArrayAttribute));
+            bool hasParamsModifier = parameterInfos[parameterInfos.Length - 1].GetCustomAttributes()
+                .Any(e => e is ParamArrayAttribute);
             builder.Varargs(hasParamsModifier);
         }
+
+        // 处理unsafe
+        bool hasPointerType = methodInfo.ReturnType.IsPointer;
+        if (!hasPointerType) {
+            foreach (ParameterInfo parameterInfo in parameterInfos) {
+                hasPointerType |= parameterInfo.ParameterType.IsPointer;
+            }
+        }
+        if (hasPointerType) {
+            modifiers |= Modifiers.Unsafe;
+        }
+
+        modifiers |= Modifiers.Override;
+        builder.AddModifiers(modifiers);
         return builder;
     }
 

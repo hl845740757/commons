@@ -12,7 +12,7 @@
 
         <Title>Wjybxx.Commons.Apt</Title>
         <Description>注解处理器工具，结构化代码生成工具</Description>
-        <PackageTags>SourceGenerator</PackageTags>
+        <PackageTags>wjybxx;SourceGenerator;Javapoet</PackageTags>
 
         <Authors>wjybxx(845740757@qq.com)</Authors>
         <Owners>wjybxx(845740757@qq.com)</Owners>

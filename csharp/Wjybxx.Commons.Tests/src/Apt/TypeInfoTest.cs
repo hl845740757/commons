@@ -20,7 +20,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using NUnit.Framework;
+using Wjybxx.Commons.Apt;
+using Wjybxx.Commons.Concurrent;
 
 namespace Commons.Tests.Apt;
 
@@ -58,6 +61,8 @@ public class TypeInfoTest
     /// Boolean op_GreaterThanOrEqual(Commons.Tests.Core.TypeInfoTest, Commons.Tests.Core.TypeInfoTest)
     /// Boolean op_Equality(Commons.Tests.Core.TypeInfoTest, Commons.Tests.Core.TypeInfoTest)
     /// Boolean op_Inequality(Commons.Tests.Core.TypeInfoTest, Commons.Tests.Core.TypeInfoTest)
+    ///
+    /// IsSpecialName = true
     /// </summary>
     [Test]
     public void TestOperator() {
@@ -68,5 +73,31 @@ public class TypeInfoTest
         foreach (MethodInfo methodInfo in methodInfos) {
             Console.WriteLine(methodInfo);
         }
+    }
+
+    [Test]
+    public void TestAsyncMethod() {
+        Type type = typeof(TypeInfoTest);
+        MethodInfo methodInfo = type.GetMethod("GetValueAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+        MethodSpec.Builder builder = MethodSpec.Overriding(methodInfo);
+
+        Assert.True((builder.modifiers & Modifiers.Async) != 0, "async");
+        Assert.True((builder.varargs), "varargs");
+    }
+
+    [Test]
+    public void TestUnsafeMethod() {
+        Type type = typeof(TypeInfoTest);
+        MethodInfo methodInfo = type.GetMethod("GetUnsafeValue", BindingFlags.NonPublic | BindingFlags.Static);
+        Console.WriteLine(methodInfo);
+    }
+
+    protected virtual async Task<int> GetValueAsync(params int[] args) {
+        return await Promise<int>.FromResult(0);
+    }
+
+    /** extern方法将导致类不完整无法运行 */
+    protected static unsafe int* GetUnsafeValue(long addr) {
+        throw new Exception();
     }
 }

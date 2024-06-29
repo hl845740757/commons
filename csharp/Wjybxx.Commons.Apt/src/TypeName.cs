@@ -123,7 +123,7 @@ public class TypeName : IEquatable<TypeName>
     /// <returns></returns>
     public sealed override string ToString() {
         if (cachedString == null) {
-            cachedString = ToStringImpl() + "NRT: " + attributes;
+            cachedString = ToStringImpl() + ", NRT: " + attributes;
         }
         return cachedString;
     }

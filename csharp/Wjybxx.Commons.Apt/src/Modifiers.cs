@@ -103,7 +103,7 @@ public enum Modifiers
     /// </summary>
     Partial = 0x2000,
     /// <summary>
-    /// 异步方法
+    /// 异步方法（实际上是注解）
     /// </summary>
     Async = 0x4000,
     /// <summary>
