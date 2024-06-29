@@ -626,10 +626,14 @@ public class AptUtils {
             // 内部类，避免与其它的内部类冲突，不能使用简单名
             // Q: 为什么不使用$符合?
             // A: 因为生成的工具类都是外部类，不是内部类。
-            final String packageName = elementUtils.getPackageOf(typeElement).getQualifiedName().toString();
-            final String fullName = typeElement.getQualifiedName().toString();
-            final String uniqueName = fullName.substring(packageName.length() + 1).replace(".", "_");
-            return uniqueName + suffix;
+            List<String> simpleNames = new ArrayList<>(3);
+            simpleNames.add(typeElement.getSimpleName().toString());
+            Element element;
+            while ((element = typeElement.getEnclosingElement()) != null
+                    && typeElement.getKind() != ElementKind.PACKAGE) {
+                simpleNames.add(element.getSimpleName().toString());
+            }
+            return String.join("_", simpleNames);
         }
     }
 

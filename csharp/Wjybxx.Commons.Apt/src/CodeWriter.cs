@@ -497,9 +497,17 @@ public class CodeWriter
         EmitModifiers(propertySpec.modifiers); // 可能无修饰符
         // Type name
         EmitTypeName(propertySpec.type);
-        Emit(" ");
-        Emit(propertySpec.name);
-        Emit(" ");
+        if (propertySpec.IsIndexer) {
+            Emit(" this[");
+            EmitTypeName(propertySpec.indexType!);
+            Emit(" ");
+            Emit(propertySpec.indexName!);
+            Emit("] ");
+        } else {
+            Emit(" ");
+            Emit(propertySpec.name);
+            Emit(" ");
+        }
 
         if (CodeBlock.IsNullOrEmpty(propertySpec.getter)
             && CodeBlock.IsNullOrEmpty(propertySpec.setter)) {
@@ -516,8 +524,8 @@ public class CodeWriter
             if (!CodeBlock.IsNullOrEmpty(propertySpec.initializer)) {
                 Emit(" = ");
                 Emit(propertySpec.initializer!);
+                EmitIfLastCharNot(';'); // 代码可能包含';'
             }
-            EmitIfLastCharNot(';'); // 代码可能包含';'
             Emit("\n");
         } else {
             // 包含getter/setter代码块 -- 不可以包含初始化块，且必须都是代码块

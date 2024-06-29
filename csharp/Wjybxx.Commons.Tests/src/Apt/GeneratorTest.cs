@@ -50,17 +50,28 @@ public class GeneratorTest
     [Test]
     public void GenerateBean() {
         TypeSpec classType = BuildClassType();
-        TypeSpec delegatorType = BuildDelegatorType();
+        TypeSpec delegatorType = BuildDelegatorType(); //测试委托打印
+        TypeSpec indexerType = BuildIndexerType(); //测试索引器属性
 
         CsharpFile csharpFile = CsharpFile.NewBuilder("ClassBean")
             .AddSpecs(NewLicenseRegion())
-            .AddSpec(NamespaceSpec.Of("Wjybxx.Commons.Apt", classType, delegatorType))
+            .AddSpec(NamespaceSpec.Of("Wjybxx.Commons.Apt", classType, delegatorType, indexerType))
             .Build();
 
         CodeWriter codeWriter = new CodeWriter();
         codeWriter.EnableFileScopedNamespace = true;
         string fileString = codeWriter.Write(csharpFile);
         Console.WriteLine(fileString);
+    }
+    
+    private static TypeSpec BuildIndexerType() {
+        return TypeSpec.NewClassBuilder("MyDictionary")
+            .AddModifiers(Modifiers.Public)
+            .AddTypeVariable(TypeVariableName.Get("TKey"))
+            .AddTypeVariable(TypeVariableName.Get("TValue"))
+            .AddProperty(PropertySpec.Overriding(typeof(IDictionary<,>).GetProperties()[0])
+                .Build())
+            .Build();
     }
 
     private static TypeSpec BuildDelegatorType() {

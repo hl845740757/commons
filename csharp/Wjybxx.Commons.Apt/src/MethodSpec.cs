@@ -114,17 +114,7 @@ public class MethodSpec : ISpecification
         }
         Builder builder = NewMethodBuilder(methodInfo.Name);
         // MethodInfo.GetBaseDefinition() 可判断是否是重写方法
-        Modifiers modifiers = Modifiers.None;
-        if (methodInfo.IsStatic) modifiers |= Modifiers.Static;
-        if (methodInfo.IsPublic) modifiers |= Modifiers.Public;
-        if (methodInfo.IsAssembly) modifiers |= Modifiers.Internal;
-        if (methodInfo.IsPrivate) modifiers |= Modifiers.Private;
-        if (methodInfo.IsFamily) modifiers |= Modifiers.Protected;
-        // async关键字是注解
-        if (methodInfo.GetCustomAttributes()
-            .Any(e => e is AsyncStateMachineAttribute)) {
-            modifiers |= Modifiers.Async;
-        }
+        Modifiers modifiers = ParseModifiers(methodInfo);
 
         // 拷贝泛型参数
         if (methodInfo.IsGenericMethod) {
@@ -143,10 +133,32 @@ public class MethodSpec : ISpecification
                 .Any(e => e is ParamArrayAttribute);
             builder.Varargs(hasParamsModifier);
         }
+        // 重写接口方法时不需要Override关键字...
+        if (!methodInfo.DeclaringType!.IsInterface) {
+            modifiers |= Modifiers.Override;
+        }
+        builder.AddModifiers(modifiers);
+        return builder;
+    }
+
+    internal static Modifiers ParseModifiers(MethodInfo methodInfo) {
+        Modifiers modifiers = Modifiers.None;
+        if (methodInfo.IsStatic) modifiers |= Modifiers.Static;
+        if (methodInfo.IsPublic) modifiers |= Modifiers.Public;
+        if (methodInfo.IsAssembly) modifiers |= Modifiers.Internal;
+        if (methodInfo.IsPrivate) modifiers |= Modifiers.Private;
+        if (methodInfo.IsFamily) modifiers |= Modifiers.Protected;
+
+        // async关键字是注解
+        if (methodInfo.GetCustomAttributes()
+            .Any(e => e is AsyncStateMachineAttribute)) {
+            modifiers |= Modifiers.Async;
+        }
 
         // 处理unsafe
         bool hasPointerType = methodInfo.ReturnType.IsPointer;
         if (!hasPointerType) {
+            ParameterInfo[] parameterInfos = methodInfo.GetParameters();
             foreach (ParameterInfo parameterInfo in parameterInfos) {
                 hasPointerType |= parameterInfo.ParameterType.IsPointer;
             }
@@ -154,10 +166,7 @@ public class MethodSpec : ISpecification
         if (hasPointerType) {
             modifiers |= Modifiers.Unsafe;
         }
-
-        modifiers |= Modifiers.Override;
-        builder.AddModifiers(modifiers);
-        return builder;
+        return modifiers;
     }
 
     #endregion

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
@@ -31,8 +32,10 @@ namespace Wjybxx.Commons.Apt;
 [Immutable]
 public class PropertySpec : ISpecification
 {
-    public readonly TypeName type;
-    public readonly string name;
+    public readonly TypeName type; // valueType
+    public readonly string name; // 索引器为Item
+    public readonly TypeName? indexType; // 索引类型 
+    public readonly string? indexName; // 索引名字
     public readonly Modifiers modifiers;
     public readonly CodeBlock document;
     public readonly CodeBlock headerCode;
@@ -49,6 +52,8 @@ public class PropertySpec : ISpecification
     public PropertySpec(Builder builder) {
         type = builder.type;
         name = builder.name;
+        indexType = builder.indexType;
+        indexName = builder.indexName;
         modifiers = builder.modifiers;
         document = builder.document.Build();
         headerCode = builder.headerCode.Build();
@@ -66,14 +71,35 @@ public class PropertySpec : ISpecification
     public string Name => name;
     public SpecType SpecType => SpecType.Property;
 
+    /// <summary>
+    /// 是否是索引器属性
+    /// </summary>
+    public bool IsIndexer => indexType != null;
+
     #region builder
 
+    public static Builder NewBuilder(Type type, string name, Modifiers modifiers = 0) {
+        return NewBuilder(TypeName.Get(type), name, modifiers);
+    }
+
     public static Builder NewBuilder(TypeName type, string name, Modifiers modifiers = 0) {
-        return new Builder(type, name, modifiers);
+        return new Builder(type, name, null, null, modifiers);
+    }
+
+    public static Builder NewIndexerBuilder(Type type, Type indexerType,
+                                            string indexerName = "index",
+                                            Modifiers modifiers = 0) {
+        return NewIndexerBuilder(TypeName.Get(type), TypeName.Get(indexerType), indexerName, modifiers);
+    }
+
+    public static Builder NewIndexerBuilder(TypeName type, TypeName indexerType,
+                                            string indexerName = "index",
+                                            Modifiers modifiers = 0) {
+        return new Builder(type, "Item", indexerType, indexerName, modifiers);
     }
 
     public Builder ToBuilder() {
-        Builder builder = new Builder(type, name, modifiers)
+        Builder builder = new Builder(type, name, indexType, indexName, modifiers)
             .AddDocument(document)
             .AddHeaderCode(headerCode)
             .AddAttributes(attributes);
@@ -88,12 +114,70 @@ public class PropertySpec : ISpecification
         return builder;
     }
 
+    private static bool IsIndexerProperty(PropertyInfo propertyInfo) {
+        if (!propertyInfo.Name.Equals("Item")) return false;
+        if (propertyInfo.CanRead) {
+            MethodInfo getMethod = propertyInfo.GetGetMethod(true)!;
+            return getMethod.GetParameters().Length > 0;
+        }
+        if (propertyInfo.CanWrite) {
+            MethodInfo setMethod = propertyInfo.GetSetMethod(true)!;
+            return setMethod.GetParameters().Length > 1;
+        }
+        return false;
+    }
+
+    // 忘了属性也是可重写的...
+    public static Builder Overriding(PropertyInfo propertyInfo) {
+        Builder builder;
+        if (IsIndexerProperty(propertyInfo)) {
+            ParameterInfo parameterInfo;
+            if (propertyInfo.CanRead) {
+                parameterInfo = propertyInfo.GetGetMethod(true)!.GetParameters()[0];
+            } else {
+                parameterInfo = propertyInfo.GetSetMethod(true)!.GetParameters()[0];
+            }
+            TypeName indexType = TypeName.Get(parameterInfo.ParameterType);
+            string indexName = parameterInfo.Name;
+            builder = NewIndexerBuilder(TypeName.Get(propertyInfo.PropertyType), indexType, indexName);
+        } else {
+            builder = NewBuilder(propertyInfo.PropertyType, propertyInfo.Name);
+        }
+
+        builder.hasGetter = propertyInfo.CanRead;
+        builder.hasSetter = propertyInfo.CanWrite;
+        // MethodInfo.GetBaseDefinition() 可判断是否是重写方法
+        Modifiers modifiers = Modifiers.None;
+        if (propertyInfo.CanRead) {
+            MethodInfo getMethod = propertyInfo.GetGetMethod(true)!;
+            modifiers = MethodSpec.ParseModifiers(getMethod);
+
+            MethodInfo setMethod = propertyInfo.GetSetMethod(true);
+            if (setMethod != null) {
+                builder.setterModifiers = MethodSpec.ParseModifiers(setMethod);
+                // 隐藏setter中包含的getter修饰符
+                builder.setterModifiers &= (~modifiers);
+            }
+        } else {
+            MethodInfo setMethod = propertyInfo.GetSetMethod(true)!;
+            modifiers = MethodSpec.ParseModifiers(setMethod);
+        }
+        // 重写接口属性时不需要Override关键字
+        if (!propertyInfo.DeclaringType!.IsInterface) {
+            modifiers |= Modifiers.Override;
+        }
+        builder.AddModifiers(modifiers);
+        return builder;
+    }
+
     #endregion
 
     public class Builder
     {
         public readonly TypeName type;
         public readonly string name;
+        public readonly TypeName? indexType;
+        public readonly string? indexName;
         public Modifiers modifiers;
         public readonly CodeBlock.Builder document = CodeBlock.NewBuilder();
         public readonly CodeBlock.Builder headerCode = CodeBlock.NewBuilder();
@@ -107,9 +191,11 @@ public class PropertySpec : ISpecification
         public bool hasGetter = true;
         public bool hasSetter = true;
 
-        internal Builder(TypeName type, string name, Modifiers modifiers) {
+        internal Builder(TypeName type, string name, TypeName? indexType, string? indexName, Modifiers modifiers) {
             this.type = type ?? throw new ArgumentNullException(nameof(type));
             this.name = Util.CheckNotBlank(name, "name is blank");
+            this.indexType = indexType;
+            this.indexName = indexName;
             this.modifiers = modifiers;
         }
 

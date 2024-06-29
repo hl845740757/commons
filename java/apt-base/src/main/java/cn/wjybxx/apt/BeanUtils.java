@@ -68,7 +68,6 @@ public class BeanUtils {
 
     /**
      * 获取类的所有字段和方法，包含继承得到的字段和方法
-     * 注意：不包含接口和静态字段。
      * <p>
      * {@link Elements#getAllMembers(TypeElement)}只包含父类的公共属性，不包含私有的东西 -- 因此不能使用。
      */
