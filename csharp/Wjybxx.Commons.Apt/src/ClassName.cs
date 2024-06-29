@@ -233,6 +233,18 @@ public class ClassName : TypeName
     }
 
     /// <summary>
+    /// 替换所有的泛型参数（长度必须一致）。
+    /// </summary>
+    /// <param name="typeArguments">长度必须等于类显式</param>
+    /// <returns></returns>
+    public ClassName WithTypeVariables(params TypeName[] typeArguments) {
+        if (typeArguments.Length != this.typeArguments.Count) {
+            throw new ArgumentException();
+        }
+        return new ClassName(ns, enclosingClassName, simpleName, typeArguments, attributes); // 需保留attributes
+    }
+
+    /// <summary>
     /// 构建真实泛型。
     /// 注意：必须从外部类开始构造，参数只接收该类显式定义的泛型参数。
     /// </summary>

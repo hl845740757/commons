@@ -79,7 +79,7 @@ public class GeneratorTest
             .Build();
 
         AttributeSpec attributeSpec = AttributeSpec.NewBuilder(ClassName.Get(typeof(MyCodeAttribute)))
-            .AddMember("Name", CodeBlock.Of("$S","wjybxx"))
+            .AddMember("Name", CodeBlock.Of("$S", "wjybxx"))
             .AddMember("Age", CodeBlock.Of("29"))
             .Build();
 
@@ -93,15 +93,6 @@ public class GeneratorTest
             .AddSpec(FieldSpec.NewBuilder(dictionaryTypeName, "blackboard", Modifiers.Public | Modifiers.Readonly)
                 .Initializer("new $T()", dictionaryTypeName)
                 .Build())
-            // 属性
-            .AddSpec(PropertySpec.NewBuilder(TypeName.INT, "Age", Modifiers.Public)
-                .Getter(CodeBlock.Of("age").WithExpressionStyle(true))
-                .Setter(CodeBlock.Of("age = value").WithExpressionStyle(true))
-                .Build())
-            .AddSpec(PropertySpec.NewBuilder(TypeName.BOOL, "IsOnline", Modifiers.Private)
-                .Initializer("$L", false)
-                .Build()
-            )
             // 构造函数
             .AddSpec(MethodSpec.NewConstructorBuilder()
                 .AddModifiers(Modifiers.Public)
@@ -116,12 +107,21 @@ public class GeneratorTest
                     .AddStatement("this.name = name")
                     .Build())
                 .Build())
+            // 属性
+            .AddSpec(PropertySpec.NewBuilder(TypeName.INT, "Age", Modifiers.Public)
+                .Getter(CodeBlock.Of("age").WithExpressionStyle(true))
+                .Setter(CodeBlock.Of("age = value").WithExpressionStyle(true))
+                .Build())
+            .AddSpec(PropertySpec.NewBuilder(TypeName.BOOL, "IsOnline", Modifiers.Private)
+                .Initializer("$L", false)
+                .Build()
+            )
             // 普通方法
             .AddSpec(MethodSpec.NewMethodBuilder("Sum")
                 .AddDocument("求int的和")
                 .AddModifiers(Modifiers.Public)
                 .Returns(TypeName.INT)
-                .AddParameter(TypeName.INT ,"a")
+                .AddParameter(TypeName.INT, "a")
                 .AddParameter(TypeName.INT, "b")
                 .Code(CodeBlock.NewBuilder()
                     .AddStatement("return a + b")

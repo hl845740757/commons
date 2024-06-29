@@ -489,6 +489,7 @@ public class CodeWriter
     #region prorperty
 
     private void EmitProperty(PropertySpec propertySpec) {
+        Emit("\n"); // 属性前空一行
         EmitDocument(propertySpec.document);
         Emit(propertySpec.headerCode, true);
         EmitAttributes(propertySpec.attributes);
@@ -620,12 +621,13 @@ public class CodeWriter
                 || methodSpec.code == null
                 || (methodSpec.modifiers & Modifiers.Abstract) != 0
                 || (methodSpec.modifiers & Modifiers.Extern) != 0) {
-                Emit(";\n");
+                Emit(";");
             } else {
                 Emit(" ");
                 EmitMethodBody(methodSpec);
             }
         }
+        Emit("\n"); // 每个元素末尾都默认换行
     }
 
     private void EmitMethodParameters(MethodSpec methodSpec) {
@@ -657,10 +659,10 @@ public class CodeWriter
         Emit(")");
     }
 
+    /** 外部统一末尾换行 */
     private void EmitMethodBody(MethodSpec methodSpec) {
         if (CodeBlock.IsNullOrEmpty(methodSpec.code)) {
-            Emit("{");
-            Emit("\n");
+            Emit("{\n");
             Emit("}");
             return;
         }
@@ -668,17 +670,15 @@ public class CodeWriter
             Emit("=> ");
             Emit(methodSpec.code);
             EmitIfLastCharNot(';'); // 代码可能包含';'
-            Emit("\n");
             return;
         }
-
         Emit("{\n");
         {
             Indent();
             Emit(methodSpec.code!, true); // 代码本身可能包含换行符
             Unindent();
         }
-        Emit("}\n");
+        Emit("}");
     }
 
     #endregion
