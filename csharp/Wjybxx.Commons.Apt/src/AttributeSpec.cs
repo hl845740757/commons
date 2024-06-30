@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using Wjybxx.Commons.Collections;
 
 #pragma warning disable CS1591
 
@@ -85,7 +84,7 @@ public class AttributeSpec : ISpecification
     {
         public readonly TypeName type;
         public CodeBlock? constructor;
-        public readonly LinkedDictionary<string, CodeBlock> props = new LinkedDictionary<string, CodeBlock>();
+        public readonly Dictionary<string, CodeBlock> props = new Dictionary<string, CodeBlock>();
 
         internal Builder(TypeName type) {
             this.type = type ?? throw new ArgumentNullException(nameof(type));

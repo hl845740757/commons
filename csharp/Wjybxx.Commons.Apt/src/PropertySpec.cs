@@ -127,7 +127,7 @@ public class PropertySpec : ISpecification
         return false;
     }
 
-    // 忘了属性也是可重写的...
+    // 忘了属性也是可重写的...属性本质是方法
     public static Builder Overriding(PropertyInfo propertyInfo) {
         Builder builder;
         if (IsIndexerProperty(propertyInfo)) {
@@ -150,21 +150,17 @@ public class PropertySpec : ISpecification
         Modifiers modifiers = Modifiers.None;
         if (propertyInfo.CanRead) {
             MethodInfo getMethod = propertyInfo.GetGetMethod(true)!;
-            modifiers = MethodSpec.ParseModifiers(getMethod);
+            modifiers = MethodSpec.ParseModifiers(getMethod, true);
 
             MethodInfo setMethod = propertyInfo.GetSetMethod(true);
             if (setMethod != null) {
-                builder.setterModifiers = MethodSpec.ParseModifiers(setMethod);
+                builder.setterModifiers = MethodSpec.ParseModifiers(setMethod, true);
                 // 隐藏setter中包含的getter修饰符
                 builder.setterModifiers &= (~modifiers);
             }
         } else {
             MethodInfo setMethod = propertyInfo.GetSetMethod(true)!;
-            modifiers = MethodSpec.ParseModifiers(setMethod);
-        }
-        // 重写接口属性时不需要Override关键字
-        if (!propertyInfo.DeclaringType!.IsInterface) {
-            modifiers |= Modifiers.Override;
+            modifiers = MethodSpec.ParseModifiers(setMethod, true);
         }
         builder.AddModifiers(modifiers);
         return builder;
