@@ -32,6 +32,8 @@ namespace Wjybxx.Commons.Apt;
 /// 3.C#由于有宏，using/import也不能安全自动推导 -- 可以设定开关。
 /// 4.C#由于有宏，我们需要保持所有元素的插入顺序，不能分开存储。
 /// 5.C#由于有宏，带代码进行校验也是较为困难的，由用户自行保证吧。
+///
+/// ps:命名空间由<see cref="NamespaceSpec"/>指定。
 /// </summary>
 [Immutable]
 public class TypeSpec : ISpecification

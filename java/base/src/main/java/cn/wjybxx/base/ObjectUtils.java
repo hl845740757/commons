@@ -166,6 +166,16 @@ public class ObjectUtils {
         return false;
     }
 
+    /** 获取跨语言统一的HashCode */
+    public static int getUnifiedHashCode(String s) {
+        final int strLen = length(s);
+        int r = 0;
+        for (int i = 0; i < strLen; i++) {
+            r = r * 31 + s.charAt(i);
+        }
+        return r;
+    }
+
     // endregion
 
     // region exception

@@ -26,7 +26,6 @@ namespace Wjybxx.Commons.Apt;
 
 /// <summary>
 /// 属性（注解）
-/// 注意：构造块语法和属性KV语法只能二选一。
 ///
 /// Q：为什么要实现<see cref="ISpecification"/>？
 /// A：因为注解可以在宏区间。
@@ -36,7 +35,7 @@ public class AttributeSpec : ISpecification
     /// <summary>
     /// 属性类型
     /// </summary>
-    public readonly TypeName type;
+    public readonly ClassName type;
     /// <summary>
     /// 构造块赋值
     /// </summary>
@@ -50,10 +49,6 @@ public class AttributeSpec : ISpecification
         this.type = builder.type;
         this.constructor = builder.constructor;
         this.props = builder.props.ToImmutableList();
-
-        if (!CodeBlock.IsNullOrEmpty(constructor) && props.Count > 0) {
-            throw new ArgumentException();
-        }
     }
 
     public string? Name => null;
@@ -61,12 +56,12 @@ public class AttributeSpec : ISpecification
 
     #region builder
 
-    public static Builder NewBuilder(TypeName typeName) {
+    public static Builder NewBuilder(ClassName typeName) {
         return new Builder(typeName);
     }
 
     public static Builder NewBuilder(Type type) {
-        return new Builder(TypeName.Get(type));
+        return new Builder(ClassName.Get(type));
     }
 
     public Builder ToBuilder() {
@@ -82,11 +77,11 @@ public class AttributeSpec : ISpecification
 
     public class Builder
     {
-        public readonly TypeName type;
+        public readonly ClassName type;
         public CodeBlock? constructor;
         public readonly Dictionary<string, CodeBlock> props = new Dictionary<string, CodeBlock>();
 
-        internal Builder(TypeName type) {
+        internal Builder(ClassName type) {
             this.type = type ?? throw new ArgumentNullException(nameof(type));
         }
 

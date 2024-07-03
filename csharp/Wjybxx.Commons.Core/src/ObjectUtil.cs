@@ -226,6 +226,19 @@ public static class ObjectUtil
     }
 
     /// <summary>
+    /// 获取跨语言统一的HashCode
+    /// </summary>
+    /// <param name="s"></param>
+    /// <returns></returns>
+    public static int GetUnifiedHashCode(this string s) {
+        int r = 0;
+        for (int i = 0; i < s.Length; i++) {
+            r = r *31 + s[i];
+        }
+        return r;
+    }
+    
+    /// <summary>
     /// 获取字符串的所有行，仅支持 \n 和 \r\n
     /// </summary>
     /// <param name="str"></param>
