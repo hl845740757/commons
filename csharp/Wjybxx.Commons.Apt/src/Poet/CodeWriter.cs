@@ -21,12 +21,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Wjybxx.Commons.Attributes;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
 
 #pragma warning disable CS1591
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// 默认的代码生成器
@@ -768,6 +767,9 @@ public class CodeWriter
 
             if ((modifiers & Modifiers.Readonly) != 0) {
                 modifierList.Add("readonly");
+            }
+            if ((modifiers & Modifiers.Const) != 0) {
+                modifierList.Add("const");
             }
             if ((modifiers & Modifiers.Partial) != 0) {
                 modifierList.Add("partial");

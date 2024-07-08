@@ -22,7 +22,7 @@ using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// 类型名，TypeName用于表示对其它类型的引用。

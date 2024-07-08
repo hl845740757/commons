@@ -20,7 +20,7 @@ using System;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// 用于将<see cref="CodeBlock"/>嵌入到任意位置。

@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using Wjybxx.Commons.Apt;
 using Wjybxx.Commons.Concurrent;
+using Wjybxx.Commons.Poet;
 
 namespace Commons.Tests.Apt;
 

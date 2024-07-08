@@ -25,7 +25,7 @@ using Wjybxx.Commons.Collections;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// 代码块
@@ -90,7 +90,7 @@ public class CodeBlock
     /// </summary>
     /// <param name="expressionStyle"></param>
     /// <returns></returns>
-    public CodeBlock WithExpressionStyle(bool expressionStyle) {
+    public CodeBlock WithExpressionStyle(bool expressionStyle = true) {
         return new CodeBlock(expressionStyle, this);
     }
 
@@ -179,7 +179,7 @@ public class CodeBlock
         /// <param name="format">格式</param>
         /// <param name="args">参数</param>
         /// <returns></returns>
-        public Builder Add(string format, params object[] args) {
+        public Builder Add(string format, params object?[] args) {
             bool hasRelative = false;
             bool hasIndexed = false;
 

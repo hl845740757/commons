@@ -21,11 +21,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Wjybxx.Commons.Apt;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// 方法或构造函数
@@ -46,7 +47,7 @@ public class MethodSpec : ISpecification
     public readonly IList<ParameterSpec> parameters; // 方法参数
     public readonly bool varargs; // 是否变长参数(params T[] args)
 
-    public readonly CodeBlock? code; // 方法体(委托一定没有，接口也可能没有)
+    public readonly CodeBlock? code; // 方法体(委托一定没有，接口可能有，也可能没有)
     public readonly CodeBlock? constructorInvoker; // 调用其它构造方法的代码
 
     public MethodSpec(Builder builder) {
@@ -108,6 +109,13 @@ public class MethodSpec : ISpecification
         return builder;
     }
 
+    /// <summary>
+    /// 重写给定方法
+    /// （注意：如果是泛型类的方法，通常需要先构造目标泛型类以确定泛型参数）
+    /// </summary>
+    /// <param name="methodInfo"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
     public static Builder Overriding(MethodInfo methodInfo) {
         if (methodInfo.IsFinal || methodInfo.IsStatic || methodInfo.IsPrivate) {
             throw new ArgumentException("cannot override method with modifiers: " + methodInfo.Attributes);
@@ -141,7 +149,16 @@ public class MethodSpec : ISpecification
         return builder;
     }
 
-    internal static Modifiers ParseModifiers(MethodInfo methodInfo, bool overriding = false) {
+    /// <summary>
+    /// 解析方法的修饰符
+    /// </summary>
+    /// <param name="methodInfo"></param>
+    /// <returns></returns>
+    public static Modifiers ParseModifiers(MethodInfo methodInfo) {
+        return ParseModifiers(methodInfo, false);
+    }
+
+    internal static Modifiers ParseModifiers(MethodInfo methodInfo, bool overriding) {
         Modifiers modifiers = Modifiers.None;
         if (methodInfo.IsStatic) modifiers |= Modifiers.Static;
         if (methodInfo.IsPublic) modifiers |= Modifiers.Public;
@@ -193,6 +210,10 @@ public class MethodSpec : ISpecification
         /// </summary>
         public CodeBlock? code;
         public CodeBlock? constructorInvoker;
+        /// <summary>
+        /// 用于简化代码编写 -- 构建时如果code为null，而builder不为空(empty)，则自动构建为code。
+        /// </summary>
+        public readonly CodeBlock.Builder codeBuilder = CodeBlock.NewBuilder();
 
         internal Builder(Kind kind, string name, Modifiers modifiers = 0) {
             this.kind = kind;
@@ -200,7 +221,15 @@ public class MethodSpec : ISpecification
             this.modifiers = modifiers;
         }
 
-        public MethodSpec Build() {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="forceBuildCode">代码块为空的情况下是否也构建代码</param>
+        /// <returns></returns>
+        public MethodSpec Build(bool forceBuildCode = false) {
+            if (code == null && (forceBuildCode || !codeBuilder.IsEmpty)) {
+                code = codeBuilder.Build();
+            }
             return new MethodSpec(this);
         }
 

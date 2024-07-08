@@ -20,7 +20,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// 处理行长度切换

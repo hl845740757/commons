@@ -21,7 +21,7 @@ using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// 指针类型(不建议真的使用)

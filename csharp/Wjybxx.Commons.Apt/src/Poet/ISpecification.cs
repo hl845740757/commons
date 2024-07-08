@@ -16,7 +16,7 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// 规格接口

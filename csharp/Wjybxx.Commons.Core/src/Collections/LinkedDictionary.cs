@@ -1366,8 +1366,8 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     private class Node
     {
         /** 由于Key的hash使用频率极高，缓存以减少求值开销 */
-        internal readonly int hash;
-        internal readonly TKey? key;
+        internal int hash;
+        internal TKey? key;
         internal TValue? value;
         /** 由于使用线性探测法，删除的元素不一定直接位于hash槽上，需要记录，以便快速删除；-1表示已删除 */
         internal int index;
@@ -1383,9 +1383,9 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         }
 
         public void AfterRemoved() {
-            if (valueIsReferenceType) {
-                value = default;
-            }
+            hash = 0;
+            key = default;
+            value = default;
             index = -1;
             prev = null;
             next = null;

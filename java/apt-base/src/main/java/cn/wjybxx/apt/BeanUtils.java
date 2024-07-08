@@ -33,6 +33,8 @@ import java.util.stream.Collectors;
  */
 public class BeanUtils {
 
+    // region 构造器
+
     /** 判断一个类是否包含无参构造方法 */
     public static boolean containsNoArgsConstructor(TypeElement typeElement) {
         return getNoArgsConstructor(typeElement) != null;
@@ -65,6 +67,9 @@ public class BeanUtils {
                 .findFirst()
                 .orElse(null);
     }
+    // endregion
+
+    // region flat
 
     /**
      * 获取类的所有字段和方法，包含继承得到的字段和方法
@@ -102,28 +107,31 @@ public class BeanUtils {
                 .map(e -> (ExecutableElement) e)
                 .collect(Collectors.toList());
     }
+    // endregion
+
+    // region getter/setter
 
     /**
      * 是否包含非private的setter方法
      */
-    public static boolean containsNotPrivateSetter(Types typeUtils, VariableElement variableElement,
-                                                   List<? extends Element> allFieldsAndMethodWithInherit) {
-        return findNotPrivateSetter(typeUtils, variableElement, allFieldsAndMethodWithInherit) != null;
+    public static boolean containsPublicSetter(Types typeUtils, VariableElement variableElement,
+                                               List<? extends Element> allFieldsAndMethodWithInherit) {
+        return findPublicSetter(typeUtils, variableElement, allFieldsAndMethodWithInherit) != null;
     }
 
     /**
      * 是否包含非private的getter方法
      */
-    public static boolean containsNotPrivateGetter(Types typeUtils, VariableElement variableElement,
-                                                   List<? extends Element> allFieldsAndMethodWithInherit) {
-        return findNotPrivateGetter(typeUtils, variableElement, allFieldsAndMethodWithInherit) != null;
+    public static boolean containsPublicGetter(Types typeUtils, VariableElement variableElement,
+                                               List<? extends Element> allFieldsAndMethodWithInherit) {
+        return findPublicGetter(typeUtils, variableElement, allFieldsAndMethodWithInherit) != null;
     }
 
     /**
      * 该方法会查询标准的setter命名，同时会查询{@code set + firstCharToUpperCase(fieldName)}格式的命名
      */
-    public static ExecutableElement findNotPrivateSetter(Types typeUtils, VariableElement variableElement,
-                                                         List<? extends Element> allFieldsAndMethodWithInherit) {
+    public static ExecutableElement findPublicSetter(Types typeUtils, VariableElement variableElement,
+                                                     List<? extends Element> allFieldsAndMethodWithInherit) {
         final String fieldName = variableElement.getSimpleName().toString();
         final String setterMethodName = BeanUtils.setterMethodName(fieldName, AptUtils.isPrimitiveBoolean(variableElement.asType()));
         final String setterMethodName2 = "set" + BeanUtils.firstCharToUpperCase(fieldName);
@@ -131,7 +139,8 @@ public class BeanUtils {
                 .filter(e -> e.getKind() == ElementKind.METHOD)
                 .map(e -> (ExecutableElement) e)
                 .filter(e -> {
-                    if (!e.getModifiers().contains(Modifier.PUBLIC)) {
+                    if (e.getModifiers().contains(Modifier.STATIC)
+                            || !e.getModifiers().contains(Modifier.PUBLIC)) {
                         return false;
                     }
                     if (e.getParameters().size() != 1) {
@@ -149,8 +158,8 @@ public class BeanUtils {
     /**
      * 该方法会查询标准的getter命名，同时会查询{@code get + firstCharToUpperCase(fieldName)}格式的命名
      */
-    public static ExecutableElement findNotPrivateGetter(Types typeUtils, VariableElement variableElement,
-                                                         List<? extends Element> allFieldsAndMethodWithInherit) {
+    public static ExecutableElement findPublicGetter(Types typeUtils, VariableElement variableElement,
+                                                     List<? extends Element> allFieldsAndMethodWithInherit) {
         final String fieldName = variableElement.getSimpleName().toString();
         final String getterMethodName = BeanUtils.getterMethodName(fieldName, AptUtils.isPrimitiveBoolean(variableElement.asType()));
         final String getterMethodName2 = "get" + BeanUtils.firstCharToUpperCase(fieldName);
@@ -158,7 +167,8 @@ public class BeanUtils {
                 .filter(e -> e.getKind() == ElementKind.METHOD)
                 .map(e -> (ExecutableElement) e)
                 .filter(e -> {
-                    if (!e.getModifiers().contains(Modifier.PUBLIC)) {
+                    if (e.getModifiers().contains(Modifier.STATIC)
+                            || !e.getModifiers().contains(Modifier.PUBLIC)) {
                         return false;
                     }
                     if (e.getParameters().size() != 0) {
@@ -171,44 +181,6 @@ public class BeanUtils {
                 .orElse(null);
         // 我们去掉了参数类型测试，用户不应该出现getter同名却干别的事情的方法
         //       .anyMatch(e -> AptUtils.isSubTypeIgnoreTypeParameter(typeUtils, e.getReturnType(), variableElement.asType()));
-    }
-
-    /**
-     * 首字符大写
-     *
-     * @param str content
-     * @return 首字符大写的字符串
-     */
-    public static String firstCharToUpperCase(@Nonnull String str) {
-        if (str.isEmpty()) {
-            return str;
-        }
-        char firstChar = str.charAt(0);
-        if (Character.isLowerCase(firstChar)) { // 可拦截非英文字符
-            StringBuilder sb = new StringBuilder(str);
-            sb.setCharAt(0, Character.toUpperCase(firstChar));
-            return sb.toString();
-        }
-        return str;
-    }
-
-    /**
-     * 首字母小写
-     *
-     * @param str content
-     * @return 首字符小写的字符串
-     */
-    public static String firstCharToLowerCase(@Nonnull String str) {
-        if (str.isEmpty()) {
-            return str;
-        }
-        char firstChar = str.charAt(0);
-        if (Character.isUpperCase(firstChar)) { // 可拦截非英文字符
-            StringBuilder sb = new StringBuilder(str);
-            sb.setCharAt(0, Character.toLowerCase(firstChar));
-            return sb.toString();
-        }
-        return str;
     }
 
     /**
@@ -252,7 +224,6 @@ public class BeanUtils {
             // 这里参数名一定不是is开头
             // 前两个字符任意一个大写，则参数名直接拼在set后面
             return "set" + filedName;
-
         }
         // 到这里前两个字符都是小写 - is 还要特殊处理。
         if (isPrimitiveBoolean) {
@@ -264,6 +235,48 @@ public class BeanUtils {
         } else {
             return "set" + firstCharToUpperCase(filedName);
         }
+    }
+
+    // endregion
+
+    // region util
+
+    /**
+     * 首字符大写
+     *
+     * @param str content
+     * @return 首字符大写的字符串
+     */
+    public static String firstCharToUpperCase(@Nonnull String str) {
+        if (str.isEmpty()) {
+            return str;
+        }
+        char firstChar = str.charAt(0);
+        if (Character.isLowerCase(firstChar)) { // 可拦截非英文字符
+            StringBuilder sb = new StringBuilder(str);
+            sb.setCharAt(0, Character.toUpperCase(firstChar));
+            return sb.toString();
+        }
+        return str;
+    }
+
+    /**
+     * 首字母小写
+     *
+     * @param str content
+     * @return 首字符小写的字符串
+     */
+    public static String firstCharToLowerCase(@Nonnull String str) {
+        if (str.isEmpty()) {
+            return str;
+        }
+        char firstChar = str.charAt(0);
+        if (Character.isUpperCase(firstChar)) { // 可拦截非英文字符
+            StringBuilder sb = new StringBuilder(str);
+            sb.setCharAt(0, Character.toLowerCase(firstChar));
+            return sb.toString();
+        }
+        return str;
     }
 
     /**
@@ -282,5 +295,5 @@ public class BeanUtils {
         }
         return false;
     }
-
+    // endregion
 }

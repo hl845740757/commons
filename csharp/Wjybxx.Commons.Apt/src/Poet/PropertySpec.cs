@@ -23,7 +23,7 @@ using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// 属性
@@ -258,6 +258,7 @@ public class PropertySpec : ISpecification
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
             if (this.initializer != null) throw new IllegalStateException("initializer was already set");
             this.initializer = codeBlock;
+            this.hasGetter = true;
             return this;
         }
 

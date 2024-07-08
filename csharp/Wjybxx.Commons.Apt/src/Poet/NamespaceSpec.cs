@@ -18,26 +18,50 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
-/// 表示一个C#文件
-/// （暂时不实现<see cref="ISpecification"/>接口）
+/// 命名空间
+/// 
+/// Q: 为什么要显式支持？
+/// A: Unity不支持文件范围命名空间...
 /// </summary>
-public class CsharpFile
+[Immutable]
+public class NamespaceSpec : ISpecification
 {
     public readonly string name;
     public readonly IList<ISpecification> nestedSpecs;
 
-    private CsharpFile(Builder builder) {
-        this.name = builder.name;
-        this.nestedSpecs = Util.ToImmutableList(builder.nestedSpecs);
+    private NamespaceSpec(string name, IList<ISpecification> nestedSpecs) {
+        this.name = Util.CheckNotBlank(name, "name is blank");
+        this.nestedSpecs = Util.ToImmutableList(nestedSpecs);
+    }
+
+    public string Name => name;
+    public SpecType SpecType => SpecType.Namespace;
+
+    #region builder
+
+    public static NamespaceSpec Of(string name, params ISpecification[] nestedSpecs) {
+        return new NamespaceSpec(name, ImmutableList.CreateRange(nestedSpecs));
+    }
+
+    public static NamespaceSpec Of(string name, IList<ISpecification> nestedSpecs) {
+        return new NamespaceSpec(name, nestedSpecs);
     }
 
     public static Builder NewBuilder(string name) => new Builder(name);
+
+    public Builder ToBuilder() {
+        return new Builder(name)
+            .AddSpecs(nestedSpecs);
+    }
+
+    #endregion
 
     public class Builder
     {
@@ -45,11 +69,11 @@ public class CsharpFile
         public readonly List<ISpecification> nestedSpecs = new List<ISpecification>();
 
         internal Builder(string name) {
-            this.name = name ?? throw new ArgumentNullException(nameof(name));
+            this.name = Util.CheckNotBlank(name, "name is blank");
         }
 
-        public CsharpFile Build() {
-            return new CsharpFile(this);
+        public NamespaceSpec Build() {
+            return new NamespaceSpec(name, nestedSpecs);
         }
 
         public Builder AddSpecs(IEnumerable<ISpecification> specs) {

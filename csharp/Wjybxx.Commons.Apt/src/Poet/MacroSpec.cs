@@ -25,7 +25,7 @@ using Wjybxx.Commons.Collections;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// 宏

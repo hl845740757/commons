@@ -19,7 +19,7 @@
 using System;
 using System.Reflection;
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// 修饰符
@@ -99,16 +99,21 @@ public enum Modifiers
     /// </summary>
     Readonly = 0x1000,
     /// <summary>
+    /// 常量
+    /// </summary>
+    Const = 0x2000,
+    /// <summary>
     /// 分部类/方法(建议只用在类上)
     /// </summary>
-    Partial = 0x2000,
+    Partial = 0x4000,
     /// <summary>
     /// 异步方法（实际上是注解）
     /// </summary>
-    Async = 0x4000,
+    Async = 0x8000,
+
     /// <summary>
     /// 操作符重载（方法名即符号）
     /// C#的操作符重载是生成了特殊的方法名来实现的，但我们使用Modifier更简单点，也更容易扩展
     /// </summary>
-    Operator = 0x8000,
+    Operator = 0x10000,
 }

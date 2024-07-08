@@ -4,11 +4,11 @@
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>annotations</Nullable>
         <LangVersion>10</LangVersion>
-        <RootNamespace>Wjybxx.Commons.Apt</RootNamespace>
+        <RootNamespace>Wjybxx.Commons</RootNamespace>
 
         <AssemblyName>Wjybxx.Commons.Apt</AssemblyName>
         <PackageId>Wjybxx.Commons.Apt</PackageId>
-        <PackageVersion>1.0.0-rc1</PackageVersion>
+        <PackageVersion>1.0.0-rc2</PackageVersion>
 
         <Title>Wjybxx.Commons.Apt</Title>
         <Description>注解处理器工具，结构化代码生成工具</Description>

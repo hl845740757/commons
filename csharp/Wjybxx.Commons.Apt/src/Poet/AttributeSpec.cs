@@ -22,7 +22,7 @@ using System.Collections.Immutable;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// 属性（注解）

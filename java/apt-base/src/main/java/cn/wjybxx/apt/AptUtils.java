@@ -375,30 +375,31 @@ public class AptUtils {
      * 查找指定注解是否出现
      */
     public static boolean isAnnotationPresent(Types typeUtils, Element element, TypeMirror targetAnnotationMirror) {
-        return findAnnotation(typeUtils, element, targetAnnotationMirror)
-                .isPresent();
+        return findAnnotation(typeUtils, element, targetAnnotationMirror) != null;
     }
 
     /**
      * 查找出现的第一个注解，不包含继承的部分
      */
-    public static Optional<? extends AnnotationMirror> findAnnotation(Types typeUtils,
-                                                                      Element element, TypeMirror targetAnnotationMirror) {
+    public static AnnotationMirror findAnnotation(Types typeUtils,
+                                                  Element element, TypeMirror targetAnnotationMirror) {
         // 查找该字段上的注解
         return element.getAnnotationMirrors().stream()
                 .filter(annotationMirror -> typeUtils.isSameType(annotationMirror.getAnnotationType(), targetAnnotationMirror))
-                .findFirst();
+                .findFirst()
+                .orElse(null);
     }
 
     /**
      * 查找出现的第一个注解，包含继承的注解
      */
-    public static Optional<? extends AnnotationMirror> findAnnotationWithInherit(Types typeUtils, Elements elementUtils,
-                                                                                 Element element, TypeMirror targetAnnotationMirror) {
+    public static AnnotationMirror findAnnotationWithInherit(Types typeUtils, Elements elementUtils,
+                                                             Element element, TypeMirror targetAnnotationMirror) {
         // 查找该字段上的注解
         return elementUtils.getAllAnnotationMirrors(element).stream()
                 .filter(annotationMirror -> typeUtils.isSameType(annotationMirror.getAnnotationType(), targetAnnotationMirror))
-                .findFirst();
+                .findFirst()
+                .orElse(null);
     }
 
     /**
@@ -442,14 +443,18 @@ public class AptUtils {
         return getAnnotationValueValue(annotationMirror, propertyName, null);
     }
 
+    /**
+     * 获取注解上的某一个属性的值
+     *
+     * @param annotationMirror 注解编译信息
+     * @param propertyName     属性的名字
+     * @return object
+     */
+    @Nonnull
     @SuppressWarnings("unchecked")
     public static <T> T getAnnotationValueValue(AnnotationMirror annotationMirror, String propertyName, T def) {
         AnnotationValue annotationValue = getAnnotationValue(annotationMirror, propertyName);
-        if (annotationValue == null) {
-            return def;
-        } else {
-            return (T) annotationValue.getValue();
-        }
+        return annotationValue == null ? def : (T) annotationValue.getValue();
     }
 
     /**
@@ -462,9 +467,8 @@ public class AptUtils {
     @SuppressWarnings("unchecked")
     @Nonnull
     public static <T> T getAnnotationValueValueWithDefaults(Elements elementUtils, AnnotationMirror annotationMirror, String propertyName) {
-        return (T) Optional.of(getAnnotationValueWithDefaults(elementUtils, annotationMirror, propertyName))
-                .map(AnnotationValue::getValue)
-                .orElseThrow();
+        return (T) getAnnotationValueWithDefaults(elementUtils, annotationMirror, propertyName)
+                .getValue();
     }
 
     /** 将注解属性转换为 name -> AnnotationValue 的Map */

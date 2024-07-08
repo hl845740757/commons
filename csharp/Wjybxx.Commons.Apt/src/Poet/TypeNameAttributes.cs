@@ -19,7 +19,7 @@
 using System;
 using System.Reflection;
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
 /// TypeName的属性，即类型引用约束

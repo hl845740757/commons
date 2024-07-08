@@ -22,6 +22,7 @@ using NUnit.Framework;
 using Wjybxx.Commons.Apt;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
+using Wjybxx.Commons.Poet;
 
 namespace Commons.Tests.Apt;
 

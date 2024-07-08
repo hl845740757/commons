@@ -23,7 +23,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Text;
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 internal class Util
 {

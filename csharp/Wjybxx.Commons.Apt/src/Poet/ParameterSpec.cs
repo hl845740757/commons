@@ -18,85 +18,74 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.Apt;
+namespace Wjybxx.Commons.Poet;
 
 /// <summary>
-/// 字段(或事件)
-/// 注意：C#的事件本身并不是字段，但实在不想整那么复杂了...
+/// 方法参数
+/// 注意：方法参数的 ref/in/out 不是单纯的修饰符，而是修改了字段的类型。
 /// </summary>
 [Immutable]
-public class FieldSpec : ISpecification
+public class ParameterSpec : ISpecification
 {
-    public readonly Kind kind;
     public readonly TypeName type;
     public readonly string name;
-    public readonly Modifiers modifiers;
-    public readonly CodeBlock document;
-    public readonly CodeBlock headerCode;
-    public readonly IList<AttributeSpec> attributes;
+    public readonly Modifiers modifiers; // c#其实没有 -- ref/in/out其实是修改了type
+    public readonly CodeBlock document; // 暂时可能不生成
+    public readonly IList<AttributeSpec> attributes; // 暂时不想支持代码生成
 
-    public readonly CodeBlock? initializer; // 初始化块
+    public readonly CodeBlock? defaultValue; // 默认值
 
-    private FieldSpec(Builder builder) {
-        kind = builder.kind;
+    private ParameterSpec(Builder builder) {
         type = builder.type;
         name = builder.name;
         modifiers = builder.modifiers;
         attributes = Util.ToImmutableList(builder.attributes);
         document = builder.document.Build();
-        headerCode = builder.headerCode.Build();
 
-        initializer = builder.initializer;
+        defaultValue = builder.defaultValue;
     }
-
-    public bool IsEvent => kind == Kind.Event;
 
     public string Name => name;
-    public SpecType SpecType => SpecType.Field;
-
-    public enum Kind
-    {
-        /// <summary>
-        /// 普通字段
-        /// </summary>
-        Field,
-        /// <summary>
-        /// 事件字段（C#的大量语法糖现在都是坑）
-        /// </summary>
-        Event,
-    }
+    public SpecType SpecType => SpecType.Parameter;
 
     #region builder
 
     public static Builder NewBuilder(TypeName type, string name, Modifiers modifiers = 0) {
         if (type == null) throw new ArgumentNullException(nameof(type));
         if (name == null) throw new ArgumentNullException(nameof(name));
-        return new Builder(Kind.Field, type, name, modifiers);
+        return new Builder(type, name, modifiers);
     }
 
     public static Builder NewBuilder(Type type, string name, Modifiers modifiers = 0) {
         return NewBuilder(TypeName.Get(type), name, modifiers);
     }
 
-    public static Builder NewEventBuilder(TypeName type, string name, Modifiers modifiers = 0) {
-        if (type == null) throw new ArgumentNullException(nameof(type));
-        if (name == null) throw new ArgumentNullException(nameof(name));
-        return new Builder(Kind.Event, type, name, modifiers);
+    public static ParameterSpec Get(ParameterInfo parameterInfo) {
+        return NewBuilder(TypeName.Get(parameterInfo.ParameterType), parameterInfo.Name!)
+            .Build();
     }
 
-    public static Builder NewEventBuilder(Type type, string name, Modifiers modifiers = 0) {
-        return NewEventBuilder(TypeName.Get(type), name, modifiers);
+    public static List<ParameterSpec> ParametersOf(MethodBase method) {
+        ParameterInfo[] parameterInfos = method.GetParameters();
+        List<ParameterSpec> result = new List<ParameterSpec>(parameterInfos.Length);
+        foreach (var parameterInfo in parameterInfos) {
+            result.Add(Get(parameterInfo));
+        }
+        return result;
     }
 
+    /// <summary>
+    /// 转为builder，不继承文档和默认值
+    /// </summary>
+    /// <returns></returns>
     public Builder ToBuilder() {
-        Builder builder = new Builder(kind, type, name, modifiers);
-        builder.document.Add(document);
+        Builder builder = new Builder(type, name, modifiers);
         builder.attributes.AddRange(attributes);
-        builder.initializer = initializer;
         return builder;
     }
 
@@ -104,25 +93,22 @@ public class FieldSpec : ISpecification
 
     public class Builder
     {
-        public readonly Kind kind;
         public readonly TypeName type;
         public readonly string name;
         public Modifiers modifiers;
         public readonly CodeBlock.Builder document = CodeBlock.NewBuilder();
-        public readonly CodeBlock.Builder headerCode = CodeBlock.NewBuilder();
         public readonly List<AttributeSpec> attributes = new List<AttributeSpec>();
 
-        internal CodeBlock? initializer;
+        public CodeBlock? defaultValue;
 
-        internal Builder(Kind kind, TypeName type, string name, Modifiers modifiers) {
-            this.kind = kind;
+        internal Builder(TypeName type, string name, Modifiers modifiers) {
             this.type = type ?? throw new ArgumentNullException(nameof(type));
             this.name = Util.CheckNotBlank(name, "name is blank");
             this.modifiers = modifiers;
         }
 
-        public FieldSpec Build() {
-            return new FieldSpec(this);
+        public ParameterSpec Build() {
+            return new ParameterSpec(this);
         }
 
         public Builder AddModifiers(Modifiers modifiers) {
@@ -142,16 +128,6 @@ public class FieldSpec : ISpecification
 
         public Builder AddDocument(CodeBlock codeBlock) {
             document.Add(codeBlock);
-            return this;
-        }
-
-        public Builder AddHeaderCode(string format, params object[] args) {
-            headerCode.Add(format, args);
-            return this;
-        }
-
-        public Builder AddHeaderCode(CodeBlock codeBlock) {
-            headerCode.Add(codeBlock);
             return this;
         }
 
@@ -176,14 +152,14 @@ public class FieldSpec : ISpecification
             return this;
         }
 
-        public Builder Initializer(string format, params object[] args) {
-            return Initializer(CodeBlock.Of(format, args));
+        public Builder DefaultValue(string format, params object[] args) {
+            return DefaultValue(CodeBlock.Of(format, args));
         }
 
-        public Builder Initializer(CodeBlock codeBlock) {
+        public Builder DefaultValue(CodeBlock codeBlock) {
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
-            if (this.initializer != null) throw new IllegalStateException("initializer was already set");
-            this.initializer = codeBlock;
+            if (this.defaultValue != null) throw new IllegalStateException("defaultValue was already set");
+            this.defaultValue = codeBlock;
             return this;
         }
     }
