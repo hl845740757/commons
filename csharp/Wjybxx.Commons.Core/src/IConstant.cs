@@ -47,10 +47,13 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
     /// <summary>
     /// 常量对象构建器
     /// </summary>
-    public abstract class Builder
+    public abstract class Builder<T>
     {
         private int? _id;
         private readonly string _name;
+
+        private int cacheIndex = -1;
+        private bool requireCacheIndex;
 
         public Builder(string name) {
             _name = CheckName(name);
@@ -75,6 +78,18 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
             throw new IllegalStateException("id has not been initialized");
         }
 
+        /** 设置高速缓存索引 -- 该方法由{@link ConstantPool}调用 */
+        public Builder<T> SetCacheIndex(int cacheIndex) {
+            this.cacheIndex = cacheIndex;
+            return this;
+        }
+
+        /** 设置是否需要分配高速缓存索引 */
+        public Builder<T> SetRequireCacheIndex(bool requireCacheIndex) {
+            this.requireCacheIndex = requireCacheIndex;
+            return this;
+        }
+
         /// <summary>
         /// 常量的id
         /// </summary>
@@ -86,10 +101,17 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
         public string Name => _name;
 
         /// <summary>
+        /// 获取分配的高速缓存索引 -- -1表示未设置。
+        /// 注意：<see cref="ConstantPool{T}"/>仅仅分配index，而真正的实现在于常量的使用者。
+        /// </summary>
+        public int CacheIndex => cacheIndex;
+        public bool RequireCacheIndex => requireCacheIndex;
+
+        /// <summary>
         /// 构建常量对象
         /// </summary>
         /// <returns></returns>
-        public abstract IConstant Build();
+        public abstract T Build();
     }
 
     /// <summary>

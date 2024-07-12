@@ -49,6 +49,17 @@ public static class ArrayUtil
         return first.SequenceEqual(second);
     }
 
+    public static int HashCode<T>(T[]? data) where T : class {
+        if (data == null) {
+            return 0;
+        }
+        int r = 1;
+        for (int i = 0; i < data.Length; i++) {
+            r = r * 31 + data[i].GetHashCode();
+        }
+        return r;
+    }
+
     public static int HashCode(byte[]? data) {
         if (data == null) {
             return 0;
@@ -138,6 +149,19 @@ public static class ArrayUtil
     }
 
     #endregion
+
+    /// <summary>
+    /// 拷贝数组
+    /// </summary>
+    /// <param name="src"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static T[] Copy<T>(this T[] src) {
+        if (src == null) throw new ArgumentNullException(nameof(src));
+        T[] result = new T[src.Length];
+        Array.Copy(src, result, src.Length);
+        return result;
+    }
 
     /// <summary>
     /// 拷贝数组

@@ -1,6 +1,6 @@
-﻿#region LICENSE
+#region LICENSE
 
-// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// Copyright 2024 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,10 +16,19 @@
 
 #endregion
 
-namespace Wjybxx.Commons;
+using System;
+
+namespace Wjybxx.Commons.Mutable;
 
 /// <summary>
-/// 只有可通过基础的Builder构建的常量才会使用到Factory
+/// 主要为基础值类型提供可变性
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public delegate T ConstantFactory<T>(IConstant.Builder<T> builder);
+public interface IMutable<T>
+{
+    /// <summary>
+    /// 读写目标值
+    /// </summary>
+    /// <exception cref="ArgumentNullException">如果参数value禁止为null</exception>
+    T Value { get; set; }
+}

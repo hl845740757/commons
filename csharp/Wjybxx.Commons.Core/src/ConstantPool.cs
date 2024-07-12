@@ -34,7 +34,14 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     /** ConstantPool不需要多高的查询性能，因此使用普通的字典更合适，可以保证id分配的连续性 */
     private readonly Dictionary<string, TConstant> _constantMap = new();
     private readonly ConstantFactory<TConstant>? _factory;
+    /** 下一个要分配的常量Id，总是分配 --由lock保护 */
     private int _nextId;
+    /**
+     * 下一个要分配的缓存索引，只有builder显式申请的情况下分配。
+     * cacheIndex和id是独立的，通常用于为特殊的<see cref="IConstant"/>建立高速索引。
+     * 由lock保护
+     */
+    private int _nextIndex = 0;
 
     public ConstantPool(ConstantFactory<TConstant>? factory, int nextId) {
         _factory = factory;
@@ -81,8 +88,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     /// </summary>
     /// <param name="builder"></param>
     /// <returns></returns>
-    /// <exception cref="ArgumentNullException"></exception>
-    public TConstant NewInstance(IConstant.Builder builder) {
+    public TConstant NewInstance(IConstant.Builder<TConstant> builder) {
         if (builder == null) throw new ArgumentNullException(nameof(builder));
         return CreateOrThrow(builder);
     }
@@ -176,7 +182,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
         }
     }
 
-    private TConstant CreateOrThrow(IConstant.Builder builder) {
+    private TConstant CreateOrThrow(IConstant.Builder<TConstant> builder) {
         string name = builder.Name;
         lock (_constantMap) {
             if (_constantMap.ContainsKey(name)) {
@@ -193,10 +199,13 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     /// </summary>
     /// <param name="builder"></param>
     /// <returns></returns>
-    private TConstant NewConstant(IConstant.Builder builder) {
+    private TConstant NewConstant(IConstant.Builder<TConstant> builder) {
         string name = builder.Name;
         int nextId = _nextId++;
         builder.SetId(nextId);
+        if (builder.RequireCacheIndex) {
+            builder.SetCacheIndex(_nextIndex++);
+        }
 
         TConstant constant = (TConstant)builder.Build();
         if (constant.Name != name || constant.Id != nextId) {
@@ -207,7 +216,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
 
     #endregion
 
-    private class SimpleBuilder : IConstant.Builder
+    private class SimpleBuilder : IConstant.Builder<TConstant>
     {
         private readonly ConstantFactory<TConstant> _factory;
 
@@ -215,7 +224,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
             _factory = factory;
         }
 
-        public override IConstant Build() {
+        public override TConstant Build() {
             return _factory(this);
         }
     }

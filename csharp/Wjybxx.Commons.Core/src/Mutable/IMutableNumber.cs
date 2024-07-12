@@ -1,6 +1,6 @@
-﻿#region LICENSE
+#region LICENSE
 
-// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// Copyright 2024 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,10 +16,23 @@
 
 #endregion
 
-namespace Wjybxx.Commons;
+namespace Wjybxx.Commons.Mutable;
 
 /// <summary>
-/// 只有可通过基础的Builder构建的常量才会使用到Factory
+/// 可变数字类型
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public delegate T ConstantFactory<T>(IConstant.Builder<T> builder);
+public interface IMutableNumber<T> : IMutable<T>
+{
+    /** 将value转为int */
+    int IntValue { get; }
+
+    /** 将value转long */
+    long LongValue { get; }
+
+    /** 将value转float */
+    float FloatValue { get; }
+
+    /** 将value转double */
+    double DoubleValue { get; }
+}

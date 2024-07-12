@@ -17,7 +17,7 @@
 package cn.wjybxx.base.mutable;
 
 /**
- * 为基础值类型提高可变性
+ * 主要为基础值类型提供可变性
  *
  * @author wjybxx
  * date - 2024/1/4
@@ -29,7 +29,7 @@ public interface Mutable<T> {
 
     /**
      * @throws NullPointerException 如果实现类禁止参数为null
-     * @throws ClassCastException   如果value的类型与
+     * @throws ClassCastException   如果value的类型与实际类型不符
      */
     void setValue(T value);
 }
