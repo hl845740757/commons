@@ -391,10 +391,11 @@ public final class DelayedCompressList<E> {
      */
     public boolean isRealEmpty() {
         final ArrayList<E> children = this.children;
-        if (children.isEmpty()) {
+        final int size = children.size();
+        if (size == 0) {
             return true;
         }
-        for (int index = 0, size = children.size(); index < size; index++) {
+        for (int index = 0; index < size; index++) {
             if (children.get(index) != null) {
                 return false;
             }
@@ -408,11 +409,11 @@ public final class DelayedCompressList<E> {
      */
     public void forEach(Consumer<? super E> action) {
         Objects.requireNonNull(action);
-        int size = size();
+        final ArrayList<E> children = this.children;
+        final int size = children.size();
         if (size == 0) {
             return;
         }
-        ArrayList<E> children = this.children;
         beginItr();
         try {
             for (int index = 0; index < size; index++) {
@@ -433,11 +434,11 @@ public final class DelayedCompressList<E> {
      */
     public void forEach(ObjIntConsumer<? super E> action) {
         Objects.requireNonNull(action);
-        int size = size();
+        final ArrayList<E> children = this.children;
+        final int size = children.size();
         if (size == 0) {
             return;
         }
-        ArrayList<E> children = this.children;
         beginItr();
         try {
             for (int index = 0; index < size; index++) {

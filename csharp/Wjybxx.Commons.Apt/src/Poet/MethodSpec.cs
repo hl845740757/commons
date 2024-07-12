@@ -181,8 +181,8 @@ public class MethodSpec : ISpecification
         if (hasPointerType) {
             modifiers |= Modifiers.Unsafe;
         }
-        // 处理override
-        if (overriding && !methodInfo.DeclaringType!.IsInterface) {
+        // 处理override -- 接口方法不需要override关键字，不论方法有没有默认实现；抽象类的抽象方法也不需要override关键字
+        if (overriding && methodInfo.IsVirtual && methodInfo.DeclaringType!.IsClass) {
             modifiers |= Modifiers.Override;
         }
         return modifiers;

@@ -31,13 +31,14 @@ namespace Wjybxx.Commons.Apt;
 
 public class AptUtils
 {
+    private static readonly ClassName clsName_GeneratedAttribute = ClassName.Get(typeof(GeneratedAttribute));
     private static readonly ClassName clsName_SourceFileRef = ClassName.Get(typeof(SourceFileRefAttribute));
 
     /// <summary>
     /// 为生成代码的注解处理器创建一个通用注解
     /// </summary>
     public static AttributeSpec NewProcessorInfoAnnotation(Type type) {
-        return AttributeSpec.NewBuilder(type)
+        return AttributeSpec.NewBuilder(clsName_GeneratedAttribute)
             .Constructor(CodeBlock.Of("$S", type.ToString()))
             .Build();
     }

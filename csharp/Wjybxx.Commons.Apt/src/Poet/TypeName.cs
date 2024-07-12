@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
@@ -123,7 +124,7 @@ public class TypeName : IEquatable<TypeName>
     /// <returns></returns>
     public sealed override string ToString() {
         if (cachedString == null) {
-            cachedString = ToStringImpl() + ", NRT: " + attributes;
+            cachedString = ToStringImpl() + ", attrs: " + attributes;
         }
         return cachedString;
     }
@@ -217,9 +218,13 @@ public class TypeName : IEquatable<TypeName>
         if (type == null) throw new ArgumentNullException(nameof(type));
         // 引用和指针 -- 无法直接拿到元素类型，通过name反射拿(去除末尾'&'或者'*')
         if (type.IsByRef || type.IsPointer) {
+            // 需要通过Assembly拿取
+            Assembly assembly = Assembly.GetAssembly(type);
+            if (assembly == null) throw new ArgumentException("unsupported type: " + type);
+            
             string typeName = type.ToString();
-            Type targetType = Type.GetType(typeName.Substring(0, typeName.Length - 1));
-            if (targetType == null) throw new ArgumentException("unsupported ref type: " + type);
+            Type targetType = assembly.GetType(typeName.Substring(0, typeName.Length - 1));
+            if (targetType == null) throw new ArgumentException("unsupported type: " + type);
             return type.IsByRef ? ByRefTypeName.Of(targetType) : PointerTypeName.Of(targetType);
         }
         // 数组

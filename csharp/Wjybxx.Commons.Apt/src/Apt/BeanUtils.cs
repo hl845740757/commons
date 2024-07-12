@@ -193,11 +193,14 @@ public class BeanUtils
         return allFieldsAndMethodWithInherit.Where(e => e.MemberType == MemberTypes.Property)
             .Select(e => (PropertyInfo)e)
             .FirstOrDefault(e => {
+                if (e.Name != propertyName) {
+                    return false;
+                }
                 MethodInfo getMethod = e.GetMethod;
                 if (getMethod == null || getMethod.IsStatic || !getMethod.IsPublic) {
                     return false;
                 }
-                return getMethod.Name == propertyName;
+                return true;
             });
     }
 
@@ -213,11 +216,14 @@ public class BeanUtils
         return allFieldsAndMethodWithInherit.Where(e => e.MemberType == MemberTypes.Property)
             .Select(e => (PropertyInfo)e)
             .FirstOrDefault(e => {
+                if (e.Name != propertyName) {
+                    return false;
+                }
                 MethodInfo setMethod = e.SetMethod;
                 if (setMethod == null || setMethod.IsStatic || !setMethod.IsPublic) {
                     return false;
                 }
-                return setMethod.Name == propertyName;
+                return true;
             });
     }
 
@@ -232,13 +238,7 @@ public class BeanUtils
         string propertyName = PropertyNameOfField(fieldInfo.Name);
         return allFieldsAndMethodWithInherit.Where(e => e.MemberType == MemberTypes.Property)
             .Select(e => (PropertyInfo)e)
-            .FirstOrDefault(e => {
-                MethodInfo getMethod = e.GetMethod;
-                if (getMethod == null || getMethod.IsStatic) {
-                    return false;
-                }
-                return getMethod.Name == propertyName;
-            });
+            .FirstOrDefault(e => e.Name == propertyName);
     }
 
     /// <summary>

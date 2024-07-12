@@ -371,13 +371,13 @@ public class CodeBlock
             return this;
         }
 
-        public Builder AddString(string s) {
+        public Builder AddString(string? s) {
             formatParts.Add("$S");
             args.Add(s);
             return this;
         }
 
-        public Builder AddLiteral(string s) {
+        public Builder AddLiteral(string? s) {
             formatParts.Add("$L");
             args.Add(s);
             return this;

@@ -66,7 +66,16 @@ public class ParameterSpec : ISpecification
     }
 
     public static ParameterSpec Get(ParameterInfo parameterInfo) {
-        return NewBuilder(TypeName.Get(parameterInfo.ParameterType), parameterInfo.Name!)
+        TypeName typeName = TypeName.Get(parameterInfo.ParameterType);
+        if (typeName is ByRefTypeName refTypeName) {
+            // 修正参数的ref关键字
+            if (parameterInfo.IsIn) {
+                typeName = ByRefTypeName.Of(refTypeName.targetType, ByRefTypeName.Kind.In);
+            } else if (parameterInfo.IsOut) {
+                typeName = ByRefTypeName.Of(refTypeName.targetType, ByRefTypeName.Kind.Out);
+            }
+        }
+        return NewBuilder(typeName, parameterInfo.Name!)
             .Build();
     }
 
