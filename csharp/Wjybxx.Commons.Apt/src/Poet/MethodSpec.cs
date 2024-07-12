@@ -113,39 +113,33 @@ public class MethodSpec : ISpecification
     /// 重写给定方法
     /// （注意：如果是泛型类的方法，通常需要先构造目标泛型类以确定泛型参数）
     /// </summary>
-    /// <param name="methodInfo"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
     public static Builder Overriding(MethodInfo methodInfo) {
         if (methodInfo.IsFinal || methodInfo.IsStatic || methodInfo.IsPrivate) {
             throw new ArgumentException("cannot override method with modifiers: " + methodInfo.Attributes);
         }
+        return CopyMethod(methodInfo, true);
+    }
+
+    /// <summary>
+    /// 拷贝方法信息
+    /// </summary>
+    public static Builder CopyMethod(MethodInfo methodInfo) {
+        return CopyMethod(methodInfo, false);
+    }
+
+    private static Builder CopyMethod(MethodInfo methodInfo, bool overriding) {
         Builder builder = NewMethodBuilder(methodInfo.Name);
         // MethodInfo.GetBaseDefinition() 可判断是否是重写方法
-        Modifiers modifiers = ParseModifiers(methodInfo, true);
-
+        Modifiers modifiers = ParseModifiers(methodInfo, overriding);
+        builder.AddModifiers(modifiers);
         // 拷贝泛型参数
-        if (methodInfo.IsGenericMethod) {
-            foreach (Type genericArgument in methodInfo.GetGenericArguments()) {
-                builder.AddTypeVariable(TypeVariableName.Get(genericArgument));
-            }
-        }
+        CopyTypeVariables(builder, methodInfo);
         // 拷贝返回值
         builder.Returns(TypeName.Get(methodInfo.ReturnType));
         // 拷贝方法参数
-        ParameterInfo[] parameterInfos = methodInfo.GetParameters();
-        if (parameterInfos.Length > 0) {
-            builder.AddParameters(ParameterSpec.ParametersOf(methodInfo));
-            // 处理params修饰符
-            bool hasParamsModifier = parameterInfos[parameterInfos.Length - 1].GetCustomAttributes()
-                .Any(e => e is ParamArrayAttribute);
-            builder.Varargs(hasParamsModifier);
-        }
-        // 重写接口方法时不需要Override关键字...
-        if (!methodInfo.DeclaringType!.IsInterface) {
-            modifiers |= Modifiers.Override;
-        }
-        builder.AddModifiers(modifiers);
+        CopyParameters(builder, methodInfo.GetParameters());
+        // 处理params修饰符
+        builder.Varargs(IsVarArgsMethod(methodInfo));
         return builder;
     }
 
@@ -186,6 +180,38 @@ public class MethodSpec : ISpecification
             modifiers |= Modifiers.Override;
         }
         return modifiers;
+    }
+
+    /// <summary>
+    /// 拷贝泛型参数
+    /// </summary>
+    public static void CopyTypeVariables(Builder builder, MethodInfo methodInfo) {
+        if (methodInfo.IsGenericMethodDefinition) {
+            Type[] genericArguments = methodInfo.GetGenericArguments();
+            foreach (Type genericArgument in genericArguments) {
+                builder.AddTypeVariable(TypeVariableName.Get(genericArgument));
+            }
+        }
+    }
+
+    /// <summary>
+    /// 拷贝方法参数
+    /// </summary>
+    public static void CopyParameters(Builder builder, IEnumerable<ParameterInfo> parameters) {
+        foreach (ParameterInfo parameter in parameters) {
+            builder.AddParameter(ParameterSpec.Get(parameter));
+        }
+    }
+
+    /// <summary>
+    /// 是否是变长参数方法
+    /// </summary>
+    public static bool IsVarArgsMethod(MethodInfo methodInfo) {
+        ParameterInfo[] parameterInfos = methodInfo.GetParameters();
+        if (parameterInfos.Length > 0) {
+            return parameterInfos[parameterInfos.Length - 1].IsDefined(typeof(ParamArrayAttribute));
+        }
+        return false;
     }
 
     #endregion

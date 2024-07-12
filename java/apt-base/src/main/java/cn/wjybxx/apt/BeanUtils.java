@@ -139,8 +139,7 @@ public class BeanUtils {
                 .filter(e -> e.getKind() == ElementKind.METHOD)
                 .map(e -> (ExecutableElement) e)
                 .filter(e -> {
-                    if (e.getModifiers().contains(Modifier.STATIC)
-                            || !e.getModifiers().contains(Modifier.PUBLIC)) {
+                    if (!e.getModifiers().contains(Modifier.PUBLIC)) {
                         return false;
                     }
                     if (e.getParameters().size() != 1) {
@@ -167,8 +166,7 @@ public class BeanUtils {
                 .filter(e -> e.getKind() == ElementKind.METHOD)
                 .map(e -> (ExecutableElement) e)
                 .filter(e -> {
-                    if (e.getModifiers().contains(Modifier.STATIC)
-                            || !e.getModifiers().contains(Modifier.PUBLIC)) {
+                    if (!e.getModifiers().contains(Modifier.PUBLIC)) {
                         return false;
                     }
                     if (e.getParameters().size() != 0) {

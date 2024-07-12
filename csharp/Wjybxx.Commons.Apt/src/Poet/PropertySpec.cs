@@ -114,21 +114,25 @@ public class PropertySpec : ISpecification
         return builder;
     }
 
-    private static bool IsIndexerProperty(PropertyInfo propertyInfo) {
-        if (!propertyInfo.Name.Equals("Item")) return false;
-        if (propertyInfo.CanRead) {
-            MethodInfo getMethod = propertyInfo.GetGetMethod(true)!;
-            return getMethod.GetParameters().Length > 0;
+    /// <summary>
+    /// 忘了属性也是可重写的...属性本质是方法
+    /// </summary>
+    public static Builder Overriding(PropertyInfo propertyInfo) {
+        MethodInfo methodInfo = propertyInfo.GetMethod ?? propertyInfo.SetMethod!;
+        if (methodInfo.IsFinal || methodInfo.IsStatic || methodInfo.IsPrivate) {
+            throw new ArgumentException("cannot override method with modifiers: " + methodInfo.Attributes);
         }
-        if (propertyInfo.CanWrite) {
-            MethodInfo setMethod = propertyInfo.GetSetMethod(true)!;
-            return setMethod.GetParameters().Length > 1;
-        }
-        return false;
+        return CopyProperty(propertyInfo, true);
     }
 
-    // 忘了属性也是可重写的...属性本质是方法
-    public static Builder Overriding(PropertyInfo propertyInfo) {
+    /// <summary>
+    /// 拷贝属性信息
+    /// </summary>
+    public static Builder CopyProperty(PropertyInfo propertyInfo) {
+        return CopyProperty(propertyInfo, false);
+    }
+
+    private static Builder CopyProperty(PropertyInfo propertyInfo, bool overriding) {
         Builder builder;
         if (IsIndexerProperty(propertyInfo)) {
             ParameterInfo parameterInfo;
@@ -143,27 +147,44 @@ public class PropertySpec : ISpecification
         } else {
             builder = NewBuilder(propertyInfo.PropertyType, propertyInfo.Name);
         }
-
         builder.hasGetter = propertyInfo.CanRead;
         builder.hasSetter = propertyInfo.CanWrite;
-        // MethodInfo.GetBaseDefinition() 可判断是否是重写方法
+
         Modifiers modifiers = Modifiers.None;
         if (propertyInfo.CanRead) {
             MethodInfo getMethod = propertyInfo.GetGetMethod(true)!;
-            modifiers = MethodSpec.ParseModifiers(getMethod, true);
+            modifiers = MethodSpec.ParseModifiers(getMethod, overriding);
 
             MethodInfo setMethod = propertyInfo.GetSetMethod(true);
             if (setMethod != null) {
-                builder.setterModifiers = MethodSpec.ParseModifiers(setMethod, true);
+                builder.setterModifiers = MethodSpec.ParseModifiers(setMethod, overriding);
                 // 隐藏setter中包含的getter修饰符
                 builder.setterModifiers &= (~modifiers);
             }
         } else {
             MethodInfo setMethod = propertyInfo.GetSetMethod(true)!;
-            modifiers = MethodSpec.ParseModifiers(setMethod, true);
+            modifiers = MethodSpec.ParseModifiers(setMethod, overriding);
         }
         builder.AddModifiers(modifiers);
         return builder;
+    }
+
+    /// <summary>
+    /// 是否是索引器属性
+    /// </summary>
+    /// <param name="propertyInfo"></param>
+    /// <returns></returns>
+    public static bool IsIndexerProperty(PropertyInfo propertyInfo) {
+        if (!propertyInfo.Name.Equals("Item")) return false;
+        if (propertyInfo.CanRead) {
+            MethodInfo getMethod = propertyInfo.GetGetMethod(true)!;
+            return getMethod.GetParameters().Length > 0;
+        }
+        if (propertyInfo.CanWrite) {
+            MethodInfo setMethod = propertyInfo.GetSetMethod(true)!;
+            return setMethod.GetParameters().Length > 1;
+        }
+        return false;
     }
 
     #endregion

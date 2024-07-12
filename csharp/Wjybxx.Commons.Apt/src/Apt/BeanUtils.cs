@@ -197,7 +197,7 @@ public class BeanUtils
                     return false;
                 }
                 MethodInfo getMethod = e.GetMethod;
-                if (getMethod == null || getMethod.IsStatic || !getMethod.IsPublic) {
+                if (getMethod == null || !getMethod.IsPublic) {
                     return false;
                 }
                 return true;
@@ -220,7 +220,7 @@ public class BeanUtils
                     return false;
                 }
                 MethodInfo setMethod = e.SetMethod;
-                if (setMethod == null || setMethod.IsStatic || !setMethod.IsPublic) {
+                if (setMethod == null || !setMethod.IsPublic) {
                     return false;
                 }
                 return true;
