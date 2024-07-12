@@ -19,6 +19,8 @@
 using System;
 using System.Runtime.CompilerServices;
 
+#pragma warning disable CS1591
+
 namespace Wjybxx.Commons;
 
 /// <summary>
@@ -26,6 +28,8 @@ namespace Wjybxx.Commons;
 /// </summary>
 public static class ArrayUtil
 {
+    #region equals/hashcode
+
     /// <summary>
     /// 比较两个数组的相等性 -- 比较所有元素
     /// </summary>
@@ -44,6 +48,96 @@ public static class ArrayUtil
         ReadOnlySpan<T> second = objB;
         return first.SequenceEqual(second);
     }
+
+    public static int HashCode(byte[]? data) {
+        if (data == null) {
+            return 0;
+        }
+        int r = 1;
+        for (int i = 0; i < data.Length; i++) {
+            r = r * 31 + data[i];
+        }
+        return r;
+    }
+
+    public static int HashCode(int[]? data) {
+        if (data == null) {
+            return 0;
+        }
+        int r = 1;
+        for (int i = 0; i < data.Length; i++) {
+            r = r * 31 + data[i];
+        }
+        return r;
+    }
+
+    public static int HashCode(long[]? data) {
+        if (data == null) {
+            return 0;
+        }
+        int r = 1;
+        for (int i = 0; i < data.Length; i++) {
+            r = r * 31 + data[i].GetHashCode();
+        }
+        return r;
+    }
+
+    public static int HashCode(float[]? data) {
+        if (data == null) {
+            return 0;
+        }
+        int r = 1;
+        for (int i = 0; i < data.Length; i++) {
+            r = r * 31 + data[i].GetHashCode();
+        }
+        return r;
+    }
+
+    public static int HashCode(double[]? data) {
+        if (data == null) {
+            return 0;
+        }
+        int r = 1;
+        for (int i = 0; i < data.Length; i++) {
+            r = r * 31 + data[i].GetHashCode();
+        }
+        return r;
+    }
+
+    public static int HashCode(char[]? data) {
+        if (data == null) {
+            return 0;
+        }
+        int r = 1;
+        for (int i = 0; i < data.Length; i++) {
+            r = r * 31 + data[i].GetHashCode();
+        }
+        return r;
+    }
+
+    public static int HashCode(uint[]? data) {
+        if (data == null) {
+            return 0;
+        }
+        int r = 1;
+        for (int i = 0; i < data.Length; i++) {
+            r = r * 31 + data[i].GetHashCode();
+        }
+        return r;
+    }
+
+    public static int HashCode(ulong[]? data) {
+        if (data == null) {
+            return 0;
+        }
+        int r = 1;
+        for (int i = 0; i < data.Length; i++) {
+            r = r * 31 + data[i].GetHashCode();
+        }
+        return r;
+    }
+
+    #endregion
 
     /// <summary>
     /// 拷贝数组
