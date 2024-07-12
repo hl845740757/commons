@@ -88,7 +88,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     /// </summary>
     /// <param name="builder"></param>
     /// <returns></returns>
-    public TConstant NewInstance(IConstant.Builder<TConstant> builder) {
+    public TConstant NewInstance(IConstant.Builder builder) {
         if (builder == null) throw new ArgumentNullException(nameof(builder));
         return CreateOrThrow(builder);
     }
@@ -182,7 +182,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
         }
     }
 
-    private TConstant CreateOrThrow(IConstant.Builder<TConstant> builder) {
+    private TConstant CreateOrThrow(IConstant.Builder builder) {
         string name = builder.Name;
         lock (_constantMap) {
             if (_constantMap.ContainsKey(name)) {
@@ -199,7 +199,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     /// </summary>
     /// <param name="builder"></param>
     /// <returns></returns>
-    private TConstant NewConstant(IConstant.Builder<TConstant> builder) {
+    private TConstant NewConstant(IConstant.Builder builder) {
         string name = builder.Name;
         int nextId = _nextId++;
         builder.SetId(nextId);
@@ -216,7 +216,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
 
     #endregion
 
-    private class SimpleBuilder : IConstant.Builder<TConstant>
+    private class SimpleBuilder : IConstant.Builder
     {
         private readonly ConstantFactory<TConstant> _factory;
 

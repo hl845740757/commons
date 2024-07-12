@@ -47,7 +47,7 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
     /// <summary>
     /// 常量对象构建器
     /// </summary>
-    public abstract class Builder<T>
+    public abstract class Builder
     {
         private int? _id;
         private readonly string _name;
@@ -79,13 +79,13 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
         }
 
         /** 设置高速缓存索引 -- 该方法由{@link ConstantPool}调用 */
-        public Builder<T> SetCacheIndex(int cacheIndex) {
+        public Builder SetCacheIndex(int cacheIndex) {
             this.cacheIndex = cacheIndex;
             return this;
         }
 
         /** 设置是否需要分配高速缓存索引 */
-        public Builder<T> SetRequireCacheIndex(bool requireCacheIndex) {
+        public Builder SetRequireCacheIndex(bool requireCacheIndex) {
             this.requireCacheIndex = requireCacheIndex;
             return this;
         }
@@ -111,7 +111,7 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
         /// 构建常量对象
         /// </summary>
         /// <returns></returns>
-        public abstract T Build();
+        public abstract IConstant Build();
     }
 
     /// <summary>

@@ -75,6 +75,10 @@ public class CodeWriter
     /// 当前类型上下文
     /// </summary>
     private readonly Stack<TypeSpec> typeSpecStack = new Stack<TypeSpec>();
+    /// <summary>
+    /// 当前命名空间上下文
+    /// </summary>
+    private readonly Stack<NamespaceSpec> namespaceStack = new Stack<NamespaceSpec>();
 
     /// <summary>
     /// 
@@ -118,6 +122,8 @@ public class CodeWriter
 
         csharpFile = null;
         importableNamespaces.Clear();
+        typeSpecStack.Clear();
+        namespaceStack.Clear();
     }
 
     /// <summary>
@@ -158,6 +164,7 @@ public class CodeWriter
                 importableNamespaces.Remove(nestedSpec.Name!);
             }
         }
+        // 理论上还可以排个序
         return importableNamespaces.ToList();
     }
 
@@ -181,10 +188,6 @@ public class CodeWriter
         }
 
         Emit("\n");
-        // 自动导入System -- 不必要
-        // if (!importableNamespaces.ContainsKey(ImportSpec.System.name)) {
-        // importableNamespaces.PutFirst(ImportSpec.System.name, null);
-        // }
         // 写额外导入
         foreach (KeyValuePair<string, string?> pair in importableNamespaces) {
             EmitImport(new ImportSpec(pair.Key, pair.Value));
@@ -207,6 +210,7 @@ public class CodeWriter
             int lastIndex = csharpFile.nestedSpecs.LastIndexOfCustom(namespaceFilter);
             if (lastIndex == firstIndex) {
                 NamespaceSpec namespaceSpec = (NamespaceSpec)csharpFile.nestedSpecs[firstIndex];
+                namespaceStack.Push(namespaceSpec);
                 Emit("namespace $L;", namespaceSpec.name); // 分号结尾
                 Emit("\n");
                 Emit("\n"); // 需要插入一个空行
@@ -217,6 +221,9 @@ public class CodeWriter
                 // 写剩余元素
                 for (int i = firstIndex + 1; i < csharpFile.nestedSpecs.Count; i++) {
                     EmitSpec(csharpFile.nestedSpecs[i]);
+                }
+                if (!ReferenceEquals(namespaceStack.Pop(), namespaceSpec)) {
+                    throw new IllegalStateException();
                 }
                 return;
             }
@@ -233,6 +240,8 @@ public class CodeWriter
     /// </summary>
     /// <param name="namespaceSpec"></param>
     private void EmitNamespaceBlocked(NamespaceSpec namespaceSpec) {
+        namespaceStack.Push(namespaceSpec);
+
         Emit("namespace $L", namespaceSpec.name); // {}
         Emit("\n{");
         Indent();
@@ -241,6 +250,10 @@ public class CodeWriter
         }
         Unindent();
         Emit("}");
+
+        if (!ReferenceEquals(namespaceStack.Pop(), namespaceSpec)) {
+            throw new IllegalStateException();
+        }
     }
 
     private void EmitSpec(ISpecification nestedSpec) {
@@ -724,7 +737,7 @@ public class CodeWriter
             modifierList.Add("public");
         }
         if ((modifiers & Modifiers.Protected) != 0) {
-            modifierList.Add("protected ");
+            modifierList.Add("protected");
         }
         if ((modifiers & Modifiers.Internal) != 0) {
             modifierList.Add("internal");
@@ -1101,7 +1114,10 @@ public class CodeWriter
             if (importableNamespaces.TryGetValue(className.ns, out string? alias) && alias != null) {
                 typeNameStack.Push(".");
                 typeNameStack.Push(alias);
-            } else {
+            } else if (typeName.Internal_Keyword == null
+                       && namespaceStack.TryPeek(out NamespaceSpec? namespaceSpec)
+                       && namespaceSpec.name != className.ns) {
+                // 基于关键字时不引入system，同命名空间下时也不引入
                 importableNamespaces.TryAdd(className.ns, null);
             }
         } else if (typeName is TypeVariableName typeVariableName) {
