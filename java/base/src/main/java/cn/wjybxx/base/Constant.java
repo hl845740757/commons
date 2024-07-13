@@ -33,7 +33,7 @@ package cn.wjybxx.base;
  * @author wjybxx
  * date 2023/4/1
  */
-public interface Constant<T extends Constant<T>> extends Comparable<T> {
+public interface Constant extends Comparable<Constant> {
 
     /**
      * 注意：
@@ -55,10 +55,17 @@ public interface Constant<T extends Constant<T>> extends Comparable<T> {
      */
     String name();
 
+    /**
+     * 声明常量的池
+     * 注意：只有同一个池下的常量才可以比较。
+     */
+    Object declaringPool();
+
     // region builder
 
-    abstract class Builder<T> {
+    abstract class Builder {
 
+        private Object declaringPool;
         private Integer id;
         private final String name;
 
@@ -70,10 +77,11 @@ public interface Constant<T extends Constant<T>> extends Comparable<T> {
         }
 
         /** 设置常量的id - id通常由管理常量的常量池分配 */
-        public Builder<T> setId(int id) {
+        public Builder setId(Object declaringPool, int id) {
             if (this.id != null) {
                 throw new IllegalStateException("id cannot be initialized repeatedly");
             }
+            this.declaringPool = declaringPool;
             this.id = id;
             return this;
         }
@@ -93,8 +101,12 @@ public interface Constant<T extends Constant<T>> extends Comparable<T> {
             return name;
         }
 
+        public Object getDeclaringPool() {
+            return declaringPool;
+        }
+
         /** 设置高速缓存索引 -- 该方法由{@link ConstantPool}调用 */
-        public Builder<T> setCacheIndex(int cacheIndex) {
+        public Builder setCacheIndex(int cacheIndex) {
             this.cacheIndex = cacheIndex;
             return this;
         }
@@ -112,12 +124,12 @@ public interface Constant<T extends Constant<T>> extends Comparable<T> {
         }
 
         /** 设置是否需要分配高速缓存索引 */
-        public Builder<T> setRequireCacheIndex(boolean requireCacheIndex) {
+        public Builder setRequireCacheIndex(boolean requireCacheIndex) {
             this.requireCacheIndex = requireCacheIndex;
             return this;
         }
 
-        public abstract T build();
+        public abstract Constant build();
 
     }
 

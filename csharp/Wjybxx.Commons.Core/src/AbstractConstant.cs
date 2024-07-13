@@ -28,22 +28,21 @@ namespace Wjybxx.Commons;
 /// <summary>
 /// 常量类的模板实现 
 /// </summary>
-public abstract class AbstractConstant : IConstant, IComparable<AbstractConstant>, IComparable
+public abstract class AbstractConstant : IConstant
 {
-    private static long _uniqueIdSequencer = 0;
-
-    private readonly long _uniqueId;
     private readonly int _id;
     private readonly string _name;
+    private readonly object _declaringPool;
 
     protected AbstractConstant(IConstant.Builder builder) {
-        _uniqueId = Interlocked.Increment(ref _uniqueIdSequencer);
         _id = builder.GetIdOrThrow();
         _name = builder.Name;
+        _declaringPool = builder.DeclaringPool ?? throw new ArgumentException("declaringPool");
     }
 
     public int Id => _id;
     public string Name => _name;
+    public object DeclaringPool => _declaringPool;
 
     /// <summary>
     /// 通常不应该覆盖该方法
@@ -88,32 +87,22 @@ public abstract class AbstractConstant : IConstant, IComparable<AbstractConstant
 
     #region compare
 
-    public int CompareTo(AbstractConstant? other) {
+    public int CompareTo(IConstant? other) {
         if (ReferenceEquals(this, other)) return 0;
         if (ReferenceEquals(null, other)) return 1;
         // 注意：
         // 1. 未比较名字也未比较其它信息 - 这可以保证同一个类中定义的常量，其结果与定义顺序相同，就像枚举。
         // 2. uniqueId与类初始化顺序有关，因此无法保证不同类中定义的常量的顺序。
         // 3. 有个例外，超类中定义的常量总是在子类前面，这是因为超类总是在子类之前初始化。
-        if (_uniqueId < other._uniqueId) {
-            return -1;
-        }
-        if (_uniqueId > other._uniqueId) {
-            return 1;
+        if (this._declaringPool == other.DeclaringPool) {
+            if (_id < other.Id) {
+                return -1;
+            }
+            if (_id > other.Id) {
+                return 1;
+            }
         }
         throw new IllegalStateException($"failed to compare two different constants, this: {Name}, that: {other.Name}");
-    }
-
-    public int CompareTo(object? obj) {
-        if (ReferenceEquals(null, obj)) return 1;
-        if (ReferenceEquals(this, obj)) return 0;
-        return obj is AbstractConstant other ? CompareTo(other) : throw new ArgumentException($"Object must be of type {nameof(AbstractConstant)}");
-    }
-
-    public int CompareTo(IConstant? obj) {
-        if (ReferenceEquals(null, obj)) return 1;
-        if (ReferenceEquals(this, obj)) return 0;
-        return obj is AbstractConstant other ? CompareTo(other) : throw new ArgumentException($"Object must be of type {nameof(AbstractConstant)}");
     }
 
     public static bool operator <(AbstractConstant? left, AbstractConstant? right) {

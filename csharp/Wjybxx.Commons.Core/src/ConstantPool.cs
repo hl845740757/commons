@@ -43,7 +43,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
      */
     private int _nextIndex = 0;
 
-    public ConstantPool(ConstantFactory<TConstant>? factory, int nextId) {
+    private ConstantPool(ConstantFactory<TConstant>? factory, int nextId) {
         _factory = factory;
         _nextId = nextId;
     }
@@ -202,13 +202,15 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     private TConstant NewConstant(IConstant.Builder builder) {
         string name = builder.Name;
         int nextId = _nextId++;
-        builder.SetId(nextId);
+        builder.SetId(this, nextId);
         if (builder.RequireCacheIndex) {
             builder.SetCacheIndex(_nextIndex++);
         }
 
         TConstant constant = (TConstant)builder.Build();
-        if (constant.Name != name || constant.Id != nextId) {
+        if (constant.Name != name
+            || constant.Id != nextId
+            || constant.DeclaringPool != this) {
             throw new IllegalStateException($"expected id: {nextId}, name: {name}, but found id: {constant.Id}, name: {constant.Name}");
         }
         return constant;

@@ -38,13 +38,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 内部类是必要的，这可以保证外部类加载完成在内部类之前，确保所有的常量实例创建完成之后才获取values。
  * （大多数技巧都依赖于此）
  * <p>
- * Q: 如何根据id获取常量？  <br>
+ * Q: 如何根据id获取常量？
  * A: 仍然需要借助内部类，在内部类中获取values，然后建立映射即可。
  *
  * @author wjybxx
  * date 2023/4/1
  */
-public class ConstantPool<T extends Constant<T>> {
+public class ConstantPool<T extends Constant> {
 
     private final ConcurrentMap<String, T> constants = new ConcurrentHashMap<>();
     private final ConstantFactory<? extends T> factory;
@@ -60,7 +60,7 @@ public class ConstantPool<T extends Constant<T>> {
         this.idGenerator = new AtomicInteger(firstId);
     }
 
-    public static <T extends Constant<T>> ConstantPool<T> newPool(ConstantFactory<? extends T> factory) {
+    public static <T extends Constant> ConstantPool<T> newPool(ConstantFactory<? extends T> factory) {
         return newPool(factory, 0);
     }
 
@@ -68,7 +68,7 @@ public class ConstantPool<T extends Constant<T>> {
      * @param factory 可通过基础的Builder构建常量的工厂，通常是无额外数据的简单常量对象，factory通常是构造方法引用
      * @param firstId 第一个常量的id，如果常量的创建是无竞争的，那么id将是连续的
      */
-    public static <T extends Constant<T>> ConstantPool<T> newPool(ConstantFactory<? extends T> factory, int firstId) {
+    public static <T extends Constant> ConstantPool<T> newPool(ConstantFactory<? extends T> factory, int firstId) {
         return new ConstantPool<>(factory, firstId);
     }
 
@@ -102,7 +102,7 @@ public class ConstantPool<T extends Constant<T>> {
      *
      * @param builder 构建常量需要的数据--请确保创建的对象仍然是不可变的。
      */
-    public final T newInstance(Constant.Builder<T> builder) {
+    public final T newInstance(Constant.Builder builder) {
         Objects.requireNonNull(builder, "builder");
         return createOrThrow(builder);
     }
@@ -192,7 +192,7 @@ public class ConstantPool<T extends Constant<T>> {
     /**
      * 创建一个常量，或者已存在关联的常量时则抛出异常
      */
-    private T createOrThrow(Constant.Builder<? extends T> builder) {
+    private T createOrThrow(Constant.Builder builder) {
         String name = builder.getName();
         T constant = constants.get(name);
         if (constant == null) {
@@ -205,17 +205,19 @@ public class ConstantPool<T extends Constant<T>> {
         throw new IllegalArgumentException(name + " is already in use");
     }
 
-    private T newConstant(Constant.Builder<? extends T> builder) {
+    private T newConstant(Constant.Builder builder) {
         final int id = idGenerator.getAndIncrement();
-        builder.setId(id);
+        builder.setId(this, id);
         if (builder.isRequireCacheIndex()) {
             builder.setCacheIndex(cacheIndexGenerator.getAndIncrement());
         }
 
-        final T result = builder.build();
+        @SuppressWarnings("unchecked") final T result = (T) builder.build();
         // 校验实现
         Objects.requireNonNull(result, "result");
-        if (result.id() != id || !Objects.equals(result.name(), builder.getName())) {
+        if (result.id() != id
+                || !Objects.equals(result.name(), builder.getName())
+                || result.declaringPool() != this) {
             throw new IllegalStateException(String.format("expected id: %d, name: %s, but found id: %d, name: %s",
                     id, builder.getName(), result.id(), result.name()));
         }
@@ -224,7 +226,7 @@ public class ConstantPool<T extends Constant<T>> {
 
     // endregion
 
-    private static class SimpleBuilder<T> extends Constant.Builder<T> {
+    private static class SimpleBuilder<T extends Constant> extends Constant.Builder {
 
         private final ConstantFactory<T> factory;
 
@@ -234,7 +236,7 @@ public class ConstantPool<T extends Constant<T>> {
         }
 
         @Override
-        public T build() {
+        public Constant build() {
             return factory.newConstant(this);
         }
     }

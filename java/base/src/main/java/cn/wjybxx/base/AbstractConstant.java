@@ -18,34 +18,24 @@ package cn.wjybxx.base;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author wjybxx
  * date - 2023/5/19
  */
-public abstract class AbstractConstant<T extends AbstractConstant<T>> implements Constant<T> {
+public abstract class AbstractConstant implements Constant {
 
-    /**
-     * 为防止id溢出，这里使用long。
-     * 不过，如果程序大量创建常量，那么程序可能是有问题的，程序可能创建了大量的临时常量。
-     */
-    private static final AtomicLong uniqueIdGenerator = new AtomicLong();
-
-    /**
-     * 常量的全局唯一标识。
-     * 注意：该标识受到常量创建顺序的影响。
-     */
-    private final long uniqueId;
     /** 常量在其所属常量池下的唯一id */
     private final int id;
     /** 常量的名字 */
     private final String name;
+    /** 声明常量的池 */
+    private final Object declaringPool;
 
-    protected AbstractConstant(Builder<?> builder) {
-        this.uniqueId = uniqueIdGenerator.incrementAndGet();
+    protected AbstractConstant(Builder builder) {
         this.id = builder.getIdOrThrow();
         this.name = Objects.requireNonNull(builder.getName());
+        this.declaringPool = Objects.requireNonNull(builder.getDeclaringPool(), "declaringPool");
     }
 
     @Override
@@ -56,6 +46,11 @@ public abstract class AbstractConstant<T extends AbstractConstant<T>> implements
     @Override
     public final String name() {
         return name;
+    }
+
+    @Override
+    public Object declaringPool() {
+        return declaringPool;
     }
 
     @Override
@@ -82,23 +77,22 @@ public abstract class AbstractConstant<T extends AbstractConstant<T>> implements
     }
 
     @Override
-    public final int compareTo(final @Nonnull T other) {
+    public final int compareTo(final @Nonnull Constant other) {
         if (this == other) {
             return 0;
         }
-
         // 注意：
         // 1. 未比较名字也未比较其它信息 - 这可以保证同一个类中定义的常量，其结果与定义顺序相同，就像枚举。
         // 2. uniqueId与类初始化顺序有关，因此无法保证不同类中定义的常量的顺序。
         // 3. 有个例外，超类中定义的常量总是在子类前面，这是因为超类总是在子类之前初始化。
-        final AbstractConstant<?> that = other;
-        if (uniqueId < that.uniqueId) {
-            return -1;
+        if (declaringPool == other.declaringPool()) {
+            if (id < other.id()) {
+                return -1;
+            }
+            if (id > other.id()) {
+                return 1;
+            }
         }
-        if (uniqueId > that.uniqueId) {
-            return 1;
-        }
-        throw new Error("failed to compare two different constants, this: " + name + ", that: " + that.name);
+        throw new Error("failed to compare two different constants, this: " + name + ", that: " + other.name());
     }
-
 }

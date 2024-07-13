@@ -206,6 +206,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                 && altResult.cause instanceof CancellationException;
     }
 
+    @Deprecated
     @Override
     public final State state() {
         Object r = result;

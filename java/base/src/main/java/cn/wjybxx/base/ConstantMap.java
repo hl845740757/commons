@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * date 2023/4/1
  */
 @Immutable
-public class ConstantMap<T extends Constant<T>> {
+public class ConstantMap<T extends Constant> {
 
     private final List<T> immutableValues;
     private final List<String> immutableNames;

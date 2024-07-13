@@ -27,6 +27,6 @@ import javax.annotation.Nonnull;
 public interface ConstantFactory<T> {
 
     @Nonnull
-    T newConstant(Constant.Builder<T> builder);
+    T newConstant(Constant.Builder builder);
 
 }
