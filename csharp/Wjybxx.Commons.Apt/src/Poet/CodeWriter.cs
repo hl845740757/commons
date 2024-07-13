@@ -112,6 +112,7 @@ public class CodeWriter
     /// 重置writer
     /// </summary>
     public void Reset() {
+        codeOut.codeOut.Clear();
         codeOut.Reset();
         document = false;
         comment = false;
@@ -460,7 +461,7 @@ public class CodeWriter
         if (typeSpec.baseClasses.Count == 0) {
             return;
         }
-        Emit(" : ");
+        Emit(": ");
         for (int index = 0; index < typeSpec.baseClasses.Count; index++) {
             TypeName baseClass = typeSpec.baseClasses[index];
             if (index > 0) {

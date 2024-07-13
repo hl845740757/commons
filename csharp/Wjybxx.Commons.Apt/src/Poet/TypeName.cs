@@ -218,14 +218,10 @@ public class TypeName : IEquatable<TypeName>
         if (type == null) throw new ArgumentNullException(nameof(type));
         // 引用和指针 -- 无法直接拿到元素类型，通过name反射拿(去除末尾'&'或者'*')
         if (type.IsByRef || type.IsPointer) {
-            // 需要通过Assembly拿取
-            Assembly assembly = Assembly.GetAssembly(type);
-            if (assembly == null) throw new ArgumentException("unsupported type: " + type);
-            
-            string typeName = type.ToString();
-            Type targetType = assembly.GetType(typeName.Substring(0, typeName.Length - 1));
-            if (targetType == null) throw new ArgumentException("unsupported type: " + type);
-            return type.IsByRef ? ByRefTypeName.Of(targetType) : PointerTypeName.Of(targetType);
+            // byRef也是GetElementType拿...
+            Type elementType = type.GetElementType();
+            if (elementType == null) throw new ArgumentException("unsupported type: " + type);
+            return type.IsByRef ? ByRefTypeName.Of(elementType) : PointerTypeName.Of(elementType);
         }
         // 数组
         if (type.IsArray) {

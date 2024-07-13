@@ -65,7 +65,7 @@ public interface ICancelToken
 
     /**
      * 取消的原因
-     * (1~10为底层使用，10以上为用户自定义)T
+     * (1~10为底层使用，10以上为用户自定义)
      */
     int Reason => CancelCodes.GetReason(CancelCode);
 

@@ -27,9 +27,12 @@ namespace Wjybxx.Commons.Poet;
 /// </summary>
 internal class LineWrapper
 {
+    /// <summary>
+    /// Reset不自动重置，由外部充值
+    /// </summary>
     public readonly StringBuilder codeOut;
     /// <summary>
-    /// 似乎不写入内容，仅仅用于外部解析引用
+    /// 标识不写入内容，仅仅用于外部解析引用
     /// </summary>
     public bool nullWriter;
 
@@ -60,6 +63,7 @@ internal class LineWrapper
     }
 
     public void Reset() {
+        nullWriter = false;
         buffer.Clear();
         column = 0;
         indentLevel = -1;

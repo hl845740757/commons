@@ -85,21 +85,34 @@ public class AptUtils
      *
      * @param suffix 后缀
      */
-    public static string GetProxyClassName(Type typeElement, string? suffix = null) {
+    public static string GetProxyClassName(Type type, string? suffix = null) {
         if (suffix == null) suffix = "";
-        if (typeElement.DeclaringType == null) {
-            return typeElement.Name + suffix; // TopLevel
+
+        string proxyName;
+        if (type.DeclaringType == null) {
+            proxyName = type.Name + suffix; // TopLevel
         } else {
             // 内部类，避免与其它的内部类冲突，不能使用简单名
             // Q: 为什么不使用$符合?
             // A: 因为生成的工具类都是外部类，不是内部类。
             List<string> simpleNames = new List<string>(3);
-            simpleNames.Add(typeElement.Name);
-            while ((typeElement = typeElement.DeclaringType) != null) {
-                simpleNames.Add(typeElement.Name);
+            simpleNames.Add(type.Name);
+            while ((type = type.DeclaringType) != null) {
+                simpleNames.Add(type.Name);
             }
             simpleNames.Reverse();
-            return string.Join("_", simpleNames) + suffix;
+            proxyName = string.Join("_", simpleNames) + suffix;
         }
+        // C#泛型的simpleName会包含反引号...没有删除字符的快捷方法
+        if (proxyName.Contains('`')) {
+            StringBuilder builder = new StringBuilder(proxyName.Length);
+            for (var i = 0; i < proxyName.Length; i++) {
+                if (proxyName[i] != '`') {
+                    builder.Append(proxyName[i]);
+                }
+            }
+            proxyName = builder.ToString();
+        }
+        return proxyName;
     }
 }
