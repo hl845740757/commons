@@ -777,13 +777,17 @@ public class CodeWriter
             if ((modifiers & Modifiers.Override) != 0) {
                 modifierList.Add("override");
             }
-
+            // 字段特性
+            if ((modifiers & Modifiers.Volatile) != 0) {
+                modifierList.Add("volatile");
+            }
             if ((modifiers & Modifiers.Readonly) != 0) {
                 modifierList.Add("readonly");
             }
             if ((modifiers & Modifiers.Const) != 0) {
                 modifierList.Add("const");
             }
+            // 其它
             if ((modifiers & Modifiers.Partial) != 0) {
                 modifierList.Add("partial");
             }

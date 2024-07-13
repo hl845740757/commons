@@ -116,4 +116,8 @@ public enum Modifiers
     /// C#的操作符重载是生成了特殊的方法名来实现的，但我们使用Modifier更简单点，也更容易扩展
     /// </summary>
     Operator = 0x10000,
+    /// <summary>
+    /// volatile
+    /// </summary>
+    Volatile = 0x20000,
 }
