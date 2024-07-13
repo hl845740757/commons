@@ -250,7 +250,7 @@ public class CodeWriter
             EmitSpec(nestedSpec);
         }
         Unindent();
-        Emit("}");
+        Emit("}\n");
 
         if (!ReferenceEquals(namespaceStack.Pop(), namespaceSpec)) {
             throw new IllegalStateException();
@@ -424,14 +424,12 @@ public class CodeWriter
             }
 
             Emit(typeSpec.name);
-            Emit(" ");
-
             EmitTypeVariables(typeSpec.typeVariables);
             EmitBaseClasses(typeSpec);
 
             // 泛型变量约束
             if (HasConstraints(typeSpec.typeVariables)) {
-                Emit(" ");
+                EmitIfLastCharNot(' ');
                 EmitTypeVariableConstraints(typeSpec.typeVariables);
                 Emit(" ");
             }
@@ -461,7 +459,7 @@ public class CodeWriter
         if (typeSpec.baseClasses.Count == 0) {
             return;
         }
-        Emit(": ");
+        Emit(" : ");
         for (int index = 0; index < typeSpec.baseClasses.Count; index++) {
             TypeName baseClass = typeSpec.baseClasses[index];
             if (index > 0) {
@@ -711,10 +709,11 @@ public class CodeWriter
             EmitDocument(enumValueSpec.document);
         }
         if (!enumValueSpec.number.HasValue) {
-            Emit("$L,\n", enumValueSpec.name);
+            Emit("$L,", enumValueSpec.name);
         } else {
-            Emit("$L = $L,\n", enumValueSpec.name, enumValueSpec.number.Value);
+            Emit("$L = $L,", enumValueSpec.name, enumValueSpec.number.Value);
         }
+        Emit("\n"); // 每个元素末尾都默认换行
     }
 
     #endregion
