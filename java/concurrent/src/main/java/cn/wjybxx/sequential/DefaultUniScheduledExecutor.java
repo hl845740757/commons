@@ -18,8 +18,8 @@ package cn.wjybxx.sequential;
 
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
+import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.base.time.TimeProvider;
-import cn.wjybxx.concurrent.CancelCodes;
 import cn.wjybxx.concurrent.EventLoopState;
 import cn.wjybxx.concurrent.IFuture;
 import cn.wjybxx.concurrent.IFutureTask;

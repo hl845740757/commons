@@ -34,7 +34,7 @@ internal sealed class StateMachineDriver<T, S> : Promise<T>, IStateMachineDriver
     /// </summary>
     private S _stateMachine;
     /// <summary>
-    /// 驱动状态机的委托（延迟分配）
+    /// 驱动状态机的委托
     /// </summary>
     private Action _moveToNext;
 

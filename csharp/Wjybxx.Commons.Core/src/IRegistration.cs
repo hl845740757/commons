@@ -18,7 +18,7 @@
 
 using System;
 
-namespace Wjybxx.Commons.Concurrent;
+namespace Wjybxx.Commons;
 
 /// <summary>
 /// 注册监听器产生的句柄。

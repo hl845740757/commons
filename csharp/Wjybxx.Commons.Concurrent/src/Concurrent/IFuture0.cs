@@ -77,7 +77,7 @@ public interface IFuture
     bool IsCancelled => Status == TaskStatus.Cancelled;
 
     /** 如果future已进入完成状态(成功、失败、被取消)，则返回true */
-    bool IsDone => Status.IsDone();
+    bool IsDone => Status >= TaskStatus.Success;
 
     /**
      * 在JDK的约定中，取消和failed是分离的，我们仍保持这样的约定；
@@ -167,9 +167,7 @@ public interface IFuture
     /// 2. 如果Future尚未进入完成状态，则默认在使Future进入完成状态的线程执行回调，即同步执行回调。
     /// </summary>
     /// <returns></returns>
-    FutureAwaiter GetAwaiter() {
-        return new FutureAwaiter(this);
-    }
+    FutureAwaiter GetAwaiter() => new FutureAwaiter(this);
 
     /// <summary>
     /// 获取在指定线程上执行回调的Awaitable对象。

@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.concurrent;
-
-import java.util.concurrent.TimeUnit;
+package cn.wjybxx.base.concurrent;
 
 /**
  * 取消码辅助类
@@ -55,7 +53,7 @@ public class CancelCodes {
 
     /** 默认原因 */
     public static final int REASON_DEFAULT = 1;
-    /** 执行超时 -- {@link ICancelTokenSource#cancelAfter(int, long, TimeUnit)}就可使用 */
+    /** 执行超时 */
     public static final int REASON_TIMEOUT = 2;
     /** Executor关闭 -- Executor关闭不一定会取消任务 */
     public static final int REASON_SHUTDOWN = 3;

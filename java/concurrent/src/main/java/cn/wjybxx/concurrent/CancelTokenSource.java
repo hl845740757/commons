@@ -16,6 +16,10 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.IRegistration;
+import cn.wjybxx.base.concurrent.CancelCodeBuilder;
+import cn.wjybxx.base.concurrent.CancelCodes;
+
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;

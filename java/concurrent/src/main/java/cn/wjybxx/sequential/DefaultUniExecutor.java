@@ -16,7 +16,7 @@
 
 package cn.wjybxx.sequential;
 
-import cn.wjybxx.concurrent.CancelCodes;
+import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.concurrent.EventLoopState;
 import cn.wjybxx.concurrent.IFuture;
 import cn.wjybxx.concurrent.IFutureTask;

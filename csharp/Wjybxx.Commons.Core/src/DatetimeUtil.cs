@@ -27,11 +27,21 @@ namespace Wjybxx.Commons;
 /// </summary>
 public static class DatetimeUtil
 {
-    /** 1毫秒对应的tick数 */
-    public const long TicksPerMillisecond = 10000;
-    /** 1秒对应的tick数 */
-    public const long TicksPerSecond = TicksPerMillisecond * 1000;
+    /** 1微秒对应的Tick数 */
+    public const long TicksPerMicrosecond = 10;
+    /** 1毫秒对应的Tick数 */
+    public const long TicksPerMillisecond = TicksPerMicrosecond * 1000; // 10,000
+    /** 1秒对应的Tick数 */
+    public const long TicksPerSecond = TicksPerMillisecond * 1000; // 10,000,000
+    /** 1分钟对应的Tick数 */
+    public const long TicksPerMinute = TicksPerSecond * 60; // 600,000,000
+    /** 1小时对应的Tick数 */
+    public const long TicksPerHour = TicksPerMinute * 60; // 36,000,000,000
+    /** 1天对应的Tick数 */
+    public const long TicksPerDay = TicksPerHour * 24; // 864,000,000,000
 
+    /** 1个Tick对应的Nanos */
+    public const int NanosPerTick = 100;
     /** 1毫秒的纳秒数 */
     public const long NanosPerMilli = 1000_000;
     /** 1秒的纳秒数 */

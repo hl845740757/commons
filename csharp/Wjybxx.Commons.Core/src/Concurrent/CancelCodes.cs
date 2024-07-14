@@ -21,7 +21,7 @@ using System;
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 
+/// 取消码辅助类
 /// </summary>
 public static class CancelCodes
 {

@@ -49,12 +49,12 @@ public static class StatusExtensions
     /** 是否表示完成状态 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsDone(this TaskStatus state) {
-        return (byte)state >= 2;
+        return state >= TaskStatus.Success;
     }
 
     /** 是否表示失败或被取消 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsFailedOrCancelled(this TaskStatus state) {
-        return (byte)state >= 3;
+        return state >= TaskStatus.Failed;
     }
 }

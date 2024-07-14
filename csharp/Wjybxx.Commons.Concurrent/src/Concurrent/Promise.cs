@@ -310,7 +310,6 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region 阻塞结果查询
 
-    // virtual 以支持重写
     protected void CheckDeadlock() {
         if (Executor is ISingleThreadExecutor se && se.InEventLoop()) {
             throw new BlockingOperationException();

@@ -21,6 +21,9 @@ using System;
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.Concurrent;
 
+/// <summary>
+/// 使用接口定义常量
+/// </summary>
 public interface ScheduledTaskBuilder
 {
     /** 执行一次 */

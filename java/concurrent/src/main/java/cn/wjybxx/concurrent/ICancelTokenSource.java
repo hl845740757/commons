@@ -16,6 +16,9 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.CancelCodeBuilder;
+import cn.wjybxx.base.concurrent.CancelCodes;
+
 import java.util.concurrent.TimeUnit;
 
 /**

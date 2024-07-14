@@ -16,6 +16,8 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.CancelCodes;
+
 import java.util.concurrent.CancellationException;
 
 /**
