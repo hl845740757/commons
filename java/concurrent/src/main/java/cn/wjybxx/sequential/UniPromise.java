@@ -16,6 +16,7 @@
 
 package cn.wjybxx.sequential;
 
+import cn.wjybxx.base.concurrent.StacklessCancellationException;
 import cn.wjybxx.base.function.TriConsumer;
 import cn.wjybxx.base.function.TriFunction;
 import cn.wjybxx.concurrent.*;

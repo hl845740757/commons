@@ -16,9 +16,9 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.concurrent.CancelCodeBuilder;
-import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.mutable.MutableInt;
 import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;

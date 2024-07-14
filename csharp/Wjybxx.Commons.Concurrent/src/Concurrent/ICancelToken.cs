@@ -80,7 +80,7 @@ public interface ICancelToken
 
     /**
      * 检测取消信号
-     * 如果收到取消信号，则抛出{@link CancellationException}
+     * 如果收到取消信号，则抛出<see cref="OperationCanceledException"/>
      */
     void CheckCancel() {
         int code = CancelCode;

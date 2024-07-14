@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.IRegistration;
+import cn.wjybxx.base.concurrent.BetterCancellationException;
 import cn.wjybxx.base.concurrent.CancelCodeBuilder;
 import cn.wjybxx.base.concurrent.CancelCodes;
 

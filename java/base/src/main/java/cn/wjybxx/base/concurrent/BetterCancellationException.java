@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.concurrent;
-
-import cn.wjybxx.base.concurrent.CancelCodes;
+package cn.wjybxx.base.concurrent;
 
 import java.util.concurrent.CancellationException;
 

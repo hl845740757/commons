@@ -20,6 +20,7 @@ import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.collection.IndexedElement;
 import cn.wjybxx.base.concurrent.CancelCodes;
+import cn.wjybxx.base.concurrent.StacklessCancellationException;
 import cn.wjybxx.disruptor.StacklessTimeoutException;
 
 import javax.annotation.Nonnull;

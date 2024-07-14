@@ -17,7 +17,9 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.IRegistration;
+import cn.wjybxx.base.concurrent.BetterCancellationException;
 import cn.wjybxx.base.concurrent.CancelCodes;
+import cn.wjybxx.base.concurrent.StacklessCancellationException;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;

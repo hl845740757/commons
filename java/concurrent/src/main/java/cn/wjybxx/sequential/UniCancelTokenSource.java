@@ -18,6 +18,7 @@ package cn.wjybxx.sequential;
 
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.annotation.Beta;
+import cn.wjybxx.base.concurrent.BetterCancellationException;
 import cn.wjybxx.base.concurrent.CancelCodeBuilder;
 import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.concurrent.*;
