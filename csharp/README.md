@@ -46,38 +46,14 @@ LinkedDictionary采用线性探测法解决hash冲突，通过在GetNode方法�
 
 ---
 
-## Concurrent包
-
-1. 提供了Java的Executor和Future框架，并提供了对应的await语法支持。
-2. 提供了默认的EventLoop实现。
-
-PS：c#端不打算再实现Disruptor库。
-
-### await语法的讨论
-
-C#的Concurrent包，个人用得非常难受。究其原因：上下文(sync/execution)的传递是隐式的。这导致我们对线程和任务上下文的控制力度较弱，部分功能编写起来十分难受。  
-以我的使用经验来看，C#的await/async语法会导致这样的结果：**使简单的问题更简单，使复杂的问题更复杂**。
-
-多线程编程从来都不是个简单问题，单线程语言的`await/async`不涉及复杂的线程和上下文切换问题，因此使用起来简单；
-在多线程下，存在上下文和线程的控制问题，按照单线程语言`async/await`语法进行设计，只是让代码看起来简单了，实际上不论是语言的开发者，还是语言的使用者，面临的问题都更多了。
-
-个人认为， 多线程下的`await`最佳实现应当允许传参，允许指定`await`后续操作的线程，以及其它调度选项。
-
-```csharp
-    await future executor;    
-    await future executor options;
-```
-
----
-
 ## APT包
 
 APT包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
 我在java端使用javapoet生成各类辅助类已有5年左右，这是个非常好用的轮子的，但C#端没有合适的等价物，于是自己移植了一版。
 
-用言语描述javapoet不够直观，我们直接看代码生成器和生成的代码（可运行测试用例）。
+用言语描述javapoet不够直观，我们直接看代码生成器和生成的代码（可运行测试用例）（代码生成器的最佳示例可见Dson和BTree库）。
 
-`GeneratorTest`测试类（生成器）。
+`GeneratorTest`测试类（生成器）代码如下：
 
 ```csharp
     private static TypeSpec BuildClassType() {
@@ -154,7 +130,7 @@ APT包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
     }
 ```
 
-以下是测试`GeneratorTest`类生成的代码。
+下面是测试`GeneratorTest`类生成的代码：
 
 ```csharp
     using Wjybxx.Commons.Attributes;
@@ -205,6 +181,30 @@ APT包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
       public extern int SumRef(ref int a, in int b);
     }
 ```
+
+## Concurrent包
+
+1. 提供了Java的Executor和Future框架，并提供了对应的await语法支持。
+2. 提供了默认的EventLoop实现。
+
+PS：c#端不打算再实现Disruptor库。
+
+### await语法的讨论
+
+C#的Concurrent包，个人用得非常难受。究其原因：上下文(sync/execution)的传递是隐式的。这导致我们对线程和任务上下文的控制力度较弱，部分功能编写起来十分难受。  
+以我的使用经验来看，C#的await/async语法会导致这样的结果：**使简单的问题更简单，使复杂的问题更复杂**。
+
+多线程编程从来都不是个简单问题，单线程语言的`await/async`不涉及复杂的线程和上下文切换问题，因此使用起来简单；
+在多线程下，存在上下文和线程的控制问题，按照单线程语言`async/await`语法进行设计，只是让代码看起来简单了，实际上不论是语言的开发者，还是语言的使用者，面临的问题都更多了。
+
+个人认为， 多线程下的`await`最佳实现应当允许传参，允许指定`await`后续操作的线程，以及其它调度选项。
+
+```csharp
+    await future executor;    
+    await future executor options;
+```
+
+---
 
 ## 个人公众号(游戏开发)
 
