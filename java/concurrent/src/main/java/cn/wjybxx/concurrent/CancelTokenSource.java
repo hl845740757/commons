@@ -87,6 +87,11 @@ public final class CancelTokenSource implements ICancelTokenSource {
         return new CancelTokenSource(copyCode ? code : 0);
     }
 
+    @Override
+    public CancelTokenSource newInstance() {
+        return new CancelTokenSource();
+    }
+
     // region tokenSource
 
     /**

@@ -867,7 +867,7 @@ public class CodeWriter
         if (typeVariable.attributes == 0 && typeVariable.bounds.Count == 0) {
             return;
         }
-        Emit(" where $L : ", typeVariable.name);
+        Emit("where $L : ", typeVariable.name);
         if ((typeVariable.attributes & TypeNameAttributes.NotNullableValueTypeConstraint) != 0) {
             Emit("struct");
             return;

@@ -158,18 +158,11 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         return new UniCancelTokenSource(executor, copyCode ? code : 0);
     }
 
-    /**
-     * 创建一个子token，子token会在当前token被取消时取消。
-     * 1.该接口是构建实例和{@link #thenTransferTo(ICancelTokenSource)}的快捷方法。
-     * 2.该接口用于快速构建子上下文。
-     */
-    public UniCancelTokenSource newChild() {
-        UniCancelTokenSource child = new UniCancelTokenSource(executor, code);
-        if (code == 0) {
-            thenTransferTo(child);
-        }
-        return child;
+    @Override
+    public UniCancelTokenSource newInstance() {
+        return new UniCancelTokenSource(executor);
     }
+
     // region tokenSource
 
     /**

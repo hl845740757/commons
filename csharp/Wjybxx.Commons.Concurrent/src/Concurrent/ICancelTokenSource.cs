@@ -26,7 +26,7 @@ namespace Wjybxx.Commons.Concurrent;
 public interface ICancelTokenSource : ICancelToken
 {
     /// <summary>
-    /// 将Token置为取消状态
+    /// 发送取消信号
     /// </summary>
     /// <param name="cancelCode">取消码；reason部分需大于0；辅助类{@link CancelCodeBuilder}</param>
     /// <exception cref="ArgumentException">如果code小于等于0；或reason部分为0</exception>

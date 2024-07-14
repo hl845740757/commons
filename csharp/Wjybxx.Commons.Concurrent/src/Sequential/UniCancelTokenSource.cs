@@ -122,20 +122,6 @@ public class UniCancelTokenSource : ICancelTokenSource
         return new UniCancelTokenSource(executor, copyCode ? code : 0);
     }
 
-    /// <summary>
-    /// 创建一个子token，子token会在当前token被取消时取消。
-    /// 1.该接口是构建实例和{@link #thenTransferTo(ICancelTokenSource)}的快捷方法。
-    /// 2.该接口用于快速构建子上下文。
-    /// </summary>
-    /// <returns></returns>
-    public UniCancelTokenSource NewChild() {
-        UniCancelTokenSource child = new UniCancelTokenSource(executor, code);
-        if (code == 0) {
-            ThenTransferTo(child);
-        }
-        return child;
-    }
-
     #region tokenSource
 
     public int Cancel(int cancelCode = CancelCodes.REASON_DEFAULT) {

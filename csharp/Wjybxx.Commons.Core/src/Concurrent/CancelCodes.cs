@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Concurrent;
 
@@ -57,26 +58,31 @@ public static class CancelCodes
     public const int REASON_SHUTDOWN = 3;
 
     /** 计算取消码中的原因 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetReason(int code) {
         return code & MASK_REASON;
     }
 
     /** 计算取消码终归的紧急程度 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetDegree(int code) {
         return (code & MASK_DEGREE) >> OFFSET_DEGREE;
     }
 
     /** 取消指令中是否要求了中断线程 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsInterruptible(int code) {
         return (code & MASK_INTERRUPT) != 0;
     }
 
     /** 取消指令中是否要求了无需删除 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsWithoutRemove(int code) {
         return (code & MASK_WITHOUT_REMOVE) != 0;
     }
 
     /** 取消信号是否来自future接口 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsFromFuture(int code) {
         return (code & MASK_FROM_FUTURE) != 0;
     }
@@ -120,6 +126,7 @@ public static class CancelCodes
      *
      * @return argument
      */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int CheckCode(int code) {
         if (GetReason(code) == 0) {
             throw new ArgumentException("reason is absent");
