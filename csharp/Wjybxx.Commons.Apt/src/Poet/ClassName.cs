@@ -33,6 +33,7 @@ namespace Wjybxx.Commons.Poet;
 /// 注意：
 /// 1.无法通过名字判断是否是结构体或引用类型。
 /// 2.ClassName始终通过<see cref="WithAttributes"/>方法设置属性，避免工厂方法参数过多。
+/// 3.要想输出未构造泛型的typeof，可使用空名字的<see cref="TypeVariableName"/>。
 /// </summary>
 [Immutable]
 public class ClassName : TypeName

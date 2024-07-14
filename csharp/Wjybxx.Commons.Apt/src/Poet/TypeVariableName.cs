@@ -34,7 +34,12 @@ namespace Wjybxx.Commons.Poet;
 public class TypeVariableName : TypeName
 {
     /// <summary>
-    /// 泛型变量名
+    /// 空类型变量仅用于输出泛型定义类时
+    /// </summary>
+    public static readonly TypeVariableName Empty = new TypeVariableName("", null, TypeNameAttributes.None);
+
+    /// <summary>
+    /// 泛型变量名(允许空字符串表示泛型定义类)
     /// </summary>
     public readonly string name;
     /// <summary>
