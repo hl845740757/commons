@@ -49,13 +49,26 @@ public static class ArrayUtil
         return first.SequenceEqual(second);
     }
 
-    public static int HashCode<T>(T[]? data) where T : class {
+    public static int HashCode<T>(T?[]? data) where T : class {
         if (data == null) {
             return 0;
         }
         int r = 1;
         for (int i = 0; i < data.Length; i++) {
-            r = r * 31 + data[i].GetHashCode();
+            T e = data[i];
+            r = r * 31 + (e == null ? 0 : e.GetHashCode());
+        }
+        return r;
+    }
+
+    public static int HashCode<T>(T?[]? data, Func<T, int> hashFunc) {
+        if (data == null) {
+            return 0;
+        }
+        int r = 1;
+        for (int i = 0; i < data.Length; i++) {
+            T e = data[i];
+            r = r * 31 + hashFunc(e);
         }
         return r;
     }
@@ -83,61 +96,6 @@ public static class ArrayUtil
     }
 
     public static int HashCode(long[]? data) {
-        if (data == null) {
-            return 0;
-        }
-        int r = 1;
-        for (int i = 0; i < data.Length; i++) {
-            r = r * 31 + data[i].GetHashCode();
-        }
-        return r;
-    }
-
-    public static int HashCode(float[]? data) {
-        if (data == null) {
-            return 0;
-        }
-        int r = 1;
-        for (int i = 0; i < data.Length; i++) {
-            r = r * 31 + data[i].GetHashCode();
-        }
-        return r;
-    }
-
-    public static int HashCode(double[]? data) {
-        if (data == null) {
-            return 0;
-        }
-        int r = 1;
-        for (int i = 0; i < data.Length; i++) {
-            r = r * 31 + data[i].GetHashCode();
-        }
-        return r;
-    }
-
-    public static int HashCode(char[]? data) {
-        if (data == null) {
-            return 0;
-        }
-        int r = 1;
-        for (int i = 0; i < data.Length; i++) {
-            r = r * 31 + data[i].GetHashCode();
-        }
-        return r;
-    }
-
-    public static int HashCode(uint[]? data) {
-        if (data == null) {
-            return 0;
-        }
-        int r = 1;
-        for (int i = 0; i < data.Length; i++) {
-            r = r * 31 + data[i].GetHashCode();
-        }
-        return r;
-    }
-
-    public static int HashCode(ulong[]? data) {
         if (data == null) {
             return 0;
         }

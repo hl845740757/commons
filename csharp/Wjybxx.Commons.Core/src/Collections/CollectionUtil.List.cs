@@ -18,9 +18,12 @@
 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
+
+#pragma warning disable CS1591
 
 namespace Wjybxx.Commons.Collections;
 
@@ -44,6 +47,34 @@ public static partial class CollectionUtil
     /** 创建3个元素的List */
     public static List<T> NewList<T>(T first, T second, T third) {
         return new List<T>(3) { first, second, third };
+    }
+
+    #endregion
+
+    #region equals/hashcode
+
+    public static int HashCode<T>(IList<T?>? data) where T : class {
+        if (data == null) {
+            return 0;
+        }
+        int r = 1;
+        for (int i = 0; i < data.Count; i++) {
+            T e = data[i];
+            r = r * 31 + (e == null ? 0 : e.GetHashCode());
+        }
+        return r;
+    }
+
+    public static int HashCode<T>(IList<T?>? data, Func<T, int> hashFunc) {
+        if (data == null) {
+            return 0;
+        }
+        int r = 1;
+        for (int i = 0; i < data.Count; i++) {
+            T e = data[i];
+            r = r * 31 + hashFunc(e);
+        }
+        return r;
     }
 
     #endregion
