@@ -104,7 +104,8 @@ public final class SimpleArrayPool<T> implements ArrayPool<T> {
     @SuppressWarnings("unchecked")
     @Override
     public T acquire(int minimumLength, boolean clear) {
-        Node<T> ceilingNode = freeArrays.ceiling(new LengthNode<>(minimumLength));
+        LengthNode<T> lengthNode = new LengthNode<>(minimumLength);
+        Node<T> ceilingNode = freeArrays.ceiling(lengthNode);
         if (ceilingNode != null) {
             freeArrays.remove(ceilingNode);
 

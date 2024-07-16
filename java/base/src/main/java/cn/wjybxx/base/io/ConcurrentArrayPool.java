@@ -36,8 +36,9 @@ import java.util.function.Consumer;
  * <h3>缺陷</h3>
  * 1.池大小的控制不是精确的。
  * 2.未对数组的归属权进行验证。
+ * 3.性能不是很好。
  * <p>
- * 上面两个问题对于一般场景问题不大，如果有严格的要求，可采用其它的对象池实现。
+ * 上面的问题对于一般场景问题不大，如果有严格的要求，可采用其它的对象池实现。
  *
  * @author wjybxx
  * date - 2024/1/6
@@ -60,6 +61,7 @@ public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
             .setMaxCapacity(64 * 1024)
             .setClear(false)
             .build();
+
     /** 全局id分配 */
     private static final AtomicLong sequence = new AtomicLong(1);
 
@@ -111,17 +113,20 @@ public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
     @SuppressWarnings("unchecked")
     @Override
     public T acquire(int minimumLength, boolean clear) {
-        Node<T> ceilingNode = freeArrays.ceilingKey(new LengthNode<>(minimumLength));
-        if (ceilingNode != null) {
-            freeArrays.remove(ceilingNode);
-
-            T array = ceilingNode.array();
-            if (!this.clear && clear) { // 默认不清理的情况下用户请求有效
-                clearHandler.accept(array);
+        LengthNode<T> lengthNode = new LengthNode<>(minimumLength);
+        while (true) {
+            Node<T> ceilingNode = freeArrays.ceilingKey(lengthNode);
+            if (ceilingNode == null) {
+                return (T) Array.newInstance(arrayType.getComponentType(), minimumLength);
             }
-            return array;
+            if (freeArrays.remove(ceilingNode) != null) {
+                T array = ceilingNode.array();
+                if (!this.clear && clear) { // 默认不清理的情况下用户请求有效
+                    clearHandler.accept(array);
+                }
+                return array;
+            }
         }
-        return (T) Array.newInstance(arrayType.getComponentType(), minimumLength);
     }
 
     @Override
