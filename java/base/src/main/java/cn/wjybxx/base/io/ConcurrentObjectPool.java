@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.pool;
+package cn.wjybxx.base.io;
 
-import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.ObjectUtils;
+import cn.wjybxx.base.pool.ObjectPool;
+import cn.wjybxx.base.pool.ResetPolicy;
 
-import javax.annotation.concurrent.NotThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
@@ -27,30 +28,33 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * 对象池的默认实现
- * <h3>队列 OR 栈</h3>
- * 主要区别：栈结构会频繁使用栈顶元素，而队列结构的元素是平等的。
- * 因此栈结构有以下特性：
- * 1.如果复用对象存在bug，更容易发现。
- * 2.如果池化的对象是List这类会扩容的对象，则只有栈顶部分的对象会扩容较大。
+ * 固定大小的普通对象池实现
  *
  * @author wjybxx
- * date 2023/4/1
+ * date - 2024/1/6
  */
-@NotThreadSafe
-public final class DefaultObjectPool<T> implements ObjectPool<T> {
+@ThreadSafe
+public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
 
-    /** 默认不能无限缓存 */
     private static final int DEFAULT_POOL_SIZE = 64;
+
+    /** 全局共享的{@link StringBuilder}池 */
+    public static final ConcurrentObjectPool<StringBuilder> SHARED_STRING_BUILDER_POOL = new ConcurrentObjectPool<>(
+            () -> new StringBuilder(1024),
+            sb -> sb.setLength(0),
+            64,
+            sb -> sb.length() >= 1024 && sb.length() <= 64 * 1024);
 
     private final Supplier<? extends T> factory;
     private final ResetPolicy<? super T> resetPolicy;
     private final Predicate<? super T> filter;
+    private final MpmcArrayQueue<T> freeObjects;
 
-    private final int poolSize;
-    private final ArrayList<T> freeObjects;
-
-    public DefaultObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy) {
+    /**
+     * @param factory     对象创建工厂
+     * @param resetPolicy 重置方法
+     */
+    public ConcurrentObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy) {
         this(factory, resetPolicy, DEFAULT_POOL_SIZE, null);
     }
 
@@ -59,7 +63,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
      * @param resetPolicy 重置方法
      * @param poolSize    缓存池大小；0表示不缓存对象
      */
-    public DefaultObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy, int poolSize) {
+    public ConcurrentObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy, int poolSize) {
         this(factory, resetPolicy, poolSize, null);
     }
 
@@ -69,21 +73,19 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
      * @param poolSize    缓存池大小；0表示不缓存对象
      * @param filter      对象回收过滤器
      */
-    public DefaultObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy, int poolSize, Predicate<? super T> filter) {
+    public ConcurrentObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy, int poolSize, Predicate<? super T> filter) {
         if (poolSize < 0) {
             throw new IllegalArgumentException("poolSize: " + poolSize);
         }
         this.factory = Objects.requireNonNull(factory, "factory");
         this.resetPolicy = ObjectUtils.nullToDef(resetPolicy, ResetPolicy.DO_NOTHING);
         this.filter = filter;
-
-        this.poolSize = poolSize;
-        this.freeObjects = new ArrayList<>(MathCommon.clamp(poolSize, 0, 10));
+        this.freeObjects = new MpmcArrayQueue<>(poolSize);
     }
 
     /** 获取池大小 */
     public int getPoolSize() {
-        return poolSize;
+        return freeObjects.getLength();
     }
 
     @Override
@@ -93,11 +95,8 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
 
     @Override
     public T acquire() {
-        int size = freeObjects.size();
-        if (size > 0) {
-            return freeObjects.remove(size - 1); // 可避免拷贝
-        }
-        return factory.get();
+        T obj = freeObjects.poll();
+        return obj == null ? factory.get() : obj;
     }
 
     @Override
@@ -105,11 +104,9 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
         if (object == null) {
             throw new IllegalArgumentException("object cannot be null.");
         }
-        // 先调用reset，避免reset出现异常导致添加脏对象到缓存池中 -- 断言是否在池中还是有较大开销
         resetPolicy.reset(object);
-//        assert !CollectionUtils.containsRef(freeObjects, e);
-        if (freeObjects.size() < poolSize && (filter == null || filter.test(object))) {
-            freeObjects.add(object);
+        if (filter == null || filter.test(object)) {
+            freeObjects.offer(object);
         }
     }
 
@@ -119,11 +116,9 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
             throw new IllegalArgumentException("objects cannot be null.");
         }
 
-        final ArrayList<T> freeObjects = this.freeObjects;
-        final int poolSize = this.poolSize;
+        final MpmcArrayQueue<T> freeObjects = this.freeObjects;
         final ResetPolicy<? super T> resetPolicy = this.resetPolicy;
         final Predicate<? super T> filter = this.filter;
-
         if (objects instanceof ArrayList<? extends T> arrayList) {
             for (int i = 0, n = arrayList.size(); i < n; i++) {
                 T obj = arrayList.get(i);
@@ -131,9 +126,8 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
                     continue;
                 }
                 resetPolicy.reset(obj);
-//                assert !CollectionUtils.containsRef(freeObjects, obj);
-                if (freeObjects.size() < poolSize && (filter == null || filter.test(obj))) {
-                    freeObjects.add(obj);
+                if (filter == null || filter.test(obj)) {
+                    freeObjects.offer(obj);
                 }
             }
         } else {
@@ -142,9 +136,8 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
                     continue;
                 }
                 resetPolicy.reset(obj);
-//                assert !CollectionUtils.containsRef(freeObjects, obj);
-                if (freeObjects.size() < poolSize && (filter == null || filter.test(obj))) {
-                    freeObjects.add(obj);
+                if (filter == null || filter.test(obj)) {
+                    freeObjects.offer(obj);
                 }
             }
         }
@@ -152,7 +145,10 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
 
     @Override
     public void clear() {
-        freeObjects.clear();
+        //noinspection StatementWithEmptyBody
+        while (freeObjects.poll() != null) {
+
+        }
     }
 
 }

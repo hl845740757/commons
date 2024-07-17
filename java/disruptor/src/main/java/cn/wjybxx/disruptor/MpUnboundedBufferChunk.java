@@ -37,9 +37,9 @@ public final class MpUnboundedBufferChunk<E> {
      * 注意：与{@link MultiProducerSequencer}的方案不同，这里发布时是将其标记为{@link #chunkIndex} -- 可避免额外的计算。
      */
     private final long[] published;
+
     /** 该chunk的索引 */
     private volatile long chunkIndex;
-
     private volatile MpUnboundedBufferChunk<E> prev;
     private volatile MpUnboundedBufferChunk<E> next;
 
@@ -120,9 +120,13 @@ public final class MpUnboundedBufferChunk<E> {
         return (E) VH_ELEMENTS.getVolatile(buffer, index);
     }
 
-    /**
-     * 将指定槽位标记为已发布
-     */
+    /** load plain element */
+    @SuppressWarnings("unchecked")
+    public final E lpElement(int index) {
+        return (E) VH_ELEMENTS.get(buffer, index);
+    }
+
+    /** 将指定槽位标记为已发布 */
     public final void publish(int index) {
         VH_PUBLISHED.setRelease(published, index, lpChunkIndex());
     }
@@ -193,6 +197,7 @@ public final class MpUnboundedBufferChunk<E> {
     private static final VarHandle VH_INDEX;
     private static final VarHandle VH_PREV;
     private static final VarHandle VH_NEXT;
+
     private static final VarHandle VH_ELEMENTS;
     private static final VarHandle VH_PUBLISHED;
 
@@ -202,6 +207,7 @@ public final class MpUnboundedBufferChunk<E> {
             VH_INDEX = l.findVarHandle(MpUnboundedBufferChunk.class, "chunkIndex", long.class);
             VH_PREV = l.findVarHandle(MpUnboundedBufferChunk.class, "prev", MpUnboundedBufferChunk.class);
             VH_NEXT = l.findVarHandle(MpUnboundedBufferChunk.class, "next", MpUnboundedBufferChunk.class);
+
             VH_ELEMENTS = MethodHandles.arrayElementVarHandle(Object[].class);
             VH_PUBLISHED = MethodHandles.arrayElementVarHandle(long[].class);
         } catch (Exception e) {

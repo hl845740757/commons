@@ -142,9 +142,8 @@ public class MultiProducerSequencer extends RingBufferSequencer {
 
     @Override
     public boolean hasAvailableCapacity(int requiredCapacity) {
-        if (requiredCapacity < 0) {
-            throw new IllegalArgumentException();
-        }
+        if (requiredCapacity < 0) throw new IllegalArgumentException();
+        if (requiredCapacity > bufferSize) return false;
         return hasAvailableCapacity(gatingBarriers, requiredCapacity, cursor.getVolatile());
     }
 

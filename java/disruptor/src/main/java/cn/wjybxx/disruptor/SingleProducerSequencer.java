@@ -23,7 +23,7 @@ import java.util.concurrent.locks.LockSupport;
 abstract class SingleProducerSequencerPad extends RingBufferSequencer {
 
     private long p1, p2, p3, p4, p5, p6, p7;
-    private long p8, p9, p10, p11, p12, p13, p14, p15;
+//    private long p8, p9, p10, p11, p12, p13, p14, p15;
 
     public SingleProducerSequencerPad(int bufferSize, long sleepNanos,
                                       WaitStrategy waitStrategy, @Nullable SequenceBlocker blocker) {
@@ -68,7 +68,7 @@ abstract class SingleProducerSequencerFields extends SingleProducerSequencerPad 
 public class SingleProducerSequencer extends SingleProducerSequencerFields {
 
     private long p1, p2, p3, p4, p5, p6, p7;
-    private long p8, p9, p10, p11, p12, p13, p14, p15;
+//    private long p8, p9, p10, p11, p12, p13, p14, p15;
 
     /**
      * @param bufferSize   RingBuffer大小

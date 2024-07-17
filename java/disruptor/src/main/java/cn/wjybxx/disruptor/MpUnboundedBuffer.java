@@ -28,7 +28,7 @@ abstract class MpUnboundedBufferFields<E> {
 
     // region pad
     private long p1, p2, p3, p4, p5, p6, p7, p8;
-    private long p11, p12, p13, p14, p15, p16, p17, p18;
+//    private long p11, p12, p13, p14, p15, p16, p17, p18;
     // endregion
 
     /**
@@ -40,7 +40,7 @@ abstract class MpUnboundedBufferFields<E> {
 
     // region pad
     private long p21, p22, p23, p24, p25, p26, p27, p28;
-    private long p31, p32, p33, p34, p35, p36, p37, p38;
+//    private long p31, p32, p33, p34, p35, p36, p37, p38;
     // endregion
 
     /** 用于竞争更新head */
@@ -62,7 +62,7 @@ abstract class MpUnboundedBufferFields<E> {
 
     // region pad
     private long p41, p42, p43, p44, p45, p46, p47, p48;
-    private long p51, p52, p53, p54, p55, p56, p57, p58;
+//    private long p51, p52, p53, p54, p55, p56, p57, p58;
     // endregion
 
     // region producer

@@ -17,7 +17,6 @@
 package cn.wjybxx.base.io;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.function.Consumer;
 
 /**
@@ -76,73 +75,4 @@ class ArrayPoolCore {
         throw new IllegalArgumentException("Unsupported arrayType: " + arrayType.getSimpleName());
     }
 
-    public static final Comparator<Node<?>> COMPARATOR = (left, right) -> {
-        final int r = Integer.compare(left.length(), right.length());
-        if (r != 0) {
-            return r;
-        }
-        return Long.compare(left.sequence(), right.sequence());
-    };
-
-    interface Node<T> {
-
-        T array();
-
-        int length();
-
-        long sequence();
-    }
-
-    public static class ArrayNode<T> implements Node<T> {
-
-        final T array;
-        final int length;
-        final long sequence;
-
-        /** @param length 缓存下来以避免反射调用 */
-        public ArrayNode(T array, int length, long sequence) {
-            this.array = array;
-            this.length = length;
-            this.sequence = sequence;
-        }
-
-        @Override
-        public T array() {
-            return array;
-        }
-
-        @Override
-        public int length() {
-            return length;
-        }
-
-        @Override
-        public long sequence() {
-            return sequence;
-        }
-    }
-
-    public static class LengthNode<T> implements Node<T> {
-
-        final int length;
-
-        public LengthNode(int length) {
-            this.length = length;
-        }
-
-        @Override
-        public T array() {
-            throw new IllegalStateException();
-        }
-
-        @Override
-        public int length() {
-            return length;
-        }
-
-        @Override
-        public long sequence() {
-            return 0;
-        }
-    }
 }
