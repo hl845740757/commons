@@ -40,8 +40,8 @@ public class ConcurrentObjectPoolTest {
     private static void testImpl() {
         ConcurrentObjectPool<StringBuilder> objectPool = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL;
         for (int j = 0; j < 100000; j++) {
-            var object = objectPool.acquire();
-            objectPool.release(object);
+            var obj = objectPool.acquire();
+            objectPool.release(obj);
         }
     }
 }

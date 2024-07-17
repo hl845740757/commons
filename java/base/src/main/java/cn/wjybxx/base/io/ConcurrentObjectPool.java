@@ -29,6 +29,7 @@ import java.util.function.Supplier;
 
 /**
  * 固定大小的普通对象池实现
+ * (未鉴定归属，可归还外部对象)
  *
  * @author wjybxx
  * date - 2024/1/6

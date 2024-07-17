@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.IO;
 /// </summary>
 /// <typeparam name="T"></typeparam>
 [ThreadSafe]
-public class DefaultArrayPool<T> : IArrayPool<T>
+public class ConcurrentArrayPool<T> : IArrayPool<T>
 {
     private readonly int _defCapacity;
     private readonly bool _clear;
@@ -42,7 +42,7 @@ public class DefaultArrayPool<T> : IArrayPool<T>
     /// <param name="maxCapacity">最近数组长度；超过大小的数组不会放入池中</param>
     /// <param name="clear">数组归还到池中时是否清理</param>
     /// <exception cref="ArgumentException"></exception>
-    public DefaultArrayPool(int defCapacity, int maxCapacity, bool clear = false) {
+    public ConcurrentArrayPool(int defCapacity, int maxCapacity, bool clear = false) {
         if (defCapacity < 0 || maxCapacity < 0) {
             throw new ArgumentException($"{nameof(defCapacity)}: {defCapacity}, {nameof(maxCapacity)}: {maxCapacity}");
         }
@@ -59,7 +59,7 @@ public class DefaultArrayPool<T> : IArrayPool<T>
     /// <param name="clear">数组归还到池中时是否清理</param>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
-    public DefaultArrayPool(ArrayPool<T> arrayPool, int defCapacity, bool clear = false) {
+    public ConcurrentArrayPool(ArrayPool<T> arrayPool, int defCapacity, bool clear = false) {
         if (defCapacity < 0) {
             throw new ArgumentException($"{nameof(defCapacity)}: {defCapacity}");
         }

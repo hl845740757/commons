@@ -27,6 +27,7 @@ import java.util.function.Consumer;
 
 /**
  * 高性能的并发数组池实现
+ * (未鉴定归属，可归还外部数组)
  *
  * @author wjybxx
  * date - 2024/1/6

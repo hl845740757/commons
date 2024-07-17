@@ -125,7 +125,7 @@ final class MpmcArrayQueue<E> {
 
             if (!isPublished(next)) {
                 // 如果尚未发布，则判断当前是否正在生产，如果正在生产者则spin等待
-                if (next < lvProducerIndex()) {
+                if (next <= lvProducerIndex()) {
                     next = current; // skip cas
                     continue;
                 }
