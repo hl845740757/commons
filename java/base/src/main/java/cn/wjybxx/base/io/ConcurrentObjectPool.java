@@ -161,4 +161,12 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
         }
     }
 
+    public void fill(int count){
+        for (int i = 0; i < count; i++) {
+            if (!freeObjects.offer(factory.get())) {
+                return;
+            }
+        }
+    }
+
 }

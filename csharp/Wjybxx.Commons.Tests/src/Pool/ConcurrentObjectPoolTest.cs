@@ -29,9 +29,12 @@ public class ConcurrentObjectPoolTest
     [Repeat(5)]
     [Test]
     public void TestConcurrentPool() {
-        ConcurrentObjectPool.SharedStringBuilderPool.Clear();
-
         int treadCount = 8;
+        ConcurrentObjectPool.SharedStringBuilderPool.Clear(); // 消除其它测试影响
+        // ConcurrentObjectPool.SharedStringBuilderPool.Fill(treadCount);
+        // int availableCount = ConcurrentObjectPool.SharedStringBuilderPool.AvailableCount();
+        // Assert.True(availableCount == treadCount);
+
         List<Thread> threads = new List<Thread>(treadCount);
         for (int i = 0; i < treadCount; i++) {
             threads.Add(new Thread(TestImpl));
@@ -43,6 +46,9 @@ public class ConcurrentObjectPoolTest
         foreach (Thread thread in threads) {
             thread.Join();
         }
+        // producerIndex 799999
+        // consumerIndex 799991
+        // 压入了80次，从池中取出799992次，因为有8个是new出来的
         int availableCount = ConcurrentObjectPool.SharedStringBuilderPool.AvailableCount();
         Assert.True(availableCount == treadCount);
     }

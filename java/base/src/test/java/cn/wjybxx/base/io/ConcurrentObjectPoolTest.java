@@ -30,9 +30,12 @@ public class ConcurrentObjectPoolTest {
 
     @RepeatedTest(5)
     void testConcurrentPool() {
-        ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.clear();
-
         int treadCount = 8;
+        ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.clear(); // 消除其它测试影响
+//        ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.fill(treadCount);
+//        int availableCount = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.getAvailableCount();
+//        Assertions.assertEquals(availableCount, treadCount);
+
         List<Thread> threads = new ArrayList<>(treadCount);
         for (int i = 0; i < treadCount; i++) {
             threads.add(new Thread(ConcurrentObjectPoolTest::testImpl));
@@ -47,6 +50,9 @@ public class ConcurrentObjectPoolTest {
             } catch (InterruptedException ignore) {
             }
         }
+        // producerIndex 799999
+        // consumerIndex 799991
+        // 压入了80次，从池中取出799992次，因为有8个是new出来的
         int availableCount = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.getAvailableCount();
         Assertions.assertEquals(availableCount, treadCount);
     }

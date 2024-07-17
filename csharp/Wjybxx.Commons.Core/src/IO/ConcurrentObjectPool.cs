@@ -68,6 +68,11 @@ public class ConcurrentObjectPool<T> : IObjectPool<T> where T : class
     }
 
     /// <summary>
+    /// 对象池大小
+    /// </summary>
+    public int PoolSize => _freeObjects.Length;
+
+    /// <summary>
     /// 可用对象数
     /// (注意：这只是一个估值，通常仅用于debug和测试用例)
     /// </summary>
@@ -91,6 +96,14 @@ public class ConcurrentObjectPool<T> : IObjectPool<T> where T : class
 
     public void Clear() {
         while (_freeObjects.Poll(out T _)) {
+        }
+    }
+
+    public void Fill(int count) {
+        for (int i = 0; i < count; i++) {
+            if (!_freeObjects.Offer(_factory.Invoke())) {
+                return;
+            }
         }
     }
 }
