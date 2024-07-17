@@ -34,7 +34,7 @@ public class ConcurrentObjectPool
         () => new StringBuilder(1024),
         sb => sb.Clear(),
         64,
-        sb => sb.Length >= 1024 && sb.Length <= 64 * 1024
+        sb => sb.Capacity >= 1024 && sb.Capacity <= 64 * 1024
     );
 }
 

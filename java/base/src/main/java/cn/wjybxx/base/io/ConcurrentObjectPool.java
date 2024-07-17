@@ -44,7 +44,7 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
             () -> new StringBuilder(1024),
             sb -> sb.setLength(0),
             64,
-            sb -> sb.length() >= 1024 && sb.length() <= 64 * 1024);
+            sb -> sb.capacity() >= 1024 && sb.capacity() <= 64 * 1024);
 
     private final Supplier<? extends T> factory;
     private final ResetPolicy<? super T> resetPolicy;
