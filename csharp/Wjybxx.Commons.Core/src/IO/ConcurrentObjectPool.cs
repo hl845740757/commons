@@ -67,6 +67,13 @@ public class ConcurrentObjectPool<T> : IObjectPool<T> where T : class
         _freeObjects = new MpmcArrayQueue<T>(poolSize);
     }
 
+    /// <summary>
+    /// 可用对象数
+    /// (注意：这只是一个估值，通常仅用于debug和测试用例)
+    /// </summary>
+    /// <returns></returns>
+    public int AvailableCount() => _freeObjects.Count;
+
     public T Acquire() {
         if (_freeObjects.Poll(out T result)) {
             return result;

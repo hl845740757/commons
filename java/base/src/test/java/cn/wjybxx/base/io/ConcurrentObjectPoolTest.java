@@ -16,6 +16,7 @@
 
 package cn.wjybxx.base.io;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
 
 import java.util.ArrayList;
@@ -29,12 +30,25 @@ public class ConcurrentObjectPoolTest {
 
     @RepeatedTest(5)
     void testConcurrentPool() {
+        ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.clear();
+
         int treadCount = 8;
         List<Thread> threads = new ArrayList<>(treadCount);
         for (int i = 0; i < treadCount; i++) {
             threads.add(new Thread(ConcurrentObjectPoolTest::testImpl));
         }
-        threads.forEach(Thread::start);
+        for (Thread thread : threads) {
+            thread.start();
+        }
+        // 等待退出
+        for (Thread t : threads) {
+            try {
+                t.join();
+            } catch (InterruptedException ignore) {
+            }
+        }
+        int availableCount = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.getAvailableCount();
+        Assertions.assertEquals(availableCount, treadCount);
     }
 
     private static void testImpl() {

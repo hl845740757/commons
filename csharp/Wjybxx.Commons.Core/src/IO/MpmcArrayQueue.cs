@@ -82,6 +82,11 @@ internal class MpmcArrayQueue<T>
     /// </summary>
     public int Length => length;
 
+    /// <summary>
+    /// 当前元素数量
+    /// </summary>
+    public int Count => MathCommon.Clamp(LvProducerIndex() - LvConsumerIndex(), 0, length);
+
     /** 尝试压入数组 */
     public bool Offer(T element) {
         if (element == null) throw new ArgumentNullException(nameof(element));

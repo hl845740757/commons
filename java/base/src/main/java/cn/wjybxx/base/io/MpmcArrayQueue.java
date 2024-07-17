@@ -16,6 +16,8 @@
 
 package cn.wjybxx.base.io;
 
+import cn.wjybxx.base.MathCommon;
+
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.Arrays;
@@ -78,6 +80,11 @@ final class MpmcArrayQueue<E> {
     /** 数组的长度 */
     public int getLength() {
         return length;
+    }
+
+    /** 当前元素数量 */
+    public int size() {
+        return MathCommon.clamp(lvProducerIndex() - lvConsumerIndex(), 0, length);
     }
 
     /** 尝试压入数组 */

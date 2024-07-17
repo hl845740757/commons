@@ -26,8 +26,11 @@ namespace Commons.Tests.Pool;
 
 public class ConcurrentObjectPoolTest
 {
+    [Repeat(5)]
     [Test]
     public void TestConcurrentPool() {
+        ConcurrentObjectPool.SharedStringBuilderPool.Clear();
+
         int treadCount = 8;
         List<Thread> threads = new List<Thread>(treadCount);
         for (int i = 0; i < treadCount; i++) {
@@ -36,6 +39,12 @@ public class ConcurrentObjectPoolTest
         foreach (Thread thread in threads) {
             thread.Start();
         }
+        // 等待退出
+        foreach (Thread thread in threads) {
+            thread.Join();
+        }
+        int availableCount = ConcurrentObjectPool.SharedStringBuilderPool.AvailableCount();
+        Assert.True(availableCount == treadCount);
     }
 
     private static void TestImpl() {

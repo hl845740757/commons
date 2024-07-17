@@ -89,6 +89,15 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
         return freeObjects.getLength();
     }
 
+    /**
+     * 可用对象数
+     * 注意：这只是一个估值，通常仅用于debug和测试用例
+     */
+    public int getAvailableCount() {
+        return freeObjects.size();
+    }
+
+    @Deprecated
     @Override
     public T get() {
         return acquire();
