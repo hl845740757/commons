@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
@@ -81,12 +82,12 @@ public static class TaskOption
     /// 
     /// ps:监听取消信号的目的在于及时从队列中删除任务。
     ///</summary>
-    public const int IGNORE_FUTURE_CANCEL = 1 << 17;
+    private const int IGNORE_FUTURE_CANCEL = 1 << 17;
 
-    /**
-     * 该选项表示异步任务需要继承上游任务的取消令牌。
-     * 注意： 在显式指定了上下文的情况下无效。
-     */
+    /// <summary>
+    /// 该选项表示异步任务需要继承上游任务的取消令牌。
+    /// 注意： 在显式指定了上下文的情况下无效。
+    /// </summary>
     public const int STAGE_INHERIT_CANCEL_TOKEN = 18;
     /// <summary>
     /// 如果一个异步任务当前已在目标<see cref="ISingleThreadExecutor"/>线程，则立即执行，而不提交任务。
@@ -104,6 +105,11 @@ public static class TaskOption
     /// </summary>
     public const int STAGE_CHECK_OBJECT_CTX = 1 << 21;
 
+    /// <summary>
+    /// 忽略死锁检测
+    /// </summary>
+    private const int IGNORE_DEADLOCK = 1 << 22;
+
     #region util
 
     /** 优先级的存储偏移量 */
@@ -114,7 +120,10 @@ public static class TaskOption
     /** 优先级的最大值 */
     public const int MAX_PRIORITY = MASK_PRIORITY >> OFFSET_PRIORITY;
 
-    /// <summary> 是否启用了所有选项 ///</summary>
+    /// <summary>
+    /// 是否启用了所有选项
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsEnabled(int flags, int option) {
         return (flags & option) == option;
     }
@@ -124,6 +133,7 @@ public static class TaskOption
     /// 1.禁用任意bit即为未启用；
     /// 2.和{@link #isEnabled(int, int)}相反关系
     ///</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsDisabled(int flags, int option) {
         return (flags & option) != option;
     }
@@ -134,6 +144,7 @@ public static class TaskOption
     /// <param name="flags">当前flags</param>
     /// <param name="option">要启用的选项</param>
     /// <returns>新的flags</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Enable(int flags, int option) {
         return flags | option;
     }
@@ -144,6 +155,7 @@ public static class TaskOption
     /// <param name="flags">当前flags</param>
     /// <param name="option">要禁用的选项</param>
     /// <returns>新的flags</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Disable(int flags, int option) {
         return (flags & ~option);
     }
@@ -155,6 +167,7 @@ public static class TaskOption
     /// <param name="option">要启用或禁用的选项</param>
     /// <param name="enable">开启或禁用</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int SetEnable(int flags, int option, bool enable) {
         if (enable) {
             return (flags | option);
@@ -166,6 +179,7 @@ public static class TaskOption
     /// <summary>
     /// 获取任务的调度阶段
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetSchedulePhase(int options) {
         return options & MASK_SCHEDULE_PHASE;
     }
@@ -176,6 +190,7 @@ public static class TaskOption
     /// <param name="options">当前options</param>
     /// <param name="phase">调度阶段</param>
     /// <returns>新的options</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int SetSchedulePhase(int options, int phase) {
         if (phase < 0 || phase > MAX_SCHEDULE_PHASE) {
             throw new ArgumentException("phase: " + phase);
@@ -190,6 +205,7 @@ public static class TaskOption
     /// </summary>
     /// <param name="options"></param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetPriority(int options) {
         return (options & MASK_PRIORITY) >> OFFSET_PRIORITY;
     }
@@ -200,6 +216,7 @@ public static class TaskOption
     /// <param name="options"></param>
     /// <param name="priority"></param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int SetPriority(int options, int priority) {
         if (priority < 0 || priority > MAX_PRIORITY) {
             throw new ArgumentException("priority: " + priority);

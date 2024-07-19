@@ -45,6 +45,7 @@ public class Context<T> : IContext where T : class
     /// 任务黑板 -- 黑板用于支持读写共享变量，不同任务可能指向同一个对象。 
     /// </summary>
     public T Blackboard { get; }
+
     object IContext.Blackboard => Blackboard;
 
     /// <summary>

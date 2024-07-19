@@ -24,8 +24,11 @@ import java.util.stream.Stream;
 
 abstract class RingBufferPad {
 
+    // region pad
     private long p1, p2, p3, p4, p5, p6, p7, p8;
-    private long p9, p10, p11, p12, p13, p14, p15;
+//    private long p11, p12, p13, p14, p15, p16, p17, p18;
+    // endregion
+
 }
 
 abstract class RingBufferFields<E> extends RingBufferPad {
@@ -52,7 +55,7 @@ abstract class RingBufferFields<E> extends RingBufferPad {
         if (!Util.isPowerOfTwo(bufferSize)) {
             throw new IllegalArgumentException("bufferSize must be a power of 2");
         }
-        // 前16和后16个用于缓存行填充
+        // 前16和后16个用于缓存行填充 -- 32位JVM上Object4字节
         this.entries = new Object[bufferSize + BUFFER_PAD * 2];
         this.bufferSize = bufferSize;
         this.indexMask = bufferSize - 1;
@@ -97,8 +100,10 @@ abstract class RingBufferFields<E> extends RingBufferPad {
  */
 public final class RingBuffer<E> extends RingBufferFields<E> implements DataProvider<E> {
 
+    // region pad
     private long p1, p2, p3, p4, p5, p6, p7, p8;
-    private long p9, p10, p11, p12, p13, p14, p15, p16;
+//    private long p11, p12, p13, p14, p15, p16, p17, p18;
+    // endregion
 
     public RingBuffer(EventFactory<? extends E> eventFactory, int bufferSize) {
         super(eventFactory, bufferSize);

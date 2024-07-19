@@ -23,19 +23,20 @@ using System.Collections.Generic;
 namespace Wjybxx.Commons.IO;
 
 /// <summary>
-/// 高性能的并发数组池实现
-/// (未鉴定归属，可归还外部数组)
+/// 高性能的并发对象池实现
+/// (未鉴定归属，可归还外部对象)
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
+public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
 {
+    private readonly IPoolableArrayHandler<T> _handler;
     private readonly bool _clear;
     private readonly int _lookAhead;
 
     private readonly int[] _capacities; // 用于快速二分查找，避免查询buckets
-    private readonly MpmcArrayQueue<T[]>[] _buckets;
+    private readonly MpmcArrayQueue<T>[] _buckets;
 
-    public ConcurrentArrayPool(Builder builder) {
+    public ConcurrentArrayLikePool(Builder builder) {
         List<ArrayBucketConfig> bucketInfo = builder.BucketInfo;
         int[] arrayCapacities;
         int[] arrayCacheCounts;
@@ -47,28 +48,29 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
             arrayCapacities = ArrayPoolCore.CalArrayCapacities(builder.DefCapacity, builder.MaxCapacity, builder.ArrayGrowFactor);
             arrayCacheCounts = ArrayPoolCore.CalArrayCacheCounts(arrayCapacities.Length, builder.FirstBucketLength, builder.BucketGrowFactor);
         }
+        this._handler = builder.Handler;
         this._clear = builder.Clear;
         this._lookAhead = Math.Max(0, builder.LookAhead);
 
         // 初始化chunk
         this._capacities = arrayCapacities;
-        this._buckets = new MpmcArrayQueue<T[]>[arrayCapacities.Length];
+        this._buckets = new MpmcArrayQueue<T>[arrayCapacities.Length];
         for (int i = 0; i < _buckets.Length; i++) {
-            _buckets[i] = new MpmcArrayQueue<T[]>(arrayCacheCounts[i]);
+            _buckets[i] = new MpmcArrayQueue<T>(arrayCacheCounts[i]);
         }
     }
 
-    public T[] Acquire() {
+    public T Acquire() {
         return Acquire(_capacities[0]);
     }
 
-    public T[] Acquire(int minimumLength, bool clear = false) {
+    public T Acquire(int minimumLength, bool clear = false) {
         int index = ArrayPoolCore.IndexBucketOfArray(_capacities, minimumLength);
         if (index < 0) { // 不能被池化
-            return new T[minimumLength];
+            return _handler.Create(this, minimumLength);
         }
         // 先尝试从最佳池申请
-        if (_buckets[index].Poll(out T[] array)) {
+        if (_buckets[index].Poll(out T array)) {
             return array;
         }
         // 尝试从更大的池申请 -- 最多跳3级，避免大规模遍历
@@ -81,33 +83,37 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
             }
         }
         // 分配新的
-        array = new T[_capacities[index]];
+        array = _handler.Create(this, _capacities[index]);
         return array;
     }
 
-    public void Release(T[] array) {
+    public void Release(T array) {
         ReleaseImpl(array, this._clear);
     }
 
-    public void Release(T[] array, bool clear) {
+    public void Release(T array, bool clear) {
         ReleaseImpl(array, this._clear | clear);
     }
 
-    private void ReleaseImpl(T[] array, bool clear) {
-        int length = array.Length;
+    private void ReleaseImpl(T array, bool clear) {
+        int length = _handler.GetCapacity(array);
         int index = ArrayPoolCore.IndexBucketOfArray(_capacities, length);
-        if (index < 0 || length != _capacities[index]) { // 长度不匹配
+        if (index < 0 || length != _capacities[index] || !_handler.Test(array)) { // 长度不匹配
+            _handler.Destroy(array);
             return;
         }
         if (clear) {
-            Array.Clear(array);
+            _handler.Reset(array);
         }
-        _buckets[index].Offer(array);
+        if (!_buckets[index].Offer(array)) {
+            _handler.Destroy(array);
+        }
     }
 
     public void Clear() {
-        foreach (MpmcArrayQueue<T[]> bucket in _buckets) {
-            while (bucket.Poll(out T[] _)) {
+        foreach (MpmcArrayQueue<T> bucket in _buckets) {
+            while (bucket.Poll(out T array)) {
+                _handler.Destroy(array);
             }
         }
     }
@@ -116,6 +122,8 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
 
     public class Builder
     {
+        /** 处理器 */
+        private readonly IPoolableArrayHandler<T> handler;
         /** 数组在归还时是否清理数组内容 */
         private bool clear;
         /** 当前chunk没有合适空闲数组时，后向查找个数 -- 该值过大可能导致性能损耗，也可能导致返回过大的数组 */
@@ -140,23 +148,15 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
         /// </summary>
         private readonly List<ArrayBucketConfig> bucketInfo = new List<ArrayBucketConfig>();
 
-        public Builder() {
+        public Builder(IPoolableArrayHandler<T> handler) {
+            this.handler = handler ?? throw new ArgumentNullException(nameof(handler));
         }
 
-        public ConcurrentArrayPool<T> Build() {
-            return new ConcurrentArrayPool<T>(this);
+        public ConcurrentArrayLikePool<T> Build() {
+            return new ConcurrentArrayLikePool<T>(this);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="arrayCapacity">bucket中的数组大小</param>
-        /// <param name="cacheCount">bucket缓存的数组个数</param>
-        /// <returns></returns>
-        public Builder AddBucket(int arrayCapacity, int cacheCount) {
-            this.bucketInfo.Add(new ArrayBucketConfig(arrayCapacity, cacheCount));
-            return this;
-        }
+        public IPoolableArrayHandler<T> Handler => handler;
 
         public int DefCapacity {
             get => defCapacity;

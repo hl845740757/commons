@@ -29,7 +29,7 @@ import java.util.List;
 public class ConcurrentObjectPoolTest {
 
     @RepeatedTest(5)
-    void testConcurrentPool() {
+    void testMpmc() {
         int treadCount = 8;
         ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.clear(); // 消除其它测试影响
 //        ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.fill(treadCount);

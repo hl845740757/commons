@@ -353,8 +353,8 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     }
 
     @Override
-    public boolean trySetCancelled(int code) {
-        Throwable cause = StacklessCancellationException.instOf(code);
+    public boolean trySetCancelled(int cancelCode) {
+        Throwable cause = StacklessCancellationException.instOf(cancelCode);
         if (internalComplete(new AltResult(cause))) {
             postComplete(this); // 不记录日志
             return true;
@@ -363,8 +363,8 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     }
 
     @Override
-    public void setCancelled(int code) {
-        if (!trySetCancelled(code)) {
+    public void setCancelled(int cancelCode) {
+        if (!trySetCancelled(cancelCode)) {
             throw new IllegalStateException("Already complete");
         }
     }
@@ -1999,14 +1999,14 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
     // region UniOnComplete
 
-    /** 普通回调式计算的超类 */
-    private static abstract class UniOnComplete<V> extends Completion {
+    /** 普通回调式计算的超类 -- 泛型T就是Promise的T，因此命名相同 */
+    private static abstract class UniOnComplete<T> extends Completion {
 
         Executor executor;
         int options;
-        UniPromise<V> input;
+        UniPromise<T> input;
 
-        public UniOnComplete(Executor executor, int options, UniPromise<V> input) {
+        public UniOnComplete(Executor executor, int options, UniPromise<T> input) {
             this.options = options;
             this.executor = executor;
             this.input = input;
@@ -2035,19 +2035,19 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         }
     }
 
-    private static class UniOnComplete1<V> extends UniOnComplete<V> {
+    private static class UniOnComplete1<T> extends UniOnComplete<T> {
 
-        Consumer<? super IFuture<V>> action;
+        Consumer<? super IFuture<T>> action;
 
-        public UniOnComplete1(Executor executor, int options, UniPromise<V> input,
-                              Consumer<? super IFuture<V>> action) {
+        public UniOnComplete1(Executor executor, int options, UniPromise<T> input,
+                              Consumer<? super IFuture<T>> action) {
             super(executor, options, input);
             this.action = action;
         }
 
         @Override
         UniPromise<?> tryFire(int mode) {
-            final UniPromise<V> input = this.input;
+            final UniPromise<T> input = this.input;
             // 异步模式下已经claim
             if (!fireNow(input, action, mode > 0 ? null : this)) {
                 return null;
@@ -2059,9 +2059,9 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
             return null;
         }
 
-        static <V> boolean fireNow(UniPromise<V> input,
-                                   Consumer<? super IFuture<V>> action,
-                                   UniOnComplete1<V> c) {
+        static <T> boolean fireNow(UniPromise<T> input,
+                                   Consumer<? super IFuture<T>> action,
+                                   UniOnComplete1<T> c) {
             try {
                 if (c != null && !c.claim()) {
                     return false;
@@ -2074,13 +2074,13 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         }
     }
 
-    private static class UniOnComplete2<V> extends UniOnComplete<V> {
+    private static class UniOnComplete2<T> extends UniOnComplete<T> {
 
-        BiConsumer<? super IFuture<V>, ? super IContext> action;
+        BiConsumer<? super IFuture<T>, ? super IContext> action;
         IContext ctx;
 
-        public UniOnComplete2(Executor executor, int options, UniPromise<V> input,
-                              BiConsumer<? super IFuture<V>, ? super IContext> action, IContext ctx) {
+        public UniOnComplete2(Executor executor, int options, UniPromise<T> input,
+                              BiConsumer<? super IFuture<T>, ? super IContext> action, IContext ctx) {
             super(executor, options, input);
             this.action = action;
             this.ctx = ctx;
@@ -2088,7 +2088,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
         @Override
         UniPromise<?> tryFire(int mode) {
-            final UniPromise<V> input = this.input;
+            final UniPromise<T> input = this.input;
             tryComplete:
             {
                 if (ctx.cancelToken().isCancelling()) {
@@ -2107,9 +2107,9 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
             return null;
         }
 
-        static <V> boolean fireNow(UniPromise<V> input,
-                                   BiConsumer<? super IFuture<V>, ? super IContext> action, IContext ctx,
-                                   UniOnComplete2<V> c) {
+        static <T> boolean fireNow(UniPromise<T> input,
+                                   BiConsumer<? super IFuture<T>, ? super IContext> action, IContext ctx,
+                                   UniOnComplete2<T> c) {
             try {
                 if (c != null && !c.claim()) {
                     return false;

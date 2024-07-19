@@ -159,6 +159,11 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
     /** 事件工厂 */
     private final EventFactory<? extends E> factory;
 
+    // region pad
+    private long p1, p2, p3, p4, p5, p6, p7, p8;
+//    private long p11, p12, p13, p14, p15, p16, p17, p18;
+    // endregion
+
     /**
      * @param chunkSize       单个块大小
      * @param maxPooledChunks 缓存块数量
@@ -211,7 +216,6 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
 
     /** 判断两个sequence是否落在同一个chunk */
     public boolean inSameChunk(long seq1, long seq2) {
-        final int chunkShift = this.chunkShift;
         return (seq1 >> chunkShift) == (seq2 >> chunkShift);
     }
 

@@ -16,8 +16,6 @@
 
 package cn.wjybxx.base;
 
-import cn.wjybxx.base.collection.DelayedCompressList;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
@@ -34,34 +32,9 @@ public class CollectionUtils {
 
     public static final int INDEX_NOT_FOUND = -1;
 
-    public static final byte[] EMPTY_BYTE_ARRAY = {};
-    public static final int[] EMPTY_INT_ARRAY = {};
-    public static final long[] EMPTY_LONG_ARRAY = {};
-    public static final float[] EMPTY_FLOAT_ARRAY = {};
-    public static final double[] EMPTY_DOUBLE_ARRAY = {};
-    public static final boolean[] EMPTY_BOOLEAN_ARRAY = {};
-
-    public static final String[] EMPTY_STRING_ARRAY = {};
-    public static final Object[] EMPTY_OBJECT_ARRAY = {};
-    public static final Class<?>[] EMPTY_CLASS_ARRAY = {};
-
     private CollectionUtils() {
 
     }
-
-    // region 特殊工厂
-    public static <E> DelayedCompressList<E> newDelayedCompressList() {
-        return new DelayedCompressList<>();
-    }
-
-    public static <E> DelayedCompressList<E> newDelayedCompressList(int initCapacity) {
-        return new DelayedCompressList<>(initCapacity);
-    }
-
-    public static <E> DelayedCompressList<E> newDelayedCompressList(Collection<? extends E> src) {
-        return new DelayedCompressList<>(src);
-    }
-    // endregion
 
     // region list扩展
 
@@ -93,10 +66,12 @@ public class CollectionUtils {
 
     /** 删除list的前n个元素 */
     public static void removeFirstN(List<?> list, int n) {
-        if (n <= 0) {
+        if (n <= 0 || list.isEmpty()) {
             return;
         }
-        if (list.size() <= n) {
+        if (n == 1) {
+            list.removeFirst();
+        } else if (list.size() <= n) {
             list.clear();
         } else {
             list.subList(0, n).clear();
@@ -105,10 +80,12 @@ public class CollectionUtils {
 
     /** 删除list的后n个元素 */
     public static void removeLastN(List<?> list, int n) {
-        if (n <= 0) {
+        if (n <= 0 || list.isEmpty()) {
             return;
         }
-        if (list.size() <= n) {
+        if (n == 1) {
+            list.removeLast();
+        } else if (list.size() <= n) {
             list.clear();
         } else {
             list.subList(list.size() - n, list.size()).clear();
@@ -318,69 +295,6 @@ public class CollectionUtils {
         removeAt(list, index, ordered);
         return true;
     }
-    // endregion
-
-    // region 数组
-
-    /** 判断是否存在给定元素的引用 */
-    public static <T> boolean containsRef(T[] list, Object element) {
-        return indexOfRef(list, element, 0) >= 0;
-    }
-
-    /** 查找对象引用在数组中的索引 */
-    public static <T> int indexOfRef(T[] list, Object element) {
-        return indexOfRef(list, element, 0);
-    }
-
-    /**
-     * 查找对象引用在数组中的索引
-     *
-     * @param element    要查找的元素
-     * @param startIndex 开始下标
-     */
-    public static <T> int indexOfRef(T[] list, Object element, int startIndex) {
-        Objects.requireNonNull(list, "list");
-        if (startIndex >= list.length) {
-            return INDEX_NOT_FOUND;
-        }
-        if (startIndex < 0) {
-            startIndex = 0;
-        }
-        for (int i = startIndex, size = list.length; i < size; i++) {
-            if (list[i] == element) {
-                return i;
-            }
-        }
-        return INDEX_NOT_FOUND;
-    }
-
-    /** 反向查找对象引用在数组中的索引 */
-    public static <T> int lastIndexOfRef(T[] list, Object element) {
-        return lastIndexOfRef(list, element, Integer.MAX_VALUE);
-    }
-
-    /**
-     * 反向查找对象引用在数组中的索引
-     *
-     * @param element    要查找的元素
-     * @param startIndex 开始下标
-     */
-    public static <T> int lastIndexOfRef(T[] list, Object element, int startIndex) {
-        Objects.requireNonNull(list, "list");
-        if (startIndex < 0) {
-            return INDEX_NOT_FOUND;
-        }
-        if (startIndex >= list.length) {
-            startIndex = list.length - 1;
-        }
-        for (int i = startIndex; i >= 0; i--) {
-            if (list[i] == element) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
     // endregion
 
     // region arrayList快捷方法

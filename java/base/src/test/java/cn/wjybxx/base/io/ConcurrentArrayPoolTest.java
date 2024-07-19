@@ -16,7 +16,9 @@
 
 package cn.wjybxx.base.io;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +30,7 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class ConcurrentArrayPoolTest {
 
-
-    @RepeatedTest(5)
+    @Test
     void testSpsc() {
         int minLen = 100;
         int maxLen = 1500;
@@ -37,6 +38,7 @@ public class ConcurrentArrayPoolTest {
         ConcurrentArrayPool<byte[]> arrayPool = ConcurrentArrayPool.newBuilder(byte[].class)
                 .setDefCapacity(minLen)
                 .setMaxCapacity(maxLen)
+                .setBucketGrowFactor(0.75)
                 .setClear(false)
                 .build();
 
@@ -44,7 +46,7 @@ public class ConcurrentArrayPoolTest {
     }
 
     @RepeatedTest(5)
-    void testConcurrentPool() {
+    void testMpmc() {
         int minLen = 100;
         int maxLen = 1500;
 
@@ -59,13 +61,38 @@ public class ConcurrentArrayPoolTest {
         for (int i = 0; i < treadCount; i++) {
             threads.add(new Thread(() -> testImpl(arrayPool)));
         }
-        threads.forEach(Thread::start);
+        for (Thread thread : threads) {
+            thread.start();
+        }
+        // 等待退出
+        for (Thread t : threads) {
+            try {
+                t.join();
+            } catch (InterruptedException ignore) {
+            }
+        }
+    }
+
+    @Test
+    void testConfig() {
+        ConcurrentArrayPool<byte[]> arrayPool = ConcurrentArrayPool.newBuilder(byte[].class)
+                .addBucket(256, 100)
+                .addBucket(1024, 100)
+                .addBucket(2048, 80)
+                .addBucket(4096,60)
+                .addBucket(8192, 50)
+                .addBucket(10000, 20)
+                .setClear(false)
+                .build();
+        testImpl(arrayPool);
     }
 
     private static void testImpl(ConcurrentArrayPool<byte[]> arrayPool) {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         for (int j = 0; j < 100000; j++) {
-            byte[] bytes = arrayPool.acquire(random.nextInt(0, 2048));
+            int minimumLength = random.nextInt(0, 2048);
+            byte[] bytes = arrayPool.acquire(minimumLength);
+            Assertions.assertTrue(bytes.length >= minimumLength);
             arrayPool.release(bytes);
         }
     }

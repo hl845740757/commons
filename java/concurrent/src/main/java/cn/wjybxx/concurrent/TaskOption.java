@@ -103,6 +103,9 @@ public final class TaskOption {
      */
     public static final int STAGE_CHECK_OBJECT_CTX = 1 << 21;
 
+    /** 忽略死锁检测 */
+    private static final int IGNORE_DEADLOCK = 1 << 22;
+
     // region util
     /** 优先级的存储偏移量 */
     public static final int OFFSET_PRIORITY = 6;

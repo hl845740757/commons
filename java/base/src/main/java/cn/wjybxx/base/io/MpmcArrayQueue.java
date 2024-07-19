@@ -233,11 +233,11 @@ final class MpmcArrayQueue<E> {
     static {
         try {
             MethodHandles.Lookup l = MethodHandles.lookup();
-            VH_ELEMENTS = MethodHandles.arrayElementVarHandle(Object[].class);
-            VH_LONG_ARRAY = MethodHandles.arrayElementVarHandle(long[].class);
-
             VH_PRODUCER = l.findVarHandle(MpmcArrayQueue.class, "producerIndex", long.class);
             VH_CONSUMER = l.findVarHandle(MpmcArrayQueue.class, "consumerIndex", long.class);
+
+            VH_ELEMENTS = MethodHandles.arrayElementVarHandle(Object[].class);
+            VH_LONG_ARRAY = MethodHandles.arrayElementVarHandle(long[].class);
         } catch (Exception e) {
             throw new ExceptionInInitializerError(e);
         }

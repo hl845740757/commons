@@ -186,6 +186,13 @@ public abstract class AbstractUniPromise
         internal Completion? next;
 
         /// <summary>
+        /// 用于池化
+        /// </summary>
+        public virtual void Reset() {
+            next = null;
+        }
+
+        /// <summary>
         /// 任务在Executor执行
         /// </summary>
         public void Run() {

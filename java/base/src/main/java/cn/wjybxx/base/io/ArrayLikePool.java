@@ -19,14 +19,14 @@ package cn.wjybxx.base.io;
 import cn.wjybxx.base.pool.ObjectPool;
 
 /**
- * 数组池
- * Java不是真泛型，因此泛型不是数组元素的类型，而是数组的类型。
+ * 类数组(ArrayLike)对象池抽象
+ * 类数组的定义：对象和数组一样固定长度(空间)，不可自动扩容，常见于数组的封装类。
  *
  * @param <T> 数组的类型
  * @author wjybxx
  * date - 2024/1/3
  */
-public interface ArrayPool<T> extends ObjectPool<T> {
+public interface ArrayLikePool<T> extends ObjectPool<T> {
 
     /** 返回池中一个默认大小的数组 */
     @Override

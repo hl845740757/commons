@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable CS1591
 
@@ -26,48 +27,36 @@ namespace Wjybxx.Commons.Concurrent;
 /// 用于绑定回调线程
 /// 注意：不可手动获取<see cref="GetAwaiter"/>。
 /// </summary>
-public readonly struct FutureAwaitable
+public readonly struct ValueFutureAwaitable
 {
-    private readonly IFuture _future;
+    private readonly ValueFuture _future;
     private readonly IExecutor _executor;
     private readonly int _options;
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="future">future</param>
-    /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
-    public FutureAwaitable(IFuture future, IExecutor executor, int options) {
-        _future = future ?? throw new ArgumentNullException(nameof(future));
+    public ValueFutureAwaitable(ValueFuture future, IExecutor executor, int options) {
+        _future = future;
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _options = options;
     }
 
-    public FutureAwaiter GetAwaiter() => new FutureAwaiter(_future, _executor, _options);
+    public ValueFutureAwaiter GetAwaiter() => new ValueFutureAwaiter(_future, _executor, _options);
 }
 
 /// <summary>
 /// 用于绑定回调线程
 /// 注意：不可手动获取<see cref="GetAwaiter"/>。
 /// </summary>
-public readonly struct FutureAwaitable<T>
+public readonly struct ValueFutureAwaitable<T>
 {
-    private readonly IFuture<T> _future;
+    private readonly ValueFuture<T> _future;
     private readonly IExecutor _executor;
     private readonly int _options;
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="future">future</param>
-    /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
-    public FutureAwaitable(IFuture<T> future, IExecutor executor, int options) {
-        _future = future ?? throw new ArgumentNullException(nameof(future));
+    public ValueFutureAwaitable(ValueFuture<T> future, IExecutor executor, int options) {
+        _future = future;
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _options = options;
     }
 
-    public FutureAwaiter<T> GetAwaiter() => new FutureAwaiter<T>(_future, _executor, _options);
+    public ValueFutureAwaiter<T> GetAwaiter() => new ValueFutureAwaiter<T>(_future, _executor, _options);
 }

@@ -40,7 +40,7 @@ public class DefaultObjectPool<T> : IObjectPool<T>
     private const int DefaultPoolSize = 1024;
 
     private readonly Func<T> _factory;
-    private readonly Action<T> _resetPolicy;
+    private readonly Action<T> _resetHandler;
     private readonly Func<T, bool>? _filter;
 
     private readonly int _poolSize;
@@ -50,13 +50,14 @@ public class DefaultObjectPool<T> : IObjectPool<T>
     /// 
     /// </summary>
     /// <param name="factory">对象创建工厂</param>
-    /// <param name="resetPolicy">重置方法</param>
+    /// <param name="resetHandler">重置方法</param>
     /// <param name="poolSize">池大小；0表示不缓存对象</param>
-    /// <param name="_filter">回收对象的过滤器</param>
-    public DefaultObjectPool(Func<T> factory, Action<T> resetPolicy, int poolSize = DefaultPoolSize, Func<T, bool>? _filter = null) {
+    /// <param name="filter">回收对象的过滤器</param>
+    public DefaultObjectPool(Func<T> factory, Action<T> resetHandler, int poolSize = DefaultPoolSize, Func<T, bool>? filter = null) {
         this._factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        this._resetPolicy = resetPolicy ?? throw new ArgumentNullException(nameof(resetPolicy));
+        this._resetHandler = resetHandler ?? throw new ArgumentNullException(nameof(resetHandler));
         this._poolSize = poolSize;
+        this._filter = filter;
         this._freeObjects = new Stack<T>(Math.Clamp(poolSize, 0, 10));
     }
 
@@ -74,7 +75,7 @@ public class DefaultObjectPool<T> : IObjectPool<T>
             throw new ArgumentException("object cannot be null.");
         }
         // 先调用reset，避免reset出现异常导致添加脏对象到缓存池中 -- 断言是否在池中还是有较大开销
-        _resetPolicy(obj);
+        _resetHandler(obj);
         if (_freeObjects.Count < _poolSize && (_filter == null || _filter.Invoke(obj))) {
             _freeObjects.Push(obj);
         }
@@ -85,7 +86,7 @@ public class DefaultObjectPool<T> : IObjectPool<T>
             throw new ArgumentException("objects cannot be null.");
         }
         Stack<T> freeObjects = this._freeObjects;
-        Action<T> resetPolicy = this._resetPolicy;
+        Action<T> resetPolicy = this._resetHandler;
         Func<T, bool>? filter = this._filter;
         int maxCapacity = this._poolSize;
         if (objects is List<T> arrayList) {

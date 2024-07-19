@@ -15,7 +15,7 @@
  */
 package cn.wjybxx.base.collection;
 
-import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.ArrayUtils;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -213,7 +213,7 @@ public final class EmptyDequeue<E> implements Deque<E> {
     @Nonnull
     @Override
     public Object[] toArray() {
-        return CollectionUtils.EMPTY_OBJECT_ARRAY;
+        return ArrayUtils.EMPTY_OBJECT_ARRAY;
     }
 
     @Nonnull

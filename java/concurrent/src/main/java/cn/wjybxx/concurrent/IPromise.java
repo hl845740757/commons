@@ -73,16 +73,16 @@ public interface IPromise<T> extends IFuture<T> {
     /**
      * 将Future置为已取消状态，如果future已进入完成状态，则返回false
      *
-     * @param code 相关的取消码
+     * @param cancelCode 相关的取消码
      */
-    boolean trySetCancelled(int code);
+    boolean trySetCancelled(int cancelCode);
 
     /**
      * 将Future置为已取消状态，如果future已进入完成状态，则抛出{@link IllegalStateException}
      *
-     * @param code 相关的取消码
+     * @param cancelCode 相关的取消码
      */
-    void setCancelled(int code);
+    void setCancelled(int cancelCode);
 
     /**
      * 将目标future的结果传输到当前Promise

@@ -1,6 +1,6 @@
-﻿#region LICENSE
+#region LICENSE
 
-// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// Copyright 2024 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,28 +20,24 @@ using System;
 using System.Runtime.CompilerServices;
 
 #pragma warning disable CS1591
-
 namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
-/// 原始类型Future的等待器
-/// awaiter默认不返回结果。
+/// 
 /// </summary>
-public readonly struct FutureAwaiter : ICriticalNotifyCompletion
+public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
 {
-    private static readonly Action<IFuture, object> INVOKER = (_, state) => ((Action)state).Invoke();
-
-    private readonly IFuture _future;
+    private readonly ValueFuture _future;
     private readonly IExecutor? _executor;
     private readonly int _options;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="future">future</param>
-    /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
-    public FutureAwaiter(IFuture future, IExecutor? executor = null, int options = 0) {
+    /// <param name="future"></param>
+    /// <param name="executor"></param>
+    /// <param name="options"></param>
+    public ValueFutureAwaiter(ValueFuture future, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = executor;
         _options = options;
@@ -62,7 +58,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中 -- 不可手动调用
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void GetResult() {
-        _future.ThrowIfFailedOrCancelled();
+        _future.GetResult();
     }
 
     // 3. OnCompleted
@@ -73,42 +69,28 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (_executor == null) {
-            _future.OnCompleted(INVOKER, continuation, _options);
-        } else {
-            _future.OnCompletedAsync(_executor, INVOKER, continuation, _options);
-        }
+        _future.OnCompleted(continuation, _executor, _options);
     }
 
     public void UnsafeOnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (_executor == null) {
-            _future.OnCompleted(INVOKER, continuation, _options);
-        } else {
-            _future.OnCompletedAsync(_executor, INVOKER, continuation, _options);
-        }
+        _future.OnCompleted(continuation, _executor, _options);
     }
 }
 
-/// <summary>
-/// Future的等待器
-/// </summary>
-/// <typeparam name="T"></typeparam>
-public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
+public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
 {
-    private static readonly Action<IFuture<T>, object> INVOKER = (_, state) => ((Action)state).Invoke();
-
-    private readonly IFuture<T> _future;
+    private readonly ValueFuture<T> _future;
     private readonly IExecutor? _executor;
     private readonly int _options;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="future">future</param>
-    /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
-    public FutureAwaiter(IFuture<T> future, IExecutor? executor = null, int options = 0) {
+    /// <param name="future"></param>
+    /// <param name="executor"></param>
+    /// <param name="options"></param>
+    public ValueFutureAwaiter(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = executor;
         _options = options;
@@ -129,7 +111,7 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中 -- 不可手动调用
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetResult() {
-        return _future.Get();
+        return _future.GetResult();
     }
 
     // 3. OnCompleted
@@ -140,19 +122,11 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (_executor == null) {
-            _future.OnCompleted(INVOKER, continuation, _options);
-        } else {
-            _future.OnCompletedAsync(_executor, INVOKER, continuation, _options);
-        }
+        _future.OnCompleted(continuation, _executor, _options);
     }
 
     public void UnsafeOnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (_executor == null) {
-            _future.OnCompleted(INVOKER, continuation, _options);
-        } else {
-            _future.OnCompletedAsync(_executor, INVOKER, continuation, _options);
-        }
+        _future.OnCompleted(continuation, _executor, _options);
     }
 }

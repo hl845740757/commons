@@ -39,6 +39,8 @@ public interface IFuture
     /// 1.对于异步任务，Executor是其执行线程；而对于同步任务，Executor不一定是其执行线程 -- 继承得来的而已。
     /// 2.在添加下游任务时，如果没有显式指定Executor，将继承当前任务的Executor。
     /// 3.Executor主要用于死锁检测，相关接口<see cref="ISingleThreadExecutor"/>
+    ///
+    /// 注意：由于死锁检测并不完全正确，当你需要绕过死锁检测时，可通过添加下游任务重新指定Executor来绕过。
     /// </summary>
     IExecutor? Executor { get; }
 
@@ -104,6 +106,27 @@ public interface IFuture
     /// <exception cref="IllegalStateException">如果任务不是失败完成状态</exception>
     /// <returns></returns>
     Exception ExceptionNow(bool throwIfCancelled = true);
+
+    /// <summary>
+    /// 如果任务失败，则抛出异常
+    /// (不返回结果以避免装箱)
+    /// </summary>
+    void ThrowIfFailedOrCancelled() {
+        switch (Status) {
+            case TaskStatus.Failed: {
+                throw new CompletionException(null, ExceptionNow(false));
+            }
+            case TaskStatus.Cancelled: {
+                throw ExceptionNow(false);
+            }
+            case TaskStatus.Pending:
+            case TaskStatus.Computing:
+            case TaskStatus.Success:
+            default: {
+                break;
+            }
+        }
+    }
 
     #endregion
 
@@ -211,7 +234,7 @@ public interface IFuture
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
     /// <param name="options">调度选项</param>
-    void OnCompleted(Action<IFuture, object> continuation, object? state, int options = 0);
+    void OnCompleted(Action<IFuture, object?> continuation, object? state, int options = 0);
 
     /// <summary>
     /// 添加一个监听器  -- 接收future和state参数
@@ -220,7 +243,7 @@ public interface IFuture
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
     /// <param name="options">调度选项</param>
-    void OnCompletedAsync(IExecutor executor, Action<IFuture, object> continuation, object? state, int options = 0);
+    void OnCompletedAsync(IExecutor executor, Action<IFuture, object?> continuation, object? state, int options = 0);
 
     /// <summary>
     /// 添加一个监听器 -- 接收future和context参数
@@ -228,7 +251,7 @@ public interface IFuture
     /// <param name="continuation">回调</param>
     /// <param name="context">上下文</param>
     /// <param name="options">调度选项</param>
-    void OnCompleted(Action<IFuture, IContext> continuation, in IContext context, int options = 0);
+    void OnCompleted(Action<IFuture, IContext> continuation, IContext context, int options = 0);
 
     /// <summary>
     /// 添加一个监听器  -- 接收future和context参数
@@ -237,7 +260,27 @@ public interface IFuture
     /// <param name="continuation">回调</param>
     /// <param name="context">上下文</param>
     /// <param name="options">调度选项</param>
-    void OnCompletedAsync(IExecutor executor, Action<IFuture, IContext> continuation, in IContext context, int options = 0);
+    void OnCompletedAsync(IExecutor executor, Action<IFuture, IContext> continuation, IContext context, int options = 0);
+
+
+    /// <summary>
+    /// 添加一个监听器
+    /// (该接口不接收future参数，主要用于<see cref="IStateMachineDriver{T}"/>)
+    /// </summary>
+    /// <param name="continuation">回调</param>
+    /// <param name="state">回调参数</param>
+    /// <param name="options">调度选项</param>
+    void OnCompleted(Action<object?> continuation, object? state, int options = 0);
+
+    /// <summary>
+    /// 添加一个监听器
+    /// (该接口不接收future参数，主要用于<see cref="IStateMachineDriver{T}"/>)
+    /// </summary>
+    /// <param name="executor">回调线程</param>
+    /// <param name="continuation">回调</param>
+    /// <param name="state">回调参数</param>
+    /// <param name="options">调度选项</param>
+    void OnCompletedAsync(IExecutor executor, Action<object?> continuation, object? state, int options = 0);
 
     #endregion
 }

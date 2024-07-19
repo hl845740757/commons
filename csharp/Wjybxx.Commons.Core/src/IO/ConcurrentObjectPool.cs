@@ -27,15 +27,19 @@ namespace Wjybxx.Commons.IO;
 /// <summary>
 /// 提供全局常量支持
 /// </summary>
-public class ConcurrentObjectPool
+public abstract class ConcurrentObjectPool
 {
+    private static readonly int SBP_MAX_CAPACITY = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.SharedStringBuilderPool.MaxCapacity", 64 * 1024);
+    private static readonly int SBP_SIZE = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.SharedStringBuilderPool.PoolSize", 64);
+
     /** 默认的全局StringBuilderPool */
     public static readonly ConcurrentObjectPool<StringBuilder> SharedStringBuilderPool = new ConcurrentObjectPool<StringBuilder>(
-        () => new StringBuilder(1024),
-        sb => sb.Clear(),
-        64,
-        sb => sb.Capacity >= 1024 && sb.Capacity <= 64 * 1024
-    );
+        PoolableObjectHandlers.NewStringBuilderHandler(1024, SBP_MAX_CAPACITY), SBP_SIZE);
+
+    /// <summary>
+    /// 提供统一API清理对象池
+    /// </summary>
+    public abstract void Clear();
 }
 
 /// <summary>
@@ -44,28 +48,25 @@ public class ConcurrentObjectPool
 /// </summary>
 /// <typeparam name="T"></typeparam>
 [ThreadSafe]
-public class ConcurrentObjectPool<T> : IObjectPool<T> where T : class
+public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> where T : class
 {
-    private static readonly Action<T> DoNothing = obj => { };
-
-    private readonly Func<T> _factory;
-    private readonly Action<T> _resetPolicy;
-    private readonly Func<T, bool>? _filter;
+    private readonly IPoolableObjectHandler<T> _handler;
+    private readonly int _initCapacity;
     private readonly MpmcArrayQueue<T> _freeObjects;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="factory">对象创建工厂</param>
-    /// <param name="resetPolicy">重置方法</param>
+    /// <param name="handler">对象创建工厂</param>
     /// <param name="poolSize">池大小</param>
-    /// <param name="filter">回收对象的过滤器</param>
-    public ConcurrentObjectPool(Func<T> factory, Action<T>? resetPolicy, int poolSize = 64, Func<T, bool>? filter = null) {
-        _factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        _resetPolicy = resetPolicy ?? DoNothing;
-        _filter = filter;
+    /// <param name="initCapacity">初始空间参数</param>
+    public ConcurrentObjectPool(IPoolableObjectHandler<T> handler, int poolSize = 64, int initCapacity = 0) {
+        if (initCapacity < 0) throw new ArgumentException(nameof(initCapacity));
+        _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+        _initCapacity = initCapacity;
         _freeObjects = new MpmcArrayQueue<T>(poolSize);
     }
+
 
     /// <summary>
     /// 对象池大小
@@ -83,25 +84,32 @@ public class ConcurrentObjectPool<T> : IObjectPool<T> where T : class
         if (_freeObjects.Poll(out T result)) {
             return result;
         }
-        return _factory.Invoke();
+        return _handler.Create(this, _initCapacity);
     }
 
     public void Release(T obj) {
         if (obj == null) throw new ArgumentNullException(nameof(obj));
-        _resetPolicy.Invoke(obj);
-        if (_filter == null || _filter.Invoke(obj)) {
-            _freeObjects.Offer(obj);
+        if (!_handler.Test(obj)) {
+            _handler.Destroy(obj);
+            return;
+        }
+        _handler.Reset(obj);
+        if (!_freeObjects.Offer(obj)) {
+            _handler.Destroy(obj);
         }
     }
 
-    public void Clear() {
-        while (_freeObjects.Poll(out T _)) {
+    public override void Clear() {
+        while (_freeObjects.Poll(out T obj)) {
+            _handler.Destroy(obj);
         }
     }
 
     public void Fill(int count) {
         for (int i = 0; i < count; i++) {
-            if (!_freeObjects.Offer(_factory.Invoke())) {
+            T obj = _handler.Create(this, _initCapacity);
+            if (!_freeObjects.Offer(obj)) {
+                _handler.Destroy(obj);
                 return;
             }
         }

@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using Wjybxx.Commons.IO;
 
 #pragma warning disable CS1591
 
@@ -91,17 +92,6 @@ public static class ArrayUtil
         int r = 1;
         for (int i = 0; i < data.Length; i++) {
             r = r * 31 + data[i];
-        }
-        return r;
-    }
-
-    public static int HashCode(long[]? data) {
-        if (data == null) {
-            return 0;
-        }
-        int r = 1;
-        for (int i = 0; i < data.Length; i++) {
-            r = r * 31 + data[i].GetHashCode();
         }
         return r;
     }
@@ -234,5 +224,18 @@ public static class ArrayUtil
         for (int i = size; i > 1; i--) {
             Swap(list, i - 1, rnd.Next(i));
         }
+    }
+
+    /// <summary>
+    /// 如果元素存在，则返回元素对应的下标；
+    /// 如果元素不存在，则返回(-(insertion point) - 1)
+    /// 即： (index + 1) * -1 可得应当插入的下标。 
+    /// </summary>
+    /// <param name="array"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BinarySearch(int[] array, int value) {
+        return ArraySortHelper.BinarySearch(array, 0, array.Length, value);
     }
 }

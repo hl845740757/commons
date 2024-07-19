@@ -81,16 +81,16 @@ public interface IPromise : IFuture
     /// <summary>
     /// 将Future置为已取消状态，如果future已进入完成状态，则返回false
     /// </summary>
-    /// <param name="code">相关的取消码</param>
+    /// <param name="cancelCode">相关的取消码</param>
     /// <returns></returns>
-    bool TrySetCancelled(int code);
+    bool TrySetCancelled(int cancelCode);
 
     /// <summary>
     /// 将Future置为已取消状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
     /// </summary>
-    /// <param name="code">相关的取消码</param>
+    /// <param name="cancelCode">相关的取消码</param>
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
-    void SetCancelled(int code);
+    void SetCancelled(int cancelCode);
 }
 
 /// <summary>
@@ -119,6 +119,54 @@ public interface IPromise<T> : IFuture<T>, IPromise
 
     void IPromise.SetResult(object result) {
         SetResult((T)result);
+    }
+
+    #endregion
+
+    #region util
+
+    /// <summary>
+    /// 用于执行数据传输的委托方法
+    /// </summary>
+    public static Action<IFuture<T>, object> InvokerSetPromise = (future, state) => {
+        IPromise<T> promise = (IPromise<T>)state;
+        switch (future.Status) {
+            case TaskStatus.Success: {
+                promise.TrySetResult(future.ResultNow());
+                break;
+            }
+            case TaskStatus.Failed:
+            case TaskStatus.Cancelled: {
+                promise.TrySetException(future.ExceptionNow(false));
+                break;
+            }
+            default: {
+                throw new IllegalStateException();
+            }
+        }
+    };
+
+    /// <summary>
+    /// 将future结果传输到Promise
+    /// </summary>
+    /// <param name="promise"></param>
+    /// <param name="task"></param>
+    public static void SetPromise(IPromise<T> promise, IFuture<T> task) {
+        switch (task.Status) {
+            case TaskStatus.Success: {
+                promise.TrySetResult(task.ResultNow());
+                break;
+            }
+            case TaskStatus.Failed:
+            case TaskStatus.Cancelled: {
+                promise.TrySetException(task.ExceptionNow(false));
+                break;
+            }
+            default: {
+                task.OnCompleted(InvokerSetPromise, promise);
+                break;
+            }
+        }
     }
 
     #endregion

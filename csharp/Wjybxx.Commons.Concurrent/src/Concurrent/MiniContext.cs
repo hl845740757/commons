@@ -45,7 +45,7 @@ public sealed class MiniContext : IContext
 
     public static MiniContext OfState(object? state) {
         if (state == null) return SHARABLE;
-        return new MiniContext(state, null);
+        return new MiniContext(state, ICancelToken.NONE);
     }
 
     public static MiniContext OfState(object? state, ICancelToken cancelToken) {
@@ -53,7 +53,7 @@ public sealed class MiniContext : IContext
     }
 
     public static MiniContext OfCancelToken(ICancelToken? cancelToken) {
-        if (cancelToken == ICancelToken.NONE) return SHARABLE;
+        if (cancelToken == ICancelToken.NONE || cancelToken == null) return SHARABLE;
         return new MiniContext(null, cancelToken);
     }
 

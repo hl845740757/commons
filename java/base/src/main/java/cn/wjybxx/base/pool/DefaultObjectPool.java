@@ -18,11 +18,13 @@ package cn.wjybxx.base.pool;
 
 import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.ObjectUtils;
+import cn.wjybxx.base.function.FunctionUtils;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -44,37 +46,37 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
     private static final int DEFAULT_POOL_SIZE = 64;
 
     private final Supplier<? extends T> factory;
-    private final ResetPolicy<? super T> resetPolicy;
+    private final Consumer<? super T> resetHandler;
     private final Predicate<? super T> filter;
 
     private final int poolSize;
     private final ArrayList<T> freeObjects;
 
-    public DefaultObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy) {
-        this(factory, resetPolicy, DEFAULT_POOL_SIZE, null);
+    public DefaultObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler) {
+        this(factory, resetHandler, DEFAULT_POOL_SIZE, null);
     }
 
     /**
      * @param factory     对象创建工厂
-     * @param resetPolicy 重置方法
+     * @param resetHandler 重置方法
      * @param poolSize    缓存池大小；0表示不缓存对象
      */
-    public DefaultObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy, int poolSize) {
-        this(factory, resetPolicy, poolSize, null);
+    public DefaultObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler, int poolSize) {
+        this(factory, resetHandler, poolSize, null);
     }
 
     /**
      * @param factory     对象创建工厂
-     * @param resetPolicy 重置方法
+     * @param resetHandler 重置方法
      * @param poolSize    缓存池大小；0表示不缓存对象
      * @param filter      对象回收过滤器
      */
-    public DefaultObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy, int poolSize, Predicate<? super T> filter) {
+    public DefaultObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler, int poolSize, Predicate<? super T> filter) {
         if (poolSize < 0) {
             throw new IllegalArgumentException("poolSize: " + poolSize);
         }
         this.factory = Objects.requireNonNull(factory, "factory");
-        this.resetPolicy = ObjectUtils.nullToDef(resetPolicy, ResetPolicy.DO_NOTHING);
+        this.resetHandler = ObjectUtils.nullToDef(resetHandler, FunctionUtils.emptyConsumer());
         this.filter = filter;
 
         this.poolSize = poolSize;
@@ -106,7 +108,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
             throw new IllegalArgumentException("object cannot be null.");
         }
         // 先调用reset，避免reset出现异常导致添加脏对象到缓存池中 -- 断言是否在池中还是有较大开销
-        resetPolicy.reset(object);
+        resetHandler.accept(object);
 //        assert !CollectionUtils.containsRef(freeObjects, e);
         if (freeObjects.size() < poolSize && (filter == null || filter.test(object))) {
             freeObjects.add(object);
@@ -121,7 +123,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
 
         final ArrayList<T> freeObjects = this.freeObjects;
         final int poolSize = this.poolSize;
-        final ResetPolicy<? super T> resetPolicy = this.resetPolicy;
+        final Consumer<? super T> resetPolicy = this.resetHandler;
         final Predicate<? super T> filter = this.filter;
 
         if (objects instanceof ArrayList<? extends T> arrayList) {
@@ -130,7 +132,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
                 if (null == obj) {
                     continue;
                 }
-                resetPolicy.reset(obj);
+                resetPolicy.accept(obj);
 //                assert !CollectionUtils.containsRef(freeObjects, obj);
                 if (freeObjects.size() < poolSize && (filter == null || filter.test(obj))) {
                     freeObjects.add(obj);
@@ -141,7 +143,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
                 if (null == obj) {
                     continue;
                 }
-                resetPolicy.reset(obj);
+                resetPolicy.accept(obj);
 //                assert !CollectionUtils.containsRef(freeObjects, obj);
                 if (freeObjects.size() < poolSize && (filter == null || filter.test(obj))) {
                     freeObjects.add(obj);

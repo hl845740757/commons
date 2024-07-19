@@ -42,14 +42,14 @@ public interface ObjectPool<T> extends Supplier<T> {
     T acquire();
 
     /**
-     * 将指定的对象放入池中 - 重置策略却决于{@link ResetPolicy}。
+     * 将指定的对象放入池中
      *
      * @param object 要回收的对象
      */
     void release(T object);
 
     /**
-     * 将指定的对象放入池中 - 重置策略却决于{@link ResetPolicy}。
+     * 将指定的对象放入池中。
      *
      * @param objects 要回收的对象
      */

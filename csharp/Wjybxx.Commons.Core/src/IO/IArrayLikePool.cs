@@ -16,37 +16,27 @@
 
 #endregion
 
-using System.Buffers;
 using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.Commons.IO;
 
 /// <summary>
-/// 数组池抽象
+/// 类数组(ArrayLike)对象池抽象
 ///
-/// C#的原生接口<see cref="ArrayPool{T}"/>有点问题，看似在归还到池中的时候选择清理是合理的，实际上是有问题的；
-/// 对于共享池来说，如果一部分操作进行清理，而另一部分不进行清理，那么清理操作就是没有意义的 —— 因为无法保证租借到的对象是安全的。
-/// 对于不受信任的池来说，只有在租借的时候进行清理才能保证安全性。
+/// 类数组的定义：对象和数组一样固定长度(空间)，不可自动扩容，常见于数组的封装类。
 /// </summary>
 /// <typeparam name="T">数组元素的类型</typeparam>
-public interface IArrayPool<T> : IObjectPool<T[]>
+public interface IArrayLikePool<T> : IObjectPool<T>
 {
     /// <summary>
-    /// 共享数组池
-    /// 1. 默认最大只保存1M大小的数组
-    /// 2. 默认不执行清理(稳定API)
-    /// </summary>
-    public static IArrayPool<T> Shared { get; } = new ArrayPoolAdapter<T>(ArrayPool<T>.Shared, 4096);
-
-    /// <summary>
-    /// 从池中租借一个数组
-    /// 1.返回的字节数组可能大于期望的数组长度
+    /// 从池中租借一个对象
+    /// 1.返回的对象的空间可能大于期望的长度
     /// 2.默认情况下不清理
     /// </summary>
     /// <param name="minimumLength">期望的最小数组长度</param>
     /// <param name="clear">返回前是否先清理，这对于共享池来说比较重要</param>
     /// <returns>池化的字节数组</returns>
-    T[] Acquire(int minimumLength, bool clear = false);
+    T Acquire(int minimumLength, bool clear = false);
 
     /// <summary>
     /// 归还一个数组到池中 - 可选择清理
@@ -54,5 +44,5 @@ public interface IArrayPool<T> : IObjectPool<T[]>
     /// <param name="array">租借的数组</param>
     /// <param name="clear">是否需要清理</param>
     /// <returns></returns>
-    void Release(T[] array, bool clear);
+    void Release(T array, bool clear);
 }

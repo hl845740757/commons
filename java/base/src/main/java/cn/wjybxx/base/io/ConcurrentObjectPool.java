@@ -16,16 +16,11 @@
 
 package cn.wjybxx.base.io;
 
-import cn.wjybxx.base.ObjectUtils;
+import cn.wjybxx.base.SystemPropsUtils;
 import cn.wjybxx.base.pool.ObjectPool;
-import cn.wjybxx.base.pool.ResetPolicy;
 
 import javax.annotation.concurrent.ThreadSafe;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Objects;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 /**
  * 固定大小的普通对象池实现
@@ -39,48 +34,38 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
 
     private static final int DEFAULT_POOL_SIZE = 64;
 
+    private static final int SBP_MAX_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedStringBuilderPool.MaxCapacity", 64 * 1024);
+    private static final int SBP_SIZE = SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedStringBuilderPool.PoolSize", 64);
+
     /** 全局共享的{@link StringBuilder}池 */
     public static final ConcurrentObjectPool<StringBuilder> SHARED_STRING_BUILDER_POOL = new ConcurrentObjectPool<>(
-            () -> new StringBuilder(1024),
-            sb -> sb.setLength(0),
-            64,
-            sb -> sb.capacity() >= 1024 && sb.capacity() <= 64 * 1024);
+            PoolableObjectHandlers.newStringBuilderHandler(1024, SBP_MAX_CAPACITY), SBP_SIZE);
 
-    private final Supplier<? extends T> factory;
-    private final ResetPolicy<? super T> resetPolicy;
-    private final Predicate<? super T> filter;
+    private final PoolableObjectHandler<T> handler;
+    private final int initCapacity;
     private final MpmcArrayQueue<T> freeObjects;
 
     /**
-     * @param factory     对象创建工厂
-     * @param resetPolicy 重置方法
+     * @param handler 对象处理器
      */
-    public ConcurrentObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy) {
-        this(factory, resetPolicy, DEFAULT_POOL_SIZE, null);
+    public ConcurrentObjectPool(PoolableObjectHandler<T> handler) {
+        this(handler, DEFAULT_POOL_SIZE, 0);
     }
 
     /**
-     * @param factory     对象创建工厂
-     * @param resetPolicy 重置方法
-     * @param poolSize    缓存池大小；0表示不缓存对象
+     * @param handler  对象处理器
+     * @param poolSize 缓存池大小；0表示不缓存对象
      */
-    public ConcurrentObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy, int poolSize) {
-        this(factory, resetPolicy, poolSize, null);
+    public ConcurrentObjectPool(PoolableObjectHandler<T> handler, int poolSize) {
+        this(handler, poolSize, 0);
     }
 
-    /**
-     * @param factory     对象创建工厂
-     * @param resetPolicy 重置方法
-     * @param poolSize    缓存池大小；0表示不缓存对象
-     * @param filter      对象回收过滤器
-     */
-    public ConcurrentObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy, int poolSize, Predicate<? super T> filter) {
+    public ConcurrentObjectPool(PoolableObjectHandler<T> handler, int poolSize, int initCapacity) {
         if (poolSize < 0) {
             throw new IllegalArgumentException("poolSize: " + poolSize);
         }
-        this.factory = Objects.requireNonNull(factory, "factory");
-        this.resetPolicy = ObjectUtils.nullToDef(resetPolicy, ResetPolicy.DO_NOTHING);
-        this.filter = filter;
+        this.handler = Objects.requireNonNull(handler, "factory");
+        this.initCapacity = initCapacity;
         this.freeObjects = new MpmcArrayQueue<>(poolSize);
     }
 
@@ -106,64 +91,37 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
     @Override
     public T acquire() {
         T obj = freeObjects.poll();
-        return obj == null ? factory.get() : obj;
+        return obj == null ? handler.create(this, initCapacity) : obj;
     }
 
     @Override
-    public void release(T object) {
-        if (object == null) {
-            throw new IllegalArgumentException("object cannot be null.");
+    public void release(T obj) {
+        if (obj == null) {
+            throw new IllegalArgumentException("obj cannot be null.");
         }
-        resetPolicy.reset(object);
-        if (filter == null || filter.test(object)) {
-            freeObjects.offer(object);
+        if (!handler.test(obj)) {
+            handler.destroy(obj);
+            return;
         }
-    }
-
-    @Override
-    public void releaseAll(Collection<? extends T> objects) {
-        if (objects == null) {
-            throw new IllegalArgumentException("objects cannot be null.");
-        }
-
-        final MpmcArrayQueue<T> freeObjects = this.freeObjects;
-        final ResetPolicy<? super T> resetPolicy = this.resetPolicy;
-        final Predicate<? super T> filter = this.filter;
-        if (objects instanceof ArrayList<? extends T> arrayList) {
-            for (int i = 0, n = arrayList.size(); i < n; i++) {
-                T obj = arrayList.get(i);
-                if (null == obj) {
-                    continue;
-                }
-                resetPolicy.reset(obj);
-                if (filter == null || filter.test(obj)) {
-                    freeObjects.offer(obj);
-                }
-            }
-        } else {
-            for (T obj : objects) {
-                if (null == obj) {
-                    continue;
-                }
-                resetPolicy.reset(obj);
-                if (filter == null || filter.test(obj)) {
-                    freeObjects.offer(obj);
-                }
-            }
+        handler.reset(obj);
+        if (!freeObjects.offer(obj)) {
+            handler.destroy(obj);
         }
     }
 
     @Override
     public void clear() {
-        //noinspection StatementWithEmptyBody
-        while (freeObjects.poll() != null) {
-
+        T obj;
+        while ((obj = freeObjects.poll()) != null) {
+            handler.destroy(obj);
         }
     }
 
-    public void fill(int count){
+    public void fill(int count) {
         for (int i = 0; i < count; i++) {
-            if (!freeObjects.offer(factory.get())) {
+            T obj = handler.create(this, initCapacity);
+            if (!freeObjects.offer(obj)) {
+                handler.destroy(obj);
                 return;
             }
         }

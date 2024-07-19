@@ -19,6 +19,8 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using Wjybxx.Commons.IO;
+using Wjybxx.Commons.Pool;
 
 #pragma warning disable CS1591
 
@@ -33,6 +35,15 @@ namespace Wjybxx.Commons.Concurrent;
 /// <typeparam name="T"></typeparam>
 public class Promise<T> : AbstractPromise, IPromise<T>
 {
+    /// <summary>
+    /// 已完成的Promise常量实例
+    /// </summary>
+    public static readonly Promise<T> COMPLETED = new Promise<T>(null, default, null);
+    /// <summary>
+    /// 已被取消的Promise常量实例
+    /// </summary>
+    public static readonly Promise<T> CANCELLED = new Promise<T>(null, default, StacklessCancellationException.INST1);
+
     private const int ST_PENDING = (int)TaskStatus.Pending;
     private const int ST_COMPUTING = (int)TaskStatus.Computing;
     private const int ST_SUCCESS = (int)TaskStatus.Success;
@@ -53,7 +64,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     private volatile object? _ex;
 
     /** 任务绑定的线程 -- 其实不一定是执行线程 */
-    private readonly IExecutor? _executor;
+    private IExecutor? _executor;
 
     /// <summary>
     /// 
@@ -83,12 +94,19 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return new Promise<T>(executor, default, ex);
     }
 
-    public static Promise<T> FromCancelled(int code, IExecutor? executor = null) {
-        Exception ex = StacklessCancellationException.InstOf(code);
+    public static Promise<T> FromCancelled(int cancelCode, IExecutor? executor = null) {
+        Exception ex = StacklessCancellationException.InstOf(cancelCode);
         return new Promise<T>(executor, default, ex);
     }
 
     #region internal
+
+    internal void Reset() {
+        _executor = null;
+        _result = default;
+        _ex = null;
+        stack = null;
+    }
 
     private bool InternalSetResult(T result) {
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
@@ -111,7 +129,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     }
 
     private bool InternalSetException(Exception exception) {
-        Debug.Assert(exception != null);
+        // Debug.Assert(exception != null);
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
         object preEx = Interlocked.CompareExchange(ref _ex, exception, null);
         if (preEx == null) {
@@ -127,7 +145,10 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return false;
     }
 
-    /** 获取当前状态，如果处于发布中状态，则等待目标线程发布完毕 */
+    /// <summary>
+    /// 获取当前状态，如果处于发布中状态，则等待目标线程发布完毕
+    /// </summary>
+    /// <returns></returns>
     private int PollState() {
         object ex = _ex;
         if (ex == null) {
@@ -214,7 +235,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     public TaskStatus TrySetComputing2() {
         object preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
-        return (TaskStatus)PeekState(preState, false);
+        return (TaskStatus)PeekState(preState);
     }
 
     public void SetComputing() {
@@ -253,16 +274,16 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         }
     }
 
-    public bool TrySetCancelled(int code) {
-        if (InternalSetException(StacklessCancellationException.InstOf(code))) {
+    public bool TrySetCancelled(int cancelCode) {
+        if (InternalSetException(StacklessCancellationException.InstOf(cancelCode))) {
             PostComplete(this);
             return true;
         }
         return false;
     }
 
-    public void SetCancelled(int code) {
-        if (!TrySetCancelled(code)) {
+    public void SetCancelled(int cancelCode) {
+        if (!TrySetCancelled(cancelCode)) {
             throw new IllegalStateException("Already complete");
         }
     }
@@ -408,11 +429,11 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         PushUniOnCompleted1(executor, continuation, options);
     }
 
-    public void OnCompleted(Action<IFuture<T>, object> continuation, object state, int options = 0) {
+    public void OnCompleted(Action<IFuture<T>, object?> continuation, object? state, int options = 0) {
         PushUniOnCompleted2(null, continuation, state, options);
     }
 
-    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object> continuation, object state, int options = 0) {
+    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object?> continuation, object? state, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         PushUniOnCompleted2(executor, continuation, state, options);
     }
@@ -426,30 +447,52 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         PushUniOnCompleted3(executor, continuation, context, options);
     }
 
+    public void OnCompleted(Action<object?> continuation, object? state, int options = 0) {
+        PushUniOnCompleted4(null, continuation, state, options);
+    }
+
+    public void OnCompletedAsync(IExecutor executor, Action<object?> continuation, object? state, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        PushUniOnCompleted4(executor, continuation, state, options);
+    }
+
     private void PushUniOnCompleted1(IExecutor? executor, Action<IFuture<T>> continuation, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsDone && executor == null) {
-            UniOnCompleted1<T>.FireNow(this, continuation, null);
+            UniOnCompleted1.FireNow(this, continuation, null);
         } else {
-            PushCompletion(new UniOnCompleted1<T>(executor, options, this, continuation));
+            PushCompletion(new UniOnCompleted1(executor, options, this, continuation));
         }
     }
 
     private void PushUniOnCompleted2(IExecutor? executor, Action<IFuture<T>, object> continuation, object? state, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsDone && executor == null) {
-            UniOnCompleted2<T>.FireNow(this, continuation, state, null);
+            UniOnCompleted2.FireNow(this, continuation, state, null);
         } else {
-            PushCompletion(new UniOnCompleted2<T>(executor, options, this, continuation, state));
+            UniOnCompleted2 completion = UniOnCompleted2.POOL.Acquire();
+            completion.Init(executor, options, this, continuation, state);
+            PushCompletion(completion);
         }
     }
 
     private void PushUniOnCompleted3(IExecutor? executor, Action<IFuture<T>, IContext> continuation, IContext context, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsDone && executor == null) {
-            UniOnCompleted3<T>.FireNow(this, continuation, context, null);
+            UniOnCompleted3.FireNow(this, continuation, context, null);
         } else {
-            PushCompletion(new UniOnCompleted3<T>(executor, options, this, continuation, context));
+            PushCompletion(new UniOnCompleted3(executor, options, this, continuation, context));
+        }
+    }
+
+    private void PushUniOnCompleted4(IExecutor? executor, Action<object?> continuation, object? state, int options = 0) {
+        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
+        if (IsDone && executor == null) {
+            UniOnCompleted4.FireNow(continuation, state, null);
+        } else {
+            UniOnCompleted4 completion = UniOnCompleted4.POOL.Acquire();
+            completion.Init(executor, options, continuation, state);
+            PushCompletion(completion);
         }
     }
 
@@ -475,16 +518,39 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return false;
     }
 
-    private abstract class UniOnCompleted<V> : Completion
-    {
-        protected IExecutor? executor;
-        protected int options;
-        protected Promise<V> input;
+    private static bool IsCancelling(object? ctx, int options) {
+        return TaskOption.IsEnabled(options, TaskOption.STAGE_CHECK_OBJECT_CTX)
+               && ctx is IContext ctx2
+               && ctx2.CancelToken.IsCancelling;
+    }
 
-        protected UniOnCompleted(IExecutor? executor, int options, Promise<V> input) {
+    private abstract class UniOnCompleted : Completion
+    {
+#nullable disable
+        protected IExecutor executor;
+        protected int options;
+        protected Promise<T> input;
+#nullable enable
+        protected UniOnCompleted() {
+        }
+
+        protected UniOnCompleted(IExecutor? executor, int options, Promise<T> input) {
             this.executor = executor;
             this.options = options;
             this.input = input;
+        }
+
+        protected void Init(IExecutor? executor, int options, Promise<T> input) {
+            this.executor = executor;
+            this.options = options;
+            this.input = input;
+        }
+
+        public override void Reset() {
+            next = null; // 不调用base
+            executor = null;
+            options = 0;
+            input = null;
         }
 
         public override int Options {
@@ -505,17 +571,19 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         }
     }
 
-    private class UniOnCompleted1<V> : UniOnCompleted<V>
+    private class UniOnCompleted1 : UniOnCompleted
     {
-        private Action<IFuture<V>> action;
+#nullable disable
+        private Action<IFuture<T>> action;
+#nullable enable
 
-        public UniOnCompleted1(IExecutor? executor, int options, Promise<V> input, Action<IFuture<V>> action)
+        public UniOnCompleted1(IExecutor? executor, int options, Promise<T> input, Action<IFuture<T>> action)
             : base(executor, options, input) {
             this.action = action;
         }
 
         protected internal override AbstractPromise? TryFire(int mode) {
-            Promise<V>? input = this.input;
+            Promise<T>? input = this.input;
             {
                 // 异步模式下已经claim
                 if (!FireNow(input, action, mode > 0 ? null : this)) {
@@ -524,13 +592,13 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             // help gc
             this.executor = null;
-            this.input = null!;
-            this.action = null!;
+            this.input = null;
+            this.action = null;
             return null;
         }
 
-        public static bool FireNow(Promise<V> input, Action<IFuture<V>> action,
-                                   UniOnCompleted1<V>? c) {
+        public static bool FireNow(Promise<T> input, Action<IFuture<T>> action,
+                                   UniOnCompleted1? c) {
             try {
                 if (c != null && !c.Claim()) {
                     return false;
@@ -544,37 +612,52 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         }
     }
 
-    private class UniOnCompleted2<V> : UniOnCompleted<V>
+    private class UniOnCompleted2 : UniOnCompleted
     {
-        private Action<IFuture<V>, object> action;
-        private object? state;
+#nullable disable
+        private Action<IFuture<T>, object> action;
+        private object state;
+#nullable enable
 
-        public UniOnCompleted2(IExecutor? executor, int options, Promise<V> input,
-                               Action<IFuture<V>, object> action, object? state)
-            : base(executor, options, input) {
+        private UniOnCompleted2() {
+        }
+
+        public void Init(IExecutor? executor, int options, Promise<T> input, Action<IFuture<T>, object?> action, object? state) {
+            base.Init(executor, options, input);
             this.action = action;
             this.state = state;
         }
 
+        public override void Reset() {
+            base.Reset();
+            action = null;
+            state = null;
+        }
+
         protected internal override AbstractPromise? TryFire(int mode) {
-            Promise<V>? input = this.input;
+            Promise<T>? input = this.input;
             {
+                if (IsCancelling(state, options)) {
+                    goto outer;
+                }
                 // 异步模式下已经claim
                 if (!FireNow(input, action, state, mode > 0 ? null : this)) {
                     return null;
                 }
             }
+            outer:
+            POOL.Release(this);
             // help gc
-            this.executor = null;
-            this.input = null!;
-            this.action = null!;
-            this.state = null;
+            // this.executor = null;
+            // this.input = null;
+            // this.action = null;
+            // this.state = null;
             return null;
         }
 
-        public static bool FireNow(Promise<V> input,
-                                   Action<IFuture<V>, object> action, object? state,
-                                   UniOnCompleted2<V>? c) {
+        public static bool FireNow(Promise<T> input,
+                                   Action<IFuture<T>, object?> action, object? state,
+                                   UniOnCompleted2? c) {
             try {
                 if (c != null && !c.Claim()) {
                     return false;
@@ -586,22 +669,31 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             return true;
         }
+
+        /// <summary>
+        /// 放在类内部，避免随着Promise就初始化
+        /// </summary>
+        internal static readonly IObjectPool<UniOnCompleted2> POOL = new ConcurrentObjectPool<UniOnCompleted2>(
+            PoolableObjectHandlers.Of(() => new UniOnCompleted2(), task => task.Reset()),
+            typeof(T) == typeof(int) ? 50 : 20);
     }
 
-    private class UniOnCompleted3<V> : UniOnCompleted<V>
+    private class UniOnCompleted3 : UniOnCompleted
     {
-        private Action<IFuture<V>, IContext> action;
+#nullable disable
+        private Action<IFuture<T>, IContext> action;
         private IContext context;
+#nullable enable
 
-        public UniOnCompleted3(IExecutor? executor, int options, Promise<V> input,
-                               Action<IFuture<V>, IContext> action, in IContext context)
+        public UniOnCompleted3(IExecutor? executor, int options, Promise<T> input,
+                               Action<IFuture<T>, IContext> action, in IContext context)
             : base(executor, options, input) {
             this.action = action;
             this.context = context;
         }
 
         protected internal override AbstractPromise? TryFire(int mode) {
-            Promise<V>? input = this.input;
+            Promise<T>? input = this.input;
             {
                 if (context.CancelToken.IsCancelling) {
                     goto outer;
@@ -614,14 +706,15 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             outer:
             // help gc
             this.executor = null;
-            this.input = null!;
-            this.action = null!;
+            this.input = null;
+            this.action = null;
+            this.context = null;
             return null;
         }
 
-        public static bool FireNow(Promise<V> input,
-                                   Action<IFuture<V>, IContext> action, in IContext context,
-                                   UniOnCompleted3<V>? c) {
+        public static bool FireNow(Promise<T> input,
+                                   Action<IFuture<T>, IContext> action, in IContext context,
+                                   UniOnCompleted3? c) {
             try {
                 if (c != null && !c.Claim()) {
                     return false;
@@ -633,6 +726,95 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             return true;
         }
+    }
+
+    /// <summary>
+    /// 直接继承Completion，特殊优化
+    /// </summary>
+    private class UniOnCompleted4 : Completion
+    {
+#nullable disable
+        protected IExecutor executor;
+        protected int options;
+        private Action<object> action;
+        private object state;
+#nullable enable
+
+        private UniOnCompleted4() {
+        }
+
+        public void Init(IExecutor? executor, int options, Action<object?> action, object? state) {
+            this.executor = executor;
+            this.options = options;
+            this.action = action;
+            this.state = state;
+        }
+
+        public override void Reset() {
+            next = null; // 减少调用
+            executor = null;
+            options = 0;
+            action = null;
+            state = null;
+        }
+
+        public override int Options {
+            get => options;
+            set => options = value;
+        }
+
+        private bool Claim() {
+            IExecutor e = this.executor;
+            if (e == CLAIMED) {
+                return true;
+            }
+            this.executor = CLAIMED;
+            if (e != null) {
+                return TryInline(this, e, options);
+            }
+            return true;
+        }
+
+        protected internal override AbstractPromise? TryFire(int mode) {
+            {
+                if (IsCancelling(state, options)) {
+                    goto outer;
+                }
+                // 异步模式下已经claim
+                if (!FireNow(action, state, mode > 0 ? null : this)) {
+                    return null;
+                }
+            }
+            outer:
+            POOL.Release(this);
+            // help gc
+            // this.executor = null;
+            // this.input = null;
+            // this.action = null;
+            // this.state = null;
+            return null;
+        }
+
+        public static bool FireNow(Action<object?> action, object? state,
+                                   UniOnCompleted4? c) {
+            try {
+                if (c != null && !c.Claim()) {
+                    return false;
+                }
+                action(state);
+            }
+            catch (Exception e) {
+                FutureLogger.LogCause(e, "UniOnCompleted4 caught an exception");
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 放在类内部，避免随着Promise就初始化
+        /// </summary>
+        internal static readonly IObjectPool<UniOnCompleted4> POOL = new ConcurrentObjectPool<UniOnCompleted4>(
+            PoolableObjectHandlers.Of(() => new UniOnCompleted4(), task => task.Reset()),
+            typeof(T) == typeof(int) ? 50 : 20); // 我们使用int代替void
     }
 
     #endregion

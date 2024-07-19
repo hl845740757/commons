@@ -84,35 +84,46 @@ public static class Executors
         return false;
     }
 
+
+    /// <summary>
+    /// 将future结果传输到Promise
+    /// </summary>
+    /// <param name="promise"></param>
+    /// <param name="task"></param>
+    /// <typeparam name="TResult"></typeparam>
+    public static void SetPromise<TResult>(IPromise<TResult> promise, IFuture<TResult> task) {
+        IPromise<TResult>.SetPromise(promise, task);
+    }
+
     #endregion
 
     #region system
 
     public static void FlatSetPromise<TResult>(TaskCompletionSource<TResult> promise, Task<Task<TResult>> task) {
         if (task.IsCompleted) {
-            FlatSetPromise0(promise, task);
+            if (task.IsCompletedSuccessfully) {
+                SetPromise(promise, task.Result);
+            } else if (task.IsFaulted) {
+                promise.TrySetException(task.Exception!);
+            } else {
+                promise.TrySetCanceled();
+            }
         } else {
-            task.ContinueWith((t, obj) => FlatSetPromise0((TaskCompletionSource<TResult>)obj, t), promise);
-        }
-    }
-
-    private static void FlatSetPromise0<TResult>(TaskCompletionSource<TResult> promise, Task<Task<TResult>> task) {
-        if (task.IsCanceled) {
-            promise.TrySetCanceled();
-        } else if (task.IsFaulted) {
-            promise.TrySetException(task.Exception!);
-        } else {
-            SetPromise(promise, task.Result);
+            task.ContinueWith((t, obj) => FlatSetPromise((TaskCompletionSource<TResult>)obj, t), promise);
         }
     }
 
     public static void SetPromise<TResult>(TaskCompletionSource<TResult> promise, Task<TResult> task) {
-        if (task.IsCanceled) {
-            promise.TrySetCanceled();
-        } else if (task.IsFaulted) {
-            promise.TrySetException(task.Exception!);
+        if (task.IsCompleted) {
+            if (task.IsCompletedSuccessfully) {
+                promise.TrySetResult(task.Result);
+            } else if (task.IsFaulted) {
+                promise.TrySetException(task.Exception!);
+            } else {
+                promise.TrySetCanceled();
+            }
         } else {
-            promise.TrySetResult(task.Result);
+            task.ContinueWith((t, obj) => SetPromise((TaskCompletionSource<TResult>)obj, t), promise);
         }
     }
 

@@ -29,22 +29,26 @@ namespace Wjybxx.Commons.Concurrent;
 ///
 /// ps：AsyncMethodBuilder的作用只有一个：封装StateMachine的回调（驱动StateMachine），接收StateMachine的执行结果。
 /// </summary>
-public struct AsyncFutureMethodBuilder
+public struct AsyncValueFutureMethodBuilder
 {
     /// <summary>
     /// 当任务异步完成时有值
     /// 
     /// ps:如果task和ex都为null，表示任务已同步完成
     /// </summary>
-    private IFutureStateMachineDriver<int> _task;
+    private IValueFutureStateMachineDriver<int> _task;
+    /// <summary>
+    /// task绑定的重入id
+    /// </summary>
+    private int reentryId;
     /// <summary>
     /// 任务失败的原因 -- 任务同步失败时有值
     /// </summary>
     private Exception? _ex;
 
     // 1. Static Create method 
-    public static AsyncFutureMethodBuilder Create() {
-        return new AsyncFutureMethodBuilder();
+    public static AsyncValueFutureMethodBuilder Create() {
+        return new AsyncValueFutureMethodBuilder();
     }
 
     // 2. Start -- 创建后立即调用
@@ -55,16 +59,16 @@ public struct AsyncFutureMethodBuilder
     }
 
     // 3. TaskLike Task property -- 返回给方法调用者；Start后调用；其实命名Future更自然
-    public IFuture Task {
+    public ValueFuture Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (_task != null) {
                 return _task.VoidFuture;
             }
             if (_ex != null) {
-                return Promise<int>.FromException(_ex);
+                return ValueFuture.FromException(_ex);
             }
-            return Promise<int>.COMPLETED;
+            return ValueFuture.FromResult();
         }
     }
 
@@ -72,7 +76,7 @@ public struct AsyncFutureMethodBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetException(Exception exception) {
         if (_task != null) {
-            _task.TrySetException(0, exception);
+            _task.TrySetException(reentryId, exception);
         } else {
             this._ex = exception;
         }
@@ -82,7 +86,7 @@ public struct AsyncFutureMethodBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetResult() {
         if (_task != null) {
-            _task.TrySetResult(0, 1);
+            _task.TrySetResult(reentryId, 0);
         }
     }
 
@@ -92,7 +96,7 @@ public struct AsyncFutureMethodBuilder
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            FutureStateMachineDriver<int, TStateMachine>.SetStateMachine(ref stateMachine, ref _task);
+            reentryId = ValueFutureStateMachineDriver<int, TStateMachine>.SetStateMachine(ref stateMachine, ref _task);
         }
         awaiter.OnCompleted(_task.MoveToNext);
     }
@@ -104,7 +108,7 @@ public struct AsyncFutureMethodBuilder
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            FutureStateMachineDriver<int, TStateMachine>.SetStateMachine(ref stateMachine, ref _task);
+            reentryId = ValueFutureStateMachineDriver<int, TStateMachine>.SetStateMachine(ref stateMachine, ref _task);
         }
         awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }
@@ -118,14 +122,19 @@ public struct AsyncFutureMethodBuilder
 /// Future的异步方法构建器
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public struct AsyncFutureMethodBuilder<T>
+public struct AsyncValueFutureMethodBuilder<T>
 {
     /// <summary>
     /// 当任务异步完成时有值
     ///
     /// ps:如果task和ex都为null，表示任务已同步完成
     /// </summary>
-    private IFutureStateMachineDriver<T>? _task;
+    private IValueFutureStateMachineDriver<T>? _task;
+    /// <summary>
+    /// task绑定的重入id
+    /// </summary>
+    private int reentryId;
+
     /// <summary>
     /// 任务失败的原因 -- 任务同步失败时有值
     /// </summary>
@@ -136,8 +145,8 @@ public struct AsyncFutureMethodBuilder<T>
     private T? _result;
 
     // 1. Static Create method 
-    public static AsyncFutureMethodBuilder<T> Create() {
-        return new AsyncFutureMethodBuilder<T>();
+    public static AsyncValueFutureMethodBuilder<T> Create() {
+        return new AsyncValueFutureMethodBuilder<T>();
     }
 
     // 2. Start -- 创建后立即调用
@@ -148,16 +157,16 @@ public struct AsyncFutureMethodBuilder<T>
     }
 
     // 3. TaskLike Task property -- 返回给方法调用者；Start后调用；其实命名Future更自然
-    public IFuture<T> Task {
+    public ValueFuture<T> Task {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (_task != null) {
                 return _task.Future;
             }
             if (_ex != null) {
-                return Promise<T>.FromException(_ex);
+                return ValueFuture<T>.FromException(_ex);
             }
-            return Promise<T>.FromResult(_result);
+            return ValueFuture<T>.FromResult(_result);
         }
     }
 
@@ -165,7 +174,7 @@ public struct AsyncFutureMethodBuilder<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetException(Exception exception) {
         if (_task != null) {
-            _task.TrySetException(0, exception);
+            _task.TrySetException(reentryId, exception);
         } else {
             this._ex = exception;
         }
@@ -175,7 +184,7 @@ public struct AsyncFutureMethodBuilder<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetResult(T result) {
         if (_task != null) {
-            _task.TrySetResult(0, result);
+            _task.TrySetResult(reentryId, result);
         } else {
             this._result = result;
         }
@@ -187,7 +196,7 @@ public struct AsyncFutureMethodBuilder<T>
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            FutureStateMachineDriver<T, TStateMachine>.SetStateMachine(ref stateMachine, ref _task);
+            reentryId = ValueFutureStateMachineDriver<T, TStateMachine>.SetStateMachine(ref stateMachine, ref _task);
         }
         awaiter.OnCompleted(_task.MoveToNext);
     }
@@ -199,7 +208,7 @@ public struct AsyncFutureMethodBuilder<T>
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            FutureStateMachineDriver<T, TStateMachine>.SetStateMachine(ref stateMachine, ref _task);
+            reentryId = ValueFutureStateMachineDriver<T, TStateMachine>.SetStateMachine(ref stateMachine, ref _task);
         }
         awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }

@@ -15,9 +15,13 @@
  */
 package cn.wjybxx.base.pool;
 
+import cn.wjybxx.base.ObjectUtils;
+import cn.wjybxx.base.function.FunctionUtils;
+
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -31,12 +35,12 @@ import java.util.function.Supplier;
 public class SingleObjectPool<T> implements ObjectPool<T> {
 
     private final Supplier<? extends T> factory;
-    private final ResetPolicy<? super T> resetPolicy;
+    private final Consumer<? super T> resetPolicy;
     private T value;
 
-    public SingleObjectPool(Supplier<? extends T> factory, ResetPolicy<? super T> resetPolicy) {
+    public SingleObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetPolicy) {
         this.factory = Objects.requireNonNull(factory, "factory");
-        this.resetPolicy = Objects.requireNonNull(resetPolicy, "resetPolicy");
+        this.resetPolicy = ObjectUtils.nullToDef(resetPolicy, FunctionUtils.emptyConsumer());
     }
 
     @Override
@@ -61,7 +65,7 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
             throw new IllegalArgumentException("object cannot be null.");
         }
         assert object != this.value;
-        resetPolicy.reset(object);
+        resetPolicy.accept(object);
         this.value = object;
     }
 
@@ -75,7 +79,7 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
                 continue;
             }
             assert obj != this.value;
-            resetPolicy.reset(obj);
+            resetPolicy.accept(obj);
             this.value = obj;
         }
     }

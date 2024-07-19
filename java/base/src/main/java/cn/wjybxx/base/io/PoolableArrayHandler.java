@@ -13,25 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cn.wjybxx.base.pool;
 
-import java.util.Collection;
-import java.util.Map;
+package cn.wjybxx.base.io;
 
 /**
- * 对象池对象的重置策略。
- * 使用组合的方式更加灵活，尤其是遇到一些非自己定义的类对象时。
+ * 类数组对象的处理器
  *
  * @author wjybxx
- * date 2023/4/1
+ * date - 2024/7/19
  */
-@FunctionalInterface
-public interface ResetPolicy<T> {
+public interface PoolableArrayHandler<T> extends PoolableObjectHandler<T> {
 
-    void reset(T object);
-
-    ResetPolicy<? super Collection<?>> CLEAR = Collection::clear;
-    ResetPolicy<? super Map<?, ?>> CLEAR_MAP = Map::clear;
-    ResetPolicy<Object> DO_NOTHING = V -> {};
+    /** 获取实例的空间 */
+    int getCapacity(T array);
 
 }
