@@ -16,15 +16,20 @@
 
 package cn.wjybxx.base.io;
 
+import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.SystemPropsUtils;
+import cn.wjybxx.base.function.FunctionUtils;
 import cn.wjybxx.base.pool.ObjectPool;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
- * 固定大小的普通对象池实现
- * (未鉴定归属，可归还外部对象)
+ * 简单的固定大小的对象池实现
+ * (未鉴定归属，可归还外部对象，适用简单场景)
  *
  * @author wjybxx
  * date - 2024/1/6
@@ -39,27 +44,46 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
 
     /** 全局共享的{@link StringBuilder}池 */
     public static final ConcurrentObjectPool<StringBuilder> SHARED_STRING_BUILDER_POOL = new ConcurrentObjectPool<>(
-            PoolableObjectHandlers.newStringBuilderHandler(1024, SBP_MAX_CAPACITY), SBP_SIZE);
+            () -> new StringBuilder(1024),
+            sb -> sb.setLength(0),
+            SBP_SIZE,
+            sb -> sb.capacity() >= 1024 && sb.capacity() <= SBP_MAX_CAPACITY);
 
-    private final PoolableObjectHandler<T> handler;
+    private final Supplier<? extends T> factory;
+    private final Consumer<? super T> resetHandler;
+    private final Predicate<? super T> filter;
     private final MpmcArrayQueue<T> freeObjects;
 
     /**
-     * @param handler 对象处理器
+     * @param factory      对象创建工厂
+     * @param resetHandler 重置方法
      */
-    public ConcurrentObjectPool(PoolableObjectHandler<T> handler) {
-        this(handler, DEFAULT_POOL_SIZE);
+    public ConcurrentObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler) {
+        this(factory, resetHandler, DEFAULT_POOL_SIZE, null);
     }
 
     /**
-     * @param handler  对象处理器
-     * @param poolSize 缓存池大小；0表示不缓存对象
+     * @param factory      对象创建工厂
+     * @param resetHandler 重置方法
+     * @param poolSize     缓存池大小；0表示不缓存对象
      */
-    public ConcurrentObjectPool(PoolableObjectHandler<T> handler, int poolSize) {
+    public ConcurrentObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler, int poolSize) {
+        this(factory, resetHandler, poolSize, null);
+    }
+
+    /**
+     * @param factory      对象创建工厂
+     * @param resetHandler 重置方法
+     * @param poolSize     缓存池大小；0表示不缓存对象
+     * @param filter       对象回收过滤器
+     */
+    public ConcurrentObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler, int poolSize, Predicate<? super T> filter) {
         if (poolSize < 0) {
             throw new IllegalArgumentException("poolSize: " + poolSize);
         }
-        this.handler = Objects.requireNonNull(handler, "factory");
+        this.factory = Objects.requireNonNull(factory, "factory");
+        this.resetHandler = ObjectUtils.nullToDef(resetHandler, FunctionUtils.emptyConsumer());
+        this.filter = filter;
         this.freeObjects = new MpmcArrayQueue<>(poolSize);
     }
 
@@ -85,7 +109,7 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
     @Override
     public T acquire() {
         T obj = freeObjects.poll();
-        return obj == null ? handler.create(this, 0) : obj;
+        return obj != null ? obj : factory.get();
     }
 
     @Override
@@ -93,32 +117,16 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
         if (obj == null) {
             throw new IllegalArgumentException("obj cannot be null.");
         }
-        if (!handler.test(obj)) {
-            handler.destroy(obj);
-            return;
-        }
-        handler.reset(obj);
-        if (!freeObjects.offer(obj)) {
-            handler.destroy(obj);
+        resetHandler.accept(obj);
+        if (filter == null || filter.test(obj)) {
+            freeObjects.offer(obj);
         }
     }
 
     @Override
     public void clear() {
-        T obj;
-        while ((obj = freeObjects.poll()) != null) {
-            handler.destroy(obj);
+        //noinspection StatementWithEmptyBody
+        while (freeObjects.poll() != null) {
         }
     }
-
-    public void fill(int count) {
-        for (int i = 0; i < count; i++) {
-            T obj = handler.create(this, 0);
-            if (!freeObjects.offer(obj)) {
-                handler.destroy(obj);
-                return;
-            }
-        }
-    }
-
 }

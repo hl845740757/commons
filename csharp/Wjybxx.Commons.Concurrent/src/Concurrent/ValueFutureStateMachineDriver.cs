@@ -30,8 +30,7 @@ namespace Wjybxx.Commons.Concurrent;
 internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMachineDriver<T> where S : IAsyncStateMachine
 {
     private static readonly ConcurrentObjectPool<ValueFutureStateMachineDriver<T, S>> POOL =
-        new(PoolableObjectHandlers.Of(() => new ValueFutureStateMachineDriver<T, S>(), driver => driver.Reset()),
-            50);
+        new(() => new ValueFutureStateMachineDriver<T, S>(), driver => driver.Reset(), 50);
 
     /// <summary>
     /// 任务状态机

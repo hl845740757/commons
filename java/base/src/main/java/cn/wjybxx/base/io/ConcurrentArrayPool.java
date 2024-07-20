@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 
 /**
  * 高性能的并发数组池实现
- * (未鉴定归属，可归还外部数组)
+ * (未鉴定归属，可归还外部数组，适用简单场景)
  *
  * @author wjybxx
  * date - 2024/1/6
@@ -201,6 +201,7 @@ public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
 
         private Builder(Class<T> arrayType) {
             this.arrayType = Objects.requireNonNull(arrayType, "arrayType");
+            this.clear = ArrayPoolCore.isRefArray(arrayType);
         }
 
         public ConcurrentArrayPool<T> build() {

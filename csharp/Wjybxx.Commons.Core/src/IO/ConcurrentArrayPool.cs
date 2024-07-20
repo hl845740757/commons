@@ -18,13 +18,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.IO;
 
 /// <summary>
 /// 高性能的并发数组池实现
-/// (未鉴定归属，可归还外部数组)
+/// (未鉴定归属，可归还外部数组，适用简单场景)
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
@@ -123,7 +124,7 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
     public class Builder
     {
         /** 数组在归还时是否清理数组内容 */
-        private bool clear;
+        private bool clear = RuntimeHelpers.IsReferenceOrContainsReferences<T>();
         /** 当前chunk没有合适空闲数组时，后向查找个数 -- 该值过大可能导致性能损耗，也可能导致返回过大的数组 */
         private int lookAhead = 1;
 

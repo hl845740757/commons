@@ -24,7 +24,7 @@ import java.util.Objects;
 
 /**
  * 高性能的并发数组池实现
- * (未鉴定归属，可归还外部数组)
+ * (未鉴定归属，可归还外部数组，适用简单场景)
  *
  * @author wjybxx
  * date - 2024/1/6
@@ -98,8 +98,8 @@ public final class ConcurrentArrayLikePool<T> implements ArrayLikePool<T> {
     public void release(T array) {
         int length = handler.getCapacity(array);
         final int index = ArrayPoolCore.indexBucketOfArray(capacities, length);
-        if (index < 0 || length != capacities[index] || !handler.test(array)) { // 长度不匹配
-            handler.destroy(array);
+        if (index < 0 || length != capacities[index] || !handler.validate(array)) { // 长度不匹配
+            handler.destroy(array); // 也可能是池创建的对象
             return;
         }
         handler.reset(array);

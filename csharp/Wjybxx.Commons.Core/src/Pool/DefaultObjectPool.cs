@@ -36,8 +36,7 @@ namespace Wjybxx.Commons.Pool;
 [NotThreadSafe]
 public class DefaultObjectPool<T> : IObjectPool<T>
 {
-    /** 默认不无限缓存 */
-    private const int DefaultPoolSize = 1024;
+    private static readonly Action<T> DO_NOTHING = _ => { };
 
     private readonly Func<T> _factory;
     private readonly Action<T> _resetHandler;
@@ -53,9 +52,9 @@ public class DefaultObjectPool<T> : IObjectPool<T>
     /// <param name="resetHandler">重置方法</param>
     /// <param name="poolSize">池大小；0表示不缓存对象</param>
     /// <param name="filter">回收对象的过滤器</param>
-    public DefaultObjectPool(Func<T> factory, Action<T> resetHandler, int poolSize = DefaultPoolSize, Func<T, bool>? filter = null) {
+    public DefaultObjectPool(Func<T> factory, Action<T>? resetHandler, int poolSize = 64, Func<T, bool>? filter = null) {
         this._factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        this._resetHandler = resetHandler ?? throw new ArgumentNullException(nameof(resetHandler));
+        this._resetHandler = resetHandler ?? DO_NOTHING;
         this._poolSize = poolSize;
         this._filter = filter;
         this._freeObjects = new Stack<T>(Math.Clamp(poolSize, 0, 10));
@@ -88,7 +87,8 @@ public class DefaultObjectPool<T> : IObjectPool<T>
         Stack<T> freeObjects = this._freeObjects;
         Action<T> resetPolicy = this._resetHandler;
         Func<T, bool>? filter = this._filter;
-        int maxCapacity = this._poolSize;
+        int poolSize = this._poolSize;
+
         if (objects is List<T> arrayList) {
             for (int i = 0, n = arrayList.Count; i < n; i++) {
                 T obj = arrayList[i];
@@ -96,7 +96,7 @@ public class DefaultObjectPool<T> : IObjectPool<T>
                     continue;
                 }
                 resetPolicy(obj);
-                if (freeObjects.Count < maxCapacity && (filter == null || filter.Invoke(obj))) {
+                if (freeObjects.Count < poolSize && (filter == null || filter.Invoke(obj))) {
                     freeObjects.Push(obj);
                 }
             }
@@ -106,7 +106,7 @@ public class DefaultObjectPool<T> : IObjectPool<T>
                     continue;
                 }
                 resetPolicy(obj);
-                if (freeObjects.Count < maxCapacity && (filter == null || filter.Invoke(obj))) {
+                if (freeObjects.Count < poolSize && (filter == null || filter.Invoke(obj))) {
                     freeObjects.Push(obj);
                 }
             }

@@ -34,7 +34,10 @@ public abstract class ConcurrentObjectPool
 
     /** 默认的全局StringBuilderPool */
     public static readonly ConcurrentObjectPool<StringBuilder> SharedStringBuilderPool = new ConcurrentObjectPool<StringBuilder>(
-        PoolableObjectHandlers.NewStringBuilderHandler(1024, SBP_MAX_CAPACITY), SBP_SIZE);
+        () => new StringBuilder(1024),
+        sb => sb.Clear(),
+        SBP_SIZE,
+        sb => sb.Capacity >= 1024 && sb.Capacity <= SBP_MAX_CAPACITY);
 
     /// <summary>
     /// 提供统一API清理对象池
@@ -44,25 +47,32 @@ public abstract class ConcurrentObjectPool
 
 /// <summary>
 /// 高性能固定大小对象池
-/// (未鉴定归属，可归还外部对象)
+/// (未鉴定归属，可归还外部对象，适用简单场景)
 /// </summary>
 /// <typeparam name="T"></typeparam>
 [ThreadSafe]
 public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> where T : class
 {
-    private readonly IPoolableObjectHandler<T> _handler;
+    private static readonly Action<T> DO_NOTHING = _ => { };
+
+    private readonly Func<T> _factory;
+    private readonly Action<T> _resetHandler;
+    private readonly Func<T, bool>? _filter;
     private readonly MpmcArrayQueue<T> _freeObjects;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="handler">对象创建工厂</param>
-    /// <param name="poolSize">池大小</param>
-    public ConcurrentObjectPool(IPoolableObjectHandler<T> handler, int poolSize = 64) {
-        _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+    /// <param name="factory">对象创建工厂</param>
+    /// <param name="resetHandler">重置方法</param>
+    /// <param name="poolSize">池大小；0表示不缓存对象</param>
+    /// <param name="filter">回收对象的过滤器</param>
+    public ConcurrentObjectPool(Func<T> factory, Action<T>? resetHandler, int poolSize = 64, Func<T, bool>? filter = null) {
+        _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+        _resetHandler = resetHandler ?? DO_NOTHING;
+        _filter = filter;
         _freeObjects = new MpmcArrayQueue<T>(poolSize);
     }
-
 
     /// <summary>
     /// 对象池大小
@@ -80,34 +90,19 @@ public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> wher
         if (_freeObjects.Poll(out T result)) {
             return result;
         }
-        return _handler.Create(this, 0);
+        return _factory.Invoke();
     }
 
     public void Release(T obj) {
         if (obj == null) throw new ArgumentNullException(nameof(obj));
-        if (!_handler.Test(obj)) {
-            _handler.Destroy(obj);
-            return;
-        }
-        _handler.Reset(obj);
-        if (!_freeObjects.Offer(obj)) {
-            _handler.Destroy(obj);
+        _resetHandler.Invoke(obj);
+        if (_filter == null || _filter.Invoke(obj)) {
+            _freeObjects.Offer(obj);
         }
     }
 
     public override void Clear() {
-        while (_freeObjects.Poll(out T obj)) {
-            _handler.Destroy(obj);
-        }
-    }
-
-    public void Fill(int count) {
-        for (int i = 0; i < count; i++) {
-            T obj = _handler.Create(this, 0);
-            if (!_freeObjects.Offer(obj)) {
-                _handler.Destroy(obj);
-                return;
-            }
+        while (_freeObjects.Poll(out T _)) {
         }
     }
 }

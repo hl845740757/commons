@@ -24,7 +24,7 @@ namespace Wjybxx.Commons.IO;
 
 /// <summary>
 /// 高性能的并发对象池实现
-/// (未鉴定归属，可归还外部对象)
+/// (未鉴定归属，可归还外部对象，适用简单场景)
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
@@ -88,8 +88,8 @@ public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
     public void Release(T array) {
         int length = _handler.GetCapacity(array);
         int index = ArrayPoolCore.IndexBucketOfArray(_capacities, length);
-        if (index < 0 || length != _capacities[index] || !_handler.Test(array)) { // 长度不匹配
-            _handler.Destroy(array);
+        if (index < 0 || length != _capacities[index] || !_handler.Validate(array)) { // 长度不匹配
+            _handler.Destroy(array); // 也可能是池创建的对象
             return;
         }
         _handler.Reset(array);

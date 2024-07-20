@@ -122,9 +122,9 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
         }
 
         final ArrayList<T> freeObjects = this.freeObjects;
-        final int poolSize = this.poolSize;
         final Consumer<? super T> resetPolicy = this.resetHandler;
         final Predicate<? super T> filter = this.filter;
+        final int poolSize = this.poolSize;
 
         if (objects instanceof ArrayList<? extends T> arrayList) {
             for (int i = 0, n = arrayList.size(); i < n; i++) {
