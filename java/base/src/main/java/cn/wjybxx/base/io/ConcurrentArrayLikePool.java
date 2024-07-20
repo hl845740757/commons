@@ -33,7 +33,6 @@ import java.util.Objects;
 public final class ConcurrentArrayLikePool<T> implements ArrayLikePool<T> {
 
     private final PoolableArrayHandler<T> handler;
-    private final boolean clear;
     private final int lookAhead;
 
     private final int[] capacities; // 用于快速二分查找，避免查询buckets
@@ -53,7 +52,6 @@ public final class ConcurrentArrayLikePool<T> implements ArrayLikePool<T> {
             arrayCacheCounts = ArrayPoolCore.calArrayCacheCounts(arrayCapacities.length, builder.getFirstBucketLength(), builder.getBucketGrowFactor());
         }
         this.handler = builder.getHandler();
-        this.clear = builder.isClear();
         this.lookAhead = Math.max(0, builder.getLookAhead());
 
         // 初始化chunk
@@ -67,16 +65,11 @@ public final class ConcurrentArrayLikePool<T> implements ArrayLikePool<T> {
     @Nonnull
     @Override
     public T acquire() {
-        return acquire(capacities[0], false);
+        return acquire(capacities[0]);
     }
 
     @Override
     public T acquire(int minimumLength) {
-        return acquire(minimumLength, false);
-    }
-
-    @Override
-    public T acquire(int minimumLength, boolean clear) {
         final int index = ArrayPoolCore.indexBucketOfArray(capacities, minimumLength);
         if (index < 0) { // 不能被池化
             return handler.create(this, minimumLength);
@@ -103,24 +96,13 @@ public final class ConcurrentArrayLikePool<T> implements ArrayLikePool<T> {
 
     @Override
     public void release(T array) {
-        releaseImpl(array, this.clear);
-    }
-
-    @Override
-    public void release(T array, boolean clear) {
-        releaseImpl(array, this.clear || clear); // 默认不清理的情况下用户请求有效
-    }
-
-    private void releaseImpl(T array, boolean clear) {
         int length = handler.getCapacity(array);
         final int index = ArrayPoolCore.indexBucketOfArray(capacities, length);
         if (index < 0 || length != capacities[index] || !handler.test(array)) { // 长度不匹配
             handler.destroy(array);
             return;
         }
-        if (clear) {
-            handler.reset(array);
-        }
+        handler.reset(array);
         if (!buckets[index].offer(array)) {
             handler.destroy(array);
         }
@@ -146,8 +128,6 @@ public final class ConcurrentArrayLikePool<T> implements ArrayLikePool<T> {
 
         /** 处理器 */
         private final PoolableArrayHandler<T> handler;
-        /** 数组在归还时是否清理数组内容 */
-        private boolean clear;
         /** 当前chunk没有合适空闲数组时，后向查找个数 -- 该值过大可能导致性能损耗，也可能导致返回过大的数组 */
         private int lookAhead = 1;
 
@@ -209,16 +189,6 @@ public final class ConcurrentArrayLikePool<T> implements ArrayLikePool<T> {
 
         public Builder<T> setMaxCapacity(int maxCapacity) {
             this.maxCapacity = maxCapacity;
-            return this;
-        }
-
-        /** 数组在归还时是否清理数组内容 */
-        public boolean isClear() {
-            return clear;
-        }
-
-        public Builder<T> setClear(boolean clear) {
-            this.clear = clear;
             return this;
         }
 

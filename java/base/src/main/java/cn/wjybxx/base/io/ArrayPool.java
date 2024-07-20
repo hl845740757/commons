@@ -43,7 +43,7 @@ public interface ArrayPool<T> extends ObjectPool<T> {
 
     /**
      * @param minimumLength 期望的最小数组长度
-     * @param clear         返回前是否先清理，这对于共享池来说比较重要
+     * @param clear         返回前是否先清理 - 只有当前池默认不清理的情况下，该参数才有效用。
      * @return 池化的字节数组
      */
     T acquire(int minimumLength, boolean clear);

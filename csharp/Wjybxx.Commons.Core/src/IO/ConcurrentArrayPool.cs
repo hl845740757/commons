@@ -69,6 +69,9 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
         }
         // 先尝试从最佳池申请
         if (_buckets[index].Poll(out T[] array)) {
+            if (clear && !this._clear) {
+                Array.Clear(array);
+            }
             return array;
         }
         // 尝试从更大的池申请 -- 最多跳3级，避免大规模遍历
@@ -76,6 +79,9 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
             int end = Math.Min(_buckets.Length, index + _lookAhead + 1);
             for (int nextIndex = index + 1; nextIndex < end; nextIndex++) {
                 if (_buckets[nextIndex].Poll(out array)) {
+                    if (clear && !this._clear) {
+                        Array.Clear(array);
+                    }
                     return array;
                 }
             }

@@ -42,14 +42,13 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
             PoolableObjectHandlers.newStringBuilderHandler(1024, SBP_MAX_CAPACITY), SBP_SIZE);
 
     private final PoolableObjectHandler<T> handler;
-    private final int initCapacity;
     private final MpmcArrayQueue<T> freeObjects;
 
     /**
      * @param handler 对象处理器
      */
     public ConcurrentObjectPool(PoolableObjectHandler<T> handler) {
-        this(handler, DEFAULT_POOL_SIZE, 0);
+        this(handler, DEFAULT_POOL_SIZE);
     }
 
     /**
@@ -57,15 +56,10 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
      * @param poolSize 缓存池大小；0表示不缓存对象
      */
     public ConcurrentObjectPool(PoolableObjectHandler<T> handler, int poolSize) {
-        this(handler, poolSize, 0);
-    }
-
-    public ConcurrentObjectPool(PoolableObjectHandler<T> handler, int poolSize, int initCapacity) {
         if (poolSize < 0) {
             throw new IllegalArgumentException("poolSize: " + poolSize);
         }
         this.handler = Objects.requireNonNull(handler, "factory");
-        this.initCapacity = initCapacity;
         this.freeObjects = new MpmcArrayQueue<>(poolSize);
     }
 
@@ -91,7 +85,7 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
     @Override
     public T acquire() {
         T obj = freeObjects.poll();
-        return obj == null ? handler.create(this, initCapacity) : obj;
+        return obj == null ? handler.create(this, 0) : obj;
     }
 
     @Override
@@ -119,7 +113,7 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
 
     public void fill(int count) {
         for (int i = 0; i < count; i++) {
-            T obj = handler.create(this, initCapacity);
+            T obj = handler.create(this, 0);
             if (!freeObjects.offer(obj)) {
                 handler.destroy(obj);
                 return;

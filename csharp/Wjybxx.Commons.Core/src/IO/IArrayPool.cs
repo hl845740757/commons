@@ -44,7 +44,7 @@ public interface IArrayPool<T> : IObjectPool<T[]>
     /// 2.默认情况下不清理
     /// </summary>
     /// <param name="minimumLength">期望的最小数组长度</param>
-    /// <param name="clear">返回前是否先清理，这对于共享池来说比较重要</param>
+    /// <param name="clear">返回前是否先清理；只有当前池默认不清理的情况下，该参数才有效用。</param>
     /// <returns>池化的字节数组</returns>
     T[] Acquire(int minimumLength, bool clear = false);
 
@@ -52,7 +52,7 @@ public interface IArrayPool<T> : IObjectPool<T[]>
     /// 归还一个数组到池中 - 可选择清理
     /// </summary>
     /// <param name="array">租借的数组</param>
-    /// <param name="clear">是否需要清理</param>
+    /// <param name="clear">是否需要清理；只有当前池默认不清理的情况下，该参数才有效用。</param>
     /// <returns></returns>
     void Release(T[] array, bool clear);
 }

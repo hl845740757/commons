@@ -111,6 +111,9 @@ public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
         // 先尝试从最佳池申请
         T array = buckets[index].poll();
         if (array != null) {
+            if (clear && !this.clear) {
+                clearHandler.accept(array);
+            }
             return array;
         }
         // 尝试从更大的池申请 -- 最多跳3级，避免大规模遍历
@@ -119,6 +122,9 @@ public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
             for (int nextIndex = index + 1; nextIndex < end; nextIndex++) {
                 array = buckets[nextIndex].poll();
                 if (array != null) {
+                    if (clear && !this.clear) {
+                        clearHandler.accept(array);
+                    }
                     return array;
                 }
             }

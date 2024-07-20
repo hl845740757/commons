@@ -51,7 +51,6 @@ public abstract class ConcurrentObjectPool
 public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> where T : class
 {
     private readonly IPoolableObjectHandler<T> _handler;
-    private readonly int _initCapacity;
     private readonly MpmcArrayQueue<T> _freeObjects;
 
     /// <summary>
@@ -59,11 +58,8 @@ public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> wher
     /// </summary>
     /// <param name="handler">对象创建工厂</param>
     /// <param name="poolSize">池大小</param>
-    /// <param name="initCapacity">初始空间参数</param>
-    public ConcurrentObjectPool(IPoolableObjectHandler<T> handler, int poolSize = 64, int initCapacity = 0) {
-        if (initCapacity < 0) throw new ArgumentException(nameof(initCapacity));
+    public ConcurrentObjectPool(IPoolableObjectHandler<T> handler, int poolSize = 64) {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
-        _initCapacity = initCapacity;
         _freeObjects = new MpmcArrayQueue<T>(poolSize);
     }
 
@@ -84,7 +80,7 @@ public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> wher
         if (_freeObjects.Poll(out T result)) {
             return result;
         }
-        return _handler.Create(this, _initCapacity);
+        return _handler.Create(this, 0);
     }
 
     public void Release(T obj) {
@@ -107,7 +103,7 @@ public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> wher
 
     public void Fill(int count) {
         for (int i = 0; i < count; i++) {
-            T obj = _handler.Create(this, _initCapacity);
+            T obj = _handler.Create(this, 0);
             if (!_freeObjects.Offer(obj)) {
                 _handler.Destroy(obj);
                 return;

@@ -30,7 +30,6 @@ namespace Wjybxx.Commons.IO;
 public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
 {
     private readonly IPoolableArrayHandler<T> _handler;
-    private readonly bool _clear;
     private readonly int _lookAhead;
 
     private readonly int[] _capacities; // 用于快速二分查找，避免查询buckets
@@ -49,7 +48,6 @@ public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
             arrayCacheCounts = ArrayPoolCore.CalArrayCacheCounts(arrayCapacities.Length, builder.FirstBucketLength, builder.BucketGrowFactor);
         }
         this._handler = builder.Handler;
-        this._clear = builder.Clear;
         this._lookAhead = Math.Max(0, builder.LookAhead);
 
         // 初始化chunk
@@ -64,7 +62,7 @@ public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
         return Acquire(_capacities[0]);
     }
 
-    public T Acquire(int minimumLength, bool clear = false) {
+    public T Acquire(int minimumLength) {
         int index = ArrayPoolCore.IndexBucketOfArray(_capacities, minimumLength);
         if (index < 0) { // 不能被池化
             return _handler.Create(this, minimumLength);
@@ -88,23 +86,13 @@ public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
     }
 
     public void Release(T array) {
-        ReleaseImpl(array, this._clear);
-    }
-
-    public void Release(T array, bool clear) {
-        ReleaseImpl(array, this._clear | clear);
-    }
-
-    private void ReleaseImpl(T array, bool clear) {
         int length = _handler.GetCapacity(array);
         int index = ArrayPoolCore.IndexBucketOfArray(_capacities, length);
         if (index < 0 || length != _capacities[index] || !_handler.Test(array)) { // 长度不匹配
             _handler.Destroy(array);
             return;
         }
-        if (clear) {
-            _handler.Reset(array);
-        }
+        _handler.Reset(array);
         if (!_buckets[index].Offer(array)) {
             _handler.Destroy(array);
         }
