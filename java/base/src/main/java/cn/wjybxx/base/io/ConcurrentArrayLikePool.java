@@ -70,7 +70,7 @@ public final class ConcurrentArrayLikePool<T> implements ArrayLikePool<T> {
 
     @Override
     public T acquire(int minimumLength) {
-        final int index = ArrayPoolCore.indexBucketOfArray(capacities, minimumLength);
+        final int index = ArrayPoolCore.bucketIndexOfArray(capacities, minimumLength);
         if (index < 0) { // 不能被池化
             return handler.create(this, minimumLength);
         }
@@ -97,7 +97,7 @@ public final class ConcurrentArrayLikePool<T> implements ArrayLikePool<T> {
     @Override
     public void release(T array) {
         int length = handler.getCapacity(array);
-        final int index = ArrayPoolCore.indexBucketOfArray(capacities, length);
+        final int index = ArrayPoolCore.bucketIndexOfArray(capacities, length);
         if (index < 0 || length != capacities[index] || !handler.validate(array)) { // 长度不匹配
             handler.destroy(array); // 也可能是池创建的对象
             return;

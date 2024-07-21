@@ -25,7 +25,7 @@ namespace Wjybxx.Commons.Concurrent;
 /// <summary>
 /// 
 /// </summary>
-[AsyncMethodBuilder(typeof(AsyncFutureMethodBuilder))]
+[AsyncMethodBuilder(typeof(AsyncValueFutureMethodBuilder))]
 public readonly struct ValueFuture
 {
     public static readonly ValueFuture COMPLETED = new ValueFuture();
@@ -128,7 +128,7 @@ public readonly struct ValueFuture
     #endregion
 }
 
-[AsyncMethodBuilder(typeof(AsyncFutureMethodBuilder<>))]
+[AsyncMethodBuilder(typeof(AsyncValueFutureMethodBuilder<>))]
 public readonly struct ValueFuture<T>
 {
     public static readonly ValueFuture<T> COMPLETED = new ValueFuture<T>(default, null);

@@ -23,7 +23,7 @@ namespace Wjybxx.Commons;
 /// <summary>
 /// 环境变量工具类
 /// </summary>
-public class EnvironmentUtil
+public static class EnvironmentUtil
 {
     /// <summary>
     /// 当前工作目录

@@ -57,19 +57,19 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     /**
-     * @param factory     对象创建工厂
+     * @param factory      对象创建工厂
      * @param resetHandler 重置方法
-     * @param poolSize    缓存池大小；0表示不缓存对象
+     * @param poolSize     缓存池大小；0表示不缓存对象
      */
     public DefaultObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler, int poolSize) {
         this(factory, resetHandler, poolSize, null);
     }
 
     /**
-     * @param factory     对象创建工厂
+     * @param factory      对象创建工厂
      * @param resetHandler 重置方法
-     * @param poolSize    缓存池大小；0表示不缓存对象
-     * @param filter      对象回收过滤器
+     * @param poolSize     缓存池大小；0表示不缓存对象
+     * @param filter       对象回收过滤器
      */
     public DefaultObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler, int poolSize, Predicate<? super T> filter) {
         if (poolSize < 0) {

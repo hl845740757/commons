@@ -104,7 +104,7 @@ public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
     @SuppressWarnings("unchecked")
     @Override
     public T acquire(int minimumLength, boolean clear) {
-        final int index = ArrayPoolCore.indexBucketOfArray(capacities, minimumLength);
+        final int index = ArrayPoolCore.bucketIndexOfArray(capacities, minimumLength);
         if (index < 0) { // 不能被池化
             return (T) Array.newInstance(arrayType.getComponentType(), minimumLength);
         }
@@ -146,7 +146,7 @@ public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
 
     private void releaseImpl(T array, boolean clear) {
         int length = Array.getLength(array);
-        int index = ArrayPoolCore.indexBucketOfArray(capacities, length);
+        int index = ArrayPoolCore.bucketIndexOfArray(capacities, length);
         if (index < 0 || length != capacities[index]) { // 长度不匹配
             return;
         }

@@ -53,25 +53,25 @@ public static partial class CollectionUtil
 
     #region equals/hashcode
 
-    public static int HashCode<T>(IList<T?>? data) where T : class {
-        if (data == null) {
+    public static int HashCode<T>(IList<T?>? list) where T : class {
+        if (list == null) {
             return 0;
         }
         int r = 1;
-        for (int i = 0; i < data.Count; i++) {
-            T e = data[i];
+        for (int i = 0; i < list.Count; i++) {
+            T e = list[i];
             r = r * 31 + (e == null ? 0 : e.GetHashCode());
         }
         return r;
     }
 
-    public static int HashCode<T>(IList<T?>? data, Func<T, int> hashFunc) {
-        if (data == null) {
+    public static int HashCode<T>(IList<T?>? list, Func<T, int> hashFunc) {
+        if (list == null) {
             return 0;
         }
         int r = 1;
-        for (int i = 0; i < data.Count; i++) {
-            T e = data[i];
+        for (int i = 0; i < list.Count; i++) {
+            T e = list[i];
             r = r * 31 + hashFunc(e);
         }
         return r;

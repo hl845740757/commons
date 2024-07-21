@@ -64,7 +64,7 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
     }
 
     public T[] Acquire(int minimumLength, bool clear = false) {
-        int index = ArrayPoolCore.IndexBucketOfArray(_capacities, minimumLength);
+        int index = ArrayPoolCore.BucketIndexOfArray(_capacities, minimumLength);
         if (index < 0) { // 不能被池化
             return new T[minimumLength];
         }
@@ -102,7 +102,7 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
 
     private void ReleaseImpl(T[] array, bool clear) {
         int length = array.Length;
-        int index = ArrayPoolCore.IndexBucketOfArray(_capacities, length);
+        int index = ArrayPoolCore.BucketIndexOfArray(_capacities, length);
         if (index < 0 || length != _capacities[index]) { // 长度不匹配
             return;
         }

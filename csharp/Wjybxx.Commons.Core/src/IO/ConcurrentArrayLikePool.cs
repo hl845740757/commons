@@ -63,7 +63,7 @@ public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
     }
 
     public T Acquire(int minimumLength) {
-        int index = ArrayPoolCore.IndexBucketOfArray(_capacities, minimumLength);
+        int index = ArrayPoolCore.BucketIndexOfArray(_capacities, minimumLength);
         if (index < 0) { // 不能被池化
             return _handler.Create(this, minimumLength);
         }
@@ -87,7 +87,7 @@ public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
 
     public void Release(T array) {
         int length = _handler.GetCapacity(array);
-        int index = ArrayPoolCore.IndexBucketOfArray(_capacities, length);
+        int index = ArrayPoolCore.BucketIndexOfArray(_capacities, length);
         if (index < 0 || length != _capacities[index] || !_handler.Validate(array)) { // 长度不匹配
             _handler.Destroy(array); // 也可能是池创建的对象
             return;

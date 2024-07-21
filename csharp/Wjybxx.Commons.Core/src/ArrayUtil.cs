@@ -50,48 +50,48 @@ public static class ArrayUtil
         return first.SequenceEqual(second);
     }
 
-    public static int HashCode<T>(T?[]? data) where T : class {
-        if (data == null) {
+    public static int HashCode<T>(T?[]? array) where T : class {
+        if (array == null) {
             return 0;
         }
         int r = 1;
-        for (int i = 0; i < data.Length; i++) {
-            T e = data[i];
+        for (int i = 0; i < array.Length; i++) {
+            T e = array[i];
             r = r * 31 + (e == null ? 0 : e.GetHashCode());
         }
         return r;
     }
 
-    public static int HashCode<T>(T?[]? data, Func<T, int> hashFunc) {
-        if (data == null) {
+    public static int HashCode<T>(T?[]? array, Func<T, int> hashFunc) {
+        if (array == null) {
             return 0;
         }
         int r = 1;
-        for (int i = 0; i < data.Length; i++) {
-            T e = data[i];
+        for (int i = 0; i < array.Length; i++) {
+            T e = array[i];
             r = r * 31 + hashFunc(e);
         }
         return r;
     }
 
-    public static int HashCode(byte[]? data) {
-        if (data == null) {
+    public static int HashCode(byte[]? array) {
+        if (array == null) {
             return 0;
         }
         int r = 1;
-        for (int i = 0; i < data.Length; i++) {
-            r = r * 31 + data[i];
+        for (int i = 0; i < array.Length; i++) {
+            r = r * 31 + array[i];
         }
         return r;
     }
 
-    public static int HashCode(int[]? data) {
-        if (data == null) {
+    public static int HashCode(int[]? array) {
+        if (array == null) {
             return 0;
         }
         int r = 1;
-        for (int i = 0; i < data.Length; i++) {
-            r = r * 31 + data[i];
+        for (int i = 0; i < array.Length; i++) {
+            r = r * 31 + array[i];
         }
         return r;
     }
