@@ -16,6 +16,8 @@
 
 package cn.wjybxx.base;
 
+import javax.annotation.Nonnull;
+
 /**
  * 常量
  * <p>
@@ -53,19 +55,20 @@ public interface Constant extends Comparable<Constant> {
      *
      * @return 常量的名字。
      */
+    @Nonnull
     String name();
 
     /**
-     * 声明常量的池
-     * 注意：只有同一个池下的常量才可以比较。
+     * 声明常量的池的id
      */
-    Object declaringPool();
+    @Nonnull
+    String poolId();
 
     // region builder
 
     abstract class Builder {
 
-        private Object declaringPool;
+        private String poolId;
         private Integer id;
         private final String name;
 
@@ -76,12 +79,12 @@ public interface Constant extends Comparable<Constant> {
             this.name = checkName(name);
         }
 
-        /** 设置常量的id - id通常由管理常量的常量池分配 */
-        public Builder setId(Object declaringPool, int id) {
+        /** 设置常量的id - 该方法由常量池调用 */
+        public Builder setId(String poolId, int id) {
             if (this.id != null) {
                 throw new IllegalStateException("id cannot be initialized repeatedly");
             }
-            this.declaringPool = declaringPool;
+            this.poolId = poolId;
             this.id = id;
             return this;
         }
@@ -101,8 +104,8 @@ public interface Constant extends Comparable<Constant> {
             return name;
         }
 
-        public Object getDeclaringPool() {
-            return declaringPool;
+        public String getPoolId() {
+            return poolId;
         }
 
         /** 设置高速缓存索引 -- 该方法由{@link ConstantPool}调用 */

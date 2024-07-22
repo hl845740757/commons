@@ -20,6 +20,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,6 +49,8 @@ public class ConstantPool<T extends Constant> {
 
     private final ConcurrentMap<String, T> constants = new ConcurrentHashMap<>();
     private final ConstantFactory<? extends T> factory;
+
+    private final String poolId = UUID.randomUUID().toString();
     private final AtomicInteger idGenerator;
     /**
      * 下一个用于高速缓存的index.
@@ -205,9 +208,10 @@ public class ConstantPool<T extends Constant> {
         throw new IllegalArgumentException(name + " is already in use");
     }
 
+    @SuppressWarnings("StringEquality")
     private T newConstant(Constant.Builder builder) {
         final int id = idGenerator.getAndIncrement();
-        builder.setId(this, id);
+        builder.setId(poolId, id);
         if (builder.isRequireCacheIndex()) {
             builder.setCacheIndex(cacheIndexGenerator.getAndIncrement());
         }
@@ -217,7 +221,7 @@ public class ConstantPool<T extends Constant> {
         Objects.requireNonNull(result, "result");
         if (result.id() != id
                 || !Objects.equals(result.name(), builder.getName())
-                || result.declaringPool() != this) {
+                || result.poolId() != poolId) {
             throw new IllegalStateException(String.format("expected id: %d, name: %s, but found id: %d, name: %s",
                     id, builder.getName(), result.id(), result.name()));
         }

@@ -30,12 +30,12 @@ public abstract class AbstractConstant implements Constant {
     /** 常量的名字 */
     private final String name;
     /** 声明常量的池 */
-    private final Object declaringPool;
+    private final String poolId;
 
     protected AbstractConstant(Builder builder) {
         this.id = builder.getIdOrThrow();
         this.name = Objects.requireNonNull(builder.getName());
-        this.declaringPool = Objects.requireNonNull(builder.getDeclaringPool(), "declaringPool");
+        this.poolId = Objects.requireNonNull(builder.getPoolId(), "poolId");
     }
 
     @Override
@@ -43,14 +43,16 @@ public abstract class AbstractConstant implements Constant {
         return id;
     }
 
+    @Nonnull
     @Override
     public final String name() {
         return name;
     }
 
+    @Nonnull
     @Override
-    public Object declaringPool() {
-        return declaringPool;
+    public final String poolId() {
+        return poolId;
     }
 
     @Override
@@ -76,6 +78,7 @@ public abstract class AbstractConstant implements Constant {
         throw new CloneNotSupportedException();
     }
 
+    @SuppressWarnings("StringEquality")
     @Override
     public final int compareTo(final @Nonnull Constant other) {
         if (this == other) {
@@ -85,13 +88,19 @@ public abstract class AbstractConstant implements Constant {
         // 1. 未比较名字也未比较其它信息 - 这可以保证同一个类中定义的常量，其结果与定义顺序相同，就像枚举。
         // 2. uniqueId与类初始化顺序有关，因此无法保证不同类中定义的常量的顺序。
         // 3. 有个例外，超类中定义的常量总是在子类前面，这是因为超类总是在子类之前初始化。
-        if (declaringPool == other.declaringPool()) {
-            if (id < other.id()) {
-                return -1;
+
+        // string的compare没有先做引用相等测试，因此总是调用会产生较大的开销
+        if (poolId != other.poolId()) {
+            int r = poolId.compareTo(other.poolId());
+            if (r != 0) {
+                return r;
             }
-            if (id > other.id()) {
-                return 1;
-            }
+        }
+        if (id < other.id()) {
+            return -1;
+        }
+        if (id > other.id()) {
+            return 1;
         }
         throw new Error("failed to compare two different constants, this: " + name + ", that: " + other.name());
     }
