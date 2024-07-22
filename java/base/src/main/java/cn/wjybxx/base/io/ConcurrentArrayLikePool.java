@@ -16,6 +16,8 @@
 
 package cn.wjybxx.base.io;
 
+import cn.wjybxx.base.pool.MpmcObjectBucket;
+
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.ArrayList;
@@ -36,7 +38,7 @@ public final class ConcurrentArrayLikePool<T> implements ArrayLikePool<T> {
     private final int lookAhead;
 
     private final int[] capacities; // 用于快速二分查找，避免查询buckets
-    private final MpmcArrayQueue<T>[] buckets;
+    private final MpmcObjectBucket<T>[] buckets;
 
     @SuppressWarnings("unchecked")
     public ConcurrentArrayLikePool(Builder<T> builder) {
@@ -56,9 +58,9 @@ public final class ConcurrentArrayLikePool<T> implements ArrayLikePool<T> {
 
         // 初始化chunk
         this.capacities = arrayCapacities;
-        this.buckets = new MpmcArrayQueue[arrayCapacities.length];
+        this.buckets = new MpmcObjectBucket[arrayCapacities.length];
         for (int i = 0; i < buckets.length; i++) {
-            buckets[i] = new MpmcArrayQueue<>(arrayCacheCounts[i]);
+            buckets[i] = new MpmcObjectBucket<>(arrayCacheCounts[i]);
         }
     }
 
@@ -110,7 +112,7 @@ public final class ConcurrentArrayLikePool<T> implements ArrayLikePool<T> {
 
     @Override
     public void clear() {
-        for (MpmcArrayQueue<T> bucket : buckets) {
+        for (MpmcObjectBucket<T> bucket : buckets) {
             T array;
             while ((array = bucket.poll()) != null) {
                 handler.destroy(array);

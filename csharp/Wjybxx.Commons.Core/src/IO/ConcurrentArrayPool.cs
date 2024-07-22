@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Wjybxx.Commons.Pool;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.IO;
@@ -34,7 +35,7 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
     private readonly int _lookAhead;
 
     private readonly int[] _capacities; // 用于快速二分查找，避免查询buckets
-    private readonly MpmcArrayQueue<T[]>[] _buckets;
+    private readonly MpmcObjectBucket<T[]>[] _buckets;
 
     public ConcurrentArrayPool(Builder builder) {
         List<ArrayBucketConfig> bucketInfo = builder.BucketInfo;
@@ -53,9 +54,9 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
 
         // 初始化chunk
         this._capacities = arrayCapacities;
-        this._buckets = new MpmcArrayQueue<T[]>[arrayCapacities.Length];
+        this._buckets = new MpmcObjectBucket<T[]>[arrayCapacities.Length];
         for (int i = 0; i < _buckets.Length; i++) {
-            _buckets[i] = new MpmcArrayQueue<T[]>(arrayCacheCounts[i]);
+            _buckets[i] = new MpmcObjectBucket<T[]>(arrayCacheCounts[i]);
         }
     }
 
@@ -113,7 +114,7 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
     }
 
     public void Clear() {
-        foreach (MpmcArrayQueue<T[]> bucket in _buckets) {
+        foreach (MpmcObjectBucket<T[]> bucket in _buckets) {
             while (bucket.Poll(out T[] _)) {
             }
         }

@@ -170,7 +170,15 @@ public class CollectionUtils {
 
     /** @param list 最好为数组列表 */
     public static <E> int indexOfCustom(List<E> list, Predicate<? super E> indexFunc) {
-        for (int i = 0, size = list.size(); i < size; i++) {
+        return indexOfCustom(list, indexFunc, 0);
+    }
+
+    /** @param list 最好为数组列表 */
+    public static <E> int indexOfCustom(List<E> list, Predicate<? super E> indexFunc, int startIndex) {
+        if (startIndex < 0) {
+            startIndex = 0;
+        }
+        for (int i = startIndex, size = list.size(); i < size; i++) {
             if (indexFunc.test(list.get(i))) {
                 return i;
             }
@@ -180,7 +188,15 @@ public class CollectionUtils {
 
     /** @param list 最好为数组列表 */
     public static <E> int lastIndexOfCustom(List<E> list, Predicate<? super E> indexFunc) {
-        for (int i = list.size() - 1; i >= 0; i--) {
+        return lastIndexOfCustom(list, indexFunc, Integer.MAX_VALUE);
+    }
+
+    /** @param list 最好为数组列表 */
+    public static <E> int lastIndexOfCustom(List<E> list, Predicate<? super E> indexFunc, int startIndex) {
+        if (startIndex >= list.size()) {
+            startIndex = list.size() - 1;
+        }
+        for (int i = startIndex; i >= 0; i--) {
             if (indexFunc.test(list.get(i))) {
                 return i;
             }
@@ -235,9 +251,6 @@ public class CollectionUtils {
      */
     public static int indexOfRef(List<?> list, Object element, int startIndex) {
         Objects.requireNonNull(list, "list");
-        if (startIndex >= list.size()) {
-            return INDEX_NOT_FOUND;
-        }
         if (startIndex < 0) {
             startIndex = 0;
         }
@@ -262,9 +275,6 @@ public class CollectionUtils {
      */
     public static int lastIndexOfRef(List<?> list, Object element, int startIndex) {
         Objects.requireNonNull(list, "list");
-        if (startIndex < 0) {
-            return INDEX_NOT_FOUND;
-        }
         if (startIndex >= list.size()) {
             startIndex = list.size() - 1;
         }

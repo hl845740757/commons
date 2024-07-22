@@ -16,6 +16,7 @@
 
 package cn.wjybxx.base.io;
 
+import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
 

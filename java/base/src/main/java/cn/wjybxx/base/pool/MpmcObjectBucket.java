@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.io;
+package cn.wjybxx.base.pool;
 
 import cn.wjybxx.base.MathCommon;
 
@@ -31,7 +31,7 @@ import java.util.Objects;
  * @author wjybxx
  * date - 2024/7/17
  */
-final class MpmcArrayQueue<E> {
+public final class MpmcObjectBucket<E> {
 
     // region padding
     private long p1, p2, p3, p4, p5, p6, p7, p8;
@@ -65,7 +65,7 @@ final class MpmcArrayQueue<E> {
     private long p31, p32, p33, p34, p35, p36, p37, p38;
     // endregion
 
-    public MpmcArrayQueue(int length) {
+    public MpmcObjectBucket(int length) {
         this.length = length;
 
         this.buffer = new Object[length];
@@ -77,7 +77,7 @@ final class MpmcArrayQueue<E> {
         Arrays.fill(consumed, -1);
     }
 
-    /** 数组的长度 */
+    /** 桶的大小 */
     public int getLength() {
         return length;
     }
@@ -233,8 +233,8 @@ final class MpmcArrayQueue<E> {
     static {
         try {
             MethodHandles.Lookup l = MethodHandles.lookup();
-            VH_PRODUCER = l.findVarHandle(MpmcArrayQueue.class, "producerIndex", long.class);
-            VH_CONSUMER = l.findVarHandle(MpmcArrayQueue.class, "consumerIndex", long.class);
+            VH_PRODUCER = l.findVarHandle(MpmcObjectBucket.class, "producerIndex", long.class);
+            VH_CONSUMER = l.findVarHandle(MpmcObjectBucket.class, "consumerIndex", long.class);
 
             VH_ELEMENTS = MethodHandles.arrayElementVarHandle(Object[].class);
             VH_LONG_ARRAY = MethodHandles.arrayElementVarHandle(long[].class);

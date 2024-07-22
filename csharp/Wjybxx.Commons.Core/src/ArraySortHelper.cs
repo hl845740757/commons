@@ -16,7 +16,9 @@
 
 #endregion
 
-namespace Wjybxx.Commons.IO;
+using System.Collections.Generic;
+
+namespace Wjybxx.Commons;
 
 internal class ArraySortHelper
 {
@@ -42,6 +44,25 @@ internal class ArraySortHelper
             if (midVal < key)
                 low = mid + 1;
             else if (midVal > key)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1); // key not found.
+    }
+
+    public static int BinarySearch<T>(T[] a, int fromIndex, int toIndex,
+                                      T key, Comparer<T> c) {
+        int low = fromIndex;
+        int high = toIndex - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >> 1;
+            T midVal = a[mid];
+            int cmp = c.Compare(midVal, key);
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
                 high = mid - 1;
             else
                 return mid; // key found

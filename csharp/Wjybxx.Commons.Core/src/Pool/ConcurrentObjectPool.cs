@@ -19,10 +19,9 @@
 using System;
 using System.Text;
 using Wjybxx.Commons.Attributes;
-using Wjybxx.Commons.Pool;
 
 #pragma warning disable CS1591
-namespace Wjybxx.Commons.IO;
+namespace Wjybxx.Commons.Pool;
 
 /// <summary>
 /// 提供全局常量支持
@@ -58,7 +57,7 @@ public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> wher
     private readonly Func<T> _factory;
     private readonly Action<T> _resetHandler;
     private readonly Func<T, bool>? _filter;
-    private readonly MpmcArrayQueue<T> _freeObjects;
+    private readonly MpmcObjectBucket<T> _freeObjects;
 
     /// <summary>
     /// 
@@ -71,7 +70,7 @@ public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> wher
         _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         _resetHandler = resetHandler ?? DO_NOTHING;
         _filter = filter;
-        _freeObjects = new MpmcArrayQueue<T>(poolSize);
+        _freeObjects = new MpmcObjectBucket<T>(poolSize);
     }
 
     /// <summary>

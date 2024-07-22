@@ -21,6 +21,7 @@ using System.Text;
 using System.Threading;
 using NUnit.Framework;
 using Wjybxx.Commons.IO;
+using Wjybxx.Commons.Pool;
 
 namespace Commons.Tests.Pool;
 

@@ -19,6 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.IO;
+using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.Commons.Concurrent;
 

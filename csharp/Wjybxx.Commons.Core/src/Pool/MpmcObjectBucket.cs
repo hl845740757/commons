@@ -20,17 +20,18 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+#pragma warning disable CS1591
 
 #pragma warning disable CS0169
 
-namespace Wjybxx.Commons.IO;
+namespace Wjybxx.Commons.Pool;
 
 /// <summary>
 /// 这是一个特定实现的多生产者多消费者的数组队列（MpmcArrayQueue）
 ///  这里没有强制数组大小必须是2的幂，因为要严格保证池的大小符合预期。
 ///  (这里的算法参照了Disruptor模块的实现，但针对数组池进行了特殊的修改，但没有做极致的优化)
 /// </summary>
-internal class MpmcArrayQueue<T>
+public sealed class MpmcObjectBucket<T>
 {
     // region padding
     private long p1, p2, p3, p4, p5, p6, p7, p8;
@@ -65,7 +66,7 @@ internal class MpmcArrayQueue<T>
     private long p31, p32, p33, p34, p35, p36, p37, p38;
     // endregion
 
-    public MpmcArrayQueue(int length) {
+    public MpmcObjectBucket(int length) {
         this.length = length;
 
         this.buffer = new T[length];
@@ -78,7 +79,7 @@ internal class MpmcArrayQueue<T>
     }
 
     /// <summary>
-    /// 数组的长度
+    /// 桶的大小
     /// </summary>
     public int Length => length;
 

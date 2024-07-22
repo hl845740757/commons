@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using Wjybxx.Commons.Pool;
 
 #pragma warning disable CS1591
 namespace Wjybxx.Commons.IO;
@@ -33,7 +34,7 @@ public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
     private readonly int _lookAhead;
 
     private readonly int[] _capacities; // 用于快速二分查找，避免查询buckets
-    private readonly MpmcArrayQueue<T>[] _buckets;
+    private readonly MpmcObjectBucket<T>[] _buckets;
 
     public ConcurrentArrayLikePool(Builder builder) {
         List<ArrayBucketConfig> bucketInfo = builder.BucketInfo;
@@ -52,9 +53,9 @@ public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
 
         // 初始化chunk
         this._capacities = arrayCapacities;
-        this._buckets = new MpmcArrayQueue<T>[arrayCapacities.Length];
+        this._buckets = new MpmcObjectBucket<T>[arrayCapacities.Length];
         for (int i = 0; i < _buckets.Length; i++) {
-            _buckets[i] = new MpmcArrayQueue<T>(arrayCacheCounts[i]);
+            _buckets[i] = new MpmcObjectBucket<T>(arrayCacheCounts[i]);
         }
     }
 
@@ -99,7 +100,7 @@ public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
     }
 
     public void Clear() {
-        foreach (MpmcArrayQueue<T> bucket in _buckets) {
+        foreach (MpmcObjectBucket<T> bucket in _buckets) {
             while (bucket.Poll(out T array)) {
                 _handler.Destroy(array);
             }
@@ -112,8 +113,6 @@ public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
     {
         /** 处理器 */
         private readonly IPoolableArrayHandler<T> handler;
-        /** 数组在归还时是否清理数组内容 */
-        private bool clear;
         /** 当前chunk没有合适空闲数组时，后向查找个数 -- 该值过大可能导致性能损耗，也可能导致返回过大的数组 */
         private int lookAhead = 1;
 
@@ -154,11 +153,6 @@ public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
         public int MaxCapacity {
             get => maxCapacity;
             set => maxCapacity = value;
-        }
-
-        public bool Clear {
-            get => clear;
-            set => clear = value;
         }
 
         public int FirstBucketLength {

@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.io;
+package cn.wjybxx.base.pool;
 
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.SystemPropsUtils;
 import cn.wjybxx.base.function.FunctionUtils;
-import cn.wjybxx.base.pool.ObjectPool;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.Objects;
@@ -52,7 +51,7 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
     private final Supplier<? extends T> factory;
     private final Consumer<? super T> resetHandler;
     private final Predicate<? super T> filter;
-    private final MpmcArrayQueue<T> freeObjects;
+    private final MpmcObjectBucket<T> freeObjects;
 
     /**
      * @param factory      对象创建工厂
@@ -84,7 +83,7 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
         this.factory = Objects.requireNonNull(factory, "factory");
         this.resetHandler = ObjectUtils.nullToDef(resetHandler, FunctionUtils.emptyConsumer());
         this.filter = filter;
-        this.freeObjects = new MpmcArrayQueue<>(poolSize);
+        this.freeObjects = new MpmcObjectBucket<>(poolSize);
     }
 
     /** 获取池大小 */

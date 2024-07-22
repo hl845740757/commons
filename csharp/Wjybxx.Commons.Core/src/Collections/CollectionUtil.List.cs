@@ -82,6 +82,12 @@ public static partial class CollectionUtil
     #region ref
 
 #nullable disable
+
+    /** 查询List中是否包含指定对象引用 */
+    public static bool ContainsRef<T>(this IList<T> list, object element) where T : class {
+        return IndexOfRef(list, element) >= 0;
+    }
+
     /// <summary>
     /// 正向查找指定引用所在的下标
     /// </summary>
@@ -118,32 +124,24 @@ public static partial class CollectionUtil
     /// <param name="startIndex">开始下标</param>
     /// <typeparam name="T">元素所在的下标，-1表示不存在</typeparam>
     /// <returns></returns>
-    public static int LastIndexOfRef<T>(this IList<T> list, object element, int? startIndex = null) where T : class {
-        int sindex;
-        if (startIndex.HasValue) {
-            sindex = Math.Min(list.Count, startIndex.Value);
-        } else {
-            sindex = list.Count - 1;
+    public static int LastIndexOfRef<T>(this IList<T> list, object element, int startIndex = int.MaxValue) where T : class {
+        if (startIndex >= list.Count) {
+            startIndex = list.Count - 1;
         }
         if (element == null) {
-            for (int idx = sindex; idx >= 0; idx--) {
+            for (int idx = startIndex; idx >= 0; idx--) {
                 if (list[idx] == null) {
                     return idx;
                 }
             }
         } else {
-            for (int idx = sindex; idx >= 0; idx--) {
+            for (int idx = startIndex; idx >= 0; idx--) {
                 if (ReferenceEquals(list[idx], element)) {
                     return idx;
                 }
             }
         }
         return -1;
-    }
-
-    /** 查询List中是否包含指定对象引用 */
-    public static bool ContainsRef<T>(this IList<T> list, object element) where T : class {
-        return IndexOfRef(list, element) >= 0;
     }
 
     /** 从List中删除指定引用 */
@@ -190,14 +188,11 @@ public static partial class CollectionUtil
     /// <param name="startIndex">开始下标</param>
     /// <typeparam name="T">元素所在的下标，-1表示不存在</typeparam>
     /// <returns></returns>
-    public static int LastIndexOfCustom<T>(this IList<T> list, Func<T, bool> filter, int? startIndex = null) where T : class {
-        int sindex;
-        if (startIndex.HasValue) {
-            sindex = Math.Min(list.Count, startIndex.Value);
-        } else {
-            sindex = list.Count - 1;
+    public static int LastIndexOfCustom<T>(this IList<T> list, Func<T, bool> filter, int startIndex = int.MaxValue) where T : class {
+        if (startIndex >= list.Count) {
+            startIndex = list.Count - 1;
         }
-        for (int idx = sindex; idx >= 0; idx--) {
+        for (int idx = startIndex; idx >= 0; idx--) {
             if (filter(list[idx])) {
                 return idx;
             }

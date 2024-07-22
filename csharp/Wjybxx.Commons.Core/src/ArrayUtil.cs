@@ -17,8 +17,8 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Wjybxx.Commons.IO;
 
 #pragma warning disable CS1591
 
@@ -98,6 +98,98 @@ public static class ArrayUtil
 
     #endregion
 
+    #region index
+
+    /** 查询List中是否包含指定对象引用 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool ContainsRef<T>(this T[] list, T element) where T : class {
+        return IndexOfRef(list, element) >= 0;
+    }
+
+    /** 查对象引用在数组中的下标 */
+    public static int IndexOfRef<T>(this T?[] list, object? element, int startIndex = 0) where T : class {
+        if (startIndex < 0) {
+            startIndex = 0;
+        }
+        if (element == null) {
+            for (int idx = startIndex, size = list.Length; idx < size; idx++) {
+                if (list[idx] == null) {
+                    return idx;
+                }
+            }
+        } else {
+            for (int idx = startIndex, size = list.Length; idx < size; idx++) {
+                if (ReferenceEquals(list[idx], element)) {
+                    return idx;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /** 查对象引用在数组中的下标 */
+    public static int LastIndexOfRef<T>(this T?[] list, object? element, int startIndex = int.MaxValue) where T : class {
+        if (startIndex >= list.Length) {
+            startIndex = list.Length - 1;
+        }
+        if (element == null) {
+            for (int idx = startIndex; idx >= 0; idx--) {
+                if (list[idx] == null) {
+                    return idx;
+                }
+            }
+        } else {
+            for (int idx = startIndex; idx >= 0; idx--) {
+                if (ReferenceEquals(list[idx], element)) {
+                    return idx;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// 正向查找指定引用所在的下标
+    /// </summary>
+    /// <param name="list"></param>
+    /// <param name="filter">筛选条件</param>
+    /// <param name="startIndex">开始下标</param>
+    /// <typeparam name="T">元素所在的下标，-1表示不存在</typeparam>
+    /// <returns></returns>
+    public static int IndexOfCustom<T>(this T[] list, Func<T, bool> filter, int startIndex = 0) where T : class {
+        if (startIndex < 0) {
+            startIndex = 0;
+        }
+        for (int idx = startIndex, size = list.Length; idx < size; idx++) {
+            if (filter(list[idx])) {
+                return idx;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// 逆向查找指定引用所在的下标
+    /// </summary>
+    /// <param name="list"></param>
+    /// <param name="filter">筛选条件</param>
+    /// <param name="startIndex">开始下标</param>
+    /// <typeparam name="T">元素所在的下标，-1表示不存在</typeparam>
+    /// <returns></returns>
+    public static int LastIndexOfCustom<T>(this T[] list, Func<T, bool> filter, int startIndex = int.MaxValue) where T : class {
+        if (startIndex >= list.Length) {
+            startIndex = list.Length - 1;
+        }
+        for (int idx = startIndex; idx >= 0; idx--) {
+            if (filter(list[idx])) {
+                return idx;
+            }
+        }
+        return -1;
+    }
+
+    #endregion
+
     /// <summary>
     /// 拷贝数组
     /// </summary>
@@ -126,57 +218,6 @@ public static class ArrayUtil
         T[] result = new T[newLen];
         Array.Copy(src, offset, result, 0, Math.Min(src.Length - offset, newLen));
         return result;
-    }
-
-    /** 查对象引用在数组中的下标 */
-    public static int IndexOfRef<T>(T?[] list, object? element, int startIndex = 0) where T : class {
-        if (startIndex < 0) {
-            startIndex = 0;
-        }
-        if (element == null) {
-            for (int idx = startIndex, size = list.Length; idx < size; idx++) {
-                if (list[idx] == null) {
-                    return idx;
-                }
-            }
-        } else {
-            for (int idx = startIndex, size = list.Length; idx < size; idx++) {
-                if (ReferenceEquals(list[idx], element)) {
-                    return idx;
-                }
-            }
-        }
-        return -1;
-    }
-
-    /** 查对象引用在数组中的下标 */
-    public static int LastIndexOfRef<T>(T?[] list, object? element, int? startIndex = null) where T : class {
-        int sindex;
-        if (startIndex.HasValue) {
-            sindex = Math.Min(list.Length - 1, startIndex.Value);
-        } else {
-            sindex = list.Length - 1;
-        }
-        if (element == null) {
-            for (int idx = sindex; idx >= 0; idx--) {
-                if (list[idx] == null) {
-                    return idx;
-                }
-            }
-        } else {
-            for (int idx = sindex; idx >= 0; idx--) {
-                if (ReferenceEquals(list[idx], element)) {
-                    return idx;
-                }
-            }
-        }
-        return -1;
-    }
-
-    /** 查询List中是否包含指定对象引用 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool ContainsRef<T>(T[] list, T element) where T : class {
-        return IndexOfRef(list, element) >= 0;
     }
 
     /// <summary>
@@ -237,5 +278,15 @@ public static class ArrayUtil
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int BinarySearch(int[] array, int value) {
         return ArraySortHelper.BinarySearch(array, 0, array.Length, value);
+    }
+
+    /// <summary>
+    /// 如果元素存在，则返回元素对应的下标；
+    /// 如果元素不存在，则返回(-(insertion point) - 1)
+    /// 即： (index + 1) * -1 可得应当插入的下标。 
+    /// </summary>
+    /// <returns></returns>
+    public static int BinarySearch<T>(T[] array, T value, Comparer<T> comparer) {
+        return ArraySortHelper.BinarySearch(array, 0, array.Length, value, comparer);
     }
 }

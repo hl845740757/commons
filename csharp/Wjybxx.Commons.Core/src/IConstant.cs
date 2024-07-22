@@ -118,6 +118,7 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
         /// 注意：<see cref="ConstantPool{T}"/>仅仅分配index，而真正的实现在于常量的使用者。
         /// </summary>
         public int CacheIndex => cacheIndex;
+
         public bool RequireCacheIndex => requireCacheIndex;
 
         /// <summary>

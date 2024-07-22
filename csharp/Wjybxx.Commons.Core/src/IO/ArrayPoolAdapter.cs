@@ -18,6 +18,7 @@
 
 using System;
 using System.Buffers;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
@@ -42,13 +43,8 @@ public sealed class ArrayPoolAdapter<T> : IArrayPool<T>
     /// <param name="maxCapacity">最近数组长度；超过大小的数组不会放入池中</param>
     /// <param name="clear">数组归还到池中时是否清理</param>
     /// <exception cref="ArgumentException"></exception>
-    public ArrayPoolAdapter(int defCapacity, int maxCapacity, bool clear = false) {
-        if (defCapacity < 0 || maxCapacity < 0) {
-            throw new ArgumentException($"{nameof(defCapacity)}: {defCapacity}, {nameof(maxCapacity)}: {maxCapacity}");
-        }
-        _defCapacity = defCapacity;
-        _clear = clear;
-        _arrayPool = ArrayPool<T>.Create(maxCapacity, 16);
+    public ArrayPoolAdapter(int defCapacity, int maxCapacity, bool? clear = null)
+        : this(ArrayPool<T>.Create(maxCapacity, 50), defCapacity, clear) {
     }
 
     /// <summary>
@@ -59,12 +55,12 @@ public sealed class ArrayPoolAdapter<T> : IArrayPool<T>
     /// <param name="clear">数组归还到池中时是否清理</param>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="ArgumentNullException"></exception>
-    public ArrayPoolAdapter(ArrayPool<T> arrayPool, int defCapacity, bool clear = false) {
+    public ArrayPoolAdapter(ArrayPool<T> arrayPool, int defCapacity, bool? clear = null) {
         if (defCapacity < 0) {
             throw new ArgumentException($"{nameof(defCapacity)}: {defCapacity}");
         }
         _defCapacity = defCapacity;
-        _clear = clear;
+        _clear = clear ?? RuntimeHelpers.IsReferenceOrContainsReferences<T>();
         _arrayPool = arrayPool ?? throw new ArgumentNullException(nameof(arrayPool));
     }
 
@@ -74,7 +70,7 @@ public sealed class ArrayPoolAdapter<T> : IArrayPool<T>
 
     public T[] Acquire(int minimumLength, bool clear = false) {
         T[] array = _arrayPool.Rent(minimumLength);
-        if (!this._clear && clear) { // 默认不清理的情况下用户请求有效
+        if (clear && !this._clear) { // 默认不清理的情况下用户请求有效
             Array.Clear(array);
         }
         return array;
