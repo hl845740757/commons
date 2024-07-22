@@ -82,7 +82,7 @@ public abstract class AbstractUniExecutor : IUniExecutorService
 
     public virtual IPromise<T> NewPromise<T>() => new Promise<T>(this);
 
-    public virtual IPromise NewPromise() => new Promise<byte>(this);
+    public virtual IPromise NewPromise() => new Promise<int>(this);
 
     public virtual IFuture<T> Submit<T>(ref TaskBuilder<T> builder) {
         PromiseTask<T> promiseTask = PromiseTask.OfBuilder(ref builder, NewPromise<T>());
@@ -103,13 +103,13 @@ public abstract class AbstractUniExecutor : IUniExecutorService
     }
 
     public virtual IFuture SubmitAction(Action action, int options = 0) {
-        PromiseTask<byte> promiseTask = PromiseTask.OfAction(action, null, options, NewPromise<byte>());
+        PromiseTask<int> promiseTask = PromiseTask.OfAction(action, null, options, NewPromise<int>());
         Execute(promiseTask);
         return promiseTask.Future;
     }
 
     public virtual IFuture SubmitAction(Action<IContext> action, IContext context, int options = 0) {
-        PromiseTask<byte> promiseTask = PromiseTask.OfAction(action, context, options, NewPromise<byte>());
+        PromiseTask<int> promiseTask = PromiseTask.OfAction(action, context, options, NewPromise<int>());
         Execute(promiseTask);
         return promiseTask.Future;
     }

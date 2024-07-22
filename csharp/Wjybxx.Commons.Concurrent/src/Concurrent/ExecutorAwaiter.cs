@@ -64,7 +64,7 @@ public readonly struct ExecutorAwaiter : ICriticalNotifyCompletion
     /// <summary>
     /// 该实现保留 -- 用于支持手动调用GetResult
     /// </summary>
-    private class SwitchExecutorTask : Promise<byte>, ITask
+    private class SwitchExecutorTask : Promise<int>, ITask
     {
         internal Action continuation;
 

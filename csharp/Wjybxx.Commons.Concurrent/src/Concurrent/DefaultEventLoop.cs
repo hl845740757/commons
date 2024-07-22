@@ -24,6 +24,8 @@ using System.Threading;
 using Serilog;
 using Wjybxx.Commons.Collections;
 
+#pragma warning disable CS0169
+
 #pragma warning disable CS1591
 
 namespace Wjybxx.Commons.Concurrent;
@@ -51,11 +53,13 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
     private const int MIN_BATCH_SIZE = 64;
     private const int MAX_BATCH_SIZE = 65535;
 
-    /** 事件循环的状态 */
-    private volatile int _state;
-    /** 当前帧时间戳 -- C#居然不支持 volatile long */
+    private long p1, p2, p3, p4, p5, p6, p7, p8;
+    /** 当前帧时间戳 -- 变化频繁，访问频率高，缓存行填充 */
     private long _tickTime;
+    private long p11, p12, p13, p14, p15, p16, p17, p18;
 
+    /** 事件循环的状态 -- 变化频率不高，不缓存行填充 */
+    private volatile int _state;
     /** 普通任务队列 */
     private readonly ConcurrentQueue<ITask> _taskQueue = new();
     /** 定时任务队列 */
@@ -66,9 +70,9 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
     /** 绑定的线程 */
     private readonly Thread _thread;
     /** 进入运行状态的promise */
-    private readonly IPromise<object> _runningPromise;
+    private readonly IPromise<int> _runningPromise;
     /** 进入终止状态的promise */
-    private readonly IPromise<object> _terminationPromise;
+    private readonly IPromise<int> _terminationPromise;
     /** 只读future - 缓存字段 */
     private readonly IFuture _runningFuture;
     private readonly IFuture _terminationFuture;
@@ -90,16 +94,18 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
 
         ThreadFactory threadFactory = ObjectUtil.RequireNonNull(builder.ThreadFactory, "ThreadFactory");
         _thread = threadFactory.NewThread(MainLoopEntry);
-        _runningPromise = new Promise<object>(this);
-        _terminationPromise = new Promise<object>(this);
+        _runningPromise = new Promise<int>(this);
+        _terminationPromise = new Promise<int>(this);
         _runningFuture = _runningPromise.AsReadonly();
         _terminationFuture = _terminationPromise.AsReadonly();
 
-        _waitTaskSpinTries = builder.WaitTaskSpinTries;
+        _waitTaskSpinTries = Math.Max(0, builder.WaitTaskSpinTries);
         _taskBatchSize = Math.Clamp(builder.BatchSize, MIN_BATCH_SIZE, MAX_BATCH_SIZE);
         _rejectedExecutionHandler = builder.RejectedExecutionHandler ?? RejectedExecutionHandlers.ABORT;
         _agent = builder.Agent ?? EmptyAgent<IAgentEvent>.INST;
         _mainModule = builder.MainModule;
+
+        _agent.Inject(this); // 注入自己
     }
 
     public override IEventLoopModule? MainModule => _mainModule;
@@ -225,7 +231,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
             _state = ST_TERMINATED;
 
             _runningPromise.TrySetCancelled(CancelCodes.REASON_SHUTDOWN);
-            _terminationPromise.TrySetResult(null);
+            _terminationPromise.TrySetResult(0);
         } else {
             // 在C#的实现中，暂未实现复杂的生产者消费者协调策略，因此此处暂只需要唤醒线程
             // 唤醒线程
@@ -268,7 +274,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
             _agent.OnStart();
 
             AdvanceRunState(ST_RUNNING);
-            _runningPromise.TrySetResult(null);
+            _runningPromise.TrySetResult(0);
 
             if (_runningPromise.IsSucceeded) {
                 MainLoopCore();
@@ -304,7 +310,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
             // 进入终止状态 -- 需清理同步上下文
             SynchronizationContext.SetSynchronizationContext(null);
             _state = ST_TERMINATED;
-            _terminationPromise.TrySetResult(null);
+            _terminationPromise.TrySetResult(0);
         }
     }
 

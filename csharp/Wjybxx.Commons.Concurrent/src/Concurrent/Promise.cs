@@ -28,7 +28,7 @@ namespace Wjybxx.Commons.Concurrent;
 
 /// <summary>
 /// Promise不会实现两份（泛型和非泛型），那会导致大量的重复代码，有非常高的维护成本。
-/// 在不需要结果的情况下，可以选择将泛型参数定义为byte或int，尽可能减少开销即可。
+/// 在不需要结果的情况下，可以选择将泛型参数定义为byte或int，尽可能减少开销即可 -- 推荐使用int。
 /// 
 /// PS：重复编码不仅仅是指Promise，与Promise相关的各个体系都需要双份...
 /// </summary>

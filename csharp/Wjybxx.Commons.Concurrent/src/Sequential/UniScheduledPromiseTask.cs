@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Threading;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Concurrent;
 
@@ -36,21 +35,21 @@ public interface UniScheduledPromiseTask
 {
     #region factory
 
-    public static UniScheduledPromiseTask<T> OfTask<T>(ITask task, IContext? context, int options, IScheduledPromise<T> promise,
+    public static UniScheduledPromiseTask<int> OfTask(ITask task, IContext? context, int options, IScheduledPromise<int> promise,
                                                        long id, long nextTriggerTime) {
-        return new UniScheduledPromiseTask<T>(task, context, options, promise, TaskBuilder.TYPE_TASK,
+        return new UniScheduledPromiseTask<int>(task, context, options, promise, TaskBuilder.TYPE_TASK,
             id, nextTriggerTime);
     }
 
-    public static UniScheduledPromiseTask<T> OfAction<T>(Action action, IContext? context, int options, IScheduledPromise<T> promise,
-                                                         long id, long nextTriggerTime) {
-        return new UniScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_ACTION,
+    public static UniScheduledPromiseTask<int> OfAction(Action action, IContext? context, int options, IScheduledPromise<int> promise,
+                                                           long id, long nextTriggerTime) {
+        return new UniScheduledPromiseTask<int>(action, context, options, promise, TaskBuilder.TYPE_ACTION,
             id, nextTriggerTime);
     }
 
-    public static UniScheduledPromiseTask<T> OfAction<T>(Action<IContext> action, IContext? context, int options, IScheduledPromise<T> promise,
-                                                         long id, long nextTriggerTime) {
-        return new UniScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_ACTION_CTX,
+    public static UniScheduledPromiseTask<int> OfAction(Action<IContext> action, IContext? context, int options, IScheduledPromise<int> promise,
+                                                        long id, long nextTriggerTime) {
+        return new UniScheduledPromiseTask<int>(action, context, options, promise, TaskBuilder.TYPE_ACTION_CTX,
             id, nextTriggerTime);
     }
 

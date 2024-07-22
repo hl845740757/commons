@@ -29,7 +29,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
 {
     private readonly ITimeProvider timeProvider;
     private readonly IndexedPriorityQueue<IScheduledFutureTask> taskQueue = new(new ScheduledTaskComparator());
-    private readonly UniPromise<byte> terminationPromise;
+    private readonly UniPromise<int> terminationPromise;
     private readonly IFuture terminationFuture;
     private EventLoopState state = EventLoopState.Unstarted;
 
@@ -45,7 +45,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
     /// <param name="initCapacity">初始队列大</param>
     public DefaultUniScheduledExecutor(ITimeProvider timeProvider, int initCapacity = 16) {
         this.timeProvider = timeProvider;
-        this.terminationPromise = new UniPromise<byte>(this);
+        this.terminationPromise = new UniPromise<int>(this);
         this.terminationFuture = terminationPromise.AsReadonly();
         this.tickTime = timeProvider.Current;
     }
@@ -101,7 +101,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
                 scheduledFutureTask.RegisterCancellation();
             }
         } else {
-            var promiseTask = UniScheduledPromiseTask.OfTask<byte>(task, null, task.Options, NewScheduledPromise<byte>(), ++sequencer, tickTime);
+            var promiseTask = UniScheduledPromiseTask.OfTask(task, null, task.Options, NewScheduledPromise<int>(), ++sequencer, tickTime);
             if (DelayExecute(promiseTask)) {
                 promiseTask.RegisterCancellation();
             }

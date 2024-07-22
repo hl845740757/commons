@@ -26,7 +26,7 @@ public interface IEventLoopAgent<in TEvent> where TEvent : IAgentEvent
     /// <summary>
     /// 注入EventLoop实例。
     ///
-    /// 注意：此时EventLoop可能尚未完全初始化！
+    /// 注意：此时EventLoop可能尚未完全初始化，建议只是单纯保存引用！
     /// </summary>
     /// <param name="eventLoop">事件循环</param>
     void Inject(IEventLoop eventLoop);

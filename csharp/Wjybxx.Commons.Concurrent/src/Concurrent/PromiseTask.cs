@@ -83,6 +83,7 @@ public interface PromiseTask
 }
 
 /// <summary>
+/// 注意：我们统一使用int代替void，避免额外的实现
 /// </summary>
 /// <typeparam name="T">结果类型</typeparam>
 public class PromiseTask<T> : IFutureTask<T>, PromiseTask
@@ -182,6 +183,7 @@ public class PromiseTask<T> : IFutureTask<T>, PromiseTask
 
     protected virtual void Clear() {
         task = null!;
+        context = null!;
     }
 
     /** 运行可直接得出结果的任务 */

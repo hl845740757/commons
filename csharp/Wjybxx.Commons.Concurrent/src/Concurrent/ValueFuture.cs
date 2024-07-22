@@ -36,7 +36,7 @@ public readonly struct ValueFuture
     private readonly Exception? _ex;
 
     public ValueFuture(IFuture future) {
-        _future = future;
+        _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = 0;
         _ex = null;
     }
@@ -141,7 +141,7 @@ public readonly struct ValueFuture<T>
     private readonly Exception? _ex;
 
     public ValueFuture(IFuture<T> future) {
-        _future = future;
+        _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = 0;
         _result = default;
         _ex = null;

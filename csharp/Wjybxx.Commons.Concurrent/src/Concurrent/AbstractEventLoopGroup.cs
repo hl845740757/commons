@@ -65,7 +65,7 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     public virtual IPromise<T> NewPromise<T>() => new Promise<T>(this);
 
-    public virtual IPromise NewPromise() => new Promise<byte>(this);
+    public virtual IPromise NewPromise() => new Promise<int>(this);
 
     public virtual IFuture<T> Submit<T>(ref TaskBuilder<T> builder) {
         return Select().Submit(ref builder);

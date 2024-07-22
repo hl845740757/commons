@@ -142,7 +142,7 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public virtual IPromise<T> NewPromise<T>() => new Promise<T>(this);
 
-    public virtual IPromise NewPromise() => new Promise<byte>(this);
+    public virtual IPromise NewPromise() => new Promise<int>(this);
 
     public virtual IFuture<T> Submit<T>(ref TaskBuilder<T> builder) {
         PromiseTask<T> promiseTask = PromiseTask.OfBuilder(ref builder, NewPromise<T>());
@@ -182,7 +182,7 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public virtual IScheduledPromise<T> NewScheduledPromise<T>() => new ScheduledPromise<T>(this);
 
-    public virtual IScheduledPromise NewScheduledPromise() => new ScheduledPromise<object>(this);
+    public virtual IScheduledPromise NewScheduledPromise() => new ScheduledPromise<int>(this);
 
     public virtual IScheduledFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder) {
         throw new NotImplementedException();
