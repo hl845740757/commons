@@ -17,6 +17,7 @@
 package cn.wjybxx.base;
 
 import java.util.Objects;
+import java.util.function.ToIntFunction;
 import java.util.random.RandomGenerator;
 
 /**
@@ -170,6 +171,70 @@ public class ArrayUtils {
         RandomGenerator rnd = RandomGenerator.getDefault();
         for (int i = array.length; i > 1; i--) {
             swap(array, i - 1, rnd.nextInt(i));
+        }
+    }
+
+    // endregion
+
+    // region binary-search
+
+    /**
+     * 如果元素存在，则返回元素对应的下标；
+     * 如果元素不存在，则返回(-(insertion point) - 1)
+     * 即： (index + 1) * -1 可得应当插入的下标。
+     *
+     * @param array 数组
+     * @param c     比较器
+     * @return 元素下标或插入下标
+     */
+    public static <T> int binarySearch(T[] array, ToIntFunction<? super T> c) {
+        return binarySearch0(array, 0, array.length, c);
+    }
+
+    /**
+     * 如果元素存在，则返回元素对应的下标；
+     * 如果元素不存在，则返回(-(insertion point) - 1)
+     * 即： (index + 1) * -1 可得应当插入的下标。
+     *
+     * @param array     数组
+     * @param fromIndex 开始索引
+     * @param toIndex   结束索引
+     * @param c         比较器
+     * @return 元素下标或插入下标
+     */
+    public static <T> int binarySearch(T[] array, int fromIndex, int toIndex, ToIntFunction<? super T> c) {
+        rangeCheck(array.length, fromIndex, toIndex);
+        return binarySearch0(array, fromIndex, toIndex, c);
+    }
+
+    private static <T> int binarySearch0(T[] array, int fromIndex, int toIndex, ToIntFunction<? super T> c) {
+        int low = fromIndex;
+        int high = toIndex - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >> 1;
+            T midVal = array[mid];
+            int cmp = c.applyAsInt(midVal);
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1); // key not found.
+    }
+
+    static void rangeCheck(int arrayLength, int fromIndex, int toIndex) {
+        if (fromIndex > toIndex) {
+            throw new IllegalArgumentException(
+                    "fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+        }
+        if (fromIndex < 0) {
+            throw new ArrayIndexOutOfBoundsException(fromIndex);
+        }
+        if (toIndex > arrayLength) {
+            throw new ArrayIndexOutOfBoundsException(toIndex);
         }
     }
 

@@ -20,6 +20,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -231,7 +232,7 @@ public class CollectionUtils {
         return null;
     }
 
-    // region 使用“==”操作集合
+    // region ref
     // 注意：对于拆装箱的对象慎用
 
     public static boolean containsRef(List<?> list, Object element) {
@@ -307,7 +308,111 @@ public class CollectionUtils {
     }
     // endregion
 
+    // region binary-search
+
+    /**
+     * 如果元素存在，则返回元素对应的下标；
+     * 如果元素不存在，则返回(-(insertion point) - 1)
+     * 即： (index + 1) * -1 可得应当插入的下标。
+     *
+     * @param array 数组
+     * @param key   要查找的元素
+     * @param c     比较器
+     * @return 元素下标或插入下标
+     */
+    public static <T> int binarySearch(List<T> array, T key, Comparator<? super T> c) {
+        return binarySearch0(array, key, 0, array.size(), c);
+    }
+
+    /**
+     * 如果元素存在，则返回元素对应的下标；
+     * 如果元素不存在，则返回(-(insertion point) - 1)
+     * 即： (index + 1) * -1 可得应当插入的下标。
+     *
+     * @param array     数组
+     * @param key       要查找的元素
+     * @param fromIndex 开始索引
+     * @param toIndex   结束索引
+     * @param c         比较器
+     * @return 元素下标或插入下标
+     */
+    public static <T> int binarySearch(List<T> array, T key, int fromIndex, int toIndex, Comparator<? super T> c) {
+        ArrayUtils.rangeCheck(array.size(), fromIndex, toIndex);
+        return binarySearch0(array, key, fromIndex, toIndex, c);
+    }
+
+    /**
+     * 如果元素存在，则返回元素对应的下标；
+     * 如果元素不存在，则返回(-(insertion point) - 1)
+     * 即： (index + 1) * -1 可得应当插入的下标。
+     *
+     * @param array 数组
+     * @param c     比较器
+     * @return 元素下标或插入下标
+     */
+    public static <T> int binarySearch(List<T> array, ToIntFunction<? super T> c) {
+        return binarySearch0(array, 0, array.size(), c);
+    }
+
+    /**
+     * 如果元素存在，则返回元素对应的下标；
+     * 如果元素不存在，则返回(-(insertion point) - 1)
+     * 即： (index + 1) * -1 可得应当插入的下标。
+     *
+     * @param array     数组
+     * @param fromIndex 开始索引
+     * @param toIndex   结束索引
+     * @param c         比较器
+     * @return 元素下标或插入下标
+     */
+    public static <T> int binarySearch(List<T> array, int fromIndex, int toIndex, ToIntFunction<? super T> c) {
+        ArrayUtils.rangeCheck(array.size(), fromIndex, toIndex);
+        return binarySearch0(array, fromIndex, toIndex, c);
+    }
+
+    private static <T> int binarySearch0(List<T> array, T key, int fromIndex, int toIndex, Comparator<? super T> c) {
+        int low = fromIndex;
+        int high = toIndex - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >> 1;
+            T midVal = array.get(mid);
+            int cmp = c.compare(key, midVal);
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1); // key not found.
+    }
+
+    private static <T> int binarySearch0(List<T> array, int fromIndex, int toIndex, ToIntFunction<? super T> c) {
+        int low = fromIndex;
+        int high = toIndex - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >> 1;
+            T midVal = array.get(mid);
+            int cmp = c.applyAsInt(midVal);
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1); // key not found.
+    }
+
+    // endregion
+
     // region arrayList快捷方法
+
+    public static <E> ArrayList<E> newArrayList() {
+        return new ArrayList<>();
+    }
 
     public static <E> ArrayList<E> newArrayList(E a) {
         final ArrayList<E> result = new ArrayList<>(1);
@@ -322,12 +427,9 @@ public class CollectionUtils {
         return result;
     }
 
-    public static <E> ArrayList<E> newArrayList(E a, E b, E c) {
-        final ArrayList<E> result = new ArrayList<>(3);
-        result.add(a);
-        result.add(b);
-        result.add(c);
-        return result;
+    @SafeVarargs
+    public static <E> ArrayList<E> newArrayList(E... array) {
+        return toArrayList(array);
     }
 
     public static <E> boolean addAll(ArrayList<E> self, Collection<? extends E> other) {

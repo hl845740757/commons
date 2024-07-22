@@ -22,7 +22,7 @@ package cn.wjybxx.base.concurrent;
  * @author wjybxx
  * date - 2024/4/11
  */
-public class CancelCodes {
+public final class CancelCodes {
 
     /**
      * 原因的掩码

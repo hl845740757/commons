@@ -16,12 +16,15 @@
 
 #endregion
 
+using System;
 using System.Collections.Generic;
 
 namespace Wjybxx.Commons;
 
 internal class ArraySortHelper
 {
+    #region array
+
     /// <summary>
     /// 如果元素存在，则返回元素对应的下标；
     /// 如果元素不存在，则返回(-(insertion point) - 1)
@@ -69,4 +72,67 @@ internal class ArraySortHelper
         }
         return -(low + 1); // key not found.
     }
+
+    public static int BinarySearch<T>(T[] a, int fromIndex, int toIndex,
+                                      Func<T, int> c) {
+        int low = fromIndex;
+        int high = toIndex - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >> 1;
+            T midVal = a[mid];
+            int cmp = c.Invoke(midVal);
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1); // key not found.
+    }
+
+    #endregion
+
+    #region list
+
+    public static int BinarySearch<T>(List<T> a, int fromIndex, int toIndex,
+                                      T key, Comparer<T> c) {
+        int low = fromIndex;
+        int high = toIndex - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >> 1;
+            T midVal = a[mid];
+            int cmp = c.Compare(midVal, key);
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1); // key not found.
+    }
+
+    public static int BinarySearch<T>(List<T> a, int fromIndex, int toIndex,
+                                      Func<T, int> c) {
+        int low = fromIndex;
+        int high = toIndex - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >> 1;
+            T midVal = a[mid];
+            int cmp = c.Invoke(midVal);
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1); // key not found.
+    }
+
+    #endregion
 }

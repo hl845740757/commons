@@ -591,31 +591,29 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             final Sequence sequence = this.sequence;
             long nextSequence = sequence.getVolatile() + 1L;
             long availableSequence = -1;
-
-            // 不使用while(true)避免有大量任务堆积的时候长时间无法退出
-            while (!isShuttingDown()) {
+            while (state == EventLoopState.ST_RUNNING) {
                 try {
                     nanoTime = System.nanoTime();
                     processScheduledQueue(nanoTime, false);
 
-                    // 多生产者模型下不可频繁调用waitFor，会在查询可用sequence时产生巨大的开销，因此查询之后本地切割为小批次，避免用户循环得不到执行
-                    if (availableSequence < nextSequence) {
-                        availableSequence = barrier.waitFor(nextSequence);
+                    // 多生产者模型下不可频繁调用waitFor，会在查询可用sequence时产生巨大的开销，因此查询之后本地切割为小批次
+                    if (availableSequence < nextSequence
+                            && (availableSequence = barrier.waitFor(nextSequence)) < nextSequence) {
+                        invokeAgentUpdate();
+                        continue;
                     }
 
                     long batchEndSequence = Math.min(availableSequence, nextSequence + taskBatchSize - 1);
+                    long curSequence = runTaskBatch(nextSequence, batchEndSequence);
+                    sequence.setRelease(curSequence);
+                    // 无界队列尝试主动回收块
+                    if (mpUnboundedEventSequencer != null) {
+                        mpUnboundedEventSequencer.tryMoveHeadToNext(curSequence);
+                    }
+                    nextSequence = curSequence + 1;
                     if (nextSequence <= batchEndSequence) {
-                        long curSequence = runTaskBatch(nextSequence, batchEndSequence);
-                        sequence.setRelease(curSequence);
-                        // 无界队列尝试主动回收块
-                        if (mpUnboundedEventSequencer != null) {
-                            mpUnboundedEventSequencer.tryMoveHeadToNext(curSequence);
-                        }
-                        nextSequence = curSequence + 1;
-                        if (nextSequence <= batchEndSequence) {
-                            assert isShuttingDown();
-                            break;
-                        }
+                        assert isShuttingDown();
+                        break;
                     }
 
                     invokeAgentUpdate();

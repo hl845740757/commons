@@ -190,6 +190,87 @@ public static class ArrayUtil
 
     #endregion
 
+    #region binary-search
+
+    /// <summary>
+    /// 如果元素存在，则返回元素对应的下标；
+    /// 如果元素不存在，则返回(-(insertion point) - 1)
+    /// 即： (index + 1) * -1 可得应当插入的下标。 
+    /// </summary>
+    /// <param name="array"></param>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BinarySearch(int[] array, int value) {
+        return ArraySortHelper.BinarySearch(array, 0, array.Length, value);
+    }
+
+    /// <summary>
+    /// 二分搜索
+    /// </summary>
+    /// <param name="array">数组</param>
+    /// <param name="value">要查找的元素</param>
+    /// <param name="fromIndex">包含</param>
+    /// <param name="toIndex">不包含</param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BinarySearch(int[] array, int value, int fromIndex, int toIndex) {
+        RangeCheck(array.Length, fromIndex, toIndex);
+        return ArraySortHelper.BinarySearch(array, fromIndex, toIndex, value);
+    }
+
+    /// <summary>
+    /// 如果元素存在，则返回元素对应的下标；
+    /// 如果元素不存在，则返回(-(insertion point) - 1)
+    /// 即： (index + 1) * -1 可得应当插入的下标。 
+    /// </summary>
+    /// <returns></returns>
+    public static int BinarySearch<T>(T[] array, T value, Comparer<T> comparer) {
+        return ArraySortHelper.BinarySearch(array, 0, array.Length, value, comparer);
+    }
+
+    /// <summary>
+    /// 二分搜索
+    /// </summary>
+    /// <param name="array">数组</param>
+    /// <param name="value">要查找的元素</param>
+    /// <param name="comparer">比较器</param>
+    /// <param name="fromIndex">包含</param>
+    /// <param name="toIndex">不包含</param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static int BinarySearch<T>(T[] array, T value, Comparer<T> comparer, int fromIndex, int toIndex) {
+        RangeCheck(array.Length, fromIndex, toIndex);
+        return ArraySortHelper.BinarySearch(array, fromIndex, toIndex, value, comparer);
+    }
+
+    /// <summary>
+    /// 自定义二分查找(适用无法构建T时)
+    /// </summary>
+    /// <param name="array"></param>
+    /// <param name="comparer">比较器</param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static int BinarySearch<T>(T[] array, Func<T, int> comparer) {
+        return ArraySortHelper.BinarySearch(array, 0, array.Length, comparer);
+    }
+
+    /// <summary>
+    /// 自定义二分查找(适用无法构建T时)
+    /// </summary>
+    /// <param name="array">数组</param>
+    /// <param name="comparer">比较器</param>
+    /// <param name="fromIndex">包含</param>
+    /// <param name="toIndex">不包含</param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static int BinarySearch<T>(T[] array, Func<T, int> comparer, int fromIndex, int toIndex) {
+        RangeCheck(array.Length, fromIndex, toIndex);
+        return ArraySortHelper.BinarySearch(array, fromIndex, toIndex, comparer);
+    }
+
+    #endregion
+
     /// <summary>
     /// 拷贝数组
     /// </summary>
@@ -268,25 +349,21 @@ public static class ArrayUtil
     }
 
     /// <summary>
-    /// 如果元素存在，则返回元素对应的下标；
-    /// 如果元素不存在，则返回(-(insertion point) - 1)
-    /// 即： (index + 1) * -1 可得应当插入的下标。 
+    /// 检查索引合法性
     /// </summary>
-    /// <param name="array"></param>
-    /// <param name="value"></param>
-    /// <returns></returns>
+    /// <param name="arrayLength">数组长度</param>
+    /// <param name="fromIndex">包含</param>
+    /// <param name="toIndex">不包含</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BinarySearch(int[] array, int value) {
-        return ArraySortHelper.BinarySearch(array, 0, array.Length, value);
-    }
-
-    /// <summary>
-    /// 如果元素存在，则返回元素对应的下标；
-    /// 如果元素不存在，则返回(-(insertion point) - 1)
-    /// 即： (index + 1) * -1 可得应当插入的下标。 
-    /// </summary>
-    /// <returns></returns>
-    public static int BinarySearch<T>(T[] array, T value, Comparer<T> comparer) {
-        return ArraySortHelper.BinarySearch(array, 0, array.Length, value, comparer);
+    internal static void RangeCheck(int arrayLength, int fromIndex, int toIndex) {
+        if (fromIndex > toIndex) {
+            throw new ArgumentException($"fromIndex({fromIndex}) > toIndex({toIndex})");
+        }
+        if (fromIndex < 0) {
+            throw new IndexOutOfRangeException($"fromIndex: {fromIndex} < 0");
+        }
+        if (toIndex > arrayLength) {
+            throw new IndexOutOfRangeException($"toIndex: {toIndex} > arrayLength: {arrayLength}");
+        }
     }
 }

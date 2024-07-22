@@ -203,6 +203,60 @@ public static partial class CollectionUtil
 
     #endregion
 
+    #region binary-search
+
+    /// <summary>
+    /// 如果元素存在，则返回元素对应的下标；
+    /// 如果元素不存在，则返回(-(insertion point) - 1)
+    /// 即： (index + 1) * -1 可得应当插入的下标。 
+    /// </summary>
+    /// <returns></returns>
+    public static int BinarySearch<T>(List<T> array, T value, Comparer<T> comparer) {
+        return ArraySortHelper.BinarySearch(array, 0, array.Count, value, comparer);
+    }
+
+    /// <summary>
+    /// 二分搜索
+    /// </summary>
+    /// <param name="array">数组</param>
+    /// <param name="value">要查找的元素</param>
+    /// <param name="comparer">比较器</param>
+    /// <param name="fromIndex">包含</param>
+    /// <param name="toIndex">不包含</param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static int BinarySearch<T>(List<T> array, T value, Comparer<T> comparer, int fromIndex, int toIndex) {
+        ArrayUtil.RangeCheck(array.Count, fromIndex, toIndex);
+        return ArraySortHelper.BinarySearch(array, fromIndex, toIndex, value, comparer);
+    }
+
+    /// <summary>
+    /// 自定义二分查找(适用无法构建T时)
+    /// </summary>
+    /// <param name="array"></param>
+    /// <param name="comparer">比较器</param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static int BinarySearch<T>(List<T> array, Func<T, int> comparer) {
+        return ArraySortHelper.BinarySearch(array, 0, array.Count, comparer);
+    }
+
+    /// <summary>
+    /// 自定义二分查找(适用无法构建T时)
+    /// </summary>
+    /// <param name="array">数组</param>
+    /// <param name="comparer">比较器</param>
+    /// <param name="fromIndex">包含</param>
+    /// <param name="toIndex">不包含</param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static int BinarySearch<T>(List<T> array, Func<T, int> comparer, int fromIndex, int toIndex) {
+        ArrayUtil.RangeCheck(array.Count, fromIndex, toIndex);
+        return ArraySortHelper.BinarySearch(array, fromIndex, toIndex, comparer);
+    }
+
+    #endregion
+
     #region peek
 
     /// <summary>
