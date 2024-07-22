@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.io;
+package cn.wjybxx.base.pool;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
@@ -79,7 +79,7 @@ public class ConcurrentArrayPoolTest {
                 .addBucket(256, 100)
                 .addBucket(1024, 100)
                 .addBucket(2048, 80)
-                .addBucket(4096,60)
+                .addBucket(4096, 60)
                 .addBucket(8192, 50)
                 .addBucket(10000, 20)
                 .setClear(false)

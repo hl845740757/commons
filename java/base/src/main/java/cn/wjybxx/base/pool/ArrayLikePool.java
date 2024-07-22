@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.io;
-
-import cn.wjybxx.base.pool.ObjectPool;
+package cn.wjybxx.base.pool;
 
 /**
  * 类数组(ArrayLike)对象池抽象

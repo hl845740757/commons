@@ -16,9 +16,7 @@
 
 #endregion
 
-using Wjybxx.Commons.Pool;
-
-namespace Wjybxx.Commons.IO;
+namespace Wjybxx.Commons.Pool;
 
 /// <summary>
 /// 类数组(ArrayLike)对象池抽象

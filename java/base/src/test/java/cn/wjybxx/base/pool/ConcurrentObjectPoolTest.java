@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.io;
+package cn.wjybxx.base.pool;
 
-import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
 

@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Wjybxx.Commons.IO;
+namespace Wjybxx.Commons.Pool;
 
 /// <summary>
 /// 数组对象池工具类

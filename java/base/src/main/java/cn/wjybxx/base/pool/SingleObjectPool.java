@@ -22,6 +22,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -35,12 +36,18 @@ import java.util.function.Supplier;
 public class SingleObjectPool<T> implements ObjectPool<T> {
 
     private final Supplier<? extends T> factory;
-    private final Consumer<? super T> resetPolicy;
+    private final Consumer<? super T> resetHandler;
+    private final Predicate<? super T> filter;
     private T value;
 
-    public SingleObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetPolicy) {
+    public SingleObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler) {
+        this(factory, resetHandler, null);
+    }
+
+    public SingleObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler, Predicate<? super T> filter) {
         this.factory = Objects.requireNonNull(factory, "factory");
-        this.resetPolicy = ObjectUtils.nullToDef(resetPolicy, FunctionUtils.emptyConsumer());
+        this.resetHandler = ObjectUtils.nullToDef(resetHandler, FunctionUtils.emptyConsumer());
+        this.filter = filter;
     }
 
     @Override
@@ -60,13 +67,15 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public void release(T object) {
-        if (object == null) {
+    public void release(T obj) {
+        if (obj == null) {
             throw new IllegalArgumentException("object cannot be null.");
         }
-        assert object != this.value;
-        resetPolicy.accept(object);
-        this.value = object;
+        assert obj != this.value;
+        resetHandler.accept(obj);
+        if (filter == null || filter.test(obj)) {
+            this.value = obj;
+        }
     }
 
     @Override
@@ -79,8 +88,10 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
                 continue;
             }
             assert obj != this.value;
-            resetPolicy.accept(obj);
-            this.value = obj;
+            resetHandler.accept(obj);
+            if (filter == null || filter.test(obj)) {
+                this.value = obj;
+            }
         }
     }
 

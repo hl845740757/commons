@@ -22,7 +22,7 @@ using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
-namespace Wjybxx.Commons.IO;
+namespace Wjybxx.Commons.Pool;
 
 /// <summary>
 /// 基于对于<see cref="ArrayPool{T}"/>进行封装的数组池。
@@ -32,9 +32,9 @@ namespace Wjybxx.Commons.IO;
 [ThreadSafe]
 public sealed class ArrayPoolAdapter<T> : IArrayPool<T>
 {
+    private readonly ArrayPool<T> _arrayPool;
     private readonly int _defCapacity;
     private readonly bool _clear;
-    private readonly ArrayPool<T> _arrayPool;
 
     /// <summary>
     /// 

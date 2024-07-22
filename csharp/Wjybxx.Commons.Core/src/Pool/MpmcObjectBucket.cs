@@ -16,20 +16,19 @@
 
 #endregion
 
-
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
-#pragma warning disable CS1591
 
+#pragma warning disable CS1591
 #pragma warning disable CS0169
 
 namespace Wjybxx.Commons.Pool;
 
 /// <summary>
 /// 这是一个特定实现的多生产者多消费者的数组队列（MpmcArrayQueue）
-///  这里没有强制数组大小必须是2的幂，因为要严格保证池的大小符合预期。
-///  (这里的算法参照了Disruptor模块的实现，但针对数组池进行了特殊的修改，但没有做极致的优化)
+/// 这里没有强制数组大小必须是2的幂，因为要严格保证池的大小符合预期。
+/// (这里的算法参照了Disruptor模块的实现，但针对对象池进行了特殊的修改，但没有做极致的优化)
 /// </summary>
 public sealed class MpmcObjectBucket<T>
 {
@@ -37,9 +36,9 @@ public sealed class MpmcObjectBucket<T>
     private long p1, p2, p3, p4, p5, p6, p7, p8;
     // endregion
 
-    /** 数组长度 -- 不一定为2的幂 */
+    /** 桶的大小 -- 不一定为2的幂 */
     private readonly int length;
-    /** 数组池 -- 每一个元素都是数组 */
+    /** 环形缓冲区 */
     private readonly T[] buffer;
 
     /** 已发布的数组元素 -- 存储的是对应的sequence */

@@ -20,7 +20,7 @@ using System;
 
 #pragma warning disable CS1591
 
-namespace Wjybxx.Commons.IO;
+namespace Wjybxx.Commons.Pool;
 
 /// <summary>
 /// 

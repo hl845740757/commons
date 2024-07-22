@@ -103,15 +103,15 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     @Override
-    public void release(T object) {
-        if (object == null) {
-            throw new IllegalArgumentException("object cannot be null.");
+    public void release(T obj) {
+        if (obj == null) {
+            throw new IllegalArgumentException("obj cannot be null.");
         }
         // 先调用reset，避免reset出现异常导致添加脏对象到缓存池中 -- 断言是否在池中还是有较大开销
-        resetHandler.accept(object);
+        resetHandler.accept(obj);
 //        assert !CollectionUtils.containsRef(freeObjects, e);
-        if (freeObjects.size() < poolSize && (filter == null || filter.test(object))) {
-            freeObjects.add(object);
+        if (freeObjects.size() < poolSize && (filter == null || filter.test(obj))) {
+            freeObjects.add(obj);
         }
     }
 

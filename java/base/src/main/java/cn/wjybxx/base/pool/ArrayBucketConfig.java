@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.io;
+package cn.wjybxx.base.pool;
 
 /**
  * @author wjybxx

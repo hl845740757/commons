@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.io;
-
-import cn.wjybxx.base.pool.MpmcObjectBucket;
+package cn.wjybxx.base.pool;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;

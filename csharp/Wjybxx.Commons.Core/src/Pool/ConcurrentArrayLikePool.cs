@@ -18,10 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using Wjybxx.Commons.Pool;
 
 #pragma warning disable CS1591
-namespace Wjybxx.Commons.IO;
+namespace Wjybxx.Commons.Pool;
 
 /// <summary>
 /// 高性能的并发对象池实现

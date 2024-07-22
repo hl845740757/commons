@@ -32,19 +32,24 @@ namespace Wjybxx.Commons.Pool;
 [NotThreadSafe]
 public class SingleObjectPool<T> : IObjectPool<T> where T : class
 {
+    private static readonly Action<T> DO_NOTHING = _ => { };
+
     private readonly Func<T> _factory;
-    private readonly Action<T> _resetPolicy;
+    private readonly Action<T> _resetHandler;
+    private readonly Func<T, bool>? _filter;
     private T? _value;
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="factory">对象创建工厂</param>
-    /// <param name="resetPolicy">重置方法</param>
+    /// <param name="resetHandler">重置方法</param>
+    /// <param name="filter">回收对象的过滤器</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public SingleObjectPool(Func<T> factory, Action<T> resetPolicy) {
+    public SingleObjectPool(Func<T> factory, Action<T>? resetHandler, Func<T, bool>? filter = null) {
         this._factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        this._resetPolicy = resetPolicy ?? throw new ArgumentNullException(nameof(resetPolicy));
+        this._resetHandler = resetHandler ?? DO_NOTHING;
+        this._filter = filter;
     }
 
     public T Acquire() {
@@ -62,8 +67,10 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
             throw new ArgumentException("object cannot be null.");
         }
         Debug.Assert(obj != this._value);
-        _resetPolicy(obj);
-        this._value = obj;
+        _resetHandler(obj);
+        if (_filter == null || _filter.Invoke(obj)) {
+            this._value = obj;
+        }
     }
 
     public void ReleaseAll(IEnumerable<T?> objects) {
@@ -75,8 +82,10 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
                 continue;
             }
             Debug.Assert(obj != this._value);
-            _resetPolicy(obj);
-            this._value = obj;
+            _resetHandler(obj);
+            if (_filter == null || _filter.Invoke(obj)) {
+                this._value = obj;
+            }
         }
     }
 

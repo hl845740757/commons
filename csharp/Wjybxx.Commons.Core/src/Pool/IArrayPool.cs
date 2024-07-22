@@ -17,9 +17,8 @@
 #endregion
 
 using System.Buffers;
-using Wjybxx.Commons.Pool;
 
-namespace Wjybxx.Commons.IO;
+namespace Wjybxx.Commons.Pool;
 
 /// <summary>
 /// 数组池抽象
