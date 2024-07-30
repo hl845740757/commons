@@ -32,12 +32,13 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     /** ConstantPool不需要多高的查询性能，因此使用普通的字典更合适，可以保证id分配的连续性 */
     private readonly Dictionary<string, TConstant> _constantMap = new();
     private readonly ConstantFactory<TConstant>? _factory;
+
+    private readonly string poolId = Guid.NewGuid().ToString();
     /** 下一个要分配的常量Id，总是分配 --由lock保护 */
     private int _nextId;
     /**
      * 下一个要分配的缓存索引，只有builder显式申请的情况下分配。
      * cacheIndex和id是独立的，通常用于为特殊的<see cref="IConstant"/>建立高速索引。
-     * 由lock保护
      */
     private int _nextIndex = 0;
 
@@ -200,7 +201,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     private TConstant NewConstant(IConstant.Builder builder) {
         string name = builder.Name;
         int nextId = _nextId++;
-        builder.SetId(this, nextId);
+        builder.SetId(poolId, nextId);
         if (builder.RequireCacheIndex) {
             builder.SetCacheIndex(_nextIndex++);
         }
@@ -208,7 +209,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
         TConstant constant = (TConstant)builder.Build();
         if (constant.Name != name
             || constant.Id != nextId
-            || constant.DeclaringPool != this) {
+            || constant.PoolId != poolId) {
             throw new IllegalStateException($"expected id: {nextId}, name: {name}, but found id: {constant.Id}, name: {constant.Name}");
         }
         return constant;

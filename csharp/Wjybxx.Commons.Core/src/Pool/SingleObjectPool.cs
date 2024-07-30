@@ -72,22 +72,6 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
         }
     }
 
-    public void ReleaseAll(IEnumerable<T?> objects) {
-        if (objects == null) {
-            throw new ArgumentException("objects cannot be null.");
-        }
-        foreach (T obj in objects) {
-            if (null == obj) {
-                continue;
-            }
-            Debug.Assert(obj != this._value);
-            _resetHandler(obj);
-            if (_filter == null || _filter.Invoke(obj)) {
-                this._value = obj;
-            }
-        }
-    }
-
     public void Clear() {
         _value = null;
     }

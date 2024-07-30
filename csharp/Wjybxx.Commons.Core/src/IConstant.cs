@@ -43,7 +43,7 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
     /// <summary>
     /// 声明常量的池
     /// </summary>
-    object DeclaringPool { get; }
+    string PoolId { get; }
 
     #region builder
 
@@ -54,7 +54,7 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
     {
         private int? _id;
         private readonly string _name;
-        private object? _declaringPool;
+        private string? _poolId;
 
         private int cacheIndex = -1;
         private bool requireCacheIndex;
@@ -66,15 +66,15 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
         /// <summary>
         /// 设置常量的id - id通常由管理常量的常量池分配
         /// </summary>
-        /// <param name="declaringPool">声明常量的池</param>
+        /// <param name="poolId">声明常量的池</param>
         /// <param name="value">分配的常量id</param>
         /// <exception cref="IllegalStateException"></exception>
-        public void SetId(object declaringPool, int value) {
+        public void SetId(string poolId, int value) {
             if (_id.HasValue) {
                 throw new IllegalStateException("id cannot be initialized repeatedly");
             }
             _id = value;
-            _declaringPool = declaringPool;
+            _poolId = poolId;
         }
 
         public int GetIdOrThrow() {
@@ -109,7 +109,7 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
         /// <summary>
         /// 声明常量的池
         /// </summary>
-        public object? DeclaringPool => _declaringPool;
+        public string? PoolId => _poolId;
 
         /// <summary>
         /// 获取分配的高速缓存索引 -- -1表示未设置。

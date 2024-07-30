@@ -44,9 +44,6 @@ namespace Wjybxx.Commons.Collections
 [NotThreadSafe]
 public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 {
-    // C#的泛型是独立的类，因此缓存是独立的
-    private static readonly bool valueIsReferenceType = !typeof(TValue).IsValueType;
-
     /** len = 2^n + 1，额外的槽用于存储nullKey；总是延迟分配空间，以减少创建空实例的开销 */
     private Node?[]? _table; // 这个NullableReference有时真的很烦
     private Node? _head;

@@ -19,7 +19,6 @@ import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.function.FunctionUtils;
 
 import javax.annotation.concurrent.NotThreadSafe;
-import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -75,23 +74,6 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
         resetHandler.accept(obj);
         if (filter == null || filter.test(obj)) {
             this.value = obj;
-        }
-    }
-
-    @Override
-    public void releaseAll(Collection<? extends T> objects) {
-        if (objects == null) {
-            throw new IllegalArgumentException("objects cannot be null.");
-        }
-        for (T obj : objects) {
-            if (null == obj) {
-                continue;
-            }
-            assert obj != this.value;
-            resetHandler.accept(obj);
-            if (filter == null || filter.test(obj)) {
-                this.value = obj;
-            }
         }
     }
 

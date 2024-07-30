@@ -55,7 +55,7 @@ public interface IStack<T> : IGenericCollection<T>
 
     /// <summary>
     /// 查看栈顶元素
-    /// (调整命名以避免接口之间冲突)
+    /// (调整命名以避免接口之间冲突 -- top/bottom)
     /// </summary>
     /// <exception cref="InvalidOperationException">如果队列为空</exception>
     /// <returns></returns>

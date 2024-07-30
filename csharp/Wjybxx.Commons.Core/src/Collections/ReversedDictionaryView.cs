@@ -37,7 +37,7 @@ public class ReversedDictionaryView<TKey, TValue> : ReversedCollectionView<KeyVa
     public ISequencedCollection<TValue> Values => Delegated.Values;
 
     public ISequencedCollection<TKey> UnsafeKeys(bool reversed = false) {
-        return Delegated.UnsafeKeys(reversed);
+        return Delegated.UnsafeKeys(!reversed); // 取反
     }
 
     public virtual TValue this[TKey key] {

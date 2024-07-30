@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Collections
 {
 /// <summary>
 /// 队列
-/// 注意：队列的所有操作都是隐含顺序的，包括Add方法，因此Reverse是可以反转的。
+/// 注意：队列的所有操作都是隐含顺序的，Add默认添加到队尾，因此Reverse是可以反转的。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public interface IQueue<T> : IGenericCollection<T>
@@ -56,7 +56,7 @@ public interface IQueue<T> : IGenericCollection<T>
 
     /// <summary>
     /// 查看队首元素
-    /// (调整命名以避免接口之间冲突)
+    /// (调整命名以避免接口之间冲突 -- head/tail)
     /// </summary>
     /// <exception cref="InvalidOperationException">如果队列为空</exception>
     /// <returns></returns>
