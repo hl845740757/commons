@@ -267,25 +267,68 @@ public static class DatetimeUtil
     #endregion
 
     /// <summary>
+    /// 将时分秒合并为一天的总秒数
+    /// </summary>
+    /// <param name="hours"></param>
+    /// <param name="minutes"></param>
+    /// <param name="seconds"></param>
+    /// <returns></returns>
+    public static int ToSecondOfDay(int hours, int minutes, int seconds) {
+        return hours * 3600 + minutes * 60 + seconds;
+    }
+
+    /// <summary>
+    /// 将时间拆解为时分秒
+    /// </summary>
+    /// <param name="secondOfDay">一天的总秒数</param>
+    /// <param name="hours"></param>
+    /// <param name="minutes"></param>
+    /// <param name="seconds"></param>
+    /// <returns></returns>
+    public static void GetPartsOfTime(int secondOfDay, out int hours, out int minutes, out int seconds) {
+        hours = secondOfDay / 3600;
+        minutes = (secondOfDay - hours * 3600) / 60;
+        seconds = secondOfDay % 60;
+    }
+
+    /// <summary>
     /// 将时间解析为总秒数 (可避免dotnet版本问题)
     /// 固定为:<code>HH:mm:ss</code>格式
     /// </summary>
     /// <param name="timeString"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public static int ParseTimeAsSeconds(string timeString) {
+    public static int ParseTime2(string timeString) {
         if (timeString.Length != 8) {
             throw new ArgumentException("Invalid timeString: " + timeString);
         }
         int hours = ParseNumber(timeString, 0, false);
         int minutes = ParseNumber(timeString, 3, true);
         int seconds = ParseNumber(timeString, 6, true);
-        return hours * SecondsPerHour + minutes * SecondsPerMinute + seconds;
+        return hours * 3600 + minutes * 60 + seconds;
+    }
+
+    /// <summary>
+    /// 将秒表示的Time部分格式化(可避免dotnet版本问题)
+    /// 固定为:<code>HH:mm:ss</code>格式
+    /// </summary>
+    /// <param name="daySeconds"></param>
+    /// <param name="sb">允许外部池化</param>
+    /// <returns></returns>
+    public static string FormatTime2(int daySeconds, StringBuilder? sb = null) {
+        if (sb == null) {
+            sb = new StringBuilder(10);
+        }
+        GetPartsOfTime(daySeconds, out int hours, out int minutes, out int seconds);
+        sb.Append(hours < 10 ? "0" : "").Append(hours)
+            .Append(minutes < 10 ? ":0" : ":").Append(minutes)
+            .Append(seconds < 10 ? ":0" : ":").Append(seconds);
+        return sb.ToString();
     }
 
     /// <summary>
     /// 解析时区偏移
-    /// 支持的格式包括：<code>Z, ±H, ±HH, ±H:mm, ±HH:mm, ±HH:mm:ss</code>
+    /// 支持的格式包括：<code>Z, ±H, ±HH, ±HH:mm, ±HH:mm:ss</code>
     /// </summary>
     /// <param name="offsetString"></param>
     /// <returns>时区偏移秒数</returns>
@@ -305,15 +348,9 @@ public static class DatetimeUtil
                 seconds = 0;
                 break;
             }
-            case 3: { // ±H
+            case 3: { // ±HH
                 hours = ParseNumber(offsetString, 1, false);
                 minutes = 0;
-                seconds = 0;
-                break;
-            }
-            case 5: { // ±H:mm
-                hours = ParseNumber(offsetString, 1, false);
-                minutes = ParseNumber(offsetString, 3, false);
                 seconds = 0;
                 break;
             }
@@ -360,16 +397,14 @@ public static class DatetimeUtil
         if (offsetSeconds == 0) {
             return "Z";
         }
-        int sign = offsetSeconds < 0 ? -1 : 1;
-        offsetSeconds = Math.Abs(offsetSeconds);
-
-        int hours = offsetSeconds / 3600;
-        int minutes = (offsetSeconds - hours * 3600) / 60;
-        int seconds = offsetSeconds % 60;
-
         if (sb == null) {
             sb = new StringBuilder(10);
         }
+
+        int sign = offsetSeconds < 0 ? -1 : 1;
+        offsetSeconds = Math.Abs(offsetSeconds);
+        GetPartsOfTime(offsetSeconds, out int hours, out int minutes, out int seconds);
+
         sb.Append(sign > 0 ? '+' : '-')
             .Append(hours < 10 ? "0" : "").Append(hours)
             .Append(minutes < 10 ? ":0" : ":").Append(minutes);
