@@ -35,8 +35,8 @@ public abstract class AbstractUniScheduledExecutor : AbstractUniExecutor, IUniSc
 
     #region schedule
 
-    public virtual IScheduledFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder) {
-        UniScheduledPromiseTask<TResult> promiseTask = UniScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<TResult>(), 0, TickTime);
+    public virtual IScheduledFuture<TResult> Schedule<TResult>(in ScheduledTaskBuilder<TResult> builder) {
+        UniScheduledPromiseTask<TResult> promiseTask = UniScheduledPromiseTask.OfBuilder(in builder, NewScheduledPromise<TResult>(), 0, TickTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -62,7 +62,8 @@ public abstract class AbstractUniScheduledExecutor : AbstractUniExecutor, IUniSc
         long triggerTime = UniScheduledPromiseTask.TriggerTime(delay, TickTime);
         MiniContext context = MiniContext.OfCancelToken(cancelToken);
 
-        UniScheduledPromiseTask<TResult> promiseTask = UniScheduledPromiseTask.OfFunction(action, context, 0, NewScheduledPromise<TResult>(), 0, triggerTime);
+        UniScheduledPromiseTask<TResult> promiseTask =
+            UniScheduledPromiseTask.OfFunction(action, context, 0, NewScheduledPromise<TResult>(), 0, triggerTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -70,7 +71,8 @@ public abstract class AbstractUniScheduledExecutor : AbstractUniExecutor, IUniSc
     public virtual IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<IContext, TResult> action, TimeSpan delay, IContext context) {
         long triggerTime = UniScheduledPromiseTask.TriggerTime(delay, TickTime);
 
-        UniScheduledPromiseTask<TResult> promiseTask = UniScheduledPromiseTask.OfFunction(action, context, 0, NewScheduledPromise<TResult>(), 0, triggerTime);
+        UniScheduledPromiseTask<TResult> promiseTask =
+            UniScheduledPromiseTask.OfFunction(action, context, 0, NewScheduledPromise<TResult>(), 0, triggerTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -81,7 +83,7 @@ public abstract class AbstractUniScheduledExecutor : AbstractUniExecutor, IUniSc
         builder.SetFixedDelay(delay.Ticks, period.Ticks, new TimeSpan(1));
         builder.Context = context;
 
-        UniScheduledPromiseTask<int> promiseTask = UniScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<int>(), 0, TickTime);
+        UniScheduledPromiseTask<int> promiseTask = UniScheduledPromiseTask.OfBuilder(in builder, NewScheduledPromise<int>(), 0, TickTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -92,7 +94,7 @@ public abstract class AbstractUniScheduledExecutor : AbstractUniExecutor, IUniSc
         builder.SetFixedRate(delay.Ticks, period.Ticks, new TimeSpan(1));
         builder.Context = context;
 
-        UniScheduledPromiseTask<int> promiseTask = UniScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<int>(), 0, TickTime);
+        UniScheduledPromiseTask<int> promiseTask = UniScheduledPromiseTask.OfBuilder(in builder, NewScheduledPromise<int>(), 0, TickTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -121,8 +123,8 @@ public abstract class AbstractUniScheduledExecutor : AbstractUniExecutor, IUniSc
 
     #region submit
 
-    public override IFuture<T> Submit<T>(ref TaskBuilder<T> builder) {
-        var promiseTask = UniScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<T>(), 0, TickTime);
+    public override IFuture<T> Submit<T>(in TaskBuilder<T> builder) {
+        var promiseTask = UniScheduledPromiseTask.OfBuilder(in builder, NewScheduledPromise<T>(), 0, TickTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }

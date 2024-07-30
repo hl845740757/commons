@@ -68,7 +68,7 @@ public class ForwardFuture<T> : IFuture<T>
 
     public bool IsComputing => future.IsComputing;
 
-    public bool IsDone => future.IsDone;
+    public bool IsCompleted => future.IsCompleted;
 
     public bool IsCancelled => future.IsCancelled;
 

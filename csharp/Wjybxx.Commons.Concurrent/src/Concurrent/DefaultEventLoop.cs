@@ -189,7 +189,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
     }
 
     public override void Shutdown() {
-        if (!_runningPromise.IsDone) { // 尚未启动成功就关闭
+        if (!_runningPromise.IsCompleted) { // 尚未启动成功就关闭
             _runningPromise.TrySetCancelled(CancelCodes.REASON_SHUTDOWN);
         }
         int expectedState = _state;
@@ -267,7 +267,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
         // 设置同步上下文，使得EventLoop创建的Task的下游任务默认继续在EventLoop上执行 -- 可增加是否启用选项
         SynchronizationContext.SetSynchronizationContext(AsSyncContext());
         try {
-            if (_runningPromise.IsDone) {
+            if (_runningPromise.IsCompleted) {
                 goto loopEnd; // 退出
             }
             SetTickTime(ObjectUtil.SystemTicks());
@@ -405,7 +405,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
 
         IScheduledFutureTask queueTask;
         while (taskQueue.TryPeekHead(out queueTask)) {
-            if (queueTask.Future.IsDone) {
+            if (queueTask.Future.IsCompleted) {
                 taskQueue.Dequeue(); // 未及时删除的任务
                 continue;
             }

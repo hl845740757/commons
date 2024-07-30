@@ -218,7 +218,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     public bool IsFailed => PeekState(_ex) == ST_FAILED;
     public bool IsCancelled => _ex is OperationCanceledException;
 
-    public bool IsDone => PeekState(_ex) >= ST_SUCCESS;
+    public bool IsCompleted => PeekState(_ex) >= ST_SUCCESS;
     public bool IsFailedOrCancelled => PeekState(_ex) >= ST_FAILED;
 
     protected sealed override bool IsRelaxedCompleted => PeekState(_ex) >= ST_SUCCESS;
@@ -365,7 +365,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     }
 
     public IFuture<T> Await() {
-        if (IsDone) {
+        if (IsCompleted) {
             return this;
         }
         CheckDeadlock();
@@ -377,7 +377,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     }
 
     public IFuture<T> AwaitUninterruptibly() {
-        if (IsDone) {
+        if (IsCompleted) {
             return this;
         }
         CheckDeadlock();
@@ -389,7 +389,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     }
 
     public bool Await(TimeSpan timeout) {
-        if (IsDone) {
+        if (IsCompleted) {
             return true;
         }
         CheckDeadlock();
@@ -401,7 +401,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     }
 
     public bool AwaitUninterruptibly(TimeSpan timeout) {
-        if (IsDone) {
+        if (IsCompleted) {
             return true;
         }
         CheckDeadlock();
@@ -458,7 +458,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private void PushUniOnCompleted1(IExecutor? executor, Action<IFuture<T>> continuation, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (IsDone && executor == null) {
+        if (IsCompleted && executor == null) {
             UniOnCompleted1.FireNow(this, continuation, null);
         } else {
             PushCompletion(new UniOnCompleted1(executor, options, this, continuation));
@@ -467,7 +467,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private void PushUniOnCompleted2(IExecutor? executor, Action<IFuture<T>, object> continuation, object? state, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (IsDone && executor == null) {
+        if (IsCompleted && executor == null) {
             UniOnCompleted2.FireNow(this, continuation, state, null);
         } else {
             UniOnCompleted2 completion = UniOnCompleted2.POOL.Acquire();
@@ -478,7 +478,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private void PushUniOnCompleted3(IExecutor? executor, Action<IFuture<T>, IContext> continuation, IContext context, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (IsDone && executor == null) {
+        if (IsCompleted && executor == null) {
             UniOnCompleted3.FireNow(this, continuation, context, null);
         } else {
             PushCompletion(new UniOnCompleted3(executor, options, this, continuation, context));
@@ -487,7 +487,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     private void PushUniOnCompleted4(IExecutor? executor, Action<object?> continuation, object? state, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (IsDone && executor == null) {
+        if (IsCompleted && executor == null) {
             UniOnCompleted4.FireNow(continuation, state, null);
         } else {
             UniOnCompleted4 completion = UniOnCompleted4.POOL.Acquire();

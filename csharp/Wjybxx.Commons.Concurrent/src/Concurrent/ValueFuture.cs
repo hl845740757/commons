@@ -77,16 +77,16 @@ public readonly struct ValueFuture
     /// <summary>
     /// 查询任务是否已完成
     /// </summary>
-    internal bool IsDone {
+    internal bool IsCompleted {
         get {
             if (_future == null) {
                 return true;
             }
             if (_future is IStateMachineDriver driver) {
-                return driver.GetStatus(_reentryId).IsDone();
+                return driver.GetStatus(_reentryId).IsCompleted();
             }
             IPromise promise = (IPromise)_future;
-            return promise.IsDone;
+            return promise.IsCompleted;
         }
     }
 
@@ -211,16 +211,16 @@ public readonly struct ValueFuture<T>
     /// <summary>
     /// 查询任务是否已完成
     /// </summary>
-    internal bool IsDone {
+    internal bool IsCompleted {
         get {
             if (_future == null) {
                 return true;
             }
             if (_future is IStateMachineDriver<T> driver) {
-                return driver.GetStatus(_reentryId).IsDone();
+                return driver.GetStatus(_reentryId).IsCompleted();
             }
             IPromise promise = (IPromise)_future;
-            return promise.IsDone;
+            return promise.IsCompleted;
         }
     }
 

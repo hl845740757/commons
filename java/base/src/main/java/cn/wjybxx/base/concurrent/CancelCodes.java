@@ -61,10 +61,7 @@ public final class CancelCodes {
     private CancelCodes() {
     }
 
-    /** 取消码是否表示已收到取消信号 */
-    public static boolean isCancelling(int code) {
-        return code != 0;
-    }
+    // region query
 
     /** 计算取消码中的原因 */
     public static int getReason(int code) {
@@ -90,6 +87,10 @@ public final class CancelCodes {
     public static boolean isFromFuture(int code) {
         return (code & MASK_FROM_FUTURE) != 0;
     }
+
+    // endregion
+
+    // region util
 
     /** 设置紧急程度 */
     public static int setDegree(int code, int value) {
@@ -136,4 +137,5 @@ public final class CancelCodes {
         }
         return code;
     }
+    // endregion
 }

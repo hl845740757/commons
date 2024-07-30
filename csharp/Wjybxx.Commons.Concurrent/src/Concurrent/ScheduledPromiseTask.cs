@@ -60,13 +60,13 @@ public interface ScheduledPromiseTask
             id, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<T> OfBuilder<T>(ref TaskBuilder<T> builder, IScheduledPromise<T> promise,
+    public static ScheduledPromiseTask<T> OfBuilder<T>(in TaskBuilder<T> builder, IScheduledPromise<T> promise,
                                                        long id, long tickTime) {
         return new ScheduledPromiseTask<T>(builder.Task, builder.Context, builder.Options, promise, builder.Type,
             id, tickTime);
     }
 
-    public static ScheduledPromiseTask<T> OfBuilder<T>(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
+    public static ScheduledPromiseTask<T> OfBuilder<T>(in ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
                                                        long id, long tickTime) {
         long timeUnit = Math.Max(1, builder.Timeunit.Ticks);
 
@@ -82,7 +82,7 @@ public interface ScheduledPromiseTask
         } else {
             timeoutContext = null;
         }
-        return new ScheduledPromiseTask<T>(ref builder, promise, id, triggerTime, period, timeoutContext);
+        return new ScheduledPromiseTask<T>(in builder, promise, id, triggerTime, period, timeoutContext);
     }
 
     #endregion
@@ -110,7 +110,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
     private IRegistration? cancelRegistration;
 
-    internal ScheduledPromiseTask(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
+    internal ScheduledPromiseTask(in ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
                                   long id, long nextTriggerTime, long period, TimeoutContext? timeoutContext)
         : base(builder.Task, builder.Context, builder.Options, promise, builder.Type) {
         this.id = id;
@@ -217,7 +217,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         AbstractScheduledEventLoop eventLoop = EventLoop;
         IPromise<T> promise = this.promise;
         IContext context = this.context;
-        if (promise.IsDone || context.CancelToken.IsCancelling) {
+        if (promise.IsCompleted || context.CancelToken.IsCancelling) {
             CancelWithoutRemove(CancelCodes.REASON_DEFAULT);
             return;
         }

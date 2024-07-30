@@ -42,20 +42,25 @@ public static class CancelCodes
     public const int MASK_WITHOUT_REMOVE = 1 << 29;
     /** 表示取消信号来自Future的取消接口 -- c#端无用 */
     public const int MASK_FROM_FUTURE = 1 << 30;
+
     /** 最大取消原因 */
     public const int MAX_REASON = MASK_REASON;
     /** 最大紧急程度 */
     public const int MAX_DEGREE = 15;
+
     /** 取消原因的偏移量 */
     public const int OFFSET_REASON = 0;
     /** 紧急度的偏移量 */
     public const int OFFSET_DEGREE = 20;
+
     /** 默认原因 */
     public const int REASON_DEFAULT = 1;
     /** 执行超时 -- {@link ICancelTokenSource#cancelAfter(int, long, TimeUnit)}就可使用 */
     public const int REASON_TIMEOUT = 2;
     /** IExecutor关闭 -- IExecutor关闭不一定会取消任务 */
     public const int REASON_SHUTDOWN = 3;
+
+    #region query
 
     /** 计算取消码中的原因 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -86,6 +91,10 @@ public static class CancelCodes
     public static bool IsFromFuture(int code) {
         return (code & MASK_FROM_FUTURE) != 0;
     }
+
+    #endregion
+
+    #region util
 
     /** 设置紧急程度 */
     public static int SetDegree(int code, int value) {
@@ -120,6 +129,8 @@ public static class CancelCodes
             ? code | MASK_WITHOUT_REMOVE
             : code & (~MASK_WITHOUT_REMOVE);
     }
+
+    #endregion
 
     /**
      * 检查取消码的合法性

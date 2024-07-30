@@ -29,7 +29,7 @@ import java.util.function.Function;
  * date - 2024/1/11
  */
 @NotThreadSafe
-public sealed class TaskBuilder<V> extends TaskOptionBuilder permits ScheduledTaskBuilder {
+public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     public static final int TYPE_ACTION = 0;
     public static final int TYPE_ACTION_CTX = 1;
@@ -44,6 +44,7 @@ public sealed class TaskBuilder<V> extends TaskOptionBuilder permits ScheduledTa
     private final int type;
     private final Object task;
     private IContext ctx;
+    private int options;
 
     protected TaskBuilder(int type, Object task) {
         this.task = Objects.requireNonNull(task);
@@ -58,10 +59,10 @@ public sealed class TaskBuilder<V> extends TaskOptionBuilder permits ScheduledTa
     }
 
     protected TaskBuilder(TaskBuilder<? extends V> taskBuilder) {
-        super.setOptions(taskBuilder.getOptions());
         this.task = taskBuilder.task;
         this.type = taskBuilder.type;
         this.ctx = taskBuilder.ctx;
+        this.options = taskBuilder.options;
     }
 
     // region factory
@@ -141,28 +142,46 @@ public sealed class TaskBuilder<V> extends TaskOptionBuilder permits ScheduledTa
 
     // region options
 
+    /** 启用选项 */
     public TaskBuilder<V> enable(int taskOption) {
-        super.enable(taskOption);
+        this.options = TaskOption.enable(options, taskOption);
         return this;
     }
 
+    /** 禁用选项 */
     public TaskBuilder<V> disable(int taskOption) {
-        super.disable(taskOption);
+        this.options = TaskOption.disable(options, taskOption);
         return this;
     }
 
+    /** 获取任务的阶段 */
+    public int getSchedulePhase() {
+        return TaskOption.getSchedulePhase(options);
+    }
+
+    /** @param phase 任务的调度阶段 */
     public TaskBuilder<V> setSchedulePhase(int phase) {
-        super.setSchedulePhase(phase);
+        this.options = TaskOption.setSchedulePhase(options, phase);
         return this;
     }
 
+    /** 获取任务优先级 */
+    public int getPriority() {
+        return TaskOption.getPriority(options);
+    }
+
+    /** 设置任务的优先级 */
     public TaskBuilder<V> setPriority(int priority) {
-        super.setPriority(priority);
+        options = TaskOption.setPriority(options, priority);
         return this;
+    }
+
+    public int getOptions() {
+        return options;
     }
 
     public TaskBuilder<V> setOptions(int options) {
-        super.setOptions(options);
+        this.options = options;
         return this;
     }
 

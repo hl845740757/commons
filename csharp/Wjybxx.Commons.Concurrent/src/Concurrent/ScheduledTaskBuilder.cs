@@ -81,7 +81,7 @@ public interface ScheduledTaskBuilder
 /// <summary>
 /// 定时任务构建器
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">结果类型，无结果时可使用int，无开销</typeparam>
 public struct ScheduledTaskBuilder<T> : ScheduledTaskBuilder, TaskBuilder
 {
     /** 不能为readonly否则调用方法会产生拷贝 */

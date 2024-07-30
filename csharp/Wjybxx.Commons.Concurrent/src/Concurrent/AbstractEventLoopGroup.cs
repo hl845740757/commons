@@ -67,8 +67,8 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     public virtual IPromise NewPromise() => new Promise<int>(this);
 
-    public virtual IFuture<T> Submit<T>(ref TaskBuilder<T> builder) {
-        return Select().Submit(ref builder);
+    public virtual IFuture<T> Submit<T>(in TaskBuilder<T> builder) {
+        return Select().Submit(in builder);
     }
 
     public virtual IFuture SubmitAction(Action action, int options = 0) {
@@ -95,8 +95,8 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     public virtual IScheduledPromise NewScheduledPromise() => new ScheduledPromise<object>(this);
 
-    public virtual IScheduledFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder) {
-        return Select().Schedule(ref builder);
+    public virtual IScheduledFuture<TResult> Schedule<TResult>(in ScheduledTaskBuilder<TResult> builder) {
+        return Select().Schedule(in builder);
     }
 
     public virtual IScheduledFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {

@@ -94,7 +94,7 @@ public class FixedEventLoopGroup : AbstractEventLoopGroup, IFixedEventLoopGroup
 
     public override bool IsShuttingDown => children.All(e => e.IsShuttingDown);
     public override bool IsShutdown => children.All(e => e.IsShutdown);
-    public override bool IsTerminated => terminationPromise.IsDone;
+    public override bool IsTerminated => terminationPromise.IsCompleted;
     public override IFuture TerminationFuture => terminationPromise.AsReadonly();
 
     public override IEnumerator<IEventLoop> GetEnumerator() {

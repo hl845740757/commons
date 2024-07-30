@@ -109,13 +109,13 @@ public interface TaskBuilder
 /// <summary>
 /// 
 /// </summary>
-/// <typeparam name="T">结果类型，无结果时可使用object，无开销</typeparam>
+/// <typeparam name="T">结果类型，无结果时可使用int，无开销</typeparam>
 public struct TaskBuilder<T> : TaskBuilder
 {
     private readonly int type;
     private readonly object task;
     private IContext? context;
-    private TaskOptionBuilder optionBuilder;
+    private int options;
 
     /// <summary>
     /// 
@@ -127,12 +127,8 @@ public struct TaskBuilder<T> : TaskBuilder
         this.type = type;
         this.task = task ?? throw new ArgumentNullException(nameof(task));
         this.context = context;
-        this.optionBuilder = default;
+        this.options = 0;
     }
-
-    #region factory
-
-    #endregion
 
     /// <summary>
     /// 任务的类型
@@ -154,42 +150,42 @@ public struct TaskBuilder<T> : TaskBuilder
     }
 
     /// <summary>
-    /// 任务的调度选项
+    /// 启用选项
     /// </summary>
-    public int Options {
-        get => optionBuilder.Options;
-        set => optionBuilder.Options = value;
+    /// <param name="optionMask"></param>
+    public void Enable(int optionMask) {
+        options |= optionMask;
     }
 
     /// <summary>
-    /// 启用特定任务选项
+    /// 禁用选项
     /// </summary>
-    /// <param name="taskOption"></param>
-    public void Enable(int taskOption) {
-        optionBuilder.Enable(taskOption);
-    }
-
-    /// <summary>
-    /// 关闭特定任务选项
-    /// </summary>
-    /// <param name="taskOption"></param>
-    public void Disable(int taskOption) {
-        optionBuilder.Disable(taskOption);
+    /// <param name="optionMask"></param>
+    public void Disable(int optionMask) {
+        options &= ~optionMask;
     }
 
     /// <summary>
     /// 设置任务的调度阶段
     /// </summary>
     public int SchedulePhase {
-        get => optionBuilder.SchedulePhase;
-        set => optionBuilder.SchedulePhase = value;
+        get => TaskOption.GetSchedulePhase(options);
+        set => options = TaskOption.SetSchedulePhase(options, value);
     }
 
     /// <summary>
     /// 设置任务的优先级
     /// </summary>
     public int Priority {
-        get => optionBuilder.Priority;
-        set => optionBuilder.Priority = value;
+        get => TaskOption.GetPriority(options);
+        set => options = TaskOption.SetPriority(options, value);
+    }
+
+    /// <summary>
+    /// 最终options
+    /// </summary>
+    public int Options {
+        get => options;
+        set => options = value;
     }
 }

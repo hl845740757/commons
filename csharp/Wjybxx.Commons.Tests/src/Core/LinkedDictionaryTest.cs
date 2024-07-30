@@ -18,8 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using NUnit.Framework;
 using Wjybxx.Commons.Collections;
 
@@ -123,26 +121,6 @@ public class LinkedDictionaryTest
         dictionary.AdjustCapacity(10001);
         dictionary.AdjustCapacity(10000);
     }
-
-#pragma warning disable SYSLIB0011
-    /** 序列化测试 */
-    [Test]
-    public void SerialTest() {
-        LinkedDictionary<string, string> dictionary = TestStringDic(1000);
-
-        BinaryFormatter formatter = new BinaryFormatter();
-        MemoryStream stream = new MemoryStream(new byte[64 * 1024]);
-        formatter.Serialize(stream, dictionary);
-
-        stream.Position = 0;
-        LinkedDictionary<string, string> dictionary2 = (LinkedDictionary<string, string>)formatter.Deserialize(stream);
-        foreach (KeyValuePair<string, string> pair in dictionary) {
-            string value2 = dictionary2[pair.Key];
-            Assert.That(value2, Is.EqualTo(pair.Value));
-        }
-        Assert.That(dictionary2.DefaultValue, Is.EqualTo(dictionary.DefaultValue));
-    }
-#pragma warning restore SYSLIB0011
 
     [Test]
     public void NullKeyTest() {

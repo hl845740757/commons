@@ -48,7 +48,7 @@ public static class StatusExtensions
 {
     /** 是否表示完成状态 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsDone(this TaskStatus state) {
+    public static bool IsCompleted(this TaskStatus state) {
         return state >= TaskStatus.Success;
     }
 

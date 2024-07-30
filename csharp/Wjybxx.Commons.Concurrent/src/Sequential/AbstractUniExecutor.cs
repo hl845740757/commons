@@ -84,8 +84,8 @@ public abstract class AbstractUniExecutor : IUniExecutorService
 
     public virtual IPromise NewPromise() => new Promise<int>(this);
 
-    public virtual IFuture<T> Submit<T>(ref TaskBuilder<T> builder) {
-        PromiseTask<T> promiseTask = PromiseTask.OfBuilder(ref builder, NewPromise<T>());
+    public virtual IFuture<T> Submit<T>(in TaskBuilder<T> builder) {
+        PromiseTask<T> promiseTask = PromiseTask.OfBuilder(in builder, NewPromise<T>());
         Execute(promiseTask);
         return promiseTask.Future;
     }

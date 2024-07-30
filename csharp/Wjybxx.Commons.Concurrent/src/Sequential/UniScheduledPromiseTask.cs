@@ -36,13 +36,13 @@ public interface UniScheduledPromiseTask
     #region factory
 
     public static UniScheduledPromiseTask<int> OfTask(ITask task, IContext? context, int options, IScheduledPromise<int> promise,
-                                                       long id, long nextTriggerTime) {
+                                                      long id, long nextTriggerTime) {
         return new UniScheduledPromiseTask<int>(task, context, options, promise, TaskBuilder.TYPE_TASK,
             id, nextTriggerTime);
     }
 
     public static UniScheduledPromiseTask<int> OfAction(Action action, IContext? context, int options, IScheduledPromise<int> promise,
-                                                           long id, long nextTriggerTime) {
+                                                        long id, long nextTriggerTime) {
         return new UniScheduledPromiseTask<int>(action, context, options, promise, TaskBuilder.TYPE_ACTION,
             id, nextTriggerTime);
     }
@@ -65,13 +65,13 @@ public interface UniScheduledPromiseTask
             id, nextTriggerTime);
     }
 
-    public static UniScheduledPromiseTask<T> OfBuilder<T>(ref TaskBuilder<T> builder, IScheduledPromise<T> promise,
+    public static UniScheduledPromiseTask<T> OfBuilder<T>(in TaskBuilder<T> builder, IScheduledPromise<T> promise,
                                                           long id, long tickTime) {
         return new UniScheduledPromiseTask<T>(builder.Task, builder.Context, builder.Options, promise, builder.Type,
             id, tickTime);
     }
 
-    public static UniScheduledPromiseTask<T> OfBuilder<T>(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
+    public static UniScheduledPromiseTask<T> OfBuilder<T>(in ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
                                                           long id, long tickTime) {
         long timeUnit = Math.Max(1, builder.Timeunit.Ticks);
 
@@ -87,7 +87,7 @@ public interface UniScheduledPromiseTask
         } else {
             timeoutContext = null;
         }
-        return new UniScheduledPromiseTask<T>(ref builder, promise, id, triggerTime, period, timeoutContext);
+        return new UniScheduledPromiseTask<T>(in builder, promise, id, triggerTime, period, timeoutContext);
     }
 
     #endregion
@@ -115,7 +115,7 @@ public class UniScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
     private IRegistration? cancelRegistration;
 
-    internal UniScheduledPromiseTask(ref ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
+    internal UniScheduledPromiseTask(in ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
                                      long id, long nextTriggerTime, long period, TimeoutContext? timeoutContext)
         : base(builder.Task, builder.Context, builder.Options, promise, builder.Type) {
         this.id = id;
@@ -222,7 +222,7 @@ public class UniScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T
         AbstractUniScheduledExecutor eventLoop = EventLoop;
         IPromise<T> promise = this.promise;
         IContext context = this.context;
-        if (promise.IsDone || context.CancelToken.IsCancelling) {
+        if (promise.IsCompleted || context.CancelToken.IsCancelling) {
             CancelWithoutRemove(CancelCodes.REASON_DEFAULT);
             return;
         }

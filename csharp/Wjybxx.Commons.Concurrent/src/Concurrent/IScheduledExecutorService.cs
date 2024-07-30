@@ -40,13 +40,12 @@ public interface IScheduledExecutorService : IExecutorService
     IScheduledPromise NewScheduledPromise();
 
     /// <summary>
-    ///
-    /// 注意：使用ref仅为了避免防御性拷贝，不会修改对象的状态 —— in关键字仍可能产生拷贝。
+    /// 提交一个任务
     /// </summary>
     /// <param name="builder">任务构建器</param>
     /// <typeparam name="TResult"></typeparam>
     /// <returns></returns>
-    IScheduledFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder);
+    IScheduledFuture<TResult> Schedule<TResult>(in ScheduledTaskBuilder<TResult> builder);
 
     #region action
 

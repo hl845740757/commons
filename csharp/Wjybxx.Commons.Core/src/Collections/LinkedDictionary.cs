@@ -22,7 +22,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
@@ -44,7 +43,7 @@ namespace Wjybxx.Commons.Collections;
 /// <typeparam name="TValue">值的类型，允许为null</typeparam>
 [Serializable]
 [NotThreadSafe]
-public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>, ISerializable
+public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 {
     // C#的泛型是独立的类，因此缓存是独立的
     private static readonly bool valueIsReferenceType = !typeof(TValue).IsValueType;
@@ -104,7 +103,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     internal int Capacity => _mask + 1;
 
     /// <summary>
-    /// 默认值会序列化
+    /// key不存在时的默认值，序列化由外部实现
     /// </summary>
     public TValue? DefaultValue {
         get => _defValue;
@@ -1402,82 +1401,6 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
         public override string ToString() {
             return $"{nameof(key)}: {key}, {nameof(value)}: {value}";
-        }
-    }
-
-    #endregion
-
-    #region seril
-
-    private const string NamesMask = "Mask";
-    private const string NamesLoadFactor = "LoadFactor";
-    private const string NamesComparer = "Comparer";
-    private const string NamesPairs = "KeyValuePairs";
-    private const string NamesDefaultValue = "DefaultValue";
-
-    public virtual void GetObjectData(SerializationInfo info, StreamingContext context) {
-        if (info == null) throw new ArgumentNullException(nameof(info));
-        info.AddValue(NamesMask, _mask);
-        info.AddValue(NamesLoadFactor, _loadFactor);
-        info.AddValue(NamesComparer, _keyComparer, typeof(IEqualityComparer<TKey>));
-        info.AddValue(NamesDefaultValue, _defValue, typeof(TValue));
-
-        if (_table != null && _count > 0) { // 有数据才序列化
-            var array = new KeyValuePair<TKey, TValue>[Count];
-            CopyTo(array, 0, false);
-            info.AddValue(NamesPairs, array, typeof(KeyValuePair<TKey, TValue>[]));
-        }
-    }
-
-    protected LinkedDictionary(SerializationInfo info, StreamingContext context) {
-        this._mask = info.GetInt32(NamesMask);
-        this._loadFactor = info.GetSingle(NamesLoadFactor);
-        this._keyComparer = (IEqualityComparer<TKey>)info.GetValue(NamesComparer, typeof(IEqualityComparer<TKey>)) ?? EqualityComparer<TKey>.Default;
-        this._defValue = (TValue)info.GetValue(NamesDefaultValue, typeof(TValue));
-
-        HashCommon.CheckLoadFactor(_loadFactor);
-        if (_mask + 1 != MathCommon.NextPowerOfTwo(_mask)) {
-            throw new Exception("invalid serial data, _mask: " + _mask);
-        }
-
-        KeyValuePair<TKey, TValue>[] pairs = (KeyValuePair<TKey, TValue>[])info.GetValue(NamesPairs, typeof(KeyValuePair<TKey, TValue>[]));
-        if (pairs != null && pairs.Length > 0) {
-            BuildTable(pairs);
-        }
-    }
-
-    private void BuildTable(KeyValuePair<TKey, TValue>[] pairsArray) {
-        // 构建Node链
-        IEqualityComparer<TKey> keyComparer = _keyComparer;
-        Node head;
-        {
-            KeyValuePair<TKey, TValue> pair = pairsArray[0];
-            int hash = KeyHash(pair.Key, keyComparer);
-            head = new Node(hash, pair.Key, pair.Value, -1);
-        }
-        Node tail = head;
-        for (var i = 1; i < pairsArray.Length; i++) {
-            KeyValuePair<TKey, TValue> pair = pairsArray[i];
-            int hash = KeyHash(pair.Key, keyComparer);
-            Node next = new Node(hash, pair.Key, pair.Value, -1);
-            //
-            tail.next = next;
-            next.prev = tail;
-            tail = next;
-        }
-        _head = head;
-        _tail = tail;
-
-        // 散列到数组 -- 走正常的Find方法更安全些
-        _table = new Node[_mask + 2];
-        _count = pairsArray.Length;
-        for (Node node = _head; node != null; node = node.next) {
-            int pos = Find(node.key, node.hash);
-            if (pos >= 0) {
-                throw new SerializationException("invalid serial data");
-            }
-            pos = -pos - 1;
-            _table[pos] = node;
         }
     }
 

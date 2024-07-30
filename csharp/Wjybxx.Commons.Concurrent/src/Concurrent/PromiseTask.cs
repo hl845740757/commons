@@ -75,8 +75,8 @@ public interface PromiseTask
         return new PromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC_CTX);
     }
 
-    public static PromiseTask<T> OfBuilder<T>(ref TaskBuilder<T> builder, IPromise<T> promise) {
-        return new PromiseTask<T>(ref builder, promise);
+    public static PromiseTask<T> OfBuilder<T>(in TaskBuilder<T> builder, IPromise<T> promise) {
+        return new PromiseTask<T>(in builder, promise);
     }
 
     #endregion
@@ -110,7 +110,7 @@ public class PromiseTask<T> : IFutureTask<T>, PromiseTask
         : this(action, context, options, promise, TaskBuilder.TaskType(action)) {
     }
 
-    public PromiseTask(ref TaskBuilder<T> builder, IPromise<T> promise)
+    public PromiseTask(in TaskBuilder<T> builder, IPromise<T> promise)
         : this(builder.Task, builder.Context, builder.Options, promise, builder.Type) {
     }
 

@@ -131,7 +131,7 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
     public T GetResult(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
         TaskStatus status = _promise.Status;
-        if (!status.IsDone()) {
+        if (!status.IsCompleted()) {
             throw new IllegalStateException("Task has not completed");
         }
 

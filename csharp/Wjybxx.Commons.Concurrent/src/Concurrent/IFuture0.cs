@@ -79,7 +79,7 @@ public interface IFuture
     bool IsCancelled => Status == TaskStatus.Cancelled;
 
     /** 如果future已进入完成状态(成功、失败、被取消)，则返回true */
-    bool IsDone => Status >= TaskStatus.Success;
+    bool IsCompleted => Status >= TaskStatus.Success;
 
     /**
      * 在JDK的约定中，取消和failed是分离的，我们仍保持这样的约定；

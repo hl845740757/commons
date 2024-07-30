@@ -26,8 +26,8 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
     protected AbstractScheduledEventLoop(IEventLoopGroup? parent) : base(parent) {
     }
 
-    public override IScheduledFuture<TResult> Schedule<TResult>(ref ScheduledTaskBuilder<TResult> builder) {
-        ScheduledPromiseTask<TResult> promiseTask = ScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<TResult>(), 0, TickTime);
+    public override IScheduledFuture<TResult> Schedule<TResult>(in ScheduledTaskBuilder<TResult> builder) {
+        ScheduledPromiseTask<TResult> promiseTask = ScheduledPromiseTask.OfBuilder(in builder, NewScheduledPromise<TResult>(), 0, TickTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -53,7 +53,8 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
         long triggerTime = ScheduledPromiseTask.TriggerTime(delay, TickTime);
         MiniContext context = MiniContext.OfCancelToken(cancelToken);
 
-        ScheduledPromiseTask<TResult> promiseTask = ScheduledPromiseTask.OfFunction(action, context, 0, NewScheduledPromise<TResult>(), 0, triggerTime);
+        ScheduledPromiseTask<TResult> promiseTask =
+            ScheduledPromiseTask.OfFunction(action, context, 0, NewScheduledPromise<TResult>(), 0, triggerTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -61,7 +62,8 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
     public override IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<IContext, TResult> action, TimeSpan delay, IContext context) {
         long triggerTime = ScheduledPromiseTask.TriggerTime(delay, TickTime);
 
-        ScheduledPromiseTask<TResult> promiseTask = ScheduledPromiseTask.OfFunction(action, context, 0, NewScheduledPromise<TResult>(), 0, triggerTime);
+        ScheduledPromiseTask<TResult> promiseTask =
+            ScheduledPromiseTask.OfFunction(action, context, 0, NewScheduledPromise<TResult>(), 0, triggerTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -72,7 +74,7 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
         builder.SetFixedDelay(delay.Ticks, period.Ticks, new TimeSpan(1));
         builder.Context = context;
 
-        ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<int>(), 0, TickTime);
+        ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfBuilder(in builder, NewScheduledPromise<int>(), 0, TickTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }
@@ -83,7 +85,7 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
         builder.SetFixedRate(delay.Ticks, period.Ticks, new TimeSpan(1));
         builder.Context = context;
 
-        ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfBuilder(ref builder, NewScheduledPromise<int>(), 0, TickTime);
+        ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfBuilder(in builder, NewScheduledPromise<int>(), 0, TickTime);
         Execute(promiseTask);
         return promiseTask.Future;
     }

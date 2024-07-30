@@ -49,7 +49,7 @@ public class CancelTokenTest
                 signal.TrySetResult("cancelled");
             });
 
-            Assert.IsFalse(signal.IsDone);
+            Assert.IsFalse(signal.IsCompleted);
             cts.Cancel(1);
             signal.AwaitUninterruptibly();
             Assert.NotNull(signal.ResultNow());
@@ -69,7 +69,7 @@ public class CancelTokenTest
                 signal.TrySetResult("cancelled");
             }, rootCtx);
 
-            Assert.IsFalse(signal.IsDone);
+            Assert.IsFalse(signal.IsCompleted);
             cts.Cancel(1);
             signal.AwaitUninterruptibly();
             Assert.NotNull(signal.ResultNow());
@@ -86,7 +86,7 @@ public class CancelTokenTest
                 signal.TrySetResult("cancelled");
             });
 
-            Assert.IsFalse(signal.IsDone);
+            Assert.IsFalse(signal.IsCompleted);
             cts.Cancel(1);
             signal.AwaitUninterruptibly();
             Assert.NotNull(signal.ResultNow());
@@ -105,7 +105,7 @@ public class CancelTokenTest
                 signal.TrySetResult("cancelled");
             }, rootCtx);
 
-            Assert.IsFalse(signal.IsDone);
+            Assert.IsFalse(signal.IsCompleted);
             cts.Cancel(1);
             signal.AwaitUninterruptibly();
             Assert.NotNull(signal.ResultNow());

@@ -297,7 +297,7 @@ public abstract class AbstractPromise
             Monitor.Enter(future);
             IncWaiter();
             try {
-                while (!future.IsDone) {
+                while (!future.IsCompleted) {
                     Monitor.Wait(future);
                 }
             }
@@ -312,7 +312,7 @@ public abstract class AbstractPromise
             IncWaiter();
             bool interrupted = false;
             try {
-                while (!future.IsDone) {
+                while (!future.IsCompleted) {
                     try {
                         Monitor.Wait(future);
                     }
@@ -341,7 +341,7 @@ public abstract class AbstractPromise
             Monitor.Enter(future);
             IncWaiter();
             try {
-                while (!future.IsDone) {
+                while (!future.IsCompleted) {
                     int remainMillis = MathCommon.Clamp(deadline - ObjectUtil.SystemTickMillis(), 0, int.MaxValue);
                     if (remainMillis <= 0) {
                         return false;
@@ -367,7 +367,7 @@ public abstract class AbstractPromise
             Monitor.Enter(future);
             IncWaiter();
             try {
-                while (!future.IsDone) {
+                while (!future.IsCompleted) {
                     int remainMillis = MathCommon.Clamp(deadline - ObjectUtil.SystemTickMillis(), 0, int.MaxValue);
                     if (remainMillis <= 0) {
                         return false;

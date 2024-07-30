@@ -22,7 +22,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Runtime.Serialization;
 using Wjybxx.Commons.Attributes;
 
 #pragma warning disable CS1591
@@ -36,7 +35,7 @@ namespace Wjybxx.Commons.Collections;
 /// <typeparam name="TKey">元素类型，允许为null</typeparam>
 [Serializable]
 [NotThreadSafe]
-public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
+public class LinkedHashSet<TKey> : ISequencedSet<TKey>
 {
     /** len = 2^n + 1，额外的槽用于存储nullKey；总是延迟分配空间，以减少创建空实例的开销 */
     private Node?[]? _table; // 这个NullableReference有时真的很烦
@@ -775,79 +774,6 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISerializable
 
         public override string ToString() {
             return $"{nameof(key)}: {key}";
-        }
-    }
-
-    #endregion
-
-    #region seril
-
-    private const string NamesMask = "Mask";
-    private const string NamesLoadFactor = "LoadFactor";
-    private const string NamesComparer = "Comparer";
-    private const string NamesKeys = "Keys";
-
-    public virtual void GetObjectData(SerializationInfo info, StreamingContext context) {
-        if (info == null) throw new ArgumentNullException(nameof(info));
-
-        info.AddValue(NamesMask, _mask);
-        info.AddValue(NamesLoadFactor, _loadFactor);
-        info.AddValue(NamesComparer, _keyComparer, typeof(IEqualityComparer<TKey>));
-        if (_table != null && _count > 0) { // 有数据才序列化
-            var array = new TKey[Count];
-            CopyTo(array, 0, false);
-            info.AddValue(NamesKeys, array, typeof(TKey[]));
-        }
-    }
-
-    protected LinkedHashSet(SerializationInfo info, StreamingContext context) {
-        _mask = info.GetInt32(NamesMask);
-        _loadFactor = info.GetSingle(NamesLoadFactor);
-        _keyComparer = (IEqualityComparer<TKey>)info.GetValue(NamesComparer, typeof(IEqualityComparer<TKey>)) ?? EqualityComparer<TKey>.Default;
-
-        HashCommon.CheckLoadFactor(_loadFactor);
-        if (_mask + 1 != MathCommon.NextPowerOfTwo(_mask)) {
-            throw new Exception("invalid serial data, _mask: " + _mask);
-        }
-
-        TKey[] keys = (TKey[])info.GetValue(NamesKeys, typeof(TKey[]));
-        if (keys != null && keys.Length > 0) {
-            BuildTable(keys);
-        }
-    }
-
-    private void BuildTable(TKey[] keyArray) {
-        // 构建Node链
-        IEqualityComparer<TKey> keyComparer = _keyComparer;
-        Node head;
-        {
-            TKey key = keyArray[0];
-            int hash = KeyHash(key, keyComparer);
-            head = new Node(hash, key, -1);
-        }
-        Node tail = head;
-        for (var i = 1; i < keyArray.Length; i++) {
-            TKey key = keyArray[0];
-            int hash = KeyHash(key, keyComparer);
-            Node next = new Node(hash, key, -1);
-            //
-            tail.next = next;
-            next.prev = tail;
-            tail = next;
-        }
-        _head = head;
-        _tail = tail;
-
-        // 散列到数组 -- 走正常的Find方法更安全些
-        _table = new Node[_mask + 2];
-        _count = keyArray.Length;
-        for (Node node = _head; node != null; node = node.next) {
-            int pos = Find(node.key, node.hash);
-            if (pos >= 0) {
-                throw new SerializationException("invalid serial data");
-            }
-            pos = -pos - 1;
-            _table[pos] = node;
         }
     }
 

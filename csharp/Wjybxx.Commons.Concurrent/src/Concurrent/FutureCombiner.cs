@@ -187,7 +187,7 @@ public sealed class FutureCombiner
             Interlocked.Increment(ref doneCount);
 
             IPromise<object> aggregatePromise = this.aggregatePromise;
-            if (aggregatePromise != null && !aggregatePromise.IsDone && CheckComplete()) {
+            if (aggregatePromise != null && !aggregatePromise.IsCompleted && CheckComplete()) {
                 result = null;
                 cause = null;
             }

@@ -47,7 +47,7 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
     // IsCompleted只在Start后调用一次，EventLoop可以通过接口查询是否已在线程中
     public bool IsCompleted {
         get {
-            if (!_future.IsDone) return false;
+            if (!_future.IsCompleted) return false;
             if (_executor == null) return true;
             return TaskOption.IsEnabled(_options, TaskOption.STAGE_TRY_INLINE)
                    && Executors.InEventLoop(_executor);
@@ -100,7 +100,7 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
     // IsCompleted只在Start后调用一次，EventLoop可以通过接口查询是否已在线程中
     public bool IsCompleted {
         get {
-            if (!_future.IsDone) return false;
+            if (!_future.IsCompleted) return false;
             if (_executor == null) return true;
             return TaskOption.IsEnabled(_options, TaskOption.STAGE_TRY_INLINE)
                    && Executors.InEventLoop(_executor);
