@@ -17,6 +17,7 @@
 package cn.wjybxx.base.pool;
 
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Supplier;
 
@@ -54,11 +55,24 @@ public interface ObjectPool<T> extends Supplier<T> {
      * @param objects 要回收的对象
      */
     default void releaseAll(Collection<? extends T> objects) {
-        objects.forEach(e -> {
-            if (e != null) release(e);
-        });
+        if (objects instanceof ArrayList<? extends T> arrayList) {
+            for (int i = 0, n = arrayList.size(); i < n; i++) {
+                T obj = arrayList.get(i);
+                if (null == obj) {
+                    continue;
+                }
+                release(obj);
+            }
+        } else {
+            for (T obj : objects) {
+                if (null == obj) {
+                    continue;
+                }
+                release(obj);
+            }
+        }
     }
-
+    
     /**
      * 释放此池中的所有对象
      * （如果属于特殊资源，可不清理）

@@ -46,13 +46,20 @@ public interface IObjectPool<T>
     /// </summary>
     /// <param name="objects"></param>
     void ReleaseAll(IEnumerable<T?> objects) {
-        if (objects is List<T> list) { // Struct Enumerator
-            foreach (T obj in list) {
-                if (obj != null) Release(obj);
+        if (objects is List<T> arrayList) { // struct enumerator
+            for (int i = 0, n = arrayList.Count; i < n; i++) {
+                T obj = arrayList[i];
+                if (null == obj) {
+                    continue;
+                }
+                Release(obj);
             }
         } else {
             foreach (T obj in objects) {
-                if (obj != null) Release(obj);
+                if (null == obj) {
+                    continue;
+                }
+                Release(obj);
             }
         }
     }

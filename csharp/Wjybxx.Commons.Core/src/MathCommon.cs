@@ -26,6 +26,11 @@ namespace Wjybxx.Commons
 /// </summary>
 public static class MathCommon
 {
+    /// <summary>
+    /// 解决dotnet5缺少全局共享变量的问题
+    /// </summary>
+    public static readonly Random SharedRandom = new Random();
+    
     /** 测试给定的参数是否是【偶数】 */
     public static bool IsEven(int x) {
         return (x & 1) == 0;

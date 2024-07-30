@@ -337,7 +337,7 @@ public static partial class CollectionUtil
     /// <param name="rnd">随机种子</param>
     /// <typeparam name="T"></typeparam>
     public static void Shuffle<T>(IList<T> list, Random? rnd = null) {
-        rnd ??= Random.Shared;
+        rnd ??= MathCommon.SharedRandom;
         int size = list.Count;
         for (int i = size; i > 1; i--) {
             Swap(list, i - 1, rnd.Next(i));

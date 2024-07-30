@@ -37,6 +37,8 @@ public class EmptyDequeue<T> : IDeque<T>
     public void AdjustCapacity(int expectedCount) {
     }
 
+    #region sequence
+
     public T PeekFirst() {
         throw ThrowHelper.CollectionEmptyException();
     }
@@ -53,6 +55,10 @@ public class EmptyDequeue<T> : IDeque<T>
     public bool TryPeekLast(out T item) {
         item = default;
         return false;
+    }
+
+    public void Add(T item) {
+        throw new InvalidOperationException("ImmutableEmptyQueue");
     }
 
     public void AddFirst(T item) {
@@ -99,6 +105,64 @@ public class EmptyDequeue<T> : IDeque<T>
 
     public void Clear() {
     }
+
+    #endregion
+
+    #region queue
+
+    public void Enqueue(T item) {
+        AddLast(item);
+    }
+
+    public bool TryEnqueue(T item) {
+        return TryAddLast(item);
+    }
+
+    public T Dequeue() {
+        return RemoveFirst();
+    }
+
+    public bool TryDequeue(out T item) {
+        return TryRemoveFirst(out item);
+    }
+
+    public T PeekHead() {
+        return PeekFirst();
+    }
+
+    public bool TryPeekHead(out T item) {
+        return TryPeekFirst(out item);
+    }
+
+    #endregion
+
+    #region stack
+
+    public void Push(T item) {
+        AddFirst(item);
+    }
+
+    public bool TryPush(T item) {
+        return TryAddFirst(item);
+    }
+
+    public T Pop() {
+        return RemoveFirst();
+    }
+
+    public bool TryPop(out T item) {
+        return TryRemoveFirst(out item);
+    }
+
+    public T PeekTop() {
+        return PeekFirst();
+    }
+
+    public bool TryPeekTop(out T item) {
+        return TryPeekFirst(out item);
+    }
+
+    #endregion
 
     public IDeque<T> Reversed() {
         return this;

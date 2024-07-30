@@ -27,7 +27,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <EmbedAllSources>true</EmbedAllSources> <!-- 嵌入源代码 -->
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <TargetFrameworks>net6.0;net7.0;</TargetFrameworks> <!-- 过段时间再添加net8.0 -->
+        <TargetFrameworks>net5.0;net6.0;net7.0;</TargetFrameworks> <!-- 过段时间再添加net8.0 -->
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

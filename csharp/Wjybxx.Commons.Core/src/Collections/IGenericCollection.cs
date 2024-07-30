@@ -55,9 +55,6 @@ public interface IGenericCollection<T> : ICollection<T>, IReadOnlyCollection<T>
 
     #region 接口适配
 
-    int ICollection<T>.Count => Count;
-    int IReadOnlyCollection<T>.Count => Count;
-
     IEnumerator IEnumerable.GetEnumerator() {
         return GetEnumerator();
     }

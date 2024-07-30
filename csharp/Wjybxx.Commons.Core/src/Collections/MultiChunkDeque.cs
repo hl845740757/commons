@@ -103,6 +103,10 @@ public class MultiChunkDeque<T> : IDeque<T>
         return _tailChunk.TryPeekLast(out item);
     }
 
+    public void Add(T item) {
+        TryAddLast(item); // 队列默认添加到尾部
+    }
+
     public void AddFirst(T item) {
         TryAddFirst(item); // 调用tryAdd减少维护代码
     }

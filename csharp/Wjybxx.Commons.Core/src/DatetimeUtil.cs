@@ -82,12 +82,15 @@ public static class DatetimeUtil
 
     /** Unix纪元时间 */
     public static readonly DateTime UnixEpoch = DateTime.UnixEpoch;
+
+#if NET6_0_OR_GREATER
     /** Unix纪元日期 */
     public static readonly DateOnly DateUnixEpoch = new DateOnly(1970, 1, 1);
     /** 一天的开始时间 */
     public static readonly TimeOnly TimeStartOfDay = new TimeOnly(0, 0, 0);
     /** 一天的结束时间 -- 精确到毫秒 */
     public static readonly TimeOnly TimeEndOfDay = new TimeOnly(23, 59, 59, 999);
+#endif
 
     /// <summary>
     /// 获取当前的Unix时间戳(毫秒)
@@ -153,6 +156,28 @@ public static class DatetimeUtil
     }
 
     /// <summary>
+    /// 解析日期时间
+    /// </summary>
+    public static DateTime ParseDateTime(string datetimeString) {
+        return DateTime.ParseExact(datetimeString, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// 格式化日期时间为ISO-8601格式
+    /// 固定为:<code>yyyy-MM-ddTHH:mm:ss</code>
+    /// </summary>
+    /// <param name="dateTime"></param>
+    /// <returns></returns>
+    public static string FormatDateTime(DateTime dateTime) {
+        return dateTime.ToString("s");
+    }
+
+    #endregion
+
+    #region 时间戳转换-dateonly-timeonly
+
+#if NET6_0_OR_GREATER
+    /// <summary>
     /// 将时间转换为当天的总秒数
     /// </summary>
     /// <param name="timeOnly"></param>
@@ -206,19 +231,9 @@ public static class DatetimeUtil
         return new TimeOnly(dateTime.Hour, dateTime.Minute, dateTime.Second);
     }
 
-    #endregion
-
-    #region parse/format
-
-    /// <summary>
-    /// 解析日期时间
-    /// </summary>
-    public static DateTime ParseDateTime(string datetimeString) {
-        return DateTime.ParseExact(datetimeString, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture);
-    }
-
     /// <summary>
     /// 解析日期
+    /// 固定为:<code>"yyyy-MM-dd"</code>格式
     /// </summary>
     public static DateOnly ParseDate(string dateString) {
         return DateOnly.ParseExact(dateString, "yyyy-MM-dd", CultureInfo.InvariantCulture);
@@ -226,19 +241,10 @@ public static class DatetimeUtil
 
     /// <summary>
     /// 解析时间
+    /// 固定为:<code>HH:mm:ss</code>格式
     /// </summary>
     public static TimeOnly ParseTime(string timeString) {
         return TimeOnly.ParseExact(timeString, "HH:mm:ss", CultureInfo.InvariantCulture);
-    }
-
-    /// <summary>
-    /// 格式化日期时间为ISO-8601格式
-    /// 固定为:<code>yyyy-MM-ddTHH:mm:ss</code>
-    /// </summary>
-    /// <param name="dateTime"></param>
-    /// <returns></returns>
-    public static string FormatDateTime(DateTime dateTime) {
-        return dateTime.ToString("s");
     }
 
     /// <summary>
@@ -256,6 +262,26 @@ public static class DatetimeUtil
     public static string FormatTime(TimeOnly dateTime) {
         return dateTime.ToString("HH:mm:ss");
     }
+#endif
+
+    #endregion
+
+    /// <summary>
+    /// 将时间解析为总秒数 (可避免dotnet版本问题)
+    /// 固定为:<code>HH:mm:ss</code>格式
+    /// </summary>
+    /// <param name="timeString"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public static int ParseTimeAsSeconds(string timeString) {
+        if (timeString.Length != 8) {
+            throw new ArgumentException("Invalid timeString: " + timeString);
+        }
+        int hours = ParseNumber(timeString, 0, false);
+        int minutes = ParseNumber(timeString, 3, true);
+        int seconds = ParseNumber(timeString, 6, true);
+        return hours * SecondsPerHour + minutes * SecondsPerMinute + seconds;
+    }
 
     /// <summary>
     /// 解析时区偏移
@@ -271,37 +297,55 @@ public static class DatetimeUtil
         if (offsetString[0] != '+' && offsetString[0] != '-') {
             throw new ArgumentException("Invalid offsetString, plus/minus not found when expected: " + offsetString);
         }
-        // 不想写得太复杂，补全后解析
-        StringBuilder sb = new StringBuilder(offsetString, 9);
+        int hours, minutes, seconds;
         switch (offsetString.Length) {
             case 2: { // ±H
-                sb.Insert(1, '0').Append(":00:00");
+                hours = CharUtil.DecimalCharToNumber(offsetString[1], 1);
+                minutes = 0;
+                seconds = 0;
                 break;
             }
-            case 3: { // ±HH
-                sb.Append(":00:00");
+            case 3: { // ±H
+                hours = ParseNumber(offsetString, 1, false);
+                minutes = 0;
+                seconds = 0;
                 break;
             }
             case 5: { // ±H:mm
-                sb.Insert(1, '0').Append(":00");
+                hours = ParseNumber(offsetString, 1, false);
+                minutes = ParseNumber(offsetString, 3, false);
+                seconds = 0;
                 break;
             }
             case 6: { // ±HH:mm
-                sb.Append(":00");
+                hours = ParseNumber(offsetString, 1, false);
+                minutes = ParseNumber(offsetString, 4, true);
+                seconds = 0;
                 break;
             }
             case 9: { // ±HH:mm:ss
+                hours = ParseNumber(offsetString, 1, false);
+                minutes = ParseNumber(offsetString, 4, true);
+                seconds = ParseNumber(offsetString, 7, true);
                 break;
             }
             default: {
                 throw new ArgumentException("Invalid offsetString: " + offsetString);
             }
         }
-        int seconds = ToSecondOfDay(ParseTime(sb.ToString(1, 8)));
+        int totalSeconds = hours * SecondsPerHour + minutes * SecondsPerMinute + seconds;
         if (offsetString[0] == '+') {
-            return seconds;
+            return totalSeconds;
         }
-        return -1 * seconds;
+        return -1 * totalSeconds;
+    }
+
+    private static int ParseNumber(string offsetString, int pos, bool precededByColon) {
+        if (precededByColon && offsetString[pos - 1] != ':') {
+            throw new ArgumentException("Invalid offsetString: " + offsetString);
+        }
+        return CharUtil.DecimalCharToNumber(offsetString[pos]) * 10
+               + CharUtil.DecimalCharToNumber(offsetString[pos + 1]);
     }
 
     /// <summary>
@@ -310,20 +354,29 @@ public static class DatetimeUtil
     /// <code> Z, ±HH:mm, ±HH:mm:ss</code>
     /// </summary>
     /// <param name="offsetSeconds">时区偏移秒数</param>
+    /// <param name="sb">允许外部池化</param>
     /// <returns></returns>
-    public static string FormatOffset(int offsetSeconds) {
+    public static string FormatOffset(int offsetSeconds, StringBuilder? sb = null) {
         if (offsetSeconds == 0) {
             return "Z";
         }
-        string sign = offsetSeconds < 0 ? "-" : "+";
-        string offsetString = FormatTime(TimeOfDaySeconds(Math.Abs(offsetSeconds)));
-        if (offsetSeconds % 60 == 0) { // 没有秒部分
-            return sign + offsetString.Substring(0, 5);
-        } else {
-            return sign + offsetString;
-        }
-    }
+        int sign = offsetSeconds < 0 ? -1 : 1;
+        offsetSeconds = Math.Abs(offsetSeconds);
 
-    #endregion
+        int hours = offsetSeconds / 3600;
+        int minutes = (offsetSeconds - hours * 3600) / 60;
+        int seconds = offsetSeconds % 60;
+
+        if (sb == null) {
+            sb = new StringBuilder(10);
+        }
+        sb.Append(sign > 0 ? '+' : '-')
+            .Append(hours < 10 ? "0" : "").Append(hours)
+            .Append(minutes < 10 ? ":0" : ":").Append(minutes);
+        if (seconds > 0) {
+            sb.Append(seconds < 10 ? ":0" : ":").Append(seconds);
+        }
+        return sb.ToString();
+    }
 }
 }

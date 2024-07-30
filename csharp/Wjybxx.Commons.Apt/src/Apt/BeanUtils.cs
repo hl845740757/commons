@@ -38,8 +38,8 @@ public class BeanUtils
     public static bool ContainsNoArgsConstructor(Type type) {
         return type.GetConstructor(BindingFlags.Instance
                                    | BindingFlags.Public
-                                   | BindingFlags.NonPublic
-            , Array.Empty<Type>()) != null;
+                                   | BindingFlags.NonPublic,
+            binder: null, Array.Empty<Type>(), null) != null;
     }
 
     /// <summary>
@@ -52,8 +52,8 @@ public class BeanUtils
         // TODO 参数如果是未构造泛型是否有问题
         return type.GetConstructor(BindingFlags.Instance
                                    | BindingFlags.Public
-                                   | BindingFlags.NonPublic
-            , new Type[] { argType }) != null;
+                                   | BindingFlags.NonPublic,
+            binder: null, new Type[] { argType }, null) != null;
     }
 
     /// <summary>

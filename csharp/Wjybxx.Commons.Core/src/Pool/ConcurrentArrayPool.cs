@@ -70,7 +70,7 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
         // 先尝试从最佳池申请
         if (_buckets[index].Poll(out T[] array)) {
             if (clear && !this._clear) {
-                Array.Clear(array);
+                Array.Clear(array, 0, array.Length);
             }
             return array;
         }
@@ -80,7 +80,7 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
             for (int nextIndex = index + 1; nextIndex < end; nextIndex++) {
                 if (_buckets[nextIndex].Poll(out array)) {
                     if (clear && !this._clear) {
-                        Array.Clear(array);
+                        Array.Clear(array, 0, array.Length);
                     }
                     return array;
                 }
@@ -106,7 +106,7 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
             return;
         }
         if (clear) {
-            Array.Clear(array);
+            Array.Clear(array, 0, array.Length);
         }
         _buckets[index].Offer(array);
     }

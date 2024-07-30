@@ -194,6 +194,13 @@ public class BoundedArrayDeque<T> : IDeque<T>
         return true;
     }
 
+    public void Add(T item) {
+        // 队列默认添加到尾部
+        if (!TryAddLast(item)) {
+            throw ThrowHelper.CollectionFullException();
+        }
+    }
+
     public void AddFirst(T item) {
         if (!TryAddFirst(item)) {
             throw ThrowHelper.CollectionFullException();

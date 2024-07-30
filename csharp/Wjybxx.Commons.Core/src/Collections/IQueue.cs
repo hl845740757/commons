@@ -68,13 +68,5 @@ public interface IQueue<T> : IGenericCollection<T>
     /// <param name="item"></param>
     /// <returns>队列不为空则返回true</returns>
     bool TryPeekHead(out T item);
-
-    #region 接口适配
-
-    void ICollection<T>.Add(T item) {
-        Enqueue(item);
-    }
-
-    #endregion
 }
 }

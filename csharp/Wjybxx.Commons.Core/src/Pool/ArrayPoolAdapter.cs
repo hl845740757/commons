@@ -70,7 +70,7 @@ public sealed class ArrayPoolAdapter<T> : IArrayPool<T>
     public T[] Acquire(int minimumLength, bool clear = false) {
         T[] array = _arrayPool.Rent(minimumLength);
         if (clear && !this._clear) { // 默认不清理的情况下用户请求有效
-            Array.Clear(array);
+            Array.Clear(array, 0, array.Length);
         }
         return array;
     }

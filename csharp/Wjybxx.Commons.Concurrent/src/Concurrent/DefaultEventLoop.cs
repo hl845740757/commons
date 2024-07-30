@@ -216,7 +216,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
     private void EnsureThreadStarted() {
         if (_state == ST_NOT_STARTED
             && Interlocked.CompareExchange(ref _state, ST_STARTING, ST_NOT_STARTED) == ST_NOT_STARTED) {
-            _thread.UnsafeStart(); // 不捕获奇怪的ExecutionContext，我非常讨厌C#这个隐式上下文捕获
+            _thread.Start(); // 不捕获奇怪的ExecutionContext，我非常讨厌C#这个隐式上下文捕获
         }
     }
 

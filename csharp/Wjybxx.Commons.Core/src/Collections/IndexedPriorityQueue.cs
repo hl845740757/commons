@@ -71,6 +71,11 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
 
     #region queue
 
+    public void Add(T item) {
+        if (item == null) throw new ArgumentNullException(nameof(item));
+        TryEnqueue(item);
+    }
+
     public void Enqueue(T item) {
         TryEnqueue(item);
     }

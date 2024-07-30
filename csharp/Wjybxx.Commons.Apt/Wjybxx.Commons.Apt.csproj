@@ -27,7 +27,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <EmbedAllSources>true</EmbedAllSources>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <TargetFrameworks>net6.0;net7.0;</TargetFrameworks>
+        <TargetFrameworks>net5.0;net6.0;net7.0;</TargetFrameworks>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

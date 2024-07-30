@@ -374,7 +374,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             _count = 0;
             _version++;
             _head = _tail = null;
-            Array.Clear(_table!);
+            Array.Clear(_table!, 0, _table!.Length);
         }
     }
 
@@ -578,11 +578,11 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
 
     IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() {
-        return new PairEnumerator(this, false);
+        return GetEnumerator();
     }
 
     IEnumerator<KeyValuePair<TKey, TValue>> ISequencedCollection<KeyValuePair<TKey, TValue>>.GetReversedEnumerator() {
-        return new PairEnumerator(this, true);
+        return GetReversedEnumerator();
     }
 
     public PairEnumerator GetEnumerator() {

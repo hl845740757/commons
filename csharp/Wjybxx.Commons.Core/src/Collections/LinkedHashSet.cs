@@ -238,7 +238,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>
             _count = 0;
             _version++;
             _head = _tail = null;
-            Array.Clear(_table!);
+            Array.Clear(_table!, 0, _table!.Length);
         }
     }
 

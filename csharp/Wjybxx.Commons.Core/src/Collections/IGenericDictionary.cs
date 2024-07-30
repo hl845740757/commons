@@ -94,17 +94,6 @@ public interface IGenericDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
     IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => Keys;
     IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => Values;
 
-    bool IDictionary<TKey, TValue>.ContainsKey(TKey key) => ContainsKey(key);
-
-    bool IReadOnlyDictionary<TKey, TValue>.ContainsKey(TKey key) => ContainsKey(key);
-
-    TValue IDictionary<TKey, TValue>.this[TKey key] {
-        get => this[key];
-        set => this[key] = value;
-    }
-
-    TValue IReadOnlyDictionary<TKey, TValue>.this[TKey key] => this[key];
-
     void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) {
         Add(item.Key, item.Value);
     }
