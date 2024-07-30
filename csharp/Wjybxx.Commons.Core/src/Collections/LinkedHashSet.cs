@@ -24,9 +24,8 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 保持插入序的Set
 /// 1.由<see cref="LinkedDictionary{TKey,TValue}"/>修改而来，保留起特性。
@@ -778,4 +777,5 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>
     }
 
     #endregion
+}
 }

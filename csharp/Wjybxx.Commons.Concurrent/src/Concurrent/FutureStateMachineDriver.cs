@@ -19,8 +19,8 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 
 /// </summary>
@@ -114,4 +114,5 @@ internal sealed class FutureStateMachineDriver<T, S> : Promise<T>, IFutureStateM
             promise.TrySetException(future.ExceptionNow(false));
         }
     };
+}
 }

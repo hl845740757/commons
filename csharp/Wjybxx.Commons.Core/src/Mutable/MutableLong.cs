@@ -19,9 +19,8 @@
 using System;
 using System.Collections.Generic;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Mutable;
-
+namespace Wjybxx.Commons.Mutable
+{
 /// <summary>
 /// 可变Int32
 /// </summary>
@@ -154,4 +153,5 @@ public class MutableLong : IMutableNumber<long>, IEquatable<MutableLong>, ICompa
     }
 
     #endregion
+}
 }

@@ -19,9 +19,8 @@
 using System;
 using System.Runtime.Serialization;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 该异常表示在计算的过程中出现异常
 /// </summary>
@@ -38,4 +37,5 @@ public class CompletionException : Exception
 
     public CompletionException(string? message, Exception? innerException) : base(message, innerException) {
     }
+}
 }

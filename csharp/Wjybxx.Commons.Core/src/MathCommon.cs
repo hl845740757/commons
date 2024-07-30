@@ -19,9 +19,8 @@
 using System;
 using System.Runtime.CompilerServices;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 数学基础库
 /// </summary>
@@ -343,4 +342,5 @@ public static class MathCommon
     }
 
     #endregion
+}
 }

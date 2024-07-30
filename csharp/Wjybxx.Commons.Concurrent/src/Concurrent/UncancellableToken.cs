@@ -18,8 +18,8 @@
 
 using System;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 不可取消的令牌
 /// </summary>
@@ -112,4 +112,5 @@ sealed class UncancellableToken : ICancelToken
         public void Dispose() {
         }
     }
+}
 }

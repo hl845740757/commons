@@ -18,9 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 public abstract class AbstractScheduledEventLoop : AbstractEventLoop
 {
     protected AbstractScheduledEventLoop(IEventLoopGroup? parent) : base(parent) {
@@ -110,4 +109,5 @@ public abstract class AbstractScheduledEventLoop : AbstractEventLoop
     /// </summary>
     /// <param name="scheduledTask"></param>
     protected internal abstract void RemoveScheduled(IScheduledFutureTask scheduledTask);
+}
 }

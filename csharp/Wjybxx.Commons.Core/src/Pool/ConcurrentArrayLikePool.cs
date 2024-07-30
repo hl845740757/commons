@@ -19,9 +19,8 @@
 using System;
 using System.Collections.Generic;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 高性能的并发对象池实现
 /// (未鉴定归属，可归还外部对象，适用简单场景)
@@ -178,4 +177,5 @@ public sealed class ConcurrentArrayLikePool<T> : IArrayLikePool<T>
     }
 
     #endregion
+}
 }

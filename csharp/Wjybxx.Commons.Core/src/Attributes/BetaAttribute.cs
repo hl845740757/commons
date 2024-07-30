@@ -18,12 +18,13 @@
 
 using System;
 
-namespace Wjybxx.Commons.Attributes;
-
+namespace Wjybxx.Commons.Attributes
+{
 /// <summary>
 /// 该属性表示对应的元素尚处于测试阶段
 /// </summary>
 [AttributeUsage(AttributeTargets.All)]
 public class BetaAttribute : Attribute
 {
+}
 }

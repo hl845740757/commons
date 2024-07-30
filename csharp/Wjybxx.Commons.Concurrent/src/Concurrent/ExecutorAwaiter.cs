@@ -19,10 +19,8 @@
 using System;
 using System.Runtime.CompilerServices;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 用于支持await切换到指定executor线程。
 /// PS：如果当前已在目标Executor线程，则没有开销。
@@ -88,4 +86,5 @@ public readonly struct ExecutorAwaiter : ICriticalNotifyCompletion
             }
         }
     }
+}
 }

@@ -19,10 +19,8 @@
 using System;
 using System.Collections.Generic;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 常量对象池
 ///
@@ -230,4 +228,5 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
             return _factory(this);
         }
     }
+}
 }

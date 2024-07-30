@@ -19,9 +19,8 @@
 using System;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 表示一个枚举值定义
 /// (equals默认不比较文档)
@@ -108,4 +107,5 @@ public class EnumValueSpec : IEquatable<EnumValueSpec>, ISpecification
             return this;
         }
     }
+}
 }

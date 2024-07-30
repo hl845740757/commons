@@ -16,9 +16,8 @@
 
 #endregion
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 只包含取消令牌的context，该类实例通常不暴露给用户的Action
 /// </summary>
@@ -63,4 +62,5 @@ public sealed class MiniContext : IContext
     public IContext ToSharable() {
         return SHARABLE;
     }
+}
 }

@@ -22,9 +22,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 有界双端队列，固定大小不扩容，可以指定溢出策略
 /// </summary>
@@ -617,4 +616,5 @@ public class BoundedArrayDeque<T> : IDeque<T>
         public void Dispose() {
         }
     }
+}
 }

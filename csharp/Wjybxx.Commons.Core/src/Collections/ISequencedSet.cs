@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 序列集合
 /// </summary>
@@ -75,4 +75,5 @@ public interface ISequencedSet<T> : ISequencedCollection<T>, IGenericSet<T>
     }
 
     #endregion
+}
 }

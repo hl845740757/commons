@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// Task是<see cref="IExecutor"/>中调度的任务的抽象。
 /// 1. 该接口暴露给Executor的扩展类，不是用户使用的类 -- 用户面向Action等委托类型即可。
@@ -36,4 +36,5 @@ public interface ITask
     /// 任务的逻辑
     /// </summary>
     void Run();
+}
 }

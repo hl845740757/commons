@@ -19,9 +19,8 @@
 using System;
 using System.Runtime.Serialization;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Ex;
-
+namespace Wjybxx.Commons.Ex
+{
 /// <summary>
 /// 包含错误码的异常
 /// </summary>
@@ -55,4 +54,5 @@ public class ErrorCodeException : Exception, IErrorCodeException, NoLogRequiredE
     }
 
     #endregion
+}
 }

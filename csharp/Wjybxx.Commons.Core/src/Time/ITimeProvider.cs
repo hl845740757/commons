@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Time;
-
+namespace Wjybxx.Commons.Time
+{
 /// <summary>
 /// 时间提供者
 /// </summary>
@@ -41,4 +41,5 @@ public interface ICachedTimeProvider : ITimeProvider
     /// </summary>
     /// <param name="time"></param>
     void SetCurrent(long time);
+}
 }

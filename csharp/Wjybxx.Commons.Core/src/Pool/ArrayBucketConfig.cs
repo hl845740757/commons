@@ -18,10 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 
 /// </summary>
@@ -43,4 +41,5 @@ public readonly struct ArrayBucketConfig
         this.arrayCapacity = arrayCapacity;
         this.cacheCount = cacheCount;
     }
+}
 }

@@ -16,9 +16,8 @@
 
 #endregion
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 用于表示字典Put操作的结果，避免过多的参数
 /// </summary>
@@ -43,4 +42,5 @@ public readonly struct PutResult<TValue>
     /// （Insert下是关联的默认值）
     /// </summary>
     public TValue? PrevValue => _prevValue;
+}
 }

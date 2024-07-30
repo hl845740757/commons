@@ -18,8 +18,8 @@
 
 using System.Runtime.CompilerServices;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// Future关联的任务的状态
 /// </summary>
@@ -57,4 +57,5 @@ public static class StatusExtensions
     public static bool IsFailedOrCancelled(this TaskStatus state) {
         return state >= TaskStatus.Failed;
     }
+}
 }

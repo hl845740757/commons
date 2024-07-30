@@ -22,8 +22,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Wjybxx.Commons.Apt;
-
+namespace Wjybxx.Commons.Apt
+{
 /// <summary>
 /// 
 /// </summary>
@@ -316,4 +316,5 @@ public class BeanUtils
     }
 
     #endregion
+}
 }

@@ -20,10 +20,8 @@ using System;
 using System.Threading;
 using Wjybxx.Commons.Concurrent;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Sequential;
-
+namespace Wjybxx.Commons.Sequential
+{
 /// <summary>
 /// 
 /// </summary>
@@ -179,4 +177,5 @@ public abstract class AbstractUniScheduledExecutor : AbstractUniExecutor, IUniSc
     protected internal abstract void RemoveScheduled(IScheduledFutureTask scheduledTask);
 
     #endregion
+}
 }

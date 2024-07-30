@@ -19,9 +19,8 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Wjybxx.Commons.Concurrent;
-
-#pragma warning disable CS1591
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 不打印堆栈的取消异常
 /// </summary>
@@ -56,4 +55,5 @@ public sealed class StacklessCancellationException : BetterCancellationException
             _ => new StacklessCancellationException(code)
         };
     }
+}
 }

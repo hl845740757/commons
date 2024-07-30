@@ -18,8 +18,8 @@
 
 using Wjybxx.Commons.Concurrent;
 
-namespace Wjybxx.Commons.Sequential;
-
+namespace Wjybxx.Commons.Sequential
+{
 /// <summary>
 /// 定时任务调度器，时间单位取决于具体的实现，通常是毫秒 -- 也可能是帧数。
 ///
@@ -29,4 +29,5 @@ namespace Wjybxx.Commons.Sequential;
 /// </summary>
 public interface IUniScheduledExecutor : IUniExecutorService, IScheduledExecutorService
 {
+}
 }

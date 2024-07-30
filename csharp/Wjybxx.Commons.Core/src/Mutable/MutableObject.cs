@@ -18,9 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Mutable;
-
+namespace Wjybxx.Commons.Mutable
+{
 /// <summary>
 /// 通用可变对象
 /// </summary>
@@ -85,4 +84,5 @@ public class MutableObject<T> : IMutable<T>, IEquatable<MutableObject<T>> where 
     }
 
     #endregion
+}
 }

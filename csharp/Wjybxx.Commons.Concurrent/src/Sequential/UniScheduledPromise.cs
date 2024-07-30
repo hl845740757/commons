@@ -19,10 +19,8 @@
 using System.Diagnostics;
 using Wjybxx.Commons.Concurrent;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Sequential;
-
+namespace Wjybxx.Commons.Sequential
+{
 /// <summary>
 /// 单线程版本定时任务的Promise
 /// </summary>
@@ -41,4 +39,5 @@ public class UniScheduledPromise<T> : UniPromise<T>, IScheduledPromise<T>
         Debug.Assert(task.Future == this);
         this._task = task;
     }
+}
 }

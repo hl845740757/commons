@@ -18,8 +18,8 @@
 
 using System;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 该接口用于VoidFuture操作
 /// </summary>
@@ -134,4 +134,5 @@ public interface IStateMachineDriver<T> : IStateMachineDriver
     /// <param name="reentryId"></param>
     /// <param name="promise"></param>
     void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise);
+}
 }

@@ -19,8 +19,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 数组对象池工具类
 /// </summary>
@@ -113,4 +113,5 @@ internal static class ArrayPoolCore
         }
         return index;
     }
+}
 }

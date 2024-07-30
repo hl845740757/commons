@@ -8,6 +8,11 @@ csharp公共库，包含集合等基础组件;nuget搜索'wjybxx'即可查看到
 
 由于我频繁在Java和C#之间切换，因此统一的命名规则对我来说很必要，但这可能让仅写C#的开发者不适应。具体的命名规则可见：[C#命名规范](https://github.com/hl845740757/commons/blob/dev/csharp/NameRules.md)
 
+## Unity兼容(进行中)
+
+为尽可能兼容Unity（本来工具主要就是用于游戏客户端和服务器的），我限定语法等级为C#9，且不使用接口默认方法。
+为保持尽可能小的增量变化，我将文件范围namespace修改为传统的namespace定义样式是，不进行缩进。
+
 ---
 
 ## Collections

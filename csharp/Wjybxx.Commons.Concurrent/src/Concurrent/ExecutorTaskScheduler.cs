@@ -20,9 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 用于适配C#的系统Task库
 /// </summary>
@@ -99,4 +98,5 @@ public class ExecutorTaskScheduler : TaskScheduler
             _taskScheduler.TryExecuteTask(_task);
         }
     }
+}
 }

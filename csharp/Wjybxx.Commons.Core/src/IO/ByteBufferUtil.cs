@@ -19,8 +19,8 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Wjybxx.Commons.IO;
-
+namespace Wjybxx.Commons.IO
+{
 /// <summary>
 /// 字节数组IO操作工具类
 /// 1.C#10不支持逻辑右移，但这里使用算术右移是等价的
@@ -377,4 +377,5 @@ public static class ByteBufferUtil
     }
 
     #endregion
+}
 }

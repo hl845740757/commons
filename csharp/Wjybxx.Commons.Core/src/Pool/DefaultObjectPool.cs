@@ -20,9 +20,8 @@ using System;
 using System.Collections.Generic;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 默认缓存池实现
 ///
@@ -116,4 +115,5 @@ public class DefaultObjectPool<T> : IObjectPool<T>
     public void Clear() {
         _freeObjects.Clear();
     }
+}
 }

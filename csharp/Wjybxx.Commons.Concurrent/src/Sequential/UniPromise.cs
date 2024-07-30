@@ -19,13 +19,10 @@
 using System;
 using System.Diagnostics;
 using Wjybxx.Commons.Concurrent;
-using Wjybxx.Commons.IO;
 using Wjybxx.Commons.Pool;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Sequential;
-
+namespace Wjybxx.Commons.Sequential
+{
 /// <summary>
 /// 单线程版本的<see cref="IPromise{T}"/>
 ///
@@ -773,4 +770,5 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
     }
 
     #endregion
+}
 }

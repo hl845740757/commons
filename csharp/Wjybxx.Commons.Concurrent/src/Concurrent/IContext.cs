@@ -16,10 +16,9 @@
 
 #endregion
 
-using System.Diagnostics.CodeAnalysis;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 异步任务的上下文
 /// 在异步和并发编程中，共享上下文是很必要的，且显式的共享优于隐式的共享。
@@ -78,4 +77,5 @@ public interface IContext
     /// </summary>
     /// <returns></returns>
     object SharedProps { get; }
+}
 }

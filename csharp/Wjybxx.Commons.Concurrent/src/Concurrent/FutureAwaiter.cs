@@ -19,10 +19,8 @@
 using System;
 using System.Runtime.CompilerServices;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 原始类型Future的等待器
 /// awaiter默认不返回结果。
@@ -155,4 +153,5 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
             _future.OnCompletedAsync(_executor, INVOKER, continuation, _options);
         }
     }
+}
 }

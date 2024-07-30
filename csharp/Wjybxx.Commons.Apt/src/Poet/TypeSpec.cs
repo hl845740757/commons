@@ -20,10 +20,8 @@ using System;
 using System.Collections.Generic;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 表示一个类型
 ///
@@ -380,4 +378,5 @@ public class TypeSpec : ISpecification
 
         #endregion
     }
+}
 }

@@ -3,7 +3,7 @@
     <PropertyGroup>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>annotations</Nullable>
-        <LangVersion>10</LangVersion>
+        <LangVersion>9</LangVersion> <!-- 为兼容unity我们使用c#9 -->
         <RootNamespace>Wjybxx.Commons</RootNamespace>
 
         <AssemblyName>Wjybxx.Commons.Core</AssemblyName>
@@ -27,7 +27,15 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <EmbedAllSources>true</EmbedAllSources> <!-- 嵌入源代码 -->
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <TargetFrameworks>net6.0;net7.0;</TargetFrameworks>	<!-- 过段时间再添加net8.0 -->
+        <TargetFrameworks>net6.0;net7.0;</TargetFrameworks> <!-- 过段时间再添加net8.0 -->
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <NoWarn>1701;1702;1591;</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <NoWarn>1701;1702;1591;</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

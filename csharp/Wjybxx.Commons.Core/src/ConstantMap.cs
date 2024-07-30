@@ -22,8 +22,8 @@ using System.Collections.Immutable;
 using System.Linq;
 using Wjybxx.Commons.Attributes;
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 常量池快照字典。
 /// 由于<see cref="ConstantPool{T}"/>是可变的，这使得有些查询是高开销的，比如：{@link ConstantPool#values()}
@@ -89,4 +89,5 @@ public sealed class ConstantMap<T> where T : class, IConstant
     /// 常量的名字集合，和<see cref="Values"/>的顺序一致。
     /// </summary>
     public IList<string> Names => immutableNames;
+}
 }

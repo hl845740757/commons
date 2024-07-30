@@ -18,9 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Attributes;
-
+namespace Wjybxx.Commons.Attributes
+{
 /// <summary>
 /// 用于标注关联的原始类文件
 /// </summary>
@@ -36,4 +35,5 @@ public class SourceFileRefAttribute : Attribute
     public SourceFileRefAttribute(Type sourceType) {
         this.sourceType = sourceType ?? throw new ArgumentNullException(nameof(sourceType));
     }
+}
 }

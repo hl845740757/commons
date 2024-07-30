@@ -21,10 +21,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 方法参数
 /// 注意：方法参数的 ref/in/out 不是单纯的修饰符，而是修改了字段的类型。
@@ -172,4 +170,5 @@ public class ParameterSpec : ISpecification
             return this;
         }
     }
+}
 }

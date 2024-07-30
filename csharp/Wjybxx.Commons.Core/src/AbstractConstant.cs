@@ -19,12 +19,9 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 常量类的模板实现 
 /// </summary>
@@ -122,4 +119,5 @@ public abstract class AbstractConstant : IConstant
     }
 
     #endregion
+}
 }

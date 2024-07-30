@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 被索引的元素
 /// 1.索引信息存储在元素上，可大幅提高查找效率；
@@ -39,4 +39,5 @@ public interface IIndexedElement
     /// <param name="collection">关联的集合 </param>
     /// <param name="index">新的索引；-1 表示从集合中删除</param>
     public void CollectionIndex(object collection, int index);
+}
 }

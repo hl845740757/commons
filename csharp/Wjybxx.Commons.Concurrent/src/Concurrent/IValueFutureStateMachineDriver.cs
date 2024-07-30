@@ -16,9 +16,8 @@
 
 #endregion
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 用于驱动<see cref="ValueFuture{T}"/>
 /// </summary>
@@ -36,4 +35,5 @@ public interface IValueFutureStateMachineDriver<T> : IStateMachineDriver<T>
     /// (不校验重入，因为只会被生成的状态机代码调用一次)
     /// </summary>
     ValueFuture<T> Future { get; }
+}
 }

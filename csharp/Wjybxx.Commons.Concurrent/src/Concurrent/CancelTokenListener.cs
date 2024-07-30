@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 取消令牌监听器。
 ///
@@ -30,4 +30,5 @@ public interface ICancelTokenListener
     /// </summary>
     /// <param name="cancelToken">收到取消信号的令牌</param>
     void OnCancelRequested(ICancelToken cancelToken);
+}
 }

@@ -18,8 +18,8 @@
 
 using System.Collections.Generic;
 
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 简单对象池抽象
 /// 线程安全性取决于具体实现
@@ -62,4 +62,5 @@ public interface IObjectPool<T>
     /// （如果属于特殊资源，可不清理）
     /// </summary>
     void Clear();
+}
 }

@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 任务被事件循环拒绝时的策略
 /// </summary>
@@ -29,4 +29,5 @@ public interface RejectedExecutionHandler
     /// <param name="task">被拒绝的任务</param>
     /// <param name="eventLoop">拒绝任务的事件循环</param>
     void Rejected(ITask task, IEventLoop eventLoop);
+}
 }

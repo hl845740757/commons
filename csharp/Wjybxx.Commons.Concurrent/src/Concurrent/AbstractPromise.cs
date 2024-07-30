@@ -21,10 +21,8 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 该类解决两个问题：
 /// 1. 解决泛型类的常量不共享问题。
@@ -392,4 +390,5 @@ public abstract class AbstractPromise
     }
 
     #endregion
+}
 }

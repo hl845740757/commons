@@ -16,9 +16,8 @@
 
 #endregion
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 空代理，用于避免null
 /// </summary>
@@ -45,4 +44,5 @@ public class EmptyAgent<TEvent> : IEventLoopAgent<TEvent> where TEvent : IAgentE
 
     public void OnShutdown() {
     }
+}
 }

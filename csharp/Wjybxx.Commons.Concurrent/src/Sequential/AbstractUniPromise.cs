@@ -21,8 +21,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Wjybxx.Commons.Concurrent;
 
-namespace Wjybxx.Commons.Sequential;
-
+namespace Wjybxx.Commons.Sequential
+{
 /// <summary>
 /// 该类解决两个问题：
 /// 1. 解决泛型类的常量不共享问题。
@@ -232,4 +232,5 @@ public abstract class AbstractUniPromise
     }
 
     #endregion
+}
 }

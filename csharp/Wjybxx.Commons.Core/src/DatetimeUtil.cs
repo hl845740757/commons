@@ -20,8 +20,8 @@ using System;
 using System.Globalization;
 using System.Text;
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 日期时间工具类
 /// </summary>
@@ -325,4 +325,5 @@ public static class DatetimeUtil
     }
 
     #endregion
+}
 }

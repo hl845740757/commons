@@ -20,8 +20,8 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 1.Future是任务和用户之间通信的媒介。
 /// 2.Task可通过Promise向用户传递信息，用户可通过Future主动查询Task的状态。
@@ -213,4 +213,5 @@ public interface IFuture<T> : IFuture
     }
 
     #endregion
+}
 }

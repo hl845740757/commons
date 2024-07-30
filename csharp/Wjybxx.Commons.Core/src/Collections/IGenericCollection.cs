@@ -19,8 +19,8 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 泛型集合
 ///
@@ -63,4 +63,5 @@ public interface IGenericCollection<T> : ICollection<T>, IReadOnlyCollection<T>
     }
 
     #endregion
+}
 }

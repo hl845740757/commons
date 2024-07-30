@@ -19,10 +19,8 @@
 using System;
 using System.Runtime.Serialization;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Ex;
-
+namespace Wjybxx.Commons.Ex
+{
 /// <summary>
 /// 死循环预防
 /// </summary>
@@ -39,4 +37,5 @@ public class InfiniteLoopException : Exception
 
     public InfiniteLoopException(string? message, Exception? innerException) : base(message, innerException) {
     }
+}
 }

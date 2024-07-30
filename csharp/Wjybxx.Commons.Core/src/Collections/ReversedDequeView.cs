@@ -16,9 +16,8 @@
 
 #endregion
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// Deque反转视图
 /// 注意：Queue和Stack接口中的方法都是明确方向的，因此可反转；
@@ -109,4 +108,5 @@ public class ReversedDequeView<TKey> : ReversedCollectionView<TKey>, IDeque<TKey
     }
 
     #endregion
+}
 }

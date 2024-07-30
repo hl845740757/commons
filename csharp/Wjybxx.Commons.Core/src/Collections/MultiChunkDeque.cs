@@ -22,9 +22,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 基于多分块的无界双端队列
 /// 
@@ -497,4 +496,5 @@ public class MultiChunkDeque<T> : IDeque<T>
             next = null;
         }
     }
+}
 }

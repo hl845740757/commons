@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 超时上下文
 ///
@@ -61,4 +61,5 @@ public struct TimeoutContext
     /// </summary>
     /// <returns></returns>
     public bool IsTimeout() => timeLeft <= 0;
+}
 }

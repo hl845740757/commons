@@ -18,9 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 事件循环工厂
 /// </summary>
@@ -53,4 +52,5 @@ public class EventLoopFactory : IEventLoopFactory
         builder.ThreadFactory = threadFactory;
         return builder.Build();
     }
+}
 }

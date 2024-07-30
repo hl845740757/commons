@@ -19,9 +19,8 @@
 using System;
 using System.Runtime.Serialization;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 如果一个操作可能导致死锁状态将抛出该异常.
 /// 通常是因为监听者和执行者在同一个线程，监听者尝试阻塞等待结果。
@@ -39,4 +38,5 @@ public class BlockingOperationException : Exception
 
     public BlockingOperationException(string? message, Exception? innerException) : base(message, innerException) {
     }
+}
 }

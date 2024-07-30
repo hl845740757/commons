@@ -26,10 +26,8 @@ using Wjybxx.Commons.Collections;
 
 #pragma warning disable CS0169
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 默认的事件循环实现
 /// </summary>
@@ -470,4 +468,5 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
     }
 
     #endregion
+}
 }

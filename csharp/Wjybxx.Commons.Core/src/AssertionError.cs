@@ -19,9 +19,8 @@
 using System;
 using System.Runtime.Serialization;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 该异常表示断言错误，不应该发送的错误发生了。
 /// </summary>
@@ -38,4 +37,5 @@ public class AssertionError : Exception
 
     public AssertionError(string? message, Exception? innerException) : base(message, innerException) {
     }
+}
 }

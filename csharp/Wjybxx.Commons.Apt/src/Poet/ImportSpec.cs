@@ -19,9 +19,8 @@
 using System;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 表示类型导入(using xxx)
 /// </summary>
@@ -83,4 +82,5 @@ public class ImportSpec : IEquatable<ImportSpec>, ISpecification
     }
 
     #endregion
+}
 }

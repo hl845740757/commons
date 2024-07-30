@@ -19,10 +19,8 @@
 using System;
 using System.Collections.Generic;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 表示一个C#文件
 /// （暂时不实现<see cref="ISpecification"/>接口）
@@ -67,4 +65,5 @@ public class CsharpFile
             return this;
         }
     }
+}
 }

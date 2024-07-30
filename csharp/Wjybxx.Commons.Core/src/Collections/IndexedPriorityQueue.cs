@@ -22,9 +22,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 参考自Netty
 /// </summary>
@@ -321,4 +320,5 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
     }
 
     #endregion
+}
 }

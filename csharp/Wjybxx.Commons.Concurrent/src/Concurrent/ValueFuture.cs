@@ -19,9 +19,8 @@
 using System;
 using System.Runtime.CompilerServices;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 
 /// </summary>
@@ -260,4 +259,5 @@ public readonly struct ValueFuture<T>
     }
 
     #endregion
+}
 }

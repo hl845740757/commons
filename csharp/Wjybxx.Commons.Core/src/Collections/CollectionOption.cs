@@ -18,8 +18,8 @@
 
 using System;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 集合的特征值，按比特位存储
 /// (未来扩展项)
@@ -33,4 +33,5 @@ internal enum CollectionOption : byte
     SerialDefaultValue = 1 << 1,
     /** 固定容量 -- 禁止扩容 */
     FixedCapacity = 1 << 2,
+}
 }

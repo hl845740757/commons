@@ -19,13 +19,10 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
-using Wjybxx.Commons.IO;
 using Wjybxx.Commons.Pool;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// Promise不会实现两份（泛型和非泛型），那会导致大量的重复代码，有非常高的维护成本。
 /// 在不需要结果的情况下，可以选择将泛型参数定义为byte或int，尽可能减少开销即可 -- 推荐使用int。
@@ -818,4 +815,5 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     }
 
     #endregion
+}
 }

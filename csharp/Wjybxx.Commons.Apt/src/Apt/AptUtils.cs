@@ -18,17 +18,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Poet;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Apt;
-
+namespace Wjybxx.Commons.Apt
+{
 public class AptUtils
 {
     private static readonly ClassName clsName_GeneratedAttribute = ClassName.Get(typeof(GeneratedAttribute));
@@ -115,4 +110,5 @@ public class AptUtils
         }
         return proxyName;
     }
+}
 }

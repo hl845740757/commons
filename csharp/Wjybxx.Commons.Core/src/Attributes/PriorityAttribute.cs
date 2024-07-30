@@ -18,9 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Attributes;
-
+namespace Wjybxx.Commons.Attributes
+{
 /// <summary>
 /// 用于配置元素的优先级
 /// </summary>
@@ -35,4 +34,5 @@ public class PriorityAttribute : Attribute
     public PriorityAttribute(int value) {
         this.value = value;
     }
+}
 }

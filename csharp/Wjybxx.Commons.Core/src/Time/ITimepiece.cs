@@ -16,10 +16,8 @@
 
 #endregion
 
-using System.Runtime.CompilerServices;
-
-namespace Wjybxx.Commons.Time;
-
+namespace Wjybxx.Commons.Time
+{
 /// <summary>
 /// 计时器
 /// </summary>
@@ -74,4 +72,5 @@ public interface ITimepiece : ITimeProvider
     /// 重新启动计时器
     /// </summary>
     void Restart();
+}
 }

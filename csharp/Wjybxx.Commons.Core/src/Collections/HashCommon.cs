@@ -20,8 +20,8 @@ using System;
 using System.Runtime.CompilerServices;
 using static Wjybxx.Commons.MathCommon;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 该类部分修改自Java的Fastutil集合库
 /// </summary>
@@ -77,4 +77,5 @@ public static class HashCommon
             throw new Exception("Load factor must be greater than 0 and smaller than 1");
         }
     }
+}
 }

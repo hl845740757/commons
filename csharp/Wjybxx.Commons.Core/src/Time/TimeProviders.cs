@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Time;
-
+namespace Wjybxx.Commons.Time
+{
 /// <summary>
 /// 
 /// </summary>
@@ -76,4 +76,5 @@ public static class TimeProviders
     }
 
     #endregion
+}
 }

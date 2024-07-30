@@ -20,8 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 
 /// </summary>
@@ -156,4 +156,5 @@ public interface IExecutorService : IExecutor
     IFuture<T> SubmitFunc<T>(Func<IContext, T> action, IContext context, int options = 0);
 
     #endregion
+}
 }

@@ -18,8 +18,8 @@
 
 using System.Buffers;
 
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 数组池抽象
 ///
@@ -54,4 +54,5 @@ public interface IArrayPool<T> : IObjectPool<T[]>
     /// <param name="clear">是否需要清理；只有当前池默认不清理的情况下，该参数才有效用。</param>
     /// <returns></returns>
     void Release(T[] array, bool clear);
+}
 }

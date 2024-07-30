@@ -18,8 +18,8 @@
 
 using Wjybxx.Commons.Concurrent;
 
-namespace Wjybxx.Commons.Sequential;
-
+namespace Wjybxx.Commons.Sequential
+{
 /// <summary>
 /// 用于在当前线程延迟执行任务的Executor -- <see cref="IExecutorService"/>。
 /// 即：该Executor仍然在当前线程（提交任务的线程）执行提交的任务，只是会延迟执行。
@@ -52,4 +52,5 @@ public interface IUniExecutorService : IExecutorService
     /// </summary>
     /// <returns>如果还有可执行任务则返回true，否则返回false</returns>
     bool NeedMoreUpdate();
+}
 }

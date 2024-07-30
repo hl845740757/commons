@@ -23,10 +23,8 @@ using System.Text;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 表示一个class或struct的类型名。
 /// 
@@ -350,4 +348,5 @@ public class ClassName : TypeName
     }
 
     #endregion
+}
 }

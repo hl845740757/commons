@@ -3,7 +3,7 @@
     <PropertyGroup>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>annotations</Nullable>
-        <LangVersion>10</LangVersion>
+        <LangVersion>9</LangVersion>
         <RootNamespace>Wjybxx.Commons</RootNamespace>
 
         <AssemblyName>Wjybxx.Commons.Apt</AssemblyName>
@@ -28,6 +28,14 @@
         <EmbedAllSources>true</EmbedAllSources>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <TargetFrameworks>net6.0;net7.0;</TargetFrameworks>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <NoWarn>1701;1702;1591;</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <NoWarn>1701;1702;1591;</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

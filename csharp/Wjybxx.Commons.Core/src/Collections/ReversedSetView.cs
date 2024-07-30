@@ -16,9 +16,8 @@
 
 #endregion
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 序列集合的反转视图
 /// </summary>
@@ -54,4 +53,5 @@ public class ReversedSequenceSetView<TKey> : ReversedCollectionView<TKey>, ISequ
     public bool AddLastIfAbsent(TKey item) {
         return Delegated.AddFirstIfAbsent(item);
     }
+}
 }

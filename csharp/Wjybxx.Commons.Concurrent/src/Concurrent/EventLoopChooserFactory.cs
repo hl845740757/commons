@@ -19,10 +19,8 @@
 using System;
 using System.Threading;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 用于创建事件循环选择器。
 /// ps：实现为接口是不必要的。
@@ -108,4 +106,5 @@ public class EventLoopChooserFactory
             return _eventLoops[key % _eventLoops.Length];
         }
     }
+}
 }

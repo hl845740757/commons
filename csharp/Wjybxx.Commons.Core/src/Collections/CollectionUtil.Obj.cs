@@ -22,8 +22,8 @@ using System.Collections.Generic;
 using System.Text;
 using Wjybxx.Commons.Attributes;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 该类用于实现Equals和ToString
 /// </summary>
@@ -202,4 +202,5 @@ public static partial class CollectionUtil
     }
 
     #endregion
+}
 }

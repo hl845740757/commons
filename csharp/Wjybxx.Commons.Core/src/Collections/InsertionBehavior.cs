@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 如果要插入的元素已存在，要执行的行为枚举
 /// (insert一定不覆盖旧值)
@@ -33,4 +33,5 @@ internal enum InsertionBehavior : byte
     /// 抛出异常
     /// </summary>
     ThrowOnExisting = 1
+}
 }

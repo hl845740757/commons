@@ -19,9 +19,8 @@
 using System;
 using System.Runtime.Serialization;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 记录了取消码的异常
 /// </summary>
@@ -59,4 +58,5 @@ public class BetterCancellationException : OperationCanceledException
     }
 
     #endregion
+}
 }

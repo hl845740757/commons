@@ -18,9 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 隐藏tokenSource的接口
 /// </summary>
@@ -101,4 +100,5 @@ public sealed class ReadonlyCancelToken : ICancelToken
     public IRegistration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
         return cancelToken.ThenTransferToAsync(executor, child, options);
     }
+}
 }

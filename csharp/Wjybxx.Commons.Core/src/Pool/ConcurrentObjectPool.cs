@@ -20,9 +20,8 @@ using System;
 using System.Text;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 提供全局常量支持
 /// </summary>
@@ -104,4 +103,5 @@ public class ConcurrentObjectPool<T> : ConcurrentObjectPool, IObjectPool<T> wher
         while (_freeObjects.Poll(out T _)) {
         }
     }
+}
 }

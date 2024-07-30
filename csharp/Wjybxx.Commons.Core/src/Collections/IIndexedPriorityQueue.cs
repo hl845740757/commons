@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 在Item上存储了索引的优先级队列
 /// (主要提高删除效率)
@@ -30,4 +30,5 @@ public interface IIndexedPriorityQueue<T> : IIndexedCollection<T>, IQueue<T> whe
     /// </summary>
     /// <param name="item"></param>
     void PriorityChanged(T item);
+}
 }

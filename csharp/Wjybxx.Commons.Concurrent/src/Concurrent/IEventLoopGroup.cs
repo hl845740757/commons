@@ -18,8 +18,8 @@
 
 using System.Collections.Generic;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 事件循环线程组，它管理着一组<see cref="IEventLoop"/>。
 /// 它的本质是容器，它主要负责管理持有的EventLoop的生命周期。
@@ -41,4 +41,5 @@ public interface IEventLoopGroup : IScheduledExecutorService, IEnumerable<IEvent
     /// </summary>
     /// <returns></returns>
     IEventLoop Select();
+}
 }

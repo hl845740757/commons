@@ -18,8 +18,8 @@
 
 using System;
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 注册监听器产生的句柄。
 /// 1. 用户可通过<see cref="IDisposable.Dispose"/>取消注册。
@@ -29,4 +29,5 @@ namespace Wjybxx.Commons;
 /// </summary>
 public interface IRegistration : IDisposable
 {
+}
 }

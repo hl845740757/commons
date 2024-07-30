@@ -18,15 +18,11 @@
 
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Text;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 该类用于增加List工具方法
 /// </summary>
@@ -383,4 +379,5 @@ public static partial class CollectionUtil
     }
 
     #endregion
+}
 }

@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 类数组对象的处理器
 /// </summary>
@@ -58,4 +58,5 @@ public interface IPoolableArrayHandler<T>
     /// </summary>
     /// <param name="obj">要销毁的对象</param>
     void Destroy(T obj);
+}
 }

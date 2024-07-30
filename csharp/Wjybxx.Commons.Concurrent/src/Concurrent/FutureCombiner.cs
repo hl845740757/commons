@@ -20,10 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// Future聚合器
 /// </summary>
@@ -246,4 +244,5 @@ public sealed class FutureCombiner
     }
 
     // endregion
+}
 }

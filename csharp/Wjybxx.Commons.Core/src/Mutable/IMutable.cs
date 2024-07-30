@@ -18,8 +18,8 @@
 
 using System;
 
-namespace Wjybxx.Commons.Mutable;
-
+namespace Wjybxx.Commons.Mutable
+{
 /// <summary>
 /// 主要为基础值类型提供可变性
 /// </summary>
@@ -31,4 +31,5 @@ public interface IMutable<T>
     /// </summary>
     /// <exception cref="ArgumentNullException">如果参数value禁止为null</exception>
     T Value { get; set; }
+}
 }

@@ -19,9 +19,8 @@
 using System;
 using System.Runtime.CompilerServices;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Time;
-
+namespace Wjybxx.Commons.Time
+{
 /// <summary>
 /// 基础的计时器实现
 /// </summary>
@@ -90,4 +89,5 @@ public class Timepiece : ITimepiece
             throw new ArgumentException("deltaTime must gte 0,  value " + deltaTime);
         }
     }
+}
 }

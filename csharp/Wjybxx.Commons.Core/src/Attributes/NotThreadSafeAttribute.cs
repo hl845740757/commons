@@ -18,12 +18,13 @@
 
 using System;
 
-namespace Wjybxx.Commons.Attributes;
-
+namespace Wjybxx.Commons.Attributes
+{
 /// <summary>
 /// 该注解表示注解的类不是线程安全的
 /// </summary>
 [AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class | AttributeTargets.Struct)]
 public class NotThreadSafeAttribute : Attribute
 {
+}
 }

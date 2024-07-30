@@ -18,17 +18,17 @@
 
 using System;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 用于构建取消码
 /// </summary>
 public struct CancelCodeBuilder
 {
-    private int code = CancelCodes.REASON_DEFAULT;
+    private int code;
 
-    public CancelCodeBuilder() {
+    public CancelCodeBuilder(int reason) {
+        this.code = reason;
     }
 
     /// <summary>
@@ -86,4 +86,5 @@ public struct CancelCodeBuilder
     /// </summary>
     /// <returns></returns>
     public int Build() => code;
+}
 }

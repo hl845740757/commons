@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Mutable;
-
+namespace Wjybxx.Commons.Mutable
+{
 /// <summary>
 /// 可变数字类型
 /// </summary>
@@ -35,4 +35,5 @@ public interface IMutableNumber<T> : IMutable<T>
 
     /** 将value转double */
     double DoubleValue { get; }
+}
 }

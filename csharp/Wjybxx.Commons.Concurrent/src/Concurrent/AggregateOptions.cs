@@ -18,8 +18,8 @@
 
 using System;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 internal readonly struct AggregateOptions
 {
     private readonly bool anyOf;
@@ -57,4 +57,5 @@ internal readonly struct AggregateOptions
         }
         return new AggregateOptions(false, successRequire, failFast);
     }
+}
 }

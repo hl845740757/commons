@@ -18,13 +18,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using Wjybxx.Commons.Concurrent;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Sequential;
-
+namespace Wjybxx.Commons.Sequential
+{
 /// <summary>
 /// 单线程化改动：
 /// 1.计数变量改为普通变量，去除volatile操作
@@ -250,4 +247,5 @@ public sealed class UniFutureCombiner
     }
 
     // endregion
+}
 }

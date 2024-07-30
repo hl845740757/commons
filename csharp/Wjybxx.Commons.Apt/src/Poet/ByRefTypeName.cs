@@ -19,10 +19,8 @@
 using System;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 传递对象的引用
 /// <code>ref int, ref int* , in int, out int</code>
@@ -75,4 +73,5 @@ public class ByRefTypeName : TypeName
     public static ByRefTypeName Of(Type targetType, Kind kind = Kind.Ref, TypeNameAttributes attributes = TypeNameAttributes.None) {
         return new ByRefTypeName(TypeName.Get(targetType), kind, attributes);
     }
+}
 }

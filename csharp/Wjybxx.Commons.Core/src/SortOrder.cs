@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 排序类型枚举
 /// </summary>
@@ -37,4 +37,5 @@ public enum SortOrder
     /// 降序
     /// </summary>
     Descending = -1,
+}
 }

@@ -18,10 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Attributes;
-
+namespace Wjybxx.Commons.Attributes
+{
 /// <summary>
 /// 该属性用于为字段和方法等定义别名
 /// </summary>
@@ -36,4 +34,5 @@ public class AliasAttribute : Attribute
     public AliasAttribute(string[]? values) {
         this.values = values ?? Array.Empty<string>();
     }
+}
 }

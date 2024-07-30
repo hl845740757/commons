@@ -19,9 +19,8 @@
 using System;
 using System.Runtime.Serialization;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 不捕获堆栈的超时异常
 /// </summary>
@@ -42,4 +41,5 @@ public class StacklessTimeoutException : TimeoutException
     }
 
     public override string? StackTrace => null;
+}
 }

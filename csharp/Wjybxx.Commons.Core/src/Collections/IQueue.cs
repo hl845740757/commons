@@ -19,8 +19,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 队列
 /// 注意：队列的所有操作都是隐含顺序的，包括Add方法，因此Reverse是可以反转的。
@@ -76,4 +76,5 @@ public interface IQueue<T> : IGenericCollection<T>
     }
 
     #endregion
+}
 }

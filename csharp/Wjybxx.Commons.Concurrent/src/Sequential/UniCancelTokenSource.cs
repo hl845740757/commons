@@ -21,10 +21,8 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Concurrent;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Sequential;
-
+namespace Wjybxx.Commons.Sequential
+{
 /// <summary>
 /// 单线程的取消令牌
 ///
@@ -792,4 +790,5 @@ public class UniCancelTokenSource : ICancelTokenSource
             return null;
         }
     }
+}
 }

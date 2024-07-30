@@ -21,9 +21,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 只缓存单个对象对象池
 /// 相比直接使用共享对象，使用该缓存池可避免递归调用带来的bug
@@ -92,4 +91,5 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
     public void Clear() {
         _value = null;
     }
+}
 }

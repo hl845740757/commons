@@ -20,10 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 数组工具类
 /// </summary>
@@ -366,4 +364,5 @@ public static class ArrayUtil
             throw new IndexOutOfRangeException($"toIndex: {toIndex} > arrayLength: {arrayLength}");
         }
     }
+}
 }

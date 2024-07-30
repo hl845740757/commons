@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 类数组(ArrayLike)对象池抽象
 ///
@@ -34,4 +34,5 @@ public interface IArrayLikePool<T> : IObjectPool<T>
     /// <param name="minimumLength">期望的最小数组长度</param>
     /// <returns>池化的字节数组</returns>
     T Acquire(int minimumLength);
+}
 }

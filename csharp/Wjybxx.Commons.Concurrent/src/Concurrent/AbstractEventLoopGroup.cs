@@ -22,9 +22,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 public abstract class AbstractEventLoopGroup : IEventLoopGroup
 {
     private readonly SynchronizationContext _syncContext;
@@ -134,4 +133,5 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
     public abstract IEnumerator<IEventLoop> GetEnumerator();
 
     #endregion
+}
 }

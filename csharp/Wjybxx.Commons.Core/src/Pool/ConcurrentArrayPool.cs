@@ -20,9 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 高性能的并发数组池实现
 /// (未鉴定归属，可归还外部数组，适用简单场景)
@@ -204,4 +203,5 @@ public sealed class ConcurrentArrayPool<T> : IArrayPool<T>
     }
 
     #endregion
+}
 }

@@ -21,13 +21,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Wjybxx.Commons.Apt;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 方法或构造函数
 /// </summary>
@@ -387,4 +384,5 @@ public class MethodSpec : ISpecification
             return this;
         }
     }
+}
 }

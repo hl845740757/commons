@@ -18,8 +18,8 @@
 
 using System;
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 环境变量工具类
 /// </summary>
@@ -162,4 +162,5 @@ public static class EnvironmentUtil
     }
 
     #endregion
+}
 }

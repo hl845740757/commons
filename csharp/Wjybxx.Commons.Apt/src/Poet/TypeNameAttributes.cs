@@ -19,8 +19,8 @@
 using System;
 using System.Reflection;
 
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// TypeName的属性，即类型引用约束
 /// </summary>
@@ -64,4 +64,5 @@ public enum TypeNameAttributes
     DefaultConstructorConstraint = 0x0010,
 
     #endregion
+}
 }

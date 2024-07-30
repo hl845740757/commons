@@ -19,9 +19,8 @@
 using System;
 using System.Collections.Generic;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 用于匹配Null元素
 /// </summary>
@@ -38,4 +37,5 @@ public sealed class NullEquality<T> : IEqualityComparer<T>
     public int GetHashCode(T obj) {
         throw new InvalidOperationException("Unsupported_NullEquality");
     }
+}
 }

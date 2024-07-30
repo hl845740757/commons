@@ -21,10 +21,8 @@ using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Concurrent;
 using Wjybxx.Commons.Time;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Sequential;
-
+namespace Wjybxx.Commons.Sequential
+{
 public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
 {
     private readonly ITimeProvider timeProvider;
@@ -155,4 +153,5 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
     }
 
     #endregion
+}
 }

@@ -23,10 +23,8 @@ using System.Linq;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 宏
 /// (宏本身只是语句，通过成对的宏的来构成块)
@@ -89,4 +87,5 @@ public class MacroSpec : ISpecification, IEquatable<MacroSpec>
     }
 
     #endregion
+}
 }

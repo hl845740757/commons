@@ -19,9 +19,8 @@
 using System;
 using System.Threading;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 线程工厂
 /// </summary>
@@ -80,4 +79,5 @@ public class DefaultThreadFactory : ThreadFactory
     /** 工厂id分配器 */
     private static long _poolIdSequencer;
     private static long NextPoolId => Interlocked.Increment(ref _poolIdSequencer);
+}
 }

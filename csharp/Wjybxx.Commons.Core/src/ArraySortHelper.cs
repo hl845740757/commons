@@ -19,8 +19,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 internal class ArraySortHelper
 {
     #region array
@@ -135,4 +135,5 @@ internal class ArraySortHelper
     }
 
     #endregion
+}
 }

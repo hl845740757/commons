@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// FutureTask是Executor压入的可获取结果的任务类型。
 /// 1. 该接口暴露给Executor的扩展类，不是用户使用的类。
@@ -45,4 +45,5 @@ public interface IFutureTask<T> : IFutureTask
     new IPromise<T> Future { get; }
 
     IPromise IFutureTask.Future => Future;
+}
 }

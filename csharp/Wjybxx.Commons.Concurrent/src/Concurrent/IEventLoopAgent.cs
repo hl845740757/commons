@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 事件循环的内部代理
 /// </summary>
@@ -62,4 +62,5 @@ public interface IEventLoopAgent<in TEvent> where TEvent : IAgentEvent
     /// 退出前进行必要的清理，释放系统资源
     /// </summary>
     void OnShutdown();
+}
 }

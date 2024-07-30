@@ -17,12 +17,9 @@
 #endregion
 
 using System;
-using System.Runtime.CompilerServices;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 用于绑定回调线程
 /// 注意：不可手动获取<see cref="GetAwaiter"/>。
@@ -59,4 +56,5 @@ public readonly struct ValueFutureAwaitable<T>
     }
 
     public ValueFutureAwaiter<T> GetAwaiter() => new ValueFutureAwaiter<T>(_future, _executor, _options);
+}
 }

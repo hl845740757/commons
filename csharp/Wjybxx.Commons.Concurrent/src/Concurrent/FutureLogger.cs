@@ -19,8 +19,8 @@
 using System;
 using Serilog;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 用于记录Future异步执行过程中的异常，用于排查错误
 /// </summary>
@@ -73,4 +73,5 @@ public sealed class FutureLogger
         /// <param name="message">额外消息</param>
         void LogCause(Exception ex, string message);
     }
+}
 }

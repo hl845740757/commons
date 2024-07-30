@@ -18,8 +18,8 @@
 
 using System.Threading;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 
 /// </summary>
@@ -54,4 +54,5 @@ public interface ISingleThreadExecutor : IExecutor
     /// </summary>
     /// <param name="thread">要测试的线程</param>
     bool InEventLoop(Thread thread);
+}
 }

@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 双端队列
 /// 1.是否支持null元素，取决于实现
@@ -113,4 +113,5 @@ public interface IDeque<T> : IQueue<T>, IStack<T>, ISequencedCollection<T>
     #endregion
 
     #endregion
+}
 }

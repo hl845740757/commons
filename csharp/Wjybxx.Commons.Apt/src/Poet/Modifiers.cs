@@ -19,8 +19,8 @@
 using System;
 using System.Reflection;
 
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 修饰符
 /// 反射接口中的 <see cref="TypeAttributes"/>
@@ -120,4 +120,5 @@ public enum Modifiers
     /// volatile
     /// </summary>
     Volatile = 0x20000,
+}
 }

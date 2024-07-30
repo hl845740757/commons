@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 由于C#的void不能作为泛型参数，又没有内置的Void代替物，我们使用该类型表示Void。
 /// </summary>
@@ -26,4 +26,5 @@ public sealed class VoidClass
     private VoidClass() {
         throw new AssertionError();
     }
+}
 }

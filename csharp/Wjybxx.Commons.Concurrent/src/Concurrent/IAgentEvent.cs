@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// <see cref="IEventLoopAgent{T}"/>接收的事件类型。
 ///
@@ -62,4 +62,5 @@ public interface IAgentEvent
     /// 清理事件的所有数据 -- 基础值也重置
     /// </summary>
     void CleanAll();
+}
 }

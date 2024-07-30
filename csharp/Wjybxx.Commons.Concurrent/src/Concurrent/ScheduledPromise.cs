@@ -18,9 +18,8 @@
 
 using System.Diagnostics;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 public class ScheduledPromise<T> : Promise<T>, IScheduledPromise<T>
 {
 #nullable disable
@@ -35,4 +34,5 @@ public class ScheduledPromise<T> : Promise<T>, IScheduledPromise<T>
         Debug.Assert(task.Future == this);
         this._task = task;
     }
+}
 }

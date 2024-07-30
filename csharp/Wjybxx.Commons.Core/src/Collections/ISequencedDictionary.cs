@@ -19,8 +19,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 序列字典
 /// </summary>
@@ -160,4 +160,5 @@ public interface ISequencedDictionary<TKey, TValue> : IGenericDictionary<TKey, T
     }
 
     #endregion
+}
 }

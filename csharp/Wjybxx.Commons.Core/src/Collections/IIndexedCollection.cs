@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 在元素身上存储了索引信息的集合。
 /// 1.这类集合禁止重复添加元素，且使用引用相等判断重复
@@ -28,4 +28,5 @@ public interface IIndexedCollection<T> : IGenericCollection<T> where T : class, 
 {
     /** 清空集合中的元素，并且不清理元素上的索引 */
     void ClearIgnoringIndexes();
+}
 }

@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 插入顺序
 /// </summary>
@@ -31,4 +31,5 @@ internal enum InsertionOrder : byte
 
     /** 插在首部 */
     Head = 2,
+}
 }

@@ -20,10 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 属性（注解）
 ///
@@ -109,4 +107,5 @@ public class AttributeSpec : ISpecification
             return this;
         }
     }
+}
 }

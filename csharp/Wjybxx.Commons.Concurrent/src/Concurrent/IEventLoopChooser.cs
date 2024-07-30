@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// EventLoop选择器
 /// </summary>
@@ -34,4 +34,5 @@ public interface IEventLoopChooser
      * @apiNote 同一个key的选择结果必须是相同的
      */
     IEventLoop Select(int key);
+}
 }

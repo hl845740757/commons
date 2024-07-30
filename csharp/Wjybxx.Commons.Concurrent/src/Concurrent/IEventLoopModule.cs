@@ -16,12 +16,13 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 事件循环的模块
 /// 该接口在最抽象层仅仅作为标记接口
 /// </summary>
 public interface IEventLoopModule
 {
+}
 }

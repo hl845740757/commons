@@ -24,9 +24,8 @@ using Wjybxx.Commons.Attributes;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 默认的代码生成器
 ///
@@ -42,7 +41,7 @@ public class CodeWriter
     private readonly string indent;
     private readonly LineWrapper codeOut;
 
-    private bool enableFileScopedNamespace = true;
+    private bool enableFileScopedNamespace = false; // 兼容性更好
     private bool enableAutoImport = true;
 
     /** 当前是否正在写入文档 -- 三斜杠 */
@@ -1254,4 +1253,5 @@ public class CodeWriter
     }
 
     #endregion
+}
 }

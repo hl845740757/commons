@@ -18,8 +18,8 @@
 
 using System;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 取消令牌源由任务的创建者（发起者）持有，具备取消权限。
 /// </summary>
@@ -55,4 +55,5 @@ public interface ICancelTokenSource : ICancelToken
     /// <param name="copyCode">是否拷贝取消码</param>
     /// <returns>新的同类型实例</returns>
     ICancelTokenSource NewInstance(bool copyCode = false);
+}
 }

@@ -19,9 +19,8 @@
 using System;
 using System.Runtime.Serialization;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 表示提交的任务被<see cref="IExecutor"/>拒绝。
 /// 通常是因为目标Executor已开始关闭，或队列已满。
@@ -39,4 +38,5 @@ public class RejectedExecutionException : Exception
 
     public RejectedExecutionException(string? message, Exception? innerException) : base(message, innerException) {
     }
+}
 }

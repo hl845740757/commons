@@ -18,9 +18,8 @@
 
 using System.Threading;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 封装原子更新，适配Java开发习惯
 /// </summary>
@@ -94,4 +93,5 @@ public sealed class AtomicInt
     public int CompareAndExchange(int value, int comparand) {
         return Interlocked.CompareExchange(ref _value, value, comparand);
     }
+}
 }

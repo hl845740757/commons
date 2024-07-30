@@ -20,10 +20,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 空的双端队列
 /// </summary>
@@ -139,4 +137,5 @@ public class EmptyDequeue<T> : IDeque<T>
 
         public T Current => default;
     }
+}
 }

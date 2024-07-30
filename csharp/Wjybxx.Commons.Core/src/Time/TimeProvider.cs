@@ -16,9 +16,8 @@
 
 #endregion
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Time;
-
+namespace Wjybxx.Commons.Time
+{
 /// <summary>
 /// 简单的时间提供者实现
 /// </summary>
@@ -37,4 +36,5 @@ public class TimeProvider : ICachedTimeProvider
     public long Current => _time;
 
     public void SetCurrent(long time) => this._time = time;
+}
 }

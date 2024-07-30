@@ -18,9 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Attributes;
-
+namespace Wjybxx.Commons.Attributes
+{
 /// <summary>
 /// 用于标注类文件是生成的
 /// </summary>
@@ -35,4 +34,5 @@ public class GeneratedAttribute : Attribute
     public GeneratedAttribute(string processor) {
         this.processor = processor ?? throw new ArgumentNullException(nameof(processor));
     }
+}
 }

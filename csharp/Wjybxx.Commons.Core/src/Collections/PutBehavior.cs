@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 字典Put操作对应的行为
 /// (put一定覆盖旧值)
@@ -38,4 +38,5 @@ internal enum PutBehavior : byte
     /// 覆盖元素并移动至首部
     /// </summary>
     MoveToFirst = 2,
+}
 }

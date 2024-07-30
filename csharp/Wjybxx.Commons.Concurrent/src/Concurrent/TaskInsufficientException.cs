@@ -20,10 +20,8 @@ using System;
 using System.Runtime.Serialization;
 using Wjybxx.Commons.Ex;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 该异常表示监听的任务数不足以到达成功条件
 /// </summary>
@@ -46,4 +44,5 @@ public class TaskInsufficientException : Exception, NoLogRequiredException
         string msg = $"futureCount: {futureCount}, doneCount: {doneCount}, succeedCount: {succeedCount}, successRequire: {successRequire}";
         return new TaskInsufficientException(msg);
     }
+}
 }

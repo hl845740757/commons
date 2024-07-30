@@ -21,9 +21,8 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 命名空间
 /// 
@@ -91,4 +90,5 @@ public class NamespaceSpec : ISpecification
             return this;
         }
     }
+}
 }

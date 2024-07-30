@@ -18,8 +18,8 @@
 
 using System.Runtime.CompilerServices;
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// Flags工具类
 /// </summary>
@@ -226,4 +226,5 @@ public class BitFlags
     }
 
     #endregion
+}
 }

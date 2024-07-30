@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 规格接口
 ///
@@ -88,4 +88,5 @@ public enum SpecType : byte
     /// 任意代码
     /// </summary>
     CodeBlock,
+}
 }

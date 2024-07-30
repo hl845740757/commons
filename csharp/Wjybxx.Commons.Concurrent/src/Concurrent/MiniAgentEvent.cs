@@ -16,9 +16,8 @@
 
 #endregion
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 提供最小支持的AgentEvent
 /// </summary>
@@ -52,4 +51,5 @@ public class MiniAgentEvent : IAgentEvent
     public void CleanAll() {
         Clean();
     }
+}
 }

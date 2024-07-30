@@ -23,9 +23,8 @@ using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 
 /// </summary>
@@ -213,4 +212,5 @@ public abstract class AbstractEventLoop : IEventLoop
     }
 
     #endregion
+}
 }

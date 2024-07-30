@@ -18,8 +18,8 @@
 
 using System.Collections.Generic;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 顺序迭代器，可先测试是否还有下一个元素
 /// </summary>
@@ -33,4 +33,5 @@ public interface ISequentialEnumerator<out T> : IEnumerator<T>
     /// </summary>
     /// <returns></returns>
     bool HasNext();
+}
 }

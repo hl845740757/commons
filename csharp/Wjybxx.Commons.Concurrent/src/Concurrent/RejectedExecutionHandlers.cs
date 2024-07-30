@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 提供常见的拒绝策略实现
 /// </summary>
@@ -59,4 +59,5 @@ public static class RejectedExecutionHandlers
             }
         }
     }
+}
 }

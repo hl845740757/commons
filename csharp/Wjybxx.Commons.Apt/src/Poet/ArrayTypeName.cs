@@ -19,10 +19,8 @@
 using System;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 表示一个数组类型
 /// </summary>
@@ -98,4 +96,5 @@ public class ArrayTypeName : TypeName
         }
         return r;
     }
+}
 }

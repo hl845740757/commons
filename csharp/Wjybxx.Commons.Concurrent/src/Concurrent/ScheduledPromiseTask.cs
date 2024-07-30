@@ -19,10 +19,8 @@
 using System;
 using Wjybxx.Commons.Collections;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 接口用于定义常量和工具方法
 /// </summary>
@@ -354,4 +352,5 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     }
 
     #endregion
+}
 }

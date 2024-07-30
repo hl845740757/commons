@@ -22,10 +22,8 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 默认的固定Child的事件循环组
 /// </summary>
@@ -100,4 +98,5 @@ public class FixedEventLoopGroup : AbstractEventLoopGroup, IFixedEventLoopGroup
     public override IEnumerator<IEventLoop> GetEnumerator() {
         return readonlyChildren.GetEnumerator();
     }
+}
 }

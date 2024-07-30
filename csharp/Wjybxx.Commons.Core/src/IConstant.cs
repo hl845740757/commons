@@ -18,10 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 常量对象
 ///
@@ -142,4 +140,5 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
     }
 
     #endregion
+}
 }

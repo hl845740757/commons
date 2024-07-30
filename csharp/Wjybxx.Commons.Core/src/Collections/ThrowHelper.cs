@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 集合内部工具方法
 /// </summary>
@@ -23,4 +23,5 @@ internal static class ThrowHelper
     public static KeyNotFoundException KeyNotFoundException(object? key) {
         return new KeyNotFoundException(key == null ? "null" : key.ToString());
     }
+}
 }

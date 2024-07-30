@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 有界双端队列溢出策略
 /// (开放给用户的策略)
@@ -45,4 +45,5 @@ public enum DequeOverflowBehavior : byte
     /// 环形缓冲 -- 首部插入时覆盖尾部；尾部插入时覆盖首部。
     /// </summary>
     CircleBuffer = 3,
+}
 }

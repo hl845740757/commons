@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Ex;
-
+namespace Wjybxx.Commons.Ex
+{
 /// <summary>
 /// 包含错误码的异常
 /// </summary>
@@ -32,4 +32,5 @@ public interface IErrorCodeException
     /// 附加信息
     /// </summary>
     string? Message { get; }
+}
 }

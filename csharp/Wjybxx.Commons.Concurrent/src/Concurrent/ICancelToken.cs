@@ -18,10 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 
 /// </summary>
@@ -159,4 +157,5 @@ public interface ICancelToken
     // endregion
 
     #endregion
+}
 }

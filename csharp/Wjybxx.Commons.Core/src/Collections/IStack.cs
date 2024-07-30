@@ -18,8 +18,8 @@
 
 using System;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 栈结构
 /// 注意：Add方法在Stack这里语义是不清楚的，应当避免使用；将Add强制约定为栈顶不是很合适，多数情况下Add都是期望插到尾部。
@@ -67,4 +67,5 @@ public interface IStack<T> : IGenericCollection<T>
     /// <param name="item"></param>
     /// <returns></returns>
     bool TryPeekTop(out T item);
+}
 }

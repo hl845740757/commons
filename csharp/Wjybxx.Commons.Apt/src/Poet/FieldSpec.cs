@@ -20,10 +20,8 @@ using System;
 using System.Collections.Generic;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 字段(或事件)
 /// 注意：C#的事件本身并不是字段，但实在不想整那么复杂了...
@@ -187,4 +185,5 @@ public class FieldSpec : ISpecification
             return this;
         }
     }
+}
 }

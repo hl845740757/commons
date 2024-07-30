@@ -18,8 +18,8 @@
 
 using System.Collections.Generic;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 泛型字典
 /// </summary>
@@ -110,4 +110,5 @@ public interface IGenericDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
     }
 
     #endregion
+}
 }

@@ -21,9 +21,8 @@ using System.Buffers;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 基于对于<see cref="ArrayPool{T}"/>进行封装的数组池。
 /// 注意：扩容管理需要用户自行实现。
@@ -86,4 +85,5 @@ public sealed class ArrayPoolAdapter<T> : IArrayPool<T>
 
     public void Clear() {
     }
+}
 }

@@ -16,12 +16,13 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Ex;
-
+namespace Wjybxx.Commons.Ex
+{
 /// <summary>
 /// 如果一个异常实现了该接口，那么当其被捕获时，我们并不为其自动记录日志。
 /// 用于节省不必要的开销（抓取异常堆栈信息的开销较大）。
 /// </summary>
 public interface NoLogRequiredException
 {
+}
 }

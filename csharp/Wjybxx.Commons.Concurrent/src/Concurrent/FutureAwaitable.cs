@@ -18,10 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 用于绑定回调线程
 /// 注意：不可手动获取<see cref="GetAwaiter"/>。
@@ -70,4 +68,5 @@ public readonly struct FutureAwaitable<T>
     }
 
     public FutureAwaiter<T> GetAwaiter() => new FutureAwaiter<T>(_future, _executor, _options);
+}
 }

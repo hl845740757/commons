@@ -18,10 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 该实现主要用于屏蔽Promise中的写接口。
 ///
@@ -135,4 +133,5 @@ public class ForwardFuture<T> : IFuture<T>
     }
 
     #endregion
+}
 }

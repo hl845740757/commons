@@ -19,8 +19,8 @@
 using System;
 using System.Threading;
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 线程工具类
 /// </summary>
@@ -50,4 +50,5 @@ public static class ThreadUtil
             return true;
         }
     }
+}
 }

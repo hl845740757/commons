@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 大小写模式
 /// </summary>
@@ -27,4 +27,5 @@ public enum CaseMode : byte
     UpperCase = 1,
     /** 小写 */
     LowerCase = 2,
+}
 }

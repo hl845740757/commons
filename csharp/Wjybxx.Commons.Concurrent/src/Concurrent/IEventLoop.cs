@@ -18,8 +18,8 @@
 
 using System;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 ///
 /// 事件循环
@@ -170,4 +170,5 @@ public enum EventLoopState
     /// 终止
     /// </summary>
     Terminated = 5
+}
 }

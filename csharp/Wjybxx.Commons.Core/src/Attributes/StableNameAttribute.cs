@@ -18,12 +18,13 @@
 
 using System;
 
-namespace Wjybxx.Commons.Attributes;
-
+namespace Wjybxx.Commons.Attributes
+{
 /// <summary>
 /// 该属性表示被标记的元素的名字是稳定的，不可以随意更改
 /// </summary>
 [AttributeUsage(AttributeTargets.All)]
 public class StableNameAttribute : Attribute
 {
+}
 }

@@ -20,9 +20,8 @@ using System;
 using System.Collections.Generic;
 using Wjybxx.Commons.Collections;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 定时任务
 ///
@@ -123,4 +122,5 @@ public sealed class ScheduledTaskComparator : IComparer<IScheduledFutureTask>
         }
         return result;
     }
+}
 }

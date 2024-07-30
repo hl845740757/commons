@@ -22,10 +22,8 @@ using System.Reflection;
 using System.Text;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 类型变量名
 /// (注意：并不是只有该类型才可以作为泛型参数，只是使用该类型时表示未构造泛型)
@@ -222,4 +220,5 @@ public class TypeVariableName : TypeName
         }
         return sb.ToString();
     }
+}
 }

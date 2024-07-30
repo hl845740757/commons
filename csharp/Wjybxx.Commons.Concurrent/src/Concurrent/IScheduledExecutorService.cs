@@ -18,8 +18,8 @@
 
 using System;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 提供定时任务支持的Executor
 /// </summary>
@@ -107,4 +107,5 @@ public interface IScheduledExecutorService : IExecutorService
     IScheduledFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
 
     #endregion
+}
 }

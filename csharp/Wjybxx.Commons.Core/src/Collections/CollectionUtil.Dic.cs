@@ -19,8 +19,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 该类用于增加字典工具方法
 /// </summary>
@@ -69,4 +69,5 @@ public static partial class CollectionUtil
         dictionary[key] = value;
         return value;
     }
+}
 }

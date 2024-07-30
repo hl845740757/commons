@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.IO;
-
+namespace Wjybxx.Commons.IO
+{
 /// <summary>
 /// 字节序
 /// </summary>
@@ -32,4 +32,5 @@ public enum ByteOrder : byte
     /// 大端（网络字节序）
     /// </summary>
     BigEndian = 1,
+}
 }

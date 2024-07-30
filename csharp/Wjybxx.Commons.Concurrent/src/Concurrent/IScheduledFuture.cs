@@ -16,9 +16,8 @@
 
 #endregion
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 返回给用户的Future
 ///
@@ -30,4 +29,5 @@ public interface IScheduledFuture : IFuture
 
 public interface IScheduledFuture<T> : IScheduledFuture, IFuture<T>
 {
+}
 }

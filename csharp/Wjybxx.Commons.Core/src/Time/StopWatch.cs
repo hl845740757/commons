@@ -20,8 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Wjybxx.Commons.Time;
-
+namespace Wjybxx.Commons.Time
+{
 /// <summary>
 /// 停表
 ///
@@ -335,4 +335,5 @@ public sealed class StopWatch
             return string.Compare(stepName, that.stepName, StringComparison.Ordinal);
         }
     }
+}
 }

@@ -18,9 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 默认的上下文实现
 ///
@@ -194,4 +193,5 @@ public class Context<T> : IContext where T : class
         }
         return NewContext(Parent, null, ICancelToken.NONE, Blackboard, SharedProps);
     }
+}
 }

@@ -20,10 +20,8 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Security;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// Future的异步方法构建器
 ///
@@ -207,4 +205,5 @@ public struct AsyncFutureMethodBuilder<T>
     // 8. SetStateMachine
     public void SetStateMachine(IAsyncStateMachine stateMachine) {
     }
+}
 }

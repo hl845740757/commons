@@ -19,10 +19,8 @@
 using System;
 using System.Runtime.Serialization;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 受保护的操作，与<see cref="BlockingOperationException"/>成一对。
 /// 一个只允许当前线程访问，一个不允许当前线程访问。
@@ -40,4 +38,5 @@ public class GuardedOperationException : Exception
 
     public GuardedOperationException(string? message, Exception? innerException) : base(message, innerException) {
     }
+}
 }

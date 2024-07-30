@@ -20,11 +20,10 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-#pragma warning disable CS1591
 #pragma warning disable CS0169
 
-namespace Wjybxx.Commons.Pool;
-
+namespace Wjybxx.Commons.Pool
+{
 /// <summary>
 /// 这是一个特定实现的多生产者多消费者的数组队列（MpmcArrayQueue）
 /// 这里没有强制数组大小必须是2的幂，因为要严格保证池的大小符合预期。
@@ -222,4 +221,5 @@ public sealed class MpmcObjectBucket<T>
     }
 
     #endregion
+}
 }

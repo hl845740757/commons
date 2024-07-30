@@ -17,13 +17,11 @@
 #endregion
 
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 任务的调度选项
 /// </summary>
@@ -227,4 +225,5 @@ public static class TaskOption
     }
 
     #endregion
+}
 }

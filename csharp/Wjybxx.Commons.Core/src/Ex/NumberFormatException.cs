@@ -19,10 +19,8 @@
 using System;
 using System.Runtime.Serialization;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Ex;
-
+namespace Wjybxx.Commons.Ex
+{
 /// <summary>
 /// 数字格式异常
 /// </summary>
@@ -45,4 +43,5 @@ public class NumberFormatException : ArgumentException
 
     public NumberFormatException(string? message, string? paramName, Exception? innerException) : base(message, paramName, innerException) {
     }
+}
 }

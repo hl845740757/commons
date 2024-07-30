@@ -19,9 +19,8 @@
 using System;
 using System.Runtime.Serialization;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 该异常表示对象的状态错误
 /// </summary>
@@ -38,4 +37,5 @@ public class StateException : Exception
 
     public StateException(string? message, Exception? innerException) : base(message, innerException) {
     }
+}
 }

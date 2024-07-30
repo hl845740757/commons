@@ -23,8 +23,8 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 一些基础工具方法
 /// </summary>
@@ -255,4 +255,5 @@ public static class ObjectUtil
     }
 
     #endregion
+}
 }

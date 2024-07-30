@@ -21,8 +21,8 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 1. 该非泛型接口用于支持统一操作，不提供具体实现。
 /// 2. void可通过byte/int/bool泛型替代 -- 推荐byte。
@@ -283,4 +283,5 @@ public interface IFuture
     void OnCompletedAsync(IExecutor executor, Action<object?> continuation, object? state, int options = 0);
 
     #endregion
+}
 }

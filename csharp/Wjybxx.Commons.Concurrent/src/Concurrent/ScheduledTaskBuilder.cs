@@ -18,9 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 使用接口定义常量
 /// </summary>
@@ -87,15 +86,20 @@ public struct ScheduledTaskBuilder<T> : ScheduledTaskBuilder, TaskBuilder
     /** 不能为readonly否则调用方法会产生拷贝 */
     private TaskBuilder<T> _core;
 
-    private byte scheduleType = 0;
-    private long initialDelay = 0;
-    private long period = 0;
-    private long timeout = -1;
+    private byte scheduleType;
+    private long initialDelay;
+    private long period;
+    private long timeout;
     /** 时间单位 -- 默认毫秒 */
-    private TimeSpan timeunit = TimeSpan.FromMilliseconds(1);
+    private TimeSpan timeunit;
 
     internal ScheduledTaskBuilder(ref TaskBuilder<T> core) {
         _core = core;
+        scheduleType = 0;
+        initialDelay = 0;
+        period = 0;
+        timeout = -1;
+        timeunit = TimeSpan.FromMilliseconds(1);
     }
 
     #region 代理
@@ -280,4 +284,5 @@ public struct ScheduledTaskBuilder<T> : ScheduledTaskBuilder, TaskBuilder
     }
 
     #endregion
+}
 }

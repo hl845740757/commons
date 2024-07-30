@@ -16,8 +16,8 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 固定数量 EventLoop 的事件循环线程组
 /// 它提供了相同key选择相同 EventLoop 的方法。
@@ -38,4 +38,5 @@ public interface IFixedEventLoopGroup : IEventLoopGroup
     /// <param name="key">计算索引的键</param>
     /// <returns></returns>
     IEventLoop Select(int key);
+}
 }

@@ -20,10 +20,8 @@ using System;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Concurrent;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Sequential;
-
+namespace Wjybxx.Commons.Sequential
+{
 /// <summary>
 /// 接口用于定义常量和工具方法
 ///
@@ -359,4 +357,5 @@ public class UniScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T
     }
 
     #endregion
+}
 }

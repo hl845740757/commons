@@ -20,10 +20,8 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 用于绑定回调线程
 /// 注意：不可手动获取<see cref="GetAwaiter"/>。
@@ -150,4 +148,5 @@ public readonly struct TaskAwaitable<T>
             _future.ContinueWith(Invoker, continuation, _executor.AsScheduler());
         }
     }
+}
 }

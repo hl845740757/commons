@@ -21,8 +21,8 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 异常工具类
 /// </summary>
@@ -76,4 +76,5 @@ public static class ExceptionUtil
     }
 
     #endregion
+}
 }

@@ -16,10 +16,11 @@
 
 #endregion
 
-namespace Wjybxx.Commons;
-
+namespace Wjybxx.Commons
+{
 /// <summary>
 /// 只有可通过基础的Builder构建的常量才会使用到Factory
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public delegate T ConstantFactory<T>(IConstant.Builder builder);
+}

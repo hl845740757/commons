@@ -18,10 +18,8 @@
 
 using System;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 由于结构体不能继承，我们通过接口来定义常量。
 /// </summary>
@@ -188,4 +186,5 @@ public struct TaskBuilder<T> : TaskBuilder
         get => options;
         set => options = value;
     }
+}
 }

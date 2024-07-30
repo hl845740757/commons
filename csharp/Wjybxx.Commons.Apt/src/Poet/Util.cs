@@ -20,11 +20,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
 using System.Text;
 
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 internal class Util
 {
     #region 断言
@@ -188,4 +187,5 @@ internal class Util
         }
         return pointerRankSymbols[rank - 1];
     }
+}
 }

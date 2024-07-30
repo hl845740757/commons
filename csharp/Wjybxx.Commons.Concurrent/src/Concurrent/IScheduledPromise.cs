@@ -16,9 +16,8 @@
 
 #endregion
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 定时任务关联的Promise
 /// </summary>
@@ -35,4 +34,5 @@ public interface IScheduledPromise<T> : IScheduledPromise, IPromise<T>, ISchedul
     /// </summary>
     /// <param name="task">关联的任务</param>
     void SetTask(IScheduledFutureTask<T> task);
+}
 }

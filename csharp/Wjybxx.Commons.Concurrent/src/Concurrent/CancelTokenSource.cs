@@ -21,9 +21,8 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-#pragma warning disable CS1591
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 取消令牌
 /// </summary>
@@ -731,4 +730,5 @@ public sealed class CancelTokenSource : ICancelTokenSource
             return null;
         }
     }
+}
 }

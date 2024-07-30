@@ -18,10 +18,8 @@
 
 using System.Threading;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 
 /// </summary>
@@ -95,4 +93,5 @@ public sealed class AtomicLong
     public long CompareAndExchange(long value, long comparand) {
         return Interlocked.CompareExchange(ref _value, value, comparand);
     }
+}
 }

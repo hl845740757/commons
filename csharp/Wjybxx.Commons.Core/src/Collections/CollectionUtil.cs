@@ -20,8 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 集合工具类
 /// </summary>
@@ -247,4 +247,5 @@ public static partial class CollectionUtil
     }
 
     #endregion
+}
 }

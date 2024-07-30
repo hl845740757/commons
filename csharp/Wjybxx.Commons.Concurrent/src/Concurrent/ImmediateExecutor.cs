@@ -19,10 +19,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Concurrent;
-
+namespace Wjybxx.Commons.Concurrent
+{
 /// <summary>
 /// 立即执行任务的Executor
 /// </summary>
@@ -47,4 +45,5 @@ public class ImmediateExecutor : IExecutor
     public void Execute(ITask task) {
         task.Run();
     }
+}
 }

@@ -18,8 +18,8 @@
 
 using System.Collections.Generic;
 
-namespace Wjybxx.Commons.Collections;
-
+namespace Wjybxx.Commons.Collections
+{
 /// <summary>
 /// 允许在迭代期间删除元素的迭代器
 /// (在C#中，迭代器默认是不可删除元素的，因此该接口是不安全的)
@@ -31,4 +31,5 @@ public interface IUnsafeIterator<out T> : IEnumerator<T>
     /// 删除当前元素
     /// </summary>
     void Remove();
+}
 }

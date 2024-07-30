@@ -18,13 +18,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Wjybxx.Commons.Attributes;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Poet;
-
+namespace Wjybxx.Commons.Poet
+{
 /// <summary>
 /// 类型名，TypeName用于表示对其它类型的引用。
 /// （这里的实现并不完整，只用于简单的代码生成）
@@ -290,4 +287,5 @@ public class TypeName : IEquatable<TypeName>
     }
 
     #endregion
+}
 }

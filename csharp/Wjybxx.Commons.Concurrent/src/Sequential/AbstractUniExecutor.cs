@@ -22,10 +22,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Wjybxx.Commons.Concurrent;
 
-#pragma warning disable CS1591
-
-namespace Wjybxx.Commons.Sequential;
-
+namespace Wjybxx.Commons.Sequential
+{
 public abstract class AbstractUniExecutor : IUniExecutorService
 {
     private readonly SynchronizationContext _syncContext;
@@ -115,4 +113,5 @@ public abstract class AbstractUniExecutor : IUniExecutorService
     }
 
     #endregion
+}
 }
