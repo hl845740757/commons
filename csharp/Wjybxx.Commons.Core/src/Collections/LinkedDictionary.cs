@@ -1149,7 +1149,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         private int _version;
 
         private Node? _nextNode;
-        internal Node? _currNode;
+        internal Node? _currNode; // 支持remove
         internal T _current;
 
         public Enumerator(LinkedDictionary<TKey, TValue> dictionary, bool reversed) {
@@ -1158,8 +1158,8 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             _version = dictionary._version;
 
             _nextNode = _reversed ? _dictionary._tail : _dictionary._head;
-            _current = default;
             _currNode = null;
+            _current = default;
         }
 
         public bool HasNext() {
@@ -1174,8 +1174,8 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
                 _current = default;
                 return false;
             }
-            Node node = _currNode = _nextNode;
-            _nextNode = _reversed ? node.prev : node.next;
+            _currNode = _nextNode;
+            _nextNode = _reversed ? _currNode.prev : _currNode.next;
             // 其实这期间node的value可能变化，安全的话应该每次创建新的Pair，但c#系统库没这么干
             // _current = CurrentOfNode(node);
             return true;
@@ -1197,8 +1197,8 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             if (_version != _dictionary._version) {
                 throw new InvalidOperationException("EnumFailedVersion");
             }
-            _currNode = null;
             _nextNode = _reversed ? _dictionary._tail : _dictionary._head;
+            _currNode = null;
             _current = default;
         }
 

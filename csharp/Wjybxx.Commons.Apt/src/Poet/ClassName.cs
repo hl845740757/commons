@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Text;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
@@ -86,11 +85,10 @@ public class ClassName : TypeName
             int enclosingCount = this.enclosingClassName.typeArguments.Count;
             int declaredCount = this.typeArguments.Count - enclosingCount;
             if (declaredCount == 0) {
-                this.declaredTypeArguments = ImmutableList<TypeName>.Empty;
+                this.declaredTypeArguments = Util.EmptyList<TypeName>();
             } else {
                 List<TypeName> typeNames = new List<TypeName>(this.typeArguments);
-                this.declaredTypeArguments = typeNames.GetRange(enclosingCount, declaredCount)
-                    .ToImmutableList();
+                this.declaredTypeArguments = Util.ToImmutableList(typeNames.GetRange(enclosingCount, declaredCount));
             }
         }
     }

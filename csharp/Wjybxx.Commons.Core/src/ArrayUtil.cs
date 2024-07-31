@@ -281,6 +281,9 @@ public static class ArrayUtil
     /// <returns></returns>
     public static T[] Copy<T>(this T[] src) {
         if (src == null) throw new ArgumentNullException(nameof(src));
+        if (src.Length == 0) {
+            return src;
+        }
         T[] result = new T[src.Length];
         Array.Copy(src, result, src.Length);
         return result;

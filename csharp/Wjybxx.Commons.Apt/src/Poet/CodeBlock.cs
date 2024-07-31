@@ -19,7 +19,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 
@@ -69,8 +68,8 @@ public class CodeBlock
 
     private CodeBlock() {
         this.expressionStyle = false;
-        this.formatParts = ImmutableList<string>.Empty;
-        this.args = ImmutableList<object>.Empty;
+        this.formatParts = Util.EmptyList<string>();
+        this.args = Util.EmptyList<object>();
     }
 
     /// <summary>

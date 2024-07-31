@@ -247,5 +247,19 @@ public static partial class CollectionUtil
     }
 
     #endregion
+
+    #region linq
+
+    public static ImmutableList<T> ToImmutableList2<T>(this IEnumerable<T> source) {
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        return ImmutableList<T>.Create(source);
+    }
+
+    public static ImmutableLinkedHastSet<T> ToImmutableLinkedHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T>? keyComparer = null) {
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        return ImmutableLinkedHastSet<T>.Create(source);
+    }
+
+    #endregion
 }
 }

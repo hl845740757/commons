@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
@@ -48,7 +47,7 @@ public class MacroSpec : ISpecification, IEquatable<MacroSpec>
 
     public MacroSpec(string name, params string[] arguments) {
         this.name = name ?? throw new ArgumentNullException(nameof(name));
-        this.arguments = ImmutableList.CreateRange(arguments);
+        this.arguments = Util.ToImmutableList(arguments);
     }
 
     private void CheckArguments() {

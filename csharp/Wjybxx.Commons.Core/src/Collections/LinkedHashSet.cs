@@ -679,7 +679,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>
         private int _version;
 
         private Node? _nextNode;
-        private Node? _currNode;
+        private Node? _currNode; // 支持remove
         private TKey _current;
 
         internal Enumerator(LinkedHashSet<TKey> hashSet, bool reversed) {
@@ -688,8 +688,8 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>
             _version = hashSet._version;
 
             _nextNode = _reversed ? _hashSet._tail : _hashSet._head;
-            _current = default;
             _currNode = null;
+            _current = default;
         }
 
         public bool HasNext() {
@@ -704,10 +704,10 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>
                 _current = default;
                 return false;
             }
-            Node node = _currNode = _nextNode;
-            _nextNode = _reversed ? node.prev : node.next;
+            _currNode = _nextNode;
+            _nextNode = _reversed ? _currNode.prev : _currNode.next;
             // 其实这期间node的value可能变化，安全的话应该每次创建新的Pair，但c#系统库没这么干
-            _current = node.key;
+            _current = _currNode.key;
             return true;
         }
 
@@ -727,8 +727,8 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>
             if (_version != _hashSet._version) {
                 throw new InvalidOperationException("EnumFailedVersion");
             }
-            _currNode = null;
             _nextNode = _reversed ? _hashSet._tail : _hashSet._head;
+            _currNode = null;
             _current = default;
         }
 
@@ -768,7 +768,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>
         }
 
         public override int GetHashCode() {
-            return hash; // 不使用value计算hash，因为value可能在中途变更
+            return hash;
         }
 
         public override string ToString() {

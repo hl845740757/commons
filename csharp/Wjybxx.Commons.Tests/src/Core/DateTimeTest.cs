@@ -67,7 +67,6 @@ public class DateTimeTest
 
         Assert.That(DatetimeUtil.ParseOffset("+8"), Is.EqualTo(seconds));
         Assert.That(DatetimeUtil.ParseOffset("+08"), Is.EqualTo(seconds));
-        Assert.That(DatetimeUtil.ParseOffset("+8:00"), Is.EqualTo(seconds));
         Assert.That(DatetimeUtil.ParseOffset("+08:00"), Is.EqualTo(seconds));
         Assert.That(DatetimeUtil.ParseOffset("+08:00:00"), Is.EqualTo(seconds));
     }

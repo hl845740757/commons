@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
@@ -46,7 +45,7 @@ public class NamespaceSpec : ISpecification
     #region builder
 
     public static NamespaceSpec Of(string name, params ISpecification[] nestedSpecs) {
-        return new NamespaceSpec(name, ImmutableList.CreateRange(nestedSpecs));
+        return new NamespaceSpec(name, Util.ToImmutableList(nestedSpecs));
     }
 
     public static NamespaceSpec Of(string name, IList<ISpecification> nestedSpecs) {

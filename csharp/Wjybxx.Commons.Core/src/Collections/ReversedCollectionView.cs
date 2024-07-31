@@ -35,7 +35,7 @@ public class ReversedCollectionView<TKey> : ISequencedCollection<TKey>
 
     public int Count => delegated.Count;
     public bool IsEmpty => delegated.IsEmpty;
-    public bool IsReadOnly => false;
+    public bool IsReadOnly => delegated.IsReadOnly;
 
     public virtual ISequencedCollection<TKey> Reversed() {
         return delegated;

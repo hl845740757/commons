@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using NUnit.Framework;
+using Wjybxx.Commons.Collections;
 
 namespace Commons.Tests.Core;
 
@@ -69,6 +70,32 @@ public class CollectionOrderTest
         while (rawItr.MoveNext()) {
             immutableItr.MoveNext();
             Assert.That(rawItr.Current, Is.EqualTo(immutableItr.Current));
+        }
+    }
+
+    [Repeat(5)]
+    [Test]
+    public void TestImmutableLinkedSet() {
+        int expectedCount = 10000;
+        List<int> keyList = new List<int>(expectedCount);
+        for (int idx = 0; idx < expectedCount; idx++) {
+            keyList.Add(idx);
+        }
+        CollectionUtil.Shuffle(keyList);
+        ImmutableLinkedHastSet<int> hashSet = keyList.ToImmutableLinkedHashSet();
+        
+        // 测试正向迭代
+        int index = 0;
+        foreach (int realKey in hashSet) {
+            int expectedKey = keyList[index++];
+            Assert.That(realKey, Is.EqualTo(expectedKey));
+        }
+
+        // 测试反向迭代
+        index = keyList.Count - 1;
+        foreach (int realKey in hashSet.Reversed()) {
+            int expectedKey = keyList[index--];
+            Assert.That(realKey, Is.EqualTo(expectedKey));
         }
     }
 

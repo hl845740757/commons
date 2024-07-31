@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -46,7 +45,7 @@ public class AttributeSpec : ISpecification
     private AttributeSpec(Builder builder) {
         this.type = builder.type;
         this.constructor = builder.constructor;
-        this.props = builder.props.ToImmutableList();
+        this.props = Util.ToImmutableList(builder.props);
     }
 
     public string? Name => null;

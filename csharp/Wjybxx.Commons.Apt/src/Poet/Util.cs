@@ -48,8 +48,12 @@ internal class Util
 
     #endregion
 
+    public static IList<T> EmptyList<T>() {
+        return ImmutableList<T>.Empty;
+    }
+
     /** C#的<see cref="ToImmutableList{T}"/>是二叉平衡树... */
-    public static IList<T> ToImmutableList<T>(ICollection<T>? collection) {
+    public static IList<T> ToImmutableList<T>(IEnumerable<T>? collection) {
         if (collection == null) return ImmutableList<T>.Empty;
         if (collection is ImmutableList<T> immutableList) return immutableList;
         return ImmutableList.CreateRange(collection);
