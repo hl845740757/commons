@@ -41,8 +41,9 @@ public class CodeWriter
     private readonly string indent;
     private readonly LineWrapper codeOut;
 
-    private bool enableFileScopedNamespace = false; // 兼容性更好
     private bool enableAutoImport = true;
+    private bool enableFileScopedNamespace = false; // 兼容性更好
+    private bool indentInsideNamespace = true;
 
     /** 当前是否正在写入文档 -- 三斜杠 */
     private bool document = false;
@@ -90,6 +91,15 @@ public class CodeWriter
     }
 
     /// <summary>
+    /// 是否自动解析namespace导入
+    /// （存在复杂的宏时请自行管理 -- <see cref="ImportSpec"/>）
+    /// </summary>
+    public bool EnableAutoImport {
+        get => enableAutoImport;
+        set => enableAutoImport = value;
+    }
+
+    /// <summary>
     /// 是否启用文件范围命名空间
     /// (用于Unity或低版本dotnet时请关闭)
     /// </summary>
@@ -99,12 +109,11 @@ public class CodeWriter
     }
 
     /// <summary>
-    /// 是否自动解析namespace导入
-    /// （存在复杂的宏时请自行管理 -- <see cref="ImportSpec"/>）
+    /// 非文件范围命名空间时是否缩进
     /// </summary>
-    public bool EnableAutoImport {
-        get => enableAutoImport;
-        set => enableAutoImport = value;
+    public bool IndentInsideNamespace {
+        get => indentInsideNamespace;
+        set => indentInsideNamespace = value;
     }
 
     /// <summary>
@@ -244,11 +253,15 @@ public class CodeWriter
 
         Emit("namespace $L", namespaceSpec.name); // {}
         Emit("\n{");
-        Indent();
+        if (indentInsideNamespace) {
+            Indent();
+        }
         foreach (ISpecification nestedSpec in namespaceSpec.nestedSpecs) {
             EmitSpec(nestedSpec);
         }
-        Unindent();
+        if (indentInsideNamespace) {
+            Unindent();
+        }
         Emit("}\n");
 
         if (!ReferenceEquals(namespaceStack.Pop(), namespaceSpec)) {
