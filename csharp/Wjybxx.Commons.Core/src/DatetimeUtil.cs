@@ -312,14 +312,14 @@ public static class DatetimeUtil
     /// 将秒表示的Time部分格式化(可避免dotnet版本问题)
     /// 固定为:<code>HH:mm:ss</code>格式
     /// </summary>
-    /// <param name="daySeconds"></param>
+    /// <param name="secondOfDay"></param>
     /// <param name="sb">允许外部池化</param>
     /// <returns></returns>
-    public static string FormatTime2(int daySeconds, StringBuilder? sb = null) {
+    public static string FormatTime2(int secondOfDay, StringBuilder? sb = null) {
         if (sb == null) {
             sb = new StringBuilder(10);
         }
-        GetPartsOfTime(daySeconds, out int hours, out int minutes, out int seconds);
+        GetPartsOfTime(secondOfDay, out int hours, out int minutes, out int seconds);
         sb.Append(hours < 10 ? "0" : "").Append(hours)
             .Append(minutes < 10 ? ":0" : ":").Append(minutes)
             .Append(seconds < 10 ? ":0" : ":").Append(seconds);
@@ -377,12 +377,12 @@ public static class DatetimeUtil
         return -1 * totalSeconds;
     }
 
-    private static int ParseNumber(string offsetString, int pos, bool precededByColon) {
-        if (precededByColon && offsetString[pos - 1] != ':') {
-            throw new ArgumentException("Invalid offsetString: " + offsetString);
+    private static int ParseNumber(string timeString, int pos, bool precededByColon) {
+        if (precededByColon && timeString[pos - 1] != ':') {
+            throw new ArgumentException("Invalid time string: " + timeString);
         }
-        return CharUtil.DecimalCharToNumber(offsetString[pos]) * 10
-               + CharUtil.DecimalCharToNumber(offsetString[pos + 1]);
+        return CharUtil.DecimalCharToNumber(timeString[pos]) * 10
+               + CharUtil.DecimalCharToNumber(timeString[pos + 1]);
     }
 
     /// <summary>
