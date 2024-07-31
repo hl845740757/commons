@@ -146,6 +146,11 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
     #region peek
 
+    public KeyValuePair<TKey, TValue> PeekFirst() {
+        if (_head == null) throw ThrowHelper.CollectionEmptyException();
+        return _head.AsPair();
+    }
+
     public bool TryPeekFirst(out KeyValuePair<TKey, TValue> pair) {
         if (_head != null) {
             pair = _head.AsPair();
@@ -155,9 +160,9 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         return false;
     }
 
-    public KeyValuePair<TKey, TValue> PeekFirst() {
-        if (_head == null) throw ThrowHelper.CollectionEmptyException();
-        return _head.AsPair();
+    public KeyValuePair<TKey, TValue> PeekLast() {
+        if (_tail == null) throw ThrowHelper.CollectionEmptyException();
+        return _tail.AsPair();
     }
 
     public bool TryPeekLast(out KeyValuePair<TKey, TValue> pair) {
@@ -167,11 +172,6 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         }
         pair = default;
         return false;
-    }
-
-    public KeyValuePair<TKey, TValue> PeekLast() {
-        if (_tail == null) throw ThrowHelper.CollectionEmptyException();
-        return _tail.AsPair();
     }
 
     public TKey PeekFirstKey() {
@@ -1389,10 +1389,6 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public KeyValuePair<TKey, TValue> AsPair() {
             return new KeyValuePair<TKey, TValue>(key, value);
-        }
-
-        public override int GetHashCode() {
-            return hash; // 不使用value计算hash，因为value可能在中途变更
         }
 
         public override string ToString() {

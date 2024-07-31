@@ -767,10 +767,6 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>
             next = null;
         }
 
-        public override int GetHashCode() {
-            return hash;
-        }
-
         public override string ToString() {
             return $"{nameof(key)}: {key}";
         }

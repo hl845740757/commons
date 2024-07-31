@@ -30,7 +30,7 @@ namespace Wjybxx.Commons.Collections
 /// (主要解决Unity的兼容性问题)
 /// </summary>
 /// <typeparam name="TKey"></typeparam>
-public class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
+public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
 {
     /** len = 2^n + 1，额外的槽用于存储nullKey */
     private readonly Node[] _table;
@@ -72,7 +72,7 @@ public class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
                 throw new ArgumentException("duplicate element: " + key);
             }
             pos = -pos - 1;
-            _table[pos] = new Node(hash, key, pos, preNodePos, -1);
+            _table[pos] = new Node(hash, key, pos, preNodePos);
 
             if (index > 0) {
                 ref Node preNode = ref _table[preNodePos];
@@ -98,7 +98,6 @@ public class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
 
     #endregion
 
-
     public int Count => _count;
     public bool IsReadOnly => true;
     public bool IsEmpty => _count == 0;
@@ -115,14 +114,6 @@ public class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
         return node.key;
     }
 
-    public TKey PeekLast() {
-        if (_count == 0) {
-            throw ThrowHelper.CollectionEmptyException();
-        }
-        ref Node node = ref _table[_tail];
-        return node.key;
-    }
-
     public bool TryPeekFirst(out TKey item) {
         if (_count == 0) {
             item = default;
@@ -133,6 +124,14 @@ public class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
         return true;
     }
 
+    public TKey PeekLast() {
+        if (_count == 0) {
+            throw ThrowHelper.CollectionEmptyException();
+        }
+        ref Node node = ref _table[_tail];
+        return node.key;
+    }
+    
     public bool TryPeekLast(out TKey item) {
         if (_count == 0) {
             item = default;
@@ -342,12 +341,16 @@ public class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
         internal int prev;
         internal int next;
 
-        public Node(int hash, TKey? key, int? index, int prev, int next) {
+        public Node(int hash, TKey? key, int? index, int prev) {
             this.hash = hash;
             this.key = key;
             this.index = index;
             this.prev = prev;
-            this.next = next;
+            this.next = -1;
+        }
+
+        public override string ToString() {
+            return $"{nameof(key)}: {key}";
         }
     }
 }
