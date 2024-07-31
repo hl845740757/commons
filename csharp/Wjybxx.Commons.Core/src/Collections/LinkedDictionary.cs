@@ -65,6 +65,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
     private KeyCollection? _keys;
     private ValueCollection? _values;
+    private ReversedDictionaryView<TKey, TValue>? _reversed;
 
     public LinkedDictionary()
         : this(0, HashCommon.DefaultLoadFactor) {
@@ -573,7 +574,10 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     #region itr
 
     public ISequencedDictionary<TKey, TValue> Reversed() {
-        return new ReversedDictionaryView<TKey, TValue>(this);
+        if (_reversed == null) {
+            _reversed = new ReversedDictionaryView<TKey, TValue>(this);
+        }
+        return _reversed;
     }
 
 

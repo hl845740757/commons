@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Wjybxx.Commons
 {
@@ -27,9 +26,6 @@ namespace Wjybxx.Commons
 public class StateException : Exception
 {
     public StateException() {
-    }
-
-    protected StateException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 
     public StateException(string? message) : base(message) {

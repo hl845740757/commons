@@ -24,6 +24,8 @@ csharp公共库，包含集合等基础组件;nuget搜索'wjybxx'即可查看到
 3. IndexedPriorityQueue 含索引的优先级队列，高查询和删除效率。
 4. BoundedArrayDeque 基于数组的有界双端队列，允许手动调整容量。
 5. MultiChunkDeque 分块无界双端队列。
+6. ImmutableLinkedHastSet 保持插入序的不可变HashSet。
+7. ImmutableLinkedDictionary 保持插入序的不可变Dictionary。
 
 LinkedDictionary特殊接口示例：
 

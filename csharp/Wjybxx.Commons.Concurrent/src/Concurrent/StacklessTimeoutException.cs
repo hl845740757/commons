@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -29,9 +28,6 @@ public class StacklessTimeoutException : TimeoutException
     public static readonly StacklessTimeoutException INST = new StacklessTimeoutException();
 
     public StacklessTimeoutException() {
-    }
-
-    protected StacklessTimeoutException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 
     public StacklessTimeoutException(string? message) : base(message) {

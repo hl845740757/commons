@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
 using Wjybxx.Commons.Ex;
 
 namespace Wjybxx.Commons.Concurrent
@@ -28,9 +27,6 @@ namespace Wjybxx.Commons.Concurrent
 public class TaskInsufficientException : Exception, NoLogRequiredException
 {
     public TaskInsufficientException() {
-    }
-
-    protected TaskInsufficientException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 
     public TaskInsufficientException(string? message) : base(message) {

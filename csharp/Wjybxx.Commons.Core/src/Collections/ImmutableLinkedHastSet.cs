@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Collections
 {
@@ -30,6 +31,8 @@ namespace Wjybxx.Commons.Collections
 /// (主要解决Unity的兼容性问题)
 /// </summary>
 /// <typeparam name="TKey"></typeparam>
+[Serializable]
+[Immutable]
 public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
 {
     /** len = 2^n + 1，额外的槽用于存储nullKey */
@@ -41,14 +44,13 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
     private readonly int _count;
     private readonly int _mask;
     private readonly IEqualityComparer<TKey> _keyComparer;
-    private readonly ReversedSequenceSetView<TKey> _reversed;
+    private ReversedSequenceSetView<TKey>? _reversed;
 
     private ImmutableLinkedHastSet(TKey[] keyArray, IEqualityComparer<TKey>? keyComparer = null) {
         if (keyComparer == null) {
             keyComparer = EqualityComparer<TKey>.Default;
         }
         this._keyComparer = keyComparer;
-        this._reversed = new ReversedSequenceSetView<TKey>(this);
 
         if (keyArray.Length == 0) {
             _table = Array.Empty<Node>();
@@ -90,10 +92,12 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
     public static readonly ImmutableLinkedHastSet<TKey> Empty = new ImmutableLinkedHastSet<TKey>(Array.Empty<TKey>());
 
     public static ImmutableLinkedHastSet<TKey> Create(IEnumerable<TKey> source, IEqualityComparer<TKey>? keyComparer = null) {
-        if (source is TKey[] array) {
-            return new ImmutableLinkedHastSet<TKey>(array, keyComparer);
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        TKey[] array = source as TKey[];
+        if (array == null) {
+            array = source.ToArray();
         }
-        return new ImmutableLinkedHastSet<TKey>(source.ToArray(), keyComparer);
+        return array.Length == 0 ? Empty : new ImmutableLinkedHastSet<TKey>(array, keyComparer);
     }
 
     #endregion
@@ -131,7 +135,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
         ref Node node = ref _table[_tail];
         return node.key;
     }
-    
+
     public bool TryPeekLast(out TKey item) {
         if (_count == 0) {
             item = default;
@@ -215,6 +219,9 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
     }
 
     public ISequencedSet<TKey> Reversed() {
+        if (_reversed == null) {
+            _reversed = new ReversedSequenceSetView<TKey>(this);
+        }
         return _reversed;
     }
 
@@ -328,7 +335,6 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
     }
 
     #endregion
-
 
     /** 在构建table完成之后不再修改 */
     private struct Node

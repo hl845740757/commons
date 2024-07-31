@@ -20,7 +20,6 @@ using System;
 
 namespace Wjybxx.Commons
 {
-
 /// <summary>
 /// Char工具类
 /// </summary>
@@ -107,7 +106,7 @@ public static class CharUtil
         }
         return HEX_DIGITS_UPPER[number];
     }
-    
+
     /// <summary>
     /// 16进制数字转char
     /// </summary>

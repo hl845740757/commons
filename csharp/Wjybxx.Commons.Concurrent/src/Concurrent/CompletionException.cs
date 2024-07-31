@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -27,9 +26,6 @@ namespace Wjybxx.Commons.Concurrent
 public class CompletionException : Exception
 {
     public CompletionException() {
-    }
-
-    protected CompletionException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 
     public CompletionException(string? message) : base(message) {

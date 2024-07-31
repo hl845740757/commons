@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Wjybxx.Commons.Ex
 {
@@ -40,19 +39,5 @@ public class ErrorCodeException : Exception, IErrorCodeException, NoLogRequiredE
     /// 错误码
     /// </summary>
     public int ErrorCode => errorCode;
-
-    #region serial
-
-    protected ErrorCodeException(SerializationInfo info, StreamingContext context)
-        : base(info, context) {
-        this.errorCode = info.GetInt32("code");
-    }
-
-    public override void GetObjectData(SerializationInfo info, StreamingContext context) {
-        base.GetObjectData(info, context);
-        info.AddValue("code", errorCode);
-    }
-
-    #endregion
 }
 }

@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -28,9 +27,6 @@ namespace Wjybxx.Commons.Concurrent
 public class RejectedExecutionException : Exception
 {
     public RejectedExecutionException() {
-    }
-
-    protected RejectedExecutionException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 
     public RejectedExecutionException(string? message) : base(message) {

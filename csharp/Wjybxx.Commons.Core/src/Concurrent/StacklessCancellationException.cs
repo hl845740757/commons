@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -38,9 +37,6 @@ public sealed class StacklessCancellationException : BetterCancellationException
     }
 
     public StacklessCancellationException(int code, string? message, Exception? innerException) : base(code, message, innerException) {
-    }
-
-    public StacklessCancellationException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 
     public override string? StackTrace => null;
