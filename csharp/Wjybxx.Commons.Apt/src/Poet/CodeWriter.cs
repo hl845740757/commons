@@ -344,6 +344,8 @@ public class CodeWriter
     private void EmitImport(ImportSpec importSpec) {
         if (importSpec.alias != null) {
             Emit("using $L = $L;", importSpec.alias, importSpec.name);
+        } else if (importSpec.isStatic) {
+            Emit("using static $L;", importSpec.name);
         } else {
             Emit("using $L;", importSpec.name);
         }
@@ -1126,8 +1128,8 @@ public class CodeWriter
                 typeNameStack.Push(".");
                 className = className.enclosingClassName;
             }
-            // 有命名空间别名时，使用别名引用Type
             if (importableNamespaces.TryGetValue(className.ns, out string? alias) && alias != null) {
+                // 有命名空间别名时，使用别名引用Type
                 typeNameStack.Push(".");
                 typeNameStack.Push(alias);
             } else if (typeName.Internal_Keyword == null

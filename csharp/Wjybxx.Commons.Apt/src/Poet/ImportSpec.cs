@@ -33,19 +33,36 @@ public class ImportSpec : IEquatable<ImportSpec>, ISpecification
     public readonly string name;
     /** 命名空间别名 */
     public readonly string? alias;
+    /** 是否是静态导入 -- 静态导入的情况下，name应当指向类名 */
+    public readonly bool isStatic;
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="name">命名空间</param>
     /// <param name="alias">别名</param>
-    public ImportSpec(string name, string? alias) {
+    /// <param name="isStatic">是否是静态导入</param>
+    public ImportSpec(string name, string? alias, bool isStatic = false) {
         this.name = Util.CheckNotBlank(name, "name is blank");
         this.alias = string.IsNullOrWhiteSpace(alias) ? null : alias;
+        this.isStatic = isStatic;
+        // 静态导入禁止使用别名
+        if (isStatic && !string.IsNullOrWhiteSpace(alias)) {
+            throw new ArgumentException("A 'using static' directive cannot be used to declare an alias");
+        }
     }
 
     public string Name => name;
     public SpecType SpecType => SpecType.Import;
+
+    /// <summary>
+    /// 设置静态导入
+    /// </summary>
+    /// <param name="isStatic"></param>
+    /// <returns></returns>
+    public ImportSpec WithStatic(bool isStatic = true) {
+        return new ImportSpec(name, alias, isStatic);
+    }
 
     /// <summary>
     /// 构建子命名空间
