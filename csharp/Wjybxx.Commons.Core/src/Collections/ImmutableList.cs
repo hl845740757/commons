@@ -35,6 +35,11 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
     private readonly T[] _elements;
     private readonly ReversedCollectionView<T> _reversed;
 
+    private ImmutableList(T element) {
+        this._elements = new[] { element };
+        this._reversed = new ReversedCollectionView<T>(this);
+    }
+
     private ImmutableList(T[] elements, bool copy = true) {
         if (elements == null) throw new ArgumentNullException(nameof(elements));
         this._elements = copy ? elements.Copy() : elements;
@@ -45,15 +50,15 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
 
     public static readonly ImmutableList<T> Empty = new ImmutableList<T>(Array.Empty<T>());
 
-    public static ImmutableList<T> Create(IEnumerable<T> source) {
+    public static ImmutableList<T> Create(T source) {
+        return new ImmutableList<T>(source);
+    }
+
+    public static ImmutableList<T> CreateRange(IEnumerable<T> source) {
         // 对于受信任的集合，不再二次拷贝
-        if (source is List<T> list) {
-            return new ImmutableList<T>(list.ToArray(), false);
-        }
-        if (source is HashSet<T> hashSet) {
-            return new ImmutableList<T>(hashSet.ToArray(), false);
-        }
-        return new ImmutableList<T>(source.ToArray());
+        bool trusted = source is List<T> || source is HashSet<T>
+                                         || source is LinkedHashSet<T>;
+        return new ImmutableList<T>(source.ToArray(), !trusted);
     }
 
     #endregion

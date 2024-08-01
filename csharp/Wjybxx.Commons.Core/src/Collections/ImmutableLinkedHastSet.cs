@@ -90,7 +90,11 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
 
     public static readonly ImmutableLinkedHastSet<TKey> Empty = new ImmutableLinkedHastSet<TKey>(Array.Empty<TKey>());
 
-    public static ImmutableLinkedHastSet<TKey> Create(IEnumerable<TKey> source, IEqualityComparer<TKey>? keyComparer = null) {
+    public static ImmutableLinkedHastSet<TKey> Create(TKey source, IEqualityComparer<TKey>? keyComparer = null) {
+        return new ImmutableLinkedHastSet<TKey>(new[] { source }, keyComparer);
+    }
+
+    public static ImmutableLinkedHastSet<TKey> CreateRange(IEnumerable<TKey> source, IEqualityComparer<TKey>? keyComparer = null) {
         if (source == null) throw new ArgumentNullException(nameof(source));
         TKey[] array = source as TKey[];
         if (array == null) {

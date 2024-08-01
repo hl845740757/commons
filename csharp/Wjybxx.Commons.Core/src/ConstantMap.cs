@@ -18,9 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using Wjybxx.Commons.Attributes;
+using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Commons
 {
@@ -36,10 +36,10 @@ public sealed class ConstantMap<T> where T : class, IConstant
     private readonly IDictionary<string, T> constants;
 
     internal ConstantMap(ConstantPool<T> pool) {
-        immutableValues = pool.Values.ToImmutableList();
+        immutableValues = pool.Values.ToImmutableList2();
         immutableNames = immutableValues.Select(e => e.Name)
-            .ToImmutableList();
-        constants = immutableValues.ToImmutableDictionary(e => e.Name, e => e);
+            .ToImmutableList2();
+        constants = immutableValues.ToImmutableLinkedDictionary(e => e.Name, e => e);
     }
 
     /// <summary>

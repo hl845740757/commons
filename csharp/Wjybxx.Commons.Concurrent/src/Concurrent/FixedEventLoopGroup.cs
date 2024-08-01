@@ -18,9 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
+using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -49,7 +49,7 @@ public class FixedEventLoopGroup : AbstractEventLoopGroup, IFixedEventLoopGroup
             if (eventLoop.Parent != this) throw new StateException("the parent of child is illegal");
             children[i] = eventLoop;
         }
-        readonlyChildren = ImmutableList.Create(children);
+        readonlyChildren = ImmutableList<IEventLoop>.CreateRange(children);
         chooser = chooserFactory.NewChooser(children);
 
         // 监听关闭信号

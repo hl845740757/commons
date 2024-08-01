@@ -19,9 +19,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
+using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -37,7 +37,7 @@ public abstract class AbstractEventLoop : IEventLoop
 
     protected AbstractEventLoop(IEventLoopGroup? parent) {
         _parent = parent;
-        _selfCollection = ImmutableList.Create<IEventLoop>(this);
+        _selfCollection = ImmutableList<IEventLoop>.CreateRange(new[] { this });
 
         _syncContext = new ExecutorSynchronizationContext(this);
         _scheduler = new ExecutorTaskScheduler(this);

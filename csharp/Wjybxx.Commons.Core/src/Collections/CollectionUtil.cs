@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Collections
@@ -252,19 +253,31 @@ public static partial class CollectionUtil
 
     public static ImmutableList<T> ToImmutableList2<T>(this IEnumerable<T> source) {
         if (source == null) throw new ArgumentNullException(nameof(source));
-        return ImmutableList<T>.Create(source);
+        return ImmutableList<T>.CreateRange(source);
     }
 
     public static ImmutableLinkedHastSet<T> ToImmutableLinkedHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T>? keyComparer = null) {
         if (source == null) throw new ArgumentNullException(nameof(source));
-        return ImmutableLinkedHastSet<T>.Create(source);
+        return ImmutableLinkedHastSet<T>.CreateRange(source, keyComparer);
+    }
+
+    public static ImmutableLinkedDictionary<TKey, TValue> ToImmutableLinkedDictionary<TSource, TKey, TValue>(this IEnumerable<TSource> source,
+        Func<TSource, TKey> keySelector,
+        Func<TSource, TValue> elementSelector,
+        IEqualityComparer<TKey>? keyComparer = null) {
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        if (keySelector == null) throw new ArgumentNullException(nameof(keySelector));
+        if (elementSelector == null) throw new ArgumentNullException(nameof(elementSelector));
+
+        IEnumerable<KeyValuePair<TKey, TValue>> pairs = source.Select(e => new KeyValuePair<TKey, TValue>(keySelector(e), elementSelector(e)));
+        return ImmutableLinkedDictionary<TKey, TValue>.CreateRange(pairs, keyComparer);
     }
 
     public static ImmutableLinkedDictionary<TKey, TValue> ToImmutableLinkedDictionary<TKey, TValue>(
         this IEnumerable<KeyValuePair<TKey, TValue>> source,
         IEqualityComparer<TKey>? keyComparer = null) {
         if (source == null) throw new ArgumentNullException(nameof(source));
-        return ImmutableLinkedDictionary<TKey, TValue>.Create(source);
+        return ImmutableLinkedDictionary<TKey, TValue>.CreateRange(source, keyComparer);
     }
 
     #endregion

@@ -30,7 +30,7 @@ public class ReversedSequenceSetView<TKey> : ReversedCollectionView<TKey>, ISequ
 
     private ISequencedSet<TKey> Delegated => (ISequencedSet<TKey>)delegated;
 
-    public override ISequencedSet<TKey> Reversed() {
+    public new ISequencedSet<TKey> Reversed() {
         return (ISequencedSet<TKey>)delegated;
     }
 

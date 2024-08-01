@@ -225,7 +225,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
             _factory = factory;
         }
 
-        public override TConstant Build() {
+        public override IConstant Build() {
             return _factory(this);
         }
     }

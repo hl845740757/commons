@@ -32,7 +32,7 @@ public class ReversedDequeView<TKey> : ReversedCollectionView<TKey>, IDeque<TKey
 
     private IDeque<TKey> Delegated => (IDeque<TKey>)delegated;
 
-    public override IDeque<TKey> Reversed() {
+    public new IDeque<TKey> Reversed() {
         return (IDeque<TKey>)delegated;
     }
 

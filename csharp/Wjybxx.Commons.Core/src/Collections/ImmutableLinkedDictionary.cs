@@ -95,8 +95,14 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     public static readonly ImmutableLinkedDictionary<TKey, TValue> Empty = new(Array.Empty<KeyValuePair<TKey, TValue>>());
 
-    public static ImmutableLinkedDictionary<TKey, TValue> Create(IEnumerable<KeyValuePair<TKey, TValue>> source,
+    public static ImmutableLinkedDictionary<TKey, TValue> Create(TKey key, TValue value,
                                                                  IEqualityComparer<TKey>? keyComparer = null) {
+        KeyValuePair<TKey, TValue>[] array = new[] { new KeyValuePair<TKey, TValue>(key, value) };
+        return new ImmutableLinkedDictionary<TKey, TValue>(array, keyComparer);
+    }
+
+    public static ImmutableLinkedDictionary<TKey, TValue> CreateRange(IEnumerable<KeyValuePair<TKey, TValue>> source,
+                                                                      IEqualityComparer<TKey>? keyComparer = null) {
         if (source == null) throw new ArgumentNullException(nameof(source));
         KeyValuePair<TKey, TValue>[] array = source as KeyValuePair<TKey, TValue>[];
         if (array == null) {

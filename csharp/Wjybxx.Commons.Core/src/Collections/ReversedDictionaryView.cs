@@ -36,7 +36,7 @@ public class ReversedDictionaryView<TKey, TValue> : ReversedCollectionView<KeyVa
 
     private ISequencedDictionary<TKey, TValue> Delegated => (ISequencedDictionary<TKey, TValue>)delegated;
 
-    public override ISequencedDictionary<TKey, TValue> Reversed() {
+    public new ISequencedDictionary<TKey, TValue> Reversed() {
         return Delegated;
     }
 

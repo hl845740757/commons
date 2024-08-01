@@ -47,7 +47,7 @@ public static class ArrayUtil
         ReadOnlySpan<T> first = objA;
         ReadOnlySpan<T> second = objB;
         return first.SequenceEqual(second);
-#endif
+#else
         EqualityComparer<T> comparer = EqualityComparer<T>.Default;
         for (int i = 0, len = objA.Length; i < len; i++) {
             if (!comparer.Equals(objA[i], objB[i])) {
@@ -55,6 +55,7 @@ public static class ArrayUtil
             }
         }
         return true;
+#endif
     }
 
     public static int HashCode<T>(T?[]? array) where T : class {
