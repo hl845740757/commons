@@ -27,17 +27,46 @@ namespace Wjybxx.Commons.Collections
 /// <typeparam name="TValue"></typeparam>
 public class ReversedDictionaryView<TKey, TValue> : ReversedCollectionView<KeyValuePair<TKey, TValue>>, ISequencedDictionary<TKey, TValue>
 {
+    private ISequencedCollection<TKey>? _keys;
+    private ISequencedCollection<TValue>? _values;
+
     public ReversedDictionaryView(ISequencedDictionary<TKey, TValue> delegated)
         : base(delegated) {
     }
 
     private ISequencedDictionary<TKey, TValue> Delegated => (ISequencedDictionary<TKey, TValue>)delegated;
 
-    public ISequencedCollection<TKey> Keys => Delegated.Keys;
-    public ISequencedCollection<TValue> Values => Delegated.Values;
+    public override ISequencedDictionary<TKey, TValue> Reversed() {
+        return Delegated;
+    }
 
-    public ISequencedCollection<TKey> UnsafeKeys(bool reversed = false) {
-        return Delegated.UnsafeKeys(!reversed); // 取反
+    #region key/values
+
+    public IGenericCollection<TKey> Keys => CachedKeys();
+    public IGenericCollection<TValue> Values => CachedValues();
+
+    public ISequencedCollection<TKey> SequencedKeys(bool reversed = false) => CachedKeys(reversed);
+
+    public ISequencedCollection<TValue> SequencedValues(bool reversed = false) => CachedValues(reversed);
+
+    private ISequencedCollection<TKey> CachedKeys(bool reversed = false) {
+        if (reversed) {
+            return Delegated.SequencedKeys();
+        }
+        if (_keys == null) {
+            _keys = Delegated.SequencedKeys(true);
+        }
+        return _keys;
+    }
+
+    private ISequencedCollection<TValue> CachedValues(bool reversed = false) {
+        if (reversed) {
+            return Delegated.SequencedValues();
+        }
+        if (_values == null) {
+            _values = Delegated.SequencedValues(true);
+        }
+        return _values;
     }
 
     public virtual TValue this[TKey key] {
@@ -45,9 +74,7 @@ public class ReversedDictionaryView<TKey, TValue> : ReversedCollectionView<KeyVa
         set => Delegated[key] = value; // 允许重写
     }
 
-    public override ISequencedDictionary<TKey, TValue> Reversed() {
-        return Delegated;
-    }
+    #endregion
 
     #region get
 

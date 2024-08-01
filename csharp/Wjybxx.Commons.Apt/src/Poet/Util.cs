@@ -19,8 +19,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Text;
+using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -56,7 +56,7 @@ internal class Util
     public static IList<T> ToImmutableList<T>(IEnumerable<T>? collection) {
         if (collection == null) return ImmutableList<T>.Empty;
         if (collection is ImmutableList<T> immutableList) return immutableList;
-        return ImmutableList.CreateRange(collection);
+        return ImmutableList<T>.Create(collection);
     }
 
     /** 求两个Set的并集 */

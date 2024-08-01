@@ -66,8 +66,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
 
         // 插入的同时构建双向链表
         int preNodePos = -1;
-        for (int index = 0; index < keyArray.Length; index++) {
-            TKey key = keyArray[index];
+        foreach (TKey key in keyArray) {
             int hash = KeyHash(key, keyComparer);
             int pos = Find(key, hash);
             if (pos >= 0) {
@@ -76,7 +75,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
             pos = -pos - 1;
             _table[pos] = new Node(hash, key, pos, preNodePos);
 
-            if (index > 0) {
+            if (preNodePos != -1) {
                 ref Node preNode = ref _table[preNodePos];
                 preNode.next = pos;
             }
@@ -210,7 +209,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
                 index = e.prev;
             }
         } else {
-            for (int index = _tail; index >= 0;) {
+            for (int index = _head; index >= 0;) {
                 ref Node e = ref _table[index];
                 array[arrayIndex++] = e.key;
                 index = e.next;
@@ -258,6 +257,9 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
     /// <returns></returns>
     private int Find(TKey key, int hash) {
         Node[] table = _table;
+        if (table.Length == 0) {
+            return -1;
+        }
         if (key == null) {
             Node nullNode = table[_mask + 1];
             return nullNode.index == null ? -(_mask + 2) : (_mask + 1);
@@ -342,8 +344,8 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
         /** 由于Key的hash使用频率极高，缓存以减少求值开销 */
         internal readonly int hash;
         internal readonly TKey? key;
-        internal readonly int? index; // null表未Node无效，低版本不支持无参构造函数，无法指定为-1
 
+        internal readonly int? index; // null表未Node无效，低版本不支持无参构造函数，无法指定为-1
         internal int prev;
         internal int next;
 
@@ -355,9 +357,15 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
             this.next = -1;
         }
 
+#if DEBUG
         public override string ToString() {
-            return $"{nameof(key)}: {key}";
+            return $"{nameof(index)}: {index}, {nameof(key)}: {key}, {nameof(prev)}: {prev}, {nameof(next)}: {next}";
         }
+#else
+        public override string ToString() {
+            return $"index: {index}, {nameof(key)}: {key}";
+        }
+#endif
     }
 }
 }

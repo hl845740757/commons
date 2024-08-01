@@ -260,8 +260,9 @@ public static partial class CollectionUtil
         return ImmutableLinkedHastSet<T>.Create(source);
     }
 
-    public static ImmutableLinkedDictionary<TKey, TValue> ToImmutableLinkedDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> source,
-                                                                                                    IEqualityComparer<TKey>? keyComparer = null) {
+    public static ImmutableLinkedDictionary<TKey, TValue> ToImmutableLinkedDictionary<TKey, TValue>(
+        this IEnumerable<KeyValuePair<TKey, TValue>> source,
+        IEqualityComparer<TKey>? keyComparer = null) {
         if (source == null) throw new ArgumentNullException(nameof(source));
         return ImmutableLinkedDictionary<TKey, TValue>.Create(source);
     }

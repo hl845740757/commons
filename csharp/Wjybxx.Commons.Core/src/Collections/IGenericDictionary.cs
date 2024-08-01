@@ -41,13 +41,6 @@ public interface IGenericDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
     new bool ContainsKey(TKey key);
 
     /// <summary>
-    /// 获取允许删除元素的Key集合，删除会作用于原始字典。
-    /// 在C#的集合中，Keys和Values默认都是只读的，这在多数情况下都是好的选择；但有时我们也确实需要能通过Keys集合删除元素。
-    /// 直接通过Values删除字典元素的情况很不常见，因此不提供额外支持。
-    /// </summary>
-    IGenericCollection<TKey> UnsafeKeys();
-
-    /// <summary>
     /// 获取key关联的值，如果关联的值不存在，则返回预设的默认值。
     /// 如果字典支持自定义默认值，则返回自定义默认值；否则返回default分配的对象。
     /// </summary>

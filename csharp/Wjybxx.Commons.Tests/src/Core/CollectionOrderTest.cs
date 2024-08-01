@@ -73,7 +73,6 @@ public class CollectionOrderTest
         }
     }
 
-    [Repeat(5)]
     [Test]
     public void TestImmutableLinkedSet() {
         int expectedCount = 10000;
@@ -83,7 +82,7 @@ public class CollectionOrderTest
         }
         CollectionUtil.Shuffle(keyList);
         ImmutableLinkedHastSet<int> hashSet = keyList.ToImmutableLinkedHashSet();
-        
+
         // 测试正向迭代
         int index = 0;
         foreach (int realKey in hashSet) {
@@ -131,6 +130,23 @@ public class CollectionOrderTest
 
         var rawItr = keySet.GetEnumerator();
         var immutableItr = keySet.ToImmutableDictionary().GetEnumerator();
+        while (rawItr.MoveNext()) {
+            immutableItr.MoveNext();
+            Assert.That(rawItr.Current, Is.EqualTo(immutableItr.Current));
+        }
+    }
+
+    [Test]
+    public void TestImmutableLinkedDic() {
+        int expectedCount = 10000;
+        Dictionary<int, int> keySet = new Dictionary<int, int>(expectedCount / 6); // 要测试扩容
+        while (keySet.Count < expectedCount) {
+            var next = Random.Shared.Next();
+            keySet.TryAdd(next, next);
+        }
+
+        var rawItr = keySet.GetEnumerator();
+        var immutableItr = keySet.ToImmutableLinkedDictionary().GetEnumerator();
         while (rawItr.MoveNext()) {
             immutableItr.MoveNext();
             Assert.That(rawItr.Current, Is.EqualTo(immutableItr.Current));

@@ -35,24 +35,19 @@ public interface ISequencedDictionary<TKey, TValue> : IGenericDictionary<TKey, T
     /// <returns></returns>
     new ISequencedDictionary<TKey, TValue> Reversed();
 
-    /// <summary>
-    /// 获取不安全的key集合视图，对key的删除将作用于原始的字典
-    /// </summary>
-    /// <param name="reversed">是否反转</param>
-    /// <returns></returns>
-    ISequencedCollection<TKey> UnsafeKeys(bool reversed = false);
-
     #region get
 
     /// <summary>
     /// 获取字典的Key集合
     /// </summary>
-    new ISequencedCollection<TKey> Keys { get; }
+    /// <param name="reversed">是否取反</param>
+    ISequencedCollection<TKey> SequencedKeys(bool reversed = false);
 
     /// <summary>
     /// 获取字典的Value集合
     /// </summary>
-    new ISequencedCollection<TValue> Values { get; }
+    /// <param name="reversed">是否取反</param>
+    ISequencedCollection<TValue> SequencedValues(bool reversed = false);
 
     /// <summary>
     /// 查看集合的第一个Key
@@ -132,8 +127,6 @@ public interface ISequencedDictionary<TKey, TValue> : IGenericDictionary<TKey, T
 
     #region 接口适配
 
-    IGenericCollection<TKey> IGenericDictionary<TKey, TValue>.Keys => Keys;
-    IGenericCollection<TValue> IGenericDictionary<TKey, TValue>.Values => Values;
     ICollection<TKey> IDictionary<TKey, TValue>.Keys => Keys;
     ICollection<TValue> IDictionary<TKey, TValue>.Values => Values;
     IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => Keys;
@@ -141,10 +134,6 @@ public interface ISequencedDictionary<TKey, TValue> : IGenericDictionary<TKey, T
 
     ISequencedCollection<KeyValuePair<TKey, TValue>> ISequencedCollection<KeyValuePair<TKey, TValue>>.Reversed() {
         return Reversed();
-    }
-
-    IGenericCollection<TKey> IGenericDictionary<TKey, TValue>.UnsafeKeys() {
-        return UnsafeKeys();
     }
 
     void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) {

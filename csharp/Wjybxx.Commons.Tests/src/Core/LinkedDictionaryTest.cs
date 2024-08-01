@@ -103,7 +103,7 @@ public class LinkedDictionaryTest
         }
         // 逆序迭代测试
         index = keyList.Count - 1;
-        var reversedEnumerator = dictionary.Keys.GetReversedEnumerator();
+        var reversedEnumerator = dictionary.SequencedKeys().GetReversedEnumerator();
         while (reversedEnumerator.MoveNext()) {
             var expectedKey = keyList[index--];
             string realKey = reversedEnumerator.Current;

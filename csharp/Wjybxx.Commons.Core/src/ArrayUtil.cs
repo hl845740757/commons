@@ -36,20 +36,25 @@ public static class ArrayUtil
     /// <param name="objB"></param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-#if !NET6_0_OR_GREATER
-    public static bool Equals<T>(T[]? objA, T[]? objB) where T : IEquatable<T> {
-#else
     public static bool Equals<T>(T[]? objA, T[]? objB) {
-#endif
         if (objA == objB) {
             return true;
         }
-        if (objA == null || objB == null) {
+        if (objA == null || objB == null || objA.Length != objB.Length) {
             return false;
         }
+#if NET6_0_OR_GREATER
         ReadOnlySpan<T> first = objA;
         ReadOnlySpan<T> second = objB;
         return first.SequenceEqual(second);
+#endif
+        EqualityComparer<T> comparer = EqualityComparer<T>.Default;
+        for (int i = 0, len = objA.Length; i < len; i++) {
+            if (!comparer.Equals(objA[i], objB[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static int HashCode<T>(T?[]? array) where T : class {

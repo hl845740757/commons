@@ -68,8 +68,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
         // 插入的同时构建双向链表
         int preNodePos = -1;
-        for (int index = 0; index < pairArray.Length; index++) {
-            KeyValuePair<TKey, TValue> pair = pairArray[index];
+        foreach (KeyValuePair<TKey, TValue> pair in pairArray) {
             TKey key = pair.Key;
             int hash = KeyHash(key, keyComparer);
             int pos = Find(key, hash);
@@ -79,7 +78,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
             pos = -pos - 1;
             _table[pos] = new Node(hash, key, pair.Value, pos, preNodePos);
 
-            if (index > 0) {
+            if (preNodePos != -1) {
                 ref Node preNode = ref _table[preNodePos];
                 preNode.next = pos;
             }
@@ -112,21 +111,31 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     public int Count => _count;
     public bool IsEmpty => _count == 0;
 
-    public ISequencedCollection<TKey> Keys => CachedKeys();
-    public ISequencedCollection<TValue> Values => CachedValues();
+    public IGenericCollection<TKey> Keys => CachedKeys();
+    public IGenericCollection<TValue> Values => CachedValues();
     ICollection<TKey> IDictionary<TKey, TValue>.Keys => CachedKeys();
     ICollection<TValue> IDictionary<TKey, TValue>.Values => CachedValues();
     IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => CachedKeys();
     IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => CachedValues();
 
-    private KeyCollection CachedKeys() {
+    public ISequencedCollection<TKey> SequencedKeys(bool reversed = false) => CachedKeys(reversed);
+
+    public ISequencedCollection<TValue> SequencedValues(bool reversed = false) => CachedValues(reversed);
+
+    private KeyCollection CachedKeys(bool reversed = false) {
+        if (reversed) {
+            return new KeyCollection(this, true);
+        }
         if (_keys == null) {
             _keys = new KeyCollection(this, false);
         }
         return _keys;
     }
 
-    private ValueCollection CachedValues() {
+    private ValueCollection CachedValues(bool reversed = false) {
+        if (reversed) {
+            return new ValueCollection(this, true);
+        }
         if (_values == null) {
             _values = new ValueCollection(this, false);
         }
@@ -156,13 +165,13 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     }
 
     public bool TryPeekFirst(out KeyValuePair<TKey, TValue> pair) {
-        if (_count > 0) {
-            ref Node node = ref _table[_head];
-            pair = node.AsPair();
-            return true;
+        if (_count == 0) {
+            pair = default;
+            return false;
         }
-        pair = default;
-        return false;
+        ref Node node = ref _table[_head];
+        pair = node.AsPair();
+        return true;
     }
 
     public KeyValuePair<TKey, TValue> PeekLast() {
@@ -174,13 +183,13 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     }
 
     public bool TryPeekLast(out KeyValuePair<TKey, TValue> pair) {
-        if (_count > 0) {
-            ref Node node = ref _table[_tail];
-            pair = node.AsPair();
-            return true;
+        if (_count == 0) {
+            pair = default;
+            return false;
         }
-        pair = default;
-        return false;
+        ref Node node = ref _table[_tail];
+        pair = node.AsPair();
+        return true;
     }
 
     public TKey PeekFirstKey() {
@@ -192,13 +201,13 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     }
 
     public bool TryPeekFirstKey(out TKey key) {
-        if (_count > 0) {
-            ref Node node = ref _table[_head];
-            key = node.key;
-            return true;
+        if (_count == 0) {
+            key = default;
+            return false;
         }
-        key = default;
-        return false;
+        ref Node node = ref _table[_head];
+        key = node.key;
+        return true;
     }
 
     public TKey PeekLastKey() {
@@ -210,13 +219,13 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     }
 
     public bool TryPeekLastKey(out TKey key) {
-        if (_count > 0) {
-            ref Node node = ref _table[_tail];
-            key = node.key;
-            return true;
+        if (_count == 0) {
+            key = default;
+            return false;
         }
-        key = default;
-        return false;
+        ref Node node = ref _table[_tail];
+        key = node.key;
+        return true;
     }
 
     #endregion
@@ -338,10 +347,6 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
         throw new NotImplementedException();
     }
 
-    public ISequencedCollection<TKey> UnsafeKeys(bool reversed = false) {
-        throw new NotImplementedException();
-    }
-
     public void Clear() {
         throw new NotImplementedException();
     }
@@ -364,7 +369,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
                 index = e.prev;
             }
         } else {
-            for (int index = _tail; index >= 0;) {
+            for (int index = _head; index >= 0;) {
                 ref Node e = ref _table[index];
                 array[arrayIndex++] = e.AsPair();
                 index = e.next;
@@ -383,7 +388,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
                 index = e.prev;
             }
         } else {
-            for (int index = _tail; index >= 0;) {
+            for (int index = _head; index >= 0;) {
                 ref Node e = ref _table[index];
                 array[arrayIndex++] = e.key;
                 index = e.next;
@@ -402,7 +407,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
                 index = e.prev;
             }
         } else {
-            for (int index = _tail; index >= 0;) {
+            for (int index = _head; index >= 0;) {
                 ref Node e = ref _table[index];
                 array[arrayIndex++] = e.value;
                 index = e.next;
@@ -435,7 +440,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     #region core
 
-    private IEqualityComparer<TValue> ValComparer => EqualityComparer<TValue>.Default;
+    private static IEqualityComparer<TValue> ValComparer => EqualityComparer<TValue>.Default;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int KeyHash(TKey? key, IEqualityComparer<TKey> keyComparer) {
@@ -452,6 +457,9 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     /// <returns></returns>
     private int Find(TKey key, int hash) {
         Node[] table = _table;
+        if (table.Length == 0) {
+            return -1;
+        }
         if (key == null) {
             Node nullNode = table[_mask + 1];
             return nullNode.index == null ? -(_mask + 2) : (_mask + 1);
@@ -596,7 +604,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
         }
 
         public override ISequencedCollection<TKey> Reversed() {
-            return _reversed ? _dictionary.Keys : new KeyCollection(_dictionary, true);
+            return _dictionary.CachedKeys(_reversed);
         }
 
         public override IEnumerator<TKey> GetEnumerator() {
@@ -614,18 +622,18 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
             : base(dictionary, reversed) {
         }
 
-        private TValue CheckNodeValue(int? index) {
-            if (index == null) throw ThrowHelper.CollectionEmptyException();
-            ref Node node = ref _dictionary._table[index.Value];
+        private TValue CheckNodeValue(int index) {
+            if (index < 0) throw ThrowHelper.CollectionEmptyException();
+            ref Node node = ref _dictionary._table[index];
             return node.value;
         }
 
-        private bool PeekNodeValue(int? index, out TValue value) {
-            if (index == null) {
+        private bool PeekNodeValue(int index, out TValue value) {
+            if (index < 0) {
                 value = default;
                 return false;
             }
-            ref Node node = ref _dictionary._table[index.Value];
+            ref Node node = ref _dictionary._table[index];
             value = node.value;
             return true;
         }
@@ -651,7 +659,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
         }
 
         public override ISequencedCollection<TValue> Reversed() {
-            return _reversed ? _dictionary.Values : new ValueCollection(_dictionary, true);
+            return _dictionary.CachedValues(_reversed);
         }
 
         public override IEnumerator<TValue> GetEnumerator() {
@@ -670,23 +678,20 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     /// <summary>
     /// 注意：在修改为结构体组合模式后，外部在调用MoveNext后需要显式设置 _current 字段。
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public struct Enumerator<T> : ISequentialEnumerator<T>
+    private struct Enumerator
     {
-        internal readonly ImmutableLinkedDictionary<TKey, TValue> _dictionary;
-        internal readonly bool _reversed;
+        private readonly ImmutableLinkedDictionary<TKey, TValue> _dictionary;
+        private readonly bool _reversed;
 
         private int _nextNode;
-        internal int _currNode;
-        internal T _current;
+        internal Node _currNode;
 
         public Enumerator(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed) {
             _dictionary = dictionary;
             _reversed = reversed;
 
             _nextNode = _reversed ? _dictionary._tail : _dictionary._head;
-            _currNode = -1;
-            _current = default;
+            _currNode = default;
         }
 
         public bool HasNext() {
@@ -695,24 +700,17 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
         public bool MoveNext() {
             if (_nextNode == -1) {
-                _current = default;
                 return false;
             }
-            _currNode = _nextNode;
-            ref Node node = ref _dictionary._table[_currNode];
-            _nextNode = _reversed ? node.prev : node.next;
+            _currNode = _dictionary._table[_nextNode];
+            _nextNode = _reversed ? _currNode.prev : _currNode.next;
             return true;
         }
 
         public void Reset() {
             _nextNode = _reversed ? _dictionary._tail : _dictionary._head;
-            _currNode = -1;
-            _current = default;
+            _currNode = default;
         }
-
-        public T Current => _current;
-
-        object IEnumerator.Current => Current;
 
         public void Dispose() {
         }
@@ -720,10 +718,12 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     public struct PairEnumerator : ISequentialEnumerator<KeyValuePair<TKey, TValue>>
     {
-        private Enumerator<KeyValuePair<TKey, TValue>> _core;
+        private Enumerator _core;
+        private KeyValuePair<TKey, TValue> _current;
 
         public PairEnumerator(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed) {
-            _core = new Enumerator<KeyValuePair<TKey, TValue>>(dictionary, reversed);
+            _core = new Enumerator(dictionary, reversed);
+            _current = default;
         }
 
         public bool HasNext() {
@@ -732,8 +732,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
         public bool MoveNext() {
             if (_core.MoveNext()) {
-                ref Node node = ref _core._dictionary._table[_core._currNode];
-                _core._current = node.AsPair();
+                _current = _core._currNode.AsPair();
                 return true;
             }
             return false;
@@ -743,8 +742,8 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
             _core.Reset();
         }
 
-        public KeyValuePair<TKey, TValue> Current => _core.Current;
-        object IEnumerator.Current => ((IEnumerator)_core).Current;
+        public KeyValuePair<TKey, TValue> Current => _current;
+        object IEnumerator.Current => _current;
 
         public void Dispose() {
             _core.Dispose();
@@ -753,10 +752,12 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     public struct KeyEnumerator : ISequentialEnumerator<TKey>
     {
-        private Enumerator<TKey> _core;
+        private Enumerator _core;
+        private TKey _current;
 
         public KeyEnumerator(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed) {
-            _core = new Enumerator<TKey>(dictionary, reversed);
+            _core = new Enumerator(dictionary, reversed);
+            _current = default;
         }
 
         public bool HasNext() {
@@ -765,8 +766,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
         public bool MoveNext() {
             if (_core.MoveNext()) {
-                ref Node node = ref _core._dictionary._table[_core._currNode];
-                _core._current = node.key;
+                _current = _core._currNode.key;
                 return true;
             }
             return false;
@@ -776,8 +776,8 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
             _core.Reset();
         }
 
-        public TKey Current => _core.Current;
-        object IEnumerator.Current => ((IEnumerator)_core).Current;
+        public TKey Current => _current;
+        object IEnumerator.Current => _current;
 
         public void Dispose() {
             _core.Dispose();
@@ -786,10 +786,12 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     public struct ValueEnumerator : ISequentialEnumerator<TValue>
     {
-        private Enumerator<TValue> _core;
+        private Enumerator _core;
+        private TValue _current;
 
         public ValueEnumerator(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed) {
-            _core = new Enumerator<TValue>(dictionary, reversed);
+            _core = new Enumerator(dictionary, reversed);
+            _current = default;
         }
 
         public bool HasNext() {
@@ -798,8 +800,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
         public bool MoveNext() {
             if (_core.MoveNext()) {
-                ref Node node = ref _core._dictionary._table[_core._currNode];
-                _core._current = node.value;
+                _current = _core._currNode.value;
                 return true;
             }
             return false;
@@ -809,8 +810,8 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
             _core.Reset();
         }
 
-        public TValue Current => _core.Current;
-        object IEnumerator.Current => ((IEnumerator)_core).Current;
+        public TValue Current => _current;
+        object IEnumerator.Current => _current;
 
         public void Dispose() {
             _core.Dispose();
@@ -826,8 +827,8 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
         internal readonly int hash;
         internal readonly TKey? key;
         internal readonly TValue? value;
-        internal readonly int? index; // null表未Node无效，低版本不支持无参构造函数，无法指定为-1
 
+        internal readonly int? index; // null表示Node无效，低版本不支持无参构造函数，无法指定为-1
         internal int prev;
         internal int next;
 
@@ -846,9 +847,15 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
             return new KeyValuePair<TKey, TValue>(key, value);
         }
 
+#if DEBUG
         public override string ToString() {
-            return $"{nameof(key)}: {key}, {nameof(value)}: {value}";
+            return $"{nameof(index)}: {index}, {nameof(key)}: {key}, {nameof(value)}: {value}, {nameof(prev)}: {prev}, {nameof(next)}: {next}";
         }
+#else
+        public override string ToString() {
+            return $"index: {index}, {nameof(key)}: {key}, {nameof(value)}: {value}";
+        }
+#endif
     }
 }
 }
