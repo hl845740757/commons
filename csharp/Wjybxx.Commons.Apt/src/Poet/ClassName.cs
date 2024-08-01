@@ -200,9 +200,15 @@ public class ClassName : TypeName
         return sb.ToString();
     }
 
+#if UNITY_EDITOR
+    public override TypeName WithAttributes(TypeNameAttributes attributes) {
+        return new ClassName(ns, enclosingClassName, simpleName, typeArguments, attributes);
+    }
+#else
     public override ClassName WithAttributes(TypeNameAttributes attributes) {
         return new ClassName(ns, enclosingClassName, simpleName, typeArguments, attributes);
     }
+#endif
 
     /// <summary>
     /// 创建一个同级类类名

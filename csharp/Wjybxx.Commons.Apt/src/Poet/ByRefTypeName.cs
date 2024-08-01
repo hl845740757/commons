@@ -62,9 +62,15 @@ public class ByRefTypeName : TypeName
         return $"{GetType().Name}, {nameof(targetType)}: {targetType}";
     }
 
+#if UNITY_EDITOR
+    public override TypeName WithAttributes(TypeNameAttributes attributes) {
+        return new ByRefTypeName(targetType, kind, attributes);
+    }
+#else
     public override ByRefTypeName WithAttributes(TypeNameAttributes attributes) {
         return new ByRefTypeName(targetType, kind, attributes);
     }
+#endif
 
     public static ByRefTypeName Of(TypeName targetType, Kind kind = Kind.Ref, TypeNameAttributes attributes = TypeNameAttributes.None) {
         return new ByRefTypeName(targetType, kind, attributes);

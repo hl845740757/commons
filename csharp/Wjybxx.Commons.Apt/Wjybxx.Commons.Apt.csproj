@@ -8,7 +8,7 @@
 
         <AssemblyName>Wjybxx.Commons.Apt</AssemblyName>
         <PackageId>Wjybxx.Commons.Apt</PackageId>
-        <PackageVersion>1.1.0-rc3</PackageVersion>
+        <PackageVersion>1.1.0-rc5</PackageVersion>
 
         <Title>Wjybxx.Commons.Apt</Title>
         <Description>注解处理器工具，结构化代码生成工具</Description>

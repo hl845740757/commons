@@ -50,9 +50,16 @@ public class PointerTypeName : TypeName
         return $"{GetType().Name}, {nameof(targetType)}: {targetType}";
     }
 
+#if UNITY_EDITOR
+    public override TypeName WithAttributes(TypeNameAttributes attributes) {
+        return new PointerTypeName(targetType, attributes);
+    }
+#else
     public override PointerTypeName WithAttributes(TypeNameAttributes attributes) {
         return new PointerTypeName(targetType, attributes);
     }
+#endif
+
 
     public static PointerTypeName Of(TypeName targetType, TypeNameAttributes attributes = TypeNameAttributes.None) {
         return new PointerTypeName(targetType, attributes);
