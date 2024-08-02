@@ -32,7 +32,7 @@ public abstract class AbstractConstant implements Constant {
     /** 声明常量的池 */
     private final String poolId;
 
-    protected AbstractConstant(Builder builder) {
+    protected AbstractConstant(Builder<?> builder) {
         this.id = builder.getIdOrThrow();
         this.name = Objects.requireNonNull(builder.getName());
         this.poolId = Objects.requireNonNull(builder.getPoolId(), "poolId");

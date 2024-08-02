@@ -8,7 +8,7 @@
         <artifactId>commons-parent</artifactId>
         <version>${revision}</version>
     </parent>
-    <artifactId>commons-mongo-codec</artifactId>
+    <artifactId>mongo-codec</artifactId>
 
     <name>Mongo-Codec</name>
     <description>mongo-codec适配器</description>

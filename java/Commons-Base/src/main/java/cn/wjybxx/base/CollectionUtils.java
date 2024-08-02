@@ -93,32 +93,6 @@ public class CollectionUtils {
         }
     }
 
-    /** 移除list中第一个匹配的元素 -- 最好是数组列表 */
-    public static <E> boolean removeFirstMatch(List<E> list, Predicate<? super E> predicate) {
-        if (list.isEmpty()) {
-            return false;
-        }
-        final int index = indexOfCustom(list, predicate);
-        if (index >= 0) {
-            list.remove(index);
-            return true;
-        }
-        return false;
-    }
-
-    /** 移除List中最后一个匹配的元素  -- 最好是数组列表 */
-    public static <E> boolean removeLastMatch(List<E> list, Predicate<? super E> predicate) {
-        if (list.isEmpty()) {
-            return false;
-        }
-        final int index = lastIndexOfCustom(list, predicate);
-        if (index >= 0) {
-            list.remove(index);
-            return true;
-        }
-        return false;
-    }
-
     /**
      * 删除指定位置的元素，可以选择是否保持列表中元素的顺序，当不需要保持顺序时可以对删除性能进行优化
      * 注意：应当小心使用该特性，能够使用该特性的场景不多，应当慎之又慎。
@@ -167,121 +141,135 @@ public class CollectionUtils {
         }
         return originSize - size;
     }
-    //
 
-    /** @param list 最好为数组列表 */
-    public static <E> int indexOfCustom(List<E> list, Predicate<? super E> indexFunc) {
-        return indexOfCustom(list, indexFunc, 0);
-    }
-
-    /** @param list 最好为数组列表 */
-    public static <E> int indexOfCustom(List<E> list, Predicate<? super E> indexFunc, int startIndex) {
-        if (startIndex < 0) {
-            startIndex = 0;
-        }
-        for (int i = startIndex, size = list.size(); i < size; i++) {
-            if (indexFunc.test(list.get(i))) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /** @param list 最好为数组列表 */
-    public static <E> int lastIndexOfCustom(List<E> list, Predicate<? super E> indexFunc) {
-        return lastIndexOfCustom(list, indexFunc, Integer.MAX_VALUE);
-    }
-
-    /** @param list 最好为数组列表 */
-    public static <E> int lastIndexOfCustom(List<E> list, Predicate<? super E> indexFunc, int startIndex) {
-        if (startIndex >= list.size()) {
-            startIndex = list.size() - 1;
-        }
-        for (int i = startIndex; i >= 0; i--) {
-            if (indexFunc.test(list.get(i))) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    /** @param list 最好为数组列表 */
-    public static <E> boolean containsCustom(List<E> list, Predicate<? super E> indexFunc) {
-        return indexOfCustom(list, indexFunc) >= 0;
-    }
-
-    /** @param list 最好为数组列表 */
-    public static <E> E findFirst(List<E> list, Predicate<? super E> indexFunc) {
-        for (int i = 0, size = list.size(); i < size; i++) {
-            final E e = list.get(i);
-            if (indexFunc.test(e)) {
-                return e;
-            }
-        }
-        return null;
-    }
-
-    /** @param list 最好为数组列表 */
-    public static <E> E findLast(List<E> list, Predicate<? super E> indexFunc) {
-        for (int i = list.size() - 1; i >= 0; i--) {
-            final E e = list.get(i);
-            if (indexFunc.test(e)) {
-                return e;
-            }
-        }
-        return null;
-    }
-
-    // region ref
-    // 注意：对于拆装箱的对象慎用
-
-    public static boolean containsRef(List<?> list, Object element) {
-        return indexOfRef(list, element, 0) >= 0;
-    }
+    // region index
 
     /** 查找对象引用在数组中的索引 */
-    public static int indexOfRef(List<?> list, Object element) {
-        return indexOfRef(list, element, 0);
-    }
-
-    /**
-     * 查找对象引用在List中的索引
-     *
-     * @param element    要查找的元素
-     * @param startIndex 开始下标
-     */
-    public static int indexOfRef(List<?> list, Object element, int startIndex) {
-        Objects.requireNonNull(list, "list");
-        if (startIndex < 0) {
-            startIndex = 0;
-        }
-        for (int i = startIndex, size = list.size(); i < size; i++) {
-            if (list.get(i) == element) {
-                return i;
-            }
-        }
-        return INDEX_NOT_FOUND;
+    public static int indexOf(List<?> list, Object element) {
+        return indexOf(list, element, 0, list.size());
     }
 
     /** 反向查找对象引用在List中的索引 */
-    public static int lastIndexOfRef(List<?> list, Object element) {
-        return lastIndexOfRef(list, element, Integer.MAX_VALUE);
+    public static int lastIndexOf(List<?> list, Object element) {
+        return lastIndexOf(list, element, 0, list.size());
     }
 
     /**
      * 反向查找对象引用在List中的索引
      *
-     * @param element    要查找的元素
-     * @param startIndex 开始下标
+     * @param list    数组
+     * @param element 要查找的元素
+     * @param start   数组的有效区间起始下标(inclusive)
+     * @param end     数组的有效区间结束下标(exclusive)
      */
-    public static int lastIndexOfRef(List<?> list, Object element, int startIndex) {
+    public static int indexOf(List<?> list, Object element, int start, int end) {
         Objects.requireNonNull(list, "list");
-        if (startIndex >= list.size()) {
-            startIndex = list.size() - 1;
+        if (element == null) {
+            for (int i = start; i < end; i++) {
+                if (list.get(i) == null) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = start; i < end; i++) {
+                if (element.equals(list.get(i))) {
+                    return i;
+                }
+            }
         }
-        for (int i = startIndex; i >= 0; i--) {
-            if (list.get(i) == element) {
-                return i;
+        return -1;
+    }
+
+    /**
+     * 反向查找对象引用在List中的索引
+     *
+     * @param list    数组
+     * @param element 要查找的元素
+     * @param start   数组的有效区间起始下标(inclusive)
+     * @param end     数组的有效区间结束下标(exclusive)
+     */
+    public static int lastIndexOf(List<?> list, Object element, int start, int end) {
+        if (element == null) {
+            for (int i = end - 1; i >= start; i--) {
+                if (list.get(i) == null) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = end - 1; i >= start; i--) {
+                if (element.equals(list.get(i))) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    // endregion
+
+    // region index-ref
+    // 注意：对于拆装箱的对象慎用
+
+    public static boolean containsRef(List<?> list, Object element) {
+        return indexOfRef(list, element, 0, list.size()) >= 0;
+    }
+
+    /** 查找对象引用在数组中的索引 */
+    public static int indexOfRef(List<?> list, Object element) {
+        return indexOfRef(list, element, 0, list.size());
+    }
+
+    /** 反向查找对象引用在List中的索引 */
+    public static int lastIndexOfRef(List<?> list, Object element) {
+        return lastIndexOfRef(list, element, 0, list.size());
+    }
+
+    /**
+     * 反向查找对象引用在List中的索引
+     *
+     * @param list    数组
+     * @param element 要查找的元素
+     * @param start   数组的有效区间起始下标(inclusive)
+     * @param end     数组的有效区间结束下标(exclusive)
+     */
+    public static int indexOfRef(List<?> list, Object element, int start, int end) {
+        Objects.requireNonNull(list, "list");
+        if (element == null) {
+            for (int i = start; i < end; i++) {
+                if (list.get(i) == null) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = start; i < end; i++) {
+                if (element == list.get(i)) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 反向查找对象引用在List中的索引
+     *
+     * @param list    数组
+     * @param element 要查找的元素
+     * @param start   数组的有效区间起始下标(inclusive)
+     * @param end     数组的有效区间结束下标(exclusive)
+     */
+    public static int lastIndexOfRef(List<?> list, Object element, int start, int end) {
+        if (element == null) {
+            for (int i = end - 1; i >= start; i--) {
+                if (list.get(i) == null) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = end - 1; i >= start; i--) {
+                if (element == list.get(i)) {
+                    return i;
+                }
             }
         }
         return -1;
@@ -306,6 +294,45 @@ public class CollectionUtils {
         removeAt(list, index, ordered);
         return true;
     }
+    // endregion
+
+    // region index-custom
+
+    /** @param list 最好为数组列表 */
+    public static <E> boolean containsCustom(List<E> list, Predicate<? super E> indexFunc) {
+        return indexOfCustom(list, indexFunc, 0, list.size()) >= 0;
+    }
+
+    /** @param list 最好为数组列表 */
+    public static <E> int indexOfCustom(List<E> list, Predicate<? super E> indexFunc) {
+        return indexOfCustom(list, indexFunc, 0, list.size());
+    }
+
+    /** @param list 最好为数组列表 */
+    public static <E> int lastIndexOfCustom(List<E> list, Predicate<? super E> indexFunc) {
+        return lastIndexOfCustom(list, indexFunc, 0, list.size());
+    }
+
+    /** @param list 最好为数组列表 */
+    public static <E> int indexOfCustom(List<E> list, Predicate<? super E> indexFunc, int start, int end) {
+        for (int i = start; i < end; i++) {
+            if (indexFunc.test(list.get(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** @param list 最好为数组列表 */
+    public static <E> int lastIndexOfCustom(List<E> list, Predicate<? super E> indexFunc, int start, int end) {
+        for (int i = end - 1; i >= start; i--) {
+            if (indexFunc.test(list.get(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     // endregion
 
     // region binary-search
@@ -784,18 +811,6 @@ public class CollectionUtils {
         return elements.iterator().next();
     }
 
-    /** 如果集合不为空，则返回第一个元素，否则返回默认值 */
-    @Nullable
-    public static <E> E firstOrDefault(Collection<E> collection, E def) {
-        if (collection == null || collection.isEmpty()) {
-            return def;
-        }
-        if (collection instanceof SequencedCollection<E> sequenced) {
-            return sequenced.getFirst();
-        }
-        return collection.iterator().next();
-    }
-
     /**
      * 移除集合中第一个匹配的元素
      *
@@ -807,10 +822,6 @@ public class CollectionUtils {
     public static <E> boolean removeFirstMatch(Collection<E> collection, Predicate<? super E> predicate) {
         if (collection.isEmpty()) {
             return false;
-        }
-        if (collection instanceof RandomAccess) {
-            final List<E> list = (List<E>) collection;
-            return removeFirstMatch(list, predicate);
         }
         for (Iterator<E> itr = collection.iterator(); itr.hasNext(); ) {
             if (predicate.test(itr.next())) {
@@ -827,10 +838,6 @@ public class CollectionUtils {
     public static boolean removeRef(Collection<?> collection, Object element) {
         if (collection.isEmpty()) {
             return false;
-        }
-        if (collection instanceof RandomAccess) {
-            final List<?> list = (List<?>) collection;
-            return removeRef(list, element);
         }
         for (Iterator<?> iterator = collection.iterator(); iterator.hasNext(); ) {
             final Object e = iterator.next();

@@ -22,5 +22,5 @@ namespace Wjybxx.Commons
 /// 只有可通过基础的Builder构建的常量才会使用到Factory
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public delegate T ConstantFactory<T>(IConstant.Builder builder);
+public delegate T ConstantFactory<T>(IConstant.Builder<T> builder) where T : IConstant;
 }

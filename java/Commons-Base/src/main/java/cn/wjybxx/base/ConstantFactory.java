@@ -24,9 +24,9 @@ import javax.annotation.Nonnull;
  * @author wjybxx
  * date 2023/4/1
  */
-public interface ConstantFactory<T> {
+public interface ConstantFactory<T extends Constant> {
 
     @Nonnull
-    T newConstant(Constant.Builder builder);
+    T newConstant(Constant.Builder<T> builder);
 
 }

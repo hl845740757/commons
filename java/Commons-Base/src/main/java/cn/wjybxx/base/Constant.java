@@ -66,7 +66,7 @@ public interface Constant extends Comparable<Constant> {
 
     // region builder
 
-    abstract class Builder {
+    abstract class Builder<T extends Constant> {
 
         private String poolId;
         private Integer id;
@@ -79,14 +79,20 @@ public interface Constant extends Comparable<Constant> {
             this.name = checkName(name);
         }
 
-        /** 设置常量的id - 该方法由常量池调用 */
-        public Builder setId(String poolId, int id) {
+        /**
+         * 设置常量的id - 该方法由常量池调用
+         *
+         * @param poolId     声明常量的池
+         * @param id         分配的常量id
+         * @param cacheIndex 分配的缓存索引，-1表示未设置
+         */
+        public void setId(String poolId, int id, int cacheIndex) {
             if (this.id != null) {
                 throw new IllegalStateException("id cannot be initialized repeatedly");
             }
             this.poolId = poolId;
             this.id = id;
-            return this;
+            this.cacheIndex = cacheIndex;
         }
 
         public int getIdOrThrow() {
@@ -108,12 +114,6 @@ public interface Constant extends Comparable<Constant> {
             return poolId;
         }
 
-        /** 设置高速缓存索引 -- 该方法由{@link ConstantPool}调用 */
-        public Builder setCacheIndex(int cacheIndex) {
-            this.cacheIndex = cacheIndex;
-            return this;
-        }
-
         /**
          * 获取分配的高速缓存索引 -- -1表示未设置。
          * 注意：{@link ConstantPool}仅仅分配index，而真正的实现在于常量的使用者。
@@ -127,12 +127,12 @@ public interface Constant extends Comparable<Constant> {
         }
 
         /** 设置是否需要分配高速缓存索引 */
-        public Builder setRequireCacheIndex(boolean requireCacheIndex) {
+        public Builder<T> setRequireCacheIndex(boolean requireCacheIndex) {
             this.requireCacheIndex = requireCacheIndex;
             return this;
         }
 
-        public abstract Constant build();
+        public abstract T build();
 
     }
 

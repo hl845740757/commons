@@ -28,4 +28,5 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.SOURCE)
 public @interface Beta {
 
+    String value() default "";
 }

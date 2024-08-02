@@ -16,7 +16,6 @@
 
 package cn.wjybxx.base;
 
-import java.util.Objects;
 import java.util.function.ToIntFunction;
 import java.util.random.RandomGenerator;
 
@@ -41,66 +40,131 @@ public class ArrayUtils {
     public static final Object[] EMPTY_OBJECT_ARRAY = {};
     public static final Class<?>[] EMPTY_CLASS_ARRAY = {};
 
-    // region ref
-
-    /** 判断是否存在给定元素的引用 */
-    public static <T> boolean containsRef(T[] list, Object element) {
-        return indexOfRef(list, element, 0) >= 0;
-    }
+    // region indexOf
 
     /** 查找对象引用在数组中的索引 */
-    public static <T> int indexOfRef(T[] list, Object element) {
-        return indexOfRef(list, element, 0);
-    }
-
-    /**
-     * 查找对象引用在数组中的索引
-     *
-     * @param element    要查找的元素
-     * @param startIndex 开始下标
-     */
-    public static <T> int indexOfRef(T[] list, Object element, int startIndex) {
-        Objects.requireNonNull(list, "list");
-        if (startIndex >= list.length) {
-            return CollectionUtils.INDEX_NOT_FOUND;
-        }
-        if (startIndex < 0) {
-            startIndex = 0;
-        }
-        for (int i = startIndex, size = list.length; i < size; i++) {
-            if (list[i] == element) {
-                return i;
-            }
-        }
-        return CollectionUtils.INDEX_NOT_FOUND;
+    public static <T> int indexOf(T[] list, Object element) {
+        return indexOf(list, element, 0, list.length);
     }
 
     /** 反向查找对象引用在数组中的索引 */
-    public static <T> int lastIndexOfRef(T[] list, Object element) {
-        return lastIndexOfRef(list, element, Integer.MAX_VALUE);
+    public static <T> int lastIndexOf(T[] list, Object element) {
+        return lastIndexOf(list, element, 0, list.length);
     }
 
     /**
-     * 反向查找对象引用在数组中的索引
-     *
-     * @param element    要查找的元素
-     * @param startIndex 开始下标
+     * @param list    数组
+     * @param element 要查找的元素
+     * @param start   数组的有效区间起始下标(inclusive)
+     * @param end     数组的有效区间结束下标(exclusive)
      */
-    public static <T> int lastIndexOfRef(T[] list, Object element, int startIndex) {
-        Objects.requireNonNull(list, "list");
-        if (startIndex < 0) {
-            return CollectionUtils.INDEX_NOT_FOUND;
-        }
-        if (startIndex >= list.length) {
-            startIndex = list.length - 1;
-        }
-        for (int i = startIndex; i >= 0; i--) {
-            if (list[i] == element) {
-                return i;
+    public static <T> int indexOf(T[] list, Object element, int start, int end) {
+        if (element == null) {
+            for (int i = start; i < end; i++) {
+                if (list[i] == null) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = start; i < end; i++) {
+                if (element.equals(list[i])) {
+                    return i;
+                }
             }
         }
         return -1;
     }
+
+    /**
+     * @param list    数组
+     * @param element 要查找的元素
+     * @param start   数组的有效区间起始下标(inclusive)
+     * @param end     数组的有效区间结束下标(exclusive)
+     */
+    public static <T> int lastIndexOf(T[] list, Object element, int start, int end) {
+        if (element == null) {
+            for (int i = end - 1; i >= start; i--) {
+                if (list[i] == null) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = end - 1; i >= start; i--) {
+                if (element.equals(list[i])) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    // endregion
+
+    // endregion
+
+    // region ref
+
+    /** 判断是否存在给定元素的引用 */
+    public static <T> boolean containsRef(T[] list, Object element) {
+        return indexOfRef(list, element, 0, list.length) >= 0;
+    }
+
+    /** 查找对象引用在数组中的索引 */
+    public static <T> int indexOfRef(T[] list, Object element) {
+        return indexOfRef(list, element, 0, list.length);
+    }
+
+    /** 反向查找对象引用在数组中的索引 */
+    public static <T> int lastIndexOfRef(T[] list, Object element) {
+        return lastIndexOfRef(list, element, 0, list.length);
+    }
+
+    /**
+     * @param list    数组
+     * @param element 要查找的元素
+     * @param start   数组的有效区间起始下标(inclusive)
+     * @param end     数组的有效区间结束下标(exclusive)
+     */
+    public static <T> int indexOfRef(T[] list, Object element, int start, int end) {
+        if (element == null) {
+            for (int i = start; i < end; i++) {
+                if (list[i] == null) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = start; i < end; i++) {
+                if (element == list[i]) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * @param list    数组
+     * @param element 要查找的元素
+     * @param start   数组的有效区间起始下标(inclusive)
+     * @param end     数组的有效区间结束下标(exclusive)
+     */
+    public static <T> int lastIndexOfRef(T[] list, Object element, int start, int end) {
+        if (element == null) {
+            for (int i = end - 1; i >= start; i--) {
+                if (list[i] == null) {
+                    return i;
+                }
+            }
+        } else {
+            for (int i = end - 1; i >= start; i--) {
+                if (element == list[i]) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
     // endregion
 
     // region swap

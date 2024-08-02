@@ -4,15 +4,13 @@
         <ImplicitUsings>false</ImplicitUsings>
         <Nullable>annotations</Nullable>
         <LangVersion>9</LangVersion>
-        <RootNamespace>Wjybxx.Dson.Apt</RootNamespace>
-
-        <AssemblyName>Wjybxx.Dson.Apt</AssemblyName>
-        <PackageId>Wjybxx.Dson.Apt</PackageId>
+        <RootNamespace>Wjybxx.Dson</RootNamespace>
+        <PackageId>Wjybxx.Dson.Core</PackageId>
         <PackageVersion>2.2.0-rc3</PackageVersion>
 
-        <Title>Wjybxx.Dson.Apt</Title>
-        <Description>Dson注解处理器，代码生成工具</Description>
-        <PackageTags>wjybxx;dson;json;codec</PackageTags>
+        <Title>Wjybxx.Dson</Title>
+        <Description>Dson-有点奇怪的配置文件格式和序列化方案</Description>
+        <PackageTags>wjybxx;dson;json</PackageTags>
 
         <Authors>wjybxx(845740757@qq.com)</Authors>
         <Owners>wjybxx(845740757@qq.com)</Owners>
@@ -29,7 +27,7 @@
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <TargetFrameworks>net5.0;net6.0;net7.0;</TargetFrameworks>
     </PropertyGroup>
-
+    
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <NoWarn>1701;1702;1591;</NoWarn>
     </PropertyGroup>
@@ -43,9 +41,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj" />
-        <ProjectReference Include="..\Wjybxx.Dson.Codec\Wjybxx.Dson.Codec.csproj" />
-        <ProjectReference Include="..\Wjybxx.Dson.Core\Wjybxx.Dson.Core.csproj" />
+      <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
     </ItemGroup>
-    
 </Project>

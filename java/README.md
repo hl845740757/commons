@@ -1,12 +1,12 @@
-# Java模块
+# Java模块说明
 
-## agent模块
+## commons-agent模块
 
 agent是基于Java Instrumentation 的热更新模块，仅包含一个Agent类；由于Agent需要以Jar的方式被加载，因此作为独立的模块打包是有利的。
 
 ps：Agent不太会产生变化，将其放在base项目下，仅是为了方便一起打包和发布。
 
-## base模块
+## commons-base模块
 
 base模块包括一些基础的工具类和注解，这些基础工具和注解被其它commons模块依赖，也被apt模块依赖。
 
@@ -15,7 +15,7 @@ base模块包括一些基础的工具类和注解，这些基础工具和注解�
 
 ps：不引入commons-lang3和guava，是因为这些基础库的类文件实在太多。
 
-## apt-base模块
+## commons-apt-base模块
 
 所有apt模块都依赖的基础模块，这里实现了apt的基础流程管理，和apt的基础工具类。
 
@@ -27,10 +27,49 @@ ps：不引入commons-lang3和guava，是因为这些基础库的类文件实在
 为了解决Disruptor的一些问题，重写了LMAX的Disruptor，实现了自己的版本。我的版本少了许多不必要的抽象，
 也拥有更好更容易理解的抽象 -- 后面可能发布为单独的库。
 
-## concurrent模块
+## commons-concurrent模块
 
 1. 重写了Future和Promise，优化了死锁检测和上下文传递的问题。
 2. 得益于新的Disruptor框架，EventLoop无需因为队列的问题而重复实现。
+
+## dson-core
+
+Dson是我设计的文本格式，Dson.Core则是Dson文本格式的C#端实现。
+
+了解Dson可阅读：[Dson文本](../docs/Dson.md)
+
+## dson-codec
+
+Dson.Codec是基于Dson文本的序列化实现，支持以下特性：
+
+1. 有限泛型支持
+2. 默认值可选写入
+3. 指定数字字段的编码格式(apt)
+4. 支持多态解析，指定指定默认解码类型(apt)
+5. **字段级别的读写代理(核心功能)**(apt)
+6. 序列化钩子方法(apt)
+7. 单例支持(apt)
+8. 为外部库类生成Codec(apt)
+9. 外部静态代理(apt)
+
+由于我们提供了强大灵活的Apt，因此不支持运行时反射编解码类型。
+
+## dson-apt
+
+Dson-Apt是为Dson-Codec提供的工具，用于生成目标类的编解码类（源代码），以避免运行时的反射开销。
+
+PS：Dson.Apt的最佳应用是`Btree.Codec`模块，行为树的所有Codec都是通过Apt自动生成的，而非手动编写的。
+
+## btree-core
+
+btree-core是从bigcat中分离出来的，为保持最小依赖，核心包只依赖我个人的base包和jsr305注解包；
+但行为树是需要能序列化的，这样才能在编辑器中编辑；在bigcat仓库的时候，btree模块依赖了我的dson-codec包，
+但dson-codec包的类比较多，依赖也比较大(尤其是fastutil)，因此我将行为树的codec配置信息抽取为btree-codec模块，可选择性引入。
+
+## btree-codec
+
+btree-codec是基于dson-codec的行为树序列化实现；btree-codec模块仅有几个配置类，真正的codec是基于dson-apt注解自动生成的。
+如果你需要使用基于dson的行为树序列化实现，可以添加btree-codec到项目。
 
 ## 个人公众号(游戏开发)
 

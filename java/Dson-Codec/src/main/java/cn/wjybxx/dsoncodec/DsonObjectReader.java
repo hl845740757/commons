@@ -25,10 +25,7 @@ import cn.wjybxx.dson.types.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -196,16 +193,22 @@ public interface DsonObjectReader extends AutoCloseable {
     @SuppressWarnings("unchecked")
     @Nonnull
     default <E> Set<E> readImmutableSet(String name, Class<E> elementType) {
-        final Set<E> result = readObject(name, TypeInfo.of(Set.class, elementType));
-        return CollectionUtils.toImmutableLinkedHashSet(result);
+        final Set<E> result = readObject(name, TypeInfo.of(Set.class, elementType), LinkedHashSet::new);
+        if (result == null) {
+            return Set.of();
+        }
+        return Collections.unmodifiableSet(result); // 无需二次拷贝
     }
 
     /** 读取为不可变字典 */
     @SuppressWarnings("unchecked")
     @Nonnull
     default <K, V> Map<K, V> readImmutableMap(String name, Class<K> keyType, Class<V> valueType) {
-        final Map<K, V> result = readObject(name, TypeInfo.of(Map.class, keyType, valueType));
-        return CollectionUtils.toImmutableLinkedHashMap(result);
+        final Map<K, V> result = readObject(name, TypeInfo.of(Map.class, keyType, valueType), LinkedHashMap::new);
+        if (result == null) {
+            return Map.of();
+        }
+        return Collections.unmodifiableMap(result); // 无需二次拷贝
     }
 
     // endregion

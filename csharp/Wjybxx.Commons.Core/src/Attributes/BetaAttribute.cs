@@ -26,5 +26,13 @@ namespace Wjybxx.Commons.Attributes
 [AttributeUsage(AttributeTargets.All)]
 public class BetaAttribute : Attribute
 {
+    /// <summary>
+    /// 接口说明
+    /// </summary>
+    public readonly string comment;
+
+    public BetaAttribute(string? comment = null) {
+        this.comment = comment ?? "";
+    }
 }
 }

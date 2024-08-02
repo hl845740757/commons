@@ -27,6 +27,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Wjybxx.Dson.Apt\Wjybxx.Dson.Apt.csproj" />
     <ProjectReference Include="..\Wjybxx.Dson.Codec\Wjybxx.Dson.Codec.csproj" />
-    <ProjectReference Include="..\Wjybxx.Dson.Core\Wjybxx.Dson.csproj" />
+    <ProjectReference Include="..\Wjybxx.Dson.Core\Wjybxx.Dson.Core.csproj" />
   </ItemGroup>
 </Project>

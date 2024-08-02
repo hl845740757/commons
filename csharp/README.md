@@ -6,227 +6,83 @@ csharp公共库，包含集合等基础组件;nuget搜索'wjybxx'即可查看到
 
 ## 命名规则
 
-由于我频繁在Java和C#之间切换，因此统一的命名规则对我来说很必要，但这可能让仅写C#的开发者不适应。具体的命名规则可见：[C#命名规范](https://github.com/hl845740757/commons/blob/dev/csharp/NameRules.md)
+由于我频繁在Java和C#之间切换，因此统一的命名规则对我来说很必要，但这可能让仅写C#的开发者不适应。具体的命名规则可见：[C#命名规范](./NameRules.md)
 
-## Unity兼容
+## Unity源码兼容
 
-为尽可能兼容Unity（本来工具主要就是用于游戏客户端和服务器的），我限定语法等级为C#9。
+C#工具库的主要是为游戏服务器和客户端造的，但几经尝试，发现无法简单打出dll直接拉入到unity，所以只能在源码中通过条件编译实现Unity兼容。
+为避免代码差异过大，我限定语法等级为C#9，Unity版本为2021。
 
-Unity2021尚不支持的特性
+Unity2021尚不支持的特性:
 
 1. 不支持文件范围命名空间(C#9) -- 为保持尽可能小的增量变化，我将文件范围namespace修改为旧式namespace时，不进行缩进。
 2. override时不能修改方法的返回值类型，因此对于简单的类型转换的情况，使用new代替override实现。
 3. 不能使用新的Immutable集合库 -- 我实现了自己的Immutable集合。
 
-几经尝试，发现无法简单打出dll直接拉入到unity，所以在unity中使用该项目的代码时，请直接下载源码。
+## C#模块说明
 
----
+### Commons.Core
 
-## Collections
+Core模块包含一些基础的工具类和注解，这些基础工具和注解被其它所有模块依赖。
 
-但凡C#的基础集合库好用一点，我也不至于自己造轮子，实现的集合类：
+1. Core提供了一些有用的集合实现
+2. Core提供了简单的对象池实现
 
-1. LinkedDictionary 保持插入顺序的字典，并提供大量的有用方法。
-2. LinkedHashSet 保持插入顺序的Set，并提供大量的有用方法。
-3. IndexedPriorityQueue 含索引的优先级队列，高查询和删除效率。
-4. BoundedArrayDeque 基于数组的有界双端队列，允许手动调整容量。
-5. MultiChunkDeque 分块无界双端队列。
-6. ImmutableLinkedHastSet 保持插入序的不可变HashSet。
-7. ImmutableLinkedDictionary 保持插入序的不可变Dictionary。
-
-LinkedDictionary特殊接口示例：
-
-```csharp
-
-    public class LinkedDictionary<TKey,TValue> {
-        TKey PeekFirstKey();
-        TKey PeekLastKey();
-        void AddFirst(TKey key, TValue value);
-        void AddLast(TKey key, TValue value);
-        KeyValuePair<TKey, TValue> RemoveFirst();
-        KeyValuePair<TKey, TValue> RemoveLast();
-        TValue GetAndMoveToFirst(TKey key);        
-        TValue GetAndMoveToLast(TKey key);
-    }
-    
-```
-
-LinkedDictionary采用线性探测法解决hash冲突，通过在GetNode方法中记录线性探测次数，统计查询数据如下：
-
-1. 1W个int类型key，查询所有key，线性探测总次数 4000~5000， 平均值小于1
-2. 10W个int类型key，查询所有key，线性探测总次数 11000~12000，平均值小于1
-3. 1W个string类型key，长度24，查询所有key，线性探测总次数 4000~5000，平均值小于1 -- 与int相似，且调整长度几无变化。
-4. 10W个string类型key，长度24，查询所有key，线性探测总次数 11000~12000，平均值小于1 -- 与int相似，且调整长度几无变化。
-
----
-
-## APT包
+### Commons.APT模块(源代码生成器)
 
 APT包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
 我在java端使用javapoet生成各类辅助类已有5年左右，这是个非常好用的轮子的，但C#端没有合适的等价物，于是自己移植了一版。
 
-用言语描述javapoet不够直观，我们直接看代码生成器和生成的代码（可运行测试用例）（代码生成器的最佳示例可见Dson和BTree库）。
+### Disruptor模块(TODO)
 
-`GeneratorTest`测试类（生成器）代码如下：
+Disruptor是LMAX的Disruptor的C#端实现，但并不是直接实现，而是修改后的实现，与我重写Java版的Disruptor模块一致。
 
-```csharp
-    private static TypeSpec BuildClassType() {
-        TypeName dictionaryTypeName = TypeName.Get(typeof(LinkedDictionary<string, object>));
-        AttributeSpec processorAttribute = AttributeSpec.NewBuilder(ClassName.Get(typeof(GeneratedAttribute)))
-            .Constructor(CodeBlock.Of("$S", "GeneratorTest")) // 字符串$S
-            .Build();
-
-        AttributeSpec attributeSpec = AttributeSpec.NewBuilder(ClassName.Get(typeof(MyCodeAttribute)))
-            .AddMember("Name", CodeBlock.Of("$S", "wjybxx"))
-            .AddMember("Age", CodeBlock.Of("29"))
-            .Build();
-
-        TypeSpec classType = TypeSpec.NewClassBuilder("ClassBean")
-            .AddModifiers(Modifiers.Public)
-            .AddAttribute(processorAttribute)
-            .AddAttribute(attributeSpec)
-            // 字段
-            .AddField(TypeName.INT, "age", Modifiers.Private)
-            .AddField(TypeName.STRING, "name", Modifiers.Private)
-            .AddSpec(FieldSpec.NewBuilder(dictionaryTypeName, "blackboard", Modifiers.Public | Modifiers.Readonly)
-                .Initializer("new $T()", dictionaryTypeName)
-                .Build())
-            // 构造函数
-            .AddSpec(MethodSpec.NewConstructorBuilder()
-                .AddModifiers(Modifiers.Public)
-                .ConstructorInvoker(CodeBlock.Of("this($L, $S)", 29, "wjybxx"))
-                .Build())
-            .AddSpec(MethodSpec.NewConstructorBuilder()
-                .AddModifiers(Modifiers.Public)
-                .AddParameter(TypeName.INT, "age")
-                .AddParameter(TypeName.STRING, "name")
-                .Code(CodeBlock.NewBuilder()
-                    .AddStatement("this.age = age")
-                    .AddStatement("this.name = name")
-                    .Build())
-                .Build())
-            // 属性
-            .AddSpec(PropertySpec.NewBuilder(TypeName.INT, "Age", Modifiers.Public)
-                .Getter(CodeBlock.Of("age").WithExpressionStyle(true))
-                .Setter(CodeBlock.Of("age = value").WithExpressionStyle(true))
-                .Build())
-            .AddSpec(PropertySpec.NewBuilder(TypeName.BOOL, "IsOnline", Modifiers.Private)
-                .Initializer("$L", false)
-                .Build()
-            )
-            // 普通方法
-            .AddSpec(MethodSpec.NewMethodBuilder("Sum")
-                .AddDocument("求int的和")
-                .AddModifiers(Modifiers.Public)
-                .Returns(TypeName.INT)
-                .AddParameter(TypeName.INT, "a")
-                .AddParameter(TypeName.INT, "b")
-                .Code(CodeBlock.NewBuilder()
-                    .AddStatement("return a + b")
-                    .Build())
-                .Build())
-            .AddSpec(MethodSpec.NewMethodBuilder("SumNullable")
-                .AddDocument("求空int的和")
-                .AddModifiers(Modifiers.Public | Modifiers.Extern)
-                .Returns(TypeName.INT.MakeNullableType())
-                .AddParameter(TypeName.INT.MakeNullableType(), "a")
-                .AddParameter(TypeName.INT, "b")
-                .Build())
-            .AddSpec(MethodSpec.NewMethodBuilder("SumRef")
-                .AddDocument("求ref int的和")
-                .AddModifiers(Modifiers.Public | Modifiers.Extern)
-                .Returns(TypeName.INT)
-                .AddParameter(TypeName.INT.MakeByRefType(), "a")
-                .AddParameter(TypeName.INT.MakeByRefType(ByRefTypeName.Kind.In), "b")
-                .Build())
-            .Build();
-        return classType;
-    }
-```
-
-下面是测试`GeneratorTest`类生成的代码：
-
-```csharp
-    using Wjybxx.Commons.Attributes;
-    using Commons.Tests.Apt;
-    using Wjybxx.Commons.Collections;
-    
-    namespace Wjybxx.Commons.Apt;
-    
-    [Generated("GeneratorTest")]
-    [MyCode(Name = "wjybxx", Age = 29)]
-    public class ClassBean 
-    {
-      private int age;
-      private string name;
-      public readonly LinkedDictionary<string, object> blackboard = new LinkedDictionary<string, object>();
-    
-      public ClassBean()
-       : this(29, "wjybxx") {
-      }
-    
-      public ClassBean(int age, string name) {
-        this.age = age;
-        this.name = name;
-      }
-    
-      public int Age {
-        get => age;
-        set => age = value;
-      }
-    
-      private bool IsOnline { get; set; } = false;
-    
-      /// <summary>
-      /// 求int的和
-      /// </summary>
-      public int Sum(int a, int b) {
-        return a + b;
-      }
-    
-      /// <summary>
-      /// 求空int的和
-      /// </summary>
-      public extern int? SumNullable(int? a, int b);
-    
-      /// <summary>
-      /// 求ref int的和
-      /// </summary>
-      public extern int SumRef(ref int a, in int b);
-    }
-```
-
-## Concurrent包
+### Commons.Concurrent模块
 
 1. 提供了Java的Executor和Future框架，并提供了对应的await语法支持。
 2. 提供了默认的EventLoop实现。
 
-PS：c#端不打算再实现Disruptor库。
+### Dson.Core
 
-### await语法的讨论
+Dson是我设计的文本格式，Dson.Core则是Dson文本格式的C#端实现。
 
-C#的Concurrent包，个人用得非常难受。究其原因：上下文(sync/execution)的传递是隐式的。这导致我们对线程和任务上下文的控制力度较弱，部分功能编写起来十分难受。  
-以我的使用经验来看，C#的await/async语法会导致这样的结果：**使简单的问题更简单，使复杂的问题更复杂**。
+了解Dson可阅读：[Dson文本](../docs/Dson.md)
 
-多线程编程从来都不是个简单问题，单线程语言的`await/async`不涉及复杂的线程和上下文切换问题，因此使用起来简单；
-在多线程下，存在上下文和线程的控制问题，按照单线程语言`async/await`语法进行设计，只是让代码看起来简单了，实际上不论是语言的开发者，还是语言的使用者，面临的问题都更多了。
+### Dson.Codec
 
-个人认为， 多线程下的`await`最佳实现应当允许传参，允许指定`await`后续操作的线程，以及其它调度选项。
+Dson.Codec是基于Dson文本的序列化实现，支持以下特性：
 
-```csharp
-    await future executor;    
-    await future executor options;
-```
+1. **支持泛型**
+2. 默认值可选写入
+3. 指定数字字段的编码格式(apt)
+4. 支持多态解析，指定指定默认解码类型(apt)
+5. **字段级别的读写代理(核心功能)**(apt)
+6. 序列化钩子方法(apt)
+7. 单例支持(apt)
+8. 为外部库类生成Codec(apt)
+9. 外部静态代理(apt)
 
----
+由于我们提供了强大灵活的Apt，因此不支持运行时反射编解码类型。
+
+### Dson.Apt
+
+Dson.Apt是为Dson.Codec提供的工具，用于生成目标类的编解码类（源代码），以避免运行时的反射开销。
+由于C#的编译时源码生成器尚不成熟，使用案例甚少，因此Dson.Apt是基于反射分析类型的，因此尽量避免循环依赖 -- 目标Bean最好是独立的Assembly。
+
+PS：Dson.Apt的最佳应用是`Btree.Codec`模块，行为树的所有Codec都是通过Apt自动生成的，而非手动编写的。
+
+## Btree.Core
+
+btree-core是从bigcat中分离出来的，为保持最小依赖，核心包只依赖我个人的base包和jsr305注解包；
+但行为树是需要能序列化的，这样才能在编辑器中编辑；在bigcat仓库的时候，btree模块依赖了我的dson-codec包，
+但dson-codec包的类比较多，依赖也比较大(尤其是fastutil)，因此我将行为树的codec配置信息抽取为btree-codec模块，可选择性引入。
+
+## Btree.Codec
+
+btree-codec是基于dson-codec的行为树序列化实现；btree-codec模块仅有几个配置类，真正的codec是基于dson-apt注解自动生成的。
+如果你需要使用基于dson的行为树序列化实现，可以添加btree-codec到项目。
 
 ## 个人公众号(游戏开发)
 
-![写代码的诗人](https://github.com/hl845740757/commons/blob/dev/docs/res/qrcode_for_wjybxx.jpg)
+![写代码的诗人](../docs/res/qrcode_for_wjybxx.jpg)
 
-## ReleaseNotes
-
-### 1.0.15
-
-1. APT库相关支持（部分工具方法）
-2. 集合的默认迭代器修改为结构体类型，并对外开放

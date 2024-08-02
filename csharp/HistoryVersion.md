@@ -1,5 +1,19 @@
 # 历史版本记录
 
+### 1.1.0.RC
+
+1. 增加ArrayPool和简单并发对象池
+2. 优化LinkedDictionary和LinkedHashSet的Node为结构体，减少GC
+3. 删除GenericDictionary中的UnsafeKeys接口
+4. 增加`ImmutableList`、`ImmutableLinkedHashSet`、`ImmutableLinkedDictionary`，以兼容Unity。
+5. 语法降级C#9，支持Dotnet5和Unity2021 （unity项目需下载源码编译）
+6. 一些bug修复
+
+### 1.0.14~1.0.15
+
+1. APT库相关支持（部分工具方法）
+2. 集合的默认迭代器修改为结构体类型，并对外开放
+
 ### 1.0.13
 
 1. bugfix - MultiChunkQueue TryRemove* 接口在队列为空时抛出异常.

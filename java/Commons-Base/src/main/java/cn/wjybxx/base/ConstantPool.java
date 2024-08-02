@@ -105,7 +105,7 @@ public class ConstantPool<T extends Constant> {
      *
      * @param builder 构建常量需要的数据--请确保创建的对象仍然是不可变的。
      */
-    public final T newInstance(Constant.Builder builder) {
+    public final T newInstance(Constant.Builder<? extends T> builder) {
         Objects.requireNonNull(builder, "builder");
         return createOrThrow(builder);
     }
@@ -195,7 +195,7 @@ public class ConstantPool<T extends Constant> {
     /**
      * 创建一个常量，或者已存在关联的常量时则抛出异常
      */
-    private T createOrThrow(Constant.Builder builder) {
+    private T createOrThrow(Constant.Builder<? extends T> builder) {
         String name = builder.getName();
         T constant = constants.get(name);
         if (constant == null) {
@@ -209,14 +209,12 @@ public class ConstantPool<T extends Constant> {
     }
 
     @SuppressWarnings("StringEquality")
-    private T newConstant(Constant.Builder builder) {
+    private T newConstant(Constant.Builder<? extends T> builder) {
         final int id = idGenerator.getAndIncrement();
-        builder.setId(poolId, id);
-        if (builder.isRequireCacheIndex()) {
-            builder.setCacheIndex(cacheIndexGenerator.getAndIncrement());
-        }
+        final int cacheIndex = builder.isRequireCacheIndex() ? cacheIndexGenerator.getAndIncrement() : -1;
+        builder.setId(poolId, id, cacheIndex);
 
-        @SuppressWarnings("unchecked") final T result = (T) builder.build();
+        final T result = builder.build();
         // 校验实现
         Objects.requireNonNull(result, "result");
         if (result.id() != id
@@ -230,7 +228,7 @@ public class ConstantPool<T extends Constant> {
 
     // endregion
 
-    private static class SimpleBuilder<T extends Constant> extends Constant.Builder {
+    private static class SimpleBuilder<T extends Constant> extends Constant.Builder<T> {
 
         private final ConstantFactory<T> factory;
 
@@ -240,7 +238,7 @@ public class ConstantPool<T extends Constant> {
         }
 
         @Override
-        public Constant build() {
+        public T build() {
             return factory.newConstant(this);
         }
     }

@@ -47,16 +47,13 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
 
     #region builder
 
-    /// <summary>
-    /// 常量对象构建器
-    /// </summary>
-    public abstract class Builder
+    public class Builder
     {
         private int? _id;
         private readonly string _name;
         private string? _poolId;
 
-        private int cacheIndex = -1;
+        private int _cacheIndex = -1;
         private bool requireCacheIndex;
 
         public Builder(string name) {
@@ -67,14 +64,16 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
         /// 设置常量的id - id通常由管理常量的常量池分配
         /// </summary>
         /// <param name="poolId">声明常量的池</param>
-        /// <param name="value">分配的常量id</param>
+        /// <param name="id">分配的常量id</param>
+        /// <param name="cacheIndex">分配的缓存索引</param>
         /// <exception cref="IllegalStateException"></exception>
-        public void SetId(string poolId, int value) {
+        public void SetId(string poolId, int id, int cacheIndex = -1) {
             if (_id.HasValue) {
                 throw new IllegalStateException("id cannot be initialized repeatedly");
             }
-            _id = value;
+            _id = id;
             _poolId = poolId;
+            _cacheIndex = cacheIndex;
         }
 
         public int GetIdOrThrow() {
@@ -82,18 +81,6 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
                 return _id.Value;
             }
             throw new IllegalStateException("id has not been initialized");
-        }
-
-        /** 设置高速缓存索引 -- 该方法由{@link ConstantPool}调用 */
-        public Builder SetCacheIndex(int cacheIndex) {
-            this.cacheIndex = cacheIndex;
-            return this;
-        }
-
-        /** 设置是否需要分配高速缓存索引 */
-        public Builder SetRequireCacheIndex(bool requireCacheIndex) {
-            this.requireCacheIndex = requireCacheIndex;
-            return this;
         }
 
         /// <summary>
@@ -115,15 +102,30 @@ public interface IConstant : IComparable<IConstant>, IEquatable<IConstant>
         /// 获取分配的高速缓存索引 -- -1表示未设置。
         /// 注意：<see cref="ConstantPool{T}"/>仅仅分配index，而真正的实现在于常量的使用者。
         /// </summary>
-        public int CacheIndex => cacheIndex;
+        public int CacheIndex => _cacheIndex;
 
-        public bool RequireCacheIndex => requireCacheIndex;
+        /// <summary>
+        /// 设置是否需要分配高速缓存索引
+        /// </summary>
+        public bool RequireCacheIndex {
+            get => requireCacheIndex;
+            set => requireCacheIndex = value;
+        }
+    }
+
+    /// <summary>
+    /// 常量对象构建器
+    /// </summary>
+    public abstract class Builder<T> : Builder where T : IConstant
+    {
+        protected Builder(string name) : base(name) {
+        }
 
         /// <summary>
         /// 构建常量对象
         /// </summary>
         /// <returns></returns>
-        public abstract IConstant Build();
+        public abstract T Build();
     }
 
     /// <summary>

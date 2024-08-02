@@ -8,13 +8,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Concurrent",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Apt", "Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj", "{F74A7DE9-2D52-4A2F-9AF9-6EA085FF728E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Dson", "Wjybxx.Dson.Core\Wjybxx.Dson.csproj", "{85A4DD0E-E41E-4DF3-89F6-5719F2EAC738}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Dson.Core", "Wjybxx.Dson.Core\Wjybxx.Dson.Core.csproj", "{85A4DD0E-E41E-4DF3-89F6-5719F2EAC738}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Dson.Codec", "Wjybxx.Dson.Codec\Wjybxx.Dson.Codec.csproj", "{4A871764-82E8-44F0-892B-8F03B62E6248}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Dson.Apt", "Wjybxx.Dson.Apt\Wjybxx.Dson.Apt.csproj", "{6F1AB306-985B-434D-90B2-1AF8F2179643}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Dson.Tests", "Wjybxx.Dson.Tests\Wjybxx.Dson.Tests.csproj", "{8EF1AB21-1AC9-4630-880E-75CFC2F3CDCF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Disruptor", "Wjybxx.Disruptor\Wjybxx.Disruptor.csproj", "{5FEDD358-5AE1-444E-BF59-6CB7F7500165}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,5 +56,9 @@ Global
 		{8EF1AB21-1AC9-4630-880E-75CFC2F3CDCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EF1AB21-1AC9-4630-880E-75CFC2F3CDCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EF1AB21-1AC9-4630-880E-75CFC2F3CDCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FEDD358-5AE1-444E-BF59-6CB7F7500165}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FEDD358-5AE1-444E-BF59-6CB7F7500165}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FEDD358-5AE1-444E-BF59-6CB7F7500165}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FEDD358-5AE1-444E-BF59-6CB7F7500165}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

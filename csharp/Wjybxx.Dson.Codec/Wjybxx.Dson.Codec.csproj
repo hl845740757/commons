@@ -24,7 +24,7 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <NeutralLanguage>zh-Hans</NeutralLanguage>
 
-        <PackageReadmeFile>DsonCodec.md</PackageReadmeFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <EmbedAllSources>true</EmbedAllSources>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <TargetFrameworks>net5.0;net6.0;net7.0;</TargetFrameworks>
@@ -39,10 +39,10 @@
     </PropertyGroup>
     
     <ItemGroup>
-<!--        <None Include="DsonCodec.md" Pack="true" PackagePath="\" />-->
+        <None Include="README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
     
     <ItemGroup>
-        <ProjectReference Include="..\Wjybxx.Dson.Core\Wjybxx.Dson.csproj" />
+        <ProjectReference Include="..\Wjybxx.Dson.Core\Wjybxx.Dson.Core.csproj" />
     </ItemGroup>
 </Project>
