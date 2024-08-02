@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>cn.wjybxx.commons</groupId>
+        <artifactId>commons-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
+    <artifactId>dson-codec</artifactId>
+
+    <name>Dson-Codec</name>
+    <description>Dson对象序列化模块</description>
+    <url>https://github.com/hl845740757/Dson</url>
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.wjybxx.commons</groupId>
+            <artifactId>dson-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>it.unimi.dsi</groupId>
+            <artifactId>fastutil-core</artifactId>
+            <version>${fastutil.version}</version>
+        </dependency>
+    </dependencies>
+</project>

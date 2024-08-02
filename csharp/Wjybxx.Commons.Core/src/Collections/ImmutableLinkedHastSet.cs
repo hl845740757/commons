@@ -88,7 +88,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
 
     #region factory
 
-    public static readonly ImmutableLinkedHastSet<TKey> Empty = new ImmutableLinkedHastSet<TKey>(Array.Empty<TKey>());
+    public static ImmutableLinkedHastSet<TKey> Empty { get; } = new ImmutableLinkedHastSet<TKey>(Array.Empty<TKey>());
 
     public static ImmutableLinkedHastSet<TKey> Create(TKey source, IEqualityComparer<TKey>? keyComparer = null) {
         return new ImmutableLinkedHastSet<TKey>(new[] { source }, keyComparer);

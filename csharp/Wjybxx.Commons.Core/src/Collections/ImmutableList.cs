@@ -48,7 +48,7 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
 
     #region factory
 
-    public static readonly ImmutableList<T> Empty = new ImmutableList<T>(Array.Empty<T>());
+    public static ImmutableList<T> Empty { get; } = new ImmutableList<T>(Array.Empty<T>());
 
     public static ImmutableList<T> Create(T source) {
         return new ImmutableList<T>(source);

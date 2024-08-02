@@ -19,6 +19,12 @@
         <module>apt-base</module>
         <module>disruptor</module>
         <module>concurrent</module>
+
+        <module>dson-core</module>
+        <module>dson-codec</module>
+        <module>dson-apt</module>
+        <module>dson-protobuf</module>
+
         <module>mongo-codec</module>
     </modules>
 
@@ -66,15 +72,17 @@
 
         <!-- 基础依赖-->
         <jsr305.version>3.0.2</jsr305.version>
+
         <!-- 子模块依赖 -->
         <fastutil.version>8.5.13</fastutil.version>
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <commons-io.version>2.16.1</commons-io.version>
         <commons-codec.version>1.17.0</commons-codec.version>
         <guava.version>33.2.0-jre</guava.version>
-        <!-- -->
+
         <javapoet.version>1.13.0</javapoet.version>
         <bson.version>4.11.2</bson.version>
+        <pb.version>3.25.1</pb.version>
     </properties>
 
     <!-- 基础依赖/全局依赖 -->
@@ -99,6 +107,20 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons-lang3.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -149,6 +171,18 @@
                     <compilerArgs>
                         <arg>-parameters</arg>
                     </compilerArgs>
+                    <annotationProcessorPaths>
+                        <annotationProcessorPath>
+                            <groupId>com.google.auto.service</groupId>
+                            <artifactId>auto-service</artifactId>
+                            <version>1.1.1</version>
+                        </annotationProcessorPath>
+                        <annotationProcessorPath>
+                            <groupId>com.google.code.findbugs</groupId>
+                            <artifactId>jsr305</artifactId>
+                            <version>3.0.2</version>
+                        </annotationProcessorPath>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <!-- 源码插件 -->

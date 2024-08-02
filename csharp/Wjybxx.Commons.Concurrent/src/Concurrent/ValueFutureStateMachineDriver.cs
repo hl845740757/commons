@@ -176,7 +176,7 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
 
     public void OnCompletedVoid(int reentryId, IPromise<int> promise) {
         ValidateReentryId(reentryId);
-        _promise.OnCompleted(SetVoidInvoker, promise);
+        _promise.OnCompleted(setVoidInvoker, promise);
     }
 
     public void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise) {
@@ -192,7 +192,7 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
         throw new Exception("ValueFutureDriver has been reused");
     }
 
-    private static readonly Action<IFuture<T>, object> SetVoidInvoker = (future, state) => {
+    private static readonly Action<IFuture<T>, object> setVoidInvoker = (future, state) => {
         IPromise<int> promise = (IPromise<int>)state;
         if (future.IsSucceeded) {
             promise.TrySetResult(0);

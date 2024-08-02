@@ -25,12 +25,12 @@ public static class TimeProviders
 {
     /** 获取系统[毫秒时间戳]实时时间提供器 */
     public static ITimeProvider SystemMillisProvider() {
-        return CSystemMillisProvider.Instance;
+        return CSystemMillisProvider.INSTANCE;
     }
 
     /** 获取系统[Tick]实时时间提供器 */
     public static ITimeProvider SystemTickProvider() {
-        return CSystemTickProvider.Instance;
+        return CSystemTickProvider.INSTANCE;
     }
 
     /// <summary>
@@ -55,7 +55,7 @@ public static class TimeProviders
 
     private class CSystemTickProvider : ITimeProvider
     {
-        internal static readonly CSystemTickProvider Instance = new();
+        internal static readonly CSystemTickProvider INSTANCE = new();
 
         public long Current => ObjectUtil.SystemTicks();
 
@@ -66,7 +66,7 @@ public static class TimeProviders
 
     private class CSystemMillisProvider : ITimeProvider
     {
-        internal static readonly CSystemMillisProvider Instance = new();
+        internal static readonly CSystemMillisProvider INSTANCE = new();
 
         public long Current => DatetimeUtil.CurrentEpochMillis();
 

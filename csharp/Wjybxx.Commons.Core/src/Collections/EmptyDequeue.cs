@@ -172,14 +172,14 @@ public class EmptyDequeue<T> : IDeque<T>
     }
 
     public IEnumerator<T> GetEnumerator() {
-        return Itr;
+        return ITERATOR;
     }
 
     public IEnumerator<T> GetReversedEnumerator() {
-        return Itr;
+        return ITERATOR;
     }
 
-    private static readonly Iterator Itr = new Iterator();
+    private static readonly Iterator ITERATOR = new Iterator();
 
     private class Iterator : ISequentialEnumerator<T>
     {

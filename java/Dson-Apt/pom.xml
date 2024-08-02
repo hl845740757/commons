@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>cn.wjybxx.commons</groupId>
+        <artifactId>commons-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
+    <artifactId>dson-apt</artifactId>
+
+    <name>Dson-Apt</name>
+    <description>Dson序列化注解处理器</description>
+    <url>https://github.com/hl845740757/Dson</url>
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.wjybxx.commons</groupId>
+            <artifactId>apt-base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- 只需引入注解，注解处理器在编译插件中指定 -->
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service-annotations</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+    </dependencies>
+</project>

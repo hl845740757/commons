@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Collections
@@ -31,7 +32,7 @@ namespace Wjybxx.Commons.Collections
 public class BoundedArrayDeque<T> : IDeque<T>
 {
     /** 元素类型是否是引用类型 */
-    private static readonly bool valueIsRefType = !typeof(T).IsValueType;
+    private static readonly bool valueIsRefType = RuntimeHelpers.IsReferenceOrContainsReferences<T>();
 
     private T[] _elements;
     private readonly DequeOverflowBehavior _overflowBehavior;

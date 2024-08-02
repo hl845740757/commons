@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>cn.wjybxx.commons</groupId>
+        <artifactId>commons-parent</artifactId>
+        <version>${revision}</version>
+    </parent>
+    <artifactId>dson-core</artifactId>
+
+    <name>Dson-Core</name>
+    <description>Dson核心模块</description>
+    <url>https://github.com/hl845740757/Dson</url>
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.wjybxx.commons</groupId>
+            <artifactId>base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- 用于性能对比测试 -->
+        <!-- https://mvnrepository.com/artifact/org.mongodb/bson -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>bson</artifactId>
+            <version>${bson.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

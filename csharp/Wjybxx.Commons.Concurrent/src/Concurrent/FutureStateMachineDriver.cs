@@ -99,14 +99,14 @@ internal sealed class FutureStateMachineDriver<T, S> : Promise<T>, IFutureStateM
     }
 
     public void OnCompletedVoid(int reentryId, IPromise<int> promise) {
-        OnCompleted(SetVoidInvoker, promise);
+        OnCompleted(setVoidInvoker, promise);
     }
 
     public void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise) {
         IPromise<T>.SetPromise(promise, this);
     }
 
-    private static readonly Action<IFuture<T>, object> SetVoidInvoker = (future, state) => {
+    private static readonly Action<IFuture<T>, object> setVoidInvoker = (future, state) => {
         IPromise<int> promise = (IPromise<int>)state;
         if (future.IsSucceeded) {
             promise.TrySetResult(0);

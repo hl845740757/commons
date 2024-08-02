@@ -8,6 +8,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Concurrent",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Apt", "Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj", "{F74A7DE9-2D52-4A2F-9AF9-6EA085FF728E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Dson", "Wjybxx.Dson.Core\Wjybxx.Dson.csproj", "{85A4DD0E-E41E-4DF3-89F6-5719F2EAC738}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Dson.Codec", "Wjybxx.Dson.Codec\Wjybxx.Dson.Codec.csproj", "{4A871764-82E8-44F0-892B-8F03B62E6248}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Dson.Apt", "Wjybxx.Dson.Apt\Wjybxx.Dson.Apt.csproj", "{6F1AB306-985B-434D-90B2-1AF8F2179643}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Dson.Tests", "Wjybxx.Dson.Tests\Wjybxx.Dson.Tests.csproj", "{8EF1AB21-1AC9-4630-880E-75CFC2F3CDCF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +38,21 @@ Global
 		{F74A7DE9-2D52-4A2F-9AF9-6EA085FF728E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F74A7DE9-2D52-4A2F-9AF9-6EA085FF728E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F74A7DE9-2D52-4A2F-9AF9-6EA085FF728E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{85A4DD0E-E41E-4DF3-89F6-5719F2EAC738}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{85A4DD0E-E41E-4DF3-89F6-5719F2EAC738}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{85A4DD0E-E41E-4DF3-89F6-5719F2EAC738}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{85A4DD0E-E41E-4DF3-89F6-5719F2EAC738}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A871764-82E8-44F0-892B-8F03B62E6248}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A871764-82E8-44F0-892B-8F03B62E6248}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A871764-82E8-44F0-892B-8F03B62E6248}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A871764-82E8-44F0-892B-8F03B62E6248}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F1AB306-985B-434D-90B2-1AF8F2179643}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F1AB306-985B-434D-90B2-1AF8F2179643}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F1AB306-985B-434D-90B2-1AF8F2179643}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F1AB306-985B-434D-90B2-1AF8F2179643}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EF1AB21-1AC9-4630-880E-75CFC2F3CDCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EF1AB21-1AC9-4630-880E-75CFC2F3CDCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EF1AB21-1AC9-4630-880E-75CFC2F3CDCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EF1AB21-1AC9-4630-880E-75CFC2F3CDCF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

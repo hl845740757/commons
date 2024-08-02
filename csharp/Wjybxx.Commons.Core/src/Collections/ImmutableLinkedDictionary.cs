@@ -93,7 +93,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     #region factory
 
-    public static readonly ImmutableLinkedDictionary<TKey, TValue> Empty = new(Array.Empty<KeyValuePair<TKey, TValue>>());
+    public static ImmutableLinkedDictionary<TKey, TValue> Empty { get; } = new(Array.Empty<KeyValuePair<TKey, TValue>>());
 
     public static ImmutableLinkedDictionary<TKey, TValue> Create(TKey key, TValue value,
                                                                  IEqualityComparer<TKey>? keyComparer = null) {

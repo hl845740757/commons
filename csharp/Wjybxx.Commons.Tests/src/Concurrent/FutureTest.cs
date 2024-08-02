@@ -27,7 +27,7 @@ namespace Commons.Tests.Concurrent;
 public class FutureTest
 {
     private static readonly IEventLoop globalEventLoop = EventLoopBuilder.NewBuilder(new DefaultThreadFactory("consumer", true)).Build();
-    private static readonly IExecutor Executor = new ImmediateExecutor();
+    private static readonly IExecutor executor = new ImmediateExecutor();
 
     [Test]
     public void TestFutureAwaitable() {
@@ -36,8 +36,8 @@ public class FutureTest
     }
 
     private static async IFuture<int> CountAsync() {
-        IFutureTask<int> task = PromiseTask.OfFunction(() => 1, null, 0, new Promise<int>(Executor));
-        Executor.Execute(task);
+        IFutureTask<int> task = PromiseTask.OfFunction(() => 1, null, 0, new Promise<int>(executor));
+        executor.Execute(task);
 
         IPromise<int> future = task.Future;
         Assert.IsFalse(globalEventLoop.InEventLoop(), "0. before globalEventLoop.InEventLoop() == true");
