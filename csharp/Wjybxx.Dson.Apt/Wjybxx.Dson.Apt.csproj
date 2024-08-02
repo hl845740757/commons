@@ -18,8 +18,8 @@
         <Owners>wjybxx(845740757@qq.com)</Owners>
         <Copyright>Copyright 2023-2024 wjybxx(845740757@qq.com)</Copyright>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-        <PackageProjectUrl>https://github.com/hl845740757/dson</PackageProjectUrl>
-        <PackageReleaseNotes>https://github.com/hl845740757/dson/releases</PackageReleaseNotes>
+        <PackageProjectUrl>https://github.com/hl845740757/commons</PackageProjectUrl>
+        <PackageReleaseNotes>https://github.com/hl845740757/commons/releases</PackageReleaseNotes>
 
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <NeutralLanguage>zh-Hans</NeutralLanguage>

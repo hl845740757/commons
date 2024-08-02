@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>annotations</Nullable>
+        <LangVersion>10</LangVersion>
+        <RootNamespace>Wjybxx.BTree</RootNamespace>
+
+        <AssemblyName>Wjybxx.BTree</AssemblyName>
+        <PackageId>Wjybxx.BTree</PackageId>
+        <PackageVersion>1.0.0-rc3</PackageVersion>
+
+        <Title>Wjybxx.BTree</Title>
+        <Description>BTree-非典型的行为树实现</Description>
+        <PackageTags>wjybxx;task;btree;game-ai;</PackageTags>
+
+        <Authors>wjybxx(845740757@qq.com)</Authors>
+        <Owners>wjybxx(845740757@qq.com)</Owners>
+        <Copyright>Copyright 2024 wjybxx(845740757@qq.com)</Copyright>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/hl845740757/commons</PackageProjectUrl>
+        <PackageReleaseNotes>https://github.com/hl845740757/commons/releases</PackageReleaseNotes>
+
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <NeutralLanguage>zh-Hans</NeutralLanguage>
+
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <EmbedAllSources>true</EmbedAllSources>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <TargetFrameworks>net5.0;net6.0;net7.0;</TargetFrameworks>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <NoWarn>1701;1702;1591;</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <NoWarn>1701;1702;1591;</NoWarn>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Wjybxx.Commons.Core" Version="1.1.0-rc3" />
+        <PackageReference Include="Serilog" Version="3.1.1" />
+        <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
+        <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.0" />
+        <PackageReference Include="Serilog.Enrichers.Environment" Version="2.3.0" />
+        <PackageReference Include="Serilog.Enrichers.Process" Version="2.0.2" />
+        <PackageReference Include="Serilog.Enrichers.Thread" Version="3.1.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
+        <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    </ItemGroup>
+</Project>

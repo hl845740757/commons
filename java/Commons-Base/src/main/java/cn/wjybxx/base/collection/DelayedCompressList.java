@@ -191,7 +191,8 @@ public final class DelayedCompressList<E> {
         if (minCapacity <= oldCapacity) {
             return;
         }
-        int newCapacity = oldCapacity + oldCapacity >> 1;
+        int newCapacity = Math.clamp((long) oldCapacity + oldCapacity >> 1,
+                4, Integer.MAX_VALUE - 8);
         if (newCapacity < minCapacity) {
             newCapacity = minCapacity;
         }

@@ -1,0 +1,68 @@
+﻿#region LICENSE
+
+// Copyright 2024 wjybxx(845740757@qq.com)
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#endregion
+
+namespace Wjybxx.BTree.Decorator
+{
+/// <summary>
+/// 循环节点抽象
+/// 注意：该模板类默认支持了尾递归优化，如果子类没有重写<see cref="Execute"/>方法，
+/// 那么在<see cref="Task{T}.OnChildCompleted"/>方法中还需要判断是否启用了尾递归优化，如果启用了尾递归优化，
+/// 也需要调用<see cref="Task{T}.Template_Execute"/>方法。
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public abstract class LoopDecorator<T> : Decorator<T> where T : class
+{
+    protected LoopDecorator() {
+    }
+
+    protected LoopDecorator(Task<T> child) : base(child) {
+    }
+
+    protected override void Execute() {
+        if (IsTailRecursion) {
+            // 尾递归优化--普通循环代替递归
+            int reentryId = ReentryId;
+            while (true) {
+                Task<T>? inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
+                if (inlinedRunningChild != null) {
+                    Template_RunInlinedChild(inlinedRunningChild, inlineHelper, child);
+                } else if (child.IsRunning) {
+                    child.Template_Execute();
+                } else {
+                    Template_RunChild(child);
+                }
+                if (CheckCancel(reentryId)) { // 得出结果或被取消
+                    return;
+                }
+                if (child.IsRunning) { // 子节点未结束
+                    return;
+                }
+            }
+        } else {
+            Task<T>? inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
+            if (inlinedRunningChild != null) {
+                Template_RunInlinedChild(inlinedRunningChild, inlineHelper, child);
+            } else if (child.IsRunning) {
+                child.Template_Execute();
+            } else {
+                Template_RunChild(child);
+            }
+        }
+    }
+}
+}

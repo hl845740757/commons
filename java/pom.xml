@@ -16,14 +16,15 @@
     <modules>
         <module>Commons-Agent</module>
         <module>Commons-Base</module>
-        <module>Commons-Apt-Base</module>
         <module>Disruptor</module>
         <module>Commons-Concurrent</module>
 
         <module>Dson-Core</module>
         <module>Dson-Codec</module>
-        <module>Dson-Apt</module>
         <module>Dson-Protobuf</module>
+
+        <module>BTree-Core</module>
+        <module>BTree-Codec</module>
 
         <module>Mongo-Codec</module>
     </modules>
@@ -181,6 +182,16 @@
                             <groupId>com.google.code.findbugs</groupId>
                             <artifactId>jsr305</artifactId>
                             <version>3.0.2</version>
+                        </annotationProcessorPath>
+                        <annotationProcessorPath>
+                            <groupId>cn.wjybxx.commons</groupId>
+                            <artifactId>apt-base</artifactId>
+                            <version>${project.version}</version>
+                        </annotationProcessorPath>
+                        <annotationProcessorPath>
+                            <groupId>cn.wjybxx.commons</groupId>
+                            <artifactId>dson-apt</artifactId>
+                            <version>${project.version}</version>
                         </annotationProcessorPath>
                     </annotationProcessorPaths>
                 </configuration>

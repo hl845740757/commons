@@ -735,6 +735,8 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             }
             preNodePos = pos;
             nextIndex = node.next;
+
+            node = default; // help gc
         }
         this._head = head;
         this._tail = preNodePos;
