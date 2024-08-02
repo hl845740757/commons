@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>cn.wjybxx.commons</groupId>
-            <artifactId>apt-base</artifactId>
+            <artifactId>commons-apt-base</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- 只需引入注解，注解处理器在编译插件中指定 -->

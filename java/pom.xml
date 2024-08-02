@@ -14,18 +14,18 @@
     <url>https://github.com/hl845740757/commons</url>
 
     <modules>
-        <module>agent</module>
-        <module>base</module>
-        <module>apt-base</module>
-        <module>disruptor</module>
-        <module>concurrent</module>
+        <module>Commons-Agent</module>
+        <module>Commons-Base</module>
+        <module>Commons-Apt-Base</module>
+        <module>Disruptor</module>
+        <module>Commons-Concurrent</module>
 
-        <module>dson-core</module>
-        <module>dson-codec</module>
-        <module>dson-apt</module>
-        <module>dson-protobuf</module>
+        <module>Dson-Core</module>
+        <module>Dson-Codec</module>
+        <module>Dson-Apt</module>
+        <module>Dson-Protobuf</module>
 
-        <module>mongo-codec</module>
+        <module>Commons-Mongo-Codec</module>
     </modules>
 
     <!-- 证书 -->

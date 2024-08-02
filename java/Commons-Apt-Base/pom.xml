@@ -8,15 +8,15 @@
         <artifactId>commons-parent</artifactId>
         <version>${revision}</version>
     </parent>
-    <artifactId>apt-base</artifactId>
+    <artifactId>commons-apt-base</artifactId>
 
     <name>Apt-Base</name>
     <description>注解处理器的基础模块</description>
     <url>https://github.com/hl845740757/commons</url>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -27,7 +27,7 @@
         </dependency>
         <dependency>
             <groupId>cn.wjybxx.commons</groupId>
-            <artifactId>base</artifactId>
+            <artifactId>commons-base</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- 只包含注解即可 -->

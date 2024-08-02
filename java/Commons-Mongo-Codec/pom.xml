@@ -8,17 +8,19 @@
         <artifactId>commons-parent</artifactId>
         <version>${revision}</version>
     </parent>
-    <artifactId>agent</artifactId>
+    <artifactId>commons-mongo-codec</artifactId>
 
-    <name>Agent</name>
-    <description>热更新Agent模块；保持最小jar包</description>
+    <name>Mongo-Codec</name>
+    <description>mongo-codec适配器</description>
     <url>https://github.com/hl845740757/commons</url>
 
-    <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
-        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>utf-8</project.reporting.outputEncoding>
-    </properties>
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.mongodb/bson -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>bson</artifactId>
+            <version>${bson.version}</version>
+        </dependency>
+    </dependencies>
+
 </project>
