@@ -649,14 +649,18 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     }
 
     /// <summary>
-    /// 告知模板方法是否自动检测取消
-    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认自动检测
-    /// 2.自动检测取消信号是一个动态的属性，可随时更改 -- 因此不要轻易缓存。
+    /// 告知模板方法是否禁用自动检测取消
+    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认不禁用
+    /// 2.是否检测取消信号是一个动态的属性，可随时更改 -- 因此不要轻易缓存。
     /// </summary>
-    public bool IsAutoCheckCancel {
+    public bool IsDisableCheckCancel {
+        get => (ctl & MASK_DISABLE_CHECK_CANCEL) != 0;
+        set => SetCtlBit(MASK_DISABLE_CHECK_CANCEL, value);
+    }
+
+    private bool IsAutoCheckCancel {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (ctl & MASK_DISABLE_CHECK_CANCEL) == 0; // 执行频率很高，不调用封装方法
-        set => SetCtlBit(MASK_DISABLE_CHECK_CANCEL, !value);
     }
 
     /// <summary>

@@ -635,15 +635,19 @@ public abstract class Task<T> implements ICancelTokenListener {
     }
 
     /**
-     * 告知模板方法是否自动检测取消
-     * 1.默认值由{@link #flags}中的信息指定，默认自动检测
-     * 2.自动检测取消信号是一个动态的属性，可随时更改 -- 因此不要轻易缓存。
+     * 告知模板方法是否禁用自动检测取消
+     * 1.默认值由{@link #flags}中的信息指定，默认不禁用
+     * 2.是否检测取消信号是一个动态的属性，可随时更改 -- 因此不要轻易缓存。
      */
-    public final void setAutoCheckCancel(boolean enable) {
-        setCtlBit(MASK_DISABLE_CHECK_CANCEL, !enable);
+    public final void setDisableCheckCancel(boolean value) {
+        setCtlBit(MASK_DISABLE_CHECK_CANCEL, value);
     }
 
-    public final boolean isAutoCheckCancel() {
+    public final boolean isDisableCheckCancel() {
+        return (ctl & MASK_DISABLE_CHECK_CANCEL) != 0;
+    }
+
+    private boolean isAutoCheckCancel() {
         return (ctl & MASK_DISABLE_CHECK_CANCEL) == 0; // 执行频率很高，不调用封装方法
     }
 

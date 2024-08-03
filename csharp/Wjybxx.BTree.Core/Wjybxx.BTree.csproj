@@ -3,7 +3,7 @@
     <PropertyGroup>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>annotations</Nullable>
-        <LangVersion>10</LangVersion>
+        <LangVersion>9</LangVersion>
         <RootNamespace>Wjybxx.BTree</RootNamespace>
 
         <AssemblyName>Wjybxx.BTree</AssemblyName>

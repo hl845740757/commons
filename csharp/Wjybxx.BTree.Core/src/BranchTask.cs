@@ -50,7 +50,7 @@ public abstract class BranchTask<T> : Task<T> where T : class
         }
     }
 
-    #region
+    #region util
 
     /** 是否是第一个子节点 */
     public bool IsFirstChild(Task<T> child) {
@@ -71,15 +71,14 @@ public abstract class BranchTask<T> : Task<T> where T : class
     }
 
     /** 获取第一个子节点 -- 主要为MainPolicy提供帮助 */
-    public Task<T>? GetFirstChild() {
-        int size = children.Count;
-        return size > 0 ? children[0] : null;
+    public Task<T> GetFirstChild() {
+        return children[0];
     }
 
     /** 获取最后一个子节点 */
-    public Task<T>? GetLastChild() {
+    public Task<T> GetLastChild() {
         int size = children.Count;
-        return size > 0 ? children[size - 1] : null;
+        return children[size - 1];
     }
 
     /** 是否所有的子节点已进入完成状态 */

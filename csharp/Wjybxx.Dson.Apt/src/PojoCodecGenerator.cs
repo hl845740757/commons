@@ -353,8 +353,8 @@ internal class PojoCodecGenerator
                 // writer.WriteInt(names_fieldName, inst.field, WireType.VarInt, NumberStyles.Simple)
                 builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L, $T.$L)",
                     writeMethodName, SerialName(fieldName), fieldAccess,
-                    processor.typeName_WireType, Enum.GetName(typeof(WireType),fieldProps.attribute.WireType),
-                    processor.typeName_NumberStyle, Enum.GetName(typeof(NumberStyle),fieldProps.attribute.NumberStyle));
+                    processor.typeName_WireType, Enum.GetName(typeof(WireType), fieldProps.attribute.WireType),
+                    processor.typeName_NumberStyle, Enum.GetName(typeof(NumberStyle), fieldProps.attribute.NumberStyle));
                 return;
             }
             if (fieldType == typeof(float) || fieldType == typeof(double)) {
@@ -381,7 +381,7 @@ internal class PojoCodecGenerator
                 if (fieldProps.attribute.ObjectStyle.HasValue) {
                     builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, typeof($T), $T.$L)",
                         writeMethodName, SerialName(fieldName), fieldAccess, fieldType,
-                        processor.typeName_ObjectStyle, Enum.GetName(typeof(ObjectStyle),fieldProps.attribute.ObjectStyle.Value));
+                        processor.typeName_ObjectStyle, Enum.GetName(typeof(ObjectStyle), fieldProps.attribute.ObjectStyle.Value));
                 } else {
                     builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, typeof($T), null)",
                         writeMethodName, SerialName(fieldName), fieldAccess, fieldType);

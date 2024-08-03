@@ -19,6 +19,7 @@ import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.TaskStatus;
 import cn.wjybxx.btree.branch.Join;
 import cn.wjybxx.btree.branch.JoinPolicy;
+import cn.wjybxx.btree.branch.ParallelChildHelper;
 import cn.wjybxx.btree.branch.SimpleParallel;
 
 /**
@@ -63,8 +64,12 @@ public class JoinMain<T> implements JoinPolicy<T> {
 
     @Override
     public void onEvent(Join<T> join, Object event) {
-        Task<T> firstChild = join.getFirstChild();
-        assert firstChild != null;
-        firstChild.onEvent(event);
+        ParallelChildHelper<T> childHelper = join.getChildHelper(0);
+        Task<T> inlinedRunningChild = childHelper.getInlinedRunningChild();
+        if (inlinedRunningChild != null) {
+            inlinedRunningChild.onEvent(event);
+        } else {
+            join.getFirstChild().onEvent(event);
+        }
     }
 }

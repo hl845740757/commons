@@ -31,7 +31,7 @@ namespace Wjybxx.BTree.Branch
 public abstract class Parallel<T> : BranchTask<T> where T : class
 {
     [NonSerialized]
-    protected readonly List<ParallelChildHelper> childHelpers = new List<ParallelChildHelper>();
+    protected readonly List<ParallelChildHelper<T>> childHelpers = new List<ParallelChildHelper<T>>();
 
     protected Parallel() {
     }
@@ -53,6 +53,10 @@ public abstract class Parallel<T> : BranchTask<T> where T : class
         ResetHelpers();
     }
 
+    public ParallelChildHelper<T> GetChildHelper(int index) {
+        return childHelpers[index];
+    }
+
     /// <summary>
     /// 初始化child关联的helper
     /// 1.默认会设置为child的controlData，以避免反向查找开销。
@@ -60,14 +64,14 @@ public abstract class Parallel<T> : BranchTask<T> where T : class
     /// </summary>
     /// <param name="allocCancelToken">是否分配取消令牌</param>
     protected void InitChildHelpers(bool allocCancelToken) {
-        List<ParallelChildHelper> childHelpers = this.childHelpers;
+        List<ParallelChildHelper<T>> childHelpers = this.childHelpers;
         List<Task<T>> children = this.children;
         while (childHelpers.Count < children.Count) {
-            childHelpers.Add(new ParallelChildHelper());
+            childHelpers.Add(new ParallelChildHelper<T>());
         }
         for (int i = 0; i < children.Count; i++) {
             Task<T> child = children[i];
-            ParallelChildHelper childHelper = childHelpers[i];
+            ParallelChildHelper<T> childHelper = childHelpers[i];
             child.ControlData = childHelper;
             childHelper.reentryId = child.ReentryId;
             if (allocCancelToken && childHelper.cancelToken == null) {
@@ -83,7 +87,7 @@ public abstract class Parallel<T> : BranchTask<T> where T : class
         foreach (Task<T> child in children) {
             child.ControlData = null;
         }
-        foreach (ParallelChildHelper helper in childHelpers) {
+        foreach (ParallelChildHelper<T> helper in childHelpers) {
             helper.Reset();
         }
     }
@@ -94,30 +98,6 @@ public abstract class Parallel<T> : BranchTask<T> where T : class
     /// </summary>
     /// <param name="child"></param>
     protected override void OnChildRunning(Task<T> child) {
-    }
-
-    protected class ParallelChildHelper : TaskInlineHelper<T>
-    {
-#nullable disable
-        /** 子节点的重入id */
-        public int reentryId;
-        /** 子节点的取消令牌 -- 应当在运行前赋值 */
-        public ICancelToken cancelToken;
-
-        /** 用于控制子节点的数据 */
-        public int ctl;
-        /** 用户自定义数据 */
-        public object userData;
-
-        public void Reset() {
-            StopInline();
-            reentryId = 0;
-            ctl = 0;
-            userData = null;
-            if (cancelToken != null) {
-                cancelToken.Reset();
-            }
-        }
     }
 }
 }

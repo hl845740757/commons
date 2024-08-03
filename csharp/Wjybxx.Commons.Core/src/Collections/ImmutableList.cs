@@ -209,11 +209,7 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
         public Enumerator(ImmutableList<T> list, bool reversed) {
             _list = list;
             _reversed = reversed;
-            if (list.Count == 0) {
-                _cursor = -1;
-            } else {
-                _cursor = _reversed ? _list.Count - 1 : 0;
-            }
+            _cursor = list.Count == 0 ? -1 : _reversed ? _list.Count - 1 : 0;
             _current = default;
         }
 
@@ -231,7 +227,7 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
             if (_reversed) {
                 _cursor = (_cursor == 0) ? -1 : _cursor - 1;
             } else {
-                _cursor = (_cursor == _list.Count) ? -1 : _cursor + 1;
+                _cursor = (_cursor == _list.Count - 1) ? -1 : _cursor + 1;
             }
             return true;
         }

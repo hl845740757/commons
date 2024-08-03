@@ -196,11 +196,16 @@ public class TaskEntry<T> : Task<T> where T : class
     }
 
     public override bool CanHandleEvent(object eventObj) {
-        return blackboard != null;
+        return blackboard != null && rootTask != null; // 只测isInited的关键属性即可
     }
 
     protected override void OnEventImpl(object eventObj) {
-        rootTask?.OnEvent(eventObj);
+        Task<T>? inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
+        if (inlinedRunningChild != null) {
+            inlinedRunningChild.OnEvent(eventObj);
+        } else if (rootTask != null) {
+            rootTask.OnEvent(eventObj);
+        }
     }
 
     public override void ResetForRestart() {

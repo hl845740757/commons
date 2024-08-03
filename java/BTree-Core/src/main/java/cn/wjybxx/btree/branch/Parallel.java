@@ -16,9 +16,7 @@
 package cn.wjybxx.btree.branch;
 
 import cn.wjybxx.btree.BranchTask;
-import cn.wjybxx.btree.ICancelToken;
 import cn.wjybxx.btree.Task;
-import cn.wjybxx.btree.TaskInlineHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +57,10 @@ public abstract class Parallel<T> extends BranchTask<T> {
     @Override
     protected void exit() {
         resetHelpers();
+    }
+
+    public final ParallelChildHelper<T> getChildHelper(int index) {
+        return childHelpers.get(index);
     }
 
     /**
@@ -108,26 +110,4 @@ public abstract class Parallel<T> extends BranchTask<T> {
 
     }
 
-    protected static class ParallelChildHelper<T> extends TaskInlineHelper<T> {
-
-        /** 子节点的重入id */
-        public int reentryId;
-        /** 子节点的取消令牌 -- 应当在运行前赋值 */
-        public ICancelToken cancelToken;
-
-        /** 用于控制子节点的数据 */
-        public int ctl;
-        /** 用户自定义数据 */
-        public Object userData;
-
-        public void reset() {
-            stopInline();
-            reentryId = 0;
-            ctl = 0;
-            userData = null;
-            if (cancelToken != null) {
-                cancelToken.reset();
-            }
-        }
-    }
 }

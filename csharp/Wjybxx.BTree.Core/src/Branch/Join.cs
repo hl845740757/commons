@@ -67,11 +67,11 @@ public class Join<T> : Parallel<T> where T : class
         if (children.Count == 0) {
             return;
         }
-        List<ParallelChildHelper> childHelpers = this.childHelpers;
+        List<ParallelChildHelper<T>> childHelpers = this.childHelpers;
         int reentryId = ReentryId;
         for (int i = 0; i < children.Count; i++) {
             Task<T> child = children[i];
-            ParallelChildHelper childHelper = childHelpers[i];
+            ParallelChildHelper<T> childHelper = childHelpers[i];
             bool started = child.IsExited(childHelper.reentryId);
             if (started) {
                 if (child.IsCompleted) {
@@ -101,12 +101,12 @@ public class Join<T> : Parallel<T> where T : class
     }
 
     protected override void OnChildRunning(Task<T> child) {
-        ParallelChildHelper childHelper = (ParallelChildHelper)child.ControlData;
+        ParallelChildHelper<T> childHelper = (ParallelChildHelper<T>)child.ControlData;
         childHelper.InlineChild(child);
     }
 
     protected override void OnChildCompleted(Task<T> child) {
-        ParallelChildHelper childHelper = (ParallelChildHelper)child.ControlData;
+        ParallelChildHelper<T> childHelper = (ParallelChildHelper<T>)child.ControlData;
         childHelper.StopInline();
         // 删除分配的token
         if (childHelper.cancelToken != null) {

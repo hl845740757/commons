@@ -25,7 +25,7 @@ ps：不引入commons-lang3和guava，是因为这些基础库的类文件实在
 ## disruptor模块
 
 为了解决Disruptor的一些问题，重写了LMAX的Disruptor，实现了自己的版本。我的版本少了许多不必要的抽象，
-也拥有更好更容易理解的抽象 -- 后面可能发布为单独的库。
+也拥有更好更容易理解的抽象。
 
 ## commons-concurrent模块
 

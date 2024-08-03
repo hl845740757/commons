@@ -210,12 +210,17 @@ public class TaskEntry<T> extends Task<T> {
 
     @Override
     public boolean canHandleEvent(@Nonnull Object event) {
-        return blackboard != null; // 只测isInited的关键属性即可
+        return blackboard != null && rootTask != null; // 只测isInited的关键属性即可
     }
 
     @Override
     protected void onEventImpl(@Nonnull Object event) {
-        if (rootTask != null) rootTask.onEvent(event);
+        Task<T> inlinedRunningChild = inlineHelper.getInlinedRunningChild();
+        if (inlinedRunningChild != null) {
+            inlinedRunningChild.onEvent(event);
+        } else if (rootTask != null) {
+            rootTask.onEvent(event);
+        }
     }
 
     @Override

@@ -3,7 +3,7 @@
     <PropertyGroup>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>annotations</Nullable>
-        <LangVersion>10</LangVersion>
+        <LangVersion>9</LangVersion>
         <RootNamespace>Wjybxx.BTreeCodec</RootNamespace>
 
         <AssemblyName>Wjybxx.BTree.Codec</AssemblyName>
@@ -37,18 +37,15 @@
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <NoWarn>1701;1702;1591;</NoWarn>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <None Include="..\..\README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BTree\BTree.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Wjybxx.Dson" Version="2.2.0-rc3" />
-        <PackageReference Include="Wjybxx.Dson.Codec" Version="2.2.0-rc3" />
+        <ProjectReference Include="..\Wjybxx.BTree.Core\Wjybxx.BTree.csproj" />
+        <ProjectReference Include="..\Wjybxx.Dson.Codec\Wjybxx.Dson.Codec.csproj" />
+        <ProjectReference Include="..\Wjybxx.Dson.Core\Wjybxx.Dson.Core.csproj" />
     </ItemGroup>
 
 </Project>

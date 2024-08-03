@@ -50,10 +50,14 @@ public class JoinMain<T> : JoinPolicy<T> where T : class
         }
     }
 
-    public void OnEvent(Join<T> join, object eventObj) { // 就没见过这么扯淡的设计，event做为关键字
-        Task<T> firstChild = join.GetFirstChild();
-        Debug.Assert(firstChild != null);
-        firstChild.OnEvent(eventObj);
+    public void OnEvent(Join<T> join, object eventObj) {
+        ParallelChildHelper<T> childHelper = join.GetChildHelper(0);
+        Task<T> inlinedRunningChild = childHelper.GetInlinedRunningChild();
+        if (inlinedRunningChild != null) {
+            inlinedRunningChild.OnEvent(eventObj);
+        } else {
+            join.GetFirstChild().OnEvent(eventObj);
+        }
     }
 }
 }

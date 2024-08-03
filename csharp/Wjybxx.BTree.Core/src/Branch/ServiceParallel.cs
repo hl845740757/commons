@@ -41,11 +41,11 @@ public class ServiceParallel<T> : Parallel<T> where T : class
 
     protected override void Execute() {
         List<Task<T>> children = this.children;
-        List<ParallelChildHelper> helpers = this.childHelpers;
+        List<ParallelChildHelper<T>> helpers = this.childHelpers;
 
         for (int idx = 0; idx < children.Count; idx++) {
             Task<T> child = children[idx];
-            ParallelChildHelper helper = helpers[0];
+            ParallelChildHelper<T> helper = helpers[0];
             Task<T> inlinedRunningChild = helper.GetInlinedRunningChild();
             if (inlinedRunningChild != null) {
                 Template_RunInlinedChild(inlinedRunningChild, helper, child);
@@ -63,12 +63,12 @@ public class ServiceParallel<T> : Parallel<T> where T : class
     }
 
     protected override void OnChildRunning(Task<T> child) {
-        ParallelChildHelper childHelper = (ParallelChildHelper)child.ControlData;
+        ParallelChildHelper<T> childHelper = (ParallelChildHelper<T>)child.ControlData;
         childHelper.InlineChild(child);
     }
 
     protected override void OnChildCompleted(Task<T> child) {
-        ParallelChildHelper childHelper = (ParallelChildHelper)child.ControlData;
+        ParallelChildHelper<T> childHelper = (ParallelChildHelper<T>)child.ControlData;
         childHelper.StopInline();
 
         if (child == children[0] && !IsExecuting()) { // 测试是否正在心跳很重要
@@ -77,7 +77,13 @@ public class ServiceParallel<T> : Parallel<T> where T : class
     }
 
     protected override void OnEventImpl(object eventObj) {
-        children[0].OnEvent(eventObj);
+        ParallelChildHelper<T> childHelper = childHelpers[0];
+        Task<T> inlinedRunningChild = childHelper.GetInlinedRunningChild();
+        if (inlinedRunningChild != null) {
+            inlinedRunningChild.OnEvent(eventObj);
+        } else {
+            children[0].OnEvent(eventObj);
+        }
     }
 }
 }

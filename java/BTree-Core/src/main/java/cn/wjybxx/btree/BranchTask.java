@@ -71,17 +71,13 @@ public abstract class BranchTask<T> extends Task<T> {
     }
 
     /** 获取第一个子节点 -- 主要为MainPolicy提供帮助 */
-    @Nullable
     public final Task<T> getFirstChild() {
-        final int size = children.size();
-        return size > 0 ? children.get(0) : null;
+        return children.getFirst();
     }
 
     /** 获取最后一个子节点 */
-    @Nullable
     public final Task<T> getLastChild() {
-        final int size = children.size();
-        return size > 0 ? children.get(size - 1) : null;
+        return children.getLast();
     }
 
     public boolean isAllChildCompleted() {

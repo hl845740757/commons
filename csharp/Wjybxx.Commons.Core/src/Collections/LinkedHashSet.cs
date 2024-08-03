@@ -464,7 +464,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>
             }
             preNodePos = pos;
             nextIndex = node.next;
-            
+
             node = default; // help gc
         }
         this._head = head;

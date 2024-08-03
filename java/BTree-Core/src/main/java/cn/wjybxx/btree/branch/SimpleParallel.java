@@ -84,6 +84,12 @@ public class SimpleParallel<T> extends Parallel<T> {
 
     @Override
     protected void onEventImpl(@Nonnull Object event) {
-        children.get(0).onEvent(event);
+        ParallelChildHelper<T> childHelper = childHelpers.get(0);
+        Task<T> inlinedRunningChild = childHelper.getInlinedRunningChild();
+        if (inlinedRunningChild != null) {
+            inlinedRunningChild.onEvent(event);
+        } else {
+            children.get(0).onEvent(event);
+        }
     }
 }

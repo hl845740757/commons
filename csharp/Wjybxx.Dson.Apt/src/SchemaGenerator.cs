@@ -86,7 +86,7 @@ internal class SchemaGenerator
         return type.IsClass
                && !type.IsAbstract
                && DsonConverterUtils.IsCollection(type, true)
-               && type.GetConstructor(BindingFlags.Public | BindingFlags.Instance, 
+               && type.GetConstructor(BindingFlags.Public | BindingFlags.Instance,
                    binder: null, Array.Empty<Type>(), modifiers: null) != null;
     }
 

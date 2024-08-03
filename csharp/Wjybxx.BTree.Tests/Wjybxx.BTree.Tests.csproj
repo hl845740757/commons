@@ -20,15 +20,17 @@
         <PackageReference Include="NUnit3TestAdapter" Version="4.4.2" />
         <PackageReference Include="NUnit.Analyzers" Version="3.6.1" />
         <PackageReference Include="coverlet.collector" Version="3.2.0" />
-        
+
         <!-- 测试用例生成代码期间使用 -->
         <PackageReference Include="Wjybxx.Commons.Apt" Version="1.1.0-rc3" />
         <PackageReference Include="Wjybxx.Dson.Apt" Version="2.2.0-rc3" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BTree\BTree.csproj" />
-        <ProjectReference Include="..\BTree.Codec\BTree.Codec.csproj" />
+        <ProjectReference Include="..\Wjybxx.BTree.Codec\Wjybxx.BTree.Codec.csproj" />
+        <ProjectReference Include="..\Wjybxx.BTree.Core\Wjybxx.BTree.csproj" />
+        <ProjectReference Include="..\Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj" />
+        <ProjectReference Include="..\Wjybxx.Dson.Apt\Wjybxx.Dson.Apt.csproj" />
     </ItemGroup>
 
 </Project>
