@@ -62,7 +62,7 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
         SetContext(null);
         while (context != null) {
             Context parent = context.Parent;
-            _contextPool.Release(context);
+            contextPool.Release(context);
             context = parent;
         }
         if (_input != null) {
@@ -229,18 +229,18 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
 
     #region context
 
-    private static readonly ConcurrentObjectPool<Context> _contextPool = new ConcurrentObjectPool<Context>(
+    private static readonly ConcurrentObjectPool<Context> contextPool = new ConcurrentObjectPool<Context>(
         () => new Context(), context => context.Reset(),
         DsonInternals.CONTEXT_POOL_SIZE);
 
     private static Context NewContext(Context parent, DsonContextType contextType, DsonType dsonType) {
-        Context context = _contextPool.Acquire();
+        Context context = contextPool.Acquire();
         context.Init(parent, contextType, dsonType);
         return context;
     }
 
     private static void ReturnContext(Context context) {
-        _contextPool.Release(context);
+        contextPool.Release(context);
     }
 
 #pragma warning disable CS0628

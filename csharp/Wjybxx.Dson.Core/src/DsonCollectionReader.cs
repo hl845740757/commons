@@ -93,7 +93,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         SetContext(null);
         while (context != null) {
             Context parent = context.Parent;
-            _contextPool.Release(context);
+            contextPool.Release(context);
             context = parent;
         }
         _nextName = default;
@@ -309,21 +309,19 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
     #region itrpool
 
-    private static readonly ConcurrentObjectPool<MarkableIterator<KeyValuePair<TName, DsonValue>>> _objectItrPool =
+    private static readonly ConcurrentObjectPool<MarkableIterator<KeyValuePair<TName, DsonValue>>> objectItrPool =
         new(() => new MarkableIterator<KeyValuePair<TName, DsonValue>>(), itr => itr.Dispose(),
             DsonInternals.CONTEXT_POOL_SIZE);
-    private static readonly ConcurrentObjectPool<MarkableIterator<DsonValue>> _arrayItrPool =
-        new(() => new MarkableIterator<DsonValue>(), itr => itr.Dispose(),
-            DsonInternals.CONTEXT_POOL_SIZE); // c#端objectItr无法和arrayItr共用一个池，因此是溢出的
+    private static ConcurrentObjectPool<MarkableIterator<DsonValue>> arrayItrPool => DsonInternals.arrayItrPool;
 
     private static MarkableIterator<DsonValue> NewArrayIterator(IEnumerator<DsonValue> baseIterator) {
-        var markableIterator = _arrayItrPool.Acquire();
+        var markableIterator = arrayItrPool.Acquire();
         markableIterator.Init(baseIterator);
         return markableIterator;
     }
 
     private static MarkableIterator<KeyValuePair<TName, DsonValue>> NewObjectIterator(IEnumerator<KeyValuePair<TName, DsonValue>> baseIterator) {
-        var markableIterator = _objectItrPool.Acquire();
+        var markableIterator = objectItrPool.Acquire();
         markableIterator.Init(baseIterator);
         return markableIterator;
     }
@@ -332,18 +330,18 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
     #region context
 
-    private static readonly ConcurrentObjectPool<Context> _contextPool = new ConcurrentObjectPool<Context>(
+    private static readonly ConcurrentObjectPool<Context> contextPool = new ConcurrentObjectPool<Context>(
         () => new Context(), context => context.Reset(),
         DsonInternals.CONTEXT_POOL_SIZE);
 
     private static Context NewContext(Context parent, DsonContextType contextType, DsonType dsonType) {
-        Context context = _contextPool.Acquire();
+        Context context = contextPool.Acquire();
         context.Init(parent, contextType, dsonType);
         return context;
     }
 
     private static void ReturnContext(Context context) {
-        _contextPool.Release(context);
+        contextPool.Release(context);
     }
 
 #pragma warning disable CS0628
@@ -365,11 +363,11 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
             header = null;
             dsonObject = null;
             if (objectIterator != null) {
-                _objectItrPool.Release(objectIterator);
+                objectItrPool.Release(objectIterator);
                 objectIterator = null;
             }
             if (arrayIterator != null) {
-                _arrayItrPool.Release(arrayIterator);
+                arrayItrPool.Release(arrayIterator);
                 arrayIterator = null;
             }
         }

@@ -34,7 +34,7 @@ public class TypeArgsInheritTest {
     void testList() {
         Assertions.assertTrue(DsonConverterUtils.canInheritTypeArgs(ArrayList.class, List.class));
 
-        // typeTnfo必须有泛型参数时才可继承
+        // typeInfo必须有泛型参数时才可继承
         Assertions.assertFalse(DsonConverterUtils.canInheritTypeArgs(ArrayList.class, TypeInfo.of(List.class)));
         Assertions.assertTrue(DsonConverterUtils.canInheritTypeArgs(ArrayList.class, TypeInfo.of(List.class, String.class)));
     }

@@ -16,20 +16,20 @@
 
 package cn.wjybxx.dsoncodec;
 
-import cn.wjybxx.dsoncodec.annotations.DsonCodecLinker;
-import cn.wjybxx.dsoncodec.annotations.DsonCodecLinkerGroup;
 import cn.wjybxx.dsoncodec.annotations.DsonSerializable;
 
-/**
- * 测试为外部类附加注解，生成Codec
- *
- * @author wjybxx
- * date - 2023/12/10
- */
-@DsonCodecLinkerGroup(outputPackage = "cn.wjybxx.base.codec")
-public class CodecLinkerTest {
+import java.util.IdentityHashMap;
 
-    @DsonCodecLinker(props = @DsonSerializable)
-    private ThirdPartyBean thirdPartyBean;
+/**
+ * 测试跳过{@link IdentityHashMap#size()}字段。
+ *
+ * @author houlei
+ * date - 2024/4/12
+ */
+@DsonSerializable(skipFields = {
+//        "IdentityHashMap.size",
+        "java.util.IdentityHashMap.size"
+})
+public class CodecSkipFieldTest<K, V> extends IdentityHashMap<K, V> {
 
 }

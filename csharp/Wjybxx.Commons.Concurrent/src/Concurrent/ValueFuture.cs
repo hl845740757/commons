@@ -68,7 +68,6 @@ public readonly struct ValueFuture
         return new ValueFuture(ex);
     }
 
-
     #region internal
 
     // internal是因为不希望用户调用

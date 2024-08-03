@@ -490,28 +490,6 @@ PS：内置结构体的值类型都是确定的，因此可以不声明类型直
 
 PS：测试用例见`ProjectionTest.java`。
 
-## 多语言
-
-作者本人是一个游戏开发者，熟悉JAVA、C#、LUA，后期会提供C#的Dson实现；其它语言可能只能依靠喜欢上Dson的小伙伴们提供。
-
-1. [Java库使用指南](https://github.com/hl845740757/Dson/blob/dev/java/README.md)。
-   ```
-      # java maven坐标(最新可查看Mvn中央仓库)
-      <groupId>cn.wjybxx.dson</groupId>
-      <artifactId>dson-core</artifactId>
-      <version>2.1.2</version>
-   ```  
-
-2. [C#库使用指南](https://github.com/hl845740757/Dson/blob/dev/csharp/README.md)。
-
-```
-	nuget Wjybxx.Dson 2.1.2
-```
-
-### 源码Unity兼容
-
-由于无法简单打出dll引入到unity，所以在unity中使用该项目的代码时，请直接下载源码。
-
 ---
 
 ## 与其他配置文件格式的比较

@@ -27,14 +27,14 @@ package cn.wjybxx.base.time;
 public class Regulator {
 
     /** 仅执行一次 */
-    private static final int ONCE = 0;
+    private static final byte ONCE = 0;
     /** 可变帧率 -- fixedDelay的间隔是前次任务的结束与下次任务的开始 */
-    private static final int FIX_DELAY = 1;
+    private static final byte FIX_DELAY = 1;
     /** 固定帧率 */
-    private static final int FIX_RATE = 2;
+    private static final byte FIX_RATE = 2;
 
     /** 其实可以省略，根据{@link #period}的正负判断，但为了提高可读性，还是不那么做 */
-    private final int type;
+    private final byte type;
     /** 首次执行延迟 */
     private long firstDelay;
     /** 后期执行延迟 */
@@ -54,7 +54,7 @@ public class Regulator {
     /** 关联的上下文 */
     private Object context;
 
-    private Regulator(int type, long firstDelay, long period, long lastUpdateTime) {
+    private Regulator(byte type, long firstDelay, long period, long lastUpdateTime) {
         this.type = type;
         this.firstDelay = firstDelay;
         this.period = period;
@@ -64,7 +64,7 @@ public class Regulator {
         this.count = 0;
     }
 
-    private static long checkFirstDelay(int type, long firstDelay) {
+    private static long checkFirstDelay(byte type, long firstDelay) {
         if (type == FIX_RATE && firstDelay < 0) {
             throw new IllegalArgumentException("the firstDelay of fixRate must gte 0, delay " + firstDelay);
         }

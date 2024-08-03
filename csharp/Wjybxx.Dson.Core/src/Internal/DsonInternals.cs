@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Wjybxx.Commons.Collections;
+using Wjybxx.Commons.Pool;
+using Wjybxx.Dson.Ext;
 
 namespace Wjybxx.Dson.Internal
 {
@@ -31,6 +33,10 @@ internal static class DsonInternals
 {
     /** 上下文缓存池大小 */
     public const int CONTEXT_POOL_SIZE = 64;
+
+    /** 用于避免每个泛型类共享问题 */
+    public static readonly ConcurrentObjectPool<MarkableIterator<DsonValue>> arrayItrPool =
+        new(() => new MarkableIterator<DsonValue>(), itr => itr.Dispose(), CONTEXT_POOL_SIZE);
 
     /** 是否设置了任意bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

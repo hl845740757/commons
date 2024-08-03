@@ -50,7 +50,7 @@ public class CodecGenerator
 
     [Test]
     public void Gen() {
-        string outDir = "D:\\Temp";
+        string outDir = "D:\\Temp\\BTreeCodecs";
         if (!Directory.Exists(outDir)) {
             return;
         }

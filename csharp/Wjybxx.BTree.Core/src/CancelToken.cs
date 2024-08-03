@@ -129,7 +129,7 @@ public sealed class CancelToken : ICancelToken
     public bool RemListener(ICancelTokenListener listener, bool firstOccurrence = false) {
         int index = firstOccurrence
             ? listeners.IndexOfRef(listener)
-            : listeners.LastIndexOf(listener);
+            : listeners.LastIndexOfRef(listener);
         if (index < 0) {
             return false;
         }

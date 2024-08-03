@@ -36,7 +36,7 @@ public class ParallelChildHelper<T> : TaskInlineHelper<T> where T : class
     /** 用户自定义数据 */
     public object userData;
 
-    public void Reset() {
+    public virtual void Reset() {
         StopInline();
         reentryId = 0;
         ctl = 0;

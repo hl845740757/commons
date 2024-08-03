@@ -671,8 +671,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         /// 放在类内部，避免随着Promise就初始化
         /// </summary>
         internal static readonly IObjectPool<UniOnCompleted2> POOL = new ConcurrentObjectPool<UniOnCompleted2>(
-            () => new UniOnCompleted2(), task => task.Reset(),
-            typeof(T) == typeof(int) ? 50 : 20);
+            () => new UniOnCompleted2(), task => task.Reset(), TaskPoolConfig.GetPoolSize<T>());
     }
 
     private class UniOnCompleted3 : UniOnCompleted
@@ -810,8 +809,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         /// 放在类内部，避免随着Promise就初始化
         /// </summary>
         internal static readonly IObjectPool<UniOnCompleted4> POOL = new ConcurrentObjectPool<UniOnCompleted4>(
-            () => new UniOnCompleted4(), task => task.Reset(),
-            typeof(T) == typeof(int) ? 50 : 20); // 我们使用int代替void
+            () => new UniOnCompleted4(), task => task.Reset(), TaskPoolConfig.GetPoolSize<T>());
     }
 
     #endregion

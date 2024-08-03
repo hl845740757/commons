@@ -121,7 +121,7 @@ public static class ArrayUtil
     }
 
     /** 查对象在数组中的下标 */
-    public static int IndexOf<T>(this T[] list, T element, int start, int end, IEqualityComparer<T>? comparer = null) {
+    public static int IndexOf<T>(this T[] list, T element, int start, int end, IEqualityComparer<T> comparer = null) {
         if (list == null) throw new ArgumentNullException(nameof(list));
         if (element == null) {
             for (int i = start; i < end; i++) {
@@ -143,7 +143,7 @@ public static class ArrayUtil
     }
 
     /** 反向查对象在数组中的下标 */
-    public static int LastIndexOf<T>(this T[] list, T element, int start, int end, IEqualityComparer<T>? comparer = null) {
+    public static int LastIndexOf<T>(this T[] list, T element, int start, int end, IEqualityComparer<T> comparer = null) {
         if (element == null) {
             for (int i = end - 1; i >= start; i--) {
                 if (list[i] == null) {
