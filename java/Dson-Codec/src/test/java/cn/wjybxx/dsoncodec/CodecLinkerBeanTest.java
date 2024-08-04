@@ -33,19 +33,27 @@ public class CodecLinkerBeanTest {
     @DsonProperty(wireType = WireType.UINT)
     private ThirdPartyBean2 age;
 
-    @DsonProperty(stringStyle = StringStyle.AUTO_QUOTE)
+    @DsonProperty(writeProxy = "writeName", readProxy = "readName")
     private ThirdPartyBean2 name;
 
     // 这些钩子方法，生成的代码会自动调用
+
+    public static void writeName(ThirdPartyBean2 inst, DsonObjectWriter writer, String dsonName) {
+        writer.writeString(dsonName, inst.getName(), StringStyle.AUTO_QUOTE);
+    }
+
+    public static void readName(ThirdPartyBean2 inst, DsonObjectReader reader, String dsonName) {
+        inst.setName(reader.readString(dsonName));
+    }
+
+    public static ThirdPartyBean2 newInstance(DsonObjectReader reader, TypeInfo<?> typeInfo) {
+        return new ThirdPartyBean2();
+    }
 
     public static void beforeEncode(ThirdPartyBean2 inst, ConverterOptions options) {
     }
 
     public static void writeObject(ThirdPartyBean2 inst, DsonObjectWriter writer) {
-    }
-
-    public static ThirdPartyBean2 newInstance(DsonObjectReader reader, TypeInfo<?> typeInfo) {
-        return new ThirdPartyBean2();
     }
 
     public static void readObject(ThirdPartyBean2 inst, DsonObjectReader reader) {

@@ -59,7 +59,7 @@
     </developers>
 
     <properties>
-        <revision>1.1.0-rc2</revision>
+        <revision>1.1.0-rc4</revision>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
@@ -183,9 +183,14 @@
                             <artifactId>jsr305</artifactId>
                             <version>3.0.2</version>
                         </annotationProcessorPath>
+                        <dependency>
+                            <groupId>com.squareup</groupId>
+                            <artifactId>javapoet</artifactId>
+                            <version>${javapoet.version}</version>
+                        </dependency>
                         <annotationProcessorPath>
                             <groupId>cn.wjybxx.commons</groupId>
-                            <artifactId>apt-base</artifactId>
+                            <artifactId>commons-apt-base</artifactId>
                             <version>${project.version}</version>
                         </annotationProcessorPath>
                         <annotationProcessorPath>

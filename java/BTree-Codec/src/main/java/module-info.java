@@ -4,7 +4,7 @@
  */
 module wjybxx.btree.codec {
     requires jsr305;
-    requires static java.compiler; // 注解保留权限为Source
+    requires static java.compiler; // 生成代码的注解依赖，保留权限为Source
 
     requires wjybxx.btree.core;
     requires wjybxx.dson.core;
