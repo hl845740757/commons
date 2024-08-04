@@ -16,6 +16,8 @@
 
 package cn.wjybxx.base;
 
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.random.RandomGenerator;
 
@@ -100,9 +102,7 @@ public class ArrayUtils {
 
     // endregion
 
-    // endregion
-
-    // region ref
+    // region index-ref
 
     /** 判断是否存在给定元素的引用 */
     public static <T> boolean containsRef(T[] list, Object element) {
@@ -160,6 +160,52 @@ public class ArrayUtils {
                 if (element == list[i]) {
                     return i;
                 }
+            }
+        }
+        return -1;
+    }
+
+    // endregion
+
+    // region index-custom
+
+    public static <T> boolean containsCustom(T[] list, Predicate<? super T> indexFunc) {
+        return indexOfCustom(list, indexFunc, 0, list.length) >= 0;
+    }
+
+    public static <T> int indexOfCustom(T[] list, Predicate<? super T> indexFunc) {
+        return indexOfCustom(list, indexFunc, 0, list.length);
+    }
+
+    public static <T> int lastIndexOfCustom(T[] list, Predicate<? super T> indexFunc) {
+        return lastIndexOfCustom(list, indexFunc, 0, list.length);
+    }
+
+    /**
+     * @param list      数组
+     * @param indexFunc 查询函数
+     * @param start     数组的有效区间起始下标(inclusive)
+     * @param end       数组的有效区间结束下标(exclusive)
+     */
+    public static <T> int indexOfCustom(T[] list, Predicate<? super T> indexFunc, int start, int end) {
+        for (int i = start; i < end; i++) {
+            if (indexFunc.test(list[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * @param list      数组
+     * @param indexFunc 查询函数
+     * @param start     数组的有效区间起始下标(inclusive)
+     * @param end       数组的有效区间结束下标(exclusive)
+     */
+    public static <T> int lastIndexOfCustom(T[] list, Predicate<? super T> indexFunc, int start, int end) {
+        for (int i = end - 1; i >= start; i--) {
+            if (indexFunc.test(list[i])) {
+                return i;
             }
         }
         return -1;
@@ -300,6 +346,31 @@ public class ArrayUtils {
         if (toIndex > arrayLength) {
             throw new ArrayIndexOutOfBoundsException(toIndex);
         }
+    }
+
+    // endregion
+
+    // region other
+
+    public static <E> List<E> asList(E[] array) {
+        return Arrays.asList(array);
+    }
+
+    public static <E> List<E> asList(final E[] array, int offset, int length) {
+        if (offset == 0 && length == array.length) {
+            return Arrays.asList(array);
+        } else {
+            return Arrays.asList(array).subList(offset, offset + length);
+        }
+    }
+
+    public static <E> ArrayList<E> toList(final E[] array) {
+        return new ArrayList<>(new CollectionUtils.ToArrayHelper<>(array, 0, array.length));
+    }
+
+    public static <E> ArrayList<E> toList(final E[] array, int offset, int length) {
+        // arrayList不支持数组的构造参数，因此无法绕过冗余的拷贝
+        return new ArrayList<>(new CollectionUtils.ToArrayHelper<>(array, offset, length));
     }
 
     // endregion

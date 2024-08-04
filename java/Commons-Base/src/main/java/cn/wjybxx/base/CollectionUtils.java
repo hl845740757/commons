@@ -456,7 +456,7 @@ public class CollectionUtils {
 
     @SafeVarargs
     public static <E> ArrayList<E> newArrayList(E... array) {
-        return toArrayList(array);
+        return new ArrayList<>(new ToArrayHelper<>(array, 0, array.length));
     }
 
     public static <E> boolean addAll(ArrayList<E> self, Collection<? extends E> other) {
@@ -471,27 +471,6 @@ public class CollectionUtils {
             return false;
         }
         return self.removeAll(other);
-    }
-
-    public static <E> List<E> toList(E[] array) {
-        return Arrays.asList(array);
-    }
-
-    public static <E> List<E> toList(final E[] array, int offset, int length) {
-        if (offset == 0 && length == array.length) {
-            return Arrays.asList(array);
-        } else {
-            return Arrays.asList(array).subList(offset, offset + length);
-        }
-    }
-
-    public static <E> ArrayList<E> toArrayList(final E[] array) {
-        return new ArrayList<>(new ArrayHolder<>(array, 0, array.length));
-    }
-
-    public static <E> ArrayList<E> toArrayList(final E[] array, int offset, int length) {
-        // arrayList不支持数组的构造参数，因此无法绕过冗余的拷贝
-        return new ArrayList<>(new ArrayHolder<>(array, offset, length));
     }
 
     // endregion
@@ -878,15 +857,13 @@ public class CollectionUtils {
         return (int) Math.ceil(numMappings / 0.75d);
     }
 
-    // endregion
-
-    private static class ArrayHolder<E> extends AbstractCollection<E> {
+    static class ToArrayHelper<E> extends AbstractCollection<E> {
 
         final E[] array;
         final int offset;
         final int length;
 
-        private ArrayHolder(E[] array, int offset, int length) {
+        public ToArrayHelper(E[] array, int offset, int length) {
             this.array = Objects.requireNonNull(array);
             this.offset = offset;
             this.length = length;
@@ -914,5 +891,7 @@ public class CollectionUtils {
             return length;
         }
     }
+
+    // endregion
 
 }
