@@ -212,6 +212,7 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
         Array.Resize(ref _items, newSize);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool Contains(T item, int idx) {
         return idx >= 0 && idx < _count && ReferenceEquals(item, _items[idx]);
     }

@@ -33,15 +33,15 @@ import java.lang.annotation.Target;
  *      MyBean field1; // 表示OuterClass的field1字段
  *      MyBean field2;
  *
- *      public static void beforeEncode(MyBean instance, ConverterOptions options, TypeInfo typeInfo){}
- *      public static void writeObject(MyBean instance, DsonObjectWriter writer, TypeInfo typeInfo){}
+ *      public static void beforeEncode(MyBean instance, ConverterOptions options){}
+ *      public static void writeObject(MyBean instance, DsonObjectWriter writer){}
  *
  *      public static Bean newInstance(DsonObjectReader reader, TypeInfo typeInfo){}
- *      public static void readObject(MyBean instance, DsonObjectReader reader, TypeInfo typeInfo){}
- *      public static void afterDecode(MyBean instance, ConverterOptions options, TypeInfo typeInfo){}
+ *      public static void readObject(MyBean instance, DsonObjectReader reader){}
+ *      public static void afterDecode(MyBean instance, ConverterOptions options){}
  *
- *      public static void writeField1(MyBean instance, DsonObjectWriter writer, String name, TypeInfo typeInfo){}
- *      public static void readField1(MyBean instance, DsonObjectReader reader, String name, TypeInfo typeInfo){}
+ *      public static void writeField1(MyBean instance, DsonObjectWriter writer, String dsonName){}
+ *      public static void readField1(MyBean instance, DsonObjectReader reader, String dsonName){}
  *  }
  * }</pre>
  * <p>

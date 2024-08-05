@@ -50,8 +50,8 @@ namespace Wjybxx.Dson.Codec.Attributes
 ///   public void ReadObject(DsonObjectReader reader){}
 ///   public void AfterDecode(ConverterOptions options){}
 ///
-///   public void WriteField1(DsonObjectWriter writer, String name){}
-///   public void ReadField1(DsonObjectReader reader, String name){}
+///   public void WriteField1(DsonObjectWriter writer, String dsonName){}
+///   public void ReadField1(DsonObjectReader reader, String dsonName){}
 /// </code></pre>
 ///
 /// <h3>序列化的字段</h3>

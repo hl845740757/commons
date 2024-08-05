@@ -60,10 +60,10 @@ public class BeanExample
     [DsonProperty(Impl = typeof(HashSet<>))]
     public ISet<string>? hashSet2;
 
-    public void WriteType(IDsonObjectWriter writer, string name) {
+    public void WriteType(IDsonObjectWriter writer, string dsonName) {
     }
 
-    public void ReadType(IDsonObjectReader reader, string name) {
+    public void ReadType(IDsonObjectReader reader, string dsonName) {
     }
 
     /// <summary>

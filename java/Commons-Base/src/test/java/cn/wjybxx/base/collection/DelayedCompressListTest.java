@@ -33,7 +33,7 @@ public class DelayedCompressListTest {
 
     @BeforeEach
     void setUp() {
-        list = new DelayedCompressList<>(capacity);
+        list = new DelayedCompressList<>(capacity / 3); // 测试扩容
         for (int i = 0; i < capacity; i++) {
             list.add(i);
         }

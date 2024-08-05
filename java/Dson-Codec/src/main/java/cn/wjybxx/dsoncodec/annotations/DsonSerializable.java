@@ -54,8 +54,8 @@ import java.lang.annotation.*;
  *      public void readObject(DsonObjectReader reader){}
  *      public void afterDecode(ConverterOptions options){}
  *
- *      public void writeField1(DsonObjectWriter writer, String name){}
- *      public void readField1(DsonObjectReader reader, String name){}
+ *      public void writeField1(DsonObjectWriter writer, String dsonName){}
+ *      public void readField1(DsonObjectReader reader, String dsonName){}
  * }</pre>
  * ps：如果要更好的支持泛型，似乎应该将TypeInfo传入...
  *

@@ -27,8 +27,6 @@ namespace Wjybxx.Dson.Internal
 /// </summary>
 internal static class CodedUtil
 {
-#pragma warning restore CS1591
-
     private const uint INT_CODED_MASK1 = (~0U) << 7; // 低7位0
     private const uint INT_CODED_MASK2 = (~0U) << 14; // 低14位0
     private const uint INT_CODED_MASK3 = (~0U) << 21;
@@ -77,7 +75,6 @@ internal static class CodedUtil
         return 10;
     }
 
-#pragma warning disable CS1591
     /** https://protobuf.dev/programming-guides/encoding  */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static uint EncodeZigZag32(int n) => (uint)(n << 1 ^ n >> 31);
@@ -90,9 +87,7 @@ internal static class CodedUtil
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long DecodeZigZag64(ulong n) => (long)(n >> 1) ^ -((long)n & 1L);
-
-#pragma warning restore CS1591
-
+    
     #region protobuf decode
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

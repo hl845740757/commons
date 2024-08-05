@@ -26,8 +26,8 @@ using Wjybxx.Commons.Attributes;
 namespace Wjybxx.Commons.Collections
 {
 /// <summary>
-/// 不可变的Set
-/// 与C#系统库的ImmutableList不同，这里的实现是基于拷贝的，且不支持增删元素；另外这里保持了元素的插入顺序
+/// 保持插入序的不可变HashSet
+/// 与C#系统库的ImmutableHashSet不同，这里的实现是基于拷贝的，且不支持增删元素；另外这里保持了元素的插入顺序
 /// (主要解决Unity的兼容性问题)
 /// </summary>
 /// <typeparam name="TKey"></typeparam>
@@ -197,8 +197,58 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
 
     #endregion
 
+    #region sp
+
+    /// <summary>
+    /// 查询指定键的后一个键
+    /// </summary>
+    /// <param name="key">当前键</param>
+    /// <param name="next">接收下一个键</param>
+    /// <returns>如果下一个key存在则返回true</returns>
+    /// <exception cref="ThrowHelper.KeyNotFoundException">如果当前键不存在</exception>
+    public bool NextKey(TKey key, out TKey next) {
+        int index = Find(key, KeyHash(key, _keyComparer));
+        if (index < 0) {
+            throw ThrowHelper.KeyNotFoundException(key);
+        }
+        ref Node node = ref _table[index];
+        if (node.next < 0) {
+            next = default;
+            return false;
+        }
+        ref Node nextNode = ref _table[node.next];
+        next = nextNode.key;
+        return true;
+    }
+
+    /// <summary>
+    /// 查询指定键的前一个键
+    /// </summary>
+    /// <param name="key">当前键</param>
+    /// <param name="prev">接收前一个键</param>
+    /// <returns>如果前一个key存在则返回true</returns>
+    /// <exception cref="ThrowHelper.KeyNotFoundException">如果当前键不存在</exception>
+    public bool PrevKey(TKey key, out TKey prev) {
+        int index = Find(key, KeyHash(key, _keyComparer));
+        if (index < 0) {
+            throw ThrowHelper.KeyNotFoundException(key);
+        }
+        ref Node node = ref _table[index];
+        if (node.prev < 0) {
+            prev = default;
+            return false;
+        }
+        ref Node nextNode = ref _table[node.prev];
+        prev = nextNode.key;
+        return true;
+    }
+
     public void AdjustCapacity(int expectedCount) {
     }
+
+    #endregion
+
+    #region copyto
 
     public void CopyTo(TKey[] array, int arrayIndex, bool reversed = false) {
         if (array == null) throw new ArgumentNullException(nameof(array));
@@ -220,6 +270,10 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
             }
         }
     }
+
+    #endregion
+
+    #region itr
 
     public ISequencedSet<TKey> Reversed() {
         if (_reversed == null) {
@@ -243,6 +297,8 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
     public Enumerator GetReversedEnumerator() {
         return new Enumerator(this, true);
     }
+
+    #endregion
 
     #region core
 

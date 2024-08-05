@@ -45,8 +45,8 @@ namespace Wjybxx.Dson.Codec.Attributes
 ///      public static void ReadObject(ref MyBean instance, IDsonObjectReader reader){}
 ///      public static void AfterDecode(ref MyBean instance, ConverterOptions options){}
 /// 
-///      public static void WriteField1(MyBean instance, IDsonObjectWriter writer, String name){}
-///      public static void ReadField1(MyBean instance, IDsonObjectReader reader, String name){}
+///      public static void WriteField1(MyBean instance, IDsonObjectWriter writer, String dsonName){}
+///      public static void ReadField1(MyBean instance, IDsonObjectReader reader, String dsonName){}
 ///  }
 /// </code></pre>
 ///

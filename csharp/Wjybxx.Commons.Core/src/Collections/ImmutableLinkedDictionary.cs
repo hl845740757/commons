@@ -26,7 +26,9 @@ using Wjybxx.Commons.Attributes;
 namespace Wjybxx.Commons.Collections
 {
 /// <summary>
-/// 不可变的保持插入序的字典
+/// 保持插入序的不可变字典
+/// 与C#系统库的ImmutableDictionary，这里的实现是基于拷贝的，且不支持增删元素；另外这里保持了元素的插入顺序
+/// (主要解决Unity的兼容性问题)
 /// </summary>
 /// <typeparam name="TKey"></typeparam>
 /// <typeparam name="TValue"></typeparam>
@@ -359,8 +361,58 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     #endregion
 
+    #region sp
+
+    /// <summary>
+    /// 查询指定键的后一个键
+    /// </summary>
+    /// <param name="key">当前键</param>
+    /// <param name="next">接收下一个键</param>
+    /// <returns>如果下一个key存在则返回true</returns>
+    /// <exception cref="ThrowHelper.KeyNotFoundException">如果当前键不存在</exception>
+    public bool NextKey(TKey key, out TKey next) {
+        int index = Find(key, KeyHash(key, _keyComparer));
+        if (index < 0) {
+            throw ThrowHelper.KeyNotFoundException(key);
+        }
+        ref Node node = ref _table[index];
+        if (node.next < 0) {
+            next = default;
+            return false;
+        }
+        ref Node nextNode = ref _table[node.next];
+        next = nextNode.key;
+        return true;
+    }
+
+    /// <summary>
+    /// 查询指定键的前一个键
+    /// </summary>
+    /// <param name="key">当前键</param>
+    /// <param name="prev">接收前一个键</param>
+    /// <returns>如果前一个key存在则返回true</returns>
+    /// <exception cref="ThrowHelper.KeyNotFoundException">如果当前键不存在</exception>
+    public bool PrevKey(TKey key, out TKey prev) {
+        int index = Find(key, KeyHash(key, _keyComparer));
+        if (index < 0) {
+            throw ThrowHelper.KeyNotFoundException(key);
+        }
+        ref Node node = ref _table[index];
+        if (node.prev < 0) {
+            prev = default;
+            return false;
+        }
+        ref Node nextNode = ref _table[node.prev];
+        prev = nextNode.key;
+        return true;
+    }
+
     public void AdjustCapacity(int expectedCount) {
     }
+
+    #endregion
+
+    #region copyto
 
     public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex, bool reversed = false) {
         if (array == null) throw new ArgumentNullException(nameof(array));
@@ -421,6 +473,10 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
         }
     }
 
+    #endregion
+
+    #region itr
+
     public ISequencedDictionary<TKey, TValue> Reversed() {
         if (_reversed == null) {
             _reversed = new ReversedDictionaryView<TKey, TValue>(this);
@@ -443,6 +499,8 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     public PairEnumerator GetReversedEnumerator() {
         return new PairEnumerator(this, true);
     }
+
+    #endregion
 
     #region core
 
