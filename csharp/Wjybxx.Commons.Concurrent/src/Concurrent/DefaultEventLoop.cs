@@ -21,8 +21,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using Serilog;
 using Wjybxx.Commons.Collections;
+using Wjybxx.Commons.Logger;
 
 #pragma warning disable CS0169
 
@@ -33,7 +33,7 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public class DefaultEventLoop : AbstractScheduledEventLoop
 {
-    private static readonly ILogger Logger = Log.Logger;
+    private static readonly ILogger logger = LoggerFactory.GetLogger(typeof(DefaultEventLoop));
 
     /** 初始状态，未启动状态 */
     private const int ST_NOT_STARTED = 0;
@@ -283,7 +283,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
             }
         }
         catch (Exception e) {
-            Logger.Error(e, "eventLoop exit due to exception");
+            logger.Error(e, "eventLoop exit due to exception");
             if (!_runningPromise.IsSucceeded) {
                 AdvanceRunState(ST_SHUTDOWN); // 启动失败直接进入快速退出状态，丢弃所有提交的任务
             }
@@ -302,7 +302,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
                 _agent.OnShutdown();
             }
             catch (Exception e) {
-                Logger.Warning(e, "agent.OnShutdown caught exception");
+                logger.Warn(e, "agent.OnShutdown caught exception");
             }
 
             // 进入终止状态 -- 需清理同步上下文
@@ -356,7 +356,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
                 if (e is ThreadInterruptedException && IsShuttingDown) {
                     break; // 响应关闭
                 }
-                Logger.Information(e, "execute task caught exception");
+                logger.Info(e, "execute task caught exception");
             }
 
             // 检测是否应该执行用户Update方法
@@ -393,7 +393,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
             _agent.Update();
         }
         catch (Exception e) {
-            Logger.Information(e, "agent.Update caught exception");
+            logger.Info(e, "agent.Update caught exception");
         }
     }
 
@@ -460,11 +460,11 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
                 }
             }
             catch (Exception e) {
-                Logger.Information(e, "execute task caught exception");
+                logger.Info(e, "execute task caught exception");
             }
         }
         long costTime = TimeSpan.FromTicks(ObjectUtil.SystemTicks() - startTime).Milliseconds;
-        Logger.Information($"CleanTaskQueue succeeded, taskCount: {taskCount}, discardCount: {discardCount}, costTime: {costTime}ms");
+        logger.Info($"CleanTaskQueue succeeded, taskCount: {taskCount}, discardCount: {discardCount}, costTime: {costTime}ms");
     }
 
     #endregion

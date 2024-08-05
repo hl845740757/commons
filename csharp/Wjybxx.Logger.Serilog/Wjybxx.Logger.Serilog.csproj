@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <Nullable>annotations</Nullable>
+        <LangVersion>9</LangVersion> <!-- 为兼容unity我们使用c#9 -->
+        <RootNamespace>Wjybxx.Commons</RootNamespace>
+
+        <AssemblyName>Wjybxx.Logger.Serilog</AssemblyName>
+        <PackageId>Wjybxx.Logger.Serilog</PackageId>
+        <PackageVersion>1.1.0-rc5</PackageVersion>
+
+        <Title>Wjybxx.Logger.Serilog</Title>
+        <Description>Serilog适配器</Description>
+        <PackageTags>wjybxx;</PackageTags>
+
+        <Authors>wjybxx(845740757@qq.com)</Authors>
+        <Owners>wjybxx(845740757@qq.com)</Owners>
+        <Copyright>Copyright 2023-2024 wjybxx(845740757@qq.com)</Copyright>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/hl845740757/commons</PackageProjectUrl>
+        <PackageReleaseNotes>https://github.com/hl845740757/commons/releases</PackageReleaseNotes>
+
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <NeutralLanguage>zh-Hans</NeutralLanguage>
+
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <EmbedAllSources>true</EmbedAllSources> <!-- 嵌入源代码 -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <TargetFrameworks>net5.0;net6.0;net7.0;</TargetFrameworks> <!-- 过段时间再添加net8.0 -->
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <NoWarn>1701;1702;1591;</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <NoWarn>1701;1702;1591;</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Serilog" Version="3.1.1" />
+        <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
+        <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.0" />
+        <PackageReference Include="Serilog.Enrichers.Environment" Version="2.3.0" />
+        <PackageReference Include="Serilog.Enrichers.Process" Version="2.0.2" />
+        <PackageReference Include="Serilog.Enrichers.Thread" Version="3.1.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
+        <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
+    </ItemGroup>
+
+</Project>

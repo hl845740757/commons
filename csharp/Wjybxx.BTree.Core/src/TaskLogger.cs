@@ -17,7 +17,7 @@
 #endregion
 
 using System;
-using Serilog;
+using Wjybxx.Commons.Logger;
 
 namespace Wjybxx.BTree
 {
@@ -27,22 +27,22 @@ namespace Wjybxx.BTree
 /// </summary>
 public static class TaskLogger
 {
-    private static readonly ILogger logger = Log.Logger;
+    private static readonly ILogger logger = LoggerFactory.GetLogger(typeof(TaskLogger));
 
     public static void Info(string format, params object[] args) {
-        logger.Information(format, args);
+        logger.Info(format, args);
     }
 
     public static void Info(Exception? ex, string format, params object[] args) {
-        logger.Information(ex, format, args);
+        logger.Info(ex, format, args);
     }
 
     public static void Warning(string format, params object[] args) {
-        logger.Warning(format, args);
+        logger.Warn(format, args);
     }
 
     public static void Warning(Exception? ex, string format, params object[] args) {
-        logger.Warning(ex, format, args);
+        logger.Warn(ex, format, args);
     }
 }
 }
