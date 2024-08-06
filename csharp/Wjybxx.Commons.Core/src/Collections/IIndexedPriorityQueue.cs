@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Collections
 /// (主要提高删除效率)
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface IIndexedPriorityQueue<T> : IIndexedCollection<T>, IQueue<T> where T : class, IIndexedElement
+public interface IIndexedPriorityQueue<T> : IIndexedCollection<T>, IQueue<T> where T : class
 {
     /// <summary>
     /// 队列中元素的优先级发生了变更，通知队列调整结构

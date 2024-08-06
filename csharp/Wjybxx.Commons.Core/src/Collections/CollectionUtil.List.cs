@@ -220,17 +220,12 @@ public static partial class CollectionUtil
     #region indexOfCustom
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool ContainsCustom<T>(this IList<T> list, Func<T, bool> filter) {
-        return IndexOfCustom(list, filter, 0, list.Count) >= 0;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int IndexOfCustom<T>(this IList<T> list, Func<T, bool> filter) {
+    public static int IndexOfCustom<T>(this IList<T> list, Predicate<T> filter) {
         return IndexOfCustom(list, filter, 0, list.Count);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int LastIndexOfCustom<T>(this IList<T> list, Func<T, bool> filter) {
+    public static int LastIndexOfCustom<T>(this IList<T> list, Predicate<T> filter) {
         return LastIndexOfCustom(list, filter, 0, list.Count);
     }
 
@@ -242,7 +237,7 @@ public static partial class CollectionUtil
     /// <param name="start">开始下标，包含</param>
     /// <param name="end">结束下标，不包含</param>
     /// <typeparam name="T"></typeparam>
-    public static int IndexOfCustom<T>(this IList<T> list, Func<T, bool> filter, int start, int end) {
+    public static int IndexOfCustom<T>(this IList<T> list, Predicate<T> filter, int start, int end) {
         for (int idx = start; idx < end; idx++) {
             if (filter(list[idx])) {
                 return idx;
@@ -259,7 +254,7 @@ public static partial class CollectionUtil
     /// <param name="start">开始下标，包含</param>
     /// <param name="end">结束下标，不包含</param>
     /// <typeparam name="T"></typeparam>
-    public static int LastIndexOfCustom<T>(this IList<T> list, Func<T, bool> filter, int start, int end) {
+    public static int LastIndexOfCustom<T>(this IList<T> list, Predicate<T> filter, int start, int end) {
         for (int i = end - 1; i >= start; i--) {
             if (filter(list[i])) {
                 return i;

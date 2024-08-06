@@ -19,12 +19,10 @@
 namespace Wjybxx.Commons.Collections
 {
 /// <summary>
-/// 被索引的元素
-/// 1.索引信息存储在元素上，可大幅提高查找效率；
-/// 2.如果对象可能存在多个集合中，慎重实现该接口，更建议为每个集合设置一个粘合对象；
-/// 3.如果不想暴露接口，可采用<see cref="IIndexedElementHelper{T}"/>
+/// 该接口用于避免集合的中元素直接实现<see cref="IIndexedElement"/>，以避免暴露不必要的接口
 /// </summary>
-public interface IIndexedElement
+/// <typeparam name="T"></typeparam>
+public interface IIndexedElementHelper<in T>
 {
     /** 表示不在集合中的索引，也是默认索引 */
     public const int IndexNotFound = -1;
@@ -32,13 +30,17 @@ public interface IIndexedElement
     /// <summary>
     /// 获取元素在指定集合中的索引，如果不在集合中则返回-1
     /// </summary>
-    public int CollectionIndex(object collection);
+    /// <param name="collection">关联的集合 </param>
+    /// <param name="element">目标元素</param>
+    /// <returns>元素下标</returns>
+    public int CollectionIndex(object collection, T element);
 
     /// <summary>
     /// 设置元素在给定集合中的索引
     /// </summary>
     /// <param name="collection">关联的集合 </param>
+    /// <param name="element">目标元素</param>
     /// <param name="index">新的索引；-1 表示从集合中删除</param>
-    public void CollectionIndex(object collection, int index);
+    public void CollectionIndex(object collection, T element, int index);
 }
 }

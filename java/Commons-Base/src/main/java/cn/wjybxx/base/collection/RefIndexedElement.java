@@ -27,7 +27,7 @@ public final class RefIndexedElement<E> implements IndexedElement {
 
     private final E e;
     private Object queue;
-    private int index = INDEX_NOT_FOUNT;
+    private int index = INDEX_NOT_FOUND;
 
     /** 封闭，允许未来切换实现 */
     private RefIndexedElement(E e) {
@@ -44,7 +44,7 @@ public final class RefIndexedElement<E> implements IndexedElement {
 
     @Override
     public int collectionIndex(Object collection) {
-        return this.queue == collection ? this.index : INDEX_NOT_FOUNT;
+        return this.queue == collection ? this.index : INDEX_NOT_FOUND;
     }
 
     @Override
@@ -55,7 +55,7 @@ public final class RefIndexedElement<E> implements IndexedElement {
             this.index = index;
         } else {
             this.queue = null;
-            this.index = INDEX_NOT_FOUNT;
+            this.index = INDEX_NOT_FOUND;
         }
     }
 

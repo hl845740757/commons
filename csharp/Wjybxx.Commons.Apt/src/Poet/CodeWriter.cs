@@ -179,7 +179,7 @@ public class CodeWriter
 
     #region file/namespace
 
-    private static readonly Func<ISpecification, bool> namespaceFilter = e => e.SpecType == SpecType.Namespace;
+    private static readonly Predicate<ISpecification> namespaceFilter = e => e.SpecType == SpecType.Namespace;
 
     private void EmitFile() {
         int firstIndex = csharpFile.nestedSpecs.IndexOfCustom(namespaceFilter);

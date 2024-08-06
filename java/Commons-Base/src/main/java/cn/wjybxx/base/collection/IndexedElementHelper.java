@@ -17,7 +17,7 @@
 package cn.wjybxx.base.collection;
 
 /**
- * 该接口用于避免集合的中元素直接实现{@link IndexedElement}，以暴露不必要的接口
+ * 该接口用于避免集合的中元素直接实现{@link IndexedElement}，以避免暴露不必要的接口
  *
  * @author wjybxx
  * date - 2024/8/5
@@ -25,7 +25,7 @@ package cn.wjybxx.base.collection;
 public interface IndexedElementHelper<E> {
 
     /** 注意：未插入的节点的所以必须初始化为该值 */
-    int INDEX_NOT_FOUNT = -1;
+    int INDEX_NOT_FOUND = -1;
 
     /**
      * 获取对象在集合中的索引

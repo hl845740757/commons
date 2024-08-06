@@ -27,10 +27,12 @@ import java.util.function.Consumer;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 
+import static cn.wjybxx.base.collection.IndexedElementHelper.INDEX_NOT_FOUND;
+
 /**
  * 迭代期间延迟压缩空间的List，在迭代期间删除元素只会清理元素，不会减少size，而插入元素会添加到List末尾并增加size
  * 1.不支持插入Null -- 理论上做的到，但会导致较高的复杂度，也很少有需要。
- * 2.未实现{@link Iterable}接口，因为不能按照正常方式迭代
+ * 2.未实现{@link Iterable}接口，因为不能按照正常方式迭代 -- 理论上迭代器实现{@link AutoCloseable}接口即可，但较危险。
  * <h3>使用方式</h3>
  * <pre><code>
  *     list.beginItr();
@@ -65,10 +67,8 @@ public final class DelayedCompressList<E> {
 
     private int size;
     private int realSize;
-    private int recursionDepth;
-
     private int firstNullIndex = -1;
-    private int lastNullIndex = -1;
+    private int recursionDepth;
 
     public DelayedCompressList() {
         this(8, 0.75f, null);
@@ -166,6 +166,39 @@ public final class DelayedCompressList<E> {
         return true;
     }
 
+    /** 插入元素（迭代期间禁止插入，不论index是否特殊） */
+    public void insert(int index, E e) {
+        Objects.requireNonNull(e);
+        ensureNotIterating();
+        // 理论上等同于size的时候是安全，但做特殊支持会让api变得不稳定
+        if (index == size) {
+            add(e);
+        } else {
+            Objects.checkIndex(index, size);
+            if (elements[index] == null) {
+                set(index, e);
+                return;
+            }
+            if (size == elements.length) {
+                ensureCapacity(size + 1);
+            }
+            if (helper != null) {
+                helper.collectionIndex(this, e, index);
+            }
+            System.arraycopy(elements, index, elements, index + 1, size - index);
+            if (helper != null) {
+                batchUpdateIndex(elements, index + 1, size, helper);
+            }
+            if (firstNullIndex >= index) {
+                firstNullIndex++;
+            }
+
+            elements[index] = e;
+            realSize++;
+            size++;
+        }
+    }
+
     /**
      * 获取指定位置的元素
      *
@@ -194,7 +227,7 @@ public final class DelayedCompressList<E> {
             }
             // remove
             if (helper != null) {
-                helper.collectionIndex(this, ele, IndexedElementHelper.INDEX_NOT_FOUNT);
+                helper.collectionIndex(this, ele, INDEX_NOT_FOUND);
             }
             elements[index] = null;
             realSize--;
@@ -203,36 +236,36 @@ public final class DelayedCompressList<E> {
             if (firstNullIndex > index || firstNullIndex == -1) {
                 firstNullIndex = index;
             }
-            if (lastNullIndex < index) {
-                lastNullIndex = index;
-            }
             if (recursionDepth == 0 && isCompressionNeeded()) {
                 removeNullElements();
             }
             return ele;
         } else {
-            IndexedElementHelper<? super E> helper = this.helper;
-            if (helper != null) {
-                if (ele != null) {
-                    helper.collectionIndex(this, ele, IndexedElementHelper.INDEX_NOT_FOUNT);
+            if (ele != null) {
+                // replace
+                if (helper != null) {
+                    helper.collectionIndex(this, ele, INDEX_NOT_FOUND);
+                    helper.collectionIndex(this, e, index);
                 }
-                helper.collectionIndex(this, e, index);
+                elements[index] = e;
+                return ele;
             }
-            elements[index] = e;
+            // insert
+            insertSet(index, e);
+            return null;
+        }
+    }
 
-            if (ele == null) {
-                // insert
-                realSize++;
+    private void insertSet(int index, E e) {
+        if (helper != null) {
+            helper.collectionIndex(this, e, index);
+        }
+        elements[index] = e;
+        realSize++;
 
-                // 更新null区间，有成本
-                if (index == firstNullIndex) {
-                    firstNullIndex = indexNextNullElement(index + 1);
-                }
-                if (index == lastNullIndex) {
-                    firstNullIndex = indexPrevNullElement(index - 1);
-                }
-            }
-            return ele;
+        // 更新null区间，有成本
+        if (index == firstNullIndex) {
+            firstNullIndex = indexNextNullElement(index + 1);
         }
     }
 
@@ -276,6 +309,8 @@ public final class DelayedCompressList<E> {
     }
 
     /**
+     * 清空List
+     *
      * @apiNote 在迭代期间清理元素不会更新size
      */
     public void clear() {
@@ -291,10 +326,9 @@ public final class DelayedCompressList<E> {
         realSize = 0;
         if (recursionDepth == 0) {
             size = 0;
-            firstNullIndex = lastNullIndex = -1;
+            firstNullIndex = -1;
         } else {
             firstNullIndex = 0;
-            lastNullIndex = size - 1;
         }
     }
 
@@ -426,7 +460,6 @@ public final class DelayedCompressList<E> {
 
     /**
      * 获取list的真实大小
-     * 如果当前正在迭代，则可能产生遍历统计的情况，要注意开销问题。
      */
     public int realSize() {
         return realSize;
@@ -434,7 +467,6 @@ public final class DelayedCompressList<E> {
 
     /**
      * 查询List是否真的为空
-     * 如果当前正在迭代，则可能产生遍历统计的情况，要注意开销问题。
      */
     public boolean isRealEmpty() {
         return realSize == 0;
@@ -493,15 +525,16 @@ public final class DelayedCompressList<E> {
 
     /** 转换为普通的List */
     public List<E> toList() {
-        @SuppressWarnings("unchecked") E[] elements = (E[]) this.elements;
         if (realSize == 0) {
             return new ArrayList<>();
         }
+        @SuppressWarnings("unchecked") E[] elements = (E[]) this.elements;
         if (realSize == size) {
             return ArrayUtils.toList(elements, 0, size);
         }
         List<E> result = new ArrayList<>(realSize);
-        for (E e : elements) {
+        for (int i = 0, end = size; i < end; i++) {
+            E e = elements[i];
             if (e != null) {
                 result.add(e);
             }
@@ -519,43 +552,40 @@ public final class DelayedCompressList<E> {
 
     private void removeNullElements() {
         assert recursionDepth == 0;
-        // 考虑clear
-        if (realSize == 0) {
-            size = 0;
-            firstNullIndex = lastNullIndex = -1;
+        if (realSize == size) {
             return;
         }
+        // 考虑clear
+        if (realSize == 0) {
+            this.size = 0;
+            this.firstNullIndex = -1;
+            return;
+        }
+
         Object[] elements = this.elements;
         IndexedElementHelper<? super E> helper = this.helper;
         // 非null元素前移
-        int indexOfNull = firstNullIndex;
-        for (int index = indexOfNull + 1, end = size; index < end; index++) {
-            Object element = elements[index];
+        int firstNullIndex = this.firstNullIndex;
+        int nextIndex = firstNullIndex + 1;
+        int nullCount = size - realSize;
+        for (int end = size; nextIndex < end && (nextIndex - firstNullIndex) < nullCount; nextIndex++) {
+            Object element = elements[nextIndex];
             if (element == null) {
                 continue;
             }
             if (helper != null) {
                 @SuppressWarnings("unchecked") E castE = (E) element;
-                helper.collectionIndex(this, castE, indexOfNull);
+                helper.collectionIndex(this, castE, firstNullIndex);
             }
-            elements[indexOfNull++] = element;
+            elements[firstNullIndex++] = element;
+        }
+        if (nextIndex < size) {
+            System.arraycopy(elements, nextIndex, elements, firstNullIndex, size - nextIndex);
         }
         // 清理后部分数据
-        assert indexOfNull == realSize : "indexOfNull %d, realSize: %d".formatted(indexOfNull, realSize);
         Arrays.fill(elements, realSize, size, null);
-        size = realSize;
-        firstNullIndex = lastNullIndex = -1;
-    }
-
-    private int indexPrevNullElement(int start) {
-        if (realSize == size) {
-            return -1;
-        }
-        Object[] elements = this.elements;
-        for (int index = start; index >= 0; index--) {
-            if (elements[index] == null) return index;
-        }
-        throw new IllegalStateException();
+        this.size = realSize;
+        this.firstNullIndex = -1;
     }
 
     private int indexNextNullElement(int start) {
@@ -585,7 +615,7 @@ public final class DelayedCompressList<E> {
             if (castE == null) {
                 continue;
             }
-            helper.collectionIndex(this, castE, IndexedElementHelper.INDEX_NOT_FOUNT);
+            helper.collectionIndex(this, castE, INDEX_NOT_FOUND);
             elements[index] = null;
         }
     }

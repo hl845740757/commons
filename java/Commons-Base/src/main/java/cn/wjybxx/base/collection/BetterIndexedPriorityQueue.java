@@ -16,10 +16,12 @@
 
 package cn.wjybxx.base.collection;
 
+import cn.wjybxx.base.reflect.TypeParameterFinder;
+
 import javax.annotation.Nonnull;
 import java.util.*;
 
-import static cn.wjybxx.base.collection.IndexedElement.INDEX_NOT_FOUND;
+import static cn.wjybxx.base.collection.IndexedElementHelper.INDEX_NOT_FOUND;
 
 /**
  * 参考自Netty的实现
@@ -27,25 +29,31 @@ import static cn.wjybxx.base.collection.IndexedElement.INDEX_NOT_FOUND;
  * @author wjybxx
  * date 2023/4/3
  */
-public class DefaultIndexedPriorityQueue<T extends IndexedElement>
+public class BetterIndexedPriorityQueue<T>
         extends AbstractQueue<T>
         implements IndexedPriorityQueue<T> {
 
-    private static final IndexedElement[] EMPTY_ARRAY = new IndexedElement[0];
+    private static final Object[] EMPTY_ARRAY = new Object[0];
     private static final int DEFAULT_CAPACITY = 16;
 
     private final Comparator<? super T> comparator;
+    private final IndexedElementHelper<? super T> helper;
+    private final Class<?> componentType;
+
     private T[] queue;
     private int size;
 
-    public DefaultIndexedPriorityQueue(Comparator<? super T> comparator) {
-        this(comparator, DEFAULT_CAPACITY);
+    public BetterIndexedPriorityQueue(Comparator<? super T> comparator, IndexedElementHelper<? super T> helper) {
+        this(comparator, helper, DEFAULT_CAPACITY);
     }
 
     @SuppressWarnings("unchecked")
-    public DefaultIndexedPriorityQueue(Comparator<? super T> comparator, int initialSize) {
+    public BetterIndexedPriorityQueue(Comparator<? super T> comparator, IndexedElementHelper<? super T> helper, int initialSize) {
         this.comparator = Objects.requireNonNull(comparator, "comparator");
-        queue = (T[]) (initialSize != 0 ? new IndexedElement[initialSize] : EMPTY_ARRAY);
+        this.helper = Objects.requireNonNull(helper, "helper");
+
+        componentType = TypeParameterFinder.findTypeParameter(helper, IndexedElementHelper.class, "E");
+        queue = (T[]) (initialSize != 0 ? new Object[initialSize] : EMPTY_ARRAY);
     }
 
     @Override
@@ -60,10 +68,11 @@ public class DefaultIndexedPriorityQueue<T extends IndexedElement>
 
     @Override
     public boolean contains(Object o) {
-        if (!(o instanceof IndexedElement node)) { // 包含null
+        if (!componentType.isInstance(o)) {
             return false;
         }
-        return contains(node, node.collectionIndex(this));
+        @SuppressWarnings("unchecked") T node = (T) o;
+        return contains(node, helper.collectionIndex(this, node));
     }
 
     @Override
@@ -71,7 +80,7 @@ public class DefaultIndexedPriorityQueue<T extends IndexedElement>
         if (node == null) {
             return false;
         }
-        return contains(node, node.collectionIndex(this));
+        return contains(node, helper.collectionIndex(this, node));
     }
 
     @Override
@@ -79,7 +88,7 @@ public class DefaultIndexedPriorityQueue<T extends IndexedElement>
         for (int i = 0; i < size; ++i) {
             T node = queue[i];
             if (node != null) {
-                node.collectionIndex(this, INDEX_NOT_FOUND);
+                helper.collectionIndex(this, node, INDEX_NOT_FOUND);
                 queue[i] = null;
             }
         }
@@ -95,16 +104,15 @@ public class DefaultIndexedPriorityQueue<T extends IndexedElement>
     // region queue
     @Override
     public boolean offer(T e) {
-        if (e.collectionIndex(this) != INDEX_NOT_FOUND) {
+        Objects.requireNonNull(e);
+        if (helper.collectionIndex(this, e) != INDEX_NOT_FOUND) {
             throw new IllegalArgumentException("e.queueIndex(): %d (expected: %d) + e: %s"
-                    .formatted(e.collectionIndex(this), INDEX_NOT_FOUND, e));
+                    .formatted(helper.collectionIndex(this, e), INDEX_NOT_FOUND, e));
         }
-
         if (size >= queue.length) {
             final int grow = (queue.length < 64) ? (queue.length + 2) : (queue.length >>> 1);
             queue = Arrays.copyOf(queue, queue.length + grow);
         }
-
         bubbleUp(size++, e);
         return true;
     }
@@ -131,7 +139,7 @@ public class DefaultIndexedPriorityQueue<T extends IndexedElement>
     @SuppressWarnings("unchecked")
     @Override
     public boolean remove(Object o) {
-        if (!(o instanceof IndexedElement)) { // 包含null
+        if (!componentType.isInstance(o)) {
             return false;
         }
         final T node = (T) o;
@@ -143,7 +151,7 @@ public class DefaultIndexedPriorityQueue<T extends IndexedElement>
         if (node == null) {
             return false;
         }
-        int idx = node.collectionIndex(this);
+        int idx = helper.collectionIndex(this, node);
         if (!contains(node, idx)) {
             return false;
         }
@@ -153,7 +161,8 @@ public class DefaultIndexedPriorityQueue<T extends IndexedElement>
 
     @Override
     public void priorityChanged(T node) {
-        int idx = node.collectionIndex(this); // NPE
+        Objects.requireNonNull(node);
+        int idx = helper.collectionIndex(this, node);
         if (!contains(node, idx)) {
             return;
         }
@@ -179,13 +188,13 @@ public class DefaultIndexedPriorityQueue<T extends IndexedElement>
 
     // region internal
 
-    private boolean contains(IndexedElement node, int idx) {
+    private boolean contains(T node, int idx) {
         // 使用equals是无意义的，如果要使用equals，那么索引i会导致漏判断
         return idx >= 0 && idx < size && node == queue[idx];
     }
 
     private void removeAt(int idx, T node) {
-        node.collectionIndex(this, INDEX_NOT_FOUND);
+        helper.collectionIndex(this, node, INDEX_NOT_FOUND);
 
         int newSize = --size;
         if (newSize == idx) { // 如果删除的是最后一个元素则无需交换
@@ -220,13 +229,13 @@ public class DefaultIndexedPriorityQueue<T extends IndexedElement>
             }
 
             queue[k] = child;
-            child.collectionIndex(this, k);
+            helper.collectionIndex(this, child, k);
 
             k = iChild;
         }
 
         queue[k] = node;
-        node.collectionIndex(this, k);
+        helper.collectionIndex(this, node, k);
     }
 
     private void bubbleUp(int k, T node) {
@@ -241,13 +250,13 @@ public class DefaultIndexedPriorityQueue<T extends IndexedElement>
             }
 
             queue[k] = parent;
-            parent.collectionIndex(this, k);
+            helper.collectionIndex(this, parent, k);
 
             k = iParent;
         }
 
         queue[k] = node;
-        node.collectionIndex(this, k);
+        helper.collectionIndex(this, node, k);
     }
 
     /** 这里暂没有按照优先级迭代，实现较为麻烦 */

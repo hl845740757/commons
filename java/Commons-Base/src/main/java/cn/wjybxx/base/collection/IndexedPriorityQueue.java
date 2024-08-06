@@ -25,11 +25,7 @@ import java.util.Queue;
  * @author wjybxx
  * date 2023/4/3
  */
-public interface IndexedPriorityQueue<T extends IndexedElement> extends Queue<T>, IndexedCollection<T> {
-
-    boolean removeTyped(T node);
-
-    boolean containsTyped(T node);
+public interface IndexedPriorityQueue<T> extends Queue<T>, IndexedCollection<T> {
 
     /**
      * 队列中节点元素的优先级发生变化时，将通过该方法通知队列调整

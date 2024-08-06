@@ -241,12 +241,12 @@ public static class ArrayUtil
     #region indexCustom
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int IndexOfCustom<T>(this T[] list, Func<T, bool> filter) {
+    public static int IndexOfCustom<T>(this T[] list, Predicate<T> filter) {
         return IndexOfCustom(list, filter, 0, list.Length);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int LastIndexOfCustom<T>(this T[] list, Func<T, bool> filter) {
+    public static int LastIndexOfCustom<T>(this T[] list, Predicate<T> filter) {
         return LastIndexOfCustom(list, filter, 0, list.Length);
     }
 
@@ -258,7 +258,7 @@ public static class ArrayUtil
     /// <param name="start">开始下标，包含</param>
     /// <param name="end">结束下标，不包含</param>
     /// <typeparam name="T"></typeparam>
-    public static int IndexOfCustom<T>(this T[] list, Func<T, bool> filter, int start, int end) {
+    public static int IndexOfCustom<T>(this T[] list, Predicate<T> filter, int start, int end) {
         for (int idx = start; idx < end; idx++) {
             if (filter(list[idx])) {
                 return idx;
@@ -275,7 +275,7 @@ public static class ArrayUtil
     /// <param name="start">开始下标，包含</param>
     /// <param name="end">结束下标，不包含</param>
     /// <typeparam name="T"></typeparam>
-    public static int LastIndexOfCustom<T>(this T[] list, Func<T, bool> filter, int start, int end) {
+    public static int LastIndexOfCustom<T>(this T[] list, Predicate<T> filter, int start, int end) {
         for (int i = end - 1; i >= start; i--) {
             if (filter(list[i])) {
                 return i;
@@ -371,7 +371,7 @@ public static class ArrayUtil
 
     #endregion
 
-#nullable enable
+#nullable disable
 
     /// <summary>
     /// 拷贝数组
@@ -404,6 +404,20 @@ public static class ArrayUtil
         T[] result = new T[newLen];
         Array.Copy(src, offset, result, 0, Math.Min(src.Length - offset, newLen));
         return result;
+    }
+
+    /// <summary>
+    /// java风格的Fill
+    /// </summary>
+    /// <param name="src"></param>
+    /// <param name="startIndex">开始下标(包含)</param>
+    /// <param name="endIndex">结束下标（不包含）</param>
+    /// <param name="value">要填充的值</param>
+    /// <typeparam name="T"></typeparam>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Fill2<T>(T[] src, int startIndex, int endIndex, T value) {
+        int count = endIndex - startIndex;
+        Array.Fill(src, value, startIndex, count);
     }
 
     /// <summary>
@@ -441,6 +455,7 @@ public static class ArrayUtil
         list[i] = b;
         list[j] = a;
     }
+#nullable enable
 
     /// <summary>
     /// 洗牌算法
@@ -450,6 +465,13 @@ public static class ArrayUtil
         int size = list.Length;
         for (int i = size; i > 1; i--) {
             Swap(list, i - 1, rnd.Next(i));
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static void CheckIndex(int index, int length) {
+        if (index < 0 || index >= length) {
+            throw new IndexOutOfRangeException($"index {index}, length: {length}");
         }
     }
 

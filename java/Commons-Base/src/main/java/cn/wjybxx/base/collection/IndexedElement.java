@@ -19,16 +19,13 @@ package cn.wjybxx.base.collection;
 /**
  * 被索引的元素
  * 1.索引信息存储在元素上，可大幅提高查找效率；
- * 2.如果对象可能存在多个集合中，慎重实现该接口，更建议为每个集合设置一个粘合对象；
- * <p>
- * 将对象在队列中的索引存储在元素上，可以有效提高查询效率，但该设计是危险的。
- * 另一种折中方式是让用户像{@link java.lang.ref.Reference}一样使用自己的对象，这种方式的话用户的使用体验上会差一些。
- * 现在做了个简单实现：{@link RefIndexedElement}
+ * 2.如果对象可能存在多个集合中，慎重实现该接口，更建议为每个集合设置一个粘合对象 -- {@link RefIndexedElement}。
+ * 3.如果不想暴露接口，可采用{@link IndexedElementHelper}
  */
 public interface IndexedElement {
 
     /** 注意：未插入的节点的所以必须初始化为该值 */
-    int INDEX_NOT_FOUNT = -1;
+    int INDEX_NOT_FOUND = -1;
 
     /**
      * 获取对象在集合中的索引

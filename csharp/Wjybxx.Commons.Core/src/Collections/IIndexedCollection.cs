@@ -24,7 +24,7 @@ namespace Wjybxx.Commons.Collections
 /// 2.更多用于非连续存储的集合。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface IIndexedCollection<T> : IGenericCollection<T> where T : class, IIndexedElement
+public interface IIndexedCollection<T> : IGenericCollection<T> where T : class
 {
     /** 清空集合中的元素，并且不清理元素上的索引 */
     void ClearIgnoringIndexes();

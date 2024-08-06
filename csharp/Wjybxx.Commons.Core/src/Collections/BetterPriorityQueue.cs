@@ -28,14 +28,17 @@ namespace Wjybxx.Commons.Collections
 /// 参考自Netty
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class, IIndexedElement
+public class BetterIndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class
 {
     private readonly IComparer<T> _comparator;
+    private readonly IIndexedElementHelper<T> _helper;
+
     private T[] _items;
     private int _count;
 
-    public IndexedPriorityQueue(IComparer<T> comparator, int initCapacity = 11) {
+    public BetterIndexedPriorityQueue(IComparer<T> comparator, IIndexedElementHelper<T> helper, int initCapacity = 11) {
         this._comparator = comparator ?? throw new ArgumentNullException(nameof(comparator));
+        this._helper = helper ?? throw new ArgumentNullException(nameof(helper));
         this._items = new T[initCapacity];
     }
 
@@ -44,19 +47,19 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
     public bool IsEmpty => _count == 0;
 
     public void Clear() {
-        for (var i = 0; i < _count; i++) {
+        for (int i = 0; i < _count; i++) {
             var item = _items[i];
             if (item == null) {
                 continue;
             }
-            item.CollectionIndex(this, -1);
+            _helper.CollectionIndex(this, item, -1);
             _items[i] = null!;
         }
         _count = 0;
     }
 
     public void ClearIgnoringIndexes() {
-        for (var i = 0; i < _count; i++) {
+        for (int i = 0; i < _count; i++) {
             _items[i] = null!;
         }
         _count = 0;
@@ -66,7 +69,7 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
         if (item == null) {
             return false;
         }
-        return Contains(item, item.CollectionIndex(this));
+        return Contains(item, _helper.CollectionIndex(this, item));
     }
 
     #region queue
@@ -88,8 +91,9 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
     }
 
     public bool TryEnqueue(T item) {
-        if (item.CollectionIndex(this) != -1) { // NPE
-            throw new InvalidOperationException($"item.Index: {item.CollectionIndex(this)}, expected: -1");
+        if (item == null) throw new ArgumentNullException(nameof(item));
+        if (_helper.CollectionIndex(this, item) != -1) {
+            throw new InvalidOperationException($"item.Index: {_helper.CollectionIndex(this, item)}, expected: -1");
         }
         if (_count >= _items.Length) {
             int grow = (_items.Length < 64) ? (_items.Length + 2) : (_items.Length >> 1);
@@ -131,7 +135,7 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
         if (item == null) {
             return false;
         }
-        int idx = item.CollectionIndex(this);
+        int idx = _helper.CollectionIndex(this, item);
         if (Contains(item, idx)) {
             RemoveAt(item, idx);
             return true;
@@ -143,7 +147,7 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
         if (node == null) {
             throw new ArgumentNullException(nameof(node));
         }
-        int idx = node.CollectionIndex(this);
+        int idx = _helper.CollectionIndex(this, node);
         if (!Contains(node, idx)) {
             return;
         }
@@ -217,14 +221,8 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
         return idx >= 0 && idx < _count && ReferenceEquals(item, _items[idx]);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void SetNodeIndex(T item, int idx) {
-        item.CollectionIndex(this, idx);
-        Debug.Assert(item.CollectionIndex(this) == idx, "item.Index != idx");
-    }
-
     private void RemoveAt(T item, int idx) {
-        SetNodeIndex(item, -1);
+        _helper.CollectionIndex(this, item, -1);
 
         int newSize = --_count;
         if (newSize == idx) { // 如果删除的是最后一个元素则无需交换
@@ -259,13 +257,13 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
             }
 
             items[k] = child;
-            SetNodeIndex(child, k);
+            _helper.CollectionIndex(this, child, k);
 
             k = iChild;
         }
 
         items[k] = node;
-        SetNodeIndex(node, k);
+        _helper.CollectionIndex(this, node, k);
     }
 
     private void BubbleUp(int k, T node) {
@@ -280,23 +278,23 @@ public class IndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : class,
             }
 
             items[k] = parent;
-            SetNodeIndex(parent, k);
+            _helper.CollectionIndex(this, parent, k);
 
             k = iParent;
         }
 
         items[k] = node;
-        SetNodeIndex(node, k);
+        _helper.CollectionIndex(this, node, k);
     }
 
     /** 这里暂没有按照优先级迭代，实现较为麻烦；由于未有序迭代，这里也没支持删除 */
     public struct Enumerator : ISequentialEnumerator<T>
     {
-        private readonly IndexedPriorityQueue<T> _queue;
+        private readonly BetterIndexedPriorityQueue<T> _queue;
         private int _index;
         private T? _current;
 
-        public Enumerator(IndexedPriorityQueue<T> queue) {
+        public Enumerator(BetterIndexedPriorityQueue<T> queue) {
             _queue = queue;
             _index = -1;
             _current = null;

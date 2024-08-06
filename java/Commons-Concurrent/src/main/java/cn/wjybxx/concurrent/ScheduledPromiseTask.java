@@ -51,7 +51,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     private TimeoutContext timeoutContext;
 
     /** 在队列中的下标 */
-    private int queueIndex = INDEX_NOT_FOUNT;
+    private int queueIndex = INDEX_NOT_FOUND;
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
     private IRegistration cancelRegistration;
 
