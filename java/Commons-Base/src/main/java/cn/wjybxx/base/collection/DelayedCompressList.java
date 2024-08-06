@@ -67,6 +67,9 @@ public final class DelayedCompressList<E> {
     private int realSize;
     private int recursionDepth;
 
+    private int firstNullIndex = -1;
+    private int lastNullIndex = -1;
+
     public DelayedCompressList() {
         this(8, 0.75f, null);
     }
@@ -91,25 +94,28 @@ public final class DelayedCompressList<E> {
         recursionDepth++;
     }
 
-    /** 迭代结束 -- 必须在finally块中调用，否则可能使List处于无效状态 */
+    /** 迭代结束 -- 必须在finally块中调用，否则可能使List处于无效状态；特殊情况下可以反复调用该接口修复状态。 */
     public void endItr() {
         if (recursionDepth == 0) {
             throw new IllegalStateException("begin must be called before end.");
         }
         recursionDepth--;
-        if (recursionDepth == 0 && realSize < size * loadFactor) {
-            fastRemoveNullEntries();
+        if (recursionDepth == 0 && isCompressionNeeded()) {
+            removeNullElements();
         }
     }
 
     /** 主动压缩空间 */
     public void compress(boolean force) {
-        if (recursionDepth != 0) {
-            throw new IllegalStateException("iterating");
+        ensureNotIterating();
+        if (force || isCompressionNeeded()) {
+            removeNullElements();
         }
-        if (force || realSize < size * loadFactor) {
-            fastRemoveNullEntries();
-        }
+    }
+
+    /** 是否需要压缩空间 */
+    private boolean isCompressionNeeded() {
+        return (size - realSize) > 3 && realSize < size * loadFactor;
     }
 
     /** 获取当前负载 -- 主要用于debug */
@@ -117,45 +123,6 @@ public final class DelayedCompressList<E> {
         if (realSize == 0) return 0;
         if (realSize == size) return 1;
         return realSize / (float) size;
-    }
-
-    private void fastRemoveNullEntries() {
-        Object[] elements = this.elements;
-        int index = 0;
-        for (int end = size; index < end; index++) {
-            if (elements[index] == null) break;
-        }
-        if (index == size) {
-            return;
-        }
-        // 非null元素前移
-        int indexOfNull = index;
-        IndexedElementHelper<? super E> helper = this.helper;
-        for (int end = size; index < end; index++) {
-            Object element = elements[index];
-            if (element == null) {
-                continue;
-            }
-            if (helper != null) {
-                @SuppressWarnings("unchecked") E castE = (E) element;
-                helper.collectionIndex(this, castE, indexOfNull);
-            }
-            elements[indexOfNull++] = element;
-        }
-        // 清理后部分数据
-        assert indexOfNull == realSize : "indexOfNull %d, realSize: %d".formatted(indexOfNull, realSize);
-        Arrays.fill(elements, realSize, size, null);
-        size = realSize;
-    }
-
-    private void fastRemoveAt(int index) {
-        int newSize = size - 1;
-        if (index < newSize) {
-            System.arraycopy(elements, index + 1, elements, index, size - (index + 1));
-        }
-        elements[newSize] = null;
-        size = newSize;
-        realSize = newSize;
     }
 
     /** 当前是否正在迭代 */
@@ -199,41 +166,6 @@ public final class DelayedCompressList<E> {
         return true;
     }
 
-    private void batchUpdateIndex(Object[] elements, int start, int end, IndexedElementHelper<? super E> helper) {
-        for (int index = start; index < end; index++) {
-            @SuppressWarnings("unchecked") E castE = (E) elements[index];
-            if (castE == null) {
-                continue;
-            }
-            helper.collectionIndex(this, castE, index);
-        }
-    }
-
-    private void batchUnsetIndex(Object[] elements, int start, int end, IndexedElementHelper<? super E> helper) {
-        for (int index = start; index < end; index++) {
-            @SuppressWarnings("unchecked") E castE = (E) elements[index];
-            if (castE == null) {
-                continue;
-            }
-            helper.collectionIndex(this, castE, IndexedElementHelper.INDEX_NOT_FOUNT);
-            elements[index] = null;
-        }
-    }
-
-    private void ensureCapacity(int minCapacity) {
-        int oldCapacity = elements.length;
-        if (minCapacity <= oldCapacity) {
-            return;
-        }
-        int grow = oldCapacity >> 1; // 位移运算符优先级较低
-        int newCapacity = Math.clamp((long) oldCapacity + grow,
-                4, Integer.MAX_VALUE - 8);
-        if (newCapacity < minCapacity) {
-            newCapacity = minCapacity;
-        }
-        elements = Arrays.copyOf(elements, newCapacity);
-    }
-
     /**
      * 获取指定位置的元素
      *
@@ -249,26 +181,59 @@ public final class DelayedCompressList<E> {
     /**
      * 将给定元素赋值到给定位置
      *
+     * @param e 如果为null，则表示删除
      * @return 该位置的前一个值
      * @throws NullPointerException 如果e为null
      */
     public E set(int index, E e) {
-        Objects.requireNonNull(e);
         Objects.checkIndex(index, size);
-
         @SuppressWarnings("unchecked") E ele = (E) elements[index];
-        elements[index] = e;
-        if (ele != null) {
+        if (e == null) {
+            if (ele == null) {
+                return null;
+            }
+            // remove
             if (helper != null) {
                 helper.collectionIndex(this, ele, IndexedElementHelper.INDEX_NOT_FOUNT);
             }
+            elements[index] = null;
+            realSize--;
+
+            // 更新null区间，无甚成本
+            if (firstNullIndex > index || firstNullIndex == -1) {
+                firstNullIndex = index;
+            }
+            if (lastNullIndex < index) {
+                lastNullIndex = index;
+            }
+            if (recursionDepth == 0 && isCompressionNeeded()) {
+                removeNullElements();
+            }
+            return ele;
         } else {
-            realSize++;
+            IndexedElementHelper<? super E> helper = this.helper;
+            if (helper != null) {
+                if (ele != null) {
+                    helper.collectionIndex(this, ele, IndexedElementHelper.INDEX_NOT_FOUNT);
+                }
+                helper.collectionIndex(this, e, index);
+            }
+            elements[index] = e;
+
+            if (ele == null) {
+                // insert
+                realSize++;
+
+                // 更新null区间，有成本
+                if (index == firstNullIndex) {
+                    firstNullIndex = indexNextNullElement(index + 1);
+                }
+                if (index == lastNullIndex) {
+                    firstNullIndex = indexPrevNullElement(index - 1);
+                }
+            }
+            return ele;
         }
-        if (helper != null) {
-            helper.collectionIndex(this, e, index);
-        }
-        return ele;
     }
 
     /**
@@ -277,25 +242,37 @@ public final class DelayedCompressList<E> {
      * @return 如果指定位置存在元素，则返回对应的元素，否则返回Null
      */
     public E removeAt(int index) {
-        Objects.checkIndex(index, size);
-        Object[] elements = this.elements;
+        return set(index, null);
+    }
 
-        @SuppressWarnings("unchecked") E ele = (E) elements[index];
-        if (ele == null) {
-            return null;
+    /**
+     * 根据equals相等删除元素
+     *
+     * @return 如果元素在集合中则删除并返回true
+     */
+    public boolean remove(Object e) {
+        if (e == null) return false;
+        int i = index(e);
+        if (i >= 0) {
+            set(i, null);
+            return true;
         }
-        if (helper != null) {
-            helper.collectionIndex(this, ele, IndexedElementHelper.INDEX_NOT_FOUNT);
+        return false;
+    }
+
+    /**
+     * 根据引用相等删除元素
+     *
+     * @return 如果元素在集合中则删除并返回true
+     */
+    public boolean removeRef(Object e) {
+        if (e == null) return false;
+        int i = indexOfRef(e);
+        if (i >= 0) {
+            set(i, null);
+            return true;
         }
-        if (recursionDepth == 0) {
-            // 立即删除
-            fastRemoveAt(index);
-        } else {
-            // 延迟删除
-            elements[index] = null;
-            realSize--;
-        }
-        return ele;
+        return false;
     }
 
     /**
@@ -314,6 +291,10 @@ public final class DelayedCompressList<E> {
         realSize = 0;
         if (recursionDepth == 0) {
             size = 0;
+            firstNullIndex = lastNullIndex = -1;
+        } else {
+            firstNullIndex = 0;
+            lastNullIndex = size - 1;
         }
     }
 
@@ -410,42 +391,16 @@ public final class DelayedCompressList<E> {
     }
 
     /**
-     * 根据equals相等删除元素
-     *
-     * @return 如果元素在集合中则删除并返回true
-     */
-    public boolean remove(Object e) {
-        if (e == null) return false;
-        int i = index(e);
-        if (i >= 0) {
-            removeAt(i);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * 根据引用相等删除元素
-     *
-     * @return 如果元素在集合中则删除并返回true
-     */
-    public boolean removeRef(Object e) {
-        if (e == null) return false;
-        int i = indexOfRef(e);
-        if (i >= 0) {
-            removeAt(i);
-            return true;
-        }
-        return false;
-    }
-
-    /**
      * @throws IllegalStateException 如果当前正在迭代
      */
     public void sort(@Nonnull Comparator<? super E> comparator) {
         Objects.requireNonNull(comparator);
         ensureNotIterating();
 
+        // 先压缩空间再排序
+        if (realSize < size) {
+            removeNullElements();
+        }
         @SuppressWarnings("unchecked") E[] elements = (E[]) this.elements;
         Arrays.sort(elements, 0, size, comparator);
         if (helper != null) {
@@ -554,12 +509,100 @@ public final class DelayedCompressList<E> {
         return result;
     }
 
-    //
+    // region internal
 
     private void ensureNotIterating() {
-        if (recursionDepth > 0) {
+        if (recursionDepth != 0) {
             throw new IllegalStateException("Invalid between iterating.");
         }
     }
+
+    private void removeNullElements() {
+        assert recursionDepth == 0;
+        // 考虑clear
+        if (realSize == 0) {
+            size = 0;
+            firstNullIndex = lastNullIndex = -1;
+            return;
+        }
+        Object[] elements = this.elements;
+        IndexedElementHelper<? super E> helper = this.helper;
+        // 非null元素前移
+        int indexOfNull = firstNullIndex;
+        for (int index = indexOfNull + 1, end = size; index < end; index++) {
+            Object element = elements[index];
+            if (element == null) {
+                continue;
+            }
+            if (helper != null) {
+                @SuppressWarnings("unchecked") E castE = (E) element;
+                helper.collectionIndex(this, castE, indexOfNull);
+            }
+            elements[indexOfNull++] = element;
+        }
+        // 清理后部分数据
+        assert indexOfNull == realSize : "indexOfNull %d, realSize: %d".formatted(indexOfNull, realSize);
+        Arrays.fill(elements, realSize, size, null);
+        size = realSize;
+        firstNullIndex = lastNullIndex = -1;
+    }
+
+    private int indexPrevNullElement(int start) {
+        if (realSize == size) {
+            return -1;
+        }
+        Object[] elements = this.elements;
+        for (int index = start; index >= 0; index--) {
+            if (elements[index] == null) return index;
+        }
+        throw new IllegalStateException();
+    }
+
+    private int indexNextNullElement(int start) {
+        if (realSize == size) {
+            return -1;
+        }
+        Object[] elements = this.elements;
+        for (int index = start, end = size; index < end; index++) {
+            if (elements[index] == null) return index;
+        }
+        throw new IllegalStateException();
+    }
+
+    private void batchUpdateIndex(Object[] elements, int start, int end, IndexedElementHelper<? super E> helper) {
+        for (int index = start; index < end; index++) {
+            @SuppressWarnings("unchecked") E castE = (E) elements[index];
+            if (castE == null) {
+                continue;
+            }
+            helper.collectionIndex(this, castE, index);
+        }
+    }
+
+    private void batchUnsetIndex(Object[] elements, int start, int end, IndexedElementHelper<? super E> helper) {
+        for (int index = start; index < end; index++) {
+            @SuppressWarnings("unchecked") E castE = (E) elements[index];
+            if (castE == null) {
+                continue;
+            }
+            helper.collectionIndex(this, castE, IndexedElementHelper.INDEX_NOT_FOUNT);
+            elements[index] = null;
+        }
+    }
+
+    private void ensureCapacity(int minCapacity) {
+        int oldCapacity = elements.length;
+        if (minCapacity <= oldCapacity) {
+            return;
+        }
+        int grow = oldCapacity >> 1; // 位移运算符优先级较低
+        int newCapacity = Math.clamp((long) oldCapacity + grow,
+                4, Integer.MAX_VALUE - 8);
+        if (newCapacity < minCapacity) {
+            newCapacity = minCapacity;
+        }
+        elements = Arrays.copyOf(elements, newCapacity);
+    }
+    // endregion
 
 }

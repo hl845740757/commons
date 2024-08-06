@@ -125,7 +125,6 @@ public interface ILogger
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Info(string format, params object[] args) => Log(Level.Info, format, args);
 
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Info(Exception? ex, string format) => Log(Level.Info, ex, format);
 
@@ -147,10 +146,8 @@ public interface ILogger
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Warn(string format, params object[] args) => Log(Level.Warn, format, args);
 
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Warn(Exception? ex, string format) => Log(Level.Warn, ex, format);
-
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Warn(Exception? ex, string format, params object[] args) => Log(Level.Warn, ex, format, args);
@@ -169,7 +166,6 @@ public interface ILogger
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Error(string format, params object[] args) => Log(Level.Error, format, args);
-
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Error(Exception? ex, string format) => Log(Level.Error, ex, format);

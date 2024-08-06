@@ -89,16 +89,12 @@ internal class ConsoleLogger : ILogger
             sb.Append('.');
 
             int millis = dateTime.Millisecond;
-            if (millis == 0) {
-                sb.Append("000");
-            } else {
-                if (millis < 10) {
-                    sb.Append("00");
-                } else if (millis < 100) {
-                    sb.Append('0');
-                }
-                sb.Append(millis);
+            if (millis < 10) {
+                sb.Append("00");
+            } else if (millis < 100) {
+                sb.Append('0');
             }
+            sb.Append(millis);
             return sb.ToString();
         }
         finally {

@@ -1,5 +1,4 @@
 ﻿#region LICENSE
-
 // Copyright 2023-2024 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,35 +12,31 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 #endregion
 
+#if UNITY_EDITOR
 using System;
 using System.Collections.Concurrent;
 
 namespace Wjybxx.Commons.Logger
 {
-/// <summary>
-/// 简单的打印到console的logger
-/// (实际项目中不会使用，只是在开发期间避免依赖时使用)
-/// </summary>
-public sealed class ConsoleLoggerFactory : ILoggerFactory
+public sealed class UnityLoggerFactory : ILoggerFactory
 {
     /// <summary>
-    /// 静态全局单例
+    /// 全局静态单例
     /// </summary>
-    public static ConsoleLoggerFactory Inst { get; } = new ConsoleLoggerFactory();
+    public static UnityLoggerFactory Inst { get; } = new UnityLoggerFactory();
 
     /// <summary>
     /// 所有的Logger
     /// </summary>
-    private readonly ConcurrentDictionary<string, ConsoleLogger> _loggerMap = new ConcurrentDictionary<string, ConsoleLogger>();
+    private readonly ConcurrentDictionary<string, UnityLogger> _loggerMap = new ConcurrentDictionary<string, UnityLogger>();
     /// <summary>
     /// 启用的log等级
     /// </summary>
     private volatile Level _enabledLevel = Level.Info;
 
-    private ConsoleLoggerFactory() {
+    private UnityLoggerFactory() {
     }
 
     public void Dispose() {
@@ -61,7 +56,7 @@ public sealed class ConsoleLoggerFactory : ILoggerFactory
         if (_loggerMap.TryGetValue(name, out var logger)) {
             return logger;
         }
-        logger = new ConsoleLogger(this, name);
+        logger = new UnityLogger(this, name);
         logger = _loggerMap.GetOrAdd(name, logger);
         return logger;
     }
@@ -71,3 +66,4 @@ public sealed class ConsoleLoggerFactory : ILoggerFactory
     }
 }
 }
+#endif
