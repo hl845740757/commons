@@ -97,23 +97,23 @@ public final class Util {
      * @param barriersToAdd 要追踪的屏障 -- 下游屏障
      */
     @SuppressWarnings("deprecation")
-    public static <T extends SequenceBarrier> void addBarriers(VarHandle varHandle,
-                                                               T current,
-                                                               SequenceBarrier... barriersToAdd) {
+    public static void addBarriers(VarHandle varHandle,
+                                   SequenceBarrier current,
+                                   SequenceBarrier... barriersToAdd) {
         checkNullElements(barriersToAdd, "barriersToAdd");
 
         long cursorSequence;
         SequenceBarrier[] oldBarriers;
         SequenceBarrier[] newBarriers;
         do {
-            oldBarriers = (SequenceBarrier[]) varHandle.get(current);
+            oldBarriers = (SequenceBarrier[]) varHandle.getVolatile(current); // 这里使用volatile更容易成功
             newBarriers = copyOf(oldBarriers, oldBarriers.length + barriersToAdd.length);
             cursorSequence = current.sequence();
 
             // 这里对新的屏障进行初始化，仅用于避免阻塞当前屏障；
             // 否则一但更新成功，当前屏障必须等待新的屏障序号更新为最新值
-            int index = oldBarriers.length;
-            for (SequenceBarrier barrier : barriersToAdd) {
+            for (int index = oldBarriers.length; index < barriersToAdd.length; index++) {
+                SequenceBarrier barrier = barriersToAdd[index];
                 barrier.claim(cursorSequence);
                 newBarriers[index++] = barrier;
             }
@@ -134,14 +134,14 @@ public final class Util {
      * @param current   当前屏障
      * @param barrier   要删除的屏障
      */
-    public static <T extends SequenceBarrier> boolean removeBarrier(VarHandle varHandle,
-                                                                    T current,
-                                                                    SequenceBarrier barrier) {
+    public static boolean removeBarrier(VarHandle varHandle,
+                                        SequenceBarrier current,
+                                        SequenceBarrier barrier) {
         int numToRemove;
         SequenceBarrier[] oldBarriers;
         SequenceBarrier[] newBarriers;
         do {
-            oldBarriers = (SequenceBarrier[]) varHandle.get(current);
+            oldBarriers = (SequenceBarrier[]) varHandle.getVolatile(current); // 这里使用volatile更容易成功
             numToRemove = countMatching(oldBarriers, barrier);
 
             if (0 == numToRemove) {
@@ -163,9 +163,9 @@ public final class Util {
         return numToRemove != 0;
     }
 
-    private static <T> int countMatching(T[] values, final T toMatch) {
+    private static int countMatching(SequenceBarrier[] values, final SequenceBarrier toMatch) {
         int numToRemove = 0;
-        for (T value : values) {
+        for (SequenceBarrier value : values) {
             if (value == toMatch) { // Specifically uses identity
                 numToRemove++;
             }
@@ -187,8 +187,12 @@ public final class Util {
         if (sequence != -1) {
             return sequence;
         }
-        long nanoTime = System.nanoTime();
-        final long deadline = nanoTime + unit.toNanos(timeout);
+        long current = System.nanoTime();
+        final long deadline = current + unit.toNanos(timeout);
+        if (deadline <= current) {
+            return -1;
+        }
+
         if (sleepNanos <= 0) {
             do {
                 Thread.onSpinWait();
@@ -200,7 +204,7 @@ public final class Util {
         } else {
             boolean interrupted = false;
             do {
-                long parkNanos = Math.min(sleepNanos, deadline - nanoTime);
+                long parkNanos = Math.min(sleepNanos, deadline - current);
                 interrupted |= Thread.interrupted(); // 先清理中断
                 LockSupport.parkNanos(parkNanos);
 
@@ -208,7 +212,7 @@ public final class Util {
                 if (sequence != -1) {
                     return sequence;
                 }
-            } while ((nanoTime = System.nanoTime()) < deadline);
+            } while ((current = System.nanoTime()) < deadline);
             if (interrupted) {
                 Thread.currentThread().interrupt();
             }

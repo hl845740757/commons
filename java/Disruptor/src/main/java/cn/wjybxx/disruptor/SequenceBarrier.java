@@ -52,7 +52,7 @@ public interface SequenceBarrier {
      * 设置当前屏障的序号。
      * 1. 仅在初始化屏障时使用。
      * 2. 这是个很危险的方法，避免在运行中使用，否则可能导致错误。
-     * 3. 屏障的初始值为{@link SequenceBarrier#INITIAL_SEQUENCE}。
+     * 3. 屏障的默认初始值为{@link SequenceBarrier#INITIAL_SEQUENCE}。
      *
      * @param sequence 要初始化的值
      * @deprecated 使用该方法时必须显式禁用警告。

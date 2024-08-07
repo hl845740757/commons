@@ -83,7 +83,7 @@ public interface ProducerBarrier extends SequenceBarrier {
     long next(int n);
 
     /**
-     * 尝试获取下一个事件的序列，空间不足时抛出异常。
+     * 尝试获取下一个事件的序列 -- 不会阻塞。
      * 申请完空间之后,必须使用 {@link #publish(long)} 发布，否则会导致整个数据结构不可用。
      * <p>
      * Attempt to claim the next event in sequence for publishing.  Will return the
@@ -95,7 +95,7 @@ public interface ProducerBarrier extends SequenceBarrier {
     long tryNext();
 
     /**
-     * 尝试获取接下来n个数据的最后一个数据索引位置。不会阻塞,空间不足时抛出异常。
+     * 尝试获取接下来n个数据的最后一个数据索引位置 -- 不会阻塞。
      * 申请完空间之后，必须使用 {@link #publish(long, long)} 发布，否则会导致整个数据结构不可用
      * <b>使用该方法可以避免死锁</b>
      * <p>

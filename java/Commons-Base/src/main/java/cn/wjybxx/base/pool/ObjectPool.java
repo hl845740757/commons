@@ -72,7 +72,7 @@ public interface ObjectPool<T> extends Supplier<T> {
             }
         }
     }
-    
+
     /**
      * 释放此池中的所有对象
      * （如果属于特殊资源，可不清理）

@@ -56,7 +56,7 @@ public class DelayedCompressListTest {
                 Assertions.assertTrue(list.contains(jVal), "val is absent" + jVal);
             }
         }
-        Assertions.assertEquals(0, list.realSize());
+        Assertions.assertEquals(0, list.elementCount());
     }
 
     @Test
@@ -76,7 +76,7 @@ public class DelayedCompressListTest {
             Assertions.assertEquals(capacity, list.size());
         } finally {
             list.endItr();
-            Assertions.assertEquals(0, list.realSize());
+            Assertions.assertEquals(0, list.elementCount());
         }
     }
 

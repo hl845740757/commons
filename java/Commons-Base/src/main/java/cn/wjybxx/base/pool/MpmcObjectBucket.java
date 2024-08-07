@@ -34,6 +34,7 @@ import java.util.Objects;
 public final class MpmcObjectBucket<E> {
 
     // region padding
+    @SuppressWarnings("unused")
     private long p1, p2, p3, p4, p5, p6, p7, p8;
     // endregion
 
@@ -48,6 +49,7 @@ public final class MpmcObjectBucket<E> {
     private final long[] consumed;
 
     // region padding
+    @SuppressWarnings("unused")
     private long p11, p12, p13, p14, p15, p16, p17, p18;
     // endregion
 
@@ -55,14 +57,16 @@ public final class MpmcObjectBucket<E> {
     private volatile long producerIndex = -1;
 
     // region padding
-    private long p21, p22, p23, p24, p25, p26, p27, p28;
+    @SuppressWarnings("unused")
+    private long p21, p22, p23, p24, p25, p26, p27;
     // endregion
 
     /** 消费者索引 */
     private volatile long consumerIndex = -1;
 
     // region padding
-    private long p31, p32, p33, p34, p35, p36, p37, p38;
+    @SuppressWarnings("unused")
+    private long p31, p32, p33, p34, p35, p36, p37;
     // endregion
 
     public MpmcObjectBucket(int length) {

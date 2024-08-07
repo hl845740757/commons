@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  * @author wjybxx
  * date - 2024/1/20
  */
-public class MpUnboundedBufferSequencer<T> implements Sequencer, ProducerBarrier {
+public class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Sequencer {
 
     /**
      * 生产者组的序号。

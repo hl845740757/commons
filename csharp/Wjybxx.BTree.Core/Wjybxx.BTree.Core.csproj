@@ -5,12 +5,12 @@
         <Nullable>annotations</Nullable>
         <LangVersion>9</LangVersion>
         <RootNamespace>Wjybxx.BTree</RootNamespace>
-
-        <AssemblyName>Wjybxx.BTree</AssemblyName>
-        <PackageId>Wjybxx.BTree</PackageId>
+        
+        <AssemblyName>Wjybxx.BTree.Core</AssemblyName>
+        <PackageId>Wjybxx.BTree.Core</PackageId>
         <PackageVersion>1.0.0-rc3</PackageVersion>
 
-        <Title>Wjybxx.BTree</Title>
+        <Title>Wjybxx.BTree.Core</Title>
         <Description>BTree-非典型的行为树实现</Description>
         <PackageTags>wjybxx;task;btree;game-ai;</PackageTags>
 
@@ -39,10 +39,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj"/>
+        <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
     </ItemGroup>
 </Project>

@@ -4,14 +4,14 @@
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>annotations</Nullable>
         <LangVersion>9</LangVersion>
-        <RootNamespace>Wjybxx.Disruptpr</RootNamespace>
+        <RootNamespace>Wjybxx.Disruptor</RootNamespace>
 
-        <AssemblyName>Wjybxx.Disruptpr</AssemblyName>
-        <PackageId>Wjybxx.Disruptpr</PackageId>
+        <AssemblyName>Wjybxx.Disruptor</AssemblyName>
+        <PackageId>Wjybxx.Disruptor</PackageId>
         <PackageVersion>1.1.0-rc3</PackageVersion>
 
         <Title>Wjybxx.Disruptpr</Title>
-        <Description>LMAX-Disrutor的C#精简实现，保留其核心设计，更好的抽象和扩展性</Description>
+        <Description>LMAX-Disruptor的C#精简实现，保留其核心设计，更好的抽象和扩展性</Description>
         <PackageTags>wjybxx;concurrent;disruptor</PackageTags>
 
         <Authors>wjybxx(845740757@qq.com)</Authors>

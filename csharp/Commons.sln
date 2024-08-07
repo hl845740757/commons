@@ -18,7 +18,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Dson.Tests", "Wjybxx
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Disruptor", "Wjybxx.Disruptor\Wjybxx.Disruptor.csproj", "{5FEDD358-5AE1-444E-BF59-6CB7F7500165}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.BTree", "Wjybxx.BTree.Core\Wjybxx.BTree.csproj", "{2890F959-2E95-45DC-823C-DB2B568907EF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.BTree.Core", "Wjybxx.BTree.Core\Wjybxx.BTree.Core.csproj", "{2890F959-2E95-45DC-823C-DB2B568907EF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.BTree.Codec", "Wjybxx.BTree.Codec\Wjybxx.BTree.Codec.csproj", "{66FD094C-CA4B-4FE6-92B1-793FC1FCBF5A}"
 EndProject

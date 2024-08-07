@@ -459,17 +459,17 @@ public final class DelayedCompressList<E> {
     }
 
     /**
-     * 获取list的真实大小
+     * 非空元素数量
      */
-    public int realSize() {
+    public int elementCount() {
         return realSize;
     }
 
     /**
-     * 查询List是否真的为空
+     * 空元素数量
      */
-    public boolean isRealEmpty() {
-        return realSize == 0;
+    public int nullCount() {
+        return size - realSize;
     }
 
     /**
@@ -551,7 +551,6 @@ public final class DelayedCompressList<E> {
     }
 
     private void removeNullElements() {
-        assert recursionDepth == 0;
         if (realSize == size) {
             return;
         }

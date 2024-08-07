@@ -137,12 +137,12 @@ public class MultiProducerSequencer extends RingBufferSequencer {
         // 查询尽量返回实时的数据 - 不使用缓存
         long consumed = Util.getMinimumSequence(gatingBarriers, cursor.getVolatile());
         long produced = cursor.getVolatile();
-        return getBufferSize() - (produced - consumed);
+        return bufferSize - (produced - consumed);
     }
 
     @Override
     public boolean hasAvailableCapacity(int requiredCapacity) {
-        if (requiredCapacity < 0) throw new IllegalArgumentException();
+        if (requiredCapacity < 0) throw new IllegalArgumentException("requiredCapacity: " + requiredCapacity);
         if (requiredCapacity > bufferSize) return false;
         return hasAvailableCapacity(gatingBarriers, requiredCapacity, cursor.getVolatile());
     }

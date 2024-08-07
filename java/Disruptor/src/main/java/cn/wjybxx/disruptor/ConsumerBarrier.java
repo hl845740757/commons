@@ -45,7 +45,7 @@ public interface ConsumerBarrier extends SequenceBarrier {
      * 而是每次消费一点，再拉取一点，则会在该操作上形成巨大的开销 —— 极端情况是每次拉取1个，性能将差到极致。
      * 建议的的方式：先拉取到本地，然后在本地分批处理，避免频繁调用{@code waitFor}。
      *
-     * @param sequence 等待消费的序号
+     * @param sequence 期望消费的序号
      * @return 当前可用的最大序号
      * @throws AlertException       if a status change has occurred for the Disruptor
      * @throws InterruptedException if the thread needs awaking on a condition variable.
@@ -54,7 +54,7 @@ public interface ConsumerBarrier extends SequenceBarrier {
     long waitFor(long sequence) throws TimeoutException, AlertException, InterruptedException;
 
     /**
-     * 【当前屏障】是否收到了特殊信号
+     * 【当前屏障】是否收到了Alert信号
      *
      * @return 如果收到了终止信号，则返回true，否则返回false
      */

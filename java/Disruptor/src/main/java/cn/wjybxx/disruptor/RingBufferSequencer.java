@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  * @author wjybxx
  * date - 2024/1/16
  */
-public abstract class RingBufferSequencer implements Sequencer, ProducerBarrier {
+public abstract class RingBufferSequencer implements ProducerBarrier, Sequencer {
 
     /** 生产者的序列，表示生产者的进度。 */
     protected final Sequence cursor = new Sequence(INITIAL_SEQUENCE);
@@ -52,6 +52,12 @@ public abstract class RingBufferSequencer implements Sequencer, ProducerBarrier 
     /** 序号阻塞器 -- 用于唤醒等待生产者发布数据的消费者 */
     protected final SequenceBlocker blocker;
 
+    /**
+     * @param bufferSize   RingBuffer大小
+     * @param sleepNanos   单步等待时间 - 0则使用自旋
+     * @param waitStrategy 默认等待策略
+     * @param blocker      用于唤醒消费者的锁
+     */
     public RingBufferSequencer(int bufferSize, long sleepNanos, WaitStrategy waitStrategy, @Nullable SequenceBlocker blocker) {
         this.bufferSize = bufferSize;
         this.sleepNanos = sleepNanos;
@@ -114,7 +120,7 @@ public abstract class RingBufferSequencer implements Sequencer, ProducerBarrier 
     }
 
     @Override
-    public long tryNext(int n, long timeout, TimeUnit unit) {
+    public final long tryNext(int n, long timeout, TimeUnit unit) {
         return Util.tryNext(n, timeout, unit, this, sleepNanos);
     }
 
@@ -128,7 +134,7 @@ public abstract class RingBufferSequencer implements Sequencer, ProducerBarrier 
     }
 
     @Override
-    public long sequence() {
+    public final long sequence() {
         return cursor.getVolatile();
     }
 

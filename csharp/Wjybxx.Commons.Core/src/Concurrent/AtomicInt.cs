@@ -73,25 +73,25 @@ public sealed class AtomicInt
     }
 
     /// <summary>
+    /// 比较并更新
     /// </summary>
-    /// <param name="value">要设置的值</param>
-    /// <param name="comparand">比较数</param>
+    /// <param name="expectedValue">期望值</param>
+    /// <param name="newValue">要设置的值</param>
     /// <returns>如果更新成功则返回true</returns>
-    public bool CompareAndSet(int value, int comparand) {
-        return Interlocked.CompareExchange(ref _value, value, comparand) == comparand;
+    public bool CompareAndSet(int expectedValue, int newValue) {
+        return Interlocked.CompareExchange(ref _value, newValue, expectedValue) == expectedValue;
     }
 
     /// <summary>
-    /// 按照C#的编程习惯，比较数放在末尾；唯一的好处可能就是进行==比较时，两个值是挨着的。
-    /// <code>
-    /// CompareAndExchange(newValue, expectedValue) == expectedValue
-    /// </code>
+    /// 比较并交换
     /// </summary>
-    /// <param name="value">要设置的值</param>
-    /// <param name="comparand">比较数</param>
+    /// <param name="expectedValue">期望值</param>
+    /// <param name="newValue">要设置的值</param>
     /// <returns>地址上的旧值</returns>
-    public int CompareAndExchange(int value, int comparand) {
-        return Interlocked.CompareExchange(ref _value, value, comparand);
+    public int CompareAndExchange(int expectedValue, int newValue) {
+        // 按照C#的编程习惯，比较数放在末；唯一的好处可能就是进行==比较时，两个值是挨着的。
+        // CompareAndExchange(newValue, expectedValue) == expectedValue
+        return Interlocked.CompareExchange(ref _value, newValue, expectedValue);
     }
 }
 }

@@ -19,32 +19,30 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
 
-abstract class LhsPadding {
-    private long p1, p2, p3, p4, p5, p6, p7;
-//    private long p8, p9, p10, p11, p12, p13, p14, p15;
-}
-
-abstract class Value extends LhsPadding {
-    protected volatile long value;
-}
-
-abstract class RhsPadding extends Value {
-    private long p1, p2, p3, p4, p5, p6, p7;
-//    private long p8, p9, p10, p11, p12, p13, p14, p15;
-}
-
 /**
  * 序列，用于追踪RingBuffer和EventProcessor的进度，表示生产/消费进度。
  */
-public final class Sequence extends RhsPadding {
+public final class Sequence {
 
     private static final long INITIAL_VALUE = -1L;
     private static final VarHandle VH_VALUE;
 
+    // region padding
+    @SuppressWarnings("unused")
+    private long p1, p2, p3, p4, p5, p6, p7;
+    // endregion
+
+    private volatile long value;
+
+    // region padding
+    @SuppressWarnings("unused")
+    private long p11, p12, p13, p14, p15, p16, p17;
+    // endregion
+
     static {
         try {
             MethodHandles.Lookup l = MethodHandles.lookup();
-            VH_VALUE = l.findVarHandle(Value.class, "value", long.class);
+            VH_VALUE = l.findVarHandle(Sequence.class, "value", long.class);
         } catch (Exception e) {
             throw new ExceptionInInitializerError(e);
         }

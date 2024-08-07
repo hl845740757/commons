@@ -16,25 +16,26 @@
 
 package cn.wjybxx.disruptor;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-abstract class RingBufferPad {
 
-    // region pad
-    private long p1, p2, p3, p4, p5, p6, p7, p8;
-//    private long p11, p12, p13, p14, p15, p16, p17, p18;
-    // endregion
-
-}
-
-abstract class RingBufferFields<E> extends RingBufferPad {
+/**
+ * 与Disruptor的设计不同，我将RingBuffer类仅仅设计为数据结构。
+ *
+ * @author wjybxx
+ * date - 2024/1/16
+ */
+public final class RingBuffer<E> implements DataProvider<E> {
 
     /** 前后缓存行填充的元素元素 */
     private static final int BUFFER_PAD = 16;
+
+    // region padding
+    @SuppressWarnings("unused")
+    private long p1, p2, p3, p4, p5, p6, p7;
+    // endregion
 
     /**
      * 索引掩码，表示后X位是有效数字(截断)。位运算代替取余快速计算插槽索引
@@ -47,10 +48,16 @@ abstract class RingBufferFields<E> extends RingBufferPad {
     private final Object[] entries;
     /**
      * 缓存有效空间大小(必须是2的整次幂，-1就是掩码)
+     * (使用long类型充当填充)
      */
-    final int bufferSize;
+    private final long bufferSize;
 
-    public RingBufferFields(EventFactory<? extends E> eventFactory, int bufferSize) {
+    // region padding
+    @SuppressWarnings("unused")
+    private long p11, p12, p13, p14, p15, p16, p17;
+    // endregion
+
+    public RingBuffer(EventFactory<? extends E> eventFactory, int bufferSize) {
         Objects.requireNonNull(eventFactory, "eventFactory");
         if (!Util.isPowerOfTwo(bufferSize)) {
             throw new IllegalArgumentException("bufferSize must be a power of 2");
@@ -63,74 +70,53 @@ abstract class RingBufferFields<E> extends RingBufferPad {
         fill(eventFactory);
     }
 
-    private static final VarHandle VH_ELEMENTS = MethodHandles.arrayElementVarHandle(Object[].class);
-
     private void fill(EventFactory<? extends E> eventFactory) {
         for (int i = 0; i < bufferSize; i++) {
             entries[BUFFER_PAD + i] = eventFactory.newInstance();
         }
     }
 
-    @SuppressWarnings("unchecked")
-    protected final E elementAt(long sequence) {
-        int index = (int) (sequence & indexMask);
-        return (E) VH_ELEMENTS.get(entries, BUFFER_PAD + index);
-    }
+    // region internal
 
     @SuppressWarnings("unchecked")
-    protected final void setElement(long sequence, E event) {
+    E getElement(long sequence) {
         int index = (int) (sequence & indexMask);
-        VH_ELEMENTS.set(entries, BUFFER_PAD + index, event);
+        return (E) entries[BUFFER_PAD + index];
     }
 
-    /** 用于debug和测试 */
-    protected final Stream<E> toStream() {
-        @SuppressWarnings("unchecked") E[] elements = (E[]) entries;
-        return Arrays.asList(elements)
-                .subList(BUFFER_PAD, BUFFER_PAD + bufferSize)
-                .stream();
+    void setElement(long sequence, E event) {
+        int index = (int) (sequence & indexMask);
+        entries[BUFFER_PAD + index] = event;
     }
-}
 
-/**
- * 与Disruptor的设计不同，我将RingBuffer类仅仅设计为数据结构。
- *
- * @author wjybxx
- * date - 2024/1/16
- */
-public final class RingBuffer<E> extends RingBufferFields<E> implements DataProvider<E> {
-
-    // region pad
-    private long p1, p2, p3, p4, p5, p6, p7, p8;
-//    private long p11, p12, p13, p14, p15, p16, p17, p18;
     // endregion
 
-    public RingBuffer(EventFactory<? extends E> eventFactory, int bufferSize) {
-        super(eventFactory, bufferSize);
-    }
-
+    /** 获取buffer大小 */
     public int getBufferSize() {
-        return bufferSize;
+        return (int) bufferSize;
     }
 
     /** 用于测试 */
     public Stream<E> stream() {
-        return toStream();
+        @SuppressWarnings("unchecked") E[] elements = (E[]) entries;
+        return Arrays.asList(elements)
+                .subList(BUFFER_PAD, BUFFER_PAD + (int) bufferSize)
+                .stream();
     }
 
     @Override
     public E get(long sequence) {
-        return elementAt(sequence);
+        return getElement(sequence);
     }
 
     @Override
     public E producerGet(long sequence) {
-        return elementAt(sequence);
+        return getElement(sequence);
     }
 
     @Override
     public E consumerGet(long sequence) {
-        return elementAt(sequence);
+        return getElement(sequence);
     }
 
     @Override

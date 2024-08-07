@@ -30,9 +30,9 @@ public interface WaitStrategy {
      * 等待给定的序号可用
      * 实现类通过{@link ProducerBarrier#sequence()}}和{@link ConsumerBarrier#dependentSequence()}进行等待。
      *
-     * @param sequence        期望生产或消费的序号
+     * @param sequence        期望消费的序号
      * @param producerBarrier 用于条件等待策略依赖策略感知生产者进度
-     * @param barrier         序号屏障 - 用于检测终止信号和查询依赖等。
+     * @param barrier         消费者屏障 - 用于检测终止信号和查询依赖等。
      * @return 当前可用的序号
      * @throws AlertException       if a status change has occurred for the Disruptor
      * @throws InterruptedException if the thread needs awaking on a condition variable.

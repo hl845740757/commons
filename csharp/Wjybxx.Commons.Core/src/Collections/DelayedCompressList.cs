@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Attributes;
@@ -145,6 +144,16 @@ public sealed class DelayedCompressList<E> where E : class
             return elements[index];
         }
         set => Set(index, value);
+    }
+
+    /// <summary>
+    /// 获取指定索引位置的值
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    public E? Get(int index) {
+        ArrayUtil.CheckIndex(index, size);
+        return elements[index];
     }
 
     /// <summary>
@@ -422,14 +431,14 @@ public sealed class DelayedCompressList<E> where E : class
     public bool IsEmpty => size == 0;
 
     /// <summary>
-    /// 获取list的真实大小
+    /// 非空元素数量
     /// </summary>
-    public int RealCount => realSize;
+    public int ElementCount => realSize;
 
     /// <summary>
-    /// 查询List是否真的为空
+    /// 空元素数量
     /// </summary>
-    public bool IsRealEmpty => realSize == 0;
+    public int NullCount => (size - realSize);
 
     /// <summary>
     /// 迭代List内的元素，该快捷方式不会迭代迭代期间新增的元素
@@ -515,7 +524,6 @@ public sealed class DelayedCompressList<E> where E : class
     }
 
     private void RemoveNullElements() {
-        Debug.Assert(recursionDepth == 0);
         if (realSize == size) {
             return;
         }

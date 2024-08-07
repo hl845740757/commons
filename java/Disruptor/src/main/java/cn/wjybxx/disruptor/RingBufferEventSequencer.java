@@ -23,12 +23,12 @@ import java.util.concurrent.TimeUnit;
  * @author wjybxx
  * date - 2024/1/17
  */
-public class RingBufferEventSequencer<E> implements EventSequencer<E> {
+public class RingBufferEventSequencer<T> implements EventSequencer<T> {
 
-    private final RingBuffer<E> buffer;
+    private final RingBuffer<T> buffer;
     private final RingBufferSequencer sequencer;
 
-    public RingBufferEventSequencer(Builder<E> builder) {
+    public RingBufferEventSequencer(Builder<T> builder) {
         Objects.requireNonNull(builder);
         this.buffer = new RingBuffer<>(builder.getFactory(), builder.getBufferSize());
         if (builder.getProducerType() == ProducerType.MULTI) {
@@ -46,35 +46,35 @@ public class RingBufferEventSequencer<E> implements EventSequencer<E> {
         }
     }
 
-    public RingBuffer<E> getBuffer() {
+    public RingBuffer<T> getBuffer() {
         return buffer;
     }
 
     // region buffer
 
     @Override
-    public final E get(long sequence) {
-        return buffer.elementAt(sequence);
+    public final T get(long sequence) {
+        return buffer.getElement(sequence);
     }
 
     @Override
-    public final E producerGet(long sequence) {
-        return buffer.elementAt(sequence);
+    public final T producerGet(long sequence) {
+        return buffer.getElement(sequence);
     }
 
     @Override
-    public final E consumerGet(long sequence) {
-        return buffer.elementAt(sequence);
+    public final T consumerGet(long sequence) {
+        return buffer.getElement(sequence);
     }
 
     @Override
-    public void producerSet(long sequence, E data) {
+    public void producerSet(long sequence, T data) {
         Objects.requireNonNull(data);
         buffer.setElement(sequence, data);
     }
 
     @Override
-    public void consumerSet(long sequence, E data) {
+    public void consumerSet(long sequence, T data) {
         buffer.setElement(sequence, data);
     }
 

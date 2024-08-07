@@ -16,47 +16,8 @@
 
 package cn.wjybxx.disruptor;
 
-
 import javax.annotation.Nullable;
 import java.util.concurrent.locks.LockSupport;
-
-abstract class SingleProducerSequencerPad extends RingBufferSequencer {
-
-    private long p1, p2, p3, p4, p5, p6, p7;
-//    private long p8, p9, p10, p11, p12, p13, p14, p15;
-
-    public SingleProducerSequencerPad(int bufferSize, long sleepNanos,
-                                      WaitStrategy waitStrategy, @Nullable SequenceBlocker blocker) {
-        super(bufferSize, sleepNanos, waitStrategy, blocker);
-    }
-}
-
-abstract class SingleProducerSequencerFields extends SingleProducerSequencerPad {
-
-    public SingleProducerSequencerFields(int bufferSize, long sleepNanos,
-                                         WaitStrategy waitStrategy, @Nullable SequenceBlocker blocker) {
-        super(bufferSize, sleepNanos, waitStrategy, blocker);
-    }
-
-    /**
-     * 预分配的序号缓存，因为是单线程的生产者，不存在竞争，因此采用普通的long变量
-     * 表示 {@link #cursor} +1 ~  nextValue 这段空间被预分配出去了，但是可能还未填充数据。
-     */
-    long produced = SequenceBarrier.INITIAL_SEQUENCE;
-    /**
-     * 网关序列的最小序号缓存。
-     * 因为是单线程的生产者，数据无竞争，因此使用普通的long变量即可。
-     * <p>
-     * Q: 该缓存值的作用？
-     * A: 除了直观上的减少对{@link #gatingBarriers}的遍历产生的volatile读以外，还可以提高缓存命中率。
-     * <p>
-     * 由于消费者的{@link Sequence}变更较为频繁，因此消费者的{@link Sequence}的缓存极易失效。
-     * 如果生产者频繁读取消费者的{@link Sequence}，极易遇见缓存失效问题（伪共享），从而影响性能。
-     * 通过缓存一个值（在必要的时候更新），可以极大的减少对消费者的{@link Sequence}的读操作，从而提高性能。
-     * PS: 使用一个变化频率较低的值代替一个变化频率较高的值，提高读效率。
-     */
-    long cachedGating = SequenceBarrier.INITIAL_SEQUENCE;
-}
 
 /**
  * 单生产者序号分配器
@@ -65,17 +26,37 @@ abstract class SingleProducerSequencerFields extends SingleProducerSequencerPad 
  * @author wjybxx
  * date - 2024/1/17
  */
-public class SingleProducerSequencer extends SingleProducerSequencerFields {
+public class SingleProducerSequencer extends RingBufferSequencer {
 
+    // region padding
+    @SuppressWarnings("unused")
     private long p1, p2, p3, p4, p5, p6, p7;
-//    private long p8, p9, p10, p11, p12, p13, p14, p15;
+    // endregion
 
     /**
-     * @param bufferSize   RingBuffer大小
-     * @param sleepNanos   单步等待时间 - 0则使用自旋
-     * @param waitStrategy 默认等待策略
-     * @param blocker      用于唤醒消费者的锁
+     * 预分配的序号缓存，因为是单线程的生产者，不存在竞争，因此采用普通的long变量；
+     * 表示 {@link #cursor} +1 ~  nextValue 这段空间被预分配出去了，但是可能还未填充数据。
      */
+    private long produced = SequenceBarrier.INITIAL_SEQUENCE;
+    /**
+     * 网关序列的最小序号缓存。
+     * 因为是单线程的生产者，数据无竞争，因此使用普通的long变量即可。
+     * <p>
+     * Q: 该缓存值的作用？
+     * A: 除了直观上的减少对{@link #gatingBarriers}的遍历产生的volatile读以外，还可以提高缓存命中率。
+     * <p>
+     * 由于消费者的{@link Sequence}变更较为频繁，因此消费者{@link Sequence}的缓存行极易失效。
+     * 如果生产者频繁读取消费者的{@link Sequence}，极易遇见缓存失效问题（伪共享），从而影响性能。
+     * 通过缓存一个值（在必要的时候更新），可以极大的减少对消费者序号的读操作，从而提高性能。
+     * PS: 使用一个变化频率较低的值代替一个变化频率较高的值，提高读效率。
+     */
+    private long cachedGating = SequenceBarrier.INITIAL_SEQUENCE;
+
+    // region padding
+    @SuppressWarnings("unused")
+    private long p11, p12, p13, p14, p15, p16, p17;
+    // endregion
+
     public SingleProducerSequencer(int bufferSize, long sleepNanos, WaitStrategy waitStrategy, @Nullable SequenceBlocker blocker) {
         super(bufferSize, sleepNanos, waitStrategy, blocker);
     }
@@ -99,7 +80,7 @@ public class SingleProducerSequencer extends SingleProducerSequencerFields {
     @Override
     public boolean hasAvailableCapacity(int requiredCapacity) {
         if (requiredCapacity < 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("requiredCapacity: " + requiredCapacity);
         }
         return hasAvailableCapacity(requiredCapacity, false);
     }

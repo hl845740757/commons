@@ -23,22 +23,22 @@ import java.util.concurrent.TimeUnit;
  * @author wjybxx
  * date - 2024/1/20
  */
-public class MpUnboundedEventSequencer<E> implements EventSequencer<E> {
+public class MpUnboundedEventSequencer<T> implements EventSequencer<T> {
 
-    private final MpUnboundedBuffer<E> buffer;
-    private final MpUnboundedBufferSequencer<E> sequencer;
+    private final MpUnboundedBuffer<T> buffer;
+    private final MpUnboundedBufferSequencer<T> sequencer;
 
-    public MpUnboundedEventSequencer(Builder<E> builder) {
+    public MpUnboundedEventSequencer(Builder<T> builder) {
         Objects.requireNonNull(builder);
-        buffer = new MpUnboundedBuffer<>(builder.getChunkSize(),
-                builder.getMaxPooledChunks(),
-                builder.getFactory());
+        buffer = new MpUnboundedBuffer<>(builder.getFactory(),
+                builder.getChunkSize(),
+                builder.getMaxPooledChunks());
         sequencer = new MpUnboundedBufferSequencer<>(buffer,
                 builder.getWaitStrategy(),
                 builder.getBlocker());
     }
 
-    public MpUnboundedBuffer<E> getBuffer() {
+    public MpUnboundedBuffer<T> getBuffer() {
         return buffer;
     }
 
@@ -60,27 +60,27 @@ public class MpUnboundedEventSequencer<E> implements EventSequencer<E> {
     // region buffer
 
     @Override
-    public final E get(long sequence) {
+    public final T get(long sequence) {
         return buffer.get(sequence);
     }
 
     @Override
-    public final E producerGet(long sequence) {
+    public final T producerGet(long sequence) {
         return buffer.producerGet(sequence);
     }
 
     @Override
-    public final E consumerGet(long sequence) {
+    public final T consumerGet(long sequence) {
         return buffer.consumerGet(sequence);
     }
 
     @Override
-    public void producerSet(long sequence, E data) {
+    public void producerSet(long sequence, T data) {
         buffer.producerSet(sequence, data);
     }
 
     @Override
-    public void consumerSet(long sequence, E data) {
+    public void consumerSet(long sequence, T data) {
         buffer.consumerSet(sequence, data);
     }
 
