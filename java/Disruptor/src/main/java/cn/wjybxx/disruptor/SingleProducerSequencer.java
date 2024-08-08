@@ -26,7 +26,7 @@ import java.util.concurrent.locks.LockSupport;
  * @author wjybxx
  * date - 2024/1/17
  */
-public class SingleProducerSequencer extends RingBufferSequencer {
+public final class SingleProducerSequencer extends RingBufferSequencer {
 
     // region padding
     @SuppressWarnings("unused")

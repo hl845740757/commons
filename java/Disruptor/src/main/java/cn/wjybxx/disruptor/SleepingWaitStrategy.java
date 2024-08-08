@@ -34,16 +34,14 @@ import java.util.concurrent.locks.LockSupport;
  */
 public class SleepingWaitStrategy implements WaitStrategy {
 
-    private static final int SPIN_TRIES = 100;
-    private static final int YIELD_TRIES = 100;
-    private static final int SLEEP_NANOS = 1000;
-
     private final int spinTries;
     private final int yieldTries;
     private final long sleepTimeNs;
 
     public SleepingWaitStrategy() {
-        this(SPIN_TRIES, YIELD_TRIES, SLEEP_NANOS, TimeUnit.NANOSECONDS);
+        this.spinTries = 100;
+        this.yieldTries = 100;
+        this.sleepTimeNs = 1000;
     }
 
     public SleepingWaitStrategy(int spinTries, int yieldTries, long sleepTime, TimeUnit unit) {
@@ -63,6 +61,7 @@ public class SleepingWaitStrategy implements WaitStrategy {
 
             if (counter > yieldTries) {
                 --counter;
+                Thread.onSpinWait();
             } else if (counter > 0) {
                 --counter;
                 Thread.yield();

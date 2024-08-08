@@ -35,7 +35,7 @@ public class SingleConsumerBarrier implements ConsumerBarrier {
     private volatile boolean alerted = false;
 
     /**
-     * @param producerBarrier   序号生成器
+     * @param producerBarrier   生产者屏障
      * @param waitStrategy      该组消费者的等待策略
      * @param dependentBarriers 依赖的屏障
      */

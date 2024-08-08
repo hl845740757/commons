@@ -637,7 +637,7 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
 #nullable enable
 
         public UniOnCompleted3(IExecutor? executor, int options, UniPromise<T> input,
-                               Action<IFuture<T>, IContext> action, in IContext context)
+                               Action<IFuture<T>, IContext> action, IContext context)
             : base(executor, options, input) {
             this.action = action;
             this.context = context;
@@ -664,7 +664,7 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         }
 
         public static bool FireNow(UniPromise<T> input,
-                                   Action<IFuture<T>, IContext> action, in IContext context,
+                                   Action<IFuture<T>, IContext> action, IContext context,
                                    UniOnCompleted3? c) {
             try {
                 if (c != null && !c.Claim()) {

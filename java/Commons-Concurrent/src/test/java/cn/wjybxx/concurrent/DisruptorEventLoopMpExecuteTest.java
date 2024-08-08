@@ -82,8 +82,7 @@ public class DisruptorEventLoopMpExecuteTest {
         counter = new Counter();
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
-                .setEventSequencer(MpUnboundedEventSequencer.<RingBufferEvent>newBuilder()
-                        .setFactory(RingBufferEvent::new)
+                .setEventSequencer(MpUnboundedEventSequencer.newBuilder(RingBufferEvent::new)
                         .build())
                 .build();
 

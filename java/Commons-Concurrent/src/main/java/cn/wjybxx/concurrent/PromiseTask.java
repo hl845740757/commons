@@ -16,7 +16,7 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.disruptor.StacklessTimeoutException;
+import cn.wjybxx.base.concurrent.StacklessTimeoutException;
 
 import java.util.Objects;
 import java.util.concurrent.Callable;

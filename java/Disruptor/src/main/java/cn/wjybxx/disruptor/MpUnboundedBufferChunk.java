@@ -109,6 +109,12 @@ public final class MpUnboundedBufferChunk<E> {
         VH_ELEMENTS.set(buffer, index, e);
     }
 
+    /** load plain element */
+    @SuppressWarnings("unchecked")
+    public final E lpElement(int index) {
+        return (E) VH_ELEMENTS.get(buffer, index);
+    }
+
     /** store ordered element */
     public final void soElement(int index, E e) {
         VH_ELEMENTS.setRelease(buffer, index, e);
@@ -118,12 +124,6 @@ public final class MpUnboundedBufferChunk<E> {
     @SuppressWarnings("unchecked")
     public final E lvElement(int index) {
         return (E) VH_ELEMENTS.getVolatile(buffer, index);
-    }
-
-    /** load plain element */
-    @SuppressWarnings("unchecked")
-    public final E lpElement(int index) {
-        return (E) VH_ELEMENTS.get(buffer, index);
     }
 
     /** 将指定槽位标记为已发布 */
@@ -140,9 +140,12 @@ public final class MpUnboundedBufferChunk<E> {
     public final void publish(int low, int high) {
         final long[] published = this.published;
         final long chunkIndex = lpChunkIndex();
-        while (low <= high) {
-            VH_PUBLISHED.setRelease(published, low++, chunkIndex);
+
+        VH_PUBLISHED.setRelease(published, low++, chunkIndex); // store fence 确保数据填充的可见性
+        while (low < high) {
+            VH_PUBLISHED.set(published, low++, chunkIndex); // store plain
         }
+        VH_PUBLISHED.setRelease(published, low, chunkIndex); // flush
     }
 
     public final boolean isPublished(int index) {

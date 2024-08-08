@@ -16,8 +16,8 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.StacklessTimeoutException;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
-import cn.wjybxx.disruptor.StacklessTimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

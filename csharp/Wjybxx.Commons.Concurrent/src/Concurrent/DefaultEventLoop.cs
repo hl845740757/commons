@@ -36,7 +36,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
     private static readonly ILogger logger = LoggerFactory.GetLogger(typeof(DefaultEventLoop));
 
     /** 初始状态，未启动状态 */
-    private const int ST_NOT_STARTED = 0;
+    private const int ST_UNSTARTED = 0;
     /** 启动中 */
     private const int ST_STARTING = 1;
     /** 运行状态 */
@@ -51,10 +51,10 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
     private const int MIN_BATCH_SIZE = 64;
     private const int MAX_BATCH_SIZE = 65535;
 
-    private long p1, p2, p3, p4, p5, p6, p7, p8;
+    private long p1, p2, p3, p4, p5, p6, p7;
     /** 当前帧时间戳 -- 变化频繁，访问频率高，缓存行填充 */
     private long _tickTime;
-    private long p11, p12, p13, p14, p15, p16, p17, p18;
+    private long p11, p12, p13, p14, p15, p16, p17;
 
     /** 事件循环的状态 -- 变化频率不高，不缓存行填充 */
     private volatile int _state;
@@ -87,7 +87,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
     private readonly IEventLoopModule? _mainModule;
 
     public DefaultEventLoop(EventLoopBuilder builder) : base(builder.Parent) {
-        _state = ST_NOT_STARTED;
+        _state = ST_UNSTARTED;
         _tickTime = ObjectUtil.SystemTicks();
 
         ThreadFactory threadFactory = ObjectUtil.RequireNonNull(builder.ThreadFactory, "ThreadFactory");
@@ -105,6 +105,8 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
 
         _agent.Inject(this); // 注入自己
     }
+
+    public IEventLoopAgent<T> Agent => _agent;
 
     public override IEventLoopModule? MainModule => _mainModule;
 
@@ -155,7 +157,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
         if (IsShuttingDown) {
             // C#端先不删除任务，这在EventLoop关闭时可能造成一定的内存泄漏，但对我们目前的工作影响较小，
             // 而要解决这个问题的成本较高，要么对Task进行二次封装（运行成本高），要么需要实现一个并发队列（开发成本高）
-        } else if (_state == ST_NOT_STARTED) {
+        } else if (_state == ST_UNSTARTED) {
             EnsureThreadStarted();
         }
     }
@@ -173,8 +175,9 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
         if (IsShuttingDown) {
             _scheduledTaskQueue.Remove(scheduledTask);
         } else {
-            Execute(scheduledTask); // run方法会检测取消信号，避免额外封装；出队列时要判断一下id
+            Execute(scheduledTask); // run方法会检测取消信号，避免额外封装
         }
+        // else 等待任务超时弹出时再删除 -- 延迟删除可能存在内存泄漏，但压任务又可能导致阻塞（有界队列）
     }
 
     #endregion
@@ -214,8 +217,8 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
     }
 
     private void EnsureThreadStarted() {
-        if (_state == ST_NOT_STARTED
-            && Interlocked.CompareExchange(ref _state, ST_STARTING, ST_NOT_STARTED) == ST_NOT_STARTED) {
+        if (_state == ST_UNSTARTED
+            && Interlocked.CompareExchange(ref _state, ST_STARTING, ST_UNSTARTED) == ST_UNSTARTED) {
             _thread.Start(); // 不捕获奇怪的ExecutionContext，我非常讨厌C#这个隐式上下文捕获
         }
     }
@@ -225,7 +228,7 @@ public class DefaultEventLoop : AbstractScheduledEventLoop
     /// </summary>
     /// <param name="oldState">切换为关闭状态之前的状态</param>
     private void EnsureThreadTerminable(int oldState) {
-        if (oldState == ST_NOT_STARTED) {
+        if (oldState == ST_UNSTARTED) {
             _state = ST_TERMINATED;
 
             _runningPromise.TrySetCancelled(CancelCodes.REASON_SHUTDOWN);

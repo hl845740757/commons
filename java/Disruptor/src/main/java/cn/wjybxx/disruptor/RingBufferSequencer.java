@@ -100,16 +100,16 @@ public abstract class RingBufferSequencer implements ProducerBarrier, Sequencer 
         return this;
     }
 
-    @Nullable
-    @Override
-    public final SequenceBlocker getBlocker() {
-        return blocker;
-    }
-
     @Nonnull
     @Override
     public final WaitStrategy getWaitStrategy() {
         return waitStrategy;
+    }
+
+    @Nullable
+    @Override
+    public final SequenceBlocker getBlocker() {
+        return blocker;
     }
 
     @Override

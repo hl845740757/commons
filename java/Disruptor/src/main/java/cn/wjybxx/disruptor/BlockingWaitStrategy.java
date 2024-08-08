@@ -35,6 +35,8 @@ import java.util.concurrent.locks.LockSupport;
  */
 public class BlockingWaitStrategy implements WaitStrategy {
 
+    public static final BlockingWaitStrategy INSTANCE = new BlockingWaitStrategy();
+
     @Override
     public long waitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier)
             throws TimeoutException, AlertException, InterruptedException {

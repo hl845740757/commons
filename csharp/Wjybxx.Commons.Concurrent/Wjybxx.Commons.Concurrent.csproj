@@ -43,5 +43,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
+        <ProjectReference Include="..\Wjybxx.Disruptor\Wjybxx.Disruptor.csproj" />
     </ItemGroup>
 </Project>

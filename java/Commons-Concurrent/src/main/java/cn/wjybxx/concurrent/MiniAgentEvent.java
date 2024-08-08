@@ -25,19 +25,24 @@ package cn.wjybxx.concurrent;
 public final class MiniAgentEvent implements IAgentEvent {
 
     private int type = TYPE_INVALID;
-    private Object obj0;
+    private Object obj1;
+    private Object obj2;
     private int options;
 
     @Override
     public void clean() {
         type = TYPE_INVALID;
+        obj1 = null;
+        obj2 = null;
         options = 0;
-        obj0 = null;
     }
 
     @Override
     public void cleanAll() {
-        clean();
+        type = TYPE_INVALID;
+        obj1 = null;
+        obj2 = null;
+        options = 0;
     }
 
     @Override
@@ -51,13 +56,23 @@ public final class MiniAgentEvent implements IAgentEvent {
     }
 
     @Override
-    public Object getObj0() {
-        return obj0;
+    public Object getObj2() {
+        return obj2;
     }
 
     @Override
-    public void setObj0(Object obj0) {
-        this.obj0 = obj0;
+    public void setObj2(Object obj2) {
+        this.obj2 = obj2;
+    }
+
+    @Override
+    public Object getObj1() {
+        return obj1;
+    }
+
+    @Override
+    public void setObj1(Object obj1) {
+        this.obj1 = obj1;
     }
 
     @Override

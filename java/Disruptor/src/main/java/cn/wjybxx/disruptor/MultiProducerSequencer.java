@@ -34,7 +34,7 @@ import java.util.concurrent.locks.LockSupport;
  * @author wjybxx
  * date - 2024/1/17
  */
-public class MultiProducerSequencer extends RingBufferSequencer {
+public final class MultiProducerSequencer extends RingBufferSequencer {
 
     /** {@link #published}元素的读写句柄 */
     private static final VarHandle VH_PUBLISHED_ELEMENTS = MethodHandles.arrayElementVarHandle(long[].class);
@@ -48,7 +48,7 @@ public class MultiProducerSequencer extends RingBufferSequencer {
      * 通过缓存一个值（在必要的时候更新），可以极大的减少对消费者的{@link Sequence}的读操作，从而提高性能。
      * PS: 使用一个变化频率较低的值代替一个变化频率较高的值，提高读效率。
      */
-    protected final Sequence gatingSequenceCache = new Sequence(SequenceBarrier.INITIAL_SEQUENCE);
+    private final Sequence gatingSequenceCache = new Sequence(SequenceBarrier.INITIAL_SEQUENCE);
     /**
      * 已发布的序号。
      * 注意：与disruptor的解决方案不同，我存储的是槽位当前的序号 -- 这可以使用更久，也可避免额外的计算。
@@ -80,18 +80,25 @@ public class MultiProducerSequencer extends RingBufferSequencer {
         return (int) (indexMask & sequence);
     }
 
-    protected final void setPublished(long sequence) {
+    private void setPublished(long sequence) {
         int index = indexOfSequence(sequence, indexMask);
         VH_PUBLISHED_ELEMENTS.setRelease(published, index, sequence);
     }
 
-    protected final void setPublished(long lo, long hi) {
+    private void setPublished(long lo, long hi) {
         final long[] published = this.published;
         final int indexMask = this.indexMask;
-        final VarHandle varHandle = VH_PUBLISHED_ELEMENTS;
-        for (long seq = lo; seq <= hi; seq++) {
+        {
+            int index = indexOfSequence(lo, indexMask);
+            VH_PUBLISHED_ELEMENTS.setRelease(published, index, lo); // store fence 确保数据填充的可见性
+        }
+        for (long seq = lo + 1; seq < hi; seq++) {
             int index = indexOfSequence(seq, indexMask);
-            varHandle.setRelease(published, index, seq);
+            published[index] = seq; // store plain
+        }
+        {
+            int index = indexOfSequence(hi, indexMask);
+            VH_PUBLISHED_ELEMENTS.setRelease(published, index, hi); // flush
         }
     }
 

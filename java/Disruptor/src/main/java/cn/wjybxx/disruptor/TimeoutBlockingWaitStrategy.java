@@ -50,8 +50,6 @@ public class TimeoutBlockingWaitStrategy implements WaitStrategy {
         SequenceBlocker blocker = Objects.requireNonNull(producerBarrier.getBlocker(), "blocker is null");
         long nanos = timeoutInNanos;
         // 先通过条件锁等待生产者发布数据
-        long availableSequence;
-        // 阻塞式等待生产者
         if (producerBarrier.sequence() < sequence) {
             blocker.lock();
             try {
@@ -59,7 +57,7 @@ public class TimeoutBlockingWaitStrategy implements WaitStrategy {
                     barrier.checkAlert();
                     nanos = blocker.awaitNanos(nanos);
                     if (nanos <= 0) {
-                        throw StacklessTimeoutException.INST;
+                        throw StacklessTimeoutException.INSTANCE;
                     }
                 }
             } finally {
@@ -67,6 +65,7 @@ public class TimeoutBlockingWaitStrategy implements WaitStrategy {
             }
         }
         // 轮询式等待其它依赖的消费者消费完该事件
+        long availableSequence;
         while ((availableSequence = barrier.dependentSequence()) < sequence) {
             barrier.checkAlert();
             LockSupport.parkNanos(100);

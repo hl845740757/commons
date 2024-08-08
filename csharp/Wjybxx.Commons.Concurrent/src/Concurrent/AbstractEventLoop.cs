@@ -123,15 +123,15 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public abstract void Execute(ITask task);
 
-    public void Execute(Action action, int options = 0) {
+    public virtual void Execute(Action action, int options = 0) {
         Execute(Executors.BoxAction(action, options));
     }
 
-    public void Execute(Action<IContext> action, in IContext context, int options = 0) {
+    public virtual void Execute(Action<IContext> action, IContext context, int options = 0) {
         Execute(Executors.BoxAction(action, context, options));
     }
 
-    public void Execute(Action action, CancellationToken cancelToken, int options = 0) {
+    public virtual void Execute(Action action, CancellationToken cancelToken, int options = 0) {
         Execute(Executors.BoxAction(action, cancelToken, options));
     }
 

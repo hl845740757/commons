@@ -27,14 +27,14 @@ import java.util.concurrent.TimeUnit;
  * @author wjybxx
  * date - 2024/1/20
  */
-public class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Sequencer {
+public final class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Sequencer {
 
     /**
      * 生产者组的序号。
      * 1. 生产者先根据sequence计算当前应该填充的chunk的索引（编号），也根据sequence计算落在该chunk的哪个槽位。
      * 2. 这仍然是一个预更新值，因为是多生产者模型。
      */
-    protected final Sequence cursor = new Sequence();
+    private final Sequence cursor = new Sequence();
     /**
      * 网关屏障，序号生成器必须和这些屏障满足以下约束:
      * cursor-bufferSize <= Min(gatingSequence)
@@ -43,7 +43,7 @@ public class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Sequencer
      * 对于生产者来讲，它只需要关注消费链最末端的消费者的进度（因为它们的进度是最慢的）。
      * 即：gatingBarrier就是所有消费链末端的消费们所拥有的的Sequence。（想一想食物链）
      */
-    protected volatile SequenceBarrier[] gatingBarriers = new SequenceBarrier[0];
+    private volatile SequenceBarrier[] gatingBarriers = new SequenceBarrier[0];
 
     /** 关联的数据结构 -- 信息在buffer上 */
     private final MpUnboundedBuffer<T> buffer;
@@ -66,6 +66,8 @@ public class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Sequencer
         }
         buffer.claim(sequence);
     }
+
+    // region producer
 
     @Override
     public void publish(long sequence) {
@@ -121,7 +123,7 @@ public class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Sequencer
     @Override
     public boolean hasAvailableCapacity(int requiredCapacity) {
         if (requiredCapacity < 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("requiredCapacity: " + requiredCapacity);
         }
         return true;
     }
@@ -137,12 +139,12 @@ public class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Sequencer
     }
 
     @Override
-    public long nextInterruptibly() throws InterruptedException {
+    public long nextInterruptibly() {
         return nextImpl(1);
     }
 
     @Override
-    public long nextInterruptibly(int n) throws InterruptedException {
+    public long nextInterruptibly(int n) {
         return nextImpl(n);
     }
 
@@ -180,28 +182,29 @@ public class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Sequencer
         }
         return next;
     }
+    // endregion
 
     // region sequencer
 
     @Override
-    public final ProducerBarrier getProducerBarrier() {
+    public ProducerBarrier getProducerBarrier() {
         return this;
-    }
-
-    @Nullable
-    @Override
-    public final SequenceBlocker getBlocker() {
-        return blocker;
     }
 
     @Nonnull
     @Override
-    public final WaitStrategy getWaitStrategy() {
+    public WaitStrategy getWaitStrategy() {
         return waitStrategy;
     }
 
+    @Nullable
     @Override
-    public final void signalAllWhenBlocking() {
+    public SequenceBlocker getBlocker() {
+        return blocker;
+    }
+
+    @Override
+    public void signalAllWhenBlocking() {
         if (blocker != null) {
             blocker.signalAll();
         }
@@ -212,7 +215,7 @@ public class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Sequencer
     // region barrier
 
     @Override
-    public final Sequence groupSequence() {
+    public Sequence groupSequence() {
         return cursor;
     }
 
@@ -222,12 +225,12 @@ public class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Sequencer
     }
 
     @Override
-    public final long dependentSequence() {
+    public long dependentSequence() {
         return Util.getMinimumSequence(gatingBarriers, Long.MAX_VALUE);
     }
 
     @Override
-    public final long minimumSequence() {
+    public long minimumSequence() {
         return Util.getMinimumSequence(gatingBarriers, cursor.getVolatile());
     }
 

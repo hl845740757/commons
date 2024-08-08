@@ -23,15 +23,11 @@ import java.util.concurrent.TimeoutException;
  * @author wjybxx
  * date 2023/4/3
  */
-public class StacklessTimeoutException extends TimeoutException {
+final class StacklessTimeoutException extends TimeoutException {
 
-    public static StacklessTimeoutException INST = new StacklessTimeoutException();
+    public static StacklessTimeoutException INSTANCE = new StacklessTimeoutException();
 
-    public StacklessTimeoutException() {
-    }
-
-    public StacklessTimeoutException(String message) {
-        super(message);
+    private StacklessTimeoutException() {
     }
 
     public final Throwable fillInStackTrace() {

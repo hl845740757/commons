@@ -38,8 +38,7 @@ public interface WaitStrategy {
      * @throws InterruptedException if the thread needs awaking on a condition variable.
      * @throws TimeoutException     if a timeout occurs while waiting for the supplied sequence.
      */
-    long waitFor(long sequence,
-                 ProducerBarrier producerBarrier,
-                 ConsumerBarrier barrier) throws TimeoutException, AlertException, InterruptedException;
+    long waitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier)
+            throws TimeoutException, AlertException, InterruptedException;
 
 }

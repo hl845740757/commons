@@ -31,6 +31,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class BusySpinWaitStrategy implements WaitStrategy {
 
+    public static final BusySpinWaitStrategy INSTANCE = new BusySpinWaitStrategy();
+
     @Override
     public long waitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier)
             throws TimeoutException, AlertException, InterruptedException {

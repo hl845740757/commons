@@ -66,7 +66,7 @@ public abstract class AbstractUniExecutor : IUniExecutorService
         Execute(Executors.BoxAction(action, options));
     }
 
-    public virtual void Execute(Action<IContext> action, in IContext context, int options = 0) {
+    public virtual void Execute(Action<IContext> action, IContext context, int options = 0) {
         Execute(Executors.BoxAction(action, context, options));
     }
 

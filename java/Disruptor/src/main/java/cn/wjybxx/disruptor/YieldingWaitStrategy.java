@@ -51,6 +51,7 @@ public class YieldingWaitStrategy implements WaitStrategy {
 
             if (counter > 0) {
                 --counter;
+                Thread.onSpinWait();
             } else {
                 Thread.yield();
             }

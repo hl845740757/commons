@@ -24,7 +24,8 @@ namespace Wjybxx.Commons.Concurrent
 public class MiniAgentEvent : IAgentEvent
 {
     private int type = IAgentEvent.TYPE_INVALID;
-    private object? obj0;
+    private object? obj1;
+    private object? obj2;
     private int options;
 
     public int Type {
@@ -37,15 +38,20 @@ public class MiniAgentEvent : IAgentEvent
         set => options = value;
     }
 
-    public object? Obj0 {
-        get => obj0;
-        set => obj0 = value;
+    public object? Obj1 {
+        get => obj1;
+        set => obj1 = value;
+    }
+
+    public object? Obj2 {
+        get => obj2;
+        set => obj2 = value;
     }
 
     public void Clean() {
         type = IAgentEvent.TYPE_INVALID;
         options = 0;
-        obj0 = null;
+        obj1 = null;
     }
 
     public void CleanAll() {

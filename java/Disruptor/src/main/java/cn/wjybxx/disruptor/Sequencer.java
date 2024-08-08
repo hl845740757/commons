@@ -68,14 +68,6 @@ public interface Sequencer {
     // region wjybxx
 
     /**
-     * 获取用于阻塞等待序号的阻塞器。
-     * 1.可能为null，如果整个系统禁用了基于锁的条件等待。
-     * 2.用于创建消费者屏障。
-     */
-    @Nullable
-    SequenceBlocker getBlocker();
-
-    /**
      * 默认等待策略
      */
     @Nonnull

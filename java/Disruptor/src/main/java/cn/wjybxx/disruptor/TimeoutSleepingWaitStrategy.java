@@ -80,6 +80,7 @@ public class TimeoutSleepingWaitStrategy implements WaitStrategy {
 
             if (counter > yieldThreshold) {
                 --counter;
+                Thread.onSpinWait();
             } else if (counter > sleepTries) {
                 --counter;
                 Thread.yield();
@@ -87,7 +88,7 @@ public class TimeoutSleepingWaitStrategy implements WaitStrategy {
                 --counter;
                 LockSupport.parkNanos(sleepTimeNs);
             } else {
-                throw StacklessTimeoutException.INST;
+                throw StacklessTimeoutException.INSTANCE;
             }
         }
         return availableSequence;

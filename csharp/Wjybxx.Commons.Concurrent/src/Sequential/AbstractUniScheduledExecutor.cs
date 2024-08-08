@@ -106,7 +106,7 @@ public abstract class AbstractUniScheduledExecutor : AbstractUniExecutor, IUniSc
         Execute(promiseTask);
     }
 
-    public override void Execute(Action<IContext> action, in IContext context, int options = 0) {
+    public override void Execute(Action<IContext> action, IContext context, int options = 0) {
         var promiseTask = UniScheduledPromiseTask.OfAction(action, context, options, NewScheduledPromise<int>(), 0, TickTime);
         Execute(promiseTask);
     }

@@ -68,7 +68,7 @@ public interface EventSequencer<T> extends DataProvider<T> {
     // endregion
 
     // region 转发-提高易用性
-    // sequencer
+    // region sequencer
 
     /** 添加一个网关屏障 -- 消费链最末端的消费者屏障 */
     default void addGatingBarriers(SequenceBarrier... gatingBarriers) {
@@ -99,8 +99,9 @@ public interface EventSequencer<T> extends DataProvider<T> {
     default ConsumerBarrier newMultiConsumerBarrier(int workerCount, WaitStrategy waitStrategy, SequenceBarrier... barriersToTrack) {
         return sequencer().newMultiConsumerBarrier(workerCount, waitStrategy, barriersToTrack);
     }
+    // endregion
 
-    // producer
+    // region producer
     default boolean hasAvailableCapacity(int requiredCapacity) {
         return producerBarrier().hasAvailableCapacity(requiredCapacity);
     }
@@ -140,5 +141,6 @@ public interface EventSequencer<T> extends DataProvider<T> {
     default void publish(long lo, long hi) {
         producerBarrier().publish(lo, hi);
     }
+    // endregion
     // endregion
 }

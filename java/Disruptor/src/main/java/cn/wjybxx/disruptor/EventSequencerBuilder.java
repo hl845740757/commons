@@ -16,31 +16,31 @@
 
 package cn.wjybxx.disruptor;
 
+import java.util.Objects;
 import java.util.concurrent.locks.Condition;
 
 /**
- * @param <E> 事件类型
+ * @param <T> 事件类型
  * @author wjybxx
  * date - 2024/1/18
  */
-public abstract class EventSequencerBuilder<E> {
+public abstract class EventSequencerBuilder<T> {
 
-    private EventFactory<? extends E> factory;
+    private final EventFactory<? extends T> factory;
     private long producerSleepNanos = 1;
     private WaitStrategy waitStrategy = TimeoutSleepingWaitStrategy.INSTANCE;
     private SequenceBlocker blocker;
 
-    /** 构建最终的对象 */
-    public abstract EventSequencer<E> build();
-
-    /** 事件对象工厂 */
-    public EventFactory<? extends E> getFactory() {
-        return factory;
+    public EventSequencerBuilder(EventFactory<? extends T> factory) {
+        this.factory = Objects.requireNonNull(factory);
     }
 
-    public EventSequencerBuilder<E> setFactory(EventFactory<? extends E> factory) {
-        this.factory = factory;
-        return this;
+    /** 构建最终的对象 */
+    public abstract EventSequencer<T> build();
+
+    /** 事件对象工厂 */
+    public EventFactory<? extends T> getFactory() {
+        return factory;
     }
 
     /**
@@ -54,22 +54,22 @@ public abstract class EventSequencerBuilder<E> {
         return producerSleepNanos;
     }
 
-    public EventSequencerBuilder<E> setProducerSleepNanos(long producerSleepNanos) {
+    public EventSequencerBuilder<T> setProducerSleepNanos(long producerSleepNanos) {
         this.producerSleepNanos = producerSleepNanos;
         return this;
     }
 
-    /** 默认的等待策略 */
+    /** 消费者默认的等待策略 */
     public WaitStrategy getWaitStrategy() {
         return waitStrategy;
     }
 
-    public EventSequencerBuilder<E> setWaitStrategy(WaitStrategy waitStrategy) {
+    public EventSequencerBuilder<T> setWaitStrategy(WaitStrategy waitStrategy) {
         this.waitStrategy = waitStrategy;
         return this;
     }
 
-    /** 获取序列阻塞器 */
+    /** 序列阻塞器 */
     public SequenceBlocker getBlocker() {
         return blocker;
     }
@@ -79,12 +79,12 @@ public abstract class EventSequencerBuilder<E> {
      * 1. 如果存在需要通过{@link Condition}等待生产者发布序号的消费者，则需要启用blocker。
      * 2. 默认情况下不启用。
      */
-    public EventSequencerBuilder<E> enableBlocker() {
+    public EventSequencerBuilder<T> enableBlocker() {
         blocker = new SequenceBlocker();
         return this;
     }
 
-    public EventSequencerBuilder<E> disableBlocker() {
+    public EventSequencerBuilder<T> disableBlocker() {
         blocker = null;
         return this;
     }

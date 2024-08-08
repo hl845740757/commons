@@ -3,7 +3,7 @@
 我为了统一抽象，以及解决Disruptor的一些问题，参考Disruptor的一些设计实现了自己的版本。我的版本少了许多不必要的抽象，
 也拥有更好更容易理解的抽象。
 
-先上架构图：![Disruptor架构图](https://github.com/hl845740757/commons/blob/dev/docs/res/MyDisruptor.png)
+先上架构图：![Disruptor架构图](../../docs/res/MyDisruptor.png)
 
 ## 与LMAX的Disruptor差异
 
@@ -26,4 +26,5 @@ lea文章 [Using JDK 9 Memory Order Modes](https://gee.cs.oswego.edu/dl/html/j9m
 
 1. JDK要求JDK11
 2. 测试用例暂时还没迁移，因为不是直接测试RingBuffer
-3. 这套框架的应用可见我并发库的EventLoop，[传送门](https://github.com/hl845740757/commons) -- 测试用例也在commons仓库。
+3. 这套框架的应用可见我并发库的EventLoop，[Java-Commons](https://github.com/hl845740757/commons/tree/dev/java) -- 测试用例也在commons仓库。
+4. 该套框架的Csharp实现，[Csharp-Commons](https://github.com/hl845740757/commons/tree/dev/csharp)
