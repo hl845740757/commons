@@ -141,11 +141,13 @@ public final class MpUnboundedBufferChunk<E> {
         final long[] published = this.published;
         final long chunkIndex = lpChunkIndex();
 
-        VH_PUBLISHED.setRelease(published, low++, chunkIndex); // store fence 确保数据填充的可见性
-        while (low < high) {
-            VH_PUBLISHED.set(published, low++, chunkIndex); // store plain
+        VH_PUBLISHED.setRelease(published, low, chunkIndex); // store fence 确保数据填充的可见性
+        if (low < high) {
+            for (int seq = low + 1; seq < high; seq++) {
+                VH_PUBLISHED.set(published, seq, chunkIndex); // store plain
+            }
+            VH_PUBLISHED.setRelease(published, high, chunkIndex); // flush
         }
-        VH_PUBLISHED.setRelease(published, low, chunkIndex); // flush
     }
 
     public final boolean isPublished(int index) {

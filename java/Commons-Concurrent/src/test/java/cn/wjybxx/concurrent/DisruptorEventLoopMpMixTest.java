@@ -68,7 +68,11 @@ public class DisruptorEventLoopMpMixTest {
             if (i > PRODUCER_COUNT / 2) {
                 producerList.add(new Producer2(i));
             } else {
-                producerList.add(new Producer(i));
+                if (i == 1) {
+                    producerList.add(new Producer3(i));
+                } else {
+                    producerList.add(new Producer(i));
+                }
             }
         }
         producerList.forEach(Thread::start);
@@ -202,15 +206,13 @@ public class DisruptorEventLoopMpMixTest {
                 if (hi < 0) {
                     break;
                 }
-                for (long sequence = hi - batchSize + 1; sequence <= hi; sequence++) {
-                    try {
-                        RingBufferEvent event = consumer.getEvent(sequence);
-                        event.setType(type);
-                        event.longVal1 = localSequence++;
-                    } finally {
-                        consumer.publish(sequence);
-                    }
+                long low = hi - batchSize + 1;
+                for (long sequence = low; sequence <= hi; sequence++) {
+                    RingBufferEvent event = consumer.getEvent(sequence);
+                    event.setType(type);
+                    event.longVal1 = localSequence++;
                 }
+                consumer.publish(low, hi);
             }
         }
     }

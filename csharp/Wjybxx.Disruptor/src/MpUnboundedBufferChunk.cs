@@ -132,10 +132,14 @@ public sealed class MpUnboundedBufferChunk<E>
     public void Publish(int low, int high) {
         long[] published = this.published;
         long chunkIndex = LpChunkIndex();
-        while (low < high) {
-            published[low++] = chunkIndex;
+
+        Volatile.Write(ref published[low], chunkIndex); // store fence 确保数据填充的可见性
+        if (low < high) {
+            for (int seq = low + 1; seq < high; seq++) {
+                published[seq] = chunkIndex; // store plain
+            }
+            Volatile.Write(ref published[high], chunkIndex); // flush
         }
-        Volatile.Write(ref published[high], chunkIndex);
     }
 
     public bool IsPublished(int index) {

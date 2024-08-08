@@ -80,12 +80,15 @@ public sealed class MultiProducerSequencer : RingBufferSequencer
     private void SetPublished(long lo, long hi) {
         long[] published = this.published;
         int indexMask = this.indexMask;
-        for (long seq = lo; seq < hi; seq++) {
-            int index = IndexOfSequence(seq, indexMask);
-            published[index] = seq; // 即使不原子，顺序被打乱，也不影响正确性
-        }
-        {
-            int index = IndexOfSequence(hi, indexMask);
+
+        int index = IndexOfSequence(lo, indexMask);
+        Volatile.Write(ref published[index], lo); // store fence 确保数据填充的可见性
+        if (lo < hi) {
+            for (long seq = lo + 1; seq < hi; seq++) {
+                index = IndexOfSequence(seq, indexMask);
+                published[index] = seq; // store plain
+            }
+            index = IndexOfSequence(hi, indexMask);
             Volatile.Write(ref published[index], hi); // flush
         }
     }

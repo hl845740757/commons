@@ -88,16 +88,15 @@ public final class MultiProducerSequencer extends RingBufferSequencer {
     private void setPublished(long lo, long hi) {
         final long[] published = this.published;
         final int indexMask = this.indexMask;
-        {
-            int index = indexOfSequence(lo, indexMask);
-            VH_PUBLISHED_ELEMENTS.setRelease(published, index, lo); // store fence 确保数据填充的可见性
-        }
-        for (long seq = lo + 1; seq < hi; seq++) {
-            int index = indexOfSequence(seq, indexMask);
-            published[index] = seq; // store plain
-        }
-        {
-            int index = indexOfSequence(hi, indexMask);
+
+        int index = indexOfSequence(lo, indexMask);
+        VH_PUBLISHED_ELEMENTS.setRelease(published, index, lo); // store fence 确保数据填充的可见性
+        if (lo < hi) {
+            for (long seq = lo + 1; seq < hi; seq++) {
+                index = indexOfSequence(seq, indexMask);
+                published[index] = seq; // store plain
+            }
+            index = indexOfSequence(hi, indexMask);
             VH_PUBLISHED_ELEMENTS.setRelease(published, index, hi); // flush
         }
     }
