@@ -17,6 +17,7 @@ package cn.wjybxx.btree.decorator;
 
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.TaskInlinable;
+import cn.wjybxx.btree.TaskStatus;
 
 /**
  * 循环子节点直到给定的条件达成
@@ -52,6 +53,8 @@ public class UntilCond<T> extends LoopDecorator<T> {
         }
         if (template_checkGuard(cond)) {
             setSuccess();
+        } else if (!hasNextLoop()) {
+            setFailed(TaskStatus.LOOP_END);
         } else if (!isExecuting() || !isTailRecursion()) {
             template_execute();
         }

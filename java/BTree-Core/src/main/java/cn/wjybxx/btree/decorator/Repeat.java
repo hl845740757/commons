@@ -17,6 +17,7 @@ package cn.wjybxx.btree.decorator;
 
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.TaskInlinable;
+import cn.wjybxx.btree.TaskStatus;
 
 /**
  * 重复N次
@@ -87,7 +88,10 @@ public class Repeat<T> extends LoopDecorator<T> {
                 return;
             }
         }
-        if (!isExecuting() || !isTailRecursion()) {
+
+        if (!hasNextLoop()) {
+            setFailed(TaskStatus.LOOP_END);
+        } else if (!isExecuting() || !isTailRecursion()) {
             template_execute();
         }
     }

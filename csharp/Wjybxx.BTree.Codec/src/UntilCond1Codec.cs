@@ -34,6 +34,7 @@ public sealed class UntilCond1Codec<T> : AbstractDsonCodec<UntilCond<T>> where T
     public const string names_guard = "guard";
     public const string names_flags = "flags";
     public const string names_child = "child";
+    public const string names_maxLoop = "maxLoop";
     public const string names_cond = "cond";
 
     public override Type GetEncoderClass() => typeof(UntilCond<T>);
@@ -42,6 +43,7 @@ public sealed class UntilCond1Codec<T> : AbstractDsonCodec<UntilCond<T>> where T
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
+        writer.WriteInt(names_maxLoop, inst.MaxLoop, WireType.VarInt, NumberStyles.Simple);
         writer.WriteObject(names_cond, inst.Cond, typeof(Task<T>), null);
     }
 
@@ -53,6 +55,7 @@ public sealed class UntilCond1Codec<T> : AbstractDsonCodec<UntilCond<T>> where T
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
         inst.Child = reader.ReadObject<Task<T>>(names_child, typeof(Task<T>), null);
+        inst.MaxLoop = reader.ReadInt(names_maxLoop);
         inst.Cond = reader.ReadObject<Task<T>>(names_cond, typeof(Task<T>), null);
     }
 }

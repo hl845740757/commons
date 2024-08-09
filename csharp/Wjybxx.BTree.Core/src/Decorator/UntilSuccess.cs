@@ -42,6 +42,8 @@ public class UntilSuccess<T> : LoopDecorator<T> where T : class
         }
         if (child.IsSucceeded) {
             SetSuccess();
+        } else if (!HasNextLoop()) {
+            SetFailed(TaskStatus.LOOP_END);
         } else if (!IsExecuting() || !IsTailRecursion) {
             Template_Execute();
         }

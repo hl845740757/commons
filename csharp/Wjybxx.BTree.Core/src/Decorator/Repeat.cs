@@ -95,7 +95,9 @@ public class Repeat<T> : LoopDecorator<T> where T : class
             }
         }
 
-        if (!IsExecuting() || !IsTailRecursion) {
+        if (!HasNextLoop()) {
+            SetFailed(TaskStatus.LOOP_END);
+        } else if (!IsExecuting() || !IsTailRecursion) {
             Template_Execute();
         }
     }

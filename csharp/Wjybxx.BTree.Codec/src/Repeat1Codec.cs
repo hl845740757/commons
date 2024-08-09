@@ -34,6 +34,7 @@ public sealed class Repeat1Codec<T> : AbstractDsonCodec<Repeat<T>> where T : cla
     public const string names_guard = "guard";
     public const string names_flags = "flags";
     public const string names_child = "child";
+    public const string names_maxLoop = "maxLoop";
     public const string names_countMode = "countMode";
     public const string names_required = "required";
 
@@ -43,6 +44,7 @@ public sealed class Repeat1Codec<T> : AbstractDsonCodec<Repeat<T>> where T : cla
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
+        writer.WriteInt(names_maxLoop, inst.MaxLoop, WireType.VarInt, NumberStyles.Simple);
         writer.WriteInt(names_countMode, inst.CountMode, WireType.VarInt, NumberStyles.Simple);
         writer.WriteInt(names_required, inst.Required, WireType.VarInt, NumberStyles.Simple);
     }
@@ -55,6 +57,7 @@ public sealed class Repeat1Codec<T> : AbstractDsonCodec<Repeat<T>> where T : cla
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
         inst.Child = reader.ReadObject<Task<T>>(names_child, typeof(Task<T>), null);
+        inst.MaxLoop = reader.ReadInt(names_maxLoop);
         inst.CountMode = reader.ReadInt(names_countMode);
         inst.Required = reader.ReadInt(names_required);
     }

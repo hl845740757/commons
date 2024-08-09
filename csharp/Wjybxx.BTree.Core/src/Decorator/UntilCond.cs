@@ -47,6 +47,8 @@ public class UntilCond<T> : LoopDecorator<T> where T : class
         }
         if (Template_CheckGuard(cond)) {
             SetSuccess();
+        } else if (!HasNextLoop()) {
+            SetFailed(TaskStatus.LOOP_END);
         } else if (!IsExecuting() || !IsTailRecursion) {
             Template_Execute();
         }

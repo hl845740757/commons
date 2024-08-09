@@ -30,11 +30,21 @@ import cn.wjybxx.btree.Task;
  */
 public abstract class LoopDecorator<T> extends Decorator<T> {
 
+    /** 最大循环次数，超过次数直接失败；大于0有效 */
+    protected int maxLoop = -1;
+    protected transient int curLoop = 0;
+
     public LoopDecorator() {
     }
 
     public LoopDecorator(Task<T> child) {
         super(child);
+    }
+
+    @Override
+    protected void beforeEnter() {
+        super.beforeEnter();
+        curLoop = 0;
     }
 
     @Override
@@ -49,6 +59,7 @@ public abstract class LoopDecorator<T> extends Decorator<T> {
                 } else if (child.isRunning()) {
                     child.template_execute();
                 } else {
+                    curLoop++;
                     template_runChild(child);
                 }
                 if (checkCancel(reentryId)) { // 得出结果或被取消
@@ -65,9 +76,22 @@ public abstract class LoopDecorator<T> extends Decorator<T> {
             } else if (child.isRunning()) {
                 child.template_execute();
             } else {
+                curLoop++;
                 template_runChild(child);
             }
         }
     }
 
+    /** 是否还有下一次循环 */
+    protected boolean hasNextLoop() {
+        return maxLoop <= 0 || curLoop < maxLoop;
+    }
+
+    public int getMaxLoop() {
+        return maxLoop;
+    }
+
+    public void setMaxLoop(int maxLoop) {
+        this.maxLoop = maxLoop;
+    }
 }

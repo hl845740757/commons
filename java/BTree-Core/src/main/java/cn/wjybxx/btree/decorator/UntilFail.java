@@ -17,6 +17,7 @@ package cn.wjybxx.btree.decorator;
 
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.TaskInlinable;
+import cn.wjybxx.btree.TaskStatus;
 
 /**
  * 重复运行子节点，直到该任务失败
@@ -48,6 +49,8 @@ public class UntilFail<T> extends LoopDecorator<T> {
         }
         if (child.isFailed()) {
             setSuccess();
+        } else if (!hasNextLoop()) {
+            setFailed(TaskStatus.LOOP_END);
         } else if (!isExecuting() || !isTailRecursion()) {
             template_execute();
         }

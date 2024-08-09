@@ -16,6 +16,8 @@
 
 #endregion
 
+using System;
+
 namespace Wjybxx.BTree.Decorator
 {
 /// <summary>
@@ -27,10 +29,20 @@ namespace Wjybxx.BTree.Decorator
 /// <typeparam name="T"></typeparam>
 public abstract class LoopDecorator<T> : Decorator<T> where T : class
 {
+    /** 最大循环次数，超过次数直接失败；大于0有效 */
+    protected int maxLoop = -1;
+    [NonSerialized]
+    protected int curLoop;
+
     protected LoopDecorator() {
     }
 
     protected LoopDecorator(Task<T> child) : base(child) {
+    }
+
+    protected override void BeforeEnter() {
+        base.BeforeEnter();
+        curLoop = 0;
     }
 
     protected override void Execute() {
@@ -44,6 +56,7 @@ public abstract class LoopDecorator<T> : Decorator<T> where T : class
                 } else if (child.IsRunning) {
                     child.Template_Execute();
                 } else {
+                    curLoop++;
                     Template_RunChild(child);
                 }
                 if (CheckCancel(reentryId)) { // 得出结果或被取消
@@ -60,9 +73,21 @@ public abstract class LoopDecorator<T> : Decorator<T> where T : class
             } else if (child.IsRunning) {
                 child.Template_Execute();
             } else {
+                curLoop++;
                 Template_RunChild(child);
             }
         }
+    }
+
+    /** 是否还有下一次循环 */
+    public bool HasNextLoop() {
+        return maxLoop <= 0 || curLoop < maxLoop;
+    }
+
+    /** 最大循环次数，用于序列化 */
+    public int MaxLoop {
+        get => maxLoop;
+        set => maxLoop = value;
     }
 }
 }
