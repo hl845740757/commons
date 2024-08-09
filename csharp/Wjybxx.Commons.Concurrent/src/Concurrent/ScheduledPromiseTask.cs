@@ -73,14 +73,13 @@ public interface ScheduledPromiseTask
         long period = Math.Max(1, builder.Period * timeUnit);
         long triggerTime = tickTime + initialDelay;
 
-        TimeoutContext? timeoutContext;
+        ScheduledPromiseTask<T> promiseTask = new ScheduledPromiseTask<T>(in builder, promise, id, triggerTime, period);
         if (builder.IsPeriodic && builder.Timeout != -1) {
-            long timeout = builder.Timeout * timeUnit;
-            timeoutContext = new TimeoutContext(timeout, tickTime);
-        } else {
-            timeoutContext = null;
+            promiseTask.EnableTimeout();
+            promiseTask.timeLeft = builder.Timeout * timeUnit;
+            promiseTask.lastTriggerTime = tickTime;
         }
-        return new ScheduledPromiseTask<T>(in builder, promise, id, triggerTime, period, timeoutContext);
+        return promiseTask;
     }
 
     #endregion
@@ -100,8 +99,11 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     private long nextTriggerTime;
     /** 任务的执行间隔 - 不再有特殊意义 */
     private long period;
-    /** 超时信息 - 有效性见<see cref="PromiseTask.MASK_TIMEOUT"/> */
-    private TimeoutContext timeoutContext;
+
+    /** 剩余时间 -- 有效性见<see cref="PromiseTask.MASK_TIMEOUT"/> */
+    internal long timeLeft;
+    /** 上次触发时间，用于固定延迟调度下计算deltaTime */
+    internal long lastTriggerTime;
 
     /** 在队列中的下标 */
     private int queueIndex = IIndexedElement.IndexNotFound;
@@ -109,21 +111,13 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     private IRegistration? cancelRegistration;
 
     internal ScheduledPromiseTask(in ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
-                                  long id, long nextTriggerTime, long period, TimeoutContext? timeoutContext)
+                                  long id, long nextTriggerTime, long period)
         : base(builder.Task, builder.Context, builder.Options, promise, builder.Type) {
         this.id = id;
         this.nextTriggerTime = nextTriggerTime;
         this.period = period;
-        // c# 超时信息特殊处理
-        if (timeoutContext.HasValue) {
-            this.timeoutContext = timeoutContext.Value;
-            HasTimeout = true;
-        } else {
-            this.timeoutContext = default;
-        }
         ScheduleType = builder.ScheduleType;
-        // 双向绑定
-        promise.SetTask(this);
+        promise.SetTask(this); // 双向绑定
     }
 
     /** 用于简单情况下的对象创建 */
@@ -133,8 +127,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         this.id = id;
         this.nextTriggerTime = nextTriggerTime;
         this.period = 0;
-        // 双向绑定
-        promise.SetTask(this);
+        promise.SetTask(this); // 双向绑定
     }
 
     #region internal
@@ -185,6 +178,9 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     public override IScheduledPromise<T> Future => (IScheduledPromise<T>)promise;
 
     public bool IsPeriodic => ScheduleType != 0;
+    private bool HasTimeout => (ctl & PromiseTask.MASK_TIMEOUT) != 0;
+
+    internal void EnableTimeout() => ctl |= PromiseTask.MASK_TIMEOUT;
 
     public int CollectionIndex(object collection) {
         return queueIndex;
@@ -197,11 +193,6 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     protected override void Clear() {
         base.Clear();
         CloseRegistration();
-    }
-
-    private bool HasTimeout {
-        get => (ctl & PromiseTask.MASK_TIMEOUT) != 0;
-        set => SetCtlBit(PromiseTask.MASK_TIMEOUT, value);
     }
 
     #endregion
@@ -257,11 +248,10 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
             return false;
         }
         // 结构体，避免拷贝...
-        ref TimeoutContext timeoutContext = ref this.timeoutContext;
         try {
             if (HasTimeout) {
-                timeoutContext.BeforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE);
-                if (TaskOption.IsEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeoutContext.IsTimeout()) {
+                BeforeCall(tickTime, nextTriggerTime, scheduleType);
+                if (TaskOption.IsEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeLeft <= 0) {
                     promise.TrySetException(StacklessTimeoutException.INST);
                     Clear();
                     return false;
@@ -278,20 +268,20 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
                 return false;
             }
             // 未被取消的情况下检测超时
-            if (HasTimeout && timeoutContext.IsTimeout()) {
+            if (HasTimeout && timeLeft <= 0) {
                 promise.TrySetException(StacklessTimeoutException.INST);
                 Clear();
                 return false;
             }
 
-            SetNextRunTime(tickTime, ref timeoutContext, scheduleType);
+            SetNextRunTime(tickTime, scheduleType);
             return true;
         }
         catch (Exception ex) {
             ThreadUtil.RecoveryInterrupted(ex);
             if (CanCaughtException(ex)) {
                 FutureLogger.LogCause(ex, "periodic task caught exception");
-                SetNextRunTime(tickTime, ref timeoutContext, scheduleType);
+                SetNextRunTime(tickTime, scheduleType);
                 return true;
             }
             promise.TrySetException(ex);
@@ -307,15 +297,29 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         return TaskOption.IsEnabled(options, TaskOption.CAUGHT_EXCEPTION);
     }
 
-    private void SetNextRunTime(long tickTime, ref TimeoutContext timeoutContext, int scheduleType) {
-        long maxDelay = HasTimeout ? timeoutContext.timeLeft : long.MaxValue;
+    /// <summary>
+    /// 在执行任务前更新状态
+    /// </summary>
+    /// <param name="realTriggerTime">真实触发时间 -- 真正被调度的时间</param>
+    /// <param name="logicTriggerTime">逻辑触发时间（期望的调度时间）</param>
+    /// <param name="scheduleType">调度类型</param>
+    private void BeforeCall(long realTriggerTime, long logicTriggerTime, int scheduleType) {
+        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
+            timeLeft -= (logicTriggerTime - lastTriggerTime);
+            lastTriggerTime = logicTriggerTime;
+        } else {
+            timeLeft -= (realTriggerTime - lastTriggerTime);
+            lastTriggerTime = realTriggerTime;
+        }
+    }
+
+    private void SetNextRunTime(long tickTime, int scheduleType) {
+        long maxDelay = HasTimeout ? timeLeft : long.MaxValue;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
             nextTriggerTime = nextTriggerTime + Math.Min(maxDelay, period); // 逻辑时间
         } else {
             nextTriggerTime = tickTime + Math.Min(maxDelay, period); // 真实时间
         }
-
-        throw new NotImplementedException();
     }
 
     /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */

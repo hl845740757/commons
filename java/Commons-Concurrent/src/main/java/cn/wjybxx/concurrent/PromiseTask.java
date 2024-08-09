@@ -182,6 +182,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     public void clear() {
         task = null;
         ctx = null;
+        ctl = 0;
     }
 
     /** 运行分时任务 */

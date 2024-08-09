@@ -52,8 +52,11 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
     private long nextTriggerTime;
     /** 任务的执行间隔 - 不再有特殊意义 */
     private long period;
-    /** 超时信息 */
-    private TimeoutContext timeoutContext;
+
+    /** 剩余时间 -- 有效性见{@link #MASK_TIMEOUT} */
+    private long timeLeft;
+    /** 上次触发时间，用于固定延迟调度下计算deltaTime */
+    private long lastTriggerTime;
 
     /** 在队列中的下标 */
     private int queueIndex = INDEX_NOT_FOUND;
@@ -66,14 +69,13 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
      * @param nextTriggerTime 任务的首次触发时间
      */
     private UniScheduledPromiseTask(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise,
-                                    long id, long nextTriggerTime, long period, TimeoutContext timeoutContext) {
+                                    long id, long nextTriggerTime, long period) {
         super(builder, promise);
         this.id = id;
         this.nextTriggerTime = nextTriggerTime;
         this.period = period;
-        this.timeoutContext = timeoutContext;
         setScheduleType(builder.getScheduleType());
-        promise.setTask(this);
+        promise.setTask(this); // 双向绑定
     }
 
     /** 用于简单情况下的创建 */
@@ -83,8 +85,10 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
         this.id = id;
         this.nextTriggerTime = nextTriggerTime;
         this.period = 0;
-        promise.setTask(this);
+        promise.setTask(this); // 双向绑定
     }
+
+    // region builder
 
     public static UniScheduledPromiseTask<?> ofAction(Runnable action, int options, IScheduledPromise<?> promise,
                                                       long id, long nextTriggerTime) {
@@ -134,15 +138,15 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
         final long period = Math.max(1, timeUnit.toMillis(builder.getPeriod()));
         final long triggerTime = tickTime + initialDelay;
 
-        TimeoutContext timeoutContext;
+        UniScheduledPromiseTask<V> promiseTask = new UniScheduledPromiseTask<>(builder, promise, id, triggerTime, period);
         if (builder.isPeriodic() && builder.getTimeout() != -1) {
-            long timeout = timeUnit.toMillis(builder.getTimeout());
-            timeoutContext = new TimeoutContext(timeout, tickTime);
-        } else {
-            timeoutContext = null;
+            promiseTask.enableTimeout();
+            promiseTask.timeLeft = timeUnit.toMillis(builder.getTimeout());
+            promiseTask.lastTriggerTime = tickTime;
         }
-        return new UniScheduledPromiseTask<>(builder, promise, id, triggerTime, period, timeoutContext);
+        return promiseTask;
     }
+    // endregion
 
     // region internal
 
@@ -207,6 +211,24 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
     }
 
     @Override
+    public IScheduledPromise<V> future() {
+        return (IScheduledPromise<V>) promise;
+    }
+
+    @Override
+    public boolean isPeriodic() {
+        return (ctl & MASK_SCHEDULE_TYPE) != 0; // 无需位移
+    }
+
+    private boolean hasTimeout() {
+        return (ctl & PromiseTask.MASK_TIMEOUT) != 0;
+    }
+
+    private void enableTimeout() {
+        ctl |= PromiseTask.MASK_TIMEOUT;
+    }
+
+    @Override
     public int collectionIndex(Object collection) {
         return queueIndex;
     }
@@ -217,19 +239,8 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
     }
 
     @Override
-    public IScheduledPromise<V> future() {
-        return (IScheduledPromise<V>) promise;
-    }
-
-    @Override
-    public boolean isPeriodic() {
-        return getScheduleType() != 0;
-    }
-
-    @Override
     public void clear() {
         super.clear();
-        timeoutContext = null;
         closeRegistration();
     }
 
@@ -294,11 +305,10 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
             return false;
         }
 
-        TimeoutContext timeoutContext = this.timeoutContext;
         try {
-            if (timeoutContext != null) {
-                timeoutContext.beforeCall(tickTime, nextTriggerTime, scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE);
-                if (TaskOption.isEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeoutContext.isTimeout()) {
+            if (hasTimeout()) {
+                beforeCall(tickTime, nextTriggerTime, scheduleType);
+                if (TaskOption.isEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeLeft <= 0) {
                     promise.trySetException(StacklessTimeoutException.INST);
                     clear();
                     return false;
@@ -321,18 +331,18 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
                 return false;
             }
             // 未被取消的情况下检测超时
-            if (timeoutContext != null && timeoutContext.isTimeout()) {
+            if (hasTimeout() && timeLeft <= 0) {
                 promise.trySetException(StacklessTimeoutException.INST);
                 clear();
                 return false;
             }
-            setNextRunTime(tickTime, timeoutContext, scheduleType);
+            setNextRunTime(tickTime, scheduleType);
             return true;
         } catch (Throwable ex) {
             ThreadUtils.recoveryInterrupted(ex);
             if (canCaughtException(ex)) {
                 FutureLogger.logCause(ex, "periodic task caught exception");
-                setNextRunTime(tickTime, timeoutContext, scheduleType);
+                setNextRunTime(tickTime, scheduleType);
                 return true;
             }
             promise.trySetException(ex);
@@ -351,8 +361,23 @@ public final class UniScheduledPromiseTask<V> extends PromiseTask<V>
         return TaskOption.isEnabled(options, TaskOption.CAUGHT_EXCEPTION);
     }
 
-    private void setNextRunTime(long tickTime, TimeoutContext timeoutContext, int scheduleType) {
-        long maxDelay = timeoutContext != null ? timeoutContext.getTimeLeft() : Long.MAX_VALUE;
+    /**
+     * @param realTriggerTime  真实触发时间 -- 真正被调度的时间
+     * @param logicTriggerTime 逻辑触发时间（期望的调度时间） -- 调度前计算的应该被调度的时间
+     * @param scheduleType     调度类型
+     */
+    private void beforeCall(long realTriggerTime, long logicTriggerTime, int scheduleType) {
+        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
+            timeLeft -= (logicTriggerTime - lastTriggerTime);
+            lastTriggerTime = logicTriggerTime;
+        } else {
+            timeLeft -= (realTriggerTime - lastTriggerTime);
+            lastTriggerTime = realTriggerTime;
+        }
+    }
+
+    private void setNextRunTime(long tickTime, int scheduleType) {
+        long maxDelay = hasTimeout() ? timeLeft : Long.MAX_VALUE;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
             nextTriggerTime = nextTriggerTime + Math.min(maxDelay, period); // 逻辑时间
         } else {
