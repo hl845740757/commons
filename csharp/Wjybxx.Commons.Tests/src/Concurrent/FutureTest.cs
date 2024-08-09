@@ -21,12 +21,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Wjybxx.Commons.Concurrent;
+using Wjybxx.Disruptor;
 
 namespace Commons.Tests.Concurrent;
 
 public class FutureTest
 {
-    private static readonly IEventLoop globalEventLoop = EventLoopBuilder.NewBuilder(new DefaultThreadFactory("consumer", true)).Build();
+    private static readonly IEventLoop globalEventLoop = new DisruptorEventLoopBuilder<MiniAgentEvent>()
+    {
+        ThreadFactory = new DefaultThreadFactory("Scheduler", true),
+        EventSequencer = new RingBufferEventSequencer<MiniAgentEvent>.Builder(() => new MiniAgentEvent())
+            .Build()
+    }.Build();
     private static readonly IExecutor executor = new ImmediateExecutor();
 
     [Test]

@@ -78,18 +78,27 @@ public sealed class RingBuffer<E> : DataProvider<E>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal E GetElement(long sequence) {
+        if (sequence < 0) {
+            throw new ArgumentException("sequence: " + sequence);
+        }
         int index = (int)(sequence & indexMask);
         return entries[BUFFER_PAD + index];
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SetElement(long sequence, E element) {
+        if (sequence < 0) {
+            throw new ArgumentException("sequence: " + sequence);
+        }
         int index = (int)(sequence & indexMask);
         entries[BUFFER_PAD + index] = element;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ref E GetElementRef(long sequence) {
+        if (sequence < 0) {
+            throw new ArgumentException("sequence: " + sequence);
+        }
         int index = (int)(sequence & indexMask);
         return ref entries[BUFFER_PAD + index];
     }

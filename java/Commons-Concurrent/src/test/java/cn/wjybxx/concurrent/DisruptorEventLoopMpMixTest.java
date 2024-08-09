@@ -37,6 +37,7 @@ public class DisruptorEventLoopMpMixTest {
 
     private static final int PRODUCER_COUNT = 4;
 
+    private CounterAgent agent;
     private Counter counter;
     private DisruptorEventLoop<RingBufferEvent> consumer;
     private List<Thread> producerList;
@@ -44,7 +45,8 @@ public class DisruptorEventLoopMpMixTest {
 
     @BeforeEach
     void setUp() {
-        counter = null;
+        agent = new CounterAgent();
+        counter = agent.getCounter();
         consumer = null;
         producerList = null;
         alert = false;
@@ -52,17 +54,15 @@ public class DisruptorEventLoopMpMixTest {
 
     @Test
     void testRingBuffer() throws InterruptedException {
-        CounterAgent agent = new CounterAgent();
-        counter = agent.getCounter();
-
         consumer = EventLoopBuilder.<RingBufferEvent>newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
-                .setAgent(new CounterAgent())
+                .setAgent(agent)
                 .setEventSequencer(RingBufferEventSequencer
                         .newMultiProducer(RingBufferEvent::new)
                         .build())
                 .build();
 
+        // 注意：用户事件从1开始
         producerList = new ArrayList<>(PRODUCER_COUNT);
         for (int i = 1; i <= PRODUCER_COUNT; i++) {
             if (i > PRODUCER_COUNT / 2) {
@@ -84,17 +84,15 @@ public class DisruptorEventLoopMpMixTest {
         alert = true;
         producerList.forEach(ThreadUtils::joinUninterruptedly);
 
-        Assertions.assertTrue(counter.getSequenceMap().size() > 0, "Counter.sequenceMap.size == 0");
+        Assertions.assertEquals(PRODUCER_COUNT, counter.getSequenceMap().size(), "Counter.sequenceMap.size != PRODUCER_COUNT");
         Assertions.assertTrue(counter.getErrorMsgList().isEmpty(), counter.getErrorMsgList()::toString);
     }
 
     @Test
     void testUnboundedBuffer() throws InterruptedException {
-        CounterAgent agent = new CounterAgent();
-        counter = agent.getCounter();
         consumer = EventLoopBuilder.<RingBufferEvent>newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
-                .setAgent(new CounterAgent())
+                .setAgent(agent)
                 .setEventSequencer(MpUnboundedEventSequencer
                         .newBuilder(RingBufferEvent::new)
                         .build())
@@ -121,7 +119,7 @@ public class DisruptorEventLoopMpMixTest {
         alert = true;
         producerList.forEach(ThreadUtils::joinUninterruptedly);
 
-        Assertions.assertTrue(counter.getSequenceMap().size() > 0, "Counter.sequenceMap.size == 0");
+        Assertions.assertEquals(PRODUCER_COUNT, counter.getSequenceMap().size(), "Counter.sequenceMap.size != PRODUCER_COUNT");
         Assertions.assertTrue(counter.getErrorMsgList().isEmpty(), counter.getErrorMsgList()::toString);
     }
 
@@ -177,7 +175,6 @@ public class DisruptorEventLoopMpMixTest {
                 try {
                     consumer.execute(counter.newTask(type, localSequence++));
                 } catch (RejectedExecutionException ignore) {
-                    assert alert;
                     break;
                 }
             }

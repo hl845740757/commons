@@ -224,7 +224,7 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
     @Override
     public E producerGet(long sequence) {
         if (sequence < 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("sequence: " + sequence);
         }
         final int seqChunkOffset = (int) (sequence & chunkMask);
         final long seqChunkIndex = sequence >> chunkShift;
@@ -239,7 +239,7 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
     @Override
     public E consumerGet(long sequence) {
         if (sequence < 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("sequence: " + sequence);
         }
         final int seqChunkOffset = (int) (sequence & chunkMask);
         final long seqChunkIndex = sequence >> chunkShift;
@@ -253,9 +253,8 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
 
     @Override
     public void producerSet(long sequence, E data) {
-        Objects.requireNonNull(data);
         if (sequence < 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("sequence: " + sequence);
         }
         final int seqChunkOffset = (int) (sequence & chunkMask);
         final long seqChunkIndex = sequence >> chunkShift;
@@ -269,9 +268,8 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
 
     @Override
     public void consumerSet(long sequence, E data) {
-        Objects.requireNonNull(data);
         if (sequence < 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("sequence: " + sequence);
         }
         final int seqChunkOffset = (int) (sequence & chunkMask);
         final long seqChunkIndex = sequence >> chunkShift;

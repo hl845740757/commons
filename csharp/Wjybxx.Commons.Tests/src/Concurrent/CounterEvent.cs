@@ -16,19 +16,21 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent
-{
-/// <summary>
-/// 提供最小支持的AgentEvent
-/// </summary>
-public struct MiniAgentEvent : IAgentEvent
+using Wjybxx.Commons.Concurrent;
+
+namespace Commons.Tests.Concurrent;
+
+public struct CounterEvent : IAgentEvent
 {
     private int type;
     private object? obj1;
     private object? obj2;
     private int options;
 
-    public MiniAgentEvent(int type = IAgentEvent.TYPE_INVALID) : this() {
+    public long longVal1;
+    public long longVal2;
+
+    public CounterEvent(int type = IAgentEvent.TYPE_INVALID) : this() {
         this.type = type;
     }
 
@@ -61,5 +63,4 @@ public struct MiniAgentEvent : IAgentEvent
     public void CleanAll() {
         Clean();
     }
-}
 }

@@ -60,7 +60,6 @@ public class RingBufferEventSequencer<T> : EventSequencer<T>
     }
 
     public void ProducerSet(long sequence, T data) {
-        if (data == null) throw new ArgumentNullException(nameof(data));
         buffer.SetElement(sequence, data);
     }
 

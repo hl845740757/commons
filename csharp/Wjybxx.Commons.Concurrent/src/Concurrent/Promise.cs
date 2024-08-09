@@ -99,10 +99,10 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     #region internal
 
     internal void Reset() {
+        stack = null;
         _executor = null;
         _result = default;
         _ex = null;
-        stack = null;
     }
 
     private bool InternalSetResult(T result) {

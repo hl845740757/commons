@@ -73,8 +73,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     private final EventSequencer<? extends T> eventSequencer;
     /** 周期性任务队列 -- 既有的任务都是先于Sequencer中的任务提交的 */
     private final IndexedPriorityQueue<ScheduledPromiseTask<?>> scheduledTaskQueue;
-    /** 批量执行任务的大小 */
-    private final int batchSize;
     /** 任务拒绝策略 */
     private final RejectedExecutionHandler rejectedExecutionHandler;
     /** 内部代理 */
@@ -82,6 +80,10 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     /** 外部门面 */
     private final EventLoopModule mainModule;
 
+    /** 批量执行任务的大小 */
+    private final int batchSize;
+    /** 消费事件后是否清理事件 -- 可清理意味着单消费者模型 */
+    private final boolean cleanEventAfterConsumed;
     /** 退出时是否清理buffer -- 可清理意味着是消费链的末尾 */
     private final boolean cleanBufferOnExit;
     /** 缓存值 -- 减少运行时测试 */
@@ -103,12 +105,13 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         this.tickTime = System.nanoTime();
         this.eventSequencer = Objects.requireNonNull(builder.getEventSequencer());
         this.scheduledTaskQueue = new DefaultIndexedPriorityQueue<>(ScheduledPromiseTask::compareToExplicitly, 64);
-
         this.batchSize = MathCommon.clamp(builder.getBatchSize(), MIN_BATCH_SIZE, MAX_BATCH_SIZE);
+
         this.rejectedExecutionHandler = ObjectUtils.nullToDef(builder.getRejectedExecutionHandler(), RejectedExecutionHandlers.abort());
         this.agent = ObjectUtils.nullToDef(builder.getAgent(), EmptyAgent.getInstance());
         this.mainModule = builder.getMainModule();
 
+        this.cleanEventAfterConsumed = builder.isCleanEventAfterConsumed();
         this.cleanBufferOnExit = builder.isCleanBufferOnExit();
         if (cleanBufferOnExit && eventSequencer instanceof MpUnboundedEventSequencer<? extends T> unboundedBuffer) {
             this.mpUnboundedEventSequencer = unboundedBuffer;
@@ -117,16 +120,13 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         }
 
         // worker只依赖生产者屏障
-        WaitStrategy waitStrategy = builder.getWaitStrategy();
-        if (waitStrategy == null) {
-            worker = new Worker(eventSequencer.newSingleConsumerBarrier());
-        } else {
-            worker = new Worker(eventSequencer.newSingleConsumerBarrier(waitStrategy));
-        }
+        ConsumerBarrier barrier = eventSequencer.newSingleConsumerBarrier(builder.getWaitStrategy());
+        worker = new Worker(barrier);
         thread = Objects.requireNonNull(threadFactory.newThread(worker), "newThread");
         DefaultThreadFactory.checkUncaughtExceptionHandler(thread);
+
         // 添加worker的sequence为网关sequence，生产者们会监听到线程的消费进度
-        eventSequencer.addGatingBarriers(worker.barrier);
+        eventSequencer.addGatingBarriers(barrier);
 
         // 完成绑定
         this.agent.inject(this);
@@ -309,14 +309,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     }
 
     public final T getEvent(long sequence) {
-        checkSequence(sequence);
         return eventSequencer.producerGet(sequence);
-    }
-
-    private static void checkSequence(long sequence) {
-        if (sequence < 0) {
-            throw new IllegalArgumentException("invalid sequence " + sequence);
-        }
     }
 
     /**
@@ -343,7 +336,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
 
     @Beta
     public final void publish(long sequence) {
-        checkSequence(sequence);
         eventSequencer.publish(sequence);
         if (sequence == 0 && !inEventLoop()) {
             ensureThreadStarted();
@@ -400,7 +392,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
      */
     @Beta
     public final void publish(long lo, long hi) {
-        checkSequence(lo);
         eventSequencer.producerBarrier().publish(lo, hi);
         if (lo == 0 && !inEventLoop()) {
             ensureThreadStarted();
@@ -543,7 +534,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 if (!runningPromise.trySetComputing()) {
                     break outer;
                 }
-
                 tickTime = System.nanoTime();
                 agent.onStart();
 
@@ -590,11 +580,9 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         }
 
         private void loop() {
-            final ConsumerBarrier barrier = this.barrier;
-            final int taskBatchSize = DisruptorEventLoop.this.batchSize;
+            final int batchSize = DisruptorEventLoop.this.batchSize;
             final var mpUnboundedEventSequencer = DisruptorEventLoop.this.mpUnboundedEventSequencer;
 
-            final Sequence sequence = this.sequence;
             long nextSequence = sequence.getVolatile() + 1L;
             long availableSequence = -1;
             while (state == EventLoopState.ST_RUNNING) {
@@ -609,7 +597,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         continue;
                     }
 
-                    long batchEndSequence = Math.min(availableSequence, nextSequence + taskBatchSize - 1);
+                    long batchEndSequence = Math.min(availableSequence, nextSequence + batchSize - 1);
                     long curSequence = runTaskBatch(nextSequence, batchEndSequence);
                     sequence.setRelease(curSequence);
                     // 无界队列尝试主动回收块
@@ -662,9 +650,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
          * @param shuttingDownMode 是否是退出模式
          */
         private void processScheduledQueue(long tickTime, boolean shuttingDownMode) {
-            final DisruptorEventLoop<T> eventLoop = DisruptorEventLoop.this;
-            final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue = eventLoop.scheduledTaskQueue;
-
+            final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue = scheduledTaskQueue;
             ScheduledPromiseTask<?> queueTask;
             while ((queueTask = taskQueue.peek()) != null) {
                 if (queueTask.future().isDone()) {
@@ -699,15 +685,16 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         private long runTaskBatch(final long batchBeginSequence, final long batchEndSequence) {
             EventSequencer<? extends T> eventSequencer = DisruptorEventLoop.this.eventSequencer;
             EventLoopAgent<? super T> agent = DisruptorEventLoop.this.agent;
-            T event;
+            boolean cleanEventAfterConsumed = DisruptorEventLoop.this.cleanEventAfterConsumed;
+
             for (long curSequence = batchBeginSequence; curSequence <= batchEndSequence; curSequence++) {
-                event = eventSequencer.consumerGet(curSequence);
+                T event = eventSequencer.consumerGet(curSequence);
                 try {
-                    if (event.getType() > 0) {
-                        agent.onEvent(event);
-                    } else if (event.getType() == 0) {
+                    if (event.getType() == 0) {
                         Runnable runnable = (Runnable) event.getObj1();
                         runnable.run();
+                    } else if (event.getType() > 0) {
+                        agent.onEvent(event);
                     } else {
                         if (isShuttingDown()) { // 生产者在观察到关闭时发布了不连续的数据
                             return curSequence;
@@ -720,13 +707,16 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         return curSequence;
                     }
                 } finally {
-                    event.clean();
+                    if (cleanEventAfterConsumed) {
+                        event.clean();
+                    }
                 }
             }
             return batchEndSequence;
         }
 
         /**
+         * 将自己从网关序列中删除;
          * 这是解决死锁问题的关键，如果不从gatingBarriers中移除，则生产者无法从{@link ProducerBarrier#next()}中退出，
          */
         private void removeFromGatingBarriers() {
@@ -771,11 +761,11 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         event.cleanAll();
                         continue;
                     }
-                    if (event.getType() > 0) {
-                        agent.onEvent(event);
-                    } else {
+                    if (event.getType() == 0) {
                         Runnable runnable = (Runnable) event.getObj1();
                         runnable.run();
+                    } else {
+                        agent.onEvent(event);
                     }
                 } catch (Throwable t) {
                     logCause(t);

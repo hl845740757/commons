@@ -64,12 +64,12 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
     #region producer
 
     public void Publish(long sequence) {
-        MpUnboundedBufferChunk<T> chunk = buffer.producerChunkForSequence(sequence);
+        MpUnboundedBufferChunk<T> chunk = buffer.ProducerChunkForSequence(sequence);
         chunk.Publish((int)(sequence - chunk.MinSequence()));
     }
 
     public void Publish(long lo, long hi) {
-        MpUnboundedBufferChunk<T> chunk = buffer.producerChunkForSequence(lo);
+        MpUnboundedBufferChunk<T> chunk = buffer.ProducerChunkForSequence(lo);
         while (hi > chunk.MaxSequence()) {
             long minSequence = chunk.MinSequence();
             chunk.Publish((int)(lo - minSequence), chunk.Length - 1);
@@ -83,13 +83,13 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
     }
 
     public bool IsPublished(long sequence) {
-        MpUnboundedBufferChunk<T> chunk = buffer.consumerChunkForSequence(sequence);
+        MpUnboundedBufferChunk<T> chunk = buffer.ConsumerChunkForSequence(sequence);
         return chunk.IsPublished((int)(sequence - chunk.MinSequence()));
     }
 
     /** 消费者可能看见尚未发布的块的序号 */
     public long GetHighestPublishedSequence(long lo, long hi) {
-        MpUnboundedBufferChunk<T> chunk = buffer.consumerChunkForSequence(lo);
+        MpUnboundedBufferChunk<T> chunk = buffer.ConsumerChunkForSequence(lo);
         while (hi > chunk.MaxSequence()) {
             long minSequence = chunk.MinSequence();
             int maxIndex = chunk.Length - 1;
@@ -159,7 +159,7 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
         // 生产者尝试进入新块时回收旧块，可能不及时，但足够安全和开销小
         if (!buffer.InSameChunk(current, next)) {
             buffer.TryMoveHeadToNext(Util.GetMinimumSequence(gatingBarriers, current));
-            buffer.producerChunkForSequence(next);
+            buffer.ProducerChunkForSequence(next);
         }
         return next;
     }

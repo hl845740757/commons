@@ -20,6 +20,7 @@ using System;
 using System.Threading;
 using NUnit.Framework;
 using Wjybxx.Commons.Concurrent;
+using Wjybxx.Disruptor;
 
 namespace Commons.Tests.Concurrent;
 
@@ -34,7 +35,12 @@ public class ScheduleOrderTest
     [SetUp]
     public void SetUp() {
         counter = new Counter();
-        consumer = EventLoopBuilder.NewBuilder(new DefaultThreadFactory("global")).Build();
+        consumer = new DisruptorEventLoopBuilder<MiniAgentEvent>()
+        {
+            ThreadFactory = new DefaultThreadFactory("Scheduler", true),
+            EventSequencer = new RingBufferEventSequencer<MiniAgentEvent>.Builder(() => new MiniAgentEvent())
+                .Build()
+        }.Build();
     }
 
     /// <summary>

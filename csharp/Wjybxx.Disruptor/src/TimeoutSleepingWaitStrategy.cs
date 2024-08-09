@@ -23,7 +23,7 @@ namespace Wjybxx.Disruptor
 {
 /// <summary>
 /// 睡眠等待策略。
-/// 在<see cref="SleepingWaitStrategy"/>的基础上增加了超时，让消费者可以从等待中醒来干其它的事情。
+/// 在<see cref="SleepingWaitStrategy"/>的基础上增加了超时，让消费者可以从等待中醒来干其它的事情（比如处理定时任务）。
 /// 
 /// 1. 先尝试自旋等待一定次数。
 /// 2. 然后尝试yield方式自旋一定次数。

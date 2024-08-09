@@ -16,12 +16,14 @@
 
 #endregion
 
+using System.Threading;
+
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 事件循环的内部代理
 /// </summary>
-public interface IEventLoopAgent<in TEvent> where TEvent : IAgentEvent
+public interface IEventLoopAgent<TEvent> where TEvent : IAgentEvent
 {
     /// <summary>
     /// 注入EventLoop实例。
@@ -33,16 +35,16 @@ public interface IEventLoopAgent<in TEvent> where TEvent : IAgentEvent
 
     /// <summary>
     /// 事件循环线程启动的时候
-    /// 注意：该方法抛出任何异常都将导致事件循环线程终止！
+    /// 注意：该方法抛出任何异常都将导致事件循环线程终止！启动期间提交任务时要小心死锁。
     /// </summary>
     void OnStart();
 
     /// <summary>
     /// 收到一个用户自定义事件或任务
-    /// 
+    /// ps：由于事件可能是结构体类型，因此使用ref。
     /// </summary>
     /// <param name="evt"></param>
-    void OnEvent(TEvent evt);
+    void OnEvent(ref TEvent evt);
 
     /// <summary>
     /// 当事件循环等待较长时间或处理完一批事件之后都将调用该方法
@@ -59,7 +61,8 @@ public interface IEventLoopAgent<in TEvent> where TEvent : IAgentEvent
 
     /// <summary>
     /// 当事件循环退出时将调用该方法
-    /// 退出前进行必要的清理，释放系统资源
+    /// 退出前进行必要的清理，释放系统资源。
+    /// 注意：此时EventLoop已清理<see cref="SynchronizationContext"/>，因此Shutdown钩子中使用await要小心线程问题。
     /// </summary>
     void OnShutdown();
 }

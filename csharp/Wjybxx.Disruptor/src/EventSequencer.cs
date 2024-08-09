@@ -20,6 +20,12 @@ using System;
 
 namespace Wjybxx.Disruptor
 {
+public static class EventSequencer
+{
+    /** 无界空间对应的常量 */
+    public const int UNBOUNDED_CAPACITY = -1;
+}
+
 /// <summary>
 /// 事件生成器
 /// 事件生成器是<see cref="Disruptor.Sequencer"/>和<see cref="DataProvider{T}"/>的集成，每一种实现通常都和数据结构绑定。
@@ -27,9 +33,6 @@ namespace Wjybxx.Disruptor
 /// <typeparam name="T"></typeparam>
 public interface EventSequencer<T> : DataProvider<T>
 {
-    /** 无界空间对应的常量 */
-    public const int UNBOUNDED_CAPACITY = -1;
-
     #region disruptor
 
     /// <summary>
@@ -79,7 +82,7 @@ public interface EventSequencer<T> : DataProvider<T>
     }
 
     /** 创建一个【单消费者】的屏障 -- 使用自定义等待策略 */
-    ConsumerBarrier NewSingleConsumerBarrier(WaitStrategy waitStrategy, params SequenceBarrier[] barriersToTrack) {
+    ConsumerBarrier NewSingleConsumerBarrier(WaitStrategy? waitStrategy, params SequenceBarrier[] barriersToTrack) {
         return Sequencer.NewSingleConsumerBarrier(waitStrategy, barriersToTrack);
     }
 
@@ -89,7 +92,7 @@ public interface EventSequencer<T> : DataProvider<T>
     }
 
     /** 创建一个【多消费者】的屏障 -- 使用自定义等待策略 */
-    ConsumerBarrier NewMultiConsumerBarrier(int workerCount, WaitStrategy waitStrategy, params SequenceBarrier[] barriersToTrack) {
+    ConsumerBarrier NewMultiConsumerBarrier(int workerCount, WaitStrategy? waitStrategy, params SequenceBarrier[] barriersToTrack) {
         return Sequencer.NewMultiConsumerBarrier(workerCount, waitStrategy, barriersToTrack);
     }
 

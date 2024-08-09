@@ -66,12 +66,9 @@ public abstract class EventSequencerBuilder<T>
     /// 1. 如果存在需要通过{@link Condition}等待生产者发布序号的消费者，则需要启用blocker。
     /// 2. 默认情况下不启用。
     /// </summary>
-    public void EnableBlocker() {
-        blocker = new SequenceBlocker();
-    }
-
-    public void DisableBlocker() {
-        blocker = null;
+    public bool EnableBlocker {
+        get => blocker != null;
+        set => blocker = (value == false) ? null : new SequenceBlocker();
     }
 
     /// <summary>

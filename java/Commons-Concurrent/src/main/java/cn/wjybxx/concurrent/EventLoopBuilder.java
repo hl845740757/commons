@@ -18,6 +18,7 @@ package cn.wjybxx.concurrent;
 
 
 import cn.wjybxx.disruptor.EventSequencer;
+import cn.wjybxx.disruptor.Sequencer;
 import cn.wjybxx.disruptor.WaitStrategy;
 
 import java.util.concurrent.ThreadFactory;
@@ -30,6 +31,7 @@ import java.util.concurrent.ThreadFactory;
 public abstract class EventLoopBuilder<T extends IAgentEvent> {
 
     private EventLoopGroup parent;
+    private int index = -1;
     private RejectedExecutionHandler rejectedExecutionHandler = RejectedExecutionHandlers.abort();
     private ThreadFactory threadFactory;
 
@@ -48,6 +50,17 @@ public abstract class EventLoopBuilder<T extends IAgentEvent> {
         return this;
     }
 
+    /** Parent为当前EventLoop分配的索引 */
+    public int getIndex() {
+        return index;
+    }
+
+    public EventLoopBuilder<T> setIndex(int index) {
+        this.index = index;
+        return this;
+    }
+
+    /** 线程工厂 */
     public ThreadFactory getThreadFactory() {
         return threadFactory;
     }
@@ -57,6 +70,7 @@ public abstract class EventLoopBuilder<T extends IAgentEvent> {
         return this;
     }
 
+    /** 拒绝策略 */
     public RejectedExecutionHandler getRejectedExecutionHandler() {
         return rejectedExecutionHandler;
     }
@@ -116,6 +130,8 @@ public abstract class EventLoopBuilder<T extends IAgentEvent> {
 
         private EventSequencer<? extends T> eventSequencer;
         private WaitStrategy waitStrategy;
+
+        private boolean cleanEventAfterConsumed = true;
         private boolean cleanBufferOnExit = true;
 
         //
@@ -123,6 +139,12 @@ public abstract class EventLoopBuilder<T extends IAgentEvent> {
         @Override
         public DisruptorBuilder<T> setParent(EventLoopGroup parent) {
             super.setParent(parent);
+            return this;
+        }
+
+        @Override
+        public DisruptorBuilder<T> setIndex(int index) {
+            super.setIndex(index);
             return this;
         }
 
@@ -181,13 +203,27 @@ public abstract class EventLoopBuilder<T extends IAgentEvent> {
             return this;
         }
 
-        /** 等待策略 -- 如果未显式指定，则使用{@link #eventSequencer}中的默认等待策略 */
+        /**
+         * 等待策略
+         * 1.如果未显式指定，则使用{@link Sequencer#getWaitStrategy()}中的默认等待策略。
+         * 2.应当避免使用无超时的等待策略，EventLoop需要处理定时任务，不能一直等待生产者。
+         */
         public WaitStrategy getWaitStrategy() {
             return waitStrategy;
         }
 
         public DisruptorBuilder<T> setWaitStrategy(WaitStrategy waitStrategy) {
             this.waitStrategy = waitStrategy;
+            return this;
+        }
+
+        /** 在消费事件后是否调用{@link IAgentEvent#clean()}方法清理引用数据 */
+        public boolean isCleanEventAfterConsumed() {
+            return cleanEventAfterConsumed;
+        }
+
+        public DisruptorBuilder<T> setCleanEventAfterConsumed(boolean cleanEventAfterConsumed) {
+            this.cleanEventAfterConsumed = cleanEventAfterConsumed;
             return this;
         }
 

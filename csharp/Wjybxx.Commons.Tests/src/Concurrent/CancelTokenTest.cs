@@ -18,14 +18,21 @@
 
 using System.Threading;
 using NUnit.Framework;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Concurrent;
+using Wjybxx.Disruptor;
 
 namespace Commons.Tests.Concurrent;
 
 public class CancelTokenTest
 {
     /** 用于测试异步执行 */
-    private static readonly IEventLoop globalEventLoop = EventLoopBuilder.NewBuilder(new DefaultThreadFactory("Scheduler", true)).Build();
+    private static readonly IEventLoop globalEventLoop = new DisruptorEventLoopBuilder<MiniAgentEvent>()
+    {
+        ThreadFactory = new DefaultThreadFactory("Scheduler", true),
+        EventSequencer = new RingBufferEventSequencer<MiniAgentEvent>.Builder(() => new MiniAgentEvent())
+            .Build()
+    }.Build();
 
     static CancelTokenTest() {
         globalEventLoop.Start().Join();
@@ -114,11 +121,17 @@ public class CancelTokenTest
 
     [Test]
     public void testDelayInterrupt() {
+        if (!globalEventLoop.IsRunning) {
+            throw new IllegalStateException();
+        }
+        
         ICancelTokenSource cts = new CancelTokenSource();
         cts.CancelAfter(1, 100);
 
         Thread thread = Thread.CurrentThread;
-        cts.ThenRun(thread.Interrupt);
+        cts.ThenRun(() => {
+            thread.Interrupt();
+        });
 
         bool interrupted;
         try {

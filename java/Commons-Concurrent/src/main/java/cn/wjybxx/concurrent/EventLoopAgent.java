@@ -37,7 +37,7 @@ public interface EventLoopAgent<T> {
 
     /**
      * 当事件循环启动的时候将调用该方法
-     * 注意：该方法抛出任何异常，都将导致事件循环线程终止！
+     * 注意：该方法抛出任何异常，都将导致事件循环线程终止！启动期间提交任务时要小心死锁！
      */
     void onStart() throws Exception;
 

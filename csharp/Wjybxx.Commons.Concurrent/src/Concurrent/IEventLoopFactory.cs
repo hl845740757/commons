@@ -47,10 +47,12 @@ public class EventLoopFactory : IEventLoopFactory
     }
 
     public IEventLoop NewChild(IEventLoopGroup parent, int index, object? extraInfo = null) {
-        EventLoopBuilder builder = EventLoopBuilder.NewBuilder(threadFactory);
-        builder.Parent = parent;
-        builder.ThreadFactory = threadFactory;
-        return builder.Build();
+        return new DisruptorEventLoopBuilder<MiniAgentEvent>()
+        {
+            Parent = parent,
+            Index = index,
+            ThreadFactory = threadFactory
+        }.Build();
     }
 }
 }

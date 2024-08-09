@@ -62,7 +62,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
     private long p11, p12, p13, p14, p15, p16, p17;
 
     /** 线程状态 -- 变化不频繁，不缓存行填充 */
-    private volatile int state = (int)EventLoopState.Unstarted;
+    private volatile int state = ST_UNSTARTED;
 
     /** 事件队列 */
     private readonly EventSequencer<T> eventSequencer;
@@ -77,13 +77,18 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
     /** 外部门面 */
     private readonly IEventLoopModule? mainModule;
 
+    /** 消费事件后是否清理事件 -- 可清理意味着单消费者模型 */
+    private readonly bool cleanEventAfterConsumed;
     /** 退出时是否清理buffer -- 可清理意味着是消费链的末尾 */
     private readonly bool cleanBufferOnExit;
     /** 缓存值 -- 减少运行时测试 */
     private readonly MpUnboundedEventSequencer<T>? mpUnboundedEventSequencer;
 
     private readonly Thread thread;
-    private readonly Worker worker;
+    /** 消费者屏障 -- 由于C#的委托不是接口，因此委托依赖的数据存储在EventLoop上 */
+    private readonly ConsumerBarrier barrier;
+    /** 消费进度 */
+    private readonly Sequence sequence;
 
     /** 进入运行状态的promise */
     private readonly IPromise<int> runningPromise;
@@ -99,12 +104,13 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
         this._tickTime = ObjectUtil.SystemTicks();
         this.eventSequencer = builder.EventSequencer ?? throw new ArgumentException("builder.EventSequencer");
         this.scheduledTaskQueue = new IndexedPriorityQueue<IScheduledFutureTask>(new ScheduledTaskComparator(), 64);
-
         this.batchSize = Math.Clamp(builder.BatchSize, MIN_BATCH_SIZE, MAX_BATCH_SIZE);
+
         this.rejectedExecutionHandler = builder.RejectedExecutionHandler ?? RejectedExecutionHandlers.ABORT;
-        this.agent = builder.Agent ?? EmptyAgent<T>.INST;
+        this.agent = builder.Agent ?? EmptyAgent<T>.Inst;
         this.mainModule = builder.MainModule;
 
+        this.cleanEventAfterConsumed = builder.CleanEventAfterConsumed;
         this.cleanBufferOnExit = builder.CleanBufferOnExit;
         if (cleanBufferOnExit && eventSequencer is MpUnboundedEventSequencer<T> unboundedBuffer) {
             this.mpUnboundedEventSequencer = unboundedBuffer;
@@ -118,15 +124,11 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
         terminationFuture = terminationPromise.AsReadonly();
 
         // worker只依赖生产者屏障
-        WaitStrategy waitStrategy = builder.WaitStrategy;
-        if (waitStrategy == null) {
-            worker = new Worker(eventSequencer.NewSingleConsumerBarrier());
-        } else {
-            worker = new Worker(eventSequencer.NewSingleConsumerBarrier(waitStrategy));
-        }
-        thread = threadFactory.NewThread(worker);
+        barrier = eventSequencer.NewSingleConsumerBarrier(builder.WaitStrategy);
+        sequence = new Sequence();
+        thread = threadFactory.NewThread(MainLoopEntry);
         // 添加worker的sequence为网关sequence，生产者们会监听到线程的消费进度
-        eventSequencer.AddGatingBarriers(worker.barrier);
+        eventSequencer.AddGatingBarriers(barrier);
 
         // 完成绑定
         this.agent.Inject(this);
@@ -139,7 +141,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
     /** 仅用于测试 */
     [VisibleForTesting]
     public ConsumerBarrier GetBarrier() {
-        return worker.barrier;
+        return barrier;
     }
 
     /** EventLoop绑定的事件生成器 - 可用于发布事件 */
@@ -179,7 +181,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
      */
     [Beta]
     public int TaskCount() {
-        long count = eventSequencer.ProducerBarrier.Sequence() - worker.sequence.GetVolatile();
+        long count = eventSequencer.ProducerBarrier.Sequence() - sequence.GetVolatile();
         if (eventSequencer.Capacity > 0 && count >= eventSequencer.Capacity) {
             return eventSequencer.Capacity;
         }
@@ -203,10 +205,10 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
                 rejectedExecutionHandler.Rejected(task, this);
                 return;
             }
-            tryPublish(task, sequence.Value, task.Options);
+            TryPublish(task, sequence.Value, task.Options);
         } else {
             // 其它线程调用，可能阻塞
-            tryPublish(task, eventSequencer.Next(1), task.Options);
+            TryPublish(task, eventSequencer.Next(1), task.Options);
         }
     }
 
@@ -223,10 +225,10 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
                 rejectedExecutionHandler.Rejected(Executors.BoxAction(command, options), this);
                 return;
             }
-            tryPublish(command, sequence.Value, options);
+            TryPublish(command, sequence.Value, options);
         } else {
             // 其它线程调用，可能阻塞
-            tryPublish(command, eventSequencer.Next(1), options);
+            TryPublish(command, eventSequencer.Next(1), options);
         }
     }
 
@@ -247,13 +249,13 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
     /// <param name="task"></param>
     /// <param name="sequence"></param>
     /// <param name="options"></param>
-    private void tryPublish(object task, long sequence, int options) {
+    private void TryPublish(object task, long sequence, int options) {
         if (IsShuttingDown) {
             // 先发布sequence，避免拒绝逻辑可能产生的阻塞，不可以覆盖数据
             eventSequencer.Publish(sequence);
             Reject(task, options);
         } else {
-            T eventObj = eventSequencer.ProducerGet(sequence);
+            ref T eventObj = ref eventSequencer.ProducerGetRef(sequence);
             if (task is EventTranslator<T> translator) {
                 try {
                     translator.TranslateTo(eventObj, sequence);
@@ -266,7 +268,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
                 eventObj.Obj1 = task;
                 eventObj.Options = options;
                 if (task is IScheduledFutureTask futureTask) {
-                    futureTask.Id = (sequence); // nice
+                    futureTask.Id = sequence; // nice
                     futureTask.RegisterCancellation();
                 }
             }
@@ -275,9 +277,9 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
             if (!InEventLoop()) {
                 // 确保线程已启动 -- ringBuffer私有的情况下才可以测试 sequence == 0
                 if (sequence == 0) {
-                    ensureThreadStarted();
+                    EnsureThreadStarted();
                 } else if (TaskOption.IsEnabled(options, TaskOption.WAKEUP_THREAD)) {
-                    wakeup();
+                    Wakeup();
                 }
             }
         }
@@ -293,23 +295,27 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
         }
     }
 
+    /** 适用Class类型事件 */
     public T GetEvent(long sequence) {
-        CheckSequence(sequence);
-        return eventSequencer.producerGet(sequence);
+        return eventSequencer.ProducerGet(sequence);
     }
 
-    private static void CheckSequence(long sequence) {
-        if (sequence < 0) {
-            throw new IllegalArgumentException("invalid sequence " + sequence);
-        }
+    /** 适用结构体类型事件 */
+    public ref T GetEventRef(long sequence) {
+        return ref eventSequencer.ProducerGetRef(sequence);
+    }
+
+    /** 适用结构体类型事件 */
+    public void SetEvent(long sequence, T eventObj) {
+        eventSequencer.ProducerSet(sequence, eventObj);
     }
 
     /**
      * 开放的特殊接口
      * 1.按照规范，在调用该方法后，必须在finally块中进行发布。
      * 2.事件类型必须大于等于0，否则可能导致异常
-     * 3.返回值为-1时必须检查
-     * <pre> {@code
+     * 3.返回值为null时必须检查
+     * <code>
      *      long sequence = eventLoop.NextSequence();
      *      try {
      *          RingBufferEvent event = eventLoop.GetEvent(sequence);
@@ -317,7 +323,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
      *      } finally {
      *          eventLoop.Publish(sequence)
      *      }
-     * }</pre>
+     * </code>
      *
      * @return 如果申请成功，则返回对应的sequence，否则返回null
      */
@@ -328,10 +334,9 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
 
     [Beta]
     public void Publish(long sequence) {
-        CheckSequence(sequence);
         eventSequencer.ProducerBarrier.Publish(sequence);
         if (sequence == 0 && !InEventLoop()) {
-            ensureThreadStarted();
+            EnsureThreadStarted();
         }
     }
 
@@ -385,10 +390,9 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
      */
     [Beta]
     public void Publish(long lo, long hi) {
-        CheckSequence(lo);
         eventSequencer.ProducerBarrier.Publish(lo, hi);
         if (lo == 0 && !InEventLoop()) {
-            ensureThreadStarted();
+            EnsureThreadStarted();
         }
     }
 
@@ -416,10 +420,11 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
         get => Volatile.Read(ref _tickTime);
     }
 
-    // C#的另一个坑，override的时候不能增加set...
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void SetTickTime(long tickTime) {
+    private long UpdateTickTime() {
+        long tickTime = ObjectUtil.SystemTicks();
         Volatile.Write(ref _tickTime, tickTime);
+        return tickTime;
     }
 
     #endregion
@@ -428,7 +433,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
 
     public override IFuture Start() {
         EnsureThreadStarted();
-        return RunningFuture;
+        return runningFuture;
     }
 
     public override void Shutdown() {
@@ -470,13 +475,15 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
     /// <param name="oldState">切换为关闭状态之前的状态</param>
     private void EnsureThreadTerminable(int oldState) {
         if (oldState == ST_UNSTARTED) {
+            // TODO 是否需要启动线程，进行更彻底的清理？
             state = ST_TERMINATED;
+            RemoveFromGatingBarriers(); // 防死锁
 
             runningPromise.TrySetException(new StartFailedException("Stillborn"));
             terminationPromise.TrySetResult(0);
         } else {
             // 等待策略是根据alert信号判断EventLoop是否已开始关闭的，因此即使inEventLoop也需要alert，否则可能丢失信号，在waitFor处无法停止
-            worker.barrier.alert();
+            barrier.Alert();
             // 唤醒线程 - 如果线程可能阻塞在其它地方
             Wakeup();
         }
@@ -493,12 +500,310 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
                 return;
             }
             int realState = Interlocked.CompareExchange(ref state, targetState, expectedState);
-            if (realState >= targetState) {
+            if (realState >= targetState) { // == 表示CAS成功， > 表示已进入目标状态
                 return;
             }
             // retry
             expectedState = realState;
         }
+    }
+
+    #endregion
+
+    #region mainloop
+
+    /// <summary>
+    /// 主循环入口
+    /// 由于C#的委托与Java有所差异，不能直接实现委托，因此我们将数据存储在EventLoop上，数据。
+    /// </summary>
+    private void MainLoopEntry() {
+        // 设置同步上下文，使得EventLoop创建的Task的下游任务默认继续在EventLoop上执行
+        SynchronizationContext.SetSynchronizationContext(AsSyncContext());
+        try {
+            if (!runningPromise.TrySetComputing()) {
+                goto loopEnd;
+            }
+            UpdateTickTime();
+            agent.OnStart();
+
+            AdvanceRunState(ST_RUNNING);
+            if (runningPromise.TrySetResult(0)) {
+                Loop();
+            }
+
+            loopEnd:
+            {
+            }
+        }
+        catch (Exception e) {
+            logger.Error(e, "thread exit due to exception!");
+            if (!runningPromise.IsCompleted) { // 启动失败
+                runningPromise.TrySetException(new StartFailedException("StartFailed", e));
+            }
+        }
+        finally {
+            if (runningPromise.IsSucceeded) {
+                AdvanceRunState(ST_SHUTTING_DOWN);
+            } else {
+                // 启动失败直接进入清理状态，丢弃所有提交的任务
+                AdvanceRunState(ST_SHUTDOWN);
+            }
+
+            try {
+                // 清理ringBuffer中的数据
+                if (cleanBufferOnExit) {
+                    CleanBuffer();
+                }
+                scheduledTaskQueue.ClearIgnoringIndexes();
+            }
+            finally {
+                RemoveFromGatingBarriers();
+                // 标记为已进入最终清理阶段
+                AdvanceRunState(ST_SHUTDOWN);
+
+                // 退出前进行必要的清理，释放系统资源
+                try {
+                    SynchronizationContext.SetSynchronizationContext(null);
+                    agent.OnShutdown();
+                }
+                catch (Exception e) {
+                    logger.Error(e, "thread exit caught exception!");
+                }
+                finally {
+                    // 设置为终止状态
+                    state = ST_TERMINATED;
+                    terminationPromise.TrySetResult(0);
+                }
+            }
+        }
+    }
+
+    private void Loop() {
+        long nextSequence = sequence.GetVolatile() + 1L;
+        long availableSequence = -1;
+        while (state == ST_RUNNING) {
+            try {
+                long tickTime = UpdateTickTime();
+                ProcessScheduledQueue(tickTime, false);
+
+                // 多生产者模型下不可频繁调用waitFor，会在查询可用sequence时产生巨大的开销，因此查询之后本地切割为小批次
+                if (availableSequence < nextSequence
+                    && (availableSequence = barrier.WaitFor(nextSequence)) < nextSequence) {
+                    InvokeAgentUpdate();
+                    continue;
+                }
+
+                long batchEndSequence = Math.Min(availableSequence, nextSequence + batchSize - 1);
+                long curSequence = RunTaskBatch(nextSequence, batchEndSequence);
+                sequence.SetRelease(curSequence);
+                // 无界队列尝试主动回收块
+                if (mpUnboundedEventSequencer != null) {
+                    mpUnboundedEventSequencer.TryMoveHeadToNext(curSequence);
+                }
+                nextSequence = curSequence + 1;
+                if (nextSequence <= batchEndSequence) {
+                    Debug.Assert(IsShuttingDown);
+                    break;
+                }
+
+                InvokeAgentUpdate();
+            }
+            catch (TimeoutException) {
+                // 优先先响应关闭，若未关闭，表用户主动退出等待，执行一次用户循环
+                if (IsShuttingDown) {
+                    break;
+                }
+                long tickTime = UpdateTickTime();
+                ProcessScheduledQueue(tickTime, false);
+                InvokeAgentUpdate();
+            }
+            catch (ThreadInterruptedException e) {
+                if (IsShuttingDown) {
+                    break;
+                }
+                logger.Warn(e, "receive a confusing signal");
+            }
+            catch (AlertException e) {
+                if (IsShuttingDown) {
+                    break;
+                }
+                logger.Warn(e, "receive a confusing signal");
+            }
+            catch (Exception e) {
+                // 不好的等待策略实现
+                logger.Error(e, "bad waitStrategy impl");
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void InvokeAgentUpdate() {
+        try {
+            agent.Update();
+        }
+        catch (Exception ex) {
+            logger.Warn(ex, "agent.update caught exception");
+        }
+    }
+
+    /// <summary>
+    /// 处理周期性任务，传入的限制只有在遇见低优先级任务的时候才生效，因此限制为0则表示遇见低优先级任务立即结束
+    /// (为避免时序错误，处理周期性任务期间不响应关闭，不容易安全实现)
+    /// </summary>
+    /// <param name="tickTime">当前时间</param>
+    /// <param name="shuttingDownMode">是否是退出模式</param>
+    private void ProcessScheduledQueue(long tickTime, bool shuttingDownMode) {
+        IndexedPriorityQueue<IScheduledFutureTask> taskQueue = scheduledTaskQueue;
+        IScheduledFutureTask queueTask;
+        while (taskQueue.TryPeekHead(out queueTask)) {
+            if (queueTask.Future.IsCompleted) {
+                taskQueue.Dequeue(); // 未及时删除的任务
+                continue;
+            }
+            // 优先级最高的任务不需要执行，那么后面的也不需要执行
+            if (tickTime < queueTask.NextTriggerTime) {
+                return;
+            }
+            // 响应关闭
+            if (IsShutdown) {
+                return;
+            }
+
+            taskQueue.Dequeue();
+            if (shuttingDownMode) {
+                // 关闭模式下，不再重复执行任务
+                if (queueTask.IsTriggered || queueTask.Trigger(tickTime)) {
+                    queueTask.CancelWithoutRemove();
+                }
+            } else {
+                // 非关闭模式下，任务必须执行，否则可能导致时序错误
+                if (queueTask.Trigger(tickTime)) {
+                    taskQueue.Enqueue(queueTask);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 批量处理任务
+    /// </summary>
+    /// <param name="batchBeginSequence">批处理的第一个序号</param>
+    /// <param name="batchEndSequence">批处理的最后一个序号</param>
+    /// <returns>curSequence</returns>
+    private long RunTaskBatch(long batchBeginSequence, long batchEndSequence) {
+        EventSequencer<T> eventSequencer = this.eventSequencer;
+        IEventLoopAgent<T> agent = this.agent;
+        bool cleanEventAfterConsumed = this.cleanEventAfterConsumed;
+
+        for (long curSequence = batchBeginSequence; curSequence <= batchEndSequence; curSequence++) {
+            ref T eventObj = ref eventSequencer.ConsumerGetRef(curSequence);
+            try {
+                if (eventObj.Type == 0) {
+                    if (eventObj.Obj1 is Action action) {
+                        action();
+                    } else {
+                        ITask task = (ITask)eventObj.Obj1;
+                        task.Run();
+                    }
+                } else if (eventObj.Type > 0) {
+                    agent.OnEvent(ref eventObj);
+                } else {
+                    if (IsShuttingDown) { // 生产者在观察到关闭时发布了不连续的数据
+                        return curSequence;
+                    }
+                    logger.Warn("user published invalid event: " + eventObj); // 用户发布了非法数据
+                }
+            }
+            catch (Exception ex) {
+                logger.Info(ex, "execute task caught exception");
+                if (IsShuttingDown) { // 可能是中断或Alert，检查关闭信号
+                    return curSequence;
+                }
+            }
+            finally {
+                if (cleanEventAfterConsumed) {
+                    eventObj.Clean();
+                }
+            }
+        }
+        return batchEndSequence;
+    }
+
+    /// <summary>
+    /// 将自己从网关序列中删除
+    /// 这是解决死锁问题的关键，如果不从gatingBarriers中移除，则生产者无法从{@link ProducerBarrier#next()}中退出，
+    /// </summary>
+    private void RemoveFromGatingBarriers() {
+        eventSequencer.RemoveGatingBarrier(barrier);
+    }
+
+    /// <summary>
+    /// 清理缓冲区
+    /// </summary>
+    private void CleanBuffer() {
+        long startTimeMillis = ObjectUtil.SystemTickMillis();
+        EventSequencer<T> eventSequencer = this.eventSequencer;
+        IEventLoopAgent<T> agent = this.agent;
+
+        // 处理延迟任务
+        long tickTime = UpdateTickTime();
+        ProcessScheduledQueue(tickTime, true);
+        scheduledTaskQueue.ClearIgnoringIndexes();
+
+        // 在新的架构下，EventSequencer可能是无界队列，这种情况下我们采用笨方法来清理；
+        // 从当前序列开始消费，一直消费到最新的cursor，然后将自己从gatingBarrier中删除 -- 此时不论有界无界，生产者都将醒来。
+        long nullCount = 0;
+        long taskCount = 0;
+        long discardCount = 0;
+
+        ProducerBarrier producerBarrier = eventSequencer.ProducerBarrier;
+        Sequence sequence = this.sequence;
+        while (true) {
+            long nextSequence = sequence.GetVolatile() + 1;
+            if (nextSequence > producerBarrier.Sequence()) {
+                break;
+            }
+            while (!producerBarrier.IsPublished(nextSequence)) {
+                Thread.SpinWait(10); // 等待发布
+            }
+            ref T eventObj = ref eventSequencer.ConsumerGetRef(nextSequence);
+            try {
+                if (eventObj.Type < 0) { // 生产者在观察到关闭时发布了不连续的数据
+                    nullCount++;
+                    continue;
+                }
+                taskCount++;
+                if (IsShutdown) { // 如果已进入shutdown阶段，则直接丢弃任务
+                    discardCount++;
+                    eventObj.CleanAll();
+                    continue;
+                }
+                if (eventObj.Type == 0) {
+                    if (eventObj.Obj1 is Action action) {
+                        action();
+                    } else {
+                        ITask task = (ITask)eventObj.Obj1;
+                        task.Run();
+                    }
+                } else {
+                    agent.OnEvent(ref eventObj);
+                }
+            }
+            catch (Exception ex) {
+                logger.Info(ex, "execute task caught exception");
+            }
+            finally {
+                eventObj.CleanAll();
+                sequence.SetRelease(nextSequence);
+            }
+        }
+        // 清理内存
+        if (mpUnboundedEventSequencer != null) {
+            mpUnboundedEventSequencer.TryMoveHeadToNext(sequence.GetVolatile());
+        }
+        long costTime = ObjectUtil.SystemTickMillis() - startTimeMillis;
+        logger.Info(
+            $"cleanBuffer success!  nullCount = {nullCount}, taskCount = {taskCount}, discardCount {discardCount}, cost timeMillis = {costTime}");
     }
 
     #endregion

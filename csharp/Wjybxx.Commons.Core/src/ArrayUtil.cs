@@ -432,6 +432,18 @@ public static class ArrayUtil
     }
 
     /// <summary>
+    /// 交换两个位置的元素
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Swap<T>(Span<T> list, int i, int j) {
+        T a = list[i];
+        T b = list[j];
+        list[i] = b;
+        list[j] = a;
+    }
+#nullable enable
+
+    /// <summary>
     /// 洗牌算法
     /// </summary>
     /// <param name="list">要打乱的列表</param>
@@ -444,18 +456,6 @@ public static class ArrayUtil
             Swap(list, i - 1, rnd.Next(i));
         }
     }
-
-    /// <summary>
-    /// 交换两个位置的元素
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Swap<T>(Span<T> list, int i, int j) {
-        T a = list[i];
-        T b = list[j];
-        list[i] = b;
-        list[j] = a;
-    }
-#nullable enable
 
     /// <summary>
     /// 洗牌算法

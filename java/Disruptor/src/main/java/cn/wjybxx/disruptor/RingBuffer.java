@@ -80,11 +80,17 @@ public final class RingBuffer<E> implements DataProvider<E> {
 
     @SuppressWarnings("unchecked")
     E getElement(long sequence) {
+        if (sequence < 0) {
+            throw new IllegalArgumentException("sequence: " + sequence);
+        }
         int index = (int) (sequence & indexMask);
         return (E) entries[BUFFER_PAD + index];
     }
 
     void setElement(long sequence, E event) {
+        if (sequence < 0) {
+            throw new IllegalArgumentException("sequence: " + sequence);
+        }
         int index = (int) (sequence & indexMask);
         entries[BUFFER_PAD + index] = event;
     }

@@ -16,18 +16,15 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Concurrent
-{
-/// <summary>
-/// 空代理，用于避免null
-/// </summary>
-/// <typeparam name="TEvent"></typeparam>
-public class EmptyAgent<TEvent> : IEventLoopAgent<TEvent> where TEvent : IAgentEvent
-{
-    public static EmptyAgent<TEvent> Inst { get; } = new EmptyAgent<TEvent>();
+using Wjybxx.Commons.Concurrent;
 
-    private EmptyAgent() {
-    }
+namespace Commons.Tests.Concurrent;
+
+public class CounterAgent : IEventLoopAgent<CounterEvent>
+{
+    private readonly Counter _counter = new Counter();
+
+    public Counter Counter => _counter;
 
     public void Inject(IEventLoop eventLoop) {
     }
@@ -35,7 +32,8 @@ public class EmptyAgent<TEvent> : IEventLoopAgent<TEvent> where TEvent : IAgentE
     public void OnStart() {
     }
 
-    public void OnEvent(ref TEvent evt) {
+    public void OnEvent(ref CounterEvent evt) {
+        _counter.Count(evt.Type, evt.longVal1);
     }
 
     public void Update() {
@@ -43,5 +41,4 @@ public class EmptyAgent<TEvent> : IEventLoopAgent<TEvent> where TEvent : IAgentE
 
     public void OnShutdown() {
     }
-}
 }

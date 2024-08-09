@@ -226,7 +226,6 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
     }
 
     public void ProducerSet(long sequence, E data) {
-        if (data == null) throw new ArgumentNullException(nameof(data));
         if (sequence < 0) {
             throw new ArgumentException("sequence: " + sequence);
         }
@@ -241,7 +240,6 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
     }
 
     public void ConsumerSet(long sequence, E data) {
-        if (data == null) throw new ArgumentNullException(nameof(data));
         if (sequence < 0) {
             throw new ArgumentException("sequence: " + sequence);
         }
@@ -284,7 +282,7 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
     }
 
     /** 获取生产者sequence对应的chunk -- 生产者再获得序号后应当调用该方法触发扩容 */
-    public MpUnboundedBufferChunk<E> producerChunkForSequence(long sequence) {
+    public MpUnboundedBufferChunk<E> ProducerChunkForSequence(long sequence) {
         if (sequence < 0) {
             throw new ArgumentException("sequence: " + sequence);
         }
@@ -297,7 +295,7 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
     }
 
     /** 获取消费者sequence对应的chunk */
-    public MpUnboundedBufferChunk<E> consumerChunkForSequence(long sequence) {
+    public MpUnboundedBufferChunk<E> ConsumerChunkForSequence(long sequence) {
         if (sequence < 0) {
             throw new ArgumentException("sequence: " + sequence);
         }

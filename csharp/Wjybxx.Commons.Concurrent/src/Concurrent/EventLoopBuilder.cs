@@ -17,54 +17,40 @@
 #endregion
 
 using System;
+using Wjybxx.Disruptor;
 
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 
 /// </summary>
-public class EventLoopBuilder
+public abstract class EventLoopBuilder<T> where T : IAgentEvent
 {
     private IEventLoopGroup? _parent;
+    private int index = -1;
     private RejectedExecutionHandler _rejectedExecutionHandler = RejectedExecutionHandlers.ABORT;
     private ThreadFactory? _threadFactory;
 
-    private IEventLoopAgent<IAgentEvent>? _agent = EmptyAgent<IAgentEvent>.INST;
+    private IEventLoopAgent<T>? _agent = EmptyAgent<T>.Inst;
     private IEventLoopModule? _mainModule;
-    private int _waitTaskSpinTries = 10;
     private int _batchSize = 1024;
 
-    private EventLoopBuilder() {
+    public EventLoopBuilder() {
     }
 
-    /// <summary>
-    /// 创建一个Builder
-    /// 
-    /// ps:尽量使用静态方法创建，以避免依赖具体的类型
-    /// </summary>
-    /// <returns></returns>
-    public static EventLoopBuilder NewBuilder() {
-        return new EventLoopBuilder();
-    }
-
-    /// <summary>
-    /// 创建一个Builder
-    /// </summary>
-    /// <param name="threadFactory">线程工厂</param>
-    /// <returns></returns>
-    public static EventLoopBuilder NewBuilder(ThreadFactory threadFactory) {
-        EventLoopBuilder builder = new EventLoopBuilder();
-        builder.ThreadFactory = threadFactory;
-        return builder;
-    }
-
-    public virtual IEventLoop Build() {
-        return new DefaultEventLoop(this);
-    }
+    public abstract IEventLoop Build();
 
     public IEventLoopGroup? Parent {
         get => _parent;
         set => _parent = value;
+    }
+
+    /// <summary>
+    /// Parent为当前EventLoop分配的索引
+    /// </summary>
+    public int Index {
+        get => index;
+        set => index = value;
     }
 
     public RejectedExecutionHandler RejectedExecutionHandler {
@@ -83,7 +69,7 @@ public class EventLoopBuilder
     /// <summary>
     /// 事件循环的内部代理
     /// </summary>
-    public IEventLoopAgent<IAgentEvent>? Agent {
+    public IEventLoopAgent<T>? Agent {
         get => _agent;
         set => _agent = value;
     }
@@ -97,19 +83,79 @@ public class EventLoopBuilder
     }
 
     /// <summary>
-    /// 等待任务时的自旋次数
-    /// </summary>
-    public int WaitTaskSpinTries {
-        get => _waitTaskSpinTries;
-        set => _waitTaskSpinTries = value;
-    }
-
-    /// <summary>
     /// 最多连续处理多少个事件必须执行一次Update
     /// </summary>
     public int BatchSize {
         get => _batchSize;
         set => _batchSize = value;
+    }
+}
+
+public class DisruptorEventLoopBuilder<T> : EventLoopBuilder<T> where T : IAgentEvent
+{
+    private EventSequencer<T> eventSequencer;
+    private WaitStrategy? waitStrategy;
+    private bool cleanEventAfterConsumed = true;
+    private bool cleanBufferOnExit = true;
+
+    private void CheckBuild() {
+        if (ThreadFactory == null) {
+            ThreadFactory = new DefaultThreadFactory("DisruptorEventLoop");
+        }
+        if (eventSequencer == null) {
+            throw new IllegalStateException("eventSequencer is null");
+        }
+    }
+
+#if UNITY_EDITOR
+    public override IEventLoop Build() {
+        CheckBuild();
+        return new DisruptorEventLoop<T>(this);
+    }
+#else
+    public override DisruptorEventLoop<T> Build() {
+        CheckBuild();
+        return new DisruptorEventLoop<T>(this);
+    }
+#endif
+
+    /// <summary>
+    /// 事件序列生成器
+    /// 注意：应当避免使用无超时的等待策略，EventLoop需要处理定时任务，不能一直等待生产者。
+    /// </summary>
+    /// <exception cref="ArgumentNullException"></exception>
+    public EventSequencer<T>? EventSequencer {
+        get => eventSequencer;
+        set => eventSequencer = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    /// <summary>
+    /// 等待策略
+    /// 1.如果未显式指定，则使用<see cref="Sequencer.WaitStrategy"/>中的默认等待策略。
+    /// 2.应当避免使用无超时的等待策略，EventLoop需要处理定时任务，不能一直等待生产者。
+    /// </summary>
+    /// <exception cref="ArgumentNullException"></exception>
+    public WaitStrategy? WaitStrategy {
+        get => waitStrategy;
+        set => waitStrategy = value;
+    }
+
+    /// <summary>
+    /// 在消费事件后是否调用<see cref="IAgentEvent.Clean()"/>方法清理引用数据 
+    /// </summary>
+    public bool CleanEventAfterConsumed {
+        get => cleanEventAfterConsumed;
+        set => cleanEventAfterConsumed = value;
+    }
+
+    /// <summary>
+    /// EventLoop在退出的时候是否清理buffer
+    /// 1. 默认清理
+    /// 2. 如果该值为true，意味着当前消费者是消费者的末端，或仅有该EventLoop消费者。
+    /// </summary>
+    public bool CleanBufferOnExit {
+        get => cleanBufferOnExit;
+        set => cleanBufferOnExit = value;
     }
 }
 }

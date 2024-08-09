@@ -250,7 +250,7 @@ internal static class Util
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static T[] CopyOf<T>(T[] src, int newLen) {
         T[] result = new T[newLen];
-        Array.Copy(src, 0, result, 0, newLen);
+        Array.Copy(src, 0, result, 0, src.Length);
         return result;
     }
 

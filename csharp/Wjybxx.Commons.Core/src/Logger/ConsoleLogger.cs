@@ -64,6 +64,9 @@ internal class ConsoleLogger : ILogger
             return;
         }
         Console.WriteLine($"[{FormatDateTime(DateTime.Now)}] [{level}] [{_name}] {format}");
+        if (ex != null) {
+            Console.WriteLine(ex.ToString());
+        }
     }
 
     public void Log(Level level, Exception? ex, string format, params object[] args) {
