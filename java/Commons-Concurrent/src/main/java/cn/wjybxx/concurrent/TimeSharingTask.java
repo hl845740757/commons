@@ -18,55 +18,28 @@ package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.annotation.Beta;
 
+import javax.annotation.Nullable;
+
 /**
  * 可分时运行的任务 - 需要长时间运行才能得出结果的任务。
  * 1. 分时任务代表着所有需要自定义管理状态的任务。
- * 2. 除了设置Promise的结果外，Task还可以约定特殊的Promise以向外部传递其它信息，比如：任务的进度。
- * 3. 该接口尚不稳定，避免用于非EventLoop架构。
+ * 2. 该接口尚不稳定，避免用于非EventLoop架构。
+ * 3. 用户可以通过ctx和外部通信
  *
  * @author wjybxx
  * date 2023/4/3
  */
 @Beta
-@FunctionalInterface
 public interface TimeSharingTask<V> {
 
-    /** 任务在添加到Executor之前进行绑定 */
-    default void inject(IContext ctx, IPromise<? super V> promise) {
-
-    }
-
     /**
-     * 任务开始前调用
-     * 1. start和update是连续执行的。
-     * 2. start抛出异常会导致任务直接结束。
+     * 执行一次
      *
-     * @param ctx     任务的上下文
-     * @param promise 关联的promise
+     * @param ctx       任务关联的上下文
+     * @param firstStep 是否是首次调度
+     * @return 如果返回null，表示任务还需要继续执行。
      */
-    default void start(IContext ctx, IPromise<? super V> promise) {
+    @Nullable
+    ResultHolder<V> step(IContext ctx, boolean firstStep) throws Exception;
 
-    }
-
-    /**
-     * 单步执行一次。
-     * 1.Executor在执行该方法之前会调用{@link IPromise#trySetComputing()}，因此任务内部无需再次调用。
-     * 2.任务在完成时需要将Promise置为完成状态！
-     *
-     * @param ctx     任务的上下文
-     * @param promise 关联的promise
-     */
-    void update(IContext ctx, IPromise<? super V> promise) throws Exception;
-
-    /**
-     * 任务结束时调用
-     * 1.只有在成功执行{@link #start(IContext, IPromise)}的情况下才会调用
-     * 2.会在start所在的executor调用 -- 如果目标executor已关闭则不会执行。
-     *
-     * @param ctx     任务的上下文
-     * @param promise 关联的promise
-     */
-    default void stop(IContext ctx, IPromise<? super V> promise) {
-
-    }
 }

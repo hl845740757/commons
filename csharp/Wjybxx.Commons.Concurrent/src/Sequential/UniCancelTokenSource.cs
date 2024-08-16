@@ -29,18 +29,14 @@ namespace Wjybxx.Commons.Sequential
 /// <h3>实现说明</h3>
 /// 1. 去除了{@link #code}等的volatile操作，变更为普通字段。
 /// 2. 默认时间单位为毫秒。
-/// 3. 增加了重置状态的方法 -- 这对行为树这类应用非常有效。
-/// 4. 去除了递归通知的优化 -- 单线程下我们需要支持用户通过监听器引用取消注册；另外，我们假设子token的情况很少。
-/// 5.<see cref="TryInline"/>对executor的检测调整
+/// 3.<see cref="TryInline"/>对executor的检测调整
 /// </summary>
 public class UniCancelTokenSource : ICancelTokenSource
 {
     /** 取消码 -- 0表示未收到信号 */
     private int code;
     /** 监听器的首部 */
-    private Completion? head;
-    /** 监听器的尾部 */
-    private Completion? tail;
+    private Completion? stack;
 
     /** 用于延迟执行取消 */
     private IUniScheduledExecutor? executor;
@@ -62,50 +58,6 @@ public class UniCancelTokenSource : ICancelTokenSource
     public IUniScheduledExecutor? Executor {
         get => executor;
         set => executor = value;
-    }
-
-    /// <summary>
-    /// 删除监听器
-    /// 通常而言逆向查找更容易匹配：Task的停止顺序通常和Task的启动顺序相反，因此后注册的监听器会先删除。
-    /// 因此默认逆向查找匹配的监听器。
-    /// </summary>
-    /// <param name="action">用户回调行为的引用</param>
-    /// <param name="firstOccurrence">是否正向删除</param>
-    /// <returns></returns>
-    public bool Unregister(object action, bool firstOccurrence = false) {
-        if (firstOccurrence) {
-            Completion node = this.head;
-            while ((node != null)) {
-                if (node.action == action) {
-                    node.Dispose();
-                    return true;
-                }
-                node = node.next;
-            }
-        } else {
-            Completion node = this.tail;
-            while ((node != null)) {
-                if (node.action == action) {
-                    node.Dispose();
-                    return true;
-                }
-                node = node.prev;
-            }
-        }
-        return false;
-    }
-
-
-    /** 重置状态，以供复用 */
-    public void Reset() {
-        code = 0;
-        Completion node;
-        while ((node = head) != null) {
-            head = node.next;
-            node.action = TOMBSTONE;
-            node.Clear();
-        }
-        tail = null;
     }
 
     public ICancelToken AsReadonly() {
@@ -142,10 +94,12 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     public void CancelAfter(int cancelCode, TimeSpan timeSpan, IScheduledExecutorService delayer) {
         if (delayer == null) throw new ArgumentNullException(nameof(delayer));
-        delayer.ScheduleAction(Callback, timeSpan, new Context(this, cancelCode));
+        ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(Canceller, new Context(this, cancelCode));
+        builder.SetOnlyOnce(timeSpan.Ticks, new TimeSpan(1));
+        delayer.Schedule(in builder);
     }
 
-    private static void Callback(IContext rawContext) {
+    private static void Canceller(IContext rawContext) {
         Context context = (Context)rawContext;
         context.source.Cancel(context.cancelCode);
     }
@@ -355,66 +309,73 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     /** 删除node -- 修正指针 */
     private void RemoveNode(Completion node) {
-        if (this.head == this.tail) {
-            Debug.Assert(this.head == node);
-            this.head = this.tail = null;
-        } else if (node == this.head) {
-            // 首节点
-            this.head = node.next!;
-            this.head.prev = null;
-        } else if (node == this.tail) {
-            // 尾节点
-            this.tail = node.prev!;
-            this.tail.next = null;
+        Completion curr = stack;
+        if (curr == null || curr == TOMBSTONE) {
+            return;
+        }
+        Completion prev = null;
+        while (curr != null && curr != node) {
+            prev = curr;
+            curr = curr.next;
+        }
+        if (curr == null) {
+            return;
+        }
+        if (prev == null) {
+            stack = node.next;
         } else {
-            // 中间节点
-            Completion prev = node.prev!;
-            Completion next = node.next!;
-            prev.next = next;
-            next.prev = prev;
+            prev.next = curr.next;
         }
     }
 
-    /** 弹出一个监听器 */
-    private Completion? PopListener() {
-        Completion head = this.head;
-        if (head == null) {
-            return null;
-        }
-        if (head == this.tail) {
-            this.head = this.tail = null;
-        } else {
-            this.head = head.next;
-            this.head!.prev = null;
-        }
-        return head;
-    }
-
-    private bool PushCompletion(Completion node) {
+    private bool PushCompletion(Completion newHead) {
         if (IsCancelling) {
-            node.TryFire(SYNC);
+            newHead.TryFire(SYNC);
             return false;
         }
-        Completion tail = this.tail;
-        if (tail == null) {
-            this.head = this.tail = node;
-        } else {
-            tail.next = node;
-            node.prev = tail;
-            this.tail = node;
-        }
+        // 单线程 - 不存在并发情况
+        newHead.next = this.stack;
+        this.stack = newHead;
         return true;
     }
 
     private static void PostComplete(UniCancelTokenSource source) {
-        Completion next;
-        UniCancelTokenSource child;
-        while ((next = source.PopListener()) != null) {
-            child = next.TryFire(NESTED);
-            if (child != null) {
-                PostComplete(child); // 递归
+        Completion next = null;
+        outer:
+        while (true) {
+            // 将当前future上的监听器添加到next前面
+            next = ClearListeners(source, next);
+
+            while (next != null) {
+                Completion curr = next;
+                next = next.next;
+                curr.next = null; // help gc
+
+                source = curr.TryFire(NESTED);
+                if (source != null) {
+                    goto outer;
+                }
             }
+            break;
         }
+    }
+
+    private static Completion? ClearListeners(UniCancelTokenSource source, Completion? onto) {
+        Completion head = source.stack;
+        if (head == TOMBSTONE) {
+            return onto;
+        }
+        source.stack = TOMBSTONE;
+
+        Completion ontoHead = onto;
+        while (head != null) {
+            Completion tmpHead = head;
+            head = head.next;
+
+            tmpHead.next = ontoHead;
+            ontoHead = tmpHead;
+        }
+        return ontoHead;
     }
 
     private static bool TryInline(Completion completion, IExecutor e, int options) {
@@ -445,7 +406,6 @@ public class UniCancelTokenSource : ICancelTokenSource
     {
         internal UniCancelTokenSource source;
         internal Completion? next;
-        internal Completion? prev;
 
         protected IExecutor? executor;
         protected int options;
@@ -520,15 +480,8 @@ public class UniCancelTokenSource : ICancelTokenSource
         /// </summary>
         protected internal virtual void Clear() {
             source = null!;
-            prev = null;
             next = null;
             executor = null;
-        }
-
-        protected bool IsCancelling(object? ctx) {
-            return TaskOption.IsEnabled(options, TaskOption.STAGE_CHECK_OBJECT_CTX)
-                   && ctx is IContext ctx2
-                   && ctx2.CancelToken.IsCancelling;
         }
     }
 
@@ -606,7 +559,7 @@ public class UniCancelTokenSource : ICancelTokenSource
                 if (action == null) {
                     return null;
                 }
-                if (!IsCancelling(state)) {
+                if (!AbstractUniPromise.IsCancelling(state, options)) {
                     action(source, state);
                 }
             }
@@ -688,7 +641,7 @@ public class UniCancelTokenSource : ICancelTokenSource
                 if (action == null) {
                     return null;
                 }
-                if (!IsCancelling(state)) {
+                if (!AbstractUniPromise.IsCancelling(state, options)) {
                     action(state);
                 }
             }

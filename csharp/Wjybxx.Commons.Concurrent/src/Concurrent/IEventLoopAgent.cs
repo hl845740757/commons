@@ -43,8 +43,9 @@ public interface IEventLoopAgent<TEvent> where TEvent : IAgentEvent
     /// 收到一个用户自定义事件或任务
     /// ps：由于事件可能是结构体类型，因此使用ref。
     /// </summary>
-    /// <param name="evt"></param>
-    void OnEvent(ref TEvent evt);
+    /// <param name="sequence">事件序号，如果是Disruptor类事件循环则有值</param>
+    /// <param name="evt">事件</param>
+    void OnEvent(long sequence, ref TEvent evt);
 
     /// <summary>
     /// 当事件循环等待较长时间或处理完一批事件之后都将调用该方法

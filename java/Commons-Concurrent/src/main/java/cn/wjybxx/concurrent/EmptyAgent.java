@@ -40,7 +40,7 @@ public final class EmptyAgent<T> implements EventLoopAgent<T> {
     }
 
     @Override
-    public void onEvent(Object event) throws Exception {
+    public void onEvent(long sequence, Object event) throws Exception {
 
     }
 

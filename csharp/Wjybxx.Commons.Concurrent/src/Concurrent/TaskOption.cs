@@ -99,14 +99,17 @@ public static class TaskOption
     ///</summary>
     public const int STAGE_NON_TRANSITIVE = 1 << 20;
     /// <summary>
-    /// 当回调形参接收的是Object类型的ctx时，也尝试检测obj实例是否为{@link IContext}类型，并检测取消信号。
+    /// 默认情况下，Stage会在触发回调之前检测ctx否为<see cref="IContext"/>和<see cref="ICancelToken"/>类型，并检测取消信号。
+    /// 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
     /// </summary>
-    public const int STAGE_CHECK_OBJECT_CTX = 1 << 21;
+    public const int STAGE_UNCANCELLABLE_CTX = 1 << 21;
 
     /// <summary>
-    /// 忽略死锁检测
+    /// 分帧任务：慢启动。
+    /// 默认情况下，分帧任务的start方法和update方法是同步执行的；
+    /// 如果期望首次运行时仅执行start方法，可通过该选项启用。
     /// </summary>
-    private const int IGNORE_DEADLOCK = 1 << 22;
+    public const int TIMESHARING_SLOW_START = 1 << 22;
 
     #region util
 

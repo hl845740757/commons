@@ -35,7 +35,7 @@ public class EmptyAgent<TEvent> : IEventLoopAgent<TEvent> where TEvent : IAgentE
     public void OnStart() {
     }
 
-    public void OnEvent(ref TEvent evt) {
+    public void OnEvent(long sequence, ref TEvent evt) {
     }
 
     public void Update() {

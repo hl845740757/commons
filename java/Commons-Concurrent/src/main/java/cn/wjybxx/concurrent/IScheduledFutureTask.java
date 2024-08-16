@@ -28,9 +28,6 @@ import java.util.concurrent.TimeUnit;
  */
 public interface IScheduledFutureTask<V> extends IFutureTask<V>, Delayed {
 
-    @Override
-    IScheduledPromise<V> future();
-
     /** 关联的任务是否是周期性任务 */
     boolean isPeriodic();
 

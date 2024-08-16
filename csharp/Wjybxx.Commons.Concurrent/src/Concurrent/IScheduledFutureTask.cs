@@ -29,10 +29,6 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 {
-    new IScheduledPromise Future { get; }
-
-    IPromise IFutureTask.Future => Future;
-
     #region internal
 
     // 以下接口应该仅用于Executor内部，不应该队用户开放
@@ -53,7 +49,7 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     long NextTriggerTime { get; }
 
     /// <summary>
-    /// 是否已完成首次触发
+    /// 是否已完成首次触发(通常用于降低优先级)
     /// </summary>
     bool IsTriggered { get; }
 
@@ -66,13 +62,6 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     bool Trigger(long tickTime);
 
     /// <summary>
-    /// 取消执行
-    /// 该方法由EventLoop调用，不需要以回调的方式从EventLoop中删除。
-    /// </summary>
-    /// <param name="code"></param>
-    void CancelWithoutRemove(int code = CancelCodes.REASON_SHUTDOWN);
-
-    /// <summary>
     /// 监听取消令牌中的取消信号
     /// 1. 该方法由EventLoop调用，通常在Task成功压入队列后调用。
     /// 2. 可检测是否已注册。
@@ -80,17 +69,6 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     void RegisterCancellation();
 
     #endregion
-}
-
-public interface IScheduledFutureTask<T> : IScheduledFutureTask, IFutureTask<T>
-{
-    new IScheduledPromise<T> Future { get; }
-
-    IPromise IFutureTask.Future => Future;
-
-    IPromise<T> IFutureTask<T>.Future => Future;
-
-    IScheduledPromise IScheduledFutureTask.Future => Future;
 }
 
 /// <summary>

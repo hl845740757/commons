@@ -63,15 +63,7 @@ public abstract class AbstractUniExecutor : IUniExecutorService
     public abstract void Execute(ITask task);
 
     public virtual void Execute(Action action, int options = 0) {
-        Execute(Executors.BoxAction(action, options));
-    }
-
-    public virtual void Execute(Action<IContext> action, IContext context, int options = 0) {
-        Execute(Executors.BoxAction(action, context, options));
-    }
-
-    public virtual void Execute(Action action, CancellationToken cancelToken, int options = 0) {
-        Execute(Executors.BoxAction(action, cancelToken, options));
+        Execute(Executors.ToTask(action, options));
     }
 
     #endregion
@@ -80,36 +72,48 @@ public abstract class AbstractUniExecutor : IUniExecutorService
 
     public virtual IPromise<T> NewPromise<T>() => new Promise<T>(this);
 
-    public virtual IPromise NewPromise() => new Promise<int>(this);
+    public virtual IPromise<int> NewPromise() => new Promise<int>(this);
 
     public virtual IFuture<T> Submit<T>(in TaskBuilder<T> builder) {
-        PromiseTask<T> promiseTask = PromiseTask.OfBuilder(in builder, NewPromise<T>());
-        Execute(promiseTask);
-        return promiseTask.Future;
-    }
-
-    public virtual IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
-        PromiseTask<T> promiseTask = PromiseTask.OfFunction(action, null, options, NewPromise<T>());
-        Execute(promiseTask);
-        return promiseTask.Future;
-    }
-
-    public virtual IFuture<T> SubmitFunc<T>(Func<IContext, T> action, IContext context, int options = 0) {
-        PromiseTask<T> promiseTask = PromiseTask.OfFunction(action, context, options, NewPromise<T>());
-        Execute(promiseTask);
-        return promiseTask.Future;
+        IPromise<T> promise = NewPromise<T>();
+        Execute(PromiseTask.OfBuilder(in builder, promise));
+        return promise;
     }
 
     public virtual IFuture SubmitAction(Action action, int options = 0) {
-        PromiseTask<int> promiseTask = PromiseTask.OfAction(action, null, options, NewPromise<int>());
-        Execute(promiseTask);
-        return promiseTask.Future;
+        IPromise<int> promise = NewPromise();
+        Execute(PromiseTask.OfAction(action, null, options, promise));
+        return promise;
+    }
+
+    public virtual IFuture SubmitAction(Action action, ICancelToken cancelToken, int options = 0) {
+        IPromise<int> promise = NewPromise();
+        Execute(PromiseTask.OfAction(action, cancelToken, options, promise));
+        return promise;
     }
 
     public virtual IFuture SubmitAction(Action<IContext> action, IContext context, int options = 0) {
-        PromiseTask<int> promiseTask = PromiseTask.OfAction(action, context, options, NewPromise<int>());
-        Execute(promiseTask);
-        return promiseTask.Future;
+        IPromise<int> promise = NewPromise();
+        Execute(PromiseTask.OfAction(action, context, options, promise));
+        return promise;
+    }
+
+    public virtual IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
+        IPromise<T> promise = NewPromise<T>();
+        Execute(PromiseTask.OfFunction(action, null, options, promise));
+        return promise;
+    }
+
+    public virtual IFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken cancelToken, int options = 0) {
+        IPromise<T> promise = NewPromise<T>();
+        Execute(PromiseTask.OfFunction(action, cancelToken, options, promise));
+        return promise;
+    }
+
+    public virtual IFuture<T> SubmitFunc<T>(Func<IContext, T> action, IContext context, int options = 0) {
+        IPromise<T> promise = NewPromise<T>();
+        Execute(PromiseTask.OfFunction(action, context, options, promise));
+        return promise;
     }
 
     #endregion

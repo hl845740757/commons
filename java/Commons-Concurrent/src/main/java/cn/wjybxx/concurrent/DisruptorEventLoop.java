@@ -73,6 +73,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     private final EventSequencer<? extends T> eventSequencer;
     /** 周期性任务队列 -- 既有的任务都是先于Sequencer中的任务提交的 */
     private final IndexedPriorityQueue<ScheduledPromiseTask<?>> scheduledTaskQueue;
+    private final ScheduledHelper scheduledHelper;
+
     /** 任务拒绝策略 */
     private final RejectedExecutionHandler rejectedExecutionHandler;
     /** 内部代理 */
@@ -105,6 +107,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         this.tickTime = System.nanoTime();
         this.eventSequencer = Objects.requireNonNull(builder.getEventSequencer());
         this.scheduledTaskQueue = new DefaultIndexedPriorityQueue<>(ScheduledPromiseTask::compareToExplicitly, 64);
+        this.scheduledHelper = new ScheduledHelper();
         this.batchSize = MathCommon.clamp(builder.getBatchSize(), MIN_BATCH_SIZE, MAX_BATCH_SIZE);
 
         this.rejectedExecutionHandler = ObjectUtils.nullToDef(builder.getRejectedExecutionHandler(), RejectedExecutionHandlers.abort());
@@ -399,29 +402,52 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     }
 
     @Override
-    final void reschedulePeriodic(ScheduledPromiseTask<?> futureTask, boolean triggered) {
-        assert inEventLoop();
-        if (isShuttingDown()) {
-            futureTask.cancelWithoutRemove();
-            return;
-        }
-        scheduledTaskQueue.add(futureTask);
+    protected IScheduledHelper helper() {
+        return scheduledHelper;
     }
 
-    @Override
-    final void removeScheduled(ScheduledPromiseTask<?> futureTask) {
-        if (inEventLoop()) {
-            scheduledTaskQueue.removeTyped(futureTask);
-        } else if (mpUnboundedEventSequencer != null) {
-            execute(futureTask, futureTask.getOptions()); // task.run方法会检测取消信号，避免额外封装
-        }
-        // else 等待任务超时弹出时再删除 -- 延迟删除可能存在内存泄漏，但压任务又可能导致阻塞（有界队列）
-        // TODO 是否存储在待移除并发集合里？
-    }
+    private class ScheduledHelper implements IScheduledHelper {
 
-    @Override
-    protected final long tickTime() {
-        return tickTime;
+        @Override
+        public long tickTime() {
+            return tickTime;
+        }
+
+        @Override
+        public long normalize(long worldTime, TimeUnit timeUnit) {
+            return timeUnit.toNanos(worldTime);
+        }
+
+        @Override
+        public long denormalize(long localTime, TimeUnit timeUnit) {
+            return timeUnit.convert(localTime, TimeUnit.NANOSECONDS);
+        }
+
+        @Override
+        public void reschedule(ScheduledPromiseTask<?> futureTask) {
+            assert inEventLoop();
+            if (isShuttingDown()) {
+                futureTask.cancelWithoutRemove();
+                return;
+            }
+            scheduledTaskQueue.add(futureTask);
+        }
+
+        @Override
+        public void onCompleted(ScheduledPromiseTask<?> futureTask) {
+            futureTask.clear();
+        }
+
+        @Override
+        public void remove(ScheduledPromiseTask<?> futureTask) {
+            if (inEventLoop()) {
+                scheduledTaskQueue.removeTyped(futureTask);
+            } else if (mpUnboundedEventSequencer != null) {
+                execute(futureTask, futureTask.getOptions()); // task.run方法会检测取消信号，避免额外封装
+            }
+            // else 等待任务超时弹出时再删除 -- 延迟删除可能存在内存泄漏，但压任务又可能导致阻塞（有界队列）
+            // TODO 是否存储在待移除并发集合里？
+        }
     }
 
     // endregion
@@ -653,7 +679,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue = scheduledTaskQueue;
             ScheduledPromiseTask<?> queueTask;
             while ((queueTask = taskQueue.peek()) != null) {
-                if (queueTask.future().isDone()) {
+                if (queueTask.isCancelling()) {
                     taskQueue.poll(); // 未及时删除的任务
                     continue;
                 }
@@ -671,11 +697,14 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                     // 关闭模式下，不再重复执行任务
                     if (queueTask.isTriggered() || queueTask.trigger(tickTime)) {
                         queueTask.cancelWithoutRemove();
+                        scheduledHelper.onCompleted(queueTask);
                     }
                 } else {
                     // 非关闭模式下，任务必须执行，否则可能导致时序错误
                     if (queueTask.trigger(tickTime)) {
                         taskQueue.offer(queueTask);
+                    } else {
+                        scheduledHelper.onCompleted(queueTask);
                     }
                 }
             }
@@ -694,7 +723,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         Runnable runnable = (Runnable) event.getObj1();
                         runnable.run();
                     } else if (event.getType() > 0) {
-                        agent.onEvent(event);
+                        agent.onEvent(curSequence, event);
                     } else {
                         if (isShuttingDown()) { // 生产者在观察到关闭时发布了不连续的数据
                             return curSequence;
@@ -765,7 +794,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         Runnable runnable = (Runnable) event.getObj1();
                         runnable.run();
                     } else {
-                        agent.onEvent(event);
+                        agent.onEvent(nextSequence, event);
                     }
                 } catch (Throwable t) {
                     logCause(t);

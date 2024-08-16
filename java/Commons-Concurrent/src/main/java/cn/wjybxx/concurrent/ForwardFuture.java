@@ -182,26 +182,6 @@ public class ForwardFuture<V> implements IFuture<V> {
     }
 
     @Override
-    public void onCompleted(BiConsumer<? super IFuture<V>, ? super IContext> action, @Nonnull IContext context, int options) {
-        future.onCompleted(action, context, options);
-    }
-
-    @Override
-    public void onCompleted(BiConsumer<? super IFuture<V>, ? super IContext> action, @Nonnull IContext context) {
-        future.onCompleted(action, context);
-    }
-
-    @Override
-    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<V>, ? super IContext> action, @Nonnull IContext context) {
-        future.onCompletedAsync(executor, action, context);
-    }
-
-    @Override
-    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<V>, ? super IContext> action, @Nonnull IContext context, int options) {
-        future.onCompletedAsync(executor, action, context, options);
-    }
-
-    @Override
     public void onCompleted(Consumer<? super IFuture<V>> action, int options) {
         future.onCompleted(action, options);
     }
@@ -219,6 +199,26 @@ public class ForwardFuture<V> implements IFuture<V> {
     @Override
     public void onCompletedAsync(Executor executor, Consumer<? super IFuture<V>> action, int options) {
         future.onCompletedAsync(executor, action, options);
+    }
+
+    @Override
+    public void onCompleted(BiConsumer<? super IFuture<V>, Object> action, Object ctx, int options) {
+        future.onCompleted(action, ctx, options);
+    }
+
+    @Override
+    public void onCompleted(BiConsumer<? super IFuture<V>, Object> action, Object ctx) {
+        future.onCompleted(action, ctx);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<V>, Object> action, Object ctx) {
+        future.onCompletedAsync(executor, action, ctx);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<V>, Object> action, Object ctx, int options) {
+        future.onCompletedAsync(executor, action, ctx, options);
     }
 
     // endregion

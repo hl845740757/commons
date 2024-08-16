@@ -13,29 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package cn.wjybxx.base.concurrent;
 
-import java.util.concurrent.TimeoutException;
+package cn.wjybxx.concurrent;
 
 /**
- * 不打印堆栈的超时异常
- *
  * @author wjybxx
  * date 2023/4/3
  */
-public class StacklessTimeoutException extends TimeoutException {
+public final class ResultHolder<V> {
 
-    public static final StacklessTimeoutException INST = new StacklessTimeoutException();
+    private static final Object NIL = new Object();
+    private static final ResultHolder<?> EMPTY = new ResultHolder<>(NIL);
 
-    public StacklessTimeoutException() {
+    private final Object result;
+
+    private ResultHolder(Object result) {
+        this.result = result;
     }
 
-    public StacklessTimeoutException(String message) {
-        super(message);
+    @SuppressWarnings("unchecked")
+    public V getResult() {
+        return result == NIL ? null : (V) result;
     }
 
-    public final Throwable fillInStackTrace() {
-        return this;
+    @SuppressWarnings("unchecked")
+    public static <V> ResultHolder<V> success() {
+        return (ResultHolder<V>) EMPTY;
+    }
+
+    public static <V> ResultHolder<V> success(V result) {
+        return new ResultHolder<>(result == null ? NIL : result);
     }
 
 }

@@ -19,8 +19,6 @@ package cn.wjybxx.concurrent;
 import javax.annotation.Nullable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * 子类需要在{@link #execute(Runnable, int)}的时候为任务赋值id和options
@@ -42,87 +40,74 @@ abstract class AbstractScheduledEventLoop extends AbstractEventLoop {
         return new ScheduledPromise<>(this);
     }
 
+    protected abstract IScheduledHelper helper();
+
     @Override
     public <V> IScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder) {
-        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
+        IScheduledPromise<V> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        return promise;
     }
 
     @Override
-    public <V> IScheduledFuture<V> scheduleFunc(Function<? super IContext, V> task, IContext ctx, long delay, TimeUnit unit) {
-        long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, ctx, 0, newScheduledPromise(), 0, triggerTime);
-        execute(promiseTask);
-        return promiseTask.future();
+    public <V> IScheduledFuture<V> scheduleFunc(Callable<V> task, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        IScheduledPromise<V> promise = newScheduledPromise();
+        IScheduledHelper helper = helper();
+
+        execute(ScheduledPromiseTask.ofFunction(task, cancelToken, 0, promise, helper, helper.triggerTime(delay, unit)));
+        return promise;
     }
 
     @Override
-    public IScheduledFuture<?> scheduleAction(Consumer<? super IContext> task, IContext ctx, long delay, TimeUnit unit) {
-        long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(task, ctx, 0, newScheduledPromise(), 0, triggerTime);
+    public IScheduledFuture<?> scheduleAction(Runnable task, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        IScheduledHelper helper = helper();
+
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(task, cancelToken, 0, promise, helper, helper.triggerTime(delay, unit));
         execute(promiseTask);
-        return promiseTask.future();
+        return promise;
     }
 
     @Override
-    public IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
-        long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(task, null, 0, newScheduledPromise(), 0, triggerTime);
-        execute(promiseTask);
-        return promiseTask.future();
-    }
-
-    @Override
-    public <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
-        long triggerTime = ScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        ScheduledPromiseTask<V> promiseTask = ScheduledPromiseTask.ofFunction(task, null, 0, newScheduledPromise(), 0, triggerTime);
-        execute(promiseTask);
-        return promiseTask.future();
-    }
-
-    @Override
-    public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
-        ScheduledTaskBuilder<?> builder = ScheduledTaskBuilder.newAction(task)
+    public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        ScheduledTaskBuilder<Object> builder = ScheduledTaskBuilder.newAction(task, cancelToken)
                 .setFixedDelay(initialDelay, delay, unit);
 
-        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        return promise;
     }
 
     @Override
-    public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
-        ScheduledTaskBuilder<?> builder = ScheduledTaskBuilder.newAction(task)
+    public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit, ICancelToken cancelToken) {
+        ScheduledTaskBuilder<Object> builder = ScheduledTaskBuilder.newAction(task, cancelToken)
                 .setFixedRate(initialDelay, period, unit);
 
-        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        return promise;
     }
+
+    @Override
+    public final IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
+        return scheduleAction(task, delay, unit, ICancelToken.NONE);
+    }
+
+    @Override
+    public final <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
+        return scheduleFunc(task, delay, unit, ICancelToken.NONE);
+    }
+
+    @Override
+    public final IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
+        return scheduleWithFixedDelay(task, initialDelay, delay, unit, ICancelToken.NONE);
+    }
+
+    @Override
+    public final IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
+        return scheduleAtFixedRate(task, initialDelay, period, unit, ICancelToken.NONE);
+    }
+
     // endregion
-
-    /**
-     * 当前线程的时间 -- 纳秒（非时间戳）
-     * 1. 可以使用缓存的时间，也可以使用{@link System#nanoTime()}实时查询，只要不破坏任务的执行约定即可。
-     * 2. 如果使用缓存时间，接口中并不约定时间的更新时机，也不约定一个大循环只更新一次。也就是说，线程可能在任意时间点更新缓存的时间，只要不破坏线程安全性和约定的任务时序。
-     * 3. 可能从其它线程查询。
-     */
-    abstract long tickTime();
-
-    /**
-     * 请求将当前任务重新压入队列
-     * 1.一定从当前线程调用
-     * 2.如果无法继续调度任务，则取消任务
-     *
-     * @param triggered 是否是执行之后压入队列；通常用于在执行成功之后降低优先级
-     */
-    abstract void reschedulePeriodic(ScheduledPromiseTask<?> futureTask, boolean triggered);
-
-    /**
-     * 请求删除给定的任务
-     * 1.可能从其它线程调用，需考虑线程安全问题
-     */
-    abstract void removeScheduled(ScheduledPromiseTask<?> futureTask);
 
 }

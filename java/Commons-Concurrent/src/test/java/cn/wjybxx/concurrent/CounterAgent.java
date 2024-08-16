@@ -44,7 +44,7 @@ final class CounterAgent implements EventLoopAgent<RingBufferEvent> {
     }
 
     @Override
-    public void onEvent(RingBufferEvent event) throws Exception {
+    public void onEvent(long sequence, RingBufferEvent event) throws Exception {
         counter.count(event.getType(), event.longVal1);
     }
 

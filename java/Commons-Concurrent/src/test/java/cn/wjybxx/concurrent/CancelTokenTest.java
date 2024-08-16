@@ -354,32 +354,6 @@ public class CancelTokenTest {
 
     // region UniCts
 
-    /** 测试{@link UniCancelTokenSource#unregister(Object)} */
-    @RepeatedTest(10)
-    void testUniUnregister() {
-        UniCancelTokenSource cts = new UniCancelTokenSource();
-        {
-            // 通知是单线程的，因此无需使用Atomic
-            final MutableInt counter = new MutableInt(0);
-            final int count = 10;
-            List<Runnable> actionList = new ArrayList<>(count);
-            for (int i = 0; i < count; i++) {
-                Runnable action = counter::increment;
-                cts.thenRun(action);
-                actionList.add(action);
-            }
-            // 打乱顺序，然后随机取消一部分
-            Collections.shuffle(actionList);
-
-            int cancelCount = MathCommon.SHARED_RANDOM.nextInt(count);
-            for (int i = 0; i < cancelCount; i++) {
-                Assertions.assertTrue(cts.unregister(actionList.get(i)), "unregister failed");
-            }
-            cts.cancel(1);
-            Assertions.assertEquals(count - cancelCount, counter.intValue());
-        }
-    }
-
     @Test
     void testCancelCode() {
         int reason = 1024;

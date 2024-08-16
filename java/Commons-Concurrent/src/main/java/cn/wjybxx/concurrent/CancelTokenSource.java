@@ -147,20 +147,42 @@ public final class CancelTokenSource implements ICancelTokenSource {
     public void cancelAfter(int cancelCode, long delay, TimeUnit timeUnit, ScheduledExecutorService executor) {
         if (executor == null) throw new IllegalArgumentException("delayer is null");
         if (this.code == 0) {
-            Canceller canceller = new Canceller(this, cancelCode);
-            canceller.future = executor.schedule(canceller, delay, timeUnit);
-            // jdk的scheduler不会响应取消令牌，我们通过Future及时取消定时任务 -- 未来更换实现后可避免
-            this.thenNotify(canceller);
+            if (executor instanceof IScheduledExecutorService betterExecutor) {
+                Canceller canceller = new Canceller(this, cancelCode);
+                betterExecutor.scheduleAction(canceller, delay, timeUnit, this);
+                // executor会自动监听延时任务的cancelToken
+            } else {
+                JDKCanceller canceller = new JDKCanceller(this, cancelCode);
+                canceller.future = executor.schedule(canceller, delay, timeUnit);
+                // jdk的scheduler不会响应取消令牌，我们通过Future及时取消定时任务 -- 未来更换实现后可避免
+                this.thenNotify(canceller);
+            }
         }
     }
 
-    private static class Canceller implements Runnable, CancelTokenListener {
+    private static class Canceller implements Runnable {
+
+        final CancelTokenSource source;
+        final int cancelCode;
+
+        private Canceller(CancelTokenSource source, int cancelCode) {
+            this.source = source;
+            this.cancelCode = cancelCode;
+        }
+
+        @Override
+        public void run() {
+            source.cancel(cancelCode);
+        }
+    }
+
+    private static class JDKCanceller implements Runnable, CancelTokenListener {
 
         final CancelTokenSource source;
         final int cancelCode;
         ScheduledFuture<?> future;
 
-        private Canceller(CancelTokenSource source, int cancelCode) {
+        private JDKCanceller(CancelTokenSource source, int cancelCode) {
             this.source = source;
             this.cancelCode = cancelCode;
         }
@@ -475,7 +497,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
      *
      * @return 最新栈顶 -- 可能是{@link #TOMBSTONE}
      */
-    private Completion removeClosedNode(Completion expectedHead) {
+    private Completion removeHead(Completion expectedHead) {
         Completion next = expectedHead.next;
         while (next != null && next.action == TOMBSTONE) {
             next = next.next;
@@ -495,7 +517,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         while (expectedHead != TOMBSTONE) {
             // 处理延迟删除
             if (expectedHead != null && expectedHead.action == TOMBSTONE) {
-                expectedHead = removeClosedNode(expectedHead);
+                expectedHead = removeHead(expectedHead);
                 continue;
             }
 
@@ -546,7 +568,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
             head = head.next;
 
             if (tmpHead.action == TOMBSTONE) {
-                continue; // 跳过被删除节点
+                continue; // 处理延迟删除
             }
 
             tmpHead.next = ontoHead;
@@ -579,10 +601,10 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
         /** 非volatile，由栈顶的cas更新保证可见性 */
         Completion next;
+        CancelTokenSource source;
 
         Executor executor;
         int options;
-        CancelTokenSource source;
         /**
          * 用户回调
          * 1.通知和清理时置为{@link #TOMBSTONE}
@@ -654,7 +676,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 return;
             }
             if (this == source.stack) {
-                source.removeClosedNode(this);
+                source.removeHead(this);
             }
             clear();
         }
@@ -663,12 +685,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
         protected void clear() {
             executor = null;
             source = null;
-        }
-
-        protected boolean isCancelling(Object ctx) {
-            return TaskOption.isEnabled(options, TaskOption.STAGE_CHECK_OBJECT_CTX)
-                    && ctx instanceof IContext ctx2
-                    && ctx2.cancelToken().isCancelling();
         }
     }
     // endregion
@@ -741,7 +757,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                if (!isCancelling(ctx)) {
+                if (!Promise.isCancelling(ctx, options)) {
                     action.accept(source, ctx);
                 }
             } catch (Throwable ex) {
@@ -824,7 +840,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                if (!isCancelling(ctx)) {
+                if (!Promise.isCancelling(ctx, options)) {
                     action.accept(ctx);
                 }
             } catch (Throwable ex) {

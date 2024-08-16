@@ -81,8 +81,9 @@ public final class MpUnboundedBufferSequencer<T> implements ProducerBarrier, Seq
         while (hi > chunk.maxSequence()) {
             long minSequence = chunk.minSequence();
             chunk.publish((int) (lo - minSequence), chunk.length() - 1);
-            chunk = chunk.lvNext();
-            lo = chunk.minSequence();
+
+            lo = minSequence + chunk.length();
+            chunk = buffer.producerChunkForSequence(lo); // 下一个块可能尚未构造
         }
         {
             long minSequence = chunk.minSequence();

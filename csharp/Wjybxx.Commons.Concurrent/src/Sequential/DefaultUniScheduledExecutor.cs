@@ -16,6 +16,7 @@
 
 #endregion
 
+using System;
 using System.Collections.Generic;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Concurrent;
@@ -27,10 +28,12 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
 {
     private readonly ITimeProvider timeProvider;
     private readonly IndexedPriorityQueue<IScheduledFutureTask> taskQueue = new(new ScheduledTaskComparator());
+    private readonly ScheduledHelper helper;
+
     private readonly UniPromise<int> terminationPromise;
     private readonly IFuture terminationFuture;
-    private EventLoopState state = EventLoopState.Unstarted;
 
+    private EventLoopState state = EventLoopState.Unstarted;
     /** 为任务分配唯一id，确保先入先出 */
     private long sequencer = 0;
     /** 当前帧的时间戳，缓存下来以避免在tick的过程中产生变化 */
@@ -45,6 +48,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
         this.timeProvider = timeProvider;
         this.terminationPromise = new UniPromise<int>(this);
         this.terminationFuture = terminationPromise.AsReadonly();
+        this.helper = new ScheduledHelper(this);
         this.tickTime = timeProvider.Current;
     }
 
@@ -71,6 +75,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
             if (queueTask.Trigger(tickTime)) {
                 if (IsShuttingDown) { // 已请求关闭
                     queueTask.CancelWithoutRemove();
+                    helper.OnCompleted(queueTask);
                 } else {
                     taskQueue.Enqueue(queueTask);
                 }
@@ -89,7 +94,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
         if (IsShuttingDown) {
             // 暂时直接取消
             if (task is IFutureTask futureTask) {
-                futureTask.Future.SetCancelled(CancelCodes.REASON_SHUTDOWN);
+                futureTask.CancelWithoutRemove();
             }
             return;
         }
@@ -99,7 +104,8 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
                 scheduledFutureTask.RegisterCancellation();
             }
         } else {
-            var promiseTask = UniScheduledPromiseTask.OfTask(task, null, task.Options, NewScheduledPromise<int>(), ++sequencer, tickTime);
+            var promiseTask = ScheduledPromiseTask.OfTask(task, null, task.Options, NewScheduledPromise<int>(), Helper, tickTime);
+            promiseTask.Id = ++sequencer;
             if (DelayExecute(promiseTask)) {
                 promiseTask.RegisterCancellation();
             }
@@ -110,6 +116,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
         if (IsShuttingDown) {
             // 默认直接取消，暂不添加拒绝处理器
             futureTask.CancelWithoutRemove();
+            helper.OnCompleted(futureTask);
             return false;
         } else {
             taskQueue.Enqueue(futureTask);
@@ -142,14 +149,39 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
 
     #region internal
 
-    protected internal override long TickTime => tickTime;
+    protected override IScheduledHelper Helper => helper;
 
-    protected internal override void ReSchedulePeriodic(IScheduledFutureTask scheduledTask, bool triggered) {
-        DelayExecute(scheduledTask);
-    }
+    private class ScheduledHelper : IScheduledHelper
+    {
+        private DefaultUniScheduledExecutor _executor;
 
-    protected internal override void RemoveScheduled(IScheduledFutureTask scheduledTask) {
-        taskQueue.Remove(scheduledTask);
+        public ScheduledHelper(DefaultUniScheduledExecutor executor) {
+            _executor = executor;
+        }
+
+        public long TickTime => _executor.tickTime;
+
+        public long Normalize(long worldTime, TimeSpan timeUnit) {
+            long ticks = worldTime * timeUnit.Ticks;
+            return ticks / TimeSpan.TicksPerMillisecond; // 默认转毫秒单位
+        }
+
+        public long Denormalize(long localTime, TimeSpan timeUnit) {
+            long ticks = localTime * TimeSpan.TicksPerMillisecond;
+            return ticks / timeUnit.Ticks;
+        }
+
+        public void Reschedule(IScheduledFutureTask scheduledTask) {
+            _executor.DelayExecute(scheduledTask);
+        }
+
+        public void OnCompleted(IScheduledFutureTask scheduledTask) {
+            scheduledTask.Clear();
+        }
+
+        public void Remove(IScheduledFutureTask scheduledTask) {
+            _executor.taskQueue.Remove(scheduledTask);
+        }
     }
 
     #endregion

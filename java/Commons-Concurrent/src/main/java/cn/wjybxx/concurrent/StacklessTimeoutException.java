@@ -13,38 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package cn.wjybxx.concurrent;
 
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
+ * 不打印堆栈的超时异常
+ *
  * @author wjybxx
- * date - 2024/1/30
+ * date 2023/4/3
  */
-public class ScheduledPromise<T> extends Promise<T> implements IScheduledPromise<T> {
+public class StacklessTimeoutException extends TimeoutException {
 
-    private IScheduledFutureTask<? extends T> task;
+    public static final StacklessTimeoutException INST = new StacklessTimeoutException();
 
-    public ScheduledPromise() {
+    public StacklessTimeoutException() {
     }
 
-    public ScheduledPromise(Executor executor) {
-        super(executor);
+    public StacklessTimeoutException(String message) {
+        super(message);
     }
 
-    @Override
-    public void setTask(IScheduledFutureTask<? extends T> task) {
-        this.task = task;
-    }
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-        if (task == null) {
-            return Long.MAX_VALUE; // 可能已解绑
-        }
-        return task.getDelay(unit);
+    public final Throwable fillInStackTrace() {
+        return this;
     }
 
 }

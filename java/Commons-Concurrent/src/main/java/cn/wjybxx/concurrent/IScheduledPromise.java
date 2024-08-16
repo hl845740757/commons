@@ -16,6 +16,8 @@
 
 package cn.wjybxx.concurrent;
 
+import javax.annotation.Nullable;
+
 /**
  * 定时任务关联的Promise
  *
@@ -29,8 +31,8 @@ public interface IScheduledPromise<V> extends IScheduledFuture<V>, IPromise<V> {
      * 1.Promise需要了解任务的状态以支持用户的查询;
      * 2.由于存在双向依赖，因此需要延迟注入;
      *
-     * @param task promise关联的任务
+     * @param task promise关联的任务，null表示解除绑定
      */
-    void setTask(IScheduledFutureTask<? extends V> task);
+    void setTask(@Nullable IScheduledFutureTask<? extends V> task);
 
 }

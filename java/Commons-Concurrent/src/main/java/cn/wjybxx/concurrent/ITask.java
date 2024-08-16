@@ -16,8 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.annotation.Beta;
-
 /**
  * Task是Executor中调度的任务抽象。
  * 1. 该接口暴露给Executor的扩展类，用户尽量避免直接实现该接口。
@@ -30,7 +28,6 @@ import cn.wjybxx.base.annotation.Beta;
  * @author wjybxx
  * date - 2024/2/2
  */
-@Beta
 public interface ITask extends Runnable {
 
     /**

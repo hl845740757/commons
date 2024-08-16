@@ -28,92 +28,84 @@ public interface ScheduledPromiseTask
 {
     #region factory
 
-    public static ScheduledPromiseTask<int> OfTask(ITask task, IContext? context, int options, IScheduledPromise<int> promise,
-                                                   long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<int>(task, context, options, promise, TaskBuilder.TYPE_TASK,
-            id, nextTriggerTime);
+    public static ScheduledPromiseTask<int> OfTask(ITask task, ICancelToken? cancelToken, int options,
+                                                   IScheduledPromise<int> promise, IScheduledHelper helper, long nextTriggerTime) {
+        return new ScheduledPromiseTask<int>(task, cancelToken, options, promise, TaskBuilder.TYPE_TASK,
+            helper, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<int> OfAction(Action action, IContext? context, int options, IScheduledPromise<int> promise,
-                                                     long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<int>(action, context, options, promise, TaskBuilder.TYPE_ACTION,
-            id, nextTriggerTime);
+    public static ScheduledPromiseTask<int> OfAction(Action action, ICancelToken? cancelToken, int options,
+                                                     IScheduledPromise<int> promise, IScheduledHelper helper, long nextTriggerTime) {
+        return new ScheduledPromiseTask<int>(action, cancelToken, options, promise, TaskBuilder.TYPE_ACTION,
+            helper, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<int> OfAction(Action<IContext> action, IContext? context, int options, IScheduledPromise<int> promise,
-                                                     long id, long nextTriggerTime) {
+    public static ScheduledPromiseTask<int> OfAction(Action<IContext> action, IContext? context, int options,
+                                                     IScheduledPromise<int> promise, IScheduledHelper helper, long nextTriggerTime) {
         return new ScheduledPromiseTask<int>(action, context, options, promise, TaskBuilder.TYPE_ACTION_CTX,
-            id, nextTriggerTime);
+            helper, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, IContext? context, int options, IScheduledPromise<T> promise,
-                                                        long id, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC,
-            id, nextTriggerTime);
+    public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, ICancelToken? cancelToken, int options,
+                                                        IScheduledPromise<T> promise, IScheduledHelper helper, long nextTriggerTime) {
+        return new ScheduledPromiseTask<T>(action, cancelToken, options, promise, TaskBuilder.TYPE_FUNC,
+            helper, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<T> OfFunction<T>(Func<IContext, T> action, IContext? context, int options, IScheduledPromise<T> promise,
-                                                        long id, long nextTriggerTime) {
+    public static ScheduledPromiseTask<T> OfFunction<T>(Func<IContext, T> action, IContext? context, int options,
+                                                        IScheduledPromise<T> promise, IScheduledHelper helper, long nextTriggerTime) {
         return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC_CTX,
-            id, nextTriggerTime);
+            helper, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<T> OfBuilder<T>(in TaskBuilder<T> builder, IScheduledPromise<T> promise,
-                                                       long id, long tickTime) {
+    public static ScheduledPromiseTask<T> OfBuilder<T>(in TaskBuilder<T> builder, IScheduledPromise<T> promise, IScheduledHelper helper) {
         return new ScheduledPromiseTask<T>(builder.Task, builder.Context, builder.Options, promise, builder.Type,
-            id, tickTime);
+            helper, helper.TickTime);
     }
 
-    public static ScheduledPromiseTask<T> OfBuilder<T>(in ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
-                                                       long id, long tickTime) {
-        long timeUnit = Math.Max(1, builder.Timeunit.Ticks);
+    public static ScheduledPromiseTask<T> OfBuilder<T>(in ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise, IScheduledHelper helper) {
+        long triggerTime = helper.TriggerTime(builder.InitialDelay, builder.Timeunit);
+        long period = builder.IsPeriodic
+            ? helper.TriggerPeriod(builder.Period, builder.Timeunit)
+            : 0;
 
-        // 并发库中不支持插队，初始延迟强制转0
-        long initialDelay = Math.Max(0, builder.InitialDelay * timeUnit);
-        long period = Math.Max(1, builder.Period * timeUnit);
-        long triggerTime = tickTime + initialDelay;
-
-        ScheduledPromiseTask<T> promiseTask = new ScheduledPromiseTask<T>(in builder, promise, id, triggerTime, period);
+        ScheduledPromiseTask<T> promiseTask = new ScheduledPromiseTask<T>(in builder, promise, helper, triggerTime, period);
         if (builder.IsPeriodic && builder.Timeout != -1) {
             promiseTask.EnableTimeout();
-            promiseTask.timeLeft = builder.Timeout * timeUnit;
-            promiseTask.lastTriggerTime = tickTime;
+            promiseTask.deadline = helper.TriggerTime(builder.Timeout, builder.Timeunit);
         }
         return promiseTask;
     }
 
     #endregion
-
-    /** 计算任务的触发时间 -- Ticks */
-    public static long TriggerTime(TimeSpan delay, long tickTime) {
-        return Math.Max(0, delay.Ticks + tickTime);
-    }
 }
 
-public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
-    IIndexedElement, ScheduledPromiseTask, ICancelTokenListener
+public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask,
+    IIndexedElement, ICancelTokenListener
 {
+#nullable disable
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
-    private long id;
+    private long id = -1;
     /** 提前计算的，逻辑上的下次触发时间 - 非volatile，不对用户开放 */
     private long nextTriggerTime;
     /** 任务的执行间隔 - 不再有特殊意义 */
     private long period;
 
-    /** 剩余时间 -- 有效性见<see cref="PromiseTask.MASK_TIMEOUT"/> */
-    internal long timeLeft;
-    /** 上次触发时间，用于固定延迟调度下计算deltaTime */
-    internal long lastTriggerTime;
+    /** 截止时间 -- 有效性见<see cref="PromiseTask.MASK_HAS_TIMEOUT"/> */
+    internal long deadline;
 
+    /** 用于避免具体类型依赖 */
+    private IScheduledHelper helper;
     /** 在队列中的下标 */
     private int queueIndex = IIndexedElement.IndexNotFound;
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
-    private IRegistration? cancelRegistration;
+    private IRegistration cancelRegistration;
+#nullable enable
 
     internal ScheduledPromiseTask(in ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
-                                  long id, long nextTriggerTime, long period)
+                                  IScheduledHelper helper, long nextTriggerTime, long period)
         : base(builder.Task, builder.Context, builder.Options, promise, builder.Type) {
-        this.id = id;
+        this.helper = helper;
         this.nextTriggerTime = nextTriggerTime;
         this.period = period;
         ScheduleType = builder.ScheduleType;
@@ -121,10 +113,10 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     }
 
     /** 用于简单情况下的对象创建 */
-    internal ScheduledPromiseTask(object action, IContext? context, int options, IScheduledPromise<T> promise, int taskType,
-                                  long id, long nextTriggerTime)
+    internal ScheduledPromiseTask(object action, object? context, int options, IScheduledPromise<T> promise, int taskType,
+                                  IScheduledHelper helper, long nextTriggerTime)
         : base(action, context, options, promise, taskType) {
-        this.id = id;
+        this.helper = helper;
         this.nextTriggerTime = nextTriggerTime;
         this.period = 0;
         promise.SetTask(this); // 双向绑定
@@ -139,11 +131,14 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
 
     public long NextTriggerTime {
         get => nextTriggerTime;
-        set => nextTriggerTime = value;
+        private set => nextTriggerTime = value;
     }
 
+    /** 任务是否已调度过，通常用于降低优先级 */
+    public bool IsTriggered => (ctl & PromiseTask.MASK_TRIGGERED) != 0;
+
     /** 任务的调度类型 -- 应该在添加到队列之前设置 */
-    public int ScheduleType {
+    private int ScheduleType {
         get => (ctl & PromiseTask.MASK_SCHEDULE_TYPE) >> PromiseTask.OFFSET_SCHEDULE_TYPE;
         set => ctl |= (value << PromiseTask.OFFSET_SCHEDULE_TYPE);
     }
@@ -163,24 +158,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         }
     }
 
-    /** 是否已经声明任务的归属权 */
-    public bool IsClaimed => (ctl & PromiseTask.MASK_CLAIMED) != 0;
-
-    /** 将任务标记为已申领 */
-    public void SetClaimed() {
-        ctl |= PromiseTask.MASK_CLAIMED;
-    }
-
-    private void SetTriggered() => ctl |= PromiseTask.MASK_TRIGGERED;
-
-    public bool IsTriggered => (ctl & PromiseTask.MASK_TRIGGERED) != 0;
-
-    public override IScheduledPromise<T> Future => (IScheduledPromise<T>)promise;
-
     public bool IsPeriodic => ScheduleType != 0;
-    private bool HasTimeout => (ctl & PromiseTask.MASK_TIMEOUT) != 0;
-
-    internal void EnableTimeout() => ctl |= PromiseTask.MASK_TIMEOUT;
 
     public int CollectionIndex(object collection) {
         return queueIndex;
@@ -190,39 +168,46 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         this.queueIndex = index;
     }
 
-    protected override void Clear() {
+    public override void Clear() {
         base.Clear();
         CloseRegistration();
+        helper = null;
     }
+
+    private bool HasTimeout => (ctl & PromiseTask.MASK_HAS_TIMEOUT) != 0;
+
+    internal void EnableTimeout() => ctl |= PromiseTask.MASK_HAS_TIMEOUT;
 
     #endregion
 
     #region core
 
-    private AbstractScheduledEventLoop EventLoop => (AbstractScheduledEventLoop)promise.Executor!;
-
     /** 该方法在任务出队列的时候调用 */
     public override void Run() {
-        AbstractScheduledEventLoop eventLoop = EventLoop;
         IPromise<T> promise = this.promise;
-        IContext context = this.context;
-        if (promise.IsCompleted || context.CancelToken.IsCancelling) {
-            CancelWithoutRemove(CancelCodes.REASON_DEFAULT);
+        if (promise.IsCompleted || GetCancelToken().IsCancelling) {
+            TrySetCancelled(promise, GetCancelToken(), CancelCodes.REASON_DEFAULT);
+            helper.OnCompleted(this);
             return;
         }
-        long tickTime = eventLoop.TickTime;
+        long tickTime = helper.TickTime;
         if (tickTime < nextTriggerTime) { // 显式测试一次，适应多种EventLoop
-            eventLoop.ReschedulePeriodic(this, false);
+            helper.Reschedule(this);
             return;
         }
         if (Trigger(tickTime)) {
-            eventLoop.ReschedulePeriodic(this, true);
+            helper.Reschedule(this);
+        } else {
+            helper.OnCompleted(this);
         }
     }
 
     public bool Trigger(long tickTime) {
         // 标记为已触发
-        SetTriggered();
+        bool firstTrigger = (ctl & PromiseTask.MASK_TRIGGERED) == 0;
+        if (firstTrigger) {
+            ctl |= PromiseTask.MASK_TRIGGERED;
+        }
 
         int scheduleType = ScheduleType;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
@@ -231,46 +216,45 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         }
 
         IPromise<T> promise = this.promise;
-        IContext context = this.context;
-        if (context.CancelToken.IsCancelling) {
-            TrySetCancelled(promise, context);
-            Clear();
+        ICancelToken cancelToken = GetCancelToken();
+        if (cancelToken.IsCancelling) {
+            TrySetCancelled(promise, cancelToken);
             return false;
         }
-        if (!IsClaimed) {
+        if (firstTrigger) {
             if (!promise.TrySetComputing()) {
-                Clear();
                 return false;
             }
-            SetClaimed();
         } else if (!promise.IsComputing) {
-            Clear();
             return false;
         }
-        // 结构体，避免拷贝...
+
         try {
             if (HasTimeout) {
-                BeforeCall(tickTime, nextTriggerTime, scheduleType);
-                if (TaskOption.IsEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && timeLeft <= 0) {
+                if (TaskOption.IsEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && deadline <= tickTime) {
                     promise.TrySetException(StacklessTimeoutException.INST);
-                    Clear();
                     return false;
                 }
             }
 
-            // 普通周期性任务没有结果
-            RunTask();
+            if (TaskType == TaskBuilder.TYPE_TIMESHARING) {
+                // 周期性任务，只有分时任务可以有结果
+                if (RunTimeSharing(firstTrigger, out T result)) {
+                    promise.TrySetResult(result);
+                    return false;
+                }
+            } else {
+                RunTask();
+            }
 
             // 任务执行后检测取消
-            if (context.CancelToken.IsCancelling || !promise.IsComputing) {
-                TrySetCancelled(promise, context);
-                Clear();
+            if (cancelToken.IsCancelling || !promise.IsComputing) {
+                TrySetCancelled(promise, cancelToken);
                 return false;
             }
             // 未被取消的情况下检测超时
-            if (HasTimeout && timeLeft <= 0) {
+            if (HasTimeout && deadline <= tickTime) {
                 promise.TrySetException(StacklessTimeoutException.INST);
-                Clear();
                 return false;
             }
 
@@ -285,7 +269,6 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
                 return true;
             }
             promise.TrySetException(ex);
-            Clear();
             return false;
         }
     }
@@ -294,27 +277,14 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         if (ScheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
             return false;
         }
+        if (TaskType == TaskBuilder.TYPE_TIMESHARING) {
+            return false;
+        }
         return TaskOption.IsEnabled(options, TaskOption.CAUGHT_EXCEPTION);
     }
 
-    /// <summary>
-    /// 在执行任务前更新状态
-    /// </summary>
-    /// <param name="realTriggerTime">真实触发时间 -- 真正被调度的时间</param>
-    /// <param name="logicTriggerTime">逻辑触发时间（期望的调度时间）</param>
-    /// <param name="scheduleType">调度类型</param>
-    private void BeforeCall(long realTriggerTime, long logicTriggerTime, int scheduleType) {
-        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
-            timeLeft -= (logicTriggerTime - lastTriggerTime);
-            lastTriggerTime = logicTriggerTime;
-        } else {
-            timeLeft -= (realTriggerTime - lastTriggerTime);
-            lastTriggerTime = realTriggerTime;
-        }
-    }
-
     private void SetNextRunTime(long tickTime, int scheduleType) {
-        long maxDelay = HasTimeout ? timeLeft : long.MaxValue;
+        long maxDelay = HasTimeout ? deadline : long.MaxValue;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
             nextTriggerTime = nextTriggerTime + Math.Min(maxDelay, period); // 逻辑时间
         } else {
@@ -322,16 +292,10 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
         }
     }
 
-    /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */
-    public void CancelWithoutRemove(int code = CancelCodes.REASON_SHUTDOWN) {
-        TrySetCancelled(promise, context, code);
-        Clear();
-    }
-
     /** 监听取消令牌中的取消信号 */
     public void RegisterCancellation() {
         // C# 的future中无取消方法，因此只需要监听取消令牌
-        ICancelToken cancelToken = context.CancelToken;
+        ICancelToken cancelToken = GetCancelToken();
         if (cancelToken == ICancelToken.NONE) {
             return;
         }
@@ -343,7 +307,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask<T>,
     public void OnCancelRequested(ICancelToken cancelToken) {
         // 用户通过令牌发起取消
         if (promise.TrySetCancelled(cancelToken.CancelCode) && !cancelToken.IsWithoutRemove) {
-            EventLoop.RemoveScheduled(this);
+            helper.Remove(this);
         }
     }
 

@@ -42,16 +42,6 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
         select().execute(command, options);
     }
 
-    @Override
-    public void execute(Consumer<? super IContext> action, IContext ctx) {
-        select().execute(action, ctx);
-    }
-
-    @Override
-    public void execute(Consumer<? super IContext> action, IContext ctx, int options) {
-        select().execute(action, ctx, options);
-    }
-
     // region submit
     @Override
     public <T> IPromise<T> newPromise() {
@@ -63,29 +53,23 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
         return select().submit(builder);
     }
 
-    @Nonnull
     @Override
-    public <T> IFuture<T> submit(@Nonnull Callable<T> task) {
-        return select().submit(task);
-    }
-
-    @Override
-    public <V> IFuture<V> submitFunc(Callable<? extends V> task) {
+    public <T> IFuture<T> submitFunc(Callable<? extends T> task) {
         return select().submitFunc(task);
     }
 
     @Override
-    public <V> IFuture<V> submitFunc(Callable<? extends V> task, int options) {
+    public <T> IFuture<T> submitFunc(Callable<? extends T> task, int options) {
         return select().submitFunc(task, options);
     }
 
     @Override
-    public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx) {
-        return select().submitFunc(task, ctx);
+    public <T> IFuture<T> submitFunc(Callable<? extends T> task, ICancelToken cancelToken, int options) {
+        return select().submitFunc(task, cancelToken, options);
     }
 
     @Override
-    public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx, int options) {
+    public <T> IFuture<T> submitFunc(Function<? super IContext, ? extends T> task, IContext ctx, int options) {
         return select().submitFunc(task, ctx, options);
     }
 
@@ -100,8 +84,8 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
     }
 
     @Override
-    public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
-        return select().submitAction(task, ctx);
+    public IFuture<?> submitAction(Runnable task, ICancelToken cancelToken, int options) {
+        return select().submitAction(task, cancelToken, options);
     }
 
     @Override
@@ -109,23 +93,52 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
         return select().submitAction(task, ctx, options);
     }
 
+    @Nonnull
+    @Override
+    public final <T> IFuture<T> submit(@Nonnull Callable<T> task) {
+        return select().submit(task);
+    }
+
+    @Nonnull
+    @Override
+    public final IFuture<?> submit(@Nonnull Runnable task) {
+        return select().submit(task);
+    }
+
     // endregion
 
     // region schedule
 
     @Override
-    public <V> IScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder) {
+    public <V> IScheduledPromise<V> newScheduledPromise() {
+        return new ScheduledPromise<>(this);
+    }
+
+    @Override
+    public <T> IScheduledFuture<T> schedule(ScheduledTaskBuilder<T> builder) {
         return select().schedule(builder);
     }
 
     @Override
-    public IScheduledFuture<?> scheduleAction(Consumer<? super IContext> task, IContext ctx, long delay, TimeUnit unit) {
-        return select().scheduleAction(task, ctx, delay, unit);
+    public IScheduledFuture<?> scheduleAction(Runnable task, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        return select().scheduleAction(task, delay, unit, cancelToken);
     }
 
     @Override
-    public <V> IScheduledFuture<V> scheduleFunc(Function<? super IContext, V> task, IContext ctx, long delay, TimeUnit unit) {
-        return select().scheduleFunc(task, ctx, delay, unit);
+    public <T> IScheduledFuture<T> scheduleFunc(Callable<T> task, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        return select().scheduleFunc(task, delay, unit, cancelToken);
+    }
+
+    @Nonnull
+    @Override
+    public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        return select().scheduleWithFixedDelay(task, initialDelay, delay, unit, cancelToken);
+    }
+
+    @Nonnull
+    @Override
+    public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit, ICancelToken cancelToken) {
+        return select().scheduleAtFixedRate(task, initialDelay, period, unit, cancelToken);
     }
 
     @Nonnull
@@ -136,7 +149,7 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
 
     @Nonnull
     @Override
-    public <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
+    public <T> IScheduledFuture<T> schedule(Callable<T> task, long delay, TimeUnit unit) {
         return select().schedule(task, delay, unit);
     }
 

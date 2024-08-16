@@ -64,7 +64,7 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     public virtual IPromise<T> NewPromise<T>() => new Promise<T>(this);
 
-    public virtual IPromise NewPromise() => new Promise<int>(this);
+    public virtual IPromise<int> NewPromise() => new Promise<int>(this);
 
     public virtual IFuture<T> Submit<T>(in TaskBuilder<T> builder) {
         return Select().Submit(in builder);
@@ -74,12 +74,20 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().SubmitAction(action, options);
     }
 
+    public virtual IFuture SubmitAction(Action action, ICancelToken cancelToken, int options = 0) {
+        return Select().SubmitAction(action, cancelToken, options);
+    }
+
     public virtual IFuture SubmitAction(Action<IContext> action, IContext context, int options = 0) {
         return Select().SubmitAction(action, context, options);
     }
 
     public virtual IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
         return Select().SubmitFunc(action, options);
+    }
+
+    public virtual IFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken cancelToken, int options = 0) {
+        return Select().SubmitFunc(action, cancelToken, options);
     }
 
     public virtual IFuture<T> SubmitFunc<T>(Func<IContext, T> action, IContext context, int options = 0) {
@@ -92,7 +100,7 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     public virtual IScheduledPromise<T> NewScheduledPromise<T>() => new ScheduledPromise<T>(this);
 
-    public virtual IScheduledPromise NewScheduledPromise() => new ScheduledPromise<object>(this);
+    public virtual IScheduledPromise<int> NewScheduledPromise() => new ScheduledPromise<int>(this);
 
     public virtual IScheduledFuture<TResult> Schedule<TResult>(in ScheduledTaskBuilder<TResult> builder) {
         return Select().Schedule(in builder);
@@ -102,16 +110,8 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().ScheduleAction(action, delay, cancelToken);
     }
 
-    public virtual IScheduledFuture ScheduleAction(Action<IContext> action, TimeSpan delay, IContext context) {
-        return Select().ScheduleAction(action, delay, context);
-    }
-
     public virtual IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
         return Select().ScheduleFunc(action, delay, cancelToken);
-    }
-
-    public virtual IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<IContext, TResult> action, TimeSpan delay, IContext context) {
-        return Select().ScheduleFunc(action, delay, context);
     }
 
     public virtual IScheduledFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {

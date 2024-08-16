@@ -16,22 +16,17 @@
 
 #endregion
 
-using System.Diagnostics;
-
 namespace Wjybxx.Commons.Concurrent
 {
 public class ScheduledPromise<T> : Promise<T>, IScheduledPromise<T>
 {
-#nullable disable
-    private IScheduledFutureTask<T> _task;
-#nullable enable
+    private IScheduledFutureTask? _task;
 
     public ScheduledPromise(IExecutor? executor = null)
         : base(executor) {
     }
 
-    public void SetTask(IScheduledFutureTask<T> task) {
-        Debug.Assert(task.Future == this);
+    public void SetTask(IScheduledFutureTask? task) {
         this._task = task;
     }
 }

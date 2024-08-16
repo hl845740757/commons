@@ -17,10 +17,16 @@
 package cn.wjybxx.sequential;
 
 import cn.wjybxx.base.time.TimeProvider;
-import cn.wjybxx.concurrent.IFuture;
+import cn.wjybxx.concurrent.*;
 
+import javax.annotation.Nonnull;
+import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author wjybxx
@@ -77,6 +83,136 @@ public class UniFutureUtils {
 
     public static UniScheduledExecutor newScheduledExecutor(TimeProvider timeProvider, int initCapacity) {
         return new DefaultUniScheduledExecutor(timeProvider, initCapacity);
+    }
+
+    // endregion
+
+    // region submit
+
+    // region submit func
+    public static <T> IFuture<T> submitFunc(Executor executor, Callable<? extends T> task) {
+        IPromise<T> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofFunction(task, null, 0, promise));
+        return promise;
+    }
+
+    public static <T> IFuture<T> submitFunc(IExecutor executor, Callable<? extends T> task, int options) {
+        IPromise<T> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofFunction(task, null, options, promise));
+        return promise;
+    }
+
+    public static <T> IFuture<T> submitFunc(Executor executor, Callable<? extends T> task, ICancelToken cancelToken) {
+        IPromise<T> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofFunction(task, cancelToken, 0, promise));
+        return promise;
+    }
+
+    public static <T> IFuture<T> submitFunc(IExecutor executor, Callable<? extends T> task, ICancelToken cancelToken, int options) {
+        IPromise<T> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofFunction(task, cancelToken, options, promise));
+        return promise;
+    }
+
+    public static <T> IFuture<T> submitFunc(Executor executor, Function<? super IContext, ? extends T> task, IContext ctx) {
+        IPromise<T> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofFunction(task, ctx, 0, promise));
+        return promise;
+    }
+
+    public static <T> IFuture<T> submitFunc(IExecutor executor, Function<? super IContext, ? extends T> task, IContext ctx, int options) {
+        IPromise<T> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofFunction(task, ctx, options, promise));
+        return promise;
+    }
+    // endregion
+
+    // region submit action
+    public static IFuture<?> submitAction(Executor executor, Runnable action) {
+        IPromise<Object> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofAction(action, null, 0, promise));
+        return promise;
+    }
+
+    public static IFuture<?> submitAction(IExecutor executor, Runnable action, int options) {
+        IPromise<Object> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofAction(action, null, options, promise));
+        return promise;
+    }
+
+    public static IFuture<?> submitAction(Executor executor, Runnable action, ICancelToken cancelToken) {
+        IPromise<Object> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofAction(action, cancelToken, 0, promise));
+        return promise;
+    }
+
+    public static IFuture<?> submitAction(IExecutor executor, Runnable action, ICancelToken cancelToken, int options) {
+        IPromise<Object> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofAction(action, cancelToken, options, promise));
+        return promise;
+    }
+
+    public static IFuture<?> submitAction(Executor executor, Consumer<? super IContext> task, IContext ctx) {
+        IPromise<Object> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofAction(task, ctx, 0, promise));
+        return promise;
+    }
+
+    public static IFuture<?> submitAction(IExecutor executor, Consumer<? super IContext> task, IContext ctx, int options) {
+        IPromise<Object> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofAction(task, ctx, options, promise));
+        return promise;
+    }
+    //endregion
+
+    // region execute
+
+    public static void execute(Executor executor, Runnable action, ICancelToken cancelToken) {
+        ITask futureTask = FutureUtils.toTask(action, cancelToken, 0);
+        executor.execute(futureTask);
+    }
+
+    public static void execute(Executor executor, Runnable action, ICancelToken cancelToken, int options) {
+        ITask futureTask = FutureUtils.toTask(action, cancelToken, options);
+        executor.execute(futureTask);
+    }
+
+    public static void execute(Executor executor, Consumer<? super IContext> action, IContext ctx) {
+        ITask futureTask = FutureUtils.toTask(action, ctx, 0);
+        executor.execute(futureTask);
+    }
+
+    public static void execute(IExecutor executor, Consumer<? super IContext> action, IContext ctx, int options) {
+        ITask futureTask = FutureUtils.toTask(action, ctx, options);
+        executor.execute(futureTask);
+    }
+
+    // endregion
+
+    // endregion
+
+    // region jdk-风格
+
+    public static <T> IFuture<T> callAsync(Executor executor, Callable<? extends T> supplier) {
+        Objects.requireNonNull(supplier);
+        return submitFunc(executor, supplier);
+    }
+
+    public static <T> IFuture<T> supplyAsync(Executor executor, Supplier<? extends T> supplier) {
+        Objects.requireNonNull(supplier);
+        return submitFunc(executor, supplier::get);
+    }
+
+    public static IFuture<?> anyOf(IFuture<?> futures) {
+        return new FutureCombiner()
+                .addAll(futures)
+                .anyOf();
+    }
+
+    public static IFuture<?> allOf(IFuture<?>... futures) {
+        return new FutureCombiner()
+                .addAll(futures)
+                .selectAll();
     }
 
     // endregion

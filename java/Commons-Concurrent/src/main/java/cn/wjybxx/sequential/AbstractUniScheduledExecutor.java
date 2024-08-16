@@ -42,66 +42,72 @@ public abstract class AbstractUniScheduledExecutor
         return new UniScheduledPromise<>(this);
     }
 
+    protected abstract IScheduledHelper helper();
+
     @Override
-    public <V> IScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder) {
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
+    public <T> IScheduledFuture<T> schedule(ScheduledTaskBuilder<T> builder) {
+        IScheduledPromise<T> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        return promise;
     }
 
     @Override
-    public <V> IScheduledFuture<V> scheduleFunc(Function<? super IContext, V> task, IContext ctx, long delay, TimeUnit unit) {
-        long triggerTime = UniScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofFunction(task, ctx, 0, newScheduledPromise(), 0, triggerTime);
-        execute(promiseTask);
-        return promiseTask.future();
+    public <T> IScheduledFuture<T> scheduleFunc(Callable<T> task, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        IScheduledPromise<T> promise = newScheduledPromise();
+        IScheduledHelper helper = helper();
+
+        execute(ScheduledPromiseTask.ofFunction(task, cancelToken, 0, promise, helper, helper.triggerTime(delay, unit)));
+        return promise;
     }
 
     @Override
-    public IScheduledFuture<?> scheduleAction(Consumer<? super IContext> task, IContext ctx, long delay, TimeUnit unit) {
-        long triggerTime = UniScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofAction(task, ctx, 0, newScheduledPromise(), 0, triggerTime);
-        execute(promiseTask);
-        return promiseTask.future();
+    public IScheduledFuture<?> scheduleAction(Runnable task, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        IScheduledHelper helper = helper();
+
+        execute(ScheduledPromiseTask.ofAction(task, cancelToken, 0, promise, helper, helper.triggerTime(delay, unit)));
+        return promise;
     }
 
     @Override
-    public IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
-        long triggerTime = UniScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofAction(task, 0, newScheduledPromise(), 0, triggerTime);
-        execute(promiseTask);
-        return promiseTask.future();
-    }
-
-    @Override
-    public <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
-        long triggerTime = UniScheduledPromiseTask.triggerTime(delay, unit, tickTime());
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofFunction(task, 0, newScheduledPromise(), 0, triggerTime);
-        execute(promiseTask);
-        return promiseTask.future();
-    }
-
-    @Override
-    public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
-        ScheduledTaskBuilder<?> builder = ScheduledTaskBuilder.newAction(task)
+    public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit, ICancelToken cancelToken) {
+        ScheduledTaskBuilder<Object> builder = ScheduledTaskBuilder.newAction(task, cancelToken)
                 .setFixedRate(initialDelay, period, unit);
 
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        return promise;
     }
 
     @Override
-    public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
-        ScheduledTaskBuilder<?> builder = ScheduledTaskBuilder.newAction(task)
+    public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        ScheduledTaskBuilder<Object> builder = ScheduledTaskBuilder.newAction(task, cancelToken)
                 .setFixedDelay(initialDelay, delay, unit);
 
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        return promise;
     }
-    // endregion
 
+    @Override
+    public final IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
+        return scheduleAction(task, delay, unit, ICancelToken.NONE);
+    }
+
+    @Override
+    public final <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
+        return scheduleFunc(task, delay, unit, ICancelToken.NONE);
+    }
+
+    @Override
+    public final IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
+        return scheduleWithFixedDelay(task, initialDelay, delay, unit, ICancelToken.NONE);
+    }
+
+    @Override
+    public final IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
+        return scheduleAtFixedRate(task, initialDelay, period, unit, ICancelToken.NONE);
+    }
     // endregion
 
     // 重写submit，修改task类型
@@ -109,108 +115,66 @@ public abstract class AbstractUniScheduledExecutor
     // region submit
 
     @Override
-    public <V> IFuture<V> submit(@Nonnull TaskBuilder<V> builder) {
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofBuilder(builder, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
+    public <T> IFuture<T> submit(@Nonnull TaskBuilder<T> builder) {
+        IScheduledPromise<T> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        return promise;
     }
 
     @Override
-    public void execute(Consumer<? super IContext> action, IContext ctx) {
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofAction(action, ctx, 0, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
+    public <T> IFuture<T> submitFunc(Callable<? extends T> task, int options) {
+        IScheduledPromise<T> promise = newScheduledPromise();
+        IScheduledHelper helper = helper();
+
+        execute(ScheduledPromiseTask.ofFunction(task, null, options, promise, helper, helper.tickTime()));
+        return promise;
     }
 
     @Override
-    public void execute(Consumer<? super IContext> action, IContext ctx, int options) {
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofAction(action, ctx, options, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
+    public <T> IFuture<T> submitFunc(Callable<? extends T> task, ICancelToken cancelToken, int options) {
+        IScheduledPromise<T> promise = newScheduledPromise();
+        IScheduledHelper helper = helper();
+
+        execute(ScheduledPromiseTask.ofFunction(task, cancelToken, options, promise, helper, helper.tickTime()));
+        return promise;
     }
 
     @Override
-    public <T> IFuture<T> submit(Callable<T> task) {
-        UniScheduledPromiseTask<T> promiseTask = UniScheduledPromiseTask.ofFunction(task, 0, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
-    }
+    public <T> IFuture<T> submitFunc(Function<? super IContext, ? extends T> task, IContext ctx, int options) {
+        IScheduledPromise<T> promise = newScheduledPromise();
+        IScheduledHelper helper = helper();
 
-    @Override
-    public <V> IFuture<V> submitFunc(Callable<? extends V> task) {
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofFunction(task, 0, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
-    }
-
-    @Override
-    public <V> IFuture<V> submitFunc(Callable<? extends V> task, int options) {
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofFunction(task, options, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
-    }
-
-    @Override
-    public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx) {
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofFunction(task, ctx, 0, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
-    }
-
-    @Override
-    public <V> IFuture<V> submitFunc(Function<? super IContext, ? extends V> task, IContext ctx, int options) {
-        UniScheduledPromiseTask<V> promiseTask = UniScheduledPromiseTask.ofFunction(task, ctx, options, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
-    }
-
-    @Override
-    public IFuture<?> submitAction(Runnable task) {
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofAction(task, 0, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
+        execute(ScheduledPromiseTask.ofFunction(task, ctx, options, promise, helper, helper.tickTime()));
+        return promise;
     }
 
     @Override
     public IFuture<?> submitAction(Runnable task, int options) {
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofAction(task, options, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        IScheduledHelper helper = helper();
+
+        execute(ScheduledPromiseTask.ofAction(task, null, options, promise, helper, helper.tickTime()));
+        return promise;
     }
 
     @Override
-    public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx) {
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofAction(task, ctx, 0, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
+    public IFuture<?> submitAction(Runnable task, ICancelToken cancelToken, int options) {
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        IScheduledHelper helper = helper();
+
+        execute(ScheduledPromiseTask.ofAction(task, cancelToken, options, promise, helper, helper.tickTime()));
+        return promise;
     }
 
     @Override
     public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
-        UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofAction(task, ctx, options, newScheduledPromise(), 0, tickTime());
-        execute(promiseTask);
-        return promiseTask.future();
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        IScheduledHelper helper = helper();
+
+        execute(ScheduledPromiseTask.ofAction(task, ctx, options, promise, helper, helper.tickTime()));
+        return promise;
     }
 
     // endregion
-
-    /**
-     * 当前线程的时间
-     * 1. 可以使用缓存的时间，也可以使用实时查询，只要不破坏任务的执行约定即可。
-     * 2. 如果使用缓存时间，接口中并不约定时间的更新时机，也不约定一个大循环只更新一次。也就是说，线程可能在任意时间点更新缓存的时间，只要不破坏线程安全性和约定的任务时序。
-     */
-    protected abstract long tickTime();
-
-    /**
-     * 请求将当前任务重新压入队列
-     * 1.一定从当前线程调用
-     * 2.如果无法继续调度任务，则取消任务
-     *
-     * @param triggered 是否是执行之后压入队列；通常用于在执行成功之后降低优先级
-     */
-    protected abstract void reSchedulePeriodic(UniScheduledPromiseTask<?> futureTask, boolean triggered);
-
-    /**
-     * 请求删除给定的任务
-     */
-    protected abstract void removeScheduled(UniScheduledPromiseTask<?> futureTask);
 
 }

@@ -83,11 +83,6 @@ public final class TaskOption {
     public static final int IGNORE_FUTURE_CANCEL = 1 << 17;
 
     /**
-     * 该选项表示异步任务需要继承上游任务的取消令牌。
-     * 注意： 在显式指定了上下文的情况下无效。
-     */
-    public static final int STAGE_INHERIT_TOKEN = 18;
-    /**
      * 如果一个异步任务当前已在目标{@link SingleThreadExecutor}线程，则立即执行，而不提交任务。
      * 仅用于{@link ICompletionStage}
      */
@@ -99,12 +94,17 @@ public final class TaskOption {
      */
     public static final int STAGE_NON_TRANSITIVE = 1 << 20;
     /**
-     * 当回调形参接收的是Object类型的ctx时，也尝试检测obj实例是否为{@link IContext}类型，并检测取消信号。
+     * 默认情况下，Stage会在触发回调之前检测ctx否为{@link IContext}或{@link ICancelToken}类型，并检测取消信号。
+     * 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
      */
-    public static final int STAGE_CHECK_OBJECT_CTX = 1 << 21;
+    public static final int STAGE_UNCANCELLABLE_CTX = 1 << 21;
 
-    /** 忽略死锁检测 */
-    private static final int IGNORE_DEADLOCK = 1 << 22;
+    /**
+     * 分帧任务：慢启动。
+     * 默认情况下，分帧任务的start方法和update方法是同步执行的；
+     * 如果期望首次运行时仅执行start方法，可通过该选项启用。
+     */
+    public static final int TIMESHARING_SLOW_START = 1 << 22;
 
     // region util
     /** 优先级的存储偏移量 */

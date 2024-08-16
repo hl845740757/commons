@@ -43,19 +43,18 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     private final int type;
     private final Object task;
-    private IContext ctx;
+    private Object ctx;
     private int options;
 
     protected TaskBuilder(int type, Object task) {
         this.task = Objects.requireNonNull(task);
         this.type = type;
-        this.ctx = IContext.NONE;
     }
 
-    protected TaskBuilder(int type, Object task, IContext ctx) {
+    protected TaskBuilder(int type, Object task, Object ctx) {
         this.task = Objects.requireNonNull(task);
         this.type = type;
-        this.ctx = ctx == null ? IContext.NONE : ctx;
+        this.ctx = ctx;
     }
 
     protected TaskBuilder(TaskBuilder<? extends V> taskBuilder) {
@@ -67,16 +66,24 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     // region factory
 
-    public static TaskBuilder<?> newAction(Runnable task) {
+    public static TaskBuilder<Object> newAction(Runnable task) {
         return new TaskBuilder<>(TYPE_ACTION, task);
     }
 
-    public static <V> TaskBuilder<V> newAction(Consumer<IContext> task, IContext ctx) {
+    public static TaskBuilder<Object> newAction(Runnable task, ICancelToken cancelToken) {
+        return new TaskBuilder<>(TYPE_ACTION, task, cancelToken);
+    }
+
+    public static TaskBuilder<Object> newAction(Consumer<IContext> task, IContext ctx) {
         return new TaskBuilder<>(TYPE_ACTION_CTX, task, ctx);
     }
 
     public static <V> TaskBuilder<V> newFunc(Callable<? extends V> task) {
         return new TaskBuilder<>(TYPE_FUNC, task);
+    }
+
+    public static <V> TaskBuilder<V> newFunc(Callable<? extends V> task, ICancelToken cancelToken) {
+        return new TaskBuilder<>(TYPE_FUNC, task, cancelToken);
     }
 
     public static <V> TaskBuilder<V> newFunc(Function<IContext, ? extends V> task, IContext ctx) {
@@ -111,6 +118,21 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         }
         throw new IllegalArgumentException("unsupported task type: " + task.getClass());
     }
+
+    /** 任务是否接收context类型参数 */
+    public static boolean isTaskAcceptContext(int type) {
+        switch (type) {
+            case TYPE_ACTION_CTX,
+                 TYPE_FUNC_CTX,
+                 TYPE_TIMESHARING -> {
+                return true;
+            }
+            default -> {
+                return false;
+            }
+        }
+    }
+
     // endregion
 
     // region props
@@ -124,17 +146,34 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         return task;
     }
 
-    /** 任务的上下文 */
-    public IContext getCtx() {
-        return ctx;
+    /** 任务是否接收context类型参数 */
+    public boolean isTaskAcceptContext() {
+        return isTaskAcceptContext(type);
     }
 
-    /**
-     * 任务的上下文
-     * 即使用户的任务不接收ctx，executor也可能需要
-     */
+    /** 任务的上下文 */
+    public IContext getCtx() {
+        return isTaskAcceptContext(type) ? (IContext) ctx : null;
+    }
+
     public TaskBuilder<V> setCtx(IContext ctx) {
+        if (!isTaskAcceptContext(type)) {
+            throw new IllegalStateException();
+        }
         this.ctx = ctx == null ? IContext.NONE : ctx;
+        return this;
+    }
+
+    /** 任务绑定的取消令牌 */
+    public ICancelToken getCancelToken() {
+        return isTaskAcceptContext(type) ? null : (ICancelToken) ctx;
+    }
+
+    public TaskBuilder<V> setCancelToken(ICancelToken cancelToken) {
+        if (isTaskAcceptContext(type)) {
+            throw new IllegalStateException();
+        }
+        this.ctx = cancelToken == null ? ICancelToken.NONE : cancelToken;
         return this;
     }
 

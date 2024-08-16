@@ -90,10 +90,12 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     public void CancelAfter(int cancelCode, TimeSpan timeSpan, IScheduledExecutorService delayer) {
         if (delayer == null) throw new ArgumentNullException(nameof(delayer));
-        delayer.ScheduleAction(Callback, timeSpan, new Context(this, cancelCode));
+        ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(Canceller, new Context(this, cancelCode));
+        builder.SetOnlyOnce(timeSpan.Ticks, new TimeSpan(1));
+        delayer.Schedule(in builder);
     }
 
-    private static void Callback(IContext rawContext) {
+    private static void Canceller(IContext rawContext) {
         Context context = (Context)rawContext;
         context.source.Cancel(context.cancelCode);
     }
@@ -300,7 +302,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
     /// </summary>
     /// <param name="expectedHead">当前的head</param>
     /// <returns>最新栈顶，可能是<see cref="TOMBSTONE"/></returns>
-    private Completion? RemoveClosedNode(Completion expectedHead) {
+    private Completion? RemoveHead(Completion expectedHead) {
         Completion? next = expectedHead.next;
         while (next != null && next.action == TOMBSTONE) {
             next = next.next;
@@ -319,7 +321,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
         while (expectedHead != TOMBSTONE) {
             // 处理延迟删除
             if (expectedHead != null && expectedHead.action == TOMBSTONE) {
-                expectedHead = RemoveClosedNode(expectedHead);
+                expectedHead = RemoveHead(expectedHead);
                 continue;
             }
 
@@ -471,7 +473,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
                 return;
             }
             if (this == source.stack) {
-                source.RemoveClosedNode(this);
+                source.RemoveHead(this);
             }
             Clear();
         }
@@ -483,12 +485,6 @@ public sealed class CancelTokenSource : ICancelTokenSource
         protected virtual void Clear() {
             executor = null!;
             source = null!;
-        }
-
-        protected bool IsCancelling(object? ctx) {
-            return TaskOption.IsEnabled(options, TaskOption.STAGE_CHECK_OBJECT_CTX)
-                   && ctx is IContext ctx2
-                   && ctx2.CancelToken.IsCancelling;
         }
     }
 
@@ -561,7 +557,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
                 if (action == null) {
                     return null;
                 }
-                if (!IsCancelling(state)) {
+                if (!AbstractPromise.IsCancelling(state, options)) {
                     action(source, state);
                 }
             }
@@ -638,7 +634,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
                 if (action == null) {
                     return null;
                 }
-                if (!IsCancelling(state)) {
+                if (!AbstractPromise.IsCancelling(state, options)) {
                     action(state);
                 }
             }

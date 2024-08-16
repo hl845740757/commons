@@ -111,22 +111,7 @@ public interface IFuture
     /// 如果任务失败，则抛出异常
     /// (不返回结果以避免装箱)
     /// </summary>
-    void ThrowIfFailedOrCancelled() {
-        switch (Status) {
-            case TaskStatus.Failed: {
-                throw new CompletionException(null, ExceptionNow(false));
-            }
-            case TaskStatus.Cancelled: {
-                throw ExceptionNow(false);
-            }
-            case TaskStatus.Pending:
-            case TaskStatus.Computing:
-            case TaskStatus.Success:
-            default: {
-                break;
-            }
-        }
-    }
+    void ThrowIfFailedOrCancelled() => ThrowIfFailedOrCancelled(this);
 
     #endregion
 
@@ -238,30 +223,14 @@ public interface IFuture
 
     /// <summary>
     /// 添加一个监听器  -- 接收future和state参数
+    ///
+    /// PS:如果不期望检测state中潜在的取消信号，可通过<see cref="TaskOption.STAGE_UNCANCELLABLE_CTX"/>关闭。
     /// </summary>
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
     /// <param name="options">调度选项</param>
     void OnCompletedAsync(IExecutor executor, Action<IFuture, object?> continuation, object? state, int options = 0);
-
-    /// <summary>
-    /// 添加一个监听器 -- 接收future和context参数
-    /// </summary>
-    /// <param name="continuation">回调</param>
-    /// <param name="context">上下文</param>
-    /// <param name="options">调度选项</param>
-    void OnCompleted(Action<IFuture, IContext> continuation, IContext context, int options = 0);
-
-    /// <summary>
-    /// 添加一个监听器  -- 接收future和context参数
-    /// </summary>
-    /// <param name="executor">回调线程</param>
-    /// <param name="continuation">回调</param>
-    /// <param name="context">上下文</param>
-    /// <param name="options">调度选项</param>
-    void OnCompletedAsync(IExecutor executor, Action<IFuture, IContext> continuation, IContext context, int options = 0);
-
 
     /// <summary>
     /// 添加一个监听器
@@ -281,6 +250,27 @@ public interface IFuture
     /// <param name="state">回调参数</param>
     /// <param name="options">调度选项</param>
     void OnCompletedAsync(IExecutor executor, Action<object?> continuation, object? state, int options = 0);
+
+    #endregion
+
+    #region util
+
+    public static void ThrowIfFailedOrCancelled(IFuture future) {
+        switch (future.Status) {
+            case TaskStatus.Failed: {
+                throw new CompletionException(null, future.ExceptionNow(false));
+            }
+            case TaskStatus.Cancelled: {
+                throw future.ExceptionNow(false);
+            }
+            case TaskStatus.Pending:
+            case TaskStatus.Computing:
+            case TaskStatus.Success:
+            default: {
+                break;
+            }
+        }
+    }
 
     #endregion
 }

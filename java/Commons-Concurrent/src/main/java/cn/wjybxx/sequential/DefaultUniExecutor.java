@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DefaultUniExecutor extends AbstractUniExecutor {
 
-    private final Deque<Runnable> taskQueue = new ArrayDeque<>();
+    private final ArrayDeque<Runnable> taskQueue = new ArrayDeque<>();
     private final UniPromise<Void> terminationPromise = new UniPromise<>(this);
     private final IFuture<Void> terminationFuture = terminationPromise.asReadonly();
     private int state = EventLoopState.ST_UNSTARTED;
@@ -73,7 +73,7 @@ public class DefaultUniExecutor extends AbstractUniExecutor {
     public void update() {
         final int batchSize = this.countLimit;
         final long nanosPerFrame = this.nanoTimeLimit;
-        final Deque<Runnable> taskQueue = this.taskQueue;
+        final ArrayDeque<Runnable> taskQueue = this.taskQueue;
 
         // 频繁取系统时间的性能不好，因此分两个模式运行
         Runnable task;
@@ -118,7 +118,7 @@ public class DefaultUniExecutor extends AbstractUniExecutor {
     public void execute(Runnable command) {
         if (isShutdown()) {
             if (command instanceof IFutureTask<?> promiseTask) {
-                promiseTask.future().trySetCancelled(CancelCodes.REASON_SHUTDOWN);
+                promiseTask.cancelWithoutRemove();
             }
             return;
         }

@@ -18,7 +18,6 @@ package cn.wjybxx.concurrent;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -63,21 +62,5 @@ public interface IExecutor extends Executor {
      */
     default void execute(Runnable command, int options) {
         execute(FutureUtils.toTask(command, options));
-    }
-
-    /**
-     * {@link Consumer}和{@link Runnable}的lambda差异足够大，因此选择重载。
-     *
-     * @param action 要执行的任务
-     * @param ctx    任务绑定的上下文
-     * @throws NullPointerException       如果任务为null
-     * @throws RejectedExecutionException 如果Executor已开始关闭
-     */
-    default void execute(Consumer<? super IContext> action, IContext ctx) {
-        execute(FutureUtils.toTask(action, ctx, 0));
-    }
-
-    default void execute(Consumer<? super IContext> action, IContext ctx, int options) {
-        execute(FutureUtils.toTask(action, ctx, options));
     }
 }

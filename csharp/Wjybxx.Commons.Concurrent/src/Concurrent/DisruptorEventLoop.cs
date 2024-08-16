@@ -68,8 +68,8 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
     private readonly EventSequencer<T> eventSequencer;
     /** 周期性任务队列 -- 既有的任务都是先于Sequencer中的任务提交的 */
     private readonly IndexedPriorityQueue<IScheduledFutureTask> scheduledTaskQueue;
-    /** 批量执行任务的大小 */
-    private readonly int batchSize;
+    private readonly ScheduledHelper scheduledHelper;
+
     /** 任务拒绝策略 */
     private readonly RejectedExecutionHandler rejectedExecutionHandler;
     /** 内部代理 */
@@ -77,6 +77,8 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
     /** 外部门面 */
     private readonly IEventLoopModule? mainModule;
 
+    /** 批量执行任务的大小 */
+    private readonly int batchSize;
     /** 消费事件后是否清理事件 -- 可清理意味着单消费者模型 */
     private readonly bool cleanEventAfterConsumed;
     /** 退出时是否清理buffer -- 可清理意味着是消费链的末尾 */
@@ -104,12 +106,13 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
         this._tickTime = ObjectUtil.SystemTicks();
         this.eventSequencer = builder.EventSequencer ?? throw new ArgumentException("builder.EventSequencer");
         this.scheduledTaskQueue = new IndexedPriorityQueue<IScheduledFutureTask>(new ScheduledTaskComparator(), 64);
-        this.batchSize = Math.Clamp(builder.BatchSize, MIN_BATCH_SIZE, MAX_BATCH_SIZE);
+        this.scheduledHelper = new ScheduledHelper(this);
 
         this.rejectedExecutionHandler = builder.RejectedExecutionHandler ?? RejectedExecutionHandlers.ABORT;
         this.agent = builder.Agent ?? EmptyAgent<T>.Inst;
         this.mainModule = builder.MainModule;
 
+        this.batchSize = Math.Clamp(builder.BatchSize, MIN_BATCH_SIZE, MAX_BATCH_SIZE);
         this.cleanEventAfterConsumed = builder.CleanEventAfterConsumed;
         this.cleanBufferOnExit = builder.CleanBufferOnExit;
         if (cleanBufferOnExit && eventSequencer is MpUnboundedEventSequencer<T> unboundedBuffer) {
@@ -215,14 +218,14 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
     public override void Execute(Action command, int options = 0) {
         if (command == null) throw new ArgumentNullException(nameof(command));
         if (IsShuttingDown) {
-            rejectedExecutionHandler.Rejected(Executors.BoxAction(command, options), this);
+            rejectedExecutionHandler.Rejected(Executors.ToTask(command, options), this);
             return;
         }
         if (InEventLoop()) {
             // 当前线程调用，需要使用tryNext以避免死锁
             long? sequence = eventSequencer.TryNext(1);
             if (sequence == null) {
-                rejectedExecutionHandler.Rejected(Executors.BoxAction(command, options), this);
+                rejectedExecutionHandler.Rejected(Executors.ToTask(command, options), this);
                 return;
             }
             TryPublish(command, sequence.Value, options);
@@ -288,7 +291,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void Reject(object objTask, int options) {
         if (objTask is Action action) {
-            rejectedExecutionHandler.Rejected(Executors.BoxAction(action, options), this);
+            rejectedExecutionHandler.Rejected(Executors.ToTask(action, options), this);
         } else {
             ITask task = (ITask)objTask;
             rejectedExecutionHandler.Rejected(task, this);
@@ -396,26 +399,51 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
         }
     }
 
-    protected internal override void ReschedulePeriodic(IScheduledFutureTask scheduledTask, bool triggered) {
-        Debug.Assert(InEventLoop());
-        if (IsShuttingDown) {
-            scheduledTask.CancelWithoutRemove();
-            return;
+    protected override IScheduledHelper Helper => scheduledHelper;
+
+    private class ScheduledHelper : IScheduledHelper
+    {
+        private readonly DisruptorEventLoop<T> _eventLoop;
+
+        public ScheduledHelper(DisruptorEventLoop<T> eventLoop) {
+            _eventLoop = eventLoop;
         }
-        scheduledTaskQueue.Enqueue(scheduledTask);
+
+        public long TickTime => _eventLoop.TickTime;
+
+        public long Normalize(long worldTime, TimeSpan timeUnit) {
+            return worldTime * timeUnit.Ticks;
+        }
+
+        public long Denormalize(long localTime, TimeSpan timeUnit) {
+            return localTime / timeUnit.Ticks;
+        }
+
+        public void Reschedule(IScheduledFutureTask scheduledTask) {
+            Debug.Assert(_eventLoop.InEventLoop());
+            if (_eventLoop.IsShuttingDown) {
+                scheduledTask.CancelWithoutRemove();
+                return;
+            }
+            _eventLoop.scheduledTaskQueue.Enqueue(scheduledTask);
+        }
+
+        public void OnCompleted(IScheduledFutureTask scheduledTask) {
+            scheduledTask.Clear();
+        }
+
+        public void Remove(IScheduledFutureTask scheduledTask) {
+            if (_eventLoop.InEventLoop()) {
+                _eventLoop.scheduledTaskQueue.Remove(scheduledTask);
+                return;
+            } else if (_eventLoop.mpUnboundedEventSequencer != null) {
+                _eventLoop.Execute(scheduledTask); // task.run方法会检测取消信号，避免额外封装
+            }
+            // else 等待任务超时弹出时再删除 -- 延迟删除可能存在内存泄漏，但压任务又可能导致阻塞（有界队列）
+        }
     }
 
-    protected internal override void RemoveScheduled(IScheduledFutureTask scheduledTask) {
-        if (IsShuttingDown) {
-            scheduledTaskQueue.Remove(scheduledTask);
-        } else {
-            scheduledTask.CancelWithoutRemove();
-            Execute(scheduledTask); // task.run方法会检测取消信号，避免额外封装
-        }
-        // else 等待任务超时弹出时再删除 -- 延迟删除可能存在内存泄漏，但压任务又可能导致阻塞（有界队列）
-    }
-
-    protected internal override long TickTime {
+    protected long TickTime {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => Volatile.Read(ref _tickTime);
     }
@@ -656,7 +684,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
         IndexedPriorityQueue<IScheduledFutureTask> taskQueue = scheduledTaskQueue;
         IScheduledFutureTask queueTask;
         while (taskQueue.TryPeekHead(out queueTask)) {
-            if (queueTask.Future.IsCompleted) {
+            if (queueTask.IsCancelling()) {
                 taskQueue.Dequeue(); // 未及时删除的任务
                 continue;
             }
@@ -674,11 +702,14 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
                 // 关闭模式下，不再重复执行任务
                 if (queueTask.IsTriggered || queueTask.Trigger(tickTime)) {
                     queueTask.CancelWithoutRemove();
+                    scheduledHelper.OnCompleted(queueTask);
                 }
             } else {
                 // 非关闭模式下，任务必须执行，否则可能导致时序错误
                 if (queueTask.Trigger(tickTime)) {
                     taskQueue.Enqueue(queueTask);
+                } else {
+                    scheduledHelper.OnCompleted(queueTask);
                 }
             }
         }
@@ -706,7 +737,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
                         task.Run();
                     }
                 } else if (eventObj.Type > 0) {
-                    agent.OnEvent(ref eventObj);
+                    agent.OnEvent(curSequence, ref eventObj);
                 } else {
                     if (IsShuttingDown) { // 生产者在观察到关闭时发布了不连续的数据
                         return curSequence;
@@ -786,7 +817,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
                         task.Run();
                     }
                 } else {
-                    agent.OnEvent(ref eventObj);
+                    agent.OnEvent(nextSequence, ref eventObj);
                 }
             }
             catch (Exception ex) {

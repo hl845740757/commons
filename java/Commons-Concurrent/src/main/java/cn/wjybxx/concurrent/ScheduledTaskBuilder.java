@@ -51,7 +51,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         super(type, task);
     }
 
-    private ScheduledTaskBuilder(int type, Object task, IContext ctx) {
+    private ScheduledTaskBuilder(int type, Object task, Object ctx) {
         super(type, task, ctx);
     }
 
@@ -61,16 +61,24 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
 
     // region factory
 
-    public static ScheduledTaskBuilder<?> newAction(Runnable task) {
+    public static ScheduledTaskBuilder<Object> newAction(Runnable task) {
         return new ScheduledTaskBuilder<>(TYPE_ACTION, task);
     }
 
-    public static <V> ScheduledTaskBuilder<V> newAction(Consumer<IContext> task, IContext ctx) {
+    public static ScheduledTaskBuilder<Object> newAction(Runnable task, ICancelToken cancelToken) {
+        return new ScheduledTaskBuilder<>(TYPE_ACTION, task, cancelToken);
+    }
+
+    public static ScheduledTaskBuilder<Object> newAction(Consumer<IContext> task, IContext ctx) {
         return new ScheduledTaskBuilder<>(TYPE_ACTION_CTX, task, ctx);
     }
 
     public static <V> ScheduledTaskBuilder<V> newFunc(Callable<? extends V> task) {
         return new ScheduledTaskBuilder<>(TYPE_FUNC, task);
+    }
+
+    public static <V> ScheduledTaskBuilder<V> newFunc(Callable<? extends V> task, ICancelToken cancelToken) {
+        return new ScheduledTaskBuilder<>(TYPE_FUNC, task, cancelToken);
     }
 
     public static <V> ScheduledTaskBuilder<V> newFunc(Function<IContext, ? extends V> task, IContext ctx) {
@@ -264,6 +272,12 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     @Override
     public TaskBuilder<V> setCtx(IContext ctx) {
         super.setCtx(ctx);
+        return this;
+    }
+
+    @Override
+    public TaskBuilder<V> setCancelToken(ICancelToken cancelToken) {
+        super.setCancelToken(cancelToken);
         return this;
     }
 

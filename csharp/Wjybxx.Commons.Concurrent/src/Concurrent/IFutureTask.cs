@@ -22,28 +22,27 @@ namespace Wjybxx.Commons.Concurrent
 /// FutureTask是Executor压入的可获取结果的任务类型。
 /// 1. 该接口暴露给Executor的扩展类，不是用户使用的类。
 /// 2. 需要获取结果的任务，我们将调度选项保存下来；普通任务的调度选项可能在execute。
+/// 3. 该接口的实例通常是不应该被序列化的。
+/// 4. 接口不再暴露Future，以允许Task在完成后清理Future。
 /// </summary>
 public interface IFutureTask : ITask
 {
     /// <summary>
-    /// 任务关联的Future
-    /// 注意：返回给用户时应当转换为<see cref="IFuture"/>类型。
+    /// 是否收到了取消信号
     /// </summary>
-    IPromise Future { get; }
-}
+    /// <returns></returns>
+    bool IsCancelling();
 
-/// <summary>
-/// FutureTask是Executor压入的可获取结果的任务类型。
-/// 1. 该接口暴露给Executor的扩展类，不是用户使用的类。
-/// 2. 需要获取结果的任务，我们将调度选项保存下来；普通任务的调度选项可能在execute。
-/// </summary>
-public interface IFutureTask<T> : IFutureTask
-{
     /// <summary>
-    /// 任务关联的Future
+    /// 取消执行
+    /// 该方法由EventLoop调用，不需要以回调的方式从EventLoop中删除。
     /// </summary>
-    new IPromise<T> Future { get; }
+    /// <param name="code">取消码</param>
+    void CancelWithoutRemove(int code = CancelCodes.REASON_SHUTDOWN);
 
-    IPromise IFutureTask.Future => Future;
+    /// <summary>
+    /// 清理任务
+    /// </summary>
+    void Clear();
 }
 }

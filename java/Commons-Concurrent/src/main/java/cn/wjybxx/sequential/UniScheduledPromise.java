@@ -20,7 +20,6 @@ import cn.wjybxx.concurrent.IScheduledFutureTask;
 import cn.wjybxx.concurrent.IScheduledPromise;
 
 import javax.annotation.concurrent.NotThreadSafe;
-import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
@@ -42,13 +41,14 @@ public class UniScheduledPromise<T> extends UniPromise<T> implements IScheduledP
 
     @Override
     public void setTask(IScheduledFutureTask<? extends T> task) {
-        assert task.future() == this;
-        this.task = Objects.requireNonNull(task);
+        this.task = task;
     }
 
     @Override
     public long getDelay(TimeUnit unit) {
-        if (task == null) throw new IllegalStateException();
+        if (task == null) {
+            return Long.MAX_VALUE; // 可能已解绑
+        }
         return task.getDelay(unit);
     }
 }

@@ -380,7 +380,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         if (trySetException(new CancellationException())) {
             return true;
         }
-        // 可能被其它线程取消
         return isCancelled();
     }
 
@@ -1019,28 +1018,28 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     }
 
     @Override
-    public void onCompleted(BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context, int options) {
-        uniOnCompleted2(null, action, context, options);
+    public void onCompleted(BiConsumer<? super IFuture<T>, Object> action, Object ctx, int options) {
+        uniOnCompleted2(null, action, ctx, options);
     }
 
     @Override
-    public void onCompleted(BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context) {
-        uniOnCompleted2(null, action, context, 0);
+    public void onCompleted(BiConsumer<? super IFuture<T>, Object> action, Object ctx) {
+        uniOnCompleted2(null, action, ctx, 0);
     }
 
     @Override
-    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context) {
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<T>, Object> action, Object ctx) {
         Objects.requireNonNull(executor, "executor");
-        uniOnCompleted2(executor, action, context, 0);
+        uniOnCompleted2(executor, action, ctx, 0);
     }
 
     @Override
-    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context, int options) {
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<T>, Object> action, Object ctx, int options) {
         Objects.requireNonNull(executor, "executor");
-        uniOnCompleted2(executor, action, context, options);
+        uniOnCompleted2(executor, action, ctx, options);
     }
 
-    private void uniOnCompleted2(Executor executor, BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context, int options) {
+    private void uniOnCompleted2(Executor executor, BiConsumer<? super IFuture<T>, Object> action, Object context, int options) {
         Objects.requireNonNull(action, "action");
         Objects.requireNonNull(context, "context");
         if (action instanceof Completion completion) { // 主要是Relay
@@ -1189,7 +1188,18 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         return false;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    static boolean isCancelling(Object ctx, int options) {
+        if (ctx == null || TaskOption.isEnabled(options, TaskOption.STAGE_UNCANCELLABLE_CTX)) {
+            return false;
+        }
+        if (ctx instanceof IContext ctx2) {
+            return ctx2.cancelToken().isCancelling();
+        }
+        if (ctx instanceof ICancelToken cancelToken) {
+            return cancelToken.isCancelling();
+        }
+        return false;
+    }
 
     // 开放给Completion的方法
 
@@ -2076,11 +2086,11 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
     private static class UniOnComplete2<T> extends UniOnComplete<T> {
 
-        BiConsumer<? super IFuture<T>, ? super IContext> action;
-        IContext ctx;
+        BiConsumer<? super IFuture<T>, Object> action;
+        Object ctx;
 
         public UniOnComplete2(Executor executor, int options, UniPromise<T> input,
-                              BiConsumer<? super IFuture<T>, ? super IContext> action, IContext ctx) {
+                              BiConsumer<? super IFuture<T>, Object> action, Object ctx) {
             super(executor, options, input);
             this.action = action;
             this.ctx = ctx;
@@ -2091,7 +2101,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
             final UniPromise<T> input = this.input;
             tryComplete:
             {
-                if (ctx.cancelToken().isCancelling()) {
+                if (isCancelling(ctx, options)) {
                     break tryComplete;
                 }
                 // 异步模式下已经claim
@@ -2108,7 +2118,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         }
 
         static <T> boolean fireNow(UniPromise<T> input,
-                                   BiConsumer<? super IFuture<T>, ? super IContext> action, IContext ctx,
+                                   BiConsumer<? super IFuture<T>, Object> action, Object ctx,
                                    UniOnComplete2<T> c) {
             try {
                 if (c != null && !c.claim()) {

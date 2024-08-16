@@ -147,30 +147,13 @@ public interface IFuture<T> : IFuture
     /// <summary>
     /// 添加一个监听器 -- 接收future和state参数
     /// 1. 该接口通常应该由<see cref="FutureAwaiter{T}"/>调用。
-    /// 2. 如果state是<see cref="IContext"/>类型，默认会在执行回调前会检查Context中的取消信号。
+    /// 2. 如果不期望检测state中潜在的取消信号，可通过<see cref="TaskOption.STAGE_UNCANCELLABLE_CTX"/>关闭。
     /// </summary>
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
     /// <param name="options">调度选项</param>
     void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object?> continuation, object? state, int options = 0);
-
-    /// <summary>
-    /// 添加一个监听器 -- 接收future和context参数
-    /// </summary>
-    /// <param name="continuation">回调</param>
-    /// <param name="context">上下文</param>
-    /// <param name="options">调度选项</param>
-    void OnCompleted(Action<IFuture<T>, IContext> continuation, IContext context, int options = 0);
-
-    /// <summary>
-    /// 添加一个监听器  -- 接收future和context参数
-    /// </summary>
-    /// <param name="executor">回调线程</param>
-    /// <param name="continuation">回调</param>
-    /// <param name="context">上下文</param>
-    /// <param name="options">调度选项</param>
-    void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, IContext> continuation, IContext context, int options = 0);
 
     #endregion
 
@@ -202,14 +185,6 @@ public interface IFuture<T> : IFuture
 
     void IFuture.OnCompletedAsync(IExecutor executor, Action<IFuture, object?> continuation, object? state, int options) {
         OnCompletedAsync(executor, continuation, state, options);
-    }
-
-    void IFuture.OnCompleted(Action<IFuture, IContext> continuation, IContext context, int options) {
-        OnCompleted(continuation, context, options);
-    }
-
-    void IFuture.OnCompletedAsync(IExecutor executor, Action<IFuture, IContext> continuation, IContext context, int options) {
-        OnCompletedAsync(executor, continuation, context, options);
     }
 
     #endregion

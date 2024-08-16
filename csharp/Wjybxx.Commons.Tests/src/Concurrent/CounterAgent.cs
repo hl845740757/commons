@@ -32,7 +32,7 @@ public class CounterAgent : IEventLoopAgent<CounterEvent>
     public void OnStart() {
     }
 
-    public void OnEvent(ref CounterEvent evt) {
+    public void OnEvent(long sequence, ref CounterEvent evt) {
         _counter.Count(evt.Type, evt.longVal1);
     }
 

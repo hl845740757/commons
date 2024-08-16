@@ -18,17 +18,15 @@ package cn.wjybxx.sequential;
 
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
-import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.base.time.TimeProvider;
-import cn.wjybxx.concurrent.EventLoopState;
-import cn.wjybxx.concurrent.IFuture;
-import cn.wjybxx.concurrent.IFutureTask;
+import cn.wjybxx.concurrent.*;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author wjybxx
@@ -36,15 +34,17 @@ import java.util.Objects;
  */
 public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor implements UniScheduledExecutor {
 
-    private static final Comparator<UniScheduledPromiseTask<?>> queueTaskComparator = UniScheduledPromiseTask::compareToExplicitly;
+    private static final Comparator<ScheduledPromiseTask<?>> queueTaskComparator = ScheduledPromiseTask::compareToExplicitly;
     private static final int DEFAULT_INITIAL_CAPACITY = 16;
 
     private final TimeProvider timeProvider;
-    private final IndexedPriorityQueue<UniScheduledPromiseTask<?>> taskQueue;
+    private final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue;
+    private final ScheduledHelper helper = new ScheduledHelper();
+
     private final UniPromise<Void> terminationPromise = new UniPromise<>(this);
     private final IFuture<Void> terminationFuture = terminationPromise.asReadonly();
-    private int state = EventLoopState.ST_UNSTARTED;
 
+    private int state = EventLoopState.ST_UNSTARTED;
     /** 为任务分配唯一id，确保先入先出 */
     private long sequencer = 0;
     /** 当前帧的时间戳，缓存下来以避免在tick的过程中产生变化 */
@@ -68,8 +68,8 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
 
         // 记录最后一个任务id，避免执行本次tick期间添加的任务
         final long barrierTaskId = sequencer;
-        final IndexedPriorityQueue<UniScheduledPromiseTask<?>> taskQueue = this.taskQueue;
-        UniScheduledPromiseTask<?> queueTask;
+        final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue = this.taskQueue;
+        ScheduledPromiseTask<?> queueTask;
         while ((queueTask = taskQueue.peek()) != null) {
             // 优先级最高的任务不需要执行，那么后面的也不需要执行
             if (curTime < queueTask.getNextTriggerTime()) {
@@ -84,6 +84,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
             if (queueTask.trigger(tickTime)) {
                 if (isShutdown()) { // 已请求关闭
                     queueTask.cancelWithoutRemove();
+                    helper.onCompleted(queueTask);
                 } else {
                     taskQueue.offer(queueTask);
                 }
@@ -93,7 +94,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
 
     @Override
     public boolean needMoreUpdate() {
-        UniScheduledPromiseTask<?> queueTask = taskQueue.peek();
+        ScheduledPromiseTask<?> queueTask = taskQueue.peek();
         return queueTask != null && queueTask.getNextTriggerTime() <= tickTime;
     }
 
@@ -102,27 +103,29 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
         if (isShuttingDown()) {
             // 暂时直接取消
             if (command instanceof IFutureTask<?> promiseTask) {
-                promiseTask.future().trySetCancelled(CancelCodes.REASON_SHUTDOWN);
+                promiseTask.cancelWithoutRemove();
             }
             return;
         }
-        if (command instanceof UniScheduledPromiseTask<?> promiseTask) {
+        if (command instanceof ScheduledPromiseTask<?> promiseTask) {
             promiseTask.setId(++sequencer);
             if (delayExecute(promiseTask)) {
                 promiseTask.registerCancellation();
             }
         } else {
-            UniScheduledPromiseTask<?> promiseTask = UniScheduledPromiseTask.ofAction(command, 0, newScheduledPromise(), ++sequencer, tickTime);
+            ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(command, null, 0, newScheduledPromise(), helper, tickTime);
+            promiseTask.setId(++sequencer);
             if (delayExecute(promiseTask)) {
                 promiseTask.registerCancellation();
             }
         }
     }
 
-    private boolean delayExecute(UniScheduledPromiseTask<?> futureTask) {
+    private boolean delayExecute(ScheduledPromiseTask<?> futureTask) {
         if (isShuttingDown()) {
             // 默认直接取消，暂不添加拒绝处理器
             futureTask.cancelWithoutRemove();
+            helper.onCompleted(futureTask);
             return false;
         } else {
             taskQueue.add(futureTask);
@@ -139,6 +142,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
         }
     }
 
+    @Nonnull
     @Override
     public List<Runnable> shutdownNow() {
         ArrayList<Runnable> result = new ArrayList<>(taskQueue);
@@ -172,18 +176,42 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
     // region 内部实现
 
     @Override
-    protected long tickTime() {
-        return tickTime;
+    protected IScheduledHelper helper() {
+        return helper;
     }
 
-    @Override
-    protected void reSchedulePeriodic(UniScheduledPromiseTask<?> futureTask, boolean triggered) {
-        delayExecute(futureTask);
+    private class ScheduledHelper implements IScheduledHelper {
+
+        @Override
+        public long tickTime() {
+            return tickTime;
+        }
+
+        @Override
+        public long normalize(long worldTime, TimeUnit timeUnit) {
+            return timeUnit.toMillis(worldTime);
+        }
+
+        @Override
+        public long denormalize(long localTime, TimeUnit timeUnit) {
+            return timeUnit.convert(localTime, TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public void reschedule(ScheduledPromiseTask<?> futureTask) {
+            delayExecute(futureTask);
+        }
+
+        @Override
+        public void onCompleted(ScheduledPromiseTask<?> futureTask) {
+            futureTask.clear();
+        }
+
+        @Override
+        public void remove(ScheduledPromiseTask<?> futureTask) {
+            taskQueue.removeTyped(futureTask);
+        }
     }
 
-    @Override
-    protected void removeScheduled(UniScheduledPromiseTask<?> futureTask) {
-        taskQueue.removeTyped(futureTask);
-    }
-
+    // endregion
 }

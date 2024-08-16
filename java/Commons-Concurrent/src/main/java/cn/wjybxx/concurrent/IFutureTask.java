@@ -16,27 +16,33 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.CancelCodes;
+
 /**
  * FutureTask是Executor压入的可获取结果的任务类型
  * 1.该接口暴露给Executor的扩展类，不是用户使用的类。
  * 2.需要获取结果的任务，我们将调度选项保存下来；普通任务的调度选项可能仅在execute时使用。
- * 3.该接口的实例通常是不应该被序列化的
+ * 3.该接口的实例通常是不应该被序列化的.
+ * 4.接口不再暴露Future，以允许Task在完成后清理Future。
  *
  * @author wjybxx
  * date - 2023/11/16
  */
 public interface IFutureTask<V> extends ITask {
 
-    /**
-     * 用于获取结果的句柄
-     * 注意：返回给用户时应当转为{@link IFuture}类型。
-     */
-    IPromise<V> future();
+    /** 是否收到了取消信号 */
+    boolean isCancelling();
 
     /**
-     * run方法应当使{@link #future()}进入完成状态
+     * 取消执行
+     * 该方法由EventLoop调用，不需要以回调的方式从EventLoop中删除。
+     *
+     * @param code 取消码
      */
-    @Override
-    void run();
+    void cancelWithoutRemove(int code);
+
+    default void cancelWithoutRemove() {
+        cancelWithoutRemove(CancelCodes.REASON_SHUTDOWN);
+    }
 
 }

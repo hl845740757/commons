@@ -30,7 +30,7 @@ namespace Wjybxx.Commons.Sequential
 /// 1.去除{@link #result}等的volatile操作，变更为普通字段。
 /// 2.去除了阻塞操作Awaiter的支持。
 /// 3.去除了state的中间状态 -- 可对比<see cref="UniPromise{T}"/>
-/// 4.<see cref="TryInline"/>对executor的检测调整
+/// 4.<see cref="AbstractPromise.TryInline"/>对executor的检测调整
 ///
 /// <h3>Async的含义</h3>
 /// 既然是单线程的，又何来异步一说？这里的异步是指不立即执行给定的行为，而是提交到Executor等待调度。
@@ -293,6 +293,10 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         };
     }
 
+    public void ThrowIfFailedOrCancelled() {
+        IFuture.ThrowIfFailedOrCancelled(this);
+    }
+
     /** 上报future的执行结果 -- 取消以外的异常都将被包装为<see cref="CompletionException"/> */
     private T ReportJoin(int state) {
         Debug.Assert(state > 0);
@@ -364,6 +368,10 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         return new FutureAwaiter<T>(this);
     }
 
+    public FutureAwaitable<T> GetAwaitable(IExecutor executor, int options = 0) {
+        return new FutureAwaitable<T>(this, executor, options);
+    }
+
     #endregion
 
     #region async
@@ -386,22 +394,13 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         PushUniOnCompleted2(executor, continuation, state, options);
     }
 
-    public void OnCompleted(Action<IFuture<T>, IContext> continuation, IContext context, int options = 0) {
-        PushUniOnCompleted3(null, continuation, context, options);
-    }
-
-    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, IContext> continuation, IContext context, int options = 0) {
-        if (executor == null) throw new ArgumentNullException(nameof(executor));
-        PushUniOnCompleted3(executor, continuation, context, options);
-    }
-
     public void OnCompleted(Action<object?> continuation, object? state, int options = 0) {
-        PushUniOnCompleted4(null, continuation, state, options);
+        PushUniOnCompleted3(null, continuation, state, options);
     }
 
     public void OnCompletedAsync(IExecutor executor, Action<object?> continuation, object? state, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        PushUniOnCompleted4(executor, continuation, state, options);
+        PushUniOnCompleted3(executor, continuation, state, options);
     }
 
     private void PushUniOnCompleted1(IExecutor? executor, Action<IFuture<T>> continuation, int options = 0) {
@@ -424,21 +423,12 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         }
     }
 
-    private void PushUniOnCompleted3(IExecutor? executor, Action<IFuture<T>, IContext> continuation, IContext context, int options = 0) {
+    private void PushUniOnCompleted3(IExecutor? executor, Action<object?> continuation, object? state, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsCompleted && executor == null) {
-            UniOnCompleted3.FireNow(this, continuation, context, null);
+            UniOnCompleted3.FireNow(continuation, state, null);
         } else {
-            PushCompletion(new UniOnCompleted3(executor, options, this, continuation, context));
-        }
-    }
-
-    private void PushUniOnCompleted4(IExecutor? executor, Action<object?> continuation, object? state, int options = 0) {
-        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (IsCompleted && executor == null) {
-            UniOnCompleted4.FireNow(continuation, state, null);
-        } else {
-            UniOnCompleted4 completion = UniOnCompleted4.POOL.Acquire();
+            UniOnCompleted3 completion = UniOnCompleted3.POOL.Acquire();
             completion.Init(executor, options, continuation, state);
             PushCompletion(completion);
         }
@@ -447,34 +437,6 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
     #endregion
 
     #region completion
-
-    private static bool TryInline(Completion completion, IExecutor e, int options) {
-        // 尝试内联
-        if (TaskOption.IsEnabled(options, TaskOption.STAGE_TRY_INLINE)) {
-            if (e is IUniExecutorService) { // uni-executor支持
-                return true;
-            }
-            if (e is ISingleThreadExecutor eventLoop
-                && eventLoop.InEventLoop()) {
-                return true;
-            }
-        }
-        // 判断是否需要传递选项
-        if (options != 0
-            && !TaskOption.IsEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)) {
-            e.Execute(completion);
-        } else {
-            completion.Options = 0;
-            e.Execute(completion);
-        }
-        return false;
-    }
-
-    private static bool IsCancelling(object? ctx, int options) {
-        return TaskOption.IsEnabled(options, TaskOption.STAGE_CHECK_OBJECT_CTX)
-               && ctx is IContext ctx2
-               && ctx2.CancelToken.IsCancelling;
-    }
 
     private abstract class UniOnCompleted : Completion
     {
@@ -629,60 +591,10 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
             () => new UniOnCompleted2(), task => task.Reset(), TaskPoolConfig.GetPoolSize<T>());
     }
 
-    private class UniOnCompleted3 : UniOnCompleted
-    {
-#nullable disable
-        private Action<IFuture<T>, IContext> action;
-        private IContext context;
-#nullable enable
-
-        public UniOnCompleted3(IExecutor? executor, int options, UniPromise<T> input,
-                               Action<IFuture<T>, IContext> action, IContext context)
-            : base(executor, options, input) {
-            this.action = action;
-            this.context = context;
-        }
-
-        protected internal override AbstractUniPromise? TryFire(int mode) {
-            UniPromise<T>? input = this.input;
-            {
-                if (context.CancelToken.IsCancelling) {
-                    goto outer;
-                }
-                // 异步模式下已经claim
-                if (!FireNow(input, action, context, mode > 0 ? null : this)) {
-                    return null;
-                }
-            }
-            outer:
-            // help gc
-            this.executor = null;
-            this.input = null;
-            this.action = null;
-            this.context = null;
-            return null;
-        }
-
-        public static bool FireNow(UniPromise<T> input,
-                                   Action<IFuture<T>, IContext> action, IContext context,
-                                   UniOnCompleted3? c) {
-            try {
-                if (c != null && !c.Claim()) {
-                    return false;
-                }
-                action(input, context);
-            }
-            catch (Exception e) {
-                FutureLogger.LogCause(e, "UniOnCompleted2 caught an exception");
-            }
-            return true;
-        }
-    }
-
     /// <summary>
     /// 直接继承Completion，特殊优化
     /// </summary>
-    private class UniOnCompleted4 : Completion
+    private class UniOnCompleted3 : Completion
     {
 #nullable disable
         protected IExecutor executor;
@@ -691,7 +603,7 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         private object state;
 #nullable enable
 
-        private UniOnCompleted4() {
+        private UniOnCompleted3() {
         }
 
         public void Init(IExecutor? executor, int options, Action<object?> action, object? state) {
@@ -747,7 +659,7 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         }
 
         public static bool FireNow(Action<object?> action, object? state,
-                                   UniOnCompleted4? c) {
+                                   UniOnCompleted3? c) {
             try {
                 if (c != null && !c.Claim()) {
                     return false;
@@ -763,8 +675,8 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         /// <summary>
         /// 放在类内部，避免随着Promise就初始化
         /// </summary>
-        internal static readonly IObjectPool<UniOnCompleted4> POOL = new ConcurrentObjectPool<UniOnCompleted4>(
-            () => new UniOnCompleted4(), task => task.Reset(), TaskPoolConfig.GetPoolSize<T>());
+        internal static readonly IObjectPool<UniOnCompleted3> POOL = new ConcurrentObjectPool<UniOnCompleted3>(
+            () => new UniOnCompleted3(), task => task.Reset(), TaskPoolConfig.GetPoolSize<T>());
     }
 
     #endregion

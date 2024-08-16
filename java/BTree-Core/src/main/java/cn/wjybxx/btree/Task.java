@@ -314,7 +314,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     /**
      * Task的心跳方法，在Task进入完成状态之前会反复执行。
      * 1.可以根据{@link #isExecuteTriggeredByEnter()}判断是否是与{@link #enter(int)}连续执行的。
-     * 2.运行中可通过{@link #setSuccess()}、{@link #setFailed(int)} ()}、{@link #setCancelled()}将自己更新为完成状态。
+     * 2.运行中可通过{@link #setSuccess()}、{@link #setFailed(int)}、{@link #setCancelled()}将自己更新为完成状态。
      * 3.不建议直接调用该方法，而是通过模板方法{@link #template_execute()}运行。
      */
     protected abstract void execute();

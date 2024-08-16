@@ -49,8 +49,8 @@ public interface ScheduledTaskBuilder
 
     #region factory
 
-    public static ScheduledTaskBuilder<int> NewAction(Action task) {
-        TaskBuilder<int> taskBuilder = TaskBuilder.NewAction(task);
+    public static ScheduledTaskBuilder<int> NewAction(Action task, ICancelToken? cancelToken = null) {
+        TaskBuilder<int> taskBuilder = TaskBuilder.NewAction(task, cancelToken);
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
@@ -59,13 +59,18 @@ public interface ScheduledTaskBuilder
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
-    public static ScheduledTaskBuilder<T> NewFunc<T>(Func<T> task) {
-        TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task);
+    public static ScheduledTaskBuilder<T> NewFunc<T>(Func<T> task, ICancelToken? cancelToken = null) {
+        TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task, cancelToken);
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
     public static ScheduledTaskBuilder<T> NewFunc<T>(Func<IContext, T> task, IContext ctx) {
         TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task, ctx);
+        return new ScheduledTaskBuilder<T>(ref taskBuilder);
+    }
+
+    public static ScheduledTaskBuilder<T> NewTimeSharing<T>(TimeSharingTask<T> func, IContext context) {
+        TaskBuilder<T> taskBuilder = TaskBuilder.NewTimeSharing(func, context);
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 

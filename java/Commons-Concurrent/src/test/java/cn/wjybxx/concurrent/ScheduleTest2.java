@@ -16,7 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.StacklessTimeoutException;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -66,23 +65,24 @@ public class ScheduleTest2 {
         consumer.terminationFuture().join();
     }
 
-    boolean timeSharingJoinString(IPromise<? super String> promise) {
+    ResultHolder<String> timeSharingJoinString() {
         joiner.add(stringList.get(index++));
         if (index >= stringList.size()) {
-            return promise.trySetResult(joiner.toString());
+            return ResultHolder.success(joiner.toString());
         }
-        return false;
+        return null;
     }
 
-    void untilJoinStringSuccess(IPromise<? super String> promise) {
-        while (!promise.isDone()) {
-            timeSharingJoinString(promise);
+    ResultHolder<String> untilJoinStringSuccess() {
+        ResultHolder<String> r;
+        while ((r = timeSharingJoinString()) == null) {
         }
+        return r;
     }
 
     @Test
     void testOnlyOnceFail() {
-        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, promise) -> timeSharingJoinString(promise))
+        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, first) -> timeSharingJoinString())
                 .setOnlyOnce(0));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
@@ -91,7 +91,7 @@ public class ScheduleTest2 {
 
     @Test
     void testOnlyOnceSuccess() {
-        String result = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, promise) -> untilJoinStringSuccess(promise))
+        String result = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, first) -> untilJoinStringSuccess())
                         .setOnlyOnce(0))
                 .join();
 
@@ -101,7 +101,7 @@ public class ScheduleTest2 {
     //
     @Test
     void testTimeSharingComplete() {
-        String result = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, promise) -> timeSharingJoinString(promise))
+        String result = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, first) -> timeSharingJoinString())
                         .setFixedDelay(0, 200))
                 .join();
 
@@ -110,7 +110,7 @@ public class ScheduleTest2 {
 
     @Test
     void testTimeSharingTimeout() {
-        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, promise) -> timeSharingJoinString(promise))
+        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, first) -> timeSharingJoinString())
                 .setFixedDelay(0, 200)
                 .setTimeoutByCount(1));
 
@@ -120,13 +120,16 @@ public class ScheduleTest2 {
 
     @Test
     void testRunnableTimeout() {
-        IScheduledFuture<?> future = consumer.schedule(ScheduledTaskBuilder.newAction(() -> {
-                })
+        IScheduledFuture<?> future = consumer.schedule(ScheduledTaskBuilder.newAction(() -> {})
                 .setFixedDelay(0, 200)
                 .setTimeoutByCount(1));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
         Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
+
+        consumer.submit(() -> {
+            System.out.println("");
+        });
     }
 
     @Test

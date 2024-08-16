@@ -34,10 +34,10 @@ public interface IScheduledExecutorService : IExecutorService
     /// <summary>
     /// 创建一个promise以用于任务调度
     ///
-    /// 注意：通常不应该使用该Promise的结果，真实泛型可能是byte/int/object。
+    /// 注意：我们统一使用int代替void，业务不应该使用该Promise的结果。
     /// </summary>
     /// <returns></returns>
-    IScheduledPromise NewScheduledPromise();
+    IScheduledPromise<int> NewScheduledPromise();
 
     /// <summary>
     /// 提交一个任务
@@ -59,15 +59,6 @@ public interface IScheduledExecutorService : IExecutorService
     IScheduledFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null);
 
     /// <summary>
-    /// 在给定的延迟之后执行给定的委托（接收上下文参数）
-    /// </summary>
-    /// <param name="action">要调度的任务</param>
-    /// <param name="delay">执行延迟</param>
-    /// <param name="context">上下文</param>
-    /// <returns></returns>11
-    IScheduledFuture ScheduleAction(Action<IContext> action, TimeSpan delay, IContext context);
-
-    /// <summary>
     /// 在给定的延迟之后执行给定的委托
     /// </summary>
     /// <param name="action">要调度的任务</param>
@@ -75,15 +66,6 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
     IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null);
-
-    /// <summary>
-    /// 在给定的延迟之后执行给定的委托（接收上下文参数）
-    /// </summary>
-    /// <param name="action">要调度的任务</param>
-    /// <param name="delay">执行延迟</param>
-    /// <param name="context">上下文</param>
-    /// <returns></returns>
-    IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<IContext, TResult> action, TimeSpan delay, IContext context);
 
     /// <summary>
     /// 按固定延迟执行任务，FixedDelay只保证两次任务的执行间隔一定大于等于给定延迟

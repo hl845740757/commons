@@ -29,27 +29,21 @@ public interface IExecutorService : IExecutor
 {
     #region lifecycle
 
-    /**
-     * 查询{@link EventLoopGroup}是否处于正在关闭状态。
-     * 正在关闭状态下，拒绝接收新任务，当执行完所有任务后，进入关闭状态。
-     *
-     * @return 如果该{@link EventLoopGroup}管理的所有{@link EventLoop}正在关闭或已关闭则返回true
-     */
+    /// <summary>
+    /// 查询<see cref="IExecutorService"/>是否处于正在关闭状态。
+    /// 正在关闭状态下，拒绝接收新任务，当执行完所有任务后，进入关闭状态。
+    /// </summary>
     bool IsShuttingDown { get; }
 
-    /**
-     * 查询{@link EventLoopGroup}是否处于关闭状态。
-     * 关闭状态下，拒绝接收新任务，执行退出前的清理操作，执行完清理操作后，进入终止状态。
-     *
-     * @return 如果已关闭，则返回true
-     */
+    /// <summary>
+    ///  查询<see cref="IExecutorService"/>是否处于关闭状态。
+    /// 关闭状态下，拒绝接收新任务，执行退出前的清理操作，执行完清理操作后，进入终止状态。
+    /// </summary>
     bool IsShutdown { get; }
 
-    /**
-     * 是否已进入终止状态，一旦进入终止状态，表示生命周期真正结束。
-     *
-     * @return 如果已处于终止状态，则返回true
-     */
+    /// <summary>
+    /// 是否已进入终止状态，一旦进入终止状态，表示生命周期真正结束。
+    /// </summary>
     bool IsTerminated { get; }
 
     /// <summary>
@@ -109,10 +103,10 @@ public interface IExecutorService : IExecutor
     /// <summary>
     /// 创建一个与当前Executor绑定的Promise
     ///
-    /// 注意：通常不应该使用该Promise的结果，真实泛型可能是byte/int/object。
+    /// 注意：我们统一使用int代替void，业务不应该使用该Promise的结果。
     /// </summary>
     /// <returns>Promise</returns>
-    IPromise NewPromise();
+    IPromise<int> NewPromise();
 
     /// <summary>
     /// 提交一个任务
@@ -133,6 +127,15 @@ public interface IExecutorService : IExecutor
     /// 提交一个任务
     /// </summary>
     /// <param name="action">待执行的函数</param>
+    /// <param name="cancelToken">取消令牌</param>
+    /// <param name="options">调度选项</param>
+    /// <returns></returns>
+    IFuture SubmitAction(Action action, ICancelToken cancelToken, int options = 0);
+
+    /// <summary>
+    /// 提交一个任务
+    /// </summary>
+    /// <param name="action">待执行的函数</param>
     /// <param name="context">任务上下文</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
@@ -145,6 +148,15 @@ public interface IExecutorService : IExecutor
     /// <param name="options">调度选项</param>
     /// <returns></returns>
     IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0);
+
+    /// <summary>
+    /// 提交一个任务
+    /// </summary>
+    /// <param name="action">待执行的函数</param>
+    /// <param name="cancelToken">取消令牌</param>
+    /// <param name="options">调度选项</param>
+    /// <returns></returns>
+    IFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken cancelToken, int options = 0);
 
     /// <summary>
     /// 提交一个任务

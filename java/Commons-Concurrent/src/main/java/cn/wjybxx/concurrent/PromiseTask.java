@@ -16,11 +16,10 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.StacklessTimeoutException;
+import cn.wjybxx.base.concurrent.CancelCodes;
 
 import java.util.Objects;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -33,51 +32,35 @@ import java.util.function.Function;
 public class PromiseTask<V> implements IFutureTask<V> {
 
     /** 优先级的掩码 - 4bit，求值频率较高，放在低位 */
-    protected static final int MASK_PRIORITY = 0x0F;
+    public static final int MASK_PRIORITY = 0x0F;
     /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
-    protected static final int MASK_TASK_TYPE = 0xF0;
+    public static final int MASK_TASK_TYPE = 0xF0;
     /** 调度类型的掩码 -- 4bit，最大16种，可支持复杂的调度 */
-    protected static final int MASK_SCHEDULE_TYPE = 0x0F00;
+    public static final int MASK_SCHEDULE_TYPE = 0x0F00;
 
-    /** 是否已经声明任务的归属权 */
-    protected static final int MASK_CLAIMED = 1 << 16;
-    /** 分时任务是否已启动 */
-    protected static final int MASK_STARTED = 1 << 17;
-    /** 分时任务是否已停止 */
-    protected static final int MASK_STOPPED = 1 << 18;
-    /** 延时任务有超时时间 */
-    protected static final int MASK_TIMEOUT = 1 << 20;
     /** 延时任务已触发过 */
-    protected static final int MASK_TRIGGERED = 1 << 21;
+    public static final int MASK_TRIGGERED = 1 << 16;
+    /** 延时任务有超时时间 */
+    public static final int MASK_HAS_TIMEOUT = 1 << 17;
 
-    protected static final int OFFSET_PRIORITY = 0;
+    public static final int OFFSET_PRIORITY = 0;
     /** 任务类型的偏移量 */
-    protected static final int OFFSET_TASK_TYPE = 4;
+    public static final int OFFSET_TASK_TYPE = 4;
     /** 调度类型的偏移量 */
-    protected static final int OFFSET_SCHEDULE_TYPE = 8;
+    public static final int OFFSET_SCHEDULE_TYPE = 8;
     /** 最大优先级 */
-    protected static final int MAX_PRIORITY = MASK_PRIORITY;
+    public static final int MAX_PRIORITY = MASK_PRIORITY;
 
     /** 用户的任务 */
     private Object task;
-    /** 任务上下文 */
-    protected IContext ctx;
+    /** 任务上下文 -- {@link IContext}或{@link ICancelToken} */
+    private Object ctx;
     /** 调度选项 */
-    protected final int options;
-    /** 任务关联的promise - 用户可能在任务完成后继续访问，因此不能清理 */
-    protected final IPromise<V> promise;
+    protected int options;
+    /** 任务关联的promise */
+    protected IPromise<V> promise;
     /** 控制标记 */
     protected int ctl;
-
-    /**
-     * @param task    用户的任务，支持的类型见{@link TaskBuilder#taskType(Object)}
-     * @param ctx     任务关联的上下文
-     * @param options 任务的调度选项
-     * @param promise 任务关联的promise
-     */
-    public PromiseTask(Object task, IContext ctx, int options, IPromise<V> promise) {
-        this(task, ctx, options, promise, TaskBuilder.taskType(task));
-    }
 
     /**
      * @param builder 任务构建器
@@ -87,31 +70,41 @@ public class PromiseTask<V> implements IFutureTask<V> {
         this(builder.getTask(), builder.getCtx(), builder.getOptions(), promise, builder.getType());
     }
 
-    public PromiseTask(Object task, IContext ctx, int options, IPromise<V> promise, int taskType) {
+    /**
+     * @param task     用户的任务，支持的类型见{@link TaskBuilder#taskType(Object)}
+     * @param ctx      任务关联的上下文
+     * @param options  任务的调度选项
+     * @param promise  任务关联的promise
+     * @param taskType 任务类型 -- 注意上下文的类型
+     */
+    protected PromiseTask(Object task, Object ctx, int options, IPromise<V> promise, int taskType) {
+        if (ctx == null) {
+            if (TaskBuilder.isTaskAcceptContext(taskType)) {
+                ctx = IContext.NONE;
+            } else {
+                ctx = ICancelToken.NONE;
+            }
+        }
+
         this.task = Objects.requireNonNull(task, "action");
-        this.ctx = ctx == null ? IContext.NONE : ctx;
+        this.ctx = ctx;
         this.options = options;
         this.promise = Objects.requireNonNull(promise, "promise");
         this.ctl |= (taskType << OFFSET_TASK_TYPE);
-        // 注入promise
-        if (taskType == TaskBuilder.TYPE_TIMESHARING) {
-            @SuppressWarnings("unchecked") TimeSharingTask<V> timeSharingTask = (TimeSharingTask<V>) task;
-            timeSharingTask.inject(this.ctx, this.promise);
-        }
     }
 
     // region factory
 
-    public static PromiseTask<?> ofAction(Runnable action, IContext ctx, int options, IPromise<?> promise) {
-        return new PromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION);
+    public static PromiseTask<?> ofAction(Runnable action, ICancelToken cancelToken, int options, IPromise<?> promise) {
+        return new PromiseTask<>(action, cancelToken, options, promise, TaskBuilder.TYPE_ACTION);
     }
 
     public static PromiseTask<?> ofAction(Consumer<? super IContext> action, IContext ctx, int options, IPromise<?> promise) {
         return new PromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION_CTX);
     }
 
-    public static <V> PromiseTask<V> ofFunction(Callable<? extends V> action, IContext ctx, int options, IPromise<V> promise) {
-        return new PromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_FUNC);
+    public static <V> PromiseTask<V> ofFunction(Callable<? extends V> action, ICancelToken cancelToken, int options, IPromise<V> promise) {
+        return new PromiseTask<>(action, cancelToken, options, promise, TaskBuilder.TYPE_FUNC);
     }
 
     public static <V> PromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IContext ctx, int options, IPromise<V> promise) {
@@ -126,6 +119,11 @@ public class PromiseTask<V> implements IFutureTask<V> {
     // region open
 
     @Override
+    public boolean isCancelling() {
+        return promise.isDone() || getCancelToken().isCancelling();
+    }
+
+    @Override
     public final int getOptions() {
         return options;
     }
@@ -135,24 +133,9 @@ public class PromiseTask<V> implements IFutureTask<V> {
         return TaskOption.isEnabled(options, taskOption);
     }
 
-    /** 获取绑定的任务 */
-    public final Object getTask() {
-        return task;
-    }
-
     /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
     public final int getTaskType() {
         return (ctl & MASK_TASK_TYPE) >> OFFSET_TASK_TYPE;
-    }
-
-    /** 分时任务是否启动 */
-    protected final boolean isStarted() {
-        return (ctl & MASK_STARTED) != 0;
-    }
-
-    /** 将分时任务标记为已启动 */
-    protected final void setStarted() {
-        ctl |= MASK_STARTED;
     }
 
     /** 获取ctl中的某个bit */
@@ -169,12 +152,6 @@ public class PromiseTask<V> implements IFutureTask<V> {
         }
     }
 
-    /** 获取任务绑的Promise - 允许子类重写返回值类型 */
-    @Override
-    public IPromise<V> future() {
-        return promise;
-    }
-
     // endregion
 
     // region core
@@ -182,28 +159,24 @@ public class PromiseTask<V> implements IFutureTask<V> {
     public void clear() {
         task = null;
         ctx = null;
+        promise = null;
         ctl = 0;
+    }
+
+    /** 获取关联的取消令牌 */
+    protected final ICancelToken getCancelToken() {
+        if (TaskBuilder.isTaskAcceptContext(getTaskType())) {
+            IContext ctx = (IContext) this.ctx;
+            return ctx.cancelToken();
+        }
+        return (ICancelToken) ctx;
     }
 
     /** 运行分时任务 */
     @SuppressWarnings("unchecked")
-    protected final void runTimeSharing() throws Exception {
+    protected final ResultHolder<V> runTimeSharing(boolean first) throws Exception {
         TimeSharingTask<V> task = (TimeSharingTask<V>) this.task;
-        if (!isStarted()) {
-            IPromise<V> promise = this.promise;
-            IContext ctx = this.ctx;
-            task.start(ctx, promise);
-            setStarted();
-
-            if (promise.isDone()) {
-                stopTask(task, promise, ctx);
-                return;
-            }
-            // 需要捕获task -- 避免和clear冲突，我们使用另一个对象来捕获上下文；同时绑定回调线程为当前Executor
-            StopInvoker<V> invoker = new StopInvoker<>(task, ctx);
-            promise.onCompletedAsync(promise.executor(), invoker, TaskOption.STAGE_TRY_INLINE);
-        }
-        task.update(ctx, promise);
+        return task.step((IContext) ctx, first);
     }
 
     /** 运行其它类型任务 */
@@ -222,11 +195,11 @@ public class PromiseTask<V> implements IFutureTask<V> {
             }
             case TaskBuilder.TYPE_FUNC_CTX -> {
                 Function<IContext, V> task = (Function<IContext, V>) this.task;
-                return task.apply(ctx);
+                return task.apply((IContext) ctx);
             }
             case TaskBuilder.TYPE_ACTION_CTX -> {
                 Consumer<IContext> task = (Consumer<IContext>) this.task;
-                task.accept(ctx);
+                task.accept((IContext) ctx);
                 return null;
             }
             default -> {
@@ -238,17 +211,19 @@ public class PromiseTask<V> implements IFutureTask<V> {
     @Override
     public void run() {
         IPromise<V> promise = this.promise;
-        IContext ctx = this.ctx;
-        if (ctx.cancelToken().isCancelling()) {
-            trySetCancelled(promise, ctx);
+        ICancelToken cancelToken = getCancelToken();
+        if (cancelToken.isCancelling()) {
+            trySetCancelled(promise, cancelToken);
             clear();
             return;
         }
         if (promise.trySetComputing()) {
             try {
                 if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
-                    runTimeSharing();
-                    if (!promise.isDone()) {
+                    ResultHolder<V> resultHolder = runTimeSharing(true);
+                    if (resultHolder != null) {
+                        promise.trySetResult(resultHolder.getResult());
+                    } else {
                         promise.trySetException(StacklessTimeoutException.INST);
                     }
                 } else {
@@ -262,41 +237,29 @@ public class PromiseTask<V> implements IFutureTask<V> {
         clear();
     }
 
-    protected static void trySetCancelled(IPromise<?> promise, IContext ctx) {
-        int cancelCode = ctx.cancelToken().cancelCode();
+    // region util
+
+    /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */
+    public void cancelWithoutRemove() {
+        cancelWithoutRemove(CancelCodes.REASON_SHUTDOWN);
+    }
+
+    /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */
+    public void cancelWithoutRemove(int code) {
+        trySetCancelled(promise, getCancelToken(), code);
+    }
+
+    protected static void trySetCancelled(IPromise<?> promise, ICancelToken cancelToken) {
+        int cancelCode = cancelToken.cancelCode();
         assert cancelCode != 0;
         promise.trySetCancelled(cancelCode);
     }
 
-    protected static void trySetCancelled(IPromise<?> promise, IContext ctx, int def) {
-        int cancelCode = ctx.cancelToken().cancelCode();
+    protected static void trySetCancelled(IPromise<?> promise, ICancelToken cancelToken, int def) {
+        int cancelCode = cancelToken.cancelCode();
         if (cancelCode == 0) cancelCode = def;
         promise.trySetCancelled(cancelCode);
     }
 
-    private static class StopInvoker<V> implements Consumer<Future<?>> {
-
-        TimeSharingTask<V> task;
-        IContext ctx;
-
-        public StopInvoker(TimeSharingTask<V> task, IContext ctx) {
-            this.task = task;
-            this.ctx = ctx;
-        }
-
-        @Override
-        public void accept(Future<?> future) {
-            @SuppressWarnings("unchecked") IPromise<V> promise = (IPromise<V>) future;
-            stopTask(task, promise, ctx);
-            task = null;
-        }
-    }
-
-    private static <V> void stopTask(TimeSharingTask<V> task, IPromise<V> promise, IContext ctx) {
-        try {
-            task.stop(ctx, promise);
-        } catch (Throwable ex) {
-            FutureLogger.logCause(ex, "task.stop caught exception");
-        }
-    }
+    // endregion
 }

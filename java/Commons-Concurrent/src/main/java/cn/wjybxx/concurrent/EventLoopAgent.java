@@ -44,8 +44,11 @@ public interface EventLoopAgent<T> {
     /***
      * 收到一个用户自定义事件或任务
      * {@link IAgentEvent#getType()}大于0的事件
+     *
+     * @param sequence 事件序号，如果是Disruptor这类事件循环
+     * @param event 事件
      */
-    void onEvent(T event) throws Exception;
+    void onEvent(long sequence, T event) throws Exception;
 
     /**
      * 当事件循环等待较长时间或处理完一批事件之后都将调用该方法

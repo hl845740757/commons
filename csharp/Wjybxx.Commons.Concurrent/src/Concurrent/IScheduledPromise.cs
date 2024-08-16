@@ -33,6 +33,6 @@ public interface IScheduledPromise<T> : IScheduledPromise, IPromise<T>, ISchedul
     /// 2.由于存在双向依赖，因此需要延迟注入;
     /// </summary>
     /// <param name="task">关联的任务</param>
-    void SetTask(IScheduledFutureTask<T> task);
+    void SetTask(IScheduledFutureTask? task);
 }
 }

@@ -175,6 +175,45 @@ public abstract class AbstractUniPromise
 
     #endregion
 
+    #region util
+
+    protected static bool TryInline(Completion completion, IExecutor e, int options) {
+        // 尝试内联
+        if (TaskOption.IsEnabled(options, TaskOption.STAGE_TRY_INLINE)) {
+            if (e is IUniExecutorService) { // uni-executor支持
+                return true;
+            }
+            if (e is ISingleThreadExecutor eventLoop
+                && eventLoop.InEventLoop()) {
+                return true;
+            }
+        }
+        // 判断是否需要传递选项
+        if (options != 0
+            && !TaskOption.IsEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)) {
+            e.Execute(completion);
+        } else {
+            completion.Options = 0;
+            e.Execute(completion);
+        }
+        return false;
+    }
+
+    protected internal static bool IsCancelling(object? ctx, int options) {
+        if (ctx == null || TaskOption.IsEnabled(options, TaskOption.STAGE_UNCANCELLABLE_CTX)) {
+            return false;
+        }
+        if (ctx is IContext ctx2) {
+            return ctx2.CancelToken.IsCancelling;
+        }
+        if (ctx is ICancelToken cts) {
+            return cts.IsCancelling;
+        }
+        return false;
+    }
+
+    #endregion
+
     #region completion
 
     /// <summary>

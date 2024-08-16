@@ -144,7 +144,7 @@ public interface ICancelToken {
     // region accept
 
     /**
-     * 添加的action将在Context收到取消信号时执行
+     * 添加的action将在Token收到取消信号时执行
      * 1.如果已收到取消请求，则给定的action会立即执行。
      * 2.如果尚未收到取消请求，则给定action会在收到请求时执行。
      */
@@ -162,6 +162,17 @@ public interface ICancelToken {
 
     // region accept-ctx
 
+    /**
+     * 添加的action将在Token收到取消信号时执行
+     * 1.如果已收到取消请求，则给定的action会立即执行。
+     * 2.如果尚未收到取消请求，则给定action会在收到请求时执行。
+     * 3.如果不期望检测ctx中潜在的取消信号，可通过{@link TaskOption#STAGE_UNCANCELLABLE_CTX}关闭。
+     *
+     * @param action  回调任务
+     * @param ctx     上下文
+     * @param options 调度选项
+     * @return 取消句柄
+     */
     IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx, int options);
 
     IRegistration thenAccept(BiConsumer<? super ICancelToken, Object> action, Object ctx);

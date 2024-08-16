@@ -23,7 +23,6 @@ import cn.wjybxx.base.concurrent.CancelCodeBuilder;
 import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.concurrent.*;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Objects;
@@ -38,9 +37,7 @@ import java.util.function.Consumer;
  * <h3>实现说明</h3>
  * 1. 去除了{@link #code}等的volatile操作，变更为普通字段。
  * 2. 默认时间单位为毫秒。
- * 3. 增加了重置状态的方法 -- 这对行为树这类应用非常有效。
- * 4. 去除了递归通知的优化 -- 单线程下我们需要支持用户通过监听器引用取消注册；另外，我们假设子token的情况很少。
- * 5. {@link #tryInline}对executor的检测调整
+ * 3. {@link #tryInline}对executor的检测调整
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -55,10 +52,11 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
      * - 非0表示收到取消信号
      */
     private int code;
-    /** 监听器的首部 */
-    private Completion head;
-    /** 监听器的尾部 */
-    private Completion tail;
+    /**
+     * 当前对象上的所有监听器，使用栈方式存储
+     * 如果{@code stack}为{@link #TOMBSTONE}，表明当前Future已完成，且正在进行通知，或已通知完毕。
+     */
+    private Completion stack;
 
     /** 用户线程 -- 如果为null，将禁止延迟取消操作 */
     private UniScheduledExecutor executor;
@@ -89,58 +87,6 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     public UniCancelTokenSource setExecutor(UniScheduledExecutor executor) {
         this.executor = executor;
         return this;
-    }
-
-    /**
-     * 删除监听器
-     * 通常而言逆向查找更容易匹配：Task的停止顺序通常和Task的启动顺序相反，因此后注册的监听器会先删除。
-     * 因此默认逆向查找匹配的监听器。
-     *
-     * @param action 用户回调行为的引用
-     */
-    public boolean unregister(Object action) {
-        return unregister(action, false);
-    }
-
-    /**
-     * 删除监听器
-     *
-     * @param action          用户回调行为的引用
-     * @param firstOccurrence 是否正向删除
-     */
-    public boolean unregister(Object action, boolean firstOccurrence) {
-        if (firstOccurrence) {
-            Completion node = this.head;
-            while ((node != null)) {
-                if (node.action == action) {
-                    node.close();
-                    return true;
-                }
-                node = node.next;
-            }
-        } else {
-            Completion node = this.tail;
-            while ((node != null)) {
-                if (node.action == action) {
-                    node.close();
-                    return true;
-                }
-                node = node.prev;
-            }
-        }
-        return false;
-    }
-
-    /** 重置状态，以供复用 */
-    public void reset() {
-        code = 0;
-        Completion node;
-        while ((node = head) != null) {
-            head = node.next;
-            node.action = TOMBSTONE;
-            node.clear();
-        }
-        tail = null;
     }
 
     @Override
@@ -207,12 +153,12 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         if (executor == null) throw new IllegalArgumentException("delayer is null");
         if (this.code == 0) {
             Canceller canceller = new Canceller(this, cancelCode);
-            executor.scheduleAction(canceller, canceller, delay, timeUnit);
+            executor.scheduleAction(canceller, delay, timeUnit, this);
             // executor会自动监听延时任务的cancelToken
         }
     }
 
-    private static class Canceller implements Consumer<Object>, IContext {
+    private static class Canceller implements Runnable {
 
         final UniCancelTokenSource source;
         final int cancelCode;
@@ -223,33 +169,9 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         }
 
         @Override
-        public void accept(Object tokenOrSelf) {
-            if (tokenOrSelf == this) {
-                source.cancel(cancelCode);
-            }
+        public void run() {
+            source.cancel(cancelCode);
         }
-
-        @Override
-        public Object state() {
-            return null;
-        }
-
-        @Nonnull
-        @Override
-        public ICancelToken cancelToken() {
-            return source;
-        }
-
-        @Override
-        public Object blackboard() {
-            return null;
-        }
-
-        @Override
-        public Object sharedProps() {
-            return null;
-        }
-
     }
 
     // endregion
@@ -534,68 +456,75 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         return preCode;
     }
 
-    /** 删除node -- 修正指针 */
+    /** 单线程版实现即时删除节点 -- 未实现为双向链表，我们认为主动关闭监听的情况较少 */
     private void removeNode(Completion node) {
-        if (this.head == this.tail) {
-            assert this.head == node;
-            this.head = this.tail = null;
-        } else if (node == this.head) {
-            // 首节点
-            this.head = node.next;
-            this.head.prev = null;
-        } else if (node == this.tail) {
-            // 尾节点
-            this.tail = node.prev;
-            this.tail.next = null;
+        Completion curr = stack;
+        if (curr == null || curr == TOMBSTONE) {
+            return;
+        }
+        Completion prev = null;
+        while (curr != null && curr != node) {
+            prev = curr;
+            curr = curr.next;
+        }
+        if (curr == null) {
+            return;
+        }
+        if (prev == null) {
+            stack = node.next;
         } else {
-            // 中间节点
-            Completion prev = node.prev;
-            Completion next = node.next;
-            prev.next = next;
-            next.prev = prev;
+            prev.next = curr.next;
         }
-    }
-
-    private Completion popListener() {
-        Completion head = this.head;
-        if (head == null) {
-            return null;
-        }
-        if (head == this.tail) {
-            this.head = this.tail = null;
-        } else {
-            this.head = head.next;
-            this.head.prev = null;
-        }
-        return head;
     }
 
     /** @return 是否压栈成功 */
-    private boolean pushCompletion(Completion node) {
+    private boolean pushCompletion(Completion newHead) {
         if (isCancelling()) {
-            node.tryFire(SYNC);
+            newHead.tryFire(SYNC);
             return false;
         }
-        Completion tail = this.tail;
-        if (tail == null) {
-            this.head = this.tail = node;
-        } else {
-            tail.next = node;
-            node.prev = tail;
-            this.tail = node;
-        }
+        newHead.next = this.stack;
+        this.stack = newHead;
         return true;
     }
 
     private static void postComplete(UniCancelTokenSource source) {
-        Completion next;
-        UniCancelTokenSource child;
-        while ((next = source.popListener()) != null) {
-            child = next.tryFire(NESTED);
-            if (child != null) {
-                postComplete(child); // 递归
+        Completion next = null;
+        outer:
+        while (true) {
+            // 将当前future上的监听器添加到next前面
+            next = clearListeners(source, next);
+
+            while (next != null) {
+                Completion curr = next;
+                next = next.next;
+                curr.next = null; // help gc
+
+                source = curr.tryFire(NESTED);
+                if (source != null) {
+                    continue outer;
+                }
             }
+            break;
         }
+    }
+
+    private static Completion clearListeners(UniCancelTokenSource source, Completion onto) {
+        Completion head = source.stack;
+        if (head == TOMBSTONE) {
+            return onto;
+        }
+        source.stack = TOMBSTONE;
+
+        Completion ontoHead = onto;
+        while (head != null) {
+            Completion tmpHead = head;
+            head = head.next;
+
+            tmpHead.next = ontoHead;
+            ontoHead = tmpHead;
+        }
+        return ontoHead;
     }
 
     private static boolean tryInline(Completion completion, Executor e, int options) {
@@ -626,9 +555,8 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     /** 不需要复用对象的情况下无需分配唯一id */
     private static abstract class Completion implements IRegistration, ITask {
 
-        UniCancelTokenSource source;
         Completion next;
-        Completion prev;
+        UniCancelTokenSource source;
 
         Executor executor;
         int options;
@@ -707,16 +635,10 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         /** 注意：不能修改{@link #action}的引用 */
         protected void clear() {
             source = null;
-            prev = null;
             next = null;
             executor = null;
         }
 
-        protected boolean isCancelling(Object ctx) {
-            return TaskOption.isEnabled(options, TaskOption.STAGE_CHECK_OBJECT_CTX)
-                    && ctx instanceof IContext ctx2
-                    && ctx2.cancelToken().isCancelling();
-        }
     }
     // endregion
 
@@ -788,7 +710,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                if (!isCancelling(ctx)) {
+                if (!UniPromise.isCancelling(ctx, options)) {
                     action.accept(source, ctx);
                 }
             } catch (Throwable ex) {
@@ -871,7 +793,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                if (!isCancelling(ctx)) {
+                if (!UniPromise.isCancelling(ctx, options)) {
                     action.accept(ctx);
                 }
             } catch (Throwable ex) {

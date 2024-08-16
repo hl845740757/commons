@@ -116,14 +116,6 @@ public class ForwardFuture<T> : IFuture<T>
         future.OnCompletedAsync(executor, continuation, state, options);
     }
 
-    public void OnCompleted(Action<IFuture<T>, IContext> continuation, IContext context, int options = 0) {
-        future.OnCompleted(continuation, context, options);
-    }
-
-    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, IContext> continuation, IContext context, int options = 0) {
-        future.OnCompletedAsync(executor, continuation, context, options);
-    }
-
     public void OnCompleted(Action<object?> continuation, object? state, int options = 0) {
         future.OnCompleted(continuation, state, options);
     }

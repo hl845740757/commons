@@ -54,10 +54,9 @@ public class ScheduleCancelTest {
         }
         {
             CancelTokenSource cts = new CancelTokenSource();
-            Context<Object> context = Context.ofCancelToken(cts);
-            IScheduledFuture<?> future = consumer.scheduleAction(ctx -> {
+            IScheduledFuture<?> future = consumer.scheduleAction(() -> {
                 System.out.println();
-            }, context, 1000, TimeUnit.MILLISECONDS);
+            }, 1000, TimeUnit.MILLISECONDS, cts);
 
             cts.cancel(1);
             Assertions.assertTrue(future.isCancelled(), () -> future.status().name());

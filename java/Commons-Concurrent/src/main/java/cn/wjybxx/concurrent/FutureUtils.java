@@ -220,6 +220,8 @@ public class FutureUtils {
 
     // endregion
 
+    // region await
+
     /** @return 如果future在指定时间内进入了完成状态，则返回true */
     public static boolean await(CompletableFuture<?> future, long timeout, TimeUnit unit) throws InterruptedException {
         if (timeout <= 0) {
@@ -275,41 +277,7 @@ public class FutureUtils {
         }
         return true; // 循环外isDone
     }
-
     // endregion
-
-    // region future工厂方法
-    public static <V> IPromise<V> newPromise() {
-        return new Promise<>();
-    }
-
-    public static <V> IPromise<V> newPromise(Executor executor) {
-        return new Promise<>(executor);
-    }
-
-    public static <V> IFuture<V> completedFuture(V result) {
-        return Promise.completedPromise(result);
-    }
-
-    public static <V> IFuture<V> completedFuture(V result, Executor executor) {
-        return Promise.completedPromise(result, executor);
-    }
-
-    public static <V> IFuture<V> failedFuture(Throwable cause) {
-        return Promise.failedPromise(cause);
-    }
-
-    public static <V> IFuture<V> failedFuture(Throwable cause, Executor executor) {
-        return Promise.failedPromise(cause, executor);
-    }
-
-    public static FutureCombiner newCombiner() {
-        return new FutureCombiner();
-    }
-
-    public static JDKFutureCombiner newJdkCombiner() {
-        return new JDKFutureCombiner();
-    }
 
     // endregion
 
@@ -349,69 +317,135 @@ public class FutureUtils {
     }
     // endregion
 
+    // region future工厂方法
+    public static <V> IPromise<V> newPromise() {
+        return new Promise<>();
+    }
+
+    public static <V> IPromise<V> newPromise(Executor executor) {
+        return new Promise<>(executor);
+    }
+
+    public static <V> IFuture<V> completedFuture(V result) {
+        return Promise.completedPromise(result);
+    }
+
+    public static <V> IFuture<V> completedFuture(V result, Executor executor) {
+        return Promise.completedPromise(result, executor);
+    }
+
+    public static <V> IFuture<V> failedFuture(Throwable cause) {
+        return Promise.failedPromise(cause);
+    }
+
+    public static <V> IFuture<V> failedFuture(Throwable cause, Executor executor) {
+        return Promise.failedPromise(cause, executor);
+    }
+
+    public static FutureCombiner newCombiner() {
+        return new FutureCombiner();
+    }
+
+    public static JDKFutureCombiner newJdkCombiner() {
+        return new JDKFutureCombiner();
+    }
+
+    // endregion
+
     // region submit
 
     public static <T> IFuture<T> submit(IExecutor executor, @Nonnull TaskBuilder<T> builder) {
         IPromise<T> promise = newPromise(executor);
-        PromiseTask<T> futureTask = PromiseTask.ofBuilder(builder, promise);
-        executor.execute(futureTask);
+        executor.execute(PromiseTask.ofBuilder(builder, promise));
         return promise;
     }
 
-    public static <V> IFuture<V> submitFunc(Executor executor, Callable<? extends V> task) {
-        IPromise<V> promise = newPromise(executor);
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, null, 0, promise);
-        executor.execute(futureTask);
+    // region submit func
+    public static <T> IFuture<T> submitFunc(Executor executor, Callable<? extends T> task) {
+        IPromise<T> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofFunction(task, null, 0, promise));
         return promise;
     }
 
-    public static <V> IFuture<V> submitFunc(IExecutor executor, Callable<? extends V> task, int options) {
-        IPromise<V> promise = newPromise(executor);
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, null, options, promise);
-        executor.execute(futureTask);
+    public static <T> IFuture<T> submitFunc(IExecutor executor, Callable<? extends T> task, int options) {
+        IPromise<T> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofFunction(task, null, options, promise));
         return promise;
     }
 
-    public static <V> IFuture<V> submitFunc(Executor executor, Function<? super IContext, ? extends V> task, IContext ctx) {
-        IPromise<V> promise = newPromise(executor);
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, ctx, 0, promise);
-        executor.execute(futureTask);
+    public static <T> IFuture<T> submitFunc(Executor executor, Callable<? extends T> task, ICancelToken cancelToken) {
+        IPromise<T> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofFunction(task, cancelToken, 0, promise));
         return promise;
     }
 
-    public static <V> IFuture<V> submitFunc(IExecutor executor, Function<? super IContext, ? extends V> task, IContext ctx, int options) {
-        IPromise<V> promise = newPromise(executor);
-        PromiseTask<V> futureTask = PromiseTask.ofFunction(task, ctx, options, promise);
-        executor.execute(futureTask);
+    public static <T> IFuture<T> submitFunc(IExecutor executor, Callable<? extends T> task, ICancelToken cancelToken, int options) {
+        IPromise<T> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofFunction(task, cancelToken, options, promise));
         return promise;
     }
 
+    public static <T> IFuture<T> submitFunc(Executor executor, Function<? super IContext, ? extends T> task, IContext ctx) {
+        IPromise<T> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofFunction(task, ctx, 0, promise));
+        return promise;
+    }
+
+    public static <T> IFuture<T> submitFunc(IExecutor executor, Function<? super IContext, ? extends T> task, IContext ctx, int options) {
+        IPromise<T> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofFunction(task, ctx, options, promise));
+        return promise;
+    }
+    // endregion
+
+    // region submit action
     public static IFuture<?> submitAction(Executor executor, Runnable action) {
         IPromise<Object> promise = newPromise(executor);
-        PromiseTask<?> futureTask = PromiseTask.ofAction(action, null, 0, promise);
-        executor.execute(futureTask);
+        executor.execute(PromiseTask.ofAction(action, null, 0, promise));
         return promise;
     }
 
     public static IFuture<?> submitAction(IExecutor executor, Runnable action, int options) {
         IPromise<Object> promise = newPromise(executor);
-        PromiseTask<?> futureTask = PromiseTask.ofAction(action, null, options, promise);
-        executor.execute(futureTask);
+        executor.execute(PromiseTask.ofAction(action, null, options, promise));
+        return promise;
+    }
+
+    public static IFuture<?> submitAction(Executor executor, Runnable action, ICancelToken cancelToken) {
+        IPromise<Object> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofAction(action, cancelToken, 0, promise));
+        return promise;
+    }
+
+    public static IFuture<?> submitAction(IExecutor executor, Runnable action, ICancelToken cancelToken, int options) {
+        IPromise<Object> promise = newPromise(executor);
+        executor.execute(PromiseTask.ofAction(action, cancelToken, options, promise));
         return promise;
     }
 
     public static IFuture<?> submitAction(Executor executor, Consumer<? super IContext> task, IContext ctx) {
         IPromise<Object> promise = newPromise(executor);
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, ctx, 0, promise);
-        executor.execute(futureTask);
+        executor.execute(PromiseTask.ofAction(task, ctx, 0, promise));
         return promise;
     }
 
     public static IFuture<?> submitAction(IExecutor executor, Consumer<? super IContext> task, IContext ctx, int options) {
         IPromise<Object> promise = newPromise(executor);
-        PromiseTask<?> futureTask = PromiseTask.ofAction(task, ctx, options, promise);
-        executor.execute(futureTask);
+        executor.execute(PromiseTask.ofAction(task, ctx, options, promise));
         return promise;
+    }
+    //endregion
+
+    // region execute
+
+    public static void execute(Executor executor, Runnable action, ICancelToken cancelToken) {
+        ITask futureTask = toTask(action, cancelToken, 0);
+        executor.execute(futureTask);
+    }
+
+    public static void execute(Executor executor, Runnable action, ICancelToken cancelToken, int options) {
+        ITask futureTask = toTask(action, cancelToken, options);
+        executor.execute(futureTask);
     }
 
     public static void execute(Executor executor, Consumer<? super IContext> action, IContext ctx) {
@@ -423,6 +457,8 @@ public class FutureUtils {
         ITask futureTask = toTask(action, ctx, options);
         executor.execute(futureTask);
     }
+
+    // endregion
 
     // endregion
 
@@ -458,6 +494,11 @@ public class FutureUtils {
         // 注意：不论options是否为0都需要封装，否则action为ITask类型时将产生错误
         Objects.requireNonNull(action, "action");
         return new Task1(action, options);
+    }
+
+    public static ITask toTask(Runnable action, ICancelToken cancelToken, int options) {
+        Objects.requireNonNull(action, "action");
+        return new Task2(action, cancelToken, options);
     }
 
     public static ITask toTask(Consumer<? super IContext> action, IContext ctx, int options) {
@@ -521,6 +562,38 @@ public class FutureUtils {
             Runnable action = this.action;
             {
                 this.action = null;
+            }
+            action.run();
+        }
+    }
+
+    private static class Task2 implements ITask {
+
+        private Runnable action;
+        private ICancelToken cancelToken;
+        private final int options;
+
+        public Task2(Runnable action, ICancelToken cancelToken, int options) {
+            this.action = action;
+            this.cancelToken = cancelToken;
+            this.options = options;
+        }
+
+        @Override
+        public int getOptions() {
+            return options;
+        }
+
+        @Override
+        public void run() {
+            Runnable action = this.action;
+            ICancelToken cancelToken = this.cancelToken;
+            {
+                this.action = null;
+                this.cancelToken = null;
+            }
+            if (cancelToken != null && cancelToken.isCancelling()) {
+                return; // 抛出异常没有意义，检测信号即可
             }
             action.run();
         }

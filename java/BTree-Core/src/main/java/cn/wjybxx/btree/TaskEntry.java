@@ -173,7 +173,7 @@ public class TaskEntry<T> extends Task<T> {
         }
     }
 
-    /** 如果行为树代表的是一个条件树，则可以调用该方法 */
+    /** 如果行为树代表的是一个条件树，则可以调用该方法；失败的情况下可以通过Status获取错误码 */
     public boolean test() {
         assert isInited();
         template_enterExecute(null, MASK_CHECKING_GUARD); // entry本身不是条件节点

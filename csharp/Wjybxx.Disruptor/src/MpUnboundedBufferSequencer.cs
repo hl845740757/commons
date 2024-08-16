@@ -73,8 +73,9 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
         while (hi > chunk.MaxSequence()) {
             long minSequence = chunk.MinSequence();
             chunk.Publish((int)(lo - minSequence), chunk.Length - 1);
-            chunk = chunk.LvNext()!;
-            lo = chunk.MinSequence();
+
+            lo = minSequence + chunk.Length;
+            chunk = buffer.ProducerChunkForSequence(lo); // 下一个块可能尚未构造
         }
         {
             long minSequence = chunk.MinSequence();

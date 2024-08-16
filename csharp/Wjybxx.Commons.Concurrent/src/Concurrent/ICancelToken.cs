@@ -93,11 +93,14 @@ public interface ICancelToken
 
     // region accept
 
-    /**
-     * 添加的action将在Context收到取消信号时执行
-     * 1.如果已收到取消请求，则给定的action会立即执行。
-     * 2.如果尚未收到取消请求，则给定action会在收到请求时执行。
-     */
+    /// <summary>
+    /// 添加的action将在Token收到取消信号时执行
+    /// 1.如果已收到取消请求，则给定的action会立即执行。
+    /// 2.如果尚未收到取消请求，则给定action会在收到请求时执行。
+    /// </summary>
+    /// <param name="action">回调任务</param>
+    /// <param name="options">调度选项</param>
+    /// <returns></returns>
     IRegistration ThenAccept(Action<ICancelToken> action, int options = 0);
 
     IRegistration ThenAcceptAsync(IExecutor executor,
@@ -107,6 +110,16 @@ public interface ICancelToken
 
     // region accept-ctx
 
+    /// <summary>
+    /// 添加的action将在Token收到取消信号时执行
+    /// 1.如果已收到取消请求，则给定的action会立即执行。
+    /// 2.如果尚未收到取消请求，则给定action会在收到请求时执行。
+    /// 3.如果不期望检测state中潜在的取消信号，可通过<see cref="TaskOption.STAGE_UNCANCELLABLE_CTX"/>关闭。
+    /// </summary>
+    /// <param name="action">回调任务</param>
+    /// <param name="state">上下文</param>
+    /// <param name="options">调度选项</param>
+    /// <returns></returns>
     IRegistration ThenAccept(Action<ICancelToken, object> action, object? state, int options = 0);
 
     IRegistration ThenAcceptAsync(IExecutor executor,

@@ -95,7 +95,7 @@ public class EventLoopStartTest {
         }
 
         @Override
-        public void onEvent(IAgentEvent event) throws Exception {
+        public void onEvent(long sequence, IAgentEvent event) throws Exception {
 
         }
 

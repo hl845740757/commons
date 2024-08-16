@@ -128,7 +128,7 @@ public interface IPromise<T> : IFuture<T>, IPromise
     /// <summary>
     /// 用于执行数据传输的委托方法
     /// </summary>
-    public static Action<IFuture<T>, object> InvokerSetPromise = (future, state) => {
+    private static readonly Action<IFuture<T>, object> _invokerSetPromise = (future, state) => {
         IPromise<T> promise = (IPromise<T>)state;
         switch (future.Status) {
             case TaskStatus.Success: {
@@ -163,7 +163,7 @@ public interface IPromise<T> : IFuture<T>, IPromise
                 break;
             }
             default: {
-                task.OnCompleted(InvokerSetPromise, promise);
+                task.OnCompleted(_invokerSetPromise, promise, TaskOption.STAGE_UNCANCELLABLE_CTX);
                 break;
             }
         }

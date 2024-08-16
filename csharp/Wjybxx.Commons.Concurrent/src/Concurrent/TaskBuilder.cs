@@ -43,7 +43,7 @@ public interface TaskBuilder
     /// </summary>
     public const int TYPE_FUNC_CTX = 3;
 
-    /** 分时任务 - 暂未移植到C# */
+    /** 分时任务 */
     public const int TYPE_TIMESHARING = 4;
     /// <summary>
     /// 表示委托类型为<see cref="ITask"/>，通常表示二次封装
@@ -52,20 +52,24 @@ public interface TaskBuilder
 
     #region factory
 
-    public static TaskBuilder<int> NewAction(Action action) {
-        return new TaskBuilder<int>(TaskBuilder.TYPE_ACTION, action);
+    public static TaskBuilder<int> NewAction(Action action, ICancelToken? cancelToken = null) {
+        return new TaskBuilder<int>(TaskBuilder.TYPE_ACTION, action, cancelToken);
     }
 
     public static TaskBuilder<int> NewAction(Action<IContext> action, IContext context) {
         return new TaskBuilder<int>(TaskBuilder.TYPE_ACTION_CTX, action, context);
     }
 
-    public static TaskBuilder<T> NewFunc<T>(Func<T> func) {
-        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC, func);
+    public static TaskBuilder<T> NewFunc<T>(Func<T> func, ICancelToken? cancelToken = null) {
+        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC, func, cancelToken);
     }
 
     public static TaskBuilder<T> NewFunc<T>(Func<IContext, T> func, IContext context) {
         return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_CTX, func, context);
+    }
+
+    public static TaskBuilder<T> NewTimeSharing<T>(TimeSharingTask<T> func, IContext context) {
+        return new TaskBuilder<T>(TaskBuilder.TYPE_TIMESHARING, func, context);
     }
 
     public static TaskBuilder<int> NewTask(ITask task) {
@@ -99,8 +103,25 @@ public interface TaskBuilder
             if (genericTypeDefinition == typeof(Func<,>) && type.GetGenericArguments()[0] == typeof(IContext)) {
                 return TYPE_FUNC_CTX;
             }
+            if (genericTypeDefinition == typeof(TimeSharingTask<>)) {
+                return TYPE_TIMESHARING;
+            }
         }
         throw new ArgumentException("unsupported task type: " + type);
+    }
+
+    /** 任务是否接收context类型参数 */
+    public static bool IsTaskAcceptContext(int type) {
+        switch (type) {
+            case TYPE_ACTION_CTX:
+            case TYPE_FUNC_CTX:
+            case TYPE_TIMESHARING: {
+                return true;
+            }
+            default: {
+                return false;
+            }
+        }
     }
 }
 
@@ -112,7 +133,7 @@ public struct TaskBuilder<T> : TaskBuilder
 {
     private readonly int type;
     private readonly object task;
-    private IContext? context;
+    private object? ctx;
     private int options;
 
     /// <summary>
@@ -120,11 +141,11 @@ public struct TaskBuilder<T> : TaskBuilder
     /// </summary>
     /// <param name="type">任务的类型</param>
     /// <param name="task">委托</param>
-    /// <param name="context">任务的上下文</param>
-    internal TaskBuilder(int type, object task, IContext? context = null) {
+    /// <param name="ctx">任务的上下文</param>
+    internal TaskBuilder(int type, object task, object? ctx = null) {
         this.type = type;
         this.task = task ?? throw new ArgumentNullException(nameof(task));
-        this.context = context;
+        this.ctx = ctx;
         this.options = 0;
     }
 
@@ -139,12 +160,35 @@ public struct TaskBuilder<T> : TaskBuilder
     public object Task => task;
 
     /// <summary>
+    /// 任务是否接收context类型参数
+    /// </summary>
+    public bool IsTaskAcceptContext => TaskBuilder.IsTaskAcceptContext(type);
+
+    /// <summary>
     /// 任务的上下文
-    /// 即使用户的任务不接收ctx，executor也可能需要
     /// </summary>
     public IContext? Context {
-        get => context;
-        set => context = value;
+        get => IsTaskAcceptContext ? (IContext?)ctx : null;
+        set {
+            if (!IsTaskAcceptContext) {
+                throw new IllegalStateException();
+            }
+            this.ctx = value ?? IContext.NONE;
+        }
+    }
+
+    /// <summary>
+    /// 任务绑定的取消令牌
+    /// </summary>
+    /// <exception cref="IllegalStateException"></exception>
+    public ICancelToken? CancelToken {
+        get => IsTaskAcceptContext ? null : (ICancelToken)ctx;
+        set {
+            if (IsTaskAcceptContext) {
+                throw new IllegalStateException();
+            }
+            this.ctx = value ?? ICancelToken.NONE;
+        }
     }
 
     /// <summary>

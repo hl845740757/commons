@@ -20,8 +20,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * 不继承{@link ScheduledExecutorService}，JDK的{@link ScheduledFuture}设计有问题。
@@ -38,9 +36,7 @@ public interface IScheduledExecutorService extends IExecutorService, ScheduledEx
      *
      * @implNote 通常应该绑定当前executor
      */
-    default <V> IScheduledPromise<V> newScheduledPromise() {
-        return new ScheduledPromise<>(this);
-    }
+    <V> IScheduledPromise<V> newScheduledPromise();
 
     /**
      * 为避免过多的参数和重载方法，我们通过Builder构建更为复杂的任务。
@@ -54,18 +50,28 @@ public interface IScheduledExecutorService extends IExecutorService, ScheduledEx
     /**
      * 延迟指定时间后执行给定的任务
      *
-     * @param task 要执行的任务
-     * @param ctx  上下文-主要是取消令牌
+     * @param task        要执行的任务
+     * @param cancelToken 取消令牌
      */
-    <V> IScheduledFuture<V> scheduleFunc(Function<? super IContext, V> task, IContext ctx, long delay, TimeUnit unit);
+    <V> IScheduledFuture<V> scheduleFunc(Callable<V> task, long delay, TimeUnit unit, ICancelToken cancelToken);
 
     /**
      * 延迟指定时间后执行给定的任务
      *
-     * @param task 要执行的任务
-     * @param ctx  上下文-主要是取消令牌
+     * @param task        要执行的任务
+     * @param cancelToken 取消令牌
      */
-    IScheduledFuture<?> scheduleAction(Consumer<? super IContext> task, IContext ctx, long delay, TimeUnit unit);
+    IScheduledFuture<?> scheduleAction(Runnable task, long delay, TimeUnit unit, ICancelToken cancelToken);
+
+    /**
+     * 以固定延迟执行给定的任务(少执行了就少执行了)
+     */
+    IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit, ICancelToken cancelToken);
+
+    /**
+     * 以固定频率执行给定的任务（少执行了会补-慎用）
+     */
+    IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit, ICancelToken cancelToken);
 
     // region jdk
 
@@ -74,28 +80,36 @@ public interface IScheduledExecutorService extends IExecutorService, ScheduledEx
      * {@inheritDoc}
      */
     @Override
-    IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit);
+    default IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
+        return scheduleAction(task, delay, unit, ICancelToken.NONE);
+    }
 
     /**
      * 延迟指定时间后执行给定的任务
      * {@inheritDoc}
      */
     @Override
-    <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit);
+    default <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
+        return scheduleFunc(task, delay, unit, ICancelToken.NONE);
+    }
 
     /**
      * 以固定延迟执行给定的任务(少执行了就少执行了)
      * {@inheritDoc}
      */
     @Override
-    IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit);
+    default IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
+        return scheduleWithFixedDelay(task, initialDelay, delay, unit, ICancelToken.NONE);
+    }
 
     /**
      * 以固定频率执行给定的任务（少执行了会补-慎用）
      * {@inheritDoc}
      */
     @Override
-    IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit);
+    default IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
+        return scheduleAtFixedRate(task, initialDelay, period, unit, ICancelToken.NONE);
+    }
 
     // ENDREGION
 }

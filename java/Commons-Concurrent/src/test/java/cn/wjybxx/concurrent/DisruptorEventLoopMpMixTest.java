@@ -198,7 +198,7 @@ public class DisruptorEventLoopMpMixTest {
             DisruptorEventLoop<RingBufferEvent> consumer = DisruptorEventLoopMpMixTest.this.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
-                int batchSize = 10;
+                int batchSize = 100;
                 long hi = consumer.nextSequence(batchSize);
                 if (hi < 0) {
                     break;

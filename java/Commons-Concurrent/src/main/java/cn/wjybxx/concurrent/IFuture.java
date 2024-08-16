@@ -236,15 +236,15 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
     void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action, int options);
 
     /** 该接口支持Context参数，可响应取消 */
-    void onCompleted(BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context, int options);
+    void onCompleted(BiConsumer<? super IFuture<T>, Object> action, Object ctx, int options);
 
-    void onCompleted(BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context);
-
-    void onCompletedAsync(Executor executor,
-                          BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context);
+    void onCompleted(BiConsumer<? super IFuture<T>, Object> action, Object ctx);
 
     void onCompletedAsync(Executor executor,
-                          BiConsumer<? super IFuture<T>, ? super IContext> action, @Nonnull IContext context, int options);
+                          BiConsumer<? super IFuture<T>, Object> action, Object ctx);
+
+    void onCompletedAsync(Executor executor,
+                          BiConsumer<? super IFuture<T>, Object> action, Object ctx, int options);
 
     // endregion
 

@@ -113,20 +113,15 @@ public interface IExecutorService extends ExecutorService, IExecutor {
      *
      * @implNote 通常应该绑定当前executor
      */
-    default <T> IPromise<T> newPromise() {
-        return new Promise<>(this);
-    }
+    <T> IPromise<T> newPromise();
 
     <T> IFuture<T> submit(@Nonnull TaskBuilder<T> builder);
-
-    @Override
-    <T> IFuture<T> submit(@Nonnull Callable<T> task);
 
     <T> IFuture<T> submitFunc(Callable<? extends T> task);
 
     <T> IFuture<T> submitFunc(Callable<? extends T> task, int options);
 
-    <T> IFuture<T> submitFunc(Function<? super IContext, ? extends T> task, IContext ctx);
+    <T> IFuture<T> submitFunc(Callable<? extends T> task, ICancelToken cancelToken, int options);
 
     <T> IFuture<T> submitFunc(Function<? super IContext, ? extends T> task, IContext ctx, int options);
 
@@ -134,9 +129,21 @@ public interface IExecutorService extends ExecutorService, IExecutor {
 
     IFuture<?> submitAction(Runnable task, int options);
 
-    IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx);
+    IFuture<?> submitAction(Runnable task, ICancelToken cancelToken, int options);
 
     IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options);
+
+    @Deprecated
+    @Override
+    default <T> IFuture<T> submit(@Nonnull Callable<T> task) {
+        return submitFunc(task, 0);
+    }
+
+    @Deprecated
+    @Override
+    default IFuture<?> submit(@Nonnull Runnable task) {
+        return submitAction(task);
+    }
 
     /**
      * 从Java引入lambda开始，对接收函数式接口的方法进行重载时，必须要具备明显的差异才可。
@@ -144,13 +151,6 @@ public interface IExecutorService extends ExecutorService, IExecutor {
      *
      * @deprecated {{@link #submitAction(Runnable)}}
      */
-    @Deprecated
-    @Override
-    default IFuture<?> submit(@Nonnull Runnable task) {
-        return submitAction(task);
-    }
-
-    /** @deprecated {{@link #submitFunc(Callable)}} */
     @Deprecated
     @Override
     default <T> IFuture<T> submit(@Nonnull Runnable task, T result) {
