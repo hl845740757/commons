@@ -18,14 +18,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Wjybxx.Commons.Concurrent;
+using Wjybxx.Commons.Logger;
 
 namespace Wjybxx.Commons.Sequential
 {
 public abstract class AbstractUniExecutor : IUniExecutorService
 {
+    protected static readonly ILogger logger = LoggerFactory.GetLogger(typeof(AbstractUniExecutor));
+    
     private readonly SynchronizationContext _syncContext;
     private readonly TaskScheduler _scheduler;
 
@@ -114,6 +118,15 @@ public abstract class AbstractUniExecutor : IUniExecutorService
         IPromise<T> promise = NewPromise<T>();
         Execute(PromiseTask.OfFunction(action, context, options, promise));
         return promise;
+    }
+
+    #endregion
+
+    #region util
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected static void LogCause(Exception ex) {
+        logger.Warn(ex, "A task raised an exception.");
     }
 
     #endregion

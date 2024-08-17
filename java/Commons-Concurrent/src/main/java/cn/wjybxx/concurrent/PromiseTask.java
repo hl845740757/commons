@@ -177,9 +177,13 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     /** 获取关联的取消令牌 */
     protected final ICancelToken getCancelToken() {
+        Object ctx = this.ctx;
+        if (ctx == ICancelToken.NONE || ctx == IContext.NONE) {
+            return ICancelToken.NONE;
+        }
         if (TaskBuilder.isTaskAcceptContext(getTaskType())) {
-            IContext ctx = (IContext) this.ctx;
-            return ctx.cancelToken();
+            IContext castCtx = (IContext) ctx;
+            return castCtx.cancelToken();
         }
         return (ICancelToken) ctx;
     }

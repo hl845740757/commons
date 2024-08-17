@@ -40,11 +40,10 @@ import java.util.concurrent.locks.LockSupport;
  * 基于Disruptor框架的事件循环。
  * 1.这个实现持有私有的RingBuffer，可以有最好的性能。
  * 2.可以通过{@link #nextSequence()}和{@link #publish(long)}发布特殊的事件。
- * 3.也可以让Task实现{@link EventTranslator}，从而拷贝数据到既有事件对象上。
  * <p>
  * 关于时序正确性：
- * 1.由于{@link #scheduledTaskQueue}的任务都是从{@link RingBuffer}中拉取出来的，因此都是先于{@link RingBuffer}中剩余的任务的。
- * 2.我们总是先取得一个时间快照，然后先执行{@link #scheduledTaskQueue}中的任务，再执行{@link RingBuffer}中的任务，因此满足优先级相同时，先提交的任务先执行的约定
+ * 1.由于{@link #scheduledTaskQueue}的任务都是从{@link #dataProvider}中拉取出来的，因此都是先于{@link #dataProvider}中剩余的任务的。
+ * 2.我们总是先取得一个时间快照，然后先执行{@link #scheduledTaskQueue}中的任务，再执行{@link #dataProvider}中的任务，因此满足优先级相同时，先提交的任务先执行的约定
  * -- 反之，如果不使用时间快照，就可能导致后提交的任务先满足触发时间。
  *
  * @author wjybxx
@@ -65,13 +64,17 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     /** 线程本地时间 -- 纳秒；时间的更新频率极高，进行缓存行填充隔离 */
     private volatile long tickTime;
     @SuppressWarnings("unused")
-    private long p11, p12, p13, p14, p15, p16, p17;
-
-    /** 线程状态 -- 变化不频繁，不缓存行填充 */
+    private long p11, p12, p13, p14, p15, p16, p17, p18;
+    /** 线程状态 -- 下面的final字段充当缓存行填充 */
     private volatile int state = EventLoopState.ST_UNSTARTED;
 
     /** 事件队列 */
     private final EventSequencer<? extends T> eventSequencer;
+    /** 缓存值 -- 减少转发 */
+    private final DataProvider<? extends T> dataProvider;
+    /** 缓存值 -- 减少运行时测试 */
+    private final MpUnboundedBuffer<? extends T> unboundedBuffer;
+
     /** 周期性任务队列 -- 既有的任务都是先于Sequencer中的任务提交的 */
     private final IndexedPriorityQueue<ScheduledPromiseTask<?>> scheduledTaskQueue;
     private final ScheduledHelper scheduledHelper;
@@ -89,8 +92,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     private final boolean cleanEventAfterConsumed;
     /** 退出时是否清理buffer -- 可清理意味着是消费链的末尾 */
     private final boolean cleanBufferOnExit;
-    /** 缓存值 -- 减少运行时测试 */
-    private final MpUnboundedEventSequencer<? extends T> mpUnboundedEventSequencer;
 
     private final Thread thread;
     private final Worker worker;
@@ -107,20 +108,23 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
 
         this.tickTime = System.nanoTime();
         this.eventSequencer = Objects.requireNonNull(builder.getEventSequencer());
+        this.dataProvider = eventSequencer.dataProvider();
         this.scheduledTaskQueue = new DefaultIndexedPriorityQueue<>(ScheduledPromiseTask::compareToExplicitly, 64);
         this.scheduledHelper = new ScheduledHelper();
-        this.batchSize = MathCommon.clamp(builder.getBatchSize(), MIN_BATCH_SIZE, MAX_BATCH_SIZE);
 
         this.rejectedExecutionHandler = ObjectUtils.nullToDef(builder.getRejectedExecutionHandler(), RejectedExecutionHandlers.abort());
         this.agent = ObjectUtils.nullToDef(builder.getAgent(), EmptyAgent.getInstance());
         this.mainModule = builder.getMainModule();
 
+        this.batchSize = MathCommon.clamp(builder.getBatchSize(), MIN_BATCH_SIZE, MAX_BATCH_SIZE);
         this.cleanEventAfterConsumed = builder.isCleanEventAfterConsumed();
         this.cleanBufferOnExit = builder.isCleanBufferOnExit();
-        if (cleanBufferOnExit && eventSequencer instanceof MpUnboundedEventSequencer<? extends T> unboundedBuffer) {
-            this.mpUnboundedEventSequencer = unboundedBuffer;
+
+        // 缓存
+        if (cleanBufferOnExit && dataProvider instanceof MpUnboundedBuffer<? extends T> unboundedBuffer) {
+            this.unboundedBuffer = unboundedBuffer;
         } else {
-            this.mpUnboundedEventSequencer = null;
+            this.unboundedBuffer = null;
         }
 
         // worker只依赖生产者屏障
@@ -283,7 +287,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             rejectedExecutionHandler.rejected(task, this);
         } else {
             // 不需要支持EventTranslator，用户可以通过申请序号和event发布
-            T event = eventSequencer.producerGet(sequence);
+            T event = dataProvider.producerGet(sequence);
             event.setType(0);
             event.setObj1(task);
             event.setOptions(options);
@@ -305,7 +309,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     }
 
     public final T getEvent(long sequence) {
-        return eventSequencer.producerGet(sequence);
+        return dataProvider.producerGet(sequence);
     }
 
     /**
@@ -612,9 +616,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         }
 
         private void loop() {
-            final int batchSize = DisruptorEventLoop.this.batchSize;
-            final var mpUnboundedEventSequencer = DisruptorEventLoop.this.mpUnboundedEventSequencer;
-
             long nextSequence = sequence.getVolatile() + 1L;
             long availableSequence = -1;
             while (state == EventLoopState.ST_RUNNING) {
@@ -633,8 +634,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                     long curSequence = runTaskBatch(nextSequence, batchEndSequence);
                     sequence.setRelease(curSequence);
                     // 无界队列尝试主动回收块
-                    if (mpUnboundedEventSequencer != null) {
-                        mpUnboundedEventSequencer.tryMoveHeadToNext(curSequence);
+                    if (unboundedBuffer != null) {
+                        unboundedBuffer.tryMoveHeadToNext(curSequence);
                     }
                     nextSequence = curSequence + 1;
                     if (nextSequence <= batchEndSequence) {
@@ -687,15 +688,12 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             while ((queueTask = taskQueue.peek()) != null) {
                 if (queueTask.isCancelling()) {
                     taskQueue.poll(); // 未及时删除的任务
+                    queueTask.trySetCancelled();
                     scheduledHelper.onCompleted(queueTask);
                     continue;
                 }
                 // 优先级最高的任务不需要执行，那么后面的也不需要执行
                 if (tickTime < queueTask.getNextTriggerTime()) {
-                    return;
-                }
-                // 响应关闭
-                if (isShutdown()) {
                     return;
                 }
 
@@ -707,24 +705,34 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         scheduledHelper.onCompleted(queueTask);
                     }
                 } else {
-                    // 非关闭模式下，任务必须执行，否则可能导致时序错误
+                    // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务
                     if (queueTask.trigger(tickTime)) {
-                        taskQueue.offer(queueTask);
+                        if (isShuttingDown()) {
+                            queueTask.trySetCancelled();
+                            scheduledHelper.onCompleted(queueTask);
+                        } else {
+                            taskQueue.offer(queueTask);
+                        }
                     } else {
                         scheduledHelper.onCompleted(queueTask);
                     }
+                }
+
+                // 响应关闭
+                if (isShutdown()) {
+                    return;
                 }
             }
         }
 
         /** @return curSequence */
         private long runTaskBatch(final long batchBeginSequence, final long batchEndSequence) {
-            EventSequencer<? extends T> eventSequencer = DisruptorEventLoop.this.eventSequencer;
+            DataProvider<? extends T> dataProvider = DisruptorEventLoop.this.dataProvider;
             EventLoopAgent<? super T> agent = DisruptorEventLoop.this.agent;
             boolean cleanEventAfterConsumed = DisruptorEventLoop.this.cleanEventAfterConsumed;
 
             for (long curSequence = batchBeginSequence; curSequence <= batchEndSequence; curSequence++) {
-                T event = eventSequencer.consumerGet(curSequence);
+                T event = dataProvider.consumerGet(curSequence);
                 try {
                     if (event.getType() == 0) {
                         Runnable runnable = (Runnable) event.getObj1();
@@ -761,8 +769,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
 
         private void cleanBuffer() {
             final long startTimeMillis = System.currentTimeMillis();
-            final EventSequencer<? extends T> eventSequencer = DisruptorEventLoop.this.eventSequencer;
-            final EventLoopAgent<? super T> agent = DisruptorEventLoop.this.agent;
 
             // 处理延迟任务
             tickTime = System.nanoTime();
@@ -775,6 +781,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             long taskCount = 0;
             long discardCount = 0;
 
+            final EventLoopAgent<? super T> agent = DisruptorEventLoop.this.agent;
+            final DataProvider<? extends T> dataProvider = DisruptorEventLoop.this.dataProvider;
             final ProducerBarrier producerBarrier = eventSequencer.producerBarrier();
             final Sequence sequence = this.sequence;
             while (true) {
@@ -785,7 +793,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 while (!producerBarrier.isPublished(nextSequence)) {
                     Thread.onSpinWait(); // 等待发布
                 }
-                final T event = eventSequencer.consumerGet(nextSequence);
+                final T event = dataProvider.consumerGet(nextSequence);
                 try {
                     if (event.getType() < 0) { // 生产者在观察到关闭时发布了不连续的数据
                         nullCount++;
@@ -811,8 +819,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 }
             }
             // 清理内存
-            if (mpUnboundedEventSequencer != null) {
-                mpUnboundedEventSequencer.tryMoveHeadToNext(sequence.getVolatile());
+            if (unboundedBuffer != null) {
+                unboundedBuffer.tryMoveHeadToNext(sequence.getVolatile());
             }
             logger.info("cleanBuffer success!  nullCount = {}, taskCount = {}, discardCount {}, cost timeMillis = {}",
                     nullCount, taskCount, discardCount, (System.currentTimeMillis() - startTimeMillis));

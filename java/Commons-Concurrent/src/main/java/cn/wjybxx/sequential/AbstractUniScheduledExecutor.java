@@ -18,11 +18,8 @@ package cn.wjybxx.sequential;
 
 import cn.wjybxx.concurrent.*;
 
-import javax.annotation.Nonnull;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * 子类需要在{@link #execute(Runnable)}的时候为任务赋值id和options
@@ -109,72 +106,4 @@ public abstract class AbstractUniScheduledExecutor
         return scheduleAtFixedRate(task, initialDelay, period, unit, ICancelToken.NONE);
     }
     // endregion
-
-    // 重写submit，修改task类型
-
-    // region submit
-
-    @Override
-    public <T> IFuture<T> submit(@Nonnull TaskBuilder<T> builder) {
-        IScheduledPromise<T> promise = newScheduledPromise();
-        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
-        return promise;
-    }
-
-    @Override
-    public <T> IFuture<T> submitFunc(Callable<? extends T> task, int options) {
-        IScheduledPromise<T> promise = newScheduledPromise();
-        IScheduledHelper helper = helper();
-
-        execute(ScheduledPromiseTask.ofFunction(task, null, options, promise, helper, helper.tickTime()));
-        return promise;
-    }
-
-    @Override
-    public <T> IFuture<T> submitFunc(Callable<? extends T> task, ICancelToken cancelToken, int options) {
-        IScheduledPromise<T> promise = newScheduledPromise();
-        IScheduledHelper helper = helper();
-
-        execute(ScheduledPromiseTask.ofFunction(task, cancelToken, options, promise, helper, helper.tickTime()));
-        return promise;
-    }
-
-    @Override
-    public <T> IFuture<T> submitFunc(Function<? super IContext, ? extends T> task, IContext ctx, int options) {
-        IScheduledPromise<T> promise = newScheduledPromise();
-        IScheduledHelper helper = helper();
-
-        execute(ScheduledPromiseTask.ofFunction(task, ctx, options, promise, helper, helper.tickTime()));
-        return promise;
-    }
-
-    @Override
-    public IFuture<?> submitAction(Runnable task, int options) {
-        IScheduledPromise<Object> promise = newScheduledPromise();
-        IScheduledHelper helper = helper();
-
-        execute(ScheduledPromiseTask.ofAction(task, null, options, promise, helper, helper.tickTime()));
-        return promise;
-    }
-
-    @Override
-    public IFuture<?> submitAction(Runnable task, ICancelToken cancelToken, int options) {
-        IScheduledPromise<Object> promise = newScheduledPromise();
-        IScheduledHelper helper = helper();
-
-        execute(ScheduledPromiseTask.ofAction(task, cancelToken, options, promise, helper, helper.tickTime()));
-        return promise;
-    }
-
-    @Override
-    public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
-        IScheduledPromise<Object> promise = newScheduledPromise();
-        IScheduledHelper helper = helper();
-
-        execute(ScheduledPromiseTask.ofAction(task, ctx, options, promise, helper, helper.tickTime()));
-        return promise;
-    }
-
-    // endregion
-
 }

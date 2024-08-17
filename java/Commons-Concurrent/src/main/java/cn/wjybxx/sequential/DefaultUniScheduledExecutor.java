@@ -20,15 +20,16 @@ import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
 import cn.wjybxx.base.time.TimeProvider;
 import cn.wjybxx.concurrent.*;
+import cn.wjybxx.disruptor.RingBuffer;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 时序管理同{@link DisruptorEventLoop}：
+ * 我们总是先取得一个时间快照，然后先执行{@link #scheduledTaskQueue}中的任务，再执行{@link RingBuffer}中的任务，因此满足优先级相同时，先提交的任务先执行的约定
+ *
  * @author wjybxx
  * date 2023/4/3
  */
@@ -38,11 +39,10 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
     private static final int DEFAULT_INITIAL_CAPACITY = 16;
 
     private final TimeProvider timeProvider;
-    private final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue;
-    private final ScheduledHelper helper = new ScheduledHelper();
-
+    private final ArrayDeque<Runnable> taskQueue;
+    private final IndexedPriorityQueue<ScheduledPromiseTask<?>> scheduledTaskQueue;
+    private final ScheduledHelper scheduledHelper = new ScheduledHelper();
     private final UniPromise<Void> terminationPromise = new UniPromise<>(this);
-    private final IFuture<Void> terminationFuture = terminationPromise.asReadonly();
 
     private int state = EventLoopState.ST_UNSTARTED;
     /** 为任务分配唯一id，确保先入先出 */
@@ -56,37 +56,60 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
 
     public DefaultUniScheduledExecutor(TimeProvider timeProvider, int initCapacity) {
         this.timeProvider = Objects.requireNonNull(timeProvider, "timeProvider");
-        this.taskQueue = new DefaultIndexedPriorityQueue<>(queueTaskComparator, initCapacity);
+        this.taskQueue = new ArrayDeque<>(initCapacity);
+        this.scheduledTaskQueue = new DefaultIndexedPriorityQueue<>(queueTaskComparator, 16);
         this.tickTime = timeProvider.getTime();
     }
 
     @Override
     public void update() {
-        // 需要缓存下来，一来用于计算下次调度时间，二来避免优先级错乱
-        final long curTime = timeProvider.getTime();
-        tickTime = curTime;
+        tickTime = timeProvider.getTime();
+        processScheduledQueue(tickTime, isShuttingDown());
 
-        // 记录最后一个任务id，避免执行本次tick期间添加的任务
-        final long barrierTaskId = sequencer;
-        final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue = this.taskQueue;
+        ArrayDeque<Runnable> taskQueue = this.taskQueue;
+        Runnable task;
+        while ((task = taskQueue.poll()) != null) {
+            try {
+                task.run();
+            } catch (Throwable ex) {
+                logCause(ex);
+            }
+        }
+    }
+
+    private void processScheduledQueue(long tickTime, boolean shuttingDownMode) {
+        final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue = scheduledTaskQueue;
         ScheduledPromiseTask<?> queueTask;
         while ((queueTask = taskQueue.peek()) != null) {
-            // 优先级最高的任务不需要执行，那么后面的也不需要执行
-            if (curTime < queueTask.getNextTriggerTime()) {
-                return;
+            if (queueTask.isCancelling()) {
+                taskQueue.poll(); // 未及时删除的任务
+                queueTask.trySetCancelled();
+                scheduledHelper.onCompleted(queueTask);
+                continue;
             }
-            // 本次tick期间新增的任务，不立即执行，避免死循环或占用过多cpu
-            if (queueTask.getId() > barrierTaskId) {
+            // 优先级最高的任务不需要执行，那么后面的也不需要执行
+            if (tickTime < queueTask.getNextTriggerTime()) {
                 return;
             }
 
             taskQueue.poll();
-            if (queueTask.trigger(tickTime)) {
-                if (isShutdown()) { // 已请求关闭
+            if (shuttingDownMode) {
+                // 关闭模式下，不再重复执行任务
+                if (queueTask.isTriggered() || queueTask.trigger(tickTime)) {
                     queueTask.trySetCancelled();
-                    helper.onCompleted(queueTask);
+                    scheduledHelper.onCompleted(queueTask);
+                }
+            } else {
+                // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务
+                if (queueTask.trigger(tickTime)) {
+                    if (isShuttingDown()) {
+                        queueTask.trySetCancelled();
+                        scheduledHelper.onCompleted(queueTask);
+                    } else {
+                        taskQueue.offer(queueTask);
+                    }
                 } else {
-                    taskQueue.offer(queueTask);
+                    scheduledHelper.onCompleted(queueTask);
                 }
             }
         }
@@ -94,12 +117,13 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
 
     @Override
     public boolean needMoreUpdate() {
-        ScheduledPromiseTask<?> queueTask = taskQueue.peek();
+        ScheduledPromiseTask<?> queueTask = scheduledTaskQueue.peek();
         return queueTask != null && queueTask.getNextTriggerTime() <= tickTime;
     }
 
     @Override
     public void execute(@Nonnull Runnable command) {
+        Objects.requireNonNull(command, "command");
         if (isShuttingDown()) {
             // 暂时直接取消
             if (command instanceof IFutureTask<?> promiseTask) {
@@ -107,15 +131,11 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
             }
             return;
         }
-        ScheduledPromiseTask<?> promiseTask;
-        if (command instanceof ScheduledPromiseTask<?> promiseTask2) {
-            promiseTask = promiseTask2;
-        } else {
-            promiseTask = ScheduledPromiseTask.ofAction(command, null, 0, newScheduledPromise(), helper, tickTime);
+        taskQueue.offer(command);
+        if (command instanceof ScheduledPromiseTask<?> scheduledPromiseTask) {
+            scheduledPromiseTask.setId(++sequencer);
+            scheduledPromiseTask.registerCancellation();
         }
-        promiseTask.setId(++sequencer);
-        taskQueue.add(promiseTask);
-        promiseTask.registerCancellation();
     }
 
     // region lifecycle
@@ -131,7 +151,9 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
     @Override
     public List<Runnable> shutdownNow() {
         ArrayList<Runnable> result = new ArrayList<>(taskQueue);
-        taskQueue.clearIgnoringIndexes();
+        result.addAll(scheduledTaskQueue);
+        scheduledTaskQueue.clearIgnoringIndexes();
+
         state = EventLoopState.ST_TERMINATED;
         terminationPromise.trySetResult(null);
         return result;
@@ -154,7 +176,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
 
     @Override
     public IFuture<?> terminationFuture() {
-        return terminationFuture;
+        return terminationPromise.asReadonly();
     }
     // endregion
 
@@ -162,7 +184,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
 
     @Override
     protected IScheduledHelper helper() {
-        return helper;
+        return scheduledHelper;
     }
 
     private class ScheduledHelper implements IScheduledHelper {
@@ -188,7 +210,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
                 futureTask.trySetCancelled();
                 onCompleted(futureTask);
             } else {
-                taskQueue.add(futureTask);
+                scheduledTaskQueue.add(futureTask);
             }
         }
 
@@ -199,7 +221,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
 
         @Override
         public void onCancelRequested(ScheduledPromiseTask<?> futureTask, int cancelCode) {
-            taskQueue.removeTyped(futureTask);
+            scheduledTaskQueue.removeTyped(futureTask);
         }
     }
 

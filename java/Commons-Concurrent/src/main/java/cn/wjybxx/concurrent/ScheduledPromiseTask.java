@@ -44,7 +44,6 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     /** 任务的执行间隔 - 不再有特殊意义 */
     private long period;
 
-    // TODO 理论上次数和时间都可能限制，可能还是独立的Limiter更好?
     /** 截止时间 -- 有效性见{@link #MASK_HAS_TIMEOUT} */
     private long deadline;
 

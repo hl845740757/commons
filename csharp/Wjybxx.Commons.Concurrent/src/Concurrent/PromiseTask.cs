@@ -172,9 +172,13 @@ public class PromiseTask<T> : IFutureTask
     }
 
     protected ICancelToken GetCancelToken() {
+        object ctx = this.ctx;
+        if (ctx == ICancelToken.NONE || ctx == IContext.NONE) {
+            return ICancelToken.NONE;
+        }
         if (TaskBuilder.IsTaskAcceptContext(TaskType)) {
-            IContext ctx = (IContext)this.ctx;
-            return ctx.CancelToken;
+            IContext castCtx = (IContext)this.ctx;
+            return castCtx.CancelToken;
         }
         return (ICancelToken)ctx;
     }

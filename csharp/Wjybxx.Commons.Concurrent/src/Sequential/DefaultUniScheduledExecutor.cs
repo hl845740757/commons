@@ -24,14 +24,17 @@ using Wjybxx.Commons.Time;
 
 namespace Wjybxx.Commons.Sequential
 {
+/// <summary>
+/// 时序管理同<see cref="DisruptorEventLoop{T}"/>：
+/// 
+/// </summary>
 public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
 {
     private readonly ITimeProvider timeProvider;
-    private readonly IndexedPriorityQueue<IScheduledFutureTask> taskQueue = new(new ScheduledTaskComparator());
-    private readonly ScheduledHelper helper;
-
+    private readonly Queue<object> taskQueue;
+    private readonly IndexedPriorityQueue<IScheduledFutureTask> scheduledTaskQueue = new(new ScheduledTaskComparator());
+    private readonly ScheduledHelper scheduledHelper;
     private readonly UniPromise<int> terminationPromise;
-    private readonly IFuture terminationFuture;
 
     private EventLoopState state = EventLoopState.Unstarted;
     /** 为任务分配唯一id，确保先入先出 */
@@ -46,45 +49,74 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
     /// <param name="initCapacity">初始队列大</param>
     public DefaultUniScheduledExecutor(ITimeProvider timeProvider, int initCapacity = 16) {
         this.timeProvider = timeProvider;
+        this.taskQueue = new Queue<object>(initCapacity);
         this.terminationPromise = new UniPromise<int>(this);
-        this.terminationFuture = terminationPromise.AsReadonly();
-        this.helper = new ScheduledHelper(this);
+        this.scheduledHelper = new ScheduledHelper(this);
         this.tickTime = timeProvider.Current;
     }
 
     public override void Update() {
         // 需要缓存下来，一来用于计算下次调度时间，二来避免优先级错乱
-        long curTime = timeProvider.Current;
-        tickTime = curTime;
+        tickTime = timeProvider.Current;
+        ProcessScheduledQueue(tickTime, IsShuttingDown);
 
-        // 记录最后一个任务id，避免执行本次tick期间添加的任务
-        long barrierTaskId = sequencer;
-        IndexedPriorityQueue<IScheduledFutureTask> taskQueue = this.taskQueue;
+        Queue<object> taskQueue = this.taskQueue;
+        object task;
+        while (taskQueue.TryDequeue(out task)) {
+            try {
+                if (task is Action action) {
+                    action();
+                } else {
+                    ITask castTask = (ITask)task;
+                    castTask.Run();
+                }
+            }
+            catch (Exception ex) {
+                LogCause(ex);
+            }
+        }
+    }
+
+    private void ProcessScheduledQueue(long tickTime, bool shuttingDownMode) {
+        IndexedPriorityQueue<IScheduledFutureTask> taskQueue = scheduledTaskQueue;
         IScheduledFutureTask queueTask;
         while (taskQueue.TryPeekHead(out queueTask)) {
-            // 优先级最高的任务不需要执行，那么后面的也不需要执行
-            if (curTime < queueTask.NextTriggerTime) {
-                return;
+            if (queueTask.IsCancelling()) {
+                taskQueue.Dequeue(); // 未及时删除的任务
+                queueTask.TrySetCancelled();
+                scheduledHelper.OnCompleted(queueTask);
+                continue;
             }
-            // 本次tick期间新增的任务，不立即执行，避免死循环或占用过多cpu
-            if (queueTask.Id > barrierTaskId) {
+            // 优先级最高的任务不需要执行，那么后面的也不需要执行
+            if (tickTime < queueTask.NextTriggerTime) {
                 return;
             }
 
             taskQueue.Dequeue();
-            if (queueTask.Trigger(tickTime)) {
-                if (IsShuttingDown) { // 已请求关闭
+            if (shuttingDownMode) {
+                // 关闭模式下，不再重复执行任务
+                if (queueTask.IsTriggered || queueTask.Trigger(tickTime)) {
                     queueTask.TrySetCancelled();
-                    helper.OnCompleted(queueTask);
+                    scheduledHelper.OnCompleted(queueTask);
+                }
+            } else {
+                // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务
+                if (queueTask.Trigger(tickTime)) {
+                    if (IsShuttingDown) {
+                        queueTask.TrySetCancelled();
+                        scheduledHelper.OnCompleted(queueTask);
+                    } else {
+                        taskQueue.Enqueue(queueTask);
+                    }
                 } else {
-                    taskQueue.Enqueue(queueTask);
+                    scheduledHelper.OnCompleted(queueTask);
                 }
             }
         }
     }
 
     public override bool NeedMoreUpdate() {
-        if (taskQueue.TryPeekHead(out IScheduledFutureTask queueTask)) {
+        if (scheduledTaskQueue.TryPeekHead(out IScheduledFutureTask queueTask)) {
             return queueTask.NextTriggerTime <= tickTime;
         }
         return false;
@@ -98,15 +130,20 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
             }
             return;
         }
-        IScheduledFutureTask promiseTask;
+        taskQueue.Enqueue(task);
         if (task is IScheduledFutureTask scheduledFutureTask) {
-            promiseTask = scheduledFutureTask;
-        } else {
-            promiseTask = ScheduledPromiseTask.OfTask(task, null, task.Options, NewScheduledPromise<int>(), Helper, tickTime);
+            scheduledFutureTask.Id = ++sequencer;
+            scheduledFutureTask.RegisterCancellation();
         }
-        promiseTask.Id = ++sequencer;
-        taskQueue.Enqueue(promiseTask);
-        promiseTask.RegisterCancellation();
+    }
+
+    public override void Execute(Action action, int options = 0) {
+        // 该executor不支持options
+        if (IsShutdown) {
+            // 暂时直接取消
+            return;
+        }
+        taskQueue.Enqueue(action);
     }
 
     #region lifecycle
@@ -118,14 +155,14 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
     }
 
     public override List<ITask> ShutdownNow() {
-        List<ITask> result = new List<ITask>(taskQueue);
-        taskQueue.ClearIgnoringIndexes();
+        List<ITask> result = new List<ITask>(scheduledTaskQueue);
+        scheduledTaskQueue.ClearIgnoringIndexes();
         state = EventLoopState.Terminated;
         terminationPromise.TrySetResult(0);
         return result;
     }
 
-    public override IFuture TerminationFuture => terminationFuture;
+    public override IFuture TerminationFuture => terminationPromise.AsReadonly();
     public override bool IsShuttingDown => state >= EventLoopState.ShuttingDown;
     public override bool IsShutdown => state >= EventLoopState.Shutdown;
     public override bool IsTerminated => state == EventLoopState.Terminated;
@@ -134,7 +171,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
 
     #region internal
 
-    protected override IScheduledHelper Helper => helper;
+    protected override IScheduledHelper Helper => scheduledHelper;
 
     private class ScheduledHelper : IScheduledHelper
     {
@@ -158,11 +195,10 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
 
         public void Reschedule(IScheduledFutureTask futureTask) {
             if (_executor.IsShuttingDown) {
-                // 默认直接取消，暂不添加拒绝处理器
                 futureTask.TrySetCancelled();
                 OnCompleted(futureTask);
             } else {
-                _executor.taskQueue.Enqueue(futureTask);
+                _executor.scheduledTaskQueue.Enqueue(futureTask);
             }
         }
 
@@ -171,7 +207,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
         }
 
         public void OnCancelRequested(IScheduledFutureTask futureTask, int cancelCode) {
-            _executor.taskQueue.Remove(futureTask);
+            _executor.scheduledTaskQueue.Remove(futureTask);
         }
     }
 
