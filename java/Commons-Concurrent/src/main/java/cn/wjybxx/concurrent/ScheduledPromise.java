@@ -17,7 +17,6 @@
 package cn.wjybxx.concurrent;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author wjybxx
@@ -25,26 +24,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class ScheduledPromise<T> extends Promise<T> implements IScheduledPromise<T> {
 
-    private IScheduledFutureTask<? extends T> task;
-
     public ScheduledPromise() {
     }
 
     public ScheduledPromise(Executor executor) {
         super(executor);
-    }
-
-    @Override
-    public void setTask(IScheduledFutureTask<? extends T> task) {
-        this.task = task;
-    }
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-        if (task == null) {
-            return Long.MAX_VALUE; // 可能已解绑
-        }
-        return task.getDelay(unit);
     }
 
 }

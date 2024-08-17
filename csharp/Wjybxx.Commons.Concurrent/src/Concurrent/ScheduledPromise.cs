@@ -20,14 +20,8 @@ namespace Wjybxx.Commons.Concurrent
 {
 public class ScheduledPromise<T> : Promise<T>, IScheduledPromise<T>
 {
-    private IScheduledFutureTask? _task;
-
     public ScheduledPromise(IExecutor? executor = null)
         : base(executor) {
-    }
-
-    public void SetTask(IScheduledFutureTask? task) {
-        this._task = task;
     }
 }
 }

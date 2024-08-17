@@ -68,6 +68,40 @@ public readonly struct ValueFuture
         return new ValueFuture(ex);
     }
 
+    /// <summary>
+    /// 转换为普通的Future
+    /// 该方法应当避免调用多次，
+    /// </summary>
+    /// <returns></returns>
+    public IFuture AsFuture() {
+        if (_future == null) {
+            return Promise<int>.FromResult(0);
+        }
+        if (_future is IFuture future) {
+            return future;
+        }
+        IStateMachineDriver stateMachineDriver = (IStateMachineDriver)_future;
+        TaskStatus status = stateMachineDriver.GetStatus(_reentryId);
+        switch (status) {
+            case TaskStatus.Success: {
+                stateMachineDriver.ThrowIfFailedOrCancelled(_reentryId);
+                return Promise<int>.FromResult(0);
+            }
+            case TaskStatus.Cancelled:
+            case TaskStatus.Failed: {
+                Exception ex = stateMachineDriver.GetException(_reentryId);
+                return Promise<int>.FromException(ex);
+            }
+            default: {
+                Promise<int> promise = new Promise<int>();
+                stateMachineDriver.SetVoidPromiseWhenCompleted(_reentryId, promise);
+                return promise;
+            }
+        }
+    }
+
+    public ValueFuture Preserve() => new ValueFuture(AsFuture());
+
     #region internal
 
     // internal是因为不希望用户调用
@@ -111,7 +145,7 @@ public readonly struct ValueFuture
             throw new IllegalStateException();
         }
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (_future is IStateMachineDriver<int> driver) {
+        if (_future is IStateMachineDriver driver) {
             driver.OnCompleted(_reentryId, driverCallBack, action, executor, options);
         } else {
             IPromise promise = (IPromise)_future;
@@ -190,7 +224,8 @@ public readonly struct ValueFuture<T>
             }
             case TaskStatus.Cancelled:
             case TaskStatus.Failed: {
-                return Promise<T>.FromException(stateMachineDriver.GetException(_reentryId));
+                Exception ex = stateMachineDriver.GetException(_reentryId);
+                return Promise<T>.FromException(ex);
             }
             default: {
                 Promise<T> promise = new Promise<T>();

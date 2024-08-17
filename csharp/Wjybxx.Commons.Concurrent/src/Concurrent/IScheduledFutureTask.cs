@@ -31,7 +31,7 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 {
     #region internal
 
-    // 以下接口应该仅用于Executor内部，不应该队用户开放
+    // 以下接口应该仅用于Executor内部，不应该对用户开放
 
     /// <summary>
     /// 任务的唯一id，不同的任务之间id不可重复
@@ -44,9 +44,9 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     bool IsPeriodic { get; }
 
     /// <summary>
-    /// 下次触发时间，不保证对其它线程的可见性
+    /// 下次触发时间
     /// </summary>
-    long NextTriggerTime { get; }
+    long NextTriggerTime { get; set; }
 
     /// <summary>
     /// 是否已完成首次触发(通常用于降低优先级)

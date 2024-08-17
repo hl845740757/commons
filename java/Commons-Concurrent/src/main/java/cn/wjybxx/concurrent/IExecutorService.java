@@ -136,7 +136,7 @@ public interface IExecutorService extends ExecutorService, IExecutor {
     @Deprecated
     @Override
     default <T> IFuture<T> submit(@Nonnull Callable<T> task) {
-        return submitFunc(task, 0);
+        return submitFunc(task);
     }
 
     @Deprecated

@@ -16,12 +16,10 @@
 
 package cn.wjybxx.sequential;
 
-import cn.wjybxx.concurrent.IScheduledFutureTask;
 import cn.wjybxx.concurrent.IScheduledPromise;
 
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author wjybxx
@@ -30,8 +28,6 @@ import java.util.concurrent.TimeUnit;
 @NotThreadSafe
 public class UniScheduledPromise<T> extends UniPromise<T> implements IScheduledPromise<T> {
 
-    private IScheduledFutureTask<? extends T> task;
-
     public UniScheduledPromise() {
     }
 
@@ -39,16 +35,4 @@ public class UniScheduledPromise<T> extends UniPromise<T> implements IScheduledP
         super(executor);
     }
 
-    @Override
-    public void setTask(IScheduledFutureTask<? extends T> task) {
-        this.task = task;
-    }
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-        if (task == null) {
-            return Long.MAX_VALUE; // 可能已解绑
-        }
-        return task.getDelay(unit);
-    }
 }

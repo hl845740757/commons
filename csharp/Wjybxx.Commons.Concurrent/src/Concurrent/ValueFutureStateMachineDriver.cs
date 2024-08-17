@@ -30,7 +30,8 @@ namespace Wjybxx.Commons.Concurrent
 internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMachineDriver<T> where S : IAsyncStateMachine
 {
     private static readonly ConcurrentObjectPool<ValueFutureStateMachineDriver<T, S>> POOL =
-        new(() => new ValueFutureStateMachineDriver<T, S>(), driver => driver.Reset(), TaskPoolConfig.GetPoolSize<T>());
+        new(() => new ValueFutureStateMachineDriver<T, S>(), driver => driver.Reset(),
+            TaskPoolConfig.GetPoolSize<T>(TaskPoolConfig.TaskType.ValueFutureStateMachineDriver));
 
     /// <summary>
     /// 任务状态机
@@ -174,9 +175,9 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
         }
     }
 
-    public void OnCompletedVoid(int reentryId, IPromise<int> promise) {
+    public void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise) {
         ValidateReentryId(reentryId);
-        _promise.OnCompleted(setVoidInvoker, promise);
+        IPromise.SetVoidPromise(promise,  _promise);
     }
 
     public void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise) {
@@ -191,14 +192,5 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
         }
         throw new Exception("ValueFutureDriver has been reused");
     }
-
-    private static readonly Action<IFuture<T>, object> setVoidInvoker = (future, state) => {
-        IPromise<int> promise = (IPromise<int>)state;
-        if (future.IsSucceeded) {
-            promise.TrySetResult(0);
-        } else {
-            promise.TrySetException(future.ExceptionNow(false));
-        }
-    };
 }
 }

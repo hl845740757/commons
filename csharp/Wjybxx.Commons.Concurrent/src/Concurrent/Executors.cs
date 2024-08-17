@@ -46,20 +46,24 @@ public static class Executors
         }
         return false;
     }
-
-    /// <summary>
-    /// 将future结果传输到Promise
-    /// </summary>
-    /// <param name="promise"></param>
-    /// <param name="task"></param>
-    /// <typeparam name="TResult"></typeparam>
-    public static void SetPromise<TResult>(IPromise<TResult> promise, IFuture<TResult> task) {
-        IPromise<TResult>.SetPromise(promise, task);
-    }
-
+    
     #endregion
 
     #region system
+
+    public static void SetPromise<TResult>(TaskCompletionSource<TResult> promise, Task<TResult> task) {
+        if (task.IsCompleted) {
+            if (task.IsCompletedSuccessfully) {
+                promise.TrySetResult(task.Result);
+            } else if (task.IsFaulted) {
+                promise.TrySetException(task.Exception!);
+            } else {
+                promise.TrySetCanceled();
+            }
+        } else {
+            task.ContinueWith((t, obj) => SetPromise((TaskCompletionSource<TResult>)obj, t), promise);
+        }
+    }
 
     public static void FlatSetPromise<TResult>(TaskCompletionSource<TResult> promise, Task<Task<TResult>> task) {
         if (task.IsCompleted) {
@@ -75,19 +79,6 @@ public static class Executors
         }
     }
 
-    public static void SetPromise<TResult>(TaskCompletionSource<TResult> promise, Task<TResult> task) {
-        if (task.IsCompleted) {
-            if (task.IsCompletedSuccessfully) {
-                promise.TrySetResult(task.Result);
-            } else if (task.IsFaulted) {
-                promise.TrySetException(task.Exception!);
-            } else {
-                promise.TrySetCanceled();
-            }
-        } else {
-            task.ContinueWith((t, obj) => SetPromise((TaskCompletionSource<TResult>)obj, t), promise);
-        }
-    }
 
     /** 用于忽略警告 */
     public static void Forget(this Task task) {
@@ -234,18 +225,17 @@ public static class Executors
         return new ActionWrapper2(action, cancelToken, options);
     }
 
-    public static ITask ToTask(Action action, CancellationToken cancelToken, int options = 0) {
-        if (action == null) throw new ArgumentNullException(nameof(action));
-        return new ActionWrapper4(action, cancelToken, options);
-    }
-
     public static ITask ToTask(Action<IContext> action, IContext context, int options = 0) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         return new ActionWrapper3(action, context, options);
     }
 
-    #endregion
+    public static ITask ToTask(Action action, CancellationToken cancelToken, int options = 0) {
+        if (action == null) throw new ArgumentNullException(nameof(action));
+        return new ActionWrapper4(action, cancelToken, options);
+    }
 
+    #endregion
 
     #region box-class
 

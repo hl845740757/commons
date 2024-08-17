@@ -540,7 +540,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         }
         // 判断是否需要传递选项
         if (options != 0
-                && !TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)
+                && TaskOption.isEnabled(options, TaskOption.STAGE_PROPAGATE_OPTIONS)
                 && e instanceof IExecutor exe) {
             exe.execute(completion);
         } else {

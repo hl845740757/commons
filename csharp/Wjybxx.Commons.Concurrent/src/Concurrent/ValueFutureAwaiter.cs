@@ -68,12 +68,12 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, _executor, _options);
+        _future.OnCompleted(continuation, _executor, _options | TaskOption.STAGE_UNCANCELLABLE_CTX);
     }
 
     public void UnsafeOnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, _executor, _options);
+        _future.OnCompleted(continuation, _executor, _options | TaskOption.STAGE_UNCANCELLABLE_CTX);
     }
 }
 
@@ -121,12 +121,12 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, _executor, _options);
+        _future.OnCompleted(continuation, _executor, _options | TaskOption.STAGE_UNCANCELLABLE_CTX);
     }
 
     public void UnsafeOnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, _executor, _options);
+        _future.OnCompleted(continuation, _executor, _options | TaskOption.STAGE_UNCANCELLABLE_CTX);
     }
 }
 }

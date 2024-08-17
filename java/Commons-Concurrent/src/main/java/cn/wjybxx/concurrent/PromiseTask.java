@@ -24,7 +24,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * ps：该类的数据是（部分）开放的，以支持不同的扩展。
+ * ps：
+ * 1.该类的数据是（部分）开放的，以支持不同的扩展。
+ * 2.周期性任务通常不适合池化，因为生存周期较长，反而是Submit创建的PromiseTask适合缓存。
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -119,23 +121,31 @@ public class PromiseTask<V> implements IFutureTask<V> {
     // region open
 
     @Override
-    public boolean isCancelling() {
-        return promise.isDone() || getCancelToken().isCancelling();
-    }
-
-    @Override
     public final int getOptions() {
         return options;
     }
 
-    /** 任务是否启用了指定选项 */
-    public final boolean isEnabled(int taskOption) {
-        return TaskOption.isEnabled(options, taskOption);
+    @Override
+    public boolean isCancelling() {
+        return promise.isDone() || getCancelToken().isCancelling();
+    }
+
+    public void trySetCancelled() {
+        trySetCancelled(promise, getCancelToken(), CancelCodes.REASON_SHUTDOWN);
+    }
+
+    public void trySetCancelled(int code) {
+        trySetCancelled(promise, getCancelToken(), code);
     }
 
     /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
     public final int getTaskType() {
         return (ctl & MASK_TASK_TYPE) >> OFFSET_TASK_TYPE;
+    }
+
+    /** 任务是否启用了指定选项 */
+    public final boolean isEnabled(int taskOption) {
+        return TaskOption.isEnabled(options, taskOption);
     }
 
     /** 获取ctl中的某个bit */
@@ -156,9 +166,11 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     // region core
 
+    /** 注意：如果task和promise之间是双向绑定的，需要解除绑定 */
     public void clear() {
         task = null;
         ctx = null;
+        options = 0;
         promise = null;
         ctl = 0;
     }
@@ -214,7 +226,6 @@ public class PromiseTask<V> implements IFutureTask<V> {
         ICancelToken cancelToken = getCancelToken();
         if (cancelToken.isCancelling()) {
             trySetCancelled(promise, cancelToken);
-            clear();
             return;
         }
         if (promise.trySetComputing()) {
@@ -234,20 +245,9 @@ public class PromiseTask<V> implements IFutureTask<V> {
                 promise.trySetException(e);
             }
         }
-        clear();
     }
 
     // region util
-
-    /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */
-    public void cancelWithoutRemove() {
-        cancelWithoutRemove(CancelCodes.REASON_SHUTDOWN);
-    }
-
-    /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */
-    public void cancelWithoutRemove(int code) {
-        trySetCancelled(promise, getCancelToken(), code);
-    }
 
     protected static void trySetCancelled(IPromise<?> promise, ICancelToken cancelToken) {
         int cancelCode = cancelToken.cancelCode();

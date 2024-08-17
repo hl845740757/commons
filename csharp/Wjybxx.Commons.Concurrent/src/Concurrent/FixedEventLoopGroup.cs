@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public class FixedEventLoopGroup : AbstractEventLoopGroup, IFixedEventLoopGroup
 {
-    private readonly IPromise<object> terminationPromise = new Promise<object>();
+    private readonly IPromise<int> terminationPromise = new Promise<int>();
     private readonly IEventLoop[] children;
     private readonly IList<IEventLoop> readonlyChildren;
     private readonly IEventLoopChooser chooser;
@@ -61,7 +61,7 @@ public class FixedEventLoopGroup : AbstractEventLoopGroup, IFixedEventLoopGroup
     /** 子节点关闭回调 */
     private void OnChildTerminated(IFuture future) {
         if (Interlocked.Increment(ref terminatedChildren) == children.Length) {
-            terminationPromise.TrySetResult(null);
+            terminationPromise.TrySetResult(0);
         }
     }
 

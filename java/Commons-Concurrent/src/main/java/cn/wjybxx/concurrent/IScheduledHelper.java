@@ -67,8 +67,9 @@ public interface IScheduledHelper {
     /**
      * 请求删除给定的任务
      * 1.可能从其它线程调用，需考虑线程安全问题（取决于取消信号）
+     * 2.未保持与JDK的兼容，参数不直接使用{@link ICancelToken}
      */
-    void remove(ScheduledPromiseTask<?> futureTask);
+    void onCancelRequested(ScheduledPromiseTask<?> futureTask, int cancelCode);
 
     /** 计算任务的触发时间 -- 允许修正 */
     default long triggerTime(long delay, TimeUnit timeUnit) {

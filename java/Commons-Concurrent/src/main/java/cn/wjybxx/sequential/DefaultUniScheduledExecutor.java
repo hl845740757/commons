@@ -83,7 +83,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
             taskQueue.poll();
             if (queueTask.trigger(tickTime)) {
                 if (isShutdown()) { // 已请求关闭
-                    queueTask.cancelWithoutRemove();
+                    queueTask.trySetCancelled();
                     helper.onCompleted(queueTask);
                 } else {
                     taskQueue.offer(queueTask);
@@ -103,34 +103,19 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
         if (isShuttingDown()) {
             // 暂时直接取消
             if (command instanceof IFutureTask<?> promiseTask) {
-                promiseTask.cancelWithoutRemove();
+                promiseTask.trySetCancelled();
             }
             return;
         }
-        if (command instanceof ScheduledPromiseTask<?> promiseTask) {
-            promiseTask.setId(++sequencer);
-            if (delayExecute(promiseTask)) {
-                promiseTask.registerCancellation();
-            }
+        ScheduledPromiseTask<?> promiseTask;
+        if (command instanceof ScheduledPromiseTask<?> promiseTask2) {
+            promiseTask = promiseTask2;
         } else {
-            ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(command, null, 0, newScheduledPromise(), helper, tickTime);
-            promiseTask.setId(++sequencer);
-            if (delayExecute(promiseTask)) {
-                promiseTask.registerCancellation();
-            }
+            promiseTask = ScheduledPromiseTask.ofAction(command, null, 0, newScheduledPromise(), helper, tickTime);
         }
-    }
-
-    private boolean delayExecute(ScheduledPromiseTask<?> futureTask) {
-        if (isShuttingDown()) {
-            // 默认直接取消，暂不添加拒绝处理器
-            futureTask.cancelWithoutRemove();
-            helper.onCompleted(futureTask);
-            return false;
-        } else {
-            taskQueue.add(futureTask);
-            return true;
-        }
+        promiseTask.setId(++sequencer);
+        taskQueue.add(promiseTask);
+        promiseTask.registerCancellation();
     }
 
     // region lifecycle
@@ -199,7 +184,12 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
 
         @Override
         public void reschedule(ScheduledPromiseTask<?> futureTask) {
-            delayExecute(futureTask);
+            if (isShuttingDown()) {
+                futureTask.trySetCancelled();
+                onCompleted(futureTask);
+            } else {
+                taskQueue.add(futureTask);
+            }
         }
 
         @Override
@@ -208,7 +198,7 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
         }
 
         @Override
-        public void remove(ScheduledPromiseTask<?> futureTask) {
+        public void onCancelRequested(ScheduledPromiseTask<?> futureTask, int cancelCode) {
             taskQueue.removeTyped(futureTask);
         }
     }

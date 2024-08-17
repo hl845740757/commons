@@ -76,7 +76,9 @@ public interface PromiseTask
 }
 
 /// <summary>
-/// 注意：我们统一使用int代替void，避免额外的实现
+/// ps：
+/// 1.该类的数据是（部分）开放的，以支持不同的扩展。
+/// 2.周期性任务通常不适合池化，因为生存周期较长，反而是Submit创建的PromiseTask适合缓存。
 /// </summary>
 /// <typeparam name="T">结果类型</typeparam>
 public class PromiseTask<T> : IFutureTask
@@ -123,21 +125,26 @@ public class PromiseTask<T> : IFutureTask
 
     #region Props
 
+    /** 任务的调度选项 */
+    public int Options => options;
+
     /** 是否收到了取消信号 */
     public bool IsCancelling() {
         return promise.IsCompleted || GetCancelToken().IsCancelling;
     }
 
-    /** 任务的调度选项 */
-    public int Options => options;
+    /** 设置为取消状态 */
+    public void TrySetCancelled(int code = CancelCodes.REASON_SHUTDOWN) {
+        TrySetCancelled(promise, GetCancelToken(), code);
+    }
+
+    /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
+    public int TaskType => (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
 
     /** 任务是否启用了指定选项 */
     public bool IsEnabled(int taskOption) {
         return TaskOption.IsEnabled(options, taskOption);
     }
-
-    /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
-    public int TaskType => (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
 
     /** 获取ctl中的某个bit */
     protected bool GetCtlBit(int mask) {
@@ -155,10 +162,12 @@ public class PromiseTask<T> : IFutureTask
 
     #endregion
 
+    /** 注意：如果task和promise之间是双向绑定的，需要解除绑定 */
     public virtual void Clear() {
         task = null;
         ctx = null;
         promise = null;
+        options = 0;
         ctl = 0;
     }
 
@@ -214,7 +223,6 @@ public class PromiseTask<T> : IFutureTask
         ICancelToken cancelToken = GetCancelToken();
         if (cancelToken.IsCancelling) {
             TrySetCancelled(promise, cancelToken);
-            Clear();
             return;
         }
         if (promise.TrySetComputing()) {
@@ -234,15 +242,9 @@ public class PromiseTask<T> : IFutureTask
                 promise.TrySetException(e);
             }
         }
-        Clear();
     }
 
     #region util
-
-    /** 该接口只能在EventLoop内调用 -- 且当前任务已弹出队列 */
-    public void CancelWithoutRemove(int code = CancelCodes.REASON_SHUTDOWN) {
-        TrySetCancelled(promise, GetCancelToken(), code);
-    }
 
     protected static void TrySetCancelled(IPromise promise, ICancelToken cancelToken) {
         int cancelCode = cancelToken.CancelCode;

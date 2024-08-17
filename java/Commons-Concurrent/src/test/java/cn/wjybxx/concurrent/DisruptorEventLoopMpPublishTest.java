@@ -131,7 +131,7 @@ public class DisruptorEventLoopMpPublishTest {
                     break;
                 }
                 try {
-                    RingBufferEvent event = consumer.getEvent(sequence);
+                    RingBufferEvent event = consumer.getEvent(sequence); // TODO 这里抛出过异常
                     event.setType(type);
                     event.longVal1 = localSequence++;
                 } finally {

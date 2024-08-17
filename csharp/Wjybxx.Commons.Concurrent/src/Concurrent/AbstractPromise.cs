@@ -165,13 +165,17 @@ public abstract class AbstractPromise
         // 1. 原子方式将当前Listeners赋值为TOMBSTONE，因为pushCompletion添加的监听器的可见性是由CAS提供的。
         // 2. 将当前栈内元素逆序，因为即使在接口层进行了说明（不提供监听器执行时序保证），但仍然有人依赖于监听器的执行时序(期望先添加的先执行)
         // 3. 将逆序后的元素插入到'onto'前面，即插入到原本要被通知的下一个监听器的前面
-        Completion head;
-        do {
-            head = promise.stack;
+        Completion head = promise.stack;
+        while (true) {
             if (head == TOMBSTONE) {
                 return onto;
             }
-        } while (Interlocked.CompareExchange(ref promise.stack, TOMBSTONE, head) != head);
+            Completion realHead = Interlocked.CompareExchange(ref promise.stack, TOMBSTONE, head);
+            if (realHead == head) {
+                break;
+            }
+            head = realHead;
+        }
 
         Completion ontoHead = onto;
         while (head != null) {
@@ -202,7 +206,7 @@ public abstract class AbstractPromise
         }
         // 判断是否需要传递选项
         if (options != 0
-            && !TaskOption.IsEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)) {
+            && TaskOption.IsEnabled(options, TaskOption.STAGE_PROPAGATE_OPTIONS)) {
             e.Execute(completion);
         } else {
             completion.Options = 0;

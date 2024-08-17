@@ -129,7 +129,7 @@ public interface TaskBuilder
 /// 
 /// </summary>
 /// <typeparam name="T">结果类型，无结果时可使用int，无开销</typeparam>
-public struct TaskBuilder<T> : TaskBuilder
+public struct TaskBuilder<T>
 {
     private readonly int type;
     private readonly object task;

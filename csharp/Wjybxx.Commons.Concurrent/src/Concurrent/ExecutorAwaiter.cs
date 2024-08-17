@@ -58,33 +58,5 @@ public readonly struct ExecutorAwaiter : ICriticalNotifyCompletion
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         _executor.Execute(continuation);
     }
-
-    /// <summary>
-    /// 该实现保留 -- 用于支持手动调用GetResult
-    /// </summary>
-    private class SwitchExecutorTask : Promise<int>, ITask
-    {
-        internal Action continuation;
-
-        public SwitchExecutorTask() {
-            this.continuation = null!;
-        }
-
-        public SwitchExecutorTask(Action continuation) {
-            this.continuation = continuation ?? throw new ArgumentNullException(nameof(continuation));
-        }
-
-        public int Options => 0;
-
-        public void Run() {
-            try {
-                SetResult(1); // 需要放在前面... continuation执行时就会调用GetResult
-                continuation.Invoke();
-            }
-            catch (Exception e) {
-                SetException(e);
-            }
-        }
-    }
 }
 }

@@ -21,16 +21,16 @@ using System;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 该接口用于VoidFuture操作
+/// 该接口表示异步状态机的驱动类。
+///
+/// ps：该接口用于VoidFuture操作。
 /// </summary>
 public interface IStateMachineDriver
 {
     /// <summary>
-    /// 用于驱动StateMachine
+    /// 返回用于驱动StateMachine的委托
     /// 
-    /// ps：
-    /// 1. 定义为属性以允许实现类进行一些优化，比如：缓存实例，代理。
-    /// 2. 通常应该是Run方法的委托。
+    /// ps：定义为属性以允许实现类进行一些优化，比如：缓存实例，代理。
     /// </summary>
     Action MoveToNext { get; }
 
@@ -73,11 +73,22 @@ public interface IStateMachineDriver
     }
 
     /// <summary>
-    /// 用于获取异常，成功时promise设置0即可
+    /// 添加一个完成回调
+    /// </summary>
+    /// <param name="reentryId">重入id，校验是否被重用</param>
+    /// <param name="continuation">回调</param>
+    /// <param name="state">回调参数</param>
+    /// <param name="executor">回调线程</param>
+    /// <param name="options">调度选项</param>
+    void OnCompleted(int reentryId, Action<object?> continuation, object? state,
+                     IExecutor? executor, int options = 0);
+    
+    /// <summary>
+    /// 用于传输结果
     /// </summary>
     /// <param name="reentryId"></param>
     /// <param name="promise"></param>
-    void OnCompletedVoid(int reentryId, IPromise<int> promise);
+    void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise);
 }
 
 /// <summary>
@@ -116,17 +127,6 @@ public interface IStateMachineDriver<T> : IStateMachineDriver
     /// <param name="cancelCode">相关的取消码</param>
     /// <returns></returns>
     bool TrySetCancelled(int reentryId, int cancelCode);
-
-    /// <summary>
-    /// 添加一个完成回调
-    /// </summary>
-    /// <param name="reentryId">重入id，校验是否被重用</param>
-    /// <param name="continuation">回调</param>
-    /// <param name="state">回调参数</param>
-    /// <param name="executor">回调线程</param>
-    /// <param name="options">调度选项</param>
-    void OnCompleted(int reentryId, Action<object?> continuation, object? state,
-                     IExecutor? executor, int options = 0);
 
     /// <summary>
     /// 用于传输结果

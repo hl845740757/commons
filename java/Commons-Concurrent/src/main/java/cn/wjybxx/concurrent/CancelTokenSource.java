@@ -554,13 +554,17 @@ public final class CancelTokenSource implements ICancelTokenSource {
     }
 
     private static Completion clearListeners(CancelTokenSource source, Completion onto) {
-        Completion head;
-        do {
-            head = source.stack;
+        Completion head = source.stack;
+        while (true) {
             if (head == TOMBSTONE) {
                 return onto;
             }
-        } while (!VH_STACK.compareAndSet(source, head, TOMBSTONE));
+            Completion realHead = (Completion) VH_STACK.compareAndExchange(source, head, TOMBSTONE);
+            if (realHead == head) {
+                break;
+            }
+            head = realHead;
+        }
 
         Completion ontoHead = onto;
         while (head != null) {
@@ -586,7 +590,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         }
         // 判断是否需要传递选项
         if (options != 0
-                && !TaskOption.isEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)
+                && TaskOption.isEnabled(options, TaskOption.STAGE_PROPAGATE_OPTIONS)
                 && e instanceof IExecutor exe) {
             exe.execute(completion);
         } else {

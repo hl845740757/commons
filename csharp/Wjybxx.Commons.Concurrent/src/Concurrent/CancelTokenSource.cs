@@ -358,14 +358,17 @@ public sealed class CancelTokenSource : ICancelTokenSource
     }
 
     private static Completion? ClearListeners(CancelTokenSource source, Completion? onto) {
-        Completion head;
-        do {
-            head = source.stack;
+        Completion head = source.stack;
+        while (true) {
             if (head == TOMBSTONE) {
                 return onto;
             }
-        } while (Interlocked.CompareExchange(ref source.stack, TOMBSTONE, head) != head);
-
+            Completion realHead = Interlocked.CompareExchange(ref source.stack, TOMBSTONE, head);
+            if (realHead == head) {
+                break;
+            }
+            head = realHead;
+        }
         Completion ontoHead = onto;
         while (head != null) {
             Completion tmpHead = head;
@@ -390,7 +393,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
         }
         // 判断是否需要传递选项
         if (options != 0
-            && !TaskOption.IsEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)) {
+            && TaskOption.IsEnabled(options, TaskOption.STAGE_PROPAGATE_OPTIONS)) {
             e.Execute(completion);
         } else {
             completion.Options = 0;

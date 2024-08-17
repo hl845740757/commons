@@ -34,10 +34,10 @@ public interface ISingleThreadExecutor : IExecutor
     ///
     /// 警告：如果用户基于该测试实现分支逻辑，则可能导致时序错误，eg：
     /// <code>
-    /// 	if(eventLoop.inEventLoop()) {
-    ///     	doSomething();
+    /// 	if(eventLoop.InEventLoop()) {
+    ///     	DoSomething();
     ///     } else {
-    ///         eventLoop.execute(() -> doSomething());
+    ///         eventLoop.execute(DoSomething);
     ///     }
     /// </code>
     /// 假设现在有3个线程：A、B、C，它们进行了约定，线程A投递任务后，告诉线程B，线程B投递后告诉线程C，线程C再投递，以期望任务按照A、B、C的顺序处理。

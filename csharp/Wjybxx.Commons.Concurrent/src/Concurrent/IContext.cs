@@ -38,7 +38,7 @@ public interface IContext
     /// <summary>
     /// 空上下文
     /// </summary>
-    public static readonly IContext NONE = MiniContext.OfCancelToken(ICancelToken.NONE);
+    public static readonly IContext NONE = MiniContext.SHARABLE;
 
 #nullable disable
     /// <summary>

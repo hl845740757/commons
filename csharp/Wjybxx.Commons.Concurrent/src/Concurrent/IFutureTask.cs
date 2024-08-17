@@ -29,16 +29,19 @@ public interface IFutureTask : ITask
 {
     /// <summary>
     /// 是否收到了取消信号
+    /// 调度器会检查任务的取消信号，以避免不必要的执行。
     /// </summary>
     /// <returns></returns>
     bool IsCancelling();
 
     /// <summary>
     /// 取消执行
-    /// 该方法由EventLoop调用，不需要以回调的方式从EventLoop中删除。
+    /// 取消可能由调度器触发，因此需要暴露该接口给EventLoop。
+    /// 该方法由EventLoop调用，不需要再回调通知EventLoop.
+    /// 实现时，优先使用CancelToken中的取消码。
     /// </summary>
-    /// <param name="code">取消码</param>
-    void CancelWithoutRemove(int code = CancelCodes.REASON_SHUTDOWN);
+    /// <param name="code">默认取消码</param>
+    void TrySetCancelled(int code = CancelCodes.REASON_SHUTDOWN);
 
     /// <summary>
     /// 清理任务

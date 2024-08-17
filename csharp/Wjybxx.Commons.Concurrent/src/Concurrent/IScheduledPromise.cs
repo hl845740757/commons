@@ -27,12 +27,5 @@ public interface IScheduledPromise : IPromise, IScheduledFuture
 
 public interface IScheduledPromise<T> : IScheduledPromise, IPromise<T>, IScheduledFuture<T>
 {
-    /// <summary>
-    /// 注入关联的任务.
-    /// 1.Promise需要了解任务的状态以支持用户的查询;
-    /// 2.由于存在双向依赖，因此需要延迟注入;
-    /// </summary>
-    /// <param name="task">关联的任务</param>
-    void SetTask(IScheduledFutureTask? task);
 }
 }

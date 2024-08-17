@@ -22,6 +22,7 @@ import cn.wjybxx.base.annotation.Beta;
 import cn.wjybxx.base.annotation.VisibleForTesting;
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
+import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.disruptor.*;
 
 import javax.annotation.Nonnull;
@@ -281,22 +282,14 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             eventSequencer.publish(sequence);
             rejectedExecutionHandler.rejected(task, this);
         } else {
+            // 不需要支持EventTranslator，用户可以通过申请序号和event发布
             T event = eventSequencer.producerGet(sequence);
-            if (task instanceof EventTranslator<?>) {
-                try {
-                    @SuppressWarnings("unchecked") EventTranslator<? super T> translator = (EventTranslator<? super T>) task;
-                    translator.translateTo(event, sequence);
-                } catch (Throwable ex) {
-                    logger.warn("translateTo caught exception", ex);
-                }
-            } else {
-                event.setType(0);
-                event.setObj1(task);
-                event.setOptions(options);
-                if (task instanceof ScheduledPromiseTask<?> futureTask) {
-                    futureTask.setId(sequence); // nice
-                    futureTask.registerCancellation();
-                }
+            event.setType(0);
+            event.setObj1(task);
+            event.setOptions(options);
+            if (task instanceof ScheduledPromiseTask<?> futureTask) {
+                futureTask.setId(sequence); // nice
+                futureTask.registerCancellation();
             }
             eventSequencer.publish(sequence);
 
@@ -427,10 +420,11 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         public void reschedule(ScheduledPromiseTask<?> futureTask) {
             assert inEventLoop();
             if (isShuttingDown()) {
-                futureTask.cancelWithoutRemove();
-                return;
+                futureTask.trySetCancelled();
+                onCompleted(futureTask);
+            } else {
+                scheduledTaskQueue.add(futureTask);
             }
-            scheduledTaskQueue.add(futureTask);
         }
 
         @Override
@@ -439,14 +433,26 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         }
 
         @Override
-        public void remove(ScheduledPromiseTask<?> futureTask) {
-            if (inEventLoop()) {
-                scheduledTaskQueue.removeTyped(futureTask);
-            } else if (mpUnboundedEventSequencer != null) {
-                execute(futureTask, futureTask.getOptions()); // task.run方法会检测取消信号，避免额外封装
+        public void onCancelRequested(ScheduledPromiseTask<?> futureTask, int cancelCode) {
+            futureTask.trySetCancelled(cancelCode);
+            if (CancelCodes.isWithoutRemove(cancelCode)) {
+                return;
             }
-            // else 等待任务超时弹出时再删除 -- 延迟删除可能存在内存泄漏，但压任务又可能导致阻塞（有界队列）
-            // TODO 是否存储在待移除并发集合里？
+            if (inEventLoop()) {
+                // 如果在事件循环线程内，有这些特殊情况：
+                // 1.futureTask可能尚未被压入调度队列
+                // 2.futureTask可能正在执行trigger方法 -- 这两种情况都导致不在调度队列
+                futureTask.setNextTriggerTime(0);
+                if (futureTask.collectionIndex(scheduledTaskQueue) >= 0) {
+                    scheduledTaskQueue.priorityChanged(futureTask);
+                }
+            } else {
+                // 如果在其它线程，有这些情况：
+                // 1.如果EventLoop是有界队列，压任务可能导致阻塞
+                // 2.如果futureTask可能会被池化，不能简单的异步删除 -- id验证都有风险，因为id也会变
+                // 结论：要保证其它线程可取消，定时任务不能被池化
+                execute(futureTask, futureTask.getOptions()); // run方法会检测取消信号，避免额外封装
+            }
         }
     }
 
@@ -681,6 +687,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             while ((queueTask = taskQueue.peek()) != null) {
                 if (queueTask.isCancelling()) {
                     taskQueue.poll(); // 未及时删除的任务
+                    scheduledHelper.onCompleted(queueTask);
                     continue;
                 }
                 // 优先级最高的任务不需要执行，那么后面的也不需要执行
@@ -696,7 +703,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 if (shuttingDownMode) {
                     // 关闭模式下，不再重复执行任务
                     if (queueTask.isTriggered() || queueTask.trigger(tickTime)) {
-                        queueTask.cancelWithoutRemove();
+                        queueTask.trySetCancelled();
                         scheduledHelper.onCompleted(queueTask);
                     }
                 } else {

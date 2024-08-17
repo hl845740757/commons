@@ -26,10 +26,12 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public class ImmediateExecutor : IExecutor
 {
+    public static ImmediateExecutor Inst { get; } = new ImmediateExecutor();
+
     private readonly SynchronizationContext synchronizationContext;
     private readonly TaskScheduler scheduler;
 
-    public ImmediateExecutor() {
+    private ImmediateExecutor() {
         synchronizationContext = new ExecutorSynchronizationContext(this);
         scheduler = new ExecutorTaskScheduler(this);
     }

@@ -53,23 +53,24 @@ public interface IScheduledHelper
     /// 1.一定从当前线程调用
     /// 2.如果无法继续调度任务，则取消任务
     /// </summary>
-    /// <param name="scheduledTask"></param>
-    void Reschedule(IScheduledFutureTask scheduledTask);
-
-    /// <summary>
-    /// 请求删除给定的任务
-    /// 1.可能从其它线程调用，需考虑线程安全问题
-    /// </summary>
-    /// <param name="scheduledTask"></param>
-    void Remove(IScheduledFutureTask scheduledTask);
+    /// <param name="futureTask"></param>
+    void Reschedule(IScheduledFutureTask futureTask);
 
     /// <summary>
     /// 任务不可继续触发 -- 任务当前已出队列
     /// 1.回调给用户，让用户决定是否清理和缓存。
     ///  2.与<see cref="Reschedule"/>成对
     /// </summary>
-    /// <param name="scheduledTask"></param>
-    void OnCompleted(IScheduledFutureTask scheduledTask);
+    /// <param name="futureTask"></param>
+    void OnCompleted(IScheduledFutureTask futureTask);
+
+    /// <summary>
+    /// 收到用户的取消请求
+    /// (为了保持兼容，参数不使用<see cref="ICancelToken"/>)
+    /// </summary>
+    /// <param name="futureTask"></param>
+    /// <param name="cancelCode"></param>
+    void OnCancelRequested(IScheduledFutureTask futureTask, int cancelCode);
 
     /** 计算任务的触发时间 -- 允许修正 */
     long TriggerTime(long delay, TimeSpan timeUnit) {

@@ -80,8 +80,8 @@ public interface ScheduledPromiseTask
     #endregion
 }
 
-public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask,
-    IIndexedElement, ICancelTokenListener
+public class ScheduledPromiseTask<T> : PromiseTask<T>,
+    IScheduledFutureTask, IIndexedElement, ICancelTokenListener
 {
 #nullable disable
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
@@ -109,7 +109,6 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask,
         this.nextTriggerTime = nextTriggerTime;
         this.period = period;
         ScheduleType = builder.ScheduleType;
-        promise.SetTask(this); // 双向绑定
     }
 
     /** 用于简单情况下的对象创建 */
@@ -119,7 +118,6 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask,
         this.helper = helper;
         this.nextTriggerTime = nextTriggerTime;
         this.period = 0;
-        promise.SetTask(this); // 双向绑定
     }
 
     #region internal
@@ -131,7 +129,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask,
 
     public long NextTriggerTime {
         get => nextTriggerTime;
-        private set => nextTriggerTime = value;
+        set => nextTriggerTime = value;
     }
 
     /** 任务是否已调度过，通常用于降低优先级 */
@@ -171,6 +169,9 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask,
     public override void Clear() {
         base.Clear();
         CloseRegistration();
+        id = -1;
+        nextTriggerTime = 0;
+        period = 0;
         helper = null;
     }
 
@@ -184,9 +185,12 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask,
 
     /** 该方法在任务出队列的时候调用 */
     public override void Run() {
-        IPromise<T> promise = this.promise;
-        if (promise.IsCompleted || GetCancelToken().IsCancelling) {
-            TrySetCancelled(promise, GetCancelToken(), CancelCodes.REASON_DEFAULT);
+        if (helper == null) { // 异步删除
+            return;
+        }
+        ICancelToken cancelToken = GetCancelToken();
+        if (promise.IsCompleted || cancelToken.IsCancelling) {
+            TrySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
             helper.OnCompleted(this);
             return;
         }
@@ -217,6 +221,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask,
 
         IPromise<T> promise = this.promise;
         ICancelToken cancelToken = GetCancelToken();
+        // 为兼容，还要检测来自future的取消，即isComputing...
         if (cancelToken.IsCancelling) {
             TrySetCancelled(promise, cancelToken);
             return false;
@@ -229,14 +234,12 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask,
             return false;
         }
 
+        if (TaskOption.IsEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN)
+            && HasTimeout && deadline <= tickTime) {
+            promise.TrySetException(StacklessTimeoutException.INST);
+            return false;
+        }
         try {
-            if (HasTimeout) {
-                if (TaskOption.IsEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN) && deadline <= tickTime) {
-                    promise.TrySetException(StacklessTimeoutException.INST);
-                    return false;
-                }
-            }
-
             if (TaskType == TaskBuilder.TYPE_TIMESHARING) {
                 // 周期性任务，只有分时任务可以有结果
                 if (RunTimeSharing(firstTrigger, out T result)) {
@@ -246,31 +249,28 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask,
             } else {
                 RunTask();
             }
-
-            // 任务执行后检测取消
-            if (cancelToken.IsCancelling || !promise.IsComputing) {
-                TrySetCancelled(promise, cancelToken);
-                return false;
-            }
-            // 未被取消的情况下检测超时
-            if (HasTimeout && deadline <= tickTime) {
-                promise.TrySetException(StacklessTimeoutException.INST);
-                return false;
-            }
-
-            SetNextRunTime(tickTime, scheduleType);
-            return true;
         }
         catch (Exception ex) {
             ThreadUtil.RecoveryInterrupted(ex);
-            if (CanCaughtException(ex)) {
-                FutureLogger.LogCause(ex, "periodic task caught exception");
-                SetNextRunTime(tickTime, scheduleType);
-                return true;
+            if (!CanCaughtException(ex)) {
+                promise.TrySetException(ex);
+                return false;
             }
-            promise.TrySetException(ex);
+            FutureLogger.LogCause(ex, "periodic task caught exception");
+        }
+        // 任务执行后检测取消
+        if (cancelToken.IsCancelling || !promise.IsComputing) {
+            TrySetCancelled(promise, cancelToken);
             return false;
         }
+        // 未被取消的情况下检测超时
+        if (HasTimeout && deadline <= tickTime) {
+            promise.TrySetException(StacklessTimeoutException.INST);
+            return false;
+        }
+
+        SetNextRunTime(tickTime, scheduleType);
+        return true;
     }
 
     private bool CanCaughtException(Exception ex) {
@@ -284,7 +284,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask,
     }
 
     private void SetNextRunTime(long tickTime, int scheduleType) {
-        long maxDelay = HasTimeout ? deadline : long.MaxValue;
+        long maxDelay = HasTimeout ? (deadline - tickTime) : long.MaxValue;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
             nextTriggerTime = nextTriggerTime + Math.Min(maxDelay, period); // 逻辑时间
         } else {
@@ -296,19 +296,15 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask,
     public void RegisterCancellation() {
         // C# 的future中无取消方法，因此只需要监听取消令牌
         ICancelToken cancelToken = GetCancelToken();
-        if (cancelToken == ICancelToken.NONE) {
-            return;
-        }
         if (cancelRegistration == null && cancelToken.CanBeCancelled) {
             cancelRegistration = cancelToken.ThenNotify(this);
         }
     }
 
+    [Obsolete("该方法为中转方法，EventLoop不应该调用")]
     public void OnCancelRequested(ICancelToken cancelToken) {
         // 用户通过令牌发起取消
-        if (promise.TrySetCancelled(cancelToken.CancelCode) && !cancelToken.IsWithoutRemove) {
-            helper.Remove(this);
-        }
+        helper.OnCancelRequested(this, cancelToken.CancelCode);
     }
 
     private void CloseRegistration() {

@@ -33,7 +33,7 @@ public class FutureTest
         EventSequencer = new RingBufferEventSequencer<MiniAgentEvent>.Builder(() => new MiniAgentEvent())
             .Build()
     }.Build();
-    private static readonly IExecutor executor = new ImmediateExecutor();
+    private static readonly IExecutor executor = ImmediateExecutor.Inst;
 
     [Test]
     public void TestFutureAwaitable() {

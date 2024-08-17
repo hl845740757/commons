@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 使用接口定义常量
 /// </summary>
-public interface ScheduledTaskBuilder
+public interface ScheduledTaskBuilder : TaskBuilder
 {
     /** 执行一次 */
     public const byte SCHEDULE_ONCE = 0;
@@ -86,7 +86,7 @@ public interface ScheduledTaskBuilder
 /// 定时任务构建器
 /// </summary>
 /// <typeparam name="T">结果类型，无结果时可使用int，无开销</typeparam>
-public struct ScheduledTaskBuilder<T> : ScheduledTaskBuilder, TaskBuilder
+public struct ScheduledTaskBuilder<T>
 {
     /** 不能为readonly否则调用方法会产生拷贝 */
     private TaskBuilder<T> _core;

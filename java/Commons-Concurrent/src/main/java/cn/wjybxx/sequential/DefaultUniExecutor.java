@@ -16,7 +16,6 @@
 
 package cn.wjybxx.sequential;
 
-import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.concurrent.EventLoopState;
 import cn.wjybxx.concurrent.IFuture;
 import cn.wjybxx.concurrent.IFutureTask;
@@ -24,7 +23,6 @@ import cn.wjybxx.concurrent.IFutureTask;
 import javax.annotation.Nonnull;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -118,7 +116,7 @@ public class DefaultUniExecutor extends AbstractUniExecutor {
     public void execute(Runnable command) {
         if (isShutdown()) {
             if (command instanceof IFutureTask<?> promiseTask) {
-                promiseTask.cancelWithoutRemove();
+                promiseTask.trySetCancelled();
             }
             return;
         }

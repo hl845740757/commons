@@ -26,14 +26,8 @@ namespace Wjybxx.Commons.Sequential
 /// <typeparam name="T"></typeparam>
 public class UniScheduledPromise<T> : UniPromise<T>, IScheduledPromise<T>
 {
-    private IScheduledFutureTask? _task;
-
     public UniScheduledPromise(IExecutor? executor = null)
         : base(executor) {
-    }
-
-    public void SetTask(IScheduledFutureTask? task) {
-        this._task = task;
     }
 }
 }

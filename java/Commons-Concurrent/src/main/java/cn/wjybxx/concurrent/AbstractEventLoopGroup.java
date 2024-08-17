@@ -96,13 +96,13 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
     @Nonnull
     @Override
     public final <T> IFuture<T> submit(@Nonnull Callable<T> task) {
-        return select().submit(task);
+        return select().submitFunc(task);
     }
 
     @Nonnull
     @Override
     public final IFuture<?> submit(@Nonnull Runnable task) {
-        return select().submit(task);
+        return select().submitAction(task);
     }
 
     // endregion
@@ -143,26 +143,26 @@ public abstract class AbstractEventLoopGroup implements EventLoopGroup {
 
     @Nonnull
     @Override
-    public IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
-        return select().schedule(task, delay, unit);
+    public final IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
+        return select().scheduleAction(task, delay, unit, ICancelToken.NONE);
     }
 
     @Nonnull
     @Override
-    public <T> IScheduledFuture<T> schedule(Callable<T> task, long delay, TimeUnit unit) {
-        return select().schedule(task, delay, unit);
+    public final <T> IScheduledFuture<T> schedule(Callable<T> task, long delay, TimeUnit unit) {
+        return select().scheduleFunc(task, delay, unit, ICancelToken.NONE);
     }
 
     @Nonnull
     @Override
-    public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
-        return select().scheduleWithFixedDelay(task, initialDelay, delay, unit);
+    public final IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
+        return select().scheduleWithFixedDelay(task, initialDelay, delay, unit, ICancelToken.NONE);
     }
 
     @Nonnull
     @Override
-    public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
-        return select().scheduleAtFixedRate(task, initialDelay, period, unit);
+    public final IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
+        return select().scheduleAtFixedRate(task, initialDelay, period, unit, ICancelToken.NONE);
     }
     // endregion
 

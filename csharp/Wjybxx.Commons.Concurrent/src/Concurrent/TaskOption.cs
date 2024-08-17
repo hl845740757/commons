@@ -63,7 +63,8 @@ public static class TaskOption
 
     /// <summary>
     /// 延时任务：在出现异常后继续执行。
-    /// 注意：只适用无需结果的周期性任务 -- 分时任务会失败。
+    /// 1. 只适用无需结果的周期性任务 -- 分时任务会失败。
+    /// 2. 如果需要取消任务，需通过取消令牌实现。
     ///</summary>
     public const int CAUGHT_EXCEPTION = 1 << 15;
     /// <summary>
@@ -93,11 +94,10 @@ public static class TaskOption
     ///</summary>
     public const int STAGE_TRY_INLINE = 1 << 19;
     /// <summary>
-    /// 默认情况下，如果一个异步任务的Executor是<see cref="IExecutor"/>类型，options将传递给Executor。
-    /// 如果期望禁用传递，可设置改选项。
-    /// 仅用于{@link ICompletionStage}
+    /// 默认情况下，默认情况下，stage的options仅用于自身，
+    /// 如果一个异步任务的Executor是<see cref="IExecutor"/>类型，且期望将options传递给Executor时，可以启用该选项。
     ///</summary>
-    public const int STAGE_NON_TRANSITIVE = 1 << 20;
+    public const int STAGE_PROPAGATE_OPTIONS = 1 << 20;
     /// <summary>
     /// 默认情况下，Stage会在触发回调之前检测ctx否为<see cref="IContext"/>和<see cref="ICancelToken"/>类型，并检测取消信号。
     /// 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。

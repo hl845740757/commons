@@ -391,7 +391,7 @@ public class UniCancelTokenSource : ICancelTokenSource
         }
         // 判断是否需要传递选项
         if (options != 0
-            && !TaskOption.IsEnabled(options, TaskOption.STAGE_NON_TRANSITIVE)) {
+            && TaskOption.IsEnabled(options, TaskOption.STAGE_PROPAGATE_OPTIONS)) {
             e.Execute(completion);
         } else {
             completion.Options = 0;

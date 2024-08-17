@@ -91,6 +91,36 @@ public interface IPromise : IFuture
     /// <param name="cancelCode">相关的取消码</param>
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
     void SetCancelled(int cancelCode);
+
+    /// <summary>
+    /// 将future的结果传输到promise
+    /// 
+    /// 该框架统一使用int代替void。
+    /// </summary>
+    /// <param name="promise"></param>
+    /// <param name="task"></param>
+    public static void SetVoidPromise(IPromise<int> promise, IFuture task) {
+        switch (task.Status) {
+            case TaskStatus.Success: {
+                promise.TrySetResult(0);
+                break;
+            }
+            case TaskStatus.Failed:
+            case TaskStatus.Cancelled: {
+                promise.TrySetException(task.ExceptionNow(false));
+                break;
+            }
+            default: {
+                task.OnCompleted(_invokerSetVoidPromise, promise, TaskOption.STAGE_UNCANCELLABLE_CTX);
+                break;
+            }
+        }
+    }
+
+    private static Action<IFuture, object> _invokerSetVoidPromise = (future, state) => {
+        IPromise<int> promise = (IPromise<int>)state;
+        SetVoidPromise(promise, future);
+    };
 }
 
 /// <summary>
@@ -130,20 +160,7 @@ public interface IPromise<T> : IFuture<T>, IPromise
     /// </summary>
     private static readonly Action<IFuture<T>, object> _invokerSetPromise = (future, state) => {
         IPromise<T> promise = (IPromise<T>)state;
-        switch (future.Status) {
-            case TaskStatus.Success: {
-                promise.TrySetResult(future.ResultNow());
-                break;
-            }
-            case TaskStatus.Failed:
-            case TaskStatus.Cancelled: {
-                promise.TrySetException(future.ExceptionNow(false));
-                break;
-            }
-            default: {
-                throw new IllegalStateException();
-            }
-        }
+        SetPromise(promise, future);
     };
 
     /// <summary>

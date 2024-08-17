@@ -258,22 +258,14 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
             eventSequencer.Publish(sequence);
             Reject(task, options);
         } else {
+            // 不需要支持EventTranslator，用户可以通过申请序号和event发布
             ref T eventObj = ref eventSequencer.ProducerGetRef(sequence);
-            if (task is EventTranslator<T> translator) {
-                try {
-                    translator.TranslateTo(eventObj, sequence);
-                }
-                catch (Exception ex) {
-                    logger.Warn("translateTo caught exception", ex);
-                }
-            } else {
-                eventObj.Type = 0;
-                eventObj.Obj1 = task;
-                eventObj.Options = options;
-                if (task is IScheduledFutureTask futureTask) {
-                    futureTask.Id = sequence; // nice
-                    futureTask.RegisterCancellation();
-                }
+            eventObj.Type = 0;
+            eventObj.Obj1 = task;
+            eventObj.Options = options;
+            if (task is IScheduledFutureTask futureTask) {
+                futureTask.Id = sequence; // nice
+                futureTask.RegisterCancellation();
             }
             eventSequencer.Publish(sequence);
 
@@ -419,27 +411,40 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
             return localTime / timeUnit.Ticks;
         }
 
-        public void Reschedule(IScheduledFutureTask scheduledTask) {
+        public void Reschedule(IScheduledFutureTask futureTask) {
             Debug.Assert(_eventLoop.InEventLoop());
             if (_eventLoop.IsShuttingDown) {
-                scheduledTask.CancelWithoutRemove();
-                return;
+                futureTask.TrySetCancelled();
+                OnCompleted(futureTask);
+            } else {
+                _eventLoop.scheduledTaskQueue.Enqueue(futureTask);
             }
-            _eventLoop.scheduledTaskQueue.Enqueue(scheduledTask);
         }
 
-        public void OnCompleted(IScheduledFutureTask scheduledTask) {
-            scheduledTask.Clear();
+        public void OnCompleted(IScheduledFutureTask futureTask) {
+            futureTask.Clear();
         }
 
-        public void Remove(IScheduledFutureTask scheduledTask) {
+        public void OnCancelRequested(IScheduledFutureTask futureTask, int cancelCode) {
+            futureTask.TrySetCancelled(cancelCode);
+            if (CancelCodes.IsWithoutRemove(cancelCode)) {
+                return; // 用户选择不立即从队列删除
+            }
             if (_eventLoop.InEventLoop()) {
-                _eventLoop.scheduledTaskQueue.Remove(scheduledTask);
-                return;
-            } else if (_eventLoop.mpUnboundedEventSequencer != null) {
-                _eventLoop.Execute(scheduledTask); // task.run方法会检测取消信号，避免额外封装
+                // 如果在事件循环线程内，有这些特殊情况：
+                // 1.futureTask可能尚未被压入调度队列
+                // 2.futureTask可能正在执行trigger方法 -- 这两种情况都导致不在调度队列
+                futureTask.NextTriggerTime = 0;
+                if (futureTask.CollectionIndex(_eventLoop.scheduledTaskQueue) >= 0) {
+                    _eventLoop.scheduledTaskQueue.PriorityChanged(futureTask);
+                }
+            } else {
+                // 如果在其它线程，有这些情况：
+                // 1.如果EventLoop是有界队列，压任务可能导致阻塞
+                // 2.如果futureTask可能会被池化，不能简单的异步删除 -- id验证都有风险，因为id也会变
+                // 结论：要保证其它线程可取消，定时任务不能被池化
+                _eventLoop.Execute(futureTask); // run方法会检测取消信号，避免额外封装
             }
-            // else 等待任务超时弹出时再删除 -- 延迟删除可能存在内存泄漏，但压任务又可能导致阻塞（有界队列）
         }
     }
 
@@ -701,7 +706,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
             if (shuttingDownMode) {
                 // 关闭模式下，不再重复执行任务
                 if (queueTask.IsTriggered || queueTask.Trigger(tickTime)) {
-                    queueTask.CancelWithoutRemove();
+                    queueTask.TrySetCancelled();
                     scheduledHelper.OnCompleted(queueTask);
                 }
             } else {

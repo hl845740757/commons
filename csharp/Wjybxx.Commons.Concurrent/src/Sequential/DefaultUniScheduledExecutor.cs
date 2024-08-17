@@ -74,7 +74,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
             taskQueue.Dequeue();
             if (queueTask.Trigger(tickTime)) {
                 if (IsShuttingDown) { // 已请求关闭
-                    queueTask.CancelWithoutRemove();
+                    queueTask.TrySetCancelled();
                     helper.OnCompleted(queueTask);
                 } else {
                     taskQueue.Enqueue(queueTask);
@@ -94,34 +94,19 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
         if (IsShuttingDown) {
             // 暂时直接取消
             if (task is IFutureTask futureTask) {
-                futureTask.CancelWithoutRemove();
+                futureTask.TrySetCancelled();
             }
             return;
         }
+        IScheduledFutureTask promiseTask;
         if (task is IScheduledFutureTask scheduledFutureTask) {
-            scheduledFutureTask.Id = ++sequencer;
-            if (DelayExecute(scheduledFutureTask)) {
-                scheduledFutureTask.RegisterCancellation();
-            }
+            promiseTask = scheduledFutureTask;
         } else {
-            var promiseTask = ScheduledPromiseTask.OfTask(task, null, task.Options, NewScheduledPromise<int>(), Helper, tickTime);
-            promiseTask.Id = ++sequencer;
-            if (DelayExecute(promiseTask)) {
-                promiseTask.RegisterCancellation();
-            }
+            promiseTask = ScheduledPromiseTask.OfTask(task, null, task.Options, NewScheduledPromise<int>(), Helper, tickTime);
         }
-    }
-
-    private bool DelayExecute(IScheduledFutureTask futureTask) {
-        if (IsShuttingDown) {
-            // 默认直接取消，暂不添加拒绝处理器
-            futureTask.CancelWithoutRemove();
-            helper.OnCompleted(futureTask);
-            return false;
-        } else {
-            taskQueue.Enqueue(futureTask);
-            return true;
-        }
+        promiseTask.Id = ++sequencer;
+        taskQueue.Enqueue(promiseTask);
+        promiseTask.RegisterCancellation();
     }
 
     #region lifecycle
@@ -171,16 +156,22 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
             return ticks / timeUnit.Ticks;
         }
 
-        public void Reschedule(IScheduledFutureTask scheduledTask) {
-            _executor.DelayExecute(scheduledTask);
+        public void Reschedule(IScheduledFutureTask futureTask) {
+            if (_executor.IsShuttingDown) {
+                // 默认直接取消，暂不添加拒绝处理器
+                futureTask.TrySetCancelled();
+                OnCompleted(futureTask);
+            } else {
+                _executor.taskQueue.Enqueue(futureTask);
+            }
         }
 
-        public void OnCompleted(IScheduledFutureTask scheduledTask) {
-            scheduledTask.Clear();
+        public void OnCompleted(IScheduledFutureTask futureTask) {
+            futureTask.Clear();
         }
 
-        public void Remove(IScheduledFutureTask scheduledTask) {
-            _executor.taskQueue.Remove(scheduledTask);
+        public void OnCancelRequested(IScheduledFutureTask futureTask, int cancelCode) {
+            _executor.taskQueue.Remove(futureTask);
         }
     }
 

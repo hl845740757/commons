@@ -588,7 +588,8 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         /// 放在类内部，避免随着Promise就初始化
         /// </summary>
         internal static readonly IObjectPool<UniOnCompleted2> POOL = new ConcurrentObjectPool<UniOnCompleted2>(
-            () => new UniOnCompleted2(), task => task.Reset(), TaskPoolConfig.GetPoolSize<T>());
+            () => new UniOnCompleted2(), task => task.Reset(),
+            TaskPoolConfig.GetPoolSize<T>(TaskPoolConfig.TaskType.UniPromiseCompleted));
     }
 
     /// <summary>
@@ -676,7 +677,8 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         /// 放在类内部，避免随着Promise就初始化
         /// </summary>
         internal static readonly IObjectPool<UniOnCompleted3> POOL = new ConcurrentObjectPool<UniOnCompleted3>(
-            () => new UniOnCompleted3(), task => task.Reset(), TaskPoolConfig.GetPoolSize<T>());
+            () => new UniOnCompleted3(), task => task.Reset(),
+            TaskPoolConfig.GetPoolSize<T>(TaskPoolConfig.TaskType.UniPromiseCompleted));
     }
 
     #endregion
