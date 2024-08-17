@@ -75,7 +75,7 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
             chunk.Publish((int)(lo - minSequence), chunk.Length - 1);
 
             lo = minSequence + chunk.Length;
-            chunk = buffer.ProducerChunkForSequence(lo); // 下一个块可能尚未构造
+            chunk = buffer.ProducerChunkForSequence(lo); // 下一个块可能尚未构造(用户在finally块中发布序号，异常的情况下也会发布序号)
         }
         {
             long minSequence = chunk.MinSequence();
@@ -94,7 +94,7 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
         while (hi > chunk.MaxSequence()) {
             long minSequence = chunk.MinSequence();
             int maxIndex = chunk.Length - 1;
-            int highestIndex = chunk.GetHighestPublishedSequence((int)(lo - minSequence), maxIndex);
+            int highestIndex = chunk.GetHighestPublished((int)(lo - minSequence), maxIndex);
             if (highestIndex != maxIndex) {
                 return minSequence + highestIndex;
             }
@@ -107,7 +107,7 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
         {
             long minSequence = chunk.MinSequence();
             int maxIndex = (int)(hi - minSequence);
-            return minSequence + chunk.GetHighestPublishedSequence((int)(lo - minSequence), maxIndex);
+            return minSequence + chunk.GetHighestPublished((int)(lo - minSequence), maxIndex);
         }
     }
 

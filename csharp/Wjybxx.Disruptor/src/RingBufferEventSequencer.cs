@@ -83,6 +83,8 @@ public class RingBufferEventSequencer<T> : EventSequencer<T>
 
     public ProducerBarrier ProducerBarrier => _sequencer;
 
+    public DataProvider<T> DataProvider => buffer;
+
     #endregion
 
     #region producer

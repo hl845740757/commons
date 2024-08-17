@@ -65,6 +65,9 @@ public interface EventSequencer<T> extends DataProvider<T> {
     /** 获取生产者屏障 -- 生产者发布数据 */
     ProducerBarrier producerBarrier();
 
+    /** 数据提供者 */
+    DataProvider<T> dataProvider();
+
     // endregion
 
     // region 转发-提高易用性

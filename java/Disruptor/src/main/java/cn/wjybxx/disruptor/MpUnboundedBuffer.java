@@ -226,13 +226,12 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         if (sequence < 0) {
             throw new IllegalArgumentException("sequence: " + sequence);
         }
-        final int seqChunkOffset = (int) (sequence & chunkMask);
         final long seqChunkIndex = sequence >> chunkShift;
-
         MpUnboundedBufferChunk<E> pChunk = lvProducerChunk();
         if (pChunk.lvChunkIndex() != seqChunkIndex) {
             pChunk = producerChunkForIndex(pChunk, seqChunkIndex);
         }
+        final int seqChunkOffset = (int) (sequence & chunkMask);
         return pChunk.lpElement(seqChunkOffset);
     }
 
@@ -241,13 +240,12 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         if (sequence < 0) {
             throw new IllegalArgumentException("sequence: " + sequence);
         }
-        final int seqChunkOffset = (int) (sequence & chunkMask);
         final long seqChunkIndex = sequence >> chunkShift;
-
         MpUnboundedBufferChunk<E> cChunk = lvHeadChunk();
         if (cChunk.lvChunkIndex() != seqChunkIndex) {
             cChunk = consumerChunkForIndex(cChunk, seqChunkIndex);
         }
+        final int seqChunkOffset = (int) (sequence & chunkMask);
         return cChunk.lpElement(seqChunkOffset);
     }
 
@@ -256,13 +254,12 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         if (sequence < 0) {
             throw new IllegalArgumentException("sequence: " + sequence);
         }
-        final int seqChunkOffset = (int) (sequence & chunkMask);
         final long seqChunkIndex = sequence >> chunkShift;
-
         MpUnboundedBufferChunk<E> pChunk = lvProducerChunk();
         if (pChunk.lvChunkIndex() != seqChunkIndex) {
             pChunk = producerChunkForIndex(pChunk, seqChunkIndex);
         }
+        final int seqChunkOffset = (int) (sequence & chunkMask);
         pChunk.spElement(seqChunkOffset, data);
     }
 
@@ -271,13 +268,12 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         if (sequence < 0) {
             throw new IllegalArgumentException("sequence: " + sequence);
         }
-        final int seqChunkOffset = (int) (sequence & chunkMask);
         final long seqChunkIndex = sequence >> chunkShift;
-
         MpUnboundedBufferChunk<E> cChunk = lvHeadChunk();
         if (cChunk.lvChunkIndex() != seqChunkIndex) {
             cChunk = consumerChunkForIndex(cChunk, seqChunkIndex);
         }
+        final int seqChunkOffset = (int) (sequence & chunkMask);
         cChunk.spElement(seqChunkOffset, data);
     }
 
@@ -307,7 +303,7 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         return cChunk;
     }
 
-    /** 获取指定索引的消费者块 -- 当{@link #lvHeadChunk()}不是期望的块时调用。 */
+    /** 获取指定索引的消费者块 */
     private MpUnboundedBufferChunk<E> consumerChunkForIndex(
             final MpUnboundedBufferChunk<E> initialChunk,
             final long requiredChunkIndex) {
@@ -331,7 +327,7 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         }
     }
 
-    /** 获取指定索引的生产者块 -- 当{@link #lvProducerChunk()}不是期望的块时调用 */
+    /** 获取指定索引的生产者块 */
     private MpUnboundedBufferChunk<E> producerChunkForIndex(
             final MpUnboundedBufferChunk<E> initialChunk,
             final long requiredChunkIndex) {
@@ -354,10 +350,12 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
             }
             currentChunk = appendNextChunks(currentChunk, currentChunkIndex, -jumpBackward);
         }
-        for (long i = 0; i < jumpBackward; i++) {
+        // 由于存在回收逻辑，有可能本应该回退2个，但前一个已经被消费回收了，所以不能简单for循环回跳...
+        // eg：线程A在进入方法时，当前initChunk可能为1，请求的是2号块；线程B在进入方法时，请求的是3号块；
+        // 由线程B追加了两个块，但线程A先返回到用户，并完成填充数据和消费，这时2号块可能已被回收；因此这里回跳步数不是固定的
+        while (currentChunk.lvChunkIndex() > requiredChunkIndex) {
             currentChunk = currentChunk.lvPrev();
         }
-        assert currentChunk.lvChunkIndex() == requiredChunkIndex;
         return currentChunk;
     }
 
@@ -418,16 +416,16 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
      */
     public boolean tryMoveHeadToNext(long gatingSequence) {
         MpUnboundedBufferChunk<E> headChunk = lvHeadChunk();
-        MpUnboundedBufferChunk<E> producerChunk = lvProducerChunk();
+        MpUnboundedBufferChunk<E> producerChunk = lvProducerChunkNotRotation();
         if (!isRecyclable(headChunk, gatingSequence, producerChunk)) {
             return false;
         }
         if (!tryLockHead()) {
             return false;
         }
-        // 注意：在竞争lock成功后，head可能是过期的！必须重新检查回收条件 -- 这期间producerChunk的索引不会变化
+        // 注意：在竞争lock成功后，head可能是过期的(可能被其它线程回收)！必须重新检查回收条件
         headChunk = lvHeadChunk();
-        producerChunk = lvProducerChunk();
+        producerChunk = lvProducerChunkNotRotation();
         if (!isRecyclable(headChunk, gatingSequence, producerChunk)) {
             unlockHead();
             return false;
@@ -439,18 +437,27 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
             nextChunk = nextChunk.lvNext();
             nextChunk.soPrev(null);
         }
-        // 我们立即发布新的head，以允许消费者获取最新的数据
+        // 我们立即发布新的head，以允许消费者获取最新的数据;但由于我们仍持有锁，nextChunk将始终有效
         soHeadChunk(nextChunk);
         recycleChunks(headChunk, nextChunk);
         unlockHead();
         return true;
     }
 
+    private MpUnboundedBufferChunk<E> lvProducerChunkNotRotation() {
+        MpUnboundedBufferChunk<E> producerChunk = lvProducerChunk();
+        while (producerChunk == ROTATION) {
+            Thread.onSpinWait();
+            producerChunk = lvProducerChunk();
+        }
+        return producerChunk;
+    }
+
     private static boolean isRecyclable(MpUnboundedBufferChunk<?> chunk, long gatingSequence,
                                         MpUnboundedBufferChunk<?> producerChunk) {
         // 不可以回收生产者当前块，否则会导致生产者append产生竞争
         return chunk.maxSequence() <= gatingSequence
-                && chunk.lvChunkIndex() < producerChunk.lvChunkIndex(); // ROTATION is ok
+                && chunk.lvChunkIndex() < producerChunk.lvChunkIndex();
     }
 
     private void recycleChunks(MpUnboundedBufferChunk<E> headChunk, MpUnboundedBufferChunk<E> nextChunk) {

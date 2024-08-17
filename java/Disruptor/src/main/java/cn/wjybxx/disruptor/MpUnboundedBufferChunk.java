@@ -156,7 +156,7 @@ public final class MpUnboundedBufferChunk<E> {
     }
 
     /** @return highest index */
-    public final int getHighestPublishedSequence(final int low, final int high) {
+    public final int getHighestPublished(final int low, final int high) {
         final long[] published = this.published;
         final long chunkIndex = lpChunkIndex();
         for (int index = low; index <= high; index++) {

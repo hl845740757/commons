@@ -59,6 +59,9 @@ public interface EventSequencer<T> : DataProvider<T>
 
     /** 获取生产者屏障 -- 生产者发布数据 */
     ProducerBarrier ProducerBarrier { get; }
+    
+    /** 数据提供者 */
+    DataProvider<T> DataProvider { get; }
 
     #endregion
 

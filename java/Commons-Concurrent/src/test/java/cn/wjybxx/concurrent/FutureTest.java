@@ -16,10 +16,12 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.function.FunctionUtils;
 import cn.wjybxx.base.mutable.MutableLong;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -44,6 +46,12 @@ public class FutureTest {
     }
 
     private static final IExecutor immediateExecutor = Runnable::run;
+
+    @BeforeEach
+    void setUp() {
+        // 必须等待其它任务完成
+        globalEventLoop.submit(FunctionUtils.emptyRunnable()).awaitUninterruptibly();
+    }
 
     // region basic
 

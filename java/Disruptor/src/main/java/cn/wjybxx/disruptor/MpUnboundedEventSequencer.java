@@ -105,6 +105,10 @@ public class MpUnboundedEventSequencer<T> implements EventSequencer<T> {
         return sequencer;
     }
 
+    @Override
+    public DataProvider<T> dataProvider() {
+        return buffer;
+    }
     // endregion
 
     // region producer

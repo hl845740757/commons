@@ -83,13 +83,15 @@ public class MpUnboundedEventSequencer<T> : EventSequencer<T>
         return ref buffer.ConsumerGetRef(sequence);
     }
 
-    public int Capacity => -1;
+    public int Capacity => EventSequencer.UNBOUNDED_CAPACITY;
 
     public long RemainingCapacity => int.MaxValue;
 
     public Sequencer Sequencer => _sequencer;
 
     public ProducerBarrier ProducerBarrier => _sequencer;
+
+    public DataProvider<T> DataProvider => buffer;
 
     #endregion
 
