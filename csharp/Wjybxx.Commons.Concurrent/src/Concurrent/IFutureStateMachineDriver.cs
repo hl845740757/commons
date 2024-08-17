@@ -19,7 +19,7 @@
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 用于驱动<see cref="ValueFuture{T}"/>
+/// 用于驱动<see cref="IFuture{T}"/>的回调
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public interface IFutureStateMachineDriver<T> : IStateMachineDriver<T>

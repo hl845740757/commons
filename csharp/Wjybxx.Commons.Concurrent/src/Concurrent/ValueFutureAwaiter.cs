@@ -54,7 +54,7 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
     }
 
     // 2. GetResult
-    // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中 -- 不可手动调用
+    // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void GetResult() {
         _future.GetResult();
@@ -107,7 +107,7 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
     }
 
     // 2. GetResult
-    // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中 -- 不可手动调用
+    // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetResult() {
         return _future.GetResult();

@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.Sequential
 public abstract class AbstractUniExecutor : IUniExecutorService
 {
     protected static readonly ILogger logger = LoggerFactory.GetLogger(typeof(AbstractUniExecutor));
-    
+
     private readonly SynchronizationContext _syncContext;
     private readonly TaskScheduler _scheduler;
 
@@ -123,7 +123,7 @@ public abstract class AbstractUniExecutor : IUniExecutorService
     #endregion
 
     #region util
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected static void LogCause(Exception ex) {
         logger.Warn(ex, "A task raised an exception.");

@@ -223,18 +223,17 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     @Override
     public void run() {
-        if (helper == null) { // 异步删除
-            return;
-        }
-        ICancelToken cancelToken = getCancelToken();
-        if (promise.isDone() || cancelToken.isCancelling()) {
-            trySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
-            helper.onCompleted(this);
-            return;
-        }
         long tickTime = helper.tickTime();
-        if (tickTime < nextTriggerTime) { // 显式测试一次，适应多种EventLoop
-            helper.reschedule(this);
+        // 显式测试一次时间，适应多种EventLoop
+        if (tickTime < nextTriggerTime) {
+            // 未达触发时间时，显式测试一次取消
+            ICancelToken cancelToken = getCancelToken();
+            if (cancelToken.isCancelling() || promise.isDone()) {
+                trySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
+                helper.onCompleted(this);
+            } else {
+                helper.reschedule(this);
+            }
             return;
         }
         if (trigger(tickTime)) {

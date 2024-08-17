@@ -691,12 +691,6 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
         IndexedPriorityQueue<IScheduledFutureTask> taskQueue = scheduledTaskQueue;
         IScheduledFutureTask queueTask;
         while (taskQueue.TryPeekHead(out queueTask)) {
-            if (queueTask.IsCancelling()) {
-                taskQueue.Dequeue(); // 未及时删除的任务
-                queueTask.TrySetCancelled();
-                scheduledHelper.OnCompleted(queueTask);
-                continue;
-            }
             // 优先级最高的任务不需要执行，那么后面的也不需要执行
             if (tickTime < queueTask.NextTriggerTime) {
                 return;

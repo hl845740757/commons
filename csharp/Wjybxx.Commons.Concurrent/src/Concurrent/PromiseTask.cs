@@ -90,14 +90,14 @@ public class PromiseTask<T> : IFutureTask
     private object ctx;
     /** 任务的调度选项 */
     protected int options;
-    /** 任务关联的promise - 用户可能在任务完成后继续访问，因此不能清理 */
+    /** 任务关联的promise */
     protected IPromise<T> promise;
     /** 任务的控制标记 */
     protected int ctl;
 #nullable enable
 
-    public PromiseTask(in TaskBuilder<T> builder, IPromise<T> promise)
-        : this(builder.Task, builder.Context, builder.Options, promise, builder.Type) {
+    public PromiseTask(in TaskBuilder<T> builder, IPromise<T> promise) {
+        Init(builder.Task, builder.Context, builder.Options, promise, builder.Type);
     }
 
     /// <summary>
@@ -109,6 +109,15 @@ public class PromiseTask<T> : IFutureTask
     /// <param name="promise"></param>
     /// <param name="taskType">任务类型</param>
     protected internal PromiseTask(object action, object? ctx, int options, IPromise<T> promise, int taskType) {
+        Init(action, ctx, options, promise, taskType);
+    }
+
+    /** 用于池化 */
+    protected PromiseTask() {
+    }
+
+    /** 用于池化 */
+    protected void Init(object action, object? ctx, int options, IPromise<T> promise, int taskType) {
         if (ctx == null) {
             if (TaskBuilder.IsTaskAcceptContext(taskType)) {
                 ctx = IContext.NONE;
@@ -177,7 +186,7 @@ public class PromiseTask<T> : IFutureTask
             return ICancelToken.NONE;
         }
         if (TaskBuilder.IsTaskAcceptContext(TaskType)) {
-            IContext castCtx = (IContext)this.ctx;
+            IContext castCtx = (IContext)ctx;
             return castCtx.CancelToken;
         }
         return (ICancelToken)ctx;

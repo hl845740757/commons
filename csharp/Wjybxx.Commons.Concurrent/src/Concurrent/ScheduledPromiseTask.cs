@@ -185,18 +185,17 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
 
     /** 该方法在任务出队列的时候调用 */
     public override void Run() {
-        if (helper == null) { // 异步删除
-            return;
-        }
-        ICancelToken cancelToken = GetCancelToken();
-        if (promise.IsCompleted || cancelToken.IsCancelling) {
-            TrySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
-            helper.OnCompleted(this);
-            return;
-        }
         long tickTime = helper.TickTime;
-        if (tickTime < nextTriggerTime) { // 显式测试一次，适应多种EventLoop
-            helper.Reschedule(this);
+        // 显式测试一次时间，适应多种EventLoop
+        if (tickTime < nextTriggerTime) {
+            // 未达触发时间时，显式测试一次取消
+            ICancelToken cancelToken = GetCancelToken();
+            if (cancelToken.IsCancelling || promise.IsCompleted) {
+                TrySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
+                helper.OnCompleted(this);
+            } else {
+                helper.Reschedule(this);
+            }
             return;
         }
         if (Trigger(tickTime)) {

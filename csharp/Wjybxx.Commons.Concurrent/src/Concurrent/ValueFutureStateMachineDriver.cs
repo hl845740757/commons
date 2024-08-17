@@ -125,7 +125,10 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
 
     public Exception GetException(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
-        return _promise.ExceptionNow(false);
+        Exception ex = _promise.ExceptionNow(false);
+        // GetResult以后归还到池
+        POOL.Release(this);
+        return ex;
     }
 
     public T GetResult(int reentryId, bool ignoreReentrant = false) {
@@ -177,7 +180,7 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
 
     public void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise) {
         ValidateReentryId(reentryId);
-        IPromise.SetVoidPromise(promise,  _promise);
+        IPromise.SetVoidPromise(promise, _promise);
     }
 
     public void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise) {

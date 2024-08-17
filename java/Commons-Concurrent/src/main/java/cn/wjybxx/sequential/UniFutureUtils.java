@@ -19,7 +19,6 @@ package cn.wjybxx.sequential;
 import cn.wjybxx.base.time.TimeProvider;
 import cn.wjybxx.concurrent.*;
 
-import javax.annotation.Nonnull;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;

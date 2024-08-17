@@ -81,12 +81,6 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
         final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue = scheduledTaskQueue;
         ScheduledPromiseTask<?> queueTask;
         while ((queueTask = taskQueue.peek()) != null) {
-            if (queueTask.isCancelling()) {
-                taskQueue.poll(); // 未及时删除的任务
-                queueTask.trySetCancelled();
-                scheduledHelper.onCompleted(queueTask);
-                continue;
-            }
             // 优先级最高的任务不需要执行，那么后面的也不需要执行
             if (tickTime < queueTask.getNextTriggerTime()) {
                 return;

@@ -46,8 +46,8 @@ public readonly struct ValueFuture
         _ex = ex;
     }
 
-    public ValueFuture(IStateMachineDriver future, int reentryId) {
-        _future = future;
+    public ValueFuture(ITaskDriver future, int reentryId) {
+        _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = reentryId;
         _ex = null;
     }
@@ -70,9 +70,8 @@ public readonly struct ValueFuture
 
     /// <summary>
     /// 转换为普通的Future
-    /// 该方法应当避免调用多次，
+    /// 该方法应当避免调用多次，且不可以在await以后调用
     /// </summary>
-    /// <returns></returns>
     public IFuture AsFuture() {
         if (_future == null) {
             return Promise<int>.FromResult(0);
@@ -80,21 +79,21 @@ public readonly struct ValueFuture
         if (_future is IFuture future) {
             return future;
         }
-        IStateMachineDriver stateMachineDriver = (IStateMachineDriver)_future;
-        TaskStatus status = stateMachineDriver.GetStatus(_reentryId);
+        ITaskDriver driver = (ITaskDriver)_future;
+        TaskStatus status = driver.GetStatus(_reentryId);
         switch (status) {
             case TaskStatus.Success: {
-                stateMachineDriver.ThrowIfFailedOrCancelled(_reentryId);
+                driver.ThrowIfFailedOrCancelled(_reentryId);
                 return Promise<int>.FromResult(0);
             }
             case TaskStatus.Cancelled:
             case TaskStatus.Failed: {
-                Exception ex = stateMachineDriver.GetException(_reentryId);
+                Exception ex = driver.GetException(_reentryId);
                 return Promise<int>.FromException(ex);
             }
             default: {
                 Promise<int> promise = new Promise<int>();
-                stateMachineDriver.SetVoidPromiseWhenCompleted(_reentryId, promise);
+                driver.SetVoidPromiseWhenCompleted(_reentryId, promise);
                 return promise;
             }
         }
@@ -114,7 +113,7 @@ public readonly struct ValueFuture
             if (_future == null) {
                 return true;
             }
-            if (_future is IStateMachineDriver driver) {
+            if (_future is ITaskDriver driver) {
                 return driver.GetStatus(_reentryId).IsCompleted();
             }
             IPromise promise = (IPromise)_future;
@@ -129,7 +128,7 @@ public readonly struct ValueFuture
             }
             return;
         }
-        if (_future is IStateMachineDriver driver) {
+        if (_future is ITaskDriver driver) {
             driver.ThrowIfFailedOrCancelled(_reentryId);
         } else {
             IPromise promise = (IPromise)_future;
@@ -145,7 +144,7 @@ public readonly struct ValueFuture
             throw new IllegalStateException();
         }
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (_future is IStateMachineDriver driver) {
+        if (_future is ITaskDriver driver) {
             driver.OnCompleted(_reentryId, driverCallBack, action, executor, options);
         } else {
             IPromise promise = (IPromise)_future;
@@ -186,8 +185,8 @@ public readonly struct ValueFuture<T>
         _ex = ex;
     }
 
-    public ValueFuture(IValueFutureStateMachineDriver<T> future, int reentryId) {
-        _future = future;
+    public ValueFuture(ITaskDriver<T> future, int reentryId) {
+        _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = reentryId;
         _result = default;
         _ex = null;
@@ -209,6 +208,10 @@ public readonly struct ValueFuture<T>
         return new ValueFuture<T>(default, ex);
     }
 
+    /// <summary>
+    /// 转换为普通的Future
+    /// 该方法应当避免调用多次，且不可以在await以后调用
+    /// </summary>
     public IFuture<T> AsFuture() {
         if (_future == null) {
             return Promise<T>.FromResult(_result);
@@ -216,7 +219,7 @@ public readonly struct ValueFuture<T>
         if (_future is IFuture<T> future) {
             return future;
         }
-        IStateMachineDriver<T> stateMachineDriver = (IStateMachineDriver<T>)_future;
+        ITaskDriver<T> stateMachineDriver = (ITaskDriver<T>)_future;
         TaskStatus status = stateMachineDriver.GetStatus(_reentryId);
         switch (status) {
             case TaskStatus.Success: {
@@ -249,7 +252,7 @@ public readonly struct ValueFuture<T>
             if (_future == null) {
                 return true;
             }
-            if (_future is IStateMachineDriver<T> driver) {
+            if (_future is ITaskDriver<T> driver) {
                 return driver.GetStatus(_reentryId).IsCompleted();
             }
             IPromise promise = (IPromise)_future;
@@ -264,7 +267,7 @@ public readonly struct ValueFuture<T>
             }
             return _result;
         }
-        if (_future is IStateMachineDriver<T> driver) {
+        if (_future is ITaskDriver<T> driver) {
             return driver.GetResult(_reentryId);
         } else {
             IPromise<T> promise = (IPromise<T>)_future;
@@ -280,7 +283,7 @@ public readonly struct ValueFuture<T>
         }
 
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (_future is IStateMachineDriver<T> driver) {
+        if (_future is ITaskDriver<T> driver) {
             driver.OnCompleted(_reentryId, ValueFuture.driverCallBack, action, executor, options);
         } else {
             IPromise<T> promise = (IPromise<T>)_future;

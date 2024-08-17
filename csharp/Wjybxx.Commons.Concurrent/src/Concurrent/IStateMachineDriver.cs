@@ -22,10 +22,13 @@ namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 该接口表示异步状态机的驱动类。
+/// <see cref="IStateMachineDriver{T}"/>和<see cref="ValueFutureTask{T}"/>/>
+/// 区别在于：一个由状态机（外部）设置结果，一个由自身（内部）设置结果。
 ///
-/// ps：该接口用于VoidFuture操作。
+/// ps：在c#中，Awaiter和StateMachine其实仅仅用于封装回调；Driver是Future和回调之间的桥梁。
 /// </summary>
-public interface IStateMachineDriver
+/// <typeparam name="T"></typeparam>
+public interface IStateMachineDriver<T> : ITaskDriver<T>
 {
     /// <summary>
     /// 返回用于驱动StateMachine的委托
@@ -33,79 +36,6 @@ public interface IStateMachineDriver
     /// ps：定义为属性以允许实现类进行一些优化，比如：缓存实例，代理。
     /// </summary>
     Action MoveToNext { get; }
-
-    /// <summary>
-    /// 获取任务的状态
-    /// </summary>
-    /// <param name="reentryId">重入id，校验是否被重用</param>
-    /// <param name="ignoreReentrant">是否跳过重入检测</param>
-    /// <returns></returns>
-    TaskStatus GetStatus(int reentryId, bool ignoreReentrant = false);
-
-    /// <summary>
-    /// 获取失败的异常
-    /// </summary>
-    /// <param name="reentryId"></param>
-    /// <param name="ignoreReentrant"></param>
-    /// <returns></returns>
-    Exception GetException(int reentryId, bool ignoreReentrant = false);
-
-    /// <summary>
-    /// 如果任务失败，则抛出异常
-    /// (不返回结果以避免装箱)
-    /// </summary>
-    void ThrowIfFailedOrCancelled(int reentryId) {
-        TaskStatus status = GetStatus(reentryId);
-        switch (status) {
-            case TaskStatus.Failed: {
-                throw new CompletionException(null, GetException(reentryId));
-            }
-            case TaskStatus.Cancelled: {
-                throw GetException(reentryId);
-            }
-            case TaskStatus.Pending:
-            case TaskStatus.Computing:
-            case TaskStatus.Success:
-            default: {
-                break;
-            }
-        }
-    }
-
-    /// <summary>
-    /// 添加一个完成回调
-    /// </summary>
-    /// <param name="reentryId">重入id，校验是否被重用</param>
-    /// <param name="continuation">回调</param>
-    /// <param name="state">回调参数</param>
-    /// <param name="executor">回调线程</param>
-    /// <param name="options">调度选项</param>
-    void OnCompleted(int reentryId, Action<object?> continuation, object? state,
-                     IExecutor? executor, int options = 0);
-    
-    /// <summary>
-    /// 用于传输结果
-    /// </summary>
-    /// <param name="reentryId"></param>
-    /// <param name="promise"></param>
-    void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise);
-}
-
-/// <summary>
-/// 该接口表示异步状态机的驱动类。
-///
-/// ps：在c#中，Awaiter和StateMachine其实仅仅用于封装回调；Driver是Future和回调之间的桥梁。
-/// </summary>
-/// <typeparam name="T"></typeparam>
-public interface IStateMachineDriver<T> : IStateMachineDriver
-{
-    /// <summary>
-    /// 获取任务的结果
-    /// </summary>
-    /// <param name="reentryId">重入id，校验是否被重用</param>
-    /// <param name="ignoreReentrant">是否忽略重入检测</param>
-    /// <returns></returns>
-    T GetResult(int reentryId, bool ignoreReentrant = false);
 
     /// <summary>
     /// 尝试将future置为成功完成状态，如果future已进入完成状态，则返回false
@@ -127,12 +57,5 @@ public interface IStateMachineDriver<T> : IStateMachineDriver
     /// <param name="cancelCode">相关的取消码</param>
     /// <returns></returns>
     bool TrySetCancelled(int reentryId, int cancelCode);
-
-    /// <summary>
-    /// 用于传输结果
-    /// </summary>
-    /// <param name="reentryId"></param>
-    /// <param name="promise"></param>
-    void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise);
 }
 }
