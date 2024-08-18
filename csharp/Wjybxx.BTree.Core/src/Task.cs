@@ -1163,6 +1163,24 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         flags |= controlFlowOptions;
     }
 
+    /** 设置子节点的取消令牌 */
+    public void SetChildCancelToken(Task<T> child, ICancelToken? childCancelToken) {
+        if (childCancelToken != null && childCancelToken != cancelToken) {
+            cancelToken.AddListener(childCancelToken);
+        }
+        child.cancelToken = childCancelToken;
+    }
+
+    /** 删除子节点的取消令牌 */
+    public void UnsetChildCancelToken(Task<T> child) {
+        ICancelToken? childCancelToken = child.cancelToken;
+        if (childCancelToken != null && childCancelToken != cancelToken) {
+            cancelToken.RemListener(childCancelToken);
+            childCancelToken.Reset();
+        }
+        child.cancelToken = null;
+    }
+
     /** 停止目标任务 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Stop(Task<T>? task) {

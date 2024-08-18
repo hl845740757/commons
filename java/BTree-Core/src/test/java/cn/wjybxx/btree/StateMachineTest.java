@@ -16,9 +16,7 @@
 package cn.wjybxx.btree;
 
 import cn.wjybxx.base.mutable.MutableInt;
-import cn.wjybxx.btree.fsm.ChangeStateArgs;
-import cn.wjybxx.btree.fsm.ChangeStateTask;
-import cn.wjybxx.btree.fsm.StateMachineTask;
+import cn.wjybxx.btree.fsm.*;
 import cn.wjybxx.btree.leaf.ActionTask;
 import cn.wjybxx.btree.leaf.Success;
 import cn.wjybxx.btree.leaf.WaitFrame;
@@ -45,14 +43,15 @@ public class StateMachineTest {
     }
 
     private static TaskEntry<Blackboard> newStateMachineTree() {
-        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry();
-        taskEntry.setRootTask(new StateMachineTask<>());
-
-        StateMachineTask<Blackboard> stateMachineTask = taskEntry.getRootStateMachine();
+        StackStateMachineTask<Blackboard> stateMachineTask = new StackStateMachineTask<>();
         stateMachineTask.setName("RootStateMachine");
-        stateMachineTask.setNoneChildStatus(TaskStatus.SUCCESS);
-        stateMachineTask.setUndoQueueSize(queue_size);
-        stateMachineTask.setRedoQueueSize(queue_size);
+        stateMachineTask.setUndoQueueCapacity(queue_size);
+        stateMachineTask.setRedoQueueCapacity(queue_size);
+        stateMachineTask.setHandler(StateMachineHandlers.defaultHandler());
+//        stateMachineTask.setNoneChildStatus(TaskStatus.SUCCESS);
+
+        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry();
+        taskEntry.setRootTask(stateMachineTask);
         return taskEntry;
     }
 
@@ -62,11 +61,13 @@ public class StateMachineTest {
     @Test
     void testCount() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        taskEntry.getRootStateMachine().changeState(new StateA<>());
-        BtreeTestUtil.untilCompleted(taskEntry);
-        taskEntry.getRootStateMachine().setListener((stateMachineTask, curState, nextState) -> {
+        taskEntry.getRootStateMachine().setHandler((stateMachineTask, curState, nextState) -> {
+            if (curState == null) return; // 尚未启动
             Assertions.assertTrue(curState.isCancelled());
         });
+
+        taskEntry.getRootStateMachine().changeState(new StateA<>());
+        BtreeTestUtil.untilCompleted(taskEntry);
         Assertions.assertEquals(3, global_count);
     }
 
@@ -75,11 +76,13 @@ public class StateMachineTest {
     void testCountDelay() {
         delayChange = true;
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        taskEntry.getRootStateMachine().changeState(new StateA<>());
-        BtreeTestUtil.untilCompleted(taskEntry);
-        taskEntry.getRootStateMachine().setListener((stateMachineTask, curState, nextState) -> {
+        taskEntry.getRootStateMachine().setHandler((stateMachineTask, curState, nextState) -> {
+            if (curState == null) return; // 尚未启动
             Assertions.assertTrue(curState.isSucceeded());
         });
+
+        taskEntry.getRootStateMachine().changeState(new StateA<>());
+        BtreeTestUtil.untilCompleted(taskEntry);
         Assertions.assertEquals(3, global_count);
     }
 
@@ -144,15 +147,14 @@ public class StateMachineTest {
 
     // region redo/undo
 
-
     /** redo，计数从 0 加到 5 */
     @Test
     void testRedo() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StateMachineTask<Blackboard> stateMachine = taskEntry.getRootStateMachine();
+        StackStateMachineTask<Blackboard> stateMachine = (StackStateMachineTask<Blackboard>) taskEntry.getRootStateMachine();
         fillRedoQueue(stateMachine);
 
-        stateMachine.setStateMachineHandler((stateMachineTask, preState) -> stateMachineTask.redoChangeState());
+        stateMachine.setHandler(StateMachineHandlers.redoHandler());
         stateMachine.redoChangeState(); // 初始化
 
         BtreeTestUtil.untilCompleted(taskEntry);
@@ -165,10 +167,10 @@ public class StateMachineTest {
     void testUndo() {
         global_count = queue_size;
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StateMachineTask<Blackboard> stateMachine = taskEntry.getRootStateMachine();
+        StackStateMachineTask<Blackboard> stateMachine = taskEntry.getRootStackStateMachine();
         fillUndoQueue(stateMachine);
 
-        stateMachine.setStateMachineHandler((stateMachineTask, preState) -> stateMachineTask.undoChangeState());
+        stateMachine.setHandler(StateMachineHandlers.undoHandler());
         stateMachine.undoChangeState(); // 初始化
 
         BtreeTestUtil.untilCompleted(taskEntry);
@@ -179,20 +181,32 @@ public class StateMachineTest {
     @Test
     void testRedoUndo() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StateMachineTask<Blackboard> stateMachine = taskEntry.getRootStateMachine();
+        StackStateMachineTask<Blackboard> stateMachine = taskEntry.getRootStackStateMachine();
         fillRedoQueue(stateMachine);
 
         MutableInt redoFinished = new MutableInt(0);
-        stateMachine.setStateMachineHandler((stateMachineTask, preState) -> {
-            if (redoFinished.intValue() == 0) {
-                if (stateMachineTask.redoChangeState()) {
+        stateMachine.setHandler(new StateMachineHandler<Blackboard>() {
+            @Override
+            public boolean onNextStateAbsent(StateMachineTask<Blackboard> stateMachineTask, Task<Blackboard> preState) {
+                if (redoFinished.intValue() == 0) {
+                    if (stateMachineTask.redoChangeState()) {
+                        return true;
+                    }
+                    Assertions.assertEquals(queue_size, global_count);
+                    fillUndoQueue(stateMachine);
+                    redoFinished.setValue(1);
+                }
+                if (stateMachineTask.undoChangeState()) {
                     return true;
                 }
-                Assertions.assertEquals(queue_size, global_count);
-                fillUndoQueue(stateMachine);
-                redoFinished.setValue(1);
+                stateMachineTask.setSuccess();
+                return true;
             }
-            return stateMachineTask.undoChangeState();
+
+            @Override
+            public void beforeChangeState(StateMachineTask<Blackboard> stateMachineTask, Task<Blackboard> curState, Task<Blackboard> nextState) {
+
+            }
         });
         stateMachine.redoChangeState(); // 初始化
 
@@ -200,20 +214,20 @@ public class StateMachineTest {
         Assertions.assertEquals(0, global_count);
     }
 
-    private static void fillRedoQueue(StateMachineTask<Blackboard> stateMachine) {
-        stateMachine.getRedoQueue().addLast(new RedoState<>(0));
-        stateMachine.getRedoQueue().addLast(new RedoState<>(1));
-        stateMachine.getRedoQueue().addLast(new RedoState<>(2));
-        stateMachine.getRedoQueue().addLast(new RedoState<>(3));
-        stateMachine.getRedoQueue().addLast(new RedoState<>(4));
+    private static void fillRedoQueue(StackStateMachineTask<Blackboard> stateMachine) {
+        stateMachine.addRedoState(new RedoState<>(4)); // redo是栈结构
+        stateMachine.addRedoState(new RedoState<>(3));
+        stateMachine.addRedoState(new RedoState<>(2));
+        stateMachine.addRedoState(new RedoState<>(1));
+        stateMachine.addRedoState(new RedoState<>(0));
     }
 
-    private static void fillUndoQueue(StateMachineTask<Blackboard> stateMachine) {
-        stateMachine.getUndoQueue().addLast(new UndoState<>(1)); // addLast容易写
-        stateMachine.getUndoQueue().addLast(new UndoState<>(2));
-        stateMachine.getUndoQueue().addLast(new UndoState<>(3));
-        stateMachine.getUndoQueue().addLast(new UndoState<>(4));
-        stateMachine.getUndoQueue().addLast(new UndoState<>(5));
+    private static void fillUndoQueue(StackStateMachineTask<Blackboard> stateMachine) {
+        stateMachine.addUndoState(new UndoState<>(1)); // undo也是栈结构
+        stateMachine.addUndoState(new UndoState<>(2));
+        stateMachine.addUndoState(new UndoState<>(3));
+        stateMachine.addUndoState(new UndoState<>(4));
+        stateMachine.addUndoState(new UndoState<>(5));
     }
 
     private static class UndoState<T> extends ActionTask<T> {
@@ -326,7 +340,7 @@ public class StateMachineTest {
         final int runFrames = 10;
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
         StateMachineTask<Blackboard> rootStateMachine = taskEntry.getRootStateMachine();
-        rootStateMachine.setListener((stateMachineTask, curState, nextState) -> {
+        rootStateMachine.setHandler((stateMachineTask, curState, nextState) -> {
             if (curState != null && nextState != null) {
                 Assertions.assertEquals(runFrames, curState.getRunFrames());
             }
@@ -335,42 +349,6 @@ public class StateMachineTest {
         taskEntry.update(0); // 启动任务树，使行为树处于运行状态
 
         rootStateMachine.changeState(new WaitFrame<>(1), ChangeStateArgs.PLAIN_WHEN_COMPLETED);
-        BtreeTestUtil.untilCompleted(taskEntry);
-    }
-
-    @Test
-    void testDelay_nextFrame() {
-        final int runFrames = 10;
-        TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StateMachineTask<Blackboard> rootStateMachine = taskEntry.getRootStateMachine();
-        rootStateMachine.setListener((stateMachineTask, curState, nextState) -> {
-            if (curState != null && nextState != null) {
-                Assertions.assertEquals(1, curState.getRunFrames());
-            }
-        });
-        rootStateMachine.changeState(new WaitFrame<>(runFrames));
-        taskEntry.update(0); // 启动任务树，使行为树处于运行状态
-
-        rootStateMachine.changeState(new WaitFrame<>(1), ChangeStateArgs.PLAIN_NEXT_FRAME);
-        BtreeTestUtil.untilCompleted(taskEntry);
-    }
-
-    @Test
-    void testDelay_specialFrame() {
-        final int runFrames = 10;
-        final int spFrame = 5;
-        TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StateMachineTask<Blackboard> rootStateMachine = taskEntry.getRootStateMachine();
-        rootStateMachine.setListener((stateMachineTask, curState, nextState) -> {
-            if (curState != null && nextState != null) {
-                Assertions.assertEquals(spFrame, curState.getRunFrames());
-            }
-        });
-        rootStateMachine.changeState(new WaitFrame<>(runFrames));
-        taskEntry.update(0); // 启动任务树，使行为树处于运行状态
-
-        rootStateMachine.changeState(new WaitFrame<>(1),
-                ChangeStateArgs.PLAIN_NEXT_FRAME.withFrame(spFrame)); // 在给定帧切换
         BtreeTestUtil.untilCompleted(taskEntry);
     }
 

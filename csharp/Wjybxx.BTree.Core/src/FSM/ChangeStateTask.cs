@@ -38,12 +38,21 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
     private string? machineName;
     /** 延迟模式 */
     private byte delayMode;
+    /** 延迟参数 */
+    private int delayArg;
 
     public ChangeStateTask() {
     }
 
     public ChangeStateTask(Task<T> nextState) {
         this.nextState = nextState;
+    }
+
+    public override void ResetForRestart() {
+        base.ResetForRestart();
+        if (nextState != null && nextState.Control == null) {
+            nextState.ResetForRestart();
+        }
     }
 
     protected override void Execute() {
@@ -59,7 +68,7 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
 
         int reentryId = ReentryId;
         StateMachineTask<T> stateMachine = StateMachineTask<T>.FindStateMachine(this, machineName);
-        stateMachine.ChangeState(nextState, ChangeStateArgs.PLAIN.WithDelayMode(delayMode));
+        stateMachine.ChangeState(nextState, ChangeStateArgs.PLAIN.With(delayMode, delayArg));
         if (!IsExited(reentryId)) {
             SetSuccess();
         }
@@ -91,6 +100,11 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
     public byte DelayMode {
         get => delayMode;
         set => delayMode = value;
+    }
+    
+    public int DelayArg {
+        get => delayArg;
+        set => delayArg = value;
     }
 }
 }

@@ -18,7 +18,6 @@ package cn.wjybxx.btree.branch;
 import cn.wjybxx.btree.BranchTask;
 import cn.wjybxx.btree.Task;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,9 +30,6 @@ import java.util.List;
  * date - 2023/11/26
  */
 public abstract class Parallel<T> extends BranchTask<T> {
-
-    /** 用于保存child的上下文等 */
-    protected transient final List<ParallelChildHelper<T>> childHelpers = new ArrayList<>();
 
     public Parallel() {
     }
@@ -59,8 +55,10 @@ public abstract class Parallel<T> extends BranchTask<T> {
         resetHelpers();
     }
 
-    public final ParallelChildHelper<T> getChildHelper(int index) {
-        return childHelpers.get(index);
+    /** 获取child的helper */
+    @SuppressWarnings("unchecked")
+    public static <T> ParallelChildHelper<T> getChildHelper(Task<T> child) {
+        return (ParallelChildHelper<T>) child.getControlData();
     }
 
     /**
@@ -71,15 +69,13 @@ public abstract class Parallel<T> extends BranchTask<T> {
      * @param allocCancelToken 是否分配取消令牌
      */
     protected final void initChildHelpers(boolean allocCancelToken) {
-        List<ParallelChildHelper<T>> childHelpers = this.childHelpers;
-        List<Task<T>> children = this.children;
-        while (childHelpers.size() < children.size()) {
-            childHelpers.add(new ParallelChildHelper<>());
-        }
         for (int i = 0; i < children.size(); i++) {
             Task<T> child = children.get(i);
-            ParallelChildHelper<T> childHelper = childHelpers.get(i);
-            child.setControlData(childHelper);
+            ParallelChildHelper<T> childHelper = getChildHelper(child);
+            if (childHelper == null) {
+                childHelper = new ParallelChildHelper<>();
+                child.setControlData(childHelper);
+            }
             childHelper.reentryId = child.getReentryId();
             if (allocCancelToken && childHelper.cancelToken == null) {
                 childHelper.cancelToken = cancelToken.newInstance();
@@ -90,14 +86,12 @@ public abstract class Parallel<T> extends BranchTask<T> {
     }
 
     protected final void resetHelpers() {
-        // 两者长度可能不一致
         List<Task<T>> children = this.children;
         for (int i = 0; i < children.size(); i++) {
-            children.get(i).setControlData(null);
-        }
-        List<ParallelChildHelper<T>> childHelpers = this.childHelpers;
-        for (int i = 0; i < childHelpers.size(); i++) {
-            childHelpers.get(i).reset();
+            ParallelChildHelper<T> childHelper = getChildHelper(children.get(i));
+            if (childHelper != null) {
+                childHelper.reset();
+            }
         }
     }
 

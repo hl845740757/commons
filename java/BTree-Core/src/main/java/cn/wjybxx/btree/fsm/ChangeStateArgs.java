@@ -33,38 +33,33 @@ public final class ChangeStateArgs {
      * 2.通常用于状态主动退出时，可避免自身进入被取消状态 -- 先调用changeState，然后setSuccess;
      */
     public static final byte DELAY_CURRENT_COMPLETED = 1;
-    /** 下一帧执行 */
-    public static final byte DELAY_NEXT_FRAME = 2;
 
     // region 共享原型
     public static final ChangeStateArgs PLAIN = new ChangeStateArgs((byte) 0, (byte) 0, 0, null);
     public static final ChangeStateArgs PLAIN_WHEN_COMPLETED = new ChangeStateArgs((byte) 0, DELAY_CURRENT_COMPLETED, 0, null);
-    public static final ChangeStateArgs PLAIN_NEXT_FRAME = new ChangeStateArgs((byte) 0, DELAY_NEXT_FRAME, -1, null);
 
     public static final ChangeStateArgs UNDO = new ChangeStateArgs(CMD_UNDO, (byte) 0, 0, null);
     public static final ChangeStateArgs UNDO_WHEN_COMPLETED = new ChangeStateArgs(CMD_UNDO, DELAY_CURRENT_COMPLETED, 0, null);
-    public static final ChangeStateArgs UNDO_NEXT_FRAME = new ChangeStateArgs(CMD_UNDO, DELAY_NEXT_FRAME, -1, null);
 
     public static final ChangeStateArgs REDO = new ChangeStateArgs(CMD_REDO, (byte) 0, 0, null);
     public static final ChangeStateArgs REDO_WHEN_COMPLETED = new ChangeStateArgs(CMD_REDO, DELAY_CURRENT_COMPLETED, 0, null);
-    public static final ChangeStateArgs REDO_NEXT_FRAME = new ChangeStateArgs(CMD_REDO, DELAY_NEXT_FRAME, -1, null);
     // endregion
 
     /** 切换命令 */
     public final byte cmd;
     /** 延迟模式 -- 不再限制，允许用户扩展 */
     public final byte delayMode;
-    /** 期望开始运行的帧号；-1表示尚未指定 */
-    public final int frame;
+    /** 延迟参数 */
+    public final int delayArg;
     /** 期望传递给Listener的数据 */
     public final Object extraInfo;
 
     /** 通过原型对象创建 */
-    private ChangeStateArgs(byte cmd, byte delayMode, int frame, Object extraInfo) {
+    private ChangeStateArgs(byte cmd, byte delayMode, int delayArg, Object extraInfo) {
 //        checkCmd(cmd); // 封闭构造方法后可不校验
         this.delayMode = delayMode;
         this.cmd = cmd;
-        this.frame = frame;
+        this.delayArg = delayArg;
         this.extraInfo = extraInfo;
     }
 
@@ -82,33 +77,29 @@ public final class ChangeStateArgs {
 
     // region 原型方法
 
-    public ChangeStateArgs with(byte delayMode, int frame) {
-        return new ChangeStateArgs(cmd, delayMode, frame, extraInfo);
-    }
-
-    public ChangeStateArgs with(byte delayMode, int frame, Object extraInfo) {
-        return new ChangeStateArgs(cmd, delayMode, frame, extraInfo);
-    }
-
-    public ChangeStateArgs withDelayMode(byte delayMode) {
+    public ChangeStateArgs with(byte delayMode) {
         if (delayMode == this.delayMode) {
             return this;
         }
-        return new ChangeStateArgs(cmd, delayMode, frame, extraInfo);
+        return new ChangeStateArgs(cmd, delayMode, delayArg, extraInfo);
     }
 
-    public ChangeStateArgs withFrame(int frame) {
-        if (frame == this.frame) {
+    public ChangeStateArgs with(byte delayMode, int delayArg) {
+        if (delayMode == this.delayMode && delayArg == this.delayArg) {
             return this;
         }
-        return new ChangeStateArgs(cmd, delayMode, frame, extraInfo);
+        return new ChangeStateArgs(cmd, delayMode, delayArg, extraInfo);
+    }
+
+    public ChangeStateArgs with(byte delayMode, int delayArg, Object extraInfo) {
+        return new ChangeStateArgs(cmd, delayMode, delayArg, extraInfo);
     }
 
     public ChangeStateArgs withExtraInfo(Object extraInfo) {
         if (extraInfo == this.extraInfo) {
             return this;
         }
-        return new ChangeStateArgs(cmd, delayMode, frame, extraInfo);
+        return new ChangeStateArgs(cmd, delayMode, delayArg, extraInfo);
     }
     // endregion
 }

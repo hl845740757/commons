@@ -38,12 +38,22 @@ public class ChangeStateTask<T> extends LeafTask<T> {
     private String machineName;
     /** 延迟模式 */
     private byte delayMode;
+    /** 延迟参数 */
+    private int delayArg;
 
     public ChangeStateTask() {
     }
 
     public ChangeStateTask(Task<T> nextState) {
         this.nextState = nextState;
+    }
+
+    @Override
+    public void resetForRestart() {
+        super.resetForRestart();
+        if (nextState != null && nextState.getControl() == null) {
+            nextState.resetForRestart();
+        }
     }
 
     @Override
@@ -59,7 +69,7 @@ public class ChangeStateTask<T> extends LeafTask<T> {
         }
         int reentryId = getReentryId();
         final StateMachineTask<T> stateMachine = StateMachineTask.findStateMachine(this, machineName);
-        stateMachine.changeState(nextState, ChangeStateArgs.PLAIN.withDelayMode(delayMode));
+        stateMachine.changeState(nextState, ChangeStateArgs.PLAIN.with(delayMode, delayArg));
         if (!isExited(reentryId)) {
             setSuccess();
         }
@@ -110,6 +120,14 @@ public class ChangeStateTask<T> extends LeafTask<T> {
 
     public void setDelayMode(byte delayMode) {
         this.delayMode = delayMode;
+    }
+
+    public int getDelayArg() {
+        return delayArg;
+    }
+
+    public void setDelayArg(int delayArg) {
+        this.delayArg = delayArg;
     }
 
     // endregion

@@ -1136,7 +1136,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     // region util
 
     /** task是否支持内联 */
-    public boolean isInlinable() {
+    public final boolean isInlinable() {
         return (ctl & TaskOverrides.MASK_INLINABLE) != 0;
     }
 
@@ -1150,6 +1150,24 @@ public abstract class Task<T> implements ICancelTokenListener {
         int controlFlowOptions = ctl & MASK_CONTROL_FLOW_OPTIONS;
         flags &= ~MASK_CONTROL_FLOW_OPTIONS;
         flags |= controlFlowOptions;
+    }
+
+    /** 设置子节点的取消令牌 */
+    public final void setChildCancelToken(Task<T> child, ICancelToken childCancelToken) {
+        if (childCancelToken != null && childCancelToken != cancelToken) {
+            cancelToken.addListener(childCancelToken);
+        }
+        child.cancelToken = childCancelToken;
+    }
+
+    /** 删除子节点的取消令牌 */
+    public final void unsetChildCancelToken(Task<T> child) {
+        ICancelToken childCancelToken = child.cancelToken;
+        if (childCancelToken != null && childCancelToken != cancelToken) {
+            cancelToken.remListener(childCancelToken);
+            childCancelToken.reset();
+        }
+        child.cancelToken = null;
     }
 
     /** 停止目标任务 */

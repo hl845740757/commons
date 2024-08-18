@@ -35,10 +35,11 @@ namespace Wjybxx.BTreeCodec
 public static class BTreeCodecExporter
 {
     public static Dictionary<Type, Type> ExportCodecs() {
-        var dic = new Dictionary<Type, Type>(35);
+        var dic = new Dictionary<Type, Type>(36);
         dic[typeof(TaskEntry<>)] = typeof(TaskEntry1Codec<>);
         dic[typeof(ChangeStateTask<>)] = typeof(ChangeStateTask1Codec<>);
         dic[typeof(StateMachineTask<>)] = typeof(StateMachineTask1Codec<>);
+        dic[typeof(StackStateMachineTask<>)] = typeof(StackStateMachineTask1Codec<>);
         dic[typeof(Failure<>)] = typeof(Failure1Codec<>);
         dic[typeof(Running<>)] = typeof(Running1Codec<>);
         dic[typeof(SimpleRandom<>)] = typeof(SimpleRandom1Codec<>);

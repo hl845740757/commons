@@ -41,12 +41,10 @@ public class SimpleParallel<T> : Parallel<T> where T : class
 
     protected override void Execute() {
         List<Task<T>> children = this.children;
-        List<ParallelChildHelper<T>> helpers = this.childHelpers;
-
         int reentryId = ReentryId;
         for (int idx = 0; idx < children.Count; idx++) {
             Task<T> child = children[idx];
-            ParallelChildHelper<T> helper = helpers[0];
+            ParallelChildHelper<T> helper = GetChildHelper(child);
             Task<T> inlinedRunningChild = helper.GetInlinedRunningChild();
             if (inlinedRunningChild != null) {
                 Template_RunInlinedChild(inlinedRunningChild, helper, child);
@@ -62,12 +60,12 @@ public class SimpleParallel<T> : Parallel<T> where T : class
     }
 
     protected override void OnChildRunning(Task<T> child) {
-        ParallelChildHelper<T> childHelper = (ParallelChildHelper<T>)child.ControlData;
+        ParallelChildHelper<T> childHelper = GetChildHelper(child);
         childHelper.InlineChild(child);
     }
 
     protected override void OnChildCompleted(Task<T> child) {
-        ParallelChildHelper<T> childHelper = (ParallelChildHelper<T>)child.ControlData;
+        ParallelChildHelper<T> childHelper = GetChildHelper(child);
         childHelper.StopInline();
 
         if (child == children[0]) {
@@ -76,12 +74,14 @@ public class SimpleParallel<T> : Parallel<T> where T : class
     }
 
     protected override void OnEventImpl(object eventObj) {
-        ParallelChildHelper<T> childHelper = childHelpers[0];
+        Task<T> mainTask = children[0];
+        ParallelChildHelper<T> childHelper = GetChildHelper(mainTask);
+
         Task<T> inlinedRunningChild = childHelper.GetInlinedRunningChild();
         if (inlinedRunningChild != null) {
             inlinedRunningChild.OnEvent(eventObj);
         } else {
-            children[0].OnEvent(eventObj);
+            mainTask.OnEvent(eventObj);
         }
     }
 }

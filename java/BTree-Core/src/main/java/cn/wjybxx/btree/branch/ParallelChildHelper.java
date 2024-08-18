@@ -32,16 +32,12 @@ public class ParallelChildHelper<T> extends TaskInlineHelper<T> {
     public int reentryId;
     /** 子节点的取消令牌 -- 应当在运行前赋值 */
     public ICancelToken cancelToken;
-
-    /** 用于控制子节点的数据 */
-    public int ctl;
     /** 用户自定义数据 */
     public Object userData;
 
     public void reset() {
         stopInline();
         reentryId = 0;
-        ctl = 0;
         userData = null;
         if (cancelToken != null) {
             cancelToken.reset();

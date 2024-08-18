@@ -37,14 +37,14 @@ public class StateMachineTest
     }
 
     private static TaskEntry<Blackboard> newStateMachineTree() {
-        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry();
-        taskEntry.RootTask = new StateMachineTask<Blackboard>();
-
-        StateMachineTask<Blackboard> stateMachineTask = taskEntry.GetRootStateMachine();
+        StackStateMachineTask<Blackboard> stateMachineTask = new StackStateMachineTask<Blackboard>();
         stateMachineTask.Name = ("RootStateMachine");
-        stateMachineTask.NoneChildStatus = TaskStatus.SUCCESS;
-        stateMachineTask.SetUndoQueueSize(queue_size);
-        stateMachineTask.SetRedoQueueSize(queue_size);
+        stateMachineTask.SetUndoQueueCapacity(queue_size);
+        stateMachineTask.SetRedoQueueCapacity(queue_size);
+        stateMachineTask.Handler = StateMachineHandlers.DefaultHandler<Blackboard>();
+
+        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry();
+        taskEntry.RootTask = stateMachineTask;
         return taskEntry;
     }
 
@@ -54,9 +54,14 @@ public class StateMachineTest
     [Test]
     public void testCount() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
+        taskEntry.GetRootStateMachine().Handler = StateMachineHandlers.OfListener<Blackboard>(
+            (stateMachineTask, curState, nextState) => {
+                if (curState == null) return; // 首次切换
+                Assert.IsTrue(curState.IsCancelled);
+            });
+
         taskEntry.GetRootStateMachine().ChangeState(new StateA<Blackboard>());
         BtreeTestUtil.untilCompleted(taskEntry);
-        taskEntry.GetRootStateMachine().Listener = ((stateMachineTask, curState, nextState) => { Assert.IsTrue(curState.IsCancelled); });
         Assert.AreEqual(3, global_count);
     }
 
@@ -65,9 +70,14 @@ public class StateMachineTest
     public void testCountDelay() {
         delayChange = true;
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
+        taskEntry.GetRootStateMachine().Handler = StateMachineHandlers.OfListener<Blackboard>(
+            (stateMachineTask, curState, nextState) => {
+                if (curState == null) return; // 首次切换
+                Assert.IsTrue(curState.IsSucceeded);
+            });
+
         taskEntry.GetRootStateMachine().ChangeState(new StateA<Blackboard>());
         BtreeTestUtil.untilCompleted(taskEntry);
-        taskEntry.GetRootStateMachine().Listener = ((stateMachineTask, curState, nextState) => { Assert.IsTrue(curState.IsSucceeded); });
         Assert.AreEqual(3, global_count);
     }
 
@@ -131,26 +141,25 @@ public class StateMachineTest
     [Test]
     public void testRedo() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StateMachineTask<Blackboard> stateMachine = taskEntry.GetRootStateMachine();
+        StackStateMachineTask<Blackboard> stateMachine = taskEntry.GetRootStackStateMachine();
         fillRedoQueue(stateMachine);
 
-        stateMachine.StateMachineHandler = new RedoHandler<Blackboard>();
+        stateMachine.Handler = StateMachineHandlers.RedoHandler<Blackboard>();
         stateMachine.RedoChangeState(); // 初始化
 
         BtreeTestUtil.untilCompleted(taskEntry);
         Assert.AreEqual(queue_size, global_count);
     }
 
-
     /** undo，计数从 5 减到 0 */
     [Test]
     public void testUndo() {
         global_count = queue_size;
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StateMachineTask<Blackboard> stateMachine = taskEntry.GetRootStateMachine();
+        StackStateMachineTask<Blackboard> stateMachine = taskEntry.GetRootStackStateMachine();
         fillUndoQueue(stateMachine);
 
-        stateMachine.StateMachineHandler = new UndoHandler<Blackboard>();
+        stateMachine.Handler = StateMachineHandlers.UndoHandler<Blackboard>();
         stateMachine.UndoChangeState(); // 初始化
 
         BtreeTestUtil.untilCompleted(taskEntry);
@@ -161,48 +170,33 @@ public class StateMachineTest
     [Test]
     public void testRedoUndo() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StateMachineTask<Blackboard> stateMachine = taskEntry.GetRootStateMachine();
+        StackStateMachineTask<Blackboard> stateMachine = taskEntry.GetRootStackStateMachine();
         fillRedoQueue(stateMachine);
 
-        stateMachine.StateMachineHandler = new RedoUndoHandler<Blackboard>();
+        stateMachine.Handler = new RedoUndoHandler<Blackboard>();
         stateMachine.RedoChangeState(); // 初始化
 
         BtreeTestUtil.untilCompleted(taskEntry);
         Assert.AreEqual(0, global_count);
     }
 
-    private static void fillRedoQueue<T>(StateMachineTask<T> stateMachine) where T : class {
-        stateMachine.GetRedoQueue().AddLast(new RedoState<T>(0));
-        stateMachine.GetRedoQueue().AddLast(new RedoState<T>(1));
-        stateMachine.GetRedoQueue().AddLast(new RedoState<T>(2));
-        stateMachine.GetRedoQueue().AddLast(new RedoState<T>(3));
-        stateMachine.GetRedoQueue().AddLast(new RedoState<T>(4));
+    private static void fillRedoQueue<T>(StackStateMachineTask<T> stateMachine) where T : class {
+        stateMachine.AddRedoState(new RedoState<T>(4)); // redo是栈结构
+        stateMachine.AddRedoState(new RedoState<T>(3));
+        stateMachine.AddRedoState(new RedoState<T>(2));
+        stateMachine.AddRedoState(new RedoState<T>(1));
+        stateMachine.AddRedoState(new RedoState<T>(0));
     }
 
-    internal static void fillUndoQueue<T>(StateMachineTask<T> stateMachine) where T : class {
-        stateMachine.GetUndoQueue().AddLast(new UndoState<T>(1)); // addLast容易写
-        stateMachine.GetUndoQueue().AddLast(new UndoState<T>(2));
-        stateMachine.GetUndoQueue().AddLast(new UndoState<T>(3));
-        stateMachine.GetUndoQueue().AddLast(new UndoState<T>(4));
-        stateMachine.GetUndoQueue().AddLast(new UndoState<T>(5));
+    internal static void fillUndoQueue<T>(StackStateMachineTask<T> stateMachine) where T : class {
+        stateMachine.AddUndoState(new UndoState<T>(1)); // undo也栈结构
+        stateMachine.AddUndoState(new UndoState<T>(2));
+        stateMachine.AddUndoState(new UndoState<T>(3));
+        stateMachine.AddUndoState(new UndoState<T>(4));
+        stateMachine.AddUndoState(new UndoState<T>(5));
     }
 
-
-    private class RedoHandler<T> : StateMachineHandler<T> where T : class
-    {
-        public bool OnNextStateAbsent(StateMachineTask<T> stateMachineTask, Task<T> preState) {
-            return stateMachineTask.RedoChangeState();
-        }
-    }
-
-    private class UndoHandler<T> : StateMachineHandler<T> where T : class
-    {
-        public bool OnNextStateAbsent(StateMachineTask<T> stateMachineTask, Task<T> preState) {
-            return stateMachineTask.UndoChangeState();
-        }
-    }
-
-    private class RedoUndoHandler<T> : StateMachineHandler<T> where T : class
+    private class RedoUndoHandler<T> : IStateMachineHandler<T> where T : class
     {
         private bool redoFinished;
 
@@ -212,10 +206,14 @@ public class StateMachineTest
                     return true;
                 }
                 Assert.AreEqual(queue_size, global_count);
-                fillUndoQueue(stateMachineTask);
+                fillUndoQueue((StackStateMachineTask<T>)stateMachineTask);
                 redoFinished = true;
             }
-            return stateMachineTask.UndoChangeState();
+            if (stateMachineTask.UndoChangeState()) {
+                return true;
+            }
+            stateMachineTask.SetSuccess();
+            return true;
         }
     }
 
@@ -322,51 +320,17 @@ public class StateMachineTest
         int runFrames = 10;
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
         StateMachineTask<Blackboard> rootStateMachine = taskEntry.GetRootStateMachine();
-        rootStateMachine.Listener = ((stateMachineTask, curState, nextState) => {
-            if (curState != null && nextState != null) {
-                Assert.AreEqual(runFrames, curState.RunFrames);
+        rootStateMachine.Handler = StateMachineHandlers.OfListener<Blackboard>(
+            (stateMachineTask, curState, nextState) => {
+                if (curState != null && nextState != null) {
+                    Assert.AreEqual(runFrames, curState.RunFrames);
+                }
             }
-        });
+        );
         rootStateMachine.ChangeState(new WaitFrame<Blackboard>(runFrames));
         taskEntry.Update(0); // 启动任务树，使行为树处于运行状态
 
         rootStateMachine.ChangeState(new WaitFrame<Blackboard>(1), ChangeStateArgs.PLAIN_WHEN_COMPLETED);
-        BtreeTestUtil.untilCompleted(taskEntry);
-    }
-
-    [Test]
-    public void testDelay_nextFrame() {
-        int runFrames = 10;
-        TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StateMachineTask<Blackboard> rootStateMachine = taskEntry.GetRootStateMachine();
-        rootStateMachine.Listener = ((stateMachineTask, curState, nextState) => {
-            if (curState != null && nextState != null) {
-                Assert.AreEqual(1, curState.RunFrames);
-            }
-        });
-        rootStateMachine.ChangeState(new WaitFrame<Blackboard>(runFrames));
-        taskEntry.Update(0); // 启动任务树，使行为树处于运行状态
-
-        rootStateMachine.ChangeState(new WaitFrame<Blackboard>(1), ChangeStateArgs.PLAIN_NEXT_FRAME);
-        BtreeTestUtil.untilCompleted(taskEntry);
-    }
-
-    [Test]
-    public void testDelay_specialFrame() {
-        int runFrames = 10;
-        int spFrame = 5;
-        TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StateMachineTask<Blackboard> rootStateMachine = taskEntry.GetRootStateMachine();
-        rootStateMachine.Listener = ((stateMachineTask, curState, nextState) => {
-            if (curState != null && nextState != null) {
-                Assert.AreEqual(spFrame, curState.RunFrames);
-            }
-        });
-        rootStateMachine.ChangeState(new WaitFrame<Blackboard>(runFrames));
-        taskEntry.Update(0); // 启动任务树，使行为树处于运行状态
-
-        rootStateMachine.ChangeState(new WaitFrame<Blackboard>(1),
-            ChangeStateArgs.PLAIN_NEXT_FRAME.WithFrame(spFrame)); // 在给定帧切换
         BtreeTestUtil.untilCompleted(taskEntry);
     }
 

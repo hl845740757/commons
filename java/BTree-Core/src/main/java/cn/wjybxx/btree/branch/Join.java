@@ -71,21 +71,17 @@ public class Join<T> extends Parallel<T> {
         if (children.isEmpty()) {
             return;
         }
-        List<ParallelChildHelper<T>> childHelpers = this.childHelpers;
         final int reentryId = getReentryId();
         for (int i = 0; i < children.size(); i++) {
             final Task<T> child = children.get(i);
-            final ParallelChildHelper<T> childHelper = childHelpers.get(i);
+            final ParallelChildHelper<T> childHelper = getChildHelper(child);
             final boolean started = child.isExited(childHelper.reentryId);
             if (started) {
                 if (child.isCompleted()) {
                     continue; // 勿轻易调整--未重置的情况下可能是上一次的完成状态
                 }
             } else {
-                if (childHelper.cancelToken != null) {
-                    cancelToken.addListener(childHelper.cancelToken);
-                    child.setCancelToken(childHelper.cancelToken); // 运行前赋值
-                }
+                setChildCancelToken(child, childHelper.cancelToken); // 运行前赋值
             }
             Task<T> inlinedRunningChild = childHelper.getInlinedRunningChild();
             if (inlinedRunningChild != null) {
@@ -106,20 +102,16 @@ public class Join<T> extends Parallel<T> {
 
     @Override
     protected void onChildRunning(Task<T> child) {
-        @SuppressWarnings("unchecked") ParallelChildHelper<T> helper = (ParallelChildHelper<T>) child.getControlData();
+        ParallelChildHelper<T> helper = getChildHelper(child);
         helper.inlineChild(child);
     }
 
     @Override
     protected void onChildCompleted(Task<T> child) {
-        ParallelChildHelper<?> helper = (ParallelChildHelper<?>) child.getControlData();
+        ParallelChildHelper<T> helper = getChildHelper(child);
         helper.stopInline();
-        // 删除分配的token
-        if (helper.cancelToken != null) {
-            cancelToken.remListener(child.getCancelToken());
-            child.getCancelToken().reset();
-            child.setCancelToken(null);
-        }
+        unsetChildCancelToken(child); // 删除分配的token
+
         completedCount++;
         if (child.isSucceeded()) {
             succeededCount++;

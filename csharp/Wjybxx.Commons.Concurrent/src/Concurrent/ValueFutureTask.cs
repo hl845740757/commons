@@ -168,7 +168,7 @@ internal class ValueFutureTask<T> : ITaskDriver<T>, IFutureTask
     public void Clear() {
     }
 
-    /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
+    /** 任务的类型 */
     private int TaskType => (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
 
     /** 获取取消令牌 */
@@ -218,7 +218,7 @@ internal class ValueFutureTask<T> : ITaskDriver<T>, IFutureTask
     }
 
     public void Run() {
-        IPromise<T> promise = this._promise;
+        Promise<T> promise = this._promise;
         ICancelToken cancelToken = GetCancelToken();
         if (cancelToken.IsCancelling) {
             TrySetCancelled(promise, cancelToken);

@@ -42,6 +42,7 @@ public class BtreeCodecLinker
     {
         private ChangeStateTask<object> changeStateTask;
         private StateMachineTask<object> stateMachineTask;
+        private StackStateMachineTask<object> stackStateMachine;
     }
 
     [DsonCodecLinkerGroup("Wjybxx.BTreeCodec.Codecs")]

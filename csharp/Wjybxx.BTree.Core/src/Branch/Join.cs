@@ -67,21 +67,17 @@ public class Join<T> : Parallel<T> where T : class
         if (children.Count == 0) {
             return;
         }
-        List<ParallelChildHelper<T>> childHelpers = this.childHelpers;
         int reentryId = ReentryId;
         for (int i = 0; i < children.Count; i++) {
             Task<T> child = children[i];
-            ParallelChildHelper<T> childHelper = childHelpers[i];
+            ParallelChildHelper<T> childHelper = GetChildHelper(child);
             bool started = child.IsExited(childHelper.reentryId);
             if (started) {
                 if (child.IsCompleted) {
                     continue; // 勿轻易调整--未重置的情况下可能是上一次的完成状态
                 }
             } else {
-                if (childHelper.cancelToken != null) {
-                    cancelToken.AddListener(childHelper.cancelToken);
-                    child.CancelToken = childHelper.cancelToken; // 运行前赋值
-                }
+                SetChildCancelToken(child, childHelper.cancelToken); // 运行前赋值
             }
             Task<T>? inlinedRunningChild = childHelper.GetInlinedRunningChild();
             if (inlinedRunningChild != null) {
@@ -101,19 +97,15 @@ public class Join<T> : Parallel<T> where T : class
     }
 
     protected override void OnChildRunning(Task<T> child) {
-        ParallelChildHelper<T> childHelper = (ParallelChildHelper<T>)child.ControlData;
+        ParallelChildHelper<T> childHelper = GetChildHelper(child);
         childHelper.InlineChild(child);
     }
 
     protected override void OnChildCompleted(Task<T> child) {
-        ParallelChildHelper<T> childHelper = (ParallelChildHelper<T>)child.ControlData;
+        ParallelChildHelper<T> childHelper = GetChildHelper(child);
         childHelper.StopInline();
-        // 删除分配的token
-        if (childHelper.cancelToken != null) {
-            cancelToken.RemListener(child.CancelToken);
-            child.CancelToken.Reset();
-            child.CancelToken = null;
-        }
+        UnsetChildCancelToken(child); // 删除分配的token
+
         completedCount++;
         if (child.IsSucceeded) {
             succeededCount++;

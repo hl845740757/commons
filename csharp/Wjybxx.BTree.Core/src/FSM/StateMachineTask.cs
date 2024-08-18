@@ -18,40 +18,31 @@
 
 using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
+using Wjybxx.BTree.Branch;
 using Wjybxx.Commons;
-using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.BTree.FSM
 {
 /// <summary>
 /// 状态机节点
+/// ps:以我的经验来看，状态机是最重要的节点，<see cref="Join{T}"/>则是仅次于状态机的节点 -- 不能以使用数量而定。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public class StateMachineTask<T> : Decorator<T> where T : class
 {
-    private static readonly IDeque<Task<T>> EMPTY_QUEUE = EmptyDequeue<Task<T>>.Instance;
-
     /** 状态机名字 */
     private string? name;
-    /** 无可用状态时状态码 -- 默认成功退出更安全 */
-    private int noneChildStatus = TaskStatus.SUCCESS;
     /** 初始状态 */
     private Task<T>? initState;
     /** 初始状态的属性 */
     private object? initStateProps;
 
+    /** 待切换的状态，主要用于支持当前状态退出后再切换 -- 即支持当前状态设置结果 */
     [NonSerialized] private Task<T>? tempNextState;
-    [NonSerialized] private IDeque<Task<T>> undoQueue = EMPTY_QUEUE;
-    [NonSerialized] private IDeque<Task<T>> redoQueue = EMPTY_QUEUE;
-#nullable disable
-    [NonSerialized] private ICancelToken childCancelToken;
-#nullable enable
+    /** 默认不序列化 -- 删除了Listener委托，因为不能反序列化 */
+    [NonSerialized] private IStateMachineHandler<T>? handler = StateMachineHandlers.DefaultHandler<T>();
 
-    [NonSerialized] private StateMachineListener<T>? listener;
-    [NonSerialized] private StateMachineHandler<T>? stateMachineHandler;
-
-    #region MyRegion
+    #region api
 
     /** 获取当前状态 */
     public Task<T>? GetCurState() {
@@ -70,67 +61,6 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         return r;
     }
 
-    /** 对当前当前状态发出取消命令 */
-    public void CancelCurState(int cancelCode) {
-        if (child != null && child.IsRunning) {
-            child.CancelToken.Cancel(cancelCode);
-        }
-    }
-
-    /** 查看undo对应的state */
-    public Task<T>? PeekUndoState() {
-        return undoQueue.TryPeekLast(out Task<T> r) ? r : null;
-    }
-
-    /** 查看redo对应的state */
-    public Task<T>? PeekRedoState() {
-        return redoQueue.TryPeekFirst(out Task<T> r) ? r : null;
-    }
-
-    /** 开放以允许填充 */
-    public IDeque<Task<T>> GetUndoQueue() {
-        return undoQueue;
-    }
-
-    /** 开放以允许填充 */
-    public IDeque<Task<T>> GetRedoQueue() {
-        return redoQueue;
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="maxSize">最大大小；0表示禁用；大于0启用</param>
-    /// <returns>最新的queue</returns>
-    public IDeque<Task<T>> SetUndoQueueSize(int maxSize) {
-        if (maxSize < 0) throw new ArgumentException("maxSize: " + maxSize);
-        return undoQueue = SetQueueMaxSize(undoQueue, maxSize, DequeOverflowBehavior.DiscardHead);
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="maxSize">最大大小；0表示禁用；大于0启用</param>
-    /// <returns>最新的queue</returns>
-    public IDeque<Task<T>> SetRedoQueueSize(int maxSize) {
-        if (maxSize < 0) throw new ArgumentException("maxSize: " + maxSize);
-        return redoQueue = SetQueueMaxSize(redoQueue, maxSize, DequeOverflowBehavior.DiscardTail);
-    }
-
-    private static IDeque<Task<T>> SetQueueMaxSize(IDeque<Task<T>> queue, int maxSize, DequeOverflowBehavior overflowBehavior) {
-        if (maxSize == 0) {
-            queue.Clear();
-            return EMPTY_QUEUE;
-        }
-        if (queue == EMPTY_QUEUE) {
-            return new BoundedArrayDeque<Task<T>>(maxSize, overflowBehavior);
-        } else {
-            BoundedArrayDeque<T> boundedArrayDeque = (BoundedArrayDeque<T>)queue;
-            boundedArrayDeque.SetCapacity(maxSize, overflowBehavior);
-            return queue;
-        }
-    }
-
     /// <summary>
     /// 撤销到前一个状态
     /// </summary>
@@ -145,15 +75,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     /// <param name="changeStateArgs">状态切换参数</param>
     /// <returns>如果有前一个状态则返回true</returns>
     public virtual bool UndoChangeState(ChangeStateArgs changeStateArgs) {
-        if (!changeStateArgs.IsUndo()) {
-            throw new ArgumentException();
-        }
-        // 真正切换以后再删除
-        if (!undoQueue.TryPeekLast(out Task<T> prevState)) {
-            return false;
-        }
-        ChangeState(prevState, changeStateArgs);
-        return true;
+        return false;
     }
 
     /// <summary>
@@ -170,15 +92,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     /// <param name="changeStateArgs">状态切换参数</param>
     /// <returns>如果有下一个状态则返回true</returns>
     public virtual bool RedoChangeState(ChangeStateArgs changeStateArgs) {
-        if (!changeStateArgs.IsRedo()) {
-            throw new ArgumentException();
-        }
-        // 真正切换以后再删除
-        if (!redoQueue.TryPeekFirst(out Task<T> nextState)) {
-            return false;
-        }
-        ChangeState(nextState, changeStateArgs);
-        return true;
+        return false;
     }
 
     /** 切换状态 -- 如果状态机处于运行中，则立即切换 */
@@ -217,19 +131,6 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 
     /** 检测正确性和自动初始化；不可修改掉cmd */
     protected virtual ChangeStateArgs CheckArgs(ChangeStateArgs changeStateArgs) {
-        // 当前未运行，不能指定延迟帧号
-        if (!IsRunning) {
-            if (changeStateArgs.delayMode == ChangeStateArgs.DELAY_NEXT_FRAME) {
-                throw new ArgumentException("invalid args");
-            }
-            return changeStateArgs.WithDelayMode(ChangeStateArgs.DELAY_NONE);
-        }
-        // 运行中一定可以拿到帧号
-        if (changeStateArgs.delayMode == ChangeStateArgs.DELAY_NEXT_FRAME) {
-            if (changeStateArgs.frame < 0) {
-                return changeStateArgs.WithFrame(taskEntry.CurFrame + 1);
-            }
-        }
         return changeStateArgs;
     }
 
@@ -239,8 +140,8 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 
     public override void ResetForRestart() {
         base.ResetForRestart();
-        if (stateMachineHandler != null) {
-            stateMachineHandler.ResetForRestart(this);
+        if (handler != null) {
+            handler.ResetForRestart(this);
         }
         if (initState != null) {
             initState.ResetForRestart();
@@ -249,100 +150,54 @@ public class StateMachineTask<T> : Decorator<T> where T : class
             RemoveChild(0);
         }
         tempNextState = null;
-        undoQueue.Clear(); // 保留用户的设置
-        redoQueue.Clear();
     }
 
     protected override void BeforeEnter() {
         base.BeforeEnter();
-        if (stateMachineHandler != null) {
-            stateMachineHandler.BeforeEnter(this);
-        }
-        if (childCancelToken == null) {
-            childCancelToken = cancelToken.NewInstance();
-        }
-        if (noneChildStatus == 0) { // 兼容编辑器忘记赋值，默认成功退出更安全
-            noneChildStatus = TaskStatus.SUCCESS;
+        if (handler != null) {
+            handler.BeforeEnter(this);
         }
         if (initState != null && initStateProps != null) {
             initState.SharedProps = initStateProps;
         }
-        if (tempNextState == null && initState != null) { // 允许运行前调用changeState
+        if (tempNextState == null && initState != null) {
             tempNextState = initState;
         }
         if (tempNextState != null && tempNextState.ControlData == null) {
             tempNextState.ControlData = ChangeStateArgs.PLAIN;
         }
-        if (child != null) {
-            child.CancelToken = childCancelToken;
-        }
+        // 不清理child是因为允许用户提前指定初始状态
     }
 
     protected override void Exit() {
+        tempNextState = null;
         if (child != null) {
             RemoveChild(0);
         }
-        tempNextState = null;
-        undoQueue.Clear();
-        redoQueue.Clear();
         base.Exit();
     }
 
     protected override void Execute() {
         Task<T> curState = this.child;
         Task<T>? nextState = this.tempNextState;
-        if (nextState != null && IsReady(curState, nextState)) {
-            this.tempNextState = null;
-            if (!Template_CheckGuard(nextState.Guard)) { // 下个状态无效
-                nextState.SetGuardFailed(null);
-                if (stateMachineHandler != null) { // 通知特殊情况
-                    stateMachineHandler.OnNextStateGuardFailed(this, nextState);
-                }
-            } else {
-                if (curState != null) {
-                    curState.Stop();
-                    inlineHelper.StopInline(); // help gc
-                }
-                ChangeStateArgs changeStateArgs = (ChangeStateArgs)nextState.ControlData;
-                switch (changeStateArgs.cmd) {
-                    case ChangeStateArgs.CMD_UNDO: {
-                        undoQueue.TryRemoveLast(out _);
-                        if (curState != null) {
-                            redoQueue.TryAddFirst(curState);
-                        }
-                        break;
-                    }
-                    case ChangeStateArgs.CMD_REDO: {
-                        redoQueue.TryRemoveFirst(out _);
-                        if (curState != null) {
-                            undoQueue.TryAddLast(curState);
-                        }
-                        break;
-                    }
-                    default: {
-                        // 进入新状态，需要清理redo队列
-                        redoQueue.Clear();
-                        if (curState != null) {
-                            undoQueue.AddLast(curState);
-                        }
-                        break;
-                    }
-                }
-                NotifyChangeState(curState, nextState);
 
-                curState = nextState;
-                cancelToken.AddListener(childCancelToken); // 需要每次添加
-                curState.CancelToken = childCancelToken; // state可独立取消 -- 可复用cancelToken
-                curState.ControlData = null;
-                if (child != null) {
-                    SetChild(0, curState);
-                } else {
-                    AddChild(curState);
-                }
+        if (nextState != null && IsReady(curState, nextState)) {
+            if (curState != null) {
+                curState.Stop();
+                inlineHelper.StopInline(); // help gc
             }
+
+            this.tempNextState = null;
+            if (child != null) {
+                SetChild(0, nextState);
+            } else {
+                AddChild(nextState);
+            }
+            BeforeChangeState(curState, nextState);
+            curState = nextState;
+            curState.ControlData = null; // 用户需要将数据填充到黑板
         }
-        if (curState == null) { // 当前无可用状态
-            OnNoChildRunning();
+        if (curState == null) {
             return;
         }
 
@@ -364,55 +219,33 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     protected override void OnChildCompleted(Task<T> child) {
         Debug.Assert(this.child == child);
         inlineHelper.StopInline();
-        cancelToken.RemListener(childCancelToken);
-        childCancelToken.Reset();
-        child.CancelToken = null;
 
         if (tempNextState == null) {
-            if (stateMachineHandler != null && stateMachineHandler.OnNextStateAbsent(this, child)) {
+            if (handler != null && handler.OnNextStateAbsent(this, child)) {
                 return;
             }
-            undoQueue.AddLast(child);
             RemoveChild(0);
-            NotifyChangeState(child, null);
-            OnNoChildRunning();
+            BeforeChangeState(child, null);
         } else {
             ChangeStateArgs? changeStateArgs = (ChangeStateArgs?)tempNextState.ControlData;
             if (changeStateArgs == null) {
                 tempNextState.ControlData = ChangeStateArgs.PLAIN;
-            } else {
-                // 必须立即切换，保留其它参数(extraInfo - 用户需要)
-                tempNextState.ControlData = changeStateArgs.WithDelayMode(ChangeStateArgs.DELAY_NONE);
             }
             Template_Execute();
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void OnNoChildRunning() {
-        if (noneChildStatus != TaskStatus.RUNNING) {
-            SetCompleted(noneChildStatus, false);
-        }
-    }
-
     protected virtual bool IsReady(Task<T>? curState, Task<T> nextState) {
-        if (curState == null) {
+        if (curState == null || curState.IsCompleted) {
             return true;
         }
         ChangeStateArgs changeStateArgs = (ChangeStateArgs)nextState.ControlData;
-        if (changeStateArgs.delayMode == ChangeStateArgs.DELAY_CURRENT_COMPLETED) {
-            return curState.IsCompleted;
-        }
-        if (changeStateArgs.delayMode == ChangeStateArgs.DELAY_NEXT_FRAME) {
-            return taskEntry.CurFrame >= changeStateArgs.frame;
-        }
-        return true;
+        return changeStateArgs.delayMode == ChangeStateArgs.DELAY_NONE;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void NotifyChangeState(Task<T>? curState, Task<T>? nextState) {
-        Debug.Assert(curState != null || nextState != null);
-        if (listener != null) listener(this, curState, nextState);
+    protected virtual void BeforeChangeState(Task<T>? curState, Task<T>? nextState) {
+        // Debug.Assert(curState != null || nextState != null);
+        if (handler != null) handler.BeforeChangeState(this, curState, nextState);
     }
 
     #endregion
@@ -479,14 +312,11 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 
     #endregion
 
+    #region 序列化
+
     public string? Name {
         get => name;
         set => name = value;
-    }
-
-    public int NoneChildStatus {
-        get => noneChildStatus;
-        set => noneChildStatus = value;
     }
 
     public Task<T>? InitState {
@@ -499,19 +329,11 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         set => initStateProps = value;
     }
 
-    public Task<T>? TempNextState {
-        get => tempNextState;
-        set => tempNextState = value;
+    public IStateMachineHandler<T>? Handler {
+        get => handler;
+        set => handler = value;
     }
 
-    public StateMachineListener<T>? Listener {
-        get => listener;
-        set => listener = value;
-    }
-
-    public StateMachineHandler<T>? StateMachineHandler {
-        get => stateMachineHandler;
-        set => stateMachineHandler = value;
-    }
+    #endregion
 }
 }

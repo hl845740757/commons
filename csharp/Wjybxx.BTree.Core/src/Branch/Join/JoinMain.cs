@@ -51,7 +51,9 @@ public class JoinMain<T> : JoinPolicy<T> where T : class
     }
 
     public void OnEvent(Join<T> join, object eventObj) {
-        ParallelChildHelper<T> childHelper = join.GetChildHelper(0);
+        Task<T> mainTask = join.GetFirstChild();
+        ParallelChildHelper<T> childHelper = Parallel<T>.GetChildHelper(mainTask);
+
         Task<T> inlinedRunningChild = childHelper.GetInlinedRunningChild();
         if (inlinedRunningChild != null) {
             inlinedRunningChild.OnEvent(eventObj);

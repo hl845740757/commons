@@ -46,10 +46,9 @@ public class ServiceParallel<T> extends Parallel<T> {
     @Override
     protected void execute() {
         final List<Task<T>> children = this.children;
-        final List<ParallelChildHelper<T>> childHelpers = this.childHelpers;
         for (int idx = 0; idx < children.size(); idx++) {
             Task<T> child = children.get(idx);
-            ParallelChildHelper<T> childHelper = childHelpers.get(idx);
+            ParallelChildHelper<T> childHelper = getChildHelper(child);
             Task<T> inlinedRunningChild = childHelper.getInlinedRunningChild();
             if (inlinedRunningChild != null) {
                 template_runInlinedChild(inlinedRunningChild, childHelper, child);
@@ -68,13 +67,13 @@ public class ServiceParallel<T> extends Parallel<T> {
 
     @Override
     protected void onChildRunning(Task<T> child) {
-        @SuppressWarnings("unchecked") ParallelChildHelper<T> helper = (ParallelChildHelper<T>) child.getControlData();
+        ParallelChildHelper<T> helper = getChildHelper(child);
         helper.inlineChild(child);
     }
 
     @Override
     protected void onChildCompleted(Task<T> child) {
-        @SuppressWarnings("unchecked") ParallelChildHelper<T> helper = (ParallelChildHelper<T>) child.getControlData();
+        ParallelChildHelper<T> helper = getChildHelper(child);
         helper.stopInline();
 
         if (child == children.get(0) && !isExecuting()) { // 测试是否正在心跳很重要
@@ -84,12 +83,14 @@ public class ServiceParallel<T> extends Parallel<T> {
 
     @Override
     protected void onEventImpl(@Nonnull Object event) {
-        ParallelChildHelper<T> childHelper = childHelpers.get(0);
+        Task<T> mainTask = children.get(0);
+        ParallelChildHelper<T> childHelper = getChildHelper(mainTask);
+
         Task<T> inlinedRunningChild = childHelper.getInlinedRunningChild();
         if (inlinedRunningChild != null) {
             inlinedRunningChild.onEvent(event);
         } else {
-            children.get(0).onEvent(event);
+            mainTask.onEvent(event);
         }
     }
 }

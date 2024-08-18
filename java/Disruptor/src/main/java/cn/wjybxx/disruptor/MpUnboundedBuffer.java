@@ -353,8 +353,11 @@ public final class MpUnboundedBuffer<E> extends MpUnboundedBufferFields<E> imple
         // 由于存在回收逻辑，有可能本应该回退2个，但前一个已经被消费回收了，所以不能简单for循环回跳...
         // eg：线程A在进入方法时，当前initChunk可能为1，请求的是2号块；线程B在进入方法时，请求的是3号块；
         // 由线程B追加了两个块，但线程A先返回到用户，并完成填充数据和消费，这时2号块可能已被回收；因此这里回跳步数不是固定的
-        while (currentChunk.lvChunkIndex() > requiredChunkIndex) {
-            currentChunk = currentChunk.lvPrev();
+        if (jumpBackward > 0) {
+            do {
+                currentChunk = currentChunk.lvPrev();
+            }
+            while (currentChunk.lvChunkIndex() > requiredChunkIndex);
         }
         return currentChunk;
     }

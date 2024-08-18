@@ -17,10 +17,7 @@ package cn.wjybxx.btree.branch.join;
 
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.TaskStatus;
-import cn.wjybxx.btree.branch.Join;
-import cn.wjybxx.btree.branch.JoinPolicy;
-import cn.wjybxx.btree.branch.ParallelChildHelper;
-import cn.wjybxx.btree.branch.SimpleParallel;
+import cn.wjybxx.btree.branch.*;
 
 /**
  * Main策略，当第一个任务完成时就完成。
@@ -64,12 +61,14 @@ public class JoinMain<T> implements JoinPolicy<T> {
 
     @Override
     public void onEvent(Join<T> join, Object event) {
-        ParallelChildHelper<T> childHelper = join.getChildHelper(0);
+        Task<T> mainTask = join.getFirstChild();
+        ParallelChildHelper<T> childHelper = Parallel.getChildHelper(mainTask);
+
         Task<T> inlinedRunningChild = childHelper.getInlinedRunningChild();
         if (inlinedRunningChild != null) {
             inlinedRunningChild.onEvent(event);
         } else {
-            join.getFirstChild().onEvent(event);
+            mainTask.onEvent(event);
         }
     }
 }

@@ -46,12 +46,10 @@ public class SimpleParallel<T> extends Parallel<T> {
     @Override
     protected void execute() {
         final List<Task<T>> children = this.children;
-        final List<ParallelChildHelper<T>> childHelpers = this.childHelpers;
-
         final int reentryId = getReentryId();
         for (int idx = 0; idx < children.size(); idx++) {
             Task<T> child = children.get(idx);
-            ParallelChildHelper<T> childHelper = childHelpers.get(idx);
+            ParallelChildHelper<T> childHelper = getChildHelper(child);
             Task<T> inlinedRunningChild = childHelper.getInlinedRunningChild();
             if (inlinedRunningChild != null) {
                 template_runInlinedChild(inlinedRunningChild, childHelper, child);
@@ -68,14 +66,14 @@ public class SimpleParallel<T> extends Parallel<T> {
 
     @Override
     protected void onChildRunning(Task<T> child) {
-        @SuppressWarnings("unchecked") ParallelChildHelper<T> helper = (ParallelChildHelper<T>) child.getControlData();
-        helper.inlineChild(child);
+        ParallelChildHelper<T> childHelper = getChildHelper(child);
+        childHelper.inlineChild(child);
     }
 
     @Override
     protected void onChildCompleted(Task<T> child) {
-        @SuppressWarnings("unchecked") ParallelChildHelper<T> helper = (ParallelChildHelper<T>) child.getControlData();
-        helper.stopInline();
+        ParallelChildHelper<T> childHelper = getChildHelper(child);
+        childHelper.stopInline();
 
         if (child == children.get(0)) {
             setCompleted(child.getStatus(), true);
@@ -84,12 +82,14 @@ public class SimpleParallel<T> extends Parallel<T> {
 
     @Override
     protected void onEventImpl(@Nonnull Object event) {
-        ParallelChildHelper<T> childHelper = childHelpers.get(0);
+        Task<T> mainTask = children.get(0);
+        ParallelChildHelper<T> childHelper = getChildHelper(mainTask);
+
         Task<T> inlinedRunningChild = childHelper.getInlinedRunningChild();
         if (inlinedRunningChild != null) {
             inlinedRunningChild.onEvent(event);
         } else {
-            children.get(0).onEvent(event);
+            mainTask.onEvent(event);
         }
     }
 }

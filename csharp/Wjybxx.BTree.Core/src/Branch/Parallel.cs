@@ -26,13 +26,11 @@ namespace Wjybxx.BTree.Branch
 /// 定义该类主要说明一些注意事项，包括：
 /// 1.不建议在子节点完成事件中再次驱动子节点，避免运行<see cref="Task{T}.Execute"/>方法，否则可能导致其它task单帧内运行多次。
 /// 2.如果有缓存数据，务必小心维护。
+/// 3.默认child的控制数据为<see cref="ParallelChildHelper{T}"/>
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public abstract class Parallel<T> : BranchTask<T> where T : class
 {
-    [NonSerialized]
-    protected readonly List<ParallelChildHelper<T>> childHelpers = new List<ParallelChildHelper<T>>();
-
     protected Parallel() {
     }
 
@@ -53,9 +51,11 @@ public abstract class Parallel<T> : BranchTask<T> where T : class
         ResetHelpers();
     }
 
-    public ParallelChildHelper<T> GetChildHelper(int index) {
-        return childHelpers[index];
+#nullable disable
+    public static ParallelChildHelper<T> GetChildHelper(Task<T> child) {
+        return (ParallelChildHelper<T>)child.ControlData;
     }
+#nullable enable
 
     /// <summary>
     /// 初始化child关联的helper
@@ -64,15 +64,14 @@ public abstract class Parallel<T> : BranchTask<T> where T : class
     /// </summary>
     /// <param name="allocCancelToken">是否分配取消令牌</param>
     protected void InitChildHelpers(bool allocCancelToken) {
-        List<ParallelChildHelper<T>> childHelpers = this.childHelpers;
         List<Task<T>> children = this.children;
-        while (childHelpers.Count < children.Count) {
-            childHelpers.Add(new ParallelChildHelper<T>());
-        }
         for (int i = 0; i < children.Count; i++) {
             Task<T> child = children[i];
-            ParallelChildHelper<T> childHelper = childHelpers[i];
-            child.ControlData = childHelper;
+            ParallelChildHelper<T> childHelper = GetChildHelper(child);
+            if (childHelper == null) {
+                childHelper = new ParallelChildHelper<T>();
+                child.ControlData = childHelper;
+            }
             childHelper.reentryId = child.ReentryId;
             if (allocCancelToken && childHelper.cancelToken == null) {
                 childHelper.cancelToken = cancelToken.NewInstance();
@@ -83,12 +82,11 @@ public abstract class Parallel<T> : BranchTask<T> where T : class
     }
 
     protected void ResetHelpers() {
-        // 两者长度可能不一致
         foreach (Task<T> child in children) {
-            child.ControlData = null;
-        }
-        foreach (ParallelChildHelper<T> helper in childHelpers) {
-            helper.Reset();
+            ParallelChildHelper<T>? childHelper = GetChildHelper(child);
+            if (childHelper != null) {
+                childHelper.Reset();
+            }
         }
     }
 

@@ -37,6 +37,7 @@ public sealed class ChangeStateTask1Codec<T> : AbstractDsonCodec<ChangeStateTask
     public const string names_stateProps = "stateProps";
     public const string names_machineName = "machineName";
     public const string names_delayMode = "delayMode";
+    public const string names_delayArg = "delayArg";
 
     public override Type GetEncoderClass() => typeof(ChangeStateTask<T>);
 
@@ -47,6 +48,7 @@ public sealed class ChangeStateTask1Codec<T> : AbstractDsonCodec<ChangeStateTask
         writer.WriteObject(names_stateProps, inst.StateProps, typeof(object), null);
         writer.WriteString(names_machineName, inst.MachineName, StringStyle.Auto);
         writer.WriteByte(names_delayMode, inst.DelayMode, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_delayArg, inst.DelayArg, WireType.VarInt, NumberStyles.Simple);
     }
 
     protected override ChangeStateTask<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
@@ -60,6 +62,7 @@ public sealed class ChangeStateTask1Codec<T> : AbstractDsonCodec<ChangeStateTask
         inst.StateProps = reader.ReadObject<object>(names_stateProps, typeof(object), null);
         inst.MachineName = reader.ReadString(names_machineName);
         inst.DelayMode = reader.ReadByte(names_delayMode);
+        inst.DelayArg = reader.ReadInt(names_delayArg);
     }
 }
 }
