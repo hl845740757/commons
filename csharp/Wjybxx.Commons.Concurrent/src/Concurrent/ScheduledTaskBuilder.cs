@@ -97,6 +97,8 @@ public struct ScheduledTaskBuilder<T>
     private long timeout;
     /** 时间单位 -- 默认毫秒 */
     private TimeSpan timeunit;
+    /** 执行次数限制 */
+    private int countLimit;
 
     internal ScheduledTaskBuilder(ref TaskBuilder<T> core) {
         _core = core;
@@ -105,6 +107,7 @@ public struct ScheduledTaskBuilder<T>
         period = 0;
         timeout = -1;
         timeunit = TimeSpan.FromMilliseconds(1);
+        countLimit = -1;
     }
 
     #region 代理
@@ -252,8 +255,13 @@ public struct ScheduledTaskBuilder<T>
     }
 
     /// <summary>
+    /// 是否设置了超时时间
+    /// </summary>
+    public bool HasTimeout => timeout >= 0;
+
+    /// <summary>
     /// 1. -1表示无限制，大于等于0表示有限制
-    /// 2. 我们总是在执行任务后检查是否超时，以确保至少会执行一次
+    /// 2. 默认只在执行任务后检查是否超时，以确保至少会执行一次
     /// 3. 超时是一个不准确的调度，不保证超时后能立即结束
     /// </summary>
     /// <exception cref="ArgumentException"></exception>
@@ -268,11 +276,6 @@ public struct ScheduledTaskBuilder<T>
     }
 
     /// <summary>
-    /// 是否设置了超时时间
-    /// </summary>
-    public bool HasTimeout => timeout >= 0;
-
-    /// <summary>
     /// 通过预估执行次数限制超时时间
     /// 该方法对于fixedRate类型的任务有帮助
     /// </summary>
@@ -285,6 +288,20 @@ public struct ScheduledTaskBuilder<T>
             this.timeout = Math.Max(0, initialDelay);
         } else {
             this.timeout = Math.Max(0, initialDelay + (count - 1) * Period);
+        }
+    }
+
+    /// <summary>
+    /// 设置任务的执行次数限制
+    /// 1. -1表示无限制，大于0表示有限制，0非法
+    /// </summary>
+    public int CountLimit {
+        get => countLimit;
+        set {
+            if (value <= 0 && value != -1) {
+                throw new ArgumentException("invalid countLimit: " + countLimit);
+            }
+            countLimit = value;
         }
     }
 

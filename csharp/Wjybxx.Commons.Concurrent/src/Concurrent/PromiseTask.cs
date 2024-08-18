@@ -36,7 +36,9 @@ public interface PromiseTask
     /** 延时任务是否已触发过 */
     public const int MASK_TRIGGERED = 1 << 16;
     /** 延时任务有超时时间 -- 识别结构体的有效性 */
-    public const int MASK_HAS_TIMEOUT = 1 << 17;
+    public const int MASK_HAS_DEADLINE = 1 << 17;
+    /** 延时任务有次数限制 */
+    public const int MASK_HAS_COUNTDOWN = 1 << 18;
 
     public const int OFFSET_PRIORITY = 0;
     /** 任务类型的偏移量 */
@@ -96,8 +98,8 @@ public class PromiseTask<T> : IFutureTask
     protected int ctl;
 #nullable enable
 
-    public PromiseTask(in TaskBuilder<T> builder, IPromise<T> promise) {
-        Init(builder.Task, builder.Context, builder.Options, promise, builder.Type);
+    public PromiseTask(in TaskBuilder<T> builder, IPromise<T> promise)
+        : this(builder.Task, builder.Context, builder.Options, promise, builder.Type) {
     }
 
     /// <summary>
@@ -109,15 +111,6 @@ public class PromiseTask<T> : IFutureTask
     /// <param name="promise"></param>
     /// <param name="taskType">任务类型</param>
     protected internal PromiseTask(object action, object? ctx, int options, IPromise<T> promise, int taskType) {
-        Init(action, ctx, options, promise, taskType);
-    }
-
-    /** 用于池化 */
-    protected PromiseTask() {
-    }
-
-    /** 用于池化 */
-    protected void Init(object action, object? ctx, int options, IPromise<T> promise, int taskType) {
         if (ctx == null) {
             if (TaskBuilder.IsTaskAcceptContext(taskType)) {
                 ctx = IContext.NONE;

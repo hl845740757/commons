@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Pool;
 
@@ -27,30 +28,30 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public static class ValueFutureTask
 {
-    public static ValueFuture<T> Submit<T>(IExecutor executor, in TaskBuilder<T> builder) {
+    public static ValueFuture<T> Call<T>(IExecutor executor, in TaskBuilder<T> builder) {
         ValueFutureTask<T> futureTask = ValueFutureTask<T>.Create(builder.Task, builder.Context, builder.Options, builder.Type);
         ValueFuture<T> promise = futureTask.Future;
         executor.Execute(futureTask); // 可能会立即完成，因此需要提前保存future
         return promise;
     }
 
-    #region submit func
+    #region func
 
-    public static ValueFuture<T> SubmitFunc<T>(IExecutor executor, Func<T> task, int options = 0) {
+    public static ValueFuture<T> Call<T>(IExecutor executor, Func<T> task, int options = 0) {
         ValueFutureTask<T> futureTask = ValueFutureTask<T>.Create(task, null, options, TaskBuilder.TYPE_FUNC);
         ValueFuture<T> promise = futureTask.Future;
         executor.Execute(futureTask);
         return promise;
     }
 
-    public static ValueFuture<T> SubmitFunc<T>(IExecutor executor, Func<T> task, ICancelToken cancelToken, int options = 0) {
+    public static ValueFuture<T> Call<T>(IExecutor executor, Func<T> task, ICancelToken cancelToken, int options = 0) {
         ValueFutureTask<T> futureTask = ValueFutureTask<T>.Create(task, cancelToken, options, TaskBuilder.TYPE_FUNC);
         ValueFuture<T> promise = futureTask.Future;
         executor.Execute(futureTask);
         return promise;
     }
 
-    public static ValueFuture<T> SubmitFunc<T>(IExecutor executor, Func<IContext, T> task, IContext ctx, int options = 0) {
+    public static ValueFuture<T> Call<T>(IExecutor executor, Func<IContext, T> task, IContext ctx, int options = 0) {
         ValueFutureTask<T> futureTask = ValueFutureTask<T>.Create(task, ctx, options, TaskBuilder.TYPE_FUNC_CTX);
         ValueFuture<T> promise = futureTask.Future;
         executor.Execute(futureTask);
@@ -59,23 +60,23 @@ public static class ValueFutureTask
 
     #endregion
 
-    #region submit action
+    #region action
 
-    public static ValueFuture SubmitAction(IExecutor executor, Action task, int options = 0) {
+    public static ValueFuture Run(IExecutor executor, Action task, int options = 0) {
         ValueFutureTask<int> futureTask = ValueFutureTask<int>.Create(task, null, options, TaskBuilder.TYPE_ACTION);
         ValueFuture promise = futureTask.VoidFuture;
         executor.Execute(futureTask);
         return promise;
     }
 
-    public static ValueFuture SubmitAction(IExecutor executor, Action task, ICancelToken cancelToken, int options) {
+    public static ValueFuture Run(IExecutor executor, Action task, ICancelToken cancelToken, int options) {
         ValueFutureTask<int> futureTask = ValueFutureTask<int>.Create(task, cancelToken, options, TaskBuilder.TYPE_ACTION);
         ValueFuture promise = futureTask.VoidFuture;
         executor.Execute(futureTask);
         return promise;
     }
 
-    public static ValueFuture SubmitAction(IExecutor executor, Action<IContext> task, IContext ctx, int options) {
+    public static ValueFuture Run(IExecutor executor, Action<IContext> task, IContext ctx, int options) {
         ValueFutureTask<int> futureTask = ValueFutureTask<int>.Create(task, ctx, options, TaskBuilder.TYPE_ACTION_CTX);
         ValueFuture promise = futureTask.VoidFuture;
         executor.Execute(futureTask);
@@ -87,57 +88,179 @@ public static class ValueFutureTask
 
 /// <summary>
 /// 用于封装用户的任务，并返回给用户<see cref="ValueFuture{T}"/>，
+/// 可看做轻量级的<see cref="PromiseTask{T}"/>实现。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-internal class ValueFutureTask<T> : PromiseTask<T>, ITaskDriver<T>
+internal class ValueFutureTask<T> : ITaskDriver<T>, IFutureTask
 {
     private static readonly ConcurrentObjectPool<ValueFutureTask<T>> POOL =
         new(() => new ValueFutureTask<T>(), task => task.Reset(),
             TaskPoolConfig.GetPoolSize<T>(TaskPoolConfig.TaskType.ValueFutureTask));
 
+#nullable disable
     /// <summary>
     /// 重入id（归还到池和从池中取出时都加1）
     /// </summary>
     private int _reentryId;
+    /** 任务关联的promise */
+    private readonly Promise<T> _promise;
+    /** 用户的委托 */
+    private object task;
+    /** 任务的上下文 */
+    private object ctx;
+    /** 任务的调度选项 */
+    private int options;
+    /** 任务的控制标记 */
+    private int ctl;
+#nullable enable
 
     private ValueFutureTask() {
-        promise = new Promise<T>();
+        _promise = new Promise<T>();
+    }
+
+    private void Init(object action, object? ctx, int options, int taskType) {
+        if (ctx == null) {
+            if (TaskBuilder.IsTaskAcceptContext(taskType)) {
+                ctx = IContext.NONE;
+            } else {
+                ctx = ICancelToken.NONE;
+            }
+        }
+        this.task = action ?? throw new ArgumentNullException(nameof(action));
+        this.ctx = ctx;
+        this.options = options;
+        this.ctl |= (taskType << PromiseTask.OFFSET_TASK_TYPE);
     }
 
     public static ValueFutureTask<T> Create(object action, object? ctx, int options, int taskType) {
         ValueFutureTask<T> futureTask = POOL.Acquire();
-        futureTask.Init(action, ctx, options, futureTask.promise, taskType);
+        futureTask.Init(action, ctx, options, taskType);
+        futureTask._reentryId++; // 重用时也加1
         return futureTask;
     }
 
     private void Reset() {
-        Promise<T> promise = (Promise<T>)this.promise;
-        try {
-            _reentryId++;
-            promise.Reset();
-            base.Clear();
-        }
-        finally {
-            this.promise = promise;
-        }
+        _reentryId++;
+        _promise.Reset();
+        task = null;
+        ctx = null;
+        options = 0;
+        ctl = 0;
+    }
+
+    #region future-task
+
+    public int Options => options;
+
+    /** 是否收到了取消信号 */
+    public bool IsCancelling() {
+        return _promise.IsCompleted || GetCancelToken().IsCancelling;
+    }
+
+    /** 设置为取消状态 */
+    public void TrySetCancelled(int code = CancelCodes.REASON_SHUTDOWN) {
+        TrySetCancelled(_promise, GetCancelToken(), code);
     }
 
     /// <summary>
     /// 该方法可能被EventLoop调用，但我们空实现
     /// </summary>
-    public override void Clear() {
+    public void Clear() {
     }
+
+    /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
+    private int TaskType => (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
+
+    /** 获取取消令牌 */
+    private ICancelToken GetCancelToken() {
+        object ctx = this.ctx;
+        if (ctx == ICancelToken.NONE || ctx == IContext.NONE) {
+            return ICancelToken.NONE;
+        }
+        if (TaskBuilder.IsTaskAcceptContext(TaskType)) {
+            IContext castCtx = (IContext)ctx;
+            return castCtx.CancelToken;
+        }
+        return (ICancelToken)ctx;
+    }
+
+    /** 运行可直接得出结果的任务 */
+    private T RunTask() {
+        int type = (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
+        switch (type) {
+            case TaskBuilder.TYPE_ACTION: {
+                Action task = (Action)this.task;
+                task();
+                return default;
+            }
+            case TaskBuilder.TYPE_FUNC: {
+                Func<T> task = (Func<T>)this.task;
+                return task();
+            }
+            case TaskBuilder.TYPE_ACTION_CTX: {
+                Action<IContext> task = (Action<IContext>)this.task;
+                task((IContext)ctx);
+                return default;
+            }
+            case TaskBuilder.TYPE_FUNC_CTX: {
+                Func<IContext, T> task = (Func<IContext, T>)this.task;
+                return task((IContext)ctx);
+            }
+            case TaskBuilder.TYPE_TASK: {
+                ITask task = (ITask)this.task;
+                task.Run();
+                return default;
+            }
+            default: {
+                throw new AssertionError("type: " + type);
+            }
+        }
+    }
+
+    public void Run() {
+        IPromise<T> promise = this._promise;
+        ICancelToken cancelToken = GetCancelToken();
+        if (cancelToken.IsCancelling) {
+            TrySetCancelled(promise, cancelToken);
+            return;
+        }
+        if (promise.TrySetComputing()) {
+            try {
+                T value = RunTask();
+                promise.TrySetResult(value);
+            }
+            catch (Exception e) {
+                promise.TrySetException(e);
+            }
+        }
+    }
+
+    private static void TrySetCancelled(IPromise promise, ICancelToken cancelToken) {
+        int cancelCode = cancelToken.CancelCode;
+        Debug.Assert(cancelCode != 0);
+        promise.TrySetCancelled(cancelCode);
+    }
+
+    private static void TrySetCancelled(IPromise promise, ICancelToken cancelToken, int def) {
+        int cancelCode = cancelToken.CancelCode;
+        if (cancelCode == 0) cancelCode = def;
+        promise.TrySetCancelled(cancelCode);
+    }
+
+    #endregion
+
+    #region driver
 
     public ValueFuture VoidFuture {
         get {
-            TaskStatus status = promise.Status;
+            TaskStatus status = _promise.Status;
             switch (status) {
                 case TaskStatus.Success: {
                     return new ValueFuture();
                 }
                 case TaskStatus.Cancelled:
                 case TaskStatus.Failed: {
-                    return new ValueFuture(promise.ExceptionNow(false));
+                    return new ValueFuture(_promise.ExceptionNow(false));
                 }
                 default: {
                     return new ValueFuture(this, _reentryId);
@@ -148,14 +271,14 @@ internal class ValueFutureTask<T> : PromiseTask<T>, ITaskDriver<T>
 
     public ValueFuture<T> Future {
         get {
-            TaskStatus status = promise.Status;
+            TaskStatus status = _promise.Status;
             switch (status) {
                 case TaskStatus.Success: {
-                    return new ValueFuture<T>(promise.ResultNow(), null);
+                    return new ValueFuture<T>(_promise.ResultNow(), null);
                 }
                 case TaskStatus.Cancelled:
                 case TaskStatus.Failed: {
-                    return new ValueFuture<T>(default, promise.ExceptionNow(false));
+                    return new ValueFuture<T>(default, _promise.ExceptionNow(false));
                 }
                 default: {
                     return new ValueFuture<T>(this, _reentryId);
@@ -166,12 +289,12 @@ internal class ValueFutureTask<T> : PromiseTask<T>, ITaskDriver<T>
 
     public TaskStatus GetStatus(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
-        return promise.Status;
+        return _promise.Status;
     }
 
     public Exception GetException(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
-        Exception ex = promise.ExceptionNow(false);
+        Exception ex = _promise.ExceptionNow(false);
         // GetResult以后归还到池
         POOL.Release(this);
         return ex;
@@ -179,7 +302,7 @@ internal class ValueFutureTask<T> : PromiseTask<T>, ITaskDriver<T>
 
     public T GetResult(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
-        TaskStatus status = promise.Status;
+        TaskStatus status = _promise.Status;
         if (!status.IsCompleted()) {
             throw new IllegalStateException("Task has not completed");
         }
@@ -187,9 +310,9 @@ internal class ValueFutureTask<T> : PromiseTask<T>, ITaskDriver<T>
         T r = default;
         Exception? ex = null;
         if (status == TaskStatus.Success) {
-            r = promise.ResultNow();
+            r = _promise.ResultNow();
         } else {
-            ex = promise.ExceptionNow(false);
+            ex = _promise.ExceptionNow(false);
         }
         // GetResult以后归还到池
         POOL.Release(this);
@@ -203,20 +326,20 @@ internal class ValueFutureTask<T> : PromiseTask<T>, ITaskDriver<T>
     public void OnCompleted(int reentryId, Action<object?> continuation, object? state, IExecutor? executor, int options = 0) {
         ValidateReentryId(reentryId);
         if (executor != null) {
-            promise.OnCompletedAsync(executor, continuation, state, options);
+            _promise.OnCompletedAsync(executor, continuation, state, options);
         } else {
-            promise.OnCompleted(continuation, state);
+            _promise.OnCompleted(continuation, state);
         }
     }
 
     public void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise) {
         ValidateReentryId(reentryId);
-        IPromise.SetVoidPromise(promise, this.promise);
+        IPromise.SetVoidPromise(promise, this._promise);
     }
 
     public void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise) {
         ValidateReentryId(reentryId);
-        IPromise<T>.SetPromise(promise, this.promise);
+        IPromise<T>.SetPromise(promise, this._promise);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -226,5 +349,7 @@ internal class ValueFutureTask<T> : PromiseTask<T>, ITaskDriver<T>
         }
         throw new Exception("ValueFutureDriver has been reused");
     }
+
+    #endregion
 }
 }

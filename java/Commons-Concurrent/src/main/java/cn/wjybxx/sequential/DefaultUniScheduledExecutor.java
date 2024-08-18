@@ -67,6 +67,10 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
         processScheduledQueue(tickTime, isShuttingDown());
 
         ArrayDeque<Runnable> taskQueue = this.taskQueue;
+        if (taskQueue.isEmpty()) {
+            return;
+        }
+
         Runnable task;
         while ((task = taskQueue.poll()) != null) {
             try {
@@ -75,6 +79,9 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
                 logCause(ex);
             }
         }
+
+        // 为何要再执行一次？任务队列中可能包含定时任务，我们需要进行补帧
+        processScheduledQueue(tickTime, isShuttingDown());
     }
 
     private void processScheduledQueue(long tickTime, boolean shuttingDownMode) {
@@ -94,13 +101,14 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
                     scheduledHelper.onCompleted(queueTask);
                 }
             } else {
-                // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务
+                // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务 -- 需等同Reschedule
                 if (queueTask.trigger(tickTime)) {
                     if (isShuttingDown()) {
                         queueTask.trySetCancelled();
                         scheduledHelper.onCompleted(queueTask);
                     } else {
                         taskQueue.offer(queueTask);
+                        continue;
                     }
                 } else {
                     scheduledHelper.onCompleted(queueTask);

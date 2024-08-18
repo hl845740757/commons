@@ -11,7 +11,8 @@ Wjybxx的公共模块，抽取以方便我的其它开源项目依赖这里的�
 2. 基于Dson的序列化 -- [Java实现](java/Dson-Codec/README.md)、[c#实现](csharp/Wjybxx.Dson.Codec/README.md).
 3. 通用任务树(行为树) -- [行为树](docs/BTree.md)、[Java实现](java/BTree-Core)、[c#实现](csharp/Wjybxx.BTree.Core)
 4. 改进的Disruptor实现 -- [Java实现](java/disruptor)、[C#实现](csharp/Wjybxx.Disruptor)
-5. [Java核心并发库](java/Commons-Concurrent)
+5. 改进的并发库 -- [Java核心并发库](java/Commons-Concurrent)[C#核心并发库](csharp/Wjybxx.Commons.Concurrent)
+6. [参考javapoet的C#代码生成工具](csharp/Wjybxx.Commons.Apt)
 
 ## 源码Unity兼容
 

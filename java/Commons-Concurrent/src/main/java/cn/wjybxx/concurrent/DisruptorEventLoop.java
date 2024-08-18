@@ -699,13 +699,14 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         scheduledHelper.onCompleted(queueTask);
                     }
                 } else {
-                    // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务
+                    // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务 -- 需等同Reschedule
                     if (queueTask.trigger(tickTime)) {
                         if (isShuttingDown()) {
                             queueTask.trySetCancelled();
                             scheduledHelper.onCompleted(queueTask);
                         } else {
                             taskQueue.offer(queueTask);
+                            continue;
                         }
                     } else {
                         scheduledHelper.onCompleted(queueTask);

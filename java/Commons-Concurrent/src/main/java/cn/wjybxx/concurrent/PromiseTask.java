@@ -43,7 +43,9 @@ public class PromiseTask<V> implements IFutureTask<V> {
     /** 延时任务已触发过 */
     public static final int MASK_TRIGGERED = 1 << 16;
     /** 延时任务有超时时间 */
-    public static final int MASK_HAS_TIMEOUT = 1 << 17;
+    public static final int MASK_HAS_DEADLINE = 1 << 17;
+    /** 延时任务有次数限制 */
+    public static final int MASK_HAS_COUNTDOWN = 1 << 18;
 
     public static final int OFFSET_PRIORITY = 0;
     /** 任务类型的偏移量 */

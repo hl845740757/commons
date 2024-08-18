@@ -61,6 +61,10 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
         ProcessScheduledQueue(tickTime, IsShuttingDown);
 
         Queue<object> taskQueue = this.taskQueue;
+        if (taskQueue.Count == 0) {
+            return;
+        }
+
         object task;
         while (taskQueue.TryDequeue(out task)) {
             try {
@@ -75,6 +79,9 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
                 LogCause(ex);
             }
         }
+
+        // 为何要再执行一次？任务队列中可能包含定时任务，我们需要进行补帧
+        ProcessScheduledQueue(tickTime, IsShuttingDown);
     }
 
     private void ProcessScheduledQueue(long tickTime, bool shuttingDownMode) {
@@ -94,13 +101,14 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
                     scheduledHelper.OnCompleted(queueTask);
                 }
             } else {
-                // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务
+                // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务 -- 需等同Reschedule
                 if (queueTask.Trigger(tickTime)) {
                     if (IsShuttingDown) {
                         queueTask.TrySetCancelled();
                         scheduledHelper.OnCompleted(queueTask);
                     } else {
                         taskQueue.Enqueue(queueTask);
+                        continue;
                     }
                 } else {
                     scheduledHelper.OnCompleted(queueTask);

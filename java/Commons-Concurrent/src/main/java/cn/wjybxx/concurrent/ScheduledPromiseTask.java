@@ -44,8 +44,10 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     /** 任务的执行间隔 - 不再有特殊意义 */
     private long period;
 
-    /** 截止时间 -- 有效性见{@link #MASK_HAS_TIMEOUT} */
+    /** 截止时间 -- 有效性见{@link #MASK_HAS_DEADLINE} */
     private long deadline;
+    /** 剩余次数 -- 有效性见{@link #MASK_HAS_COUNTDOWN} */
+    private int countdown;
 
     /** 用于避免具体类型依赖 */
     private IScheduledHelper helper;
@@ -123,9 +125,13 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
                 ? helper.triggerPeriod(builder.getPeriod(), builder.getTimeUnit())
                 : 0;
         ScheduledPromiseTask<V> promiseTask = new ScheduledPromiseTask<>(builder, promise, helper, triggerTime, period);
-        if (builder.isPeriodic() && builder.getTimeout() != -1) {
-            promiseTask.enableTimeout();
-            promiseTask.deadline = helper.triggerTime(builder.getTimeout(), builder.getTimeUnit());
+        if (builder.isPeriodic()) {
+            if (builder.getTimeout() != -1) {
+                promiseTask.enableTimeout(helper.triggerTime(builder.getTimeout(), builder.getTimeUnit()));
+            }
+            if (builder.getCountLimit() != -1) {
+                promiseTask.enableCountLimit(builder.getCountLimit());
+            }
         }
         return promiseTask;
     }
@@ -210,11 +216,21 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     }
 
     private boolean hasTimeout() {
-        return (ctl & PromiseTask.MASK_HAS_TIMEOUT) != 0;
+        return (ctl & PromiseTask.MASK_HAS_DEADLINE) != 0;
     }
 
-    private void enableTimeout() {
-        ctl |= PromiseTask.MASK_HAS_TIMEOUT;
+    private void enableTimeout(long deadline) {
+        ctl |= PromiseTask.MASK_HAS_DEADLINE;
+        this.deadline = deadline;
+    }
+
+    private boolean hasCountLimit() {
+        return (ctl & PromiseTask.MASK_HAS_COUNTDOWN) != 0;
+    }
+
+    private void enableCountLimit(int countdown) {
+        ctl |= PromiseTask.MASK_HAS_COUNTDOWN;
+        this.countdown = countdown;
     }
 
     // endregion
@@ -307,6 +323,11 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         // 未被取消的情况下检测超时
         if (hasTimeout() && deadline <= tickTime) {
             promise.trySetException(StacklessTimeoutException.INST);
+            return false;
+        }
+        // 检测次数限制
+        if (hasCountLimit() && (--countdown < 1)) {
+            promise.trySetException(StacklessTimeoutException.INST_COUNTDOWN);
             return false;
         }
         setNextRunTime(tickTime, scheduleType);

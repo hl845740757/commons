@@ -34,20 +34,24 @@ public readonly struct ValueFuture
     private readonly int _reentryId;
     private readonly Exception? _ex;
 
-    public ValueFuture(IFuture future) {
-        _future = future ?? throw new ArgumentNullException(nameof(future));
-        _reentryId = 0;
-        _ex = null;
-    }
-
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="ex">如果为null，则表示成功</param>
     public ValueFuture(Exception? ex) {
         _future = null;
         _reentryId = 0;
         _ex = ex;
     }
 
-    public ValueFuture(ITaskDriver future, int reentryId) {
+    public ValueFuture(IFuture future) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
+        _reentryId = 0;
+        _ex = null;
+    }
+
+    public ValueFuture(ITaskDriver driver, int reentryId) {
+        _future = driver ?? throw new ArgumentNullException(nameof(driver));
         _reentryId = reentryId;
         _ex = null;
     }
@@ -74,26 +78,29 @@ public readonly struct ValueFuture
     /// </summary>
     public IFuture AsFuture() {
         if (_future == null) {
+            if (_ex != null) {
+                return Promise<int>.FromException(_ex);
+            }
             return Promise<int>.FromResult(0);
         }
         if (_future is IFuture future) {
             return future;
         }
-        ITaskDriver driver = (ITaskDriver)_future;
-        TaskStatus status = driver.GetStatus(_reentryId);
+        ITaskDriver taskDriver = (ITaskDriver)_future;
+        TaskStatus status = taskDriver.GetStatus(_reentryId);
         switch (status) {
             case TaskStatus.Success: {
-                driver.ThrowIfFailedOrCancelled(_reentryId);
+                taskDriver.ThrowIfFailedOrCancelled(_reentryId);
                 return Promise<int>.FromResult(0);
             }
             case TaskStatus.Cancelled:
             case TaskStatus.Failed: {
-                Exception ex = driver.GetException(_reentryId);
+                Exception ex = taskDriver.GetException(_reentryId);
                 return Promise<int>.FromException(ex);
             }
             default: {
                 Promise<int> promise = new Promise<int>();
-                driver.SetVoidPromiseWhenCompleted(_reentryId, promise);
+                taskDriver.SetVoidPromiseWhenCompleted(_reentryId, promise);
                 return promise;
             }
         }
@@ -171,13 +178,11 @@ public readonly struct ValueFuture<T>
     private readonly T? _result;
     private readonly Exception? _ex;
 
-    public ValueFuture(IFuture<T> future) {
-        _future = future ?? throw new ArgumentNullException(nameof(future));
-        _reentryId = 0;
-        _result = default;
-        _ex = null;
-    }
-
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="result"></param>
+    /// <param name="ex">如果为null，则表示成功</param>
     public ValueFuture(T? result, Exception? ex) {
         _future = null;
         _reentryId = 0;
@@ -185,8 +190,15 @@ public readonly struct ValueFuture<T>
         _ex = ex;
     }
 
-    public ValueFuture(ITaskDriver<T> future, int reentryId) {
+    public ValueFuture(IFuture<T> future) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
+        _reentryId = 0;
+        _result = default;
+        _ex = null;
+    }
+
+    public ValueFuture(ITaskDriver<T> driver, int reentryId) {
+        _future = driver ?? throw new ArgumentNullException(nameof(driver));
         _reentryId = reentryId;
         _result = default;
         _ex = null;
@@ -214,31 +226,47 @@ public readonly struct ValueFuture<T>
     /// </summary>
     public IFuture<T> AsFuture() {
         if (_future == null) {
+            if (_ex != null) {
+                return Promise<T>.FromException(_ex);
+            }
             return Promise<T>.FromResult(_result);
         }
         if (_future is IFuture<T> future) {
             return future;
         }
-        ITaskDriver<T> stateMachineDriver = (ITaskDriver<T>)_future;
-        TaskStatus status = stateMachineDriver.GetStatus(_reentryId);
+        ITaskDriver<T> taskDriver = (ITaskDriver<T>)_future;
+        TaskStatus status = taskDriver.GetStatus(_reentryId);
         switch (status) {
             case TaskStatus.Success: {
-                return Promise<T>.FromResult(stateMachineDriver.GetResult(_reentryId));
+                return Promise<T>.FromResult(taskDriver.GetResult(_reentryId));
             }
             case TaskStatus.Cancelled:
             case TaskStatus.Failed: {
-                Exception ex = stateMachineDriver.GetException(_reentryId);
+                Exception ex = taskDriver.GetException(_reentryId);
                 return Promise<T>.FromException(ex);
             }
             default: {
                 Promise<T> promise = new Promise<T>();
-                stateMachineDriver.SetPromiseWhenCompleted(_reentryId, promise);
+                taskDriver.SetPromiseWhenCompleted(_reentryId, promise);
                 return promise;
             }
         }
     }
 
     public ValueFuture<T> Preserve() => new ValueFuture<T>(AsFuture());
+
+    public ValueFuture ToVoid() {
+        if (_future == null) {
+            if (_ex != null) {
+                return new ValueFuture(_ex);
+            }
+            return ValueFuture.COMPLETED;
+        }
+        if (_future is IFuture future) {
+            return new ValueFuture(future);
+        }
+        return new ValueFuture((ITaskDriver)_future, _reentryId);
+    }
 
     #region internal
 

@@ -23,7 +23,8 @@ using System.Threading;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 
+///
+/// PS：如果想节省提交任务的开销，请移步<see cref="ValueFutureTask"/>
 /// </summary>
 public interface IExecutorService : IExecutor
 {

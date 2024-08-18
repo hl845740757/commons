@@ -704,13 +704,14 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
                     scheduledHelper.OnCompleted(queueTask);
                 }
             } else {
-                // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务
+                // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务 -- 需等同Reschedule
                 if (queueTask.Trigger(tickTime)) {
                     if (IsShuttingDown) {
                         queueTask.TrySetCancelled();
                         scheduledHelper.OnCompleted(queueTask);
                     } else {
                         taskQueue.Enqueue(queueTask);
+                        continue;
                     }
                 } else {
                     scheduledHelper.OnCompleted(queueTask);

@@ -70,9 +70,13 @@ public interface ScheduledPromiseTask
             : 0;
 
         ScheduledPromiseTask<T> promiseTask = new ScheduledPromiseTask<T>(in builder, promise, helper, triggerTime, period);
-        if (builder.IsPeriodic && builder.Timeout != -1) {
-            promiseTask.EnableTimeout();
-            promiseTask.deadline = helper.TriggerTime(builder.Timeout, builder.Timeunit);
+        if (builder.IsPeriodic) {
+            if (builder.Timeout != -1) {
+                promiseTask.EnableTimeout(helper.TriggerTime(builder.Timeout, builder.Timeunit));
+            }
+            if (builder.CountLimit != -1) {
+                promiseTask.EnableCountLimit(builder.CountLimit);
+            }
         }
         return promiseTask;
     }
@@ -91,8 +95,10 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
     /** 任务的执行间隔 - 不再有特殊意义 */
     private long period;
 
-    /** 截止时间 -- 有效性见<see cref="PromiseTask.MASK_HAS_TIMEOUT"/> */
-    internal long deadline;
+    /** 截止时间 -- 有效性见<see cref="PromiseTask.MASK_HAS_DEADLINE"/> */
+    private long deadline;
+    /** 剩余次数 -- 有效性见<see cref="PromiseTask.MASK_HAS_COUNTDOWN"/> */
+    private int countdown;
 
     /** 用于避免具体类型依赖 */
     private IScheduledHelper helper;
@@ -175,9 +181,19 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
         helper = null;
     }
 
-    private bool HasTimeout => (ctl & PromiseTask.MASK_HAS_TIMEOUT) != 0;
+    private bool HasTimeout => (ctl & PromiseTask.MASK_HAS_DEADLINE) != 0;
 
-    internal void EnableTimeout() => ctl |= PromiseTask.MASK_HAS_TIMEOUT;
+    internal void EnableTimeout(long deadline) {
+        ctl |= PromiseTask.MASK_HAS_DEADLINE;
+        this.deadline = deadline;
+    }
+
+    private bool HasCountLimit => (ctl & PromiseTask.MASK_HAS_COUNTDOWN) != 0;
+
+    internal void EnableCountLimit(int countdown) {
+        ctl |= PromiseTask.MASK_HAS_COUNTDOWN;
+        this.countdown = countdown;
+    }
 
     #endregion
 
@@ -267,7 +283,11 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
             promise.TrySetException(StacklessTimeoutException.INST);
             return false;
         }
-
+        // 检测次数限制
+        if (HasCountLimit && (--countdown < 1)) {
+            promise.TrySetException(StacklessTimeoutException.INST_COUNTDOWN);
+            return false;
+        }
         SetNextRunTime(tickTime, scheduleType);
         return true;
     }

@@ -25,6 +25,7 @@ import java.util.function.Function;
 
 /**
  * 该对象为临时对象，应避免共享
+ * (虽然java这个类的开销有点大，但我们提交定时任务的频率非常低，暂不考虑池化)
  *
  * @author wjybxx
  * date 2023/4/14
@@ -46,6 +47,8 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     private long period;
     private long timeout = -1;
     private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
+    /** 执行次数限制 */
+    private int countLimit = -1;
 
     private ScheduledTaskBuilder(int type, Object task) {
         super(type, task);
@@ -182,12 +185,21 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         return this;
     }
 
+    /** 是否设置了超时时间 */
+    public boolean hasTimeout() {
+        return timeout != -1;
+    }
+
+    public long getTimeout() {
+        return timeout;
+    }
+
     /**
      * 设置周期性任务的超时时间（非分时任务也可以）
      * <p>
      * 注意：
      * 1. -1表示无限制，大于等于0表示有限制
-     * 2. 我们总是在执行任务后检查是否超时，以确保至少会执行一次
+     * 2. 默认只在执行任务后检查是否超时，以确保至少会执行一次
      * 3. 超时是一个不准确的调度，不保证超时后能立即结束
      */
     public ScheduledTaskBuilder<V> setTimeout(long timeout) {
@@ -217,23 +229,36 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         return this;
     }
 
-    public long getTimeout() {
-        return timeout;
+    /** 是否设置了次数限制 */
+    public boolean hasCountLimit() {
+        return countLimit != -1;
     }
 
-    /** 是否设置了超时时间 */
-    public boolean hasTimeout() {
-        return timeout != -1;
+    public int getCountLimit() {
+        return countLimit;
+    }
+
+    /**
+     * 设置任务的执行次数限制
+     * 1. -1表示无限制，大于0表示有限制，0非法
+     *
+     * @param countLimit 次数限制
+     */
+    public void setCountLimit(int countLimit) {
+        if (countLimit <= 0 && countLimit != -1) {
+            throw new IllegalArgumentException("invalid countLimit " + countLimit);
+        }
+        this.countLimit = countLimit;
+    }
+
+    public TimeUnit getTimeUnit() {
+        return timeUnit;
     }
 
     /** 设置时间单位 */
     public ScheduledTaskBuilder<V> setTimeUnit(TimeUnit timeUnit) {
         this.timeUnit = Objects.requireNonNull(timeUnit);
         return this;
-    }
-
-    public TimeUnit getTimeUnit() {
-        return timeUnit;
     }
 
     // endregion
