@@ -244,11 +244,12 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
      *
      * @param countLimit 次数限制
      */
-    public void setCountLimit(int countLimit) {
+    public ScheduledTaskBuilder<V> setCountLimit(int countLimit) {
         if (countLimit <= 0 && countLimit != -1) {
             throw new IllegalArgumentException("invalid countLimit " + countLimit);
         }
         this.countLimit = countLimit;
+        return this;
     }
 
     public TimeUnit getTimeUnit() {

@@ -285,7 +285,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
         }
         // 检测次数限制
         if (HasCountLimit && (--countdown < 1)) {
-            promise.TrySetException(StacklessTimeoutException.INST_COUNTDOWN);
+            promise.TrySetException(StacklessTimeoutException.INST_COUNT_LIMIT);
             return false;
         }
         SetNextRunTime(tickTime, scheduleType);
@@ -305,9 +305,9 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
     private void SetNextRunTime(long tickTime, int scheduleType) {
         long maxDelay = HasTimeout ? (deadline - tickTime) : long.MaxValue;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
-            nextTriggerTime = nextTriggerTime + Math.Min(maxDelay, period); // 逻辑时间
+            nextTriggerTime = nextTriggerTime + Math.Clamp(period, 1, maxDelay); // 逻辑时间
         } else {
-            nextTriggerTime = tickTime + Math.Min(maxDelay, period); // 真实时间
+            nextTriggerTime = tickTime + Math.Clamp(period, 1, maxDelay); // 真实时间
         }
     }
 

@@ -45,7 +45,7 @@ public class TaskStatus {
     /** 执行超时 */
     public static final int TIMEOUT = 8;
     /** 循环次数限制 */
-    public static final int LOOP_END = 9;
+    public static final int MAX_LOOP_LIMIT = 9;
 
     /** 这是Task类能捕获的最大前一个状态的值，超过该值时将被修正该值 */
     public static final int MAX_PREV_STATUS = 31;

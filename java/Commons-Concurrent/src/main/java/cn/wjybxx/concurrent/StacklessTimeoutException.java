@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 public class StacklessTimeoutException extends TimeoutException {
 
     public static final StacklessTimeoutException INST = new StacklessTimeoutException();
-    public static final StacklessTimeoutException INST_COUNTDOWN = new StacklessTimeoutException("countdown");
+    public static final StacklessTimeoutException INST_COUNT_LIMIT = new StacklessTimeoutException("count limit");
 
     public StacklessTimeoutException() {
     }

@@ -51,6 +51,7 @@ public class ScheduleTest2 {
                         .newMultiProducer(RingBufferEvent::new)
                         .build())
                 .build();
+        consumer.start().join();
 
         joiner = new StringJoiner(",");
 
@@ -82,7 +83,7 @@ public class ScheduleTest2 {
 
     @Test
     void testOnlyOnceFail() {
-        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, first) -> timeSharingJoinString())
+        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.newTimeSharing((ctx, firstStep) -> timeSharingJoinString())
                 .setOnlyOnce(0));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
@@ -91,32 +92,23 @@ public class ScheduleTest2 {
 
     @Test
     void testOnlyOnceSuccess() {
-        String result = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, first) -> untilJoinStringSuccess())
+        String result = consumer.schedule(ScheduledTaskBuilder.newTimeSharing((ctx, firstStep) -> untilJoinStringSuccess())
                         .setOnlyOnce(0))
                 .join();
 
         Assertions.assertEquals(expectedString, result);
     }
 
-    //
     @Test
     void testTimeSharingComplete() {
-        String result = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, first) -> timeSharingJoinString())
+        String result = consumer.schedule(ScheduledTaskBuilder.newTimeSharing((ctx, firstStep) -> timeSharingJoinString())
                         .setFixedDelay(0, 200))
                 .join();
 
         Assertions.assertEquals(expectedString, result);
     }
 
-    @Test
-    void testTimeSharingTimeout() {
-        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.<String>newTimeSharing((ctx, first) -> timeSharingJoinString())
-                .setFixedDelay(0, 200)
-                .setTimeoutByCount(1));
-
-        future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
-    }
+    // region timeout
 
     @Test
     void testRunnableTimeout() {
@@ -128,7 +120,7 @@ public class ScheduleTest2 {
         Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
 
         consumer.submit(() -> {
-            System.out.println("");
+            System.out.println();
         });
     }
 
@@ -142,4 +134,42 @@ public class ScheduleTest2 {
         Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
     }
 
+    @Test
+    void testTimeSharingTimeout() {
+        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.newTimeSharing((ctx, firstStep) -> timeSharingJoinString())
+                .setFixedDelay(0, 200)
+                .setTimeoutByCount(1));
+
+        future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
+        Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
+    }
+
+    // endregion
+
+    // region count-limit
+
+    @Test
+    void testTimeSharingCountLimitSuccess() {
+        long millis = System.currentTimeMillis();
+        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.newTimeSharing((ctx, firstStep) -> timeSharingJoinString())
+                .setFixedDelay(10, 10)
+                .setCountLimit(stringList.size()));
+
+        future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
+        System.out.println(System.currentTimeMillis() - millis);
+        Assertions.assertEquals(expectedString, future.resultNow());
+    }
+
+    @Test
+    void testTimeSharingCountLimitFail() {
+        IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.newTimeSharing(
+                (ctx, firstStep) -> timeSharingJoinString())
+                .setFixedDelay(0, 10)
+                .setCountLimit(stringList.size() - 1));
+
+        future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
+        Assertions.assertTrue(future.exceptionNow() == StacklessTimeoutException.INST_COUNT_LIMIT);
+    }
+
+    // endregion
 }

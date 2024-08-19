@@ -16,10 +16,7 @@
 
 package cn.wjybxx.base;
 
-import cn.wjybxx.base.time.TimeUtils;
-
 import java.util.Set;
-import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
 /**
@@ -77,8 +74,14 @@ public class ThreadUtils {
      */
     public static void sleepQuietly(long sleepMillis) {
         // 这步不能省略，还未查明原因，有时会立即从park中醒来，但线程并没有被中断...
-        LockSupport.parkNanos(1);
-        LockSupport.parkNanos(sleepMillis * TimeUtils.NANOS_PER_MILLI);
+//        LockSupport.parkNanos(1);
+//        LockSupport.parkNanos(sleepMillis * TimeUtils.NANOS_PER_MILLI);
+        // 近来还发现，java的parkNanos在Windows上延迟非常高，所以这个方法还是改为sleep
+        try {
+            Thread.sleep(sleepMillis);
+        } catch (InterruptedException ignore) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     public static void joinUninterruptedly(Thread thread) {

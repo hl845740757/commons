@@ -126,10 +126,10 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
                 : 0;
         ScheduledPromiseTask<V> promiseTask = new ScheduledPromiseTask<>(builder, promise, helper, triggerTime, period);
         if (builder.isPeriodic()) {
-            if (builder.getTimeout() != -1) {
+            if (builder.hasTimeout()) {
                 promiseTask.enableTimeout(helper.triggerTime(builder.getTimeout(), builder.getTimeUnit()));
             }
-            if (builder.getCountLimit() != -1) {
+            if (builder.hasCountLimit()) {
                 promiseTask.enableCountLimit(builder.getCountLimit());
             }
         }
@@ -327,7 +327,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         }
         // 检测次数限制
         if (hasCountLimit() && (--countdown < 1)) {
-            promise.trySetException(StacklessTimeoutException.INST_COUNTDOWN);
+            promise.trySetException(StacklessTimeoutException.INST_COUNT_LIMIT);
             return false;
         }
         setNextRunTime(tickTime, scheduleType);
@@ -347,9 +347,9 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     private void setNextRunTime(long tickTime, int scheduleType) {
         long maxDelay = hasTimeout() ? (deadline - tickTime) : Long.MAX_VALUE;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
-            nextTriggerTime = nextTriggerTime + Math.min(maxDelay, period); // 逻辑时间
+            nextTriggerTime = nextTriggerTime + Math.clamp(period, 1, maxDelay); // 逻辑时间
         } else {
-            nextTriggerTime = tickTime + Math.min(maxDelay, period); // 真实时间
+            nextTriggerTime = tickTime + Math.clamp(period, 1, maxDelay); // 真实时间
         }
     }
     // endregion

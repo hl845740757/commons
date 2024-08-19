@@ -50,7 +50,7 @@ public class UntilFail<T> extends LoopDecorator<T> {
         if (child.isFailed()) {
             setSuccess();
         } else if (!hasNextLoop()) {
-            setFailed(TaskStatus.LOOP_END);
+            setFailed(TaskStatus.MAX_LOOP_LIMIT);
         } else if (!isExecuting() || !isTailRecursion()) {
             template_execute();
         }

@@ -46,7 +46,7 @@ public class TaskStatus
     /** 执行超时 */
     public const int TIMEOUT = 8;
     /** 循环结束 */
-    public const int LOOP_END = 9;
+    public const int MAX_LOOP_LIMIT = 9;
 
     /** 这是Task类能捕获的最大前一个状态的值，超过该值时将被修正该值 */
     public const int MAX_PREV_STATUS = 31;

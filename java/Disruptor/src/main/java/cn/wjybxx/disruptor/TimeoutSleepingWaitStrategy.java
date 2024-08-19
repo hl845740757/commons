@@ -73,6 +73,8 @@ public class TimeoutSleepingWaitStrategy implements WaitStrategy {
 
         int counter = spinTries + yieldTries + sleepTries;
         int yieldThreshold = yieldTries + sleepTries;
+        // windows上parkNanos的延迟很高，parkNanos(1)都可能延迟10ms，不处理的话会导致不能及时调度定时任务
+        long parkDeadline = System.nanoTime() + sleepTries * sleepTimeNs;
 
         long availableSequence;
         while ((availableSequence = barrier.dependentSequence()) < sequence) {
@@ -86,7 +88,12 @@ public class TimeoutSleepingWaitStrategy implements WaitStrategy {
                 Thread.yield();
             } else if (counter > 0) {
                 --counter;
-                LockSupport.parkNanos(sleepTimeNs);
+
+                long remainNano = Math.min(parkDeadline - System.nanoTime(), sleepTimeNs);
+                if (remainNano < 1) {
+                    throw StacklessTimeoutException.INSTANCE;
+                }
+                LockSupport.parkNanos(remainNano);
             } else {
                 throw StacklessTimeoutException.INSTANCE;
             }

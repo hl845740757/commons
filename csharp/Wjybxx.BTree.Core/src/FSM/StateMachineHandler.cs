@@ -58,7 +58,7 @@ public interface IStateMachineHandler<T> where T : class
     /// 
     /// 1.两个参数最多一个为null
     /// 2.可以设置新状态的黑板和其它数据
-    /// 3.用户此时可为新状态分配上下文；同时清理前一个状态的上下文
+    /// 3.用户此时可为新状态分配上下文(黑板、取消令牌、共享属性)；同时清理前一个状态的上下文
     /// 4.用户此时可拿到新状态的状态切换参数<see cref="Task{T}.ControlData"/>，后续则不可
     /// 5.如果task需要感知redo和undo，则由用户将信息写入黑板
     /// </summary>
