@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using Wjybxx.Commons.Attributes;
+using Wjybxx.Commons.Mutable;
 
 namespace Commons.Tests.Concurrent;
 
@@ -47,6 +48,12 @@ public class Counter
 
     public Action NewTask(int type, long sequence) {
         if (type <= 0) throw new ArgumentException("invalidType: " + type);
-        return () => Count(type, sequence);
+        // 计数只能计数一次
+        MutableInt first = new MutableInt(0);
+        return () => {
+            if (first.GetAndIncrement() == 0) {
+                Count(type, sequence);
+            }
+        };
     }
 }
