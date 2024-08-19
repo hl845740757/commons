@@ -83,7 +83,9 @@ public class Join<T> : Parallel<T> where T : class
             if (inlinedRunningChild != null) {
                 Template_RunInlinedChild(inlinedRunningChild, childHelper, child);
             } else if (child.IsRunning) {
-                child.Template_Execute();
+                if (child.IsActiveInHierarchy) {
+                    child.Template_Execute();
+                }
             } else {
                 Template_RunChild(child);
             }

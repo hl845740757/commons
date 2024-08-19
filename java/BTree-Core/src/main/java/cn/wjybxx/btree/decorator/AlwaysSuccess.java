@@ -45,7 +45,9 @@ public class AlwaysSuccess<T> extends Decorator<T> {
         if (inlinedRunningChild != null) {
             template_runInlinedChild(inlinedRunningChild, inlineHelper, child);
         } else if (child.isRunning()) {
-            child.template_execute();
+            if (child.isActiveInHierarchy()) {
+                child.template_execute();
+            }
         } else {
             template_runChild(child);
         }

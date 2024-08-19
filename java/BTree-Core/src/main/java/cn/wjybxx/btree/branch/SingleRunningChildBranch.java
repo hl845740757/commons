@@ -140,7 +140,9 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
                     if (inlinedChild != null) {
                         template_runInlinedChild(inlinedChild, inlineHelper, runningChild);
                     } else if (runningChild.isRunning()) {
-                        runningChild.template_execute();
+                        if (runningChild.isActiveInHierarchy()) {
+                            runningChild.template_execute();
+                        }
                     } else {
                         template_runChild(runningChild);
                     }
@@ -163,7 +165,9 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
                 if (inlinedChild != null) {
                     template_runInlinedChild(inlinedChild, inlineHelper, runningChild);
                 } else if (runningChild.isRunning()) {
-                    runningChild.template_execute();
+                    if (runningChild.isActiveInHierarchy()) {
+                        runningChild.template_execute();
+                    }
                 } else {
                     template_runChild(runningChild);
                 }

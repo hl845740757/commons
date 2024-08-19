@@ -131,7 +131,9 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
                     if (inlinedChild != null) {
                         Template_RunInlinedChild(inlinedChild, inlineHelper, runningChild);
                     } else if (runningChild.IsRunning) {
-                        runningChild.Template_Execute();
+                        if (runningChild.IsActiveInHierarchy) {
+                            runningChild.Template_Execute();
+                        }
                     } else {
                         Template_RunChild(runningChild);
                     }
@@ -154,7 +156,9 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
                 if (inlinedChild != null) {
                     Template_RunInlinedChild(inlinedChild, inlineHelper, runningChild);
                 } else if (runningChild.IsRunning) {
-                    runningChild.Template_Execute();
+                    if (runningChild.IsActiveInHierarchy) {
+                        runningChild.Template_Execute();
+                    }
                 } else {
                     Template_RunChild(runningChild);
                 }

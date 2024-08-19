@@ -57,7 +57,9 @@ public abstract class LoopDecorator<T> extends Decorator<T> {
                 if (inlinedRunningChild != null) {
                     template_runInlinedChild(inlinedRunningChild, inlineHelper, child);
                 } else if (child.isRunning()) {
-                    child.template_execute();
+                    if (child.isActiveInHierarchy()) {
+                        child.template_execute();
+                    }
                 } else {
                     curLoop++;
                     template_runChild(child);
@@ -74,7 +76,9 @@ public abstract class LoopDecorator<T> extends Decorator<T> {
             if (inlinedRunningChild != null) {
                 template_runInlinedChild(inlinedRunningChild, inlineHelper, child);
             } else if (child.isRunning()) {
-                child.template_execute();
+                if (child.isActiveInHierarchy()) {
+                    child.template_execute();
+                }
             } else {
                 curLoop++;
                 template_runChild(child);

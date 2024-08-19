@@ -102,12 +102,6 @@ public abstract class BranchTask<T> extends Task<T> {
     // region child
 
     @Override
-    public final void removeAllChild() {
-        children.forEach(Task::unsetControl);
-        children.clear();
-    }
-
-    @Override
     public final int indexChild(Task<?> task) {
         return CollectionUtils.indexOfRef(children, task);
     }

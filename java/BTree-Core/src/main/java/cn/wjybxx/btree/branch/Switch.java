@@ -50,7 +50,9 @@ public class Switch<T> extends SingleRunningChildBranch<T> {
             runningChild = children.get(index);
         }
         if (runningChild.isRunning()) {
-            runningChild.template_execute();
+            if (runningChild.isActiveInHierarchy()) {
+                runningChild.template_execute();
+            }
         } else {
             template_runChildDirectly(runningChild);
         }

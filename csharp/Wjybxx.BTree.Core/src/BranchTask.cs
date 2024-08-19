@@ -106,11 +106,6 @@ public abstract class BranchTask<T> : Task<T> where T : class
 
     #region child
 
-    public sealed override void RemoveAllChild() {
-        children.ForEach(e => e.UnsetControl());
-        children.Clear();
-    }
-
     public sealed override int IndexChild(Task<T> task) {
         return CollectionUtil.IndexOfRef(children, task);
     }

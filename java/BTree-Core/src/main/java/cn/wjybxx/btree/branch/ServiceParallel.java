@@ -53,7 +53,9 @@ public class ServiceParallel<T> extends Parallel<T> {
             if (inlinedRunningChild != null) {
                 template_runInlinedChild(inlinedRunningChild, childHelper, child);
             } else if (child.isRunning()) {
-                child.template_execute();
+                if (child.isActiveInHierarchy()) {
+                    child.template_execute();
+                }
             } else {
                 template_runChild(child);
             }

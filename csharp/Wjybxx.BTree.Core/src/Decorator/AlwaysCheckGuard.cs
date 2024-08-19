@@ -37,7 +37,9 @@ public class AlwaysCheckGuard<T> : Decorator<T> where T : class
             if (inlinedRunningChild != null) {
                 Template_RunInlinedChild(inlinedRunningChild, inlineHelper, child);
             } else if (child.IsRunning) {
-                child.Template_Execute();
+                if (child.IsActiveInHierarchy) {
+                    child.Template_Execute();
+                }
             } else {
                 Template_RunChildDirectly(child);
             }
