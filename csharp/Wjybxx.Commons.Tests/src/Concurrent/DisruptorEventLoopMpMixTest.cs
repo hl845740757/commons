@@ -89,7 +89,7 @@ public class DisruptorEventLoopMpMixTest
         Assert.That(counter.sequenceMap.Count, Is.EqualTo(PRODUCER_COUNT), "counter.sequenceMap.Count != PRODUCER_COUNT");
         Assert.IsTrue(counter.errorMsgList.Count == 0, CollectionUtil.ToString(counter.errorMsgList));
     }
-    
+
     [Test]
     public void TestUnboundedBuffer() {
         consumer = new DisruptorEventLoopBuilder<CounterEvent>()
@@ -174,12 +174,16 @@ public class DisruptorEventLoopMpMixTest
                 break;
             }
             long low = hi.Value - batchSize + 1;
-            for (long sequence = low; sequence <= hi.Value; sequence++) {
-                CounterEvent agentEvent = new CounterEvent(type);
-                agentEvent.longVal1 = localSequence++;
-                consumer.SetEvent(sequence, agentEvent);
+            try {
+                for (long sequence = low; sequence <= hi.Value; sequence++) {
+                    CounterEvent agentEvent = new CounterEvent(type);
+                    agentEvent.longVal1 = localSequence++;
+                    consumer.SetEvent(sequence, agentEvent);
+                }
             }
-            consumer.Publish(low, hi.Value);
+            finally {
+                consumer.Publish(low, hi.Value);
+            }
         }
     }
 }

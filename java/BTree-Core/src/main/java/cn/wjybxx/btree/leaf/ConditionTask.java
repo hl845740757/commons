@@ -22,8 +22,17 @@ import javax.annotation.Nonnull;
 
 /**
  * 条件节点
- * 1. 大多数条件节点都只需要返回bool值，不需要详细的错误码，因此提供该模板实现。
- * 2. 并非所有条件节点都需要继承该类
+ * 注意：并非条件节点必须继承该类。
+ *
+ * <h3>开销问题</h3>
+ * Task类是比较大的，如果项目中有大量的条件，需要考虑开销问题。
+ * 一种解决方案是：使用Task类做壳，作为条件测试的入口，内部使用自定义类型。
+ * <pre>{@code
+ * public class ConditionEntry<T> extends LeafTask<T> {
+ *     private int type;
+ *     private List<ICondition> children = new ArrayList<ICondition>(4);
+ * }
+ * }</pre>
  *
  * @author wjybxx
  * date - 2023/11/25
@@ -32,14 +41,18 @@ public abstract class ConditionTask<T> extends LeafTask<T> {
 
     @Override
     protected final void execute() {
-        if (test()) {
-            setSuccess();
-        } else {
-            setFailed(TaskStatus.ERROR);
+        int status = test();
+        switch (status) {
+            case TaskStatus.NEW,
+                 TaskStatus.RUNNING,
+                 TaskStatus.CANCELLED -> throw new IllegalStateException("Illegal condition status: " + status);
+            case TaskStatus.SUCCESS -> setSuccess();
+            default -> setFailed(status);
         }
     }
 
-    protected abstract boolean test();
+    /** @return Taskstus */
+    protected abstract int test();
 
     @Override
     public boolean canHandleEvent(@Nonnull Object event) {
