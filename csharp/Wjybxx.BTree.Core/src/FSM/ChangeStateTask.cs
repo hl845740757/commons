@@ -101,7 +101,7 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
         get => delayMode;
         set => delayMode = value;
     }
-    
+
     public int DelayArg {
         get => delayArg;
         set => delayArg = value;

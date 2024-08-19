@@ -44,8 +44,6 @@ public sealed class CancelToken : ICancelToken
         this.code = code;
     }
 
-    public int ReentryId => reentryId;
-
     /** 重置状态，以供复用 */
     public void Reset() {
         reentryId++;

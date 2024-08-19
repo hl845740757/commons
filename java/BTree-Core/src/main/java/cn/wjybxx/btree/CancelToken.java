@@ -44,11 +44,6 @@ public final class CancelToken implements ICancelToken {
         this.code = code;
     }
 
-    @Override
-    public int getReentryId() {
-        return reentryId;
-    }
-
     /** 重置状态，以供复用 */
     public void reset() {
         reentryId++;

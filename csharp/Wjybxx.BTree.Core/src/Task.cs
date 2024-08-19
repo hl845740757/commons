@@ -41,6 +41,10 @@ namespace Wjybxx.BTree
 /// <h3>关于泛型</h3>
 /// Task是泛型的，我的Dson库将支持泛型类的序列化；BTree.Codec中的编解码器由Dson库的注解处理器生成。
 /// (脚本在测试用例模块)
+///
+///<h3>待办</h3>
+/// 1.考虑否是为每一个Task分配一个Name，有利于检索节点，和特殊通信 -- 主要是开销问题，Task类越来越大。
+/// 2.考虑是否为条件节点提供额外的抽象，以降低内存开销 -- 条件节点可以省一半字段，但代码的复杂度会更高。
 /// 
 /// <typeparam name="T">黑板的类型</typeparam>
 /// </summary>
@@ -49,7 +53,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /** 低5位记录Task重写了哪些方法 */
     private const int MASK_OVERRIDES = 31;
     /** 低[6~10]位记录前一次的运行结果，范围 [0, 31] */
-    private const int MASK_PREV_STATUS = TaskStatus.MAX_PREV_STATUS << 5;
+    private const int MASK_PREV_STATUS = 31 << 5;
     /** 前一次运行结果的存储偏移量 */
     private const int OFFSET_PREV_STATUS = 5;
 
@@ -132,7 +136,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 任务的自定义标识
     /// 1.对任务进行标记是一个常见的需求，我们将其定义在顶层以简化使用
     /// 2.在运行期间不应该变动
-    /// 3.高12位为流程控制特征值，会在任务运行前拷贝到ctl -- 以支持在编辑器导中指定Task的运行特征。
+    /// 3.高8位为流程控制特征值，会在任务运行前拷贝到ctl -- 以支持在编辑器导中指定Task的运行特征。
     /// </summary>
     protected int flags;
 

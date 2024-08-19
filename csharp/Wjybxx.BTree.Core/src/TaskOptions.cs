@@ -32,7 +32,7 @@ public static class TaskOptions
     public const int MASK_AUTO_RESET_CHILDREN = 1 << 28;
     public const int MASK_INVERTED_GUARD = 1 << 29;
     public const int MASK_TAIL_RECURSION = 1 << 30;
-    /** 高12位为控制流程相关bit（对外开放）*/
-    public const int MASK_CONTROL_FLOW_OPTIONS = (-1) << 20;
+    /** 高8位为流程控制特征值（对外开放）*/
+    public const int MASK_CONTROL_FLOW_OPTIONS = (-1) << 24;
 }
 }

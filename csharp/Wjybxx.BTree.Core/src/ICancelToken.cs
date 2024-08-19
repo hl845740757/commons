@@ -33,11 +33,6 @@ namespace Wjybxx.BTree
 public interface ICancelToken : ICancelTokenListener
 {
     /// <summary>
-    /// 获取重入id -- 用于监听器判断令牌是否被重置，特殊情况下需要
-    /// </summary>
-    int ReentryId { get; }
-
-    /// <summary>
     /// 重置状态(行为树模块取消令牌需要复用)
     /// </summary>
     void Reset();
@@ -46,10 +41,10 @@ public interface ICancelToken : ICancelTokenListener
 
     /// <summary>
     /// 取消码
-    /// 1. 按bit位存储信息，包括是否请求中断，是否超时，紧急程度等
-    /// 2. 低20位为取消原因；高12位为特殊信息 <see cref="CancelCodes.MASK_REASON"/>
-    /// 3. 不为0表示已发起取消请求
-    /// 4. 取消时至少赋值一个信息，reason通常应该赋值
+    /// 1.按bit位存储信息，包括是否请求中断，是否超时，紧急程度等
+    /// 2.低20位为取消原因；高12位为特殊信息 <see cref="CancelCodes.MASK_REASON"/>
+    /// 3.不为0表示已发起取消请求
+    /// 4.取消时至少赋值一个信息，reason通常应该赋值
     /// </summary>
     /// <value></value>
     int CancelCode { get; }

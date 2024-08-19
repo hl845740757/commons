@@ -36,6 +36,10 @@ import java.util.stream.Stream;
  * 1.心跳为主，事件为辅。
  * 2.心跳不是事件！心跳自顶向下驱动，事件则无规律。
  *
+ * <h3>待办</h3>
+ * 1.考虑否是为每一个Task分配一个Name，有利于检索节点，和特殊通信。但Task类就越来越大了。
+ * 2.考虑是否为条件节点提供额外的抽象，以降低内存开销 -- 条件节点可以省一半字段，但代码的复杂度会更高。
+ *
  * @param <T> 黑板的类型
  * @author wjybxx
  * date - 2023/11/25
@@ -48,7 +52,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     /** 低5位记录Task重写了哪些方法 */
     private static final int MASK_OVERRIDES = 31;
     /** 低[6~10]位记录前一次的运行结果，范围 [0, 31] */
-    private static final int MASK_PREV_STATUS = TaskStatus.MAX_PREV_STATUS << 5;
+    private static final int MASK_PREV_STATUS = 31 << 5;
     /** 前一次运行结果的存储偏移量 */
     private static final int OFFSET_PREV_STATUS = 5;
 
@@ -71,8 +75,8 @@ public abstract class Task<T> implements ICancelTokenListener {
     public static final int MASK_AUTO_RESET_CHILDREN = 1 << 28;
     public static final int MASK_INVERTED_GUARD = 1 << 29;
     public static final int MASK_TAIL_CALL_RECURSION = 1 << 30;
-    /** 高12位为控制流程相关bit（对外开放） */
-    public static final int MASK_CONTROL_FLOW_OPTIONS = (-1) << 20;
+    /** 高8位为流程控制特征值（对外开放） */
+    public static final int MASK_CONTROL_FLOW_OPTIONS = (-1) << 24;
 
     /** 条件节点的基础选项 */
     private static final int MASK_GUARD_BASE_OPTIONS = MASK_DISABLE_CHECK_CANCEL | MASK_CHECKING_GUARD | MASK_TAIL_CALL_RECURSION;
@@ -136,7 +140,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 任务的自定义标识
      * 1.对任务进行标记是一个常见的需求，我们将其定义在顶层以简化使用
      * 2.在运行期间不应该变动
-     * 3.高12位为流程控制特征值，会在任务运行前拷贝到ctl -- 以支持在编辑器导中指定Task的运行特征。
+     * 3.高8位为流程控制特征值，会在任务运行前拷贝到ctl -- 以支持在编辑器导中指定Task的运行特征。
      */
     protected int flags;
 

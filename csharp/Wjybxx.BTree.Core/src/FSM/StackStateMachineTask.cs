@@ -188,6 +188,7 @@ public class StackStateMachineTask<T> : StateMachineTask<T> where T : class
         get => undoQueueCapacity;
         set => SetUndoQueueCapacity(value);
     }
+
     public int RedoQueueCapacity {
         get => redoQueueCapacity;
         set => SetRedoQueueCapacity(value);
