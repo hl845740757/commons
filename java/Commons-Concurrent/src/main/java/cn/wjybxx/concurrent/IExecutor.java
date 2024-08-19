@@ -51,11 +51,11 @@ public interface IExecutor extends Executor {
      * <p>
      * 任务的调度特征值
      * 1.Executor需要感知用户任务的一些属性，以实现更好的管理。
-     * 2.选项可参考{@link TaskOption}。
+     * 2.选项可参考{@link TaskOptions}。
      * 3.该接口不应该测试任务的类型，应当以参数的options为准。
      *
      * @param command 要执行的任务
-     * @param options 任务的调度特征值，见{@link TaskOption}
+     * @param options 任务的调度特征值，见{@link TaskOptions}
      * @throws NullPointerException       如果任务为null
      * @throws RejectedExecutionException 如果Executor已开始关闭
      * @implNote 实现类如果不支持选项，应该保守调度。

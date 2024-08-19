@@ -145,7 +145,7 @@ public class PromiseTask<T> : IFutureTask
 
     /** 任务是否启用了指定选项 */
     public bool IsEnabled(int taskOption) {
-        return TaskOption.IsEnabled(options, taskOption);
+        return TaskOptions.IsEnabled(options, taskOption);
     }
 
     /** 获取ctl中的某个bit */

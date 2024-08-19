@@ -36,7 +36,7 @@ namespace Wjybxx.Commons.Sequential
 /// 既然是单线程的，又何来异步一说？这里的异步是指不立即执行给定的行为，而是提交到Executor等待调度。
 /// 这有什么作用？有几个作用：
 /// 1.让出CPU，避免过多的任务集中处理。
-/// 2.延迟到特定阶段执行 -- 通过<see cref="TaskOption"/>指定。
+/// 2.延迟到特定阶段执行 -- 通过<see cref="TaskOptions"/>指定。
 /// 
 /// </summary>
 /// <typeparam name="T"></typeparam>

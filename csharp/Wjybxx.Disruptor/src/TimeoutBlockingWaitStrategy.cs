@@ -41,7 +41,7 @@ public class TimeoutBlockingWaitStrategy : WaitStrategy
 
     public long WaitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier) {
         SequenceBlocker blocker = producerBarrier.Blocker ?? throw new ArgumentException("blocker is null");
-        long current = Util.SystemMillis();
+        long current = Util.SystemTickMillis();
         long deadline = current + timeoutMillis;
         // 先通过条件锁等待生产者发布数据
         if (producerBarrier.Sequence() < sequence) {
@@ -51,7 +51,7 @@ public class TimeoutBlockingWaitStrategy : WaitStrategy
                     barrier.CheckAlert();
                     blocker.Await((int)(deadline - current));
 
-                    current = Util.SystemMillis();
+                    current = Util.SystemTickMillis();
                     if (current >= deadline) {
                         throw StacklessTimeoutException.Inst;
                     }

@@ -108,7 +108,7 @@ public sealed class FutureCombiner
     /// <param name="failFast">是否在不满足条件时立即失败</param>
     /// <returns></returns>
     public IPromise<object> SelectN(int successRequire, bool failFast) {
-        return Finish(AggregateOptions.SelectN(successRequire, failFast));
+        return Finish(AggregateOptions.SelectN(futureCount, successRequire, failFast));
     }
 
     /// <summary>
@@ -118,7 +118,7 @@ public sealed class FutureCombiner
     /// <param name="failFast">是否在不满足条件时立即失败</param>
     /// <returns></returns>
     public IPromise<object> SelectAll(bool failFast = true) {
-        return SelectN(FutureCount, failFast);
+        return Finish(AggregateOptions.SelectAll(failFast));
     }
 
     // region 内部实现
@@ -218,7 +218,7 @@ public sealed class FutureCombiner
                 return false;
             }
             // 包含了require小于等于0的情况
-            int successRequire = options.successRequire;
+            int successRequire = options.IsSelectAll ? futureCount : options.successRequire;
             if (succeedCount >= successRequire) {
                 return aggregatePromise!.TrySetResult(null);
             }

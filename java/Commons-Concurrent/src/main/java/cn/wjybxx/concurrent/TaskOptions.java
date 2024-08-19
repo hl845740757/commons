@@ -24,7 +24,7 @@ import cn.wjybxx.base.annotation.Beta;
  * @author wjybxx
  * date 2023/4/14
  */
-public final class TaskOption {
+public final class TaskOptions {
 
     /**
      * 低位用于存储任务的调度阶段，取值[0, 63]，使用低位可以避免位移。

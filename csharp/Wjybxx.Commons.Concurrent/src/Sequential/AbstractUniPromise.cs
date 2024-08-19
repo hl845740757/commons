@@ -179,7 +179,7 @@ public abstract class AbstractUniPromise
 
     protected static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (TaskOption.IsEnabled(options, TaskOption.STAGE_TRY_INLINE)) {
+        if (TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)) {
             if (e is IUniExecutorService) { // uni-executor支持
                 return true;
             }
@@ -190,7 +190,7 @@ public abstract class AbstractUniPromise
         }
         // 判断是否需要传递选项
         if (options != 0
-            && TaskOption.IsEnabled(options, TaskOption.STAGE_PROPAGATE_OPTIONS)) {
+            && TaskOptions.IsEnabled(options, TaskOptions.STAGE_PROPAGATE_OPTIONS)) {
             e.Execute(completion);
         } else {
             completion.Options = 0;
@@ -200,7 +200,7 @@ public abstract class AbstractUniPromise
     }
 
     protected internal static bool IsCancelling(object? ctx, int options) {
-        if (ctx == null || TaskOption.IsEnabled(options, TaskOption.STAGE_UNCANCELLABLE_CTX)) {
+        if (ctx == null || TaskOptions.IsEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
             return false;
         }
         if (ctx is IContext ctx2) {

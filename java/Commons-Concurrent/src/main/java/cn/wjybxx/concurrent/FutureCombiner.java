@@ -115,7 +115,7 @@ public class FutureCombiner {
      * @param failFast       是否在不满足条件时立即失败
      */
     public IPromise<Object> selectN(int successRequire, boolean failFast) {
-        return finish(AggregateOptions.selectN(successRequire, failFast));
+        return finish(AggregateOptions.selectN(futureCount, successRequire, failFast));
     }
 
     /**
@@ -123,7 +123,7 @@ public class FutureCombiner {
      * 一旦有任务失败则立即失败
      */
     public IPromise<Object> selectAll() {
-        return selectN(futureCount(), true);
+        return finish(AggregateOptions.selectAll(true));
     }
 
     /**
@@ -133,7 +133,7 @@ public class FutureCombiner {
      * @param failFast 是否在不满足条件时立即失败
      */
     public IPromise<Object> selectAll(boolean failFast) {
-        return selectN(futureCount(), failFast);
+        return finish(AggregateOptions.selectAll(failFast));
     }
 
     // region 内部实现
@@ -229,7 +229,7 @@ public class FutureCombiner {
                 return false;
             }
             // 包含了require小于等于0的情况
-            final int successRequire = options.successRequire;
+            final int successRequire = options.isSelectAll() ? futureCount : options.successRequire;
             if (succeedCount >= successRequire) {
                 return aggregatePromise.trySetResult(null);
             }

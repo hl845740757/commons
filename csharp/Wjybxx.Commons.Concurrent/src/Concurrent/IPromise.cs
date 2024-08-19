@@ -111,7 +111,7 @@ public interface IPromise : IFuture
                 break;
             }
             default: {
-                task.OnCompleted(_invokerSetVoidPromise, promise, TaskOption.STAGE_UNCANCELLABLE_CTX);
+                task.OnCompleted(_invokerSetVoidPromise, promise, TaskOptions.STAGE_UNCANCELLABLE_CTX);
                 break;
             }
         }
@@ -180,7 +180,7 @@ public interface IPromise<T> : IFuture<T>, IPromise
                 break;
             }
             default: {
-                task.OnCompleted(_invokerSetPromise, promise, TaskOption.STAGE_UNCANCELLABLE_CTX);
+                task.OnCompleted(_invokerSetPromise, promise, TaskOptions.STAGE_UNCANCELLABLE_CTX);
                 break;
             }
         }

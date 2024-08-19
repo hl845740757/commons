@@ -38,20 +38,6 @@ public interface IStateMachineHandler<T> where T : class
     void BeforeEnter(StateMachineTask<T> stateMachineTask) {
     }
 
-    /// <summary>
-    /// 当状态机没有下一个状态时调用该方法，以避免无可用状态
-    ///
-    /// 注意：
-    /// 1.状态机启动时不会调用该方法
-    /// 2.如果该方法返回后仍无可用状态，将触发无状态逻辑
-    /// </summary>
-    /// <param name="stateMachineTask">状态机</param>
-    /// <param name="preState">前一个状态，用于计算下一个状态</param>
-    /// <returns>用户是否执行了【状态切换】或【停止状态机】</returns>
-    bool OnNextStateAbsent(StateMachineTask<T> stateMachineTask, Task<T> preState) {
-        stateMachineTask.SetCompleted(preState.Status, true);
-        return true;
-    }
 
     /// <summary>
     /// 该方法在进入新状态前调用
@@ -66,6 +52,31 @@ public interface IStateMachineHandler<T> where T : class
     /// <param name="curState">当前状态</param>
     /// <param name="nextState">下一个状态</param>
     void BeforeChangeState(StateMachineTask<T> stateMachineTask, Task<T>? curState, Task<T>? nextState) {
+    }
+
+    /// <summary>
+    /// 该方法在当前状态正常结束(非stop结束)时调用
+    /// </summary>
+    /// <param name="stateMachineTask">状态机</param>
+    /// <param name="curState">当前状态</param>
+    /// <returns>计算结果</returns>
+    int OnChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
+        return TaskStatus.RUNNING;
+    }
+
+    /// <summary>
+    /// 当状态机没有下一个状态时调用该方法，以避免无可用状态
+    ///
+    /// 注意：
+    /// 1.状态机启动时不会调用该方法
+    /// 2.如果该方法返回后仍无可用状态，将触发无状态逻辑
+    /// </summary>
+    /// <param name="stateMachineTask">状态机</param>
+    /// <param name="preState">前一个状态，用于计算下一个状态</param>
+    /// <returns>用户是否执行了【状态切换】或【停止状态机】</returns>
+    bool OnNextStateAbsent(StateMachineTask<T> stateMachineTask, Task<T> preState) {
+        stateMachineTask.SetCompleted(preState.Status, true);
+        return true;
     }
 }
 }

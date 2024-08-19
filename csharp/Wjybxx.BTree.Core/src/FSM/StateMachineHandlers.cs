@@ -42,6 +42,19 @@ public static class StateMachineHandlers
     private class DefaultStateMachineHandler<T> : IStateMachineHandler<T> where T : class
     {
         internal static readonly DefaultStateMachineHandler<T> Inst = new DefaultStateMachineHandler<T>();
+
+        public void ResetForRestart(StateMachineTask<T> stateMachineTask) {
+        }
+
+        public void BeforeEnter(StateMachineTask<T> stateMachineTask) {
+        }
+
+        public void BeforeChangeState(StateMachineTask<T> stateMachineTask, Task<T>? curState, Task<T>? nextState) {
+        }
+
+        public int OnChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
+            return TaskStatus.RUNNING;
+        }
     }
 
     private class ListenerHandler<T> : IStateMachineHandler<T> where T : class
@@ -54,6 +67,16 @@ public static class StateMachineHandlers
 
         public void BeforeChangeState(StateMachineTask<T> stateMachineTask, Task<T>? curState, Task<T>? nextState) {
             _listener.Invoke(stateMachineTask, curState, nextState);
+        }
+
+        public void ResetForRestart(StateMachineTask<T> stateMachineTask) {
+        }
+
+        public void BeforeEnter(StateMachineTask<T> stateMachineTask) {
+        }
+
+        public int OnChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
+            return TaskStatus.RUNNING;
         }
     }
 
@@ -68,6 +91,19 @@ public static class StateMachineHandlers
             stateMachineTask.SetCompleted(preState.Status, true);
             return true;
         }
+
+        public void ResetForRestart(StateMachineTask<T> stateMachineTask) {
+        }
+
+        public void BeforeEnter(StateMachineTask<T> stateMachineTask) {
+        }
+
+        public void BeforeChangeState(StateMachineTask<T> stateMachineTask, Task<T>? curState, Task<T>? nextState) {
+        }
+
+        public int OnChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
+            return TaskStatus.RUNNING;
+        }
     }
 
     private class CUndoHandler<T> : IStateMachineHandler<T> where T : class
@@ -80,6 +116,19 @@ public static class StateMachineHandlers
             }
             stateMachineTask.SetCompleted(preState.Status, true);
             return true;
+        }
+
+        public void ResetForRestart(StateMachineTask<T> stateMachineTask) {
+        }
+
+        public void BeforeEnter(StateMachineTask<T> stateMachineTask) {
+        }
+
+        public void BeforeChangeState(StateMachineTask<T> stateMachineTask, Task<T>? curState, Task<T>? nextState) {
+        }
+
+        public int OnChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
+            return TaskStatus.RUNNING;
         }
     }
 }

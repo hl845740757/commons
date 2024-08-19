@@ -17,6 +17,7 @@
 package cn.wjybxx.btree.fsm;
 
 import cn.wjybxx.btree.Task;
+import cn.wjybxx.btree.TaskStatus;
 
 /**
  * @author wjybxx
@@ -24,11 +25,9 @@ import cn.wjybxx.btree.Task;
  */
 public class StateMachineHandlers {
 
-    private static final StateMachineHandler<?> DEFAULT = (stateMachineTask, curState, nextState) -> {};
-
     @SuppressWarnings("unchecked")
     public static <T> StateMachineHandler<T> defaultHandler() {
-        return (StateMachineHandler<T>) DEFAULT;
+        return (StateMachineHandler<T>) DefaultHandler.INST;
     }
 
     @SuppressWarnings("unchecked")
@@ -39,6 +38,30 @@ public class StateMachineHandlers {
     @SuppressWarnings("unchecked")
     public static <T> StateMachineHandler<T> undoHandler() {
         return (StateMachineHandler<T>) UndoHandler.INST;
+    }
+
+    private static class DefaultHandler<T> implements StateMachineHandler<T> {
+
+        private static final DefaultHandler<?> INST = new DefaultHandler<>();
+
+        // region override
+        @Override
+        public final void beforeChangeState(StateMachineTask<T> stateMachineTask, Task<T> curState, Task<T> nextState) {
+        }
+
+        @Override
+        public final void resetForRestart(StateMachineTask<T> stateMachineTask) {
+        }
+
+        @Override
+        public final void beforeEnter(StateMachineTask<T> stateMachineTask) {
+        }
+
+        @Override
+        public final int onChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
+            return TaskStatus.RUNNING;
+        }
+        // endregion
     }
 
     public static class RedoHandler<T> implements StateMachineHandler<T> {
@@ -54,10 +77,24 @@ public class StateMachineHandlers {
             return true;
         }
 
+        // region override
         @Override
-        public void beforeChangeState(StateMachineTask<T> stateMachineTask, Task<T> curState, Task<T> nextState) {
-
+        public final void beforeChangeState(StateMachineTask<T> stateMachineTask, Task<T> curState, Task<T> nextState) {
         }
+
+        @Override
+        public final void resetForRestart(StateMachineTask<T> stateMachineTask) {
+        }
+
+        @Override
+        public final void beforeEnter(StateMachineTask<T> stateMachineTask) {
+        }
+
+        @Override
+        public final int onChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
+            return TaskStatus.RUNNING;
+        }
+        // endregion
     }
 
     private static class UndoHandler<T> implements StateMachineHandler<T> {
@@ -73,9 +110,23 @@ public class StateMachineHandlers {
             return true;
         }
 
+        // region override
         @Override
-        public void beforeChangeState(StateMachineTask<T> stateMachineTask, Task<T> curState, Task<T> nextState) {
-
+        public final void beforeChangeState(StateMachineTask<T> stateMachineTask, Task<T> curState, Task<T> nextState) {
         }
+
+        @Override
+        public final void resetForRestart(StateMachineTask<T> stateMachineTask) {
+        }
+
+        @Override
+        public final void beforeEnter(StateMachineTask<T> stateMachineTask) {
+        }
+
+        @Override
+        public final int onChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
+            return TaskStatus.RUNNING;
+        }
+        // endregion
     }
 }

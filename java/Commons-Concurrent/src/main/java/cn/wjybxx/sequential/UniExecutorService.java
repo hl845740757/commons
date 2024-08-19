@@ -18,7 +18,7 @@ package cn.wjybxx.sequential;
 
 
 import cn.wjybxx.concurrent.IExecutorService;
-import cn.wjybxx.concurrent.TaskOption;
+import cn.wjybxx.concurrent.TaskOptions;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
  * 由于仍然是在当前线程执行，因此需要外部进行驱动，外部需要定时调用{@link #update()}
  *
  * <h3>指定执行阶段</h3>
- * 如果Executor支持在特定的阶段执行给定的任务，需要响应{@link TaskOption#MASK_SCHEDULE_PHASE}指定的阶段。
+ * 如果Executor支持在特定的阶段执行给定的任务，需要响应{@link TaskOptions#MASK_SCHEDULE_PHASE}指定的阶段。
  *
  * @author wjybxx
  * date 2023/4/3

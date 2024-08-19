@@ -214,7 +214,7 @@ public class FutureUtils {
     /** 由{@link EventLoop}通知返回的{@link IPromise} */
     public static <V> IPromise<V> toEventLoopPromise(EventLoop eventLoop, ICompletionStage<V> input) {
         IPromise<V> result = eventLoop.newPromise();
-        setFutureAsync(eventLoop, result, input, TaskOption.STAGE_TRY_INLINE);
+        setFutureAsync(eventLoop, result, input, TaskOptions.STAGE_TRY_INLINE);
         return result;
     }
 

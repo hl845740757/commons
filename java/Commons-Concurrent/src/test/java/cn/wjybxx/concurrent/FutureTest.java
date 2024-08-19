@@ -144,7 +144,7 @@ public class FutureTest {
                     Assertions.assertEquals(sequence.longValue(), curSequence());
 
                     Assertions.assertEquals(first, r);
-                }, null, TaskOption.STAGE_TRY_INLINE)
+                }, null, TaskOptions.STAGE_TRY_INLINE)
                 .awaitUninterruptibly()
                 .resultNow();
     }
@@ -197,7 +197,7 @@ public class FutureTest {
 
                     Assertions.assertEquals(first, r);
                     return StringUtils.reverse(r);
-                }, null, TaskOption.STAGE_TRY_INLINE)
+                }, null, TaskOptions.STAGE_TRY_INLINE)
                 .awaitUninterruptibly()
                 .resultNow();
     }
@@ -250,7 +250,7 @@ public class FutureTest {
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
                     Assertions.assertEquals(sequence.longValue(), curSequence());
                     return first;
-                }, null, TaskOption.STAGE_TRY_INLINE)
+                }, null, TaskOptions.STAGE_TRY_INLINE)
                 .thenAccept((ctx, r) -> {
                     Assertions.assertEquals(first, r);
                 })
@@ -309,7 +309,7 @@ public class FutureTest {
 
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
                     Assertions.assertEquals(first, r);
-                }, null, TaskOption.STAGE_TRY_INLINE)
+                }, null, TaskOptions.STAGE_TRY_INLINE)
                 .thenAccept((ctx, r) -> {
                     Assertions.assertEquals(first, r);
                 })

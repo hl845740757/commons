@@ -25,7 +25,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 任务的调度选项
 /// </summary>
-public static class TaskOption
+public static class TaskOptions
 {
     /// <summary>
     /// 低位用于存储任务的调度阶段，取值[0, 63]，使用低位可以避免位移。

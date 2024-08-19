@@ -211,16 +211,16 @@ public struct TaskBuilder<T>
     /// 设置任务的调度阶段
     /// </summary>
     public int SchedulePhase {
-        get => TaskOption.GetSchedulePhase(options);
-        set => options = TaskOption.SetSchedulePhase(options, value);
+        get => TaskOptions.GetSchedulePhase(options);
+        set => options = TaskOptions.SetSchedulePhase(options, value);
     }
 
     /// <summary>
     /// 设置任务的优先级
     /// </summary>
     public int Priority {
-        get => TaskOption.GetPriority(options);
-        set => options = TaskOption.SetPriority(options, value);
+        get => TaskOptions.GetPriority(options);
+        set => options = TaskOptions.SetPriority(options, value);
     }
 
     /// <summary>

@@ -18,6 +18,7 @@ package cn.wjybxx.btree.fsm;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.btree.Decorator;
 import cn.wjybxx.btree.Task;
+import cn.wjybxx.btree.TaskStatus;
 import cn.wjybxx.btree.branch.Join;
 
 import javax.annotation.Nonnull;
@@ -213,7 +214,7 @@ public class StateMachineTask<T> extends Decorator<T> {
         } else if (curState.isRunning()) {
             curState.template_execute();
         } else {
-            template_runChildDirectly(curState);
+            template_runChild(curState);
         }
     }
 
@@ -227,6 +228,14 @@ public class StateMachineTask<T> extends Decorator<T> {
         assert this.child == child;
         inlineHelper.stopInline();
 
+        // 默认和普通的FSM实现一样，不特殊对待当前状态的执行结果，但可以由handler扩展
+        if (handler != null) {
+            int status = handler.onChildCompleted(this, child);
+            if (status != TaskStatus.RUNNING) {
+                setCompleted(status, true);
+                return;
+            }
+        }
         if (tempNextState == null) {
             if (handler != null && handler.onNextStateAbsent(this, child)) {
                 return;
@@ -234,10 +243,6 @@ public class StateMachineTask<T> extends Decorator<T> {
             removeChild(0);
             beforeChangeState(child, null);
         } else {
-            ChangeStateArgs changeStateArgs = (ChangeStateArgs) tempNextState.getControlData();
-            if (changeStateArgs == null) {
-                tempNextState.setControlData(ChangeStateArgs.PLAIN);
-            }
             template_execute();
         }
     }

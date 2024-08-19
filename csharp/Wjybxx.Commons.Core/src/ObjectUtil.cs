@@ -67,8 +67,8 @@ public static class ObjectUtil
     /// <summary>
     /// 'Frequency'存储的是在当前平台上，1秒对应多少个原始tick -- 依赖平台。
     /// </summary>
-    private static readonly double s_tickFrequency = (double)DatetimeUtil.TicksPerSecond / Stopwatch.Frequency;
-    private static readonly double s_millis_tickFrequency = (double)DatetimeUtil.TicksPerMillisecond / Stopwatch.Frequency;
+    private static readonly double s_tickFrequency = (double)TimeSpan.TicksPerSecond / Stopwatch.Frequency;
+    private static readonly double s_millis_tickFrequency = (double)TimeSpan.TicksPerMillisecond / Stopwatch.Frequency;
 
     #region string
 

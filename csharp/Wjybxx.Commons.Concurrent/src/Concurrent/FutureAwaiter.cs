@@ -38,7 +38,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     /// </summary>
     /// <param name="future">future</param>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public FutureAwaiter(IFuture future, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = executor;
@@ -51,7 +51,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
         get {
             if (!_future.IsCompleted) return false;
             if (_executor == null) return true;
-            return TaskOption.IsEnabled(_options, TaskOption.STAGE_TRY_INLINE)
+            return TaskOptions.IsEnabled(_options, TaskOptions.STAGE_TRY_INLINE)
                    && Executors.InEventLoop(_executor);
         }
     }
@@ -105,7 +105,7 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// </summary>
     /// <param name="future">future</param>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public FutureAwaiter(IFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = executor;
@@ -118,7 +118,7 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
         get {
             if (!_future.IsCompleted) return false;
             if (_executor == null) return true;
-            return TaskOption.IsEnabled(_options, TaskOption.STAGE_TRY_INLINE)
+            return TaskOptions.IsEnabled(_options, TaskOptions.STAGE_TRY_INLINE)
                    && Executors.InEventLoop(_executor);
         }
     }

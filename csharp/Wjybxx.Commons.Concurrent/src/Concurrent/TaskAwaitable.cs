@@ -57,7 +57,7 @@ public readonly struct TaskAwaitable
         // 1.IsCompleted
         // IsCompleted只在Start后调用一次，EventLoop可以通过接口查询是否已在线程中
         public bool IsCompleted => _future.IsCompleted
-                                   && TaskOption.IsEnabled(_options, TaskOption.STAGE_TRY_INLINE)
+                                   && TaskOptions.IsEnabled(_options, TaskOptions.STAGE_TRY_INLINE)
                                    && Executors.InEventLoop(_executor);
 
         // 2. GetResult
@@ -121,7 +121,7 @@ public readonly struct TaskAwaitable<T>
         // 1.IsCompleted
         // IsCompleted只在Start后调用一次，EventLoop可以通过接口查询是否已在线程中
         public bool IsCompleted => _future.IsCompleted
-                                   && TaskOption.IsEnabled(_options, TaskOption.STAGE_TRY_INLINE)
+                                   && TaskOptions.IsEnabled(_options, TaskOptions.STAGE_TRY_INLINE)
                                    && Executors.InEventLoop(_executor);
 
         // 2. GetResult

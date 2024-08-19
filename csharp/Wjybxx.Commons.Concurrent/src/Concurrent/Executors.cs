@@ -102,7 +102,7 @@ public static class Executors
     /// </summary>
     /// <param name="task">要等待的Task</param>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public static TaskAwaitable GetAwaitable(this Task task, IExecutor executor, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         return new TaskAwaitable(task, executor, options);
@@ -122,7 +122,7 @@ public static class Executors
     /// </summary>
     /// <param name="task">要等待的Task</param>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public static TaskAwaitable<T> GetAwaitable<T>(this Task<T> task, IExecutor executor, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         return new TaskAwaitable<T>(task, executor, options);

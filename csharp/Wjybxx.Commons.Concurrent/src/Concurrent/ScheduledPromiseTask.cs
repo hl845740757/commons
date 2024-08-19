@@ -249,7 +249,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
             return false;
         }
 
-        if (TaskOption.IsEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN)
+        if (TaskOptions.IsEnabled(options, TaskOptions.TIMEOUT_BEFORE_RUN)
             && HasTimeout && deadline <= tickTime) {
             promise.TrySetException(StacklessTimeoutException.INST);
             return false;
@@ -299,7 +299,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
         if (TaskType == TaskBuilder.TYPE_TIMESHARING) {
             return false;
         }
-        return TaskOption.IsEnabled(options, TaskOption.CAUGHT_EXCEPTION);
+        return TaskOptions.IsEnabled(options, TaskOptions.CAUGHT_EXCEPTION);
     }
 
     private void SetNextRunTime(long tickTime, int scheduleType) {

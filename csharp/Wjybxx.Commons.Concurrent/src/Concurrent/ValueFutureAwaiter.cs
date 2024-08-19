@@ -48,7 +48,7 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
         get {
             if (!_future.IsCompleted) return false;
             if (_executor == null) return true;
-            return TaskOption.IsEnabled(_options, TaskOption.STAGE_TRY_INLINE)
+            return TaskOptions.IsEnabled(_options, TaskOptions.STAGE_TRY_INLINE)
                    && Executors.InEventLoop(_executor);
         }
     }
@@ -68,12 +68,12 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, _executor, _options | TaskOption.STAGE_UNCANCELLABLE_CTX);
+        _future.OnCompleted(continuation, _executor, _options | TaskOptions.STAGE_UNCANCELLABLE_CTX);
     }
 
     public void UnsafeOnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, _executor, _options | TaskOption.STAGE_UNCANCELLABLE_CTX);
+        _future.OnCompleted(continuation, _executor, _options | TaskOptions.STAGE_UNCANCELLABLE_CTX);
     }
 }
 
@@ -101,7 +101,7 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
         get {
             if (!_future.IsCompleted) return false;
             if (_executor == null) return true;
-            return TaskOption.IsEnabled(_options, TaskOption.STAGE_TRY_INLINE)
+            return TaskOptions.IsEnabled(_options, TaskOptions.STAGE_TRY_INLINE)
                    && Executors.InEventLoop(_executor);
         }
     }
@@ -121,12 +121,12 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="continuation">回调任务</param>
     public void OnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, _executor, _options | TaskOption.STAGE_UNCANCELLABLE_CTX);
+        _future.OnCompleted(continuation, _executor, _options | TaskOptions.STAGE_UNCANCELLABLE_CTX);
     }
 
     public void UnsafeOnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        _future.OnCompleted(continuation, _executor, _options | TaskOption.STAGE_UNCANCELLABLE_CTX);
+        _future.OnCompleted(continuation, _executor, _options | TaskOptions.STAGE_UNCANCELLABLE_CTX);
     }
 }
 }

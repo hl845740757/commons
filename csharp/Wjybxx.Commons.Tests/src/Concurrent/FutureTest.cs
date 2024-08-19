@@ -51,7 +51,7 @@ public class FutureTest
         await future.GetAwaitable(globalEventLoop);
         Assert.IsTrue(globalEventLoop.InEventLoop(), "1. globalEventLoop.InEventLoop() == false");
 
-        await future.GetAwaitable(globalEventLoop, TaskOption.STAGE_TRY_INLINE);
+        await future.GetAwaitable(globalEventLoop, TaskOptions.STAGE_TRY_INLINE);
         Assert.IsTrue(globalEventLoop.InEventLoop(), "2. globalEventLoop.InEventLoop() == false");
 
         return await future;
@@ -70,7 +70,7 @@ public class FutureTest
         await future.GetAwaitable(globalEventLoop);
         Assert.IsTrue(globalEventLoop.InEventLoop(), "1. globalEventLoop.InEventLoop() == false");
 
-        await future.GetAwaitable(globalEventLoop, TaskOption.STAGE_TRY_INLINE);
+        await future.GetAwaitable(globalEventLoop, TaskOptions.STAGE_TRY_INLINE);
         Assert.IsTrue(globalEventLoop.InEventLoop(), "2. globalEventLoop.InEventLoop() == false");
 
         return await future;

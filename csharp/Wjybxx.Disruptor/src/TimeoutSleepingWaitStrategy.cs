@@ -61,6 +61,8 @@ public class TimeoutSleepingWaitStrategy : WaitStrategy
     public long WaitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier) {
         int counter = spinTries + yieldTries + sleepTries;
         int yieldThreshold = yieldTries + sleepTries;
+        // windows上sleep的延迟很高，sleep(1)可能延迟16ms，不处理的话会导致不能及时调度定时任务
+        long deadline = Util.SystemTickMillis() + sleepTries;
 
         long availableSequence;
         while ((availableSequence = barrier.DependentSequence()) < sequence) {
@@ -74,6 +76,10 @@ public class TimeoutSleepingWaitStrategy : WaitStrategy
                 Thread.Yield();
             } else if (counter > 0) {
                 --counter;
+
+                if (deadline <= Util.SystemTickMillis()) {
+                    throw StacklessTimeoutException.Inst;
+                }
                 Thread.Sleep(1);
             } else {
                 throw StacklessTimeoutException.Inst;

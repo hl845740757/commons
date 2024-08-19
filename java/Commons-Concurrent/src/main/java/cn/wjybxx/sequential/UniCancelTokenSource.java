@@ -529,7 +529,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     private static boolean tryInline(Completion completion, Executor e, int options) {
         // 尝试内联
-        if (TaskOption.isEnabled(options, TaskOption.STAGE_TRY_INLINE)) {
+        if (TaskOptions.isEnabled(options, TaskOptions.STAGE_TRY_INLINE)) {
             if (e instanceof UniExecutorService) { // uni-executor支持
                 return true;
             }
@@ -540,7 +540,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
         }
         // 判断是否需要传递选项
         if (options != 0
-                && TaskOption.isEnabled(options, TaskOption.STAGE_PROPAGATE_OPTIONS)
+                && TaskOptions.isEnabled(options, TaskOptions.STAGE_PROPAGATE_OPTIONS)
                 && e instanceof IExecutor exe) {
             exe.execute(completion);
         } else {

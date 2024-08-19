@@ -290,7 +290,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         } else if (!promise.isComputing()) {
             return false;
         }
-        if (TaskOption.isEnabled(options, TaskOption.TIMEOUT_BEFORE_RUN)
+        if (TaskOptions.isEnabled(options, TaskOptions.TIMEOUT_BEFORE_RUN)
                 && hasTimeout() && deadline <= tickTime) {
             promise.trySetException(StacklessTimeoutException.INST);
             return false;
@@ -341,7 +341,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
             return false;
         }
-        return TaskOption.isEnabled(options, TaskOption.CAUGHT_EXCEPTION);
+        return TaskOptions.isEnabled(options, TaskOptions.CAUGHT_EXCEPTION);
     }
 
     private void setNextRunTime(long tickTime, int scheduleType) {

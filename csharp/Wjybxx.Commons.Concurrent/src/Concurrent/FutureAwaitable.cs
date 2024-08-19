@@ -35,7 +35,7 @@ public readonly struct FutureAwaitable
     /// </summary>
     /// <param name="future">future</param>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public FutureAwaitable(IFuture future, IExecutor executor, int options) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
@@ -60,7 +60,7 @@ public readonly struct FutureAwaitable<T>
     /// </summary>
     /// <param name="future">future</param>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public FutureAwaitable(IFuture<T> future, IExecutor executor, int options) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));

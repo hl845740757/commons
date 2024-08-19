@@ -190,7 +190,7 @@ public interface IFuture
     /// </code>
     /// </summary>
     /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOption.STAGE_TRY_INLINE"/></param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     /// <returns></returns>
     FutureAwaitable GetAwaitable(IExecutor executor, int options = 0) => new FutureAwaitable(this, executor, options);
 
@@ -224,7 +224,7 @@ public interface IFuture
     /// <summary>
     /// 添加一个监听器  -- 接收future和state参数
     ///
-    /// PS:如果不期望检测state中潜在的取消信号，可通过<see cref="TaskOption.STAGE_UNCANCELLABLE_CTX"/>关闭。
+    /// PS:如果不期望检测state中潜在的取消信号，可通过<see cref="TaskOptions.STAGE_UNCANCELLABLE_CTX"/>关闭。
     /// </summary>
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>

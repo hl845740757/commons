@@ -27,37 +27,57 @@ import cn.wjybxx.base.annotation.Internal;
 @Internal
 public final class AggregateOptions {
 
-    private final boolean anyOf;
+    private final byte type;
     public final int successRequire;
     public final boolean failFast;
 
-    AggregateOptions(boolean anyOf, int successRequire, boolean failFast) {
-        this.anyOf = anyOf;
+    AggregateOptions(byte type, int successRequire, boolean failFast) {
+        this.type = type;
         this.successRequire = successRequire;
         this.failFast = failFast;
     }
 
     public boolean isAnyOf() {
-        return anyOf;
+        return type == TYPE_ANY;
     }
 
-    private static final AggregateOptions ANY = new AggregateOptions(true, 0, false);
+    public boolean isSelectAll() {
+        return type == TYPE_SELECT_ALL;
+    }
+
+    public boolean isSelectMany() {
+        return type == TYPE_SELECT_MANY;
+    }
+
+    private static final byte TYPE_ANY = 0;
+    private static final byte TYPE_SELECT_ALL = 1;
+    private static final byte TYPE_SELECT_MANY = 2;
+
+    private static final AggregateOptions ANY = new AggregateOptions(TYPE_ANY, 0, false);
+    private static final AggregateOptions SELECT_ALL = new AggregateOptions(TYPE_SELECT_ALL, 0, false);
+    private static final AggregateOptions SELECT_ALL2 = new AggregateOptions(TYPE_SELECT_ALL, 0, true);
 
     /** 任意一个完成 */
     public static AggregateOptions anyOf() {
         return ANY;
     }
 
+    /** 所有任务成功 */
+    public static AggregateOptions selectAll(boolean failFast) {
+        return failFast ? SELECT_ALL2 : SELECT_ALL;
+    }
+
     /**
      * 成功完成n个
      *
+     * @param futureCount    future数量
      * @param successRequire 需要成功完成的数量
      * @param failFast       是否快速失败
      */
-    public static AggregateOptions selectN(int successRequire, boolean failFast) {
-        if (successRequire < 0) {
-            throw new IllegalArgumentException("successRequire < 0");
+    public static AggregateOptions selectN(int futureCount, int successRequire, boolean failFast) {
+        if (futureCount < 0 || successRequire < 0) {
+            throw new IllegalArgumentException();
         }
-        return new AggregateOptions(false, successRequire, failFast);
+        return new AggregateOptions(TYPE_SELECT_MANY, successRequire, failFast);
     }
 }

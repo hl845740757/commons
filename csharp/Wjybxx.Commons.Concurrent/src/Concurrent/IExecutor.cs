@@ -62,7 +62,7 @@ public interface IExecutor
     /// 命令可以在新线程中执行，也可以在池线程中执行，或者在调用线程中执行，这由Executor实现决定。
     /// </summary>
     /// <param name="action">要执行的任务</param>
-    /// <param name="options">任务的调度特征值，见<see cref="TaskOption"/></param>
+    /// <param name="options">任务的调度特征值，见<see cref="TaskOptions"/></param>
     void Execute(Action action, int options = 0) {
         Execute(Executors.ToTask(action, options));
     }

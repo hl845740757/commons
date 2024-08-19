@@ -45,7 +45,7 @@ import java.util.function.Function;
  * 既然是单线程的，又何来异步一说？这里的异步是指不立即执行给定的行为，而是提交到Executor等待调度。<br>
  * 这有什么作用？有几个作用：
  * 1.让出CPU，避免过多的任务集中处理。
- * 2.延迟到特定阶段执行 -- 通过{@link TaskOption}指定。
+ * 2.延迟到特定阶段执行 -- 通过{@link TaskOptions}指定。
  *
  * @author wjybxx
  * date - 2024/1/10
@@ -1167,7 +1167,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
     private static boolean tryInline(Completion completion, Executor e, int options) {
         // 尝试内联
-        if (TaskOption.isEnabled(options, TaskOption.STAGE_TRY_INLINE)) {
+        if (TaskOptions.isEnabled(options, TaskOptions.STAGE_TRY_INLINE)) {
             if (e instanceof UniExecutorService) { // uni-executor特殊支持
                 return true;
             }
@@ -1178,7 +1178,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         }
         // 判断是否需要传递选项
         if (options != 0
-                && TaskOption.isEnabled(options, TaskOption.STAGE_PROPAGATE_OPTIONS)
+                && TaskOptions.isEnabled(options, TaskOptions.STAGE_PROPAGATE_OPTIONS)
                 && e instanceof IExecutor exe) {
             exe.execute(completion);
         } else {
@@ -1189,7 +1189,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     }
 
     static boolean isCancelling(Object ctx, int options) {
-        if (ctx == null || TaskOption.isEnabled(options, TaskOption.STAGE_UNCANCELLABLE_CTX)) {
+        if (ctx == null || TaskOptions.isEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
             return false;
         }
         if (ctx instanceof IContext ctx2) {

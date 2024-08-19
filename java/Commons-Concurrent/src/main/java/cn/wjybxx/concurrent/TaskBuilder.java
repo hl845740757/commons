@@ -183,35 +183,35 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     /** 启用选项 */
     public TaskBuilder<V> enable(int taskOption) {
-        this.options = TaskOption.enable(options, taskOption);
+        this.options = TaskOptions.enable(options, taskOption);
         return this;
     }
 
     /** 禁用选项 */
     public TaskBuilder<V> disable(int taskOption) {
-        this.options = TaskOption.disable(options, taskOption);
+        this.options = TaskOptions.disable(options, taskOption);
         return this;
     }
 
     /** 获取任务的阶段 */
     public int getSchedulePhase() {
-        return TaskOption.getSchedulePhase(options);
+        return TaskOptions.getSchedulePhase(options);
     }
 
     /** @param phase 任务的调度阶段 */
     public TaskBuilder<V> setSchedulePhase(int phase) {
-        this.options = TaskOption.setSchedulePhase(options, phase);
+        this.options = TaskOptions.setSchedulePhase(options, phase);
         return this;
     }
 
     /** 获取任务优先级 */
     public int getPriority() {
-        return TaskOption.getPriority(options);
+        return TaskOptions.getPriority(options);
     }
 
     /** 设置任务的优先级 */
     public TaskBuilder<V> setPriority(int priority) {
-        options = TaskOption.setPriority(options, priority);
+        options = TaskOptions.setPriority(options, priority);
         return this;
     }
 

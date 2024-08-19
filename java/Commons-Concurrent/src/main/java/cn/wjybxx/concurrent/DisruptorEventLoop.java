@@ -301,7 +301,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                 // 确保线程已启动 -- ringBuffer私有的情况下才可以测试 sequence == 0
                 if (sequence == 0) {
                     ensureThreadStarted();
-                } else if (TaskOption.isEnabled(options, TaskOption.WAKEUP_THREAD)) {
+                } else if (TaskOptions.isEnabled(options, TaskOptions.WAKEUP_THREAD)) {
                     wakeup();
                 }
             }

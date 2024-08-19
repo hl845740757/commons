@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -194,7 +195,7 @@ internal static class Util
         if (sequence.HasValue) {
             return sequence;
         }
-        long current = SystemMillis();
+        long current = SystemTickMillis();
         long deadline = current + (long)timeout.TotalMilliseconds;
         if (deadline <= current) {
             return null;
@@ -207,7 +208,7 @@ internal static class Util
                 if (sequence.HasValue) {
                     return sequence;
                 }
-            } while (SystemMillis() < deadline);
+            } while (SystemTickMillis() < deadline);
         } else {
             bool interrupted = false;
             do {
@@ -222,7 +223,7 @@ internal static class Util
                 if (sequence.HasValue) {
                     return sequence;
                 }
-            } while ((current = SystemMillis()) < deadline);
+            } while ((current = SystemTickMillis()) < deadline);
             if (interrupted) {
                 Thread.CurrentThread.Interrupt();
             }
@@ -231,11 +232,27 @@ internal static class Util
     }
 
     /// <summary>
-    /// 系统毫秒时间戳
+    /// 获取系统的tick数
+    /// (稳定值与平台无关)
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long SystemMillis() => DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
+    public static long SystemTicks() => (long)(Stopwatch.GetTimestamp() * s_tickFrequency);
+
+    /// <summary>
+    /// 系统tick对应的毫秒时间戳
+    /// 注意：不是Unix时间戳！
+    /// </summary>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long SystemTickMillis() => (long)(Stopwatch.GetTimestamp() * s_millis_tickFrequency);
+
+    /// <summary>
+    /// 'Frequency'存储的是在当前平台上，1秒对应多少个原始tick -- 依赖平台。
+    /// 为避免依赖，拷贝自commons.core模块
+    /// </summary>
+    private static readonly double s_tickFrequency = (double)TimeSpan.TicksPerSecond / Stopwatch.Frequency;
+    private static readonly double s_millis_tickFrequency = (double)TimeSpan.TicksPerMillisecond / Stopwatch.Frequency;
 
     /// <summary>
     /// TimeSpan转换毫秒时间

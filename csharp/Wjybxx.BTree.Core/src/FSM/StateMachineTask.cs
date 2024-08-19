@@ -180,7 +180,6 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     protected override void Execute() {
         Task<T> curState = this.child;
         Task<T>? nextState = this.tempNextState;
-
         if (nextState != null && IsReady(curState, nextState)) {
             if (curState != null) {
                 curState.Stop();
@@ -208,7 +207,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         } else if (curState.IsRunning) {
             curState.Template_Execute();
         } else {
-            Template_RunChildDirectly(curState);
+            Template_RunChild(curState);
         }
     }
 
@@ -220,6 +219,14 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         Debug.Assert(this.child == child);
         inlineHelper.StopInline();
 
+        // 默认和普通的FSM实现一样，不特殊对待当前状态的执行结果，但可以由handler扩展
+        if (handler != null) {
+            int status = handler.OnChildCompleted(this, child);
+            if (status != TaskStatus.RUNNING) {
+                SetCompleted(status, true);
+                return;
+            }
+        }
         if (tempNextState == null) {
             if (handler != null && handler.OnNextStateAbsent(this, child)) {
                 return;
@@ -227,10 +234,6 @@ public class StateMachineTask<T> : Decorator<T> where T : class
             RemoveChild(0);
             BeforeChangeState(child, null);
         } else {
-            ChangeStateArgs? changeStateArgs = (ChangeStateArgs?)tempNextState.ControlData;
-            if (changeStateArgs == null) {
-                tempNextState.ControlData = ChangeStateArgs.PLAIN;
-            }
             Template_Execute();
         }
     }

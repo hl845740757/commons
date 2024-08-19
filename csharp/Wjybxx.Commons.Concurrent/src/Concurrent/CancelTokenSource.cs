@@ -386,14 +386,14 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (TaskOption.IsEnabled(options, TaskOption.STAGE_TRY_INLINE)
+        if (TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
             && e is ISingleThreadExecutor eventLoop
             && eventLoop.InEventLoop()) {
             return true;
         }
         // 判断是否需要传递选项
         if (options != 0
-            && TaskOption.IsEnabled(options, TaskOption.STAGE_PROPAGATE_OPTIONS)) {
+            && TaskOptions.IsEnabled(options, TaskOptions.STAGE_PROPAGATE_OPTIONS)) {
             e.Execute(completion);
         } else {
             completion.Options = 0;

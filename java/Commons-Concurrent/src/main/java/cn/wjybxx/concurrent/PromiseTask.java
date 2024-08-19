@@ -147,7 +147,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     /** 任务是否启用了指定选项 */
     public final boolean isEnabled(int taskOption) {
-        return TaskOption.isEnabled(options, taskOption);
+        return TaskOptions.isEnabled(options, taskOption);
     }
 
     /** 获取ctl中的某个bit */
