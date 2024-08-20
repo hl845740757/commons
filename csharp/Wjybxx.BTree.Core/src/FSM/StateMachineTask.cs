@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Wjybxx.BTree.Branch;
 using Wjybxx.Commons;
 
@@ -65,6 +66,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     /// 撤销到前一个状态
     /// </summary>
     /// <returns>如果有前一个状态则返回true</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool UndoChangeState() {
         return UndoChangeState(ChangeStateArgs.UNDO);
     }
@@ -82,6 +84,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     /// 重新进入到下一个状态
     /// </summary>
     /// <returns>如果有下一个状态则返回true</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool RedoChangeState() {
         return RedoChangeState(ChangeStateArgs.REDO);
     }
@@ -96,6 +99,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     }
 
     /** 切换状态 -- 如果状态机处于运行中，则立即切换 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ChangeState(Task<T> nextState) {
         ChangeState(nextState, ChangeStateArgs.PLAIN);
     }

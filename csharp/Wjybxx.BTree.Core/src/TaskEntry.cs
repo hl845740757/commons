@@ -141,7 +141,7 @@ public class TaskEntry<T> : Task<T> where T : class
     public void Update(int curFrame) {
         this.curFrame = curFrame;
         if (IsRunning) {
-            Template_Execute(false);
+            Template_Execute(true); // 用户就是control
         } else {
             Debug.Assert(IsInited());
             Template_EnterExecute(null, 0);

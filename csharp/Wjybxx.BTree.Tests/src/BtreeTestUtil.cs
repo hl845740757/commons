@@ -45,6 +45,22 @@ internal class BtreeTestUtil
         throw new InfiniteLoopException();
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="entry">任务入口</param>
+    /// <param name="frameAction">帧回调，初始帧号0；在task执行后调用</param>
+    /// <typeparam name="T"></typeparam>
+    /// <exception cref="InfiniteLoopException"></exception>
+    public static void untilCompleted<T>(TaskEntry<T> entry, Action<int> frameAction) where T : class {
+        for (int idx = 0; idx < 200; idx++) { // 避免死循环
+            entry.Update(idx);
+            frameAction.Invoke(idx);
+            if (entry.IsCompleted) return;
+        }
+        throw new InfiniteLoopException();
+    }
+
     /** 需要注意！直接遍历子节点，可能统计到上次的执行结果 */
     public static int completedCount<T>(Task<T> ctrl) where T : class {
         return ctrl

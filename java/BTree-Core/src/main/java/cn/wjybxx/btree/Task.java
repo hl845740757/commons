@@ -270,9 +270,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         if (status == TaskStatus.RUNNING) {
             return taskEntry.getCurFrame() - enterFrame;
         }
-        if (taskEntry == null) {
-            return 0;
-        }
+        // 不测试taskEntry，是因为child可能在运行后被删除
         return exitFrame - enterFrame;
     }
 
@@ -592,7 +590,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         for (int idx = 0; idx < getChildCount(); idx++) {
             Task<T> child = getChild(idx);
             if (child.status == TaskStatus.RUNNING) {
-                refreshActiveInHierarchy();
+                child.refreshActiveInHierarchy();
             }
         }
     }
@@ -871,7 +869,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      * execute模板方法
      * (通过参数的方式，有助于我们统一代码，也简化子类实现；同时避免遗漏)
      *
-     * @param fromControl 是否是父节点调用
+     * @param fromControl 是否是父节点调用(是否是心跳触发)
      */
     public final void template_execute(boolean fromControl) {
         assert status == TaskStatus.RUNNING;

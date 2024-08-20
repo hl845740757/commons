@@ -16,6 +16,7 @@
 
 package cn.wjybxx.sequential;
 
+import cn.wjybxx.base.annotation.VisibleForTesting;
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
 import cn.wjybxx.base.time.TimeProvider;
@@ -59,6 +60,10 @@ public class DefaultUniScheduledExecutor extends AbstractUniScheduledExecutor im
         this.taskQueue = new ArrayDeque<>(initCapacity);
         this.scheduledTaskQueue = new DefaultIndexedPriorityQueue<>(queueTaskComparator, 16);
         this.tickTime = timeProvider.getTime();
+    }
+
+    public TimeProvider getTimeProvider() {
+        return timeProvider;
     }
 
     @Override

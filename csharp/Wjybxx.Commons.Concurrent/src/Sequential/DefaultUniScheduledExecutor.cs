@@ -55,6 +55,8 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
         this.tickTime = timeProvider.Current;
     }
 
+    public ITimeProvider TimeProvider => timeProvider;
+
     public override void Update() {
         // 需要缓存下来，一来用于计算下次调度时间，二来避免优先级错乱
         tickTime = timeProvider.Current;

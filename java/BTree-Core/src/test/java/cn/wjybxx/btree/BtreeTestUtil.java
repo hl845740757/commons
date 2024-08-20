@@ -20,6 +20,7 @@ import cn.wjybxx.btree.decorator.Inverter;
 import cn.wjybxx.btree.leaf.WaitFrame;
 
 import java.util.Random;
+import java.util.function.IntConsumer;
 import java.util.random.RandomGenerator;
 
 /**
@@ -41,6 +42,19 @@ class BtreeTestUtil {
     public static void untilCompleted(TaskEntry<?> entry) {
         for (int idx = 0; idx < 200; idx++) { // 避免死循环
             entry.update(idx);
+            if (entry.isCompleted()) return;
+        }
+        throw new InfiniteLoopException();
+    }
+
+    /**
+     * @param entry       任务入口
+     * @param frameAction 帧回调，初始帧号0；在task执行后调用
+     */
+    public static void untilCompleted(TaskEntry<?> entry, IntConsumer frameAction) {
+        for (int idx = 0; idx < 200; idx++) { // 避免死循环
+            entry.update(idx);
+            frameAction.accept(idx);
             if (entry.isCompleted()) return;
         }
         throw new InfiniteLoopException();
@@ -80,4 +94,5 @@ class BtreeTestUtil {
         }
         branch.shuffleChild(); // 打乱child
     }
+
 }

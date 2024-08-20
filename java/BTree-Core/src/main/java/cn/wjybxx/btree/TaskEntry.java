@@ -153,7 +153,7 @@ public class TaskEntry<T> extends Task<T> {
     public void update(int curFrame) {
         this.curFrame = curFrame;
         if (isRunning()) {
-            template_execute(false);
+            template_execute(true); // 用户就是control
         } else {
             assert isInited();
             template_enterExecute(null, 0);

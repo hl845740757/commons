@@ -269,9 +269,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             if (status == TaskStatus.RUNNING) {
                 return taskEntry.CurFrame - enterFrame;
             }
-            if (taskEntry == null) {
-                return 0;
-            }
+            // 不测试taskEntry，是因为child可能在运行后被删除
             return exitFrame - enterFrame;
         }
     }
@@ -570,7 +568,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             return;
         }
         SetCtlBit(MASK_NOT_ACTIVE_SELF, !value); // 取反
-        RefreshActiveInHierarchy(); //
+        RefreshActiveInHierarchy();
     }
 
     /// <summary>
@@ -596,7 +594,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         for (int idx = 0; idx < GetChildCount(); idx++) {
             Task<T> child = GetChild(idx);
             if (child.status == TaskStatus.RUNNING) {
-                RefreshActiveInHierarchy();
+                child.RefreshActiveInHierarchy();
             }
         }
     }
@@ -877,7 +875,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// execute模板方法
     /// (通过参数的方式，有助于我们统一代码，也简化子类实现；同时避免遗漏)
     /// </summary>
-    /// <param name="fromControl">是否是父节点调用</param>
+    /// <param name="fromControl">是否是父节点调用(是否是心跳触发)</param>
     public void Template_Execute(bool fromControl) {
         Debug.Assert(status == TaskStatus.RUNNING);
         ICancelToken cancelToken = this.cancelToken;
