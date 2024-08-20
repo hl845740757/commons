@@ -54,9 +54,7 @@ public class SimpleParallel<T> extends Parallel<T> {
             if (inlinedRunningChild != null) {
                 template_runInlinedChild(inlinedRunningChild, childHelper, child);
             } else if (child.isRunning()) {
-                if (child.isActiveInHierarchy()) {
-                    child.template_execute();
-                }
+                child.template_execute(true);
             } else {
                 template_runChild(child);
             }

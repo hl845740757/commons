@@ -56,7 +56,7 @@ public class UntilCond<T> extends LoopDecorator<T> {
         } else if (!hasNextLoop()) {
             setFailed(TaskStatus.MAX_LOOP_LIMIT);
         } else if (!isExecuting() || !isTailRecursion()) {
-            template_execute();
+            template_execute(false);
         }
     }
 

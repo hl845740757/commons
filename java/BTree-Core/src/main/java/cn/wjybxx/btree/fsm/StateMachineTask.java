@@ -131,7 +131,7 @@ public class StateMachineTask<T> extends Decorator<T> {
         tempNextState = nextState;
 
         if (isRunning() && isReady(child, nextState)) {
-            template_execute();
+            template_execute(false);
         }
     }
 
@@ -212,7 +212,7 @@ public class StateMachineTask<T> extends Decorator<T> {
         if (inlinedRunningChild != null) {
             template_runInlinedChild(inlinedRunningChild, inlineHelper, curState);
         } else if (curState.isRunning()) {
-            curState.template_execute();
+            curState.template_execute(true);
         } else {
             template_runChild(curState);
         }
@@ -243,7 +243,7 @@ public class StateMachineTask<T> extends Decorator<T> {
             removeChild(0);
             beforeChangeState(child, null);
         } else {
-            template_execute();
+            template_execute(false);
         }
     }
 

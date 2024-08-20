@@ -59,7 +59,7 @@ public class Selector<T> extends SingleRunningChildBranch<T> {
         } else if (isAllChildCompleted()) {
             setFailed(TaskStatus.ERROR);
         } else if (!isExecuting() || !isTailRecursion()) {
-            template_execute();
+            template_execute(false);
         }
     }
 }

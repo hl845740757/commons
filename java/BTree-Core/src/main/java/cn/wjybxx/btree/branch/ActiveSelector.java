@@ -71,7 +71,7 @@ public class ActiveSelector<T> extends SingleRunningChildBranch<T> {
             if (inlinedRunningChild != null) {
                 template_runInlinedChild(inlinedRunningChild, inlineHelper, childToRun);
             } else if (childToRun.isRunning()) {
-                childToRun.template_execute();
+                childToRun.template_execute(true);
             } else {
                 template_runChildDirectly(childToRun);
             }

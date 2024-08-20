@@ -67,7 +67,7 @@ public class ActiveSelector<T> : SingleRunningChildBranch<T> where T : class
             if (inlinedRunningChild != null) {
                 Template_RunInlinedChild(inlinedRunningChild, inlineHelper, childToRun);
             } else if (childToRun.IsRunning) {
-                childToRun.Template_Execute();
+                childToRun.Template_Execute(true);
             } else {
                 Template_RunChildDirectly(childToRun);
             }

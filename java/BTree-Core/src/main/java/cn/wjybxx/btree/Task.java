@@ -76,6 +76,8 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     /** 条件节点的基础选项 */
     private static final int MASK_GUARD_BASE_OPTIONS = MASK_DISABLE_CHECK_CANCEL | MASK_CHECKING_GUARD | MASK_TAIL_CALL_RECURSION;
+    /** enter前相关options */
+    private static final int MASK_BEFORE_ENTER_OPTIONS = MASK_AUTO_LISTEN_CANCEL | MASK_AUTO_RESET_CHILDREN;
 
     /** 任务树的入口(缓存以避免递归查找) */
     transient TaskEntry<T> taskEntry;
@@ -556,14 +558,15 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 2.只有停止Execute而不影响逻辑的场景，才可能需要该特性。比如：等待事件发生。
      * 3.如果等待条件或事件的过程中需要响应超时，则通常需要监听取消信号。
      * 4.如果Task处于非运行状态，该属性在运行时被重置。
-     * 5.暂不打算支持activeChanged事件。
+     * 5.该属性对条件检查无效。
+     * 6.为控制复杂度，暂不打算支持activeChanged事件。
      */
     public final void setActive(boolean value) {
         if (isActiveSelf() == value) {
             return;
         }
         setCtlBit(MASK_NOT_ACTIVE_SELF, !value); // 取反
-        refreshActiveInHierarchy(); //
+        refreshActiveInHierarchy();
     }
 
     /**
@@ -674,6 +677,12 @@ public abstract class Task<T> implements ICancelTokenListener {
     /** 是否可以通知父节点 */
     private static boolean checkNotifyMask(int ctl) {
         return (ctl & (MASK_DISABLE_NOTIFY | MASK_STOP_EXIT)) == 0; // 被stop取消的任务不能通知
+    }
+
+    /** 是否可以延迟启动 */
+    private static boolean checkSlowStart(int ctl) {
+        if ((ctl & MASK_CHECKING_GUARD) != 0) return false; // 条件节点必须执行execute
+        return (ctl & (MASK_SLOW_START | MASK_NOT_ACTIVE_IN_HIERARCHY)) != 0;
     }
 
     // endregion
@@ -789,6 +798,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         // 初始化基础上下文后才可以检测取消
         if (control != null) {
             initMask |= captureContext(control);
+            initMask |= (control.ctl & MASK_NOT_ACTIVE_IN_HIERARCHY);
         }
         initMask |= (ctl & MASK_OVERRIDES); // 方法实现bits
         initMask |= (flags & MASK_CONTROL_FLOW_OPTIONS); // 控制流bits
@@ -813,13 +823,14 @@ public abstract class Task<T> implements ICancelTokenListener {
             if ((initMask & TaskOverrides.MASK_BEFORE_ENTER) != 0) {
                 beforeEnter(); // 这里用户可能修改控制流标记
             }
-            if (isAutoResetChildren()) {
-                resetChildrenForRestart();
+            if ((ctl & MASK_BEFORE_ENTER_OPTIONS) != 0) {
+                if ((ctl & MASK_AUTO_RESET_CHILDREN) != 0) {
+                    resetChildrenForRestart();
+                }
+                if ((ctl & MASK_AUTO_LISTEN_CANCEL) != 0) {
+                    cancelToken.addListener(this);
+                }
             }
-            if (isAutoListenCancel()) {
-                cancelToken.addListener(this);
-            }
-
             if ((initMask & TaskOverrides.MASK_ENTER) != 0) {
                 enter(reentryId); // enter可能导致结束和取消信号
                 if (reentryId != this.reentryId) {
@@ -830,7 +841,7 @@ public abstract class Task<T> implements ICancelTokenListener {
                     return;
                 }
             }
-            if (isSlowStart()) { // 需要下一帧执行execute，这里暂不响应active改变
+            if (checkSlowStart(ctl)) { // 需要使用最新的ctl(enter也可能修改ctl)
                 checkFireRunningAndCancel(control, cancelToken);
                 return;
             }
@@ -858,13 +869,19 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     /**
      * execute模板方法
+     * (通过参数的方式，有助于我们统一代码，也简化子类实现；同时避免遗漏)
+     *
+     * @param fromControl 是否是父节点调用
      */
-    public final void template_execute() {
+    public final void template_execute(boolean fromControl) {
         assert status == TaskStatus.RUNNING;
         final ICancelToken cancelToken = this.cancelToken;
         if (cancelToken.isCancelling() && isAutoCheckCancel()) {
             setCancelled();
             return;
+        }
+        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && fromControl) {
+            return; // 非活动状态下也检测取消信号；前者多为假，后者多为真
         }
 
         final int reentryId = this.reentryId;
@@ -916,16 +933,14 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     /**
      * 运行子节点，会检查子节点的前置条件
-     * 注：如果想减少方法调用，对于运行中的子节点，可直接调用子节点的{@link #template_execute()}方法。
+     * 注：如果想减少方法调用，对于运行中的子节点，可直接调用子节点的{@link #template_execute(boolean)}方法。
      *
      * @param child 普通子节点，或需要接收通知的钩子任务
      */
     public final void template_runChild(Task<T> child) {
         assert isReady() : "Task is not ready";
         if (child.status == TaskStatus.RUNNING) {
-            if (child.isActiveInHierarchy()) {
-                child.template_execute();
-            }
+            child.template_execute(true);
         } else if (child.guard == null || template_checkGuard(child.guard)) {
             int initMask = (ctl & MASK_CHECKING_GUARD) == 0 ? 0 : MASK_GUARD_BASE_OPTIONS;
             child.template_enterExecute(this, initMask);
@@ -938,9 +953,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     public final void template_runChildDirectly(Task<T> child) {
         assert isReady() : "Task is not ready";
         if (child.status == TaskStatus.RUNNING) {
-            if (child.isActiveInHierarchy()) {
-                child.template_execute();
-            }
+            child.template_execute(true);
         } else {
             int initMask = (ctl & MASK_CHECKING_GUARD) == 0 ? 0 : MASK_GUARD_BASE_OPTIONS;
             child.template_enterExecute(this, initMask);
@@ -953,16 +966,14 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 2.前置条件其实是特殊的钩子任务
      * 3.条件分支不应该有钩子任务
      * <p>
-     * 注：如果想减少方法调用，对于运行中的子节点，可直接调用子节点的{@link #template_execute()}方法。
+     * 注：如果想减少方法调用，对于运行中的子节点，可直接调用子节点的{@link #template_execute(boolean)}方法。
      *
      * @param hook 钩子任务，或不需要接收事件通知的子节点
      */
     public final void template_runHook(Task<T> hook) {
         assert isReady() : "Task is not ready";
         if (hook.status == TaskStatus.RUNNING) {
-            if (hook.isActiveInHierarchy()) {
-                hook.template_execute();
-            }
+            hook.template_execute(true);
         } else if (hook.guard == null || template_checkGuard(hook.guard)) {
             hook.template_enterExecute(this, MASK_DISABLE_NOTIFY);
         } else {
@@ -974,9 +985,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     public final void template_runHookDirectly(Task<T> hook) {
         assert isReady() : "Task is not ready";
         if (hook.status == TaskStatus.RUNNING) {
-            if (hook.isActiveInHierarchy()) {
-                hook.template_execute();
-            }
+            hook.template_execute(true);
         } else {
             hook.template_enterExecute(this, MASK_DISABLE_NOTIFY);
         }
@@ -990,15 +999,13 @@ public abstract class Task<T> implements ICancelTokenListener {
      * @param runningChild 未被内联的子节点，直接子任务
      */
     public final void template_runInlinedChild(Task<T> inlinedChild, TaskInlineHelper<T> helper, Task<T> runningChild) {
-        if (inlinedChild.isActiveInHierarchy()) {
-            final int runningChildReentryId = runningChild.getReentryId();
-            final int inlinedChildReentryId = inlinedChild.getReentryId();
+        final int runningChildReentryId = runningChild.getReentryId();
+        final int inlinedChildReentryId = inlinedChild.getReentryId();
 
-            inlinedChild.template_execute();
-            // 如果被内联子节点退出，而直接子节点未退出，则重新内联
-            if (inlinedChild.getReentryId() != inlinedChildReentryId && runningChild.getReentryId() == runningChildReentryId) {
-                helper.inlineChild(runningChild);
-            }
+        inlinedChild.template_execute(true);
+        // 如果被内联子节点退出，而直接子节点未退出，则重新内联
+        if (inlinedChild.getReentryId() != inlinedChildReentryId && runningChild.getReentryId() == runningChildReentryId) {
+            helper.inlineChild(runningChild);
         }
     }
 

@@ -41,9 +41,7 @@ public class Inverter<T> : Decorator<T> where T : class
         if (inlinedRunningChild != null) {
             Template_RunInlinedChild(inlinedRunningChild, inlineHelper, child);
         } else if (child.IsRunning) {
-            if (child.IsActiveInHierarchy) {
-                child.Template_Execute();
-            }
+            child.Template_Execute(true);
         } else {
             Template_RunChild(child);
         }

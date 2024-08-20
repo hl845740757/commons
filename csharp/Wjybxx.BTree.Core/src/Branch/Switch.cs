@@ -53,9 +53,7 @@ public class Switch<T> : SingleRunningChildBranch<T> where T : class
             runningChild = children[index];
         }
         if (runningChild.IsRunning) {
-            if (runningChild.IsActiveInHierarchy) {
-                runningChild.Template_Execute();
-            }
+            runningChild.Template_Execute(true);
         } else {
             Template_RunChildDirectly(runningChild);
         }

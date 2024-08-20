@@ -52,7 +52,7 @@ public class Sequence<T> : SingleRunningChildBranch<T> where T : class
         } else if (IsAllChildCompleted) {
             SetSuccess();
         } else if (!IsExecuting() || !IsTailRecursion) {
-            Template_Execute();
+            Template_Execute(false);
         }
     }
 }

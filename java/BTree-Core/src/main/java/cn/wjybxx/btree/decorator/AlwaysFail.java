@@ -48,9 +48,7 @@ public class AlwaysFail<T> extends Decorator<T> {
         if (inlinedRunningChild != null) {
             template_runInlinedChild(inlinedRunningChild, inlineHelper, child);
         } else if (child.isRunning()) {
-            if (child.isActiveInHierarchy()) {
-                child.template_execute();
-            }
+            child.template_execute(true);
         } else {
             template_runChild(child);
         }

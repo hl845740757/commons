@@ -125,7 +125,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         tempNextState = nextState;
 
         if (IsRunning && IsReady(child, nextState)) {
-            Template_Execute();
+            Template_Execute(false);
         }
     }
 
@@ -205,7 +205,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         if (inlinedRunningChild != null) {
             Template_RunInlinedChild(inlinedRunningChild, inlineHelper, curState);
         } else if (curState.IsRunning) {
-            curState.Template_Execute();
+            curState.Template_Execute(true);
         } else {
             Template_RunChild(curState);
         }
@@ -234,7 +234,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
             RemoveChild(0);
             BeforeChangeState(child, null);
         } else {
-            Template_Execute();
+            Template_Execute(false);
         }
     }
 

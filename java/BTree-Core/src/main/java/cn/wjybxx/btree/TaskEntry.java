@@ -153,7 +153,7 @@ public class TaskEntry<T> extends Task<T> {
     public void update(int curFrame) {
         this.curFrame = curFrame;
         if (isRunning()) {
-            template_execute();
+            template_execute(false);
         } else {
             assert isInited();
             template_enterExecute(null, 0);
@@ -171,7 +171,7 @@ public class TaskEntry<T> extends Task<T> {
             if (inlinedRunningChild != null) {
                 template_runInlinedChild(inlinedRunningChild, inlineHelper, rootTask);
             } else if (rootTask.isRunning()) {
-                rootTask.template_execute();
+                rootTask.template_execute(true);
             } else {
                 template_runChild(rootTask);
             }
@@ -194,7 +194,7 @@ public class TaskEntry<T> extends Task<T> {
         if (inlinedRunningChild != null) {
             template_runInlinedChild(inlinedRunningChild, inlineHelper, rootTask);
         } else if (rootTask.isRunning()) {
-            rootTask.template_execute();
+            rootTask.template_execute(true);
         } else {
             template_runChild(rootTask);
         }

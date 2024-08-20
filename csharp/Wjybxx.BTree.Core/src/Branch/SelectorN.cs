@@ -76,7 +76,7 @@ public class SelectorN<T> : SingleRunningChildBranch<T> where T : class
         } else if (IsAllChildCompleted || CheckFailFast()) {
             SetFailed(TaskStatus.ERROR);
         } else if (!IsExecuting() || !IsTailRecursion) {
-            Template_Execute();
+            Template_Execute(false);
         }
     }
 

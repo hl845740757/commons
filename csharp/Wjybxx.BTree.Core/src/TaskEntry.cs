@@ -141,7 +141,7 @@ public class TaskEntry<T> : Task<T> where T : class
     public void Update(int curFrame) {
         this.curFrame = curFrame;
         if (IsRunning) {
-            Template_Execute();
+            Template_Execute(false);
         } else {
             Debug.Assert(IsInited());
             Template_EnterExecute(null, 0);
@@ -160,7 +160,7 @@ public class TaskEntry<T> : Task<T> where T : class
             if (inlinedRunningChild != null) {
                 Template_RunInlinedChild(inlinedRunningChild, inlineHelper, rootTask!);
             } else if (rootTask!.IsRunning) {
-                rootTask.Template_Execute();
+                rootTask.Template_Execute(true);
             } else {
                 Template_RunChild(rootTask);
             }
@@ -182,7 +182,7 @@ public class TaskEntry<T> : Task<T> where T : class
         if (inlinedRunningChild != null) {
             Template_RunInlinedChild(inlinedRunningChild, inlineHelper, rootTask!);
         } else if (rootTask!.IsRunning) {
-            rootTask.Template_Execute();
+            rootTask.Template_Execute(true);
         } else {
             Template_RunChild(rootTask);
         }

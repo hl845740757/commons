@@ -52,7 +52,7 @@ public class Foreach<T> extends SingleRunningChildBranch<T> {
         if (isAllChildCompleted()) {
             setSuccess();
         } else if (!isExecuting() || !isTailRecursion()) {
-            template_execute();
+            template_execute(false);
         }
     }
 }
