@@ -58,6 +58,8 @@ public readonly struct ValueFuture
 
     public ValueFutureAwaiter GetAwaiter() => new ValueFutureAwaiter(this);
 
+    public ValueFutureAwaitable GetAwaitable(IExecutor executor, int options = 0) => new ValueFutureAwaitable(this, executor, options);
+
     public static ValueFuture FromResult() {
         return new ValueFuture((Exception)null);
     }
@@ -90,7 +92,7 @@ public readonly struct ValueFuture
         TaskStatus status = taskDriver.GetStatus(_reentryId);
         switch (status) {
             case TaskStatus.Success: {
-                taskDriver.ThrowIfFailedOrCancelled(_reentryId);
+                taskDriver.GetVoidResult(_reentryId);
                 return Promise<int>.FromResult(0);
             }
             case TaskStatus.Cancelled:
@@ -136,7 +138,7 @@ public readonly struct ValueFuture
             return;
         }
         if (_future is ITaskDriver driver) {
-            driver.ThrowIfFailedOrCancelled(_reentryId);
+            driver.GetVoidResult(_reentryId);
         } else {
             IPromise promise = (IPromise)_future;
             promise.ThrowIfFailedOrCancelled();
@@ -205,6 +207,8 @@ public readonly struct ValueFuture<T>
     }
 
     public ValueFutureAwaiter<T> GetAwaiter() => new ValueFutureAwaiter<T>(this);
+
+    public ValueFutureAwaitable<T> GetAwaitable(IExecutor executor, int options = 0) => new ValueFutureAwaitable<T>(this, executor, options);
 
     public static ValueFuture<T> FromResult(T result) {
         return new ValueFuture<T>(result, null);

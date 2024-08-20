@@ -35,16 +35,18 @@ import java.util.concurrent.RejectedExecutionException;
  */
 public class DisruptorEventLoopMpExecuteTest {
 
-    private static final int PRODUCER_COUNT = 4;
+    private static final int PRODUCER_COUNT = 6;
 
-    private Counter counter;
-    private EventLoop consumer;
-    private List<Producer> producerList;
-    private volatile boolean alert;
+    private static CounterAgent agent;
+    private static Counter counter;
+    private static EventLoop consumer;
+    private static List<Producer> producerList;
+    private static volatile boolean alert;
 
     @BeforeEach
     void setUp() {
-        counter = null;
+        agent = new CounterAgent();
+        counter = agent.getCounter();
         consumer = null;
         producerList = null;
         alert = false;
@@ -52,7 +54,6 @@ public class DisruptorEventLoopMpExecuteTest {
 
     @Test
     void testRingBuffer() throws InterruptedException {
-        counter = new Counter();
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setEventSequencer(RingBufferEventSequencer
@@ -79,7 +80,6 @@ public class DisruptorEventLoopMpExecuteTest {
 
     @Test
     void testUnboundedBuffer() throws InterruptedException {
-        counter = new Counter();
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setEventSequencer(MpUnboundedEventSequencer.newBuilder(RingBufferEvent::new)
@@ -103,7 +103,7 @@ public class DisruptorEventLoopMpExecuteTest {
         Assertions.assertTrue(counter.getErrorMsgList().isEmpty(), counter.getErrorMsgList()::toString);
     }
 
-    private class Producer extends Thread {
+    private static class Producer extends Thread {
 
         private final int type;
 
@@ -117,7 +117,7 @@ public class DisruptorEventLoopMpExecuteTest {
 
         @Override
         public void run() {
-            EventLoop consumer = DisruptorEventLoopMpExecuteTest.this.consumer;
+            EventLoop consumer = DisruptorEventLoopMpExecuteTest.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
                 try {

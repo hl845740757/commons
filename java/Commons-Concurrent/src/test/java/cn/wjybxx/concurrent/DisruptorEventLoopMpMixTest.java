@@ -35,13 +35,13 @@ import java.util.concurrent.RejectedExecutionException;
  */
 public class DisruptorEventLoopMpMixTest {
 
-    private static final int PRODUCER_COUNT = 4;
+    private static final int PRODUCER_COUNT = 6;
 
-    private CounterAgent agent;
-    private Counter counter;
-    private DisruptorEventLoop<RingBufferEvent> consumer;
-    private List<Thread> producerList;
-    private volatile boolean alert;
+    private static CounterAgent agent;
+    private static Counter counter;
+    private static DisruptorEventLoop<RingBufferEvent> consumer;
+    private static List<Thread> producerList;
+    private static volatile boolean alert;
 
     @BeforeEach
     void setUp() {
@@ -50,6 +50,22 @@ public class DisruptorEventLoopMpMixTest {
         consumer = null;
         producerList = null;
         alert = false;
+
+        createProducers();
+    }
+
+    private void createProducers() {
+        // 注意：用户事件从1开始
+        producerList = new ArrayList<>(PRODUCER_COUNT);
+        for (int i = 1; i <= PRODUCER_COUNT; i++) {
+            if (i > PRODUCER_COUNT / 2) {
+                producerList.add(new Producer2(i));
+            } else if (i == 1) {
+                producerList.add(new Producer3(i));
+            } else {
+                producerList.add(new Producer(i));
+            }
+        }
     }
 
     @Test
@@ -62,19 +78,6 @@ public class DisruptorEventLoopMpMixTest {
                         .build())
                 .build();
 
-        // 注意：用户事件从1开始
-        producerList = new ArrayList<>(PRODUCER_COUNT);
-        for (int i = 1; i <= PRODUCER_COUNT; i++) {
-            if (i > PRODUCER_COUNT / 2) {
-                producerList.add(new Producer2(i));
-            } else {
-                if (i == 1) {
-                    producerList.add(new Producer3(i));
-                } else {
-                    producerList.add(new Producer(i));
-                }
-            }
-        }
         producerList.forEach(Thread::start);
 
         ThreadUtils.sleepQuietly(5000);
@@ -98,18 +101,6 @@ public class DisruptorEventLoopMpMixTest {
                         .build())
                 .build();
 
-        producerList = new ArrayList<>(PRODUCER_COUNT);
-        for (int i = 1; i <= PRODUCER_COUNT; i++) {
-            if (i > PRODUCER_COUNT / 2) {
-                producerList.add(new Producer2(i));
-            } else {
-                if (i == 1) {
-                    producerList.add(new Producer3(i));
-                } else {
-                    producerList.add(new Producer(i));
-                }
-            }
-        }
         producerList.forEach(Thread::start);
 
         ThreadUtils.sleepQuietly(5000);
@@ -123,7 +114,7 @@ public class DisruptorEventLoopMpMixTest {
         Assertions.assertTrue(counter.getErrorMsgList().isEmpty(), counter.getErrorMsgList()::toString);
     }
 
-    private class Producer extends Thread {
+    private static class Producer extends Thread {
 
         private final int type;
 
@@ -137,7 +128,7 @@ public class DisruptorEventLoopMpMixTest {
 
         @Override
         public void run() {
-            DisruptorEventLoop<RingBufferEvent> consumer = DisruptorEventLoopMpMixTest.this.consumer;
+            DisruptorEventLoop<RingBufferEvent> consumer = DisruptorEventLoopMpMixTest.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
                 long sequence = consumer.nextSequence();
@@ -155,7 +146,7 @@ public class DisruptorEventLoopMpMixTest {
         }
     }
 
-    private class Producer2 extends Thread {
+    private static class Producer2 extends Thread {
 
         private final int type;
 
@@ -169,7 +160,7 @@ public class DisruptorEventLoopMpMixTest {
 
         @Override
         public void run() {
-            DisruptorEventLoop<RingBufferEvent> consumer = DisruptorEventLoopMpMixTest.this.consumer;
+            DisruptorEventLoop<RingBufferEvent> consumer = DisruptorEventLoopMpMixTest.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
                 try {
@@ -181,7 +172,7 @@ public class DisruptorEventLoopMpMixTest {
         }
     }
 
-    private class Producer3 extends Thread {
+    private static class Producer3 extends Thread {
 
         private final int type;
 
@@ -195,7 +186,7 @@ public class DisruptorEventLoopMpMixTest {
 
         @Override
         public void run() {
-            DisruptorEventLoop<RingBufferEvent> consumer = DisruptorEventLoopMpMixTest.this.consumer;
+            DisruptorEventLoop<RingBufferEvent> consumer = DisruptorEventLoopMpMixTest.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
                 int batchSize = 100;

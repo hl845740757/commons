@@ -73,6 +73,7 @@ public class ActiveTest {
             }
             if (frame == expectedFrames - 1) {
                 taskEntry.getCancelToken().cancel(1);
+                taskEntry.setActive(true);
             }
         });
         Assertions.assertTrue(taskEntry.isCancelled());

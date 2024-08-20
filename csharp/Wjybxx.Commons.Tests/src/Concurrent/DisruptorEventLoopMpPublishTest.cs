@@ -17,7 +17,6 @@
 #endregion
 
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using NUnit.Framework;
 using Wjybxx.Commons.Collections;
@@ -27,11 +26,9 @@ using Wjybxx.Disruptor;
 namespace Commons.Tests.Concurrent;
 
 /// <summary>
-/// Disruptor事件循环，混合模式测试
-/// <see cref="DisruptorEventLoop{T}.Execute(System.Action,int)"/>
-/// <see cref="DisruptorEventLoop{T}.Publish(long, long)"/>
+/// 测试多生产者使用<see cref="DisruptorEventLoop{T}.Publish(long)"/>发布任务的时序
 /// </summary>
-public class DisruptorEventLoopMpMixTest
+public class DisruptorEventLoopMpPublishTest
 {
     private const int PRODUCER_COUNT = 6;
 
@@ -48,7 +45,6 @@ public class DisruptorEventLoopMpMixTest
         consumer = null!;
         producerList = null!;
         alert = false;
-
         CreateProducers();
     }
 
@@ -56,13 +52,11 @@ public class DisruptorEventLoopMpMixTest
         // 注意：用户事件从1开始
         producerList = new List<Thread>(PRODUCER_COUNT);
         for (int i = 1; i <= PRODUCER_COUNT; i++) {
-            int type = i;
+            int type = i; // lambda
             if (i > PRODUCER_COUNT / 2) {
-                producerList.Add(new Thread(() => ProducerLoop2(type)));
-            } else if (i == 1) {
-                producerList.Add(new Thread(() => ProducerLoop3(type)));
+                producerList.Add(new Thread(() => ProducerLoopBatch(type)));
             } else {
-                producerList.Add(new Thread(() => ProducerLoop1(type)));
+                producerList.Add(new Thread(() => ProducerLoop(type)));
             }
         }
     }
@@ -92,7 +86,7 @@ public class DisruptorEventLoopMpMixTest
         Assert.That(counter.sequenceMap.Count, Is.EqualTo(PRODUCER_COUNT), "counter.sequenceMap.Count != PRODUCER_COUNT");
         Assert.IsTrue(counter.errorMsgList.Count == 0, CollectionUtil.ToString(counter.errorMsgList));
     }
-
+    
     [Test]
     public void TestUnboundedBuffer() {
         consumer = new DisruptorEventLoopBuilder<CounterEvent>()
@@ -101,11 +95,10 @@ public class DisruptorEventLoopMpMixTest
             EventSequencer = new MpUnboundedEventSequencer<CounterEvent>.Builder(() => new CounterEvent()).Build(),
             Agent = agent
         }.Build();
-
+        
         foreach (Thread thread in producerList) {
             thread.Start();
         }
-
         Thread.Sleep(5000);
         consumer.Shutdown();
         alert = true;
@@ -119,9 +112,8 @@ public class DisruptorEventLoopMpMixTest
         Assert.IsTrue(counter.errorMsgList.Count == 0, CollectionUtil.ToString(counter.errorMsgList));
     }
 
-    /** 单个申请和发布 */
-    private static void ProducerLoop1(int type) {
-        DisruptorEventLoop<CounterEvent> consumer = DisruptorEventLoopMpMixTest.consumer;
+    private static void ProducerLoop(int type) {
+        DisruptorEventLoop<CounterEvent> consumer = DisruptorEventLoopMpPublishTest.consumer;
         long localSequence = 0;
         while (!alert && localSequence < 1000000) {
             long? sequence = consumer.NextSequence();
@@ -139,22 +131,9 @@ public class DisruptorEventLoopMpMixTest
         }
     }
 
-    private static void ProducerLoop2(int type) {
-        DisruptorEventLoop<CounterEvent> consumer = DisruptorEventLoopMpMixTest.consumer;
-        long localSequence = 0;
-        while (!alert && localSequence < 1000000) {
-            try {
-                consumer.Execute(counter.NewTask(type, localSequence++));
-            }
-            catch (RejectedExecutionException) {
-                break;
-            }
-        }
-    }
-
     /** 批量申请和发布 */
-    private static void ProducerLoop3(int type) {
-        DisruptorEventLoop<CounterEvent> consumer = DisruptorEventLoopMpMixTest.consumer;
+    private static void ProducerLoopBatch(int type) {
+        DisruptorEventLoop<CounterEvent> consumer = DisruptorEventLoopMpPublishTest.consumer;
         long localSequence = 0;
         while (!alert && localSequence < 1000000) {
             int batchSize = 10;

@@ -63,6 +63,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     static final int MASK_CHECKING_GUARD = 1 << 18;
     private static final int MASK_NOT_ACTIVE_SELF = 1 << 19;
     private static final int MASK_NOT_ACTIVE_IN_HIERARCHY = 1 << 20;
+    private static final int MASK_REGISTERED_LISTENER = 1 << 21;
 
     public static final int MASK_SLOW_START = 1 << 24;
     public static final int MASK_DISABLE_CHECK_CANCEL = 1 << 25;
@@ -75,7 +76,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     public static final int MASK_CONTROL_FLOW_OPTIONS = (-1) << 24;
 
     /** 条件节点的基础选项 */
-    private static final int MASK_GUARD_BASE_OPTIONS = MASK_DISABLE_CHECK_CANCEL | MASK_CHECKING_GUARD | MASK_TAIL_CALL_RECURSION;
+    private static final int MASK_GUARD_BASE_OPTIONS = MASK_CHECKING_GUARD | MASK_DISABLE_CHECK_CANCEL | MASK_TAIL_CALL_RECURSION;
     /** enter前相关options */
     private static final int MASK_BEFORE_ENTER_OPTIONS = MASK_AUTO_LISTEN_CANCEL | MASK_AUTO_RESET_CHILDREN;
 
@@ -554,7 +555,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 注意：
      * 1.active为false表示可以不执行心跳逻辑{@link #execute()}
      * 2.只有停止Execute而不影响逻辑的场景，才可能需要该特性。比如：等待事件发生。
-     * 3.如果等待条件或事件的过程中需要响应超时，则通常需要监听取消信号。
+     * 3.如果等待条件或事件的过程中需要响应超时，通常需要通过定时任务唤醒。
      * 4.如果Task处于非运行状态，该属性在运行时被重置。
      * 5.该属性对条件检查无效。
      * 6.为控制复杂度，暂不打算支持activeChanged事件。
@@ -597,6 +598,12 @@ public abstract class Task<T> implements ICancelTokenListener {
     // endregion
 
     // region execute-util
+
+    /** 注册取消信号监听器，任务在退出时将自动触发删除 */
+    public final void registerCancelListener() {
+        cancelToken.addListener(this);
+        ctl |= MASK_REGISTERED_LISTENER;
+    }
 
     /**
      * 检查取消
@@ -822,11 +829,12 @@ public abstract class Task<T> implements ICancelTokenListener {
                 beforeEnter(); // 这里用户可能修改控制流标记
             }
             if ((ctl & MASK_BEFORE_ENTER_OPTIONS) != 0) {
-                if ((ctl & MASK_AUTO_RESET_CHILDREN) != 0) {
+                if (isAutoResetChildren()) {
                     resetChildrenForRestart();
                 }
-                if ((ctl & MASK_AUTO_LISTEN_CANCEL) != 0) {
+                if (isAutoListenCancel()) {
                     cancelToken.addListener(this);
+                    ctl |= MASK_REGISTERED_LISTENER;
                 }
             }
             if ((initMask & TaskOverrides.MASK_ENTER) != 0) {
@@ -873,15 +881,15 @@ public abstract class Task<T> implements ICancelTokenListener {
      */
     public final void template_execute(boolean fromControl) {
         assert status == TaskStatus.RUNNING;
+        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && fromControl) {
+            return; // 前者多为假，后者多为真
+        }
+
         final ICancelToken cancelToken = this.cancelToken;
         if (cancelToken.isCancelling() && isAutoCheckCancel()) {
             setCancelled();
             return;
         }
-        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && fromControl) {
-            return; // 非活动状态下也检测取消信号；前者多为假，后者多为真
-        }
-
         final int reentryId = this.reentryId;
         if ((ctl & MASK_EXECUTING) != 0) { // 递归执行
             execute();
@@ -913,7 +921,7 @@ public abstract class Task<T> implements ICancelTokenListener {
             ctl |= extraMask;
         }
         exitFrame = taskEntry.getCurFrame();
-        if (isAutoListenCancel()) {
+        if ((ctl & MASK_REGISTERED_LISTENER) != 0) {
             cancelToken.remListener(this);
         }
         try {

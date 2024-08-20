@@ -30,7 +30,7 @@ namespace Wjybxx.BTree.Leaf
 ///<code>
 /// public class ConditionEntry&lt;T> extends LeafTask&lt;T> {
 ///     private int type;
-///     private List&lt;ICondition> children = new ArrayList&lt;ICondition>(4);
+///     private List&lt;ICondition> children = new List&lt;ICondition>(4);
 /// }
 /// </code>
 /// </summary>

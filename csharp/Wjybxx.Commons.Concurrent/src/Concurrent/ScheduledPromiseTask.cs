@@ -201,6 +201,9 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
 
     /** 该方法在任务出队列的时候调用 */
     public override void Run() {
+        if (helper == null) {
+            return; // 在任务执行完毕后收到取消信号
+        }
         long tickTime = helper.TickTime;
         // 显式测试一次时间，适应多种EventLoop
         if (tickTime < nextTriggerTime) {

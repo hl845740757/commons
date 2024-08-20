@@ -837,10 +837,10 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
                 eventObj.CleanAll();
                 sequence.SetRelease(nextSequence);
             }
-        }
-        // 清理内存
-        if (unboundedBuffer != null) {
-            unboundedBuffer.TryMoveHeadToNext(sequence.GetVolatile());
+            // 由于生产者已停止，如果不moveHead，后续的查询性能将越来越差
+            if (unboundedBuffer != null && !unboundedBuffer.InSameChunk(nextSequence - 1, nextSequence)) {
+                unboundedBuffer.TryMoveHeadToNext(nextSequence);
+            }
         }
         long costTime = ObjectUtil.SystemTickMillis() - startTimeMillis;
         logger.Info(

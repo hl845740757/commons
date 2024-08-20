@@ -33,14 +33,16 @@ import java.util.concurrent.Executor;
  */
 public class DisruptorEventLoopSpExecuteTest {
 
-    private Counter counter;
-    private EventLoop consumer;
-    private Producer producer;
-    private volatile boolean alert;
+    private static CounterAgent agent;
+    private static Counter counter;
+    private static EventLoop consumer;
+    private static Producer producer;
+    private static volatile boolean alert;
 
     @BeforeEach
     void setUp() {
-        counter = null;
+        agent = new CounterAgent();
+        counter = agent.getCounter();
         consumer = null;
         producer = null;
         alert = false;
@@ -48,7 +50,6 @@ public class DisruptorEventLoopSpExecuteTest {
 
     @Test
     void testRingBuffer() throws InterruptedException {
-        counter = new Counter();
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setEventSequencer(RingBufferEventSequencer
@@ -71,7 +72,6 @@ public class DisruptorEventLoopSpExecuteTest {
 
     @Test
     void testUnboundedBuffer() throws InterruptedException {
-        counter = new Counter();
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setEventSequencer(MpUnboundedEventSequencer
@@ -92,7 +92,7 @@ public class DisruptorEventLoopSpExecuteTest {
         Assertions.assertTrue(counter.getErrorMsgList().isEmpty(), counter.getErrorMsgList()::toString);
     }
 
-    private class Producer extends Thread {
+    private static class Producer extends Thread {
 
         final int type;
 
@@ -103,7 +103,7 @@ public class DisruptorEventLoopSpExecuteTest {
 
         @Override
         public void run() {
-            EventLoop consumer = DisruptorEventLoopSpExecuteTest.this.consumer;
+            EventLoop consumer = DisruptorEventLoopSpExecuteTest.consumer;
             long sequencer = 0;
             while (!alert && sequencer < 1000000) {
                 consumer.execute(counter.newTask(type, sequencer++));

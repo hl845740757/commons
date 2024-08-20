@@ -41,26 +41,18 @@ public class ScheduleCancelTest {
                         .newMultiProducer(RingBufferEvent::new)
                         .build())
                 .build();
+        consumer.start().join();
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     void testCancel() {
-        consumer.start().join();
-        {
-            IScheduledFuture<String> future = consumer.schedule(() -> "", 1000, TimeUnit.MILLISECONDS);
-            future.cancel(false);
-            Assertions.assertTrue(future.isCancelled());
-        }
-        {
-            CancelTokenSource cts = new CancelTokenSource();
-            IScheduledFuture<?> future = consumer.scheduleAction(() -> {
-                System.out.println();
-            }, 1000, TimeUnit.MILLISECONDS, cts);
+        CancelTokenSource cts = new CancelTokenSource();
+        IScheduledFuture<?> future = consumer.scheduleAction(() -> {}, 1000, TimeUnit.MILLISECONDS, cts);
 
-            cts.cancel(1);
-            Assertions.assertTrue(future.isCancelled(), () -> future.status().name());
-        }
+        cts.cancel(1);
+        future.awaitUninterruptibly();
+        Assertions.assertTrue(future.isCancelled(), () -> future.status().name());
+
         // 测试关闭Future的取消监听 -- 含特殊统计代码
         {
 //            ScheduledTaskBuilder<?> builder = ScheduledTaskBuilder.newAction(() -> {})

@@ -77,6 +77,14 @@ public class FutureCombinerTest {
         consumer.terminationFuture().join();
     }
 
+    @Test
+    void testZero() {
+        final FutureCombiner combiner = FutureUtils.newCombiner();
+        IPromise<Object> promise = combiner.anyOf();
+        promise.awaitUninterruptibly(1, TimeUnit.SECONDS);
+        Assertions.assertTrue(!promise.isDone());
+    }
+
     private static final Runnable task_success = () -> {
     };
     private static final Runnable task_failure = () -> {

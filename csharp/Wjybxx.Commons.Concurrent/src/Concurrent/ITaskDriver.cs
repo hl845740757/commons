@@ -42,26 +42,11 @@ public interface ITaskDriver
     Exception GetException(int reentryId, bool ignoreReentrant = false);
 
     /// <summary>
-    /// 如果任务失败，则抛出异常
-    /// (不返回结果以避免装箱)
+    /// 如果任务成功完成，则触发回收；如果任务失败（含取消）则抛出异常
     /// </summary>
-    void ThrowIfFailedOrCancelled(int reentryId) {
-        TaskStatus status = GetStatus(reentryId);
-        switch (status) {
-            case TaskStatus.Failed: {
-                throw new CompletionException(null, GetException(reentryId));
-            }
-            case TaskStatus.Cancelled: {
-                throw GetException(reentryId);
-            }
-            case TaskStatus.Pending:
-            case TaskStatus.Computing:
-            case TaskStatus.Success:
-            default: {
-                break;
-            }
-        }
-    }
+    /// <param name="reentryId"></param>
+    /// <param name="ignoreReentrant"></param>
+    void GetVoidResult(int reentryId, bool ignoreReentrant = false);
 
     /// <summary>
     /// 添加一个完成回调

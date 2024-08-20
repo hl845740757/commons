@@ -74,6 +74,10 @@ internal sealed class FutureStateMachineDriver<T, S> : Promise<T>, IFutureStateM
         return ExceptionNow(false);
     }
 
+    public void GetVoidResult(int reentryId, bool ignoreReentrant = false) {
+        ThrowIfFailedOrCancelled();
+    }
+
     public T GetResult(int reentryId, bool ignoreReentrant = false) {
         return ResultNow();
     }

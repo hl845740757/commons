@@ -71,6 +71,7 @@ public class ActiveTest
             }
             if (frame == expectedFrames - 1) {
                 taskEntry.CancelToken.Cancel(1);
+                taskEntry.SetActive(true);
             }
         });
         Assert.AreEqual(10, nextState.RunFrames);

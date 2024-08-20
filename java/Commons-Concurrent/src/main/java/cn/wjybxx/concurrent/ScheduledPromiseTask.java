@@ -239,6 +239,9 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     @Override
     public void run() {
+        if (helper == null) {
+            return; // 在任务执行完毕后收到取消信号
+        }
         long tickTime = helper.tickTime();
         // 显式测试一次时间，适应多种EventLoop
         if (tickTime < nextTriggerTime) {

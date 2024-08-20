@@ -812,10 +812,10 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                     event.cleanAll();
                     sequence.setRelease(nextSequence);
                 }
-            }
-            // 清理内存
-            if (unboundedBuffer != null) {
-                unboundedBuffer.tryMoveHeadToNext(sequence.getVolatile());
+                // 由于生产者已停止，如果不moveHead，后续的查询性能将越来越差
+                if (unboundedBuffer != null && !unboundedBuffer.inSameChunk(nextSequence - 1, nextSequence)) {
+                    unboundedBuffer.tryMoveHeadToNext(nextSequence);
+                }
             }
             logger.info("cleanBuffer success!  nullCount = {}, taskCount = {}, discardCount {}, cost timeMillis = {}",
                     nullCount, taskCount, discardCount, (System.currentTimeMillis() - startTimeMillis));

@@ -64,10 +64,10 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     internal const int MASK_CHECKING_GUARD = 1 << 18;
     private const int MASK_NOT_ACTIVE_SELF = 1 << 19;
     private const int MASK_NOT_ACTIVE_IN_HIERARCHY = 1 << 20;
-    // 高12位为控制流程相关bit，定义在TaskOptions类中
+    private const int MASK_REGISTERED_LISTENER = 1 << 21;
 
     /** 条件节点的基础选项 */
-    private const int MASK_GUARD_BASE_OPTIONS = MASK_DISABLE_CHECK_CANCEL | MASK_CHECKING_GUARD | MASK_TAIL_RECURSION;
+    private const int MASK_GUARD_BASE_OPTIONS = MASK_CHECKING_GUARD | MASK_DISABLE_CHECK_CANCEL | MASK_TAIL_RECURSION;
     /** enter前相关options */
     private const int MASK_BEFORE_ENTER_OPTIONS = MASK_AUTO_LISTEN_CANCEL | MASK_AUTO_RESET_CHILDREN;
 
@@ -557,7 +557,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 注意：
     /// 1.active为false表示可以不执行心跳逻辑<see cref="Execute"/>。
     /// 2.只有停止Execute而不影响逻辑的场景，才可能需要该特性。比如：等待事件发生。
-    /// 3.如果等待条件或事件的过程中需要响应超时，则通常需要监听取消信号。
+    /// 3.如果等待条件或事件的过程中需要响应超时，通常需要通过定时任务唤醒。
     /// 4.如果Task处于非运行状态，该属性在运行时被重置。
     /// 5.该属性对条件检查无效。
     /// 6.为控制复杂度，暂不打算支持activeChanged事件。
@@ -602,6 +602,14 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     #endregion
 
     #region execute-util
+
+    /// <summary>
+    /// 注册取消信号监听器，任务在退出时将自动触发删除
+    /// </summary>
+    public void RegisterCancelListener() {
+        cancelToken.AddListener(this);
+        ctl |= MASK_REGISTERED_LISTENER;
+    }
 
     /// <summary>
     /// 检查取消
@@ -826,11 +834,12 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                 BeforeEnter(); // 这里用户可能修改控制流标记
             }
             if ((ctl & MASK_BEFORE_ENTER_OPTIONS) != 0) {
-                if ((ctl & MASK_AUTO_RESET_CHILDREN) != 0) {
+                if (IsAutoResetChildren) {
                     ResetChildrenForRestart();
                 }
-                if ((ctl & MASK_AUTO_LISTEN_CANCEL) != 0) {
+                if (IsAutoListenCancel) {
                     cancelToken.AddListener(this);
+                    ctl |= MASK_REGISTERED_LISTENER;
                 }
             }
             if ((initMask & TaskOverrides.MASK_ENTER) != 0) {
@@ -878,15 +887,15 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// <param name="fromControl">是否是父节点调用(是否是心跳触发)</param>
     public void Template_Execute(bool fromControl) {
         Debug.Assert(status == TaskStatus.RUNNING);
+        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && fromControl) {
+            return; // 前者多为假，后者多为真
+        }
+
         ICancelToken cancelToken = this.cancelToken;
         if (cancelToken.IsCancelling && IsAutoCheckCancel) {
             SetCancelled();
             return;
         }
-        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && fromControl) {
-            return; // 非活动状态下也检测取消信号；前者多为假，后者多为真
-        }
-
         int reentryId = this.reentryId;
         if ((ctl & MASK_EXECUTING) != 0) { // 递归执行
             Execute();
@@ -919,7 +928,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             ctl |= extraMask;
         }
         exitFrame = taskEntry.CurFrame;
-        if (IsAutoListenCancel) {
+        if ((ctl & MASK_REGISTERED_LISTENER) != 0) {
             cancelToken.RemListener(this);
         }
         try {

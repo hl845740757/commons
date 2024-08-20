@@ -66,7 +66,7 @@ public class CancelTokenTest {
 
     private static ICancelTokenSource newTokenSource(int code) {
         if ((mode.incrementAndGet() & 1) == 0) {
-            return newTokenSource(code);
+            return new CancelTokenSource(code);
         } else {
             return new UniCancelTokenSource(code);
         }
@@ -366,8 +366,8 @@ public class CancelTokenTest {
         Assertions.assertEquals(reason, builder.getReason());
         Assertions.assertEquals(degree, builder.getDegree());
         Assertions.assertTrue(builder.isInterruptible());
-        final int code = builder.build();
 
+        final int code = builder.build();
         ICancelTokenSource cts = newTokenSource(0);
         cts.cancel(code);
 
@@ -376,4 +376,5 @@ public class CancelTokenTest {
         Assertions.assertEquals(degree, cts.degree());
         Assertions.assertTrue(cts.isInterruptible());
     }
+    // endregion
 }

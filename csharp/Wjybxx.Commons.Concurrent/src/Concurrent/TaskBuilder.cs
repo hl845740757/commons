@@ -68,7 +68,7 @@ public interface TaskBuilder
         return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_CTX, func, context);
     }
 
-    public static TaskBuilder<T> NewTimeSharing<T>(TimeSharingTask<T> func, IContext context) {
+    public static TaskBuilder<T> NewTimeSharing<T>(TimeSharingTask<T> func, IContext? context = null) {
         return new TaskBuilder<T>(TaskBuilder.TYPE_TIMESHARING, func, context);
     }
 

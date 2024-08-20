@@ -300,6 +300,25 @@ internal class ValueFutureTask<T> : ITaskDriver<T>, IFutureTask
         return ex;
     }
 
+    public void GetVoidResult(int reentryId, bool ignoreReentrant = false) {
+        ValidateReentryId(reentryId, ignoreReentrant);
+        TaskStatus status = _promise.Status;
+        if (!status.IsCompleted()) {
+            throw new IllegalStateException("Task has not completed");
+        }
+        
+        Exception? ex = null;
+        if (status != TaskStatus.Success) {
+            ex = _promise.ExceptionNow(false);
+        }
+        // GetResult以后归还到池
+        POOL.Release(this);
+        
+        if (ex != null) {
+            throw status == TaskStatus.Cancelled ? ex : new CompletionException(null, ex);
+        }
+    }
+
     public T GetResult(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
         TaskStatus status = _promise.Status;
@@ -347,7 +366,7 @@ internal class ValueFutureTask<T> : ITaskDriver<T>, IFutureTask
         if (ignoreReentrant || reentryId == this._reentryId) {
             return;
         }
-        throw new Exception("ValueFutureDriver has been reused");
+        throw new IllegalStateException("ValueFutureDriver has been reused");
     }
 
     #endregion

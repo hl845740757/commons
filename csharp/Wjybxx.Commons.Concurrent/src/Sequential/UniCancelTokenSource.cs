@@ -306,7 +306,6 @@ public class UniCancelTokenSource : ICancelTokenSource
         return preCode;
     }
 
-
     /** 删除node -- 修正指针 */
     private void RemoveNode(Completion node) {
         Completion curr = stack;

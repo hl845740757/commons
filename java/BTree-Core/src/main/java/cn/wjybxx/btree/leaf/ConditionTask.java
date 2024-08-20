@@ -51,9 +51,14 @@ public abstract class ConditionTask<T> extends LeafTask<T> {
         }
     }
 
-    /** @return Taskstus */
+    /**
+     * 检查条件 -- 同步返回
+     *
+     * @return 状态码
+     */
     protected abstract int test();
 
+    /** 条件节点正常情况下不会触发事件 */
     @Override
     public boolean canHandleEvent(@Nonnull Object event) {
         return false;

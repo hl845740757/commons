@@ -17,7 +17,6 @@
 #endregion
 
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using NUnit.Framework;
 using Wjybxx.Commons.Collections;
@@ -27,11 +26,9 @@ using Wjybxx.Disruptor;
 namespace Commons.Tests.Concurrent;
 
 /// <summary>
-/// Disruptor事件循环，混合模式测试
-/// <see cref="DisruptorEventLoop{T}.Execute(System.Action,int)"/>
-/// <see cref="DisruptorEventLoop{T}.Publish(long, long)"/>
+/// 测试多生产者使用<see cref="DisruptorEventLoop{T}.Execute(System.Action, int)"/>发布任务的时序
 /// </summary>
-public class DisruptorEventLoopMpMixTest
+public class DisruptorEventLoopMpExecuteTest
 {
     private const int PRODUCER_COUNT = 6;
 
@@ -48,23 +45,6 @@ public class DisruptorEventLoopMpMixTest
         consumer = null!;
         producerList = null!;
         alert = false;
-
-        CreateProducers();
-    }
-
-    private static void CreateProducers() {
-        // 注意：用户事件从1开始
-        producerList = new List<Thread>(PRODUCER_COUNT);
-        for (int i = 1; i <= PRODUCER_COUNT; i++) {
-            int type = i;
-            if (i > PRODUCER_COUNT / 2) {
-                producerList.Add(new Thread(() => ProducerLoop2(type)));
-            } else if (i == 1) {
-                producerList.Add(new Thread(() => ProducerLoop3(type)));
-            } else {
-                producerList.Add(new Thread(() => ProducerLoop1(type)));
-            }
-        }
     }
 
     [Test]
@@ -76,6 +56,12 @@ public class DisruptorEventLoopMpMixTest
             Agent = agent
         }.Build();
 
+        // 注意：用户事件从1开始
+        producerList = new List<Thread>(PRODUCER_COUNT);
+        for (int i = 1; i <= PRODUCER_COUNT; i++) {
+            int type = i; // lambda
+            producerList.Add(new Thread(() => ProducerLoop(type)));
+        }
         foreach (Thread thread in producerList) {
             thread.Start();
         }
@@ -102,6 +88,12 @@ public class DisruptorEventLoopMpMixTest
             Agent = agent
         }.Build();
 
+        // 注意：用户事件从1开始
+        producerList = new List<Thread>(PRODUCER_COUNT);
+        for (int i = 1; i <= PRODUCER_COUNT; i++) {
+            int type = i; // lambda
+            producerList.Add(new Thread(() => ProducerLoop(type)));
+        }
         foreach (Thread thread in producerList) {
             thread.Start();
         }
@@ -119,28 +111,8 @@ public class DisruptorEventLoopMpMixTest
         Assert.IsTrue(counter.errorMsgList.Count == 0, CollectionUtil.ToString(counter.errorMsgList));
     }
 
-    /** 单个申请和发布 */
-    private static void ProducerLoop1(int type) {
-        DisruptorEventLoop<CounterEvent> consumer = DisruptorEventLoopMpMixTest.consumer;
-        long localSequence = 0;
-        while (!alert && localSequence < 1000000) {
-            long? sequence = consumer.NextSequence();
-            if (sequence == null) {
-                break;
-            }
-            try {
-                CounterEvent agentEvent = new CounterEvent(type);
-                agentEvent.longVal1 = localSequence++;
-                consumer.SetEvent(sequence.Value, agentEvent);
-            }
-            finally {
-                consumer.Publish(sequence.Value);
-            }
-        }
-    }
-
-    private static void ProducerLoop2(int type) {
-        DisruptorEventLoop<CounterEvent> consumer = DisruptorEventLoopMpMixTest.consumer;
+    private static void ProducerLoop(int type) {
+        DisruptorEventLoop<CounterEvent> consumer = DisruptorEventLoopMpExecuteTest.consumer;
         long localSequence = 0;
         while (!alert && localSequence < 1000000) {
             try {
@@ -148,30 +120,6 @@ public class DisruptorEventLoopMpMixTest
             }
             catch (RejectedExecutionException) {
                 break;
-            }
-        }
-    }
-
-    /** 批量申请和发布 */
-    private static void ProducerLoop3(int type) {
-        DisruptorEventLoop<CounterEvent> consumer = DisruptorEventLoopMpMixTest.consumer;
-        long localSequence = 0;
-        while (!alert && localSequence < 1000000) {
-            int batchSize = 10;
-            long? hi = consumer.NextSequence(batchSize);
-            if (hi == null) {
-                break;
-            }
-            long low = hi.Value - batchSize + 1;
-            try {
-                for (long sequence = low; sequence <= hi.Value; sequence++) {
-                    CounterEvent agentEvent = new CounterEvent(type);
-                    agentEvent.longVal1 = localSequence++;
-                    consumer.SetEvent(sequence, agentEvent);
-                }
-            }
-            finally {
-                consumer.Publish(low, hi.Value);
             }
         }
     }

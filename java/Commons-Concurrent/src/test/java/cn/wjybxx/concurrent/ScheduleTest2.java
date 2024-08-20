@@ -35,13 +35,12 @@ import java.util.concurrent.TimeoutException;
  */
 public class ScheduleTest2 {
 
-    private final List<String> stringList = List.of("hello", "world", "a", "b", "c");
+    private static final List<String> stringList = List.of("hello", "world", "a", "b", "c");
+    private static final String expectedString = String.join(",", stringList);
 
-    private EventLoop consumer;
-    private StringJoiner joiner;
-    private int index = 0;
-
-    private String expectedString;
+    private static EventLoop consumer;
+    private static StringJoiner joiner;
+    private static int index = 0;
 
     @BeforeEach
     void setUp() {
@@ -54,10 +53,7 @@ public class ScheduleTest2 {
         consumer.start().join();
 
         joiner = new StringJoiner(",");
-
-        StringJoiner tempJoiner = new StringJoiner(",");
-        stringList.forEach(tempJoiner::add);
-        expectedString = tempJoiner.toString();
+        index = 0;
     }
 
     @AfterEach
@@ -118,10 +114,6 @@ public class ScheduleTest2 {
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
         Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
-
-        consumer.submit(() -> {
-            System.out.println();
-        });
     }
 
     @Test
@@ -150,24 +142,26 @@ public class ScheduleTest2 {
 
     @Test
     void testTimeSharingCountLimitSuccess() {
-        long millis = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.newTimeSharing((ctx, firstStep) -> timeSharingJoinString())
                 .setFixedDelay(10, 10)
                 .setCountLimit(stringList.size()));
 
-        future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
-        System.out.println(System.currentTimeMillis() - millis);
+        future.awaitUninterruptibly();
+        System.out.println(System.currentTimeMillis() - startTime);
         Assertions.assertEquals(expectedString, future.resultNow());
     }
 
     @Test
     void testTimeSharingCountLimitFail() {
+        long startTime = System.currentTimeMillis();
         IScheduledFuture<String> future = consumer.schedule(ScheduledTaskBuilder.newTimeSharing(
-                (ctx, firstStep) -> timeSharingJoinString())
+                        (ctx, firstStep) -> timeSharingJoinString())
                 .setFixedDelay(0, 10)
                 .setCountLimit(stringList.size() - 1));
 
-        future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
+        future.awaitUninterruptibly();
+        System.out.println(System.currentTimeMillis() - startTime);
         Assertions.assertTrue(future.exceptionNow() == StacklessTimeoutException.INST_COUNT_LIMIT);
     }
 
