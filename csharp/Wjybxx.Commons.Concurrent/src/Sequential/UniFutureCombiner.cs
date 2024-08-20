@@ -87,6 +87,7 @@ public sealed class UniFutureCombiner
     /// <summary>
     /// 返回的promise在任意future进入完成状态时进入完成状态
     /// 返回的promise与首个完成future的结果相同（不准确）
+    /// 注意：如果future数量为0，返回的promise将无法进入完成状态。
     /// </summary>
     /// <returns></returns>
     public IPromise<object> AnyOf() {
@@ -201,11 +202,10 @@ public sealed class UniFutureCombiner
             if (doneCount < succeedCount) { // 退出竞争，另一个线程来完成
                 return false;
             }
-            // 没有任务，立即完成
-            if (futureCount == 0) {
-                return aggregatePromise!.TrySetResult(null);
-            }
             if (options.IsAnyOf) {
+                if (futureCount == 0) { // anyOf不能完成，考虑打印log
+                    return false;
+                }
                 if (doneCount == 0) {
                     return false;
                 }

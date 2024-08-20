@@ -89,7 +89,8 @@ public final class UniFutureCombiner {
 
     /**
      * 返回的promise在任意future进入完成状态时进入完成状态
-     * 返回的promise与首个future的结果相同
+     * 返回的promise与首个完成future的结果相同（不准确）
+     * 注意：如果future数量为0，返回的promise将无法进入完成状态。
      */
     public IPromise<Object> anyOf() {
         return finish(AggregateOptions.anyOf());
@@ -203,12 +204,10 @@ public final class UniFutureCombiner {
         boolean checkComplete() {
             int doneCount = this.doneCount;
             int succeedCount = this.succeedCount;
-
-            // 没有任务，立即完成
-            if (futureCount == 0) {
-                return aggregatePromise.trySetResult(null);
-            }
             if (options.isAnyOf()) {
+                if (futureCount == 0) { // anyOf不能完成，考虑打印log
+                    return false;
+                }
                 if (doneCount == 0) {
                     return false;
                 }
