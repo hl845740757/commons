@@ -69,9 +69,10 @@ public abstract class Task<T> implements ICancelTokenListener {
     public static final int MASK_DISABLE_CHECK_CANCEL = 1 << 25;
     public static final int MASK_AUTO_LISTEN_CANCEL = 1 << 26;
     public static final int MASK_CANCEL_TOKEN_PER_CHILD = 1 << 27;
-    public static final int MASK_AUTO_RESET_CHILDREN = 1 << 28;
-    public static final int MASK_INVERTED_GUARD = 1 << 29;
-    public static final int MASK_TAIL_CALL_RECURSION = 1 << 30;
+    public static final int MASK_BLACKBOARD_PER_CHILD = 1 << 28;
+    public static final int MASK_AUTO_RESET_CHILDREN = 1 << 29;
+    public static final int MASK_INVERTED_GUARD = 1 << 30;
+    public static final int MASK_TAIL_CALL_RECURSION = 1 << 31;
     /** 高8位为流程控制特征值（对外开放） */
     public static final int MASK_CONTROL_FLOW_OPTIONS = (-1) << 24;
 
@@ -318,7 +319,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      * Task的心跳方法，在Task进入完成状态之前会反复执行。
      * 1.可以根据{@link #isExecuteTriggeredByEnter()}判断是否是与{@link #enter(int)}连续执行的。
      * 2.运行中可通过{@link #setSuccess()}、{@link #setFailed(int)}、{@link #setCancelled()}将自己更新为完成状态。
-     * 3.不建议直接调用该方法，而是通过模板方法{@link #template_execute()}运行。
+     * 3.不建议直接调用该方法，而是通过模板方法{@link #template_execute(boolean)}运行。
      */
     protected abstract void execute();
 
@@ -750,6 +751,19 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     public final boolean isCancelTokenPerChild() {
         return (ctl & MASK_CANCEL_TOKEN_PER_CHILD) != 0;
+    }
+
+    /**
+     * 是否每个child一个独立的黑板（常见于栈式黑板）
+     * 1.默认值由{@link #flags}中的信息指定，默认false
+     * 2.该值是否生效取决于控制节点的实现，这里只是提供配置接口。
+     */
+    public final void setBlackboardPerChild(boolean value) {
+        setCtlBit(MASK_BLACKBOARD_PER_CHILD, value);
+    }
+
+    public final boolean isBlackboardPerChild() {
+        return (ctl & MASK_BLACKBOARD_PER_CHILD) != 0;
     }
 
     /**

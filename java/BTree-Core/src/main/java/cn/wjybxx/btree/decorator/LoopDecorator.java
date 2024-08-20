@@ -23,7 +23,7 @@ import cn.wjybxx.btree.Task;
  * <p>
  * 注意：该模板类默认支持了尾递归优化，如果子类没有重写{@link #execute()}方法，
  * 那么在{@link #onChildCompleted(Task)}方法中还需要判断是否启用了尾递归优化，
- * 如果启用了尾递归优化，也需要调用{@link #template_execute()}方法。
+ * 如果启用了尾递归优化，也需要调用{@link #template_execute(boolean)}方法。
  *
  * @author wjybxx
  * date - 2023/11/26

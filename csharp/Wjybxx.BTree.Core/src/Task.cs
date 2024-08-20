@@ -764,6 +764,16 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     }
 
     /// <summary>
+    /// 是否每个child一个独立的黑板（常见于栈式黑板）
+    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认false。
+    /// 2.该值是否生效取决于控制节点的实现，这里只是提供配置接口。
+    /// </summary>
+    public bool IsBlackboardPerChild {
+        get => (ctl & MASK_BLACKBOARD_PER_CHILD) != 0;
+        set => SetCtlBit(MASK_BLACKBOARD_PER_CHILD, value);
+    }
+
+    /// <summary>
     /// 告知模板方法是否在<see cref="Enter"/>前自动调用<see cref="ResetChildrenForRestart"/>
     /// 1.默认值由<see cref="Flags"/>中的信息指定，默认不分开执行
     /// 2.要覆盖默认值应当在<see cref="BeforeEnter"/>方法中调用

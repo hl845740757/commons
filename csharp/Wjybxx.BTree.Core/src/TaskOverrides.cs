@@ -32,6 +32,7 @@ internal static class TaskOverrides
     internal const int MASK_BEFORE_ENTER = 1;
     internal const int MASK_ENTER = 1 << 1;
     internal const int MASK_EXIT = 1 << 2;
+    internal const int MASK_REFRESH_CHILDREN_ACTIVE = 1 << 3;
     private const int MASK_ALL = 15;
 
     internal const int MASK_INLINABLE = 1 << 4;
@@ -62,6 +63,9 @@ internal static class TaskOverrides
             }
             if (IsSkippable(clazz, "Exit")) {
                 mask &= ~MASK_EXIT;
+            }
+            if (IsSkippable(clazz, "RefreshChildrenActiveInHierarchy")) {
+                mask &= ~MASK_REFRESH_CHILDREN_ACTIVE;
             }
             if (inlinable) {
                 mask |= MASK_INLINABLE;
