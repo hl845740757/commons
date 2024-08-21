@@ -143,6 +143,10 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
 
     public override IEventLoopModule? MainModule => mainModule;
 
+    /** 当前消费序号 */
+    [VisibleForTesting]
+    internal long CurSequence => sequence.GetVolatile();
+
     #region 状态查询
 
     public sealed override EventLoopState State => (EventLoopState)state;

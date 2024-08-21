@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 全局事件循环，用于执行一些
+ * 全局事件循环，用于执行一些简单的任务。
  *
  * @author wjybxx
  * date - 2024/8/21

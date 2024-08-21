@@ -19,6 +19,7 @@ package cn.wjybxx.concurrent;
 import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.annotation.Beta;
+import cn.wjybxx.base.annotation.VisibleForTesting;
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
 import cn.wjybxx.base.concurrent.CancelCodes;
@@ -147,6 +148,12 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     @Override
     public EventLoopModule mainModule() {
         return mainModule;
+    }
+
+    /** 当前消费序号 */
+    @VisibleForTesting
+    long curSequence() {
+        return worker.sequence.getVolatile();
     }
 
     // region 状态查询

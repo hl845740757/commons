@@ -42,7 +42,7 @@ public class FutureTest {
 
     /** 用于内联测试 */
     private static long curSequence() {
-        return globalEventLoop.getBarrier().sequence();
+        return globalEventLoop.curSequence();
     }
 
     private static final IExecutor immediateExecutor = Runnable::run;
