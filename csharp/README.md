@@ -2,6 +2,8 @@
 
 csharp公共库，包含集合等基础组件;nuget搜索'wjybxx'即可查看到相关库。
 
+注意：commons和Btree `1.1.0`开始属于正式版，而Dson`2.2.0`开始属于正式版，沿用之前的版本号。
+
 注意： 1.0.x 尚属于快速迭代版本，等**基础工具基本完备的时候，会更新到 1.1.x 版本**。因为我还有几个项目没有完成，会把遇见的一些基础工具迁移到这里，或在这里实现。
 
 ## 命名规则
@@ -33,14 +35,14 @@ Core模块包含一些基础的工具类和注解，这些基础工具和注解�
 APT包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
 我在java端使用javapoet生成各类辅助类已有5年左右，这是个非常好用的轮子的，但C#端没有合适的等价物，于是自己移植了一版。
 
-### Disruptor模块(TODO)
-
-Disruptor是LMAX的Disruptor的C#端实现，但并不是直接实现，而是修改后的实现，与我重写Java版的Disruptor模块一致。
-
 ### Commons.Concurrent模块
 
 1. 提供了Java的Executor和Future框架，并提供了对应的await语法支持。
 2. 提供了默认的EventLoop实现。
+
+### Disruptor模块
+
+Disruptor是LMAX的Disruptor的C#端实现，但并不是直接实现，而是修改后的实现，与我重写Java版的Disruptor模块一致。
 
 ### Dson.Core
 
@@ -62,7 +64,10 @@ Dson.Codec是基于Dson文本的序列化实现，支持以下特性：
 8. 为外部库类生成Codec(apt)
 9. 外部静态代理(apt)
 
-由于我们提供了强大灵活的Apt，因此不支持运行时反射编解码类型。
+不支持的特性：
+
+1. 默认不支持对象图序列化
+2. 不支持委托类型。
 
 ### Dson.Apt
 

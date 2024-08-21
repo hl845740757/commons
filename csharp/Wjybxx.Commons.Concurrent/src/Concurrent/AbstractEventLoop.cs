@@ -96,7 +96,7 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public virtual bool IsTerminated => State >= EventLoopState.Terminated;
 
-    public bool AwaitTermination(TimeSpan timeout) {
+    public virtual bool AwaitTermination(TimeSpan timeout) {
         return TerminationFuture.Await(timeout);
     }
 

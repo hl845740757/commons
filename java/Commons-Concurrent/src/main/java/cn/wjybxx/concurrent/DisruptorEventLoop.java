@@ -19,7 +19,6 @@ package cn.wjybxx.concurrent;
 import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.annotation.Beta;
-import cn.wjybxx.base.annotation.VisibleForTesting;
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
 import cn.wjybxx.base.concurrent.CancelCodes;
@@ -150,17 +149,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
         return mainModule;
     }
 
-    /** 仅用于测试 */
-    @VisibleForTesting
-    public ConsumerBarrier getBarrier() {
-        return worker.barrier;
-    }
-
-    /** EventLoop绑定的事件生成器 - 可用于发布事件 */
-    public EventSequencer<? extends T> getEventSequencer() {
-        return eventSequencer;
-    }
-
     // region 状态查询
 
     @Override
@@ -194,12 +182,12 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     }
 
     @Override
-    public final IFuture<?> terminationFuture() {
+    public IFuture<?> terminationFuture() {
         return terminationFuture;
     }
 
     @Override
-    public final boolean awaitTermination(long timeout, @Nonnull TimeUnit unit) throws InterruptedException {
+    public boolean awaitTermination(long timeout, @Nonnull TimeUnit unit) throws InterruptedException {
         return terminationPromise.await(timeout, unit);
     }
 
@@ -214,7 +202,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
     }
 
     @Override
-    public final void wakeup() {
+    public void wakeup() {
         if (!inEventLoop() && thread.isAlive()) {
             thread.interrupt();
             agent.wakeup();
@@ -438,7 +426,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
 
         @Override
         public void onCancelRequested(ScheduledPromiseTask<?> futureTask, int cancelCode) {
-            futureTask.trySetCancelled(cancelCode);
             if (CancelCodes.isWithoutRemove(cancelCode)) {
                 return;
             }

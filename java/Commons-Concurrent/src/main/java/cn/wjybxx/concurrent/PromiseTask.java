@@ -255,16 +255,16 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     // region util
 
-    protected static void trySetCancelled(IPromise<?> promise, ICancelToken cancelToken) {
+    protected static boolean trySetCancelled(IPromise<?> promise, ICancelToken cancelToken) {
         int cancelCode = cancelToken.cancelCode();
         assert cancelCode != 0;
-        promise.trySetCancelled(cancelCode);
+        return promise.trySetCancelled(cancelCode);
     }
 
-    protected static void trySetCancelled(IPromise<?> promise, ICancelToken cancelToken, int def) {
+    protected static boolean trySetCancelled(IPromise<?> promise, ICancelToken cancelToken, int def) {
         int cancelCode = cancelToken.cancelCode();
         if (cancelCode == 0) cancelCode = def;
-        promise.trySetCancelled(cancelCode);
+        return promise.trySetCancelled(cancelCode);
     }
 
     // endregion

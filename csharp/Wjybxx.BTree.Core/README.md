@@ -28,10 +28,10 @@ Task的上下文由三部分组成：黑板、取消令牌、共享属性。
 
 ```java
     class Task {
-    Object blackboard;
-    CancelToken cancelToken;
-    Object sharedProps;
-}
+        Object blackboard;
+        CancelToken cancelToken;
+        Object sharedProps;
+    }
 ```
 
 ### Blackboard(黑板)

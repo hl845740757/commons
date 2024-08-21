@@ -143,33 +143,22 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
 
     public override IEventLoopModule? MainModule => mainModule;
 
-    /** 仅用于测试 */
-    [VisibleForTesting]
-    public ConsumerBarrier GetBarrier() {
-        return barrier;
-    }
-
-    /** EventLoop绑定的事件生成器 - 可用于发布事件 */
-    public EventSequencer<T> GetEventSequencer() {
-        return eventSequencer;
-    }
-
     #region 状态查询
 
-    public override EventLoopState State => (EventLoopState)state;
-    public override bool IsRunning => state == ST_RUNNING;
-    public override bool IsShuttingDown => state >= ST_SHUTTING_DOWN;
-    public override bool IsShutdown => state >= ST_SHUTDOWN;
-    public override bool IsTerminated => state == ST_TERMINATED;
+    public sealed override EventLoopState State => (EventLoopState)state;
+    public sealed override bool IsRunning => state == ST_RUNNING;
+    public sealed override bool IsShuttingDown => state >= ST_SHUTTING_DOWN;
+    public sealed override bool IsShutdown => state >= ST_SHUTDOWN;
+    public sealed override bool IsTerminated => state == ST_TERMINATED;
 
-    public override IFuture RunningFuture => runningFuture;
+    public sealed override IFuture RunningFuture => runningFuture;
     public override IFuture TerminationFuture => terminationFuture;
 
-    public override bool InEventLoop() {
+    public sealed override bool InEventLoop() {
         return this.thread == Thread.CurrentThread;
     }
 
-    public override bool InEventLoop(Thread thread) {
+    public sealed override bool InEventLoop(Thread thread) {
         return this.thread == thread;
     }
 
@@ -293,16 +282,19 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
     }
 
     /** 适用Class类型事件 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetEvent(long sequence) {
         return dataProvider.ProducerGet(sequence);
     }
 
     /** 适用结构体类型事件 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T GetEventRef(long sequence) {
         return ref dataProvider.ProducerGetRef(sequence);
     }
 
     /** 适用结构体类型事件 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetEvent(long sequence, T eventObj) {
         dataProvider.ProducerSet(sequence, eventObj);
     }
@@ -325,6 +317,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
      * @return 如果申请成功，则返回对应的sequence，否则返回null
      */
     [Beta]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long? NextSequence() {
         return NextSequence(1);
     }
@@ -428,7 +421,6 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
         }
 
         public void OnCancelRequested(IScheduledFutureTask futureTask, int cancelCode) {
-            futureTask.TrySetCancelled(cancelCode);
             if (CancelCodes.IsWithoutRemove(cancelCode)) {
                 return; // 用户选择不立即从队列删除
             }

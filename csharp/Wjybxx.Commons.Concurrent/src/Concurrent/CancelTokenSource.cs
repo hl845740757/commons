@@ -20,7 +20,6 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Wjybxx.Disruptor;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -32,17 +31,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
     /// <summary>
     /// 默认的延迟调度器
     /// </summary>
-    private static readonly IScheduledExecutorService _delayer = new DisruptorEventLoopBuilder<MiniAgentEvent>()
-    {
-        ThreadFactory = new DefaultThreadFactory("Delayer"),
-        EventSequencer = new MpUnboundedEventSequencer<MiniAgentEvent>.Builder(() => new MiniAgentEvent())
-            {
-                WaitStrategy = new TimeoutSleepingWaitStrategy(10, 10, 10), // 需要处理定时任务，不能一直Sleep
-                MaxPooledChunks = 1
-            }
-            .Build()
-    }.Build();
-
+    private static readonly IScheduledExecutorService _delayer = GlobalEventLoop.Inst;
 
     private volatile int code;
     private volatile Completion? stack;

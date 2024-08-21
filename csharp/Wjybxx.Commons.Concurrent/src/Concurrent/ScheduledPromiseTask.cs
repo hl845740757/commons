@@ -325,8 +325,15 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
 
     [Obsolete("该方法为中转方法，EventLoop不应该调用")]
     public void OnCancelRequested(ICancelToken cancelToken) {
-        // 用户通过令牌发起取消
-        helper.OnCancelRequested(this, cancelToken.CancelCode);
+        // 用户通过令牌发起取消，此时任务可能正在执行，从而有并发风险
+        IScheduledHelper helper = this.helper;
+        IPromise<T> promise = this.promise;
+        if (helper == null || promise == null) {
+            return; // cleared
+        }
+        if (TrySetCancelled(promise, cancelToken)) {
+            helper.OnCancelRequested(this, cancelToken.CancelCode);
+        }
     }
 
     private void CloseRegistration() {

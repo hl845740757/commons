@@ -17,6 +17,7 @@
 #endregion
 
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 #pragma warning disable CS0169
@@ -24,21 +25,22 @@ namespace Wjybxx.Disruptor
 {
 /// <summary>
 /// 序列，用于追踪RingBuffer和EventProcessor的进度，表示生产/消费进度。
+///
+/// <see cref="FieldOffsetAttribute"/>较为适合这种没有继承关系的，字段数又比较少的类型。
 /// </summary>
+[StructLayout(LayoutKind.Explicit)]
 public sealed class Sequence
 {
     private const long INITIAL_VALUE = -1L;
 
-    // region padding
-    private long p1, p2, p3, p4, p5, p6, p7;
-    // endregion
+    [FieldOffset(0)]
+    private long lhsPadding;
 
-    /** volatile读写 */
+    [FieldOffset(64 - 8)]
     private long _value;
 
-    // region padding
-    private long p11, p12, p13, p14, p15, p16, p17;
-    // endregion
+    [FieldOffset(120 - 8)]
+    private long rhsPadding;
 
     public Sequence(long value = INITIAL_VALUE) {
         this._value = value;

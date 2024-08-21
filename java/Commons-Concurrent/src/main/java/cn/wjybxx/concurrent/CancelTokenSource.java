@@ -25,7 +25,10 @@ import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.Objects;
-import java.util.concurrent.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -40,12 +43,7 @@ import java.util.function.Consumer;
  */
 public final class CancelTokenSource implements ICancelTokenSource {
 
-    private static final ScheduledThreadPoolExecutor delayer;
-
-    static {
-        delayer = new ScheduledThreadPoolExecutor(1, new DefaultThreadFactory("CancelTokenSource.Delayer", true));
-        delayer.setRemoveOnCancelPolicy(true);
-    }
+    private static final EventLoop delayer = GlobalEventLoop.INST;
 
     /**
      * 取消码

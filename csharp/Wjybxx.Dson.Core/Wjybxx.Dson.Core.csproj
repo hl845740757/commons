@@ -8,7 +8,7 @@
 
         <AssemblyName>Wjybxx.Dson.Core</AssemblyName>
         <PackageId>Wjybxx.Dson.Core</PackageId>
-        <PackageVersion>2.2.0-rc3</PackageVersion>
+        <PackageVersion>2.2.0</PackageVersion>
 
         <Title>Wjybxx.Dson</Title>
         <Description>Dson-有点奇怪的配置文件格式和序列化方案</Description>

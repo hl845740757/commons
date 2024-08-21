@@ -8,11 +8,11 @@
         
         <AssemblyName>Wjybxx.BTree.Core</AssemblyName>
         <PackageId>Wjybxx.BTree.Core</PackageId>
-        <PackageVersion>1.0.0-rc3</PackageVersion>
+        <PackageVersion>1.1.0</PackageVersion>
 
         <Title>Wjybxx.BTree.Core</Title>
-        <Description>BTree-非典型的行为树实现</Description>
-        <PackageTags>wjybxx;task;btree;game-ai;</PackageTags>
+        <Description>BTree-非典型的高性能行为树实现</Description>
+        <PackageTags>wjybxx;btree;tasktree;game-ai;</PackageTags>
 
         <Authors>wjybxx(845740757@qq.com)</Authors>
         <Owners>wjybxx(845740757@qq.com)</Owners>
@@ -39,7 +39,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+        <None Include="README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
     <ItemGroup>

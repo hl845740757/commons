@@ -8,7 +8,7 @@
 
         <AssemblyName>Wjybxx.Dson.Apt</AssemblyName>
         <PackageId>Wjybxx.Dson.Apt</PackageId>
-        <PackageVersion>2.2.0-rc3</PackageVersion>
+        <PackageVersion>2.2.0</PackageVersion>
 
         <Title>Wjybxx.Dson.Apt</Title>
         <Description>Dson注解处理器，代码生成工具</Description>

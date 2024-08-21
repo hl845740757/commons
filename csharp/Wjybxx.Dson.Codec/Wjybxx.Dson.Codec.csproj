@@ -8,7 +8,7 @@
 
         <AssemblyName>Wjybxx.Dson.Codec</AssemblyName>
         <PackageId>Wjybxx.Dson.Codec</PackageId>
-        <PackageVersion>2.2.0-rc3</PackageVersion>
+        <PackageVersion>2.2.0</PackageVersion>
 
         <Title>Wjybxx.Dson.Codec</Title>
         <Description>Dson对象序列化组件</Description>

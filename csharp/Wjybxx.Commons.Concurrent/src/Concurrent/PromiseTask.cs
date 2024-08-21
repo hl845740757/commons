@@ -252,16 +252,16 @@ public class PromiseTask<T> : IFutureTask
 
     #region util
 
-    protected static void TrySetCancelled(IPromise promise, ICancelToken cancelToken) {
+    protected static bool TrySetCancelled(IPromise promise, ICancelToken cancelToken) {
         int cancelCode = cancelToken.CancelCode;
         Debug.Assert(cancelCode != 0);
-        promise.TrySetCancelled(cancelCode);
+        return promise.TrySetCancelled(cancelCode);
     }
 
-    protected static void TrySetCancelled(IPromise promise, ICancelToken cancelToken, int def) {
+    protected static bool TrySetCancelled(IPromise promise, ICancelToken cancelToken, int def) {
         int cancelCode = cancelToken.CancelCode;
         if (cancelCode == 0) cancelCode = def;
-        promise.TrySetCancelled(cancelCode);
+        return promise.TrySetCancelled(cancelCode);
     }
 
     #endregion

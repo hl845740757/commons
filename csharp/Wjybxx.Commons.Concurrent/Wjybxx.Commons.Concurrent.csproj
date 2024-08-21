@@ -8,13 +8,14 @@
 
         <AssemblyName>Wjybxx.Commons.Concurrent</AssemblyName>
         <PackageId>Wjybxx.Commons.Concurrent</PackageId>
-        <PackageVersion>1.1.0-rc3</PackageVersion>
+        <PackageVersion>1.1.0</PackageVersion>
 
         <Title>Wjybxx.Commons.Concurrent</Title>
         <Description>并发基础库；提供事件循环和基于事件循环的await语法</Description>
         <PackageTags>wjybxx;concurrent;eventloop</PackageTags>
 
         <Authors>wjybxx(845740757@qq.com)</Authors>
+        <Owners>wjybxx(845740757@qq.com)</Owners>
         <Copyright>Copyright 2023-2024 wjybxx(845740757@qq.com)</Copyright>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/hl845740757/commons</PackageProjectUrl>

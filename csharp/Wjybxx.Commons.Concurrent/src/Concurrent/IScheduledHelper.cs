@@ -59,14 +59,15 @@ public interface IScheduledHelper
     /// <summary>
     /// 任务不可继续触发 -- 任务当前已出队列
     /// 1.回调给用户，让用户决定是否清理和缓存。
-    ///  2.与<see cref="Reschedule"/>成对
+    /// 2.与<see cref="Reschedule"/>成对
     /// </summary>
     /// <param name="futureTask"></param>
     void OnCompleted(IScheduledFutureTask futureTask);
 
     /// <summary>
     /// 收到用户的取消请求
-    /// (为了保持兼容，参数不使用<see cref="ICancelToken"/>)
+    /// 1.可能从其它线程调用，需考虑线程安全问题（取决于取消信号）
+    /// 2.Task关联的future在调用方法前已进入取消状态，用户处理后续逻辑。
     /// </summary>
     /// <param name="futureTask"></param>
     /// <param name="cancelCode"></param>

@@ -372,8 +372,15 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     @Deprecated
     @Override
     public void onCancelRequested(ICancelToken cancelToken) {
-        // 用户通过令牌发起取消
-        helper.onCancelRequested(this, cancelToken.cancelCode());
+        // 用户通过令牌发起取消，此时任务可能正在执行，从而有并发风险
+        IScheduledHelper helper = this.helper;
+        IPromise<V> promise = this.promise;
+        if (helper == null || promise == null) {
+            return; // cleared
+        }
+        if (trySetCancelled(promise, cancelToken)) {
+            helper.onCancelRequested(this, cancelToken.cancelCode());
+        }
     }
 
     private void closeRegistration() {

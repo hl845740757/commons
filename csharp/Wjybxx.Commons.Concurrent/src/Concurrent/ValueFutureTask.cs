@@ -306,14 +306,14 @@ internal class ValueFutureTask<T> : ITaskDriver<T>, IFutureTask
         if (!status.IsCompleted()) {
             throw new IllegalStateException("Task has not completed");
         }
-        
+
         Exception? ex = null;
         if (status != TaskStatus.Success) {
             ex = _promise.ExceptionNow(false);
         }
         // GetResult以后归还到池
         POOL.Release(this);
-        
+
         if (ex != null) {
             throw status == TaskStatus.Cancelled ? ex : new CompletionException(null, ex);
         }

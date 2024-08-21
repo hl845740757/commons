@@ -8,7 +8,7 @@
 
         <AssemblyName>Wjybxx.Disruptor</AssemblyName>
         <PackageId>Wjybxx.Disruptor</PackageId>
-        <PackageVersion>1.1.0-rc3</PackageVersion>
+        <PackageVersion>1.1.0</PackageVersion>
 
         <Title>Wjybxx.Disruptpr</Title>
         <Description>LMAX-Disruptor的C#精简实现，保留其核心设计，更好的抽象和扩展性</Description>
@@ -40,6 +40,5 @@
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
-
 
 </Project>

@@ -67,7 +67,8 @@ public interface IScheduledHelper {
     /**
      * 请求删除给定的任务
      * 1.可能从其它线程调用，需考虑线程安全问题（取决于取消信号）
-     * 2.未保持与JDK的兼容，参数不直接使用{@link ICancelToken}
+     * 2.Task关联的future在调用方法前已进入取消状态，用户处理后续逻辑。
+     * 3.未保持与JDK的兼容，参数不直接使用{@link ICancelToken}
      */
     void onCancelRequested(ScheduledPromiseTask<?> futureTask, int cancelCode);
 
