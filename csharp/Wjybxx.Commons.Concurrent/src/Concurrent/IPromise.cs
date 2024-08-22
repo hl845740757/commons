@@ -99,28 +99,10 @@ public interface IPromise : IFuture
     /// </summary>
     /// <param name="promise"></param>
     /// <param name="task"></param>
+    [Obsolete]
     public static void SetVoidPromise(IPromise<int> promise, IFuture task) {
-        switch (task.Status) {
-            case TaskStatus.Success: {
-                promise.TrySetResult(0);
-                break;
-            }
-            case TaskStatus.Failed:
-            case TaskStatus.Cancelled: {
-                promise.TrySetException(task.ExceptionNow(false));
-                break;
-            }
-            default: {
-                task.OnCompleted(_invokerSetVoidPromise, promise, TaskOptions.STAGE_UNCANCELLABLE_CTX);
-                break;
-            }
-        }
+        Executors.SetVoidPromise(promise, task);
     }
-
-    private static Action<IFuture, object> _invokerSetVoidPromise = (future, state) => {
-        IPromise<int> promise = (IPromise<int>)state;
-        SetVoidPromise(promise, future);
-    };
 }
 
 /// <summary>
@@ -156,34 +138,13 @@ public interface IPromise<T> : IFuture<T>, IPromise
     #region util
 
     /// <summary>
-    /// 用于执行数据传输的委托方法
-    /// </summary>
-    private static readonly Action<IFuture<T>, object> _invokerSetPromise = (future, state) => {
-        IPromise<T> promise = (IPromise<T>)state;
-        SetPromise(promise, future);
-    };
-
-    /// <summary>
     /// 将future结果传输到Promise
     /// </summary>
     /// <param name="promise"></param>
     /// <param name="task"></param>
+    [Obsolete]
     public static void SetPromise(IPromise<T> promise, IFuture<T> task) {
-        switch (task.Status) {
-            case TaskStatus.Success: {
-                promise.TrySetResult(task.ResultNow());
-                break;
-            }
-            case TaskStatus.Failed:
-            case TaskStatus.Cancelled: {
-                promise.TrySetException(task.ExceptionNow(false));
-                break;
-            }
-            default: {
-                task.OnCompleted(_invokerSetPromise, promise, TaskOptions.STAGE_UNCANCELLABLE_CTX);
-                break;
-            }
-        }
+        Executors.SetPromise(promise, task);
     }
 
     #endregion

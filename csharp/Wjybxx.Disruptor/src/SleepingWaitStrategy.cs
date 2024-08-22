@@ -39,9 +39,9 @@ public class SleepingWaitStrategy : WaitStrategy
     private readonly int yieldTries;
 
     public SleepingWaitStrategy() {
-        this.spinTries = 100;
-        this.spinIterations = 10;
-        this.yieldTries = 100;
+        this.spinTries = 10;
+        this.spinIterations = 1;
+        this.yieldTries = 10;
     }
 
     public SleepingWaitStrategy(int spinTries, int spinIterations, int yieldTries) {

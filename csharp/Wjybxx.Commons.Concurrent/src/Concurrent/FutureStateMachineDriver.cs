@@ -22,7 +22,8 @@ using System.Runtime.CompilerServices;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 
+///
+/// PS：该类型由于不复用，因此可直接继承Promise。
 /// </summary>
 /// <typeparam name="T">任务的结果类型</typeparam>
 /// <typeparam name="S">状态机类型</typeparam>
@@ -103,11 +104,11 @@ internal sealed class FutureStateMachineDriver<T, S> : Promise<T>, IFutureStateM
     }
 
     public void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise) {
-        IPromise<T>.SetPromise(promise, this);
+        Executors.SetPromise(promise, this);
     }
 
     public void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise) {
-        IPromise.SetVoidPromise(promise, this);
+        Executors.SetVoidPromise(promise, this);
     }
 }
 }

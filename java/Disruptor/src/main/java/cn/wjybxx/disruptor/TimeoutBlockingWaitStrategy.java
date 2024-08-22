@@ -19,7 +19,6 @@ package cn.wjybxx.disruptor;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -45,7 +44,7 @@ public class TimeoutBlockingWaitStrategy implements WaitStrategy {
 
     @Override
     public long waitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier)
-            throws TimeoutException, AlertException, InterruptedException {
+            throws AlertException, InterruptedException {
 
         SequenceBlocker blocker = Objects.requireNonNull(producerBarrier.getBlocker(), "blocker is null");
         long nanos = timeoutInNanos;
@@ -57,7 +56,7 @@ public class TimeoutBlockingWaitStrategy implements WaitStrategy {
                     barrier.checkAlert();
                     nanos = blocker.awaitNanos(nanos);
                     if (nanos <= 0) {
-                        throw StacklessTimeoutException.INSTANCE;
+                        return sequence - 1;
                     }
                 }
             } finally {

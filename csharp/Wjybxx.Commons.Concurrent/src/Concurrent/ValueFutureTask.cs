@@ -353,12 +353,12 @@ internal class ValueFutureTask<T> : ITaskDriver<T>, IFutureTask
 
     public void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise) {
         ValidateReentryId(reentryId);
-        IPromise.SetVoidPromise(promise, this._promise);
+        Executors.SetVoidPromise(promise, this._promise);
     }
 
     public void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise) {
         ValidateReentryId(reentryId);
-        IPromise<T>.SetPromise(promise, this._promise);
+        Executors.SetPromise(promise, this._promise);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

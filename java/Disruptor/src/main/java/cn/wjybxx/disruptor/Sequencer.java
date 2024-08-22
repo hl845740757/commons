@@ -18,7 +18,6 @@ package cn.wjybxx.disruptor;
 
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * 序号生成器

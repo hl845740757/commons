@@ -16,8 +16,6 @@
 
 package cn.wjybxx.disruptor;
 
-import java.util.concurrent.TimeoutException;
-
 /**
  * 自旋等待策略
  * 特征：极低的延迟，极高的吞吐量，以及极高的CPU占用。
@@ -35,7 +33,7 @@ public class BusySpinWaitStrategy implements WaitStrategy {
 
     @Override
     public long waitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier)
-            throws TimeoutException, AlertException, InterruptedException {
+            throws AlertException, InterruptedException {
 
         long availableSequence;
         while ((availableSequence = barrier.dependentSequence()) < sequence) {

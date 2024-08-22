@@ -620,7 +620,7 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
                 // 多生产者模型下不可频繁调用waitFor，会在查询可用sequence时产生巨大的开销，因此查询之后本地切割为小批次
                 if (availableSequence < nextSequence
                     && (availableSequence = barrier.WaitFor(nextSequence)) < nextSequence) {
-                    InvokeAgentUpdate();
+                    InvokeAgentUpdate(); // 等待超时
                     continue;
                 }
 
@@ -637,15 +637,6 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
                     break;
                 }
 
-                InvokeAgentUpdate();
-            }
-            catch (TimeoutException) {
-                // 优先先响应关闭，若未关闭，表用户主动退出等待，执行一次用户循环
-                if (IsShuttingDown) {
-                    break;
-                }
-                long tickTime = UpdateTickTime();
-                ProcessScheduledQueue(tickTime, false);
                 InvokeAgentUpdate();
             }
             catch (ThreadInterruptedException e) {

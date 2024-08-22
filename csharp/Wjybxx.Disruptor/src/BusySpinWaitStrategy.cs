@@ -33,21 +33,21 @@ public class BusySpinWaitStrategy : WaitStrategy
     public static BusySpinWaitStrategy Inst { get; } = new BusySpinWaitStrategy();
 
     // 入乡随俗，C#提供了一个参数，我们开放给用户
-    private readonly int iterations;
+    private readonly int spinIterations;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="iterations">用于控制SpinWait的等待时间</param>
-    public BusySpinWaitStrategy(int iterations = 1) {
-        this.iterations = iterations;
+    /// <param name="spinIterations">用于控制SpinWait的等待时间</param>
+    public BusySpinWaitStrategy(int spinIterations = 1) {
+        this.spinIterations = spinIterations;
     }
 
     public long WaitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier) {
         long availableSequence;
         while ((availableSequence = barrier.DependentSequence()) < sequence) {
             barrier.CheckAlert();
-            Thread.SpinWait(iterations);
+            Thread.SpinWait(spinIterations);
         }
         return availableSequence;
     }

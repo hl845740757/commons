@@ -51,7 +51,8 @@ public static class TaskPoolConfig
         ValueFutureStateMachineDriver,
         PromiseTask,
         ScheduledPromiseTask,
-        ValueFutureTask
+        ValueFutureTask,
+        ManualResetPromise
     }
 }
 }

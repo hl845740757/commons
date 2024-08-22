@@ -474,7 +474,7 @@ public class FutureUtils {
         return submitFunc(executor, supplier::get);
     }
 
-    public static IFuture<?> anyOf(IFuture<?> futures) {
+    public static IFuture<?> anyOf(IFuture<?>... futures) {
         return new FutureCombiner()
                 .addAll(futures)
                 .anyOf();

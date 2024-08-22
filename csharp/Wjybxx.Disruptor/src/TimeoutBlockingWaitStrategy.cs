@@ -53,7 +53,7 @@ public class TimeoutBlockingWaitStrategy : WaitStrategy
 
                     current = Util.SystemTickMillis();
                     if (current >= deadline) {
-                        throw StacklessTimeoutException.Inst;
+                        return sequence - 1;
                     }
                 }
             }

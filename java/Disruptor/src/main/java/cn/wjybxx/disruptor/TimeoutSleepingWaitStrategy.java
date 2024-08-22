@@ -69,7 +69,7 @@ public class TimeoutSleepingWaitStrategy implements WaitStrategy {
 
     @Override
     public long waitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier)
-            throws TimeoutException, AlertException, InterruptedException {
+            throws AlertException, InterruptedException {
 
         int counter = spinTries + yieldTries + sleepTries;
         int yieldThreshold = yieldTries + sleepTries;
@@ -91,11 +91,11 @@ public class TimeoutSleepingWaitStrategy implements WaitStrategy {
 
                 long remainNano = Math.min(parkDeadline - System.nanoTime(), sleepTimeNs);
                 if (remainNano < 1) {
-                    throw StacklessTimeoutException.INSTANCE;
+                    return sequence - 1;
                 }
                 LockSupport.parkNanos(remainNano);
             } else {
-                throw StacklessTimeoutException.INSTANCE;
+                return sequence - 1;
             }
         }
         return availableSequence;

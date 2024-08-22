@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Disruptor;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -51,7 +52,12 @@ public class EventLoopFactory : IEventLoopFactory
         {
             Parent = parent,
             Index = index,
-            ThreadFactory = threadFactory
+            ThreadFactory = threadFactory,
+            EventSequencer = new MpUnboundedEventSequencer<MiniAgentEvent>.Builder(() => new MiniAgentEvent())
+            {
+                ChunkLength = 1024,
+                MaxPooledChunks = 4,
+            }.Build()
         }.Build();
     }
 }

@@ -22,7 +22,7 @@ namespace Wjybxx.Disruptor
 {
 /// <summary>
 /// 该策略在尝试一定次数的自旋等待(空循环)之后使用尝试让出cpu。
-/// 该策略将会占用大量的CPU资源(100%)，但是比{@link BusySpinWaitStrategy}策略更容易在其他线程需要CPU时让出CPU。
+/// 该策略将会占用大量的CPU资源(100%)，但是比<see cref="BusySpinWaitStrategy"/>策略更容易在其他线程需要CPU时让出CPU。
 /// 
 /// 它有着较低的延迟、较高的吞吐量，以及较高CPU占用率。当CPU数量足够时，可以使用该策略。
 /// </summary>
@@ -33,7 +33,7 @@ public class YieldingWaitStrategy : WaitStrategy
 
     public YieldingWaitStrategy() {
         this.spinTries = 100;
-        this.spinIterations = 10;
+        this.spinIterations = 1;
     }
 
     public YieldingWaitStrategy(int spinTries, int spinIterations) {

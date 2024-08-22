@@ -157,6 +157,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         if (ex == EX_PUBLISHING) {
             // busy spin -- 该过程通常很快，因此自旋等待即可
             while ((ex = _ex) == EX_PUBLISHING) {
+                Thread.SpinWait(1);
             }
             return ST_SUCCESS;
         }

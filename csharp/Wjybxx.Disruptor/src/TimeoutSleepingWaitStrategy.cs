@@ -30,6 +30,7 @@ namespace Wjybxx.Disruptor
 /// 3. 然后sleep等待一定次数。
 /// 4. 如果数据仍不可用，抛出<see cref="TimeoutException"/>
 ///
+/// 注意：在Windows下，如果要保证计时器的稳定，可能需要调整系统时间的更新频率<code>WinApi.TimeBeginPeriod(1)</code>
 /// </summary>
 public class TimeoutSleepingWaitStrategy : WaitStrategy
 {
@@ -41,7 +42,7 @@ public class TimeoutSleepingWaitStrategy : WaitStrategy
     private readonly int sleepTries;
 
     public TimeoutSleepingWaitStrategy()
-        : this(100, 10, 100) {
+        : this(10, 1, 10) {
     }
 
     /// <summary>
@@ -76,13 +77,12 @@ public class TimeoutSleepingWaitStrategy : WaitStrategy
                 Thread.Yield();
             } else if (counter > 0) {
                 --counter;
-
                 if (deadline <= Util.SystemTickMillis()) {
-                    throw StacklessTimeoutException.Inst;
+                    return sequence - 1;
                 }
                 Thread.Sleep(1);
             } else {
-                throw StacklessTimeoutException.Inst;
+                return sequence - 1;
             }
         }
         return availableSequence;

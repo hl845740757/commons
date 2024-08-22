@@ -23,7 +23,8 @@ using Wjybxx.Commons.Pool;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 
+///
+/// PS：该类型由于要复用，不能继承Promise，否则可能导致用户使用到错误的接口。
 /// </summary>
 /// <typeparam name="T">任务的结果类型</typeparam>
 /// <typeparam name="S">状态机类型</typeparam>
@@ -46,7 +47,7 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
     /// </summary>
     private readonly Action _moveToNext;
     /// <summary>
-    /// 不继承Promise，避免类型测试时bug
+    /// 存储结果的Promise（未特殊实现结构体类型的Promise，不想重复编码）
     /// </summary>
     private readonly Promise<T> _promise = new Promise<T>();
 
@@ -199,12 +200,12 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
 
     public void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise) {
         ValidateReentryId(reentryId);
-        IPromise.SetVoidPromise(promise, _promise);
+        Executors.SetVoidPromise(promise, _promise);
     }
 
     public void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise) {
         ValidateReentryId(reentryId);
-        IPromise<T>.SetPromise(promise, _promise);
+        Executors.SetPromise(promise, _promise);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

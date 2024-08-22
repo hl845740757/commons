@@ -16,7 +16,6 @@
 
 #endregion
 
-using System;
 using System.Threading;
 
 namespace Wjybxx.Disruptor
@@ -48,7 +47,6 @@ public interface ConsumerBarrier : SequenceBarrier
     /// <param name="sequence">期望消费的序号</param>
     /// <exception cref="AlertException">如果收到了Alert信号</exception>
     /// <exception cref="ThreadInterruptedException">线程被中断</exception>
-    /// <exception cref="TimeoutException">等待超时</exception>
     /// <returns></returns>
     long WaitFor(long sequence);
 

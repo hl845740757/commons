@@ -22,7 +22,8 @@ namespace Wjybxx.Disruptor
 {
 /// <summary>
 /// 表示屏障关联的生产者或消费者收到了特殊信号 - 其作用类似于中断。
-/// ps: 由于性能原因，该异常不会获取堆栈信息。
+/// 
+/// ps: 由于性能原因，该异常不会获取堆栈信息；近来发现C#的异常即使不返回堆栈信息，也会明显降低性能。
 /// </summary>
 public sealed class AlertException : Exception
 {

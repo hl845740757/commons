@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -620,7 +619,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                     // 多生产者模型下不可频繁调用waitFor，会在查询可用sequence时产生巨大的开销，因此查询之后本地切割为小批次
                     if (availableSequence < nextSequence
                             && (availableSequence = barrier.waitFor(nextSequence)) < nextSequence) {
-                        invokeAgentUpdate();
+                        invokeAgentUpdate(); // 等待超时
                         continue;
                     }
 
@@ -637,14 +636,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
                         break;
                     }
 
-                    invokeAgentUpdate();
-                } catch (TimeoutException e) {
-                    // 优先先响应关闭，若未关闭，表用户主动退出等待，执行一次用户循环
-                    if (isShuttingDown()) {
-                        break;
-                    }
-                    tickTime = System.nanoTime();
-                    processScheduledQueue(tickTime, false);
                     invokeAgentUpdate();
                 } catch (AlertException | InterruptedException e) {
                     if (isShuttingDown()) {

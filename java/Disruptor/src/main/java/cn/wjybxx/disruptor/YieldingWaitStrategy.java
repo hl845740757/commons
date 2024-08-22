@@ -16,8 +16,6 @@
 
 package cn.wjybxx.disruptor;
 
-import java.util.concurrent.TimeoutException;
-
 /**
  * 该策略在尝试一定次数的自旋等待(空循环)之后使用尝试让出cpu。
  * 该策略将会占用大量的CPU资源(100%)，但是比{@link BusySpinWaitStrategy}策略更容易在其他线程需要CPU时让出CPU。
@@ -42,7 +40,7 @@ public class YieldingWaitStrategy implements WaitStrategy {
 
     @Override
     public long waitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier)
-            throws TimeoutException, AlertException, InterruptedException {
+            throws AlertException, InterruptedException {
 
         int counter = spinTries;
         long availableSequence;

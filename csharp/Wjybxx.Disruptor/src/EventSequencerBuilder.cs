@@ -24,7 +24,7 @@ namespace Wjybxx.Disruptor
 public abstract class EventSequencerBuilder<T>
 {
     private readonly Func<T> factory;
-    private int spinIterations = 10;
+    private int spinIterations = 1;
     private WaitStrategy waitStrategy = TimeoutSleepingWaitStrategy.Inst;
     private SequenceBlocker? blocker;
 

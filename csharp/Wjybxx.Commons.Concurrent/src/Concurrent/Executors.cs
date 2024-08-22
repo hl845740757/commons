@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -49,39 +50,63 @@ public static class Executors
 
     #endregion
 
-    #region system
+    #region set-future
 
     public static void SetPromise<TResult>(TaskCompletionSource<TResult> promise, Task<TResult> task) {
-        if (task.IsCompleted) {
-            if (task.IsCompletedSuccessfully) {
-                promise.TrySetResult(task.Result);
-            } else if (task.IsFaulted) {
-                promise.TrySetException(task.Exception!);
-            } else {
-                promise.TrySetCanceled();
-            }
-        } else {
-            task.ContinueWith((t, obj) => SetPromise((TaskCompletionSource<TResult>)obj, t), promise);
-        }
+        TaskHelper<TResult>.SetPromise(promise, task);
     }
 
     public static void FlatSetPromise<TResult>(TaskCompletionSource<TResult> promise, Task<Task<TResult>> task) {
-        if (task.IsCompleted) {
-            if (task.IsCompletedSuccessfully) {
-                SetPromise(promise, task.Result);
-            } else if (task.IsFaulted) {
-                promise.TrySetException(task.Exception!);
-            } else {
-                promise.TrySetCanceled();
-            }
-        } else {
-            task.ContinueWith((t, obj) => FlatSetPromise((TaskCompletionSource<TResult>)obj, t), promise);
-        }
+        TaskHelper<TResult>.FlatSetPromise(promise, task);
     }
 
+    public static void SetPromise<T>(IPromise<T> promise, IFuture<T> task) {
+        PromiseHelper<T>.SetPromise(promise, task);
+    }
+
+    public static void FlatSetPromise<T>(IPromise<T> promise, IFuture<IFuture<T>> task) {
+        PromiseHelper<T>.FlatSetPromise(promise, task);
+    }
+
+    /// <summary>
+    /// 该框架统一使用int代替void。
+    /// </summary>
+    /// <param name="promise"></param>
+    /// <param name="task"></param>
+    public static void SetVoidPromise(IPromise<int> promise, IFuture task) {
+        PromiseHelper.SetVoidPromise(promise, task);
+    }
+
+    public static void FlatSetVoidPromise(IPromise<int> promise, IFuture<IFuture> task) {
+        PromiseHelper.FlatSetVoidPromise(promise, task);
+    }
+
+    public static Task ToTask(IFuture future) {
+        return TaskConverterHelper.ToTask(future);
+    }
+
+    public static Task<T> ToTask<T>(IFuture<T> future) {
+        return TaskConverterHelper<T>.ToTask(future);
+    }
+
+    public static IFuture<T> ToFuture<T>(Task<T> task) {
+        return TaskConverterHelper<T>.ToFuture(task);
+    }
+
+    public static IFuture ToFuture(Task task) {
+        return TaskConverterHelper.ToFuture(task);
+    }
+
+    #endregion
+
+    #region system-task
 
     /** 用于忽略警告 */
     public static void Forget(this Task task) {
+    }
+
+    /** 用于忽略警告 */
+    public static void Forget(this IFuture task) {
     }
 
     public static bool IsFailedOrCancelled(this Task task) {
@@ -130,7 +155,7 @@ public static class Executors
 
     #endregion
 
-    #region submit
+    #region factory
 
     public static IPromise<T> NewPromise<T>(IExecutor? executor = null) {
         return new Promise<T>(executor);
@@ -139,6 +164,14 @@ public static class Executors
     public static IPromise<int> NewPromise(IExecutor? executor = null) {
         return new Promise<int>(executor);
     }
+
+    public static FutureCombiner NewCombiner() {
+        return new FutureCombiner();
+    }
+
+    #endregion
+
+    #region submit
 
     public static IFuture<T> Submit<T>(IExecutor executor, in TaskBuilder<T> builder) {
         IPromise<T> promise = NewPromise<T>(executor);
@@ -209,6 +242,22 @@ public static class Executors
     }
 
     #endregion
+
+    #endregion
+
+    #region all
+
+    public static IFuture<object> AnyOf(IEnumerable<IFuture> futures) {
+        return new FutureCombiner()
+            .AddAll(futures)
+            .AnyOf();
+    }
+
+    public static IFuture<object> AllOf(IEnumerable<IFuture> futures) {
+        return new FutureCombiner()
+            .AddAll(futures)
+            .SelectAll();
+    }
 
     #endregion
 
@@ -320,6 +369,297 @@ public static class Executors
             }
             action();
         }
+    }
+
+    #endregion
+
+    #region future_helper
+
+    private static class PromiseHelper
+    {
+        private static readonly Action<IFuture, object> _invokerSetVoidPromise = (future, state) => {
+            IPromise<int> promise = (IPromise<int>)state;
+            SetVoidPromise(promise, future);
+        };
+
+        private static readonly Action<IFuture<IFuture>, object> _invokerFlatSetPromise = (future, state) => {
+            IPromise<int> promise = (IPromise<int>)state;
+            FlatSetVoidPromise(promise, future);
+        };
+
+        public static void SetVoidPromise(IPromise<int> promise, IFuture task) {
+            switch (task.Status) {
+                case TaskStatus.Success: {
+                    promise.TrySetResult(0);
+                    break;
+                }
+                case TaskStatus.Failed:
+                case TaskStatus.Cancelled: {
+                    promise.TrySetException(task.ExceptionNow(false));
+                    break;
+                }
+                default: {
+                    task.OnCompleted(_invokerSetVoidPromise, promise, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+                    break;
+                }
+            }
+        }
+
+        public static void FlatSetVoidPromise(IPromise<int> promise, IFuture<IFuture> task) {
+            switch (task.Status) {
+                case TaskStatus.Success: {
+                    SetVoidPromise(promise, task.ResultNow());
+                    break;
+                }
+                case TaskStatus.Failed:
+                case TaskStatus.Cancelled: {
+                    promise.TrySetException(task.ExceptionNow(false));
+                    break;
+                }
+                default: {
+                    task.OnCompleted(_invokerFlatSetPromise, promise, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+                    break;
+                }
+            }
+        }
+    }
+
+    private static class PromiseHelper<T>
+    {
+        private static readonly Action<IFuture<T>, object> _invokerSetPromise = (future, state) => {
+            IPromise<T> promise = (IPromise<T>)state;
+            SetPromise(promise, future);
+        };
+
+        private static readonly Action<IFuture<IFuture<T>>, object> _invokerFlatSetPromise = (future, state) => {
+            IPromise<T> promise = (IPromise<T>)state;
+            FlatSetPromise(promise, future);
+        };
+
+        public static void SetPromise(IPromise<T> promise, IFuture<T> task) {
+            switch (task.Status) {
+                case TaskStatus.Success: {
+                    promise.TrySetResult(task.ResultNow());
+                    break;
+                }
+                case TaskStatus.Failed:
+                case TaskStatus.Cancelled: {
+                    promise.TrySetException(task.ExceptionNow(false));
+                    break;
+                }
+                default: {
+                    task.OnCompleted(_invokerSetPromise, promise, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+                    break;
+                }
+            }
+        }
+
+        public static void FlatSetPromise(IPromise<T> promise, IFuture<IFuture<T>> task) {
+            switch (task.Status) {
+                case TaskStatus.Success: {
+                    SetPromise(promise, task.ResultNow());
+                    break;
+                }
+                case TaskStatus.Failed:
+                case TaskStatus.Cancelled: {
+                    promise.TrySetException(task.ExceptionNow(false));
+                    break;
+                }
+                default: {
+                    task.OnCompleted(_invokerFlatSetPromise, promise, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+                    break;
+                }
+            }
+        }
+    }
+
+    private static class TaskHelper<T>
+    {
+        private static readonly Action<Task<T>, object> _invokerSetPromise = (future, state) => {
+            TaskCompletionSource<T> promise = (TaskCompletionSource<T>)state;
+            SetPromise(promise, future);
+        };
+
+        private static readonly Action<Task<Task<T>>, object> _invokerFlatSetPromise = (future, state) => {
+            TaskCompletionSource<T> promise = (TaskCompletionSource<T>)state;
+            FlatSetPromise(promise, future);
+        };
+
+        public static void SetPromise(TaskCompletionSource<T> promise, Task<T> task) {
+            if (task.IsCompleted) {
+                if (task.IsCompletedSuccessfully) {
+                    promise.TrySetResult(task.Result);
+                } else if (task.IsFaulted) {
+                    promise.TrySetException(task.Exception!);
+                } else {
+                    promise.TrySetCanceled();
+                }
+            } else {
+                task.ContinueWith(_invokerSetPromise, promise);
+            }
+        }
+
+        public static void FlatSetPromise(TaskCompletionSource<T> promise, Task<Task<T>> task) {
+            if (task.IsCompleted) {
+                if (task.IsCompletedSuccessfully) {
+                    SetPromise(promise, task.Result);
+                } else if (task.IsFaulted) {
+                    promise.TrySetException(task.Exception!);
+                } else {
+                    promise.TrySetCanceled();
+                }
+            } else {
+                task.ContinueWith(_invokerFlatSetPromise, promise);
+            }
+        }
+    }
+
+    private static class TaskConverterHelper
+    {
+        #region converter
+
+        private static readonly Action<IFuture, object> _invokerToTask = (future, state) => {
+            TaskCompletionSource cts = (TaskCompletionSource)state;
+            switch (future.Status) {
+                case TaskStatus.Success: {
+                    cts.TrySetResult();
+                    break;
+                }
+                case TaskStatus.Cancelled: {
+                    cts.TrySetCanceled();
+                    break;
+                }
+                case TaskStatus.Failed: {
+                    cts.TrySetException(future.ExceptionNow());
+                    break;
+                }
+                default: {
+                    throw new AssertionError();
+                }
+            }
+        };
+
+        public static Task ToTask(IFuture future) {
+            switch (future.Status) {
+                case TaskStatus.Success: {
+                    return Task.FromResult(future.ResultNow());
+                }
+                case TaskStatus.Cancelled: {
+                    return Task.FromCanceled(default);
+                }
+                case TaskStatus.Failed: {
+                    return Task.FromException(future.ExceptionNow());
+                }
+                default: {
+                    TaskCompletionSource source = new TaskCompletionSource();
+                    future.OnCompleted(_invokerToTask, source);
+                    return source.Task;
+                }
+            }
+        }
+
+        ////////////////////////////////////
+        private static readonly Action<Task, object> _invokerToFuture = (task, state) => {
+            IPromise<int> promise = (IPromise<int>)state;
+            if (task.IsCompletedSuccessfully) {
+                promise.TrySetResult(0);
+            } else if (task.IsFaulted) {
+                promise.TrySetException(task.Exception!);
+            } else {
+                promise.TrySetCancelled(CancelCodes.REASON_DEFAULT);
+            }
+        };
+
+        public static IFuture ToFuture(Task task) {
+            if (task.IsCompleted) {
+                if (task.IsCompletedSuccessfully) {
+                    return Promise<int>.COMPLETED;
+                }
+                if (task.IsFaulted) {
+                    return Promise<int>.FromException(task.Exception!);
+                }
+                return Promise<int>.FromCancelled(CancelCodes.REASON_DEFAULT);
+            }
+            Promise<int> promise = new Promise<int>();
+            task.ContinueWith(_invokerToFuture, promise);
+            return promise;
+        }
+
+        #endregion
+    }
+
+    private static class TaskConverterHelper<T>
+    {
+        #region converter
+
+        private static readonly Action<IFuture<T>, object> _invokerToTask = (future, state) => {
+            TaskCompletionSource<T> cts = (TaskCompletionSource<T>)state;
+            switch (future.Status) {
+                case TaskStatus.Success: {
+                    cts.TrySetResult(future.ResultNow());
+                    break;
+                }
+                case TaskStatus.Cancelled: {
+                    cts.TrySetCanceled();
+                    break;
+                }
+                case TaskStatus.Failed: {
+                    cts.TrySetException(future.ExceptionNow());
+                    break;
+                }
+                default: {
+                    throw new AssertionError();
+                }
+            }
+        };
+
+        public static Task<T> ToTask(IFuture<T> future) {
+            switch (future.Status) {
+                case TaskStatus.Success: {
+                    return Task.FromResult(future.ResultNow());
+                }
+                case TaskStatus.Cancelled: {
+                    return Task.FromCanceled<T>(default);
+                }
+                case TaskStatus.Failed: {
+                    return Task.FromException<T>(future.ExceptionNow());
+                }
+                default: {
+                    TaskCompletionSource<T> source = new TaskCompletionSource<T>();
+                    future.OnCompleted(_invokerToTask, source);
+                    return source.Task;
+                }
+            }
+        }
+
+        ////////////////////////////////////
+        private static readonly Action<Task<T>, object> _invokerToFuture = (task, state) => {
+            IPromise<T> promise = (IPromise<T>)state;
+            if (task.IsCompletedSuccessfully) {
+                promise.TrySetResult(task.Result);
+            } else if (task.IsFaulted) {
+                promise.TrySetException(task.Exception!);
+            } else {
+                promise.TrySetCancelled(CancelCodes.REASON_DEFAULT);
+            }
+        };
+
+        public static IFuture<T> ToFuture(Task<T> task) {
+            if (task.IsCompleted) {
+                if (task.IsCompletedSuccessfully) {
+                    return Promise<T>.FromResult(task.Result);
+                }
+                if (task.IsFaulted) {
+                    return Promise<T>.FromException(task.Exception!);
+                }
+                return Promise<T>.FromCancelled(CancelCodes.REASON_DEFAULT);
+            }
+            Promise<T> promise = new Promise<T>();
+            task.ContinueWith(_invokerToFuture, promise);
+            return promise;
+        }
+
+        #endregion
     }
 
     #endregion

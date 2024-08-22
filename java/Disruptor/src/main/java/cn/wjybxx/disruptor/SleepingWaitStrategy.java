@@ -17,7 +17,6 @@
 package cn.wjybxx.disruptor;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -39,8 +38,8 @@ public class SleepingWaitStrategy implements WaitStrategy {
     private final long sleepTimeNs;
 
     public SleepingWaitStrategy() {
-        this.spinTries = 100;
-        this.yieldTries = 100;
+        this.spinTries = 10;
+        this.yieldTries = 10;
         this.sleepTimeNs = 1000;
     }
 
@@ -52,7 +51,7 @@ public class SleepingWaitStrategy implements WaitStrategy {
 
     @Override
     public long waitFor(long sequence, ProducerBarrier producerBarrier, ConsumerBarrier barrier)
-            throws TimeoutException, AlertException, InterruptedException {
+            throws AlertException, InterruptedException {
 
         int counter = spinTries + yieldTries;
         long availableSequence;
