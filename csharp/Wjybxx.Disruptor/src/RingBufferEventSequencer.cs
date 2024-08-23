@@ -157,12 +157,12 @@ public class RingBufferEventSequencer<T> : EventSequencer<T>
         public Builder(Func<T> factory) : base(factory) {
         }
 
-#if UNITY_EDITOR
-        public override EventSequencer<T> Build() {
+#if NET5_0_OR_GREATER
+        public override RingBufferEventSequencer<T> Build() {
             return new RingBufferEventSequencer<T>(this);
         }
 #else
-        public override RingBufferEventSequencer<T> Build() {
+        public override EventSequencer<T> Build() {
             return new RingBufferEventSequencer<T>(this);
         }
 #endif

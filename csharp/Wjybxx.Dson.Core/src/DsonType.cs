@@ -81,13 +81,13 @@ public static class DsonTypes
 
     static DsonTypes() {
         LOOK_UP = new DsonType[(int)DsonType.Object + 1];
-#if UNITY_EDITOR
-        foreach (object dsonType in Enum.GetValues(typeof(DsonType))) {
-            LOOK_UP[(int)dsonType] = (DsonType)dsonType;
-        }
-#else
+#if NET5_0_OR_GREATER
         foreach (var dsonType in Enum.GetValues<DsonType>()) {
             LOOK_UP[(int)dsonType] = dsonType;
+        }
+#else
+        foreach (object dsonType in Enum.GetValues(typeof(DsonType))) {
+            LOOK_UP[(int)dsonType] = (DsonType)dsonType;
         }
 #endif
     }

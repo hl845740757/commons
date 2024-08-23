@@ -59,12 +59,12 @@ public class ArrayTypeName : TypeName
         return $"{GetType().Name}, {nameof(elementType)}: {elementType}";
     }
 
-#if UNITY_EDITOR
-    public override TypeName WithAttributes(TypeNameAttributes attributes) {
+#if NET5_0_OR_GREATER
+    public override ArrayTypeName WithAttributes(TypeNameAttributes attributes) {
         return new ArrayTypeName(elementType, attributes);
     }
 #else
-    public override ArrayTypeName WithAttributes(TypeNameAttributes attributes) {
+    public override TypeName WithAttributes(TypeNameAttributes attributes) {
         return new ArrayTypeName(elementType, attributes);
     }
 #endif

@@ -91,18 +91,6 @@ public interface IPromise : IFuture
     /// <param name="cancelCode">相关的取消码</param>
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
     void SetCancelled(int cancelCode);
-
-    /// <summary>
-    /// 将future的结果传输到promise
-    /// 
-    /// 该框架统一使用int代替void。
-    /// </summary>
-    /// <param name="promise"></param>
-    /// <param name="task"></param>
-    [Obsolete]
-    public static void SetVoidPromise(IPromise<int> promise, IFuture task) {
-        Executors.SetVoidPromise(promise, task);
-    }
 }
 
 /// <summary>
@@ -131,20 +119,6 @@ public interface IPromise<T> : IFuture<T>, IPromise
 
     void IPromise.SetResult(object result) {
         SetResult((T)result);
-    }
-
-    #endregion
-
-    #region util
-
-    /// <summary>
-    /// 将future结果传输到Promise
-    /// </summary>
-    /// <param name="promise"></param>
-    /// <param name="task"></param>
-    [Obsolete]
-    public static void SetPromise(IPromise<T> promise, IFuture<T> task) {
-        Executors.SetPromise(promise, task);
     }
 
     #endregion

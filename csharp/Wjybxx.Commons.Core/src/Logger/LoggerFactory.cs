@@ -30,7 +30,7 @@ public static class LoggerFactory
     /** C#不推荐锁定class，容易导致死锁问题... */
     private static readonly object _lockObject = new object();
 
-#if UNITY_EDITOR
+#if UNITY_2018_4_OR_NEWER
     private static volatile ILoggerFactory provider = UnityLoggerFactory.Inst;
 #else
     private static volatile ILoggerFactory provider = ConsoleLoggerFactory.Inst;

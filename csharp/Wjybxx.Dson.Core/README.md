@@ -1,5 +1,7 @@
 # Dson Csharp
 
+[Dson文本语法](https://github.com/hl845740757/commons/blob/dev/docs/Dson.md)
+
 ## 模块说明
 
 1. Dson.Core: Core模块提供了Dson的文本和二进制流编解码实现。
@@ -8,7 +10,7 @@
 
 ## 简单使用指南
 
-这里只介绍Dson-Core模块的功能，有关对象序列化的说明请跳转Dson.Codec模块。
+这里只介绍Dson-Core模块的功能，有关对象序列化的说明请跳转`Dson.Codec`模块。
 
 ### Dsons工具类
 

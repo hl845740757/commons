@@ -102,12 +102,12 @@ public class DsonTextWriterSettings : DsonWriterSettings
         public Builder() {
         }
 
-#if UNITY_EDITOR
-        public override DsonWriterSettings Build() {
+#if NET5_0_OR_GREATER
+        public override DsonTextWriterSettings Build() {
             return new DsonTextWriterSettings(this);
         }
 #else
-        public override DsonTextWriterSettings Build() {
+        public override DsonWriterSettings Build() {
             return new DsonTextWriterSettings(this);
         }
 #endif

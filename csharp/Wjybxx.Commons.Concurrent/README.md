@@ -13,3 +13,11 @@
 3. await隐式捕获上下文，导致的结果是：**简单的问题更加简单，复杂的问题更加复杂**。
 4. Task不支持死锁检测
 5. TaskCompletionSource泛型类和非泛型类之间是非继承的，我们确实统一的Api获取结果和取消任务。
+
+## ReleaseNotes
+
+### 1.1.1
+
+1. `DisruptorEventLoop`适配`Disruptor`模块的等待超时修改。
+2. fix `ValueFuture`的await错误。
+3. 增加 `GlobalEventLoop`和`ManualResetPromise`。

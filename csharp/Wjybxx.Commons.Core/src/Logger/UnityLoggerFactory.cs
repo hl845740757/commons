@@ -16,7 +16,7 @@
 
 #endregion
 
-#if UNITY_EDITOR
+#if UNITY_2018_4_OR_NEWER
 using System;
 using System.Collections.Concurrent;
 

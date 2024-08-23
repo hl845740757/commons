@@ -51,12 +51,12 @@ public class DsonTextReaderSettings : DsonReaderSettings
         public Builder() {
         }
 
-#if UNITY_EDITOR
-        public override DsonReaderSettings Build() {
+#if NET5_0_OR_GREATER
+        public override DsonTextReaderSettings Build() {
             return new DsonTextReaderSettings(this);
         }
 #else
-        public override DsonTextReaderSettings Build() {
+        public override DsonReaderSettings Build() {
             return new DsonTextReaderSettings(this);
         }
 #endif

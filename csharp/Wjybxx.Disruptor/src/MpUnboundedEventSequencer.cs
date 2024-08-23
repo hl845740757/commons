@@ -154,12 +154,12 @@ public class MpUnboundedEventSequencer<T> : EventSequencer<T>
             : base(factory) {
         }
 
-#if UNITY_EDITOR
-        public override EventSequencer<T> Build() {
+#if NET5_0_OR_GREATER
+        public override MpUnboundedEventSequencer<T> Build() {
             return new MpUnboundedEventSequencer<T>(this);
         }
 #else
-        public override MpUnboundedEventSequencer<T> Build() {
+        public override EventSequencer<T> Build() {
             return new MpUnboundedEventSequencer<T>(this);
         }
 #endif

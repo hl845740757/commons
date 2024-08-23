@@ -30,3 +30,10 @@ PS：C#其实可以采用FieldOffset来实现缓存行填充，但为了保持�
 
 1. C#的挂起最小单位是毫秒，因此慎重使用可能导致线程挂起的api，可能导致较大的延迟。
 2. 框架的具体应用见[并发库](../Wjybxx.Commons.Concurrent)中的`DisruptorEventLoop`。
+
+## ReleaseNotes
+
+### 1.1.1
+
+1. 修复`TimeoutSleepingWaitStrategy`在Windows上延迟过高的问题。
+2. 使用`sequence-1`代替抛出`TimeoutException`，C#的异常总是会影响性能，即使我们声明为不捕获异常的。

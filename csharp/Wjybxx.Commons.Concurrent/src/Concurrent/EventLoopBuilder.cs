@@ -107,13 +107,13 @@ public class DisruptorEventLoopBuilder<T> : EventLoopBuilder<T> where T : IAgent
         }
     }
 
-#if UNITY_EDITOR
-    public override IEventLoop Build() {
+#if NET5_0_OR_GREATER
+    public override DisruptorEventLoop<T> Build() {
         CheckBuild();
         return new DisruptorEventLoop<T>(this);
     }
 #else
-    public override DisruptorEventLoop<T> Build() {
+    public override IEventLoop Build() {
         CheckBuild();
         return new DisruptorEventLoop<T>(this);
     }
