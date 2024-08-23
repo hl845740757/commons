@@ -94,7 +94,7 @@ public struct AsyncValueFutureMethodBuilder
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            reentryId = ValueFutureStateMachineDriver<int, TStateMachine>.SetStateMachine(ref stateMachine, ref _task);
+            ValueFutureStateMachineDriver<int, TStateMachine>.SetStateMachine(ref stateMachine, out _task, out reentryId);
         }
         awaiter.OnCompleted(_task.MoveToNext);
     }
@@ -106,7 +106,7 @@ public struct AsyncValueFutureMethodBuilder
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            reentryId = ValueFutureStateMachineDriver<int, TStateMachine>.SetStateMachine(ref stateMachine, ref _task);
+            ValueFutureStateMachineDriver<int, TStateMachine>.SetStateMachine(ref stateMachine, out _task, out reentryId);
         }
         awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }
@@ -194,7 +194,7 @@ public struct AsyncValueFutureMethodBuilder<T>
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            reentryId = ValueFutureStateMachineDriver<T, TStateMachine>.SetStateMachine(ref stateMachine, ref _task);
+            ValueFutureStateMachineDriver<T, TStateMachine>.SetStateMachine(ref stateMachine, out _task, out reentryId);
         }
         awaiter.OnCompleted(_task.MoveToNext);
     }
@@ -206,7 +206,7 @@ public struct AsyncValueFutureMethodBuilder<T>
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            reentryId = ValueFutureStateMachineDriver<T, TStateMachine>.SetStateMachine(ref stateMachine, ref _task);
+            ValueFutureStateMachineDriver<T, TStateMachine>.SetStateMachine(ref stateMachine, out _task, out reentryId);
         }
         awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }

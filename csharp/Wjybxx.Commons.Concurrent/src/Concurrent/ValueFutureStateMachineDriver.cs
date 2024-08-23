@@ -55,18 +55,17 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
         _moveToNext = Run;
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="stateMachine"></param>
-    /// <param name="driver"></param>
-    /// <returns></returns>
-    public static int SetStateMachine(ref S stateMachine, ref IValueFutureStateMachineDriver<T> driver) {
+    public static void SetStateMachine(ref S stateMachine, out IValueFutureStateMachineDriver<T> driver, out int reentryId) {
         ValueFutureStateMachineDriver<T, S> result = POOL.Acquire();
-        driver = result; // set driver before copy -- 需要copy到栈
-        result._stateMachine = stateMachine; // copy struct... 从栈拷贝到堆，ref也没用，不错一次不知道...
         result._reentryId++; // 重用时也+1
-        return result._reentryId;
+
+        // driver和reentryId是builder的属性，而builder是状态机的属性，需要在拷贝状态机之前完成初始化
+        // init builder before copy state machine
+        driver = result;
+        reentryId = result._reentryId;
+
+        // copy struct... 从栈拷贝到堆，此后栈上的状态机将被丢弃
+        result._stateMachine = stateMachine;
     }
 
     public void Run() {
