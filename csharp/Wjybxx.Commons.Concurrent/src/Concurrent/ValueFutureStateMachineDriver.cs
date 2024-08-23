@@ -65,7 +65,8 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
         ValueFutureStateMachineDriver<T, S> result = POOL.Acquire();
         driver = result; // set driver before copy -- 需要copy到栈
         result._stateMachine = stateMachine; // copy struct... 从栈拷贝到堆，ref也没用，不错一次不知道...
-        return result._reentryId++; // 重用时也+1
+        result._reentryId++; // 重用时也+1
+        return result._reentryId;
     }
 
     public void Run() {

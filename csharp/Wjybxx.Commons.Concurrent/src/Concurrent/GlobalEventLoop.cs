@@ -22,15 +22,18 @@ using Wjybxx.Disruptor;
 
 namespace Wjybxx.Commons.Concurrent
 {
+/// <summary>
+/// 全局事件循环，用于执行一些简单的任务
+/// </summary>
 public sealed class GlobalEventLoop : DisruptorEventLoop<MiniAgentEvent>
 {
     public static GlobalEventLoop Inst { get; } = new GlobalEventLoop(new DisruptorEventLoopBuilder<MiniAgentEvent>()
     {
         Agent = EmptyAgent<MiniAgentEvent>.Inst,
-        ThreadFactory = new DefaultThreadFactory("GlobalEventLoop"),
+        ThreadFactory = new DefaultThreadFactory("GlobalEventLoop", true),
         EventSequencer = new MpUnboundedEventSequencer<MiniAgentEvent>.Builder(() => new MiniAgentEvent()) // 需要使用无界队列
             {
-                WaitStrategy = new TimeoutSleepingWaitStrategy(10, 10, 10), // 等待策略需要支持超时，否则无法调度定时任务
+                WaitStrategy = new TimeoutSleepingWaitStrategy(10, 1, 10), // 等待策略需要支持超时，否则无法调度定时任务
                 ChunkLength = 1024,
                 MaxPooledChunks = 1
             }
