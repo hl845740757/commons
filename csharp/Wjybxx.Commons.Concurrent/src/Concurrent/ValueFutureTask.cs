@@ -20,6 +20,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Pool;
+#pragma warning disable CS8603
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -326,7 +327,7 @@ internal class ValueFutureTask<T> : ITaskDriver<T>, IFutureTask
             throw new IllegalStateException("Task has not completed");
         }
 
-        T r = default;
+        T r = default!;
         Exception? ex = null;
         if (status == TaskStatus.Success) {
             r = _promise.ResultNow();

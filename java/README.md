@@ -21,6 +21,17 @@ agent是基于Java Instrumentation 的热更新模块，仅包含一个Agent类�
 
 ps：Agent不太会产生变化，将其放在base项目下，仅是为了方便一起打包和发布。
 
+maven坐标：
+
+```xml
+
+<dependency>
+    <groupId>cn.wjybxx.commons</groupId>
+    <artifactId>commons-agent</artifactId>
+    <version>${commons.version}</version>
+</dependency>
+```
+
 ## commons-base模块
 
 base模块包括一些基础的工具类和注解，这些基础工具和注解被其它commons模块依赖，也被apt模块依赖。
@@ -30,6 +41,17 @@ base模块包括一些基础的工具类和注解，这些基础工具和注解�
 
 ps：不引入commons-lang3和guava，是因为这些基础库的类文件实在太多。
 
+maven坐标：
+
+```xml
+
+<dependency>
+    <groupId>cn.wjybxx.commons</groupId>
+    <artifactId>commons-base</artifactId>
+    <version>${commons.version}</version>
+</dependency>
+```
+
 ## commons-apt-base模块
 
 所有apt模块都依赖的基础模块，这里实现了apt的基础流程管理，和apt的基础工具类。
@@ -37,21 +59,64 @@ ps：不引入commons-lang3和guava，是因为这些基础库的类文件实在
 这里的指导是：**注解处理器永远是可选模块！业务逻辑可以在不依赖注解处理器的执行，可以手动编写代码代替APT生成。**
 因此，编写apt时应当反转依赖，即避免apt代码直接引用业务模块的注解，而是通过全限定名字符串的方式引用，这可以避免apt组件成为必须组件。
 
-## disruptor模块
+maven坐标：
 
-为了解决Disruptor的一些问题，重写了LMAX的Disruptor，实现了自己的版本。我的版本少了许多不必要的抽象，
-也拥有更好更容易理解的抽象。
+```xml
+
+<dependency>
+    <groupId>cn.wjybxx.commons</groupId>
+    <artifactId>commons-apt-base</artifactId>
+    <version>${commons.version}</version>
+</dependency>
+```
 
 ## commons-concurrent模块
 
 1. 重写了Future和Promise，优化了死锁检测和上下文传递的问题。
 2. 得益于新的Disruptor框架，EventLoop无需因为队列的问题而重复实现。
 
+maven坐标：
+
+```xml
+
+<dependency>
+    <groupId>cn.wjybxx.commons</groupId>
+    <artifactId>commons-concurrent</artifactId>
+    <version>${commons.version}</version>
+</dependency>
+```
+
+## disruptor模块
+
+为了解决Disruptor的一些问题，重写了LMAX的Disruptor，实现了自己的版本。我的版本少了许多不必要的抽象，
+也拥有更好更容易理解的抽象。
+
+maven坐标：
+
+```xml
+
+<dependency>
+    <groupId>cn.wjybxx.commons</groupId>
+    <artifactId>disruptor</artifactId>
+    <version>${commons.version}</version>
+</dependency>
+```
+
 ## dson-core
 
 Dson是我设计的文本格式，Dson.Core则是Dson文本格式的C#端实现。
 
 了解Dson可阅读：[Dson文本](../docs/Dson.md)
+
+maven坐标：
+
+```xml
+<dependency>
+    <groupId>cn.wjybxx.commons</groupId>
+    <artifactId>dson-core</artifactId>
+    <version>${commons.version}</version>
+</dependency>
+```
 
 ## dson-codec
 
@@ -69,11 +134,33 @@ Dson.Codec是基于Dson文本的序列化实现，支持以下特性：
 
 由于我们提供了强大灵活的Apt，因此不支持运行时反射编解码类型。
 
+maven坐标：
+
+```xml
+
+<dependency>
+    <groupId>cn.wjybxx.commons</groupId>
+    <artifactId>dson-codec</artifactId>
+    <version>${commons.version}</version>
+</dependency>
+```
+
 ## dson-apt
 
 Dson-Apt是为Dson-Codec提供的工具，用于生成目标类的编解码类（源代码），以避免运行时的反射开销。
 
 PS：Dson.Apt的最佳应用是`Btree.Codec`模块，行为树的所有Codec都是通过Apt自动生成的，而非手动编写的。
+
+maven坐标：
+
+```xml
+
+<dependency>
+    <groupId>cn.wjybxx.commons</groupId>
+    <artifactId>dson-apt</artifactId>
+    <version>${commons.version}</version>
+</dependency>
+```
 
 ## btree-core
 
@@ -81,10 +168,30 @@ btree-core是从bigcat中分离出来的，为保持最小依赖，核心包只�
 但行为树是需要能序列化的，这样才能在编辑器中编辑；在bigcat仓库的时候，btree模块依赖了我的dson-codec包，
 但dson-codec包的类比较多，依赖也比较大(尤其是fastutil)，因此我将行为树的codec配置信息抽取为btree-codec模块，可选择性引入。
 
+maven坐标：
+```xml
+
+<dependency>
+    <groupid>cn.wjybxx.commons</groupid>
+    <artifactid>btree-core</artifactid>
+    <version>${commons.version}</version>
+</dependency>
+```
+
 ## btree-codec
 
 btree-codec是基于dson-codec的行为树序列化实现；btree-codec模块仅有几个配置类，真正的codec是基于dson-apt注解自动生成的。
 如果你需要使用基于dson的行为树序列化实现，可以添加btree-codec到项目。
+
+maven坐标：
+```xml
+
+<dependency>
+    <groupId>cn.wjybxx.commons</groupId>
+    <artifactId>btree-codec</artifactId>
+    <version>${commons.version}</version>
+</dependency>
+```
 
 ## 个人公众号(游戏开发)
 

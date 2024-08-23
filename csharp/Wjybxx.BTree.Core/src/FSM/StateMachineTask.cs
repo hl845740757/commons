@@ -109,12 +109,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     /// 1.如果当前有一个待切换的状态，则会被悄悄丢弃(todo 可以增加一个通知)
     /// 2.无论何种模式，在当前状态进入完成状态时一定会触发
     /// 3.如果状态机未运行，则仅仅保存在那里，等待下次运行的时候执行
-    /// 4.当前状态可先正常完成，然后再切换状态，就可以避免进入被取消状态；可参考<see cref="ChangeStateTask{T}"/>
-    /// <code>
-    ///      Task nextState = nextState();
-    ///      setSuccess();
-    ///      stateMachine.changeState(nextState)
-    /// </code>
+    /// 4.关于如何避免当前状态被取消，可参考<see cref="ChangeStateTask{T}"/>
     /// 
     /// </summary>
     /// <param name="nextState">要进入的下一个状态</param>

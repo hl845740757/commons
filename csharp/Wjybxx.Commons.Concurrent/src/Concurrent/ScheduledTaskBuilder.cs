@@ -49,32 +49,32 @@ public interface ScheduledTaskBuilder : TaskBuilder
 
     #region factory
 
-    public static ScheduledTaskBuilder<int> NewAction(Action task, ICancelToken? cancelToken = null) {
+    public new static ScheduledTaskBuilder<int> NewAction(Action task, ICancelToken? cancelToken = null) {
         TaskBuilder<int> taskBuilder = TaskBuilder.NewAction(task, cancelToken);
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
-    public static ScheduledTaskBuilder<int> NewAction(Action<IContext> task, IContext ctx) {
+    public new static ScheduledTaskBuilder<int> NewAction(Action<IContext> task, IContext ctx) {
         TaskBuilder<int> taskBuilder = TaskBuilder.NewAction(task, ctx);
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
-    public static ScheduledTaskBuilder<T> NewFunc<T>(Func<T> task, ICancelToken? cancelToken = null) {
+    public new static ScheduledTaskBuilder<T> NewFunc<T>(Func<T> task, ICancelToken? cancelToken = null) {
         TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task, cancelToken);
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
-    public static ScheduledTaskBuilder<T> NewFunc<T>(Func<IContext, T> task, IContext ctx) {
+    public new static ScheduledTaskBuilder<T> NewFunc<T>(Func<IContext, T> task, IContext ctx) {
         TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task, ctx);
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
-    public static ScheduledTaskBuilder<T> NewTimeSharing<T>(TimeSharingTask<T> func, IContext? context = null) {
+    public new static ScheduledTaskBuilder<T> NewTimeSharing<T>(TimeSharingTask<T> func, IContext? context = null) {
         TaskBuilder<T> taskBuilder = TaskBuilder.NewTimeSharing(func, context);
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
-    public static ScheduledTaskBuilder<int> NewTask(ITask task) {
+    public new static ScheduledTaskBuilder<int> NewTask(ITask task) {
         TaskBuilder<int> taskBuilder = TaskBuilder.NewTask(task);
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }

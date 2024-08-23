@@ -14,7 +14,9 @@
 // limitations under the License.
 #endregion
 
+using System.Threading;
 using NUnit.Framework;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Logger;
 
 namespace Commons.Tests.Logger;
@@ -27,5 +29,14 @@ public class LoggerTest
 
         ILogger logger = LoggerFactory.GetLogger(typeof(LoggerTest));
         logger.Info("ConsoleLoggerTest");
+    }
+    
+    [Test]
+    public void SeriLoggerTest() {
+        LoggerFactory.SetLoggerProvider(SerilogHelper.InitFromAppSettings());
+
+        ILogger logger = LoggerFactory.GetLogger(typeof(LoggerTest));
+        logger.Info("SeriLoggerTest");
+        Thread.Sleep(1);
     }
 }
