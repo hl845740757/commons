@@ -156,13 +156,11 @@ public class MpUnboundedEventSequencer<T> : EventSequencer<T>
 
 #if NET5_0_OR_GREATER
         public override MpUnboundedEventSequencer<T> Build() {
-            return new MpUnboundedEventSequencer<T>(this);
-        }
 #else
         public override EventSequencer<T> Build() {
+#endif
             return new MpUnboundedEventSequencer<T>(this);
         }
-#endif
 
         /// <summary>
         /// 单个块大小

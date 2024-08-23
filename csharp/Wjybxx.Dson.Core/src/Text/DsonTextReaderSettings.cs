@@ -53,13 +53,11 @@ public class DsonTextReaderSettings : DsonReaderSettings
 
 #if NET5_0_OR_GREATER
         public override DsonTextReaderSettings Build() {
-            return new DsonTextReaderSettings(this);
-        }
 #else
         public override DsonReaderSettings Build() {
+#endif
             return new DsonTextReaderSettings(this);
         }
-#endif
     }
 }
 }

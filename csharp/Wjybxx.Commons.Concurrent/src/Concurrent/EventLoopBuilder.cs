@@ -109,15 +109,12 @@ public class DisruptorEventLoopBuilder<T> : EventLoopBuilder<T> where T : IAgent
 
 #if NET5_0_OR_GREATER
     public override DisruptorEventLoop<T> Build() {
-        CheckBuild();
-        return new DisruptorEventLoop<T>(this);
-    }
 #else
     public override IEventLoop Build() {
+#endif
         CheckBuild();
         return new DisruptorEventLoop<T>(this);
     }
-#endif
 
     /// <summary>
     /// 事件序列生成器

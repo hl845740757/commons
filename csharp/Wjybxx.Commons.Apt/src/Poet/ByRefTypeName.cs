@@ -64,13 +64,11 @@ public class ByRefTypeName : TypeName
 
 #if NET5_0_OR_GREATER
     public override ByRefTypeName WithAttributes(TypeNameAttributes attributes) {
-        return new ByRefTypeName(targetType, kind, attributes);
-    }
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {
+#endif
         return new ByRefTypeName(targetType, kind, attributes);
     }
-#endif
 
     public static ByRefTypeName Of(TypeName targetType, Kind kind = Kind.Ref, TypeNameAttributes attributes = TypeNameAttributes.None) {
         return new ByRefTypeName(targetType, kind, attributes);

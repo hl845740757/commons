@@ -29,6 +29,7 @@ namespace Wjybxx.Commons
 public sealed class SeriLoggerFactory : ILoggerFactory
 {
     private readonly Serilog.ILogger _logger;
+    private readonly bool _appendName;
     /// <summary>
     /// 所有的Logger
     /// </summary>
@@ -37,10 +38,12 @@ public sealed class SeriLoggerFactory : ILoggerFactory
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="logger"></param>
+    /// <param name="logger">serilog</param>
+    /// <param name="appendName">是否在日志前面追加name</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public SeriLoggerFactory(Serilog.ILogger logger) {
+    public SeriLoggerFactory(Serilog.ILogger logger, bool appendName = true) {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _appendName = appendName;
     }
 
     /// <summary>
@@ -57,7 +60,7 @@ public sealed class SeriLoggerFactory : ILoggerFactory
         if (_loggerMap.TryGetValue(name, out var logger)) {
             return logger;
         }
-        logger = new SeriLoggerAdapter(name, _logger);
+        logger = new SeriLoggerAdapter(name, _logger, _appendName);
         logger = _loggerMap.GetOrAdd(name, logger);
         return logger;
     }

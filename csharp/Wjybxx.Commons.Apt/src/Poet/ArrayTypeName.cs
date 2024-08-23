@@ -61,13 +61,11 @@ public class ArrayTypeName : TypeName
 
 #if NET5_0_OR_GREATER
     public override ArrayTypeName WithAttributes(TypeNameAttributes attributes) {
-        return new ArrayTypeName(elementType, attributes);
-    }
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {
+#endif
         return new ArrayTypeName(elementType, attributes);
     }
-#endif
 
     public static ArrayTypeName Of(TypeName elementType, TypeNameAttributes attributes = TypeNameAttributes.None) {
         return new ArrayTypeName(elementType, attributes);

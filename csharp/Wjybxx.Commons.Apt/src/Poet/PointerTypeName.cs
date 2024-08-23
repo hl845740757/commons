@@ -52,13 +52,11 @@ public class PointerTypeName : TypeName
 
 #if NET5_0_OR_GREATER
     public override PointerTypeName WithAttributes(TypeNameAttributes attributes) {
-        return new PointerTypeName(targetType, attributes);
-    }
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {
+#endif
         return new PointerTypeName(targetType, attributes);
     }
-#endif
 
 
     public static PointerTypeName Of(TypeName targetType, TypeNameAttributes attributes = TypeNameAttributes.None) {

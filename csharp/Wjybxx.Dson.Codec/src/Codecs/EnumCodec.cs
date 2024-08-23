@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using Wjybxx.Commons;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
@@ -49,12 +50,11 @@ public sealed class EnumCodec<T> : AbstractEnumCodec<T>, IDsonCodec<T> where T :
     private static readonly Dictionary<string, EnumValueInfo> _name2ConstDic = new Dictionary<string, EnumValueInfo>();
 
     static EnumCodec() {
-#if NET5_0_OR_GREATER
-        T[] values = Enum.GetValues<T>();
-        string[] names = Enum.GetNames<T>();
+        T[] values = EnumUtil.GetValues<T>();
+        string[] names = EnumUtil.GetNames<T>();
         for (int i = 0; i < values.Length; i++) {
             T value = values[i];
-            int number = value.GetHashCode(); // 奇巧淫技：int32/uint32/byte/sybte的hashcode是自身，可避免装箱
+            int number = EnumUtil.GetIntValue(value);
             string name = names[i];
 
             EnumValueInfo enumValueInfo = new EnumValueInfo(value, number, name);
@@ -62,21 +62,6 @@ public sealed class EnumCodec<T> : AbstractEnumCodec<T>, IDsonCodec<T> where T :
             _number2ConstDic[number] = enumValueInfo;
             _name2ConstDic[name] = enumValueInfo;
         }
-#else
-        Array values = Enum.GetValues(typeof(T));
-        string[] names = Enum.GetNames(typeof(T));
-        for (int i = 0; i < values.Length; i++)
-        {
-            T value = (T)values.GetValue(i);
-            int number = value.GetHashCode(); // 奇巧淫技：int32/uint32/byte/sybte的hashcode是自身，可避免装箱
-            string name = names[i];
-
-            EnumValueInfo enumValueInfo = new EnumValueInfo(value, number, name);
-            _value2ConstDic[value] = enumValueInfo;
-            _number2ConstDic[number] = enumValueInfo;
-            _name2ConstDic[name] = enumValueInfo;
-        }
-#endif
     }
 
     #region 避免装箱

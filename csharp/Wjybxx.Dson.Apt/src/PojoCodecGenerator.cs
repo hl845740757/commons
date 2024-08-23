@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Apt;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Poet;
@@ -353,15 +354,15 @@ internal class PojoCodecGenerator
                 // writer.WriteInt(names_fieldName, inst.field, WireType.VarInt, NumberStyles.Simple)
                 builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L, $T.$L)",
                     writeMethodName, SerialName(fieldName), fieldAccess,
-                    processor.typeName_WireType, Enum.GetName(typeof(WireType), fieldProps.attribute.WireType),
-                    processor.typeName_NumberStyle, Enum.GetName(typeof(NumberStyle), fieldProps.attribute.NumberStyle));
+                    processor.typeName_WireType, EnumUtil.GetName(fieldProps.attribute.WireType),
+                    processor.typeName_NumberStyle, EnumUtil.GetName(fieldProps.attribute.NumberStyle));
                 return;
             }
             if (fieldType == typeof(float) || fieldType == typeof(double)) {
                 // writer.writeInt(names_fieldName, inst.field, NumberStyles.Simple)
                 builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L)",
                     writeMethodName, SerialName(fieldName), fieldAccess,
-                    processor.typeName_NumberStyle, Enum.GetName(typeof(NumberStyle), fieldProps.attribute.NumberStyle));
+                    processor.typeName_NumberStyle, EnumUtil.GetName(fieldProps.attribute.NumberStyle));
                 return;
             }
         }
@@ -372,7 +373,7 @@ internal class PojoCodecGenerator
                 // writer.writeString(names_fieldName, inst.getName(), StringStyle.AUTO)
                 builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L)",
                     writeMethodName, SerialName(fieldName), fieldAccess,
-                    processor.typeName_StringStyle, Enum.GetName(typeof(StringStyle), fieldProps.attribute.StringStyle));
+                    processor.typeName_StringStyle, EnumUtil.GetName(fieldProps.attribute.StringStyle));
                 break;
             }
             case MNAME_WRITE_OBJECT: {
@@ -381,7 +382,7 @@ internal class PojoCodecGenerator
                 if (fieldProps.attribute.ObjectStyle.HasValue) {
                     builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, typeof($T), $T.$L)",
                         writeMethodName, SerialName(fieldName), fieldAccess, fieldType,
-                        processor.typeName_ObjectStyle, Enum.GetName(typeof(ObjectStyle), fieldProps.attribute.ObjectStyle.Value));
+                        processor.typeName_ObjectStyle, EnumUtil.GetName(fieldProps.attribute.ObjectStyle.Value));
                 } else {
                     builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, typeof($T), null)",
                         writeMethodName, SerialName(fieldName), fieldAccess, fieldType);

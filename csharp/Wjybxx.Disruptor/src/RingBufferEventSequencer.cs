@@ -159,13 +159,11 @@ public class RingBufferEventSequencer<T> : EventSequencer<T>
 
 #if NET5_0_OR_GREATER
         public override RingBufferEventSequencer<T> Build() {
-            return new RingBufferEventSequencer<T>(this);
-        }
 #else
         public override EventSequencer<T> Build() {
+#endif
             return new RingBufferEventSequencer<T>(this);
         }
-#endif
 
         /// <summary>
         /// 生产者的类型

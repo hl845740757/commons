@@ -70,6 +70,7 @@ public class DsonTextWriterSettings : DsonWriterSettings
     {
         /** 行分隔符 */
         public string LineSeparator { get; set; } = Environment.NewLine;
+
         /**
          * 行长度，该值是一个换行参考值
          * 精确控制行长度较为复杂，那样我们需要考虑每一种值toString后长度超出的问题；
@@ -83,8 +84,10 @@ public class DsonTextWriterSettings : DsonWriterSettings
          * 如果{@link #unicodeChar}为true，该值通常需要关闭，text模式不会执行转义，也就不会处理unicode字符
          */
         public bool EnableText { get; set; } = true;
+
         /** 触发text模式的字符串长度 */
         public float TextStringLength { get; set; } = 120;
+
         /** 纯文本换行是否启用左对齐  */
         public bool TextAlignLeft { get; set; } = true;
 
@@ -94,8 +97,10 @@ public class DsonTextWriterSettings : DsonWriterSettings
          * 通常用于非UTF8文本的移植
          */
         public bool UnicodeChar { get; set; } = false;
+
         /** 自动模式下无引号字符串的最大长度 -- 过大会降低序列化速度 */
         public int MaxLengthOfUnquoteString { get; set; } = 20;
+
         /** 如果目标Writer是<see cref="StringWriter"/>，是否直接访问底层的Builder代替额外的分配，这可以节省大量的开销。 */
         public bool AccessBackingBuilder { get; set; } = true;
 
@@ -104,13 +109,11 @@ public class DsonTextWriterSettings : DsonWriterSettings
 
 #if NET5_0_OR_GREATER
         public override DsonTextWriterSettings Build() {
-            return new DsonTextWriterSettings(this);
-        }
 #else
         public override DsonWriterSettings Build() {
+#endif
             return new DsonTextWriterSettings(this);
         }
-#endif
     }
 }
 }

@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Commons;
 
 namespace Wjybxx.Dson
 {
@@ -81,15 +82,9 @@ public static class DsonTypes
 
     static DsonTypes() {
         LOOK_UP = new DsonType[(int)DsonType.Object + 1];
-#if NET5_0_OR_GREATER
-        foreach (var dsonType in Enum.GetValues<DsonType>()) {
+        foreach (var dsonType in EnumUtil.GetValues<DsonType>()) {
             LOOK_UP[(int)dsonType] = dsonType;
         }
-#else
-        foreach (object dsonType in Enum.GetValues(typeof(DsonType))) {
-            LOOK_UP[(int)dsonType] = (DsonType)dsonType;
-        }
-#endif
     }
 
     /** DsonType是否表示Dson的Number */

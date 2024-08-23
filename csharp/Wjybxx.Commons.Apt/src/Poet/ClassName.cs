@@ -202,13 +202,11 @@ public class ClassName : TypeName
 
 #if NET5_0_OR_GREATER
     public override ClassName WithAttributes(TypeNameAttributes attributes) {
-        return new ClassName(ns, enclosingClassName, simpleName, typeArguments, attributes);
-    }
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {
+#endif
         return new ClassName(ns, enclosingClassName, simpleName, typeArguments, attributes);
     }
-#endif
 
     /// <summary>
     /// 创建一个同级类类名
