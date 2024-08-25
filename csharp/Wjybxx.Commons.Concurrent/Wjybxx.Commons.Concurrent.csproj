@@ -8,7 +8,7 @@
 
         <AssemblyName>Wjybxx.Commons.Concurrent</AssemblyName>
         <PackageId>Wjybxx.Commons.Concurrent</PackageId>
-        <PackageVersion>1.1.1</PackageVersion>
+        <PackageVersion>1.1.2</PackageVersion>
 
         <Title>Wjybxx.Commons.Concurrent</Title>
         <Description>并发基础库；提供事件循环和基于事件循环的await语法</Description>

@@ -8,7 +8,7 @@
         
         <AssemblyName>Wjybxx.BTree.Core</AssemblyName>
         <PackageId>Wjybxx.BTree.Core</PackageId>
-        <PackageVersion>1.1.0</PackageVersion>
+        <PackageVersion>1.1.1</PackageVersion>
 
         <Title>Wjybxx.BTree.Core</Title>
         <Description>BTree-非典型的高性能行为树实现</Description>

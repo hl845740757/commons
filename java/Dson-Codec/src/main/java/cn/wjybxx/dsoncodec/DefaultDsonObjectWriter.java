@@ -299,6 +299,9 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
 
     /** 写入clsName时，应当尽可能写上泛型参数信息 */
     private void writeClsName(Object value, TypeInfo<?> typeInfo) {
+        if (typeInfo == TypeInfo.NONE) {
+            return;
+        }
         final Class<?> encodeClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举
         if (!converter.options().classIdPolicy.test(typeInfo.rawType, encodeClass)) {
             return;

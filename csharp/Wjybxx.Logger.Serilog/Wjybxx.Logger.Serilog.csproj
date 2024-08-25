@@ -8,7 +8,7 @@
 
         <AssemblyName>Wjybxx.Logger.Serilog</AssemblyName>
         <PackageId>Wjybxx.Logger.Serilog</PackageId>
-        <PackageVersion>1.1.0</PackageVersion>
+        <PackageVersion>1.1.1</PackageVersion>
 
         <Title>Wjybxx.Logger.Serilog</Title>
         <Description>Serilog适配器</Description>

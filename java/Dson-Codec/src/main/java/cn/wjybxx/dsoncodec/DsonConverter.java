@@ -49,7 +49,8 @@ public interface DsonConverter extends Converter {
 
     /**
      * 将一个对象写入源
-     * 如果对象的运行时类型和{@link TypeInfo#rawType}一致，则会省去编码结果中的类型信息
+     * 如果对象的运行时类型和{@link TypeInfo#rawType}一致，则会省去编码结果中的类型信息，
+     * 使用{@link TypeInfo#NONE}也可以避免写入类型信息。
      *
      * @param typeInfo 对象的类型信息
      * @param style    缩进格式

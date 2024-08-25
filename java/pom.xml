@@ -59,7 +59,7 @@
     </developers>
 
     <properties>
-        <revision>1.1.0</revision>
+        <revision>1.1.1</revision>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
@@ -69,21 +69,21 @@
         <!-- 测试依赖 -->
         <slf4j.version>2.0.13</slf4j.version>
         <logback.version>1.5.6</logback.version>
-        <junit.version>5.10.2</junit.version>
+        <junit.version>5.10.3</junit.version>
 
         <!-- 基础依赖-->
         <jsr305.version>3.0.2</jsr305.version>
 
         <!-- 子模块依赖 -->
-        <fastutil.version>8.5.13</fastutil.version>
-        <commons-lang3.version>3.14.0</commons-lang3.version>
+        <fastutil.version>8.5.14</fastutil.version>
+        <commons-lang3.version>3.16.0</commons-lang3.version>
         <commons-io.version>2.16.1</commons-io.version>
-        <commons-codec.version>1.17.0</commons-codec.version>
-        <guava.version>33.2.0-jre</guava.version>
+        <commons-codec.version>1.17.1</commons-codec.version>
+        <guava.version>33.3.0-jre</guava.version>
 
         <javapoet.version>1.13.0</javapoet.version>
-        <bson.version>4.11.2</bson.version>
-        <pb.version>3.25.1</pb.version>
+        <bson.version>4.11.3</bson.version>
+        <pb.version>3.25.2</pb.version>
     </properties>
 
     <!-- 基础依赖/全局依赖 -->

@@ -41,7 +41,7 @@ public sealed class SeriLoggerFactory : ILoggerFactory
     /// <param name="logger">serilog</param>
     /// <param name="appendName">是否在日志前面追加name</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public SeriLoggerFactory(Serilog.ILogger logger, bool appendName = true) {
+    public SeriLoggerFactory(Serilog.ILogger logger, bool appendName = false) {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _appendName = appendName;
     }
