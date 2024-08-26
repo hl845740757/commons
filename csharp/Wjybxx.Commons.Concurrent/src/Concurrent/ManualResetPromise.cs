@@ -25,6 +25,7 @@ namespace Wjybxx.Commons.Concurrent
 ///
 /// Q：为什么是手动重置？
 /// A：因为我们无法精确校验<see cref="IPromise{T}"/>中的接口的安全性，即使使用reentryId也不安全。
+/// 尤其是有异步回调的情况下，Promise就更难以正确回收。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public sealed class ManualResetPromise<T> : Promise<T>

@@ -16,24 +16,21 @@
 
 #endregion
 
+using System;
+
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 用于驱动<see cref="IFuture{T}"/>的回调
+/// 用于驱动<see cref="ValueFuture{T}"/>
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface IFutureStateMachineDriver<T> : IStateMachineDriver<T>
+public interface IValueFutureStateMachineTask<T> : IPoolablePromise<T>
 {
     /// <summary>
-    /// 用于用户等待状态机完成
-    /// (不校验重入，因为只会被生成的状态机代码调用一次)
+    /// 返回用于驱动StateMachine的委托
+    /// 
+    /// ps：定义为属性以允许实现类进行一些优化，比如：缓存实例，代理。
     /// </summary>
-    IFuture VoidFuture { get; }
-
-    /// <summary>
-    /// 用于用户等待状态机完成，只能在Future上进行await操作，而不能进行更多操作
-    /// (不校验重入，因为只会被生成的状态机代码调用一次)
-    /// </summary>
-    IFuture<T> Future { get; }
+    Action MoveToNext { get; }
 }
 }

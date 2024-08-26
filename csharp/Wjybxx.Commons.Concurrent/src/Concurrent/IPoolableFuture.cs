@@ -21,10 +21,15 @@ using System;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 任务驱动类
+/// 可池化的Future
 /// </summary>
-public interface ITaskDriver
+public interface IPoolableFuture
 {
+    /// <summary>
+    /// 获取返回给用户的句柄
+    /// </summary>
+    ValueFuture VoidFuture { get; }
+
     /// <summary>
     /// 获取任务的状态
     /// </summary>
@@ -68,11 +73,24 @@ public interface ITaskDriver
 }
 
 /// <summary>
-/// 任务驱动类
+/// 可池化的Future
+///
+/// 1.所有的读写方法都需要验证重用id。
+/// 2.在用户获取结果后触发回收。
+/// 3.不支持阻塞获取结果。
+/// 4.通常不返回给用户，多返回给用户<see cref="ValueFuture{T}"/>。
+/// 5.主要用于状态机等场景。
+/// 
+/// ps: 框架统一使用int代替void。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface ITaskDriver<T> : ITaskDriver
+public interface IPoolableFuture<T> : IPoolableFuture
 {
+    /// <summary>
+    /// 获取返回给用户的句柄
+    /// </summary>
+    ValueFuture<T> Future { get; }
+
     /// <summary>
     /// 获取任务的结果
     /// </summary>

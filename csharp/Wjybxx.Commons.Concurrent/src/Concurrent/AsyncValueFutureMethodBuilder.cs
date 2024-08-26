@@ -34,7 +34,7 @@ public struct AsyncValueFutureMethodBuilder
     /// 
     /// ps:如果task和ex都为null，表示任务已同步完成
     /// </summary>
-    private IValueFutureStateMachineDriver<int> _task;
+    private IValueFutureStateMachineTask<int> _task;
     /// <summary>
     /// task绑定的重入id
     /// </summary>
@@ -94,7 +94,7 @@ public struct AsyncValueFutureMethodBuilder
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            ValueFutureStateMachineDriver<int, TStateMachine>.SetStateMachine(ref stateMachine, out _task, out reentryId);
+            ValueFutureStateMachineTask<int, TStateMachine>.SetStateMachine(ref stateMachine, out _task, out reentryId);
         }
         awaiter.OnCompleted(_task.MoveToNext);
     }
@@ -106,7 +106,7 @@ public struct AsyncValueFutureMethodBuilder
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            ValueFutureStateMachineDriver<int, TStateMachine>.SetStateMachine(ref stateMachine, out _task, out reentryId);
+            ValueFutureStateMachineTask<int, TStateMachine>.SetStateMachine(ref stateMachine, out _task, out reentryId);
         }
         awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }
@@ -127,7 +127,7 @@ public struct AsyncValueFutureMethodBuilder<T>
     ///
     /// ps:如果task和ex都为null，表示任务已同步完成
     /// </summary>
-    private IValueFutureStateMachineDriver<T>? _task;
+    private IValueFutureStateMachineTask<T>? _task;
     /// <summary>
     /// task绑定的重入id
     /// </summary>
@@ -194,7 +194,7 @@ public struct AsyncValueFutureMethodBuilder<T>
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            ValueFutureStateMachineDriver<T, TStateMachine>.SetStateMachine(ref stateMachine, out _task, out reentryId);
+            ValueFutureStateMachineTask<T, TStateMachine>.SetStateMachine(ref stateMachine, out _task, out reentryId);
         }
         awaiter.OnCompleted(_task.MoveToNext);
     }
@@ -206,7 +206,7 @@ public struct AsyncValueFutureMethodBuilder<T>
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            ValueFutureStateMachineDriver<T, TStateMachine>.SetStateMachine(ref stateMachine, out _task, out reentryId);
+            ValueFutureStateMachineTask<T, TStateMachine>.SetStateMachine(ref stateMachine, out _task, out reentryId);
         }
         awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }

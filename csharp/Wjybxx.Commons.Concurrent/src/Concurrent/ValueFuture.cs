@@ -50,8 +50,8 @@ public readonly struct ValueFuture
         _ex = null;
     }
 
-    public ValueFuture(ITaskDriver driver, int reentryId) {
-        _future = driver ?? throw new ArgumentNullException(nameof(driver));
+    public ValueFuture(IPoolableFuture future, int reentryId) {
+        _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = reentryId;
         _ex = null;
     }
@@ -88,21 +88,21 @@ public readonly struct ValueFuture
         if (_future is IFuture future) {
             return future;
         }
-        ITaskDriver taskDriver = (ITaskDriver)_future;
-        TaskStatus status = taskDriver.GetStatus(_reentryId);
+        IPoolableFuture poolableFuture = (IPoolableFuture)_future;
+        TaskStatus status = poolableFuture.GetStatus(_reentryId);
         switch (status) {
             case TaskStatus.Success: {
-                taskDriver.GetVoidResult(_reentryId);
+                poolableFuture.GetVoidResult(_reentryId);
                 return Promise<int>.FromResult(0);
             }
             case TaskStatus.Cancelled:
             case TaskStatus.Failed: {
-                Exception ex = taskDriver.GetException(_reentryId);
+                Exception ex = poolableFuture.GetException(_reentryId);
                 return Promise<int>.FromException(ex);
             }
             default: {
                 Promise<int> promise = new Promise<int>();
-                taskDriver.SetVoidPromiseWhenCompleted(_reentryId, promise);
+                poolableFuture.SetVoidPromiseWhenCompleted(_reentryId, promise);
                 return promise;
             }
         }
@@ -122,11 +122,11 @@ public readonly struct ValueFuture
             if (_future == null) {
                 return true;
             }
-            if (_future is ITaskDriver driver) {
-                return driver.GetStatus(_reentryId).IsCompleted();
+            if (_future is IPoolableFuture poolableFuture) {
+                return poolableFuture.GetStatus(_reentryId).IsCompleted();
             }
-            IPromise promise = (IPromise)_future;
-            return promise.IsCompleted;
+            IFuture future = (IFuture)_future;
+            return future.IsCompleted;
         }
     }
 
@@ -137,11 +137,11 @@ public readonly struct ValueFuture
             }
             return;
         }
-        if (_future is ITaskDriver driver) {
-            driver.GetVoidResult(_reentryId);
+        if (_future is IPoolableFuture poolableFuture) {
+            poolableFuture.GetVoidResult(_reentryId);
         } else {
-            IPromise promise = (IPromise)_future;
-            promise.ThrowIfFailedOrCancelled();
+            IFuture future = (IFuture)_future;
+            future.ThrowIfFailedOrCancelled();
         }
     }
 
@@ -153,14 +153,14 @@ public readonly struct ValueFuture
             throw new IllegalStateException();
         }
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (_future is ITaskDriver driver) {
-            driver.OnCompleted(_reentryId, driverCallBack, action, executor, options);
+        if (_future is IPoolableFuture poolableFuture) {
+            poolableFuture.OnCompleted(_reentryId, driverCallBack, action, executor, options);
         } else {
-            IPromise promise = (IPromise)_future;
+            IFuture future = (IFuture)_future;
             if (executor != null) {
-                promise.OnCompletedAsync(executor, futureCallback, action, options);
+                future.OnCompletedAsync(executor, futureCallback, action, options);
             } else {
-                promise.OnCompleted(futureCallback, action, options);
+                future.OnCompleted(futureCallback, action, options);
             }
         }
     }
@@ -199,8 +199,8 @@ public readonly struct ValueFuture<T>
         _ex = null;
     }
 
-    public ValueFuture(ITaskDriver<T> driver, int reentryId) {
-        _future = driver ?? throw new ArgumentNullException(nameof(driver));
+    public ValueFuture(IPoolableFuture<T> future, int reentryId) {
+        _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = reentryId;
         _result = default;
         _ex = null;
@@ -238,20 +238,20 @@ public readonly struct ValueFuture<T>
         if (_future is IFuture<T> future) {
             return future;
         }
-        ITaskDriver<T> taskDriver = (ITaskDriver<T>)_future;
-        TaskStatus status = taskDriver.GetStatus(_reentryId);
+        IPoolableFuture<T> poolableFuture = (IPoolableFuture<T>)_future;
+        TaskStatus status = poolableFuture.GetStatus(_reentryId);
         switch (status) {
             case TaskStatus.Success: {
-                return Promise<T>.FromResult(taskDriver.GetResult(_reentryId));
+                return Promise<T>.FromResult(poolableFuture.GetResult(_reentryId));
             }
             case TaskStatus.Cancelled:
             case TaskStatus.Failed: {
-                Exception ex = taskDriver.GetException(_reentryId);
+                Exception ex = poolableFuture.GetException(_reentryId);
                 return Promise<T>.FromException(ex);
             }
             default: {
                 Promise<T> promise = new Promise<T>();
-                taskDriver.SetPromiseWhenCompleted(_reentryId, promise);
+                poolableFuture.SetPromiseWhenCompleted(_reentryId, promise);
                 return promise;
             }
         }
@@ -269,7 +269,7 @@ public readonly struct ValueFuture<T>
         if (_future is IFuture future) {
             return new ValueFuture(future);
         }
-        return new ValueFuture((ITaskDriver)_future, _reentryId);
+        return new ValueFuture((IPoolableFuture)_future, _reentryId);
     }
 
     #region internal
@@ -284,11 +284,11 @@ public readonly struct ValueFuture<T>
             if (_future == null) {
                 return true;
             }
-            if (_future is ITaskDriver<T> driver) {
-                return driver.GetStatus(_reentryId).IsCompleted();
+            if (_future is IPoolableFuture<T> poolableFuture) {
+                return poolableFuture.GetStatus(_reentryId).IsCompleted();
             }
-            IPromise promise = (IPromise)_future;
-            return promise.IsCompleted;
+            IFuture<T> future = (IFuture<T>)_future;
+            return future.IsCompleted;
         }
     }
 
@@ -299,11 +299,11 @@ public readonly struct ValueFuture<T>
             }
             return _result;
         }
-        if (_future is ITaskDriver<T> driver) {
-            return driver.GetResult(_reentryId);
+        if (_future is IPoolableFuture<T> poolableFuture) {
+            return poolableFuture.GetResult(_reentryId);
         } else {
-            IPromise<T> promise = (IPromise<T>)_future;
-            return promise.Get();
+            IFuture<T> future = (IFuture<T>)_future;
+            return future.Get();
         }
     }
 
@@ -315,14 +315,14 @@ public readonly struct ValueFuture<T>
         }
 
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (_future is ITaskDriver<T> driver) {
-            driver.OnCompleted(_reentryId, ValueFuture.driverCallBack, action, executor, options);
+        if (_future is IPoolableFuture<T> poolableFuture) {
+            poolableFuture.OnCompleted(_reentryId, ValueFuture.driverCallBack, action, executor, options);
         } else {
-            IPromise<T> promise = (IPromise<T>)_future;
+            IFuture<T> future = (IFuture<T>)_future;
             if (executor != null) {
-                promise.OnCompletedAsync(executor, futureCallback, action, options);
+                future.OnCompletedAsync(executor, futureCallback, action, options);
             } else {
-                promise.OnCompleted(futureCallback, action, options);
+                future.OnCompleted(futureCallback, action, options);
             }
         }
     }

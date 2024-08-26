@@ -1,4 +1,4 @@
-﻿#region LICENSE
+#region LICENSE
 
 // Copyright 2023-2024 wjybxx(845740757@qq.com)
 // 
@@ -21,22 +21,13 @@ using System;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 该接口表示异步状态机的驱动类。
-/// <see cref="IStateMachineDriver{T}"/>和<see cref="ValueFutureTask{T}"/>/>
-/// 区别在于：一个由状态机（外部）设置结果，一个由自身（内部）设置结果。
+/// 可池化的Promise
 ///
-/// ps：在c#中，Awaiter和StateMachine其实仅仅用于封装回调；Driver是Future和回调之间的桥梁。
+/// PS：框架统一使用int代替void。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface IStateMachineDriver<T> : ITaskDriver<T>
+public interface IPoolablePromise<T> : IPoolableFuture<T>
 {
-    /// <summary>
-    /// 返回用于驱动StateMachine的委托
-    /// 
-    /// ps：定义为属性以允许实现类进行一些优化，比如：缓存实例，代理。
-    /// </summary>
-    Action MoveToNext { get; }
-
     /// <summary>
     /// 尝试将future置为成功完成状态，如果future已进入完成状态，则返回false
     /// </summary>

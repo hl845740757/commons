@@ -34,7 +34,7 @@ public struct AsyncFutureMethodBuilder
     /// 
     /// ps:如果task和ex都为null，表示任务已同步完成
     /// </summary>
-    private IFutureStateMachineDriver<int> _task;
+    private IFutureStateMachineTask<int> _task;
     /// <summary>
     /// 任务失败的原因 -- 任务同步失败时有值
     /// </summary>
@@ -57,7 +57,7 @@ public struct AsyncFutureMethodBuilder
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (_task != null) {
-                return _task.VoidFuture;
+                return _task;
             }
             if (_ex != null) {
                 return Promise<int>.FromException(_ex);
@@ -70,7 +70,7 @@ public struct AsyncFutureMethodBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetException(Exception exception) {
         if (_task != null) {
-            _task.TrySetException(0, exception);
+            _task.TrySetException(exception);
         } else {
             this._ex = exception;
         }
@@ -80,7 +80,7 @@ public struct AsyncFutureMethodBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetResult() {
         if (_task != null) {
-            _task.TrySetResult(0, 1);
+            _task.TrySetResult(0);
         }
     }
 
@@ -90,7 +90,7 @@ public struct AsyncFutureMethodBuilder
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            FutureStateMachineDriver<int, TStateMachine>.SetStateMachine(ref stateMachine, out _task);
+            FutureStateMachineTask<int, TStateMachine>.SetStateMachine(ref stateMachine, out _task);
         }
         awaiter.OnCompleted(_task.MoveToNext);
     }
@@ -102,7 +102,7 @@ public struct AsyncFutureMethodBuilder
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            FutureStateMachineDriver<int, TStateMachine>.SetStateMachine(ref stateMachine, out _task);
+            FutureStateMachineTask<int, TStateMachine>.SetStateMachine(ref stateMachine, out _task);
         }
         awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }
@@ -123,7 +123,7 @@ public struct AsyncFutureMethodBuilder<T>
     ///
     /// ps:如果task和ex都为null，表示任务已同步完成
     /// </summary>
-    private IFutureStateMachineDriver<T>? _task;
+    private IFutureStateMachineTask<T>? _task;
     /// <summary>
     /// 任务失败的原因 -- 任务同步失败时有值
     /// </summary>
@@ -150,7 +150,7 @@ public struct AsyncFutureMethodBuilder<T>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get {
             if (_task != null) {
-                return _task.Future;
+                return _task;
             }
             if (_ex != null) {
                 return Promise<T>.FromException(_ex);
@@ -163,7 +163,7 @@ public struct AsyncFutureMethodBuilder<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetException(Exception exception) {
         if (_task != null) {
-            _task.TrySetException(0, exception);
+            _task.TrySetException(exception);
         } else {
             this._ex = exception;
         }
@@ -173,7 +173,7 @@ public struct AsyncFutureMethodBuilder<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetResult(T result) {
         if (_task != null) {
-            _task.TrySetResult(0, result);
+            _task.TrySetResult(result);
         } else {
             this._result = result;
         }
@@ -185,7 +185,7 @@ public struct AsyncFutureMethodBuilder<T>
         where TAwaiter : INotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            FutureStateMachineDriver<T, TStateMachine>.SetStateMachine(ref stateMachine, out _task);
+            FutureStateMachineTask<T, TStateMachine>.SetStateMachine(ref stateMachine, out _task);
         }
         awaiter.OnCompleted(_task.MoveToNext);
     }
@@ -197,7 +197,7 @@ public struct AsyncFutureMethodBuilder<T>
         where TAwaiter : ICriticalNotifyCompletion
         where TStateMachine : IAsyncStateMachine {
         if (_task == null) {
-            FutureStateMachineDriver<T, TStateMachine>.SetStateMachine(ref stateMachine, out _task);
+            FutureStateMachineTask<T, TStateMachine>.SetStateMachine(ref stateMachine, out _task);
         }
         awaiter.UnsafeOnCompleted(_task.MoveToNext);
     }

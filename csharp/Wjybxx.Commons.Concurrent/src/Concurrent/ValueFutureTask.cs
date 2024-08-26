@@ -18,8 +18,8 @@
 
 using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Pool;
+
 #pragma warning disable CS8603
 
 namespace Wjybxx.Commons.Concurrent
@@ -92,19 +92,13 @@ public static class ValueFutureTask
 /// 可看做轻量级的<see cref="PromiseTask{T}"/>实现。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-internal class ValueFutureTask<T> : ITaskDriver<T>, IFutureTask
+internal class ValueFutureTask<T> : PoolablePromise<T>, IFutureTask
 {
     private static readonly ConcurrentObjectPool<ValueFutureTask<T>> POOL =
         new(() => new ValueFutureTask<T>(), task => task.Reset(),
             TaskPoolConfig.GetPoolSize<T>(TaskPoolConfig.TaskType.ValueFutureTask));
 
 #nullable disable
-    /// <summary>
-    /// 重入id（归还到池和从池中取出时都加1）
-    /// </summary>
-    private int _reentryId;
-    /** 任务关联的promise */
-    private readonly Promise<T> _promise;
     /** 用户的委托 */
     private object task;
     /** 任务的上下文 */
@@ -116,7 +110,6 @@ internal class ValueFutureTask<T> : ITaskDriver<T>, IFutureTask
 #nullable enable
 
     private ValueFutureTask() {
-        _promise = new Promise<T>();
     }
 
     private void Init(object action, object? ctx, int options, int taskType) {
@@ -135,18 +128,21 @@ internal class ValueFutureTask<T> : ITaskDriver<T>, IFutureTask
 
     public static ValueFutureTask<T> Create(object action, object? ctx, int options, int taskType) {
         ValueFutureTask<T> futureTask = POOL.Acquire();
+        futureTask.IncReentryId(); // 重用时也加1
         futureTask.Init(action, ctx, options, taskType);
-        futureTask._reentryId++; // 重用时也加1
         return futureTask;
     }
 
-    private void Reset() {
-        _reentryId++;
-        _promise.Reset();
+    public override void Reset() {
+        base.Reset();
         task = null;
         ctx = null;
         options = 0;
         ctl = 0;
+    }
+
+    protected override void PrepareToRecycle() {
+        POOL.Release(this);
     }
 
     #region future-task
@@ -246,128 +242,6 @@ internal class ValueFutureTask<T> : ITaskDriver<T>, IFutureTask
         int cancelCode = cancelToken.CancelCode;
         if (cancelCode == 0) cancelCode = def;
         promise.TrySetCancelled(cancelCode);
-    }
-
-    #endregion
-
-    #region driver
-
-    public ValueFuture VoidFuture {
-        get {
-            TaskStatus status = _promise.Status;
-            switch (status) {
-                case TaskStatus.Success: {
-                    return new ValueFuture();
-                }
-                case TaskStatus.Cancelled:
-                case TaskStatus.Failed: {
-                    return new ValueFuture(_promise.ExceptionNow(false));
-                }
-                default: {
-                    return new ValueFuture(this, _reentryId);
-                }
-            }
-        }
-    }
-
-    public ValueFuture<T> Future {
-        get {
-            TaskStatus status = _promise.Status;
-            switch (status) {
-                case TaskStatus.Success: {
-                    return new ValueFuture<T>(_promise.ResultNow(), null);
-                }
-                case TaskStatus.Cancelled:
-                case TaskStatus.Failed: {
-                    return new ValueFuture<T>(default, _promise.ExceptionNow(false));
-                }
-                default: {
-                    return new ValueFuture<T>(this, _reentryId);
-                }
-            }
-        }
-    }
-
-    public TaskStatus GetStatus(int reentryId, bool ignoreReentrant = false) {
-        ValidateReentryId(reentryId, ignoreReentrant);
-        return _promise.Status;
-    }
-
-    public Exception GetException(int reentryId, bool ignoreReentrant = false) {
-        ValidateReentryId(reentryId, ignoreReentrant);
-        Exception ex = _promise.ExceptionNow(false);
-        // GetResult以后归还到池
-        POOL.Release(this);
-        return ex;
-    }
-
-    public void GetVoidResult(int reentryId, bool ignoreReentrant = false) {
-        ValidateReentryId(reentryId, ignoreReentrant);
-        TaskStatus status = _promise.Status;
-        if (!status.IsCompleted()) {
-            throw new IllegalStateException("Task has not completed");
-        }
-
-        Exception? ex = null;
-        if (status != TaskStatus.Success) {
-            ex = _promise.ExceptionNow(false);
-        }
-        // GetResult以后归还到池
-        POOL.Release(this);
-
-        if (ex != null) {
-            throw status == TaskStatus.Cancelled ? ex : new CompletionException(null, ex);
-        }
-    }
-
-    public T GetResult(int reentryId, bool ignoreReentrant = false) {
-        ValidateReentryId(reentryId, ignoreReentrant);
-        TaskStatus status = _promise.Status;
-        if (!status.IsCompleted()) {
-            throw new IllegalStateException("Task has not completed");
-        }
-
-        T r = default!;
-        Exception? ex = null;
-        if (status == TaskStatus.Success) {
-            r = _promise.ResultNow();
-        } else {
-            ex = _promise.ExceptionNow(false);
-        }
-        // GetResult以后归还到池
-        POOL.Release(this);
-
-        if (ex != null) {
-            throw status == TaskStatus.Cancelled ? ex : new CompletionException(null, ex);
-        }
-        return r;
-    }
-
-    public void OnCompleted(int reentryId, Action<object?> continuation, object? state, IExecutor? executor, int options = 0) {
-        ValidateReentryId(reentryId);
-        if (executor != null) {
-            _promise.OnCompletedAsync(executor, continuation, state, options);
-        } else {
-            _promise.OnCompleted(continuation, state);
-        }
-    }
-
-    public void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise) {
-        ValidateReentryId(reentryId);
-        Executors.SetVoidPromise(promise, this._promise);
-    }
-
-    public void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise) {
-        ValidateReentryId(reentryId);
-        Executors.SetPromise(promise, this._promise);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ValidateReentryId(int reentryId, bool ignoreReentrant = false) {
-        if (ignoreReentrant || reentryId == this._reentryId) {
-            return;
-        }
-        throw new IllegalStateException("ValueFutureDriver has been reused");
     }
 
     #endregion

@@ -29,6 +29,10 @@ public class ValueFutureTest
     public async Task TestRun() {
         await asyncVoid();
         await asyncInt();
+        await asyncVoid();
+        await asyncInt();
+        await asyncVoid();
+        await asyncInt();
     }
 
     private static async ValueFuture asyncVoid() {

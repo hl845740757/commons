@@ -21,7 +21,7 @@ using System;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 用于配置<see cref="IStateMachineDriver{T}"/>和<see cref="Promise{T}"/>中的对象池信息
+/// 用于配置工具库中的对象池大小
 /// </summary>
 public static class TaskPoolConfig
 {
@@ -52,7 +52,8 @@ public static class TaskPoolConfig
         PromiseTask,
         ScheduledPromiseTask,
         ValueFutureTask,
-        ManualResetPromise
+        ManualResetPromise,
+        ValuePromise,
     }
 }
 }

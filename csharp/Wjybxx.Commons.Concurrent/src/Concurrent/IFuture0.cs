@@ -234,7 +234,7 @@ public interface IFuture
 
     /// <summary>
     /// 添加一个监听器
-    /// (该接口不接收future参数，主要用于<see cref="IStateMachineDriver{T}"/>)
+    /// (该接口不接收future参数，主要用于异步状态机)
     /// </summary>
     /// <param name="continuation">回调</param>
     /// <param name="state">回调参数</param>
@@ -243,7 +243,7 @@ public interface IFuture
 
     /// <summary>
     /// 添加一个监听器
-    /// (该接口不接收future参数，主要用于<see cref="IStateMachineDriver{T}"/>)
+    /// (该接口不接收future参数，主要用于异步状态机)
     /// </summary>
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
@@ -261,13 +261,13 @@ public interface IFuture
                 throw new CompletionException(null, future.ExceptionNow(false));
             }
             case TaskStatus.Cancelled: {
-                throw future.ExceptionNow(false);
+                throw future.ExceptionNow(false); // c#下，这样似乎会丢堆栈
             }
             case TaskStatus.Pending:
             case TaskStatus.Computing:
             case TaskStatus.Success:
             default: {
-                break;
+                throw new IllegalStateException("Task has not completed");
             }
         }
     }

@@ -18,69 +18,52 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 ///
-/// PS：该类型由于要复用，不能继承Promise，否则可能导致用户使用到错误的接口。
+/// 1.该类型由于要复用，不能继承Promise，否则可能导致用户使用到错误的接口，也可能导致类型测试时的混乱。
+/// 2.统一在用户获得结果后触发回收。
+/// 3.该实现并不是严格线程安全的，但在使用<see cref="ValueFuture{T}"/>的情况下是安全的。
 /// </summary>
-/// <typeparam name="T">任务的结果类型</typeparam>
-/// <typeparam name="S">状态机类型</typeparam>
-internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMachineDriver<T> where S : IAsyncStateMachine
+/// <typeparam name="T"></typeparam>
+internal class PoolablePromise<T> : IPoolablePromise<T>
 {
-    private static readonly ConcurrentObjectPool<ValueFutureStateMachineDriver<T, S>> POOL =
-        new(() => new ValueFutureStateMachineDriver<T, S>(), driver => driver.Reset(),
-            TaskPoolConfig.GetPoolSize<T>(TaskPoolConfig.TaskType.ValueFutureStateMachineDriver));
-
-    /// <summary>
-    /// 任务状态机
-    /// </summary>
-    private S _stateMachine;
     /// <summary>
     /// 重入id（归还到池和从池中取出时都加1）
     /// </summary>
     private int _reentryId;
     /// <summary>
-    /// 驱动状态机的委托
-    /// </summary>
-    private readonly Action _moveToNext;
-    /// <summary>
     /// 存储结果的Promise（未特殊实现结构体类型的Promise，不想重复编码）
     /// </summary>
-    private readonly Promise<T> _promise = new Promise<T>();
+    protected readonly Promise<T> _promise = new Promise<T>();
 
-    private ValueFutureStateMachineDriver() {
-        _moveToNext = Run;
-    }
+    /// <summary>
+    /// 当前重入id
+    /// </summary>
+    public int ReentryId => _reentryId;
 
-    public static void SetStateMachine(ref S stateMachine, out IValueFutureStateMachineDriver<T> driver, out int reentryId) {
-        ValueFutureStateMachineDriver<T, S> result = POOL.Acquire();
-        result._reentryId++; // 重用时也+1
-
-        // driver和reentryId是builder的属性，而builder是状态机的属性，需要在拷贝状态机之前完成初始化
-        // init builder before copy state machine
-        driver = result;
-        reentryId = result._reentryId;
-
-        // copy struct... 从栈拷贝到堆，此后栈上的状态机将被丢弃
-        result._stateMachine = stateMachine;
-    }
-
-    public void Run() {
-        _stateMachine.MoveNext();
+    /// <summary>
+    /// 增加重入id(重用对象时调用)
+    /// </summary>
+    /// <returns>增加后的值</returns>
+    public int IncReentryId() {
+        return ++_reentryId;
     }
 
     /// <summary>
-    /// 用于驱动StateMachine的Action委托
+    /// 重置数据
     /// </summary>
-    public Action MoveToNext => _moveToNext;
-
-    private void Reset() {
+    public virtual void Reset() {
         _reentryId++;
-        _stateMachine = default;
         _promise.Reset();
+    }
+
+    /// <summary>
+    /// 用户已正常获取结果信息，可以尝试回收
+    /// </summary>
+    protected virtual void PrepareToRecycle() {
     }
 
     public ValueFuture VoidFuture {
@@ -128,7 +111,9 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
         ValidateReentryId(reentryId, ignoreReentrant);
         Exception ex = _promise.ExceptionNow(false);
         // GetResult以后归还到池
-        POOL.Release(this);
+        if (!ignoreReentrant) {
+            PrepareToRecycle();
+        }
         return ex;
     }
 
@@ -144,7 +129,9 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
             ex = _promise.ExceptionNow(false);
         }
         // GetResult以后归还到池
-        POOL.Release(this);
+        if (!ignoreReentrant) {
+            PrepareToRecycle();
+        }
 
         if (ex != null) {
             throw status == TaskStatus.Cancelled ? ex : new CompletionException(null, ex);
@@ -166,7 +153,9 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
             ex = _promise.ExceptionNow(false);
         }
         // GetResult以后归还到池
-        POOL.Release(this);
+        if (!ignoreReentrant) {
+            PrepareToRecycle();
+        }
 
         if (ex != null) {
             throw status == TaskStatus.Cancelled ? ex : new CompletionException(null, ex);
@@ -213,7 +202,7 @@ internal sealed class ValueFutureStateMachineDriver<T, S> : IValueFutureStateMac
         if (ignoreReentrant || reentryId == this._reentryId) {
             return;
         }
-        throw new IllegalStateException("ValueFutureDriver has been reused");
+        throw new IllegalStateException("promise has been reused");
     }
 }
 }
