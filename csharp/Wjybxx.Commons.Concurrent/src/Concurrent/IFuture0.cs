@@ -257,15 +257,17 @@ public interface IFuture
 
     public static void ThrowIfFailedOrCancelled(IFuture future) {
         switch (future.Status) {
+            case TaskStatus.Success: {
+                break;
+            }
             case TaskStatus.Failed: {
                 throw new CompletionException(null, future.ExceptionNow(false));
             }
             case TaskStatus.Cancelled: {
-                throw future.ExceptionNow(false); // c#下，这样似乎会丢堆栈
+                throw future.ExceptionNow(false);
             }
             case TaskStatus.Pending:
             case TaskStatus.Computing:
-            case TaskStatus.Success:
             default: {
                 throw new IllegalStateException("Task has not completed");
             }

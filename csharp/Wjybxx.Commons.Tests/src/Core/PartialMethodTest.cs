@@ -16,6 +16,11 @@
 
 namespace Commons.Tests.Core;
 
+/// <summary>
+/// 测试分部方法的规则
+///
+/// 显式声明访问权限后，必须提供实现。
+/// </summary>
 public partial class PartialMethodTest
 {
     partial void AfterReload();

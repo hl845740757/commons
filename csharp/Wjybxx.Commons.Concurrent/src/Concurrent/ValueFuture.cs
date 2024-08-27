@@ -142,6 +142,13 @@ public readonly struct ValueFuture
 
     public ValueFuture Preserve() => new ValueFuture(AsFuture());
 
+    /// <summary>
+    /// 用于压制警告
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Forget() {
+    }
+
     #region internal
 
     // internal是因为不希望用户调用
@@ -314,6 +321,10 @@ public readonly struct ValueFuture<T>
     }
 
     public ValueFuture<T> Preserve() => new ValueFuture<T>(AsFuture());
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Forget() {
+    }
 
     public ValueFuture ToVoid() {
         if (_future == null) {

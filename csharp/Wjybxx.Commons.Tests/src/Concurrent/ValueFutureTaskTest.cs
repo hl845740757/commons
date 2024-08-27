@@ -50,7 +50,7 @@ public class ValueFutureTaskTest
         consumer.Start().Join();
 
         for (int idx = 0; idx < 100; idx++) {
-            CountAsync(idx);
+            CountAsync(idx).Forget();
         }
 
         Thread.Sleep(3000);
@@ -61,7 +61,7 @@ public class ValueFutureTaskTest
         Assert.IsTrue(counter.errorMsgList.Count == 0, "counter.errorMsgList.Count == 0");
     }
 
-    private static async void CountAsync(int idx) {
+    private static async ValueFuture CountAsync(int idx) {
         Action newTask = counter.NewTask(1, idx);
         ValueFuture future = ValueFutureTask.Run(consumer, newTask);
         if (MathCommon.IsEven(idx)) {
@@ -69,10 +69,6 @@ public class ValueFutureTaskTest
         } else {
             await future.GetAwaitable(consumer, TaskOptions.STAGE_TRY_INLINE);
             Assert.IsTrue(consumer.InEventLoop());
-        }
-        if (idx == 0) {
-            // 重复await将抛出异常
-            Assert.CatchAsync<IllegalStateException>(async () => await future);
         }
     }
 }

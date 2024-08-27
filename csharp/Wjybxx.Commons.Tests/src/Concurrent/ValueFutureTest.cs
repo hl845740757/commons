@@ -19,6 +19,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Concurrent;
 
 namespace Commons.Tests.Concurrent;
@@ -27,10 +28,18 @@ public class ValueFutureTest
 {
     [Test]
     public async Task TestRun() {
+        ValueFuture future1 = asyncVoid();
+        ValueFuture<int> future2 = asyncInt();
+        await future1;
+        await future2;
+        
+        // 重复await将抛出异常
+        Assert.CatchAsync<IllegalStateException>(async () => await future1);
+        Assert.CatchAsync<IllegalStateException>(async () => await future2);
+
         await asyncVoid();
         await asyncInt();
-        await asyncVoid();
-        await asyncInt();
+
         await asyncVoid();
         await asyncInt();
     }
