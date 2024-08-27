@@ -157,8 +157,8 @@ public sealed class UniFutureCombiner
 
     private class ChildListener
     {
-        private int succeedCount = 0;
-        private int doneCount = 0;
+        private int succeedCount;
+        private int doneCount;
 
         /** 非volatile，虽然存在竞争，但重复赋值是安全的，通过promise发布到其它线程 */
         private object? result;
@@ -236,7 +236,7 @@ public sealed class UniFutureCombiner
         }
     }
 
-    private static object NIL = new object();
+    private static readonly object NIL = new object();
 
     private static object EncodeValue(object? val) {
         return val == null ? NIL : val;

@@ -64,7 +64,6 @@ public readonly struct TaskAwaitable
         // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中 -- 不可手动调用
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetResult() {
-            _future.Wait();
             _future.GetAwaiter().GetResult();
         }
 
@@ -128,8 +127,7 @@ public readonly struct TaskAwaitable<T>
         // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中 -- 不可手动调用
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T GetResult() {
-            _future.Wait();
-            return _future.Result;
+            return _future.GetAwaiter().GetResult();
         }
 
         // 3. OnCompleted

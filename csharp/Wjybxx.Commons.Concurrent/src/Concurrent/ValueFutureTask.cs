@@ -92,7 +92,7 @@ public static class ValueFutureTask
 /// 可看做轻量级的<see cref="PromiseTask{T}"/>实现。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-internal class ValueFutureTask<T> : PoolablePromise<T>, IFutureTask
+internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
 {
     private static readonly ConcurrentObjectPool<ValueFutureTask<T>> POOL =
         new(() => new ValueFutureTask<T>(), task => task.Reset(),

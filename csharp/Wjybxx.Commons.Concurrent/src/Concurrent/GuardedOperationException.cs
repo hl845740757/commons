@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.Serialization;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -33,6 +34,9 @@ public class GuardedOperationException : Exception
     }
 
     public GuardedOperationException(string? message, Exception? innerException) : base(message, innerException) {
+    }
+
+    protected GuardedOperationException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 }
 }

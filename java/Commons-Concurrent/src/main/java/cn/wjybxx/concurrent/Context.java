@@ -188,7 +188,9 @@ public class Context<T> implements IContext {
     }
 
     public Context<T> withState(Object state, ICancelToken cancelToken) {
-        if (cancelToken == null) cancelToken = ICancelToken.NONE;
+        if (cancelToken == null) {
+            cancelToken = ICancelToken.NONE;
+        }
         if (state == this.state && cancelToken == this.cancelToken) {
             return this;
         }

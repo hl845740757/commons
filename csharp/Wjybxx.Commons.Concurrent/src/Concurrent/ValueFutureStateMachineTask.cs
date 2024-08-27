@@ -32,7 +32,7 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 /// <typeparam name="T">任务的结果类型</typeparam>
 /// <typeparam name="S">状态机类型</typeparam>
-internal sealed class ValueFutureStateMachineTask<T, S> : PoolablePromise<T>, IValueFutureStateMachineTask<T> where S : IAsyncStateMachine
+internal sealed class ValueFutureStateMachineTask<T, S> : ValuePromise<T>, IValueFutureStateMachineTask<T> where S : IAsyncStateMachine
 {
     private static readonly ConcurrentObjectPool<ValueFutureStateMachineTask<T, S>> POOL =
         new(() => new ValueFutureStateMachineTask<T, S>(), driver => driver.Reset(),

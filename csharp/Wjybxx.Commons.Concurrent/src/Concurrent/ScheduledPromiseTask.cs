@@ -148,7 +148,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
     }
 
     /// <summary>
-    /// 任务的优先级，范围 [0, 255]
+    /// 任务的优先级，范围 [0, 15]
     /// </summary>
     /// <exception cref="ArgumentException"></exception>
     public int Priority {

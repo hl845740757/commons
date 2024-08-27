@@ -24,7 +24,7 @@ namespace Wjybxx.Commons.Concurrent
 /// 用于驱动<see cref="ValueFuture{T}"/>
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface IValueFutureStateMachineTask<T> : IPoolablePromise<T>
+public interface IValueFutureStateMachineTask<T> : IValuePromise<T>
 {
     /// <summary>
     /// 返回用于驱动StateMachine的委托

@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.Serialization;
 
 namespace Wjybxx.Commons.Ex
 {
@@ -32,6 +33,9 @@ public class InfiniteLoopException : Exception
     }
 
     public InfiniteLoopException(string? message, Exception? innerException) : base(message, innerException) {
+    }
+
+    protected InfiniteLoopException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 }
 }

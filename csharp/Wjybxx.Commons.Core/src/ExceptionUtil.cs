@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Commons
@@ -50,6 +51,13 @@ public static class ExceptionUtil
             ex = ex.InnerException;
         }
         return list;
+    }
+
+    /// <summary>
+    /// 捕获异常堆栈
+    /// </summary>
+    public static ExceptionDispatchInfo? TryCapture(Exception? ex) {
+        return ex == null ? null : ExceptionDispatchInfo.Capture(ex);
     }
 
     #region factory

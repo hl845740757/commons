@@ -30,7 +30,8 @@ import java.util.function.Function;
 
 /**
  * 提供转发功能的基类
- * 由于Future中存在取消接口，因此该类还不是Readonly的。
+ * 1.由于Future中存在取消接口，因此该类还不是Readonly的。
+ * 2.onCompleted系列接口存在封装泄漏 -- 可能导致错误。
  *
  * @author wjybxx
  * date - 2024/1/9

@@ -53,8 +53,8 @@ public class FixedEventLoopGroup : AbstractEventLoopGroup, IFixedEventLoopGroup
         chooser = chooserFactory.NewChooser(children);
 
         // 监听关闭信号
-        foreach (IFuture future in children.Select(e => e.TerminationFuture)) {
-            future.OnCompleted(OnChildTerminated);
+        foreach (IEventLoop child in children) {
+            child.TerminationFuture.OnCompleted(OnChildTerminated);
         }
     }
 
@@ -66,7 +66,6 @@ public class FixedEventLoopGroup : AbstractEventLoopGroup, IFixedEventLoopGroup
     }
 
     public int ChildCount => children.Length;
-
 
     public override IEventLoop Select() {
         return chooser.Select();

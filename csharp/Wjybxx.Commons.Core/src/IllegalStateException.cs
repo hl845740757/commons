@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.Serialization;
 
 namespace Wjybxx.Commons
 {
@@ -32,6 +33,9 @@ public class IllegalStateException : StateException
     }
 
     public IllegalStateException(string? message, Exception? innerException) : base(message, innerException) {
+    }
+
+    protected IllegalStateException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 }
 }

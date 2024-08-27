@@ -154,8 +154,8 @@ public sealed class FutureCombiner
 
     private class ChildListener
     {
-        private volatile int succeedCount = 0;
-        private volatile int doneCount = 0;
+        private volatile int succeedCount;
+        private volatile int doneCount;
 
         /** 非volatile，虽然存在竞争，但重复赋值是安全的，通过promise发布到其它线程 */
         private object? result;

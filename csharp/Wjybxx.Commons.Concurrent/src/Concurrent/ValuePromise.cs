@@ -28,7 +28,7 @@ namespace Wjybxx.Commons.Concurrent
 /// 3.该实现并不是严格线程安全的，但在使用<see cref="ValueFuture{T}"/>的情况下是安全的。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-internal class PoolablePromise<T> : IPoolablePromise<T>
+internal class ValuePromise<T> : IValuePromise<T>
 {
     /// <summary>
     /// 重入id（归还到池和从池中取出时都加1）

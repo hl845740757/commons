@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+
 #pragma warning disable CS8603
 
 namespace Wjybxx.Commons.Concurrent

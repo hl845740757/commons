@@ -59,6 +59,6 @@ internal sealed class FutureStateMachineTask<T, S> : Promise<T>, IFutureStateMac
     /// <summary>
     /// 用于驱动StateMachine的Action委托
     /// </summary>
-    public override Action MoveToNext => _moveToNext;
+    public Action MoveToNext => _moveToNext;
 }
 }

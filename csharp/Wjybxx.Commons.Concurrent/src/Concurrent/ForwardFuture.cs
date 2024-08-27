@@ -23,7 +23,9 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 该实现主要用于屏蔽Promise中的写接口。
 ///
-/// ps:Csharp的Future没有取消接口，因此无需显式的Readonly实现。
+/// ps:
+/// 1.Csharp的Future没有取消接口，因此无需显式的Readonly实现。
+/// 2.OnCompleted系列接口存在封装泄漏，可能导致错误。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public class ForwardFuture<T> : IFuture<T>

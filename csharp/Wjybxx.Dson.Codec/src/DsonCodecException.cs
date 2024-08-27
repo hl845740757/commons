@@ -36,6 +36,9 @@ public class DsonCodecException : DsonIOException
     public DsonCodecException(string? message, Exception? innerException) : base(message, innerException) {
     }
 
+    protected DsonCodecException(SerializationInfo info, StreamingContext context) : base(info, context) {
+    }
+
     public static DsonCodecException UnsupportedType(Type type) {
         return new DsonCodecException("Can't find a codec for " + type);
     }

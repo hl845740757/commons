@@ -17,13 +17,14 @@
 #endregion
 
 using System;
+using System.Runtime.Serialization;
 
 namespace Wjybxx.Commons.Ex
 {
 /// <summary>
 /// 包含错误码的异常
 /// </summary>
-public class ErrorCodeException : Exception, IErrorCodeException, NoLogRequiredException
+public class ErrorCodeException : Exception, IErrorCodeException, NoLogRequiredException, ISerializable
 {
     private readonly int errorCode;
 
@@ -39,5 +40,19 @@ public class ErrorCodeException : Exception, IErrorCodeException, NoLogRequiredE
     /// 错误码
     /// </summary>
     public int ErrorCode => errorCode;
+
+    #region seril
+
+    protected ErrorCodeException(SerializationInfo info, StreamingContext context)
+        : base(info, context) {
+        this.errorCode = info.GetInt32("code");
+    }
+
+    public override void GetObjectData(SerializationInfo info, StreamingContext context) {
+        base.GetObjectData(info, context);
+        info.AddValue("code", errorCode);
+    }
+
+    #endregion
 }
 }

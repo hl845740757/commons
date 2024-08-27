@@ -33,7 +33,7 @@ public static class TaskPoolConfig
     }
 
     /// <summary>
-    /// 计算给定类型的<see cref="IStateMachineDriver{T}"/>的缓存池大小。
+    /// 计算给定类型对象池的缓存池大小。
     /// 注意：本库默认使用int代替void，因此当T为int类型时，应当分配更大的池。
     /// </summary>
     public static int GetPoolSize<T>(TaskType domain) {

@@ -53,8 +53,7 @@ public class ExecutorTaskScheduler : TaskScheduler
     }
 
     /// <summary>
-    /// 默认实现为：如果Task是一个新任务，且当前在EventLoop所在线程，则立即执行。
-    /// 这可避免Task挂载的延续任务总是先提交到队列再执行 —— 这可以避免一些时序错误，但又可能造成一些时序错误。
+    /// 默认不内联，保证时序的确定性。
     /// 
     /// PS：C#的该接口设计我认为是糟糕的，时序的控制居然不在用户，而是TaskScheduler自行决定。
     /// </summary>
@@ -62,12 +61,6 @@ public class ExecutorTaskScheduler : TaskScheduler
     /// <param name="taskWasPreviouslyQueued"></param>
     /// <returns></returns>
     protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) {
-        if (taskWasPreviouslyQueued) {
-            return false;
-        }
-        if (_executor is ISingleThreadExecutor singleThreadExecutor && singleThreadExecutor.InEventLoop()) {
-            return TryExecuteTask(task);
-        }
         return false;
     }
 

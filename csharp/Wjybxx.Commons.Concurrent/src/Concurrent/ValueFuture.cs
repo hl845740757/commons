@@ -50,7 +50,7 @@ public readonly struct ValueFuture
         _ex = null;
     }
 
-    public ValueFuture(IPoolableFuture future, int reentryId) {
+    public ValueFuture(IValuePromise future, int reentryId) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = reentryId;
         _ex = null;
@@ -74,6 +74,38 @@ public readonly struct ValueFuture
         return new ValueFuture(ex);
     }
 
+    public TaskStatus Status {
+        get {
+            if (_future == null) {
+                if (_ex == null) {
+                    return TaskStatus.Success;
+                }
+                return _ex is OperationCanceledException ? TaskStatus.Cancelled : TaskStatus.Failed;
+            }
+            if (_future is IValuePromise valuePromise) {
+                return valuePromise.GetStatus(_reentryId);
+            }
+            IFuture future = (IFuture)_future;
+            return future.Status;
+        }
+    }
+
+    /// <summary>
+    /// 查询任务是否已完成
+    /// </summary>
+    public bool IsCompleted {
+        get {
+            if (_future == null) {
+                return true;
+            }
+            if (_future is IValuePromise valuePromise) {
+                return valuePromise.GetStatus(_reentryId).IsCompleted();
+            }
+            IFuture future = (IFuture)_future;
+            return future.IsCompleted;
+        }
+    }
+
     /// <summary>
     /// 转换为普通的Future
     /// 该方法应当避免调用多次，且不可以在await以后调用
@@ -88,21 +120,21 @@ public readonly struct ValueFuture
         if (_future is IFuture future) {
             return future;
         }
-        IPoolableFuture poolableFuture = (IPoolableFuture)_future;
-        TaskStatus status = poolableFuture.GetStatus(_reentryId);
+        IValuePromise valuePromise = (IValuePromise)_future;
+        TaskStatus status = valuePromise.GetStatus(_reentryId);
         switch (status) {
             case TaskStatus.Success: {
-                poolableFuture.GetVoidResult(_reentryId);
+                valuePromise.GetVoidResult(_reentryId);
                 return Promise<int>.FromResult(0);
             }
             case TaskStatus.Cancelled:
             case TaskStatus.Failed: {
-                Exception ex = poolableFuture.GetException(_reentryId);
+                Exception ex = valuePromise.GetException(_reentryId);
                 return Promise<int>.FromException(ex);
             }
             default: {
                 Promise<int> promise = new Promise<int>();
-                poolableFuture.SetVoidPromiseWhenCompleted(_reentryId, promise);
+                valuePromise.SetVoidPromiseWhenCompleted(_reentryId, promise);
                 return promise;
             }
         }
@@ -115,30 +147,19 @@ public readonly struct ValueFuture
     // internal是因为不希望用户调用
 
     /// <summary>
-    /// 查询任务是否已完成
+    /// 获取任务的结果
+    /// 
+    /// ps：不对外，会触发Promise回收
     /// </summary>
-    internal bool IsCompleted {
-        get {
-            if (_future == null) {
-                return true;
-            }
-            if (_future is IPoolableFuture poolableFuture) {
-                return poolableFuture.GetStatus(_reentryId).IsCompleted();
-            }
-            IFuture future = (IFuture)_future;
-            return future.IsCompleted;
-        }
-    }
-
     internal void GetResult() {
         if (_future == null) {
             if (_ex != null) {
-                throw _ex;
+                throw _ex; // TODO 会丢失堆栈
             }
             return;
         }
-        if (_future is IPoolableFuture poolableFuture) {
-            poolableFuture.GetVoidResult(_reentryId);
+        if (_future is IValuePromise valuePromise) {
+            valuePromise.GetVoidResult(_reentryId);
         } else {
             IFuture future = (IFuture)_future;
             future.ThrowIfFailedOrCancelled();
@@ -153,8 +174,8 @@ public readonly struct ValueFuture
             throw new IllegalStateException();
         }
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (_future is IPoolableFuture poolableFuture) {
-            poolableFuture.OnCompleted(_reentryId, driverCallBack, action, executor, options);
+        if (_future is IValuePromise valuePromise) {
+            valuePromise.OnCompleted(_reentryId, driverCallBack, action, executor, options);
         } else {
             IFuture future = (IFuture)_future;
             if (executor != null) {
@@ -199,7 +220,7 @@ public readonly struct ValueFuture<T>
         _ex = null;
     }
 
-    public ValueFuture(IPoolableFuture<T> future, int reentryId) {
+    public ValueFuture(IValuePromise<T> future, int reentryId) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = reentryId;
         _result = default;
@@ -225,6 +246,41 @@ public readonly struct ValueFuture<T>
     }
 
     /// <summary>
+    /// 获取任务当前的状态
+    /// </summary>
+    public TaskStatus Status {
+        get {
+            if (_future == null) {
+                if (_ex == null) {
+                    return TaskStatus.Success;
+                }
+                return _ex is OperationCanceledException ? TaskStatus.Cancelled : TaskStatus.Failed;
+            }
+            if (_future is IValuePromise valuePromise) {
+                return valuePromise.GetStatus(_reentryId);
+            }
+            IFuture future = (IFuture)_future;
+            return future.Status;
+        }
+    }
+
+    /// <summary>
+    /// 查询任务是否已完成
+    /// </summary>
+    public bool IsCompleted {
+        get {
+            if (_future == null) {
+                return true;
+            }
+            if (_future is IValuePromise valuePromise) {
+                return valuePromise.GetStatus(_reentryId).IsCompleted();
+            }
+            IFuture future = (IFuture)_future;
+            return future.IsCompleted;
+        }
+    }
+
+    /// <summary>
     /// 转换为普通的Future
     /// 该方法应当避免调用多次，且不可以在await以后调用
     /// </summary>
@@ -238,20 +294,20 @@ public readonly struct ValueFuture<T>
         if (_future is IFuture<T> future) {
             return future;
         }
-        IPoolableFuture<T> poolableFuture = (IPoolableFuture<T>)_future;
-        TaskStatus status = poolableFuture.GetStatus(_reentryId);
+        IValuePromise<T> valuePromise = (IValuePromise<T>)_future;
+        TaskStatus status = valuePromise.GetStatus(_reentryId);
         switch (status) {
             case TaskStatus.Success: {
-                return Promise<T>.FromResult(poolableFuture.GetResult(_reentryId));
+                return Promise<T>.FromResult(valuePromise.GetResult(_reentryId));
             }
             case TaskStatus.Cancelled:
             case TaskStatus.Failed: {
-                Exception ex = poolableFuture.GetException(_reentryId);
+                Exception ex = valuePromise.GetException(_reentryId);
                 return Promise<T>.FromException(ex);
             }
             default: {
                 Promise<T> promise = new Promise<T>();
-                poolableFuture.SetPromiseWhenCompleted(_reentryId, promise);
+                valuePromise.SetPromiseWhenCompleted(_reentryId, promise);
                 return promise;
             }
         }
@@ -269,7 +325,7 @@ public readonly struct ValueFuture<T>
         if (_future is IFuture future) {
             return new ValueFuture(future);
         }
-        return new ValueFuture((IPoolableFuture)_future, _reentryId);
+        return new ValueFuture((IValuePromise)_future, _reentryId);
     }
 
     #region internal
@@ -277,30 +333,19 @@ public readonly struct ValueFuture<T>
     // internal是因为不希望用户调用
 
     /// <summary>
-    /// 查询任务是否已完成
+    /// 获取任务的结果
+    /// 
+    /// ps：不对外，会触发Promise回收
     /// </summary>
-    internal bool IsCompleted {
-        get {
-            if (_future == null) {
-                return true;
-            }
-            if (_future is IPoolableFuture<T> poolableFuture) {
-                return poolableFuture.GetStatus(_reentryId).IsCompleted();
-            }
-            IFuture<T> future = (IFuture<T>)_future;
-            return future.IsCompleted;
-        }
-    }
-
     internal T GetResult() {
         if (_future == null) {
             if (_ex != null) {
-                throw _ex;
+                throw _ex; // TODO 会丢失堆栈
             }
             return _result;
         }
-        if (_future is IPoolableFuture<T> poolableFuture) {
-            return poolableFuture.GetResult(_reentryId);
+        if (_future is IValuePromise<T> valuePromise) {
+            return valuePromise.GetResult(_reentryId);
         } else {
             IFuture<T> future = (IFuture<T>)_future;
             return future.Get();
@@ -315,8 +360,8 @@ public readonly struct ValueFuture<T>
         }
 
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (_future is IPoolableFuture<T> poolableFuture) {
-            poolableFuture.OnCompleted(_reentryId, ValueFuture.driverCallBack, action, executor, options);
+        if (_future is IValuePromise<T> valuePromise) {
+            valuePromise.OnCompleted(_reentryId, ValueFuture.driverCallBack, action, executor, options);
         } else {
             IFuture<T> future = (IFuture<T>)_future;
             if (executor != null) {

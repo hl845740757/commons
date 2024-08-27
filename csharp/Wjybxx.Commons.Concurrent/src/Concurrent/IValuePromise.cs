@@ -20,10 +20,7 @@ using System;
 
 namespace Wjybxx.Commons.Concurrent
 {
-/// <summary>
-/// 可池化的Future
-/// </summary>
-public interface IPoolableFuture
+public interface IValuePromise
 {
     /// <summary>
     /// 获取返回给用户的句柄
@@ -70,12 +67,41 @@ public interface IPoolableFuture
     /// <param name="reentryId"></param>
     /// <param name="promise"></param>
     void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise);
+
+    /// <summary>
+    /// 尝试将future置为成功完成状态，如果future已进入完成状态，则返回false
+    /// </summary>
+    bool TrySetResult(int reentryId, object result);
+
+    /// <summary>
+    /// 尝试将future置为失败完成状态，如果future已进入完成状态，则返回false
+    /// </summary>
+    /// <param name="reentryId">重入id，校验是否被重用</param>
+    /// <param name="cause">任务失败的原因，如果为<see cref="OperationCanceledException"/>，则等同于取消</param>
+    /// <returns></returns>
+    bool TrySetException(int reentryId, Exception cause);
+
+    /// <summary>
+    /// 将Future置为已取消状态，如果future已进入完成状态，则返回false
+    /// </summary>
+    /// <param name="reentryId">重入id，校验是否被重用</param>
+    /// <param name="cancelCode">相关的取消码</param>
+    /// <returns></returns>
+    bool TrySetCancelled(int reentryId, int cancelCode);
 }
 
 /// <summary>
-/// 可池化的Future
+/// 与通用的的Promise不同，
+/// ValuePromise和ValueFuture之间为组合关系，目的在于池化Promise。
 ///
 /// 1.所有的读写方法都需要验证重用id。
+/// 2.Promise不应该返回给用户，。
+///  
+/// 通过结构体的ValueFuture实现Await，
+///
+/// 
+///
+/// 1.
 /// 2.在用户获取结果后触发回收。
 /// 3.不支持阻塞获取结果。
 /// 4.通常不返回给用户，多返回给用户<see cref="ValueFuture{T}"/>。
@@ -84,7 +110,7 @@ public interface IPoolableFuture
 /// ps: 框架统一使用int代替void。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface IPoolableFuture<T> : IPoolableFuture
+public interface IValuePromise<T> : IValuePromise
 {
     /// <summary>
     /// 获取返回给用户的句柄
@@ -105,5 +131,18 @@ public interface IPoolableFuture<T> : IPoolableFuture
     /// <param name="reentryId"></param>
     /// <param name="promise"></param>
     void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise);
+
+    /// <summary>
+    /// 尝试将future置为成功完成状态，如果future已进入完成状态，则返回false
+    /// </summary>
+    bool TrySetResult(int reentryId, T result);
+
+    #region 接口适配
+
+    bool IValuePromise.TrySetResult(int reentryId, object result) {
+        return TrySetResult(reentryId, (T)result);
+    }
+
+    #endregion
 }
 }

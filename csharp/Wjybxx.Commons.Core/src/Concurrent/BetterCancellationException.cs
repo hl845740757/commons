@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.Serialization;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -43,5 +44,19 @@ public class BetterCancellationException : OperationCanceledException
         : base(message, innerException) {
         this.Code = CancelCodes.CheckCode(code);
     }
+
+    #region serial
+
+    protected BetterCancellationException(SerializationInfo info, StreamingContext context)
+        : base(info, context) {
+        this.Code = info.GetInt32("code");
+    }
+
+    public override void GetObjectData(SerializationInfo info, StreamingContext context) {
+        base.GetObjectData(info, context);
+        info.AddValue("code", Code);
+    }
+
+    #endregion
 }
 }

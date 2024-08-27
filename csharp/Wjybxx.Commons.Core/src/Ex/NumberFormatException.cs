@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.Serialization;
 
 namespace Wjybxx.Commons.Ex
 {
@@ -38,6 +39,9 @@ public class NumberFormatException : ArgumentException
     }
 
     public NumberFormatException(string? message, string? paramName, Exception? innerException) : base(message, paramName, innerException) {
+    }
+
+    protected NumberFormatException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 }
 }
