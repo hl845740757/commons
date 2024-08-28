@@ -90,11 +90,6 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     }
 
     @Override
-    public ICancelToken asReadonly() {
-        return new ReadonlyCancelToken(this);
-    }
-
-    @Override
     public boolean canBeCancelled() {
         return true;
     }
@@ -119,18 +114,18 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
      * @throws IllegalArgumentException      如果code小于等于0；或reason部分为0
      * @throws UnsupportedOperationException 如果context是只读的
      */
-    public int cancel(int cancelCode) {
+    public boolean cancel(int cancelCode) {
         CancelCodes.checkCode(cancelCode);
         int preCode = internalCancel(cancelCode);
         if (preCode != 0) {
-            return preCode;
+            return false;
         }
         postComplete(this);
-        return 0;
+        return true;
     }
 
     /** 使用默认原因取消 */
-    public int cancel() {
+    public boolean cancel() {
         return cancel(CancelCodes.REASON_DEFAULT);
     }
 

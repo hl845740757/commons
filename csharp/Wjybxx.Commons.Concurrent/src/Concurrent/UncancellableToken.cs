@@ -30,8 +30,6 @@ sealed class UncancellableToken : ICancelToken
     private UncancellableToken() {
     }
 
-    public ICancelToken AsReadonly() => this;
-
     public bool CanBeCancelled => false;
 
     #region token

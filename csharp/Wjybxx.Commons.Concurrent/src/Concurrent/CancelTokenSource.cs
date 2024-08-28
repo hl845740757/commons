@@ -45,10 +45,6 @@ public sealed class CancelTokenSource : ICancelTokenSource
         }
     }
 
-    public ICancelToken AsReadonly() {
-        return new ReadonlyCancelToken(this);
-    }
-
     public bool CanBeCancelled => true;
 
     ICancelTokenSource ICancelTokenSource.NewInstance(bool copyCode) => NewInstance(copyCode);
@@ -59,14 +55,14 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     #region tokenSource
 
-    public int Cancel(int cancelCode = CancelCodes.REASON_DEFAULT) {
+    public bool Cancel(int cancelCode = CancelCodes.REASON_DEFAULT) {
         CancelCodes.CheckCode(cancelCode);
         int preCode = InternalCancel(cancelCode);
         if (preCode != 0) {
-            return preCode;
+            return false;
         }
         PostComplete(this);
-        return 0;
+        return true;
     }
 
     public void CancelAfter(int cancelCode, long millisecondsDelay) {

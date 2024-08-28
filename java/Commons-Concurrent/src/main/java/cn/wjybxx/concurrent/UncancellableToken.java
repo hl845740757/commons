@@ -34,11 +34,6 @@ final class UncancellableToken implements ICancelToken {
     }
 
     @Override
-    public ICancelToken asReadonly() {
-        return this;
-    }
-
-    @Override
     public boolean canBeCancelled() {
         return false;
     }

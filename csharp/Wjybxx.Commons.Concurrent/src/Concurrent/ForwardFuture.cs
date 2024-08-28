@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -54,6 +55,33 @@ public class ForwardFuture<T> : IFuture<T>
 
     public FutureAwaiter<T> GetAwaiter() {
         return new FutureAwaiter<T>(this); // 不可转发，避免封装泄漏
+    }
+
+    // onCompleted不能直接转发，否则会导致封装泄漏
+    public void OnCompleted(Action<IFuture<T>> continuation, int options = 0) {
+        future.OnCompleted(WrapAction(continuation), options);
+    }
+
+    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>> continuation, int options = 0) {
+        future.OnCompletedAsync(executor, WrapAction(continuation), options);
+    }
+
+    public void OnCompleted(Action<IFuture<T>, object> continuation, object state, int options = 0) {
+        future.OnCompleted(WrapAction(continuation), state, options);
+    }
+
+    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object> continuation, object state, int options = 0) {
+        future.OnCompletedAsync(executor, WrapAction(continuation), state, options);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Action<IFuture<T>> WrapAction(Action<IFuture<T>> action) {
+        return _ => action(this);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private Action<IFuture<T>, object> WrapAction(Action<IFuture<T>, object> action) {
+        return (_, ctx) => action(this, ctx);
     }
 
     #endregion
@@ -100,22 +128,6 @@ public class ForwardFuture<T> : IFuture<T>
 
     public T Join() {
         return future.Join();
-    }
-
-    public void OnCompleted(Action<IFuture<T>> continuation, int options = 0) {
-        future.OnCompleted(continuation, options);
-    }
-
-    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>> continuation, int options = 0) {
-        future.OnCompletedAsync(executor, continuation, options);
-    }
-
-    public void OnCompleted(Action<IFuture<T>, object> continuation, object state, int options = 0) {
-        future.OnCompleted(continuation, state, options);
-    }
-
-    public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object> continuation, object state, int options = 0) {
-        future.OnCompletedAsync(executor, continuation, state, options);
     }
 
     public void OnCompleted(Action<object?> continuation, object? state, int options = 0) {

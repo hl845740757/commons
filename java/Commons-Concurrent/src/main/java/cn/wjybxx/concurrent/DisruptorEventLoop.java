@@ -291,13 +291,12 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractScheduled
             }
             eventSequencer.publish(sequence);
 
-            if (!inEventLoop()) {
+            if (sequence == 0) {
                 // 确保线程已启动 -- ringBuffer私有的情况下才可以测试 sequence == 0
-                if (sequence == 0) {
-                    ensureThreadStarted();
-                } else if (TaskOptions.isEnabled(options, TaskOptions.WAKEUP_THREAD)) {
-                    wakeup();
-                }
+                ensureThreadStarted();
+            } else if (TaskOptions.isEnabled(options, TaskOptions.WAKEUP_THREAD) && !inEventLoop()) {
+                // 唤醒线程
+                wakeup();
             }
         }
     }

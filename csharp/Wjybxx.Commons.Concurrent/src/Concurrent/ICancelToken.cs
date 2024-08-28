@@ -30,12 +30,6 @@ public interface ICancelToken
     /// </summary>
     static readonly ICancelToken NONE = UncancellableToken.INST;
 
-    /**
-     * 返回一个只读的<see cref="ICancelToken"/>试图，返回的实例会在当前Token被取消时取消。
-     * 其作用类似<see cref="IFuture.AsReadonly"/>。
-     */
-    ICancelToken AsReadonly();
-
     /// <summary>
     /// Token是否可以进入取消状态
     /// </summary>

@@ -73,12 +73,6 @@ public interface ICancelToken {
     ICancelToken NONE = UncancellableToken.INST;
 
     /**
-     * 返回一个只读的{@link ICancelToken}试图，返回的实例会在当前Token被取消时取消。
-     * 其作用类似{@link IFuture#asReadonly()}
-     */
-    ICancelToken asReadonly();
-
-    /**
      * 当前token是否可以进入取消状态
      *
      * @return 如果当前token可以进入取消状态则返回true

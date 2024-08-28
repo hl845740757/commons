@@ -37,13 +37,13 @@ public interface ICancelTokenSource extends ICancelToken {
      * 将Token置为取消状态
      *
      * @param cancelCode 取消码；reason部分需大于0；辅助类{@link CancelCodeBuilder}
-     * @return 如果Token已被取消，则返回旧值（非0）；如果Token尚未被取消，则将Token更新为取消状态，并返回0。
+     * @return 成功使用给定取消码进入取消状态则返回true，否则返回false
      * @throws IllegalArgumentException 如果code小于等于0；或reason部分为0
      */
-    int cancel(int cancelCode);
+    boolean cancel(int cancelCode);
 
     /** 使用默认原因取消 */
-    default int cancel() {
+    default boolean cancel() {
         return cancel(CancelCodes.REASON_DEFAULT); // 末位1，默认情况
     }
 
@@ -52,7 +52,7 @@ public interface ICancelTokenSource extends ICancelToken {
      *
      * @param mayInterruptIfRunning 是否可以中断目标线程；注意该参数由任务自身处理，且任务监听了取消信号才有用
      */
-    default int cancel(boolean mayInterruptIfRunning) {
+    default boolean cancel(boolean mayInterruptIfRunning) {
         return cancel(mayInterruptIfRunning
                 ? (CancelCodes.REASON_DEFAULT & CancelCodes.MASK_INTERRUPT)
                 : CancelCodes.REASON_DEFAULT);

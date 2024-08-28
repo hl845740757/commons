@@ -264,13 +264,12 @@ public class DisruptorEventLoop<T> : AbstractScheduledEventLoop where T : IAgent
             }
             eventSequencer.Publish(sequence);
 
-            if (!InEventLoop()) {
+            if (sequence == 0) {
                 // 确保线程已启动 -- ringBuffer私有的情况下才可以测试 sequence == 0
-                if (sequence == 0) {
-                    EnsureThreadStarted();
-                } else if (TaskOptions.IsEnabled(options, TaskOptions.WAKEUP_THREAD)) {
-                    Wakeup();
-                }
+                EnsureThreadStarted();
+            } else if (TaskOptions.IsEnabled(options, TaskOptions.WAKEUP_THREAD) && !InEventLoop()) {
+                // 唤醒线程
+                Wakeup();
             }
         }
     }

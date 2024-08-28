@@ -67,6 +67,55 @@ public class ForwardFuture<V> implements IFuture<V> {
         return this; // 返回this
     }
 
+    // onCompleted不能直接转发，否则会导致封装泄漏
+    @Override
+    public void onCompleted(Consumer<? super IFuture<V>> action, int options) {
+        future.onCompleted(wrapAction(action), options);
+    }
+
+    @Override
+    public void onCompleted(Consumer<? super IFuture<V>> action) {
+        future.onCompleted(wrapAction(action));
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<V>> action) {
+        future.onCompletedAsync(executor, wrapAction(action));
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<V>> action, int options) {
+        future.onCompletedAsync(executor, wrapAction(action), options);
+    }
+
+    @Override
+    public void onCompleted(BiConsumer<? super IFuture<V>, Object> action, Object ctx, int options) {
+        future.onCompleted(wrapAction(action), ctx, options);
+    }
+
+    @Override
+    public void onCompleted(BiConsumer<? super IFuture<V>, Object> action, Object ctx) {
+        future.onCompleted(wrapAction(action), ctx);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<V>, Object> action, Object ctx) {
+        future.onCompletedAsync(executor, wrapAction(action), ctx);
+    }
+
+    @Override
+    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<V>, Object> action, Object ctx, int options) {
+        future.onCompletedAsync(executor, wrapAction(action), ctx, options);
+    }
+
+    private Consumer<? super IFuture<V>> wrapAction(Consumer<? super IFuture<V>> action) {
+        return f -> action.accept(this);
+    }
+
+    private BiConsumer<? super IFuture<V>, Object> wrapAction(BiConsumer<? super IFuture<V>, Object> action) {
+        return (f, ctx) -> action.accept(this, ctx);
+    }
+
     // region future
 
     @Override
@@ -180,46 +229,6 @@ public class ForwardFuture<V> implements IFuture<V> {
     @Override
     public V join() {
         return future.join();
-    }
-
-    @Override
-    public void onCompleted(Consumer<? super IFuture<V>> action, int options) {
-        future.onCompleted(action, options);
-    }
-
-    @Override
-    public void onCompleted(Consumer<? super IFuture<V>> action) {
-        future.onCompleted(action);
-    }
-
-    @Override
-    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<V>> action) {
-        future.onCompletedAsync(executor, action);
-    }
-
-    @Override
-    public void onCompletedAsync(Executor executor, Consumer<? super IFuture<V>> action, int options) {
-        future.onCompletedAsync(executor, action, options);
-    }
-
-    @Override
-    public void onCompleted(BiConsumer<? super IFuture<V>, Object> action, Object ctx, int options) {
-        future.onCompleted(action, ctx, options);
-    }
-
-    @Override
-    public void onCompleted(BiConsumer<? super IFuture<V>, Object> action, Object ctx) {
-        future.onCompleted(action, ctx);
-    }
-
-    @Override
-    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<V>, Object> action, Object ctx) {
-        future.onCompletedAsync(executor, action, ctx);
-    }
-
-    @Override
-    public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<V>, Object> action, Object ctx, int options) {
-        future.onCompletedAsync(executor, action, ctx, options);
     }
 
     // endregion

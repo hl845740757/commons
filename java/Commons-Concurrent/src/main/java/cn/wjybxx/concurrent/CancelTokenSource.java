@@ -71,11 +71,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
     }
 
     @Override
-    public ICancelToken asReadonly() {
-        return new ReadonlyCancelToken(this);
-    }
-
-    @Override
     public boolean canBeCancelled() {
         return true;
     }
@@ -101,19 +96,19 @@ public final class CancelTokenSource implements ICancelTokenSource {
      * @throws UnsupportedOperationException 如果context是只读的
      */
     @Override
-    public int cancel(int cancelCode) {
+    public boolean cancel(int cancelCode) {
         CancelCodes.checkCode(cancelCode);
         int preCode = internalCancel(cancelCode);
         if (preCode != 0) {
-            return preCode;
+            return false;
         }
         postComplete(this);
-        return 0;
+        return true;
     }
 
     /** 使用默认原因取消 */
     @Override
-    public int cancel() {
+    public boolean cancel() {
         return cancel(CancelCodes.REASON_DEFAULT);
     }
 
@@ -122,7 +117,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
      *
      * @param mayInterruptIfRunning 是否可以中断目标线程；注意该参数由任务自身处理，且任务监听了取消信号才有用
      */
-    public int cancel(boolean mayInterruptIfRunning) {
+    public boolean cancel(boolean mayInterruptIfRunning) {
         return cancel(mayInterruptIfRunning
                 ? (CancelCodes.REASON_DEFAULT & CancelCodes.MASK_INTERRUPT)
                 : CancelCodes.REASON_DEFAULT);

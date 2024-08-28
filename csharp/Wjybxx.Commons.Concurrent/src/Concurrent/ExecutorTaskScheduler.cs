@@ -61,7 +61,7 @@ public class ExecutorTaskScheduler : TaskScheduler
     /// <param name="taskWasPreviouslyQueued"></param>
     /// <returns></returns>
     protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) {
-        return false;
+        return false; // 不内联有可能产生死锁问题，如果EventLoop在启动的过程中触发Task.Wait
     }
 
     /// <summary>
