@@ -17,7 +17,6 @@
 package cn.wjybxx.disruptor;
 
 import java.util.Objects;
-import java.util.concurrent.TimeoutException;
 
 /**
  * 单线程消费者屏障
@@ -57,7 +56,7 @@ public class SingleConsumerBarrier implements ConsumerBarrier {
     // region consumer
 
     @Override
-    public long waitFor(long sequence) throws TimeoutException, AlertException, InterruptedException {
+    public long waitFor(long sequence) throws AlertException, InterruptedException {
         checkAlert();
 
         // available是生产者或前置消费者的进度

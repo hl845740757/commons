@@ -367,7 +367,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             return isCancelled0(r);
         }
         // 不再记录取消者堆栈，取消者堆栈意义不大
-        if (trySetException(StacklessCancellationException.INST1)) {
+        if (trySetException(StacklessCancellationException.DEFAULT)) {
             return true;
         }
         // 可能被其它线程取消
@@ -460,7 +460,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         if (r instanceof AltResult altResult) {
             Throwable cause = altResult.cause;
             if (cause instanceof CancellationException cancellationException) {
-                throw newCancellationException(cancellationException);
+                throw BetterCancellationException.capture(cancellationException);
             }
             throw new CompletionException(cause);
         }
@@ -475,20 +475,13 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         if (r instanceof AltResult altResult) {
             Throwable cause = altResult.cause;
             if (cause instanceof CancellationException cancellationException) {
-                throw newCancellationException(cancellationException);
+                throw BetterCancellationException.capture(cancellationException);
             }
             throw new ExecutionException(cause);
         }
         return (T) r;
     }
 
-    /** 抛出异常时总是包含当前堆栈，否则会导致用户的代码被中断而没有被记录 */
-    private static CancellationException newCancellationException(CancellationException ex) {
-        if (ex instanceof BetterCancellationException ex2) {
-            return new BetterCancellationException(ex2.getCode(), ex2.getMessage());
-        }
-        return new CancellationException(ex.getMessage());
-    }
     // endregion
 
     // region 阻塞结果查询
@@ -1555,7 +1548,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 return true;
             }
             if (!output.trySetComputing()) { // 被用户取消
-                throw StacklessCancellationException.INST1;
+                throw StacklessCancellationException.DEFAULT;
             }
             this.executor = CLAIMED;
             if (e != null) {

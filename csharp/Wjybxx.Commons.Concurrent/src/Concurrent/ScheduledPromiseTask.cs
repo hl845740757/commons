@@ -254,7 +254,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
 
         if (TaskOptions.IsEnabled(options, TaskOptions.TIMEOUT_BEFORE_RUN)
             && HasTimeout && deadline <= tickTime) {
-            promise.TrySetException(StacklessTimeoutException.INST);
+            promise.TrySetException(StacklessCancellationException.Timeout);
             return false;
         }
         try {
@@ -283,12 +283,12 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
         }
         // 未被取消的情况下检测超时
         if (HasTimeout && deadline <= tickTime) {
-            promise.TrySetException(StacklessTimeoutException.INST);
+            promise.TrySetException(StacklessCancellationException.Timeout);
             return false;
         }
         // 检测次数限制
         if (HasCountLimit && (--countdown < 1)) {
-            promise.TrySetException(StacklessTimeoutException.INST_COUNT_LIMIT);
+            promise.TrySetException(StacklessCancellationException.TriggerCountLimit);
             return false;
         }
         SetNextRunTime(tickTime, scheduleType);

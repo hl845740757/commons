@@ -44,5 +44,7 @@ public class TaskInsufficientException : Exception, NoLogRequiredException
         string msg = $"futureCount: {futureCount}, doneCount: {doneCount}, succeedCount: {succeedCount}, successRequire: {successRequire}";
         return new TaskInsufficientException(msg);
     }
+
+    public override string? StackTrace => null;
 }
 }

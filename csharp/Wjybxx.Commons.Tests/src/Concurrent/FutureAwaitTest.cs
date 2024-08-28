@@ -25,7 +25,7 @@ using Wjybxx.Disruptor;
 
 namespace Commons.Tests.Concurrent;
 
-public class FutureTest
+public class FutureAwaitTest
 {
     private static readonly IEventLoop globalEventLoop = new DisruptorEventLoopBuilder<MiniAgentEvent>()
     {

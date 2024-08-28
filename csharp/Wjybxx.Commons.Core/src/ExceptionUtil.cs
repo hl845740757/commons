@@ -56,6 +56,7 @@ public static class ExceptionUtil
     /// <summary>
     /// 捕获异常堆栈
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ExceptionDispatchInfo? TryCapture(Exception? ex) {
         return ex == null ? null : ExceptionDispatchInfo.Capture(ex);
     }

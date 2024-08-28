@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -226,6 +227,41 @@ public abstract class AbstractPromise
             return cts.IsCancelling;
         }
         return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static object WrapException(Exception ex) {
+        if (ex == null) throw new ArgumentNullException(nameof(ex));
+        if (ex is OperationCanceledException) {
+            return ex;
+        }
+        return ExceptionDispatchInfo.Capture(ex);
+    }
+
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static object WrapException(ExceptionDispatchInfo ex) {
+        if (ex == null) throw new ArgumentNullException(nameof(ex));
+        if (ex.SourceException is OperationCanceledException) {
+            return ex.SourceException;
+        }
+        return ex;
+    }
+
+    internal static object WrapException(object ex) {
+        if (ex == null) throw new ArgumentNullException(nameof(ex));
+        if (ex is OperationCanceledException) {
+            return ex;
+        }
+        if (ex is Exception ex2) {
+            return ExceptionDispatchInfo.Capture(ex2);
+        }
+        // 恢复取消异常
+        ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)ex;
+        if (dispatchInfo.SourceException is OperationCanceledException) {
+            return dispatchInfo.SourceException;
+        }
+        return ex;
     }
 
     #endregion

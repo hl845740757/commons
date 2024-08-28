@@ -16,6 +16,7 @@
 
 package cn.wjybxx.base.concurrent;
 
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 
 /**
@@ -45,8 +46,27 @@ public class BetterCancellationException extends CancellationException {
 
     private static String formatMessage(int code, String message) {
         if (message == null) {
-            return "code: " + code;
+            return "The task was canceled, code: " + code;
         }
-        return String.format("code: %d, msg: %s", code, message);
+        return String.format("The task was canceled, code: %d, message: %s", code, message);
+    }
+
+    /**
+     * 捕获目标异常 -- 在目标异常的堆栈基础上增加当前堆栈。
+     * 作用：异步任务在重新抛出异常时应当记录当前堆栈，否则会导致用户的代码被中断而没有被记录。
+     */
+    public static BetterCancellationException capture(Exception ex) {
+        Objects.requireNonNull(ex);
+        if (ex instanceof StacklessCancellationException slex) {
+            return new BetterCancellationException(slex.getCode(), slex.getMessage());
+        }
+        BetterCancellationException r;
+        if (ex instanceof BetterCancellationException ex2) {
+            r = new BetterCancellationException(ex2.getCode(), ex.getMessage());
+        } else {
+            r = new BetterCancellationException(CancelCodes.REASON_DEFAULT);
+        }
+        r.initCause(ex);
+        return r;
     }
 }

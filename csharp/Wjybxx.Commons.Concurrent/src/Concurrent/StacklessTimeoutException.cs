@@ -26,8 +26,8 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public class StacklessTimeoutException : TimeoutException
 {
-    public static readonly StacklessTimeoutException INST = new StacklessTimeoutException();
-    public static readonly StacklessTimeoutException INST_COUNT_LIMIT = new StacklessTimeoutException("count limit");
+    // C#的异常不适合单例
+    public static StacklessTimeoutException Inst => new StacklessTimeoutException();
 
     public StacklessTimeoutException() {
     }

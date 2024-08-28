@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -28,11 +29,11 @@ namespace Wjybxx.Commons.Concurrent
 public readonly struct ValueFuture
 {
     public static readonly ValueFuture COMPLETED = new ValueFuture();
-    public static readonly ValueFuture CANCELLED = new ValueFuture(StacklessCancellationException.INST1);
+    public static readonly ValueFuture CANCELLED = new ValueFuture(StacklessCancellationException.Default);
 
     private readonly object? _future;
     private readonly int _reentryId;
-    private readonly Exception? _ex;
+    private readonly object? _ex;
 
     /// <summary>
     /// 
@@ -41,7 +42,14 @@ public readonly struct ValueFuture
     public ValueFuture(Exception? ex) {
         _future = null;
         _reentryId = 0;
-        _ex = ex;
+        _ex = ex == null ? null : AbstractPromise.WrapException(ex);
+    }
+
+    public ValueFuture(ExceptionDispatchInfo ex) {
+        if (ex == null) throw new ArgumentNullException(nameof(ex));
+        _future = null;
+        _reentryId = 0;
+        _ex = AbstractPromise.WrapException(ex);
     }
 
     public ValueFuture(IFuture future) {
@@ -65,6 +73,11 @@ public readonly struct ValueFuture
     }
 
     public static ValueFuture FromException(Exception ex) {
+        if (ex == null) throw new ArgumentNullException(nameof(ex));
+        return new ValueFuture(ex);
+    }
+
+    public static ValueFuture FromException(ExceptionDispatchInfo ex) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
         return new ValueFuture(ex);
     }
@@ -112,10 +125,14 @@ public readonly struct ValueFuture
     /// </summary>
     public IFuture AsFuture() {
         if (_future == null) {
-            if (_ex != null) {
-                return Promise<int>.FromException(_ex);
+            if (_ex == null) {
+                return Promise<int>.FromResult(0);
             }
-            return Promise<int>.FromResult(0);
+            if (_ex is OperationCanceledException canceledException) {
+                return Promise<int>.FromException(canceledException);
+            }
+            ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
+            return Promise<int>.FromException(dispatchInfo);
         }
         if (_future is IFuture future) {
             return future;
@@ -160,9 +177,14 @@ public readonly struct ValueFuture
     /// </summary>
     internal void GetResult() {
         if (_future == null) {
-            if (_ex != null) {
-                throw _ex; // TODO 会丢失堆栈
+            if (_ex == null) {
+                return;
             }
+            if (_ex is OperationCanceledException canceledException) {
+                throw BetterCancellationException.Capture(canceledException);
+            }
+            ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
+            dispatchInfo.Throw();
             return;
         }
         if (_future is IValuePromise valuePromise) {
@@ -200,13 +222,13 @@ public readonly struct ValueFuture
 public readonly struct ValueFuture<T>
 {
     public static readonly ValueFuture<T> COMPLETED = new ValueFuture<T>(default, null);
-    public static readonly ValueFuture<T> CANCELLED = new ValueFuture<T>(default, StacklessCancellationException.INST1);
+    public static readonly ValueFuture<T> CANCELLED = new ValueFuture<T>(default, StacklessCancellationException.Default);
 
     private readonly object? _future;
     private readonly int _reentryId;
 
     private readonly T? _result;
-    private readonly Exception? _ex;
+    private readonly object? _ex;
 
     /// <summary>
     /// 
@@ -217,7 +239,15 @@ public readonly struct ValueFuture<T>
         _future = null;
         _reentryId = 0;
         _result = result;
-        _ex = ex;
+        _ex = ex == null ? null : AbstractPromise.WrapException(ex);
+    }
+
+    public ValueFuture(ExceptionDispatchInfo ex) {
+        if (ex == null) throw new ArgumentNullException(nameof(ex));
+        _future = null;
+        _reentryId = 0;
+        _result = default;
+        _ex = AbstractPromise.WrapException(ex);
     }
 
     public ValueFuture(IFuture<T> future) {
@@ -245,6 +275,11 @@ public readonly struct ValueFuture<T>
     public static ValueFuture<T> FromException(Exception ex) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
         return new ValueFuture<T>(default, ex);
+    }
+
+    public static ValueFuture<T> FromException(ExceptionDispatchInfo ex) {
+        if (ex == null) throw new ArgumentNullException(nameof(ex));
+        return new ValueFuture<T>(ex);
     }
 
     public static ValueFuture<T> FromCancelled(int cancelCode) {
@@ -293,10 +328,14 @@ public readonly struct ValueFuture<T>
     /// </summary>
     public IFuture<T> AsFuture() {
         if (_future == null) {
-            if (_ex != null) {
-                return Promise<T>.FromException(_ex);
+            if (_ex == null) {
+                return Promise<T>.FromResult(_result);
             }
-            return Promise<T>.FromResult(_result);
+            if (_ex is OperationCanceledException canceledException) {
+                return Promise<T>.FromException(canceledException);
+            }
+            ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
+            return Promise<T>.FromException(dispatchInfo);
         }
         if (_future is IFuture<T> future) {
             return future;
@@ -328,10 +367,13 @@ public readonly struct ValueFuture<T>
 
     public ValueFuture ToVoid() {
         if (_future == null) {
-            if (_ex != null) {
-                return new ValueFuture(_ex);
+            if (_ex == null) {
+                return ValueFuture.COMPLETED;
             }
-            return ValueFuture.COMPLETED;
+            if (_ex is OperationCanceledException canceledException) {
+                return new ValueFuture(canceledException);
+            }
+            return new ValueFuture((ExceptionDispatchInfo)_ex);
         }
         if (_future is IFuture future) {
             return new ValueFuture(future);
@@ -350,10 +392,15 @@ public readonly struct ValueFuture<T>
     /// </summary>
     internal T GetResult() {
         if (_future == null) {
-            if (_ex != null) {
-                throw _ex; // TODO 会丢失堆栈
+            if (_ex == null) {
+                return _result;
             }
-            return _result;
+            if (_ex is OperationCanceledException canceledException) {
+                throw BetterCancellationException.Capture(canceledException);
+            }
+            ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
+            dispatchInfo.Throw();
+            return default;
         }
         if (_future is IValuePromise<T> valuePromise) {
             return valuePromise.GetResult(_reentryId);

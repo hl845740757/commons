@@ -25,10 +25,20 @@ import cn.wjybxx.base.ex.NoLogRequiredException;
  */
 public final class StacklessCancellationException extends BetterCancellationException implements NoLogRequiredException {
 
-    public static final StacklessCancellationException INST1 = new StacklessCancellationException(1);
-    private static final StacklessCancellationException INST2 = new StacklessCancellationException(2);
-    private static final StacklessCancellationException INST3 = new StacklessCancellationException(3);
-    private static final StacklessCancellationException INST4 = new StacklessCancellationException(4);
+    private static final StacklessCancellationException[] INST_CACHE = new StacklessCancellationException[10];
+
+    public static final StacklessCancellationException DEFAULT;
+    public static final StacklessCancellationException TIMEOUT;
+    public static final StacklessCancellationException TRIGGER_COUNT_LIMIT;
+
+    static {
+        for (int idx = 0; idx < INST_CACHE.length; idx++) {
+            INST_CACHE[idx] = new StacklessCancellationException(idx + 1);
+        }
+        DEFAULT = INST_CACHE[0];
+        TIMEOUT = INST_CACHE[CancelCodes.REASON_TIMEOUT - 1];
+        TRIGGER_COUNT_LIMIT = INST_CACHE[CancelCodes.REASON_TRIGGER_COUNT_LIMIT - 1];
+    }
 
     public StacklessCancellationException(int code) {
         super(code);
@@ -43,12 +53,9 @@ public final class StacklessCancellationException extends BetterCancellationExce
     }
 
     public static StacklessCancellationException instOf(int code) {
-        return switch (code) {
-            case 1 -> INST1;
-            case 2 -> INST2;
-            case 3 -> INST3;
-            case 4 -> INST4;
-            default -> new StacklessCancellationException(code);
-        };
+        if (code > 0 && code <= INST_CACHE.length) {
+            return INST_CACHE[code - 1];
+        }
+        return new StacklessCancellationException(code);
     }
 }

@@ -59,6 +59,8 @@ public static class CancelCodes
     public const int REASON_TIMEOUT = 2;
     /** IExecutor关闭 -- IExecutor关闭不一定会取消任务 */
     public const int REASON_SHUTDOWN = 3;
+    /** 执行超时，触发次数限制 */
+    public const int REASON_TRIGGER_COUNT_LIMIT = 4;
 
     #region query
 

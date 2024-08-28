@@ -27,10 +27,8 @@ namespace Wjybxx.Disruptor
 /// </summary>
 public sealed class AlertException : Exception
 {
-    /// <summary>
-    /// 全局单例
-    /// </summary>
-    public static AlertException Inst { get; } = new AlertException();
+    // C#的异常不适合用单例
+    public static AlertException Inst => new AlertException();
 
     private AlertException() {
     }

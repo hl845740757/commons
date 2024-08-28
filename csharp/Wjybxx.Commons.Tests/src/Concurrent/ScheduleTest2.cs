@@ -82,7 +82,7 @@ public class ScheduleTest2
 
         IScheduledFuture<string> future = consumer.Schedule(in builder);
         future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
-        Assert.IsTrue(future.ExceptionNow() is TimeoutException);
+        Assert.IsTrue(future.ExceptionNow(false) is BetterCancellationException);
     }
 
     [Test]
@@ -117,7 +117,7 @@ public class ScheduleTest2
 
         IScheduledFuture<int> future = consumer.Schedule(in builder);
         future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
-        Assert.IsTrue(future.ExceptionNow() is StacklessTimeoutException);
+        Assert.IsTrue(future.ExceptionNow(false) is BetterCancellationException);
     }
 
 
@@ -130,7 +130,7 @@ public class ScheduleTest2
 
         IScheduledFuture<string> future = consumer.Schedule(in builder);
         future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
-        Assert.IsTrue(future.ExceptionNow() is StacklessTimeoutException);
+        Assert.IsTrue(future.ExceptionNow(false) is BetterCancellationException);
     }
 
     #endregion
@@ -164,7 +164,7 @@ public class ScheduleTest2
         future.AwaitUninterruptibly();
         Console.WriteLine("costTime: " + (ObjectUtil.SystemTickMillis() - startTime));
 
-        Assert.IsTrue(future.ExceptionNow() == StacklessTimeoutException.INST_COUNT_LIMIT);
+        Assert.IsTrue(future.ExceptionNow(false) is BetterCancellationException);
     }
 
     #endregion

@@ -16,7 +16,7 @@
 
 ## ReleaseNotes
 
-### 1.1.1
+### 1.1.1 ~ 1.1.2
 
 1. `DisruptorEventLoop`适配`Disruptor`模块的等待超时修改。
 2. fix `ValueFuture`的await错误。

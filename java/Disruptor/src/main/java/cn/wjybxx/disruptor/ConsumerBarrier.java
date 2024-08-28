@@ -16,8 +16,6 @@
 
 package cn.wjybxx.disruptor;
 
-import java.util.concurrent.TimeoutException;
-
 /**
  * 消费者序号屏障
  * 1. 消费者屏障负责的是【当前消费者和生产者】、【当前消费者和前置消费者】之间的协调。<br>
@@ -46,12 +44,11 @@ public interface ConsumerBarrier extends SequenceBarrier {
      * 建议的的方式：先拉取到本地，然后在本地分批处理，避免频繁调用{@code waitFor}。
      *
      * @param sequence 期望消费的序号
-     * @return 当前可用的最大序号
+     * @return 当前可用的最大序号；返回值小于期望的sequence时表示超时，通常为{@code sequence - 1}。
      * @throws AlertException       if a status change has occurred for the Disruptor
      * @throws InterruptedException if the thread needs awaking on a condition variable.
-     * @throws TimeoutException     if a timeout occurs while waiting for the supplied sequence.
      */
-    long waitFor(long sequence) throws TimeoutException, AlertException, InterruptedException;
+    long waitFor(long sequence) throws AlertException, InterruptedException;
 
     /**
      * 【当前屏障】是否收到了Alert信号

@@ -25,10 +25,10 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public sealed class StacklessCancellationException : BetterCancellationException
 {
-    public static readonly StacklessCancellationException INST1 = new StacklessCancellationException(1);
-    private static readonly StacklessCancellationException INST2 = new StacklessCancellationException(2);
-    private static readonly StacklessCancellationException INST3 = new StacklessCancellationException(3);
-    private static readonly StacklessCancellationException INST4 = new StacklessCancellationException(4);
+    // c# 的异常不适合单例，会导致堆栈冲突
+    public static StacklessCancellationException Default => new StacklessCancellationException(1);
+    public static StacklessCancellationException Timeout => new StacklessCancellationException(CancelCodes.REASON_TIMEOUT);
+    public static StacklessCancellationException TriggerCountLimit => new StacklessCancellationException(CancelCodes.REASON_TRIGGER_COUNT_LIMIT);
 
     public StacklessCancellationException(int code) : base(code) {
     }
@@ -42,14 +42,7 @@ public sealed class StacklessCancellationException : BetterCancellationException
     public override string? StackTrace => null;
 
     public static StacklessCancellationException InstOf(int code) {
-        return code switch
-        {
-            1 => INST1,
-            2 => INST2,
-            3 => INST3,
-            4 => INST4,
-            _ => new StacklessCancellationException(code)
-        };
+        return new StacklessCancellationException(code);
     }
 }
 }

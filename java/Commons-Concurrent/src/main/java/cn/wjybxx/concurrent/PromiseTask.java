@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.concurrent.CancelCodes;
+import cn.wjybxx.base.concurrent.StacklessCancellationException;
 
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -241,7 +242,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
                     if (resultHolder != null) {
                         promise.trySetResult(resultHolder.getResult());
                     } else {
-                        promise.trySetException(StacklessTimeoutException.INST);
+                        promise.trySetException(StacklessCancellationException.TIMEOUT);
                     }
                 } else {
                     V result = runTask();

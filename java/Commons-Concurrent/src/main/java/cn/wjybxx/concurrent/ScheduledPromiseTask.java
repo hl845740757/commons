@@ -20,6 +20,7 @@ import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.collection.IndexedElement;
 import cn.wjybxx.base.concurrent.CancelCodes;
+import cn.wjybxx.base.concurrent.StacklessCancellationException;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.Callable;
@@ -295,7 +296,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         }
         if (TaskOptions.isEnabled(options, TaskOptions.TIMEOUT_BEFORE_RUN)
                 && hasTimeout() && deadline <= tickTime) {
-            promise.trySetException(StacklessTimeoutException.INST);
+            promise.trySetException(StacklessCancellationException.TIMEOUT);
             return false;
         }
 
@@ -325,12 +326,12 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         }
         // 未被取消的情况下检测超时
         if (hasTimeout() && deadline <= tickTime) {
-            promise.trySetException(StacklessTimeoutException.INST);
+            promise.trySetException(StacklessCancellationException.TIMEOUT);
             return false;
         }
         // 检测次数限制
         if (hasCountLimit() && (--countdown < 1)) {
-            promise.trySetException(StacklessTimeoutException.INST_COUNT_LIMIT);
+            promise.trySetException(StacklessCancellationException.TRIGGER_COUNT_LIMIT);
             return false;
         }
         setNextRunTime(tickTime, scheduleType);

@@ -16,6 +16,8 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.BetterCancellationException;
+
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -201,6 +203,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
      * 1. -1表示无限制，大于等于0表示有限制
      * 2. 默认只在执行任务后检查是否超时，以确保至少会执行一次
      * 3. 超时是一个不准确的调度，不保证超时后能立即结束
+     * 4. 达到截止时间后任务任务将被取消{@link BetterCancellationException} -- 任何的主动退出都使用取消。
      */
     public ScheduledTaskBuilder<V> setTimeout(long timeout) {
         if (timeout < -1) {
@@ -241,6 +244,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     /**
      * 设置任务的执行次数限制
      * 1. -1表示无限制，大于0表示有限制，0非法
+     * 2. 到达执行上限后任务将被取消{@link BetterCancellationException} -- 任何的主动退出都使用取消。
      *
      * @param countLimit 次数限制
      */

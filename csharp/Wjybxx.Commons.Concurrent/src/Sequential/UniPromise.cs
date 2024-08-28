@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using Wjybxx.Commons.Concurrent;
 using Wjybxx.Commons.Pool;
 
@@ -49,7 +50,7 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
     /// <summary>
     /// 已被取消的Promise常量实例
     /// </summary>
-    public static readonly UniPromise<T> CANCELLED = new UniPromise<T>(null, default, StacklessCancellationException.INST1);
+    public static readonly UniPromise<T> CANCELLED = new UniPromise<T>(null, default, StacklessCancellationException.Default);
 
     private const int ST_PENDING = (int)TaskStatus.Pending;
     private const int ST_COMPUTING = (int)TaskStatus.Computing;
@@ -65,7 +66,8 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
     /// 1. 如果为null，表示尚未开始。
     /// 2. 如果为<see cref="AbstractUniPromise.EX_COMPUTING"/>，表示正在计算。
     /// 3. 如果为<see cref="AbstractUniPromise.EX_SUCCESS"/>，表示成功，且结果已可见。
-    /// 4. 如果为其它异常，表示任务失败或取消。
+    /// 4. 如果为<see cref="OperationCanceledException"/>，表示取消。
+    /// 5. 如果为<see cref="ExceptionDispatchInfo"/>，表示失败。
     /// </summary>
     private object? _ex;
 
@@ -80,14 +82,14 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         _executor = executor;
     }
 
-    private UniPromise(IExecutor? executor, T result, Exception? ex) {
+    private UniPromise(IExecutor? executor, T result, object? ex) {
         this._executor = executor;
         if (ex == null) {
             this._result = result;
             this._ex = EX_SUCCESS;
         } else {
             this._result = default;
-            this._ex = ex;
+            this._ex = AbstractPromise.WrapException(ex);
         }
     }
 
@@ -96,6 +98,11 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
     }
 
     public static UniPromise<T> FromException(Exception ex, IExecutor? executor = null) {
+        if (ex == null) throw new ArgumentNullException(nameof(ex));
+        return new UniPromise<T>(executor, default, ex);
+    }
+
+    public static UniPromise<T> FromException(ExceptionDispatchInfo ex, IExecutor? executor = null) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
         return new UniPromise<T>(executor, default, ex);
     }
@@ -118,10 +125,11 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
     }
 
     private bool InternalSetException(Exception exception) {
-        Debug.Assert(exception != null);
+        object result = AbstractPromise.WrapException(exception);
+
         object preEx = this._ex;
         if (preEx == null || preEx == EX_COMPUTING) {
-            this._ex = exception;
+            this._ex = result;
             return true;
         }
         return false;
@@ -161,6 +169,8 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         return ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
     }
 
+    private ExceptionDispatchInfo DispatchInfo => (ExceptionDispatchInfo)_ex!;
+
     #endregion
 
     #region 上下文
@@ -182,11 +192,12 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
     }
 
     public TaskStatus Status => (TaskStatus)PeekState(_ex);
+
     public bool IsPending => _ex == null;
     public bool IsComputing => _ex == EX_COMPUTING;
     public bool IsSucceeded => PeekState(_ex) == ST_SUCCESS;
     public bool IsFailed => PeekState(_ex) == ST_FAILED;
-    public bool IsCancelled => _ex is OperationCanceledException;
+    public bool IsCancelled => PeekState(_ex) == ST_CANCELLED;
 
     public bool IsCompleted => PeekState(_ex) >= ST_SUCCESS;
     public bool IsFailedOrCancelled => PeekState(_ex) >= ST_FAILED;
@@ -283,14 +294,20 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
 
     public Exception ExceptionNow(bool throwIfCancelled = true) {
         int state = PollState();
-        return state switch
-        {
-            ST_FAILED => (Exception)_ex!,
-            ST_CANCELLED when throwIfCancelled => throw (Exception)_ex!,
-            ST_CANCELLED => (Exception)_ex!,
-            ST_SUCCESS => throw new IllegalStateException("Task completed with a result"),
-            _ => throw new IllegalStateException("Task has not completed")
-        };
+        switch (state) {
+            case ST_FAILED:
+                return DispatchInfo.SourceException;
+            case ST_CANCELLED:
+                Exception ex = (Exception)_ex!;
+                if (throwIfCancelled) {
+                    throw BetterCancellationException.Capture(ex);
+                }
+                return ex;
+            case ST_SUCCESS:
+                throw new IllegalStateException("Task completed with a result");
+            default:
+                throw new IllegalStateException("Task has not completed");
+        }
     }
 
     public void ThrowIfFailedOrCancelled() {
@@ -304,17 +321,15 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
             return _result;
         }
         if (state == ST_CANCELLED) {
-            throw NewCancellationException((Exception)_ex!);
+            throw BetterCancellationException.Capture((Exception)_ex!);
         }
-        throw new CompletionException(null, (Exception)_ex);
-    }
-
-    /** 抛出异常时总是包含当前堆栈，否则会导致用户的代码被中断而没有被记录 */
-    private OperationCanceledException NewCancellationException(Exception ex) {
-        if (ex is BetterCancellationException ex2) {
-            throw new BetterCancellationException(ex2.Code, ex2.Message);
+        try {
+            DispatchInfo.Throw(); // C#无法直接restore原始异常的堆栈
+            return default;
         }
-        throw new OperationCanceledException(ex.Message);
+        catch (Exception ex) {
+            throw new CompletionException(null, ex);
+        }
     }
 
     #endregion

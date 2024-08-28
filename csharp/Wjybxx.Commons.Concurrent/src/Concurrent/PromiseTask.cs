@@ -239,7 +239,7 @@ public class PromiseTask<T> : IFutureTask
                     if (RunTimeSharing(true, out T result)) {
                         promise.TrySetResult(result);
                     } else {
-                        promise.TrySetException(StacklessTimeoutException.INST);
+                        promise.TrySetException(StacklessCancellationException.Timeout);
                     }
                 } else {
                     T value = RunTask();

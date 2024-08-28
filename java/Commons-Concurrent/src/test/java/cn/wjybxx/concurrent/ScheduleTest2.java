@@ -16,6 +16,7 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.BetterCancellationException;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -83,7 +84,7 @@ public class ScheduleTest2 {
                 .setOnlyOnce(0));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.exceptionNow() instanceof TimeoutException);
+        Assertions.assertTrue(future.exceptionNow(false) instanceof BetterCancellationException);
     }
 
     @Test
@@ -113,7 +114,7 @@ public class ScheduleTest2 {
                 .setTimeoutByCount(1));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
+        Assertions.assertTrue(future.exceptionNow(false) instanceof BetterCancellationException);
     }
 
     @Test
@@ -123,7 +124,7 @@ public class ScheduleTest2 {
                 .setTimeoutByCount(1));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
+        Assertions.assertTrue(future.exceptionNow(false) instanceof BetterCancellationException);
     }
 
     @Test
@@ -133,7 +134,7 @@ public class ScheduleTest2 {
                 .setTimeoutByCount(1));
 
         future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
-        Assertions.assertTrue(future.exceptionNow() instanceof StacklessTimeoutException);
+        Assertions.assertTrue(future.exceptionNow(false) instanceof BetterCancellationException);
     }
 
     // endregion
@@ -162,7 +163,7 @@ public class ScheduleTest2 {
 
         future.awaitUninterruptibly();
         System.out.println(System.currentTimeMillis() - startTime);
-        Assertions.assertTrue(future.exceptionNow() == StacklessTimeoutException.INST_COUNT_LIMIT);
+        Assertions.assertTrue(future.exceptionNow(false) instanceof BetterCancellationException);
     }
 
     // endregion

@@ -263,6 +263,9 @@ public struct ScheduledTaskBuilder<T>
     /// 1. -1表示无限制，大于等于0表示有限制
     /// 2. 默认只在执行任务后检查是否超时，以确保至少会执行一次
     /// 3. 超时是一个不准确的调度，不保证超时后能立即结束
+    /// 4. 达到截止时间后任务将被取消<see cref="BetterCancellationException"/> -- 任何的主动退出都使用取消。
+    ///
+    /// PS：使用取消异常是为了避免捕获堆栈，Future只对取消异常进行了优化。
     /// </summary>
     /// <exception cref="ArgumentException"></exception>
     public long Timeout {
@@ -294,6 +297,9 @@ public struct ScheduledTaskBuilder<T>
     /// <summary>
     /// 设置任务的执行次数限制
     /// 1. -1表示无限制，大于0表示有限制，0非法
+    /// 2. 到达执行上限后任务将被取消<see cref="BetterCancellationException"/> -- 任何的主动退出都使用取消。
+    ///
+    /// PS：使用取消异常是为了避免捕获堆栈，Future只对取消异常进行了优化。
     /// </summary>
     public int CountLimit {
         get => countLimit;
