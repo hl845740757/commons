@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
+import cn.wjybxx.base.concurrent.BetterCancellationException;
 import cn.wjybxx.base.concurrent.StacklessCancellationException;
 import cn.wjybxx.base.function.TriConsumer;
 import cn.wjybxx.base.function.TriFunction;
@@ -365,7 +366,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         if (isDone0(r)) {
             return isCancelled0(r);
         }
-        if (trySetException(new CancellationException())) {
+        // 不再记录取消者堆栈，取消者堆栈意义不大
+        if (trySetException(StacklessCancellationException.INST1)) {
             return true;
         }
         // 可能被其它线程取消
@@ -457,8 +459,8 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         }
         if (r instanceof AltResult altResult) {
             Throwable cause = altResult.cause;
-            if (cause instanceof CancellationException) {
-                throw (CancellationException) cause;
+            if (cause instanceof CancellationException cancellationException) {
+                throw newCancellationException(cancellationException);
             }
             throw new CompletionException(cause);
         }
@@ -472,12 +474,20 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
         }
         if (r instanceof AltResult altResult) {
             Throwable cause = altResult.cause;
-            if (cause instanceof CancellationException) {
-                throw (CancellationException) cause;
+            if (cause instanceof CancellationException cancellationException) {
+                throw newCancellationException(cancellationException);
             }
             throw new ExecutionException(cause);
         }
         return (T) r;
+    }
+
+    /** 抛出异常时总是包含当前堆栈，否则会导致用户的代码被中断而没有被记录 */
+    private static CancellationException newCancellationException(CancellationException ex) {
+        if (ex instanceof BetterCancellationException ex2) {
+            return new BetterCancellationException(ex2.getCode(), ex2.getMessage());
+        }
+        return new CancellationException(ex.getMessage());
     }
     // endregion
 

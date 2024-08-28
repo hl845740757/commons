@@ -324,9 +324,17 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             return _result;
         }
         if (state == ST_CANCELLED) {
-            throw (Exception)_ex!;
+            throw NewCancellationException((Exception)_ex!);
         }
         throw new CompletionException(null, (Exception)_ex);
+    }
+
+    /** 抛出异常时总是包含当前堆栈，否则会导致用户的代码被中断而没有被记录 */
+    private OperationCanceledException NewCancellationException(Exception ex) {
+        if (ex is BetterCancellationException ex2) {
+            throw new BetterCancellationException(ex2.Code, ex2.Message);
+        }
+        throw new OperationCanceledException(ex.Message);
     }
 
     #endregion
