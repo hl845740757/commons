@@ -27,8 +27,6 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public readonly struct FutureAwaiter : ICriticalNotifyCompletion
 {
-    private static readonly Action<IFuture, object> INVOKER = (_, state) => ((Action)state).Invoke();
-
     private readonly IFuture _future;
     private readonly IExecutor? _executor;
     private readonly int _options;
@@ -63,6 +61,8 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
         _future.ThrowIfFailedOrCancelled();
     }
 
+    internal static readonly Action<object> invoker = state => ((Action)state).Invoke();
+
     // 3. OnCompleted
     /// <summary>
     /// 添加一个Future完成时的回调。
@@ -72,18 +72,18 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     public void OnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (_executor == null) {
-            _future.OnCompleted(INVOKER, continuation, _options);
+            _future.OnCompleted(invoker, continuation, _options);
         } else {
-            _future.OnCompletedAsync(_executor, INVOKER, continuation, _options);
+            _future.OnCompletedAsync(_executor, invoker, continuation, _options);
         }
     }
 
     public void UnsafeOnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (_executor == null) {
-            _future.OnCompleted(INVOKER, continuation, _options);
+            _future.OnCompleted(invoker, continuation, _options);
         } else {
-            _future.OnCompletedAsync(_executor, INVOKER, continuation, _options);
+            _future.OnCompletedAsync(_executor, invoker, continuation, _options);
         }
     }
 }
@@ -94,8 +94,6 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
 /// <typeparam name="T"></typeparam>
 public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
 {
-    private static readonly Action<IFuture<T>, object> INVOKER = (_, state) => ((Action)state).Invoke();
-
     private readonly IFuture<T> _future;
     private readonly IExecutor? _executor;
     private readonly int _options;
@@ -139,18 +137,18 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     public void OnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (_executor == null) {
-            _future.OnCompleted(INVOKER, continuation, _options);
+            _future.OnCompleted(FutureAwaiter.invoker, continuation, _options);
         } else {
-            _future.OnCompletedAsync(_executor, INVOKER, continuation, _options);
+            _future.OnCompletedAsync(_executor, FutureAwaiter.invoker, continuation, _options);
         }
     }
 
     public void UnsafeOnCompleted(Action continuation) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (_executor == null) {
-            _future.OnCompleted(INVOKER, continuation, _options);
+            _future.OnCompleted(FutureAwaiter.invoker, continuation, _options);
         } else {
-            _future.OnCompletedAsync(_executor, INVOKER, continuation, _options);
+            _future.OnCompletedAsync(_executor, FutureAwaiter.invoker, continuation, _options);
         }
     }
 }

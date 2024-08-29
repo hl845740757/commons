@@ -91,7 +91,10 @@ public final class TaskOptions {
     /**
      * 默认情况下，stage的options仅用于自身，
      * 如果一个异步任务的Executor是{@link IExecutor}类型，且期望将options传递给Executor时，可以启用该选项。
+     *
+     * @deprecated 不冲突，总是传递；另外，不传递我们还需要存储两份options。
      */
+    @Deprecated
     public static final int STAGE_PROPAGATE_OPTIONS = 1 << 20;
     /**
      * 默认情况下，Stage会在触发回调之前检测ctx否为{@link IContext}或{@link ICancelToken}类型，并检测取消信号。

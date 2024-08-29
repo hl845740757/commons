@@ -195,8 +195,7 @@ public readonly struct ValueFuture
         }
     }
 
-    internal static readonly Action<object> driverCallBack = (state) => ((Action)state).Invoke();
-    private static readonly Action<IFuture, object> futureCallback = (_, state) => ((Action)state).Invoke();
+    internal static readonly Action<object> invoker = (state) => ((Action)state).Invoke();
 
     internal void OnCompleted(Action action, IExecutor? executor, int options) {
         if (_future == null) {
@@ -204,13 +203,13 @@ public readonly struct ValueFuture
         }
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (_future is IValuePromise valuePromise) {
-            valuePromise.OnCompleted(_reentryId, driverCallBack, action, executor, options);
+            valuePromise.OnCompleted(_reentryId, invoker, action, executor, options);
         } else {
             IFuture future = (IFuture)_future;
             if (executor != null) {
-                future.OnCompletedAsync(executor, futureCallback, action, options);
+                future.OnCompletedAsync(executor, invoker, action, options);
             } else {
-                future.OnCompleted(futureCallback, action, options);
+                future.OnCompleted(invoker, action, options);
             }
         }
     }
@@ -410,8 +409,6 @@ public readonly struct ValueFuture<T>
         }
     }
 
-    private static readonly Action<IFuture<T>, object> futureCallback = (_, state) => ((Action)state).Invoke();
-
     internal void OnCompleted(Action action, IExecutor? executor, int options) {
         if (_future == null) {
             throw new IllegalStateException();
@@ -419,13 +416,13 @@ public readonly struct ValueFuture<T>
 
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (_future is IValuePromise<T> valuePromise) {
-            valuePromise.OnCompleted(_reentryId, ValueFuture.driverCallBack, action, executor, options);
+            valuePromise.OnCompleted(_reentryId, ValueFuture.invoker, action, executor, options);
         } else {
             IFuture<T> future = (IFuture<T>)_future;
             if (executor != null) {
-                future.OnCompletedAsync(executor, futureCallback, action, options);
+                future.OnCompletedAsync(executor, ValueFuture.invoker, action, options);
             } else {
-                future.OnCompleted(futureCallback, action, options);
+                future.OnCompleted(ValueFuture.invoker, action, options);
             }
         }
     }

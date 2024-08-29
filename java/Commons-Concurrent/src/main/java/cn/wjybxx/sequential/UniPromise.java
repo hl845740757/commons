@@ -40,7 +40,6 @@ import java.util.function.Function;
  * <h3>单线程化做的变动</h3>
  * 1.去除{@link #result}等的volatile操作，变更为普通字段。
  * 2.去除了阻塞操作Awaiter的支持。
- * 3.{@link #tryInline}对executor的检测调整
  *
  * <h3>Async的含义</h3>
  * 既然是单线程的，又何来异步一说？这里的异步是指不立即执行给定的行为，而是提交到Executor等待调度。<br>
@@ -1169,24 +1168,12 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
     private static boolean tryInline(Completion completion, Executor e, int options) {
         // 尝试内联
-        if (TaskOptions.isEnabled(options, TaskOptions.STAGE_TRY_INLINE)) {
-            if (e instanceof UniExecutorService) { // uni-executor特殊支持
-                return true;
-            }
-            if (e instanceof SingleThreadExecutor eventLoop
-                    && eventLoop.inEventLoop()) {
-                return true;
-            }
+        if (TaskOptions.isEnabled(options, TaskOptions.STAGE_TRY_INLINE)
+                && e instanceof SingleThreadExecutor eventLoop
+                && eventLoop.inEventLoop()) {
+            return true;
         }
-        // 判断是否需要传递选项
-        if (options != 0
-                && TaskOptions.isEnabled(options, TaskOptions.STAGE_PROPAGATE_OPTIONS)
-                && e instanceof IExecutor exe) {
-            exe.execute(completion);
-        } else {
-            completion.setOptions(0);
-            e.execute(completion);
-        }
+        e.execute(completion);
         return false;
     }
 

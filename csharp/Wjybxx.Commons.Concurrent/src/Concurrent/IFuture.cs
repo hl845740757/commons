@@ -130,7 +130,6 @@ public interface IFuture<T> : IFuture
 
     /// <summary>
     /// 添加一个监听器
-    /// 1. 该接口通常应该由<see cref="FutureAwaiter{T}"/>调用。
     /// </summary>
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>
@@ -148,8 +147,7 @@ public interface IFuture<T> : IFuture
 
     /// <summary>
     /// 添加一个监听器 -- 接收future和state参数
-    /// 1. 该接口通常应该由<see cref="FutureAwaiter{T}"/>调用。
-    /// 2. 如果不期望检测state中潜在的取消信号，可通过<see cref="TaskOptions.STAGE_UNCANCELLABLE_CTX"/>关闭。
+    /// ps：如果不期望检测state中潜在的取消信号，可通过<see cref="TaskOptions.STAGE_UNCANCELLABLE_CTX"/>关闭。
     /// </summary>
     /// <param name="executor">回调线程</param>
     /// <param name="continuation">回调</param>

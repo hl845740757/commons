@@ -97,6 +97,7 @@ public static class TaskOptions
     /// 默认情况下，默认情况下，stage的options仅用于自身，
     /// 如果一个异步任务的Executor是<see cref="IExecutor"/>类型，且期望将options传递给Executor时，可以启用该选项。
     ///</summary>
+    [Obsolete("不冲突，总是传递")]
     public const int STAGE_PROPAGATE_OPTIONS = 1 << 20;
     /// <summary>
     /// 默认情况下，Stage会在触发回调之前检测ctx否为<see cref="IContext"/>和<see cref="ICancelToken"/>类型，并检测取消信号。

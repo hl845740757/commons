@@ -34,21 +34,36 @@ public static class TaskPoolConfig
 
     /// <summary>
     /// 计算给定类型对象池的缓存池大小。
-    /// 注意：本库默认使用int代替void，因此当T为int类型时，应当分配更大的池。
+    /// 
+    /// 注意：本库统一使用int代替void，因此当T为int类型时，应当分配更大的池。
     /// </summary>
     public static int GetPoolSize<T>(TaskType domain) {
         Func<TaskType, Type, int> func = poolSizeCalculator;
         if (func != null) {
             return Math.Max(0, func.Invoke(domain, typeof(T)));
         }
+        if (domain == TaskType.PromiseMoveNext
+            || domain == TaskType.UniPromiseMoveNext) {
+            return 500;
+        }
         return typeof(T) == typeof(int) ? 100 : 50;
     }
 
     public enum TaskType
     {
-        PromiseCompleted,
-        UniPromiseCompleted,
-        ValueFutureStateMachineDriver,
+        /// <summary>
+        /// 状态机await回调
+        /// </summary>
+        PromiseMoveNext,
+        /// <summary>
+        /// 状态机await回调
+        /// </summary>
+        UniPromiseMoveNext,
+        /// <summary>
+        /// 状态机任务
+        /// </summary>
+        ValueFutureStateMachineTask,
+
         PromiseTask,
         ScheduledPromiseTask,
         ValueFutureTask,

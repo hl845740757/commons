@@ -20,6 +20,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Wjybxx.Commons.Concurrent;
+using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.Commons.Sequential
 {
@@ -179,23 +180,12 @@ public abstract class AbstractUniPromise
 
     protected static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)) {
-            if (e is IUniExecutorService) { // uni-executor支持
-                return true;
-            }
-            if (e is ISingleThreadExecutor eventLoop
-                && eventLoop.InEventLoop()) {
-                return true;
-            }
+        if (TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
+            && e is ISingleThreadExecutor eventLoop
+            && eventLoop.InEventLoop()) {
+            return true;
         }
-        // 判断是否需要传递选项
-        if (options != 0
-            && TaskOptions.IsEnabled(options, TaskOptions.STAGE_PROPAGATE_OPTIONS)) {
-            e.Execute(completion);
-        } else {
-            completion.Options = 0;
-            e.Execute(completion);
-        }
+        e.Execute(completion);
         return false;
     }
 
@@ -268,6 +258,97 @@ public abstract class AbstractUniPromise
         protected internal override AbstractUniPromise? TryFire(int mode) {
             throw new NotImplementedException();
         }
+    }
+
+
+    /// <summary>
+    /// 状态机回调特殊优化，由于不依赖Promise的结果，
+    /// 因此不放入泛型内种，可全局缓存。
+    /// </summary>
+    protected class MoveNextCompletion : Completion
+    {
+#nullable disable
+        protected IExecutor executor;
+        protected int options;
+        private Action<object> action;
+        private object state;
+#nullable enable
+
+        private MoveNextCompletion() {
+        }
+
+        public void Init(IExecutor? executor, int options, Action<object?> action, object? state) {
+            this.executor = executor;
+            this.options = options;
+            this.action = action;
+            this.state = state;
+        }
+
+        public override void Reset() {
+            next = null; // 减少调用
+            executor = null;
+            options = 0;
+            action = null;
+            state = null;
+        }
+
+        public override int Options {
+            get => options;
+            set => options = value;
+        }
+
+        private bool Claim() {
+            IExecutor e = this.executor;
+            if (e == CLAIMED) {
+                return true;
+            }
+            this.executor = CLAIMED;
+            if (e != null) {
+                return TryInline(this, e, options);
+            }
+            return true;
+        }
+
+        protected internal override AbstractUniPromise? TryFire(int mode) {
+            {
+                if (IsCancelling(state, options)) {
+                    goto outer;
+                }
+                // 异步模式下已经claim
+                if (!FireNow(action, state, mode > 0 ? null : this)) {
+                    return null;
+                }
+            }
+            outer:
+            POOL.Release(this);
+            // help gc
+            // this.executor = null;
+            // this.input = null!;
+            // this.action = null!;
+            // this.state = null;
+            return null;
+        }
+
+        public static bool FireNow(Action<object?> action, object? state,
+                                   MoveNextCompletion? c) {
+            try {
+                if (c != null && !c.Claim()) {
+                    return false;
+                }
+                action(state);
+            }
+            catch (Exception e) {
+                FutureLogger.LogCause(e, "UniOnCompleted4 caught an exception");
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 放在类内部，避免随着Promise就初始化
+        /// </summary>
+        internal static readonly IObjectPool<MoveNextCompletion> POOL = new ConcurrentObjectPool<MoveNextCompletion>(
+            () => new MoveNextCompletion(), task => task.Reset(),
+            TaskPoolConfig.GetPoolSize<int>(TaskPoolConfig.TaskType.UniPromiseMoveNext));
     }
 
     #endregion

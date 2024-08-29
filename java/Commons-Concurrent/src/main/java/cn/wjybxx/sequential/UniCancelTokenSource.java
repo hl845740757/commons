@@ -37,7 +37,6 @@ import java.util.function.Consumer;
  * <h3>实现说明</h3>
  * 1. 去除了{@link #code}等的volatile操作，变更为普通字段。
  * 2. 默认时间单位为毫秒。
- * 3. {@link #tryInline}对executor的检测调整
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -524,24 +523,12 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     private static boolean tryInline(Completion completion, Executor e, int options) {
         // 尝试内联
-        if (TaskOptions.isEnabled(options, TaskOptions.STAGE_TRY_INLINE)) {
-            if (e instanceof UniExecutorService) { // uni-executor支持
-                return true;
-            }
-            if (e instanceof SingleThreadExecutor eventLoop
-                    && eventLoop.inEventLoop()) {
-                return true;
-            }
+        if (TaskOptions.isEnabled(options, TaskOptions.STAGE_TRY_INLINE)
+                && e instanceof SingleThreadExecutor eventLoop
+                && eventLoop.inEventLoop()) {
+            return true;
         }
-        // 判断是否需要传递选项
-        if (options != 0
-                && TaskOptions.isEnabled(options, TaskOptions.STAGE_PROPAGATE_OPTIONS)
-                && e instanceof IExecutor exe) {
-            exe.execute(completion);
-        } else {
-            completion.setOptions(0);
-            e.execute(completion);
-        }
+        e.execute(completion);
         return false;
     }
 

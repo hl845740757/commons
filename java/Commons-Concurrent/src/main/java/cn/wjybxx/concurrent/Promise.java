@@ -1249,15 +1249,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 && eventLoop.inEventLoop()) {
             return true;
         }
-        // 判断是否需要传递选项
-        if (options != 0
-                && TaskOptions.isEnabled(options, TaskOptions.STAGE_PROPAGATE_OPTIONS)
-                && e instanceof IExecutor exe) {
-            exe.execute(completion);
-        } else {
-            completion.setOptions(0);
-            e.execute(completion);
-        }
+        e.execute(completion);
         return false;
     }
 

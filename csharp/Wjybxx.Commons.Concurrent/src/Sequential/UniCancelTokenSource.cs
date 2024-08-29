@@ -375,23 +375,12 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     private static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)) {
-            if (e is IUniExecutorService) { // uni-executor支持
-                return true;
-            }
-            if (e is ISingleThreadExecutor eventLoop
-                && eventLoop.InEventLoop()) {
-                return true;
-            }
+        if (TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
+            && e is ISingleThreadExecutor eventLoop
+            && eventLoop.InEventLoop()) {
+            return true;
         }
-        // 判断是否需要传递选项
-        if (options != 0
-            && TaskOptions.IsEnabled(options, TaskOptions.STAGE_PROPAGATE_OPTIONS)) {
-            e.Execute(completion);
-        } else {
-            completion.Options = 0;
-            e.Execute(completion);
-        }
+        e.Execute(completion);
         return false;
     }
 

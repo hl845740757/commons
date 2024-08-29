@@ -179,7 +179,7 @@ public class DefaultUniScheduledExecutor : AbstractUniScheduledExecutor
 
     private class ScheduledHelper : IScheduledHelper
     {
-        private DefaultUniScheduledExecutor _executor;
+        private readonly DefaultUniScheduledExecutor _executor;
 
         public ScheduledHelper(DefaultUniScheduledExecutor executor) {
             _executor = executor;

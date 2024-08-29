@@ -376,14 +376,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
             && eventLoop.InEventLoop()) {
             return true;
         }
-        // 判断是否需要传递选项
-        if (options != 0
-            && TaskOptions.IsEnabled(options, TaskOptions.STAGE_PROPAGATE_OPTIONS)) {
-            e.Execute(completion);
-        } else {
-            completion.Options = 0;
-            e.Execute(completion);
-        }
+        e.Execute(completion);
         return false;
     }
 
