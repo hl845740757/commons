@@ -203,7 +203,11 @@ public readonly struct ValueFuture
         }
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (_future is IValuePromise valuePromise) {
-            valuePromise.OnCompleted(_reentryId, invoker, action, executor, options);
+            if (executor != null) {
+                valuePromise.OnCompletedAsync(_reentryId, executor, invoker, action, options);
+            } else {
+                valuePromise.OnCompleted(_reentryId, invoker, action, options);
+            }
         } else {
             IFuture future = (IFuture)_future;
             if (executor != null) {
@@ -413,10 +417,13 @@ public readonly struct ValueFuture<T>
         if (_future == null) {
             throw new IllegalStateException();
         }
-
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (_future is IValuePromise<T> valuePromise) {
-            valuePromise.OnCompleted(_reentryId, ValueFuture.invoker, action, executor, options);
+            if (executor != null) {
+                valuePromise.OnCompletedAsync(_reentryId, executor, ValueFuture.invoker, action, options);
+            } else {
+                valuePromise.OnCompleted(_reentryId, ValueFuture.invoker, action, options);
+            }
         } else {
             IFuture<T> future = (IFuture<T>)_future;
             if (executor != null) {

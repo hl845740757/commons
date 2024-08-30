@@ -576,9 +576,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private static boolean tryInline(Completion completion, Executor e, int options) {
         // 尝试内联
-        if (TaskOptions.isEnabled(options, TaskOptions.STAGE_TRY_INLINE)
-                && e instanceof SingleThreadExecutor eventLoop
-                && eventLoop.inEventLoop()) {
+        if (Promise.isInlinable(e, options)) {
             return true;
         }
         e.execute(completion);

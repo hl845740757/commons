@@ -17,10 +17,12 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Wjybxx.Commons.Concurrent;
 using Wjybxx.Commons.Pool;
+using TaskStatus = Wjybxx.Commons.Concurrent.TaskStatus;
 
 namespace Wjybxx.Commons.Sequential
 {
@@ -52,6 +54,12 @@ public abstract class AbstractUniPromise
     protected abstract bool IsStrictlyCompleted { get; }
 
     #region state
+
+    internal const int ST_PENDING = (int)TaskStatus.Pending;
+    internal const int ST_COMPUTING = (int)TaskStatus.Computing;
+    internal const int ST_SUCCESS = (int)TaskStatus.Success;
+    internal const int ST_FAILED = (int)TaskStatus.Failed;
+    internal const int ST_CANCELLED = (int)TaskStatus.Cancelled;
 
     /** 表示任务已进入执行阶段 */
     internal static readonly object EX_COMPUTING = new object();
@@ -180,24 +188,29 @@ public abstract class AbstractUniPromise
 
     protected static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
-            && e is ISingleThreadExecutor eventLoop
-            && eventLoop.InEventLoop()) {
+        if (IsInlinable(e, options)) {
             return true;
         }
         e.Execute(completion);
         return false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool IsInlinable(IExecutor e, int options) {
+        return TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
+               && e is ISingleThreadExecutor eventLoop
+               && eventLoop.InEventLoop();
+    }
+
     protected internal static bool IsCancelling(object? ctx, int options) {
         if (ctx == null || TaskOptions.IsEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
             return false;
         }
-        if (ctx is IContext ctx2) {
-            return ctx2.CancelToken.IsCancelling;
-        }
         if (ctx is ICancelToken cts) {
             return cts.IsCancelling;
+        }
+        if (ctx is IContext ctx2) {
+            return ctx2.CancelToken.IsCancelling;
         }
         return false;
     }

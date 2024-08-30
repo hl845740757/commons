@@ -17,6 +17,7 @@
 #endregion
 
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Collections
 {
@@ -36,6 +37,7 @@ public interface IGenericSet<T> : IGenericCollection<T>
 
     #region 接口适配
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ICollection<T>.Add(T item) {
         Add(item);
     }

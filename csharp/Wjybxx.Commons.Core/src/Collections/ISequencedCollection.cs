@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Collections
 {
@@ -122,6 +123,7 @@ public interface ISequencedCollection<T> : IGenericCollection<T>
     /// <param name="reversed">是否逆序</param>
     void CopyTo(T[] array, int arrayIndex, bool reversed = false);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ICollection<T>.CopyTo(T[] array, int arrayIndex) {
         CopyTo(array, arrayIndex, false);
     }

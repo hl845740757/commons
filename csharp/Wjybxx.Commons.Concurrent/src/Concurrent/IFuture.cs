@@ -159,30 +159,40 @@ public interface IFuture<T> : IFuture
 
     #region 接口适配
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     IFuture IFuture.AsReadonly() => AsReadonly();
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     object IFuture.ResultNow() => ResultNow();
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     object IFuture.Get() => Get();
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     object IFuture.Join() => Join();
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     IFuture IFuture.Await() => Await();
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     IFuture IFuture.AwaitUninterruptibly() => AwaitUninterruptibly();
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void IFuture.OnCompleted(Action<IFuture> continuation, int options) {
         OnCompleted(continuation, options);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void IFuture.OnCompletedAsync(IExecutor executor, Action<IFuture> continuation, int options) {
         OnCompletedAsync(executor, continuation, options);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void IFuture.OnCompleted(Action<IFuture, object?> continuation, object? state, int options) {
         OnCompleted(continuation, state, options);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void IFuture.OnCompletedAsync(IExecutor executor, Action<IFuture, object?> continuation, object? state, int options) {
         OnCompletedAsync(executor, continuation, state, options);
     }

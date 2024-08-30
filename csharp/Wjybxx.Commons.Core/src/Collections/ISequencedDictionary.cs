@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Collections
 {
@@ -127,23 +128,22 @@ public interface ISequencedDictionary<TKey, TValue> : IGenericDictionary<TKey, T
 
     #region 接口适配
 
-    ICollection<TKey> IDictionary<TKey, TValue>.Keys => Keys;
-    ICollection<TValue> IDictionary<TKey, TValue>.Values => Values;
-    IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => Keys;
-    IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => Values;
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     ISequencedCollection<KeyValuePair<TKey, TValue>> ISequencedCollection<KeyValuePair<TKey, TValue>>.Reversed() {
         return Reversed();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) {
         Add(item.Key, item.Value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ISequencedCollection<KeyValuePair<TKey, TValue>>.AddFirst(KeyValuePair<TKey, TValue> item) {
         AddFirst(item.Key, item.Value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ISequencedCollection<KeyValuePair<TKey, TValue>>.AddLast(KeyValuePair<TKey, TValue> item) {
         AddLast(item.Key, item.Value);
     }

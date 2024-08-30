@@ -32,8 +32,8 @@ public class ValueFutureTest
         ValueFuture<int> future2 = asyncInt();
         await future1;
         await future2;
-        
-        // 重复await将抛出异常
+
+        // 重复await将抛出异常 -- 在此之前，future不能进入完成状态
         Assert.CatchAsync<IllegalStateException>(async () => await future1);
         Assert.CatchAsync<IllegalStateException>(async () => await future2);
 
@@ -42,11 +42,14 @@ public class ValueFutureTest
 
         await asyncVoid();
         await asyncInt();
+
+        await asyncVoid().AsFuture();
+        await asyncInt().AsFuture();
     }
 
     private static async ValueFuture asyncVoid() {
         await GlobalEventLoop.Inst;
-        Thread.Sleep(1);
+        await ValueFutureTask.Run(GlobalEventLoop.Inst, () => { });
     }
 
     private static async ValueFuture<int> asyncInt() {

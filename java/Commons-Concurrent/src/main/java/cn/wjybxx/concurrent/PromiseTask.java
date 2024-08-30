@@ -34,12 +34,11 @@ import java.util.function.Function;
  */
 public class PromiseTask<V> implements IFutureTask<V> {
 
-    /** 优先级的掩码 - 4bit，求值频率较高，放在低位 */
-    public static final int MASK_PRIORITY = 0x0F;
+    // 低8位和TaskOptions保持一致，以方便继承数据
     /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
-    public static final int MASK_TASK_TYPE = 0xF0;
+    public static final int MASK_TASK_TYPE = 0x0F00;
     /** 调度类型的掩码 -- 4bit，最大16种，可支持复杂的调度 */
-    public static final int MASK_SCHEDULE_TYPE = 0x0F00;
+    public static final int MASK_SCHEDULE_TYPE = 0xF000;
 
     /** 延时任务已触发过 */
     public static final int MASK_TRIGGERED = 1 << 16;
@@ -48,13 +47,10 @@ public class PromiseTask<V> implements IFutureTask<V> {
     /** 延时任务有次数限制 */
     public static final int MASK_HAS_COUNTDOWN = 1 << 18;
 
-    public static final int OFFSET_PRIORITY = 0;
     /** 任务类型的偏移量 */
-    public static final int OFFSET_TASK_TYPE = 4;
+    public static final int OFFSET_TASK_TYPE = 8;
     /** 调度类型的偏移量 */
-    public static final int OFFSET_SCHEDULE_TYPE = 8;
-    /** 最大优先级 */
-    public static final int MAX_PRIORITY = MASK_PRIORITY;
+    public static final int OFFSET_SCHEDULE_TYPE = 12;
 
     /** 用户的任务 */
     private Object task;
@@ -95,6 +91,8 @@ public class PromiseTask<V> implements IFutureTask<V> {
         this.ctx = ctx;
         this.options = options;
         this.promise = Objects.requireNonNull(promise, "promise");
+
+        this.ctl = (options & TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE);
         this.ctl |= (taskType << OFFSET_TASK_TYPE);
     }
 

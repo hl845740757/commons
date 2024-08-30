@@ -54,6 +54,11 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     bool IsTriggered { get; }
 
     /// <summary>
+    /// 任务的优先级
+    /// </summary>
+    int Priority { get; set; }
+
+    /// <summary>
     /// 外部确定性触发
     /// 该方法由EventLoop调用，不需要回调的方式重新压入队列，而是返回bool值告知EventLoop是否需要继续执行
     /// </summary>
@@ -82,23 +87,26 @@ public sealed class ScheduledTaskComparator : IComparer<IScheduledFutureTask>
         if (ReferenceEquals(lhs, rhs)) {
             return 0;
         }
-        int result = lhs.NextTriggerTime.CompareTo(rhs.NextTriggerTime);
-        if (result != 0) {
-            return result;
+        int r = lhs.NextTriggerTime.CompareTo(rhs.NextTriggerTime);
+        if (r != 0) {
+            return r;
         }
         // 未触发的放前面
-        result = lhs.IsTriggered.CompareTo(rhs.IsTriggered);
-        if (result != 0) {
-            return result;
+        r = lhs.IsTriggered.CompareTo(rhs.IsTriggered);
+        if (r != 0) {
+            return r;
         }
         // 再按优先级排序
-
+        r = lhs.Priority.CompareTo(rhs.Priority);
+        if (r != 0) {
+            return r;
+        }
         // 再按id排序
-        result = lhs.Id.CompareTo(rhs.Id);
-        if (result == 0) {
+        r = lhs.Id.CompareTo(rhs.Id);
+        if (r == 0) {
             throw new InvalidOperationException($"lhs.id: {lhs.Id}, rhs.id: {rhs.Id}");
         }
-        return result;
+        return r;
     }
 }
 }

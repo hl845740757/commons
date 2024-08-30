@@ -179,16 +179,12 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     /** 获取任务所属的队列id */
     public int getPriority() {
-        return (ctl & MASK_PRIORITY);
+        return (ctl & TaskOptions.MASK_PRIORITY);
     }
 
     /** @param priority 任务的优先级，范围 [0, 15] */
     public void setPriority(int priority) {
-        if (priority < 0 || priority > MAX_PRIORITY) {
-            throw new IllegalArgumentException("priority: " + MAX_PRIORITY);
-        }
-        ctl &= ~MASK_PRIORITY;
-        ctl |= (priority);
+        ctl = TaskOptions.setPriority(ctl, priority);
     }
 
     @Override
@@ -413,6 +409,11 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         }
         // 未触发的放前面
         r = Boolean.compare(isTriggered(), other.isTriggered());
+        if (r != 0) {
+            return r;
+        }
+        // 再按优先级排序
+        r = Integer.compare(getPriority(), other.getPriority());
         if (r != 0) {
             return r;
         }

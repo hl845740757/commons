@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -113,10 +114,12 @@ public interface IPromise<T> : IFuture<T>, IPromise
 
     #region 接口适配
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     bool IPromise.TrySetResult(object result) {
         return TrySetResult((T)result);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void IPromise.SetResult(object result) {
         SetResult((T)result);
     }

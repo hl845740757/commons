@@ -20,7 +20,6 @@ using System;
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using Wjybxx.Commons.Concurrent;
-using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.Commons.Sequential
 {
@@ -51,12 +50,6 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
     /// 已被取消的Promise常量实例
     /// </summary>
     public static readonly UniPromise<T> CANCELLED = new UniPromise<T>(null, default, StacklessCancellationException.Default);
-
-    private const int ST_PENDING = (int)TaskStatus.Pending;
-    private const int ST_COMPUTING = (int)TaskStatus.Computing;
-    private const int ST_SUCCESS = (int)TaskStatus.Success;
-    private const int ST_FAILED = (int)TaskStatus.Failed;
-    private const int ST_CANCELLED = (int)TaskStatus.Cancelled;
 
     /** 任务成功执行时的结果 -- 可见性由<see cref="_ex"/>保证 */
     private T _result;
@@ -137,7 +130,7 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
 
     /** 获取当前状态，如果处于发布中状态，则等待目标线程发布完毕 */
     private int PollState() {
-        object ex = _ex;
+        object? ex = _ex;
         if (ex == null) {
             return ST_PENDING;
         }
@@ -293,21 +286,7 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
     }
 
     public Exception ExceptionNow(bool throwIfCancelled = true) {
-        int state = PollState();
-        switch (state) {
-            case ST_FAILED:
-                return DispatchInfo.SourceException;
-            case ST_CANCELLED:
-                Exception ex = (Exception)_ex!;
-                if (throwIfCancelled) {
-                    throw BetterCancellationException.Capture(ex);
-                }
-                return ex;
-            case ST_SUCCESS:
-                throw new IllegalStateException("Task completed with a result");
-            default:
-                throw new IllegalStateException("Task has not completed");
-        }
+        return AbstractPromise.ExceptionNow(PollState(), _ex, throwIfCancelled);
     }
 
     public void ThrowIfFailedOrCancelled() {
@@ -323,13 +302,8 @@ public class UniPromise<T> : AbstractUniPromise, IPromise<T>
         if (state == ST_CANCELLED) {
             throw BetterCancellationException.Capture((Exception)_ex!);
         }
-        try {
-            DispatchInfo.Throw(); // C#无法直接restore原始异常的堆栈
-            return default;
-        }
-        catch (Exception ex) {
-            throw new CompletionException(null, ex);
-        }
+        ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex!;
+        throw new CompletionException(null, ExceptionUtil.RestoreStackTrace(dispatchInfo));
     }
 
     #endregion

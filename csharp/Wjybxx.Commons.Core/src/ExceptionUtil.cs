@@ -22,6 +22,10 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using Wjybxx.Commons.Collections;
 
+#if NET6_0_OR_GREATER
+using System.Diagnostics;
+#endif
+
 namespace Wjybxx.Commons
 {
 /// <summary>
@@ -57,33 +61,32 @@ public static class ExceptionUtil
     /// 捕获异常堆栈
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
     public static ExceptionDispatchInfo? TryCapture(Exception? ex) {
         return ex == null ? null : ExceptionDispatchInfo.Capture(ex);
     }
 
-    #region factory
-
     /// <summary>
-    /// 创建一个索引溢出异常
+    /// 恢复异常的堆栈
     /// </summary>
-    /// <param name="index">索引值</param>
+    /// <param name="dispatchInfo"></param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static IndexOutOfRangeException IndexOutOfRange(int index) {
-        return new IndexOutOfRangeException("Index out of range: " + index);
+#if NET6_0_OR_GREATER
+    [StackTraceHidden]
+#endif
+    public static Exception RestoreStackTrace(ExceptionDispatchInfo dispatchInfo) {
+        if (dispatchInfo == null) throw new ArgumentNullException(nameof(dispatchInfo));
+        // c# 没有开放接口直接恢复堆栈，我们通过重新抛出异常来恢复堆栈
+        try {
+            dispatchInfo.Throw();
+            return dispatchInfo.SourceException;
+        }
+        catch (Exception e) {
+            return e;
+        }
     }
-
-    /// <summary>
-    /// 创建一个索引溢出异常
-    /// </summary>
-    /// <param name="index">创建一个索引溢出异常</param>
-    /// <param name="length">数组的长度</param>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static IndexOutOfRangeException IndexOutOfRange(int index, int length) {
-        return new IndexOutOfRangeException($"Index out of range: {index}, {length}");
-    }
-
-    #endregion
 }
 }

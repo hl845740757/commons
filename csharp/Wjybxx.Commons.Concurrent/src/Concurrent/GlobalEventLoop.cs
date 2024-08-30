@@ -31,7 +31,7 @@ public sealed class GlobalEventLoop : DisruptorEventLoop<MiniAgentEvent>
     {
         Agent = EmptyAgent<MiniAgentEvent>.Inst,
         ThreadFactory = new DefaultThreadFactory("GlobalEventLoop", true),
-        EventSequencer = new MpUnboundedEventSequencer<MiniAgentEvent>.Builder(() => new MiniAgentEvent()) // 需要使用无界队列
+        EventSequencer = new MpUnboundedEventSequencer<MiniAgentEvent>.Builder(MiniAgentEvent.FACTORY) // 需要使用无界队列
             {
                 WaitStrategy = new TimeoutSleepingWaitStrategy(10, 1, 10), // 等待策略需要支持超时，否则无法调度定时任务
                 ChunkLength = 1024,

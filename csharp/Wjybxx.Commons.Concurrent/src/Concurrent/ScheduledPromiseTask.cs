@@ -18,6 +18,7 @@
 
 using System;
 using Wjybxx.Commons.Collections;
+using static Wjybxx.Commons.Concurrent.PromiseTask;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -139,12 +140,12 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
     }
 
     /** 任务是否已调度过，通常用于降低优先级 */
-    public bool IsTriggered => (ctl & PromiseTask.MASK_TRIGGERED) != 0;
+    public bool IsTriggered => (ctl & MASK_TRIGGERED) != 0;
 
     /** 任务的调度类型 -- 应该在添加到队列之前设置 */
     private int ScheduleType {
-        get => (ctl & PromiseTask.MASK_SCHEDULE_TYPE) >> PromiseTask.OFFSET_SCHEDULE_TYPE;
-        set => ctl |= (value << PromiseTask.OFFSET_SCHEDULE_TYPE);
+        get => (ctl & MASK_SCHEDULE_TYPE) >> OFFSET_SCHEDULE_TYPE;
+        set => ctl |= (value << OFFSET_SCHEDULE_TYPE);
     }
 
     /// <summary>
@@ -152,14 +153,8 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
     /// </summary>
     /// <exception cref="ArgumentException"></exception>
     public int Priority {
-        get => (ctl & PromiseTask.MASK_PRIORITY);
-        set {
-            if (value < 0 || value > PromiseTask.MAX_PRIORITY) {
-                throw new ArgumentException("priority: " + PromiseTask.MAX_PRIORITY);
-            }
-            ctl &= ~PromiseTask.MASK_PRIORITY;
-            ctl |= (value);
-        }
+        get => ctl & TaskOptions.MASK_PRIORITY;
+        set => ctl = TaskOptions.SetPriority(ctl, value);
     }
 
     public bool IsPeriodic => ScheduleType != 0;
@@ -181,17 +176,17 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
         helper = null;
     }
 
-    private bool HasTimeout => (ctl & PromiseTask.MASK_HAS_DEADLINE) != 0;
+    private bool HasTimeout => (ctl & MASK_HAS_DEADLINE) != 0;
 
     internal void EnableTimeout(long deadline) {
-        ctl |= PromiseTask.MASK_HAS_DEADLINE;
+        ctl |= MASK_HAS_DEADLINE;
         this.deadline = deadline;
     }
 
-    private bool HasCountLimit => (ctl & PromiseTask.MASK_HAS_COUNTDOWN) != 0;
+    private bool HasCountLimit => (ctl & MASK_HAS_COUNTDOWN) != 0;
 
     internal void EnableCountLimit(int countdown) {
-        ctl |= PromiseTask.MASK_HAS_COUNTDOWN;
+        ctl |= MASK_HAS_COUNTDOWN;
         this.countdown = countdown;
     }
 

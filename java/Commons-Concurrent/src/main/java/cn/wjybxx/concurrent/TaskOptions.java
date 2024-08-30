@@ -27,20 +27,19 @@ import cn.wjybxx.base.annotation.Beta;
 public final class TaskOptions {
 
     /**
-     * 低位用于存储任务的调度阶段，取值[0, 63]，使用低位可以避免位移。
-     * 1. 用于指定异步任务的调度时机。
-     * 2. 主要用于{@link EventLoop}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
-     */
-    public static final int MASK_SCHEDULE_PHASE = 63;
-
-    /**
      * 延时任务的优先级，取值[0, 15]
      * 1. 当任务的触发时间相同时，按照优先级排序，值越低优先级越高。
      * 2. 由于0需要表示未设置优先级，因此Executor会对值进行偏移，通常而言是减1。
      * 3. 优先级值的约定取决于各自的实现。
      */
     @Beta
-    public static final int MASK_PRIORITY = 15 << 6;
+    public static final int MASK_PRIORITY = 0x0F;
+    /**
+     * 低位用于存储任务的调度阶段，取值[0, 15]，使用低位可以避免位移。
+     * 1. 用于指定异步任务的调度时机。
+     * 2. 主要用于{@link EventLoop}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
+     */
+    public static final int MASK_SCHEDULE_PHASE = 0xF0;
 
     /**
      * 事件循环在执行该任务前必须先处理一次定时任务队列。
@@ -111,12 +110,16 @@ public final class TaskOptions {
 
     // region util
     /** 优先级的存储偏移量 */
-    public static final int OFFSET_PRIORITY = 6;
+    public static final int OFFSET_PRIORITY = 0;
+    /** 优先级的存储偏移量 */
+    public static final int OFFSET_SCHEDULE_PHASE = 4;
 
-    /** 调度阶段的最大值 */
-    public static final int MAX_SCHEDULE_PHASE = MASK_SCHEDULE_PHASE;
     /** 优先级的最大值 */
-    public static final int MAX_PRIORITY = MASK_PRIORITY >> OFFSET_PRIORITY;
+    public static final int MAX_PRIORITY = MASK_PRIORITY;
+    /** 调度阶段的最大值 */
+    public static final int MAX_SCHEDULE_PHASE = MASK_SCHEDULE_PHASE >> OFFSET_SCHEDULE_PHASE;
+    /** 调度阶段和优先级的掩码 */
+    public static final int MASK_PRIORITY_AND_SCHEDULE_PHASE = MASK_PRIORITY | MASK_SCHEDULE_PHASE;
 
     /** 是否启用了所有选项 */
     public static boolean isEnabled(int flags, int option) {
@@ -151,24 +154,9 @@ public final class TaskOptions {
         }
     }
 
-    /** 获取任务的调度阶段 */
-    public static int getSchedulePhase(int options) {
-        return options & MASK_SCHEDULE_PHASE;
-    }
-
-    /** 设置任务的调度阶段 */
-    public static int setSchedulePhase(int options, int phase) {
-        if (phase < 0 || phase > MASK_SCHEDULE_PHASE) {
-            throw new IllegalArgumentException("phase: " + phase);
-        }
-        options &= ~MASK_SCHEDULE_PHASE;
-        options |= phase;
-        return options;
-    }
-
     /** 获取任务的优先级 */
     public static int getPriority(int options) {
-        return (options & MASK_PRIORITY) >> OFFSET_PRIORITY;
+        return options & MASK_PRIORITY;
     }
 
     /** 设置优先级 */
@@ -177,8 +165,26 @@ public final class TaskOptions {
             throw new IllegalArgumentException("priority: " + priority);
         }
         options &= ~MASK_PRIORITY;
-        options |= (priority << OFFSET_PRIORITY);
+        options |= priority;
         return options;
     }
+
+
+    /** 获取任务的调度阶段 */
+    public static int getSchedulePhase(int options) {
+        return (options & MASK_SCHEDULE_PHASE) >> OFFSET_SCHEDULE_PHASE;
+    }
+
+    /** 设置任务的调度阶段 */
+    public static int setSchedulePhase(int options, int phase) {
+        if (phase < 0 || phase > MASK_SCHEDULE_PHASE) {
+            throw new IllegalArgumentException("phase: " + phase);
+        }
+        options &= ~MASK_SCHEDULE_PHASE;
+        options |= (phase) << OFFSET_SCHEDULE_PHASE;
+        return options;
+    }
+
+
     // endregion
 }

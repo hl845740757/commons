@@ -16,6 +16,8 @@
 
 #endregion
 
+using System.Runtime.CompilerServices;
+
 namespace Wjybxx.Commons.Collections
 {
 /// <summary>
@@ -52,32 +54,39 @@ public interface IDeque<T> : IQueue<T>, IStack<T>, ISequencedCollection<T>
 
     #region 接口适配
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     ISequencedCollection<T> ISequencedCollection<T>.Reversed() {
         return Reversed();
     }
 
     #region queue
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void IQueue<T>.Enqueue(T item) {
         AddLast(item);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     bool IQueue<T>.TryEnqueue(T item) {
         return TryAddLast(item);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     T IQueue<T>.Dequeue() {
         return RemoveFirst();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     bool IQueue<T>.TryDequeue(out T item) {
         return TryRemoveFirst(out item);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     T IQueue<T>.PeekHead() {
         return PeekFirst();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     bool IQueue<T>.TryPeekHead(out T item) {
         return TryPeekFirst(out item);
     }
@@ -86,26 +95,32 @@ public interface IDeque<T> : IQueue<T>, IStack<T>, ISequencedCollection<T>
 
     #region stack
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void IStack<T>.Push(T item) {
         AddFirst(item);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     bool IStack<T>.TryPush(T item) {
         return TryAddFirst(item);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     T IStack<T>.Pop() {
         return RemoveFirst();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     bool IStack<T>.TryPop(out T item) {
         return TryRemoveFirst(out item);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     T IStack<T>.PeekTop() {
         return PeekFirst();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     bool IStack<T>.TryPeekTop(out T item) {
         return TryPeekFirst(out item);
     }

@@ -58,6 +58,7 @@ public struct CounterEvent : IAgentEvent
         type = IAgentEvent.TYPE_INVALID;
         options = 0;
         obj1 = null;
+        obj2 = null;
     }
 
     public void CleanAll() {

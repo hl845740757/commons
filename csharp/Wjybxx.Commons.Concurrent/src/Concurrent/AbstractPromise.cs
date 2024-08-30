@@ -54,6 +54,12 @@ public abstract class AbstractPromise
 
     #region state
 
+    internal const int ST_PENDING = (int)TaskStatus.Pending;
+    internal const int ST_COMPUTING = (int)TaskStatus.Computing;
+    internal const int ST_SUCCESS = (int)TaskStatus.Success;
+    internal const int ST_FAILED = (int)TaskStatus.Failed;
+    internal const int ST_CANCELLED = (int)TaskStatus.Cancelled;
+
     /** 表示任务已进入执行阶段 */
     internal static readonly object EX_COMPUTING = new object();
     /** 表示任务已成功完成，但正在发布执行结果 */
@@ -201,24 +207,29 @@ public abstract class AbstractPromise
 
     protected static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
-            && e is ISingleThreadExecutor eventLoop
-            && eventLoop.InEventLoop()) {
+        if (IsInlinable(e, options)) {
             return true;
         }
         e.Execute(completion);
         return false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool IsInlinable(IExecutor e, int options) {
+        return TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
+               && e is ISingleThreadExecutor eventLoop
+               && eventLoop.InEventLoop();
+    }
+
     protected internal static bool IsCancelling(object? ctx, int options) {
         if (ctx == null || TaskOptions.IsEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
             return false;
         }
-        if (ctx is IContext ctx2) {
-            return ctx2.CancelToken.IsCancelling;
-        }
         if (ctx is ICancelToken cts) {
             return cts.IsCancelling;
+        }
+        if (ctx is IContext ctx2) {
+            return ctx2.CancelToken.IsCancelling;
         }
         return false;
     }
@@ -231,7 +242,6 @@ public abstract class AbstractPromise
         }
         return ExceptionDispatchInfo.Capture(ex);
     }
-
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static object WrapException(ExceptionDispatchInfo ex) {
@@ -256,6 +266,26 @@ public abstract class AbstractPromise
             return dispatchInfo.SourceException;
         }
         return ex;
+    }
+
+    internal static Exception ExceptionNow(int state, object? ex, bool throwIfCancelled) {
+        switch (state) {
+            case ST_FAILED: {
+                ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)ex!;
+                return ExceptionUtil.RestoreStackTrace(dispatchInfo);
+            }
+            case ST_CANCELLED: {
+                Exception ex2 = (Exception)ex!;
+                if (throwIfCancelled) {
+                    throw BetterCancellationException.Capture(ex2);
+                }
+                return ex2;
+            }
+            case ST_SUCCESS:
+                throw new IllegalStateException("Task completed with a result");
+            default:
+                throw new IllegalStateException("Task has not completed");
+        }
     }
 
     #endregion

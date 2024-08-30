@@ -123,6 +123,8 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
         this.task = action ?? throw new ArgumentNullException(nameof(action));
         this.ctx = ctx;
         this.options = options;
+
+        this.ctl = (options & TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE);
         this.ctl |= (taskType << PromiseTask.OFFSET_TASK_TYPE);
     }
 
@@ -151,12 +153,17 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
 
     /** 是否收到了取消信号 */
     public bool IsCancelling() {
-        return _promise.IsCompleted || GetCancelToken().IsCancelling;
+        return IsCompleted || GetCancelToken().IsCancelling;
     }
 
     /** 设置为取消状态 */
     public void TrySetCancelled(int code = CancelCodes.REASON_SHUTDOWN) {
-        TrySetCancelled(_promise, GetCancelToken(), code);
+        ICancelToken cancelToken = GetCancelToken();
+        int cancelCode = cancelToken.CancelCode;
+        if (cancelCode == 0) {
+            cancelCode = code;
+        }
+        Internal_TrySetCancelled(cancelCode);
     }
 
     /// <summary>
@@ -215,33 +222,20 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
     }
 
     public void Run() {
-        Promise<T> promise = this._promise;
         ICancelToken cancelToken = GetCancelToken();
         if (cancelToken.IsCancelling) {
-            TrySetCancelled(promise, cancelToken);
+            Internal_TrySetCancelled(cancelToken.CancelCode);
             return;
         }
-        if (promise.TrySetComputing()) {
+        if (Internal_TrySetComputing()) {
             try {
                 T value = RunTask();
-                promise.TrySetResult(value);
+                Internal_TrySetResult(value);
             }
             catch (Exception e) {
-                promise.TrySetException(e);
+                Internal_TrySetException(e);
             }
         }
-    }
-
-    private static void TrySetCancelled(IPromise promise, ICancelToken cancelToken) {
-        int cancelCode = cancelToken.CancelCode;
-        Debug.Assert(cancelCode != 0);
-        promise.TrySetCancelled(cancelCode);
-    }
-
-    private static void TrySetCancelled(IPromise promise, ICancelToken cancelToken, int def) {
-        int cancelCode = cancelToken.CancelCode;
-        if (cancelCode == 0) cancelCode = def;
-        promise.TrySetCancelled(cancelCode);
     }
 
     #endregion

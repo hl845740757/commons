@@ -1244,24 +1244,28 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     private static boolean tryInline(Completion completion, Executor e, int options) {
         // 尝试内联
-        if (TaskOptions.isEnabled(options, TaskOptions.STAGE_TRY_INLINE)
-                && e instanceof SingleThreadExecutor eventLoop
-                && eventLoop.inEventLoop()) {
+        if (isInlinable(e, options)) {
             return true;
         }
         e.execute(completion);
         return false;
     }
 
+    static boolean isInlinable(Executor e, int options) {
+        return TaskOptions.isEnabled(options, TaskOptions.STAGE_TRY_INLINE)
+                && e instanceof SingleThreadExecutor eventLoop
+                && eventLoop.inEventLoop();
+    }
+
     static boolean isCancelling(Object ctx, int options) {
         if (ctx == null || TaskOptions.isEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
             return false;
         }
-        if (ctx instanceof IContext ctx2) {
-            return ctx2.cancelToken().isCancelling();
-        }
         if (ctx instanceof ICancelToken cancelToken) {
             return cancelToken.isCancelling();
+        }
+        if (ctx instanceof IContext ctx2) {
+            return ctx2.cancelToken().isCancelling();
         }
         return false;
     }

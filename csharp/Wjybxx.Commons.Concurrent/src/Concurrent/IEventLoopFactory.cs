@@ -53,7 +53,7 @@ public class EventLoopFactory : IEventLoopFactory
             Parent = parent,
             Index = index,
             ThreadFactory = threadFactory,
-            EventSequencer = new MpUnboundedEventSequencer<MiniAgentEvent>.Builder(() => new MiniAgentEvent())
+            EventSequencer = new MpUnboundedEventSequencer<MiniAgentEvent>.Builder(MiniAgentEvent.FACTORY)
             {
                 ChunkLength = 1024,
                 MaxPooledChunks = 4,

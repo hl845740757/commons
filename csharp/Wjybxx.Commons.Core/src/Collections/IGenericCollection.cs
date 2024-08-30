@@ -18,6 +18,7 @@
 
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Collections
 {
@@ -55,6 +56,7 @@ public interface IGenericCollection<T> : ICollection<T>, IReadOnlyCollection<T>
 
     #region 接口适配
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     IEnumerator IEnumerable.GetEnumerator() {
         return GetEnumerator();
     }

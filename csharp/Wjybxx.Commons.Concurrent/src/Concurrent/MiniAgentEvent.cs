@@ -16,6 +16,8 @@
 
 #endregion
 
+using System;
+
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
@@ -28,9 +30,14 @@ public struct MiniAgentEvent : IAgentEvent
     private object? obj2;
     private int options;
 
-    public MiniAgentEvent(int type = IAgentEvent.TYPE_INVALID) : this() {
-        this.type = type;
-    }
+    /// <summary>
+    /// 构造函数将type声明为可选值，会导致不被调用构造函数
+    /// </summary>
+    public static readonly Func<MiniAgentEvent> FACTORY = () => {
+        MiniAgentEvent r = default;
+        r.type = IAgentEvent.TYPE_INVALID;
+        return r;
+    };
 
     public int Type {
         get => type;
@@ -56,10 +63,14 @@ public struct MiniAgentEvent : IAgentEvent
         type = IAgentEvent.TYPE_INVALID;
         options = 0;
         obj1 = null;
+        obj2 = null;
     }
 
     public void CleanAll() {
-        Clean();
+        type = IAgentEvent.TYPE_INVALID;
+        options = 0;
+        obj1 = null;
+        obj2 = null;
     }
 }
 }

@@ -17,6 +17,7 @@
 #endregion
 
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Collections
 {
@@ -82,11 +83,27 @@ public interface IGenericDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
     #region 接口适配
 
     // 泛型接口建议实现类再显式实现，因为转换为接口的情况较多，可减少转发
-    ICollection<TKey> IDictionary<TKey, TValue>.Keys => Keys;
-    ICollection<TValue> IDictionary<TKey, TValue>.Values => Values;
-    IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => Keys;
-    IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => Values;
+    ICollection<TKey> IDictionary<TKey, TValue>.Keys {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => Keys;
+    }
 
+    ICollection<TValue> IDictionary<TKey, TValue>.Values {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => Values;
+    }
+
+    IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => Keys;
+    }
+
+    IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => Values;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item) {
         Add(item.Key, item.Value);
     }

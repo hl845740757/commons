@@ -375,9 +375,7 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     private static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
-            && e is ISingleThreadExecutor eventLoop
-            && eventLoop.InEventLoop()) {
+        if (AbstractUniPromise.IsInlinable(e, options)) {
             return true;
         }
         e.Execute(completion);
