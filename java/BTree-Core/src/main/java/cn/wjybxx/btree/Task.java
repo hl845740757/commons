@@ -891,11 +891,11 @@ public abstract class Task<T> implements ICancelTokenListener {
      * execute模板方法
      * (通过参数的方式，有助于我们统一代码，也简化子类实现；同时避免遗漏)
      *
-     * @param fromControl 是否是父节点调用(是否是心跳触发)
+     * @param isHeartbeat 是否是心跳触发
      */
-    public final void template_execute(boolean fromControl) {
+    public final void template_execute(boolean isHeartbeat) {
         assert status == TaskStatus.RUNNING;
-        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && fromControl) {
+        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && isHeartbeat) {
             return; // 前者多为假，后者多为真
         }
 

@@ -894,10 +894,10 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// execute模板方法
     /// (通过参数的方式，有助于我们统一代码，也简化子类实现；同时避免遗漏)
     /// </summary>
-    /// <param name="fromControl">是否是父节点调用(是否是心跳触发)</param>
-    public void Template_Execute(bool fromControl) {
+    /// <param name="isHeartbeat">是否是心跳触发</param>
+    public void Template_Execute(bool isHeartbeat) {
         Debug.Assert(status == TaskStatus.RUNNING);
-        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && fromControl) {
+        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && isHeartbeat) {
             return; // 前者多为假，后者多为真
         }
 
