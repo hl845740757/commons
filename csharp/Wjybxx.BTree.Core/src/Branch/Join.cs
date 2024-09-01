@@ -119,7 +119,7 @@ public class Join<T> : Parallel<T> where T : class
 
     // region
 
-    public override bool IsAllChildCompleted => completedCount >= children.Count;
+    public bool IsAllChildCompleted => completedCount >= children.Count;
 
     public bool IsAllChildSucceeded => succeededCount >= children.Count;
 

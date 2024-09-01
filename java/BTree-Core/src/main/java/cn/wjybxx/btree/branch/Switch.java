@@ -49,7 +49,11 @@ public class Switch<T> extends SingleRunningChildBranch<T> {
             runningIndex = index;
             runningChild = children.get(index);
         }
-        if (runningChild.isRunning()) {
+
+        Task<T> inlinedChild = inlineHelper.getInlinedRunningChild();
+        if (inlinedChild != null) {
+            template_runInlinedChild(inlinedChild, inlineHelper, runningChild);
+        } else if (runningChild.isRunning()) {
             runningChild.template_execute(true);
         } else {
             template_runChildDirectly(runningChild);

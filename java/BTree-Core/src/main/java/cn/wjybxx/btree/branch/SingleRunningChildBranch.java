@@ -73,13 +73,23 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
         return inlineHelper;
     }
 
+    /** 是否所有子节点已进入完成状态 */
+    public boolean isAllChildCompleted() {
+        return runningIndex + 1 >= children.size();
+    }
+
+    /** 进入完成状态的子节点数量 */
     public int getCompletedCount() {
         return runningIndex + 1;
     }
 
-    @Override
-    public boolean isAllChildCompleted() {
-        return runningIndex + 1 >= children.size();
+    /** 成功的子节点数量 */
+    public int getSucceededCount() {
+        int r = 0;
+        for (int i = 0; i < runningIndex; i++) {
+            if (children.get(i).isSucceeded()) r++;
+        }
+        return r;
     }
 
     // endregion

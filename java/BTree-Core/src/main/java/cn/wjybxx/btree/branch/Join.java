@@ -125,7 +125,6 @@ public class Join<T> extends Parallel<T> {
     }
 
     // region
-    @Override
     public boolean isAllChildCompleted() {
         return completedCount >= children.size();
     }

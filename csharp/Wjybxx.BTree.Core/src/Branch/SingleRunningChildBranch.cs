@@ -76,7 +76,24 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
         return runningIndex + 1;
     }
 
-    public override bool IsAllChildCompleted => runningIndex + 1 >= children.Count;
+    /** 是否所有子节点已进入完成状态 */
+    public bool IsAllChildCompleted => runningIndex + 1 >= children.Count;
+
+    /** 进入完成状态的子节点数量 */
+    public int CompletedCount => runningIndex + 1;
+
+    /** 成功的子节点数量 */
+    public int SucceededCount {
+        get {
+            int r = 0;
+            for (int i = 0; i <= runningIndex; i++) {
+                if (children[r].IsSucceeded) {
+                    r++;
+                }
+            }
+            return r;
+        }
+    }
 
     #endregion
 

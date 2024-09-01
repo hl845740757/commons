@@ -80,17 +80,6 @@ public abstract class BranchTask<T> extends Task<T> {
         return children.getLast();
     }
 
-    public boolean isAllChildCompleted() {
-        // 在判断是否全部完成这件事上，逆序遍历有优势
-        for (int idx = children.size() - 1; idx >= 0; idx--) {
-            Task<?> child = children.get(idx);
-            if (child.isRunning()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     /** 用于避免测试的子节点过于规律 */
     @VisibleForTesting
     public final void shuffleChild() {
