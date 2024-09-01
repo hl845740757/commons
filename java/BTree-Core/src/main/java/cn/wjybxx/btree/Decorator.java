@@ -118,7 +118,7 @@ public abstract class Decorator<T> extends Task<T> {
     @Override
     protected final int addChildImpl(Task<T> task) {
         if (child != null) {
-            throw new IllegalStateException("A task entry cannot have more than one child");
+            throw new IllegalStateException("Decorator cannot have more than one child");
         }
         child = task;
         return 0;

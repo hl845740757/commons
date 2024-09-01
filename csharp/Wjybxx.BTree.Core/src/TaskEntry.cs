@@ -256,7 +256,7 @@ public class TaskEntry<T> : Task<T> where T : class
 
     protected override int AddChildImpl(Task<T> task) {
         if (rootTask != null) {
-            throw new IllegalStateException("A task entry cannot have more than one child");
+            throw new IllegalStateException("Task entry cannot have more than one child");
         }
         rootTask = task;
         return 0;

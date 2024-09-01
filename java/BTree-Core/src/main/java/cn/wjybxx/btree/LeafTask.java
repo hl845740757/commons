@@ -54,22 +54,22 @@ public abstract class LeafTask<T> extends Task<T> {
 
     @Override
     public final Task<T> getChild(int index) {
-        throw new IndexOutOfBoundsException("A leaf task can not have any child");
+        throw new IndexOutOfBoundsException("Leaf task can not have any children");
     }
 
     @Override
     protected final int addChildImpl(Task<T> task) {
-        throw new IllegalStateException("A leaf task cannot have any children");
+        throw new IllegalStateException("Leaf task can not have any children");
     }
 
     @Override
     protected final Task<T> setChildImpl(int index, Task<T> task) {
-        throw new IllegalStateException("A leaf task cannot have any children");
+        throw new IllegalStateException("Leaf task can not have any children");
     }
 
     @Override
     protected final Task<T> removeChildImpl(int index) {
-        throw new IndexOutOfBoundsException("A leaf task can not have any child");
+        throw new IndexOutOfBoundsException("Leaf task can not have any children");
     }
 
     // endregion

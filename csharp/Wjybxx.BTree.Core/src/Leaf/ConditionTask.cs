@@ -33,6 +33,8 @@ namespace Wjybxx.BTree.Leaf
 ///     private List&lt;ICondition> children = new List&lt;ICondition>(4);
 /// }
 /// </code>
+///
+/// ps：该类其实可以直接继承Task类，以减少继承层次。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public abstract class ConditionTask<T> : LeafTask<T> where T : class

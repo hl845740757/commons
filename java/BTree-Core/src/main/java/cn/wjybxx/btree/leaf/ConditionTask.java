@@ -34,6 +34,8 @@ import javax.annotation.Nonnull;
  * }
  * }</pre>
  *
+ * ps：该类其实可以直接继承Task类，以减少继承层次。
+ *
  * @author wjybxx
  * date - 2023/11/25
  */

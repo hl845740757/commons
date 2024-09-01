@@ -54,19 +54,19 @@ public abstract class LeafTask<T> : Task<T> where T : class
     }
 
     public sealed override Task<T> GetChild(int index) {
-        throw new IndexOutOfRangeException("A leaf task can not have any child");
+        throw new IndexOutOfRangeException("Leaf task can not have any children");
     }
 
     protected sealed override int AddChildImpl(Task<T> task) {
-        throw new IllegalStateException("A leaf task cannot have any children");
+        throw new IllegalStateException("Leaf task can not have any children");
     }
 
     protected sealed override Task<T> SetChildImpl(int index, Task<T> task) {
-        throw new IllegalStateException("A leaf task cannot have any children");
+        throw new IllegalStateException("Leaf task can not have any children");
     }
 
     protected sealed override Task<T> RemoveChildImpl(int index) {
-        throw new IndexOutOfRangeException("A leaf task can not have any child");
+        throw new IndexOutOfRangeException("Leaf task can not have any children");
     }
 
     #endregion

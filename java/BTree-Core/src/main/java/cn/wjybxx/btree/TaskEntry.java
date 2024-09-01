@@ -275,7 +275,7 @@ public class TaskEntry<T> extends Task<T> {
     @Override
     protected final int addChildImpl(Task<T> task) {
         if (rootTask != null) {
-            throw new IllegalStateException("A task entry cannot have more than one child");
+            throw new IllegalStateException("Task entry cannot have more than one child");
         }
         rootTask = task;
         return 0;
