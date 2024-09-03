@@ -338,7 +338,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         assert this.status == TaskStatus.RUNNING;
         this.status = TaskStatus.SUCCESS;
         template_exit(0);
-        if (checkNotifyMask(ctl) && control != null) {
+        if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
             control.onChildCompleted(this);
         }
     }
@@ -393,7 +393,7 @@ public abstract class Task<T> implements ICancelTokenListener {
             this.status = status;
             ctl |= MASK_STILLBORN;
         }
-        if (checkNotifyMask(ctl) && control != null) {
+        if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
             control.onChildCompleted(this);
         }
     }
@@ -473,13 +473,10 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 3.不命名为cancel，否则容易误用；我们设计的cancel是协作式的，可通过{@link #cancelToken}发出请求请求。
      */
     public final void stop() {
-        // 被显式调用stop的task一定不能通知父节点，只要任务执行过就需要标记
+        // 被显式调用stop的task不能通知父节点，只要任务执行过就需要标记
         if (status == TaskStatus.RUNNING) {
             status = TaskStatus.CANCELLED;
-            template_exit(MASK_STOP_EXIT);
-        } else if (status != TaskStatus.NEW) {
-            // 可能是一个先将自己更新为完成状态，又执行了逻辑的子节点；
-            ctl |= MASK_STOP_EXIT;
+            template_exit(MASK_STOP_EXIT | MASK_DISABLE_NOTIFY);
         }
     }
 
@@ -680,11 +677,6 @@ public abstract class Task<T> implements ICancelTokenListener {
         return (ctl & MASK_STILLBORN) != 0;
     }
 
-    /** 是否可以通知父节点 */
-    private static boolean checkNotifyMask(int ctl) {
-        return (ctl & (MASK_DISABLE_NOTIFY | MASK_STOP_EXIT)) == 0; // 被stop取消的任务不能通知
-    }
-
     /** 是否可以延迟启动 */
     private static boolean checkSlowStart(int ctl) {
         if ((ctl & MASK_CHECKING_GUARD) != 0) return false; // 条件节点必须执行execute
@@ -882,7 +874,7 @@ public abstract class Task<T> implements ICancelTokenListener {
             setCancelled();
             return;
         }
-        if (checkNotifyMask(ctl) && control != null) {
+        if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
             control.onChildRunning(this);
         }
     }

@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Wjybxx.Commons;
 using static Wjybxx.BTree.TaskOptions;
 
 namespace Wjybxx.BTree
@@ -332,7 +333,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         Debug.Assert(this.status == TaskStatus.RUNNING);
         this.status = TaskStatus.SUCCESS;
         Template_Exit(0);
-        if (CheckNotifyMask(ctl) && control != null) {
+        if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
             control.OnChildCompleted(this);
         }
     }
@@ -390,7 +391,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             ctl |= MASK_STILLBORN;
             this.status = status;
         }
-        if (CheckNotifyMask(ctl) && control != null) {
+        if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
             control.OnChildCompleted(this);
         }
     }
@@ -474,13 +475,10 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 3.不命名为cancel，否则容易误用；我们设计的cancel是协作式的，可通过<see cref="CancelToken"/>发出请求请求。
     /// </summary>
     public void Stop() {
-        // 被显式调用stop的task一定不能通知父节点，只要任务执行过就需要标记
+        // 被显式调用stop的task不能通知父节点，只要任务执行过就需要标记
         if (status == TaskStatus.RUNNING) {
             status = TaskStatus.CANCELLED;
-            Template_Exit(MASK_STOP_EXIT);
-        } else if (status != TaskStatus.NEW) {
-            // 可能是一个先将自己更新为完成状态，又执行了逻辑的子节点；
-            ctl |= MASK_STOP_EXIT;
+            Template_Exit(MASK_STOP_EXIT | MASK_DISABLE_NOTIFY);
         }
     }
 
@@ -697,12 +695,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         return (ctl & MASK_STILLBORN) != 0;
     }
 
-    /** 是否可以通知父节点 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool CheckNotifyMask(int ctl) {
-        return (ctl & (MASK_DISABLE_NOTIFY | MASK_STOP_EXIT)) == 0; // 被stop取消的任务不能通知
-    }
-
     /** 是否可以延迟启动 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool CheckSlowStart(int ctl) {
@@ -885,7 +877,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             SetCancelled();
             return;
         }
-        if (CheckNotifyMask(ctl) && control != null) {
+        if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
             control.OnChildRunning(this);
         }
     }
@@ -1064,7 +1056,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                     return (guard.ctl & MASK_INVERTED_GUARD) != 0;
                 }
                 default: {
-                    throw new InvalidOperationException($"Illegal guard status {guard.status}. Guards must either succeed or fail in one step.");
+                    throw new IllegalStateException($"Illegal guard status {guard.status}. Guards must either succeed or fail in one step.");
                 }
             }
         }
