@@ -42,6 +42,21 @@ public class Selector<T> extends SingleRunningChildBranch<T> {
     }
 
     @Override
+    protected void enter(int reentryId) {
+        if (isCheckingGuard()) {
+            // 条件检测性能优化
+            for (int i = 0; i < children.size(); i++) {
+                Task<T> child = children.get(i);
+                if (template_checkGuard(child)) {
+                    setSuccess();
+                    return;
+                }
+            }
+            setFailed(TaskStatus.ERROR);
+        }
+    }
+
+    @Override
     protected void onChildRunning(Task<T> child) {
         inlineHelper.inlineChild(child);
     }
@@ -58,7 +73,7 @@ public class Selector<T> extends SingleRunningChildBranch<T> {
             setSuccess();
         } else if (isAllChildCompleted()) {
             setFailed(TaskStatus.ERROR);
-        } else if (!isExecuting() || !isTailRecursion()) {
+        } else {
             template_execute(false);
         }
     }

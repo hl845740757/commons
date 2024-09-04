@@ -36,6 +36,20 @@ public class Sequence<T> : SingleRunningChildBranch<T> where T : class
     public Sequence(Task<T> first, Task<T>? second) : base(first, second) {
     }
 
+    protected override void Enter(int reentryId) {
+        if (IsCheckingGuard()) {
+            // 条件检测性能优化
+            for (int i = 0; i < children.Count; i++) {
+                Task<T> child = children[i];
+                if (!Template_CheckGuard(child)) {
+                    SetCompleted(child.Status, true);
+                    return;
+                }
+            }
+            SetSuccess();
+        }
+    }
+    
     protected override void OnChildRunning(Task<T> child) {
         inlineHelper.InlineChild(child);
     }
@@ -51,7 +65,7 @@ public class Sequence<T> : SingleRunningChildBranch<T> where T : class
             SetCompleted(child.Status, true);
         } else if (IsAllChildCompleted) {
             SetSuccess();
-        } else if (!IsExecuting() || !IsTailRecursion) {
+        } else {
             Template_Execute(false);
         }
     }

@@ -42,6 +42,15 @@ public class Inverter<T> extends Decorator<T> {
     }
 
     @Override
+    protected void enter(int reentryId) {
+        if (isCheckingGuard()) {
+            // 条件检测优化
+            template_checkGuard(child);
+            setCompleted(TaskStatus.invert(child.getStatus()), true);
+        }
+    }
+
+    @Override
     protected void execute() {
         Task<T> inlinedRunningChild = inlineHelper.getInlinedRunningChild();
         if (inlinedRunningChild != null) {

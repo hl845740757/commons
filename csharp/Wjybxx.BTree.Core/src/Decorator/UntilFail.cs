@@ -45,7 +45,7 @@ public class UntilFail<T> : LoopDecorator<T> where T : class
             SetSuccess();
         } else if (!HasNextLoop()) {
             SetFailed(TaskStatus.MAX_LOOP_LIMIT);
-        } else if (!IsExecuting() || !IsTailRecursion) {
+        } else {
             Template_Execute(false);
         }
     }

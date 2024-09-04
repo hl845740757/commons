@@ -22,15 +22,13 @@ namespace Wjybxx.BTree.Decorator
 {
 /// <summary>
 /// 循环节点抽象
-/// 注意：该模板类默认支持了尾递归优化，如果子类没有重写<see cref="Execute"/>方法，
-/// 那么在<see cref="Task{T}.OnChildCompleted"/>方法中还需要判断是否启用了尾递归优化，如果启用了尾递归优化，
-/// 也需要调用<see cref="Task{T}.Template_Execute"/>方法。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public abstract class LoopDecorator<T> : Decorator<T> where T : class
 {
     /** 最大循环次数，超过次数直接失败；大于0有效 */
     protected int maxLoop = -1;
+    /** 执行前+1，因此从1开始 */
     [NonSerialized]
     protected int curLoop;
 
@@ -46,36 +44,14 @@ public abstract class LoopDecorator<T> : Decorator<T> where T : class
     }
 
     protected override void Execute() {
-        if (IsTailRecursion) {
-            // 尾递归优化--普通循环代替递归
-            int reentryId = ReentryId;
-            while (true) {
-                Task<T>? inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
-                if (inlinedRunningChild != null) {
-                    Template_RunInlinedChild(inlinedRunningChild, inlineHelper, child);
-                } else if (child.IsRunning) {
-                    child.Template_Execute(true);
-                } else {
-                    curLoop++;
-                    Template_RunChild(child);
-                }
-                if (CheckCancel(reentryId)) { // 得出结果或被取消
-                    return;
-                }
-                if (child.IsRunning) { // 子节点未结束
-                    return;
-                }
-            }
+        Task<T>? inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
+        if (inlinedRunningChild != null) {
+            Template_RunInlinedChild(inlinedRunningChild, inlineHelper, child);
+        } else if (child.IsRunning) {
+            child.Template_Execute(true);
         } else {
-            Task<T>? inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
-            if (inlinedRunningChild != null) {
-                Template_RunInlinedChild(inlinedRunningChild, inlineHelper, child);
-            } else if (child.IsRunning) {
-                child.Template_Execute(true);
-            } else {
-                curLoop++;
-                Template_RunChild(child);
-            }
+            curLoop++;
+            Template_RunChild(child);
         }
     }
 

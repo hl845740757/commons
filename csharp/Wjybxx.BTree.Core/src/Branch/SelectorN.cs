@@ -50,13 +50,22 @@ public class SelectorN<T> : SingleRunningChildBranch<T> where T : class
     }
 
     protected override void Enter(int reentryId) {
-        base.Enter(reentryId);
         if (required < 1) {
             SetSuccess();
         } else if (GetChildCount() == 0) {
             SetFailed(TaskStatus.CHILDLESS);
         } else if (CheckFailFast()) {
             SetFailed(TaskStatus.INSUFFICIENT_CHILD);
+        } else if (IsCheckingGuard()) {
+            // 条件检测性能优化
+            for (int i = 0; i < children.Count; i++) {
+                Task<T> child = children[i];
+                if (Template_CheckGuard(child) && ++count >= required) {
+                    SetSuccess();
+                    return;
+                }
+            }
+            SetFailed(TaskStatus.ERROR);
         }
     }
 
@@ -75,7 +84,7 @@ public class SelectorN<T> : SingleRunningChildBranch<T> where T : class
             SetSuccess();
         } else if (IsAllChildCompleted || CheckFailFast()) {
             SetFailed(TaskStatus.ERROR);
-        } else if (!IsExecuting() || !IsTailRecursion) {
+        } else {
             Template_Execute(false);
         }
     }

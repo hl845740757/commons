@@ -40,6 +40,21 @@ public class Sequence<T> extends SingleRunningChildBranch<T> {
     }
 
     @Override
+    protected void enter(int reentryId) {
+        if (isCheckingGuard()) {
+            // 条件检测性能优化
+            for (int i = 0; i < children.size(); i++) {
+                Task<T> child = children.get(i);
+                if (!template_checkGuard(child)) {
+                    setCompleted(child.getStatus(), true);
+                    return;
+                }
+            }
+            setSuccess();
+        }
+    }
+
+    @Override
     protected void onChildRunning(Task<T> child) {
         inlineHelper.inlineChild(child);
     }
@@ -56,7 +71,7 @@ public class Sequence<T> extends SingleRunningChildBranch<T> {
             setCompleted(child.getStatus(), true);
         } else if (isAllChildCompleted()) {
             setSuccess();
-        } else if (!isExecuting() || !isTailRecursion()) {
+        } else {
             template_execute(false);
         }
     }

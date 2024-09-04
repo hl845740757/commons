@@ -68,7 +68,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     private const int MASK_REGISTERED_LISTENER = 1 << 21;
 
     /** 条件节点的基础选项 */
-    private const int MASK_GUARD_BASE_OPTIONS = MASK_CHECKING_GUARD | MASK_DISABLE_CHECK_CANCEL | MASK_TAIL_RECURSION;
+    private const int MASK_GUARD_BASE_OPTIONS = MASK_CHECKING_GUARD | MASK_DISABLE_CHECK_CANCEL;
     /** enter前相关options */
     private const int MASK_BEFORE_ENTER_OPTIONS = MASK_AUTO_LISTEN_CANCEL | MASK_AUTO_RESET_CHILDREN;
 
@@ -702,6 +702,11 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         return (ctl & (MASK_SLOW_START | MASK_NOT_ACTIVE_IN_HIERARCHY)) != 0;
     }
 
+    /** 当前是否是条件检查上下文 */
+    public bool IsCheckingGuard() {
+        return (ctl & MASK_CHECKING_GUARD) != 0;
+    }
+
     #endregion
 
     #region options
@@ -1034,6 +1039,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 4.guard永远是检查当前Task的上下文，子节点的guard也不例外。
     /// 5.guard通常不应该修改数据
     /// 6.guard默认不检查取消信号，用户可实现取消信号检测节点。
+    /// 7.如果guard开启了inverter内联或包含Inverter节点，Status将不能保留原始的错误码。
     /// </summary>
     /// <param name="guard">前置条件；可以是子节点的guard属性，也可以是条件子节点，也可以是外部的条件节点</param>
     /// <returns></returns>
@@ -1042,23 +1048,30 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (guard == null) {
             return true;
         }
+        // 注意：此时需要从flags读取反转标记，因为尚未运行(且guard.guard失败的情况下不会运行)
+        bool isInvertedGuard = (guard.flags & MASK_INVERTED_GUARD) != 0;
         try {
             // 极少情况下会有前置的前置，更推荐组合节点，更清晰；guard的guard也是检测当前上下文
             if (guard.guard != null && !Template_CheckGuard(guard.guard)) {
+                guard.status = isInvertedGuard ? TaskStatus.SUCCESS : TaskStatus.GUARD_FAILED;
                 return false;
             }
             guard.Template_EnterExecute(this, MASK_DISABLE_NOTIFY | MASK_GUARD_BASE_OPTIONS);
-            switch (guard.NormalizedStatus) {
-                case TaskStatus.SUCCESS: {
-                    return (guard.ctl & MASK_INVERTED_GUARD) == 0;
+            if (guard.IsSucceeded) {
+                if (isInvertedGuard) {
+                    guard.status = TaskStatus.ERROR;
+                    return false;
                 }
-                case TaskStatus.ERROR: {
-                    return (guard.ctl & MASK_INVERTED_GUARD) != 0;
-                }
-                default: {
-                    throw new IllegalStateException($"Illegal guard status {guard.status}. Guards must either succeed or fail in one step.");
-                }
+                return true;
             }
+            if (guard.IsFailed) {
+                if (isInvertedGuard) {
+                    guard.status = TaskStatus.SUCCESS;
+                    return true;
+                }
+                return false;
+            }
+            throw new IllegalStateException($"Illegal guard status {guard.status}. Guards must either succeed or fail in one step.");
         }
         finally {
             guard.UnsetControl(); // 条件类节点总是及时清理

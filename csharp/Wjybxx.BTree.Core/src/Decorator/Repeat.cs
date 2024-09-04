@@ -97,7 +97,7 @@ public class Repeat<T> : LoopDecorator<T> where T : class
 
         if (!HasNextLoop()) {
             SetFailed(TaskStatus.MAX_LOOP_LIMIT);
-        } else if (!IsExecuting() || !IsTailRecursion) {
+        } else {
             Template_Execute(false);
         }
     }

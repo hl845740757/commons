@@ -25,10 +25,6 @@ import java.util.List;
 
 /**
  * 非并行分支节点抽象(最多只有一个运行中的子节点)
- * <p>
- * 注意：该模板类默认支持了尾递归优化，如果子类没有重写{@link #execute()}方法，
- * 那么在{@link #onChildCompleted(Task)}方法中还需要判断是否启用了尾递归优化，
- * 如果启用了尾递归优化，也需要调用{@link #template_execute(boolean)}方法。
  *
  * @author wjybxx
  * date - 2023/11/26
@@ -137,46 +133,18 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
 
     @Override
     protected void execute() {
-        if (isTailRecursion()) {
-            // 尾递归优化--普通循环代替递归
-            final int reentryId = getReentryId();
-            while (true) {
-                Task<T> runningChild = this.runningChild;
-                if (runningChild == null) {
-                    this.runningChild = runningChild = nextChild();
-                    template_runChild(runningChild);
-                } else {
-                    Task<T> inlinedChild = inlineHelper.getInlinedRunningChild();
-                    if (inlinedChild != null) {
-                        template_runInlinedChild(inlinedChild, inlineHelper, runningChild);
-                    } else if (runningChild.isRunning()) {
-                        runningChild.template_execute(true);
-                    } else {
-                        template_runChild(runningChild);
-                    }
-                }
-                if (checkCancel(reentryId)) { // 得出结果或被取消
-                    return;
-                }
-                if (runningChild.isRunning()) { // 子节点未结束
-                    return;
-                }
-            }
+        Task<T> runningChild = this.runningChild;
+        if (runningChild == null) {
+            this.runningChild = runningChild = nextChild();
+            template_runChild(runningChild);
         } else {
-            // 普通事件驱动模式
-            Task<T> runningChild = this.runningChild;
-            if (runningChild == null) {
-                this.runningChild = runningChild = nextChild();
-                template_runChild(runningChild);
+            Task<T> inlinedChild = inlineHelper.getInlinedRunningChild();
+            if (inlinedChild != null) {
+                template_runInlinedChild(inlinedChild, inlineHelper, runningChild);
+            } else if (runningChild.isRunning()) {
+                runningChild.template_execute(true);
             } else {
-                Task<T> inlinedChild = inlineHelper.getInlinedRunningChild();
-                if (inlinedChild != null) {
-                    template_runInlinedChild(inlinedChild, inlineHelper, runningChild);
-                } else if (runningChild.isRunning()) {
-                    runningChild.template_execute(true);
-                } else {
-                    template_runChild(runningChild);
-                }
+                template_runChild(runningChild);
             }
         }
     }

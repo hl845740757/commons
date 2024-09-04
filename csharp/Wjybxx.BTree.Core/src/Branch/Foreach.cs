@@ -46,7 +46,7 @@ public class Foreach<T> : SingleRunningChildBranch<T> where T : class
         }
         if (IsAllChildCompleted) {
             SetSuccess();
-        } else if (!IsExecuting() || !IsTailRecursion) {
+        } else {
             Template_Execute(false);
         }
     }

@@ -33,7 +33,7 @@ import javax.annotation.Nonnull;
  *     private List<ICondition> children = new ArrayList<ICondition>(4);
  * }
  * }</pre>
- *
+ * <p>
  * ps：该类其实可以直接继承Task类，以减少继承层次。
  *
  * @author wjybxx

@@ -36,6 +36,13 @@ public class Inverter<T> : Decorator<T> where T : class
     public Inverter(Task<T> child) : base(child) {
     }
 
+    protected override void Enter(int reentryId) {
+        if (IsCheckingGuard()) {
+            Template_CheckGuard(child);
+            SetCompleted(TaskStatus.Invert(child.Status), true);
+        }
+    }
+
     protected override void Execute() {
         Task<T>? inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
         if (inlinedRunningChild != null) {

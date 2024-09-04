@@ -24,10 +24,6 @@ namespace Wjybxx.BTree.Branch
 {
 /// <summary>
 /// 非并行分支节点抽象（最多只有一个运行中的子节点）
-///
-/// 注意：该模板类默认支持了尾递归优化，如果子类没有重写<see cref="Execute"/>方法，
-/// 那么在<see cref="OnChildCompleted"/>方法中还需要判断是否启用了尾递归优化，如果启用了尾递归优化，
-/// 也需要调用<see cref="Task{T}.Template_Execute"/>方法。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : class
@@ -135,46 +131,18 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
     }
 
     protected override void Execute() {
-        if (IsTailRecursion) {
-            // 尾递归优化--普通循环代替递归
-            int reentryId = ReentryId;
-            while (true) {
-                Task<T>? runningChild = this.runningChild;
-                if (runningChild == null) {
-                    this.runningChild = runningChild = NextChild();
-                    Template_RunChild(runningChild);
-                } else {
-                    Task<T>? inlinedChild = inlineHelper.GetInlinedRunningChild();
-                    if (inlinedChild != null) {
-                        Template_RunInlinedChild(inlinedChild, inlineHelper, runningChild);
-                    } else if (runningChild.IsRunning) {
-                        runningChild.Template_Execute(true);
-                    } else {
-                        Template_RunChild(runningChild);
-                    }
-                }
-                if (CheckCancel(reentryId)) { // 得出结果或被取消
-                    return;
-                }
-                if (runningChild.IsRunning) { // 子节点未结束
-                    return;
-                }
-            }
+        Task<T>? runningChild = this.runningChild;
+        if (runningChild == null) {
+            this.runningChild = runningChild = NextChild();
+            Template_RunChild(runningChild);
         } else {
-            // 普通事件驱动模式
-            Task<T>? runningChild = this.runningChild;
-            if (runningChild == null) {
-                this.runningChild = runningChild = NextChild();
-                Template_RunChild(runningChild);
+            Task<T>? inlinedChild = inlineHelper.GetInlinedRunningChild();
+            if (inlinedChild != null) {
+                Template_RunInlinedChild(inlinedChild, inlineHelper, runningChild);
+            } else if (runningChild.IsRunning) {
+                runningChild.Template_Execute(true);
             } else {
-                Task<T>? inlinedChild = inlineHelper.GetInlinedRunningChild();
-                if (inlinedChild != null) {
-                    Template_RunInlinedChild(inlinedChild, inlineHelper, runningChild);
-                } else if (runningChild.IsRunning) {
-                    runningChild.Template_Execute(true);
-                } else {
-                    Template_RunChild(runningChild);
-                }
+                Template_RunChild(runningChild);
             }
         }
     }

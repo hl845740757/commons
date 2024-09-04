@@ -36,6 +36,20 @@ public class Selector<T> : SingleRunningChildBranch<T> where T : class
     public Selector(Task<T> first, Task<T>? second) : base(first, second) {
     }
 
+    protected override void Enter(int reentryId) {
+        if (IsCheckingGuard()) {
+            // 条件检测性能优化
+            for (int i = 0; i < children.Count; i++) {
+                Task<T> child = children[i];
+                if (Template_CheckGuard(child)) {
+                    SetSuccess();
+                    return;
+                }
+            }
+            SetFailed(TaskStatus.ERROR);
+        }
+    }
+
     protected override void OnChildRunning(Task<T> child) {
         inlineHelper.InlineChild(child);
     }
@@ -51,7 +65,7 @@ public class Selector<T> : SingleRunningChildBranch<T> where T : class
             SetSuccess();
         } else if (IsAllChildCompleted) {
             SetFailed(TaskStatus.ERROR);
-        } else if (!IsExecuting() || !IsTailRecursion) {
+        } else {
             Template_Execute(false);
         }
     }
