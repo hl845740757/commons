@@ -20,6 +20,7 @@ import cn.wjybxx.btree.branch.Selector;
 import cn.wjybxx.btree.branch.SelectorN;
 import cn.wjybxx.btree.branch.Sequence;
 import cn.wjybxx.btree.decorator.Inverter;
+import cn.wjybxx.btree.leaf.Failure;
 import cn.wjybxx.btree.leaf.Success;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -43,10 +44,11 @@ public class ConditionTest {
         // 顺便测试inverter内联
         int failCount = childCount - successCount;
         for (int i = 0; i < failCount; i++) {
-            if (BtreeTestUtil.random.nextBoolean()) {
-                branch.getChild(i).setFlags(Task.MASK_INVERTED_GUARD);
-            } else {
-                branch.setChild(i, new Inverter<>(new Success<>()));
+            switch (BtreeTestUtil.random.nextInt(3)) {
+                case 0 ->  branch.getChild(i).setFlags(Task.MASK_INVERTED_GUARD);
+                case 1 -> branch.setChild(i, new Inverter<>(new Success<>()));
+                case 2 -> branch.getChild(i).setGuard(new Failure<>());
+                default -> throw new AssertionError();
             }
         }
         branch.shuffleChild(); // 打乱child

@@ -1039,7 +1039,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 4.guard永远是检查当前Task的上下文，子节点的guard也不例外。
     /// 5.guard通常不应该修改数据
     /// 6.guard默认不检查取消信号，用户可实现取消信号检测节点。
-    /// 7.如果guard开启了inverter内联或包含Inverter节点，Status将不能保留原始的错误码。
+    /// 7.如果guard开启了inverter内联或包含Inverter节点，Status将不能保留原始的错误码 -- 只有Sequence能精确返回错误码。
     /// </summary>
     /// <param name="guard">前置条件；可以是子节点的guard属性，也可以是条件子节点，也可以是外部的条件节点</param>
     /// <returns></returns>
@@ -1049,23 +1049,23 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             return true;
         }
         // 注意：此时需要从flags读取反转标记，因为尚未运行(且guard.guard失败的情况下不会运行)
-        bool isInvertedGuard = (guard.flags & MASK_INVERTED_GUARD) != 0;
+        bool inverted = (guard.flags & MASK_INVERTED_GUARD) != 0;
         try {
             // 极少情况下会有前置的前置，更推荐组合节点，更清晰；guard的guard也是检测当前上下文
             if (guard.guard != null && !Template_CheckGuard(guard.guard)) {
-                guard.status = isInvertedGuard ? TaskStatus.SUCCESS : TaskStatus.GUARD_FAILED;
-                return false;
+                guard.status = inverted ? TaskStatus.SUCCESS : TaskStatus.GUARD_FAILED;
+                return inverted;
             }
             guard.Template_EnterExecute(this, MASK_DISABLE_NOTIFY | MASK_GUARD_BASE_OPTIONS);
             if (guard.IsSucceeded) {
-                if (isInvertedGuard) {
+                if (inverted) {
                     guard.status = TaskStatus.ERROR;
                     return false;
                 }
                 return true;
             }
             if (guard.IsFailed) {
-                if (isInvertedGuard) {
+                if (inverted) {
                     guard.status = TaskStatus.SUCCESS;
                     return true;
                 }

@@ -21,6 +21,7 @@ using Wjybxx.BTree;
 using Wjybxx.BTree.Branch;
 using Wjybxx.BTree.Decorator;
 using Wjybxx.BTree.Leaf;
+using Wjybxx.Commons;
 
 namespace BTree.Tests;
 
@@ -40,10 +41,20 @@ public class ConditionTest
         // 顺便测试inverter内联
         int failCount = childCount - successCount;
         for (int i = 0; i < failCount; i++) {
-            if (BtreeTestUtil.random.Next(2) == 0) {
-                branch.GetChild(i).Flags = TaskOptions.MASK_INVERTED_GUARD;
-            } else {
-                branch.SetChild(i, new Inverter<Blackboard>(new Success<Blackboard>()));
+            switch (BtreeTestUtil.random.Next(3)) {
+                case 0: {
+                    branch.GetChild(i).Flags = TaskOptions.MASK_INVERTED_GUARD;
+                    break;
+                }
+                case 1: {
+                    branch.SetChild(i, new Inverter<Blackboard>(new Success<Blackboard>()));
+                    break;
+                }
+                case 2: {
+                    branch.GetChild(i).Guard = new Failure<Blackboard>();
+                    break;
+                }
+                default: throw new AssertionError();
             }
         }
         branch.ShuffleChild(); // 打乱child
