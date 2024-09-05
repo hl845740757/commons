@@ -21,12 +21,20 @@ import cn.wjybxx.base.concurrent.CancelCodes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
+ * 行为树模块使用的取消令牌
+ * 1.行为树模块需要的功能不多，且需要进行一些特殊的优化，因此去除对Concurrent模块的依赖。
+ * 2.关于取消码的设计，可查看<see cref="CancelCodes"/>类。
+ * 3.继承<see cref="ICancelTokenListener"/>是为了方便通知子Token。
+ * 4.在行为树模块，Task在运行期间最多只应该添加一次监听。
+ * 5.Task在处理取消信号时不需要调用该方法来删除自己，令牌会先删除Listener再通知。
+ *
  * @author wjybxx
  * date - 2024/7/14
  */
-public final class CancelToken implements ICancelToken {
+public class CancelToken implements ICancelTokenListener {
 
     /** 取消码 -- 0表示未收到信号 */
     private int code;
@@ -44,7 +52,22 @@ public final class CancelToken implements ICancelToken {
         this.code = code;
     }
 
-    /** 重置状态，以供复用 */
+    /** 创建一个同类型实例(默认只拷贝环境数据) */
+    public CancelToken newInstance() {
+        return newInstance(false);
+    }
+
+    /**
+     * 创建一个同类型实例(默认只拷贝环境数据)
+     *
+     * @param copyCode 是否拷贝当前取消码
+     * @return 新实例
+     */
+    public CancelToken newInstance(boolean copyCode) {
+        return new CancelToken(copyCode ? code : 0);
+    }
+
+    /** 重置状态(行为树模块取消令牌需要复用) */
     public void reset() {
         reentryId++;
         code = 0;
@@ -52,39 +75,67 @@ public final class CancelToken implements ICancelToken {
         firing = false;
     }
 
-    //region code
+    protected final int getReentryId() {
+        return reentryId;
+    }
 
-    @Override
-    public int cancelCode() {
+    protected final boolean isFiring() {
+        return firing;
+    }
+
+    //region query
+
+    /**
+     * 取消码
+     * 1.按bit位存储信息，包括是否请求中断，是否超时，紧急程度等
+     * 2.低20位为取消原因；高12位为特殊信息 {@link CancelCodes#MASK_REASON}
+     * 3.不为0表示已发起取消请求
+     * 4.取消时至少赋值一个信息，reason通常应该赋值
+     */
+    public final int cancelCode() {
         return code;
     }
 
-    @Override
-    public boolean isCancelling() {
+    /**
+     * 是否已收到取消信号
+     * 任务的执行者将持有该令牌，在调度任务前会检测取消信号；如果任务已经开始，则由用户的任务自身检测取消和中断信号。
+     */
+    public final boolean isCancelling() {
         return code != 0;
     }
 
-    @Override
-    public int reason() {
+    /**
+     * 取消的原因
+     * (1~10为底层使用，10以上为用户自定义)
+     */
+    public final int reason() {
         return CancelCodes.getReason(code);
     }
 
-    @Override
-    public int degree() {
+    /** 取消的紧急程度 */
+    public final int degree() {
         return CancelCodes.getDegree(code);
     }
 
     //endregion
 
-    //region tokenSource
+    //region cancel
 
-    @Override
-    public boolean cancel() {
+    /**
+     * 发送取消信号，使用默认取消码 {@link CancelCodes#REASON_DEFAULT}
+     */
+    public final boolean cancel() {
         return cancel(CancelCodes.REASON_DEFAULT);
     }
 
-    @Override
-    public boolean cancel(int cancelCode) {
+    /**
+     * 发送取消信号
+     *
+     * @param cancelCode 取消码；reason部分需大于0
+     * @return 是否成功已给定取消码进入取消状态
+     * @throws IllegalArgumentException 如果code小于等于0；或reason部分为0
+     */
+    public final boolean cancel(int cancelCode) {
         CancelCodes.checkCode(cancelCode);
         int r = this.code;
         if (r == 0) {
@@ -95,7 +146,6 @@ public final class CancelToken implements ICancelToken {
         return false;
     }
 
-    /** 不能优化递归 -- 因为在通知期间用户可能会请求删除 */
     private static void postComplete(CancelToken cancelToken) {
         List<ICancelTokenListener> listeners = cancelToken.listeners;
         if (listeners.isEmpty()) {
@@ -125,11 +175,10 @@ public final class CancelToken implements ICancelToken {
 
     //region 监听器
 
-    @Override
-    public void addListener(ICancelTokenListener listener) {
-        if (listener == this) {
-            throw new IllegalArgumentException("add this");
-        }
+    /** 添加监听器 */
+    public final void addListener(ICancelTokenListener listener) {
+        Objects.requireNonNull(listener);
+        if (listener == this) throw new IllegalArgumentException("add self");
         if (code != 0) {
             try {
                 listener.onCancelRequested(this);
@@ -141,13 +190,20 @@ public final class CancelToken implements ICancelToken {
         }
     }
 
-    @Override
-    public boolean remListener(ICancelTokenListener listener) {
+    /** 删除指定监听器 */
+    public final boolean remListener(ICancelTokenListener listener) {
         return remListener(listener, false);
     }
 
-    @Override
-    public boolean remListener(ICancelTokenListener listener, boolean firstOccurrence) {
+    /**
+     * 删除监听器
+     * 注意：Task在处理取消信号时不需要调用该方法来删除自己，令牌会先删除Listener再通知。
+     *
+     * @param listener        要删除的监听器
+     * @param firstOccurrence 是否强制正向查找删除
+     * @return 存在匹配的监听器则返回true
+     */
+    public final boolean remListener(ICancelTokenListener listener, boolean firstOccurrence) {
         int index = firstOccurrence
                 ? CollectionUtils.indexOfRef(listeners, listener)
                 : CollectionUtils.lastIndexOfRef(listeners, listener);
@@ -162,25 +218,16 @@ public final class CancelToken implements ICancelToken {
         return true;
     }
 
-    public boolean hasListener(ICancelTokenListener listener) {
+    /** 查询是否存在给定的监听器 */
+    public final boolean hasListener(ICancelTokenListener listener) {
         return CollectionUtils.lastIndexOfRef(listeners, listener) >= 0;
     }
 
     //endregion
 
-
+    /** 收到其它地方的取消信号 */
     @Override
-    public ICancelToken newInstance() {
-        return newInstance(false);
-    }
-
-    @Override
-    public CancelToken newInstance(boolean copyCode) {
-        return new CancelToken(copyCode ? code : 0);
-    }
-
-    @Override
-    public void onCancelRequested(ICancelToken cancelToken) {
+    public final void onCancelRequested(CancelToken cancelToken) {
         cancel(cancelToken.cancelCode());
     }
 

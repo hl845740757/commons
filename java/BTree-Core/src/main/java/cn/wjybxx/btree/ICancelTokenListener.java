@@ -28,5 +28,5 @@ public interface ICancelTokenListener {
      *
      * @param cancelToken 收到取消信号的令牌
      */
-    void onCancelRequested(ICancelToken cancelToken);
+    void onCancelRequested(CancelToken cancelToken);
 }

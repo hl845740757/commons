@@ -104,7 +104,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 2.运行时不能为null；
     /// 3.如果是自动继承的，exit后自动删除；如果是Control赋值的，则由control删除。
     /// </summary>
-    [NonSerialized] protected ICancelToken cancelToken;
+    [NonSerialized] protected CancelToken cancelToken;
 
     /// <summary>
     /// Control为管理子节点存储在子节点上的数据
@@ -155,7 +155,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         set => blackboard = value;
     }
 
-    public ICancelToken CancelToken {
+    public CancelToken CancelToken {
         get => cancelToken;
         set => cancelToken = value;
     }
@@ -464,7 +464,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 注意：如果未启动自动监听，手动监听时也建议绑定到该方法
     /// </summary>
     /// <param name="cancelToken">进入取消状态的取消令牌</param>
-    public virtual void OnCancelRequested(ICancelToken cancelToken) {
+    public virtual void OnCancelRequested(CancelToken cancelToken) {
         if (IsRunning) SetCancelled();
     }
 
@@ -791,7 +791,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         initMask |= (flags & MASK_CONTROL_FLOW_OPTIONS); // 控制流bits
         ctl = initMask;
 
-        ICancelToken cancelToken = this.cancelToken;
+        CancelToken cancelToken = this.cancelToken;
         if (cancelToken.IsCancelling) { // 胎死腹中
             ReleaseContext();
             SetCompleted(TaskStatus.CANCELLED, false);
@@ -847,7 +847,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void CheckFireRunningAndCancel(Task<T>? control, ICancelToken cancelToken) {
+    private void CheckFireRunningAndCancel(Task<T>? control, CancelToken cancelToken) {
         if (cancelToken.IsCancelling && IsAutoCheckCancel) {
             SetCancelled();
             return;
@@ -1201,7 +1201,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     }
 
     /** 设置子节点的取消令牌 */
-    public void SetChildCancelToken(Task<T> child, ICancelToken? childCancelToken) {
+    public void SetChildCancelToken(Task<T> child, CancelToken? childCancelToken) {
         if (childCancelToken != null && childCancelToken != cancelToken) {
             cancelToken.AddListener(childCancelToken);
         }
@@ -1210,7 +1210,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /** 删除子节点的取消令牌 */
     public void UnsetChildCancelToken(Task<T> child) {
-        ICancelToken? childCancelToken = child.cancelToken;
+        CancelToken? childCancelToken = child.cancelToken;
         if (childCancelToken != null && childCancelToken != cancelToken) {
             cancelToken.RemListener(childCancelToken);
             childCancelToken.Reset();

@@ -30,6 +30,6 @@ public interface ICancelTokenListener
     /// 注意：由于取消令牌支持复用，如果监听器不能立即响应取消请求，则应当将取消码保存为局部变量。
     /// </summary>
     /// <param name="cancelToken">收到取消信号的令牌</param>
-    void OnCancelRequested(ICancelToken cancelToken);
+    void OnCancelRequested(CancelToken cancelToken);
 }
 }

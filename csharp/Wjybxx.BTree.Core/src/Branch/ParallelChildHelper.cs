@@ -29,7 +29,7 @@ public class ParallelChildHelper<T> : TaskInlineHelper<T> where T : class
     /** 子节点的重入id */
     public int reentryId;
     /** 子节点的取消令牌 -- 应当在运行前赋值 */
-    public ICancelToken cancelToken;
+    public CancelToken cancelToken;
     /** 用户自定义数据 */
     public object userData;
 

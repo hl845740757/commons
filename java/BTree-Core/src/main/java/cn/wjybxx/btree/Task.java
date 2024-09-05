@@ -108,7 +108,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 2.运行时不能为null；
      * 3.如果是自动继承的，exit后自动删除；如果是Control赋值的，则由control删除。
      */
-    protected transient ICancelToken cancelToken;
+    protected transient CancelToken cancelToken;
     /**
      * Control为管理子节点存储在子节点上的数据
      * 1.避免额外映射，提高性能和易用性
@@ -165,11 +165,11 @@ public abstract class Task<T> implements ICancelTokenListener {
         this.blackboard = blackboard;
     }
 
-    public final ICancelToken getCancelToken() {
+    public final CancelToken getCancelToken() {
         return cancelToken;
     }
 
-    public final void setCancelToken(ICancelToken cancelToken) {
+    public final void setCancelToken(CancelToken cancelToken) {
         this.cancelToken = cancelToken;
     }
 
@@ -461,7 +461,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 注意：如果未启动自动监听，手动监听时也建议绑定到该方法
      */
     @Override
-    public void onCancelRequested(ICancelToken cancelToken) {
+    public void onCancelRequested(CancelToken cancelToken) {
         if (isRunning()) setCancelled();
     }
 
@@ -786,7 +786,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         initMask |= (flags & MASK_CONTROL_FLOW_OPTIONS); // 控制流bits
         ctl = initMask;
 
-        final ICancelToken cancelToken = this.cancelToken;
+        final CancelToken cancelToken = this.cancelToken;
         if (cancelToken.isCancelling()) { // 胎死腹中
             releaseContext();
             setCompleted(TaskStatus.CANCELLED, false);
@@ -840,7 +840,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         }
     }
 
-    private void checkFireRunningAndCancel(Task<T> control, ICancelToken cancelToken) {
+    private void checkFireRunningAndCancel(Task<T> control, CancelToken cancelToken) {
         if (cancelToken.isCancelling() && isAutoCheckCancel()) {
             setCancelled();
             return;
@@ -1186,7 +1186,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     }
 
     /** 设置子节点的取消令牌 */
-    public final void setChildCancelToken(Task<T> child, ICancelToken childCancelToken) {
+    public final void setChildCancelToken(Task<T> child, CancelToken childCancelToken) {
         if (childCancelToken != null && childCancelToken != cancelToken) {
             cancelToken.addListener(childCancelToken);
         }
@@ -1195,7 +1195,7 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     /** 删除子节点的取消令牌 */
     public final void unsetChildCancelToken(Task<T> child) {
-        ICancelToken childCancelToken = child.cancelToken;
+        CancelToken childCancelToken = child.cancelToken;
         if (childCancelToken != null && childCancelToken != cancelToken) {
             cancelToken.remListener(childCancelToken);
             childCancelToken.reset();
