@@ -59,7 +59,7 @@ public class DecoratorTest {
 
         @Override
         protected void execute() {
-            if (!isGuard && getRunFrames() < 3 && random.nextBoolean()) { // 随机等待
+            if (!isGuard && random.nextBoolean()) { // 随机等待
                 return;
             }
 
@@ -149,7 +149,7 @@ public class DecoratorTest {
     // endregion
 
     /** OnlyOnce不重置的情况下，每次都返回之前的状态 */
-    @Test
+    @RepeatedTest(5)
     void onlyOnceTest() {
         OnlyOnce<Blackboard> decorator = new OnlyOnce<>();
         decorator.setChild(new CountRandom<>());

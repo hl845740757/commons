@@ -32,7 +32,7 @@ final class TaskOverrides {
     static final int MASK_BEFORE_ENTER = 1;
     static final int MASK_ENTER = 1 << 1;
     static final int MASK_EXIT = 1 << 2;
-    static final int MASK_REFRESH_CHILDREN_ACTIVE = 1 << 3;
+    static final int MASK_CANCEL_REQUESTED = 1 << 3;
     private static final int MASK_ALL = 15;
 
     static final int MASK_INLINABLE = 1 << 4;
@@ -56,9 +56,6 @@ final class TaskOverrides {
             }
             if (getDeclaredMethodInherit(clazz, "exit") == null) {
                 mask &= ~MASK_EXIT;
-            }
-            if (getDeclaredMethodInherit(clazz, "refreshChildrenActiveInHierarchy") == null) {
-                mask &= ~MASK_REFRESH_CHILDREN_ACTIVE;
             }
             if (clazz.getDeclaredAnnotation(TaskInlinable.class) != null) {
                 mask |= MASK_INLINABLE;

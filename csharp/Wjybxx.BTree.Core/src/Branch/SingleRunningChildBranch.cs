@@ -134,7 +134,7 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
         Task<T>? runningChild = this.runningChild;
         if (runningChild == null) {
             this.runningChild = runningChild = NextChild();
-            Template_RunChild(runningChild);
+            Template_StartChild(runningChild, true);
         } else {
             Task<T>? inlinedChild = inlineHelper.GetInlinedRunningChild();
             if (inlinedChild != null) {
@@ -142,7 +142,7 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
             } else if (runningChild.IsRunning) {
                 runningChild.Template_Execute(true);
             } else {
-                Template_RunChild(runningChild);
+                Template_StartChild(runningChild, true);
             }
         }
     }

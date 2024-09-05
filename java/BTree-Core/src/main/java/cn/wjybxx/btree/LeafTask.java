@@ -15,8 +15,6 @@
  */
 package cn.wjybxx.btree;
 
-import java.util.stream.Stream;
-
 /**
  * 叶子任务（不能有子节点）
  *
@@ -43,8 +41,8 @@ public abstract class LeafTask<T> extends Task<T> {
     }
 
     @Override
-    public final Stream<Task<T>> childStream() {
-        return Stream.empty();
+    public final void visitChildren(TaskVisitor<? super T> visitor, Object param) {
+
     }
 
     @Override

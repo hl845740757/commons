@@ -75,8 +75,8 @@ public interface ICancelToken : ICancelTokenListener
     /// </summary>
     /// <param name="cancelCode">取消码；reason部分需大于0；辅助类{@link CancelCodeBuilder}</param>
     /// <exception cref="ArgumentException">如果code小于等于0；或reason部分为0</exception>
-    /// <returns>Token的当前值；如果Token已被取消，则非0；如果Token尚未被取消，则返回0。</returns>
-    int Cancel(int cancelCode = CancelCodes.REASON_DEFAULT);
+    /// <returns>是否成功已给定取消码进入取消状态</returns>
+    bool Cancel(int cancelCode = CancelCodes.REASON_DEFAULT);
 
     #endregion
 

@@ -16,7 +16,6 @@
 package cn.wjybxx.btree;
 
 import javax.annotation.Nonnull;
-import java.util.stream.Stream;
 
 /**
  * 装饰任务（最多只有一个子节点）
@@ -89,17 +88,18 @@ public abstract class Decorator<T> extends Task<T> {
 
     // region child
 
+
+    @Override
+    public void visitChildren(TaskVisitor<? super T> visitor, Object param) {
+        if (child != null) visitor.visitChild(child, 0, param);
+    }
+
     @Override
     public final int indexChild(Task<?> task) {
         if (task != null && task == this.child) {
             return 0;
         }
         return -1;
-    }
-
-    @Override
-    public final Stream<Task<T>> childStream() {
-        return Stream.ofNullable(child);
     }
 
     @Override

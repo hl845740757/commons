@@ -79,19 +79,20 @@ public final class CancelToken implements ICancelToken {
     //region tokenSource
 
     @Override
-    public int cancel() {
+    public boolean cancel() {
         return cancel(CancelCodes.REASON_DEFAULT);
     }
 
     @Override
-    public int cancel(int cancelCode) {
+    public boolean cancel(int cancelCode) {
         CancelCodes.checkCode(cancelCode);
         int r = this.code;
         if (r == 0) {
             this.code = cancelCode;
             postComplete(this);
+            return true;
         }
-        return r;
+        return false;
     }
 
     /** 不能优化递归 -- 因为在通知期间用户可能会请求删除 */

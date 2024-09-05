@@ -208,7 +208,7 @@ public class StateMachineTask<T> extends Decorator<T> {
         } else if (curState.isRunning()) {
             curState.template_execute(true);
         } else {
-            template_runChild(curState);
+            template_startChild(curState, true);
         }
     }
 

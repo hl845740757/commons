@@ -104,12 +104,10 @@ public class SingleRunningTest1
         });
         BtreeTestUtil.untilCompleted(taskEntry);
 
-        Task<Blackboard>? runChild = taskEntry.RootTask.ListChildren()
-            .Where(e => e.Guard.IsSucceeded)
-            .FirstOrDefault();
-        if (runChild == null) {
+        if (branch.GetRunningIndex() < 0) {
             Assert.IsTrue(taskEntry.IsFailed);
         } else {
+            Task<Blackboard> runChild = branch.GetChild(branch.GetRunningIndex());
             Assert.AreEqual(taskEntry.Status, runChild.Status);
         }
     }
@@ -134,25 +132,5 @@ public class SingleRunningTest1
         BtreeTestUtil.untilCompleted(taskEntry);
 
         Assert.IsTrue(taskEntry.IsSucceeded);
-    }
-    
-    /** 测试尾递归 */
-    [Test]
-    public void tailRecursionTest() {
-        Selector<Blackboard> branch = new Selector<Blackboard>();
-        branch.IsTailRecursion = true;
-        branch.ExportControlFlowOptions();
-        
-        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(branch);
-        for (int expcted = 0; expcted <= childCount; expcted++) {
-            BtreeTestUtil.initChildren(branch, childCount, expcted);
-            BtreeTestUtil.untilCompleted(taskEntry);
-
-            if (expcted > 0) {
-                Assert.IsTrue(taskEntry.IsSucceeded, "Task is unsuccessful, status " + taskEntry.Status);
-            } else {
-                Assert.IsTrue(taskEntry.IsFailed, "Task is unfailed, status " + taskEntry.Status);
-            }
-        }
     }
 }

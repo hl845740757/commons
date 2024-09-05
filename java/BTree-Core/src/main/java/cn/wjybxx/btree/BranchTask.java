@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 /**
  * 分支任务（可能有多个子节点）
@@ -96,8 +95,10 @@ public abstract class BranchTask<T> extends Task<T> {
     }
 
     @Override
-    public final Stream<Task<T>> childStream() {
-        return children.stream();
+    public void visitChildren(TaskVisitor<? super T> visitor, Object param) {
+        for (int i = 0; i < children.size(); i++) {
+            visitor.visitChild(children.get(i), i, param);
+        }
     }
 
     @Override

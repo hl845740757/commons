@@ -45,8 +45,7 @@ public class ActiveSelector<T> extends SingleRunningChildBranch<T> {
         for (int idx = 0; idx < children.size(); idx++) {
             Task<T> child = children.get(idx);
             if (!template_checkGuard(child.getGuard())) {
-                child.setGuardFailed(null); // 不接收通知
-                continue;
+                continue; // 不能调用SetGuardFailed，会中断当前运行中的child
             }
             childToRun = child;
             childIndex = idx;
@@ -73,12 +72,12 @@ public class ActiveSelector<T> extends SingleRunningChildBranch<T> {
             } else if (childToRun.isRunning()) {
                 childToRun.template_execute(true);
             } else {
-                template_runChildDirectly(childToRun);
+                template_startChild(childToRun, false);
             }
         } else {
             this.runningChild = childToRun;
             this.runningIndex = childIndex;
-            template_runChildDirectly(childToRun);
+            template_startChild(childToRun, false);
         }
     }
 

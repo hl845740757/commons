@@ -45,7 +45,7 @@ public class ConditionTest {
         int failCount = childCount - successCount;
         for (int i = 0; i < failCount; i++) {
             switch (BtreeTestUtil.random.nextInt(3)) {
-                case 0 ->  branch.getChild(i).setFlags(Task.MASK_INVERTED_GUARD);
+                case 0 -> branch.getChild(i).setFlags(Task.MASK_INVERTED_GUARD);
                 case 1 -> branch.setChild(i, new Inverter<>(new Success<>()));
                 case 2 -> branch.getChild(i).setGuard(new Failure<>());
                 default -> throw new AssertionError();

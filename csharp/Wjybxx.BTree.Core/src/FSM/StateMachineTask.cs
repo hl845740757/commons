@@ -206,7 +206,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         } else if (curState.IsRunning) {
             curState.Template_Execute(true);
         } else {
-            Template_RunChild(curState);
+            Template_StartChild(curState, true);
         }
     }
 

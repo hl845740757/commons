@@ -99,13 +99,11 @@ public class SingleRunningTest1 {
         branch.addChild(new Failure<Blackboard>().setGuard(new SimpleRandom<>(0.5f)));
         BtreeTestUtil.untilCompleted(taskEntry);
 
-        Task<Blackboard> runChild = taskEntry.getRootTask().childStream()
-                .filter(e -> e.getGuard().isSucceeded())
-                .findFirst()
-                .orElse(null);
-        if (runChild == null) {
+        int runningIndex = branch.getRunningIndex();
+        if (runningIndex < 0) {
             Assertions.assertTrue(taskEntry.isFailed());
         } else {
+            Task<Blackboard> runChild = branch.getChild(runningIndex);
             Assertions.assertEquals(taskEntry.getStatus(), runChild.getStatus());
         }
     }
@@ -121,25 +119,5 @@ public class SingleRunningTest1 {
         BtreeTestUtil.untilCompleted(taskEntry);
 
         Assertions.assertTrue(taskEntry.isSucceeded());
-    }
-
-    /** 测试尾递归 */
-    @Test
-    void tailRecursionTest() {
-        Selector<Blackboard> branch = new Selector<>();
-        branch.setTailRecursion(true);
-        branch.exportControlFlowOptions();
-
-        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(branch);
-        for (int expcted = 0; expcted <= childCount; expcted++) {
-            BtreeTestUtil.initChildren(branch, childCount, expcted);
-            BtreeTestUtil.untilCompleted(taskEntry);
-
-            if (expcted > 0) {
-                Assertions.assertTrue(taskEntry.isSucceeded(), "Task is unsuccessful, status " + taskEntry.getStatus());
-            } else {
-                Assertions.assertTrue(taskEntry.isFailed(), "Task is unfailed, status " + taskEntry.getStatus());
-            }
-        }
     }
 }

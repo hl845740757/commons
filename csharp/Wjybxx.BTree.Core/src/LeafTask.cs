@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using Wjybxx.Commons;
 using Wjybxx.Commons.Ex;
 
@@ -41,12 +40,11 @@ public abstract class LeafTask<T> : Task<T> where T : class
 
     #region child
 
-    public sealed override int IndexChild(Task<T> task) {
-        return -1;
+    public override void VisitChildren(TaskVisitor<T> visitor, object param) {
     }
 
-    public sealed override List<Task<T>> ListChildren() {
-        return new List<Task<T>>(0);
+    public sealed override int IndexChild(Task<T> task) {
+        return -1;
     }
 
     public sealed override int GetChildCount() {

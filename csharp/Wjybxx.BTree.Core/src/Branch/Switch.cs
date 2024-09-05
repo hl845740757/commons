@@ -59,7 +59,7 @@ public class Switch<T> : SingleRunningChildBranch<T> where T : class
         } else if (runningChild.IsRunning) {
             runningChild.Template_Execute(true);
         } else {
-            Template_RunChildDirectly(runningChild);
+            Template_StartChild(runningChild, false);
         }
     }
 
@@ -70,7 +70,6 @@ public class Switch<T> : SingleRunningChildBranch<T> where T : class
         for (int idx = 0; idx < children.Count; idx++) {
             Task<T> child = children[idx];
             if (!Template_CheckGuard(child.Guard)) {
-                child.SetGuardFailed(null); // 不接收通知
                 continue;
             }
             return idx;

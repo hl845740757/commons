@@ -20,7 +20,6 @@ import cn.wjybxx.btree.fsm.StateMachineTask;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 /**
  * 任务入口（可联想程序的Main）
@@ -156,7 +155,7 @@ public class TaskEntry<T> extends Task<T> {
             template_execute(true); // 用户就是control
         } else {
             assert isInited();
-            template_enterExecute(null, 0);
+            template_start(null, 0);
         }
     }
 
@@ -173,18 +172,18 @@ public class TaskEntry<T> extends Task<T> {
             } else if (rootTask.isRunning()) {
                 rootTask.template_execute(true);
             } else {
-                template_runChild(rootTask);
+                template_startChild(rootTask, true);
             }
         } else {
             assert isInited();
-            template_enterExecute(null, 0);
+            template_start(null, 0);
         }
     }
 
     /** 如果行为树代表的是一个条件树，则可以调用该方法；失败的情况下可以通过Status获取错误码 */
     public boolean test() {
         assert isInited();
-        template_enterExecute(null, MASK_CHECKING_GUARD); // entry本身不是条件节点
+        template_start(null, MASK_CHECKING_GUARD); // entry本身不是条件节点
         return isSucceeded();
     }
 
@@ -196,7 +195,7 @@ public class TaskEntry<T> extends Task<T> {
         } else if (rootTask.isRunning()) {
             rootTask.template_execute(true);
         } else {
-            template_runChild(rootTask);
+            template_startChild(rootTask, true);
         }
     }
 
@@ -247,16 +246,16 @@ public class TaskEntry<T> extends Task<T> {
     // region child
 
     @Override
+    public void visitChildren(TaskVisitor<? super T> visitor, Object param) {
+        if (rootTask != null) visitor.visitChild(rootTask, 0, param);
+    }
+
+    @Override
     public final int indexChild(Task<?> task) {
         if (task != null && task == this.rootTask) {
             return 0;
         }
         return -1;
-    }
-
-    @Override
-    public final Stream<Task<T>> childStream() {
-        return Stream.ofNullable(rootTask);
     }
 
     @Override

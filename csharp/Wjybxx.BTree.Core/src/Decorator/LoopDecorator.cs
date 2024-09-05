@@ -51,7 +51,7 @@ public abstract class LoopDecorator<T> : Decorator<T> where T : class
             child.Template_Execute(true);
         } else {
             curLoop++;
-            Template_RunChild(child);
+            Template_StartChild(child, true);
         }
     }
 

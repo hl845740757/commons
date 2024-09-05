@@ -51,7 +51,7 @@ public class SimpleParallel<T> : Parallel<T> where T : class
             } else if (child.IsRunning) {
                 child.Template_Execute(true);
             } else {
-                Template_RunChild(child);
+                Template_StartChild(child, true);
             }
             if (CheckCancel(reentryId)) { // 得出结果或取消
                 return;

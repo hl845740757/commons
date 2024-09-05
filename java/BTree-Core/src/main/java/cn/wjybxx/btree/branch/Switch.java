@@ -56,7 +56,7 @@ public class Switch<T> extends SingleRunningChildBranch<T> {
         } else if (runningChild.isRunning()) {
             runningChild.template_execute(true);
         } else {
-            template_runChildDirectly(runningChild);
+            template_startChild(runningChild, false);
         }
     }
 
@@ -67,7 +67,6 @@ public class Switch<T> extends SingleRunningChildBranch<T> {
         for (int idx = 0; idx < children.size(); idx++) {
             Task<T> child = children.get(idx);
             if (!template_checkGuard(child.getGuard())) {
-                child.setGuardFailed(null); // 不接收通知
                 continue;
             }
             return idx;

@@ -44,7 +44,7 @@ public class AlwaysCheckGuard<T> extends Decorator<T> {
             } else if (child.isRunning()) {
                 child.template_execute(true);
             } else {
-                template_runChildDirectly(child);
+                template_startChild(child, false);
             }
         } else {
             child.stop();

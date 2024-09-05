@@ -60,7 +60,7 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
         return runningIndex;
     }
 
-    /** 获取运行中的子节点 */
+    /** 获取运行中的子节点 -- 不可结束后查询 */
     public final Task<T> getRunningChild() {
         return runningChild;
     }
@@ -136,7 +136,7 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
         Task<T> runningChild = this.runningChild;
         if (runningChild == null) {
             this.runningChild = runningChild = nextChild();
-            template_runChild(runningChild);
+            template_startChild(runningChild, true);
         } else {
             Task<T> inlinedChild = inlineHelper.getInlinedRunningChild();
             if (inlinedChild != null) {
@@ -144,7 +144,7 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
             } else if (runningChild.isRunning()) {
                 runningChild.template_execute(true);
             } else {
-                template_runChild(runningChild);
+                template_startChild(runningChild, true);
             }
         }
     }

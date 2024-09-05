@@ -53,7 +53,7 @@ public abstract class LoopDecorator<T> extends Decorator<T> {
             child.template_execute(true);
         } else {
             curLoop++;
-            template_runChild(child);
+            template_startChild(child, true);
         }
     }
 

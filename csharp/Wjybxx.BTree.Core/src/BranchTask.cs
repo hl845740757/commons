@@ -92,12 +92,14 @@ public abstract class BranchTask<T> : Task<T> where T : class
 
     #region child
 
-    public sealed override int IndexChild(Task<T> task) {
-        return CollectionUtil.IndexOfRef(children, task);
+    public override void VisitChildren(TaskVisitor<T> visitor, object param) {
+        for (int i = 0; i < children.Count; i++) {
+            visitor.VisitChild(children[i], i, param);
+        }
     }
 
-    public sealed override List<Task<T>> ListChildren() {
-        return new List<Task<T>>(children);
+    public sealed override int IndexChild(Task<T> task) {
+        return CollectionUtil.IndexOfRef(children, task);
     }
 
     public sealed override int GetChildCount() {

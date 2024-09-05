@@ -71,16 +71,16 @@ public interface ICancelToken extends ICancelTokenListener {
     //region 取消操作
 
     /** 使用默认取消码 {@link CancelCodes#REASON_DEFAULT} */
-    int cancel();
+    boolean cancel();
 
     /**
      * 发送取消信号
      *
      * @param cancelCode 取消码；reason部分需大于0
-     * @return Token的当前值；如果Token已被取消，则非0；如果Token尚未被取消，则返回0。
+     * @return 是否成功已给定取消码进入取消状态
      * @throws IllegalArgumentException 如果code小于等于0；或reason部分为0
      */
-    int cancel(int cancelCode);
+    boolean cancel(int cancelCode);
 
     //endregion
 

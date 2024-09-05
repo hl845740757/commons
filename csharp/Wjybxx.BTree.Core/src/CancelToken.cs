@@ -66,14 +66,15 @@ public sealed class CancelToken : ICancelToken
 
     #region tokenSource
 
-    public int Cancel(int cancelCode = CancelCodes.REASON_DEFAULT) {
+    public bool Cancel(int cancelCode = CancelCodes.REASON_DEFAULT) {
         CancelCodes.CheckCode(cancelCode);
         int r = this.code;
         if (r == 0) {
             this.code = cancelCode;
             PostComplete(this);
+            return true;
         }
-        return r;
+        return false;
     }
 
     /** 不能优化递归 -- 因为在通知期间用户可能会请求删除 */

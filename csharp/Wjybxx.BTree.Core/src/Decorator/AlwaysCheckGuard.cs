@@ -39,7 +39,7 @@ public class AlwaysCheckGuard<T> : Decorator<T> where T : class
             } else if (child.IsRunning) {
                 child.Template_Execute(true);
             } else {
-                Template_RunChildDirectly(child);
+                Template_StartChild(child, false);
             }
         } else {
             child.Stop();

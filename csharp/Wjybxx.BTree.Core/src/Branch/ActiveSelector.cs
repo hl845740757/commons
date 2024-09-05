@@ -41,8 +41,7 @@ public class ActiveSelector<T> : SingleRunningChildBranch<T> where T : class
         for (int idx = 0; idx < children.Count; idx++) {
             Task<T> child = children[idx];
             if (!Template_CheckGuard(child.Guard)) {
-                child.SetGuardFailed(null); // 不接收通知
-                continue;
+                continue; // 不能调用SetGuardFailed，会中断当前运行中的child
             }
             childToRun = child;
             childIndex = idx;
@@ -69,12 +68,12 @@ public class ActiveSelector<T> : SingleRunningChildBranch<T> where T : class
             } else if (childToRun.IsRunning) {
                 childToRun.Template_Execute(true);
             } else {
-                Template_RunChildDirectly(childToRun);
+                Template_StartChild(childToRun, false);
             }
         } else {
             this.runningChild = childToRun;
             this.runningIndex = childIndex;
-            Template_RunChildDirectly(childToRun);
+            Template_StartChild(childToRun, false);
         }
     }
 

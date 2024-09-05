@@ -49,7 +49,7 @@ public class Sequence<T> : SingleRunningChildBranch<T> where T : class
             SetSuccess();
         }
     }
-    
+
     protected override void OnChildRunning(Task<T> child) {
         inlineHelper.InlineChild(child);
     }

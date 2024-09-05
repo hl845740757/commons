@@ -58,7 +58,7 @@ public class Inverter<T> extends Decorator<T> {
         } else if (child.isRunning()) {
             child.template_execute(true);
         } else {
-            template_runChild(child);
+            template_startChild(child, true);
         }
     }
 

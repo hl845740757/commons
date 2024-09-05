@@ -50,7 +50,7 @@ public class DecoratorTest
         }
 
         protected override void Execute() {
-            if (!isGuard && RunFrames < 3 && random.Next(2) == 1) { // 随机等待
+            if (!isGuard && random.Next(2) == 1) { // 随机等待
                 return;
             }
             if (random.Next(2) == 1) {
@@ -140,7 +140,7 @@ public class DecoratorTest
     #endregion
 
     /** OnlyOnce不重置的情况下，每次都返回之前的状态 */
-    [Test]
+    [Test] [Repeat(5)]
     public void onlyOnceTest() {
         OnlyOnce<Blackboard> decorator = new OnlyOnce<Blackboard>();
         decorator.Child = new CountRandom<Blackboard>();

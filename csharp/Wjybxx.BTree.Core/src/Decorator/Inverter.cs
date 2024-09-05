@@ -50,7 +50,7 @@ public class Inverter<T> : Decorator<T> where T : class
         } else if (child.IsRunning) {
             child.Template_Execute(true);
         } else {
-            Template_RunChild(child);
+            Template_StartChild(child, true);
         }
     }
 

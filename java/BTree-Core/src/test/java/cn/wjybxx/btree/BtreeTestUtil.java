@@ -62,21 +62,30 @@ class BtreeTestUtil {
 
     /** 需要注意！直接遍历子节点，可能统计到上次的执行结果 */
     public static int completedCount(Task<?> ctrl) {
-        return (int) ctrl.childStream()
-                .filter(Task::isCompleted)
-                .count();
+        int count = 0;
+        int childCount = ctrl.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            if (ctrl.getChild(i).isCompleted()) count++;
+        }
+        return count;
     }
 
     public static int succeededCount(Task<?> ctrl) {
-        return (int) ctrl.childStream()
-                .filter(Task::isSucceeded)
-                .count();
+        int count = 0;
+        int childCount = ctrl.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            if (ctrl.getChild(i).isSucceeded()) count++;
+        }
+        return count;
     }
 
     public static int failedCount(Task<?> ctrl) {
-        return (int) ctrl.childStream()
-                .filter(Task::isFailed)
-                .count();
+        int count = 0;
+        int childCount = ctrl.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            if (ctrl.getChild(i).isFailed()) count++;
+        }
+        return count;
     }
 
     /**

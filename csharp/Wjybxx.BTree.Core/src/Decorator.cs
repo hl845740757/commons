@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using Wjybxx.Commons;
 
 namespace Wjybxx.BTree
@@ -90,15 +89,15 @@ public abstract class Decorator<T> : Task<T> where T : class
 
     #region child
 
+    public override void VisitChildren(TaskVisitor<T> visitor, object param) {
+        if (child != null) visitor.VisitChild(child, 0, param);
+    }
+
     public sealed override int IndexChild(Task<T> task) {
         if (task != null && task == this.child) {
             return 0;
         }
         return -1;
-    }
-
-    public sealed override List<Task<T>> ListChildren() {
-        return child == null ? new List<Task<T>>(0) : new List<Task<T>> { child };
     }
 
     public sealed override int GetChildCount() {

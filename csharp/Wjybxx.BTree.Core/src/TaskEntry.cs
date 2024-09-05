@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using Wjybxx.BTree.FSM;
 using Wjybxx.Commons;
@@ -144,7 +143,7 @@ public class TaskEntry<T> : Task<T> where T : class
             Template_Execute(true); // 用户就是control
         } else {
             Debug.Assert(IsInited());
-            Template_EnterExecute(null, 0);
+            Template_Start(null, 0);
         }
     }
 
@@ -162,18 +161,18 @@ public class TaskEntry<T> : Task<T> where T : class
             } else if (rootTask!.IsRunning) {
                 rootTask.Template_Execute(true);
             } else {
-                Template_RunChild(rootTask);
+                Template_StartChild(rootTask, true);
             }
         } else {
             Debug.Assert(IsInited());
-            Template_EnterExecute(null, 0);
+            Template_Start(null, 0);
         }
     }
 
     /** 如果行为树代表的是一个条件树，则可以调用该方法；失败的情况下可以通过Status获取错误码 */
     public bool Test() {
         Debug.Assert(IsInited());
-        Template_EnterExecute(null, MASK_CHECKING_GUARD); // entry本身不是条件节点
+        Template_Start(null, MASK_CHECKING_GUARD); // entry本身不是条件节点
         return IsSucceeded;
     }
 
@@ -184,7 +183,7 @@ public class TaskEntry<T> : Task<T> where T : class
         } else if (rootTask!.IsRunning) {
             rootTask.Template_Execute(true);
         } else {
-            Template_RunChild(rootTask);
+            Template_StartChild(rootTask, true);
         }
     }
 
@@ -232,15 +231,15 @@ public class TaskEntry<T> : Task<T> where T : class
 
     #region child
 
+    public override void VisitChildren(TaskVisitor<T> visitor, object param) {
+        if (rootTask != null) visitor.VisitChild(rootTask, 0, param);
+    }
+
     public sealed override int IndexChild(Task<T> task) {
         if (task != null && task == this.rootTask) {
             return 0;
         }
         return -1;
-    }
-
-    public override List<Task<T>> ListChildren() {
-        return rootTask == null ? new List<Task<T>>() : new List<Task<T>> { rootTask };
     }
 
     public override int GetChildCount() {
