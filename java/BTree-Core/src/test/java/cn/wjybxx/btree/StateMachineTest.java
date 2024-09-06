@@ -151,7 +151,7 @@ public class StateMachineTest {
     @Test
     void testRedo() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StackStateMachineTask<Blackboard> stateMachine = (StackStateMachineTask<Blackboard>) taskEntry.getRootStateMachine();
+        StackStateMachineTask<Blackboard> stateMachine = (StackStateMachineTask<Blackboard>) taskEntry.getRootTask();
         fillRedoQueue(stateMachine);
 
         stateMachine.setHandler(StateMachineHandlers.redoHandler());
@@ -167,7 +167,7 @@ public class StateMachineTest {
     void testUndo() {
         global_count = queue_size;
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StackStateMachineTask<Blackboard> stateMachine = taskEntry.getRootStackStateMachine();
+        StackStateMachineTask<Blackboard> stateMachine = (StackStateMachineTask<Blackboard>) taskEntry.getRootTask();
         fillUndoQueue(stateMachine);
 
         stateMachine.setHandler(StateMachineHandlers.undoHandler());
@@ -181,7 +181,7 @@ public class StateMachineTest {
     @Test
     void testRedoUndo() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StackStateMachineTask<Blackboard> stateMachine = taskEntry.getRootStackStateMachine();
+        StackStateMachineTask<Blackboard> stateMachine = (StackStateMachineTask<Blackboard>) taskEntry.getRootTask();
         fillRedoQueue(stateMachine);
 
         MutableInt redoFinished = new MutableInt(0);

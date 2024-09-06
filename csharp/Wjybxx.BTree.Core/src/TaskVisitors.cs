@@ -33,11 +33,11 @@ public static class TaskVisitors
         public static readonly RefreshActiveVisitor<T> Inst = new RefreshActiveVisitor<T>();
 
         public void VisitChild(Task<T> child, int index, object? param) {
-            child.RefreshActiveInHierarchy();
+            if (child.IsRunning) child.RefreshActiveInHierarchy();
         }
 
         public void VisitHook(Task<T> child, object? param) {
-            child.RefreshActiveInHierarchy();
+            if (child.IsRunning) child.RefreshActiveInHierarchy();
         }
     }
 

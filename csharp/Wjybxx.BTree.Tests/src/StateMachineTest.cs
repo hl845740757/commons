@@ -141,7 +141,7 @@ public class StateMachineTest
     [Test]
     public void testRedo() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StackStateMachineTask<Blackboard> stateMachine = taskEntry.GetRootStackStateMachine();
+        StackStateMachineTask<Blackboard> stateMachine = (StackStateMachineTask<Blackboard>)taskEntry.RootTask;
         fillRedoQueue(stateMachine);
 
         stateMachine.Handler = StateMachineHandlers.RedoHandler<Blackboard>();
@@ -156,7 +156,7 @@ public class StateMachineTest
     public void testUndo() {
         global_count = queue_size;
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StackStateMachineTask<Blackboard> stateMachine = taskEntry.GetRootStackStateMachine();
+        StackStateMachineTask<Blackboard> stateMachine = (StackStateMachineTask<Blackboard>)taskEntry.RootTask;
         fillUndoQueue(stateMachine);
 
         stateMachine.Handler = StateMachineHandlers.UndoHandler<Blackboard>();
@@ -170,7 +170,7 @@ public class StateMachineTest
     [Test]
     public void testRedoUndo() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        StackStateMachineTask<Blackboard> stateMachine = taskEntry.GetRootStackStateMachine();
+        StackStateMachineTask<Blackboard> stateMachine = (StackStateMachineTask<Blackboard>)taskEntry.RootTask;
         fillRedoQueue(stateMachine);
 
         stateMachine.Handler = new RedoUndoHandler<Blackboard>();

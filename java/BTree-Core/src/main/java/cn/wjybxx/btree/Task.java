@@ -560,6 +560,17 @@ public abstract class Task<T> implements ICancelTokenListener {
     }
 
     /**
+     * 当节点在层次结构中的Active状态发生变化时调用
+     * 1.该方法只在Task处于运行状态下调用。
+     * 2.该方法不应该产生状态迁移，即不应该使Task进入完成状态。
+     * 3.该方法主要用于暂停关联的外部逻辑，如停止外部计时器。
+     * 4.重写该方法通常应该重写enter方法，在enter方法中处理未激活的情况。
+     */
+    protected void onActiveInHierarchyChanged() {
+
+    }
+
+    /**
      * 刷新Task在层次结构中的active状态
      */
     final void refreshActiveInHierarchy() {
@@ -569,6 +580,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         }
         setCtlBit(MASK_NOT_ACTIVE_IN_HIERARCHY, !newState); // 取反
         if (status == TaskStatus.RUNNING) {
+            onActiveInHierarchyChanged();
             visitChildren(TaskVisitors.refreshActive(), null);
         }
     }
@@ -814,6 +826,7 @@ public abstract class Task<T> implements ICancelTokenListener {
                     ctl |= MASK_REGISTERED_LISTENER;
                 }
             }
+
             if ((initMask & TaskOverrides.MASK_ENTER) != 0) {
                 enter(reentryId); // enter可能导致结束和取消信号
                 if (reentryId != this.reentryId) {
@@ -825,28 +838,27 @@ public abstract class Task<T> implements ICancelTokenListener {
                 }
             }
             if (checkSlowStart(ctl)) { // 需要使用最新的ctl(enter也可能修改ctl)
-                checkFireRunningAndCancel(control, cancelToken);
+                if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
+                    control.onChildRunning(this);
+                }
                 return;
             }
 
             execute();
-            if (reentryId == this.reentryId) {
-                checkFireRunningAndCancel(control, cancelToken);
+            if (reentryId != this.reentryId) {
+                return;
+            }
+            if (cancelToken.isCancelling() && isAutoCheckCancel()) {
+                setCancelled();
+                return;
+            }
+            if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
+                control.onChildRunning(this);
             }
         } finally {
             if (reentryId == this.reentryId) { // 否则可能清理掉递归任务的数据
                 ctl &= ~(MASK_ENTER_EXECUTE | MASK_EXECUTING);
             }
-        }
-    }
-
-    private void checkFireRunningAndCancel(Task<T> control, CancelToken cancelToken) {
-        if (cancelToken.isCancelling() && isAutoCheckCancel()) {
-            setCancelled();
-            return;
-        }
-        if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
-            control.onChildRunning(this);
         }
     }
 

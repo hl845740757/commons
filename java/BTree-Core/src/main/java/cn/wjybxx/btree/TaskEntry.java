@@ -15,7 +15,6 @@
  */
 package cn.wjybxx.btree;
 
-import cn.wjybxx.btree.fsm.StackStateMachineTask;
 import cn.wjybxx.btree.fsm.StateMachineTask;
 
 import javax.annotation.Nonnull;
@@ -134,13 +133,6 @@ public class TaskEntry<T> extends Task<T> {
      */
     public final StateMachineTask<T> getRootStateMachine() {
         if (rootTask instanceof StateMachineTask<T> stateMachine) {
-            return stateMachine;
-        }
-        throw new IllegalStateException("rootTask is not state machine task");
-    }
-
-    public final StackStateMachineTask<T> getRootStackStateMachine() {
-        if (rootTask instanceof StackStateMachineTask<T> stateMachine) {
             return stateMachine;
         }
         throw new IllegalStateException("rootTask is not state machine task");

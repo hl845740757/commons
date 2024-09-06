@@ -39,12 +39,12 @@ public class TaskVisitors {
 
         @Override
         public void visitChild(Task<? extends T> child, int index, Object param) {
-            child.refreshActiveInHierarchy();
+            if (child.isRunning()) child.refreshActiveInHierarchy();
         }
 
         @Override
         public void visitHook(Task<? extends T> child, Object param) {
-            child.refreshActiveInHierarchy();
+            if (child.isRunning()) child.refreshActiveInHierarchy();
         }
     }
 

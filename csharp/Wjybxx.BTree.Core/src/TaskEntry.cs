@@ -126,13 +126,6 @@ public class TaskEntry<T> : Task<T> where T : class
         throw new IllegalStateException("rootTask is not state machine task");
     }
 
-    public StackStateMachineTask<T> GetRootStackStateMachine() {
-        if (rootTask is StackStateMachineTask<T> stateMachine) {
-            return stateMachine;
-        }
-        throw new IllegalStateException("rootTask is not state machine task");
-    }
-
     /// <summary>
     /// 普通Update
     /// </summary>

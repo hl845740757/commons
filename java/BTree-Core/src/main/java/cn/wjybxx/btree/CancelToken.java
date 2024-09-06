@@ -17,6 +17,7 @@
 package cn.wjybxx.btree;
 
 import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.collection.SmallArrayList;
 import cn.wjybxx.base.concurrent.CancelCodes;
 
 import java.util.ArrayList;
@@ -38,8 +39,8 @@ public class CancelToken implements ICancelTokenListener {
 
     /** 取消码 -- 0表示未收到信号 */
     private int code;
-    /** 监听器列表 -- 通知期间可能会被重用 */
-    private final List<ICancelTokenListener> listeners = new ArrayList<>();
+    /** 监听器列表 -- 通知期间可能会被重用 */ //
+    private final List<ICancelTokenListener> listeners = new SmallArrayList<>();
     /** 是否正在通知 -- 处理通知期间删除监听器问题 */
     private boolean firing = false;
     /** 用于检测复用 -- short应当足够 */
@@ -158,7 +159,7 @@ public class CancelToken implements ICancelTokenListener {
                 var listener = listeners.set(idx, TOMBSTONE); // 标记为删除，HasListener将返回false
                 try {
                     listener.onCancelRequested(cancelToken);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     Task.logger.info("listener caught exception", e);
                 }
                 // 在通知期间被Reset

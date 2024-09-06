@@ -554,7 +554,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 3.如果等待条件或事件的过程中需要响应超时，通常需要通过定时任务唤醒。
     /// 4.如果Task处于非运行状态，该属性在运行时被重置。
     /// 5.该属性对条件检查无效。
-    /// 6.为控制复杂度，暂不打算支持activeChanged事件。
     /// </summary>
     /// <param name="value"></param>
     public void SetActive(bool value) {
@@ -563,6 +562,16 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
         SetCtlBit(MASK_NOT_ACTIVE_SELF, !value); // 取反
         RefreshActiveInHierarchy();
+    }
+
+    /// <summary>
+    /// 当节点在层次结构中的Active状态发生变化时调用
+    /// 1.该方法只在Task处于运行状态下调用。
+    /// 2.该方法不应该产生状态迁移，即不应该使Task进入完成状态。
+    /// 3.该方法主要用于暂停关联的外部逻辑，如停止外部计时器。
+    /// 4.重写该方法通常应该重写enter方法，在enter方法中处理未激活的情况。
+    /// </summary>
+    protected virtual void OnActiveInHierarchyChanged() {
     }
 
     /// <summary>
@@ -575,6 +584,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
         SetCtlBit(MASK_NOT_ACTIVE_IN_HIERARCHY, !newState); // 取反
         if (status == TaskStatus.RUNNING) {
+            OnActiveInHierarchyChanged();
             VisitChildren(TaskVisitors.RefreshActive<T>(), this);
         }
     }
@@ -819,6 +829,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                     ctl |= MASK_REGISTERED_LISTENER;
                 }
             }
+            
             if ((initMask & TaskOverrides.MASK_ENTER) != 0) {
                 Enter(reentryId); // enter可能导致结束和取消信号
                 if (reentryId != this.reentryId) {
@@ -830,30 +841,28 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                 }
             }
             if (CheckSlowStart(ctl)) { // 需要使用最新的ctl(enter也可能修改ctl)
-                CheckFireRunningAndCancel(control, cancelToken);
+                if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
+                    control.OnChildRunning(this);
+                }
                 return;
             }
 
             Execute();
-            if (reentryId == this.reentryId) {
-                CheckFireRunningAndCancel(control, cancelToken);
+            if (reentryId != this.reentryId) {
+                return;
+            }
+            if (cancelToken.IsCancelling && IsAutoCheckCancel) {
+                SetCancelled();
+                return;
+            }
+            if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
+                control.OnChildRunning(this);
             }
         }
         finally {
             if (reentryId == this.reentryId) { // 否则可能清理掉递归任务的数据
                 ctl &= ~(MASK_ENTER_EXECUTE | MASK_EXECUTING);
             }
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void CheckFireRunningAndCancel(Task<T>? control, CancelToken cancelToken) {
-        if (cancelToken.IsCancelling && IsAutoCheckCancel) {
-            SetCancelled();
-            return;
-        }
-        if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
-            control.OnChildRunning(this);
         }
     }
 
@@ -947,7 +956,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             hook.SetGuardFailed(this, true);
         }
     }
-
 
     /// <summary>
     /// 执行被内联的子任务
