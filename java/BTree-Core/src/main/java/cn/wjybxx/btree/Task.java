@@ -870,15 +870,12 @@ public abstract class Task<T> implements ICancelTokenListener {
      */
     public final void template_execute(boolean isHeartbeat) {
         assert status == TaskStatus.RUNNING;
-        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && isHeartbeat) {
-            return; // 前者多为假，后者多为真
-        }
         if (cancelToken.isCancelling() && isAutoCheckCancel()) {
             setCancelled();
             return;
         }
         final int reentryId = this.reentryId;
-        if ((ctl & MASK_EXECUTING) != 0) { // 递归执行
+        if ((ctl & MASK_EXECUTING) != 0) { // 递归执行--事件调用
             execute();
             if (reentryId == this.reentryId && cancelToken.isCancelling() && isAutoCheckCancel()) {
                 setCancelled();
@@ -886,6 +883,9 @@ public abstract class Task<T> implements ICancelTokenListener {
             return;
         }
 
+        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && isHeartbeat) {
+            return; // 前者多为假，后者多为真
+        }
         ctl |= MASK_EXECUTING;
         try {
             execute();

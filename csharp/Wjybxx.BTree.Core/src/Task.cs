@@ -41,7 +41,7 @@ namespace Wjybxx.BTree
 /// <h3>关于泛型</h3>
 /// Task是泛型的，我的Dson库将支持泛型类的序列化；BTree.Codec中的编解码器由Dson库的注解处理器生成。
 /// (脚本在测试用例模块)
-/// 
+///
 /// <typeparam name="T">黑板的类型</typeparam>
 /// </summary>
 public abstract class Task<T> : ICancelTokenListener where T : class
@@ -137,6 +137,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 1.对任务进行标记是一个常见的需求，我们将其定义在顶层以简化使用
     /// 2.在运行期间不应该变动
     /// 3.高8位为流程控制特征值，会在任务运行前拷贝到ctl -- 以支持在编辑器导中指定Task的运行特征。
+    ///
+    /// ps：<see cref="TaskOptions"/>
     /// </summary>
     protected int flags;
 
@@ -585,7 +587,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         SetCtlBit(MASK_NOT_ACTIVE_IN_HIERARCHY, !newState); // 取反
         if (status == TaskStatus.RUNNING) {
             OnActiveInHierarchyChanged();
-            VisitChildren(TaskVisitors.RefreshActive<T>(), this);
+            VisitChildren(TaskVisitors.RefreshActive<T>(), null);
         }
     }
 
@@ -688,6 +690,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     }
 
     /** 当前是否是条件检查上下文 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsCheckingGuard() {
         return (ctl & MASK_CHECKING_GUARD) != 0;
     }
@@ -829,7 +832,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                     ctl |= MASK_REGISTERED_LISTENER;
                 }
             }
-            
+
             if ((initMask & TaskOverrides.MASK_ENTER) != 0) {
                 Enter(reentryId); // enter可能导致结束和取消信号
                 if (reentryId != this.reentryId) {
@@ -873,23 +876,22 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// <param name="isHeartbeat">是否是心跳触发</param>
     public void Template_Execute(bool isHeartbeat) {
         Debug.Assert(status == TaskStatus.RUNNING);
-        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && isHeartbeat) {
-            return; // 前者多为假，后者多为真
-        }
-
         if (cancelToken.IsCancelling && IsAutoCheckCancel) {
             SetCancelled();
             return;
         }
         int reentryId = this.reentryId;
-        if ((ctl & MASK_EXECUTING) != 0) { // 递归执行
+        if ((ctl & MASK_EXECUTING) != 0) { // 递归执行--事件调用
             Execute();
             if (reentryId == this.reentryId && cancelToken.IsCancelling && IsAutoCheckCancel) {
                 SetCancelled();
             }
             return;
         }
-
+        
+        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && isHeartbeat) {
+            return; // 前者多为假，后者多为真
+        }
         ctl |= MASK_EXECUTING;
         try {
             Execute();

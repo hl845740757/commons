@@ -23,7 +23,6 @@ namespace Wjybxx.BTree
 {
 /// <summary>
 /// 用于行为树记录日志
-/// (暂时选择了Serilog，C#也没标准的接口)
 /// </summary>
 public static class TaskLogger
 {

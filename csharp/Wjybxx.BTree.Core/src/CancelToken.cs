@@ -127,20 +127,18 @@ public class CancelToken : ICancelTokenListener
         }
         int reentryId = cancelToken.reentryId;
         cancelToken.firing = true;
-        {
-            for (int idx = 0; idx < listeners.Count; idx++) {
-                var listener = listeners[idx];
-                listeners[idx] = TOMBSTONE; // 标记为删除，HasListener将返回false
-                try {
-                    listener.OnCancelRequested(cancelToken);
-                }
-                catch (Exception e) {
-                    TaskLogger.Info(e, "listener caught exception");
-                }
-                // 在通知期间被Reset
-                if (reentryId != cancelToken.reentryId) {
-                    return;
-                }
+        for (int idx = 0; idx < listeners.Count; idx++) {
+            var listener = listeners[idx];
+            listeners[idx] = TOMBSTONE; // 标记为删除，HasListener将返回false
+            try {
+                listener.OnCancelRequested(cancelToken);
+            }
+            catch (Exception e) {
+                TaskLogger.Info(e, "listener caught exception");
+            }
+            // 在通知期间被Reset
+            if (reentryId != cancelToken.reentryId) {
+                return;
             }
         }
         listeners.Clear();

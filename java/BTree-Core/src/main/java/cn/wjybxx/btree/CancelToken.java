@@ -154,18 +154,16 @@ public class CancelToken implements ICancelTokenListener {
         }
         int reentryId = cancelToken.reentryId;
         cancelToken.firing = true;
-        {
-            for (var idx = 0; idx < listeners.size(); idx++) {
-                var listener = listeners.set(idx, TOMBSTONE); // 标记为删除，HasListener将返回false
-                try {
-                    listener.onCancelRequested(cancelToken);
-                } catch (Throwable e) {
-                    Task.logger.info("listener caught exception", e);
-                }
-                // 在通知期间被Reset
-                if (reentryId != cancelToken.reentryId) {
-                    return;
-                }
+        for (int idx = 0; idx < listeners.size(); idx++) {
+            var listener = listeners.set(idx, TOMBSTONE); // 标记为删除，HasListener将返回false
+            try {
+                listener.onCancelRequested(cancelToken);
+            } catch (Throwable e) {
+                Task.logger.info("listener caught exception", e);
+            }
+            // 在通知期间被Reset
+            if (reentryId != cancelToken.reentryId) {
+                return;
             }
         }
         listeners.clear();
@@ -183,7 +181,7 @@ public class CancelToken implements ICancelTokenListener {
         if (code != 0) {
             try {
                 listener.onCancelRequested(this);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 Task.logger.info("listener caught exception", e);
             }
         } else {
