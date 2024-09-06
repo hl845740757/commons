@@ -117,7 +117,6 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
     }
 
     protected override void StopRunningChildren() {
-        // 停止需要从上层开始
         Stop(runningChild);
     }
 

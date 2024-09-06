@@ -129,8 +129,57 @@ public class SingleRunningTest1
         {
             Guard = new SimpleRandom<Blackboard>(0.5f)
         });
+        
         BtreeTestUtil.untilCompleted(taskEntry);
-
         Assert.IsTrue(taskEntry.IsSucceeded);
+    }
+
+    [Test]
+    public void activeSelectorTest() {
+        ActiveSelector<Blackboard> branch = new ActiveSelector<Blackboard>();
+        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(branch);
+
+        branch.AddChild(new WaitFrame<Blackboard>
+        {
+            Required = 10,
+            Guard = new FailAtFrame<Blackboard>(1)
+        });
+        branch.AddChild(new WaitFrame<Blackboard>
+        {
+            Required = 10,
+            Guard = new FailAtFrame<Blackboard>(2)
+        });
+        branch.AddChild(new WaitFrame<Blackboard>
+        {
+            Required = 10,
+            Guard = new FailAtFrame<Blackboard>(100)
+        });
+        
+        BtreeTestUtil.untilCompleted(taskEntry);
+        Assert.IsTrue(taskEntry.IsSucceeded);
+        
+        Assert.IsTrue(branch.GetChild(0).IsCancelled);
+        Assert.IsTrue(branch.GetChild(1).IsCancelled);
+        Assert.IsTrue(branch.GetChild(2).IsSucceeded);
+    }
+    
+    private class FailAtFrame<T> : LeafTask<T> where T: class
+    {
+        private readonly int frame;
+
+        public FailAtFrame(int frame) {
+            this.frame = frame;
+        }
+
+        protected override void Execute() {
+            if (taskEntry.CurFrame >= frame) {
+                SetFailed(TaskStatus.ERROR);
+            } else {
+                SetSuccess();
+            }
+        }
+
+        protected override void OnEventImpl(object eventObj) {
+        }
     }
 }

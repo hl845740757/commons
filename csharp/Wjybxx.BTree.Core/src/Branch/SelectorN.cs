@@ -50,7 +50,13 @@ public class SelectorN<T> : SingleRunningChildBranch<T> where T : class
     }
 
     protected override void Enter(int reentryId) {
-        if (IsCheckingGuard()) {
+        if (required < 1) {
+            SetSuccess();
+        } else if (GetChildCount() == 0) {
+            SetFailed(TaskStatus.CHILDLESS);
+        } else if (CheckFailFast()) {
+            SetFailed(TaskStatus.INSUFFICIENT_CHILD);
+        } else if (IsCheckingGuard()) {
             // 条件检测性能优化
             for (int i = 0; i < children.Count; i++) {
                 Task<T> child = children[i];
@@ -60,14 +66,6 @@ public class SelectorN<T> : SingleRunningChildBranch<T> where T : class
                 }
             }
             SetFailed(TaskStatus.ERROR);
-            return;
-        }
-        if (required < 1) {
-            SetSuccess();
-        } else if (GetChildCount() == 0) {
-            SetFailed(TaskStatus.CHILDLESS);
-        } else if (CheckFailFast()) {
-            SetFailed(TaskStatus.INSUFFICIENT_CHILD);
         }
     }
 

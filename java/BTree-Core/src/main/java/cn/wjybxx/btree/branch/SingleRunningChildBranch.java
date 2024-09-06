@@ -117,7 +117,6 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
 
     @Override
     protected void stopRunningChildren() {
-        // 停止需要从上层开始
         Task.stop(runningChild);
     }
 

@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
+import javax.annotation.Nonnull;
+
 /**
  * @author wjybxx
  * date - 2023/11/26
@@ -120,4 +122,46 @@ public class SingleRunningTest1 {
 
         Assertions.assertTrue(taskEntry.isSucceeded());
     }
+
+    @Test
+    void activeSelectorTest() {
+        ActiveSelector<Blackboard> branch = new ActiveSelector<>();
+        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(branch);
+
+        branch.addChild(new WaitFrame<Blackboard>(10).setGuard(new FailAtFrame<>(1)));
+        branch.addChild(new WaitFrame<Blackboard>(10).setGuard(new FailAtFrame<>(2)));
+        branch.addChild(new WaitFrame<Blackboard>(10).setGuard(new FailAtFrame<>(100))); // 成功
+
+        BtreeTestUtil.untilCompleted(taskEntry);
+        Assertions.assertTrue(taskEntry.isSucceeded());
+
+        Assertions.assertTrue(branch.getChild(0).isCancelled());
+        Assertions.assertTrue(branch.getChild(1).isCancelled());
+        Assertions.assertTrue(branch.getChild(2).isSucceeded());
+    }
+
+    /** 在给定帧返回失败 */
+    private static class FailAtFrame<T> extends LeafTask<T> {
+
+        final int frame;
+
+        private FailAtFrame(int frame) {
+            this.frame = frame;
+        }
+
+        @Override
+        protected void execute() {
+            if (taskEntry.getCurFrame() >= frame) {
+                setFailed(TaskStatus.ERROR);
+            } else {
+                setSuccess();
+            }
+        }
+
+        @Override
+        protected void onEventImpl(@Nonnull Object event) {
+
+        }
+    }
+
 }

@@ -66,7 +66,7 @@ public abstract class Decorator<T> extends Task<T> {
 
     @Override
     protected void stopRunningChildren() {
-        Task.stop(child); // 停止需要从上层开始
+        Task.stop(child);
     }
 
     @Override
@@ -79,7 +79,7 @@ public abstract class Decorator<T> extends Task<T> {
         }
     }
 
-    /** 子类如果支持内联，则重写该方法 */
+    /** 子类如果支持内联，则重写该方法(超类不能安全内联) */
     @Override
     protected void onChildRunning(Task<T> child) {
 

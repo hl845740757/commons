@@ -51,30 +51,27 @@ public class ActiveSelector<T> extends SingleRunningChildBranch<T> {
             childIndex = idx;
             break;
         }
-
-        Task<T> runningChild = this.runningChild;
-        if (runningChild != null && runningChild != childToRun) {
-            runningChild.stop();
-            inlineHelper.stopInline(); // help gc
-            this.runningChild = null;
-            this.runningIndex = -1;
-        }
-
         if (childToRun == null) {
+            stop(this.runningChild); // 不清理index，允许退出后查询最后一次运行的child
             setFailed(TaskStatus.ERROR);
             return;
         }
 
+        Task<T> runningChild = this.runningChild;
         if (runningChild == childToRun) {
             Task<T> inlinedRunningChild = inlineHelper.getInlinedRunningChild();
             if (inlinedRunningChild != null) {
-                template_runInlinedChild(inlinedRunningChild, inlineHelper, childToRun);
-            } else if (childToRun.isRunning()) {
-                childToRun.template_execute(true);
+                template_runInlinedChild(inlinedRunningChild, inlineHelper, runningChild);
+            } else if (runningChild.isRunning()) {
+                runningChild.template_execute(true);
             } else {
-                template_startChild(childToRun, false);
+                template_startChild(runningChild, false);
             }
         } else {
+            if (runningChild != null) {
+                runningChild.stop();
+                inlineHelper.stopInline();
+            }
             this.runningChild = childToRun;
             this.runningIndex = childIndex;
             template_startChild(childToRun, false);

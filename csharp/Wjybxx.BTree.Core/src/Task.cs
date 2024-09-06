@@ -520,7 +520,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (guard != null) {
             guard.ResetForRestart();
         }
-        if (this != taskEntry) { // unsetControl
+        if (this != taskEntry) {
             UnsetControl();
         }
         status = 0;
@@ -813,43 +813,43 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
         int prevStatus = Math.Min(TaskStatus.MAX_PREV_STATUS, this.status);
         initMask |= (prevStatus << OFFSET_PREV_STATUS);
-        initMask |= (MASK_ENTER_EXECUTE | MASK_EXECUTING);
         ctl = initMask;
-
         status = TaskStatus.RUNNING; // 先更新为running状态，以避免执行过程中外部查询task的状态时仍处于上一次的结束status
         enterFrame = exitFrame = taskEntry.CurFrame;
         int reentryId = ++this.reentryId; // 和上次执行的exit分开
-        try {
-            if ((initMask & TaskOverrides.MASK_BEFORE_ENTER) != 0) {
-                BeforeEnter(); // 这里用户可能修改控制流标记
+        
+        if ((initMask & TaskOverrides.MASK_BEFORE_ENTER) != 0) {
+            BeforeEnter(); // 这里用户可能修改控制流标记
+        }
+        if ((ctl & MASK_BEFORE_ENTER_OPTIONS) != 0) {
+            if (IsAutoResetChildren) {
+                ResetChildrenForRestart();
             }
-            if ((ctl & MASK_BEFORE_ENTER_OPTIONS) != 0) {
-                if (IsAutoResetChildren) {
-                    ResetChildrenForRestart();
-                }
-                if (IsAutoListenCancel) {
-                    cancelToken.AddListener(this);
-                    ctl |= MASK_REGISTERED_LISTENER;
-                }
+            if (IsAutoListenCancel) {
+                cancelToken.AddListener(this);
+                ctl |= MASK_REGISTERED_LISTENER;
             }
+        }
 
-            if ((initMask & TaskOverrides.MASK_ENTER) != 0) {
-                Enter(reentryId); // enter可能导致结束和取消信号
-                if (reentryId != this.reentryId) {
-                    return;
-                }
-                if (cancelToken.IsCancelling && IsAutoCheckCancel) {
-                    SetCancelled();
-                    return;
-                }
-            }
-            if (CheckSlowStart(ctl)) { // 需要使用最新的ctl(enter也可能修改ctl)
-                if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
-                    control.OnChildRunning(this);
-                }
+        if ((initMask & TaskOverrides.MASK_ENTER) != 0) {
+            Enter(reentryId); // enter可能导致结束和取消信号
+            if (reentryId != this.reentryId) {
                 return;
             }
+            if (cancelToken.IsCancelling && IsAutoCheckCancel) {
+                SetCancelled();
+                return;
+            }
+        }
+        if (CheckSlowStart(ctl)) { // 需要使用最新的ctl(enter也可能修改ctl)
+            if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
+                control.OnChildRunning(this);
+            }
+            return;
+        }
 
+        ctl |= (MASK_ENTER_EXECUTE | MASK_EXECUTING);
+        try {
             Execute();
             if (reentryId != this.reentryId) {
                 return;
@@ -873,24 +873,25 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// execute模板方法
     /// (通过参数的方式，有助于我们统一代码，也简化子类实现；同时避免遗漏)
     /// </summary>
-    /// <param name="isHeartbeat">是否是心跳触发</param>
-    public void Template_Execute(bool isHeartbeat) {
+    /// <param name="fromControl">是否由父节点调用</param>
+    public void Template_Execute(bool fromControl) {
         Debug.Assert(status == TaskStatus.RUNNING);
         if (cancelToken.IsCancelling && IsAutoCheckCancel) {
             SetCancelled();
             return;
         }
+        // 事件驱动下无法精确判断是否是心跳走到这里，因此只要处于非激活状态就拒绝父节点请求(装死)
+        if (fromControl && (ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
+            return;
+        }
+
         int reentryId = this.reentryId;
-        if ((ctl & MASK_EXECUTING) != 0) { // 递归执行--事件调用
+        if ((ctl & MASK_EXECUTING) != 0) { // 递归执行
             Execute();
             if (reentryId == this.reentryId && cancelToken.IsCancelling && IsAutoCheckCancel) {
                 SetCancelled();
             }
             return;
-        }
-        
-        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0 && isHeartbeat) {
-            return; // 前者多为假，后者多为真
         }
         ctl |= MASK_EXECUTING;
         try {

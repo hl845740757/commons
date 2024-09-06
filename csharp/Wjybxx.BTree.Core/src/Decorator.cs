@@ -67,7 +67,7 @@ public abstract class Decorator<T> : Task<T> where T : class
     }
 
     protected override void StopRunningChildren() {
-        Stop(child); // 停止需要从上层开始
+        Stop(child);
     }
 
     protected override void OnEventImpl(object eventObj) {
@@ -79,7 +79,7 @@ public abstract class Decorator<T> : Task<T> where T : class
         }
     }
 
-    /** 子类如果支持内联，则重写该方法 */
+    /** 子类如果支持内联，则重写该方法(超类不能安全内联) */
     protected override void OnChildRunning(Task<T> child) {
     }
 

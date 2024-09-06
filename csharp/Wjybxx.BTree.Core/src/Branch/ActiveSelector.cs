@@ -48,29 +48,27 @@ public class ActiveSelector<T> : SingleRunningChildBranch<T> where T : class
             break;
         }
 
-        Task<T>? runningChild = this.runningChild;
-        if (runningChild != null && runningChild != childToRun) {
-            runningChild.Stop();
-            inlineHelper.StopInline();
-            this.runningChild = null;
-            this.runningIndex = -1;
-        }
-
         if (childToRun == null) {
+            Stop(this.runningChild); // 不清理index，允许退出后查询最后一次运行的child
             SetFailed(TaskStatus.ERROR);
             return;
         }
 
+        Task<T> runningChild = this.runningChild;
         if (runningChild == childToRun) {
             Task<T> inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
             if (inlinedRunningChild != null) {
-                Template_RunInlinedChild(inlinedRunningChild, inlineHelper, childToRun);
-            } else if (childToRun.IsRunning) {
-                childToRun.Template_Execute(true);
+                Template_RunInlinedChild(inlinedRunningChild, inlineHelper, runningChild);
+            } else if (runningChild.IsRunning) {
+                runningChild.Template_Execute(true);
             } else {
-                Template_StartChild(childToRun, false);
+                Template_StartChild(runningChild, false);
             }
         } else {
+            if (runningChild != null) {
+                runningChild.Stop();
+                inlineHelper.StopInline();
+            }
             this.runningChild = childToRun;
             this.runningIndex = childIndex;
             Template_StartChild(childToRun, false);

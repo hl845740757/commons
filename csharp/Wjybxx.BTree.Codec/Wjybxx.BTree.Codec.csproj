@@ -8,7 +8,7 @@
 
         <AssemblyName>Wjybxx.BTree.Codec</AssemblyName>
         <PackageId>Wjybxx.BTree.Codec</PackageId>
-        <PackageVersion>1.2.0</PackageVersion>
+        <PackageVersion>1.2.1</PackageVersion>
 
         <Title>Wjybxx.BTree.Codec</Title>
         <Description>行为树Codec包</Description>

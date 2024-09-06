@@ -20,7 +20,6 @@ import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.base.collection.SmallArrayList;
 import cn.wjybxx.base.concurrent.CancelCodes;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
