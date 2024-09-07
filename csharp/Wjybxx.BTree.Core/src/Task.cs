@@ -575,7 +575,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// <summary>
     /// 刷新Task在层次结构中的active状态
     /// </summary>
-    internal void RefreshActiveInHierarchy() {
+    public void RefreshActiveInHierarchy() {
         bool newState = IsActiveSelf && (control == null || control.IsActiveInHierarchy);
         if (newState == IsActiveInHierarchy) {
             return;
@@ -851,6 +851,42 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
     }
 
+    /// <summary>
+    /// 被内联子节点的execute模板方法
+    /// </summary>
+    /// <param name="helper">存储被内联子节点的对象</param>
+    /// <param name="source">被内联前的Task</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Template_ExecuteInlined(TaskInlineHelper<T> helper, Task<T> source) {
+        Debug.Assert(status == TaskStatus.RUNNING);
+        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
+            return;
+        }
+        int sourceReentryId = source.reentryId;
+        int reentryId = this.reentryId;
+        // 内联template_execute逻辑
+        {
+            if (cancelToken.IsCancelling && IsAutoCheckCancel) {
+                SetCancelled();
+                goto outer;
+            }
+            Execute();
+            if (reentryId != this.reentryId) {
+                goto outer;
+            }
+            if (cancelToken.IsCancelling && IsAutoCheckCancel) {
+                SetCancelled();
+            }
+        }
+        outer:
+        {
+            // 如果被内联子节点退出，而源任务未退出，则重新内联(source可能自身进行了新的内联)
+            if (reentryId != this.reentryId && sourceReentryId == source.reentryId && helper.GetInlinedChild() == null) {
+                helper.InlineChild(source);
+            }
+        }
+    }
+
     private void Template_Exit() {
         if ((ctl & MASK_REGISTERED_LISTENER) != 0) {
             cancelToken.RemListener(this);
@@ -871,7 +907,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// <param name="checkGuard">是否检查子节点的前置条件</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Template_StartChild(Task<T> child, bool checkGuard) {
-        Debug.Assert(IsReady(), "Task is not ready");
         if (!checkGuard || child.guard == null || Template_CheckGuard(child.guard)) {
             int initMask = (ctl & MASK_CHECKING_GUARD) == 0 ? 0 : MASK_GUARD_BASE_OPTIONS;
             child.Template_Start(this, initMask);
@@ -884,35 +919,19 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 启动钩子节点
     /// 1.钩子任务不会触发<see cref="OnChildRunning"/>和<see cref="OnChildCompleted"/>
     /// 2.前置条件其实是特殊的钩子任务
-    /// 3.条件分支不应该有钩子任务
+    /// 3.条件分支通常不应该有钩子任务
     /// </summary>
     /// <param name="hook">钩子任务，或不需要接收事件通知的子节点</param>
     /// <param name="checkGuard">是否检查子节点的前置条件</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Template_StartHook(Task<T> hook, bool checkGuard) {
-        Debug.Assert(IsReady(), "Task is not ready");
         if (!checkGuard || hook.guard == null || Template_CheckGuard(hook.guard)) {
-            hook.Template_Start(this, MASK_DISABLE_NOTIFY);
+            int initMask = (ctl & MASK_CHECKING_GUARD) == 0
+                ? MASK_DISABLE_NOTIFY
+                : MASK_DISABLE_NOTIFY | MASK_GUARD_BASE_OPTIONS;
+            hook.Template_Start(this, initMask);
         } else {
             hook.SetGuardFailed(this, true);
-        }
-    }
-
-    /// <summary>
-    /// 执行被内联的子任务
-    /// </summary>
-    /// <param name="inlinedChild">被内联的子节点(可以是钩子任务)</param>
-    /// <param name="helper">存储被内联子节点的对象</param>
-    /// <param name="runningChild">未被内联的子节点，直接子任务</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Template_RunInlinedChild(Task<T> inlinedChild, TaskInlineHelper<T> helper, Task<T> runningChild) {
-        int runningChildReentryId = runningChild.ReentryId;
-        int inlinedChildReentryId = inlinedChild.ReentryId;
-
-        inlinedChild.Template_Execute(true);
-        // 如果被内联子节点退出，而直接子节点未退出，则重新内联
-        if (inlinedChild.ReentryId != inlinedChildReentryId && runningChild.ReentryId == runningChildReentryId) {
-            helper.InlineChild(runningChild);
         }
     }
 
@@ -929,7 +948,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// <param name="guard">前置条件；可以是子节点的guard属性，也可以是条件子节点，也可以是外部的条件节点</param>
     /// <returns></returns>
     public bool Template_CheckGuard(Task<T>? guard) {
-        Debug.Assert(IsReady(), "Task is not ready");
         if (guard == null) {
             return true;
         }
@@ -1137,9 +1155,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         get => (ctl & TaskOverrides.MASK_INLINABLE) != 0;
     }
 
-    /// <summary>
-    /// 任务的控制流标记
-    /// </summary>
+    /** 任务的控制流标记 */
     public int ControlFlowOptions => ctl & MASK_CONTROL_FLOW_OPTIONS;
 
     /** 将task上的临时控制标记写回到flags中 */
@@ -1149,7 +1165,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         flags |= controlFlowOptions;
     }
 
-    /** 设置子节点的取消令牌 */
+    /** 设置子节点的取消令牌 -- 会自动传播取消信号 */
     public void SetChildCancelToken(Task<T> child, CancelToken? childCancelToken) {
         if (childCancelToken != null && childCancelToken != cancelToken) {
             cancelToken.AddListener(childCancelToken);
@@ -1183,17 +1199,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
     }
 
-    /** 测试Task是否处于可执行状态 -- 该测试并不完全，仅用于简单的断言 */
-    private bool IsReady() {
-        if (IsRunning) {
-            return true;
-        }
-        if (this == taskEntry) {
-            return taskEntry.IsInited();
-        }
-        return taskEntry != null && control != null && blackboard != null && cancelToken != null;
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SetCtlBit(int mask, bool enable) {
         if (enable) {
@@ -1201,11 +1206,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         } else {
             ctl &= ~mask;
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool GetCtlBit(int mask) {
-        return (ctl & mask) != 0;
     }
 
     #endregion

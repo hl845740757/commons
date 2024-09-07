@@ -64,9 +64,9 @@ public class JoinMain<T> implements JoinPolicy<T> {
         Task<T> mainTask = join.getFirstChild();
         ParallelChildHelper<T> childHelper = Parallel.getChildHelper(mainTask);
 
-        Task<T> inlinedRunningChild = childHelper.getInlinedRunningChild();
-        if (inlinedRunningChild != null) {
-            inlinedRunningChild.onEvent(event);
+        Task<T> inlinedChild = childHelper.getInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.onEvent(event);
         } else {
             mainTask.onEvent(event);
         }

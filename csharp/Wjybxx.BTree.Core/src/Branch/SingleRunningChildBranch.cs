@@ -55,22 +55,9 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
     #region open
 
     /** 允许外部在结束后查询 */
-    public int GetRunningIndex() {
-        return runningIndex;
-    }
-
+    public int RunningIndex => runningIndex;
     /** 获取运行中的子节点 */
-    public Task<T>? GetRunningChild() {
-        return runningChild;
-    }
-
-    public TaskInlineHelper<T> GetInlineHelper() {
-        return inlineHelper;
-    }
-
-    public int GetCompletedCount() {
-        return runningIndex + 1;
-    }
+    public Task<T>? RunningChild => runningChild;
 
     /** 是否所有子节点已进入完成状态 */
     public bool IsAllChildCompleted => runningIndex + 1 >= children.Count;
@@ -89,6 +76,10 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
             }
             return r;
         }
+    }
+
+    public TaskInlineHelper<T> GetInlineHelper() {
+        return inlineHelper;
     }
 
     #endregion
@@ -121,7 +112,7 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
     }
 
     protected override void OnEventImpl(object eventObj) {
-        Task<T>? inlinedChild = inlineHelper.GetInlinedRunningChild();
+        Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
         if (inlinedChild != null) {
             inlinedChild.OnEvent(eventObj);
         } else if (runningChild != null) {
@@ -135,9 +126,9 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
             this.runningChild = runningChild = NextChild();
             Template_StartChild(runningChild, true);
         } else {
-            Task<T>? inlinedChild = inlineHelper.GetInlinedRunningChild();
+            Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
             if (inlinedChild != null) {
-                Template_RunInlinedChild(inlinedChild, inlineHelper, runningChild);
+                inlinedChild.Template_ExecuteInlined(inlineHelper, runningChild);
             } else if (runningChild.IsRunning) {
                 runningChild.Template_Execute(true);
             } else {

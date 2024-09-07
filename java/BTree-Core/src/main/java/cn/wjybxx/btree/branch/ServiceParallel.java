@@ -49,9 +49,9 @@ public class ServiceParallel<T> extends Parallel<T> {
         for (int idx = 0; idx < children.size(); idx++) {
             Task<T> child = children.get(idx);
             ParallelChildHelper<T> childHelper = getChildHelper(child);
-            Task<T> inlinedRunningChild = childHelper.getInlinedRunningChild();
-            if (inlinedRunningChild != null) {
-                template_runInlinedChild(inlinedRunningChild, childHelper, child);
+            Task<T> inlinedChild = childHelper.getInlinedChild();
+            if (inlinedChild != null) {
+                inlinedChild.template_executeInlined(childHelper, child);
             } else if (child.isRunning()) {
                 child.template_execute(true);
             } else {
@@ -82,9 +82,9 @@ public class ServiceParallel<T> extends Parallel<T> {
         Task<T> mainTask = children.get(0);
         ParallelChildHelper<T> childHelper = getChildHelper(mainTask);
 
-        Task<T> inlinedRunningChild = childHelper.getInlinedRunningChild();
-        if (inlinedRunningChild != null) {
-            inlinedRunningChild.onEvent(event);
+        Task<T> inlinedChild = childHelper.getInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.onEvent(event);
         } else {
             mainTask.onEvent(event);
         }

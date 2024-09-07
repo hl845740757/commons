@@ -104,10 +104,10 @@ public class SingleRunningTest1
         });
         BtreeTestUtil.untilCompleted(taskEntry);
 
-        if (branch.GetRunningIndex() < 0) {
+        if (branch.RunningIndex < 0) {
             Assert.IsTrue(taskEntry.IsFailed);
         } else {
-            Task<Blackboard> runChild = branch.GetChild(branch.GetRunningIndex());
+            Task<Blackboard> runChild = branch.GetChild(branch.RunningIndex);
             Assert.AreEqual(taskEntry.Status, runChild.Status);
         }
     }

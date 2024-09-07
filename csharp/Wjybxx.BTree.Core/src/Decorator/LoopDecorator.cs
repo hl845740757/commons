@@ -44,9 +44,9 @@ public abstract class LoopDecorator<T> : Decorator<T> where T : class
     }
 
     protected override void Execute() {
-        Task<T>? inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
-        if (inlinedRunningChild != null) {
-            Template_RunInlinedChild(inlinedRunningChild, inlineHelper, child);
+        Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.Template_ExecuteInlined(inlineHelper, child);
         } else if (child.IsRunning) {
             child.Template_Execute(true);
         } else {

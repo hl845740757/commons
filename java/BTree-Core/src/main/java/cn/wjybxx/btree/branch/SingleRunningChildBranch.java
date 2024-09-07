@@ -15,6 +15,7 @@
  */
 package cn.wjybxx.btree.branch;
 
+import cn.wjybxx.base.annotation.Internal;
 import cn.wjybxx.btree.BranchTask;
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.TaskInlineHelper;
@@ -65,10 +66,6 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
         return runningChild;
     }
 
-    public final TaskInlineHelper<T> getInlineHelper() {
-        return inlineHelper;
-    }
-
     /** 是否所有子节点已进入完成状态 */
     public boolean isAllChildCompleted() {
         return runningIndex + 1 >= children.size();
@@ -88,6 +85,9 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
         return r;
     }
 
+    public final TaskInlineHelper<T> getInlineHelper() {
+        return inlineHelper;
+    }
     // endregion
 
     // region logic
@@ -122,7 +122,7 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
 
     @Override
     protected void onEventImpl(@Nonnull Object event) {
-        Task<T> inlinedChild = inlineHelper.getInlinedRunningChild();
+        Task<T> inlinedChild = inlineHelper.getInlinedChild();
         if (inlinedChild != null) {
             inlinedChild.onEvent(event);
         } else if (runningChild != null) {
@@ -137,9 +137,9 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
             this.runningChild = runningChild = nextChild();
             template_startChild(runningChild, true);
         } else {
-            Task<T> inlinedChild = inlineHelper.getInlinedRunningChild();
+            Task<T> inlinedChild = inlineHelper.getInlinedChild();
             if (inlinedChild != null) {
-                template_runInlinedChild(inlinedChild, inlineHelper, runningChild);
+                inlinedChild.template_executeInlined(inlineHelper, runningChild);
             } else if (runningChild.isRunning()) {
                 runningChild.template_execute(true);
             } else {

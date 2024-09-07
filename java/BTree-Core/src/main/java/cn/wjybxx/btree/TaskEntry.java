@@ -158,9 +158,9 @@ public class TaskEntry<T> extends Task<T> {
     public void updateInlined(int curFrame) {
         this.curFrame = curFrame;
         if (isRunning()) {
-            Task<T> inlinedRunningChild = inlineHelper.getInlinedRunningChild();
-            if (inlinedRunningChild != null) {
-                template_runInlinedChild(inlinedRunningChild, inlineHelper, rootTask);
+            Task<T> inlinedChild = inlineHelper.getInlinedChild();
+            if (inlinedChild != null) {
+                inlinedChild.template_executeInlined(inlineHelper, rootTask);
             } else if (rootTask.isRunning()) {
                 rootTask.template_execute(true);
             } else {
@@ -181,9 +181,9 @@ public class TaskEntry<T> extends Task<T> {
 
     @Override
     protected void execute() {
-        Task<T> inlinedRunningChild = inlineHelper.getInlinedRunningChild();
-        if (inlinedRunningChild != null) {
-            template_runInlinedChild(inlinedRunningChild, inlineHelper, rootTask);
+        Task<T> inlinedChild = inlineHelper.getInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.template_executeInlined(inlineHelper, rootTask);
         } else if (rootTask.isRunning()) {
             rootTask.template_execute(true);
         } else {
@@ -214,9 +214,9 @@ public class TaskEntry<T> extends Task<T> {
 
     @Override
     protected void onEventImpl(@Nonnull Object event) {
-        Task<T> inlinedRunningChild = inlineHelper.getInlinedRunningChild();
-        if (inlinedRunningChild != null) {
-            inlinedRunningChild.onEvent(event);
+        Task<T> inlinedChild = inlineHelper.getInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.onEvent(event);
         } else if (rootTask != null) {
             rootTask.onEvent(event);
         }

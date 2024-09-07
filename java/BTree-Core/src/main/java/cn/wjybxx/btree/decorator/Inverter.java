@@ -52,9 +52,9 @@ public class Inverter<T> extends Decorator<T> {
 
     @Override
     protected void execute() {
-        Task<T> inlinedRunningChild = inlineHelper.getInlinedRunningChild();
-        if (inlinedRunningChild != null) {
-            template_runInlinedChild(inlinedRunningChild, inlineHelper, child);
+        Task<T> inlinedChild = inlineHelper.getInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.template_executeInlined(inlineHelper, child);
         } else if (child.isRunning()) {
             child.template_execute(true);
         } else {

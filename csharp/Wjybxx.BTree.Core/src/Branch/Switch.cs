@@ -53,9 +53,9 @@ public class Switch<T> : SingleRunningChildBranch<T> where T : class
             runningChild = children[index];
         }
 
-        Task<T> inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
-        if (inlinedRunningChild != null) {
-            Template_RunInlinedChild(inlinedRunningChild, inlineHelper, runningChild);
+        Task<T> inlinedChild = inlineHelper.GetInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.Template_ExecuteInlined(inlineHelper, runningChild);
         } else if (runningChild.IsRunning) {
             runningChild.Template_Execute(true);
         } else {

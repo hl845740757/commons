@@ -200,9 +200,9 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         }
 
         // 继续运行或新状态enter；在尾部才能保证安全
-        Task<T>? inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
-        if (inlinedRunningChild != null) {
-            Template_RunInlinedChild(inlinedRunningChild, inlineHelper, curState);
+        Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.Template_ExecuteInlined(inlineHelper, curState);
         } else if (curState.IsRunning) {
             curState.Template_Execute(true);
         } else {

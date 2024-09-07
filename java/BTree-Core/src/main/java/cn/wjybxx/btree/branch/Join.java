@@ -83,9 +83,9 @@ public class Join<T> extends Parallel<T> {
             } else {
                 setChildCancelToken(child, childHelper.cancelToken); // 运行前赋值
             }
-            Task<T> inlinedRunningChild = childHelper.getInlinedRunningChild();
-            if (inlinedRunningChild != null) {
-                template_runInlinedChild(inlinedRunningChild, childHelper, child);
+            Task<T> inlinedChild = childHelper.getInlinedChild();
+            if (inlinedChild != null) {
+                inlinedChild.template_executeInlined(childHelper, child);
             } else if (child.isRunning()) {
                 child.template_execute(true);
             } else {

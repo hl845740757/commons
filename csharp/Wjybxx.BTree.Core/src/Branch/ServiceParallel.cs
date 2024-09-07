@@ -44,9 +44,9 @@ public class ServiceParallel<T> : Parallel<T> where T : class
         for (int idx = 0; idx < children.Count; idx++) {
             Task<T> child = children[idx];
             ParallelChildHelper<T> helper = GetChildHelper(child);
-            Task<T> inlinedRunningChild = helper.GetInlinedRunningChild();
-            if (inlinedRunningChild != null) {
-                Template_RunInlinedChild(inlinedRunningChild, helper, child);
+            Task<T> inlinedChild = helper.GetInlinedChild();
+            if (inlinedChild != null) {
+                inlinedChild.Template_ExecuteInlined(helper, child);
             } else if (child.IsRunning) {
                 child.Template_Execute(true);
             } else {
@@ -69,9 +69,9 @@ public class ServiceParallel<T> : Parallel<T> where T : class
         Task<T> mainTask = children[0];
         ParallelChildHelper<T> childHelper = GetChildHelper(mainTask);
 
-        Task<T> inlinedRunningChild = childHelper.GetInlinedRunningChild();
-        if (inlinedRunningChild != null) {
-            inlinedRunningChild.OnEvent(eventObj);
+        Task<T> inlinedChild = childHelper.GetInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.OnEvent(eventObj);
         } else {
             mainTask.OnEvent(eventObj);
         }

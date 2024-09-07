@@ -71,7 +71,7 @@ public abstract class Decorator<T> : Task<T> where T : class
     }
 
     protected override void OnEventImpl(object eventObj) {
-        Task<T>? inlinedChild = inlineHelper.GetInlinedRunningChild();
+        Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
         if (inlinedChild != null) {
             inlinedChild.OnEvent(eventObj);
         } else if (child != null) {

@@ -71,7 +71,7 @@ public abstract class Decorator<T> extends Task<T> {
 
     @Override
     protected void onEventImpl(@Nonnull Object event) {
-        Task<T> inlinedChild = inlineHelper.getInlinedRunningChild();
+        Task<T> inlinedChild = inlineHelper.getInlinedChild();
         if (inlinedChild != null) {
             inlinedChild.onEvent(event);
         } else if (child != null) {

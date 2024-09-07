@@ -148,9 +148,9 @@ public class TaskEntry<T> : Task<T> where T : class
     public void UpdateInlined(int curFrame) {
         this.curFrame = curFrame;
         if (IsRunning) {
-            Task<T>? inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
-            if (inlinedRunningChild != null) {
-                Template_RunInlinedChild(inlinedRunningChild, inlineHelper, rootTask!);
+            Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
+            if (inlinedChild != null) {
+                inlinedChild.Template_ExecuteInlined(inlineHelper, rootTask!);
             } else if (rootTask!.IsRunning) {
                 rootTask.Template_Execute(true);
             } else {
@@ -170,9 +170,9 @@ public class TaskEntry<T> : Task<T> where T : class
     }
 
     protected override void Execute() {
-        Task<T>? inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
-        if (inlinedRunningChild != null) {
-            Template_RunInlinedChild(inlinedRunningChild, inlineHelper, rootTask!);
+        Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.Template_ExecuteInlined(inlineHelper, rootTask!);
         } else if (rootTask!.IsRunning) {
             rootTask.Template_Execute(true);
         } else {
@@ -199,9 +199,9 @@ public class TaskEntry<T> : Task<T> where T : class
     }
 
     protected override void OnEventImpl(object eventObj) {
-        Task<T>? inlinedRunningChild = inlineHelper.GetInlinedRunningChild();
-        if (inlinedRunningChild != null) {
-            inlinedRunningChild.OnEvent(eventObj);
+        Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.OnEvent(eventObj);
         } else if (rootTask != null) {
             rootTask.OnEvent(eventObj);
         }

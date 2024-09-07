@@ -90,7 +90,7 @@ public class SelectorN<T> : SingleRunningChildBranch<T> where T : class
     }
 
     private bool CheckFailFast() {
-        return failFast && (children.Count - GetCompletedCount() < required - count);
+        return failFast && (children.Count - CompletedCount < required - count);
     }
 
     /** 需要达成的次数 */

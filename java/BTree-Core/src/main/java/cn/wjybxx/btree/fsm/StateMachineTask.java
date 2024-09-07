@@ -202,9 +202,9 @@ public class StateMachineTask<T> extends Decorator<T> {
         }
 
         // 继续运行或新状态enter；在尾部才能保证安全
-        Task<T> inlinedRunningChild = inlineHelper.getInlinedRunningChild();
-        if (inlinedRunningChild != null) {
-            template_runInlinedChild(inlinedRunningChild, inlineHelper, curState);
+        Task<T> inlinedChild = inlineHelper.getInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.template_executeInlined(inlineHelper, curState);
         } else if (curState.isRunning()) {
             curState.template_execute(true);
         } else {

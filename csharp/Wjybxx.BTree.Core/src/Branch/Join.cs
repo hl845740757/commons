@@ -79,9 +79,9 @@ public class Join<T> : Parallel<T> where T : class
             } else {
                 SetChildCancelToken(child, childHelper.cancelToken); // 运行前赋值
             }
-            Task<T>? inlinedRunningChild = childHelper.GetInlinedRunningChild();
-            if (inlinedRunningChild != null) {
-                Template_RunInlinedChild(inlinedRunningChild, childHelper, child);
+            Task<T>? inlinedChild = childHelper.GetInlinedChild();
+            if (inlinedChild != null) {
+                inlinedChild.Template_ExecuteInlined(childHelper, child);
             } else if (child.IsRunning) {
                 child.Template_Execute(true);
             } else {

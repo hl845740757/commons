@@ -59,9 +59,9 @@ public class ActiveSelector<T> extends SingleRunningChildBranch<T> {
 
         Task<T> runningChild = this.runningChild;
         if (runningChild == childToRun) {
-            Task<T> inlinedRunningChild = inlineHelper.getInlinedRunningChild();
-            if (inlinedRunningChild != null) {
-                template_runInlinedChild(inlinedRunningChild, inlineHelper, runningChild);
+            Task<T> inlinedChild = inlineHelper.getInlinedChild();
+            if (inlinedChild != null) {
+                inlinedChild.template_executeInlined(inlineHelper, runningChild);
             } else if (runningChild.isRunning()) {
                 runningChild.template_execute(true);
             } else {
