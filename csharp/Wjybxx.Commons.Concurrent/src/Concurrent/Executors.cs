@@ -320,7 +320,7 @@ public static class Executors
         public int Options => options;
 
         public void Run() {
-            if (cancelToken.IsCancelling) {
+            if (cancelToken.IsCancelRequested) {
                 return;
             }
             action();
@@ -342,7 +342,7 @@ public static class Executors
         public int Options => options;
 
         public void Run() {
-            if (context.CancelToken.IsCancelling) {
+            if (context.CancelToken.IsCancelRequested) {
                 return;
             }
             action(context);

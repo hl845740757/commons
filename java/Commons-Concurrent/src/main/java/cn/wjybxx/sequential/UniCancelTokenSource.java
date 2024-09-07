@@ -178,7 +178,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     }
 
     @Override
-    public boolean isCancelling() {
+    public boolean IsCancelRequested() {
         return code != 0;
     }
 
@@ -240,7 +240,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     private IRegistration uniAccept(Executor executor, Consumer<? super ICancelToken> action,
                                     int options) {
         Objects.requireNonNull(action);
-        if (isCancelling() && executor == null) {
+        if (IsCancelRequested() && executor == null) {
             UniAccept.fireNow(this, action);
             return TOMBSTONE;
         }
@@ -277,7 +277,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     private IRegistration uniAcceptCtx(Executor executor, BiConsumer<? super ICancelToken, Object> action,
                                        Object ctx, int options) {
         Objects.requireNonNull(action);
-        if (isCancelling() && executor == null) {
+        if (IsCancelRequested() && executor == null) {
             UniAcceptCtx.fireNow(this, action, ctx);
             return TOMBSTONE;
         }
@@ -313,7 +313,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     private IRegistration uniRun(Executor executor, Runnable action, int options) {
         Objects.requireNonNull(action);
-        if (isCancelling() && executor == null) {
+        if (IsCancelRequested() && executor == null) {
             UniRun.fireNow(action);
             return TOMBSTONE;
         }
@@ -349,7 +349,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     private IRegistration uniRunCtx(Executor executor, Consumer<Object> action, Object ctx, int options) {
         Objects.requireNonNull(action);
-        if (isCancelling() && executor == null) {
+        if (IsCancelRequested() && executor == null) {
             UniRunCtx.fireNow(action, ctx);
             return TOMBSTONE;
         }
@@ -384,7 +384,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
     }
 
     private IRegistration uniNotify(Executor executor, CancelTokenListener action, int options) {
-        if (isCancelling() && executor == null) {
+        if (IsCancelRequested() && executor == null) {
             UniNotify.fireNow(this, action);
             return TOMBSTONE;
         }
@@ -420,7 +420,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     private IRegistration uniTransferTo(Executor executor, ICancelTokenSource child, int options) {
         Objects.requireNonNull(child, "child");
-        if (isCancelling() && executor == null) {
+        if (IsCancelRequested() && executor == null) {
             UniTransferTo.fireNow(this, SYNC, child);
             return TOMBSTONE;
         }
@@ -473,7 +473,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
 
     /** @return 是否压栈成功 */
     private boolean pushCompletion(Completion newHead) {
-        if (isCancelling()) {
+        if (IsCancelRequested()) {
             newHead.tryFire(SYNC);
             return false;
         }
@@ -690,7 +690,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                if (!UniPromise.isCancelling(ctx, options)) {
+                if (!UniPromise.isCancelRequested(ctx, options)) {
                     action.accept(source, ctx);
                 }
             } catch (Throwable ex) {
@@ -773,7 +773,7 @@ public final class UniCancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                if (!UniPromise.isCancelling(ctx, options)) {
+                if (!UniPromise.isCancelRequested(ctx, options)) {
                     action.accept(ctx);
                 }
             } catch (Throwable ex) {

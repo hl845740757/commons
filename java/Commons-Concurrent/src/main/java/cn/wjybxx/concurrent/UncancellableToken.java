@@ -45,7 +45,7 @@ final class UncancellableToken implements ICancelToken {
     }
 
     @Override
-    public boolean isCancelling() {
+    public boolean IsCancelRequested() {
         return false;
     }
 

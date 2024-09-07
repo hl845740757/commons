@@ -100,9 +100,7 @@ public abstract class Decorator<T> : Task<T> where T : class
         return -1;
     }
 
-    public sealed override int GetChildCount() {
-        return child == null ? 0 : 1;
-    }
+    public override int ChildCount => child == null ? 0 : 1;
 
     public sealed override Task<T> GetChild(int index) {
         if (index == 0 && child != null) {

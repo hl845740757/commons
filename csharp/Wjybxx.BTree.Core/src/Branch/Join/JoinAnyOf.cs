@@ -38,7 +38,7 @@ public class JoinAnyOf<T> : JoinPolicy<T> where T : class
 
     public void Enter(Join<T> join) {
         // 不能成功，失败也不能
-        if (join.GetChildCount() == 0) {
+        if (join.ChildCount == 0) {
             TaskLogger.Info("JonAnyOf: children is empty");
         }
     }

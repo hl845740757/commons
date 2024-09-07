@@ -64,7 +64,7 @@ internal class BtreeTestUtil
     /** 需要注意！直接遍历子节点，可能统计到上次的执行结果 */
     public static int completedCount<T>(Task<T> ctrl) where T : class {
         int count = 0;
-        for (int i = 0; i < ctrl.GetChildCount(); i++) {
+        for (int i = 0; i < ctrl.ChildCount; i++) {
             if (ctrl.GetChild(i).IsCompleted) count++;
         }
         return count;
@@ -72,7 +72,7 @@ internal class BtreeTestUtil
 
     public static int succeededCount<T>(Task<T> ctrl) where T : class {
         int count = 0;
-        for (int i = 0; i < ctrl.GetChildCount(); i++) {
+        for (int i = 0; i < ctrl.ChildCount; i++) {
             if (ctrl.GetChild(i).IsSucceeded) count++;
         }
         return count;
@@ -80,7 +80,7 @@ internal class BtreeTestUtil
 
     public static int failedCount<T>(Task<T> ctrl) where T : class {
         int count = 0;
-        for (int i = 0; i < ctrl.GetChildCount(); i++) {
+        for (int i = 0; i < ctrl.ChildCount; i++) {
             if (ctrl.GetChild(i).IsFailed) count++;
         }
         return count;

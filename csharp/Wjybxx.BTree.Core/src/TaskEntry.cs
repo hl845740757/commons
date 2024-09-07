@@ -235,9 +235,7 @@ public class TaskEntry<T> : Task<T> where T : class
         return -1;
     }
 
-    public override int GetChildCount() {
-        return rootTask == null ? 0 : 1;
-    }
+    public override int ChildCount => rootTask == null ? 0 : 1;
 
     public override Task<T> GetChild(int index) {
         if (index == 0 && rootTask != null) {

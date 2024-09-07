@@ -102,9 +102,7 @@ public abstract class BranchTask<T> : Task<T> where T : class
         return CollectionUtil.IndexOfRef(children, task);
     }
 
-    public sealed override int GetChildCount() {
-        return children.Count;
-    }
+    public override int ChildCount => children.Count;
 
     public sealed override Task<T> GetChild(int index) {
         return children[index];

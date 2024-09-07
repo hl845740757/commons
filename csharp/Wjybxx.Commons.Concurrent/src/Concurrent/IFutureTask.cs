@@ -32,7 +32,7 @@ public interface IFutureTask : ITask
     /// 调度器会检查任务的取消信号，以避免不必要的执行。
     /// </summary>
     /// <returns></returns>
-    bool IsCancelling();
+    bool IsCancelRequested();
 
     /// <summary>
     /// 取消执行

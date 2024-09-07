@@ -52,7 +52,7 @@ public class SelectorN<T> : SingleRunningChildBranch<T> where T : class
     protected override void Enter(int reentryId) {
         if (required < 1) {
             SetSuccess();
-        } else if (GetChildCount() == 0) {
+        } else if (ChildCount == 0) {
             SetFailed(TaskStatus.CHILDLESS);
         } else if (CheckFailFast()) {
             SetFailed(TaskStatus.INSUFFICIENT_CHILD);

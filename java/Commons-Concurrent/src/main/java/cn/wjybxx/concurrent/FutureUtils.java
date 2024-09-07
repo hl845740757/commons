@@ -592,7 +592,7 @@ public class FutureUtils {
                 this.action = null;
                 this.cancelToken = null;
             }
-            if (cancelToken != null && cancelToken.isCancelling()) {
+            if (cancelToken != null && cancelToken.IsCancelRequested()) {
                 return; // 抛出异常没有意义，检测信号即可
             }
             action.run();
@@ -624,7 +624,7 @@ public class FutureUtils {
                 this.action = null;
                 this.ctx = null;
             }
-            if (ctx != null && ctx.cancelToken().isCancelling()) {
+            if (ctx != null && ctx.cancelToken().IsCancelRequested()) {
                 return; // 抛出异常没有意义，检测信号即可
             }
             action.accept(ctx);

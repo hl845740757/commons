@@ -570,7 +570,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         protected internal override AbstractPromise? TryFire(int mode) {
             Promise<T>? input = this.input;
             {
-                if (IsCancelling(state, options)) {
+                if (IsCancelRequested(state, options)) {
                     goto outer;
                 }
                 // 异步模式下已经claim

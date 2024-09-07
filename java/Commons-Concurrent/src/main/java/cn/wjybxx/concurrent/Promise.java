@@ -1257,15 +1257,15 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                 && eventLoop.inEventLoop();
     }
 
-    static boolean isCancelling(Object ctx, int options) {
+    static boolean isCancelRequested(Object ctx, int options) {
         if (ctx == null || TaskOptions.isEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
             return false;
         }
         if (ctx instanceof ICancelToken cancelToken) {
-            return cancelToken.isCancelling();
+            return cancelToken.IsCancelRequested();
         }
         if (ctx instanceof IContext ctx2) {
-            return ctx2.cancelToken().isCancelling();
+            return ctx2.cancelToken().IsCancelRequested();
         }
         return false;
     }
@@ -1649,7 +1649,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (ctx.cancelToken().isCancelling()) {
+                if (ctx.cancelToken().IsCancelRequested()) {
                     setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
@@ -1702,7 +1702,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (ctx.cancelToken().isCancelling()) {
+                if (ctx.cancelToken().IsCancelRequested()) {
                     setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
@@ -1757,7 +1757,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (ctx.cancelToken().isCancelling()) {
+                if (ctx.cancelToken().IsCancelRequested()) {
                     setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
@@ -1811,7 +1811,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (ctx.cancelToken().isCancelling()) {
+                if (ctx.cancelToken().IsCancelRequested()) {
                     setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
@@ -1869,7 +1869,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (ctx.cancelToken().isCancelling()) {
+                if (ctx.cancelToken().IsCancelRequested()) {
                     setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
@@ -1918,7 +1918,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (ctx.cancelToken().isCancelling()) {
+                if (ctx.cancelToken().IsCancelRequested()) {
                     setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
@@ -1968,7 +1968,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (ctx.cancelToken().isCancelling()) {
+                if (ctx.cancelToken().IsCancelRequested()) {
                     setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
@@ -2017,7 +2017,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (ctx.cancelToken().isCancelling()) {
+                if (ctx.cancelToken().IsCancelRequested()) {
                     setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
@@ -2069,7 +2069,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (ctx.cancelToken().isCancelling()) {
+                if (ctx.cancelToken().IsCancelRequested()) {
                     setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
@@ -2120,7 +2120,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (ctx.cancelToken().isCancelling()) {
+                if (ctx.cancelToken().IsCancelRequested()) {
                     setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
@@ -2172,7 +2172,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                if (ctx.cancelToken().isCancelling()) {
+                if (ctx.cancelToken().IsCancelRequested()) {
                     setCompleted = output.completeCancelled(ctx);
                     break tryComplete;
                 }
@@ -2301,7 +2301,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             final Promise<T> input = this.input;
             tryComplete:
             {
-                if (isCancelling(ctx, options)) {
+                if (isCancelRequested(ctx, options)) {
                     break tryComplete;
                 }
                 // 异步模式下已经claim

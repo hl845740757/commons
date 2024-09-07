@@ -53,7 +53,7 @@ public interface ICancelToken
     /// 任务的执行者将持有该令牌，在调度任务前会检测取消信号；如果任务已经开始，则由用户的任务自身检测取消和中断信号。
     /// </summary>
     /// <value></value>
-    bool IsCancelling => CancelCode != 0;
+    bool IsCancelRequested => CancelCode != 0;
 
     /**
      * 取消的原因

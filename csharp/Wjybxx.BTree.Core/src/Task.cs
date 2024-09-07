@@ -489,7 +489,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// </summary>
     protected virtual void StopRunningChildren() {
         // 停止child时默认逆序停止；一般而言都是后面的子节点依赖前面的子节点
-        for (int idx = GetChildCount() - 1; idx >= 0; idx--) {
+        for (int idx = ChildCount - 1; idx >= 0; idx--) {
             Task<T> child = GetChild(idx);
             if (child.status == TaskStatus.RUNNING) {
                 child.Stop();
@@ -610,7 +610,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (rid != this.reentryId) { // exit
             return true;
         }
-        if (cancelToken.IsCancelling) { // 这里是手动检查
+        if (cancelToken.IsCancelRequested) { // 这里是手动检查
             SetCancelled();
             return true;
         }
@@ -769,7 +769,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         ctl = initMask;
 
         CancelToken cancelToken = this.cancelToken;
-        if (cancelToken.IsCancelling) { // 胎死腹中
+        if (cancelToken.IsCancelRequested) { // 胎死腹中
             ReleaseContext();
             SetCompleted(TaskStatus.CANCELLED, false);
             return;
@@ -800,7 +800,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             if (reentryId != this.reentryId) {
                 return;
             }
-            if (cancelToken.IsCancelling && IsAutoCheckCancel) {
+            if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
                 SetCancelled();
                 return;
             }
@@ -816,7 +816,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (reentryId != this.reentryId) {
             return;
         }
-        if (cancelToken.IsCancelling && IsAutoCheckCancel) {
+        if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
             SetCancelled();
             return;
         }
@@ -837,7 +837,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             return;
         }
 
-        if (cancelToken.IsCancelling && IsAutoCheckCancel) {
+        if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
             SetCancelled();
             return;
         }
@@ -846,7 +846,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (reentryId != this.reentryId) {
             return;
         }
-        if (cancelToken.IsCancelling && IsAutoCheckCancel) {
+        if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
             SetCancelled();
         }
     }
@@ -866,7 +866,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         int reentryId = this.reentryId;
         // 内联template_execute逻辑
         {
-            if (cancelToken.IsCancelling && IsAutoCheckCancel) {
+            if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
                 SetCancelled();
                 goto outer;
             }
@@ -874,7 +874,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             if (reentryId != this.reentryId) {
                 goto outer;
             }
-            if (cancelToken.IsCancelling && IsAutoCheckCancel) {
+            if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
                 SetCancelled();
             }
         }
@@ -1111,14 +1111,14 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /** 删除所有的child -- 不是个常用方法 */
     public void RemoveAllChild() {
-        for (int idx = GetChildCount() - 1; idx >= 0; idx--) {
+        for (int idx = ChildCount - 1; idx >= 0; idx--) {
             RemoveChildImpl(idx).UnsetControl();
         }
     }
 
     /** @return index or -1 */
     public virtual int IndexChild(Task<T> task) {
-        for (int idx = GetChildCount() - 1; idx >= 0; idx--) {
+        for (int idx = ChildCount - 1; idx >= 0; idx--) {
             if (GetChild(idx) == task) {
                 return idx;
             }
@@ -1130,7 +1130,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     public abstract void VisitChildren(TaskVisitor<T> visitor, object param);
 
     /** 子节点的数量（仅包括普通意义上的child，不包括钩子任务） */
-    public abstract int GetChildCount();
+    public abstract int ChildCount { get; }
 
     /** 获取指定索引的child */
     public abstract Task<T> GetChild(int index);

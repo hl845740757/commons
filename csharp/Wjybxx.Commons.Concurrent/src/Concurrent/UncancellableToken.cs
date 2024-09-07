@@ -36,7 +36,7 @@ sealed class UncancellableToken : ICancelToken
 
     public int CancelCode => 0;
 
-    public bool IsCancelling => false;
+    public bool IsCancelRequested => false;
 
     public int Reason => 0;
 

@@ -244,7 +244,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         if (tickTime < nextTriggerTime) {
             // 未达触发时间时，显式测试一次取消
             ICancelToken cancelToken = getCancelToken();
-            if (cancelToken.isCancelling() || promise.isDone()) {
+            if (cancelToken.IsCancelRequested() || promise.isDone()) {
                 trySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
                 helper.onCompleted(this);
             } else {
@@ -279,7 +279,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         IPromise<V> promise = this.promise;
         ICancelToken cancelToken = getCancelToken();
         // 检测取消信号 -- 为兼容，还要检测来自future的取消，即isComputing...
-        if (cancelToken.isCancelling()) {
+        if (cancelToken.IsCancelRequested()) {
             trySetCancelled(promise, cancelToken);
             return false;
         }
@@ -316,7 +316,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
             FutureLogger.logCause(ex, "periodic task caught exception");
         }
         // 任务执行后检测取消
-        if (cancelToken.isCancelling() || !promise.isComputing()) {
+        if (cancelToken.IsCancelRequested() || !promise.isComputing()) {
             trySetCancelled(promise, cancelToken);
             return false;
         }

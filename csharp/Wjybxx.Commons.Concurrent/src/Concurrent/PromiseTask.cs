@@ -131,8 +131,8 @@ public class PromiseTask<T> : IFutureTask
     public int Options => options;
 
     /** 是否收到了取消信号 */
-    public bool IsCancelling() {
-        return promise.IsCompleted || GetCancelToken().IsCancelling;
+    public bool IsCancelRequested() {
+        return promise.IsCompleted || GetCancelToken().IsCancelRequested;
     }
 
     /** 设置为取消状态 */
@@ -227,7 +227,7 @@ public class PromiseTask<T> : IFutureTask
     public virtual void Run() {
         IPromise<T> promise = this.promise;
         ICancelToken cancelToken = GetCancelToken();
-        if (cancelToken.IsCancelling) {
+        if (cancelToken.IsCancelRequested) {
             TrySetCancelled(promise, cancelToken);
             return;
         }

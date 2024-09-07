@@ -36,6 +36,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <typeparam name="T"></typeparam>
 internal class ValuePromise<T> : IValuePromise<T>
 {
+#nullable disable
     /// <summary>
     /// 任务的结果
     /// </summary>
@@ -50,8 +51,8 @@ internal class ValuePromise<T> : IValuePromise<T>
     /// 5. 如果为<see cref="OperationCanceledException"/>，表示取消 -- 避免捕获堆栈。
     /// 6. 如果为<see cref="ExceptionDispatchInfo"/>，表示失败。
     /// </summary>
-    private volatile object? _ex;
-
+    private volatile object _ex;
+#nullable enable
     /// <summary>
     /// 重入id（归还到池和从池中取出时都加1）
     /// </summary>
@@ -353,7 +354,7 @@ internal class ValuePromise<T> : IValuePromise<T>
             throw new IllegalStateException("Task has not completed");
         }
 
-        T r = default;
+        T r = default!;
         Exception? ex = null;
         if (status == TaskStatus.Success) {
             r = ResultNow();
@@ -586,7 +587,7 @@ internal class ValuePromise<T> : IValuePromise<T>
         }
 
         public void TryFire(int mode) {
-            if (IsCancelling(state, options)) {
+            if (IsCancelRequested(state, options)) {
                 return;
             }
             // 异步模式下已经claim

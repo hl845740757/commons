@@ -34,7 +34,7 @@ public interface IFutureTask<V> extends ITask {
      * 是否收到了取消信号；
      * 调度器会检查任务的取消信号，以避免不必要的执行。
      */
-    boolean isCancelling();
+    boolean isCancelRequested();
 
     /**
      * 取消执行；

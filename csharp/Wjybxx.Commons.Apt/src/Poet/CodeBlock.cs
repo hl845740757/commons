@@ -311,13 +311,13 @@ public class CodeBlock
 
         #region 控制流
 
-        public Builder BeginControlFlow(string controlFlow, params object[] args) {
+        public Builder BeginControlFlow(string controlFlow, params object?[] args) {
             Add(controlFlow + " {\n", args);
             Indent();
             return this;
         }
 
-        public Builder NextControlFlow(string controlFlow, params object[] args) {
+        public Builder NextControlFlow(string controlFlow, params object?[] args) {
             Unindent();
             Add("} " + controlFlow + " {\n", args);
             Indent();
@@ -330,13 +330,13 @@ public class CodeBlock
             return this;
         }
 
-        public Builder EndControlFlow(string controlFlow, params object[] args) {
+        public Builder EndControlFlow(string controlFlow, params object?[] args) {
             Unindent();
             Add("} " + controlFlow + ";\n", args);
             return this;
         }
 
-        public Builder AddStatement(string format, params object[] args) {
+        public Builder AddStatement(string format, params object?[] args) {
             Add("$[");
             Add(format, args);
             Add(";\n$]");

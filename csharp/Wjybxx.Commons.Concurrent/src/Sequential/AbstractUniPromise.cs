@@ -202,15 +202,15 @@ public abstract class AbstractUniPromise
                && eventLoop.InEventLoop();
     }
 
-    protected internal static bool IsCancelling(object? ctx, int options) {
+    protected internal static bool IsCancelRequested(object? ctx, int options) {
         if (ctx == null || TaskOptions.IsEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
             return false;
         }
         if (ctx is ICancelToken cts) {
-            return cts.IsCancelling;
+            return cts.IsCancelRequested;
         }
         if (ctx is IContext ctx2) {
-            return ctx2.CancelToken.IsCancelling;
+            return ctx2.CancelToken.IsCancelRequested;
         }
         return false;
     }
@@ -324,7 +324,7 @@ public abstract class AbstractUniPromise
 
         protected internal override AbstractUniPromise? TryFire(int mode) {
             {
-                if (IsCancelling(state, options)) {
+                if (IsCancelRequested(state, options)) {
                     goto outer;
                 }
                 // 异步模式下已经claim

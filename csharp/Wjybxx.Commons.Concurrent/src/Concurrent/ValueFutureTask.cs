@@ -152,8 +152,8 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
     public int Options => options;
 
     /** 是否收到了取消信号 */
-    public bool IsCancelling() {
-        return IsCompleted || GetCancelToken().IsCancelling;
+    public bool IsCancelRequested() {
+        return IsCompleted || GetCancelToken().IsCancelRequested;
     }
 
     /** 设置为取消状态 */
@@ -223,7 +223,7 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
 
     public void Run() {
         ICancelToken cancelToken = GetCancelToken();
-        if (cancelToken.IsCancelling) {
+        if (cancelToken.IsCancelRequested) {
             Internal_TrySetCancelled(cancelToken.CancelCode);
             return;
         }

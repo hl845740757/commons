@@ -602,7 +602,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         if (rid != this.reentryId) { // exit
             return true;
         }
-        if (cancelToken.isCancelling()) { // 这里是手动检查
+        if (cancelToken.isCancelRequested()) { // 这里是手动检查
             setCancelled();
             return true;
         }
@@ -771,7 +771,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         ctl = initMask;
 
         final CancelToken cancelToken = this.cancelToken;
-        if (cancelToken.isCancelling()) { // 胎死腹中
+        if (cancelToken.isCancelRequested()) { // 胎死腹中
             releaseContext();
             setCompleted(TaskStatus.CANCELLED, false);
             return;
@@ -802,7 +802,7 @@ public abstract class Task<T> implements ICancelTokenListener {
             if (reentryId != this.reentryId) {
                 return;
             }
-            if (cancelToken.isCancelling() && isAutoCheckCancel()) {
+            if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
                 setCancelled();
                 return;
             }
@@ -818,7 +818,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         if (reentryId != this.reentryId) {
             return;
         }
-        if (cancelToken.isCancelling() && isAutoCheckCancel()) {
+        if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
             setCancelled();
             return;
         }
@@ -839,7 +839,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         if (fromControl && (ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
             return;
         }
-        if (cancelToken.isCancelling() && isAutoCheckCancel()) {
+        if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
             setCancelled();
             return;
         }
@@ -848,7 +848,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         if (reentryId != this.reentryId) {
             return;
         }
-        if (cancelToken.isCancelling() && isAutoCheckCancel()) {
+        if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
             setCancelled();
         }
     }
@@ -870,7 +870,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         // 内联template_execute逻辑
         outer:
         {
-            if (cancelToken.isCancelling() && isAutoCheckCancel()) {
+            if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
                 setCancelled();
                 break outer;
             }
@@ -878,7 +878,7 @@ public abstract class Task<T> implements ICancelTokenListener {
             if (reentryId != this.reentryId) {
                 break outer;
             }
-            if (cancelToken.isCancelling() && isAutoCheckCancel()) {
+            if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
                 setCancelled();
             }
         }

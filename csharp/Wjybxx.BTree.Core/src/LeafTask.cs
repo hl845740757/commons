@@ -47,9 +47,7 @@ public abstract class LeafTask<T> : Task<T> where T : class
         return -1;
     }
 
-    public sealed override int GetChildCount() {
-        return 0;
-    }
+    public override int ChildCount => 0;
 
     public sealed override Task<T> GetChild(int index) {
         throw new IndexOutOfRangeException("Leaf task can not have any children");

@@ -107,7 +107,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     public int CancelCode => code;
 
-    public bool IsCancelling => code != 0;
+    public bool IsCancelRequested => code != 0;
 
     public int Reason => CancelCodes.GetReason(code);
 
@@ -141,7 +141,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private IRegistration PushUniAccept(IExecutor? executor, Action<ICancelToken> action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelling && executor == null) {
+        if (IsCancelRequested && executor == null) {
             UniAccept.FireNow(this, action);
             return TOMBSTONE;
         }
@@ -164,7 +164,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private IRegistration PushUniAcceptCtx(IExecutor? executor, Action<ICancelToken, object> action, object? state, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelling && executor == null) {
+        if (IsCancelRequested && executor == null) {
             UniAcceptCtx.FireNow(this, action, state);
             return TOMBSTONE;
         }
@@ -187,7 +187,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private IRegistration PushUniRun(IExecutor? executor, Action action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelling && executor == null) {
+        if (IsCancelRequested && executor == null) {
             UniRun.FireNow(this, action);
             return TOMBSTONE;
         }
@@ -210,7 +210,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private IRegistration PushUniRunCtx(IExecutor? executor, Action<object> action, object? state, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelling && executor == null) {
+        if (IsCancelRequested && executor == null) {
             UniRunCtx.FireNow(this, action, state);
             return TOMBSTONE;
         }
@@ -233,7 +233,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private IRegistration PushUniNotify(IExecutor? executor, ICancelTokenListener action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelling && executor == null) {
+        if (IsCancelRequested && executor == null) {
             UniNotify.FireNow(this, action);
             return TOMBSTONE;
         }
@@ -256,7 +256,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private IRegistration PushUniTransfer(IExecutor? executor, ICancelTokenSource action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (IsCancelling && executor == null) {
+        if (IsCancelRequested && executor == null) {
             UniTransferTo.FireNow(this, SYNC, action);
             return TOMBSTONE;
         }
@@ -297,7 +297,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
     }
 
     private bool PushCompletion(Completion newHead) {
-        if (IsCancelling) {
+        if (IsCancelRequested) {
             newHead.TryFire(SYNC);
             return false;
         }
@@ -536,7 +536,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
                 if (action == null) {
                     return null;
                 }
-                if (!AbstractPromise.IsCancelling(state, options)) {
+                if (!AbstractPromise.IsCancelRequested(state, options)) {
                     action(source, state);
                 }
             }
@@ -613,7 +613,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
                 if (action == null) {
                     return null;
                 }
-                if (!AbstractPromise.IsCancelling(state, options)) {
+                if (!AbstractPromise.IsCancelRequested(state, options)) {
                     action(state);
                 }
             }

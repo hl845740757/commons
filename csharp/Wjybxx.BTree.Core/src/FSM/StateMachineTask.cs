@@ -293,7 +293,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
                 return stateMachine;
             }
             // 兄弟节点
-            for (int i = 0, n = control.GetChildCount(); i < n; i++) {
+            for (int i = 0, n = control.ChildCount; i < n; i++) {
                 Task<T> brother = control.GetChild(i);
                 if ((stateMachine = CastAsStateMachine(brother, name)) != null) {
                     return stateMachine;

@@ -127,8 +127,8 @@ public class PromiseTask<V> implements IFutureTask<V> {
     }
 
     @Override
-    public boolean isCancelling() {
-        return promise.isDone() || getCancelToken().isCancelling();
+    public boolean isCancelRequested() {
+        return promise.isDone() || getCancelToken().IsCancelRequested();
     }
 
     public void trySetCancelled() {
@@ -229,7 +229,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     public void run() {
         IPromise<V> promise = this.promise;
         ICancelToken cancelToken = getCancelToken();
-        if (cancelToken.isCancelling()) {
+        if (cancelToken.IsCancelRequested()) {
             trySetCancelled(promise, cancelToken);
             return;
         }
