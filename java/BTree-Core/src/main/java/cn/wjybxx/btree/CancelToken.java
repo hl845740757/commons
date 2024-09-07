@@ -41,14 +41,17 @@ public class CancelToken implements ICancelTokenListener {
     /** 监听器列表 -- 通知期间可能会被重用 */ //
     private final List<ICancelTokenListener> listeners = new SmallArrayList<>();
     /** 是否正在通知 -- 处理通知期间删除监听器问题 */
-    private boolean firing = false;
+    private boolean firing;
     /** 用于检测复用 -- short应当足够 */
-    private short reentryId = 0;
+    private short reentryId;
 
     public CancelToken() {
     }
 
     public CancelToken(int code) {
+        if (code != 0) {
+            CancelCodes.checkCode(code);
+        }
         this.code = code;
     }
 

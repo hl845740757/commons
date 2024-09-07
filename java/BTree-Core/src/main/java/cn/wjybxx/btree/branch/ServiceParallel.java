@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * 服务并发节点
  * 1.其中第一个任务为主要任务，其余任务为后台服务。
- * 2.每次所有任务都会执行一次，但总是根据第一个任务执行结果返回结果。
+ * 2.每次所有任务都会执行一次，并保持长期运行。
  * 3.外部事件将派发给主要任务。
  *
  * @author wjybxx
@@ -75,10 +75,6 @@ public class ServiceParallel<T> extends Parallel<T> {
     protected void onChildCompleted(Task<T> child) {
         ParallelChildHelper<T> helper = getChildHelper(child);
         helper.stopInline();
-
-        if (child == children.get(0) && !isExecuting()) { // 测试是否正在心跳很重要
-            setSuccess();
-        }
     }
 
     @Override

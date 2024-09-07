@@ -23,7 +23,7 @@ namespace Wjybxx.BTree.Branch
 /// <summary>
 /// 服务并发节点
 /// 1.其中第一个任务为主要任务，其余任务为后台服务。
-/// 2.每次所有任务都会执行一次，但总是根据第一个任务执行结果返回结果。
+/// 2.每次所有任务都会执行一次，并保持长期运行。
 /// 3.外部事件将派发给主要任务。
 /// </summary>
 /// <typeparam name="T"></typeparam>
@@ -53,11 +53,6 @@ public class ServiceParallel<T> : Parallel<T> where T : class
                 Template_StartChild(child, true);
             }
         }
-
-        Task<T> mainTask = children[0];
-        if (mainTask.IsCompleted) {
-            SetCompleted(mainTask.Status, true);
-        }
     }
 
     protected override void OnChildRunning(Task<T> child) {
@@ -68,10 +63,6 @@ public class ServiceParallel<T> : Parallel<T> where T : class
     protected override void OnChildCompleted(Task<T> child) {
         ParallelChildHelper<T> childHelper = GetChildHelper(child);
         childHelper.StopInline();
-
-        if (child == children[0] && !IsExecuting()) { // 测试是否正在心跳很重要
-            SetSuccess();
-        }
     }
 
     protected override void OnEventImpl(object eventObj) {

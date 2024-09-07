@@ -39,14 +39,17 @@ public class CancelToken : ICancelTokenListener
     /** 监听器列表 -- 通知期间可能会被重用 */
     private readonly List<ICancelTokenListener> listeners = new List<ICancelTokenListener>();
     /** 是否正在通知 -- 处理通知期间删除监听器问题 */
-    private bool firing = false;
+    private bool firing;
     /** 用于检测复用 -- short应当足够 */
-    private short reentryId = 0;
+    private short reentryId;
 
     public CancelToken() {
     }
 
     public CancelToken(int code) {
+        if (code != 0) {
+            CancelCodes.CheckCode(code);
+        }
         this.code = code;
     }
 

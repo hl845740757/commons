@@ -31,13 +31,14 @@ internal static class TaskOverrides
     internal const int MASK_BEFORE_ENTER = 1;
     internal const int MASK_ENTER = 1 << 1;
     internal const int MASK_EXIT = 1 << 2;
-    internal const int MASK_CANCEL_REQUESTED = 1 << 3;
+    internal const int MASK_CAN_HANDLE_EVENT = 1 << 3;
     private const int MASK_ALL = 15;
 
     internal const int MASK_INLINABLE = 1 << 4;
 
     private static readonly Type TYPE_TASK = typeof(Task<>);
     private static readonly Type TYPE_INT32 = typeof(int);
+    private static readonly Type TYPE_OBJECT = typeof(object);
     private static readonly Type TYPE_INLINABLE = typeof(TaskInlinableAttribute);
     private static readonly ConcurrentDictionary<Type, int> maskCacheMap = new ConcurrentDictionary<Type, int>();
 
@@ -62,6 +63,9 @@ internal static class TaskOverrides
             }
             if (IsSkippable(clazz, "Exit")) {
                 mask &= ~MASK_EXIT;
+            }
+            if (IsSkippable(clazz, "CanHandleEvent", TYPE_OBJECT)) {
+                mask &= ~MASK_CAN_HANDLE_EVENT;
             }
             if (inlinable) {
                 mask |= MASK_INLINABLE;

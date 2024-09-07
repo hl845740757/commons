@@ -77,8 +77,6 @@ public abstract class Task<T> implements ICancelTokenListener {
     private static final int MASK_GUARD_BASE_OPTIONS = MASK_CHECKING_GUARD | MASK_MANUAL_CHECK_CANCEL;
     /** enter前相关options */
     private static final int MASK_BEFORE_ENTER_OPTIONS = MASK_AUTO_LISTEN_CANCEL | MASK_AUTO_RESET_CHILDREN;
-    /** 任务完成时需要清理的ctl位 */
-    private static final int MASK_TEMP_CTL = MASK_ENTER_EXECUTE | MASK_EXECUTING | MASK_STOP_EXIT;
 
     /** 任务树的入口(缓存以避免递归查找) */
     transient TaskEntry<T> taskEntry;
@@ -316,8 +314,8 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     /**
      * Task的心跳方法，在Task进入完成状态之前会反复执行。
-     * 1.可以根据{@link #isExecuteTriggeredByEnter()}判断是否是与{@link #enter(int)}连续执行的。
-     * 2.运行中可通过{@link #setSuccess()}、{@link #setFailed(int)}、{@link #setCancelled()}将自己更新为完成状态。
+     * 1.运行中可通过{@link #setSuccess()}、{@link #setFailed(int)}、{@link #setCancelled()}将自己更新为完成状态。
+     * 2.如果不想和{@link #enter(int)}同步执行，{@link #setSlowStart(boolean)}实现。
      * 3.不建议直接调用该方法，而是通过模板方法{@link #template_execute(boolean)}运行。
      */
     protected abstract void execute();
@@ -410,9 +408,8 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 2.{@link #getNormalizedStatus()}有助于switch测试
      * 3.task可能是取消状态，甚至可能没运行过直接失败（前置条件失败）
      * 4.钩子任务和guard不会调用该方法
-     * 5.{@link #isExecuting()}有助于检测冲突，减少调用栈深度
-     * 6.同一子节点连续通知的情况下，completed的逻辑应当覆盖{@link #onChildRunning(Task)}的影响。
-     * 7.任何的回调和事件方法中都由用户自身检测取消信号
+     * 5.同一子节点连续通知的情况下，completed的逻辑应当覆盖{@link #onChildRunning(Task)}的影响。
+     * 6.任何的回调和事件方法中都由用户自身检测取消信号
      */
     protected abstract void onChildCompleted(Task<T> child);
 
@@ -452,7 +449,6 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 注意：
      * 1.转发事件时应该调用子节点的{@link #onEvent(Object)}方法
      * 2.在AI这样的领域中，建议将事件转化为信息存储在Task或黑板中，而不是尝试立即做出反应。
-     * 3.{@link #isExecuting()}方法很重要
      */
     protected abstract void onEventImpl(@Nonnull Object event);
 
@@ -474,7 +470,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     public final void stop() {
         // 被显式调用stop的task不能通知父节点，只要任务执行过就需要标记
         if (status == TaskStatus.RUNNING) {
-            ctl |= (MASK_STOP_EXIT | MASK_DISABLE_NOTIFY);
+            ctl |= MASK_DISABLE_NOTIFY;
             setCompleted(TaskStatus.CANCELLED, false);
         }
     }
@@ -637,30 +633,6 @@ public abstract class Task<T> implements ICancelTokenListener {
     }
 
     /**
-     * 是否正在执行{@link #execute()}方法
-     * 该方法非常重要，主要处理心跳和事件方法之间的冲突。
-     * 利用得当可大幅降低代码复杂度，减少调用栈深度，提高性能。
-     */
-    protected final boolean isExecuting() {
-        return (ctl & MASK_EXECUTING) != 0;
-    }
-
-    /**
-     * execute方法是否是enter触发的
-     * 1.用于{@link #execute()}方法判断当前是否和{@link #enter(int)}在同一帧，以决定是否执行某些逻辑。
-     * 2.如果仅仅是想在下一帧运行{@link #execute()}的逻辑，可通过{@link #setSlowStart(boolean)} 实现。
-     * 3.部分Task的{@link #execute()}可能在一帧内执行多次，因此不能通过运行帧数为0代替。
-     */
-    public final boolean isExecuteTriggeredByEnter() {
-        return (ctl & MASK_ENTER_EXECUTE) != 0;
-    }
-
-    /** exit方法是否是由{@link #stop()}方法触发的 */
-    public final boolean isExitTriggeredByStop() {
-        return (ctl & MASK_STOP_EXIT) != 0;
-    }
-
-    /**
      * 任务是否未启动就失败了。常见原因：
      * 1. 前置条件失败
      * 2. 任务开始前检测到取消
@@ -687,7 +659,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     /**
      * 告知模板方法否将{@link #enter(int)}和{@link #execute()}方法分开执行。
      * 1.默认值由{@link #flags}中的信息指定，默认不分开执行
-     * 2.要覆盖默认值应当在{@link #beforeEnter()}方法中调用
+     * 2.要覆盖默认值应当在{@link #beforeEnter()}和{@link #enter(int)}方法中调用
      * 3.该属性运行期间不应该调整，调整也无效
      */
     public final void setSlowStart(boolean disable) {
@@ -811,7 +783,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         status = TaskStatus.RUNNING; // 先更新为running状态，以避免执行过程中外部查询task的状态时仍处于上一次的结束status
         enterFrame = exitFrame = taskEntry.getCurFrame();
         final int reentryId = ++this.reentryId;  // 和上次执行的exit分开
-
+        // beforeEnter
         if ((initMask & TaskOverrides.MASK_BEFORE_ENTER) != 0) {
             beforeEnter(); // 这里用户可能修改控制流标记
         }
@@ -824,9 +796,9 @@ public abstract class Task<T> implements ICancelTokenListener {
                 ctl |= MASK_REGISTERED_LISTENER;
             }
         }
-
+        // enter
         if ((initMask & TaskOverrides.MASK_ENTER) != 0) {
-            enter(reentryId); // enter可能导致结束和取消信号
+            enter(reentryId); // enter可能导致结束和取消信号，也可能修改ctl
             if (reentryId != this.reentryId) {
                 return;
             }
@@ -835,30 +807,23 @@ public abstract class Task<T> implements ICancelTokenListener {
                 return;
             }
         }
-        if (checkSlowStart(ctl)) { // 需要使用最新的ctl(enter也可能修改ctl)
-            if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
+        if (checkSlowStart(ctl)) { // 需要使用最新的ctl
+            if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
                 control.onChildRunning(this);
             }
             return;
         }
-
-        ctl |= (MASK_ENTER_EXECUTE | MASK_EXECUTING);
-        try {
-            execute();
-            if (reentryId != this.reentryId) {
-                return;
-            }
-            if (cancelToken.isCancelling() && isAutoCheckCancel()) {
-                setCancelled();
-                return;
-            }
-            if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
-                control.onChildRunning(this);
-            }
-        } finally {
-            if (reentryId == this.reentryId) { // 否则可能清理掉递归任务的数据
-                ctl &= ~(MASK_ENTER_EXECUTE | MASK_EXECUTING);
-            }
+        // execute
+        execute();
+        if (reentryId != this.reentryId) {
+            return;
+        }
+        if (cancelToken.isCancelling() && isAutoCheckCancel()) {
+            setCancelled();
+            return;
+        }
+        if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
+            control.onChildRunning(this);
         }
     }
 
@@ -870,52 +835,35 @@ public abstract class Task<T> implements ICancelTokenListener {
      */
     public final void template_execute(boolean fromControl) {
         assert status == TaskStatus.RUNNING;
-        if (cancelToken.isCancelling() && isAutoCheckCancel()) {
-            setCancelled();
-            return;
-        }
         // 事件驱动下无法精确判断是否是心跳走到这里，因此只要处于非激活状态就拒绝父节点请求(装死)
         if (fromControl && (ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
             return;
         }
-
-        final int reentryId = this.reentryId;
-        if ((ctl & MASK_EXECUTING) != 0) { // 递归执行
-            execute();
-            if (reentryId == this.reentryId && cancelToken.isCancelling() && isAutoCheckCancel()) {
-                setCancelled();
-            }
+        if (cancelToken.isCancelling() && isAutoCheckCancel()) {
+            setCancelled();
             return;
         }
-        ctl |= MASK_EXECUTING;
-        try {
-            execute();
-            if (reentryId == this.reentryId && cancelToken.isCancelling() && isAutoCheckCancel()) {
-                setCancelled();
-            }
-        } finally {
-            if (reentryId == this.reentryId) { // 否则可能清理掉递归任务的数据
-                ctl &= ~MASK_EXECUTING;
-            }
+        final int reentryId = this.reentryId;
+        execute();
+        if (reentryId != this.reentryId) {
+            return;
+        }
+        if (cancelToken.isCancelling() && isAutoCheckCancel()) {
+            setCancelled();
         }
     }
 
     private void template_exit() {
-        exitFrame = taskEntry.getCurFrame();
         if ((ctl & MASK_REGISTERED_LISTENER) != 0) {
             cancelToken.remListener(this);
         }
-        try {
-            stopRunningChildren(); // 停止有特殊顺序，不能使用访问器
-            if ((ctl & TaskOverrides.MASK_EXIT) != 0) {
-                exit();
-            }
-        } finally {
-            // 去除enter和execute相关标记
-            ctl &= ~MASK_TEMP_CTL;
-            reentryId++;
-            releaseContext();
+        exitFrame = taskEntry.getCurFrame();
+        stopRunningChildren(); // 停止有特殊顺序，不能使用访问器
+        if ((ctl & TaskOverrides.MASK_EXIT) != 0) {
+            exit();
         }
+        releaseContext();
+        reentryId++;
     }
 
     /**
