@@ -28,7 +28,11 @@ public class ChangeStateArgs
     public const byte CMD_UNDO = 1;
     public const byte CMD_REDO = 2;
 
-    /** 不延迟 */
+    /// <summary>
+    /// 不延迟
+    /// 1.delayArg为当前状态要设置的结果，大于0有效 -- 用于更好的支持FSM。
+    /// 2.通常用于状态主动退出时，可避免自身进入被取消状态。
+    /// </summary>
     public const byte DELAY_NONE = 0;
     /// <summary>
     /// 在当前子节点完成的时候切换
@@ -90,6 +94,13 @@ public class ChangeStateArgs
     }
 
     public ChangeStateArgs With(byte delayMode, int delayArg, object? extraInfo) {
+        return new ChangeStateArgs(cmd, delayMode, delayArg, extraInfo);
+    }
+
+    public ChangeStateArgs WithArg(int delayArg) {
+        if (delayArg == this.delayArg) {
+            return this;
+        }
         return new ChangeStateArgs(cmd, delayMode, delayArg, extraInfo);
     }
 

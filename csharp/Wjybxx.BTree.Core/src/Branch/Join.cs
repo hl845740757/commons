@@ -23,7 +23,7 @@ using Wjybxx.Commons;
 
 namespace Wjybxx.BTree.Branch
 {
-public class Join<T> : Parallel<T> where T : class
+public class Join<T> : ParallelBranch<T> where T : class
 {
 #nullable disable
     protected JoinPolicy<T> policy;

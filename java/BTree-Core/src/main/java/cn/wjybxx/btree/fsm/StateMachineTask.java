@@ -106,6 +106,15 @@ public class StateMachineTask<T> extends Decorator<T> {
         changeState(nextState, ChangeStateArgs.PLAIN);
     }
 
+    /**
+     * 切换状态 -- 如果状态机处于运行中，则立即切换
+     *
+     * @param curStateResult 当前状态的结果
+     */
+    public final void changeState(Task<T> nextState, int curStateResult) {
+        changeState(nextState, ChangeStateArgs.PLAIN.withArg(curStateResult));
+    }
+
     /***
      * 切换状态
      * 1.如果当前有一个待切换的状态，则会被悄悄丢弃(todo 可以增加一个通知)
@@ -183,7 +192,12 @@ public class StateMachineTask<T> extends Decorator<T> {
         Task<T> nextState = this.tempNextState;
         if (nextState != null && isReady(curState, nextState)) {
             if (curState != null) {
-                curState.stop();
+                ChangeStateArgs stateArg = (ChangeStateArgs) nextState.getControlData();
+                if (stateArg.delayMode == ChangeStateArgs.DELAY_NONE && stateArg.delayArg > 0) {
+                    curState.stop(stateArg.delayArg);
+                } else {
+                    curState.stop();
+                }
                 inlineHelper.stopInline(); // help gc
             }
 
@@ -250,6 +264,7 @@ public class StateMachineTask<T> extends Decorator<T> {
     }
 
     protected void beforeChangeState(Task<T> curState, Task<T> nextState) {
+        assert curState != null || nextState != null;
         if (handler != null) handler.beforeChangeState(this, curState, nextState);
     }
 

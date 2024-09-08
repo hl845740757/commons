@@ -29,7 +29,7 @@ import java.util.List;
  * @author wjybxx
  * date - 2023/12/2
  */
-public class Join<T> extends Parallel<T> {
+public class Join<T> extends ParallelBranch<T> {
 
     /** 子节点的管理策略 */
     protected JoinPolicy<T> policy;

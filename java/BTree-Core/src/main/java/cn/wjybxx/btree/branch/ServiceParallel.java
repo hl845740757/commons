@@ -29,7 +29,7 @@ import java.util.List;
  * @author wjybxx
  * date - 2023/11/26
  */
-public class ServiceParallel<T> extends Parallel<T> {
+public class ServiceParallel<T> extends ParallelBranch<T> {
 
     public ServiceParallel() {
     }

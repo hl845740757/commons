@@ -477,11 +477,15 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 2.未完成的任务默认会进入Cancelled状态
     /// 3.不命名为cancel，否则容易误用；我们设计的cancel是协作式的，可通过<see cref="CancelToken"/>发出请求请求。
     /// </summary>
-    public void Stop() {
+    /// <param name="result">取消任务时的分配的结果，0默认为取消 -- 更好的支持FSM</param>
+    public void Stop(int result = TaskStatus.CANCELLED) {
+        if (result == 0) {
+            result = TaskStatus.CANCELLED;
+        }
         // 被显式调用stop的task不能通知父节点，只要任务执行过就需要标记
-        if (status == TaskStatus.RUNNING) {
+        if (this.status == TaskStatus.RUNNING) {
             ctl |= MASK_DISABLE_NOTIFY;
-            SetCompleted(TaskStatus.CANCELLED, false);
+            SetCompleted(result, false);
         }
     }
 
@@ -705,6 +709,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 2.是否检测取消信号是一个动态的属性，可随时更改 -- 因此不要轻易缓存。
     /// </summary>
     public bool IsManualCheckCancel {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (ctl & MASK_MANUAL_CHECK_CANCEL) != 0;
         set => SetCtlBit(MASK_MANUAL_CHECK_CANCEL, value);
     }
@@ -732,6 +737,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 3.该值是否生效取决于控制节点的实现，这里只是提供配置接口。
     /// </summary>
     public bool IsCancelTokenPerChild {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (ctl & MASK_CANCEL_TOKEN_PER_CHILD) != 0;
         set => SetCtlBit(MASK_CANCEL_TOKEN_PER_CHILD, value);
     }
@@ -742,6 +748,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 2.该值是否生效取决于控制节点的实现，这里只是提供配置接口。
     /// </summary>
     public bool IsBlackboardPerChild {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (ctl & MASK_BLACKBOARD_PER_CHILD) != 0;
         set => SetCtlBit(MASK_BLACKBOARD_PER_CHILD, value);
     }
@@ -835,6 +842,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// (通过参数的方式，有助于我们统一代码，也简化子类实现；同时避免遗漏)
     /// </summary>
     /// <param name="fromControl">是否由父节点调用</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Template_Execute(bool fromControl) {
         Debug.Assert(status == TaskStatus.RUNNING);
         // 事件驱动下无法精确判断是否是心跳走到这里，因此只要处于非激活状态就拒绝父节点请求(装死)

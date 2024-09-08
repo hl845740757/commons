@@ -57,11 +57,6 @@ public abstract class Decorator<T> : Task<T> where T : class
         inlineHelper.StopInline();
     }
 
-    /** 模板类不重写enter方法，只有数据初始化逻辑 */
-    protected override void BeforeEnter() {
-        // inlineHelper.StopInline();
-    }
-
     protected override void Exit() {
         inlineHelper.StopInline();
     }

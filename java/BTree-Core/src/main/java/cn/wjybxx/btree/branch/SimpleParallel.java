@@ -29,7 +29,7 @@ import java.util.List;
  * @author wjybxx
  * date - 2023/11/26
  */
-public class SimpleParallel<T> extends Parallel<T> {
+public class SimpleParallel<T> extends ParallelBranch<T> {
 
     public SimpleParallel() {
     }

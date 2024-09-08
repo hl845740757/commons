@@ -105,6 +105,16 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     }
 
     /// <summary>
+    /// 切换状态 -- 如果状态机处于运行中，则立即切换
+    /// </summary>
+    /// <param name="nextState">要进入的下一个状态</param>
+    /// <param name="curStateResult">当前状态的结果</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ChangeState(Task<T> nextState, int curStateResult) {
+        ChangeState(nextState, ChangeStateArgs.PLAIN.WithArg(curStateResult));
+    }
+
+    /// <summary>
     /// 切换状态
     /// 1.如果当前有一个待切换的状态，则会被悄悄丢弃(todo 可以增加一个通知)
     /// 2.无论何种模式，在当前状态进入完成状态时一定会触发
@@ -181,7 +191,12 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         Task<T>? nextState = this.tempNextState;
         if (nextState != null && IsReady(curState, nextState)) {
             if (curState != null) {
-                curState.Stop();
+                ChangeStateArgs stateArg = (ChangeStateArgs)nextState.ControlData;
+                if (stateArg.delayMode == ChangeStateArgs.DELAY_NONE && stateArg.delayArg > 0) {
+                    curState.Stop(stateArg.delayArg);
+                } else {
+                    curState.Stop();
+                }
                 inlineHelper.StopInline(); // help gc
             }
 
@@ -246,7 +261,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     }
 
     protected virtual void BeforeChangeState(Task<T>? curState, Task<T>? nextState) {
-        // Debug.Assert(curState != null || nextState != null);
+        Debug.Assert(curState != null || nextState != null);
         if (handler != null) handler.BeforeChangeState(this, curState, nextState);
     }
 

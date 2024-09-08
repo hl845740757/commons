@@ -15,7 +15,6 @@
  */
 package cn.wjybxx.btree.branch;
 
-import cn.wjybxx.base.annotation.Internal;
 import cn.wjybxx.btree.BranchTask;
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.TaskInlineHelper;

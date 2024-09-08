@@ -53,12 +53,6 @@ public abstract class Decorator<T> extends Task<T> {
         inlineHelper.stopInline();
     }
 
-    /** 模板类不重写enter方法，只有数据初始化逻辑 */
-    @Override
-    protected void beforeEnter() {
-//        inlineHelper.stopInline();
-    }
-
     @Override
     protected void exit() {
         inlineHelper.stopInline();

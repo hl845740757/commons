@@ -30,12 +30,12 @@ import java.util.List;
  * @author wjybxx
  * date - 2023/11/26
  */
-public abstract class Parallel<T> extends BranchTask<T> {
+public abstract class ParallelBranch<T> extends BranchTask<T> {
 
-    public Parallel() {
+    public ParallelBranch() {
     }
 
-    public Parallel(List<Task<T>> children) {
+    public ParallelBranch(List<Task<T>> children) {
         super(children);
     }
 

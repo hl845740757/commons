@@ -337,10 +337,7 @@ public class StateMachineTest {
 
     // region changeState
 
-    /**
-     * {@link ChangeStateTask}先更新为完成，然后再调用的{@link StateMachineTask#changeState(Task)}，
-     * 因此完成应该处于成功状态
-     */
+    /** 由于未指定delayArg，因此当前状态会进入取消状态 */
     @Test
     void testChangeStateTask() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
@@ -349,6 +346,18 @@ public class StateMachineTest {
 
         BtreeTestUtil.untilCompleted(taskEntry);
         Assertions.assertTrue(stateTask.isCancelled(), "ChangeState task is cancelled? code: " + stateTask.getStatus());
+    }
+
+    /** 由于我们指定了DelayArg，因此会进入成功状态 */
+    @Test
+    void testChangeStateTask2() {
+        TaskEntry<Blackboard> taskEntry = newStateMachineTree();
+        ChangeStateTask<Blackboard> stateTask = new ChangeStateTask<>(new Success<>());
+        stateTask.setDelayArg(TaskStatus.SUCCESS);
+        taskEntry.getRootStateMachine().changeState(stateTask);
+
+        BtreeTestUtil.untilCompleted(taskEntry);
+        Assertions.assertTrue(stateTask.isSucceeded(), "ChangeState task is succeeded? code: " + stateTask.getStatus());
     }
 
     @Test

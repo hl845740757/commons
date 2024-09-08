@@ -63,7 +63,7 @@ public class JoinMain<T> implements JoinPolicy<T> {
     @Override
     public void onEvent(Join<T> join, Object event) {
         Task<T> mainTask = join.getFirstChild();
-        ParallelChildHelper<T> childHelper = Parallel.getChildHelper(mainTask);
+        ParallelChildHelper<T> childHelper = ParallelBranch.getChildHelper(mainTask);
 
         Task<T> inlinedChild = childHelper.getInlinedChild();
         if (inlinedChild != null) {

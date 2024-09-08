@@ -30,12 +30,12 @@ namespace Wjybxx.BTree.Branch
 /// 4.并行节点都不能被内联
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public abstract class Parallel<T> : BranchTask<T> where T : class
+public abstract class ParallelBranch<T> : BranchTask<T> where T : class
 {
-    protected Parallel() {
+    protected ParallelBranch() {
     }
 
-    protected Parallel(List<Task<T>>? children) : base(children) {
+    protected ParallelBranch(List<Task<T>>? children) : base(children) {
     }
 
     public override void ResetForRestart() {

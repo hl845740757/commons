@@ -315,11 +315,10 @@ public class StateMachineTest
     #endregion
 
     #region ChangeState
-
-    /**
-     * {@link ChangeStateTask}先更新为完成，然后再调用的{@link StateMachineTask#ChangeState(Task)}，
-     * 因此完成应该处于成功状态
-     */
+    
+    /// <summary>
+    /// 由于未指定delayArg，因此当前状态会进入取消状态
+    /// </summary>
     [Test]
     public void testChangeStateTask() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
@@ -328,6 +327,20 @@ public class StateMachineTest
 
         BtreeTestUtil.untilCompleted(taskEntry);
         Assert.IsTrue(stateTask.IsCancelled, "ChangeState task is cancelled? code: " + stateTask.Status);
+    }
+    
+    /// <summary>
+    /// 由于我们指定了DelayArg，因此会进入成功状态
+    /// </summary>
+    [Test]
+    public void testChangeStateTask2() {
+        TaskEntry<Blackboard> taskEntry = newStateMachineTree();
+        ChangeStateTask<Blackboard> stateTask = new ChangeStateTask<Blackboard>(new Success<Blackboard>());
+        stateTask.DelayArg = TaskStatus.SUCCESS;
+        taskEntry.GetRootStateMachine().ChangeState(stateTask);
+
+        BtreeTestUtil.untilCompleted(taskEntry);
+        Assert.IsTrue(stateTask.IsSucceeded, "ChangeState task is succeeded? code: " + stateTask.Status);
     }
 
     [Test]

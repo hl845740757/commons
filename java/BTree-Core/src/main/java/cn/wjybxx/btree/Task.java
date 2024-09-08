@@ -465,17 +465,27 @@ public abstract class Task<T> implements ICancelTokenListener {
         if (isRunning()) setCancelled();
     }
 
+    /** 强制停止任务 */
+    public final void stop() {
+        stop(TaskStatus.CANCELLED);
+    }
+
     /**
      * 强制停止任务
      * 1.只应该由Control调用，因此不会通知Control
      * 2.未完成的任务默认会进入Cancelled状态
      * 3.不命名为cancel，否则容易误用；我们设计的cancel是协作式的，可通过{@link #cancelToken}发出请求请求。
+     *
+     * @param result 取消任务时的分配的结果，0默认为取消 -- 更好的支持FSM
      */
-    public final void stop() {
+    public final void stop(int result) {
+        if (result == 0) {
+            result = TaskStatus.CANCELLED;
+        }
         // 被显式调用stop的task不能通知父节点，只要任务执行过就需要标记
         if (status == TaskStatus.RUNNING) {
             ctl |= MASK_DISABLE_NOTIFY;
-            setCompleted(TaskStatus.CANCELLED, false);
+            setCompleted(result, false);
         }
     }
 
