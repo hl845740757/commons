@@ -15,6 +15,8 @@
  */
 package cn.wjybxx.btree.fsm;
 
+import cn.wjybxx.btree.TaskStatus;
+
 /**
  * 状态切换参数
  * 建议用户通过原型对象的{@link #withExtraInfo(Object)}等方法创建
@@ -41,6 +43,10 @@ public final class ChangeStateArgs {
     // region 共享原型
     public static final ChangeStateArgs PLAIN = new ChangeStateArgs((byte) 0, (byte) 0, 0, null);
     public static final ChangeStateArgs PLAIN_WHEN_COMPLETED = new ChangeStateArgs((byte) 0, DELAY_CURRENT_COMPLETED, 0, null);
+
+    public static final ChangeStateArgs PLAIN_SUCCESS = new ChangeStateArgs((byte) 0, (byte) 0, TaskStatus.SUCCESS, null);
+    public static final ChangeStateArgs PLAIN_CANCELLED = new ChangeStateArgs((byte) 0, (byte) 0, TaskStatus.CANCELLED, null);
+    public static final ChangeStateArgs PLAIN_ERROR = new ChangeStateArgs((byte) 0, (byte) 0, TaskStatus.ERROR, null);
 
     public static final ChangeStateArgs UNDO = new ChangeStateArgs(CMD_UNDO, (byte) 0, 0, null);
     public static final ChangeStateArgs UNDO_WHEN_COMPLETED = new ChangeStateArgs(CMD_UNDO, DELAY_CURRENT_COMPLETED, 0, null);

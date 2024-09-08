@@ -67,9 +67,14 @@ public class ChangeStateTask<T> extends LeafTask<T> {
         if (stateProps != null) {
             nextState.setSharedProps(stateProps);
         }
-        int reentryId = getReentryId();
+
+        final int reentryId = getReentryId();
         final StateMachineTask<T> stateMachine = StateMachineTask.findStateMachine(this, machineName);
-        stateMachine.changeState(nextState, ChangeStateArgs.PLAIN.with(delayMode, delayArg));
+        if (delayMode == 0) {
+            stateMachine.changeState(nextState, delayArg);
+        } else {
+            stateMachine.changeState(nextState, ChangeStateArgs.PLAIN.with(delayMode, delayArg));
+        }
         if (!isExited(reentryId)) {
             setSuccess();
         }

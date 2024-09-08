@@ -51,10 +51,6 @@ public static class StateMachineHandlers
 
         public void BeforeChangeState(StateMachineTask<T> stateMachineTask, Task<T>? curState, Task<T>? nextState) {
         }
-
-        public int OnChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
-            return TaskStatus.RUNNING;
-        }
     }
 
     private class ListenerHandler<T> : IStateMachineHandler<T> where T : class
@@ -73,10 +69,6 @@ public static class StateMachineHandlers
         }
 
         public void BeforeEnter(StateMachineTask<T> stateMachineTask) {
-        }
-
-        public int OnChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
-            return TaskStatus.RUNNING;
         }
     }
 
@@ -100,10 +92,6 @@ public static class StateMachineHandlers
 
         public void BeforeChangeState(StateMachineTask<T> stateMachineTask, Task<T>? curState, Task<T>? nextState) {
         }
-
-        public int OnChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
-            return TaskStatus.RUNNING;
-        }
     }
 
     private class CUndoHandler<T> : IStateMachineHandler<T> where T : class
@@ -125,10 +113,6 @@ public static class StateMachineHandlers
         }
 
         public void BeforeChangeState(StateMachineTask<T> stateMachineTask, Task<T>? curState, Task<T>? nextState) {
-        }
-
-        public int OnChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
-            return TaskStatus.RUNNING;
         }
     }
 }

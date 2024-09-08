@@ -38,25 +38,21 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     /** 初始状态的属性 */
     private object? initStateProps;
 
-    /** 待切换的状态，主要用于支持当前状态退出后再切换 -- 即支持当前状态设置结果 */
+    /** 待切换的状态，主要用于支持当前状态退出后再切换 */
     [NonSerialized] private Task<T>? tempNextState;
     /** 默认不序列化 -- 删除了Listener委托，因为不能反序列化 */
-    [NonSerialized] private IStateMachineHandler<T>? handler = StateMachineHandlers.DefaultHandler<T>();
+    [NonSerialized] private IStateMachineHandler<T> handler = StateMachineHandlers.DefaultHandler<T>();
 
     #region api
 
     /** 获取当前状态 */
-    public Task<T>? GetCurState() {
-        return child;
-    }
+    public Task<T>? CurState => child;
 
     /** 获取临时的下一个状态 */
-    public Task<T>? GetTempNextState() {
-        return tempNextState;
-    }
+    public Task<T>? TempNextState => tempNextState;
 
     /** 丢弃未切换的临时状态 */
-    public Task<T>? DiscardTempNextState() {
+    public Task<T>? DiscardNextState() {
         Task<T>? r = tempNextState;
         if (r != null) tempNextState = null;
         return r;
@@ -111,16 +107,22 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     /// <param name="curStateResult">当前状态的结果</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ChangeState(Task<T> nextState, int curStateResult) {
-        ChangeState(nextState, ChangeStateArgs.PLAIN.WithArg(curStateResult));
+        ChangeStateArgs changeStateArgs = curStateResult switch
+        {
+            TaskStatus.SUCCESS => ChangeStateArgs.PLAIN_SUCCESS,
+            TaskStatus.CANCELLED => ChangeStateArgs.PLAIN_CANCELLED,
+            TaskStatus.ERROR => ChangeStateArgs.PLAIN_ERROR,
+            _ => ChangeStateArgs.PLAIN.WithArg(curStateResult)
+        };
+        ChangeState(nextState, changeStateArgs);
     }
 
     /// <summary>
     /// 切换状态
     /// 1.如果当前有一个待切换的状态，则会被悄悄丢弃(todo 可以增加一个通知)
     /// 2.无论何种模式，在当前状态进入完成状态时一定会触发
-    /// 3.如果状态机未运行，则仅仅保存在那里，等待下次运行的时候执行
+    /// 3.如果状态机未运行，则仅仅保存在那里，等待下次运行的时候执行。
     /// 4.关于如何避免当前状态被取消，可参考<see cref="ChangeStateTask{T}"/>
-    /// 
     /// </summary>
     /// <param name="nextState">要进入的下一个状态</param>
     /// <param name="changeStateArgs">状态切换参数</param>
@@ -129,18 +131,12 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         if (nextState == null) throw new ArgumentNullException(nameof(nextState));
         if (changeStateArgs == null) throw new ArgumentNullException(nameof(changeStateArgs));
 
-        changeStateArgs = CheckArgs(changeStateArgs);
         nextState.ControlData = changeStateArgs;
         tempNextState = nextState;
 
-        if (IsRunning && IsReady(child, nextState)) {
+        if (IsRunning && handler.IsReady(this, child, nextState)) {
             Template_Execute(false);
         }
-    }
-
-    /** 检测正确性和自动初始化；不可修改掉cmd */
-    protected virtual ChangeStateArgs CheckArgs(ChangeStateArgs changeStateArgs) {
-        return changeStateArgs;
     }
 
     #endregion
@@ -149,9 +145,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 
     public override void ResetForRestart() {
         base.ResetForRestart();
-        if (handler != null) {
-            handler.ResetForRestart(this);
-        }
+        handler.ResetForRestart(this);
         if (initState != null) {
             initState.ResetForRestart();
         }
@@ -162,10 +156,8 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     }
 
     protected override void BeforeEnter() {
-        base.BeforeEnter();
-        if (handler != null) {
-            handler.BeforeEnter(this);
-        }
+        // base.BeforeEnter();
+        handler.BeforeEnter(this);
         if (initState != null && initStateProps != null) {
             initState.SharedProps = initStateProps;
         }
@@ -187,18 +179,10 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     }
 
     protected override void Execute() {
-        Task<T> curState = this.child;
+        Task<T>? curState = this.child;
         Task<T>? nextState = this.tempNextState;
-        if (nextState != null && IsReady(curState, nextState)) {
-            if (curState != null) {
-                ChangeStateArgs stateArg = (ChangeStateArgs)nextState.ControlData;
-                if (stateArg.delayMode == ChangeStateArgs.DELAY_NONE && stateArg.delayArg > 0) {
-                    curState.Stop(stateArg.delayArg);
-                } else {
-                    curState.Stop();
-                }
-                inlineHelper.StopInline(); // help gc
-            }
+        if (nextState != null && handler.IsReady(this, curState, nextState)) {
+            StopCurState(curState, (ChangeStateArgs)nextState.ControlData);
 
             this.tempNextState = null;
             if (child != null) {
@@ -206,14 +190,15 @@ public class StateMachineTask<T> : Decorator<T> where T : class
             } else {
                 AddChild(nextState);
             }
+
             BeforeChangeState(curState, nextState);
-            curState = nextState;
-            curState.ControlData = null; // 用户需要将数据填充到黑板
+            nextState.ControlData = null; // 用户需要提前将数据填充到黑板
+            Template_StartChild(nextState, true); // 启动新状态
+            return;
         }
         if (curState == null) {
             return;
         }
-
         // 继续运行或新状态enter；在尾部才能保证安全
         Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
         if (inlinedChild != null) {
@@ -225,6 +210,21 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         }
     }
 
+    private void StopCurState(Task<T>? curState, ChangeStateArgs args) {
+        if (curState == null) return;
+        if (args.delayMode == ChangeStateArgs.DELAY_NONE && args.delayArg > 0) {
+            curState.Stop(args.delayArg);
+        } else {
+            curState.Stop();
+        }
+        inlineHelper.StopInline(); // help gc
+    }
+
+    protected virtual void BeforeChangeState(Task<T>? curState, Task<T>? nextState) {
+        Debug.Assert(curState != null || nextState != null);
+        handler.BeforeChangeState(this, curState, nextState);
+    }
+
     protected override void OnChildRunning(Task<T> child) {
         inlineHelper.InlineChild(child);
     }
@@ -233,36 +233,16 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         Debug.Assert(this.child == child);
         inlineHelper.StopInline();
 
-        // 默认和普通的FSM实现一样，不特殊对待当前状态的执行结果，但可以由handler扩展
-        if (handler != null) {
-            int status = handler.OnChildCompleted(this, child);
-            if (status != TaskStatus.RUNNING) {
-                SetCompleted(status, true);
-                return;
-            }
-        }
+        // 先判断是否有下一个状态，保持和changeState调用相同的逻辑
         if (tempNextState != null) {
             Template_Execute(false);
             return;
         }
-        if (handler != null && handler.OnNextStateAbsent(this, child)) {
+        if (handler.OnNextStateAbsent(this, child)) {
             return;
         }
         RemoveChild(0);
         BeforeChangeState(child, null);
-    }
-
-    protected virtual bool IsReady(Task<T>? curState, Task<T> nextState) {
-        if (curState == null || curState.IsCompleted) {
-            return true;
-        }
-        ChangeStateArgs changeStateArgs = (ChangeStateArgs)nextState.ControlData;
-        return changeStateArgs.delayMode == ChangeStateArgs.DELAY_NONE;
-    }
-
-    protected virtual void BeforeChangeState(Task<T>? curState, Task<T>? nextState) {
-        Debug.Assert(curState != null || nextState != null);
-        if (handler != null) handler.BeforeChangeState(this, curState, nextState);
     }
 
     #endregion
@@ -348,7 +328,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 
     public IStateMachineHandler<T>? Handler {
         get => handler;
-        set => handler = value;
+        set => handler = value ?? StateMachineHandlers.DefaultHandler<T>();
     }
 
     #endregion

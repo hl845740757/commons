@@ -68,7 +68,11 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
 
         int reentryId = ReentryId;
         StateMachineTask<T> stateMachine = StateMachineTask<T>.FindStateMachine(this, machineName);
-        stateMachine.ChangeState(nextState, ChangeStateArgs.PLAIN.With(delayMode, delayArg));
+        if (delayMode == 0) {
+            stateMachine.ChangeState(nextState, delayArg);
+        } else {
+            stateMachine.ChangeState(nextState, ChangeStateArgs.PLAIN.With(delayMode, delayArg));
+        }
         if (!IsExited(reentryId)) {
             SetSuccess();
         }

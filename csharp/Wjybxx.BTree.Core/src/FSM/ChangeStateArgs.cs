@@ -46,6 +46,10 @@ public class ChangeStateArgs
     public static readonly ChangeStateArgs PLAIN = new(0, 0, 0, null);
     public static readonly ChangeStateArgs PLAIN_WHEN_COMPLETED = new(0, DELAY_CURRENT_COMPLETED, 0, null);
 
+    public static readonly ChangeStateArgs PLAIN_SUCCESS = new(0, 0, TaskStatus.SUCCESS, null);
+    public static readonly ChangeStateArgs PLAIN_CANCELLED = new(0, 0, TaskStatus.CANCELLED, null);
+    public static readonly ChangeStateArgs PLAIN_ERROR = new(0, 0, TaskStatus.ERROR, null);
+
     public static readonly ChangeStateArgs UNDO = new(CMD_UNDO, 0, 0, null);
     public static readonly ChangeStateArgs UNDO_WHEN_COMPLETED = new(CMD_UNDO, DELAY_CURRENT_COMPLETED, 0, null);
 

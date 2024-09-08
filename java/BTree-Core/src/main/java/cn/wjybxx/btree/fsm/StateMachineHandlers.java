@@ -17,7 +17,6 @@
 package cn.wjybxx.btree.fsm;
 
 import cn.wjybxx.btree.Task;
-import cn.wjybxx.btree.TaskStatus;
 
 /**
  * @author wjybxx
@@ -57,10 +56,6 @@ public class StateMachineHandlers {
         public final void beforeEnter(StateMachineTask<T> stateMachineTask) {
         }
 
-        @Override
-        public final int onChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
-            return TaskStatus.RUNNING;
-        }
         // endregion
     }
 
@@ -90,10 +85,6 @@ public class StateMachineHandlers {
         public final void beforeEnter(StateMachineTask<T> stateMachineTask) {
         }
 
-        @Override
-        public final int onChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
-            return TaskStatus.RUNNING;
-        }
         // endregion
     }
 
@@ -123,10 +114,6 @@ public class StateMachineHandlers {
         public final void beforeEnter(StateMachineTask<T> stateMachineTask) {
         }
 
-        @Override
-        public final int onChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
-            return TaskStatus.RUNNING;
-        }
         // endregion
     }
 }

@@ -22,7 +22,6 @@ import cn.wjybxx.btree.TaskStatus;
 import cn.wjybxx.btree.branch.Join;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
@@ -41,7 +40,7 @@ public class StateMachineTask<T> extends Decorator<T> {
     /** 初始状态的属性 */
     protected Object initStateProps;
 
-    /** 待切换的状态，主要用于支持当前状态退出后再切换 -- 即支持当前状态设置结果 */
+    /** 待切换的状态，主要用于支持当前状态退出后再切换 */
     protected transient Task<T> tempNextState;
     /** 默认不序列化 */
     protected transient StateMachineHandler<T> handler = StateMachineHandlers.defaultHandler();
@@ -54,12 +53,12 @@ public class StateMachineTask<T> extends Decorator<T> {
     }
 
     /** 获取临时的下一个状态 */
-    public final Task<T> getTempNextState() {
+    public final Task<T> getNextState() {
         return tempNextState;
     }
 
     /** 丢弃未切换的临时状态 */
-    public final Task<T> discardTempNextState() {
+    public final Task<T> discardNextState() {
         Task<T> r = tempNextState;
         if (r != null) tempNextState = null;
         return r;
@@ -112,7 +111,13 @@ public class StateMachineTask<T> extends Decorator<T> {
      * @param curStateResult 当前状态的结果
      */
     public final void changeState(Task<T> nextState, int curStateResult) {
-        changeState(nextState, ChangeStateArgs.PLAIN.withArg(curStateResult));
+        ChangeStateArgs changeStateArgs = switch (curStateResult) {
+            case TaskStatus.SUCCESS -> ChangeStateArgs.PLAIN_SUCCESS;
+            case TaskStatus.CANCELLED -> ChangeStateArgs.PLAIN_CANCELLED;
+            case TaskStatus.ERROR -> ChangeStateArgs.PLAIN_ERROR;
+            default -> ChangeStateArgs.PLAIN.withArg(curStateResult);
+        };
+        changeState(nextState, changeStateArgs);
     }
 
     /***
@@ -129,27 +134,20 @@ public class StateMachineTask<T> extends Decorator<T> {
         Objects.requireNonNull(nextState, "nextState");
         Objects.requireNonNull(changeStateArgs, "changeStateArgs");
 
-        changeStateArgs = checkArgs(changeStateArgs);
         nextState.setControlData(changeStateArgs);
         tempNextState = nextState;
 
-        if (isRunning() && isReady(child, nextState)) {
+        if (isRunning() && handler.isReady(this, child, nextState)) {
             template_execute(false);
         }
     }
 
-    /** 检测正确性和自动初始化；不可修改掉cmd */
-    protected ChangeStateArgs checkArgs(ChangeStateArgs changeStateArgs) {
-        return changeStateArgs;
-    }
     // endregion
 
     @Override
     public void resetForRestart() {
         super.resetForRestart();
-        if (handler != null) {
-            handler.resetForRestart(this);
-        }
+        handler.resetForRestart(this);
         if (initState != null) {
             initState.resetForRestart();
         }
@@ -161,10 +159,8 @@ public class StateMachineTask<T> extends Decorator<T> {
 
     @Override
     protected void beforeEnter() {
-        super.beforeEnter();
-        if (handler != null) {
-            handler.beforeEnter(this);
-        }
+//        super.beforeEnter();
+        handler.beforeEnter(this);
         if (initState != null && initStateProps != null) {
             initState.setSharedProps(initStateProps);
         }
@@ -190,16 +186,8 @@ public class StateMachineTask<T> extends Decorator<T> {
     protected void execute() {
         Task<T> curState = this.child;
         Task<T> nextState = this.tempNextState;
-        if (nextState != null && isReady(curState, nextState)) {
-            if (curState != null) {
-                ChangeStateArgs stateArg = (ChangeStateArgs) nextState.getControlData();
-                if (stateArg.delayMode == ChangeStateArgs.DELAY_NONE && stateArg.delayArg > 0) {
-                    curState.stop(stateArg.delayArg);
-                } else {
-                    curState.stop();
-                }
-                inlineHelper.stopInline(); // help gc
-            }
+        if (nextState != null && handler.isReady(this, curState, nextState)) {
+            stopCurState(curState, (ChangeStateArgs) nextState.getControlData());
 
             this.tempNextState = null;
             if (child != null) {
@@ -207,9 +195,11 @@ public class StateMachineTask<T> extends Decorator<T> {
             } else {
                 addChild(nextState);
             }
+
             beforeChangeState(curState, nextState);
-            curState = nextState;
-            curState.setControlData(null); // 用户需要将数据填充到黑板
+            nextState.setControlData(null); // 用户需要提前将数据填充到黑板
+            template_startChild(nextState, true); // 启动新状态
+            return;
         }
         if (curState == null) {
             return;
@@ -226,6 +216,21 @@ public class StateMachineTask<T> extends Decorator<T> {
         }
     }
 
+    private void stopCurState(Task<T> curState, ChangeStateArgs args) {
+        if (curState == null) return;
+        if (args.delayMode == ChangeStateArgs.DELAY_NONE && args.delayArg > 0) {
+            curState.stop(args.delayArg);
+        } else {
+            curState.stop();
+        }
+        inlineHelper.stopInline(); // help gc
+    }
+
+    protected void beforeChangeState(Task<T> curState, Task<T> nextState) {
+        assert curState != null || nextState != null;
+        handler.beforeChangeState(this, curState, nextState);
+    }
+
     @Override
     protected void onChildRunning(Task<T> child) {
         inlineHelper.inlineChild(child);
@@ -236,36 +241,16 @@ public class StateMachineTask<T> extends Decorator<T> {
         assert this.child == child;
         inlineHelper.stopInline();
 
-        // 默认和普通的FSM实现一样，不特殊对待当前状态的执行结果，但可以由handler扩展
-        if (handler != null) {
-            int status = handler.onChildCompleted(this, child);
-            if (status != TaskStatus.RUNNING) {
-                setCompleted(status, true);
-                return;
-            }
-        }
+        // 先判断是否有下一个状态，保持和changeState调用相同的逻辑
         if (tempNextState != null) {
             template_execute(false);
             return;
         }
-        if (handler != null && handler.onNextStateAbsent(this, child)) {
+        if (handler.onNextStateAbsent(this, child)) {
             return;
         }
         removeChild(0);
         beforeChangeState(child, null);
-    }
-
-    protected boolean isReady(@Nullable Task<T> curState, Task<?> nextState) {
-        if (curState == null || curState.isCompleted()) {
-            return true;
-        }
-        ChangeStateArgs changeStateArgs = (ChangeStateArgs) nextState.getControlData();
-        return changeStateArgs.delayMode == ChangeStateArgs.DELAY_NONE;
-    }
-
-    protected void beforeChangeState(Task<T> curState, Task<T> nextState) {
-        assert curState != null || nextState != null;
-        if (handler != null) handler.beforeChangeState(this, curState, nextState);
     }
 
     // region find
@@ -362,7 +347,7 @@ public class StateMachineTask<T> extends Decorator<T> {
     }
 
     public void setHandler(StateMachineHandler<T> handler) {
-        this.handler = handler;
+        this.handler = handler == null ? StateMachineHandlers.defaultHandler() : handler;
     }
     // endregion
 }

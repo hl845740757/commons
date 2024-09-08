@@ -16,10 +16,11 @@
 package cn.wjybxx.btree.fsm;
 
 import cn.wjybxx.btree.Task;
-import cn.wjybxx.btree.TaskStatus;
+
+import javax.annotation.Nullable;
 
 /**
- * 状态机策略
+ * 状态机扩展处理器
  *
  * @author wjybxx
  * date - 2023/12/3
@@ -46,6 +47,22 @@ public interface StateMachineHandler<T> {
     }
 
     /**
+     * 是否可以切换到下一个状态
+     *
+     * @param stateMachineTask 状态机
+     * @param curState         当前状态
+     * @param nextState        下一个状态
+     * @return 如果可以切换则返回true，否则返回false
+     */
+    default boolean isReady(StateMachineTask<T> stateMachineTask, @Nullable Task<T> curState, Task<T> nextState) {
+        if (curState == null || curState.isCompleted()) {
+            return true;
+        }
+        ChangeStateArgs changeStateArgs = (ChangeStateArgs) nextState.getControlData();
+        return changeStateArgs.delayMode == ChangeStateArgs.DELAY_NONE;
+    }
+
+    /**
      * 该方法在进入新状态前调用
      * 1.两个参数最多一个为null
      * 2.可以设置新状态的黑板和其它数据
@@ -58,17 +75,6 @@ public interface StateMachineHandler<T> {
      * @param nextState        下一个状态
      */
     void beforeChangeState(StateMachineTask<T> stateMachineTask, Task<T> curState, Task<T> nextState);
-
-    /**
-     * 该方法在当前状态正常结束(非stop结束)时调用
-     *
-     * @param stateMachineTask 状态机
-     * @param curState         当前状态
-     * @return 计算结果
-     */
-    default int onChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
-        return TaskStatus.RUNNING;
-    }
 
     /**
      * 当状态机没有下一个状态时调用该方法，以避免无可用状态

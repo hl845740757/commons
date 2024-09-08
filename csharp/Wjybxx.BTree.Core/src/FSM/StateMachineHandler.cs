@@ -19,7 +19,7 @@
 namespace Wjybxx.BTree.FSM
 {
 /// <summary>
-/// 状态机扩展理解处理器
+/// 状态机扩展处理器
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public interface IStateMachineHandler<T> where T : class
@@ -39,6 +39,21 @@ public interface IStateMachineHandler<T> where T : class
     }
 
     /// <summary>
+    /// 是否可以切换到下一个状态
+    /// </summary>
+    /// <param name="stateMachineTask">状态机</param>
+    /// <param name="curState">当前状态</param>
+    /// <param name="nextState">要切换的状态</param>
+    /// <returns></returns>
+    bool IsReady(StateMachineTask<T> stateMachineTask, Task<T>? curState, Task<T> nextState) {
+        if (curState == null || curState.IsCompleted) {
+            return true;
+        }
+        ChangeStateArgs changeStateArgs = (ChangeStateArgs)nextState.ControlData;
+        return changeStateArgs.delayMode == ChangeStateArgs.DELAY_NONE;
+    }
+
+    /// <summary>
     /// 该方法在进入新状态前调用
     /// 
     /// 1.两个参数最多一个为null
@@ -51,16 +66,6 @@ public interface IStateMachineHandler<T> where T : class
     /// <param name="curState">当前状态</param>
     /// <param name="nextState">下一个状态</param>
     void BeforeChangeState(StateMachineTask<T> stateMachineTask, Task<T>? curState, Task<T>? nextState) {
-    }
-
-    /// <summary>
-    /// 该方法在当前状态正常结束(非stop结束)时调用
-    /// </summary>
-    /// <param name="stateMachineTask">状态机</param>
-    /// <param name="curState">当前状态</param>
-    /// <returns>计算结果</returns>
-    int OnChildCompleted(StateMachineTask<T> stateMachineTask, Task<T> curState) {
-        return TaskStatus.RUNNING;
     }
 
     /// <summary>
