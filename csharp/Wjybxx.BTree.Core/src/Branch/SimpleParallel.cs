@@ -44,13 +44,14 @@ public class SimpleParallel<T> : Parallel<T> where T : class
         int reentryId = ReentryId;
         for (int idx = 0; idx < children.Count; idx++) {
             Task<T> child = children[idx];
-            ParallelChildHelper<T> helper = GetChildHelper(child);
-            Task<T> inlinedChild = helper.GetInlinedChild();
+            ParallelChildHelper<T> childHelper = GetChildHelper(child);
+            Task<T> inlinedChild = childHelper.GetInlinedChild();
             if (inlinedChild != null) {
-                inlinedChild.Template_ExecuteInlined(helper, child);
+                inlinedChild.Template_ExecuteInlined(childHelper, child);
             } else if (child.IsRunning) {
                 child.Template_Execute(true);
             } else {
+                SetChildCancelToken(child, childHelper.cancelToken); // 运行前赋值取消令牌
                 Template_StartChild(child, true);
             }
             if (CheckCancel(reentryId)) { // 得出结果或取消
@@ -67,8 +68,10 @@ public class SimpleParallel<T> : Parallel<T> where T : class
     protected override void OnChildCompleted(Task<T> child) {
         ParallelChildHelper<T> childHelper = GetChildHelper(child);
         childHelper.StopInline();
+        UnsetChildCancelToken(child);
 
-        if (child == children[0]) {
+        Task<T> mainTask = children[0];
+        if (child == mainTask) {
             SetCompleted(child.Status, true);
         }
     }

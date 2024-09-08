@@ -27,6 +27,7 @@ namespace Wjybxx.BTree.Branch
 /// 1.不建议在子节点完成事件中再次驱动子节点，避免运行<see cref="Task{T}.Execute"/>方法，否则可能导致其它task单帧内运行多次。
 /// 2.如果有缓存数据，务必小心维护。
 /// 3.默认child的控制数据为<see cref="ParallelChildHelper{T}"/>
+/// 4.并行节点都不能被内联
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public abstract class Parallel<T> : BranchTask<T> where T : class

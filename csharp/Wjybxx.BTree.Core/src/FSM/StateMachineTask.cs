@@ -226,15 +226,15 @@ public class StateMachineTask<T> : Decorator<T> where T : class
                 return;
             }
         }
-        if (tempNextState == null) {
-            if (handler != null && handler.OnNextStateAbsent(this, child)) {
-                return;
-            }
-            RemoveChild(0);
-            BeforeChangeState(child, null);
-        } else {
+        if (tempNextState != null) {
             Template_Execute(false);
+            return;
         }
+        if (handler != null && handler.OnNextStateAbsent(this, child)) {
+            return;
+        }
+        RemoveChild(0);
+        BeforeChangeState(child, null);
     }
 
     protected virtual bool IsReady(Task<T>? curState, Task<T> nextState) {

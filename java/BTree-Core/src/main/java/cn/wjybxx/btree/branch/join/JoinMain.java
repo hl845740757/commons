@@ -54,7 +54,8 @@ public class JoinMain<T> implements JoinPolicy<T> {
 
     @Override
     public void onChildCompleted(Join<T> join, Task<T> child) {
-        if (join.isFirstChild(child)) {
+        Task<T> mainTask = join.getFirstChild();
+        if (child == mainTask) {
             join.setCompleted(child.getStatus(), true);
         }
     }

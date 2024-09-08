@@ -45,7 +45,8 @@ public class JoinMain<T> : JoinPolicy<T> where T : class
     }
 
     public void OnChildCompleted(Join<T> join, Task<T> child) {
-        if (join.IsFirstChild(child)) {
+        Task<T> mainTask = join.GetFirstChild();
+        if (child == mainTask) {
             join.SetCompleted(child.Status, true);
         }
     }

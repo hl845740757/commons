@@ -132,7 +132,7 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
             } else if (runningChild.IsRunning) {
                 runningChild.Template_Execute(true);
             } else {
-                Template_StartChild(runningChild, true);
+                Template_StartChild(runningChild, true); // 可能继续运行前一个节点
             }
         }
     }
@@ -162,7 +162,7 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
     /// <code>
     ///  protected void OnChildCompleted(Task child) {
     ///     runningChild = null;
-    ///     inlinedHolder.Reset();
+    ///     inlineHelper.StopInline();
     ///     // 尝试计算结果（记得处理取消）
     ///      ...
     ///      // 如果未得出结果

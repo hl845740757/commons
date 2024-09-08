@@ -419,7 +419,11 @@ public abstract class Task<T> implements ICancelTokenListener {
      * @see #onEventImpl(Object)
      */
     public final void onEvent(@Nonnull Object event) {
-        if (canHandleEvent(event)) {
+        if ((ctl & TaskOverrides.MASK_CAN_HANDLE_EVENT) == 0) {
+            if (status == TaskStatus.RUNNING) {
+                onEventImpl(event);
+            }
+        } else if (canHandleEvent(event)) {
             onEventImpl(event);
         }
     }
@@ -648,8 +652,8 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     /** 是否可以延迟启动 */
     private static boolean checkSlowStart(int ctl) {
-        if ((ctl & MASK_CHECKING_GUARD) != 0) return false; // 条件节点必须执行execute
-        return (ctl & (MASK_SLOW_START | MASK_NOT_ACTIVE_IN_HIERARCHY)) != 0;
+        // 条件节点不可延迟启动；其它情况下只有用户请求延迟启动的Task才可延迟启动
+        return (ctl & (MASK_CHECKING_GUARD | MASK_SLOW_START)) == MASK_SLOW_START;
     }
 
     // endregion
@@ -864,7 +868,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
             return;
         }
-
+        // 理论上这里可以先检查一下source的取消令牌，但如果source收到取消信号，则被内联的节点的子节点也一定收到取消信号
         final int sourceReentryId = source.reentryId;
         final int reentryId = this.reentryId;
         // 内联template_execute逻辑

@@ -142,7 +142,7 @@ public class TaskEntry<T> : Task<T> where T : class
 
     /// <summary>
     /// 以内联的方式Update。
-    /// 一般情况下，TaskEntry除了驱动root节点运行外，便没有额外逻辑，因此以内内联的方式运行可省大量不必要的调用栈。
+    /// 一般情况下，TaskEntry除了驱动root节点运行外，便没有额外逻辑，因此以内联的方式运行可省一些不必要的调用栈。
     /// </summary>
     /// <param name="curFrame">当前帧号</param>
     public void UpdateInlined(int curFrame) {
@@ -180,6 +180,10 @@ public class TaskEntry<T> : Task<T> where T : class
         }
     }
 
+    protected override void Exit() {
+        inlineHelper.StopInline();
+    }
+
     protected override void OnChildRunning(Task<T> child) {
         inlineHelper.InlineChild(child);
     }
@@ -210,7 +214,6 @@ public class TaskEntry<T> : Task<T> where T : class
     public override void ResetForRestart() {
         base.ResetForRestart();
         cancelToken.Reset();
-        inlineHelper.StopInline();
         curFrame = 0;
     }
 

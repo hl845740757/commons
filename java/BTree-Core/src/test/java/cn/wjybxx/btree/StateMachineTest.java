@@ -296,8 +296,24 @@ public class StateMachineTest {
         Assertions.assertTrue(taskEntry.isSucceeded());
     }
 
+    @Test
+    void testFireEvent() {
+        TaskEntry<Blackboard> taskEntry = newStateMachineTree();
+        ClassicalState<Blackboard> nextState = new ClassicalState<>();
+        taskEntry.getRootStateMachine().changeState(nextState);
+
+        String message = "message";
+
+        taskEntry.update(0); // 先启动
+        taskEntry.onEvent(message);
+        Assertions.assertEquals(nextState.message, message);
+    }
+
     /** 传统状态机下的状态；期望enter和execute分开执行 */
     private static class ClassicalState<T> extends LeafTask<T> {
+
+        public Object message;
+
         @Override
         protected void beforeEnter() {
             super.beforeEnter();
@@ -314,7 +330,7 @@ public class StateMachineTest {
 
         @Override
         protected void onEventImpl(@Nonnull Object event) {
-
+            message = event;
         }
     }
     // endregion

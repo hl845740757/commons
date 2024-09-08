@@ -16,6 +16,10 @@
 
 ## ReleaseNotes
 
+### 1.2.0
+
+C#的异常派发机制和java不同，之前的future异常处理是按照java写的，导致异步任务的异常信息堆栈丢失。
+
 ### 1.1.1 ~ 1.1.2
 
 1. `DisruptorEventLoop`适配`Disruptor`模块的等待超时修改。

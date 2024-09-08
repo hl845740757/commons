@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Wjybxx.BTree.Branch;
 
 namespace Wjybxx.BTree
@@ -34,7 +35,13 @@ public static class TaskInlineHelper
 }
 
 /// <summary>
-/// 
+/// 内联工具类
+/// 1.只有不能被内联的节点，才需要该工具类。
+/// 2.实现内联优化时，应当在<see cref="Task{T}.OnChildRunning"/>时开启内联和<see cref="Task{T}.OnChildCompleted"/>时停止内联。
+/// 3.在<see cref="Task{T}.Exit"/>时也调用一次停止内联可避免内存泄漏(不必要的引用)。
+/// 4.在<see cref="Task{T}.OnEventImpl"/>时应当尝试将事件转发给被内联的子节点，可使用工具方法<see cref="OnEvent"/>。
+///
+/// ps：<see cref="TaskEntry{T}"/>就是标准实现。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public class TaskInlineHelper<T> where T : class
@@ -81,10 +88,7 @@ public class TaskInlineHelper<T> where T : class
             return;
         }
         Task<T>? cur = runningChild;
-        while (true) {
-            if (!cur.IsInlinable) {
-                break; // 不可内联
-            }
+        while (cur.IsInlinable) {
             if (cur is SingleRunningChildBranch<T> branch) {
                 if (branch.RunningChild == null || branch.RunningChild!.IsCompleted) {
                     break;
@@ -125,6 +129,17 @@ public class TaskInlineHelper<T> where T : class
         } else {
             this.inlinedChild = cur;
             this.inlinedReentryId = cur.ReentryId;
+        }
+    }
+
+    /** 转发事件的工具方法 -- 编写代码时使用该方法，编写完毕后点重构内联(保留该方法) */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void OnEvent(object eventObj, Task<T>? source) {
+        Task<T>? inlinedChild = GetInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.OnEvent(eventObj);
+        } else if (source != null) {
+            source.OnEvent(eventObj);
         }
     }
 }

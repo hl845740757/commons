@@ -143,7 +143,7 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
             } else if (runningChild.isRunning()) {
                 runningChild.template_execute(true);
             } else {
-                template_startChild(runningChild, true);
+                template_startChild(runningChild, true); // 可能继续运行前一个节点
             }
         }
     }
@@ -174,7 +174,7 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
      *
      *  protected void onChildCompleted(Task child) {
      *      runningChild = null;
-     *      inlinedHolder.reset();
+     *      inlinedHolder.stopInline();
      *      // 尝试计算结果（记得处理取消）
      *      ...
      *      // 如果未得出结果

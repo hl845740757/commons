@@ -72,12 +72,8 @@ public class Join<T> : Parallel<T> where T : class
             Task<T> child = children[i];
             ParallelChildHelper<T> childHelper = GetChildHelper(child);
             bool started = child.IsExited(childHelper.reentryId);
-            if (started) {
-                if (child.IsCompleted) {
-                    continue; // 勿轻易调整--未重置的情况下可能是上一次的完成状态
-                }
-            } else {
-                SetChildCancelToken(child, childHelper.cancelToken); // 运行前赋值
+            if (started && child.IsCompleted) {
+                continue; // 未重置的情况下可能是上一次的完成状态
             }
             Task<T>? inlinedChild = childHelper.GetInlinedChild();
             if (inlinedChild != null) {
@@ -85,6 +81,7 @@ public class Join<T> : Parallel<T> where T : class
             } else if (child.IsRunning) {
                 child.Template_Execute(true);
             } else {
+                SetChildCancelToken(child, childHelper.cancelToken); // 运行前赋值取消令牌
                 Template_StartChild(child, true);
             }
             if (CheckCancel(reentryId)) {

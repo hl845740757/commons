@@ -421,8 +421,13 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// @see #onEventImpl(Object)
     /// </summary>
     /// <param name="eventObj">外部事件</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OnEvent(object eventObj) {
-        if (CanHandleEvent(eventObj)) {
+        if ((ctl & TaskOverrides.MASK_CAN_HANDLE_EVENT) == 0) {
+            if (status == TaskStatus.RUNNING) {
+                OnEventImpl(eventObj);
+            }
+        } else if (CanHandleEvent(eventObj)) {
             OnEventImpl(eventObj);
         }
     }
@@ -662,8 +667,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /** 是否可以延迟启动 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool CheckSlowStart(int ctl) {
-        if ((ctl & MASK_CHECKING_GUARD) != 0) return false; // 条件节点必须执行execute
-        return (ctl & (MASK_SLOW_START | MASK_NOT_ACTIVE_IN_HIERARCHY)) != 0;
+        // 条件节点不可延迟启动；其它情况下只有用户请求延迟启动的Task才可延迟启动
+        return (ctl & (MASK_CHECKING_GUARD | MASK_SLOW_START)) == MASK_SLOW_START;
     }
 
     #endregion
@@ -862,6 +867,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
             return;
         }
+        // 理论上这里可以先检查一下source的取消令牌，但如果source收到取消信号，则被内联的节点的子节点也一定收到取消信号
         int sourceReentryId = source.reentryId;
         int reentryId = this.reentryId;
         // 内联template_execute逻辑

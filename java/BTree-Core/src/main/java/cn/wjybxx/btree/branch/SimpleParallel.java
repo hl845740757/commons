@@ -40,7 +40,7 @@ public class SimpleParallel<T> extends Parallel<T> {
 
     @Override
     protected void enter(int reentryId) {
-        initChildHelpers(false);
+        initChildHelpers(isCancelTokenPerChild());
     }
 
     @Override
@@ -56,6 +56,7 @@ public class SimpleParallel<T> extends Parallel<T> {
             } else if (child.isRunning()) {
                 child.template_execute(true);
             } else {
+                setChildCancelToken(child, childHelper.cancelToken); // 运行前赋值取消令牌
                 template_startChild(child, true);
             }
             if (checkCancel(reentryId)) { // 得出结果或取消
@@ -74,8 +75,10 @@ public class SimpleParallel<T> extends Parallel<T> {
     protected void onChildCompleted(Task<T> child) {
         ParallelChildHelper<T> childHelper = getChildHelper(child);
         childHelper.stopInline();
+        unsetChildCancelToken(child);
 
-        if (child == children.get(0)) {
+        Task<T> mainTask = children.get(0);
+        if (child == mainTask) {
             setCompleted(child.getStatus(), true);
         }
     }

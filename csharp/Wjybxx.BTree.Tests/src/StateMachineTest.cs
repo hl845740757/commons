@@ -277,10 +277,24 @@ public class StateMachineTest
         Assert.IsTrue(nextState.IsSucceeded);
         Assert.IsTrue(taskEntry.IsSucceeded);
     }
+    
+    [Test]
+    public void testFireEvent() {
+        TaskEntry<Blackboard> taskEntry = newStateMachineTree();
+        ClassicalState<Blackboard> nextState = new ClassicalState<Blackboard>();
+        taskEntry.GetRootStateMachine().ChangeState(nextState);
+
+        string message = "message";
+        taskEntry.Update(0); // 先启动
+        taskEntry.OnEvent(message);
+        Assert.AreEqual(message, nextState.message);
+    }
 
     /** 传统状态机下的状态；期望enter和execute分开执行 */
     class ClassicalState<T> : LeafTask<T> where T : class
     {
+        public object? message;
+        
         protected override void BeforeEnter() {
             base.BeforeEnter();
             IsSlowStart = true;
@@ -294,6 +308,7 @@ public class StateMachineTest
         }
 
         protected override void OnEventImpl(object eventObj) {
+            message = eventObj;
         }
     }
 

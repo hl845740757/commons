@@ -230,15 +230,15 @@ public class StateMachineTask<T> extends Decorator<T> {
                 return;
             }
         }
-        if (tempNextState == null) {
-            if (handler != null && handler.onNextStateAbsent(this, child)) {
-                return;
-            }
-            removeChild(0);
-            beforeChangeState(child, null);
-        } else {
+        if (tempNextState != null) {
             template_execute(false);
+            return;
         }
+        if (handler != null && handler.onNextStateAbsent(this, child)) {
+            return;
+        }
+        removeChild(0);
+        beforeChangeState(child, null);
     }
 
     protected boolean isReady(@Nullable Task<T> curState, Task<?> nextState) {

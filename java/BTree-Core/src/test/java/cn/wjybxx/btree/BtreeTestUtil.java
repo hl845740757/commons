@@ -15,6 +15,7 @@
  */
 package cn.wjybxx.btree;
 
+import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.ex.InfiniteLoopException;
 import cn.wjybxx.btree.decorator.Inverter;
 import cn.wjybxx.btree.leaf.WaitFrame;
@@ -41,7 +42,11 @@ class BtreeTestUtil {
 
     public static void untilCompleted(TaskEntry<?> entry) {
         for (int idx = 0; idx < 200; idx++) { // 避免死循环
-            entry.update(idx);
+            if (MathCommon.isEven(idx)) {
+                entry.update(idx);
+            } else {
+                entry.updateInlined(idx);
+            }
             if (entry.isCompleted()) return;
         }
         throw new InfiniteLoopException();

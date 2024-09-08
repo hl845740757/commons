@@ -76,12 +76,8 @@ public class Join<T> extends Parallel<T> {
             final Task<T> child = children.get(i);
             final ParallelChildHelper<T> childHelper = getChildHelper(child);
             final boolean started = child.isExited(childHelper.reentryId);
-            if (started) {
-                if (child.isCompleted()) {
-                    continue; // 勿轻易调整--未重置的情况下可能是上一次的完成状态
-                }
-            } else {
-                setChildCancelToken(child, childHelper.cancelToken); // 运行前赋值
+            if (started && child.isCompleted()) {
+                continue; // 未重置的情况下可能是上一次的完成状态
             }
             Task<T> inlinedChild = childHelper.getInlinedChild();
             if (inlinedChild != null) {
@@ -89,6 +85,7 @@ public class Join<T> extends Parallel<T> {
             } else if (child.isRunning()) {
                 child.template_execute(true);
             } else {
+                setChildCancelToken(child, childHelper.cancelToken); // 运行前赋值取消令牌
                 template_startChild(child, true);
             }
             if (checkCancel(reentryId)) {

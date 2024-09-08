@@ -153,7 +153,7 @@ public class TaskEntry<T> extends Task<T> {
 
     /**
      * 以内联的方式update。
-     * 一般情况下，TaskEntry除了驱动root节点运行外，便没有额外逻辑，因此以内内联的方式运行可省大量不必要的调用栈。
+     * 一般情况下，TaskEntry除了驱动root节点运行外，便没有额外逻辑，因此以内联的方式运行可省一些不必要的调用栈。
      */
     public void updateInlined(int curFrame) {
         this.curFrame = curFrame;
@@ -189,6 +189,11 @@ public class TaskEntry<T> extends Task<T> {
         } else {
             template_startChild(rootTask, true);
         }
+    }
+
+    @Override
+    protected void exit() {
+        inlineHelper.stopInline();
     }
 
     @Override

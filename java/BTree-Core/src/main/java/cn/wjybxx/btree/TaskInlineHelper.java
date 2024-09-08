@@ -18,7 +18,17 @@ package cn.wjybxx.btree;
 
 import cn.wjybxx.btree.branch.SingleRunningChildBranch;
 
+import javax.annotation.Nullable;
+
 /**
+ * 内联工具类。
+ * 1.只有不能被内联的节点，才需要该工具类。
+ * 2.实现内联优化时，应当在{@link Task#onChildRunning(Task)}时开启内联和{@link Task#onChildCompleted(Task)}时停止内联。
+ * 3.在{@link Task#exit()}时也调用一次停止内联可避免内存泄漏(不必要的引用)。
+ * 4.在{@link Task#onEventImpl(Object)}时应当尝试将事件转发给被内联的子节点，可使用工具方法{@link #onEvent(Object, Task)}.
+ * <p>
+ * ps：{@link TaskEntry}就是标准实现。
+ *
  * @author wjybxx
  * date - 2024/7/24
  */
@@ -36,11 +46,6 @@ public class TaskInlineHelper<T> {
     private transient Task<T> inlinedChild = null;
     /** 被内联的子节点的重入id */
     private transient int inlinedReentryId = INVALID_REENTRY_ID;
-
-    /** 测试内联的有效性 */
-    public boolean testInlined() {
-        return inlinedChild != null && inlinedChild.getReentryId() == inlinedReentryId;
-    }
 
     /** 获取被内联运行的子节点 */
     public final Task<T> getInlinedChild() {
@@ -75,10 +80,7 @@ public class TaskInlineHelper<T> {
 
         Task<T> cur = runningChild;
         // 只对确定逻辑的常见类型进行内联 -- 子节点完成必定触发控制节点完成的才可以内联
-        while (true) {
-            if (!cur.isInlinable()) {
-                break; // 不可内联
-            }
+        while (cur.isInlinable()) {
             if (cur instanceof SingleRunningChildBranch<T> branch) {
                 if (branch.getRunningChild() == null || branch.getRunningChild().isCompleted()) {
                     break;
@@ -119,6 +121,16 @@ public class TaskInlineHelper<T> {
         } else {
             this.inlinedChild = cur;
             this.inlinedReentryId = cur.getReentryId();
+        }
+    }
+
+    /** 转发事件的工具方法 -- 编写代码时使用该方法，编写完毕后点重构内联(保留该方法) */
+    public final void onEvent(Object event, @Nullable Task<T> source) {
+        Task<T> inlinedChild = getInlinedChild();
+        if (inlinedChild != null) {
+            inlinedChild.onEvent(event);
+        } else if (source != null) {
+            source.onEvent(event);
         }
     }
 }

@@ -38,7 +38,6 @@ public interface IStateMachineHandler<T> where T : class
     void BeforeEnter(StateMachineTask<T> stateMachineTask) {
     }
 
-
     /// <summary>
     /// 该方法在进入新状态前调用
     /// 
