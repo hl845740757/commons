@@ -29,17 +29,12 @@ import cn.wjybxx.btree.TaskInlinable;
 @TaskInlinable
 public class AlwaysRunning<T> extends Decorator<T> {
 
-    /** 记录子节点上次的重入id，这样不论enter和execute是否分开执行都不影响 */
-    private transient int childPrevReentryId;
+    private transient boolean started;
 
     @Override
     protected void beforeEnter() {
         super.beforeEnter();
-        if (child == null) {
-            childPrevReentryId = 0;
-        } else {
-            childPrevReentryId = child.getReentryId();
-        }
+        started = false;
     }
 
     @Override
@@ -48,7 +43,6 @@ public class AlwaysRunning<T> extends Decorator<T> {
         if (child == null) {
             return;
         }
-        final boolean started = child.isExited(childPrevReentryId);
         if (started && child.isCompleted()) {  // 勿轻易调整
             return;
         }
@@ -58,6 +52,7 @@ public class AlwaysRunning<T> extends Decorator<T> {
         } else if (child.isRunning()) {
             child.template_execute(true);
         } else {
+            started = true;
             template_startChild(child, true);
         }
     }

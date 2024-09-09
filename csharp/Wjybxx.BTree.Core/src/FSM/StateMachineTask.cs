@@ -185,7 +185,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
             StopCurState(curState, (ChangeStateArgs)nextState.ControlData);
 
             this.tempNextState = null;
-            if (child != null) {
+            if (curState != null) {
                 SetChild(0, nextState);
             } else {
                 AddChild(nextState);
@@ -210,10 +210,10 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         }
     }
 
-    private void StopCurState(Task<T>? curState, ChangeStateArgs args) {
+    private void StopCurState(Task<T>? curState, ChangeStateArgs changeStateArgs) {
         if (curState == null) return;
-        if (args.delayMode == ChangeStateArgs.DELAY_NONE && args.delayArg > 0) {
-            curState.Stop(args.delayArg);
+        if (changeStateArgs.delayMode == 0 && changeStateArgs.delayArg > 0) {
+            curState.Stop(changeStateArgs.delayArg);
         } else {
             curState.Stop();
         }

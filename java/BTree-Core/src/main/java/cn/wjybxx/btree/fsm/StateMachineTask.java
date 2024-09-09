@@ -190,7 +190,7 @@ public class StateMachineTask<T> extends Decorator<T> {
             stopCurState(curState, (ChangeStateArgs) nextState.getControlData());
 
             this.tempNextState = null;
-            if (child != null) {
+            if (curState != null) {
                 setChild(0, nextState);
             } else {
                 addChild(nextState);
@@ -216,10 +216,10 @@ public class StateMachineTask<T> extends Decorator<T> {
         }
     }
 
-    private void stopCurState(Task<T> curState, ChangeStateArgs args) {
+    private void stopCurState(Task<T> curState, ChangeStateArgs changeStateArgs) {
         if (curState == null) return;
-        if (args.delayMode == ChangeStateArgs.DELAY_NONE && args.delayArg > 0) {
-            curState.stop(args.delayArg);
+        if (changeStateArgs.delayMode == 0 && changeStateArgs.delayArg > 0) {
+            curState.stop(changeStateArgs.delayArg);
         } else {
             curState.stop();
         }

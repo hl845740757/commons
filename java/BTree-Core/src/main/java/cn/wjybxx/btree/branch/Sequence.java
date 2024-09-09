@@ -41,7 +41,9 @@ public class Sequence<T> extends SingleRunningChildBranch<T> {
 
     @Override
     protected void enter(int reentryId) {
-        if (isCheckingGuard()) {
+        if (children.isEmpty()) {
+            setSuccess();
+        } else if (isCheckingGuard()) {
             // 条件检测性能优化
             for (int i = 0; i < children.size(); i++) {
                 Task<T> child = children.get(i);

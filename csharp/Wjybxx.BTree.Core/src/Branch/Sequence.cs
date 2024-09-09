@@ -37,7 +37,9 @@ public class Sequence<T> : SingleRunningChildBranch<T> where T : class
     }
 
     protected override void Enter(int reentryId) {
-        if (IsCheckingGuard()) {
+        if (children.Count == 0) {
+            SetSuccess();
+        } else if (IsCheckingGuard()) {
             // 条件检测性能优化
             for (int i = 0; i < children.Count; i++) {
                 Task<T> child = children[i];

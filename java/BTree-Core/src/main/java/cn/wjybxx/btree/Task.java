@@ -315,7 +315,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     /**
      * Task的心跳方法，在Task进入完成状态之前会反复执行。
      * 1.运行中可通过{@link #setSuccess()}、{@link #setFailed(int)}、{@link #setCancelled()}将自己更新为完成状态。
-     * 2.如果不想和{@link #enter(int)}同步执行，{@link #setSlowStart(boolean)}实现。
+     * 2.如果不想和{@link #enter(int)}同步执行，可通过{@link #setSlowStart(boolean)}实现。
      * 3.不建议直接调用该方法，而是通过模板方法{@link #template_execute(boolean)}运行。
      */
     protected abstract void execute();
@@ -501,7 +501,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         for (int idx = getChildCount() - 1; idx >= 0; idx--) {
             final Task<T> child = getChild(idx);
             if (child.status == TaskStatus.RUNNING) {
-                child.stop();
+                child.stop(TaskStatus.CANCELLED);
             }
         }
     }
@@ -519,7 +519,7 @@ public abstract class Task<T> implements ICancelTokenListener {
             return;
         }
         if (status == TaskStatus.RUNNING) {
-            stop();
+            stop(TaskStatus.CANCELLED);
         }
         resetChildrenForRestart();
         if (guard != null) {
@@ -1198,7 +1198,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     /** 停止目标任务 */
     public static void stop(@Nullable Task<?> task) {
         if (task != null && task.status == TaskStatus.RUNNING) {
-            task.stop();
+            task.stop(TaskStatus.CANCELLED);
         }
     }
 

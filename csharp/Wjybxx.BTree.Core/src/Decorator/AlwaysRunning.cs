@@ -28,8 +28,7 @@ namespace Wjybxx.BTree.Decorator
 [TaskInlinable]
 public class AlwaysRunning<T> : Decorator<T> where T : class
 {
-    /** 记录子节点上次的重入id，这样不论enter和execute是否分开执行都不影响 */
-    [NonSerialized] private int childPrevReentryId;
+    [NonSerialized] private bool started;
 
     public AlwaysRunning() {
     }
@@ -39,11 +38,7 @@ public class AlwaysRunning<T> : Decorator<T> where T : class
 
     protected override void BeforeEnter() {
         base.BeforeEnter();
-        if (child == null) {
-            childPrevReentryId = 0;
-        } else {
-            childPrevReentryId = child.ReentryId;
-        }
+        started = false;
     }
 
     protected override void Execute() {
@@ -51,7 +46,6 @@ public class AlwaysRunning<T> : Decorator<T> where T : class
         if (child == null) {
             return;
         }
-        bool started = child.IsExited(childPrevReentryId);
         if (started && child.IsCompleted) { // 勿轻易调整
             return;
         }
@@ -61,6 +55,7 @@ public class AlwaysRunning<T> : Decorator<T> where T : class
         } else if (child.IsRunning) {
             child.Template_Execute(true);
         } else {
+            started = true;
             Template_StartChild(child, true);
         }
     }

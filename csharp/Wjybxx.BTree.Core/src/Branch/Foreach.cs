@@ -33,6 +33,12 @@ public class Foreach<T> : SingleRunningChildBranch<T> where T : class
     public Foreach(List<Task<T>>? children) : base(children) {
     }
 
+    protected override void Enter(int reentryId) {
+        if (children.Count == 0) {
+            SetSuccess();
+        }
+    }
+
     protected override void OnChildRunning(Task<T> child) {
         inlineHelper.InlineChild(child);
     }

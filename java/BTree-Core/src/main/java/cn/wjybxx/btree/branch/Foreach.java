@@ -37,6 +37,13 @@ public class Foreach<T> extends SingleRunningChildBranch<T> {
     }
 
     @Override
+    protected void enter(int reentryId) {
+        if (children.isEmpty()) {
+            setSuccess();
+        }
+    }
+
+    @Override
     protected void onChildRunning(Task<T> child) {
         inlineHelper.inlineChild(child);
     }
