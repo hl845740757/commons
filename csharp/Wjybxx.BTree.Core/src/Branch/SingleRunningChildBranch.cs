@@ -56,6 +56,7 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
 
     /** 允许外部在结束后查询 */
     public int RunningIndex => runningIndex;
+
     /** 获取运行中的子节点 */
     public Task<T>? RunningChild => runningChild;
 
