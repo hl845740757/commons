@@ -24,7 +24,7 @@ namespace Wjybxx.Commons
 /// <summary>
 /// 该异常表示对象的状态错误
 /// </summary>
-public class IllegalStateException : StateException
+public class IllegalStateException : InvalidOperationException
 {
     public IllegalStateException() {
     }

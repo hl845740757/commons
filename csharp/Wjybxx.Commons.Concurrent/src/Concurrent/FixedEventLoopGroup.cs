@@ -46,7 +46,7 @@ public class FixedEventLoopGroup : AbstractEventLoopGroup, IFixedEventLoopGroup
         children = new IEventLoop[numChildren];
         for (int i = 0; i < numChildren; i++) {
             IEventLoop eventLoop = eventLoopFactory.NewChild(this, i);
-            if (eventLoop.Parent != this) throw new StateException("the parent of child is illegal");
+            if (eventLoop.Parent != this) throw new IllegalStateException("the parent of child is illegal");
             children[i] = eventLoop;
         }
         readonlyChildren = ImmutableList<IEventLoop>.CreateRange(children);

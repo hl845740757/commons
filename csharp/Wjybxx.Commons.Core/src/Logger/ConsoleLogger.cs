@@ -52,7 +52,7 @@ internal class ConsoleLogger : ILogger
         Console.WriteLine(ex.ToString());
     }
 
-    public void Log(Level level, string format, params object[] args) {
+    public void Log(Level level, string format, params object?[] args) {
         if (!_factory.IsEnabled(level)) {
             return;
         }
@@ -69,7 +69,7 @@ internal class ConsoleLogger : ILogger
         }
     }
 
-    public void Log(Level level, Exception? ex, string format, params object[] args) {
+    public void Log(Level level, Exception? ex, string format, params object?[] args) {
         if (!_factory.IsEnabled(level)) {
             return;
         }

@@ -90,7 +90,7 @@ public class TaskEntry<T> : Task<T> where T : class
 
     public ITreeLoader TreeLoader {
         get => treeLoader;
-        set => treeLoader = ObjectUtil.NullToDef(value, ITreeLoader.NullLoader());
+        set => treeLoader = value ?? ITreeLoader.NullLoader();
     }
 
     public ITaskEntryHandler<T>? Handler {
@@ -114,11 +114,13 @@ public class TaskEntry<T> : Task<T> where T : class
     /// </summary>
     /// <returns></returns>
     public TaskAwaiter<T> GetAwaiter() => new TaskAwaiter<T>(this);
-
-    /**
-     * 获取根状态机
-     * 状态机太重要了，值得我们为其提供各种快捷方法
-     */
+    
+    /// <summary>
+    /// 获取根状态机
+    /// 状态机太重要了，值得我们为其提供各种快捷方法
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="IllegalStateException"></exception>
     public StateMachineTask<T> GetRootStateMachine() {
         if (rootTask is StateMachineTask<T> stateMachine) {
             return stateMachine;

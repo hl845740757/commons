@@ -28,19 +28,19 @@ public static class TaskLogger
 {
     private static readonly ILogger logger = LoggerFactory.GetLogger(typeof(TaskLogger));
 
-    public static void Info(string format, params object[] args) {
+    public static void Info(string format, params object?[] args) {
         logger.Info(format, args);
     }
 
-    public static void Info(Exception? ex, string format, params object[] args) {
+    public static void Info(Exception? ex, string format, params object?[] args) {
         logger.Info(ex, format, args);
     }
 
-    public static void Warning(string format, params object[] args) {
+    public static void Warning(string format, params object?[] args) {
         logger.Warn(format, args);
     }
 
-    public static void Warning(Exception? ex, string format, params object[] args) {
+    public static void Warning(Exception? ex, string format, params object?[] args) {
         logger.Warn(ex, format, args);
     }
 }

@@ -138,6 +138,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 1.对任务进行标记是一个常见的需求，我们将其定义在顶层以简化使用
      * 2.在运行期间不应该变动
      * 3.高8位为流程控制特征值，会在任务运行前拷贝到ctl -- 以支持在编辑器导中指定Task的运行特征。
+     * 4.用户可以通过flags来识别child，以判断是否处理child的结果
      */
     protected int flags;
 
@@ -462,7 +463,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      */
     @Override
     public void onCancelRequested(CancelToken cancelToken) {
-        if (isRunning()) setCancelled();
+        if (isRunning()) setCompleted(TaskStatus.CANCELLED, false);
     }
 
     /** 强制停止任务 */
@@ -617,7 +618,7 @@ public abstract class Task<T> implements ICancelTokenListener {
             return true;
         }
         if (cancelToken.isCancelRequested()) { // 这里是手动检查
-            setCancelled();
+            setCompleted(TaskStatus.CANCELLED, false);
             return true;
         }
         return false;
@@ -817,7 +818,7 @@ public abstract class Task<T> implements ICancelTokenListener {
                 return;
             }
             if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
-                setCancelled();
+                setCompleted(TaskStatus.CANCELLED, false);
                 return;
             }
         }
@@ -833,7 +834,7 @@ public abstract class Task<T> implements ICancelTokenListener {
             return;
         }
         if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
-            setCancelled();
+            setCompleted(TaskStatus.CANCELLED, false);
             return;
         }
         if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
@@ -854,7 +855,7 @@ public abstract class Task<T> implements ICancelTokenListener {
             return;
         }
         if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
-            setCancelled();
+            setCompleted(TaskStatus.CANCELLED, false);
             return;
         }
         final int reentryId = this.reentryId;
@@ -863,7 +864,7 @@ public abstract class Task<T> implements ICancelTokenListener {
             return;
         }
         if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
-            setCancelled();
+            setCompleted(TaskStatus.CANCELLED, false);
         }
     }
 
@@ -885,7 +886,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         outer:
         {
             if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
-                setCancelled();
+                setCompleted(TaskStatus.CANCELLED, false);
                 break outer;
             }
             execute();
@@ -893,7 +894,7 @@ public abstract class Task<T> implements ICancelTokenListener {
                 break outer;
             }
             if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
-                setCancelled();
+                setCompleted(TaskStatus.CANCELLED, false);
             }
         }
         // 如果被内联子节点退出，而源任务未退出，则重新内联(source可能自身进行了新的内联)

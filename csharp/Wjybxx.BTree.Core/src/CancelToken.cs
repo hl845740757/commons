@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Concurrent;
 
@@ -84,13 +85,19 @@ public class CancelToken : ICancelTokenListener
     /// 4.取消时至少赋值一个信息，reason通常应该赋值
     /// </summary>
     /// <value></value>
-    public int CancelCode => code;
+    public int CancelCode {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => code;
+    }
 
     /// <summary>
     /// 是否已收到取消信号
     /// 任务的执行者将持有该令牌，在调度任务前会检测取消信号；如果任务已经开始，则由用户的任务自身检测取消和中断信号。
     /// </summary>
-    public bool IsCancelRequested => code != 0;
+    public bool IsCancelRequested {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => code != 0;
+    }
 
     /// <summary>
     /// 取消的原因

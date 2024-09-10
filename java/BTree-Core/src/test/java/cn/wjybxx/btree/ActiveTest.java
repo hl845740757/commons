@@ -16,8 +16,6 @@
 
 package cn.wjybxx.btree;
 
-import cn.wjybxx.btree.fsm.StackStateMachineTask;
-import cn.wjybxx.btree.fsm.StateMachineHandlers;
 import cn.wjybxx.btree.leaf.WaitFrame;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -28,24 +26,12 @@ import org.junit.jupiter.api.Test;
  */
 public class ActiveTest {
 
-    private static TaskEntry<Blackboard> newStateMachineTree() {
-        StackStateMachineTask<Blackboard> stateMachineTask = new StackStateMachineTask<>();
-        stateMachineTask.setName("RootStateMachine");
-        stateMachineTask.setHandler(StateMachineHandlers.defaultHandler());
-
-        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry();
-        taskEntry.setRootTask(stateMachineTask);
-        return taskEntry;
-    }
-
     /**
      * waitframe本应该在第5帧完成，但我们暂停了其心跳，在第9帧后启用心跳，第10帧就完成
      */
     @Test
     void testWaitFrame() {
-        TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        WaitFrame<Blackboard> nextState = new WaitFrame<>(5);
-        taskEntry.getRootStateMachine().changeState(nextState);
+        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<>(5));
 
         int expectedFrames = 10;
         BtreeTestUtil.untilCompleted(taskEntry, frame -> {
@@ -56,15 +42,13 @@ public class ActiveTest {
                 taskEntry.setActive(true);
             }
         });
-        Assertions.assertEquals(10, nextState.getRunFrames());
+        Assertions.assertEquals(10, taskEntry.getRootTask().getRunFrames());
     }
 
     /** 测试active为false的情况下在第9帧取消 */
     @Test
     void testCancel() {
-        TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        WaitFrame<Blackboard> nextState = new WaitFrame<>(5);
-        taskEntry.getRootStateMachine().changeState(nextState);
+        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<>(5));
 
         int expectedFrames = 10;
         BtreeTestUtil.untilCompleted(taskEntry, frame -> {
@@ -77,6 +61,6 @@ public class ActiveTest {
             }
         });
         Assertions.assertTrue(taskEntry.isCancelled());
-        Assertions.assertEquals(10, taskEntry.getRunFrames());
+        Assertions.assertEquals(10, taskEntry.getRootTask().getRunFrames());
     }
 }

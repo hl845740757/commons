@@ -27,7 +27,7 @@ namespace BTree.Tests;
 public class ActiveTest
 {
     private static TaskEntry<Blackboard> newStateMachineTree() {
-        StackStateMachineTask<Blackboard> stateMachineTask = new StackStateMachineTask<Blackboard>();
+        StateMachineTask<Blackboard> stateMachineTask = new StateMachineTask<Blackboard>();
         stateMachineTask.Name = "RootStateMachine";
         stateMachineTask.Handler = StateMachineHandlers.DefaultHandler<Blackboard>();
 
@@ -41,9 +41,7 @@ public class ActiveTest
     /// </summary>
     [Test]
     public void testWaitFrame() {
-        TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        WaitFrame<Blackboard> nextState = new WaitFrame<Blackboard>(5);
-        taskEntry.GetRootStateMachine().ChangeState(nextState);
+        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<Blackboard>(5));
 
         const int expectedFrames = 10;
         BtreeTestUtil.untilCompleted(taskEntry, frame => {
@@ -54,15 +52,13 @@ public class ActiveTest
                 taskEntry.SetActive(true);
             }
         });
-        Assert.AreEqual(10, nextState.RunFrames);
+        Assert.AreEqual(10, taskEntry.RootTask.RunFrames);
     }
     
     /** 测试active为false的情况下在第9帧取消 */
     [Test]
     public void testCancel() {
-        TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        WaitFrame<Blackboard> nextState = new WaitFrame<Blackboard>(5);
-        taskEntry.GetRootStateMachine().ChangeState(nextState);
+        TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(new WaitFrame<Blackboard>(5));
 
         const int expectedFrames = 10;
         BtreeTestUtil.untilCompleted(taskEntry, frame => {
@@ -74,6 +70,6 @@ public class ActiveTest
                 taskEntry.SetActive(true);
             }
         });
-        Assert.AreEqual(10, nextState.RunFrames);
+        Assert.AreEqual(10, taskEntry.RootTask.RunFrames);
     }
 }

@@ -60,7 +60,7 @@ internal class UnityLogger : ILogger
         Debug.LogException(ex);
     }
 
-    public void Log(Level level, string format, params object[] args) {
+    public void Log(Level level, string format, params object?[] args) {
         if (!_factory.IsEnabled(level)) {
             return;
         }
@@ -94,7 +94,7 @@ internal class UnityLogger : ILogger
         }
     }
 
-    public void Log(Level level, Exception? ex, string format, params object[] args) {
+    public void Log(Level level, Exception? ex, string format, params object?[] args) {
         if (!_factory.IsEnabled(level)) {
             return;
         }

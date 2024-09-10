@@ -135,7 +135,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 1.对任务进行标记是一个常见的需求，我们将其定义在顶层以简化使用
     /// 2.在运行期间不应该变动
     /// 3.高8位为流程控制特征值，会在任务运行前拷贝到ctl -- 以支持在编辑器导中指定Task的运行特征。
-    ///
+    /// 4.用户可以通过flags来识别child，以判断是否处理child的结果
     /// ps：<see cref="TaskOptions"/>
     /// </summary>
     protected int flags;
@@ -468,7 +468,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// </summary>
     /// <param name="cancelToken">进入取消状态的取消令牌</param>
     public virtual void OnCancelRequested(CancelToken cancelToken) {
-        if (IsRunning) SetCancelled();
+        if (IsRunning) SetCompleted(TaskStatus.CANCELLED, false);
     }
 
     /// <summary>
@@ -620,7 +620,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             return true;
         }
         if (cancelToken.IsCancelRequested) { // 这里是手动检查
-            SetCancelled();
+            SetCompleted(TaskStatus.CANCELLED, false);
             return true;
         }
         return false;
@@ -812,10 +812,12 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             if (reentryId != this.reentryId) {
                 return;
             }
+#if !TASK_MANUAL_CHECK_CANCEL
             if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
-                SetCancelled();
+                SetCompleted(TaskStatus.CANCELLED, false);
                 return;
             }
+#endif
         }
         if (CheckSlowStart(ctl)) { // 需要使用最新的ctl
             if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
@@ -828,10 +830,12 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (reentryId != this.reentryId) {
             return;
         }
+#if !TASK_MANUAL_CHECK_CANCEL
         if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
-            SetCancelled();
+            SetCompleted(TaskStatus.CANCELLED, false);
             return;
         }
+#endif
         if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
             control.OnChildRunning(this);
         }
@@ -849,9 +853,9 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (fromControl && (ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
             return;
         }
-
+#if !TASK_MANUAL_CHECK_CANCEL
         if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
-            SetCancelled();
+            SetCompleted(TaskStatus.CANCELLED, false);
             return;
         }
         int reentryId = this.reentryId;
@@ -860,8 +864,11 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             return;
         }
         if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
-            SetCancelled();
+            SetCompleted(TaskStatus.CANCELLED, false);
         }
+#else
+        Execute();
+#endif
     }
 
     /// <summary>
@@ -871,7 +878,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// <param name="source">被内联前的Task</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Template_ExecuteInlined(TaskInlineHelper<T> helper, Task<T> source) {
-        Debug.Assert(status == TaskStatus.RUNNING);
+        Debug.Assert(status == TaskStatus.RUNNING && this != source);
         if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
             return;
         }
@@ -880,8 +887,9 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         int reentryId = this.reentryId;
         // 内联template_execute逻辑
         {
+#if !TASK_MANUAL_CHECK_CANCEL
             if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
-                SetCancelled();
+                SetCompleted(TaskStatus.CANCELLED, false);
                 goto outer;
             }
             Execute();
@@ -889,8 +897,11 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                 goto outer;
             }
             if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
-                SetCancelled();
+                SetCompleted(TaskStatus.CANCELLED, false);
             }
+#else
+            Execute();
+#endif
         }
         outer:
         {

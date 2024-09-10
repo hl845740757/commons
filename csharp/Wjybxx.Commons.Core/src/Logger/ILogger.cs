@@ -51,7 +51,7 @@ public interface ILogger
     /// <param name="level">日志等级</param>
     /// <param name="format">文本模板</param>
     /// <param name="args">格式化参数</param>
-    void Log(Level level, string format, params object[] args);
+    void Log(Level level, string format, params object?[] args);
 
     /// <summary>
     /// 
@@ -68,7 +68,7 @@ public interface ILogger
     /// <param name="ex">异常信息</param>
     /// <param name="format">文本模板</param>
     /// <param name="args">格式化参数</param>
-    void Log(Level level, Exception? ex, string format, params object[] args);
+    void Log(Level level, Exception? ex, string format, params object?[] args);
 
     #region trace
 
@@ -81,13 +81,13 @@ public interface ILogger
     void Trace(Exception ex) => Log(Level.Trace, ex);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Trace(string format, params object[] args) => Log(Level.Trace, format, args);
+    void Trace(string format, params object?[] args) => Log(Level.Trace, format, args);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Trace(Exception? ex, string format) => Log(Level.Trace, ex, format);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Trace(Exception? ex, string format, params object[] args) => Log(Level.Trace, ex, format, args);
+    void Trace(Exception? ex, string format, params object?[] args) => Log(Level.Trace, ex, format, args);
 
     #endregion
 
@@ -102,13 +102,13 @@ public interface ILogger
     void Debug(Exception ex) => Log(Level.Debug, ex);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Debug(string format, params object[] args) => Log(Level.Debug, format, args);
+    void Debug(string format, params object?[] args) => Log(Level.Debug, format, args);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Debug(Exception? ex, string format) => Log(Level.Debug, ex, format);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Debug(Exception? ex, string format, params object[] args) => Log(Level.Debug, ex, format, args);
+    void Debug(Exception? ex, string format, params object?[] args) => Log(Level.Debug, ex, format, args);
 
     #endregion
 
@@ -123,13 +123,13 @@ public interface ILogger
     void Info(Exception ex) => Log(Level.Info, ex);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Info(string format, params object[] args) => Log(Level.Info, format, args);
+    void Info(string format, params object?[] args) => Log(Level.Info, format, args);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Info(Exception? ex, string format) => Log(Level.Info, ex, format);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Info(Exception? ex, string format, params object[] args) => Log(Level.Info, ex, format, args);
+    void Info(Exception? ex, string format, params object?[] args) => Log(Level.Info, ex, format, args);
 
     #endregion
 
@@ -144,13 +144,13 @@ public interface ILogger
     void Warn(Exception ex) => Log(Level.Warn, ex);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Warn(string format, params object[] args) => Log(Level.Warn, format, args);
+    void Warn(string format, params object?[] args) => Log(Level.Warn, format, args);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Warn(Exception? ex, string format) => Log(Level.Warn, ex, format);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Warn(Exception? ex, string format, params object[] args) => Log(Level.Warn, ex, format, args);
+    void Warn(Exception? ex, string format, params object?[] args) => Log(Level.Warn, ex, format, args);
 
     #endregion
 
@@ -165,13 +165,13 @@ public interface ILogger
     void Error(Exception ex) => Log(Level.Error, ex);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Error(string format, params object[] args) => Log(Level.Error, format, args);
+    void Error(string format, params object?[] args) => Log(Level.Error, format, args);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Error(Exception? ex, string format) => Log(Level.Error, ex, format);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Error(Exception? ex, string format, params object[] args) => Log(Level.Error, ex, format, args);
+    void Error(Exception? ex, string format, params object?[] args) => Log(Level.Error, ex, format, args);
 
     #endregion
 }
