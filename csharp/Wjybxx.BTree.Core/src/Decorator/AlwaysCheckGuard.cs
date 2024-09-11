@@ -35,7 +35,7 @@ public class AlwaysCheckGuard<T> : Decorator<T> where T : class
         if (Template_CheckGuard(child.Guard)) {
             Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
             if (inlinedChild != null) {
-                inlinedChild.Template_ExecuteInlined(inlineHelper, child);
+                inlinedChild.Template_ExecuteInlined(ref inlineHelper, child);
             } else if (child.IsRunning) {
                 child.Template_Execute(true);
             } else {

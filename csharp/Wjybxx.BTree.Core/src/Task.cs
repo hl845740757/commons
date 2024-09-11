@@ -877,7 +877,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// <param name="helper">存储被内联子节点的对象</param>
     /// <param name="source">被内联前的Task</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Template_ExecuteInlined(TaskInlineHelper<T> helper, Task<T> source) {
+    public void Template_ExecuteInlined(ref TaskInlineHelper<T> helper, Task<T> source) {
         Debug.Assert(status == TaskStatus.RUNNING && this != source);
         if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
             return;

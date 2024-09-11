@@ -53,7 +53,7 @@ public class TaskEntry<T> : Task<T> where T : class
     /** 用于Entry的事件驱动 */
     [NonSerialized] protected ITaskEntryHandler<T>? handler;
     /** 用于内联优化 */
-    [NonSerialized] protected readonly TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<T>();
+    [NonSerialized] protected TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<T>();
 
     public TaskEntry()
         : this(null, null, default) {
@@ -114,7 +114,7 @@ public class TaskEntry<T> : Task<T> where T : class
     /// </summary>
     /// <returns></returns>
     public TaskAwaiter<T> GetAwaiter() => new TaskAwaiter<T>(this);
-    
+
     /// <summary>
     /// 获取根状态机
     /// 状态机太重要了，值得我们为其提供各种快捷方法
@@ -152,7 +152,7 @@ public class TaskEntry<T> : Task<T> where T : class
         if (IsRunning) {
             Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
             if (inlinedChild != null) {
-                inlinedChild.Template_ExecuteInlined(inlineHelper, rootTask!);
+                inlinedChild.Template_ExecuteInlined(ref inlineHelper, rootTask!);
             } else if (rootTask!.IsRunning) {
                 rootTask.Template_Execute(true);
             } else {
@@ -174,7 +174,7 @@ public class TaskEntry<T> : Task<T> where T : class
     protected override void Execute() {
         Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
         if (inlinedChild != null) {
-            inlinedChild.Template_ExecuteInlined(inlineHelper, rootTask!);
+            inlinedChild.Template_ExecuteInlined(ref inlineHelper, rootTask!);
         } else if (rootTask!.IsRunning) {
             rootTask.Template_Execute(true);
         } else {

@@ -55,7 +55,7 @@ public class Switch<T> : SingleRunningChildBranch<T> where T : class
 
         Task<T> inlinedChild = inlineHelper.GetInlinedChild();
         if (inlinedChild != null) {
-            inlinedChild.Template_ExecuteInlined(inlineHelper, runningChild);
+            inlinedChild.Template_ExecuteInlined(ref inlineHelper, runningChild);
         } else if (runningChild.IsRunning) {
             runningChild.Template_Execute(true);
         } else {
@@ -69,10 +69,9 @@ public class Switch<T> : SingleRunningChildBranch<T> where T : class
         }
         for (int idx = 0; idx < children.Count; idx++) {
             Task<T> child = children[idx];
-            if (!Template_CheckGuard(child.Guard)) {
-                continue;
+            if (Template_CheckGuard(child.Guard)) {
+                return idx;
             }
-            return idx;
         }
         return -1;
     }

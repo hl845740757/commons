@@ -44,7 +44,7 @@ public static class TaskInlineHelper
 /// ps：<see cref="TaskEntry{T}"/>就是标准实现。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class TaskInlineHelper<T> where T : class
+public struct TaskInlineHelper<T> where T : class
 {
     /** 无效重入id */
     private const int INVALID_REENTRY_ID = int.MinValue;
@@ -54,7 +54,7 @@ public class TaskInlineHelper<T> where T : class
 #nullable disable
     [NonSerialized] private Task<T> inlinedChild;
     /** 被内联的子节点的重入id */
-    [NonSerialized] private int inlinedReentryId = INVALID_REENTRY_ID;
+    [NonSerialized] private int inlinedReentryId;
 #nullable enable
 
     /** 获取被内联运行的子节点 */

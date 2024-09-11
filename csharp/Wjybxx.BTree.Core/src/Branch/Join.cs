@@ -77,7 +77,7 @@ public class Join<T> : ParallelBranch<T> where T : class
             }
             Task<T>? inlinedChild = childHelper.GetInlinedChild();
             if (inlinedChild != null) {
-                inlinedChild.Template_ExecuteInlined(childHelper, child);
+                inlinedChild.Template_ExecuteInlined(ref childHelper.Unwrap(), child);
             } else if (child.IsRunning) {
                 child.Template_Execute(true);
             } else {

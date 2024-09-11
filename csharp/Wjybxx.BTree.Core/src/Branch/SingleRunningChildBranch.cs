@@ -40,7 +40,7 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
     /// 2.子类要支持实现内联优化时，应当在<see cref="OnChildRunning"/>和<see cref="Task{T}.OnChildCompleted"/>维护字段引用。
     /// </summary>
     [NonSerialized]
-    protected readonly TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<T>();
+    protected TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<T>();
 #nullable enable
 
     protected SingleRunningChildBranch() {
@@ -79,8 +79,8 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
         }
     }
 
-    public TaskInlineHelper<T> GetInlineHelper() {
-        return inlineHelper;
+    public ref TaskInlineHelper<T> GetInlineHelper() {
+        return ref inlineHelper;
     }
 
     #endregion
@@ -129,7 +129,7 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
         } else {
             Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
             if (inlinedChild != null) {
-                inlinedChild.Template_ExecuteInlined(inlineHelper, runningChild);
+                inlinedChild.Template_ExecuteInlined(ref inlineHelper, runningChild);
             } else if (runningChild.IsRunning) {
                 runningChild.Template_Execute(true);
             } else {

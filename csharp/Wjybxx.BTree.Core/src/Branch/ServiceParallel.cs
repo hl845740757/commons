@@ -43,10 +43,10 @@ public class ServiceParallel<T> : ParallelBranch<T> where T : class
         List<Task<T>> children = this.children;
         for (int idx = 0; idx < children.Count; idx++) {
             Task<T> child = children[idx];
-            ParallelChildHelper<T> helper = GetChildHelper(child);
-            Task<T> inlinedChild = helper.GetInlinedChild();
+            ParallelChildHelper<T> childHelper = GetChildHelper(child);
+            Task<T> inlinedChild = childHelper.GetInlinedChild();
             if (inlinedChild != null) {
-                inlinedChild.Template_ExecuteInlined(helper, child);
+                inlinedChild.Template_ExecuteInlined(ref childHelper.Unwrap(), child);
             } else if (child.IsRunning) {
                 child.Template_Execute(true);
             } else {

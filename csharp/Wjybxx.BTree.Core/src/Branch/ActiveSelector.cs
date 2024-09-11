@@ -58,7 +58,7 @@ public class ActiveSelector<T> : SingleRunningChildBranch<T> where T : class
         if (runningChild == childToRun) {
             Task<T> inlinedChild = inlineHelper.GetInlinedChild();
             if (inlinedChild != null) {
-                inlinedChild.Template_ExecuteInlined(inlineHelper, runningChild);
+                inlinedChild.Template_ExecuteInlined(ref inlineHelper, runningChild);
             } else if (runningChild.IsRunning) {
                 runningChild.Template_Execute(true);
             } else {

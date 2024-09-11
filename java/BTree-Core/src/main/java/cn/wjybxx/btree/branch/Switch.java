@@ -66,10 +66,9 @@ public class Switch<T> extends SingleRunningChildBranch<T> {
         }
         for (int idx = 0; idx < children.size(); idx++) {
             Task<T> child = children.get(idx);
-            if (!template_checkGuard(child.getGuard())) {
-                continue;
+            if (template_checkGuard(child.getGuard())) {
+                return idx;
             }
-            return idx;
         }
         return -1;
     }

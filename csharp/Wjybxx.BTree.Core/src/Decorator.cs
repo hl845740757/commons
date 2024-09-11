@@ -36,7 +36,7 @@ public abstract class Decorator<T> : Task<T> where T : class
     /// 2.子类要支持实现内联优化时，应当在<see cref="OnChildRunning"/>和<see cref="Task{T}.OnChildCompleted"/>维护字段引用。
     /// </summary>
     [NonSerialized]
-    protected readonly TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<T>();
+    protected TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<T>();
 #nullable enable
 
     public Decorator() {
@@ -46,8 +46,8 @@ public abstract class Decorator<T> : Task<T> where T : class
         this.child = child;
     }
 
-    public TaskInlineHelper<T> GetInlineHelper() {
-        return inlineHelper;
+    public ref TaskInlineHelper<T> GetInlineHelper() {
+        return ref inlineHelper;
     }
 
     #region logic

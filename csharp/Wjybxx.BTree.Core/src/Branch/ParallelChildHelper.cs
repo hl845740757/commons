@@ -23,8 +23,9 @@ namespace Wjybxx.BTree.Branch
 /// A: 通常只应该在有多个运行中的子节点(含hook)的情况下才需要使用该工具类。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class ParallelChildHelper<T> : TaskInlineHelper<T> where T : class
+public class ParallelChildHelper<T> where T : class
 {
+    private TaskInlineHelper<T> _inlineHelper = new TaskInlineHelper<T>();
 #nullable disable
     /** 子节点的重入id */
     public int reentryId;
@@ -34,12 +35,26 @@ public class ParallelChildHelper<T> : TaskInlineHelper<T> where T : class
     public object userData;
 
     public virtual void Reset() {
-        StopInline();
+        _inlineHelper.StopInline();
         reentryId = 0;
         userData = null;
         if (cancelToken != null) {
             cancelToken.Reset();
         }
+    }
+
+    public ref TaskInlineHelper<T> Unwrap() => ref _inlineHelper;
+
+    public Task<T> GetInlinedChild() {
+        return _inlineHelper.GetInlinedChild();
+    }
+
+    public void StopInline() {
+        _inlineHelper.StopInline();
+    }
+
+    public void InlineChild(Task<T> runningChild) {
+        _inlineHelper.InlineChild(runningChild);
     }
 }
 }
