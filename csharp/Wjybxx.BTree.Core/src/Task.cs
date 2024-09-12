@@ -763,6 +763,18 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         get => (ctl & MASK_INVERTED_GUARD) != 0;
         set => SetCtlBit(MASK_INVERTED_GUARD, value);
     }
+    
+    /// <summary>
+    /// 当Task可以被内联时是否打破内联
+    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认不分开执行
+    /// 2.要覆盖默认值应当在<see cref="BeforeEnter"/>方法中调用
+    /// 3.它的作用是避免被内联子节点进入完成状态时产生【过长的恢复路径】
+    /// </summary>
+    public bool IsBreakInline {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => (ctl & MASK_BREAK_INLINE) != 0;
+        set => SetCtlBit(MASK_BREAK_INLINE, value);
+    }
 
     #endregion
 
@@ -981,7 +993,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         try {
             // 极少情况下会有前置的前置，更推荐组合节点，更清晰；guard的guard也是检测当前上下文
             if (guard.guard != null && !Template_CheckGuard(guard.guard)) {
-                guard.status = inverted ? TaskStatus.SUCCESS : TaskStatus.GUARD_FAILED;
+                guard.ctl |= MASK_DISABLE_NOTIFY;
+                guard.SetCompleted(inverted ? TaskStatus.SUCCESS : TaskStatus.GUARD_FAILED, false);
                 return inverted;
             }
             guard.Template_Start(this, MASK_DISABLE_NOTIFY | MASK_GUARD_BASE_OPTIONS);
@@ -1177,7 +1190,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /** task是否支持内联 */
     public bool IsInlinable {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => (ctl & TaskOverrides.MASK_INLINABLE) != 0;
+        get => (ctl & (TaskOverrides.MASK_INLINABLE | MASK_BREAK_INLINE)) == TaskOverrides.MASK_INLINABLE;
     }
 
     /** 任务的控制流标记 */

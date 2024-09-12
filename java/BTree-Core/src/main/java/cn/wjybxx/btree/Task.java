@@ -70,6 +70,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     public static final int MASK_CANCEL_TOKEN_PER_CHILD = 1 << 28;
     public static final int MASK_BLACKBOARD_PER_CHILD = 1 << 29;
     public static final int MASK_INVERTED_GUARD = 1 << 30;
+    public static final int MASK_BREAK_INLINE = 1 << 31;
     /** 高8位为流程控制特征值（对外开放） */
     public static final int MASK_CONTROL_FLOW_OPTIONS = (-1) << 24;
 
@@ -677,8 +678,8 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 2.要覆盖默认值应当在{@link #beforeEnter()}和{@link #enter(int)}方法中调用
      * 3.该属性运行期间不应该调整，调整也无效
      */
-    public final void setSlowStart(boolean disable) {
-        setCtlBit(MASK_SLOW_START, disable);
+    public final void setSlowStart(boolean value) {
+        setCtlBit(MASK_SLOW_START, value);
     }
 
     public final boolean isSlowStart() {
@@ -691,8 +692,8 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 2.要覆盖默认值应当在{@link #beforeEnter()}方法中调用
      * 3.部分任务可能在调用{@link #resetForRestart()}之前不会再次运行，因此需要该特性
      */
-    public final void setAutoResetChildren(boolean enable) {
-        setCtlBit(MASK_AUTO_RESET_CHILDREN, enable);
+    public final void setAutoResetChildren(boolean value) {
+        setCtlBit(MASK_AUTO_RESET_CHILDREN, value);
     }
 
     public final boolean isAutoResetChildren() {
@@ -721,8 +722,8 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 1.默认值由{@link #flags}中的信息指定，默认不自动监听！自动监听有较大的开销，绝大多数业务只需要在Entry监听。
      * 2.要覆盖默认值应当在{@link #beforeEnter()}方法中调用
      */
-    public final void setAutoListenCancel(boolean enable) {
-        setCtlBit(MASK_AUTO_LISTEN_CANCEL, enable);
+    public final void setAutoListenCancel(boolean value) {
+        setCtlBit(MASK_AUTO_LISTEN_CANCEL, value);
     }
 
     public final boolean isAutoListenCancel() {
@@ -761,12 +762,26 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 1.默认值由{@link #flags}中的信息指定，默认不禁用（即默认延迟通知）
      * 2.要覆盖默认值应当在{@link #beforeEnter()}方法中调用
      */
-    public final void setInvertedGuard(boolean enable) {
-        setCtlBit(MASK_INVERTED_GUARD, enable);
+    public final void setInvertedGuard(boolean value) {
+        setCtlBit(MASK_INVERTED_GUARD, value);
     }
 
     public final boolean isInvertedGuard() {
         return (ctl & MASK_INVERTED_GUARD) != 0;
+    }
+
+    /**
+     * 当Task可以被内联时是否打破内联
+     * 1.默认值由{@link #flags}中的信息指定，默认不禁用（即默认延迟通知）
+     * 2.要覆盖默认值应当在{@link #beforeEnter()}方法中调用
+     * 3.它的作用是避免被内联子节点进入完成状态时产生【过长的恢复路径】
+     */
+    public final void setBreakInline(boolean value) {
+        setCtlBit(MASK_BREAK_INLINE, value);
+    }
+
+    public final boolean isBreakInline() {
+        return (ctl & MASK_BREAK_INLINE) != 0;
     }
 
     // endregion
@@ -972,7 +987,8 @@ public abstract class Task<T> implements ICancelTokenListener {
         try {
             // 极少情况下会有前置的前置，更推荐组合节点，更清晰；guard的guard也是检测当前上下文
             if (guard.guard != null && !template_checkGuard(guard.guard)) {
-                guard.status = inverted ? TaskStatus.SUCCESS : TaskStatus.GUARD_FAILED;
+                guard.ctl |= MASK_DISABLE_NOTIFY;
+                guard.setCompleted(inverted ? TaskStatus.SUCCESS : TaskStatus.GUARD_FAILED, false);
                 return inverted;
             }
             guard.template_start(this, MASK_DISABLE_NOTIFY | MASK_GUARD_BASE_OPTIONS);
@@ -1163,7 +1179,7 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     /** task是否支持内联 */
     public final boolean isInlinable() {
-        return (ctl & TaskOverrides.MASK_INLINABLE) != 0;
+        return (ctl & (TaskOverrides.MASK_INLINABLE | MASK_BREAK_INLINE)) == TaskOverrides.MASK_INLINABLE;
     }
 
     /** 获取任务的控制流标记位 */

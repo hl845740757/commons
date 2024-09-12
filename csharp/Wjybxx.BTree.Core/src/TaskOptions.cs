@@ -32,6 +32,7 @@ public static class TaskOptions
     public const int MASK_CANCEL_TOKEN_PER_CHILD = 1 << 28;
     public const int MASK_BLACKBOARD_PER_CHILD = 1 << 29;
     public const int MASK_INVERTED_GUARD = 1 << 30;
+    public const int MASK_BREAK_INLINE = 1 << 31;
     /** 高8位为流程控制特征值（对外开放）*/
     public const int MASK_CONTROL_FLOW_OPTIONS = (-1) << 24;
 }

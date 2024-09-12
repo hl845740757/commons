@@ -17,7 +17,12 @@
 #endregion
 
 using System;
+
+#if UNITY_2018_4_OR_NEWER
+using UnityEngine;
+#else
 using Wjybxx.Commons.Logger;
+#endif
 
 namespace Wjybxx.BTree
 {
@@ -26,22 +31,48 @@ namespace Wjybxx.BTree
 /// </summary>
 public static class TaskLogger
 {
+#if !UNITY_2018_4_OR_NEWER
     private static readonly ILogger logger = LoggerFactory.GetLogger(typeof(TaskLogger));
+#endif
 
     public static void Info(string format, params object?[] args) {
+#if UNITY_2018_4_OR_NEWER
+        Debug.LogFormat(format, args);
+#else
         logger.Info(format, args);
+#endif
     }
 
     public static void Info(Exception? ex, string format, params object?[] args) {
+#if UNITY_2018_4_OR_NEWER
+        Debug.LogFormat(format, args);
+        if (ex != null)
+        { 
+            Debug.LogException(ex);
+        }
+#else
         logger.Info(ex, format, args);
+#endif
     }
 
     public static void Warning(string format, params object?[] args) {
+#if UNITY_2018_4_OR_NEWER
+        Debug.LogWarningFormat(format, args);
+#else
         logger.Warn(format, args);
+#endif
     }
 
     public static void Warning(Exception? ex, string format, params object?[] args) {
+#if UNITY_2018_4_OR_NEWER
+        Debug.LogWarningFormat(format, args);
+        if (ex != null)
+        { 
+            Debug.LogException(ex);
+        }
+#else
         logger.Warn(ex, format, args);
+#endif
     }
 }
 }

@@ -184,6 +184,7 @@ public class TaskEntry<T> : Task<T> where T : class
 
     protected override void Exit() {
         inlineHelper.StopInline();
+        cancelToken.Reset(); // 避免内存泄漏
     }
 
     protected override void OnChildRunning(Task<T> child) {
@@ -192,7 +193,6 @@ public class TaskEntry<T> : Task<T> where T : class
 
     protected override void OnChildCompleted(Task<T> child) {
         inlineHelper.StopInline();
-        cancelToken.Reset(); // 避免内存泄漏
 
         SetCompleted(child.Status, true);
         if (handler != null) {

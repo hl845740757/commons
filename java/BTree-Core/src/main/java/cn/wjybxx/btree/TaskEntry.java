@@ -194,6 +194,7 @@ public class TaskEntry<T> extends Task<T> {
     @Override
     protected void exit() {
         inlineHelper.stopInline();
+        cancelToken.reset(); // 避免内存泄漏
     }
 
     @Override
@@ -204,7 +205,6 @@ public class TaskEntry<T> extends Task<T> {
     @Override
     protected void onChildCompleted(Task<T> child) {
         inlineHelper.stopInline();
-        cancelToken.reset(); // 避免内存泄漏
 
         setCompleted(child.getStatus(), true);
         if (handler != null) {

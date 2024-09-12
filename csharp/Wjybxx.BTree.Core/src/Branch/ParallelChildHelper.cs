@@ -16,6 +16,8 @@
 
 #endregion
 
+using System.Runtime.CompilerServices;
+
 namespace Wjybxx.BTree.Branch
 {
 /// <summary>
@@ -45,14 +47,17 @@ public class ParallelChildHelper<T> where T : class
 
     public ref TaskInlineHelper<T> Unwrap() => ref _inlineHelper;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Task<T> GetInlinedChild() {
         return _inlineHelper.GetInlinedChild();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StopInline() {
         _inlineHelper.StopInline();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void InlineChild(Task<T> runningChild) {
         _inlineHelper.InlineChild(runningChild);
     }

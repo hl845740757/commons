@@ -58,6 +58,7 @@ public struct TaskInlineHelper<T> where T : class
 #nullable enable
 
     /** 获取被内联运行的子节点 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Task<T>? GetInlinedChild() {
         Task<T> r = inlinedChild;
         if (r == null) {
@@ -72,6 +73,7 @@ public struct TaskInlineHelper<T> where T : class
     }
 
     /** 取消内联 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StopInline() {
         this.inlinedChild = null;
         this.inlinedReentryId = INVALID_REENTRY_ID;
