@@ -48,8 +48,6 @@ public struct TaskInlineHelper<T> where T : class
 {
     /** 无效重入id */
     private const int INVALID_REENTRY_ID = int.MinValue;
-    /** 表示内联失败 */
-    private const int FAILED_REENTRY_ID = INVALID_REENTRY_ID + 1;
 
 #nullable disable
     [NonSerialized] private Task<T> inlinedChild;
@@ -92,33 +90,27 @@ public struct TaskInlineHelper<T> where T : class
         Task<T>? cur = runningChild;
         while (cur.IsInlinable) {
             if (cur is SingleRunningChildBranch<T> branch) {
-                if (branch.RunningChild == null || branch.RunningChild!.IsCompleted) {
-                    break;
-                }
                 cur = branch.GetInlineHelper().GetInlinedChild();
-                if (cur != null) { // 分支有成功内联数据
+                if (cur != null) { // 分支有成功内联数据 -- 高概率
                     break;
                 }
-                if (branch.GetInlineHelper().inlinedReentryId == FAILED_REENTRY_ID) {
-                    cur = branch.RunningChild; // 分支内联子节点失败
+                cur = branch.RunningChild; // 尝试内联其child
+                if (cur == null || cur.IsCompleted) {
+                    cur = branch;
                     break;
                 }
-                cur = branch.RunningChild!;
                 continue;
             }
             if (cur is Decorator<T> decorator) {
-                if (decorator.Child == null || decorator.Child.IsCompleted) {
-                    break;
-                }
                 cur = decorator.GetInlineHelper().GetInlinedChild();
-                if (cur != null) {
+                if (cur != null) { // 分支有成功内联数据 -- 高概率
                     break;
                 }
-                if (decorator.GetInlineHelper().inlinedReentryId == FAILED_REENTRY_ID) {
-                    cur = decorator.Child;
+                cur = decorator.Child; // 尝试内联其child
+                if (cur == null || cur.IsCompleted) {
+                    cur = decorator;
                     break;
                 }
-                cur = decorator.Child;
                 continue;
             }
             break;
@@ -127,7 +119,7 @@ public struct TaskInlineHelper<T> where T : class
         if (cur == runningChild) {
             // 无实际内联效果时置为null性能更好
             this.inlinedChild = null;
-            this.inlinedReentryId = FAILED_REENTRY_ID;
+            this.inlinedReentryId = INVALID_REENTRY_ID;
         } else {
             this.inlinedChild = cur;
             this.inlinedReentryId = cur.ReentryId;

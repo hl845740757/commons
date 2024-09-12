@@ -36,11 +36,8 @@ public class TaskInlineHelper<T> {
 
     /** 是否启用内联 */
     public static boolean enableInline = true;
-
     /** 无效重入id */
     private static final int INVALID_REENTRY_ID = Integer.MIN_VALUE;
-    /** 表示内联失败 */
-    private static final int FAILED_REENTRY_ID = INVALID_REENTRY_ID + 1;
 
     /** 被内联运行的子节点 */
     private transient Task<T> inlinedChild = null;
@@ -82,33 +79,27 @@ public class TaskInlineHelper<T> {
         // 只对确定逻辑的常见类型进行内联 -- 子节点完成必定触发控制节点完成的才可以内联
         while (cur.isInlinable()) {
             if (cur instanceof SingleRunningChildBranch<T> branch) {
-                if (branch.getRunningChild() == null || branch.getRunningChild().isCompleted()) {
-                    break;
-                }
                 cur = branch.getInlineHelper().getInlinedChild();
-                if (cur != null) { // 分支有成功内联数据
+                if (cur != null) { // 分支有成功内联数据 -- 高概率
                     break;
                 }
-                if (branch.getInlineHelper().inlinedReentryId == FAILED_REENTRY_ID) {
-                    cur = branch.getRunningChild(); // 分支内联子节点失败
+                cur = branch.getRunningChild(); // 尝试内联其child
+                if (cur == null || cur.isCompleted()) {
+                    cur = branch;
                     break;
                 }
-                cur = branch.getRunningChild();
                 continue;
             }
             if (cur instanceof Decorator<T> decorator) {
-                if (decorator.getChild() == null || decorator.getChild().isCompleted()) {
-                    break;
-                }
                 cur = decorator.getInlineHelper().getInlinedChild();
-                if (cur != null) {
+                if (cur != null) { // 分支有成功内联数据 -- 高概率
                     break;
                 }
-                if (decorator.getInlineHelper().inlinedReentryId == FAILED_REENTRY_ID) {
-                    cur = decorator.getChild();
+                cur = decorator.getChild(); // 尝试内联其child
+                if (cur == null || cur.isCompleted()) {
+                    cur = decorator;
                     break;
                 }
-                cur = decorator.getChild();
                 continue;
             }
             break;
@@ -117,7 +108,7 @@ public class TaskInlineHelper<T> {
         if (cur == runningChild) {
             // 无实际内联效果时置为null性能更好
             this.inlinedChild = null;
-            this.inlinedReentryId = FAILED_REENTRY_ID;
+            this.inlinedReentryId = INVALID_REENTRY_ID;
         } else {
             this.inlinedChild = cur;
             this.inlinedReentryId = cur.getReentryId();
