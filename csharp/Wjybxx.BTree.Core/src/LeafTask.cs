@@ -27,7 +27,7 @@ namespace Wjybxx.BTree
 /// <typeparam name="T"></typeparam>
 public abstract class LeafTask<T> : Task<T> where T : class
 {
-    protected sealed override void OnChildRunning(Task<T> child) {
+    protected sealed override void OnChildRunning(Task<T> child, bool starting) {
         throw new AssertionError();
     }
 

@@ -187,7 +187,7 @@ public class TaskEntry<T> : Task<T> where T : class
         cancelToken.Reset(); // 避免内存泄漏
     }
 
-    protected override void OnChildRunning(Task<T> child) {
+    protected override void OnChildRunning(Task<T> child, bool starting) {
         inlineHelper.InlineChild(child);
     }
 

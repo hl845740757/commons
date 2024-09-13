@@ -399,10 +399,12 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     /**
      * 子节点还需要继续运行
-     * 1.child在一次运行期间只会通知一次
+     * 1.该方法在运行期间可能被多次调用(非启动时调用表示修复内联)
      * 2.该方法不应该触发状态迁移，即不应该使自己进入完成状态
+     *
+     * @param starting 是否是启动时调用，即首次调用
      */
-    protected abstract void onChildRunning(Task<T> child);
+    protected abstract void onChildRunning(Task<T> child, boolean starting);
 
     /**
      * 子节点进入完成状态
@@ -410,7 +412,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 2.{@link #getNormalizedStatus()}有助于switch测试
      * 3.task可能是取消状态，甚至可能没运行过直接失败（前置条件失败）
      * 4.钩子任务和guard不会调用该方法
-     * 5.同一子节点连续通知的情况下，completed的逻辑应当覆盖{@link #onChildRunning(Task)}的影响。
+     * 5.同一子节点连续通知的情况下，completed的逻辑应当覆盖{@link #onChildRunning(Task, boolean)}的影响。
      * 6.任何的回调和事件方法中都由用户自身检测取消信号
      */
     protected abstract void onChildCompleted(Task<T> child);
@@ -839,7 +841,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         }
         if (checkSlowStart(ctl)) { // 需要使用最新的ctl
             if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
-                control.onChildRunning(this);
+                control.onChildRunning(this, true);
             }
             return;
         }
@@ -853,7 +855,7 @@ public abstract class Task<T> implements ICancelTokenListener {
             return;
         }
         if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
-            control.onChildRunning(this);
+            control.onChildRunning(this, true);
         }
     }
 
@@ -861,7 +863,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      * execute模板方法
      * (通过参数的方式，有助于我们统一代码，也简化子类实现；同时避免遗漏)
      *
-     * @param fromControl 是否由父节点调用
+     * @param fromControl 是否由父节点调用(判断是否是心跳)
      */
     public final void template_execute(boolean fromControl) {
         assert status == TaskStatus.RUNNING;
@@ -880,6 +882,11 @@ public abstract class Task<T> implements ICancelTokenListener {
         }
         if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
             setCompleted(TaskStatus.CANCELLED, false);
+            return;
+        }
+        // 如果可以被内联的子节点没有被内联执行，则尝试通知父节点修复内联
+        if (fromControl && isInlinable() && (ctl & MASK_DISABLE_NOTIFY) == 0) {
+            control.onChildRunning(this, false);
         }
     }
 
@@ -948,7 +955,7 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     /**
      * 启动钩子节点
-     * 1.钩子任务不会触发{@link #onChildRunning(Task)}和{@link #onChildCompleted(Task)}
+     * 1.钩子任务不会触发{@link #onChildRunning(Task, boolean)}和{@link #onChildCompleted(Task)}
      * 2.前置条件其实是特殊的钩子任务
      * 3.条件分支通常不应该有钩子任务
      *

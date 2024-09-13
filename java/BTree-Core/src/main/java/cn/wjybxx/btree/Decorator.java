@@ -30,7 +30,7 @@ public abstract class Decorator<T> extends Task<T> {
     /**
      * 被内联运行的子节点
      * 1.该字段定义在这里是为了减少抽象层次，该类并不提供功能。
-     * 2.子类要支持实现内联优化时，应当在{@link #onChildRunning(Task)}和{@link #onChildCompleted(Task)}维护字段引用。
+     * 2.子类要支持实现内联优化时，应当在{@link Task#onChildRunning(Task, boolean)}和{@link #onChildCompleted(Task)}维护字段引用。
      */
     protected final transient TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<>();
 
@@ -75,7 +75,7 @@ public abstract class Decorator<T> extends Task<T> {
 
     /** 子类如果支持内联，则重写该方法(超类不能安全内联) */
     @Override
-    protected void onChildRunning(Task<T> child) {
+    protected void onChildRunning(Task<T> child, boolean starting) {
 
     }
     // endregion

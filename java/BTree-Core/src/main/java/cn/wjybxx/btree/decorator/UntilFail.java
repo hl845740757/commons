@@ -36,7 +36,7 @@ public class UntilFail<T> extends LoopDecorator<T> {
     }
 
     @Override
-    protected void onChildRunning(Task<T> child) {
+    protected void onChildRunning(Task<T> child, boolean starting) {
         inlineHelper.inlineChild(child);
     }
 

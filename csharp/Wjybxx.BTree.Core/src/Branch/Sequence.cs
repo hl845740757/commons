@@ -52,7 +52,7 @@ public class Sequence<T> : SingleRunningChildBranch<T> where T : class
         }
     }
 
-    protected override void OnChildRunning(Task<T> child) {
+    protected override void OnChildRunning(Task<T> child, bool starting) {
         inlineHelper.InlineChild(child);
     }
 

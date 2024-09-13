@@ -398,11 +398,12 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /// <summary>
     /// 子节点还需要继续运行
-    /// 1.child在一次运行期间只会通知一次
+    /// 1.该方法在运行期间可能被多次调用(非启动时调用表示修复内联)
     /// 2.该方法不应该触发状态迁移，即不应该使自己进入完成状态
     /// </summary>
     /// <param name="child"></param>
-    protected abstract void OnChildRunning(Task<T> child);
+    /// <param name="starting">是否是启动时调用，即首次调用</param>
+    protected abstract void OnChildRunning(Task<T> child, bool starting);
 
     /// <summary>
     /// 子节点进入完成状态
@@ -763,7 +764,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         get => (ctl & MASK_INVERTED_GUARD) != 0;
         set => SetCtlBit(MASK_INVERTED_GUARD, value);
     }
-    
+
     /// <summary>
     /// 当Task可以被内联时是否打破内联
     /// 1.默认值由<see cref="Flags"/>中的信息指定，默认不分开执行
@@ -833,7 +834,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
         if (CheckSlowStart(ctl)) { // 需要使用最新的ctl
             if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
-                control.OnChildRunning(this);
+                control.OnChildRunning(this, true);
             }
             return;
         }
@@ -849,7 +850,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
 #endif
         if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
-            control.OnChildRunning(this);
+            control.OnChildRunning(this, true);
         }
     }
 
@@ -857,7 +858,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// execute模板方法
     /// (通过参数的方式，有助于我们统一代码，也简化子类实现；同时避免遗漏)
     /// </summary>
-    /// <param name="fromControl">是否由父节点调用</param>
+    /// <param name="fromControl">是否由父节点调用(判断是否是心跳)</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Template_Execute(bool fromControl) {
         Debug.Assert(status == TaskStatus.RUNNING);
@@ -877,10 +878,15 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
         if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
             SetCompleted(TaskStatus.CANCELLED, false);
+            return;
         }
 #else
         Execute();
 #endif
+        // 如果可以被内联的子节点没有被内联执行，则尝试通知父节点修复内联
+        if (fromControl && IsInlinable && (ctl & MASK_DISABLE_NOTIFY) == 0) {
+            control.OnChildRunning(this, false);
+        }
     }
 
     /// <summary>

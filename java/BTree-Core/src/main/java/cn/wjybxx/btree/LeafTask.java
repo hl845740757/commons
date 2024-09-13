@@ -24,7 +24,7 @@ package cn.wjybxx.btree;
 public abstract class LeafTask<T> extends Task<T> {
 
     @Override
-    protected final void onChildRunning(Task<T> child) {
+    protected final void onChildRunning(Task<T> child, boolean starting) {
         throw new AssertionError();
     }
 

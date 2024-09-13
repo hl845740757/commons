@@ -225,7 +225,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         handler.BeforeChangeState(this, curState, nextState);
     }
 
-    protected override void OnChildRunning(Task<T> child) {
+    protected override void OnChildRunning(Task<T> child, bool starting) {
         inlineHelper.InlineChild(child);
     }
 

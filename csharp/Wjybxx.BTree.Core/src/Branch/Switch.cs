@@ -76,7 +76,7 @@ public class Switch<T> : SingleRunningChildBranch<T> where T : class
         return -1;
     }
 
-    protected override void OnChildRunning(Task<T> child) {
+    protected override void OnChildRunning(Task<T> child, bool starting) {
         inlineHelper.InlineChild(child);
     }
 

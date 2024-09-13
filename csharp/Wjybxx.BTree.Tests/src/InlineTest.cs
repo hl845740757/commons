@@ -19,6 +19,7 @@
 using NUnit.Framework;
 using Wjybxx.BTree;
 using Wjybxx.BTree.Branch;
+using Wjybxx.BTree.Decorator;
 
 namespace BTree.Tests;
 
@@ -27,13 +28,19 @@ namespace BTree.Tests;
 /// </summary>
 public class InlineTest
 {
+    private const string successMessage = "success";
+
     [Test]
     public void fireEventTest() {
         Task<Blackboard> branch = new Selector<Blackboard>();
         EventAcceptor eventAcceptor = new EventAcceptor();
         TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(branch);
 
-        branch.AddChild(new Selector<Blackboard>());
+        // 顶层插入一个repeat，查看内联的修复是否正确
+        branch.AddChild(new Repeat<Blackboard>()
+        {
+            Required = 3
+        });
 
         branch = branch.GetChild(0);
         branch.AddChild(new Selector<Blackboard>());
@@ -53,8 +60,11 @@ public class InlineTest
         string message = "message";
         taskEntry.OnEvent(message);
         Assert.AreEqual(message, eventAcceptor.eventObj);
-        
+
         taskEntry.Update(1); // debug查看心跳调用栈
+
+        taskEntry.OnEvent(successMessage);
+        taskEntry.Update(2); // debug查看心跳调用栈--查看内联修复过程
     }
 
     private class EventAcceptor : LeafTask<Blackboard>
@@ -69,6 +79,9 @@ public class InlineTest
 
         protected override void OnEventImpl(object eventObj) {
             this.eventObj = eventObj;
+            if (successMessage.Equals(eventObj)) {
+                SetSuccess();
+            }
         }
     }
 }

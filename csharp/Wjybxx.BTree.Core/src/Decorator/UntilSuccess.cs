@@ -30,7 +30,7 @@ public class UntilSuccess<T> : LoopDecorator<T> where T : class
     public UntilSuccess(Task<T> child) : base(child) {
     }
 
-    protected override void OnChildRunning(Task<T> child) {
+    protected override void OnChildRunning(Task<T> child, bool starting) {
         inlineHelper.InlineChild(child);
     }
 

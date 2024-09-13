@@ -40,6 +40,14 @@ public class Repeat<T> extends LoopDecorator<T> {
     /** 当前计数 */
     private transient int count;
 
+    // 序列化
+    public Repeat() {
+    }
+
+    public Repeat(int required) {
+        this.required = required;
+    }
+
     @Override
     public void resetForRestart() {
         super.resetForRestart();
@@ -64,7 +72,7 @@ public class Repeat<T> extends LoopDecorator<T> {
     }
 
     @Override
-    protected void onChildRunning(Task<T> child) {
+    protected void onChildRunning(Task<T> child, boolean starting) {
         inlineHelper.inlineChild(child);
     }
 

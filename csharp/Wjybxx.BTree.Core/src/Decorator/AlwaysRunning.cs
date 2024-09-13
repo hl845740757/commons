@@ -39,6 +39,9 @@ public class AlwaysRunning<T> : Decorator<T> where T : class
     protected override void BeforeEnter() {
         base.BeforeEnter();
         started = false;
+        if (child == null) {
+            IsBreakInline = true;
+        }
     }
 
     protected override void Execute() {
@@ -60,12 +63,14 @@ public class AlwaysRunning<T> : Decorator<T> where T : class
         }
     }
 
-    protected override void OnChildRunning(Task<T> child) {
+    protected override void OnChildRunning(Task<T> child, bool starting) {
         inlineHelper.InlineChild(child);
     }
 
     protected override void OnChildCompleted(Task<T> child) {
         inlineHelper.StopInline();
+        IsBreakInline = true; // 阻断内联，避免频繁通知父节点
+        
         // 不响应其它状态，但还是需要响应取消...
         if (child.IsCancelled) {
             SetCancelled();

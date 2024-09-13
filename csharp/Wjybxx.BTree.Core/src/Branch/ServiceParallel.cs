@@ -55,7 +55,7 @@ public class ServiceParallel<T> : ParallelBranch<T> where T : class
         }
     }
 
-    protected override void OnChildRunning(Task<T> child) {
+    protected override void OnChildRunning(Task<T> child, bool starting) {
         ParallelChildHelper<T> childHelper = GetChildHelper(child);
         childHelper.InlineChild(child);
     }

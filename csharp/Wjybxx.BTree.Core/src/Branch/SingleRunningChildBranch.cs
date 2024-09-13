@@ -154,7 +154,7 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
     }
 
     /** 子类如果支持内联，则重写该方法 */
-    protected override void OnChildRunning(Task<T> child) {
+    protected override void OnChildRunning(Task<T> child, bool starting) {
         runningChild = child; // 子类可能未赋值
     }
 

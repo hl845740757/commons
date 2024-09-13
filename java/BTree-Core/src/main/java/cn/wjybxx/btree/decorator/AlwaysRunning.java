@@ -35,6 +35,9 @@ public class AlwaysRunning<T> extends Decorator<T> {
     protected void beforeEnter() {
         super.beforeEnter();
         started = false;
+        if (child == null) {
+            setBreakInline(true);
+        }
     }
 
     @Override
@@ -58,13 +61,15 @@ public class AlwaysRunning<T> extends Decorator<T> {
     }
 
     @Override
-    protected void onChildRunning(Task<T> child) {
+    protected void onChildRunning(Task<T> child, boolean starting) {
         inlineHelper.inlineChild(child);
     }
 
     @Override
     protected void onChildCompleted(Task<T> child) {
         inlineHelper.stopInline();
+        setBreakInline(true); // 阻断内联，避免频繁通知父节点
+
         // 不响应其它状态，但还是需要响应取消...
         if (child.isCancelled()) {
             setCancelled();

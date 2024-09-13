@@ -96,7 +96,8 @@ public abstract class ParallelBranch<T> : BranchTask<T> where T : class
     /// 2.实现类可以在该方法中内联子节点
     /// </summary>
     /// <param name="child"></param>
-    protected override void OnChildRunning(Task<T> child) {
+    /// <param name="starting"></param>
+    protected override void OnChildRunning(Task<T> child, bool starting) {
     }
 }
 }

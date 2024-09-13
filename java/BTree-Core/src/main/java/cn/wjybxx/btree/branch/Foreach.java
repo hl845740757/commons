@@ -44,7 +44,7 @@ public class Foreach<T> extends SingleRunningChildBranch<T> {
     }
 
     @Override
-    protected void onChildRunning(Task<T> child) {
+    protected void onChildRunning(Task<T> child, boolean starting) {
         inlineHelper.inlineChild(child);
     }
 

@@ -66,7 +66,7 @@ public class ServiceParallel<T> extends ParallelBranch<T> {
     }
 
     @Override
-    protected void onChildRunning(Task<T> child) {
+    protected void onChildRunning(Task<T> child, boolean starting) {
         ParallelChildHelper<T> helper = getChildHelper(child);
         helper.inlineChild(child);
     }

@@ -75,7 +75,7 @@ public abstract class Decorator<T> : Task<T> where T : class
     }
 
     /** 子类如果支持内联，则重写该方法(超类不能安全内联) */
-    protected override void OnChildRunning(Task<T> child) {
+    protected override void OnChildRunning(Task<T> child, bool starting) {
     }
 
     #endregion

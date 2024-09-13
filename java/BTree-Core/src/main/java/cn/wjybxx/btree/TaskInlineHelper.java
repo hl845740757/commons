@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
 /**
  * 内联工具类。
  * 1.只有不能被内联的节点，才需要该工具类。
- * 2.实现内联优化时，应当在{@link Task#onChildRunning(Task)}时开启内联和{@link Task#onChildCompleted(Task)}时停止内联。
+ * 2.实现内联优化时，应当在{@link Task#onChildRunning(Task, boolean)}时开启内联和{@link Task#onChildCompleted(Task)}时停止内联。
  * 3.在{@link Task#exit()}时也调用一次停止内联可避免内存泄漏(不必要的引用)。
  * 4.在{@link Task#onEventImpl(Object)}时应当尝试将事件转发给被内联的子节点，可使用工具方法{@link #onEvent(Object, Task)}.
  * <p>

@@ -66,7 +66,7 @@ public class SimpleParallel<T> extends ParallelBranch<T> {
     }
 
     @Override
-    protected void onChildRunning(Task<T> child) {
+    protected void onChildRunning(Task<T> child, boolean starting) {
         ParallelChildHelper<T> childHelper = getChildHelper(child);
         childHelper.inlineChild(child);
     }

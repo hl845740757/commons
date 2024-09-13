@@ -232,7 +232,7 @@ public class StateMachineTask<T> extends Decorator<T> {
     }
 
     @Override
-    protected void onChildRunning(Task<T> child) {
+    protected void onChildRunning(Task<T> child, boolean starting) {
         inlineHelper.inlineChild(child);
     }
 

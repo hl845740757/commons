@@ -38,7 +38,7 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
     /**
      * 被内联运行的子节点
      * 1.该字段定义在这里是为了减少抽象层次，该类并不提供功能。
-     * 2.子类要支持实现内联优化时，应当在{@link #onChildRunning(Task)}和{@link #onChildCompleted(Task)}维护字段引用。
+     * 2.子类要支持实现内联优化时，应当在{@link Task#onChildRunning(Task, boolean)}和{@link #onChildCompleted(Task)}维护字段引用。
      */
     protected final transient TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<>();
 
@@ -163,7 +163,7 @@ public abstract class SingleRunningChildBranch<T> extends BranchTask<T> {
 
     /** 子类如果支持内联，则重写该方法 */
     @Override
-    protected void onChildRunning(Task<T> child) {
+    protected void onChildRunning(Task<T> child, boolean starting) {
         runningChild = child; // 子类可能未赋值
     }
 

@@ -18,8 +18,12 @@ package cn.wjybxx.btree;
 
 import cn.wjybxx.btree.branch.Selector;
 import cn.wjybxx.btree.branch.Sequence;
+import cn.wjybxx.btree.decorator.Repeat;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import javax.annotation.Nonnull;
+import java.util.Objects;
 
 /**
  * 内敛测试
@@ -29,13 +33,16 @@ import org.junit.jupiter.api.Test;
  */
 public class InlineTest {
 
+    private static final String successMessage = "success";
+
     @Test
     public void fireEventTest() {
         Task<Blackboard> branch = new Selector<>();
         EventAcceptor eventAcceptor = new EventAcceptor();
         TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry(branch);
 
-        branch.addChild(new Selector<>());
+        // 顶层插入一个repeat，查看内联的修复是否正确
+        branch.addChild(new Repeat<>(3));
 
         branch = branch.getChild(0);
         branch.addChild(new Selector<>());
@@ -57,6 +64,9 @@ public class InlineTest {
         Assertions.assertEquals(message, eventAcceptor.eventObj);
 
         taskEntry.update(1); // debug查看心跳调用栈
+
+        taskEntry.onEvent(successMessage);
+        taskEntry.update(2); // debug查看心跳调用栈--查看内联修复过程
     }
 
     private static class EventAcceptor extends LeafTask<Blackboard> {
@@ -70,8 +80,11 @@ public class InlineTest {
             }
         }
 
-        protected void onEventImpl(Object eventObj) {
+        protected void onEventImpl(@Nonnull Object eventObj) {
             this.eventObj = eventObj;
+            if (Objects.equals(eventObj, successMessage)) {
+                setSuccess();
+            }
         }
     }
 }

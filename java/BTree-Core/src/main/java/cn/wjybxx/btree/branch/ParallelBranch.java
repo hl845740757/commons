@@ -101,7 +101,7 @@ public abstract class ParallelBranch<T> extends BranchTask<T> {
      * 2.实现类可以在该方法中内联子节点
      */
     @Override
-    protected void onChildRunning(Task<T> child) {
+    protected void onChildRunning(Task<T> child, boolean starting) {
 
     }
 
