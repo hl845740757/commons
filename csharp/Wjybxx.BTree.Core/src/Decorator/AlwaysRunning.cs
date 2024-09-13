@@ -70,7 +70,7 @@ public class AlwaysRunning<T> : Decorator<T> where T : class
     protected override void OnChildCompleted(Task<T> child) {
         inlineHelper.StopInline();
         IsBreakInline = true; // 阻断内联，避免频繁通知父节点
-        
+
         // 不响应其它状态，但还是需要响应取消...
         if (child.IsCancelled) {
             SetCancelled();

@@ -150,6 +150,7 @@ public class TaskEntry<T> : Task<T> where T : class
     public void UpdateInlined(int curFrame) {
         this.curFrame = curFrame;
         if (IsRunning) {
+            // 内联Execute逻辑
             Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
             if (inlinedChild != null) {
                 inlinedChild.Template_ExecuteInlined(ref inlineHelper, rootTask!);

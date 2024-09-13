@@ -56,6 +56,7 @@ public class InlineTest {
         branch = branch.getChild(0);
         branch.addChild(eventAcceptor);
 
+//        TaskInlineHelper.enableInline = false;
         taskEntry.update(0); // 先启动
 
         // 测试事件是否直接到达末端 -- 这个似乎只能debug看调用栈
@@ -64,9 +65,10 @@ public class InlineTest {
         Assertions.assertEquals(message, eventAcceptor.eventObj);
 
         taskEntry.update(1); // debug查看心跳调用栈
+        taskEntry.updateInlined(2); // debug查看心跳调用栈
 
         taskEntry.onEvent(successMessage);
-        taskEntry.update(2); // debug查看心跳调用栈--查看内联修复过程
+        taskEntry.update(3); // debug查看心跳调用栈--查看内联修复过程
     }
 
     private static class EventAcceptor extends LeafTask<Blackboard> {

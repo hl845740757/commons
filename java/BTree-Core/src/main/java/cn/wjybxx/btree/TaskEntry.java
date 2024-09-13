@@ -158,6 +158,7 @@ public class TaskEntry<T> extends Task<T> {
     public void updateInlined(int curFrame) {
         this.curFrame = curFrame;
         if (isRunning()) {
+            // 内联Execute逻辑
             Task<T> inlinedChild = inlineHelper.getInlinedChild();
             if (inlinedChild != null) {
                 inlinedChild.template_executeInlined(inlineHelper, rootTask);

@@ -923,8 +923,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
         outer:
         {
-            // 如果被内联子节点退出，而源任务未退出，则重新内联(source可能自身进行了新的内联)
-            if (reentryId != this.reentryId && sourceReentryId == source.reentryId && helper.GetInlinedChild() == null) {
+            // 如果被内联子节点退出，而源任务未退出，则重新内联
+            if (reentryId != this.reentryId && sourceReentryId == source.reentryId) {
                 helper.InlineChild(source);
             }
         }
