@@ -871,17 +871,17 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             SetCompleted(TaskStatus.CANCELLED, false);
             return;
         }
+#endif
         int reentryId = this.reentryId;
         Execute();
         if (reentryId != this.reentryId) {
             return;
         }
+#if !TASK_MANUAL_CHECK_CANCEL
         if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
             SetCompleted(TaskStatus.CANCELLED, false);
             return;
         }
-#else
-        Execute();
 #endif
         // 如果可以被内联的子节点没有被内联执行，则尝试通知父节点修复内联
         if (fromControl && IsInlinable && (ctl & MASK_DISABLE_NOTIFY) == 0) {
@@ -910,15 +910,15 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                 SetCompleted(TaskStatus.CANCELLED, false);
                 goto outer;
             }
+#endif
             Execute();
             if (reentryId != this.reentryId) {
                 goto outer;
             }
+#if !TASK_MANUAL_CHECK_CANCEL
             if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
                 SetCompleted(TaskStatus.CANCELLED, false);
             }
-#else
-            Execute();
 #endif
         }
         outer:
