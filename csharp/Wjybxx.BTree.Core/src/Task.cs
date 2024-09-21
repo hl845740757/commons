@@ -56,15 +56,13 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     private const int MASK_INHERITED_BLACKBOARD = 1 << 10;
     private const int MASK_INHERITED_PROPS = 1 << 11;
     private const int MASK_INHERITED_CANCEL_TOKEN = 1 << 12;
-    private const int MASK_ENTER_EXECUTE = 1 << 13;
-    private const int MASK_EXECUTING = 1 << 14;
-    private const int MASK_STOP_EXIT = 1 << 15;
-    private const int MASK_STILLBORN = 1 << 16;
-    internal const int MASK_DISABLE_NOTIFY = 1 << 17;
-    internal const int MASK_CHECKING_GUARD = 1 << 18;
-    private const int MASK_NOT_ACTIVE_SELF = 1 << 19;
-    private const int MASK_NOT_ACTIVE_IN_HIERARCHY = 1 << 20;
-    private const int MASK_REGISTERED_LISTENER = 1 << 21;
+    private const int MASK_STOP_EXIT = 1 << 13;
+    private const int MASK_STILLBORN = 1 << 14;
+    private const int MASK_DISABLE_NOTIFY = 1 << 15;
+    internal const int MASK_CHECKING_GUARD = 1 << 16;
+    private const int MASK_NOT_ACTIVE_SELF = 1 << 17;
+    private const int MASK_NOT_ACTIVE_IN_HIERARCHY = 1 << 18;
+    private const int MASK_REGISTERED_LISTENER = 1 << 19;
 
     /** 条件节点的基础选项 */
     private const int MASK_GUARD_BASE_OPTIONS = MASK_CHECKING_GUARD | MASK_MANUAL_CHECK_CANCEL;
@@ -90,9 +88,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 2.共享属性应该在运行前赋值，不应该也不能被序列化。
     /// 3.共享属性应该是只读的、可共享的，因为它是配置。
     /// 4.如果是自动继承的，exit后自动删除；如果是Control赋值的，则由control删除。
-    ///
-    /// 举个例子：部分项目的角色技能是有等级的，且数值不是根据等级计算的，而是一级一级配置的，
-    /// 那么每一级的数值就是props，技能流程就是task。
     /// </summary>
     /// <returns></returns>
     [NonSerialized] protected object sharedProps;
@@ -331,12 +326,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /** 设置为运行成功 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetSuccess() {
-        Debug.Assert(this.status == TaskStatus.RUNNING);
-        this.status = TaskStatus.SUCCESS;
-        Template_Exit();
-        if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
-            control.OnChildCompleted(this);
-        }
+        SetCompleted(TaskStatus.SUCCESS, false);
     }
 
     /** 设置为取消 */
@@ -381,14 +371,24 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                 throw new ArgumentException("Running task cant fail with 'GUARD_FAILED'");
             }
             this.status = status;
-            Template_Exit();
+            // template_exit
+            if ((ctl & MASK_REGISTERED_LISTENER) != 0) {
+                cancelToken.RemListener(this);
+            }
+            exitFrame = taskEntry.CurFrame;
+            StopRunningChildren();
+            if ((ctl & TaskOverrides.MASK_EXIT) != 0) {
+                Exit();
+            }
+            ReleaseContext();
+            reentryId++;
         } else {
             // 未调用Enter和Exit，需要补偿 -- 保留当前的ctl会更好
             this.PrevStatus = prevStatus;
             this.enterFrame = exitFrame;
             this.reentryId++;
+            this.ctl |= MASK_STILLBORN;
 
-            ctl |= MASK_STILLBORN;
             this.status = status;
         }
         if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
@@ -694,7 +694,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /// <summary>
     /// 告知模板方法是否在<see cref="Enter"/>前自动调用<see cref="ResetChildrenForRestart"/>
-    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认不分开执行
+    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认false
     /// 2.要覆盖默认值应当在<see cref="BeforeEnter"/>方法中调用
     /// 3.部分任务可能在调用<see cref="ResetForRestart()"/>之前不会再次运行，因此需要该特性
     /// </summary>
@@ -706,7 +706,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /// <summary>
     /// 告知模板方法是否手动检测取消
-    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认不禁用
+    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认false
     /// 2.是否检测取消信号是一个动态的属性，可随时更改 -- 因此不要轻易缓存。
     /// </summary>
     public bool IsManualCheckCancel {
@@ -717,12 +717,12 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     private bool IsAutoCheckCancel {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => (ctl & MASK_MANUAL_CHECK_CANCEL) == 0; // 执行频率很高，不调用封装方法
+        get => (ctl & MASK_MANUAL_CHECK_CANCEL) == 0;
     }
 
     /// <summary>
     /// 告知模板方法是否自动监听取消事件
-    /// 1.默认值由<see cref="Flags"/>中的信息指定，，默认不自动监听！自动监听有较大的开销，绝大多数业务只需要在Entry监听。
+    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认不自动监听！自动监听有较大的开销，绝大多数业务只需要在Entry监听。
     /// 2.要覆盖默认值应当在<see cref="BeforeEnter"/>方法中调用
     /// </summary>
     public bool IsAutoListenCancel {
@@ -756,7 +756,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /// <summary>
     /// 当task作为guard节点时，是否取反(减少栈深度) -- 避免套用<see cref="Decorator.Inverter{T}"/>
-    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认不分开执行
+    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认false
     /// 2.要覆盖默认值应当在<see cref="BeforeEnter"/>方法中调用
     /// </summary>
     public bool IsInvertedGuard {
@@ -767,7 +767,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /// <summary>
     /// 当Task可以被内联时是否打破内联
-    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认不分开执行
+    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认false
     /// 2.要覆盖默认值应当在<see cref="BeforeEnter"/>方法中调用
     /// 3.它的作用是避免被内联子节点进入完成状态时产生【过长的恢复路径】
     /// </summary>
@@ -928,19 +928,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                 helper.InlineChild(source);
             }
         }
-    }
-
-    private void Template_Exit() {
-        if ((ctl & MASK_REGISTERED_LISTENER) != 0) {
-            cancelToken.RemListener(this);
-        }
-        exitFrame = taskEntry.CurFrame;
-        StopRunningChildren(); // 停止有特殊顺序，不能使用访问器
-        if ((ctl & TaskOverrides.MASK_EXIT) != 0) {
-            Exit();
-        }
-        ReleaseContext();
-        reentryId++;
     }
 
     /// <summary>

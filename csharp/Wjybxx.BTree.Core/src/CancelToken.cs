@@ -72,9 +72,13 @@ public class CancelToken : ICancelTokenListener
         firing = false;
     }
 
-    protected bool IsFiring => firing;
-    protected int ReentryId => reentryId;
+    /// <summary>
+    /// 重入id，允许外部捕获
+    /// </summary>
+    public int ReentryId => reentryId;
 
+    protected bool IsFiring => firing;
+    
     #region query
 
     /// <summary>

@@ -78,7 +78,8 @@ public class CancelToken implements ICancelTokenListener {
         firing = false;
     }
 
-    protected final int getReentryId() {
+    /** 重入id，允许外部捕获 */
+    public final int getReentryId() {
         return reentryId;
     }
 

@@ -62,9 +62,7 @@ public class ChangeStateTask<T> : LeafTask<T> where T : class
             }
             nextState = TaskEntry.TreeLoader.LoadRootTask<T>(nextStateGuid);
         }
-        if (stateProps != null) {
-            nextState.SharedProps = stateProps;
-        }
+        nextState.SharedProps = stateProps;
 
         int reentryId = ReentryId;
         StateMachineTask<T> stateMachine = StateMachineTask<T>.FindStateMachine(this, machineName);

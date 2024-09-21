@@ -64,9 +64,7 @@ public class ChangeStateTask<T> extends LeafTask<T> {
             }
             nextState = getTaskEntry().getTreeLoader().loadRootTask(nextStateGuid);
         }
-        if (stateProps != null) {
-            nextState.setSharedProps(stateProps);
-        }
+        nextState.setSharedProps(stateProps);
 
         final int reentryId = getReentryId();
         final StateMachineTask<T> stateMachine = StateMachineTask.findStateMachine(this, machineName);

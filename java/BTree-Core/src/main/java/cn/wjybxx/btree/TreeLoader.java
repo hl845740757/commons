@@ -109,12 +109,17 @@ public interface TreeLoader {
 
     // region
 
+    /**
+     * 编辑器中的Entry节点抽象。
+     * 接口层不处理数据和行为分离架构下的配置需求，用户在具体的Entry上处理即可。
+     */
     interface IEntry {
 
-        /** 入口对象的名字 */
+        /** 入口对象的名字(别名) -- 可能为null */
+        @Nullable
         String getName();
 
-        /** 入口对象的guid */
+        /** 入口对象的guid -- 一定存在 */
         String getGuid();
 
         /** 入口对象的标记信息 */

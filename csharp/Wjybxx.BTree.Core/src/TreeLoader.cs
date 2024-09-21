@@ -109,12 +109,13 @@ public interface ITreeLoader
     # region entry
 
     /// <summary>
-    /// 数据对象入口抽象
+    /// 编辑器中的Entry节点抽象。
+    /// 接口层不处理数据和行为分离架构下的配置需求，用户在具体的Entry上处理即可。
     /// </summary>
     interface IEntry
     {
-        /** 入口对象的名字 */
-        string Name { get; }
+        /** 入口对象的名字(别名) -- 可能为null */
+        string? Name { get; }
 
         /** 入口对象的guid */
         string Guid { get; }
