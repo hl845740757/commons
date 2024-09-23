@@ -33,12 +33,15 @@ public class ParallelChildHelper<T> where T : class
     public int reentryId;
     /** 子节点的取消令牌 -- 应当在运行前赋值 */
     public CancelToken cancelToken;
+    /** 子节点控制数据 -- 自行规划 */
+    public int ctl;
     /** 用户自定义数据 */
     public object userData;
 
     public virtual void Reset() {
         _inlineHelper.StopInline();
         reentryId = 0;
+        ctl = 0;
         userData = null;
         if (cancelToken != null) {
             cancelToken.Reset();

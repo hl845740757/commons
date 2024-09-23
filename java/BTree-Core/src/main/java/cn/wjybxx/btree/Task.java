@@ -272,7 +272,7 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     /**
      * 获取任务前一次的执行结果
-     * 1.取值范围[0,63] -- 其实只要能区分成功失败就够；
+     * 1.取值范围[0,31] -- 其实只要能区分成功失败就够；
      * 2.这并不是一个运行时必须的属性，而是为Debug和UI视图服务的；
      */
     public final int getPrevStatus() {
@@ -814,7 +814,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         ctl = initMask;
         status = TaskStatus.RUNNING; // 先更新为running状态，以避免执行过程中外部查询task的状态时仍处于上一次的结束status
         enterFrame = exitFrame = taskEntry.getCurFrame();
-        final int reentryId = ++this.reentryId;  // 和上次执行的exit分开
+        final short reentryId = ++this.reentryId;  // 和上次执行的exit分开
         // beforeEnter
         if ((initMask & TaskOverrides.MASK_BEFORE_ENTER) != 0) {
             beforeEnter(); // 这里用户可能修改控制流标记
@@ -875,7 +875,7 @@ public abstract class Task<T> implements ICancelTokenListener {
             setCompleted(TaskStatus.CANCELLED, false);
             return;
         }
-        final int reentryId = this.reentryId;
+        final short reentryId = this.reentryId;
         execute();
         if (reentryId != this.reentryId) {
             return;
@@ -902,8 +902,8 @@ public abstract class Task<T> implements ICancelTokenListener {
             return;
         }
         // 理论上这里可以先检查一下source的取消令牌，但如果source收到取消信号，则被内联的节点的子节点也一定收到取消信号
-        final int sourceReentryId = source.reentryId;
-        final int reentryId = this.reentryId;
+        final short sourceReentryId = source.reentryId;
+        final short reentryId = this.reentryId;
         // 内联template_execute逻辑
         outer:
         {
@@ -951,10 +951,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      */
     public final void template_startHook(Task<T> hook, boolean checkGuard) {
         if (!checkGuard || hook.guard == null || template_checkGuard(hook.guard)) {
-            int initMask = (ctl & MASK_CHECKING_GUARD) == 0
-                    ? MASK_DISABLE_NOTIFY
-                    : MASK_DISABLE_NOTIFY | MASK_GUARD_BASE_OPTIONS;
-            hook.template_start(this, initMask);
+            hook.template_start(this, MASK_DISABLE_NOTIFY);
         } else {
             hook.setGuardFailed(this, true);
         }

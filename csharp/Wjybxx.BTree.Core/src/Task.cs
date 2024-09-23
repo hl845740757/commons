@@ -273,7 +273,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /// <summary>
     /// 获取任务前一次的执行结果
-    /// 1.取值范围[0,63] -- 其实只要能区分成功失败就够；
+    /// 1.取值范围[0,31] -- 其实只要能区分成功失败就够；
     /// 2.这并不是一个运行时必须的属性，而是为Debug和Ui视图用的；
     /// </summary>
     public int PrevStatus {
@@ -805,7 +805,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         ctl = initMask;
         status = TaskStatus.RUNNING; // 先更新为running状态，以避免执行过程中外部查询task的状态时仍处于上一次的结束status
         enterFrame = exitFrame = taskEntry.CurFrame;
-        int reentryId = ++this.reentryId; // 和上次执行的exit分开
+        short reentryId = ++this.reentryId; // 和上次执行的exit分开
         // beforeEnter
         if ((initMask & TaskOverrides.MASK_BEFORE_ENTER) != 0) {
             BeforeEnter(); // 这里用户可能修改控制流标记
@@ -872,7 +872,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             return;
         }
 #endif
-        int reentryId = this.reentryId;
+        short reentryId = this.reentryId;
         Execute();
         if (reentryId != this.reentryId) {
             return;
@@ -901,8 +901,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             return;
         }
         // 理论上这里可以先检查一下source的取消令牌，但如果source收到取消信号，则被内联的节点的子节点也一定收到取消信号
-        int sourceReentryId = source.reentryId;
-        int reentryId = this.reentryId;
+        short sourceReentryId = source.reentryId;
+        short reentryId = this.reentryId;
         // 内联template_execute逻辑
         {
 #if !TASK_MANUAL_CHECK_CANCEL
@@ -956,10 +956,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Template_StartHook(Task<T> hook, bool checkGuard) {
         if (!checkGuard || hook.guard == null || Template_CheckGuard(hook.guard)) {
-            int initMask = (ctl & MASK_CHECKING_GUARD) == 0
-                ? MASK_DISABLE_NOTIFY
-                : MASK_DISABLE_NOTIFY | MASK_GUARD_BASE_OPTIONS;
-            hook.Template_Start(this, initMask);
+            hook.Template_Start(this, MASK_DISABLE_NOTIFY);
         } else {
             hook.SetGuardFailed(this, true);
         }
