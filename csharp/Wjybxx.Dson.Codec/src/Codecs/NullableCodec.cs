@@ -23,12 +23,13 @@ namespace Wjybxx.Dson.Codec.Codecs
 {
 /// <summary>
 /// <see cref="Nullable{T}"/>的模板编解码器
+/// 是我天真了，C#特殊处理了Nullable的GetType，和装箱的效果一样，返回的是值的GetType，因此永远无法走到Nullable的Codec...
+/// (除非编译期不可感知类型，即对象在编译期为泛型)
 ///
-/// 是我天真了，C#特殊处理了Nullable的GetType -- 和装箱的效果一样，返回的是值的GetType，
-/// 因此永远无法走到Nullable的Codec，该类保留用作提醒...
+/// 在解码时，如果Dson中的值为null，会直接返回default；如果Dson中的值非null，会直接读取为目标值，然后强转为Nullable。
+/// int是可以强转为int?的 —— C#的类型转换不是单纯基于继承的。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-[Obsolete]
 public class NullableCodec<T> : IDsonCodec<T?> where T : struct
 {
     public void WriteObject(IDsonObjectWriter writer, ref T? inst, Type declaredType, ObjectStyle style) {

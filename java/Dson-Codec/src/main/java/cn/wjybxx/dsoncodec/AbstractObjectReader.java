@@ -139,6 +139,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
 
         DsonType dsonType = reader.getCurrentDsonType();
         if (dsonType == DsonType.NULL) { // null直接返回
+            reader.readNull(name);
             return null;
         }
         if (dsonType.isContainer()) { // 容器类型只能通过codec解码

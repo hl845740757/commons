@@ -71,8 +71,7 @@ public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
         if (typeInfo.isGenericType()) {
             return typeInfo.getGenericArgument(0);
         }
-        TypeInfo<?> elementTypeInfo = DsonConverterUtils.getElementActualTypeInfo(typeInfo.rawType);
-        return elementTypeInfo != null ? elementTypeInfo : TypeInfo.OBJECT;
+        return DsonConverterUtils.getElementActualTypeInfo(typeInfo.rawType);
     }
 
     @Override
@@ -89,6 +88,10 @@ public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
         Collection<Object> result = newCollection(typeInfo, factory);
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readObject(null, componentArgInfo));
+        }
+        CollectionConverter collectionConverter = reader.options().collectionConverter;
+        if (collectionConverter != null) {
+            result = collectionConverter.convertCollection(typeInfo, result);
         }
         return clazz.cast(result);
     }

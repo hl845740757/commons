@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Attributes;
@@ -121,10 +122,10 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     public IGenericCollection<TKey> Keys => CachedKeys();
     public IGenericCollection<TValue> Values => CachedValues();
-    ICollection<TKey> IDictionary<TKey, TValue>.Keys => CachedKeys();
-    ICollection<TValue> IDictionary<TKey, TValue>.Values => CachedValues();
-    IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => CachedKeys();
-    IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => CachedValues();
+    [DebuggerHidden] ICollection<TKey> IDictionary<TKey, TValue>.Keys => CachedKeys();
+    [DebuggerHidden] ICollection<TValue> IDictionary<TKey, TValue>.Values => CachedValues();
+    [DebuggerHidden] IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => CachedKeys();
+    [DebuggerHidden] IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => CachedValues();
 
     public ISequencedCollection<TKey> SequencedKeys(bool reversed = false) => CachedKeys(reversed);
 

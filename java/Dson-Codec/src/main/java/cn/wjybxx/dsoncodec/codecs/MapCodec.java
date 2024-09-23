@@ -80,12 +80,9 @@ public class MapCodec<T extends Map> implements DsonCodec<T> {
                 && typeInfo.isGenericType()) {
             keyArgInfo = typeInfo.getGenericArgument(0);
             valueArgInfo = typeInfo.getGenericArgument(1);
-        } else if (typeInfo.typeArgs.size() == 1
-                && (keyArgInfo = DsonConverterUtils.getKeyActualTypeInfo(typeInfo.rawType)) != null) {
-            // 对特殊类型字典做一点优化
-            valueArgInfo = typeInfo.getGenericArgument(0);
         } else {
-            keyArgInfo = valueArgInfo = TypeInfo.OBJECT;
+            keyArgInfo = DsonConverterUtils.getKeyActualTypeInfo(typeInfo.rawType);
+            valueArgInfo = DsonConverterUtils.getValueActualTypeInfo(typeInfo.rawType);
         }
 
         @SuppressWarnings("unchecked") Set<Map.Entry<?, ?>> entrySet = instance.entrySet();
@@ -120,12 +117,9 @@ public class MapCodec<T extends Map> implements DsonCodec<T> {
         if (typeInfo.typeArgs.size() == 2 && typeInfo.isGenericType()) {
             keyArgInfo = typeInfo.getGenericArgument(0);
             valueArgInfo = typeInfo.getGenericArgument(1);
-        } else if (typeInfo.typeArgs.size() == 1
-                && (keyArgInfo = DsonConverterUtils.getKeyActualTypeInfo(typeInfo.rawType)) != null) {
-            // 对特殊类型字典做一点优化
-            valueArgInfo = typeInfo.getGenericArgument(0);
         } else {
-            keyArgInfo = valueArgInfo = TypeInfo.OBJECT;
+            keyArgInfo = DsonConverterUtils.getKeyActualTypeInfo(typeInfo.rawType);
+            valueArgInfo = DsonConverterUtils.getValueActualTypeInfo(typeInfo.rawType);
         }
 
         Map<Object, Object> result = newMap(typeInfo, factory);
@@ -146,6 +140,10 @@ public class MapCodec<T extends Map> implements DsonCodec<T> {
                 result.put(key, value);
             }
             reader.readEndArray();
+        }
+        CollectionConverter collectionConverter = reader.options().collectionConverter;
+        if (collectionConverter != null) {
+            result = collectionConverter.convertMap(typeInfo, result);
         }
         return clazz.cast(result);
     }

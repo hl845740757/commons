@@ -35,7 +35,7 @@ public class ConverterOptions
     /// 是否弱顺序。
     /// 对于集合和字典，要保证解码的正确性，就必须保持插入序。而C#未提供原生的高性能的保持插入序的Set和Dictionary，
     /// 我实现的<see cref="LinkedHashSet{TKey}"/>和<see cref="LinkedDictionary{TKey,TValue}"/>虽然能保持插入序，
-    /// 但优化做的较少，可能会产生较多的小对象，增加gc开销。
+    /// 但大家可能更习惯使用系统库的字典。
     ///
     /// ps：根据观察，系统的<see cref="Dictionary{TKey,TValue}"/>在只插入的情况下是保持有序的，但有删除操作的情况下就会无序。
     /// </summary>
@@ -97,7 +97,6 @@ public class ConverterOptions
     /// </code>
     /// </summary>
     public readonly bool enableBeforeEncode;
-
     /// <summary>
     /// 是否启用AfterDecode钩子方法。
     ///  默认启用！因为我们假设afterDecode仅依赖自身数据。
@@ -106,6 +105,12 @@ public class ConverterOptions
     /// </code>
     /// </summary>
     public readonly bool enableAfterDecode;
+    /// <summary>
+    /// 集合转换器，主要用于读取为不可变集合。
+    /// 当使用Dson读取配置文件时，保持配置对象的不可变性是非常重要的。
+    /// 交给用户处理，使得可以支持特殊的集合实现。
+    /// </summary>
+    public readonly CollectionConverter? collectionConverter;
 
     /** protoBuf对应的二进制子类型 -- 其它模块依赖 */
     public readonly int pbBinaryType;
@@ -140,6 +145,7 @@ public class ConverterOptions
         this.randomRead = builder.RandomRead;
         this.enableBeforeEncode = builder.EnableBeforeEncode;
         this.enableAfterDecode = builder.EnableAfterDecode;
+        this.collectionConverter = builder.CollectionConverter;
 
         this.pbBinaryType = builder.PbBinaryType;
         this.usage = builder.Usage;
@@ -172,6 +178,7 @@ public class ConverterOptions
         builder.RandomRead = randomRead;
         builder.EnableBeforeEncode = enableBeforeEncode;
         builder.EnableAfterDecode = enableAfterDecode;
+        builder.CollectionConverter = collectionConverter;
 
         builder.PbBinaryType = pbBinaryType;
         builder.Usage = usage;
@@ -211,6 +218,7 @@ public class ConverterOptions
         public bool RandomRead { get; set; } = true;
         public bool EnableBeforeEncode { get; set; } = false;
         public bool EnableAfterDecode { get; set; } = true;
+        public CollectionConverter? CollectionConverter { get; set; }
 
         public int PbBinaryType { get; set; } = 127;
         public int Usage { get; set; } = 0;

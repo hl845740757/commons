@@ -25,6 +25,7 @@ import cn.wjybxx.dson.DsonWriterSettings;
 import cn.wjybxx.dson.text.DsonTextReaderSettings;
 import cn.wjybxx.dson.text.DsonTextWriterSettings;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import java.util.ArrayDeque;
 import java.util.Objects;
@@ -94,6 +95,13 @@ public class ConverterOptions {
      * 默认启用！因为我们假设afterDecode仅依赖自身数据。
      */
     public final boolean enableAfterDecode;
+    /**
+     * 集合转换器，主要用于读取为不可变集合。
+     * 当使用Dson读取配置文件时，保持配置对象的不可变性是非常重要的。
+     * 交给用户处理，使得可以支持特殊的集合实现。
+     */
+    @Nullable
+    public final CollectionConverter collectionConverter;
 
     /** protoBuf对应的二进制子类型 -- 其它模块依赖 */
     public final int pbBinaryType;
@@ -127,6 +135,7 @@ public class ConverterOptions {
         this.randomRead = builder.randomRead;
         this.enableBeforeEncode = builder.enableBeforeEncode;
         this.enableAfterDecode = builder.enableAfterDecode;
+        this.collectionConverter = builder.collectionConverter;
 
         this.pbBinaryType = builder.pbBinaryType;
         this.usage = builder.usage;
@@ -159,6 +168,7 @@ public class ConverterOptions {
         builder.randomRead = randomRead;
         builder.enableBeforeEncode = enableBeforeEncode;
         builder.enableAfterDecode = enableAfterDecode;
+        builder.collectionConverter = collectionConverter;
 
         builder.pbBinaryType = pbBinaryType;
         builder.usage = usage;
@@ -194,6 +204,7 @@ public class ConverterOptions {
         private boolean randomRead = true;
         private boolean enableBeforeEncode = false;
         private boolean enableAfterDecode = true;
+        private CollectionConverter collectionConverter = null;
 
         private int pbBinaryType = 127;
         private int usage;
@@ -299,6 +310,15 @@ public class ConverterOptions {
 
         public Builder setEnableAfterDecode(boolean enableAfterDecode) {
             this.enableAfterDecode = enableAfterDecode;
+            return this;
+        }
+
+        public CollectionConverter getCollectionConverter() {
+            return collectionConverter;
+        }
+
+        public Builder setCollectionConverter(CollectionConverter collectionConverter) {
+            this.collectionConverter = collectionConverter;
             return this;
         }
 

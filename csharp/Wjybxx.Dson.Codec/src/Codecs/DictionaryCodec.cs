@@ -80,6 +80,10 @@ public abstract class DictionaryCodec
             }
             reader.ReadEndArray();
         }
+        CollectionConverter collectionConverter = reader.Options.collectionConverter;
+        if (collectionConverter != null) {
+            result = collectionConverter.ConvertDictionary(declaredType, result);
+        }
         return result;
     }
 

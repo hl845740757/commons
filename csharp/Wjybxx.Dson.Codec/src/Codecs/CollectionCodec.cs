@@ -54,6 +54,11 @@ public abstract class CollectionCodec
             result.Add(value);
         }
         reader.ReadEndArray();
+
+        CollectionConverter collectionConverter = reader.Options.collectionConverter;
+        if (collectionConverter != null) {
+            result = collectionConverter.ConvertCollection(declaredType, result);
+        }
         return result;
     }
 

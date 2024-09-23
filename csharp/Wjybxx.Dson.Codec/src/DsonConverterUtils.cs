@@ -155,7 +155,9 @@ public static class DsonConverterUtils
             // uint
             TypeMetaOf(typeof(uint), DsonTexts.LabelUInt32, "uint", "uint32"),
             TypeMetaOf(typeof(ulong), DsonTexts.LabelUInt64, "ulong", "uint64"),
-            TypeMetaOf(typeof(DictionaryEncodeProxy<>), "DictionaryEncodeProxy", "MapEncodeProxy")
+            TypeMetaOf(typeof(DictionaryEncodeProxy<>), "DictionaryEncodeProxy", "MapEncodeProxy"),
+            // c#的nullable支持，不支持'?'，以避免冲突 -- 该类型信息是需要的，Codec是不需要的
+            TypeMetaOf(typeof(Nullable<>), "Nullable"),
         };
     }
 

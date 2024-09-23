@@ -77,6 +77,7 @@ public class GenericCodecConfig : IGenericCodecConfig
 
         // 特殊组件
         AddCodec(typeof(DictionaryEncodeProxy<>), typeof(DictionaryEncodeProxyCodec<>));
+        AddCodec(typeof(Nullable<>), typeof(NullableCodec<>));
         return this;
     }
 

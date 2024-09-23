@@ -283,9 +283,7 @@ public final class DsonConverterUtils {
 
     /** 判断是否可继承的开销比较大，我们需要缓存测试结果 */
     private static final ConcurrentHashMap<ClassPair, Boolean> inheritableResultCache = new ConcurrentHashMap<>();
-
-    private static final TypeInfo<?> Nil = TypeInfo.of(void.class);
-    private static final ConcurrentHashMap<Class<?>, TypeInfo<?>> actualTypeArgCache = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Class<?>, List<TypeInfo<?>>> actualTypeArgsCache = new ConcurrentHashMap<>();
 
     /** 判断要编码的类型是否可继承声明类型的泛型参数 */
     public static <T> boolean canInheritTypeArgs(Class<T> encoderClass, TypeInfo<?> typeInfo) {
@@ -329,43 +327,62 @@ public final class DsonConverterUtils {
         return r;
     }
 
-    /** 获取传递给集合的元素类型；不存在则返回nuLl */
+    /** 获取传递给集合的元素类型；不存在则返回{@link TypeInfo#OBJECT} */
     @SuppressWarnings("unchecked")
     public static <T> TypeInfo<?> getElementActualTypeInfo(Class<T> rawType) {
-        if (!Collection.class.isAssignableFrom(rawType)) {
-            return null;
+        if (rawType == Object.class || rawType == Collection.class || !Collection.class.isAssignableFrom(rawType)) {
+            return TypeInfo.OBJECT;
         }
-        return findActualTypeImpl(rawType, (Class<? super T>) Collection.class, "E");
+        List<TypeInfo<?>> actualTypeArgs = findActualTypeArgs(rawType, (Class<? super T>) Collection.class);
+        return actualTypeArgs.isEmpty() ? TypeInfo.OBJECT : actualTypeArgs.get(0);
     }
 
-    /** 获取传递给字典的Key类型；不存在则返回nuLl */
+    /** 获取传递给字典的Key类型；不存在则返回{@link TypeInfo#OBJECT} */
     @SuppressWarnings("unchecked")
     public static <T> TypeInfo<?> getKeyActualTypeInfo(Class<T> rawType) {
-        if (!Map.class.isAssignableFrom(rawType)) {
-            return null;
+        if (rawType == Object.class || rawType == Map.class || !Map.class.isAssignableFrom(rawType)) {
+            return TypeInfo.OBJECT;
         }
-        return findActualTypeImpl(rawType, (Class<? super T>) Map.class, "K");
+        List<TypeInfo<?>> actualTypeArgs = findActualTypeArgs(rawType, (Class<? super T>) Map.class);
+        return actualTypeArgs.isEmpty() ? TypeInfo.OBJECT : actualTypeArgs.get(0);
     }
 
-    private static <T> TypeInfo<?> findActualTypeImpl(Class<T> rawType, Class<? super T> targetType, String typeVarName) {
-        if (rawType == targetType) {
-            return null;
+    /** 获取传递给字典的Value类型；不存在则返回{@link TypeInfo#OBJECT} */
+    @SuppressWarnings("unchecked")
+    public static <T> TypeInfo<?> getValueActualTypeInfo(Class<T> rawType) {
+        if (rawType == Object.class || rawType == Map.class || !Map.class.isAssignableFrom(rawType)) {
+            return TypeInfo.OBJECT;
         }
-        TypeInfo<?> typeInfo = actualTypeArgCache.get(rawType);
-        if (typeInfo == null) {
-            try {
-                Class<?> actualType = TypeParameterFinder.findTypeParameterUnsafe(rawType, targetType, typeVarName);
-                if (actualType != null) {
-                    typeInfo = TypeInfo.of(actualType);
+        List<TypeInfo<?>> actualTypeArgs = findActualTypeArgs(rawType, (Class<? super T>) Map.class);
+        return actualTypeArgs.isEmpty() ? TypeInfo.OBJECT : actualTypeArgs.get(1);
+    }
+
+    private static <T> List<TypeInfo<?>> findActualTypeArgs(Class<T> rawType, Class<? super T> targetType) {
+        List<TypeInfo<?>> actualTypeArgs = actualTypeArgsCache.get(rawType);
+        if (actualTypeArgs != null) {
+            return actualTypeArgs;
+        }
+        Type genericSuperType = TypeParameterFinder.getGenericSuperType(rawType, targetType);
+        List<TypeInfo<?>> result;
+        if (genericSuperType instanceof ParameterizedType parameterizedType) {
+            Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+            TypeInfo<?>[] typeInfos = new TypeInfo<?>[actualTypeArguments.length];
+            for (int idx = 0; idx < actualTypeArguments.length; idx++) {
+                Type actualTypeArgument = actualTypeArguments[idx];
+                if (actualTypeArgument instanceof Class<?> cls) {
+                    typeInfos[idx] = TypeInfo.of(cls); // 泛型参数是Class
+                } else if (actualTypeArgument instanceof ParameterizedType p2 && p2.getRawType() instanceof Class<?> cls2) {
+                    typeInfos[idx] = TypeInfo.of(cls2); // 泛型参数是另一个泛型Class
+                } else {
+                    typeInfos[idx] = TypeInfo.OBJECT;
                 }
-            } catch (Throwable ignore) {
             }
-            if (typeInfo == null) {
-                typeInfo = Nil;
-            }
-            actualTypeArgCache.put(rawType, typeInfo);
+            result = List.of(typeInfos);
+        } else {
+            result = List.of();
         }
-        return typeInfo == Nil ? null : typeInfo;
+        actualTypeArgsCache.put(rawType, result);
+        return result;
     }
 
     private static class ClassPair {

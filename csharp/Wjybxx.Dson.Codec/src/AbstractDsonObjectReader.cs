@@ -114,6 +114,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
 
         DsonType dsonType = reader.CurrentDsonType;
         if (dsonType == DsonType.Null) { // null直接返回
+            reader.ReadNull(name);
             return default;
         }
         if (dsonType.IsContainer()) { // 容器类型只能通过codec解码
@@ -282,7 +283,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         if (factory != null) {
             return rootRegistry.GetDecoder(declaredType, rootRegistry);
         }
-        // 尝试按真实类型读
+        // 尝试按真实类型读 -- IsAssignableFrom 支持 Nullable
         if (!string.IsNullOrWhiteSpace(classId)) {
             TypeMeta typeMeta = converter.TypeMetaRegistry.OfName(classId);
             if (typeMeta != null && declaredType.IsAssignableFrom(typeMeta.type)) {
