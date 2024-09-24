@@ -43,13 +43,14 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
             }
             return reader.CurrentDsonType != DsonType.EndOfObject;
         }
+
+        if (name == null) throw new ArgumentNullException(nameof(name));
         if (reader.IsAtValue) {
             if (reader.CurrentName == name) {
                 return true;
             }
             reader.SkipValue();
         }
-        if (name == null) throw new ArgumentNullException(nameof(name));
         if (reader.IsAtType) {
             // 用户尚未调用readDsonType，可指定下一个key的值
             KeyIterator keyItr = (KeyIterator)reader.Attachment();

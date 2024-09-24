@@ -229,7 +229,7 @@ public final class DsonConverterUtils {
         public <T> DsonCodecImpl<T> getDecoder(Class<T> clazz, DsonCodecRegistry rootRegistry) {
             DsonCodecImpl<?> codec = codecMap.get(clazz);
             if (codec != null) return (DsonCodecImpl<T>) codec;
-            // java是泛型擦擦，因此我们可以这么干 -- Codec创建的实例可以线下转型目标类型
+            // java是泛型擦擦，因此我们可以这么干 -- Codec创建的实例可以向下转型目标类型
             if (clazz.isAssignableFrom(LinkedHashMap.class)) return (DsonCodecImpl<T>) mapCodec;
             if (clazz.isAssignableFrom(ArrayList.class)) return (DsonCodecImpl<T>) collectionCodec;
             return null;
@@ -286,7 +286,7 @@ public final class DsonConverterUtils {
     private static final ConcurrentHashMap<Class<?>, List<TypeInfo<?>>> actualTypeArgsCache = new ConcurrentHashMap<>();
 
     /** 判断要编码的类型是否可继承声明类型的泛型参数 */
-    public static <T> boolean canInheritTypeArgs(Class<T> encoderClass, TypeInfo<?> typeInfo) {
+    public static boolean canInheritTypeArgs(Class<?> encoderClass, TypeInfo<?> typeInfo) {
         return typeInfo.typeArgs.size() > 0 && canInheritTypeArgs(encoderClass, typeInfo.rawType);
     }
 
@@ -316,7 +316,7 @@ public final class DsonConverterUtils {
                 Type genericSuperType = TypeParameterFinder.getGenericSuperType(thisClass, superClassOrInterface);
                 if (genericSuperType instanceof ParameterizedType parameterizedType) {
                     Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-                    r = Arrays.equals(thisTypeParameters, actualTypeArguments);
+                    r = isSameGenericTypeArguments(thisTypeParameters, actualTypeArguments);
                 }
             }
         }
@@ -325,6 +325,23 @@ public final class DsonConverterUtils {
         }
         inheritableResultCache.put(classPair, r);
         return r;
+    }
+
+    private static <T> boolean isSameGenericTypeArguments(TypeVariable<? extends Class<?>>[] thisTypeParameters,
+                                                          Type[] actualTypeArguments) {
+        // 子类声明相同的泛型变量是声明了新的变量，因此无法直接Equals比较数组元素，我们只能简单的比较名字
+        if (thisTypeParameters.length != actualTypeArguments.length) {
+            return false;
+        }
+        for (int i = 0; i < thisTypeParameters.length; i++) {
+            TypeVariable<? extends Class<?>> typeParameter = thisTypeParameters[i];
+            Type actualTypeArgument = actualTypeArguments[i];
+            if (!(actualTypeArgument instanceof TypeVariable<?> typeVariable)
+                    || !typeVariable.getName().equals(typeParameter.getName())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** 获取传递给集合的元素类型；不存在则返回{@link TypeInfo#OBJECT} */
@@ -457,7 +474,7 @@ public final class DsonConverterUtils {
      * @param rhsType 测试的类型
      * @return 如果测试的类型可以赋值给基类型则返回true，否则返回false
      */
-    public static boolean isAssignable(Class<?> lhsType, Class<?> rhsType) {
+    public static boolean isAssignableFrom(Class<?> lhsType, Class<?> rhsType) {
         Objects.requireNonNull(lhsType, "Left-hand side type must not be null");
         Objects.requireNonNull(rhsType, "Right-hand side type must not be null");
         if (lhsType.isAssignableFrom(rhsType)) {
@@ -483,7 +500,7 @@ public final class DsonConverterUtils {
      */
     public static boolean isAssignableValue(Class<?> type, @Nullable Object value) {
         Objects.requireNonNull(type, "Type must not be null");
-        return (value != null ? isAssignable(type, value.getClass()) : !type.isPrimitive());
+        return (value == null) ? !type.isPrimitive() : isAssignableFrom(type, value.getClass());
     }
 
     /**
@@ -546,7 +563,7 @@ public final class DsonConverterUtils {
         return supplier;
     }
 
-    /** @param lookup 外部缓存实例，避免每次创建的开销 */
+    /** @param lookup 外部缓存实例，避免每次创建或查找的开销 */
     public static <T extends Collection<?>> CollectionCodec<T> createCollectionCodec(MethodHandles.Lookup lookup, Class<T> clazz) {
         try {
             Constructor<T> constructor = clazz.getConstructor();
@@ -559,6 +576,7 @@ public final class DsonConverterUtils {
         }
     }
 
+    /** @param lookup 外部缓存实例，避免每次创建或查找的开销 */
     public static <T extends Map<?, ?>> MapCodec<T> createMapCodec(MethodHandles.Lookup lookup, Class<T> clazz) {
         try {
             Constructor<T> constructor = clazz.getConstructor();

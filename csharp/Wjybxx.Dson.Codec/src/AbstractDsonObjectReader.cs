@@ -95,9 +95,9 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
 
     #region object处理
 
-    public T ReadObject<T>(string? name, Type declaredType, Func<T>? factory = null) {
+    public T ReadObject<T>(string? name, Type declaredType, Func<T>? factory = null, bool skipName = false) {
         if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
-        if (!ReadName(name)) { // 顺带读取了DsonType
+        if (!skipName && !ReadName(name)) { // 顺带读取了DsonType
             return default;
         }
         IDsonReader<string> reader = this.reader;

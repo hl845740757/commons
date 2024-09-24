@@ -89,7 +89,7 @@ public final class TypeInfo<T> {
         if (isGenericType()) {
             return new TypeInfo<>(rawType);
         }
-        return null;
+        throw new IllegalStateException("This operation is only valid on generic types");
     }
 
     /** 获取泛型参数 */
@@ -124,8 +124,6 @@ public final class TypeInfo<T> {
     public static final TypeInfo<Integer> INTEGER = new TypeInfo<>(Integer.class);
     public static final TypeInfo<Long> LONG = new TypeInfo<>(Long.class);
     public static final TypeInfo<String> STRING = new TypeInfo<>(String.class);
-    /** 表示不写入类型信息 */
-    public static final TypeInfo<Object> NONE = new TypeInfo<>(Object.class);
 
     public static final TypeInfo<ArrayList> ARRAYLIST =
             new TypeInfo<>(ArrayList.class, Object.class);

@@ -73,7 +73,7 @@ public class DsonCodecException extends DsonIOException {
         return new DsonCodecException(String.format("Incompatible data format, expected %s, dsonType %s", expected, dsonType));
     }
 
-    public static <T> DsonCodecException incompatible(Class<?> declared, T classId) {
+    public static DsonCodecException incompatible(Class<?> declared, String classId) {
         return new DsonCodecException(String.format("Incompatible data format, declaredType %s, classId %s", declared, classId));
     }
 }

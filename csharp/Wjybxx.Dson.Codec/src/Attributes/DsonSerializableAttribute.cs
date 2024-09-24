@@ -104,6 +104,7 @@ public class DsonSerializableAttribute : Attribute
     /// 获取单例的方法名（兼容属性）
     /// </summary>
     public string? Singleton { get; set; }
+
     /// <summary>
     /// 不自动编解码的字段和属性，通常用于跳过不能直接访问的超类字段和属性，然后手动编解码。
     /// (注意：skip仅仅表示不自动读，被跳过的字段仍然会占用字段编号和name！)

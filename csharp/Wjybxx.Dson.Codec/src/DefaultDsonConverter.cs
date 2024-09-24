@@ -236,7 +236,7 @@ public class DefaultDsonConverter : IDsonConverter
             DsonCodecImpl codecImpl = (DsonCodecImpl)Activator.CreateInstance(genericType, rawCodec);
             allPojoCodecList.Add(codecImpl);
         }
-
+        // 泛型支持
         DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(
             TypeMetaRegistries.FromRegistries(typeMetaRegistry,
                 DsonConverterUtils.GetDefaultTypeMetaRegistry()));
@@ -270,10 +270,10 @@ public class DefaultDsonConverter : IDsonConverter
             copied.Add(DsonConverterUtils.GetDefaultCodecRegistry());
             registryList = copied;
         }
+        // 泛型支持
         DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(
             TypeMetaRegistries.FromRegistries(typeMetaRegistry,
                 DsonConverterUtils.GetDefaultTypeMetaRegistry()));
-
         DynamicDsonCodecRegistry dynamicDsonCodecRegistry = new DynamicDsonCodecRegistry(
             DsonCodecRegistries.FromRegistries(registryList),
             genericCodecConfig);

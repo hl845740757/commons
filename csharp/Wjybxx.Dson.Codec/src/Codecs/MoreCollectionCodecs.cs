@@ -175,8 +175,7 @@ public static class MoreCollectionCodecs
         }
 
         public Queue<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<Queue<T>>? factory = null) {
-            Type[] genericTypeArguments = DsonConverterUtils.GetGenericArguments(declaredType);
-            Type eleDeclaredType = genericTypeArguments.Length > 0 ? declaredType.GenericTypeArguments[0] : typeof(object);
+            Type eleDeclaredType = typeof(T);
             // Queue重复编码，避免不必要的拷贝
             Queue<T> result = factory != null ? factory.Invoke() : new Queue<T>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {

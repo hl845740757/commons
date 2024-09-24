@@ -29,6 +29,7 @@ import java.util.Objects;
  * <p>
  * 1.1个Class可以有多个ClassName(即允许别名)，以支持简写；但一个ClassName只能映射到一个Class。
  * 2.在文档型编解码中，可读性是比较重要的，因此不要一味追求简短。
+ * 3.使用{@link TypeInfo}以支持写入泛型信息，供支持泛型的语言使用。
  *
  * @author wjybxx
  * date - 2023/7/29

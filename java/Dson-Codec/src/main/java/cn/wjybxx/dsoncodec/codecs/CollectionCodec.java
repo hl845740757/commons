@@ -76,6 +76,7 @@ public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
 
     @Override
     public void writeObject(DsonObjectWriter writer, T instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+        // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询K,V的类型，但Java是伪泛型...
         TypeInfo<?> componentArgInfo = getElementTypeInfo(typeInfo);
         for (Object e : instance) {
             writer.writeObject(null, e, componentArgInfo, null);

@@ -126,7 +126,12 @@ public struct ClassName : IEquatable<ClassName>
     /// <summary>
     /// 是否是泛型类 -- 根据TypeArgs测试是精准的。
     /// </summary>
-    public bool IsGeneric => typeArgs.Count > 0;
+    public bool IsGeneric {
+        get {
+            int idx = clsName.Length - 1;
+            return clsName[idx] != ']' && typeArgs.Count > 0; // 不能是数组
+        }
+    }
 
     #endregion
 

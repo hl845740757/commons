@@ -17,39 +17,29 @@
 #endregion
 
 using System;
+using Wjybxx.Commons;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
 /// <summary>
 /// <see cref="Nullable{T}"/>的模板编解码器
-/// 是我天真了，C#特殊处理了Nullable的GetType，和装箱的效果一样，返回的是值的GetType，因此永远无法走到Nullable的Codec...
-/// (除非编译期不可感知类型，即对象在编译期为泛型)
 ///
-/// 在解码时，如果Dson中的值为null，会直接返回default；如果Dson中的值非null，会直接读取为目标值，然后强转为Nullable。
-/// int是可以强转为int?的 —— C#的类型转换不是单纯基于继承的。
+/// 注意：Nullable编码时不会再封装一层，而是直接写内部值。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public class NullableCodec<T> : IDsonCodec<T?> where T : struct
 {
+    public bool AutoStartEnd => false;
+
     public void WriteObject(IDsonObjectWriter writer, ref T? inst, Type declaredType, ObjectStyle style) {
-        if (inst.HasValue) {
-            writer.WriteObject("value", inst.Value);
-        } else {
-            writer.WriteNull("value");
-        }
+        // C#特殊处理了Nullable的GetType，和装箱的效果一样，返回的是值的GetType，因此永远无法走到Nullable的Codec...
+        throw new IllegalStateException();
     }
 
     public T? ReadObject(IDsonObjectReader reader, Type declaredType, Func<T?>? factory = null) {
-        DsonType dsonType = reader.ReadDsonType();
-        T? r;
-        if (dsonType == DsonType.Null) {
-            reader.ReadNull("value");
-            r = null;
-        } else {
-            r = reader.ReadObject<T>("value");
-        }
-        return r;
+        // declaredType 是Nullable<T>的类型，不是T的声明类型；name已读，这里无法获得正确的name
+        return reader.ReadObject<T>(null, typeof(T), null, true);
     }
 }
 }

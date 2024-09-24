@@ -20,6 +20,9 @@ import javax.annotation.Nullable;
 
 /**
  * 编解码器注册表
+ * <p>
+ * Q：Java端为什么不设计为支持泛型{@link TypeInfo}的？
+ * A：因为莫得意义呀。
  *
  * @author wjybxx
  * date 2023/4/3

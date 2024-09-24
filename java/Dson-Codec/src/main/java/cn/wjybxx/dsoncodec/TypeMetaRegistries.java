@@ -53,8 +53,8 @@ public class TypeMetaRegistries {
     }
 
     public static TypeMetaRegistry fromMetas(List<TypeMeta> typeMetaList) {
-        final IdentityHashMap<TypeInfo<?>, TypeMeta> type2MetaMap = new IdentityHashMap<>(typeMetaList.size());
         final IdentityHashMap<Class<?>, TypeMeta> clazz2MetaMap = new IdentityHashMap<>(typeMetaList.size());
+        final HashMap<TypeInfo<?>, TypeMeta> type2MetaMap = HashMap.newHashMap(typeMetaList.size()); // 不能使用IdentityMap...
         final HashMap<String, TypeMeta> name2MetaMap = HashMap.newHashMap(typeMetaList.size());
         for (TypeMeta typeMeta : typeMetaList) {
             TypeInfo<?> typeInfo = typeMeta.typeInfo;
@@ -77,33 +77,36 @@ public class TypeMetaRegistries {
                 name2MetaMap.put(clsName, typeMeta);
             }
         }
-        return new TypeMetaRegistryImpl(type2MetaMap, clazz2MetaMap, name2MetaMap);
+        return new TypeMetaRegistryImpl(clazz2MetaMap, type2MetaMap, name2MetaMap);
     }
 
     private static class TypeMetaRegistryImpl implements TypeMetaRegistry {
 
-
-        private final Map<TypeInfo<?>, TypeMeta> type2MetaMap;
         private final Map<Class<?>, TypeMeta> clazz2MetaMap;
+        private final Map<TypeInfo<?>, TypeMeta> type2MetaMap;
         private final Map<String, TypeMeta> name2MetaMap;
 
-        TypeMetaRegistryImpl(Map<TypeInfo<?>, TypeMeta> type2MetaMap, Map<Class<?>, TypeMeta> clazz2MetaMap,
+        TypeMetaRegistryImpl(Map<Class<?>, TypeMeta> clazz2MetaMap,
+                             Map<TypeInfo<?>, TypeMeta> type2MetaMap,
                              Map<String, TypeMeta> name2MetaMap) {
-            this.type2MetaMap = type2MetaMap;
             this.clazz2MetaMap = clazz2MetaMap;
+            this.type2MetaMap = type2MetaMap;
             this.name2MetaMap = name2MetaMap;
-        }
-
-        @Nullable
-        @Override
-        public TypeMeta ofType(TypeInfo<?> type) {
-            return type2MetaMap.get(type);
         }
 
         @Nullable
         @Override
         public TypeMeta ofClass(Class<?> clazz) {
             return clazz2MetaMap.get(clazz);
+        }
+
+        @Nullable
+        @Override
+        public TypeMeta ofType(TypeInfo<?> type) {
+            if (type.typeArgs.isEmpty()) {
+                return clazz2MetaMap.get(type.rawType); // hash更快
+            }
+            return type2MetaMap.get(type);
         }
 
         @Override

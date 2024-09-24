@@ -115,7 +115,8 @@ public final class ClassName {
      * 注意：如果为特定构造泛型取了别名，该测试不一定准确。
      */
     public boolean isGeneric() {
-        return typeArgs.size() > 0;
+        int idx = clsName.length() - 1;
+        return clsName.charAt(idx) != ']' && typeArgs.size() > 0; // 不能是数组
     }
 
     // endregion

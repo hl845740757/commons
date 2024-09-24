@@ -42,50 +42,62 @@ public static class ClassIdPolicyExts
     /// <param name="encoderType">实例的运行时类型</param>
     /// <returns></returns>
     public static bool Test(this ClassIdPolicy policy, Type declaredType, Type encoderType) {
-        switch (policy) {
-            case ClassIdPolicy.None: return false;
-            case ClassIdPolicy.Always:
-            default: return true;
-            case ClassIdPolicy.Optimized: {
-                if (encoderType == declaredType) {
-                    return false; // 运行时类型和声明类型一致，不写入
-                }
-                if (declaredType == typeof(object)) {
-                    return true;
-                }
-                // c# 泛型的测试开销较大，我们需要缓存测试结果
-                if (declaredType.IsGenericType && encoderType.IsGenericType) {
-                    TypePair pair = new TypePair(declaredType, encoderType);
-                    if (_classIdPolicyCacheDic.TryGetValue(pair, out bool r)) {
-                        return r;
-                    }
-                    Type encoderGenericDefine = encoderType.GetGenericTypeDefinition();
-                    if (encoderGenericDefine == typeof(List<>)
-                        && DsonConverterUtils.IsCollection(declaredType)) {
-                        r = IsSameGenericTypeArguments(declaredType, encoderType);
-                        goto next;
-                    }
-                    if ((encoderGenericDefine == typeof(Dictionary<,>) || encoderGenericDefine == typeof(LinkedDictionary<,>))
-                        && DsonConverterUtils.IsDictionary(declaredType)) {
-                        r = IsSameGenericTypeArguments(declaredType, encoderType);
-                        goto next;
-                    }
-                    if (encoderGenericDefine == typeof(HashSet<>)
-                        && DsonConverterUtils.IsSet(declaredType)) {
-                        r = IsSameGenericTypeArguments(declaredType, encoderType);
-                        goto next;
-                    }
-                    r = false;
-
-                    next:
-                    {
-                        _classIdPolicyCacheDic.TryAdd(pair, r);
-                    }
-                    return r;
-                }
+        if (policy == ClassIdPolicy.Optimized) {
+            // Nullable拆箱
+            if (declaredType.IsGenericType && declaredType.GetGenericTypeDefinition() == typeof(Nullable<>)) {
+                declaredType = DsonConverterUtils.GetGenericArguments(declaredType)[0];
+            }
+            if (encoderType == declaredType) {
+                return false; // 运行时类型和声明类型一致，不写入
+            }
+            if (declaredType == typeof(object)) {
                 return true;
             }
+            
+            // c# 泛型的测试开销较大，我们需要缓存测试结果
+            if (declaredType.IsGenericType && encoderType.IsGenericType) {
+                TypePair pair = new TypePair(declaredType, encoderType);
+                if (_classIdPolicyCacheDic.TryGetValue(pair, out bool r)) {
+                    return r;
+                }
+                Type encoderGenericDefine = encoderType.GetGenericTypeDefinition();
+                if (encoderGenericDefine == typeof(List<>)
+                    && DsonConverterUtils.IsCollection(declaredType)) {
+                    r = IsSameGenericTypeArguments(declaredType, encoderType);
+                    goto next;
+                }
+                if (encoderGenericDefine == typeof(Dictionary<,>)
+                    && DsonConverterUtils.IsDictionary(declaredType)) {
+                    r = IsSameGenericTypeArguments(declaredType, encoderType);
+                    goto next;
+                }
+                if (encoderGenericDefine == typeof(HashSet<>)
+                    && DsonConverterUtils.IsSet(declaredType)) {
+                    r = IsSameGenericTypeArguments(declaredType, encoderType);
+                    goto next;
+                }
+                // 自己的集合实现
+                if (encoderGenericDefine == typeof(LinkedDictionary<,>)
+                    && DsonConverterUtils.IsDictionary(declaredType)) {
+                    r = IsSameGenericTypeArguments(declaredType, encoderType);
+                    goto next;
+                }
+                if (encoderGenericDefine == typeof(LinkedHashSet<>)
+                    && DsonConverterUtils.IsGenericSet(declaredType)) {
+                    r = IsSameGenericTypeArguments(declaredType, encoderType);
+                    goto next;
+                }
+                r = false;
+
+                next:
+                {
+                    _classIdPolicyCacheDic.TryAdd(pair, r);
+                }
+                return r;
+            }
+            return true;
         }
+        return policy == ClassIdPolicy.Always;
     }
 
     /// <summary>

@@ -45,7 +45,7 @@ public interface CollectionConverter
     /// <param name="collection">待转换的集合</param>
     /// <returns></returns>
     ICollection<K> ConvertCollection<K>(Type declaredType, ICollection<K> collection);
-    
+
     /// <summary>
     /// 默认的不可变转换器
     /// </summary>

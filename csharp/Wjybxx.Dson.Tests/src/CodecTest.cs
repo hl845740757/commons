@@ -52,12 +52,15 @@ public class CodecTest
 
     // [Test]
     public void TestNullableInt() {
+        // int? v2 = default;
+        // Console.WriteLine(v2.GetType()); // NPE
+        
         // C#特殊处理了Nullable的GetType，返回的是值的类型 -- 和装箱是一样的。。。
         // 因此永远走不到NullableCodec
         int? val = 5;
-        string dson = converter.WriteAsDson(val, typeof(int?)); //
+        string dson = converter.WriteAsDson(val, typeof(int?));
         Console.WriteLine(dson);
-
+        
         int? copied = converter.ReadFromDson<int?>(dson);
         Assert.IsTrue(copied == val);
     }

@@ -386,20 +386,20 @@ public class MultiChunkDeque<T> : IDeque<T>
         private readonly bool _reversed;
 
         private Chunk? _chunk;
-        private ISequentialEnumerator<T>? _chunkItr;
+        private BoundedArrayDeque<T>.Enumerator _chunkItr;
 
         public Enumerator(MultiChunkDeque<T> deque, bool reversed) {
             this._deque = deque;
             this._reversed = reversed;
 
             this._chunk = null;
-            this._chunkItr = null;
+            this._chunkItr = default;
             this.Reset();
         }
 
         public bool HasNext() {
             // 测试时可以更新chunk和chunkItr，只要我们不迭代chunk内数据
-            if (_chunkItr == null) {
+            if (_chunkItr.IsNull) {
                 return false;
             }
             if (_chunkItr.HasNext()) {
@@ -409,30 +409,30 @@ public class MultiChunkDeque<T> : IDeque<T>
                 // 可能是个空块
                 while (_chunk!.prev != null) {
                     _chunk = _chunk.prev;
-                    _chunkItr = (ISequentialEnumerator<T>)_chunk.GetReversedEnumerator();
+                    _chunkItr = _chunk.GetReversedEnumerator();
                     if (_chunkItr.HasNext()) {
                         return true;
                     }
                 }
                 this._chunk = null;
-                this._chunkItr = null;
+                this._chunkItr = default;
                 return false;
             } else {
                 while (_chunk!.next != null) {
                     _chunk = _chunk.next;
-                    _chunkItr = (ISequentialEnumerator<T>)_chunk.GetEnumerator();
+                    _chunkItr = _chunk.GetEnumerator();
                     if (_chunkItr.HasNext()) {
                         return true;
                     }
                 }
                 this._chunk = null;
-                this._chunkItr = null;
+                this._chunkItr = default;
                 return false;
             }
         }
 
         public bool MoveNext() {
-            if (_chunkItr == null) {
+            if (_chunkItr.IsNull) {
                 return false;
             }
             if (_chunkItr.MoveNext()) {
@@ -442,24 +442,24 @@ public class MultiChunkDeque<T> : IDeque<T>
                 // 可能是个空块
                 while (_chunk!.prev != null) {
                     _chunk = _chunk.prev;
-                    _chunkItr = (ISequentialEnumerator<T>)_chunk.GetReversedEnumerator();
+                    _chunkItr = _chunk.GetReversedEnumerator();
                     if (_chunkItr.MoveNext()) {
                         return true;
                     }
                 }
                 this._chunk = null;
-                this._chunkItr = null;
+                this._chunkItr = default;
                 return false;
             } else {
                 while (_chunk!.next != null) {
                     _chunk = _chunk.next;
-                    _chunkItr = (ISequentialEnumerator<T>)_chunk.GetEnumerator();
+                    _chunkItr = _chunk.GetEnumerator();
                     if (_chunkItr.MoveNext()) {
                         return true;
                     }
                 }
                 this._chunk = null;
-                this._chunkItr = null;
+                this._chunkItr = default;
                 return false;
             }
         }
@@ -467,17 +467,17 @@ public class MultiChunkDeque<T> : IDeque<T>
         public void Reset() {
             if (_deque.Count == 0) {
                 this._chunk = null;
-                this._chunkItr = null;
+                this._chunkItr = default;
             } else if (_reversed) {
                 this._chunk = _deque._tailChunk;
-                this._chunkItr = (ISequentialEnumerator<T>)_chunk!.GetReversedEnumerator();
+                this._chunkItr = _chunk!.GetReversedEnumerator();
             } else {
                 this._chunk = _deque._headChunk;
-                this._chunkItr = (ISequentialEnumerator<T>)_chunk!.GetEnumerator();
+                this._chunkItr = _chunk!.GetEnumerator();
             }
         }
 
-        public T Current => _chunkItr == null ? default : _chunkItr.Current;
+        public T Current => _chunkItr.IsNull ? default : _chunkItr.Current;
         object IEnumerator.Current => Current;
 
         public void Dispose() {

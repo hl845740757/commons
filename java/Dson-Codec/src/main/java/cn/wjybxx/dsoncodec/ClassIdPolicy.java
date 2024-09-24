@@ -46,32 +46,29 @@ public enum ClassIdPolicy {
     NONE;
 
     public boolean test(Class<?> declaredType, Class<?> encoderType) {
-        return switch (this) {
-            case NONE -> false;
-            case ALWAYS -> true;
-            case OPTIMIZED -> {
-                if (encoderType == declaredType) {
-                    yield false;
-                }
-                if (declaredType == Object.class) {
-                    yield true;
-                }
-                // 默认解码类型的父类型无需写入，List/Map/Set
-                if (encoderType == ArrayList.class
-                        && Collection.class.isAssignableFrom(declaredType)) {
-                    yield false;
-                }
-                if ((encoderType == HashMap.class || encoderType == LinkedHashMap.class)
-                        && Map.class.isAssignableFrom(declaredType)) {
-                    yield false;
-                }
-                if ((encoderType == HashSet.class || encoderType == LinkedHashSet.class)
-                        && Set.class.isAssignableFrom(declaredType)) {
-                    yield false;
-                }
-                yield true;
+        if (this == ClassIdPolicy.OPTIMIZED) {
+            if (encoderType == declaredType) {
+                return false; // 运行时类型和声明类型一致，不写入
             }
-        };
+            if (declaredType == Object.class) {
+                return true;
+            }
+            // 默认解码类型的父类型无需写入，List/Map/Set
+            if (encoderType == ArrayList.class
+                    && Collection.class.isAssignableFrom(declaredType)) {
+                return false;
+            }
+            if ((encoderType == HashMap.class || encoderType == LinkedHashMap.class)
+                    && Map.class.isAssignableFrom(declaredType)) {
+                return false;
+            }
+            if ((encoderType == HashSet.class || encoderType == LinkedHashSet.class)
+                    && Set.class.isAssignableFrom(declaredType)) {
+                return false;
+            }
+            return true;
+        }
+        return this == ClassIdPolicy.ALWAYS;
     }
 
 }

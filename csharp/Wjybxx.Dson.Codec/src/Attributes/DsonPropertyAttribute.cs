@@ -34,10 +34,12 @@ public class DsonPropertyAttribute : Attribute
     /// 用于文档型序列化时字段名
     /// </summary>
     public string? Name { get; set; }
+
     /// <summary>
     /// 获取字段的属性或方法 -- 特殊情况下使用
     /// </summary>
     public string? Getter { get; set; }
+
     /// <summary>
     /// 赋值字段的属性或方法 -- 特殊情况下使用
     /// </summary>

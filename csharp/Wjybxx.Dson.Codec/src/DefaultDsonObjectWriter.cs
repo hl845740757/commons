@@ -133,7 +133,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             WriteNull(name);
             return;
         }
-        // 常见基础类型也在CodecRegistry中
+        // 常见基础类型也在CodecRegistry中 -- Nullable会直接返回被装箱的值的类型
         Type type = value.GetType();
         DsonCodecImpl? codec = FindObjectEncoder(type);
         if (codec != null) {
@@ -193,7 +193,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
 
     public void WriteStartObject<T>(in T value, Type declaredType, ObjectStyle style = ObjectStyle.Indent) {
         writer.WriteStartObject(style);
-        WriteClassId(in value, declaredType);
+        WriteClsName(in value, declaredType);
     }
 
 
@@ -203,7 +203,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
 
     public void WriteStartArray<T>(in T value, Type declaredType, ObjectStyle style = ObjectStyle.Indent) {
         writer.WriteStartArray(style);
-        WriteClassId(in value, declaredType);
+        WriteClsName(in value, declaredType);
     }
 
     public void WriteEndArray() {
@@ -256,7 +256,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.Dispose();
     }
 
-    private void WriteClassId<T>(in T value, Type declaredType) {
+    private void WriteClsName<T>(in T value, Type declaredType) {
         Type type = value!.GetType();
         if (!converter.Options.classIdPolicy.Test(declaredType, type)) {
             return;

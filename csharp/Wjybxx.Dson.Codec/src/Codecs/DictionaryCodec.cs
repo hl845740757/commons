@@ -31,12 +31,13 @@ public abstract class DictionaryCodec
 {
     /** 字典需要自行控制start/end，和是否写为数组 */
     public virtual bool AutoStartEnd => false;
+
     public virtual bool IsWriteAsArray => false;
 
     public static void WriteDictionary<K, V>(IDsonObjectWriter writer, in IDictionary<K, V> inst, Type declaredType, ObjectStyle style) {
-        Type[]? genericTypeArguments = DsonConverterUtils.GetGenericArguments(declaredType);
-        Type keyDeclaredType = genericTypeArguments.Length == 2 ? genericTypeArguments[0] : typeof(object);
-        Type valDeclaredType = genericTypeArguments.Length == 2 ? genericTypeArguments[1] : typeof(object);
+        // 虽然K,V为运行时类型，但declaredType只影响inst是否写入类型，不影响K,V是否写入类型
+        Type keyDeclaredType = typeof(K);
+        Type valDeclaredType = typeof(V);
 
         if (writer.Options.writeMapAsDocument) {
             if (typeof(K) == typeof(int)) { // 这里转换字符串必定丢失类型，因此是判断实际类型(K)是安全的
@@ -47,20 +48,39 @@ public abstract class DictionaryCodec
                 WriteDictionaryObject(writer, inst, declaredType, valDeclaredType, style);
             }
         } else {
-            // TODO 这里做优化需要判断-keyDeclaredType
-            writer.WriteStartArray(inst, declaredType, style);
-            foreach (KeyValuePair<K, V> pair in inst) {
-                writer.WriteObject(null, pair.Key, keyDeclaredType);
-                writer.WriteObject(null, pair.Value, valDeclaredType);
+            if (typeof(K) == typeof(int)) {
+                // int2object
+                IDictionary<int, V> int2ObjDic = (IDictionary<int, V>)inst;
+                writer.WriteStartArray(inst, declaredType, style);
+                foreach (KeyValuePair<int, V> pair in int2ObjDic) {
+                    writer.WriteInt(null, pair.Key);
+                    writer.WriteObject(null, pair.Value, valDeclaredType);
+                }
+                writer.WriteEndArray();
+            } else if (typeof(K) == typeof(long)) {
+                // long2object
+                IDictionary<long, V> long2ObjDic = (IDictionary<long, V>)inst;
+                writer.WriteStartArray(inst, declaredType, style);
+                foreach (KeyValuePair<long, V> pair in long2ObjDic) {
+                    writer.WriteLong(null, pair.Key);
+                    writer.WriteObject(null, pair.Value, valDeclaredType);
+                }
+                writer.WriteEndArray();
+            } else {
+                // generic
+                writer.WriteStartArray(inst, declaredType, style);
+                foreach (KeyValuePair<K, V> pair in inst) {
+                    writer.WriteObject(null, pair.Key, keyDeclaredType);
+                    writer.WriteObject(null, pair.Value, valDeclaredType);
+                }
+                writer.WriteEndArray();
             }
-            writer.WriteEndArray();
         }
     }
 
     public static IDictionary<K, V> ReadDictionary<K, V>(IDsonObjectReader reader, Type declaredType, Func<IDictionary<K, V>>? factory = null) {
-        Type[] genericTypeArguments = DsonConverterUtils.GetGenericArguments(declaredType);
-        Type keyDeclaredType = genericTypeArguments.Length > 0 ? genericTypeArguments[0] : typeof(object);
-        Type valDeclaredType = genericTypeArguments.Length > 0 ? genericTypeArguments[1] : typeof(object);
+        Type keyDeclaredType = typeof(K);
+        Type valDeclaredType = typeof(V);
 
         IDictionary<K, V> result = NewDictionary(reader, declaredType, factory);
         if (reader.Options.writeMapAsDocument) {
@@ -72,13 +92,36 @@ public abstract class DictionaryCodec
                 ReadDictionaryObject(reader, result, valDeclaredType);
             }
         } else {
-            reader.ReadStartArray();
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                K key = reader.ReadObject<K>(null, keyDeclaredType);
-                V value = reader.ReadObject<V>(null, valDeclaredType);
-                result[key] = value;
+            if (typeof(K) == typeof(int)) {
+                // int2object
+                IDictionary<int, V> int2ObjDic = (IDictionary<int, V>)result;
+                reader.ReadStartArray();
+                while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                    int key = reader.ReadInt(null);
+                    V value = reader.ReadObject<V>(null, valDeclaredType);
+                    int2ObjDic[key] = value;
+                }
+                reader.ReadEndArray();
+            } else if (typeof(K) == typeof(long)) {
+                // long2object
+                IDictionary<long, V> long2ObjDic = (IDictionary<long, V>)result;
+                reader.ReadStartArray();
+                while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                    long key = reader.ReadLong(null);
+                    V value = reader.ReadObject<V>(null, valDeclaredType);
+                    long2ObjDic[key] = value;
+                }
+                reader.ReadEndArray();
+            } else {
+                // generic
+                reader.ReadStartArray();
+                while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                    K key = reader.ReadObject<K>(null, keyDeclaredType);
+                    V value = reader.ReadObject<V>(null, valDeclaredType);
+                    result[key] = value;
+                }
+                reader.ReadEndArray();
             }
-            reader.ReadEndArray();
         }
         CollectionConverter collectionConverter = reader.Options.collectionConverter;
         if (collectionConverter != null) {
@@ -186,8 +229,8 @@ public abstract class DictionaryCodec
             if (genericTypeDefinition == typeof(Dictionary<,>)) {
                 return new Dictionary<K, V>();
             }
-            if (genericTypeDefinition == typeof(ConcurrentDictionary<,>)) {
-                return new ConcurrentDictionary<K, V>();
+            if (genericTypeDefinition == typeof(LinkedDictionary<,>)) {
+                return new LinkedDictionary<K, V>();
             }
         }
         return reader.Options.weakOrder ? new Dictionary<K, V>() : new LinkedDictionary<K, V>();

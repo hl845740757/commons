@@ -249,10 +249,13 @@ public class DefaultDsonConverter implements DsonConverter {
         for (DsonCodec<?> rawCodec : pojoCodecList) {
             allPojoCodecList.add(new DsonCodecImpl<>(rawCodec));
         }
+        // 泛型支持
+        DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(TypeMetaRegistries.fromRegistries(
+                typeMetaRegistry,
+                DsonConverterUtils.getDefaultTypeMetaRegistry()));
+
         return new DefaultDsonConverter(
-                TypeMetaRegistries.fromRegistries(
-                        typeMetaRegistry,
-                        DsonConverterUtils.getDefaultTypeMetaRegistry()),
+                dynamicTypeMetaRegistry,
                 DsonCodecRegistries.fromRegistries(
                         DsonCodecRegistries.fromCodecs(allPojoCodecList),
                         DsonConverterUtils.getDefaultCodecRegistry()),
@@ -275,10 +278,13 @@ public class DefaultDsonConverter implements DsonConverter {
             copied.add(DsonConverterUtils.getDefaultCodecRegistry());
             registryList = copied;
         }
+        // 泛型支持
+        DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(TypeMetaRegistries.fromRegistries(
+                typeMetaRegistry,
+                DsonConverterUtils.getDefaultTypeMetaRegistry()));
+
         return new DefaultDsonConverter(
-                TypeMetaRegistries.fromRegistries(
-                        typeMetaRegistry,
-                        DsonConverterUtils.getDefaultTypeMetaRegistry()),
+                dynamicTypeMetaRegistry,
                 DsonCodecRegistries.fromRegistries(
                         registryList),
                 options);

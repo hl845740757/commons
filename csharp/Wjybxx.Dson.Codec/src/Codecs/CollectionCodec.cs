@@ -33,8 +33,7 @@ public abstract class CollectionCodec
     public virtual bool IsWriteAsArray => true;
 
     public static void WriteCollection<T>(IDsonObjectWriter writer, in IEnumerable<T> inst, Type declaredType, ObjectStyle style) {
-        Type[] genericTypeArguments = DsonConverterUtils.GetGenericArguments(declaredType);
-        Type eleDeclaredType = genericTypeArguments.Length > 0 ? declaredType.GenericTypeArguments[0] : typeof(object);
+        Type eleDeclaredType = typeof(T);
 
         writer.WriteStartArray(inst, declaredType, style);
         foreach (T value in inst) {
@@ -44,8 +43,7 @@ public abstract class CollectionCodec
     }
 
     public static ICollection<T> ReadCollection<T>(IDsonObjectReader reader, Type declaredType, Func<ICollection<T>>? factory = null) {
-        Type[] genericTypeArguments = DsonConverterUtils.GetGenericArguments(declaredType);
-        Type eleDeclaredType = genericTypeArguments.Length > 0 ? declaredType.GenericTypeArguments[0] : typeof(object);
+        Type eleDeclaredType = typeof(T);
 
         ICollection<T> result = NewCollection(declaredType, factory);
         reader.ReadStartArray();
@@ -66,7 +64,7 @@ public abstract class CollectionCodec
         if (factory != null) return factory.Invoke();
         if (declaredType.IsGenericType) {
             Type genericTypeDefinition = declaredType.GetGenericTypeDefinition();
-            if (genericTypeDefinition == typeof(LinkedHashSet<>)) {
+            if (genericTypeDefinition == typeof(LinkedHashSet<>) || genericTypeDefinition == typeof(IGenericSet<>)) {
                 return new LinkedHashSet<T>(); // 暂时未实现ISet接口
             }
             if (genericTypeDefinition == typeof(HashSet<>) || genericTypeDefinition == typeof(ISet<>)) {

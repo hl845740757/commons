@@ -29,8 +29,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
 
     public void WriteObject(IDsonObjectWriter writer, ref DictionaryEncodeProxy<V> inst, Type declaredType, ObjectStyle style) {
         IEnumerable<KeyValuePair<string, V>> entries = inst.Entries ?? throw new NullReferenceException("inst.Entries");
-        Type[]? genericTypeArguments = DsonConverterUtils.GetGenericArguments(declaredType);
-        Type valDeclaredType = genericTypeArguments.Length == 1 ? genericTypeArguments[0] : typeof(object);
+        Type valDeclaredType = typeof(V);
 
         switch (inst.Mode) {
             default: {
@@ -90,8 +89,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
     }
 
     public DictionaryEncodeProxy<V> ReadObject(IDsonObjectReader reader, Type declaredType, Func<DictionaryEncodeProxy<V>>? factory = null) {
-        Type[]? genericTypeArguments = DsonConverterUtils.GetGenericArguments(declaredType);
-        Type valDeclaredType = genericTypeArguments.Length == 1 ? genericTypeArguments[0] : typeof(object);
+        Type valDeclaredType = typeof(V);
 
         List<KeyValuePair<string, V>> entries = new List<KeyValuePair<string, V>>();
         DictionaryEncodeProxy<V> result = new DictionaryEncodeProxy<V>();

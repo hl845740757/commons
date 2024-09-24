@@ -60,10 +60,10 @@ public static class DsonConverterUtils
     /// 获取类型的泛型参数列表
     /// </summary>
     public static Type[] GetGenericArguments(Type type) {
+        if (!type.IsGenericType || type.IsGenericTypeDefinition) {
+            return Array.Empty<Type>();
+        }
         if (enableCache) {
-            if (!type.IsGenericType || type.IsGenericTypeDefinition) {
-                return Array.Empty<Type>();
-            }
             if (!typeArgumentsCache.TryGetValue(type, out Type[] result)) {
                 result = type.GenericTypeArguments;
                 typeArgumentsCache.TryAdd(type, result);
@@ -155,8 +155,9 @@ public static class DsonConverterUtils
             // uint
             TypeMetaOf(typeof(uint), DsonTexts.LabelUInt32, "uint", "uint32"),
             TypeMetaOf(typeof(ulong), DsonTexts.LabelUInt64, "ulong", "uint64"),
+            // 特殊组件
             TypeMetaOf(typeof(DictionaryEncodeProxy<>), "DictionaryEncodeProxy", "MapEncodeProxy"),
-            // c#的nullable支持，不支持'?'，以避免冲突 -- 该类型信息是需要的，Codec是不需要的
+            // c#的nullable支持，该类型信息是需要的，Codec是不需要的(走不到)
             TypeMetaOf(typeof(Nullable<>), "Nullable"),
         };
     }
@@ -238,6 +239,20 @@ public static class DsonConverterUtils
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
             return target == typeof(ISet<>);
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 判断一个类型是否是<see cref="IGenericSet{T}"/>类型
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public static bool IsGenericSet(Type type) {
+        Type target = type.GetInterface("IGenericSet`1");
+        if (target != null) {
+            if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
+            return target == typeof(IGenericSet<>);
         }
         return false;
     }

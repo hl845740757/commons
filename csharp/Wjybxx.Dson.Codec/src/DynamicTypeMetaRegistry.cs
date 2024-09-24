@@ -49,12 +49,8 @@ public class DynamicTypeMetaRegistry : ITypeMetaRegistry
     #region OfType
 
     public TypeMeta? OfType(Type type) {
-        return OfType(type, false);
-    }
-
-    private TypeMeta? OfType(Type type, bool basicType) {
         TypeMeta typeMeta = _basicRegistry.OfType(type);
-        if (typeMeta != null || basicType) {
+        if (typeMeta != null) {
             return typeMeta;
         }
         if (type2MetaDic.TryGetValue(type, out typeMeta)) {
@@ -70,9 +66,9 @@ public class DynamicTypeMetaRegistry : ITypeMetaRegistry
             style = ObjectStyle.Indent;
         } else {
             Type rawType = type.IsGenericType ? type.GetGenericTypeDefinition() : type;
-            TypeMeta rawTypeMeta = OfType(rawType);
-            if (rawTypeMeta == null) { // 通常这里不应该为null
-                throw new AssertionError("type: " + type);
+            TypeMeta rawTypeMeta = _basicRegistry.OfType(rawType);
+            if (rawTypeMeta == null) {
+                throw new DsonCodecException("typeMeta absent, type: " + type);
             }
             style = rawTypeMeta.style; // 保留泛型类的Style
         }
@@ -91,12 +87,8 @@ public class DynamicTypeMetaRegistry : ITypeMetaRegistry
     #region OfName
 
     public TypeMeta? OfName(string clsName) {
-        return OfName(clsName, false);
-    }
-
-    private TypeMeta? OfName(string clsName, bool basicType) {
         TypeMeta typeMeta = _basicRegistry.OfName(clsName);
-        if (typeMeta != null || basicType) {
+        if (typeMeta != null) {
             return typeMeta;
         }
         if (name2MetaDic.TryGetValue(clsName, out typeMeta)) {
@@ -108,7 +100,10 @@ public class DynamicTypeMetaRegistry : ITypeMetaRegistry
         Type type = TypeOfClassName(className);
 
         // 通过Type初始化TypeMeta，我们尽量合并TypeMeta -- clsName包含空白时不缓存
-        typeMeta = OfType(type, false) ?? throw new AssertionError(type.ToString());
+        typeMeta = OfType(type);
+        if (typeMeta == null) {
+            throw new DsonCodecException("typeMeta absent, type: " + type);
+        }
         if (typeMeta.clsNames.Contains(clsName) || ObjectUtil.ContainsWhitespace(clsName)) {
             return typeMeta;
         }
@@ -148,7 +143,7 @@ public class DynamicTypeMetaRegistry : ITypeMetaRegistry
         if (type.IsGenericType) {
             // 泛型原型类必须存在于用户的注册表中
             Type genericTypeDefinition = type.GetGenericTypeDefinition();
-            TypeMeta typeMeta = OfType(genericTypeDefinition, true);
+            TypeMeta typeMeta = _basicRegistry.OfType(genericTypeDefinition);
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
@@ -161,7 +156,7 @@ public class DynamicTypeMetaRegistry : ITypeMetaRegistry
         }
         // 非泛型非数组，必须存在于用户的注册表中
         {
-            TypeMeta typeMeta = OfType(type, true);
+            TypeMeta typeMeta = _basicRegistry.OfType(type);
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
@@ -182,8 +177,8 @@ public class DynamicTypeMetaRegistry : ITypeMetaRegistry
             // 获取数组根元素的类型
             elementType = TypeOfClassName(new ClassName(className.RootElement, className.typeArgs));
         } else {
-            // 解析泛型原型 —— 这个clsName必须存在于用户的注册表中
-            TypeMeta typeMeta = OfName(className.clsName, true);
+            // 解析泛型原型 —— 泛型原型类必须存在于用户的注册表中
+            TypeMeta typeMeta = _basicRegistry.OfName(className.clsName);
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, className: " + className);
             }

@@ -19,6 +19,8 @@ package cn.wjybxx.dsoncodec;
 import cn.wjybxx.dson.DsonReader;
 import cn.wjybxx.dson.DsonType;
 
+import java.util.Objects;
+
 /**
  * 顺序解码没有额外的开销，但数据兼容性会变差。
  * 如果觉得{@link BufferedDsonObjectReader}的开销有点大，可以选择顺序解码模式
@@ -44,6 +46,8 @@ final class DefaultDsonObjectReader extends AbstractObjectReader implements Dson
             }
             return reader.getCurrentDsonType() != DsonType.END_OF_OBJECT;
         }
+
+        Objects.requireNonNull(name, "name");
         if (reader.isAtValue()) {
             return reader.getCurrentName().equals(name);
         }

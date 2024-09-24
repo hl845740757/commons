@@ -53,7 +53,7 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             return typeMeta;
         }
         // 走到这里，通常意味着clsName是数组或泛型，或在基础注册表中不存在
-        // 对于数组，我们可以生成原始类型数组的元数据，其它情况下则证明不存在对应元数据
+        // 对于数组，我们可以动态生成原始类型数组的元数据，其它情况下则证明不存在对应元数据
         if (clazz.isArray()) {
             return ofType(TypeInfo.of(clazz));
         }
@@ -63,12 +63,8 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
     @Nullable
     @Override
     public TypeMeta ofType(TypeInfo<?> type) {
-        return ofType(type, false);
-    }
-
-    private TypeMeta ofType(TypeInfo<?> type, boolean basicType) {
         TypeMeta typeMeta = basicRegistry.ofType(type);
-        if (typeMeta != null || basicType) {
+        if (typeMeta != null) {
             return typeMeta;
         }
         typeMeta = type2MetaDic.get(type);
@@ -84,19 +80,20 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
         if (type.isArray()) {
             style = ObjectStyle.INDENT;
         } else {
-            TypeMeta rawTypeMeta = ofType(type);
-            if (rawTypeMeta == null) { // 通常这里不应该为null
-                throw new AssertionError("type: " + type);
+            Class<?> rawType = type.rawType;
+            TypeMeta rawTypeMeta = basicRegistry.ofClass(rawType);
+            if (rawTypeMeta == null) {
+                throw new DsonCodecException("typeMeta absent, type: " + type);
             }
-            style = rawTypeMeta.style;
+            style = rawTypeMeta.style; // 保留泛型类的Style
         }
-        ClassName className = classNameOfType(type);
+        ClassName className = classNameOfType(type); // 放前方可检测泛型
         String mainClsName = className.toString();
 
         // 动态生成TypeMeta并缓存下来
         typeMeta = TypeMeta.of(type, style, mainClsName);
-        type2MetaDic.put(type, typeMeta);
-        name2MetaDic.put(mainClsName, typeMeta);
+        type2MetaDic.putIfAbsent(type, typeMeta);
+        name2MetaDic.putIfAbsent(mainClsName, typeMeta);
         return typeMeta;
     }
 
@@ -106,19 +103,15 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
     @Override
     public TypeMeta ofName(String clsName) {
-        return ofName(clsName, false);
-    }
-
-    private TypeMeta ofName(String clsName, boolean basicType) {
         TypeMeta typeMeta = basicRegistry.ofName(clsName);
-        if (typeMeta != null || basicType) {
+        if (typeMeta != null) {
             return typeMeta;
         }
         typeMeta = name2MetaDic.get(clsName);
         if (typeMeta != null) {
             return typeMeta;
         }
-        // 走到这里，通常意味着clsName是数组或泛型 -- 别名可能导致泛型断言失败
+        // 走到这里，通常意味着clsName是数组或泛型 -- 别名可能导致断言失败
         ClassName className = classNamePool.parse(clsName);
 //        assert className.isArray() || className.isGeneric()
         TypeInfo<?> type = typeOfClassName(className);
@@ -126,7 +119,7 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
         // 通过Type初始化TypeMeta，我们尽量合并TypeMeta -- clsName包含空白时不缓存
         typeMeta = ofType(type);
         if (typeMeta == null) {
-            throw new AssertionError(type.toString());
+            throw new DsonCodecException("typeMeta absent, type: " + type);
         }
         if (typeMeta.clsNames.contains(clsName) || ObjectUtils.containsWhitespace(clsName)) {
             return typeMeta;
@@ -165,8 +158,8 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
         }
         if (type.isGenericType()) {
             // 泛型原型类必须存在于用户的注册表中
-            TypeInfo<?> genericTypeDefinition = type.getGenericTypeDefinition();
-            TypeMeta typeMeta = ofType(genericTypeDefinition, true);
+//            TypeInfo<?> genericTypeDefinition = type.getGenericTypeDefinition();
+            TypeMeta typeMeta = basicRegistry.ofClass(type.rawType);
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
@@ -180,7 +173,7 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
         }
         // 非泛型非数组，必须存在于用户的注册表中
         {
-            TypeMeta typeMeta = ofType(type, true);
+            TypeMeta typeMeta = basicRegistry.ofType(type);
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
@@ -202,8 +195,8 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             // 获取数组根元素的类型
             elementType = typeOfClassName(new ClassName(className.getRootElement(), className.typeArgs));
         } else {
-            // 解析泛型原型 —— 这个clsName必须存在于用户的注册表中
-            TypeMeta typeMeta = ofName(className.clsName, true);
+            // 解析泛型原型 —— 泛型原型类必须存在于用户的注册表中
+            TypeMeta typeMeta = basicRegistry.ofName(className.clsName);
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, className: " + className);
             }
