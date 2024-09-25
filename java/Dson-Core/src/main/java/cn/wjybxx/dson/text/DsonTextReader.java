@@ -61,7 +61,7 @@ public final class DsonTextReader extends AbstractDsonReader {
     private Object nextValue;
 
     private boolean marking;
-    private final ArrayDeque<DsonToken> pushedTokenQueue = new ArrayDeque<>(6);
+    private final ArrayDeque<DsonToken> pushedTokenQueue = new ArrayDeque<>(6); // 缓存的Token
     private final ArrayDeque<DsonToken> markedTokenQueue = new ArrayDeque<>(6);
 
     public DsonTextReader(DsonTextReaderSettings settings, CharSequence dsonString) {

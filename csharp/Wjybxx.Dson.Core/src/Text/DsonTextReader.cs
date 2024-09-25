@@ -50,7 +50,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     private UnionValue _nextUnionValue;
 
     private bool _marking;
-    private readonly Stack<DsonToken> _pushedTokenQueue = new Stack<DsonToken>(6);
+    private readonly Stack<DsonToken> _pushedTokenQueue = new Stack<DsonToken>(6); // 缓存的Token
     private readonly List<DsonToken> _markedTokenQueue = new List<DsonToken>(6); // C#没有现成的Deque，我们拿List实现
 
     public DsonTextReader(DsonTextReaderSettings settings, string dsonString)
@@ -124,7 +124,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     /// </summary>
     private void ResetPushedQueue() {
         _pushedTokenQueue.Clear();
-        for (var i = _markedTokenQueue.Count - 1; i >= 0; i--) {
+        for (int i = _markedTokenQueue.Count - 1; i >= 0; i--) {
             _pushedTokenQueue.Push(_markedTokenQueue[i]);
         }
         _markedTokenQueue.Clear();

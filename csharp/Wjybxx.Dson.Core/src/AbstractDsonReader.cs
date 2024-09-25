@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.IO;
 using Wjybxx.Dson.Types;
@@ -35,6 +36,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     protected WireType currentWireType;
     protected int currentWireTypeBits;
     protected internal TName currentName;
+    protected Context waitStartContext; // 暂时只支持单次回滚，在读取Value或跳过Value时都应该清理
 
     protected AbstractDsonReader(DsonReaderSettings settings) {
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -42,10 +44,12 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
 
     public DsonReaderSettings Settings => settings;
 
-    protected virtual Context GetContext() {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected Context GetContext() {
         return context;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void SetContext(Context context) {
         this.context = context;
     }
@@ -57,6 +61,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         currentWireType = WireType.VarInt;
         currentWireTypeBits = 0;
         currentName = default;
+        waitStartContext = null;
     }
 
     #region state
@@ -180,6 +185,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void EnsureValueState(Context context, DsonType requiredType) {
         if (context.state != DsonReaderState.Value) {
             throw InvalidState(CollectionUtil.NewList(DsonReaderState.Value));
@@ -189,6 +195,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void SetNextState() {
         context.SetState(DsonReaderState.Type);
     }
@@ -344,18 +351,29 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         if (context.state != DsonReaderState.Type) {
             throw InvalidState(CollectionUtil.NewList(DsonReaderState.Type));
         }
-        context.SetState(DsonReaderState.WaitStartObject);
+        waitStartContext = context;
+        // 模拟ReadEnd
+        RecoverDsonType(this.context);
+        recursionDepth--;
+        SetContext(context.parent);
+        context.parent.SetState(DsonReaderState.Value); // 设置读Value状态
     }
 
     private void ReadStartContainer(DsonContextType contextType, DsonType dsonType) {
-        Context context = this.context;
-        if (context.state == DsonReaderState.WaitStartObject) {
-            SetNextState();
+        Context waitStartContext = this.waitStartContext;
+        if (waitStartContext != null) {
+            this.waitStartContext = null;
+            // 模拟ReadStart
+            recursionDepth++;
+            SetContext(waitStartContext);
+            SetNextState(); // 设置新上下文状态
             return;
         }
+
         if (recursionDepth >= settings.recursionLimit) {
             throw DsonIOException.RecursionLimitExceeded();
         }
+        Context context = this.context;
         AutoStartTopLevel(context);
         EnsureValueState(context, dsonType);
         DoReadStartContainer(contextType, dsonType);
@@ -363,6 +381,8 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     }
 
     private void ReadEndContainer(DsonContextType contextType) {
+        this.waitStartContext = null; // 跳过body
+
         Context context = this.context;
         CheckEndContext(context, contextType);
         DoReadEndContainer();
@@ -420,6 +440,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         if (context.state != DsonReaderState.Value) {
             throw InvalidState(CollectionUtil.NewList(DsonReaderState.Value));
         }
+        waitStartContext = null;
         DoSkipValue();
         SetNextState();
     }
@@ -429,13 +450,11 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         if (context.contextType == DsonContextType.TopLevel) {
             throw DsonIOException.ContextErrorTopLevel();
         }
-        if (context.state == DsonReaderState.WaitStartObject) {
-            throw InvalidState(CollectionUtil.NewList(DsonReaderState.Type, DsonReaderState.Name, DsonReaderState.Value));
-        }
         if (currentDsonType == DsonType.EndOfObject) {
             Debug.Assert(context.state == DsonReaderState.WaitEndObject);
             return;
         }
+        waitStartContext = null;
         DoSkipToEndOfObject();
         SetNextState();
         ReadDsonType(); // end of object
