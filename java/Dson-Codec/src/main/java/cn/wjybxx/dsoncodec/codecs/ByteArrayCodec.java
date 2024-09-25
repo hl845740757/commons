@@ -42,12 +42,12 @@ public class ByteArrayCodec implements DsonCodec<byte[]> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, byte[] instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, byte[] instance, TypeInfo typeInfo, ObjectStyle style) {
         writer.writeBytes(null, instance);
     }
 
     @Override
-    public byte[] readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends byte[]> factory) {
+    public byte[] readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends byte[]> factory) {
         return reader.readBytes(reader.getCurrentName());
     }
 }

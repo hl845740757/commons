@@ -50,12 +50,12 @@ public class ObjectLitePtrCodec implements DsonCodec<ObjectLitePtr> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, ObjectLitePtr instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, ObjectLitePtr instance, TypeInfo typeInfo, ObjectStyle style) {
         writer.writeLitePtr(null, instance);
     }
 
     @Override
-    public ObjectLitePtr readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends ObjectLitePtr> factory) {
+    public ObjectLitePtr readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends ObjectLitePtr> factory) {
         return reader.readLitePtr(reader.getCurrentName());
     }
 }

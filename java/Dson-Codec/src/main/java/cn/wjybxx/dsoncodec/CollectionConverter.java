@@ -36,7 +36,7 @@ public interface CollectionConverter {
      * @param map      待转换的字典
      * @return 转换后的map
      */
-    <K, V> Map<K, V> convertMap(TypeInfo<?> typeInfo, Map<K, V> map);
+    <K, V> Map<K, V> convertMap(TypeInfo typeInfo, Map<K, V> map);
 
     /**
      * 转换集合
@@ -45,7 +45,7 @@ public interface CollectionConverter {
      * @param collection 待转换的集合
      * @return 转换后的map
      */
-    <E> Collection<E> convertCollection(TypeInfo<?> typeInfo, Collection<E> collection);
+    <E> Collection<E> convertCollection(TypeInfo typeInfo, Collection<E> collection);
 
 
     static CollectionConverter immutableConverter() {
@@ -60,7 +60,7 @@ public interface CollectionConverter {
         }
 
         @Override
-        public <K, V> Map<K, V> convertMap(TypeInfo<?> typeInfo, Map<K, V> map) {
+        public <K, V> Map<K, V> convertMap(TypeInfo typeInfo, Map<K, V> map) {
             if (map instanceof LinkedHashMap<K, V> hashMap) {
                 return Collections.unmodifiableMap(hashMap); // 保持插入序
             }
@@ -68,7 +68,7 @@ public interface CollectionConverter {
         }
 
         @Override
-        public <E> Collection<E> convertCollection(TypeInfo<?> typeInfo, Collection<E> collection) {
+        public <E> Collection<E> convertCollection(TypeInfo typeInfo, Collection<E> collection) {
             if (collection instanceof LinkedHashSet<E> hashSet) {
                 return Collections.unmodifiableSet(hashSet); // 保持插入序
             }

@@ -37,7 +37,7 @@ import java.util.IdentityHashMap;
         annotations = DsonCodecScanIgnore.class)
 public class CustomMapCodecTest<K, V> extends IdentityHashMap<K, V> {
 
-    public CustomMapCodecTest(DsonObjectReader reader, TypeInfo<?> typeInfo) {
+    public CustomMapCodecTest(DsonObjectReader reader, TypeInfo typeInfo) {
     }
 
     public void beforeEncode(ConverterOptions options) {

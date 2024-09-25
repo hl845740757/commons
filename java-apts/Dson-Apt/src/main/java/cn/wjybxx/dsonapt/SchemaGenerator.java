@@ -41,12 +41,12 @@ import java.util.Set;
 class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
 
     private final Context context;
-    private final ClassName typeInfoRawTypeName;
+    private final ClassName typeName_TypeInfo;
 
     public SchemaGenerator(CodecProcessor processor, Context context) {
         super(processor, context.typeElement);
         this.context = context;
-        this.typeInfoRawTypeName = processor.typeName_TypeInfo;
+        this.typeName_TypeInfo = processor.typeName_TypeInfo;
     }
 
     @Override
@@ -139,35 +139,26 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
     }
 
     private FieldSpec genTypeField(VariableElement variableElement, AptTypeInfo aptTypeInfo) {
-        ParameterizedTypeName fieldTypeName;
-        if (variableElement.asType().getKind().isPrimitive()) {
-            // 基础类型不能做泛型参数...
-            fieldTypeName = ParameterizedTypeName.get(typeInfoRawTypeName,
-                    TypeName.get(variableElement.asType()).box());
-        } else {
-            // TypeInfo的泛型T最好不带泛型参数，兼容性很差
-            fieldTypeName = ParameterizedTypeName.get(typeInfoRawTypeName,
-                    TypeName.get(typeUtils.erasure(variableElement.asType())));
-        }
+        // TypeInfo去除泛型后，基础类型可以用上了
         String typeInfoFieldName = getTypeInfoFieldName(variableElement.getSimpleName().toString());
-        FieldSpec.Builder builder = FieldSpec.builder(fieldTypeName, typeInfoFieldName, AptUtils.PUBLIC_STATIC_FINAL);
+        FieldSpec.Builder builder = FieldSpec.builder(typeName_TypeInfo, typeInfoFieldName, AptUtils.PUBLIC_STATIC_FINAL);
         switch (aptTypeInfo.typeArgs.size()) {
             case 0: {
                 builder.initializer("$T.of($T.class)",
-                        typeInfoRawTypeName,
+                        typeName_TypeInfo,
                         TypeName.get(typeUtils.erasure(aptTypeInfo.declared)));
                 break;
             }
             case 1: {
                 builder.initializer("$T.of($T.class, $T.class)",
-                        typeInfoRawTypeName,
+                        typeName_TypeInfo,
                         TypeName.get(typeUtils.erasure(aptTypeInfo.declared)),
                         TypeName.get(typeUtils.erasure(aptTypeInfo.typeArgs.get(0))));
                 break;
             }
             case 2: {
                 builder.initializer("$T.of($T.class, $T.class, $T.class)",
-                        typeInfoRawTypeName,
+                        typeName_TypeInfo,
                         TypeName.get(typeUtils.erasure(aptTypeInfo.declared)),
                         TypeName.get(typeUtils.erasure(aptTypeInfo.typeArgs.get(0))),
                         TypeName.get(typeUtils.erasure(aptTypeInfo.typeArgs.get(1))));
@@ -177,7 +168,7 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
                 // 超过2个泛型参数时，使用List.of
                 StringBuilder format = new StringBuilder("$T.of($T.class, List.Of(");
                 List<Object> params = new ArrayList<>(aptTypeInfo.typeArgs.size() + 2);
-                params.add(typeInfoRawTypeName);
+                params.add(typeName_TypeInfo);
                 params.add(TypeName.get(typeUtils.erasure(aptTypeInfo.declared)));
                 for (int i = 0; i < aptTypeInfo.typeArgs.size(); i++) {
                     if (i > 0) {

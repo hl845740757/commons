@@ -49,8 +49,8 @@ public class MapEncodeProxyCodec implements DsonCodec<MapEncodeProxy> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, MapEncodeProxy instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        TypeInfo<?> valueArgInfo = typeInfo.isGenericType() ? typeInfo.getGenericArgument(0) : TypeInfo.OBJECT;
+    public void writeObject(DsonObjectWriter writer, MapEncodeProxy instance, TypeInfo typeInfo, ObjectStyle style) {
+        TypeInfo valueArgInfo = typeInfo.isGenericType() ? typeInfo.getGenericArgument(0) : TypeInfo.OBJECT;
         @SuppressWarnings("unchecked") Collection<Map.Entry<String, Object>> entries = Objects.requireNonNull(instance.getEntries());
         switch (instance.getMode()) {
             default -> {
@@ -71,7 +71,7 @@ public class MapEncodeProxyCodec implements DsonCodec<MapEncodeProxy> {
                 writer.writeEndArray();
             }
             case MapEncodeProxy.MODE_PAIR_AS_ARRAY -> {
-                TypeInfo<Map.Entry> pairTypeInfo = TypeInfo.of(Map.Entry.class, String.class, valueArgInfo.rawType);
+                TypeInfo pairTypeInfo = TypeInfo.of(Map.Entry.class, String.class, valueArgInfo.rawType);
                 writer.writeStartArray(instance, typeInfo, style);
                 for (Map.Entry<String, ?> entry : entries) {
                     writer.writeStartArray(entry, pairTypeInfo); // pair写为子数组
@@ -84,7 +84,7 @@ public class MapEncodeProxyCodec implements DsonCodec<MapEncodeProxy> {
                 writer.writeEndArray();
             }
             case MapEncodeProxy.MODE_PAIR_AS_DOCUMENT -> {
-                TypeInfo<Map.Entry> pairTypeInfo = TypeInfo.of(Map.Entry.class, String.class, valueArgInfo.rawType);
+                TypeInfo pairTypeInfo = TypeInfo.of(Map.Entry.class, String.class, valueArgInfo.rawType);
                 writer.writeStartArray(instance, typeInfo, style);
                 for (Map.Entry<String, ?> entry : entries) {
                     writer.writeStartObject(entry, pairTypeInfo); // pair写为子文档
@@ -100,8 +100,8 @@ public class MapEncodeProxyCodec implements DsonCodec<MapEncodeProxy> {
     }
 
     @Override
-    public MapEncodeProxy readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends MapEncodeProxy> factory) {
-        TypeInfo<?> valueArgInfo = typeInfo.isGenericType() ? typeInfo.getGenericArgument(0) : TypeInfo.OBJECT;
+    public MapEncodeProxy readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends MapEncodeProxy> factory) {
+        TypeInfo valueArgInfo = typeInfo.isGenericType() ? typeInfo.getGenericArgument(0) : TypeInfo.OBJECT;
 
         List<Map.Entry<String, Object>> entries = new ArrayList<>();
         MapEncodeProxy<Object> result = new MapEncodeProxy<>();

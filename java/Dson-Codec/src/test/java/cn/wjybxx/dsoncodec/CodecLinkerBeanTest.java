@@ -46,7 +46,7 @@ public class CodecLinkerBeanTest {
         inst.setName(reader.readString(dsonName));
     }
 
-    public static ThirdPartyBean2 newInstance(DsonObjectReader reader, TypeInfo<?> typeInfo) {
+    public static ThirdPartyBean2 newInstance(DsonObjectReader reader, TypeInfo typeInfo) {
         return new ThirdPartyBean2();
     }
 

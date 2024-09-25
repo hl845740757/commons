@@ -36,19 +36,21 @@ public interface IGenericCodecConfig
     /// <summary>
     /// 获取可以编码目标泛型类的Codec原型 -- 可以向上匹配。
     /// 
-    /// 注意：Codec需要和泛型定义类有相同的泛型参数列表。
+    /// 注意：
+    /// 1.Codec需要和泛型定义类有相同的泛型参数列表。
+    /// 2.不会频繁查询，因此不必太在意匹配算法的效率。
     /// </summary>
     /// <param name="genericTypeDefine">目标泛型类</param>
-    /// <returns></returns>
+    /// <returns>编码器类型</returns>
     Type? GetEncoderType(Type genericTypeDefine);
 
     /// <summary>
-    /// 获取可以解码目标泛型类的Codec原型。
+    /// 获取可以解码目标泛型类的Codec原型 -- 精确匹配。
     ///
     /// 注意：Codec需要和泛型定义类有相同的泛型参数列表。
     /// </summary>
     /// <param name="genericTypeDefine">目标泛型类</param>
-    /// <returns></returns>
+    /// <returns>解码器类型</returns>
     Type? GetDecoderType(Type genericTypeDefine);
 }
 }

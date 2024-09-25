@@ -73,7 +73,7 @@ public class DefaultDsonConverter implements DsonConverter {
 
     @Nonnull
     @Override
-    public byte[] write(Object value, @Nonnull TypeInfo<?> typeInfo) {
+    public byte[] write(Object value, @Nonnull TypeInfo typeInfo) {
         Objects.requireNonNull(value);
         final byte[] localBuffer = options.bufferPool.acquire(options.bufferSize);
         try {
@@ -86,13 +86,13 @@ public class DefaultDsonConverter implements DsonConverter {
     }
 
     @Override
-    public <T> T read(byte[] source, @Nonnull TypeInfo<T> typeInfo, Supplier<? extends T> factory) {
+    public <T> T read(byte[] source, @Nonnull TypeInfo typeInfo, Supplier<? extends T> factory) {
         final DsonInput inputStream = DsonInputs.newInstance(source);
         return decodeObject(inputStream, typeInfo, factory);
     }
 
     @Override
-    public void write(Object value, TypeInfo<?> typeInfo, DsonChunk chunk) {
+    public void write(Object value, TypeInfo typeInfo, DsonChunk chunk) {
         Objects.requireNonNull(value);
         final DsonOutput outputStream = DsonOutputs.newInstance(chunk.getBuffer(), chunk.getOffset(), chunk.getLength());
         encodeObject(outputStream, value, typeInfo);
@@ -100,13 +100,13 @@ public class DefaultDsonConverter implements DsonConverter {
     }
 
     @Override
-    public <T> T read(DsonChunk chunk, TypeInfo<T> typeInfo, Supplier<? extends T> factory) {
+    public <T> T read(DsonChunk chunk, TypeInfo typeInfo, Supplier<? extends T> factory) {
         final DsonInput inputStream = DsonInputs.newInstance(chunk.getBuffer(), chunk.getOffset(), chunk.getLength());
         return decodeObject(inputStream, typeInfo, factory);
     }
 
     @Override
-    public <T> T cloneObject(Object value, TypeInfo<T> typeInfo, Supplier<? extends T> factory) {
+    public <T> T cloneObject(Object value, TypeInfo typeInfo, Supplier<? extends T> factory) {
         if (value == null) return null;
         final byte[] localBuffer = options.bufferPool.acquire(options.bufferSize);
         try {
@@ -120,7 +120,7 @@ public class DefaultDsonConverter implements DsonConverter {
         }
     }
 
-    private void encodeObject(DsonOutput outputStream, @Nullable Object value, TypeInfo<?> typeInfo) {
+    private void encodeObject(DsonOutput outputStream, @Nullable Object value, TypeInfo typeInfo) {
         try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this,
                 new DsonBinaryWriter(options.binWriterSettings, outputStream))) {
             wrapper.writeObject(null, value, typeInfo, null);
@@ -128,7 +128,7 @@ public class DefaultDsonConverter implements DsonConverter {
         }
     }
 
-    private <T> T decodeObject(DsonInput inputStream, TypeInfo<T> typeInfo, Supplier<? extends T> factory) {
+    private <T> T decodeObject(DsonInput inputStream, TypeInfo typeInfo, Supplier<? extends T> factory) {
         try (DsonObjectReader wrapper = wrapReader(new DsonBinaryReader(options.binReaderSettings, inputStream))) {
             return wrapper.readObject(null, typeInfo, factory);
         }
@@ -150,7 +150,7 @@ public class DefaultDsonConverter implements DsonConverter {
 
     @Nonnull
     @Override
-    public String writeAsDson(Object value, @Nonnull TypeInfo<?> typeInfo, ObjectStyle style) {
+    public String writeAsDson(Object value, @Nonnull TypeInfo typeInfo, ObjectStyle style) {
         StringBuilder stringBuilder = options.stringBuilderPool.acquire();
         try {
             writeAsDson(value, typeInfo, new StringBuilderWriter(stringBuilder), style);
@@ -161,14 +161,14 @@ public class DefaultDsonConverter implements DsonConverter {
     }
 
     @Override
-    public <T> T readFromDson(CharSequence source, @Nonnull TypeInfo<T> typeInfo, Supplier<? extends T> factory) {
+    public <T> T readFromDson(CharSequence source, @Nonnull TypeInfo typeInfo, Supplier<? extends T> factory) {
         try (DsonObjectReader wrapper = wrapReader(new DsonTextReader(options.textReaderSettings, source))) {
             return wrapper.readObject(null, typeInfo, factory);
         }
     }
 
     @Override
-    public void writeAsDson(Object value, @Nonnull TypeInfo<?> typeInfo, Writer writer, ObjectStyle style) {
+    public void writeAsDson(Object value, @Nonnull TypeInfo typeInfo, Writer writer, ObjectStyle style) {
         Objects.requireNonNull(writer, "writer");
         try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this,
                 new DsonTextWriter(options.textWriterSettings, writer, false))) {
@@ -178,7 +178,7 @@ public class DefaultDsonConverter implements DsonConverter {
     }
 
     @Override
-    public <T> T readFromDson(Reader source, @Nonnull TypeInfo<T> typeInfo, Supplier<? extends T> factory) {
+    public <T> T readFromDson(Reader source, @Nonnull TypeInfo typeInfo, Supplier<? extends T> factory) {
         try (DsonObjectReader wrapper = wrapReader(
                 new DsonTextReader(options.textReaderSettings, Dsons.newStreamScanner(source, false)))) {
             return wrapper.readObject(null, typeInfo, factory);
@@ -186,7 +186,7 @@ public class DefaultDsonConverter implements DsonConverter {
     }
 
     @Override
-    public DsonValue writeAsDsonValue(Object value, TypeInfo<?> typeInfo) {
+    public DsonValue writeAsDsonValue(Object value, TypeInfo typeInfo) {
         Objects.requireNonNull(value);
         DsonArray<String> outList = new DsonArray<>(1);
         try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this,
@@ -201,7 +201,7 @@ public class DefaultDsonConverter implements DsonConverter {
     }
 
     @Override
-    public <T> T readFromDsonValue(DsonValue source, @Nonnull TypeInfo<T> typeInfo, Supplier<? extends T> factory) {
+    public <T> T readFromDsonValue(DsonValue source, @Nonnull TypeInfo typeInfo, Supplier<? extends T> factory) {
         if (!source.getDsonType().isContainer()) {
             throw new IllegalArgumentException("value must be container");
         }
@@ -267,8 +267,8 @@ public class DefaultDsonConverter implements DsonConverter {
      * @param typeMetaRegistry 所有的类型id信息，包括protobuf的类
      * @param options          一些可选项
      */
-    public static DefaultDsonConverter newInstance2(List<DsonCodecRegistry> registryList,
-                                                    final TypeMetaRegistry typeMetaRegistry,
+    public static DefaultDsonConverter newInstance2(final TypeMetaRegistry typeMetaRegistry,
+                                                    List<DsonCodecRegistry> registryList,
                                                     final ConverterOptions options) {
         Objects.requireNonNull(options, "options");
         // 添加默认Registry

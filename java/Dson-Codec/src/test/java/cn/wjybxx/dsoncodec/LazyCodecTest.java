@@ -102,7 +102,7 @@ public class LazyCodecTest {
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, MyStruct instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+        public void writeObject(DsonObjectWriter writer, MyStruct instance, TypeInfo typeInfo, ObjectStyle style) {
             writer.writeString("strVal", instance.strVal);
             if (role == Role.ROUTER) {
                 writer.writeValueBytes("nestStruct", DsonType.OBJECT, (byte[]) instance.nestStruct);
@@ -121,7 +121,7 @@ public class LazyCodecTest {
         }
 
         @Override
-        public MyStruct readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends MyStruct> factory) {
+        public MyStruct readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends MyStruct> factory) {
             String strVal = reader.readString("strVal");
             Object nestStruct;
             if (role == Role.ROUTER) {

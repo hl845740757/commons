@@ -50,12 +50,12 @@ public class ObjectPtrCodec implements DsonCodec<ObjectPtr> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, ObjectPtr instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, ObjectPtr instance, TypeInfo typeInfo, ObjectStyle style) {
         writer.writePtr(null, instance);
     }
 
     @Override
-    public ObjectPtr readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends ObjectPtr> factory) {
+    public ObjectPtr readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends ObjectPtr> factory) {
         return reader.readPtr(reader.getCurrentName());
     }
 }

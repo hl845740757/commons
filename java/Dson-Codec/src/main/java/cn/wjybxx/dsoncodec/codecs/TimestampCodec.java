@@ -39,12 +39,12 @@ public class TimestampCodec implements DsonCodec<Timestamp> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Timestamp instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, Timestamp instance, TypeInfo typeInfo, ObjectStyle style) {
         writer.writeTimestamp(null, instance);
     }
 
     @Override
-    public Timestamp readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends Timestamp> factory) {
+    public Timestamp readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends Timestamp> factory) {
         return reader.readTimestamp(reader.getCurrentName());
     }
 }

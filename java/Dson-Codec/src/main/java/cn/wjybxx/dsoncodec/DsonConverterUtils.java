@@ -28,10 +28,6 @@ import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.*;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -109,36 +105,9 @@ public final class DsonConverterUtils {
                 typeMetaOf(ObjectLitePtr.class, DsonTexts.LABEL_LITE_PTR),
                 typeMetaOf(ExtDateTime.class, DsonTexts.LABEL_DATETIME),
                 typeMetaOf(Timestamp.class, DsonTexts.LABEL_TIMESTAMP),
-
                 // 特殊组件
-                typeMetaOf(MapEncodeProxy.class, "MapEncodeProxy", "DictionaryEncodeProxy"),
-
-                // 基本类型数组
-                typeMetaOf(int[].class),
-                typeMetaOf(long[].class),
-                typeMetaOf(float[].class),
-                typeMetaOf(double[].class),
-                typeMetaOf(boolean[].class),
-                typeMetaOf(String[].class),
-                typeMetaOf(short[].class),
-                typeMetaOf(char[].class),
-                typeMetaOf(Object[].class),
-
-                // 抽象集合类型
-                typeMetaOf(Collection.class),
-                typeMetaOf(Map.class),
-                // 常用具体类型集合
-                typeMetaOf(LinkedList.class),
-                typeMetaOf(ArrayDeque.class),
-                typeMetaOf(IdentityHashMap.class),
-                typeMetaOf(ConcurrentHashMap.class),
-
-                // 日期
-                typeMetaOf(LocalDateTime.class),
-                typeMetaOf(LocalDate.class),
-                typeMetaOf(LocalTime.class),
-                typeMetaOf(Instant.class),
-                typeMetaOf(DurationCodec.class)
+                typeMetaOf(Object.class, "Object", "object"), // 泛型参数...
+                typeMetaOf(MapEncodeProxy.class, "DictionaryEncodeProxy", "MapEncodeProxy")
         );
     }
 
@@ -156,7 +125,6 @@ public final class DsonConverterUtils {
                 new ObjectLitePtrCodec(),
                 new ExtDateTimeCodec(),
                 new TimestampCodec(),
-
                 // 特殊组件
                 new MapEncodeProxyCodec(),
 
@@ -170,15 +138,6 @@ public final class DsonConverterUtils {
                 new MoreArrayCodecs.ShortArrayCodec(),
                 new MoreArrayCodecs.CharArrayCodec(),
                 new MoreArrayCodecs.ObjectArrayCodec(),
-
-                // 抽象集合类型
-                new CollectionCodec<>(Collection.class, null),
-                new MapCodec<>(Map.class, null),
-                // 常用具体类型集合 -- 不含默认解码类型的超类
-                new CollectionCodec<>(LinkedList.class, LinkedList::new),
-                new CollectionCodec<>(ArrayDeque.class, ArrayDeque::new),
-                new MapCodec<>(IdentityHashMap.class, IdentityHashMap::new),
-                new MapCodec<>(ConcurrentHashMap.class, ConcurrentHashMap::new),
 
                 // 日期类型
                 new LocalDateTimeCodec(),
@@ -283,10 +242,10 @@ public final class DsonConverterUtils {
 
     /** 判断是否可继承的开销比较大，我们需要缓存测试结果 */
     private static final ConcurrentHashMap<ClassPair, Boolean> inheritableResultCache = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Class<?>, List<TypeInfo<?>>> actualTypeArgsCache = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Class<?>, List<TypeInfo>> actualTypeArgsCache = new ConcurrentHashMap<>();
 
     /** 判断要编码的类型是否可继承声明类型的泛型参数 */
-    public static boolean canInheritTypeArgs(Class<?> encoderClass, TypeInfo<?> typeInfo) {
+    public static boolean canInheritTypeArgs(Class<?> encoderClass, TypeInfo typeInfo) {
         return typeInfo.typeArgs.size() > 0 && canInheritTypeArgs(encoderClass, typeInfo.rawType);
     }
 
@@ -346,44 +305,44 @@ public final class DsonConverterUtils {
 
     /** 获取传递给集合的元素类型；不存在则返回{@link TypeInfo#OBJECT} */
     @SuppressWarnings("unchecked")
-    public static <T> TypeInfo<?> getElementActualTypeInfo(Class<T> rawType) {
+    public static <T> TypeInfo getElementActualTypeInfo(Class<T> rawType) {
         if (rawType == Object.class || rawType == Collection.class || !Collection.class.isAssignableFrom(rawType)) {
             return TypeInfo.OBJECT;
         }
-        List<TypeInfo<?>> actualTypeArgs = findActualTypeArgs(rawType, (Class<? super T>) Collection.class);
+        List<TypeInfo> actualTypeArgs = findActualTypeArgs(rawType, (Class<? super T>) Collection.class);
         return actualTypeArgs.isEmpty() ? TypeInfo.OBJECT : actualTypeArgs.get(0);
     }
 
     /** 获取传递给字典的Key类型；不存在则返回{@link TypeInfo#OBJECT} */
     @SuppressWarnings("unchecked")
-    public static <T> TypeInfo<?> getKeyActualTypeInfo(Class<T> rawType) {
+    public static <T> TypeInfo getKeyActualTypeInfo(Class<T> rawType) {
         if (rawType == Object.class || rawType == Map.class || !Map.class.isAssignableFrom(rawType)) {
             return TypeInfo.OBJECT;
         }
-        List<TypeInfo<?>> actualTypeArgs = findActualTypeArgs(rawType, (Class<? super T>) Map.class);
+        List<TypeInfo> actualTypeArgs = findActualTypeArgs(rawType, (Class<? super T>) Map.class);
         return actualTypeArgs.isEmpty() ? TypeInfo.OBJECT : actualTypeArgs.get(0);
     }
 
     /** 获取传递给字典的Value类型；不存在则返回{@link TypeInfo#OBJECT} */
     @SuppressWarnings("unchecked")
-    public static <T> TypeInfo<?> getValueActualTypeInfo(Class<T> rawType) {
+    public static <T> TypeInfo getValueActualTypeInfo(Class<T> rawType) {
         if (rawType == Object.class || rawType == Map.class || !Map.class.isAssignableFrom(rawType)) {
             return TypeInfo.OBJECT;
         }
-        List<TypeInfo<?>> actualTypeArgs = findActualTypeArgs(rawType, (Class<? super T>) Map.class);
+        List<TypeInfo> actualTypeArgs = findActualTypeArgs(rawType, (Class<? super T>) Map.class);
         return actualTypeArgs.isEmpty() ? TypeInfo.OBJECT : actualTypeArgs.get(1);
     }
 
-    private static <T> List<TypeInfo<?>> findActualTypeArgs(Class<T> rawType, Class<? super T> targetType) {
-        List<TypeInfo<?>> actualTypeArgs = actualTypeArgsCache.get(rawType);
+    private static <T> List<TypeInfo> findActualTypeArgs(Class<T> rawType, Class<? super T> targetType) {
+        List<TypeInfo> actualTypeArgs = actualTypeArgsCache.get(rawType);
         if (actualTypeArgs != null) {
             return actualTypeArgs;
         }
         Type genericSuperType = TypeParameterFinder.getGenericSuperType(rawType, targetType);
-        List<TypeInfo<?>> result;
+        List<TypeInfo> result;
         if (genericSuperType instanceof ParameterizedType parameterizedType) {
             Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-            TypeInfo<?>[] typeInfos = new TypeInfo<?>[actualTypeArguments.length];
+            TypeInfo[] typeInfos = new TypeInfo[actualTypeArguments.length];
             for (int idx = 0; idx < actualTypeArguments.length; idx++) {
                 Type actualTypeArgument = actualTypeArguments[idx];
                 if (actualTypeArgument instanceof Class<?> cls) {

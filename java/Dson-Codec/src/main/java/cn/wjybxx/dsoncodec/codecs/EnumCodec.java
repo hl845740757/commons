@@ -19,98 +19,121 @@ package cn.wjybxx.dsoncodec.codecs;
 import cn.wjybxx.base.EnumLite;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
-import cn.wjybxx.dsoncodec.DsonCodec;
-import cn.wjybxx.dsoncodec.DsonObjectReader;
-import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.dsoncodec.TypeInfo;
+import cn.wjybxx.dsoncodec.*;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
 /**
- * 让枚举的Codec继承该Codec的话，生成的代码就更为稳定，我们调整编解码方式也更方便。
+ * 枚举编解码器
+ * 如果枚举实现了{@link EnumLite}接口，则序列化时使用自定义数字，否则使用{@link Enum#ordinal()}
  *
  * @author wjybxx
  * date - 2023/4/24
  */
 @DsonCodecScanIgnore
-public class EnumCodec<T extends EnumLite> extends AbstractEnumCodec<T> implements DsonCodec<T> {
+public final class EnumCodec<T extends Enum<T>> extends AbstractEnumCodec<T> implements DsonCodec<T> {
 
     private final Class<T> encoderClass;
-    private final IntFunction<T> mapper;
-    private final Map<String, T> name2EnumMap;
+    private final EnumMap<T, EnumValueInfo<T>> value2EnumMap;
+    private final Int2ObjectMap<EnumValueInfo<T>> number2EnumMap;
+    private final Map<String, EnumValueInfo<T>> name2EnumMap; // 这允许为枚举指定别名
 
-    /**
-     * @param mapper forNumber静态方法的lambda表达式
-     */
-    public EnumCodec(Class<T> encoderClass, IntFunction<T> mapper) {
+    public EnumCodec(Class<T> encoderClass) {
         if (!encoderClass.isEnum()) {
             throw new IllegalArgumentException("EnumLite must be enum class, type: " + encoderClass);
         }
-        // 虽然可以支持覆盖toString，但我们选择不支持，保持统一的规范更好
-        final boolean overrideToString = Arrays.stream(encoderClass.getDeclaredMethods())
-                .anyMatch(e -> "toString".equals(e.getName()));
-        if (overrideToString) {
-            throw new IllegalArgumentException("enum class cannot override toString methods, type: " + encoderClass);
-        }
-
         this.encoderClass = Objects.requireNonNull(encoderClass);
-        this.mapper = Objects.requireNonNull(mapper);
 
         T[] enumConstants = encoderClass.getEnumConstants();
-        name2EnumMap = HashMap.newHashMap(enumConstants.length);
+        this.value2EnumMap = new EnumMap<>(encoderClass);
+        this.number2EnumMap = new Int2ObjectOpenHashMap<>(enumConstants.length);
+        this.name2EnumMap = HashMap.newHashMap(enumConstants.length);
         for (T enumConstant : enumConstants) {
-            Enum<?> anEnum = (Enum<?>) enumConstant;
-            name2EnumMap.put(anEnum.name(), enumConstant);
+            int number = enumConstant instanceof EnumLite enumLite ? enumLite.getNumber() : enumConstant.ordinal();
+
+            EnumValueInfo<T> enumValueInfo = new EnumValueInfo<>(enumConstant, number, enumConstant.name());
+            value2EnumMap.put(enumConstant, enumValueInfo);
+            number2EnumMap.put(number, enumValueInfo);
+            name2EnumMap.put(enumConstant.name(), enumValueInfo);
         }
     }
 
     @Override
     @Nullable
     public T forName(String name) {
-        return name2EnumMap.get(name);
+        EnumValueInfo<T> valueInfo = name2EnumMap.get(name);
+        return valueInfo == null ? null : valueInfo.value;
     }
 
     @Override
     @Nullable
     public T forNumber(int number) {
-        return mapper.apply(number);
+        EnumValueInfo<T> valueInfo = number2EnumMap.get(number);
+        return valueInfo == null ? null : valueInfo.value;
     }
 
     @Nonnull
     @Override
-    public final Class<T> getEncoderClass() {
+    public Class<T> getEncoderClass() {
         return encoderClass;
     }
 
     /** false 可以将枚举简单写为整数 */
     @Override
-    public final boolean autoStartEnd() {
+    public boolean autoStartEnd() {
         return false;
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo typeInfo, ObjectStyle style) {
+        EnumValueInfo<T> valueInfo = value2EnumMap.get(instance);
+        if (valueInfo == null) {
+            throw new DsonCodecException("invalid enum value: %s, type: %s".formatted(instance, encoderClass));
+        }
         if (writer.options().writeEnumAsString) {
-            writer.writeString(null, instance.toString(), StringStyle.UNQUOTE);
+            writer.writeString(null, valueInfo.name, StringStyle.UNQUOTE);
         } else {
-            writer.writeInt(null, instance.getNumber());
+            writer.writeInt(null, valueInfo.number);
         }
     }
 
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends T> factory) {
+    public T readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends T> factory) {
         if (reader.options().writeEnumAsString) {
-            return name2EnumMap.get(reader.readString(reader.getCurrentName()));
+            String name = reader.readString(reader.getCurrentName());
+            EnumValueInfo<T> valueInfo = name2EnumMap.get(name);
+            if (valueInfo != null) {
+                return valueInfo.value;
+            }
+            throw new DsonCodecException("invalid enum value: %s, type: %s".formatted(name, encoderClass));
         } else {
-            return mapper.apply(reader.readInt(reader.getCurrentName()));
+            int number = reader.readInt(reader.getCurrentName());
+            EnumValueInfo<T> valueInfo = number2EnumMap.get(number);
+            if (valueInfo != null) {
+                return valueInfo.value;
+            }
+            throw new DsonCodecException("invalid enum value: %d, type: %s".formatted(number, encoderClass));
+        }
+    }
+
+    private static class EnumValueInfo<T> {
+        final T value;
+        final int number;
+        final String name;
+
+        public EnumValueInfo(T value, int number, String name) {
+            this.value = value;
+            this.number = number;
+            this.name = name;
         }
     }
 }

@@ -72,7 +72,7 @@ public interface IConverter
     #region 快捷方法
 
     byte[] Write<T>(in T value) {
-        return Write(in value, typeof(object)); // 默认写入对象类型，因此不是typeof(T)
+        return Write(in value, typeof(object)); // 默认写入对象类型，因此不是value.GetType
     }
 
     /// <summary>

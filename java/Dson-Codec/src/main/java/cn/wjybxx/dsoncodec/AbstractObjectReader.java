@@ -118,7 +118,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
     @SuppressWarnings("unchecked")
     @Nullable
     @Override
-    public <T> T readObject(String name, TypeInfo<T> typeInfo, Supplier<? extends T> factory) {
+    public <T> T readObject(String name, TypeInfo typeInfo, Supplier<? extends T> factory) {
         Class<T> declaredType = typeInfo.rawType;
         if (!readName(name)) { // 顺带读取了DsonType
             return (T) DsonConverterUtils.getDefaultValue(declaredType);
@@ -164,7 +164,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         return declaredType.cast(DsonCodecHelper.readDsonValue(reader, dsonType, name));
     }
 
-    private <T> T readContainer(TypeInfo<T> typeInfo, Supplier<? extends T> factory, DsonType dsonType) {
+    private <T> T readContainer(TypeInfo typeInfo, Supplier<? extends T> factory, DsonType dsonType) {
         String classId = readClassId(dsonType);
         DsonCodecImpl<T> codec = findObjectDecoder(typeInfo, factory, classId);
         if (codec == null) {
@@ -327,7 +327,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
     }
 
     @SuppressWarnings("unchecked")
-    private <T> DsonCodecImpl<T> findObjectDecoder(TypeInfo<T> typeInfo, Supplier<? extends T> factory, String classId) {
+    private <T> DsonCodecImpl<T> findObjectDecoder(TypeInfo typeInfo, Supplier<? extends T> factory, String classId) {
         final Class<T> declaredType = typeInfo.rawType;
         // factory不为null时，直接按照声明类型查找，因为factory的优先级最高
         DsonCodecRegistry rootRegistry = converter.codecRegistry();

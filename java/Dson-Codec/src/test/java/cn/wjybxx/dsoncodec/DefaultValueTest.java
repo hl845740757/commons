@@ -122,13 +122,13 @@ public class DefaultValueTest {
 
         @Override
         protected DefaultValueTest.Bean newInstance(DsonObjectReader reader,
-                                                    TypeInfo<?> typeInfo) {
+                                                    TypeInfo typeInfo) {
             return new DefaultValueTest.Bean();
         }
 
         @Override
         public void readFields(DsonObjectReader reader, DefaultValueTest.Bean instance,
-                               TypeInfo<?> typeInfo) {
+                               TypeInfo typeInfo) {
             instance.iv1 = reader.readInt("iv1");
             instance.iv2 = reader.readInt("iv2");
             instance.lv1 = reader.readLong("lv1");
@@ -143,7 +143,7 @@ public class DefaultValueTest {
 
         @Override
         public void writeFields(DsonObjectWriter writer, Bean instance,
-                                TypeInfo<?> typeInfo, ObjectStyle style) {
+                                TypeInfo typeInfo, ObjectStyle style) {
             writer.writeInt("iv1", instance.iv1, WireType.VARINT, NumberStyle.SIMPLE);
             writer.writeInt("iv2", instance.iv2, WireType.VARINT, NumberStyle.SIMPLE);
             writer.writeLong("lv1", instance.lv1, WireType.VARINT, NumberStyle.SIMPLE);

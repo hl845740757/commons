@@ -49,12 +49,12 @@ public class BooleanCodec implements DsonCodec<Boolean> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Boolean instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, Boolean instance, TypeInfo typeInfo, ObjectStyle style) {
         writer.writeBoolean(null, instance);
     }
 
     @Override
-    public Boolean readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends Boolean> factory) {
+    public Boolean readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends Boolean> factory) {
         return reader.readBoolean(reader.getCurrentName());
     }
 

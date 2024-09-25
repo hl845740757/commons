@@ -38,13 +38,13 @@ import java.util.Objects;
 public final class TypeMeta {
 
     /** 关联的类型 */
-    public final TypeInfo<?> typeInfo;
+    public final TypeInfo typeInfo;
     /** 文本编码时的输出格式 */
     public final ObjectStyle style;
     /** 支持的类型名 */
     public final List<String> clsNames;
 
-    private TypeMeta(TypeInfo<?> typeInfo, ObjectStyle style, List<String> clsNames) {
+    private TypeMeta(TypeInfo typeInfo, ObjectStyle style, List<String> clsNames) {
         if (clsNames.isEmpty()) throw new IllegalArgumentException("clsNames is empty");
         this.typeInfo = Objects.requireNonNull(typeInfo);
         this.style = Objects.requireNonNull(style);
@@ -54,6 +54,7 @@ public final class TypeMeta {
     public String mainClsName() {
         return clsNames.get(0);
     }
+    // region factory
 
     public static TypeMeta of(Class<?> clazz, ObjectStyle style) {
         return new TypeMeta(TypeInfo.of(clazz), style, List.of(clazz.getSimpleName()));
@@ -73,17 +74,18 @@ public final class TypeMeta {
 
     //
 
-    public static TypeMeta of(TypeInfo<?> typeInfo, ObjectStyle style, String clsName) {
+    public static TypeMeta of(TypeInfo typeInfo, ObjectStyle style, String clsName) {
         return new TypeMeta(typeInfo, style, List.of(clsName));
     }
 
-    public static TypeMeta of(TypeInfo<?> typeInfo, ObjectStyle style, String... clsNames) {
+    public static TypeMeta of(TypeInfo typeInfo, ObjectStyle style, String... clsNames) {
         return new TypeMeta(typeInfo, style, List.of(clsNames));
     }
 
-    public static TypeMeta of(TypeInfo<?> typeInfo, ObjectStyle style, List<String> clsNames) {
+    public static TypeMeta of(TypeInfo typeInfo, ObjectStyle style, List<String> clsNames) {
         return new TypeMeta(typeInfo, style, List.copyOf(clsNames));
     }
+    // endregion
 
     @Override
     public String toString() {

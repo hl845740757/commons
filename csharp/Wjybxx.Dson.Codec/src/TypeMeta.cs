@@ -32,7 +32,7 @@ namespace Wjybxx.Dson.Codec
 /// 2.在文档型编解码中，可读性是比较重要的，因此不要一味追求简短。
 /// </summary>
 [Immutable]
-public sealed class TypeMeta : IEquatable<TypeMeta>
+public sealed class TypeMeta
 {
     /// <summary>
     /// 关联的类型
@@ -66,24 +66,16 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
     /// </summary>
     public string MainClsName => clsNames[0];
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="clazz"></param>
-    /// <param name="style">文本样式</param>
-    /// <param name="clsName">类型名</param>
-    /// <returns></returns>
+    #region factory
+
+    public static TypeMeta Of(Type clazz, ObjectStyle style) {
+        return new TypeMeta(clazz, style, ImmutableList<string>.Create(clazz.Name));
+    }
+
     public static TypeMeta Of(Type clazz, ObjectStyle style, string clsName) {
         return new TypeMeta(clazz, style, ImmutableList<string>.Create(clsName));
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="clazz"></param>
-    /// <param name="style">文本样式</param>
-    /// <param name="clsNames">类型名</param>
-    /// <returns></returns>
     public static TypeMeta Of(Type clazz, ObjectStyle style, params string[] clsNames) {
         return new TypeMeta(clazz, style, ImmutableList<string>.CreateRange(clsNames));
     }
@@ -92,32 +84,10 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
         return new TypeMeta(clazz, style, clsNames.ToImmutableList2());
     }
 
+    #endregion
+
     public override string ToString() {
         return $"{nameof(type)}: {type}, {nameof(style)}: {style}, {nameof(clsNames)}: {CollectionUtil.ToString(clsNames)}";
-    }
-
-    public bool Equals(TypeMeta? other) {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return type == other.type
-               && style == other.style
-               && clsNames.SequenceEqual(other.clsNames); // 序列相等
-    }
-
-    public override bool Equals(object? obj) {
-        return ReferenceEquals(this, obj) || obj is TypeMeta other && Equals(other);
-    }
-
-    public override int GetHashCode() {
-        return HashCode.Combine(type, (int)style, clsNames);
-    }
-
-    public static bool operator ==(TypeMeta? left, TypeMeta? right) {
-        return Equals(left, right);
-    }
-
-    public static bool operator !=(TypeMeta? left, TypeMeta? right) {
-        return !Equals(left, right);
     }
 }
 }

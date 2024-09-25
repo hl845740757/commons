@@ -52,13 +52,13 @@ public class LocalDateTimeCodec implements DsonCodec<LocalDateTime> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, LocalDateTime instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, LocalDateTime instance, TypeInfo typeInfo, ObjectStyle style) {
         ExtDateTime dateTime = ExtDateTime.ofDateTime(instance);
         writer.writeExtDateTime(null, dateTime);
     }
 
     @Override
-    public LocalDateTime readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends LocalDateTime> factory) {
+    public LocalDateTime readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends LocalDateTime> factory) {
         ExtDateTime dateTime = reader.readExtDateTime(reader.getCurrentName());
         return LocalDateTime.ofEpochSecond(dateTime.getSeconds(), dateTime.getNanos(), ZoneOffset.UTC);
     }

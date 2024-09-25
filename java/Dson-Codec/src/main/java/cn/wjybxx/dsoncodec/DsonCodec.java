@@ -58,7 +58,7 @@ public interface DsonCodec<T> {
      * @param typeInfo 对象的类型信息(声明类型)
      * @param style    外部期望的输出格式
      */
-    void writeObject(DsonObjectWriter writer, T instance, TypeInfo<?> typeInfo, ObjectStyle style);
+    void writeObject(DsonObjectWriter writer, T instance, TypeInfo typeInfo, ObjectStyle style);
 
     /**
      * 从输入流中解析指定对象。
@@ -69,7 +69,7 @@ public interface DsonCodec<T> {
      * @param typeInfo 对象的类型信息(声明类型)
      * @param factory  实例工厂
      */
-    T readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends T> factory);
+    T readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends T> factory);
 
     /**
      * 该方法用于告知{@link DsonCodecImpl}是否自动调用以下方法:

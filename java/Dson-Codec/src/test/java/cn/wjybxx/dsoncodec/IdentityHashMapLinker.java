@@ -42,7 +42,7 @@ public class IdentityHashMapLinker {
 
     }
 
-    public static IdentityHashMap<?, ?> newInstance(DsonObjectReader reader, TypeInfo<?> typeInfo) {
+    public static IdentityHashMap<?, ?> newInstance(DsonObjectReader reader, TypeInfo typeInfo) {
         return new IdentityHashMap<>();
     }
 

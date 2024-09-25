@@ -171,7 +171,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     // region object处理
 
     @Override
-    public <T> void writeObject(String name, T value, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public <T> void writeObject(String name, T value, TypeInfo typeInfo, ObjectStyle style) {
         Objects.requireNonNull(typeInfo, "typeInfo");
         if (value == null) {
             writeNull(name);
@@ -232,7 +232,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public void writeStartObject(@Nonnull Object value, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeStartObject(@Nonnull Object value, TypeInfo typeInfo, ObjectStyle style) {
         writer.writeStartObject(style);
         writeClsName(value, typeInfo);
     }
@@ -243,7 +243,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public void writeStartArray(@Nonnull Object value, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeStartArray(@Nonnull Object value, TypeInfo typeInfo, ObjectStyle style) {
         writer.writeStartArray(style);
         writeClsName(value, typeInfo);
     }
@@ -299,7 +299,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     // 写入超类信息似乎也不对劲 -- 最好的方式是每个类型都有对应的TypeMeta
 
     /** 写入clsName时，应当尽可能写上泛型参数信息 */
-    private void writeClsName(Object value, TypeInfo<?> typeInfo) {
+    private void writeClsName(Object value, TypeInfo typeInfo) {
         final Class<?> encodeClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举
         if (!converter.options().classIdPolicy.test(typeInfo.rawType, encodeClass)) {
             return;
@@ -311,7 +311,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     /** style可以允许泛型参数不同时走不同的style - 但不是必须的 */
-    private ObjectStyle findObjectStyle(Object value, TypeInfo<?> typeInfo) {
+    private ObjectStyle findObjectStyle(Object value, TypeInfo typeInfo) {
         final Class<?> encodeClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举...
         final TypeMeta typeMeta = getEncoderTypeMeta(typeInfo, encodeClass);
         return typeMeta != null ? typeMeta.style : ObjectStyle.INDENT;
@@ -319,13 +319,13 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
 
     /** 查找codec始终通过原始类型查找 -- 这么有问题 */
     @SuppressWarnings("unchecked")
-    private <T> DsonCodecImpl<? super T> findObjectEncoder(T value, TypeInfo<?> typeInfo) {
+    private <T> DsonCodecImpl<? super T> findObjectEncoder(T value, TypeInfo typeInfo) {
         final Class<?> encodeClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举...
         DsonCodecRegistry rootRegistry = converter.codecRegistry();
         return (DsonCodecImpl<? super T>) rootRegistry.getEncoder(encodeClass, rootRegistry);
     }
 
-    private TypeMeta getEncoderTypeMeta(TypeInfo<?> typeInfo, Class<?> encoderClass) {
+    private TypeMeta getEncoderTypeMeta(TypeInfo typeInfo, Class<?> encoderClass) {
         if (encoderClass == typeInfo.rawType) {
             return converter.typeMetaRegistry().ofType(typeInfo);
         }

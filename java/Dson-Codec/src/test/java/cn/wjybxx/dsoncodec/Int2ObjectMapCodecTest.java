@@ -64,7 +64,7 @@ public class Int2ObjectMapCodecTest {
         srcMap.put(2, "b");
         srcMap.put(3, "3");
 
-        @SuppressWarnings("rawtypes") TypeInfo<Int2ObjectMap> typeInfo = TypeInfo.of(Int2ObjectMap.class, String.class);
+        @SuppressWarnings("rawtypes") TypeInfo typeInfo = TypeInfo.of(Int2ObjectMap.class, String.class);
         String dsonString = converter.writeAsDson(srcMap, typeInfo);
         System.out.println(dsonString);
 
@@ -84,7 +84,7 @@ public class Int2ObjectMapCodecTest {
         srcList.add(1);
         srcList.add(2);
 
-        TypeInfo<IntList> typeInfo = TypeInfo.of(IntList.class);
+        TypeInfo typeInfo = TypeInfo.of(IntList.class);
         String dsonString = converter.writeAsDson(srcList, typeInfo);
         System.out.println(dsonString);
 

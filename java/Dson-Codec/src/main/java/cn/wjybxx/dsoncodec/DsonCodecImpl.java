@@ -63,7 +63,7 @@ public class DsonCodecImpl<T> {
      * 将对象写入输出流。
      * 将对象及其所有超类定义的所有要序列化的字段写入输出流。
      */
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo typeInfo, ObjectStyle style) {
         if (autoStart) {
             if (writeAsArray) {
                 writer.writeStartArray(instance, typeInfo, style);
@@ -83,7 +83,7 @@ public class DsonCodecImpl<T> {
      * 从输入流中解析指定对象。
      * 它应该创建对象，并反序列化该类及其所有超类定义的所有要序列化的字段。
      */
-    public T readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends T> factory) {
+    public T readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends T> factory) {
         if (autoStart) {
             T result;
             if (writeAsArray) {

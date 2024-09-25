@@ -54,16 +54,16 @@ public class TypeMetaRegistries {
 
     public static TypeMetaRegistry fromMetas(List<TypeMeta> typeMetaList) {
         final IdentityHashMap<Class<?>, TypeMeta> clazz2MetaMap = new IdentityHashMap<>(typeMetaList.size());
-        final HashMap<TypeInfo<?>, TypeMeta> type2MetaMap = HashMap.newHashMap(typeMetaList.size()); // 不能使用IdentityMap...
+        final HashMap<TypeInfo, TypeMeta> type2MetaMap = HashMap.newHashMap(typeMetaList.size()); // 不能使用IdentityMap...
         final HashMap<String, TypeMeta> name2MetaMap = HashMap.newHashMap(typeMetaList.size());
         for (TypeMeta typeMeta : typeMetaList) {
-            TypeInfo<?> typeInfo = typeMeta.typeInfo;
+            TypeInfo typeInfo = typeMeta.typeInfo;
             if (type2MetaMap.containsKey(typeInfo)) {
                 throw new IllegalArgumentException("type %s is duplicate".formatted(typeInfo));
             }
             type2MetaMap.put(typeInfo, typeMeta);
-            // 非泛型额外注册
-            if (!typeInfo.isGenericType()) {
+            // 无泛型参数时额外索引一份
+            if (typeInfo.typeArgs.isEmpty()) {
                 if (clazz2MetaMap.containsKey(typeInfo.rawType)) {
                     throw new IllegalArgumentException("type %s is duplicate".formatted(typeInfo));
                 }
@@ -83,11 +83,11 @@ public class TypeMetaRegistries {
     private static class TypeMetaRegistryImpl implements TypeMetaRegistry {
 
         private final Map<Class<?>, TypeMeta> clazz2MetaMap;
-        private final Map<TypeInfo<?>, TypeMeta> type2MetaMap;
+        private final Map<TypeInfo, TypeMeta> type2MetaMap;
         private final Map<String, TypeMeta> name2MetaMap;
 
         TypeMetaRegistryImpl(Map<Class<?>, TypeMeta> clazz2MetaMap,
-                             Map<TypeInfo<?>, TypeMeta> type2MetaMap,
+                             Map<TypeInfo, TypeMeta> type2MetaMap,
                              Map<String, TypeMeta> name2MetaMap) {
             this.clazz2MetaMap = clazz2MetaMap;
             this.type2MetaMap = type2MetaMap;
@@ -102,7 +102,7 @@ public class TypeMetaRegistries {
 
         @Nullable
         @Override
-        public TypeMeta ofType(TypeInfo<?> type) {
+        public TypeMeta ofType(TypeInfo type) {
             if (type.typeArgs.isEmpty()) {
                 return clazz2MetaMap.get(type.rawType); // hash更快
             }

@@ -54,7 +54,7 @@ public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private Collection<Object> newCollection(TypeInfo<?> typeInfo, Supplier<? extends T> factory) {
+    private Collection<Object> newCollection(TypeInfo typeInfo, Supplier<? extends T> factory) {
         if (factory != null) {
             return (Collection<Object>) factory.get();
         }
@@ -67,7 +67,7 @@ public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
         return new ArrayList<>();
     }
 
-    private static TypeInfo<?> getElementTypeInfo(TypeInfo<?> typeInfo) {
+    private static TypeInfo getElementTypeInfo(TypeInfo typeInfo) {
         if (typeInfo.isGenericType()) {
             return typeInfo.getGenericArgument(0);
         }
@@ -75,17 +75,17 @@ public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo typeInfo, ObjectStyle style) {
         // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询K,V的类型，但Java是伪泛型...
-        TypeInfo<?> componentArgInfo = getElementTypeInfo(typeInfo);
+        TypeInfo componentArgInfo = getElementTypeInfo(typeInfo);
         for (Object e : instance) {
             writer.writeObject(null, e, componentArgInfo, null);
         }
     }
 
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends T> factory) {
-        TypeInfo<?> componentArgInfo = getElementTypeInfo(typeInfo);
+    public T readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends T> factory) {
+        TypeInfo componentArgInfo = getElementTypeInfo(typeInfo);
         Collection<Object> result = newCollection(typeInfo, factory);
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readObject(null, componentArgInfo));

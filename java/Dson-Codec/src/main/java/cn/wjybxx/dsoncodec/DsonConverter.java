@@ -55,7 +55,7 @@ public interface DsonConverter extends Converter {
      * @param style    缩进格式
      */
     @Nonnull
-    String writeAsDson(Object value, TypeInfo<?> typeInfo, ObjectStyle style);
+    String writeAsDson(Object value, TypeInfo typeInfo, ObjectStyle style);
 
     /**
      * 从数据源中读取一个对象
@@ -63,7 +63,7 @@ public interface DsonConverter extends Converter {
      * @param source   数据源
      * @param typeInfo 要读取的目标类型信息，部分实现支持投影
      */
-    <T> T readFromDson(CharSequence source, TypeInfo<T> typeInfo, @Nullable Supplier<? extends T> factory);
+    <T> T readFromDson(CharSequence source, TypeInfo typeInfo, @Nullable Supplier<? extends T> factory);
 
 
     /**
@@ -74,7 +74,7 @@ public interface DsonConverter extends Converter {
      * @param writer   用于接收输出
      * @param style    缩进格式
      */
-    void writeAsDson(Object value, TypeInfo<?> typeInfo, Writer writer, ObjectStyle style);
+    void writeAsDson(Object value, TypeInfo typeInfo, Writer writer, ObjectStyle style);
 
     /**
      * 从数据源中读取一个对象
@@ -83,7 +83,7 @@ public interface DsonConverter extends Converter {
      * @param source   用于支持大数据源
      * @param typeInfo 要读取的目标类型信息，部分实现支持投影
      */
-    <T> T readFromDson(Reader source, TypeInfo<T> typeInfo, @Nullable Supplier<? extends T> factory);
+    <T> T readFromDson(Reader source, TypeInfo typeInfo, @Nullable Supplier<? extends T> factory);
 
 
     /**
@@ -93,13 +93,13 @@ public interface DsonConverter extends Converter {
      * @param typeInfo 对象的类型信息
      * @return {@link DsonObject}或{@link DsonArray}
      */
-    DsonValue writeAsDsonValue(Object value, TypeInfo<?> typeInfo);
+    DsonValue writeAsDsonValue(Object value, TypeInfo typeInfo);
 
     /**
      * @param source   {@link DsonObject}或{@link DsonArray}
      * @param typeInfo 要读取的目标类型信息
      */
-    <T> T readFromDsonValue(DsonValue source, TypeInfo<T> typeInfo, @Nullable Supplier<? extends T> factory);
+    <T> T readFromDsonValue(DsonValue source, TypeInfo typeInfo, @Nullable Supplier<? extends T> factory);
 
     /**
      * 将Dson源解码为DsonValue中间对象 -- 只读取一个顶层对象。
@@ -128,7 +128,7 @@ public interface DsonConverter extends Converter {
         return writeAsDson(value, TypeInfo.OBJECT, (ObjectStyle) null);
     }
 
-    default String writeAsDson(Object value, TypeInfo<?> typeInfo) {
+    default String writeAsDson(Object value, TypeInfo typeInfo) {
         return writeAsDson(value, typeInfo, (ObjectStyle) null);
     }
 
@@ -136,19 +136,19 @@ public interface DsonConverter extends Converter {
         return readFromDson(source, TypeInfo.OBJECT, null);
     }
 
-    default <T> T readFromDson(CharSequence source, TypeInfo<T> typeInfo) {
+    default <T> T readFromDson(CharSequence source, TypeInfo typeInfo) {
         return readFromDson(source, typeInfo, null);
     }
 
-    default void writeAsDson(Object value, TypeInfo<?> typeInfo, Writer writer) {
+    default void writeAsDson(Object value, TypeInfo typeInfo, Writer writer) {
         writeAsDson(value, typeInfo, writer, null);
     }
 
-    default <T> T readFromDson(Reader source, TypeInfo<T> typeInfo) {
+    default <T> T readFromDson(Reader source, TypeInfo typeInfo) {
         return readFromDson(source, typeInfo, null);
     }
 
-    default <T> T readFromDsonValue(DsonValue source, TypeInfo<T> typeInfo) {
+    default <T> T readFromDsonValue(DsonValue source, TypeInfo typeInfo) {
         return readFromDsonValue(source, typeInfo, null);
     }
 

@@ -51,14 +51,14 @@ public class Int64Codec implements DsonCodec<Long> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Long instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, Long instance, TypeInfo typeInfo, ObjectStyle style) {
         NumberStyle numberStyle = (typeInfo.rawType == Long.class || typeInfo.rawType == long.class) ?
                 NumberStyle.SIMPLE : NumberStyle.TYPED;
         writer.writeLong(null, instance, WireType.VARINT, numberStyle);
     }
 
     @Override
-    public Long readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends Long> factory) {
+    public Long readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends Long> factory) {
         return reader.readLong(reader.getCurrentName());
     }
 

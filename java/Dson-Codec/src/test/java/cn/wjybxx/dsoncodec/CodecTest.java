@@ -78,7 +78,7 @@ public class CodecTest {
                 ),
                 List.of(
                         new CodecStructs.MyStructCodec(),
-                        new EnumCodec<>(Sex.class, Sex::forNumber)
+                        new EnumCodec<>(Sex.class)
                 ),
                 options);
 

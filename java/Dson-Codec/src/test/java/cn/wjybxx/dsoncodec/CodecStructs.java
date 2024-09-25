@@ -166,7 +166,7 @@ class CodecStructs {
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, MyStruct instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+        public void writeObject(DsonObjectWriter writer, MyStruct instance, TypeInfo typeInfo, ObjectStyle style) {
             NestStruct nestStruct = instance.nestStruct;
             writer.writeStartObject("nestStruct", nestStruct, TypeInfo.of(NestStruct.class));
             {
@@ -189,9 +189,8 @@ class CodecStructs {
             writer.writeObject("list", instance.list, TypeInfo.ARRAYLIST, null);
         }
 
-        @SuppressWarnings("unchecked")
         @Override
-        public MyStruct readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends MyStruct> factory) {
+        public MyStruct readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends MyStruct> factory) {
             reader.readStartObject("nestStruct");
             NestStruct nestStruct = new NestStruct(
                     reader.readInt("intVal"),

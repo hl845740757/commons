@@ -82,9 +82,9 @@ public interface DsonObjectReader extends AutoCloseable {
      * @param typeInfo 对象声明类型信息；可以与写入的类型不一致，
      */
     @Nullable
-    <T> T readObject(String name, TypeInfo<T> typeInfo, Supplier<? extends T> factory);
+    <T> T readObject(String name, TypeInfo typeInfo, Supplier<? extends T> factory);
 
-    default <T> T readObject(String name, TypeInfo<T> typeInfo) {
+    default <T> T readObject(String name, TypeInfo typeInfo) {
         return readObject(name, typeInfo, null);
     }
 

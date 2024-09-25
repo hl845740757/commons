@@ -32,8 +32,8 @@ namespace Wjybxx.Dson.Codec
 public class GenericCodecConfig : IGenericCodecConfig
 {
     /** 一个Type可能只有encoder而没有decoder，因此需要分开缓存  */
-    private readonly Dictionary<Type, Type> encoderTypeDic = new Dictionary<Type, Type>();
-    private readonly Dictionary<Type, Type> decoderTypeDic = new Dictionary<Type, Type>();
+    protected readonly Dictionary<Type, Type> encoderTypeDic = new Dictionary<Type, Type>();
+    protected readonly Dictionary<Type, Type> decoderTypeDic = new Dictionary<Type, Type>();
 
     public GenericCodecConfig() {
     }
@@ -116,11 +116,12 @@ public class GenericCodecConfig : IGenericCodecConfig
 
     /// <summary>
     /// <inheritdoc cref="IGenericCodecConfig.GetEncoderType"/>
+    /// --允许子类重写该方法以实现更多的匹配
     /// </summary>
     public virtual Type? GetEncoderType(Type genericTypeDefine) {
         if (!encoderTypeDic.TryGetValue(genericTypeDefine, out Type codecType)) {
             // 集合和字典兼容
-            if (DsonConverterUtils.IsCollection(genericTypeDefine)) {
+            if (DsonConverterUtils.IsCollection(genericTypeDefine, includeDictionary: false)) {
                 encoderTypeDic.TryGetValue(typeof(ICollection<>), out codecType);
             } else if (DsonConverterUtils.IsDictionary(genericTypeDefine)) {
                 encoderTypeDic.TryGetValue(typeof(IDictionary<,>), out codecType);

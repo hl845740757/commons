@@ -36,7 +36,7 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
     private final TypeMetaRegistry basicRegistry;
 
     private final ClassNamePool classNamePool = new ClassNamePool();
-    private final ConcurrentHashMap<TypeInfo<?>, TypeMeta> type2MetaDic = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<TypeInfo, TypeMeta> type2MetaDic = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, TypeMeta> name2MetaDic = new ConcurrentHashMap<>();
 
     public DynamicTypeMetaRegistry(TypeMetaRegistry basicRegistry) {
@@ -62,7 +62,7 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
     @Nullable
     @Override
-    public TypeMeta ofType(TypeInfo<?> type) {
+    public TypeMeta ofType(TypeInfo type) {
         TypeMeta typeMeta = basicRegistry.ofType(type);
         if (typeMeta != null) {
             return typeMeta;
@@ -114,7 +114,7 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
         // 走到这里，通常意味着clsName是数组或泛型 -- 别名可能导致断言失败
         ClassName className = classNamePool.parse(clsName);
 //        assert className.isArray() || className.isGeneric()
-        TypeInfo<?> type = typeOfClassName(className);
+        TypeInfo type = typeOfClassName(className);
 
         // 通过Type初始化TypeMeta，我们尽量合并TypeMeta -- clsName包含空白时不缓存
         typeMeta = ofType(type);
@@ -149,9 +149,9 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
      * 2.解析的开销较大，需要缓存最终结果。
      * 3.Java禁止递归的泛型
      */
-    private ClassName classNameOfType(TypeInfo<?> type) {
+    private ClassName classNameOfType(TypeInfo type) {
         if (type.isArray()) {
-            TypeInfo<?> rootElementType = TypeInfo.of(DsonConverterUtils.getRootComponentType(type.rawType), type.typeArgs);
+            TypeInfo rootElementType = TypeInfo.of(DsonConverterUtils.getRootComponentType(type.rawType), type.typeArgs);
             int arrayRank = DsonConverterUtils.getArrayRank(type.rawType);
             String clsName = classNameOfType(rootElementType) + DsonConverterUtils.arrayRankSymbol(arrayRank);
             return new ClassName(clsName);
@@ -163,11 +163,10 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
-            List<Class<?>> genericArguments = type.typeArgs;
+            List<TypeInfo> genericArguments = type.typeArgs;
             List<ClassName> typeArgClassNames = new ArrayList<>(genericArguments.size());
-            for (Class<?> genericArgument : genericArguments) {
-                TypeInfo<?> genericArgType = TypeInfo.of(genericArgument);
-                typeArgClassNames.add(classNameOfType(genericArgType));
+            for (TypeInfo genericArgument : genericArguments) {
+                typeArgClassNames.add(classNameOfType(genericArgument));
             }
             return new ClassName(typeMeta.mainClsName(), typeArgClassNames);
         }
@@ -187,10 +186,10 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
      * 2.解析的开销较大，需要缓存最终结果。
      * 3.Java禁止递归的泛型
      */
-    private TypeInfo<?> typeOfClassName(ClassName className) {
+    private TypeInfo typeOfClassName(ClassName className) {
         // 先解析泛型类，再构建数组
         int arrayRank = className.getArrayRank();
-        TypeInfo<?> elementType;
+        TypeInfo elementType;
         if (arrayRank > 0) {
             // 获取数组根元素的类型
             elementType = typeOfClassName(new ClassName(className.getRootElement(), className.typeArgs));
@@ -204,12 +203,12 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             // 解析泛型参数
             int typeArgsCount = className.typeArgs.size();
             if (typeArgsCount > 0) {
-                Class<?>[] typeParameters = new Class<?>[typeArgsCount];
+                TypeInfo[] typeParameters = new TypeInfo[typeArgsCount];
                 for (int index = 0; index < typeArgsCount; index++) {
                     ClassName genericArgClassName = className.typeArgs.get(index);
-                    typeParameters[index] = typeOfClassName(genericArgClassName).rawType;
+                    typeParameters[index] = typeOfClassName(genericArgClassName);
                 }
-                elementType = TypeInfo.of(elementType.rawType, typeParameters);
+                elementType = TypeInfo.ofGeneric(elementType.rawType, typeParameters);
             }
         }
         // 构建多维数组

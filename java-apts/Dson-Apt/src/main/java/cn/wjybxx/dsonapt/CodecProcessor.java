@@ -26,7 +26,6 @@ import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import java.time.LocalDateTime;
@@ -76,7 +75,7 @@ public class CodecProcessor extends MyAbstractProcessor {
     public static final String MNAME_NEW_INSTANCE = "newInstance";
     public static final String MNAME_READ_FIELDS = "readFields";
     public static final String MNAME_AFTER_DECODE = "afterDecode";
-    // EnumCode
+    // EnumCodec
     private static final String CNAME_ENUM_CODEC = "cn.wjybxx.dsoncodec.codecs.EnumCodec";
     public static final String CNAME_ENUM_LITE = "cn.wjybxx.base.EnumLite";
     public static final String MNAME_FOR_NUMBER = "forNumber";
@@ -113,14 +112,10 @@ public class CodecProcessor extends MyAbstractProcessor {
     public ExecutableElement beforeEncodeMethod;
     public ExecutableElement writeFieldsMethod;
 
-    // enumCodec
-    public TypeElement type_EnumCodec;
-
     // 特殊类型依赖
     // 基础类型
     public TypeMirror type_String;
     public TypeMirror type_Object;
-    public TypeMirror type_EnumLite;
     public TypeMirror type_Ptr;
     public TypeMirror type_LitePtr;
     public TypeMirror type_LocalDateTime;
@@ -181,14 +176,11 @@ public class CodecProcessor extends MyAbstractProcessor {
             beforeEncodeMethod = findCodecMethod(allMethodsWithInherit, MNAME_BEFORE_ENCODE, typeMirror_dsonWriter);
             writeFieldsMethod = findCodecMethod(allMethodsWithInherit, MNAME_WRITE_FIELDS, typeMirror_dsonWriter);
         }
-        // enumLiteCodec
-        type_EnumCodec = elementUtils.getTypeElement(CNAME_ENUM_CODEC);
 
         // 特殊类型依赖
         // 基础类型
         type_String = elementUtils.getTypeElement(String.class.getCanonicalName()).asType();
         type_Object = elementUtils.getTypeElement(Object.class.getCanonicalName()).asType();
-        type_EnumLite = elementUtils.getTypeElement(CNAME_ENUM_LITE).asType();
         type_Ptr = elementUtils.getTypeElement(CNAME_ObjectPtr).asType();
         type_LitePtr = elementUtils.getTypeElement(CNAME_ObjectLitePtr).asType();
         type_LocalDateTime = elementUtils.getTypeElement(LocalDateTime.class.getCanonicalName()).asType();
@@ -367,20 +359,17 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     private void generateCodec(Context context) {
         TypeElement typeElement = context.typeElement;
-        if (isEnumLite(typeElement.asType())) {
-            DeclaredType superDeclaredType = typeUtils.getDeclaredType(type_EnumCodec, typeUtils.erasure(typeElement.asType()));
-            initTypeBuilder(context, typeElement, superDeclaredType);
-            // 生成枚举Codec
-            new EnumCodecGenerator(this, typeElement, context).execute();
-        } else {
-            DeclaredType superDeclaredType = typeUtils.getDeclaredType(abstractCodecTypeElement, typeUtils.erasure(typeElement.asType()));
-            initTypeBuilder(context, typeElement, superDeclaredType);
-            // 先生成常量字段
-            SchemaGenerator schemaGenerator = new SchemaGenerator(this, context);
-            schemaGenerator.execute();
-            // 再生成PojoCodec
-            new PojoCodecGenerator(this, context).execute();
+        if (typeElement.getKind() != ElementKind.CLASS) {
+            return; // Enum
         }
+        DeclaredType superDeclaredType = typeUtils.getDeclaredType(abstractCodecTypeElement, typeUtils.erasure(typeElement.asType()));
+        initTypeBuilder(context, typeElement, superDeclaredType);
+        // 先生成常量字段
+        SchemaGenerator schemaGenerator = new SchemaGenerator(this, context);
+        schemaGenerator.execute();
+        // 再生成PojoCodec
+        new PojoCodecGenerator(this, context).execute();
+
         // 写入文件
         if (context.outPackage != null) {
             AptUtils.writeToFile(typeElement, context.typeBuilder, context.outPackage, messager, filer);
@@ -447,50 +436,11 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     private void checkTypeElement(Context context) {
         TypeElement typeElement = context.typeElement;
-        if (!isClassOrEnum(typeElement)) {
-            messager.printMessage(Diagnostic.Kind.ERROR, "unsupported type", typeElement);
-            return;
+        if (typeElement.getKind() != ElementKind.CLASS) {
+            return; // Enum
         }
-        if (typeElement.getKind() == ElementKind.ENUM) {
-            checkEnum(typeElement);
-        } else {
-            checkNormalClass(context);
-        }
+        checkNormalClass(context);
     }
-
-    // region 枚举检查
-
-    /**
-     * 检查枚举 - 要自动序列化的枚举，必须实现EnumLite接口且提供forNumber方法。
-     */
-    private void checkEnum(TypeElement typeElement) {
-        if (!isEnumLite(typeElement.asType())) {
-            messager.printMessage(Diagnostic.Kind.ERROR,
-                    "serializable enum must implement EnumLite",
-                    typeElement);
-            return;
-        }
-        if (!containNotPrivateStaticForNumberMethod(typeElement)) {
-            messager.printMessage(Diagnostic.Kind.ERROR,
-                    "serializable enum must contains a not private 'static T forNumber(int)' method!",
-                    typeElement);
-        }
-    }
-
-    /**
-     * 是否包含静态的非private的forNumber方法
-     */
-    private boolean containNotPrivateStaticForNumberMethod(TypeElement typeElement) {
-        return typeElement.getEnclosedElements().stream()
-                .filter(e -> e.getKind() == ElementKind.METHOD)
-                .map(e -> (ExecutableElement) e)
-                .anyMatch(e -> e.getModifiers().contains(Modifier.PUBLIC)
-                        && e.getModifiers().contains(Modifier.STATIC)
-                        && e.getParameters().size() == 1
-                        && e.getSimpleName().toString().equals(MNAME_FOR_NUMBER)
-                        && e.getParameters().get(0).asType().getKind() == TypeKind.INT);
-    }
-    // endregion
 
     // region 普通类检查
 
@@ -769,10 +719,6 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     protected boolean isByteArray(TypeMirror typeMirror) {
         return AptUtils.isByteArray(typeMirror);
-    }
-
-    protected boolean isEnumLite(TypeMirror typeMirror) {
-        return AptUtils.isSubTypeIgnoreTypeParameter(typeUtils, typeMirror, type_EnumLite);
     }
 
     protected boolean isMap(TypeMirror typeMirror) {

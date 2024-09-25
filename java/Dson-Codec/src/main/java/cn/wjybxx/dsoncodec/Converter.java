@@ -47,7 +47,7 @@ public interface Converter {
      * @param typeInfo 对象声明类型信息
      */
 
-    byte[] write(Object value, TypeInfo<?> typeInfo);
+    byte[] write(Object value, TypeInfo typeInfo);
 
     /**
      * 从数据源中读取一个对象
@@ -57,14 +57,14 @@ public interface Converter {
      * @param typeInfo 对象声明类型信息
      * @param factory  实例工厂
      */
-    <T> T read(byte[] source, TypeInfo<T> typeInfo, @Nullable Supplier<? extends T> factory);
+    <T> T read(byte[] source, TypeInfo typeInfo, @Nullable Supplier<? extends T> factory);
 
     /**
      * @param value    要写入的对象
      * @param typeInfo 对象声明类型信息
      * @param chunk    二进制块，写入的字节数设置到{@link DsonChunk}
      */
-    void write(Object value, TypeInfo<?> typeInfo, DsonChunk chunk);
+    void write(Object value, TypeInfo typeInfo, DsonChunk chunk);
 
     /**
      * @param chunk    二进制块，读取的字节数设置到{@link DsonChunk}
@@ -72,13 +72,13 @@ public interface Converter {
      * @param factory  实例工厂
      * @return 解码结果，顶层对象不应该是null
      */
-    <T> T read(DsonChunk chunk, TypeInfo<T> typeInfo, @Nullable Supplier<? extends T> factory);
+    <T> T read(DsonChunk chunk, TypeInfo typeInfo, @Nullable Supplier<? extends T> factory);
 
-    default <T> T read(byte[] source, TypeInfo<T> typeInfo) {
+    default <T> T read(byte[] source, TypeInfo typeInfo) {
         return read(new DsonChunk(source), typeInfo, null);
     }
 
-    default <T> T read(DsonChunk chunk, TypeInfo<T> typeInfo) {
+    default <T> T read(DsonChunk chunk, TypeInfo typeInfo) {
         return read(chunk, typeInfo, null);
     }
 
@@ -99,7 +99,7 @@ public interface Converter {
      * @param buffer   编码输出
      * @return 写入的字节数
      */
-    default int write(Object value, TypeInfo<?> typeInfo, byte[] buffer) {
+    default int write(Object value, TypeInfo typeInfo, byte[] buffer) {
         DsonChunk chunk = new DsonChunk(buffer);
         write(value, typeInfo, chunk);
         return chunk.getUsed();
@@ -114,7 +114,7 @@ public interface Converter {
      * @param typeInfo 用于确定返回结果类型
      * @param factory  实例工厂
      */
-    default <T> T cloneObject(Object value, TypeInfo<T> typeInfo, @Nullable Supplier<? extends T> factory) {
+    default <T> T cloneObject(Object value, TypeInfo typeInfo, @Nullable Supplier<? extends T> factory) {
         if (value == null) {
             return null;
         }
@@ -123,7 +123,7 @@ public interface Converter {
         return read(data, typeInfo, factory);
     }
 
-    default <T> T cloneObject(Object value, TypeInfo<T> typeInfo) {
+    default <T> T cloneObject(Object value, TypeInfo typeInfo) {
         return cloneObject(value, typeInfo, null);
     }
 

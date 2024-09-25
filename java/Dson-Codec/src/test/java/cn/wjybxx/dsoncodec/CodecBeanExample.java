@@ -92,7 +92,7 @@ public class CodecBeanExample {
     }
 
     /** 生成代码自动调用 */
-    public static CodecBeanExample newInstance(DsonObjectReader reader, TypeInfo<?> typeInfo) {
+    public static CodecBeanExample newInstance(DsonObjectReader reader, TypeInfo typeInfo) {
         return new CodecBeanExample();
     }
 
