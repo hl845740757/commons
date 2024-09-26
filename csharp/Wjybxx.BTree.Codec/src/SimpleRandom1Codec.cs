@@ -35,7 +35,7 @@ public sealed class SimpleRandom1Codec<T> : AbstractDsonCodec<SimpleRandom<T>> w
     public const string names_flags = "flags";
     public const string names_p = "p";
 
-    public override Type GetEncoderClass() => typeof(SimpleRandom<T>);
+    public override Type GetEncoderType() => typeof(SimpleRandom<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref SimpleRandom<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

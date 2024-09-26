@@ -151,7 +151,7 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
      */
     private ClassName classNameOfType(TypeInfo type) {
         if (type.isArray()) {
-            TypeInfo rootElementType = TypeInfo.of(DsonConverterUtils.getRootComponentType(type.rawType), type.typeArgs);
+            TypeInfo rootElementType = TypeInfo.of(DsonConverterUtils.getRootComponentType(type.rawType), type.genericArgs);
             int arrayRank = DsonConverterUtils.getArrayRank(type.rawType);
             String clsName = classNameOfType(rootElementType) + DsonConverterUtils.arrayRankSymbol(arrayRank);
             return new ClassName(clsName);
@@ -163,7 +163,7 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
-            List<TypeInfo> genericArguments = type.typeArgs;
+            List<TypeInfo> genericArguments = type.genericArgs;
             List<ClassName> typeArgClassNames = new ArrayList<>(genericArguments.size());
             for (TypeInfo genericArgument : genericArguments) {
                 typeArgClassNames.add(classNameOfType(genericArgument));

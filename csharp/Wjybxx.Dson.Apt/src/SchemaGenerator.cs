@@ -98,7 +98,7 @@ internal class SchemaGenerator
         //     PropertyInfo propertyInfo = (PropertyInfo)memberInfo;
         //     declaredType = propertyInfo.PropertyType;
         // }
-        // C#6泛型不支持协变
+        // dotnet 6泛型不支持协变
         ClassName factoryFieldType = className_Func.WithActualTypeVariables(TypeName.Get(props.implType!));
         return FieldSpec.NewBuilder(factoryFieldType, GetFactoryFieldName(memberInfo.Name),
                 Modifiers.Public | Modifiers.Static | Modifiers.Readonly)

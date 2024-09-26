@@ -37,7 +37,7 @@ public sealed class UntilCond1Codec<T> : AbstractDsonCodec<UntilCond<T>> where T
     public const string names_maxLoop = "maxLoop";
     public const string names_cond = "cond";
 
-    public override Type GetEncoderClass() => typeof(UntilCond<T>);
+    public override Type GetEncoderType() => typeof(UntilCond<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref UntilCond<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

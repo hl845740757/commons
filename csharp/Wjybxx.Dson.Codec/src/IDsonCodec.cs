@@ -30,13 +30,13 @@ public interface IDsonCodec
     /// Codec关联的类型
     /// </summary>
     /// <returns></returns>
-    Type GetEncoderClass();
+    Type GetEncoderType();
 
     /// <summary>
     /// 该方法用于告知<see cref="DsonCodecImpl{T}"/>是否自动调用以下方法：
     /// <see cref="IDsonObjectWriter.WriteStartObject()"/>
     /// <see cref="IDsonObjectWriter.WriteEndObject"/>
-    /// <see cref="IDsonObjectReader.ReadStartObject()"/>
+    /// <see cref="IDsonObjectReader.ReadStartObject(System.Type)"/>
     /// <see cref="IDsonObjectReader.ReadEndObject"/>
     /// 
     /// Q：禁用该属性有什么用？
@@ -51,7 +51,7 @@ public interface IDsonCodec
     /// 1.默认情况下，Map是被看做普通的数组的
     /// 2.该属性只有<see cref="AutoStartEnd"/>为true的时候有效。
     /// </summary>
-    bool IsWriteAsArray => DsonConverterUtils.IsEncodeAsArray(GetEncoderClass());
+    bool IsWriteAsArray => DsonConverterUtils.IsEncodeAsArray(GetEncoderType());
 }
 
 /// <summary>
@@ -66,10 +66,10 @@ public interface IDsonCodec
 public interface IDsonCodec<T> : IDsonCodec
 {
     /// <summary>
-    /// C#是真泛型，因此T就是其
+    /// C#是真泛型，因此T通常就是其编解码类型
     /// </summary>
     /// <returns></returns>
-    Type IDsonCodec.GetEncoderClass() => typeof(T);
+    Type IDsonCodec.GetEncoderType() => typeof(T);
 
     /// <summary>
     /// 由于序列化的时候，可能触发实例数据变化，为支持结构体序列化，因此需要使用ref

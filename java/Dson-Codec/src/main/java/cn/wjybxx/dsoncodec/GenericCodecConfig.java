@@ -23,7 +23,7 @@ import java.util.Map;
  * @author wjybxx
  * date - 2024/9/25
  */
-public class GenericCodecConfig {
+public class GenericCodecConfig implements IGenericCodecConfig {
 
     /** 一个Type可能只有encoder而没有decoder，因此需要分开缓存 */
     private final Map<Class<?>, Class<?>> encoderTypeDic = new IdentityHashMap<>();

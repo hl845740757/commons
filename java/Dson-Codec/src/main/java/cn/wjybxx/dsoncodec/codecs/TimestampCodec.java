@@ -32,19 +32,29 @@ import java.util.function.Supplier;
  */
 public class TimestampCodec implements DsonCodec<Timestamp> {
 
-    @Nonnull
     @Override
-    public Class<Timestamp> getEncoderClass() {
-        return Timestamp.class;
+    public boolean isWriteAsArray() {
+        return false;
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Timestamp instance, TypeInfo typeInfo, ObjectStyle style) {
+    public boolean autoStartEnd() {
+        return false;
+    }
+
+    @Nonnull
+    @Override
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(Timestamp.class);
+    }
+
+    @Override
+    public void writeObject(DsonObjectWriter writer, Timestamp instance, TypeInfo declaredType, ObjectStyle style) {
         writer.writeTimestamp(null, instance);
     }
 
     @Override
-    public Timestamp readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends Timestamp> factory) {
+    public Timestamp readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Timestamp> factory) {
         return reader.readTimestamp(reader.getCurrentName());
     }
 }

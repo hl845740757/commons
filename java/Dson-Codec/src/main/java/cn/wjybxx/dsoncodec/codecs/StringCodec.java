@@ -46,17 +46,17 @@ public class StringCodec implements DsonCodec<String> {
 
     @Nonnull
     @Override
-    public Class<String> getEncoderClass() {
-        return String.class;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.STRING;
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, String instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, String instance, TypeInfo declaredType, ObjectStyle style) {
         writer.writeString(null, instance, StringStyle.AUTO);
     }
 
     @Override
-    public String readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends String> factory) {
+    public String readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends String> factory) {
         return reader.readString(reader.getCurrentName());
     }
 

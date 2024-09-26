@@ -46,20 +46,20 @@ public class Int32Codec implements DsonCodec<Integer> {
 
     @Nonnull
     @Override
-    public Class<Integer> getEncoderClass() {
-        return Integer.class;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.BOXED_INT;
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Integer instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, Integer instance, TypeInfo declaredType, ObjectStyle style) {
         // 由字典或List调用时，declaredType可能是匹配的
-        NumberStyle numberStyle = (typeInfo.rawType == Integer.class || typeInfo.rawType == int.class) ?
+        NumberStyle numberStyle = (declaredType.rawType == Integer.class || declaredType.rawType == int.class) ?
                 NumberStyle.SIMPLE : NumberStyle.TYPED;
         writer.writeInt(null, instance, WireType.VARINT, numberStyle);
     }
 
     @Override
-    public Integer readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends Integer> factory) {
+    public Integer readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Integer> factory) {
         return reader.readInt(reader.getCurrentName());
     }
 

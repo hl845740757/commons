@@ -41,7 +41,7 @@ public class DefaultDsonObjectReader : AbstractDsonObjectReader
             }
             return reader.CurrentDsonType != DsonType.EndOfObject;
         }
-        
+
         if (name == null) throw new ArgumentNullException(nameof(name));
         if (reader.IsAtValue) {
             return reader.CurrentName == name;

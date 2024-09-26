@@ -36,7 +36,7 @@ public sealed class TaskEntry1Codec<T> : AbstractDsonCodec<TaskEntry<T>> where T
     public const string names_rootTask = "rootTask";
     public const string names_type = "type";
 
-    public override Type GetEncoderClass() => typeof(TaskEntry<T>);
+    public override Type GetEncoderType() => typeof(TaskEntry<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref TaskEntry<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

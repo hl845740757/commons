@@ -34,27 +34,18 @@ public abstract class AbstractDsonCodec<T> implements DsonCodec<T> {
 
     @Nonnull
     @Override
-    public abstract Class<T> getEncoderClass();
+    public abstract TypeInfo getEncoderType();
 
-    @Override
-    public boolean autoStartEnd() {
-        return true;
-    }
-
-    @Override
-    public boolean isWriteAsArray() {
-        return DsonConverterUtils.isEncodeAsArray(getEncoderClass());
-    }
     // endregion
 
     // region write
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
         if (writer.options().enableBeforeEncode) {
-            beforeEncode(writer, instance, typeInfo, style);
+            beforeEncode(writer, instance, declaredType, style);
         }
-        writeFields(writer, instance, typeInfo, style);
+        writeFields(writer, instance, declaredType, style);
     }
 
     /**
@@ -73,11 +64,11 @@ public abstract class AbstractDsonCodec<T> implements DsonCodec<T> {
     // region read
 
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends T> factory) {
-        final T instance = factory != null ? factory.get() : newInstance(reader, typeInfo);
-        readFields(reader, instance, typeInfo);
+    public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
+        final T instance = factory != null ? factory.get() : newInstance(reader, declaredType);
+        readFields(reader, instance, declaredType);
         if (reader.options().enableAfterDecode) {
-            afterDecode(reader, instance, typeInfo);
+            afterDecode(reader, instance, declaredType);
         }
         return instance;
     }

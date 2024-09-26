@@ -36,18 +36,28 @@ import java.util.function.Supplier;
 @DsonCodecScanIgnore
 public class MapCodec<T extends Map> implements DsonCodec<T> {
 
-    final Class<T> clazz;
-    final Supplier<? extends T> factory;
+    protected final TypeInfo typeInfo;
+    protected final Supplier<? extends T> factory;
+    private final TypeInfo keyTypeInfo;
+    private final TypeInfo valueTypeInfo;
 
     @SuppressWarnings("unchecked")
-    public MapCodec() {
-        clazz = (Class<T>) Map.class;
-        factory = null;
+    public MapCodec(TypeInfo typeInfo) {
+        this.typeInfo = Objects.requireNonNull(typeInfo);
+
+        Class<T> rawType = (Class<T>) typeInfo.rawType;
+        this.factory = DsonConverterUtils.tryNoArgConstructorToSupplier(rawType);
+        this.keyTypeInfo = DsonConverterUtils.findTypeParameter(rawType, Map.class, "K");
+        this.valueTypeInfo = DsonConverterUtils.findTypeParameter(rawType, Map.class, "V");
     }
 
-    public MapCodec(Class<T> clazz, Supplier<? extends T> factory) {
-        this.clazz = Objects.requireNonNull(clazz);
+    public MapCodec(TypeInfo typeInfo, Supplier<? extends T> factory) {
+        this.typeInfo = Objects.requireNonNull(typeInfo);
         this.factory = factory;
+
+        @SuppressWarnings("unchecked") Class<T> rawType = (Class<T>) typeInfo.rawType;
+        this.keyTypeInfo = DsonConverterUtils.findTypeParameter(rawType, Map.class, "K");
+        this.valueTypeInfo = DsonConverterUtils.findTypeParameter(rawType, Map.class, "V");
     }
 
     @Override
@@ -57,12 +67,12 @@ public class MapCodec<T extends Map> implements DsonCodec<T> {
 
     @Nonnull
     @Override
-    public Class<T> getEncoderClass() {
-        return clazz;
+    public TypeInfo getEncoderType() {
+        return typeInfo;
     }
 
     @SuppressWarnings("unchecked")
-    private Map<Object, Object> newMap(TypeInfo typeInfo, Supplier<? extends T> factory) {
+    protected Map<Object, Object> newMap(TypeInfo declaredType, Supplier<? extends T> factory) {
         if (factory != null) {
             return (Map<Object, Object>) factory.get();
         }
@@ -72,23 +82,35 @@ public class MapCodec<T extends Map> implements DsonCodec<T> {
         return new LinkedHashMap<>();
     }
 
-    @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo typeInfo, ObjectStyle style) {
-        // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询K,V的类型，但Java是伪泛型...
-        TypeInfo keyArgInfo;
-        TypeInfo valueArgInfo;
-        if (typeInfo.typeArgs.size() == 2
-                && typeInfo.isGenericType()) {
-            keyArgInfo = typeInfo.getGenericArgument(0);
-            valueArgInfo = typeInfo.getGenericArgument(1);
-        } else {
-            keyArgInfo = DsonConverterUtils.getKeyActualTypeInfo(typeInfo.rawType);
-            valueArgInfo = DsonConverterUtils.getValueActualTypeInfo(typeInfo.rawType);
+    protected TypeInfo getKeyTypeInfo(TypeInfo declaredType) {
+        if (typeInfo.genericArgs.size() == 2) {
+            return typeInfo.getGenericArgument(0);
         }
+        if (declaredType.genericArgs.size() == 2) {
+            return declaredType.getGenericArgument(0);
+        }
+        return keyTypeInfo;
+    }
+
+    protected TypeInfo getValueTypeInfo(TypeInfo declaredType) {
+        if (typeInfo.genericArgs.size() == 2) {
+            return typeInfo.getGenericArgument(1);
+        }
+        if (declaredType.genericArgs.size() == 2) {
+            return declaredType.getGenericArgument(1);
+        }
+        return valueTypeInfo;
+    }
+
+    @Override
+    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
+        // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询K,V的类型，但Java是伪泛型...
+        TypeInfo keyTypeInfo = getKeyTypeInfo(declaredType);
+        TypeInfo valueTypeInfo = getValueTypeInfo(declaredType);
 
         @SuppressWarnings("unchecked") Set<Map.Entry<?, ?>> entrySet = instance.entrySet();
         if (writer.options().writeMapAsDocument) {
-            writer.writeStartObject(instance, typeInfo, style);
+            writer.writeStartObject(instance, declaredType, style);
             for (Map.Entry<?, ?> entry : entrySet) {
                 String keyString = writer.encodeKey(entry.getKey());
                 Object value = entry.getValue();
@@ -97,56 +119,50 @@ public class MapCodec<T extends Map> implements DsonCodec<T> {
                     writer.writeName(keyString);
                     writer.writeNull(keyString);
                 } else {
-                    writer.writeObject(keyString, value, valueArgInfo, null);
+                    writer.writeObject(keyString, value, valueTypeInfo, null);
                 }
             }
             writer.writeEndObject();
         } else {
-            writer.writeStartArray(instance, typeInfo, style);
+            writer.writeStartArray(instance, declaredType, style);
             for (Map.Entry<?, ?> entry : entrySet) {
-                writer.writeObject(null, entry.getKey(), keyArgInfo, null);
-                writer.writeObject(null, entry.getValue(), valueArgInfo, null);
+                writer.writeObject(null, entry.getKey(), keyTypeInfo, null);
+                writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
             }
             writer.writeEndArray();
         }
     }
 
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends T> factory) {
-        TypeInfo keyArgInfo;
-        TypeInfo valueArgInfo;
-        if (typeInfo.typeArgs.size() == 2 && typeInfo.isGenericType()) {
-            keyArgInfo = typeInfo.getGenericArgument(0);
-            valueArgInfo = typeInfo.getGenericArgument(1);
-        } else {
-            keyArgInfo = DsonConverterUtils.getKeyActualTypeInfo(typeInfo.rawType);
-            valueArgInfo = DsonConverterUtils.getValueActualTypeInfo(typeInfo.rawType);
-        }
+    public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
+        TypeInfo keyTypeInfo = getKeyTypeInfo(declaredType);
+        TypeInfo valueTypeInfo = getValueTypeInfo(declaredType);
 
-        Map<Object, Object> result = newMap(typeInfo, factory);
+        Map<Object, Object> result = newMap(declaredType, factory);
         if (reader.options().writeMapAsDocument) {
-            reader.readStartObject();
+            reader.readStartObject(declaredType);
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
-                Object key = reader.decodeKey(keyString, keyArgInfo.rawType);
-                Object value = reader.readObject(keyString, valueArgInfo);
+                Object key = reader.decodeKey(keyString, keyTypeInfo.rawType);
+                Object value = reader.readObject(keyString, valueTypeInfo);
                 result.put(key, value);
             }
             reader.readEndObject();
         } else {
-            reader.readStartArray();
+            reader.readStartArray(declaredType);
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
-                Object key = reader.readObject(null, keyArgInfo);
-                Object value = reader.readObject(null, valueArgInfo);
+                Object key = reader.readObject(null, keyTypeInfo);
+                Object value = reader.readObject(null, valueTypeInfo);
                 result.put(key, value);
             }
             reader.readEndArray();
         }
         CollectionConverter collectionConverter = reader.options().collectionConverter;
         if (collectionConverter != null) {
-            result = collectionConverter.convertMap(typeInfo, result);
+            result = collectionConverter.convertMap(declaredType, result);
         }
-        return clazz.cast(result);
+        @SuppressWarnings("unchecked") Class<T> rawType = (Class<T>) typeInfo.rawType;
+        return rawType.cast(result);
     }
 
 }

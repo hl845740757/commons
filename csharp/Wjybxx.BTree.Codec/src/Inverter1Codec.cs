@@ -35,7 +35,7 @@ public sealed class Inverter1Codec<T> : AbstractDsonCodec<Inverter<T>> where T :
     public const string names_flags = "flags";
     public const string names_child = "child";
 
-    public override Type GetEncoderClass() => typeof(Inverter<T>);
+    public override Type GetEncoderType() => typeof(Inverter<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref Inverter<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

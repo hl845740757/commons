@@ -46,7 +46,7 @@ public abstract class CollectionCodec
         Type eleDeclaredType = typeof(T);
 
         ICollection<T> result = NewCollection(declaredType, factory);
-        reader.ReadStartArray();
+        reader.ReadStartArray(declaredType);
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             T value = reader.ReadObject<T>(null, eleDeclaredType);
             result.Add(value);

@@ -28,17 +28,15 @@ namespace Wjybxx.Dson.Codec
 /// 这可能增加类的数量，但代码的复杂度更低，更易于使用。
 /// 
 /// 注意：
-/// 1. 数组和泛型是不同的，数组都对应<see cref="ArrayCodec{T}"/>，因此不需要再这里存储。
-/// 2. 在dotnet6/7中不支持泛型协变和逆变，因此 Codec`1[IList`1[string]] 是不能赋值给 Codec`1[List`1[String]]的。
+/// 1. Codec需要和泛型定义类有相同的泛型参数列表。
+/// 2. 不会频繁查询，因此不必太在意匹配算法的效率。
+/// 3. 数组和泛型是不同的，数组都对应<see cref="ArrayCodec{T}"/>，因此不需要在这里存储。
+/// 4. 在dotnet6/7中不支持泛型协变和逆变，因此 Codec`1[IList`1[string]] 是不能赋值给 Codec`1[List`1[String]]的。
 /// </summary>
 public interface IGenericCodecConfig
 {
     /// <summary>
     /// 获取可以编码目标泛型类的Codec原型 -- 可以向上匹配。
-    /// 
-    /// 注意：
-    /// 1.Codec需要和泛型定义类有相同的泛型参数列表。
-    /// 2.不会频繁查询，因此不必太在意匹配算法的效率。
     /// </summary>
     /// <param name="genericTypeDefine">目标泛型类</param>
     /// <returns>编码器类型</returns>
@@ -46,8 +44,6 @@ public interface IGenericCodecConfig
 
     /// <summary>
     /// 获取可以解码目标泛型类的Codec原型 -- 精确匹配。
-    ///
-    /// 注意：Codec需要和泛型定义类有相同的泛型参数列表。
     /// </summary>
     /// <param name="genericTypeDefine">目标泛型类</param>
     /// <returns>解码器类型</returns>

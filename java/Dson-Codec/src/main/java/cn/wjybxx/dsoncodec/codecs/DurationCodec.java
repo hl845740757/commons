@@ -34,6 +34,7 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class DurationCodec implements DsonCodec<Duration> {
+
     @Override
     public boolean isWriteAsArray() {
         return false;
@@ -46,17 +47,17 @@ public class DurationCodec implements DsonCodec<Duration> {
 
     @Nonnull
     @Override
-    public Class<Duration> getEncoderClass() {
-        return Duration.class;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(Duration.class);
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Duration instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, Duration instance, TypeInfo declaredType, ObjectStyle style) {
         writer.writeTimestamp(null, Timestamp.ofDuration(instance));
     }
 
     @Override
-    public Duration readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends Duration> factory) {
+    public Duration readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Duration> factory) {
         Timestamp timestamp = reader.readTimestamp(reader.getCurrentName());
         return Duration.ofSeconds(timestamp.getSeconds(), timestamp.getNanos());
     }

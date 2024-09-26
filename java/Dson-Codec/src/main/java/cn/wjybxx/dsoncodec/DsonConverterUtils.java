@@ -173,24 +173,24 @@ public final class DsonConverterUtils {
 
         @Nullable
         @Override
-        public <T> DsonCodecImpl<? super T> getEncoder(Class<T> clazz, DsonCodecRegistry rootRegistry) {
-            DsonCodecImpl<?> codec = codecMap.get(clazz);
+        public <T> DsonCodecImpl<? super T> getEncoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry) {
+            DsonCodecImpl<?> codec = codecMap.get(typeInfo);
             if (codec != null) return (DsonCodecImpl<T>) codec;
 
-            if (clazz.isArray()) return (DsonCodecImpl<T>) objectArrayCodec;
-            if (Collection.class.isAssignableFrom(clazz)) return (DsonCodecImpl<? super T>) collectionCodec;
-            if (Map.class.isAssignableFrom(clazz)) return (DsonCodecImpl<? super T>) mapCodec;
+            if (typeInfo.isArray()) return (DsonCodecImpl<T>) objectArrayCodec;
+            if (Collection.class.isAssignableFrom(typeInfo)) return (DsonCodecImpl<? super T>) collectionCodec;
+            if (Map.class.isAssignableFrom(typeInfo)) return (DsonCodecImpl<? super T>) mapCodec;
             return null;
         }
 
         @Nullable
         @Override
-        public <T> DsonCodecImpl<T> getDecoder(Class<T> clazz, DsonCodecRegistry rootRegistry) {
-            DsonCodecImpl<?> codec = codecMap.get(clazz);
+        public <T> DsonCodecImpl<T> getDecoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry) {
+            DsonCodecImpl<?> codec = codecMap.get(typeInfo);
             if (codec != null) return (DsonCodecImpl<T>) codec;
             // java是泛型擦擦，因此我们可以这么干 -- Codec创建的实例可以向下转型目标类型
-            if (clazz.isAssignableFrom(LinkedHashMap.class)) return (DsonCodecImpl<T>) mapCodec;
-            if (clazz.isAssignableFrom(ArrayList.class)) return (DsonCodecImpl<T>) collectionCodec;
+            if (typeInfo.rawType.isAssignableFrom(LinkedHashMap.class)) return (DsonCodecImpl<T>) mapCodec;
+            if (typeInfo.rawType.isAssignableFrom(ArrayList.class)) return (DsonCodecImpl<T>) collectionCodec;
             return null;
         }
     }
@@ -242,11 +242,10 @@ public final class DsonConverterUtils {
 
     /** 判断是否可继承的开销比较大，我们需要缓存测试结果 */
     private static final ConcurrentHashMap<ClassPair, Boolean> inheritableResultCache = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Class<?>, List<TypeInfo>> actualTypeArgsCache = new ConcurrentHashMap<>();
 
     /** 判断要编码的类型是否可继承声明类型的泛型参数 */
     public static boolean canInheritTypeArgs(Class<?> encoderClass, TypeInfo typeInfo) {
-        return typeInfo.typeArgs.size() > 0 && canInheritTypeArgs(encoderClass, typeInfo.rawType);
+        return typeInfo.genericArgs.size() > 0 && canInheritTypeArgs(encoderClass, typeInfo.rawType);
     }
 
     /** 测试当前类是否可继承目标类的泛型参数 */
@@ -304,62 +303,15 @@ public final class DsonConverterUtils {
         return true;
     }
 
-    /** 获取传递给集合的元素类型；不存在则返回{@link TypeInfo#OBJECT} */
-    @SuppressWarnings("unchecked")
-    public static <T> TypeInfo getElementActualTypeInfo(Class<T> rawType) {
-        if (rawType == Object.class || rawType == Collection.class || !Collection.class.isAssignableFrom(rawType)) {
-            return TypeInfo.OBJECT;
-        }
-        List<TypeInfo> actualTypeArgs = findActualTypeArgs(rawType, (Class<? super T>) Collection.class);
-        return actualTypeArgs.isEmpty() ? TypeInfo.OBJECT : actualTypeArgs.get(0);
-    }
-
-    /** 获取传递给字典的Key类型；不存在则返回{@link TypeInfo#OBJECT} */
-    @SuppressWarnings("unchecked")
-    public static <T> TypeInfo getKeyActualTypeInfo(Class<T> rawType) {
-        if (rawType == Object.class || rawType == Map.class || !Map.class.isAssignableFrom(rawType)) {
-            return TypeInfo.OBJECT;
-        }
-        List<TypeInfo> actualTypeArgs = findActualTypeArgs(rawType, (Class<? super T>) Map.class);
-        return actualTypeArgs.isEmpty() ? TypeInfo.OBJECT : actualTypeArgs.get(0);
-    }
-
-    /** 获取传递给字典的Value类型；不存在则返回{@link TypeInfo#OBJECT} */
-    @SuppressWarnings("unchecked")
-    public static <T> TypeInfo getValueActualTypeInfo(Class<T> rawType) {
-        if (rawType == Object.class || rawType == Map.class || !Map.class.isAssignableFrom(rawType)) {
-            return TypeInfo.OBJECT;
-        }
-        List<TypeInfo> actualTypeArgs = findActualTypeArgs(rawType, (Class<? super T>) Map.class);
-        return actualTypeArgs.isEmpty() ? TypeInfo.OBJECT : actualTypeArgs.get(1);
-    }
-
-    private static <T> List<TypeInfo> findActualTypeArgs(Class<T> rawType, Class<? super T> targetType) {
-        List<TypeInfo> actualTypeArgs = actualTypeArgsCache.get(rawType);
-        if (actualTypeArgs != null) {
-            return actualTypeArgs;
-        }
-        Type genericSuperType = TypeParameterFinder.getGenericSuperType(rawType, targetType);
-        List<TypeInfo> result;
-        if (genericSuperType instanceof ParameterizedType parameterizedType) {
-            Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-            TypeInfo[] typeInfos = new TypeInfo[actualTypeArguments.length];
-            for (int idx = 0; idx < actualTypeArguments.length; idx++) {
-                Type actualTypeArgument = actualTypeArguments[idx];
-                if (actualTypeArgument instanceof Class<?> cls) {
-                    typeInfos[idx] = TypeInfo.of(cls); // 泛型参数是Class
-                } else if (actualTypeArgument instanceof ParameterizedType p2 && p2.getRawType() instanceof Class<?> cls2) {
-                    typeInfos[idx] = TypeInfo.of(cls2); // 泛型参数是另一个泛型Class
-                } else {
-                    typeInfos[idx] = TypeInfo.OBJECT;
-                }
+    public static <T> TypeInfo findTypeParameter(Class<T> thisClass, Class<? super T> superClazz, String typeParameterName) {
+        TypeVariable<Class<T>>[] typeParameters = thisClass.getTypeParameters();
+        for (TypeVariable<Class<T>> typeParameter : typeParameters) {
+            if (typeParameter.getName().equals(typeParameterName)) {
+                return TypeInfo.OBJECT; // TODO 尝试擦除泛型，有点点麻烦
             }
-            result = List.of(typeInfos);
-        } else {
-            result = List.of();
         }
-        actualTypeArgsCache.put(rawType, result);
-        return result;
+        Class<?> typeParameter = TypeParameterFinder.findTypeParameterUnsafe(thisClass, superClazz, typeParameterName);
+        return TypeInfo.of(typeParameter);
     }
 
     private static class ClassPair {
@@ -523,31 +475,18 @@ public final class DsonConverterUtils {
         return supplier;
     }
 
-    /** @param lookup 外部缓存实例，避免每次创建或查找的开销 */
-    public static <T extends Collection<?>> CollectionCodec<T> createCollectionCodec(MethodHandles.Lookup lookup, Class<T> clazz) {
+    /** 尝试将无参构造函数转换为Supplier */
+    @Nullable
+    public static <T> Supplier<T> tryNoArgConstructorToSupplier(Class<T> clazz) {
         try {
             Constructor<T> constructor = clazz.getConstructor();
-            Supplier<T> factory = noArgConstructorToSupplier(lookup, constructor);
-            return new CollectionCodec<>(clazz, factory);
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
+            MethodHandles.Lookup lookup = MethodHandles.lookup();
+            return noArgConstructorToSupplier(lookup, constructor);
+        } catch (Throwable ex) {
+            return null;
         }
     }
 
-    /** @param lookup 外部缓存实例，避免每次创建或查找的开销 */
-    public static <T extends Map<?, ?>> MapCodec<T> createMapCodec(MethodHandles.Lookup lookup, Class<T> clazz) {
-        try {
-            Constructor<T> constructor = clazz.getConstructor();
-            Supplier<T> factory = noArgConstructorToSupplier(lookup, constructor);
-            return new MapCodec<>(clazz, factory);
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
-    }
     // endregion
 
 }

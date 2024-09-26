@@ -77,10 +77,9 @@ public interface IDsonObjectReader : IDisposable
     /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
-    /// <param name="skipName">是否跳过name</param>
     /// <typeparam name="T">返回值类型，避免装箱</typeparam>
     /// <returns></returns>
-    T ReadObject<T>(string? name, Type declaredType, Func<T>? factory = null, bool skipName = false);
+    T ReadObject<T>(string? name, Type declaredType, Func<T>? factory = null);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     T ReadObject<T>(string? name) {
@@ -123,11 +122,12 @@ public interface IDsonObjectReader : IDisposable
 
     string CurrentName { get; }
 
-    void ReadStartObject();
+    /** typeInfo用于传递给嵌套对象，以及暂存到Context */
+    void ReadStartObject(Type declaredType);
 
     void ReadEndObject();
 
-    void ReadStartArray();
+    void ReadStartArray(Type declaredType);
 
     void ReadEndArray();
 
@@ -158,10 +158,11 @@ public interface IDsonObjectReader : IDisposable
     /// 
     /// </summary>
     /// <param name="name">字段的名字</param>
+    /// <param name="declaredType">对象的类型</param>
     /// <returns>如果存在对应的字段则返回true</returns>
-    bool ReadStartObject(string? name) {
+    bool ReadStartObject(string? name, Type declaredType) {
         if (ReadName(name)) {
-            ReadStartObject();
+            ReadStartObject(declaredType);
             return true;
         }
         return false;
@@ -171,10 +172,11 @@ public interface IDsonObjectReader : IDisposable
     /// 
     /// </summary>
     /// <param name="name">字段的名字</param>
+    /// <param name="declaredType">对象的类型</param>
     /// <returns>如果存在对应的字段则返回true</returns>
-    bool ReadStartArray(string? name) {
+    bool ReadStartArray(string? name, Type declaredType) {
         if (ReadName(name)) {
-            ReadStartArray();
+            ReadStartArray(declaredType);
             return true;
         }
         return false;

@@ -37,17 +37,17 @@ public class ByteArrayCodec implements DsonCodec<byte[]> {
 
     @Nonnull
     @Override
-    public Class<byte[]> getEncoderClass() {
-        return byte[].class;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.ARRAY_BYTE;
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, byte[] instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, byte[] instance, TypeInfo declaredType, ObjectStyle style) {
         writer.writeBytes(null, instance);
     }
 
     @Override
-    public byte[] readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends byte[]> factory) {
+    public byte[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends byte[]> factory) {
         return reader.readBytes(reader.getCurrentName());
     }
 }

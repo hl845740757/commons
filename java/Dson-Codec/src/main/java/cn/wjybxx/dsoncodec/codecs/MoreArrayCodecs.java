@@ -46,19 +46,19 @@ public final class MoreArrayCodecs {
 
         @Nonnull
         @Override
-        public Class<int[]> getEncoderClass() {
-            return int[].class;
+        public TypeInfo getEncoderType() {
+            return TypeInfo.ARRAY_INT;
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, int[] instance, TypeInfo typeInfo, ObjectStyle style) {
+        public void writeObject(DsonObjectWriter writer, int[] instance, TypeInfo declaredType, ObjectStyle style) {
             for (int e : instance) {
                 writer.writeInt(null, e);
             }
         }
 
         @Override
-        public int[] readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends int[]> factory) {
+        public int[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends int[]> factory) {
             IntArrayList result = new IntArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readInt(null));
@@ -72,19 +72,19 @@ public final class MoreArrayCodecs {
 
         @Nonnull
         @Override
-        public Class<long[]> getEncoderClass() {
-            return long[].class;
+        public TypeInfo getEncoderType() {
+            return TypeInfo.ARRAY_LONG;
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, long[] instance, TypeInfo typeInfo, ObjectStyle style) {
+        public void writeObject(DsonObjectWriter writer, long[] instance, TypeInfo declaredType, ObjectStyle style) {
             for (long e : instance) {
                 writer.writeLong(null, e);
             }
         }
 
         @Override
-        public long[] readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends long[]> factory) {
+        public long[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends long[]> factory) {
             LongArrayList result = new LongArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readLong(null));
@@ -98,19 +98,19 @@ public final class MoreArrayCodecs {
 
         @Nonnull
         @Override
-        public Class<float[]> getEncoderClass() {
-            return float[].class;
+        public TypeInfo getEncoderType() {
+            return TypeInfo.ARRAY_FLOAT;
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, float[] instance, TypeInfo typeInfo, ObjectStyle style) {
+        public void writeObject(DsonObjectWriter writer, float[] instance, TypeInfo declaredType, ObjectStyle style) {
             for (float e : instance) {
                 writer.writeFloat(null, e, NumberStyle.SIMPLE);
             }
         }
 
         @Override
-        public float[] readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends float[]> factory) {
+        public float[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends float[]> factory) {
             FloatArrayList result = new FloatArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readFloat(null));
@@ -124,19 +124,19 @@ public final class MoreArrayCodecs {
 
         @Nonnull
         @Override
-        public Class<double[]> getEncoderClass() {
-            return double[].class;
+        public TypeInfo getEncoderType() {
+            return TypeInfo.ARRAY_DOUBLE;
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, double[] instance, TypeInfo typeInfo, ObjectStyle style) {
+        public void writeObject(DsonObjectWriter writer, double[] instance, TypeInfo declaredType, ObjectStyle style) {
             for (double e : instance) {
                 writer.writeDouble(null, e, NumberStyle.SIMPLE);
             }
         }
 
         @Override
-        public double[] readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends double[]> factory) {
+        public double[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends double[]> factory) {
             DoubleArrayList result = new DoubleArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readDouble(null));
@@ -150,19 +150,19 @@ public final class MoreArrayCodecs {
 
         @Nonnull
         @Override
-        public Class<boolean[]> getEncoderClass() {
-            return boolean[].class;
+        public TypeInfo getEncoderType() {
+            return TypeInfo.ARRAY_BOOL;
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, boolean[] instance, TypeInfo typeInfo, ObjectStyle style) {
+        public void writeObject(DsonObjectWriter writer, boolean[] instance, TypeInfo declaredType, ObjectStyle style) {
             for (boolean e : instance) {
                 writer.writeBoolean(null, e);
             }
         }
 
         @Override
-        public boolean[] readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends boolean[]> factory) {
+        public boolean[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends boolean[]> factory) {
             ArrayList<Boolean> result = new ArrayList<>();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readBoolean(null));
@@ -176,19 +176,19 @@ public final class MoreArrayCodecs {
 
         @Nonnull
         @Override
-        public Class<String[]> getEncoderClass() {
-            return String[].class;
+        public TypeInfo getEncoderType() {
+            return TypeInfo.ARRAY_STRING;
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, String[] instance, TypeInfo typeInfo, ObjectStyle style) {
+        public void writeObject(DsonObjectWriter writer, String[] instance, TypeInfo declaredType, ObjectStyle style) {
             for (String e : instance) {
                 writer.writeString(null, e, StringStyle.AUTO);
             }
         }
 
         @Override
-        public String[] readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends String[]> factory) {
+        public String[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends String[]> factory) {
             ArrayList<String> result = new ArrayList<>();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readString(null));
@@ -197,25 +197,24 @@ public final class MoreArrayCodecs {
         }
     }
 
-
     @DsonCodecScanIgnore
     public static class ShortArrayCodec implements DsonCodec<short[]> {
 
         @Nonnull
         @Override
-        public Class<short[]> getEncoderClass() {
-            return short[].class;
+        public TypeInfo getEncoderType() {
+            return TypeInfo.ARRAY_SHORT;
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, short[] instance, TypeInfo typeInfo, ObjectStyle style) {
+        public void writeObject(DsonObjectWriter writer, short[] instance, TypeInfo declaredType, ObjectStyle style) {
             for (short e : instance) {
                 writer.writeShort(null, e);
             }
         }
 
         @Override
-        public short[] readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends short[]> factory) {
+        public short[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends short[]> factory) {
             ShortArrayList result = new ShortArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readShort(null));
@@ -229,19 +228,19 @@ public final class MoreArrayCodecs {
 
         @Nonnull
         @Override
-        public Class<char[]> getEncoderClass() {
-            return char[].class;
+        public TypeInfo getEncoderType() {
+            return TypeInfo.ARRAY_CHAR;
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, char[] instance, TypeInfo typeInfo, ObjectStyle style) {
+        public void writeObject(DsonObjectWriter writer, char[] instance, TypeInfo declaredType, ObjectStyle style) {
             for (char e : instance) {
                 writer.writeChar(null, e);
             }
         }
 
         @Override
-        public char[] readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends char[]> factory) {
+        public char[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends char[]> factory) {
             CharArrayList result = new CharArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readChar(null));
@@ -255,13 +254,13 @@ public final class MoreArrayCodecs {
 
         @Nonnull
         @Override
-        public Class<Object[]> getEncoderClass() {
-            return Object[].class;
+        public TypeInfo getEncoderType() {
+            return TypeInfo.ARRAY_OBJECT;
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, Object[] instance, TypeInfo typeInfo, ObjectStyle style) {
-            TypeInfo componentArgInfo = typeInfo.isArray() ? typeInfo.getComponentType() : TypeInfo.OBJECT;
+        public void writeObject(DsonObjectWriter writer, Object[] instance, TypeInfo declaredType, ObjectStyle style) {
+            TypeInfo componentArgInfo = declaredType.isArray() ? declaredType.getComponentType() : TypeInfo.OBJECT;
 
             for (Object e : instance) {
                 writer.writeObject(null, e, componentArgInfo, null);
@@ -269,15 +268,15 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public Object[] readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends Object[]> factory) {
-            TypeInfo componentArgInfo = typeInfo.isArray() ? typeInfo.getComponentType() : TypeInfo.OBJECT;
+        public Object[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Object[]> factory) {
+            TypeInfo componentArgInfo = declaredType.isArray() ? declaredType.getComponentType() : TypeInfo.OBJECT;
 
             ArrayList<Object> result = new ArrayList<>();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readObject(null, componentArgInfo));
             }
             // 一定不是基础类型数组
-            return (Object[]) DsonConverterUtils.convertList2Array(result, typeInfo.rawType);
+            return (Object[]) DsonConverterUtils.convertList2Array(result, declaredType.rawType);
         }
     }
 }

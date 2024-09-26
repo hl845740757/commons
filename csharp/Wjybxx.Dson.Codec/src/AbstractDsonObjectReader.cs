@@ -95,9 +95,9 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
 
     #region object处理
 
-    public T ReadObject<T>(string? name, Type declaredType, Func<T>? factory = null, bool skipName = false) {
+    public T ReadObject<T>(string? name, Type declaredType, Func<T>? factory = null) {
         if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
-        if (!skipName && !ReadName(name)) { // 顺带读取了DsonType
+        if (!ReadName(name)) { // 顺带读取了DsonType
             return default;
         }
         IDsonReader<string> reader = this.reader;
@@ -140,7 +140,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         if (codec == null) {
             throw DsonCodecException.Incompatible(declaredType, classId);
         }
-        if (codec.GetEncoderClass() == typeof(T)) {
+        if (codec.GetEncoderType() == typeof(T)) {
             DsonCodecImpl<T> codecImpl = (DsonCodecImpl<T>)codec;
             return codecImpl.ReadObject(this, declaredType, factory);
         }
@@ -168,7 +168,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
     public DsonType CurrentDsonType => reader.CurrentDsonType;
     public string CurrentName => reader.CurrentName;
 
-    public virtual void ReadStartObject() {
+    public virtual void ReadStartObject(Type declaredType) {
         if (reader.IsAtType) { // 顶层对象适配
             reader.ReadDsonType();
         }
@@ -180,7 +180,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         reader.ReadEndObject();
     }
 
-    public virtual void ReadStartArray() {
+    public virtual void ReadStartArray(Type declaredType) {
         if (reader.IsAtType) { // 顶层对象适配
             reader.ReadDsonType();
         }

@@ -45,13 +45,18 @@ public enum ClassIdPolicy {
      */
     NONE;
 
+    /**
+     * @param declaredType 字段的声明类型
+     * @param encoderType  运行时类型
+     * @return 是否写入类型信息
+     */
     public boolean test(Class<?> declaredType, Class<?> encoderType) {
         if (this == ClassIdPolicy.OPTIMIZED) {
             if (encoderType == declaredType) {
                 return false; // 运行时类型和声明类型一致，不写入
             }
             if (declaredType == Object.class) {
-                return true;
+                return true; // 声明类型Object类型一定写入
             }
             // 默认解码类型的父类型无需写入，List/Map/Set
             if (encoderType == ArrayList.class

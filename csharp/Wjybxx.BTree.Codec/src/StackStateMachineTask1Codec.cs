@@ -40,7 +40,7 @@ public sealed class StackStateMachineTask1Codec<T> : AbstractDsonCodec<StackStat
     public const string names_undoQueueCapacity = "undoQueueCapacity";
     public const string names_redoQueueCapacity = "redoQueueCapacity";
 
-    public override Type GetEncoderClass() => typeof(StackStateMachineTask<T>);
+    public override Type GetEncoderType() => typeof(StackStateMachineTask<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref StackStateMachineTask<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

@@ -35,6 +35,7 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class LocalTimeCodec implements DsonCodec<LocalTime> {
+
     @Override
     public boolean isWriteAsArray() {
         return false;
@@ -47,17 +48,17 @@ public class LocalTimeCodec implements DsonCodec<LocalTime> {
 
     @Nonnull
     @Override
-    public Class<LocalTime> getEncoderClass() {
-        return LocalTime.class;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(LocalTime.class);
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, LocalTime instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, LocalTime instance, TypeInfo declaredType, ObjectStyle style) {
         writer.writeExtDateTime(null, toDateTime(instance));
     }
 
     @Override
-    public LocalTime readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends LocalTime> factory) {
+    public LocalTime readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends LocalTime> factory) {
         ExtDateTime dateTime = reader.readExtDateTime(reader.getCurrentName());
         return ofDateTime(dateTime);
     }

@@ -58,10 +58,9 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                 break;
             }
             case DictionaryEncodeProxy.MODE_PAIR_AS_ARRAY: {
-                Type pairTypeInfo = typeof(KeyValuePair<string, V>);
                 writer.WriteStartArray(inst, declaredType, style);
                 foreach (KeyValuePair<string, V> pair in entries) {
-                    writer.WriteStartArray(in pair, pairTypeInfo); // pair写为子数组
+                    writer.WriteStartArray(in pair, typeof(object[])); // pair写为子数组-没有类型
                     {
                         writer.WriteString(null, pair.Key);
                         writer.WriteObject(null, pair.Value, valDeclaredType);
@@ -72,12 +71,11 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                 break;
             }
             case DictionaryEncodeProxy.MODE_PAIR_AS_DOCUMENT: {
-                Type pairTypeInfo = typeof(KeyValuePair<string, V>);
-
                 writer.WriteStartArray(inst, declaredType, style);
                 foreach (KeyValuePair<string, V> pair in entries) {
-                    writer.WriteStartObject(in pair, pairTypeInfo); // pair写为子文档
+                    writer.WriteStartObject(in pair, typeof(object)); // pair写为子文档-没有类型
                     {
+                        writer.WriteName(pair.Key); // 确保写入null
                         writer.WriteObject(pair.Key, pair.Value, valDeclaredType);
                     }
                     writer.WriteEndObject();
@@ -98,7 +96,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
         DsonType currentDsonType = reader.CurrentDsonType;
         if (currentDsonType == DsonType.Object) {
             result.SetWriteAsDocument();
-            reader.ReadStartObject();
+            reader.ReadStartObject(declaredType);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 string key = reader.ReadName();
                 V value = reader.ReadObject<V>(key, valDeclaredType);
@@ -107,7 +105,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
             reader.ReadEndObject();
         } else {
             Debug.Assert(currentDsonType == DsonType.Array);
-            reader.ReadStartArray();
+            reader.ReadStartArray(declaredType);
             DsonType firstDsonType = reader.ReadDsonType();
             switch (firstDsonType) {
                 case DsonType.String: { // 整个字典写为数组
@@ -122,7 +120,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                 case DsonType.Array: { // Pair为子数组
                     result.SetWritePairAsArray();
                     do {
-                        reader.ReadStartArray();
+                        reader.ReadStartArray(typeof(object[]));
                         {
                             string key = reader.ReadString(null);
                             V value = reader.ReadObject<V>(null, valDeclaredType);
@@ -133,10 +131,10 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                     } while (reader.ReadDsonType() != DsonType.EndOfObject);
                     break;
                 }
-                case DsonType.Object: {
+                case DsonType.Object: { // Pair为子文档
                     result.SetWritePairAsArray();
                     do {
-                        reader.ReadStartObject();
+                        reader.ReadStartObject(typeof(object));
                         {
                             string key = reader.ReadName();
                             V value = reader.ReadObject<V>(null, valDeclaredType);

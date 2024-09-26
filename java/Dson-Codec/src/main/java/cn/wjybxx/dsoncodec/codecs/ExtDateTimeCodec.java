@@ -46,17 +46,17 @@ public class ExtDateTimeCodec implements DsonCodec<ExtDateTime> {
 
     @Nonnull
     @Override
-    public Class<ExtDateTime> getEncoderClass() {
-        return ExtDateTime.class;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(ExtDateTime.class);
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, ExtDateTime instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, ExtDateTime instance, TypeInfo declaredType, ObjectStyle style) {
         writer.writeExtDateTime(null, instance);
     }
 
     @Override
-    public ExtDateTime readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends ExtDateTime> factory) {
+    public ExtDateTime readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends ExtDateTime> factory) {
         return reader.readExtDateTime(reader.getCurrentName());
     }
 }

@@ -45,19 +45,19 @@ public class FloatCodec implements DsonCodec<Float> {
 
     @Nonnull
     @Override
-    public Class<Float> getEncoderClass() {
-        return Float.class;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.FLOAT;
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Float instance, TypeInfo typeInfo, ObjectStyle style) {
-        NumberStyle numberStyle = (typeInfo.rawType == Float.class || typeInfo.rawType == float.class) ?
+    public void writeObject(DsonObjectWriter writer, Float instance, TypeInfo declaredType, ObjectStyle style) {
+        NumberStyle numberStyle = (declaredType.rawType == Float.class || declaredType.rawType == float.class) ?
                 NumberStyle.SIMPLE : NumberStyle.TYPED;
         writer.writeFloat(null, instance, numberStyle);
     }
 
     @Override
-    public Float readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends Float> factory) {
+    public Float readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Float> factory) {
         return reader.readFloat(reader.getCurrentName());
     }
 

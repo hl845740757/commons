@@ -29,7 +29,7 @@ namespace Wjybxx.BTreeCodec.Codecs
 [Generated("Wjybxx.Dson.Apt.CodecProcessor")]
 public sealed class JoinMain1Codec<T> : AbstractDsonCodec<JoinMain<T>> where T : class
 {
-    public override Type GetEncoderClass() => typeof(JoinMain<T>);
+    public override Type GetEncoderType() => typeof(JoinMain<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref JoinMain<T> inst, Type declaredType, ObjectStyle style) {
     }

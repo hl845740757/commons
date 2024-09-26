@@ -26,6 +26,8 @@ import java.util.*;
 import java.util.function.Supplier;
 
 /**
+ * 集合解码器，动态构造
+ *
  * @author wjybxx
  * date 2023/4/4
  */
@@ -33,28 +35,37 @@ import java.util.function.Supplier;
 @DsonCodecScanIgnore
 public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
 
-    final Class<T> clazz;
-    final Supplier<? extends T> factory;
+    protected final TypeInfo typeInfo;
+    protected final Supplier<? extends T> factory;
+    private final TypeInfo eleTypeInfo;
 
     @SuppressWarnings("unchecked")
-    public CollectionCodec() {
-        this.clazz = (Class<T>) Collection.class;
-        this.factory = null;
+    public CollectionCodec(TypeInfo typeInfo) {
+        this.typeInfo = Objects.requireNonNull(typeInfo);
+
+        Class<T> rawType = (Class<T>) typeInfo.rawType;
+        this.factory = DsonConverterUtils.tryNoArgConstructorToSupplier(rawType);
+        this.eleTypeInfo = DsonConverterUtils.findTypeParameter(rawType, Collection.class, "E");
     }
 
-    public CollectionCodec(Class<T> clazz, Supplier<? extends T> factory) {
-        this.clazz = Objects.requireNonNull(clazz);
+    @SuppressWarnings("unchecked")
+    public CollectionCodec(TypeInfo typeInfo, Supplier<? extends T> factory) {
+        this.typeInfo = Objects.requireNonNull(typeInfo);
         this.factory = factory;
+
+        Class<T> rawType = (Class<T>) typeInfo.rawType;
+        this.eleTypeInfo = DsonConverterUtils.findTypeParameter(rawType, Collection.class, "E");
     }
 
     @Nonnull
     @Override
-    public Class<T> getEncoderClass() {
-        return clazz;
+    public TypeInfo getEncoderType() {
+        return typeInfo;
     }
 
+    /** 允许重写 */
     @SuppressWarnings("unchecked")
-    private Collection<Object> newCollection(TypeInfo typeInfo, Supplier<? extends T> factory) {
+    protected Collection<Object> newCollection(TypeInfo typeInfo, Supplier<? extends T> factory) {
         if (factory != null) {
             return (Collection<Object>) factory.get();
         }
@@ -67,34 +78,39 @@ public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
         return new ArrayList<>();
     }
 
-    private static TypeInfo getElementTypeInfo(TypeInfo typeInfo) {
+    /** 允许重写 */
+    protected TypeInfo getElementTypeInfo(TypeInfo declaredType) {
         if (typeInfo.isGenericType()) {
             return typeInfo.getGenericArgument(0);
         }
-        return DsonConverterUtils.getElementActualTypeInfo(typeInfo.rawType);
+        if (declaredType.isGenericType()) {
+            return declaredType.getGenericArgument(0);
+        }
+        return eleTypeInfo;
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
         // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询K,V的类型，但Java是伪泛型...
-        TypeInfo componentArgInfo = getElementTypeInfo(typeInfo);
+        TypeInfo componentArgInfo = getElementTypeInfo(declaredType);
         for (Object e : instance) {
             writer.writeObject(null, e, componentArgInfo, null);
         }
     }
 
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends T> factory) {
-        TypeInfo componentArgInfo = getElementTypeInfo(typeInfo);
-        Collection<Object> result = newCollection(typeInfo, factory);
+    public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
+        TypeInfo componentArgInfo = getElementTypeInfo(declaredType);
+        Collection<Object> result = newCollection(declaredType, factory);
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readObject(null, componentArgInfo));
         }
         CollectionConverter collectionConverter = reader.options().collectionConverter;
         if (collectionConverter != null) {
-            result = collectionConverter.convertCollection(typeInfo, result);
+            result = collectionConverter.convertCollection(declaredType, result);
         }
-        return clazz.cast(result);
+        @SuppressWarnings("unchecked") Class<T> rawType = (Class<T>) typeInfo.rawType;
+        return rawType.cast(result);
     }
 
 }

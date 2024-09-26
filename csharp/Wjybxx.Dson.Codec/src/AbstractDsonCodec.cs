@@ -30,11 +30,11 @@ namespace Wjybxx.Dson.Codec
 public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
 {
     [StableName]
-    public virtual Type GetEncoderClass() => typeof(T);
+    public virtual Type GetEncoderType() => typeof(T);
 
     public virtual bool AutoStartEnd => true;
 
-    public virtual bool IsWriteAsArray => DsonConverterUtils.IsEncodeAsArray(GetEncoderClass());
+    public virtual bool IsWriteAsArray => DsonConverterUtils.IsEncodeAsArray(GetEncoderType());
 
     #region Write
 

@@ -14,7 +14,7 @@ public sealed class MyDictionary2Codec<TKey, TValue> : AbstractDsonCodec<MyDicti
     public const string names_dictionary = "dictionary";
     public static readonly Func<Dictionary<TKey, TValue>> factories_dictionary = () => new Dictionary<TKey, TValue>();
 
-    public override Type GetEncoderClass() => typeof(MyDictionary<TKey, TValue>);
+    public override Type GetEncoderType() => typeof(MyDictionary<TKey, TValue>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref MyDictionary<TKey, TValue> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_dictionary, inst.dictionary, typeof(Dictionary<TKey, TValue>), null);

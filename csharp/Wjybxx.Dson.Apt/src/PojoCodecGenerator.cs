@@ -107,7 +107,7 @@ internal class PojoCodecGenerator
         }
         // 控制方法生成顺序
         // GetEncoderType
-        typeBuilder.AddMethod(processor.NewGetEncoderClassMethod(context.superDeclaredType, rawTypeName));
+        typeBuilder.AddMethod(processor.NewGetEncoderTypeMethod(context.superDeclaredType, rawTypeName));
         // BeforeEncode回调
         if (GenBeforeEncodeMethod(aptClassProps)) {
             typeBuilder.AddMethod(beforeEncodeMethodBuilder.Build());

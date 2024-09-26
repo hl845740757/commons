@@ -35,7 +35,7 @@ public sealed class AlwaysSuccess1Codec<T> : AbstractDsonCodec<AlwaysSuccess<T>>
     public const string names_flags = "flags";
     public const string names_child = "child";
 
-    public override Type GetEncoderClass() => typeof(AlwaysSuccess<T>);
+    public override Type GetEncoderType() => typeof(AlwaysSuccess<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref AlwaysSuccess<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

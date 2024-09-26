@@ -36,7 +36,7 @@ public sealed class UntilSuccess1Codec<T> : AbstractDsonCodec<UntilSuccess<T>> w
     public const string names_child = "child";
     public const string names_maxLoop = "maxLoop";
 
-    public override Type GetEncoderClass() => typeof(UntilSuccess<T>);
+    public override Type GetEncoderType() => typeof(UntilSuccess<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref UntilSuccess<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

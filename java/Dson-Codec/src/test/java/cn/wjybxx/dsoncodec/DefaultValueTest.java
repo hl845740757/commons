@@ -116,7 +116,7 @@ public class DefaultValueTest {
 
         @Override
         @Nonnull
-        public Class<DefaultValueTest.Bean> getEncoderClass() {
+        public TypeInfo getEncoderType() {
             return DefaultValueTest.Bean.class;
         }
 

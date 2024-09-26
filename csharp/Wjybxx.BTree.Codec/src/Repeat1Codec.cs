@@ -38,7 +38,7 @@ public sealed class Repeat1Codec<T> : AbstractDsonCodec<Repeat<T>> where T : cla
     public const string names_countMode = "countMode";
     public const string names_required = "required";
 
-    public override Type GetEncoderClass() => typeof(Repeat<T>);
+    public override Type GetEncoderType() => typeof(Repeat<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref Repeat<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

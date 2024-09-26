@@ -161,12 +161,12 @@ class CodecStructs {
 
         @Nonnull
         @Override
-        public Class<MyStruct> getEncoderClass() {
-            return MyStruct.class;
+        public TypeInfo getEncoderType() {
+            return TypeInfo.of(MyStruct.class);
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, MyStruct instance, TypeInfo typeInfo, ObjectStyle style) {
+        public void writeObject(DsonObjectWriter writer, MyStruct instance, TypeInfo declaredType, ObjectStyle style) {
             NestStruct nestStruct = instance.nestStruct;
             writer.writeStartObject("nestStruct", nestStruct, TypeInfo.of(NestStruct.class));
             {
@@ -190,8 +190,8 @@ class CodecStructs {
         }
 
         @Override
-        public MyStruct readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends MyStruct> factory) {
-            reader.readStartObject("nestStruct");
+        public MyStruct readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends MyStruct> factory) {
+            reader.readStartObject("nestStruct", TypeInfo.of(NestStruct.class));
             NestStruct nestStruct = new NestStruct(
                     reader.readInt("intVal"),
                     reader.readLong("longVal"),

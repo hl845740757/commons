@@ -31,12 +31,13 @@ import java.util.function.Supplier;
 public class DsonCodecImpl<T> {
 
     private final DsonCodec<T> codec;
+    private final TypeInfo typeInfo; // 统一缓存TypeInfo
     private final boolean autoStart; // 避免查找default方法
     private final boolean writeAsArray;
     private final AbstractEnumCodec<T> enumCodec;
 
     public DsonCodecImpl(DsonCodec<T> codec) {
-        Objects.requireNonNull(codec.getEncoderClass());
+        this.typeInfo = Objects.requireNonNull(codec.getEncoderType());
         this.codec = codec;
         this.autoStart = codec.autoStartEnd();
         this.writeAsArray = codec.isWriteAsArray();
@@ -50,8 +51,8 @@ public class DsonCodecImpl<T> {
     }
 
     @Nonnull
-    public Class<T> getEncoderClass() {
-        return codec.getEncoderClass();
+    public TypeInfo getEncoderClass() {
+        return typeInfo;
     }
 
     /** 是否编码为数组 */
@@ -87,11 +88,11 @@ public class DsonCodecImpl<T> {
         if (autoStart) {
             T result;
             if (writeAsArray) {
-                reader.readStartArray();
+                reader.readStartArray(typeInfo);
                 result = codec.readObject(reader, typeInfo, factory);
                 reader.readEndArray();
             } else {
-                reader.readStartObject();
+                reader.readStartObject(typeInfo);
                 result = codec.readObject(reader, typeInfo, factory);
                 reader.readEndObject();
             }

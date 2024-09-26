@@ -35,7 +35,7 @@ public sealed class OnlyOnce1Codec<T> : AbstractDsonCodec<OnlyOnce<T>> where T :
     public const string names_flags = "flags";
     public const string names_child = "child";
 
-    public override Type GetEncoderClass() => typeof(OnlyOnce<T>);
+    public override Type GetEncoderType() => typeof(OnlyOnce<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref OnlyOnce<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

@@ -45,9 +45,10 @@ public interface DsonCodec<T> {
 
     /**
      * 获取负责编解码的类对象
+     * 实现类无需处理缓存，该方法只会调用一次、
      */
     @Nonnull
-    Class<T> getEncoderClass();
+    TypeInfo getEncoderType();
 
     /**
      * 将对象写入输出流。
@@ -55,10 +56,10 @@ public interface DsonCodec<T> {
      * <p>
      * 注意：name在外部已写入，因此基础类型写入value时name传null或空字符串。
      *
-     * @param typeInfo 对象的类型信息(声明类型)
-     * @param style    外部期望的输出格式
+     * @param declaredType 声明类型
+     * @param style        外部期望的输出格式
      */
-    void writeObject(DsonObjectWriter writer, T instance, TypeInfo typeInfo, ObjectStyle style);
+    void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style);
 
     /**
      * 从输入流中解析指定对象。
@@ -66,16 +67,16 @@ public interface DsonCodec<T> {
      * <p>
      * 注意：name在外部已读取，因此读取value时使用{@link DsonObjectReader#getCurrentName()}。
      *
-     * @param typeInfo 对象的类型信息(声明类型)
-     * @param factory  实例工厂
+     * @param declaredType 声明类型
+     * @param factory      实例工厂
      */
-    T readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends T> factory);
+    T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory);
 
     /**
      * 该方法用于告知{@link DsonCodecImpl}是否自动调用以下方法:
      * {@link DsonObjectWriter#writeStartObject(String, Object, TypeInfo)} ()}
      * {@link DsonObjectWriter#writeEndObject()}
-     * {@link DsonObjectReader#readStartObject(String)}
+     * {@link DsonObjectReader#readStartObject(String, TypeInfo)}
      * {@link DsonObjectReader#readEndObject()}
      * <p>
      * Q：禁用该属性有什么用？
@@ -91,8 +92,9 @@ public interface DsonCodec<T> {
      * 当前对象是否按照数组格式编码
      * 1.默认情况下，Map是被看做普通的数组的
      * 2.该属性只有{@link #autoStartEnd()} 为true的时候有效。
+     * 3.实现类无需处理缓存，该方法只会调用一次.
      */
     default boolean isWriteAsArray() {
-        return DsonConverterUtils.isEncodeAsArray(getEncoderClass());
+        return DsonConverterUtils.isEncodeAsArray(getEncoderType().rawType);
     }
 }

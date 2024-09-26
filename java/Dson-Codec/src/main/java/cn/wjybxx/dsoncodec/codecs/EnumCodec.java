@@ -42,19 +42,19 @@ import java.util.function.Supplier;
 @DsonCodecScanIgnore
 public final class EnumCodec<T extends Enum<T>> extends AbstractEnumCodec<T> implements DsonCodec<T> {
 
-    private final Class<T> encoderClass;
+    private final Class<T> enumClass;
     private final EnumMap<T, EnumValueInfo<T>> value2EnumMap;
     private final Int2ObjectMap<EnumValueInfo<T>> number2EnumMap;
     private final Map<String, EnumValueInfo<T>> name2EnumMap; // 这允许为枚举指定别名
 
-    public EnumCodec(Class<T> encoderClass) {
-        if (!encoderClass.isEnum()) {
-            throw new IllegalArgumentException("EnumLite must be enum class, type: " + encoderClass);
+    public EnumCodec(Class<T> enumClass) {
+        if (!enumClass.isEnum()) {
+            throw new IllegalArgumentException("EnumLite must be enum class, type: " + enumClass);
         }
-        this.encoderClass = Objects.requireNonNull(encoderClass);
+        this.enumClass = Objects.requireNonNull(enumClass);
 
-        T[] enumConstants = encoderClass.getEnumConstants();
-        this.value2EnumMap = new EnumMap<>(encoderClass);
+        T[] enumConstants = enumClass.getEnumConstants();
+        this.value2EnumMap = new EnumMap<>(enumClass);
         this.number2EnumMap = new Int2ObjectOpenHashMap<>(enumConstants.length);
         this.name2EnumMap = HashMap.newHashMap(enumConstants.length);
         for (T enumConstant : enumConstants) {
@@ -83,8 +83,8 @@ public final class EnumCodec<T extends Enum<T>> extends AbstractEnumCodec<T> imp
 
     @Nonnull
     @Override
-    public Class<T> getEncoderClass() {
-        return encoderClass;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(enumClass);
     }
 
     /** false 可以将枚举简单写为整数 */
@@ -94,10 +94,10 @@ public final class EnumCodec<T extends Enum<T>> extends AbstractEnumCodec<T> imp
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
         EnumValueInfo<T> valueInfo = value2EnumMap.get(instance);
         if (valueInfo == null) {
-            throw new DsonCodecException("invalid enum value: %s, type: %s".formatted(instance, encoderClass));
+            throw new DsonCodecException("invalid enum value: %s, type: %s".formatted(instance, enumClass));
         }
         if (writer.options().writeEnumAsString) {
             writer.writeString(null, valueInfo.name, StringStyle.UNQUOTE);
@@ -107,21 +107,21 @@ public final class EnumCodec<T extends Enum<T>> extends AbstractEnumCodec<T> imp
     }
 
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends T> factory) {
+    public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
         if (reader.options().writeEnumAsString) {
             String name = reader.readString(reader.getCurrentName());
             EnumValueInfo<T> valueInfo = name2EnumMap.get(name);
             if (valueInfo != null) {
                 return valueInfo.value;
             }
-            throw new DsonCodecException("invalid enum value: %s, type: %s".formatted(name, encoderClass));
+            throw new DsonCodecException("invalid enum value: %s, type: %s".formatted(name, enumClass));
         } else {
             int number = reader.readInt(reader.getCurrentName());
             EnumValueInfo<T> valueInfo = number2EnumMap.get(number);
             if (valueInfo != null) {
                 return valueInfo.value;
             }
-            throw new DsonCodecException("invalid enum value: %d, type: %s".formatted(number, encoderClass));
+            throw new DsonCodecException("invalid enum value: %d, type: %s".formatted(number, enumClass));
         }
     }
 

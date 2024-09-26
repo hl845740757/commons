@@ -27,10 +27,10 @@ public static class DsonCodecRegistries
     public static Dictionary<Type, DsonCodecImpl> NewCodecMap(IList<DsonCodecImpl> pojoCodecs) {
         Dictionary<Type, DsonCodecImpl> codecMap = new Dictionary<Type, DsonCodecImpl>();
         foreach (DsonCodecImpl codec in pojoCodecs) {
-            if (codecMap.ContainsKey(codec.GetEncoderClass())) {
-                throw new ArgumentException("the class has multiple codecs :" + codec.GetEncoderClass());
+            if (codecMap.ContainsKey(codec.GetEncoderType())) {
+                throw new ArgumentException("the class has multiple codecs :" + codec.GetEncoderType());
             }
-            codecMap[codec.GetEncoderClass()] = codec;
+            codecMap[codec.GetEncoderType()] = codec;
         }
         return codecMap;
     }
@@ -42,10 +42,10 @@ public static class DsonCodecRegistries
     public static IDsonCodecRegistry FromCodecs(IEnumerable<DsonCodecImpl> pojoCodecs) {
         Dictionary<Type, DsonCodecImpl> codecMap = new Dictionary<Type, DsonCodecImpl>();
         foreach (DsonCodecImpl codec in pojoCodecs) {
-            if (codecMap.ContainsKey(codec.GetEncoderClass())) {
-                throw new ArgumentException("the class has multiple codecs :" + codec.GetEncoderClass());
+            if (codecMap.ContainsKey(codec.GetEncoderType())) {
+                throw new ArgumentException("the class has multiple codecs :" + codec.GetEncoderType());
             }
-            codecMap[codec.GetEncoderClass()] = codec;
+            codecMap[codec.GetEncoderType()] = codec;
         }
         return new DefaultCodecRegistry(codecMap);
     }

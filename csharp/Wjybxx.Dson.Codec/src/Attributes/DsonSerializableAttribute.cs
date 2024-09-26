@@ -64,8 +64,8 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 1. 如果对象的运行时类型存在于<see cref="IDsonCodecRegistry"/>中，则总是可以精确解析，因此不需要特殊处理。
 /// 2. 否则用户需要指定实现类或读代理实现精确解析，请查看<see cref="DsonPropertyAttribute"/>。
 ///
-/// <h3>final字段</h3>
-/// 详见：
+/// <h3>readonly字段</h3>
+/// 考虑到性能和安全性，readonly字段必须通过解析构造函数解析。
 ///
 /// <h3>读写忽略字段</h3>
 /// 用户可以通过构造解码器和写对象方法实现。

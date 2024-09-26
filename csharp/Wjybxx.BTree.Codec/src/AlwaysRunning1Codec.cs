@@ -35,7 +35,7 @@ public sealed class AlwaysRunning1Codec<T> : AbstractDsonCodec<AlwaysRunning<T>>
     public const string names_flags = "flags";
     public const string names_child = "child";
 
-    public override Type GetEncoderClass() => typeof(AlwaysRunning<T>);
+    public override Type GetEncoderType() => typeof(AlwaysRunning<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref AlwaysRunning<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

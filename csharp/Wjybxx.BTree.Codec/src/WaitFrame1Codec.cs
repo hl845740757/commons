@@ -35,7 +35,7 @@ public sealed class WaitFrame1Codec<T> : AbstractDsonCodec<WaitFrame<T>> where T
     public const string names_flags = "flags";
     public const string names_required = "required";
 
-    public override Type GetEncoderClass() => typeof(WaitFrame<T>);
+    public override Type GetEncoderType() => typeof(WaitFrame<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref WaitFrame<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

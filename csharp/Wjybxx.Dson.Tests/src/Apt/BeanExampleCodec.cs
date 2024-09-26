@@ -20,7 +20,7 @@ public sealed class BeanExampleCodec : AbstractDsonCodec<BeanExample>
   public static readonly Func<HashSet<string>> factories_hashSet = () => new HashSet<string>();
   public static readonly Func<HashSet<string>> factories_hashSet2 = () => new HashSet<string>();
 
-  public override Type GetEncoderClass() => typeof(BeanExample);
+  public override Type GetEncoderType() => typeof(BeanExample);
 
   protected override void BeforeEncode(IDsonObjectWriter writer, ref BeanExample inst, Type declaredType, ObjectStyle style) {
     inst.BeforeEncode(writer.Options);

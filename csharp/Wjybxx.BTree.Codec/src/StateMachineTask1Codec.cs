@@ -38,7 +38,7 @@ public sealed class StateMachineTask1Codec<T> : AbstractDsonCodec<StateMachineTa
     public const string names_initState = "initState";
     public const string names_initStateProps = "initStateProps";
 
-    public override Type GetEncoderClass() => typeof(StateMachineTask<T>);
+    public override Type GetEncoderType() => typeof(StateMachineTask<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref StateMachineTask<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

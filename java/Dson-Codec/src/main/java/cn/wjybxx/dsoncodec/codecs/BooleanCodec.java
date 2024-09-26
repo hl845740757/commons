@@ -44,17 +44,17 @@ public class BooleanCodec implements DsonCodec<Boolean> {
 
     @Nonnull
     @Override
-    public Class<Boolean> getEncoderClass() {
-        return Boolean.class;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.BOXED_BOOL;
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Boolean instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, Boolean instance, TypeInfo declaredType, ObjectStyle style) {
         writer.writeBoolean(null, instance);
     }
 
     @Override
-    public Boolean readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends Boolean> factory) {
+    public Boolean readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Boolean> factory) {
         return reader.readBoolean(reader.getCurrentName());
     }
 

@@ -209,7 +209,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
     }
 
     @Override
-    public void readStartObject() {
+    public void readStartObject(TypeInfo typeInfo) {
         if (reader.isAtType()) { // 顶层对象适配
             reader.readDsonType();
         }
@@ -223,7 +223,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
     }
 
     @Override
-    public void readStartArray() {
+    public void readStartArray(TypeInfo typeInfo) {
         if (reader.isAtType()) { // 顶层对象适配
             reader.readDsonType();
         }

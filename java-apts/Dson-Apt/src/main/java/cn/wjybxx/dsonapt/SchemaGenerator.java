@@ -25,6 +25,7 @@ import com.squareup.javapoet.TypeName;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.*;
 import javax.tools.Diagnostic;
@@ -35,6 +36,8 @@ import java.util.Set;
 
 /**
  * 方法对象
+ * 1.要序列化的泛型类，其外部类不可以是泛型 -- 否则其泛型信息难以解析。
+ * 2.
  *
  * @author wjybxx
  * date - 2023/12/10
@@ -63,13 +66,18 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
                 aptFieldProps.implMirror = typeInfo.impl;
             }
         }
-
         final List<FieldSpec> typesFields = genTypeFields(allSerialFields, allAptTypeInfos);
         final List<FieldSpec> factoryFields = genFactoryFields(allSerialFields, allAptTypeInfos);
         final List<FieldSpec> namesSpec = genNameFields();
-        context.typeBuilder.addFields(typesFields)
+        context.typeBuilder
+                .addField(genRawTypeInfoFiled())
+                .addFields(typesFields)
                 .addFields(factoryFields)
                 .addFields(namesSpec);
+    }
+
+    static String getTypeInfoFieldName() {
+        return "rawTypeInfo";
     }
 
     static String getFactoryFieldName(String fieldName) {
@@ -86,16 +94,6 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
 
     // region typeArgs
 
-    private List<FieldSpec> genTypeFields(List<VariableElement> allSerialFields, List<AptTypeInfo> allAptTypeInfos) {
-        List<FieldSpec> typeFieldList = new ArrayList<>(allSerialFields.size() * 2);
-        for (int i = 0; i < allSerialFields.size(); i++) {
-            VariableElement variableElement = allSerialFields.get(i);
-            AptTypeInfo aptTypeInfo = allAptTypeInfos.get(i);
-            typeFieldList.add(genTypeField(variableElement, aptTypeInfo));
-        }
-        return typeFieldList;
-    }
-
     private List<FieldSpec> genFactoryFields(List<VariableElement> allSerialFields, List<AptTypeInfo> allAptTypeInfos) {
         List<FieldSpec> typeFieldList = new ArrayList<>(allSerialFields.size() * 2);
         for (int i = 0; i < allSerialFields.size(); i++) {
@@ -110,6 +108,7 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
 
     private FieldSpec genFactoryField(VariableElement variableElement, AptTypeInfo aptTypeInfo) {
         // 暂不擦除泛型 -- 我们约定禁止字段出现未定义泛型，如：List<T>
+        // public static final Supplier<Map<String, Object>> factories_map = HashMap::new;
         TypeMirror typeMirror = variableElement.asType();
         ParameterizedTypeName fieldTypeName = ParameterizedTypeName.get(AptUtils.CLSNAME_SUPPLIER, TypeName.get(typeMirror));
         String factoryFieldName = getFactoryFieldName(variableElement.getSimpleName().toString());
@@ -133,8 +132,18 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
         return builder.build();
     }
 
+    private List<FieldSpec> genTypeFields(List<VariableElement> allSerialFields, List<AptTypeInfo> allAptTypeInfos) {
+        List<FieldSpec> typeFieldList = new ArrayList<>(allSerialFields.size() * 2);
+        for (int i = 0; i < allSerialFields.size(); i++) {
+            VariableElement variableElement = allSerialFields.get(i);
+            AptTypeInfo aptTypeInfo = allAptTypeInfos.get(i);
+            typeFieldList.add(genTypeField(variableElement, aptTypeInfo));
+        }
+        return typeFieldList;
+    }
+
     private FieldSpec genTypeField(VariableElement variableElement, AptTypeInfo aptTypeInfo) {
-        // TypeInfo去除泛型后，基础类型可以用上了
+        // public static final TypeInfo types_name = TypeInfo.of();
         TypeMirror typeMirror = variableElement.asType();
         String typeInfoFieldName = getTypeInfoFieldName(variableElement.getSimpleName().toString());
 
@@ -169,16 +178,12 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
         if (nested) { // 递归时换行，否则生成代码太乱
             format.append("\n$>");
         }
-        format.append("$T.of($T.class, $T.of("); // List需要import
+        format.append("$T.of($T.class, List.of("); // List已import
         params.add(typeName_TypeInfo);
         params.add(TypeName.get(typeUtils.erasure(typeMirror)));
-        params.add(AptUtils.CLSNAME_LIST);
-
+        // 泛型参数递归解析
         for (int i = 0; i < typeArguments.size(); i++) {
-            if (i > 0) {
-                format.append(", ");
-            }
-            // 递归
+            if (i > 0) format.append(", ");
             TypeMirror constructedType = toConstructedType(typeArguments.get(i));
             appendTypeInfo(constructedType, format, params);
         }
@@ -186,6 +191,35 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
             format.append("$<");
         }
         format.append("))");
+    }
+
+    /** 生成原始类型的TypeInfo字段 */
+    private FieldSpec genRawTypeInfoFiled() {
+        // private static final TypeInfo rawTypeInfo = TypeInfo.of();
+        FieldSpec.Builder builder = FieldSpec.builder(typeName_TypeInfo, getTypeInfoFieldName(), AptUtils.PRIVATE_STATIC_FINAL);
+        List<? extends TypeParameterElement> typeParameters = typeElement.getTypeParameters();
+
+        StringBuilder format = new StringBuilder(16);
+        List<Object> params = new ArrayList<>(4);
+        if (typeParameters.isEmpty()) {
+            format.append("$T.of($T.class， $T.of())"); // List需要import
+            params.add(typeName_TypeInfo);
+            params.add(TypeName.get(typeElement.asType()));
+            params.add(AptUtils.CLSNAME_LIST);
+        } else {
+            format.append("$T.of($T.class, $T.of("); // List需要import
+            params.add(typeName_TypeInfo);
+            params.add(TypeName.get(typeElement.asType()));
+            params.add(AptUtils.CLSNAME_LIST);
+            // 泛型参数直接擦除即可
+            for (int i = 0; i < typeParameters.size(); i++) {
+                if (i > 0) format.append(", ");
+                params.add(typeName_TypeInfo);
+                params.add(TypeName.get(typeUtils.erasure(typeParameters.get(i).asType())));
+            }
+        }
+        builder.initializer(format.toString(), params.toArray());
+        return builder.build();
     }
 
     private AptTypeInfo parseTypeInfo(VariableElement variableElement) {

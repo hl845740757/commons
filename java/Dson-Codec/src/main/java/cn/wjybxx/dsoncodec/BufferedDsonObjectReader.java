@@ -72,8 +72,8 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
     }
 
     @Override
-    public void readStartObject() {
-        super.readStartObject();
+    public void readStartObject(TypeInfo typeInfo) {
+        super.readStartObject(typeInfo);
 
         DsonCollectionReader reader = (DsonCollectionReader) this.reader;
         ArrayDeque<String> keyQueue = converter.options().keySetPool.acquire();
@@ -100,6 +100,7 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
 
         Set<String> keySet;
         ArrayDeque<String> keyQueue;
+        TypeInfo typeInfo;
 
         public KeyIterator(Set<String> keySet, ArrayDeque<String> keyQueue) {
             this.keySet = keySet;

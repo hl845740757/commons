@@ -63,7 +63,7 @@ public class TypeMetaRegistries {
             }
             type2MetaMap.put(typeInfo, typeMeta);
             // 无泛型参数时额外索引一份
-            if (typeInfo.typeArgs.isEmpty()) {
+            if (typeInfo.genericArgs.isEmpty()) {
                 if (clazz2MetaMap.containsKey(typeInfo.rawType)) {
                     throw new IllegalArgumentException("type %s is duplicate".formatted(typeInfo));
                 }
@@ -103,7 +103,7 @@ public class TypeMetaRegistries {
         @Nullable
         @Override
         public TypeMeta ofType(TypeInfo type) {
-            if (type.typeArgs.isEmpty()) {
+            if (type.genericArgs.isEmpty()) {
                 return clazz2MetaMap.get(type.rawType); // hash更快
             }
             return type2MetaMap.get(type);

@@ -69,7 +69,7 @@ public class CodecProcessor extends MyAbstractProcessor {
     public static final String MNAME_WRITE_OBJECT = "writeObject";
     // AbstractCodec
     private static final String CNAME_ABSTRACT_CODEC = "cn.wjybxx.dsoncodec.AbstractDsonCodec";
-    public static final String MNAME_GET_ENCODER_CLASS = "getEncoderClass";
+    public static final String MNAME_GET_ENCODER_TYPE = "getEncoderType";
     public static final String MNAME_BEFORE_ENCODE = "beforeEncode";
     public static final String MNAME_WRITE_FIELDS = "writeFields";
     public static final String MNAME_NEW_INSTANCE = "newInstance";
@@ -164,7 +164,7 @@ public class CodecProcessor extends MyAbstractProcessor {
 
         // Codec
         TypeElement codecTypeElement = elementUtils.getTypeElement(CNAME_CODEC);
-        getEncoderClassMethod = AptUtils.findMethodByName(codecTypeElement, MNAME_GET_ENCODER_CLASS);
+        getEncoderClassMethod = AptUtils.findMethodByName(codecTypeElement, MNAME_GET_ENCODER_TYPE);
         // abstractCodec
         abstractCodecTypeElement = elementUtils.getTypeElement(CNAME_ABSTRACT_CODEC);
         {
@@ -744,9 +744,9 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     // region overriding util
 
-    public MethodSpec newGetEncoderClassMethod(DeclaredType superDeclaredType, TypeName encoderTypeName) {
+    public MethodSpec newGetEncoderTypeMethod(DeclaredType superDeclaredType, ClassName rawTypeName) {
         return MethodSpec.overriding(getEncoderClassMethod, superDeclaredType, typeUtils)
-                .addStatement("return $T.class", encoderTypeName)
+                .addStatement("return typeInfo") // final字段
                 .addAnnotation(AptUtils.ANNOTATION_NONNULL)
                 .build();
     }

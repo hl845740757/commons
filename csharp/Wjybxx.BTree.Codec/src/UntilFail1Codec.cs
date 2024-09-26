@@ -36,7 +36,7 @@ public sealed class UntilFail1Codec<T> : AbstractDsonCodec<UntilFail<T>> where T
     public const string names_child = "child";
     public const string names_maxLoop = "maxLoop";
 
-    public override Type GetEncoderClass() => typeof(UntilFail<T>);
+    public override Type GetEncoderType() => typeof(UntilFail<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref UntilFail<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

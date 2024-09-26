@@ -35,7 +35,7 @@ public sealed class AlwaysCheckGuard1Codec<T> : AbstractDsonCodec<AlwaysCheckGua
     public const string names_flags = "flags";
     public const string names_child = "child";
 
-    public override Type GetEncoderClass() => typeof(AlwaysCheckGuard<T>);
+    public override Type GetEncoderType() => typeof(AlwaysCheckGuard<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref AlwaysCheckGuard<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

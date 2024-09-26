@@ -25,7 +25,9 @@ import cn.wjybxx.dsoncodec.codecs.ArrayCodec;
  * 这可能增加类的数量，但代码的复杂度更低，更易于使用。
  * <p>
  * 注意：
- * 1. 数组和泛型是不同的，数组都对应{@link ArrayCodec}，因此不需要再这里存储。
+ * 1. Codec需要和泛型定义类有相同的泛型参数列表，且构造函数接收一个{@link TypeInfo}参数。
+ * 2. 不会频繁查询，因此不必太在意匹配算法的效率。
+ * 3. 数组和泛型是不同的，数组都对应{@link ArrayCodec}，因此不需要再这里存储。
  *
  * @author wjybxx
  * date - 2024/9/25
@@ -42,7 +44,7 @@ public interface IGenericCodecConfig {
      * @param genericTypeDefine 目标泛型类
      * @return 编码器类型
      */
-    Class<?> GetEncoderType(Class<?> genericTypeDefine);
+    Class<?> getEncoderType(Class<?> genericTypeDefine);
 
     /**
      * 获取可以解码目标泛型类的Codec原型 -- 精确匹配。
@@ -51,6 +53,6 @@ public interface IGenericCodecConfig {
      * @param genericTypeDefine 目标泛型类
      * @return 解码器类型
      */
-    Class<?> GetDecoderType(Class<?> genericTypeDefine);
+    Class<?> getDecoderType(Class<?> genericTypeDefine);
 
 }

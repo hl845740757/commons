@@ -37,7 +37,7 @@ public sealed class ActiveSelector1Codec<T> : AbstractDsonCodec<ActiveSelector<T
     public const string names_children = "children";
     public static readonly Func<List<Task<T>>> factories_children = () => new List<Task<T>>();
 
-    public override Type GetEncoderClass() => typeof(ActiveSelector<T>);
+    public override Type GetEncoderType() => typeof(ActiveSelector<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref ActiveSelector<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

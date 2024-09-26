@@ -53,7 +53,7 @@ public static class ClassIdPolicyExts
             if (declaredType == typeof(object)) {
                 return true;
             }
-            
+
             // c# 泛型的测试开销较大，我们需要缓存测试结果
             if (declaredType.IsGenericType && encoderType.IsGenericType) {
                 TypePair pair = new TypePair(declaredType, encoderType);

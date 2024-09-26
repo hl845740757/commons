@@ -54,6 +54,7 @@ public class DsonCodecRegistries {
     }
 
     public static DsonCodecRegistry fromRegistries(DsonCodecRegistry... codecRegistry) {
+        // TODO 合并DefaultCodecRegistry
         return new CompositeCodecRegistry(List.of(codecRegistry)); // 拷贝
     }
 
@@ -72,14 +73,14 @@ public class DsonCodecRegistries {
         @SuppressWarnings("unchecked")
         @Nullable
         @Override
-        public <T> DsonCodecImpl<? super T> getEncoder(Class<T> clazz, DsonCodecRegistry rootRegistry) {
-            return (DsonCodecImpl<? super T>) type2CodecMap.get(clazz);
+        public <T> DsonCodecImpl<? super T> getEncoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry) {
+            return (DsonCodecImpl<? super T>) type2CodecMap.get(typeInfo);
         }
 
         @SuppressWarnings("unchecked")
         @Override
-        public <T> DsonCodecImpl<T> getDecoder(Class<T> clazz, DsonCodecRegistry rootRegistry) {
-            return (DsonCodecImpl<T>) type2CodecMap.get(clazz);
+        public <T> DsonCodecImpl<T> getDecoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry) {
+            return (DsonCodecImpl<T>) type2CodecMap.get(typeInfo);
         }
 
     }
@@ -94,11 +95,11 @@ public class DsonCodecRegistries {
 
         @Nullable
         @Override
-        public <T> DsonCodecImpl<? super T> getEncoder(Class<T> clazz, DsonCodecRegistry rootRegistry) {
+        public <T> DsonCodecImpl<? super T> getEncoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry) {
             List<DsonCodecRegistry> registryList = this.registryList;
             for (int i = 0; i < registryList.size(); i++) {
                 DsonCodecRegistry registry = registryList.get(i);
-                DsonCodecImpl<? super T> codec = registry.getEncoder(clazz, rootRegistry);
+                DsonCodecImpl<? super T> codec = registry.getEncoder(typeInfo, rootRegistry);
                 if (codec != null) return codec;
             }
             return null;
@@ -106,11 +107,11 @@ public class DsonCodecRegistries {
 
         @Nullable
         @Override
-        public <T> DsonCodecImpl<T> getDecoder(Class<T> clazz, DsonCodecRegistry rootRegistry) {
+        public <T> DsonCodecImpl<T> getDecoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry) {
             List<DsonCodecRegistry> registryList = this.registryList;
             for (int i = 0; i < registryList.size(); i++) {
                 DsonCodecRegistry registry = registryList.get(i);
-                DsonCodecImpl<T> codec = registry.getDecoder(clazz, rootRegistry);
+                DsonCodecImpl<T> codec = registry.getDecoder(typeInfo, rootRegistry);
                 if (codec != null) return codec;
             }
             return null;

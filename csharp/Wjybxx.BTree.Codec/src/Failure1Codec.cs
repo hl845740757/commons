@@ -35,7 +35,7 @@ public sealed class Failure1Codec<T> : AbstractDsonCodec<Failure<T>> where T : c
     public const string names_flags = "flags";
     public const string names_failureStatus = "failureStatus";
 
-    public override Type GetEncoderClass() => typeof(Failure<T>);
+    public override Type GetEncoderType() => typeof(Failure<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref Failure<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

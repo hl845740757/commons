@@ -20,6 +20,7 @@ import cn.wjybxx.apt.AbstractGenerator;
 import cn.wjybxx.apt.AptUtils;
 import cn.wjybxx.apt.BeanUtils;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
@@ -109,8 +110,23 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         }
 
         // 控制方法生成顺序
+        // typeInfo 字段
+        typeBuilder.addField(FieldSpec.builder(processor.typeName_TypeInfo, "typeInfo", Modifier.PRIVATE, Modifier.FINAL).build());
+        // 生成默认构造函数，使用全局默认TypeInfo
+        typeBuilder.addMethod(MethodSpec.constructorBuilder()
+                .addModifiers(Modifier.PUBLIC)
+                .addStatement("this.typeInfo = " + SchemaGenerator.getTypeInfoFieldName())
+                .build());
+        // 泛型类再生成一个指定TypeInfo的工作函数
+        if (typeElement.getTypeParameters().size() > 0) {
+            typeBuilder.addMethod(MethodSpec.constructorBuilder()
+                    .addModifiers(Modifier.PUBLIC)
+                    .addParameter(processor.typeName_TypeInfo, "typeInfo")
+                    .addStatement("this.typeInfo = typeInfo")
+                    .build());
+        }
         // getEncoderType
-        typeBuilder.addMethod(processor.newGetEncoderClassMethod(context.superDeclaredType, rawTypeName));
+        typeBuilder.addMethod(processor.newGetEncoderTypeMethod(context.superDeclaredType, rawTypeName));
 
         // beforeEncode回调
         if (genBeforeEncodeMethod(aptClassProps)) {

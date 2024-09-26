@@ -39,7 +39,7 @@ public sealed class SelectorN1Codec<T> : AbstractDsonCodec<SelectorN<T>> where T
     public const string names_failFast = "failFast";
     public static readonly Func<List<Task<T>>> factories_children = () => new List<Task<T>>();
 
-    public override Type GetEncoderClass() => typeof(SelectorN<T>);
+    public override Type GetEncoderType() => typeof(SelectorN<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref SelectorN<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

@@ -37,7 +37,7 @@ public sealed class ServiceParallel1Codec<T> : AbstractDsonCodec<ServiceParallel
     public const string names_children = "children";
     public static readonly Func<List<Task<T>>> factories_children = () => new List<Task<T>>();
 
-    public override Type GetEncoderClass() => typeof(ServiceParallel<T>);
+    public override Type GetEncoderType() => typeof(ServiceParallel<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref ServiceParallel<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

@@ -278,7 +278,7 @@ public static class DsonConverterUtils
             IList<IDsonCodec> builtinCodecs = BuiltinCodecs();
             List<DsonCodecImpl> codecImpls = new List<DsonCodecImpl>();
             foreach (IDsonCodec rawCodec in builtinCodecs) {
-                Type genericType = typeof(DsonCodecImpl<>).MakeGenericType(rawCodec.GetEncoderClass());
+                Type genericType = typeof(DsonCodecImpl<>).MakeGenericType(rawCodec.GetEncoderType());
                 DsonCodecImpl codecImpl = (DsonCodecImpl)Activator.CreateInstance(genericType, rawCodec);
                 codecImpls.Add(codecImpl);
             }

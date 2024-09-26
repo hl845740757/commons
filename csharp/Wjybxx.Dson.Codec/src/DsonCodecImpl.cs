@@ -27,7 +27,7 @@ namespace Wjybxx.Dson.Codec
 /// </summary>
 public abstract class DsonCodecImpl
 {
-    public abstract Type GetEncoderClass();
+    public abstract Type GetEncoderType();
 
     // 解决泛型协变逆变问题 - 不会导致装箱
     public abstract void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, ObjectStyle style);
@@ -54,8 +54,8 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
         _enumCodec = codec as AbstractEnumCodec<T>;
     }
 
-    public override Type GetEncoderClass() {
-        return _codec.GetEncoderClass();
+    public override Type GetEncoderType() {
+        return _codec.GetEncoderType();
     }
 
     public override void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, ObjectStyle style) {
@@ -63,7 +63,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     }
 
     public override object ReadObject2(IDsonObjectReader reader, Type declaredType, object? factory = null) {
-        return ReadObject(reader, declaredType, (Func<T>?)factory); // factory不未null时一定按照declaredType查找codec，所以到这里factory应该为null
+        return ReadObject(reader, declaredType, (Func<T>?)factory); // factory不为null时一定按照declaredType查找codec，所以到这里factory应该为null
     }
 
     public void WriteObject(IDsonObjectWriter writer, T inst, Type declaredType, ObjectStyle style) {
@@ -86,11 +86,11 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
         if (_autoStart) {
             T result;
             if (_writeAsArray) {
-                reader.ReadStartArray();
+                reader.ReadStartArray(declaredType);
                 result = _codec.ReadObject(reader, declaredType, factory);
                 reader.ReadEndArray();
             } else {
-                reader.ReadStartObject();
+                reader.ReadStartObject(declaredType);
                 result = _codec.ReadObject(reader, declaredType, factory);
                 reader.ReadEndObject();
             }

@@ -35,6 +35,7 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class LocalDateTimeCodec implements DsonCodec<LocalDateTime> {
+
     @Override
     public boolean isWriteAsArray() {
         return false;
@@ -47,18 +48,18 @@ public class LocalDateTimeCodec implements DsonCodec<LocalDateTime> {
 
     @Nonnull
     @Override
-    public Class<LocalDateTime> getEncoderClass() {
-        return LocalDateTime.class;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(LocalDateTime.class);
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, LocalDateTime instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, LocalDateTime instance, TypeInfo declaredType, ObjectStyle style) {
         ExtDateTime dateTime = ExtDateTime.ofDateTime(instance);
         writer.writeExtDateTime(null, dateTime);
     }
 
     @Override
-    public LocalDateTime readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends LocalDateTime> factory) {
+    public LocalDateTime readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends LocalDateTime> factory) {
         ExtDateTime dateTime = reader.readExtDateTime(reader.getCurrentName());
         return LocalDateTime.ofEpochSecond(dateTime.getSeconds(), dateTime.getNanos(), ZoneOffset.UTC);
     }

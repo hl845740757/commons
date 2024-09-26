@@ -40,7 +40,7 @@ import java.util.*;
  *
  * <h3>数组泛型信息</h3>
  * 注意：由于{@link Class#getComponentType()}不包含泛型信息，
- * 而我们需要这部分数据，因此我们将数组的泛型信息也存储在{@link #typeArgs}中，
+ * 而我们需要这部分数据，因此我们将数组的泛型信息也存储在{@link #genericArgs}中，
  * 因此不能简单根据泛型参数个数判断是否是泛型类，请通过{@link #isGenericType()}判断。
  * ps：数组不是泛型类。
  *
@@ -54,26 +54,26 @@ public final class TypeInfo {
     /** 原始类型 -- 可能是基础类型 */
     public final Class<?> rawType;
     /** 泛型参数信息 */
-    public final List<TypeInfo> typeArgs;
+    public final List<TypeInfo> genericArgs;
 
     private TypeInfo(Class<?> rawType) {
         this.rawType = Objects.requireNonNull(rawType);
-        this.typeArgs = List.of();
+        this.genericArgs = List.of();
     }
 
-    private TypeInfo(Class<?> rawType, List<TypeInfo> typeArgs) {
+    private TypeInfo(Class<?> rawType, List<TypeInfo> genericArgs) {
         this.rawType = Objects.requireNonNull(rawType);
-        this.typeArgs = typeArgs;
+        this.genericArgs = genericArgs;
     }
 
     private TypeInfo(Class<?> rawType, TypeInfo typeArg1) {
         this.rawType = Objects.requireNonNull(rawType);
-        this.typeArgs = List.of(typeArg1);
+        this.genericArgs = List.of(typeArg1);
     }
 
     private TypeInfo(Class<?> rawType, TypeInfo typeArg1, TypeInfo typeArg2) {
         this.rawType = Objects.requireNonNull(rawType);
-        this.typeArgs = List.of(typeArg1, typeArg2);
+        this.genericArgs = List.of(typeArg1, typeArg2);
     }
 
     // 用于动态解析时
@@ -82,13 +82,13 @@ public final class TypeInfo {
     }
 
     TypeInfo toImmutable() {
-        if (typeArgs.isEmpty()) {
+        if (genericArgs.isEmpty()) {
             return new TypeInfo(rawType);
         }
-        for (int i = 0; i < typeArgs.size(); i++) {
-            typeArgs.set(i, typeArgs.get(i).toImmutable());
+        for (int i = 0; i < genericArgs.size(); i++) {
+            genericArgs.set(i, genericArgs.get(i).toImmutable());
         }
-        return new TypeInfo(rawType, List.copyOf(typeArgs));
+        return new TypeInfo(rawType, List.copyOf(genericArgs));
     }
 
     // region api
@@ -122,7 +122,7 @@ public final class TypeInfo {
      * 注意：这不代表{@link #rawType}是泛型类，使用时务必小心。
      */
     public boolean isGenericType() {
-        return !rawType.isArray() && !typeArgs.isEmpty();
+        return !rawType.isArray() && !genericArgs.isEmpty();
     }
 
     /** 获取泛型原型 */
@@ -135,7 +135,7 @@ public final class TypeInfo {
 
     /** 获取泛型参数 */
     public TypeInfo getGenericArgument(int idx) {
-        return typeArgs.get(idx);
+        return genericArgs.get(idx);
     }
 
     /** 是否是数组 */
@@ -146,14 +146,50 @@ public final class TypeInfo {
     /** 获取数组的元素类型 */
     public TypeInfo getComponentType() {
         if (rawType.isArray()) {
-            return new TypeInfo(rawType.getComponentType(), typeArgs);  // 继承泛型信息
+            return new TypeInfo(rawType.getComponentType(), genericArgs);  // 继承泛型信息
         }
         return null;
     }
 
     /** 构建数组类型 */
     public TypeInfo makeArrayType() {
-        return new TypeInfo(rawType.arrayType(), typeArgs); // 继承泛型信息
+        return new TypeInfo(rawType.arrayType(), genericArgs); // 继承泛型信息
+    }
+
+    /** 是否包含泛型参数 */
+    public boolean hasGenericArgs() {
+        return genericArgs.size() > 0;
+    }
+
+    // endregion
+
+    // region equals
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TypeInfo that = (TypeInfo) o;
+        if (!rawType.equals(that.rawType)) return false;
+        return CollectionUtils.sequenceEqual(genericArgs, that.genericArgs);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = rawType.hashCode();
+        for (int i = 0; i < genericArgs.size(); i++) {
+            result = 31 * result + genericArgs.get(i).hashCode();
+        }
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "TypeInfo{" +
+                "rawType=" + rawType +
+                ", typeArgs=" + genericArgs +
+                '}';
     }
 
     // endregion
@@ -161,6 +197,7 @@ public final class TypeInfo {
     // region 常量
 
     // 非泛型常量不能使用of，of可能返回自己，导致NULL
+    // String/Object
     public static final TypeInfo OBJECT = new TypeInfo(Object.class);
     public static final TypeInfo STRING = new TypeInfo(String.class);
     // 基础类型
@@ -183,8 +220,20 @@ public final class TypeInfo {
     public static final TypeInfo BOXED_BYTE = new TypeInfo(Byte.class);
     public static final TypeInfo BOXED_CHAR = new TypeInfo(Character.class);
     public static final TypeInfo BOXED_VOID = new TypeInfo(Void.class);
+    // 数组类型
+    public static final TypeInfo ARRAY_INT = new TypeInfo(int[].class);
+    public static final TypeInfo ARRAY_LONG = new TypeInfo(long[].class);
+    public static final TypeInfo ARRAY_FLOAT = new TypeInfo(float[].class);
+    public static final TypeInfo ARRAY_DOUBLE = new TypeInfo(double[].class);
+    public static final TypeInfo ARRAY_BOOL = new TypeInfo(boolean[].class);
+    public static final TypeInfo ARRAY_SHORT = new TypeInfo(short[].class);
+    public static final TypeInfo ARRAY_BYTE = new TypeInfo(byte[].class);
+    public static final TypeInfo ARRAY_CHAR = new TypeInfo(char[].class);
+    // 数组类型 -- String/Object
+    public static final TypeInfo ARRAY_STRING = new TypeInfo(String[].class);
+    public static final TypeInfo ARRAY_OBJECT = new TypeInfo(Object[].class);
 
-    // 泛型类其实可使用Of
+    // 常用集合--泛型类其实可使用Of
     public static final TypeInfo ARRAYLIST = new TypeInfo(ArrayList.class, List.of(OBJECT));
     public static final TypeInfo LINKED_HASHSET = new TypeInfo(LinkedHashSet.class, List.of(OBJECT));
 
@@ -196,9 +245,7 @@ public final class TypeInfo {
 
     // endregion
 
-    // region 工厂方法
-
-    // region of-type-info
+    // region 工厂方法：of-type-info
 
     @StableName(comment = "生成的代码会调用")
     public static TypeInfo of(Class<?> rawType) {
@@ -236,7 +283,7 @@ public final class TypeInfo {
 
     // endregion
 
-    // region of-class#方便手写
+    // region 工厂方法: of-class#方便手写
 
     public static TypeInfo of(Class<?> rawType, Class<?> typeArg1) {
         return new TypeInfo(rawType, of(typeArg1));
@@ -256,36 +303,4 @@ public final class TypeInfo {
 
     // endregion
 
-    // endregion
-
-    // region equals
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        TypeInfo that = (TypeInfo) o;
-        if (!rawType.equals(that.rawType)) return false;
-        return CollectionUtils.sequenceEqual(typeArgs, that.typeArgs);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = rawType.hashCode();
-        for (int i = 0; i < typeArgs.size(); i++) {
-            result = 31 * result + typeArgs.get(i).hashCode();
-        }
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "TypeInfo{" +
-                "rawType=" + rawType +
-                ", typeArgs=" + typeArgs +
-                '}';
-    }
-
-    // endregion
 }

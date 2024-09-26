@@ -31,36 +31,43 @@ import java.util.function.Supplier;
  */
 public class ArrayCodec<T> implements DsonCodec<T> {
 
-    private final Class<T> type;
+    private final TypeInfo typeInfo;
 
-    public ArrayCodec(Class<T> type) {
-        assert type.isArray();
-        this.type = type;
+    public ArrayCodec(TypeInfo typeInfo) {
+        assert typeInfo.isArray();
+        this.typeInfo = typeInfo;
     }
 
     @Nonnull
     @Override
-    public Class<T> getEncoderClass() {
-        return type;
+    public TypeInfo getEncoderType() {
+        return typeInfo;
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
         // declaredType只影响inst是否写入类型，不影响数组元素是否写入类型，但Java是伪泛型，我们尝试从用户信息中获取泛型信息
-        TypeInfo eleDeclaredType = typeInfo.isArray() ? typeInfo.getComponentType() : TypeInfo.of(type.getComponentType());
+        TypeInfo eleDeclaredType = getEleDeclaredType(declaredType);
 
         // 基础类型数组被特殊处理了，因此这里一定能强转 -- 强转以避免反射接口
         Object[] array = (Object[]) instance;
-        writer.writeStartArray(instance, typeInfo, style);
+        writer.writeStartArray(instance, declaredType, style);
         for (int i = 0; i < array.length; i++) {
             writer.writeObject(null, array[i], eleDeclaredType);
         }
         writer.writeEndArray();
     }
 
+    private TypeInfo getEleDeclaredType(TypeInfo declaredType) {
+        if (typeInfo.hasGenericArgs()) {
+            return typeInfo.getGenericArgument(0);
+        }
+        return declaredType.isGenericType() ? declaredType.getGenericArgument(0) : TypeInfo.OBJECT;
+    }
+
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends T> factory) {
-        TypeInfo eleDeclaredType = typeInfo.isArray() ? typeInfo.getComponentType() : TypeInfo.of(type.getComponentType());
+    public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
+        TypeInfo eleDeclaredType = getEleDeclaredType(declaredType);
 
         // 由于长度未知，只能先存储为List再转...
         List<Object> result = new ArrayList<>();
@@ -68,6 +75,8 @@ public class ArrayCodec<T> implements DsonCodec<T> {
             Object value = reader.readObject(null, eleDeclaredType, null);
             result.add(value);
         }
-        return DsonConverterUtils.convertList2Array(result, type);
+
+        @SuppressWarnings("unchecked") Class<T> arrayType = (Class<T>) typeInfo.rawType;
+        return DsonConverterUtils.convertList2Array(result, arrayType);
     }
 }

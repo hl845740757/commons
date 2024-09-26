@@ -74,8 +74,8 @@ public class DynamicDsonCodecRegistry : IDsonCodecRegistry
     /// </summary>
     /// <param name="codecImpl"></param>
     public void AddCodec(DsonCodecImpl codecImpl) {
-        encoderDic.TryAdd(codecImpl.GetEncoderClass(), codecImpl);
-        decoderDic.TryAdd(codecImpl.GetEncoderClass(), codecImpl);
+        encoderDic.TryAdd(codecImpl.GetEncoderType(), codecImpl);
+        decoderDic.TryAdd(codecImpl.GetEncoderType(), codecImpl);
     }
 
     /// <summary>
@@ -83,7 +83,7 @@ public class DynamicDsonCodecRegistry : IDsonCodecRegistry
     /// </summary>
     /// <param name="codecImpl">编码器</param>
     public void AddEncoder(DsonCodecImpl codecImpl) {
-        encoderDic.TryAdd(codecImpl.GetEncoderClass(), codecImpl);
+        encoderDic.TryAdd(codecImpl.GetEncoderType(), codecImpl);
     }
 
     /// <summary>
@@ -93,8 +93,8 @@ public class DynamicDsonCodecRegistry : IDsonCodecRegistry
     /// <param name="codecImpl">编码器</param>
     /// <exception cref="ArgumentException"></exception>
     public void AddEncoder(Type type, DsonCodecImpl codecImpl) {
-        if (!codecImpl.GetEncoderClass().IsAssignableFrom(type)) {
-            throw new ArgumentException($"codecType: {codecImpl.GetEncoderClass()}, argType: {type}");
+        if (!codecImpl.GetEncoderType().IsAssignableFrom(type)) {
+            throw new ArgumentException($"codecType: {codecImpl.GetEncoderType()}, argType: {type}");
         }
         encoderDic.TryAdd(type, codecImpl);
     }
@@ -104,7 +104,7 @@ public class DynamicDsonCodecRegistry : IDsonCodecRegistry
     /// </summary>
     /// <param name="codecImpl"></param>
     public void AddDecoder(DsonCodecImpl codecImpl) {
-        decoderDic.TryAdd(codecImpl.GetEncoderClass(), codecImpl);
+        decoderDic.TryAdd(codecImpl.GetEncoderType(), codecImpl);
     }
 
     /// <summary>
@@ -134,7 +134,7 @@ public class DynamicDsonCodecRegistry : IDsonCodecRegistry
         if (codecImpl != null) {
             encoderDic.TryAdd(type, codecImpl);
             // 可能是超类Encoder
-            if (type == codecImpl.GetEncoderClass()) {
+            if (type == codecImpl.GetEncoderType()) {
                 decoderDic.TryAdd(type, codecImpl);
             }
         }

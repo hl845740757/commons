@@ -39,7 +39,7 @@ public sealed class ChangeStateTask1Codec<T> : AbstractDsonCodec<ChangeStateTask
     public const string names_delayMode = "delayMode";
     public const string names_delayArg = "delayArg";
 
-    public override Type GetEncoderClass() => typeof(ChangeStateTask<T>);
+    public override Type GetEncoderType() => typeof(ChangeStateTask<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref ChangeStateTask<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

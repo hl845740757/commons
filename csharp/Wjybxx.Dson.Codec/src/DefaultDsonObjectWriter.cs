@@ -142,7 +142,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             }
             ObjectStyle castStyle = style ?? FindObjectStyle(type);
             // 注意：value的运行时类型不一定是T，因此类型转型时只能测试T
-            if (codec.GetEncoderClass() == typeof(T)) {
+            if (codec.GetEncoderType() == typeof(T)) {
                 DsonCodecImpl<T> codecImpl = (DsonCodecImpl<T>)codec;
                 codecImpl.WriteObject(this, value, declaredType, castStyle);
             } else {

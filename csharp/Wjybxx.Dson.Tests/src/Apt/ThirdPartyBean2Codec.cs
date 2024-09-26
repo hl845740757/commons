@@ -13,7 +13,7 @@ public sealed class ThirdPartyBean2Codec : AbstractDsonCodec<ThirdPartyBean2>
     public const string names_name = "name";
     public const string names_Sex = "Sex";
 
-    public override Type GetEncoderClass() => typeof(ThirdPartyBean2);
+    public override Type GetEncoderType() => typeof(ThirdPartyBean2);
 
     protected override void BeforeEncode(IDsonObjectWriter writer, ref ThirdPartyBean2 inst, Type declaredType, ObjectStyle style) {
         LinkerBeanExample.BeforeEncode(inst, writer.Options);

@@ -239,9 +239,9 @@ public class DefaultDsonConverter implements DsonConverter {
         Objects.requireNonNull(options, "options");
         // 检查classId是否存在，以及命名是否非法
         for (DsonCodec<?> rawCodec : pojoCodecList) {
-            TypeMeta typeMeta = typeMetaRegistry.ofClass(rawCodec.getEncoderClass());
+            TypeMeta typeMeta = typeMetaRegistry.ofClass(rawCodec.getEncoderType());
             if (typeMeta == null) {
-                throw new IllegalArgumentException("the type meta of encoderClass: %s is absent".formatted(rawCodec.getEncoderClass()));
+                throw new IllegalArgumentException("the type meta of encoderClass: %s is absent".formatted(rawCodec.getEncoderType()));
             }
         }
         // 转换codecImpl

@@ -12,7 +12,7 @@ public sealed class ThirdPartyBeanCodec : AbstractDsonCodec<ThirdPartyBean>
     public const string names_age = "age";
     public const string names_name = "name";
 
-    public override Type GetEncoderClass() => typeof(ThirdPartyBean);
+    public override Type GetEncoderType() => typeof(ThirdPartyBean);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref ThirdPartyBean inst, Type declaredType, ObjectStyle style) {
         writer.WriteInt(names_age, inst.Age, WireType.VarInt, NumberStyles.Simple);

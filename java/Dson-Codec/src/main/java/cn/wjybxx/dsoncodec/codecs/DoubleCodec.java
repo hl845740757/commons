@@ -45,17 +45,17 @@ public class DoubleCodec implements DsonCodec<Double> {
 
     @Nonnull
     @Override
-    public Class<Double> getEncoderClass() {
-        return Double.class;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.BOXED_DOUBLE;
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Double instance, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, Double instance, TypeInfo declaredType, ObjectStyle style) {
         writer.writeDouble(null, instance, NumberStyle.SIMPLE); // double无需声明类型
     }
 
     @Override
-    public Double readObject(DsonObjectReader reader, TypeInfo typeInfo, Supplier<? extends Double> factory) {
+    public Double readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Double> factory) {
         return reader.readDouble(reader.getCurrentName());
     }
 

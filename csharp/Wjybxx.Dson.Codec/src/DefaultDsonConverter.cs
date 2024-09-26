@@ -227,12 +227,12 @@ public class DefaultDsonConverter : IDsonConverter
         if (options == null) throw new ArgumentNullException(nameof(options));
         // 检查classId是否存在，以及命名是否非法
         foreach (IDsonCodec rawCodec in pojoCodecList) {
-            typeMetaRegistry.CheckedOfType(rawCodec.GetEncoderClass());
+            typeMetaRegistry.CheckedOfType(rawCodec.GetEncoderType());
         }
         // 转换codecImpl
         List<DsonCodecImpl> allPojoCodecList = new List<DsonCodecImpl>(pojoCodecList.Count);
         foreach (IDsonCodec rawCodec in pojoCodecList) {
-            Type genericType = typeof(DsonCodecImpl<>).MakeGenericType(rawCodec.GetEncoderClass());
+            Type genericType = typeof(DsonCodecImpl<>).MakeGenericType(rawCodec.GetEncoderType());
             DsonCodecImpl codecImpl = (DsonCodecImpl)Activator.CreateInstance(genericType, rawCodec);
             allPojoCodecList.Add(codecImpl);
         }

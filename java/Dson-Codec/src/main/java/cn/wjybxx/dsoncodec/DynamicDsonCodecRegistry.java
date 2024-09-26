@@ -69,7 +69,7 @@ public class DynamicDsonCodecRegistry implements DsonCodecRegistry {
     @SuppressWarnings("unchecked")
     @Nullable
     @Override
-    public <T> DsonCodecImpl<? super T> getEncoder(Class<T> type, DsonCodecRegistry rootRegistry) {
+    public <T> DsonCodecImpl<? super T> getEncoder(TypeInfo type, DsonCodecRegistry rootRegistry) {
         // 优先查找用户的Codec，以允许用户定制优化
         DsonCodecImpl<? super T> codecImpl = basicRegistry.getEncoder(type, rootRegistry);
         if (codecImpl != null) return codecImpl;
@@ -97,7 +97,7 @@ public class DynamicDsonCodecRegistry implements DsonCodecRegistry {
     @SuppressWarnings("unchecked")
     @Nullable
     @Override
-    public <T> DsonCodecImpl<T> getDecoder(Class<T> type, DsonCodecRegistry rootRegistry) {
+    public <T> DsonCodecImpl<T> getDecoder(TypeInfo type, DsonCodecRegistry rootRegistry) {
         // 优先查找用户的Codec，以允许用户定制优化
         DsonCodecImpl<T> codecImpl = basicRegistry.getDecoder(type, rootRegistry);
         if (codecImpl != null) return codecImpl;

@@ -37,7 +37,7 @@ public sealed class Foreach1Codec<T> : AbstractDsonCodec<Foreach<T>> where T : c
     public const string names_children = "children";
     public static readonly Func<List<Task<T>>> factories_children = () => new List<Task<T>>();
 
-    public override Type GetEncoderClass() => typeof(Foreach<T>);
+    public override Type GetEncoderType() => typeof(Foreach<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref Foreach<T> inst, Type declaredType, ObjectStyle style) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);

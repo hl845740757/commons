@@ -85,17 +85,17 @@ public abstract class DictionaryCodec
         IDictionary<K, V> result = NewDictionary(reader, declaredType, factory);
         if (reader.Options.writeMapAsDocument) {
             if (typeof(K) == typeof(int)) {
-                ReadDictionaryInt(reader, (IDictionary<int, V>)result, valDeclaredType);
+                ReadDictionaryInt(reader, (IDictionary<int, V>)result, declaredType, valDeclaredType);
             } else if (typeof(K) == typeof(long)) {
-                ReadDictionaryLong(reader, (IDictionary<long, V>)result, valDeclaredType);
+                ReadDictionaryLong(reader, (IDictionary<long, V>)result, declaredType, valDeclaredType);
             } else {
-                ReadDictionaryObject(reader, result, valDeclaredType);
+                ReadDictionaryObject(reader, result, declaredType, valDeclaredType);
             }
         } else {
             if (typeof(K) == typeof(int)) {
                 // int2object
                 IDictionary<int, V> int2ObjDic = (IDictionary<int, V>)result;
-                reader.ReadStartArray();
+                reader.ReadStartArray(declaredType);
                 while (reader.ReadDsonType() != DsonType.EndOfObject) {
                     int key = reader.ReadInt(null);
                     V value = reader.ReadObject<V>(null, valDeclaredType);
@@ -105,7 +105,7 @@ public abstract class DictionaryCodec
             } else if (typeof(K) == typeof(long)) {
                 // long2object
                 IDictionary<long, V> long2ObjDic = (IDictionary<long, V>)result;
-                reader.ReadStartArray();
+                reader.ReadStartArray(declaredType);
                 while (reader.ReadDsonType() != DsonType.EndOfObject) {
                     long key = reader.ReadLong(null);
                     V value = reader.ReadObject<V>(null, valDeclaredType);
@@ -114,7 +114,7 @@ public abstract class DictionaryCodec
                 reader.ReadEndArray();
             } else {
                 // generic
-                reader.ReadStartArray();
+                reader.ReadStartArray(declaredType);
                 while (reader.ReadDsonType() != DsonType.EndOfObject) {
                     K key = reader.ReadObject<K>(null, keyDeclaredType);
                     V value = reader.ReadObject<V>(null, valDeclaredType);
@@ -189,8 +189,8 @@ public abstract class DictionaryCodec
     #region read
 
     // 通过重复编码避免拆装箱
-    private static void ReadDictionaryObject<K, V>(IDsonObjectReader reader, IDictionary<K, V> result, Type valDeclaredType) {
-        reader.ReadStartObject();
+    private static void ReadDictionaryObject<K, V>(IDsonObjectReader reader, IDictionary<K, V> result, Type declaredType, Type valDeclaredType) {
+        reader.ReadStartObject(declaredType);
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             string keyString = reader.ReadName();
             K key = reader.DecodeKey<K>(keyString);
@@ -200,8 +200,8 @@ public abstract class DictionaryCodec
         reader.ReadEndObject();
     }
 
-    private static void ReadDictionaryInt<V>(IDsonObjectReader reader, IDictionary<int, V> result, Type valDeclaredType) {
-        reader.ReadStartObject();
+    private static void ReadDictionaryInt<V>(IDsonObjectReader reader, IDictionary<int, V> result, Type declaredType, Type valDeclaredType) {
+        reader.ReadStartObject(declaredType);
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             string keyString = reader.ReadName();
             int key = int.Parse(keyString);
@@ -211,8 +211,8 @@ public abstract class DictionaryCodec
         reader.ReadEndObject();
     }
 
-    private static void ReadDictionaryLong<V>(IDsonObjectReader reader, IDictionary<long, V> result, Type valDeclaredType) {
-        reader.ReadStartObject();
+    private static void ReadDictionaryLong<V>(IDsonObjectReader reader, IDictionary<long, V> result, Type declaredType, Type valDeclaredType) {
+        reader.ReadStartObject(declaredType);
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             string keyString = reader.ReadName();
             long key = long.Parse(keyString);

@@ -330,7 +330,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
             return converter.typeMetaRegistry().ofType(typeInfo);
         }
         if (DsonConverterUtils.canInheritTypeArgs(encoderClass, typeInfo)) {
-            return converter.typeMetaRegistry().ofType(TypeInfo.of(encoderClass, typeInfo.typeArgs));
+            return converter.typeMetaRegistry().ofType(TypeInfo.of(encoderClass, typeInfo.genericArgs));
         }
         return converter.typeMetaRegistry().ofClass(encoderClass);
     }

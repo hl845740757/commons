@@ -20,9 +20,6 @@ import javax.annotation.Nullable;
 
 /**
  * 编解码器注册表
- * <p>
- * Q：Java端为什么不设计为支持泛型{@link TypeInfo}的？
- * A：因为莫得意义呀。
  *
  * @author wjybxx
  * date 2023/4/3
@@ -33,10 +30,11 @@ public interface DsonCodecRegistry {
      * 查找编码器（encoder）。
      * 编码器可以接收子类实例，将子类实例按照超类编码，子类特殊数据丢弃。
      *
+     * @param typeInfo     类型信息，含泛型参数
      * @param rootRegistry 用于比如想转换为查询超类的Encoder
      */
     @Nullable
-    <T> DsonCodecImpl<? super T> getEncoder(Class<T> clazz, DsonCodecRegistry rootRegistry);
+    <T> DsonCodecImpl<? super T> getEncoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry);
 
     /**
      * 查找解码器（decoder）。
@@ -45,9 +43,10 @@ public interface DsonCodecRegistry {
      * ps:在Java端其实可以有所变通，因为Java是伪泛型，因此{@code Codec<BaseType> }可以赋值给{@code Codec<SubType>}，
      * 因此如果超类的Codec创建的实例可以向下转型为参数目标类型，那么是可以返回超类的Codec的。
      *
+     * @param typeInfo     类型信息，含泛型参数
      * @param rootRegistry 用于转换为查询子类的Decoder
      */
     @Nullable
-    <T> DsonCodecImpl<T> getDecoder(Class<T> clazz, DsonCodecRegistry rootRegistry);
+    <T> DsonCodecImpl<T> getDecoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry);
 
 }
