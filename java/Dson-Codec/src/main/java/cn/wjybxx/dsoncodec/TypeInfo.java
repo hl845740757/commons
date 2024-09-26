@@ -17,6 +17,7 @@
 package cn.wjybxx.dsoncodec;
 
 
+import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.base.annotation.StableName;
 
 import javax.annotation.concurrent.Immutable;
@@ -26,8 +27,11 @@ import java.util.*;
  * 类型信息
  *
  * <h3>编码-有限泛型</h3>
- * 由于Java是伪泛型，在编译时会擦除类型信息，因此在运行时无法获得对象的完整类型信息 —— APT也无法做到。
- * 因此编码时无法写入完整的泛型参数信息，因此在跨语言通信时，应当避免【泛型递归】，即禁止泛型参数也是泛型 -- 最好彻底避免泛型。
+ * 由于Java是伪泛型，在编译时会擦除类型信息，因此在运行时无法获得对象的完整类型信息，
+ * 因此编码时无法精确写入完整的泛型参数信息，因此在跨语言通信时，应当避免【泛型递归】，即禁止泛型参数也是泛型 -- 最好彻底避免泛型。
+ * <p>
+ * APT在编译时可以精确解析不包含泛型变量的类型，eg：{@code Map<String, Task<Blackboard>}，
+ * 但无发精确解析包含泛型变量的类型，eg：{@code Map<String, T>}，只能进行擦除后解析。
  *
  * <h3>解码-完整泛型</h3>
  * 虽然我们无法在运行时导出对象的完整的泛型信息，但编辑器可以 —— 编辑器中的泛型都是已构造泛型。
@@ -47,7 +51,7 @@ import java.util.*;
 @SuppressWarnings({"unused"})
 public final class TypeInfo {
 
-    /** 原始类型 */
+    /** 原始类型 -- 可能是基础类型 */
     public final Class<?> rawType;
     /** 泛型参数信息 */
     public final List<TypeInfo> typeArgs;
@@ -57,29 +61,24 @@ public final class TypeInfo {
         this.typeArgs = List.of();
     }
 
-    private TypeInfo(Class<?> rawType, boolean mutable) {
-        this.rawType = Objects.requireNonNull(rawType);
-        this.typeArgs = mutable ? new ArrayList<>() : List.of();
-    }
-
     private TypeInfo(Class<?> rawType, List<TypeInfo> typeArgs) {
         this.rawType = Objects.requireNonNull(rawType);
-        this.typeArgs = List.copyOf(typeArgs);
+        this.typeArgs = typeArgs;
     }
 
-    private TypeInfo(Class<?> rawType, Class<?> typeArg1) {
+    private TypeInfo(Class<?> rawType, TypeInfo typeArg1) {
         this.rawType = Objects.requireNonNull(rawType);
-        this.typeArgs = List.of(TypeInfo.of(typeArg1));
+        this.typeArgs = List.of(typeArg1);
     }
 
-    private TypeInfo(Class<?> rawType, Class<?> typeArg1, Class<?> typeArg2) {
+    private TypeInfo(Class<?> rawType, TypeInfo typeArg1, TypeInfo typeArg2) {
         this.rawType = Objects.requireNonNull(rawType);
-        this.typeArgs = List.of(TypeInfo.of(typeArg1), TypeInfo.of(typeArg2));
+        this.typeArgs = List.of(typeArg1, typeArg2);
     }
 
     // 用于动态解析时
     static TypeInfo newMutable(Class<?> rawType) {
-        return new TypeInfo(rawType, true);
+        return new TypeInfo(rawType, new ArrayList<>());
     }
 
     TypeInfo toImmutable() {
@@ -97,6 +96,20 @@ public final class TypeInfo {
     /** 是否是基础类型 */
     public boolean isPrimitive() {
         return rawType.isPrimitive();
+    }
+
+    /** 基础类型装箱 */
+    public TypeInfo box() {
+        if (rawType == int.class) return BOXED_INT;
+        if (rawType == long.class) return BOXED_LONG;
+        if (rawType == float.class) return BOXED_FLOAT;
+        if (rawType == double.class) return BOXED_DOUBLE;
+        if (rawType == boolean.class) return BOXED_BOOL;
+        if (rawType == byte.class) return BOXED_BYTE;
+        if (rawType == short.class) return BOXED_SHORT;
+        if (rawType == char.class) return BOXED_CHAR;
+        if (rawType == void.class) return BOXED_VOID;
+        throw new RuntimeException();
     }
 
     /** 是否是枚举 */
@@ -147,91 +160,101 @@ public final class TypeInfo {
 
     // region 常量
 
-    /** 这里不能调用of...因为of可能返回该对象 */
+    // 非泛型常量不能使用of，of可能返回自己，导致NULL
     public static final TypeInfo OBJECT = new TypeInfo(Object.class);
-    public static final TypeInfo INTEGER = new TypeInfo(Integer.class);
-    public static final TypeInfo LONG = new TypeInfo(Long.class);
     public static final TypeInfo STRING = new TypeInfo(String.class);
+    // 基础类型
+    public static final TypeInfo INT = new TypeInfo(int.class);
+    public static final TypeInfo LONG = new TypeInfo(long.class);
+    public static final TypeInfo FLOAT = new TypeInfo(float.class);
+    public static final TypeInfo DOUBLE = new TypeInfo(double.class);
+    public static final TypeInfo BOOL = new TypeInfo(boolean.class);
+    public static final TypeInfo SHORT = new TypeInfo(short.class);
+    public static final TypeInfo BYTE = new TypeInfo(byte.class);
+    public static final TypeInfo CHAR = new TypeInfo(char.class);
+    public static final TypeInfo VOID = new TypeInfo(void.class);
+    // 装箱类型
+    public static final TypeInfo BOXED_INT = new TypeInfo(Integer.class);
+    public static final TypeInfo BOXED_LONG = new TypeInfo(Long.class);
+    public static final TypeInfo BOXED_FLOAT = new TypeInfo(Float.class);
+    public static final TypeInfo BOXED_DOUBLE = new TypeInfo(Double.class);
+    public static final TypeInfo BOXED_BOOL = new TypeInfo(Boolean.class);
+    public static final TypeInfo BOXED_SHORT = new TypeInfo(Short.class);
+    public static final TypeInfo BOXED_BYTE = new TypeInfo(Byte.class);
+    public static final TypeInfo BOXED_CHAR = new TypeInfo(Character.class);
+    public static final TypeInfo BOXED_VOID = new TypeInfo(Void.class);
 
-    public static final TypeInfo ARRAYLIST =
-            new TypeInfo(ArrayList.class, Object.class);
-    public static final TypeInfo LINKED_HASHSET =
-            new TypeInfo(LinkedHashSet.class, Object.class);
+    // 泛型类其实可使用Of
+    public static final TypeInfo ARRAYLIST = new TypeInfo(ArrayList.class, List.of(OBJECT));
+    public static final TypeInfo LINKED_HASHSET = new TypeInfo(LinkedHashSet.class, List.of(OBJECT));
 
-    public static final TypeInfo LINKED_HASHMAP =
-            new TypeInfo(LinkedHashMap.class, Object.class, Object.class);
-    public static final TypeInfo STRING_LINKED_HASHMAP =
-            new TypeInfo(LinkedHashMap.class, String.class, Object.class);
+    public static final TypeInfo HASHMAP = new TypeInfo(HashMap.class, List.of(OBJECT, OBJECT));
+    public static final TypeInfo STRING_HASHMAP = new TypeInfo(HashMap.class, List.of(STRING, OBJECT));
 
-    public static final TypeInfo HASHMAP =
-            new TypeInfo(HashMap.class, Object.class, Object.class);
-    public static final TypeInfo STRING_HASHMAP =
-            new TypeInfo(HashMap.class, String.class, Object.class);
+    public static final TypeInfo LINKED_HASHMAP = new TypeInfo(LinkedHashMap.class, List.of(OBJECT, OBJECT));
+    public static final TypeInfo STRING_LINKED_HASHMAP = new TypeInfo(LinkedHashMap.class, List.of(STRING, OBJECT));
 
     // endregion
 
     // region 工厂方法
 
+    // region of-type-info
+
     @StableName(comment = "生成的代码会调用")
     public static TypeInfo of(Class<?> rawType) {
-        if (rawType == Object.class) {
-            return OBJECT;
-        }
-        if (rawType == String.class) {
-            return STRING;
-        }
-        if (rawType == Integer.class) {
-            return INTEGER;
-        }
-        if (rawType == Long.class) {
-            return LONG;
-        }
+        // 避免过多的计算，只对常见类型测试
+        if (rawType == int.class) return INT;
+        if (rawType == long.class) return LONG;
+
+        if (rawType == Integer.class) return BOXED_INT;
+        if (rawType == Long.class) return BOXED_LONG;
+
+        if (rawType == String.class) return STRING;
+        if (rawType == Object.class) return OBJECT;
         return new TypeInfo(rawType);
     }
 
     @StableName(comment = "生成的代码会调用")
-    public static TypeInfo of(Class<?> rawType, Class<?> typeArg1) {
+    public static TypeInfo of(Class<?> rawType, TypeInfo typeArg1) {
         return new TypeInfo(rawType, List.of(typeArg1));
     }
 
     @StableName(comment = "生成的代码会调用")
-    public static TypeInfo of(Class<?> rawType, Class<?> typeArg1, Class<?> typeArg2) {
-        return ofGeneric(rawType, TypeInfo.of(typeArg1), TypeInfo.of(typeArg2))
-    }
-
-    @StableName(comment = "生成的代码会调用")
-    public static TypeInfo of(Class<?> rawType, List<Class<?>> typeArgs) {
-        List<TypeInfo> typeInfos = new ArrayList<>(typeArgs.size());
-        for (int i = 0; i < typeArgs.size(); i++) {
-            typeInfos.add(TypeInfo.of(typeArgs.get(i)));
-        }
-        return new TypeInfo(rawType, List.copyOf(typeInfos));
-    }
-
-    public static TypeInfo ofGeneric(Class<?> rawType, TypeInfo typeArg1) {
-        return new TypeInfo(rawType, List.of(typeArg1));
-    }
-
-    public static TypeInfo ofGeneric(Class<?> rawType, TypeInfo typeArg1, TypeInfo typeArg2) {
+    public static TypeInfo of(Class<?> rawType, TypeInfo typeArg1, TypeInfo typeArg2) {
         return new TypeInfo(rawType, List.of(typeArg1, typeArg2));
     }
 
     @StableName(comment = "生成的代码会调用")
-    public static TypeInfo ofGeneric(Class<?> rawType, List<TypeInfo<?>> typeArgs) {
-        return new TypeInfo(rawType, List.copyOf(typeArgs));
-    }
-
-
-    @StableName(comment = "生成的代码会调用")
-    public static TypeInfo of(Class<?> rawType, Class<?> typeArg1, Class<?> typeArg2, Class<?> typeArg3) {
-        return new TypeInfo(rawType, List.of(typeArg1, typeArg2, typeArg3));
-    }
-
-    @StableName(comment = "生成的代码会调用")
-    public static TypeInfo of(Class<?> rawType, Class<?>... typeArgs) {
+    public static TypeInfo of(Class<?> rawType, TypeInfo... typeArgs) {
         return new TypeInfo(rawType, List.of(typeArgs));
     }
 
+    @StableName(comment = "生成的代码会调用")
+    public static TypeInfo of(Class<?> rawType, List<TypeInfo> typeArgs) {
+        return new TypeInfo(rawType, List.copyOf(typeArgs));
+    }
+
+    // endregion
+
+    // region of-class#方便手写
+
+    public static TypeInfo of(Class<?> rawType, Class<?> typeArg1) {
+        return new TypeInfo(rawType, of(typeArg1));
+    }
+
+    public static TypeInfo of(Class<?> rawType, Class<?> typeArg1, Class<?> typeArg2) {
+        return new TypeInfo(rawType, of(typeArg1), of(typeArg2));
+    }
+
+    public static TypeInfo of(Class<?> rawType, Class<?>... typeArgs) {
+        TypeInfo[] typeInfos = new TypeInfo[typeArgs.length]; // 使用数组可避免额外拷贝
+        for (int i = 0; i < typeArgs.length; i++) {
+            typeInfos[i] = of(typeArgs[i]);
+        }
+        return new TypeInfo(rawType, List.of(typeInfos));
+    }
+
+    // endregion
 
     // endregion
 
@@ -242,16 +265,17 @@ public final class TypeInfo {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        TypeInfo typeInfo = (TypeInfo) o;
-
-        if (!rawType.equals(typeInfo.rawType)) return false;
-        return typeArgs.equals(typeInfo.typeArgs);
+        TypeInfo that = (TypeInfo) o;
+        if (!rawType.equals(that.rawType)) return false;
+        return CollectionUtils.sequenceEqual(typeArgs, that.typeArgs);
     }
 
     @Override
     public int hashCode() {
         int result = rawType.hashCode();
-        result = 31 * result + typeArgs.hashCode();
+        for (int i = 0; i < typeArgs.size(); i++) {
+            result = 31 * result + typeArgs.get(i).hashCode();
+        }
         return result;
     }
 
@@ -263,5 +287,5 @@ public final class TypeInfo {
                 '}';
     }
 
-// endregion
+    // endregion
 }

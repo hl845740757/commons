@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.dson.DsonValue;
 import cn.wjybxx.dson.WireType;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.annotations.DsonProperty;
@@ -68,6 +69,18 @@ public class CodecBeanExample {
     // 测试非标准的getter/seter
     private boolean boolValue;
     private String sV;
+
+    // 测试最新apt 递归解析TypeInfo
+    // 测试嵌套泛型apt解析
+    public Map<String, Map<String, ObjectStyle>> nestedMap;
+    // 测试泛型擦除，应当解析为 DsonValue
+    public Map<String, ? extends DsonValue> nestedMap2;
+    // 测试泛型擦除，应当解析为 Object
+    public Map<String, ? super DsonValue> nestedMap3;
+    public Map<String, ?> nestedMap4;
+    // 测试数组Map -- 泛型参数应当被解析
+    public Map<String, ObjectStyle>[] arrayMap;
+    public Map<String, ObjectStyle>[][] arrayMap2;
 
     public CodecBeanExample() {
     }

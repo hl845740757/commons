@@ -251,6 +251,7 @@ public final class DsonConverterUtils {
 
     /** 测试当前类是否可继承目标类的泛型参数 */
     public static <T> boolean canInheritTypeArgs(Class<T> thisClass, Class<?> targetClass) {
+        if (targetClass == Object.class) return false;
         if (thisClass == targetClass) {
             return true;
         }

@@ -208,7 +208,7 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
                     ClassName genericArgClassName = className.typeArgs.get(index);
                     typeParameters[index] = typeOfClassName(genericArgClassName);
                 }
-                elementType = TypeInfo.ofGeneric(elementType.rawType, typeParameters);
+                elementType = TypeInfo.of(elementType.rawType, typeParameters);
             }
         }
         // 构建多维数组

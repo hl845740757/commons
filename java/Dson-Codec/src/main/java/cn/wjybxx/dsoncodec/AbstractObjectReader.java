@@ -119,7 +119,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
     @Nullable
     @Override
     public <T> T readObject(String name, TypeInfo typeInfo, Supplier<? extends T> factory) {
-        Class<T> declaredType = typeInfo.rawType;
+        Class<T> declaredType = (Class<T>) typeInfo.rawType;
         if (!readName(name)) { // 顺带读取了DsonType
             return (T) DsonConverterUtils.getDefaultValue(declaredType);
         }
@@ -328,7 +328,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
 
     @SuppressWarnings("unchecked")
     private <T> DsonCodecImpl<T> findObjectDecoder(TypeInfo typeInfo, Supplier<? extends T> factory, String classId) {
-        final Class<T> declaredType = typeInfo.rawType;
+        final Class<T> declaredType = (Class<T>) typeInfo.rawType;
         // factory不为null时，直接按照声明类型查找，因为factory的优先级最高
         DsonCodecRegistry rootRegistry = converter.codecRegistry();
         if (factory != null) {

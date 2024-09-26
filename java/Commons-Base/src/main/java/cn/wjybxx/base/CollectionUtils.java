@@ -529,6 +529,19 @@ public class CollectionUtils {
         return src == null ? List.of() : src;
     }
 
+    /** 比较List的相等性 -- 按序相等 */
+    public static <E> boolean sequenceEqual(List<E> self, List<E> that) {
+        if (self == null) return that == null;
+        if (that == null) return false;
+        if (self.size() != that.size()) return false;
+        for (int i = 0, size = self.size(); i < size; i++) {
+            if (!self.get(i).equals(that.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // endregion
 
     // region set

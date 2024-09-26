@@ -50,7 +50,7 @@ public class TypeParameterFinder {
      * 获取包含泛型信息的超类(或接口)
      *
      * @param thisClass             当前类
-     * @param superClazzOrInterface 目标超类后接口
+     * @param superClazzOrInterface 目标超类或接口(兼容非泛型类和接口)
      */
     public static <T> Type getGenericSuperType(final Class<T> thisClass, final Class<? super T> superClazzOrInterface) {
         assert superClazzOrInterface.isAssignableFrom(thisClass);

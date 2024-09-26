@@ -17,7 +17,6 @@
 package cn.wjybxx.dsonapt;
 
 import javax.lang.model.type.TypeMirror;
-import java.util.List;
 
 /**
  * @author wjybxx
@@ -33,31 +32,24 @@ class AptTypeInfo {
     final int type;
     /** 声明类型 */
     final TypeMirror declared;
-    /** 泛型类型信息 */
-    final List<? extends TypeMirror> typeArgs;
     /** 注解指定的实现类 - 可能为null */
     final TypeMirror impl;
 
-    public AptTypeInfo(int type, TypeMirror declared, List<? extends TypeMirror> typeArgs, TypeMirror impl) {
+    public AptTypeInfo(int type, TypeMirror declared, TypeMirror impl) {
         this.declared = declared;
         this.impl = impl;
         this.type = type;
-        this.typeArgs = typeArgs == null ? List.of() : typeArgs;
     }
 
     public static AptTypeInfo of(TypeMirror declared, TypeMirror impl) {
-        return new AptTypeInfo(TYPE_UNKNOWN, declared, List.of(), impl);
+        return new AptTypeInfo(TYPE_UNKNOWN, declared, impl);
     }
 
-    public static AptTypeInfo of(TypeMirror declared, List<? extends TypeMirror> typeArgs, TypeMirror impl) {
-        return new AptTypeInfo(TYPE_UNKNOWN, declared, typeArgs, impl);
+    public static AptTypeInfo ofCollection(TypeMirror declared, TypeMirror impl) {
+        return new AptTypeInfo(TYPE_COLLECTION, declared, impl);
     }
 
-    public static AptTypeInfo ofCollection(TypeMirror declared, List<? extends TypeMirror> typeArgs, TypeMirror impl) {
-        return new AptTypeInfo(TYPE_COLLECTION, declared, typeArgs, impl);
-    }
-
-    public static AptTypeInfo ofMap(TypeMirror declared, List<? extends TypeMirror> typeArgs, TypeMirror impl) {
-        return new AptTypeInfo(TYPE_MAP, declared, typeArgs, impl);
+    public static AptTypeInfo ofMap(TypeMirror declared, TypeMirror impl) {
+        return new AptTypeInfo(TYPE_MAP, declared, impl);
     }
 }
