@@ -343,6 +343,10 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         ReadEndContainer(DsonContextType.Header);
     }
 
+    public bool HasWaitingStartContext() {
+        return waitStartContext != null;
+    }
+
     public void BackToWaitStart() {
         Context context = this.context;
         if (context.contextType == DsonContextType.TopLevel) {

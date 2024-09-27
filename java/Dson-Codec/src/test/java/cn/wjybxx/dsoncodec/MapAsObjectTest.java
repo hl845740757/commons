@@ -39,7 +39,7 @@ public class MapAsObjectTest {
         DsonConverter converter = DefaultDsonConverter.newInstance(
                 TypeMetaRegistries.fromMetas(),
                 List.of(),
-                options);
+                options, GenericCodecConfig.newDefaultConfig(), new GenericCodecHelper());
 
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("one", "1");

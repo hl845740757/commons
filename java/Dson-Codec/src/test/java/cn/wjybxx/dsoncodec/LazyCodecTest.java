@@ -55,7 +55,7 @@ public class LazyCodecTest {
             DefaultDsonConverter converter = DefaultDsonConverter.newInstance(
                     typeMetaRegistry,
                     List.of(new MyStructCodec(Role.SOURCE)),
-                    options);
+                    options, GenericCodecConfig.newDefaultConfig(), new GenericCodecHelper());
             bytesSource = converter.write(myStruct);
         }
 
@@ -65,7 +65,7 @@ public class LazyCodecTest {
             DefaultDsonConverter converter = DefaultDsonConverter.newInstance(
                     typeMetaRegistry,
                     List.of(new MyStructCodec(Role.ROUTER)),
-                    options);
+                    options, GenericCodecConfig.newDefaultConfig(), new GenericCodecHelper());
             routerBytes = converter.write(converter.read(bytesSource));
         }
 
@@ -75,7 +75,8 @@ public class LazyCodecTest {
             DefaultDsonConverter converter = DefaultDsonConverter.newInstance(
                     typeMetaRegistry,
                     List.of(new MyStructCodec(Role.DESTINATION)),
-                    options);
+                    options, GenericCodecConfig.newDefaultConfig(),
+                    new GenericCodecHelper());
             destStruct = (MyStruct) converter.read(routerBytes);
         }
         Assertions.assertEquals(myStruct, destStruct);

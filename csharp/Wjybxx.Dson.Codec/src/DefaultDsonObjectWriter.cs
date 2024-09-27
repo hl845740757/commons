@@ -256,6 +256,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.Dispose();
     }
 
+    /** 写入对象的类型名，如果存在对应的TypeMeta */
     private void WriteClsName<T>(in T value, Type declaredType) {
         Type type = value!.GetType();
         if (!converter.Options.classIdPolicy.Test(declaredType, type)) {
@@ -267,11 +268,13 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         }
     }
 
+    /** 允许泛型参数不同时走不同的style */
     private ObjectStyle FindObjectStyle(Type type) {
         TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(type);
         return typeMeta != null ? typeMeta.style : ObjectStyle.Indent;
     }
 
+    /** 查找对象的Encoder */
     private DsonCodecImpl? FindObjectEncoder(Type type) {
         IDsonCodecRegistry rootRegistry = converter.CodecRegistry;
         return rootRegistry.GetEncoder(type, rootRegistry);

@@ -260,7 +260,7 @@ public final class MoreArrayCodecs {
 
         @Override
         public void writeObject(DsonObjectWriter writer, Object[] instance, TypeInfo declaredType, ObjectStyle style) {
-            TypeInfo componentArgInfo = declaredType.isArray() ? declaredType.getComponentType() : TypeInfo.OBJECT;
+            TypeInfo componentArgInfo = declaredType.isArrayType() ? declaredType.getComponentType() : TypeInfo.OBJECT;
 
             for (Object e : instance) {
                 writer.writeObject(null, e, componentArgInfo, null);
@@ -269,7 +269,7 @@ public final class MoreArrayCodecs {
 
         @Override
         public Object[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Object[]> factory) {
-            TypeInfo componentArgInfo = declaredType.isArray() ? declaredType.getComponentType() : TypeInfo.OBJECT;
+            TypeInfo componentArgInfo = declaredType.isArrayType() ? declaredType.getComponentType() : TypeInfo.OBJECT;
 
             ArrayList<Object> result = new ArrayList<>();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {

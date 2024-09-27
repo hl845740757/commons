@@ -202,21 +202,23 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
         StringBuilder format = new StringBuilder(16);
         List<Object> params = new ArrayList<>(4);
         if (typeParameters.isEmpty()) {
-            format.append("$T.of($T.class， $T.of())"); // List需要import
+            format.append("$T.of($T.class, $T.of())"); // List需要import
             params.add(typeName_TypeInfo);
-            params.add(TypeName.get(typeElement.asType()));
+            params.add(TypeName.get(typeUtils.erasure(typeElement.asType())));
             params.add(AptUtils.CLSNAME_LIST);
         } else {
             format.append("$T.of($T.class, $T.of("); // List需要import
             params.add(typeName_TypeInfo);
-            params.add(TypeName.get(typeElement.asType()));
+            params.add(TypeName.get(typeUtils.erasure(typeElement.asType())));
             params.add(AptUtils.CLSNAME_LIST);
             // 泛型参数直接擦除即可
             for (int i = 0; i < typeParameters.size(); i++) {
                 if (i > 0) format.append(", ");
+                format.append("$T.of($T.class)");
                 params.add(typeName_TypeInfo);
                 params.add(TypeName.get(typeUtils.erasure(typeParameters.get(i).asType())));
             }
+            format.append("))");
         }
         builder.initializer(format.toString(), params.toArray());
         return builder.build();

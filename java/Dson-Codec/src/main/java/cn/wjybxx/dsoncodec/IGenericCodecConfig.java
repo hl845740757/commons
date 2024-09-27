@@ -25,7 +25,7 @@ import cn.wjybxx.dsoncodec.codecs.ArrayCodec;
  * 这可能增加类的数量，但代码的复杂度更低，更易于使用。
  * <p>
  * 注意：
- * 1. Codec需要和泛型定义类有相同的泛型参数列表，且构造函数接收一个{@link TypeInfo}参数。
+ * 1. Codec编码的类型和要编码的类型人相同的泛型参数列表，比如：{@code Map<K,V>}和{@code LinkedHashMap<K,V>}，且构造函数接收一个{@link TypeInfo}参数。
  * 2. 不会频繁查询，因此不必太在意匹配算法的效率。
  * 3. 数组和泛型是不同的，数组都对应{@link ArrayCodec}，因此不需要再这里存储。
  *
@@ -36,23 +36,21 @@ public interface IGenericCodecConfig {
 
     /**
      * 获取可以编码目标泛型类的Codec原型 -- 可以向上匹配。
-     * <p>
-     * 注意：
-     * 1.Codec需要和泛型定义类有相同的泛型参数列表。
-     * 2.不会频繁查询，因此不必太在意匹配算法的效率。
      *
-     * @param genericTypeDefine 目标泛型类
+     * @param genericTypeDefine  目标泛型类(java端可能是抽象类或接口)
+     * @param genericCodecHelper 用于判断泛型参数继承
      * @return 编码器类型
      */
-    Class<?> getEncoderType(Class<?> genericTypeDefine);
+    Class<?> getEncoderType(Class<?> genericTypeDefine, IGenericCodecHelper genericCodecHelper);
 
     /**
      * 获取可以解码目标泛型类的Codec原型 -- 精确匹配。
-     * 注意：Codec需要和泛型定义类有相同的泛型参数列表。
+     * 其实也可以向上匹配，只要创建的实例可以转型为目标类型。
      *
-     * @param genericTypeDefine 目标泛型类
+     * @param genericTypeDefine  目标泛型类
+     * @param genericCodecHelper 用于判断泛型参数继承
      * @return 解码器类型
      */
-    Class<?> getDecoderType(Class<?> genericTypeDefine);
+    Class<?> getDecoderType(Class<?> genericTypeDefine, IGenericCodecHelper genericCodecHelper);
 
 }

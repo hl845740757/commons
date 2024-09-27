@@ -32,10 +32,12 @@ import java.util.function.Supplier;
 public class ArrayCodec<T> implements DsonCodec<T> {
 
     private final TypeInfo typeInfo;
+    private final TypeInfo elementTypeInfo;
 
     public ArrayCodec(TypeInfo typeInfo) {
-        assert typeInfo.isArray();
+        assert typeInfo.isArrayType();
         this.typeInfo = typeInfo;
+        this.elementTypeInfo = typeInfo.getComponentType();
     }
 
     @Nonnull
@@ -47,32 +49,25 @@ public class ArrayCodec<T> implements DsonCodec<T> {
     @Override
     public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
         // declaredType只影响inst是否写入类型，不影响数组元素是否写入类型，但Java是伪泛型，我们尝试从用户信息中获取泛型信息
-        TypeInfo eleDeclaredType = getEleDeclaredType(declaredType);
+        TypeInfo elementTypeInfo = this.elementTypeInfo;
 
         // 基础类型数组被特殊处理了，因此这里一定能强转 -- 强转以避免反射接口
         Object[] array = (Object[]) instance;
         writer.writeStartArray(instance, declaredType, style);
         for (int i = 0; i < array.length; i++) {
-            writer.writeObject(null, array[i], eleDeclaredType);
+            writer.writeObject(null, array[i], elementTypeInfo);
         }
         writer.writeEndArray();
     }
 
-    private TypeInfo getEleDeclaredType(TypeInfo declaredType) {
-        if (typeInfo.hasGenericArgs()) {
-            return typeInfo.getGenericArgument(0);
-        }
-        return declaredType.isGenericType() ? declaredType.getGenericArgument(0) : TypeInfo.OBJECT;
-    }
-
     @Override
     public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
-        TypeInfo eleDeclaredType = getEleDeclaredType(declaredType);
+        TypeInfo elementTypeInfo = this.elementTypeInfo;
 
         // 由于长度未知，只能先存储为List再转...
         List<Object> result = new ArrayList<>();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
-            Object value = reader.readObject(null, eleDeclaredType, null);
+            Object value = reader.readObject(null, elementTypeInfo, null);
             result.add(value);
         }
 

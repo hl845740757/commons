@@ -17,9 +17,7 @@
 package cn.wjybxx.dsoncodec;
 
 import javax.annotation.Nullable;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author wjybxx
@@ -27,60 +25,83 @@ import java.util.Map;
  */
 public class DsonCodecRegistries {
 
-    public static Map<Class<?>, DsonCodecImpl<?>> newCodecMap(List<? extends DsonCodecImpl<?>> pojoCodecs) {
-        final IdentityHashMap<Class<?>, DsonCodecImpl<?>> codecMap = new IdentityHashMap<>(pojoCodecs.size());
-        for (DsonCodecImpl<?> codec : pojoCodecs) {
-            if (codecMap.containsKey(codec.getEncoderClass())) {
-                throw new IllegalArgumentException("the class has multiple codecs :" + codec.getEncoderClass().getName());
-            }
-            codecMap.put(codec.getEncoderClass(), codec);
-        }
-        return codecMap;
-    }
-
-    public static DsonCodecRegistry fromCodecs(DsonCodecImpl<?>... pojoCodecs) {
+    public static DsonCodecRegistry fromCodecs(DsonCodec<?>... pojoCodecs) {
         return fromCodecs(List.of(pojoCodecs));
     }
 
-    public static DsonCodecRegistry fromCodecs(List<? extends DsonCodecImpl<?>> pojoCodecs) {
-        final IdentityHashMap<Class<?>, DsonCodecImpl<?>> codecMap = new IdentityHashMap<>(pojoCodecs.size());
-        for (DsonCodecImpl<?> codec : pojoCodecs) {
-            if (codecMap.containsKey(codec.getEncoderClass())) {
-                throw new IllegalArgumentException("the class has multiple codecs :" + codec.getEncoderClass().getName());
+    public static DsonCodecRegistry fromCodecs(List<? extends DsonCodec<?>> pojoCodecs) {
+        final HashMap<TypeInfo, DsonCodecImpl<?>> codecMap = new HashMap<>(pojoCodecs.size());
+        for (DsonCodec<?> codec : pojoCodecs) {
+            if (codecMap.containsKey(codec.getEncoderType())) {
+                throw new IllegalArgumentException("the type has multiple codecs :" + codec.getEncoderType());
             }
-            codecMap.put(codec.getEncoderClass(), codec);
+            codecMap.put(codec.getEncoderType(), new DsonCodecImpl<>(codec));
         }
         return new DefaultCodecRegistry(codecMap);
     }
 
-    public static DsonCodecRegistry fromRegistries(DsonCodecRegistry... codecRegistry) {
-        // TODO 合并DefaultCodecRegistry
-        return new CompositeCodecRegistry(List.of(codecRegistry)); // 拷贝
+    public static DsonCodecRegistry fromRegistries(DsonCodecRegistry... codecRegistries) {
+        return fromRegistries(Arrays.asList(codecRegistries));
     }
 
-    public static DsonCodecRegistry fromRegistries(List<DsonCodecRegistry> codecRegistry) {
-        return new CompositeCodecRegistry(List.copyOf(codecRegistry)); // 拷贝
+    public static DsonCodecRegistry fromRegistries(List<? extends DsonCodecRegistry> codecRegistries) {
+        // 合并codec
+        final HashMap<TypeInfo, DsonCodecImpl<?>> type2CodecMap = new HashMap<>();
+        final List<DsonCodecRegistry> unmergedRegistries = new ArrayList<>(codecRegistries.size());
+        for (DsonCodecRegistry codecRegistry : codecRegistries) {
+            if (!(codecRegistry instanceof DefaultCodecRegistry defaultCodecRegistry)) {
+                unmergedRegistries.add(codecRegistry);
+                continue;
+            }
+            for (DsonCodecImpl<?> codec : defaultCodecRegistry.type2CodecMap.values()) {
+                if (type2CodecMap.containsKey(codec.getEncoderType())) {
+                    throw new IllegalArgumentException("the type has multiple codecs :" + codec.getEncoderType());
+                }
+                type2CodecMap.put(codec.getEncoderType(), codec);
+            }
+        }
+        if (unmergedRegistries.isEmpty()) {
+            return new DefaultCodecRegistry(type2CodecMap);
+        }
+        // 简单Codec放在最前面
+        unmergedRegistries.add(0, new DefaultCodecRegistry(type2CodecMap));
+        return new CompositeCodecRegistry(unmergedRegistries); // 拷贝
     }
 
     private static class DefaultCodecRegistry implements DsonCodecRegistry {
 
-        private final IdentityHashMap<Class<?>, DsonCodecImpl<?>> type2CodecMap;
+        private final Map<TypeInfo, DsonCodecImpl<?>> type2CodecMap;
+        private final IdentityHashMap<Class<?>, DsonCodecImpl<?>> class2CodecMap;
 
-        private DefaultCodecRegistry(IdentityHashMap<Class<?>, DsonCodecImpl<?>> type2CodecMap) {
-            this.type2CodecMap = type2CodecMap;
+        private DefaultCodecRegistry(HashMap<TypeInfo, DsonCodecImpl<?>> type2CodecMap) {
+            this.type2CodecMap = new HashMap<>(type2CodecMap); // 拷贝，压缩空间
+            this.class2CodecMap = new IdentityHashMap<>(type2CodecMap.size()); // 增加非泛型缓存
+
+            for (Map.Entry<TypeInfo, DsonCodecImpl<?>> entry : type2CodecMap.entrySet()) {
+                TypeInfo typeInfo = entry.getKey();
+                if (!typeInfo.hasGenericArgs()) {
+                    class2CodecMap.put(typeInfo.rawType, entry.getValue());
+                }
+            }
         }
 
-        @SuppressWarnings("unchecked")
         @Nullable
         @Override
-        public <T> DsonCodecImpl<? super T> getEncoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry) {
-            return (DsonCodecImpl<? super T>) type2CodecMap.get(typeInfo);
+        public DsonCodecImpl<?> getEncoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry, IGenericCodecHelper genericCodecHelper) {
+            if (typeInfo.hasGenericArgs()) {
+                return type2CodecMap.get(typeInfo);
+            } else {
+                return class2CodecMap.get(typeInfo.rawType);
+            }
         }
 
-        @SuppressWarnings("unchecked")
         @Override
-        public <T> DsonCodecImpl<T> getDecoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry) {
-            return (DsonCodecImpl<T>) type2CodecMap.get(typeInfo);
+        public DsonCodecImpl<?> getDecoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry, IGenericCodecHelper genericCodecHelper) {
+            if (typeInfo.hasGenericArgs()) {
+                return type2CodecMap.get(typeInfo);
+            } else {
+                return class2CodecMap.get(typeInfo.rawType);
+            }
         }
 
     }
@@ -90,16 +111,16 @@ public class DsonCodecRegistries {
         private final List<DsonCodecRegistry> registryList;
 
         private CompositeCodecRegistry(List<DsonCodecRegistry> registryList) {
-            this.registryList = registryList;
+            this.registryList = List.copyOf(registryList);
         }
 
         @Nullable
         @Override
-        public <T> DsonCodecImpl<? super T> getEncoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry) {
+        public DsonCodecImpl<?> getEncoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry, IGenericCodecHelper genericCodecHelper) {
             List<DsonCodecRegistry> registryList = this.registryList;
             for (int i = 0; i < registryList.size(); i++) {
                 DsonCodecRegistry registry = registryList.get(i);
-                DsonCodecImpl<? super T> codec = registry.getEncoder(typeInfo, rootRegistry);
+                DsonCodecImpl<?> codec = registry.getEncoder(typeInfo, rootRegistry, genericCodecHelper);
                 if (codec != null) return codec;
             }
             return null;
@@ -107,11 +128,11 @@ public class DsonCodecRegistries {
 
         @Nullable
         @Override
-        public <T> DsonCodecImpl<T> getDecoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry) {
+        public DsonCodecImpl<?> getDecoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry, IGenericCodecHelper genericCodecHelper) {
             List<DsonCodecRegistry> registryList = this.registryList;
             for (int i = 0; i < registryList.size(); i++) {
                 DsonCodecRegistry registry = registryList.get(i);
-                DsonCodecImpl<T> codec = registry.getDecoder(typeInfo, rootRegistry);
+                DsonCodecImpl<?> codec = registry.getDecoder(typeInfo, rootRegistry, genericCodecHelper);
                 if (codec != null) return codec;
             }
             return null;

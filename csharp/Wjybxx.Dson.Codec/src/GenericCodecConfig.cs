@@ -44,19 +44,6 @@ public class GenericCodecConfig : IGenericCodecConfig
     }
 
     /// <summary>
-    /// 主要用于合并注解处理器生成的Config
-    /// </summary>
-    /// <param name="otherConfig"></param>
-    public void AddCodecs(GenericCodecConfig otherConfig) {
-        foreach (KeyValuePair<Type, Type> pair in otherConfig.encoderTypeDic) {
-            AddEncoder(pair.Key, pair.Value);
-        }
-        foreach (KeyValuePair<Type, Type> pair in otherConfig.decoderTypeDic) {
-            AddDecoder(pair.Key, pair.Value);
-        }
-    }
-
-    /// <summary>
     /// 通过默认的泛型类Codec初始化
     /// </summary>
     public GenericCodecConfig InitWithDefaults() {
@@ -79,6 +66,19 @@ public class GenericCodecConfig : IGenericCodecConfig
         AddCodec(typeof(DictionaryEncodeProxy<>), typeof(DictionaryEncodeProxyCodec<>));
         AddCodec(typeof(Nullable<>), typeof(NullableCodec<>));
         return this;
+    }
+
+    /// <summary>
+    /// 主要用于合并注解处理器生成的Config
+    /// </summary>
+    /// <param name="otherConfig"></param>
+    public void AddCodecs(GenericCodecConfig otherConfig) {
+        foreach (KeyValuePair<Type, Type> pair in otherConfig.encoderTypeDic) {
+            AddEncoder(pair.Key, pair.Value);
+        }
+        foreach (KeyValuePair<Type, Type> pair in otherConfig.decoderTypeDic) {
+            AddDecoder(pair.Key, pair.Value);
+        }
     }
 
     /// <summary>

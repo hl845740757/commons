@@ -72,12 +72,12 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             return typeMeta;
         }
         // 走到这里，通常意味着clsName是数组或泛型，或在基础注册表中不存在
-        if (!type.isGenericType() && !type.isArray()) {
+        if (!type.isGenericType() && !type.isArrayType()) {
             return null;
         }
 
         ObjectStyle style;
-        if (type.isArray()) {
+        if (type.isArrayType()) {
             style = ObjectStyle.INDENT;
         } else {
             Class<?> rawType = type.rawType;
@@ -150,13 +150,13 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
      * 3.Java禁止递归的泛型
      */
     private ClassName classNameOfType(TypeInfo type) {
-        if (type.isArray()) {
+        if (type.isArrayType()) {
             TypeInfo rootElementType = TypeInfo.of(DsonConverterUtils.getRootComponentType(type.rawType), type.genericArgs);
             int arrayRank = DsonConverterUtils.getArrayRank(type.rawType);
             String clsName = classNameOfType(rootElementType) + DsonConverterUtils.arrayRankSymbol(arrayRank);
             return new ClassName(clsName);
         }
-        if (type.isGenericType()) {
+        if (type.isConstructedGenericType()) {
             // 泛型原型类必须存在于用户的注册表中
 //            TypeInfo<?> genericTypeDefinition = type.getGenericTypeDefinition();
             TypeMeta typeMeta = basicRegistry.ofClass(type.rawType);

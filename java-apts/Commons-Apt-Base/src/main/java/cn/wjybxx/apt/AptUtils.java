@@ -564,9 +564,9 @@ public class AptUtils {
         int r = 1;
         TypeMirror rootComponentType = arrayType.getComponentType();
         while (rootComponentType.getKind() == TypeKind.ARRAY) {
-            r++;
             arrayType = (ArrayType) rootComponentType;
             rootComponentType = arrayType.getComponentType();
+            r++;
         }
         return r;
     }

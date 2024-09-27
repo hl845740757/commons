@@ -24,46 +24,58 @@ namespace Wjybxx.Dson.Codec
 {
 public static class DsonCodecRegistries
 {
-    public static Dictionary<Type, DsonCodecImpl> NewCodecMap(IList<DsonCodecImpl> pojoCodecs) {
+    public static IDsonCodecRegistry FromCodecs(params IDsonCodec[] pojoCodecs) {
+        return FromCodecs((IEnumerable<IDsonCodec>)pojoCodecs);
+    }
+
+    public static IDsonCodecRegistry FromCodecs(IEnumerable<IDsonCodec> pojoCodecs) {
         Dictionary<Type, DsonCodecImpl> codecMap = new Dictionary<Type, DsonCodecImpl>();
-        foreach (DsonCodecImpl codec in pojoCodecs) {
+        foreach (IDsonCodec codec in pojoCodecs) {
             if (codecMap.ContainsKey(codec.GetEncoderType())) {
                 throw new ArgumentException("the class has multiple codecs :" + codec.GetEncoderType());
             }
-            codecMap[codec.GetEncoderType()] = codec;
-        }
-        return codecMap;
-    }
-
-    public static IDsonCodecRegistry FromCodecs(params DsonCodecImpl[] pojoCodecs) {
-        return FromCodecs((IEnumerable<DsonCodecImpl>)pojoCodecs);
-    }
-
-    public static IDsonCodecRegistry FromCodecs(IEnumerable<DsonCodecImpl> pojoCodecs) {
-        Dictionary<Type, DsonCodecImpl> codecMap = new Dictionary<Type, DsonCodecImpl>();
-        foreach (DsonCodecImpl codec in pojoCodecs) {
-            if (codecMap.ContainsKey(codec.GetEncoderType())) {
-                throw new ArgumentException("the class has multiple codecs :" + codec.GetEncoderType());
-            }
-            codecMap[codec.GetEncoderType()] = codec;
+            // 反射创建...
+            Type genericType = typeof(DsonCodecImpl<>).MakeGenericType(codec.GetEncoderType());
+            DsonCodecImpl codecImpl = (DsonCodecImpl)Activator.CreateInstance(genericType, codec);
+            codecMap[codec.GetEncoderType()] = codecImpl;
         }
         return new DefaultCodecRegistry(codecMap);
     }
 
-    public static IDsonCodecRegistry FromRegistries(params IDsonCodecRegistry[] codecRegistry) {
-        return new CompositeCodecRegistry(codecRegistry.ToList()); // 拷贝
+    public static IDsonCodecRegistry FromRegistries(params IDsonCodecRegistry[] codecRegistries) {
+        return FromRegistries((IEnumerable<IDsonCodecRegistry>)codecRegistries);
     }
 
-    public static IDsonCodecRegistry FromRegistries(IList<IDsonCodecRegistry> codecRegistries) {
-        return new CompositeCodecRegistry(new List<IDsonCodecRegistry>(codecRegistries)); // 拷贝
+    public static IDsonCodecRegistry FromRegistries(IEnumerable<IDsonCodecRegistry> codecRegistries) {
+        // 合并codec
+        Dictionary<Type, DsonCodecImpl> type2CodecMap = new Dictionary<Type, DsonCodecImpl>();
+        List<IDsonCodecRegistry> unmergedRegistries = new List<IDsonCodecRegistry>(4);
+        foreach (IDsonCodecRegistry codecRegistry in codecRegistries) {
+            if (codecRegistry is not DefaultCodecRegistry defaultCodecRegistry) {
+                unmergedRegistries.Add(codecRegistry);
+                continue;
+            }
+            foreach (DsonCodecImpl codec in defaultCodecRegistry.type2CodecMap.Values) {
+                if (type2CodecMap.ContainsKey(codec.GetEncoderType())) {
+                    throw new ArgumentException("the type has multiple codecs :" + codec.GetEncoderType());
+                }
+                type2CodecMap[codec.GetEncoderType()] = codec;
+            }
+        }
+        if (unmergedRegistries.Count == 0) {
+            return new DefaultCodecRegistry(type2CodecMap);
+        }
+        // 简单Codec放在最前面
+        unmergedRegistries.Insert(0, new DefaultCodecRegistry(type2CodecMap));
+        return new CompositeCodecRegistry(unmergedRegistries); // 拷贝
     }
 
     private class DefaultCodecRegistry : IDsonCodecRegistry
     {
-        private readonly Dictionary<Type, DsonCodecImpl> type2CodecMap;
+        internal readonly Dictionary<Type, DsonCodecImpl> type2CodecMap;
 
         internal DefaultCodecRegistry(Dictionary<Type, DsonCodecImpl> type2CodecMap) {
-            this.type2CodecMap = type2CodecMap;
+            this.type2CodecMap = new Dictionary<Type, DsonCodecImpl>(type2CodecMap); // copy 压缩空间
         }
 
         public DsonCodecImpl? GetEncoder(Type clazz, IDsonCodecRegistry rootRegistry) {
@@ -82,7 +94,7 @@ public static class DsonCodecRegistries
         private readonly List<IDsonCodecRegistry> registryList;
 
         internal CompositeCodecRegistry(List<IDsonCodecRegistry> registryList) {
-            this.registryList = registryList;
+            this.registryList = new List<IDsonCodecRegistry>(registryList);
         }
 
         public DsonCodecImpl? GetEncoder(Type clazz, IDsonCodecRegistry rootRegistry) {

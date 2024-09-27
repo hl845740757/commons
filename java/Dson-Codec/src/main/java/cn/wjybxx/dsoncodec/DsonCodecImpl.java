@@ -51,7 +51,7 @@ public class DsonCodecImpl<T> {
     }
 
     @Nonnull
-    public TypeInfo getEncoderClass() {
+    public TypeInfo getEncoderType() {
         return typeInfo;
     }
 

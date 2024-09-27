@@ -158,6 +158,8 @@ public interface DsonConverter extends Converter {
 
     TypeMetaRegistry typeMetaRegistry();
 
+    IGenericCodecHelper genericCodecHelper();
+
     ConverterOptions options();
 
     /** 在共享其它属性的情况，创建一个持有给定options的Converter */

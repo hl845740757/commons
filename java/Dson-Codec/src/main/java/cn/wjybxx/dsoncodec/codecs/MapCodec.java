@@ -82,31 +82,11 @@ public class MapCodec<T extends Map> implements DsonCodec<T> {
         return new LinkedHashMap<>();
     }
 
-    protected TypeInfo getKeyTypeInfo(TypeInfo declaredType) {
-        if (typeInfo.genericArgs.size() == 2) {
-            return typeInfo.getGenericArgument(0);
-        }
-        if (declaredType.genericArgs.size() == 2) {
-            return declaredType.getGenericArgument(0);
-        }
-        return keyTypeInfo;
-    }
-
-    protected TypeInfo getValueTypeInfo(TypeInfo declaredType) {
-        if (typeInfo.genericArgs.size() == 2) {
-            return typeInfo.getGenericArgument(1);
-        }
-        if (declaredType.genericArgs.size() == 2) {
-            return declaredType.getGenericArgument(1);
-        }
-        return valueTypeInfo;
-    }
-
     @Override
     public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
         // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询K,V的类型，但Java是伪泛型...
-        TypeInfo keyTypeInfo = getKeyTypeInfo(declaredType);
-        TypeInfo valueTypeInfo = getValueTypeInfo(declaredType);
+        TypeInfo keyTypeInfo = this.keyTypeInfo;
+        TypeInfo valueTypeInfo = this.valueTypeInfo;
 
         @SuppressWarnings("unchecked") Set<Map.Entry<?, ?>> entrySet = instance.entrySet();
         if (writer.options().writeMapAsDocument) {
@@ -135,15 +115,15 @@ public class MapCodec<T extends Map> implements DsonCodec<T> {
 
     @Override
     public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
-        TypeInfo keyTypeInfo = getKeyTypeInfo(declaredType);
-        TypeInfo valueTypeInfo = getValueTypeInfo(declaredType);
+        TypeInfo keyTypeInfo = this.keyTypeInfo;
+        TypeInfo valueTypeInfo = this.valueTypeInfo;
 
         Map<Object, Object> result = newMap(declaredType, factory);
         if (reader.options().writeMapAsDocument) {
             reader.readStartObject(declaredType);
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
-                Object key = reader.decodeKey(keyString, keyTypeInfo.rawType);
+                Object key = reader.decodeKey(keyString, keyTypeInfo);
                 Object value = reader.readObject(keyString, valueTypeInfo);
                 result.put(key, value);
             }

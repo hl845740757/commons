@@ -129,7 +129,7 @@ public static class DsonConverterUtils
 
     /** 默认的类型元数据 */
     private static readonly ITypeMetaRegistry TYPE_META_REGISTRY = TypeMetaRegistries.FromMetas(BuiltinTypeMetas());
-    private static readonly IDsonCodecRegistry CODEC_REGISTRY;
+    private static readonly IDsonCodecRegistry CODEC_REGISTRY = DsonCodecRegistries.FromCodecs(BuiltinCodecs());
 
     private static TypeMeta TypeMetaOf(Type type, params string[] clsNames) {
         if (clsNames.Length == 0) {
@@ -272,18 +272,5 @@ public static class DsonConverterUtils
     }
 
     #endregion
-
-    static DsonConverterUtils() {
-        {
-            IList<IDsonCodec> builtinCodecs = BuiltinCodecs();
-            List<DsonCodecImpl> codecImpls = new List<DsonCodecImpl>();
-            foreach (IDsonCodec rawCodec in builtinCodecs) {
-                Type genericType = typeof(DsonCodecImpl<>).MakeGenericType(rawCodec.GetEncoderType());
-                DsonCodecImpl codecImpl = (DsonCodecImpl)Activator.CreateInstance(genericType, rawCodec);
-                codecImpls.Add(codecImpl);
-            }
-            CODEC_REGISTRY = DsonCodecRegistries.FromCodecs(codecImpls);
-        }
-    }
 }
 }

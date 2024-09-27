@@ -136,10 +136,13 @@ public interface DsonObjectReader extends AutoCloseable {
     byte[] readValueAsBytes(String name);
 
     /** 解码字典的key */
-    <T> T decodeKey(String keyString, Class<T> keyDeclared);
+    <T> T decodeKey(String keyString, TypeInfo keyTypeInfo);
 
     /** 设置数组/object的value的类型，用于精确解析Dson文本 */
     void setComponentType(DsonType dsonType);
+
+    /** 获取当前对象的类型信息 -- java特殊支持，用于读写Object/Array期间查询当前对象的类型信息 */
+    TypeInfo getCurrentTypeInfo();
 
     @Override
     void close();

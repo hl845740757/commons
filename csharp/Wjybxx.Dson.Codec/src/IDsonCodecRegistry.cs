@@ -22,7 +22,7 @@ namespace Wjybxx.Dson.Codec
 {
 /// <summary>
 /// <see cref="IDsonCodec{T}"/>的注册表
-/// 由于C#的真泛型，因此注册表通常不能实现为不可变的 —— 除非在运行前就知道所有的类型，提前注册。
+/// 注意：如果只是简单的Type到Codec的映射，请使用<see cref="DsonCodecRegistries"/>的工具方法构建Registry，可实现多Registry的合并。
 /// </summary>
 public interface IDsonCodecRegistry
 {
@@ -47,6 +47,7 @@ public interface IDsonCodecRegistry
     /// 
     /// 注意：
     /// 解码器必须目标类型一致，子类Codec不能安全解码超类数据，超类Codec返回的实例不能向下转型。
+    /// 更关键的是dotnet6的泛型不支持协变，超类或子类的Codec不能赋值目标类型...
     /// <code>
     ///   DsonCodecImpl.GetEncoderClass() == type
     /// </code>

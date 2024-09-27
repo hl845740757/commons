@@ -27,7 +27,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -40,13 +39,16 @@ public class DefaultDsonConverter implements DsonConverter {
 
     private final TypeMetaRegistry typeMetaRegistry;
     private final DsonCodecRegistry codecRegistry;
+    private final IGenericCodecHelper genericCodecHelper;
     private final ConverterOptions options;
 
     private DefaultDsonConverter(TypeMetaRegistry typeMetaRegistry,
                                  DsonCodecRegistry codecRegistry,
+                                 IGenericCodecHelper genericCodecHelper,
                                  ConverterOptions options) {
         this.codecRegistry = codecRegistry;
         this.typeMetaRegistry = typeMetaRegistry;
+        this.genericCodecHelper = genericCodecHelper;
         this.options = options;
     }
 
@@ -61,6 +63,11 @@ public class DefaultDsonConverter implements DsonConverter {
     }
 
     @Override
+    public IGenericCodecHelper genericCodecHelper() {
+        return genericCodecHelper;
+    }
+
+    @Override
     public ConverterOptions options() {
         return options;
     }
@@ -68,7 +75,7 @@ public class DefaultDsonConverter implements DsonConverter {
     @Override
     public DsonConverter withOptions(ConverterOptions options) {
         Objects.requireNonNull(options);
-        return new DefaultDsonConverter(typeMetaRegistry, codecRegistry, options);
+        return new DefaultDsonConverter(typeMetaRegistry, codecRegistry, genericCodecHelper, options);
     }
 
     @Nonnull
@@ -229,64 +236,71 @@ public class DefaultDsonConverter implements DsonConverter {
     // ------------------------------------------------- 工厂方法 ------------------------------------------------------
 
     /**
-     * @param typeMetaRegistry 所有的类型id信息，包括protobuf的类
-     * @param pojoCodecList    所有的普通对象编解码器，外部传入，因此用户可以处理冲突后传入
-     * @param options          一些可选项
+     * @param typeMetaRegistry   所有的类型id信息，包括protobuf的类
+     * @param pojoCodecList      所有的普通对象编解码器，外部传入，因此用户可以处理冲突后传入
+     * @param options            一些可选项
+     * @param genericCodecConfig 泛型codec配置
+     * @param genericCodecHelper 泛型解码器工具类
      */
     public static DefaultDsonConverter newInstance(final TypeMetaRegistry typeMetaRegistry,
                                                    final List<? extends DsonCodec<?>> pojoCodecList,
-                                                   final ConverterOptions options) {
+                                                   final ConverterOptions options,
+                                                   final IGenericCodecConfig genericCodecConfig,
+                                                   @Nullable IGenericCodecHelper genericCodecHelper) {
         Objects.requireNonNull(options, "options");
-        // 检查classId是否存在，以及命名是否非法
-        for (DsonCodec<?> rawCodec : pojoCodecList) {
-            TypeMeta typeMeta = typeMetaRegistry.ofClass(rawCodec.getEncoderType());
-            if (typeMeta == null) {
-                throw new IllegalArgumentException("the type meta of encoderClass: %s is absent".formatted(rawCodec.getEncoderType()));
-            }
-        }
-        // 转换codecImpl
-        final List<DsonCodecImpl<?>> allPojoCodecList = new ArrayList<>(pojoCodecList.size());
-        for (DsonCodec<?> rawCodec : pojoCodecList) {
-            allPojoCodecList.add(new DsonCodecImpl<>(rawCodec));
-        }
+        Objects.requireNonNull(genericCodecConfig, "genericCodecConfig");
+        if (genericCodecHelper == null) genericCodecHelper = new GenericCodecHelper();
         // 泛型支持
+        // 添加默认的TypeMeta
         DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(TypeMetaRegistries.fromRegistries(
                 typeMetaRegistry,
                 DsonConverterUtils.getDefaultTypeMetaRegistry()));
+        // 添加默认的Codecs
+        DsonCodecRegistry userCodecRegistry = DsonCodecRegistries.fromCodecs(pojoCodecList);
+        DynamicDsonCodecRegistry dynamicDsonCodecRegistry = new DynamicDsonCodecRegistry(
+                DsonCodecRegistries.fromRegistries(userCodecRegistry, DsonConverterUtils.getDefaultCodecRegistry()),
+                genericCodecConfig);
 
+        // 检查typeMeta是否存在 -- 通过Dynamic查询
+        for (DsonCodec<?> codec : pojoCodecList) {
+            if (dynamicTypeMetaRegistry.ofType(codec.getEncoderType()) == null) {
+                throw new IllegalArgumentException("the type meta of encoderClass: %s is absent".formatted(codec.getEncoderType()));
+            }
+        }
         return new DefaultDsonConverter(
                 dynamicTypeMetaRegistry,
-                DsonCodecRegistries.fromRegistries(
-                        DsonCodecRegistries.fromCodecs(allPojoCodecList),
-                        DsonConverterUtils.getDefaultCodecRegistry()),
+                dynamicDsonCodecRegistry,
+                genericCodecHelper,
                 options);
     }
 
     /**
+     * 完全以用户的数据为准，不使用任何默认数据，不使用默认的TypeMeta和默认的Codec
+     *
      * @param registryList     可以包含一些特殊的registry
      * @param typeMetaRegistry 所有的类型id信息，包括protobuf的类
      * @param options          一些可选项
      */
     public static DefaultDsonConverter newInstance2(final TypeMetaRegistry typeMetaRegistry,
-                                                    List<DsonCodecRegistry> registryList,
-                                                    final ConverterOptions options) {
+                                                    final List<DsonCodecRegistry> registryList,
+                                                    final ConverterOptions options,
+                                                    final IGenericCodecConfig genericCodecConfig,
+                                                    @Nullable IGenericCodecHelper genericCodecHelper) {
         Objects.requireNonNull(options, "options");
-        // 添加默认Registry
-        if (!registryList.contains(DsonConverterUtils.getDefaultCodecRegistry())) {
-            List<DsonCodecRegistry> copied = new ArrayList<>(registryList.size() + 1);
-            copied.addAll(registryList);
-            copied.add(DsonConverterUtils.getDefaultCodecRegistry());
-            registryList = copied;
-        }
+        Objects.requireNonNull(genericCodecConfig, "genericCodecConfig");
+        if (genericCodecHelper == null) genericCodecHelper = new GenericCodecHelper();
         // 泛型支持
-        DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(TypeMetaRegistries.fromRegistries(
-                typeMetaRegistry,
-                DsonConverterUtils.getDefaultTypeMetaRegistry()));
+        // 不添加默认的TypeMeta
+        DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(
+                TypeMetaRegistries.fromRegistries(typeMetaRegistry));
+        // 不添加默认的Codecs
+        DynamicDsonCodecRegistry dynamicDsonCodecRegistry = new DynamicDsonCodecRegistry(
+                DsonCodecRegistries.fromRegistries(registryList), genericCodecConfig);
 
         return new DefaultDsonConverter(
                 dynamicTypeMetaRegistry,
-                DsonCodecRegistries.fromRegistries(
-                        registryList),
+                dynamicDsonCodecRegistry,
+                genericCodecHelper,
                 options);
     }
 }

@@ -77,7 +77,7 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
 
         DsonCollectionReader reader = (DsonCollectionReader) this.reader;
         ArrayDeque<String> keyQueue = converter.options().keySetPool.acquire();
-        KeyIterator keyItr = new KeyIterator(reader.getkeySet(), keyQueue);
+        KeyIterator keyItr = new KeyIterator(reader.getkeySet(), keyQueue, typeInfo);
         reader.setKeyItr(keyItr, DsonNull.NULL);
         reader.attach(keyItr);
     }
@@ -92,6 +92,15 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
         keyItr.keyQueue = null;
     }
 
+    @Override
+    public TypeInfo getCurrentTypeInfo() {
+        Object attachment = reader.attachment();
+        if (attachment instanceof KeyIterator keyItr) {
+            return keyItr.typeInfo;
+        }
+        return (TypeInfo) attachment;
+    }
+
     /**
      * 我将keyQueue由{@link LinkedHashSet}替换为{@link ArrayDeque}，基于这样的一种假设：
      * 大多数情况下，我们都是按照写入的顺序读取，因此使用{@link ArrayDeque}并不会造成太大的负面影响。
@@ -102,9 +111,10 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
         ArrayDeque<String> keyQueue;
         TypeInfo typeInfo;
 
-        public KeyIterator(Set<String> keySet, ArrayDeque<String> keyQueue) {
+        public KeyIterator(Set<String> keySet, ArrayDeque<String> keyQueue, TypeInfo typeInfo) {
             this.keySet = keySet;
             this.keyQueue = keyQueue;
+            this.typeInfo = typeInfo;
             keyQueue.addAll(keySet);
         }
 

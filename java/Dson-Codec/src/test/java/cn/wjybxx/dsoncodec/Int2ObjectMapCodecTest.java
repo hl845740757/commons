@@ -37,24 +37,42 @@ public class Int2ObjectMapCodecTest {
 
     private static DsonConverter converter;
 
+    @SuppressWarnings("rawtypes")
+    private static class Int2ObjectMapCodec extends MapCodec<Int2ObjectMap> {
+
+        public Int2ObjectMapCodec(TypeInfo typeInfo) {
+            super(typeInfo);
+        }
+    }
+
+    private static class IntListCodec extends CollectionCodec<IntList> {
+        public IntListCodec(TypeInfo typeInfo) {
+            super(typeInfo);
+        }
+    }
+
     @BeforeEach
     void setUp() {
+        GenericCodecConfig genericCodecConfig = GenericCodecConfig.newDefaultConfig();
+        genericCodecConfig.addCodec(Int2ObjectMap.class, Int2ObjectMapCodec.class);
+        genericCodecConfig.addCodec(Int2ObjectOpenHashMap.class, Int2ObjectMapCodec.class);
+        genericCodecConfig.addCodec(IntList.class, IntListCodec.class);
+        genericCodecConfig.addCodec(IntArrayList.class, IntListCodec.class);
+
+        TypeMetaRegistry typeMetaRegistry = TypeMetaRegistries.fromMetas(
+                TypeMeta.of(Int2ObjectMap.class, ObjectStyle.INDENT),
+                TypeMeta.of(Int2ObjectOpenHashMap.class, ObjectStyle.INDENT),
+                TypeMeta.of(IntList.class, ObjectStyle.FLOW),
+                TypeMeta.of(IntArrayList.class, ObjectStyle.FLOW)
+        );
         converter = DefaultDsonConverter.newInstance(
-                TypeMetaRegistries.fromMetas(
-                        TypeMeta.of(Int2ObjectMap.class, ObjectStyle.INDENT),
-                        TypeMeta.of(Int2ObjectOpenHashMap.class, ObjectStyle.INDENT),
-                        TypeMeta.of(IntList.class, ObjectStyle.FLOW),
-                        TypeMeta.of(IntArrayList.class, ObjectStyle.FLOW)
-                ),
-                List.of(
-                        new MapCodec<>(Int2ObjectMap.class, Int2ObjectOpenHashMap::new),
-                        new MapCodec<>(Int2ObjectOpenHashMap.class, Int2ObjectOpenHashMap::new),
-                        new CollectionCodec<>(IntList.class, IntArrayList::new),
-                        new CollectionCodec<>(IntArrayList.class, IntArrayList::new)
-                ),
+                typeMetaRegistry,
+                List.of(),
                 ConverterOptions.DEFAULT.toBuilder()
                         .setWriteMapAsDocument(true)
-                        .build());
+                        .build(),
+                genericCodecConfig,
+                new GenericCodecHelper());
     }
 
     @Test
@@ -64,16 +82,16 @@ public class Int2ObjectMapCodecTest {
         srcMap.put(2, "b");
         srcMap.put(3, "3");
 
-        @SuppressWarnings("rawtypes") TypeInfo typeInfo = TypeInfo.of(Int2ObjectMap.class, String.class);
+        TypeInfo typeInfo = TypeInfo.of(Int2ObjectMap.class, String.class);
         String dsonString = converter.writeAsDson(srcMap, typeInfo);
         System.out.println(dsonString);
 
         // 根据真实类型查询Codec
-        @SuppressWarnings("unchecked") Int2ObjectMap<String> copied = converter.readFromDson(dsonString, typeInfo);
+        Int2ObjectMap<String> copied = converter.readFromDson(dsonString, typeInfo);
         Assertions.assertEquals(srcMap, copied);
 
         // 根据声明类型查询Codec
-        @SuppressWarnings("unchecked") Int2ObjectMap<String> copied2 = converter.readFromDson(dsonString, typeInfo, Int2ObjectOpenHashMap::new);
+        Int2ObjectMap<String> copied2 = converter.readFromDson(dsonString, typeInfo, Int2ObjectOpenHashMap::new);
         Assertions.assertEquals(srcMap, copied2);
     }
 

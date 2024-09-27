@@ -363,6 +363,11 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
     }
 
     @Override
+    public boolean hasWaitingStartContext() {
+        return waitStartContext != null;
+    }
+
+    @Override
     public void backToWaitStart() {
         Context context = this.context;
         if (context.contextType == DsonContextType.TOP_LEVEL) {

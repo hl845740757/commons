@@ -27,11 +27,11 @@ import java.util.*;
  * 类型信息
  *
  * <h3>编码-有限泛型</h3>
- * 由于Java是伪泛型，在编译时会擦除类型信息，因此在运行时无法获得对象的完整类型信息，
- * 因此编码时无法精确写入完整的泛型参数信息，因此在跨语言通信时，应当避免【泛型递归】，即禁止泛型参数也是泛型 -- 最好彻底避免泛型。
+ * 由于Java是伪泛型，在运行时无法获得对象的完整类型信息，因此编码时无法总是精确写入完整的泛型参数信息；
+ * 如果字段的泛型参数在编译期是已知的，则APT可精确生成其类型信息，eg：{@code Map<String, Task<Blackboard>}；
  * <p>
- * APT在编译时可以精确解析不包含泛型变量的类型，eg：{@code Map<String, Task<Blackboard>}，
- * 但无发精确解析包含泛型变量的类型，eg：{@code Map<String, T>}，只能进行擦除后解析。
+ * 当运行时类型和声明类型一致 或 泛型参数可继承{@link IGenericCodecHelper#canInheritTypeArgs(Class, Class)}时，
+ * 则可以精确写入变量的类型信息，否则则只能写入原始类型信息。
  *
  * <h3>解码-完整泛型</h3>
  * 虽然我们无法在运行时导出对象的完整的泛型信息，但编辑器可以 —— 编辑器中的泛型都是已构造泛型。
@@ -41,7 +41,7 @@ import java.util.*;
  * <h3>数组泛型信息</h3>
  * 注意：由于{@link Class#getComponentType()}不包含泛型信息，
  * 而我们需要这部分数据，因此我们将数组的泛型信息也存储在{@link #genericArgs}中，
- * 因此不能简单根据泛型参数个数判断是否是泛型类，请通过{@link #isGenericType()}判断。
+ * 因此不能简单根据泛型参数个数判断是否是泛型类，请通过{@link #isConstructedGenericType()}判断。
  * ps：数组不是泛型类。
  *
  * @author wjybxx
@@ -53,7 +53,7 @@ public final class TypeInfo {
 
     /** 原始类型 -- 可能是基础类型 */
     public final Class<?> rawType;
-    /** 泛型参数信息 */
+    /** 泛型参数信息 -- 当不为0时，应当和真实泛型参数个数相同 */
     public final List<TypeInfo> genericArgs;
 
     private TypeInfo(Class<?> rawType) {
@@ -117,20 +117,25 @@ public final class TypeInfo {
         return rawType.isEnum();
     }
 
-    /**
-     * 是否是泛型类
-     * 注意：这不代表{@link #rawType}是泛型类，使用时务必小心。
-     */
-    public boolean isGenericType() {
-        return !rawType.isArray() && !genericArgs.isEmpty();
+    /** 是否包含泛型参数 */
+    public boolean hasGenericArgs() {
+        return genericArgs.size() > 0;
     }
 
-    /** 获取泛型原型 */
-    public TypeInfo getGenericTypeDefinition() {
-        if (isGenericType()) {
-            return new TypeInfo(rawType);
+    /** 是否是泛型类 -- 不适用数组 */
+    public boolean isGenericType() {
+        if (rawType.isPrimitive() || rawType.isArray()) {
+            return false;
         }
-        throw new IllegalStateException("This operation is only valid on generic types");
+        return genericArgs.size() > 0 || rawType.getTypeParameters().length > 0; // 这个有点浪费
+    }
+
+    /** 是否是已构造泛型类 -- 不适用数组 */
+    public boolean isConstructedGenericType() {
+        if (rawType.isPrimitive() || rawType.isArray()) {
+            return false;
+        }
+        return genericArgs.size() > 0;
     }
 
     /** 获取泛型参数 */
@@ -139,8 +144,24 @@ public final class TypeInfo {
     }
 
     /** 是否是数组 */
-    public boolean isArray() {
+    public boolean isArrayType() {
         return rawType.isArray();
+    }
+
+    /** 获取数组的阶数 -- 非数组返回0 */
+    public int getArrayRank() {
+        int r = 0;
+        Class<?> clazz = rawType;
+        while (clazz.isArray()) {
+            clazz = clazz.getComponentType();
+            r++;
+        }
+        return r;
+    }
+
+    /** 是否是已构造泛型数组 */
+    public boolean isConstructedGenericArrayType() {
+        return rawType.isArray() && genericArgs.size() > 0;
     }
 
     /** 获取数组的元素类型 */
@@ -148,17 +169,24 @@ public final class TypeInfo {
         if (rawType.isArray()) {
             return new TypeInfo(rawType.getComponentType(), genericArgs);  // 继承泛型信息
         }
-        return null;
+        throw new IllegalStateException("This operation is only valid on array types");
+    }
+
+    /** 获取最底层数组的元素类型 */
+    public TypeInfo getRootComponentType() {
+        if (rawType.isArray()) {
+            Class<?> root = rawType.getComponentType();
+            while (root.isArray()) {
+                root = root.getComponentType();
+            }
+            return new TypeInfo(root, genericArgs); // 继承泛型信息
+        }
+        throw new IllegalStateException("This operation is only valid on array types");
     }
 
     /** 构建数组类型 */
     public TypeInfo makeArrayType() {
         return new TypeInfo(rawType.arrayType(), genericArgs); // 继承泛型信息
-    }
-
-    /** 是否包含泛型参数 */
-    public boolean hasGenericArgs() {
-        return genericArgs.size() > 0;
     }
 
     // endregion

@@ -178,12 +178,13 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
             return;
         }
         // 常见基础类型也在CodecRegistry中
-        DsonCodecImpl<? super T> codec = findObjectEncoder(value, typeInfo);
+        TypeInfo runtimeTypeInfo = getRuntimeTypeInfo(value, typeInfo);
+        @SuppressWarnings("unchecked") var codec = (DsonCodecImpl<? super T>) findObjectEncoder(runtimeTypeInfo);
         if (codec != null) {
             if (writer.isAtName()) { // 写入name
                 writer.writeName(name);
             }
-            if (style == null) style = findObjectStyle(value, typeInfo);
+            if (style == null) style = findObjectStyle(runtimeTypeInfo);
             codec.writeObject(this, value, typeInfo, style);
             return;
         }
@@ -298,39 +299,52 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     // 发现个问题：子类使用超类编码器时，如果当前类不存在TypeMeta，是否应当尝试写入超类的TypeMeta？
     // 写入超类信息似乎也不对劲 -- 最好的方式是每个类型都有对应的TypeMeta
 
-    /** 写入clsName时，应当尽可能写上泛型参数信息 */
-    private void writeClsName(Object value, TypeInfo typeInfo) {
+    /** 写入对象的类型名，如果存在对应的TypeMeta -- 尽可能写上泛型参数信息 */
+    private void writeClsName(Object value, TypeInfo declaredType) {
         final Class<?> encodeClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举
-        if (!converter.options().classIdPolicy.test(typeInfo.rawType, encodeClass)) {
+        if (!converter.options().classIdPolicy.test(declaredType.rawType, encodeClass)) {
             return;
         }
-        final TypeMeta typeMeta = getEncoderTypeMeta(typeInfo, encodeClass);
+        final TypeMeta typeMeta = getEncoderTypeMeta(encodeClass, declaredType);
         if (typeMeta != null && !typeMeta.clsNames.isEmpty()) {
             writer.writeSimpleHeader(typeMeta.mainClsName());
         }
     }
 
-    /** style可以允许泛型参数不同时走不同的style - 但不是必须的 */
-    private ObjectStyle findObjectStyle(Object value, TypeInfo typeInfo) {
-        final Class<?> encodeClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举...
-        final TypeMeta typeMeta = getEncoderTypeMeta(typeInfo, encodeClass);
+    /** 允许泛型参数不同时走不同的style */
+    private ObjectStyle findObjectStyle(TypeInfo runtimeTypeInfo) {
+        final TypeMeta typeMeta = converter.typeMetaRegistry().ofType(runtimeTypeInfo);
         return typeMeta != null ? typeMeta.style : ObjectStyle.INDENT;
     }
 
-    /** 查找codec始终通过原始类型查找 -- 这么有问题 */
-    @SuppressWarnings("unchecked")
-    private <T> DsonCodecImpl<? super T> findObjectEncoder(T value, TypeInfo typeInfo) {
-        final Class<?> encodeClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举...
+    /** 查找对象的Encoder */
+    private DsonCodecImpl<?> findObjectEncoder(TypeInfo runtimeTypeInfo) {
         DsonCodecRegistry rootRegistry = converter.codecRegistry();
-        return (DsonCodecImpl<? super T>) rootRegistry.getEncoder(encodeClass, rootRegistry);
+        return rootRegistry.getEncoder(runtimeTypeInfo, rootRegistry, converter.genericCodecHelper());
     }
 
-    private TypeMeta getEncoderTypeMeta(TypeInfo typeInfo, Class<?> encoderClass) {
-        if (encoderClass == typeInfo.rawType) {
-            return converter.typeMetaRegistry().ofType(typeInfo);
+    /** 计算对象的运行时类型信息 */
+    private TypeInfo getRuntimeTypeInfo(Object value, TypeInfo declaredType) {
+        final Class<?> encoderClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举...
+        if (encoderClass == declaredType.rawType) {
+            return declaredType;
         }
-        if (DsonConverterUtils.canInheritTypeArgs(encoderClass, typeInfo)) {
-            return converter.typeMetaRegistry().ofType(TypeInfo.of(encoderClass, typeInfo.genericArgs));
+        if (declaredType.hasGenericArgs()
+                && converter.genericCodecHelper().canInheritTypeArgs(encoderClass, declaredType.rawType)) {
+            return TypeInfo.of(encoderClass, declaredType.genericArgs);
+        }
+        return TypeInfo.of(encoderClass);
+    }
+
+    private TypeMeta getEncoderTypeMeta(Class<?> encoderClass, TypeInfo declaredType) {
+        if (encoderClass == declaredType.rawType) {
+            return converter.typeMetaRegistry().ofType(declaredType);
+        }
+        // Class没有提供接口直接测试是否是泛型，该接口会导致空数组和拷贝...
+        if (declaredType.hasGenericArgs()
+                && converter.genericCodecHelper().canInheritTypeArgs(encoderClass, declaredType.rawType)) {
+            TypeInfo runtimeType = TypeInfo.of(encoderClass, declaredType.genericArgs);
+            return converter.typeMetaRegistry().ofType(runtimeType);
         }
         return converter.typeMetaRegistry().ofClass(encoderClass);
     }

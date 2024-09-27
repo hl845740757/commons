@@ -185,7 +185,7 @@ class CodecStructs {
             writer.writeString("strVal", instance.strVal, StringStyle.AUTO);
             writer.writeBytes("bytes", instance.bytes);
             writer.writeObject("sex", instance.sex, TypeInfo.of(Sex.class));
-            writer.writeObject("map", instance.map, TypeInfo.STRING_LINKED_HASHMAP, null);
+            writer.writeObject("map", instance.map, TypeInfo.STRING_HASHMAP, null);
             writer.writeObject("list", instance.list, TypeInfo.ARRAYLIST, null);
         }
 
@@ -208,7 +208,7 @@ class CodecStructs {
                     reader.readString("strVal"),
                     reader.readBytes("bytes"),
                     reader.readObject("sex", TypeInfo.of(Sex.class)),
-                    reader.readObject("map", TypeInfo.STRING_LINKED_HASHMAP),
+                    reader.readObject("map", TypeInfo.STRING_HASHMAP),
                     reader.readObject("list", TypeInfo.ARRAYLIST),
                     nestStruct);
         }

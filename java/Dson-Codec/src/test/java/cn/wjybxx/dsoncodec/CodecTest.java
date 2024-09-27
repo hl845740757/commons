@@ -80,7 +80,7 @@ public class CodecTest {
                         new CodecStructs.MyStructCodec(),
                         new EnumCodec<>(Sex.class)
                 ),
-                options);
+                options, GenericCodecConfig.newDefaultConfig(), new GenericCodecHelper());
 
         String dsonString = converter.writeAsDson(myStruct);
         System.out.println(dsonString);

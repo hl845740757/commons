@@ -38,12 +38,13 @@ public interface IGenericCodecConfig
     /// <summary>
     /// 获取可以编码目标泛型类的Codec原型 -- 可以向上匹配。
     /// </summary>
-    /// <param name="genericTypeDefine">目标泛型类</param>
+    /// <param name="genericTypeDefine">目标泛型类(可能是抽象类或接口)</param>
     /// <returns>编码器类型</returns>
     Type? GetEncoderType(Type genericTypeDefine);
 
     /// <summary>
     /// 获取可以解码目标泛型类的Codec原型 -- 精确匹配。
+    /// 其实也可以向上匹配，只要创建的实例可以转型为目标类型。
     /// </summary>
     /// <param name="genericTypeDefine">目标泛型类</param>
     /// <returns>解码器类型</returns>

@@ -37,7 +37,7 @@ public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
 
     protected final TypeInfo typeInfo;
     protected final Supplier<? extends T> factory;
-    private final TypeInfo eleTypeInfo;
+    private final TypeInfo elementTypeInfo;
 
     @SuppressWarnings("unchecked")
     public CollectionCodec(TypeInfo typeInfo) {
@@ -45,7 +45,7 @@ public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
 
         Class<T> rawType = (Class<T>) typeInfo.rawType;
         this.factory = DsonConverterUtils.tryNoArgConstructorToSupplier(rawType);
-        this.eleTypeInfo = DsonConverterUtils.findTypeParameter(rawType, Collection.class, "E");
+        this.elementTypeInfo = DsonConverterUtils.findTypeParameter(rawType, Collection.class, "E");
     }
 
     @SuppressWarnings("unchecked")
@@ -54,7 +54,7 @@ public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
         this.factory = factory;
 
         Class<T> rawType = (Class<T>) typeInfo.rawType;
-        this.eleTypeInfo = DsonConverterUtils.findTypeParameter(rawType, Collection.class, "E");
+        this.elementTypeInfo = DsonConverterUtils.findTypeParameter(rawType, Collection.class, "E");
     }
 
     @Nonnull
@@ -78,32 +78,21 @@ public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
         return new ArrayList<>();
     }
 
-    /** 允许重写 */
-    protected TypeInfo getElementTypeInfo(TypeInfo declaredType) {
-        if (typeInfo.isGenericType()) {
-            return typeInfo.getGenericArgument(0);
-        }
-        if (declaredType.isGenericType()) {
-            return declaredType.getGenericArgument(0);
-        }
-        return eleTypeInfo;
-    }
-
     @Override
     public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
         // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询K,V的类型，但Java是伪泛型...
-        TypeInfo componentArgInfo = getElementTypeInfo(declaredType);
+        TypeInfo elementTypeInfo = this.elementTypeInfo;
         for (Object e : instance) {
-            writer.writeObject(null, e, componentArgInfo, null);
+            writer.writeObject(null, e, elementTypeInfo, null);
         }
     }
 
     @Override
     public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
-        TypeInfo componentArgInfo = getElementTypeInfo(declaredType);
+        TypeInfo elementTypeInfo = this.elementTypeInfo;
         Collection<Object> result = newCollection(declaredType, factory);
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
-            result.add(reader.readObject(null, componentArgInfo));
+            result.add(reader.readObject(null, elementTypeInfo));
         }
         CollectionConverter collectionConverter = reader.options().collectionConverter;
         if (collectionConverter != null) {

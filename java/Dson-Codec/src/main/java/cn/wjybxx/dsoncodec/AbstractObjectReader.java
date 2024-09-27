@@ -98,7 +98,11 @@ abstract class AbstractObjectReader implements DsonObjectReader {
 
     @Override
     public LocalDateTime readDateTime(String name) {
-        return readName(name) ? DsonCodecHelper.readDateTime(reader, name).toDateTime() : null;
+        if (readName(name)) { // java不是结构体可能返回null
+            ExtDateTime extDateTime = DsonCodecHelper.readDateTime(reader, name);
+            return extDateTime == null ? null : extDateTime.toDateTime();
+        }
+        return null;
     }
 
     @Override
@@ -146,10 +150,12 @@ abstract class AbstractObjectReader implements DsonObjectReader {
             return readContainer(typeInfo, factory, dsonType);
         }
 
-        // 考虑枚举类型--可转换为基础值类型的Object
-        DsonCodecRegistry rootRegistry = converter.codecRegistry();
-        DsonCodecImpl<T> codec = rootRegistry.getDecoder(declaredType, rootRegistry);
-        if (codec != null && codec.isEnumCodec()) {
+        // 非容器类型,Dson内建结构
+        // 考虑枚举类型 -- 可转换为基础值类型的Object
+        if (declaredType.isEnum()) {
+            DsonCodecRegistry rootRegistry = converter.codecRegistry();
+            DsonCodecImpl<T> codec = (DsonCodecImpl<T>) rootRegistry.getDecoder(typeInfo, rootRegistry, converter.genericCodecHelper());
+            assert codec != null;
             return codec.readObject(this, typeInfo, factory);
         }
         // 考虑包装类型
@@ -157,6 +163,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         if (unboxed.isPrimitive()) {
             return (T) DsonCodecHelper.readPrimitive(reader, name, unboxed);
         }
+        // 考虑DsonValue
         if (DsonValue.class.isAssignableFrom(declaredType)) {
             return declaredType.cast(Dsons.readDsonValue(reader));
         }
@@ -166,7 +173,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
 
     private <T> T readContainer(TypeInfo typeInfo, Supplier<? extends T> factory, DsonType dsonType) {
         String classId = readClassId(dsonType);
-        DsonCodecImpl<T> codec = findObjectDecoder(typeInfo, factory, classId);
+        @SuppressWarnings("unchecked") DsonCodecImpl<T> codec = (DsonCodecImpl<T>) findObjectDecoder(typeInfo, factory, classId);
         if (codec == null) {
             throw DsonCodecException.incompatible(typeInfo.rawType, classId);
         }
@@ -228,6 +235,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
             reader.readDsonType();
         }
         reader.readStartArray();
+        reader.attach(typeInfo); // 数组默认总是直接attach
     }
 
     @Override
@@ -258,7 +266,8 @@ abstract class AbstractObjectReader implements DsonObjectReader {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> T decodeKey(String keyString, Class<T> keyDeclared) {
+    public <T> T decodeKey(String keyString, TypeInfo keyTypeInfo) {
+        Class<?> keyDeclared = keyTypeInfo.rawType;
         if (keyDeclared == String.class || keyDeclared == Object.class) {
             return (T) keyString;
         }
@@ -269,12 +278,13 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         if (keyDeclared == Long.class) {
             return (T) Long.valueOf(keyString);
         }
-        DsonCodecRegistry rootRegistry = converter.codecRegistry();
-        DsonCodecImpl<T> codec = rootRegistry.getDecoder(keyDeclared, rootRegistry);
-        if (codec == null || !codec.isEnumCodec()) {
+        if (!keyDeclared.isEnum()) {
             throw DsonCodecException.unsupportedKeyType(keyDeclared);
         }
         // 处理枚举类型
+        DsonCodecRegistry rootRegistry = converter.codecRegistry();
+        DsonCodecImpl<T> codec = (DsonCodecImpl<T>) rootRegistry.getDecoder(keyTypeInfo, rootRegistry, converter.genericCodecHelper());
+        assert codec != null;
         T result;
         if (converter.options().writeEnumAsString) {
             result = codec.forName(keyString);
@@ -303,6 +313,9 @@ abstract class AbstractObjectReader implements DsonObjectReader {
 
     private String readClassId(DsonType dsonType) {
         DsonReader reader = this.reader;
+        if (reader.hasWaitingStartContext()) {
+            return ""; // 已读取header，当前可能触发了读代理
+        }
         if (dsonType == DsonType.OBJECT) {
             reader.readStartObject();
         } else {
@@ -326,23 +339,21 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         return clsName;
     }
 
-    @SuppressWarnings("unchecked")
-    private <T> DsonCodecImpl<T> findObjectDecoder(TypeInfo typeInfo, Supplier<? extends T> factory, String classId) {
-        final Class<T> declaredType = (Class<T>) typeInfo.rawType;
+    private <T> DsonCodecImpl<?> findObjectDecoder(TypeInfo declaredType, Supplier<T> factory, String clsName) {
         // factory不为null时，直接按照声明类型查找，因为factory的优先级最高
         DsonCodecRegistry rootRegistry = converter.codecRegistry();
         if (factory != null) {
-            return rootRegistry.getDecoder(declaredType, rootRegistry);
+            return rootRegistry.getDecoder(declaredType, rootRegistry, converter.genericCodecHelper());
         }
-        // 尝试按真实类型读
-        if (!ObjectUtils.isBlank(classId)) {
-            TypeMeta typeMeta = converter.typeMetaRegistry().ofName(classId);
-            if (typeMeta != null && declaredType.isAssignableFrom(typeMeta.typeInfo.rawType)) {
-                return (DsonCodecImpl<T>) rootRegistry.getDecoder(typeMeta.typeInfo.rawType, rootRegistry);
+        // 尝试按真实类型读 -- TODO 这里是否考虑继承泛型参数?对方应当写入了泛型参数才是
+        if (!ObjectUtils.isBlank(clsName)) {
+            TypeMeta typeMeta = converter.typeMetaRegistry().ofName(clsName);
+            if (typeMeta != null && declaredType.rawType.isAssignableFrom(typeMeta.typeInfo.rawType)) {
+                return rootRegistry.getDecoder(typeMeta.typeInfo, rootRegistry, converter.genericCodecHelper());
             }
         }
         // 尝试按照声明类型读 - 读的时候两者可能是无继承关系的(投影)
-        return rootRegistry.getDecoder(declaredType, rootRegistry);
+        return rootRegistry.getDecoder(declaredType, rootRegistry, converter.genericCodecHelper());
     }
 
     // endregion

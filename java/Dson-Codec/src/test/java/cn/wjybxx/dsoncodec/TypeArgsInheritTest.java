@@ -32,10 +32,7 @@ public class TypeArgsInheritTest {
 
     @Test
     void testList() {
-        Assertions.assertTrue(DsonConverterUtils.canInheritTypeArgs(ArrayList.class, List.class));
-
-        // typeInfo必须有泛型参数时才可继承
-        Assertions.assertFalse(DsonConverterUtils.canInheritTypeArgs(ArrayList.class, TypeInfo.of(List.class)));
-        Assertions.assertTrue(DsonConverterUtils.canInheritTypeArgs(ArrayList.class, TypeInfo.of(List.class, String.class)));
+        GenericCodecHelper genericCodecHelper = new GenericCodecHelper();
+        Assertions.assertTrue(genericCodecHelper.canInheritTypeArgs(ArrayList.class, List.class));
     }
 }

@@ -43,7 +43,7 @@ public class DefaultValueTest {
         DsonConverter converter = DefaultDsonConverter.newInstance(
                 TypeMetaRegistries.fromMetas(TypeMeta.of(Bean.class, ObjectStyle.INDENT, "Bean")),
                 List.of(new BeanDocCodec()),
-                options);
+                options, GenericCodecConfig.newDefaultConfig(), new GenericCodecHelper());
 
         Bean bean = new Bean();
         bean.iv1 = 1;
@@ -117,7 +117,7 @@ public class DefaultValueTest {
         @Override
         @Nonnull
         public TypeInfo getEncoderType() {
-            return DefaultValueTest.Bean.class;
+            return TypeInfo.of(DefaultValueTest.Bean.class);
         }
 
         @Override

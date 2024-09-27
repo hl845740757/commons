@@ -27,9 +27,11 @@ import java.lang.invoke.CallSite;
 import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.*;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.TypeVariable;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
@@ -39,9 +41,9 @@ import java.util.function.Supplier;
 public final class DsonConverterUtils {
 
     /** 类型id注册表 */
-    private static final TypeMetaRegistry TYPE_META_REGISTRY;
+    private static final TypeMetaRegistry BUILTIN_TYPE_METAS;
     /** 默认codec注册表 */
-    private static final DsonCodecRegistry CODEC_REGISTRY;
+    private static final DsonCodecRegistry BUILTIN_CODEC_REGISTRY;
 
     private static final MethodType SUPPLIER_INVOKE_TYPE = MethodType.methodType(Supplier.class);
     private static final MethodType SUPPLIER_GET_METHOD_TYPE = MethodType.methodType(Object.class);
@@ -76,10 +78,8 @@ public final class DsonConverterUtils {
         primitiveTypeDefaultValueMap.put(Void.class, null);
 
         // 内置codec类型
-        TYPE_META_REGISTRY = TypeMetaRegistries.fromMetas(builtinTypeMetas());
-        CODEC_REGISTRY = new DefaultCodecRegistry(DsonCodecRegistries.newCodecMap(builtinCodecs().stream()
-                .map(DsonCodecImpl::new)
-                .toList()));
+        BUILTIN_TYPE_METAS = TypeMetaRegistries.fromMetas(builtinTypeMetas());
+        BUILTIN_CODEC_REGISTRY = DsonCodecRegistries.fromCodecs(builtinCodecs());
     }
 
     // region 内建codec
@@ -91,6 +91,7 @@ public final class DsonConverterUtils {
         return TypeMeta.of(clazz, ObjectStyle.INDENT, List.of(clsNames));
     }
 
+    /** 内建基本类型的codec */
     private static List<TypeMeta> builtinTypeMetas() {
         return List.of(
                 // dson内建结构
@@ -106,7 +107,7 @@ public final class DsonConverterUtils {
                 typeMetaOf(ExtDateTime.class, DsonTexts.LABEL_DATETIME),
                 typeMetaOf(Timestamp.class, DsonTexts.LABEL_TIMESTAMP),
                 // 特殊组件
-                typeMetaOf(Object.class, "Object", "object"), // 泛型参数...
+                typeMetaOf(Object.class, "object", "Object"), // 泛型参数...
                 typeMetaOf(MapEncodeProxy.class, "DictionaryEncodeProxy", "MapEncodeProxy")
         );
     }
@@ -137,62 +138,19 @@ public final class DsonConverterUtils {
                 new MoreArrayCodecs.StringArrayCodec(),
                 new MoreArrayCodecs.ShortArrayCodec(),
                 new MoreArrayCodecs.CharArrayCodec(),
-                new MoreArrayCodecs.ObjectArrayCodec(),
+                new MoreArrayCodecs.ObjectArrayCodec()
+        );
+    }
 
-                // 日期类型
+    /** 日期类型 */
+    private static List<DsonCodec<?>> dateTimeCodecs() {
+        return List.of(
                 new LocalDateTimeCodec(),
                 new LocalDateCodec(),
                 new LocalTimeCodec(),
                 new InstantCodec(),
                 new DurationCodec()
         );
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private static class DefaultCodecRegistry implements DsonCodecRegistry {
-
-        final Map<Class<?>, DsonCodecImpl<?>> codecMap;
-
-        final DsonCodecImpl<Object[]> objectArrayCodec;
-        final DsonCodecImpl<Collection> collectionCodec;
-        final DsonCodecImpl<Map> mapCodec;
-
-        private DefaultCodecRegistry(Map<Class<?>, DsonCodecImpl<?>> codecMap) {
-            this.codecMap = codecMap;
-
-            this.objectArrayCodec = getCodec(codecMap, Object[].class);
-            this.collectionCodec = getCodec(codecMap, Collection.class);
-            this.mapCodec = getCodec(codecMap, Map.class);
-        }
-
-        private static <T> DsonCodecImpl<T> getCodec(Map<Class<?>, DsonCodecImpl<?>> codecMap, Class<T> clazz) {
-            DsonCodecImpl<T> codec = (DsonCodecImpl<T>) codecMap.get(clazz);
-            if (codec == null) throw new IllegalArgumentException(clazz.getName());
-            return codec;
-        }
-
-        @Nullable
-        @Override
-        public <T> DsonCodecImpl<? super T> getEncoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry) {
-            DsonCodecImpl<?> codec = codecMap.get(typeInfo);
-            if (codec != null) return (DsonCodecImpl<T>) codec;
-
-            if (typeInfo.isArray()) return (DsonCodecImpl<T>) objectArrayCodec;
-            if (Collection.class.isAssignableFrom(typeInfo)) return (DsonCodecImpl<? super T>) collectionCodec;
-            if (Map.class.isAssignableFrom(typeInfo)) return (DsonCodecImpl<? super T>) mapCodec;
-            return null;
-        }
-
-        @Nullable
-        @Override
-        public <T> DsonCodecImpl<T> getDecoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry) {
-            DsonCodecImpl<?> codec = codecMap.get(typeInfo);
-            if (codec != null) return (DsonCodecImpl<T>) codec;
-            // java是泛型擦擦，因此我们可以这么干 -- Codec创建的实例可以向下转型目标类型
-            if (typeInfo.rawType.isAssignableFrom(LinkedHashMap.class)) return (DsonCodecImpl<T>) mapCodec;
-            if (typeInfo.rawType.isAssignableFrom(ArrayList.class)) return (DsonCodecImpl<T>) collectionCodec;
-            return null;
-        }
     }
 
     // endregion
@@ -240,69 +198,7 @@ public final class DsonConverterUtils {
 
     // region 泛型
 
-    /** 判断是否可继承的开销比较大，我们需要缓存测试结果 */
-    private static final ConcurrentHashMap<ClassPair, Boolean> inheritableResultCache = new ConcurrentHashMap<>();
-
-    /** 判断要编码的类型是否可继承声明类型的泛型参数 */
-    public static boolean canInheritTypeArgs(Class<?> encoderClass, TypeInfo typeInfo) {
-        return typeInfo.genericArgs.size() > 0 && canInheritTypeArgs(encoderClass, typeInfo.rawType);
-    }
-
-    /** 测试当前类是否可继承目标类的泛型参数 */
-    public static <T> boolean canInheritTypeArgs(Class<T> thisClass, Class<?> targetClass) {
-        if (targetClass == Object.class) return false;
-        if (thisClass == targetClass) {
-            return true;
-        }
-        if (!targetClass.isAssignableFrom(thisClass)) {
-            return false;
-        }
-        ClassPair classPair = new ClassPair(thisClass, targetClass);
-        Boolean r = inheritableResultCache.get(classPair);
-        if (r != null) {
-            return r;
-        }
-        if (thisClass.isArray()) {
-            // 数组由根元素类型决定
-            Class<?> thisElementType = getRootComponentType(thisClass);
-            Class<?> targetElementType = getRootComponentType(targetClass);
-            r = canInheritTypeArgs(thisElementType, targetElementType);
-        } else {
-            TypeVariable<? extends Class<?>>[] thisTypeParameters = thisClass.getTypeParameters();
-            if (thisTypeParameters.length > 0) {
-                // 当前类是泛型类 -- 查找传递给超类的泛型变量
-                @SuppressWarnings("unchecked") Class<? super T> superClassOrInterface = (Class<? super T>) targetClass;
-                Type genericSuperType = TypeParameterFinder.getGenericSuperType(thisClass, superClassOrInterface);
-                if (genericSuperType instanceof ParameterizedType parameterizedType) {
-                    Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-                    r = isSameGenericTypeArguments(thisTypeParameters, actualTypeArguments);
-                }
-            }
-        }
-        if (r == null) {
-            r = false;
-        }
-        inheritableResultCache.put(classPair, r);
-        return r;
-    }
-
-    private static <T> boolean isSameGenericTypeArguments(TypeVariable<? extends Class<?>>[] thisTypeParameters,
-                                                          Type[] actualTypeArguments) {
-        // 子类声明相同的泛型变量是声明了新的变量，因此无法直接Equals比较数组元素，我们只能简单的比较名字
-        if (thisTypeParameters.length != actualTypeArguments.length) {
-            return false;
-        }
-        for (int i = 0; i < thisTypeParameters.length; i++) {
-            TypeVariable<? extends Class<?>> typeParameter = thisTypeParameters[i];
-            Type actualTypeArgument = actualTypeArguments[i];
-            if (!(actualTypeArgument instanceof TypeVariable<?> typeVariable)
-                    || !typeVariable.getName().equals(typeParameter.getName())) {
-                return false;
-            }
-        }
-        return true;
-    }
-
+    /** 查找指定泛型参数的运行时类型 */
     public static <T> TypeInfo findTypeParameter(Class<T> thisClass, Class<? super T> superClazz, String typeParameterName) {
         TypeVariable<Class<T>>[] typeParameters = thisClass.getTypeParameters();
         for (TypeVariable<Class<T>> typeParameter : typeParameters) {
@@ -314,46 +210,18 @@ public final class DsonConverterUtils {
         return TypeInfo.of(typeParameter);
     }
 
-    private static class ClassPair {
-
-        final Class<?> first;
-        final Class<?> second;
-
-        public ClassPair(Class<?> first, Class<?> second) {
-            this.first = first;
-            this.second = second;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            ClassPair classPair = (ClassPair) o;
-
-            if (!first.equals(classPair.first)) return false;
-            return second.equals(classPair.second);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = first.hashCode();
-            result = 31 * result + second.hashCode();
-            return result;
-        }
-    }
     // endregion
 
     // region codec utils
 
     /** 获取默认的编解码器 */
     public static DsonCodecRegistry getDefaultCodecRegistry() {
-        return CODEC_REGISTRY;
+        return BUILTIN_CODEC_REGISTRY;
     }
 
     /** 获取默认的元数据注册表 */
     public static TypeMetaRegistry getDefaultTypeMetaRegistry() {
-        return TYPE_META_REGISTRY;
+        return BUILTIN_TYPE_METAS;
     }
 
     /** 获取给定类型的默认值 */
@@ -430,11 +298,20 @@ public final class DsonConverterUtils {
 
     /** 枚举实例可能是枚举类的子类，如果枚举实例声明了代码块{}，在编解码时需要转换为声明类 */
     public static Class<?> getEncodeClass(Object value) {
-        if (value instanceof Enum<?> e) {
-            return e.getDeclaringClass();
-        } else {
-            return value.getClass();
+        Class<?> clazz = value.getClass();
+        if (clazz.isEnum()) {
+            return clazz;
         }
+        Class<?> superclass = clazz.getSuperclass();
+        if (superclass.isEnum()) {
+            return superclass;
+        }
+        return clazz;
+//        if (value instanceof Enum<?> e) {
+//            return e.getDeclaringClass();
+//        } else {
+//            return value.getClass();
+//        }
     }
 
     /** 注意：默认情况下map是一个数组对象，而不是普通的对象 */
@@ -478,6 +355,9 @@ public final class DsonConverterUtils {
     /** 尝试将无参构造函数转换为Supplier */
     @Nullable
     public static <T> Supplier<T> tryNoArgConstructorToSupplier(Class<T> clazz) {
+        if (Modifier.isAbstract(clazz.getModifiers()) || clazz.isInterface()) {
+            return null; // 抽象类或接口
+        }
         try {
             Constructor<T> constructor = clazz.getConstructor();
             MethodHandles.Lookup lookup = MethodHandles.lookup();

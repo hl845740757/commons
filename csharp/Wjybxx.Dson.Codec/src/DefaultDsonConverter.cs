@@ -216,34 +216,42 @@ public class DefaultDsonConverter : IDsonConverter
     #region factory
 
     /**
-     * @param pojoCodecImplList 所有的普通对象编解码器，外部传入，因此用户可以处理冲突后传入
+     * @param pojoCodecImplList 
      * @param typeMetaRegistry  所有的类型id信息，包括protobuf的类
      * @param options           一些可选项
      */
+    //
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="typeMetaRegistry"></param>
+    /// <param name="pojoCodecList">所有的普通对象编解码器，外部传入，因此用户可以处理冲突后传入</param>
+    /// <param name="genericCodecConfig"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
     public static DefaultDsonConverter NewInstance(ITypeMetaRegistry typeMetaRegistry,
                                                    IList<IDsonCodec> pojoCodecList,
                                                    IGenericCodecConfig genericCodecConfig,
                                                    ConverterOptions options) {
+        if (genericCodecConfig == null) throw new ArgumentNullException(nameof(genericCodecConfig));
         if (options == null) throw new ArgumentNullException(nameof(options));
+
         // 检查classId是否存在，以及命名是否非法
         foreach (IDsonCodec rawCodec in pojoCodecList) {
             typeMetaRegistry.CheckedOfType(rawCodec.GetEncoderType());
         }
         // 转换codecImpl
-        List<DsonCodecImpl> allPojoCodecList = new List<DsonCodecImpl>(pojoCodecList.Count);
-        foreach (IDsonCodec rawCodec in pojoCodecList) {
-            Type genericType = typeof(DsonCodecImpl<>).MakeGenericType(rawCodec.GetEncoderType());
-            DsonCodecImpl codecImpl = (DsonCodecImpl)Activator.CreateInstance(genericType, rawCodec);
-            allPojoCodecList.Add(codecImpl);
-        }
+        IDsonCodecRegistry userCodecRegistry = DsonCodecRegistries.FromCodecs(pojoCodecList);
+
         // 泛型支持
         DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(
             TypeMetaRegistries.FromRegistries(typeMetaRegistry,
                 DsonConverterUtils.GetDefaultTypeMetaRegistry()));
+        // 添加默认的Codecs
         DynamicDsonCodecRegistry dynamicDsonCodecRegistry = new DynamicDsonCodecRegistry(
-            DsonCodecRegistries.FromRegistries(
-                DsonCodecRegistries.FromCodecs(allPojoCodecList),
-                DsonConverterUtils.GetDefaultCodecRegistry()),
+            DsonCodecRegistries.FromRegistries(userCodecRegistry, DsonConverterUtils.GetDefaultCodecRegistry()),
             genericCodecConfig);
 
         return new DefaultDsonConverter(
@@ -252,31 +260,27 @@ public class DefaultDsonConverter : IDsonConverter
             options);
     }
 
-    /**
-     * @param registryList     可以包含一些特殊的registry
-     * @param typeMetaRegistry 所有的类型id信息，包括protobuf的类
-     * @param options          一些可选项
-     * @return
-     */
+    /// <summary>
+    /// 完全以用户的数据为准，不使用任何默认数据，不使用默认的TypeMeta和默认的Codec
+    /// </summary>
+    /// <param name="typeMetaRegistry">可以包含一些特殊的registry</param>
+    /// <param name="registryList"></param>
+    /// <param name="genericCodecConfig"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
     public static DefaultDsonConverter NewInstance2(ITypeMetaRegistry typeMetaRegistry,
                                                     IList<IDsonCodecRegistry> registryList,
                                                     IGenericCodecConfig genericCodecConfig,
                                                     ConverterOptions options) {
         if (options == null) throw new ArgumentNullException(nameof(options));
-        // 添加默认Registry
-        if (!registryList.Contains(DsonConverterUtils.GetDefaultCodecRegistry())) {
-            List<IDsonCodecRegistry> copied = new List<IDsonCodecRegistry>(registryList.Count + 1);
-            copied.AddRange(registryList);
-            copied.Add(DsonConverterUtils.GetDefaultCodecRegistry());
-            registryList = copied;
-        }
         // 泛型支持
+        // 不添加默认的TypeMeta
         DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(
-            TypeMetaRegistries.FromRegistries(typeMetaRegistry,
-                DsonConverterUtils.GetDefaultTypeMetaRegistry()));
+            TypeMetaRegistries.FromRegistries(typeMetaRegistry));
+        // 不添加默认的Codecs
         DynamicDsonCodecRegistry dynamicDsonCodecRegistry = new DynamicDsonCodecRegistry(
-            DsonCodecRegistries.FromRegistries(registryList),
-            genericCodecConfig);
+            DsonCodecRegistries.FromRegistries(registryList), genericCodecConfig);
 
         return new DefaultDsonConverter(
             dynamicTypeMetaRegistry,
