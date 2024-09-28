@@ -40,7 +40,7 @@ import java.util.function.Supplier;
  * date - 2023/4/24
  */
 @DsonCodecScanIgnore
-public final class EnumCodec<T extends Enum<T>> extends AbstractEnumCodec<T> implements DsonCodec<T> {
+public final class EnumCodec<T extends Enum<T>> implements IEnumCodec<T>, DsonCodec<T> {
 
     private final Class<T> enumClass;
     private final EnumMap<T, EnumValueInfo<T>> value2EnumMap;

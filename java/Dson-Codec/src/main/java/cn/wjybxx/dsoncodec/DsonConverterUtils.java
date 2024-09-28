@@ -32,6 +32,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
@@ -40,7 +41,7 @@ import java.util.function.Supplier;
  */
 public final class DsonConverterUtils {
 
-    /** 类型id注册表 */
+    /** 类型原数据注册表 */
     private static final TypeMetaRegistry BUILTIN_TYPE_METAS;
     /** 默认codec注册表 */
     private static final DsonCodecRegistry BUILTIN_CODEC_REGISTRY;
@@ -91,7 +92,7 @@ public final class DsonConverterUtils {
         return TypeMeta.of(clazz, ObjectStyle.INDENT, List.of(clsNames));
     }
 
-    /** 内建基本类型的codec */
+    /** 内建基本类型的codec -- 只包含处理的类型，其它都需要用户分配 */
     private static List<TypeMeta> builtinTypeMetas() {
         return List.of(
                 // dson内建结构
@@ -108,10 +109,21 @@ public final class DsonConverterUtils {
                 typeMetaOf(Timestamp.class, DsonTexts.LABEL_TIMESTAMP),
                 // 特殊组件
                 typeMetaOf(Object.class, "object", "Object"), // 泛型参数...
-                typeMetaOf(MapEncodeProxy.class, "DictionaryEncodeProxy", "MapEncodeProxy")
+                typeMetaOf(MapEncodeProxy.class, "DictionaryEncodeProxy", "MapEncodeProxy"),
+
+                // 基础集合
+                typeMetaOf(Collection.class, "ICollection"),
+                typeMetaOf(List.class, "IList"),
+                typeMetaOf(ArrayList.class, "List"),
+
+                typeMetaOf(Map.class, "IDictionary"),
+                typeMetaOf(HashMap.class, "HashMap"),
+                typeMetaOf(LinkedHashMap.class, "Dictionary", "LinkedDictionary"), // c#的字典有毒，不删除的情况下有序，导致Java映射困难
+                typeMetaOf(ConcurrentHashMap.class, "ConcurrentDictionary")
         );
     }
 
+    /** codec可以比类型元数据多 */
     private static List<DsonCodec<?>> builtinCodecs() {
         return List.of(
                 // dson内建结构
@@ -126,8 +138,6 @@ public final class DsonConverterUtils {
                 new ObjectLitePtrCodec(),
                 new ExtDateTimeCodec(),
                 new TimestampCodec(),
-                // 特殊组件
-                new MapEncodeProxyCodec(),
 
                 // 基本类型数组
                 new MoreArrayCodecs.IntArrayCodec(),
@@ -138,13 +148,9 @@ public final class DsonConverterUtils {
                 new MoreArrayCodecs.StringArrayCodec(),
                 new MoreArrayCodecs.ShortArrayCodec(),
                 new MoreArrayCodecs.CharArrayCodec(),
-                new MoreArrayCodecs.ObjectArrayCodec()
-        );
-    }
+                new MoreArrayCodecs.ObjectArrayCodec(),
 
-    /** 日期类型 */
-    private static List<DsonCodec<?>> dateTimeCodecs() {
-        return List.of(
+                // 日期时间
                 new LocalDateTimeCodec(),
                 new LocalDateCodec(),
                 new LocalTimeCodec(),

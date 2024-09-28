@@ -20,7 +20,9 @@ import javax.annotation.Nullable;
 
 /**
  * 编解码器注册表
- * 注意：如果只是简单的Type到Codec的映射，请使用{@link DsonCodecRegistries}的工具方法构建Registry，可实现多Registry的合并。
+ * 注意：
+ * 1.如果只是简单的Type到Codec的映射，请使用{@link DsonCodecRegistries}的工具方法构建Registry，可实现多Registry的合并。
+ * 2.如果需要处理类型转换问题，请使用{@link DsonCodecCaster}
  *
  * @author wjybxx
  * date 2023/4/3
@@ -31,12 +33,10 @@ public interface DsonCodecRegistry {
      * 查找编码器（encoder）。
      * 编码器可以接收子类实例，将子类实例按照超类编码，子类特殊数据丢弃。
      *
-     * @param typeInfo           类型信息，含泛型参数
-     * @param rootRegistry       用于比如想转换为查询超类的Encoder
-     * @param genericCodecHelper 泛型工具类
+     * @param typeInfo 类型信息，含泛型参数
      */
     @Nullable
-    DsonCodecImpl<?> getEncoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry, IGenericCodecHelper genericCodecHelper);
+    DsonCodecImpl<?> getEncoder(TypeInfo typeInfo);
 
     /**
      * 查找解码器（decoder）。
@@ -45,11 +45,9 @@ public interface DsonCodecRegistry {
      * ps:在Java端其实可以有所变通，因为Java是伪泛型，因此{@code Codec<BaseType> }可以赋值给{@code Codec<SubType>}，反过来也可以。
      * 因此可以返回超类或子类的Codec，只有数据是兼容的就可以。
      *
-     * @param typeInfo           类型信息，含泛型参数
-     * @param rootRegistry       用于转换为查询子类的Decoder
-     * @param genericCodecHelper 泛型工具类
+     * @param typeInfo 类型信息，含泛型参数
      */
     @Nullable
-    DsonCodecImpl<?> getDecoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry, IGenericCodecHelper genericCodecHelper);
+    DsonCodecImpl<?> getDecoder(TypeInfo typeInfo);
 
 }

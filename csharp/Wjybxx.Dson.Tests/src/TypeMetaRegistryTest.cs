@@ -32,8 +32,6 @@ public class TypeMetaRegistryTest
     [SetUp]
     public void SetUp() {
         ITypeMetaRegistry basicRegistry = TypeMetaRegistries.FromMetas(
-            TypeMeta.Of(typeof(Dictionary<,>), ObjectStyle.Indent, "Dictionary", "Dictionary`2"),
-            TypeMeta.Of(typeof(List<>), ObjectStyle.Indent, "List", "List`1")
         );
         basicRegistry = TypeMetaRegistries.FromRegistries(DsonConverterUtils.GetDefaultTypeMetaRegistry(), basicRegistry);
         registry = new DynamicTypeMetaRegistry(basicRegistry);

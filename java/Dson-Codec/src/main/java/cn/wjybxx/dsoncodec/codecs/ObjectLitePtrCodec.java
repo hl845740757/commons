@@ -34,20 +34,15 @@ import java.util.function.Supplier;
 @DsonCodecScanIgnore
 public class ObjectLitePtrCodec implements DsonCodec<ObjectLitePtr> {
 
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(ObjectLitePtr.class);
     }
 
     @Override
     public boolean autoStartEnd() {
         return false;
-    }
-
-    @Nonnull
-    @Override
-    public TypeInfo getEncoderType() {
-        return TypeInfo.of(ObjectLitePtr.class);
     }
 
     @Override

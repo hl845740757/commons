@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
 
@@ -52,31 +51,36 @@ public class LazyCodecTest {
         // 源端
         final byte[] bytesSource;
         {
-            DefaultDsonConverter converter = DefaultDsonConverter.newInstance(
-                    typeMetaRegistry,
-                    List.of(new MyStructCodec(Role.SOURCE)),
-                    options, GenericCodecConfig.newDefaultConfig(), new GenericCodecHelper());
+            DsonConverter converter = new DsonConverterBuilder()
+                    .addTypeMetaRegistry(typeMetaRegistry).addCodecRegistry(DsonCodecRegistries.fromCodecs(
+                            new MyStructCodec(Role.SOURCE)
+                    ))
+                    .setOptions(options)
+                    .build();
             bytesSource = converter.write(myStruct);
         }
 
         final byte[] routerBytes;
         // 模拟转发 -- 读进来再写
         {
-            DefaultDsonConverter converter = DefaultDsonConverter.newInstance(
-                    typeMetaRegistry,
-                    List.of(new MyStructCodec(Role.ROUTER)),
-                    options, GenericCodecConfig.newDefaultConfig(), new GenericCodecHelper());
+            DsonConverter converter = new DsonConverterBuilder()
+                    .addTypeMetaRegistry(typeMetaRegistry).addCodecRegistry(DsonCodecRegistries.fromCodecs(
+                            new MyStructCodec(Role.ROUTER)
+                    ))
+                    .setOptions(options)
+                    .build();
             routerBytes = converter.write(converter.read(bytesSource));
         }
 
         // 终端
         MyStruct destStruct;
         {
-            DefaultDsonConverter converter = DefaultDsonConverter.newInstance(
-                    typeMetaRegistry,
-                    List.of(new MyStructCodec(Role.DESTINATION)),
-                    options, GenericCodecConfig.newDefaultConfig(),
-                    new GenericCodecHelper());
+            DsonConverter converter = new DsonConverterBuilder()
+                    .addTypeMetaRegistry(typeMetaRegistry).addCodecRegistry(DsonCodecRegistries.fromCodecs(
+                            new MyStructCodec(Role.DESTINATION)
+                    ))
+                    .setOptions(options)
+                    .build();
             destStruct = (MyStruct) converter.read(routerBytes);
         }
         Assertions.assertEquals(myStruct, destStruct);

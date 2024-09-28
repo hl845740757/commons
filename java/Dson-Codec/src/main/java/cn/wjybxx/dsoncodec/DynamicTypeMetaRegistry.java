@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author wjybxx
  * date - 2024/5/16
  */
-public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
+public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
     private final TypeMetaRegistry basicRegistry;
 

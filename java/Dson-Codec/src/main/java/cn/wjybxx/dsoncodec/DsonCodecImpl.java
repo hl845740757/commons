@@ -17,8 +17,8 @@
 package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dsoncodec.codecs.AbstractEnumCodec;
 import cn.wjybxx.dsoncodec.codecs.EnumCodec;
+import cn.wjybxx.dsoncodec.codecs.IEnumCodec;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
@@ -34,16 +34,16 @@ public class DsonCodecImpl<T> {
     private final TypeInfo typeInfo; // 统一缓存TypeInfo
     private final boolean autoStart; // 避免查找default方法
     private final boolean writeAsArray;
-    private final AbstractEnumCodec<T> enumCodec;
+    private final IEnumCodec<T> enumCodec;
 
     public DsonCodecImpl(DsonCodec<T> codec) {
         this.typeInfo = Objects.requireNonNull(codec.getEncoderType());
         this.codec = codec;
         this.autoStart = codec.autoStartEnd();
-        this.writeAsArray = codec.isWriteAsArray();
+        this.writeAsArray = autoStart && codec.isWriteAsArray();
 
-        if (codec instanceof AbstractEnumCodec<?>) {
-            @SuppressWarnings("unchecked") AbstractEnumCodec<T> enumCodec = (AbstractEnumCodec<T>) codec;
+        if (codec instanceof IEnumCodec<?>) {
+            @SuppressWarnings("unchecked") IEnumCodec<T> enumCodec = (IEnumCodec<T>) codec;
             this.enumCodec = enumCodec;
         } else {
             this.enumCodec = null;

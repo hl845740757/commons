@@ -16,36 +16,63 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.dsoncodec.codecs.ArrayCodec;
 import cn.wjybxx.dsoncodec.codecs.CollectionCodec;
 import cn.wjybxx.dsoncodec.codecs.MapCodec;
 import cn.wjybxx.dsoncodec.codecs.MapEncodeProxyCodec;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 泛型类到泛型类的Codec的类型映射。
+ * 由于泛型类的Codec不能被直接构造，因此只能先将其类型信息存储下来，待到确定泛型参数类型的时候再构造。
+ * 考虑到泛型的反射构建较为复杂，因此我们不采用Type => Factory 的形式来配置，而是配置对应的Codec原型类；
+ * 这可能增加类的数量，但代码的复杂度更低，更易于使用。
+ * <p>
+ * 注意：
+ * 1. Codec编码的类型和要编码的类型有相同的泛型参数列表，比如：{@code Map<K,V>}和{@code LinkedHashMap<K,V>}，且构造函数接收一个{@link TypeInfo}参数。
+ * 2. 不会频繁查询，因此不必太在意匹配算法的效率。
+ * 3. 数组和泛型是不同的，数组都对应{@link ArrayCodec}，因此不需要再这里存储。
+ * 4. 请避免运行时修改数据，否则可能造成线程安全问题。
+ *
  * @author wjybxx
  * date - 2024/9/25
  */
+@NotThreadSafe
 @SuppressWarnings("rawtypes")
-public class GenericCodecConfig implements IGenericCodecConfig {
+public final class GenericCodecConfig {
 
     /** 一个Type可能只有encoder而没有decoder，因此需要分开缓存 */
-    protected final Map<Class<?>, Class<? extends DsonCodec>> encoderTypeDic = new IdentityHashMap<>();
-    protected final Map<Class<?>, Class<? extends DsonCodec>> decoderTypeDic = new IdentityHashMap<>();
+    private final Map<Class<?>, Class<? extends DsonCodec>> encoderTypeDic;
+    private final Map<Class<?>, Class<? extends DsonCodec>> decoderTypeDic;
 
     public GenericCodecConfig() {
+        encoderTypeDic = new IdentityHashMap<>();
+        decoderTypeDic = new IdentityHashMap<>();
     }
 
-    /** 创建一个默认配置 */
-    public static GenericCodecConfig newDefaultConfig() {
-        return new GenericCodecConfig().initWithDefaults();
+    private GenericCodecConfig(Map<Class<?>, Class<? extends DsonCodec>> encoderTypeDic,
+                               Map<Class<?>, Class<? extends DsonCodec>> decoderTypeDic) {
+        this.encoderTypeDic = encoderTypeDic;
+        this.decoderTypeDic = decoderTypeDic;
     }
 
     /** 清理数据 */
     public void clear() {
         encoderTypeDic.clear();
         decoderTypeDic.clear();
+    }
+
+    /** 转换为不可变配置 */
+    public GenericCodecConfig toImmutable() {
+        return new GenericCodecConfig(Map.copyOf(encoderTypeDic), Map.copyOf(decoderTypeDic));
+    }
+
+    /** 创建一个默认配置 */
+    public static GenericCodecConfig newDefaultConfig() {
+        return new GenericCodecConfig().initWithDefaults();
     }
 
     /** 通过默认的泛型类Codec初始化 */
@@ -85,15 +112,17 @@ public class GenericCodecConfig implements IGenericCodecConfig {
      * @param genericType 泛型类的信息
      * @param codecType   编解码器类的信息
      */
-    public void addCodec(Class<?> genericType, Class<? extends DsonCodec> codecType) {
-        if (genericType == null) throw new IllegalArgumentException("genericType");
-        if (codecType == null) throw new IllegalArgumentException("codecType");
+    public GenericCodecConfig addCodec(Class<?> genericType, Class<? extends DsonCodec> codecType) {
+        if (genericType.getTypeParameters().length == 0) {
+            throw new IllegalArgumentException("genericType is not IsGenericType");
+        }
         // java端可以不如此严格，可以更灵活
 //        if (genericType.getTypeParameters().length != codecType.getTypeParameters().length) {
 //            throw new IllegalArgumentException("genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length");
 //        }
         encoderTypeDic.put(genericType, codecType);
         decoderTypeDic.put(genericType, codecType);
+        return this;
     }
 
     /**
@@ -101,9 +130,14 @@ public class GenericCodecConfig implements IGenericCodecConfig {
      *
      * @param genericType 泛型类的信息
      * @param codecType   编解码器类的信息
+     * @return this
      */
-    public void addEncoder(Class<?> genericType, Class<? extends DsonCodec> codecType) {
+    public GenericCodecConfig addEncoder(Class<?> genericType, Class<? extends DsonCodec> codecType) {
+        if (genericType.getTypeParameters().length == 0) {
+            throw new IllegalArgumentException("genericType is not IsGenericType");
+        }
         encoderTypeDic.put(genericType, codecType);
+        return this;
     }
 
     /**
@@ -111,39 +145,23 @@ public class GenericCodecConfig implements IGenericCodecConfig {
      *
      * @param genericType 泛型类的信息
      * @param codecType   编解码器类的信息
+     * @return this
      */
-    public void addDecoder(Class<?> genericType, Class<? extends DsonCodec> codecType) {
+    public GenericCodecConfig addDecoder(Class<?> genericType, Class<? extends DsonCodec> codecType) {
+        if (genericType.getTypeParameters().length == 0) {
+            throw new IllegalArgumentException("genericType is not IsGenericType");
+        }
         decoderTypeDic.put(genericType, codecType);
+        return this;
     }
 
-    /** 允许子类重写该方法以实现更多的匹配 */
-    @Override
-    public Class<?> getEncoderType(Class<?> genericTypeDefine, IGenericCodecHelper genericCodecHelper) {
-        Class<?> codecType = encoderTypeDic.get(genericTypeDefine);
-        if (codecType != null) return codecType;
-        // 兼容集合和字典 -- 编码时需要是集合类型的子类
-        if (Collection.class.isAssignableFrom(genericTypeDefine)
-                && genericCodecHelper.canInheritTypeArgs(genericTypeDefine, Collection.class)) {
-            return encoderTypeDic.get(Collection.class);
-        }
-        if (Map.class.isAssignableFrom(genericTypeDefine)
-                && genericCodecHelper.canInheritTypeArgs(genericTypeDefine, Map.class)) {
-            return encoderTypeDic.get(Map.class);
-        }
-        return null;
+    /** 查询编码器类 */
+    public Class<? extends DsonCodec> getEncoderType(Class<?> genericTypeDefine) {
+        return encoderTypeDic.get(genericTypeDefine);
     }
 
-    @Override
-    public Class<?> getDecoderType(Class<?> genericTypeDefine, IGenericCodecHelper genericCodecHelper) {
-        Class<? extends DsonCodec> codecType = decoderTypeDic.get(genericTypeDefine);
-        if (codecType != null) return codecType;
-        // 兼容集合和字典 -- 解码时需要是默认解码类型的超类
-        if (genericTypeDefine.isAssignableFrom(ArrayList.class)) {
-            return encoderTypeDic.get(Collection.class);
-        }
-        if (genericTypeDefine.isAssignableFrom(LinkedHashMap.class)) {
-            return encoderTypeDic.get(Map.class);
-        }
-        return null;
+    /** 查询解码器类 */
+    public Class<? extends DsonCodec> getDecoderType(Class<?> genericTypeDefine) {
+        return decoderTypeDic.get(genericTypeDefine);
     }
 }

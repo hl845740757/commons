@@ -17,15 +17,15 @@
 package cn.wjybxx.dsoncodec.codecs;
 
 /**
- * 抽象类不添加Enum限制，该接口用于避免拆装箱等问题
+ * 接口不添加Enum限制，该接口用于避免拆装箱等问题
  *
  * @author wjybxx
  * date - 2024/5/11
  */
-public abstract class AbstractEnumCodec<T> {
+public interface IEnumCodec<T> {
 
-    public abstract T forNumber(int number);
+    T forNumber(int number);
 
-    public abstract T forName(String name);
+    T forName(String name);
 
 }

@@ -40,11 +40,15 @@ public class DefaultValueTest {
                 .setAppendDef(false)
                 .build();
 
-        DsonConverter converter = DefaultDsonConverter.newInstance(
-                TypeMetaRegistries.fromMetas(TypeMeta.of(Bean.class, ObjectStyle.INDENT, "Bean")),
-                List.of(new BeanDocCodec()),
-                options, GenericCodecConfig.newDefaultConfig(), new GenericCodecHelper());
+        DsonConverter converter = new DsonConverterBuilder()
+                .addTypeMetaRegistry(TypeMetaRegistries.fromMetas(
+                        TypeMeta.of(Bean.class, ObjectStyle.INDENT, "Bean")
 
+                )).addCodecRegistry(DsonCodecRegistries.fromCodecs(
+                        new BeanDocCodec()
+                ))
+                .setOptions(options)
+                .build();
         Bean bean = new Bean();
         bean.iv1 = 1;
         bean.lv2 = 3;

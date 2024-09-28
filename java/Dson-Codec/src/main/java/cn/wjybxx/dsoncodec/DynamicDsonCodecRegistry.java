@@ -21,27 +21,43 @@ import cn.wjybxx.dsoncodec.codecs.EnumCodec;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 动态Codec注册表
+ *
  * @author wjybxx
  * date - 2024/9/25
  */
-public class DynamicDsonCodecRegistry implements DsonCodecRegistry {
+public final class DynamicDsonCodecRegistry implements DsonCodecRegistry {
 
     /** 用户的原始的类型Codec */
     private final DsonCodecRegistry basicRegistry;
+    /** 类型转换器 */
+    private final List<DsonCodecCaster> casters;
     /** 泛型codec配置 */
-    private final IGenericCodecConfig genericCodecConfig;
+    private final GenericCodecConfig genericCodecConfig;
+    /** 泛型Codec辅助工具类 */
+    private final GenericCodecHelper genericCodecHelper;
 
     /** 一个Type可能只有encoder而没有decoder，因此需要分开缓存 */
     private final ConcurrentHashMap<TypeInfo, DsonCodecImpl<?>> encoderDic = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<TypeInfo, DsonCodecImpl<?>> decoderDic = new ConcurrentHashMap<>();
 
-    public DynamicDsonCodecRegistry(DsonCodecRegistry basicRegistry, IGenericCodecConfig genericCodecConfig) {
+    public DynamicDsonCodecRegistry(DsonCodecRegistry basicRegistry,
+                                    List<? extends DsonCodecCaster> casters,
+                                    List<GenericCodecConfig> genericCodecConfigs,
+                                    GenericCodecHelper genericCodecHelper) {
         this.basicRegistry = Objects.requireNonNull(basicRegistry);
-        this.genericCodecConfig = Objects.requireNonNull(genericCodecConfig);
+        this.casters = List.copyOf(casters);
+        this.genericCodecHelper = Objects.requireNonNull(genericCodecHelper);
+
+        // 先初始化为默认配置，然后由用户的配置进行覆盖 -- 不转不可变对象，性能更好
+        this.genericCodecConfig = GenericCodecConfig.newDefaultConfig();
+        for (GenericCodecConfig genericCodecConfig : genericCodecConfigs) {
+            this.genericCodecConfig.addCodecs(genericCodecConfig);
+        }
     }
 
     /** 预添加Codec */
@@ -72,9 +88,9 @@ public class DynamicDsonCodecRegistry implements DsonCodecRegistry {
 
     @Nullable
     @Override
-    public DsonCodecImpl<?> getEncoder(TypeInfo type, DsonCodecRegistry rootRegistry, IGenericCodecHelper genericCodecHelper) {
+    public DsonCodecImpl<?> getEncoder(TypeInfo type) {
         // 优先查找用户的Codec，以允许用户定制优化
-        DsonCodecImpl<?> codecImpl = basicRegistry.getEncoder(type, rootRegistry, genericCodecHelper);
+        DsonCodecImpl<?> codecImpl = basicRegistry.getEncoder(type);
         if (codecImpl != null) return codecImpl;
 
         // 查缓存
@@ -82,12 +98,18 @@ public class DynamicDsonCodecRegistry implements DsonCodecRegistry {
         if (codecImpl != null) return codecImpl;
 
         // 动态生成--java端无法处理泛型
-        if (type.isArrayType()) {
+        if (type.isEnum()) {
+            codecImpl = makeEnumCodec(type);
+        } else if (type.isArrayType()) {
             codecImpl = makeArrayCodec(type);
         } else if (type.isGenericType()) {
-            codecImpl = makeGenericCodec(type, true, genericCodecHelper);
-        } else if (type.isEnum()) {
-            codecImpl = makeEnumCodec(type);
+            codecImpl = makeGenericCodec(type, true);
+        } else {
+            // 尝试转换为超类
+            Class<?> superType = castEncoderType(type.rawType);
+            if (superType != null) {
+                codecImpl = getEncoder(TypeInfo.of(superType, type.genericArgs));
+            }
         }
         if (codecImpl != null) {
             encoderDic.putIfAbsent(type, codecImpl);
@@ -101,9 +123,9 @@ public class DynamicDsonCodecRegistry implements DsonCodecRegistry {
 
     @Nullable
     @Override
-    public DsonCodecImpl<?> getDecoder(TypeInfo type, DsonCodecRegistry rootRegistry, IGenericCodecHelper genericCodecHelper) {
+    public DsonCodecImpl<?> getDecoder(TypeInfo type) {
         // 优先查找用户的Codec，以允许用户定制优化
-        DsonCodecImpl<?> codecImpl = basicRegistry.getDecoder(type, rootRegistry, genericCodecHelper);
+        DsonCodecImpl<?> codecImpl = basicRegistry.getDecoder(type);
         if (codecImpl != null) return codecImpl;
 
         // 查缓存
@@ -111,14 +133,21 @@ public class DynamicDsonCodecRegistry implements DsonCodecRegistry {
         if (codecImpl != null) return codecImpl;
 
         // 动态生成--java端无法处理泛型
-        if (type.isArrayType()) {
+        if (type.isEnum()) {
+            codecImpl = makeEnumCodec(type);
+        } else if (type.isArrayType()) {
             codecImpl = makeArrayCodec(type);
         } else if (type.isGenericType()) {
-            codecImpl = makeGenericCodec(type, false, genericCodecHelper);
-        } else if (type.isEnum()) {
-            codecImpl = makeEnumCodec(type);
+            codecImpl = makeGenericCodec(type, false);
+        } else {
+            // 尝试转换为超类或子类
+            Class<?> superType = castDecoderType(type.rawType);
+            if (superType != null) {
+                codecImpl = getDecoder(TypeInfo.of(superType, type.genericArgs));
+            }
         }
         if (codecImpl != null) {
+            // 可以解码的一定可以编码
             decoderDic.putIfAbsent(type, codecImpl);
             encoderDic.putIfAbsent(type, codecImpl);
         }
@@ -134,12 +163,10 @@ public class DynamicDsonCodecRegistry implements DsonCodecRegistry {
         return new DsonCodecImpl<>(new EnumCodec<>((Class) type.rawType)); // forget
     }
 
-    private DsonCodecImpl<?> makeGenericCodec(TypeInfo type, boolean encoder, IGenericCodecHelper genericCodecHelper) {
-        Class<?> genericCodecTypeDefine = encoder
-                ? genericCodecConfig.getEncoderType(type.rawType, genericCodecHelper)
-                : genericCodecConfig.getDecoderType(type.rawType, genericCodecHelper);
+    private DsonCodecImpl<?> makeGenericCodec(TypeInfo type, boolean encoder) {
+        Class<?> genericCodecTypeDefine = encoder ? findGenericEncoder(type) : findGenericDecoder(type);
         if (genericCodecTypeDefine == null) {
-            return null; // 未配置泛型对应的Codec类型
+            return null; // 不存在对应的泛型类Codec
         }
         try {
             // 需要有一个包含TypeInfo的构造函数
@@ -150,4 +177,67 @@ public class DynamicDsonCodecRegistry implements DsonCodecRegistry {
             return null;
         }
     }
+
+    private Class<?> findGenericEncoder(TypeInfo type) {
+        Class<?> codecType = genericCodecConfig.getEncoderType(type.rawType);
+        if (codecType != null) return codecType;
+        // 尝试转换为超类
+        Class<?> superClazz = castEncoderType(type.rawType);
+        if (superClazz != null) {
+            return findGenericEncoder(TypeInfo.of(superClazz, type.genericArgs));
+        }
+        // 这段保底代码写在这里最为合适，放在用户的Config里还需要考虑冲突问题...
+        // 兼容集合和字典
+        if (Collection.class.isAssignableFrom(type.rawType)
+                && genericCodecHelper.canInheritTypeArgs(type.rawType, Collection.class)) {
+            return genericCodecConfig.getEncoderType(Collection.class);
+        }
+        if (Map.class.isAssignableFrom(type.rawType)
+                && genericCodecHelper.canInheritTypeArgs(type.rawType, Map.class)) {
+            return genericCodecConfig.getEncoderType(Map.class);
+        }
+        return null;
+    }
+
+    private Class<?> findGenericDecoder(TypeInfo type) {
+        Class<?> codecType = genericCodecConfig.getDecoderType(type.rawType);
+        if (codecType != null) return codecType;
+        // 尝试转换为超类或子类
+        Class<?> superClazz = castDecoderType(type.rawType);
+        if (superClazz != null) {
+            return findGenericDecoder(TypeInfo.of(superClazz, type.genericArgs));
+        }
+        // 这段保底代码写在这里最为合适，放在用户的Config里还需要考虑冲突问题...
+        // 兼容集合和字典 -- 解码时需要是默认解码类型的超类
+        if (Collection.class.isAssignableFrom(type.rawType)
+                && type.rawType.isAssignableFrom(ArrayList.class)) {
+            return genericCodecConfig.getDecoderType(Collection.class);
+        }
+        if (Map.class.isAssignableFrom(type.rawType)
+                && type.rawType.isAssignableFrom(LinkedHashMap.class)) {
+            return genericCodecConfig.getDecoderType(Map.class);
+        }
+        return null;
+    }
+
+    private <T> Class<? super T> castEncoderType(Class<T> clazz) {
+        for (DsonCodecCaster caster : casters) {
+            Class<? super T> superClazz = caster.castEncoderType(clazz, genericCodecHelper);
+            if (superClazz != null && superClazz != clazz) { // fix用户返回当前类
+                return superClazz;
+            }
+        }
+        return null;
+    }
+
+    private Class<?> castDecoderType(Class<?> clazz) {
+        for (DsonCodecCaster caster : casters) {
+            Class<?> superClazz = caster.castDecoderType(clazz, genericCodecHelper);
+            if (superClazz != null && superClazz != clazz) { // fix用户返回当前类
+                return superClazz;
+            }
+        }
+        return null;
+    }
+
 }

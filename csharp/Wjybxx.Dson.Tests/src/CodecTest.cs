@@ -31,36 +31,31 @@ public class CodecTest
     [SetUp]
     public void SetUp() {
         ITypeMetaRegistry typeMetaRegistry = TypeMetaRegistries.FromMetas(
-            TypeMeta.Of(typeof(Vector3), ObjectStyle.Flow, "V3", "Vector3"),
-            // List
-            TypeMeta.Of(typeof(List<>), ObjectStyle.Indent, "List`1", "List"),
-            TypeMeta.Of(typeof(IList<>), ObjectStyle.Indent, "IList`1", "IList"),
-            // 字典
-            TypeMeta.Of(typeof(Dictionary<,>), ObjectStyle.Indent, "Dictionary`2", "Dictionary"),
-            TypeMeta.Of(typeof(IDictionary<,>), ObjectStyle.Indent, "IDictionary`2", "IDictionary")
+            TypeMeta.Of(typeof(Vector3), ObjectStyle.Flow, "V3", "Vector3")
         );
         IList<IDsonCodec> dsonCodecs = new IDsonCodec[]
         {
             new Vector3Codec()
         }.ToList();
 
-        converter = DefaultDsonConverter.NewInstance(typeMetaRegistry, dsonCodecs,
-            GenericCodecConfig.NewDefaultConfig(),
-            ConverterOptions.NewBuilder().Build()
-        );
+        converter = new DsonConverterBuilder()
+            .AddTypeMetaRegistry(typeMetaRegistry)
+            .AddCodecRegistry(DsonCodecRegistries.FromCodecs(dsonCodecs))
+            .SetOptions(ConverterOptions.DEFAULT)
+            .Build();
     }
 
     // [Test]
     public void TestNullableInt() {
         // int? v2 = default;
         // Console.WriteLine(v2.GetType()); // NPE
-        
+
         // C#特殊处理了Nullable的GetType，返回的是值的类型 -- 和装箱是一样的。。。
         // 因此永远走不到NullableCodec
         int? val = 5;
         string dson = converter.WriteAsDson(val, typeof(int?));
         Console.WriteLine(dson);
-        
+
         int? copied = converter.ReadFromDson<int?>(dson);
         Assert.IsTrue(copied == val);
     }

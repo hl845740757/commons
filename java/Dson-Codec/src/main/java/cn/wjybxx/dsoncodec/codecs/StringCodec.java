@@ -34,20 +34,15 @@ import java.util.function.Supplier;
 @DsonCodecScanIgnore
 public class StringCodec implements DsonCodec<String> {
 
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.STRING;
     }
 
     @Override
     public boolean autoStartEnd() {
         return false;
-    }
-
-    @Nonnull
-    @Override
-    public TypeInfo getEncoderType() {
-        return TypeInfo.STRING;
     }
 
     @Override

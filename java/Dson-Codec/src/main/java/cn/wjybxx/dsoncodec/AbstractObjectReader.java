@@ -153,8 +153,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         // 非容器类型,Dson内建结构
         // 考虑枚举类型 -- 可转换为基础值类型的Object
         if (declaredType.isEnum()) {
-            DsonCodecRegistry rootRegistry = converter.codecRegistry();
-            DsonCodecImpl<T> codec = (DsonCodecImpl<T>) rootRegistry.getDecoder(typeInfo, rootRegistry, converter.genericCodecHelper());
+            DsonCodecImpl<T> codec = (DsonCodecImpl<T>) converter.codecRegistry().getDecoder(typeInfo);
             assert codec != null;
             return codec.readObject(this, typeInfo, factory);
         }
@@ -282,8 +281,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
             throw DsonCodecException.unsupportedKeyType(keyDeclared);
         }
         // 处理枚举类型
-        DsonCodecRegistry rootRegistry = converter.codecRegistry();
-        DsonCodecImpl<T> codec = (DsonCodecImpl<T>) rootRegistry.getDecoder(keyTypeInfo, rootRegistry, converter.genericCodecHelper());
+        DsonCodecImpl<T> codec = (DsonCodecImpl<T>) converter.codecRegistry().getDecoder(keyTypeInfo);
         assert codec != null;
         T result;
         if (converter.options().writeEnumAsString) {
@@ -341,19 +339,18 @@ abstract class AbstractObjectReader implements DsonObjectReader {
 
     private <T> DsonCodecImpl<?> findObjectDecoder(TypeInfo declaredType, Supplier<T> factory, String clsName) {
         // factory不为null时，直接按照声明类型查找，因为factory的优先级最高
-        DsonCodecRegistry rootRegistry = converter.codecRegistry();
         if (factory != null) {
-            return rootRegistry.getDecoder(declaredType, rootRegistry, converter.genericCodecHelper());
+            return converter.codecRegistry().getDecoder(declaredType);
         }
         // 尝试按真实类型读 -- TODO 这里是否考虑继承泛型参数?对方应当写入了泛型参数才是
         if (!ObjectUtils.isBlank(clsName)) {
             TypeMeta typeMeta = converter.typeMetaRegistry().ofName(clsName);
             if (typeMeta != null && declaredType.rawType.isAssignableFrom(typeMeta.typeInfo.rawType)) {
-                return rootRegistry.getDecoder(typeMeta.typeInfo, rootRegistry, converter.genericCodecHelper());
+                return converter.codecRegistry().getDecoder(typeMeta.typeInfo);
             }
         }
         // 尝试按照声明类型读 - 读的时候两者可能是无继承关系的(投影)
-        return rootRegistry.getDecoder(declaredType, rootRegistry, converter.genericCodecHelper());
+        return converter.codecRegistry().getDecoder(declaredType);
     }
 
     // endregion

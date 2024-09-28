@@ -40,7 +40,7 @@ public class BTreeCodecTest
     }
     """;
 
-    private static DefaultDsonConverter converter;
+    private static IDsonConverter converter;
 
     [SetUp]
     public void SetUp() {
@@ -64,11 +64,11 @@ public class BTreeCodecTest
             TypeMeta.Of(typeof(IDictionary<,>), ObjectStyle.Indent, "IDictionary", "IDictionary`2")
         });
 
-        List<IDsonCodec> pojoCodecList = new List<IDsonCodec>();
-        converter = DefaultDsonConverter.NewInstance(TypeMetaRegistries.FromMetas(typeMetas),
-            pojoCodecList,
-            genericCodecConfig,
-            ConverterOptions.NewBuilder().Build());
+        converter = new DsonConverterBuilder()
+            .AddTypeMetaRegistry(TypeMetaRegistries.FromMetas(typeMetas))
+            .AddGenericCodecConfig(genericCodecConfig)
+            .SetOptions(ConverterOptions.DEFAULT)
+            .Build();
     }
 
     private static string RemoveGenericInfo(string clsName) {

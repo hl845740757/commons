@@ -87,7 +87,7 @@ public class DsonCodecRegistries {
 
         @Nullable
         @Override
-        public DsonCodecImpl<?> getEncoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry, IGenericCodecHelper genericCodecHelper) {
+        public DsonCodecImpl<?> getEncoder(TypeInfo typeInfo) {
             if (typeInfo.hasGenericArgs()) {
                 return type2CodecMap.get(typeInfo);
             } else {
@@ -96,7 +96,7 @@ public class DsonCodecRegistries {
         }
 
         @Override
-        public DsonCodecImpl<?> getDecoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry, IGenericCodecHelper genericCodecHelper) {
+        public DsonCodecImpl<?> getDecoder(TypeInfo typeInfo) {
             if (typeInfo.hasGenericArgs()) {
                 return type2CodecMap.get(typeInfo);
             } else {
@@ -116,11 +116,11 @@ public class DsonCodecRegistries {
 
         @Nullable
         @Override
-        public DsonCodecImpl<?> getEncoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry, IGenericCodecHelper genericCodecHelper) {
+        public DsonCodecImpl<?> getEncoder(TypeInfo typeInfo) {
             List<DsonCodecRegistry> registryList = this.registryList;
             for (int i = 0; i < registryList.size(); i++) {
                 DsonCodecRegistry registry = registryList.get(i);
-                DsonCodecImpl<?> codec = registry.getEncoder(typeInfo, rootRegistry, genericCodecHelper);
+                DsonCodecImpl<?> codec = registry.getEncoder(typeInfo);
                 if (codec != null) return codec;
             }
             return null;
@@ -128,11 +128,11 @@ public class DsonCodecRegistries {
 
         @Nullable
         @Override
-        public DsonCodecImpl<?> getDecoder(TypeInfo typeInfo, DsonCodecRegistry rootRegistry, IGenericCodecHelper genericCodecHelper) {
+        public DsonCodecImpl<?> getDecoder(TypeInfo typeInfo) {
             List<DsonCodecRegistry> registryList = this.registryList;
             for (int i = 0; i < registryList.size(); i++) {
                 DsonCodecRegistry registry = registryList.get(i);
-                DsonCodecImpl<?> codec = registry.getDecoder(typeInfo, rootRegistry, genericCodecHelper);
+                DsonCodecImpl<?> codec = registry.getDecoder(typeInfo);
                 if (codec != null) return codec;
             }
             return null;

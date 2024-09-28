@@ -36,10 +36,10 @@ public class MapAsObjectTest {
         ConverterOptions options = ConverterOptions.newBuilder()
                 .setWriteMapAsDocument(true)
                 .build();
-        DsonConverter converter = DefaultDsonConverter.newInstance(
-                TypeMetaRegistries.fromMetas(),
-                List.of(),
-                options, GenericCodecConfig.newDefaultConfig(), new GenericCodecHelper());
+
+        DsonConverter converter = new DsonConverterBuilder()
+                .setOptions(options)
+                .build();
 
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("one", "1");

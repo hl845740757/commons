@@ -186,7 +186,6 @@ public interface DsonObjectReader extends AutoCloseable {
     }
 
     /** 读取为不可变List */
-    @SuppressWarnings("unchecked")
     @Nonnull
     default <E> List<E> readImmutableList(String name, Class<E> elementType) {
         final Collection<E> result = readObject(name, TypeInfo.of(Collection.class, elementType));
@@ -194,7 +193,6 @@ public interface DsonObjectReader extends AutoCloseable {
     }
 
     /** 读取为不可变Set */
-    @SuppressWarnings("unchecked")
     @Nonnull
     default <E> Set<E> readImmutableSet(String name, Class<E> elementType) {
         final Set<E> result = readObject(name, TypeInfo.of(Set.class, elementType), LinkedHashSet::new);
@@ -205,7 +203,6 @@ public interface DsonObjectReader extends AutoCloseable {
     }
 
     /** 读取为不可变字典 */
-    @SuppressWarnings("unchecked")
     @Nonnull
     default <K, V> Map<K, V> readImmutableMap(String name, Class<K> keyType, Class<V> valueType) {
         final Map<K, V> result = readObject(name, TypeInfo.of(Map.class, keyType, valueType), LinkedHashMap::new);

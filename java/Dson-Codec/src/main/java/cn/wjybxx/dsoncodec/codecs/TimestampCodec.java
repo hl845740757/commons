@@ -32,20 +32,15 @@ import java.util.function.Supplier;
  */
 public class TimestampCodec implements DsonCodec<Timestamp> {
 
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(Timestamp.class);
     }
 
     @Override
     public boolean autoStartEnd() {
         return false;
-    }
-
-    @Nonnull
-    @Override
-    public TypeInfo getEncoderType() {
-        return TypeInfo.of(Timestamp.class);
     }
 
     @Override

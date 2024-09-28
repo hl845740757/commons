@@ -26,16 +26,43 @@ using Wjybxx.Dson.Codec.Codecs;
 namespace Wjybxx.Dson.Codec
 {
 /// <summary>
-/// 默认的泛型Codec配置类实现，该配置应当在使用前初始化，因此默认是非线程安全的。
+/// 泛型类到泛型类的Codec的类型映射。
+/// 由于泛型类的Codec不能被直接构造，因此只能先将其类型信息存储下来，待到确定泛型参数类型的时候再构造。
+/// 考虑到泛型的反射构建较为复杂，因此我们不采用Type => Factory 的形式来配置，而是配置对应的Codec原型类；
+/// 这可能增加类的数量，但代码的复杂度更低，更易于使用。
+/// 
+/// 注意：
+/// 1. Codec需要和泛型定义类有相同的泛型参数列表。
+/// 2. 不会频繁查询，因此不必太在意匹配算法的效率。
+/// 3. 数组和泛型是不同的，数组都对应<see cref="ArrayCodec{T}"/>，因此不需要在这里存储。
+/// 4. 在dotnet6/7中不支持泛型协变和逆变，因此 Codec`1[IList`1[string]] 是不能赋值给 Codec`1[List`1[String]]的。
 /// </summary>
 [NotThreadSafe]
-public class GenericCodecConfig : IGenericCodecConfig
+public sealed class GenericCodecConfig
 {
     /** 一个Type可能只有encoder而没有decoder，因此需要分开缓存  */
-    protected readonly Dictionary<Type, Type> encoderTypeDic = new Dictionary<Type, Type>();
-    protected readonly Dictionary<Type, Type> decoderTypeDic = new Dictionary<Type, Type>();
+    private readonly IDictionary<Type, Type> encoderTypeDic;
+    private readonly IDictionary<Type, Type> decoderTypeDic;
 
     public GenericCodecConfig() {
+        encoderTypeDic = new Dictionary<Type, Type>();
+        decoderTypeDic = new Dictionary<Type, Type>();
+    }
+
+    private GenericCodecConfig(IDictionary<Type, Type> encoderTypeDic, IDictionary<Type, Type> decoderTypeDic) {
+        this.encoderTypeDic = encoderTypeDic.ToImmutableLinkedDictionary();
+        this.decoderTypeDic = decoderTypeDic.ToImmutableLinkedDictionary(); // 避免系统库依赖，无法引入Unity
+    }
+
+    /** 清理数据 */
+    public void Clear() {
+        encoderTypeDic.Clear();
+        decoderTypeDic.Clear();
+    }
+
+    /** 转换为不可变配置 */
+    public GenericCodecConfig ToImmutable() {
+        return new GenericCodecConfig(encoderTypeDic, decoderTypeDic);
     }
 
     /** 创建一个默认配置 */
@@ -87,8 +114,7 @@ public class GenericCodecConfig : IGenericCodecConfig
     /// <param name="genericType">泛型类的信息</param>
     /// <param name="codecType">编解码器类的信息</param>
     public void AddCodec(Type genericType, Type codecType) {
-        if (genericType == null) throw new ArgumentNullException(nameof(genericType));
-        if (codecType == null) throw new ArgumentNullException(nameof(codecType));
+        if (!genericType.IsGenericType) throw new ArgumentException($"genericType is not IsGenericType");
         if (genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length) {
             throw new ArgumentException("genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length");
         }
@@ -102,6 +128,10 @@ public class GenericCodecConfig : IGenericCodecConfig
     /// <param name="genericType">泛型类的信息</param>
     /// <param name="codecType">编解码器类的信息</param>
     public void AddEncoder(Type genericType, Type codecType) {
+        if (!genericType.IsGenericType) throw new ArgumentException($"genericType is not IsGenericType");
+        if (genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length) {
+            throw new ArgumentException("genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length");
+        }
         encoderTypeDic[genericType] = codecType;
     }
 
@@ -111,29 +141,29 @@ public class GenericCodecConfig : IGenericCodecConfig
     /// <param name="genericType">泛型类的信息</param>
     /// <param name="codecType">编解码器类的信息</param>
     public void AddDecoder(Type genericType, Type codecType) {
+        if (!genericType.IsGenericType) throw new ArgumentException($"genericType is not IsGenericType");
+        if (genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length) {
+            throw new ArgumentException("genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length");
+        }
         decoderTypeDic[genericType] = codecType;
     }
 
     /// <summary>
-    /// <inheritdoc cref="IGenericCodecConfig.GetEncoderType"/>
-    /// --允许子类重写该方法以实现更多的匹配
+    /// 获取编码器类型
     /// </summary>
-    public virtual Type? GetEncoderType(Type genericTypeDefine) {
-        if (!encoderTypeDic.TryGetValue(genericTypeDefine, out Type codecType)) {
-            // 集合和字典兼容
-            if (DsonConverterUtils.IsCollection(genericTypeDefine, includeDictionary: false)) {
-                encoderTypeDic.TryGetValue(typeof(ICollection<>), out codecType);
-            } else if (DsonConverterUtils.IsDictionary(genericTypeDefine)) {
-                encoderTypeDic.TryGetValue(typeof(IDictionary<,>), out codecType);
-            }
-        }
+    /// <param name="genericTypeDefine"></param>
+    /// <returns></returns>
+    public Type? GetEncoderType(Type genericTypeDefine) {
+        encoderTypeDic.TryGetValue(genericTypeDefine, out Type codecType);
         return codecType;
     }
 
     /// <summary>
-    /// <inheritdoc cref="IGenericCodecConfig.GetDecoderType"/>
+    /// 获取解码器类型
     /// </summary>
-    public virtual Type? GetDecoderType(Type genericTypeDefine) {
+    /// <param name="genericTypeDefine"></param>
+    /// <returns></returns>
+    public Type? GetDecoderType(Type genericTypeDefine) {
         decoderTypeDic.TryGetValue(genericTypeDefine, out Type codecType);
         return codecType;
     }

@@ -34,20 +34,16 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class Int64Codec implements DsonCodec<Long> {
-    @Override
-    public boolean isWriteAsArray() {
-        return false;
-    }
-
-    @Override
-    public boolean autoStartEnd() {
-        return false;
-    }
 
     @Nonnull
     @Override
     public TypeInfo getEncoderType() {
         return TypeInfo.BOXED_LONG;
+    }
+
+    @Override
+    public boolean autoStartEnd() {
+        return false;
     }
 
     @Override

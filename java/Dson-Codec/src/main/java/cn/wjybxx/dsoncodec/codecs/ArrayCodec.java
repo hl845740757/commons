@@ -47,6 +47,11 @@ public class ArrayCodec<T> implements DsonCodec<T> {
     }
 
     @Override
+    public boolean autoStartEnd() {
+        return false;
+    }
+
+    @Override
     public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
         // declaredType只影响inst是否写入类型，不影响数组元素是否写入类型，但Java是伪泛型，我们尝试从用户信息中获取泛型信息
         TypeInfo elementTypeInfo = this.elementTypeInfo;

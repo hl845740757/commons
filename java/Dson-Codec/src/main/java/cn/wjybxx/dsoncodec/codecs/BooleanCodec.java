@@ -32,20 +32,16 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class BooleanCodec implements DsonCodec<Boolean> {
-    @Override
-    public boolean isWriteAsArray() {
-        return false;
-    }
-
-    @Override
-    public boolean autoStartEnd() {
-        return false;
-    }
 
     @Nonnull
     @Override
     public TypeInfo getEncoderType() {
         return TypeInfo.BOXED_BOOL;
+    }
+
+    @Override
+    public boolean autoStartEnd() {
+        return false;
     }
 
     @Override

@@ -159,6 +159,16 @@ public static class DsonConverterUtils
             TypeMetaOf(typeof(Nullable<>), "Nullable"), // Nullable
             TypeMetaOf(typeof(object), "Object", "object"), // 泛型参数...
             TypeMetaOf(typeof(DictionaryEncodeProxy<>), "DictionaryEncodeProxy", "MapEncodeProxy"),
+
+            // 基础集合
+            TypeMetaOf(typeof(ICollection<>), "ICollection", "ICollection`1"),
+            TypeMetaOf(typeof(IList<>), "IList", "IList`1"),
+            TypeMetaOf(typeof(List<>), "List", "List`1"),
+
+            TypeMetaOf(typeof(IDictionary<,>), "IDictionary", "IDictionary`2"),
+            TypeMetaOf(typeof(Dictionary<,>), "Dictionary", "Dictionary`2"),
+            TypeMetaOf(typeof(LinkedDictionary<,>), "LinkedDictionary", "LinkedDictionary`2"),
+            TypeMetaOf(typeof(ConcurrentDictionary<,>), "ConcurrentDictionary", "ConcurrentDictionary`2")
         };
     }
 

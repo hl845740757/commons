@@ -135,7 +135,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         }
         // 常见基础类型也在CodecRegistry中 -- Nullable会直接返回被装箱的值的类型
         Type type = value.GetType();
-        DsonCodecImpl? codec = FindObjectEncoder(type);
+        DsonCodecImpl? codec = converter.CodecRegistry.GetEncoder(type);
         if (codec != null) {
             if (writer.IsAtName) { // 写入name
                 writer.WriteName(name);
@@ -230,8 +230,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         if (!type.IsEnum) {
             throw DsonCodecException.UnsupportedType(type);
         }
-        IDsonCodecRegistry rootRegistry = converter.CodecRegistry;
-        DsonCodecImpl<T> codecImpl = (DsonCodecImpl<T>)rootRegistry.GetEncoder(type, rootRegistry);
+        DsonCodecImpl<T> codecImpl = (DsonCodecImpl<T>)converter.CodecRegistry.GetEncoder(type);
         if (codecImpl == null) {
             throw DsonCodecException.UnsupportedType(type);
         }
@@ -272,12 +271,6 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
     private ObjectStyle FindObjectStyle(Type type) {
         TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(type);
         return typeMeta != null ? typeMeta.style : ObjectStyle.Indent;
-    }
-
-    /** 查找对象的Encoder */
-    private DsonCodecImpl? FindObjectEncoder(Type type) {
-        IDsonCodecRegistry rootRegistry = converter.CodecRegistry;
-        return rootRegistry.GetEncoder(type, rootRegistry);
     }
 
     #endregion

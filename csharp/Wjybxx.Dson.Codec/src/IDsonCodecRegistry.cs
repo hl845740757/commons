@@ -37,10 +37,7 @@ public interface IDsonCodecRegistry
     ///   DsonCodecImpl.GetEncoderClass().IsAssignableFrom(type)
     /// </code>
     /// </summary>
-    /// <param name="type"></param>
-    /// <param name="rootRegistry">用于转换为查找父类Encoder</param>
-    /// <returns></returns>
-    DsonCodecImpl? GetEncoder(Type type, IDsonCodecRegistry rootRegistry);
+    DsonCodecImpl? GetEncoder(Type type);
 
     /// <summary>
     /// 获取类型对应的解码器。
@@ -52,9 +49,6 @@ public interface IDsonCodecRegistry
     ///   DsonCodecImpl.GetEncoderClass() == type
     /// </code>
     /// </summary>
-    /// <param name="type"></param>
-    /// <param name="rootRegistry">用于转换为查找子类Decoder</param>
-    /// <returns></returns>
-    DsonCodecImpl? GetDecoder(Type type, IDsonCodecRegistry rootRegistry);
+    DsonCodecImpl? GetDecoder(Type type);
 }
 }

@@ -17,7 +17,6 @@
 package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dsoncodec.codecs.EnumCodec;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +24,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Random;
 
 /**
@@ -71,17 +69,16 @@ public class CodecTest {
                 .setWriteMapAsDocument(true)
                 .setWriteEnumAsString(true)
                 .build();
-        DsonConverter converter = DefaultDsonConverter.newInstance(
-                TypeMetaRegistries.fromMetas(
+        DsonConverter converter = new DsonConverterBuilder()
+                .addTypeMetaRegistry(TypeMetaRegistries.fromMetas(
                         TypeMeta.of(CodecStructs.MyStruct.class, ObjectStyle.INDENT, "MyStruct"),
                         TypeMeta.of(Sex.class, ObjectStyle.INDENT, "Sex")
-                ),
-                List.of(
-                        new CodecStructs.MyStructCodec(),
-                        new EnumCodec<>(Sex.class)
-                ),
-                options, GenericCodecConfig.newDefaultConfig(), new GenericCodecHelper());
 
+                )).addCodecRegistry(DsonCodecRegistries.fromCodecs(
+                        new CodecStructs.MyStructCodec()
+                ))
+                .setOptions(options)
+                .build();
         String dsonString = converter.writeAsDson(myStruct);
         System.out.println(dsonString);
 

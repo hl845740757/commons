@@ -36,20 +36,15 @@ import java.util.function.Supplier;
 @DsonCodecScanIgnore
 public class LocalDateTimeCodec implements DsonCodec<LocalDateTime> {
 
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(LocalDateTime.class);
     }
 
     @Override
     public boolean autoStartEnd() {
         return false;
-    }
-
-    @Nonnull
-    @Override
-    public TypeInfo getEncoderType() {
-        return TypeInfo.of(LocalDateTime.class);
     }
 
     @Override

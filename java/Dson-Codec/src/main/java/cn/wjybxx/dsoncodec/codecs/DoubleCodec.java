@@ -33,20 +33,16 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class DoubleCodec implements DsonCodec<Double> {
-    @Override
-    public boolean isWriteAsArray() {
-        return false;
-    }
-
-    @Override
-    public boolean autoStartEnd() {
-        return false;
-    }
 
     @Nonnull
     @Override
     public TypeInfo getEncoderType() {
         return TypeInfo.BOXED_DOUBLE;
+    }
+
+    @Override
+    public boolean autoStartEnd() {
+        return false;
     }
 
     @Override

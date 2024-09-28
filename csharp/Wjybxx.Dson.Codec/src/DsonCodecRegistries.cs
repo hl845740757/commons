@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Wjybxx.Dson.Codec
 {
@@ -78,12 +77,12 @@ public static class DsonCodecRegistries
             this.type2CodecMap = new Dictionary<Type, DsonCodecImpl>(type2CodecMap); // copy 压缩空间
         }
 
-        public DsonCodecImpl? GetEncoder(Type clazz, IDsonCodecRegistry rootRegistry) {
+        public DsonCodecImpl? GetEncoder(Type clazz) {
             type2CodecMap.TryGetValue(clazz, out DsonCodecImpl r);
             return r;
         }
 
-        public DsonCodecImpl? GetDecoder(Type clazz, IDsonCodecRegistry rootRegistry) {
+        public DsonCodecImpl? GetDecoder(Type clazz) {
             type2CodecMap.TryGetValue(clazz, out DsonCodecImpl r);
             return r;
         }
@@ -97,21 +96,21 @@ public static class DsonCodecRegistries
             this.registryList = new List<IDsonCodecRegistry>(registryList);
         }
 
-        public DsonCodecImpl? GetEncoder(Type clazz, IDsonCodecRegistry rootRegistry) {
+        public DsonCodecImpl? GetEncoder(Type clazz) {
             List<IDsonCodecRegistry> registryList = this.registryList;
             for (int i = 0; i < registryList.Count; i++) {
                 IDsonCodecRegistry registry = registryList[i];
-                DsonCodecImpl codec = registry.GetEncoder(clazz, rootRegistry);
+                DsonCodecImpl codec = registry.GetEncoder(clazz);
                 if (codec != null) return codec;
             }
             return null;
         }
 
-        public DsonCodecImpl? GetDecoder(Type clazz, IDsonCodecRegistry rootRegistry) {
+        public DsonCodecImpl? GetDecoder(Type clazz) {
             List<IDsonCodecRegistry> registryList = this.registryList;
             for (int i = 0; i < registryList.Count; i++) {
                 IDsonCodecRegistry registry = registryList[i];
-                DsonCodecImpl codec = registry.GetDecoder(clazz, rootRegistry);
+                DsonCodecImpl codec = registry.GetDecoder(clazz);
                 if (codec != null) return codec;
             }
             return null;

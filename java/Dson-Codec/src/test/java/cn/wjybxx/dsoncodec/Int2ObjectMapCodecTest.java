@@ -27,8 +27,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 /**
  * @author wjybxx
  * date - 2024/5/17
@@ -56,8 +54,8 @@ public class Int2ObjectMapCodecTest {
         GenericCodecConfig genericCodecConfig = GenericCodecConfig.newDefaultConfig();
         genericCodecConfig.addCodec(Int2ObjectMap.class, Int2ObjectMapCodec.class);
         genericCodecConfig.addCodec(Int2ObjectOpenHashMap.class, Int2ObjectMapCodec.class);
-        genericCodecConfig.addCodec(IntList.class, IntListCodec.class);
-        genericCodecConfig.addCodec(IntArrayList.class, IntListCodec.class);
+//        genericCodecConfig.addCodec(IntList.class, IntListCodec.class); // IntList不是泛型类...
+//        genericCodecConfig.addCodec(IntArrayList.class, IntListCodec.class);
 
         TypeMetaRegistry typeMetaRegistry = TypeMetaRegistries.fromMetas(
                 TypeMeta.of(Int2ObjectMap.class, ObjectStyle.INDENT),
@@ -65,14 +63,15 @@ public class Int2ObjectMapCodecTest {
                 TypeMeta.of(IntList.class, ObjectStyle.FLOW),
                 TypeMeta.of(IntArrayList.class, ObjectStyle.FLOW)
         );
-        converter = DefaultDsonConverter.newInstance(
-                typeMetaRegistry,
-                List.of(),
-                ConverterOptions.DEFAULT.toBuilder()
-                        .setWriteMapAsDocument(true)
-                        .build(),
-                genericCodecConfig,
-                new GenericCodecHelper());
+        ConverterOptions options = ConverterOptions.DEFAULT.toBuilder()
+                .setWriteMapAsDocument(true)
+                .build();
+
+        converter = new DsonConverterBuilder()
+                .addTypeMetaRegistry(typeMetaRegistry)
+                .addGenericCodecConfig(genericCodecConfig)
+                .setOptions(options)
+                .build();
     }
 
     @Test

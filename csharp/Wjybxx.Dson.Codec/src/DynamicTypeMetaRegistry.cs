@@ -27,7 +27,7 @@ namespace Wjybxx.Dson.Codec
 /// <summary>
 /// 为支持数组和泛型，我们根据原型类型动态创建TypeMeta
 /// </summary>
-public class DynamicTypeMetaRegistry : ITypeMetaRegistry
+public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
 {
     /// <summary>
     /// 用户的原始的类型元数据

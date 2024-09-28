@@ -124,8 +124,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         // 非容器类型,Dson内建结构
         // 考虑枚举类型--可转换为基础值类型的Object
         if (declaredType.IsEnum) {
-            IDsonCodecRegistry rootRegistry = converter.CodecRegistry;
-            DsonCodecImpl<T> codec = (DsonCodecImpl<T>)rootRegistry.GetDecoder(declaredType, rootRegistry)!;
+            DsonCodecImpl<T> codec = (DsonCodecImpl<T>)converter.CodecRegistry.GetDecoder(declaredType)!;
             return codec.ReadObject(this, declaredType);
         }
         // 考虑DsonValue
@@ -227,8 +226,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
             throw DsonCodecException.UnsupportedKeyType(type);
         }
         // 处理枚举类型
-        IDsonCodecRegistry rootRegistry = converter.CodecRegistry;
-        DsonCodecImpl<T> codec = (DsonCodecImpl<T>)rootRegistry.GetDecoder(type, rootRegistry)!;
+        DsonCodecImpl<T> codec = (DsonCodecImpl<T>)converter.CodecRegistry.GetDecoder(type)!;
         T result;
         if (converter.Options.writeEnumAsString) {
             if (codec.ForName(keyString, out result)) {
@@ -282,21 +280,20 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         return clsName;
     }
 
-    private DsonCodecImpl? FindObjectDecoder<T>(Type declaredType, Func<T>? factory, string clsName) {
+    private DsonCodecImpl? FindObjectDecoder<T>(Type declaredType, Func<T>? factory, string classId) {
         // factory不为null时，直接按照声明类型查找，因为factory的优先级最高
-        IDsonCodecRegistry rootRegistry = converter.CodecRegistry;
         if (factory != null) {
-            return rootRegistry.GetDecoder(declaredType, rootRegistry);
+            return converter.CodecRegistry.GetDecoder(declaredType);
         }
         // 尝试按真实类型读 -- IsAssignableFrom 支持 Nullable
-        if (!string.IsNullOrWhiteSpace(clsName)) {
-            TypeMeta typeMeta = converter.TypeMetaRegistry.OfName(clsName);
+        if (!string.IsNullOrWhiteSpace(classId)) {
+            TypeMeta typeMeta = converter.TypeMetaRegistry.OfName(classId);
             if (typeMeta != null && declaredType.IsAssignableFrom(typeMeta.type)) {
-                return rootRegistry.GetDecoder(typeMeta.type, rootRegistry);
+                return converter.CodecRegistry.GetDecoder(typeMeta.type);
             }
         }
         // 尝试按照声明类型读 - 读的时候两者可能是无继承关系的(投影)
-        return rootRegistry.GetDecoder(declaredType, rootRegistry);
+        return converter.CodecRegistry.GetDecoder(declaredType);
     }
 
     #endregion

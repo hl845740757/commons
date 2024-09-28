@@ -179,7 +179,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         }
         // 常见基础类型也在CodecRegistry中
         TypeInfo runtimeTypeInfo = getRuntimeTypeInfo(value, typeInfo);
-        @SuppressWarnings("unchecked") var codec = (DsonCodecImpl<? super T>) findObjectEncoder(runtimeTypeInfo);
+        @SuppressWarnings("unchecked") var codec = (DsonCodecImpl<? super T>) converter.codecRegistry().getEncoder(runtimeTypeInfo);
         if (codec != null) {
             if (writer.isAtName()) { // 写入name
                 writer.writeName(name);
@@ -315,12 +315,6 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     private ObjectStyle findObjectStyle(TypeInfo runtimeTypeInfo) {
         final TypeMeta typeMeta = converter.typeMetaRegistry().ofType(runtimeTypeInfo);
         return typeMeta != null ? typeMeta.style : ObjectStyle.INDENT;
-    }
-
-    /** 查找对象的Encoder */
-    private DsonCodecImpl<?> findObjectEncoder(TypeInfo runtimeTypeInfo) {
-        DsonCodecRegistry rootRegistry = converter.codecRegistry();
-        return rootRegistry.getEncoder(runtimeTypeInfo, rootRegistry, converter.genericCodecHelper());
     }
 
     /** 计算对象的运行时类型信息 */

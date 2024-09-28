@@ -41,6 +41,10 @@ public class TypeMetaRegistries {
     }
 
     public static TypeMetaRegistry fromRegistries(TypeMetaRegistry... registries) {
+        return fromRegistries(Arrays.asList(registries));
+    }
+
+    public static TypeMetaRegistry fromRegistries(List<? extends TypeMetaRegistry> registries) {
         List<TypeMeta> typeMetaList = new ArrayList<>();
         for (TypeMetaRegistry e : registries) {
             typeMetaList.addAll(e.export());

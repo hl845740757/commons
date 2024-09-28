@@ -33,20 +33,16 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class FloatCodec implements DsonCodec<Float> {
+
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.BOXED_FLOAT;
     }
 
     @Override
     public boolean autoStartEnd() {
         return false;
-    }
-
-    @Nonnull
-    @Override
-    public TypeInfo getEncoderType() {
-        return TypeInfo.FLOAT;
     }
 
     @Override

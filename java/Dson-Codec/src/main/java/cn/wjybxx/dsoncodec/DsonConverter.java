@@ -158,7 +158,7 @@ public interface DsonConverter extends Converter {
 
     TypeMetaRegistry typeMetaRegistry();
 
-    IGenericCodecHelper genericCodecHelper();
+    GenericCodecHelper genericCodecHelper();
 
     ConverterOptions options();
 
