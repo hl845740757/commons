@@ -46,8 +46,8 @@ public class BinaryCodec implements DsonCodec<Binary> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Binary instance, TypeInfo declaredType, ObjectStyle style) {
-        writer.writeBinary(null, instance);
+    public void writeObject(DsonObjectWriter writer, Binary inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeBinary(null, inst);
     }
 
     @Override

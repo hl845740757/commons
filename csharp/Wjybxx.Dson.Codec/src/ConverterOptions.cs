@@ -88,7 +88,11 @@ public class ConverterOptions
     /// 另一种方式是先反序列化，然后完整序列化为字节数组，再通过字节数组反序列化 -- 可关闭随机读。
     /// </summary>
     public readonly bool randomRead;
-
+    /// <summary>
+    /// 集合类型是否读取为不可变
+    /// 其它类型的对象也可以使用该设置
+    /// </summary>
+    public readonly bool readAsImmutable;
     /// <summary>
     /// 是否启用BeforeEncode钩子方法。
     /// 默认不启用！因为启用该特性要求同一个Bean不能被多线程同时序列化 -- 只适用单线程序列化场景，
@@ -105,12 +109,6 @@ public class ConverterOptions
     /// </code>
     /// </summary>
     public readonly bool enableAfterDecode;
-    /// <summary>
-    /// 集合转换器，主要用于读取为不可变集合。
-    /// 当使用Dson读取配置文件时，保持配置对象的不可变性是非常重要的。
-    /// 交给用户处理，使得可以支持特殊的集合实现。
-    /// </summary>
-    public readonly CollectionConverter? collectionConverter;
 
     /** protoBuf对应的二进制子类型 -- 其它模块依赖 */
     public readonly int pbBinaryType;
@@ -143,9 +141,9 @@ public class ConverterOptions
         this.writeMapAsDocument = builder.WriteMapAsDocument;
         this.writeEnumAsString = builder.WriteEnumAsString;
         this.randomRead = builder.RandomRead;
+        this.readAsImmutable = builder.ReadAsImmutable;
         this.enableBeforeEncode = builder.EnableBeforeEncode;
         this.enableAfterDecode = builder.EnableAfterDecode;
-        this.collectionConverter = builder.CollectionConverter;
 
         this.pbBinaryType = builder.PbBinaryType;
         this.usage = builder.Usage;
@@ -176,9 +174,9 @@ public class ConverterOptions
         builder.WriteMapAsDocument = writeMapAsDocument;
         builder.WriteEnumAsString = writeEnumAsString;
         builder.RandomRead = randomRead;
+        builder.ReadAsImmutable = readAsImmutable;
         builder.EnableBeforeEncode = enableBeforeEncode;
         builder.EnableAfterDecode = enableAfterDecode;
-        builder.CollectionConverter = collectionConverter;
 
         builder.PbBinaryType = pbBinaryType;
         builder.Usage = usage;
@@ -216,16 +214,16 @@ public class ConverterOptions
         public bool WriteMapAsDocument { get; set; } = false;
         public bool WriteEnumAsString { get; set; } = false;
         public bool RandomRead { get; set; } = true;
+        public bool ReadAsImmutable { get; set; } = false;
         public bool EnableBeforeEncode { get; set; } = false;
         public bool EnableAfterDecode { get; set; } = true;
-        public CollectionConverter? CollectionConverter { get; set; }
 
         public int PbBinaryType { get; set; } = 127;
         public int Usage { get; set; } = 0;
 
         public int BufferSize { get; set; } = 8192;
         public IArrayPool<byte> BufferPool { get; set; } = IArrayPool<byte>.Shared;
-        public IObjectPool<MultiChunkDeque<string>> KeySetPool = SHARED_KEY_SET_POOL;
+        public IObjectPool<MultiChunkDeque<string>> KeySetPool { get; set; } = SHARED_KEY_SET_POOL;
         public IObjectPool<StringBuilder> StringBuilderPool { get; set; } = ConcurrentObjectPool.SharedStringBuilderPool;
 
         public DsonReaderSettings BinReaderSettings { get; set; } = DsonReaderSettings.Default;

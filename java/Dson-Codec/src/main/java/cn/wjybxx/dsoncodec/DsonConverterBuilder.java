@@ -26,10 +26,12 @@ import java.util.List;
 public class DsonConverterBuilder {
 
     private final List<TypeMetaRegistry> typeMetaRegistries = new ArrayList<>(4);
+
     private final List<DsonCodecRegistry> codecRegistries = new ArrayList<>(4);
     private final List<DsonCodecCaster> casters = new ArrayList<>(4);
     private final List<GenericCodecConfig> genericCodecConfigs = new ArrayList<>(4);
-    private final List<GenericCodecHelper.Handler> genericCodecHelpers = new ArrayList<>(4);
+    private GenericCodecHelper genericCodecHelper;
+
     private ConverterOptions options = ConverterOptions.DEFAULT;
     private boolean pureMode = false;
 
@@ -45,7 +47,9 @@ public class DsonConverterBuilder {
         if (!pureMode) {
             typeMetaRegistries.removeLast();
         }
-        GenericCodecHelper genericCodecHelper = new GenericCodecHelper(genericCodecHelpers);
+        if (genericCodecHelper == null) {
+            genericCodecHelper = new GenericCodecHelper();
+        }
         DynamicDsonCodecRegistry dynamicDsonCodecRegistry;
         codecRegistries.add(DsonConverterUtils.getDefaultCodecRegistry());
         {
@@ -124,19 +128,15 @@ public class DsonConverterBuilder {
         return this;
     }
 
-    public List<GenericCodecHelper.Handler> getGenericCodecHelpers() {
-        return genericCodecHelpers;
+    public GenericCodecHelper getGenericCodecHelper() {
+        return genericCodecHelper;
     }
 
-    public DsonConverterBuilder addCodecHelper(GenericCodecHelper.Handler helper) {
-        genericCodecHelpers.add(helper);
+    public DsonConverterBuilder setGenericCodecHelper(GenericCodecHelper genericCodecHelper) {
+        this.genericCodecHelper = genericCodecHelper;
         return this;
     }
 
-    public DsonConverterBuilder addCodecHelpers(List<? extends GenericCodecHelper.Handler> helpers) {
-        genericCodecHelpers.addAll(helpers);
-        return this;
-    }
     // endregion
 
     public List<DsonCodecCaster> getCasters() {

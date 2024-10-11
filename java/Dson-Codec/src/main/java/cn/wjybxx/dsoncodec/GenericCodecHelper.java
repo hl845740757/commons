@@ -46,6 +46,11 @@ public final class GenericCodecHelper {
         this.userHelpers = List.copyOf(userHelpers);
     }
 
+    /** 获取用户的Helpers -- 用于创建其它的Helper */
+    public List<Handler> getUserHelpers() {
+        return userHelpers;
+    }
+
     /** 用于扩展 -- 实在不知道怎么命名了，还是内部类吧.. */
     @Stateless
     public interface Handler {
@@ -64,11 +69,11 @@ public final class GenericCodecHelper {
     /**
      * 添加缓存
      *
-     * @param clazz      运行时类型
-     * @param superClazz 声明类型
+     * @param clazz    运行时类型
+     * @param declared 声明类型
      */
-    public <T> GenericCodecHelper addCache(Class<T> clazz, Class<? super T> superClazz, boolean val) {
-        inheritableResultCache.put(new CacheKey(clazz, superClazz), val);
+    public <T> GenericCodecHelper addCache(Class<T> clazz, Class<? super T> declared, boolean val) {
+        inheritableResultCache.put(new CacheKey(clazz, declared), val);
         return this;
     }
 
@@ -159,9 +164,8 @@ public final class GenericCodecHelper {
             if (o == null || getClass() != o.getClass()) return false;
 
             CacheKey cacheKey = (CacheKey) o;
-
-            if (!first.equals(cacheKey.first)) return false;
-            return second.equals(cacheKey.second);
+            return first.equals(cacheKey.first)
+                    && second.equals(cacheKey.second);
         }
 
         @Override

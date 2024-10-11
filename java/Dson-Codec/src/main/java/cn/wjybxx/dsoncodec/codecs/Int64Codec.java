@@ -47,10 +47,10 @@ public class Int64Codec implements DsonCodec<Long> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Long instance, TypeInfo declaredType, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, Long inst, TypeInfo declaredType, ObjectStyle style) {
         NumberStyle numberStyle = (declaredType.rawType == Long.class || declaredType.rawType == long.class) ?
                 NumberStyle.SIMPLE : NumberStyle.TYPED;
-        writer.writeLong(null, instance, WireType.VARINT, numberStyle);
+        writer.writeLong(null, inst, WireType.VARINT, numberStyle);
     }
 
     @Override

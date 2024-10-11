@@ -45,8 +45,8 @@ public class BooleanCodec implements DsonCodec<Boolean> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Boolean instance, TypeInfo declaredType, ObjectStyle style) {
-        writer.writeBoolean(null, instance);
+    public void writeObject(DsonObjectWriter writer, Boolean inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeBoolean(null, inst);
     }
 
     @Override

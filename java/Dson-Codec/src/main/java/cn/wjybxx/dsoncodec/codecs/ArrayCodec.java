@@ -37,7 +37,7 @@ public class ArrayCodec<T> implements DsonCodec<T> {
     public ArrayCodec(TypeInfo typeInfo) {
         assert typeInfo.isArrayType();
         this.typeInfo = typeInfo;
-        this.elementTypeInfo = typeInfo.getComponentType();
+        this.elementTypeInfo = typeInfo.getComponentType(); // 缓存实例
     }
 
     @Nonnull
@@ -47,22 +47,20 @@ public class ArrayCodec<T> implements DsonCodec<T> {
     }
 
     @Override
-    public boolean autoStartEnd() {
-        return false;
+    public boolean isWriteAsArray() {
+        return true;
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
-        // declaredType只影响inst是否写入类型，不影响数组元素是否写入类型，但Java是伪泛型，我们尝试从用户信息中获取泛型信息
+    public void writeObject(DsonObjectWriter writer, T inst, TypeInfo declaredType, ObjectStyle style) {
+        // declaredType只影响inst是否写入类型，不影响数组元素是否写入类型
         TypeInfo elementTypeInfo = this.elementTypeInfo;
 
         // 基础类型数组被特殊处理了，因此这里一定能强转 -- 强转以避免反射接口
-        Object[] array = (Object[]) instance;
-        writer.writeStartArray(instance, declaredType, style);
+        Object[] array = (Object[]) inst;
         for (int i = 0; i < array.length; i++) {
             writer.writeObject(null, array[i], elementTypeInfo);
         }
-        writer.writeEndArray();
     }
 
     @Override

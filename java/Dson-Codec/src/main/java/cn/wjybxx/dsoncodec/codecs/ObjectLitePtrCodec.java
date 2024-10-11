@@ -46,8 +46,8 @@ public class ObjectLitePtrCodec implements DsonCodec<ObjectLitePtr> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, ObjectLitePtr instance, TypeInfo declaredType, ObjectStyle style) {
-        writer.writeLitePtr(null, instance);
+    public void writeObject(DsonObjectWriter writer, ObjectLitePtr inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeLitePtr(null, inst);
     }
 
     @Override

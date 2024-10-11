@@ -23,7 +23,6 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
@@ -55,19 +54,8 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
 
     @Override
     public void execute() {
-        final List<VariableElement> allSerialFields = context.serialFields;
-        final List<AptTypeInfo> allAptTypeInfos = new ArrayList<>(allSerialFields.size());
-        for (VariableElement variableElement : allSerialFields) {
-            AptTypeInfo typeInfo = parseTypeInfo(variableElement);
-            allAptTypeInfos.add(typeInfo);
-            // 修正impl属性
-            AptFieldProps aptFieldProps = context.fieldPropsMap.get(variableElement);
-            if (aptFieldProps != null) {
-                aptFieldProps.implMirror = typeInfo.impl;
-            }
-        }
-        final List<FieldSpec> typesFields = genTypeFields(allSerialFields, allAptTypeInfos);
-        final List<FieldSpec> factoryFields = genFactoryFields(allSerialFields, allAptTypeInfos);
+        final List<FieldSpec> typesFields = genTypeFields(context.serialFields);
+        final List<FieldSpec> factoryFields = genFactoryFields(context.serialFields);
         final List<FieldSpec> namesSpec = genNameFields();
         context.typeBuilder
                 .addField(genRawTypeInfoFiled())
@@ -94,19 +82,18 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
 
     // region typeArgs
 
-    private List<FieldSpec> genFactoryFields(List<VariableElement> allSerialFields, List<AptTypeInfo> allAptTypeInfos) {
-        List<FieldSpec> typeFieldList = new ArrayList<>(allSerialFields.size() * 2);
-        for (int i = 0; i < allSerialFields.size(); i++) {
-            VariableElement variableElement = allSerialFields.get(i);
-            AptTypeInfo aptTypeInfo = allAptTypeInfos.get(i);
-            if (aptTypeInfo.impl != null) {
-                typeFieldList.add(genFactoryField(variableElement, aptTypeInfo));
+    private List<FieldSpec> genFactoryFields(List<VariableElement> allSerialFields) {
+        List<FieldSpec> typeFieldList = new ArrayList<>(allSerialFields.size());
+        for (VariableElement variableElement : allSerialFields) {
+            AptFieldProps fieldProps = context.fieldPropsMap.get(variableElement);
+            if (fieldProps.implMirror != null) {
+                typeFieldList.add(genFactoryField(variableElement, fieldProps.implMirror));
             }
         }
         return typeFieldList;
     }
 
-    private FieldSpec genFactoryField(VariableElement variableElement, AptTypeInfo aptTypeInfo) {
+    private FieldSpec genFactoryField(VariableElement variableElement, TypeMirror implMirror) {
         // 暂不擦除泛型 -- 我们约定禁止字段出现未定义泛型，如：List<T>
         // public static final Supplier<Map<String, Object>> factories_map = HashMap::new;
         TypeMirror typeMirror = variableElement.asType();
@@ -114,12 +101,12 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
         String factoryFieldName = getFactoryFieldName(variableElement.getSimpleName().toString());
 
         FieldSpec.Builder builder = FieldSpec.builder(fieldTypeName, factoryFieldName, AptUtils.PUBLIC_STATIC_FINAL);
-        if (aptTypeInfo.impl == processor.type_EnumMap) {
+        if (implMirror == processor.type_EnumMap) {
             // EnumMap
             DeclaredType declaredType = (DeclaredType) typeMirror;
             builder.initializer("() -> new EnumMap<>($T.class)",
                     TypeName.get(typeUtils.erasure(declaredType.getTypeArguments().get(0))));
-        } else if (aptTypeInfo.impl == processor.type_EnumSet) {
+        } else if (implMirror == processor.type_EnumSet) {
             // EnumSet
             DeclaredType declaredType = (DeclaredType) typeMirror;
             builder.initializer("() -> EnumSet.noneOf($T.class)",
@@ -127,22 +114,18 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
         } else {
             // 其它可直接New的类型
             builder.initializer("$T::new",
-                    TypeName.get(typeUtils.erasure(aptTypeInfo.impl)));
+                    TypeName.get(typeUtils.erasure(implMirror)));
         }
         return builder.build();
     }
 
-    private List<FieldSpec> genTypeFields(List<VariableElement> allSerialFields, List<AptTypeInfo> allAptTypeInfos) {
-        List<FieldSpec> typeFieldList = new ArrayList<>(allSerialFields.size() * 2);
-        for (int i = 0; i < allSerialFields.size(); i++) {
-            VariableElement variableElement = allSerialFields.get(i);
-            AptTypeInfo aptTypeInfo = allAptTypeInfos.get(i);
-            typeFieldList.add(genTypeField(variableElement, aptTypeInfo));
-        }
-        return typeFieldList;
+    private List<FieldSpec> genTypeFields(List<VariableElement> allSerialFields) {
+        return allSerialFields.stream()
+                .map(this::genTypeField)
+                .toList();
     }
 
-    private FieldSpec genTypeField(VariableElement variableElement, AptTypeInfo aptTypeInfo) {
+    private FieldSpec genTypeField(VariableElement variableElement) {
         // public static final TypeInfo types_name = TypeInfo.of();
         TypeMirror typeMirror = variableElement.asType();
         String typeInfoFieldName = getTypeInfoFieldName(variableElement.getSimpleName().toString());
@@ -222,110 +205,6 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
         }
         builder.initializer(format.toString(), params.toArray());
         return builder.build();
-    }
-
-    private AptTypeInfo parseTypeInfo(VariableElement variableElement) {
-        TypeMirror typeMirror = variableElement.asType();
-        // 普通类型字段 -- 也需要解析泛型参数
-        if (typeMirror.getKind().isPrimitive()) {
-            return AptTypeInfo.of(typeMirror, null);
-        }
-        // 统一检查impl的合法性
-        AptFieldProps properties = context.fieldPropsMap.get(variableElement);
-        if (properties.implMirror != null
-                && !AptUtils.isSubTypeIgnoreTypeParameter(typeUtils, properties.implMirror, variableElement.asType())) {
-            messager.printMessage(Diagnostic.Kind.ERROR, "The implementation type must be a subtype of the declared type", variableElement);
-        }
-        switch (typeMirror.getKind()) {
-            case ARRAY -> {
-                ArrayType constructedArrayType = (ArrayType) toConstructedType(typeMirror);
-                return AptTypeInfo.of(constructedArrayType, properties.implMirror); // 数组也可指定impl
-            }
-            case DECLARED -> {
-                if (processor.isMap(typeMirror)) {
-                    return parseMapTypeInfo(variableElement, properties);
-                }
-                if (processor.isCollection(typeMirror)) {
-                    return parseCollectionTypeInfo(variableElement, properties);
-                }
-                return AptTypeInfo.of(typeMirror, properties.implMirror);
-            }
-            default -> {
-                // 可能是泛型T
-                return AptTypeInfo.of(typeUtils.erasure(typeMirror), properties.implMirror);
-            }
-        }
-    }
-
-    /** 解析map的类型信息 */
-    private AptTypeInfo parseMapTypeInfo(VariableElement variableElement, AptFieldProps properties) {
-        final TypeMirror realImplMirror = parseMapVarImpl(variableElement, properties);
-        return AptTypeInfo.ofMap(variableElement.asType(), realImplMirror);
-    }
-
-    /** 解析Collection的类型信息 */
-    private AptTypeInfo parseCollectionTypeInfo(VariableElement variableElement, AptFieldProps properties) {
-        final TypeMirror realImplMirror = parseCollectionVarImpl(variableElement, properties);
-        return AptTypeInfo.ofCollection(variableElement.asType(), realImplMirror);
-    }
-
-    /** 解析map的实现类 */
-    private TypeMirror parseMapVarImpl(VariableElement variableElement, AptFieldProps properties) {
-        if (!AptUtils.isBlank(properties.readProxy)) {
-            return null; // 有读代理，不需要解析
-        }
-        TypeMirror typeMirror = variableElement.asType();
-        if (properties.implMirror != null) { // 具体类和抽象类都可以指定实现类，且优先级最高
-            return properties.implMirror;
-        }
-        if (processor.isEnumMap(typeMirror)) { // EnumMap不需要解析
-            return processor.type_EnumMap;
-        }
-
-        final DeclaredType declaredType = (DeclaredType) variableElement.asType();
-        // 是具体类型-可直接构造
-        if (!declaredType.asElement().getModifiers().contains(Modifier.ABSTRACT)) {
-            return declaredType;
-        }
-        // 如果是抽象的，并且不是LinkedHashMap的超类，则抛出异常
-        checkDefaultImpl(variableElement, processor.type_LinkedHashMap);
-        return null;
-    }
-
-    /** 解析collection的实现类 */
-    private TypeMirror parseCollectionVarImpl(VariableElement variableElement, AptFieldProps properties) {
-        if (!AptUtils.isBlank(properties.readProxy)) {
-            return null; // 有读代理，不需要解析
-        }
-        TypeMirror typeMirror = variableElement.asType();
-        if (properties.implMirror != null) { // 具体类和抽象类都可以指定实现类，且优先级最高
-            return properties.implMirror;
-        }
-        if (processor.isEnumSet(typeMirror)) { // EnumSet不需要解析
-            return processor.type_EnumSet;
-        }
-
-        final DeclaredType declaredType = (DeclaredType) variableElement.asType();
-        // 是具体类型-可直接构造
-        if (!declaredType.asElement().getModifiers().contains(Modifier.ABSTRACT)) {
-            return declaredType;
-        }
-        // 如果是抽象的，并且不是ArrayList/LinkedHashSet的超类，则抛出异常
-        if (processor.isSet(typeMirror)) {
-            checkDefaultImpl(variableElement, processor.type_LinkedHashSet);
-        } else {
-            checkDefaultImpl(variableElement, processor.type_ArrayList);
-        }
-        return null;
-    }
-
-    /** 检查字段是否是默认实现类型的超类 */
-    private void checkDefaultImpl(VariableElement variableElement, TypeMirror defImpl) {
-        if (!AptUtils.isSubTypeIgnoreTypeParameter(typeUtils, defImpl, variableElement.asType())) {
-            messager.printMessage(Diagnostic.Kind.ERROR,
-                    "Unknown abstract Map or Collection must contains impl annotation " + CodecProcessor.CNAME_PROPERTY,
-                    variableElement);
-        }
     }
 
     // endregion

@@ -55,11 +55,6 @@ public class DsonCodecImpl<T> {
         return typeInfo;
     }
 
-    /** 是否编码为数组 */
-    public boolean isWriteAsArray() {
-        return writeAsArray;
-    }
-
     /**
      * 将对象写入输出流。
      * 将对象及其所有超类定义的所有要序列化的字段写入输出流。

@@ -26,6 +26,8 @@ namespace Wjybxx.Dson.Ext
 /// <summary>
 /// C#和Java的迭代器差异较大；虽然写Java的时候更多，但不能说C#的迭代器有问题。
 /// 对于单线程数据结构，先测试是否有数据，再Move体验更好；而对于并发数据结构，先Move再获取数据则更安全。
+///
+/// TODO 定制为Dson库的结构体实现，可大幅减少GC
 /// </summary>
 /// <typeparam name="T">元素的类型</typeparam>
 public class MarkableIterator<T> : ISequentialEnumerator<T>

@@ -130,7 +130,7 @@ public class CodecTest
         Console.WriteLine(dson);
 
         ConverterOptions.Builder builder = converter.Options.ToBuilder();
-        builder.CollectionConverter = CollectionConverter.ImmutableConverter;
+        builder.ReadAsImmutable = true;
 
         IDsonConverter converter2 = converter.WithOptions(builder.Build());
         IDictionary<int, Vector3> copied = converter2.ReadFromDson<IDictionary<int, Vector3>>(dson, () => new Dictionary<int, Vector3>());

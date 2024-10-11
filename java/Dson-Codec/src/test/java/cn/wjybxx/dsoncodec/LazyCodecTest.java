@@ -107,13 +107,13 @@ public class LazyCodecTest {
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, MyStruct instance, TypeInfo declaredType, ObjectStyle style) {
-            writer.writeString("strVal", instance.strVal);
+        public void writeObject(DsonObjectWriter writer, MyStruct inst, TypeInfo declaredType, ObjectStyle style) {
+            writer.writeString("strVal", inst.strVal);
             if (role == Role.ROUTER) {
-                writer.writeValueBytes("nestStruct", DsonType.OBJECT, (byte[]) instance.nestStruct);
+                writer.writeValueBytes("nestStruct", DsonType.OBJECT, (byte[]) inst.nestStruct);
             } else {
                 // 不在编码器里，定制写
-                NestStruct nestStruct = (NestStruct) instance.nestStruct;
+                NestStruct nestStruct = (NestStruct) inst.nestStruct;
                 writer.writeStartObject("nestStruct", nestStruct, TypeInfo.of(NestStruct.class));
                 {
                     writer.writeInt("intVal", nestStruct.intVal);

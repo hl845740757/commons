@@ -44,8 +44,8 @@ public class TimestampCodec implements DsonCodec<Timestamp> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Timestamp instance, TypeInfo declaredType, ObjectStyle style) {
-        writer.writeTimestamp(null, instance);
+    public void writeObject(DsonObjectWriter writer, Timestamp inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeTimestamp(null, inst);
     }
 
     @Override

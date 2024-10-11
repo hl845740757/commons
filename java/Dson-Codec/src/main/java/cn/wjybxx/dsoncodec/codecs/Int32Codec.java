@@ -47,11 +47,11 @@ public class Int32Codec implements DsonCodec<Integer> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Integer instance, TypeInfo declaredType, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, Integer inst, TypeInfo declaredType, ObjectStyle style) {
         // 由字典或List调用时，declaredType可能是匹配的
         NumberStyle numberStyle = (declaredType.rawType == Integer.class || declaredType.rawType == int.class) ?
                 NumberStyle.SIMPLE : NumberStyle.TYPED;
-        writer.writeInt(null, instance, WireType.VARINT, numberStyle);
+        writer.writeInt(null, inst, WireType.VARINT, numberStyle);
     }
 
     @Override

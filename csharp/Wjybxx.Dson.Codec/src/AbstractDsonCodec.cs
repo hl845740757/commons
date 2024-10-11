@@ -85,6 +85,7 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
     /// 解码后调用
     /// 需要使用ref，否则结构体会产生拷贝，导致无法读取到指定实例上。
     /// </summary>
+    [StableName]
     protected virtual void AfterDecode(IDsonObjectReader reader, ref T inst, Type declaredType) {
     }
 

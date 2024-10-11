@@ -30,69 +30,48 @@ namespace Wjybxx.Dson.Codec
 public static class ClassIdPolicyExts
 {
     /// <summary>
-    /// C#的泛型测试开销较大，我们缓存下来
+    /// C#的泛型测试开销较大，我们需要缓存测试结果；另外，也为了支持用户配置。
     /// </summary>
-    private static readonly ConcurrentDictionary<TypePair, bool> _classIdPolicyCacheDic = new ConcurrentDictionary<TypePair, bool>();
+    private static readonly ConcurrentDictionary<CacheKey, bool> cacheDic = new ConcurrentDictionary<CacheKey, bool>();
+
+    /// <summary>
+    /// 注意：
+    /// 1.如果声明类型是泛型类，仅支持编码类型也是泛型类
+    /// 2.通常当真实类型是声明类型的默认实例类型时，可指定不编码类型信息
+    /// </summary>
+    /// <param name="declaredType">声明类型</param>
+    /// <param name="encoderType">实现类型</param>
+    /// <param name="value">是否写入类型信息</param>
+    /// <returns></returns>
+    public static void AddCache(Type declaredType, Type encoderType, bool value) {
+        CacheKey key = new CacheKey(declaredType, encoderType);
+        cacheDic[key] = value;
+    }
 
     /// <summary>
     /// 测试是否需要写入对象类型信息
     /// </summary>
     /// <param name="policy">classId写入策略</param>
     /// <param name="declaredType">实例的声明类型</param>
-    /// <param name="encoderType">实例的运行时类型</param>
-    /// <returns></returns>
+    /// <param name="encoderType">实例的运行时类型，一定不是Nullable</param>
+    /// <returns>是否需要写入类型信息</returns>
     public static bool Test(this ClassIdPolicy policy, Type declaredType, Type encoderType) {
         if (policy == ClassIdPolicy.Optimized) {
-            // Nullable拆箱
+            // Nullable拆箱，结构体由于不能继承，因此泛型参数必定和EncoderType相等
             if (declaredType.IsGenericType && declaredType.GetGenericTypeDefinition() == typeof(Nullable<>)) {
-                declaredType = DsonConverterUtils.GetGenericArguments(declaredType)[0];
+                return false;
             }
-            if (encoderType == declaredType) {
-                return false; // 运行时类型和声明类型一致，不写入
-            }
-            if (declaredType == typeof(object)) {
-                return true;
-            }
+            if (encoderType == declaredType) return false;
+            if (declaredType == typeof(object)) return true;
 
-            // c# 泛型的测试开销较大，我们需要缓存测试结果
+            CacheKey key = new CacheKey(declaredType, encoderType);
+            if (cacheDic.TryGetValue(key, out bool r)) {
+                return r;
+            }
+            // 泛型之间可能需要动态测试
             if (declaredType.IsGenericType && encoderType.IsGenericType) {
-                TypePair pair = new TypePair(declaredType, encoderType);
-                if (_classIdPolicyCacheDic.TryGetValue(pair, out bool r)) {
-                    return r;
-                }
-                Type encoderGenericDefine = encoderType.GetGenericTypeDefinition();
-                if (encoderGenericDefine == typeof(List<>)
-                    && DsonConverterUtils.IsCollection(declaredType)) {
-                    r = IsSameGenericTypeArguments(declaredType, encoderType);
-                    goto next;
-                }
-                if (encoderGenericDefine == typeof(Dictionary<,>)
-                    && DsonConverterUtils.IsDictionary(declaredType)) {
-                    r = IsSameGenericTypeArguments(declaredType, encoderType);
-                    goto next;
-                }
-                if (encoderGenericDefine == typeof(HashSet<>)
-                    && DsonConverterUtils.IsSet(declaredType)) {
-                    r = IsSameGenericTypeArguments(declaredType, encoderType);
-                    goto next;
-                }
-                // 自己的集合实现
-                if (encoderGenericDefine == typeof(LinkedDictionary<,>)
-                    && DsonConverterUtils.IsDictionary(declaredType)) {
-                    r = IsSameGenericTypeArguments(declaredType, encoderType);
-                    goto next;
-                }
-                if (encoderGenericDefine == typeof(LinkedHashSet<>)
-                    && DsonConverterUtils.IsGenericSet(declaredType)) {
-                    r = IsSameGenericTypeArguments(declaredType, encoderType);
-                    goto next;
-                }
-                r = false;
-
-                next:
-                {
-                    _classIdPolicyCacheDic.TryAdd(pair, r);
-                }
+                r = TestGenericType(declaredType, encoderType);
+                cacheDic.TryAdd(key, r);
                 return r;
             }
             return true;
@@ -100,49 +79,79 @@ public static class ClassIdPolicyExts
         return policy == ClassIdPolicy.Always;
     }
 
-    /// <summary>
-    /// 测试两个泛型类的泛型参数是否相同
-    /// </summary>
-    /// <param name="declaredType"></param>
-    /// <param name="encoderType"></param>
-    /// <returns></returns>
-    private static bool IsSameGenericTypeArguments(Type declaredType, Type encoderType) {
-        Type[] genericArguments1 = DsonConverterUtils.GetGenericArguments(declaredType);
-        Type[] genericArguments2 = DsonConverterUtils.GetGenericArguments(encoderType);
-        return genericArguments1.SequenceEqual(genericArguments2);
+    private static bool TestGenericType(Type declaredType, Type encoderType) {
+        Type declaredGenericDefine = declaredType.GetGenericTypeDefinition();
+        Type encoderGenericDefine = encoderType.GetGenericTypeDefinition();
+        // 如果泛型原型之间设置为必须写入，则必须写入；如果泛型原型之间设置为无需写入，则测试泛型参数是否相同
+        {
+            CacheKey key = new CacheKey(declaredGenericDefine, encoderGenericDefine);
+            if (cacheDic.TryGetValue(key, out bool r)) {
+                return r || IsGenericTypeArgumentsDifferent(declaredType, encoderType);
+            }
+        }
+        // 默认类型测试，系统集合库
+        if (encoderGenericDefine == typeof(List<>)
+            && DsonConverterUtils.IsCollection(declaredGenericDefine)) {
+            return IsGenericTypeArgumentsDifferent(declaredType, encoderType);
+        }
+        if (encoderGenericDefine == typeof(Dictionary<,>)
+            && DsonConverterUtils.IsDictionary(declaredGenericDefine)) {
+            return IsGenericTypeArgumentsDifferent(declaredType, encoderType);
+        }
+        if (encoderGenericDefine == typeof(HashSet<>)
+            && DsonConverterUtils.IsSet(declaredGenericDefine)) {
+            return IsGenericTypeArgumentsDifferent(declaredType, encoderType);
+        }
+        // 自己的集合实现
+        if (encoderGenericDefine == typeof(LinkedDictionary<,>)
+            && DsonConverterUtils.IsDictionary(declaredGenericDefine)) {
+            return IsGenericTypeArgumentsDifferent(declaredType, encoderType);
+        }
+        if (encoderGenericDefine == typeof(LinkedHashSet<>)
+            && DsonConverterUtils.IsGenericSet(declaredGenericDefine)) {
+            return IsGenericTypeArgumentsDifferent(declaredType, encoderType);
+        }
+        return true;
+    }
+
+    /** 泛型参数是否不同 */
+    private static bool IsGenericTypeArgumentsDifferent(Type declaredType, Type encoderType) {
+        Type[] genericArguments1 = declaredType.GenericTypeArguments;
+        Type[] genericArguments2 = encoderType.GenericTypeArguments;
+        return !genericArguments1.SequenceEqual(genericArguments2);
     }
 
     /// <summary>
     /// 用做缓存字典的Key
     /// </summary>
-    private readonly struct TypePair : IEquatable<TypePair>
+    private readonly struct CacheKey : IEquatable<CacheKey>
     {
         private readonly Type declaredType;
         private readonly Type encoderType;
 
-        public TypePair(Type declaredType, Type encoderType) {
+        public CacheKey(Type declaredType, Type encoderType) {
             this.declaredType = declaredType;
             this.encoderType = encoderType;
         }
 
-        public bool Equals(TypePair other) {
+        public bool Equals(CacheKey other) {
             return declaredType == other.declaredType
                    && encoderType == other.encoderType;
         }
 
         public override bool Equals(object? obj) {
-            return obj is TypePair other && Equals(other);
+            return obj is CacheKey other && Equals(other);
         }
 
         public override int GetHashCode() {
             return HashCode.Combine(declaredType, encoderType);
         }
 
-        public static bool operator ==(TypePair left, TypePair right) {
+        public static bool operator ==(CacheKey left, CacheKey right) {
             return left.Equals(right);
         }
 
-        public static bool operator !=(TypePair left, TypePair right) {
+        public static bool operator !=(CacheKey left, CacheKey right) {
             return !left.Equals(right);
         }
     }

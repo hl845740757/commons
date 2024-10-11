@@ -47,8 +47,8 @@ public class DurationCodec implements DsonCodec<Duration> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Duration instance, TypeInfo declaredType, ObjectStyle style) {
-        writer.writeTimestamp(null, Timestamp.ofDuration(instance));
+    public void writeObject(DsonObjectWriter writer, Duration inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeTimestamp(null, Timestamp.ofDuration(inst));
     }
 
     @Override

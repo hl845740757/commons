@@ -45,7 +45,8 @@ public interface DsonCodec<T> {
 
     /**
      * 获取负责编解码的类对象
-     * 实现类无需处理缓存，该方法只会调用一次、
+     * 1.实现类无需处理缓存，该方法只会调用一次、
+     * 2.如果可以，在数据兼容的情况下，尽量将泛型'T'声明为抽象类或接口，然后通过动态的TypeInfo来绑定编解码类型。
      */
     @Nonnull
     TypeInfo getEncoderType();
@@ -59,7 +60,7 @@ public interface DsonCodec<T> {
      * @param declaredType 声明类型
      * @param style        外部期望的输出格式
      */
-    void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style);
+    void writeObject(DsonObjectWriter writer, T inst, TypeInfo declaredType, ObjectStyle style);
 
     /**
      * 从输入流中解析指定对象。

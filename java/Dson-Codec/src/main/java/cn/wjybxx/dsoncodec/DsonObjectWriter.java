@@ -87,19 +87,19 @@ public interface DsonObjectWriter extends AutoCloseable {
     /**
      * 写嵌套对象
      *
-     * @param name     字段的名字，数组元素和顶层对象的name可为null或空字符串
-     * @param value    要写入的对象，{@code getClass}获取真实类型 -- 小心枚举。
-     * @param typeInfo 对象的类型参数信息
-     * @param style    对象的编码风格，如果为null则使用目标类型Codec的默认格式
+     * @param name         字段的名字，数组元素和顶层对象的name可为null或空字符串
+     * @param value        要写入的对象，{@code getClass}获取真实类型 -- 小心枚举。
+     * @param declaredType 对象的声明类型
+     * @param style        对象的编码风格，如果为null则使用目标类型Codec的默认格式
      */
-    <T> void writeObject(String name, T value, TypeInfo typeInfo, @Nullable ObjectStyle style);
+    <T> void writeObject(String name, T value, TypeInfo declaredType, @Nullable ObjectStyle style);
 
     default <T> void writeObject(String name, T value) {
         writeObject(name, value, TypeInfo.OBJECT, null);
     }
 
-    default <T> void writeObject(String name, T value, TypeInfo typeInfo) {
-        writeObject(name, value, typeInfo, null);
+    default <T> void writeObject(String name, T value, TypeInfo declaredType) {
+        writeObject(name, value, declaredType, null);
     }
 
     // endregion
@@ -112,11 +112,11 @@ public interface DsonObjectWriter extends AutoCloseable {
 
     void writeName(String name);
 
-    void writeStartObject(@Nonnull Object value, TypeInfo typeInfo, ObjectStyle style);
+    void writeStartObject(@Nonnull Object value, TypeInfo declaredType, ObjectStyle style);
 
     void writeEndObject();
 
-    void writeStartArray(@Nonnull Object value, TypeInfo typeInfo, ObjectStyle style);
+    void writeStartArray(@Nonnull Object value, TypeInfo declaredType, ObjectStyle style);
 
     void writeEndArray();
 
@@ -134,32 +134,32 @@ public interface DsonObjectWriter extends AutoCloseable {
     void close();
 
     // defaults
-    default void writeStartObject(Object value, TypeInfo typeInfo) {
-        writeStartObject(value, typeInfo, ObjectStyle.INDENT);
+    default void writeStartObject(Object value, TypeInfo declaredType) {
+        writeStartObject(value, declaredType, ObjectStyle.INDENT);
     }
 
-    default void writeStartObject(String name, Object value, TypeInfo typeInfo) {
+    default void writeStartObject(String name, Object value, TypeInfo declaredType) {
         writeName(name);
-        writeStartObject(value, typeInfo, ObjectStyle.INDENT);
+        writeStartObject(value, declaredType, ObjectStyle.INDENT);
     }
 
-    default void writeStartObject(String name, Object value, TypeInfo typeInfo, ObjectStyle style) {
+    default void writeStartObject(String name, Object value, TypeInfo declaredType, ObjectStyle style) {
         writeName(name);
-        writeStartObject(value, typeInfo, style);
+        writeStartObject(value, declaredType, style);
     }
 
-    default void writeStartArray(Object value, TypeInfo typeInfo) {
-        writeStartArray(value, typeInfo, ObjectStyle.INDENT);
+    default void writeStartArray(Object value, TypeInfo declaredType) {
+        writeStartArray(value, declaredType, ObjectStyle.INDENT);
     }
 
-    default void writeStartArray(String name, Object value, TypeInfo typeInfo) {
+    default void writeStartArray(String name, Object value, TypeInfo declaredType) {
         writeName(name);
-        writeStartArray(value, typeInfo, ObjectStyle.INDENT);
+        writeStartArray(value, declaredType, ObjectStyle.INDENT);
     }
 
-    default void writeStartArray(String name, Object value, TypeInfo typeInfo, ObjectStyle style) {
+    default void writeStartArray(String name, Object value, TypeInfo declaredType, ObjectStyle style) {
         writeName(name);
-        writeStartArray(value, typeInfo, style);
+        writeStartArray(value, declaredType, style);
     }
     // endregion
 

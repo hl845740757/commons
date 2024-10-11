@@ -182,9 +182,19 @@ public final class TypeInfo {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        return equals((TypeInfo) o);
+    }
 
-        TypeInfo that = (TypeInfo) o;
-        if (!rawType.equals(that.rawType)) return false;
+    /** 避免走到不必要的重载 */
+    public boolean equals(TypeInfo that) {
+        if (that == null) return false;
+        if (this == that) return true;
+        if (rawType != that.rawType) { // class可用==代替equals
+            return false;
+        }
+        if (genericArgs.isEmpty() && that.genericArgs.isEmpty()) { // 多数情况下无泛型参数
+            return true;
+        }
         return CollectionUtils.sequenceEqual(genericArgs, that.genericArgs);
     }
 
@@ -315,5 +325,4 @@ public final class TypeInfo {
     }
 
     // endregion
-
 }

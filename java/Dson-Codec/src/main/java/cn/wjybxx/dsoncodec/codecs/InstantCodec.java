@@ -47,8 +47,8 @@ public class InstantCodec implements DsonCodec<Instant> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Instant instance, TypeInfo declaredType, ObjectStyle style) {
-        writer.writeTimestamp(null, Timestamp.ofInstant(instance));
+    public void writeObject(DsonObjectWriter writer, Instant inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeTimestamp(null, Timestamp.ofInstant(inst));
     }
 
     @Override

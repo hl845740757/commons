@@ -29,14 +29,12 @@ public static class MoreArrayCodecs
 {
     #region 特化数组
 
-    public class IntArrayCodec : ArrayCodec, IDsonCodec<int[]>
+    public class IntArrayCodec : IDsonCodec<int[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref int[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteInt(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
         public int[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<int[]>? factory = null) {
@@ -50,14 +48,12 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class LongArrayCodec : ArrayCodec, IDsonCodec<long[]>
+    public class LongArrayCodec : IDsonCodec<long[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref long[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteLong(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
         public long[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<long[]>? factory = null) {
@@ -71,14 +67,12 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class FloatArrayCodec : ArrayCodec, IDsonCodec<float[]>
+    public class FloatArrayCodec : IDsonCodec<float[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref float[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteFloat(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
         public float[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<float[]>? factory = null) {
@@ -92,14 +86,12 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class DoubleArrayCodec : ArrayCodec, IDsonCodec<double[]>
+    public class DoubleArrayCodec : IDsonCodec<double[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref double[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteDouble(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
         public double[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<double[]>? factory = null) {
@@ -113,14 +105,12 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class BoolArrayCodec : ArrayCodec, IDsonCodec<bool[]>
+    public class BoolArrayCodec : IDsonCodec<bool[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref bool[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteBool(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
         public bool[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<bool[]>? factory = null) {
@@ -134,14 +124,12 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class StringArrayCodec : ArrayCodec, IDsonCodec<string[]>
+    public class StringArrayCodec : IDsonCodec<string[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref string[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteString(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
         public string[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<string[]>? factory = null) {
@@ -155,14 +143,12 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class UIntArrayCodec : ArrayCodec, IDsonCodec<uint[]>
+    public class UIntArrayCodec : IDsonCodec<uint[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref uint[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteUint(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
         public uint[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<uint[]>? factory = null) {
@@ -176,14 +162,12 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class ULongArrayCodec : ArrayCodec, IDsonCodec<ulong[]>
+    public class ULongArrayCodec : IDsonCodec<ulong[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref ulong[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteUlong(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
         public ulong[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<ulong[]>? factory = null) {
@@ -197,15 +181,13 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class ObjectArrayCodec : ArrayCodec, IDsonCodec<object[]>
+    public class ObjectArrayCodec : IDsonCodec<object[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref object[] inst, Type declaredType, ObjectStyle style) {
             Type eleType = typeof(object);
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteObject(null, inst[i], eleType);
             }
-            writer.WriteEndArray();
         }
 
         public object[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object[]>? factory = null) {

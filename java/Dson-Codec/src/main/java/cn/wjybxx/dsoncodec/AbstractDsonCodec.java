@@ -41,22 +41,22 @@ public abstract class AbstractDsonCodec<T> implements DsonCodec<T> {
     // region write
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, T inst, TypeInfo declaredType, ObjectStyle style) {
         if (writer.options().enableBeforeEncode) {
-            beforeEncode(writer, instance, declaredType, style);
+            beforeEncode(writer, inst, declaredType, style);
         }
-        writeFields(writer, instance, declaredType, style);
+        writeFields(writer, inst, declaredType, style);
     }
 
     /**
      * 用于执行用户的{@code beforeEncode}钩子方法。
      * 通常用于数据转换。
      */
-    protected void beforeEncode(DsonObjectWriter writer, T instance, TypeInfo typeInfo, ObjectStyle style) {
+    protected void beforeEncode(DsonObjectWriter writer, T inst, TypeInfo typeInfo, ObjectStyle style) {
 
     }
 
-    public abstract void writeFields(DsonObjectWriter writer, T instance, TypeInfo typeInfo, ObjectStyle style);
+    public abstract void writeFields(DsonObjectWriter writer, T inst, TypeInfo typeInfo, ObjectStyle style);
 
     // endregion
 
@@ -85,15 +85,15 @@ public abstract class AbstractDsonCodec<T> implements DsonCodec<T> {
     /**
      * 从输入流中读取所有序列化的字段到指定实例上。
      *
-     * @param instance 可以是子类实例
+     * @param inst 可能是子类实例
      */
-    public abstract void readFields(DsonObjectReader reader, T instance, TypeInfo typeInfo);
+    public abstract void readFields(DsonObjectReader reader, T inst, TypeInfo typeInfo);
 
     /**
      * 用于执行用户的{@code afterDecode}钩子方法。
      * 通常用于数据转换。
      */
-    protected void afterDecode(DsonObjectReader reader, T instance, TypeInfo typeInfo) {
+    protected void afterDecode(DsonObjectReader reader, T inst, TypeInfo typeInfo) {
 
     }
 

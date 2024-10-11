@@ -62,17 +62,22 @@ public interface IDsonCodec
 /// 1. 编码的对象可能是'T'的子类；解码返回的对象也可能是'T'的子类。
 /// 2. Codec的泛型'T'和参数declaredType可能并不兼容，因此必须显式传入。
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">实例类型，可能是EncoderType的超类</typeparam>
 public interface IDsonCodec<T> : IDsonCodec
 {
     /// <summary>
-    /// C#是真泛型，因此T通常就是其编解码类型
+    /// C#是真泛型，因此T通常就是其编解码类型。
+    /// 如果可以，在数据兼容的情况下，尽量将泛型'T'声明为抽象类或接口，然后通过动态的Type来绑定编解码类型。
     /// </summary>
     /// <returns></returns>
     Type IDsonCodec.GetEncoderType() => typeof(T);
 
     /// <summary>
+    /// 将对象写入输出流。
+    /// 将对象及其所有超类定义的所有要序列化的字段写入输出流。
     /// 由于序列化的时候，可能触发实例数据变化，为支持结构体序列化，因此需要使用ref
+    /// 
+    /// 注意：name在外部已写入，因此基础类型写入value时name传null或空字符串。
     /// </summary>
     /// <param name="writer">writer</param>
     /// <param name="inst">要编码的实例</param>
@@ -81,7 +86,11 @@ public interface IDsonCodec<T> : IDsonCodec
     void WriteObject(IDsonObjectWriter writer, ref T inst, Type declaredType, ObjectStyle style);
 
     /// <summary>
-    /// 
+    /// 从输入流中解析指定对象。
+    /// 它应该创建对象，并反序列化该类及其所有超类定义的所有要序列化的字段。
+    /// factory用于将超类数据读取到子类，通常用于集合类型。
+    ///
+    /// 注意：name在外部已读取，因此读取value时使用<see cref="IDsonObjectReader.CurrentName"/>。
     /// </summary>
     /// <param name="reader">reader</param>
     /// <param name="declaredType">对象的声明类型</param>

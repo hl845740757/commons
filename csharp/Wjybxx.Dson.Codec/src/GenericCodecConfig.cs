@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Codec.Codecs;
@@ -33,23 +34,25 @@ namespace Wjybxx.Dson.Codec
 /// 
 /// 注意：
 /// 1. Codec需要和泛型定义类有相同的泛型参数列表。
-/// 2. 不会频繁查询，因此不必太在意匹配算法的效率。
-/// 3. 数组和泛型是不同的，数组都对应<see cref="ArrayCodec{T}"/>，因此不需要在这里存储。
-/// 4. 在dotnet6/7中不支持泛型协变和逆变，因此 Codec`1[IList`1[string]] 是不能赋值给 Codec`1[List`1[String]]的。
+/// 2. 如果Codec的是面向接口或抽象类的，构造函数可以接收<see cref="Type"/>和<see cref="Func{TResult}"/>参数 -- 可参考<see cref="CollectionCodec{T}"/>。
+/// 3. 不会频繁查询，因此不必太在意匹配算法的效率。
+/// 4. 数组和泛型是不同的，数组都对应<see cref="ArrayCodec{T}"/>，因此不需要在这里存储。
+/// 5. 请避免运行时修改数据，否则可能造成线程安全问题。
+/// 6. 在dotnet6/7中不支持泛型协变和逆变，因此 Codec`1[IList`1[string]] 是不能赋值给 Codec`1[List`1[String]]的。
 /// </summary>
 [NotThreadSafe]
 public sealed class GenericCodecConfig
 {
     /** 一个Type可能只有encoder而没有decoder，因此需要分开缓存  */
-    private readonly IDictionary<Type, Type> encoderTypeDic;
-    private readonly IDictionary<Type, Type> decoderTypeDic;
+    private readonly IDictionary<Type, GenericCodecInfo> encoderTypeDic;
+    private readonly IDictionary<Type, GenericCodecInfo> decoderTypeDic;
 
     public GenericCodecConfig() {
-        encoderTypeDic = new Dictionary<Type, Type>();
-        decoderTypeDic = new Dictionary<Type, Type>();
+        encoderTypeDic = new Dictionary<Type, GenericCodecInfo>();
+        decoderTypeDic = new Dictionary<Type, GenericCodecInfo>();
     }
 
-    private GenericCodecConfig(IDictionary<Type, Type> encoderTypeDic, IDictionary<Type, Type> decoderTypeDic) {
+    private GenericCodecConfig(IDictionary<Type, GenericCodecInfo> encoderTypeDic, IDictionary<Type, GenericCodecInfo> decoderTypeDic) {
         this.encoderTypeDic = encoderTypeDic.ToImmutableLinkedDictionary();
         this.decoderTypeDic = decoderTypeDic.ToImmutableLinkedDictionary(); // 避免系统库依赖，无法引入Unity
     }
@@ -74,21 +77,24 @@ public sealed class GenericCodecConfig
     /// 通过默认的泛型类Codec初始化
     /// </summary>
     public GenericCodecConfig InitWithDefaults() {
-        AddCodec(typeof(ICollection<>), typeof(ICollectionCodec<>));
-        AddCodec(typeof(IList<>), typeof(MoreCollectionCodecs.IListCodec<>));
-        AddCodec(typeof(List<>), typeof(MoreCollectionCodecs.ListCodec<>));
+        // 艹，readonly系列集合和普通集合之间没有交集...
+        // CollectionCodec默认测试了常见的集合类型
+        AddCodec(typeof(ICollection<>), typeof(CollectionCodec<>));
+        AddCodec(typeof(IList<>), typeof(CollectionCodec<>));
+        AddCodec(typeof(List<>), typeof(CollectionCodec<>));
+        // 
+        AddCodec(typeof(ISet<>), typeof(CollectionCodec<>));
+        AddCodec(typeof(HashSet<>), typeof(CollectionCodec<>));
+        AddCodec(typeof(LinkedHashSet<>), typeof(CollectionCodec<>));
+        //
         AddCodec(typeof(Stack<>), typeof(MoreCollectionCodecs.StackCodec<>));
         AddCodec(typeof(Queue<>), typeof(MoreCollectionCodecs.QueueCodec<>));
 
-        AddCodec(typeof(ISet<>), typeof(MoreCollectionCodecs.ISetCodec<>));
-        AddCodec(typeof(HashSet<>), typeof(MoreCollectionCodecs.HashSetCodec<>));
-        AddCodec(typeof(LinkedHashSet<>), typeof(MoreCollectionCodecs.LinkedHashSetCodec<>));
-
-        AddCodec(typeof(IDictionary<,>), typeof(IDictionaryCodec<,>));
-        AddCodec(typeof(Dictionary<,>), typeof(MoreCollectionCodecs.DictionaryCodec<,>));
-        AddCodec(typeof(LinkedDictionary<,>), typeof(MoreCollectionCodecs.LinkedDictionaryCodec<,>));
-        AddCodec(typeof(ConcurrentDictionary<,>), typeof(MoreCollectionCodecs.ConcurrentDictionaryCodec<,>));
-
+        // IDictionary接口不指定工厂，根据options动态分配实现
+        AddCodec(typeof(IDictionary<,>), typeof(DictionaryCodec<,>));
+        AddCodec(typeof(Dictionary<,>), typeof(DictionaryCodec<,>));
+        AddCodec(typeof(LinkedDictionary<,>), typeof(DictionaryCodec<,>));
+        AddCodec(typeof(ConcurrentDictionary<,>), typeof(DictionaryCodec<,>));
         // 特殊组件
         AddCodec(typeof(DictionaryEncodeProxy<>), typeof(DictionaryEncodeProxyCodec<>));
         AddCodec(typeof(Nullable<>), typeof(NullableCodec<>));
@@ -99,63 +105,174 @@ public sealed class GenericCodecConfig
     /// 主要用于合并注解处理器生成的Config
     /// </summary>
     /// <param name="otherConfig"></param>
-    public void AddCodecs(GenericCodecConfig otherConfig) {
-        foreach (KeyValuePair<Type, Type> pair in otherConfig.encoderTypeDic) {
-            AddEncoder(pair.Key, pair.Value);
+    public GenericCodecConfig AddCodecs(GenericCodecConfig otherConfig) {
+        foreach (GenericCodecInfo item in otherConfig.encoderTypeDic.Values) {
+            AddEncoder(item);
         }
-        foreach (KeyValuePair<Type, Type> pair in otherConfig.decoderTypeDic) {
-            AddDecoder(pair.Key, pair.Value);
+        foreach (GenericCodecInfo item in otherConfig.decoderTypeDic.Values) {
+            AddDecoder(item);
         }
+        return this;
     }
+
+    #region add-codec
 
     /// <summary>
     /// 增加一个配置
     /// </summary>
     /// <param name="genericType">泛型类的信息</param>
     /// <param name="codecType">编解码器类的信息</param>
-    public void AddCodec(Type genericType, Type codecType) {
-        if (!genericType.IsGenericType) throw new ArgumentException($"genericType is not IsGenericType");
-        if (genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length) {
-            throw new ArgumentException("genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length");
-        }
-        encoderTypeDic[genericType] = codecType;
-        decoderTypeDic[genericType] = codecType;
+    public GenericCodecConfig AddCodec(Type genericType, Type codecType) {
+        AddCodec(GenericCodecInfo.Create(genericType, codecType));
+        return this;
     }
+
+    /// <summary>
+    /// 增加一个配置，适用factory定义在codec类中的情况
+    /// </summary>
+    /// <param name="genericType">泛型类的信息</param>
+    /// <param name="codecType">编解码器类的信息，也是工厂类</param>
+    /// <param name="factoryFieldName">工厂字段的名字</param>
+    /// <returns></returns>
+    public GenericCodecConfig AddCodec(Type genericType, Type codecType, string factoryFieldName) {
+        AddCodec(GenericCodecInfo.Create(genericType, codecType, factoryFieldName));
+        return this;
+    }
+
+    /// <summary>
+    /// 增加一个配置，适用factory定义在外部类中的情况
+    /// </summary>
+    /// <param name="genericType">泛型类的信息</param>
+    /// <param name="codecType">编解码器类的信息</param>
+    /// <param name="factoryDeclaringType">定义工厂字段的类</param>
+    /// <param name="factoryFieldName">工厂字段的名字</param>
+    public GenericCodecConfig AddCodec(Type genericType, Type codecType, Type factoryDeclaringType, string factoryFieldName) {
+        AddCodec(GenericCodecInfo.Create(genericType, codecType, factoryDeclaringType, factoryFieldName));
+        return this;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="genericCodecInfo">配置项</param>
+    /// <exception cref="ArgumentException"></exception>
+    public GenericCodecConfig AddCodec(GenericCodecInfo genericCodecInfo) {
+        if (genericCodecInfo.IsNull) throw new ArgumentException("codecInfo  is null");
+        encoderTypeDic[genericCodecInfo.typeInfo] = genericCodecInfo;
+        decoderTypeDic[genericCodecInfo.typeInfo] = genericCodecInfo;
+        return this;
+    }
+
+    #endregion
+
+    #region add-encoder
 
     /// <summary>
     /// 添加编码器
     /// </summary>
     /// <param name="genericType">泛型类的信息</param>
     /// <param name="codecType">编解码器类的信息</param>
-    public void AddEncoder(Type genericType, Type codecType) {
-        if (!genericType.IsGenericType) throw new ArgumentException($"genericType is not IsGenericType");
-        if (genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length) {
-            throw new ArgumentException("genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length");
-        }
-        encoderTypeDic[genericType] = codecType;
+    public GenericCodecConfig AddEncoder(Type genericType, Type codecType) {
+        AddEncoder(GenericCodecInfo.Create(genericType, codecType));
+        return this;
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="genericType">泛型类的信息</param>
+    /// <param name="codecType">编解码器类的信息，也是工厂类</param>
+    /// <param name="factoryFieldName">工厂字段的名字</param>
+    /// <returns>this</returns>
+    public GenericCodecConfig AddEncoder(Type genericType, Type codecType, string factoryFieldName) {
+        AddEncoder(GenericCodecInfo.Create(genericType, codecType, factoryFieldName));
+        return this;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="genericType">泛型类的信息</param>
+    /// <param name="codecType">编解码器类的信息</param>
+    /// <param name="factoryDeclaringType">定义工厂字段的类</param>
+    /// <param name="factoryFieldName">工厂字段的名字</param>
+    /// <returns>this</returns>
+    public GenericCodecConfig AddEncoder(Type genericType, Type codecType, Type factoryDeclaringType, string factoryFieldName) {
+        AddEncoder(GenericCodecInfo.Create(genericType, codecType, factoryDeclaringType, factoryFieldName));
+        return this;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="genericCodecInfo">配置项</param>
+    /// <returns></returns>
+    public GenericCodecConfig AddEncoder(GenericCodecInfo genericCodecInfo) {
+        if (genericCodecInfo.IsNull) throw new ArgumentException("codecInfo  is null");
+        encoderTypeDic[genericCodecInfo.typeInfo] = genericCodecInfo;
+        return this;
+    }
+
+    #endregion
+
+    #region add-decoder
 
     /// <summary>
     /// 添加解码器
     /// </summary>
     /// <param name="genericType">泛型类的信息</param>
     /// <param name="codecType">编解码器类的信息</param>
-    public void AddDecoder(Type genericType, Type codecType) {
-        if (!genericType.IsGenericType) throw new ArgumentException($"genericType is not IsGenericType");
-        if (genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length) {
-            throw new ArgumentException("genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length");
-        }
-        decoderTypeDic[genericType] = codecType;
+    public GenericCodecConfig AddDecoder(Type genericType, Type codecType) {
+        AddDecoder(GenericCodecInfo.Create(genericType, codecType));
+        return this;
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="genericType">泛型类的信息</param>
+    /// <param name="codecType">编解码器类的信息，也是工厂类</param>
+    /// <param name="factoryFieldName">工厂字段的名字</param>
+    public GenericCodecConfig AddDecoder(Type genericType, Type codecType, string factoryFieldName) {
+        AddDecoder(GenericCodecInfo.Create(genericType, codecType, factoryFieldName));
+        return this;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="genericType">泛型类的信息</param>
+    /// <param name="codecType">编解码器类的信息</param>
+    /// <param name="factoryDeclaringType">定义工厂字段的类</param>
+    /// <param name="factoryFieldName">工厂字段的名字</param>
+    public GenericCodecConfig AddDecoder(Type genericType, Type codecType, Type factoryDeclaringType, string factoryFieldName) {
+        AddDecoder(GenericCodecInfo.Create(genericType, codecType, factoryDeclaringType, factoryFieldName));
+        return this;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="genericCodecInfo">配置项</param>
+    /// <returns></returns>
+    public GenericCodecConfig AddDecoder(GenericCodecInfo genericCodecInfo) {
+        if (genericCodecInfo.IsNull) throw new ArgumentException("codecInfo  is null");
+        decoderTypeDic[genericCodecInfo.typeInfo] = genericCodecInfo;
+        return this;
+    }
+
+    #endregion
 
     /// <summary>
     /// 获取编码器类型
     /// </summary>
     /// <param name="genericTypeDefine"></param>
     /// <returns></returns>
-    public Type? GetEncoderType(Type genericTypeDefine) {
-        encoderTypeDic.TryGetValue(genericTypeDefine, out Type codecType);
-        return codecType;
+    public GenericCodecInfo? GetEncoderInfo(Type genericTypeDefine) {
+        if (encoderTypeDic.TryGetValue(genericTypeDefine, out GenericCodecInfo item)) {
+            return item;
+        }
+        return null;
     }
 
     /// <summary>
@@ -163,9 +280,11 @@ public sealed class GenericCodecConfig
     /// </summary>
     /// <param name="genericTypeDefine"></param>
     /// <returns></returns>
-    public Type? GetDecoderType(Type genericTypeDefine) {
-        decoderTypeDic.TryGetValue(genericTypeDefine, out Type codecType);
-        return codecType;
+    public GenericCodecInfo? GetDecoderInfo(Type genericTypeDefine) {
+        if (decoderTypeDic.TryGetValue(genericTypeDefine, out GenericCodecInfo item)) {
+            return item;
+        }
+        return null;
     }
 }
 }

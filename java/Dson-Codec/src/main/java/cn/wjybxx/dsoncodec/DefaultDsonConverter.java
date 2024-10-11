@@ -24,7 +24,6 @@ import cn.wjybxx.dson.text.DsonTextWriter;
 import cn.wjybxx.dson.text.ObjectStyle;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Objects;
@@ -126,7 +125,7 @@ class DefaultDsonConverter implements DsonConverter {
         }
     }
 
-    private void encodeObject(DsonOutput outputStream, @Nullable Object value, TypeInfo typeInfo) {
+    private void encodeObject(DsonOutput outputStream, Object value, TypeInfo typeInfo) {
         try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this,
                 new DsonBinaryWriter(options.binWriterSettings, outputStream))) {
             wrapper.writeObject(null, value, typeInfo, null);

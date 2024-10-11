@@ -94,10 +94,10 @@ public final class EnumCodec<T extends Enum<T>> implements IEnumCodec<T>, DsonCo
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
-        EnumValueInfo<T> valueInfo = value2EnumMap.get(instance);
+    public void writeObject(DsonObjectWriter writer, T inst, TypeInfo declaredType, ObjectStyle style) {
+        EnumValueInfo<T> valueInfo = value2EnumMap.get(inst);
         if (valueInfo == null) {
-            throw new DsonCodecException("invalid enum value: %s, type: %s".formatted(instance, enumClass));
+            throw new DsonCodecException("invalid enum value: %s, type: %s".formatted(inst, enumClass));
         }
         if (writer.options().writeEnumAsString) {
             writer.writeString(null, valueInfo.name, StringStyle.UNQUOTE);

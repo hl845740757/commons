@@ -48,7 +48,7 @@ public class MapAsObjectTest {
         String dson = converter.writeAsDson(map);
 //        System.out.println(dson);
 
-        @SuppressWarnings("unchecked") LinkedHashMap<String, Object> copied = converter.readFromDson(dson, TypeInfo.STRING_LINKED_HASHMAP);
+        LinkedHashMap<String, Object> copied = converter.readFromDson(dson, TypeInfo.STRING_LINKED_HASHMAP);
         Assertions.assertEquals(map, copied);
     }
 }

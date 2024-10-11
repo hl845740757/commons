@@ -16,7 +16,11 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.CollectionUtils;
+
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * 类型id的写入策略
@@ -45,35 +49,104 @@ public enum ClassIdPolicy {
      */
     NONE;
 
+    /** 缓存信息 */
+    private static final ConcurrentMap<CacheKey, Boolean> cacheDic = new ConcurrentHashMap<>();
+
     /**
+     * 1.如果声明类型是泛型类，仅支持编码类型也是泛型类
+     * 2.通常当真实类型是声明类型的默认实例类型时，可指定不编码类型信息
+     *
+     * @param declaredType 字段的声明类型
+     * @param encoderType  运行时类型
+     * @param value        是否写入类型信息
+     */
+    public static void addCache(Class<?> declaredType, Class<?> encoderType, boolean value) {
+        CacheKey key = new CacheKey(TypeInfo.of(declaredType), TypeInfo.of(encoderType));
+        cacheDic.put(key, value);
+    }
+
+    /**
+     * 测试是否需要写入对象类型信息
+     * 当
+     *
      * @param declaredType 字段的声明类型
      * @param encoderType  运行时类型
      * @return 是否写入类型信息
      */
-    public boolean test(Class<?> declaredType, Class<?> encoderType) {
+    public boolean test(TypeInfo declaredType, TypeInfo encoderType) {
         if (this == ClassIdPolicy.OPTIMIZED) {
-            if (encoderType == declaredType) {
-                return false; // 运行时类型和声明类型一致，不写入
+            if (encoderType.equals(declaredType)) return false;
+            if (declaredType.rawType == Object.class) return true;
+
+            CacheKey key = new CacheKey(declaredType, encoderType);
+            Boolean value = cacheDic.get(key);
+            if (value != null) {
+                return value;
             }
-            if (declaredType == Object.class) {
-                return true; // 声明类型Object类型一定写入
-            }
-            // 默认解码类型的父类型无需写入，List/Map/Set
-            if (encoderType == ArrayList.class
-                    && Collection.class.isAssignableFrom(declaredType)) {
-                return false;
-            }
-            if ((encoderType == HashMap.class || encoderType == LinkedHashMap.class)
-                    && Map.class.isAssignableFrom(declaredType)) {
-                return false;
-            }
-            if ((encoderType == HashSet.class || encoderType == LinkedHashSet.class)
-                    && Set.class.isAssignableFrom(declaredType)) {
-                return false;
+            if (declaredType.isGenericType() && encoderType.isGenericType()) {
+                value = testGeneric(declaredType, encoderType);
+                cacheDic.put(key, value);
+                return value;
             }
             return true;
         }
         return this == ClassIdPolicy.ALWAYS;
     }
 
+    private static boolean testGeneric(TypeInfo declaredType, TypeInfo encoderType) {
+        // 如果泛型原型之间设置为必须写入，则必须写入；如果泛型原型之间设置为无需写入，则测试泛型参数是否相同
+        {
+            CacheKey key = new CacheKey(TypeInfo.of(declaredType.rawType), TypeInfo.of(encoderType.rawType));
+            Boolean value = cacheDic.get(key);
+            if (value != null) {
+                return value || isGenericTypeArgumentsDifferent(declaredType, encoderType);
+            }
+        }
+        // 默认类型测试
+        if (encoderType.rawType == ArrayList.class
+                && Collection.class.isAssignableFrom(declaredType.rawType)) {
+            return isGenericTypeArgumentsDifferent(declaredType, encoderType);
+        }
+        if ((encoderType.rawType == HashMap.class || encoderType.rawType == LinkedHashMap.class)
+                && Map.class.isAssignableFrom(declaredType.rawType)) {
+            return isGenericTypeArgumentsDifferent(declaredType, encoderType);
+        }
+        if ((encoderType.rawType == HashSet.class || encoderType.rawType == LinkedHashSet.class)
+                && Set.class.isAssignableFrom(declaredType.rawType)) {
+            return isGenericTypeArgumentsDifferent(declaredType, encoderType);
+        }
+        return true;
+    }
+
+    private static boolean isGenericTypeArgumentsDifferent(TypeInfo declaredType, TypeInfo encoderType) {
+        return !CollectionUtils.sequenceEqual(declaredType.genericArgs, encoderType.genericArgs);
+    }
+
+    private static class CacheKey {
+
+        public final TypeInfo declaredType;
+        public final TypeInfo encoderType;
+
+        public CacheKey(TypeInfo declaredType, TypeInfo encoderType) {
+            this.declaredType = declaredType;
+            this.encoderType = encoderType;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            CacheKey that = (CacheKey) o;
+            return declaredType.equals(that.declaredType)
+                    && encoderType.equals(that.encoderType);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = declaredType.hashCode();
+            result = 31 * result + encoderType.hashCode();
+            return result;
+        }
+    }
 }

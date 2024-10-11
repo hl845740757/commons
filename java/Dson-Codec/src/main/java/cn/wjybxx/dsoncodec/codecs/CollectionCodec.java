@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.*;
@@ -31,30 +32,42 @@ import java.util.function.Supplier;
  * @author wjybxx
  * date 2023/4/4
  */
-@SuppressWarnings("rawtypes")
 @DsonCodecScanIgnore
-public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
+public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
 
     protected final TypeInfo typeInfo;
-    protected final Supplier<? extends T> factory;
-    private final TypeInfo elementTypeInfo;
+    protected final Supplier<? extends Collection<E>> factory;
+    private final FactoryKind factoryKind;
 
-    @SuppressWarnings("unchecked")
     public CollectionCodec(TypeInfo typeInfo) {
-        this.typeInfo = Objects.requireNonNull(typeInfo);
-
-        Class<T> rawType = (Class<T>) typeInfo.rawType;
-        this.factory = DsonConverterUtils.tryNoArgConstructorToSupplier(rawType);
-        this.elementTypeInfo = DsonConverterUtils.findTypeParameter(rawType, Collection.class, "E");
+        this(typeInfo, null);
     }
 
     @SuppressWarnings("unchecked")
-    public CollectionCodec(TypeInfo typeInfo, Supplier<? extends T> factory) {
-        this.typeInfo = Objects.requireNonNull(typeInfo);
+    public CollectionCodec(TypeInfo typeInfo, Supplier<? extends Collection<E>> factory) {
+        if (factory == null) {
+            factory = DsonConverterUtils.tryNoArgConstructorToSupplier((Class<? extends Collection<E>>) typeInfo.rawType);
+        }
+        this.typeInfo = typeInfo;
         this.factory = factory;
+        this.factoryKind = factory == null ? computeFactoryKind(typeInfo) : FactoryKind.Unknown;
+    }
 
-        Class<T> rawType = (Class<T>) typeInfo.rawType;
-        this.elementTypeInfo = DsonConverterUtils.findTypeParameter(rawType, Collection.class, "E");
+    private static FactoryKind computeFactoryKind(TypeInfo typeInfo) {
+        Class<?> clazz = typeInfo.rawType;
+        if (Set.class.isAssignableFrom(clazz)) {
+            return FactoryKind.LinkedHashSet;
+        }
+        if (Deque.class.isAssignableFrom(clazz)) {
+            return FactoryKind.ArrayDeque;
+        }
+        return FactoryKind.Unknown;
+    }
+
+    private enum FactoryKind {
+        Unknown,
+        LinkedHashSet,
+        ArrayDeque,
     }
 
     @Nonnull
@@ -63,43 +76,55 @@ public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
         return typeInfo;
     }
 
-    /** 允许重写 */
-    @SuppressWarnings("unchecked")
-    protected Collection<Object> newCollection(TypeInfo typeInfo, Supplier<? extends T> factory) {
-        if (factory != null) {
-            return (Collection<Object>) factory.get();
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    protected Collection<E> newCollection(TypeInfo declaredType) {
+        if (factory != null) return factory.get();
+        // EnumSet只有通过DeclaredType构建才稳妥 -- 因为这里的Codec可能是泛型原型
+        if (declaredType.rawType == EnumSet.class) {
+            TypeInfo elementTypeInfo = declaredType.genericArgs.get(0);
+            return EnumSet.noneOf((Class) elementTypeInfo.rawType);
         }
-        if (this.factory != null) {
-            return (Collection<Object>) this.factory.get();
+        return switch (factoryKind) {
+            case ArrayDeque -> new ArrayDeque<>();
+            case LinkedHashSet -> new LinkedHashSet<>();
+            default -> new ArrayList<>();
+        };
+    }
+
+    protected Collection<E> toImmutable(Collection<E> result) {
+        if (result instanceof LinkedHashSet<E> linkedHashSet) {
+            return Collections.unmodifiableSet(linkedHashSet);
         }
-        if (Set.class.isAssignableFrom(typeInfo.rawType)) {
-            return new LinkedHashSet<>();
+        if (result instanceof EnumSet<?>) {
+            Set<? extends E> enumSet = (Set<? extends E>) result;
+            return Collections.unmodifiableSet(enumSet);
         }
-        return new ArrayList<>();
+        if (result instanceof Set<E> set) {
+            return CollectionUtils.toImmutableLinkedHashSet(set);
+        }
+        return List.copyOf(result);
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo declaredType, ObjectStyle style) {
-        // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询K,V的类型，但Java是伪泛型...
-        TypeInfo elementTypeInfo = this.elementTypeInfo;
-        for (Object e : instance) {
+    public void writeObject(DsonObjectWriter writer, Collection<E> inst, TypeInfo declaredType, ObjectStyle style) {
+        // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询E的类型...
+        // 另外，typeInfo就是根据【运行时类型】和【declaredType】生成的
+        TypeInfo elementTypeInfo = typeInfo.genericArgs.get(0);
+
+        for (Object e : inst) {
             writer.writeObject(null, e, elementTypeInfo, null);
         }
     }
 
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
-        TypeInfo elementTypeInfo = this.elementTypeInfo;
-        Collection<Object> result = newCollection(declaredType, factory);
+    public Collection<E> readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Collection<E>> factory) {
+        TypeInfo elementTypeInfo = typeInfo.genericArgs.get(0);
+
+        Collection<E> result = factory != null ? factory.get() : newCollection(declaredType);
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readObject(null, elementTypeInfo));
         }
-        CollectionConverter collectionConverter = reader.options().collectionConverter;
-        if (collectionConverter != null) {
-            result = collectionConverter.convertCollection(declaredType, result);
-        }
-        @SuppressWarnings("unchecked") Class<T> rawType = (Class<T>) typeInfo.rawType;
-        return rawType.cast(result);
+        return reader.options().readAsImmutable ? toImmutable(result) : result;
     }
 
 }

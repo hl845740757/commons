@@ -142,12 +142,11 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
         }
         if (type.IsGenericType) {
             // 泛型原型类必须存在于用户的注册表中
-            Type genericTypeDefinition = type.GetGenericTypeDefinition();
-            TypeMeta typeMeta = _basicRegistry.OfType(genericTypeDefinition);
+            TypeMeta typeMeta = _basicRegistry.OfType(type.GetGenericTypeDefinition());
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
-            Type[] genericArguments = DsonConverterUtils.GetGenericArguments(type);
+            Type[] genericArguments = type.GenericTypeArguments;
             List<ClassName> typeArgClassNames = new List<ClassName>(genericArguments.Length);
             foreach (Type genericArgument in genericArguments) {
                 typeArgClassNames.Add(ClassNameOfType(genericArgument));
@@ -188,8 +187,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             if (typeArgsCount > 0) {
                 Type[] typeParameters = new Type[typeArgsCount];
                 for (int index = 0; index < typeArgsCount; index++) {
-                    ClassName classNameTypeArg = className.typeArgs[index];
-                    typeParameters[index] = TypeOfClassName(classNameTypeArg);
+                    typeParameters[index] = TypeOfClassName(className.typeArgs[index]);
                 }
                 elementType = elementType.MakeGenericType(typeParameters);
             }

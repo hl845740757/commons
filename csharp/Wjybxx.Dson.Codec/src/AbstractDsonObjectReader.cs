@@ -136,17 +136,17 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
     }
 
     private T ReadContainer<T>(Type declaredType, Func<T>? factory, DsonType dsonType) {
-        string classId = ReadClassId(dsonType);
-        DsonCodecImpl codec = FindObjectDecoder(declaredType, factory, classId);
+        string clsName = ReadClsName(dsonType);
+        DsonCodecImpl codec = FindObjectDecoder(declaredType, factory, clsName);
         if (codec == null) {
-            throw DsonCodecException.Incompatible(declaredType, classId);
+            throw DsonCodecException.Incompatible(declaredType, clsName);
         }
-        if (codec.GetEncoderType() == typeof(T)) {
-            DsonCodecImpl<T> codecImpl = (DsonCodecImpl<T>)codec;
+        // 避免结构体装箱
+        if (codec is DsonCodecImpl<T> codecImpl) {
             return codecImpl.ReadObject(this, declaredType, factory);
+        } else {
+            return (T)codec.ReadObject2(this, declaredType, factory);
         }
-        // codec可能是实际类型(子类型)的codec
-        return (T)codec.ReadObject2(this, declaredType, factory);
     }
 
     #endregion
@@ -211,16 +211,17 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
 
     public T DecodeKey<T>(string keyString) {
         Type type = typeof(T);
+        if (type == typeof(string) || type == typeof(object)) {
+            return (T)(object)keyString;
+        }
+        // 会导致装箱，外部需要优化
         if (type == typeof(int)) {
-            int r = int.Parse(keyString); // 会导致装箱，外部需要优化
+            int r = int.Parse(keyString);
             return (T)(object)r;
         }
         if (type == typeof(long)) {
             long r = long.Parse(keyString);
             return (T)(object)r;
-        }
-        if (type == typeof(string)) {
-            return (T)(object)keyString;
         }
         if (!type.IsEnum) {
             throw DsonCodecException.UnsupportedKeyType(type);
@@ -252,7 +253,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         reader.Dispose();
     }
 
-    private string ReadClassId(DsonType dsonType) {
+    private string ReadClsName(DsonType dsonType) {
         IDsonReader<string> reader = this.reader;
         if (reader.HasWaitingStartContext()) {
             return ""; // 已读取header，当前可能触发了读代理
@@ -280,14 +281,15 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         return clsName;
     }
 
-    private DsonCodecImpl? FindObjectDecoder<T>(Type declaredType, Func<T>? factory, string classId) {
-        // factory不为null时，直接按照声明类型查找，因为factory的优先级最高
+    private DsonCodecImpl? FindObjectDecoder<T>(Type declaredType, Func<T>? factory, string clsName) {
+        // factory不为null时，直接按照声明类型查找 -- factory创建的实例可能和写入的真实类型不兼容
         if (factory != null) {
             return converter.CodecRegistry.GetDecoder(declaredType);
         }
+        // 如果factory为null，最终的codec关联的type一定是声明类型的子类型
         // 尝试按真实类型读 -- IsAssignableFrom 支持 Nullable
-        if (!string.IsNullOrWhiteSpace(classId)) {
-            TypeMeta typeMeta = converter.TypeMetaRegistry.OfName(classId);
+        if (!string.IsNullOrWhiteSpace(clsName)) {
+            TypeMeta typeMeta = converter.TypeMetaRegistry.OfName(clsName);
             if (typeMeta != null && declaredType.IsAssignableFrom(typeMeta.type)) {
                 return converter.CodecRegistry.GetDecoder(typeMeta.type);
             }

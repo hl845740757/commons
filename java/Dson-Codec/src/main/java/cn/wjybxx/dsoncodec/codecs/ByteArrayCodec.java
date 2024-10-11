@@ -47,8 +47,8 @@ public class ByteArrayCodec implements DsonCodec<byte[]> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, byte[] instance, TypeInfo declaredType, ObjectStyle style) {
-        writer.writeBytes(null, instance);
+    public void writeObject(DsonObjectWriter writer, byte[] inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeBytes(null, inst);
     }
 
     @Override

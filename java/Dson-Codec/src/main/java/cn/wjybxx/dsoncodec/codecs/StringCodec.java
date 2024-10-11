@@ -46,8 +46,8 @@ public class StringCodec implements DsonCodec<String> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, String instance, TypeInfo declaredType, ObjectStyle style) {
-        writer.writeString(null, instance, StringStyle.AUTO);
+    public void writeObject(DsonObjectWriter writer, String inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeString(null, inst, StringStyle.AUTO);
     }
 
     @Override

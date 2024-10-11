@@ -46,8 +46,8 @@ public class ExtDateTimeCodec implements DsonCodec<ExtDateTime> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, ExtDateTime instance, TypeInfo declaredType, ObjectStyle style) {
-        writer.writeExtDateTime(null, instance);
+    public void writeObject(DsonObjectWriter writer, ExtDateTime inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeExtDateTime(null, inst);
     }
 
     @Override

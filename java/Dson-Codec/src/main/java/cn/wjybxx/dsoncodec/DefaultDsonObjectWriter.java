@@ -171,21 +171,20 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     // region object处理
 
     @Override
-    public <T> void writeObject(String name, T value, TypeInfo typeInfo, ObjectStyle style) {
-        Objects.requireNonNull(typeInfo, "typeInfo");
+    public <T> void writeObject(String name, T value, TypeInfo declaredType, ObjectStyle style) {
+        Objects.requireNonNull(declaredType, "typeInfo");
         if (value == null) {
             writeNull(name);
             return;
         }
-        // 常见基础类型也在CodecRegistry中
-        TypeInfo runtimeTypeInfo = getRuntimeTypeInfo(value, typeInfo);
+        TypeInfo runtimeTypeInfo = getRuntimeTypeInfo(value, declaredType);
         @SuppressWarnings("unchecked") var codec = (DsonCodecImpl<? super T>) converter.codecRegistry().getEncoder(runtimeTypeInfo);
         if (codec != null) {
             if (writer.isAtName()) { // 写入name
                 writer.writeName(name);
             }
             if (style == null) style = findObjectStyle(runtimeTypeInfo);
-            codec.writeObject(this, value, typeInfo, style);
+            codec.writeObject(this, value, declaredType, style);
             return;
         }
         Class<?> type = value.getClass();
@@ -233,9 +232,9 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public void writeStartObject(@Nonnull Object value, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeStartObject(@Nonnull Object value, TypeInfo declaredType, ObjectStyle style) {
         writer.writeStartObject(style);
-        writeClsName(value, typeInfo);
+        writeClsName(value, declaredType);
     }
 
     @Override
@@ -244,9 +243,9 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public void writeStartArray(@Nonnull Object value, TypeInfo typeInfo, ObjectStyle style) {
+    public void writeStartArray(@Nonnull Object value, TypeInfo declaredType, ObjectStyle style) {
         writer.writeStartArray(style);
-        writeClsName(value, typeInfo);
+        writeClsName(value, declaredType);
     }
 
     @Override
@@ -301,11 +300,11 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
 
     /** 写入对象的类型名，如果存在对应的TypeMeta -- 尽可能写上泛型参数信息 */
     private void writeClsName(Object value, TypeInfo declaredType) {
-        final Class<?> encodeClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举
-        if (!converter.options().classIdPolicy.test(declaredType.rawType, encodeClass)) {
+        TypeInfo runtimeTypeInfo = getRuntimeTypeInfo(value, declaredType);
+        if (!converter.options().classIdPolicy.test(declaredType, runtimeTypeInfo)) {
             return;
         }
-        final TypeMeta typeMeta = getEncoderTypeMeta(encodeClass, declaredType);
+        final TypeMeta typeMeta = converter.typeMetaRegistry().ofType(runtimeTypeInfo);
         if (typeMeta != null && !typeMeta.clsNames.isEmpty()) {
             writer.writeSimpleHeader(typeMeta.mainClsName());
         }
@@ -323,25 +322,15 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         if (encoderClass == declaredType.rawType) {
             return declaredType;
         }
+        // 尝试继承泛型参数
         if (declaredType.hasGenericArgs()
                 && converter.genericCodecHelper().canInheritTypeArgs(encoderClass, declaredType.rawType)) {
             return TypeInfo.of(encoderClass, declaredType.genericArgs);
         }
+        // 如果真实类型是泛型，而声明类型是object等，会导致泛型信息丢失
         return TypeInfo.of(encoderClass);
     }
 
-    private TypeMeta getEncoderTypeMeta(Class<?> encoderClass, TypeInfo declaredType) {
-        if (encoderClass == declaredType.rawType) {
-            return converter.typeMetaRegistry().ofType(declaredType);
-        }
-        // Class没有提供接口直接测试是否是泛型，该接口会导致空数组和拷贝...
-        if (declaredType.hasGenericArgs()
-                && converter.genericCodecHelper().canInheritTypeArgs(encoderClass, declaredType.rawType)) {
-            TypeInfo runtimeType = TypeInfo.of(encoderClass, declaredType.genericArgs);
-            return converter.typeMetaRegistry().ofType(runtimeType);
-        }
-        return converter.typeMetaRegistry().ofClass(encoderClass);
-    }
     // endregion
 
 }

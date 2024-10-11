@@ -26,9 +26,9 @@ public class DsonConverterBuilder
     private readonly List<IDsonCodecRegistry> codecRegistries = new(4);
     private readonly List<IDsonCodecCaster> casters = new(4);
     private readonly List<GenericCodecConfig> genericCodecConfigs = new(4);
+
     private ConverterOptions options = ConverterOptions.DEFAULT;
     private bool pureMode = false;
-
 
     public DsonConverterBuilder() {
     }
@@ -73,7 +73,7 @@ public class DsonConverterBuilder
 
     // region type-meta
 
-    public List<ITypeMetaRegistry> getTypeMetaRegistries() {
+    public List<ITypeMetaRegistry> GetTypeMetaRegistries() {
         return typeMetaRegistries;
     }
 
@@ -98,14 +98,14 @@ public class DsonConverterBuilder
         return this;
     }
 
-    public DsonConverterBuilder addCodecRegistries(List<IDsonCodecRegistry> codecRegistries) {
+    public DsonConverterBuilder AddCodecRegistries(List<IDsonCodecRegistry> codecRegistries) {
         this.codecRegistries.AddRange(codecRegistries);
         return this;
     }
     // endregion
 
     // region generic
-    public List<GenericCodecConfig> getGenericCodecConfigs() {
+    public List<GenericCodecConfig> GetGenericCodecConfigs() {
         return genericCodecConfigs;
     }
 
@@ -120,7 +120,7 @@ public class DsonConverterBuilder
     }
     // endregion
 
-    public List<IDsonCodecCaster> getCasters() {
+    public List<IDsonCodecCaster> GetCasters() {
         return casters;
     }
 

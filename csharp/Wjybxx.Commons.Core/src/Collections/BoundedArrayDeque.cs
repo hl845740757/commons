@@ -45,6 +45,10 @@ public class BoundedArrayDeque<T> : IDeque<T>
     private int _tail;
     private int _version;
 
+    public BoundedArrayDeque()
+        : this(1024) {
+    }
+
     /// <summary>
     /// 
     /// </summary>
@@ -583,7 +587,7 @@ public class BoundedArrayDeque<T> : IDeque<T>
         }
 
         internal bool IsNull => _arrayDeque == null;
-        
+
         public bool HasNext() {
             return _cursor >= 0;
         }

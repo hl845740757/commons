@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Reflection;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Codec.Codecs;
 using Wjybxx.Dson.Text;
@@ -31,51 +32,6 @@ namespace Wjybxx.Dson.Codec
 /// </summary>
 public static class DsonConverterUtils
 {
-    #region 泛型
-
-    /// <summary>
-    /// 缓存泛型类型的泛型信息
-    /// </summary>
-    private static readonly ConcurrentDictionary<Type, Type[]> typeArgumentsCache = new ConcurrentDictionary<Type, Type[]>();
-
-    /// <summary>
-    /// 是否启用泛型参数缓存。
-    /// 如果启用缓存，则会增加一定的查找开销；
-    /// 如果不启用缓存，则可能创建大量的临时数组对象；
-    /// 这个值在运行中通常并不需要修改，但我们暂先使用volatile。
-    /// </summary>
-    private static volatile bool enableCache = true;
-
-    /// <summary>
-    /// 启用缓存
-    /// </summary>
-    public static void EnableGenericCache() => enableCache = true;
-
-    /// <summary>
-    /// 禁用缓存
-    /// </summary>
-    public static void DisableGenericCache() => enableCache = false;
-
-    /// <summary>
-    /// 获取类型的泛型参数列表
-    /// </summary>
-    public static Type[] GetGenericArguments(Type type) {
-        if (!type.IsGenericType || type.IsGenericTypeDefinition) {
-            return Array.Empty<Type>();
-        }
-        if (enableCache) {
-            if (!typeArgumentsCache.TryGetValue(type, out Type[] result)) {
-                result = type.GenericTypeArguments;
-                typeArgumentsCache.TryAdd(type, result);
-            }
-            return result;
-        } else {
-            return type.GenericTypeArguments;
-        }
-    }
-
-    #endregion
-
     #region array
 
     /** 最大支持9阶 - 我都没见过3阶以上的数组... */
@@ -254,20 +210,6 @@ public static class DsonConverterUtils
     }
 
     /// <summary>
-    /// 判断一个类型是否是<see cref="IGenericSet{T}"/>类型
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    public static bool IsGenericSet(Type type) {
-        Type target = type.GetInterface("IGenericSet`1");
-        if (target != null) {
-            if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
-            return target == typeof(IGenericSet<>);
-        }
-        return false;
-    }
-
-    /// <summary>
     /// 判断一个类型是否是<see cref="IDictionary{K,V}"/>类型
     /// </summary>
     /// <param name="type"></param>
@@ -277,6 +219,34 @@ public static class DsonConverterUtils
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
             return target.GetGenericTypeDefinition() == typeof(IDictionary<,>);
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 判断一个类型是否是<see cref="IGenericSet{T}"/>类型
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public static bool IsGenericSet(Type type) {
+        Type target = type.GetInterface(typeof(IGenericSet<>).Name);
+        if (target != null) {
+            if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
+            return target == typeof(IGenericSet<>);
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 判断一个类型是否是<see cref="IGenericDictionary{TKey,TValue}"/>类型
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public static bool IsGenericDictionary(Type type) {
+        Type target = type.GetInterface(typeof(IGenericDictionary<,>).Name);
+        if (target != null) {
+            if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
+            return target.GetGenericTypeDefinition() == typeof(IGenericDictionary<,>);
         }
         return false;
     }

@@ -27,10 +27,7 @@ import java.lang.invoke.CallSite;
 import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.TypeVariable;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -205,12 +202,26 @@ public final class DsonConverterUtils {
     // region 泛型
 
     /** 查找指定泛型参数的运行时类型 */
-    public static <T> TypeInfo findTypeParameter(Class<T> thisClass, Class<? super T> superClazz, String typeParameterName) {
+    @Deprecated
+    private static <T> TypeInfo findTypeParameter(Class<T> thisClass, Class<? super T> superClazz, String typeParameterName) {
         TypeVariable<Class<T>>[] typeParameters = thisClass.getTypeParameters();
         for (TypeVariable<Class<T>> typeParameter : typeParameters) {
-            if (typeParameter.getName().equals(typeParameterName)) {
-                return TypeInfo.OBJECT; // TODO 尝试擦除泛型，有点点麻烦
+            if (!typeParameter.getName().equals(typeParameterName)) {
+                continue;
             }
+            Type[] bounds = typeParameter.getBounds();
+            if (bounds.length == 0) {
+                return TypeInfo.OBJECT;
+            }
+            // 先简单擦除
+            if (bounds[0] instanceof Class<?> clazz) {
+                return TypeInfo.of(clazz);
+            }
+            if (bounds[0] instanceof ParameterizedType parameterizedType) {
+//                return TypeInfo.of(parameterizedType);
+                return TypeInfo.of((Class<?>) parameterizedType.getRawType());
+            }
+            return TypeInfo.OBJECT;
         }
         Class<?> typeParameter = TypeParameterFinder.findTypeParameterUnsafe(thisClass, superClazz, typeParameterName);
         return TypeInfo.of(typeParameter);
@@ -332,7 +343,7 @@ public final class DsonConverterUtils {
     public static <T, E> T convertList2Array(List<? extends E> list, Class<T> arrayType) {
         final Class<?> componentType = arrayType.getComponentType();
         final int length = list.size();
-
+        // 如果当前是引用类型数组，则直接ToArray
         if (list.getClass() == ArrayList.class && !componentType.isPrimitive()) {
             final E[] tempArray = (E[]) Array.newInstance(componentType, length);
             return (T) list.toArray(tempArray);
@@ -366,6 +377,9 @@ public final class DsonConverterUtils {
         }
         try {
             Constructor<T> constructor = clazz.getConstructor();
+            if (!Modifier.isPublic(constructor.getModifiers())) {
+                return null;
+            }
             MethodHandles.Lookup lookup = MethodHandles.lookup();
             return noArgConstructorToSupplier(lookup, constructor);
         } catch (Throwable ex) {

@@ -59,6 +59,9 @@ public class MapEncodeProxy<V> {
     private int mode = MODE_DOCUMENT;
     private Collection<Map.Entry<String, V>> entries;
 
+    public MapEncodeProxy() {
+    }
+
     public int getMode() {
         return mode;
     }

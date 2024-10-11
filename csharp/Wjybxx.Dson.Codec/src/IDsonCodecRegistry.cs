@@ -29,25 +29,21 @@ public interface IDsonCodecRegistry
     /// <summary>
     /// 获取类型对应的编解码器。
     /// 
-    /// 注意：
-    /// 1. 返回的Encoder可能是T的超类型的Codec，C#是真实泛型，dotnet6/7不支持泛型逆变，因此这里不定义为泛型方法。
-    /// 2. 对于泛型类，需要动态创建其对应的Codec。
+    /// 1.可以返回超类的codec，因为子类实例可以向上转型，但子类特殊数据将被丢弃。
+    /// 2.不可返回子类的codec，因为超类实例不能向下转型。
     /// 
-    /// <code>
-    ///   DsonCodecImpl.GetEncoderClass().IsAssignableFrom(type)
-    /// </code>
+    /// PS：可参考集合和字典的Codec实现。
     /// </summary>
     DsonCodecImpl? GetEncoder(Type type);
 
     /// <summary>
     /// 获取类型对应的解码器。
     /// 
-    /// 注意：
-    /// 解码器必须目标类型一致，子类Codec不能安全解码超类数据，超类Codec返回的实例不能向下转型。
-    /// 更关键的是dotnet6的泛型不支持协变，超类或子类的Codec不能赋值目标类型...
-    /// <code>
-    ///   DsonCodecImpl.GetEncoderClass() == type
-    /// </code>
+    /// 1.可以返回子类的Codec，如果子类和当前类数据兼容。
+    /// 2.不可返回超类的codec，因为超类Codec创建的实例不能安全向下转型。
+    /// 3.如果可以，请尽量返回当前类对应的Codec，以避免错误。
+    ///
+    /// PS：可参考集合和字典的Codec实现。
     /// </summary>
     DsonCodecImpl? GetDecoder(Type type);
 }

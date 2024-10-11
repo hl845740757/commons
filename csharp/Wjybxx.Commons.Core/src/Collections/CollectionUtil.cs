@@ -84,8 +84,12 @@ public static partial class CollectionUtil
     public static void AddAll<T>(this ICollection<T> self, IEnumerable<T> items) {
         if (self == null) throw new ArgumentNullException(nameof(self));
         if (items == null) throw new ArgumentNullException(nameof(items));
-        if (self is IGenericCollection<T> generic && items is ICollection<T> otherCollection) {
-            generic.AdjustCapacity(generic.Count + otherCollection.Count);
+        if (self is IGenericCollection<T> generic) {
+            if (items is ICollection<T> other1) {
+                generic.AdjustCapacity(generic.Count + other1.Count);
+            } else if (items is IReadOnlyCollection<T> other2) {
+                generic.AdjustCapacity(generic.Count + other2.Count);
+            }
         }
         foreach (T item in items) {
             self.Add(item);
@@ -98,8 +102,12 @@ public static partial class CollectionUtil
     public static void AddAll<T>(this IGenericCollection<T> self, IEnumerable<T> items) {
         if (self == null) throw new ArgumentNullException(nameof(self));
         if (items == null) throw new ArgumentNullException(nameof(items));
-        if (items is ICollection<T> otherCollection) {
-            self.AdjustCapacity(self.Count + otherCollection.Count);
+        {
+            if (items is ICollection<T> other1) {
+                self.AdjustCapacity(self.Count + other1.Count);
+            } else if (items is IReadOnlyCollection<T> other2) {
+                self.AdjustCapacity(self.Count + other2.Count);
+            }
         }
         foreach (T item in items) {
             self.Add(item);
@@ -152,45 +160,6 @@ public static partial class CollectionUtil
 
     #endregion
 
-    #region Set
-
-    /// <summary>
-    /// 批量Add元素
-    /// </summary>
-    /// <returns>新插入的元素个数</returns>
-    public static int AddAll<T>(this ISet<T> self, IEnumerable<T> items) {
-        if (self == null) throw new ArgumentNullException(nameof(self));
-        if (items == null) throw new ArgumentNullException(nameof(items));
-        if (self is IGenericCollection<T> generic && items is ICollection<T> otherCollection) {
-            generic.AdjustCapacity(self.Count + otherCollection.Count);
-        }
-        int r = 0;
-        foreach (T item in items) {
-            if (self.Add(item)) r++;
-        }
-        return r;
-    }
-
-    /// <summary>
-    /// 批量Add元素
-    /// (没有继承ISet接口，因此需要独立的扩展方法)
-    /// </summary>
-    /// <returns>新插入的元素个数</returns>
-    public static int AddAll<T>(this IGenericSet<T> self, IEnumerable<T> items) {
-        if (self == null) throw new ArgumentNullException(nameof(self));
-        if (items == null) throw new ArgumentNullException(nameof(items));
-        if (items is ICollection<T> otherCollection) {
-            self.AdjustCapacity(self.Count + otherCollection.Count);
-        }
-        int r = 0;
-        foreach (T item in items) {
-            if (self.Add(item)) r++;
-        }
-        return r;
-    }
-
-    #endregion
-
     #region dictionary
 
     /// <summary>
@@ -203,7 +172,7 @@ public static partial class CollectionUtil
     /// 判断字典是否为空
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsEmpty<K, V>(this IDictionary<K, V> self) => self.Count == 0;
+    public static bool IsEmpty<K, V>(IDictionary<K, V> self) => self.Count == 0;
 
     /// <summary>
     /// 获取集合的数量，如果集合为null，则返回0

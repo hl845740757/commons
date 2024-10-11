@@ -27,13 +27,15 @@ namespace Wjybxx.Commons.Collections
 {
 /// <summary>
 /// 保持插入序的不可变HashSet
-/// 与C#系统库的ImmutableHashSet不同，这里的实现是基于拷贝的，且不支持增删元素；另外这里保持了元素的插入顺序
-/// (主要解决Unity的兼容性问题)
+/// 与C#系统库的ImmutableHashSet不同，这里的实现是基于拷贝的，且不支持增删元素；另外这里保持了元素的插入顺序。
+/// (主要解决Unity的兼容性问题，以及反序列化顺序问题)
+///
+/// PS：该类虽然声明实现了<see cref="ISet{T}"/>接口，但并未实现对应接口，只为了保证类型的兼容性 -- 否则有些场合难搞。
 /// </summary>
 /// <typeparam name="TKey"></typeparam>
 [Serializable]
 [Immutable]
-public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
+public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet<TKey>
 {
     /** len = 2^n + 1，额外的槽用于存储nullKey */
     private readonly Node[] _table;
@@ -427,5 +429,73 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>
         }
 #endif
     }
+
+    #region 系统库set接口适配
+
+    void ISet<TKey>.ExceptWith(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    void ISet<TKey>.IntersectWith(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    void ISet<TKey>.SymmetricExceptWith(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    void ISet<TKey>.UnionWith(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool ISet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool ISet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool ISet<TKey>.IsSubsetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool ISet<TKey>.IsSupersetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool ISet<TKey>.Overlaps(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool ISet<TKey>.SetEquals(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool IReadOnlySet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool IReadOnlySet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool IReadOnlySet<TKey>.IsSubsetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool IReadOnlySet<TKey>.IsSupersetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool IReadOnlySet<TKey>.Overlaps(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool IReadOnlySet<TKey>.SetEquals(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    #endregion
 }
 }

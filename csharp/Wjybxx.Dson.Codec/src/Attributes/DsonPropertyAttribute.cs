@@ -91,6 +91,7 @@ public class DsonPropertyAttribute : Attribute
     /// 2. 自定义类型也可以指定实现类。
     /// 3. 实现类的泛型参数个数必须和声明类型一致，typeof时不要指定泛型参数。
     /// 4. 使用<see cref="ReadProxy"/>时忽略该属性。
+    /// 5. 不要轻易使用该属性，这会导致总是按照固定类型解析，从而导致多态失效。
     /// </summary>
     public Type? Impl { get; set; }
 

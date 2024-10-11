@@ -32,38 +32,39 @@ public abstract class DsonCodecImpl
     // 解决泛型协变逆变问题 - 不会导致装箱
     public abstract void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, ObjectStyle style);
 
-    public abstract object ReadObject2(IDsonObjectReader reader, Type declaredType, object? factory = null);
+    public abstract object ReadObject2(IDsonObjectReader reader, Type declaredType, object? factory);
 }
 
 /// <summary>
 /// 
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">实例类型，可能是EncoderType的超类</typeparam>
 public sealed class DsonCodecImpl<T> : DsonCodecImpl
 {
     private readonly IDsonCodec<T> _codec;
+    private readonly Type _typeInfo;
     private readonly bool _autoStart;
     private readonly bool _writeAsArray;
-
     private readonly AbstractEnumCodec<T>? _enumCodec;
 
     public DsonCodecImpl(IDsonCodec<T> codec) {
         _codec = codec;
+        _typeInfo = codec.GetEncoderType();
         _autoStart = codec.AutoStartEnd;
         _writeAsArray = codec.IsWriteAsArray;
         _enumCodec = codec as AbstractEnumCodec<T>;
     }
 
     public override Type GetEncoderType() {
-        return _codec.GetEncoderType();
+        return _typeInfo;
     }
 
     public override void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, ObjectStyle style) {
         WriteObject(writer, (T)inst, declaredType, style);
     }
 
-    public override object ReadObject2(IDsonObjectReader reader, Type declaredType, object? factory = null) {
-        return ReadObject(reader, declaredType, (Func<T>?)factory); // factory不为null时一定按照declaredType查找codec，所以到这里factory应该为null
+    public override object ReadObject2(IDsonObjectReader reader, Type declaredType, object? factory) {
+        return ReadObject(reader, declaredType, (Func<T>)factory);
     }
 
     public void WriteObject(IDsonObjectWriter writer, T inst, Type declaredType, ObjectStyle style) {

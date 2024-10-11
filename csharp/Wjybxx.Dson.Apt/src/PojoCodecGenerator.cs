@@ -266,6 +266,8 @@ internal class PojoCodecGenerator
                 CodecProcessor.MNAME_NEW_INSTANCE);
         } else if (containsReaderConstructor) { // 解析构造方法
             newInstanceMethodBuilder.codeBuilder.AddStatement("return new $T(reader)", rawTypeName);
+        } else if (typeElement.IsValueType) { // 值类型
+            newInstanceMethodBuilder.codeBuilder.AddStatement("return default");
         } else {
             newInstanceMethodBuilder.codeBuilder.AddStatement("return new $T()", rawTypeName);
         }

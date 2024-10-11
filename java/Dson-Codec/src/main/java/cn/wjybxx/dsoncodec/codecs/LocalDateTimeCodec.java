@@ -48,8 +48,8 @@ public class LocalDateTimeCodec implements DsonCodec<LocalDateTime> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, LocalDateTime instance, TypeInfo declaredType, ObjectStyle style) {
-        ExtDateTime dateTime = ExtDateTime.ofDateTime(instance);
+    public void writeObject(DsonObjectWriter writer, LocalDateTime inst, TypeInfo declaredType, ObjectStyle style) {
+        ExtDateTime dateTime = ExtDateTime.ofDateTime(inst);
         writer.writeExtDateTime(null, dateTime);
     }
 

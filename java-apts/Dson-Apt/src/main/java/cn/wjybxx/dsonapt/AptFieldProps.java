@@ -56,7 +56,7 @@ class AptFieldProps {
     /** 赋值方法 */
     public String setter = "";
 
-    /** 实现类 -- 在解析{@link AptTypeInfo}时会被修正 */
+    /** 实现类 */
     public TypeMirror implMirror;
     /** 写代理方法名 */
     public String writeProxy = "";

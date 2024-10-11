@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using Wjybxx.Dson.IO;
 using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
@@ -133,20 +134,25 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             WriteNull(name);
             return;
         }
-        // 常见基础类型也在CodecRegistry中 -- Nullable会直接返回被装箱的值的类型
         Type type = value.GetType();
-        DsonCodecImpl? codec = converter.CodecRegistry.GetEncoder(type);
+        Type genericArgument = typeof(T);
+        DsonCodecImpl? codec;
+        // Nullable会直接返回被装箱的值的类型，而泛型参数T可能是Nullable<>，为避免装箱，我们需要转换为查找Nullable的Codec
+        if (type.IsValueType && genericArgument.IsGenericType
+                             && genericArgument.GetGenericTypeDefinition() == typeof(Nullable<>)) {
+            codec = converter.CodecRegistry.GetEncoder(genericArgument);
+        } else {
+            codec = converter.CodecRegistry.GetEncoder(type);
+        }
         if (codec != null) {
             if (writer.IsAtName) { // 写入name
                 writer.WriteName(name);
             }
             ObjectStyle castStyle = style ?? FindObjectStyle(type);
-            // 注意：value的运行时类型不一定是T，因此类型转型时只能测试T
-            if (codec.GetEncoderType() == typeof(T)) {
-                DsonCodecImpl<T> codecImpl = (DsonCodecImpl<T>)codec;
+            if (codec is DsonCodecImpl<T> codecImpl) { // 避免结构体装箱
                 codecImpl.WriteObject(this, value, declaredType, castStyle);
             } else {
-                // 这里value通常不是结构体，不会被装箱
+                Debug.Assert(!type.IsValueType);
                 codec.WriteObject2(this, value, declaredType, castStyle);
             }
             return;

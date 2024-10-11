@@ -44,7 +44,7 @@ internal class AptFieldProps
     /// </summary>
     public bool? ignore;
     /// <summary>
-    /// 实现类 -- 会被替换
+    /// 实现类 -- 会被替换（修正泛型参数）
     /// </summary>
     public Type? implType;
 

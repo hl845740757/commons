@@ -52,8 +52,8 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
         if (typeMeta != null) {
             return typeMeta;
         }
-        // 走到这里，通常意味着clsName是数组或泛型，或在基础注册表中不存在
-        // 对于数组，我们可以动态生成原始类型数组的元数据，其它情况下则证明不存在对应元数据
+        // 走到这里，通常意味着clsName是数组或泛型，在基础注册表中不存在
+        // 对于数组，我们可以尝试动态生成原始类型数组的元数据，其它情况下则证明不存在对应元数据
         if (clazz.isArray()) {
             return ofType(TypeInfo.of(clazz));
         }
@@ -156,9 +156,8 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             String clsName = classNameOfType(rootElementType) + DsonConverterUtils.arrayRankSymbol(arrayRank);
             return new ClassName(clsName);
         }
-        if (type.isConstructedGenericType()) {
+        if (type.isGenericType()) {
             // 泛型原型类必须存在于用户的注册表中
-//            TypeInfo<?> genericTypeDefinition = type.getGenericTypeDefinition();
             TypeMeta typeMeta = basicRegistry.ofClass(type.rawType);
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
@@ -205,8 +204,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             if (typeArgsCount > 0) {
                 TypeInfo[] typeParameters = new TypeInfo[typeArgsCount];
                 for (int index = 0; index < typeArgsCount; index++) {
-                    ClassName genericArgClassName = className.typeArgs.get(index);
-                    typeParameters[index] = typeOfClassName(genericArgClassName);
+                    typeParameters[index] = typeOfClassName(className.typeArgs.get(index));
                 }
                 elementType = TypeInfo.of(elementType.rawType, typeParameters);
             }

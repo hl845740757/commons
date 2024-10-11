@@ -51,8 +51,8 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, int[] instance, TypeInfo declaredType, ObjectStyle style) {
-            for (int e : instance) {
+        public void writeObject(DsonObjectWriter writer, int[] inst, TypeInfo declaredType, ObjectStyle style) {
+            for (int e : inst) {
                 writer.writeInt(null, e);
             }
         }
@@ -77,8 +77,8 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, long[] instance, TypeInfo declaredType, ObjectStyle style) {
-            for (long e : instance) {
+        public void writeObject(DsonObjectWriter writer, long[] inst, TypeInfo declaredType, ObjectStyle style) {
+            for (long e : inst) {
                 writer.writeLong(null, e);
             }
         }
@@ -103,8 +103,8 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, float[] instance, TypeInfo declaredType, ObjectStyle style) {
-            for (float e : instance) {
+        public void writeObject(DsonObjectWriter writer, float[] inst, TypeInfo declaredType, ObjectStyle style) {
+            for (float e : inst) {
                 writer.writeFloat(null, e, NumberStyle.SIMPLE);
             }
         }
@@ -129,8 +129,8 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, double[] instance, TypeInfo declaredType, ObjectStyle style) {
-            for (double e : instance) {
+        public void writeObject(DsonObjectWriter writer, double[] inst, TypeInfo declaredType, ObjectStyle style) {
+            for (double e : inst) {
                 writer.writeDouble(null, e, NumberStyle.SIMPLE);
             }
         }
@@ -155,8 +155,8 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, boolean[] instance, TypeInfo declaredType, ObjectStyle style) {
-            for (boolean e : instance) {
+        public void writeObject(DsonObjectWriter writer, boolean[] inst, TypeInfo declaredType, ObjectStyle style) {
+            for (boolean e : inst) {
                 writer.writeBoolean(null, e);
             }
         }
@@ -181,8 +181,8 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, String[] instance, TypeInfo declaredType, ObjectStyle style) {
-            for (String e : instance) {
+        public void writeObject(DsonObjectWriter writer, String[] inst, TypeInfo declaredType, ObjectStyle style) {
+            for (String e : inst) {
                 writer.writeString(null, e, StringStyle.AUTO);
             }
         }
@@ -207,8 +207,8 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, short[] instance, TypeInfo declaredType, ObjectStyle style) {
-            for (short e : instance) {
+        public void writeObject(DsonObjectWriter writer, short[] inst, TypeInfo declaredType, ObjectStyle style) {
+            for (short e : inst) {
                 writer.writeShort(null, e);
             }
         }
@@ -233,8 +233,8 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, char[] instance, TypeInfo declaredType, ObjectStyle style) {
-            for (char e : instance) {
+        public void writeObject(DsonObjectWriter writer, char[] inst, TypeInfo declaredType, ObjectStyle style) {
+            for (char e : inst) {
                 writer.writeChar(null, e);
             }
         }
@@ -259,10 +259,10 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, Object[] instance, TypeInfo declaredType, ObjectStyle style) {
+        public void writeObject(DsonObjectWriter writer, Object[] inst, TypeInfo declaredType, ObjectStyle style) {
             TypeInfo componentArgInfo = declaredType.isArrayType() ? declaredType.getComponentType() : TypeInfo.OBJECT;
 
-            for (Object e : instance) {
+            for (Object e : inst) {
                 writer.writeObject(null, e, componentArgInfo, null);
             }
         }

@@ -46,8 +46,8 @@ public class DoubleCodec implements DsonCodec<Double> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Double instance, TypeInfo declaredType, ObjectStyle style) {
-        writer.writeDouble(null, instance, NumberStyle.SIMPLE); // double无需声明类型
+    public void writeObject(DsonObjectWriter writer, Double inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeDouble(null, inst, NumberStyle.SIMPLE); // double无需声明类型
     }
 
     @Override

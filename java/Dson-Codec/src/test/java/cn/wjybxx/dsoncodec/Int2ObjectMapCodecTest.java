@@ -17,8 +17,8 @@
 package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dsoncodec.codecs.CollectionCodec;
-import cn.wjybxx.dsoncodec.codecs.MapCodec;
+import cn.wjybxx.dsoncodec.fastutil.Int2ObjectMapCodec;
+import cn.wjybxx.dsoncodec.fastutil.IntCollectionCodec;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -35,40 +35,33 @@ public class Int2ObjectMapCodecTest {
 
     private static DsonConverter converter;
 
-    @SuppressWarnings("rawtypes")
-    private static class Int2ObjectMapCodec extends MapCodec<Int2ObjectMap> {
-
-        public Int2ObjectMapCodec(TypeInfo typeInfo) {
-            super(typeInfo);
-        }
-    }
-
-    private static class IntListCodec extends CollectionCodec<IntList> {
-        public IntListCodec(TypeInfo typeInfo) {
-            super(typeInfo);
-        }
-    }
-
     @BeforeEach
     void setUp() {
-        GenericCodecConfig genericCodecConfig = GenericCodecConfig.newDefaultConfig();
-        genericCodecConfig.addCodec(Int2ObjectMap.class, Int2ObjectMapCodec.class);
-        genericCodecConfig.addCodec(Int2ObjectOpenHashMap.class, Int2ObjectMapCodec.class);
-//        genericCodecConfig.addCodec(IntList.class, IntListCodec.class); // IntList不是泛型类...
-//        genericCodecConfig.addCodec(IntArrayList.class, IntListCodec.class);
-
         TypeMetaRegistry typeMetaRegistry = TypeMetaRegistries.fromMetas(
                 TypeMeta.of(Int2ObjectMap.class, ObjectStyle.INDENT),
                 TypeMeta.of(Int2ObjectOpenHashMap.class, ObjectStyle.INDENT),
                 TypeMeta.of(IntList.class, ObjectStyle.FLOW),
                 TypeMeta.of(IntArrayList.class, ObjectStyle.FLOW)
         );
+
+        // IntList不是泛型类...
+        DsonCodecRegistry codecRegistry = DsonCodecRegistries.fromCodecs(
+                new IntCollectionCodec(TypeInfo.of(IntList.class), IntArrayList::new),
+                new IntCollectionCodec(TypeInfo.of(IntArrayList.class), IntArrayList::new)
+        );
+        GenericCodecConfig genericCodecConfig = GenericCodecConfig.newDefaultConfig();
+        genericCodecConfig.addCodec(GenericCodecInfo.create(TypeInfo.of(Int2ObjectMap.class, Object.class),
+                Int2ObjectMapCodec.class, Int2ObjectOpenHashMap.class));
+        genericCodecConfig.addCodec(GenericCodecInfo.create(TypeInfo.of(Int2ObjectOpenHashMap.class, Object.class),
+                Int2ObjectMapCodec.class, Int2ObjectOpenHashMap.class));
+
         ConverterOptions options = ConverterOptions.DEFAULT.toBuilder()
                 .setWriteMapAsDocument(true)
                 .build();
 
         converter = new DsonConverterBuilder()
                 .addTypeMetaRegistry(typeMetaRegistry)
+                .addCodecRegistry(codecRegistry)
                 .addGenericCodecConfig(genericCodecConfig)
                 .setOptions(options)
                 .build();

@@ -22,6 +22,7 @@ import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonCodecRegistry;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
+import cn.wjybxx.dsoncodec.TypeInfo;
 
 import java.lang.annotation.*;
 
@@ -58,6 +59,10 @@ import java.lang.annotation.*;
  *      public void readField1(DsonObjectReader reader, String dsonName){}
  * }</pre>
  * ps：如果要更好的支持泛型，似乎应该将TypeInfo传入...
+ *
+ * <h3>泛型类</h3>
+ * 1.Apt为泛型类生成Codec时，会固定生成一个{@code rawTypeInfo}字段。
+ * 2.Apt为泛型类生成Codec时，会固定生成一个带有{@link TypeInfo}的构造函数。
  *
  * <h3>序列化的字段</h3>
  * 1. 默认序列化public和或包含public getter的字段；默认忽略{@code transient}修饰或{@link DsonIgnore}注解的字段。

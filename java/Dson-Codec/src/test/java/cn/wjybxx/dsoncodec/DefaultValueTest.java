@@ -131,33 +131,33 @@ public class DefaultValueTest {
         }
 
         @Override
-        public void readFields(DsonObjectReader reader, DefaultValueTest.Bean instance,
+        public void readFields(DsonObjectReader reader, DefaultValueTest.Bean inst,
                                TypeInfo typeInfo) {
-            instance.iv1 = reader.readInt("iv1");
-            instance.iv2 = reader.readInt("iv2");
-            instance.lv1 = reader.readLong("lv1");
-            instance.lv2 = reader.readLong("lv2");
-            instance.fv1 = reader.readFloat("fv1");
-            instance.fv2 = reader.readFloat("fv2");
-            instance.dv1 = reader.readDouble("dv1");
-            instance.dv2 = reader.readDouble("dv2");
-            instance.bv1 = reader.readBoolean("bv1");
-            instance.bv2 = reader.readBoolean("bv2");
+            inst.iv1 = reader.readInt("iv1");
+            inst.iv2 = reader.readInt("iv2");
+            inst.lv1 = reader.readLong("lv1");
+            inst.lv2 = reader.readLong("lv2");
+            inst.fv1 = reader.readFloat("fv1");
+            inst.fv2 = reader.readFloat("fv2");
+            inst.dv1 = reader.readDouble("dv1");
+            inst.dv2 = reader.readDouble("dv2");
+            inst.bv1 = reader.readBoolean("bv1");
+            inst.bv2 = reader.readBoolean("bv2");
         }
 
         @Override
-        public void writeFields(DsonObjectWriter writer, Bean instance,
+        public void writeFields(DsonObjectWriter writer, Bean inst,
                                 TypeInfo typeInfo, ObjectStyle style) {
-            writer.writeInt("iv1", instance.iv1, WireType.VARINT, NumberStyle.SIMPLE);
-            writer.writeInt("iv2", instance.iv2, WireType.VARINT, NumberStyle.SIMPLE);
-            writer.writeLong("lv1", instance.lv1, WireType.VARINT, NumberStyle.SIMPLE);
-            writer.writeLong("lv2", instance.lv2, WireType.VARINT, NumberStyle.SIMPLE);
-            writer.writeFloat("fv1", instance.fv1, NumberStyle.SIMPLE);
-            writer.writeFloat("fv2", instance.fv2, NumberStyle.SIMPLE);
-            writer.writeDouble("dv1", instance.dv1, NumberStyle.SIMPLE);
-            writer.writeDouble("dv2", instance.dv2, NumberStyle.SIMPLE);
-            writer.writeBoolean("bv1", instance.bv1);
-            writer.writeBoolean("bv2", instance.bv2);
+            writer.writeInt("iv1", inst.iv1, WireType.VARINT, NumberStyle.SIMPLE);
+            writer.writeInt("iv2", inst.iv2, WireType.VARINT, NumberStyle.SIMPLE);
+            writer.writeLong("lv1", inst.lv1, WireType.VARINT, NumberStyle.SIMPLE);
+            writer.writeLong("lv2", inst.lv2, WireType.VARINT, NumberStyle.SIMPLE);
+            writer.writeFloat("fv1", inst.fv1, NumberStyle.SIMPLE);
+            writer.writeFloat("fv2", inst.fv2, NumberStyle.SIMPLE);
+            writer.writeDouble("dv1", inst.dv1, NumberStyle.SIMPLE);
+            writer.writeDouble("dv2", inst.dv2, NumberStyle.SIMPLE);
+            writer.writeBoolean("bv1", inst.bv1);
+            writer.writeBoolean("bv2", inst.bv2);
         }
 
     }

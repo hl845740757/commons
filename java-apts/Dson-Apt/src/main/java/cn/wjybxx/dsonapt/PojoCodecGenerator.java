@@ -158,15 +158,15 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private boolean genReadObjectMethod(AptClassProps aptClassProps) {
         if (aptClassProps.codecProxyTypeElement != null) {
             if (containsHookMethod(aptClassProps, CodecProcessor.MNAME_READ_OBJECT)) {
-                // CodecProxy.readObject(instance, reader);
-                readFieldsMethodBuilder.addStatement("$T.$L(instance, reader)",
+                // CodecProxy.readObject(inst, reader);
+                readFieldsMethodBuilder.addStatement("$T.$L(inst, reader)",
                         aptClassProps.codecProxyClassName, CodecProcessor.MNAME_READ_OBJECT);
                 return true;
             }
         } else {
             if (containsReadObjectMethod) {
-                // instance.readObject(reader);
-                readFieldsMethodBuilder.addStatement("instance.$L(reader)",
+                // inst.readObject(reader);
+                readFieldsMethodBuilder.addStatement("inst.$L(reader)",
                         CodecProcessor.MNAME_READ_OBJECT);
                 return true;
             }
@@ -178,15 +178,15 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private boolean genWriteObjectMethod(AptClassProps aptClassProps) {
         if (aptClassProps.codecProxyTypeElement != null) {
             if (containsHookMethod(aptClassProps, CodecProcessor.MNAME_WRITE_OBJECT)) {
-                // CodecProxy.writeObject(instance, writer);
-                writeFieldsMethodBuilder.addStatement("$T.$L(instance, writer)",
+                // CodecProxy.writeObject(inst, writer);
+                writeFieldsMethodBuilder.addStatement("$T.$L(inst, writer)",
                         aptClassProps.codecProxyClassName, CodecProcessor.MNAME_WRITE_OBJECT);
                 return true;
             }
         } else {
             if (containsWriteObjectMethod) {
-                // instance.writeObject(writer);
-                writeFieldsMethodBuilder.addStatement("instance.$L(writer)",
+                // inst.writeObject(writer);
+                writeFieldsMethodBuilder.addStatement("inst.$L(writer)",
                         CodecProcessor.MNAME_WRITE_OBJECT);
                 return true;
             }
@@ -198,15 +198,15 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private boolean genBeforeEncodeMethod(AptClassProps aptClassProps) {
         if (aptClassProps.codecProxyTypeElement != null) {
             if (containsHookMethod(aptClassProps, CodecProcessor.MNAME_BEFORE_ENCODE)) {
-                // CodecProxy.beforeEncode(instance, writer.options());
-                beforeEncodeMethodBuilder.addStatement("$T.$L(instance, writer.options())",
+                // CodecProxy.beforeEncode(inst, writer.options());
+                beforeEncodeMethodBuilder.addStatement("$T.$L(inst, writer.options())",
                         aptClassProps.codecProxyClassName, CodecProcessor.MNAME_BEFORE_ENCODE);
                 return true;
             }
         } else {
             if (containsBeforeEncodeMethod) {
-                // instance.beforeEncode(writer.options());
-                beforeEncodeMethodBuilder.addStatement("instance.$L(writer.options())",
+                // inst.beforeEncode(writer.options());
+                beforeEncodeMethodBuilder.addStatement("inst.$L(writer.options())",
                         CodecProcessor.MNAME_BEFORE_ENCODE);
                 return true;
             }
@@ -218,15 +218,15 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private boolean genAfterDecodeMethod(AptClassProps aptClassProps) {
         if (aptClassProps.codecProxyTypeElement != null) {
             if (containsHookMethod(aptClassProps, CodecProcessor.MNAME_AFTER_DECODE)) {
-                // CodecProxy.afterDecode(instance, reader.options());
-                afterDecodeMethodBuilder.addStatement("$T.$L(instance, reader.options())",
+                // CodecProxy.afterDecode(inst, reader.options());
+                afterDecodeMethodBuilder.addStatement("$T.$L(inst, reader.options())",
                         aptClassProps.codecProxyClassName, CodecProcessor.MNAME_AFTER_DECODE);
                 return true;
             }
         } else {
             if (containsAfterDecodeMethod) {
-                // instance.afterDecode(reader.options());
-                afterDecodeMethodBuilder.addStatement("instance.$L(reader.options())",
+                // inst.afterDecode(reader.options());
+                afterDecodeMethodBuilder.addStatement("inst.$L(reader.options())",
                         CodecProcessor.MNAME_AFTER_DECODE);
                 return true;
             }
@@ -278,9 +278,9 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         if (!AptUtils.isBlank(fieldProps.readProxy)) { // 自定义读
             if (aptClassProps.codecProxyTypeElement != null) {
                 // 方法名是CodecProxy指定的，因此应当存在，不做校验
-                builder.addStatement("$T.$L(instance, reader, $L)", aptClassProps.codecProxyClassName, fieldProps.readProxy, serialName(fieldName));
+                builder.addStatement("$T.$L(inst, reader, $L)", aptClassProps.codecProxyClassName, fieldProps.readProxy, serialName(fieldName));
             } else {
-                builder.addStatement("instance.$L(reader, $L)", fieldProps.readProxy, serialName(fieldName));
+                builder.addStatement("inst.$L(reader, $L)", fieldProps.readProxy, serialName(fieldName));
             }
             return;
         }
@@ -292,38 +292,38 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
             final String fieldAccess = hasCustomSetter ? fieldProps.setter : setterMethod.getSimpleName().toString();
             if (readMethodName.equals(MNAME_READ_OBJECT)) {
                 // 读对象时要传入类型信息和Factory
-                // instance.setName(reader.readObject(names_name, types_name, factories_name))
+                // inst.setName(reader.readObject(names_name, types_name, factories_name))
                 if (fieldProps.implMirror != null) {
-                    builder.addStatement("instance.$L(reader.$L($L, $L, $L))",
+                    builder.addStatement("inst.$L(reader.$L($L, $L, $L))",
                             fieldAccess, readMethodName,
                             serialName(fieldName), serialTypeArg(fieldName), serialFactory(fieldName));
                 } else {
-                    builder.addStatement("instance.$L(reader.$L($L, $L, null))",
+                    builder.addStatement("inst.$L(reader.$L($L, $L, null))",
                             fieldAccess, readMethodName,
                             serialName(fieldName), serialTypeArg(fieldName));
                 }
             } else {
-                // instance.setName(reader.readString(names_.name))
-                builder.addStatement("instance.$L(reader.$L($L))",
+                // inst.setName(reader.readString(names_.name))
+                builder.addStatement("inst.$L(reader.$L($L))",
                         fieldAccess, readMethodName,
                         serialName(fieldName));
             }
         } else {
             if (readMethodName.equals(MNAME_READ_OBJECT)) {
                 // 读对象时要传入类型信息和Factory
-                // instance.name = reader.readObject(names_name, types_name, factories_name)
+                // inst.name = reader.readObject(names_name, types_name, factories_name)
                 if (fieldProps.implMirror != null) {
-                    builder.addStatement("instance.$L = reader.$L($L, $L, $L)",
+                    builder.addStatement("inst.$L = reader.$L($L, $L, $L)",
                             fieldName, readMethodName,
                             serialName(fieldName), serialTypeArg(fieldName), serialFactory(fieldName));
                 } else {
-                    builder.addStatement("instance.$L = reader.$L($L, $L, null)",
+                    builder.addStatement("inst.$L = reader.$L($L, $L, null)",
                             fieldName, readMethodName,
                             serialName(fieldName), serialTypeArg(fieldName));
                 }
             } else {
-                // instance.name = reader.readString(names_.name)
-                builder.addStatement("instance.$L = reader.$L($L)",
+                // inst.name = reader.readString(names_.name)
+                builder.addStatement("inst.$L = reader.$L($L)",
                         fieldName, readMethodName,
                         serialName(fieldName));
             }
@@ -336,9 +336,9 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         if (!AptUtils.isBlank(fieldProps.writeProxy)) { // 自定义写
             if (aptClassProps.codecProxyTypeElement != null) {
                 // 方法名是CodecProxy指定的，因此应当存在，不做校验
-                builder.addStatement("$T.$L(instance, writer, $L)", aptClassProps.codecProxyClassName, fieldProps.writeProxy, serialName(fieldName));
+                builder.addStatement("$T.$L(inst, writer, $L)", aptClassProps.codecProxyClassName, fieldProps.writeProxy, serialName(fieldName));
             } else {
-                builder.addStatement("instance.$L(writer, $L)", fieldProps.writeProxy, serialName(fieldName));
+                builder.addStatement("inst.$L(writer, $L)", fieldProps.writeProxy, serialName(fieldName));
             }
             return;
         }
@@ -358,16 +358,16 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         final String writeMethodName = getWriteMethodName(variableElement);
         switch (variableElement.asType().getKind()) {
             case INT, LONG, SHORT, BYTE, CHAR -> {
-                // writer.writeInt(names_fieldName, instance.field, WireType.VARINT, NumberStyle.SIMPLE)
-                builder.addStatement("writer.$L($L, instance.$L, $T.$L, $T.$L)",
+                // writer.writeInt(names_fieldName, inst.field, WireType.VARINT, NumberStyle.SIMPLE)
+                builder.addStatement("writer.$L($L, inst.$L, $T.$L, $T.$L)",
                         writeMethodName, serialName(fieldName), fieldAccess,
                         processor.typeName_WireType, fieldProps.wireType,
                         processor.typeName_NumberStyle, fieldProps.numberStyle);
                 return;
             }
             case FLOAT, DOUBLE -> {
-                // writer.writeInt(names_fieldName, instance.field, NumberStyle.SIMPLE)
-                builder.addStatement("writer.$L($L, instance.$L, $T.$L)",
+                // writer.writeInt(names_fieldName, inst.field, NumberStyle.SIMPLE)
+                builder.addStatement("writer.$L($L, inst.$L, $T.$L)",
                         writeMethodName, serialName(fieldName), fieldAccess,
                         processor.typeName_NumberStyle, fieldProps.numberStyle);
                 return;
@@ -377,27 +377,27 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         // 其它类型
         switch (writeMethodName) {
             case MNAME_WRITE_STRING -> {
-                // writer.writeString(names_fieldName, instance.getName(), StringStyle.AUTO)
-                builder.addStatement("writer.$L($L, instance.$L, $T.$L)",
+                // writer.writeString(names_fieldName, inst.getName(), StringStyle.AUTO)
+                builder.addStatement("writer.$L($L, inst.$L, $T.$L)",
                         writeMethodName, serialName(fieldName), fieldAccess,
                         processor.typeName_StringStyle, fieldProps.stringStyle);
             }
             case MNAME_WRITE_OBJECT -> {
                 // 写Object时传入类型信息和Style
-                // writer.writeObject(names_fieldName, instance.getName(), types_name, ObjectStyle.INDENT)
+                // writer.writeObject(names_fieldName, inst.getName(), types_name, ObjectStyle.INDENT)
                 if (fieldProps.objectStyle != null) {
-                    builder.addStatement("writer.$L($L, instance.$L, $L, $T.$L)",
+                    builder.addStatement("writer.$L($L, inst.$L, $L, $T.$L)",
                             writeMethodName, serialName(fieldName), fieldAccess, serialTypeArg(fieldName),
                             processor.typeName_ObjectStyle, fieldProps.objectStyle);
                 } else {
-                    builder.addStatement("writer.$L($L, instance.$L, $L, null)",
+                    builder.addStatement("writer.$L($L, inst.$L, $L, null)",
                             writeMethodName, serialName(fieldName), fieldAccess, serialTypeArg(fieldName));
                 }
             }
             default -> {
-                // writer.writeBytes(names_fieldName, instance.getName())
-                // writer.writeBoolean(names_fieldName, instance.getName())
-                builder.addStatement("writer.$L($L, instance.$L)",
+                // writer.writeBytes(names_fieldName, inst.getName())
+                // writer.writeBoolean(names_fieldName, inst.getName())
+                builder.addStatement("writer.$L($L, inst.$L)",
                         writeMethodName, serialName(fieldName), fieldAccess);
             }
         }

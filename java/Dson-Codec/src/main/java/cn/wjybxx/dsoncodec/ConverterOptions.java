@@ -25,7 +25,6 @@ import cn.wjybxx.dson.DsonWriterSettings;
 import cn.wjybxx.dson.text.DsonTextReaderSettings;
 import cn.wjybxx.dson.text.DsonTextWriterSettings;
 
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import java.util.ArrayDeque;
 import java.util.Objects;
@@ -58,7 +57,7 @@ public class ConverterOptions {
     /**
      * 是否把Map编码为普通对象（文档）
      * 1.只在文档编解码中生效(DsonCodec)
-     * 2.如果要将一个Map结构编码为普通对象，<b>Key的运行时必须和声明类型相同</b>，且只支持String、Integer、Long、EnumLite。
+     * 2.如果要将一个Map结构编码为普通对象，<b>Key的运行时必须和声明类型相同</b>，且只支持String、Integer、Long、Enum。
      * 3.在不启用该选项的情况下，用户可通过字段写代理将字段转换为{@link MapEncodeProxy}，实现更精确的控制。
      *
      * <h3>Map不是Object</h3>
@@ -86,6 +85,11 @@ public class ConverterOptions {
      */
     public final boolean randomRead;
     /**
+     * 集合类型是否读取为不可变
+     * 其它类型的对象也可以使用该设置
+     */
+    public final boolean readAsImmutable;
+    /**
      * 是否启用{@code void beforeEncode(ConverterOptions)}钩子方法。
      * 默认不启用！因为启用该特性要求同一个Bean不能被多线程同时序列化 -- 只适用单线程序列化场景，
      */
@@ -95,13 +99,6 @@ public class ConverterOptions {
      * 默认启用！因为我们假设afterDecode仅依赖自身数据。
      */
     public final boolean enableAfterDecode;
-    /**
-     * 集合转换器，主要用于读取为不可变集合。
-     * 当使用Dson读取配置文件时，保持配置对象的不可变性是非常重要的。
-     * 交给用户处理，使得可以支持特殊的集合实现。
-     */
-    @Nullable
-    public final CollectionConverter collectionConverter;
 
     /** protoBuf对应的二进制子类型 -- 其它模块依赖 */
     public final int pbBinaryType;
@@ -112,7 +109,7 @@ public class ConverterOptions {
     public final int bufferSize;
     /** 字节数组缓存池 -- 多线程下需要注意线程安全问题 */
     public final ArrayPool<byte[]> bufferPool;
-    /** 字典key队列缓存池 */
+    /** 字典key队列缓存池 -- 多线程下需要注意线程安全问题 */
     public final ObjectPool<ArrayDeque<String>> keySetPool;
     /** 字符串缓存池 -- 多线程下需要注意线程安全问题 */
     public final ObjectPool<StringBuilder> stringBuilderPool;
@@ -133,9 +130,9 @@ public class ConverterOptions {
         this.writeMapAsDocument = builder.writeMapAsDocument;
         this.writeEnumAsString = builder.writeEnumAsString;
         this.randomRead = builder.randomRead;
+        this.readAsImmutable = builder.readAsImmutable;
         this.enableBeforeEncode = builder.enableBeforeEncode;
         this.enableAfterDecode = builder.enableAfterDecode;
-        this.collectionConverter = builder.collectionConverter;
 
         this.pbBinaryType = builder.pbBinaryType;
         this.usage = builder.usage;
@@ -166,9 +163,9 @@ public class ConverterOptions {
         builder.writeMapAsDocument = writeMapAsDocument;
         builder.writeEnumAsString = writeEnumAsString;
         builder.randomRead = randomRead;
+        builder.readAsImmutable = readAsImmutable;
         builder.enableBeforeEncode = enableBeforeEncode;
         builder.enableAfterDecode = enableAfterDecode;
-        builder.collectionConverter = collectionConverter;
 
         builder.pbBinaryType = pbBinaryType;
         builder.usage = usage;
@@ -204,7 +201,7 @@ public class ConverterOptions {
         private boolean randomRead = true;
         private boolean enableBeforeEncode = false;
         private boolean enableAfterDecode = true;
-        private CollectionConverter collectionConverter = null;
+        private boolean readAsImmutable = false;
 
         private int pbBinaryType = 127;
         private int usage;
@@ -295,6 +292,15 @@ public class ConverterOptions {
             return this;
         }
 
+        public boolean isReadAsImmutable() {
+            return readAsImmutable;
+        }
+
+        public Builder setReadAsImmutable(boolean readAsImmutable) {
+            this.readAsImmutable = readAsImmutable;
+            return this;
+        }
+
         public boolean isEnableBeforeEncode() {
             return enableBeforeEncode;
         }
@@ -310,15 +316,6 @@ public class ConverterOptions {
 
         public Builder setEnableAfterDecode(boolean enableAfterDecode) {
             this.enableAfterDecode = enableAfterDecode;
-            return this;
-        }
-
-        public CollectionConverter getCollectionConverter() {
-            return collectionConverter;
-        }
-
-        public Builder setCollectionConverter(CollectionConverter collectionConverter) {
-            this.collectionConverter = collectionConverter;
             return this;
         }
 

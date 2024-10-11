@@ -31,7 +31,11 @@ public interface DsonCodecRegistry {
 
     /**
      * 查找编码器（encoder）。
-     * 编码器可以接收子类实例，将子类实例按照超类编码，子类特殊数据丢弃。
+     * <p>
+     * 1.可以返回超类的codec，因为子类实例可以向上转型，但子类特殊数据将被丢弃。
+     * 2.不可返回子类的codec，因为超类实例不能向下转型。
+     * <p>
+     * PS：可参考集合和字典的Codec实现。
      *
      * @param typeInfo 类型信息，含泛型参数
      */
@@ -40,10 +44,12 @@ public interface DsonCodecRegistry {
 
     /**
      * 查找解码器（decoder）。
-     * 注意：解码器必须目标类型一致，子类Codec不能安全解码超类数据，超类Codec返回的实例不能向下转型。
      * <p>
-     * ps:在Java端其实可以有所变通，因为Java是伪泛型，因此{@code Codec<BaseType> }可以赋值给{@code Codec<SubType>}，反过来也可以。
-     * 因此可以返回超类或子类的Codec，只有数据是兼容的就可以。
+     * 1.可以返回子类的Codec，如果子类和当前类数据兼容。
+     * 2.不可向上转型，因为超类Codec创建的实例不能安全向下转型。
+     * 3.如果可以，请尽量返回当前类对应的Codec，以避免错误。
+     * <p>
+     * PS：可参考集合和字典的Codec实现。
      *
      * @param typeInfo 类型信息，含泛型参数
      */

@@ -29,9 +29,10 @@ public interface DsonCodecCaster {
 
     /**
      * 转换编码类型
-     * 1.只可以向上转换，因为类型cast限制。
-     * 2.如果目标类型是泛型，返回的Class必须可以继承泛型参数
-     * 3.转换后的类型必须存在对应的Codec
+     * 1.可以向上转换，因为子类实例可以向上转型，但子类特殊数据将被丢弃。
+     * 2.不可向下转换，因为超类实例不能向下转型。
+     * 3.转换后的类必须和当前类具有相同的泛型参数列表，即可以继承当前类型的泛型参数。
+     * 4.转换后的类型必须存在对应的Codec
      *
      * @param clazz              目标类
      * @param genericCodecHelper 用于判断泛型参数继承
@@ -42,15 +43,15 @@ public interface DsonCodecCaster {
 
     /**
      * 转换解码类型
-     * 1.理论上可以向上转换：只要超类对应的Codec返回的实例可以向下转换 -- 通常只适用集合。
-     * 2.理论上也可以向下转换，只要数据是兼容的(子类不包含额外的数据) -- 因此接口不是泛型。
-     * 3.如果目标类型是泛型，返回的Class必须可以继承泛型参数
+     * 1.可以返回子类的Codec，如果子类和当前类数据兼容。
+     * 2.不可向上转型，因为超类Codec创建的实例不能安全向下转型。
+     * 3.转换后的类必须和当前类具有相同的泛型参数列表，即可以继承当前类型的泛型参数。
+     * 4.转换后的类型必须存在对应的Codec
      *
      * @param clazz              目标类
      * @param genericCodecHelper 用于判断泛型参数继承
      * @return 要转换的解码类型；null表示找不到合适的类型，将继续查找下一个
      */
     @Nullable
-    Class<?> castDecoderType(Class<?> clazz, GenericCodecHelper genericCodecHelper);
-
+    <T> Class<? extends T> castDecoderType(Class<T> clazz, GenericCodecHelper genericCodecHelper);
 }

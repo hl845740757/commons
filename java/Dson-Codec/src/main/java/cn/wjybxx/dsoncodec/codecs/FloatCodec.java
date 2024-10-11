@@ -46,10 +46,10 @@ public class FloatCodec implements DsonCodec<Float> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Float instance, TypeInfo declaredType, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, Float inst, TypeInfo declaredType, ObjectStyle style) {
         NumberStyle numberStyle = (declaredType.rawType == Float.class || declaredType.rawType == float.class) ?
                 NumberStyle.SIMPLE : NumberStyle.TYPED;
-        writer.writeFloat(null, instance, numberStyle);
+        writer.writeFloat(null, inst, numberStyle);
     }
 
     @Override
