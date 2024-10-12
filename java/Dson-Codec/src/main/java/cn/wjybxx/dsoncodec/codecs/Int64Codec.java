@@ -54,7 +54,7 @@ public class Int64Codec implements DsonCodec<Long> {
     }
 
     @Override
-    public Long readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Long> factory) {
+    public Long readObject(DsonObjectReader reader, Supplier<? extends Long> factory) {
         return reader.readLong(reader.getCurrentName());
     }
 

@@ -75,7 +75,7 @@ public class LongCollectionCodec implements DsonCodec<LongCollection> {
     }
 
     @Override
-    public LongCollection readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends LongCollection> factory) {
+    public LongCollection readObject(DsonObjectReader reader, Supplier<? extends LongCollection> factory) {
         LongCollection result = factory != null ? factory.get() : newCollection();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readLong(null));

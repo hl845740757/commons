@@ -51,7 +51,7 @@ public class DoubleCodec implements DsonCodec<Double> {
     }
 
     @Override
-    public Double readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Double> factory) {
+    public Double readObject(DsonObjectReader reader, Supplier<? extends Double> factory) {
         return reader.readDouble(reader.getCurrentName());
     }
 

@@ -43,17 +43,17 @@ public class DsonConverterBuilder
             typeMetaRegistries.RemoveAt(typeMetaRegistries.Count - 1);
         }
 
-        DynamicDsonCodecRegistry dynamicDsonCodecRegistry;
+        DynamicCodecRegistry dynamicCodecRegistry;
         codecRegistries.Add(DsonConverterUtils.GetDefaultCodecRegistry());
         {
-            dynamicDsonCodecRegistry = new DynamicDsonCodecRegistry(
+            dynamicCodecRegistry = new DynamicCodecRegistry(
                 DsonCodecRegistries.FromRegistries(codecRegistries), casters,
                 genericCodecConfigs);
         }
         codecRegistries.RemoveAt(codecRegistries.Count - 1);
 
         return new DefaultDsonConverter(dynamicTypeMetaRegistry,
-            dynamicDsonCodecRegistry,
+            dynamicCodecRegistry,
             options);
     }
 

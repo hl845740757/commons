@@ -45,7 +45,7 @@ public sealed class FixedSwitch1Codec<T> : AbstractDsonCodec<FixedSwitch<T>> whe
 
     public override Type GetEncoderType() => typeof(FixedSwitch<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref FixedSwitch<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref FixedSwitch<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteObject(names_children, inst.Children, typeof(List<Task<T>>), null);
@@ -57,11 +57,11 @@ public sealed class FixedSwitch1Codec<T> : AbstractDsonCodec<FixedSwitch<T>> whe
         writer.WriteObject(names_branch5, inst.Branch5, typeof(Task<T>), null);
     }
 
-    protected override FixedSwitch<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override FixedSwitch<T> NewInstance(IDsonObjectReader reader) {
         return new FixedSwitch<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref FixedSwitch<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref FixedSwitch<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
         inst.Children = reader.ReadObject<List<Task<T>>>(names_children, typeof(List<Task<T>>), factories_children);

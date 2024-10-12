@@ -41,7 +41,7 @@ public sealed class ChangeStateTask1Codec<T> : AbstractDsonCodec<ChangeStateTask
 
     public override Type GetEncoderType() => typeof(ChangeStateTask<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref ChangeStateTask<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref ChangeStateTask<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteString(names_nextStateGuid, inst.NextStateGuid, StringStyle.Auto);
@@ -51,11 +51,11 @@ public sealed class ChangeStateTask1Codec<T> : AbstractDsonCodec<ChangeStateTask
         writer.WriteInt(names_delayArg, inst.DelayArg, WireType.VarInt, NumberStyles.Simple);
     }
 
-    protected override ChangeStateTask<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override ChangeStateTask<T> NewInstance(IDsonObjectReader reader) {
         return new ChangeStateTask<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref ChangeStateTask<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref ChangeStateTask<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
         inst.NextStateGuid = reader.ReadString(names_nextStateGuid);

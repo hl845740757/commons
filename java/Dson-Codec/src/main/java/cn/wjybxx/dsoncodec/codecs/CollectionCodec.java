@@ -35,26 +35,29 @@ import java.util.function.Supplier;
 @DsonCodecScanIgnore
 public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
 
-    protected final TypeInfo typeInfo;
+    protected final TypeInfo encoderType;
     protected final Supplier<? extends Collection<E>> factory;
     private final FactoryKind factoryKind;
 
-    public CollectionCodec(TypeInfo typeInfo) {
-        this(typeInfo, null);
+    public CollectionCodec(TypeInfo encoderType) {
+        this(encoderType, null);
     }
 
     @SuppressWarnings("unchecked")
-    public CollectionCodec(TypeInfo typeInfo, Supplier<? extends Collection<E>> factory) {
+    public CollectionCodec(TypeInfo encoderType, Supplier<? extends Collection<E>> factory) {
         if (factory == null) {
-            factory = DsonConverterUtils.tryNoArgConstructorToSupplier((Class<? extends Collection<E>>) typeInfo.rawType);
+            factory = DsonConverterUtils.tryNoArgConstructorToSupplier((Class<? extends Collection<E>>) encoderType.rawType);
         }
-        this.typeInfo = typeInfo;
+        this.encoderType = encoderType;
         this.factory = factory;
-        this.factoryKind = factory == null ? computeFactoryKind(typeInfo) : FactoryKind.Unknown;
+        this.factoryKind = factory == null ? computeFactoryKind(encoderType) : FactoryKind.Unknown;
     }
 
     private static FactoryKind computeFactoryKind(TypeInfo typeInfo) {
         Class<?> clazz = typeInfo.rawType;
+        if (clazz == EnumSet.class && typeInfo.genericArgs.get(0).isEnum()) {
+            return FactoryKind.EnumSet;
+        }
         if (Set.class.isAssignableFrom(clazz)) {
             return FactoryKind.LinkedHashSet;
         }
@@ -66,6 +69,7 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
 
     private enum FactoryKind {
         Unknown,
+        EnumSet,
         LinkedHashSet,
         ArrayDeque,
     }
@@ -73,20 +77,19 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
     @Nonnull
     @Override
     public TypeInfo getEncoderType() {
-        return typeInfo;
+        return encoderType;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    protected Collection<E> newCollection(TypeInfo declaredType) {
+    protected Collection<E> newCollection() {
         if (factory != null) return factory.get();
-        // EnumSet只有通过DeclaredType构建才稳妥 -- 因为这里的Codec可能是泛型原型
-        if (declaredType.rawType == EnumSet.class) {
-            TypeInfo elementTypeInfo = declaredType.genericArgs.get(0);
-            return EnumSet.noneOf((Class) elementTypeInfo.rawType);
-        }
         return switch (factoryKind) {
-            case ArrayDeque -> new ArrayDeque<>();
+            case EnumSet -> {
+                TypeInfo elementTypeInfo = encoderType.genericArgs.get(0);
+                yield EnumSet.noneOf((Class) elementTypeInfo.rawType);
+            }
             case LinkedHashSet -> new LinkedHashSet<>();
+            case ArrayDeque -> new ArrayDeque<>();
             default -> new ArrayList<>();
         };
     }
@@ -109,7 +112,7 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
     public void writeObject(DsonObjectWriter writer, Collection<E> inst, TypeInfo declaredType, ObjectStyle style) {
         // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询E的类型...
         // 另外，typeInfo就是根据【运行时类型】和【declaredType】生成的
-        TypeInfo elementTypeInfo = typeInfo.genericArgs.get(0);
+        TypeInfo elementTypeInfo = encoderType.genericArgs.get(0);
 
         for (Object e : inst) {
             writer.writeObject(null, e, elementTypeInfo, null);
@@ -117,10 +120,10 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
     }
 
     @Override
-    public Collection<E> readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Collection<E>> factory) {
-        TypeInfo elementTypeInfo = typeInfo.genericArgs.get(0);
+    public Collection<E> readObject(DsonObjectReader reader, Supplier<? extends Collection<E>> factory) {
+        TypeInfo elementTypeInfo = encoderType.genericArgs.get(0);
 
-        Collection<E> result = factory != null ? factory.get() : newCollection(declaredType);
+        Collection<E> result = factory != null ? factory.get() : newCollection();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readObject(null, elementTypeInfo));
         }

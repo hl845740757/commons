@@ -38,18 +38,18 @@ public sealed class AlwaysFail1Codec<T> : AbstractDsonCodec<AlwaysFail<T>> where
 
     public override Type GetEncoderType() => typeof(AlwaysFail<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref AlwaysFail<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref AlwaysFail<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
         writer.WriteInt(names_failureStatus, inst.FailureStatus, WireType.VarInt, NumberStyles.Simple);
     }
 
-    protected override AlwaysFail<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override AlwaysFail<T> NewInstance(IDsonObjectReader reader) {
         return new AlwaysFail<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref AlwaysFail<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref AlwaysFail<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
         inst.Child = reader.ReadObject<Task<T>>(names_child, typeof(Task<T>), null);

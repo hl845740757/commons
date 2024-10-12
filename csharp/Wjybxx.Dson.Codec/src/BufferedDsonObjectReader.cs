@@ -70,8 +70,8 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
         }
     }
 
-    public override void ReadStartObject(Type declaredType) {
-        base.ReadStartObject(declaredType);
+    public override void ReadStartObject() {
+        base.ReadStartObject();
 
         DsonCollectionReader<string> reader = (DsonCollectionReader<string>)this.reader;
         MultiChunkDeque<string> keyQueue = converter.Options.keySetPool.Acquire();

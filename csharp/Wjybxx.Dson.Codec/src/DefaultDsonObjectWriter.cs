@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Wjybxx.Dson.IO;
 using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
@@ -193,25 +194,37 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
     public ConverterOptions Options => converter.Options;
     public string CurrentName => writer.CurrentName;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteName(string name) {
         writer.WriteName(name);
     }
 
-    public void WriteStartObject<T>(in T value, Type declaredType, ObjectStyle style = ObjectStyle.Indent) {
-        writer.WriteStartObject(style);
-        WriteClsName(in value, declaredType);
+    public void WriteTypeInfo(Type declaredType, Type encoderType) {
+        if (!converter.Options.classIdPolicy.Test(declaredType, encoderType)) {
+            return;
+        }
+        TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(encoderType);
+        if (typeMeta != null) {
+            writer.WriteSimpleHeader(typeMeta.MainClsName);
+        }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteStartObject(ObjectStyle style) {
+        writer.WriteStartObject(style);
+    }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteEndObject() {
         writer.WriteEndObject();
     }
 
-    public void WriteStartArray<T>(in T value, Type declaredType, ObjectStyle style = ObjectStyle.Indent) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteStartArray(ObjectStyle style) {
         writer.WriteStartArray(style);
-        WriteClsName(in value, declaredType);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteEndArray() {
         writer.WriteEndArray();
     }
@@ -261,22 +274,53 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.Dispose();
     }
 
-    /** 写入对象的类型名，如果存在对应的TypeMeta */
-    private void WriteClsName<T>(in T value, Type declaredType) {
-        Type type = value!.GetType();
-        if (!converter.Options.classIdPolicy.Test(declaredType, type)) {
-            return;
-        }
-        TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(type);
-        if (typeMeta != null) {
-            writer.WriteSimpleHeader(typeMeta.MainClsName);
-        }
-    }
-
     /** 允许泛型参数不同时走不同的style */
     private ObjectStyle FindObjectStyle(Type type) {
         TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(type);
         return typeMeta != null ? typeMeta.style : ObjectStyle.Indent;
+    }
+
+    #endregion
+
+    #region 重复实现，提高效率
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteStartObject(ObjectStyle style, Type declaredType, Type encoderType) {
+        writer.WriteStartObject(style);
+        WriteTypeInfo(declaredType, encoderType);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteStartObject<T>(string name, ObjectStyle style) {
+        writer.WriteName(name);
+        writer.WriteStartObject(style);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteStartObject(string name, ObjectStyle style, Type declaredType, Type encoderType) {
+        writer.WriteName(name);
+        writer.WriteStartObject(style);
+        WriteTypeInfo(declaredType, encoderType);
+    }
+
+    //
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteStartArray(ObjectStyle style, Type declaredType, Type encoderType) {
+        writer.WriteStartArray(style);
+        WriteTypeInfo(declaredType, encoderType);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteStartArray<T>(string name, ObjectStyle style) {
+        writer.WriteName(name);
+        writer.WriteStartArray(style);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteStartArray<T>(string name, ObjectStyle style, Type declaredType, Type encoderType) {
+        writer.WriteName(name);
+        writer.WriteStartArray(style);
+        WriteTypeInfo(declaredType, encoderType);
     }
 
     #endregion

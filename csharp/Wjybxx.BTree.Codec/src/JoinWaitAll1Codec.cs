@@ -31,14 +31,14 @@ public sealed class JoinWaitAll1Codec<T> : AbstractDsonCodec<JoinWaitAll<T>> whe
 {
     public override Type GetEncoderType() => typeof(JoinWaitAll<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref JoinWaitAll<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref JoinWaitAll<T> inst) {
     }
 
-    protected override JoinWaitAll<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override JoinWaitAll<T> NewInstance(IDsonObjectReader reader) {
         return JoinWaitAll<T>.GetInstance();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref JoinWaitAll<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref JoinWaitAll<T> inst) {
     }
 }
 }

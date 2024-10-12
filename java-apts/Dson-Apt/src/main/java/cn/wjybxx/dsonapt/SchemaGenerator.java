@@ -58,25 +58,25 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
         final List<FieldSpec> factoryFields = genFactoryFields(context.serialFields);
         final List<FieldSpec> namesSpec = genNameFields();
         context.typeBuilder
-                .addField(genRawTypeInfoFiled())
+                .addField(genRawEncoderTypeFiled())
                 .addFields(typesFields)
                 .addFields(factoryFields)
                 .addFields(namesSpec);
     }
 
-    static String getTypeInfoFieldName() {
-        return "rawTypeInfo";
+    static String rawEncoderTypeFieldName() {
+        return "_rawEncoderType";
     }
 
-    static String getFactoryFieldName(String fieldName) {
+    static String factoryFieldName(String fieldName) {
         return "factories_" + fieldName;
     }
 
-    static String getTypeInfoFieldName(String fieldName) {
+    static String typeInfoFieldName(String fieldName) {
         return "types_" + fieldName;
     }
 
-    static String getNameFileName(String fieldName) {
+    static String nameFileName(String fieldName) {
         return "names_" + fieldName;
     }
 
@@ -98,15 +98,15 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
         // public static final Supplier<Map<String, Object>> factories_map = HashMap::new;
         TypeMirror typeMirror = variableElement.asType();
         ParameterizedTypeName fieldTypeName = ParameterizedTypeName.get(AptUtils.CLSNAME_SUPPLIER, TypeName.get(typeMirror));
-        String factoryFieldName = getFactoryFieldName(variableElement.getSimpleName().toString());
+        String factoryFieldName = factoryFieldName(variableElement.getSimpleName().toString());
 
         FieldSpec.Builder builder = FieldSpec.builder(fieldTypeName, factoryFieldName, AptUtils.PUBLIC_STATIC_FINAL);
-        if (implMirror == processor.type_EnumMap) {
+        if (processor.isEnumMap(implMirror)) {
             // EnumMap
             DeclaredType declaredType = (DeclaredType) typeMirror;
             builder.initializer("() -> new EnumMap<>($T.class)",
                     TypeName.get(typeUtils.erasure(declaredType.getTypeArguments().get(0))));
-        } else if (implMirror == processor.type_EnumSet) {
+        } else if (processor.isEnumSet(implMirror)) {
             // EnumSet
             DeclaredType declaredType = (DeclaredType) typeMirror;
             builder.initializer("() -> EnumSet.noneOf($T.class)",
@@ -128,7 +128,7 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
     private FieldSpec genTypeField(VariableElement variableElement) {
         // public static final TypeInfo types_name = TypeInfo.of();
         TypeMirror typeMirror = variableElement.asType();
-        String typeInfoFieldName = getTypeInfoFieldName(variableElement.getSimpleName().toString());
+        String typeInfoFieldName = typeInfoFieldName(variableElement.getSimpleName().toString());
 
         FieldSpec.Builder builder = FieldSpec.builder(typeName_TypeInfo, typeInfoFieldName, AptUtils.PUBLIC_STATIC_FINAL);
         // 需要递归构建
@@ -177,9 +177,9 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
     }
 
     /** 生成原始类型的TypeInfo字段 */
-    private FieldSpec genRawTypeInfoFiled() {
-        // private static final TypeInfo rawTypeInfo = TypeInfo.of();
-        FieldSpec.Builder builder = FieldSpec.builder(typeName_TypeInfo, getTypeInfoFieldName(), AptUtils.PRIVATE_STATIC_FINAL);
+    private FieldSpec genRawEncoderTypeFiled() {
+        // private static final TypeInfo _rawEncoderType = TypeInfo.of();
+        FieldSpec.Builder builder = FieldSpec.builder(typeName_TypeInfo, rawEncoderTypeFieldName(), AptUtils.PRIVATE_STATIC_FINAL);
         List<? extends TypeParameterElement> typeParameters = typeElement.getTypeParameters();
 
         StringBuilder format = new StringBuilder(16);
@@ -231,7 +231,7 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
                         variableElement);
                 continue;
             }
-            fieldSpecList.add(FieldSpec.builder(AptUtils.CLSNAME_STRING, getNameFileName(fieldName), AptUtils.PUBLIC_STATIC_FINAL)
+            fieldSpecList.add(FieldSpec.builder(AptUtils.CLSNAME_STRING, nameFileName(fieldName), AptUtils.PUBLIC_STATIC_FINAL)
                     .initializer("$S", dsonName)
                     .build()
             );

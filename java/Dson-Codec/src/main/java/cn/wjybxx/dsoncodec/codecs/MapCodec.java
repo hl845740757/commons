@@ -38,26 +38,30 @@ import java.util.function.Supplier;
 @DsonCodecScanIgnore
 public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
 
-    protected final TypeInfo typeInfo;
+    protected final TypeInfo encoderType;
     protected final Supplier<? extends Map<K, V>> factory;
     private final FactoryKind factoryKind;
 
-    public MapCodec(TypeInfo typeInfo) {
-        this(typeInfo, null);
+    public MapCodec(TypeInfo encoderType) {
+        this(encoderType, null);
     }
 
     @SuppressWarnings("unchecked")
-    public MapCodec(TypeInfo typeInfo, Supplier<? extends Map<K, V>> factory) {
+    public MapCodec(TypeInfo encoderType, Supplier<? extends Map<K, V>> factory) {
         if (factory == null) {
-            factory = DsonConverterUtils.tryNoArgConstructorToSupplier((Class<? extends Map<K, V>>) typeInfo.rawType);
+            factory = DsonConverterUtils.tryNoArgConstructorToSupplier((Class<? extends Map<K, V>>) encoderType.rawType);
         }
-        this.typeInfo = typeInfo;
+        this.encoderType = encoderType;
         this.factory = factory;
-        this.factoryKind = factory == null ? computeFactoryKind(typeInfo) : FactoryKind.Unknown;
+        this.factoryKind = factory == null ? computeFactoryKind(encoderType) : FactoryKind.Unknown;
     }
 
     private static FactoryKind computeFactoryKind(TypeInfo typeInfo) {
         Class<?> clazz = typeInfo.rawType;
+        // EnumMap需要考虑泛型擦除问题
+        if (clazz == EnumMap.class && typeInfo.genericArgs.get(0).isEnum()) {
+            return FactoryKind.EnumMap;
+        }
         if (ConcurrentMap.class.isAssignableFrom(clazz)) {
             return FactoryKind.ConcurrentMap;
         }
@@ -66,6 +70,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
 
     private enum FactoryKind {
         Unknown,
+        EnumMap,
         ConcurrentMap,
     }
 
@@ -78,18 +83,17 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
     @Nonnull
     @Override
     public TypeInfo getEncoderType() {
-        return typeInfo;
+        return encoderType;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private Map<K, V> newMap(TypeInfo declaredType) {
+    private Map<K, V> newMap() {
         if (factory != null) return factory.get();
-        // EnumMap只有通过DeclaredType构建才稳妥 -- 因为这里的Codec可能是泛型原型
-        if (declaredType.rawType == EnumMap.class) {
-            TypeInfo elementTypeInfo = declaredType.genericArgs.get(0);
-            return new EnumMap((Class) elementTypeInfo.rawType);
-        }
         return switch (factoryKind) {
+            case EnumMap -> {
+                TypeInfo elementTypeInfo = encoderType.genericArgs.get(0);
+                yield new EnumMap((Class) elementTypeInfo.rawType);
+            }
             case ConcurrentMap -> new ConcurrentHashMap<>();
             default -> new LinkedHashMap<>();
         };
@@ -109,12 +113,12 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
     public void writeObject(DsonObjectWriter writer, Map<K, V> inst, TypeInfo declaredType, ObjectStyle style) {
         // 理论上declaredType只影响当前inst是否写入类型，而不影响KV是否写入类型，因此应当优先从inst的真实类型中查询K,V的类型...
         // 另外，typeInfo就是根据【运行时类型】和【declaredType】生成的
-        TypeInfo keyTypeInfo = typeInfo.genericArgs.get(0);
-        TypeInfo valueTypeInfo = typeInfo.genericArgs.get(1);
+        TypeInfo keyTypeInfo = encoderType.genericArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.genericArgs.get(1);
 
         var entrySet = inst.entrySet();
         if (writer.options().writeMapAsDocument) {
-            writer.writeStartObject(inst, declaredType, style);
+            writer.writeStartObject(style, declaredType, encoderType);
             for (Map.Entry<K, V> entry : entrySet) {
                 String keyString = writer.encodeKey(entry.getKey());
                 V value = entry.getValue();
@@ -128,7 +132,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
             }
             writer.writeEndObject();
         } else {
-            writer.writeStartArray(inst, declaredType, style);
+            writer.writeStartArray(style, declaredType, encoderType);
             for (Map.Entry<K, V> entry : entrySet) {
                 writer.writeObject(null, entry.getKey(), keyTypeInfo, null);
                 writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
@@ -138,13 +142,13 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
     }
 
     @Override
-    public Map<K, V> readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Map<K, V>> factory) {
-        TypeInfo keyTypeInfo = typeInfo.genericArgs.get(0);
-        TypeInfo valueTypeInfo = typeInfo.genericArgs.get(1);
+    public Map<K, V> readObject(DsonObjectReader reader, Supplier<? extends Map<K, V>> factory) {
+        TypeInfo keyTypeInfo = encoderType.genericArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.genericArgs.get(1);
         //
-        Map<K, V> result = factory != null ? factory.get() : newMap(declaredType);
+        Map<K, V> result = factory != null ? factory.get() : newMap();
         if (reader.options().writeMapAsDocument) {
-            reader.readStartObject(declaredType);
+            reader.readStartObject();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
                 K key = reader.decodeKey(keyString, keyTypeInfo);
@@ -153,7 +157,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
             }
             reader.readEndObject();
         } else {
-            reader.readStartArray(declaredType);
+            reader.readStartArray();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 K key = reader.readObject(null, keyTypeInfo);
                 V value = reader.readObject(null, valueTypeInfo);

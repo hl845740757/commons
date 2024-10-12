@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 泛型编解码工具类
+ * 泛型编解码工具类，测试是否可继承泛型参数
  *
  * @author wjybxx
  * date - 2024/9/27
@@ -88,6 +88,8 @@ public final class GenericCodecHelper {
         inheritableResultCache.put(new CacheKey(clazz, declared), val);
         return this;
     }
+
+    // TODO 直接改为返回TypeInfo，这样就可以组合了，不像现在这般麻烦
 
     /**
      * 测试运行时类型是否可继承声明类型的泛型参数

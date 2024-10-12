@@ -50,10 +50,10 @@ public class DsonConverterBuilder {
         if (genericCodecHelper == null) {
             genericCodecHelper = new GenericCodecHelper();
         }
-        DynamicDsonCodecRegistry dynamicDsonCodecRegistry;
+        DynamicCodecRegistry dynamicDsonCodecRegistry;
         codecRegistries.add(DsonConverterUtils.getDefaultCodecRegistry());
         {
-            dynamicDsonCodecRegistry = new DynamicDsonCodecRegistry(
+            dynamicDsonCodecRegistry = new DynamicCodecRegistry(
                     DsonCodecRegistries.fromRegistries(codecRegistries), casters,
                     genericCodecConfigs, genericCodecHelper);
         }

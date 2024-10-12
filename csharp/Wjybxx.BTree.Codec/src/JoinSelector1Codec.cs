@@ -31,14 +31,14 @@ public sealed class JoinSelector1Codec<T> : AbstractDsonCodec<JoinSelector<T>> w
 {
     public override Type GetEncoderType() => typeof(JoinSelector<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref JoinSelector<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref JoinSelector<T> inst) {
     }
 
-    protected override JoinSelector<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override JoinSelector<T> NewInstance(IDsonObjectReader reader) {
         return JoinSelector<T>.GetInstance();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref JoinSelector<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref JoinSelector<T> inst) {
     }
 }
 }

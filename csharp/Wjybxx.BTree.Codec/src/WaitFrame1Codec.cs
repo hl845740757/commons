@@ -37,17 +37,17 @@ public sealed class WaitFrame1Codec<T> : AbstractDsonCodec<WaitFrame<T>> where T
 
     public override Type GetEncoderType() => typeof(WaitFrame<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref WaitFrame<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref WaitFrame<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteInt(names_required, inst.Required, WireType.VarInt, NumberStyles.Simple);
     }
 
-    protected override WaitFrame<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override WaitFrame<T> NewInstance(IDsonObjectReader reader) {
         return new WaitFrame<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref WaitFrame<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref WaitFrame<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
         inst.Required = reader.ReadInt(names_required);

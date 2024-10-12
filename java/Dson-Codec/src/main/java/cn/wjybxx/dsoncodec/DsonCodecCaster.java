@@ -19,8 +19,10 @@ package cn.wjybxx.dsoncodec;
 import javax.annotation.Nullable;
 
 /**
- * 当要编码的对象类型不存在直接的Codec时，该方法用于转换编解码类型
+ * 当要编码的对象类型不存在直接的Codec时，该方法用于转换编解码类型。
  * PS：建议实现为无状态的。
+ * <p>
+ * 该接口是从{@link DsonCodecRegistry}的逻辑中分离出来的，可更好的处理类型转换冲突。
  *
  * @author wjybxx
  * date - 2024/9/28

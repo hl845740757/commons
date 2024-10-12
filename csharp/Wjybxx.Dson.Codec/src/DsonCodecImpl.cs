@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Reflection;
 using Wjybxx.Dson.Codec.Codecs;
 using Wjybxx.Dson.Text;
 
@@ -33,6 +34,16 @@ public abstract class DsonCodecImpl
     public abstract void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, ObjectStyle style);
 
     public abstract object ReadObject2(IDsonObjectReader reader, Type declaredType, object? factory);
+
+    /** 创建Impl实例 */
+    public static DsonCodecImpl CreateInstance(IDsonCodec codec) {
+        // 存在泛型协变和逆变问题，因此不能直接使用GetEncoderClass创建泛型，需要找到IDsonCodec<>的泛型参数
+        Type genericCodecType = codec.GetType().GetInterface(typeof(IDsonCodec<>).Name)!;
+        Type codecImplGenericType = typeof(DsonCodecImpl<>).MakeGenericType(genericCodecType.GenericTypeArguments);
+        ConstructorInfo constructor = codecImplGenericType.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)[0];
+        object dsonCodecImpl = constructor.Invoke(new object[] { codec });
+        return (DsonCodecImpl)dsonCodecImpl;
+    }
 }
 
 /// <summary>
@@ -42,21 +53,21 @@ public abstract class DsonCodecImpl
 public sealed class DsonCodecImpl<T> : DsonCodecImpl
 {
     private readonly IDsonCodec<T> _codec;
-    private readonly Type _typeInfo;
+    private readonly Type _encoderType;
     private readonly bool _autoStart;
     private readonly bool _writeAsArray;
     private readonly AbstractEnumCodec<T>? _enumCodec;
 
-    public DsonCodecImpl(IDsonCodec<T> codec) {
+    internal DsonCodecImpl(IDsonCodec<T> codec) {
         _codec = codec;
-        _typeInfo = codec.GetEncoderType();
+        _encoderType = codec.GetEncoderType();
         _autoStart = codec.AutoStartEnd;
         _writeAsArray = codec.IsWriteAsArray;
         _enumCodec = codec as AbstractEnumCodec<T>;
     }
 
     public override Type GetEncoderType() {
-        return _typeInfo;
+        return _encoderType;
     }
 
     public override void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, ObjectStyle style) {
@@ -64,17 +75,26 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     }
 
     public override object ReadObject2(IDsonObjectReader reader, Type declaredType, object? factory) {
-        return ReadObject(reader, declaredType, (Func<T>)factory);
+        return ReadObject(reader, (Func<T>)factory);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="writer"></param>
+    /// <param name="inst">要编码的对象</param>
+    /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="style">编码风格</param>
     public void WriteObject(IDsonObjectWriter writer, T inst, Type declaredType, ObjectStyle style) {
         if (_autoStart) {
             if (_writeAsArray) {
-                writer.WriteStartArray(in inst, declaredType, style);
+                writer.WriteStartArray(style);
+                writer.WriteTypeInfo(declaredType, _encoderType);
                 _codec.WriteObject(writer, ref inst, declaredType, style);
                 writer.WriteEndArray();
             } else {
-                writer.WriteStartObject(in inst, declaredType, style);
+                writer.WriteStartObject(style);
+                writer.WriteTypeInfo(declaredType, _encoderType);
                 _codec.WriteObject(writer, ref inst, declaredType, style);
                 writer.WriteEndObject();
             }
@@ -83,21 +103,27 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
         }
     }
 
-    public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<T>? factory = null) {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="reader">reader</param>
+    /// <param name="factory">实例工厂</param>
+    /// <returns></returns>
+    public T ReadObject(IDsonObjectReader reader, Func<T>? factory = null) {
         if (_autoStart) {
             T result;
             if (_writeAsArray) {
-                reader.ReadStartArray(declaredType);
-                result = _codec.ReadObject(reader, declaredType, factory);
+                reader.ReadStartArray();
+                result = _codec.ReadObject(reader, factory);
                 reader.ReadEndArray();
             } else {
-                reader.ReadStartObject(declaredType);
-                result = _codec.ReadObject(reader, declaredType, factory);
+                reader.ReadStartObject();
+                result = _codec.ReadObject(reader, factory);
                 reader.ReadEndObject();
             }
             return result;
         } else {
-            return _codec.ReadObject(reader, declaredType, factory);
+            return _codec.ReadObject(reader, factory);
         }
     }
 

@@ -18,9 +18,13 @@ package cn.wjybxx.dsoncodec.codecs;
 
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dsoncodec.*;
+import cn.wjybxx.dsoncodec.DsonCodec;
+import cn.wjybxx.dsoncodec.DsonObjectReader;
+import cn.wjybxx.dsoncodec.DsonObjectWriter;
+import cn.wjybxx.dsoncodec.TypeInfo;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -63,8 +67,9 @@ public class ArrayCodec<T> implements DsonCodec<T> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
+    public T readObject(DsonObjectReader reader, Supplier<? extends T> factory) {
         TypeInfo elementTypeInfo = this.elementTypeInfo;
 
         // 由于长度未知，只能先存储为List再转...
@@ -73,8 +78,8 @@ public class ArrayCodec<T> implements DsonCodec<T> {
             Object value = reader.readObject(null, elementTypeInfo, null);
             result.add(value);
         }
-
-        @SuppressWarnings("unchecked") Class<T> arrayType = (Class<T>) typeInfo.rawType;
-        return DsonConverterUtils.convertList2Array(result, arrayType);
+        Object[] array = (Object[]) Array.newInstance(elementTypeInfo.rawType, result.size());
+        result.toArray(array);
+        return (T) array;
     }
 }

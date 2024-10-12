@@ -28,7 +28,7 @@ namespace Wjybxx.Dson.Codec
 /// 为支持数组和泛型，我们根据原型类型动态创建Codec。
 /// 查找Codec时，总是优先查找用户的CodecRegistry，以允许用户对特定泛型和数组进行定制编解码。
 /// </summary>
-public sealed class DynamicDsonCodecRegistry : IDsonCodecRegistry
+public sealed class DynamicCodecRegistry : IDsonCodecRegistry
 {
     /** 用户的原始的类型Codec */
     private readonly IDsonCodecRegistry _basicRegistry;
@@ -47,14 +47,14 @@ public sealed class DynamicDsonCodecRegistry : IDsonCodecRegistry
     /// <param name="basicRegistry">用户的基础类型Codec</param>
     /// <param name="casters">类型转换器</param>
     /// <param name="genericCodecConfigs">泛型Codec配置类</param>
-    public DynamicDsonCodecRegistry(IDsonCodecRegistry basicRegistry, List<IDsonCodecCaster> casters, List<GenericCodecConfig> genericCodecConfigs) {
+    public DynamicCodecRegistry(IDsonCodecRegistry basicRegistry, List<IDsonCodecCaster> casters, List<GenericCodecConfig> genericCodecConfigs) {
         _basicRegistry = basicRegistry ?? throw new ArgumentNullException(nameof(basicRegistry));
         _casters = new List<IDsonCodecCaster>(casters);
 
         // 先初始化为默认配置，然后由用户的配置进行覆盖 -- 不转不可变对象，性能更好
         _genericCodecConfig = GenericCodecConfig.NewDefaultConfig();
         foreach (GenericCodecConfig genericCodecConfig in genericCodecConfigs) {
-            _genericCodecConfig.AddCodecs(genericCodecConfig);
+            _genericCodecConfig.MergeFrom(genericCodecConfig);
         }
         // 初始化特化List
         AddCodec(new DsonCodecImpl<IList<int>>(new MoreCollectionCodecs.IntListCodec(typeof(IList<int>))));
@@ -197,13 +197,13 @@ public sealed class DynamicDsonCodecRegistry : IDsonCodecRegistry
     private DsonCodecImpl MakeArrayCodec(Type type) {
         Type genericArrayCodecType = typeof(ArrayCodec<>).MakeGenericType(type.GetElementType()!);
         IDsonCodec codec = (IDsonCodec)Activator.CreateInstance(genericArrayCodecType)!;
-        return MakeCodecImpl(codec);
+        return DsonCodecImpl.CreateInstance(codec);
     }
 
     private DsonCodecImpl MakeEnumCodec(Type type) {
         Type enumCodecType = typeof(EnumCodec<>).MakeGenericType(type);
         IDsonCodec codec = (IDsonCodec)Activator.CreateInstance(enumCodecType)!;
-        return MakeCodecImpl(codec);
+        return DsonCodecImpl.CreateInstance(codec);
     }
 
     private DsonCodecImpl? MakeGenericCodec(Type type, bool encoder) {
@@ -241,7 +241,7 @@ public sealed class DynamicDsonCodecRegistry : IDsonCodecRegistry
         if (codec == null) {
             throw new DsonCodecException("bad generic codec: " + genericCodecType);
         }
-        return MakeCodecImpl(codec);
+        return DsonCodecImpl.CreateInstance(codec);
     }
 
     private GenericCodecInfo? FindGenericEncoder(Type type) {
@@ -273,17 +273,7 @@ public sealed class DynamicDsonCodecRegistry : IDsonCodecRegistry
         if (superClazz != null) {
             return FindGenericDecoder(superClazz);
         }
-        // c# 泛型类之间不能直接测试是否可赋值...要解决问题的话，这里需要动态构建Dictionary<,>类型，开销较大
         return null;
-    }
-
-    private static DsonCodecImpl MakeCodecImpl(IDsonCodec codec) {
-        // 存在泛型协变和逆变问题，因此不能直接使用GetEncoderClass创建泛型，需要找到IDsonCodec<>的泛型参数
-        Type genericCodecType = codec.GetType().GetInterface(typeof(IDsonCodec<>).Name)!;
-        Type codecImplGenericType = typeof(DsonCodecImpl<>).MakeGenericType(genericCodecType.GenericTypeArguments);
-        ConstructorInfo constructor = codecImplGenericType.GetConstructors()[0];
-        object dsonCodecImpl = constructor.Invoke(new object[] { codec });
-        return (DsonCodecImpl)dsonCodecImpl;
     }
 
     private Type? CastEncoderType(Type clazz) {

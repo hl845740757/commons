@@ -51,7 +51,7 @@ public class ObjectPtrCodec implements DsonCodec<ObjectPtr> {
     }
 
     @Override
-    public ObjectPtr readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends ObjectPtr> factory) {
+    public ObjectPtr readObject(DsonObjectReader reader, Supplier<? extends ObjectPtr> factory) {
         return reader.readPtr(reader.getCurrentName());
     }
 }

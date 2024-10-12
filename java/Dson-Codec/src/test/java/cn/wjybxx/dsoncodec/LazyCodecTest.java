@@ -114,7 +114,7 @@ public class LazyCodecTest {
             } else {
                 // 不在编码器里，定制写
                 NestStruct nestStruct = (NestStruct) inst.nestStruct;
-                writer.writeStartObject("nestStruct", nestStruct, TypeInfo.of(NestStruct.class));
+                writer.writeStartObject("nestStruct", ObjectStyle.INDENT);
                 {
                     writer.writeInt("intVal", nestStruct.intVal);
                     writer.writeLong("longVal", nestStruct.longVal);
@@ -126,13 +126,13 @@ public class LazyCodecTest {
         }
 
         @Override
-        public MyStruct readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends MyStruct> factory) {
+        public MyStruct readObject(DsonObjectReader reader, Supplier<? extends MyStruct> factory) {
             String strVal = reader.readString("strVal");
             Object nestStruct;
             if (role == Role.ROUTER) {
                 nestStruct = reader.readValueAsBytes("nestStruct");
             } else {
-                reader.readStartObject("nestStruct", TypeInfo.of(NestStruct.class));
+                reader.readStartObject("nestStruct");
                 nestStruct = new NestStruct(
                         reader.readInt("intVal"),
                         reader.readLong("longVal"),
@@ -145,7 +145,7 @@ public class LazyCodecTest {
     }
 
     private record NestStruct(int intVal, long longVal, float floatVal, double doubleVal) {
-
+        private static final TypeInfo typeInfo = TypeInfo.of(NestStruct.class);
     }
 
     private record MyStruct(String strVal, Object nestStruct) {

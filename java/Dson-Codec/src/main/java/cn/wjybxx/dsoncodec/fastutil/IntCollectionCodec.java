@@ -71,7 +71,7 @@ public class IntCollectionCodec implements DsonCodec<IntCollection> {
     }
 
     @Override
-    public IntCollection readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends IntCollection> factory) {
+    public IntCollection readObject(DsonObjectReader reader, Supplier<? extends IntCollection> factory) {
         IntCollection result = factory != null ? factory.get() : newCollection();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readInt(null));

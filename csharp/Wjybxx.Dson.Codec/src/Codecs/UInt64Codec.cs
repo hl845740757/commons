@@ -32,7 +32,7 @@ public class UInt64Codec : IDsonCodec<ulong>
         writer.WriteUlong(null, inst, WireType.Uint, numberStyle);
     }
 
-    public ulong ReadObject(IDsonObjectReader reader, Type declaredType, Func<ulong>? factory = null) {
+    public ulong ReadObject(IDsonObjectReader reader, Func<ulong>? factory = null) {
         return reader.ReadUlong(reader.CurrentName);
     }
 }

@@ -107,7 +107,7 @@ public final class EnumCodec<T extends Enum<T>> implements IEnumCodec<T>, DsonCo
     }
 
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
+    public T readObject(DsonObjectReader reader, Supplier<? extends T> factory) {
         if (reader.options().writeEnumAsString) {
             String name = reader.readString(reader.getCurrentName());
             EnumValueInfo<T> valueInfo = name2EnumMap.get(name);

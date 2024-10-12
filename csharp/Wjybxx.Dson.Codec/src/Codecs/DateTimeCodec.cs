@@ -29,7 +29,7 @@ public class DateTimeCodec : IDsonCodec<DateTime>
         writer.WriteDateTime(null, in inst);
     }
 
-    public DateTime ReadObject(IDsonObjectReader reader, Type declaredType, Func<DateTime>? factory = null) {
+    public DateTime ReadObject(IDsonObjectReader reader, Func<DateTime>? factory = null) {
         return reader.ReadDateTime(reader.CurrentName);
     }
 }

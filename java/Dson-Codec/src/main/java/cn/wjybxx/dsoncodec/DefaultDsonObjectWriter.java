@@ -232,9 +232,20 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public void writeStartObject(@Nonnull Object value, TypeInfo declaredType, ObjectStyle style) {
+    public void writeTypeInfo(TypeInfo declaredType, TypeInfo encoderType) {
+        if (!converter.options().classIdPolicy.test(declaredType, encoderType)) {
+            return;
+        }
+        // 这里不应该为null
+        final TypeMeta typeMeta = converter.typeMetaRegistry().ofType(encoderType);
+        if (typeMeta != null && !typeMeta.clsNames.isEmpty()) {
+            writer.writeSimpleHeader(typeMeta.mainClsName());
+        }
+    }
+
+    @Override
+    public void writeStartObject(ObjectStyle style) {
         writer.writeStartObject(style);
-        writeClsName(value, declaredType);
     }
 
     @Override
@@ -243,9 +254,8 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public void writeStartArray(@Nonnull Object value, TypeInfo declaredType, ObjectStyle style) {
+    public void writeStartArray(ObjectStyle style) {
         writer.writeStartArray(style);
-        writeClsName(value, declaredType);
     }
 
     @Override
@@ -295,21 +305,6 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         writer.close();
     }
 
-    // 发现个问题：子类使用超类编码器时，如果当前类不存在TypeMeta，是否应当尝试写入超类的TypeMeta？
-    // 写入超类信息似乎也不对劲 -- 最好的方式是每个类型都有对应的TypeMeta
-
-    /** 写入对象的类型名，如果存在对应的TypeMeta -- 尽可能写上泛型参数信息 */
-    private void writeClsName(Object value, TypeInfo declaredType) {
-        TypeInfo runtimeTypeInfo = getRuntimeTypeInfo(value, declaredType);
-        if (!converter.options().classIdPolicy.test(declaredType, runtimeTypeInfo)) {
-            return;
-        }
-        final TypeMeta typeMeta = converter.typeMetaRegistry().ofType(runtimeTypeInfo);
-        if (typeMeta != null && !typeMeta.clsNames.isEmpty()) {
-            writer.writeSimpleHeader(typeMeta.mainClsName());
-        }
-    }
-
     /** 允许泛型参数不同时走不同的style */
     private ObjectStyle findObjectStyle(TypeInfo runtimeTypeInfo) {
         final TypeMeta typeMeta = converter.typeMetaRegistry().ofType(runtimeTypeInfo);
@@ -333,4 +328,45 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
 
     // endregion
 
+    // region 重复实现，提高效率
+
+    @Override
+    public void writeStartObject(ObjectStyle style, TypeInfo declaredType, TypeInfo encoderType) {
+        writer.writeStartObject(style);
+        writeTypeInfo(declaredType, encoderType);
+    }
+
+    @Override
+    public void writeStartObject(String name, ObjectStyle style) {
+        writer.writeName(name);
+        writer.writeStartObject(style);
+    }
+
+    @Override
+    public void writeStartObject(String name, ObjectStyle style, TypeInfo declaredType, TypeInfo encoderType) {
+        writer.writeName(name);
+        writer.writeStartObject(style);
+        writeTypeInfo(declaredType, encoderType);
+    }
+    //
+
+    @Override
+    public void writeStartArray(ObjectStyle style, TypeInfo declaredType, TypeInfo encoderType) {
+        writer.writeStartArray(style);
+        writeTypeInfo(encoderType, declaredType);
+    }
+
+    @Override
+    public void writeStartArray(String name, ObjectStyle style) {
+        writer.writeName(name);
+        writer.writeStartArray(style);
+    }
+
+    @Override
+    public void writeStartArray(String name, ObjectStyle style, TypeInfo declaredType, TypeInfo encoderType) {
+        writer.writeName(name);
+        writer.writeStartArray(style);
+        writeTypeInfo(encoderType, declaredType);
+    }
+    // endregion
 }

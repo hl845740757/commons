@@ -34,7 +34,7 @@ public interface IDsonCodec
 
     /// <summary>
     /// 该方法用于告知<see cref="DsonCodecImpl{T}"/>是否自动调用以下方法：
-    /// <see cref="IDsonObjectWriter.WriteStartObject()"/>
+    /// <see cref="IDsonObjectWriter.WriteStartObject"/>
     /// <see cref="IDsonObjectWriter.WriteEndObject"/>
     /// <see cref="IDsonObjectReader.ReadStartObject(System.Type)"/>
     /// <see cref="IDsonObjectReader.ReadEndObject"/>
@@ -77,11 +77,13 @@ public interface IDsonCodec<T> : IDsonCodec
     /// 将对象及其所有超类定义的所有要序列化的字段写入输出流。
     /// 由于序列化的时候，可能触发实例数据变化，为支持结构体序列化，因此需要使用ref
     /// 
-    /// 注意：name在外部已写入，因此基础类型写入value时name传null或空字符串。
+    /// 注意：
+    /// 1.name在外部已写入，因此基础类型写入value时name传null或空字符串。
+    /// 2.declaredType只影响外层类型信息是否写入，而不应向下传递。以字典为例，KV是否需要写入类型信息，取决于encoderType中的信息。 
     /// </summary>
     /// <param name="writer">writer</param>
     /// <param name="inst">要编码的实例</param>
-    /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="declaredType">对象的声明类型，用于判断是否写入类型信息</param>
     /// <param name="style">文本编码样式</param>
     void WriteObject(IDsonObjectWriter writer, ref T inst, Type declaredType, ObjectStyle style);
 
@@ -89,13 +91,12 @@ public interface IDsonCodec<T> : IDsonCodec
     /// 从输入流中解析指定对象。
     /// 它应该创建对象，并反序列化该类及其所有超类定义的所有要序列化的字段。
     /// factory用于将超类数据读取到子类，通常用于集合类型。
-    ///
+    /// 
     /// 注意：name在外部已读取，因此读取value时使用<see cref="IDsonObjectReader.CurrentName"/>。
     /// </summary>
     /// <param name="reader">reader</param>
-    /// <param name="declaredType">对象的声明类型</param>
     /// <param name="factory">实例工厂</param>
     /// <returns></returns>
-    T ReadObject(IDsonObjectReader reader, Type declaredType, Func<T>? factory = null);
+    T ReadObject(IDsonObjectReader reader, Func<T>? factory = null);
 }
 }

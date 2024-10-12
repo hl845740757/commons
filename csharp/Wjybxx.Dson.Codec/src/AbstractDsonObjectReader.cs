@@ -125,7 +125,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         // 考虑枚举类型--可转换为基础值类型的Object
         if (declaredType.IsEnum) {
             DsonCodecImpl<T> codec = (DsonCodecImpl<T>)converter.CodecRegistry.GetDecoder(declaredType)!;
-            return codec.ReadObject(this, declaredType);
+            return codec.ReadObject(this);
         }
         // 考虑DsonValue
         if (typeof(DsonValue).IsAssignableFrom(declaredType)) {
@@ -143,7 +143,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         }
         // 避免结构体装箱
         if (codec is DsonCodecImpl<T> codecImpl) {
-            return codecImpl.ReadObject(this, declaredType, factory);
+            return codecImpl.ReadObject(this, factory);
         } else {
             return (T)codec.ReadObject2(this, declaredType, factory);
         }
@@ -169,7 +169,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
     public DsonType CurrentDsonType => reader.CurrentDsonType;
     public string CurrentName => reader.CurrentName;
 
-    public virtual void ReadStartObject(Type declaredType) {
+    public virtual void ReadStartObject() {
         if (reader.IsAtType) { // 顶层对象适配
             reader.ReadDsonType();
         }
@@ -181,7 +181,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         reader.ReadEndObject();
     }
 
-    public virtual void ReadStartArray(Type declaredType) {
+    public virtual void ReadStartArray() {
         if (reader.IsAtType) { // 顶层对象适配
             reader.ReadDsonType();
         }

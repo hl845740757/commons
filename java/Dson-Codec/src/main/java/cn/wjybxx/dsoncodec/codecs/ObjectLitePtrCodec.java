@@ -51,7 +51,7 @@ public class ObjectLitePtrCodec implements DsonCodec<ObjectLitePtr> {
     }
 
     @Override
-    public ObjectLitePtr readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends ObjectLitePtr> factory) {
+    public ObjectLitePtr readObject(DsonObjectReader reader, Supplier<? extends ObjectLitePtr> factory) {
         return reader.readLitePtr(reader.getCurrentName());
     }
 }

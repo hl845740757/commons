@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Codec.Codecs;
@@ -104,12 +103,12 @@ public sealed class GenericCodecConfig
     /// <summary>
     /// 主要用于合并注解处理器生成的Config
     /// </summary>
-    /// <param name="otherConfig"></param>
-    public GenericCodecConfig AddCodecs(GenericCodecConfig otherConfig) {
-        foreach (GenericCodecInfo item in otherConfig.encoderTypeDic.Values) {
+    /// <param name="other"></param>
+    public GenericCodecConfig MergeFrom(GenericCodecConfig other) {
+        foreach (GenericCodecInfo item in other.encoderTypeDic.Values) {
             AddEncoder(item);
         }
-        foreach (GenericCodecInfo item in otherConfig.decoderTypeDic.Values) {
+        foreach (GenericCodecInfo item in other.decoderTypeDic.Values) {
             AddDecoder(item);
         }
         return this;

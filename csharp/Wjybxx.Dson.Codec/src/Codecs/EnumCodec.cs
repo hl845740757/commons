@@ -114,13 +114,13 @@ public sealed class EnumCodec<T> : AbstractEnumCodec<T>, IDsonCodec<T> where T :
             throw new DsonCodecException($"invalid enum value: {inst}, type: {typeof(T)}");
         }
         if (writer.Options.writeEnumAsString) {
-            writer.WriteString(null, valueInfo.name, StringStyle.Unquote);
+            writer.WriteString(writer.CurrentName, valueInfo.name, StringStyle.Unquote);
         } else {
-            writer.WriteInt(null, valueInfo.number);
+            writer.WriteInt(writer.CurrentName, valueInfo.number);
         }
     }
 
-    public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<T>? factory = null) {
+    public T ReadObject(IDsonObjectReader reader, Func<T>? factory = null) {
         if (reader.Options.writeEnumAsString) {
             string name = reader.ReadString(reader.CurrentName);
             if (_name2EnumDic.TryGetValue(name, out EnumValueInfo valueInfo)) {

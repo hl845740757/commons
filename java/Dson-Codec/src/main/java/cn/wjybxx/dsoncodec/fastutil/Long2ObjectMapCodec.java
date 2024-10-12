@@ -32,20 +32,20 @@ import java.util.function.Supplier;
  */
 public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
 
-    protected final TypeInfo typeInfo;
+    protected final TypeInfo encoderType;
     protected final Supplier<? extends Long2ObjectMap<V>> factory;
 
-    public Long2ObjectMapCodec(TypeInfo typeInfo) {
-        this(typeInfo, null);
+    public Long2ObjectMapCodec(TypeInfo encoderType) {
+        this(encoderType, null);
     }
 
     @SuppressWarnings("unchecked")
-    public Long2ObjectMapCodec(TypeInfo typeInfo, Supplier<? extends Long2ObjectMap<V>> factory) {
+    public Long2ObjectMapCodec(TypeInfo encoderType, Supplier<? extends Long2ObjectMap<V>> factory) {
         if (factory == null) {
-            Class<? extends Long2ObjectMap<V>> rawType = (Class<? extends Long2ObjectMap<V>>) typeInfo.rawType;
+            Class<? extends Long2ObjectMap<V>> rawType = (Class<? extends Long2ObjectMap<V>>) encoderType.rawType;
             factory = DsonConverterUtils.tryNoArgConstructorToSupplier(rawType);
         }
-        this.typeInfo = typeInfo;
+        this.encoderType = encoderType;
         this.factory = factory;
     }
 
@@ -57,7 +57,7 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
     @Nonnull
     @Override
     public TypeInfo getEncoderType() {
-        return typeInfo;
+        return encoderType;
     }
 
     private Long2ObjectMap<V> newMap() {
@@ -67,10 +67,10 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
 
     @Override
     public void writeObject(DsonObjectWriter writer, Long2ObjectMap<V> inst, TypeInfo declaredType, ObjectStyle style) {
-        TypeInfo valueTypeInfo = typeInfo.genericArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.genericArgs.get(0);
 
         if (writer.options().writeMapAsDocument) {
-            writer.writeStartObject(inst, declaredType, style);
+            writer.writeStartObject(style, declaredType, encoderType);
             for (var itr = Long2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                 Long2ObjectMap.Entry<V> entry = itr.next();
                 String keyString = Long.toString(entry.getLongKey());
@@ -84,7 +84,7 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
             }
             writer.writeEndObject();
         } else {
-            writer.writeStartArray(inst, declaredType, style);
+            writer.writeStartArray(style, declaredType, encoderType);
             for (var itr = Long2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                 Long2ObjectMap.Entry<V> entry = itr.next();
                 writer.writeLong(null, entry.getLongKey(), null);
@@ -95,12 +95,12 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
     }
 
     @Override
-    public Long2ObjectMap<V> readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Long2ObjectMap<V>> factory) {
-        TypeInfo valueTypeInfo = typeInfo.genericArgs.get(0);
+    public Long2ObjectMap<V> readObject(DsonObjectReader reader, Supplier<? extends Long2ObjectMap<V>> factory) {
+        TypeInfo valueTypeInfo = encoderType.genericArgs.get(0);
 
         Long2ObjectMap<V> result = factory != null ? factory.get() : newMap();
         if (reader.options().writeMapAsDocument) {
-            reader.readStartObject(declaredType);
+            reader.readStartObject();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
                 long key = Long.parseLong(keyString);
@@ -109,7 +109,7 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
             }
             reader.readEndObject();
         } else {
-            reader.readStartArray(declaredType);
+            reader.readStartArray();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 int key = reader.readInt(null);
                 V value = reader.readObject(null, valueTypeInfo);

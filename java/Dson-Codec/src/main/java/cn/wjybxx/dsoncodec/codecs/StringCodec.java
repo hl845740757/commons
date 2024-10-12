@@ -51,7 +51,7 @@ public class StringCodec implements DsonCodec<String> {
     }
 
     @Override
-    public String readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends String> factory) {
+    public String readObject(DsonObjectReader reader, Supplier<? extends String> factory) {
         return reader.readString(reader.getCurrentName());
     }
 

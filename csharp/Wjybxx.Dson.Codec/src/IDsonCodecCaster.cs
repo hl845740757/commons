@@ -23,6 +23,8 @@ namespace Wjybxx.Dson.Codec
 /// <summary>
 /// 当要编码的对象类型不存在直接的Codec时，该方法用于转换编解码类型。
 /// PS：建议实现为无状态的。
+///
+/// 该接口是从<see cref="IDsonCodecRegistry"/>的逻辑中分离出来的，可更好的处理类型转换冲突。
 /// </summary>
 public interface IDsonCodecCaster
 {

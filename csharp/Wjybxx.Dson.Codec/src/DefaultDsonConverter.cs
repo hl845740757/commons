@@ -34,11 +34,11 @@ namespace Wjybxx.Dson.Codec
 public class DefaultDsonConverter : IDsonConverter
 {
     private readonly DynamicTypeMetaRegistry typeMetaRegistry;
-    private readonly DynamicDsonCodecRegistry codecRegistry;
+    private readonly DynamicCodecRegistry codecRegistry;
     private readonly ConverterOptions options;
 
     internal DefaultDsonConverter(DynamicTypeMetaRegistry typeMetaRegistry,
-                                  DynamicDsonCodecRegistry codecRegistry,
+                                  DynamicCodecRegistry codecRegistry,
                                   ConverterOptions options) {
         this.typeMetaRegistry = typeMetaRegistry;
         this.codecRegistry = codecRegistry;
@@ -64,7 +64,7 @@ public class DefaultDsonConverter : IDsonConverter
     /// <summary>
     /// 暴露注册表以允许用户提前缓存
     /// </summary>
-    public DynamicDsonCodecRegistry CodecRegistry => codecRegistry;
+    public DynamicCodecRegistry CodecRegistry => codecRegistry;
 
     #endregion
 

@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 
 /**
  * 测试不写入默认值情况下的解码测试。
@@ -125,14 +124,12 @@ public class DefaultValueTest {
         }
 
         @Override
-        protected DefaultValueTest.Bean newInstance(DsonObjectReader reader,
-                                                    TypeInfo typeInfo) {
+        protected DefaultValueTest.Bean newInstance(DsonObjectReader reader) {
             return new DefaultValueTest.Bean();
         }
 
         @Override
-        public void readFields(DsonObjectReader reader, DefaultValueTest.Bean inst,
-                               TypeInfo typeInfo) {
+        public void readFields(DsonObjectReader reader, Bean inst) {
             inst.iv1 = reader.readInt("iv1");
             inst.iv2 = reader.readInt("iv2");
             inst.lv1 = reader.readLong("lv1");
@@ -146,8 +143,7 @@ public class DefaultValueTest {
         }
 
         @Override
-        public void writeFields(DsonObjectWriter writer, Bean inst,
-                                TypeInfo typeInfo, ObjectStyle style) {
+        public void writeFields(DsonObjectWriter writer, Bean inst) {
             writer.writeInt("iv1", inst.iv1, WireType.VARINT, NumberStyle.SIMPLE);
             writer.writeInt("iv2", inst.iv2, WireType.VARINT, NumberStyle.SIMPLE);
             writer.writeLong("lv1", inst.lv1, WireType.VARINT, NumberStyle.SIMPLE);

@@ -32,19 +32,19 @@ import java.util.function.Supplier;
  */
 public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
 
-    protected final TypeInfo typeInfo;
+    protected final TypeInfo encoderType;
     protected final Supplier<? extends Int2ObjectMap<V>> factory;
 
-    public Int2ObjectMapCodec(TypeInfo typeInfo) {
-        this(typeInfo, null);
+    public Int2ObjectMapCodec(TypeInfo encoderType) {
+        this(encoderType, null);
     }
 
     @SuppressWarnings("unchecked")
-    public Int2ObjectMapCodec(TypeInfo typeInfo, Supplier<? extends Int2ObjectMap<V>> factory) {
+    public Int2ObjectMapCodec(TypeInfo encoderType, Supplier<? extends Int2ObjectMap<V>> factory) {
         if (factory == null) {
-            factory = DsonConverterUtils.tryNoArgConstructorToSupplier((Class<? extends Int2ObjectMap<V>>) typeInfo.rawType);
+            factory = DsonConverterUtils.tryNoArgConstructorToSupplier((Class<? extends Int2ObjectMap<V>>) encoderType.rawType);
         }
-        this.typeInfo = typeInfo;
+        this.encoderType = encoderType;
         this.factory = factory;
     }
 
@@ -56,7 +56,7 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
     @Nonnull
     @Override
     public TypeInfo getEncoderType() {
-        return typeInfo;
+        return encoderType;
     }
 
     protected Int2ObjectMap<V> newMap() {
@@ -66,10 +66,10 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
 
     @Override
     public void writeObject(DsonObjectWriter writer, Int2ObjectMap<V> inst, TypeInfo declaredType, ObjectStyle style) {
-        TypeInfo valueTypeInfo = typeInfo.genericArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.genericArgs.get(0);
 
         if (writer.options().writeMapAsDocument) {
-            writer.writeStartObject(inst, declaredType, style);
+            writer.writeStartObject(style, declaredType, encoderType);
             for (var itr = Int2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                 Int2ObjectMap.Entry<V> entry = itr.next();
                 String keyString = Integer.toString(entry.getIntKey());
@@ -83,7 +83,7 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
             }
             writer.writeEndObject();
         } else {
-            writer.writeStartArray(inst, declaredType, style);
+            writer.writeStartArray(style, declaredType, encoderType);
             for (var itr = Int2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                 Int2ObjectMap.Entry<V> entry = itr.next();
                 writer.writeInt(null, entry.getIntKey(), null);
@@ -94,12 +94,12 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
     }
 
     @Override
-    public Int2ObjectMap<V> readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Int2ObjectMap<V>> factory) {
-        TypeInfo valueTypeInfo = typeInfo.genericArgs.get(0);
+    public Int2ObjectMap<V> readObject(DsonObjectReader reader, Supplier<? extends Int2ObjectMap<V>> factory) {
+        TypeInfo valueTypeInfo = encoderType.genericArgs.get(0);
 
         Int2ObjectMap<V> result = factory != null ? factory.get() : newMap();
         if (reader.options().writeMapAsDocument) {
-            reader.readStartObject(declaredType);
+            reader.readStartObject();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
                 int key = Integer.parseInt(keyString);
@@ -108,7 +108,7 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
             }
             reader.readEndObject();
         } else {
-            reader.readStartArray(declaredType);
+            reader.readStartArray();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 int key = reader.readInt(null);
                 V value = reader.readObject(null, valueTypeInfo);

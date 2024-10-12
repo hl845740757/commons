@@ -26,6 +26,7 @@ import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import java.time.LocalDateTime;
@@ -391,7 +392,13 @@ public class CodecProcessor extends MyAbstractProcessor {
             AptFieldProps aptFieldProps = AptFieldProps.parse(typeUtils, variableElement, anno_DsonProperty);
             // dsonIgnore
             aptFieldProps.parseIgnore(typeUtils, variableElement, anno_DsonIgnore);
-
+            // 修正一下EnumSet和EnumMap，可以减少不必要的麻烦 -- 其实也可以测试是否是final类型
+            TypeMirror fieldTypeMirror = variableElement.asType();
+            if (aptFieldProps.implMirror == null
+                    && fieldTypeMirror.getKind() == TypeKind.DECLARED
+                    && (isEnumSet(fieldTypeMirror) || isEnumMap(fieldTypeMirror))) {
+                aptFieldProps.implMirror = fieldTypeMirror;
+            }
             context.fieldPropsMap.put(variableElement, aptFieldProps);
         }
     }
@@ -500,6 +507,7 @@ public class CodecProcessor extends MyAbstractProcessor {
         if (typeElement.getModifiers().contains(Modifier.ABSTRACT)) {
             return;
         }
+        // TODO 其实还应该测试一下静态代理
         if (BeanUtils.containsNoArgsConstructor(typeElement)
                 || containsReaderConstructor(typeElement)
                 || containsNewInstanceMethod(typeElement)) {
@@ -746,7 +754,7 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     public MethodSpec newGetEncoderTypeMethod(DeclaredType superDeclaredType, ClassName rawTypeName) {
         return MethodSpec.overriding(getEncoderClassMethod, superDeclaredType, typeUtils)
-                .addStatement("return typeInfo") // final字段
+                .addStatement("return encoderType") // final字段
                 .addAnnotation(AptUtils.ANNOTATION_NONNULL)
                 .build();
     }

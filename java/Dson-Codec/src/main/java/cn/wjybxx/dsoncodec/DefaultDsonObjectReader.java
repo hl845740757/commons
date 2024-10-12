@@ -65,13 +65,12 @@ final class DefaultDsonObjectReader extends AbstractObjectReader implements Dson
     }
 
     @Override
-    public void readStartObject(TypeInfo typeInfo) {
-        super.readStartObject(typeInfo);
-        reader.attach(typeInfo);
+    public void setEncoderType(TypeInfo encoderType) {
+        reader.attach(encoderType);
     }
 
     @Override
-    public TypeInfo getCurrentTypeInfo() {
+    public TypeInfo getEncoderType() {
         return (TypeInfo) reader.attachment();
     }
 }

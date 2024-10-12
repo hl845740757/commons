@@ -111,20 +111,19 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
 
         // 控制方法生成顺序
         // typeInfo 字段
-        typeBuilder.addField(FieldSpec.builder(processor.typeName_TypeInfo, "typeInfo", Modifier.PRIVATE, Modifier.FINAL).build());
+        typeBuilder.addField(FieldSpec.builder(processor.typeName_TypeInfo, "encoderType", Modifier.PRIVATE, Modifier.FINAL).build());
         // 生成默认构造函数，使用全局默认TypeInfo
         typeBuilder.addMethod(MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
-                .addStatement("this.typeInfo = " + SchemaGenerator.getTypeInfoFieldName())
+                .addStatement("this.encoderType = " + SchemaGenerator.rawEncoderTypeFieldName())
                 .build());
-        // 泛型类再生成一个指定TypeInfo的工作函数
-        if (typeElement.getTypeParameters().size() > 0) {
-            typeBuilder.addMethod(MethodSpec.constructorBuilder()
-                    .addModifiers(Modifier.PUBLIC)
-                    .addParameter(processor.typeName_TypeInfo, "typeInfo")
-                    .addStatement("this.typeInfo = typeInfo")
-                    .build());
-        }
+        // 再生成一个指定TypeInfo的工作函数 -- 非泛型类的抽象类也可能需要
+        typeBuilder.addMethod(MethodSpec.constructorBuilder()
+                .addModifiers(Modifier.PUBLIC)
+                .addParameter(processor.typeName_TypeInfo, "encoderType")
+                .addStatement("this.encoderType = encoderType")
+                .build());
+
         // getEncoderType
         typeBuilder.addMethod(processor.newGetEncoderTypeMethod(context.superDeclaredType, rawTypeName));
 
@@ -255,17 +254,20 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
 
         if (aptClassProps.codecProxyTypeElement != null) {
             if (containsHookMethod(aptClassProps, CodecProcessor.MNAME_NEW_INSTANCE)) {
-                // CodecProxy.newInstance(reader);
-                newInstanceMethodBuilder.addStatement("return $T.$L(reader, typeInfo)",
-                        aptClassProps.codecProxyClassName, CodecProcessor.MNAME_NEW_INSTANCE);
+                // CodecProxy.newInstance(reader, getEncoderType());
+                newInstanceMethodBuilder.addStatement("return $T.$L(reader, $L())",
+                        aptClassProps.codecProxyClassName, CodecProcessor.MNAME_NEW_INSTANCE, CodecProcessor.MNAME_GET_ENCODER_TYPE);
                 return;
             }
         }
         if (containsNewInstanceMethod) { // 静态解析方法，优先级更高
-            newInstanceMethodBuilder.addStatement("return $T.$L(reader, typeInfo)", rawTypeName, CodecProcessor.MNAME_NEW_INSTANCE);
+            // MyBean.NewInstance(reader, getEncoderType());
+            newInstanceMethodBuilder.addStatement("return $T.$L(reader, $L())", rawTypeName, CodecProcessor.MNAME_NEW_INSTANCE, CodecProcessor.MNAME_GET_ENCODER_TYPE);
         } else if (containsReaderConstructor) { // 解析构造方法
-            newInstanceMethodBuilder.addStatement("return new $T(reader, typeInfo)", rawTypeName);
+            // return new MyBean(reader, getEncoderType());
+            newInstanceMethodBuilder.addStatement("return new $T(reader, $L())", rawTypeName, CodecProcessor.MNAME_GET_ENCODER_TYPE);
         } else {
+            // MyBean.NewInstance();
             newInstanceMethodBuilder.addStatement("return new $T()", rawTypeName);
         }
     }
@@ -409,15 +411,15 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
 
     // 虽然多了临时字符串拼接，但可以大幅降低字符串模板的复杂度
     private String serialName(String fieldName) {
-        return SchemaGenerator.getNameFileName(fieldName);
+        return SchemaGenerator.nameFileName(fieldName);
     }
 
     private String serialTypeArg(String fieldName) {
-        return SchemaGenerator.getTypeInfoFieldName(fieldName);
+        return SchemaGenerator.typeInfoFieldName(fieldName);
     }
 
     private String serialFactory(String fieldName) {
-        return SchemaGenerator.getFactoryFieldName(fieldName);
+        return SchemaGenerator.factoryFieldName(fieldName);
     }
 
     /** 获取writer写字段的方法名 */

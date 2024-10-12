@@ -52,7 +52,7 @@ public class ByteArrayCodec implements DsonCodec<byte[]> {
     }
 
     @Override
-    public byte[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends byte[]> factory) {
+    public byte[] readObject(DsonObjectReader reader, Supplier<? extends byte[]> factory) {
         return reader.readBytes(reader.getCurrentName());
     }
 }

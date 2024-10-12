@@ -72,12 +72,12 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
     }
 
     @Override
-    public void readStartObject(TypeInfo typeInfo) {
-        super.readStartObject(typeInfo);
+    public void readStartObject() {
+        super.readStartObject();
 
         DsonCollectionReader reader = (DsonCollectionReader) this.reader;
         ArrayDeque<String> keyQueue = converter.options().keySetPool.acquire();
-        KeyIterator keyItr = new KeyIterator(reader.getkeySet(), keyQueue, typeInfo);
+        KeyIterator keyItr = new KeyIterator(reader.getkeySet(), keyQueue);
         reader.setKeyItr(keyItr, DsonNull.NULL);
         reader.attach(keyItr);
     }
@@ -93,10 +93,20 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
     }
 
     @Override
-    public TypeInfo getCurrentTypeInfo() {
+    public void setEncoderType(TypeInfo encoderType) {
         Object attachment = reader.attachment();
         if (attachment instanceof KeyIterator keyItr) {
-            return keyItr.typeInfo;
+            keyItr.encoderType = encoderType;
+        } else {
+            reader.attach(encoderType);
+        }
+    }
+
+    @Override
+    public TypeInfo getEncoderType() {
+        Object attachment = reader.attachment();
+        if (attachment instanceof KeyIterator keyItr) {
+            return keyItr.encoderType;
         }
         return (TypeInfo) attachment;
     }
@@ -109,12 +119,11 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
 
         Set<String> keySet;
         ArrayDeque<String> keyQueue;
-        TypeInfo typeInfo;
+        TypeInfo encoderType;
 
-        public KeyIterator(Set<String> keySet, ArrayDeque<String> keyQueue, TypeInfo typeInfo) {
+        public KeyIterator(Set<String> keySet, ArrayDeque<String> keyQueue) {
             this.keySet = keySet;
             this.keyQueue = keyQueue;
-            this.typeInfo = typeInfo;
             keyQueue.addAll(keySet);
         }
 

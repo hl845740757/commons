@@ -28,17 +28,7 @@ public static class DsonCodecRegistries
     }
 
     public static IDsonCodecRegistry FromCodecs(IEnumerable<IDsonCodec> pojoCodecs) {
-        Dictionary<Type, DsonCodecImpl> codecMap = new Dictionary<Type, DsonCodecImpl>();
-        foreach (IDsonCodec codec in pojoCodecs) {
-            if (codecMap.ContainsKey(codec.GetEncoderType())) {
-                throw new ArgumentException("the class has multiple codecs :" + codec.GetEncoderType());
-            }
-            // 反射创建...
-            Type genericType = typeof(DsonCodecImpl<>).MakeGenericType(codec.GetEncoderType());
-            DsonCodecImpl codecImpl = (DsonCodecImpl)Activator.CreateInstance(genericType, codec);
-            codecMap[codec.GetEncoderType()] = codecImpl;
-        }
-        return new DefaultCodecRegistry(codecMap);
+        return SimpleCodecRegistry.FromCodecs(pojoCodecs);
     }
 
     public static IDsonCodecRegistry FromRegistries(params IDsonCodecRegistry[] codecRegistries) {
@@ -46,47 +36,24 @@ public static class DsonCodecRegistries
     }
 
     public static IDsonCodecRegistry FromRegistries(IEnumerable<IDsonCodecRegistry> codecRegistries) {
-        // 合并codec
-        Dictionary<Type, DsonCodecImpl> type2CodecMap = new Dictionary<Type, DsonCodecImpl>();
+        SimpleCodecRegistry simpleCodecRegistry = new SimpleCodecRegistry();
         List<IDsonCodecRegistry> unmergedRegistries = new List<IDsonCodecRegistry>(4);
+        // 合并codec
         foreach (IDsonCodecRegistry codecRegistry in codecRegistries) {
-            if (codecRegistry is not DefaultCodecRegistry defaultCodecRegistry) {
+            if (codecRegistry is SimpleCodecRegistry other) {
+                simpleCodecRegistry.MergeFrom(other);
+            } else {
                 unmergedRegistries.Add(codecRegistry);
-                continue;
-            }
-            foreach (DsonCodecImpl codec in defaultCodecRegistry.type2CodecMap.Values) {
-                if (type2CodecMap.ContainsKey(codec.GetEncoderType())) {
-                    throw new ArgumentException("the type has multiple codecs :" + codec.GetEncoderType());
-                }
-                type2CodecMap[codec.GetEncoderType()] = codec;
             }
         }
         if (unmergedRegistries.Count == 0) {
-            return new DefaultCodecRegistry(type2CodecMap);
+            return simpleCodecRegistry.ToImmutable();
         }
         // 简单Codec放在最前面
-        unmergedRegistries.Insert(0, new DefaultCodecRegistry(type2CodecMap));
+        unmergedRegistries.Insert(0, simpleCodecRegistry.ToImmutable());
         return new CompositeCodecRegistry(unmergedRegistries); // 拷贝
     }
 
-    private class DefaultCodecRegistry : IDsonCodecRegistry
-    {
-        internal readonly Dictionary<Type, DsonCodecImpl> type2CodecMap;
-
-        internal DefaultCodecRegistry(Dictionary<Type, DsonCodecImpl> type2CodecMap) {
-            this.type2CodecMap = new Dictionary<Type, DsonCodecImpl>(type2CodecMap); // copy 压缩空间
-        }
-
-        public DsonCodecImpl? GetEncoder(Type clazz) {
-            type2CodecMap.TryGetValue(clazz, out DsonCodecImpl r);
-            return r;
-        }
-
-        public DsonCodecImpl? GetDecoder(Type clazz) {
-            type2CodecMap.TryGetValue(clazz, out DsonCodecImpl r);
-            return r;
-        }
-    }
 
     private class CompositeCodecRegistry : IDsonCodecRegistry
     {

@@ -43,20 +43,20 @@ public abstract class AbstractDsonCodec<T> implements DsonCodec<T> {
     @Override
     public void writeObject(DsonObjectWriter writer, T inst, TypeInfo declaredType, ObjectStyle style) {
         if (writer.options().enableBeforeEncode) {
-            beforeEncode(writer, inst, declaredType, style);
+            beforeEncode(writer, inst);
         }
-        writeFields(writer, inst, declaredType, style);
+        writeFields(writer, inst);
     }
 
     /**
      * 用于执行用户的{@code beforeEncode}钩子方法。
      * 通常用于数据转换。
      */
-    protected void beforeEncode(DsonObjectWriter writer, T inst, TypeInfo typeInfo, ObjectStyle style) {
+    protected void beforeEncode(DsonObjectWriter writer, T inst) {
 
     }
 
-    public abstract void writeFields(DsonObjectWriter writer, T inst, TypeInfo typeInfo, ObjectStyle style);
+    public abstract void writeFields(DsonObjectWriter writer, T inst);
 
     // endregion
 
@@ -64,11 +64,11 @@ public abstract class AbstractDsonCodec<T> implements DsonCodec<T> {
     // region read
 
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
-        final T instance = factory != null ? factory.get() : newInstance(reader, declaredType);
-        readFields(reader, instance, declaredType);
+    public T readObject(DsonObjectReader reader, Supplier<? extends T> factory) {
+        final T instance = factory != null ? factory.get() : newInstance(reader);
+        readFields(reader, instance);
         if (reader.options().enableAfterDecode) {
-            afterDecode(reader, instance, declaredType);
+            afterDecode(reader, instance);
         }
         return instance;
     }
@@ -80,20 +80,20 @@ public abstract class AbstractDsonCodec<T> implements DsonCodec<T> {
      *
      * @return 可以是子类实例
      */
-    protected abstract T newInstance(DsonObjectReader reader, TypeInfo typeInfo);
+    protected abstract T newInstance(DsonObjectReader reader);
 
     /**
      * 从输入流中读取所有序列化的字段到指定实例上。
      *
      * @param inst 可能是子类实例
      */
-    public abstract void readFields(DsonObjectReader reader, T inst, TypeInfo typeInfo);
+    public abstract void readFields(DsonObjectReader reader, T inst);
 
     /**
      * 用于执行用户的{@code afterDecode}钩子方法。
      * 通常用于数据转换。
      */
-    protected void afterDecode(DsonObjectReader reader, T inst, TypeInfo typeInfo) {
+    protected void afterDecode(DsonObjectReader reader, T inst) {
 
     }
 

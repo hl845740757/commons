@@ -123,11 +123,11 @@ public interface IDsonObjectReader : IDisposable
     string CurrentName { get; }
 
     /** typeInfo用于传递给嵌套对象，以及暂存到Context */
-    void ReadStartObject(Type declaredType);
+    void ReadStartObject();
 
     void ReadEndObject();
 
-    void ReadStartArray(Type declaredType);
+    void ReadStartArray();
 
     void ReadEndArray();
 
@@ -158,11 +158,10 @@ public interface IDsonObjectReader : IDisposable
     /// 
     /// </summary>
     /// <param name="name">字段的名字</param>
-    /// <param name="declaredType">对象的类型</param>
     /// <returns>如果存在对应的字段则返回true</returns>
-    bool ReadStartObject(string? name, Type declaredType) {
+    bool ReadStartObject(string? name) {
         if (ReadName(name)) {
-            ReadStartObject(declaredType);
+            ReadStartObject();
             return true;
         }
         return false;
@@ -172,11 +171,10 @@ public interface IDsonObjectReader : IDisposable
     /// 
     /// </summary>
     /// <param name="name">字段的名字</param>
-    /// <param name="declaredType">对象的类型</param>
     /// <returns>如果存在对应的字段则返回true</returns>
-    bool ReadStartArray(string? name, Type declaredType) {
+    bool ReadStartArray(string? name) {
         if (ReadName(name)) {
-            ReadStartArray(declaredType);
+            ReadStartArray();
             return true;
         }
         return false;

@@ -70,7 +70,7 @@ public class DoubleCollectionCodec implements DsonCodec<DoubleCollection> {
     }
 
     @Override
-    public DoubleCollection readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends DoubleCollection> factory) {
+    public DoubleCollection readObject(DsonObjectReader reader, Supplier<? extends DoubleCollection> factory) {
         DoubleCollection result = factory != null ? factory.get() : newCollection();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readDouble(null));

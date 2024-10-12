@@ -39,20 +39,20 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
 
     #endregion
 
-    private readonly Type typeInfo;
+    private readonly Type encoderType;
     private readonly Func<ICollection<T>>? factory;
     private readonly FactoryKind factoryKind; // 处理默认情况
 
     /// <summary>
     /// 动态构建Codec时会被调用
     /// </summary>
-    /// <param name="typeInfo"></param>
+    /// <param name="encoderType"></param>
     /// <param name="factory"></param>
-    public CollectionCodec(Type typeInfo, Func<ICollection<T>>? factory = null) {
-        this.typeInfo = typeInfo;
+    public CollectionCodec(Type encoderType, Func<ICollection<T>>? factory = null) {
+        this.encoderType = encoderType;
         this.factory = factory;
         if (factory == null) {
-            this.factoryKind = ComputeFactoryKind(typeInfo);
+            this.factoryKind = ComputeFactoryKind(encoderType);
         }
     }
 
@@ -81,7 +81,7 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         Dequeue
     }
 
-    public Type GetEncoderType() => typeInfo;
+    public Type GetEncoderType() => encoderType;
 
     /** typeInfo一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
     private ICollection<T> NewCollection() {
@@ -103,7 +103,6 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
     }
 
     public void WriteObject(IDsonObjectWriter writer, ref ICollection<T> inst, Type declaredType, ObjectStyle style) {
-        // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询E的类型...
         Type eleDeclaredType = typeof(T);
 
         foreach (T value in inst) {
@@ -111,7 +110,7 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         }
     }
 
-    public ICollection<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<ICollection<T>>? factory = null) {
+    public ICollection<T> ReadObject(IDsonObjectReader reader, Func<ICollection<T>>? factory = null) {
         Type eleDeclaredType = typeof(T);
 
         ICollection<T> result = factory != null ? factory() : NewCollection();
@@ -124,7 +123,7 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
 
     // util
 
-    public static void WriteAsList(IDsonObjectWriter writer, IEnumerable<T> inst, Type declaredType) {
+    public static void WriteAsList(IDsonObjectWriter writer, IEnumerable<T> inst) {
         Type eleDeclaredType = typeof(T);
 
         foreach (T value in inst) {
@@ -132,7 +131,7 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         }
     }
 
-    public static List<T> ReadAsList(IDsonObjectReader reader, Type declaredType) {
+    public static List<T> ReadAsList(IDsonObjectReader reader) {
         Type eleDeclaredType = typeof(T);
 
         List<T> result = new List<T>();

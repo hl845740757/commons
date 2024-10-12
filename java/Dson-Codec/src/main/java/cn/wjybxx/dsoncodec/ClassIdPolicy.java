@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * 类型id的写入策略
+ * TODO 改接口
  *
  * @author wjybxx
  * date - 2023/4/27

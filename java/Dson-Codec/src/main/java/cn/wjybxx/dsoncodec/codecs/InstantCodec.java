@@ -52,7 +52,7 @@ public class InstantCodec implements DsonCodec<Instant> {
     }
 
     @Override
-    public Instant readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Instant> factory) {
+    public Instant readObject(DsonObjectReader reader, Supplier<? extends Instant> factory) {
         Timestamp timestamp = reader.readTimestamp(reader.getCurrentName());
         return Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos());
     }

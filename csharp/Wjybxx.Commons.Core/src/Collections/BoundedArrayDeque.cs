@@ -45,10 +45,6 @@ public class BoundedArrayDeque<T> : IDeque<T>
     private int _tail;
     private int _version;
 
-    public BoundedArrayDeque()
-        : this(1024) {
-    }
-
     /// <summary>
     /// 
     /// </summary>

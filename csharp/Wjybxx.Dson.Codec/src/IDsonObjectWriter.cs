@@ -72,7 +72,7 @@ public interface IDsonObjectWriter : IDisposable
     /// 写嵌套对象
     /// </summary>
     /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
-    /// <param name="value">要写入的对象，GetType获取实际类型</param>
+    /// <param name="value">要写入的对象</param>
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="style">如果为null，则表示使用对象对象默认的文本编码样式</param>
     /// <typeparam name="T">避免拆装箱</typeparam>
@@ -93,14 +93,23 @@ public interface IDsonObjectWriter : IDisposable
 
     void WriteName(string name);
 
-    void WriteStartObject<T>(in T value, Type declaredType, ObjectStyle style = ObjectStyle.Indent);
+    /// <summary>
+    /// 写入类型信息
+    /// 该方法应当在writeStartObject/Array后立即调用，写在所有字段之前。
+    /// </summary>
+    /// <param name="declaredType">对象的声明类型，用于测试是否写入类型信息</param>
+    /// <param name="encoderType">编码器绑定的类型，要写入的类型信息</param>
+    void WriteTypeInfo(Type declaredType, Type encoderType);
+
+    void WriteStartObject(ObjectStyle style);
 
     void WriteEndObject();
 
-    void WriteStartArray<T>(in T value, Type declaredType, ObjectStyle style = ObjectStyle.Indent); // 数组一定是class，in修饰不是必须的
+    void WriteStartArray(ObjectStyle style);
 
     void WriteEndArray();
 
+    /** 写入已编码的二进制数据 */
     void WriteValueBytes(string name, DsonType dsonType, byte[] data);
 
     /// <summary>
@@ -120,15 +129,42 @@ public interface IDsonObjectWriter : IDisposable
 
     // defaults
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartObject<T>(string name, in T value, Type declaredType, ObjectStyle style = ObjectStyle.Indent) {
-        WriteName(name);
-        WriteStartObject(in value, declaredType, style);
+    void WriteStartObject(ObjectStyle style, Type declaredType, Type encoderType) {
+        WriteStartObject(style);
+        WriteTypeInfo(declaredType, encoderType);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartArray<T>(string name, in T value, Type declaredType, ObjectStyle style = ObjectStyle.Indent) {
+    void WriteStartObject<T>(string name, ObjectStyle style) {
         WriteName(name);
-        WriteStartArray(value, declaredType, style);
+        WriteStartObject(style);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void WriteStartObject(string name, ObjectStyle style, Type declaredType, Type encoderType) {
+        WriteName(name);
+        WriteStartObject(style);
+        WriteTypeInfo(declaredType, encoderType);
+    }
+
+    //
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void WriteStartArray(ObjectStyle style, Type declaredType, Type encoderType) {
+        WriteStartArray(style);
+        WriteTypeInfo(declaredType, encoderType);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void WriteStartArray<T>(string name, ObjectStyle style) {
+        WriteName(name);
+        WriteStartArray(style);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void WriteStartArray<T>(string name, ObjectStyle style, Type declaredType, Type encoderType) {
+        WriteName(name);
+        WriteStartArray(style);
+        WriteTypeInfo(declaredType, encoderType);
     }
 
     #endregion

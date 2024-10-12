@@ -53,7 +53,7 @@ public class LocalTimeCodec implements DsonCodec<LocalTime> {
     }
 
     @Override
-    public LocalTime readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends LocalTime> factory) {
+    public LocalTime readObject(DsonObjectReader reader, Supplier<? extends LocalTime> factory) {
         ExtDateTime dateTime = reader.readExtDateTime(reader.getCurrentName());
         return ofDateTime(dateTime);
     }

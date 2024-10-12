@@ -23,7 +23,10 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -33,9 +36,9 @@ import java.util.function.Supplier;
  * @author wjybxx
  * date - 2024/9/25
  */
-public final class DynamicDsonCodecRegistry implements DsonCodecRegistry {
+public final class DynamicCodecRegistry implements DsonCodecRegistry {
 
-    private static final Logger logger = LoggerFactory.getLogger(DynamicDsonCodecRegistry.class);
+    private static final Logger logger = LoggerFactory.getLogger(DynamicCodecRegistry.class);
     /** 用户的原始的类型Codec */
     private final DsonCodecRegistry basicRegistry;
     /** 类型转换器 */
@@ -49,10 +52,10 @@ public final class DynamicDsonCodecRegistry implements DsonCodecRegistry {
     private final ConcurrentHashMap<TypeInfo, DsonCodecImpl<?>> encoderDic = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<TypeInfo, DsonCodecImpl<?>> decoderDic = new ConcurrentHashMap<>();
 
-    public DynamicDsonCodecRegistry(DsonCodecRegistry basicRegistry,
-                                    List<? extends DsonCodecCaster> casters,
-                                    List<GenericCodecConfig> genericCodecConfigs,
-                                    GenericCodecHelper genericCodecHelper) {
+    public DynamicCodecRegistry(DsonCodecRegistry basicRegistry,
+                                List<? extends DsonCodecCaster> casters,
+                                List<GenericCodecConfig> genericCodecConfigs,
+                                GenericCodecHelper genericCodecHelper) {
         this.basicRegistry = Objects.requireNonNull(basicRegistry);
         this.casters = List.copyOf(casters);
         this.genericCodecHelper = Objects.requireNonNull(genericCodecHelper);
@@ -60,7 +63,7 @@ public final class DynamicDsonCodecRegistry implements DsonCodecRegistry {
         // 先初始化为默认配置，然后由用户的配置进行覆盖 -- 不转不可变对象，性能更好
         this.genericCodecConfig = GenericCodecConfig.newDefaultConfig();
         for (GenericCodecConfig genericCodecConfig : genericCodecConfigs) {
-            this.genericCodecConfig.addCodecs(genericCodecConfig);
+            this.genericCodecConfig.mergeFrom(genericCodecConfig);
         }
     }
 
@@ -228,14 +231,6 @@ public final class DynamicDsonCodecRegistry implements DsonCodecRegistry {
         Class<?> superClazz = castDecoderType(type.rawType);
         if (superClazz != null) {
             return findGenericDecoder(TypeInfo.of(superClazz, type.genericArgs));
-        }
-        // 这段保底代码写在这里最为合适，放在用户的Config里还需要考虑冲突问题...
-        // 兼容集合和字典 -- 解码时需要是默认解码类型的超类
-        if (type.rawType.isAssignableFrom(ArrayList.class)) {
-            return genericCodecConfig.getDecoderInfo(Collection.class);
-        }
-        if (type.rawType.isAssignableFrom(LinkedHashMap.class)) {
-            return genericCodecConfig.getDecoderInfo(Map.class);
         }
         return null;
     }

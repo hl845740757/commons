@@ -82,34 +82,36 @@ public final class GenericCodecConfig {
     /** 通过默认的泛型类Codec初始化 */
     public GenericCodecConfig initWithDefaults() {
         addCodec(TypeInfo.of(Collection.class, Object.class), CollectionCodec.class, ArrayList.class);
-        // List
         addCodec(TypeInfo.of(List.class, Object.class), CollectionCodec.class, ArrayList.class);
         addCodec(TypeInfo.of(ArrayList.class, Object.class), CollectionCodec.class, ArrayList.class);
-        //
         addCodec(TypeInfo.of(LinkedList.class, Object.class), CollectionCodec.class, LinkedList.class);
         addCodec(TypeInfo.of(ArrayDeque.class, Object.class), CollectionCodec.class, ArrayDeque.class);
+
         // Set -- 如果是接口类型，则默认保持有序；如果是具体类型，则默认具体类型
         addCodec(TypeInfo.of(Set.class, Object.class), CollectionCodec.class, LinkedHashSet.class);
         addCodec(TypeInfo.of(HashSet.class, Object.class), CollectionCodec.class, HashSet.class);
         addCodec(TypeInfo.of(LinkedHashSet.class, Object.class), CollectionCodec.class, LinkedHashSet.class);
+        addCodec(TypeInfo.of(EnumSet.class, Enum.class), CollectionCodec.class); // EnumSet需要动态构建
+
         // Map -- 如果是接口类型，则默认保持有序
         addCodec(TypeInfo.of(Map.class, Object.class, Object.class), MapCodec.class, LinkedHashMap.class);
         addCodec(TypeInfo.of(HashMap.class, Object.class, Object.class), MapCodec.class, HashMap.class);
         addCodec(TypeInfo.of(LinkedHashMap.class, Object.class, Object.class), MapCodec.class, LinkedHashMap.class);
-        //
+        addCodec(TypeInfo.of(EnumMap.class, Enum.class, Object.class), MapCodec.class); // EnumSet需要动态构建
         addCodec(TypeInfo.of(ConcurrentMap.class, Object.class, Object.class), MapCodec.class, ConcurrentHashMap.class);
         addCodec(TypeInfo.of(ConcurrentHashMap.class, Object.class, Object.class), MapCodec.class, ConcurrentHashMap.class);
+
         // 特殊组件
         addCodec(TypeInfo.of(MapEncodeProxy.class, Object.class), MapEncodeProxyCodec.class);
         return this;
     }
 
     /** 主要用于合并注解处理器生成的Config */
-    public GenericCodecConfig addCodecs(GenericCodecConfig otherConfig) {
-        for (GenericCodecInfo genericCodecInfo : otherConfig.encoderTypeDic.values()) {
+    public GenericCodecConfig mergeFrom(GenericCodecConfig other) {
+        for (GenericCodecInfo genericCodecInfo : other.encoderTypeDic.values()) {
             addEncoder(genericCodecInfo);
         }
-        for (GenericCodecInfo genericCodecInfo : otherConfig.decoderTypeDic.values()) {
+        for (GenericCodecInfo genericCodecInfo : other.decoderTypeDic.values()) {
             addDecoder(genericCodecInfo);
         }
         return this;

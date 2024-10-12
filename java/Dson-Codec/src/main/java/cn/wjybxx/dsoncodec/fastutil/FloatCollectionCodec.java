@@ -70,7 +70,7 @@ public class FloatCollectionCodec implements DsonCodec<FloatCollection> {
     }
 
     @Override
-    public FloatCollection readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends FloatCollection> factory) {
+    public FloatCollection readObject(DsonObjectReader reader, Supplier<? extends FloatCollection> factory) {
         FloatCollection result = factory != null ? factory.get() : newCollection();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readFloat(null));

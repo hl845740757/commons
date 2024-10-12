@@ -20,12 +20,16 @@ import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
-import cn.wjybxx.dsoncodec.*;
+import cn.wjybxx.dsoncodec.DsonCodec;
+import cn.wjybxx.dsoncodec.DsonObjectReader;
+import cn.wjybxx.dsoncodec.DsonObjectWriter;
+import cn.wjybxx.dsoncodec.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 import it.unimi.dsi.fastutil.chars.CharArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 
@@ -58,7 +62,7 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public int[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends int[]> factory) {
+        public int[] readObject(DsonObjectReader reader, Supplier<? extends int[]> factory) {
             IntArrayList result = new IntArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readInt(null));
@@ -84,7 +88,7 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public long[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends long[]> factory) {
+        public long[] readObject(DsonObjectReader reader, Supplier<? extends long[]> factory) {
             LongArrayList result = new LongArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readLong(null));
@@ -110,7 +114,7 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public float[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends float[]> factory) {
+        public float[] readObject(DsonObjectReader reader, Supplier<? extends float[]> factory) {
             FloatArrayList result = new FloatArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readFloat(null));
@@ -136,7 +140,7 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public double[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends double[]> factory) {
+        public double[] readObject(DsonObjectReader reader, Supplier<? extends double[]> factory) {
             DoubleArrayList result = new DoubleArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readDouble(null));
@@ -162,12 +166,18 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public boolean[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends boolean[]> factory) {
-            ArrayList<Boolean> result = new ArrayList<>();
+        public boolean[] readObject(DsonObjectReader reader, Supplier<? extends boolean[]> factory) {
+            IntList result = new IntArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
-                result.add(reader.readBoolean(null));
+                int v = reader.readBoolean(null) ? 1 : 0;
+                result.add(v);
             }
-            return DsonConverterUtils.convertList2Array(result, boolean[].class);
+            // 手动转换
+            boolean[] array = new boolean[result.size()];
+            for (int i = 0; i < result.size(); i++) {
+                array[i] = result.getInt(i) == 1;
+            }
+            return array;
         }
     }
 
@@ -188,12 +198,13 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public String[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends String[]> factory) {
+        public String[] readObject(DsonObjectReader reader, Supplier<? extends String[]> factory) {
             ArrayList<String> result = new ArrayList<>();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readString(null));
             }
-            return result.toArray(new String[result.size()]);
+            String[] array = new String[result.size()];
+            return result.toArray(array);
         }
     }
 
@@ -214,7 +225,7 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public short[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends short[]> factory) {
+        public short[] readObject(DsonObjectReader reader, Supplier<? extends short[]> factory) {
             ShortArrayList result = new ShortArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readShort(null));
@@ -240,7 +251,7 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public char[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends char[]> factory) {
+        public char[] readObject(DsonObjectReader reader, Supplier<? extends char[]> factory) {
             CharArrayList result = new CharArrayList();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readChar(null));
@@ -268,15 +279,14 @@ public final class MoreArrayCodecs {
         }
 
         @Override
-        public Object[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Object[]> factory) {
-            TypeInfo componentArgInfo = declaredType.isArrayType() ? declaredType.getComponentType() : TypeInfo.OBJECT;
+        public Object[] readObject(DsonObjectReader reader, Supplier<? extends Object[]> factory) {
+            TypeInfo componentArgInfo = TypeInfo.OBJECT;
 
             ArrayList<Object> result = new ArrayList<>();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readObject(null, componentArgInfo));
             }
-            // 一定不是基础类型数组
-            return (Object[]) DsonConverterUtils.convertList2Array(result, declaredType.rawType);
+            return result.toArray();
         }
     }
 }
