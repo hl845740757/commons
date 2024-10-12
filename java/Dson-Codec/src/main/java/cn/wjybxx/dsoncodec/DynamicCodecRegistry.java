@@ -161,7 +161,7 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
         return codecImpl;
     }
 
-    private <T> DsonCodecImpl<T> makeArrayCodec(TypeInfo type) {
+    private DsonCodecImpl<?> makeArrayCodec(TypeInfo type) {
         return new DsonCodecImpl<>(new ArrayCodec<>(type));
     }
 

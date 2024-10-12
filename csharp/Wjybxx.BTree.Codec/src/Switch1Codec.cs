@@ -21,11 +21,11 @@
 using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree.Branch;
 using Wjybxx.Dson.Codec;
-using Wjybxx.BTree;
-using System.Collections.Generic;
 using System;
-using Wjybxx.Dson.Text;
+using Wjybxx.BTree;
 using Wjybxx.Dson;
+using Wjybxx.Dson.Text;
+using System.Collections.Generic;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
@@ -36,7 +36,6 @@ public sealed class Switch1Codec<T> : AbstractDsonCodec<Switch<T>> where T : cla
     public const string names_flags = "flags";
     public const string names_children = "children";
     public const string names_handler = "handler";
-    public static readonly Func<List<Task<T>>> factories_children = () => new List<Task<T>>();
 
     public override Type GetEncoderType() => typeof(Switch<T>);
 
@@ -54,7 +53,7 @@ public sealed class Switch1Codec<T> : AbstractDsonCodec<Switch<T>> where T : cla
     protected override void ReadFields(IDsonObjectReader reader, ref Switch<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
-        inst.Children = reader.ReadObject<List<Task<T>>>(names_children, typeof(List<Task<T>>), factories_children);
+        inst.Children = reader.ReadObject<List<Task<T>>>(names_children, typeof(List<Task<T>>), null);
         inst.Handler = reader.ReadObject<ISwitchHandler<T>>(names_handler, typeof(ISwitchHandler<T>), null);
     }
 }

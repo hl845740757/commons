@@ -53,16 +53,6 @@ public class BTreeCodecTest
         List<TypeMeta> typeMetas = rawType2CodecTypeDic.Keys
             .Select(e => TypeMeta.Of(e, ObjectStyle.Indent, RemoveGenericInfo(e.Name)))
             .ToList();
-        // 加入集合的类型数据
-        typeMetas.AddRange(new List<TypeMeta>
-        {
-            // List
-            TypeMeta.Of(typeof(List<>), ObjectStyle.Indent, "List", "List`1"),
-            TypeMeta.Of(typeof(IList<>), ObjectStyle.Indent, "IList", "IList`1"),
-            // 字典
-            TypeMeta.Of(typeof(Dictionary<,>), ObjectStyle.Indent, "Dictionary", "Dictionary`2"),
-            TypeMeta.Of(typeof(IDictionary<,>), ObjectStyle.Indent, "IDictionary", "IDictionary`2")
-        });
 
         converter = new DsonConverterBuilder()
             .AddTypeMetaRegistry(TypeMetaRegistries.FromMetas(typeMetas))

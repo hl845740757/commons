@@ -65,7 +65,6 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         AddCodec(new DsonCodecImpl<IList<string>>(new MoreCollectionCodecs.StringListCodec(typeof(IList<string>))));
         AddCodec(new DsonCodecImpl<IList<uint>>(new MoreCollectionCodecs.UIntListCodec(typeof(IList<uint>))));
         AddCodec(new DsonCodecImpl<IList<ulong>>(new MoreCollectionCodecs.ULongListCodec(typeof(IList<ulong>))));
-        AddCodec(new DsonCodecImpl<IList<object>>(new MoreCollectionCodecs.ObjectListCodec(typeof(IList<object>))));
 
         AddCodec(new DsonCodecImpl<IList<int>>(new MoreCollectionCodecs.IntListCodec(typeof(List<int>))));
         AddCodec(new DsonCodecImpl<IList<long>>(new MoreCollectionCodecs.LongListCodec(typeof(List<long>))));
@@ -75,7 +74,6 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         AddCodec(new DsonCodecImpl<IList<string>>(new MoreCollectionCodecs.StringListCodec(typeof(List<string>))));
         AddCodec(new DsonCodecImpl<IList<uint>>(new MoreCollectionCodecs.UIntListCodec(typeof(List<uint>))));
         AddCodec(new DsonCodecImpl<IList<ulong>>(new MoreCollectionCodecs.ULongListCodec(typeof(List<ulong>))));
-        AddCodec(new DsonCodecImpl<IList<object>>(new MoreCollectionCodecs.ObjectListCodec(typeof(List<object>))));
     }
 
     /// <summary>

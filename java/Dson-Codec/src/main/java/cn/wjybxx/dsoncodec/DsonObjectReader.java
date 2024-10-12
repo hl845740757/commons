@@ -16,16 +16,13 @@
 
 package cn.wjybxx.dsoncodec;
 
-import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.base.annotation.StableName;
 import cn.wjybxx.dson.DsonContextType;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.types.*;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.LocalDateTime;
-import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -78,14 +75,14 @@ public interface DsonObjectReader extends AutoCloseable {
      * 1. 该方法对于无法精确解析的对象，可能返回一个不兼容的类型。
      * 2. 目标类型可以与写入类型不一致，甚至无继承关系，只要数据格式兼容即可 —— 投影。
      *
-     * @param name     数组内元素传null或空字符串
-     * @param typeInfo 对象声明类型信息；可以与写入的类型不一致，
+     * @param name         数组内元素传null或空字符串
+     * @param declaredType 对象声明类型信息
      */
     @Nullable
-    <T> T readObject(String name, TypeInfo typeInfo, Supplier<? extends T> factory);
+    <T> T readObject(String name, TypeInfo declaredType, Supplier<? extends T> factory);
 
-    default <T> T readObject(String name, TypeInfo typeInfo) {
-        return readObject(name, typeInfo, null);
+    default <T> T readObject(String name, TypeInfo declaredType) {
+        return readObject(name, declaredType, null);
     }
 
     // endregion
@@ -190,33 +187,6 @@ public interface DsonObjectReader extends AutoCloseable {
     @StableName
     default char readChar(String name) {
         return (char) readInt(name);
-    }
-
-    /** 读取为不可变List */
-    @Nonnull
-    default <E> List<E> readImmutableList(String name, Class<E> elementType) {
-        final Collection<E> result = readObject(name, TypeInfo.of(Collection.class, elementType));
-        return CollectionUtils.toImmutableList(result);
-    }
-
-    /** 读取为不可变Set */
-    @Nonnull
-    default <E> Set<E> readImmutableSet(String name, Class<E> elementType) {
-        final Set<E> result = readObject(name, TypeInfo.of(Set.class, elementType), LinkedHashSet::new);
-        if (result == null) {
-            return Set.of();
-        }
-        return Collections.unmodifiableSet(result); // 无需二次拷贝
-    }
-
-    /** 读取为不可变字典 */
-    @Nonnull
-    default <K, V> Map<K, V> readImmutableMap(String name, Class<K> keyType, Class<V> valueType) {
-        final Map<K, V> result = readObject(name, TypeInfo.of(Map.class, keyType, valueType), LinkedHashMap::new);
-        if (result == null) {
-            return Map.of();
-        }
-        return Collections.unmodifiableMap(result); // 无需二次拷贝
     }
 
     // endregion

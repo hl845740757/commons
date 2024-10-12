@@ -27,7 +27,7 @@ namespace Wjybxx.Dson.Codec.Codecs
 /// 如果想提升性能，可以为常见基本类型数组提供定制的Codec，以避免低效的WriteObject/ReadObject。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class ArrayCodec<T> : IDsonCodec<T[]>
+public sealed class ArrayCodec<T> : IDsonCodec<T[]>
 {
     public void WriteObject(IDsonObjectWriter writer, ref T[] inst, Type declaredType, ObjectStyle style) {
         // declaredType只影响inst是否写入类型，不影响数组元素是否写入类型

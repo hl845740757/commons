@@ -69,7 +69,7 @@ public class LazyCodecTest {
                     ))
                     .setOptions(options)
                     .build();
-            routerBytes = converter.write(converter.read(bytesSource));
+            routerBytes = converter.write(converter.read(bytesSource, TypeInfo.OBJECT));
         }
 
         // 终端
@@ -81,7 +81,7 @@ public class LazyCodecTest {
                     ))
                     .setOptions(options)
                     .build();
-            destStruct = (MyStruct) converter.read(routerBytes);
+            destStruct = (MyStruct) converter.read(routerBytes, TypeInfo.OBJECT);
         }
         Assertions.assertEquals(myStruct, destStruct);
     }

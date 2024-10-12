@@ -30,10 +30,13 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
+ * 该实例仅支持引用类型数组，
+ * 基础类型数组走定制Codec实现。
+ *
  * @author wjybxx
  * date - 2024/9/25
  */
-public class ArrayCodec<T> implements DsonCodec<T> {
+public final class ArrayCodec<T> implements DsonCodec<T[]> {
 
     private final TypeInfo typeInfo;
     private final TypeInfo elementTypeInfo;
@@ -56,30 +59,27 @@ public class ArrayCodec<T> implements DsonCodec<T> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T inst, TypeInfo declaredType, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, T[] inst, TypeInfo declaredType, ObjectStyle style) {
         // declaredType只影响inst是否写入类型，不影响数组元素是否写入类型
         TypeInfo elementTypeInfo = this.elementTypeInfo;
 
-        // 基础类型数组被特殊处理了，因此这里一定能强转 -- 强转以避免反射接口
-        Object[] array = (Object[]) inst;
-        for (int i = 0; i < array.length; i++) {
-            writer.writeObject(null, array[i], elementTypeInfo);
+        for (int i = 0; i < inst.length; i++) {
+            writer.writeObject(null, inst[i], elementTypeInfo);
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public T readObject(DsonObjectReader reader, Supplier<? extends T> factory) {
+    public T[] readObject(DsonObjectReader reader, Supplier<? extends T[]> factory) {
         TypeInfo elementTypeInfo = this.elementTypeInfo;
 
         // 由于长度未知，只能先存储为List再转...
-        List<Object> result = new ArrayList<>();
+        List<T> result = new ArrayList<>();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
-            Object value = reader.readObject(null, elementTypeInfo, null);
+            T value = reader.readObject(null, elementTypeInfo, null);
             result.add(value);
         }
-        Object[] array = (Object[]) Array.newInstance(elementTypeInfo.rawType, result.size());
+        @SuppressWarnings("unchecked") T[] array = (T[]) Array.newInstance(elementTypeInfo.rawType, result.size());
         result.toArray(array);
-        return (T) array;
+        return array;
     }
 }

@@ -233,6 +233,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
 
     @Override
     public void writeTypeInfo(TypeInfo declaredType, TypeInfo encoderType) {
+        writer.attach(encoderType);
         if (!converter.options().classIdPolicy.test(declaredType, encoderType)) {
             return;
         }
@@ -293,6 +294,16 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         if (writer instanceof DsonTextWriter textWriter) {
             textWriter.println();
         }
+    }
+
+    @Override
+    public void setEncoderType(TypeInfo encoderType) {
+        writer.attach(encoderType);
+    }
+
+    @Override
+    public TypeInfo getEncoderType() {
+        return (TypeInfo) writer.attachment();
     }
 
     @Override

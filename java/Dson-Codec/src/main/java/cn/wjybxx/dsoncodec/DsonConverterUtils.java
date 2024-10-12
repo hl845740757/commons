@@ -145,7 +145,6 @@ public final class DsonConverterUtils {
                 new MoreArrayCodecs.StringArrayCodec(),
                 new MoreArrayCodecs.ShortArrayCodec(),
                 new MoreArrayCodecs.CharArrayCodec(),
-                new MoreArrayCodecs.ObjectArrayCodec(),
 
                 // 日期时间
                 new LocalDateTimeCodec(),

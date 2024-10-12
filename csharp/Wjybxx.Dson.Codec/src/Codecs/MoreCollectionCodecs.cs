@@ -87,7 +87,6 @@ public static class MoreCollectionCodecs
 
     #region 特化List
 
-    // 其实泛型参数使用IList<int>会更好
     public class IntListCodec : IDsonCodec<IList<int>>
     {
         private readonly Type typeInfo;
@@ -308,36 +307,6 @@ public static class MoreCollectionCodecs
             }
             return reader.Options.readAsImmutable
                 ? ImmutableList<ulong>.CreateRange(result)
-                : result;
-        }
-    }
-
-    public class ObjectListCodec : IDsonCodec<IList<object>>
-    {
-        private readonly Type typeInfo;
-
-        public ObjectListCodec(Type typeInfo) {
-            this.typeInfo = typeInfo;
-        }
-
-        public Type GetEncoderType() => typeInfo;
-
-        public void WriteObject(IDsonObjectWriter writer, ref IList<object> inst, Type declaredType, ObjectStyle style) {
-            Type eleType = typeof(object);
-            for (int i = 0; i < inst.Count; i++) {
-                writer.WriteObject(null, inst[i], eleType);
-            }
-        }
-
-        public IList<object> ReadObject(IDsonObjectReader reader, Func<IList<object>>? factory = null) {
-            Type eleType = typeof(object);
-            IList<object> result = new List<object>();
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                object value = reader.ReadObject<object>(null, eleType);
-                result.Add(value);
-            }
-            return reader.Options.readAsImmutable
-                ? ImmutableList<object>.CreateRange(result)
                 : result;
         }
     }

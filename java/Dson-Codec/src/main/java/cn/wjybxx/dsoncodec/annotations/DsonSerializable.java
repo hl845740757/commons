@@ -51,7 +51,7 @@ import java.lang.annotation.*;
  *      public void beforeEncode(ConverterOptions options){}
  *      public void writeObject(DsonObjectWriter writer){}
  *
- *      public static Bean newInstance(DsonObjectReader reader, TypeInfo typeInfo){}
+ *      public static Bean newInstance(DsonObjectReader reader, TypeInfo encoderType){}
  *      public void readObject(DsonObjectReader reader){}
  *      public void afterDecode(ConverterOptions options){}
  *

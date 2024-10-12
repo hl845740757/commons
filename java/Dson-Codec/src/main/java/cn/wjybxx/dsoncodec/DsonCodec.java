@@ -42,7 +42,10 @@ import java.util.function.Supplier;
  *
  * <br>-------------------------------泛型相关----------------------<br>
  * 1. 泛型codec的encoderType是根据对象的[真实类型]和[声明类型]动态生成的。
- * 2.
+ * 2  泛型codec必须包含接收{@link TypeInfo}的构造函数，还可以接收一个Factory。
+ * <p>
+ * {@code Struct(TypeInfo encoderType)}
+ * {@code Struct(TypeInfo encoderType, Supplier factory)}
  *
  * @author wjybxx
  * date 2023/4/3

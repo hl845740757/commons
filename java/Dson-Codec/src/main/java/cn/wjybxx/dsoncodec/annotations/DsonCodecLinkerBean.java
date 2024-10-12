@@ -36,7 +36,7 @@ import java.lang.annotation.Target;
  *      public static void beforeEncode(MyBean instance, ConverterOptions options){}
  *      public static void writeObject(MyBean instance, DsonObjectWriter writer){}
  *
- *      public static Bean newInstance(DsonObjectReader reader, TypeInfo typeInfo){}
+ *      public static Bean newInstance(DsonObjectReader reader, TypeInfo encoderType){}
  *      public static void readObject(MyBean instance, DsonObjectReader reader){}
  *      public static void afterDecode(MyBean instance, ConverterOptions options){}
  *

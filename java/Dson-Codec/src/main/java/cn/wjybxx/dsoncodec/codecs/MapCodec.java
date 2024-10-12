@@ -111,8 +111,6 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
 
     @Override
     public void writeObject(DsonObjectWriter writer, Map<K, V> inst, TypeInfo declaredType, ObjectStyle style) {
-        // 理论上declaredType只影响当前inst是否写入类型，而不影响KV是否写入类型，因此应当优先从inst的真实类型中查询K,V的类型...
-        // 另外，typeInfo就是根据【运行时类型】和【declaredType】生成的
         TypeInfo keyTypeInfo = encoderType.genericArgs.get(0);
         TypeInfo valueTypeInfo = encoderType.genericArgs.get(1);
 

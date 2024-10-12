@@ -82,7 +82,8 @@ public class CodecTest {
         String dsonString = converter.writeAsDson(myStruct);
         System.out.println(dsonString);
 
-        CodecStructs.MyStruct clonedObject = converter.cloneObject(myStruct, TypeInfo.of(CodecStructs.MyStruct.class));
+        TypeInfo typeInfo = TypeInfo.of(CodecStructs.MyStruct.class);
+        CodecStructs.MyStruct clonedObject = converter.cloneObject(myStruct, typeInfo, typeInfo);
         Assertions.assertEquals(myStruct, clonedObject);
     }
 

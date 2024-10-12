@@ -70,6 +70,7 @@ public interface IDsonObjectWriter : IDisposable
 
     /// <summary>
     /// 写嵌套对象
+    /// 1.由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
     /// </summary>
     /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
     /// <param name="value">要写入的对象</param>
@@ -79,8 +80,13 @@ public interface IDsonObjectWriter : IDisposable
     void WriteObject<T>(string? name, in T? value, Type declaredType, ObjectStyle? style = null);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteObject<T>(string? name, in T? value) {
-        WriteObject(name, value, typeof(T));
+    void WriteObject<T>(string? name, in T? value, ObjectStyle? style = null) {
+        WriteObject(name, value, typeof(T), style);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void WriteObject(string? name, object? value, Type declaredType, ObjectStyle? style = null) {
+        WriteObject<object>(name, value, declaredType, style);
     }
 
     #endregion

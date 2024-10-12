@@ -22,7 +22,6 @@ using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree.Branch.Join;
 using Wjybxx.Dson.Codec;
 using System;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {

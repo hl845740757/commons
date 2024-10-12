@@ -61,6 +61,10 @@ public interface IDsonCodec
 /// 
 /// 1. 编码的对象可能是'T'的子类；解码返回的对象也可能是'T'的子类。
 /// 2. Codec的泛型'T'和参数declaredType可能并不兼容，因此必须显式传入。
+/// 3. 泛型codec可以包含接收<see cref="Type"/>的构造函数，还可以接收一个Factory。
+///
+/// <code>Struct(Type encoderType)</code>
+/// <code>Struct(Type encoderType, Func factory)</code>
 /// </summary>
 /// <typeparam name="T">实例类型，可能是EncoderType的超类</typeparam>
 public interface IDsonCodec<T> : IDsonCodec

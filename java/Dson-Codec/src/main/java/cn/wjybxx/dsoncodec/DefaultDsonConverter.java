@@ -78,12 +78,12 @@ class DefaultDsonConverter implements DsonConverter {
 
     @Nonnull
     @Override
-    public byte[] write(Object value, @Nonnull TypeInfo typeInfo) {
+    public byte[] write(Object value, @Nonnull TypeInfo declaredType) {
         Objects.requireNonNull(value);
         final byte[] localBuffer = options.bufferPool.acquire(options.bufferSize);
         try {
             final DsonChunk chunk = new DsonChunk(localBuffer);
-            write(value, typeInfo, chunk);
+            write(value, declaredType, chunk);
             return chunk.usedPayload();
         } finally {
             options.bufferPool.release(localBuffer);
@@ -91,35 +91,35 @@ class DefaultDsonConverter implements DsonConverter {
     }
 
     @Override
-    public <T> T read(byte[] source, @Nonnull TypeInfo typeInfo, Supplier<? extends T> factory) {
+    public <T> T read(byte[] source, @Nonnull TypeInfo declaredType, Supplier<? extends T> factory) {
         final DsonInput inputStream = DsonInputs.newInstance(source);
-        return decodeObject(inputStream, typeInfo, factory);
+        return decodeObject(inputStream, declaredType, factory);
     }
 
     @Override
-    public void write(Object value, TypeInfo typeInfo, DsonChunk chunk) {
+    public void write(Object value, TypeInfo declaredType, DsonChunk chunk) {
         Objects.requireNonNull(value);
         final DsonOutput outputStream = DsonOutputs.newInstance(chunk.getBuffer(), chunk.getOffset(), chunk.getLength());
-        encodeObject(outputStream, value, typeInfo);
+        encodeObject(outputStream, value, declaredType);
         chunk.setUsed(outputStream.getPosition());
     }
 
     @Override
-    public <T> T read(DsonChunk chunk, TypeInfo typeInfo, Supplier<? extends T> factory) {
+    public <T> T read(DsonChunk chunk, TypeInfo declaredType, Supplier<? extends T> factory) {
         final DsonInput inputStream = DsonInputs.newInstance(chunk.getBuffer(), chunk.getOffset(), chunk.getLength());
-        return decodeObject(inputStream, typeInfo, factory);
+        return decodeObject(inputStream, declaredType, factory);
     }
 
     @Override
-    public <T> T cloneObject(Object value, TypeInfo typeInfo, Supplier<? extends T> factory) {
+    public <T> T cloneObject(Object value, TypeInfo declaredType, TypeInfo targetType, Supplier<? extends T> factory) {
         if (value == null) return null;
         final byte[] localBuffer = options.bufferPool.acquire(options.bufferSize);
         try {
             final DsonOutput outputStream = DsonOutputs.newInstance(localBuffer);
-            encodeObject(outputStream, value, typeInfo);
+            encodeObject(outputStream, value, declaredType);
 
             final DsonInput inputStream = DsonInputs.newInstance(localBuffer, 0, outputStream.getPosition());
-            return decodeObject(inputStream, typeInfo, factory);
+            return decodeObject(inputStream, targetType, factory);
         } finally {
             options.bufferPool.release(localBuffer);
         }
@@ -155,10 +155,10 @@ class DefaultDsonConverter implements DsonConverter {
 
     @Nonnull
     @Override
-    public String writeAsDson(Object value, @Nonnull TypeInfo typeInfo, ObjectStyle style) {
+    public String writeAsDson(Object value, @Nonnull TypeInfo declaredType, ObjectStyle style) {
         StringBuilder stringBuilder = options.stringBuilderPool.acquire();
         try {
-            writeAsDson(value, typeInfo, new StringBuilderWriter(stringBuilder), style);
+            writeAsDson(value, declaredType, new StringBuilderWriter(stringBuilder), style);
             return stringBuilder.toString();
         } finally {
             options.stringBuilderPool.release(stringBuilder);
@@ -166,37 +166,37 @@ class DefaultDsonConverter implements DsonConverter {
     }
 
     @Override
-    public <T> T readFromDson(CharSequence source, @Nonnull TypeInfo typeInfo, Supplier<? extends T> factory) {
+    public <T> T readFromDson(CharSequence source, @Nonnull TypeInfo declaredType, Supplier<? extends T> factory) {
         try (DsonObjectReader wrapper = wrapReader(new DsonTextReader(options.textReaderSettings, source))) {
-            return wrapper.readObject(null, typeInfo, factory);
+            return wrapper.readObject(null, declaredType, factory);
         }
     }
 
     @Override
-    public void writeAsDson(Object value, @Nonnull TypeInfo typeInfo, Writer writer, ObjectStyle style) {
+    public void writeAsDson(Object value, @Nonnull TypeInfo declaredType, Writer writer, ObjectStyle style) {
         Objects.requireNonNull(writer, "writer");
         try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this,
                 new DsonTextWriter(options.textWriterSettings, writer, false))) {
-            wrapper.writeObject(null, value, typeInfo, style);
+            wrapper.writeObject(null, value, declaredType, style);
             wrapper.flush();
         }
     }
 
     @Override
-    public <T> T readFromDson(Reader source, @Nonnull TypeInfo typeInfo, Supplier<? extends T> factory) {
+    public <T> T readFromDson(Reader source, @Nonnull TypeInfo declaredType, Supplier<? extends T> factory) {
         try (DsonObjectReader wrapper = wrapReader(
                 new DsonTextReader(options.textReaderSettings, Dsons.newStreamScanner(source, false)))) {
-            return wrapper.readObject(null, typeInfo, factory);
+            return wrapper.readObject(null, declaredType, factory);
         }
     }
 
     @Override
-    public DsonValue writeAsDsonValue(Object value, TypeInfo typeInfo) {
+    public DsonValue writeAsDsonValue(Object value, TypeInfo declaredType) {
         Objects.requireNonNull(value);
         DsonArray<String> outList = new DsonArray<>(1);
         try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this,
                 new DsonCollectionWriter(options.binWriterSettings, outList))) {
-            wrapper.writeObject(null, value, typeInfo, ObjectStyle.INDENT);
+            wrapper.writeObject(null, value, declaredType, ObjectStyle.INDENT);
             DsonValue dsonValue = outList.get(0);
             if (dsonValue.getDsonType().isContainer()) {
                 return dsonValue;
@@ -206,14 +206,14 @@ class DefaultDsonConverter implements DsonConverter {
     }
 
     @Override
-    public <T> T readFromDsonValue(DsonValue source, @Nonnull TypeInfo typeInfo, Supplier<? extends T> factory) {
+    public <T> T readFromDsonValue(DsonValue source, @Nonnull TypeInfo declaredType, Supplier<? extends T> factory) {
         if (!source.getDsonType().isContainer()) {
             throw new IllegalArgumentException("value must be container");
         }
         DsonArray<String> dsonArray = new DsonArray<String>().append(source);
         try (DsonObjectReader wrapper = new BufferedDsonObjectReader(this,
                 new DsonCollectionReader(options.binReaderSettings, dsonArray))) {
-            return wrapper.readObject(null, typeInfo, factory);
+            return wrapper.readObject(null, declaredType, factory);
         }
     }
 

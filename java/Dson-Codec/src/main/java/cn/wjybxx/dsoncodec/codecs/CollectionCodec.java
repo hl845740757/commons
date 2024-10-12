@@ -110,11 +110,9 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
 
     @Override
     public void writeObject(DsonObjectWriter writer, Collection<E> inst, TypeInfo declaredType, ObjectStyle style) {
-        // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询E的类型...
-        // 另外，typeInfo就是根据【运行时类型】和【declaredType】生成的
         TypeInfo elementTypeInfo = encoderType.genericArgs.get(0);
 
-        for (Object e : inst) {
+        for (E e : inst) {
             writer.writeObject(null, e, elementTypeInfo, null);
         }
     }

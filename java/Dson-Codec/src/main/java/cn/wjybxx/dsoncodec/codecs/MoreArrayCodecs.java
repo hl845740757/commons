@@ -259,34 +259,4 @@ public final class MoreArrayCodecs {
             return result.toCharArray();
         }
     }
-
-    @DsonCodecScanIgnore
-    public static class ObjectArrayCodec implements DsonCodec<Object[]> {
-
-        @Nonnull
-        @Override
-        public TypeInfo getEncoderType() {
-            return TypeInfo.ARRAY_OBJECT;
-        }
-
-        @Override
-        public void writeObject(DsonObjectWriter writer, Object[] inst, TypeInfo declaredType, ObjectStyle style) {
-            TypeInfo componentArgInfo = declaredType.isArrayType() ? declaredType.getComponentType() : TypeInfo.OBJECT;
-
-            for (Object e : inst) {
-                writer.writeObject(null, e, componentArgInfo, null);
-            }
-        }
-
-        @Override
-        public Object[] readObject(DsonObjectReader reader, Supplier<? extends Object[]> factory) {
-            TypeInfo componentArgInfo = TypeInfo.OBJECT;
-
-            ArrayList<Object> result = new ArrayList<>();
-            while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
-                result.add(reader.readObject(null, componentArgInfo));
-            }
-            return result.toArray();
-        }
-    }
 }

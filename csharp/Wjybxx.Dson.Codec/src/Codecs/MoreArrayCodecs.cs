@@ -181,27 +181,6 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class ObjectArrayCodec : IDsonCodec<object[]>
-    {
-        public void WriteObject(IDsonObjectWriter writer, ref object[] inst, Type declaredType, ObjectStyle style) {
-            Type eleType = typeof(object);
-            for (int i = 0; i < inst.Length; i++) {
-                writer.WriteObject(null, inst[i], eleType);
-            }
-        }
-
-        public object[] ReadObject(IDsonObjectReader reader, Func<object[]>? factory = null) {
-            Type eleType = typeof(object);
-            // 由于长度未知，只能先存储为List再转...
-            List<object> result = new List<object>();
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                object value = reader.ReadObject<object>(null, eleType);
-                result.Add(value);
-            }
-            return result.ToArray();
-        }
-    }
-
     #endregion
 }
 }

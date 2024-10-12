@@ -114,7 +114,8 @@ public interface DsonObjectWriter extends AutoCloseable {
 
     /**
      * 写入类型信息
-     * 该方法应当在writeStartObject/Array后立即调用，写在所有字段之前。
+     * 1.该方法应当在writeStartObject/Array后立即调用，写在所有字段之前。
+     * 2.默认会调用{@link #setEncoderType(TypeInfo)}保存类型信息
      *
      * @param declaredType 对象的声明类型，用于测试是否写入类型信息
      * @param encoderType  编码器绑定的类型，真实写入的类型信息
@@ -139,6 +140,16 @@ public interface DsonObjectWriter extends AutoCloseable {
 
     /** 打印换行，用于控制Dson文本的样式 */
     void println();
+
+    /**
+     * 设置当前对象的encoderType
+     * 1.java特殊支持，用于读写Object/Array期间查询当前对象的类型信息
+     * 2.应当在writeStartObject/Array以后调用
+     */
+    void setEncoderType(TypeInfo encoderType);
+
+    /** 获取当前对象的类型信息 */
+    TypeInfo getEncoderType();
 
     void flush();
 

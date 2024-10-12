@@ -72,7 +72,7 @@ public interface IDsonObjectReader : IDisposable
     /// 注意：
     /// 1. 该方法对于无法精确解析的对象，可能返回一个不兼容的类型。
     /// 2. 目标类型可以与写入类型不一致，甚至无继承关系，只要数据格式兼容即可 —— 投影。
-    /// 3. 由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入。
+    /// 3. 由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
     /// </summary>
     /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
     /// <param name="declaredType">对象的声明类型</param>
@@ -82,8 +82,13 @@ public interface IDsonObjectReader : IDisposable
     T ReadObject<T>(string? name, Type declaredType, Func<T>? factory = null);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    T ReadObject<T>(string? name) {
-        return ReadObject<T>(name, typeof(T));
+    T ReadObject<T>(string? name, Func<T>? factory = null) {
+        return ReadObject<T>(name, typeof(T), factory);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    object ReadObject(string? name, Type declaredType, Func<object>? factory = null) {
+        return ReadObject<object>(name, declaredType, factory);
     }
 
     #endregion
@@ -207,24 +212,6 @@ public interface IDsonObjectReader : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     char ReadChar(string? name) {
         return (char)ReadInt(name);
-    }
-
-    /** 读取为不可变List */
-    IList<TE> ReadImmutableList<TE>(string? name) {
-        List<TE> result = ReadObject<List<TE>>(name);
-        return result == null ? ImmutableList<TE>.Empty : ImmutableList<TE>.CreateRange(result);
-    }
-
-    /** 读取为不可变Set */
-    IGenericSet<TE> ReadImmutableSet<TE>(string? name) {
-        HashSet<TE> result = ReadObject<HashSet<TE>>(name);
-        return result == null ? ImmutableLinkedHastSet<TE>.Empty : ImmutableLinkedHastSet<TE>.CreateRange(result);
-    }
-
-    /** 读取为不可变字典 */
-    IDictionary<Tkey, TValue> ReadImmutableDictionary<Tkey, TValue>(string? name) {
-        Dictionary<Tkey, TValue> result = ReadObject<Dictionary<Tkey, TValue>>(name);
-        return result == null ? ImmutableLinkedDictionary<Tkey, TValue>.Empty : ImmutableLinkedDictionary<Tkey, TValue>.CreateRange(result);
     }
 
     #endregion
