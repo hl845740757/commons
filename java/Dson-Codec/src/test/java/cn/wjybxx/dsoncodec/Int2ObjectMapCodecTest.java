@@ -37,7 +37,7 @@ public class Int2ObjectMapCodecTest {
 
     @BeforeEach
     void setUp() {
-        TypeMetaRegistry typeMetaRegistry = TypeMetaRegistries.fromMetas(
+        TypeMetaRegistry typeMetaRegistry = SimpleTypeMetaRegistry.fromMetas(
                 TypeMeta.of(Int2ObjectMap.class, ObjectStyle.INDENT),
                 TypeMeta.of(Int2ObjectOpenHashMap.class, ObjectStyle.INDENT),
                 TypeMeta.of(IntList.class, ObjectStyle.FLOW),
@@ -45,15 +45,15 @@ public class Int2ObjectMapCodecTest {
         );
 
         // IntList不是泛型类...
-        DsonCodecRegistry codecRegistry = DsonCodecRegistries.fromCodecs(
+        DsonCodecRegistry codecRegistry = SimpleCodecRegistry.fromCodecs(
                 new IntCollectionCodec(TypeInfo.of(IntList.class), IntArrayList::new),
                 new IntCollectionCodec(TypeInfo.of(IntArrayList.class), IntArrayList::new)
         );
         GenericCodecConfig genericCodecConfig = GenericCodecConfig.newDefaultConfig();
-        genericCodecConfig.addCodec(GenericCodecInfo.create(TypeInfo.of(Int2ObjectMap.class, Object.class),
-                Int2ObjectMapCodec.class, Int2ObjectOpenHashMap.class));
-        genericCodecConfig.addCodec(GenericCodecInfo.create(TypeInfo.of(Int2ObjectOpenHashMap.class, Object.class),
-                Int2ObjectMapCodec.class, Int2ObjectOpenHashMap.class));
+        genericCodecConfig.addCodec(GenericCodecInfo.create(
+                TypeInfo.of(Int2ObjectMap.class, Object.class), Int2ObjectMapCodec.class, Int2ObjectOpenHashMap.class));
+        genericCodecConfig.addCodec(GenericCodecInfo.create(
+                TypeInfo.of(Int2ObjectOpenHashMap.class, Object.class), Int2ObjectMapCodec.class, Int2ObjectOpenHashMap.class));
 
         ConverterOptions options = ConverterOptions.DEFAULT.toBuilder()
                 .setWriteMapAsDocument(true)

@@ -16,13 +16,13 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.ArrayUtils;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.dson.text.ObjectStyle;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -33,32 +33,16 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
-    private final TypeMetaRegistry basicRegistry;
+    private final SimpleTypeMetaRegistry basicRegistry;
+    private final ClassNamePool classNamePool = new ClassNamePool(1024);
+    private final ConcurrentHashMap<TypeInfo, TypeMeta> type2MetaDic = new ConcurrentHashMap<>(1024);
+    private final ConcurrentHashMap<String, TypeMeta> name2MetaDic = new ConcurrentHashMap<>(1024);
 
-    private final ClassNamePool classNamePool = new ClassNamePool();
-    private final ConcurrentHashMap<TypeInfo, TypeMeta> type2MetaDic = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, TypeMeta> name2MetaDic = new ConcurrentHashMap<>();
-
-    public DynamicTypeMetaRegistry(TypeMetaRegistry basicRegistry) {
-        this.basicRegistry = Objects.requireNonNull(basicRegistry);
+    public DynamicTypeMetaRegistry(List<TypeMetaRegistry> basicRegistries) {
+        this.basicRegistry = SimpleTypeMetaRegistry.fromRegistries(basicRegistries);
     }
 
     // region ofType
-
-    @Nullable
-    @Override
-    public TypeMeta ofClass(Class<?> clazz) {
-        TypeMeta typeMeta = basicRegistry.ofClass(clazz);
-        if (typeMeta != null) {
-            return typeMeta;
-        }
-        // 走到这里，通常意味着clsName是数组或泛型，在基础注册表中不存在
-        // 对于数组，我们可以尝试动态生成原始类型数组的元数据，其它情况下则证明不存在对应元数据
-        if (clazz.isArray()) {
-            return ofType(TypeInfo.of(clazz));
-        }
-        return null;
-    }
 
     @Nullable
     @Override
@@ -80,8 +64,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
         if (type.isArrayType()) {
             style = ObjectStyle.INDENT;
         } else {
-            Class<?> rawType = type.rawType;
-            TypeMeta rawTypeMeta = basicRegistry.ofClass(rawType);
+            TypeMeta rawTypeMeta = basicRegistry.ofType(TypeInfo.of(type.rawType));
             if (rawTypeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
@@ -151,14 +134,14 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
      */
     private ClassName classNameOfType(TypeInfo type) {
         if (type.isArrayType()) {
-            TypeInfo rootElementType = TypeInfo.of(DsonConverterUtils.getRootComponentType(type.rawType), type.genericArgs);
-            int arrayRank = DsonConverterUtils.getArrayRank(type.rawType);
-            String clsName = classNameOfType(rootElementType) + DsonConverterUtils.arrayRankSymbol(arrayRank);
+            TypeInfo rootElementType = TypeInfo.of(ArrayUtils.getRootComponentType(type.rawType), type.genericArgs);
+            int arrayRank = ArrayUtils.getArrayRank(type.rawType);
+            String clsName = classNameOfType(rootElementType) + ArrayUtils.arrayRankSymbol(arrayRank);
             return new ClassName(clsName);
         }
         if (type.isGenericType()) {
             // 泛型原型类必须存在于用户的注册表中
-            TypeMeta typeMeta = basicRegistry.ofClass(type.rawType);
+            TypeMeta typeMeta = basicRegistry.ofType(TypeInfo.of(type.rawType));
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
@@ -218,6 +201,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
     // endregion
 
+    /** 这里导出的是快照，但并不会导致错误 */
     @Override
     public List<TypeMeta> export() {
         List<TypeMeta> result = new ArrayList<>(basicRegistry.export());

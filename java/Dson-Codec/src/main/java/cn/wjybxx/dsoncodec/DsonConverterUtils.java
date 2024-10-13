@@ -16,7 +16,6 @@
 
 package cn.wjybxx.dsoncodec;
 
-import cn.wjybxx.base.reflect.TypeParameterFinder;
 import cn.wjybxx.dson.text.DsonTexts;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.types.*;
@@ -27,7 +26,8 @@ import java.lang.invoke.CallSite;
 import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -76,8 +76,10 @@ public final class DsonConverterUtils {
         primitiveTypeDefaultValueMap.put(Void.class, null);
 
         // 内置codec类型
-        BUILTIN_TYPE_METAS = TypeMetaRegistries.fromMetas(builtinTypeMetas());
-        BUILTIN_CODEC_REGISTRY = DsonCodecRegistries.fromCodecs(builtinCodecs());
+        List<TypeMeta> typeMetaList = builtinTypeMetas();
+        BUILTIN_TYPE_METAS = SimpleTypeMetaRegistry.fromMetas(typeMetaList);
+        List<? extends DsonCodec<?>> pojoCodecs = builtinCodecs();
+        BUILTIN_CODEC_REGISTRY = SimpleCodecRegistry.fromCodecs(pojoCodecs);
     }
 
     // region 内建codec
@@ -153,77 +155,6 @@ public final class DsonConverterUtils {
                 new InstantCodec(),
                 new DurationCodec()
         );
-    }
-
-    // endregion
-
-    // region array
-
-    /** 最大支持9阶 - 我都没见过3阶以上的数组... */
-    private static final String[] arrayRankSymbols = {
-            "[]",
-            "[][]",
-            "[][][]",
-            "[][][][]",
-            "[][][][][]",
-            "[][][][][][]",
-            "[][][][][][][]",
-            "[][][][][][][][]",
-            "[][][][][][][][][]"
-    };
-
-    public static String arrayRankSymbol(int rank) {
-        if (rank < 1 || rank > 9) {
-            throw new IllegalArgumentException("rank: " + rank);
-        }
-        return arrayRankSymbols[rank - 1];
-    }
-
-    /** 获取根元素的类型 -- 如果Type是数组，则返回最底层的元素类型；如果不是数组，则返回type */
-    public static Class<?> getRootComponentType(Class<?> clz) {
-        while (clz.isArray()) {
-            clz = clz.getComponentType();
-        }
-        return clz;
-    }
-
-    /** 获取数组的阶数 -- 如果不是数组，则返回0 */
-    public static int getArrayRank(Class<?> clz) {
-        int r = 0;
-        while (clz.isArray()) {
-            r++;
-            clz = clz.getComponentType();
-        }
-        return r;
-    }
-    // endregion
-
-    // region 泛型
-
-    /** 查找指定泛型参数的运行时类型 */
-    @Deprecated
-    private static <T> TypeInfo findTypeParameter(Class<T> thisClass, Class<? super T> superClazz, String typeParameterName) {
-        TypeVariable<Class<T>>[] typeParameters = thisClass.getTypeParameters();
-        for (TypeVariable<Class<T>> typeParameter : typeParameters) {
-            if (!typeParameter.getName().equals(typeParameterName)) {
-                continue;
-            }
-            Type[] bounds = typeParameter.getBounds();
-            if (bounds.length == 0) {
-                return TypeInfo.OBJECT;
-            }
-            // 先简单擦除
-            if (bounds[0] instanceof Class<?> clazz) {
-                return TypeInfo.of(clazz);
-            }
-            if (bounds[0] instanceof ParameterizedType parameterizedType) {
-//                return TypeInfo.of(parameterizedType);
-                return TypeInfo.of((Class<?>) parameterizedType.getRawType());
-            }
-            return TypeInfo.OBJECT;
-        }
-        Class<?> typeParameter = TypeParameterFinder.findTypeParameterUnsafe(thisClass, superClazz, typeParameterName);
-        return TypeInfo.of(typeParameter);
     }
 
     // endregion
@@ -335,25 +266,6 @@ public final class DsonConverterUtils {
         return encoderClass.isArray()
                 || Collection.class.isAssignableFrom(encoderClass)
                 || Map.class.isAssignableFrom(encoderClass);
-    }
-
-    /** List转Array */
-    @SuppressWarnings("unchecked")
-    public static <T, E> T convertList2Array(List<? extends E> list, Class<T> arrayType) {
-        final Class<?> componentType = arrayType.getComponentType();
-        final int length = list.size();
-        // 如果当前是引用类型数组，则直接ToArray
-        if (list.getClass() == ArrayList.class && !componentType.isPrimitive()) {
-            final E[] tempArray = (E[]) Array.newInstance(componentType, length);
-            return (T) list.toArray(tempArray);
-        }
-        // System.arrayCopy并不支持对象数组到基础类型数组
-        final T tempArray = (T) Array.newInstance(componentType, length);
-        for (int index = 0; index < length; index++) {
-            Object element = list.get(index);
-            Array.set(tempArray, index, element);
-        }
-        return tempArray;
     }
 
     /** 无参构造函数转lambda实例 -- 可避免解码过程中的反射 */

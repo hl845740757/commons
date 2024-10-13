@@ -37,16 +37,16 @@ class DefaultDsonConverter implements DsonConverter {
 
     private final TypeMetaRegistry typeMetaRegistry;
     private final DsonCodecRegistry codecRegistry;
-    private final GenericCodecHelper genericCodecHelper;
+    private final GenericHelper genericHelper;
     private final ConverterOptions options;
 
     DefaultDsonConverter(TypeMetaRegistry typeMetaRegistry,
                          DsonCodecRegistry codecRegistry,
-                         GenericCodecHelper genericCodecHelper,
+                         GenericHelper genericHelper,
                          ConverterOptions options) {
         this.codecRegistry = codecRegistry;
         this.typeMetaRegistry = typeMetaRegistry;
-        this.genericCodecHelper = genericCodecHelper;
+        this.genericHelper = genericHelper;
         this.options = options;
     }
 
@@ -61,8 +61,8 @@ class DefaultDsonConverter implements DsonConverter {
     }
 
     @Override
-    public GenericCodecHelper genericCodecHelper() {
-        return genericCodecHelper;
+    public GenericHelper genericCodecHelper() {
+        return genericHelper;
     }
 
     @Override
@@ -73,7 +73,7 @@ class DefaultDsonConverter implements DsonConverter {
     @Override
     public DsonConverter withOptions(ConverterOptions options) {
         Objects.requireNonNull(options);
-        return new DefaultDsonConverter(typeMetaRegistry, codecRegistry, genericCodecHelper, options);
+        return new DefaultDsonConverter(typeMetaRegistry, codecRegistry, genericHelper, options);
     }
 
     @Nonnull

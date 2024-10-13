@@ -33,7 +33,7 @@ public abstract class DsonCodecImpl
     // 解决泛型协变逆变问题 - 不会导致装箱
     public abstract void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, ObjectStyle style);
 
-    public abstract object ReadObject2(IDsonObjectReader reader, Type declaredType, object? factory);
+    public abstract object ReadObject2(IDsonObjectReader reader, object? factory);
 
     /** 创建Impl实例 */
     public static DsonCodecImpl CreateInstance(IDsonCodec codec) {
@@ -74,7 +74,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
         WriteObject(writer, (T)inst, declaredType, style);
     }
 
-    public override object ReadObject2(IDsonObjectReader reader, Type declaredType, object? factory) {
+    public override object ReadObject2(IDsonObjectReader reader, object? factory) {
         return ReadObject(reader, (Func<T>)factory);
     }
 

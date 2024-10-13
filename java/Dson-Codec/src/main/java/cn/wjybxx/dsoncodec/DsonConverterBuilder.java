@@ -30,7 +30,7 @@ public class DsonConverterBuilder {
     private final List<DsonCodecRegistry> codecRegistries = new ArrayList<>(4);
     private final List<DsonCodecCaster> casters = new ArrayList<>(4);
     private final List<GenericCodecConfig> genericCodecConfigs = new ArrayList<>(4);
-    private GenericCodecHelper genericCodecHelper;
+    private GenericHelper genericHelper;
 
     private ConverterOptions options = ConverterOptions.DEFAULT;
     private boolean pureMode = false;
@@ -42,26 +42,23 @@ public class DsonConverterBuilder {
         if (!pureMode) {
             typeMetaRegistries.addLast(DsonConverterUtils.getDefaultTypeMetaRegistry());
         }
-        DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(
-                TypeMetaRegistries.fromRegistries(typeMetaRegistries));
+        DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(typeMetaRegistries);
         if (!pureMode) {
             typeMetaRegistries.removeLast();
         }
-        if (genericCodecHelper == null) {
-            genericCodecHelper = new GenericCodecHelper();
+        if (genericHelper == null) {
+            genericHelper = new GenericHelper();
         }
-        DynamicCodecRegistry dynamicDsonCodecRegistry;
+        DynamicCodecRegistry dynamicCodecRegistry;
         codecRegistries.add(DsonConverterUtils.getDefaultCodecRegistry());
         {
-            dynamicDsonCodecRegistry = new DynamicCodecRegistry(
-                    DsonCodecRegistries.fromRegistries(codecRegistries), casters,
-                    genericCodecConfigs, genericCodecHelper);
+            dynamicCodecRegistry = new DynamicCodecRegistry(codecRegistries);
         }
         codecRegistries.removeLast();
 
         return new DefaultDsonConverter(dynamicTypeMetaRegistry,
-                dynamicDsonCodecRegistry,
-                genericCodecHelper,
+                dynamicCodecRegistry,
+                genericHelper,
                 options);
     }
 
@@ -128,12 +125,12 @@ public class DsonConverterBuilder {
         return this;
     }
 
-    public GenericCodecHelper getGenericCodecHelper() {
-        return genericCodecHelper;
+    public GenericHelper getGenericCodecHelper() {
+        return genericHelper;
     }
 
-    public DsonConverterBuilder setGenericCodecHelper(GenericCodecHelper genericCodecHelper) {
-        this.genericCodecHelper = genericCodecHelper;
+    public DsonConverterBuilder setGenericCodecHelper(GenericHelper genericHelper) {
+        this.genericHelper = genericHelper;
         return this;
     }
 

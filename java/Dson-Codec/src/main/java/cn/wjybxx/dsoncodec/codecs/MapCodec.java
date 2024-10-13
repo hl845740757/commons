@@ -48,6 +48,9 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
 
     @SuppressWarnings("unchecked")
     public MapCodec(TypeInfo encoderType, Supplier<? extends Map<K, V>> factory) {
+        if (encoderType.genericArgs.size() != 2) {
+            throw new IllegalArgumentException("encoderType.genericArgs.size() != 2");
+        }
         if (factory == null) {
             factory = DsonConverterUtils.tryNoArgConstructorToSupplier((Class<? extends Map<K, V>>) encoderType.rawType);
         }

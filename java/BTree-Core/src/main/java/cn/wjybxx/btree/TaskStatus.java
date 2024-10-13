@@ -32,7 +32,7 @@ public class TaskStatus {
     /** 执行成功 -- 最小的完成状态 */
     public static final int SUCCESS = 2;
 
-    /** 被取消 -- 需要放在所有失败码的前面，用户可以可以通过比较大小判断；向上传播时要小心 */
+    /** 被取消 -- 需要放在所有失败码的前面，用户可以通过比较大小判断；向上传播时要小心 */
     public static final int CANCELLED = 3;
     /** 默认失败码 -- 是最小的失败码 */
     public static final int ERROR = 4;

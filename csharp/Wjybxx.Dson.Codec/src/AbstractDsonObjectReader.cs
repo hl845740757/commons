@@ -145,7 +145,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         if (codec is DsonCodecImpl<T> codecImpl) {
             return codecImpl.ReadObject(this, factory);
         } else {
-            return (T)codec.ReadObject2(this, declaredType, factory);
+            return (T)codec.ReadObject2(this, factory);
         }
     }
 

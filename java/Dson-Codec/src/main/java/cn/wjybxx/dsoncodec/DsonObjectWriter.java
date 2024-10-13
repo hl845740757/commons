@@ -138,9 +138,6 @@ public interface DsonObjectWriter extends AutoCloseable {
     /** 编码字典的key */
     String encodeKey(Object key);
 
-    /** 打印换行，用于控制Dson文本的样式 */
-    void println();
-
     /**
      * 设置当前对象的encoderType
      * 1.java特殊支持，用于读写Object/Array期间查询当前对象的类型信息

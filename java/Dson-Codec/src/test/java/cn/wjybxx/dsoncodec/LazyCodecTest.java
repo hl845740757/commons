@@ -36,7 +36,7 @@ public class LazyCodecTest {
 
     @Test
     void testLazyCodec() {
-        TypeMetaRegistry typeMetaRegistry = TypeMetaRegistries.fromMetas(
+        TypeMetaRegistry typeMetaRegistry = SimpleTypeMetaRegistry.fromMetas(
                 TypeMeta.of(MyStruct.class, ObjectStyle.INDENT, "MyStruct")
         );
         ConverterOptions options = ConverterOptions.newBuilder()
@@ -52,7 +52,8 @@ public class LazyCodecTest {
         final byte[] bytesSource;
         {
             DsonConverter converter = new DsonConverterBuilder()
-                    .addTypeMetaRegistry(typeMetaRegistry).addCodecRegistry(DsonCodecRegistries.fromCodecs(
+                    .addTypeMetaRegistry(typeMetaRegistry)
+                    .addCodecRegistry(SimpleCodecRegistry.fromCodecs(
                             new MyStructCodec(Role.SOURCE)
                     ))
                     .setOptions(options)
@@ -64,7 +65,8 @@ public class LazyCodecTest {
         // 模拟转发 -- 读进来再写
         {
             DsonConverter converter = new DsonConverterBuilder()
-                    .addTypeMetaRegistry(typeMetaRegistry).addCodecRegistry(DsonCodecRegistries.fromCodecs(
+                    .addTypeMetaRegistry(typeMetaRegistry)
+                    .addCodecRegistry(SimpleCodecRegistry.fromCodecs(
                             new MyStructCodec(Role.ROUTER)
                     ))
                     .setOptions(options)
@@ -76,7 +78,8 @@ public class LazyCodecTest {
         MyStruct destStruct;
         {
             DsonConverter converter = new DsonConverterBuilder()
-                    .addTypeMetaRegistry(typeMetaRegistry).addCodecRegistry(DsonCodecRegistries.fromCodecs(
+                    .addTypeMetaRegistry(typeMetaRegistry)
+                    .addCodecRegistry(SimpleCodecRegistry.fromCodecs(
                             new MyStructCodec(Role.DESTINATION)
                     ))
                     .setOptions(options)

@@ -32,7 +32,7 @@ public class TypeArgsInheritTest {
 
     @Test
     void testList() {
-        GenericCodecHelper genericCodecHelper = new GenericCodecHelper();
-        Assertions.assertTrue(genericCodecHelper.canInheritTypeArgs(ArrayList.class, List.class));
+        GenericHelper genericHelper = new GenericHelper();
+        Assertions.assertTrue(genericHelper.canInheritTypeArgs(ArrayList.class, List.class));
     }
 }

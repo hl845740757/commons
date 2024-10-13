@@ -88,6 +88,25 @@ public final class TypeMeta {
     // endregion
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TypeMeta typeMeta = (TypeMeta) o;
+        return typeInfo.equals(typeMeta.typeInfo)
+                && style == typeMeta.style
+                && clsNames.equals(typeMeta.clsNames);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = typeInfo.hashCode();
+        result = 31 * result + style.hashCode();
+        result = 31 * result + clsNames.hashCode();
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "TypeMeta{" +
                 "type=" + typeInfo +

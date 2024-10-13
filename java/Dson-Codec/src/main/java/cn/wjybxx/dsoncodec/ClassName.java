@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.ArrayUtils;
 import cn.wjybxx.base.mutable.MutableInt;
 
 import javax.annotation.concurrent.Immutable;
@@ -184,7 +185,7 @@ public final class ClassName {
         }
         // 数组符号放末尾
         if (arrayRank > 0) {
-            sb.append(DsonConverterUtils.arrayRankSymbol(arrayRank));
+            sb.append(ArrayUtils.arrayRankSymbol(arrayRank));
         }
         return sb;
     }
@@ -234,7 +235,7 @@ public final class ClassName {
             String clsName = fullClsName.substring(rawStartIndex, clsNameEndIndex + 1);
             // 简单名需要拼接数组符号
             if (arrayRank > 0) {
-                clsName = clsName + DsonConverterUtils.arrayRankSymbol(arrayRank);
+                clsName = clsName + ArrayUtils.arrayRankSymbol(arrayRank);
             }
 
             // 解析泛型参数 -- 不能简单逗号分隔，需按Token匹配；泛型个数通常不超过2

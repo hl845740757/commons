@@ -29,16 +29,39 @@ public sealed class SimpleCodecRegistry : IDsonCodecRegistry
 {
     private readonly IDictionary<Type, DsonCodecImpl> encoderDic;
     private readonly IDictionary<Type, DsonCodecImpl> decoderDic;
+    private readonly IList<GenericCodecConfig> genericCodecConfigs;
+    private readonly IList<IDsonCodecCaster> casters;
 
     public SimpleCodecRegistry() {
-        encoderDic = new Dictionary<Type, DsonCodecImpl>();
-        decoderDic = new Dictionary<Type, DsonCodecImpl>();
+        encoderDic = new Dictionary<Type, DsonCodecImpl>(64);
+        decoderDic = new Dictionary<Type, DsonCodecImpl>(64);
+        genericCodecConfigs = new List<GenericCodecConfig>();
+        casters = new List<IDsonCodecCaster>();
     }
 
-    private SimpleCodecRegistry(IDictionary<Type, DsonCodecImpl> encoderDic, IDictionary<Type, DsonCodecImpl> decoderDic) {
-        this.encoderDic = encoderDic.ToImmutableLinkedDictionary();
-        this.decoderDic = decoderDic.ToImmutableLinkedDictionary(); // 避免系统库依赖，无法引入Unity
+    private SimpleCodecRegistry(SimpleCodecRegistry other, bool immutable = true) {
+        if (immutable) {
+            this.encoderDic = ImmutableLinkedDictionary<Type, DsonCodecImpl>.CreateRange(other.encoderDic);
+            this.decoderDic = ImmutableLinkedDictionary<Type, DsonCodecImpl>.CreateRange(other.decoderDic);
+            this.genericCodecConfigs = ImmutableList<GenericCodecConfig>.CreateRange(other.genericCodecConfigs);
+            this.casters = ImmutableList<IDsonCodecCaster>.CreateRange(other.casters);
+        } else {
+            this.encoderDic = new Dictionary<Type, DsonCodecImpl>(other.encoderDic);
+            this.decoderDic = new Dictionary<Type, DsonCodecImpl>(other.decoderDic);
+            this.genericCodecConfigs = new List<GenericCodecConfig>(other.genericCodecConfigs);
+            this.casters = new List<IDsonCodecCaster>(other.casters);
+        }
     }
+
+    public IDictionary<Type, DsonCodecImpl> GetEncoderDic() => encoderDic;
+
+    public IDictionary<Type, DsonCodecImpl> GetDecoderDic() => decoderDic;
+
+    public IList<GenericCodecConfig> GetGenericCodecConfigs() => genericCodecConfigs;
+
+    public IList<IDsonCodecCaster> GetCasters() => casters;
+
+    #region factory
 
     /** 根据codecs创建一个Registry -- 返回的实例不可变 */
     public static SimpleCodecRegistry FromCodecs(IEnumerable<IDsonCodec> codecs) {
@@ -49,15 +72,30 @@ public sealed class SimpleCodecRegistry : IDsonCodecRegistry
         return result.ToImmutable();
     }
 
+    /** 合并多个Registry为单个Registry -- 返回的实例不可变 */
+    public static SimpleCodecRegistry FromRegistries(IEnumerable<IDsonCodecRegistry> registries) {
+        SimpleCodecRegistry result = new SimpleCodecRegistry();
+        foreach (IDsonCodecRegistry other in registries) {
+            result.MergeFrom(other.Export());
+        }
+        return result.ToImmutable();
+    }
+
     /** 转换为不可变实例 */
     public SimpleCodecRegistry ToImmutable() {
-        return new SimpleCodecRegistry(encoderDic, decoderDic);
+        return new SimpleCodecRegistry(this);
     }
+
+    #endregion
+
+    #region update
 
     /** 清理数据 */
     public void Clear() {
         encoderDic.Clear();
         decoderDic.Clear();
+        genericCodecConfigs.Clear();
+        casters.Clear();
     }
 
     /** 合并配置 */
@@ -68,42 +106,89 @@ public sealed class SimpleCodecRegistry : IDsonCodecRegistry
         foreach (KeyValuePair<Type, DsonCodecImpl> pair in other.decoderDic) {
             decoderDic[pair.Key] = pair.Value;
         }
+        AddGenericCodecConfigs(other.genericCodecConfigs);
+        AddCasters(other.casters);
         return this;
     }
 
-    /** 配置编解码器 */
+    /// <summary>
+    /// 添加编解码器
+    /// </summary>
     public SimpleCodecRegistry AddCodec(IDsonCodec codec) {
         DsonCodecImpl codecImpl = DsonCodecImpl.CreateInstance(codec);
-        Type clazz = codecImpl.GetEncoderType();
-        encoderDic[clazz] = codecImpl;
-        decoderDic[clazz] = codecImpl;
+        Type type = codecImpl.GetEncoderType();
+        encoderDic[type] = codecImpl;
+        decoderDic[type] = codecImpl;
         return this;
     }
 
-    /**
-     * 配置编解码器
-     * 适用超类Codec的默认解码实例可赋值给当前类型的情况，eg：IntList => IntCollectionCodec。
-     */
-    public SimpleCodecRegistry AddCodec(Type clazz, IDsonCodec codec) {
+    /// <summary>
+    /// 添加编解码器
+    /// 适用超类Codec的默认解码实例可赋值给当前类型的情况，eg：IntList => IntCollectionCodec。
+    /// </summary>
+    public SimpleCodecRegistry AddCodec(Type type, IDsonCodec codec) {
         DsonCodecImpl codecImpl = DsonCodecImpl.CreateInstance(codec);
-        encoderDic[clazz] = codecImpl;
-        decoderDic[clazz] = codecImpl;
+        encoderDic[type] = codecImpl;
+        decoderDic[type] = codecImpl;
         return this;
     }
 
-    /** 配置编码器 */
-    public SimpleCodecRegistry AddEncoder(Type clazz, IDsonCodec codec) {
+    /// <summary>
+    /// 添加编码器
+    /// </summary>
+    /// <param name="type">要编码的类型</param>
+    /// <param name="codec">编码器，codec关联的encoderType是目标类型的超类</param>
+    /// <returns></returns>
+    public SimpleCodecRegistry AddEncoder(Type type, IDsonCodec codec) {
         DsonCodecImpl codecImpl = DsonCodecImpl.CreateInstance(codec);
-        encoderDic[clazz] = codecImpl;
+        encoderDic[type] = codecImpl;
         return this;
     }
 
-    /** 配置解码器 */
-    public SimpleCodecRegistry AddDecoder(Type clazz, IDsonCodec codec) {
+    /// <summary>
+    /// 添加解码器
+    /// </summary>
+    /// <param name="type">要解码的类型</param>
+    /// <param name="codec">编码器，codec关联的encoderType是目标类型的子类</param>
+    /// <returns></returns>
+    public SimpleCodecRegistry AddDecoder(Type type, IDsonCodec codec) {
         DsonCodecImpl codecImpl = DsonCodecImpl.CreateInstance(codec);
-        decoderDic[clazz] = codecImpl;
+        decoderDic[type] = codecImpl;
         return this;
     }
+
+    /// <summary>
+    /// 添加泛型配置
+    /// </summary>
+    public SimpleCodecRegistry AddGenericCodecConfig(GenericCodecConfig genericCodecConfig) {
+        this.genericCodecConfigs.Add(genericCodecConfig);
+        return this;
+    }
+
+    public SimpleCodecRegistry AddGenericCodecConfigs(IEnumerable<GenericCodecConfig> genericCodecConfigs) {
+        foreach (GenericCodecConfig genericCodecConfig in genericCodecConfigs) {
+            AddGenericCodecConfig(genericCodecConfig);
+        }
+        return this;
+    }
+
+    /// <summary>
+    /// 添加类型转换器
+    /// </summary>
+    public SimpleCodecRegistry AddCaster(IDsonCodecCaster caster) {
+        if (caster == null) throw new ArgumentNullException(nameof(caster));
+        this.casters.Add(caster);
+        return this;
+    }
+
+    public SimpleCodecRegistry AddCasters(IEnumerable<IDsonCodecCaster> casters) {
+        foreach (IDsonCodecCaster? caster in casters) {
+            AddCaster(caster);
+        }
+        return this;
+    }
+
+    #endregion
 
     public DsonCodecImpl? GetEncoder(Type typeInfo) {
         encoderDic.TryGetValue(typeInfo, out DsonCodecImpl codecImpl);
@@ -113,6 +198,10 @@ public sealed class SimpleCodecRegistry : IDsonCodecRegistry
     public DsonCodecImpl? GetDecoder(Type typeInfo) {
         decoderDic.TryGetValue(typeInfo, out DsonCodecImpl codecImpl);
         return codecImpl;
+    }
+
+    public SimpleCodecRegistry Export() {
+        return new SimpleCodecRegistry(this, false);
     }
 }
 }

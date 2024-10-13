@@ -78,7 +78,7 @@ public class MacroSpec : ISpecification, IEquatable<MacroSpec>
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(name, arguments);
+        return name.GetHashCode() * 31 + CollectionUtil.HashCode(arguments);
     }
 
     public override string ToString() {

@@ -375,5 +375,82 @@ public class ArrayUtils {
         return new ArrayList<>(new CollectionUtils.ToArrayHelper<>(array, offset, length));
     }
 
+    public static int[] toIntArray(final List<Integer> list) {
+        int[] array = new int[list.size()];
+        for (int idx = 0; idx < list.size(); idx++) {
+            int val = list.get(idx);
+            array[idx] = val;
+        }
+        return array;
+    }
+
+    public static long[] toLongArray(final List<Long> list) {
+        long[] array = new long[list.size()];
+        for (int idx = 0; idx < list.size(); idx++) {
+            long val = list.get(idx);
+            array[idx] = val;
+        }
+        return array;
+    }
+
+    public static float[] toFloatArray(final List<Float> list) {
+        float[] array = new float[list.size()];
+        for (int idx = 0; idx < list.size(); idx++) {
+            float val = list.get(idx);
+            array[idx] = val;
+        }
+        return array;
+    }
+
+    public static double[] toDoubleArray(final List<Double> list) {
+        double[] array = new double[list.size()];
+        for (int idx = 0; idx < list.size(); idx++) {
+            double val = list.get(idx);
+            array[idx] = val;
+        }
+        return array;
+    }
+
+    // endregion
+
+    // region rank
+
+    /** 最大支持9阶 - 我都没见过3阶以上的数组... */
+    private static final String[] arrayRankSymbols = {
+            "[]",
+            "[][]",
+            "[][][]",
+            "[][][][]",
+            "[][][][][]",
+            "[][][][][][]",
+            "[][][][][][][]",
+            "[][][][][][][][]",
+            "[][][][][][][][][]"
+    };
+
+    public static String arrayRankSymbol(int rank) {
+        if (rank < 1 || rank > 9) {
+            throw new IllegalArgumentException("rank: " + rank);
+        }
+        return arrayRankSymbols[rank - 1];
+    }
+
+    /** 获取根元素的类型 -- 如果Type是数组，则返回最底层的元素类型；如果不是数组，则返回type */
+    public static Class<?> getRootComponentType(Class<?> clz) {
+        while (clz.isArray()) {
+            clz = clz.getComponentType();
+        }
+        return clz;
+    }
+
+    /** 获取数组的阶数 -- 如果不是数组，则返回0 */
+    public static int getArrayRank(Class<?> clz) {
+        int r = 0;
+        while (clz.isArray()) {
+            r++;
+            clz = clz.getComponentType();
+        }
+        return r;
+    }
     // endregion
 }

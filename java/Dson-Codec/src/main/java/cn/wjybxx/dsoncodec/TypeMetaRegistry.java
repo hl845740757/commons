@@ -32,17 +32,6 @@ import java.util.List;
 public interface TypeMetaRegistry {
 
     /**
-     * 通过类型信息查询类型元数据。
-     * 由于java在运行会擦除泛型信息，因此当声明类型和实际类型不一致时，我们只能根据运行时类型的原始类型查询。
-     * 所以java生成的文本，C#可能无法解析(无法构造Type)；但C#生成的文本，Java可以解析。
-     * PS：该接口实际上是为了节省开销而定义的，因为总是可以封装{@link TypeInfo}查询。
-     *
-     * @param clazz 运行时类型
-     */
-    @Nullable
-    TypeMeta ofClass(Class<?> clazz);
-
-    /**
      * 通过完整的类型信息查询类型元数据
      */
     @Nullable
@@ -54,7 +43,8 @@ public interface TypeMetaRegistry {
     TypeMeta ofName(String clsName);
 
     /**
-     * 该方法的主要目的在于聚合多个Registry为单个Registry，以提高查询效率
+     * 导出类型元数据
+     * 该方法的主要目的在于聚合多个Registry为单个Registry，以提高查询效率。
      */
     List<TypeMeta> export();
 

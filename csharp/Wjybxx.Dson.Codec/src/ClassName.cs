@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 
@@ -202,7 +203,7 @@ public struct ClassName : IEquatable<ClassName>
         }
         // 数组符号放末尾
         if (arrayRank > 0) {
-            sb.Append(DsonConverterUtils.ArrayRankSymbol(arrayRank));
+            sb.Append(ArrayUtil.ArrayRankSymbol(arrayRank));
         }
         return sb;
     }
@@ -252,7 +253,7 @@ public struct ClassName : IEquatable<ClassName>
             string clsName = fullClsName.Substring(rawStartIndex, clsNameEndIndex - rawStartIndex + 1);
             // 简单名需要拼接数组符号
             if (arrayRank > 0) {
-                clsName = clsName + DsonConverterUtils.ArrayRankSymbol(arrayRank);
+                clsName = clsName + ArrayUtil.ArrayRankSymbol(arrayRank);
             }
 
             // 解析泛型参数 -- 不能简单逗号分隔，需按Token匹配；泛型个数通常不超过2

@@ -44,22 +44,6 @@ public interface ITypeMetaRegistry
     /// <returns></returns>
     TypeMeta? OfName(string clsName);
 
-    TypeMeta CheckedOfType(Type type) {
-        TypeMeta? typeMeta = OfType(type);
-        if (typeMeta == null) {
-            throw new DsonCodecException("type is absent, type " + type);
-        }
-        return typeMeta;
-    }
-
-    TypeMeta CheckedOfName(string clsName) {
-        TypeMeta? typeMeta = OfName(clsName);
-        if (typeMeta == null) {
-            throw new DsonCodecException("type is absent, clsName " + clsName);
-        }
-        return typeMeta;
-    }
-
     /// <summary>
     /// 将包含的所有类型信息导出。
     /// 该方法主要用于聚合多个Registry为单个Registry，以提高查询效率。

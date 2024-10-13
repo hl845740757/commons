@@ -45,6 +45,9 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
 
     @SuppressWarnings("unchecked")
     public CollectionCodec(TypeInfo encoderType, Supplier<? extends Collection<E>> factory) {
+        if (encoderType.genericArgs.size() != 1) {
+            throw new IllegalArgumentException("encoderType.genericArgs.size() != 1");
+        }
         if (factory == null) {
             factory = DsonConverterUtils.tryNoArgConstructorToSupplier((Class<? extends Collection<E>>) encoderType.rawType);
         }

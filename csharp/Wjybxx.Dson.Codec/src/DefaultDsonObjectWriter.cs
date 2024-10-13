@@ -78,6 +78,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteNull(string? name) {
         // 用户已写入name或convert开启了null写入
         if (!writer.IsAtName || converter.Options.appendNull) {
@@ -135,13 +136,13 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             WriteNull(name);
             return;
         }
-        Type type = value.GetType();
-        Type genericArgument = typeof(T);
-        DsonCodecImpl? codec;
         // Nullable会直接返回被装箱的值的类型，而泛型参数T可能是Nullable<>，为避免装箱，我们需要转换为查找Nullable的Codec
-        if (type.IsValueType && genericArgument.IsGenericType
-                             && genericArgument.GetGenericTypeDefinition() == typeof(Nullable<>)) {
-            codec = converter.CodecRegistry.GetEncoder(genericArgument);
+        Type type = value.GetType();
+        bool isNullable = type.IsValueType && declaredType.IsGenericType
+                                           && declaredType.GetGenericTypeDefinition() == typeof(Nullable<>);
+        DsonCodecImpl? codec;
+        if (isNullable) {
+            codec = converter.CodecRegistry.GetEncoder(declaredType);
         } else {
             codec = converter.CodecRegistry.GetEncoder(type);
         }
@@ -149,8 +150,8 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             if (writer.IsAtName) { // 写入name
                 writer.WriteName(name);
             }
-            ObjectStyle castStyle = style ?? FindObjectStyle(type);
-            if (codec is DsonCodecImpl<T> codecImpl) { // 避免结构体装箱
+            ObjectStyle castStyle = style ?? FindObjectStyle(isNullable ? type : codec.GetEncoderType());
+            if (codec is DsonCodecImpl<T> codecImpl) {
                 codecImpl.WriteObject(this, value, declaredType, castStyle);
             } else {
                 Debug.Assert(!type.IsValueType);
@@ -229,8 +230,8 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.WriteEndArray();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteValueBytes(string name, DsonType dsonType, byte[] data) {
-        if (data == null) throw new ArgumentNullException(nameof(data));
         writer.WriteValueBytes(name, dsonType, data);
     }
 
@@ -257,12 +258,6 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             return codecImpl.GetName(key);
         } else {
             return codecImpl.GetNumber(key).ToString();
-        }
-    }
-
-    public void Println() {
-        if (writer is DsonTextWriter textWriter) {
-            textWriter.Println();
         }
     }
 

@@ -21,8 +21,9 @@ import javax.annotation.Nullable;
 /**
  * 编解码器注册表
  * 注意：
- * 1.如果只是简单的Type到Codec的映射，请使用{@link DsonCodecRegistries}的工具方法构建Registry，可实现多Registry的合并。
+ * 1.如果只是简单的Type到Codec的映射，请使用{@link SimpleCodecRegistry}的工具方法构建Registry。
  * 2.如果需要处理类型转换问题，请使用{@link DsonCodecCaster}
+ * 3.多个Registry合并时，越靠近用户，优先级越高 -- 因为这一定能解决冲突。
  *
  * @author wjybxx
  * date 2023/4/3
@@ -56,4 +57,10 @@ public interface DsonCodecRegistry {
     @Nullable
     DsonCodecImpl<?> getDecoder(TypeInfo typeInfo);
 
+    /**
+     * 导出数据
+     * 1.在导出时应先导出被代理的Registry，再导出自身数据。
+     * 2.导出的数据不保证可变性。
+     */
+    SimpleCodecRegistry export();
 }

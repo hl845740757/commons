@@ -33,7 +33,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ClassNamePool {
 
     /** 字符串解析结果的缓存 —— ClassName的解析缓存则存储在{@link TypeMeta} */
-    private final ConcurrentHashMap<String, ClassName> string2StructDic = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ClassName> string2StructDic;
+
+    public ClassNamePool() {
+        this(1024);
+    }
+
+    public ClassNamePool(int initCapacity) {
+        string2StructDic = new ConcurrentHashMap<>(initCapacity);
+    }
 
     /** 解析Dson风格的字符串名为结构化名字 */
     public ClassName parse(String clsName) {

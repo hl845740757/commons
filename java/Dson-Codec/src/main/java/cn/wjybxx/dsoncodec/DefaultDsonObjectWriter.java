@@ -19,7 +19,6 @@ package cn.wjybxx.dsoncodec;
 import cn.wjybxx.base.EnumLite;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.io.DsonChunk;
-import cn.wjybxx.dson.text.DsonTextWriter;
 import cn.wjybxx.dson.text.INumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
@@ -183,7 +182,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
             if (writer.isAtName()) { // 写入name
                 writer.writeName(name);
             }
-            if (style == null) style = findObjectStyle(runtimeTypeInfo);
+            if (style == null) style = findObjectStyle(codec.getEncoderType());
             codec.writeObject(this, value, declaredType, style);
             return;
         }
@@ -290,13 +289,6 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public void println() {
-        if (writer instanceof DsonTextWriter textWriter) {
-            textWriter.println();
-        }
-    }
-
-    @Override
     public void setEncoderType(TypeInfo encoderType) {
         writer.attach(encoderType);
     }
@@ -317,8 +309,8 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     /** 允许泛型参数不同时走不同的style */
-    private ObjectStyle findObjectStyle(TypeInfo runtimeTypeInfo) {
-        final TypeMeta typeMeta = converter.typeMetaRegistry().ofType(runtimeTypeInfo);
+    private ObjectStyle findObjectStyle(TypeInfo encoderType) {
+        final TypeMeta typeMeta = converter.typeMetaRegistry().ofType(encoderType);
         return typeMeta != null ? typeMeta.style : ObjectStyle.INDENT;
     }
 
@@ -329,11 +321,11 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
             return declaredType;
         }
         // 尝试继承泛型参数
-        if (declaredType.hasGenericArgs()
-                && converter.genericCodecHelper().canInheritTypeArgs(encoderClass, declaredType.rawType)) {
-            return TypeInfo.of(encoderClass, declaredType.genericArgs);
+        if (declaredType.hasGenericArgs()) {
+            return converter.genericCodecHelper().inheritTypeArgs(encoderClass, declaredType);
         }
         // 如果真实类型是泛型，而声明类型是object等，会导致泛型信息丢失
+        // 在查找泛型类对应的codec时会修正为对应的泛型原型，从而保证泛型参数个数的正确性
         return TypeInfo.of(encoderClass);
     }
 

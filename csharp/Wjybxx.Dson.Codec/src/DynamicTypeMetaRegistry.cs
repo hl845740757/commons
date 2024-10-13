@@ -32,7 +32,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
     /// <summary>
     /// 用户的原始的类型元数据
     /// </summary>
-    private readonly ITypeMetaRegistry _basicRegistry;
+    private readonly SimpleTypeMetaRegistry _basicRegistry;
 
     private readonly ClassNamePool _classNamePool = new ClassNamePool();
     private readonly ConcurrentDictionary<Type, TypeMeta> type2MetaDic = new ConcurrentDictionary<Type, TypeMeta>();
@@ -41,9 +41,9 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="basicRegistry">元类型注册表</param>
-    public DynamicTypeMetaRegistry(ITypeMetaRegistry basicRegistry) {
-        _basicRegistry = basicRegistry ?? throw new ArgumentNullException(nameof(basicRegistry));
+    /// <param name="basicRegistries">元类型注册表</param>
+    public DynamicTypeMetaRegistry(IEnumerable<ITypeMetaRegistry> basicRegistries) {
+        _basicRegistry = SimpleTypeMetaRegistry.FromRegistries(basicRegistries);
     }
 
     #region OfType
@@ -135,9 +135,9 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
     /// <returns></returns>
     private ClassName ClassNameOfType(Type type) {
         if (type.IsArray) {
-            Type rootElementType = DsonConverterUtils.GetRootElementType(type);
-            int arrayRank = DsonConverterUtils.GetArrayRank(type);
-            string clsName = ClassNameOfType(rootElementType) + DsonConverterUtils.ArrayRankSymbol(arrayRank);
+            Type rootElementType = ArrayUtil.GetRootElementType(type);
+            int arrayRank = ArrayUtil.GetArrayRank(type);
+            string clsName = ClassNameOfType(rootElementType) + ArrayUtil.ArrayRankSymbol(arrayRank);
             return new ClassName(clsName);
         }
         if (type.IsGenericType) {
@@ -146,7 +146,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
-            Type[] genericArguments = type.GenericTypeArguments;
+            Type[] genericArguments = type.GenericTypeArguments; // 真实泛型参数
             List<ClassName> typeArgClassNames = new List<ClassName>(genericArguments.Length);
             foreach (Type genericArgument in genericArguments) {
                 typeArgClassNames.Add(ClassNameOfType(genericArgument));

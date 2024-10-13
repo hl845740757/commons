@@ -20,6 +20,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Codec.Codecs;
 using Wjybxx.Dson.Text;
@@ -32,60 +33,9 @@ namespace Wjybxx.Dson.Codec
 /// </summary>
 public static class DsonConverterUtils
 {
-    #region array
-
-    /** 最大支持9阶 - 我都没见过3阶以上的数组... */
-    private static readonly string[] arrayRankSymbols =
-    {
-        "[]",
-        "[][]",
-        "[][][]",
-        "[][][][]",
-        "[][][][][]",
-        "[][][][][][]",
-        "[][][][][][][]",
-        "[][][][][][][][]",
-        "[][][][][][][][][]"
-    };
-
-    /// <summary>
-    /// 获取数组阶数对应的符号
-    /// </summary>
-    /// <param name="rank"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
-    public static string ArrayRankSymbol(int rank) {
-        if (rank < 1 || rank > 9) {
-            throw new ArgumentException("rank: " + rank);
-        }
-        return arrayRankSymbols[rank - 1];
-    }
-
-    /** 获取根元素的类型 -- 如果Type是数组，则返回最底层的元素类型；如果不是数组，则返回type */
-    public static Type GetRootElementType(Type type) {
-        while (type.IsArray) {
-            type = type.GetElementType()!;
-        }
-        return type;
-    }
-
-    /** 获取数组的阶数 -- 如果不是数组，则返回0 */
-    public static int GetArrayRank(Type type) {
-        int r = 0;
-        while (type.IsArray) {
-            r++;
-            type = type.GetElementType()!;
-        }
-        return r;
-    }
-
-    #endregion
-
-    #region 其它
-
     /** 默认的类型元数据 */
-    private static readonly ITypeMetaRegistry TYPE_META_REGISTRY = TypeMetaRegistries.FromMetas(BuiltinTypeMetas());
-    private static readonly IDsonCodecRegistry CODEC_REGISTRY = DsonCodecRegistries.FromCodecs(BuiltinCodecs());
+    private static readonly ITypeMetaRegistry TYPE_META_REGISTRY = SimpleTypeMetaRegistry.FromTypeMetas(BuiltinTypeMetas());
+    private static readonly IDsonCodecRegistry CODEC_REGISTRY = SimpleCodecRegistry.FromCodecs(BuiltinCodecs());
 
     private static TypeMeta TypeMetaOf(Type type, params string[] clsNames) {
         if (clsNames.Length == 0) {
@@ -195,6 +145,20 @@ public static class DsonConverterUtils
     }
 
     /// <summary>
+    /// 判断一个类型是否是<see cref="IList{T}"/>类型
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public static bool IsList(Type type) {
+        Type target = type.GetInterface("IList`1");
+        if (target != null) {
+            if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
+            return target == typeof(IList<>);
+        }
+        return false;
+    }
+
+    /// <summary>
     /// 判断一个类型是否是<see cref="ISet{T}"/>类型
     /// </summary>
     /// <param name="type"></param>
@@ -249,7 +213,5 @@ public static class DsonConverterUtils
         }
         return false;
     }
-
-    #endregion
 }
 }

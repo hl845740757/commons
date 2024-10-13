@@ -48,7 +48,7 @@ public class Selector<T> : SingleRunningChildBranch<T> where T : class
                     return;
                 }
             }
-            SetFailed(TaskStatus.ERROR);
+            SetCompleted(children[0].Status, true);
         }
     }
 
@@ -66,7 +66,7 @@ public class Selector<T> : SingleRunningChildBranch<T> where T : class
         if (child.IsSucceeded) {
             SetSuccess();
         } else if (IsAllChildCompleted) {
-            SetFailed(TaskStatus.ERROR);
+            SetCompleted(children[0].Status, true);
         } else {
             Template_Execute(false);
         }

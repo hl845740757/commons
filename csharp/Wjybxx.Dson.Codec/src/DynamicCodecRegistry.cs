@@ -19,7 +19,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
+using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Codec.Codecs;
 
 namespace Wjybxx.Dson.Codec
@@ -31,11 +33,11 @@ namespace Wjybxx.Dson.Codec
 public sealed class DynamicCodecRegistry : IDsonCodecRegistry
 {
     /** 用户的原始的类型Codec */
-    private readonly IDsonCodecRegistry _basicRegistry;
-    /** 类型转换器 */
-    private readonly List<IDsonCodecCaster> _casters;
+    private readonly SimpleCodecRegistry _basicRegistry;
     /** 泛型类对应的Codec类型 */
     private readonly GenericCodecConfig _genericCodecConfig;
+    /** 类型转换器 */
+    private readonly List<IDsonCodecCaster> _casters;
 
     /** 一个Type可能只有encoder而没有decoder，因此需要分开缓存  */
     private readonly ConcurrentDictionary<Type, DsonCodecImpl> encoderDic = new ConcurrentDictionary<Type, DsonCodecImpl>();
@@ -44,18 +46,19 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="basicRegistry">用户的基础类型Codec</param>
-    /// <param name="casters">类型转换器</param>
-    /// <param name="genericCodecConfigs">泛型Codec配置类</param>
-    public DynamicCodecRegistry(IDsonCodecRegistry basicRegistry, List<IDsonCodecCaster> casters, List<GenericCodecConfig> genericCodecConfigs) {
-        _basicRegistry = basicRegistry ?? throw new ArgumentNullException(nameof(basicRegistry));
-        _casters = new List<IDsonCodecCaster>(casters);
-
+    public DynamicCodecRegistry(List<IDsonCodecRegistry> basicRegistries) {
+        _basicRegistry = new SimpleCodecRegistry();
+        foreach (IDsonCodecRegistry other in basicRegistries) {
+            _basicRegistry.MergeFrom(other.Export());
+        }
         // 先初始化为默认配置，然后由用户的配置进行覆盖 -- 不转不可变对象，性能更好
         _genericCodecConfig = GenericCodecConfig.NewDefaultConfig();
-        foreach (GenericCodecConfig genericCodecConfig in genericCodecConfigs) {
+        foreach (GenericCodecConfig genericCodecConfig in _basicRegistry.GetGenericCodecConfigs()) {
             _genericCodecConfig.MergeFrom(genericCodecConfig);
         }
+        // 拷贝，避免不必要的虚方法调用
+        _casters = new List<IDsonCodecCaster>(_basicRegistry.GetCasters());
+
         // 初始化特化List
         AddCodec(new DsonCodecImpl<IList<int>>(new MoreCollectionCodecs.IntListCodec(typeof(IList<int>))));
         AddCodec(new DsonCodecImpl<IList<long>>(new MoreCollectionCodecs.LongListCodec(typeof(IList<long>))));
@@ -75,6 +78,16 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         AddCodec(new DsonCodecImpl<IList<uint>>(new MoreCollectionCodecs.UIntListCodec(typeof(List<uint>))));
         AddCodec(new DsonCodecImpl<IList<ulong>>(new MoreCollectionCodecs.ULongListCodec(typeof(List<ulong>))));
     }
+
+    public SimpleCodecRegistry Export() {
+        SimpleCodecRegistry result = new SimpleCodecRegistry();
+        result.MergeFrom(_basicRegistry);
+        result.GetEncoderDic().AddAll(encoderDic);
+        result.GetDecoderDic().AddAll(decoderDic);
+        return result;
+    }
+
+    #region add-cache
 
     /// <summary>
     /// 预添加Codec(可覆盖)
@@ -114,6 +127,8 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         decoderDic[codecImpl.GetEncoderType()] = codecImpl;
     }
 
+    #endregion
+
     /// <summary>
     /// 查找可用的编码器，对于泛型和数组会动态生成Codec
     /// </summary>
@@ -135,9 +150,19 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         } else if (type.IsArray) {
             codecImpl = MakeArrayCodec(type);
         } else if (type.IsGenericType) {
-            codecImpl = MakeGenericCodec(type, true);
+            GenericCodecInfo? genericCodecInfo = _genericCodecConfig.GetEncoderInfo(type.GetGenericTypeDefinition());
+            if (genericCodecInfo != null) {
+                codecImpl = MakeGenericCodec(type, genericCodecInfo.Value);
+            } else {
+                // 尝试转换为超类编码，写入超类的TypeInfo
+                Type superType = CastEncoderType(type.GetGenericTypeDefinition());
+                if (superType != null) {
+                    superType = superType.MakeGenericType(type.GenericTypeArguments);
+                    codecImpl = GetEncoder(superType);
+                }
+            }
         } else {
-            // 尝试转换为超类
+            // 尝试转换为超类编码，写入超类的TypeInfo
             Type superType = CastEncoderType(type);
             if (superType != null) {
                 codecImpl = GetEncoder(type);
@@ -145,7 +170,6 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         }
         if (codecImpl != null) {
             encoderDic.TryAdd(type, codecImpl);
-            // 可能是超类Encoder
             if (type == codecImpl.GetEncoderType()) {
                 decoderDic.TryAdd(type, codecImpl);
             }
@@ -174,18 +198,29 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         } else if (type.IsArray) {
             codecImpl = MakeArrayCodec(type);
         } else if (type.IsGenericType) {
-            codecImpl = MakeGenericCodec(type, false);
+            GenericCodecInfo? genericCodecInfo = _genericCodecConfig.GetDecoderInfo(type.GetGenericTypeDefinition());
+            if (genericCodecInfo != null) {
+                codecImpl = MakeGenericCodec(type, genericCodecInfo.Value);
+            } else {
+                // 尝试转换为子类解码，解码不涉及到写入TypeInfo
+                Type subType = CastDecoderType(type.GetGenericTypeDefinition());
+                if (subType != null) {
+                    subType = subType.MakeGenericType(type.GenericTypeArguments);
+                    codecImpl = GetDecoder(subType);
+                }
+            }
         } else {
-            // 尝试转换为超类或子类
-            Type superType = CastEncoderType(type);
-            if (superType != null) {
+            // 尝试转换为子类解码，解码不涉及到写入TypeInfo
+            Type subType = CastDecoderType(type);
+            if (subType != null) {
                 codecImpl = GetDecoder(type);
             }
         }
         if (codecImpl != null) {
-            // 可以解码的一定可以编码
             decoderDic.TryAdd(type, codecImpl);
-            encoderDic.TryAdd(type, codecImpl);
+            if (type == codecImpl.GetEncoderType()) {
+                encoderDic.TryAdd(type, codecImpl);
+            }
         }
         return codecImpl;
     }
@@ -204,15 +239,11 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         return DsonCodecImpl.CreateInstance(codec);
     }
 
-    private DsonCodecImpl? MakeGenericCodec(Type type, bool encoder) {
-        GenericCodecInfo? nullableItem = encoder ? FindGenericEncoder(type) : FindGenericDecoder(type);
-        if (nullableItem == null) {
-            return null; // 未配置泛型对应的Codec类型
-        }
-        GenericCodecInfo genericCodecInfo = nullableItem.Value;
+    private DsonCodecImpl MakeGenericCodec(Type type, GenericCodecInfo genericCodecInfo) {
+        Debug.Assert(type.GetGenericTypeDefinition() == genericCodecInfo.typeInfo);
         Type genericCodecType = genericCodecInfo.codecType.MakeGenericType(type.GenericTypeArguments);
 
-        IDsonCodec codec = null;
+        IDsonCodec codec;
         // 先查找包含Type和Func的构造函数 -- factory的泛型参数是传递给DsonCodec泛型参数的类型
         Type interfaceType = genericCodecType.GetInterface(typeof(IDsonCodec<>).Name)!;
         Type factoryType = typeof(Func<>).MakeGenericType(interfaceType.GenericTypeArguments[0]);
@@ -221,7 +252,7 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
             // 如果用户指定了Factory，则获取具体实例，否则传入null
             if (genericCodecInfo.factoryDeclaringType != null) {
                 Type factoryDeclaringType = genericCodecInfo.factoryDeclaringType.MakeGenericType(type.GenericTypeArguments);
-                FieldInfo fieldInfo = factoryDeclaringType.GetField(genericCodecInfo.factoryField, GenericCodecInfo.FactoryBindFlags)!;
+                FieldInfo fieldInfo = factoryDeclaringType.GetField(genericCodecInfo.factoryField!, GenericCodecInfo.FactoryBindFlags)!;
                 object factory = fieldInfo.GetValue(null); // Func<T>
                 codec = (IDsonCodec)constructorInfo.Invoke(new object[] { type, factory });
             } else {
@@ -242,50 +273,39 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         return DsonCodecImpl.CreateInstance(codec);
     }
 
-    private GenericCodecInfo? FindGenericEncoder(Type type) {
-        Type genericTypeDefinition = type.GetGenericTypeDefinition();
-        GenericCodecInfo? genericCodecInfo = _genericCodecConfig.GetEncoderInfo(genericTypeDefinition);
-        if (genericCodecInfo != null) return genericCodecInfo;
-        // 尝试转换为超类
-        Type superClazz = CastEncoderType(genericTypeDefinition);
-        if (superClazz != null) {
-            return FindGenericEncoder(superClazz);
-        }
-        // 这段保底代码写在这里最为合适，放在用户的Config里还需要考虑冲突问题...
-        // 兼容集合和字典 -- 解码时需要是默认解码类型的超类
-        if (DsonConverterUtils.IsCollection(genericTypeDefinition, includeDictionary: false)) {
-            return _genericCodecConfig.GetEncoderInfo(typeof(ICollection<>));
-        }
-        if (DsonConverterUtils.IsDictionary(genericTypeDefinition)) {
-            return _genericCodecConfig.GetEncoderInfo(typeof(IDictionary<,>));
-        }
-        return null;
-    }
-
-    private GenericCodecInfo? FindGenericDecoder(Type type) {
-        Type genericTypeDefinition = type.GetGenericTypeDefinition();
-        GenericCodecInfo? genericCodecInfo = _genericCodecConfig.GetDecoderInfo(genericTypeDefinition);
-        if (genericCodecInfo != null) return genericCodecInfo;
-        // 尝试转换为超类或子类
-        Type? superClazz = CastDecoderType(genericTypeDefinition);
-        if (superClazz != null) {
-            return FindGenericDecoder(superClazz);
-        }
-        return null;
-    }
-
     private Type? CastEncoderType(Type clazz) {
-        foreach (IDsonCodecCaster caster in _casters) {
+        // caster逆向迭代，越靠近用户优先级越高，才能保证一定能解决冲突
+        for (int index = _casters.Count - 1; index >= 0; index--) {
+            IDsonCodecCaster caster = _casters[index];
             Type superClazz = caster.CastEncoderType(clazz);
             if (superClazz != null && superClazz != clazz) { // fix用户返回当前类
                 return superClazz;
             }
         }
+        // 这段保底代码写在这里最为合适，放在用户的Config里还需要考虑冲突问题...
+        // 具体到抽象 -- 这里其实也需要测试是否可以继承泛型参数，但不想增加组件了，用户通过Caster自行解决
+        if (DsonConverterUtils.IsList(clazz)) {
+            return typeof(IList<>);
+        }
+        if (DsonConverterUtils.IsSet(clazz)) {
+            return typeof(ISet<>);
+        }
+        if (DsonConverterUtils.IsGenericSet(clazz)) {
+            return typeof(IGenericSet<>);
+        }
+        if (DsonConverterUtils.IsCollection(clazz, includeDictionary: false)) {
+            return typeof(ICollection<>);
+        }
+        if (DsonConverterUtils.IsDictionary(clazz)) {
+            return typeof(IDictionary<,>);
+        }
         return null;
     }
 
     private Type? CastDecoderType(Type clazz) {
-        foreach (IDsonCodecCaster caster in _casters) {
+        // caster逆向迭代，越靠近用户优先级越高，才能保证一定能解决冲突
+        for (int index = _casters.Count - 1; index >= 0; index--) {
+            IDsonCodecCaster caster = _casters[index];
             Type subClazz = caster.CastDecoderType(clazz);
             if (subClazz != null && subClazz != clazz) { // fix用户返回当前类
                 return subClazz;

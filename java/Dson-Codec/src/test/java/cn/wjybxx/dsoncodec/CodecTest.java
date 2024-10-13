@@ -70,11 +70,11 @@ public class CodecTest {
                 .setWriteEnumAsString(true)
                 .build();
         DsonConverter converter = new DsonConverterBuilder()
-                .addTypeMetaRegistry(TypeMetaRegistries.fromMetas(
+                .addTypeMetaRegistry(SimpleTypeMetaRegistry.fromMetas(
                         TypeMeta.of(CodecStructs.MyStruct.class, ObjectStyle.INDENT, "MyStruct"),
                         TypeMeta.of(Sex.class, ObjectStyle.INDENT, "Sex")
 
-                )).addCodecRegistry(DsonCodecRegistries.fromCodecs(
+                )).addCodecRegistry(SimpleCodecRegistry.fromCodecs(
                         new CodecStructs.MyStructCodec()
                 ))
                 .setOptions(options)

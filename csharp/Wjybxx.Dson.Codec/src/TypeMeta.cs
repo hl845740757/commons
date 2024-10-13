@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Text;
@@ -32,7 +33,7 @@ namespace Wjybxx.Dson.Codec
 /// 2.在文档型编解码中，可读性是比较重要的，因此不要一味追求简短。
 /// </summary>
 [Immutable]
-public sealed class TypeMeta
+public sealed class TypeMeta : IEquatable<TypeMeta>
 {
     /// <summary>
     /// 关联的类型
@@ -85,6 +86,33 @@ public sealed class TypeMeta
     }
 
     #endregion
+
+    public override bool Equals(object? obj) {
+        return ReferenceEquals(this, obj) || obj is TypeMeta other && Equals(other);
+    }
+
+    public bool Equals(TypeMeta? other) {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return type == other.type
+               && style == other.style
+               && clsNames.SequenceEqual(other.clsNames);
+    }
+
+    public override int GetHashCode() {
+        int hashCode = type.GetHashCode();
+        hashCode = hashCode * 31 + style.GetHashCode();
+        hashCode = hashCode * 31 + CollectionUtil.HashCode(clsNames);
+        return hashCode;
+    }
+
+    public static bool operator ==(TypeMeta? left, TypeMeta? right) {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(TypeMeta? left, TypeMeta? right) {
+        return !Equals(left, right);
+    }
 
     public override string ToString() {
         return $"{nameof(type)}: {type}, {nameof(style)}: {style}, {nameof(clsNames)}: {CollectionUtil.ToString(clsNames)}";

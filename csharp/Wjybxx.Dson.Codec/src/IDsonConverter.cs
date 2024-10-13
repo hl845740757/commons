@@ -115,7 +115,7 @@ public interface IDsonConverter : IConverter
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     string WriteAsDson(object value, Type declaredType, ObjectStyle? style = null) {
-        return WriteAsDson<object>(in value, declaredType, style);
+        return WriteAsDson<object>(value, declaredType, style);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

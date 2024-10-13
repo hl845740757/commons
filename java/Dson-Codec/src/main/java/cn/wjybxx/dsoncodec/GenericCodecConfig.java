@@ -59,51 +59,59 @@ public final class GenericCodecConfig {
 
     private GenericCodecConfig(Map<Class<?>, GenericCodecInfo> encoderTypeDic,
                                Map<Class<?>, GenericCodecInfo> decoderTypeDic) {
-        this.encoderTypeDic = encoderTypeDic;
-        this.decoderTypeDic = decoderTypeDic;
+        this.encoderTypeDic = Map.copyOf(encoderTypeDic);
+        this.decoderTypeDic = Map.copyOf(decoderTypeDic);
     }
+
+    // region factory
+
+    /** 创建一个默认配置 */
+    public static GenericCodecConfig newDefaultConfig() {
+        GenericCodecConfig config = new GenericCodecConfig();
+        config.addCodec(TypeInfo.of(Collection.class, Object.class), CollectionCodec.class, ArrayList.class);
+        config.addCodec(TypeInfo.of(List.class, Object.class), CollectionCodec.class, ArrayList.class);
+        config.addCodec(TypeInfo.of(ArrayList.class, Object.class), CollectionCodec.class, ArrayList.class);
+        config.addCodec(TypeInfo.of(LinkedList.class, Object.class), CollectionCodec.class, LinkedList.class);
+        config.addCodec(TypeInfo.of(ArrayDeque.class, Object.class), CollectionCodec.class, ArrayDeque.class);
+
+        // Set -- 如果是接口类型，则默认保持有序；如果是具体类型，则默认具体类型
+        config.addCodec(TypeInfo.of(Set.class, Object.class), CollectionCodec.class, LinkedHashSet.class);
+        config.addCodec(TypeInfo.of(HashSet.class, Object.class), CollectionCodec.class, HashSet.class);
+        config.addCodec(TypeInfo.of(LinkedHashSet.class, Object.class), CollectionCodec.class, LinkedHashSet.class);
+        config.addCodec(TypeInfo.of(EnumSet.class, Enum.class), CollectionCodec.class); // EnumSet需要动态构建
+
+        // Map -- 如果是接口类型，则默认保持有序
+        config.addCodec(TypeInfo.of(Map.class, Object.class, Object.class), MapCodec.class, LinkedHashMap.class);
+        config.addCodec(TypeInfo.of(HashMap.class, Object.class, Object.class), MapCodec.class, HashMap.class);
+        config.addCodec(TypeInfo.of(LinkedHashMap.class, Object.class, Object.class), MapCodec.class, LinkedHashMap.class);
+        config.addCodec(TypeInfo.of(EnumMap.class, Enum.class, Object.class), MapCodec.class); // EnumSet需要动态构建
+        config.addCodec(TypeInfo.of(ConcurrentMap.class, Object.class, Object.class), MapCodec.class, ConcurrentHashMap.class);
+        config.addCodec(TypeInfo.of(ConcurrentHashMap.class, Object.class, Object.class), MapCodec.class, ConcurrentHashMap.class);
+
+        // 特殊组件
+        config.addCodec(TypeInfo.of(MapEncodeProxy.class, Object.class), MapEncodeProxyCodec.class);
+        return config;
+    }
+
+    /** 合并多个Config为单个Config -- 返回的实例不可变 */
+    public GenericCodecConfig fromConfigs(List<GenericCodecConfig> configs) {
+        GenericCodecConfig result = new GenericCodecConfig();
+        for (GenericCodecConfig other : configs) {
+            result.mergeFrom(other);
+        }
+        return this.toImmutable();
+    }
+
+    /** 转换为不可变配置 */
+    public GenericCodecConfig toImmutable() {
+        return new GenericCodecConfig(encoderTypeDic, decoderTypeDic);
+    }
+    // endregion
 
     /** 清理数据 */
     public void clear() {
         encoderTypeDic.clear();
         decoderTypeDic.clear();
-    }
-
-    /** 转换为不可变配置 */
-    public GenericCodecConfig toImmutable() {
-        return new GenericCodecConfig(Map.copyOf(encoderTypeDic), Map.copyOf(decoderTypeDic));
-    }
-
-    /** 创建一个默认配置 */
-    public static GenericCodecConfig newDefaultConfig() {
-        return new GenericCodecConfig().initWithDefaults();
-    }
-
-    /** 通过默认的泛型类Codec初始化 */
-    public GenericCodecConfig initWithDefaults() {
-        addCodec(TypeInfo.of(Collection.class, Object.class), CollectionCodec.class, ArrayList.class);
-        addCodec(TypeInfo.of(List.class, Object.class), CollectionCodec.class, ArrayList.class);
-        addCodec(TypeInfo.of(ArrayList.class, Object.class), CollectionCodec.class, ArrayList.class);
-        addCodec(TypeInfo.of(LinkedList.class, Object.class), CollectionCodec.class, LinkedList.class);
-        addCodec(TypeInfo.of(ArrayDeque.class, Object.class), CollectionCodec.class, ArrayDeque.class);
-
-        // Set -- 如果是接口类型，则默认保持有序；如果是具体类型，则默认具体类型
-        addCodec(TypeInfo.of(Set.class, Object.class), CollectionCodec.class, LinkedHashSet.class);
-        addCodec(TypeInfo.of(HashSet.class, Object.class), CollectionCodec.class, HashSet.class);
-        addCodec(TypeInfo.of(LinkedHashSet.class, Object.class), CollectionCodec.class, LinkedHashSet.class);
-        addCodec(TypeInfo.of(EnumSet.class, Enum.class), CollectionCodec.class); // EnumSet需要动态构建
-
-        // Map -- 如果是接口类型，则默认保持有序
-        addCodec(TypeInfo.of(Map.class, Object.class, Object.class), MapCodec.class, LinkedHashMap.class);
-        addCodec(TypeInfo.of(HashMap.class, Object.class, Object.class), MapCodec.class, HashMap.class);
-        addCodec(TypeInfo.of(LinkedHashMap.class, Object.class, Object.class), MapCodec.class, LinkedHashMap.class);
-        addCodec(TypeInfo.of(EnumMap.class, Enum.class, Object.class), MapCodec.class); // EnumSet需要动态构建
-        addCodec(TypeInfo.of(ConcurrentMap.class, Object.class, Object.class), MapCodec.class, ConcurrentHashMap.class);
-        addCodec(TypeInfo.of(ConcurrentHashMap.class, Object.class, Object.class), MapCodec.class, ConcurrentHashMap.class);
-
-        // 特殊组件
-        addCodec(TypeInfo.of(MapEncodeProxy.class, Object.class), MapEncodeProxyCodec.class);
-        return this;
     }
 
     /** 主要用于合并注解处理器生成的Config */

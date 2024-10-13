@@ -17,6 +17,7 @@
 package cn.wjybxx.dsoncodec;
 
 
+import cn.wjybxx.base.ArrayUtils;
 import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.base.annotation.StableName;
 
@@ -30,7 +31,7 @@ import java.util.*;
  * 由于Java是伪泛型，在运行时无法获得对象的完整类型信息，因此编码时无法总是精确写入完整的泛型参数信息；
  * 如果字段的泛型参数在编译期是已知的，则APT可精确生成其类型信息，eg：{@code Map<String, Task<Blackboard>}；
  * <p>
- * 当运行时类型和声明类型一致 或 泛型参数可继承{@link GenericCodecHelper#canInheritTypeArgs(Class, Class)}时，
+ * 当运行时类型和声明类型一致 或 泛型参数可继承{@link GenericHelper#canInheritTypeArgs(Class, Class)}时，
  * 则可以精确写入变量的类型信息，否则则只能写入原始类型信息。
  *
  * <h3>解码-完整泛型</h3>
@@ -112,7 +113,7 @@ public final class TypeInfo {
         if (rawType.isPrimitive() || rawType.isArray()) {
             return false;
         }
-        return genericArgs.size() > 0 || rawType.getTypeParameters().length > 0; // 这个有点浪费
+        return genericArgs.size() > 0 || rawType.getTypeParameters().length > 0; // 这个有点浪费，但又没有直接的API
     }
 
     /** 是否是已构造泛型类 -- 不适用数组 */
@@ -160,10 +161,7 @@ public final class TypeInfo {
     /** 获取最底层数组的元素类型 */
     public TypeInfo getRootComponentType() {
         if (rawType.isArray()) {
-            Class<?> root = rawType.getComponentType();
-            while (root.isArray()) {
-                root = root.getComponentType();
-            }
+            Class<?> root = ArrayUtils.getRootComponentType(rawType);
             return new TypeInfo(root, genericArgs); // 继承泛型信息
         }
         throw new IllegalStateException("This operation is only valid on array types");

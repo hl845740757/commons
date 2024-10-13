@@ -20,9 +20,9 @@ import javax.annotation.Nullable;
 
 /**
  * 当要编码的对象类型不存在直接的Codec时，该方法用于转换编解码类型。
- * PS：建议实现为无状态的。
  * <p>
- * 该接口是从{@link DsonCodecRegistry}的逻辑中分离出来的，可更好的处理类型转换冲突。
+ * 1.该接口是从{@link DsonCodecRegistry}的逻辑中分离出来的，可更好的处理类型转换冲突。
+ * 2.不必考虑效率问题，结果会被缓存，因此建议实现为无状态的。
  *
  * @author wjybxx
  * date - 2024/9/28
@@ -34,26 +34,27 @@ public interface DsonCodecCaster {
      * 1.可以向上转换，因为子类实例可以向上转型，但子类特殊数据将被丢弃。
      * 2.不可向下转换，因为超类实例不能向下转型。
      * 3.转换后的类必须和当前类具有相同的泛型参数列表，即可以继承当前类型的泛型参数。
-     * 4.转换后的类型必须存在对应的Codec
+     * 4.转换后的类型必须存在对应的Codec和TypeMeta。
+     * 5.集合类型通常转换为其对应的接口类型。
      *
-     * @param clazz              目标类
-     * @param genericCodecHelper 用于判断泛型参数继承
+     * @param clazz         要转换的类，泛型类的话是泛型定义类
+     * @param genericHelper 用于判断泛型参数继承
      * @return 要转换的编码类型；null表示找不到合适的类型，将继续查找下一个
      */
     @Nullable
-    <T> Class<? super T> castEncoderType(Class<T> clazz, GenericCodecHelper genericCodecHelper);
+    <T> Class<? super T> castEncoderType(Class<T> clazz, GenericHelper genericHelper);
 
     /**
      * 转换解码类型
      * 1.可以返回子类的Codec，如果子类和当前类数据兼容。
      * 2.不可向上转型，因为超类Codec创建的实例不能安全向下转型。
      * 3.转换后的类必须和当前类具有相同的泛型参数列表，即可以继承当前类型的泛型参数。
-     * 4.转换后的类型必须存在对应的Codec
+     * 4.转换后的类型必须存在对应的Codec和TypeMeta。
      *
-     * @param clazz              目标类
-     * @param genericCodecHelper 用于判断泛型参数继承
+     * @param clazz         要转换的类，泛型类的话是泛型定义类
+     * @param genericHelper 用于判断泛型参数继承
      * @return 要转换的解码类型；null表示找不到合适的类型，将继续查找下一个
      */
     @Nullable
-    <T> Class<? extends T> castDecoderType(Class<T> clazz, GenericCodecHelper genericCodecHelper);
+    <T> Class<? extends T> castDecoderType(Class<T> clazz, GenericHelper genericHelper);
 }

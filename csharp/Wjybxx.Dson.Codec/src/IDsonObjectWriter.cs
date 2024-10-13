@@ -126,11 +126,6 @@ public interface IDsonObjectWriter : IDisposable
     /// <returns></returns>
     string EncodeKey<T>(T key);
 
-    /// <summary>
-    /// 打印换行，用于控制Dson文本的样式
-    /// </summary>
-    void Println();
-
     void Flush();
 
     // defaults

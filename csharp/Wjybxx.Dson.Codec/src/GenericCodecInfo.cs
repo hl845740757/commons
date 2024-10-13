@@ -83,17 +83,22 @@ public readonly struct GenericCodecInfo
         if (factoryDeclaringType.GetField(factoryField, FactoryBindFlags) == null) {
             throw new ArgumentException($"factoryField is absent, type: {factoryDeclaringType}, field: {factoryField}");
         }
-        if (factoryDeclaringType.GenericTypeArguments.Length != genericType.GenericTypeArguments.Length) {
-            throw new ArgumentException("genericType.GenericTypeArguments.Length != factoryDeclaringType.GenericTypeArguments.Length,"
+        // GenericTypeArguments 属性获取真实泛型参数，GetGenericArguments() 方法则获取泛型参数定义 -- 这名字差异太小
+        if (factoryDeclaringType.GetGenericArguments().Length != genericType.GetGenericArguments().Length) {
+            throw new ArgumentException("GenericArguments.Length error,"
                                         + $"genericType: {genericType}, factoryDeclaringType: {factoryDeclaringType}");
         }
         return CreateImpl(genericType, codecType, factoryDeclaringType, factoryField);
     }
 
     private static GenericCodecInfo CreateImpl(Type genericType, Type codecType, Type? factoryDeclaringType, string? factoryField) {
-        if (!genericType.IsGenericType) throw new ArgumentException($"genericType is not IsGenericType");
-        if (genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length) {
-            throw new ArgumentException("genericType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length");
+        if (!genericType.IsGenericTypeDefinition) throw new ArgumentException("genericType must be GenericTypeDefinition");
+        if (!codecType.IsGenericTypeDefinition) throw new ArgumentException("codecType must be GenericTypeDefinition");
+
+        // GenericTypeArguments 属性获取真实泛型参数，GetGenericArguments() 方法则获取泛型参数定义
+        if (genericType.GetGenericArguments().Length != codecType.GetGenericArguments().Length) {
+            throw new ArgumentException($"GenericArguments.Length error," +
+                                        $"genericType: {genericType}, codecType: {codecType}");
         }
         if (codecType.GetInterface(typeof(IDsonCodec<>).Name) == null) {
             throw new ArgumentException("codecType must be IDsonCodec");

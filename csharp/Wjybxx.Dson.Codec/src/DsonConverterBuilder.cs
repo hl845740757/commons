@@ -24,9 +24,6 @@ public class DsonConverterBuilder
 {
     private readonly List<ITypeMetaRegistry> typeMetaRegistries = new(4);
     private readonly List<IDsonCodecRegistry> codecRegistries = new(4);
-    private readonly List<IDsonCodecCaster> casters = new(4);
-    private readonly List<GenericCodecConfig> genericCodecConfigs = new(4);
-
     private ConverterOptions options = ConverterOptions.DEFAULT;
     private bool pureMode = false;
 
@@ -38,7 +35,7 @@ public class DsonConverterBuilder
             typeMetaRegistries.Add(DsonConverterUtils.GetDefaultTypeMetaRegistry());
         }
         DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(
-            TypeMetaRegistries.FromRegistries(typeMetaRegistries));
+            SimpleTypeMetaRegistry.FromRegistries(typeMetaRegistries));
         if (!pureMode) {
             typeMetaRegistries.RemoveAt(typeMetaRegistries.Count - 1);
         }
@@ -46,9 +43,7 @@ public class DsonConverterBuilder
         DynamicCodecRegistry dynamicCodecRegistry;
         codecRegistries.Add(DsonConverterUtils.GetDefaultCodecRegistry());
         {
-            dynamicCodecRegistry = new DynamicCodecRegistry(
-                DsonCodecRegistries.FromRegistries(codecRegistries), casters,
-                genericCodecConfigs);
+            dynamicCodecRegistry = new DynamicCodecRegistry(codecRegistries);
         }
         codecRegistries.RemoveAt(codecRegistries.Count - 1);
 
@@ -87,52 +82,6 @@ public class DsonConverterBuilder
         return this;
     }
     // endregion
-
-    // region codec-registry
-    public List<IDsonCodecRegistry> GetCodecRegistries() {
-        return codecRegistries;
-    }
-
-    public DsonConverterBuilder AddCodecRegistry(IDsonCodecRegistry codecRegistry) {
-        this.codecRegistries.Add(codecRegistry);
-        return this;
-    }
-
-    public DsonConverterBuilder AddCodecRegistries(List<IDsonCodecRegistry> codecRegistries) {
-        this.codecRegistries.AddRange(codecRegistries);
-        return this;
-    }
-    // endregion
-
-    // region generic
-    public List<GenericCodecConfig> GetGenericCodecConfigs() {
-        return genericCodecConfigs;
-    }
-
-    public DsonConverterBuilder AddGenericCodecConfig(GenericCodecConfig genericCodecConfig) {
-        this.genericCodecConfigs.Add(genericCodecConfig);
-        return this;
-    }
-
-    public DsonConverterBuilder AddGenericCodecConfigs(List<GenericCodecConfig> genericCodecConfigs) {
-        this.genericCodecConfigs.AddRange(genericCodecConfigs);
-        return this;
-    }
-    // endregion
-
-    public List<IDsonCodecCaster> GetCasters() {
-        return casters;
-    }
-
-    public DsonConverterBuilder AddCaster(IDsonCodecCaster caster) {
-        this.casters.Add(caster);
-        return this;
-    }
-
-    public DsonConverterBuilder AddCasters(List<IDsonCodecCaster> casters) {
-        this.casters.AddRange(casters);
-        return this;
-    }
 
     public ConverterOptions GetOptions() {
         return options;

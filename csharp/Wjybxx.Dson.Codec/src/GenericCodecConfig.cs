@@ -42,24 +42,50 @@ namespace Wjybxx.Dson.Codec
 [NotThreadSafe]
 public sealed class GenericCodecConfig
 {
+    private readonly bool mutable;
     /** 一个Type可能只有encoder而没有decoder，因此需要分开缓存  */
-    private readonly IDictionary<Type, GenericCodecInfo> encoderTypeDic;
-    private readonly IDictionary<Type, GenericCodecInfo> decoderTypeDic;
+    private readonly Dictionary<Type, GenericCodecInfo> encoderTypeDic;
+    private readonly Dictionary<Type, GenericCodecInfo> decoderTypeDic;
 
     public GenericCodecConfig() {
+        mutable = true;
         encoderTypeDic = new Dictionary<Type, GenericCodecInfo>();
         decoderTypeDic = new Dictionary<Type, GenericCodecInfo>();
     }
 
     private GenericCodecConfig(IDictionary<Type, GenericCodecInfo> encoderTypeDic, IDictionary<Type, GenericCodecInfo> decoderTypeDic) {
-        this.encoderTypeDic = encoderTypeDic.ToImmutableLinkedDictionary();
-        this.decoderTypeDic = decoderTypeDic.ToImmutableLinkedDictionary(); // 避免系统库依赖，无法引入Unity
+        this.mutable = false;
+        this.encoderTypeDic = new Dictionary<Type, GenericCodecInfo>(encoderTypeDic);
+        this.decoderTypeDic = new Dictionary<Type, GenericCodecInfo>(decoderTypeDic);
     }
 
-    /** 清理数据 */
-    public void Clear() {
-        encoderTypeDic.Clear();
-        decoderTypeDic.Clear();
+    #region factory
+
+    /** 创建一个默认配置 */
+    public static GenericCodecConfig NewDefaultConfig() {
+        GenericCodecConfig config = new GenericCodecConfig();
+        // 艹，readonly系列集合和普通集合之间没有交集...
+        // CollectionCodec默认测试了常见的集合类型
+        config.AddCodec(typeof(ICollection<>), typeof(CollectionCodec<>));
+        config.AddCodec(typeof(IList<>), typeof(CollectionCodec<>));
+        config.AddCodec(typeof(List<>), typeof(CollectionCodec<>));
+        // 
+        config.AddCodec(typeof(ISet<>), typeof(CollectionCodec<>));
+        config.AddCodec(typeof(HashSet<>), typeof(CollectionCodec<>));
+        config.AddCodec(typeof(LinkedHashSet<>), typeof(CollectionCodec<>));
+        //
+        config.AddCodec(typeof(Stack<>), typeof(MoreCollectionCodecs.StackCodec<>));
+        config.AddCodec(typeof(Queue<>), typeof(MoreCollectionCodecs.QueueCodec<>));
+
+        // IDictionary接口不指定工厂，根据options动态分配实现
+        config.AddCodec(typeof(IDictionary<,>), typeof(DictionaryCodec<,>));
+        config.AddCodec(typeof(Dictionary<,>), typeof(DictionaryCodec<,>));
+        config.AddCodec(typeof(LinkedDictionary<,>), typeof(DictionaryCodec<,>));
+        config.AddCodec(typeof(ConcurrentDictionary<,>), typeof(DictionaryCodec<,>));
+        // 特殊组件
+        config.AddCodec(typeof(DictionaryEncodeProxy<>), typeof(DictionaryEncodeProxyCodec<>));
+        config.AddCodec(typeof(Nullable<>), typeof(NullableCodec<>));
+        return config;
     }
 
     /** 转换为不可变配置 */
@@ -67,37 +93,17 @@ public sealed class GenericCodecConfig
         return new GenericCodecConfig(encoderTypeDic, decoderTypeDic);
     }
 
-    /** 创建一个默认配置 */
-    public static GenericCodecConfig NewDefaultConfig() {
-        return new GenericCodecConfig().InitWithDefaults();
+    #endregion
+
+    private void EnsureMutable() {
+        if (!mutable) throw new InvalidOperationException("config is immutable");
     }
 
-    /// <summary>
-    /// 通过默认的泛型类Codec初始化
-    /// </summary>
-    public GenericCodecConfig InitWithDefaults() {
-        // 艹，readonly系列集合和普通集合之间没有交集...
-        // CollectionCodec默认测试了常见的集合类型
-        AddCodec(typeof(ICollection<>), typeof(CollectionCodec<>));
-        AddCodec(typeof(IList<>), typeof(CollectionCodec<>));
-        AddCodec(typeof(List<>), typeof(CollectionCodec<>));
-        // 
-        AddCodec(typeof(ISet<>), typeof(CollectionCodec<>));
-        AddCodec(typeof(HashSet<>), typeof(CollectionCodec<>));
-        AddCodec(typeof(LinkedHashSet<>), typeof(CollectionCodec<>));
-        //
-        AddCodec(typeof(Stack<>), typeof(MoreCollectionCodecs.StackCodec<>));
-        AddCodec(typeof(Queue<>), typeof(MoreCollectionCodecs.QueueCodec<>));
-
-        // IDictionary接口不指定工厂，根据options动态分配实现
-        AddCodec(typeof(IDictionary<,>), typeof(DictionaryCodec<,>));
-        AddCodec(typeof(Dictionary<,>), typeof(DictionaryCodec<,>));
-        AddCodec(typeof(LinkedDictionary<,>), typeof(DictionaryCodec<,>));
-        AddCodec(typeof(ConcurrentDictionary<,>), typeof(DictionaryCodec<,>));
-        // 特殊组件
-        AddCodec(typeof(DictionaryEncodeProxy<>), typeof(DictionaryEncodeProxyCodec<>));
-        AddCodec(typeof(Nullable<>), typeof(NullableCodec<>));
-        return this;
+    /** 清理数据 */
+    public void Clear() {
+        EnsureMutable();
+        encoderTypeDic.Clear();
+        decoderTypeDic.Clear();
     }
 
     /// <summary>
@@ -105,6 +111,7 @@ public sealed class GenericCodecConfig
     /// </summary>
     /// <param name="other"></param>
     public GenericCodecConfig MergeFrom(GenericCodecConfig other) {
+        EnsureMutable();
         foreach (GenericCodecInfo item in other.encoderTypeDic.Values) {
             AddEncoder(item);
         }
@@ -157,6 +164,7 @@ public sealed class GenericCodecConfig
     /// <exception cref="ArgumentException"></exception>
     public GenericCodecConfig AddCodec(GenericCodecInfo genericCodecInfo) {
         if (genericCodecInfo.IsNull) throw new ArgumentException("codecInfo  is null");
+        EnsureMutable();
         encoderTypeDic[genericCodecInfo.typeInfo] = genericCodecInfo;
         decoderTypeDic[genericCodecInfo.typeInfo] = genericCodecInfo;
         return this;
@@ -208,6 +216,7 @@ public sealed class GenericCodecConfig
     /// <returns></returns>
     public GenericCodecConfig AddEncoder(GenericCodecInfo genericCodecInfo) {
         if (genericCodecInfo.IsNull) throw new ArgumentException("codecInfo  is null");
+        EnsureMutable();
         encoderTypeDic[genericCodecInfo.typeInfo] = genericCodecInfo;
         return this;
     }
@@ -256,6 +265,7 @@ public sealed class GenericCodecConfig
     /// <returns></returns>
     public GenericCodecConfig AddDecoder(GenericCodecInfo genericCodecInfo) {
         if (genericCodecInfo.IsNull) throw new ArgumentException("codecInfo  is null");
+        EnsureMutable();
         decoderTypeDic[genericCodecInfo.typeInfo] = genericCodecInfo;
         return this;
     }

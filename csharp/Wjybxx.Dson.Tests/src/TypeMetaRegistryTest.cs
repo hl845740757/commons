@@ -31,10 +31,7 @@ public class TypeMetaRegistryTest
 
     [SetUp]
     public void SetUp() {
-        ITypeMetaRegistry basicRegistry = TypeMetaRegistries.FromMetas(
-        );
-        basicRegistry = TypeMetaRegistries.FromRegistries(DsonConverterUtils.GetDefaultTypeMetaRegistry(), basicRegistry);
-        registry = new DynamicTypeMetaRegistry(basicRegistry);
+        registry = new DynamicTypeMetaRegistry(new[] { DsonConverterUtils.GetDefaultTypeMetaRegistry() });
     }
 
     [Test]

@@ -55,6 +55,7 @@ public interface DsonCodec<T> {
     /**
      * 获取负责编解码的类对象
      * 如果可以，在数据兼容的情况下，尽量将泛型'T'声明为抽象类或接口，然后通过动态的TypeInfo来绑定编解码类型。
+     * Encoder必须存在对应的{@link TypeMeta}
      */
     @Nonnull
     TypeInfo getEncoderType();
