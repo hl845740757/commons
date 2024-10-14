@@ -32,12 +32,12 @@ public interface IDsonCodecCaster
     /// 转换编码类型
     /// 1.可以向上转换，因为子类实例可以向上转型，但子类特殊数据将被丢弃。
     /// 2.不可向下转换，因为超类实例不能向下转型。
-    /// 3.转换后的类必须和当前类具有相同的泛型参数列表，即可以继承当前类型的泛型参数。
+    /// 3.泛型参数的转换由用户处理，尽量转换为具有相同泛型参数的类型。
     /// 4.转换后的类型必须存在对应的Codec和TypeMeta。
     /// 5.集合类型通常转换为其对应的接口类型。
     /// 
     /// </summary>
-    /// <param name="clazz">要转换的类，泛型类的话是泛型定义类</param>
+    /// <param name="clazz">要转换的类，运行时类型</param>
     /// <returns>要转换的编码类型；null表示找不到合适的类型，将继续查找下一个</returns>
     Type? CastEncoderType(Type clazz);
 
@@ -45,11 +45,11 @@ public interface IDsonCodecCaster
     /// 转换解码类型
     /// 1.可以返回子类的Codec，如果子类和当前类数据兼容。
     /// 2.不可向上转型，因为超类Codec创建的实例不能安全向下转型。
-    /// 3.转换后的类必须和当前类具有相同的泛型参数列表，即可以继承当前类型的泛型参数。
+    /// 3.泛型参数的转换由用户处理，尽量转换为具有相同泛型参数的类型。
     /// 4.转换后的类型必须存在对应的Codec和TypeMeta。
     /// 
     /// </summary>
-    /// <param name="clazz">要转换的类，泛型类的话是泛型定义类</param>
+    /// <param name="clazz">要转换的类，运行时类型</param>
     /// <returns>要转换的解码类型；null表示找不到合适的类型，将继续查找下一个</returns>
     Type? CastDecoderType(Type clazz);
 }

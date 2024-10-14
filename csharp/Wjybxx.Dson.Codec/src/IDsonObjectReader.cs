@@ -120,14 +120,13 @@ public interface IDsonObjectReader : IDisposable
     /// 返回false的情况下，可继续调用该方法或{@link #readDsonType()}读取下一个字段。
     /// </summary>
     /// <param name="name"></param>
-    /// <returns>如果是Object上下午，如果字段存在则返回true，否则返回false；如果是Array上下文，如果尚未到达数组尾部，则返回true，否则返回false。</returns>
+    /// <returns>如果是Object上下文，如果字段存在则返回true，否则返回false；如果是Array上下文，如果尚未到达数组尾部，则返回true，否则返回false。</returns>
     bool ReadName(string? name);
 
     DsonType CurrentDsonType { get; }
 
     string CurrentName { get; }
 
-    /** typeInfo用于传递给嵌套对象，以及暂存到Context */
     void ReadStartObject();
 
     void ReadEndObject();

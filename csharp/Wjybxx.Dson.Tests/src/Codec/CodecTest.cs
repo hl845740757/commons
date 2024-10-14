@@ -30,17 +30,17 @@ public class CodecTest
 
     [SetUp]
     public void SetUp() {
-        ITypeMetaRegistry typeMetaRegistry = TypeMetaRegistries.FromMetas(
+        IList<TypeMeta> typeMetas = new List<TypeMeta>()
+        {
             TypeMeta.Of(typeof(Vector3), ObjectStyle.Flow, "V3", "Vector3")
-        );
-        IList<IDsonCodec> dsonCodecs = new IDsonCodec[]
+        };
+        IList<IDsonCodec> codecs = new List<IDsonCodec>()
         {
             new Vector3Codec()
-        }.ToList();
-
+        };
         converter = new DsonConverterBuilder()
-            .AddTypeMetaRegistry(typeMetaRegistry)
-            .AddCodecRegistry(DsonCodecRegistries.FromCodecs(dsonCodecs))
+            .AddTypeMetas(typeMetas)
+            .AddCodecs(codecs)
             .SetOptions(ConverterOptions.DEFAULT)
             .Build();
     }
@@ -53,6 +53,22 @@ public class CodecTest
 
         Vector3 copied = converter.ReadFromDson<Vector3>(dson);
         Assert.IsTrue(copied == vector3);
+    }
+    
+    [Test]
+    public void TestListEnum() {
+        List<Sex> list = new List<Sex>()
+        {
+            Sex.Unknown,
+            Sex.Male,
+            Sex.Female,
+        };
+
+        string dson = converter.WriteAsDson(list, ObjectStyle.Flow);
+        Console.WriteLine(dson);
+
+        List<Sex> copied = converter.ReadFromDson<List<Sex>>(dson);
+        Assert.IsTrue(list.SequenceEqual(copied));
     }
 
     [Test]

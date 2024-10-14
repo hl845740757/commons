@@ -61,7 +61,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DsonProperty {
 
-    /** 用于文档型序列化时字段名 */
+    /** 用于文档型序列化时字段名 -- 适用枚举 */
     String name() default "";
 
     // region 特殊命名处理

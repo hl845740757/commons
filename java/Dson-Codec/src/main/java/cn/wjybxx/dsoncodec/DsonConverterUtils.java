@@ -77,7 +77,7 @@ public final class DsonConverterUtils {
 
         // 内置codec类型
         List<TypeMeta> typeMetaList = builtinTypeMetas();
-        BUILTIN_TYPE_METAS = SimpleTypeMetaRegistry.fromMetas(typeMetaList);
+        BUILTIN_TYPE_METAS = SimpleTypeMetaRegistry.fromTypeMetas(typeMetaList);
         List<? extends DsonCodec<?>> pojoCodecs = builtinCodecs();
         BUILTIN_CODEC_REGISTRY = SimpleCodecRegistry.fromCodecs(pojoCodecs);
     }

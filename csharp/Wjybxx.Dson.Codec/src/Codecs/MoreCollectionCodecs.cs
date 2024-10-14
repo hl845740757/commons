@@ -46,7 +46,7 @@ public static class MoreCollectionCodecs
         }
 
         public Stack<T> ReadObject(IDsonObjectReader reader, Func<Stack<T>>? factory = null) {
-            List<T> list = CollectionCodec<T>.ReadAsList(reader);
+            List<T> list = EnumerableCodec<T>.ReadAsList(reader);
             // Stack并未实现ICollection接口，另外我们需要保持与序列化之前相同的顺序，需要将list反向转换为Stack
             Stack<T> result = new Stack<T>(list.Count);
             for (int idx = list.Count - 1; idx >= 0; idx--) {

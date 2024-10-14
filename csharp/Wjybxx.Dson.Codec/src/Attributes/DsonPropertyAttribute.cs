@@ -32,6 +32,7 @@ public class DsonPropertyAttribute : Attribute
 {
     /// <summary>
     /// 用于文档型序列化时字段名
+    /// 可用于枚举。
     /// </summary>
     public string? Name { get; set; }
 

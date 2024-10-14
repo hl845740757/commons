@@ -45,7 +45,7 @@ public static class DsonConverterUtils
     }
 
     private static List<TypeMeta> BuiltinTypeMetas() {
-        return new List<TypeMeta>(40)
+        return new List<TypeMeta>(30)
         {
             TypeMetaOf(typeof(int), DsonTexts.LabelInt32, "int", "int32"),
             TypeMetaOf(typeof(long), DsonTexts.LabelInt64, "long", "int64"),
@@ -118,7 +118,7 @@ public static class DsonConverterUtils
         return TYPE_META_REGISTRY;
     }
 
-    /** 获取默认的注册表 */
+    /** 获取默认的Codec注册表 */
     public static IDsonCodecRegistry GetDefaultCodecRegistry() {
         return CODEC_REGISTRY;
     }

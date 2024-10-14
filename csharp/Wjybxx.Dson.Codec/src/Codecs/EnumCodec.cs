@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Wjybxx.Commons;
+using Wjybxx.Dson.Codec.Attributes;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
@@ -56,10 +58,19 @@ public sealed class EnumCodec<T> : AbstractEnumCodec<T>, IDsonCodec<T> where T :
         _value2EnumDic = new Dictionary<T, EnumValueInfo>(values.Length);
         _number2EnumDic = new Dictionary<int, EnumValueInfo>(values.Length);
         _name2EnumDic = new Dictionary<string, EnumValueInfo>(values.Length);
-        for (int i = 0; i < values.Length; i++) {
-            T value = values[i];
+        FieldInfo[] enumFields = typeof(T).GetFields(); // 第一个元素是占位符，查询枚举关联的Field时需要+1
+        for (int idx = 0; idx < values.Length; idx++) {
+            T value = values[idx];
             int number = EnumUtil.GetIntValue(value);
-            string name = names[i];
+
+            // 可通过注解指定DsonName
+            DsonPropertyAttribute attribute = enumFields[idx + 1].GetCustomAttribute<DsonPropertyAttribute>();
+            string name;
+            if (attribute != null && !string.IsNullOrWhiteSpace(attribute.Name)) {
+                name = attribute.Name;
+            } else {
+                name = names[idx];
+            }
 
             EnumValueInfo enumValueInfo = new EnumValueInfo(value, number, name);
             _value2EnumDic[value] = enumValueInfo;

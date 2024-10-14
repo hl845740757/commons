@@ -322,7 +322,8 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         }
         // 尝试继承泛型参数
         if (declaredType.hasGenericArgs()) {
-            return converter.genericCodecHelper().inheritTypeArgs(encoderClass, declaredType);
+            TypeInfo typeInfo = converter.genericCodecHelper().inheritTypeArgs(encoderClass, declaredType);
+            return typeInfo == null ? TypeInfo.of(encoderClass) : typeInfo;
         }
         // 如果真实类型是泛型，而声明类型是object等，会导致泛型信息丢失
         // 在查找泛型类对应的codec时会修正为对应的泛型原型，从而保证泛型参数个数的正确性

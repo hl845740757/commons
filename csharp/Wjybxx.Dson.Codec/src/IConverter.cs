@@ -23,8 +23,8 @@ using Wjybxx.Dson.IO;
 namespace Wjybxx.Dson.Codec
 {
 /// <summary>
-/// 由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
-/// 非泛型接口用于反射等统一API。
+/// 1.由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
+/// 2.非泛型接口用于反射等统一API。
 /// </summary>
 public interface IConverter
 {
@@ -137,20 +137,17 @@ public interface IConverter
 
     /// <summary>
     /// 克隆一个实例
-    ///  
-    /// 注意：
-    /// 1. 返回值的类型不一定和原始对象相同，这通常发生在集合对象上 —— 也可能是投影。
-    /// 2. 如果Codec存在lazyDecode，也会导致不同
     /// </summary>
     /// <param name="value">要克隆的对象</param>
     /// <param name="factory">返回对象类型工厂</param>
-    /// <typeparam name="T">要克隆的对象类型，对象的声明类型</typeparam>
-    /// <typeparam name="U">返回对象的类型</typeparam>
+    /// <typeparam name="T">对象的声明类型</typeparam>
     /// <returns></returns>
-    U CloneObject<T, U>(in T? value, Func<U>? factory = null);
+    T CloneObject<T>(T? value, Func<T>? factory = null);
 
     /// <summary>
-    /// 
+    /// 克隆一个实例
+    /// 1. 返回值的类型不一定和原始对象相同，这通常发生在集合对象上 —— 也可能是投影。
+    /// 2. 如果Codec存在lazyDecode，也会导致不同
     /// </summary>
     /// <param name="value">要克隆的对象</param>
     /// <param name="declaredType">对象的声明类型</param>

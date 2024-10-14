@@ -161,7 +161,7 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
         if (nested) { // 递归时换行，否则生成代码太乱
             format.append("\n$>");
         }
-        format.append("$T.of($T.class, List.of("); // List已import
+        format.append("$T.of($T.class, ");
         params.add(typeName_TypeInfo);
         params.add(TypeName.get(typeUtils.erasure(typeMirror)));
         // 泛型参数递归解析
@@ -173,7 +173,7 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
         if (nested) {
             format.append("$<");
         }
-        format.append("))");
+        format.append(")");
     }
 
     /** 生成原始类型的TypeInfo字段 */
@@ -185,15 +185,13 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
         StringBuilder format = new StringBuilder(16);
         List<Object> params = new ArrayList<>(4);
         if (typeParameters.isEmpty()) {
-            format.append("$T.of($T.class, $T.of())"); // List需要import
+            format.append("$T.of($T.class)");
             params.add(typeName_TypeInfo);
             params.add(TypeName.get(typeUtils.erasure(typeElement.asType())));
-            params.add(AptUtils.CLSNAME_LIST);
         } else {
-            format.append("$T.of($T.class, $T.of("); // List需要import
+            format.append("$T.of($T.class, ");
             params.add(typeName_TypeInfo);
             params.add(TypeName.get(typeUtils.erasure(typeElement.asType())));
-            params.add(AptUtils.CLSNAME_LIST);
             // 泛型参数直接擦除即可
             for (int i = 0; i < typeParameters.size(); i++) {
                 if (i > 0) format.append(", ");
@@ -201,7 +199,7 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
                 params.add(typeName_TypeInfo);
                 params.add(TypeName.get(typeUtils.erasure(typeParameters.get(i).asType())));
             }
-            format.append("))");
+            format.append(")");
         }
         builder.initializer(format.toString(), params.toArray());
         return builder.build();

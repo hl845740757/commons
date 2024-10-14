@@ -85,6 +85,7 @@ public sealed class GenericCodecConfig
         // 特殊组件
         config.AddCodec(typeof(DictionaryEncodeProxy<>), typeof(DictionaryEncodeProxyCodec<>));
         config.AddCodec(typeof(Nullable<>), typeof(NullableCodec<>));
+        config.AddCodec(typeof(IEnumerable<>), typeof(EnumerableCodec<>));
         return config;
     }
 

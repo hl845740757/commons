@@ -25,28 +25,32 @@ using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Tests.Codec;
 
+/// <summary>
+/// 测试泛型类编解码
+/// </summary>
 public class GenericCodecTest
 {
     private static IDsonConverter converter;
 
     [SetUp]
     public void SetUp() {
-        ITypeMetaRegistry typeMetaRegistry = TypeMetaRegistries.FromMetas(
+        IList<TypeMeta> typeMetas = new List<TypeMeta>()
+        {
             TypeMeta.Of(typeof(Vector3), ObjectStyle.Flow, "V3", "Vector3"),
             TypeMeta.Of(typeof(MyDictionary<,>), ObjectStyle.Indent, "MyDictionary")
-        );
-        IList<IDsonCodec> dsonCodecs = new IDsonCodec[]
+        };
+        IList<IDsonCodec> codecs = new List<IDsonCodec>()
         {
             new Vector3Codec()
-        }.ToList();
+        };
 
         GenericCodecConfig genericCodecConfig = new GenericCodecConfig();
         genericCodecConfig.AddCodec(typeof(MyDictionary<,>), typeof(MyDictionary2Codec<,>),
             typeof(MyDictionary<,>), "FACTORY");
 
         converter = new DsonConverterBuilder()
-            .AddTypeMetaRegistry(typeMetaRegistry)
-            .AddCodecRegistry(DsonCodecRegistries.FromCodecs(dsonCodecs))
+            .AddTypeMetas(typeMetas)
+            .AddCodecs(codecs)
             .AddGenericCodecConfig(genericCodecConfig)
             .SetOptions(ConverterOptions.DEFAULT)
             .Build();

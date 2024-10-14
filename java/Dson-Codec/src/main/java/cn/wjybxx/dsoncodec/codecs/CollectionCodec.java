@@ -59,7 +59,7 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
     private static FactoryKind computeFactoryKind(TypeInfo typeInfo) {
         Class<?> clazz = typeInfo.rawType;
         if (clazz == EnumSet.class && typeInfo.genericArgs.get(0).isEnum()) {
-            return FactoryKind.EnumSet;
+            return FactoryKind.EnumSet; // 考虑被擦除的情况
         }
         if (Set.class.isAssignableFrom(clazz)) {
             return FactoryKind.LinkedHashSet;

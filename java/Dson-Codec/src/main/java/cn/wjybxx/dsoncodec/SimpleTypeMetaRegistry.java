@@ -30,8 +30,8 @@ public final class SimpleTypeMetaRegistry implements TypeMetaRegistry {
     private final Map<String, TypeMeta> name2MetaMap;
 
     public SimpleTypeMetaRegistry() {
-        type2MetaMap = HashMap.newHashMap(64);
-        name2MetaMap = HashMap.newHashMap(64);
+        type2MetaMap = new HashMap<>(32);
+        name2MetaMap = new HashMap<>(32);
     }
 
     private SimpleTypeMetaRegistry(Map<TypeInfo, TypeMeta> type2MetaMap,
@@ -54,20 +54,20 @@ public final class SimpleTypeMetaRegistry implements TypeMetaRegistry {
         return registry.toImmutable();
     }
 
-    public static SimpleTypeMetaRegistry fromMetas(TypeMeta... typeMetas) {
+    public static SimpleTypeMetaRegistry fromTypeMetas(TypeMeta... typeMetas) {
         return new SimpleTypeMetaRegistry().addAll(Arrays.asList(typeMetas))
                 .toImmutable();
     }
 
-    public static SimpleTypeMetaRegistry fromMetas(List<TypeMeta> typeMetas) {
+    public static SimpleTypeMetaRegistry fromTypeMetas(Collection<TypeMeta> typeMetas) {
         return new SimpleTypeMetaRegistry().addAll(typeMetas)
                 .toImmutable();
     }
 
-    public static SimpleTypeMetaRegistry fromRegistries(List<? extends TypeMetaRegistry> registries) {
+    public static SimpleTypeMetaRegistry fromRegistries(Collection<? extends TypeMetaRegistry> registries) {
         SimpleTypeMetaRegistry result = new SimpleTypeMetaRegistry();
         for (TypeMetaRegistry other : registries) {
-            result.addAll(other.export());
+            result.mergeFrom(other);
         }
         return result.toImmutable();
     }
@@ -93,7 +93,7 @@ public final class SimpleTypeMetaRegistry implements TypeMetaRegistry {
         return this;
     }
 
-    public SimpleTypeMetaRegistry addAll(List<TypeMeta> typeMetas) {
+    public SimpleTypeMetaRegistry addAll(Collection<TypeMeta> typeMetas) {
         for (TypeMeta typeMeta : typeMetas) {
             add(typeMeta);
         }

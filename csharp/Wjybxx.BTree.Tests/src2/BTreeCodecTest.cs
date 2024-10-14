@@ -55,7 +55,7 @@ public class BTreeCodecTest
             .ToList();
 
         converter = new DsonConverterBuilder()
-            .AddTypeMetaRegistry(TypeMetaRegistries.FromMetas(typeMetas))
+            .AddTypeMetas(typeMetas)
             .AddGenericCodecConfig(genericCodecConfig)
             .SetOptions(ConverterOptions.DEFAULT)
             .Build();

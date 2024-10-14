@@ -24,7 +24,7 @@ using Wjybxx.Commons.Attributes;
 namespace Wjybxx.Commons.Pool
 {
 /// <summary>
-/// 基于对于<see cref="ArrayPool{T}"/>进行封装的数组池。
+/// 基于<see cref="ArrayPool{T}"/>进行封装的数组池。
 /// 注意：扩容管理需要用户自行实现。
 /// </summary>
 /// <typeparam name="T"></typeparam>

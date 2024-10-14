@@ -31,8 +31,8 @@ public final class SimpleCodecRegistry implements DsonCodecRegistry {
     private final List<DsonCodecCaster> casters;
 
     public SimpleCodecRegistry() {
-        encoderDic = new HashMap<>(64);
-        decoderDic = new HashMap<>(64);
+        encoderDic = new HashMap<>(32);
+        decoderDic = new HashMap<>(32);
         genericCodecConfigs = new ArrayList<>();
         casters = new ArrayList<>();
     }
@@ -75,7 +75,7 @@ public final class SimpleCodecRegistry implements DsonCodecRegistry {
     }
 
     /** 根据codecs创建一个Registry -- 返回的实例不可变 */
-    public static SimpleCodecRegistry fromCodecs(List<? extends DsonCodec<?>> codecs) {
+    public static SimpleCodecRegistry fromCodecs(Collection<? extends DsonCodec<?>> codecs) {
         SimpleCodecRegistry result = new SimpleCodecRegistry();
         for (DsonCodec<?> codec : codecs) {
             result.addCodec(codec);
@@ -84,10 +84,10 @@ public final class SimpleCodecRegistry implements DsonCodecRegistry {
     }
 
     /** 根据codecs创建一个Registry -- 返回的实例不可变 */
-    public static SimpleCodecRegistry fromRegistries(List<? extends DsonCodecRegistry> registries) {
+    public static SimpleCodecRegistry fromRegistries(Collection<? extends DsonCodecRegistry> registries) {
         SimpleCodecRegistry result = new SimpleCodecRegistry();
         for (DsonCodecRegistry other : registries) {
-            result.mergeFrom(other.export());
+            result.mergeFrom(other);
         }
         return result.toImmutable();
     }
@@ -99,8 +99,6 @@ public final class SimpleCodecRegistry implements DsonCodecRegistry {
 
     // endregion
 
-    // region update
-
     /** 清理数据 */
     public void clear() {
         encoderDic.clear();
@@ -110,11 +108,52 @@ public final class SimpleCodecRegistry implements DsonCodecRegistry {
     }
 
     /** 合并配置 */
-    public SimpleCodecRegistry mergeFrom(SimpleCodecRegistry other) {
+    public SimpleCodecRegistry mergeFrom(DsonCodecRegistry registry) {
+        SimpleCodecRegistry other = registry instanceof SimpleCodecRegistry
+                ? (SimpleCodecRegistry) registry : registry.export();
         encoderDic.putAll(other.encoderDic);
         decoderDic.putAll(other.decoderDic);
         genericCodecConfigs.addAll(other.genericCodecConfigs);
         casters.addAll(other.casters);
+        return this;
+    }
+
+    /** 添加泛型codec配置 */
+    public SimpleCodecRegistry addGenericCodecConfig(GenericCodecConfig genericCodecConfig) {
+        Objects.requireNonNull(genericCodecConfig);
+        this.genericCodecConfigs.add(genericCodecConfig);
+        return this;
+    }
+
+    /** 添加泛型codec配置 */
+    public SimpleCodecRegistry addGenericCodecConfigs(Collection<? extends GenericCodecConfig> genericCodecConfigs) {
+        for (GenericCodecConfig genericCodecConfig : genericCodecConfigs) {
+            addGenericCodecConfig(genericCodecConfig);
+        }
+        return this;
+    }
+
+    /** 添加类型转换器 */
+    public SimpleCodecRegistry addCaster(DsonCodecCaster caster) {
+        Objects.requireNonNull(caster);
+        this.casters.add(caster);
+        return this;
+    }
+
+    public SimpleCodecRegistry addCasters(Collection<? extends DsonCodecCaster> casters) {
+        for (DsonCodecCaster caster : casters) {
+            addCaster(caster);
+        }
+        return this;
+    }
+
+    // region add-codec
+
+    /** 配置编解码器 */
+    public SimpleCodecRegistry addCodecs(Collection<? extends DsonCodec<?>> codecs) {
+        for (DsonCodec<?> codec : codecs) {
+            addCodec(codec.getEncoderType(), codec);
+        }
         return this;
     }
 
@@ -166,32 +205,15 @@ public final class SimpleCodecRegistry implements DsonCodecRegistry {
         return this;
     }
 
-    /** 添加泛型codec配置 */
-    public SimpleCodecRegistry addGenericCodecConfig(GenericCodecConfig genericCodecConfig) {
-        Objects.requireNonNull(genericCodecConfig);
-        this.genericCodecConfigs.add(genericCodecConfig);
+    // 合并其它Registry
+    public SimpleCodecRegistry addEncoder(TypeInfo typeInfo, DsonCodecImpl<?> codecImpl) {
+        encoderDic.put(typeInfo, codecImpl);
         return this;
     }
 
-    /** 添加泛型codec配置 */
-    public SimpleCodecRegistry addGenericCodecConfigs(List<? extends GenericCodecConfig> genericCodecConfigs) {
-        for (GenericCodecConfig genericCodecConfig : genericCodecConfigs) {
-            addGenericCodecConfig(genericCodecConfig);
-        }
-        return this;
-    }
-
-    /** 添加类型转换器 */
-    public SimpleCodecRegistry addCaster(DsonCodecCaster caster) {
-        Objects.requireNonNull(caster);
-        this.casters.add(caster);
-        return this;
-    }
-
-    public SimpleCodecRegistry addCasters(List<? extends DsonCodecCaster> casters) {
-        for (DsonCodecCaster caster : casters) {
-            addCaster(caster);
-        }
+    /** 配置解码器 -- 适用已构造泛型 */
+    public SimpleCodecRegistry addDecoder(TypeInfo typeInfo, DsonCodecImpl<?> codecImpl) {
+        decoderDic.put(typeInfo, codecImpl);
         return this;
     }
 

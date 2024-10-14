@@ -286,7 +286,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartObject<T>(string name, ObjectStyle style) {
+    public void WriteStartObject(string name, ObjectStyle style) {
         writer.WriteName(name);
         writer.WriteStartObject(style);
     }
@@ -306,13 +306,13 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartArray<T>(string name, ObjectStyle style) {
+    public void WriteStartArray(string name, ObjectStyle style) {
         writer.WriteName(name);
         writer.WriteStartArray(style);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartArray<T>(string name, ObjectStyle style, Type declaredType, Type encoderType) {
+    public void WriteStartArray(string name, ObjectStyle style, Type declaredType, Type encoderType) {
         writer.WriteName(name);
         writer.WriteStartArray(style);
         WriteTypeInfo(declaredType, encoderType);

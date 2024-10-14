@@ -62,11 +62,6 @@ public final class TypeInfo {
         this.genericArgs = List.of();
     }
 
-    private TypeInfo(Class<?> rawType, List<TypeInfo> genericArgs) {
-        this.rawType = Objects.requireNonNull(rawType);
-        this.genericArgs = genericArgs;
-    }
-
     private TypeInfo(Class<?> rawType, TypeInfo typeArg1) {
         this.rawType = Objects.requireNonNull(rawType);
         this.genericArgs = List.of(typeArg1);
@@ -75,6 +70,11 @@ public final class TypeInfo {
     private TypeInfo(Class<?> rawType, TypeInfo typeArg1, TypeInfo typeArg2) {
         this.rawType = Objects.requireNonNull(rawType);
         this.genericArgs = List.of(typeArg1, typeArg2);
+    }
+
+    private TypeInfo(Class<?> rawType, List<TypeInfo> genericArgs) {
+        this.rawType = Objects.requireNonNull(rawType);
+        this.genericArgs = genericArgs;
     }
 
     // region api
@@ -255,14 +255,14 @@ public final class TypeInfo {
     public static final TypeInfo ARRAY_OBJECT = new TypeInfo(Object[].class);
 
     // 常用集合--泛型类其实可使用Of
-    public static final TypeInfo ARRAYLIST = new TypeInfo(ArrayList.class, List.of(OBJECT));
-    public static final TypeInfo LINKED_HASHSET = new TypeInfo(LinkedHashSet.class, List.of(OBJECT));
+    public static final TypeInfo ARRAYLIST = new TypeInfo(ArrayList.class, OBJECT);
+    public static final TypeInfo LINKED_HASHSET = new TypeInfo(LinkedHashSet.class, OBJECT);
 
-    public static final TypeInfo HASHMAP = new TypeInfo(HashMap.class, List.of(OBJECT, OBJECT));
-    public static final TypeInfo STRING_HASHMAP = new TypeInfo(HashMap.class, List.of(STRING, OBJECT));
+    public static final TypeInfo HASHMAP = new TypeInfo(HashMap.class, OBJECT, OBJECT);
+    public static final TypeInfo STRING_HASHMAP = new TypeInfo(HashMap.class, STRING, OBJECT);
 
-    public static final TypeInfo LINKED_HASHMAP = new TypeInfo(LinkedHashMap.class, List.of(OBJECT, OBJECT));
-    public static final TypeInfo STRING_LINKED_HASHMAP = new TypeInfo(LinkedHashMap.class, List.of(STRING, OBJECT));
+    public static final TypeInfo LINKED_HASHMAP = new TypeInfo(LinkedHashMap.class, OBJECT, OBJECT);
+    public static final TypeInfo STRING_LINKED_HASHMAP = new TypeInfo(LinkedHashMap.class, STRING, OBJECT);
 
     // endregion
 
@@ -270,7 +270,7 @@ public final class TypeInfo {
 
     @StableName(comment = "生成的代码会调用")
     public static TypeInfo of(Class<?> rawType) {
-        // 避免过多的计算，只对常见类型测试
+        // 避免过多的测试，以免浪费性能
         if (rawType == int.class) return INT;
         if (rawType == long.class) return LONG;
 
@@ -284,12 +284,12 @@ public final class TypeInfo {
 
     @StableName(comment = "生成的代码会调用")
     public static TypeInfo of(Class<?> rawType, TypeInfo typeArg1) {
-        return new TypeInfo(rawType, List.of(typeArg1));
+        return new TypeInfo(rawType, typeArg1);
     }
 
     @StableName(comment = "生成的代码会调用")
     public static TypeInfo of(Class<?> rawType, TypeInfo typeArg1, TypeInfo typeArg2) {
-        return new TypeInfo(rawType, List.of(typeArg1, typeArg2));
+        return new TypeInfo(rawType, typeArg1, typeArg2);
     }
 
     @StableName(comment = "生成的代码会调用")
@@ -300,6 +300,23 @@ public final class TypeInfo {
     @StableName(comment = "生成的代码会调用")
     public static TypeInfo of(Class<?> rawType, List<TypeInfo> typeArgs) {
         return new TypeInfo(rawType, List.copyOf(typeArgs));
+    }
+
+    /** 用于继承其它类型的泛型参数 */
+    public static TypeInfo of(Class<?> rawType, List<TypeInfo> typeArgs, TypeInfo typeArg1) {
+        TypeInfo[] newTypeInfo = new TypeInfo[typeArgs.size() + 2];
+        typeArgs.toArray(newTypeInfo);
+        newTypeInfo[typeArgs.size()] = Objects.requireNonNull(typeArg1);
+        return new TypeInfo(rawType, List.of(newTypeInfo)); // 会多一次拷贝，但不想依赖外部库
+    }
+
+    /** 用于继承其它类型的泛型参数 */
+    public static TypeInfo of(Class<?> rawType, List<TypeInfo> typeArgs, TypeInfo typeArg1, TypeInfo typeArg2) {
+        TypeInfo[] newTypeInfo = new TypeInfo[typeArgs.size() + 2];
+        typeArgs.toArray(newTypeInfo);
+        newTypeInfo[typeArgs.size()] = Objects.requireNonNull(typeArg1);
+        newTypeInfo[typeArgs.size() + 1] = Objects.requireNonNull(typeArg2);
+        return new TypeInfo(rawType, List.of(newTypeInfo));
     }
 
     // endregion

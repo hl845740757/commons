@@ -30,13 +30,13 @@ public abstract class DsonCodecImpl
 {
     public abstract Type GetEncoderType();
 
-    // 解决泛型协变逆变问题 - 不会导致装箱
+    // 解决泛型协变逆变问题 - 不会导致装箱，但会多一次cast
     public abstract void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, ObjectStyle style);
 
     public abstract object ReadObject2(IDsonObjectReader reader, object? factory);
 
     /** 创建Impl实例 */
-    public static DsonCodecImpl CreateInstance(IDsonCodec codec) {
+    internal static DsonCodecImpl CreateInstance(IDsonCodec codec) {
         // 存在泛型协变和逆变问题，因此不能直接使用GetEncoderClass创建泛型，需要找到IDsonCodec<>的泛型参数
         Type genericCodecType = codec.GetType().GetInterface(typeof(IDsonCodec<>).Name)!;
         Type codecImplGenericType = typeof(DsonCodecImpl<>).MakeGenericType(genericCodecType.GenericTypeArguments);
@@ -75,7 +75,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     }
 
     public override object ReadObject2(IDsonObjectReader reader, object? factory) {
-        return ReadObject(reader, (Func<T>)factory);
+        return ReadObject(reader, factory as Func<T>); // factory的cast是否可能失败？用as稳妥
     }
 
     /// <summary>

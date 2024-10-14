@@ -36,7 +36,7 @@ public class LazyCodecTest {
 
     @Test
     void testLazyCodec() {
-        TypeMetaRegistry typeMetaRegistry = SimpleTypeMetaRegistry.fromMetas(
+        TypeMetaRegistry typeMetaRegistry = SimpleTypeMetaRegistry.fromTypeMetas(
                 TypeMeta.of(MyStruct.class, ObjectStyle.INDENT, "MyStruct")
         );
         ConverterOptions options = ConverterOptions.newBuilder()

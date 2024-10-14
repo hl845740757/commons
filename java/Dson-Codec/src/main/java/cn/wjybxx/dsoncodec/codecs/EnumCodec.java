@@ -17,15 +17,18 @@
 package cn.wjybxx.dsoncodec.codecs;
 
 import cn.wjybxx.base.EnumLite;
+import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dsoncodec.*;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
+import cn.wjybxx.dsoncodec.annotations.DsonProperty;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.reflect.Field;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,13 +60,24 @@ public final class EnumCodec<T extends Enum<T>> implements IEnumCodec<T>, DsonCo
         this.value2EnumMap = new EnumMap<>(enumClass);
         this.number2EnumMap = new Int2ObjectOpenHashMap<>(enumConstants.length);
         this.name2EnumMap = HashMap.newHashMap(enumConstants.length);
-        for (T enumConstant : enumConstants) {
+        Field[] enumFields = enumClass.getDeclaredFields(); // java的枚举常量在所有其它字段之前
+        for (int idx = 0; idx < enumConstants.length; idx++) {
+            T enumConstant = enumConstants[idx];
             int number = enumConstant instanceof EnumLite enumLite ? enumLite.getNumber() : enumConstant.ordinal();
 
-            EnumValueInfo<T> enumValueInfo = new EnumValueInfo<>(enumConstant, number, enumConstant.name());
+            // 可通过注解指定DsonName
+            DsonProperty annotation = enumFields[idx].getAnnotation(DsonProperty.class);
+            String name;
+            if (annotation != null && !ObjectUtils.isBlank(annotation.name())) {
+                name = annotation.name();
+            } else {
+                name = enumConstant.name();
+            }
+
+            EnumValueInfo<T> enumValueInfo = new EnumValueInfo<>(enumConstant, number, name);
             value2EnumMap.put(enumConstant, enumValueInfo);
             number2EnumMap.put(number, enumValueInfo);
-            name2EnumMap.put(enumConstant.name(), enumValueInfo);
+            name2EnumMap.put(name, enumValueInfo);
         }
     }
 

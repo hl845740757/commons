@@ -33,8 +33,8 @@ public class SimpleTypeMetaRegistry : ITypeMetaRegistry
 
     public SimpleTypeMetaRegistry() {
         mutable = true;
-        type2MetaDic = new Dictionary<Type, TypeMeta>(64);
-        name2MetaDic = new Dictionary<string, TypeMeta>(64);
+        type2MetaDic = new Dictionary<Type, TypeMeta>(32);
+        name2MetaDic = new Dictionary<string, TypeMeta>(32);
     }
 
     public SimpleTypeMetaRegistry(Dictionary<Type, TypeMeta> type2MetaDic,
@@ -58,6 +58,10 @@ public class SimpleTypeMetaRegistry : ITypeMetaRegistry
         return registry.ToImmutable();
     }
 
+    public static SimpleTypeMetaRegistry FromTypeMetas(params TypeMeta[] typeMetas) {
+        return new SimpleTypeMetaRegistry().AddAll(typeMetas)
+            .ToImmutable();
+    }
     public static SimpleTypeMetaRegistry FromTypeMetas(IEnumerable<TypeMeta> typeMetas) {
         return new SimpleTypeMetaRegistry().AddAll(typeMetas)
             .ToImmutable();
@@ -66,7 +70,7 @@ public class SimpleTypeMetaRegistry : ITypeMetaRegistry
     public static SimpleTypeMetaRegistry FromRegistries(IEnumerable<ITypeMetaRegistry> registries) {
         SimpleTypeMetaRegistry result = new SimpleTypeMetaRegistry();
         foreach (ITypeMetaRegistry other in registries) {
-            result.AddAll(other.Export());
+            result.MergeFrom(other);
         }
         return result.ToImmutable();
     }

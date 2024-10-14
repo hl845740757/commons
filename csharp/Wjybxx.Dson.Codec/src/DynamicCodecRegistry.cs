@@ -155,9 +155,8 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
                 codecImpl = MakeGenericCodec(type, genericCodecInfo.Value);
             } else {
                 // 尝试转换为超类编码，写入超类的TypeInfo
-                Type superType = CastEncoderType(type.GetGenericTypeDefinition());
+                Type superType = CastEncoderType(type);
                 if (superType != null) {
-                    superType = superType.MakeGenericType(type.GenericTypeArguments);
                     codecImpl = GetEncoder(superType);
                 }
             }
@@ -203,9 +202,8 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
                 codecImpl = MakeGenericCodec(type, genericCodecInfo.Value);
             } else {
                 // 尝试转换为子类解码，解码不涉及到写入TypeInfo
-                Type subType = CastDecoderType(type.GetGenericTypeDefinition());
+                Type subType = CastDecoderType(type);
                 if (subType != null) {
-                    subType = subType.MakeGenericType(type.GenericTypeArguments);
                     codecImpl = GetDecoder(subType);
                 }
             }
@@ -273,43 +271,42 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         return DsonCodecImpl.CreateInstance(codec);
     }
 
-    private Type? CastEncoderType(Type clazz) {
+    private Type? CastEncoderType(Type type) {
         // caster逆向迭代，越靠近用户优先级越高，才能保证一定能解决冲突
         for (int index = _casters.Count - 1; index >= 0; index--) {
             IDsonCodecCaster caster = _casters[index];
-            Type superClazz = caster.CastEncoderType(clazz);
-            if (superClazz != null && superClazz != clazz) { // fix用户返回当前类
-                return superClazz;
-            }
+            Type superType = caster.CastEncoderType(type);
+            if (superType == null) continue;
+            return superType == type ? null : superType; // fix用户返回当前类
         }
         // 这段保底代码写在这里最为合适，放在用户的Config里还需要考虑冲突问题...
-        // 具体到抽象 -- 这里其实也需要测试是否可以继承泛型参数，但不想增加组件了，用户通过Caster自行解决
-        if (DsonConverterUtils.IsList(clazz)) {
-            return typeof(IList<>);
-        }
-        if (DsonConverterUtils.IsSet(clazz)) {
-            return typeof(ISet<>);
-        }
-        if (DsonConverterUtils.IsGenericSet(clazz)) {
-            return typeof(IGenericSet<>);
-        }
-        if (DsonConverterUtils.IsCollection(clazz, includeDictionary: false)) {
-            return typeof(ICollection<>);
-        }
-        if (DsonConverterUtils.IsDictionary(clazz)) {
-            return typeof(IDictionary<,>);
-        }
-        return null;
+        Type castType = type.GetInterface(typeof(IList<>).Name);
+        if (castType != null) return castType;
+
+        castType = type.GetInterface(typeof(ISet<>).Name);
+        if (castType != null) return castType;
+
+        castType = type.GetInterface(typeof(IGenericSet<>).Name);
+        if (castType != null) return castType;
+
+        castType = type.GetInterface(typeof(ICollection<>).Name);
+        if (castType != null) return castType;
+
+        castType = type.GetInterface(typeof(IDictionary<,>).Name);
+        if (castType != null) return castType;
+
+        // readonly系列集合...
+        castType = type.GetInterface(typeof(IEnumerable<>).Name);
+        return castType;
     }
 
-    private Type? CastDecoderType(Type clazz) {
+    private Type? CastDecoderType(Type type) {
         // caster逆向迭代，越靠近用户优先级越高，才能保证一定能解决冲突
         for (int index = _casters.Count - 1; index >= 0; index--) {
             IDsonCodecCaster caster = _casters[index];
-            Type subClazz = caster.CastDecoderType(clazz);
-            if (subClazz != null && subClazz != clazz) { // fix用户返回当前类
-                return subClazz;
-            }
+            Type subType = caster.CastDecoderType(type);
+            if (subType == null) continue;
+            return subType == type ? null : subType; // fix用户返回当前类
         }
         return null;
     }

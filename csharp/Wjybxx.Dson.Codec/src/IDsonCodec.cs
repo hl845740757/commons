@@ -72,7 +72,7 @@ public interface IDsonCodec<T> : IDsonCodec
     /// <summary>
     /// C#是真泛型，因此T通常就是其编解码类型。
     /// 如果可以，在数据兼容的情况下，尽量将泛型'T'声明为抽象类或接口，然后通过动态的Type来绑定编解码类型。
-    /// Encoder必须存在对应的<see cref="TypeMeta"/>
+    /// EncoderType必须存在对应的<see cref="TypeMeta"/>
     /// </summary>
     /// <returns></returns>
     Type IDsonCodec.GetEncoderType() => typeof(T);

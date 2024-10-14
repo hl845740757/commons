@@ -38,19 +38,19 @@ import java.util.function.Supplier;
  */
 public final class ArrayCodec<T> implements DsonCodec<T[]> {
 
-    private final TypeInfo typeInfo;
+    private final TypeInfo encoderType;
     private final TypeInfo elementTypeInfo;
 
-    public ArrayCodec(TypeInfo typeInfo) {
-        assert typeInfo.isArrayType();
-        this.typeInfo = typeInfo;
-        this.elementTypeInfo = typeInfo.getComponentType(); // 缓存实例
+    public ArrayCodec(TypeInfo encoderType) {
+        assert encoderType.isArrayType();
+        this.encoderType = encoderType;
+        this.elementTypeInfo = encoderType.getComponentType(); // 缓存实例
     }
 
     @Nonnull
     @Override
     public TypeInfo getEncoderType() {
-        return typeInfo;
+        return encoderType;
     }
 
     @Override

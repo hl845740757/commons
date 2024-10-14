@@ -154,11 +154,6 @@ class CodecStructs {
             return false;
         }
 
-        @Override
-        public boolean autoStartEnd() {
-            return true;
-        }
-
         @Nonnull
         @Override
         public TypeInfo getEncoderType() {

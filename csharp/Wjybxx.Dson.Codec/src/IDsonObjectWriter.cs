@@ -136,7 +136,7 @@ public interface IDsonObjectWriter : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartObject<T>(string name, ObjectStyle style) {
+    void WriteStartObject(string name, ObjectStyle style) {
         WriteName(name);
         WriteStartObject(style);
     }
@@ -156,13 +156,13 @@ public interface IDsonObjectWriter : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartArray<T>(string name, ObjectStyle style) {
+    void WriteStartArray(string name, ObjectStyle style) {
         WriteName(name);
         WriteStartArray(style);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartArray<T>(string name, ObjectStyle style, Type declaredType, Type encoderType) {
+    void WriteStartArray(string name, ObjectStyle style, Type declaredType, Type encoderType) {
         WriteName(name);
         WriteStartArray(style);
         WriteTypeInfo(declaredType, encoderType);

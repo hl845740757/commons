@@ -120,26 +120,5 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         }
         return reader.Options.readAsImmutable ? ToImmutable(result) : result;
     }
-
-    // util
-
-    public static void WriteAsList(IDsonObjectWriter writer, IEnumerable<T> inst) {
-        Type eleDeclaredType = typeof(T);
-
-        foreach (T value in inst) {
-            writer.WriteObject<T>(null, in value, eleDeclaredType);
-        }
-    }
-
-    public static List<T> ReadAsList(IDsonObjectReader reader) {
-        Type eleDeclaredType = typeof(T);
-
-        List<T> result = new List<T>();
-        while (reader.ReadDsonType() != DsonType.EndOfObject) {
-            T value = reader.ReadObject<T>(null, eleDeclaredType);
-            result.Add(value);
-        }
-        return result;
-    }
 }
 }

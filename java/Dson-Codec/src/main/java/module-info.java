@@ -6,8 +6,8 @@
  */
 module wjybxx.dson.codec {
     requires jsr305;
-    requires static java.compiler; // 测试用例依赖
     requires it.unimi.dsi.fastutil.core;
+    requires static java.compiler; // 测试用例依赖
     requires transitive org.slf4j;
 
     requires transitive wjybxx.commons.base;

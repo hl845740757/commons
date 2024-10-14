@@ -45,8 +45,6 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
     private final GenericCodecConfig genericCodecConfig;
     /** 类型转换器 */
     private final List<DsonCodecCaster> casters;
-    /** 泛型Codec辅助工具类 */
-    private final GenericHelper genericHelper;
 
     /** 一个Type可能只有encoder而没有decoder，因此需要分开缓存 */
     private final ConcurrentHashMap<TypeInfo, DsonCodecImpl<?>> encoderDic = new ConcurrentHashMap<>();
@@ -63,12 +61,6 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
             this.genericCodecConfig.mergeFrom(genericCodecConfig);
         }
         this.casters = List.copyOf(basicRegistry.getCasters());
-        this.genericHelper = new GenericHelper();
-    }
-
-    /** 需要暴露给Converter */
-    public GenericHelper getGenericHelper() {
-        return genericHelper;
     }
 
     @Override
@@ -141,16 +133,16 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
                 codecImpl = makeGenericCodec(type, genericCodecInfo);
             } else {
                 // 尝试转换为超类编码，写入超类的TypeInfo
-                Class<?> superType = castEncoderType(type.rawType);
+                TypeInfo superType = castEncoderType(type);
                 if (superType != null) {
-                    codecImpl = getEncoder(TypeInfo.of(superType, type.genericArgs));
+                    codecImpl = getEncoder(superType);
                 }
             }
         } else {
             // 非泛型类，也尝试转换为超类，写入超类的TypeInfo
-            Class<?> superType = castEncoderType(type.rawType);
+            TypeInfo superType = castEncoderType(type);
             if (superType != null) {
-                codecImpl = getEncoder(TypeInfo.of(superType, type.genericArgs));
+                codecImpl = getEncoder(superType);
             }
         }
         if (codecImpl != null) {
@@ -185,16 +177,16 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
                 codecImpl = makeGenericCodec(type, genericCodecInfo);
             } else {
                 // 尝试转换为子类解码，解码不涉及到写入TypeInfo
-                Class<?> subType = castDecoderType(type.rawType);
+                TypeInfo subType = castDecoderType(type);
                 if (subType != null) {
-                    codecImpl = getDecoder(TypeInfo.of(subType, type.genericArgs));
+                    codecImpl = getDecoder(subType);
                 }
             }
         } else {
             // 尝试转换为子类解码，解码不涉及到写入TypeInfo
-            Class<?> subType = castDecoderType(type.rawType);
+            TypeInfo subType = castDecoderType(type);
             if (subType != null) {
-                codecImpl = getDecoder(TypeInfo.of(subType, type.genericArgs));
+                codecImpl = getDecoder(subType);
             }
         }
         if (codecImpl != null) {
@@ -218,7 +210,8 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
 
     private DsonCodecImpl<?> makeGenericCodec(TypeInfo type, GenericCodecInfo genericCodecInfo) {
         assert type.rawType == genericCodecInfo.typeInfo.rawType;
-        if (type.genericArgs.isEmpty()) { // 参数可能是丢失了泛型参数的原始类型
+        // 参数可能是丢失了泛型参数的原始类型，亦或是逻辑错误导致泛型参数个数不匹配
+        if (type.genericArgs.size() != genericCodecInfo.typeInfo.genericArgs.size()) {
             type = genericCodecInfo.typeInfo;
         }
         Class<?> genericCodecTypeDefine = genericCodecInfo.codecType;
@@ -247,45 +240,39 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
         throw new DsonCodecException("bad generic codec: " + genericCodecTypeDefine);
     }
 
-
-    private Class<?> castEncoderType(Class<?> clazz) {
+    private TypeInfo castEncoderType(TypeInfo type) {
         // caster逆向迭代，越靠近用户优先级越高，才能保证一定能解决冲突
+        Class<?> rawType = type.rawType;
         for (int i = casters.size() - 1; i >= 0; i--) {
             DsonCodecCaster caster = casters.get(i);
-            Class<?> superClazz = caster.castEncoderType(clazz, genericHelper);
-            if (superClazz != null && superClazz != clazz) { // fix用户返回当前类
-                return superClazz;
-            }
+            TypeInfo superType = caster.castEncoderType(type);
+            if (superType == null) continue;
+            return superType.rawType == rawType ? null : superType; // fix用户返回当前类
         }
         // 这段保底代码写在这里最为合适，放在用户的Config里还需要考虑冲突问题...
-        // 具体到抽象
-        if (List.class.isAssignableFrom(clazz)
-                && genericHelper.canInheritTypeArgs(clazz, List.class)) {
-            return List.class;
+        // 这里其实也需要测试是否可以继承泛型参数，但不想增加复杂度了，用户通过Caster解决
+        if (List.class.isAssignableFrom(rawType)) {
+            return TypeInfo.of(List.class, type.genericArgs);
         }
-        if (Set.class.isAssignableFrom(clazz)
-                && genericHelper.canInheritTypeArgs(clazz, Set.class)) {
-            return Set.class;
+        if (Set.class.isAssignableFrom(rawType)) {
+            return TypeInfo.of(Set.class, type.genericArgs);
         }
-        if (Collection.class.isAssignableFrom(clazz)
-                && genericHelper.canInheritTypeArgs(clazz, Collection.class)) {
-            return Collection.class;
+        if (Collection.class.isAssignableFrom(rawType)) {
+            return TypeInfo.of(Collection.class, type.genericArgs);
         }
-        if (Map.class.isAssignableFrom(clazz)
-                && genericHelper.canInheritTypeArgs(clazz, Map.class)) {
-            return Map.class;
+        if (Map.class.isAssignableFrom(rawType)) {
+            return TypeInfo.of(Map.class, type.genericArgs);
         }
         return null;
     }
 
-    private Class<?> castDecoderType(Class<?> clazz) {
+    private TypeInfo castDecoderType(TypeInfo type) {
         // caster逆向迭代，越靠近用户优先级越高，才能保证一定能解决冲突
         for (int i = casters.size() - 1; i >= 0; i--) {
             DsonCodecCaster caster = casters.get(i);
-            Class<?> superClazz = caster.castDecoderType(clazz, genericHelper);
-            if (superClazz != null && superClazz != clazz) { // fix用户返回当前类
-                return superClazz;
-            }
+            TypeInfo subType = caster.castDecoderType(type);
+            if (subType == null) continue;
+            return subType.rawType == type.rawType ? null : subType; // fix用户返回当前类
         }
         return null;
     }

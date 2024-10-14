@@ -37,31 +37,28 @@ public class Int2ObjectMapCodecTest {
 
     @BeforeEach
     void setUp() {
-        TypeMetaRegistry typeMetaRegistry = SimpleTypeMetaRegistry.fromMetas(
+        TypeMeta[] typeMetas = {
                 TypeMeta.of(Int2ObjectMap.class, ObjectStyle.INDENT),
                 TypeMeta.of(Int2ObjectOpenHashMap.class, ObjectStyle.INDENT),
                 TypeMeta.of(IntList.class, ObjectStyle.FLOW),
                 TypeMeta.of(IntArrayList.class, ObjectStyle.FLOW)
-        );
-
+        };
         // IntList不是泛型类...
-        DsonCodecRegistry codecRegistry = SimpleCodecRegistry.fromCodecs(
+        DsonCodec<?>[] codecs = {
                 new IntCollectionCodec(TypeInfo.of(IntList.class), IntArrayList::new),
                 new IntCollectionCodec(TypeInfo.of(IntArrayList.class), IntArrayList::new)
-        );
-        GenericCodecConfig genericCodecConfig = GenericCodecConfig.newDefaultConfig();
-        genericCodecConfig.addCodec(GenericCodecInfo.create(
-                TypeInfo.of(Int2ObjectMap.class, Object.class), Int2ObjectMapCodec.class, Int2ObjectOpenHashMap.class));
-        genericCodecConfig.addCodec(GenericCodecInfo.create(
-                TypeInfo.of(Int2ObjectOpenHashMap.class, Object.class), Int2ObjectMapCodec.class, Int2ObjectOpenHashMap.class));
+        };
+        // 泛型codec
+        GenericCodecConfig genericCodecConfig = new GenericCodecConfig();
+        genericCodecConfig.addCodec(TypeInfo.of(Int2ObjectMap.class, Object.class), Int2ObjectMapCodec.class, Int2ObjectOpenHashMap.class);
+        genericCodecConfig.addCodec(TypeInfo.of(Int2ObjectOpenHashMap.class, Object.class), Int2ObjectMapCodec.class, Int2ObjectOpenHashMap.class);
 
         ConverterOptions options = ConverterOptions.DEFAULT.toBuilder()
                 .setWriteMapAsDocument(true)
                 .build();
-
         converter = new DsonConverterBuilder()
-                .addTypeMetaRegistry(typeMetaRegistry)
-                .addCodecRegistry(codecRegistry)
+                .addTypeMetas(typeMetas)
+                .addCodecs(codecs)
                 .addGenericCodecConfig(genericCodecConfig)
                 .setOptions(options)
                 .build();
