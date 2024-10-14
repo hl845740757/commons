@@ -31,8 +31,7 @@ import java.util.*;
  * 由于Java是伪泛型，在运行时无法获得对象的完整类型信息，因此编码时无法总是精确写入完整的泛型参数信息；
  * 如果字段的泛型参数在编译期是已知的，则APT可精确生成其类型信息，eg：{@code Map<String, Task<Blackboard>}；
  * <p>
- * 当运行时类型和声明类型一致 或 泛型参数可继承{@link GenericHelper#canInheritTypeArgs(Class, Class)}时，
- * 则可以精确写入变量的类型信息，否则则只能写入原始类型信息。
+ * 如果想尽可能精确的写入泛型信息，需要扩展{@link GenericHelper}。
  *
  * <h3>解码-完整泛型</h3>
  * 虽然我们无法在运行时导出对象的完整的泛型信息，但编辑器可以 —— 编辑器中的泛型都是已构造泛型。

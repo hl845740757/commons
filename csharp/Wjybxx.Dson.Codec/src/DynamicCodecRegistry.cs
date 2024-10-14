@@ -47,10 +47,13 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
     /// 
     /// </summary>
     public DynamicCodecRegistry(List<IDsonCodecRegistry> basicRegistries) {
-        _basicRegistry = new SimpleCodecRegistry();
+        // 先初始化为默认配置，再由用户的配置进行覆盖
+        _basicRegistry = SimpleCodecRegistry.NewDefaultRegistry();
         foreach (IDsonCodecRegistry other in basicRegistries) {
             _basicRegistry.MergeFrom(other.Export());
         }
+        _basicRegistry.TrimExcess();
+        
         // 先初始化为默认配置，然后由用户的配置进行覆盖 -- 不转不可变对象，性能更好
         _genericCodecConfig = GenericCodecConfig.NewDefaultConfig();
         foreach (GenericCodecConfig genericCodecConfig in _basicRegistry.GetGenericCodecConfigs()) {
@@ -58,25 +61,6 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         }
         // 拷贝，避免不必要的虚方法调用
         _casters = new List<IDsonCodecCaster>(_basicRegistry.GetCasters());
-
-        // 初始化特化List
-        AddCodec(new DsonCodecImpl<IList<int>>(new MoreCollectionCodecs.IntListCodec(typeof(IList<int>))));
-        AddCodec(new DsonCodecImpl<IList<long>>(new MoreCollectionCodecs.LongListCodec(typeof(IList<long>))));
-        AddCodec(new DsonCodecImpl<IList<float>>(new MoreCollectionCodecs.FloatListCodec(typeof(IList<float>))));
-        AddCodec(new DsonCodecImpl<IList<double>>(new MoreCollectionCodecs.DoubleListCodec(typeof(IList<double>))));
-        AddCodec(new DsonCodecImpl<IList<bool>>(new MoreCollectionCodecs.BoolListCodec(typeof(IList<bool>))));
-        AddCodec(new DsonCodecImpl<IList<string>>(new MoreCollectionCodecs.StringListCodec(typeof(IList<string>))));
-        AddCodec(new DsonCodecImpl<IList<uint>>(new MoreCollectionCodecs.UIntListCodec(typeof(IList<uint>))));
-        AddCodec(new DsonCodecImpl<IList<ulong>>(new MoreCollectionCodecs.ULongListCodec(typeof(IList<ulong>))));
-
-        AddCodec(new DsonCodecImpl<IList<int>>(new MoreCollectionCodecs.IntListCodec(typeof(List<int>))));
-        AddCodec(new DsonCodecImpl<IList<long>>(new MoreCollectionCodecs.LongListCodec(typeof(List<long>))));
-        AddCodec(new DsonCodecImpl<IList<float>>(new MoreCollectionCodecs.FloatListCodec(typeof(List<float>))));
-        AddCodec(new DsonCodecImpl<IList<double>>(new MoreCollectionCodecs.DoubleListCodec(typeof(List<double>))));
-        AddCodec(new DsonCodecImpl<IList<bool>>(new MoreCollectionCodecs.BoolListCodec(typeof(List<bool>))));
-        AddCodec(new DsonCodecImpl<IList<string>>(new MoreCollectionCodecs.StringListCodec(typeof(List<string>))));
-        AddCodec(new DsonCodecImpl<IList<uint>>(new MoreCollectionCodecs.UIntListCodec(typeof(List<uint>))));
-        AddCodec(new DsonCodecImpl<IList<ulong>>(new MoreCollectionCodecs.ULongListCodec(typeof(List<ulong>))));
     }
 
     public SimpleCodecRegistry Export() {
@@ -86,48 +70,6 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         result.GetDecoderDic().AddAll(decoderDic);
         return result;
     }
-
-    #region add-cache
-
-    /// <summary>
-    /// 预添加Codec(可覆盖)
-    /// </summary>
-    /// <param name="codecImpl"></param>
-    public void AddCodec(DsonCodecImpl codecImpl) {
-        encoderDic[codecImpl.GetEncoderType()] = codecImpl;
-        decoderDic[codecImpl.GetEncoderType()] = codecImpl;
-    }
-
-    /// <summary>
-    /// 添加编码器
-    /// </summary>
-    /// <param name="codecImpl">编码器</param>
-    public void AddEncoder(DsonCodecImpl codecImpl) {
-        encoderDic[codecImpl.GetEncoderType()] = codecImpl;
-    }
-
-    /// <summary>
-    /// 添加编码器
-    /// </summary>
-    /// <param name="type">绑定的类型，需要是Codec绑定类型的子类</param>
-    /// <param name="codecImpl">编码器</param>
-    /// <exception cref="ArgumentException"></exception>
-    public void AddEncoder(Type type, DsonCodecImpl codecImpl) {
-        if (!codecImpl.GetEncoderType().IsAssignableFrom(type)) {
-            throw new ArgumentException($"codecType: {codecImpl.GetEncoderType()}, argType: {type}");
-        }
-        encoderDic[type] = codecImpl;
-    }
-
-    /// <summary>
-    /// 添加解码器
-    /// </summary>
-    /// <param name="codecImpl"></param>
-    public void AddDecoder(DsonCodecImpl codecImpl) {
-        decoderDic[codecImpl.GetEncoderType()] = codecImpl;
-    }
-
-    #endregion
 
     /// <summary>
     /// 查找可用的编码器，对于泛型和数组会动态生成Codec

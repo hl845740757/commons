@@ -62,6 +62,7 @@ public class SimpleTypeMetaRegistry : ITypeMetaRegistry
         return new SimpleTypeMetaRegistry().AddAll(typeMetas)
             .ToImmutable();
     }
+
     public static SimpleTypeMetaRegistry FromTypeMetas(IEnumerable<TypeMeta> typeMetas) {
         return new SimpleTypeMetaRegistry().AddAll(typeMetas)
             .ToImmutable();

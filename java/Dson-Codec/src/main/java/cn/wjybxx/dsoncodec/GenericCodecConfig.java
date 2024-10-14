@@ -65,8 +65,22 @@ public final class GenericCodecConfig {
 
     // region factory
 
+    /** 合并多个Config为单个Config -- 返回的实例不可变 */
+    public GenericCodecConfig fromConfigs(List<GenericCodecConfig> configs) {
+        GenericCodecConfig result = new GenericCodecConfig();
+        for (GenericCodecConfig other : configs) {
+            result.mergeFrom(other);
+        }
+        return this.toImmutable();
+    }
+
+    /** 转换为不可变配置 */
+    public GenericCodecConfig toImmutable() {
+        return new GenericCodecConfig(encoderTypeDic, decoderTypeDic);
+    }
+
     /** 创建一个默认配置 */
-    public static GenericCodecConfig newDefaultConfig() {
+    static GenericCodecConfig newDefaultConfig() {
         GenericCodecConfig config = new GenericCodecConfig();
         config.addCodec(TypeInfo.of(Collection.class, Object.class), CollectionCodec.class, ArrayList.class);
         config.addCodec(TypeInfo.of(List.class, Object.class), CollectionCodec.class, ArrayList.class);
@@ -93,19 +107,6 @@ public final class GenericCodecConfig {
         return config;
     }
 
-    /** 合并多个Config为单个Config -- 返回的实例不可变 */
-    public GenericCodecConfig fromConfigs(List<GenericCodecConfig> configs) {
-        GenericCodecConfig result = new GenericCodecConfig();
-        for (GenericCodecConfig other : configs) {
-            result.mergeFrom(other);
-        }
-        return this.toImmutable();
-    }
-
-    /** 转换为不可变配置 */
-    public GenericCodecConfig toImmutable() {
-        return new GenericCodecConfig(encoderTypeDic, decoderTypeDic);
-    }
     // endregion
 
     /** 清理数据 */

@@ -79,6 +79,19 @@ public static partial class CollectionUtil
     public static int Count<T>(ICollection<T>? self) => self == null ? 0 : self.Count;
 
     /// <summary>
+    /// 尝试压缩空间
+    /// </summary>
+    public static void TrimExcess<T>(ICollection<T> c) {
+        if (c is List<T> list) {
+            list.TrimExcess();
+        } else if (c is HashSet<T> hashSet) {
+            hashSet.TrimExcess();
+        } else if (c is IGenericCollection<T> genericCollection) {
+            genericCollection.AdjustCapacity(c.Count);
+        }
+    }
+
+    /// <summary>
     /// 批量Add元素
     /// </summary>
     public static void AddAll<T>(this ICollection<T> self, IEnumerable<T> items) {
@@ -179,6 +192,17 @@ public static partial class CollectionUtil
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Count<K, V>(IDictionary<K, V>? self) => self == null ? 0 : self.Count;
+
+    /// <summary>
+    /// 尝试压缩空间
+    /// </summary>
+    public static void TrimExcess<K, V>(IDictionary<K, V> dic) {
+        if (dic is Dictionary<K, V> dictionary) {
+            dictionary.TrimExcess();
+        } else if (dic is IGenericDictionary<K, V> genericDictionary) {
+            genericDictionary.AdjustCapacity(dic.Count);
+        }
+    }
 
     /// <summary>
     /// 批量添加元素 -- 如果Key已存在，则抛出异常

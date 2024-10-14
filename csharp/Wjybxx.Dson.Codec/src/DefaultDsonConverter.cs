@@ -104,7 +104,7 @@ public class DefaultDsonConverter : IDsonConverter
     public T CloneObject<T>(T value, Func<T>? factory = null) {
         if (value == null) return default;
         if (value.GetType().IsValueType) return value;
-        
+
         byte[] localBuffer = options.bufferPool.Acquire(options.bufferSize);
         try {
             IDsonOutput outputStream = DsonOutputs.NewInstance(localBuffer);
@@ -121,7 +121,7 @@ public class DefaultDsonConverter : IDsonConverter
     public object CloneObject(object? value, Type declaredType, Type targetType, Func<object>? factory = null) {
         if (value == null) return null!;
         if (value.GetType().IsValueType) return value;
-        
+
         byte[] localBuffer = options.bufferPool.Acquire(options.bufferSize);
         try {
             IDsonOutput outputStream = DsonOutputs.NewInstance(localBuffer);

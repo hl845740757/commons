@@ -62,7 +62,7 @@ public sealed class GenericCodecConfig
     #region factory
 
     /** 创建一个默认配置 */
-    public static GenericCodecConfig NewDefaultConfig() {
+    internal static GenericCodecConfig NewDefaultConfig() {
         GenericCodecConfig config = new GenericCodecConfig();
         // 艹，readonly系列集合和普通集合之间没有交集...
         // CollectionCodec默认测试了常见的集合类型

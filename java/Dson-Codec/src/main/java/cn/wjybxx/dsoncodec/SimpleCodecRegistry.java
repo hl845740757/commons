@@ -97,6 +97,12 @@ public final class SimpleCodecRegistry implements DsonCodecRegistry {
         return new SimpleCodecRegistry(this, true);
     }
 
+    /** 创建一个默认配置 */
+    static SimpleCodecRegistry newDefaultRegistry() {
+        // TODO 特殊Codec绑定
+        return new SimpleCodecRegistry();
+    }
+
     // endregion
 
     /** 清理数据 */

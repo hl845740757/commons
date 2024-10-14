@@ -65,7 +65,6 @@ public interface DsonConverter extends Converter {
      */
     <T> T readFromDson(CharSequence source, TypeInfo declaredType, @Nullable Supplier<? extends T> factory);
 
-
     /**
      * 将一个对象写入指定writer
      * (默认不关闭writer)

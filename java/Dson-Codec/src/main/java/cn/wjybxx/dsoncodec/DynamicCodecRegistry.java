@@ -51,7 +51,8 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
     private final ConcurrentHashMap<TypeInfo, DsonCodecImpl<?>> decoderDic = new ConcurrentHashMap<>();
 
     public DynamicCodecRegistry(List<DsonCodecRegistry> basicRegistries) {
-        this.basicRegistry = new SimpleCodecRegistry();
+        // 先初始化为默认配置，然后由用户的配置进行覆盖
+        this.basicRegistry = SimpleCodecRegistry.newDefaultRegistry();
         for (DsonCodecRegistry other : basicRegistries) {
             this.basicRegistry.mergeFrom(other.export());
         }
@@ -70,45 +71,6 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
         result.getEncoderDic().putAll(encoderDic);
         result.getDecoderDic().putAll(decoderDic);
         return result;
-    }
-
-    /** 预添加Codec(可覆盖) */
-    public void addCodec(DsonCodec<?> codec) {
-        DsonCodecImpl<?> codecImpl = new DsonCodecImpl<>(codec);
-        encoderDic.put(codecImpl.getEncoderType(), codecImpl);
-        decoderDic.put(codecImpl.getEncoderType(), codecImpl);
-    }
-
-    /**
-     * 预添加Codec
-     * 适用超类Codec的默认解码实例可赋值给当前类型的情况，eg：IntList => IntCollectionCodec。
-     */
-    public void addCodec(TypeInfo type, DsonCodec<?> codec) {
-        DsonCodecImpl<?> codecImpl = new DsonCodecImpl<>(codec);
-        encoderDic.put(type, codecImpl);
-        decoderDic.put(type, codecImpl);
-    }
-
-    /**
-     * 添加编码器
-     *
-     * @param type  要编码的类型
-     * @param codec 编码器，codec关联的encoderType是目标类型的超类
-     */
-    public void addEncoder(TypeInfo type, DsonCodec<?> codec) {
-        DsonCodecImpl<?> codecImpl = new DsonCodecImpl<>(codec);
-        encoderDic.put(type, codecImpl);
-    }
-
-    /**
-     * 添加解码器
-     *
-     * @param type  要解码的类型
-     * @param codec 编码器，codec关联的encoderType是目标类型的子类
-     */
-    public void addDecoder(TypeInfo type, DsonCodec<?> codec) {
-        DsonCodecImpl<?> codecImpl = new DsonCodecImpl<>(codec);
-        decoderDic.put(type, codecImpl);
     }
 
     @Nullable

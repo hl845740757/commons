@@ -32,7 +32,7 @@ public class DsonConverterBuilder {
 
     private final List<TypeMetaRegistry> typeMetaRegistries = new ArrayList<>(4);
     private final List<DsonCodecRegistry> codecRegistries = new ArrayList<>(4);
-    private GenericHelper genericHelper;
+    private final List<GenericHelper> genericHelpers = new ArrayList<>(4);
 
     private ConverterOptions options = ConverterOptions.DEFAULT;
     private boolean pureMode = false;
@@ -50,9 +50,6 @@ public class DsonConverterBuilder {
         if (!pureMode) {
             typeMetaRegistries.removeLast();
         }
-        if (genericHelper == null) {
-            genericHelper = new GenericHelper();
-        }
         DynamicCodecRegistry dynamicCodecRegistry;
         codecRegistries.add(DsonConverterUtils.getDefaultCodecRegistry());
         {
@@ -60,10 +57,8 @@ public class DsonConverterBuilder {
         }
         codecRegistries.removeLast();
 
-        return new DefaultDsonConverter(dynamicTypeMetaRegistry,
-                dynamicCodecRegistry,
-                genericHelper,
-                options);
+        return new DefaultDsonConverter(dynamicTypeMetaRegistry, dynamicCodecRegistry,
+                new CachedGenericHelper(genericHelpers), options);
     }
 
     /**
@@ -194,6 +189,16 @@ public class DsonConverterBuilder {
     }
 
     // endregion
+
+    public DsonConverterBuilder addGenericHelper(GenericHelper caster) {
+        genericHelpers.add(caster);
+        return this;
+    }
+
+    public DsonConverterBuilder addGenericHelpers(Collection<? extends GenericHelper> casters) {
+        genericHelpers.addAll(casters);
+        return this;
+    }
 
     public ConverterOptions getOptions() {
         return options;

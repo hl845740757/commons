@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using Wjybxx.Commons.Collections;
+using Wjybxx.Dson.Codec.Codecs;
 
 namespace Wjybxx.Dson.Codec
 {
@@ -63,6 +64,29 @@ public sealed class SimpleCodecRegistry : IDsonCodecRegistry
 
     #region factory
 
+    internal static SimpleCodecRegistry NewDefaultRegistry() {
+        SimpleCodecRegistry registry = new SimpleCodecRegistry();
+        // 初始化特化List
+        registry.AddCodec(new MoreCollectionCodecs.IntListCodec(typeof(IList<int>)));
+        registry.AddCodec(new MoreCollectionCodecs.LongListCodec(typeof(IList<long>)));
+        registry.AddCodec(new MoreCollectionCodecs.FloatListCodec(typeof(IList<float>)));
+        registry.AddCodec(new MoreCollectionCodecs.DoubleListCodec(typeof(IList<double>)));
+        registry.AddCodec(new MoreCollectionCodecs.BoolListCodec(typeof(IList<bool>)));
+        registry.AddCodec(new MoreCollectionCodecs.StringListCodec(typeof(IList<string>)));
+        registry.AddCodec(new MoreCollectionCodecs.UIntListCodec(typeof(IList<uint>)));
+        registry.AddCodec(new MoreCollectionCodecs.ULongListCodec(typeof(IList<ulong>)));
+
+        registry.AddCodec(new MoreCollectionCodecs.IntListCodec(typeof(List<int>)));
+        registry.AddCodec(new MoreCollectionCodecs.LongListCodec(typeof(List<long>)));
+        registry.AddCodec(new MoreCollectionCodecs.FloatListCodec(typeof(List<float>)));
+        registry.AddCodec(new MoreCollectionCodecs.DoubleListCodec(typeof(List<double>)));
+        registry.AddCodec(new MoreCollectionCodecs.BoolListCodec(typeof(List<bool>)));
+        registry.AddCodec(new MoreCollectionCodecs.StringListCodec(typeof(List<string>)));
+        registry.AddCodec(new MoreCollectionCodecs.UIntListCodec(typeof(List<uint>)));
+        registry.AddCodec(new MoreCollectionCodecs.ULongListCodec(typeof(List<ulong>)));
+        return registry;
+    }
+
     /** 根据codecs创建一个Registry -- 返回的实例不可变 */
     public static SimpleCodecRegistry FromCodecs(IEnumerable<IDsonCodec> codecs) {
         SimpleCodecRegistry result = new SimpleCodecRegistry();
@@ -87,6 +111,14 @@ public sealed class SimpleCodecRegistry : IDsonCodecRegistry
     }
 
     #endregion
+
+    /** 压缩空间 */
+    internal void TrimExcess() {
+        CollectionUtil.TrimExcess(encoderDic);
+        CollectionUtil.TrimExcess(decoderDic);
+        CollectionUtil.TrimExcess(genericCodecConfigs);
+        CollectionUtil.TrimExcess(casters);
+    }
 
     /** 清理数据 */
     public void Clear() {
