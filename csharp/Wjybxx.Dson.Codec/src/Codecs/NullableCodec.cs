@@ -37,7 +37,7 @@ public class NullableCodec<T> : IDsonCodec<T?> where T : struct
 
     public T? ReadObject(IDsonObjectReader reader, Func<T?>? factory = null) {
         // declaredType 是Nullable<T>的类型，不是T的声明类型 -- 转为读代理
-        return reader.ReadObject<T>(reader.CurrentName, typeof(T), null);
+        return reader.ReadObject<T>(null, typeof(T), null);
     }
 }
 }

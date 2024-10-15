@@ -54,7 +54,7 @@ public class FloatCodec implements DsonCodec<Float> {
 
     @Override
     public Float readObject(DsonObjectReader reader, Supplier<? extends Float> factory) {
-        return reader.readFloat(reader.getCurrentName());
+        return reader.readFloat(null);
     }
 
 }

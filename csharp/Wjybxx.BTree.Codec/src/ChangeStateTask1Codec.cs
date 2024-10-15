@@ -47,7 +47,7 @@ public sealed class ChangeStateTask1Codec<T> : AbstractDsonCodec<ChangeStateTask
         writer.WriteString(names_nextStateGuid, inst.NextStateGuid, StringStyle.Auto);
         writer.WriteObject(names_stateProps, inst.StateProps, typeof(object), null);
         writer.WriteString(names_machineName, inst.MachineName, StringStyle.Auto);
-        writer.WriteByte(names_delayMode, inst.DelayMode, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteByte(names_delayMode, inst.DelayMode, NumberStyles.Simple);
         writer.WriteInt(names_delayArg, inst.DelayArg, WireType.VarInt, NumberStyles.Simple);
     }
 

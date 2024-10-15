@@ -34,6 +34,7 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
 
     public override bool ReadName(string? name) {
         IDsonReader<string> reader = this.reader;
+        // array
         if (reader.ContextType.IsArrayLike()) {
             if (reader.IsAtValue) {
                 return true;
@@ -43,14 +44,14 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
             }
             return reader.CurrentDsonType != DsonType.EndOfObject;
         }
-
-        if (name == null) throw new ArgumentNullException(nameof(name));
+        // object
         if (reader.IsAtValue) {
-            if (reader.CurrentName == name) {
+            if (name == null || reader.CurrentName == name) {
                 return true;
             }
             reader.SkipValue();
         }
+        if (name == null) throw new ArgumentNullException(nameof(name));
         if (reader.IsAtType) {
             // 用户尚未调用readDsonType，可指定下一个key的值
             KeyIterator keyItr = (KeyIterator)reader.Attachment();

@@ -34,7 +34,7 @@ public class Int32Codec : IDsonCodec<int>
     }
 
     public int ReadObject(IDsonObjectReader reader, Func<int>? factory = null) {
-        return reader.ReadInt(reader.CurrentName);
+        return reader.ReadInt(null);
     }
 }
 }

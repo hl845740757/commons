@@ -799,21 +799,6 @@ public final class DsonTextReader extends AbstractDsonReader {
     // region 简单值
 
     @Override
-    public Number readNumber(String name) {
-        // 重写以减少拆装箱
-        advanceToValueState(name, null);
-        return switch (currentDsonType) {
-            case INT32, INT64, FLOAT, DOUBLE -> {
-                Number number = (Number) popNextValue();
-                Objects.requireNonNull(number);
-                setNextState();
-                yield number;
-            }
-            default -> throw DsonIOException.dsonTypeMismatch(DsonType.DOUBLE, currentDsonType);
-        };
-    }
-
-    @Override
     protected int doReadInt32() {
         Number number = (Number) popNextValue();
         Objects.requireNonNull(number);

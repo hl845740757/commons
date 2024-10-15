@@ -53,7 +53,7 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
             _basicRegistry.MergeFrom(other.Export());
         }
         _basicRegistry.TrimExcess();
-        
+
         // 先初始化为默认配置，然后由用户的配置进行覆盖 -- 不转不可变对象，性能更好
         _genericCodecConfig = GenericCodecConfig.NewDefaultConfig();
         foreach (GenericCodecConfig genericCodecConfig in _basicRegistry.GetGenericCodecConfigs()) {

@@ -171,6 +171,15 @@ public final class TypeInfo {
         return new TypeInfo(rawType.arrayType(), genericArgs); // 继承泛型信息
     }
 
+    /** 构建数组类型 -- 可用于减少中间对象 */
+    public TypeInfo makeArrayType(int rank) {
+        Class<?> rawType = this.rawType;
+        while (rank-- > 0) {
+            rawType = rawType.arrayType();
+        }
+        return new TypeInfo(rawType, genericArgs);
+    }
+
     // endregion
 
     // region equals

@@ -30,7 +30,7 @@ public class BoolCodec : IDsonCodec<bool>
     }
 
     public bool ReadObject(IDsonObjectReader reader, Func<bool>? factory = null) {
-        return reader.ReadBool(reader.CurrentName);
+        return reader.ReadBool(null);
     }
 }
 }

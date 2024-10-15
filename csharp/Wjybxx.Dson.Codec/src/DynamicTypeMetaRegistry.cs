@@ -192,7 +192,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
                 elementType = elementType.MakeGenericType(typeParameters);
             }
         }
-        // 构建多维数组
+        // 构建多维数组 -- 与MakeArrayType(rank)接口获得的结果不一样
         while (arrayRank-- > 0) {
             elementType = elementType.MakeArrayType();
         }

@@ -30,7 +30,7 @@ public class DateTimeCodec : IDsonCodec<DateTime>
     }
 
     public DateTime ReadObject(IDsonObjectReader reader, Func<DateTime>? factory = null) {
-        return reader.ReadDateTime(reader.CurrentName);
+        return reader.ReadDateTime(null);
     }
 }
 }

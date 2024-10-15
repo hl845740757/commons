@@ -16,6 +16,8 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.dsoncodec.codecs.*;
+
 import javax.annotation.Nullable;
 import java.util.*;
 
@@ -95,12 +97,6 @@ public final class SimpleCodecRegistry implements DsonCodecRegistry {
     /** 转换为不可变实例 */
     public SimpleCodecRegistry toImmutable() {
         return new SimpleCodecRegistry(this, true);
-    }
-
-    /** 创建一个默认配置 */
-    static SimpleCodecRegistry newDefaultRegistry() {
-        // TODO 特殊Codec绑定
-        return new SimpleCodecRegistry();
     }
 
     // endregion
@@ -223,6 +219,14 @@ public final class SimpleCodecRegistry implements DsonCodecRegistry {
         return this;
     }
 
+    public DsonCodecImpl<?> removeEncoder(TypeInfo typeInfo) {
+        return encoderDic.remove(typeInfo);
+    }
+
+    public DsonCodecImpl<?> removeDecoder(TypeInfo typeInfo) {
+        return decoderDic.remove(typeInfo);
+    }
+
     // endregion
 
     @Nullable
@@ -239,5 +243,49 @@ public final class SimpleCodecRegistry implements DsonCodecRegistry {
     @Override
     public SimpleCodecRegistry export() {
         return new SimpleCodecRegistry(this, false);
+    }
+
+    //
+    /** 全局默认配置 */
+    public static final SimpleCodecRegistry DEFAULT = newDefaultRegistry().toImmutable();
+
+    /** 创建一个默认配置 */
+    static SimpleCodecRegistry newDefaultRegistry() {
+        SimpleCodecRegistry registry = new SimpleCodecRegistry();
+        registry.addCodec(new Int32Codec());
+        registry.addCodec(new Int64Codec());
+        registry.addCodec(new FloatCodec());
+        registry.addCodec(new DoubleCodec());
+        registry.addCodec(new BooleanCodec());
+        registry.addCodec(new StringCodec());
+        registry.addCodec(new BinaryCodec());
+        registry.addCodec(new ObjectPtrCodec());
+        registry.addCodec(new ObjectLitePtrCodec());
+        registry.addCodec(new ExtDateTimeCodec());
+        registry.addCodec(new TimestampCodec());
+        // 基本类型补充
+        registry.addCodec(new MorePrimitiveCodecs.ShortCodec());
+        registry.addCodec(new MorePrimitiveCodecs.ByteCodec());
+        registry.addCodec(new MorePrimitiveCodecs.CharacterCodec());
+        // 基本类型数组
+        registry.addCodec(new MoreArrayCodecs.ByteArrayCodec());
+        registry.addCodec(new MoreArrayCodecs.IntArrayCodec());
+        registry.addCodec(new MoreArrayCodecs.LongArrayCodec());
+        registry.addCodec(new MoreArrayCodecs.FloatArrayCodec());
+        registry.addCodec(new MoreArrayCodecs.DoubleArrayCodec());
+        registry.addCodec(new MoreArrayCodecs.BooleanArrayCodec());
+        registry.addCodec(new MoreArrayCodecs.StringArrayCodec());
+        registry.addCodec(new MoreArrayCodecs.ShortArrayCodec());
+        registry.addCodec(new MoreArrayCodecs.CharArrayCodec());
+
+        // 日期时间
+        registry.addCodec(new LocalDateTimeCodec());
+        registry.addCodec(new LocalDateCodec());
+        registry.addCodec(new LocalTimeCodec());
+        registry.addCodec(new InstantCodec());
+        registry.addCodec(new DurationCodec());
+
+        // TODO 特殊Codec绑定
+        return registry;
     }
 }

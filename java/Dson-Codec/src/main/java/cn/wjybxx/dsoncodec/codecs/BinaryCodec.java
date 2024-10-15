@@ -52,6 +52,6 @@ public class BinaryCodec implements DsonCodec<Binary> {
 
     @Override
     public Binary readObject(DsonObjectReader reader, Supplier<? extends Binary> factory) {
-        return reader.readBinary(reader.getCurrentName());
+        return reader.readBinary(null);
     }
 }

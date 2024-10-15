@@ -51,7 +51,7 @@ public class BooleanCodec implements DsonCodec<Boolean> {
 
     @Override
     public Boolean readObject(DsonObjectReader reader, Supplier<? extends Boolean> factory) {
-        return reader.readBoolean(reader.getCurrentName());
+        return reader.readBoolean(null);
     }
 
 }

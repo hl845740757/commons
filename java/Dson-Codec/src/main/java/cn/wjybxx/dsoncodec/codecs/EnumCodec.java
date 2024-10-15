@@ -123,14 +123,14 @@ public final class EnumCodec<T extends Enum<T>> implements IEnumCodec<T>, DsonCo
     @Override
     public T readObject(DsonObjectReader reader, Supplier<? extends T> factory) {
         if (reader.options().writeEnumAsString) {
-            String name = reader.readString(reader.getCurrentName());
+            String name = reader.readString(null);
             EnumValueInfo<T> valueInfo = name2EnumMap.get(name);
             if (valueInfo != null) {
                 return valueInfo.value;
             }
             throw new DsonCodecException("invalid enum value: %s, type: %s".formatted(name, enumClass));
         } else {
-            int number = reader.readInt(reader.getCurrentName());
+            int number = reader.readInt(null);
             EnumValueInfo<T> valueInfo = number2EnumMap.get(number);
             if (valueInfo != null) {
                 return valueInfo.value;

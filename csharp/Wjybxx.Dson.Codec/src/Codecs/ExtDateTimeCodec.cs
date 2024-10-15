@@ -31,7 +31,7 @@ public class ExtDateTimeCodec : IDsonCodec<ExtDateTime>
     }
 
     public ExtDateTime ReadObject(IDsonObjectReader reader, Func<ExtDateTime>? factory = null) {
-        return reader.ReadExtDateTime(reader.CurrentName);
+        return reader.ReadExtDateTime(null);
     }
 }
 }

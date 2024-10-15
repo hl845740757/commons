@@ -29,7 +29,7 @@ public class TimestampCodec : IDsonCodec<Timestamp>
     }
 
     public Timestamp ReadObject(IDsonObjectReader reader, Func<Timestamp>? factory = null) {
-        return reader.ReadTimestamp(reader.CurrentName);
+        return reader.ReadTimestamp(null);
     }
 }
 }

@@ -19,7 +19,6 @@ package cn.wjybxx.dsoncodec;
 import cn.wjybxx.dson.text.DsonTexts;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.types.*;
-import cn.wjybxx.dsoncodec.codecs.*;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.CallSite;
@@ -40,8 +39,6 @@ public final class DsonConverterUtils {
 
     /** 类型原数据注册表 */
     private static final TypeMetaRegistry BUILTIN_TYPE_METAS;
-    /** 默认codec注册表 */
-    private static final DsonCodecRegistry BUILTIN_CODEC_REGISTRY;
 
     private static final MethodType SUPPLIER_INVOKE_TYPE = MethodType.methodType(Supplier.class);
     private static final MethodType SUPPLIER_GET_METHOD_TYPE = MethodType.methodType(Object.class);
@@ -78,8 +75,6 @@ public final class DsonConverterUtils {
         // 内置codec类型
         List<TypeMeta> typeMetaList = builtinTypeMetas();
         BUILTIN_TYPE_METAS = SimpleTypeMetaRegistry.fromTypeMetas(typeMetaList);
-        List<? extends DsonCodec<?>> pojoCodecs = builtinCodecs();
-        BUILTIN_CODEC_REGISTRY = SimpleCodecRegistry.fromCodecs(pojoCodecs);
     }
 
     // region 内建codec
@@ -91,7 +86,11 @@ public final class DsonConverterUtils {
         return TypeMeta.of(clazz, ObjectStyle.INDENT, List.of(clsNames));
     }
 
-    /** 内建基本类型的codec -- 只包含处理的类型，其它都需要用户分配 */
+    /**
+     * 内建基本类型的codec
+     * 1.只包含基础的类型，其它都需要用户分配
+     * 2.clsName并不总是等于类型名，以方便跨语言交互
+     */
     private static List<TypeMeta> builtinTypeMetas() {
         return List.of(
                 // dson内建结构
@@ -101,70 +100,44 @@ public final class DsonConverterUtils {
                 typeMetaOf(double.class, DsonTexts.LABEL_DOUBLE, "double"),
                 typeMetaOf(boolean.class, DsonTexts.LABEL_BOOL, "bool", "boolean"),
                 typeMetaOf(String.class, DsonTexts.LABEL_STRING, "string"),
-                typeMetaOf(Binary.class, DsonTexts.LABEL_BINARY),
+                typeMetaOf(Binary.class, DsonTexts.LABEL_BINARY, "bytes"),
                 typeMetaOf(ObjectPtr.class, DsonTexts.LABEL_PTR),
                 typeMetaOf(ObjectLitePtr.class, DsonTexts.LABEL_LITE_PTR),
                 typeMetaOf(ExtDateTime.class, DsonTexts.LABEL_DATETIME),
                 typeMetaOf(Timestamp.class, DsonTexts.LABEL_TIMESTAMP),
+                // 基础类型
+                typeMetaOf(short.class, "int16", "uint16", "short"),
+                typeMetaOf(byte.class, "byte", "sbyte"),
+                typeMetaOf(char.class, "char"),
+                // 装箱类型--要和c#互通
+                typeMetaOf(Integer.class, "Int"),
+                typeMetaOf(Long.class, "Long"),
+                typeMetaOf(Float.class, "Float"),
+                typeMetaOf(Double.class, "Double"),
+                typeMetaOf(Boolean.class, "Bool"),
+                typeMetaOf(Short.class, "Short"),
+                typeMetaOf(Byte.class, "Byte"),
+                typeMetaOf(Character.class, "Char"),
+
                 // 特殊组件
-                typeMetaOf(Object.class, "object", "Object"), // 泛型参数...
+                typeMetaOf(Object.class, "object", "Object"), // object会作为泛型参数...
                 typeMetaOf(MapEncodeProxy.class, "DictionaryEncodeProxy", "MapEncodeProxy"),
 
                 // 基础集合
-                typeMetaOf(Collection.class, "ICollection"),
-                typeMetaOf(List.class, "IList"),
-                typeMetaOf(ArrayList.class, "List"),
+                typeMetaOf(Collection.class, "ICollection", "ICollection`1"),
+                typeMetaOf(List.class, "IList", "IList`1"),
+                typeMetaOf(ArrayList.class, "List", "List`1"),
 
-                typeMetaOf(Map.class, "IDictionary"),
-                typeMetaOf(HashMap.class, "HashMap"),
-                typeMetaOf(LinkedHashMap.class, "Dictionary", "LinkedDictionary"), // c#的字典有毒，不删除的情况下有序，导致Java映射困难
-                typeMetaOf(ConcurrentHashMap.class, "ConcurrentDictionary")
-        );
-    }
-
-    /** codec可以比类型元数据多 */
-    private static List<DsonCodec<?>> builtinCodecs() {
-        return List.of(
-                // dson内建结构
-                new Int32Codec(),
-                new Int64Codec(),
-                new FloatCodec(),
-                new DoubleCodec(),
-                new BooleanCodec(),
-                new StringCodec(),
-                new BinaryCodec(),
-                new ObjectPtrCodec(),
-                new ObjectLitePtrCodec(),
-                new ExtDateTimeCodec(),
-                new TimestampCodec(),
-
-                // 基本类型数组
-                new MoreArrayCodecs.IntArrayCodec(),
-                new MoreArrayCodecs.LongArrayCodec(),
-                new MoreArrayCodecs.FloatArrayCodec(),
-                new MoreArrayCodecs.DoubleArrayCodec(),
-                new MoreArrayCodecs.BooleanArrayCodec(),
-                new MoreArrayCodecs.StringArrayCodec(),
-                new MoreArrayCodecs.ShortArrayCodec(),
-                new MoreArrayCodecs.CharArrayCodec(),
-
-                // 日期时间
-                new LocalDateTimeCodec(),
-                new LocalDateCodec(),
-                new LocalTimeCodec(),
-                new InstantCodec(),
-                new DurationCodec()
+                typeMetaOf(Map.class, "IDictionary", "IDictionary`2"),
+                typeMetaOf(HashMap.class, "HashMap", "HashMap`2"), // c#的字典有毒，不删除的情况下有序，导致Java映射困难
+                typeMetaOf(LinkedHashMap.class, "Dictionary", "Dictionary`2", "LinkedDictionary", "LinkedDictionary`2"),
+                typeMetaOf(ConcurrentHashMap.class, "ConcurrentDictionary", "ConcurrentDictionary`2")
         );
     }
 
     // endregion
 
     // region codec utils
-
-    /** 获取默认的编解码器 */
-    public static DsonCodecRegistry getDefaultCodecRegistry() {
-        return BUILTIN_CODEC_REGISTRY;
-    }
 
     /** 获取默认的元数据注册表 */
     public static TypeMetaRegistry getDefaultTypeMetaRegistry() {

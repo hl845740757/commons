@@ -35,6 +35,7 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
     @Override
     public boolean readName(String name) {
         DsonReader reader = this.reader;
+        // array
         if (reader.getContextType().isArrayLike()) {
             if (reader.isAtValue()) {
                 return true;
@@ -44,14 +45,14 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
             }
             return reader.getCurrentDsonType() != DsonType.END_OF_OBJECT;
         }
-
-        Objects.requireNonNull(name, "name");
+        // object
         if (reader.isAtValue()) {
-            if (reader.getCurrentName().equals(name)) {
+            if (name == null || reader.getCurrentName().equals(name)) {
                 return true;
             }
             reader.skipValue();
         }
+        Objects.requireNonNull(name, "name");
         if (reader.isAtType()) {
             // 用户尚未调用readDsonType，可指定下一个key的值
             KeyIterator keyItr = (KeyIterator) reader.attachment();

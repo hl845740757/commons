@@ -23,7 +23,7 @@ using Wjybxx.Dson.Internal;
 namespace Wjybxx.Dson.Types
 {
 /// <summary>
-/// 字节数组封装
+/// 二进制数据
 /// </summary>
 public struct Binary : IEquatable<Binary>
 {

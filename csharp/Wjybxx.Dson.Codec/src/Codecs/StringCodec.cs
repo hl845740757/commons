@@ -30,7 +30,7 @@ public class StringCodec : IDsonCodec<string>
     }
 
     public string ReadObject(IDsonObjectReader reader, Func<string>? factory = null) {
-        return reader.ReadString(reader.CurrentName);
+        return reader.ReadString(null);
     }
 }
 }

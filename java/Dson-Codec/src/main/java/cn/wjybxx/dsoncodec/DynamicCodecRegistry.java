@@ -50,7 +50,7 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
     private final ConcurrentHashMap<TypeInfo, DsonCodecImpl<?>> encoderDic = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<TypeInfo, DsonCodecImpl<?>> decoderDic = new ConcurrentHashMap<>();
 
-    public DynamicCodecRegistry(List<DsonCodecRegistry> basicRegistries) {
+    public DynamicCodecRegistry(Collection<? extends DsonCodecRegistry> basicRegistries) {
         // 先初始化为默认配置，然后由用户的配置进行覆盖
         this.basicRegistry = SimpleCodecRegistry.newDefaultRegistry();
         for (DsonCodecRegistry other : basicRegistries) {

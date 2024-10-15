@@ -53,7 +53,7 @@ public class DurationCodec implements DsonCodec<Duration> {
 
     @Override
     public Duration readObject(DsonObjectReader reader, Supplier<? extends Duration> factory) {
-        Timestamp timestamp = reader.readTimestamp(reader.getCurrentName());
+        Timestamp timestamp = reader.readTimestamp(null);
         return Duration.ofSeconds(timestamp.getSeconds(), timestamp.getNanos());
     }
 

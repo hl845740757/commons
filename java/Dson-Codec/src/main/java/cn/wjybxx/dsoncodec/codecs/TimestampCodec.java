@@ -50,6 +50,6 @@ public class TimestampCodec implements DsonCodec<Timestamp> {
 
     @Override
     public Timestamp readObject(DsonObjectReader reader, Supplier<? extends Timestamp> factory) {
-        return reader.readTimestamp(reader.getCurrentName());
+        return reader.readTimestamp(null);
     }
 }

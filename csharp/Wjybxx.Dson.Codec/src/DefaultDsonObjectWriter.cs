@@ -90,7 +90,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         if (value == null) {
             WriteNull(name);
         } else {
-            writer.WriteBinary(name, Binary.UnsafeWrap(value));
+            writer.WriteBinary(name, Binary.CopyFrom(value));
         }
     }
 
@@ -157,27 +157,6 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
                 Debug.Assert(!type.IsValueType);
                 codec.WriteObject2(this, value, declaredType, castStyle);
             }
-            return;
-        }
-        // 类型补充
-        if (value is byte[] bytes) {
-            WriteBytes(name, bytes);
-            return;
-        }
-        if (value is short shortVal) {
-            WriteInt(name, shortVal, WireType.VarInt, NumberStyles.Simple);
-            return;
-        }
-        if (value is byte byteVal) {
-            WriteInt(name, byteVal, WireType.VarInt, NumberStyles.Simple);
-            return;
-        }
-        if (value is sbyte sbyteVal) {
-            WriteInt(name, sbyteVal, WireType.VarInt, NumberStyles.Simple);
-            return;
-        }
-        if (value is char charVal) {
-            WriteInt(name, charVal, WireType.VarInt, NumberStyles.Simple);
             return;
         }
         // DsonValue

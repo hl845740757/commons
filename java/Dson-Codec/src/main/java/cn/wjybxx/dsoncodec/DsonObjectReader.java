@@ -26,6 +26,9 @@ import java.time.LocalDateTime;
 import java.util.function.Supplier;
 
 /**
+ * 1.读取数组内普通成员时，name传null，读取嵌套对象时使用无name参数的start方法
+ * 2.为减少API数量，我们的所有简单值读取都是带有name参数的，在已读取name的情况下，接口的name参数将被忽略。
+ *
  * @author wjybxx
  * date 2023/4/3
  */
@@ -102,7 +105,8 @@ public interface DsonObjectReader extends AutoCloseable {
     /**
      * 读取指定名字的值 -- 可实现随机读
      * 如果尚未调用{@link #readDsonType()}，该方法将尝试跳转到该name所在的字段。
-     * 如果已调用{@link #readDsonType()}，则该方法必须与下一个name匹配。
+     * 如果已调用{@link #readDsonType()}，则name必须与下一个name匹配。
+     * 如果已调用{@link #readName()}，则name可以为null，否则必须当前name匹配。
      * 如果reader不支持随机读，当名字不匹配下一个值时将抛出异常。
      * 返回false的情况下，可继续调用该方法或{@link #readDsonType()}读取下一个字段。
      *

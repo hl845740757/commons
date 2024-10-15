@@ -56,7 +56,7 @@ public class Int32Codec implements DsonCodec<Integer> {
 
     @Override
     public Integer readObject(DsonObjectReader reader, Supplier<? extends Integer> factory) {
-        return reader.readInt(reader.getCurrentName());
+        return reader.readInt(null);
     }
 
 }

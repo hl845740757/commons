@@ -125,21 +125,21 @@ public sealed class EnumCodec<T> : AbstractEnumCodec<T>, IDsonCodec<T> where T :
             throw new DsonCodecException($"invalid enum value: {inst}, type: {typeof(T)}");
         }
         if (writer.Options.writeEnumAsString) {
-            writer.WriteString(writer.CurrentName, valueInfo.name, StringStyle.Unquote);
+            writer.WriteString(null, valueInfo.name, StringStyle.Unquote);
         } else {
-            writer.WriteInt(writer.CurrentName, valueInfo.number);
+            writer.WriteInt(null, valueInfo.number);
         }
     }
 
     public T ReadObject(IDsonObjectReader reader, Func<T>? factory = null) {
         if (reader.Options.writeEnumAsString) {
-            string name = reader.ReadString(reader.CurrentName);
+            string name = reader.ReadString(null);
             if (_name2EnumDic.TryGetValue(name, out EnumValueInfo valueInfo)) {
                 return valueInfo.value;
             }
             throw new DsonCodecException($"invalid enum value: {name}, type: {typeof(T)}");
         } else {
-            int number = reader.ReadInt(reader.CurrentName);
+            int number = reader.ReadInt(null);
             if (_number2EnumDic.TryGetValue(number, out EnumValueInfo valueInfo)) {
                 return valueInfo.value;
             }

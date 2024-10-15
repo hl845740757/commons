@@ -181,14 +181,6 @@ public interface DsonReader extends AutoCloseable {
     void skipToEndOfObject();
 
     /**
-     * {@link DsonType#INT32}
-     * {@link DsonType#INT64}
-     * {@link DsonType#FLOAT}
-     * {@link DsonType#DOUBLE}
-     */
-    Number readNumber(String name);
-
-    /**
      * 将value的值读取为字节数组
      * 1.支持类型：String、Binary、Array、Object、Header；
      * 2.返回的bytes中去除了value的length信息；

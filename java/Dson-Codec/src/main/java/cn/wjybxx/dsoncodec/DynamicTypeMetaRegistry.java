@@ -22,11 +22,13 @@ import cn.wjybxx.dson.text.ObjectStyle;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 为更好的支持泛型，我们根据原型类型动态创建TypeMeta
+ * PS：要做得更好的话，还可以缓存TypeInfo实例，进行常量化。
  *
  * @author wjybxx
  * date - 2024/5/16
@@ -38,7 +40,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
     private final ConcurrentHashMap<TypeInfo, TypeMeta> type2MetaDic = new ConcurrentHashMap<>(1024);
     private final ConcurrentHashMap<String, TypeMeta> name2MetaDic = new ConcurrentHashMap<>(1024);
 
-    public DynamicTypeMetaRegistry(List<TypeMetaRegistry> basicRegistries) {
+    public DynamicTypeMetaRegistry(Collection<? extends TypeMetaRegistry> basicRegistries) {
         this.basicRegistry = SimpleTypeMetaRegistry.fromRegistries(basicRegistries);
     }
 
@@ -193,8 +195,8 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             }
         }
         // 构建多维数组
-        while (arrayRank-- > 0) {
-            elementType = elementType.makeArrayType();
+        if (arrayRank > 0) {
+            elementType = elementType.makeArrayType(arrayRank);
         }
         return elementType;
     }

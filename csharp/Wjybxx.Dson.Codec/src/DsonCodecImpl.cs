@@ -28,6 +28,8 @@ namespace Wjybxx.Dson.Codec
 /// </summary>
 public abstract class DsonCodecImpl
 {
+    public abstract IDsonCodec GetCodec();
+
     public abstract Type GetEncoderType();
 
     // 解决泛型协变逆变问题 - 不会导致装箱，但会多一次cast
@@ -64,6 +66,10 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
         _autoStart = codec.AutoStartEnd;
         _writeAsArray = codec.IsWriteAsArray;
         _enumCodec = codec as AbstractEnumCodec<T>;
+    }
+
+    public override IDsonCodec GetCodec() {
+        return _codec;
     }
 
     public override Type GetEncoderType() {

@@ -500,18 +500,6 @@ public abstract class AbstractDsonReader implements DsonReader {
     }
 
     @Override
-    public Number readNumber(String name) {
-        advanceToValueState(name, null);
-        return switch (currentDsonType) {
-            case INT32 -> readInt32(name);
-            case INT64 -> readInt64(name);
-            case FLOAT -> readFloat(name);
-            case DOUBLE -> readDouble(name);
-            default -> throw DsonIOException.dsonTypeMismatch(DsonType.DOUBLE, currentDsonType);
-        };
-    }
-
-    @Override
     public byte[] readValueAsBytes(String name) {
         advanceToValueState(name, null);
         DsonReaderUtils.checkReadValueAsBytes(currentDsonType);

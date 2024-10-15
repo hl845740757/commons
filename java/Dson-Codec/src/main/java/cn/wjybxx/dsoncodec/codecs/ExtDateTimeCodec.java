@@ -52,6 +52,6 @@ public class ExtDateTimeCodec implements DsonCodec<ExtDateTime> {
 
     @Override
     public ExtDateTime readObject(DsonObjectReader reader, Supplier<? extends ExtDateTime> factory) {
-        return reader.readExtDateTime(reader.getCurrentName());
+        return reader.readExtDateTime(null);
     }
 }

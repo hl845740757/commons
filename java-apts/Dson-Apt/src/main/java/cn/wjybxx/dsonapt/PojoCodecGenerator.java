@@ -356,10 +356,10 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
             fieldAccess = fieldName;
         }
 
-        // 处理数字 -- 涉及WireType和Style
+        // 处理数字 -- 涉及WireType和Style，short,byte,char不再指定WireType，意义不大
         final String writeMethodName = getWriteMethodName(variableElement);
         switch (variableElement.asType().getKind()) {
-            case INT, LONG, SHORT, BYTE, CHAR -> {
+            case INT, LONG -> {
                 // writer.writeInt(names_fieldName, inst.field, WireType.VARINT, NumberStyle.SIMPLE)
                 builder.addStatement("writer.$L($L, inst.$L, $T.$L, $T.$L)",
                         writeMethodName, serialName(fieldName), fieldAccess,
@@ -367,7 +367,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
                         processor.typeName_NumberStyle, fieldProps.numberStyle);
                 return;
             }
-            case FLOAT, DOUBLE -> {
+            case FLOAT, DOUBLE, SHORT, BYTE, CHAR -> {
                 // writer.writeInt(names_fieldName, inst.field, NumberStyle.SIMPLE)
                 builder.addStatement("writer.$L($L, inst.$L, $T.$L)",
                         writeMethodName, serialName(fieldName), fieldAccess,

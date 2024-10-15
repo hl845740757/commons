@@ -20,6 +20,7 @@ import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
+import cn.wjybxx.dson.types.Binary;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
@@ -44,6 +45,26 @@ import java.util.function.Supplier;
  * date 2023/4/4
  */
 public final class MoreArrayCodecs {
+
+    /** 字节数组需要转Binary */
+    public static class ByteArrayCodec implements DsonCodec<byte[]> {
+        @Nonnull
+        @Override
+        public TypeInfo getEncoderType() {
+            return TypeInfo.ARRAY_BYTE;
+        }
+
+        @Override
+        public void writeObject(DsonObjectWriter writer, byte[] bytes, TypeInfo declaredType, ObjectStyle style) {
+            writer.writeBinary(null, Binary.copyFrom(bytes)); // 默认拷贝
+        }
+
+        @Override
+        public byte[] readObject(DsonObjectReader reader, Supplier<? extends byte[]> factory) {
+            Binary binary = reader.readBinary(reader.getCurrentName());
+            return binary.unsafeBuffer();
+        }
+    }
 
     @DsonCodecScanIgnore
     public static class IntArrayCodec implements DsonCodec<int[]> {

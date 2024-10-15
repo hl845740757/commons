@@ -33,7 +33,7 @@ public class FloatCodec : IDsonCodec<float>
     }
 
     public float ReadObject(IDsonObjectReader reader, Func<float>? factory = null) {
-        return reader.ReadFloat(reader.CurrentName);
+        return reader.ReadFloat(null);
     }
 }
 }

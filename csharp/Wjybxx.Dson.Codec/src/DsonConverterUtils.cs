@@ -19,10 +19,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Reflection;
-using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
-using Wjybxx.Dson.Codec.Codecs;
 using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
 
@@ -35,7 +32,6 @@ public static class DsonConverterUtils
 {
     /** 默认的类型元数据 */
     private static readonly ITypeMetaRegistry TYPE_META_REGISTRY = SimpleTypeMetaRegistry.FromTypeMetas(BuiltinTypeMetas());
-    private static readonly IDsonCodecRegistry CODEC_REGISTRY = SimpleCodecRegistry.FromCodecs(BuiltinCodecs());
 
     private static TypeMeta TypeMetaOf(Type type, params string[] clsNames) {
         if (clsNames.Length == 0) {
@@ -53,18 +49,25 @@ public static class DsonConverterUtils
             TypeMetaOf(typeof(double), DsonTexts.LabelDouble, "double"),
             TypeMetaOf(typeof(bool), DsonTexts.LabelBool, "bool", "boolean"),
             TypeMetaOf(typeof(string), DsonTexts.LabelString, "string"),
-            TypeMetaOf(typeof(Binary), DsonTexts.LabelBinary),
+            TypeMetaOf(typeof(Binary), DsonTexts.LabelBinary, "bytes"),
             TypeMetaOf(typeof(ObjectPtr), DsonTexts.LabelPtr),
             TypeMetaOf(typeof(ObjectLitePtr), DsonTexts.LabelLitePtr),
             TypeMetaOf(typeof(ExtDateTime), DsonTexts.LabelDateTime),
             TypeMetaOf(typeof(Timestamp), DsonTexts.LabelTimestamp),
-            // uint
+            // 基础类型
             TypeMetaOf(typeof(uint), DsonTexts.LabelUInt32, "uint", "uint32"),
             TypeMetaOf(typeof(ulong), DsonTexts.LabelUInt64, "ulong", "uint64"),
+            TypeMetaOf(typeof(short), "int16", "short"),
+            TypeMetaOf(typeof(ushort), "uint16", "ushort"),
+            TypeMetaOf(typeof(byte), "byte"),
+            TypeMetaOf(typeof(sbyte), "sbyte"),
+            TypeMetaOf(typeof(char), "char"),
             // 特殊组件
-            TypeMetaOf(typeof(Nullable<>), "Nullable"), // Nullable
-            TypeMetaOf(typeof(object), "Object", "object"), // 泛型参数...
+            TypeMetaOf(typeof(object), "Object", "object"), // object会作为泛型参数...
             TypeMetaOf(typeof(DictionaryEncodeProxy<>), "DictionaryEncodeProxy", "MapEncodeProxy"),
+            // Nullable
+            TypeMetaOf(typeof(Nullable<>), "Nullable"), // Nullable
+            
 
             // 基础集合
             TypeMetaOf(typeof(ICollection<>), "ICollection", "ICollection`1"),
@@ -78,49 +81,9 @@ public static class DsonConverterUtils
         };
     }
 
-    private static IList<IDsonCodec> BuiltinCodecs() {
-        return new IDsonCodec[]
-        {
-            // dson内建结构
-            new Int32Codec(),
-            new Int64Codec(),
-            new FloatCodec(),
-            new DoubleCodec(),
-            new BoolCodec(),
-            new StringCodec(),
-            new BinaryCodec(),
-            new ObjectPtrCodec(),
-            new ObjectLitePtrCodec(),
-            new ExtDateTimeCodec(),
-            new TimestampCodec(),
-            // uint
-            new UInt32Codec(),
-            new UInt64Codec(),
-
-            // 基本类型数组
-            new MoreArrayCodecs.IntArrayCodec(),
-            new MoreArrayCodecs.LongArrayCodec(),
-            new MoreArrayCodecs.FloatArrayCodec(),
-            new MoreArrayCodecs.DoubleArrayCodec(),
-            new MoreArrayCodecs.BoolArrayCodec(),
-            new MoreArrayCodecs.StringArrayCodec(),
-            new MoreArrayCodecs.UIntArrayCodec(),
-            new MoreArrayCodecs.ULongArrayCodec(),
-
-            // 日期时间
-            new DateTimeCodec(),
-            new DateTimeOffsetCodec()
-        }.ToImmutableList2();
-    }
-
     /** 获取默认的类型元数据注册表 */
     public static ITypeMetaRegistry GetDefaultTypeMetaRegistry() {
         return TYPE_META_REGISTRY;
-    }
-
-    /** 获取默认的Codec注册表 */
-    public static IDsonCodecRegistry GetDefaultCodecRegistry() {
-        return CODEC_REGISTRY;
     }
 
     /** 注意：默认情况下字典应该是一个数组对象，而不是普通的对象 */

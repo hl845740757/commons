@@ -43,7 +43,7 @@ public sealed class TaskEntry1Codec<T> : AbstractDsonCodec<TaskEntry<T>> where T
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteString(names_name, inst.Name, StringStyle.Auto);
         writer.WriteObject(names_rootTask, inst.RootTask, typeof(Task<T>), null);
-        writer.WriteByte(names_type, inst.Type, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteByte(names_type, inst.Type, NumberStyles.Simple);
     }
 
     protected override TaskEntry<T> NewInstance(IDsonObjectReader reader) {

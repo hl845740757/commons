@@ -83,7 +83,7 @@ public interface IDsonCodec<T> : IDsonCodec
     /// 由于序列化的时候，可能触发实例数据变化，为支持结构体序列化，因此需要使用ref
     /// 
     /// 注意：
-    /// 1.name在外部已写入，因此基础类型写入value时name传null或空字符串。
+    /// 1.name在外部已写入，因此基础类型写入value时name传null。
     /// 2.declaredType只影响外层类型信息是否写入，而不应向下传递。以字典为例，KV是否需要写入类型信息，取决于encoderType中的信息。 
     /// </summary>
     /// <param name="writer">writer</param>
@@ -97,7 +97,7 @@ public interface IDsonCodec<T> : IDsonCodec
     /// 它应该创建对象，并反序列化该类及其所有超类定义的所有要序列化的字段。
     /// factory用于将超类数据读取到子类，通常用于集合类型。
     /// 
-    /// 注意：name在外部已读取，因此读取value时使用<see cref="IDsonObjectReader.CurrentName"/>。
+    /// 注意：name在外部已读取，因此基础类型读取value时name传null。
     /// </summary>
     /// <param name="reader">reader</param>
     /// <param name="factory">实例工厂</param>

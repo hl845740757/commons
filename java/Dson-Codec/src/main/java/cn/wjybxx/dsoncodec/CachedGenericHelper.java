@@ -85,9 +85,7 @@ public final class CachedGenericHelper implements GenericHelper {
                     declaredType.isArrayType() ? declaredType.getRootComponentType() : declaredType);
             // 若是数组，TypeInfo需要恢复
             if (typeInfo != null && runtimeType.isArray()) {
-                for (int rank = ArrayUtils.getArrayRank(runtimeType); rank > 0; rank--) {
-                    typeInfo = typeInfo.makeArrayType();
-                }
+                typeInfo = TypeInfo.of(runtimeType, typeInfo.genericArgs);
             }
         } else {
             // 查询用户逻辑，逆向迭代 -- 越靠近用户，优先级越高

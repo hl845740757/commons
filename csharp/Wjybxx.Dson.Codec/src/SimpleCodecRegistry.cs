@@ -64,29 +64,6 @@ public sealed class SimpleCodecRegistry : IDsonCodecRegistry
 
     #region factory
 
-    internal static SimpleCodecRegistry NewDefaultRegistry() {
-        SimpleCodecRegistry registry = new SimpleCodecRegistry();
-        // 初始化特化List
-        registry.AddCodec(new MoreCollectionCodecs.IntListCodec(typeof(IList<int>)));
-        registry.AddCodec(new MoreCollectionCodecs.LongListCodec(typeof(IList<long>)));
-        registry.AddCodec(new MoreCollectionCodecs.FloatListCodec(typeof(IList<float>)));
-        registry.AddCodec(new MoreCollectionCodecs.DoubleListCodec(typeof(IList<double>)));
-        registry.AddCodec(new MoreCollectionCodecs.BoolListCodec(typeof(IList<bool>)));
-        registry.AddCodec(new MoreCollectionCodecs.StringListCodec(typeof(IList<string>)));
-        registry.AddCodec(new MoreCollectionCodecs.UIntListCodec(typeof(IList<uint>)));
-        registry.AddCodec(new MoreCollectionCodecs.ULongListCodec(typeof(IList<ulong>)));
-
-        registry.AddCodec(new MoreCollectionCodecs.IntListCodec(typeof(List<int>)));
-        registry.AddCodec(new MoreCollectionCodecs.LongListCodec(typeof(List<long>)));
-        registry.AddCodec(new MoreCollectionCodecs.FloatListCodec(typeof(List<float>)));
-        registry.AddCodec(new MoreCollectionCodecs.DoubleListCodec(typeof(List<double>)));
-        registry.AddCodec(new MoreCollectionCodecs.BoolListCodec(typeof(List<bool>)));
-        registry.AddCodec(new MoreCollectionCodecs.StringListCodec(typeof(List<string>)));
-        registry.AddCodec(new MoreCollectionCodecs.UIntListCodec(typeof(List<uint>)));
-        registry.AddCodec(new MoreCollectionCodecs.ULongListCodec(typeof(List<ulong>)));
-        return registry;
-    }
-
     /** 根据codecs创建一个Registry -- 返回的实例不可变 */
     public static SimpleCodecRegistry FromCodecs(IEnumerable<IDsonCodec> codecs) {
         SimpleCodecRegistry result = new SimpleCodecRegistry();
@@ -242,8 +219,17 @@ public sealed class SimpleCodecRegistry : IDsonCodecRegistry
         return this;
     }
 
-    #endregion
+    public DsonCodecImpl? RemoveEncoder(Type type) {
+        encoderDic.Remove(type, out DsonCodecImpl? r);
+        return r;
+    }
 
+    public DsonCodecImpl? RemoveDecoder(Type type) {
+        decoderDic.Remove(type, out DsonCodecImpl? r);
+        return r;
+    }
+
+    #endregion
 
     public DsonCodecImpl? GetEncoder(Type typeInfo) {
         encoderDic.TryGetValue(typeInfo, out DsonCodecImpl codecImpl);
@@ -257,6 +243,70 @@ public sealed class SimpleCodecRegistry : IDsonCodecRegistry
 
     public SimpleCodecRegistry Export() {
         return new SimpleCodecRegistry(this, false);
+    }
+
+    //
+    public static SimpleCodecRegistry Default { get; } = NewDefaultRegistry().ToImmutable();
+
+    internal static SimpleCodecRegistry NewDefaultRegistry() {
+        SimpleCodecRegistry registry = new SimpleCodecRegistry();
+        // 
+        // dson内建结构
+        registry.AddCodec(new Int32Codec());
+        registry.AddCodec(new Int64Codec());
+        registry.AddCodec(new FloatCodec());
+        registry.AddCodec(new DoubleCodec());
+        registry.AddCodec(new BoolCodec());
+        registry.AddCodec(new StringCodec());
+        registry.AddCodec(new BinaryCodec());
+        registry.AddCodec(new ObjectPtrCodec());
+        registry.AddCodec(new ObjectLitePtrCodec());
+        registry.AddCodec(new ExtDateTimeCodec());
+        registry.AddCodec(new TimestampCodec());
+        // 基本类型补充
+        registry.AddCodec(new MorePrimitiveCodecs.UInt32Codec());
+        registry.AddCodec(new MorePrimitiveCodecs.UInt64Codec());
+        registry.AddCodec(new MorePrimitiveCodecs.ShortCodec());
+        registry.AddCodec(new MorePrimitiveCodecs.UShortCodec());
+        registry.AddCodec(new MorePrimitiveCodecs.ByteCodec());
+        registry.AddCodec(new MorePrimitiveCodecs.SByteCodec());
+        registry.AddCodec(new MorePrimitiveCodecs.CharCodec());
+        // 日期时间
+        registry.AddCodec(new DateTimeCodec());
+        registry.AddCodec(new DateTimeOffsetCodec());
+
+        // 基本类型数组
+        registry.AddCodec(new MoreArrayCodecs.ByteArrayCodec());
+        registry.AddCodec(new MoreArrayCodecs.IntArrayCodec());
+        registry.AddCodec(new MoreArrayCodecs.LongArrayCodec());
+        registry.AddCodec(new MoreArrayCodecs.FloatArrayCodec());
+        registry.AddCodec(new MoreArrayCodecs.DoubleArrayCodec());
+        registry.AddCodec(new MoreArrayCodecs.BoolArrayCodec());
+        registry.AddCodec(new MoreArrayCodecs.StringArrayCodec());
+        registry.AddCodec(new MoreArrayCodecs.UIntArrayCodec());
+        registry.AddCodec(new MoreArrayCodecs.ULongArrayCodec());
+
+        // 特化List
+        registry.AddCodec(new MoreCollectionCodecs.IntListCodec(typeof(List<int>)));
+        registry.AddCodec(new MoreCollectionCodecs.LongListCodec(typeof(List<long>)));
+        registry.AddCodec(new MoreCollectionCodecs.FloatListCodec(typeof(List<float>)));
+        registry.AddCodec(new MoreCollectionCodecs.DoubleListCodec(typeof(List<double>)));
+        registry.AddCodec(new MoreCollectionCodecs.BoolListCodec(typeof(List<bool>)));
+        registry.AddCodec(new MoreCollectionCodecs.StringListCodec(typeof(List<string>)));
+        registry.AddCodec(new MoreCollectionCodecs.UIntListCodec(typeof(List<uint>)));
+        registry.AddCodec(new MoreCollectionCodecs.ULongListCodec(typeof(List<ulong>)));
+        // 接口类型也支持下
+        registry.AddCodec(new MoreCollectionCodecs.IntListCodec(typeof(IList<int>)));
+        registry.AddCodec(new MoreCollectionCodecs.LongListCodec(typeof(IList<long>)));
+        registry.AddCodec(new MoreCollectionCodecs.FloatListCodec(typeof(IList<float>)));
+        registry.AddCodec(new MoreCollectionCodecs.DoubleListCodec(typeof(IList<double>)));
+        registry.AddCodec(new MoreCollectionCodecs.BoolListCodec(typeof(IList<bool>)));
+        registry.AddCodec(new MoreCollectionCodecs.StringListCodec(typeof(IList<string>)));
+        registry.AddCodec(new MoreCollectionCodecs.UIntListCodec(typeof(IList<uint>)));
+        registry.AddCodec(new MoreCollectionCodecs.ULongListCodec(typeof(IList<ulong>)));
+
+        // TODO 特殊Codec绑定
+        return registry;
     }
 }
 }

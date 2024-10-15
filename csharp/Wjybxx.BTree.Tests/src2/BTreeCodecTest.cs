@@ -44,7 +44,7 @@ public class BTreeCodecTest
 
     [SetUp]
     public void SetUp() {
-        GenericCodecConfig genericCodecConfig = GenericCodecConfig.NewDefaultConfig();
+        GenericCodecConfig genericCodecConfig = new GenericCodecConfig();
         Dictionary<Type, Type> rawType2CodecTypeDic = BTreeCodecExporter.ExportCodecs();
         foreach (KeyValuePair<Type, Type> pair in rawType2CodecTypeDic) {
             genericCodecConfig.AddCodec(pair.Key, pair.Value);

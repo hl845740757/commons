@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using Wjybxx.Dson.Text;
+using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
@@ -28,6 +29,19 @@ namespace Wjybxx.Dson.Codec.Codecs
 public static class MoreArrayCodecs
 {
     #region 特化数组
+
+    /** 字节数组需要转Binary */
+    public class ByteArrayCodec : IDsonCodec<byte[]>
+    {
+        public void WriteObject(IDsonObjectWriter writer, ref byte[] inst, Type declaredType, ObjectStyle style) {
+            writer.WriteBinary(null, Binary.CopyFrom(inst)); // 默认拷贝
+        }
+
+        public byte[] ReadObject(IDsonObjectReader reader, Func<byte[]>? factory = null) {
+            Binary binary = reader.ReadBinary(reader.CurrentName);
+            return binary.UnsafeBuffer;
+        }
+    }
 
     public class IntArrayCodec : IDsonCodec<int[]>
     {

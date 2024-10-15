@@ -30,7 +30,7 @@ public class DoubleCodec : IDsonCodec<double>
     }
 
     public double ReadObject(IDsonObjectReader reader, Func<double>? factory = null) {
-        return reader.ReadDouble(reader.CurrentName);
+        return reader.ReadDouble(null);
     }
 }
 }

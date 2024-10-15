@@ -50,14 +50,9 @@ public class DsonConverterBuilder {
         if (!pureMode) {
             typeMetaRegistries.removeLast();
         }
-        DynamicCodecRegistry dynamicCodecRegistry;
-        codecRegistries.add(DsonConverterUtils.getDefaultCodecRegistry());
-        {
-            dynamicCodecRegistry = new DynamicCodecRegistry(codecRegistries);
-        }
-        codecRegistries.removeLast();
 
-        return new DefaultDsonConverter(dynamicTypeMetaRegistry, dynamicCodecRegistry,
+        return new DefaultDsonConverter(dynamicTypeMetaRegistry,
+                new DynamicCodecRegistry(codecRegistries),
                 new CachedGenericHelper(genericHelpers), options);
     }
 

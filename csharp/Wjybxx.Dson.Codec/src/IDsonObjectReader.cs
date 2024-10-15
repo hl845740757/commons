@@ -17,15 +17,14 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec
 {
 /// <summary>
-/// 为减少API数量，我们的所有简单值读取都是带有name参数的，在已读取name的情况下，接口的name参数将被忽略。
+/// 1. 读取数组内普通成员时，name传null或零值，读取嵌套对象时使用无name参数的start方法
+/// 2. 为减少API数量，我们的所有简单值读取都是带有name参数的，在已读取name的情况下，接口的name参数将被忽略。
 /// </summary>
 public interface IDsonObjectReader : IDisposable
 {
@@ -114,8 +113,9 @@ public interface IDsonObjectReader : IDisposable
 
     /// <summary>
     /// 读取指定名字的值 -- 可实现随机读
-    /// 如果尚未调用{@link #readDsonType()}，该方法将尝试跳转到该name所在的字段。
-    /// 如果已调用{@link #readDsonType()}，则该方法必须与下一个name匹配。
+    /// 如果尚未调用<see cref="ReadDsonType"/>，该方法将尝试跳转到该name所在的字段。
+    /// 如果已调用<see cref="ReadDsonType"/>，则name必须与下一个name匹配。
+    /// 如果已调用<see cref="ReadName()"/>，则name可以为null，否则必须当前name匹配。
     /// 如果reader不支持随机读，当名字不匹配下一个值时将抛出异常。
     /// 返回false的情况下，可继续调用该方法或{@link #readDsonType()}读取下一个字段。
     /// </summary>
@@ -189,16 +189,6 @@ public interface IDsonObjectReader : IDisposable
     #region 快捷方法
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    uint ReadUint(string? name) {
-        return (uint)ReadInt(name);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    ulong ReadUlong(string? name) {
-        return (ulong)ReadLong(name);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     short ReadShort(string? name) {
         return (short)ReadInt(name);
     }
@@ -211,6 +201,26 @@ public interface IDsonObjectReader : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     char ReadChar(string? name) {
         return (char)ReadInt(name);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    uint ReadUint(string? name) {
+        return (uint)ReadInt(name);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    ulong ReadUlong(string? name) {
+        return (ulong)ReadLong(name);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    ushort ReadUshort(string? name) {
+        return (ushort)ReadInt(name);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    sbyte ReadSbyte(string? name) {
+        return (sbyte)ReadInt(name);
     }
 
     #endregion

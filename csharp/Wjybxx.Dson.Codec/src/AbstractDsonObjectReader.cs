@@ -294,7 +294,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
                 return converter.CodecRegistry.GetDecoder(typeMeta.type);
             }
         }
-        // 尝试按照声明类型读 - 读的时候两者可能是无继承关系的(投影)
+        // 尝试按照声明类型读 - 读的时候两者可能是无继承关系的(投影) LinkedDictionary => Dictionary
         return converter.CodecRegistry.GetDecoder(declaredType);
     }
 

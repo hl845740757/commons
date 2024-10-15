@@ -50,6 +50,10 @@ public final class DsonCodecImpl<T> {
         }
     }
 
+    public DsonCodec<T> getCodec() {
+        return codec;
+    }
+
     @Nonnull
     public TypeInfo getEncoderType() {
         return encoderType;

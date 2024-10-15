@@ -61,34 +61,6 @@ public sealed class GenericCodecConfig
 
     #region factory
 
-    /** 创建一个默认配置 */
-    internal static GenericCodecConfig NewDefaultConfig() {
-        GenericCodecConfig config = new GenericCodecConfig();
-        // 艹，readonly系列集合和普通集合之间没有交集...
-        // CollectionCodec默认测试了常见的集合类型
-        config.AddCodec(typeof(ICollection<>), typeof(CollectionCodec<>));
-        config.AddCodec(typeof(IList<>), typeof(CollectionCodec<>));
-        config.AddCodec(typeof(List<>), typeof(CollectionCodec<>));
-        // 
-        config.AddCodec(typeof(ISet<>), typeof(CollectionCodec<>));
-        config.AddCodec(typeof(HashSet<>), typeof(CollectionCodec<>));
-        config.AddCodec(typeof(LinkedHashSet<>), typeof(CollectionCodec<>));
-        //
-        config.AddCodec(typeof(Stack<>), typeof(MoreCollectionCodecs.StackCodec<>));
-        config.AddCodec(typeof(Queue<>), typeof(MoreCollectionCodecs.QueueCodec<>));
-
-        // IDictionary接口不指定工厂，根据options动态分配实现
-        config.AddCodec(typeof(IDictionary<,>), typeof(DictionaryCodec<,>));
-        config.AddCodec(typeof(Dictionary<,>), typeof(DictionaryCodec<,>));
-        config.AddCodec(typeof(LinkedDictionary<,>), typeof(DictionaryCodec<,>));
-        config.AddCodec(typeof(ConcurrentDictionary<,>), typeof(DictionaryCodec<,>));
-        // 特殊组件
-        config.AddCodec(typeof(DictionaryEncodeProxy<>), typeof(DictionaryEncodeProxyCodec<>));
-        config.AddCodec(typeof(Nullable<>), typeof(NullableCodec<>));
-        config.AddCodec(typeof(IEnumerable<>), typeof(EnumerableCodec<>));
-        return config;
-    }
-
     /** 转换为不可变配置 */
     public GenericCodecConfig ToImmutable() {
         return new GenericCodecConfig(encoderTypeDic, decoderTypeDic);
@@ -295,6 +267,38 @@ public sealed class GenericCodecConfig
             return item;
         }
         return null;
+    }
+
+    //
+
+    public static GenericCodecConfig Default { get; } = NewDefaultConfig().ToImmutable();
+
+    /** 创建一个默认配置 */
+    internal static GenericCodecConfig NewDefaultConfig() {
+        GenericCodecConfig config = new GenericCodecConfig();
+        // 艹，readonly系列集合和普通集合之间没有交集...
+        // CollectionCodec默认测试了常见的集合类型
+        config.AddCodec(typeof(ICollection<>), typeof(CollectionCodec<>));
+        config.AddCodec(typeof(IList<>), typeof(CollectionCodec<>));
+        config.AddCodec(typeof(List<>), typeof(CollectionCodec<>));
+        // 
+        config.AddCodec(typeof(ISet<>), typeof(CollectionCodec<>));
+        config.AddCodec(typeof(HashSet<>), typeof(CollectionCodec<>));
+        config.AddCodec(typeof(LinkedHashSet<>), typeof(CollectionCodec<>));
+        //
+        config.AddCodec(typeof(Stack<>), typeof(MoreCollectionCodecs.StackCodec<>));
+        config.AddCodec(typeof(Queue<>), typeof(MoreCollectionCodecs.QueueCodec<>));
+
+        // IDictionary接口不指定工厂，根据options动态分配实现
+        config.AddCodec(typeof(IDictionary<,>), typeof(DictionaryCodec<,>));
+        config.AddCodec(typeof(Dictionary<,>), typeof(DictionaryCodec<,>));
+        config.AddCodec(typeof(LinkedDictionary<,>), typeof(DictionaryCodec<,>));
+        config.AddCodec(typeof(ConcurrentDictionary<,>), typeof(DictionaryCodec<,>));
+        // 特殊组件
+        config.AddCodec(typeof(DictionaryEncodeProxy<>), typeof(DictionaryEncodeProxyCodec<>));
+        config.AddCodec(typeof(Nullable<>), typeof(NullableCodec<>));
+        config.AddCodec(typeof(IEnumerable<>), typeof(EnumerableCodec<>));
+        return config;
     }
 }
 }

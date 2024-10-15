@@ -52,7 +52,7 @@ public class StringCodec implements DsonCodec<String> {
 
     @Override
     public String readObject(DsonObjectReader reader, Supplier<? extends String> factory) {
-        return reader.readString(reader.getCurrentName());
+        return reader.readString(null);
     }
 
 }

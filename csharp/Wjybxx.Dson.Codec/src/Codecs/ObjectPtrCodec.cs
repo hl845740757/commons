@@ -31,7 +31,7 @@ public class ObjectPtrCodec : IDsonCodec<ObjectPtr>
     }
 
     public ObjectPtr ReadObject(IDsonObjectReader reader, Func<ObjectPtr>? factory = null) {
-        return reader.ReadPtr(reader.CurrentName);
+        return reader.ReadPtr(null);
     }
 }
 }

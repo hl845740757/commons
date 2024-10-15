@@ -187,23 +187,6 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
             return;
         }
         Class<?> type = value.getClass();
-        // 类型补充
-        if (type == byte[].class) {
-            writeBytes(name, (byte[]) value);
-            return;
-        }
-        if (type == Short.class) {
-            writeShort(name, (Short) value);
-            return;
-        }
-        if (type == Byte.class) {
-            writeByte(name, (Byte) value);
-            return;
-        }
-        if (type == Character.class) {
-            writeChar(name, (Character) value);
-            return;
-        }
         // DsonValue
         if (value instanceof DsonValue dsonValue) {
             Dsons.writeDsonValue(writer, dsonValue, name);

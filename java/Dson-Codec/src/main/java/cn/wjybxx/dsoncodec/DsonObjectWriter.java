@@ -221,27 +221,26 @@ public interface DsonObjectWriter extends AutoCloseable {
 
     /** 应当减少 short/byte/char 的使用，尤其应当避免使用其包装类型，使用的越多越难以扩展，越难以支持跨语言等。 */
     default void writeShort(String name, short value) {
-        writeInt(name, value, WireType.VARINT, NumberStyle.SIMPLE);
+        writeInt(name, value, WireType.SINT, NumberStyle.SIMPLE);
     }
 
-    default void writeShort(String name, short value, WireType wireType, INumberStyle style) {
-        writeInt(name, value, wireType, style);
+    default void writeShort(String name, short value, INumberStyle style) {
+        writeInt(name, value, WireType.SINT, style);
     }
 
     default void writeByte(String name, byte value) {
-        writeInt(name, value, WireType.VARINT, NumberStyle.SIMPLE);
+        writeInt(name, value, WireType.SINT, NumberStyle.SIMPLE); // java的byte是有符号数，容易负数
     }
 
-    default void writeByte(String name, byte value, WireType wireType, INumberStyle style) {
-        writeInt(name, value, WireType.VARINT, style);
+    default void writeByte(String name, byte value, INumberStyle style) {
+        writeInt(name, value, WireType.SINT, style);
     }
 
     default void writeChar(String name, char value) {
         writeInt(name, value, WireType.UINT, NumberStyle.SIMPLE);
     }
 
-    /** @apiNote 保持签名以确保生成的代码可正确调用 */
-    default void writeChar(String name, char value, WireType ignore, INumberStyle style) {
+    default void writeChar(String name, char value, INumberStyle style) {
         writeInt(name, value, WireType.UINT, style);
     }
 
