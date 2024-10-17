@@ -57,14 +57,14 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
     }
 
     private static FactoryKind ComputeFactoryKind(Type typeInfo) {
+        if (typeInfo == typeof(IGenericSet<T>)
+            || typeInfo == typeof(LinkedHashSet<T>)) {
+            return FactoryKind.LinkedHashSet;
+        }
         if (typeInfo == typeof(ISet<T>)
             || typeInfo == typeof(IReadOnlySet<T>)
             || typeInfo == typeof(HashSet<T>)) {
             return FactoryKind.HashSet;
-        }
-        if (typeInfo == typeof(IGenericSet<T>)
-            || typeInfo == typeof(LinkedHashSet<T>)) {
-            return FactoryKind.LinkedHashSet;
         }
         if (typeInfo == typeof(IDeque<T>)
             || typeInfo == typeof(MultiChunkDeque<T>)) {
@@ -83,7 +83,7 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
 
     public Type GetEncoderType() => encoderType;
 
-    /** typeInfo一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
+    /** <see cref="encoderType"/>一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
     private ICollection<T> NewCollection() {
         if (factory != null) return factory();
         return factoryKind switch

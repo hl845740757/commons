@@ -60,7 +60,7 @@ public class MapEncodeProxyCodec<V> implements DsonCodec<MapEncodeProxy<V>> {
         Collection<Map.Entry<String, V>> entries = Objects.requireNonNull(inst.getEntries());
         switch (inst.getMode()) {
             default -> {
-                writer.writeStartObject(style, declaredType, encoderType); // 字典写为普通文档
+                writer.writeStartObject(style, encoderType, declaredType); // 字典写为普通文档
                 for (Map.Entry<String, V> entry : entries) {
                     // map写为普通的Object的时候，必须要写入Null，否则containsKey会异常；要强制写入Null必须先写入Name
                     writer.writeName(entry.getKey());
@@ -69,7 +69,7 @@ public class MapEncodeProxyCodec<V> implements DsonCodec<MapEncodeProxy<V>> {
                 writer.writeEndObject();
             }
             case MapEncodeProxy.MODE_ARRAY -> {
-                writer.writeStartArray(style, declaredType, encoderType); // 整个字典写为数组
+                writer.writeStartArray(style, encoderType, declaredType); // 整个字典写为数组
                 for (Map.Entry<String, V> entry : entries) {
                     writer.writeString(null, entry.getKey());
                     writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
@@ -77,7 +77,7 @@ public class MapEncodeProxyCodec<V> implements DsonCodec<MapEncodeProxy<V>> {
                 writer.writeEndArray();
             }
             case MapEncodeProxy.MODE_PAIR_AS_ARRAY -> {
-                writer.writeStartArray(style, declaredType, encoderType);
+                writer.writeStartArray(style, encoderType, declaredType);
                 for (Map.Entry<String, V> entry : entries) {
                     writer.writeStartArray(ObjectStyle.FLOW); // pair写为子数组-没有类型
                     {
@@ -89,7 +89,7 @@ public class MapEncodeProxyCodec<V> implements DsonCodec<MapEncodeProxy<V>> {
                 writer.writeEndArray();
             }
             case MapEncodeProxy.MODE_PAIR_AS_DOCUMENT -> {
-                writer.writeStartArray(style, declaredType, encoderType);
+                writer.writeStartArray(style, encoderType, declaredType);
                 for (Map.Entry<String, V> entry : entries) {
                     writer.writeStartObject(ObjectStyle.FLOW); // pair写为子文档-没有类型
                     {

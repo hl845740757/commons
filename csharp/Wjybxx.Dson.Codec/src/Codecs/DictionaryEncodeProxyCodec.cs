@@ -34,7 +34,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
 
         switch (inst.Mode) {
             default: {
-                writer.WriteStartObject(style, declaredType, encoderType); // 字典写为普通文档
+                writer.WriteStartObject(style, encoderType, declaredType); // 字典写为普通文档
                 foreach (KeyValuePair<string, V> pair in entries) {
                     string keyString = writer.EncodeKey(pair.Key);
                     V value = pair.Value;
@@ -50,7 +50,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                 break;
             }
             case DictionaryEncodeProxy.MODE_ARRAY: {
-                writer.WriteStartArray(style, declaredType, encoderType); // 整个字典写为数组
+                writer.WriteStartArray(style, encoderType, declaredType); // 整个字典写为数组
                 foreach (KeyValuePair<string, V> pair in entries) {
                     writer.WriteString(null, pair.Key);
                     writer.WriteObject(null, pair.Value, valDeclaredType);
@@ -59,7 +59,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                 break;
             }
             case DictionaryEncodeProxy.MODE_PAIR_AS_ARRAY: {
-                writer.WriteStartArray(style, declaredType, encoderType);
+                writer.WriteStartArray(style, encoderType, declaredType);
                 foreach (KeyValuePair<string, V> pair in entries) {
                     writer.WriteStartArray(ObjectStyle.Flow); // pair写为子数组-没有类型
                     {
@@ -72,7 +72,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                 break;
             }
             case DictionaryEncodeProxy.MODE_PAIR_AS_DOCUMENT: {
-                writer.WriteStartArray(style, declaredType, encoderType);
+                writer.WriteStartArray(style, encoderType, declaredType);
                 foreach (KeyValuePair<string, V> pair in entries) {
                     writer.WriteStartObject(ObjectStyle.Flow); // pair写为子文档-没有类型
                     {

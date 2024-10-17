@@ -16,7 +16,6 @@
 
 #endregion
 
-using System.Collections.Generic;
 using System.Text;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
@@ -32,19 +31,9 @@ namespace Wjybxx.Dson.Codec
 public class ConverterOptions
 {
     /// <summary>
-    /// 是否弱顺序。
-    /// 对于集合和字典，要保证解码的正确性，就必须保持插入序。而C#未提供原生的高性能的保持插入序的Set和Dictionary，
-    /// 我实现的<see cref="LinkedHashSet{TKey}"/>和<see cref="LinkedDictionary{TKey,TValue}"/>虽然能保持插入序，
-    /// 但大家可能更习惯使用系统库的字典。
-    ///
-    /// ps：根据观察，系统的<see cref="Dictionary{TKey,TValue}"/>在只插入的情况下是保持有序的，但有删除操作的情况下就会无序。
-    /// </summary>
-    public readonly bool weakOrder;
-
-    /// <summary>
     /// classId的写入策略
     /// </summary>
-    public readonly ClassIdPolicy classIdPolicy;
+    public readonly TypeWritePolicy typeWritePolicy;
     /// <summary>
     /// 是否写入对象基础类型字段的默认值
     /// 1.数值类型默认值为0，bool类型默认值为false
@@ -134,8 +123,7 @@ public class ConverterOptions
     public readonly DsonTextWriterSettings textWriterSettings;
 
     public ConverterOptions(Builder builder) {
-        this.weakOrder = builder.WeakOrder;
-        this.classIdPolicy = builder.ClassIdPolicy;
+        this.typeWritePolicy = builder.TypeWritePolicy;
         this.appendDef = builder.AppendDef;
         this.appendNull = builder.AppendNull;
         this.writeMapAsDocument = builder.WriteMapAsDocument;
@@ -167,8 +155,7 @@ public class ConverterOptions
 
     /** 允许子类重写 */
     public virtual void AssignToBuilder(Builder builder) {
-        builder.WeakOrder = weakOrder;
-        builder.ClassIdPolicy = classIdPolicy;
+        builder.TypeWritePolicy = typeWritePolicy;
         builder.AppendDef = appendDef;
         builder.AppendNull = appendNull;
         builder.WriteMapAsDocument = writeMapAsDocument;
@@ -207,8 +194,7 @@ public class ConverterOptions
 
     public class Builder
     {
-        public bool WeakOrder { get; set; } = true;
-        public ClassIdPolicy ClassIdPolicy { get; set; } = ClassIdPolicy.Optimized;
+        public TypeWritePolicy TypeWritePolicy { get; set; } = TypeWritePolicy.Optimized;
         public bool AppendDef { get; set; } = true;
         public bool AppendNull { get; set; } = true;
         public bool WriteMapAsDocument { get; set; } = false;

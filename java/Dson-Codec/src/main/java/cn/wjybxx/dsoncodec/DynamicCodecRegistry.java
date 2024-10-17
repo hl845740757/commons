@@ -39,10 +39,8 @@ import java.util.function.Supplier;
 public final class DynamicCodecRegistry implements DsonCodecRegistry {
 
     private static final Logger logger = LoggerFactory.getLogger(DynamicCodecRegistry.class);
-    /** 用户的原始的类型Codec */
-    private final SimpleCodecRegistry basicRegistry;
-    /** 泛型codec配置 */
-    private final GenericCodecConfig genericCodecConfig;
+    /** 用户配置信息 */
+    private final DsonCodecConfig config;
     /** 类型转换器 */
     private final List<DsonCodecCaster> casters;
 
@@ -50,38 +48,25 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
     private final ConcurrentHashMap<TypeInfo, DsonCodecImpl<?>> encoderDic = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<TypeInfo, DsonCodecImpl<?>> decoderDic = new ConcurrentHashMap<>();
 
-    public DynamicCodecRegistry(Collection<? extends DsonCodecRegistry> basicRegistries) {
-        // 先初始化为默认配置，然后由用户的配置进行覆盖
-        this.basicRegistry = SimpleCodecRegistry.newDefaultRegistry();
-        for (DsonCodecRegistry other : basicRegistries) {
-            this.basicRegistry.mergeFrom(other.export());
-        }
-        // 先初始化为默认配置，然后由用户的配置进行覆盖 -- 不转不可变对象，性能更好
-        this.genericCodecConfig = GenericCodecConfig.newDefaultConfig();
-        for (GenericCodecConfig genericCodecConfig : basicRegistry.getGenericCodecConfigs()) {
-            this.genericCodecConfig.mergeFrom(genericCodecConfig);
-        }
-        this.casters = List.copyOf(basicRegistry.getCasters());
+    public DynamicCodecRegistry(DsonCodecConfig config) {
+        config = config.toImmutable();
+        this.config = config;
+        this.casters = config.getCasters();
+
+        // 构建DsonCodecImpl实例
+        config.getEncoderDic().forEach((typeInfo, dsonCodec) -> {
+            encoderDic.put(typeInfo, new DsonCodecImpl<>(dsonCodec));
+        });
+        config.getDecoderDic().forEach((typeInfo, dsonCodec) -> {
+            decoderDic.put(typeInfo, new DsonCodecImpl<>(dsonCodec));
+        });
     }
 
-    @Override
-    public SimpleCodecRegistry export() {
-        SimpleCodecRegistry result = new SimpleCodecRegistry();
-        result.mergeFrom(basicRegistry);
-        result.getEncoderDic().putAll(encoderDic);
-        result.getDecoderDic().putAll(decoderDic);
-        return result;
-    }
 
     @Nullable
     @Override
     public DsonCodecImpl<?> getEncoder(final TypeInfo type) {
-        // 优先查找用户的Codec，以允许用户定制优化
-        DsonCodecImpl<?> codecImpl = basicRegistry.getEncoder(type);
-        if (codecImpl != null) return codecImpl;
-
-        // 查缓存
-        codecImpl = encoderDic.get(type);
+        DsonCodecImpl<?> codecImpl = encoderDic.get(type);
         if (codecImpl != null) return codecImpl;
 
         // 动态生成--java端无法处理泛型
@@ -90,7 +75,7 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
         } else if (type.isArrayType()) {
             codecImpl = makeArrayCodec(type);
         } else if (type.isGenericType()) {
-            GenericCodecInfo genericCodecInfo = genericCodecConfig.getEncoderInfo(type.rawType);
+            GenericCodecInfo genericCodecInfo = config.getGenericEncoderInfo(type.rawType);
             if (genericCodecInfo != null) {
                 codecImpl = makeGenericCodec(type, genericCodecInfo);
             } else {
@@ -120,12 +105,7 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
     @Nullable
     @Override
     public DsonCodecImpl<?> getDecoder(TypeInfo type) {
-        // 优先查找用户的Codec，以允许用户定制优化
-        DsonCodecImpl<?> codecImpl = basicRegistry.getDecoder(type);
-        if (codecImpl != null) return codecImpl;
-
-        // 查缓存
-        codecImpl = decoderDic.get(type);
+        DsonCodecImpl<?> codecImpl = decoderDic.get(type);
         if (codecImpl != null) return codecImpl;
 
         // 动态生成--java端无法处理泛型
@@ -134,7 +114,7 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
         } else if (type.isArrayType()) {
             codecImpl = makeArrayCodec(type);
         } else if (type.isGenericType()) {
-            GenericCodecInfo genericCodecInfo = genericCodecConfig.getDecoderInfo(type.rawType);
+            GenericCodecInfo genericCodecInfo = config.getGenericDecoderInfo(type.rawType);
             if (genericCodecInfo != null) {
                 codecImpl = makeGenericCodec(type, genericCodecInfo);
             } else {

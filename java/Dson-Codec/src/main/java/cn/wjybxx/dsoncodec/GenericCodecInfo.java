@@ -26,8 +26,8 @@ import java.util.function.Supplier;
 @SuppressWarnings("rawtypes")
 public final class GenericCodecInfo {
 
-    public final TypeInfo typeInfo;
-    public final Class<? extends DsonCodec> codecType;
+    public final TypeInfo typeInfo; // 泛型原型类
+    public final Class<? extends DsonCodec> codecType; // 对应的Codec
     public final Supplier<?> factory; // 工厂
 
     private GenericCodecInfo(TypeInfo typeInfo, Class<? extends DsonCodec> codecType, Supplier<?> factory) {

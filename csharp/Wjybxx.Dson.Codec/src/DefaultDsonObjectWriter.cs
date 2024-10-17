@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Wjybxx.Dson.IO;
 using Wjybxx.Dson.Text;
@@ -31,10 +30,12 @@ namespace Wjybxx.Dson.Codec
 public class DefaultDsonObjectWriter : IDsonObjectWriter
 {
     private readonly IDsonConverter converter;
+    private readonly TypeWriteHelper typeWriteHelper;
     private readonly IDsonWriter<string> writer;
 
-    public DefaultDsonObjectWriter(IDsonConverter converter, IDsonWriter<string> writer) {
+    public DefaultDsonObjectWriter(IDsonConverter converter, TypeWriteHelper typeWriteHelper, IDsonWriter<string> writer) {
         this.converter = converter;
+        this.typeWriteHelper = typeWriteHelper;
         this.writer = writer;
     }
 
@@ -154,8 +155,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             if (codec is DsonCodecImpl<T> codecImpl) {
                 codecImpl.WriteObject(this, value, declaredType, castStyle);
             } else {
-                Debug.Assert(!type.IsValueType);
-                codec.WriteObject2(this, value, declaredType, castStyle);
+                codec.WriteObject2(this, value, declaredType, castStyle); // 声明类型是object的情况下，value可能是装箱值类型
             }
             return;
         }
@@ -179,12 +179,14 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.WriteName(name);
     }
 
-    public void WriteTypeInfo(Type declaredType, Type encoderType) {
-        if (!converter.Options.classIdPolicy.Test(declaredType, encoderType)) {
-            return;
-        }
-        TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(encoderType);
-        if (typeMeta != null) {
+    public void WriteTypeInfo(Type encoderType, Type declaredType) {
+        TypeWritePolicy policy = converter.Options.typeWritePolicy;
+        if ((policy == TypeWritePolicy.Optimized && !typeWriteHelper.IsOptimizable(encoderType, declaredType))
+            || policy == TypeWritePolicy.Always) {
+            TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(encoderType);
+            if (typeMeta == null) {
+                throw new DsonCodecException($"typeMeta of encoderType: {encoderType} is absent");
+            }
             writer.WriteSimpleHeader(typeMeta.MainClsName);
         }
     }
@@ -216,21 +218,15 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
 
     public string EncodeKey<T>(T key) {
         if (key == null) throw new ArgumentNullException(nameof(key));
-        if (key is string sv) {
-            return sv;
-        }
-        if (key is int iv) {
-            return iv.ToString();
-        }
-        if (key is long lv) {
-            return lv.ToString();
-        }
+        if (key is string sv) return sv;
+        if (key is int iv) return iv.ToString();
+        if (key is long lv) return lv.ToString();
+        if (key is uint uiv) return uiv.ToString();
+        if (key is ulong ulv) return ulv.ToString();
+
         Type type = key.GetType();
-        if (!type.IsEnum) {
-            throw DsonCodecException.UnsupportedType(type);
-        }
-        DsonCodecImpl<T> codecImpl = (DsonCodecImpl<T>)converter.CodecRegistry.GetEncoder(type);
-        if (codecImpl == null) {
+        DsonCodecImpl<T> codecImpl = converter.CodecRegistry.GetEncoder(type) as DsonCodecImpl<T>;
+        if (codecImpl == null || !codecImpl.IsEnumCodec) {
             throw DsonCodecException.UnsupportedType(type);
         }
         if (converter.Options.writeEnumAsString) {
@@ -259,9 +255,9 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
     #region 重复实现，提高效率
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartObject(ObjectStyle style, Type declaredType, Type encoderType) {
+    public void WriteStartObject(ObjectStyle style, Type encoderType, Type declaredType) {
         writer.WriteStartObject(style);
-        WriteTypeInfo(declaredType, encoderType);
+        WriteTypeInfo(encoderType, declaredType);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -271,17 +267,17 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartObject(string name, ObjectStyle style, Type declaredType, Type encoderType) {
+    public void WriteStartObject(string name, ObjectStyle style, Type encoderType, Type declaredType) {
         writer.WriteName(name);
         writer.WriteStartObject(style);
-        WriteTypeInfo(declaredType, encoderType);
+        WriteTypeInfo(encoderType, declaredType);
     }
 
     //
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartArray(ObjectStyle style, Type declaredType, Type encoderType) {
+    public void WriteStartArray(ObjectStyle style, Type encoderType, Type declaredType) {
         writer.WriteStartArray(style);
-        WriteTypeInfo(declaredType, encoderType);
+        WriteTypeInfo(encoderType, declaredType);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -291,10 +287,10 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartArray(string name, ObjectStyle style, Type declaredType, Type encoderType) {
+    public void WriteStartArray(string name, ObjectStyle style, Type encoderType, Type declaredType) {
         writer.WriteName(name);
         writer.WriteStartArray(style);
-        WriteTypeInfo(declaredType, encoderType);
+        WriteTypeInfo(encoderType, declaredType);
     }
 
     #endregion

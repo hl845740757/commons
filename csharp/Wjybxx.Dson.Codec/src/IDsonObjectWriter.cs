@@ -104,9 +104,9 @@ public interface IDsonObjectWriter : IDisposable
     /// 写入类型信息
     /// 该方法应当在writeStartObject/Array后立即调用，写在所有字段之前。
     /// </summary>
-    /// <param name="declaredType">对象的声明类型，用于测试是否写入类型信息</param>
     /// <param name="encoderType">编码器绑定的类型，要写入的类型信息</param>
-    void WriteTypeInfo(Type declaredType, Type encoderType);
+    /// <param name="declaredType">对象的声明类型，用于测试是否写入类型信息</param>
+    void WriteTypeInfo(Type encoderType, Type declaredType);
 
     void WriteStartObject(ObjectStyle style);
 
@@ -131,9 +131,9 @@ public interface IDsonObjectWriter : IDisposable
 
     // defaults
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartObject(ObjectStyle style, Type declaredType, Type encoderType) {
+    void WriteStartObject(ObjectStyle style, Type encoderType, Type declaredType) {
         WriteStartObject(style);
-        WriteTypeInfo(declaredType, encoderType);
+        WriteTypeInfo(encoderType, declaredType);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -143,17 +143,17 @@ public interface IDsonObjectWriter : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartObject(string name, ObjectStyle style, Type declaredType, Type encoderType) {
+    void WriteStartObject(string name, ObjectStyle style, Type encoderType, Type declaredType) {
         WriteName(name);
         WriteStartObject(style);
-        WriteTypeInfo(declaredType, encoderType);
+        WriteTypeInfo(encoderType, declaredType);
     }
 
     //
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartArray(ObjectStyle style, Type declaredType, Type encoderType) {
+    void WriteStartArray(ObjectStyle style, Type encoderType, Type declaredType) {
         WriteStartArray(style);
-        WriteTypeInfo(declaredType, encoderType);
+        WriteTypeInfo(encoderType, declaredType);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -163,10 +163,10 @@ public interface IDsonObjectWriter : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartArray(string name, ObjectStyle style, Type declaredType, Type encoderType) {
+    void WriteStartArray(string name, ObjectStyle style, Type encoderType, Type declaredType) {
         WriteName(name);
         WriteStartArray(style);
-        WriteTypeInfo(declaredType, encoderType);
+        WriteTypeInfo(encoderType, declaredType);
     }
 
     #endregion

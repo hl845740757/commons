@@ -62,12 +62,23 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
         this.clsNames = clsNames.ToImmutableList2();
     }
 
-    /// <summary>
-    /// 类的主别名
-    /// </summary>
+    /** 类的主别名 */
     public string MainClsName => clsNames[0];
 
+    /** 替换Style */
+    public TypeMeta WithStyle(ObjectStyle style) {
+        return new TypeMeta(type, style, clsNames);
+    }
+
     #region factory
+
+    public static TypeMeta Of(Type clazz, string clsName) {
+        return new TypeMeta(clazz, ObjectStyle.Indent, ImmutableList<string>.Create(clsName));
+    }
+
+    public static TypeMeta Of(Type clazz, params string[] clsNames) {
+        return new TypeMeta(clazz, ObjectStyle.Indent, ImmutableList<string>.CreateRange(clsNames));
+    }
 
     public static TypeMeta Of(Type clazz, ObjectStyle style) {
         return new TypeMeta(clazz, style, ImmutableList<string>.Create(clazz.Name));

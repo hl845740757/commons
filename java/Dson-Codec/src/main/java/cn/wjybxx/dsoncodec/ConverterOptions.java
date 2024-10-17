@@ -38,8 +38,8 @@ import java.util.Objects;
 @Immutable
 public class ConverterOptions {
 
-    /** classId的写入策略 */
-    public final ClassIdPolicy classIdPolicy;
+    /** 类型信息的写入策略 */
+    public final TypeWritePolicy typeWritePolicy;
     /**
      * 是否写入对象基础类型字段的默认值
      * 1.数值类型默认值为0，bool类型默认值为false
@@ -124,7 +124,7 @@ public class ConverterOptions {
     public final DsonTextWriterSettings textWriterSettings;
 
     public ConverterOptions(Builder builder) {
-        this.classIdPolicy = builder.classIdPolicy;
+        this.typeWritePolicy = builder.typeWritePolicy;
         this.appendDef = builder.appendDef;
         this.appendNull = builder.appendNull;
         this.writeMapAsDocument = builder.writeMapAsDocument;
@@ -157,7 +157,7 @@ public class ConverterOptions {
 
     /** 子类可覆盖该方法 */
     public void assignToBuilder(Builder builder) {
-        builder.classIdPolicy = classIdPolicy;
+        builder.typeWritePolicy = typeWritePolicy;
         builder.appendDef = appendDef;
         builder.appendNull = appendNull;
         builder.writeMapAsDocument = writeMapAsDocument;
@@ -193,7 +193,7 @@ public class ConverterOptions {
 
     public static class Builder {
 
-        private ClassIdPolicy classIdPolicy = ClassIdPolicy.OPTIMIZED;
+        private TypeWritePolicy typeWritePolicy = TypeWritePolicy.OPTIMIZED;
         private boolean appendDef = true;
         private boolean appendNull = true;
         private boolean writeMapAsDocument = false;
@@ -220,12 +220,12 @@ public class ConverterOptions {
             return new ConverterOptions(this);
         }
 
-        public ClassIdPolicy getClassIdPolicy() {
-            return classIdPolicy;
+        public TypeWritePolicy getTypeWritePolicy() {
+            return typeWritePolicy;
         }
 
-        public Builder setClassIdPolicy(ClassIdPolicy classIdPolicy) {
-            this.classIdPolicy = Objects.requireNonNull(classIdPolicy);
+        public Builder setTypeWritePolicy(TypeWritePolicy typeWritePolicy) {
+            this.typeWritePolicy = typeWritePolicy;
             return this;
         }
 

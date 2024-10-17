@@ -22,8 +22,8 @@ import cn.wjybxx.dson.text.ObjectStyle;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -35,13 +35,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
-    private final SimpleTypeMetaRegistry basicRegistry;
-    private final ClassNamePool classNamePool = new ClassNamePool(1024);
+    private final TypeMetaConfig basicRegistry;
+    private final ConcurrentHashMap<String, ClassName> typeNamePool = new ConcurrentHashMap<>(1024);
     private final ConcurrentHashMap<TypeInfo, TypeMeta> type2MetaDic = new ConcurrentHashMap<>(1024);
     private final ConcurrentHashMap<String, TypeMeta> name2MetaDic = new ConcurrentHashMap<>(1024);
 
-    public DynamicTypeMetaRegistry(Collection<? extends TypeMetaRegistry> basicRegistries) {
-        this.basicRegistry = SimpleTypeMetaRegistry.fromRegistries(basicRegistries);
+    public DynamicTypeMetaRegistry(TypeMetaConfig config) {
+        this.basicRegistry = config.toImmutable();
     }
 
     // region ofType
@@ -97,7 +97,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             return typeMeta;
         }
         // 走到这里，通常意味着clsName是数组或泛型 -- 别名可能导致断言失败
-        ClassName className = classNamePool.parse(clsName);
+        ClassName className = parseName(clsName);
 //        assert className.isArray() || className.isGeneric()
         TypeInfo type = typeOfClassName(className);
 
@@ -127,6 +127,22 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
     // endregion
 
     // region internal
+
+    private ClassName parseName(String clsName) {
+        Objects.requireNonNull(clsName);
+        ClassName className = typeNamePool.get(clsName);
+        if (className != null) {
+            return className;
+        }
+        // 程序生成的clsName通常是紧凑的，不包含空白字符(缩进)的，因此可以安全缓存；
+        // 如果clsName包含空白字符，通常是用户手写的，缓存有一定的风险性 —— 可能产生恶意缓存
+        if (ObjectUtils.containsWhitespace(clsName)) {
+            return ClassName.parse(clsName);
+        }
+        className = ClassName.parse(clsName);
+        typeNamePool.put(clsName, className);
+        return className;
+    }
 
     /**
      * 根据Type查找对应的ClassName。
@@ -202,13 +218,4 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
     }
 
     // endregion
-
-    /** 这里导出的是快照，但并不会导致错误 */
-    @Override
-    public List<TypeMeta> export() {
-        List<TypeMeta> result = new ArrayList<>(basicRegistry.export());
-        result.addAll(type2MetaDic.values());
-        return result;
-    }
-
 }

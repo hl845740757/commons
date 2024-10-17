@@ -44,10 +44,10 @@ public class BTreeCodecTest
 
     [SetUp]
     public void SetUp() {
-        GenericCodecConfig genericCodecConfig = new GenericCodecConfig();
+        DsonCodecConfig codecConfig = new DsonCodecConfig();
         Dictionary<Type, Type> rawType2CodecTypeDic = BTreeCodecExporter.ExportCodecs();
         foreach (KeyValuePair<Type, Type> pair in rawType2CodecTypeDic) {
-            genericCodecConfig.AddCodec(pair.Key, pair.Value);
+            codecConfig.AddGenericCodec(pair.Key, pair.Value);
         }
 
         List<TypeMeta> typeMetas = rawType2CodecTypeDic.Keys
@@ -56,7 +56,7 @@ public class BTreeCodecTest
 
         converter = new DsonConverterBuilder()
             .AddTypeMetas(typeMetas)
-            .AddGenericCodecConfig(genericCodecConfig)
+            .AddCodecConfig(codecConfig)
             .SetOptions(ConverterOptions.DEFAULT)
             .Build();
     }

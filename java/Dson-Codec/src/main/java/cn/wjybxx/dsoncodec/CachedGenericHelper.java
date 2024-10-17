@@ -27,6 +27,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 添加了缓存功能的GenericHelper
  *
+ * <h3>宽松匹配</h3>
+ * 默认采取宽松匹配策略，只有泛型参数声明的个数和名字相同，就认为可继承泛型参数。
+ * 这可以更加灵活，如果不希望某些类型之间匹配，用户可通过扩展{@link GenericHelper}拦截。
+ *
  * @author wjybxx
  * date - 2024/9/27
  */
@@ -35,7 +39,7 @@ public final class CachedGenericHelper implements GenericHelper {
 
     private final List<GenericHelper> userHelpers;
     private final ConcurrentHashMap<CacheKey, TypeInfo> resultCache = new ConcurrentHashMap<>(1024);
-    private final ConcurrentHashMap<InheritableCacheKey, Boolean> inheritableCache = new ConcurrentHashMap<>(1024);
+    private final ConcurrentHashMap<ClassPair, Boolean> inheritableCache = new ConcurrentHashMap<>(1024);
 
     public CachedGenericHelper() {
         userHelpers = List.of();
@@ -43,29 +47,6 @@ public final class CachedGenericHelper implements GenericHelper {
 
     public CachedGenericHelper(List<GenericHelper> userHelpers) {
         this.userHelpers = List.copyOf(userHelpers);
-    }
-
-    /**
-     * 添加是否可继承缓存
-     *
-     * @param clazz    运行时类型
-     * @param declared 声明类型
-     * @param val      是否可继承泛型参数
-     */
-    public <T> void addInheritable(Class<T> clazz, Class<? super T> declared, boolean val) {
-        inheritableCache.put(new InheritableCacheKey(clazz, declared), val);
-    }
-
-    /**
-     * 添加是否可继承缓存。
-     * 允许非继承关系的class，主要用于类型投影。
-     *
-     * @param clazz    运行时类型
-     * @param declared 声明类型
-     * @param val      是否可继承泛型参数
-     */
-    public void addInheritableUnsafe(Class<?> clazz, Class<?> declared, boolean val) {
-        inheritableCache.put(new InheritableCacheKey(clazz, declared), val);
     }
 
     @Nullable
@@ -78,7 +59,7 @@ public final class CachedGenericHelper implements GenericHelper {
         if (typeInfo != null) {
             return typeInfo == TypeInfo.OBJECT ? null : typeInfo;
         }
-        if (runtimeType.isArray() || declaredType.rawType.isArray()) {
+        if (runtimeType.isArray() || declaredType.isArrayType()) {
             // 数组需要根据root元素的类型查询
             typeInfo = inheritTypeArgs(
                     runtimeType.isArray() ? ArrayUtils.getRootComponentType(runtimeType) : runtimeType,
@@ -107,7 +88,7 @@ public final class CachedGenericHelper implements GenericHelper {
     }
 
     private boolean canInheritTypeArgs(Class<?> runtimeType, Class<?> declaredType) {
-        InheritableCacheKey cacheKey = new InheritableCacheKey(runtimeType, declaredType);
+        ClassPair cacheKey = new ClassPair(runtimeType, declaredType);
         Boolean r = inheritableCache.get(cacheKey);
         if (r == null) {
             r = isSameGenericTypeArguments(runtimeType, declaredType);
@@ -161,31 +142,4 @@ public final class CachedGenericHelper implements GenericHelper {
         }
     }
 
-    private static class InheritableCacheKey {
-
-        public final Class<?> runtimeType;
-        public final Class<?> declaredType;
-
-        public InheritableCacheKey(Class<?> runtimeType, Class<?> declaredType) {
-            this.runtimeType = runtimeType;
-            this.declaredType = declaredType;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            InheritableCacheKey cacheKey = (InheritableCacheKey) o;
-            return runtimeType == cacheKey.runtimeType // class 使用 ==
-                    && declaredType == cacheKey.declaredType;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = runtimeType.hashCode();
-            result = 31 * result + declaredType.hashCode();
-            return result;
-        }
-    }
 }

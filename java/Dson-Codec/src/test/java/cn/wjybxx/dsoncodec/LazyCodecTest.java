@@ -36,7 +36,7 @@ public class LazyCodecTest {
 
     @Test
     void testLazyCodec() {
-        TypeMetaRegistry typeMetaRegistry = SimpleTypeMetaRegistry.fromTypeMetas(
+        TypeMetaConfig typeMetaConfig = TypeMetaConfig.fromTypeMetas(
                 TypeMeta.of(MyStruct.class, ObjectStyle.INDENT, "MyStruct")
         );
         ConverterOptions options = ConverterOptions.newBuilder()
@@ -52,10 +52,8 @@ public class LazyCodecTest {
         final byte[] bytesSource;
         {
             DsonConverter converter = new DsonConverterBuilder()
-                    .addTypeMetaRegistry(typeMetaRegistry)
-                    .addCodecRegistry(SimpleCodecRegistry.fromCodecs(
-                            new MyStructCodec(Role.SOURCE)
-                    ))
+                    .addTypeMetaConfig(typeMetaConfig)
+                    .addCodec(new MyStructCodec(Role.SOURCE))
                     .setOptions(options)
                     .build();
             bytesSource = converter.write(myStruct);
@@ -65,10 +63,8 @@ public class LazyCodecTest {
         // 模拟转发 -- 读进来再写
         {
             DsonConverter converter = new DsonConverterBuilder()
-                    .addTypeMetaRegistry(typeMetaRegistry)
-                    .addCodecRegistry(SimpleCodecRegistry.fromCodecs(
-                            new MyStructCodec(Role.ROUTER)
-                    ))
+                    .addTypeMetaConfig(typeMetaConfig)
+                    .addCodec(new MyStructCodec(Role.ROUTER))
                     .setOptions(options)
                     .build();
             routerBytes = converter.write(converter.read(bytesSource, TypeInfo.OBJECT));
@@ -78,10 +74,8 @@ public class LazyCodecTest {
         MyStruct destStruct;
         {
             DsonConverter converter = new DsonConverterBuilder()
-                    .addTypeMetaRegistry(typeMetaRegistry)
-                    .addCodecRegistry(SimpleCodecRegistry.fromCodecs(
-                            new MyStructCodec(Role.DESTINATION)
-                    ))
+                    .addTypeMetaConfig(typeMetaConfig)
+                    .addCodec(new MyStructCodec(Role.DESTINATION))
                     .setOptions(options)
                     .build();
             destStruct = (MyStruct) converter.read(routerBytes, TypeInfo.OBJECT);

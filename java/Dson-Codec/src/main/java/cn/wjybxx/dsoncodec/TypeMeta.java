@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.dson.text.ObjectStyle;
 
 import javax.annotation.concurrent.Immutable;
@@ -51,10 +52,25 @@ public final class TypeMeta {
         this.clsNames = List.copyOf(clsNames);
     }
 
+    /** 类的主别名 */
     public String mainClsName() {
         return clsNames.get(0);
     }
+
+    /** 替换Style */
+    public TypeMeta withStyle(ObjectStyle style) {
+        return new TypeMeta(typeInfo, style, clsNames);
+    }
+
     // region factory
+
+    public static TypeMeta of(Class<?> clazz, String clsName) {
+        return new TypeMeta(TypeInfo.of(clazz), ObjectStyle.INDENT, List.of(clsName));
+    }
+
+    public static TypeMeta of(Class<?> clazz, String... clsNames) {
+        return new TypeMeta(TypeInfo.of(clazz), ObjectStyle.INDENT, List.of(clsNames));
+    }
 
     public static TypeMeta of(Class<?> clazz, ObjectStyle style) {
         return new TypeMeta(TypeInfo.of(clazz), style, List.of(clazz.getSimpleName()));
@@ -72,8 +88,7 @@ public final class TypeMeta {
         return new TypeMeta(TypeInfo.of(clazz), style, List.copyOf(clsNames));
     }
 
-    //
-
+    // 泛型类
     public static TypeMeta of(TypeInfo typeInfo, ObjectStyle style, String clsName) {
         return new TypeMeta(typeInfo, style, List.of(clsName));
     }
@@ -95,7 +110,7 @@ public final class TypeMeta {
         TypeMeta typeMeta = (TypeMeta) o;
         return typeInfo.equals(typeMeta.typeInfo)
                 && style == typeMeta.style
-                && clsNames.equals(typeMeta.clsNames);
+                && CollectionUtils.sequenceEqual(clsNames, typeMeta.clsNames);
     }
 
     @Override

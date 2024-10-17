@@ -58,14 +58,14 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     private readonly Type _encoderType;
     private readonly bool _autoStart;
     private readonly bool _writeAsArray;
-    private readonly AbstractEnumCodec<T>? _enumCodec;
+    private readonly IEnumCodec<T>? _enumCodec;
 
     internal DsonCodecImpl(IDsonCodec<T> codec) {
         _codec = codec;
         _encoderType = codec.GetEncoderType();
         _autoStart = codec.AutoStartEnd;
         _writeAsArray = codec.IsWriteAsArray;
-        _enumCodec = codec as AbstractEnumCodec<T>;
+        _enumCodec = codec as IEnumCodec<T>;
     }
 
     public override IDsonCodec GetCodec() {
@@ -95,12 +95,12 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
         if (_autoStart) {
             if (_writeAsArray) {
                 writer.WriteStartArray(style);
-                writer.WriteTypeInfo(declaredType, _encoderType);
+                writer.WriteTypeInfo(_encoderType, declaredType);
                 _codec.WriteObject(writer, ref inst, declaredType, style);
                 writer.WriteEndArray();
             } else {
                 writer.WriteStartObject(style);
-                writer.WriteTypeInfo(declaredType, _encoderType);
+                writer.WriteTypeInfo(_encoderType, declaredType);
                 _codec.WriteObject(writer, ref inst, declaredType, style);
                 writer.WriteEndObject();
             }
@@ -135,7 +135,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
 
     #region 枚举支持
 
-    public bool IsEnumCodec => typeof(T).IsEnum; // 这个测试兼容
+    public bool IsEnumCodec => _enumCodec != null;
 
     public bool ForNumber(int number, out T result) {
         if (_enumCodec != null) {

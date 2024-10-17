@@ -30,62 +30,6 @@ namespace Wjybxx.Dson.Codec
 /// </summary>
 public static class DsonConverterUtils
 {
-    /** 默认的类型元数据 */
-    private static readonly ITypeMetaRegistry TYPE_META_REGISTRY = SimpleTypeMetaRegistry.FromTypeMetas(BuiltinTypeMetas());
-
-    private static TypeMeta TypeMetaOf(Type type, params string[] clsNames) {
-        if (clsNames.Length == 0) {
-            clsNames = new string[] { type.Name };
-        }
-        return TypeMeta.Of(type, ObjectStyle.Indent, clsNames);
-    }
-
-    private static List<TypeMeta> BuiltinTypeMetas() {
-        return new List<TypeMeta>(30)
-        {
-            TypeMetaOf(typeof(int), DsonTexts.LabelInt32, "int", "int32"),
-            TypeMetaOf(typeof(long), DsonTexts.LabelInt64, "long", "int64"),
-            TypeMetaOf(typeof(float), DsonTexts.LabelFloat, "float"),
-            TypeMetaOf(typeof(double), DsonTexts.LabelDouble, "double"),
-            TypeMetaOf(typeof(bool), DsonTexts.LabelBool, "bool", "boolean"),
-            TypeMetaOf(typeof(string), DsonTexts.LabelString, "string"),
-            TypeMetaOf(typeof(Binary), DsonTexts.LabelBinary, "bytes"),
-            TypeMetaOf(typeof(ObjectPtr), DsonTexts.LabelPtr),
-            TypeMetaOf(typeof(ObjectLitePtr), DsonTexts.LabelLitePtr),
-            TypeMetaOf(typeof(ExtDateTime), DsonTexts.LabelDateTime),
-            TypeMetaOf(typeof(Timestamp), DsonTexts.LabelTimestamp),
-            // 基础类型
-            TypeMetaOf(typeof(uint), DsonTexts.LabelUInt32, "uint", "uint32"),
-            TypeMetaOf(typeof(ulong), DsonTexts.LabelUInt64, "ulong", "uint64"),
-            TypeMetaOf(typeof(short), "int16", "short"),
-            TypeMetaOf(typeof(ushort), "uint16", "ushort"),
-            TypeMetaOf(typeof(byte), "byte"),
-            TypeMetaOf(typeof(sbyte), "sbyte"),
-            TypeMetaOf(typeof(char), "char"),
-            // 特殊组件
-            TypeMetaOf(typeof(object), "Object", "object"), // object会作为泛型参数...
-            TypeMetaOf(typeof(DictionaryEncodeProxy<>), "DictionaryEncodeProxy", "MapEncodeProxy"),
-            // Nullable
-            TypeMetaOf(typeof(Nullable<>), "Nullable"), // Nullable
-            
-
-            // 基础集合
-            TypeMetaOf(typeof(ICollection<>), "ICollection", "ICollection`1"),
-            TypeMetaOf(typeof(IList<>), "IList", "IList`1"),
-            TypeMetaOf(typeof(List<>), "List", "List`1"),
-
-            TypeMetaOf(typeof(IDictionary<,>), "IDictionary", "IDictionary`2"),
-            TypeMetaOf(typeof(Dictionary<,>), "Dictionary", "Dictionary`2"),
-            TypeMetaOf(typeof(LinkedDictionary<,>), "LinkedDictionary", "LinkedDictionary`2"),
-            TypeMetaOf(typeof(ConcurrentDictionary<,>), "ConcurrentDictionary", "ConcurrentDictionary`2")
-        };
-    }
-
-    /** 获取默认的类型元数据注册表 */
-    public static ITypeMetaRegistry GetDefaultTypeMetaRegistry() {
-        return TYPE_META_REGISTRY;
-    }
-
     /** 注意：默认情况下字典应该是一个数组对象，而不是普通的对象 */
     public static bool IsEncodeAsArray(Type encoderClass) {
         // c#不能直接测试是否是某个泛型原型的子类，好在字典也实现了IEnumerable，字典默认也需要编码为数组

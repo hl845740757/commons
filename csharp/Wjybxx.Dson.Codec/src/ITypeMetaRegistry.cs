@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Dson.Codec
 {
@@ -28,6 +29,7 @@ namespace Wjybxx.Dson.Codec
 /// <h3>泛型</h3>
 /// 用户在初始化Registry时无需处理泛型类的TypeMeta，底层会动态生成对应的TypeMeta，用户只需要保证使用到的所有原始类型都注册了。
 /// </summary>
+[ThreadSafe]
 public interface ITypeMetaRegistry
 {
     /// <summary>
@@ -43,12 +45,5 @@ public interface ITypeMetaRegistry
     /// <param name="clsName"></param>
     /// <returns></returns>
     TypeMeta? OfName(string clsName);
-
-    /// <summary>
-    /// 将包含的所有类型信息导出。
-    /// 该方法主要用于聚合多个Registry为单个Registry，以提高查询效率。
-    /// </summary>
-    /// <returns></returns>
-    List<TypeMeta> Export();
 }
 }

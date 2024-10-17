@@ -70,7 +70,7 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
         TypeInfo valueTypeInfo = encoderType.genericArgs.get(0);
 
         if (writer.options().writeMapAsDocument) {
-            writer.writeStartObject(style, declaredType, encoderType);
+            writer.writeStartObject(style, encoderType, declaredType);
             for (var itr = Long2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                 Long2ObjectMap.Entry<V> entry = itr.next();
                 String keyString = Long.toString(entry.getLongKey());
@@ -84,7 +84,7 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
             }
             writer.writeEndObject();
         } else {
-            writer.writeStartArray(style, declaredType, encoderType);
+            writer.writeStartArray(style, encoderType, declaredType);
             for (var itr = Long2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                 Long2ObjectMap.Entry<V> entry = itr.next();
                 writer.writeLong(null, entry.getLongKey(), null);

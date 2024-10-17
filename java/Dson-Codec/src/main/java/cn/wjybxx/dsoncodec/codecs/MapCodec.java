@@ -89,6 +89,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         return encoderType;
     }
 
+    /** {@link #encoderType}一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
     @SuppressWarnings({"unchecked", "rawtypes"})
     private Map<K, V> newMap() {
         if (factory != null) return factory.get();
@@ -119,9 +120,9 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
 
         var entrySet = inst.entrySet();
         if (writer.options().writeMapAsDocument) {
-            writer.writeStartObject(style, declaredType, encoderType);
+            writer.writeStartObject(style, encoderType, declaredType);
             for (Map.Entry<K, V> entry : entrySet) {
-                String keyString = writer.encodeKey(entry.getKey());
+                String keyString = writer.encodeKey(entry.getKey(), keyTypeInfo);
                 V value = entry.getValue();
                 if (value == null) {
                     // map写为普通的Object的时候，必须要写入Null，否则containsKey会异常；要强制写入Null必须先写入Name
@@ -133,7 +134,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
             }
             writer.writeEndObject();
         } else {
-            writer.writeStartArray(style, declaredType, encoderType);
+            writer.writeStartArray(style, encoderType, declaredType);
             for (Map.Entry<K, V> entry : entrySet) {
                 writer.writeObject(null, entry.getKey(), keyTypeInfo, null);
                 writer.writeObject(null, entry.getValue(), valueTypeInfo, null);

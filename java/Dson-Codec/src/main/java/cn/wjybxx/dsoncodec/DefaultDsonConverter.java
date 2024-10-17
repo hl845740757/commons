@@ -38,15 +38,18 @@ class DefaultDsonConverter implements DsonConverter {
     private final TypeMetaRegistry typeMetaRegistry;
     private final DsonCodecRegistry codecRegistry;
     private final GenericHelper genericHelper;
+    private final TypeWriteHelper typeWriteHelper;
     private final ConverterOptions options;
 
     DefaultDsonConverter(TypeMetaRegistry typeMetaRegistry,
                          DsonCodecRegistry codecRegistry,
                          GenericHelper genericHelper,
+                         TypeWriteHelper typeWriteHelper,
                          ConverterOptions options) {
         this.codecRegistry = codecRegistry;
         this.typeMetaRegistry = typeMetaRegistry;
         this.genericHelper = genericHelper;
+        this.typeWriteHelper = typeWriteHelper;
         this.options = options;
     }
 
@@ -73,7 +76,7 @@ class DefaultDsonConverter implements DsonConverter {
     @Override
     public DsonConverter withOptions(ConverterOptions options) {
         Objects.requireNonNull(options);
-        return new DefaultDsonConverter(typeMetaRegistry, codecRegistry, genericHelper, options);
+        return new DefaultDsonConverter(typeMetaRegistry, codecRegistry, genericHelper, typeWriteHelper, options);
     }
 
     @Nonnull
@@ -126,7 +129,7 @@ class DefaultDsonConverter implements DsonConverter {
     }
 
     private void encodeObject(DsonOutput outputStream, Object value, TypeInfo typeInfo) {
-        try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this,
+        try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this, typeWriteHelper,
                 new DsonBinaryWriter(options.binWriterSettings, outputStream))) {
             wrapper.writeObject(null, value, typeInfo, null);
             wrapper.flush();
@@ -175,7 +178,7 @@ class DefaultDsonConverter implements DsonConverter {
     @Override
     public void writeAsDson(Object value, @Nonnull TypeInfo declaredType, Writer writer, ObjectStyle style) {
         Objects.requireNonNull(writer, "writer");
-        try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this,
+        try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this, typeWriteHelper,
                 new DsonTextWriter(options.textWriterSettings, writer, false))) {
             wrapper.writeObject(null, value, declaredType, style);
             wrapper.flush();
@@ -194,7 +197,7 @@ class DefaultDsonConverter implements DsonConverter {
     public DsonValue writeAsDsonValue(Object value, TypeInfo declaredType) {
         Objects.requireNonNull(value);
         DsonArray<String> outList = new DsonArray<>(1);
-        try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this,
+        try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this, typeWriteHelper,
                 new DsonCollectionWriter(options.binWriterSettings, outList))) {
             wrapper.writeObject(null, value, declaredType, ObjectStyle.INDENT);
             DsonValue dsonValue = outList.get(0);

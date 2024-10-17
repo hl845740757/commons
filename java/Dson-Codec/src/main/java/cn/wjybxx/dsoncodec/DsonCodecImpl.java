@@ -17,7 +17,6 @@
 package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dsoncodec.codecs.EnumCodec;
 import cn.wjybxx.dsoncodec.codecs.IEnumCodec;
 
 import javax.annotation.Nonnull;
@@ -67,12 +66,12 @@ public final class DsonCodecImpl<T> {
         if (autoStart) {
             if (writeAsArray) {
                 writer.writeStartArray(style);
-                writer.writeTypeInfo(declaredType, encoderType);
+                writer.writeTypeInfo(encoderType, declaredType);
                 codec.writeObject(writer, inst, declaredType, style);
                 writer.writeEndArray();
             } else {
                 writer.writeStartObject(style);
-                writer.writeTypeInfo(declaredType, encoderType);
+                writer.writeTypeInfo(encoderType, declaredType);
                 codec.writeObject(writer, inst, declaredType, style);
                 writer.writeEndObject();
             }
@@ -108,7 +107,7 @@ public final class DsonCodecImpl<T> {
     }
 
     public boolean isEnumCodec() {
-        return codec instanceof EnumCodec;
+        return enumCodec != null;
     }
 
     public T forNumber(int number) {
@@ -123,5 +122,19 @@ public final class DsonCodecImpl<T> {
             return enumCodec.forName(name);
         }
         throw new DsonCodecException("unexpected forName method call");
+    }
+
+    public int getNumber(T val) {
+        if (enumCodec != null) {
+            return enumCodec.getNumber(val);
+        }
+        throw new DsonCodecException("unexpected getNumber method call");
+    }
+
+    public String getName(T val) {
+        if (enumCodec != null) {
+            return enumCodec.getName(val);
+        }
+        throw new DsonCodecException("unexpected getName method call");
     }
 }

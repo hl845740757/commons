@@ -16,10 +16,6 @@
 
 package cn.wjybxx.dsoncodec;
 
-import cn.wjybxx.dson.text.DsonTexts;
-import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dson.types.*;
-
 import javax.annotation.Nullable;
 import java.lang.invoke.CallSite;
 import java.lang.invoke.LambdaMetafactory;
@@ -27,8 +23,10 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Collection;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -36,9 +34,6 @@ import java.util.function.Supplier;
  * date 2023/4/4
  */
 public final class DsonConverterUtils {
-
-    /** 类型原数据注册表 */
-    private static final TypeMetaRegistry BUILTIN_TYPE_METAS;
 
     private static final MethodType SUPPLIER_INVOKE_TYPE = MethodType.methodType(Supplier.class);
     private static final MethodType SUPPLIER_GET_METHOD_TYPE = MethodType.methodType(Object.class);
@@ -71,78 +66,9 @@ public final class DsonConverterUtils {
         primitiveTypeDefaultValueMap.put(Long.class, 0L);
         primitiveTypeDefaultValueMap.put(Short.class, (short) 0);
         primitiveTypeDefaultValueMap.put(Void.class, null);
-
-        // 内置codec类型
-        List<TypeMeta> typeMetaList = builtinTypeMetas();
-        BUILTIN_TYPE_METAS = SimpleTypeMetaRegistry.fromTypeMetas(typeMetaList);
     }
-
-    // region 内建codec
-
-    private static TypeMeta typeMetaOf(Class<?> clazz, String... clsNames) {
-        if (clsNames.length == 0) {
-            clsNames = new String[]{clazz.getSimpleName()};
-        }
-        return TypeMeta.of(clazz, ObjectStyle.INDENT, List.of(clsNames));
-    }
-
-    /**
-     * 内建基本类型的codec
-     * 1.只包含基础的类型，其它都需要用户分配
-     * 2.clsName并不总是等于类型名，以方便跨语言交互
-     */
-    private static List<TypeMeta> builtinTypeMetas() {
-        return List.of(
-                // dson内建结构
-                typeMetaOf(int.class, DsonTexts.LABEL_INT32, "int", "int32", "ui", "uint", "uint32"),
-                typeMetaOf(long.class, DsonTexts.LABEL_INT64, "long", "int64", "uL", "ulong", "uint64"),
-                typeMetaOf(float.class, DsonTexts.LABEL_FLOAT, "float"),
-                typeMetaOf(double.class, DsonTexts.LABEL_DOUBLE, "double"),
-                typeMetaOf(boolean.class, DsonTexts.LABEL_BOOL, "bool", "boolean"),
-                typeMetaOf(String.class, DsonTexts.LABEL_STRING, "string"),
-                typeMetaOf(Binary.class, DsonTexts.LABEL_BINARY, "bytes"),
-                typeMetaOf(ObjectPtr.class, DsonTexts.LABEL_PTR),
-                typeMetaOf(ObjectLitePtr.class, DsonTexts.LABEL_LITE_PTR),
-                typeMetaOf(ExtDateTime.class, DsonTexts.LABEL_DATETIME),
-                typeMetaOf(Timestamp.class, DsonTexts.LABEL_TIMESTAMP),
-                // 基础类型
-                typeMetaOf(short.class, "int16", "uint16", "short"),
-                typeMetaOf(byte.class, "byte", "sbyte"),
-                typeMetaOf(char.class, "char"),
-                // 装箱类型--要和c#互通
-                typeMetaOf(Integer.class, "Int"),
-                typeMetaOf(Long.class, "Long"),
-                typeMetaOf(Float.class, "Float"),
-                typeMetaOf(Double.class, "Double"),
-                typeMetaOf(Boolean.class, "Bool"),
-                typeMetaOf(Short.class, "Short"),
-                typeMetaOf(Byte.class, "Byte"),
-                typeMetaOf(Character.class, "Char"),
-
-                // 特殊组件
-                typeMetaOf(Object.class, "object", "Object"), // object会作为泛型参数...
-                typeMetaOf(MapEncodeProxy.class, "DictionaryEncodeProxy", "MapEncodeProxy"),
-
-                // 基础集合
-                typeMetaOf(Collection.class, "ICollection", "ICollection`1"),
-                typeMetaOf(List.class, "IList", "IList`1"),
-                typeMetaOf(ArrayList.class, "List", "List`1"),
-
-                typeMetaOf(Map.class, "IDictionary", "IDictionary`2"),
-                typeMetaOf(HashMap.class, "HashMap", "HashMap`2"), // c#的字典有毒，不删除的情况下有序，导致Java映射困难
-                typeMetaOf(LinkedHashMap.class, "Dictionary", "Dictionary`2", "LinkedDictionary", "LinkedDictionary`2"),
-                typeMetaOf(ConcurrentHashMap.class, "ConcurrentDictionary", "ConcurrentDictionary`2")
-        );
-    }
-
-    // endregion
 
     // region codec utils
-
-    /** 获取默认的元数据注册表 */
-    public static TypeMetaRegistry getDefaultTypeMetaRegistry() {
-        return BUILTIN_TYPE_METAS;
-    }
 
     /** 获取给定类型的默认值 */
     public static Object getDefaultValue(Class<?> type) {

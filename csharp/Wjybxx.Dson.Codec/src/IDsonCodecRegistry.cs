@@ -23,7 +23,7 @@ namespace Wjybxx.Dson.Codec
 /// <summary>
 /// <see cref="IDsonCodec{T}"/>的注册表
 /// 注意：
-/// 1.如果只是简单的Type到Codec的映射，请使用<see cref="SimpleCodecRegistry"/>的工具方法构建Registry，可实现多Registry的合并。
+/// 1.如果只是简单的Type到Codec的映射，请使用<see cref="DsonCodecConfig"/>的工具方法构建Registry，可实现多Registry的合并。
 /// 2.如果需要处理类型转换问题，请使用<see cref="IDsonCodecCaster"/>
 /// 3.多个Registry合并时，越靠近用户，优先级越高 -- 因为这一定能解决冲突。
 /// </summary>
@@ -49,13 +49,5 @@ public interface IDsonCodecRegistry
     /// PS：可参考集合和字典的Codec实现。
     /// </summary>
     DsonCodecImpl? GetDecoder(Type type);
-
-    /// <summary>
-    /// 导出数据
-    /// 1.在导出时应先导出被代理的Registry，再导出自身数据。
-    /// 2.导出的数据不保证可变性。
-    /// </summary>
-    /// <returns></returns>
-    SimpleCodecRegistry Export();
 }
 }

@@ -18,12 +18,13 @@ package cn.wjybxx.dsoncodec;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
-import java.util.List;
 
 /**
  * 类型元数据注册表
- * <p>
- * 注意：需要实现为线程安全的，建议实现为不可变对象（或事实不可变对象）
+ * 注意：需要实现为线程安全的，建议实现为不可变对象（或事实不可变对象） —— 在运行时通常不会变化。
+ *
+ * <h3>泛型</h3>
+ * 用户在初始化Registry时无需处理泛型类的TypeMeta，底层会动态生成对应的TypeMeta，用户只需要保证使用到的所有原始类型都注册了。
  *
  * @author wjybxx
  * date - 2023/4/26
@@ -41,11 +42,5 @@ public interface TypeMetaRegistry {
      * 通过字符串名字找到类型信息
      */
     TypeMeta ofName(String clsName);
-
-    /**
-     * 导出类型元数据
-     * 该方法的主要目的在于聚合多个Registry为单个Registry，以提高查询效率。
-     */
-    List<TypeMeta> export();
 
 }

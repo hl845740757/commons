@@ -39,19 +39,15 @@ public class GenericCodecTest
             TypeMeta.Of(typeof(Vector3), ObjectStyle.Flow, "V3", "Vector3"),
             TypeMeta.Of(typeof(MyDictionary<,>), ObjectStyle.Indent, "MyDictionary")
         };
-        IList<IDsonCodec> codecs = new List<IDsonCodec>()
-        {
-            new Vector3Codec()
-        };
-
-        GenericCodecConfig genericCodecConfig = new GenericCodecConfig();
-        genericCodecConfig.AddCodec(typeof(MyDictionary<,>), typeof(MyDictionary2Codec<,>),
+        DsonCodecConfig codecConfig = new DsonCodecConfig()
+            .AddCodec(new Vector3Codec());
+        // 
+        codecConfig.AddGenericCodec(typeof(MyDictionary<,>), typeof(MyDictionary2Codec<,>), 
             typeof(MyDictionary<,>), "FACTORY");
 
         converter = new DsonConverterBuilder()
             .AddTypeMetas(typeMetas)
-            .AddCodecs(codecs)
-            .AddGenericCodecConfig(genericCodecConfig)
+            .AddCodecConfig(codecConfig)
             .SetOptions(ConverterOptions.DEFAULT)
             .Build();
     }

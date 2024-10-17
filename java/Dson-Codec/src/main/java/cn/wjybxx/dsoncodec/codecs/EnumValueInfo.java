@@ -16,21 +16,23 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
-import cn.wjybxx.dsoncodec.DsonCodec;
+import java.util.Objects;
 
 /**
- * 接口不添加Enum限制，该接口用于避免拆装箱等问题
+ * 单个枚举值信息
  *
  * @author wjybxx
- * date - 2024/5/11
+ * date - 2023/4/24
  */
-public interface IEnumCodec<T> extends DsonCodec<T> {
+public final class EnumValueInfo<T> {
 
-    T forNumber(int number);
+    public final T value;
+    public final int number;
+    public final String name;
 
-    T forName(String name);
-
-    String getName(T val);
-
-    int getNumber(T val);
+    public EnumValueInfo(T value, int number, String name) {
+        this.value = value;
+        this.number = number;
+        this.name = Objects.requireNonNull(name, "name");
+    }
 }

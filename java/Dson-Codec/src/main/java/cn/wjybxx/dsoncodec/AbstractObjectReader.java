@@ -124,50 +124,31 @@ abstract class AbstractObjectReader implements DsonObjectReader {
     @Override
     public <T> T readObject(String name, TypeInfo declaredType, Supplier<? extends T> factory) {
         Class<T> rawType = (Class<T>) declaredType.rawType;
-        if (!readName(name)) { // 顺带读取了DsonType
+        if (!readName(name)) { // 字段不存在，返回默认值
             return (T) DsonConverterUtils.getDefaultValue(rawType);
         }
 
         DsonReader reader = this.reader;
-        // 基础类型不能返回null
-        if (rawType.isPrimitive()) {
-            return (T) DsonCodecHelper.readPrimitive(reader, name, rawType);
-        }
-        if (rawType == String.class) {
-            return (T) DsonCodecHelper.readString(reader, name);
-        }
-        if (rawType == byte[].class) {
-            Binary binary = DsonCodecHelper.readBinary(reader, name);
-            return (T) (binary == null ? null : binary.unsafeBuffer());
-        }
-
         DsonType dsonType = reader.getCurrentDsonType();
         if (dsonType == DsonType.NULL) { // null直接返回
             reader.readNull(name);
-            return null;
+            return (T) DsonConverterUtils.getDefaultValue(rawType); //
         }
         if (dsonType.isContainer()) { // 容器类型只能通过codec解码
             return readContainer(declaredType, factory, dsonType);
         }
 
-        // 非容器类型,Dson内建结构
-        // 考虑枚举类型 -- 可转换为基础值类型的Object
-        if (rawType.isEnum()) {
-            DsonCodecImpl<T> codec = (DsonCodecImpl<T>) converter.codecRegistry().getDecoder(declaredType);
-            assert codec != null;
+        // 非容器类型 -- Dson内建结构，基础值类型，装箱类型，Enum，String等
+        DsonCodecImpl<T> codec = (DsonCodecImpl<T>) converter.codecRegistry().getDecoder(declaredType);
+        if (codec != null) {
             return codec.readObject(this, declaredType, factory);
-        }
-        // 考虑包装类型
-        Class<?> unboxed = DsonConverterUtils.unboxIfWrapperType(rawType);
-        if (unboxed.isPrimitive()) {
-            return (T) DsonCodecHelper.readPrimitive(reader, name, unboxed);
         }
         // 考虑DsonValue
         if (DsonValue.class.isAssignableFrom(rawType)) {
             return rawType.cast(Dsons.readDsonValue(reader));
         }
         // 默认类型转换-声明类型可能是个抽象类型，eg：Number
-        return rawType.cast(DsonCodecHelper.readDsonValue(reader, dsonType, name));
+        return (T) DsonCodecHelper.readDsonValue(reader, dsonType, name);
     }
 
     private <T> T readContainer(TypeInfo typeInfo, Supplier<? extends T> factory, DsonType dsonType) {
@@ -276,12 +257,11 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         if (keyDeclared == Long.class) {
             return (T) Long.valueOf(keyString);
         }
-        if (!keyDeclared.isEnum()) {
-            throw DsonCodecException.unsupportedKeyType(keyDeclared);
-        }
         // 处理枚举类型
         DsonCodecImpl<T> codec = (DsonCodecImpl<T>) converter.codecRegistry().getDecoder(keyTypeInfo);
-        assert codec != null;
+        if (codec == null || !codec.isEnumCodec()) {
+            throw DsonCodecException.unsupportedKeyType(keyDeclared);
+        }
         T result;
         if (converter.options().writeEnumAsString) {
             result = codec.forName(keyString);

@@ -531,17 +531,26 @@ public class CollectionUtils {
 
     /** 比较List的相等性 -- 按序相等 */
     public static <E> boolean sequenceEqual(List<E> first, List<E> second) {
-        if (first == null || second == null)  {
-            throw new NullPointerException(first == null ? "first" : "second");
-        }
+        Objects.requireNonNull(first, "first");
+        Objects.requireNonNull(second, "second");
+
         if (first == second) return true;
         if (first.size() != second.size()) return false;
         for (int i = 0, size = first.size(); i < size; i++) {
-            if (!first.get(i).equals(second.get(i))) {
+            if (!Objects.equals(first.get(i), second.get(i))) {
                 return false;
             }
         }
         return true;
+    }
+
+    /** 获取List的hashcode */
+    public static int hashcode(List<?> list) {
+        int r = 1;
+        for (int i = 0, size = list.size(); i < size; i++) {
+            r = 31 * r + Objects.hashCode(list.get(i));
+        }
+        return r;
     }
 
     // endregion

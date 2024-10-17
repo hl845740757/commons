@@ -18,146 +18,202 @@
 
 using System;
 using System.Collections.Generic;
+using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec
 {
 public class DsonConverterBuilder
 {
-    private readonly SimpleTypeMetaRegistry tempTypeMetaRegistry = new SimpleTypeMetaRegistry();
-    private readonly SimpleCodecRegistry tempCodecRegistry = new SimpleCodecRegistry(); // 用于简化build
-
-    private readonly List<ITypeMetaRegistry> typeMetaRegistries = new(4);
-    private readonly List<IDsonCodecRegistry> codecRegistries = new(4);
+    // 用于简化build
+    public readonly TypeMetaConfig typeMetaConfig = new TypeMetaConfig();
+    private readonly DsonCodecConfig codecConfig = new DsonCodecConfig();
     private ConverterOptions options = ConverterOptions.DEFAULT;
-    private bool pureMode = false;
 
-    public DsonConverterBuilder() {
-        typeMetaRegistries.Add(tempTypeMetaRegistry);
-        codecRegistries.Add(tempCodecRegistry);
+    public DsonConverterBuilder(bool includeDefaults = true) {
+        if (includeDefaults) {
+            typeMetaConfig.MergeFrom(TypeMetaConfig.Default);
+            codecConfig.MergeFrom(DsonCodecConfig.Default);
+        }
     }
 
     public IDsonConverter Build() {
-        if (!pureMode) {
-            typeMetaRegistries.Add(DsonConverterUtils.GetDefaultTypeMetaRegistry());
-        }
-        DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(typeMetaRegistries);
-        if (!pureMode) {
-            typeMetaRegistries.RemoveAt(typeMetaRegistries.Count - 1);
-        }
-        return new DefaultDsonConverter(dynamicTypeMetaRegistry,
-            new DynamicCodecRegistry(codecRegistries),
+        return new DefaultDsonConverter(
+            new DynamicTypeMetaRegistry(typeMetaConfig),
+            new DynamicCodecRegistry(codecConfig),
+            new TypeWriteHelper(new Dictionary<TypePair, bool>()),
             options);
-    }
-
-    /**
-     * 是否纯净模式
-     * 纯净模式是指Build时不使用默认的TypeMeta，完全由用户分配。
-     * 主要用于解析跨语言Dson文本。
-     */
-    public bool IsPureMode() {
-        return pureMode;
-    }
-
-    public DsonConverterBuilder SetPureMode(bool pureMode) {
-        this.pureMode = pureMode;
-        return this;
     }
 
     #region type-meta
 
-    public List<ITypeMetaRegistry> GetTypeMetaRegistries() {
-        return typeMetaRegistries;
-    }
-
-    public DsonConverterBuilder AddTypeMetaRegistry(ITypeMetaRegistry typeMetaRegistry) {
-        this.typeMetaRegistries.Add(typeMetaRegistry);
+    public DsonConverterBuilder AddTypeMetaConfig(TypeMetaConfig typeMetaConfig) {
+        this.typeMetaConfig.MergeFrom(typeMetaConfig);
         return this;
     }
 
-    public DsonConverterBuilder AddTypeMetaRegistries(List<ITypeMetaRegistry> typeMetaRegistries) {
-        this.typeMetaRegistries.AddRange(typeMetaRegistries);
+    public DsonConverterBuilder AddTypeMetaConfigs(IEnumerable<TypeMetaConfig> typeMetaConfigs) {
+        foreach (TypeMetaConfig typeMetaConfig in typeMetaConfigs) {
+            this.typeMetaConfig.MergeFrom(typeMetaConfig);
+        }
         return this;
     }
 
     public DsonConverterBuilder AddTypeMeta(TypeMeta typeMeta) {
-        tempTypeMetaRegistry.Add(typeMeta);
+        typeMetaConfig.Add(typeMeta);
         return this;
     }
 
     public DsonConverterBuilder AddTypeMetas(IEnumerable<TypeMeta> typeMetas) {
-        tempTypeMetaRegistry.AddAll(typeMetas);
+        typeMetaConfig.AddAll(typeMetas);
         return this;
     }
 
     public DsonConverterBuilder AddTypeMetas(params TypeMeta[] typeMetas) {
-        tempTypeMetaRegistry.AddAll(typeMetas);
+        typeMetaConfig.AddAll(typeMetas);
+        return this;
+    }
+
+    public DsonConverterBuilder AddTypeMeta(Type type, string clsName) {
+        typeMetaConfig.Add(type, clsName);
+        return this;
+    }
+
+    public DsonConverterBuilder AddTypeMeta(Type type, params string[] clsNames) {
+        typeMetaConfig.Add(type, clsNames);
+        return this;
+    }
+
+    public DsonConverterBuilder AddTypeMeta(Type type, ObjectStyle style, string clsName) {
+        typeMetaConfig.Add(type, style, clsName);
+        return this;
+    }
+
+    public DsonConverterBuilder AddTypeMeta(Type type, ObjectStyle style, params string[] clsNames) {
+        typeMetaConfig.Add(type, style, clsNames);
         return this;
     }
 
     #endregion
 
-    # region codec-registry
+    # region 非泛型codec
 
-    public List<IDsonCodecRegistry> GetCodecRegistries() {
-        return codecRegistries;
-    }
-
-    public DsonConverterBuilder AddCodecRegistry(IDsonCodecRegistry codecRegistry) {
-        this.codecRegistries.Add(codecRegistry);
+    public DsonConverterBuilder AddCodecConfig(DsonCodecConfig codecConfig) {
+        this.codecConfig.MergeFrom(codecConfig);
         return this;
     }
 
-    public DsonConverterBuilder AddCodecRegistries(List<IDsonCodecRegistry> codecRegistries) {
-        this.codecRegistries.AddRange(codecRegistries);
+    public DsonConverterBuilder AddCodecConfigs(IEnumerable<DsonCodecConfig> codecConfigs) {
+        foreach (DsonCodecConfig codecConfig in codecConfigs) {
+            this.codecConfig.MergeFrom(codecConfig);
+        }
         return this;
     }
 
     public DsonConverterBuilder AddCodecs(IEnumerable<IDsonCodec> codecs) {
-        tempCodecRegistry.AddCodecs(codecs);
+        codecConfig.AddCodecs(codecs);
         return this;
     }
 
     public DsonConverterBuilder AddCodec(IDsonCodec codec) {
-        tempCodecRegistry.AddCodec(codec);
+        codecConfig.AddCodec(codec);
         return this;
     }
 
     public DsonConverterBuilder AddCodec(Type type, IDsonCodec codec) {
-        tempCodecRegistry.AddCodec(type, codec);
+        codecConfig.AddCodec(type, codec);
         return this;
     }
 
     public DsonConverterBuilder AddEncoder(Type type, IDsonCodec codec) {
-        tempCodecRegistry.AddEncoder(type, codec);
+        codecConfig.AddEncoder(type, codec);
         return this;
     }
 
     public DsonConverterBuilder AddDecoder(Type type, IDsonCodec codec) {
-        tempCodecRegistry.AddDecoder(type, codec);
-        return this;
-    }
-
-    public DsonConverterBuilder AddGenericCodecConfig(GenericCodecConfig genericCodecConfig) {
-        tempCodecRegistry.AddGenericCodecConfig(genericCodecConfig);
-        return this;
-    }
-
-    public DsonConverterBuilder AddGenericCodecConfigs(IEnumerable<GenericCodecConfig> genericCodecConfigs) {
-        tempCodecRegistry.AddGenericCodecConfigs(genericCodecConfigs);
-        return this;
-    }
-
-    public DsonConverterBuilder AddCaster(IDsonCodecCaster caster) {
-        tempCodecRegistry.AddCaster(caster);
-        return this;
-    }
-
-    public DsonConverterBuilder AddCasters(IEnumerable<IDsonCodecCaster> casters) {
-        tempCodecRegistry.AddCasters(casters);
+        codecConfig.AddDecoder(type, codec);
         return this;
     }
 
     # endregion
+
+    #region 泛型codec
+
+    public DsonConverterBuilder AddGenericCodec(Type genericType, Type codecType) {
+        codecConfig.AddGenericCodec(genericType, codecType);
+        return this;
+    }
+
+    public DsonConverterBuilder AddGenericCodec(Type genericType, Type codecType, string factoryFieldName) {
+        codecConfig.AddGenericCodec(genericType, codecType, factoryFieldName);
+        return this;
+    }
+
+    public DsonConverterBuilder AddGenericCodec(Type genericType, Type codecType, Type factoryDeclaringType, string factoryFieldName) {
+        codecConfig.AddGenericCodec(genericType, codecType, factoryDeclaringType, factoryFieldName);
+        return this;
+    }
+
+    public DsonConverterBuilder AddGenericCodec(GenericCodecInfo genericCodecInfo) {
+        codecConfig.AddGenericCodec(genericCodecInfo);
+        return this;
+    }
+
+    public DsonConverterBuilder AddGenericEncoder(Type genericType, Type codecType) {
+        codecConfig.AddGenericEncoder(genericType, codecType);
+        return this;
+    }
+
+    public DsonConverterBuilder AddGenericEncoder(Type genericType, Type codecType, string factoryFieldName) {
+        codecConfig.AddGenericEncoder(genericType, codecType, factoryFieldName);
+        return this;
+    }
+
+    public DsonConverterBuilder AddGenericEncoder(Type genericType, Type codecType, Type factoryDeclaringType, string factoryFieldName) {
+        codecConfig.AddGenericEncoder(genericType, codecType, factoryDeclaringType, factoryFieldName);
+        return this;
+    }
+
+    public DsonConverterBuilder AddGenericEncoder(GenericCodecInfo genericCodecInfo) {
+        codecConfig.AddGenericEncoder(genericCodecInfo);
+        return this;
+    }
+
+    public DsonConverterBuilder AddGenericDecoder(Type genericType, Type codecType) {
+        codecConfig.AddGenericDecoder(genericType, codecType);
+        return this;
+    }
+
+    public DsonConverterBuilder AddGenericDecoder(Type genericType, Type codecType, string factoryFieldName) {
+        codecConfig.AddGenericDecoder(genericType, codecType, factoryFieldName);
+        return this;
+    }
+
+    public DsonConverterBuilder AddGenericDecoder(Type genericType, Type codecType, Type factoryDeclaringType, string factoryFieldName) {
+        codecConfig.AddGenericDecoder(genericType, codecType, factoryDeclaringType, factoryFieldName);
+        return this;
+    }
+
+    public DsonConverterBuilder AddGenericDecoder(GenericCodecInfo genericCodecInfo) {
+        codecConfig.AddGenericDecoder(genericCodecInfo);
+        return this;
+    }
+
+    #endregion
+
+    public DsonConverterBuilder AddCaster(IDsonCodecCaster caster) {
+        codecConfig.AddCaster(caster);
+        return this;
+    }
+
+    public DsonConverterBuilder AddCasters(IEnumerable<IDsonCodecCaster> casters) {
+        codecConfig.AddCasters(casters);
+        return this;
+    }
+
+    public DsonConverterBuilder AddOptimizedType(Type encoderType, Type declaredType, bool val = true) {
+        codecConfig.AddOptimizedType(encoderType, declaredType, val);
+        return this;
+    }
 
     public ConverterOptions GetOptions() {
         return options;

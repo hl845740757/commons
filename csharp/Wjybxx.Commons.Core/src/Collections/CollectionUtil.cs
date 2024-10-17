@@ -98,28 +98,9 @@ public static partial class CollectionUtil
         if (self == null) throw new ArgumentNullException(nameof(self));
         if (items == null) throw new ArgumentNullException(nameof(items));
         if (self is IGenericCollection<T> generic) {
-            if (items is ICollection<T> other1) {
-                generic.AdjustCapacity(generic.Count + other1.Count);
-            } else if (items is IReadOnlyCollection<T> other2) {
-                generic.AdjustCapacity(generic.Count + other2.Count);
-            }
-        }
-        foreach (T item in items) {
-            self.Add(item);
-        }
-    }
-
-    /// <summary>
-    /// 批量Add元素
-    /// </summary>
-    public static void AddAll<T>(this IGenericCollection<T> self, IEnumerable<T> items) {
-        if (self == null) throw new ArgumentNullException(nameof(self));
-        if (items == null) throw new ArgumentNullException(nameof(items));
-        {
-            if (items is ICollection<T> other1) {
-                self.AdjustCapacity(self.Count + other1.Count);
-            } else if (items is IReadOnlyCollection<T> other2) {
-                self.AdjustCapacity(self.Count + other2.Count);
+            int itemsCount = PredicateCount(items);
+            if (itemsCount > 0) {
+                generic.AdjustCapacity(generic.Count + itemsCount);
             }
         }
         foreach (T item in items) {
@@ -207,11 +188,14 @@ public static partial class CollectionUtil
     /// <summary>
     /// 批量添加元素 -- 如果Key已存在，则抛出异常
     /// </summary>
-    public static void AddAll<TKey, TValue>(this IGenericDictionary<TKey, TValue> self, IEnumerable<KeyValuePair<TKey, TValue>> pairs) {
+    public static void AddAll<TKey, TValue>(this IDictionary<TKey, TValue> self, IEnumerable<KeyValuePair<TKey, TValue>> pairs) {
         if (self == null) throw new ArgumentNullException(nameof(self));
         if (pairs == null) throw new ArgumentNullException(nameof(pairs));
-        if (pairs is ICollection<KeyValuePair<TKey, TValue>> collection) {
-            self.AdjustCapacity(self.Count + collection.Count);
+        if (self is IGenericDictionary<TKey, TValue> generic) {
+            int itemsCount = PredicateCount(pairs);
+            if (itemsCount > 0) {
+                generic.AdjustCapacity(generic.Count + itemsCount);
+            }
         }
         foreach (KeyValuePair<TKey, TValue> pair in pairs) {
             self.Add(pair.Key, pair.Value);
@@ -221,23 +205,37 @@ public static partial class CollectionUtil
     /// <summary>
     /// 批量添加元素 -- 如果Key已存在，则覆盖
     /// </summary>
-    public static void PutAll<TKey, TValue>(this IGenericDictionary<TKey, TValue> self, IEnumerable<KeyValuePair<TKey, TValue>> pairs) {
+    public static void PutAll<TKey, TValue>(this IDictionary<TKey, TValue> self, IEnumerable<KeyValuePair<TKey, TValue>> pairs) {
         if (self == null) throw new ArgumentNullException(nameof(self));
         if (pairs == null) throw new ArgumentNullException(nameof(pairs));
-        if (pairs is ICollection<KeyValuePair<TKey, TValue>> collection) {
-            self.AdjustCapacity(self.Count + collection.Count);
+        if (self is IGenericDictionary<TKey, TValue> generic) {
+            int itemsCount = PredicateCount(pairs);
+            if (itemsCount > 0) {
+                generic.AdjustCapacity(generic.Count + itemsCount);
+            }
         }
         foreach (KeyValuePair<TKey, TValue> pair in pairs) {
-            self.Put(pair.Key, pair.Value);
+            self[pair.Key] = pair.Value;
         }
     }
 
     /// <summary>
     /// 获取key关联的值，如果关联的值不存在，则返回给定的默认值。
     /// </summary>
-    public static TValue GetValueOrDefault<TKey, TValue>(this IGenericDictionary<TKey, TValue> self, TKey key, TValue defValue) {
+    public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key, TValue defValue) {
         if (self == null) throw new ArgumentNullException(nameof(self));
         return self.TryGetValue(key, out TValue value) ? value : defValue;
+    }
+
+    /** 简单测试items的数量，返回-1表示未知 */
+    private static int PredicateCount<T>(IEnumerable<T> items) {
+        if (items is ICollection<T> other1) { // C#的数组实现了ICollection...
+            return other1.Count;
+        }
+        if (items is IReadOnlyCollection<T> other2) {
+            return other2.Count;
+        }
+        return -1;
     }
 
     #endregion
@@ -246,11 +244,17 @@ public static partial class CollectionUtil
 
     public static ImmutableList<T> ToImmutableList2<T>(this IEnumerable<T> source) {
         if (source == null) throw new ArgumentNullException(nameof(source));
+        if (source is ImmutableList<T> list) {
+            return list;
+        }
         return ImmutableList<T>.CreateRange(source);
     }
 
     public static ImmutableLinkedHastSet<T> ToImmutableLinkedHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T>? keyComparer = null) {
         if (source == null) throw new ArgumentNullException(nameof(source));
+        if (source is ImmutableLinkedHastSet<T> hastSet) {
+            return hastSet;
+        }
         return ImmutableLinkedHastSet<T>.CreateRange(source, keyComparer);
     }
 
@@ -258,6 +262,7 @@ public static partial class CollectionUtil
         Func<TSource, TKey> keySelector,
         Func<TSource, TValue> elementSelector,
         IEqualityComparer<TKey>? keyComparer = null) {
+        //
         if (source == null) throw new ArgumentNullException(nameof(source));
         if (keySelector == null) throw new ArgumentNullException(nameof(keySelector));
         if (elementSelector == null) throw new ArgumentNullException(nameof(elementSelector));
@@ -269,7 +274,11 @@ public static partial class CollectionUtil
     public static ImmutableLinkedDictionary<TKey, TValue> ToImmutableLinkedDictionary<TKey, TValue>(
         this IEnumerable<KeyValuePair<TKey, TValue>> source,
         IEqualityComparer<TKey>? keyComparer = null) {
+        //
         if (source == null) throw new ArgumentNullException(nameof(source));
+        if (keyComparer == null && source is ImmutableLinkedDictionary<TKey, TValue> dictionary) {
+            return dictionary;
+        }
         return ImmutableLinkedDictionary<TKey, TValue>.CreateRange(source, keyComparer);
     }
 

@@ -63,7 +63,6 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     private enum FactoryKind
     {
         Unknown,
-        Dictionary, // 字典有两种，需要都列出来
         LinkedDictionary,
         ConcurrentDictionary,
     }
@@ -78,9 +77,6 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     }
 
     private static FactoryKind ComputeFactoryKind(Type typeInfo) {
-        if (typeInfo == typeof(Dictionary<K, V>)) {
-            return FactoryKind.Dictionary;
-        }
         if (typeInfo == typeof(LinkedDictionary<K, V>)
             || typeInfo == typeof(IGenericDictionary<K, V>)) {
             return FactoryKind.LinkedDictionary;
@@ -97,15 +93,14 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
 
     public Type GetEncoderType() => encoderType;
 
-    /** typeInfo一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
-    private IDictionary<K, V> NewDictionary(bool weakOrder) {
+    /** <see cref="encoderType"/>一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
+    private IDictionary<K, V> NewDictionary() {
         if (factory != null) return factory.Invoke();
         return factoryKind switch
         {
-            FactoryKind.Dictionary => new Dictionary<K, V>(),
             FactoryKind.LinkedDictionary => new LinkedDictionary<K, V>(),
             FactoryKind.ConcurrentDictionary => new ConcurrentDictionary<K, V>(),
-            _ => weakOrder ? new Dictionary<K, V>() : new LinkedDictionary<K, V>()
+            _ => new Dictionary<K, V>()
         };
     }
 
@@ -128,7 +123,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             if (keyKind == KeyKind.Int32) {
                 // int2object
                 IDictionary<int, V> int2ObjDic = (IDictionary<int, V>)inst;
-                writer.WriteStartArray(style, declaredType, encoderType);
+                writer.WriteStartArray(style, encoderType, declaredType);
                 foreach (KeyValuePair<int, V> pair in int2ObjDic) {
                     writer.WriteInt(null, pair.Key);
                     writer.WriteObject(null, pair.Value, valDeclaredType);
@@ -137,7 +132,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             } else if (keyKind == KeyKind.Int64) {
                 // long2object
                 IDictionary<long, V> long2ObjDic = (IDictionary<long, V>)inst;
-                writer.WriteStartArray(style, declaredType, encoderType);
+                writer.WriteStartArray(style, encoderType, declaredType);
                 foreach (KeyValuePair<long, V> pair in long2ObjDic) {
                     writer.WriteLong(null, pair.Key);
                     writer.WriteObject(null, pair.Value, valDeclaredType);
@@ -145,7 +140,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 writer.WriteEndArray();
             } else {
                 // generic
-                writer.WriteStartArray(style, declaredType, encoderType);
+                writer.WriteStartArray(style, encoderType, declaredType);
                 foreach (KeyValuePair<K, V> pair in inst) {
                     writer.WriteObject(null, pair.Key, keyDeclaredType);
                     writer.WriteObject(null, pair.Value, valDeclaredType);
@@ -156,7 +151,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     }
 
     public IDictionary<K, V> ReadObject(IDsonObjectReader reader, Func<IDictionary<K, V>>? factory = null) {
-        IDictionary<K, V> result = factory != null ? factory() : NewDictionary(reader.Options.weakOrder);
+        IDictionary<K, V> result = factory != null ? factory() : NewDictionary();
         if (reader.Options.writeMapAsDocument) {
             if (keyKind == KeyKind.Int32) {
                 ReadDictionaryInt(reader, (IDictionary<int, V>)result);
@@ -208,7 +203,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     private void WriteDictionaryObject(IDsonObjectWriter writer, IDictionary<K, V> inst,
                                        Type declaredType, ObjectStyle style) {
         Type valDeclaredType = typeof(V);
-        writer.WriteStartObject(style, declaredType, encoderType);
+        writer.WriteStartObject(style, encoderType, declaredType);
         foreach (KeyValuePair<K, V> pair in inst) {
             string keyString = writer.EncodeKey(pair.Key);
             V value = pair.Value;
@@ -226,7 +221,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     private void WriteDictionaryInt(IDsonObjectWriter writer, IDictionary<int, V> inst,
                                     Type declaredType, ObjectStyle style) {
         Type valDeclaredType = typeof(V);
-        writer.WriteStartObject(style, declaredType, encoderType);
+        writer.WriteStartObject(style, encoderType, declaredType);
         foreach (KeyValuePair<int, V> pair in inst) {
             string keyString = pair.Key.ToString();
             V value = pair.Value;
@@ -244,7 +239,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     private void WriteDictionaryLong(IDsonObjectWriter writer, IDictionary<long, V> inst,
                                      Type declaredType, ObjectStyle style) {
         Type valDeclaredType = typeof(V);
-        writer.WriteStartObject(style, declaredType, encoderType);
+        writer.WriteStartObject(style, encoderType, declaredType);
         foreach (KeyValuePair<long, V> pair in inst) {
             string keyString = pair.Key.ToString();
             V value = pair.Value;

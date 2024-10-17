@@ -39,7 +39,7 @@ public class TypeMetaRegistryTest {
 
     @BeforeEach
     void setUp() {
-        registry = new DynamicTypeMetaRegistry(List.of(DsonConverterUtils.getDefaultTypeMetaRegistry()));
+        registry = new DynamicTypeMetaRegistry(TypeMetaConfig.DEFAULT);
     }
 
     @Test

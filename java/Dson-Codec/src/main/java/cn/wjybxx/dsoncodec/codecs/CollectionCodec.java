@@ -83,6 +83,7 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
         return encoderType;
     }
 
+    /** {@link #encoderType}一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
     @SuppressWarnings({"unchecked", "rawtypes"})
     protected Collection<E> newCollection() {
         if (factory != null) return factory.get();

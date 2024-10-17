@@ -20,7 +20,10 @@ import cn.wjybxx.base.EnumLite;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
-import cn.wjybxx.dsoncodec.*;
+import cn.wjybxx.dsoncodec.DsonCodecException;
+import cn.wjybxx.dsoncodec.DsonObjectReader;
+import cn.wjybxx.dsoncodec.DsonObjectWriter;
+import cn.wjybxx.dsoncodec.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 import cn.wjybxx.dsoncodec.annotations.DsonProperty;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -29,10 +32,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -43,41 +43,57 @@ import java.util.function.Supplier;
  * date - 2023/4/24
  */
 @DsonCodecScanIgnore
-public final class EnumCodec<T extends Enum<T>> implements IEnumCodec<T>, DsonCodec<T> {
+public final class EnumCodec<T extends Enum<T>> implements IEnumCodec<T> {
 
     private final Class<T> enumClass;
     private final EnumMap<T, EnumValueInfo<T>> value2EnumMap;
     private final Int2ObjectMap<EnumValueInfo<T>> number2EnumMap;
     private final Map<String, EnumValueInfo<T>> name2EnumMap; // 这允许为枚举指定别名
 
-    public EnumCodec(Class<T> enumClass) {
-        if (!enumClass.isEnum()) {
-            throw new IllegalArgumentException("EnumLite must be enum class, type: " + enumClass);
+    /**
+     * @param enumClass  枚举类
+     * @param valueInfos 枚举值信息，允许自定义枚举序列化数据
+     */
+    public EnumCodec(Class<T> enumClass, List<EnumValueInfo<T>> valueInfos) {
+        this.enumClass = Objects.requireNonNull(enumClass);
+
+        this.value2EnumMap = new EnumMap<>(enumClass);
+        this.number2EnumMap = new Int2ObjectOpenHashMap<>(valueInfos.size());
+        this.name2EnumMap = HashMap.newHashMap(valueInfos.size());
+
+        for (EnumValueInfo<T> valueInfo : valueInfos) {
+            value2EnumMap.put(valueInfo.value, valueInfo);
+            number2EnumMap.put(valueInfo.number, valueInfo);
+            name2EnumMap.put(valueInfo.name, valueInfo);
         }
+    }
+
+    public EnumCodec(Class<T> enumClass) {
         this.enumClass = Objects.requireNonNull(enumClass);
 
         T[] enumConstants = enumClass.getEnumConstants();
         this.value2EnumMap = new EnumMap<>(enumClass);
         this.number2EnumMap = new Int2ObjectOpenHashMap<>(enumConstants.length);
         this.name2EnumMap = HashMap.newHashMap(enumConstants.length);
-        Field[] enumFields = enumClass.getDeclaredFields(); // java的枚举常量在所有其它字段之前
-        for (int idx = 0; idx < enumConstants.length; idx++) {
-            T enumConstant = enumConstants[idx];
-            int number = enumConstant instanceof EnumLite enumLite ? enumLite.getNumber() : enumConstant.ordinal();
 
-            // 可通过注解指定DsonName
+        Field[] enumFields = enumClass.getDeclaredFields();
+        for (int idx = 0; idx < enumConstants.length; idx++) {
+            T value = enumConstants[idx];
+            int number = value instanceof EnumLite enumLite ? enumLite.getNumber() : value.ordinal();
+
+            // 可通过注解指定DsonName -- java的枚举常量在所有其它字段之前
             DsonProperty annotation = enumFields[idx].getAnnotation(DsonProperty.class);
             String name;
             if (annotation != null && !ObjectUtils.isBlank(annotation.name())) {
                 name = annotation.name();
             } else {
-                name = enumConstant.name();
+                name = value.name();
             }
 
-            EnumValueInfo<T> enumValueInfo = new EnumValueInfo<>(enumConstant, number, name);
-            value2EnumMap.put(enumConstant, enumValueInfo);
-            number2EnumMap.put(number, enumValueInfo);
-            name2EnumMap.put(name, enumValueInfo);
+            EnumValueInfo<T> valueInfo = new EnumValueInfo<>(value, number, name);
+            value2EnumMap.put(valueInfo.value, valueInfo);
+            number2EnumMap.put(valueInfo.number, valueInfo);
+            name2EnumMap.put(valueInfo.name, valueInfo);
         }
     }
 
@@ -93,6 +109,18 @@ public final class EnumCodec<T extends Enum<T>> implements IEnumCodec<T>, DsonCo
     public T forNumber(int number) {
         EnumValueInfo<T> valueInfo = number2EnumMap.get(number);
         return valueInfo == null ? null : valueInfo.value;
+    }
+
+    @Override
+    public String getName(T val) {
+        EnumValueInfo<T> valueInfo = value2EnumMap.get(val);
+        return valueInfo.name;
+    }
+
+    @Override
+    public int getNumber(T val) {
+        EnumValueInfo<T> valueInfo = value2EnumMap.get(val);
+        return valueInfo.number;
     }
 
     @Nonnull
@@ -139,15 +167,4 @@ public final class EnumCodec<T extends Enum<T>> implements IEnumCodec<T>, DsonCo
         }
     }
 
-    private static class EnumValueInfo<T> {
-        final T value;
-        final int number;
-        final String name;
-
-        public EnumValueInfo(T value, int number, String name) {
-            this.value = value;
-            this.number = number;
-            this.name = name;
-        }
-    }
 }

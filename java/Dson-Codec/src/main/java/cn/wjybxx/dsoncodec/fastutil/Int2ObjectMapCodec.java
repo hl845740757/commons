@@ -69,7 +69,7 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
         TypeInfo valueTypeInfo = encoderType.genericArgs.get(0);
 
         if (writer.options().writeMapAsDocument) {
-            writer.writeStartObject(style, declaredType, encoderType);
+            writer.writeStartObject(style, encoderType, declaredType);
             for (var itr = Int2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                 Int2ObjectMap.Entry<V> entry = itr.next();
                 String keyString = Integer.toString(entry.getIntKey());
@@ -83,7 +83,7 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
             }
             writer.writeEndObject();
         } else {
-            writer.writeStartArray(style, declaredType, encoderType);
+            writer.writeStartArray(style, encoderType, declaredType);
             for (var itr = Int2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                 Int2ObjectMap.Entry<V> entry = itr.next();
                 writer.writeInt(null, entry.getIntKey(), null);

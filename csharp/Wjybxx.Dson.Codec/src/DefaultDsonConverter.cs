@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -35,13 +34,16 @@ public class DefaultDsonConverter : IDsonConverter
 {
     private readonly DynamicTypeMetaRegistry typeMetaRegistry;
     private readonly DynamicCodecRegistry codecRegistry;
+    private readonly TypeWriteHelper typeWriteHelper;
     private readonly ConverterOptions options;
 
     internal DefaultDsonConverter(DynamicTypeMetaRegistry typeMetaRegistry,
                                   DynamicCodecRegistry codecRegistry,
+                                  TypeWriteHelper typeWriteHelper,
                                   ConverterOptions options) {
         this.typeMetaRegistry = typeMetaRegistry;
         this.codecRegistry = codecRegistry;
+        this.typeWriteHelper = typeWriteHelper;
         this.options = options;
     }
 
@@ -53,7 +55,7 @@ public class DefaultDsonConverter : IDsonConverter
 
     public IDsonConverter WithOptions(ConverterOptions options) {
         if (options == null) throw new ArgumentNullException(nameof(options));
-        return new DefaultDsonConverter(typeMetaRegistry, codecRegistry, options);
+        return new DefaultDsonConverter(typeMetaRegistry, codecRegistry, typeWriteHelper, options);
     }
 
     /// <summary>
@@ -137,7 +139,7 @@ public class DefaultDsonConverter : IDsonConverter
 
     private void EncodeObject<T>(IDsonOutput outputStream, in T value, Type declaredType) {
         DsonBinaryWriter<string> binaryWriter = new DsonBinaryWriter<string>(options.binWriterSettings, outputStream);
-        using IDsonObjectWriter wrapper = new DefaultDsonObjectWriter(this, binaryWriter);
+        using IDsonObjectWriter wrapper = new DefaultDsonObjectWriter(this, typeWriteHelper, binaryWriter);
         wrapper.WriteObject(null, in value, declaredType);
         wrapper.Flush();
     }
@@ -190,7 +192,7 @@ public class DefaultDsonConverter : IDsonConverter
         if (writer == null) throw new ArgumentNullException(nameof(writer));
 
         DsonTextWriter textWriter = new DsonTextWriter(options.textWriterSettings, writer, false);
-        using IDsonObjectWriter wrapper = new DefaultDsonObjectWriter(this, textWriter);
+        using IDsonObjectWriter wrapper = new DefaultDsonObjectWriter(this, typeWriteHelper, textWriter);
         wrapper.WriteObject(null, in value, declaredType, style);
         wrapper.Flush();
     }
@@ -205,7 +207,7 @@ public class DefaultDsonConverter : IDsonConverter
         if (value == null) throw new ArgumentNullException(nameof(value));
         DsonArray<string> outList = new DsonArray<string>(1);
         IDsonWriter<string> objectWriter = new DsonCollectionWriter<string>(options.binWriterSettings, outList);
-        using IDsonObjectWriter wrapper = new DefaultDsonObjectWriter(this, objectWriter);
+        using IDsonObjectWriter wrapper = new DefaultDsonObjectWriter(this, typeWriteHelper, objectWriter);
 
         wrapper.WriteObject(null, in value, declaredType, ObjectStyle.Flow);
         DsonValue dsonValue = outList[0];

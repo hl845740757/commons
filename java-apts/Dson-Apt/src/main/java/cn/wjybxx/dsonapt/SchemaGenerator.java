@@ -121,8 +121,16 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
 
     private List<FieldSpec> genTypeFields(List<VariableElement> allSerialFields) {
         return allSerialFields.stream()
+                .filter(e -> needTypeInfoFields(e.asType()))
                 .map(this::genTypeField)
                 .toList();
+    }
+
+    private boolean needTypeInfoFields(TypeMirror typeMirror) {
+        // 有对应读写方法的类型不需要生成TypeInfo
+        return !(typeMirror.getKind().isPrimitive()
+                || processor.isString(typeMirror)
+                || processor.isByteArray(typeMirror));
     }
 
     private FieldSpec genTypeField(VariableElement variableElement) {

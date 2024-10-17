@@ -278,13 +278,9 @@ public final class TypeInfo {
 
     @StableName(comment = "生成的代码会调用")
     public static TypeInfo of(Class<?> rawType) {
-        // 避免过多的测试，以免浪费性能
-        if (rawType == int.class) return INT;
-        if (rawType == long.class) return LONG;
-
+        // 避免过多的测试，以免浪费性能 -- 生成的代码不会走到基础类型
         if (rawType == Integer.class) return BOXED_INT;
         if (rawType == Long.class) return BOXED_LONG;
-
         if (rawType == String.class) return STRING;
         if (rawType == Object.class) return OBJECT;
         return new TypeInfo(rawType);

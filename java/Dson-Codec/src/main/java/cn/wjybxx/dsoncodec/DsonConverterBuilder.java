@@ -16,44 +16,42 @@
 
 package cn.wjybxx.dsoncodec;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author wjybxx
  * date - 2024/9/28
  */
+@SuppressWarnings("rawtypes")
 public class DsonConverterBuilder {
 
-    private final SimpleTypeMetaRegistry tempTypeMetaRegistry = new SimpleTypeMetaRegistry();
-    private final SimpleCodecRegistry tempCodecRegistry = new SimpleCodecRegistry(); // 用于简化build
-
-    private final List<TypeMetaRegistry> typeMetaRegistries = new ArrayList<>(4);
-    private final List<DsonCodecRegistry> codecRegistries = new ArrayList<>(4);
-    private final List<GenericHelper> genericHelpers = new ArrayList<>(4);
-
+    // 用于简化build
+    public final TypeMetaConfig typeMetaConfig = new TypeMetaConfig();
+    public final DsonCodecConfig codecConfig = new DsonCodecConfig();
     private ConverterOptions options = ConverterOptions.DEFAULT;
     private boolean pureMode = false;
 
     public DsonConverterBuilder() {
-        typeMetaRegistries.add(tempTypeMetaRegistry);
-        codecRegistries.add(tempCodecRegistry);
+        this(true);
+    }
+
+    /** @param includeDefaults 是否包含默认配置 */
+    public DsonConverterBuilder(boolean includeDefaults) {
+        if (includeDefaults) {
+            typeMetaConfig.mergeFrom(TypeMetaConfig.DEFAULT);
+            codecConfig.mergeFrom(DsonCodecConfig.DEFAULT);
+        }
     }
 
     public DsonConverter build() {
-        if (!pureMode) {
-            typeMetaRegistries.addLast(DsonConverterUtils.getDefaultTypeMetaRegistry());
-        }
-        DynamicTypeMetaRegistry dynamicTypeMetaRegistry = new DynamicTypeMetaRegistry(typeMetaRegistries);
-        if (!pureMode) {
-            typeMetaRegistries.removeLast();
-        }
-
-        return new DefaultDsonConverter(dynamicTypeMetaRegistry,
-                new DynamicCodecRegistry(codecRegistries),
-                new CachedGenericHelper(genericHelpers), options);
+        return new DefaultDsonConverter(
+                new DynamicTypeMetaRegistry(typeMetaConfig),
+                new DynamicCodecRegistry(codecConfig),
+                new CachedGenericHelper(codecConfig.getGenericHelpers()),
+                new TypeWriteHelper(codecConfig.getOptimizedTypes()),
+                options);
     }
 
     /**
@@ -72,128 +70,193 @@ public class DsonConverterBuilder {
 
     // region type-meta
 
-    public List<TypeMetaRegistry> getTypeMetaRegistries() {
-        return typeMetaRegistries;
-    }
-
-    public DsonConverterBuilder addTypeMetaRegistry(TypeMetaRegistry typeMetaRegistry) {
-        this.typeMetaRegistries.add(typeMetaRegistry);
+    public DsonConverterBuilder addTypeMetaConfig(TypeMetaConfig typeMetaConfig) {
+        this.typeMetaConfig.mergeFrom(typeMetaConfig);
         return this;
     }
 
-    public DsonConverterBuilder addTypeMetaRegistries(Collection<? extends TypeMetaRegistry> typeMetaRegistries) {
-        this.typeMetaRegistries.addAll(typeMetaRegistries);
+    public DsonConverterBuilder addTypeMetaConfigs(Collection<TypeMetaConfig> typeMetaConfigs) {
+        for (TypeMetaConfig typeMetaConfig : typeMetaConfigs) {
+            this.typeMetaConfig.mergeFrom(typeMetaConfig);
+        }
         return this;
     }
 
     public DsonConverterBuilder addTypeMetas(Collection<TypeMeta> typeMetas) {
-        tempTypeMetaRegistry.addAll(typeMetas);
+        typeMetaConfig.addAll(typeMetas);
         return this;
     }
 
     public DsonConverterBuilder addTypeMetas(TypeMeta... typeMetas) {
-        tempTypeMetaRegistry.addAll(Arrays.asList(typeMetas));
+        typeMetaConfig.addAll(Arrays.asList(typeMetas));
         return this;
     }
 
     public DsonConverterBuilder addTypeMeta(TypeMeta typeMeta) {
-        tempTypeMetaRegistry.add(typeMeta);
+        typeMetaConfig.add(typeMeta);
         return this;
     }
 
     // endregion
 
     // region codec-registry
-    public List<DsonCodecRegistry> getCodecRegistries() {
-        return codecRegistries;
-    }
 
-    public DsonConverterBuilder addCodecRegistry(DsonCodecRegistry codecRegistry) {
-        this.codecRegistries.add(codecRegistry);
+    public DsonConverterBuilder addCodecConfig(DsonCodecConfig codecConfig) {
+        this.codecConfig.mergeFrom(codecConfig);
         return this;
     }
 
-    public DsonConverterBuilder addCodecRegistries(Collection<? extends DsonCodecRegistry> codecRegistries) {
-        this.codecRegistries.addAll(codecRegistries);
+    public DsonConverterBuilder addCodecConfigs(Collection<DsonCodecConfig> codecConfigs) {
+        for (DsonCodecConfig codecConfig : codecConfigs) {
+            this.codecConfig.mergeFrom(codecConfig);
+        }
         return this;
     }
 
     public <T> DsonConverterBuilder addCodec(Class<T> clazz, DsonCodec<? super T> codec) {
-        tempCodecRegistry.addCodec(clazz, codec);
+        codecConfig.addCodec(clazz, codec);
         return this;
     }
 
     public DsonConverterBuilder addCodec(DsonCodec<?> codec) {
-        tempCodecRegistry.addCodec(codec);
+        codecConfig.addCodec(codec);
         return this;
     }
 
     public DsonConverterBuilder addCodecs(DsonCodec<?>... codecs) {
-        tempCodecRegistry.addCodecs(Arrays.asList(codecs));
+        codecConfig.addCodecs(Arrays.asList(codecs));
         return this;
     }
 
     public DsonConverterBuilder addCodecs(Collection<? extends DsonCodec<?>> codecs) {
-        tempCodecRegistry.addCodecs(codecs);
+        codecConfig.addCodecs(codecs);
         return this;
     }
 
     public DsonConverterBuilder addCodec(TypeInfo typeInfo, DsonCodec<?> codec) {
-        tempCodecRegistry.addCodec(typeInfo, codec);
+        codecConfig.addCodec(typeInfo, codec);
         return this;
     }
 
     public <T> DsonConverterBuilder addEncoder(Class<T> clazz, DsonCodec<? super T> codec) {
-        tempCodecRegistry.addEncoder(clazz, codec);
+        codecConfig.addEncoder(clazz, codec);
         return this;
     }
 
     public DsonConverterBuilder addEncoder(TypeInfo typeInfo, DsonCodec<?> codec) {
-        tempCodecRegistry.addEncoder(typeInfo, codec);
+        codecConfig.addEncoder(typeInfo, codec);
         return this;
     }
 
     public <T> DsonConverterBuilder addDecoder(Class<T> clazz, DsonCodec<? extends T> codec) {
-        tempCodecRegistry.addDecoder(clazz, codec);
+        codecConfig.addDecoder(clazz, codec);
         return this;
     }
 
     public DsonConverterBuilder addDecoder(TypeInfo typeInfo, DsonCodec<?> codec) {
-        tempCodecRegistry.addDecoder(typeInfo, codec);
-        return this;
-    }
-
-    public DsonConverterBuilder addGenericCodecConfig(GenericCodecConfig genericCodecConfig) {
-        tempCodecRegistry.addGenericCodecConfig(genericCodecConfig);
-        return this;
-    }
-
-    public DsonConverterBuilder addGenericCodecConfigs(Collection<? extends GenericCodecConfig> genericCodecConfigs) {
-        tempCodecRegistry.addGenericCodecConfigs(genericCodecConfigs);
-        return this;
-    }
-
-    public DsonConverterBuilder addCaster(DsonCodecCaster caster) {
-        tempCodecRegistry.addCaster(caster);
-        return this;
-    }
-
-    public DsonConverterBuilder addCasters(Collection<? extends DsonCodecCaster> casters) {
-        tempCodecRegistry.addCasters(casters);
+        codecConfig.addDecoder(typeInfo, codec);
         return this;
     }
 
     // endregion
 
+    // region 泛型codec
+
+    public DsonConverterBuilder addGenericCodec(TypeInfo genericType, Class<? extends DsonCodec> codecType) {
+        codecConfig.addGenericCodec(genericType, codecType);
+        return this;
+    }
+
+    public DsonConverterBuilder addGenericCodec(TypeInfo genericType, Class<? extends DsonCodec> codecType, Class<?> implType) {
+        codecConfig.addGenericCodec(genericType, codecType, implType);
+        return this;
+    }
+
+    public DsonConverterBuilder addGenericCodec(TypeInfo genericType, Class<? extends DsonCodec> codecType, Supplier<?> factory) {
+        codecConfig.addGenericCodec(genericType, codecType, factory);
+        return this;
+    }
+
+    public DsonConverterBuilder addGenericCodec(GenericCodecInfo genericCodecInfo) {
+        codecConfig.addGenericCodec(genericCodecInfo);
+        return this;
+    }
+
+    public DsonConverterBuilder addGenericEncoder(TypeInfo genericType, Class<? extends DsonCodec> codecType) {
+        codecConfig.addGenericEncoder(genericType, codecType);
+        return this;
+    }
+
+    public DsonConverterBuilder addGenericEncoder(TypeInfo genericType, Class<? extends DsonCodec> codecType, Class<?> implType) {
+        codecConfig.addGenericEncoder(genericType, codecType, implType);
+        return this;
+    }
+
+    public DsonConverterBuilder addGenericEncoder(TypeInfo genericType, Class<? extends DsonCodec> codecType, Supplier<?> factory) {
+        codecConfig.addGenericEncoder(genericType, codecType, factory);
+        return this;
+    }
+
+    public DsonConverterBuilder addGenericEncoder(GenericCodecInfo genericCodecInfo) {
+        codecConfig.addGenericEncoder(genericCodecInfo);
+        return this;
+    }
+
+    public DsonConverterBuilder addGenericDecoder(TypeInfo genericType, Class<? extends DsonCodec> codecType) {
+        codecConfig.addGenericDecoder(genericType, codecType);
+        return this;
+    }
+
+    public DsonConverterBuilder addGenericDecoder(TypeInfo genericType, Class<? extends DsonCodec> codecType, Class<?> implType) {
+        codecConfig.addGenericDecoder(genericType, codecType, implType);
+        return this;
+    }
+
+    public DsonConverterBuilder addGenericDecoder(TypeInfo genericType, Class<? extends DsonCodec> codecType, Supplier<?> factory) {
+        codecConfig.addGenericDecoder(genericType, codecType, factory);
+        return this;
+    }
+
+    public DsonConverterBuilder addGenericDecoder(GenericCodecInfo genericCodecInfo) {
+        codecConfig.addGenericDecoder(genericCodecInfo);
+        return this;
+    }
+
+    // endregion
+
+    // region 其它
+
+    public DsonConverterBuilder addCaster(DsonCodecCaster caster) {
+        codecConfig.addCaster(caster);
+        return this;
+    }
+
+    public DsonConverterBuilder addCasters(Collection<? extends DsonCodecCaster> casters) {
+        codecConfig.addCasters(casters);
+        return this;
+    }
+
+    public <T> DsonConverterBuilder addOptimizedType(Class<T> encoderType, Class<? super T> declaredType) {
+        codecConfig.addOptimizedType(encoderType, declaredType);
+        return this;
+    }
+
+    public <T> DsonConverterBuilder addOptimizedType(Class<T> encoderType, Class<? super T> declaredType, boolean val) {
+        codecConfig.addOptimizedType(encoderType, declaredType, val);
+        return this;
+    }
+
     public DsonConverterBuilder addGenericHelper(GenericHelper caster) {
-        genericHelpers.add(caster);
+        codecConfig.addGenericHelper(caster);
         return this;
     }
 
     public DsonConverterBuilder addGenericHelpers(Collection<? extends GenericHelper> casters) {
-        genericHelpers.addAll(casters);
+        codecConfig.addGenericHelpers(casters);
         return this;
     }
+
+    // endregion
 
     public ConverterOptions getOptions() {
         return options;

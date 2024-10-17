@@ -117,10 +117,10 @@ public interface DsonObjectWriter extends AutoCloseable {
      * 1.该方法应当在writeStartObject/Array后立即调用，写在所有字段之前。
      * 2.默认会调用{@link #setEncoderType(TypeInfo)}保存类型信息
      *
-     * @param declaredType 对象的声明类型，用于测试是否写入类型信息
      * @param encoderType  编码器绑定的类型，真实写入的类型信息
+     * @param declaredType 对象的声明类型，用于测试是否写入类型信息
      */
-    void writeTypeInfo(TypeInfo declaredType, TypeInfo encoderType);
+    void writeTypeInfo(TypeInfo encoderType, TypeInfo declaredType);
 
     /** 开始写入Object */
     void writeStartObject(ObjectStyle style);
@@ -136,7 +136,7 @@ public interface DsonObjectWriter extends AutoCloseable {
     void writeValueBytes(String name, DsonType dsonType, byte[] data);
 
     /** 编码字典的key */
-    String encodeKey(Object key);
+    <T> String encodeKey(T key, TypeInfo keyType);
 
     /**
      * 设置当前对象的encoderType
@@ -154,9 +154,9 @@ public interface DsonObjectWriter extends AutoCloseable {
     void close();
 
     // defaults
-    default void writeStartObject(ObjectStyle style, TypeInfo declaredType, TypeInfo encoderType) {
+    default void writeStartObject(ObjectStyle style, TypeInfo encoderType, TypeInfo declaredType) {
         writeStartObject(style);
-        writeTypeInfo(declaredType, encoderType);
+        writeTypeInfo(encoderType, declaredType);
     }
 
     default void writeStartObject(String name, ObjectStyle style) {
@@ -164,14 +164,14 @@ public interface DsonObjectWriter extends AutoCloseable {
         writeStartObject(style);
     }
 
-    default void writeStartObject(String name, ObjectStyle style, TypeInfo declaredType, TypeInfo encoderType) {
+    default void writeStartObject(String name, ObjectStyle style, TypeInfo encoderType, TypeInfo declaredType) {
         writeName(name);
         writeStartObject(style);
-        writeTypeInfo(declaredType, encoderType);
+        writeTypeInfo(encoderType, declaredType);
     }
     //
 
-    default void writeStartArray(ObjectStyle style, TypeInfo declaredType, TypeInfo encoderType) {
+    default void writeStartArray(ObjectStyle style, TypeInfo encoderType, TypeInfo declaredType) {
         writeStartArray(style);
         writeTypeInfo(encoderType, declaredType);
     }
@@ -181,7 +181,7 @@ public interface DsonObjectWriter extends AutoCloseable {
         writeStartArray(style);
     }
 
-    default void writeStartArray(String name, ObjectStyle style, TypeInfo declaredType, TypeInfo encoderType) {
+    default void writeStartArray(String name, ObjectStyle style, TypeInfo encoderType, TypeInfo declaredType) {
         writeName(name);
         writeStartArray(style);
         writeTypeInfo(encoderType, declaredType);
