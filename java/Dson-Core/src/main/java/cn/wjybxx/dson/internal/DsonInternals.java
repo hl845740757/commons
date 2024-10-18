@@ -25,7 +25,7 @@ package cn.wjybxx.dson.internal;
 public class DsonInternals {
 
     /** 上下文缓存池大小 */
-    public static final int CONTEXT_POOL_SIZE = 64;
+    public static final int CONTEXT_POOL_SIZE = 256;
     /** 垂直制表符号 - java不支持... */
     public static final char CHAR_VERTICAL_TAB = '\u000b';
 

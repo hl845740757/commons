@@ -16,6 +16,8 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.dson.text.ObjectStyle;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Supplier;
@@ -31,7 +33,6 @@ public class DsonConverterBuilder {
     public final TypeMetaConfig typeMetaConfig = new TypeMetaConfig();
     public final DsonCodecConfig codecConfig = new DsonCodecConfig();
     private ConverterOptions options = ConverterOptions.DEFAULT;
-    private boolean pureMode = false;
 
     public DsonConverterBuilder() {
         this(true);
@@ -52,20 +53,6 @@ public class DsonConverterBuilder {
                 new CachedGenericHelper(codecConfig.getGenericHelpers()),
                 new TypeWriteHelper(codecConfig.getOptimizedTypes()),
                 options);
-    }
-
-    /**
-     * 是否纯净模式
-     * 纯净模式是指{@link #build()}时不使用默认的{@link TypeMeta}，完全由用户分配。
-     * 主要用于解析跨语言Dson文本。
-     */
-    public boolean isPureMode() {
-        return pureMode;
-    }
-
-    public DsonConverterBuilder setPureMode(boolean pureMode) {
-        this.pureMode = pureMode;
-        return this;
     }
 
     // region type-meta
@@ -94,6 +81,26 @@ public class DsonConverterBuilder {
 
     public DsonConverterBuilder addTypeMeta(TypeMeta typeMeta) {
         typeMetaConfig.add(typeMeta);
+        return this;
+    }
+
+    public DsonConverterBuilder addTypeMeta(Class<?> type, String clsName) {
+        typeMetaConfig.add(TypeMeta.of(type, ObjectStyle.INDENT, clsName));
+        return this;
+    }
+
+    public DsonConverterBuilder addTypeMeta(Class<?> type, String... clsName) {
+        typeMetaConfig.add(TypeMeta.of(type, ObjectStyle.INDENT, clsName));
+        return this;
+    }
+
+    public DsonConverterBuilder addTypeMeta(Class<?> type, ObjectStyle style, String clsName) {
+        typeMetaConfig.add(TypeMeta.of(type, style, clsName));
+        return this;
+    }
+
+    public DsonConverterBuilder addTypeMeta(Class<?> type, ObjectStyle style, String... clsName) {
+        typeMetaConfig.add(TypeMeta.of(type, style, clsName));
         return this;
     }
 

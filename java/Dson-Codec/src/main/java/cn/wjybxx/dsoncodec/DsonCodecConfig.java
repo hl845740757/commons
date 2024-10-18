@@ -38,6 +38,9 @@ import java.util.function.Supplier;
  * Codec与TypeMete在配置和运行时都是分离的，它们属于不同的体系；
  * 但Codec关联的encoderType必须在{@link TypeMetaConfig}中存在。
  *
+ * <h3>合并规则</h3>
+ * 多个Config合并时，越靠近用户，优先级越高 -- 因为这一定能解决冲突。
+ *
  * @author wjybxx
  * date - 2024/10/11
  */

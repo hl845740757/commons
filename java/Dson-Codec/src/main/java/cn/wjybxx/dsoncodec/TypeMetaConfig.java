@@ -24,6 +24,14 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 类型元数据配置
+ * <p>
+ * 用户在初始化Config时无需处理泛型类的TypeMeta，底层会动态生成对应的TypeMeta，
+ * 用户只需要保证使用到的所有原始类型都注册了即可。
+ *
+ * <h3>合并规则</h3>
+ * 多个Config合并时，越靠近用户，优先级越高 -- 因为这一定能解决冲突。
+ *
  * @author wjybxx
  * date - 2024/10/13
  */

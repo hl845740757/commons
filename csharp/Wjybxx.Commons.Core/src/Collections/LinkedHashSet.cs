@@ -170,23 +170,6 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet
         return TryInsert(key, InsertionOrder.Tail, InsertionBehavior.None);
     }
 
-    [Obsolete("Instead AddAll")]
-    public bool AddRange(IEnumerable<TKey> collection) {
-        if (collection == null) throw new ArgumentNullException(nameof(collection));
-        if (collection is ICollection<TKey> c) {
-            if (_loadFactor <= 0.5f) {
-                EnsureCapacity(c.Count); // 负载小于0.5，数组的长度将大于等于count的2倍，就能放下所有元素
-            } else {
-                TryCapacity(_count + c.Count);
-            }
-        }
-        bool r = false;
-        foreach (TKey key in collection) {
-            r |= TryPut(key, PutBehavior.None);
-        }
-        return r;
-    }
-
     #endregion
 
     #region remove

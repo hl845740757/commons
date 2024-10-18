@@ -33,7 +33,13 @@ namespace Wjybxx.Dson.Codec
 /// 4. 数组和泛型是不同的，数组都对应<see cref="ArrayCodec{T}"/>，因此不需要在这里存储。
 /// 5. 请避免运行时修改数据，否则可能造成线程安全问题。
 /// 6. 在dotnet6/7中不支持泛型协变和逆变，因此 Codec`1[IList`1[string]] 是不能赋值给 Codec`1[List`1[String]]的。
+///
+/// <h3>与TypeMetaConfig的关系</h3>
+/// Codec与TypeMete在配置和运行时都是分离的，它们属于不同的体系；
+/// 但Codec关联的encoderType必须在<see cref="TypeMetaConfig"/>中存在。
 /// 
+/// <h3>合并规则</h3>
+/// 多个Config合并时，越靠近用户，优先级越高 -- 因为这一定能解决冲突。
 /// </summary>
 public sealed class DsonCodecConfig
 {
@@ -74,9 +80,11 @@ public sealed class DsonCodecConfig
 
     public IDictionary<Type, GenericCodecInfo> GetGenericEncoderDic() => genericEncoderDic;
 
-    public IDictionary<Type, GenericCodecInfo> GenericDecoderDic => genericDecoderDic;
+    public IDictionary<Type, GenericCodecInfo> GetGenericDecoderDic() => genericDecoderDic;
 
     public IList<IDsonCodecCaster> GetCasters() => casters;
+
+    public IDictionary<TypePair, bool> GetOptimizedTypes() => optimizedTypes;
 
     #region factory
 

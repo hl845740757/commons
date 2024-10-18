@@ -16,24 +16,37 @@
 
 #endregion
 
-using System.Collections.Generic;
+using System.Collections;
 
 namespace Wjybxx.Commons.Collections
 {
 /// <summary>
-/// 顺序迭代器，可先测试是否还有下一个元素
+/// 空迭代器
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface ISequentialEnumerator<out T> : IEnumerator<T>
+public sealed class EmptyEnumerator<T> : ISequentialEnumerator<T>
 {
-    public static ISequentialEnumerator<T> Empty => EmptyEnumerator<T>.Instance;
+    public static EmptyEnumerator<T> Instance { get; } = new EmptyEnumerator<T>();
 
-    /// <summary>
-    /// 是否还有下一个元素。
-    /// 
-    /// 注意：如果返回true，则MoveNext也应当返回true。
-    /// </summary>
-    /// <returns></returns>
-    bool HasNext();
+    private EmptyEnumerator() {
+    }
+
+    public bool MoveNext() {
+        return false;
+    }
+
+    public void Reset() {
+    }
+
+    object IEnumerator.Current => Current;
+
+    public void Dispose() {
+    }
+
+    public T Current => default;
+
+    public bool HasNext() {
+        return false;
+    }
 }
 }

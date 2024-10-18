@@ -17,11 +17,9 @@
 #endregion
 
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Wjybxx.Commons;
-using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Dson.Codec
 {
@@ -38,33 +36,13 @@ public sealed class TypeWriteHelper
     private readonly ConcurrentDictionary<TypePair, bool> cacheDic = new ConcurrentDictionary<TypePair, bool>();
 
     public TypeWriteHelper(IDictionary<TypePair, bool> configs) {
-        InitDefaults();
         foreach (KeyValuePair<TypePair, bool> pair in configs) {
-            cacheDic[pair.Key] = pair.Value; // 覆盖
+            cacheDic[pair.Key] = pair.Value;
         }
     }
 
-    private void InitDefaults() {
-        // List
-        cacheDic[new TypePair(typeof(List<>), typeof(IList<>))] = true;
-        cacheDic[new TypePair(typeof(List<>), typeof(IReadOnlyList<>))] = true;
-        cacheDic[new TypePair(typeof(List<>), typeof(ICollection<>))] = true;
-        cacheDic[new TypePair(typeof(List<>), typeof(IReadOnlyCollection<>))] = true;
-        // Set
-        cacheDic[new TypePair(typeof(HashSet<>), typeof(ISet<>))] = true;
-        cacheDic[new TypePair(typeof(HashSet<>), typeof(IReadOnlySet<>))] = true;
-        // Map
-        cacheDic[new TypePair(typeof(Dictionary<,>), typeof(IDictionary<,>))] = true;
-        cacheDic[new TypePair(typeof(Dictionary<,>), typeof(IReadOnlyDictionary<,>))] = true;
-        // 扩展集合
-        cacheDic[new TypePair(typeof(LinkedHashSet<>), typeof(IGenericSet<>))] = true;
-        cacheDic[new TypePair(typeof(LinkedHashSet<>), typeof(ISequencedSet<>))] = true;
-        cacheDic[new TypePair(typeof(LinkedDictionary<,>), typeof(IGenericDictionary<,>))] = true;
-        cacheDic[new TypePair(typeof(LinkedDictionary<,>), typeof(ISequencedDictionary<,>))] = true;
-    }
-
     /// <summary>
-    /// 测试是否需要写入对象类型信息
+    /// 
     /// </summary>
     /// <param name="encoderType">实例的运行时类型，一定不是Nullable</param>
     /// <param name="declaredType">实例的声明类型</param>

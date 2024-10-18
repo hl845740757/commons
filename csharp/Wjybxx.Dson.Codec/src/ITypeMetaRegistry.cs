@@ -25,9 +25,6 @@ namespace Wjybxx.Dson.Codec
 /// <summary>
 /// 类型元数据注册表
 /// 注意：需要实现为线程安全的，建议实现为不可变对象（或事实不可变对象） —— 在运行时通常不会变化。
-///
-/// <h3>泛型</h3>
-/// 用户在初始化Registry时无需处理泛型类的TypeMeta，底层会动态生成对应的TypeMeta，用户只需要保证使用到的所有原始类型都注册了。
 /// </summary>
 [ThreadSafe]
 public interface ITypeMetaRegistry

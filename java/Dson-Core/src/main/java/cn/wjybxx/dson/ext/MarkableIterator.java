@@ -16,42 +16,85 @@
 
 package cn.wjybxx.dson.ext;
 
+import cn.wjybxx.base.annotation.Internal;
+
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 /**
  * @author wjybxx
  * date - 2023/8/8
  */
-public final class MarkableIterator<E> implements Iterator<E> {
+public final class MarkableIterator<E> implements Iterator<E>, AutoCloseable {
 
     private Iterator<E> baseIterator;
     private boolean marking;
 
-    private final ArrayList<E> buffer = new ArrayList<>(4);
+    private final List<E> buffer;
+    /** buffer当前value的索引 */
     private int bufferIndex;
-    /** buffer起始偏移，用于避免List频繁删除队首 */
+    /** buffer起始偏移 -- 使用双指针法避免删除队首导致的频繁拷贝 */
     private int bufferOffset;
 
     public MarkableIterator(Iterator<E> baseIterator) {
-        unsafeInit(baseIterator);
+        this(baseIterator, null);
     }
 
+    /**
+     * @param baseIterator 外部迭代器
+     * @param buffer       buffer，方便外部池化
+     */
+    public MarkableIterator(Iterator<E> baseIterator, List<E> buffer) {
+        if (buffer == null) {
+            buffer = new ArrayList<>();
+        } else if (buffer.size() > 0) {
+            throw new IllegalArgumentException("buffer is not empty");
+        }
+        this.baseIterator = Objects.requireNonNull(baseIterator);
+        this.marking = false;
+        this.buffer = buffer;
+        this.bufferIndex = 0;
+        this.bufferOffset = 0;
+    }
+
+    /**
+     * 是否处于干净的状态
+     * 1.返回true表示可替换外部迭代器{@link #setBaseIterator(Iterator)}
+     * 2.{@link #close()}后一定为true，用于复用对象
+     */
+    @Internal
+    public boolean isClean() {
+        return buffer.isEmpty();
+    }
+
+    @Internal
+    public void setBaseIterator(Iterator<E> baseIterator) {
+        if (!isClean()) {
+            throw new IllegalStateException();
+        }
+        this.baseIterator = Objects.requireNonNull(baseIterator);
+    }
+
+    /** 当前是否处于标记中 */
     public boolean isMarking() {
         return marking;
     }
 
+    /** 标记位置 */
     public void mark() {
         if (marking) throw new IllegalStateException();
         marking = true;
     }
 
+    /** 倒回到Mark位置，不清理Mark状态 */
     public void rewind() {
         if (!marking) throw new IllegalStateException();
         bufferIndex = bufferOffset;
     }
 
+    /** 倒回到Mark位置，并清理mark状态 */
     public void reset() {
         if (!marking) throw new IllegalStateException();
         marking = false;
@@ -68,21 +111,22 @@ public final class MarkableIterator<E> implements Iterator<E> {
 
     @Override
     public E next() {
-        ArrayList<E> buffer = this.buffer;
+        List<E> buffer = this.buffer;
         E value;
         if (bufferIndex < buffer.size()) {
             value = buffer.get(bufferIndex++);
-            if (!marking) {
-                buffer.set(bufferOffset++, null); // 使用双指针法避免频繁的拷贝
-                if (bufferOffset == buffer.size() || bufferOffset >= 8) {
-                    if (bufferOffset == buffer.size()) {
-                        buffer.clear();
-                    } else {
-                        buffer.subList(0, bufferOffset).clear();
-                    }
-                    bufferIndex = 0;
-                    bufferOffset = 0;
+            if (marking) {
+                return value;
+            }
+            buffer.set(bufferOffset++, null); // 使用双指针法避免频繁的拷贝
+            if (bufferOffset == buffer.size() || bufferOffset >= 8) {
+                if (bufferOffset == buffer.size()) {
+                    buffer.clear();
+                } else {
+                    buffer.subList(0, bufferOffset).clear();
                 }
+                bufferIndex = 0;
+                bufferOffset = 0;
             }
         } else {
             value = baseIterator.next();
@@ -94,28 +138,13 @@ public final class MarkableIterator<E> implements Iterator<E> {
         return value;
     }
 
-    // region pool
-
-    /** 创建用于池化的实例 */
-    public static <E> MarkableIterator<E> unsafeCreate() {
-        return new MarkableIterator<>();
-    }
-
-    private MarkableIterator() {
-    }
-
-    public void unsafeInit(Iterator<E> baseIterator) {
-        this.baseIterator = Objects.requireNonNull(baseIterator);
-        this.bufferIndex = 0;
+    @Override
+    public void close() {
+        this.baseIterator = null;
         this.marking = false;
-    }
 
-    public void unsafeDispose() {
-        baseIterator = null;
-        marking = false;
-        buffer.clear();
-        bufferIndex = 0;
-        bufferOffset = 0;
+        this.buffer.clear();
+        this.bufferIndex = 0;
+        this.bufferOffset = 0;
     }
-    // endregion
 }

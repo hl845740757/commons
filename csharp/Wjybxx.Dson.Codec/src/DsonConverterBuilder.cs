@@ -40,7 +40,7 @@ public class DsonConverterBuilder
         return new DefaultDsonConverter(
             new DynamicTypeMetaRegistry(typeMetaConfig),
             new DynamicCodecRegistry(codecConfig),
-            new TypeWriteHelper(new Dictionary<TypePair, bool>()),
+            new TypeWriteHelper(codecConfig.GetOptimizedTypes()),
             options);
     }
 
@@ -58,13 +58,13 @@ public class DsonConverterBuilder
         return this;
     }
 
-    public DsonConverterBuilder AddTypeMeta(TypeMeta typeMeta) {
-        typeMetaConfig.Add(typeMeta);
+    public DsonConverterBuilder AddTypeMetas(IEnumerable<TypeMeta> typeMetas) {
+        typeMetaConfig.AddAll(typeMetas);
         return this;
     }
 
-    public DsonConverterBuilder AddTypeMetas(IEnumerable<TypeMeta> typeMetas) {
-        typeMetaConfig.AddAll(typeMetas);
+    public DsonConverterBuilder AddTypeMeta(TypeMeta typeMeta) {
+        typeMetaConfig.Add(typeMeta);
         return this;
     }
 

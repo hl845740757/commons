@@ -22,10 +22,6 @@ namespace Wjybxx.Dson.Codec
 {
 /// <summary>
 /// <see cref="IDsonCodec{T}"/>的注册表
-/// 注意：
-/// 1.如果只是简单的Type到Codec的映射，请使用<see cref="DsonCodecConfig"/>的工具方法构建Registry，可实现多Registry的合并。
-/// 2.如果需要处理类型转换问题，请使用<see cref="IDsonCodecCaster"/>
-/// 3.多个Registry合并时，越靠近用户，优先级越高 -- 因为这一定能解决冲突。
 /// </summary>
 public interface IDsonCodecRegistry
 {

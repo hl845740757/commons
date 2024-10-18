@@ -38,7 +38,7 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
 
         Context context = newContext(null, DsonContextType.TOP_LEVEL, null);
         context.header = !dsonArray.getHeader().isEmpty() ? dsonArray.getHeader() : null;
-        context.arrayIterator = newArrayIterator(dsonArray.iterator());
+        context.arrayIterator.setBaseIterator(dsonArray.iterator());
         setContext(context);
     }
 
@@ -250,15 +250,17 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
         if (dsonValue.getDsonType() == DsonType.OBJECT) {
             DsonObject<FieldNumber> dsonObject = dsonValue.asObjectLite();
             newContext.header = !dsonObject.getHeader().isEmpty() ? dsonObject.getHeader() : null;
-            newContext.objectIterator = newObjectIterator(dsonObject.entrySet().iterator());
+            newContext.dsonObject = dsonObject;
+            newContext.objectIterator.setBaseIterator(dsonObject.entrySet().iterator());
         } else if (dsonValue.getDsonType() == DsonType.ARRAY) {
             DsonArray<FieldNumber> dsonArray = dsonValue.asArrayLite();
             newContext.header = !dsonArray.getHeader().isEmpty() ? dsonArray.getHeader() : null;
-            newContext.arrayIterator = newArrayIterator(dsonArray.iterator());
+            newContext.arrayIterator.setBaseIterator(dsonArray.iterator());
         } else {
-            // 其它内置结构体
-            newContext.dsonObject = dsonValue.asHeaderLite();
-            newContext.objectIterator = newObjectIterator(dsonValue.asHeaderLite().entrySet().iterator());
+            // header
+            DsonHeader<FieldNumber> header = dsonValue.asHeaderLite();
+            newContext.dsonObject = header;
+            newContext.objectIterator.setBaseIterator(header.entrySet().iterator());
         }
         newContext.name = currentName;
 
@@ -295,10 +297,12 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
     protected void doSkipToEndOfObject() {
         Context context = getContext();
         context.header = null;
-        if (context.arrayIterator != null) {
-            context.arrayIterator.forEachRemaining(dsonValue -> {});
+        if (context.dsonObject != null) {
+            context.objectIterator.close();
+            context.objectIterator.setBaseIterator(Collections.emptyIterator());
         } else {
-            context.objectIterator.forEachRemaining(e -> {});
+            context.arrayIterator.close();
+            context.arrayIterator.setBaseIterator(Collections.emptyIterator());
         }
     }
 
@@ -307,26 +311,6 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
         throw new UnsupportedOperationException();
     }
 
-    // endregion
-
-    // region itrpool
-    private static final ConcurrentObjectPool<MarkableIterator<?>> iteratorPool = new ConcurrentObjectPool<>(
-            MarkableIterator::unsafeCreate, MarkableIterator::unsafeDispose,
-            DsonInternals.CONTEXT_POOL_SIZE); // 1倍是正确的
-
-    @SuppressWarnings("unchecked")
-    private static MarkableIterator<DsonValue> newArrayIterator(Iterator<DsonValue> baseIterator) {
-        var markableIterator = (MarkableIterator<DsonValue>) iteratorPool.acquire();
-        markableIterator.unsafeInit(baseIterator);
-        return markableIterator;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static MarkableIterator<Map.Entry<FieldNumber, DsonValue>> newObjectIterator(Iterator<Map.Entry<FieldNumber, DsonValue>> baseIterator) {
-        var markableIterator = (MarkableIterator<Map.Entry<FieldNumber, DsonValue>>) iteratorPool.acquire();
-        markableIterator.unsafeInit(baseIterator);
-        return markableIterator;
-    }
     // endregion
 
     // region context
@@ -344,13 +328,19 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
         contextPool.release(context);
     }
 
-    protected static class Context extends AbstractDsonLiteReader.Context {
+    protected static class Context extends AbstractDsonLiteReader.Context
+            implements Iterator<Map.Entry<FieldNumber, DsonValue>> {
 
         /** 如果不为null，则表示需要先读取header */
         private DsonHeader<FieldNumber> header;
         private AbstractDsonObject<FieldNumber> dsonObject;
-        private MarkableIterator<Map.Entry<FieldNumber, DsonValue>> objectIterator;
-        private MarkableIterator<DsonValue> arrayIterator;
+        /** 随着Context池化 */
+        private final MarkableIterator<Map.Entry<FieldNumber, DsonValue>> objectIterator = new MarkableIterator<>(Collections.emptyIterator());
+        private final MarkableIterator<DsonValue> arrayIterator = new MarkableIterator<>(Collections.emptyIterator());
+
+        /** 按照外部key迭代 -- 避免再封装一层增加开销 */
+        private Iterator<FieldNumber> keyItr;
+        private DsonValue defValue;
 
         public Context() {
         }
@@ -365,32 +355,26 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
             super.reset();
             header = null;
             dsonObject = null;
-            if (objectIterator != null) {
-                iteratorPool.release(objectIterator);
-                objectIterator = null;
-            }
-            if (arrayIterator != null) {
-                iteratorPool.release(arrayIterator);
-                arrayIterator = null;
-            }
+            objectIterator.close();
+            arrayIterator.close();
+            keyItr = null;
+            defValue = null;
         }
 
-        public void setKeyItr(Iterator<FieldNumber> keyItr, DsonValue defValue) {
-            if (dsonObject == null) throw new IllegalStateException();
-            if (objectIterator.isMarking()) throw new IllegalStateException("reader is in marking state");
-            objectIterator = newObjectIterator(new KeyIterator(dsonObject, keyItr, defValue));
-        }
-
+        /** 该方法重合了迭代器的hasNext，需要兼容 */
+        @Override
         public boolean hasNext() {
-            if (objectIterator != null) {
-                return objectIterator.hasNext();
-            } else {
-                return arrayIterator.hasNext();
+            if (keyItr != null) {
+                return keyItr.hasNext();
             }
+            if (dsonObject != null) {
+                return objectIterator.hasNext();
+            }
+            return arrayIterator.hasNext();
         }
 
         public void markItr() {
-            if (objectIterator != null) {
+            if (dsonObject != null) {
                 objectIterator.mark();
             } else {
                 arrayIterator.mark();
@@ -398,7 +382,7 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
         }
 
         public void resetItr() {
-            if (objectIterator != null) {
+            if (dsonObject != null) {
                 objectIterator.reset();
             } else {
                 arrayIterator.reset();
@@ -413,23 +397,16 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
             return objectIterator.hasNext() ? objectIterator.next() : null;
         }
 
-    }
+        // key-itr
 
-    private static class KeyIterator implements Iterator<Map.Entry<FieldNumber, DsonValue>> {
+        public void setKeyItr(Iterator<FieldNumber> keyItr, DsonValue defValue) {
+            if (dsonObject == null) throw new IllegalStateException();
+            if (objectIterator.isMarking()) throw new IllegalStateException("reader is in marking state");
 
-        final AbstractDsonObject<FieldNumber> dsonObject;
-        final Iterator<FieldNumber> keyItr;
-        final DsonValue defValue;
-
-        public KeyIterator(AbstractDsonObject<FieldNumber> dsonObject, Iterator<FieldNumber> keyItr, DsonValue defValue) {
-            this.dsonObject = dsonObject;
             this.keyItr = keyItr;
             this.defValue = defValue;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return keyItr.hasNext();
+            objectIterator.close();
+            objectIterator.setBaseIterator(this);
         }
 
         @Override
