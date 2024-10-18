@@ -325,7 +325,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                     throw DsonIOException.InvalidTokenType(context.contextType, valueToken);
                 }
                 EnsureCountIsZero(context, valueToken);
-                // PushNextValue(valueToken);
                 return DsonType.Header;
             }
             case DsonTokenType.EndArray: {
@@ -551,7 +550,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             }
             default: {
                 PushToken(headerToken); // 非Object形式内置结构体
-                // PushNextValue(valueToken);
                 return DsonType.Object;
             }
         }
@@ -573,7 +571,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         }
         // 内置元组 -- 已尽皆删除
         PushToken(headerToken);
-        // PushNextValue(valueToken);
         return DsonType.Array;
     }
 

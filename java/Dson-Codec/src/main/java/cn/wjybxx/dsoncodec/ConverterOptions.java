@@ -109,8 +109,6 @@ public class ConverterOptions {
     public final int bufferSize;
     /** 字节数组缓存池 -- 多线程下需要注意线程安全问题 */
     public final ArrayPool<byte[]> bufferPool;
-    /** 字典key队列缓存池 -- 多线程下需要注意线程安全问题 */
-    public final ObjectPool<ArrayDeque<String>> keySetPool;
     /** 字符串缓存池 -- 多线程下需要注意线程安全问题 */
     public final ObjectPool<StringBuilder> stringBuilderPool;
 
@@ -139,7 +137,6 @@ public class ConverterOptions {
 
         this.bufferSize = builder.bufferSize;
         this.bufferPool = Objects.requireNonNull(builder.bufferPool);
-        this.keySetPool = Objects.requireNonNull(builder.keySetPool);
         this.stringBuilderPool = Objects.requireNonNull(builder.stringBuilderPool);
 
         this.binReaderSettings = Objects.requireNonNull(builder.binReaderSettings);
@@ -172,7 +169,6 @@ public class ConverterOptions {
 
         builder.bufferSize = bufferSize;
         builder.bufferPool = bufferPool;
-        builder.keySetPool = keySetPool;
         builder.stringBuilderPool = stringBuilderPool;
 
         builder.binReaderSettings = binReaderSettings;
@@ -181,9 +177,6 @@ public class ConverterOptions {
         builder.textWriterSettings = textWriterSettings;
     }
 
-    /** 全局共享的key队列 */
-    public static final ObjectPool<ArrayDeque<String>> SHARED_KEY_SET_POOL = new ConcurrentObjectPool<>(
-            ArrayDeque::new, ArrayDeque::clear, 64);
     /** 默认的Options */
     public static ConverterOptions DEFAULT = newBuilder().build(); // 有初始化顺序依赖
 
@@ -208,7 +201,6 @@ public class ConverterOptions {
 
         private int bufferSize = 8192;
         private ArrayPool<byte[]> bufferPool = ConcurrentArrayPool.SHARED_BYTE_ARRAY_POOL;
-        private ObjectPool<ArrayDeque<String>> keySetPool = SHARED_KEY_SET_POOL;
         private ObjectPool<StringBuilder> stringBuilderPool = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL;
 
         private DsonReaderSettings binReaderSettings = DsonReaderSettings.DEFAULT;
@@ -334,15 +326,6 @@ public class ConverterOptions {
 
         public Builder setBufferPool(ArrayPool<byte[]> bufferPool) {
             this.bufferPool = bufferPool;
-            return this;
-        }
-
-        public ObjectPool<ArrayDeque<String>> getKeySetPool() {
-            return keySetPool;
-        }
-
-        public Builder setKeySetPool(ObjectPool<ArrayDeque<String>> keySetPool) {
-            this.keySetPool = keySetPool;
             return this;
         }
 

@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.*;
 
 import java.util.*;
@@ -77,8 +78,7 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
         super.readStartObject();
 
         DsonCollectionReader reader = (DsonCollectionReader) this.reader;
-        ArrayDeque<String> keyQueue = converter.options().keySetPool.acquire();
-        KeyIterator keyItr = new KeyIterator(reader.getkeySet(), keyQueue);
+        KeyIterator keyItr = new KeyIterator(reader.getkeySet(), keySetPool.acquire());
         reader.setKeyItr(keyItr, DsonNull.NULL);
         reader.attach(keyItr);
     }
@@ -89,7 +89,7 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
         KeyIterator keyItr = (KeyIterator) reader.attach(null);
         super.readEndObject();
 
-        converter.options().keySetPool.release(keyItr.keyQueue);
+        keySetPool.release(keyItr.keyQueue);
         keyItr.keyQueue = null;
     }
 
@@ -113,16 +113,20 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
     }
 
     /**
-     * 我将keyQueue由{@link LinkedHashSet}替换为{@link ArrayDeque}，基于这样的一种假设：
-     * 大多数情况下，我们都是按照写入的顺序读取，因此使用{@link ArrayDeque}并不会造成太大的负面影响。
+     * {@link LinkedHashSet}还是优于{@link ArrayDeque}，
+     * 虽然多数情况下我们都是按照写入的顺序读取，但当Key不存在的时候，Deque删除元素的效率很差。
+     * 考虑到这块尚不稳定，因此不开放给用户设置。
      */
+    private static final ConcurrentObjectPool<LinkedHashSet<String>> keySetPool = new ConcurrentObjectPool<>(
+            () -> new LinkedHashSet<>(16), LinkedHashSet::clear, 256);
+
     private static class KeyIterator implements Iterator<String> {
 
         Set<String> keySet;
-        ArrayDeque<String> keyQueue;
+        LinkedHashSet<String> keyQueue;
         TypeInfo encoderType;
 
-        public KeyIterator(Set<String> keySet, ArrayDeque<String> keyQueue) {
+        public KeyIterator(Set<String> keySet, LinkedHashSet<String> keyQueue) {
             this.keySet = keySet;
             this.keyQueue = keyQueue;
             keyQueue.addAll(keySet);
@@ -130,10 +134,9 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
 
         public void setNext(String nextName) {
             Objects.requireNonNull(nextName);
-            if (Objects.equals(keyQueue.peekFirst(), nextName)) {
+            if (keyQueue.size() > 0 && keyQueue.getFirst().equals(nextName)) {
                 return;
             }
-            keyQueue.removeFirstOccurrence(nextName);
             keyQueue.addFirst(nextName);
         }
 

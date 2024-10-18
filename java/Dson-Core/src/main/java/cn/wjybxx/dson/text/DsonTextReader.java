@@ -321,7 +321,6 @@ public final class DsonTextReader extends AbstractDsonReader {
                     throw DsonIOException.invalidTokenType(context.contextType, valueToken);
                 }
                 ensureCountIsZero(context, valueToken);
-//                pushNextValue(valueToken);
                 yield DsonType.HEADER;
             }
             case END_ARRAY -> {
@@ -511,7 +510,6 @@ public final class DsonTextReader extends AbstractDsonReader {
             }
             default -> {
                 pushToken(headerToken); // 非Object形式内置结构体
-//                pushNextValue(valueToken);
                 yield DsonType.OBJECT;
             }
         };
@@ -532,7 +530,6 @@ public final class DsonTextReader extends AbstractDsonReader {
         }
         // 内置元组 -- 已尽皆删除...
         pushToken(headerToken);
-//        pushNextValue(valueToken);
         return DsonType.ARRAY;
     }
 

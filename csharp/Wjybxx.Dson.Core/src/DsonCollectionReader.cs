@@ -331,7 +331,9 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
     {
         /** 如果不为null，则表示需要先读取header */
         protected internal DsonHeader<TName> header;
+        /** 如果不为null，则表示读取Header和Object上下文 */
         protected internal AbstractDsonObject<TName> dsonObject;
+        /** 迭代器和Context一起缓存 */
         protected internal MarkableIterator<KeyValuePair<TName, DsonValue>> objectIterator =
             new(ISequentialEnumerator<KeyValuePair<TName, DsonValue>>.Empty);
         protected internal MarkableIterator<DsonValue> arrayIterator = new(ISequentialEnumerator<DsonValue>.Empty);
@@ -356,6 +358,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
             defValue = null;
         }
 
+        /** 该方法重合了迭代器的hasNext，需要兼容 */
         public bool HasNext() {
             if (keyItr != null) {
                 return keyItr.HasNext();

@@ -36,7 +36,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     protected WireType currentWireType;
     protected int currentWireTypeBits;
     protected internal TName currentName;
-    protected Context waitStartContext; // 暂时只支持单次回滚，在读取Value或跳过Value时都应该清理
+    protected Context waitStartContext; // 暂时只支持单次回滚，在ReadStart或SkipValue时都应该清理
 
     protected AbstractDsonReader(DsonReaderSettings settings) {
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -167,6 +167,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     }
 
     /** 前进到读值状态 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void AdvanceToValueState(TName name, DsonType requiredType) {
         Context context = this.context;
         if (context.state != DsonReaderState.Value) {
@@ -200,6 +201,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         context.SetState(DsonReaderState.Type);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected DsonIOException InvalidState(List<DsonReaderState> expected) {
         return DsonIOException.InvalidState(context.contextType, expected, context.state);
     }
@@ -385,8 +387,6 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     }
 
     private void ReadEndContainer(DsonContextType contextType) {
-        this.waitStartContext = null; // 跳过body
-
         Context context = this.context;
         CheckEndContext(context, contextType);
         DoReadEndContainer();

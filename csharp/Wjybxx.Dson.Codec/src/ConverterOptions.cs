@@ -108,8 +108,6 @@ public class ConverterOptions
     public readonly int bufferSize;
     /** 字节数组缓存池 -- 多线程下需要注意线程安全问题 */
     public readonly IArrayPool<byte> bufferPool;
-    /** 字典key队列缓存池 */
-    public readonly IObjectPool<MultiChunkDeque<string>> keySetPool;
     /** 字符串缓存池 -- 多线程下需要注意线程安全问题 */
     public readonly IObjectPool<StringBuilder> stringBuilderPool;
 
@@ -138,7 +136,6 @@ public class ConverterOptions
 
         this.bufferSize = builder.BufferSize;
         this.bufferPool = builder.BufferPool;
-        this.keySetPool = builder.KeySetPool;
         this.stringBuilderPool = builder.StringBuilderPool;
 
         this.binReaderSettings = builder.BinReaderSettings;
@@ -170,7 +167,6 @@ public class ConverterOptions
 
         builder.BufferSize = bufferSize;
         builder.BufferPool = bufferPool;
-        builder.KeySetPool = keySetPool;
         builder.StringBuilderPool = stringBuilderPool;
 
         builder.BinReaderSettings = binReaderSettings;
@@ -179,12 +175,6 @@ public class ConverterOptions
         builder.TextWriterSettings = textWriterSettings;
     }
 
-
-    /** 全局共享的key队列 */
-    public static readonly IObjectPool<MultiChunkDeque<string>> SHARED_KEY_SET_POOL
-        = new ConcurrentObjectPool<MultiChunkDeque<string>>(
-            () => new MultiChunkDeque<string>(32, 4), queue => queue.Clear(),
-            64);
     /** 默认的Options */
     public static readonly ConverterOptions DEFAULT = NewBuilder().Build(); // 有初始化顺序依赖
 
@@ -209,7 +199,6 @@ public class ConverterOptions
 
         public int BufferSize { get; set; } = 8192;
         public IArrayPool<byte> BufferPool { get; set; } = IArrayPool<byte>.Shared;
-        public IObjectPool<MultiChunkDeque<string>> KeySetPool { get; set; } = SHARED_KEY_SET_POOL;
         public IObjectPool<StringBuilder> StringBuilderPool { get; set; } = ConcurrentObjectPool.SharedStringBuilderPool;
 
         public DsonReaderSettings BinReaderSettings { get; set; } = DsonReaderSettings.Default;

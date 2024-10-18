@@ -50,14 +50,6 @@ namespace Wjybxx.Dson.Tests;
 /// </summary>
 public class BigFileTest
 {
-    private FileStream NewInputStream() {
-        return new FileStream("D:\\Test.json", FileMode.Open);
-    }
-
-    private FileStream NewOutputStream() {
-        return new FileStream("D:\\Test2.json", FileMode.Create);
-    }
-
     [Test]
     public void TestReadWriteFile() {
         if (!File.Exists("D:\\Test.json")) {
@@ -70,6 +62,14 @@ public class BigFileTest
         Thread.Sleep(1000);
 
         TestBson();
+    }
+
+    private static FileStream NewInputStream() {
+        return new FileStream("D:\\Test.json", FileMode.Open);
+    }
+
+    private static FileStream NewOutputStream(string suffix = "json") {
+        return new FileStream($"D:\\Test2.{suffix}", FileMode.Create);
     }
 
     private void TestSystemJson() {

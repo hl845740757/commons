@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Wjybxx.Commons.Collections;
+using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.Dson.Codec
 {
@@ -75,8 +76,7 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
         base.ReadStartObject();
 
         DsonCollectionReader<string> reader = (DsonCollectionReader<string>)this.reader;
-        MultiChunkDeque<string> keyQueue = converter.Options.keySetPool.Acquire();
-        KeyIterator keyItr = new KeyIterator(reader.Keys(), keyQueue);
+        KeyIterator keyItr = new KeyIterator(reader.Keys(), keySetPool.Acquire());
         reader.SetKeyItr(keyItr, DsonNull.NULL);
         reader.Attach(keyItr);
     }
@@ -86,27 +86,30 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
         KeyIterator ketItr = (KeyIterator)reader.Attachment();
         base.ReadEndObject();
 
-        converter.Options.keySetPool.Release(ketItr.keyQueue);
+        keySetPool.Release(ketItr.keyQueue);
         ketItr.keyQueue = null!;
     }
 
     /// <summary>
-    /// 我将keyQueue由<see cref="LinkedHashSet{T}"/>替换为<see cref="IDeque{T}"/>，基于这样的一种假设：
-    /// 大多数情况下，我们都是按照写入的顺序读取，因此使用<see cref="IDeque{T}"/>并不会造成太大的负面影响，
-    /// 而且C#使用的是<see cref="MultiChunkDeque{T}"/>，影响更小。
+    /// <see cref="LinkedHashSet{T}"/>还是由于<see cref="IDeque{T}"/>，
+    /// 虽然多数情况下我们都是按照写入的顺序读取，但当Key不存在的时候，Deque删除元素的效率很差。
+    /// 考虑到这块尚不稳定，因此不开放给用户设置。
     /// </summary>
+    private static readonly ConcurrentObjectPool<LinkedHashSet<string>> keySetPool = new ConcurrentObjectPool<LinkedHashSet<string>>(
+        () => new LinkedHashSet<string>(16), hashset => hashset.Clear(), 256);
+
     private class KeyIterator : ISequentialEnumerator<string>
     {
         internal readonly ICollection<string> keySet;
-        internal MultiChunkDeque<string> keyQueue;
+        internal LinkedHashSet<string> keyQueue;
         private string? _current;
 
-        public KeyIterator(ICollection<string> keySet, MultiChunkDeque<string> keyQueue) {
+        public KeyIterator(ICollection<string> keySet, LinkedHashSet<string> keyQueue) {
             this.keySet = keySet;
             this.keyQueue = keyQueue;
 
             foreach (string name in this.keySet) {
-                keyQueue.Enqueue(name);
+                keyQueue.Add(name);
             }
         }
 
@@ -115,7 +118,6 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
             if (keyQueue.TryPeekFirst(out string name) && name == nextName) {
                 return;
             }
-            keyQueue.Remove(nextName);
             keyQueue.AddFirst(nextName);
         }
 

@@ -43,7 +43,7 @@ public abstract class AbstractDsonReader implements DsonReader {
     protected WireType currentWireType;
     protected int currentWireTypeBits;
     protected String currentName = INVALID_NAME;
-    protected Context waitStartContext; // 暂时只支持单次回滚，在读取Value或跳过Value时都应该清理
+    protected Context waitStartContext; // 暂时只支持单次回滚，在ReadStart或SkipValue时都应该清理
 
     protected AbstractDsonReader(DsonReaderSettings settings) {
         this.settings = Objects.requireNonNull(settings, "settings");
@@ -412,8 +412,6 @@ public abstract class AbstractDsonReader implements DsonReader {
     }
 
     private void readEndContainer(DsonContextType contextType) {
-        this.waitStartContext = null; // 跳过body
-
         Context context = this.context;
         checkEndContext(context, contextType);
         doReadEndContainer();
