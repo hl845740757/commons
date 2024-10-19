@@ -22,9 +22,9 @@ using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree.Leaf;
 using Wjybxx.Dson.Codec;
 using System;
-using Wjybxx.Dson.Text;
 using Wjybxx.BTree;
 using Wjybxx.Dson;
+using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
@@ -34,18 +34,18 @@ public sealed class Running1Codec<T> : AbstractDsonCodec<Running<T>> where T : c
     public const string names_guard = "guard";
     public const string names_flags = "flags";
 
-    public override Type GetEncoderClass() => typeof(Running<T>);
+    public override Type GetEncoderType() => typeof(Running<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref Running<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref Running<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
     }
 
-    protected override Running<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override Running<T> NewInstance(IDsonObjectReader reader) {
         return new Running<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref Running<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref Running<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
     }

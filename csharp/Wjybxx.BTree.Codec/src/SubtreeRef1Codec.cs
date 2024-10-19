@@ -22,9 +22,9 @@ using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree.Decorator;
 using Wjybxx.Dson.Codec;
 using System;
-using Wjybxx.Dson.Text;
 using Wjybxx.BTree;
 using Wjybxx.Dson;
+using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
@@ -36,20 +36,20 @@ public sealed class SubtreeRef1Codec<T> : AbstractDsonCodec<SubtreeRef<T>> where
     public const string names_child = "child";
     public const string names_subtreeName = "subtreeName";
 
-    public override Type GetEncoderClass() => typeof(SubtreeRef<T>);
+    public override Type GetEncoderType() => typeof(SubtreeRef<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref SubtreeRef<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref SubtreeRef<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
         writer.WriteString(names_subtreeName, inst.SubtreeName, StringStyle.Auto);
     }
 
-    protected override SubtreeRef<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override SubtreeRef<T> NewInstance(IDsonObjectReader reader) {
         return new SubtreeRef<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref SubtreeRef<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref SubtreeRef<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
         inst.Child = reader.ReadObject<Task<T>>(names_child, typeof(Task<T>), null);

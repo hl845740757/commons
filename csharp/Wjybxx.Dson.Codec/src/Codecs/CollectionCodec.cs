@@ -1,4 +1,4 @@
-#region LICENSE
+﻿#region LICENSE
 
 // Copyright 2023-2024 wjybxx(845740757@qq.com)
 // 
@@ -18,77 +18,107 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
 /// <summary>
-/// 提取工具方法
+/// 集合默认编解码器
 /// </summary>
-public abstract class CollectionCodec
+/// <typeparam name="T"></typeparam>
+public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
 {
-    public virtual bool AutoStartEnd => false;
-    public virtual bool IsWriteAsArray => true;
+    #region factory
 
-    public static void WriteCollection<T>(IDsonObjectWriter writer, in IEnumerable<T> inst, Type declaredType, ObjectStyle style) {
+    // 泛型参数需要和Codec传递给DsonCodec的泛型参数一致 -- 即和构造函数一致
+    // 我们通过简单名进行字段匹配，这样可以保证正确性 -- factory + type.Name
+    public static readonly Func<ICollection<T>> factory_List = () => new List<T>();
+    public static readonly Func<ICollection<T>> factory_HashSet = () => new HashSet<T>();
+    public static readonly Func<ICollection<T>> factory_LinkedHashSet = () => new LinkedHashSet<T>();
+
+    #endregion
+
+    private readonly Type encoderType;
+    private readonly Func<ICollection<T>>? factory;
+    private readonly FactoryKind factoryKind; // 处理默认情况
+
+    /// <summary>
+    /// 动态构建Codec时会被调用
+    /// </summary>
+    /// <param name="encoderType"></param>
+    /// <param name="factory"></param>
+    public CollectionCodec(Type encoderType, Func<ICollection<T>>? factory = null) {
+        this.encoderType = encoderType;
+        this.factory = factory;
+        if (factory == null) {
+            this.factoryKind = ComputeFactoryKind(encoderType);
+        }
+    }
+
+    private static FactoryKind ComputeFactoryKind(Type typeInfo) {
+        if (typeInfo == typeof(IGenericSet<T>)
+            || typeInfo == typeof(LinkedHashSet<T>)) {
+            return FactoryKind.LinkedHashSet;
+        }
+        if (typeInfo == typeof(ISet<T>)
+            || typeInfo == typeof(IReadOnlySet<T>)
+            || typeInfo == typeof(HashSet<T>)) {
+            return FactoryKind.HashSet;
+        }
+        if (typeInfo == typeof(IDeque<T>)
+            || typeInfo == typeof(MultiChunkDeque<T>)) {
+            return FactoryKind.Dequeue;
+        }
+        return FactoryKind.Unknown;
+    }
+
+    private enum FactoryKind
+    {
+        Unknown,
+        HashSet,
+        LinkedHashSet,
+        Dequeue
+    }
+
+    public Type GetEncoderType() => encoderType;
+
+    /** <see cref="encoderType"/>一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
+    private ICollection<T> NewCollection() {
+        if (factory != null) return factory();
+        return factoryKind switch
+        {
+            FactoryKind.HashSet => new HashSet<T>(),
+            FactoryKind.LinkedHashSet => new LinkedHashSet<T>(),
+            FactoryKind.Dequeue => new MultiChunkDeque<T>(),
+            _ => new List<T>()
+        };
+    }
+
+    protected virtual ICollection<T> ToImmutable(ICollection<T> result) {
+        if (result is ISet<T> || result is IGenericSet<T>) {
+            return ImmutableLinkedHastSet<T>.CreateRange(result); // 暂时进行了类型兼容，否则难搞...
+        }
+        return ImmutableList<T>.CreateRange(result);
+    }
+
+    public void WriteObject(IDsonObjectWriter writer, ref ICollection<T> inst, Type declaredType, ObjectStyle style) {
         Type eleDeclaredType = typeof(T);
 
-        writer.WriteStartArray(inst, declaredType, style);
         foreach (T value in inst) {
             writer.WriteObject<T>(null, in value, eleDeclaredType); // value向上转型为T
         }
-        writer.WriteEndArray();
     }
 
-    public static ICollection<T> ReadCollection<T>(IDsonObjectReader reader, Type declaredType, Func<ICollection<T>>? factory = null) {
+    public ICollection<T> ReadObject(IDsonObjectReader reader, Func<ICollection<T>>? factory = null) {
         Type eleDeclaredType = typeof(T);
 
-        ICollection<T> result = NewCollection(declaredType, factory);
-        reader.ReadStartArray();
+        ICollection<T> result = factory != null ? factory() : NewCollection();
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             T value = reader.ReadObject<T>(null, eleDeclaredType);
             result.Add(value);
         }
-        reader.ReadEndArray();
-
-        CollectionConverter collectionConverter = reader.Options.collectionConverter;
-        if (collectionConverter != null) {
-            result = collectionConverter.ConvertCollection(declaredType, result);
-        }
-        return result;
-    }
-
-    private static ICollection<T> NewCollection<T>(Type declaredType, Func<ICollection<T>>? factory) {
-        if (factory != null) return factory.Invoke();
-        if (declaredType.IsGenericType) {
-            Type genericTypeDefinition = declaredType.GetGenericTypeDefinition();
-            if (genericTypeDefinition == typeof(LinkedHashSet<>) || genericTypeDefinition == typeof(IGenericSet<>)) {
-                return new LinkedHashSet<T>(); // 暂时未实现ISet接口
-            }
-            if (genericTypeDefinition == typeof(HashSet<>) || genericTypeDefinition == typeof(ISet<>)) {
-                return new HashSet<T>(); // 由于不能直接IsAssignableFrom测试，就测试几个特殊的类型
-            }
-        }
-        return new List<T>();
-    }
-}
-
-/// <summary>
-/// 该Codec通常只用于编码
-/// </summary>
-/// <typeparam name="T"></typeparam>
-public class ICollectionCodec<T> : CollectionCodec, IDsonCodec<ICollection<T>>
-{
-    private static readonly Func<ICollection<T>>? _factory = () => new List<T>();
-
-    public void WriteObject(IDsonObjectWriter writer, ref ICollection<T> inst, Type declaredType, ObjectStyle style) {
-        WriteCollection(writer, inst, declaredType, style);
-    }
-
-    public ICollection<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<ICollection<T>>? factory = null) {
-        return ReadCollection(reader, declaredType, factory ?? _factory);
+        return reader.Options.readAsImmutable ? ToImmutable(result) : result;
     }
 }
 }

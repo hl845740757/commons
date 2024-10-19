@@ -22,9 +22,9 @@ using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree.Leaf;
 using Wjybxx.Dson.Codec;
 using System;
-using Wjybxx.Dson.Text;
 using Wjybxx.BTree;
 using Wjybxx.Dson;
+using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
@@ -35,19 +35,19 @@ public sealed class Failure1Codec<T> : AbstractDsonCodec<Failure<T>> where T : c
     public const string names_flags = "flags";
     public const string names_failureStatus = "failureStatus";
 
-    public override Type GetEncoderClass() => typeof(Failure<T>);
+    public override Type GetEncoderType() => typeof(Failure<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref Failure<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref Failure<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteInt(names_failureStatus, inst.FailureStatus, WireType.VarInt, NumberStyles.Simple);
     }
 
-    protected override Failure<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override Failure<T> NewInstance(IDsonObjectReader reader) {
         return new Failure<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref Failure<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref Failure<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
         inst.FailureStatus = reader.ReadInt(names_failureStatus);

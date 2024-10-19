@@ -34,9 +34,10 @@ import java.util.function.Supplier;
 @DsonCodecScanIgnore
 public class BinaryCodec implements DsonCodec<Binary> {
 
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(Binary.class);
     }
 
     @Override
@@ -44,19 +45,13 @@ public class BinaryCodec implements DsonCodec<Binary> {
         return false;
     }
 
-    @Nonnull
     @Override
-    public Class<Binary> getEncoderClass() {
-        return Binary.class;
+    public void writeObject(DsonObjectWriter writer, Binary inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeBinary(null, inst);
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Binary instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        writer.writeBinary(null, instance);
-    }
-
-    @Override
-    public Binary readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends Binary> factory) {
-        return reader.readBinary(reader.getCurrentName());
+    public Binary readObject(DsonObjectReader reader, Supplier<? extends Binary> factory) {
+        return reader.readBinary(null);
     }
 }

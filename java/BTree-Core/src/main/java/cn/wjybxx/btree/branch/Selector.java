@@ -54,7 +54,7 @@ public class Selector<T> extends SingleRunningChildBranch<T> {
                     return;
                 }
             }
-            setFailed(TaskStatus.ERROR);
+            setCompleted(children.get(0).getStatus(), true);
         }
     }
 
@@ -74,7 +74,7 @@ public class Selector<T> extends SingleRunningChildBranch<T> {
         if (child.isSucceeded()) {
             setSuccess();
         } else if (isAllChildCompleted()) {
-            setFailed(TaskStatus.ERROR);
+            setCompleted(children.get(0).getStatus(), true);
         } else {
             template_execute(false);
         }

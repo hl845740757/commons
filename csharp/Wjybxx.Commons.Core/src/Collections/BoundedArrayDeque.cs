@@ -583,7 +583,7 @@ public class BoundedArrayDeque<T> : IDeque<T>
         }
 
         internal bool IsNull => _arrayDeque == null;
-        
+
         public bool HasNext() {
             return _cursor >= 0;
         }

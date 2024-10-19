@@ -29,8 +29,8 @@ public class DoubleCodec : IDsonCodec<double>
         writer.WriteDouble(null, inst, NumberStyles.Simple); // double无需声明类型
     }
 
-    public double ReadObject(IDsonObjectReader reader, Type declaredType, Func<double>? factory = null) {
-        return reader.ReadDouble(reader.CurrentName);
+    public double ReadObject(IDsonObjectReader reader, Func<double>? factory = null) {
+        return reader.ReadDouble(null);
     }
 }
 }

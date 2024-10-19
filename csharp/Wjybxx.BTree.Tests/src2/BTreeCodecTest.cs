@@ -40,35 +40,25 @@ public class BTreeCodecTest
     }
     """;
 
-    private static DefaultDsonConverter converter;
+    private static IDsonConverter converter;
 
     [SetUp]
     public void SetUp() {
-        GenericCodecConfig genericCodecConfig = GenericCodecConfig.NewDefaultConfig();
+        DsonCodecConfig codecConfig = new DsonCodecConfig();
         Dictionary<Type, Type> rawType2CodecTypeDic = BTreeCodecExporter.ExportCodecs();
         foreach (KeyValuePair<Type, Type> pair in rawType2CodecTypeDic) {
-            genericCodecConfig.AddCodec(pair.Key, pair.Value);
+            codecConfig.AddGenericCodec(pair.Key, pair.Value);
         }
 
         List<TypeMeta> typeMetas = rawType2CodecTypeDic.Keys
             .Select(e => TypeMeta.Of(e, ObjectStyle.Indent, RemoveGenericInfo(e.Name)))
             .ToList();
-        // 加入集合的类型数据
-        typeMetas.AddRange(new List<TypeMeta>
-        {
-            // List
-            TypeMeta.Of(typeof(List<>), ObjectStyle.Indent, "List", "List`1"),
-            TypeMeta.Of(typeof(IList<>), ObjectStyle.Indent, "IList", "IList`1"),
-            // 字典
-            TypeMeta.Of(typeof(Dictionary<,>), ObjectStyle.Indent, "Dictionary", "Dictionary`2"),
-            TypeMeta.Of(typeof(IDictionary<,>), ObjectStyle.Indent, "IDictionary", "IDictionary`2")
-        });
 
-        List<IDsonCodec> pojoCodecList = new List<IDsonCodec>();
-        converter = DefaultDsonConverter.NewInstance(TypeMetaRegistries.FromMetas(typeMetas),
-            pojoCodecList,
-            genericCodecConfig,
-            ConverterOptions.NewBuilder().Build());
+        converter = new DsonConverterBuilder()
+            .AddTypeMetas(typeMetas)
+            .AddCodecConfig(codecConfig)
+            .SetOptions(ConverterOptions.DEFAULT)
+            .Build();
     }
 
     private static string RemoveGenericInfo(string clsName) {

@@ -37,6 +37,7 @@ final class DefaultDsonObjectReader extends AbstractObjectReader implements Dson
     @Override
     public boolean readName(String name) {
         DsonReader reader = this.reader;
+        // array
         if (reader.getContextType().isArrayLike()) {
             if (reader.isAtValue()) {
                 return true;
@@ -46,11 +47,11 @@ final class DefaultDsonObjectReader extends AbstractObjectReader implements Dson
             }
             return reader.getCurrentDsonType() != DsonType.END_OF_OBJECT;
         }
-
-        Objects.requireNonNull(name, "name");
+        // object
         if (reader.isAtValue()) {
-            return reader.getCurrentName().equals(name);
+            return name == null || reader.getCurrentName().equals(name);
         }
+        Objects.requireNonNull(name, "name");
         if (reader.isAtType()) {
             if (reader.readDsonType() == DsonType.END_OF_OBJECT) {
                 return false;
@@ -64,4 +65,13 @@ final class DefaultDsonObjectReader extends AbstractObjectReader implements Dson
         return true;
     }
 
+    @Override
+    public void setEncoderType(TypeInfo encoderType) {
+        reader.attach(encoderType);
+    }
+
+    @Override
+    public TypeInfo getEncoderType() {
+        return (TypeInfo) reader.attachment();
+    }
 }

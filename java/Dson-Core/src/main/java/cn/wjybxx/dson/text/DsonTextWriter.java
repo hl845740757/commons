@@ -20,7 +20,6 @@ import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.internal.CommonsLang3;
 import cn.wjybxx.dson.internal.DsonInternals;
-import cn.wjybxx.dson.io.DsonChunk;
 import cn.wjybxx.dson.types.*;
 
 import java.io.Writer;
@@ -427,11 +426,11 @@ public final class DsonTextWriter extends AbstractDsonWriter {
     }
 
     @Override
-    protected void doWriteBinary(DsonChunk chunk) {
+    protected void doWriteBinary(byte[] bytes, int offset, int len) {
         DsonPrinter printer = this.printer;
         writeCurrentName(printer, DsonType.BINARY);
         printer.fastPrint("@bin ");
-        printBinary(chunk.getBuffer(), chunk.getOffset(), chunk.getLength());
+        printBinary(bytes, offset, len);
     }
 
     @Override

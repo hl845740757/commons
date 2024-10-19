@@ -17,8 +17,8 @@
 package cn.wjybxx.dson.text;
 
 import cn.wjybxx.base.io.ByteBufferUtils;
-import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.base.io.StringBuilderWriter;
+import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.io.DsonIOException;
 
 import java.io.Writer;

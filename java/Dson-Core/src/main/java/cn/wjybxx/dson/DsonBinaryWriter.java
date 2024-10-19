@@ -18,7 +18,6 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
-import cn.wjybxx.dson.io.DsonChunk;
 import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.io.DsonOutput;
 import cn.wjybxx.dson.text.INumberStyle;
@@ -156,10 +155,10 @@ public class DsonBinaryWriter extends AbstractDsonWriter {
     }
 
     @Override
-    protected void doWriteBinary(DsonChunk chunk) {
+    protected void doWriteBinary(byte[] bytes, int offset, int len) {
         DsonOutput output = this.output;
         writeFullTypeAndCurrentName(output, DsonType.BINARY, 0);
-        DsonReaderUtils.writeBinary(output, chunk);
+        DsonReaderUtils.writeBinary(output, bytes, offset, len);
     }
 
     @Override

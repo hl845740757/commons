@@ -35,6 +35,7 @@ public class ByteBufferUtils {
      * @param length 数据的长度
      */
     public static void checkBuffer(byte[] buffer, int offset, int length) {
+        if (buffer == null) throw new NullPointerException("buffer");
         checkBuffer(buffer.length, offset, length);
     }
 

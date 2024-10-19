@@ -22,23 +22,22 @@ using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree.Branch.Join;
 using Wjybxx.Dson.Codec;
 using System;
-using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
 [Generated("Wjybxx.Dson.Apt.CodecProcessor")]
 public sealed class JoinSequence1Codec<T> : AbstractDsonCodec<JoinSequence<T>> where T : class
 {
-    public override Type GetEncoderClass() => typeof(JoinSequence<T>);
+    public override Type GetEncoderType() => typeof(JoinSequence<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref JoinSequence<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref JoinSequence<T> inst) {
     }
 
-    protected override JoinSequence<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override JoinSequence<T> NewInstance(IDsonObjectReader reader) {
         return JoinSequence<T>.GetInstance();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref JoinSequence<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref JoinSequence<T> inst) {
     }
 }
 }

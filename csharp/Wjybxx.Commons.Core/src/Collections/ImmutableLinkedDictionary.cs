@@ -28,7 +28,7 @@ namespace Wjybxx.Commons.Collections
 {
 /// <summary>
 /// 保持插入序的不可变字典
-/// 与C#系统库的ImmutableDictionary，这里的实现是基于拷贝的，且不支持增删元素；另外这里保持了元素的插入顺序
+/// 与C#系统库的ImmutableDictionary不同，这里的实现是基于拷贝的，且不支持增删元素；另外这里保持了元素的插入顺序
 /// (主要解决Unity的兼容性问题)
 /// </summary>
 /// <typeparam name="TKey"></typeparam>
@@ -893,7 +893,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
         internal readonly TKey? key;
         internal readonly TValue? value;
 
-        internal readonly int? index; // null表示Node无效，低版本不支持无参构造函数，无法指定为-1
+        internal readonly int? index; // null表示Node无效
         internal int prev;
         internal int next;
 

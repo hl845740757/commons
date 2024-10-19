@@ -31,12 +31,7 @@ public class TypeMetaRegistryTest
 
     [SetUp]
     public void SetUp() {
-        ITypeMetaRegistry basicRegistry = TypeMetaRegistries.FromMetas(
-            TypeMeta.Of(typeof(Dictionary<,>), ObjectStyle.Indent, "Dictionary", "Dictionary`2"),
-            TypeMeta.Of(typeof(List<>), ObjectStyle.Indent, "List", "List`1")
-        );
-        basicRegistry = TypeMetaRegistries.FromRegistries(DsonConverterUtils.GetDefaultTypeMetaRegistry(), basicRegistry);
-        registry = new DynamicTypeMetaRegistry(basicRegistry);
+        registry = new DynamicTypeMetaRegistry(TypeMetaConfig.Default);
     }
 
     [Test]
@@ -53,7 +48,7 @@ public class TypeMetaRegistryTest
         TypeMeta typeMeta3 = registry.OfName("List`1[s]");
         // Assert.That(typeMeta3, Is.SameAs(typeMeta));
         Assert.NotNull(typeMeta3);
-        Assert.That(typeMeta3.type, Is.SameAs(type));
+        Assert.That(typeMeta3.type, Is.SameAs(type)); // C#的Type是唯一的
 
         // 最终会指向同一个TypeMeta -- 我们实现了动态合并
         typeMeta = registry.OfType(type);
@@ -73,7 +68,7 @@ public class TypeMetaRegistryTest
         Assert.That(typeMeta2, Is.SameAs(typeMeta));
     }
 
-    /** 先通过Type查找TypeMeta */
+    /** 通过Type查找TypeMeta */
     [Test]
     public void TestGenericArray() {
         Type type = typeof(List<List<string>>[]);
@@ -87,7 +82,7 @@ public class TypeMetaRegistryTest
         Assert.That(typeMeta2, Is.SameAs(typeMeta));
     }
 
-    /** 先通过clsName查找TypeMeta */
+    /** 通过clsName查找TypeMeta */
     [Test]
     public void TestGenericArray2() {
         string clsName = "List[List[i]][]";

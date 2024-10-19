@@ -16,7 +16,6 @@
 
 #endregion
 
-using System.Collections.Generic;
 using System.Text;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
@@ -32,19 +31,9 @@ namespace Wjybxx.Dson.Codec
 public class ConverterOptions
 {
     /// <summary>
-    /// 是否弱顺序。
-    /// 对于集合和字典，要保证解码的正确性，就必须保持插入序。而C#未提供原生的高性能的保持插入序的Set和Dictionary，
-    /// 我实现的<see cref="LinkedHashSet{TKey}"/>和<see cref="LinkedDictionary{TKey,TValue}"/>虽然能保持插入序，
-    /// 但大家可能更习惯使用系统库的字典。
-    ///
-    /// ps：根据观察，系统的<see cref="Dictionary{TKey,TValue}"/>在只插入的情况下是保持有序的，但有删除操作的情况下就会无序。
-    /// </summary>
-    public readonly bool weakOrder;
-
-    /// <summary>
     /// classId的写入策略
     /// </summary>
-    public readonly ClassIdPolicy classIdPolicy;
+    public readonly TypeWritePolicy typeWritePolicy;
     /// <summary>
     /// 是否写入对象基础类型字段的默认值
     /// 1.数值类型默认值为0，bool类型默认值为false
@@ -88,7 +77,11 @@ public class ConverterOptions
     /// 另一种方式是先反序列化，然后完整序列化为字节数组，再通过字节数组反序列化 -- 可关闭随机读。
     /// </summary>
     public readonly bool randomRead;
-
+    /// <summary>
+    /// 集合类型是否读取为不可变
+    /// 其它类型的对象也可以使用该设置
+    /// </summary>
+    public readonly bool readAsImmutable;
     /// <summary>
     /// 是否启用BeforeEncode钩子方法。
     /// 默认不启用！因为启用该特性要求同一个Bean不能被多线程同时序列化 -- 只适用单线程序列化场景，
@@ -105,12 +98,6 @@ public class ConverterOptions
     /// </code>
     /// </summary>
     public readonly bool enableAfterDecode;
-    /// <summary>
-    /// 集合转换器，主要用于读取为不可变集合。
-    /// 当使用Dson读取配置文件时，保持配置对象的不可变性是非常重要的。
-    /// 交给用户处理，使得可以支持特殊的集合实现。
-    /// </summary>
-    public readonly CollectionConverter? collectionConverter;
 
     /** protoBuf对应的二进制子类型 -- 其它模块依赖 */
     public readonly int pbBinaryType;
@@ -121,8 +108,6 @@ public class ConverterOptions
     public readonly int bufferSize;
     /** 字节数组缓存池 -- 多线程下需要注意线程安全问题 */
     public readonly IArrayPool<byte> bufferPool;
-    /** 字典key队列缓存池 */
-    public readonly IObjectPool<MultiChunkDeque<string>> keySetPool;
     /** 字符串缓存池 -- 多线程下需要注意线程安全问题 */
     public readonly IObjectPool<StringBuilder> stringBuilderPool;
 
@@ -136,23 +121,21 @@ public class ConverterOptions
     public readonly DsonTextWriterSettings textWriterSettings;
 
     public ConverterOptions(Builder builder) {
-        this.weakOrder = builder.WeakOrder;
-        this.classIdPolicy = builder.ClassIdPolicy;
+        this.typeWritePolicy = builder.TypeWritePolicy;
         this.appendDef = builder.AppendDef;
         this.appendNull = builder.AppendNull;
         this.writeMapAsDocument = builder.WriteMapAsDocument;
         this.writeEnumAsString = builder.WriteEnumAsString;
         this.randomRead = builder.RandomRead;
+        this.readAsImmutable = builder.ReadAsImmutable;
         this.enableBeforeEncode = builder.EnableBeforeEncode;
         this.enableAfterDecode = builder.EnableAfterDecode;
-        this.collectionConverter = builder.CollectionConverter;
 
         this.pbBinaryType = builder.PbBinaryType;
         this.usage = builder.Usage;
 
         this.bufferSize = builder.BufferSize;
         this.bufferPool = builder.BufferPool;
-        this.keySetPool = builder.KeySetPool;
         this.stringBuilderPool = builder.StringBuilderPool;
 
         this.binReaderSettings = builder.BinReaderSettings;
@@ -169,23 +152,21 @@ public class ConverterOptions
 
     /** 允许子类重写 */
     public virtual void AssignToBuilder(Builder builder) {
-        builder.WeakOrder = weakOrder;
-        builder.ClassIdPolicy = classIdPolicy;
+        builder.TypeWritePolicy = typeWritePolicy;
         builder.AppendDef = appendDef;
         builder.AppendNull = appendNull;
         builder.WriteMapAsDocument = writeMapAsDocument;
         builder.WriteEnumAsString = writeEnumAsString;
         builder.RandomRead = randomRead;
+        builder.ReadAsImmutable = readAsImmutable;
         builder.EnableBeforeEncode = enableBeforeEncode;
         builder.EnableAfterDecode = enableAfterDecode;
-        builder.CollectionConverter = collectionConverter;
 
         builder.PbBinaryType = pbBinaryType;
         builder.Usage = usage;
 
         builder.BufferSize = bufferSize;
         builder.BufferPool = bufferPool;
-        builder.KeySetPool = keySetPool;
         builder.StringBuilderPool = stringBuilderPool;
 
         builder.BinReaderSettings = binReaderSettings;
@@ -194,12 +175,6 @@ public class ConverterOptions
         builder.TextWriterSettings = textWriterSettings;
     }
 
-
-    /** 全局共享的key队列 */
-    public static readonly IObjectPool<MultiChunkDeque<string>> SHARED_KEY_SET_POOL
-        = new ConcurrentObjectPool<MultiChunkDeque<string>>(
-            () => new MultiChunkDeque<string>(32, 4), queue => queue.Clear(),
-            64);
     /** 默认的Options */
     public static readonly ConverterOptions DEFAULT = NewBuilder().Build(); // 有初始化顺序依赖
 
@@ -209,23 +184,21 @@ public class ConverterOptions
 
     public class Builder
     {
-        public bool WeakOrder { get; set; } = true;
-        public ClassIdPolicy ClassIdPolicy { get; set; } = ClassIdPolicy.Optimized;
+        public TypeWritePolicy TypeWritePolicy { get; set; } = TypeWritePolicy.Optimized;
         public bool AppendDef { get; set; } = true;
         public bool AppendNull { get; set; } = true;
         public bool WriteMapAsDocument { get; set; } = false;
         public bool WriteEnumAsString { get; set; } = false;
         public bool RandomRead { get; set; } = true;
+        public bool ReadAsImmutable { get; set; } = false;
         public bool EnableBeforeEncode { get; set; } = false;
         public bool EnableAfterDecode { get; set; } = true;
-        public CollectionConverter? CollectionConverter { get; set; }
 
         public int PbBinaryType { get; set; } = 127;
         public int Usage { get; set; } = 0;
 
         public int BufferSize { get; set; } = 8192;
         public IArrayPool<byte> BufferPool { get; set; } = IArrayPool<byte>.Shared;
-        public IObjectPool<MultiChunkDeque<string>> KeySetPool = SHARED_KEY_SET_POOL;
         public IObjectPool<StringBuilder> StringBuilderPool { get; set; } = ConcurrentObjectPool.SharedStringBuilderPool;
 
         public DsonReaderSettings BinReaderSettings { get; set; } = DsonReaderSettings.Default;

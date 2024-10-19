@@ -30,38 +30,38 @@ namespace Wjybxx.Dson.Codec
 public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
 {
     [StableName]
-    public virtual Type GetEncoderClass() => typeof(T);
+    public virtual Type GetEncoderType() => typeof(T);
 
     public virtual bool AutoStartEnd => true;
 
-    public virtual bool IsWriteAsArray => DsonConverterUtils.IsEncodeAsArray(GetEncoderClass());
+    public virtual bool IsWriteAsArray => DsonConverterUtils.IsEncodeAsArray(GetEncoderType());
 
     #region Write
 
     public void WriteObject(IDsonObjectWriter writer, ref T inst, Type declaredType, ObjectStyle style) {
         if (writer.Options.enableBeforeEncode) {
-            BeforeEncode(writer, ref inst, declaredType, style);
+            BeforeEncode(writer, ref inst);
         }
-        WriteFields(writer, ref inst, declaredType, style);
+        WriteFields(writer, ref inst);
     }
 
     [StableName]
-    protected virtual void BeforeEncode(IDsonObjectWriter writer, ref T inst, Type declaredType, ObjectStyle style) {
+    protected virtual void BeforeEncode(IDsonObjectWriter writer, ref T inst) {
     }
 
     [StableName]
-    protected abstract void WriteFields(IDsonObjectWriter writer, ref T inst, Type declaredType, ObjectStyle style);
+    protected abstract void WriteFields(IDsonObjectWriter writer, ref T inst);
 
     #endregion
 
     #region Read
 
     [StableName]
-    public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<T>? factory = null) {
-        T inst = factory != null ? factory() : NewInstance(reader, declaredType);
-        ReadFields(reader, ref inst, declaredType);
+    public T ReadObject(IDsonObjectReader reader, Func<T>? factory = null) {
+        T inst = factory != null ? factory() : NewInstance(reader);
+        ReadFields(reader, ref inst);
         if (reader.Options.enableAfterDecode) {
-            AfterDecode(reader, ref inst, declaredType);
+            AfterDecode(reader, ref inst);
         }
         return inst;
     }
@@ -72,20 +72,21 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
     /// 2. 该方法可解决readonly字段问题。
     /// </summary>
     [StableName]
-    protected abstract T NewInstance(IDsonObjectReader reader, Type declaredType);
+    protected abstract T NewInstance(IDsonObjectReader reader);
 
     /// <summary>
     /// 读取字段到指定实例（可以是子类实例）
     /// 需要使用ref，否则结构体会产生拷贝，导致无法读取到指定实例上。
     /// </summary>
     [StableName]
-    protected abstract void ReadFields(IDsonObjectReader reader, ref T inst, Type declaredType);
+    protected abstract void ReadFields(IDsonObjectReader reader, ref T inst);
 
     /// <summary>
     /// 解码后调用
     /// 需要使用ref，否则结构体会产生拷贝，导致无法读取到指定实例上。
     /// </summary>
-    protected virtual void AfterDecode(IDsonObjectReader reader, ref T inst, Type declaredType) {
+    [StableName]
+    protected virtual void AfterDecode(IDsonObjectReader reader, ref T inst) {
     }
 
     #endregion

@@ -90,13 +90,23 @@ public static class DsonTexts
         }
     }
 
+    /** 添加全局不安全字符 */
+    public static void AddUnsafeChars(char[] unsafeChars) {
+        foreach (char c in unsafeChars) {
+            unsafeCharSet.Set(c, true);
+        }
+    }
+
     /** 是否是缩进字符 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsIndentChar(int c) {
         return c == ' ' || c == '\t';
     }
 
-    /** 是否是不安全的字符，不能省略引号的字符 */
+    /**
+     * 是否是不安全的字符，不能省略引号的字符
+     * 注意：safeChar也可能组合出不安全的无引号字符串，比如：123, 0.5, null,true,false，因此不能因为每个字符安全，就认为整个字符串安全
+     */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsUnsafeStringChar(int c) {
         if (c < 128) { // BitArray不能访问索引外的字符
@@ -106,22 +116,9 @@ public static class DsonTexts
     }
 
     /**
-     * 是否是安全字符，可以省略引号的字符
-     * 注意：safeChar也可能组合出不安全的无引号字符串，比如：123, 0.5, null,true,false，
-     * 因此不能因为每个字符安全，就认为整个字符串安全
-     */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsSafeStringChar(int c) {
-        if (c < 128) {
-            return !unsafeCharSet.Get(c) && !char.IsWhiteSpace((char)c);
-        }
-        return !char.IsWhiteSpace((char)c);
-    }
-
-    /**
      * 是否可省略字符串的引号
      * 其实并不建议底层默认判断是否可以不加引号，用户可以根据自己的数据决定是否加引号，比如；guid可能就是可以不加引号的
-     * 这里的计算是保守的，保守一些不容易出错，因为情况太多，否则既难以保证正确性，性能也差
+     * 这里的计算是保守的，保守一些不容易出错，因为情况太多，否则既难以保证正确性，性能也差。
      */
     public static bool CanUnquoteString(string value, int maxLengthOfUnquoteString) {
         if (value.Length == 0 || value.Length > maxLengthOfUnquoteString) {

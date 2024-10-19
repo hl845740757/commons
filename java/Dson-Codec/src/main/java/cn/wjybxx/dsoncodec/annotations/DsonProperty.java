@@ -61,7 +61,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DsonProperty {
 
-    /** 用于文档型序列化时字段名 */
+    /** 用于文档型序列化时字段名 -- 适用枚举 */
     String name() default "";
 
     // region 特殊命名处理
@@ -123,6 +123,7 @@ public @interface DsonProperty {
      * 1. 必须是具体类型，必须拥有public无参构造方法 -- 生成的代码可访问。
      * 2. 自定义类型也可以指定实现类。
      * 3. 使用{@link #readProxy()}时忽略该属性。
+     * 4. 不要轻易使用该属性，这会导致总是按照固定类型解析，从而导致多态失效。
      * <p>
      * PS：Java的注解必须是常量，因此不能直接使用{@code TypeName}
      */

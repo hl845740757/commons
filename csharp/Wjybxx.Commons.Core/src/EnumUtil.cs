@@ -81,7 +81,7 @@ public static class EnumUtil
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetIntValue<T>(T value) where T : struct, Enum {
-        // 奇巧淫技：int32/uint32/byte/sybte的hashcode是自身，可避免装箱。
+        // 奇巧淫技：int32/uint32/short/ushort/byte/sybte的hashcode是自身，可避免装箱。
         return value.GetHashCode();
     }
 }

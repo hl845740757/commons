@@ -32,6 +32,7 @@ public class DefaultDsonObjectReader : AbstractDsonObjectReader
 
     public override bool ReadName(string? name) {
         IDsonReader<string> reader = this.reader;
+        // array
         if (reader.ContextType.IsArrayLike()) {
             if (reader.IsAtValue) {
                 return true;
@@ -41,11 +42,11 @@ public class DefaultDsonObjectReader : AbstractDsonObjectReader
             }
             return reader.CurrentDsonType != DsonType.EndOfObject;
         }
-        
-        if (name == null) throw new ArgumentNullException(nameof(name));
+        // object
         if (reader.IsAtValue) {
-            return reader.CurrentName == name;
+            return name == null || reader.CurrentName == name;
         }
+        if (name == null) throw new ArgumentNullException(nameof(name));
         if (reader.IsAtType) {
             if (reader.ReadDsonType() == DsonType.EndOfObject) {
                 return false;

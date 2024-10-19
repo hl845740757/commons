@@ -29,8 +29,8 @@ public class StringCodec : IDsonCodec<string>
         writer.WriteString(null, inst, StringStyle.Auto);
     }
 
-    public string ReadObject(IDsonObjectReader reader, Type declaredType, Func<string>? factory = null) {
-        return reader.ReadString(reader.CurrentName);
+    public string ReadObject(IDsonObjectReader reader, Func<string>? factory = null) {
+        return reader.ReadString(null);
     }
 }
 }

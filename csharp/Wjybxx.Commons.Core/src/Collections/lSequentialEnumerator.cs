@@ -26,6 +26,8 @@ namespace Wjybxx.Commons.Collections
 /// <typeparam name="T"></typeparam>
 public interface ISequentialEnumerator<out T> : IEnumerator<T>
 {
+    public static ISequentialEnumerator<T> Empty => EmptyEnumerator<T>.Instance;
+
     /// <summary>
     /// 是否还有下一个元素。
     /// 

@@ -636,7 +636,7 @@ public static class Dsons
     /// <param name="dsonString">原始的dson字符串</param>
     /// <param name="projectInfo">投影描述</param>
     /// <returns>如果存在可映射对象则返回对应值</returns>
-    public static DsonValue? Project(String dsonString, String projectInfo) {
+    public static DsonValue? Project(string dsonString, string projectInfo) {
         return new Projection(projectInfo).Project(dsonString);
     }
 
@@ -646,7 +646,7 @@ public static class Dsons
     /// <param name="dsonString">原始的dson字符串</param>
     /// <param name="projectInfo">投影描述</param>
     /// <returns>如果存在可映射对象则返回对应值</returns>
-    public static DsonValue? Project(String dsonString, DsonObject<String> projectInfo) {
+    public static DsonValue? Project(string dsonString, DsonObject<string> projectInfo) {
         return new Projection(projectInfo).Project(dsonString);
     }
 

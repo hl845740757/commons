@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using Wjybxx.Commons.Collections;
+using Wjybxx.Commons.IO;
 using Wjybxx.Dson.IO;
 using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
@@ -180,10 +181,10 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
-    public void WriteBinary(TName name, DsonChunk chunk) {
-        Dsons.CheckBinaryLength(chunk.Length);
+    public void WriteBinary(TName name, byte[] bytes, int offset, int len) {
+        ByteBufferUtil.CheckBuffer(bytes, offset, len);
         AdvanceToValueState(name);
-        DoWriteBinary(chunk);
+        DoWriteBinary(bytes, offset, len);
         SetNextState();
     }
 
@@ -227,7 +228,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     protected abstract void DoWriteBinary(Binary binary);
 
-    protected abstract void DoWriteBinary(DsonChunk chunk);
+    protected abstract void DoWriteBinary(byte[] bytes, int offset, int len);
 
     protected abstract void DoWritePtr(in ObjectPtr objectPtr);
 

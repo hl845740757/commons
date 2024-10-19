@@ -103,12 +103,11 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
     }
 
     protected override void DoWriteBinary(Binary binary) {
-        // Binary修改为默认不拷贝，由外部接口决定是否拷贝
-        GetContext().Add(new DsonBinary(binary));
+        GetContext().Add(new DsonBinary(binary)); // binary默认为可共享的
     }
 
-    protected override void DoWriteBinary(DsonChunk chunk) {
-        GetContext().Add(new DsonBinary(chunk.ToBinary()));
+    protected override void DoWriteBinary(byte[] bytes, int offset, int len) {
+        GetContext().Add(new DsonBinary(Binary.CopyFrom(bytes, offset, len)));
     }
 
     protected override void DoWritePtr(in ObjectPtr objectPtr) {

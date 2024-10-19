@@ -32,9 +32,11 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class BooleanCodec implements DsonCodec<Boolean> {
+
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.BOXED_BOOL;
     }
 
     @Override
@@ -42,20 +44,14 @@ public class BooleanCodec implements DsonCodec<Boolean> {
         return false;
     }
 
-    @Nonnull
     @Override
-    public Class<Boolean> getEncoderClass() {
-        return Boolean.class;
+    public void writeObject(DsonObjectWriter writer, Boolean inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeBoolean(null, inst);
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Boolean instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        writer.writeBoolean(null, instance);
-    }
-
-    @Override
-    public Boolean readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends Boolean> factory) {
-        return reader.readBoolean(reader.getCurrentName());
+    public Boolean readObject(DsonObjectReader reader, Supplier<? extends Boolean> factory) {
+        return reader.readBoolean(null);
     }
 
 }

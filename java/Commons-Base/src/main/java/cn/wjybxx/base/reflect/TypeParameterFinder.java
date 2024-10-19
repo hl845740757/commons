@@ -44,13 +44,13 @@ import java.util.Objects;
  * date 2023/4/1
  */
 @Beta
-public class TypeParameterFinder {
+public final class TypeParameterFinder {
 
     /**
      * 获取包含泛型信息的超类(或接口)
      *
      * @param thisClass             当前类
-     * @param superClazzOrInterface 目标超类后接口
+     * @param superClazzOrInterface 目标超类或接口(兼容非泛型类和接口)
      */
     public static <T> Type getGenericSuperType(final Class<T> thisClass, final Class<? super T> superClazzOrInterface) {
         assert superClazzOrInterface.isAssignableFrom(thisClass);
@@ -98,13 +98,14 @@ public class TypeParameterFinder {
         Objects.requireNonNull(thisClass, "thisClass");
         Objects.requireNonNull(superClazzOrInterface, "superClazzOrInterface");
         Objects.requireNonNull(typeParamName, "typeParamName");
-
-        if (thisClass == superClazzOrInterface) {
-            // 仅仅支持查找父类/父接口定义的泛型且被子类声明为具体类型的泛型参数
-            throw new IllegalArgumentException("typeParam " + typeParamName + " is declared in self class: " + thisClass.getSimpleName()
-                    + ", only support find superClassOrInterface typeParam.");
+        // 必须超类/接口
+        if (thisClass == superClazzOrInterface || !superClazzOrInterface.isAssignableFrom(thisClass)) {
+            throw new IllegalArgumentException("superClazz error");
         }
-        ensureTypeParameterExist(superClazzOrInterface, typeParamName);
+        if (indexTypeParam(superClazzOrInterface, typeParamName) < 0) {
+            throw new IllegalArgumentException("typeVarName %s is not declared in superClazz/interface %s"
+                    .formatted(typeParamName, superClazzOrInterface.getSimpleName()));
+        }
 
         if (superClazzOrInterface.isInterface()) {
             // 自己实现的在接口中查找泛型参数的具体类型
@@ -112,19 +113,6 @@ public class TypeParameterFinder {
         } else {
             // netty实现了在超类中进行查找
             return find0(thisClass, superClazzOrInterface, typeParamName);
-        }
-    }
-
-    /**
-     * 确保泛型参数在该类型中进行了定义
-     *
-     * @param parametrizedSuperInterface 超类/接口对应的Class对象
-     * @param typeVarName                泛型参数名
-     */
-    private static void ensureTypeParameterExist(Class<?> parametrizedSuperInterface, String typeVarName) {
-        if (indexTypeParam(parametrizedSuperInterface, typeVarName) < 0) {
-            throw new IllegalArgumentException("typeVarName " + typeVarName +
-                    " is not declared in superClazz/interface " + parametrizedSuperInterface.getSimpleName());
         }
     }
 
@@ -154,15 +142,14 @@ public class TypeParameterFinder {
      */
     private static <T> Class<? super T> findInterfaceDirectChildClass(Class<? super T> currentClazzOrInterface, Class<? super T> parametrizedInterface) {
         if (!parametrizedInterface.isAssignableFrom(currentClazzOrInterface)) {
-            throw new IllegalArgumentException("currentClazzOrInterface=" + currentClazzOrInterface.getSimpleName()
-                    + " ,parametrizedInterface=" + parametrizedInterface.getSimpleName());
+            throw new IllegalArgumentException("currentClazzOrInterface = %s ,parametrizedInterface = %s"
+                    .formatted(currentClazzOrInterface.getSimpleName(), parametrizedInterface.getSimpleName()));
         }
 
         // 查询直接实现/继承的接口
         Class<?>[] implementationInterfaces = currentClazzOrInterface.getInterfaces();
         for (Class<?> clazz : implementationInterfaces) {
             if (clazz == parametrizedInterface) {
-                // 找到了直接实现类/直接子接口
                 return currentClazzOrInterface;
             }
         }
@@ -179,13 +166,11 @@ public class TypeParameterFinder {
         for (Class<?> oneSuperInterface : implementationInterfaces) {
             if (parametrizedInterface.isAssignableFrom(oneSuperInterface)) {
                 // 任意一个通路上去
-                @SuppressWarnings({"unchecked"})
+                @SuppressWarnings("unchecked")
                 Class<? super T> superInterface = (Class<? super T>) oneSuperInterface;
                 return findInterfaceDirectChildClass(superInterface, parametrizedInterface);
             }
         }
-
-        // 这里走不到
         throw new AssertionError();
     }
 
@@ -275,8 +260,8 @@ public class TypeParameterFinder {
     }
 
     private static Class<?> fail(Class<?> type, String typeParamName) {
-        throw new IllegalStateException(
-                "cannot determine the type of the type parameter '" + typeParamName + "': " + type);
+        throw new IllegalStateException("cannot determine the type of the type parameter '%s': %s"
+                .formatted(typeParamName, type));
     }
 
     /**
@@ -288,8 +273,8 @@ public class TypeParameterFinder {
             if (currentClass.getSuperclass() == parametrizedSuperclass) {
                 int typeParamIndex = indexTypeParam(parametrizedSuperclass, typeParamName);
                 if (typeParamIndex < 0) {
-                    throw new IllegalStateException(
-                            "unknown type parameter '" + typeParamName + "': " + parametrizedSuperclass);
+                    throw new IllegalStateException("unknown type parameter '%s': %s"
+                            .formatted(typeParamName, parametrizedSuperclass));
                 }
 
                 Type genericSuperType = currentClass.getGenericSuperclass();

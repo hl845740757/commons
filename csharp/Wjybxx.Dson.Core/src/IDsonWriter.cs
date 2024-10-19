@@ -86,7 +86,7 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
 
     void WriteBinary(TName name, Binary binary);
 
-    void WriteBinary(TName name, DsonChunk chunk);
+    void WriteBinary(TName name, byte[] bytes, int offset, int len);
 
     void WritePtr(TName name, in ObjectPtr objectPtr);
 
@@ -115,6 +115,11 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteDouble(TName name, double value) {
         WriteDouble(name, value, NumberStyles.Simple);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void WriteBinary(TName name, byte[] bytes) {
+        WriteBinary(name, bytes, 0, bytes.Length);
     }
 
     #endregion

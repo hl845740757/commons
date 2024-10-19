@@ -529,6 +529,30 @@ public class CollectionUtils {
         return src == null ? List.of() : src;
     }
 
+    /** 比较List的相等性 -- 按序相等 */
+    public static <E> boolean sequenceEqual(List<E> first, List<E> second) {
+        Objects.requireNonNull(first, "first");
+        Objects.requireNonNull(second, "second");
+
+        if (first == second) return true;
+        if (first.size() != second.size()) return false;
+        for (int i = 0, size = first.size(); i < size; i++) {
+            if (!Objects.equals(first.get(i), second.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** 获取List的hashcode */
+    public static int hashcode(List<?> list) {
+        int r = 1;
+        for (int i = 0, size = list.size(); i < size; i++) {
+            r = 31 * r + Objects.hashCode(list.get(i));
+        }
+        return r;
+    }
+
     // endregion
 
     // region set
@@ -559,8 +583,11 @@ public class CollectionUtils {
         }
         // 在Set的copy方法中会先调用new HashSet拷贝数据。
         // 我们进行一次判断并显式调用toArray可减少一次不必要的拷贝
-        if (src.getClass() == HashSet.class) {
+        if (src.getClass() == HashSet.class || src.getClass() == LinkedHashSet.class) {
             return (Set<E>) Set.of(src.toArray());
+        } else if (src instanceof EnumSet<?> enumSet) {
+            EnumSet<?> result = EnumSet.copyOf(enumSet);
+            return (Set<E>) Collections.unmodifiableSet(result);
         } else {
             return Set.copyOf(src);
         }
@@ -572,16 +599,6 @@ public class CollectionUtils {
             return Set.of();
         }
         return Collections.unmodifiableSet(new LinkedHashSet<>(src));
-    }
-
-    /** 转换为不可变的{@link EnumSet}，用户需要保持高效查询效率的场景 */
-    public static <E extends Enum<E>> Set<E> toImmutableEnumSet(@Nullable Collection<E> src, Class<E> keyType) {
-        if (src == null || src.isEmpty()) {
-            return Set.of();
-        }
-        EnumSet<E> enumSet = EnumSet.noneOf(keyType);
-        enumSet.addAll(src);
-        return Collections.unmodifiableSet(enumSet);
     }
 
     // endregion
@@ -686,10 +703,15 @@ public class CollectionUtils {
     }
 
     /** @param src 不支持key或value为null */
+    @SuppressWarnings("unchecked")
     @Nonnull
     public static <K, V> Map<K, V> toImmutableMap(@Nullable Map<K, V> src) {
         if ((src == null || src.isEmpty())) {
             return Map.of();
+        }
+        if (src instanceof EnumMap<?, ?> enumMap) {
+            EnumMap<?, ?> result = new EnumMap<>(enumMap);
+            return (Map<K, V>) Collections.unmodifiableMap(result);
         }
         return Map.copyOf(src);
     }
@@ -721,28 +743,6 @@ public class CollectionUtils {
         }
         final Map<K, List<V>> copiedMap = new LinkedHashMap<>();
         src.forEach((k, v) -> copiedMap.put(k, List.copyOf(v)));
-        return Collections.unmodifiableMap(copiedMap);
-    }
-
-    /** 转换为不可变的{@link EnumMap}，用于需要保持高效查询的场景 */
-    @Nonnull
-    public static <K extends Enum<K>, V> Map<K, V> toImmutableEnumMap(@Nullable Map<K, V> src, Class<K> keyType) {
-        if ((src == null || src.isEmpty())) {
-            return Map.of();
-        }
-        EnumMap<K, V> copiedMap = new EnumMap<>(keyType);
-        copiedMap.putAll(src);
-        return Collections.unmodifiableMap(copiedMap);
-    }
-
-    /** 转换为不可变的{@link EnumMap}，用于需要保持高效查询的场景 */
-    @Nonnull
-    public static <K extends Enum<K>, V> Map<K, List<V>> toImmutableMultiEnumMap(@Nullable Map<K, ? extends Collection<V>> src, Class<K> keyType) {
-        if ((src == null || src.isEmpty())) {
-            return Map.of();
-        }
-        EnumMap<K, List<V>> copiedMap = new EnumMap<>(keyType);
-        src.forEach((k, vs) -> copiedMap.put(k, List.copyOf(vs)));
         return Collections.unmodifiableMap(copiedMap);
     }
 

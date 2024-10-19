@@ -23,7 +23,7 @@ using Wjybxx.Dson.Internal;
 namespace Wjybxx.Dson.Types
 {
 /// <summary>
-/// 字节数组封装
+/// 二进制数据
 /// </summary>
 public struct Binary : IEquatable<Binary>
 {
@@ -31,7 +31,6 @@ public struct Binary : IEquatable<Binary>
     private int _hash;
 
     private Binary(byte[] data) {
-        Dsons.CheckBinaryLength(data.Length);
         this._data = data ?? throw new ArgumentNullException(nameof(data));
         this._hash = 0;
     }

@@ -49,7 +49,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
         Context context = NewContext(null, DsonContextType.TopLevel, DsonTypes.INVALID);
         context.header = dsonArray.Header.Count > 0 ? dsonArray.Header : null;
-        context.arrayIterator = NewArrayIterator(dsonArray.GetEnumerator());
+        context.arrayIterator.SetBaseIterator(dsonArray.GetEnumerator());
         SetContext(context);
     }
 
@@ -253,15 +253,16 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
             DsonObject<TName> dsonObject = dsonValue.AsObject<TName>();
             newContext.header = dsonObject.Header.Count > 0 ? dsonObject.Header : null;
             newContext.dsonObject = dsonObject;
-            newContext.objectIterator = NewObjectIterator(dsonObject.GetEnumerator());
+            newContext.objectIterator.SetBaseIterator(dsonObject.GetEnumerator());
         } else if (dsonValue.DsonType == DsonType.Array) {
             DsonArray<TName> dsonArray = dsonValue.AsArray<TName>();
             newContext.header = dsonArray.Header.Count > 0 ? dsonArray.Header : null;
-            newContext.arrayIterator = NewArrayIterator(dsonArray.GetEnumerator());
+            newContext.arrayIterator.SetBaseIterator(dsonArray.GetEnumerator());
         } else {
-            // 其它内置结构体
-            newContext.dsonObject = dsonValue.AsHeader<TName>();
-            newContext.objectIterator = NewObjectIterator(dsonValue.AsHeader<TName>().GetEnumerator());
+            // header
+            DsonHeader<TName> header = dsonValue.AsHeader<TName>();
+            newContext.dsonObject = header;
+            newContext.objectIterator.SetBaseIterator(header.GetEnumerator());
         }
         newContext.name = currentName;
 
@@ -294,36 +295,17 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
     protected override void DoSkipToEndOfObject() {
         Context context = GetContext();
         context.header = null;
-        if (context.arrayIterator != null) {
-            context.arrayIterator.ForEachRemaining(_ => { });
+        if (context.dsonObject != null) {
+            context.objectIterator.Dispose();
+            context.objectIterator.SetBaseIterator(ISequentialEnumerator<KeyValuePair<TName, DsonValue>>.Empty);
         } else {
-            context.objectIterator!.ForEachRemaining(_ => { });
+            context.arrayIterator.Dispose();
+            context.arrayIterator.SetBaseIterator(ISequentialEnumerator<DsonValue>.Empty);
         }
     }
 
     protected override byte[] DoReadValueAsBytes() {
         throw new InvalidOperationException("Unsupported operation");
-    }
-
-    #endregion
-
-    #region itrpool
-
-    private static readonly ConcurrentObjectPool<MarkableIterator<KeyValuePair<TName, DsonValue>>> objectItrPool =
-        new(() => new MarkableIterator<KeyValuePair<TName, DsonValue>>(), itr => itr.Dispose(),
-            DsonInternals.CONTEXT_POOL_SIZE);
-    private static ConcurrentObjectPool<MarkableIterator<DsonValue>> arrayItrPool => DsonInternals.arrayItrPool;
-
-    private static MarkableIterator<DsonValue> NewArrayIterator(IEnumerator<DsonValue> baseIterator) {
-        var markableIterator = arrayItrPool.Acquire();
-        markableIterator.Init(baseIterator);
-        return markableIterator;
-    }
-
-    private static MarkableIterator<KeyValuePair<TName, DsonValue>> NewObjectIterator(IEnumerator<KeyValuePair<TName, DsonValue>> baseIterator) {
-        var markableIterator = objectItrPool.Acquire();
-        markableIterator.Init(baseIterator);
-        return markableIterator;
     }
 
     #endregion
@@ -345,49 +327,50 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
     }
 
 #pragma warning disable CS0628
-    protected new class Context : AbstractDsonReader<TName>.Context
+    protected new class Context : AbstractDsonReader<TName>.Context, ISequentialEnumerator<KeyValuePair<TName, DsonValue>>
     {
         /** 如果不为null，则表示需要先读取header */
         protected internal DsonHeader<TName> header;
+        /** 如果不为null，则表示读取Header和Object上下文 */
         protected internal AbstractDsonObject<TName> dsonObject;
-        protected internal MarkableIterator<KeyValuePair<TName, DsonValue>> objectIterator;
-        protected internal MarkableIterator<DsonValue> arrayIterator;
+        /** 迭代器和Context一起缓存 */
+        protected internal MarkableIterator<KeyValuePair<TName, DsonValue>> objectIterator =
+            new(ISequentialEnumerator<KeyValuePair<TName, DsonValue>>.Empty);
+        protected internal MarkableIterator<DsonValue> arrayIterator = new(ISequentialEnumerator<DsonValue>.Empty);
+
+        /** 按照外部key迭代 -- 避免再封装一层增加开销 */
+        private ISequentialEnumerator<TName> keyItr;
+        private DsonValue defValue;
 
         public Context() {
         }
 
         public new Context Parent => (Context)parent;
 
+        // 这里重合的迭代器的Reset...好在目前没有问题，不然还是得使用额外的KeyItr
         public override void Reset() {
             base.Reset();
             header = null;
             dsonObject = null;
-            if (objectIterator != null) {
-                objectItrPool.Release(objectIterator);
-                objectIterator = null;
-            }
-            if (arrayIterator != null) {
-                arrayItrPool.Release(arrayIterator);
-                arrayIterator = null;
-            }
+            objectIterator.Dispose();
+            arrayIterator.Dispose();
+            keyItr = null;
+            defValue = null;
         }
 
-        public void SetKeyItr(ISequentialEnumerator<TName> keyItr, DsonValue defValue) {
-            if (dsonObject == null) throw new InvalidOperationException();
-            if (objectIterator!.IsMarking) throw new InvalidOperationException("reader is in marking state");
-            objectIterator = NewObjectIterator(new KeyIterator(dsonObject, keyItr, defValue));
-        }
-
+        /** 该方法重合了迭代器的hasNext，需要兼容 */
         public bool HasNext() {
-            if (objectIterator != null) {
-                return objectIterator.HasNext();
-            } else {
-                return arrayIterator!.HasNext();
+            if (keyItr != null) {
+                return keyItr.HasNext();
             }
+            if (dsonObject != null) {
+                return objectIterator.HasNext();
+            }
+            return arrayIterator.HasNext();
         }
 
         public void MarkItr() {
-            if (objectIterator != null) {
+            if (dsonObject != null) {
                 objectIterator.Mark();
             } else {
                 arrayIterator!.Mark();
@@ -395,7 +378,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         }
 
         public void ResetItr() {
-            if (objectIterator != null) {
+            if (dsonObject != null) {
                 objectIterator.Reset();
             } else {
                 arrayIterator!.Reset();
@@ -409,41 +392,31 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         public KeyValuePair<TName, DsonValue>? NextElement() {
             return objectIterator!.HasNext() ? objectIterator.Next() : null;
         }
-    }
 
-    private class KeyIterator : ISequentialEnumerator<KeyValuePair<TName, DsonValue>>
-    {
-        private readonly AbstractDsonObject<TName> _dsonObject;
-        private readonly ISequentialEnumerator<TName> _keyItr;
-        private readonly DsonValue _defValue;
+        // key-itr
+        public void SetKeyItr(ISequentialEnumerator<TName> keyItr, DsonValue defValue) {
+            if (dsonObject == null) throw new InvalidOperationException();
+            if (objectIterator!.IsMarking) throw new InvalidOperationException("reader is in marking state");
 
-        public KeyIterator(AbstractDsonObject<TName> dsonObject, ISequentialEnumerator<TName> keyItr, DsonValue defValue) {
-            this._dsonObject = dsonObject;
-            this._keyItr = keyItr;
-            this._defValue = defValue;
-        }
-
-        public bool HasNext() {
-            return _keyItr.HasNext();
+            this.keyItr = keyItr;
+            this.defValue = defValue;
+            objectIterator.Dispose();
+            objectIterator.SetBaseIterator(this);
         }
 
         public bool MoveNext() {
-            return _keyItr.MoveNext();
+            return keyItr.MoveNext();
         }
 
         public KeyValuePair<TName, DsonValue> Current {
             get {
-                TName key = _keyItr.Current;
-                if (_dsonObject.TryGetValue(key!, out DsonValue dsonValue)) {
+                TName key = keyItr.Current;
+                if (dsonObject.TryGetValue(key!, out DsonValue dsonValue)) {
                     return new KeyValuePair<TName, DsonValue>(key, dsonValue);
                 } else {
-                    return new KeyValuePair<TName, DsonValue>(key, _defValue);
+                    return new KeyValuePair<TName, DsonValue>(key, defValue);
                 }
             }
-        }
-
-        public void Reset() {
-            _keyItr.Reset();
         }
 
         object IEnumerator.Current => Current;

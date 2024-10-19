@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.ArrayUtils;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.dson.text.ObjectStyle;
 
@@ -27,42 +28,27 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 为更好的支持泛型，我们根据原型类型动态创建TypeMeta
+ * PS：要做得更好的话，还可以缓存TypeInfo实例，进行常量化。
  *
  * @author wjybxx
  * date - 2024/5/16
  */
-public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
+public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
-    private final TypeMetaRegistry basicRegistry;
+    private final TypeMetaConfig basicRegistry;
+    private final ConcurrentHashMap<String, ClassName> typeNamePool = new ConcurrentHashMap<>(1024);
+    private final ConcurrentHashMap<TypeInfo, TypeMeta> type2MetaDic = new ConcurrentHashMap<>(1024);
+    private final ConcurrentHashMap<String, TypeMeta> name2MetaDic = new ConcurrentHashMap<>(1024);
 
-    private final ClassNamePool classNamePool = new ClassNamePool();
-    private final ConcurrentHashMap<TypeInfo<?>, TypeMeta> type2MetaDic = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, TypeMeta> name2MetaDic = new ConcurrentHashMap<>();
-
-    public DynamicTypeMetaRegistry(TypeMetaRegistry basicRegistry) {
-        this.basicRegistry = Objects.requireNonNull(basicRegistry);
+    public DynamicTypeMetaRegistry(TypeMetaConfig config) {
+        this.basicRegistry = config.toImmutable();
     }
 
     // region ofType
 
     @Nullable
     @Override
-    public TypeMeta ofClass(Class<?> clazz) {
-        TypeMeta typeMeta = basicRegistry.ofClass(clazz);
-        if (typeMeta != null) {
-            return typeMeta;
-        }
-        // 走到这里，通常意味着clsName是数组或泛型，或在基础注册表中不存在
-        // 对于数组，我们可以动态生成原始类型数组的元数据，其它情况下则证明不存在对应元数据
-        if (clazz.isArray()) {
-            return ofType(TypeInfo.of(clazz));
-        }
-        return null;
-    }
-
-    @Nullable
-    @Override
-    public TypeMeta ofType(TypeInfo<?> type) {
+    public TypeMeta ofType(TypeInfo type) {
         TypeMeta typeMeta = basicRegistry.ofType(type);
         if (typeMeta != null) {
             return typeMeta;
@@ -72,16 +58,15 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             return typeMeta;
         }
         // 走到这里，通常意味着clsName是数组或泛型，或在基础注册表中不存在
-        if (!type.isGenericType() && !type.isArray()) {
+        if (!type.isGenericType() && !type.isArrayType()) {
             return null;
         }
 
         ObjectStyle style;
-        if (type.isArray()) {
+        if (type.isArrayType()) {
             style = ObjectStyle.INDENT;
         } else {
-            Class<?> rawType = type.rawType;
-            TypeMeta rawTypeMeta = basicRegistry.ofClass(rawType);
+            TypeMeta rawTypeMeta = basicRegistry.ofType(TypeInfo.of(type.rawType));
             if (rawTypeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
@@ -112,9 +97,9 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             return typeMeta;
         }
         // 走到这里，通常意味着clsName是数组或泛型 -- 别名可能导致断言失败
-        ClassName className = classNamePool.parse(clsName);
+        ClassName className = parseName(clsName);
 //        assert className.isArray() || className.isGeneric()
-        TypeInfo<?> type = typeOfClassName(className);
+        TypeInfo type = typeOfClassName(className);
 
         // 通过Type初始化TypeMeta，我们尽量合并TypeMeta -- clsName包含空白时不缓存
         typeMeta = ofType(type);
@@ -143,31 +128,45 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
     // region internal
 
+    private ClassName parseName(String clsName) {
+        Objects.requireNonNull(clsName);
+        ClassName className = typeNamePool.get(clsName);
+        if (className != null) {
+            return className;
+        }
+        // 程序生成的clsName通常是紧凑的，不包含空白字符(缩进)的，因此可以安全缓存；
+        // 如果clsName包含空白字符，通常是用户手写的，缓存有一定的风险性 —— 可能产生恶意缓存
+        if (ObjectUtils.containsWhitespace(clsName)) {
+            return ClassName.parse(clsName);
+        }
+        className = ClassName.parse(clsName);
+        typeNamePool.put(clsName, className);
+        return className;
+    }
+
     /**
      * 根据Type查找对应的ClassName。
      * 1.由于类型存在别名，一个Type的ClassName可能有很多个，且泛型参数还会导致组合，导致更多的类型名，但动态生成时我们只生成确定的一种。
      * 2.解析的开销较大，需要缓存最终结果。
      * 3.Java禁止递归的泛型
      */
-    private ClassName classNameOfType(TypeInfo<?> type) {
-        if (type.isArray()) {
-            TypeInfo<?> rootElementType = TypeInfo.of(DsonConverterUtils.getRootComponentType(type.rawType), type.typeArgs);
-            int arrayRank = DsonConverterUtils.getArrayRank(type.rawType);
-            String clsName = classNameOfType(rootElementType) + DsonConverterUtils.arrayRankSymbol(arrayRank);
+    private ClassName classNameOfType(TypeInfo type) {
+        if (type.isArrayType()) {
+            TypeInfo rootElementType = TypeInfo.of(ArrayUtils.getRootComponentType(type.rawType), type.genericArgs);
+            int arrayRank = ArrayUtils.getArrayRank(type.rawType);
+            String clsName = classNameOfType(rootElementType) + ArrayUtils.arrayRankSymbol(arrayRank);
             return new ClassName(clsName);
         }
         if (type.isGenericType()) {
             // 泛型原型类必须存在于用户的注册表中
-//            TypeInfo<?> genericTypeDefinition = type.getGenericTypeDefinition();
-            TypeMeta typeMeta = basicRegistry.ofClass(type.rawType);
+            TypeMeta typeMeta = basicRegistry.ofType(TypeInfo.of(type.rawType));
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
-            List<Class<?>> genericArguments = type.typeArgs;
+            List<TypeInfo> genericArguments = type.genericArgs;
             List<ClassName> typeArgClassNames = new ArrayList<>(genericArguments.size());
-            for (Class<?> genericArgument : genericArguments) {
-                TypeInfo<?> genericArgType = TypeInfo.of(genericArgument);
-                typeArgClassNames.add(classNameOfType(genericArgType));
+            for (TypeInfo genericArgument : genericArguments) {
+                typeArgClassNames.add(classNameOfType(genericArgument));
             }
             return new ClassName(typeMeta.mainClsName(), typeArgClassNames);
         }
@@ -187,10 +186,10 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
      * 2.解析的开销较大，需要缓存最终结果。
      * 3.Java禁止递归的泛型
      */
-    private TypeInfo<?> typeOfClassName(ClassName className) {
+    private TypeInfo typeOfClassName(ClassName className) {
         // 先解析泛型类，再构建数组
         int arrayRank = className.getArrayRank();
-        TypeInfo<?> elementType;
+        TypeInfo elementType;
         if (arrayRank > 0) {
             // 获取数组根元素的类型
             elementType = typeOfClassName(new ClassName(className.getRootElement(), className.typeArgs));
@@ -204,28 +203,19 @@ public class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             // 解析泛型参数
             int typeArgsCount = className.typeArgs.size();
             if (typeArgsCount > 0) {
-                Class<?>[] typeParameters = new Class<?>[typeArgsCount];
+                TypeInfo[] typeParameters = new TypeInfo[typeArgsCount];
                 for (int index = 0; index < typeArgsCount; index++) {
-                    ClassName genericArgClassName = className.typeArgs.get(index);
-                    typeParameters[index] = typeOfClassName(genericArgClassName).rawType;
+                    typeParameters[index] = typeOfClassName(className.typeArgs.get(index));
                 }
                 elementType = TypeInfo.of(elementType.rawType, typeParameters);
             }
         }
         // 构建多维数组
-        while (arrayRank-- > 0) {
-            elementType = elementType.makeArrayType();
+        if (arrayRank > 0) {
+            elementType = elementType.makeArrayType(arrayRank);
         }
         return elementType;
     }
 
     // endregion
-
-    @Override
-    public List<TypeMeta> export() {
-        List<TypeMeta> result = new ArrayList<>(basicRegistry.export());
-        result.addAll(type2MetaDic.values());
-        return result;
-    }
-
 }

@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
 
@@ -37,7 +36,7 @@ public class LazyCodecTest {
 
     @Test
     void testLazyCodec() {
-        TypeMetaRegistry typeMetaRegistry = TypeMetaRegistries.fromMetas(
+        TypeMetaConfig typeMetaConfig = TypeMetaConfig.fromTypeMetas(
                 TypeMeta.of(MyStruct.class, ObjectStyle.INDENT, "MyStruct")
         );
         ConverterOptions options = ConverterOptions.newBuilder()
@@ -52,31 +51,34 @@ public class LazyCodecTest {
         // 源端
         final byte[] bytesSource;
         {
-            DefaultDsonConverter converter = DefaultDsonConverter.newInstance(
-                    typeMetaRegistry,
-                    List.of(new MyStructCodec(Role.SOURCE)),
-                    options);
+            DsonConverter converter = new DsonConverterBuilder()
+                    .addTypeMetaConfig(typeMetaConfig)
+                    .addCodec(new MyStructCodec(Role.SOURCE))
+                    .setOptions(options)
+                    .build();
             bytesSource = converter.write(myStruct);
         }
 
         final byte[] routerBytes;
         // 模拟转发 -- 读进来再写
         {
-            DefaultDsonConverter converter = DefaultDsonConverter.newInstance(
-                    typeMetaRegistry,
-                    List.of(new MyStructCodec(Role.ROUTER)),
-                    options);
-            routerBytes = converter.write(converter.read(bytesSource));
+            DsonConverter converter = new DsonConverterBuilder()
+                    .addTypeMetaConfig(typeMetaConfig)
+                    .addCodec(new MyStructCodec(Role.ROUTER))
+                    .setOptions(options)
+                    .build();
+            routerBytes = converter.write(converter.read(bytesSource, TypeInfo.OBJECT));
         }
 
         // 终端
         MyStruct destStruct;
         {
-            DefaultDsonConverter converter = DefaultDsonConverter.newInstance(
-                    typeMetaRegistry,
-                    List.of(new MyStructCodec(Role.DESTINATION)),
-                    options);
-            destStruct = (MyStruct) converter.read(routerBytes);
+            DsonConverter converter = new DsonConverterBuilder()
+                    .addTypeMetaConfig(typeMetaConfig)
+                    .addCodec(new MyStructCodec(Role.DESTINATION))
+                    .setOptions(options)
+                    .build();
+            destStruct = (MyStruct) converter.read(routerBytes, TypeInfo.OBJECT);
         }
         Assertions.assertEquals(myStruct, destStruct);
     }
@@ -97,19 +99,19 @@ public class LazyCodecTest {
 
         @Nonnull
         @Override
-        public Class<MyStruct> getEncoderClass() {
-            return MyStruct.class;
+        public TypeInfo getEncoderType() {
+            return TypeInfo.of(MyStruct.class);
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, MyStruct instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-            writer.writeString("strVal", instance.strVal);
+        public void writeObject(DsonObjectWriter writer, MyStruct inst, TypeInfo declaredType, ObjectStyle style) {
+            writer.writeString("strVal", inst.strVal);
             if (role == Role.ROUTER) {
-                writer.writeValueBytes("nestStruct", DsonType.OBJECT, (byte[]) instance.nestStruct);
+                writer.writeValueBytes("nestStruct", DsonType.OBJECT, (byte[]) inst.nestStruct);
             } else {
                 // 不在编码器里，定制写
-                NestStruct nestStruct = (NestStruct) instance.nestStruct;
-                writer.writeStartObject("nestStruct", nestStruct, TypeInfo.of(NestStruct.class));
+                NestStruct nestStruct = (NestStruct) inst.nestStruct;
+                writer.writeStartObject("nestStruct", ObjectStyle.INDENT);
                 {
                     writer.writeInt("intVal", nestStruct.intVal);
                     writer.writeLong("longVal", nestStruct.longVal);
@@ -121,7 +123,7 @@ public class LazyCodecTest {
         }
 
         @Override
-        public MyStruct readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends MyStruct> factory) {
+        public MyStruct readObject(DsonObjectReader reader, Supplier<? extends MyStruct> factory) {
             String strVal = reader.readString("strVal");
             Object nestStruct;
             if (role == Role.ROUTER) {
@@ -140,7 +142,7 @@ public class LazyCodecTest {
     }
 
     private record NestStruct(int intVal, long longVal, float floatVal, double doubleVal) {
-
+        private static final TypeInfo typeInfo = TypeInfo.of(NestStruct.class);
     }
 
     private record MyStruct(String strVal, Object nestStruct) {

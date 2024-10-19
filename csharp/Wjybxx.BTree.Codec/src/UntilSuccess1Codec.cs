@@ -22,9 +22,9 @@ using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree.Decorator;
 using Wjybxx.Dson.Codec;
 using System;
-using Wjybxx.Dson.Text;
 using Wjybxx.BTree;
 using Wjybxx.Dson;
+using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
@@ -36,20 +36,20 @@ public sealed class UntilSuccess1Codec<T> : AbstractDsonCodec<UntilSuccess<T>> w
     public const string names_child = "child";
     public const string names_maxLoop = "maxLoop";
 
-    public override Type GetEncoderClass() => typeof(UntilSuccess<T>);
+    public override Type GetEncoderType() => typeof(UntilSuccess<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref UntilSuccess<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref UntilSuccess<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
         writer.WriteInt(names_maxLoop, inst.MaxLoop, WireType.VarInt, NumberStyles.Simple);
     }
 
-    protected override UntilSuccess<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override UntilSuccess<T> NewInstance(IDsonObjectReader reader) {
         return new UntilSuccess<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref UntilSuccess<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref UntilSuccess<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
         inst.Child = reader.ReadObject<Task<T>>(names_child, typeof(Task<T>), null);

@@ -34,38 +34,29 @@ public abstract class AbstractDsonCodec<T> implements DsonCodec<T> {
 
     @Nonnull
     @Override
-    public abstract Class<T> getEncoderClass();
+    public abstract TypeInfo getEncoderType();
 
-    @Override
-    public boolean autoStartEnd() {
-        return true;
-    }
-
-    @Override
-    public boolean isWriteAsArray() {
-        return DsonConverterUtils.isEncodeAsArray(getEncoderClass());
-    }
     // endregion
 
     // region write
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, T inst, TypeInfo declaredType, ObjectStyle style) {
         if (writer.options().enableBeforeEncode) {
-            beforeEncode(writer, instance, typeInfo, style);
+            beforeEncode(writer, inst);
         }
-        writeFields(writer, instance, typeInfo, style);
+        writeFields(writer, inst);
     }
 
     /**
      * 用于执行用户的{@code beforeEncode}钩子方法。
      * 通常用于数据转换。
      */
-    protected void beforeEncode(DsonObjectWriter writer, T instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    protected void beforeEncode(DsonObjectWriter writer, T inst) {
 
     }
 
-    public abstract void writeFields(DsonObjectWriter writer, T instance, TypeInfo<?> typeInfo, ObjectStyle style);
+    public abstract void writeFields(DsonObjectWriter writer, T inst);
 
     // endregion
 
@@ -73,11 +64,11 @@ public abstract class AbstractDsonCodec<T> implements DsonCodec<T> {
     // region read
 
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends T> factory) {
-        final T instance = factory != null ? factory.get() : newInstance(reader, typeInfo);
-        readFields(reader, instance, typeInfo);
+    public T readObject(DsonObjectReader reader, Supplier<? extends T> factory) {
+        final T instance = factory != null ? factory.get() : newInstance(reader);
+        readFields(reader, instance);
         if (reader.options().enableAfterDecode) {
-            afterDecode(reader, instance, typeInfo);
+            afterDecode(reader, instance);
         }
         return instance;
     }
@@ -89,20 +80,20 @@ public abstract class AbstractDsonCodec<T> implements DsonCodec<T> {
      *
      * @return 可以是子类实例
      */
-    protected abstract T newInstance(DsonObjectReader reader, TypeInfo<?> typeInfo);
+    protected abstract T newInstance(DsonObjectReader reader);
 
     /**
      * 从输入流中读取所有序列化的字段到指定实例上。
      *
-     * @param instance 可以是子类实例
+     * @param inst 可能是子类实例
      */
-    public abstract void readFields(DsonObjectReader reader, T instance, TypeInfo<?> typeInfo);
+    public abstract void readFields(DsonObjectReader reader, T inst);
 
     /**
      * 用于执行用户的{@code afterDecode}钩子方法。
      * 通常用于数据转换。
      */
-    protected void afterDecode(DsonObjectReader reader, T instance, TypeInfo<?> typeInfo) {
+    protected void afterDecode(DsonObjectReader reader, T inst) {
 
     }
 

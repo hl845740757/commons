@@ -34,9 +34,10 @@ import java.util.function.Supplier;
 @DsonCodecScanIgnore
 public class StringCodec implements DsonCodec<String> {
 
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.STRING;
     }
 
     @Override
@@ -44,20 +45,14 @@ public class StringCodec implements DsonCodec<String> {
         return false;
     }
 
-    @Nonnull
     @Override
-    public Class<String> getEncoderClass() {
-        return String.class;
+    public void writeObject(DsonObjectWriter writer, String inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeString(null, inst, StringStyle.AUTO);
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, String instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        writer.writeString(null, instance, StringStyle.AUTO);
-    }
-
-    @Override
-    public String readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends String> factory) {
-        return reader.readString(reader.getCurrentName());
+    public String readObject(DsonObjectReader reader, Supplier<? extends String> factory) {
+        return reader.readString(null);
     }
 
 }

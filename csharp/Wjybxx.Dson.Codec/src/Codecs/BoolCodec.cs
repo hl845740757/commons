@@ -29,8 +29,8 @@ public class BoolCodec : IDsonCodec<bool>
         writer.WriteBool(null, inst);
     }
 
-    public bool ReadObject(IDsonObjectReader reader, Type declaredType, Func<bool>? factory = null) {
-        return reader.ReadBool(reader.CurrentName);
+    public bool ReadObject(IDsonObjectReader reader, Func<bool>? factory = null) {
+        return reader.ReadBool(null);
     }
 }
 }

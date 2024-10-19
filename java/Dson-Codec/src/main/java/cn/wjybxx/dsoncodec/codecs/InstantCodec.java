@@ -34,9 +34,11 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class InstantCodec implements DsonCodec<Instant> {
+
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(Instant.class);
     }
 
     @Override
@@ -44,20 +46,14 @@ public class InstantCodec implements DsonCodec<Instant> {
         return false;
     }
 
-    @Nonnull
     @Override
-    public Class<Instant> getEncoderClass() {
-        return Instant.class;
+    public void writeObject(DsonObjectWriter writer, Instant inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeTimestamp(null, Timestamp.ofInstant(inst));
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Instant instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        writer.writeTimestamp(null, Timestamp.ofInstant(instance));
-    }
-
-    @Override
-    public Instant readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends Instant> factory) {
-        Timestamp timestamp = reader.readTimestamp(reader.getCurrentName());
+    public Instant readObject(DsonObjectReader reader, Supplier<? extends Instant> factory) {
+        Timestamp timestamp = reader.readTimestamp(null);
         return Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos());
     }
 }

@@ -16,40 +16,68 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.*;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 
 import javax.annotation.Nonnull;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
 /**
  * @author wjybxx
  * date 2023/4/4
  */
-@SuppressWarnings("rawtypes")
 @DsonCodecScanIgnore
-public class MapCodec<T extends Map> implements DsonCodec<T> {
+public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
 
-    final Class<T> clazz;
-    final Supplier<? extends T> factory;
+    protected final TypeInfo encoderType;
+    protected final Supplier<? extends Map<K, V>> factory;
+    private final FactoryKind factoryKind;
+
+    public MapCodec(TypeInfo encoderType) {
+        this(encoderType, null);
+    }
 
     @SuppressWarnings("unchecked")
-    public MapCodec() {
-        clazz = (Class<T>) Map.class;
-        factory = null;
-    }
-
-    public MapCodec(Class<T> clazz, Supplier<? extends T> factory) {
-        this.clazz = Objects.requireNonNull(clazz);
+    public MapCodec(TypeInfo encoderType, Supplier<? extends Map<K, V>> factory) {
+        if (encoderType.genericArgs.size() != 2) {
+            throw new IllegalArgumentException("encoderType.genericArgs.size() != 2");
+        }
+        if (factory == null) {
+            factory = DsonConverterUtils.tryNoArgConstructorToSupplier((Class<? extends Map<K, V>>) encoderType.rawType);
+        }
+        this.encoderType = encoderType;
         this.factory = factory;
+        this.factoryKind = factory == null ? computeFactoryKind(encoderType) : FactoryKind.Unknown;
     }
 
+    private static FactoryKind computeFactoryKind(TypeInfo typeInfo) {
+        Class<?> clazz = typeInfo.rawType;
+        // EnumMap需要考虑泛型擦除问题
+        if (clazz == EnumMap.class && typeInfo.genericArgs.get(0).isEnum()) {
+            return FactoryKind.EnumMap;
+        }
+        if (ConcurrentMap.class.isAssignableFrom(clazz)) {
+            return FactoryKind.ConcurrentMap;
+        }
+        return FactoryKind.Unknown;
+    }
+
+    private enum FactoryKind {
+        Unknown,
+        EnumMap,
+        ConcurrentMap,
+    }
+
+    // 需要动态处理是否写为文档
     @Override
     public boolean autoStartEnd() {
         return false;
@@ -57,96 +85,89 @@ public class MapCodec<T extends Map> implements DsonCodec<T> {
 
     @Nonnull
     @Override
-    public Class<T> getEncoderClass() {
-        return clazz;
+    public TypeInfo getEncoderType() {
+        return encoderType;
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<Object, Object> newMap(TypeInfo<?> typeInfo, Supplier<? extends T> factory) {
-        if (factory != null) {
-            return (Map<Object, Object>) factory.get();
+    /** {@link #encoderType}一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private Map<K, V> newMap() {
+        if (factory != null) return factory.get();
+        return switch (factoryKind) {
+            case EnumMap -> {
+                TypeInfo elementTypeInfo = encoderType.genericArgs.get(0);
+                yield new EnumMap((Class) elementTypeInfo.rawType);
+            }
+            case ConcurrentMap -> new ConcurrentHashMap<>();
+            default -> new LinkedHashMap<>();
+        };
+    }
+
+    protected Map<K, V> toImmutable(Map<K, V> result) {
+        if (result instanceof LinkedHashMap<K, V> linkedHashMap) {
+            return Collections.unmodifiableMap(linkedHashMap);
         }
-        if (this.factory != null) {
-            return (Map<Object, Object>) this.factory.get();
+        if (result instanceof EnumMap<?, ?>) {
+            return Collections.unmodifiableMap(result);
         }
-        return new LinkedHashMap<>();
+        return CollectionUtils.toImmutableLinkedHashMap(result);
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询K,V的类型，但Java是伪泛型...
-        TypeInfo<?> keyArgInfo;
-        TypeInfo<?> valueArgInfo;
-        if (typeInfo.typeArgs.size() == 2
-                && typeInfo.isGenericType()) {
-            keyArgInfo = typeInfo.getGenericArgument(0);
-            valueArgInfo = typeInfo.getGenericArgument(1);
-        } else {
-            keyArgInfo = DsonConverterUtils.getKeyActualTypeInfo(typeInfo.rawType);
-            valueArgInfo = DsonConverterUtils.getValueActualTypeInfo(typeInfo.rawType);
-        }
+    public void writeObject(DsonObjectWriter writer, Map<K, V> inst, TypeInfo declaredType, ObjectStyle style) {
+        TypeInfo keyTypeInfo = encoderType.genericArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.genericArgs.get(1);
 
-        @SuppressWarnings("unchecked") Set<Map.Entry<?, ?>> entrySet = instance.entrySet();
+        var entrySet = inst.entrySet();
         if (writer.options().writeMapAsDocument) {
-            writer.writeStartObject(instance, typeInfo, style);
-            for (Map.Entry<?, ?> entry : entrySet) {
-                String keyString = writer.encodeKey(entry.getKey());
-                Object value = entry.getValue();
+            writer.writeStartObject(style, encoderType, declaredType);
+            for (Map.Entry<K, V> entry : entrySet) {
+                String keyString = writer.encodeKey(entry.getKey(), keyTypeInfo);
+                V value = entry.getValue();
                 if (value == null) {
                     // map写为普通的Object的时候，必须要写入Null，否则containsKey会异常；要强制写入Null必须先写入Name
                     writer.writeName(keyString);
                     writer.writeNull(keyString);
                 } else {
-                    writer.writeObject(keyString, value, valueArgInfo, null);
+                    writer.writeObject(keyString, value, valueTypeInfo, null);
                 }
             }
             writer.writeEndObject();
         } else {
-            writer.writeStartArray(instance, typeInfo, style);
-            for (Map.Entry<?, ?> entry : entrySet) {
-                writer.writeObject(null, entry.getKey(), keyArgInfo, null);
-                writer.writeObject(null, entry.getValue(), valueArgInfo, null);
+            writer.writeStartArray(style, encoderType, declaredType);
+            for (Map.Entry<K, V> entry : entrySet) {
+                writer.writeObject(null, entry.getKey(), keyTypeInfo, null);
+                writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
             }
             writer.writeEndArray();
         }
     }
 
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends T> factory) {
-        TypeInfo<?> keyArgInfo;
-        TypeInfo<?> valueArgInfo;
-        if (typeInfo.typeArgs.size() == 2 && typeInfo.isGenericType()) {
-            keyArgInfo = typeInfo.getGenericArgument(0);
-            valueArgInfo = typeInfo.getGenericArgument(1);
-        } else {
-            keyArgInfo = DsonConverterUtils.getKeyActualTypeInfo(typeInfo.rawType);
-            valueArgInfo = DsonConverterUtils.getValueActualTypeInfo(typeInfo.rawType);
-        }
-
-        Map<Object, Object> result = newMap(typeInfo, factory);
+    public Map<K, V> readObject(DsonObjectReader reader, Supplier<? extends Map<K, V>> factory) {
+        TypeInfo keyTypeInfo = encoderType.genericArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.genericArgs.get(1);
+        //
+        Map<K, V> result = factory != null ? factory.get() : newMap();
         if (reader.options().writeMapAsDocument) {
             reader.readStartObject();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
-                Object key = reader.decodeKey(keyString, keyArgInfo.rawType);
-                Object value = reader.readObject(keyString, valueArgInfo);
+                K key = reader.decodeKey(keyString, keyTypeInfo);
+                V value = reader.readObject(keyString, valueTypeInfo);
                 result.put(key, value);
             }
             reader.readEndObject();
         } else {
             reader.readStartArray();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
-                Object key = reader.readObject(null, keyArgInfo);
-                Object value = reader.readObject(null, valueArgInfo);
+                K key = reader.readObject(null, keyTypeInfo);
+                V value = reader.readObject(null, valueTypeInfo);
                 result.put(key, value);
             }
             reader.readEndArray();
         }
-        CollectionConverter collectionConverter = reader.options().collectionConverter;
-        if (collectionConverter != null) {
-            result = collectionConverter.convertMap(typeInfo, result);
-        }
-        return clazz.cast(result);
+        return reader.options().readAsImmutable ? toImmutable(result) : result;
     }
 
 }

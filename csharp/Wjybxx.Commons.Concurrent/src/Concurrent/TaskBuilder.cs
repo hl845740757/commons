@@ -94,13 +94,13 @@ public interface TaskBuilder
         Type type = task.GetType();
         if (type.IsGenericType) {
             Type genericTypeDefinition = type.GetGenericTypeDefinition();
-            if (genericTypeDefinition == typeof(Action<>) && type.GetGenericArguments()[0] == typeof(IContext)) {
+            if (genericTypeDefinition == typeof(Action<>) && type.GenericTypeArguments[0] == typeof(IContext)) {
                 return TYPE_ACTION_CTX;
             }
             if (genericTypeDefinition == typeof(Func<>)) {
                 return TYPE_FUNC;
             }
-            if (genericTypeDefinition == typeof(Func<,>) && type.GetGenericArguments()[0] == typeof(IContext)) {
+            if (genericTypeDefinition == typeof(Func<,>) && type.GenericTypeArguments[0] == typeof(IContext)) {
                 return TYPE_FUNC_CTX;
             }
             if (genericTypeDefinition == typeof(TimeSharingTask<>)) {

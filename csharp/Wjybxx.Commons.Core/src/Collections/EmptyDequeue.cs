@@ -30,6 +30,9 @@ public class EmptyDequeue<T> : IDeque<T>
 {
     public static EmptyDequeue<T> Instance { get; } = new EmptyDequeue<T>();
 
+    private EmptyDequeue() {
+    }
+
     public bool IsReadOnly => true;
     public int Count => 0;
     public bool IsEmpty => true;

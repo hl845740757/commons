@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.ArrayUtils;
 import cn.wjybxx.base.mutable.MutableInt;
 
 import javax.annotation.concurrent.Immutable;
@@ -30,13 +31,13 @@ import java.util.Objects;
  *
  * <h3>格式化样式</h3>
  * ClassName的编码样式采用了C#的TypeName编码样式，
- * <pre>
+ * <pre>{@code
  * System.Collections.Generic.Dictionary`2
  * [
  *   System.Int32,
  *   System.String[]
  * ][]
- * </pre>
+ * }</pre>
  * 1. 数组用一对方括号表示'[]'，中间不可包含空白字符；
  * 2. 泛型参数放在一对方括号中'[,]'，通过逗号分隔；
  *
@@ -184,7 +185,7 @@ public final class ClassName {
         }
         // 数组符号放末尾
         if (arrayRank > 0) {
-            sb.append(DsonConverterUtils.arrayRankSymbol(arrayRank));
+            sb.append(ArrayUtils.arrayRankSymbol(arrayRank));
         }
         return sb;
     }
@@ -210,8 +211,8 @@ public final class ClassName {
      */
     private static ClassName parse(String fullClsName, int rawStartIndex, int rawEndIndex) {
         // 跳过两端空白，避免分割字符串
-        rawStartIndex = SkipLeading(fullClsName, rawStartIndex);
-        rawEndIndex = SkipTrailing(fullClsName, rawEndIndex);
+        rawStartIndex = skipLeading(fullClsName, rawStartIndex);
+        rawEndIndex = skipTrailing(fullClsName, rawEndIndex);
 
         // 统计数组阶数，数组的'[]'之间不能有空格
         int arrayRank = 0;
@@ -230,18 +231,18 @@ public final class ClassName {
             }
             // 截取类简单名 List`1
             int clsNameEndIndex = typeArgStartIdx - 1;
-            clsNameEndIndex = SkipTrailing(fullClsName, clsNameEndIndex);
+            clsNameEndIndex = skipTrailing(fullClsName, clsNameEndIndex);
             String clsName = fullClsName.substring(rawStartIndex, clsNameEndIndex + 1);
             // 简单名需要拼接数组符号
             if (arrayRank > 0) {
-                clsName = clsName + DsonConverterUtils.arrayRankSymbol(arrayRank);
+                clsName = clsName + ArrayUtils.arrayRankSymbol(arrayRank);
             }
 
             // 解析泛型参数 -- 不能简单逗号分隔，需按Token匹配；泛型个数通常不超过2
             List<ClassName> typeArgs = new ArrayList<>(2);
             MutableInt eleStartIdx = new MutableInt(typeArgStartIdx + 1);
             while (eleStartIdx.getValue() > 0) {
-                String typeArg = ScanNextTypeArg(fullClsName, eleStartIdx.getValue(), typeArgEndIdx - 1, eleStartIdx);
+                String typeArg = scanNextTypeArg(fullClsName, eleStartIdx.getValue(), typeArgEndIdx - 1, eleStartIdx);
                 if (typeArg == null) {
                     break;
                 }
@@ -268,9 +269,9 @@ public final class ClassName {
      * @param nextStartIndex 接收下一次的扫描开始位置，-1表示结束
      * @return 扫描到的泛型元素
      */
-    private static String ScanNextTypeArg(String typeArgs, int startIndex, int endIndex, MutableInt nextStartIndex) {
-        startIndex = SkipLeading(typeArgs, startIndex);
-        endIndex = SkipTrailing(typeArgs, endIndex);
+    private static String scanNextTypeArg(String typeArgs, int startIndex, int endIndex, MutableInt nextStartIndex) {
+        startIndex = skipLeading(typeArgs, startIndex);
+        endIndex = skipTrailing(typeArgs, endIndex);
         if (startIndex > endIndex) {
             nextStartIndex.setValue(-1);
             return null; // 结束-空白
@@ -281,7 +282,7 @@ public final class ClassName {
             char c = typeArgs.charAt(index);
             if (c == ',' && stackDepth == 0) { // 结束-分隔符
                 nextStartIndex.setValue(index + 1);
-                index = SkipTrailing(typeArgs, index - 1);
+                index = skipTrailing(typeArgs, index - 1);
                 return typeArgs.substring(startIndex, index + 1);
             }
             if (c == '[') { // 入栈
@@ -292,7 +293,7 @@ public final class ClassName {
             if (index == endIndex) { // 结束-eof
                 assert stackDepth == 0;
                 nextStartIndex.setValue(-1);
-                index = SkipTrailing(typeArgs, index);
+                index = skipTrailing(typeArgs, index);
                 return typeArgs.substring(startIndex, index + 1);
             }
             index++;
@@ -301,7 +302,7 @@ public final class ClassName {
     }
 
     /** 跳过首部空白字符 */
-    private static int SkipLeading(String str, int index) {
+    private static int skipLeading(String str, int index) {
         while (Character.isWhitespace(str.charAt(index))) {
             index++;
         }
@@ -309,7 +310,7 @@ public final class ClassName {
     }
 
     /** 跳过尾部空白字符 */
-    private static int SkipTrailing(String str, int index) {
+    private static int skipTrailing(String str, int index) {
         while (Character.isWhitespace(str.charAt(index))) {
             index--;
         }

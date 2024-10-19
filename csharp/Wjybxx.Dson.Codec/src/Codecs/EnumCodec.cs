@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Wjybxx.Commons;
+using Wjybxx.Dson.Codec.Attributes;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
@@ -27,47 +29,93 @@ namespace Wjybxx.Dson.Codec.Codecs
 /// 抽象类不添加Struct和Enum限制，该接口用于避免拆装箱等问题
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public abstract class AbstractEnumCodec<T>
+public interface IEnumCodec<T> : IDsonCodec<T>
 {
-    public abstract bool ForNumber(int number, out T result);
+    bool ForNumber(int number, out T result);
 
-    public abstract bool ForName(string name, out T result);
+    bool ForName(string name, out T result);
 
-    public abstract int GetNumber(T value);
+    int GetNumber(T value);
 
-    public abstract string GetName(T value);
+    string GetName(T value);
 }
 
 /// <summary>
-/// 枚举类的Codec
+/// 单个枚举值信息
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public readonly struct EnumValueInfo<T>
+{
+    public readonly T value;
+    public readonly int number;
+    public readonly string name;
+
+    public EnumValueInfo(T value, int number, string name) {
+        this.value = value;
+        this.number = number;
+        this.name = name ?? throw new ArgumentNullException(nameof(name));
+    }
+}
+
+/// <summary>
+/// 默认枚举类的Codec
 /// 注意：默认不支持序列化未在枚举中定义的枚举值 —— 其它特殊情况，建议直接使用int值。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public sealed class EnumCodec<T> : AbstractEnumCodec<T>, IDsonCodec<T> where T : struct, Enum
+public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
 {
-    private static readonly Dictionary<T, EnumValueInfo> _value2ConstDic = new Dictionary<T, EnumValueInfo>();
-    private static readonly Dictionary<int, EnumValueInfo> _number2ConstDic = new Dictionary<int, EnumValueInfo>();
-    private static readonly Dictionary<string, EnumValueInfo> _name2ConstDic = new Dictionary<string, EnumValueInfo>();
+    private readonly Dictionary<T, EnumValueInfo<T>> _value2EnumDic;
+    private readonly Dictionary<int, EnumValueInfo<T>> _number2EnumDic;
+    private readonly Dictionary<string, EnumValueInfo<T>> _name2EnumDic;
 
-    static EnumCodec() {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="valueInfos">枚举值信息，允许自定义枚举序列化数据</param>
+    public EnumCodec(List<EnumValueInfo<T>> valueInfos) {
+        _value2EnumDic = new Dictionary<T, EnumValueInfo<T>>(valueInfos.Count);
+        _number2EnumDic = new Dictionary<int, EnumValueInfo<T>>(valueInfos.Count);
+        _name2EnumDic = new Dictionary<string, EnumValueInfo<T>>(valueInfos.Count);
+
+        foreach (EnumValueInfo<T> valueInfo in valueInfos) {
+            _value2EnumDic[valueInfo.value] = valueInfo;
+            _number2EnumDic[valueInfo.number] = valueInfo;
+            _name2EnumDic[valueInfo.name] = valueInfo;
+        }
+    }
+
+    public EnumCodec() {
         T[] values = EnumUtil.GetValues<T>();
         string[] names = EnumUtil.GetNames<T>();
-        for (int i = 0; i < values.Length; i++) {
-            T value = values[i];
-            int number = EnumUtil.GetIntValue(value);
-            string name = names[i];
+        _value2EnumDic = new Dictionary<T, EnumValueInfo<T>>(values.Length);
+        _number2EnumDic = new Dictionary<int, EnumValueInfo<T>>(values.Length);
+        _name2EnumDic = new Dictionary<string, EnumValueInfo<T>>(values.Length);
 
-            EnumValueInfo enumValueInfo = new EnumValueInfo(value, number, name);
-            _value2ConstDic[value] = enumValueInfo;
-            _number2ConstDic[number] = enumValueInfo;
-            _name2ConstDic[name] = enumValueInfo;
+        FieldInfo[] enumFields = typeof(T).GetFields();
+        for (int idx = 0; idx < values.Length; idx++) {
+            T value = values[idx];
+            int number = EnumUtil.GetIntValue(value);
+
+            // 可通过注解指定DsonName -- 第一个元素是占位符，查询枚举关联的Field时需要+1
+            DsonPropertyAttribute attribute = enumFields[idx + 1].GetCustomAttribute<DsonPropertyAttribute>();
+            string name;
+            if (attribute != null && !string.IsNullOrWhiteSpace(attribute.Name)) {
+                name = attribute.Name;
+            } else {
+                name = names[idx];
+            }
+
+            EnumValueInfo<T> valueInfo = new EnumValueInfo<T>(value, number, name);
+            _value2EnumDic[valueInfo.value] = valueInfo;
+            _number2EnumDic[valueInfo.number] = valueInfo;
+            _name2EnumDic[valueInfo.name] = valueInfo;
         }
     }
 
     #region 避免装箱
 
-    public override bool ForNumber(int number, out T result) {
-        if (_number2ConstDic.TryGetValue(number, out EnumValueInfo valueInfo)) {
+    public bool ForNumber(int number, out T result) {
+        if (_number2EnumDic.TryGetValue(number, out EnumValueInfo<T> valueInfo)) {
             result = valueInfo.value;
             return true;
         }
@@ -75,8 +123,8 @@ public sealed class EnumCodec<T> : AbstractEnumCodec<T>, IDsonCodec<T> where T :
         return false;
     }
 
-    public override bool ForName(string name, out T result) {
-        if (_name2ConstDic.TryGetValue(name, out EnumValueInfo valueInfo)) {
+    public bool ForName(string name, out T result) {
+        if (_name2EnumDic.TryGetValue(name, out EnumValueInfo<T> valueInfo)) {
             result = valueInfo.value;
             return true;
         }
@@ -84,15 +132,15 @@ public sealed class EnumCodec<T> : AbstractEnumCodec<T>, IDsonCodec<T> where T :
         return false;
     }
 
-    public override int GetNumber(T value) {
-        if (!_value2ConstDic.TryGetValue(value, out EnumValueInfo valueInfo)) {
+    public int GetNumber(T value) {
+        if (!_value2EnumDic.TryGetValue(value, out EnumValueInfo<T> valueInfo)) {
             throw new DsonCodecException($"invalid enum value: {value}, type: {typeof(T)}");
         }
         return valueInfo.number;
     }
 
-    public override string GetName(T value) {
-        if (!_value2ConstDic.TryGetValue(value, out EnumValueInfo valueInfo)) {
+    public string GetName(T value) {
+        if (!_value2EnumDic.TryGetValue(value, out EnumValueInfo<T> valueInfo)) {
             throw new DsonCodecException($"invalid enum value: {value}, type: {typeof(T)}");
         }
         return valueInfo.name;
@@ -106,7 +154,7 @@ public sealed class EnumCodec<T> : AbstractEnumCodec<T>, IDsonCodec<T> where T :
     public bool AutoStartEnd => false;
 
     public void WriteObject(IDsonObjectWriter writer, ref T inst, Type declaredType, ObjectStyle style) {
-        if (!_value2ConstDic.TryGetValue(inst, out EnumValueInfo valueInfo)) {
+        if (!_value2EnumDic.TryGetValue(inst, out EnumValueInfo<T> valueInfo)) {
             throw new DsonCodecException($"invalid enum value: {inst}, type: {typeof(T)}");
         }
         if (writer.Options.writeEnumAsString) {
@@ -116,32 +164,20 @@ public sealed class EnumCodec<T> : AbstractEnumCodec<T>, IDsonCodec<T> where T :
         }
     }
 
-    public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<T>? factory = null) {
+    public T ReadObject(IDsonObjectReader reader, Func<T>? factory = null) {
         if (reader.Options.writeEnumAsString) {
-            string name = reader.ReadString(reader.CurrentName);
-            if (_name2ConstDic.TryGetValue(name, out EnumValueInfo valueInfo)) {
+            string name = reader.ReadString(null);
+            if (_name2EnumDic.TryGetValue(name, out EnumValueInfo<T> valueInfo)) {
                 return valueInfo.value;
             }
+            throw new DsonCodecException($"invalid enum value: {name}, type: {typeof(T)}");
         } else {
-            int number = reader.ReadInt(reader.CurrentName);
-            if (_number2ConstDic.TryGetValue(number, out EnumValueInfo valueInfo)) {
+            int number = reader.ReadInt(null);
+            if (_number2EnumDic.TryGetValue(number, out EnumValueInfo<T> valueInfo)) {
                 return valueInfo.value;
             }
-            // 不做number转enum支持 -- ToObject会装箱，另外还存在跨语言兼容性问题
-        }
-        return default;
-    }
-
-    private readonly struct EnumValueInfo
-    {
-        internal readonly T value;
-        internal readonly int number;
-        internal readonly string name;
-
-        public EnumValueInfo(T value, int number, string name) {
-            this.value = value;
-            this.number = number;
-            this.name = name;
+            // 不做number转enum支持 -- 存在跨语言兼容性问题
+            throw new DsonCodecException($"invalid enum value: {number}, type: {typeof(T)}");
         }
     }
 }

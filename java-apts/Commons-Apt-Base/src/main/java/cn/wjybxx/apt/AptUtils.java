@@ -538,20 +538,37 @@ public class AptUtils {
         return elementUtils.getTypeElement(clazz.getCanonicalName()).asType();
     }
 
-    /** 是否是基本类型的boolean */
     public static boolean isPrimitiveBoolean(TypeMirror typeMirror) {
         return typeMirror.getKind() == TypeKind.BOOLEAN;
     }
 
-    /** 是否是数组类型 */
     public static boolean isArrayType(TypeMirror typeMirror) {
         return typeMirror.getKind() == TypeKind.ARRAY;
     }
 
     public static TypeMirror getComponentType(TypeMirror typeMirror) {
-        assert isArrayType(typeMirror);
         ArrayType arrayType = (ArrayType) typeMirror;
         return arrayType.getComponentType();
+    }
+
+    public static TypeMirror getRootComponentType(ArrayType arrayType) {
+        TypeMirror rootComponentType = arrayType.getComponentType();
+        while (rootComponentType.getKind() == TypeKind.ARRAY) {
+            arrayType = (ArrayType) rootComponentType;
+            rootComponentType = arrayType.getComponentType();
+        }
+        return rootComponentType;
+    }
+
+    public static int getArrayRank(ArrayType arrayType) {
+        int r = 1;
+        TypeMirror rootComponentType = arrayType.getComponentType();
+        while (rootComponentType.getKind() == TypeKind.ARRAY) {
+            arrayType = (ArrayType) rootComponentType;
+            rootComponentType = arrayType.getComponentType();
+            r++;
+        }
+        return r;
     }
 
     /**

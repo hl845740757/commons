@@ -16,19 +16,19 @@
 
 package cn.wjybxx.dsoncodec;
 
-import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.base.annotation.StableName;
 import cn.wjybxx.dson.DsonContextType;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.types.*;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.LocalDateTime;
-import java.util.*;
 import java.util.function.Supplier;
 
 /**
+ * 1.读取数组内普通成员时，name传null，读取嵌套对象时使用无name参数的start方法
+ * 2.为减少API数量，我们的所有简单值读取都是带有name参数的，在已读取name的情况下，接口的name参数将被忽略。
+ *
  * @author wjybxx
  * date 2023/4/3
  */
@@ -78,14 +78,14 @@ public interface DsonObjectReader extends AutoCloseable {
      * 1. 该方法对于无法精确解析的对象，可能返回一个不兼容的类型。
      * 2. 目标类型可以与写入类型不一致，甚至无继承关系，只要数据格式兼容即可 —— 投影。
      *
-     * @param name     数组内元素传null或空字符串
-     * @param typeInfo 对象声明类型信息；可以与写入的类型不一致，
+     * @param name         数组内元素传null或空字符串
+     * @param declaredType 对象声明类型信息
      */
     @Nullable
-    <T> T readObject(String name, TypeInfo<T> typeInfo, Supplier<? extends T> factory);
+    <T> T readObject(String name, TypeInfo declaredType, Supplier<? extends T> factory);
 
-    default <T> T readObject(String name, TypeInfo<T> typeInfo) {
-        return readObject(name, typeInfo, null);
+    default <T> T readObject(String name, TypeInfo declaredType) {
+        return readObject(name, declaredType, null);
     }
 
     // endregion
@@ -105,11 +105,12 @@ public interface DsonObjectReader extends AutoCloseable {
     /**
      * 读取指定名字的值 -- 可实现随机读
      * 如果尚未调用{@link #readDsonType()}，该方法将尝试跳转到该name所在的字段。
-     * 如果已调用{@link #readDsonType()}，则该方法必须与下一个name匹配。
+     * 如果已调用{@link #readDsonType()}，则name必须与下一个name匹配。
+     * 如果已调用{@link #readName()}，则name可以为null，否则必须当前name匹配。
      * 如果reader不支持随机读，当名字不匹配下一个值时将抛出异常。
      * 返回false的情况下，可继续调用该方法或{@link #readDsonType()}读取下一个字段。
      *
-     * @return 如果是Object上下午，如果字段存在则返回true，否则返回false；
+     * @return 如果是Object上下文，如果字段存在则返回true，否则返回false；
      * 如果是Array上下文，如果尚未到达数组尾部，则返回true，否则返回false
      */
     boolean readName(String name);
@@ -118,6 +119,7 @@ public interface DsonObjectReader extends AutoCloseable {
 
     String getCurrentName();
 
+    /** typeInfo用于传递给嵌套对象，以及暂存到Context */
     void readStartObject();
 
     void readEndObject();
@@ -135,10 +137,20 @@ public interface DsonObjectReader extends AutoCloseable {
     byte[] readValueAsBytes(String name);
 
     /** 解码字典的key */
-    <T> T decodeKey(String keyString, Class<T> keyDeclared);
+    <T> T decodeKey(String keyString, TypeInfo keyTypeInfo);
 
     /** 设置数组/object的value的类型，用于精确解析Dson文本 */
     void setComponentType(DsonType dsonType);
+
+    /**
+     * 设置当前对象的encoderType
+     * 1.java特殊支持，用于读写Object/Array期间查询当前对象的类型信息
+     * 2.应当在readStartObject/Array以后调用
+     */
+    void setEncoderType(TypeInfo encoderType);
+
+    /** 获取当前对象的类型信息 */
+    TypeInfo getEncoderType();
 
     @Override
     void close();
@@ -179,36 +191,6 @@ public interface DsonObjectReader extends AutoCloseable {
     @StableName
     default char readChar(String name) {
         return (char) readInt(name);
-    }
-
-    /** 读取为不可变List */
-    @SuppressWarnings("unchecked")
-    @Nonnull
-    default <E> List<E> readImmutableList(String name, Class<E> elementType) {
-        final Collection<E> result = readObject(name, TypeInfo.of(Collection.class, elementType));
-        return CollectionUtils.toImmutableList(result);
-    }
-
-    /** 读取为不可变Set */
-    @SuppressWarnings("unchecked")
-    @Nonnull
-    default <E> Set<E> readImmutableSet(String name, Class<E> elementType) {
-        final Set<E> result = readObject(name, TypeInfo.of(Set.class, elementType), LinkedHashSet::new);
-        if (result == null) {
-            return Set.of();
-        }
-        return Collections.unmodifiableSet(result); // 无需二次拷贝
-    }
-
-    /** 读取为不可变字典 */
-    @SuppressWarnings("unchecked")
-    @Nonnull
-    default <K, V> Map<K, V> readImmutableMap(String name, Class<K> keyType, Class<V> valueType) {
-        final Map<K, V> result = readObject(name, TypeInfo.of(Map.class, keyType, valueType), LinkedHashMap::new);
-        if (result == null) {
-            return Map.of();
-        }
-        return Collections.unmodifiableMap(result); // 无需二次拷贝
     }
 
     // endregion

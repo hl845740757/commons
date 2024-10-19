@@ -21,11 +21,11 @@
 using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree.Branch;
 using Wjybxx.Dson.Codec;
-using Wjybxx.BTree;
-using System.Collections.Generic;
 using System;
-using Wjybxx.Dson.Text;
+using Wjybxx.BTree;
 using Wjybxx.Dson;
+using Wjybxx.Dson.Text;
+using System.Collections.Generic;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
@@ -41,11 +41,10 @@ public sealed class FixedSwitch1Codec<T> : AbstractDsonCodec<FixedSwitch<T>> whe
     public const string names_branch3 = "branch3";
     public const string names_branch4 = "branch4";
     public const string names_branch5 = "branch5";
-    public static readonly Func<List<Task<T>>> factories_children = () => new List<Task<T>>();
 
-    public override Type GetEncoderClass() => typeof(FixedSwitch<T>);
+    public override Type GetEncoderType() => typeof(FixedSwitch<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref FixedSwitch<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref FixedSwitch<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteObject(names_children, inst.Children, typeof(List<Task<T>>), null);
@@ -57,14 +56,14 @@ public sealed class FixedSwitch1Codec<T> : AbstractDsonCodec<FixedSwitch<T>> whe
         writer.WriteObject(names_branch5, inst.Branch5, typeof(Task<T>), null);
     }
 
-    protected override FixedSwitch<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override FixedSwitch<T> NewInstance(IDsonObjectReader reader) {
         return new FixedSwitch<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref FixedSwitch<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref FixedSwitch<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
-        inst.Children = reader.ReadObject<List<Task<T>>>(names_children, typeof(List<Task<T>>), factories_children);
+        inst.Children = reader.ReadObject<List<Task<T>>>(names_children, typeof(List<Task<T>>), null);
         inst.Handler = reader.ReadObject<ISwitchHandler<T>>(names_handler, typeof(ISwitchHandler<T>), null);
         inst.Branch1 = reader.ReadObject<Task<T>>(names_branch1, typeof(Task<T>), null);
         inst.Branch2 = reader.ReadObject<Task<T>>(names_branch2, typeof(Task<T>), null);

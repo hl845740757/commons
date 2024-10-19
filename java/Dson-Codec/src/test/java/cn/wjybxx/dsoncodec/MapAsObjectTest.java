@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,10 +35,10 @@ public class MapAsObjectTest {
         ConverterOptions options = ConverterOptions.newBuilder()
                 .setWriteMapAsDocument(true)
                 .build();
-        DsonConverter converter = DefaultDsonConverter.newInstance(
-                TypeMetaRegistries.fromMetas(),
-                List.of(),
-                options);
+
+        DsonConverter converter = new DsonConverterBuilder()
+                .setOptions(options)
+                .build();
 
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("one", "1");
@@ -48,7 +47,7 @@ public class MapAsObjectTest {
         String dson = converter.writeAsDson(map);
 //        System.out.println(dson);
 
-        @SuppressWarnings("unchecked") LinkedHashMap<String, Object> copied = converter.readFromDson(dson, TypeInfo.STRING_LINKED_HASHMAP);
+        LinkedHashMap<String, Object> copied = converter.readFromDson(dson, TypeInfo.STRING_LINKED_HASHMAP);
         Assertions.assertEquals(map, copied);
     }
 }

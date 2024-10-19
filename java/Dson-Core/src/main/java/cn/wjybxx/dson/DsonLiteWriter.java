@@ -16,7 +16,6 @@
 
 package cn.wjybxx.dson;
 
-import cn.wjybxx.dson.io.DsonChunk;
 import cn.wjybxx.dson.types.*;
 
 /**
@@ -73,7 +72,7 @@ public interface DsonLiteWriter extends AutoCloseable {
 
     void writeBinary(int name, Binary binary);
 
-    void writeBinary(int name, DsonChunk chunk);
+    void writeBinary(int name, byte[] bytes, int offset, int len);
 
     void writePtr(int name, ObjectPtr objectPtr);
 

@@ -20,9 +20,6 @@ import javax.annotation.Nullable;
 
 /**
  * 编解码器注册表
- * <p>
- * Q：Java端为什么不设计为支持泛型{@link TypeInfo}的？
- * A：因为莫得意义呀。
  *
  * @author wjybxx
  * date 2023/4/3
@@ -31,23 +28,28 @@ public interface DsonCodecRegistry {
 
     /**
      * 查找编码器（encoder）。
-     * 编码器可以接收子类实例，将子类实例按照超类编码，子类特殊数据丢弃。
+     * <p>
+     * 1.可以返回超类的codec，因为子类实例可以向上转型，但子类特殊数据将被丢弃。
+     * 2.不可返回子类的codec，因为超类实例不能向下转型。
+     * <p>
+     * PS：可参考集合和字典的Codec实现。
      *
-     * @param rootRegistry 用于比如想转换为查询超类的Encoder
+     * @param typeInfo 类型信息，含泛型参数
      */
     @Nullable
-    <T> DsonCodecImpl<? super T> getEncoder(Class<T> clazz, DsonCodecRegistry rootRegistry);
+    DsonCodecImpl<?> getEncoder(TypeInfo typeInfo);
 
     /**
      * 查找解码器（decoder）。
-     * 解码器必须目标类型一致，子类Codec不能安全解码超类数据，超类Codec返回的实例不能向下转型。
      * <p>
-     * ps:在Java端其实可以有所变通，因为Java是伪泛型，因此{@code Codec<BaseType> }可以赋值给{@code Codec<SubType>}，
-     * 因此如果超类的Codec创建的实例可以向下转型为参数目标类型，那么是可以返回超类的Codec的。
+     * 1.可以返回子类的Codec，如果子类和当前类数据兼容。
+     * 2.不可向上转型，因为超类Codec创建的实例不能安全向下转型。
+     * 3.如果可以，请尽量返回当前类对应的Codec，以避免错误。
+     * <p>
+     * PS：可参考集合和字典的Codec实现。
      *
-     * @param rootRegistry 用于转换为查询子类的Decoder
+     * @param typeInfo 类型信息，含泛型参数
      */
     @Nullable
-    <T> DsonCodecImpl<T> getDecoder(Class<T> clazz, DsonCodecRegistry rootRegistry);
-
+    DsonCodecImpl<?> getDecoder(TypeInfo typeInfo);
 }

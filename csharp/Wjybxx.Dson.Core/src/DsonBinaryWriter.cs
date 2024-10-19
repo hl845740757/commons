@@ -148,10 +148,10 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
         DsonReaderUtils.WriteBinary(output, binary);
     }
 
-    protected override void DoWriteBinary(DsonChunk chunk) {
+    protected override void DoWriteBinary(byte[] bytes, int offset, int len) {
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.Binary, 0);
-        DsonReaderUtils.WriteBinary(output, chunk);
+        DsonReaderUtils.WriteBinary(output, bytes, offset, len);
     }
 
     protected override void DoWritePtr(in ObjectPtr objectPtr) {

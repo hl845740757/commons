@@ -65,6 +65,7 @@ public interface IGenericDictionary<TKey, TValue> : IDictionary<TKey, TValue>, I
 
     /// <summary>
     /// 与Add不同，Put操作在Key存在值，总是覆盖当前关联值，而不是抛出异常
+    /// (即与设值操作符等同)
     /// </summary>
     /// <param name="key"></param>
     /// <param name="value"></param>

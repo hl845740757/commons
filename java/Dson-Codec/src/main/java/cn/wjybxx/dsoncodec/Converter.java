@@ -44,43 +44,38 @@ public interface Converter {
      * 将一个对象写入源
      * 注意：如果对象的运行时类型和声明类型一致，则可省去编码结果中的类型信息。
      *
-     * @param typeInfo 对象声明类型信息
+     * @param declaredType 对象声明类型信息
      */
 
-    byte[] write(Object value, TypeInfo<?> typeInfo);
+    byte[] write(Object value, TypeInfo declaredType);
 
     /**
      * 从数据源中读取一个对象
      * 注意：如果对象的声明类型和写入的类型不兼容，则表示投影；factory用于支持将数据读取到既有实例或子类实例上。
      *
-     * @param source   数据源
-     * @param typeInfo 对象声明类型信息
-     * @param factory  实例工厂
+     * @param source       数据源
+     * @param declaredType 对象声明类型信息
+     * @param factory      实例工厂
      */
-    <T> T read(byte[] source, TypeInfo<T> typeInfo, @Nullable Supplier<? extends T> factory);
+    <T> T read(byte[] source, TypeInfo declaredType, @Nullable Supplier<? extends T> factory);
 
     /**
-     * @param value    要写入的对象
-     * @param typeInfo 对象声明类型信息
-     * @param chunk    二进制块，写入的字节数设置到{@link DsonChunk}
+     * @param value        要写入的对象
+     * @param declaredType 对象声明类型信息
+     * @param chunk        二进制块，写入的字节数设置到{@link DsonChunk}
      */
-    void write(Object value, TypeInfo<?> typeInfo, DsonChunk chunk);
+    void write(Object value, TypeInfo declaredType, DsonChunk chunk);
 
     /**
-     * @param chunk    二进制块，读取的字节数设置到{@link DsonChunk}
-     * @param typeInfo 对象声明类型信息
-     * @param factory  实例工厂
+     * @param chunk        二进制块，读取的字节数设置到{@link DsonChunk}
+     * @param declaredType 对象声明类型信息
+     * @param factory      实例工厂
      * @return 解码结果，顶层对象不应该是null
      */
-    <T> T read(DsonChunk chunk, TypeInfo<T> typeInfo, @Nullable Supplier<? extends T> factory);
+    <T> T read(DsonChunk chunk, TypeInfo declaredType, @Nullable Supplier<? extends T> factory);
 
-    default <T> T read(byte[] source, TypeInfo<T> typeInfo) {
-        return read(new DsonChunk(source), typeInfo, null);
-    }
+    // defaults
 
-    default <T> T read(DsonChunk chunk, TypeInfo<T> typeInfo) {
-        return read(chunk, typeInfo, null);
-    }
 
     // endregion
 
@@ -90,18 +85,26 @@ public interface Converter {
         return write(value, TypeInfo.OBJECT); // 默认写入对象类型
     }
 
-    default Object read(byte[] source) {
-        return read(source, TypeInfo.OBJECT);
+    default <T> T read(byte[] source, TypeInfo declaredType) {
+        return read(source, declaredType, null);
+    }
+
+    default void write(Object value, DsonChunk chunk) {
+        write(value, TypeInfo.OBJECT, chunk);
+    }
+
+    default <T> T read(DsonChunk chunk, TypeInfo declaredType) {
+        return read(chunk, declaredType, null);
     }
 
     /**
-     * @param typeInfo 对象声明类型信息
-     * @param buffer   编码输出
+     * @param declaredType 对象声明类型信息
+     * @param buffer       编码输出
      * @return 写入的字节数
      */
-    default int write(Object value, TypeInfo<?> typeInfo, byte[] buffer) {
+    default int write(Object value, TypeInfo declaredType, byte[] buffer) {
         DsonChunk chunk = new DsonChunk(buffer);
-        write(value, typeInfo, chunk);
+        write(value, declaredType, chunk);
         return chunk.getUsed();
     }
 
@@ -111,20 +114,14 @@ public interface Converter {
      * 1.返回值的类型不一定和原始对象相同，这通常发生在集合对象上。
      * 2.如果Codec存在lazyDecode，也会导致不同
      *
-     * @param typeInfo 用于确定返回结果类型
-     * @param factory  实例工厂
+     * @param targetType 目标类型
+     * @param factory    目标类型的实例工厂
      */
-    default <T> T cloneObject(Object value, TypeInfo<T> typeInfo, @Nullable Supplier<? extends T> factory) {
-        if (value == null) {
-            return null;
-        }
-        // 克隆属于立即使用数据，可以不写入顶层的类型信息
-        final byte[] data = write(value, TypeInfo.of(value.getClass()));
-        return read(data, typeInfo, factory);
-    }
+    <T> T cloneObject(Object value, TypeInfo declaredType, TypeInfo targetType,
+                      @Nullable Supplier<? extends T> factory);
 
-    default <T> T cloneObject(Object value, TypeInfo<T> typeInfo) {
-        return cloneObject(value, typeInfo, null);
+    default <T> T cloneObject(Object value, TypeInfo declaredType, TypeInfo targetType) {
+        return cloneObject(value, declaredType, targetType, null);
     }
 
     // endregion

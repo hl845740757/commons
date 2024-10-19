@@ -16,8 +16,6 @@
 
 package cn.wjybxx.dson.types;
 
-import cn.wjybxx.dson.Dsons;
-
 import java.util.Arrays;
 import java.util.HexFormat;
 
@@ -35,7 +33,6 @@ public final class Binary {
     private int hash;
 
     private Binary(byte[] data) {
-        Dsons.checkBinaryLength(data.length);
         this.data = data;
     }
 

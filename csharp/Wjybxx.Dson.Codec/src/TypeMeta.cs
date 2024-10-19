@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Text;
@@ -61,29 +62,32 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
         this.clsNames = clsNames.ToImmutableList2();
     }
 
-    /// <summary>
-    /// 类的主别名
-    /// </summary>
+    /** 类的主别名 */
     public string MainClsName => clsNames[0];
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="clazz"></param>
-    /// <param name="style">文本样式</param>
-    /// <param name="clsName">类型名</param>
-    /// <returns></returns>
+    /** 替换Style */
+    public TypeMeta WithStyle(ObjectStyle style) {
+        return new TypeMeta(type, style, clsNames);
+    }
+
+    #region factory
+
+    public static TypeMeta Of(Type clazz, string clsName) {
+        return new TypeMeta(clazz, ObjectStyle.Indent, ImmutableList<string>.Create(clsName));
+    }
+
+    public static TypeMeta Of(Type clazz, params string[] clsNames) {
+        return new TypeMeta(clazz, ObjectStyle.Indent, ImmutableList<string>.CreateRange(clsNames));
+    }
+
+    public static TypeMeta Of(Type clazz, ObjectStyle style) {
+        return new TypeMeta(clazz, style, ImmutableList<string>.Create(clazz.Name));
+    }
+
     public static TypeMeta Of(Type clazz, ObjectStyle style, string clsName) {
         return new TypeMeta(clazz, style, ImmutableList<string>.Create(clsName));
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="clazz"></param>
-    /// <param name="style">文本样式</param>
-    /// <param name="clsNames">类型名</param>
-    /// <returns></returns>
     public static TypeMeta Of(Type clazz, ObjectStyle style, params string[] clsNames) {
         return new TypeMeta(clazz, style, ImmutableList<string>.CreateRange(clsNames));
     }
@@ -92,8 +96,10 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
         return new TypeMeta(clazz, style, clsNames.ToImmutableList2());
     }
 
-    public override string ToString() {
-        return $"{nameof(type)}: {type}, {nameof(style)}: {style}, {nameof(clsNames)}: {CollectionUtil.ToString(clsNames)}";
+    #endregion
+
+    public override bool Equals(object? obj) {
+        return ReferenceEquals(this, obj) || obj is TypeMeta other && Equals(other);
     }
 
     public bool Equals(TypeMeta? other) {
@@ -101,15 +107,14 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
         if (ReferenceEquals(this, other)) return true;
         return type == other.type
                && style == other.style
-               && clsNames.SequenceEqual(other.clsNames); // 序列相等
-    }
-
-    public override bool Equals(object? obj) {
-        return ReferenceEquals(this, obj) || obj is TypeMeta other && Equals(other);
+               && clsNames.SequenceEqual(other.clsNames);
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(type, (int)style, clsNames);
+        int hashCode = type.GetHashCode();
+        hashCode = hashCode * 31 + style.GetHashCode();
+        hashCode = hashCode * 31 + CollectionUtil.HashCode(clsNames);
+        return hashCode;
     }
 
     public static bool operator ==(TypeMeta? left, TypeMeta? right) {
@@ -118,6 +123,10 @@ public sealed class TypeMeta : IEquatable<TypeMeta>
 
     public static bool operator !=(TypeMeta? left, TypeMeta? right) {
         return !Equals(left, right);
+    }
+
+    public override string ToString() {
+        return $"{nameof(type)}: {type}, {nameof(style)}: {style}, {nameof(clsNames)}: {CollectionUtil.ToString(clsNames)}";
     }
 }
 }

@@ -37,7 +37,7 @@ import java.util.IdentityHashMap;
         annotations = DsonCodecScanIgnore.class)
 public class CustomMapCodecTest<K, V> extends IdentityHashMap<K, V> {
 
-    public CustomMapCodecTest(DsonObjectReader reader, TypeInfo<?> typeInfo) {
+    public CustomMapCodecTest(DsonObjectReader reader, TypeInfo typeInfo) {
     }
 
     public void beforeEncode(ConverterOptions options) {
@@ -45,17 +45,22 @@ public class CustomMapCodecTest<K, V> extends IdentityHashMap<K, V> {
     }
 
     public void writeObject(DsonObjectWriter writer) {
+        TypeInfo encoderType = writer.getEncoderType();
+        TypeInfo keyType = encoderType.genericArgs.get(0);
+        TypeInfo valueType = encoderType.genericArgs.get(1);
         for (Entry<K, V> entry : this.entrySet()) {
-            writer.writeObject(null, entry.getKey());
-            writer.writeObject(null, entry.getValue());
+            writer.writeObject(null, entry.getKey(), keyType);
+            writer.writeObject(null, entry.getValue(), valueType);
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void readObject(DsonObjectReader reader) {
+        TypeInfo encoderType = reader.getEncoderType();
+        TypeInfo keyType = encoderType.genericArgs.get(0);
+        TypeInfo valueType = encoderType.genericArgs.get(1);
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
-            K k = (K) reader.readObject(null, TypeInfo.OBJECT);
-            V v = (V) reader.readObject(null, TypeInfo.OBJECT);
+            K k = reader.readObject(null, keyType);
+            V v = reader.readObject(null, valueType);
             put(k, v);
         }
     }

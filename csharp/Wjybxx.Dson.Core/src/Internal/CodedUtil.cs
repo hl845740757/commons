@@ -87,7 +87,7 @@ internal static class CodedUtil
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long DecodeZigZag64(ulong n) => (long)(n >> 1) ^ -((long)n & 1L);
-    
+
     #region protobuf decode
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

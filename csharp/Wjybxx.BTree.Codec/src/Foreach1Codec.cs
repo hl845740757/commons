@@ -21,11 +21,11 @@
 using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree.Branch;
 using Wjybxx.Dson.Codec;
-using Wjybxx.BTree;
-using System.Collections.Generic;
 using System;
-using Wjybxx.Dson.Text;
+using Wjybxx.BTree;
 using Wjybxx.Dson;
+using Wjybxx.Dson.Text;
+using System.Collections.Generic;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
@@ -35,24 +35,23 @@ public sealed class Foreach1Codec<T> : AbstractDsonCodec<Foreach<T>> where T : c
     public const string names_guard = "guard";
     public const string names_flags = "flags";
     public const string names_children = "children";
-    public static readonly Func<List<Task<T>>> factories_children = () => new List<Task<T>>();
 
-    public override Type GetEncoderClass() => typeof(Foreach<T>);
+    public override Type GetEncoderType() => typeof(Foreach<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref Foreach<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref Foreach<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteObject(names_children, inst.Children, typeof(List<Task<T>>), null);
     }
 
-    protected override Foreach<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override Foreach<T> NewInstance(IDsonObjectReader reader) {
         return new Foreach<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref Foreach<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref Foreach<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
-        inst.Children = reader.ReadObject<List<Task<T>>>(names_children, typeof(List<Task<T>>), factories_children);
+        inst.Children = reader.ReadObject<List<Task<T>>>(names_children, typeof(List<Task<T>>), null);
     }
 }
 }

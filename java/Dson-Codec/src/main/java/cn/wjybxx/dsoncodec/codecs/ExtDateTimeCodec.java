@@ -34,9 +34,10 @@ import java.util.function.Supplier;
 @DsonCodecScanIgnore
 public class ExtDateTimeCodec implements DsonCodec<ExtDateTime> {
 
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(ExtDateTime.class);
     }
 
     @Override
@@ -44,19 +45,13 @@ public class ExtDateTimeCodec implements DsonCodec<ExtDateTime> {
         return false;
     }
 
-    @Nonnull
     @Override
-    public Class<ExtDateTime> getEncoderClass() {
-        return ExtDateTime.class;
+    public void writeObject(DsonObjectWriter writer, ExtDateTime inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeExtDateTime(null, inst);
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, ExtDateTime instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        writer.writeExtDateTime(null, instance);
-    }
-
-    @Override
-    public ExtDateTime readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends ExtDateTime> factory) {
-        return reader.readExtDateTime(reader.getCurrentName());
+    public ExtDateTime readObject(DsonObjectReader reader, Supplier<? extends ExtDateTime> factory) {
+        return reader.readExtDateTime(null);
     }
 }

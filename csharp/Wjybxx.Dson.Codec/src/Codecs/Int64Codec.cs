@@ -32,8 +32,8 @@ public class Int64Codec : IDsonCodec<long>
         writer.WriteLong(null, inst, WireType.VarInt, numberStyle);
     }
 
-    public long ReadObject(IDsonObjectReader reader, Type declaredType, Func<long>? factory = null) {
-        return reader.ReadLong(reader.CurrentName);
+    public long ReadObject(IDsonObjectReader reader, Func<long>? factory = null) {
+        return reader.ReadLong(null);
     }
 }
 }

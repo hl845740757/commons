@@ -30,11 +30,13 @@ namespace Wjybxx.Commons.Collections
 /// 保持插入序的Set
 /// 1.由<see cref="LinkedDictionary{TKey,TValue}"/>修改而来，保留起特性。
 /// 2.使用拷贝而不是封装的方式，以减少使用开销。
+///
+/// PS：该类虽然声明实现了<see cref="ISet{T}"/>接口，但并未实现对应接口，只为了保证类型的兼容性 -- 否则有些场合难搞。
 /// </summary>
 /// <typeparam name="TKey">元素类型，允许为null</typeparam>
 [Serializable]
 [NotThreadSafe]
-public class LinkedHashSet<TKey> : ISequencedSet<TKey>
+public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet<TKey>
 {
 #nullable disable
     /** len = 2^n + 1，额外的槽用于存储nullKey；总是延迟分配空间，以减少创建空实例的开销 */
@@ -166,23 +168,6 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>
 
     public bool AddLastIfAbsent(TKey key) {
         return TryInsert(key, InsertionOrder.Tail, InsertionBehavior.None);
-    }
-
-    [Obsolete("Instead AddAll")]
-    public bool AddRange(IEnumerable<TKey> collection) {
-        if (collection == null) throw new ArgumentNullException(nameof(collection));
-        if (collection is ICollection<TKey> c) {
-            if (_loadFactor <= 0.5f) {
-                EnsureCapacity(c.Count); // 负载小于0.5，数组的长度将大于等于count的2倍，就能放下所有元素
-            } else {
-                TryCapacity(_count + c.Count);
-            }
-        }
-        bool r = false;
-        foreach (TKey key in collection) {
-            r |= TryPut(key, PutBehavior.None);
-        }
-        return r;
     }
 
     #endregion
@@ -830,6 +815,74 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>
             return $"index: {index}, {nameof(key)}: {key}";
         }
 #endif
+    }
+
+    #endregion
+
+    #region 系统库set接口适配
+
+    void ISet<TKey>.ExceptWith(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    void ISet<TKey>.IntersectWith(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    void ISet<TKey>.SymmetricExceptWith(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    void ISet<TKey>.UnionWith(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool ISet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool ISet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool ISet<TKey>.IsSubsetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool ISet<TKey>.IsSupersetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool ISet<TKey>.Overlaps(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool ISet<TKey>.SetEquals(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool IReadOnlySet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool IReadOnlySet<TKey>.IsProperSupersetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool IReadOnlySet<TKey>.IsSubsetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool IReadOnlySet<TKey>.IsSupersetOf(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool IReadOnlySet<TKey>.Overlaps(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
+    }
+
+    bool IReadOnlySet<TKey>.SetEquals(IEnumerable<TKey> other) {
+        throw new NotImplementedException();
     }
 
     #endregion

@@ -30,6 +30,7 @@ using Wjybxx.Commons.Poet;
 using Wjybxx.Dson.Codec;
 using Wjybxx.Dson.Codec.Attributes;
 using Wjybxx.Dson.Text;
+using static System.Reflection.BindingFlags;
 using ClassName = Wjybxx.Commons.Poet.ClassName;
 
 namespace Wjybxx.Dson.Apt
@@ -44,7 +45,7 @@ public class CodecProcessor
     internal const string MNAME_READ_OBJECT = "ReadObject";
     internal const string MNAME_WRITE_OBJECT = "WriteObject";
 
-    internal const string MNAME_GET_ENCODER_CLASS = "GetEncoderClass";
+    internal const string MNAME_GET_ENCODER_TYPE = "GetEncoderType";
     internal const string MNAME_BEFORE_ENCODE = "BeforeEncode";
     internal const string MNAME_WRITE_FIELDS = "WriteFields";
     internal const string MNAME_NEW_INSTANCE = "NewInstance";
@@ -518,7 +519,7 @@ public class CodecProcessor
 
     /** 是否包含 newInstance(reader) 静态解码方法 -- 只能从当前类型查询 */
     internal bool ContainsNewInstanceMethod(Type typeElement) {
-        MemberInfo[] staticMembers = typeElement.GetMembers(BindingFlags.Static | BindingFlags.Public);
+        MemberInfo[] staticMembers = typeElement.GetMembers(Static | Public);
         return ContainsHookMethod(staticMembers, MNAME_NEW_INSTANCE, type_DsonReader);
     }
 
@@ -692,9 +693,9 @@ public class CodecProcessor
 
     #region overring util
 
-    public MethodSpec NewGetEncoderClassMethod(Type superDeclaredType, TypeName encoderTypeName) {
+    public MethodSpec NewGetEncoderTypeMethod(Type superDeclaredType, TypeName encoderTypeName) {
         // 需要处理泛型
-        MethodInfo? methodInfo = superDeclaredType.GetMethod(MNAME_GET_ENCODER_CLASS);
+        MethodInfo? methodInfo = superDeclaredType.GetMethod(MNAME_GET_ENCODER_TYPE);
         if (methodInfo == null) {
             throw new AssertionError();
         }
@@ -704,7 +705,7 @@ public class CodecProcessor
     }
 
     public MethodSpec.Builder NewNewInstanceMethodBuilder(Type superDeclaredType) {
-        MethodInfo? methodInfo = superDeclaredType.GetMethod(MNAME_NEW_INSTANCE, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        MethodInfo? methodInfo = superDeclaredType.GetMethod(MNAME_NEW_INSTANCE, Public | NonPublic | Instance);
         if (methodInfo == null) {
             throw new AssertionError();
         }
@@ -712,7 +713,7 @@ public class CodecProcessor
     }
 
     public MethodSpec.Builder NewReadFieldsMethodBuilder(Type superDeclaredType) {
-        MethodInfo? methodInfo = superDeclaredType.GetMethod(MNAME_READ_FIELDS, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        MethodInfo? methodInfo = superDeclaredType.GetMethod(MNAME_READ_FIELDS, Public | NonPublic | Instance);
         if (methodInfo == null) {
             throw new AssertionError();
         }
@@ -720,7 +721,7 @@ public class CodecProcessor
     }
 
     public MethodSpec.Builder NewAfterDecodeMethodBuilder(Type superDeclaredType) {
-        MethodInfo? methodInfo = superDeclaredType.GetMethod(MNAME_AFTER_DECODE, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        MethodInfo? methodInfo = superDeclaredType.GetMethod(MNAME_AFTER_DECODE, Public | NonPublic | Instance);
         if (methodInfo == null) {
             throw new AssertionError();
         }
@@ -728,7 +729,7 @@ public class CodecProcessor
     }
 
     public MethodSpec.Builder NewBeforeEncodeMethodBuilder(Type superDeclaredType) {
-        MethodInfo? methodInfo = superDeclaredType.GetMethod(MNAME_BEFORE_ENCODE, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        MethodInfo? methodInfo = superDeclaredType.GetMethod(MNAME_BEFORE_ENCODE, Public | NonPublic | Instance);
         if (methodInfo == null) {
             throw new AssertionError();
         }
@@ -736,7 +737,7 @@ public class CodecProcessor
     }
 
     public MethodSpec.Builder NewWriteFieldsMethodBuilder(Type superDeclaredType) {
-        MethodInfo? methodInfo = superDeclaredType.GetMethod(MNAME_WRITE_FIELDS, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        MethodInfo? methodInfo = superDeclaredType.GetMethod(MNAME_WRITE_FIELDS, Public | NonPublic | Instance);
         if (methodInfo == null) {
             throw new AssertionError();
         }

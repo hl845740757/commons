@@ -227,9 +227,9 @@ public static class DsonReaderUtils
         output.WriteRawBytes(binary.UnsafeBuffer);
     }
 
-    public static void WriteBinary(IDsonOutput output, DsonChunk chunk) {
-        output.WriteUint32(chunk.Length);
-        output.WriteRawBytes(chunk.Buffer, chunk.Offset, chunk.Length);
+    public static void WriteBinary(IDsonOutput output, byte[] bytes, int offset, int len) {
+        output.WriteUint32(len);
+        output.WriteRawBytes(bytes, offset, len);
     }
 
     public static Binary ReadBinary(IDsonInput input) {

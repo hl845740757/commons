@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.*;
@@ -26,75 +27,109 @@ import java.util.*;
 import java.util.function.Supplier;
 
 /**
+ * 集合解码器，动态构造
+ *
  * @author wjybxx
  * date 2023/4/4
  */
-@SuppressWarnings("rawtypes")
 @DsonCodecScanIgnore
-public class CollectionCodec<T extends Collection> implements DsonCodec<T> {
+public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
 
-    final Class<T> clazz;
-    final Supplier<? extends T> factory;
+    protected final TypeInfo encoderType;
+    protected final Supplier<? extends Collection<E>> factory;
+    private final FactoryKind factoryKind;
 
-    @SuppressWarnings("unchecked")
-    public CollectionCodec() {
-        this.clazz = (Class<T>) Collection.class;
-        this.factory = null;
+    public CollectionCodec(TypeInfo encoderType) {
+        this(encoderType, null);
     }
 
-    public CollectionCodec(Class<T> clazz, Supplier<? extends T> factory) {
-        this.clazz = Objects.requireNonNull(clazz);
+    @SuppressWarnings("unchecked")
+    public CollectionCodec(TypeInfo encoderType, Supplier<? extends Collection<E>> factory) {
+        if (encoderType.genericArgs.size() != 1) {
+            throw new IllegalArgumentException("encoderType.genericArgs.size() != 1");
+        }
+        if (factory == null) {
+            factory = DsonConverterUtils.tryNoArgConstructorToSupplier((Class<? extends Collection<E>>) encoderType.rawType);
+        }
+        this.encoderType = encoderType;
         this.factory = factory;
+        this.factoryKind = factory == null ? computeFactoryKind(encoderType) : FactoryKind.Unknown;
+    }
+
+    private static FactoryKind computeFactoryKind(TypeInfo typeInfo) {
+        Class<?> clazz = typeInfo.rawType;
+        if (clazz == EnumSet.class && typeInfo.genericArgs.get(0).isEnum()) {
+            return FactoryKind.EnumSet; // 考虑被擦除的情况
+        }
+        if (Set.class.isAssignableFrom(clazz)) {
+            return FactoryKind.LinkedHashSet;
+        }
+        if (Deque.class.isAssignableFrom(clazz)) {
+            return FactoryKind.ArrayDeque;
+        }
+        return FactoryKind.Unknown;
+    }
+
+    private enum FactoryKind {
+        Unknown,
+        EnumSet,
+        LinkedHashSet,
+        ArrayDeque,
     }
 
     @Nonnull
     @Override
-    public Class<T> getEncoderClass() {
-        return clazz;
+    public TypeInfo getEncoderType() {
+        return encoderType;
     }
 
-    @SuppressWarnings("unchecked")
-    private Collection<Object> newCollection(TypeInfo<?> typeInfo, Supplier<? extends T> factory) {
-        if (factory != null) {
-            return (Collection<Object>) factory.get();
-        }
-        if (this.factory != null) {
-            return (Collection<Object>) this.factory.get();
-        }
-        if (Set.class.isAssignableFrom(typeInfo.rawType)) {
-            return new LinkedHashSet<>();
-        }
-        return new ArrayList<>();
+    /** {@link #encoderType}一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    protected Collection<E> newCollection() {
+        if (factory != null) return factory.get();
+        return switch (factoryKind) {
+            case EnumSet -> {
+                TypeInfo elementTypeInfo = encoderType.genericArgs.get(0);
+                yield EnumSet.noneOf((Class) elementTypeInfo.rawType);
+            }
+            case LinkedHashSet -> new LinkedHashSet<>();
+            case ArrayDeque -> new ArrayDeque<>();
+            default -> new ArrayList<>();
+        };
     }
 
-    private static TypeInfo<?> getElementTypeInfo(TypeInfo<?> typeInfo) {
-        if (typeInfo.isGenericType()) {
-            return typeInfo.getGenericArgument(0);
+    protected Collection<E> toImmutable(Collection<E> result) {
+        if (result instanceof LinkedHashSet<E> linkedHashSet) {
+            return Collections.unmodifiableSet(linkedHashSet);
         }
-        return DsonConverterUtils.getElementActualTypeInfo(typeInfo.rawType);
+        if (result instanceof EnumSet<?>) {
+            Set<? extends E> enumSet = (Set<? extends E>) result;
+            return Collections.unmodifiableSet(enumSet);
+        }
+        if (result instanceof Set<E> set) {
+            return CollectionUtils.toImmutableLinkedHashSet(set);
+        }
+        return List.copyOf(result);
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, T instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        // 理论上declaredType只影响当前inst是否写入类型，因此应当优先从inst的真实类型中查询K,V的类型，但Java是伪泛型...
-        TypeInfo<?> componentArgInfo = getElementTypeInfo(typeInfo);
-        for (Object e : instance) {
-            writer.writeObject(null, e, componentArgInfo, null);
+    public void writeObject(DsonObjectWriter writer, Collection<E> inst, TypeInfo declaredType, ObjectStyle style) {
+        TypeInfo elementTypeInfo = encoderType.genericArgs.get(0);
+
+        for (E e : inst) {
+            writer.writeObject(null, e, elementTypeInfo, null);
         }
     }
 
     @Override
-    public T readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends T> factory) {
-        TypeInfo<?> componentArgInfo = getElementTypeInfo(typeInfo);
-        Collection<Object> result = newCollection(typeInfo, factory);
+    public Collection<E> readObject(DsonObjectReader reader, Supplier<? extends Collection<E>> factory) {
+        TypeInfo elementTypeInfo = encoderType.genericArgs.get(0);
+
+        Collection<E> result = factory != null ? factory.get() : newCollection();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
-            result.add(reader.readObject(null, componentArgInfo));
+            result.add(reader.readObject(null, elementTypeInfo));
         }
-        CollectionConverter collectionConverter = reader.options().collectionConverter;
-        if (collectionConverter != null) {
-            result = collectionConverter.convertCollection(typeInfo, result);
-        }
-        return clazz.cast(result);
+        return reader.options().readAsImmutable ? toImmutable(result) : result;
     }
 
 }

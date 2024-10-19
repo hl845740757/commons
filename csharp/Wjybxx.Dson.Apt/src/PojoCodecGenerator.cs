@@ -107,7 +107,7 @@ internal class PojoCodecGenerator
         }
         // 控制方法生成顺序
         // GetEncoderType
-        typeBuilder.AddMethod(processor.NewGetEncoderClassMethod(context.superDeclaredType, rawTypeName));
+        typeBuilder.AddMethod(processor.NewGetEncoderTypeMethod(context.superDeclaredType, rawTypeName));
         // BeforeEncode回调
         if (GenBeforeEncodeMethod(aptClassProps)) {
             typeBuilder.AddMethod(beforeEncodeMethodBuilder.Build());
@@ -266,6 +266,8 @@ internal class PojoCodecGenerator
                 CodecProcessor.MNAME_NEW_INSTANCE);
         } else if (containsReaderConstructor) { // 解析构造方法
             newInstanceMethodBuilder.codeBuilder.AddStatement("return new $T(reader)", rawTypeName);
+        } else if (typeElement.IsValueType) { // 值类型
+            newInstanceMethodBuilder.codeBuilder.AddStatement("return default");
         } else {
             newInstanceMethodBuilder.codeBuilder.AddStatement("return new $T()", rawTypeName);
         }
@@ -349,22 +351,22 @@ internal class PojoCodecGenerator
         // 处理数字 -- 涉及WireType和Style，注解使用的是枚举，我们转换为NumberStyles静态类
         string writeMethodName = GetWriteMethodName(fieldInfo);
         Type fieldType = fieldInfo.FieldType;
-        if (fieldType.IsPrimitive) {
-            if (numberTypes.Contains(fieldType)) {
+        if (fieldType.IsPrimitive && numberTypes.Contains(fieldType)) {
+            if (numberHasWireType.Contains(fieldType)) {
+                // int,long
                 // writer.WriteInt(names_fieldName, inst.field, WireType.VarInt, NumberStyles.Simple)
                 builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L, $T.$L)",
                     writeMethodName, SerialName(fieldName), fieldAccess,
                     processor.typeName_WireType, EnumUtil.GetName(fieldProps.attribute.WireType),
                     processor.typeName_NumberStyle, EnumUtil.GetName(fieldProps.attribute.NumberStyle));
-                return;
-            }
-            if (fieldType == typeof(float) || fieldType == typeof(double)) {
+            } else {
+                // float,double,uint,ulong,short,ushort,byte,sbyte...
                 // writer.writeInt(names_fieldName, inst.field, NumberStyles.Simple)
                 builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L)",
                     writeMethodName, SerialName(fieldName), fieldAccess,
                     processor.typeName_NumberStyle, EnumUtil.GetName(fieldProps.attribute.NumberStyle));
-                return;
             }
+            return;
         }
 
         // 其它类型
@@ -478,17 +480,19 @@ internal class PojoCodecGenerator
     private static readonly Dictionary<Type, string> primitiveWriteMethodNameMap = new Dictionary<Type, string>(12);
 
     private static readonly HashSet<Type> numberTypes = new HashSet<Type>();
+    private static readonly HashSet<Type> numberHasWireType = new HashSet<Type>();
 
     static PojoCodecGenerator() {
         Dictionary<Type, string> type2KeywordDic = new Dictionary<Type, string>()
         {
             { typeof(int), "int" },
-            { typeof(uint), "uint" },
             { typeof(long), "long" },
-            { typeof(ulong), "ulong" },
             { typeof(float), "float" },
             { typeof(double), "double" },
             { typeof(bool), "bool" },
+
+            { typeof(uint), "uint" },
+            { typeof(ulong), "ulong" },
             { typeof(byte), "byte" },
             { typeof(sbyte), "sbyte" },
             { typeof(short), "short" },
@@ -507,11 +511,18 @@ internal class PojoCodecGenerator
             typeof(long),
             typeof(uint),
             typeof(ulong),
+            typeof(float),
+            typeof(double),
             typeof(short),
             typeof(ushort),
             typeof(byte),
             typeof(sbyte),
-            typeof(char)
+            typeof(char),
+        });
+        numberHasWireType.AddAll(new[]
+        {
+            typeof(int),
+            typeof(long),
         });
     }
 

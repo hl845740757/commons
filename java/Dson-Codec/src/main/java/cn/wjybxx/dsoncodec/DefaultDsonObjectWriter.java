@@ -16,10 +16,8 @@
 
 package cn.wjybxx.dsoncodec;
 
-import cn.wjybxx.base.EnumLite;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.io.DsonChunk;
-import cn.wjybxx.dson.text.DsonTextWriter;
 import cn.wjybxx.dson.text.INumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
@@ -37,10 +35,12 @@ import java.util.Objects;
 final class DefaultDsonObjectWriter implements DsonObjectWriter {
 
     private final DsonConverter converter;
+    private final TypeWriteHelper typeWriteHelper;
     private final DsonWriter writer;
 
-    public DefaultDsonObjectWriter(DsonConverter converter, DsonWriter writer) {
+    public DefaultDsonObjectWriter(DsonConverter converter, TypeWriteHelper typeWriteHelper, DsonWriter writer) {
         this.converter = converter;
+        this.typeWriteHelper = typeWriteHelper;
         this.writer = writer;
     }
 
@@ -103,8 +103,14 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         if (value == null) {
             writeNull(name);
         } else {
-            writer.writeBinary(name, Binary.copyFrom(value));
+            writer.writeBinary(name, value, 0, value.length);
         }
+    }
+
+    @Override
+    public void writeBytes(String name, byte[] value, int offset, int len) {
+        if (value == null) throw new NullPointerException("value");
+        writer.writeBinary(name, value, offset, len);
     }
 
     @Override
@@ -114,12 +120,6 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         } else {
             writer.writeBinary(name, binary);
         }
-    }
-
-    @Override
-    public void writeBinary(String name, @Nonnull DsonChunk chunk) {
-        Objects.requireNonNull(chunk);
-        writer.writeBinary(name, chunk);
     }
 
     @Override
@@ -171,40 +171,23 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     // region object处理
 
     @Override
-    public <T> void writeObject(String name, T value, TypeInfo<?> typeInfo, ObjectStyle style) {
-        Objects.requireNonNull(typeInfo, "typeInfo");
+    public <T> void writeObject(String name, T value, TypeInfo declaredType, ObjectStyle style) {
+        Objects.requireNonNull(declaredType, "typeInfo");
         if (value == null) {
             writeNull(name);
             return;
         }
-        // 常见基础类型也在CodecRegistry中
-        DsonCodecImpl<? super T> codec = findObjectEncoder(value, typeInfo);
+        TypeInfo runtimeTypeInfo = getRuntimeTypeInfo(value, declaredType);
+        @SuppressWarnings("unchecked") var codec = (DsonCodecImpl<? super T>) converter.codecRegistry().getEncoder(runtimeTypeInfo);
         if (codec != null) {
             if (writer.isAtName()) { // 写入name
                 writer.writeName(name);
             }
-            if (style == null) style = findObjectStyle(value, typeInfo);
-            codec.writeObject(this, value, typeInfo, style);
+            if (style == null) style = findObjectStyle(codec.getEncoderType());
+            codec.writeObject(this, value, declaredType, style);
             return;
         }
         Class<?> type = value.getClass();
-        // 类型补充
-        if (type == byte[].class) {
-            writeBytes(name, (byte[]) value);
-            return;
-        }
-        if (type == Short.class) {
-            writeShort(name, (Short) value);
-            return;
-        }
-        if (type == Byte.class) {
-            writeByte(name, (Byte) value);
-            return;
-        }
-        if (type == Character.class) {
-            writeChar(name, (Character) value);
-            return;
-        }
         // DsonValue
         if (value instanceof DsonValue dsonValue) {
             Dsons.writeDsonValue(writer, dsonValue, name);
@@ -232,9 +215,23 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public void writeStartObject(@Nonnull Object value, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeTypeInfo(TypeInfo encoderType, TypeInfo declaredType) {
+        writer.attach(encoderType);
+
+        TypeWritePolicy policy = converter.options().typeWritePolicy;
+        if ((policy == TypeWritePolicy.OPTIMIZED && !typeWriteHelper.isOptimizable(encoderType, declaredType))
+                || policy == TypeWritePolicy.ALWAYS) {
+            TypeMeta typeMeta = converter.typeMetaRegistry().ofType(encoderType);
+            if (typeMeta == null) {
+                throw new DsonCodecException("typeMeta of encoderType: %s is absent".formatted(encoderType));
+            }
+            writer.writeSimpleHeader(typeMeta.mainClsName());
+        }
+    }
+
+    @Override
+    public void writeStartObject(ObjectStyle style) {
         writer.writeStartObject(style);
-        writeClsName(value, typeInfo);
     }
 
     @Override
@@ -243,9 +240,8 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public void writeStartArray(@Nonnull Object value, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeStartArray(ObjectStyle style) {
         writer.writeStartArray(style);
-        writeClsName(value, typeInfo);
     }
 
     @Override
@@ -260,7 +256,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public String encodeKey(Object key) {
+    public <T> String encodeKey(T key, TypeInfo keyType) {
         Objects.requireNonNull(key);
         if (key instanceof String str) {
             return str;
@@ -268,21 +264,25 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         if ((key instanceof Integer) || (key instanceof Long)) {
             return key.toString();
         }
-        if (!(key instanceof EnumLite enumLite)) {
+        @SuppressWarnings("unchecked") var codecImpl = (DsonCodecImpl<T>) converter.codecRegistry().getEncoder(keyType);
+        if (codecImpl == null || !codecImpl.isEnumCodec()) {
             throw DsonCodecException.unsupportedType(key.getClass());
         }
         if (converter.options().writeEnumAsString) {
-            return key.toString();
+            return codecImpl.getName(key);
         } else {
-            return Integer.toString(enumLite.getNumber());
+            return Integer.toString(codecImpl.getNumber(key));
         }
     }
 
     @Override
-    public void println() {
-        if (writer instanceof DsonTextWriter textWriter) {
-            textWriter.println();
-        }
+    public void setEncoderType(TypeInfo encoderType) {
+        writer.attach(encoderType);
+    }
+
+    @Override
+    public TypeInfo getEncoderType() {
+        return (TypeInfo) writer.attachment();
     }
 
     @Override
@@ -295,45 +295,69 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         writer.close();
     }
 
-    // 发现个问题：子类使用超类编码器时，如果当前类不存在TypeMeta，是否应当尝试写入超类的TypeMeta？
-    // 写入超类信息似乎也不对劲 -- 最好的方式是每个类型都有对应的TypeMeta
-
-    /** 写入clsName时，应当尽可能写上泛型参数信息 */
-    private void writeClsName(Object value, TypeInfo<?> typeInfo) {
-        final Class<?> encodeClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举
-        if (!converter.options().classIdPolicy.test(typeInfo.rawType, encodeClass)) {
-            return;
-        }
-        final TypeMeta typeMeta = getEncoderTypeMeta(typeInfo, encodeClass);
-        if (typeMeta != null && !typeMeta.clsNames.isEmpty()) {
-            writer.writeSimpleHeader(typeMeta.mainClsName());
-        }
-    }
-
-    /** style可以允许泛型参数不同时走不同的style - 但不是必须的 */
-    private ObjectStyle findObjectStyle(Object value, TypeInfo<?> typeInfo) {
-        final Class<?> encodeClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举...
-        final TypeMeta typeMeta = getEncoderTypeMeta(typeInfo, encodeClass);
+    /** 允许泛型参数不同时走不同的style */
+    private ObjectStyle findObjectStyle(TypeInfo encoderType) {
+        final TypeMeta typeMeta = converter.typeMetaRegistry().ofType(encoderType);
         return typeMeta != null ? typeMeta.style : ObjectStyle.INDENT;
     }
 
-    /** 查找codec始终通过原始类型查找 -- 这么有问题 */
-    @SuppressWarnings("unchecked")
-    private <T> DsonCodecImpl<? super T> findObjectEncoder(T value, TypeInfo<?> typeInfo) {
-        final Class<?> encodeClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举...
-        DsonCodecRegistry rootRegistry = converter.codecRegistry();
-        return (DsonCodecImpl<? super T>) rootRegistry.getEncoder(encodeClass, rootRegistry);
+    /** 计算对象的运行时类型信息 */
+    private TypeInfo getRuntimeTypeInfo(Object value, TypeInfo declaredType) {
+        final Class<?> encoderClass = DsonConverterUtils.getEncodeClass(value); // 小心枚举...
+        if (encoderClass == declaredType.rawType) {
+            return declaredType;
+        }
+        // 尝试继承泛型参数
+        if (declaredType.hasGenericArgs()) {
+            TypeInfo typeInfo = converter.genericCodecHelper().inheritTypeArgs(encoderClass, declaredType);
+            return typeInfo == null ? TypeInfo.of(encoderClass) : typeInfo;
+        }
+        // 如果真实类型是泛型，而声明类型是object等，会导致泛型信息丢失
+        // 在查找泛型类对应的codec时会修正为对应的泛型原型，从而保证泛型参数个数的正确性
+        return TypeInfo.of(encoderClass);
     }
 
-    private TypeMeta getEncoderTypeMeta(TypeInfo<?> typeInfo, Class<?> encoderClass) {
-        if (encoderClass == typeInfo.rawType) {
-            return converter.typeMetaRegistry().ofType(typeInfo);
-        }
-        if (DsonConverterUtils.canInheritTypeArgs(encoderClass, typeInfo)) {
-            return converter.typeMetaRegistry().ofType(TypeInfo.of(encoderClass, typeInfo.typeArgs));
-        }
-        return converter.typeMetaRegistry().ofClass(encoderClass);
-    }
     // endregion
 
+    // region 重复实现，提高效率
+
+    @Override
+    public void writeStartObject(ObjectStyle style, TypeInfo encoderType, TypeInfo declaredType) {
+        writer.writeStartObject(style);
+        writeTypeInfo(encoderType, declaredType);
+    }
+
+    @Override
+    public void writeStartObject(String name, ObjectStyle style) {
+        writer.writeName(name);
+        writer.writeStartObject(style);
+    }
+
+    @Override
+    public void writeStartObject(String name, ObjectStyle style, TypeInfo encoderType, TypeInfo declaredType) {
+        writer.writeName(name);
+        writer.writeStartObject(style);
+        writeTypeInfo(encoderType, declaredType);
+    }
+    //
+
+    @Override
+    public void writeStartArray(ObjectStyle style, TypeInfo encoderType, TypeInfo declaredType) {
+        writer.writeStartArray(style);
+        writeTypeInfo(encoderType, declaredType);
+    }
+
+    @Override
+    public void writeStartArray(String name, ObjectStyle style) {
+        writer.writeName(name);
+        writer.writeStartArray(style);
+    }
+
+    @Override
+    public void writeStartArray(String name, ObjectStyle style, TypeInfo encoderType, TypeInfo declaredType) {
+        writer.writeName(name);
+        writer.writeStartArray(style);
+        writeTypeInfo(encoderType, declaredType);
+    }
+    // endregion
 }

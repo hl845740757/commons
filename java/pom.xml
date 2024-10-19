@@ -73,7 +73,7 @@
 
         <!-- 基础依赖-->
         <jsr305.version>3.0.2</jsr305.version>
-        <apt.version>1.2.0</apt.version>
+        <apt.version>1.3.0</apt.version>
 
         <!-- 子模块依赖 -->
         <fastutil.version>8.5.14</fastutil.version>

@@ -30,8 +30,8 @@ public class ExtDateTimeCodec : IDsonCodec<ExtDateTime>
         writer.WriteExtDateTime(null, in inst);
     }
 
-    public ExtDateTime ReadObject(IDsonObjectReader reader, Type declaredType, Func<ExtDateTime>? factory = null) {
-        return reader.ReadExtDateTime(reader.CurrentName);
+    public ExtDateTime ReadObject(IDsonObjectReader reader, Func<ExtDateTime>? factory = null) {
+        return reader.ReadExtDateTime(null);
     }
 }
 }

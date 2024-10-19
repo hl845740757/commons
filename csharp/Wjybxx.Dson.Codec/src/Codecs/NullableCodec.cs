@@ -17,14 +17,12 @@
 #endregion
 
 using System;
-using Wjybxx.Commons;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
 /// <summary>
 /// <see cref="Nullable{T}"/>的模板编解码器
-///
 /// 注意：Nullable编码时不会再封装一层，而是直接写内部值。
 /// </summary>
 /// <typeparam name="T"></typeparam>
@@ -33,13 +31,13 @@ public class NullableCodec<T> : IDsonCodec<T?> where T : struct
     public bool AutoStartEnd => false;
 
     public void WriteObject(IDsonObjectWriter writer, ref T? inst, Type declaredType, ObjectStyle style) {
-        // C#特殊处理了Nullable的GetType，和装箱的效果一样，返回的是值的GetType，因此永远无法走到Nullable的Codec...
-        throw new IllegalStateException();
+        // 我们对Nullable类型编码的时候进行了修正，会走到这里
+        writer.WriteObject(null, inst.Value, typeof(T));
     }
 
-    public T? ReadObject(IDsonObjectReader reader, Type declaredType, Func<T?>? factory = null) {
-        // declaredType 是Nullable<T>的类型，不是T的声明类型；name已读，这里无法获得正确的name
-        return reader.ReadObject<T>(null, typeof(T), null, true);
+    public T? ReadObject(IDsonObjectReader reader, Func<T?>? factory = null) {
+        // declaredType 是Nullable<T>的类型，不是T的声明类型 -- 转为读代理
+        return reader.ReadObject<T>(null, typeof(T), null);
     }
 }
 }

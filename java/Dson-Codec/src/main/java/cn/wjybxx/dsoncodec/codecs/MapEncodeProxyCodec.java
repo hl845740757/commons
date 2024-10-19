@@ -31,16 +31,22 @@ import java.util.function.Supplier;
  * @author wjybxx
  * date - 2024/5/19
  */
-@SuppressWarnings("rawtypes")
-public class MapEncodeProxyCodec implements DsonCodec<MapEncodeProxy> {
+public class MapEncodeProxyCodec<V> implements DsonCodec<MapEncodeProxy<V>> {
+
+    private final TypeInfo encoderType;
 
     public MapEncodeProxyCodec() {
+        encoderType = TypeInfo.of(MapEncodeProxy.class, TypeInfo.OBJECT);
+    }
+
+    public MapEncodeProxyCodec(TypeInfo encoderType) {
+        this.encoderType = encoderType;
     }
 
     @Nonnull
     @Override
-    public Class<MapEncodeProxy> getEncoderClass() {
-        return MapEncodeProxy.class;
+    public TypeInfo getEncoderType() {
+        return encoderType;
     }
 
     @Override
@@ -49,62 +55,60 @@ public class MapEncodeProxyCodec implements DsonCodec<MapEncodeProxy> {
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, MapEncodeProxy instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        TypeInfo<?> valueArgInfo = typeInfo.isGenericType() ? typeInfo.getGenericArgument(0) : TypeInfo.OBJECT;
-        @SuppressWarnings("unchecked") Collection<Map.Entry<String, Object>> entries = Objects.requireNonNull(instance.getEntries());
-        switch (instance.getMode()) {
+    public void writeObject(DsonObjectWriter writer, MapEncodeProxy<V> inst, TypeInfo declaredType, ObjectStyle style) {
+        TypeInfo valueTypeInfo = encoderType.genericArgs.get(0);
+        Collection<Map.Entry<String, V>> entries = Objects.requireNonNull(inst.getEntries());
+        switch (inst.getMode()) {
             default -> {
-                writer.writeStartObject(instance, typeInfo, style); // 字典写为普通文档
-                for (Map.Entry<String, ?> entry : entries) {
+                writer.writeStartObject(style, encoderType, declaredType); // 字典写为普通文档
+                for (Map.Entry<String, V> entry : entries) {
                     // map写为普通的Object的时候，必须要写入Null，否则containsKey会异常；要强制写入Null必须先写入Name
                     writer.writeName(entry.getKey());
-                    writer.writeObject(entry.getKey(), entry.getValue(), valueArgInfo, null);
+                    writer.writeObject(entry.getKey(), entry.getValue(), valueTypeInfo, null);
                 }
                 writer.writeEndObject();
             }
             case MapEncodeProxy.MODE_ARRAY -> {
-                writer.writeStartArray(instance, typeInfo, style); // 整个字典写为数组
-                for (Map.Entry<String, ?> entry : entries) {
+                writer.writeStartArray(style, encoderType, declaredType); // 整个字典写为数组
+                for (Map.Entry<String, V> entry : entries) {
                     writer.writeString(null, entry.getKey());
-                    writer.writeObject(null, entry.getValue(), valueArgInfo, null);
+                    writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
                 }
                 writer.writeEndArray();
             }
             case MapEncodeProxy.MODE_PAIR_AS_ARRAY -> {
-                TypeInfo<Map.Entry> pairTypeInfo = TypeInfo.of(Map.Entry.class, String.class, valueArgInfo.rawType);
-                writer.writeStartArray(instance, typeInfo, style);
-                for (Map.Entry<String, ?> entry : entries) {
-                    writer.writeStartArray(entry, pairTypeInfo); // pair写为子数组
+                writer.writeStartArray(style, encoderType, declaredType);
+                for (Map.Entry<String, V> entry : entries) {
+                    writer.writeStartArray(ObjectStyle.FLOW); // pair写为子数组-没有类型
                     {
                         writer.writeString(null, entry.getKey());
-                        writer.writeObject(null, entry.getValue(), valueArgInfo, null);
+                        writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
                     }
                     writer.writeEndArray();
                 }
                 writer.writeEndArray();
             }
             case MapEncodeProxy.MODE_PAIR_AS_DOCUMENT -> {
-                TypeInfo<Map.Entry> pairTypeInfo = TypeInfo.of(Map.Entry.class, String.class, valueArgInfo.rawType);
-                writer.writeStartArray(instance, typeInfo, style);
-                for (Map.Entry<String, ?> entry : entries) {
-                    writer.writeStartObject(entry, pairTypeInfo); // pair写为子文档
+                writer.writeStartArray(style, encoderType, declaredType);
+                for (Map.Entry<String, V> entry : entries) {
+                    writer.writeStartObject(ObjectStyle.FLOW); // pair写为子文档-没有类型
                     {
-                        writer.writeObject(entry.getKey(), entry.getValue(), valueArgInfo);
+                        writer.writeName(entry.getKey()); // 确保写入null
+                        writer.writeObject(entry.getKey(), entry.getValue(), valueTypeInfo);
                     }
                     writer.writeEndObject();
                 }
                 writer.writeEndArray();
             }
-
         }
     }
 
     @Override
-    public MapEncodeProxy readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends MapEncodeProxy> factory) {
-        TypeInfo<?> valueArgInfo = typeInfo.isGenericType() ? typeInfo.getGenericArgument(0) : TypeInfo.OBJECT;
+    public MapEncodeProxy<V> readObject(DsonObjectReader reader, Supplier<? extends MapEncodeProxy<V>> factory) {
+        TypeInfo valueTypeInfo = encoderType.genericArgs.get(0);
 
-        List<Map.Entry<String, Object>> entries = new ArrayList<>();
-        MapEncodeProxy<Object> result = new MapEncodeProxy<>();
+        List<Map.Entry<String, V>> entries = new ArrayList<>();
+        MapEncodeProxy<V> result = new MapEncodeProxy<>();
         result.setEntries(entries);
 
         DsonType currentDsonType = reader.getCurrentDsonType();
@@ -113,7 +117,7 @@ public class MapEncodeProxyCodec implements DsonCodec<MapEncodeProxy> {
             reader.readStartObject();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String key = reader.readName();
-                Object value = reader.readObject(key, valueArgInfo);
+                V value = reader.readObject(key, valueTypeInfo);
                 entries.add(Tuple2.of(key, value)); // Map.entry不支持value为null
             }
             reader.readEndObject();
@@ -126,7 +130,7 @@ public class MapEncodeProxyCodec implements DsonCodec<MapEncodeProxy> {
                     result.setWriteAsArray();
                     do {
                         String key = reader.readString(null);
-                        Object value = reader.readObject(null, valueArgInfo);
+                        V value = reader.readObject(null, valueTypeInfo);
                         entries.add(Tuple2.of(key, value));
                     } while (reader.readDsonType() != DsonType.END_OF_OBJECT);
                 }
@@ -136,7 +140,7 @@ public class MapEncodeProxyCodec implements DsonCodec<MapEncodeProxy> {
                         reader.readStartArray();
                         {
                             String key = reader.readString(null);
-                            Object value = reader.readObject(null, valueArgInfo);
+                            V value = reader.readObject(null, valueTypeInfo);
                             entries.add(Tuple2.of(key, value));
                         }
                         reader.readEndArray();
@@ -148,7 +152,7 @@ public class MapEncodeProxyCodec implements DsonCodec<MapEncodeProxy> {
                         reader.readStartObject();
                         {
                             String key = reader.readName();
-                            Object value = reader.readObject(key, valueArgInfo);
+                            V value = reader.readObject(key, valueTypeInfo);
                             entries.add(Tuple2.of(key, value));
                         }
                         reader.readEndObject();

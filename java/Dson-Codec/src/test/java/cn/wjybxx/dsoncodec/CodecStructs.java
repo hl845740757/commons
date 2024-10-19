@@ -154,21 +154,16 @@ class CodecStructs {
             return false;
         }
 
-        @Override
-        public boolean autoStartEnd() {
-            return true;
-        }
-
         @Nonnull
         @Override
-        public Class<MyStruct> getEncoderClass() {
-            return MyStruct.class;
+        public TypeInfo getEncoderType() {
+            return TypeInfo.of(MyStruct.class);
         }
 
         @Override
-        public void writeObject(DsonObjectWriter writer, MyStruct instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-            NestStruct nestStruct = instance.nestStruct;
-            writer.writeStartObject("nestStruct", nestStruct, TypeInfo.of(NestStruct.class));
+        public void writeObject(DsonObjectWriter writer, MyStruct inst, TypeInfo declaredType, ObjectStyle style) {
+            NestStruct nestStruct = inst.nestStruct;
+            writer.writeStartObject("nestStruct", ObjectStyle.INDENT);
             {
                 writer.writeInt("intVal", nestStruct.intVal);
                 writer.writeLong("longVal", nestStruct.longVal);
@@ -177,21 +172,20 @@ class CodecStructs {
             }
             writer.writeEndObject();
 
-            writer.writeInt("intVal", instance.intVal);
-            writer.writeLong("longVal", instance.longVal);
-            writer.writeFloat("floatVal", instance.floatVal, NumberStyle.SIMPLE);
-            writer.writeDouble("doubleVal", instance.doubleVal, NumberStyle.SIMPLE);
-            writer.writeBoolean("boolVal", instance.boolVal);
-            writer.writeString("strVal", instance.strVal, StringStyle.AUTO);
-            writer.writeBytes("bytes", instance.bytes);
-            writer.writeObject("sex", instance.sex, TypeInfo.of(Sex.class));
-            writer.writeObject("map", instance.map, TypeInfo.STRING_LINKED_HASHMAP, null);
-            writer.writeObject("list", instance.list, TypeInfo.ARRAYLIST, null);
+            writer.writeInt("intVal", inst.intVal);
+            writer.writeLong("longVal", inst.longVal);
+            writer.writeFloat("floatVal", inst.floatVal, NumberStyle.SIMPLE);
+            writer.writeDouble("doubleVal", inst.doubleVal, NumberStyle.SIMPLE);
+            writer.writeBoolean("boolVal", inst.boolVal);
+            writer.writeString("strVal", inst.strVal, StringStyle.AUTO);
+            writer.writeBytes("bytes", inst.bytes);
+            writer.writeObject("sex", inst.sex, TypeInfo.of(Sex.class));
+            writer.writeObject("map", inst.map, TypeInfo.STRING_HASHMAP, null);
+            writer.writeObject("list", inst.list, TypeInfo.ARRAYLIST, null);
         }
 
-        @SuppressWarnings("unchecked")
         @Override
-        public MyStruct readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends MyStruct> factory) {
+        public MyStruct readObject(DsonObjectReader reader, Supplier<? extends MyStruct> factory) {
             reader.readStartObject("nestStruct");
             NestStruct nestStruct = new NestStruct(
                     reader.readInt("intVal"),
@@ -209,7 +203,7 @@ class CodecStructs {
                     reader.readString("strVal"),
                     reader.readBytes("bytes"),
                     reader.readObject("sex", TypeInfo.of(Sex.class)),
-                    reader.readObject("map", TypeInfo.STRING_LINKED_HASHMAP),
+                    reader.readObject("map", TypeInfo.STRING_HASHMAP),
                     reader.readObject("list", TypeInfo.ARRAYLIST),
                     nestStruct);
         }

@@ -26,7 +26,53 @@ namespace Wjybxx.Dson.Tests.Apt;
 /// <typeparam name="TKey"></typeparam>
 /// <typeparam name="TValue"></typeparam>
 [DsonSerializable]
-public class MyDictionary<TKey, TValue>
+public class MyDictionary<TKey, TValue> where TKey : notnull
 {
-    public Dictionary<TKey, TValue> dictionary;
+    /** 测试泛型指定工厂 */
+    public static readonly Func<MyDictionary<TKey, TValue>> FACTORY = () => new MyDictionary<TKey, TValue>();
+
+    internal Dictionary<TKey, TValue> dictionary = new Dictionary<TKey, TValue>();
+
+    public MyDictionary() {
+    }
+
+    public void Add(TKey key, TValue value) {
+        dictionary.Add(key, value);
+    }
+
+    public void Clear() {
+        dictionary.Clear();
+    }
+
+    public bool ContainsKey(TKey key) {
+        return dictionary.ContainsKey(key);
+    }
+
+    public bool ContainsValue(TValue value) {
+        return dictionary.ContainsValue(value);
+    }
+
+    public bool Remove(TKey key) {
+        return dictionary.Remove(key);
+    }
+
+    public bool Remove(TKey key, out TValue value) {
+        return dictionary.Remove(key, out value);
+    }
+
+    public bool TryAdd(TKey key, TValue value) {
+        return dictionary.TryAdd(key, value);
+    }
+
+    public bool TryGetValue(TKey key, out TValue value) {
+        return dictionary.TryGetValue(key, out value);
+    }
+
+    public int Count => dictionary.Count;
+    public TValue this[TKey key] {
+        get => dictionary[key];
+        set => dictionary[key] = value;
+    }
+    public Dictionary<TKey, TValue>.KeyCollection Keys => dictionary.Keys;
+    public Dictionary<TKey, TValue>.ValueCollection Values => dictionary.Values;
 }

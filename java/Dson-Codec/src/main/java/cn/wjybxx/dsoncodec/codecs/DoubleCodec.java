@@ -33,9 +33,11 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class DoubleCodec implements DsonCodec<Double> {
+
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.BOXED_DOUBLE;
     }
 
     @Override
@@ -43,20 +45,14 @@ public class DoubleCodec implements DsonCodec<Double> {
         return false;
     }
 
-    @Nonnull
     @Override
-    public Class<Double> getEncoderClass() {
-        return Double.class;
+    public void writeObject(DsonObjectWriter writer, Double inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeDouble(null, inst, NumberStyle.SIMPLE); // double无需声明类型
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, Double instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        writer.writeDouble(null, instance, NumberStyle.SIMPLE); // double无需声明类型
-    }
-
-    @Override
-    public Double readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends Double> factory) {
-        return reader.readDouble(reader.getCurrentName());
+    public Double readObject(DsonObjectReader reader, Supplier<? extends Double> factory) {
+        return reader.readDouble(null);
     }
 
 }

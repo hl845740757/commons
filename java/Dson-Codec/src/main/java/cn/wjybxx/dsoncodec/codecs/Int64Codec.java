@@ -34,9 +34,11 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class Int64Codec implements DsonCodec<Long> {
+
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.BOXED_LONG;
     }
 
     @Override
@@ -44,22 +46,16 @@ public class Int64Codec implements DsonCodec<Long> {
         return false;
     }
 
-    @Nonnull
     @Override
-    public Class<Long> getEncoderClass() {
-        return Long.class;
-    }
-
-    @Override
-    public void writeObject(DsonObjectWriter writer, Long instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        NumberStyle numberStyle = (typeInfo.rawType == Long.class || typeInfo.rawType == long.class) ?
+    public void writeObject(DsonObjectWriter writer, Long inst, TypeInfo declaredType, ObjectStyle style) {
+        NumberStyle numberStyle = (declaredType.rawType == Long.class || declaredType.rawType == long.class) ?
                 NumberStyle.SIMPLE : NumberStyle.TYPED;
-        writer.writeLong(null, instance, WireType.VARINT, numberStyle);
+        writer.writeLong(null, inst, WireType.VARINT, numberStyle);
     }
 
     @Override
-    public Long readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends Long> factory) {
-        return reader.readLong(reader.getCurrentName());
+    public Long readObject(DsonObjectReader reader, Supplier<? extends Long> factory) {
+        return reader.readLong(null);
     }
 
 }

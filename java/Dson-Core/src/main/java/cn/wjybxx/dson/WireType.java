@@ -84,7 +84,7 @@ public enum WireType {
     },
 
     /**
-     * 按照有符号数格式优化编码
+     * 按照有符号数格式优化编码(ZigZag编码)
      */
     SINT(2) {
         @Override

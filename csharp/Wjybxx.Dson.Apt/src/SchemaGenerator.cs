@@ -71,34 +71,16 @@ internal class SchemaGenerator
         List<FieldSpec> result = new List<FieldSpec>();
         foreach (FieldInfo fieldInfo in context.serialFields) {
             AptFieldProps props = context.fieldPropsMap[fieldInfo];
-            // 集合类型默认指定实现类
-            if (props.implType == null && IsConcreteCollection(fieldInfo.FieldType)) {
-                props.implType = fieldInfo.FieldType;
-            }
-            if (props!.implType != null) {
+            if (props.implType != null) {
                 result.Add(GenFactoryField(fieldInfo, props));
             }
         }
         return result;
     }
 
-    private static bool IsConcreteCollection(Type type) {
-        return type.IsClass
-               && !type.IsAbstract
-               && DsonConverterUtils.IsCollection(type, true)
-               && type.GetConstructor(BindingFlags.Public | BindingFlags.Instance,
-                   binder: null, Array.Empty<Type>(), modifiers: null) != null;
-    }
-
+    // 不能在编译时生成过多的factory，因为即使字段的声明类型是具体类型，其运行时类型仍可能是子类型，因此默认分配factory不安全
     private FieldSpec GenFactoryField(MemberInfo memberInfo, AptFieldProps props) {
-        // Type declaredType;
-        // if (memberInfo is FieldInfo fieldInfo) {
-        //     declaredType = fieldInfo.FieldType;
-        // } else {
-        //     PropertyInfo propertyInfo = (PropertyInfo)memberInfo;
-        //     declaredType = propertyInfo.PropertyType;
-        // }
-        // C#6泛型不支持协变
+        // dotnet 6泛型不支持协变
         ClassName factoryFieldType = className_Func.WithActualTypeVariables(TypeName.Get(props.implType!));
         return FieldSpec.NewBuilder(factoryFieldType, GetFactoryFieldName(memberInfo.Name),
                 Modifiers.Public | Modifiers.Static | Modifiers.Readonly)

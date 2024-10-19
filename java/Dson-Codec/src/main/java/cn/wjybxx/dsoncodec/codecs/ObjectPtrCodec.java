@@ -33,9 +33,11 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class ObjectPtrCodec implements DsonCodec<ObjectPtr> {
+
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.of(ObjectPtr.class);
     }
 
     @Override
@@ -43,19 +45,13 @@ public class ObjectPtrCodec implements DsonCodec<ObjectPtr> {
         return false;
     }
 
-    @Nonnull
     @Override
-    public Class<ObjectPtr> getEncoderClass() {
-        return ObjectPtr.class;
+    public void writeObject(DsonObjectWriter writer, ObjectPtr inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writePtr(null, inst);
     }
 
     @Override
-    public void writeObject(DsonObjectWriter writer, ObjectPtr instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        writer.writePtr(null, instance);
-    }
-
-    @Override
-    public ObjectPtr readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends ObjectPtr> factory) {
-        return reader.readPtr(reader.getCurrentName());
+    public ObjectPtr readObject(DsonObjectReader reader, Supplier<? extends ObjectPtr> factory) {
+        return reader.readPtr(null);
     }
 }

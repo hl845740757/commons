@@ -30,10 +30,11 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
     public void WriteObject(IDsonObjectWriter writer, ref DictionaryEncodeProxy<V> inst, Type declaredType, ObjectStyle style) {
         IEnumerable<KeyValuePair<string, V>> entries = inst.Entries ?? throw new NullReferenceException("inst.Entries");
         Type valDeclaredType = typeof(V);
+        Type encoderType = typeof(DictionaryEncodeProxy<V>);
 
         switch (inst.Mode) {
             default: {
-                writer.WriteStartObject(in inst, declaredType, style); // 字典写为普通文档
+                writer.WriteStartObject(style, encoderType, declaredType); // 字典写为普通文档
                 foreach (KeyValuePair<string, V> pair in entries) {
                     string keyString = writer.EncodeKey(pair.Key);
                     V value = pair.Value;
@@ -49,7 +50,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                 break;
             }
             case DictionaryEncodeProxy.MODE_ARRAY: {
-                writer.WriteStartArray(inst, declaredType, style); // 整个字典写为数组
+                writer.WriteStartArray(style, encoderType, declaredType); // 整个字典写为数组
                 foreach (KeyValuePair<string, V> pair in entries) {
                     writer.WriteString(null, pair.Key);
                     writer.WriteObject(null, pair.Value, valDeclaredType);
@@ -58,10 +59,9 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                 break;
             }
             case DictionaryEncodeProxy.MODE_PAIR_AS_ARRAY: {
-                Type pairTypeInfo = typeof(KeyValuePair<string, V>);
-                writer.WriteStartArray(inst, declaredType, style);
+                writer.WriteStartArray(style, encoderType, declaredType);
                 foreach (KeyValuePair<string, V> pair in entries) {
-                    writer.WriteStartArray(in pair, pairTypeInfo); // pair写为子数组
+                    writer.WriteStartArray(ObjectStyle.Flow); // pair写为子数组-没有类型
                     {
                         writer.WriteString(null, pair.Key);
                         writer.WriteObject(null, pair.Value, valDeclaredType);
@@ -72,12 +72,11 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                 break;
             }
             case DictionaryEncodeProxy.MODE_PAIR_AS_DOCUMENT: {
-                Type pairTypeInfo = typeof(KeyValuePair<string, V>);
-
-                writer.WriteStartArray(inst, declaredType, style);
+                writer.WriteStartArray(style, encoderType, declaredType);
                 foreach (KeyValuePair<string, V> pair in entries) {
-                    writer.WriteStartObject(in pair, pairTypeInfo); // pair写为子文档
+                    writer.WriteStartObject(ObjectStyle.Flow); // pair写为子文档-没有类型
                     {
+                        writer.WriteName(pair.Key); // 确保写入null
                         writer.WriteObject(pair.Key, pair.Value, valDeclaredType);
                     }
                     writer.WriteEndObject();
@@ -88,7 +87,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
         }
     }
 
-    public DictionaryEncodeProxy<V> ReadObject(IDsonObjectReader reader, Type declaredType, Func<DictionaryEncodeProxy<V>>? factory = null) {
+    public DictionaryEncodeProxy<V> ReadObject(IDsonObjectReader reader, Func<DictionaryEncodeProxy<V>>? factory = null) {
         Type valDeclaredType = typeof(V);
 
         List<KeyValuePair<string, V>> entries = new List<KeyValuePair<string, V>>();
@@ -133,7 +132,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                     } while (reader.ReadDsonType() != DsonType.EndOfObject);
                     break;
                 }
-                case DsonType.Object: {
+                case DsonType.Object: { // Pair为子文档
                     result.SetWritePairAsArray();
                     do {
                         reader.ReadStartObject();

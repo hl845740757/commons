@@ -19,6 +19,7 @@ package cn.wjybxx.dsoncodec;
 import cn.wjybxx.base.EnumLite;
 import cn.wjybxx.base.EnumLiteMap;
 import cn.wjybxx.base.EnumUtils;
+import cn.wjybxx.dsoncodec.annotations.DsonProperty;
 import cn.wjybxx.dsoncodec.annotations.DsonSerializable;
 
 import javax.annotation.Nullable;
@@ -30,8 +31,13 @@ import javax.annotation.Nullable;
 @DsonSerializable
 public enum Sex implements EnumLite {
 
+    @DsonProperty(name = "Z")
     UNKNOWN(0),
+
+    @DsonProperty(name = "M")
     MALE(1),
+
+    @DsonProperty(name = "F")
     FEMALE(2);
 
     public final int number;

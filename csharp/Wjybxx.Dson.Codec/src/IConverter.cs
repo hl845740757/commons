@@ -17,12 +17,14 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using Wjybxx.Dson.IO;
 
 namespace Wjybxx.Dson.Codec
 {
 /// <summary>
-/// 转换器
+/// 1.由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
+/// 2.非泛型接口用于反射等统一API。
 /// </summary>
 public interface IConverter
 {
@@ -39,16 +41,15 @@ public interface IConverter
 
     /// <summary>
     /// 从数据源中读取一个对象
-    ///
+    /// 
     /// 注意：如果对象的声明类型和写入的类型不兼容，则表示投影；factory用于支持将数据读取到既有实例或子类实例上。
     /// </summary>
     /// <param name="source">数据源</param>
+    /// <param name="declaredType"></param>
     /// <param name="factory">对象工厂</param>
     /// <typeparam name="T">对象的声明类型</typeparam>
     /// <returns></returns>
-    T Read<T>(byte[] source, Func<T>? factory = null) {
-        return Read<T>(new DsonChunk(source), factory);
-    }
+    T Read<T>(byte[] source, Type declaredType, Func<T>? factory = null);
 
     /// <summary>
     /// 将一个对象转换为字节数组
@@ -64,15 +65,52 @@ public interface IConverter
     /// 从数据源中读取一个对象
     /// </summary>
     /// <param name="source">数据源</param>
+    /// <param name="declaredType"></param>
     /// <param name="factory">对象工厂</param>
     /// <typeparam name="T">对象的声明类型</typeparam>
     /// <returns></returns>
-    T Read<T>(DsonChunk source, Func<T>? factory = null);
+    T Read<T>(DsonChunk source, Type declaredType, Func<T>? factory = null);
 
     #region 快捷方法
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     byte[] Write<T>(in T value) {
-        return Write(in value, typeof(object)); // 默认写入对象类型，因此不是typeof(T)
+        return Write(in value, typeof(object)); // 默认写入对象类型，因此不是value.GetType
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    byte[] Write(object value, Type declaredType) {
+        return Write<object>(value, declaredType);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    T Read<T>(byte[] source, Func<T>? factory = null) {
+        return Read<T>(source, typeof(T), factory);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    object Read(byte[] source, Type declaredType, Func<object>? factory = null) {
+        return Read<object>(source, declaredType, factory);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void Write<T>(in T value, DsonChunk chunk) {
+        Write(in value, typeof(T), chunk);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void Write(object value, Type declaredType, DsonChunk chunk) {
+        Write<object>(value, declaredType, chunk);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    T Read<T>(DsonChunk source, Func<T>? factory = null) {
+        return Read<T>(source, typeof(T), factory);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    object Read(DsonChunk source, Type declaredType, Func<object>? factory = null) {
+        return Read<object>(source, declaredType, factory);
     }
 
     /// <summary>
@@ -83,32 +121,40 @@ public interface IConverter
     /// <param name="buffer">序列化输出buffer</param>
     /// <typeparam name="T">对象的声明类型</typeparam>
     /// <returns>写入的字节数</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     int Write<T>(in T value, Type declaredType, byte[] buffer) {
         DsonChunk chunk = new DsonChunk(buffer);
         Write(in value, declaredType, chunk);
         return chunk.Used;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    int Write(object value, Type declaredType, byte[] buffer) {
+        DsonChunk chunk = new DsonChunk(buffer);
+        Write<object>(value, declaredType, chunk);
+        return chunk.Used;
+    }
+
     /// <summary>
     /// 克隆一个实例
-    ///  
-    /// 注意：
+    /// </summary>
+    /// <param name="value">要克隆的对象</param>
+    /// <param name="factory">返回对象类型工厂</param>
+    /// <typeparam name="T">对象的声明类型</typeparam>
+    /// <returns></returns>
+    T CloneObject<T>(T? value, Func<T>? factory = null);
+
+    /// <summary>
+    /// 克隆一个实例
     /// 1. 返回值的类型不一定和原始对象相同，这通常发生在集合对象上 —— 也可能是投影。
     /// 2. 如果Codec存在lazyDecode，也会导致不同
     /// </summary>
     /// <param name="value">要克隆的对象</param>
+    /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="targetType">目标类型</param>
     /// <param name="factory">返回对象类型工厂</param>
-    /// <typeparam name="T">要克隆的对象类型</typeparam>
-    /// <typeparam name="U">返回对象的类型</typeparam>
     /// <returns></returns>
-    U CloneObject<T, U>(in T? value, Func<U>? factory = null) {
-        if (value == null) {
-            return default;
-        }
-        // 克隆属于立即使用数据，可以不写入顶层的类型信息
-        byte[] data = Write(in value, value.GetType());
-        return Read(data, factory);
-    }
+    object CloneObject(object? value, Type declaredType, Type targetType, Func<object>? factory = null);
 
     #endregion
 }

@@ -21,11 +21,11 @@
 using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree.Branch;
 using Wjybxx.Dson.Codec;
-using Wjybxx.BTree;
-using System.Collections.Generic;
 using System;
-using Wjybxx.Dson.Text;
+using Wjybxx.BTree;
 using Wjybxx.Dson;
+using Wjybxx.Dson.Text;
+using System.Collections.Generic;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
@@ -37,11 +37,10 @@ public sealed class SelectorN1Codec<T> : AbstractDsonCodec<SelectorN<T>> where T
     public const string names_children = "children";
     public const string names_required = "required";
     public const string names_failFast = "failFast";
-    public static readonly Func<List<Task<T>>> factories_children = () => new List<Task<T>>();
 
-    public override Type GetEncoderClass() => typeof(SelectorN<T>);
+    public override Type GetEncoderType() => typeof(SelectorN<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref SelectorN<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref SelectorN<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteObject(names_children, inst.Children, typeof(List<Task<T>>), null);
@@ -49,14 +48,14 @@ public sealed class SelectorN1Codec<T> : AbstractDsonCodec<SelectorN<T>> where T
         writer.WriteBool(names_failFast, inst.FailFast);
     }
 
-    protected override SelectorN<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override SelectorN<T> NewInstance(IDsonObjectReader reader) {
         return new SelectorN<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref SelectorN<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref SelectorN<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
-        inst.Children = reader.ReadObject<List<Task<T>>>(names_children, typeof(List<Task<T>>), factories_children);
+        inst.Children = reader.ReadObject<List<Task<T>>>(names_children, typeof(List<Task<T>>), null);
         inst.Required = reader.ReadInt(names_required);
         inst.FailFast = reader.ReadBool(names_failFast);
     }

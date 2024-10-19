@@ -34,9 +34,11 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class Int32Codec implements DsonCodec<Integer> {
+
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.BOXED_INT;
     }
 
     @Override
@@ -44,23 +46,17 @@ public class Int32Codec implements DsonCodec<Integer> {
         return false;
     }
 
-    @Nonnull
     @Override
-    public Class<Integer> getEncoderClass() {
-        return Integer.class;
-    }
-
-    @Override
-    public void writeObject(DsonObjectWriter writer, Integer instance, TypeInfo<?> typeInfo, ObjectStyle style) {
+    public void writeObject(DsonObjectWriter writer, Integer inst, TypeInfo declaredType, ObjectStyle style) {
         // 由字典或List调用时，declaredType可能是匹配的
-        NumberStyle numberStyle = (typeInfo.rawType == Integer.class || typeInfo.rawType == int.class) ?
+        NumberStyle numberStyle = (declaredType.rawType == Integer.class || declaredType.rawType == int.class) ?
                 NumberStyle.SIMPLE : NumberStyle.TYPED;
-        writer.writeInt(null, instance, WireType.VARINT, numberStyle);
+        writer.writeInt(null, inst, WireType.VARINT, numberStyle);
     }
 
     @Override
-    public Integer readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends Integer> factory) {
-        return reader.readInt(reader.getCurrentName());
+    public Integer readObject(DsonObjectReader reader, Supplier<? extends Integer> factory) {
+        return reader.readInt(null);
     }
 
 }

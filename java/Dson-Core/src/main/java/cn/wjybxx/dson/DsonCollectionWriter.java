@@ -2,7 +2,6 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.internal.DsonInternals;
-import cn.wjybxx.dson.io.DsonChunk;
 import cn.wjybxx.dson.text.INumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
@@ -92,13 +91,12 @@ public class DsonCollectionWriter extends AbstractDsonWriter {
 
     @Override
     protected void doWriteBinary(Binary binary) {
-        // Binary修改为默认不拷贝，由外部接口决定是否拷贝
-        getContext().add(new DsonBinary(binary));
+        getContext().add(new DsonBinary(binary)); // binary默认为可共享的
     }
 
     @Override
-    protected void doWriteBinary(DsonChunk chunk) {
-        getContext().add(new DsonBinary(chunk.toBinary()));
+    protected void doWriteBinary(byte[] bytes, int offset, int len) {
+        getContext().add(new DsonBinary(Binary.copyFrom(bytes, offset, len)));
     }
 
     @Override

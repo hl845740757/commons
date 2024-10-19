@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.dson.text.ObjectStyle;
 
 import javax.annotation.concurrent.Immutable;
@@ -38,21 +39,37 @@ import java.util.Objects;
 public final class TypeMeta {
 
     /** 关联的类型 */
-    public final TypeInfo<?> typeInfo;
+    public final TypeInfo typeInfo;
     /** 文本编码时的输出格式 */
     public final ObjectStyle style;
     /** 支持的类型名 */
     public final List<String> clsNames;
 
-    private TypeMeta(TypeInfo<?> typeInfo, ObjectStyle style, List<String> clsNames) {
+    private TypeMeta(TypeInfo typeInfo, ObjectStyle style, List<String> clsNames) {
         if (clsNames.isEmpty()) throw new IllegalArgumentException("clsNames is empty");
         this.typeInfo = Objects.requireNonNull(typeInfo);
         this.style = Objects.requireNonNull(style);
         this.clsNames = List.copyOf(clsNames);
     }
 
+    /** 类的主别名 */
     public String mainClsName() {
         return clsNames.get(0);
+    }
+
+    /** 替换Style */
+    public TypeMeta withStyle(ObjectStyle style) {
+        return new TypeMeta(typeInfo, style, clsNames);
+    }
+
+    // region factory
+
+    public static TypeMeta of(Class<?> clazz, String clsName) {
+        return new TypeMeta(TypeInfo.of(clazz), ObjectStyle.INDENT, List.of(clsName));
+    }
+
+    public static TypeMeta of(Class<?> clazz, String... clsNames) {
+        return new TypeMeta(TypeInfo.of(clazz), ObjectStyle.INDENT, List.of(clsNames));
     }
 
     public static TypeMeta of(Class<?> clazz, ObjectStyle style) {
@@ -71,18 +88,37 @@ public final class TypeMeta {
         return new TypeMeta(TypeInfo.of(clazz), style, List.copyOf(clsNames));
     }
 
-    //
-
-    public static TypeMeta of(TypeInfo<?> typeInfo, ObjectStyle style, String clsName) {
+    // 泛型类
+    public static TypeMeta of(TypeInfo typeInfo, ObjectStyle style, String clsName) {
         return new TypeMeta(typeInfo, style, List.of(clsName));
     }
 
-    public static TypeMeta of(TypeInfo<?> typeInfo, ObjectStyle style, String... clsNames) {
+    public static TypeMeta of(TypeInfo typeInfo, ObjectStyle style, String... clsNames) {
         return new TypeMeta(typeInfo, style, List.of(clsNames));
     }
 
-    public static TypeMeta of(TypeInfo<?> typeInfo, ObjectStyle style, List<String> clsNames) {
+    public static TypeMeta of(TypeInfo typeInfo, ObjectStyle style, List<String> clsNames) {
         return new TypeMeta(typeInfo, style, List.copyOf(clsNames));
+    }
+    // endregion
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        TypeMeta typeMeta = (TypeMeta) o;
+        return typeInfo.equals(typeMeta.typeInfo)
+                && style == typeMeta.style
+                && CollectionUtils.sequenceEqual(clsNames, typeMeta.clsNames);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = typeInfo.hashCode();
+        result = 31 * result + style.hashCode();
+        result = 31 * result + clsNames.hashCode();
+        return result;
     }
 
     @Override

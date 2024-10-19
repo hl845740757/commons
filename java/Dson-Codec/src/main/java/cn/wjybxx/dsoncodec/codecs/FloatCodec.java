@@ -33,9 +33,11 @@ import java.util.function.Supplier;
  */
 @DsonCodecScanIgnore
 public class FloatCodec implements DsonCodec<Float> {
+
+    @Nonnull
     @Override
-    public boolean isWriteAsArray() {
-        return false;
+    public TypeInfo getEncoderType() {
+        return TypeInfo.BOXED_FLOAT;
     }
 
     @Override
@@ -43,22 +45,16 @@ public class FloatCodec implements DsonCodec<Float> {
         return false;
     }
 
-    @Nonnull
     @Override
-    public Class<Float> getEncoderClass() {
-        return Float.class;
-    }
-
-    @Override
-    public void writeObject(DsonObjectWriter writer, Float instance, TypeInfo<?> typeInfo, ObjectStyle style) {
-        NumberStyle numberStyle = (typeInfo.rawType == Float.class || typeInfo.rawType == float.class) ?
+    public void writeObject(DsonObjectWriter writer, Float inst, TypeInfo declaredType, ObjectStyle style) {
+        NumberStyle numberStyle = (declaredType.rawType == Float.class || declaredType.rawType == float.class) ?
                 NumberStyle.SIMPLE : NumberStyle.TYPED;
-        writer.writeFloat(null, instance, numberStyle);
+        writer.writeFloat(null, inst, numberStyle);
     }
 
     @Override
-    public Float readObject(DsonObjectReader reader, TypeInfo<?> typeInfo, Supplier<? extends Float> factory) {
-        return reader.readFloat(reader.getCurrentName());
+    public Float readObject(DsonObjectReader reader, Supplier<? extends Float> factory) {
+        return reader.readFloat(null);
     }
 
 }

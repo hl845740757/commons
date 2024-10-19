@@ -22,9 +22,9 @@ using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree.FSM;
 using Wjybxx.Dson.Codec;
 using System;
-using Wjybxx.Dson.Text;
 using Wjybxx.BTree;
 using Wjybxx.Dson;
+using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
@@ -40,9 +40,9 @@ public sealed class StackStateMachineTask1Codec<T> : AbstractDsonCodec<StackStat
     public const string names_undoQueueCapacity = "undoQueueCapacity";
     public const string names_redoQueueCapacity = "redoQueueCapacity";
 
-    public override Type GetEncoderClass() => typeof(StackStateMachineTask<T>);
+    public override Type GetEncoderType() => typeof(StackStateMachineTask<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref StackStateMachineTask<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref StackStateMachineTask<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
@@ -53,11 +53,11 @@ public sealed class StackStateMachineTask1Codec<T> : AbstractDsonCodec<StackStat
         writer.WriteInt(names_redoQueueCapacity, inst.RedoQueueCapacity, WireType.VarInt, NumberStyles.Simple);
     }
 
-    protected override StackStateMachineTask<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override StackStateMachineTask<T> NewInstance(IDsonObjectReader reader) {
         return new StackStateMachineTask<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref StackStateMachineTask<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref StackStateMachineTask<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
         inst.Child = reader.ReadObject<Task<T>>(names_child, typeof(Task<T>), null);

@@ -665,7 +665,7 @@ public class Projection
     }
 
     /** object类型的投影模式 */
-    enum SelectMode
+    private enum SelectMode
     {
         /** 普通选择，选择给定的键 -- 投影信息为空 或 value包含至少一个1 */
         Normal,
@@ -674,7 +674,7 @@ public class Projection
     }
 
     /** 数组切片范围 */
-    readonly struct SliceSpec
+    private readonly struct SliceSpec
     {
         internal static readonly SliceSpec Empty = new SliceSpec(0, 0);
         internal static readonly SliceSpec First = new SliceSpec(0, 1);

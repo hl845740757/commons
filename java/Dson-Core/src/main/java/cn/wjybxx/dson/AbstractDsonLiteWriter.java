@@ -16,7 +16,7 @@
 
 package cn.wjybxx.dson;
 
-import cn.wjybxx.dson.io.DsonChunk;
+import cn.wjybxx.base.io.ByteBufferUtils;
 import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.types.*;
 
@@ -179,11 +179,10 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
     }
 
     @Override
-    public void writeBinary(int name, DsonChunk chunk) {
-        Objects.requireNonNull(chunk);
-        Dsons.checkBinaryLength(chunk.getLength());
+    public void writeBinary(int name, byte[] bytes, int offset, int len) {
+        ByteBufferUtils.checkBuffer(bytes, offset, len);
         advanceToValueState(name);
-        doWriteBinary(chunk);
+        doWriteBinary(bytes, offset, len);
         setNextState();
     }
 
@@ -235,7 +234,7 @@ public abstract class AbstractDsonLiteWriter implements DsonLiteWriter {
 
     protected abstract void doWriteBinary(Binary binary);
 
-    protected abstract void doWriteBinary(DsonChunk chunk);
+    protected abstract void doWriteBinary(byte[] bytes, int offset, int len);
 
     protected abstract void doWritePtr(ObjectPtr objectPtr);
 

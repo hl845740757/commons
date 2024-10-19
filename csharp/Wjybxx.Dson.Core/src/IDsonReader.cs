@@ -152,11 +152,17 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
 
     /// <summary>
     /// 回退到等待开始状态
-    /// 1.该方法只回退状态，不回退输入
+    /// 1.该方法只回退上下文(状态)，不回退输入
     /// 2.只有在等待读取下一个值的类型时才可以执行，即等待<see cref="ReadDsonType"/>时才可以执行
     /// 3.通常用于在读取header之后回退，然后让业务对象的codec去解码
     /// </summary>
     void BackToWaitStart();
+
+    /// <summary>
+    /// 是否有被回退的上下文 
+    /// </summary>
+    /// <returns></returns>
+    bool HasWaitingStartContext();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ReadStartArray(TName name) {

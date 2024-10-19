@@ -50,7 +50,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     private UnionValue _nextUnionValue;
 
     private bool _marking;
-    private readonly Stack<DsonToken> _pushedTokenQueue = new Stack<DsonToken>(6);
+    private readonly Stack<DsonToken> _pushedTokenQueue = new Stack<DsonToken>(6); // 缓存的Token
     private readonly List<DsonToken> _markedTokenQueue = new List<DsonToken>(6); // C#没有现成的Deque，我们拿List实现
 
     public DsonTextReader(DsonTextReaderSettings settings, string dsonString)
@@ -124,7 +124,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     /// </summary>
     private void ResetPushedQueue() {
         _pushedTokenQueue.Clear();
-        for (var i = _markedTokenQueue.Count - 1; i >= 0; i--) {
+        for (int i = _markedTokenQueue.Count - 1; i >= 0; i--) {
             _pushedTokenQueue.Push(_markedTokenQueue[i]);
         }
         _markedTokenQueue.Clear();
@@ -325,7 +325,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                     throw DsonIOException.InvalidTokenType(context.contextType, valueToken);
                 }
                 EnsureCountIsZero(context, valueToken);
-                // PushNextValue(valueToken);
                 return DsonType.Header;
             }
             case DsonTokenType.EndArray: {
@@ -551,7 +550,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             }
             default: {
                 PushToken(headerToken); // 非Object形式内置结构体
-                // PushNextValue(valueToken);
                 return DsonType.Object;
             }
         }
@@ -573,7 +571,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         }
         // 内置元组 -- 已尽皆删除
         PushToken(headerToken);
-        // PushNextValue(valueToken);
         return DsonType.Array;
     }
 

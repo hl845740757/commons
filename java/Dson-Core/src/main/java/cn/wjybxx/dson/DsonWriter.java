@@ -16,7 +16,6 @@
 
 package cn.wjybxx.dson;
 
-import cn.wjybxx.dson.io.DsonChunk;
 import cn.wjybxx.dson.text.*;
 import cn.wjybxx.dson.types.*;
 
@@ -74,7 +73,7 @@ public interface DsonWriter extends AutoCloseable {
 
     void writeBinary(String name, Binary binary);
 
-    void writeBinary(String name, DsonChunk chunk);
+    void writeBinary(String name, byte[] bytes, int offset, int len);
 
     void writePtr(String name, ObjectPtr objectPtr);
 
@@ -103,6 +102,10 @@ public interface DsonWriter extends AutoCloseable {
 
     default void writeString(String name, String value) {
         writeString(name, value, StringStyle.AUTO);
+    }
+
+    default void writeBinary(String name, byte[] bytes) {
+        writeBinary(name, bytes, 0, bytes.length);
     }
 
     // endregion

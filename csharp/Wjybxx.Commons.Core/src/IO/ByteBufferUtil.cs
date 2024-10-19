@@ -35,6 +35,7 @@ public static class ByteBufferUtil
     /// <param name="length">数据的长度</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void CheckBuffer(byte[] buffer, int offset, int length) {
+        if (buffer == null) throw new ArgumentNullException(nameof(buffer));
         CheckBuffer(buffer.Length, offset, length);
     }
 

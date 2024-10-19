@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using Wjybxx.Dson.Text;
+using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec.Codecs
 {
@@ -29,17 +30,28 @@ public static class MoreArrayCodecs
 {
     #region 特化数组
 
-    public class IntArrayCodec : ArrayCodec, IDsonCodec<int[]>
+    /** 字节数组需要转Binary */
+    public class ByteArrayCodec : IDsonCodec<byte[]>
+    {
+        public void WriteObject(IDsonObjectWriter writer, ref byte[] inst, Type declaredType, ObjectStyle style) {
+            writer.WriteBinary(null, Binary.CopyFrom(inst)); // 默认拷贝
+        }
+
+        public byte[] ReadObject(IDsonObjectReader reader, Func<byte[]>? factory = null) {
+            Binary binary = reader.ReadBinary(reader.CurrentName);
+            return binary.UnsafeBuffer;
+        }
+    }
+
+    public class IntArrayCodec : IDsonCodec<int[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref int[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteInt(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
-        public int[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<int[]>? factory = null) {
+        public int[] ReadObject(IDsonObjectReader reader, Func<int[]>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<int> result = new List<int>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -50,17 +62,15 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class LongArrayCodec : ArrayCodec, IDsonCodec<long[]>
+    public class LongArrayCodec : IDsonCodec<long[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref long[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteLong(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
-        public long[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<long[]>? factory = null) {
+        public long[] ReadObject(IDsonObjectReader reader, Func<long[]>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<long> result = new List<long>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -71,17 +81,15 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class FloatArrayCodec : ArrayCodec, IDsonCodec<float[]>
+    public class FloatArrayCodec : IDsonCodec<float[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref float[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteFloat(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
-        public float[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<float[]>? factory = null) {
+        public float[] ReadObject(IDsonObjectReader reader, Func<float[]>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<float> result = new List<float>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -92,17 +100,15 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class DoubleArrayCodec : ArrayCodec, IDsonCodec<double[]>
+    public class DoubleArrayCodec : IDsonCodec<double[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref double[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteDouble(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
-        public double[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<double[]>? factory = null) {
+        public double[] ReadObject(IDsonObjectReader reader, Func<double[]>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<double> result = new List<double>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -113,17 +119,15 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class BoolArrayCodec : ArrayCodec, IDsonCodec<bool[]>
+    public class BoolArrayCodec : IDsonCodec<bool[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref bool[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteBool(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
-        public bool[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<bool[]>? factory = null) {
+        public bool[] ReadObject(IDsonObjectReader reader, Func<bool[]>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<bool> result = new List<bool>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -134,17 +138,15 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class StringArrayCodec : ArrayCodec, IDsonCodec<string[]>
+    public class StringArrayCodec : IDsonCodec<string[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref string[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteString(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
-        public string[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<string[]>? factory = null) {
+        public string[] ReadObject(IDsonObjectReader reader, Func<string[]>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<string> result = new List<string>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -155,17 +157,15 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class UIntArrayCodec : ArrayCodec, IDsonCodec<uint[]>
+    public class UIntArrayCodec : IDsonCodec<uint[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref uint[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteUint(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
-        public uint[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<uint[]>? factory = null) {
+        public uint[] ReadObject(IDsonObjectReader reader, Func<uint[]>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<uint> result = new List<uint>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -176,44 +176,19 @@ public static class MoreArrayCodecs
         }
     }
 
-    public class ULongArrayCodec : ArrayCodec, IDsonCodec<ulong[]>
+    public class ULongArrayCodec : IDsonCodec<ulong[]>
     {
         public void WriteObject(IDsonObjectWriter writer, ref ulong[] inst, Type declaredType, ObjectStyle style) {
-            writer.WriteStartArray(inst, declaredType, style);
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteUlong(null, inst[i]);
             }
-            writer.WriteEndArray();
         }
 
-        public ulong[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<ulong[]>? factory = null) {
+        public ulong[] ReadObject(IDsonObjectReader reader, Func<ulong[]>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<ulong> result = new List<ulong>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 ulong value = reader.ReadUlong(null);
-                result.Add(value);
-            }
-            return result.ToArray();
-        }
-    }
-
-    public class ObjectArrayCodec : ArrayCodec, IDsonCodec<object[]>
-    {
-        public void WriteObject(IDsonObjectWriter writer, ref object[] inst, Type declaredType, ObjectStyle style) {
-            Type eleType = typeof(object);
-            writer.WriteStartArray(inst, declaredType, style);
-            for (int i = 0; i < inst.Length; i++) {
-                writer.WriteObject(null, inst[i], eleType);
-            }
-            writer.WriteEndArray();
-        }
-
-        public object[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object[]>? factory = null) {
-            Type eleType = typeof(object);
-            // 由于长度未知，只能先存储为List再转...
-            List<object> result = new List<object>();
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                object value = reader.ReadObject<object>(null, eleType);
                 result.Add(value);
             }
             return result.ToArray();

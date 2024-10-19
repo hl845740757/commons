@@ -22,8 +22,8 @@ using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree;
 using Wjybxx.Dson.Codec;
 using System;
-using Wjybxx.Dson.Text;
 using Wjybxx.Dson;
+using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
@@ -36,21 +36,21 @@ public sealed class TaskEntry1Codec<T> : AbstractDsonCodec<TaskEntry<T>> where T
     public const string names_rootTask = "rootTask";
     public const string names_type = "type";
 
-    public override Type GetEncoderClass() => typeof(TaskEntry<T>);
+    public override Type GetEncoderType() => typeof(TaskEntry<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref TaskEntry<T> inst, Type declaredType, ObjectStyle style) {
+    protected override void WriteFields(IDsonObjectWriter writer, ref TaskEntry<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
         writer.WriteString(names_name, inst.Name, StringStyle.Auto);
         writer.WriteObject(names_rootTask, inst.RootTask, typeof(Task<T>), null);
-        writer.WriteByte(names_type, inst.Type, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteByte(names_type, inst.Type, NumberStyles.Simple);
     }
 
-    protected override TaskEntry<T> NewInstance(IDsonObjectReader reader, Type declaredType) {
+    protected override TaskEntry<T> NewInstance(IDsonObjectReader reader) {
         return new TaskEntry<T>();
     }
 
-    protected override void ReadFields(IDsonObjectReader reader, ref TaskEntry<T> inst, Type declaredType) {
+    protected override void ReadFields(IDsonObjectReader reader, ref TaskEntry<T> inst) {
         inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
         inst.Flags = reader.ReadInt(names_flags);
         inst.Name = reader.ReadString(names_name);

@@ -139,11 +139,14 @@ public interface DsonReader extends AutoCloseable {
 
     /**
      * 回退到等待开始状态
-     * 1.该方法只回退状态，不回退输入
+     * 1.该方法只回退上下文，不回退输入
      * 2.只有在等待读取下一个值的类型时才可以执行，即等待{@link #readDsonType()}时才可以执行
      * 3.通常用于在读取header之后回退，然后让业务对象的codec去解码
      */
     void backToWaitStart();
+
+    /** 是否有被回退的上下文 */
+    boolean hasWaitingStartContext();
 
     default void readStartArray(String name) {
         readName(name);
@@ -176,14 +179,6 @@ public interface DsonReader extends AutoCloseable {
      * 也就是说，调用该方法后应立即调用 readEnd 相关方法
      */
     void skipToEndOfObject();
-
-    /**
-     * {@link DsonType#INT32}
-     * {@link DsonType#INT64}
-     * {@link DsonType#FLOAT}
-     * {@link DsonType#DOUBLE}
-     */
-    Number readNumber(String name);
 
     /**
      * 将value的值读取为字节数组
