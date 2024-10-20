@@ -385,6 +385,38 @@ public static partial class CollectionUtil
         return false;
     }
 
+    /// <summary>
+    /// 删除List的首个元素
+    /// </summary>
+    /// <exception cref="ArgumentNullException">如果List为null</exception>
+    public static bool TryRemoveFirst<T>(this IList<T> list, out T? value) {
+        if (list == null) throw new ArgumentNullException(nameof(list));
+        int count = list.Count;
+        if (count > 0) {
+            value = list[0];
+            list.RemoveAt(0);
+            return true;
+        }
+        value = default;
+        return false;
+    }
+
+    /// <summary>
+    /// 删除List的最后一个元素
+    /// </summary>
+    /// <exception cref="ArgumentNullException">如果List为null</exception>
+    public static bool TryRemoveLast<T>(this IList<T> list, out T? value) {
+        if (list == null) throw new ArgumentNullException(nameof(list));
+        int count = list.Count;
+        if (count > 0) {
+            value = list[count - 1];
+            list.RemoveAt(count - 1);
+            return true;
+        }
+        value = default;
+        return false;
+    }
+
     #endregion
 
     #region misc

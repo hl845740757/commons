@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Wjybxx.BTree.Branch;
@@ -158,7 +159,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     protected override void BeforeEnter() {
         // base.BeforeEnter();
         handler.BeforeEnter(this);
-        if (initState != null && initStateProps != null) {
+        if (initState != null) {
             initState.SharedProps = initStateProps;
         }
         if (tempNextState == null && initState != null) {

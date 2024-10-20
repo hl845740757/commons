@@ -161,7 +161,7 @@ public class StateMachineTask<T> extends Decorator<T> {
     protected void beforeEnter() {
 //        super.beforeEnter();
         handler.beforeEnter(this);
-        if (initState != null && initStateProps != null) {
+        if (initState != null) {
             initState.setSharedProps(initStateProps);
         }
         if (tempNextState == null && initState != null) {
