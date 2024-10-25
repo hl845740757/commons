@@ -168,7 +168,6 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         if (tempNextState != null && tempNextState.ControlData == null) {
             tempNextState.ControlData = ChangeStateArgs.PLAIN;
         }
-        // 不清理child是因为允许用户提前指定初始状态
     }
 
     protected override void Exit() {

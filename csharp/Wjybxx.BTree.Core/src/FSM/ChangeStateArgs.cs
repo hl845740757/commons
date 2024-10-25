@@ -39,26 +39,26 @@ public class ChangeStateArgs
     /// 1.其它延迟模式也会在当前状态完成时触发
     /// 2.通常用于状态主动退出时，可避免自身进入被取消状态 -- 先调用changeState，然后setSuccess
     /// </summary>
-    public const byte DELAY_CURRENT_COMPLETED = 1;
+    public const byte DELAY_WHEN_COMPLETED = 1;
 
     #region 共享原型
 
     public static readonly ChangeStateArgs PLAIN = new(0, 0, 0, null);
-    public static readonly ChangeStateArgs PLAIN_WHEN_COMPLETED = new(0, DELAY_CURRENT_COMPLETED, 0, null);
+    public static readonly ChangeStateArgs PLAIN_WHEN_COMPLETED = new(0, DELAY_WHEN_COMPLETED, 0, null);
 
     public static readonly ChangeStateArgs PLAIN_SUCCESS = new(0, 0, TaskStatus.SUCCESS, null);
     public static readonly ChangeStateArgs PLAIN_CANCELLED = new(0, 0, TaskStatus.CANCELLED, null);
     public static readonly ChangeStateArgs PLAIN_ERROR = new(0, 0, TaskStatus.ERROR, null);
 
     public static readonly ChangeStateArgs UNDO = new(CMD_UNDO, 0, 0, null);
-    public static readonly ChangeStateArgs UNDO_WHEN_COMPLETED = new(CMD_UNDO, DELAY_CURRENT_COMPLETED, 0, null);
+    public static readonly ChangeStateArgs UNDO_WHEN_COMPLETED = new(CMD_UNDO, DELAY_WHEN_COMPLETED, 0, null);
 
     public static readonly ChangeStateArgs REDO = new(CMD_REDO, 0, 0, null);
-    public static readonly ChangeStateArgs REDO_WHEN_COMPLETED = new(CMD_REDO, DELAY_CURRENT_COMPLETED, 0, null);
+    public static readonly ChangeStateArgs REDO_WHEN_COMPLETED = new(CMD_REDO, DELAY_WHEN_COMPLETED, 0, null);
 
     #endregion
 
-    /** 切换命名 */
+    /** 切换命令 */
     public readonly byte cmd;
     /** 延迟模式 -- 允许用户扩展 */
     public readonly byte delayMode;

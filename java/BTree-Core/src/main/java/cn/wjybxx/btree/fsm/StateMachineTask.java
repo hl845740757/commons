@@ -170,7 +170,6 @@ public class StateMachineTask<T> extends Decorator<T> {
         if (tempNextState != null && tempNextState.getControlData() == null) {
             tempNextState.setControlData(ChangeStateArgs.PLAIN);
         }
-        // 不清理child是因为允许用户提前指定初始状态
     }
 
     @Override

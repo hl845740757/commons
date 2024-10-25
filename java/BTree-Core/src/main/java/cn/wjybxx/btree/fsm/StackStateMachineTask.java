@@ -72,13 +72,11 @@ public class StackStateMachineTask<T> extends StateMachineTask<T> {
      * @return 是否添加成功
      */
     public final boolean addUndoState(Task<T> curState) {
-        if (undoQueueCapacity < 1) {
-            return false;
-        }
-        undoQueue.addLast(curState);
-        while (undoQueue.size() > undoQueueCapacity) {
+        if (undoQueueCapacity < 1) return false;
+        if (undoQueue.size() == undoQueueCapacity) {
             undoQueue.pollFirst();
         }
+        undoQueue.addLast(curState);
         return true;
     }
 
@@ -88,13 +86,11 @@ public class StackStateMachineTask<T> extends StateMachineTask<T> {
      * @return 是否添加成功
      */
     public final boolean addRedoState(Task<T> curState) {
-        if (redoQueueCapacity < 1) {
-            return false;
-        }
-        redoQueue.addFirst(curState);
-        while (redoQueue.size() > redoQueueCapacity) {
+        if (redoQueueCapacity < 1) return false;
+        if (redoQueue.size() == redoQueueCapacity) {
             redoQueue.pollLast();
         }
+        redoQueue.addFirst(curState);
         return true;
     }
 

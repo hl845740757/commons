@@ -31,10 +31,8 @@ public class StackStateMachineTask<T> : StateMachineTask<T> where T : class
     // 需要支持编辑器设置
     private int undoQueueCapacity = QUEUE_CAPACITY;
     private int redoQueueCapacity = QUEUE_CAPACITY;
-    [NonSerialized]
-    private readonly BoundedArrayDeque<Task<T>> undoQueue = new(0, DequeOverflowBehavior.DiscardHead);
-    [NonSerialized]
-    private readonly BoundedArrayDeque<Task<T>> redoQueue = new(0, DequeOverflowBehavior.DiscardTail);
+    [NonSerialized] private readonly ArrayDeque<Task<T>> undoQueue = new(QUEUE_CAPACITY);
+    [NonSerialized] private readonly ArrayDeque<Task<T>> redoQueue = new(QUEUE_CAPACITY);
 
     #region api
 
@@ -49,25 +47,29 @@ public class StackStateMachineTask<T> : StateMachineTask<T> where T : class
     }
 
     /// <summary>
-    /// 
+    /// 设置Undo队列的大小
     /// </summary>
     /// <param name="capacity">最大大小；0表示禁用；大于0启用</param>
     /// <returns>最新的queue</returns>
     public void SetUndoQueueCapacity(int capacity) {
         if (capacity < 0) throw new ArgumentException("capacity: " + capacity);
         this.undoQueueCapacity = capacity;
-        undoQueue.SetCapacity(capacity, DequeOverflowBehavior.DiscardHead);
+        while (undoQueue.Count > capacity) {
+            undoQueue.RemoveFirst();
+        }
     }
 
     /// <summary>
-    /// 
+    /// 设置Redo队列的大小
     /// </summary>
     /// <param name="capacity">最大大小；0表示禁用；大于0启用</param>
     /// <returns>最新的queue</returns>
     public void SetRedoQueueCapacity(int capacity) {
         if (capacity < 0) throw new ArgumentException("capacity: " + capacity);
         this.redoQueueCapacity = capacity;
-        redoQueue.SetCapacity(capacity, DequeOverflowBehavior.DiscardTail);
+        while (redoQueue.Count > capacity) {
+            redoQueue.RemoveLast();
+        }
     }
 
     /// <summary>
@@ -76,8 +78,9 @@ public class StackStateMachineTask<T> : StateMachineTask<T> where T : class
     /// <param name="curState"></param>
     /// <returns>是否添加成功</returns>
     public bool AddUndoState(Task<T> curState) {
-        if (undoQueueCapacity < 1) {
-            return false;
+        if (undoQueueCapacity < 1) return false;
+        if (undoQueue.Count == undoQueueCapacity) {
+            undoQueue.RemoveFirst();
         }
         undoQueue.AddLast(curState);
         return true;
@@ -89,8 +92,9 @@ public class StackStateMachineTask<T> : StateMachineTask<T> where T : class
     /// <param name="curState">是否添加成功</param>
     /// <returns></returns>
     public bool AddRedoState(Task<T> curState) {
-        if (redoQueueCapacity < 1) {
-            return false;
+        if (redoQueueCapacity < 1) return false;
+        if (redoQueue.Count == redoQueueCapacity) {
+            redoQueue.RemoveLast();
         }
         redoQueue.AddFirst(curState);
         return true;
@@ -103,7 +107,7 @@ public class StackStateMachineTask<T> : StateMachineTask<T> where T : class
     /// <returns>如果有前一个状态则返回true</returns>
     public override bool UndoChangeState(ChangeStateArgs changeStateArgs) {
         if (!changeStateArgs.IsUndo()) {
-            throw new ArgumentException();
+            throw new ArgumentException(nameof(changeStateArgs));
         }
         // 真正切换以后再删除
         if (!undoQueue.TryPeekLast(out Task<T> prevState)) {
@@ -120,7 +124,7 @@ public class StackStateMachineTask<T> : StateMachineTask<T> where T : class
     /// <returns>如果有下一个状态则返回true</returns>
     public override bool RedoChangeState(ChangeStateArgs changeStateArgs) {
         if (!changeStateArgs.IsRedo()) {
-            throw new ArgumentException();
+            throw new ArgumentException(nameof(changeStateArgs));
         }
         // 真正切换以后再删除
         if (!redoQueue.TryPeekFirst(out Task<T> nextState)) {

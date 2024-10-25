@@ -38,21 +38,21 @@ public final class ChangeStateArgs {
      * 1.其它延迟模式也会在当前状态完成时触发；
      * 2.通常用于状态主动退出时，可避免自身进入被取消状态 -- 先调用changeState，然后setSuccess;
      */
-    public static final byte DELAY_CURRENT_COMPLETED = 1;
+    public static final byte DELAY_WHEN_COMPLETED = 1;
 
     // region 共享原型
     public static final ChangeStateArgs PLAIN = new ChangeStateArgs((byte) 0, (byte) 0, 0, null);
-    public static final ChangeStateArgs PLAIN_WHEN_COMPLETED = new ChangeStateArgs((byte) 0, DELAY_CURRENT_COMPLETED, 0, null);
+    public static final ChangeStateArgs PLAIN_WHEN_COMPLETED = new ChangeStateArgs((byte) 0, DELAY_WHEN_COMPLETED, 0, null);
 
     public static final ChangeStateArgs PLAIN_SUCCESS = new ChangeStateArgs((byte) 0, (byte) 0, TaskStatus.SUCCESS, null);
     public static final ChangeStateArgs PLAIN_CANCELLED = new ChangeStateArgs((byte) 0, (byte) 0, TaskStatus.CANCELLED, null);
     public static final ChangeStateArgs PLAIN_ERROR = new ChangeStateArgs((byte) 0, (byte) 0, TaskStatus.ERROR, null);
 
     public static final ChangeStateArgs UNDO = new ChangeStateArgs(CMD_UNDO, (byte) 0, 0, null);
-    public static final ChangeStateArgs UNDO_WHEN_COMPLETED = new ChangeStateArgs(CMD_UNDO, DELAY_CURRENT_COMPLETED, 0, null);
+    public static final ChangeStateArgs UNDO_WHEN_COMPLETED = new ChangeStateArgs(CMD_UNDO, DELAY_WHEN_COMPLETED, 0, null);
 
     public static final ChangeStateArgs REDO = new ChangeStateArgs(CMD_REDO, (byte) 0, 0, null);
-    public static final ChangeStateArgs REDO_WHEN_COMPLETED = new ChangeStateArgs(CMD_REDO, DELAY_CURRENT_COMPLETED, 0, null);
+    public static final ChangeStateArgs REDO_WHEN_COMPLETED = new ChangeStateArgs(CMD_REDO, DELAY_WHEN_COMPLETED, 0, null);
     // endregion
 
     /** 切换命令 */

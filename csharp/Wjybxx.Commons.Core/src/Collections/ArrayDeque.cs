@@ -84,7 +84,7 @@ public class ArrayDeque<T> : IDeque<T>
         }
     }
 
-    private void Grow(int needed) {
+    private T[] Grow(int needed) {
         // Double capacity if small; else grow by 50%
         int oldCapacity = _elements.Length;
         int growUp = oldCapacity < 64 ? oldCapacity : oldCapacity >> 1;
@@ -106,6 +106,7 @@ public class ArrayDeque<T> : IDeque<T>
             _tail = count - 1;
         }
         _version++;
+        return elements;
     }
 
     private static int Length(int tail, int head, int modulus) {
@@ -191,9 +192,8 @@ public class ArrayDeque<T> : IDeque<T>
         if (head >= 0) {
             head = Dec(head, elements.Length);
             if (head == _tail) {
-                Grow(1); // 扩展容量，tail和head会变更，要读取最新数据
+                elements = Grow(1); // 扩展容量，tail和head会变更，要读取最新数据
                 head = Dec(_head, elements.Length);
-                _tail = Dec(_tail, elements.Length);
             }
             elements[head] = item;
             _head = head;
@@ -214,9 +214,8 @@ public class ArrayDeque<T> : IDeque<T>
         if (tail >= 0) {
             tail = Inc(tail, elements.Length);
             if (tail == _head) {
-                Grow(1); // 扩展容量，tail和head会变更，要读取最新数据
+                elements = Grow(1); // 扩展容量，tail和head会变更，要读取最新数据
                 tail = Inc(_tail, elements.Length);
-                _head = Inc(_head, elements.Length);
             }
             elements[tail] = item;
             _tail = tail;
