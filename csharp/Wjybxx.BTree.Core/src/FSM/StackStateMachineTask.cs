@@ -153,6 +153,8 @@ public class StackStateMachineTask<T> : StateMachineTask<T> where T : class
 
     protected override void BeforeChangeState(Task<T>? curState, Task<T>? nextState) {
         if (nextState == null) {
+            // 进入Null状态，Redo也需要清理
+            redoQueue.Clear();
             AddUndoState(curState!);
             return;
         }

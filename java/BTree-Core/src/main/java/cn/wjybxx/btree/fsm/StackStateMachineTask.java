@@ -148,6 +148,8 @@ public class StackStateMachineTask<T> extends StateMachineTask<T> {
     @Override
     protected void beforeChangeState(Task<T> curState, Task<T> nextState) {
         if (nextState == null) {
+            // 进入null状态，需要清理redo队列
+            redoQueue.clear();
             addUndoState(curState);
             return;
         }

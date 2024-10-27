@@ -28,7 +28,7 @@ namespace Wjybxx.Commons.Collections
 /// <typeparam name="T"></typeparam>
 public interface IDeque<T> : IQueue<T>, IStack<T>, ISequencedCollection<T>
 {
-    public static IDeque<T> Empty => EmptyDequeue<T>.Instance;
+    public static IDeque<T> Empty => EmptyDeque<T>.Instance;
 
     /// <summary>
     /// 注意：Queue和栈的操作都是隐含方向的，因此相关操作会被反转。

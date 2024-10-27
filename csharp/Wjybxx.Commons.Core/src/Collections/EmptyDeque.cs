@@ -26,11 +26,11 @@ namespace Wjybxx.Commons.Collections
 /// 空的双端队列
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class EmptyDequeue<T> : IDeque<T>
+public class EmptyDeque<T> : IDeque<T>
 {
-    public static EmptyDequeue<T> Instance { get; } = new EmptyDequeue<T>();
+    public static EmptyDeque<T> Instance { get; } = new EmptyDeque<T>();
 
-    private EmptyDequeue() {
+    private EmptyDeque() {
     }
 
     public bool IsReadOnly => true;
