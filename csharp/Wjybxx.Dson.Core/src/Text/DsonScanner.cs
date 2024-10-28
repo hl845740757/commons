@@ -184,7 +184,7 @@ public sealed class DsonScanner : IDisposable
             className = ScanString(false)!;
         } else {
             // 非双引号模式下，只能由安全字符构成
-            if (DsonTexts.IsUnsafeStringChar(firstChar)) {
+            if (DsonTexts.IsUnsafeChar(firstChar)) {
                 throw InvalidClassName(char.ToString((char)firstChar), Position);
             }
             StringBuilder sb = GetCachedStringBuilder();
@@ -192,12 +192,12 @@ public sealed class DsonScanner : IDisposable
             if (!IsClsNameHeader(buffer, sb, beginPos)) {
                 int c;
                 while ((c = buffer.Read()) >= 0) {
-                    if (DsonTexts.IsUnsafeStringChar(c)) {
+                    if (DsonTexts.IsUnsafeChar(c)) {
                         break;
                     }
                     sb.Append((char)c);
                 }
-                if (c < 0 || DsonTexts.IsUnsafeStringChar(c)) {
+                if (c < 0 || DsonTexts.IsUnsafeChar(c)) {
                     buffer.Unread();
                 }
             }
@@ -247,7 +247,7 @@ public sealed class DsonScanner : IDisposable
     private DsonToken ScanBuiltinValue(int firstChar, bool skipValue) {
         Debug.Assert(firstChar != '"');
         // 非双引号模式下，只能由安全字符构成
-        if (DsonTexts.IsUnsafeStringChar(firstChar)) {
+        if (DsonTexts.IsUnsafeChar(firstChar)) {
             throw InvalidClassName(char.ToString((char)firstChar), Position);
         }
         IDsonCharStream buffer = this._charStream;
@@ -255,7 +255,7 @@ public sealed class DsonScanner : IDisposable
         sb.Append((char)firstChar);
         int c;
         while ((c = buffer.Read()) >= 0) {
-            if (DsonTexts.IsUnsafeStringChar(c)) {
+            if (DsonTexts.IsUnsafeChar(c)) {
                 break;
             }
             sb.Append((char)c);
@@ -429,7 +429,7 @@ public sealed class DsonScanner : IDisposable
         IDsonCharStream buffer = this._charStream;
         int c;
         while ((c = buffer.Read()) >= 0) {
-            if (DsonTexts.IsUnsafeStringChar(c)) {
+            if (DsonTexts.IsUnsafeChar(c)) {
                 break;
             }
         }
@@ -441,7 +441,7 @@ public sealed class DsonScanner : IDisposable
         sb.Append(firstChar);
         int c;
         while ((c = buffer.Read()) >= 0) {
-            if (DsonTexts.IsUnsafeStringChar(c)) {
+            if (DsonTexts.IsUnsafeChar(c)) {
                 break;
             }
             sb.Append((char)c);

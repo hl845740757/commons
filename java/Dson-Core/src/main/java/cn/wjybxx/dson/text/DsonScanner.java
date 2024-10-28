@@ -192,7 +192,7 @@ public final class DsonScanner implements AutoCloseable {
             className = scanString(false);
         } else {
             // 非双引号模式下，只能由安全字符构成
-            if (DsonTexts.isUnsafeStringChar(firstChar)) {
+            if (DsonTexts.isUnsafeChar(firstChar)) {
                 throw invalidClassName(Character.toString((char) firstChar), getPosition());
             }
             StringBuilder sb = getCachedStringBuilder();
@@ -200,12 +200,12 @@ public final class DsonScanner implements AutoCloseable {
             if (!isClsNameHeader(buffer, sb, beginPos)) {
                 int c;
                 while ((c = buffer.read()) >= 0) {
-                    if (DsonTexts.isUnsafeStringChar(c)) {
+                    if (DsonTexts.isUnsafeChar(c)) {
                         break;
                     }
                     sb.append((char) c);
                 }
-                if (c < 0 || DsonTexts.isUnsafeStringChar(c)) {
+                if (c < 0 || DsonTexts.isUnsafeChar(c)) {
                     buffer.unread();
                 }
             }
@@ -255,7 +255,7 @@ public final class DsonScanner implements AutoCloseable {
     private DsonToken scanBuiltinValue(int firstChar, boolean skipValue) {
         assert firstChar != '"';
         // 非双引号模式下，只能由安全字符构成
-        if (DsonTexts.isUnsafeStringChar(firstChar)) {
+        if (DsonTexts.isUnsafeChar(firstChar)) {
             throw invalidClassName(Character.toString((char) firstChar), getPosition());
         }
         DsonCharStream buffer = this.charStream;
@@ -263,7 +263,7 @@ public final class DsonScanner implements AutoCloseable {
         sb.append((char) firstChar);
         int c;
         while ((c = buffer.read()) >= 0) {
-            if (DsonTexts.isUnsafeStringChar(c)) {
+            if (DsonTexts.isUnsafeChar(c)) {
                 break;
             }
             sb.append((char) c);
@@ -414,7 +414,7 @@ public final class DsonScanner implements AutoCloseable {
         DsonCharStream buffer = this.charStream;
         int c;
         while ((c = buffer.read()) >= 0) {
-            if (DsonTexts.isUnsafeStringChar(c)) {
+            if (DsonTexts.isUnsafeChar(c)) {
                 break;
             }
         }
@@ -426,7 +426,7 @@ public final class DsonScanner implements AutoCloseable {
         sb.append(firstChar);
         int c;
         while ((c = buffer.read()) >= 0) {
-            if (DsonTexts.isUnsafeStringChar(c)) {
+            if (DsonTexts.isUnsafeChar(c)) {
                 break;
             }
             sb.append((char) c);

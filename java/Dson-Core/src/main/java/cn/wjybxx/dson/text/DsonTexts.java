@@ -80,11 +80,19 @@ public class DsonTexts {
      * 这些字符都是128内，使用bitset很快，还可以避免第三方依赖
      */
     private static final BitSet unsafeCharSet = new BitSet(128);
+    /** print时的不安全字符 */
+    private static final BitSet unsafePrintCharSet = new BitSet(128);
 
     static {
         char[] tokenCharArray = "{}[],:/@\"\\".toCharArray();
         for (char c : tokenCharArray) {
             unsafeCharSet.set(c);
+        }
+        // 保留token字符集
+        char[] reservedTokenCharArray = "()$.".toCharArray();
+        unsafePrintCharSet.or(unsafeCharSet);
+        for (char c : reservedTokenCharArray) {
+            unsafePrintCharSet.set(c, true);
         }
     }
 
@@ -92,6 +100,7 @@ public class DsonTexts {
     public static void addUnsafeChars(char[] unsafeChars) {
         for (char c : unsafeChars) {
             unsafeCharSet.set(c);
+            unsafePrintCharSet.set(c);
         }
     }
 
@@ -104,8 +113,12 @@ public class DsonTexts {
      * 是否是不安全的字符，不能省略引号的字符
      * 注意：safeChar也可能组合出不安全的无引号字符串，比如：123, 0.5, null,true,false，因此不能因为每个字符安全，就认为整个字符串安全
      */
-    public static boolean isUnsafeStringChar(int c) {
+    public static boolean isUnsafeChar(int c) {
         return unsafeCharSet.get(c) || Character.isWhitespace(c);
+    }
+
+    private static boolean isUnsafePrintChar(int c) {
+        return unsafePrintCharSet.get(c) || Character.isWhitespace(c);
     }
 
     /**
@@ -122,7 +135,7 @@ public class DsonTexts {
         }
         for (int i = 0; i < value.length(); i++) { // 这遍历的不是unicode码点，但不影响
             char c = value.charAt(i);
-            if (isUnsafeStringChar(c)) {
+            if (isUnsafePrintChar(c)) {
                 return false;
             }
         }
