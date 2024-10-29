@@ -32,7 +32,7 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
 
     /** 引用对象的本地id - 如果目标对象是容器中的一员，该值是其容器内编号 */
     public string LocalId { get; }
-    /** 引用对象所属的命名空间 -- namespace是关键字，这里缩写 */
+    /** 引用对象所属的命名空间 */
     public string Namespace { get; }
     /** 引用的对象的大类型 -- 给业务使用的，用于快速引用分析 */
     public byte Type { get; }

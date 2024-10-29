@@ -13,7 +13,7 @@ public class DsonTextReaderTest2 {
 
     static final String dsonString = """
             // 以下是一个简单的DsonObject示例
-            {@{clsName:MyClassInfo, guid :10001, flags: 0}
+            {@{clsName:MyClass, guid :10001, flags: 0}
               name : wjybxx,
               age: 28,
               pos :{@{Vector3} x: 0, y: 0, z: 0},

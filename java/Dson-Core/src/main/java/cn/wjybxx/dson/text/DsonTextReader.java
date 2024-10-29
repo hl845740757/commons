@@ -237,12 +237,12 @@ public final class DsonTextReader extends AbstractDsonReader {
                 verifyTokenType(context, nextToken, VALUE_SEPARATOR_TOKENS);
             }
             if (nextToken.type == DsonTokenType.COMMA) {
-                // 禁止末尾逗号
-                DsonToken nnToken = popToken();
-                pushToken(nnToken);
-                if (nnToken.type == DsonTokenType.END_OBJECT || nnToken.type == DsonTokenType.END_ARRAY) {
-                    throw DsonIOException.invalidTokenType(context.contextType, nextToken);
-                }
+                // 禁止末尾逗号 -- 会导致手写体验变差
+//                DsonToken nnToken = popToken();
+//                pushToken(nnToken);
+//                if (nnToken.type == DsonTokenType.END_OBJECT || nnToken.type == DsonTokenType.END_ARRAY) {
+//                    throw DsonIOException.invalidTokenType(context.contextType, nextToken);
+//                }
             } else {
                 pushToken(nextToken);
             }

@@ -21,7 +21,6 @@ using System.Diagnostics;
 using System.IO;
 using Wjybxx.Commons.Pool;
 using Wjybxx.Dson.Internal;
-using Wjybxx.Dson.IO;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Text
@@ -566,15 +565,9 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
             printer.FastPrint(", ");
 
             CheckLineLength(printer, softLineLength);
-            if (timestamp.CanConvertNanosToMillis()) {
-                printer.FastPrint(Timestamp.NamesMillis);
-                printer.FastPrint(": ");
-                printer.FastPrint(timestamp.ConvertNanosToMillis().ToString());
-            } else {
-                printer.FastPrint(Timestamp.NamesNanos);
-                printer.FastPrint(": ");
-                printer.FastPrint(timestamp.Nanos.ToString());
-            }
+            printer.FastPrint(Timestamp.NamesNanos);
+            printer.FastPrint(": ");
+            printer.FastPrint(timestamp.Nanos.ToString());
             printer.Print('}');
         }
     }

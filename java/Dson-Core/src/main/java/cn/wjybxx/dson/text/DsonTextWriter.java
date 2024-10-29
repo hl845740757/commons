@@ -591,15 +591,9 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             printer.fastPrint(", ");
 
             checkLineLength(printer, softLineLength);
-            if (timestamp.canConvertNanosToMillis()) {
-                printer.fastPrint(Timestamp.NAMES_MILLIS);
-                printer.fastPrint(": ");
-                printer.fastPrint(Integer.toString(timestamp.convertNanosToMillis()));
-            } else {
-                printer.fastPrint(Timestamp.NAMES_NANOS);
-                printer.fastPrint(": ");
-                printer.fastPrint(Integer.toString(timestamp.getNanos()));
-            }
+            printer.fastPrint(Timestamp.NAMES_NANOS);
+            printer.fastPrint(": ");
+            printer.fastPrint(Integer.toString(timestamp.getNanos()));
             printer.print('}');
         }
     }

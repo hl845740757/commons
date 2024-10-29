@@ -514,6 +514,9 @@ public final class DsonScanner implements AutoCloseable {
             } while ((c = buffer.read()) >= 0);
             // 空行
             if (c < 0) {
+                if (c == -1) {
+                    break;
+                }
                 continue;
             }
             // 处理结束符
@@ -556,7 +559,7 @@ public final class DsonScanner implements AutoCloseable {
             // 空行
             if (c < 0) {
                 if (c == -1) {
-                    break; // eof
+                    break; // eof -- 文本正确的情况下不会出现
                 }
                 sb.append('\n');
                 continue;

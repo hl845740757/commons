@@ -239,12 +239,12 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 VerifyTokenType(context, nextToken, VALUE_SEPARATOR_TOKENS);
             }
             if (nextToken.type == DsonTokenType.Comma) {
-                // 禁止末尾逗号
-                DsonToken nnToken = PopToken();
-                PushToken(nnToken);
-                if (nnToken.type == DsonTokenType.EndObject || nnToken.type == DsonTokenType.EndArray) {
-                    throw DsonIOException.InvalidTokenType(context.contextType, nextToken);
-                }
+                // 禁止末尾逗号 -- 会导致手写体验变差
+                // DsonToken nnToken = PopToken();
+                // PushToken(nnToken);
+                // if (nnToken.type == DsonTokenType.EndObject || nnToken.type == DsonTokenType.EndArray) {
+                //     throw DsonIOException.InvalidTokenType(context.contextType, nextToken);
+                // }
             } else {
                 PushToken(nextToken);
             }

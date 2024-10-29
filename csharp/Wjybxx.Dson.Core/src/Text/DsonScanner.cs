@@ -529,6 +529,9 @@ public sealed class DsonScanner : IDisposable
             } while ((c = buffer.Read()) >= 0);
             // 空行
             if (c < 0) {
+                if (c == -1) {
+                    break;
+                }
                 continue;
             }
             // 处理结束符
@@ -573,7 +576,7 @@ public sealed class DsonScanner : IDisposable
             // 空行
             if (c < 0) {
                 if (c == -1) {
-                    break; // eof
+                    break; // eof -- 文本正确的情况下不会出现
                 }
                 sb.Append('\n');
                 continue;

@@ -42,7 +42,7 @@ public class DsonTextReaderTest {
               介绍: "这是一段中文而且非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常非常长",
               intro: "hello world",
               ptr1: @ptr 17630eb4f916148b,
-              ptr2: {@ptr ns: 16148b3b4e7b8923d398, localId: "10001"},
+              ptr2: {@ptr ns: 16148b3b4e7b8923d398, localId: 10001},
               bin: @bin "35DF2E75E6A4BE9E6F4571C64CB6D08B0D6BC46C1754F6E9EB4A6E57E2FD53",
               bin2: @bin ""
             },
@@ -50,7 +50,7 @@ public class DsonTextReaderTest {
               name: wjybxx,
               intro: "hello world",
               ptr1: @ptr 17630eb4f916148b,
-              ptr2: {@ptr ns: 16148b3b4e7b8923d398, localId: "10001"},
+              ptr2: {@ptr ns: 16148b3b4e7b8923d398, localId: 10001},
               lptr1: @lptr 10001,
               lptr2: {@lptr ns: global, localId: 10001}
             },
@@ -70,7 +70,7 @@ public class DsonTextReaderTest {
         DsonArray<String> collection1 = Dsons.fromCollectionDson(dsonString);
         String dsonString1 = Dsons.toCollectionDson(collection1);
 //        System.out.println(dsonString1);
-//        Assertions.assertEquals(dsonString, dsonString1.replace("\r\n", "\n")); // 统一换行符为\n
+//        Assertions.assertEquals(dsonString, dsonString1); // 注意：可能受到平台换行符的影响
 
         // Binary
         {
