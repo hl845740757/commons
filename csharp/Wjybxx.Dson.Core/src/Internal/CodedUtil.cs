@@ -77,22 +77,22 @@ internal static class CodedUtil
 
     /** https://protobuf.dev/programming-guides/encoding  */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint EncodeZigZag32(int n) => (uint)(n << 1 ^ n >> 31);
+    public static int EncodeZigZag32(int n) => (n << 1 ^ n >> 31);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int DecodeZigZag32(uint n) => (int)(n >> 1) ^ -((int)n & 1);
+    public static int DecodeZigZag32(int n) => n >> 1 ^ -(n & 1);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong EncodeZigZag64(long n) => (ulong)(n << 1 ^ n >> 63);
+    public static long EncodeZigZag64(long n) => (n << 1 ^ n >> 63);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long DecodeZigZag64(ulong n) => (long)(n >> 1) ^ -((long)n & 1L);
+    public static long DecodeZigZag64(long n) => n >> 1 ^ -(n & 1L);
 
     #region protobuf decode
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int ReadInt32(byte[] buffer, int pos, out int newPos) {
-        ulong rawBits = ReadRawVarint64(buffer, pos, out newPos);
+        uint rawBits = ReadRawVarint32(buffer, pos, out newPos);
         return (int)rawBits;
     }
 
@@ -104,7 +104,7 @@ internal static class CodedUtil
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int ReadUint32(byte[] buffer, int pos, out int newPos) {
-        return (int)ReadRawVarint64(buffer, pos, out newPos);
+        return (int)ReadRawVarint32(buffer, pos, out newPos);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -114,14 +114,14 @@ internal static class CodedUtil
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int ReadSint32(byte[] buffer, int pos, out int newPos) {
-        ulong rawBits = ReadRawVarint64(buffer, pos, out newPos);
-        return DecodeZigZag32((uint)rawBits);
+        uint rawBits = ReadRawVarint32(buffer, pos, out newPos);
+        return DecodeZigZag32((int)rawBits);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static long ReadSint64(byte[] buffer, int pos, out int newPos) {
         ulong rawBits = ReadRawVarint64(buffer, pos, out newPos);
-        return DecodeZigZag64(rawBits);
+        return DecodeZigZag64((long)rawBits);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -154,7 +154,27 @@ internal static class CodedUtil
         return BitConverter.Int64BitsToDouble((long)rawBits);
     }
 
-    /** varint编码不区分int和long，而是固定读取到高位字节为0，因此无需两个方法 */
+    private static uint ReadRawVarint32(byte[] buffer, int pos, out int newPos) {
+        // 单字节优化
+        byte b = buffer[pos++];
+        uint r = b & 127U;
+        if (b < 128U) {
+            newPos = pos;
+            return r;
+        }
+        int shift = 7;
+        do {
+            b = buffer[pos++];
+            r |= (b & 127U) << shift; // 取后7位左移
+            if (b < 128U) { // 高位0
+                newPos = pos;
+                return r;
+            }
+            shift += 7;
+        } while (shift < 32);
+        throw new DsonIOException("DsonInput encountered a malformed varint32.");
+    }
+
     private static ulong ReadRawVarint64(byte[] buffer, int pos, out int newPos) {
         // 单字节优化
         byte b = buffer[pos++];
@@ -174,7 +194,7 @@ internal static class CodedUtil
             shift += 7;
         } while (shift < 64);
         // 读取超过10个字节
-        throw new DsonIOException("DsonInput encountered a malformed varint.");
+        throw new DsonIOException("DsonInput encountered a malformed varint64.");
     }
 
     private static uint ReadRawFixed16(byte[] buffer, int pos, out int newPos) {
@@ -212,11 +232,7 @@ internal static class CodedUtil
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteInt32(byte[] buffer, int pos, int value) {
-        if (value >= 0) {
-            return WriteRawVarint32(buffer, pos, (uint)value);
-        } else {
-            return WriteRawVarint64(buffer, pos, (ulong)value);
-        }
+        return WriteRawVarint32(buffer, pos, (uint)value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -236,12 +252,12 @@ internal static class CodedUtil
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteSint32(byte[] buffer, int pos, int value) {
-        return WriteRawVarint32(buffer, pos, EncodeZigZag32(value));
+        return WriteRawVarint32(buffer, pos, (uint)EncodeZigZag32(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteSint64(byte[] buffer, int pos, long value) {
-        return WriteRawVarint64(buffer, pos, EncodeZigZag64(value));
+        return WriteRawVarint64(buffer, pos, (ulong)EncodeZigZag64(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

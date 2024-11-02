@@ -88,8 +88,7 @@ public final class CodedUtils {
     //region protobuf decode
 
     public static int readInt32(byte[] buffer, int pos, MutableInt newPos) {
-        long rawBits = readRawVarint64(buffer, pos, newPos);
-        return (int) rawBits;
+        return readRawVarint32(buffer, pos, newPos);
     }
 
     public static long readInt64(byte[] buffer, int pos, MutableInt newPos) {
@@ -97,7 +96,7 @@ public final class CodedUtils {
     }
 
     public static int readUint32(byte[] buffer, int pos, MutableInt newPos) {
-        return (int) readRawVarint64(buffer, pos, newPos);
+        return readRawVarint32(buffer, pos, newPos);
     }
 
     public static long readUint64(byte[] buffer, int pos, MutableInt newPos) {
@@ -105,8 +104,8 @@ public final class CodedUtils {
     }
 
     public static int readSint32(byte[] buffer, int pos, MutableInt newPos) {
-        long rawBits = readRawVarint64(buffer, pos, newPos);
-        return decodeZigZag32((int) rawBits);
+        int rawBits = readRawVarint32(buffer, pos, newPos);
+        return decodeZigZag32(rawBits);
     }
 
     public static long readSint64(byte[] buffer, int pos, MutableInt newPos) {
@@ -136,7 +135,28 @@ public final class CodedUtils {
         return Double.longBitsToDouble(rawBits);
     }
 
-    /** varint编码不区分int和long，而是固定读取到高位字节为0，因此无需两个方法 */
+    private static int readRawVarint32(byte[] buffer, int pos, MutableInt newPos) {
+        // 单字节优化
+        byte b = buffer[pos++];
+        int r = (b & 127);
+        if ((b & 128) == 0) {
+            newPos.setValue(pos);
+            return r;
+        }
+        int shift = 7;
+        do {
+            b = buffer[pos++];
+            r |= (b & 127) << shift; // 取后7位左移
+            if ((b & 128) == 0) { // 高位0
+                newPos.setValue(pos);
+                return r;
+            }
+            shift += 7;
+        } while (shift < 32);
+        // 读取超过5个字节
+        throw new DsonIOException("DsonInput encountered a malformed varint32.");
+    }
+
     private static long readRawVarint64(byte[] buffer, int pos, MutableInt newPos) {
         // 单字节优化
         byte b = buffer[pos++];
@@ -156,7 +176,7 @@ public final class CodedUtils {
             shift += 7;
         } while (shift < 64);
         // 读取超过10个字节
-        throw new DsonIOException("DsonInput encountered a malformed varint.");
+        throw new DsonIOException("DsonInput encountered a malformed varint64.");
     }
 
     private static int readRawFixed16(byte[] buffer, int pos, MutableInt newPos) {
@@ -194,11 +214,7 @@ public final class CodedUtils {
 
     /** @return newPos */
     public static int writeInt32(byte[] buffer, int pos, int value) {
-        if (value >= 0) {
-            return writeRawVarint32(buffer, pos, value);
-        } else {
-            return writeRawVarint64(buffer, pos, value);
-        }
+        return writeRawVarint32(buffer, pos, value);
     }
 
     public static int writeInt64(byte[] buffer, int pos, long value) {
