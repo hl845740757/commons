@@ -30,20 +30,16 @@ public interface DsonInput extends AutoCloseable {
     int readFixed16();
 
     //
-    int readInt32();
+    int readUInt32();
 
-    int readUint32();
-
-    int readSint32();
+    int readSInt32();
 
     int readFixed32();
 
     //
-    long readInt64();
+    long readUInt64();
 
-    long readUint64();
-
-    long readSint64();
+    long readSInt64();
 
     long readFixed64();
 
@@ -52,8 +48,14 @@ public interface DsonInput extends AutoCloseable {
     /** 该接口固定读取4字节 */
     float readFloat();
 
+    /** 读取变长编码的float */
+    float readVarFloat();
+
     /** 该接口固定读取8字节 */
     double readDouble();
+
+    /** 读取变长编码的double */
+    double readVarDouble();
 
     /** 该接口固定只读取一个字节；字节对应值不为0则表示true */
     boolean readBool();

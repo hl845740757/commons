@@ -36,6 +36,11 @@ public final class CodedUtils {
     private static final int INT_CODED_MASK3 = (-1) << 21;
     private static final int INT_CODED_MASK4 = (-1) << 28;
 
+    private static final int INT_BIG_ENDIAN_MASK1 = (-1) >>> 7; // 高7位0
+    private static final int INT_BIG_ENDIAN_MASK2 = (-1) >>> 14; // 高14位0
+    private static final int INT_BIG_ENDIAN_MASK3 = (-1) >>> 21;
+    private static final int INT_BIG_ENDIAN_MASK4 = (-1) >>> 28;
+
     private static final long LONG_CODED_MASK1 = (-1L) << 7;
     private static final long LONG_CODED_MASK2 = (-1L) << 14;
     private static final long LONG_CODED_MASK3 = (-1L) << 21;
@@ -46,7 +51,17 @@ public final class CodedUtils {
     private static final long LONG_CODED_MASK8 = (-1L) << 56;
     private static final long LONG_CODED_MASK9 = (-1L) << 63;
 
-    /** 计算原始的32位变长整形的编码长度 */
+    private static final long LONG_BIG_ENDIAN_MASK1 = (-1L) >>> 7;
+    private static final long LONG_BIG_ENDIAN_MASK2 = (-1L) >>> 14;
+    private static final long LONG_BIG_ENDIAN_MASK3 = (-1L) >>> 21;
+    private static final long LONG_BIG_ENDIAN_MASK4 = (-1L) >>> 28;
+    private static final long LONG_BIG_ENDIAN_MASK5 = (-1L) >>> 35;
+    private static final long LONG_BIG_ENDIAN_MASK6 = (-1L) >>> 42;
+    private static final long LONG_BIG_ENDIAN_MASK7 = (-1L) >>> 49;
+    private static final long LONG_BIG_ENDIAN_MASK8 = (-1L) >>> 56;
+    private static final long LONG_BIG_ENDIAN_MASK9 = (-1L) >>> 63;
+
+    /** 计算原始的32位变长整形的编码长度 -- 也可直接通过前导0个数计算 */
     public static int computeRawVarInt32Size(int value) {
         if ((value & INT_CODED_MASK1) == 0) return 1; // 所有高位为0
         if ((value & INT_CODED_MASK2) == 0) return 2;
@@ -55,7 +70,7 @@ public final class CodedUtils {
         return 5;
     }
 
-    /** 计算原始的64位变长整形的编码长度 */
+    /** 计算原始的64位变长整形的编码长度 -- 也可直接通过前导0个数计算 */
     public static int computeRawVarInt64Size(long value) {
         if ((value & LONG_CODED_MASK1) == 0) return 1; // 所有高位为0
         if ((value & LONG_CODED_MASK2) == 0) return 2;
@@ -87,29 +102,21 @@ public final class CodedUtils {
 
     //region protobuf decode
 
-    public static int readInt32(byte[] buffer, int pos, MutableInt newPos) {
-        return readRawVarint32(buffer, pos, newPos);
+    public static int readUInt32(byte[] buffer, int pos, MutableInt newPos) {
+        return readRawVarInt32(buffer, pos, newPos);
     }
 
-    public static long readInt64(byte[] buffer, int pos, MutableInt newPos) {
-        return readRawVarint64(buffer, pos, newPos);
+    public static long readUInt64(byte[] buffer, int pos, MutableInt newPos) {
+        return readRawVarInt64(buffer, pos, newPos);
     }
 
-    public static int readUint32(byte[] buffer, int pos, MutableInt newPos) {
-        return readRawVarint32(buffer, pos, newPos);
-    }
-
-    public static long readUint64(byte[] buffer, int pos, MutableInt newPos) {
-        return readRawVarint64(buffer, pos, newPos);
-    }
-
-    public static int readSint32(byte[] buffer, int pos, MutableInt newPos) {
-        int rawBits = readRawVarint32(buffer, pos, newPos);
+    public static int readSInt32(byte[] buffer, int pos, MutableInt newPos) {
+        int rawBits = readRawVarInt32(buffer, pos, newPos);
         return decodeZigZag32(rawBits);
     }
 
-    public static long readSint64(byte[] buffer, int pos, MutableInt newPos) {
-        long rawBits = readRawVarint64(buffer, pos, newPos);
+    public static long readSInt64(byte[] buffer, int pos, MutableInt newPos) {
+        long rawBits = readRawVarInt64(buffer, pos, newPos);
         return decodeZigZag64(rawBits);
     }
 
@@ -125,8 +132,14 @@ public final class CodedUtils {
         return readRawFixed64(buffer, pos, newPos);
     }
 
+    //-------------------
     public static float readFloat(byte[] buffer, int pos, MutableInt newPos) {
         int rawBits = readRawFixed32(buffer, pos, newPos);
+        return Float.intBitsToFloat(rawBits);
+    }
+
+    public static float readVarFloat(byte[] buffer, int pos, MutableInt newPos) {
+        int rawBits = readRawBigEndianVarInt32(buffer, pos, newPos);
         return Float.intBitsToFloat(rawBits);
     }
 
@@ -135,50 +148,12 @@ public final class CodedUtils {
         return Double.longBitsToDouble(rawBits);
     }
 
-    private static int readRawVarint32(byte[] buffer, int pos, MutableInt newPos) {
-        // 单字节优化
-        byte b = buffer[pos++];
-        int r = (b & 127);
-        if ((b & 128) == 0) {
-            newPos.setValue(pos);
-            return r;
-        }
-        int shift = 7;
-        do {
-            b = buffer[pos++];
-            r |= (b & 127) << shift; // 取后7位左移
-            if ((b & 128) == 0) { // 高位0
-                newPos.setValue(pos);
-                return r;
-            }
-            shift += 7;
-        } while (shift < 32);
-        // 读取超过5个字节
-        throw new DsonIOException("DsonInput encountered a malformed varint32.");
+    public static double readVarDouble(byte[] buffer, int pos, MutableInt newPos) {
+        long rawBits = readRawBigEndianVarInt64(buffer, pos, newPos);
+        return Double.longBitsToDouble(rawBits);
     }
 
-    private static long readRawVarint64(byte[] buffer, int pos, MutableInt newPos) {
-        // 单字节优化
-        byte b = buffer[pos++];
-        long r = (b & 127L);
-        if ((b & 128) == 0) {
-            newPos.setValue(pos);
-            return r;
-        }
-        int shift = 7;
-        do {
-            b = buffer[pos++];
-            r |= (b & 127L) << shift; // 取后7位左移
-            if ((b & 128) == 0) { // 高位0
-                newPos.setValue(pos);
-                return r;
-            }
-            shift += 7;
-        } while (shift < 64);
-        // 读取超过10个字节
-        throw new DsonIOException("DsonInput encountered a malformed varint64.");
-    }
-
+    //-------------------
     private static int readRawFixed16(byte[] buffer, int pos, MutableInt newPos) {
         int r = (((buffer[pos] & 0xff))
                 | ((buffer[pos + 1] & 0xff) << 8));
@@ -208,33 +183,141 @@ public final class CodedUtils {
         return r;
     }
 
+    private static int readRawVarInt32(byte[] buffer, int pos, MutableInt newPos) {
+        // 循环展开
+        byte b = buffer[pos++];
+        int r = (b & 127);
+        if ((b & 128) == 0) {
+            newPos.setValue(pos);
+            return r;
+        }
+        b = buffer[pos++];
+        r |= (b & 127) << 7;
+        if ((b & 128) == 0) {
+            newPos.setValue(pos);
+            return r;
+        }
+        b = buffer[pos++];
+        r |= (b & 127) << 14;
+        if ((b & 128) == 0) {
+            newPos.setValue(pos);
+            return r;
+        }
+        b = buffer[pos++];
+        r |= (b & 127) << 21;
+        if ((b & 128) == 0) {
+            newPos.setValue(pos);
+            return r;
+        }
+        b = buffer[pos++];
+        r |= (b & 127) << 28; // 只有低4位有效
+        if ((b & 128) == 0) {
+            newPos.setValue(pos);
+            return r;
+        }
+        // 读取超过5个字节
+        throw new DsonIOException("DsonInput encountered a malformed varint32.");
+    }
+
+    private static long readRawVarInt64(byte[] buffer, int pos, MutableInt newPos) {
+        // int64循环展开的代码太长，还容易写错...
+        long r = 0;
+        int shift = 0;
+        byte b;
+        do {
+            b = buffer[pos++];
+            r |= (b & 127L) << shift; // 取后7位左移
+            if ((b & 128L) == 0) { // 高位0
+                newPos.setValue(pos);
+                return r;
+            }
+            shift += 7;
+        } while (shift < 64);
+        // 读取超过10个字节
+        throw new DsonIOException("DsonInput encountered a malformed varint64.");
+    }
+
+    /** 大端编码的VarInt32 */
+    private static int readRawBigEndianVarInt32(byte[] buffer, int pos, MutableInt newPos) {
+        // 循环展开
+        byte b = buffer[pos++];
+        int r = (b & 127) << 25;
+        if ((b & 128) == 0) {
+            newPos.setValue(pos);
+            return r;
+        }
+        b = buffer[pos++];
+        r |= (b & 127) << 18;
+        if ((b & 128) == 0) {
+            newPos.setValue(pos);
+            return r;
+        }
+        b = buffer[pos++];
+        r |= (b & 127) << 11;
+        if ((b & 128) == 0) {
+            newPos.setValue(pos);
+            return r;
+        }
+        b = buffer[pos++];
+        r |= (b & 127) << 4;
+        if ((b & 128) == 0) {
+            newPos.setValue(pos);
+            return r;
+        }
+        b = buffer[pos++];
+        r |= (b & 127); // 只有低4位有效
+        if ((b & 128) == 0) {
+            newPos.setValue(pos);
+            return r;
+        }
+        // 读取超过5个字节
+        throw new DsonIOException("DsonInput encountered a malformed big endian varint32.");
+    }
+
+    /** 大端编码的VarInt64 */
+    private static long readRawBigEndianVarInt64(byte[] buffer, int pos, MutableInt newPos) {
+        // int64循环展开的代码太长，还容易写错...
+        long r = 0;
+        int shift = 57;
+        byte b;
+        do {
+            b = buffer[pos++];
+            r |= (b & 127L) << shift; // 取后7位左移
+            if ((b & 128L) == 0) { // 高位0
+                newPos.setValue(pos);
+                return r;
+            }
+            shift -= 7;
+        } while (shift > 0);
+        // 最后一个字节不移位
+        b = buffer[pos++];
+        r |= (b & 127L);
+        if ((b & 128L) == 0) {
+            newPos.setValue(pos);
+            return r;
+        }
+        // 读取超过10个字节
+        throw new DsonIOException("DsonInput encountered a malformed big endian varint64.");
+    }
+
     //endregion
 
     //region protobuf encode
 
-    /** @return newPos */
-    public static int writeInt32(byte[] buffer, int pos, int value) {
-        return writeRawVarint32(buffer, pos, value);
+    public static int writeUInt32(byte[] buffer, int pos, int value) {
+        return writeRawVarInt32(buffer, pos, value);
     }
 
-    public static int writeInt64(byte[] buffer, int pos, long value) {
-        return writeRawVarint64(buffer, pos, value);
+    public static int writeUInt64(byte[] buffer, int pos, long value) {
+        return writeRawVarInt64(buffer, pos, value);
     }
 
-    public static int writeUint32(byte[] buffer, int pos, int value) {
-        return writeRawVarint32(buffer, pos, value);
+    public static int writeSInt32(byte[] buffer, int pos, int value) {
+        return writeRawVarInt32(buffer, pos, encodeZigZag32(value));
     }
 
-    public static int writeUint64(byte[] buffer, int pos, long value) {
-        return writeRawVarint64(buffer, pos, value);
-    }
-
-    public static int writeSint32(byte[] buffer, int pos, int value) {
-        return writeRawVarint32(buffer, pos, encodeZigZag32(value));
-    }
-
-    public static int writeSint64(byte[] buffer, int pos, long value) {
-        return writeRawVarint64(buffer, pos, encodeZigZag64(value));
+    public static int writeSInt64(byte[] buffer, int pos, long value) {
+        return writeRawVarInt64(buffer, pos, encodeZigZag64(value));
     }
 
     public static int writeFixed16(byte[] buffer, int pos, int value) {
@@ -249,63 +332,24 @@ public final class CodedUtils {
         return writeRawFixed64(buffer, pos, value);
     }
 
+    //-------------------
     public static int writeFloat(byte[] buffer, int pos, float value) {
         return writeRawFixed32(buffer, pos, Float.floatToRawIntBits(value));
+    }
+
+    public static int writeVarFloat(byte[] buffer, int pos, float value) {
+        return writeRawBigEndianVarInt32(buffer, pos, Float.floatToRawIntBits(value));
     }
 
     public static int writeDouble(byte[] buffer, int pos, double value) {
         return writeRawFixed64(buffer, pos, Double.doubleToRawLongBits(value));
     }
 
-    /**
-     * 写入一个变长的64位整数，所有的负数都将固定10字节
-     *
-     * @param buffer buffer
-     * @param pos    开始写入的位置
-     * @param value  要写入的值
-     * @return 写入后的新坐标
-     */
-    private static int writeRawVarint64(byte[] buffer, int pos, long value) {
-        if (value >= 0 && value < 128L) { // 小数值较多的情况下有意义
-            buffer[pos] = (byte) value;
-            return pos + 1;
-        }
-        while (true) {
-            if ((value & LONG_CODED_MASK1) != 0) {
-                buffer[pos++] = (byte) ((value & 127L) | 128L); // 截取后7位，高位补1
-                value >>>= 7; // java必须逻辑右移
-            } else {
-                buffer[pos++] = (byte) value;
-                return pos;
-            }
-        }
+    public static int writeVarDouble(byte[] buffer, int pos, double value) {
+        return writeRawBigEndianVarInt64(buffer, pos, Double.doubleToRawLongBits(value));
     }
 
-    /**
-     * 写入一个变长的32位整数，负数将固定为5字节
-     * （注意：普通int慎重调用，这里将int看做无符号整数编码）
-     *
-     * @param buffer buffer
-     * @param pos    开始写入的位置
-     * @param value  要写入的值
-     * @return 写入后的新坐标
-     */
-    private static int writeRawVarint32(byte[] buffer, int pos, int value) {
-        if (value >= 0 && value < 128) { // 小数值较多的情况下有意义
-            buffer[pos] = (byte) value;
-            return pos + 1;
-        }
-        while (true) {
-            if ((value & INT_CODED_MASK1) != 0) {
-                buffer[pos++] = (byte) ((value & 127) | 128); // 截取后7位，高位补1
-                value >>>= 7; // java必须逻辑右移
-            } else {
-                buffer[pos++] = (byte) value;
-                return pos;
-            }
-        }
-    }
-
+    //-------------------
     private static int writeRawFixed16(byte[] buffer, int pos, int value) {
         buffer[pos] = (byte) value;
         buffer[pos + 1] = (byte) (value >> 8);
@@ -332,5 +376,56 @@ public final class CodedUtils {
         return pos + 8;
     }
 
+    private static int writeRawVarInt32(byte[] buffer, int pos, int value) {
+        while (true) {
+            int b = (value & 127); // 取低7位
+            value >>>= 7;
+            if (value != 0) {
+                buffer[pos++] = (byte) (b | 128); // 高位补1
+            } else {
+                buffer[pos++] = (byte) b;
+                return pos;
+            }
+        }
+    }
+
+    private static int writeRawVarInt64(byte[] buffer, int pos, long value) {
+        while (true) {
+            long b = (value & 127L); // 取低7位
+            value >>>= 7;
+            if (value != 0) {
+                buffer[pos++] = (byte) (b | 128L); // 高位补1
+            } else {
+                buffer[pos++] = (byte) b;
+                return pos;
+            }
+        }
+    }
+
+    private static int writeRawBigEndianVarInt32(byte[] buffer, int pos, int value) {
+        while (true) {
+            int b = (value & ~INT_BIG_ENDIAN_MASK1) >>> 25; // 取高7位
+            value <<= 7;
+            if (value != 0) {
+                buffer[pos++] = (byte) (b | 128); // 高位补1
+            } else {
+                buffer[pos++] = (byte) b;
+                return pos;
+            }
+        }
+    }
+
+    private static int writeRawBigEndianVarInt64(byte[] buffer, int pos, long value) {
+        while (true) {
+            long b = (value & ~LONG_BIG_ENDIAN_MASK1) >>> 57; // 取高7位
+            value <<= 7;
+            if (value != 0) {
+                buffer[pos++] = (byte) (b | 128L); // 高位补1
+            } else {
+                buffer[pos++] = (byte) b;
+                return pos;
+            }
+        }
+    }
     //endregion
 }

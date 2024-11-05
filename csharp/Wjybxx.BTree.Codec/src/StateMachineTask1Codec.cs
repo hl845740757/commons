@@ -42,7 +42,7 @@ public sealed class StateMachineTask1Codec<T> : AbstractDsonCodec<StateMachineTa
 
     protected override void WriteFields(IDsonObjectWriter writer, ref StateMachineTask<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
         writer.WriteString(names_name, inst.Name, StringStyle.Auto);
         writer.WriteObject(names_initState, inst.InitState, typeof(Task<T>), null);

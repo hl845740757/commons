@@ -40,9 +40,9 @@ public sealed class AlwaysFail1Codec<T> : AbstractDsonCodec<AlwaysFail<T>> where
 
     protected override void WriteFields(IDsonObjectWriter writer, ref AlwaysFail<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
-        writer.WriteInt(names_failureStatus, inst.FailureStatus, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_failureStatus, inst.FailureStatus, WireType.Uint, NumberStyles.Simple);
     }
 
     protected override AlwaysFail<T> NewInstance(IDsonObjectReader reader) {

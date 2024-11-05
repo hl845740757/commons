@@ -189,8 +189,9 @@ public interface DsonObjectWriter extends AutoCloseable {
 
     // region 便捷方法
 
+    // 这里使用simple -- 外部通常包含明确类型
     default void writeInt(String name, int value) {
-        writeInt(name, value, WireType.VARINT, NumberStyle.SIMPLE); // 这里使用simple -- 外部通常包含明确类型
+        writeInt(name, value, WireType.bestOfInt32(value), NumberStyle.SIMPLE);
     }
 
     default void writeInt(String name, int value, WireType wireType) {
@@ -198,7 +199,7 @@ public interface DsonObjectWriter extends AutoCloseable {
     }
 
     default void writeLong(String name, long value) {
-        writeLong(name, value, WireType.VARINT, NumberStyle.SIMPLE);
+        writeLong(name, value, WireType.bestOfInt64(value), NumberStyle.SIMPLE);
     }
 
     default void writeLong(String name, long value, WireType wireType) {
@@ -216,6 +217,8 @@ public interface DsonObjectWriter extends AutoCloseable {
     default void writeString(String name, String value) {
         writeString(name, value, StringStyle.AUTO);
     }
+
+    // short等不再允许指定WireType
 
     /** 应当减少 short/byte/char 的使用，尤其应当避免使用其包装类型，使用的越多越难以扩展，越难以支持跨语言等。 */
     default void writeShort(String name, short value) {

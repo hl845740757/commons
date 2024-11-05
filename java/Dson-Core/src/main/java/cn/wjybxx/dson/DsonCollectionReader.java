@@ -146,7 +146,7 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         }
 
         this.currentDsonType = dsonType;
-        this.currentWireType = WireType.VARINT;
+        this.currentWireType = WireType.UINT;
         this.currentName = INVALID_NAME;
 
         onReadDsonType(context, dsonType);

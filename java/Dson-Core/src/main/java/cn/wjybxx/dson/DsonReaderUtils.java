@@ -34,94 +34,6 @@ public class DsonReaderUtils {
     public static final List<DsonType> VALUE_BYTES_TYPES = List.of(DsonType.STRING,
             DsonType.BINARY, DsonType.ARRAY, DsonType.OBJECT, DsonType.HEADER);
 
-    // region number
-
-    /**
-     * 1.浮点数的前16位固定写入，因此只统计后16位
-     * 2.wireType表示后导0对应的字节数
-     * 3.该算法对于整数有很好的收益，对于小数收益较低
-     * 4.由于编码依赖了上层的wireType比特位，因此不能写在Output接口中
-     */
-    public static int wireTypeOfFloat(float value) {
-        int rawBits = Float.floatToRawIntBits(value);
-        if ((rawBits & 0xFF) != 0) return 0;
-        if ((rawBits & 0xFF00) != 0) return 1;
-        return 2;
-    }
-
-    /** 小端编码，从末尾非0开始写入 */
-    public static void writeFloat(DsonOutput output, float value, int wireType) {
-        if (wireType == 0) {
-            output.writeFloat(value);
-            return;
-        }
-
-        int rawBits = Float.floatToRawIntBits(value);
-        for (int i = 0; i < wireType; i++) {
-            rawBits = rawBits >>> 8;
-        }
-        for (int i = wireType; i < 4; i++) {
-            output.writeRawByte((byte) rawBits);
-            rawBits = rawBits >>> 8;
-        }
-    }
-
-    public static float readFloat(DsonInput input, int wireType) {
-        if (wireType == 0) {
-            return input.readFloat();
-        }
-
-        int rawBits = 0;
-        for (int i = wireType; i < 4; i++) {
-            rawBits |= (input.readRawByte() & 0XFF) << (8 * i);
-        }
-        return Float.intBitsToFloat(rawBits);
-    }
-
-    /**
-     * 1.浮点数的前16位固定写入，因此只统计后48位
-     * 2.wireType表示后导0对应的字节数
-     * 3.该算法对于整数有很好的收益，对于小数收益较低
-     */
-    public static int wireTypeOfDouble(double value) {
-        long rawBits = Double.doubleToRawLongBits(value);
-        if ((rawBits & 0xFFL) != 0) return 0;
-        if ((rawBits & 0xFF00L) != 0) return 1;
-        if ((rawBits & 0xFF_0000L) != 0) return 2;
-        if ((rawBits & 0xFF00_0000L) != 0) return 3;
-        if ((rawBits & 0xFF_0000_0000L) != 0) return 4;
-        if ((rawBits & 0xFF00_0000_0000L) != 0) return 5;
-        return 6;
-    }
-
-    public static void writeDouble(DsonOutput output, double value, int wireType) {
-        if (wireType == 0) {
-            output.writeDouble(value);
-            return;
-        }
-
-        long rawBits = Double.doubleToRawLongBits(value);
-        for (int i = 0; i < wireType; i++) {
-            rawBits = rawBits >>> 8;
-        }
-        for (int i = wireType; i < 8; i++) {
-            output.writeRawByte((byte) rawBits);
-            rawBits = rawBits >>> 8;
-        }
-    }
-
-    public static double readDouble(DsonInput input, int wireType) {
-        if (wireType == 0) {
-            return input.readDouble();
-        }
-
-        long rawBits = 0;
-        for (int i = wireType; i < 8; i++) {
-            rawBits |= (input.readRawByte() & 0XFFL) << (8 * i);
-        }
-        return Double.longBitsToDouble(rawBits);
-    }
-
     public static boolean readBool(DsonInput input, int wireTypeBits) {
         if (wireTypeBits == 1) {
             return true;
@@ -131,22 +43,21 @@ public class DsonReaderUtils {
         }
         throw new DsonIOException("invalid wireType for bool, bits: " + wireTypeBits);
     }
-    // endregion
 
     // region binary
 
     public static void writeBinary(DsonOutput output, Binary binary) {
-        output.writeUint32(binary.length());
+        output.writeUInt32(binary.length());
         output.writeRawBytes(binary.unsafeBuffer());
     }
 
     public static void writeBinary(DsonOutput output, byte[] bytes, int offset, int len) {
-        output.writeUint32(len);
+        output.writeUInt32(len);
         output.writeRawBytes(bytes, offset, len);
     }
 
     public static Binary readBinary(DsonInput input) {
-        int size = input.readUint32();
+        int size = input.readUInt32();
         int oldLimit = input.pushLimit(size);
         Binary binary;
         {
@@ -209,7 +120,7 @@ public class DsonReaderUtils {
     }
 
     public static void writeLitePtr(DsonOutput output, ObjectLitePtr objectLitePtr) {
-        output.writeUint64(objectLitePtr.getLocalId());
+        output.writeUInt64(objectLitePtr.getLocalId());
         if (objectLitePtr.hasNamespace()) {
             output.writeString(objectLitePtr.getNamespace());
         }
@@ -222,7 +133,7 @@ public class DsonReaderUtils {
     }
 
     public static ObjectLitePtr readLitePtr(DsonInput input, int wireTypeBits) {
-        long localId = input.readUint64();
+        long localId = input.readUInt64();
         String namespace = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_NAMESPACE) ? input.readString() : null;
         byte type = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_TYPE) ? input.readRawByte() : (byte) 0;
         byte policy = DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_POLICY) ? input.readRawByte() : (byte) 0;
@@ -230,29 +141,29 @@ public class DsonReaderUtils {
     }
 
     public static void writeDateTime(DsonOutput output, ExtDateTime dateTime) {
-        output.writeUint64(dateTime.getSeconds());
-        output.writeUint32(dateTime.getNanos());
-        output.writeSint32(dateTime.getOffset());
+        output.writeUInt64(dateTime.getSeconds());
+        output.writeUInt32(dateTime.getNanos());
+        output.writeSInt32(dateTime.getOffset());
 //        output.writeRawByte(dateTime.getEnables());
     }
 
     public static ExtDateTime readDateTime(DsonInput input, int wireTypeBits) {
         return new ExtDateTime(
-                input.readUint64(),
-                input.readUint32(),
-                input.readSint32(),
+                input.readUInt64(),
+                input.readUInt32(),
+                input.readSInt32(),
                 (byte) wireTypeBits);
     }
 
     public static void writeTimestamp(DsonOutput output, Timestamp Timestamp) {
-        output.writeUint64(Timestamp.getSeconds());
-        output.writeUint32(Timestamp.getNanos());
+        output.writeUInt64(Timestamp.getSeconds());
+        output.writeUInt32(Timestamp.getNanos());
     }
 
     public static Timestamp readTimestamp(DsonInput input) {
         return new Timestamp(
-                input.readUint64(),
-                input.readUint32());
+                input.readUInt64(),
+                input.readUInt32());
     }
 
     // endregion
@@ -260,7 +171,7 @@ public class DsonReaderUtils {
     // region 特殊
     public static void writeValueBytes(DsonOutput output, DsonType dsonType, byte[] data) {
         if (dsonType == DsonType.STRING || dsonType == DsonType.BINARY) {
-            output.writeUint32(data.length);
+            output.writeUInt32(data.length);
         } else {
             output.writeFixed32(data.length);
         }
@@ -270,7 +181,7 @@ public class DsonReaderUtils {
     public static byte[] readValueAsBytes(DsonInput input, DsonType dsonType) {
         int size;
         if (dsonType == DsonType.STRING || dsonType == DsonType.BINARY) {
-            size = input.readUint32();
+            size = input.readUInt32();
         } else {
             size = input.readFixed32();
         }
@@ -302,10 +213,12 @@ public class DsonReaderUtils {
         int skip;
         switch (dsonType) {
             case FLOAT -> {
-                skip = 4 - wireTypeBits;
+                wireType.readFloat(input);
+                return;
             }
             case DOUBLE -> {
-                skip = 8 - wireTypeBits;
+                wireType.readDouble(input);
+                return;
             }
             case BOOL, NULL -> {
                 return;
@@ -319,17 +232,17 @@ public class DsonReaderUtils {
                 return;
             }
             case STRING -> {
-                skip = input.readUint32();  // string长度
+                skip = input.readUInt32();  // string长度
             }
             case BINARY -> {
-                skip = input.readUint32(); // length(data)
+                skip = input.readUInt32(); // length(data)
             }
             case POINTER -> {
-                skip = input.readUint32(); // localId长度
+                skip = input.readUInt32(); // localId长度
                 input.skipRawBytes(skip);
 
                 if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_NAMESPACE)) {
-                    skip = input.readUint32(); // namespace长度
+                    skip = input.readUInt32(); // namespace长度
                     input.skipRawBytes(skip);
                 }
                 if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_TYPE)) {
@@ -341,9 +254,9 @@ public class DsonReaderUtils {
                 return;
             }
             case LITE_POINTER -> {
-                input.readUint64(); // localId
+                input.readUInt64(); // localId
                 if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_NAMESPACE)) {
-                    skip = input.readUint32(); // namespace长度
+                    skip = input.readUInt32(); // namespace长度
                     input.skipRawBytes(skip);
                 }
                 if (DsonInternals.isSet(wireTypeBits, ObjectPtr.MASK_TYPE)) {
@@ -355,15 +268,15 @@ public class DsonReaderUtils {
                 return;
             }
             case DATETIME -> {
-                input.readUint64();
-                input.readUint32();
-                input.readSint32();
+                input.readUInt64();
+                input.readUInt32();
+                input.readSInt32();
 //                input.readRawByte();
                 return;
             }
             case TIMESTAMP -> {
-                input.readUint64();
-                input.readUint32();
+                input.readUInt64();
+                input.readUInt32();
                 return;
             }
             case HEADER -> {

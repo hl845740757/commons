@@ -180,7 +180,7 @@ public final class DsonTextReader extends AbstractDsonReader {
 
         DsonType dsonType = readDsonTypeOfToken();
         this.currentDsonType = dsonType;
-        this.currentWireType = WireType.VARINT;
+        this.currentWireType = WireType.UINT;
         this.currentName = INVALID_NAME;
 
         onReadDsonType(context, dsonType);

@@ -108,6 +108,16 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void WriteInt32(TName name, int value) {
+        WriteInt32(name, value, WireTypes.BestOfInt32(value), NumberStyles.Typed);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void WriteInt64(TName name, long value) {
+        WriteInt64(name, value, WireTypes.BestOfInt64(value), NumberStyles.Typed);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteFloat(TName name, float value) {
         WriteFloat(name, value, NumberStyles.Typed);
     }

@@ -21,7 +21,6 @@
 
         <module>Dson-Core</module>
         <module>Dson-Codec</module>
-        <module>Dson-Protobuf</module>
 
         <module>BTree-Core</module>
         <module>BTree-Codec</module>
@@ -59,7 +58,7 @@
     </developers>
 
     <properties>
-        <revision>1.4.0</revision>
+        <revision>1.5.0</revision>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
@@ -73,7 +72,7 @@
 
         <!-- 基础依赖-->
         <jsr305.version>3.0.2</jsr305.version>
-        <apt.version>1.3.0</apt.version>
+        <apt.version>1.4.0</apt.version>
 
         <!-- 子模块依赖 -->
         <fastutil.version>8.5.14</fastutil.version>

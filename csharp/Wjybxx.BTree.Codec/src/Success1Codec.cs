@@ -38,7 +38,7 @@ public sealed class Success1Codec<T> : AbstractDsonCodec<Success<T>> where T : c
 
     protected override void WriteFields(IDsonObjectWriter writer, ref Success<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
     }
 
     protected override Success<T> NewInstance(IDsonObjectReader reader) {

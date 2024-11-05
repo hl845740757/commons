@@ -90,9 +90,9 @@ public class DsonInputs {
         }
 
         @Override
-        public int readInt32() {
+        public int readUInt32() {
             try {
-                int r = CodedUtils.readInt32(buffer, bufferPos, newPos);
+                int r = CodedUtils.readUInt32(buffer, bufferPos, newPos);
                 bufferPos = checkNewBufferPos(newPos.getValue());
                 return r;
             } catch (Exception e) {
@@ -101,20 +101,9 @@ public class DsonInputs {
         }
 
         @Override
-        public int readUint32() {
+        public int readSInt32() {
             try {
-                int r = CodedUtils.readUint32(buffer, bufferPos, newPos);
-                bufferPos = checkNewBufferPos(newPos.getValue());
-                return r;
-            } catch (Exception e) {
-                throw DsonIOException.wrap(e, "buffer overflow");
-            }
-        }
-
-        @Override
-        public int readSint32() {
-            try {
-                int r = CodedUtils.readSint32(buffer, bufferPos, newPos);
+                int r = CodedUtils.readSInt32(buffer, bufferPos, newPos);
                 bufferPos = checkNewBufferPos(newPos.getValue());
                 return r;
             } catch (Exception e) {
@@ -134,9 +123,9 @@ public class DsonInputs {
         }
 
         @Override
-        public long readInt64() {
+        public long readUInt64() {
             try {
-                long r = CodedUtils.readInt64(buffer, bufferPos, newPos);
+                long r = CodedUtils.readUInt64(buffer, bufferPos, newPos);
                 bufferPos = checkNewBufferPos(newPos.getValue());
                 return r;
             } catch (Exception e) {
@@ -145,20 +134,9 @@ public class DsonInputs {
         }
 
         @Override
-        public long readUint64() {
+        public long readSInt64() {
             try {
-                long r = CodedUtils.readUint64(buffer, bufferPos, newPos);
-                bufferPos = checkNewBufferPos(newPos.getValue());
-                return r;
-            } catch (Exception e) {
-                throw DsonIOException.wrap(e, "buffer overflow");
-            }
-        }
-
-        @Override
-        public long readSint64() {
-            try {
-                long r = CodedUtils.readSint64(buffer, bufferPos, newPos);
+                long r = CodedUtils.readSInt64(buffer, bufferPos, newPos);
                 bufferPos = checkNewBufferPos(newPos.getValue());
                 return r;
             } catch (Exception e) {
@@ -189,9 +167,31 @@ public class DsonInputs {
         }
 
         @Override
+        public float readVarFloat() {
+            try {
+                float r = CodedUtils.readVarFloat(buffer, bufferPos, newPos);
+                bufferPos = checkNewBufferPos(newPos.getValue());
+                return r;
+            } catch (Exception e) {
+                throw DsonIOException.wrap(e, "buffer overflow");
+            }
+        }
+
+        @Override
         public double readDouble() {
             try {
                 double r = CodedUtils.readDouble(buffer, bufferPos, newPos);
+                bufferPos = checkNewBufferPos(newPos.getValue());
+                return r;
+            } catch (Exception e) {
+                throw DsonIOException.wrap(e, "buffer overflow");
+            }
+        }
+
+        @Override
+        public double readVarDouble() {
+            try {
+                double r = CodedUtils.readVarDouble(buffer, bufferPos, newPos);
                 bufferPos = checkNewBufferPos(newPos.getValue());
                 return r;
             } catch (Exception e) {
@@ -208,7 +208,7 @@ public class DsonInputs {
         @Override
         public String readString() {
             try {
-                int len = CodedUtils.readUint32(buffer, bufferPos, newPos); // 字符串长度
+                int len = CodedUtils.readUInt32(buffer, bufferPos, newPos); // 字符串长度
                 checkNewBufferPos(newPos.getValue() + len); // 先检查，避免构建无效字符串
 
                 String r = new String(buffer, newPos.getValue(), len, StandardCharsets.UTF_8);

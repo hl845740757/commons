@@ -432,10 +432,10 @@ public static class Dsons
         }
         switch (dsonValue.DsonType) {
             case DsonType.Int32:
-                writer.WriteInt32(name, dsonValue.AsInt32(), WireType.VarInt, NumberStyles.Typed); // 必须能精确反序列化
+                writer.WriteInt32(name, dsonValue.AsInt32(), WireType.Uint, NumberStyles.Typed); // 必须能精确反序列化
                 break;
             case DsonType.Int64:
-                writer.WriteInt64(name, dsonValue.AsInt64(), WireType.VarInt, NumberStyles.Typed);
+                writer.WriteInt64(name, dsonValue.AsInt64(), WireType.Uint, NumberStyles.Typed);
                 break;
             case DsonType.Float:
                 writer.WriteFloat(name, dsonValue.AsFloat(), NumberStyles.Typed);

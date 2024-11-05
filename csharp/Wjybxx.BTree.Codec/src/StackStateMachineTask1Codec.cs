@@ -44,13 +44,13 @@ public sealed class StackStateMachineTask1Codec<T> : AbstractDsonCodec<StackStat
 
     protected override void WriteFields(IDsonObjectWriter writer, ref StackStateMachineTask<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
         writer.WriteString(names_name, inst.Name, StringStyle.Auto);
         writer.WriteObject(names_initState, inst.InitState, typeof(Task<T>), null);
         writer.WriteObject(names_initStateProps, inst.InitStateProps, typeof(object), null);
-        writer.WriteInt(names_undoQueueCapacity, inst.UndoQueueCapacity, WireType.VarInt, NumberStyles.Simple);
-        writer.WriteInt(names_redoQueueCapacity, inst.RedoQueueCapacity, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_undoQueueCapacity, inst.UndoQueueCapacity, WireType.Uint, NumberStyles.Simple);
+        writer.WriteInt(names_redoQueueCapacity, inst.RedoQueueCapacity, WireType.Uint, NumberStyles.Simple);
     }
 
     protected override StackStateMachineTask<T> NewInstance(IDsonObjectReader reader) {

@@ -44,10 +44,9 @@ class AptFieldProps {
     public static final String TYPE_EXT_INT64 = "EXT_INT64";
     public static final String TYPE_EXT_DOUBLE = "EXT_DOUBLE";
 
-    public static final String WIRE_TYPE_VARINT = "VARINT";
-    public static final String STYLE_SIMPLE = "SIMPLE";
-    public static final String STYLE_AUTO = "AUTO";
-    public static final String STYLE_INDENT = "INDENT";
+    public static final String DEFAULT_WIRE_TYPE = "UINT";
+    public static final String DEFAULT_NUMBER_STYLE = "SIMPLE";
+    public static final String DEFAULT_STRING_STYLE = "AUTO";
 
     /** 字段序列化时的名字 */
     public String name = "";
@@ -63,12 +62,12 @@ class AptFieldProps {
     /** 读代理方法名 */
     public String readProxy = "";
 
-    public String wireType = WIRE_TYPE_VARINT;
+    public String wireType = DEFAULT_WIRE_TYPE;
     public String dsonType = null; // 该属性只有显式声明才有效
     public int dsonSubType = 0;
 
-    public String numberStyle = STYLE_SIMPLE;
-    public String stringStyle = STYLE_AUTO;
+    public String numberStyle = DEFAULT_NUMBER_STYLE;
+    public String stringStyle = DEFAULT_STRING_STYLE;
     public String objectStyle = null; // 该属性只有显式声明才有效
 
     public Boolean dsonIgnore;

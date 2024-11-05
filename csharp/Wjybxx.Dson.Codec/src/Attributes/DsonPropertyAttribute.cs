@@ -52,7 +52,7 @@ public class DsonPropertyAttribute : Attribute
     /// 数字类型属性的编码格式。
     /// 设定合适的类型有助于优化二进制编码，修改该值不产生兼容性问题。
     /// </summary>
-    public WireType WireType { get; set; } = WireType.VarInt;
+    public WireType WireType { get; set; } = WireType.Uint;
 
     /// <summary>
     /// 数据关联的{@link DsonType}，配合<see cref="DsonSubType"/>使用

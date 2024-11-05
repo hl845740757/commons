@@ -40,9 +40,9 @@ public sealed class UntilSuccess1Codec<T> : AbstractDsonCodec<UntilSuccess<T>> w
 
     protected override void WriteFields(IDsonObjectWriter writer, ref UntilSuccess<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
-        writer.WriteInt(names_maxLoop, inst.MaxLoop, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_maxLoop, inst.MaxLoop, WireType.Uint, NumberStyles.Simple);
     }
 
     protected override UntilSuccess<T> NewInstance(IDsonObjectReader reader) {

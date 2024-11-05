@@ -91,7 +91,7 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
             if (_textWriter != null) { // 避免装箱
                 output.WriteString(_textWriter.context.curName);
             } else {
-                output.WriteUint32(_binWriter!.context.curName.FullNumber);
+                output.WriteUInt32(_binWriter!.context.curName.FullNumber);
             }
         }
     }
@@ -103,27 +103,27 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
     protected override void DoWriteInt32(int value, WireType wireType, INumberStyle style) {
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.Int32, (int)wireType);
-        DsonReaderUtils.WriteInt32(output, value, wireType);
+        wireType.WriteInt32(output, value);
     }
 
     protected override void DoWriteInt64(long value, WireType wireType, INumberStyle style) {
         IDsonOutput output = this._output;
         WriteFullTypeAndCurrentName(output, DsonType.Int64, (int)wireType);
-        DsonReaderUtils.WriteInt64(output, value, wireType);
+        wireType.WriteInt64(output, value);
     }
 
     protected override void DoWriteFloat(float value, INumberStyle style) {
-        int wireType = DsonReaderUtils.WireTypeOfFloat(value);
+        WireType wireType = WireTypes.BestOfFloat(value);
         IDsonOutput output = this._output;
-        WriteFullTypeAndCurrentName(output, DsonType.Float, wireType);
-        DsonReaderUtils.WriteFloat(output, value, wireType);
+        WriteFullTypeAndCurrentName(output, DsonType.Float, (int)wireType);
+        wireType.WriteFloat(output, value);
     }
 
     protected override void DoWriteDouble(double value, INumberStyle style) {
-        int wireType = DsonReaderUtils.WireTypeOfDouble(value);
+        WireType wireType = WireTypes.BestOfDouble(value);
         IDsonOutput output = this._output;
-        WriteFullTypeAndCurrentName(output, DsonType.Double, wireType);
-        DsonReaderUtils.WriteDouble(output, value, wireType);
+        WriteFullTypeAndCurrentName(output, DsonType.Double, (int)wireType);
+        wireType.WriteDouble(output, value);
     }
 
     protected override void DoWriteBool(bool value) {

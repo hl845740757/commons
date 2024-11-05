@@ -18,7 +18,8 @@ package cn.wjybxx.dson.io;
 
 /**
  * 接口约定以小端编码数字
- * 通过{@link DsonOutputs}的静态方法创建实例
+ * 1.通过{@link DsonOutputs}的静态方法创建实例
+ * 2.输出流中不需要记录值类型
  *
  * @author wjybxx
  * date 2023/4/1
@@ -35,20 +36,16 @@ public interface DsonOutput extends AutoCloseable {
     void writeFixed16(int value);
 
     //
-    void writeInt32(int value);
+    void writeUInt32(int value);
 
-    void writeUint32(int value);
-
-    void writeSint32(int value);
+    void writeSInt32(int value);
 
     void writeFixed32(int value);
     //
 
-    void writeInt64(long value);
+    void writeUInt64(long value);
 
-    void writeUint64(long value);
-
-    void writeSint64(long value);
+    void writeSInt64(long value);
 
     void writeFixed64(long value);
     //
@@ -56,10 +53,16 @@ public interface DsonOutput extends AutoCloseable {
     /** 该接口固定写入4个字节 */
     void writeFloat(float value);
 
+    /** 以变长编码格式写入float */
+    void writeVarFloat(float value);
+
     /** 该接口固定写入8个字节 */
     void writeDouble(double value);
 
-    /** 该接口固定写入1个字节 */
+    /** 以变长编码格式写入double */
+    void writeVarDouble(double value);
+
+    /** 该接口固定写入一个字节 */
     void writeBool(boolean value);
 
     /** 该接口先以Uint32格式写入String以UTF8编码后的字节长度，再写入String以UTF8编码后的内容 */

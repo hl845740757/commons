@@ -156,7 +156,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         }
 
         this.currentDsonType = dsonType;
-        this.currentWireType = WireType.VarInt;
+        this.currentWireType = WireType.Uint;
         this.currentName = default;
 
         OnReadDsonType(context, dsonType);

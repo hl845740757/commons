@@ -354,7 +354,7 @@ internal class PojoCodecGenerator
         if (fieldType.IsPrimitive && numberTypes.Contains(fieldType)) {
             if (numberHasWireType.Contains(fieldType)) {
                 // int,long
-                // writer.WriteInt(names_fieldName, inst.field, WireType.VarInt, NumberStyles.Simple)
+                // writer.WriteInt(names_fieldName, inst.field, WireType.Uint, NumberStyles.Simple)
                 builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L, $T.$L)",
                     writeMethodName, SerialName(fieldName), fieldAccess,
                     processor.typeName_WireType, EnumUtil.GetName(fieldProps.attribute.WireType),

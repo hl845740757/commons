@@ -37,9 +37,9 @@ public sealed class JoinSelectorN1Codec<T> : AbstractDsonCodec<JoinSelectorN<T>>
     public override Type GetEncoderType() => typeof(JoinSelectorN<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref JoinSelectorN<T> inst) {
-        writer.WriteInt(names_required, inst.Required, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_required, inst.Required, WireType.Uint, NumberStyles.Simple);
         writer.WriteBool(names_failFast, inst.FailFast);
-        writer.WriteInt(names_sequence, inst.Sequence, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_sequence, inst.Sequence, WireType.Uint, NumberStyles.Simple);
     }
 
     protected override JoinSelectorN<T> NewInstance(IDsonObjectReader reader) {

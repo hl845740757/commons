@@ -58,7 +58,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         context = null;
         recursionDepth = 0;
         currentDsonType = DsonTypes.INVALID;
-        currentWireType = WireType.VarInt;
+        currentWireType = WireType.Uint;
         currentWireTypeBits = 0;
         currentName = default;
         waitStartContext = null;
@@ -412,7 +412,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     /** 限用于读取容器后恢复上下文 */
     protected void RecoverDsonType(Context context) {
         this.currentDsonType = context.dsonType;
-        this.currentWireType = WireType.VarInt;
+        this.currentWireType = WireType.Uint;
         this.currentWireTypeBits = 0;
         this.currentName = context.name;
     }

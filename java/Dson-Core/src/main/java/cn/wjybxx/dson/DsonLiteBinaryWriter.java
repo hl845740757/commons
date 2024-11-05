@@ -87,7 +87,7 @@ public class DsonLiteBinaryWriter extends AbstractDsonLiteWriter {
         Context context = getContext();
         if (context.contextType == DsonContextType.OBJECT
                 || context.contextType == DsonContextType.HEADER) {
-            output.writeUint32(context.curName);
+            output.writeUInt32(context.curName);
         }
     }
 
@@ -111,18 +111,18 @@ public class DsonLiteBinaryWriter extends AbstractDsonLiteWriter {
 
     @Override
     protected void doWriteFloat(float value) {
-        int wireType = DsonReaderUtils.wireTypeOfFloat(value);
+        WireType wireType = WireType.bestOfFloat(value);
         DsonOutput output = this.output;
-        writeFullTypeAndCurrentName(output, DsonType.FLOAT, wireType);
-        DsonReaderUtils.writeFloat(output, value, wireType);
+        writeFullTypeAndCurrentName(output, DsonType.FLOAT, wireType.getNumber());
+        wireType.writeFloat(output, value);
     }
 
     @Override
     protected void doWriteDouble(double value) {
-        int wireType = DsonReaderUtils.wireTypeOfDouble(value);
+        WireType wireType = WireType.bestOfDouble(value);
         DsonOutput output = this.output;
-        writeFullTypeAndCurrentName(output, DsonType.DOUBLE, wireType);
-        DsonReaderUtils.writeDouble(output, value, wireType);
+        writeFullTypeAndCurrentName(output, DsonType.DOUBLE, wireType.getNumber());
+        wireType.writeDouble(output, value);
     }
 
     @Override

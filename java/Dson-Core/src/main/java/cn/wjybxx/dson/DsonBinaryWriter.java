@@ -114,18 +114,18 @@ public class DsonBinaryWriter extends AbstractDsonWriter {
 
     @Override
     protected void doWriteFloat(float value, INumberStyle style) {
-        int wireType = DsonReaderUtils.wireTypeOfFloat(value);
+        WireType wireType = WireType.bestOfFloat(value);
         DsonOutput output = this.output;
-        writeFullTypeAndCurrentName(output, DsonType.FLOAT, wireType);
-        DsonReaderUtils.writeFloat(output, value, wireType);
+        writeFullTypeAndCurrentName(output, DsonType.FLOAT, wireType.getNumber());
+        wireType.writeFloat(output, value);
     }
 
     @Override
     protected void doWriteDouble(double value, INumberStyle style) {
-        int wireType = DsonReaderUtils.wireTypeOfDouble(value);
+        WireType wireType = WireType.bestOfDouble(value);
         DsonOutput output = this.output;
-        writeFullTypeAndCurrentName(output, DsonType.DOUBLE, wireType);
-        DsonReaderUtils.writeDouble(output, value, wireType);
+        writeFullTypeAndCurrentName(output, DsonType.DOUBLE, wireType.getNumber());
+        wireType.writeDouble(output, value);
     }
 
     @Override

@@ -43,7 +43,7 @@ public class LinkedHashSetTest
                 linkedHashSet.Remove(key);
                 continue;
             }
-            var next = Random.Shared.Next();
+            int next = Random.Shared.Next();
             if (keySet.Add(next)) {
                 keyList.Add(next);
                 linkedHashSet.Add(next);
@@ -109,9 +109,9 @@ public class LinkedHashSetTest
 
     [Test]
     public void TestAdjustCapacity() {
-        LinkedHashSet<string> dictionary = TestStringSet(10000);
-        dictionary.AdjustCapacity(15000);
-        dictionary.AdjustCapacity(10001);
-        dictionary.AdjustCapacity(10000);
+        LinkedHashSet<string> hashSet = TestStringSet(10000);
+        hashSet.AdjustCapacity(15000);
+        hashSet.AdjustCapacity(10001);
+        hashSet.AdjustCapacity(10000);
     }
 }

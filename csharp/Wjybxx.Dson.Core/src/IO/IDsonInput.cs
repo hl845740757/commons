@@ -30,19 +30,15 @@ public interface IDsonInput : IDisposable
 
     int ReadFixed16();
 
-    int ReadInt32();
+    int ReadUInt32();
 
-    int ReadUint32();
-
-    int ReadSint32();
+    int ReadSInt32();
 
     int ReadFixed32();
 
-    long ReadInt64();
+    long ReadUInt64();
 
-    long ReadUint64();
-
-    long ReadSint64();
+    long ReadSInt64();
 
     long ReadFixed64();
 
@@ -53,10 +49,22 @@ public interface IDsonInput : IDisposable
     float ReadFloat();
 
     /// <summary>
+    /// 读取变长编码的Float
+    /// </summary>
+    /// <returns></returns>
+    float ReadVarFloat();
+
+    /// <summary>
     /// 该接口固定读取8字节
     /// </summary>
     /// <returns></returns>
     double ReadDouble();
+
+    /// <summary>
+    /// 读取变长编码的Double
+    /// </summary>
+    /// <returns></returns>
+    double ReadVarDouble();
 
     /// <summary>
     /// 该接口固定读取一个字节

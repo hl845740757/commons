@@ -92,9 +92,9 @@ public class DsonOutputs {
         }
 
         @Override
-        public void writeInt32(int value) {
+        public void writeUInt32(int value) {
             try {
-                int newPos = CodedUtils.writeInt32(buffer, bufferPos, value);
+                int newPos = CodedUtils.writeUInt32(buffer, bufferPos, value);
                 bufferPos = CheckNewBufferPos(newPos);
             } catch (Exception e) {
                 throw DsonIOException.wrap(e, "buffer overflow");
@@ -102,19 +102,9 @@ public class DsonOutputs {
         }
 
         @Override
-        public void writeUint32(int value) {
+        public void writeSInt32(int value) {
             try {
-                int newPos = CodedUtils.writeUint32(buffer, bufferPos, value);
-                bufferPos = CheckNewBufferPos(newPos);
-            } catch (Exception e) {
-                throw DsonIOException.wrap(e, "buffer overflow");
-            }
-        }
-
-        @Override
-        public void writeSint32(int value) {
-            try {
-                int newPos = CodedUtils.writeSint32(buffer, bufferPos, value);
+                int newPos = CodedUtils.writeSInt32(buffer, bufferPos, value);
                 bufferPos = CheckNewBufferPos(newPos);
             } catch (Exception e) {
                 throw DsonIOException.wrap(e, "buffer overflow");
@@ -132,9 +122,9 @@ public class DsonOutputs {
         }
 
         @Override
-        public void writeInt64(long value) {
+        public void writeUInt64(long value) {
             try {
-                int newPos = CodedUtils.writeInt64(buffer, bufferPos, value);
+                int newPos = CodedUtils.writeUInt64(buffer, bufferPos, value);
                 bufferPos = CheckNewBufferPos(newPos);
             } catch (Exception e) {
                 throw DsonIOException.wrap(e, "buffer overflow");
@@ -142,19 +132,9 @@ public class DsonOutputs {
         }
 
         @Override
-        public void writeUint64(long value) {
+        public void writeSInt64(long value) {
             try {
-                int newPos = CodedUtils.writeUint64(buffer, bufferPos, value);
-                bufferPos = CheckNewBufferPos(newPos);
-            } catch (Exception e) {
-                throw DsonIOException.wrap(e, "buffer overflow");
-            }
-        }
-
-        @Override
-        public void writeSint64(long value) {
-            try {
-                int newPos = CodedUtils.writeSint64(buffer, bufferPos, value);
+                int newPos = CodedUtils.writeSInt64(buffer, bufferPos, value);
                 bufferPos = CheckNewBufferPos(newPos);
             } catch (Exception e) {
                 throw DsonIOException.wrap(e, "buffer overflow");
@@ -182,6 +162,16 @@ public class DsonOutputs {
         }
 
         @Override
+        public void writeVarFloat(float value) {
+            try {
+                int newPos = CodedUtils.writeVarFloat(buffer, bufferPos, value);
+                bufferPos = CheckNewBufferPos(newPos);
+            } catch (Exception e) {
+                throw DsonIOException.wrap(e, "buffer overflow");
+            }
+        }
+
+        @Override
         public void writeDouble(double value) {
             try {
                 int newPos = CodedUtils.writeDouble(buffer, bufferPos, value);
@@ -192,9 +182,19 @@ public class DsonOutputs {
         }
 
         @Override
+        public void writeVarDouble(double value) {
+            try {
+                int newPos = CodedUtils.writeVarDouble(buffer, bufferPos, value);
+                bufferPos = CheckNewBufferPos(newPos);
+            } catch (Exception e) {
+                throw DsonIOException.wrap(e, "buffer overflow");
+            }
+        }
+
+        @Override
         public void writeBool(boolean value) {
             try {
-                int newPos = CodedUtils.writeUint32(buffer, bufferPos, value ? 1 : 0);
+                int newPos = CodedUtils.writeUInt32(buffer, bufferPos, value ? 1 : 0);
                 bufferPos = CheckNewBufferPos(newPos);
             } catch (Exception e) {
                 throw DsonIOException.wrap(e, "buffer overflow");
@@ -211,12 +211,12 @@ public class DsonOutputs {
                     // len占用的字节数是可提前确定的，因此无需额外的字节数计算，可直接编码
                     int newPos = bufferPos + minByteCountVarIntSize;
                     int byteCount = Utf8Util.utf8Encode(value, buffer, newPos, bufferPosLimit - newPos);
-                    CodedUtils.writeUint32(buffer, bufferPos, byteCount);
+                    CodedUtils.writeUInt32(buffer, bufferPos, byteCount);
                     bufferPos = CheckNewBufferPos(newPos + byteCount);
                 } else {
                     // 注意，这里写的编码后的字节长度；而不是字符串长度 -- 提前计算UTF8的长度是很有用的方法
                     int byteCount = Utf8Util.utf8Length(value);
-                    int newPos = CodedUtils.writeUint32(buffer, bufferPos, byteCount);
+                    int newPos = CodedUtils.writeUInt32(buffer, bufferPos, byteCount);
                     if (byteCount > 0) {
                         CheckNewBufferPos(newPos + byteCount);
                         Utf8Util.utf8Encode(value, buffer, newPos, bufferPosLimit - newPos);

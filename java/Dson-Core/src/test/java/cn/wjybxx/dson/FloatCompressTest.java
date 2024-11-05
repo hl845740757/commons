@@ -33,8 +33,8 @@ public class FloatCompressTest {
 
     private static final int COUNT = 100000;
     /**
-     * delta如果是不能2进制精确表达的，那么是不能节省字节的；
      * delta如果是能2进制精确表达的，才可以节省存储空间。
+     * delta如果是不能2进制精确表达的，那么是不能节省字节的；
      */
     private static final float FLOAT_DELTA = 0.0625F;
     private static final double DOUBLE_DELTA = 0.0625D;
@@ -48,8 +48,8 @@ public class FloatCompressTest {
             for (int i = 0; i < COUNT; i++) {
                 float v = i * FLOAT_DELTA;
                 valueArray[i] = v;
-                int wireType = DsonReaderUtils.wireTypeOfFloat(v);
-                DsonReaderUtils.writeFloat(dsonOutput, v, wireType);
+                WireType wireType = WireType.bestOfFloat(v);
+                wireType.writeFloat(dsonOutput, v);
             }
             dsonOutput.flush();
             totalSize = dsonOutput.getPosition();
@@ -57,8 +57,8 @@ public class FloatCompressTest {
         try (DsonInput dsonInput = DsonInputs.newInstance(buffer, 0, totalSize)) {
             for (int i = 0; i < COUNT; i++) {
                 float v = valueArray[i];
-                int wireType = DsonReaderUtils.wireTypeOfFloat(v);
-                float v2 = DsonReaderUtils.readFloat(dsonInput, wireType);
+                WireType wireType = WireType.bestOfFloat(v);
+                float v2 = wireType.readFloat(dsonInput);
                 Assertions.assertEquals(v, v2);
             }
         }
@@ -74,8 +74,8 @@ public class FloatCompressTest {
             for (int i = 0; i < COUNT; i++) {
                 double v = i * DOUBLE_DELTA;
                 valueArray[i] = v;
-                int wireType = DsonReaderUtils.wireTypeOfDouble(v);
-                DsonReaderUtils.writeDouble(dsonOutput, v, wireType);
+                WireType wireType = WireType.bestOfDouble(v);
+                wireType.writeDouble(dsonOutput, v);
             }
             dsonOutput.flush();
             totalSize = dsonOutput.getPosition();
@@ -83,8 +83,8 @@ public class FloatCompressTest {
         try (DsonInput dsonInput = DsonInputs.newInstance(buffer, 0, totalSize)) {
             for (int i = 0; i < COUNT; i++) {
                 double v = valueArray[i];
-                int wireType = DsonReaderUtils.wireTypeOfDouble(v);
-                double v2 = DsonReaderUtils.readDouble(dsonInput, wireType);
+                WireType wireType = WireType.bestOfDouble(v);
+                double v2 = wireType.readDouble(dsonInput);
                 Assertions.assertEquals(v, v2);
             }
         }

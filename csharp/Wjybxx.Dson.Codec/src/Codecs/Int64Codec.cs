@@ -29,7 +29,7 @@ public class Int64Codec : IDsonCodec<long>
         INumberStyle numberStyle = declaredType == typeof(long)
             ? NumberStyles.Simple
             : NumberStyles.Typed;
-        writer.WriteLong(null, inst, WireType.VarInt, numberStyle);
+        writer.WriteLong(null, inst, WireType.Uint, numberStyle);
     }
 
     public long ReadObject(IDsonObjectReader reader, Func<long>? factory = null) {

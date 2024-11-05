@@ -17,7 +17,7 @@ namespace Wjybxx.Dson.Tests.Apt
     public override Type GetEncoderType() => typeof(ThirdPartyBean);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref ThirdPartyBean inst) {
-      writer.WriteInt(names_age, inst.Age, WireType.VarInt, NumberStyles.Simple);
+      writer.WriteInt(names_age, inst.Age, WireType.Uint, NumberStyles.Simple);
       writer.WriteString(names_name, inst.Name, StringStyle.Auto);
     }
 

@@ -18,7 +18,6 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using Wjybxx.Dson.IO;
 using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
 
@@ -173,13 +172,24 @@ public interface IDsonObjectWriter : IDisposable
 
     #region 快捷方法
 
+    // 这里使用simple -- 外部通常包含明确类型
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteInt(string? name, int value, WireType wireType = WireType.VarInt) {
-        WriteInt(name, value, wireType, NumberStyles.Simple); // 这里使用simple -- 外部通常包含明确类型
+    void WriteInt(string? name, int value) {
+        WriteInt(name, value, WireTypes.BestOfInt32(value), NumberStyles.Simple);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteLong(string? name, long value, WireType wireType = WireType.VarInt) {
+    void WriteInt(string? name, int value, WireType wireType) {
+        WriteInt(name, value, wireType, NumberStyles.Simple);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void WriteLong(string? name, long value) {
+        WriteLong(name, value, WireTypes.BestOfInt64(value), NumberStyles.Simple);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void WriteLong(string? name, long value, WireType wireType) {
         WriteLong(name, value, wireType, NumberStyles.Simple);
     }
 

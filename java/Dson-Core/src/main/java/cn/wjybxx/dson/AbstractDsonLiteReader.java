@@ -431,7 +431,7 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
     /** 限用于读取容器后恢复上下文 */
     protected final void recoverDsonType(Context context) {
         this.currentDsonType = Objects.requireNonNull(context.dsonType);
-        this.currentWireType = WireType.VARINT;
+        this.currentWireType = WireType.UINT;
         this.currentWireTypeBits = 0;
         this.currentName = context.name;
     }

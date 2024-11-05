@@ -123,7 +123,7 @@ public static class DsonTexts
         }
         return char.IsWhiteSpace((char)c);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsUnsafePrintChar(int c) {
         if (c < 128) { // BitArray不能访问索引外的字符

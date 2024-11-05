@@ -80,7 +80,7 @@ public @interface DsonProperty {
      * 数字类型属性的编码格式
      * 设定合适的类型有助于优化二进制编码，修改该值不产生兼容性问题。
      */
-    WireType wireType() default WireType.VARINT;
+    WireType wireType() default WireType.UINT;
 
     /**
      * 数据关联的{@link DsonType}，配合{@link #dsonSubType()}使用

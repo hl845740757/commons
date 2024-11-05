@@ -83,7 +83,7 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
         int fullType = _input.IsAtEnd() ? 0 : _input.ReadRawByte();
         int wreTypeBits = Dsons.WireTypeOfFullType(fullType);
         DsonType dsonType = DsonTypes.ForNumber(Dsons.DsonTypeOfFullType(fullType));
-        WireType wireType = dsonType.HasWireType() ? WireTypes.ForNumber(wreTypeBits) : WireType.VarInt;
+        WireType wireType = dsonType.HasWireType() ? WireTypes.ForNumber(wreTypeBits) : WireType.Uint;
         this.currentDsonType = dsonType;
         this.currentWireType = wireType;
         this.currentWireTypeBits = wreTypeBits;
@@ -109,7 +109,7 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
             }
             _textReader.currentName = filedName;
         } else {
-            _binReader!.currentName = FieldNumber.OfFullNumber(_input.ReadUint32());
+            _binReader!.currentName = FieldNumber.OfFullNumber(_input.ReadUInt32());
         }
     }
 
@@ -118,19 +118,19 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
     #region 简单值
 
     protected override int DoReadInt32() {
-        return DsonReaderUtils.ReadInt32(_input, currentWireType);
+        return currentWireType.ReadInt32(_input);
     }
 
     protected override long DoReadInt64() {
-        return DsonReaderUtils.ReadInt64(_input, currentWireType);
+        return currentWireType.ReadInt64(_input);
     }
 
     protected override float DoReadFloat() {
-        return DsonReaderUtils.ReadFloat(_input, currentWireTypeBits);
+        return currentWireType.ReadFloat(_input);
     }
 
     protected override double DoReadDouble() {
-        return DsonReaderUtils.ReadDouble(_input, currentWireTypeBits);
+        return currentWireType.ReadDouble(_input);
     }
 
     protected override bool DoReadBool() {
@@ -204,12 +204,12 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
     protected override void DoSkipName() {
         if (_textReader != null) {
             // 避免构建字符串
-            int size = _input.ReadUint32();
+            int size = _input.ReadUInt32();
             if (size > 0) {
                 _input.SkipRawBytes(size);
             }
         } else {
-            _input.ReadUint32();
+            _input.ReadUInt32();
         }
     }
 

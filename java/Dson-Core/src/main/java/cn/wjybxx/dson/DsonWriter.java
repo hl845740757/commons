@@ -92,6 +92,14 @@ public interface DsonWriter extends AutoCloseable {
         writeInt64(name, value, wireType, NumberStyle.TYPED);
     }
 
+    default void writeInt32(String name, int value) {
+        writeInt32(name, value, WireType.bestOfInt32(value), NumberStyle.TYPED);
+    }
+
+    default void writeInt64(String name, long value) {
+        writeInt64(name, value, WireType.bestOfInt64(value), NumberStyle.TYPED);
+    }
+
     default void writeFloat(String name, float value) {
         writeFloat(name, value, NumberStyle.TYPED);
     }

@@ -105,6 +105,8 @@ public static class DsonTypes
         {
             DsonType.Int32 => true,
             DsonType.Int64 => true,
+            DsonType.Float => true,
+            DsonType.Double => true,
             _ => false
         };
     }

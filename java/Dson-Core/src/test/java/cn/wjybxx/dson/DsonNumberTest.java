@@ -54,8 +54,8 @@ public class DsonNumberTest {
                     }
                     DsonNumber dsonNumber = dsonValue.asDsonNumber();
                     switch (dsonNumber.getDsonType()) {
-                        case INT32 -> writer.writeInt32(name, dsonNumber.intValue(), WireType.VARINT, style);
-                        case INT64 -> writer.writeInt64(name, dsonNumber.longValue(), WireType.VARINT, style);
+                        case INT32 -> writer.writeInt32(name, dsonNumber.intValue(), WireType.UINT, style);
+                        case INT64 -> writer.writeInt64(name, dsonNumber.longValue(), WireType.UINT, style);
                         case FLOAT ->
                                 writer.writeFloat(name, dsonNumber.floatValue(), supportFloat ? style : NumberStyle.TYPED);
                         case DOUBLE ->

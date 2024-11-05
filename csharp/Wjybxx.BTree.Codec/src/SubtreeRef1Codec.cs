@@ -40,7 +40,7 @@ public sealed class SubtreeRef1Codec<T> : AbstractDsonCodec<SubtreeRef<T>> where
 
     protected override void WriteFields(IDsonObjectWriter writer, ref SubtreeRef<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
         writer.WriteString(names_subtreeName, inst.SubtreeName, StringStyle.Auto);
     }

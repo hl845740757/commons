@@ -79,7 +79,7 @@ public final class DsonBinaryReader extends AbstractDsonReader {
         final int fullType = input.isAtEnd() ? 0 : Byte.toUnsignedInt(input.readRawByte());
         final int wreTypeBits = Dsons.wireTypeOfFullType(fullType);
         DsonType dsonType = DsonType.forNumber(Dsons.dsonTypeOfFullType(fullType));
-        WireType wireType = dsonType.hasWireType() ? WireType.forNumber(wreTypeBits) : WireType.VARINT;
+        WireType wireType = dsonType.hasWireType() ? WireType.forNumber(wreTypeBits) : WireType.UINT;
         this.currentDsonType = dsonType;
         this.currentWireType = wireType;
         this.currentWireTypeBits = wreTypeBits;
@@ -124,12 +124,12 @@ public final class DsonBinaryReader extends AbstractDsonReader {
 
     @Override
     protected float doReadFloat() {
-        return DsonReaderUtils.readFloat(input, currentWireTypeBits);
+        return currentWireType.readFloat(input);
     }
 
     @Override
     protected double doReadDouble() {
-        return DsonReaderUtils.readDouble(input, currentWireTypeBits);
+        return currentWireType.readDouble(input);
     }
 
     @Override
@@ -214,7 +214,7 @@ public final class DsonBinaryReader extends AbstractDsonReader {
     @Override
     protected void doSkipName() {
         // 避免构建字符串
-        int size = input.readUint32();
+        int size = input.readUInt32();
         if (size > 0) {
             input.skipRawBytes(size);
         }

@@ -8,9 +8,9 @@ Dson提供了两个版本的二进制格式，从整体上看他们是一样的�
 ## number映射字段方案
 
   <pre>
-   length1  [dsonType + wireType] +  [lnumber  +  idep] + [length2] + [subType] + [hasValue] + [data] ...
-    4Bytes    5 bits     3 bits        n bits  3 bits     4 Bytes     1~5 Byte      1Byte      0~n Bytes
-    总长度      1 Byte(unit8)             1~n Byte          int32      unit32
+   [dsonType + wireType] + length1   +  [lnumber  +  idep] + [length2] + [subType] + [hasValue] + [data] ...
+    5 bits     3 bits       4Bytes         n bits  3 bits     4 Bytes     1~5 Byte      1Byte      0~n Bytes
+      1 Byte(unit8)         总长度            1~n Byte           int32      unit32
   </pre>
 
 ### length1区域

@@ -79,7 +79,7 @@ public final class DsonLiteBinaryReader extends AbstractDsonLiteReader {
         final int fullType = input.isAtEnd() ? 0 : Byte.toUnsignedInt(input.readRawByte());
         final int wreTypeBits = Dsons.wireTypeOfFullType(fullType);
         DsonType dsonType = DsonType.forNumber(Dsons.dsonTypeOfFullType(fullType));
-        WireType wireType = dsonType.hasWireType() ? WireType.forNumber(wreTypeBits) : WireType.VARINT;
+        WireType wireType = dsonType.hasWireType() ? WireType.forNumber(wreTypeBits) : WireType.UINT;
         this.currentDsonType = dsonType;
         this.currentWireType = wireType;
         this.currentWireTypeBits = wreTypeBits;
@@ -100,7 +100,7 @@ public final class DsonLiteBinaryReader extends AbstractDsonLiteReader {
 
     @Override
     protected void doReadName() {
-        currentName = input.readUint32();
+        currentName = input.readUInt32();
     }
 
     // endregion
@@ -119,12 +119,12 @@ public final class DsonLiteBinaryReader extends AbstractDsonLiteReader {
 
     @Override
     protected float doReadFloat() {
-        return DsonReaderUtils.readFloat(input, currentWireTypeBits);
+        return currentWireType.readFloat(input);
     }
 
     @Override
     protected double doReadDouble() {
-        return DsonReaderUtils.readDouble(input, currentWireTypeBits);
+        return currentWireType.readDouble(input);
     }
 
     @Override
@@ -208,7 +208,7 @@ public final class DsonLiteBinaryReader extends AbstractDsonLiteReader {
 
     @Override
     protected void doSkipName() {
-        input.readUint32();
+        input.readUInt32();
     }
 
     @Override

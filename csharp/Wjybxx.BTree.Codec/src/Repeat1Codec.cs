@@ -42,11 +42,11 @@ public sealed class Repeat1Codec<T> : AbstractDsonCodec<Repeat<T>> where T : cla
 
     protected override void WriteFields(IDsonObjectWriter writer, ref Repeat<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
-        writer.WriteInt(names_maxLoop, inst.MaxLoop, WireType.VarInt, NumberStyles.Simple);
-        writer.WriteInt(names_countMode, inst.CountMode, WireType.VarInt, NumberStyles.Simple);
-        writer.WriteInt(names_required, inst.Required, WireType.VarInt, NumberStyles.Simple);
+        writer.WriteInt(names_maxLoop, inst.MaxLoop, WireType.Uint, NumberStyles.Simple);
+        writer.WriteInt(names_countMode, inst.CountMode, WireType.Uint, NumberStyles.Simple);
+        writer.WriteInt(names_required, inst.Required, WireType.Uint, NumberStyles.Simple);
     }
 
     protected override Repeat<T> NewInstance(IDsonObjectReader reader) {

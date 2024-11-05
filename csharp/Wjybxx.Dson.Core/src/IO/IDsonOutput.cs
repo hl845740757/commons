@@ -38,19 +38,15 @@ public interface IDsonOutput : IDisposable
 
     void WriteFixed16(int value);
 
-    void WriteInt32(int value);
+    void WriteUInt32(int value);
 
-    void WriteUint32(int value);
-
-    void WriteSint32(int value);
+    void WriteSInt32(int value);
 
     void WriteFixed32(int value);
 
-    void WriteInt64(long value);
+    void WriteUInt64(long value);
 
-    void WriteUint64(long value);
-
-    void WriteSint64(long value);
+    void WriteSInt64(long value);
 
     void WriteFixed64(long value);
 
@@ -61,10 +57,22 @@ public interface IDsonOutput : IDisposable
     void WriteFloat(float value);
 
     /// <summary>
+    /// 以变长编码格式写入Float
+    /// </summary>
+    /// <param name="value"></param>
+    void WriteVarFloat(float value);
+
+    /// <summary>
     /// 该接口固定写入8个字节
     /// </summary>
     /// <param name="value"></param>
     void WriteDouble(double value);
+
+    /// <summary>
+    /// 以变长编码格式写入Double
+    /// </summary>
+    /// <param name="value"></param>
+    void WriteVarDouble(double value);
 
     /// <summary>
     /// 该接口固定写入一个字节

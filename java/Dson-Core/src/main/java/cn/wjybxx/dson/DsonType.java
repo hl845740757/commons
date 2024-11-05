@@ -100,7 +100,7 @@ public enum DsonType {
     /** {@link WireType} */
     public boolean hasWireType() {
         return switch (this) {
-            case INT32, INT64 -> true;
+            case INT32, INT64, FLOAT, DOUBLE -> true;
             default -> false;
         };
     }
@@ -121,7 +121,9 @@ public enum DsonType {
     }
 
     public static DsonType forNumber(int number) {
-        return LOOK_UP[number];
+        DsonType dsonType = LOOK_UP[number];
+        if (dsonType == null) throw new IllegalArgumentException("invalid number: " + number);
+        return dsonType;
     }
 
 }

@@ -196,7 +196,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
 
         DsonType dsonType = ReadDsonTypeOfToken();
         this.currentDsonType = dsonType;
-        this.currentWireType = WireType.VarInt;
+        this.currentWireType = WireType.Uint;
         this.currentName = default!;
 
         OnReadDsonType(context, dsonType);

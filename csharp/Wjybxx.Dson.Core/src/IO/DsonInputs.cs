@@ -100,9 +100,9 @@ public static class DsonInputs
             }
         }
 
-        public int ReadInt32() {
+        public int ReadUInt32() {
             try {
-                int r = CodedUtil.ReadInt32(_buffer, _bufferPos, out int newPos);
+                int r = CodedUtil.ReadUInt32(_buffer, _bufferPos, out int newPos);
                 _bufferPos = CheckNewBufferPos(newPos);
                 return r;
             }
@@ -111,20 +111,9 @@ public static class DsonInputs
             }
         }
 
-        public int ReadUint32() {
+        public int ReadSInt32() {
             try {
-                int r = CodedUtil.ReadUint32(_buffer, _bufferPos, out int newPos);
-                _bufferPos = CheckNewBufferPos(newPos);
-                return r;
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
-        }
-
-        public int ReadSint32() {
-            try {
-                int r = CodedUtil.ReadSint32(_buffer, _bufferPos, out int newPos);
+                int r = CodedUtil.ReadSInt32(_buffer, _bufferPos, out int newPos);
                 _bufferPos = CheckNewBufferPos(newPos);
                 return r;
             }
@@ -144,9 +133,9 @@ public static class DsonInputs
             }
         }
 
-        public long ReadInt64() {
+        public long ReadUInt64() {
             try {
-                long r = CodedUtil.ReadInt64(_buffer, _bufferPos, out int newPos);
+                long r = CodedUtil.ReadUInt64(_buffer, _bufferPos, out int newPos);
                 _bufferPos = CheckNewBufferPos(newPos);
                 return r;
             }
@@ -155,20 +144,9 @@ public static class DsonInputs
             }
         }
 
-        public long ReadUint64() {
+        public long ReadSInt64() {
             try {
-                long r = CodedUtil.ReadUint64(_buffer, _bufferPos, out int newPos);
-                _bufferPos = CheckNewBufferPos(newPos);
-                return r;
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
-        }
-
-        public long ReadSint64() {
-            try {
-                long r = CodedUtil.ReadSint64(_buffer, _bufferPos, out int newPos);
+                long r = CodedUtil.ReadSInt64(_buffer, _bufferPos, out int newPos);
                 _bufferPos = CheckNewBufferPos(newPos);
                 return r;
             }
@@ -199,9 +177,31 @@ public static class DsonInputs
             }
         }
 
+        public float ReadVarFloat() {
+            try {
+                float r = CodedUtil.ReadVarFloat(_buffer, _bufferPos, out int newPos);
+                _bufferPos = CheckNewBufferPos(newPos);
+                return r;
+            }
+            catch (Exception e) {
+                throw DsonIOException.Wrap(e, "buffer overflow");
+            }
+        }
+
         public double ReadDouble() {
             try {
                 double r = CodedUtil.ReadDouble(_buffer, _bufferPos, out int newPos);
+                _bufferPos = CheckNewBufferPos(newPos);
+                return r;
+            }
+            catch (Exception e) {
+                throw DsonIOException.Wrap(e, "buffer overflow");
+            }
+        }
+
+        public double ReadVarDouble() {
+            try {
+                double r = CodedUtil.ReadVarDouble(_buffer, _bufferPos, out int newPos);
                 _bufferPos = CheckNewBufferPos(newPos);
                 return r;
             }
@@ -217,7 +217,7 @@ public static class DsonInputs
 
         public string ReadString() {
             try {
-                int len = CodedUtil.ReadUint32(_buffer, _bufferPos, out int newPos); // 字符串长度
+                int len = CodedUtil.ReadUInt32(_buffer, _bufferPos, out int newPos); // 字符串长度
                 CheckNewBufferPos(newPos + len); // 先检查，避免构建无效字符串
 
                 string r = Encoding.UTF8.GetString(_buffer, newPos, len);
