@@ -32,11 +32,6 @@ internal static class CodedUtil
     private const uint INT_CODED_MASK3 = (~0U) << 21;
     private const uint INT_CODED_MASK4 = (~0U) << 28;
 
-    private const uint INT_BIG_ENDIAN_MASK1 = (~0U) >> 7;
-    private const uint INT_BIG_ENDIAN_MASK2 = (~0U) >> 14;
-    private const uint INT_BIG_ENDIAN_MASK3 = (~0U) >> 21;
-    private const uint INT_BIG_ENDIAN_MASK4 = (~0U) >> 28;
-
     private const ulong LONG_CODED_MASK1 = (~0UL) << 7;
     private const ulong LONG_CODED_MASK2 = (~0UL) << 14;
     private const ulong LONG_CODED_MASK3 = (~0UL) << 21;
@@ -46,16 +41,6 @@ internal static class CodedUtil
     private const ulong LONG_CODED_MASK7 = (~0UL) << 49;
     private const ulong LONG_CODED_MASK8 = (~0UL) << 56;
     private const ulong LONG_CODED_MASK9 = (~0UL) << 63;
-
-    private const ulong LONG_BIG_ENDIAN_MASK1 = (~0UL) >> 7;
-    private const ulong LONG_BIG_ENDIAN_MASK2 = (~0UL) >> 14;
-    private const ulong LONG_BIG_ENDIAN_MASK3 = (~0UL) >> 21;
-    private const ulong LONG_BIG_ENDIAN_MASK4 = (~0UL) >> 28;
-    private const ulong LONG_BIG_ENDIAN_MASK5 = (~0UL) >> 35;
-    private const ulong LONG_BIG_ENDIAN_MASK6 = (~0UL) >> 42;
-    private const ulong LONG_BIG_ENDIAN_MASK7 = (~0UL) >> 49;
-    private const ulong LONG_BIG_ENDIAN_MASK8 = (~0UL) >> 56;
-    private const ulong LONG_BIG_ENDIAN_MASK9 = (~0UL) >> 63;
 
     /// <summary>
     /// 计算原始的32位变长整形的编码长度
@@ -107,143 +92,141 @@ internal static class CodedUtil
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int ReadUInt32(byte[] buffer, int pos, out int newPos) {
-        return (int)ReadRawVarInt32(buffer, pos, out newPos);
+        return ReadRawVarInt32(buffer, pos, out newPos);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static long ReadUInt64(byte[] buffer, int pos, out int newPos) {
-        return (long)ReadRawVarInt64(buffer, pos, out newPos);
+        return ReadRawVarInt64(buffer, pos, out newPos);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int ReadSInt32(byte[] buffer, int pos, out int newPos) {
-        uint rawBits = ReadRawVarInt32(buffer, pos, out newPos);
-        return DecodeZigZag32((int)rawBits);
+        int rawBits = ReadRawVarInt32(buffer, pos, out newPos);
+        return DecodeZigZag32(rawBits);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static long ReadSInt64(byte[] buffer, int pos, out int newPos) {
-        ulong rawBits = ReadRawVarInt64(buffer, pos, out newPos);
-        return DecodeZigZag64((long)rawBits);
+        long rawBits = ReadRawVarInt64(buffer, pos, out newPos);
+        return DecodeZigZag64(rawBits);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int ReadFixed16(byte[] buffer, int pos, out int newPos) {
-        uint rawBits = ReadRawFixed16(buffer, pos, out newPos);
-        return (int)rawBits;
+        return ReadRawFixed16(buffer, pos, out newPos);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int ReadFixed32(byte[] buffer, int pos, out int newPos) {
-        uint rawBits = ReadRawFixed32(buffer, pos, out newPos);
-        return (int)rawBits;
+        return ReadRawFixed32(buffer, pos, out newPos);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static long ReadFixed64(byte[] buffer, int pos, out int newPos) {
-        ulong rawBits = ReadRawFixed64(buffer, pos, out newPos);
-        return (long)rawBits;
+        return ReadRawFixed64(buffer, pos, out newPos);
     }
 
     //-------------------
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static float ReadFloat(byte[] buffer, int pos, out int newPos) {
-        uint rawBits = ReadRawFixed32(buffer, pos, out newPos);
+        int rawBits = ReadRawFixed32(buffer, pos, out newPos);
         return BitConverter.Int32BitsToSingle((int)rawBits);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static float ReadVarFloat(byte[] buffer, int pos, out int newPos) {
-        uint rawBits = ReadRawBigEndianVarInt32(buffer, pos, out newPos);
+        uint rawBits = ReadRawVarFloat32(buffer, pos, out newPos);
         return BitConverter.Int32BitsToSingle((int)rawBits);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static double ReadDouble(byte[] buffer, int pos, out int newPos) {
-        ulong rawBits = ReadRawFixed64(buffer, pos, out newPos);
+        long rawBits = ReadRawFixed64(buffer, pos, out newPos);
         return BitConverter.Int64BitsToDouble((long)rawBits);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static double ReadVarDouble(byte[] buffer, int pos, out int newPos) {
-        ulong rawBits = ReadRawBigEndianVarInt64(buffer, pos, out newPos);
-        return BitConverter.Int64BitsToDouble((long)rawBits);
+        long rawBits = ReadRawVarFloat64(buffer, pos, out newPos);
+        return BitConverter.Int64BitsToDouble(rawBits);
     }
 
     //-------------------
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static uint ReadRawFixed16(byte[] buffer, int pos, out int newPos) {
-        uint r = (((buffer[pos] & 0xffU))
-                  | ((buffer[pos + 1] & 0xffU) << 8));
+    private static int ReadRawFixed16(byte[] buffer, int pos, out int newPos) {
+        int r = (((buffer[pos] & 0xFF))
+                 | ((buffer[pos + 1] & 0xFF) << 8));
         newPos = pos + 2;
         return r;
     }
 
-    private static uint ReadRawFixed32(byte[] buffer, int pos, out int newPos) {
-        uint r = (((buffer[pos] & 0xffU))
-                  | ((buffer[pos + 1] & 0xffU) << 8)
-                  | ((buffer[pos + 2] & 0xffU) << 16)
-                  | ((buffer[pos + 3] & 0xffU) << 24));
+    private static int ReadRawFixed32(byte[] buffer, int pos, out int newPos) {
+        int r = (((buffer[pos] & 0xFF))
+                 | ((buffer[pos + 1] & 0xFF) << 8)
+                 | ((buffer[pos + 2] & 0xFF) << 16)
+                 | ((buffer[pos + 3] & 0xFF) << 24));
         newPos = pos + 4;
         return r;
     }
 
-    private static ulong ReadRawFixed64(byte[] buffer, int pos, out int newPos) {
-        ulong r = (((buffer[pos] & 0xffUL))
-                   | ((buffer[pos + 1] & 0xffUL) << 8)
-                   | ((buffer[pos + 2] & 0xffUL) << 16)
-                   | ((buffer[pos + 3] & 0xffUL) << 24)
-                   | ((buffer[pos + 4] & 0xffUL) << 32)
-                   | ((buffer[pos + 5] & 0xffUL) << 40)
-                   | ((buffer[pos + 6] & 0xffUL) << 48)
-                   | ((buffer[pos + 7] & 0xffUL) << 56));
+    private static long ReadRawFixed64(byte[] buffer, int pos, out int newPos) {
+        long r = (((buffer[pos] & 0xFFL))
+                  | ((buffer[pos + 1] & 0xFFL) << 8)
+                  | ((buffer[pos + 2] & 0xFFL) << 16)
+                  | ((buffer[pos + 3] & 0xFFL) << 24)
+                  | ((buffer[pos + 4] & 0xFFL) << 32)
+                  | ((buffer[pos + 5] & 0xFFL) << 40)
+                  | ((buffer[pos + 6] & 0xFFL) << 48)
+                  | ((buffer[pos + 7] & 0xFFL) << 56));
         newPos = pos + 8;
         return r;
     }
 
-    private static uint ReadRawVarInt32(byte[] buffer, int pos, out int newPos) {
+    private static int ReadRawVarInt32(byte[] buffer, int pos, out int newPos) {
         // 循环展开
         byte b = buffer[pos++];
-        uint r = (b & 127U);
+        int r = (b & 127);
         if (b < 128U) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127U) << 7;
+        r |= (b & 127) << 7;
         if (b < 128U) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127U) << 14;
+        r |= (b & 127) << 14;
         if (b < 128U) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127U) << 21;
+        r |= (b & 127) << 21;
         if (b < 128U) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127U) << 28; // 只有低4位有效
+        r |= (b & 127) << 28;
         if (b < 128U) {
             newPos = pos;
             return r;
         }
+        // 读取超过5个字节
         throw new DsonIOException("DsonInput encountered a malformed varint32.");
     }
 
-    private static ulong ReadRawVarInt64(byte[] buffer, int pos, out int newPos) {
+    private static long ReadRawVarInt64(byte[] buffer, int pos, out int newPos) {
         // int64循环展开的代码太长，还容易写错...
-        ulong r = 0;
+        long r = 0;
         int shift = 0;
         byte b;
         do {
             b = buffer[pos++];
-            r |= (b & 127UL) << shift; // 取后7位左移
+            r |= (b & 127L) << shift; // 取后7位左移
             if (b < 128U) { // 高位0
                 newPos = pos;
                 return r;
@@ -254,64 +237,51 @@ internal static class CodedUtil
         throw new DsonIOException("DsonInput encountered a malformed varint64.");
     }
 
-    private static uint ReadRawBigEndianVarInt32(byte[] buffer, int pos, out int newPos) {
-        // 循环展开
+    private static uint ReadRawVarFloat32(byte[] buffer, int pos, out int newPos) {
+        uint r = (buffer[pos++] & 0xFFU) << 24;
         byte b = buffer[pos++];
-        uint r = (b & 127U) << 25;
+        r |= (b & 127U) << 17;
         if (b < 128U) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127U) << 18;
+        r |= (b & 127U) << 10;
         if (b < 128U) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127U) << 11;
+        r |= (b & 127U) << 3;
         if (b < 128U) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127U) << 4;
+        r |= (b & 127U);
         if (b < 128U) {
             newPos = pos;
             return r;
         }
-        b = buffer[pos++];
-        r |= (b & 127U); // 只有低4位有效
-        if (b < 128U) {
-            newPos = pos;
-            return r;
-        }
-        throw new DsonIOException("DsonInput encountered a malformed big endian varint32.");
+        // 读取超过5个字节
+        throw new DsonIOException("DsonInput encountered a malformed varfloat32.");
     }
 
-    private static ulong ReadRawBigEndianVarInt64(byte[] buffer, int pos, out int newPos) {
-        // int64循环展开的代码太长，还容易写错...
-        ulong r = 0;
-        int shift = 57;
+    private static long ReadRawVarFloat64(byte[] buffer, int pos, out int newPos) {
+        long r = (buffer[pos++] & 0xFFL) << 56;
+        int shift = 49;
         byte b;
         do {
             b = buffer[pos++];
-            r |= (b & 127UL) << shift; // 取后7位左移
-            if (b < 128UL) { // 高位0
+            r |= (b & 127L) << shift; // 取后7位左移
+            if (b < 128U) { // 高位0
                 newPos = pos;
                 return r;
             }
             shift -= 7;
-        } while (shift > 0);
-        // 最后一个字节不移位
-        b = buffer[pos++];
-        r |= (b & 127UL);
-        if (b < 128UL) {
-            newPos = pos;
-            return r;
-        }
-        // 读取超过10个字节
-        throw new DsonIOException("DsonInput encountered a malformed big endian varint64.");
+        } while (shift >= 0);
+        // 读取超过9个字节
+        throw new DsonIOException("DsonInput encountered a malformed varfloat64.");
     }
 
     #endregion
@@ -320,69 +290,69 @@ internal static class CodedUtil
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteUInt32(byte[] buffer, int pos, int value) {
-        return WriteRawVarInt32(buffer, pos, (uint)value);
+        return WriteRawVarInt32(buffer, pos, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteUInt64(byte[] buffer, int pos, long value) {
-        return WriteRawVarInt64(buffer, pos, (ulong)value);
+        return WriteRawVarInt64(buffer, pos, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteSInt32(byte[] buffer, int pos, int value) {
-        return WriteRawVarInt32(buffer, pos, (uint)EncodeZigZag32(value));
+        return WriteRawVarInt32(buffer, pos, EncodeZigZag32(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteSInt64(byte[] buffer, int pos, long value) {
-        return WriteRawVarInt64(buffer, pos, (ulong)EncodeZigZag64(value));
+        return WriteRawVarInt64(buffer, pos, EncodeZigZag64(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteFixed16(byte[] buffer, int pos, int value) {
-        return WriteRawFixed16(buffer, pos, (uint)value);
+        return WriteRawFixed16(buffer, pos, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteFixed32(byte[] buffer, int pos, int value) {
-        return WriteRawFixed32(buffer, pos, (uint)value);
+        return WriteRawFixed32(buffer, pos, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteFixed64(byte[] buffer, int pos, long value) {
-        return WriteRawFixed64(buffer, pos, (ulong)value);
+        return WriteRawFixed64(buffer, pos, value);
     }
 
     //-------------------
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteFloat(byte[] buffer, int pos, float value) {
-        return WriteRawFixed32(buffer, pos, (uint)BitConverter.SingleToInt32Bits(value));
+        return WriteRawFixed32(buffer, pos, BitConverter.SingleToInt32Bits(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteVarFloat(byte[] buffer, int pos, float value) {
-        return WriteRawBigEndianVarInt32(buffer, pos, (uint)BitConverter.SingleToInt32Bits(value));
+        return WriteRawVarFloat32(buffer, pos, BitConverter.SingleToInt32Bits(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteDouble(byte[] buffer, int pos, double value) {
-        return WriteRawFixed64(buffer, pos, (ulong)BitConverter.DoubleToInt64Bits(value));
+        return WriteRawFixed64(buffer, pos, BitConverter.DoubleToInt64Bits(value));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteVarDouble(byte[] buffer, int pos, double value) {
-        return WriteRawBigEndianVarInt64(buffer, pos, (ulong)BitConverter.DoubleToInt64Bits(value));
+        return WriteRawVarFloat64(buffer, pos, BitConverter.DoubleToInt64Bits(value));
     }
 
     //-------------------
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int WriteRawFixed16(byte[] buffer, int pos, uint value) {
+    private static int WriteRawFixed16(byte[] buffer, int pos, int value) {
         buffer[pos] = (byte)value;
         buffer[pos + 1] = (byte)(value >> 8);
         return pos + 2;
     }
 
-    private static int WriteRawFixed32(byte[] buffer, int pos, uint value) {
+    private static int WriteRawFixed32(byte[] buffer, int pos, int value) {
         buffer[pos] = (byte)value;
         buffer[pos + 1] = (byte)(value >> 8);
         buffer[pos + 2] = (byte)(value >> 16);
@@ -390,7 +360,7 @@ internal static class CodedUtil
         return pos + 4;
     }
 
-    private static int WriteRawFixed64(byte[] buffer, int pos, ulong value) {
+    private static int WriteRawFixed64(byte[] buffer, int pos, long value) {
         buffer[pos] = (byte)value;
         buffer[pos + 1] = (byte)(value >> 8);
         buffer[pos + 2] = (byte)(value >> 16);
@@ -402,12 +372,13 @@ internal static class CodedUtil
         return pos + 8;
     }
 
-    private static int WriteRawVarInt32(byte[] buffer, int pos, uint value) {
+    private static int WriteRawVarInt32(byte[] buffer, int pos, int value) {
+        const int mask = (1 << 25) - 1; // 低25位1，实现逻辑右移7位
         while (true) {
-            uint b = (value & 127U); // 取低7位
-            value >>= 7;
+            int b = (value & 127); // 取低7位
+            value = (value >> 7) & mask;
             if (value != 0) {
-                buffer[pos++] = (byte)(b | 128U); // 高位补1
+                buffer[pos++] = (byte)(b | 128); // 高位补1
             } else {
                 buffer[pos++] = (byte)b;
                 return pos;
@@ -415,12 +386,13 @@ internal static class CodedUtil
         }
     }
 
-    private static int WriteRawVarInt64(byte[] buffer, int pos, ulong value) {
+    private static int WriteRawVarInt64(byte[] buffer, int pos, long value) {
+        const long mask = (1L << 57) - 1; // 低57位1，实现逻辑右移7位
         while (true) {
-            ulong b = (value & 127UL); // 取低7位
-            value >>= 7;
+            long b = (value & 127L); // 取低7位
+            value = (value >> 7) & mask;
             if (value != 0) {
-                buffer[pos++] = (byte)(b | 128Ul); // 高位补1
+                buffer[pos++] = (byte)(b | 128L); // 高位补1
             } else {
                 buffer[pos++] = (byte)b;
                 return pos;
@@ -428,12 +400,17 @@ internal static class CodedUtil
         }
     }
 
-    private static int WriteRawBigEndianVarInt32(byte[] buffer, int pos, uint value) {
+    private static int WriteRawVarFloat32(byte[] buffer, int pos, int value) {
+        // 高8位固定写入 -- 剩余采用变长编码，剩余24位，仍需要4字节
+        int b = (value >> 24) & 0xFF;
+        value <<= 8;
+        buffer[pos++] = (byte)b;
+
         while (true) {
-            uint b = (value & ~INT_BIG_ENDIAN_MASK1) >> 25; // 取高7位
+            b = (value >> 25) & 127; // 取高7位
             value <<= 7;
             if (value != 0) {
-                buffer[pos++] = (byte)(b | 128U); // 高位补1
+                buffer[pos++] = (byte)(b | 128); // 高位补1
             } else {
                 buffer[pos++] = (byte)b;
                 return pos;
@@ -441,12 +418,17 @@ internal static class CodedUtil
         }
     }
 
-    private static int WriteRawBigEndianVarInt64(byte[] buffer, int pos, ulong value) {
+    private static int WriteRawVarFloat64(byte[] buffer, int pos, long value) {
+        // 高8位固定写入 -- 剩余采用变长编码，剩余56位，刚好8字节
+        long b = (value >> 56) & 0xFFL;
+        value <<= 8;
+        buffer[pos++] = (byte)b;
+
         while (true) {
-            ulong b = (value & ~LONG_BIG_ENDIAN_MASK1) >> 57; // 取高7位
+            b = (value >> 57) & 127L; // 取高7位
             value <<= 7;
             if (value != 0) {
-                buffer[pos++] = (byte)(b | 128UL); // 高位补1
+                buffer[pos++] = (byte)(b | 128L); // 高位补1
             } else {
                 buffer[pos++] = (byte)b;
                 return pos;

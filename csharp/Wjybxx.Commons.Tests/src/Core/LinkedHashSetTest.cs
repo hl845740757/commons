@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 
 namespace Commons.Tests.Core;
@@ -80,8 +82,36 @@ public class LinkedHashSetTest
             Random.Shared.NextBytes(buffer);
             string next = Convert.ToHexString(buffer);
             string key = Random.Shared.Next(0, 10) == 0 ? null : next; // 随机使用nullKey
+            
+            // 还需要测试AddFirst
             if (linkedHashSet.Add(key)) {
                 keyList.Add(key);
+            }
+            // 随机删除元素 30%概率
+            if (linkedHashSet.Count > expectedCount / 2) {
+                int idx = -1;
+                switch (Random.Shared.Next(10)) {
+                    case 0: {
+                        // 随机位置
+                        idx = Random.Shared.Next(keyList.Count);
+                        break;
+                    }
+                    case 1: {
+                        // 删除首元素
+                        idx = 0;
+                        break;
+                    }
+                    case 2: {
+                        // 删除尾元素
+                        idx = keyList.Count - 1;
+                        break;
+                    }
+                }
+                if (idx >= 0) {
+                    string remKey = keyList[idx];
+                    keyList.RemoveAt(idx);
+                    linkedHashSet.Remove(remKey);
+                }
             }
         }
 
@@ -110,8 +140,21 @@ public class LinkedHashSetTest
     [Test]
     public void TestAdjustCapacity() {
         LinkedHashSet<string> hashSet = TestStringSet(10000);
-        hashSet.AdjustCapacity(15000);
-        hashSet.AdjustCapacity(10001);
-        hashSet.AdjustCapacity(10000);
+        string[] rawArray = hashSet.ToArray();
+        {
+            hashSet.AdjustCapacity(15000);
+            string[] copiedArray1 = hashSet.ToArray();
+            ArrayUtil.Equals(rawArray, copiedArray1);
+        }
+        {
+            hashSet.AdjustCapacity(10001);
+            string[] copiedArray2 = hashSet.ToArray();
+            ArrayUtil.Equals(rawArray, copiedArray2);
+        }
+        {
+            hashSet.AdjustCapacity(10000);
+            string[] copiedArray3 = hashSet.ToArray();
+            ArrayUtil.Equals(rawArray, copiedArray3);
+        }
     }
 }

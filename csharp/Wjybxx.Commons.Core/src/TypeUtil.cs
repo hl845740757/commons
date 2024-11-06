@@ -25,7 +25,7 @@ namespace Wjybxx.Commons
 /// <see cref="Type.GetGenericArguments"/>拿到的是编译时类型，可能是真实类型，也可能是T这样的泛型参数。
 /// <see cref="Type.GenericTypeArguments"/>拿到的是运行时类型 -- 可能为空数组。
 /// </summary>
-public static class TypeUtil
+internal static class TypeUtil
 {
     /// <summary>
     /// 获取的Type的简单名，不包含

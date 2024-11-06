@@ -158,32 +158,32 @@ public static class WireTypes
     public static double ReadDouble(this WireType wireType, IDsonInput input) {
         return wireType == WireType.Uint ? input.ReadVarDouble() : input.ReadDouble();
     }
-    
+
     #endregion
 
     #region 计算最佳WireType
 
-    private const int INT_COMPRESS_MASK = (1 << 21) - 1; // 低21位
-    private const long LONG_COMPRESS_MASK = (1L << 49) - 1; // 低49位
-    private const int FLOAT_COMPRESS_MASK = ~(-1 << 11); // 高21位
-    private const long DOUBLE_COMPRESS_MASK = ~(-1L << 15); // 高49位
+    private const int INT_THRESHOLD = (1 << 21) - 1; // 低21位全1
+    private const long LONG_THRESHOLD = (1L << 49) - 1; // 低49位全1
 
+    private const int FLOAT_COMPRESS_MASK = (1 << 10) - 1; // 低10位全1
+    private const long DOUBLE_COMPRESS_MASK = (1L << 14) - 1; // 低14位全1
 
     /** 计算int32的最佳序列化格式 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static WireType BestOfInt32(int value) {
-        if (value > INT_COMPRESS_MASK) return WireType.Fixed;
+        if (value > INT_THRESHOLD) return WireType.Fixed;
         if (value > 0) return WireType.Uint;
-        if (value > -(INT_COMPRESS_MASK / 2)) return WireType.Sint;
+        if (value > -(INT_THRESHOLD / 2)) return WireType.Sint;
         return WireType.Fixed;
     }
 
     /** 计算int64的最佳序列化格式 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static WireType BestOfInt64(long value) {
-        if (value > LONG_COMPRESS_MASK) return WireType.Fixed;
+        if (value > LONG_THRESHOLD) return WireType.Fixed;
         if (value > 0) return WireType.Uint;
-        if (value > -(LONG_COMPRESS_MASK / 2)) return WireType.Sint;
+        if (value > -(LONG_THRESHOLD / 2)) return WireType.Sint;
         return WireType.Fixed;
     }
 
@@ -191,7 +191,6 @@ public static class WireTypes
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static WireType BestOfFloat(float value) {
         int rawBits = BitConverter.SingleToInt32Bits(value);
-        // 当变长编码的开销更小时，使用变长编码 -- Float变长编码3字节可表达21个有效位，即后11位为0
         return (rawBits & FLOAT_COMPRESS_MASK) == 0 ? WireType.Uint : WireType.Fixed;
     }
 
@@ -199,7 +198,6 @@ public static class WireTypes
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static WireType BestOfDouble(double value) {
         long rawBits = BitConverter.DoubleToInt64Bits(value);
-        // 当变长编码的开销更小时，使用变长编码 -- Double变长编码7字节可表达49个有效位，即后15位为0
         return (rawBits & DOUBLE_COMPRESS_MASK) == 0 ? WireType.Uint : WireType.Fixed;
     }
 

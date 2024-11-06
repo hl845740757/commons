@@ -23,6 +23,7 @@ namespace Wjybxx.Commons.Collections
 {
 /// <summary>
 /// Set工具类
+/// 该类暂不兼容Unity —— Unity没有IReadOnlySet，拷贝到Unity时可删除该文件
 /// </summary>
 public static class SetExtension
 {

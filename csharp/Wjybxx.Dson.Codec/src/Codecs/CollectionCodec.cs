@@ -61,8 +61,8 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
             || typeInfo == typeof(LinkedHashSet<T>)) {
             return FactoryKind.LinkedHashSet;
         }
+        // Unity没有IReadOnlySet
         if (typeInfo == typeof(ISet<T>)
-            || typeInfo == typeof(IReadOnlySet<T>)
             || typeInfo == typeof(HashSet<T>)) {
             return FactoryKind.HashSet;
         }

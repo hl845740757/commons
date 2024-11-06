@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 
 namespace Commons.Tests.Core;
@@ -87,8 +89,35 @@ public class LinkedDictionaryTest
             Random.Shared.NextBytes(buffer);
             string next = Convert.ToHexString(buffer);
             string key = Random.Shared.Next(0, 10) == 0 ? null : next; // 随机使用nullKey
+            // 还需要测试AddFirst
             if (dictionary.TryAdd(key, next)) {
                 keyList.Add(key);
+            }
+            // 随机删除元素 30%概率
+            if (dictionary.Count > expectedCount / 2) {
+                int idx = -1;
+                switch (Random.Shared.Next(10)) {
+                    case 0: {
+                        // 随机位置
+                        idx = Random.Shared.Next(keyList.Count);
+                        break;
+                    }
+                    case 1: {
+                        // 删除首元素
+                        idx = 0;
+                        break;
+                    }
+                    case 2: {
+                        // 删除尾元素
+                        idx = keyList.Count - 1;
+                        break;
+                    }
+                }
+                if (idx >= 0) {
+                    string remKey = keyList[idx];
+                    keyList.RemoveAt(idx);
+                    dictionary.Remove(remKey);
+                }
             }
         }
 
@@ -117,9 +146,22 @@ public class LinkedDictionaryTest
     [Test]
     public void TestAdjustCapacity() {
         LinkedDictionary<string, string> dictionary = TestStringDic(10000);
-        dictionary.AdjustCapacity(15000);
-        dictionary.AdjustCapacity(10001);
-        dictionary.AdjustCapacity(10000);
+        var rawArray = dictionary.ToArray();
+        {
+            dictionary.AdjustCapacity(15000);
+            var copiedArray1 = dictionary.ToArray();
+            ArrayUtil.Equals(rawArray, copiedArray1);
+        }
+        {
+            dictionary.AdjustCapacity(10001);
+            var copiedArray2 = dictionary.ToArray();
+            ArrayUtil.Equals(rawArray, copiedArray2);
+        }
+        {
+            dictionary.AdjustCapacity(10000);
+            var copiedArray3 = dictionary.ToArray();
+            ArrayUtil.Equals(rawArray, copiedArray3);
+        }
     }
 
     [Test]

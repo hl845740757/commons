@@ -30,12 +30,18 @@ namespace Wjybxx.Commons.Collections
 /// 与C#系统库的ImmutableHashSet不同，这里的实现是基于拷贝的，且不支持增删元素；另外这里保持了元素的插入顺序。
 /// (主要解决Unity的兼容性问题，以及反序列化顺序问题)
 ///
-/// PS：该类虽然声明实现了<see cref="ISet{T}"/>接口，但并未实现对应接口，只为了保证类型的兼容性 -- 否则有些场合难搞。
+/// PS：
+/// 1.该类虽然声明实现了<see cref="ISet{T}"/>接口，但并未实现对应接口，只为了保证类型的兼容性 -- 否则有些场合难搞。
+/// 2.Unity没有IReadOnlySet
 /// </summary>
 /// <typeparam name="TKey"></typeparam>
 [Serializable]
 [Immutable]
+#if NET5_0_OR_GREATER
 public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet<TKey>
+#else
+public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
+#endif
 {
     /** len = 2^n + 1，额外的槽用于存储nullKey */
     private readonly Node[] _table;
@@ -472,6 +478,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
         throw new NotImplementedException();
     }
 
+#if NET5_0_OR_GREATER
     bool IReadOnlySet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) {
         throw new NotImplementedException();
     }
@@ -495,6 +502,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
     bool IReadOnlySet<TKey>.SetEquals(IEnumerable<TKey> other) {
         throw new NotImplementedException();
     }
+#endif
 
     #endregion
 }

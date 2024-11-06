@@ -30,3 +30,38 @@ LinkedDictionary特殊接口示例：
     }
     
 ```
+
+## 版本记录
+
+### 1.2.1
+
+1. fix LinkedHashSet和LinkedDictionary中`FixPointers`方法head维护错误..
+2. fix LinkedHashSet与Unity的兼容问题（IReadOnlySet）
+
+```
+    private void FixPointers(int source, int dest) {
+        if (_count == 1) {
+            _head = _tail = dest;
+            return;
+        }
+        if (_head == source) {
+            _head = dest; // 旧时将source赋值给了head...
+            ref Node node = ref _table[dest];
+            ref Node nextNode = ref _table[node.next];
+            nextNode.prev = dest;
+        } else if (_tail == source) {
+            _tail = dest;
+            ref Node node = ref _table[dest];
+            ref Node prevNode = ref _table[node.prev];
+            prevNode.next = dest;
+        }
+        // ...
+    }
+```
+
+### 1.2.0
+
+1. 新增无界数组队列`ArrayDeque`，以方便统一Java和C#代码
+2. `LinkedHashSet`类型兼容`ISet`和`IReadOnlySet`接口
+3. 重命名`EmptyDequeue` => `EmptyDeque`
+4. 优化`MultiChunkDeque`的迭代器

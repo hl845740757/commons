@@ -221,6 +221,14 @@ public static class DsonReaderUtils
                                  DsonType dsonType, WireType wireType, int wireTypeBits) {
         int skip;
         switch (dsonType) {
+            case DsonType.Int32: {
+                wireType.ReadInt32(input);
+                return;
+            }
+            case DsonType.Int64: {
+                wireType.ReadInt64(input);
+                return;
+            }
             case DsonType.Float: {
                 wireType.ReadFloat(input);
                 return;
@@ -231,14 +239,6 @@ public static class DsonReaderUtils
             }
             case DsonType.Bool:
             case DsonType.Null: {
-                return;
-            }
-            case DsonType.Int32: {
-                wireType.ReadInt32(input);
-                return;
-            }
-            case DsonType.Int64: {
-                wireType.ReadInt64(input);
                 return;
             }
             case DsonType.String: {

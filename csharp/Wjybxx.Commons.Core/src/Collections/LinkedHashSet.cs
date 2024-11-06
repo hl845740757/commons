@@ -31,12 +31,19 @@ namespace Wjybxx.Commons.Collections
 /// 1.由<see cref="LinkedDictionary{TKey,TValue}"/>修改而来，保留起特性。
 /// 2.使用拷贝而不是封装的方式，以减少使用开销。
 ///
-/// PS：该类虽然声明实现了<see cref="ISet{T}"/>接口，但并未实现对应接口，只为了保证类型的兼容性 -- 否则有些场合难搞。
+/// PS：
+/// 1.该类虽然声明实现了<see cref="ISet{T}"/>接口，但并未实现对应接口，只为了保证类型的兼容性 -- 否则有些场合难搞。
+/// 2.Unity没有IReadOnlySet
 /// </summary>
 /// <typeparam name="TKey">元素类型，允许为null</typeparam>
 [Serializable]
 [NotThreadSafe]
+#if NET5_0_OR_GREATER
 public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet<TKey>
+#else
+public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
+#endif
+
 {
 #nullable disable
     /** len = 2^n + 1，额外的槽用于存储nullKey；总是延迟分配空间，以减少创建空实例的开销 */
@@ -593,6 +600,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet
             ref Node curr2 = ref table[pos];
             curr2.index = last; // set index before copy
             table[last] = curr2;
+            table[pos] = default;
             FixPointers(pos, last); // fix pointers
         }
     }
@@ -603,14 +611,15 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet
     /// </summary>
     /// <param name="node">要解除引用的节点</param>
     private void FixPointers(in Node node) {
+        int pos = node.index!.Value;
         if (_count == 0) {
             _head = _tail = -1;
-        } else if (node.index!.Value == _head) {
+        } else if (pos == _head) {
             // 删除的是首部
             _head = node.next;
             ref Node nextNode = ref _table[node.next];
             nextNode.prev = -1;
-        } else if (node.index.Value == _tail) {
+        } else if (pos == _tail) {
             // 删除的是尾部
             _tail = node.prev;
             ref Node prevNode = ref _table[node.prev];
@@ -619,8 +628,8 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet
             // 删除的是中间元素
             ref Node prevNode = ref _table[node.prev];
             ref Node nextNode = ref _table[node.next];
-            prevNode.next = nextNode.index!.Value;
-            nextNode.prev = prevNode.index!.Value;
+            prevNode.next = node.next;
+            nextNode.prev = node.prev;
         }
     }
 
@@ -632,13 +641,10 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet
     private void FixPointers(int source, int dest) {
         if (_count == 1) {
             _head = _tail = dest;
-            ref Node node = ref _table[dest];
-            node.prev = -1;
-            node.next = -1;
             return;
         }
         if (_head == source) {
-            _head = source;
+            _head = dest;
             ref Node node = ref _table[dest];
             ref Node nextNode = ref _table[node.next];
             nextNode.prev = dest;
@@ -657,48 +663,50 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet
     }
 
     private void MoveToFirst(ref Node node) {
-        if (node.index!.Value == _head) {
+        int pos = node.index!.Value;
+        if (pos == _head) {
             return;
         }
         // 先断开链接，再插入到首部
-        if (node.index.Value == _tail) {
+        if (pos == _tail) {
             _tail = node.prev;
             ref Node prevNode = ref _table[node.prev];
             prevNode.next = -1;
         } else {
             ref Node prevNode = ref _table[node.prev];
             ref Node nextNode = ref _table[node.next];
-            prevNode.next = nextNode.index!.Value;
-            nextNode.prev = prevNode.index!.Value;
+            prevNode.next = node.next;
+            nextNode.prev = node.prev;
         }
 
-        ref Node headNode = ref _table[_head];
-        headNode.prev = node.index.Value;
+        ref Node oldHead = ref _table[_head];
+        oldHead.prev = pos;
         node.next = _head;
-        _head = node.index.Value;
+        _head = pos;
         _version++;
     }
 
     private void MoveToLast(ref Node node) {
-        if (node.index!.Value == _tail) {
+        int pos = node.index!.Value;
+        if (pos == _tail) {
             return;
         }
         // 先断开链接，再插入到尾部
-        if (node.index.Value == _head) {
+        if (pos == _head) {
             _head = node.next;
             ref Node nextNode = ref _table[node.next];
             nextNode.prev = -1;
         } else {
             ref Node prevNode = ref _table[node.prev];
             ref Node nextNode = ref _table[node.next];
-            prevNode.next = nextNode.index!.Value;
-            nextNode.prev = prevNode.index!.Value;
+            prevNode.next = node.next;
+            nextNode.prev = node.prev;
         }
 
-        ref Node tailNode = ref _table[_tail];
-        tailNode.next = node.index.Value;
+        ref Node oldTail = ref _table[_tail];
+        oldTail.next = pos;
         node.prev = _tail;
-        _tail = node.index.Value;
+        _tail = pos;
         _version++;
     }
 
@@ -861,6 +869,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet
         throw new NotImplementedException();
     }
 
+#if NET5_0_OR_GREATER
     bool IReadOnlySet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) {
         throw new NotImplementedException();
     }
@@ -884,7 +893,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet
     bool IReadOnlySet<TKey>.SetEquals(IEnumerable<TKey> other) {
         throw new NotImplementedException();
     }
-
+#endif
     #endregion
 }
 }

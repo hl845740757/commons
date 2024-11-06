@@ -881,6 +881,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             ref Node curr2 = ref table[pos];
             curr2.index = last; // set index before copy
             table[last] = curr2;
+            table[pos] = default;
             FixPointers(pos, last); // fix pointers
         }
     }
@@ -891,14 +892,15 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     /// </summary>
     /// <param name="node">要解除引用的节点</param>
     private void FixPointers(in Node node) {
+        int pos = node.index!.Value;
         if (_count == 0) {
             _head = _tail = -1;
-        } else if (node.index!.Value == _head) {
+        } else if (pos == _head) {
             // 删除的是首部
             _head = node.next;
             ref Node nextNode = ref _table[node.next];
             nextNode.prev = -1;
-        } else if (node.index.Value == _tail) {
+        } else if (pos == _tail) {
             // 删除的是尾部
             _tail = node.prev;
             ref Node prevNode = ref _table[node.prev];
@@ -907,8 +909,8 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             // 删除的是中间元素
             ref Node prevNode = ref _table[node.prev];
             ref Node nextNode = ref _table[node.next];
-            prevNode.next = nextNode.index!.Value;
-            nextNode.prev = prevNode.index!.Value;
+            prevNode.next = node.next;
+            nextNode.prev = node.prev;
         }
     }
 
@@ -920,13 +922,10 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     private void FixPointers(int source, int dest) {
         if (_count == 1) {
             _head = _tail = dest;
-            ref Node node = ref _table[dest];
-            node.prev = -1;
-            node.next = -1;
             return;
         }
         if (_head == source) {
-            _head = source;
+            _head = dest;
             ref Node node = ref _table[dest];
             ref Node nextNode = ref _table[node.next];
             nextNode.prev = dest;
@@ -945,48 +944,50 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     }
 
     private void MoveToFirst(ref Node node) {
-        if (node.index!.Value == _head) {
+        int pos = node.index!.Value;
+        if (pos == _head) {
             return;
         }
         // 先断开链接，再插入到首部
-        if (node.index.Value == _tail) {
+        if (pos == _tail) {
             _tail = node.prev;
             ref Node prevNode = ref _table[node.prev];
             prevNode.next = -1;
         } else {
             ref Node prevNode = ref _table[node.prev];
             ref Node nextNode = ref _table[node.next];
-            prevNode.next = nextNode.index!.Value;
-            nextNode.prev = prevNode.index!.Value;
+            prevNode.next = node.next;
+            nextNode.prev = node.prev;
         }
 
-        ref Node headNode = ref _table[_head];
-        headNode.prev = node.index.Value;
+        ref Node oldHead = ref _table[_head];
+        oldHead.prev = pos;
         node.next = _head;
-        _head = node.index.Value;
+        _head = pos;
         _version++;
     }
 
     private void MoveToLast(ref Node node) {
-        if (node.index!.Value == _tail) {
+        int pos = node.index!.Value;
+        if (pos == _tail) {
             return;
         }
         // 先断开链接，再插入到尾部
-        if (node.index.Value == _head) {
+        if (pos == _head) {
             _head = node.next;
             ref Node nextNode = ref _table[node.next];
             nextNode.prev = -1;
         } else {
             ref Node prevNode = ref _table[node.prev];
             ref Node nextNode = ref _table[node.next];
-            prevNode.next = nextNode.index!.Value;
-            nextNode.prev = prevNode.index!.Value;
+            prevNode.next = node.next;
+            nextNode.prev = node.prev;
         }
 
-        ref Node tailNode = ref _table[_tail];
-        tailNode.next = node.index.Value;
+        ref Node oldTail = ref _table[_tail];
+        oldTail.next = pos;
         node.prev = _tail;
-        _tail = node.index.Value;
+        _tail = pos;
         _version++;
     }
 

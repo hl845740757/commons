@@ -212,6 +212,14 @@ public class DsonReaderUtils {
                                  DsonType dsonType, WireType wireType, int wireTypeBits) {
         int skip;
         switch (dsonType) {
+            case INT32 -> {
+                wireType.readInt32(input);
+                return;
+            }
+            case INT64 -> {
+                wireType.readInt64(input);
+                return;
+            }
             case FLOAT -> {
                 wireType.readFloat(input);
                 return;
@@ -221,14 +229,6 @@ public class DsonReaderUtils {
                 return;
             }
             case BOOL, NULL -> {
-                return;
-            }
-            case INT32 -> {
-                wireType.readInt32(input);
-                return;
-            }
-            case INT64 -> {
-                wireType.readInt64(input);
                 return;
             }
             case STRING -> {
