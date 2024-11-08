@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dson;
 
+import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.dson.io.DsonInput;
 import cn.wjybxx.dson.io.DsonInputs;
 import cn.wjybxx.dson.io.DsonOutput;
@@ -24,35 +25,29 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * 浮点数压缩率测试
+ * 整数压缩率测试
  *
  * @author wjybxx
  * date - 2023/7/17
  */
-public class FloatCompressTest {
+public class IntCompressTest {
 
     private static final int COUNT = 100000;
-    /**
-     * delta如果是能2进制精确表达的，才可以节省存储空间。
-     * delta如果是不能2进制精确表达的，那么是不能节省字节的；
-     */
-    private static final float FLOAT_DELTA = 0.0625F;
-    private static final double DOUBLE_DELTA = 0.0625D;
 
     @Test
-    void floatTest() {
+    void int32Test() {
         byte[] buffer = new byte[5 * COUNT];
-        float[] valueArray = new float[COUNT];
+        int[] valueArray = new int[COUNT];
         int totalSize = 0;
-        int varFloat = 0;
+        int varInt = 0;
         try (DsonOutput dsonOutput = DsonOutputs.newInstance(buffer)) {
             for (int i = 0; i < COUNT; i++) {
-                float v = i * FLOAT_DELTA;
+                int v = MathCommon.SHARED_RANDOM.nextInt(-10000, 100 * 10000);
                 valueArray[i] = v;
-                WireType wireType = WireType.bestOfFloat(v);
-                wireType.writeFloat(dsonOutput, v);
+                WireType wireType = WireType.bestOfInt32(v);
+                wireType.writeInt32(dsonOutput, v);
                 if (wireType != WireType.FIXED) {
-                    varFloat++;
+                    varInt++;
                 }
             }
             dsonOutput.flush();
@@ -60,29 +55,29 @@ public class FloatCompressTest {
         }
         try (DsonInput dsonInput = DsonInputs.newInstance(buffer, 0, totalSize)) {
             for (int i = 0; i < COUNT; i++) {
-                float v = valueArray[i];
-                WireType wireType = WireType.bestOfFloat(v);
-                float v2 = wireType.readFloat(dsonInput);
+                int v = valueArray[i];
+                WireType wireType = WireType.bestOfInt32(v);
+                int v2 = wireType.readInt32(dsonInput);
                 Assertions.assertEquals(v, v2);
             }
         }
-        System.out.printf("float totalSize: %d, saved: %d, varFloat: %d%n", totalSize, (4 * COUNT - totalSize), varFloat);
+        System.out.printf("int32 totalSize: %d, saved: %d, varInt: %d%n", totalSize, (4 * COUNT - totalSize), varInt);
     }
 
     @Test
-    void doubleTest() {
+    void int64Test() {
         byte[] buffer = new byte[10 * COUNT];
-        double[] valueArray = new double[COUNT];
+        long[] valueArray = new long[COUNT];
         int totalSize = 0;
-        int varFloat = 0;
+        int varInt = 0;
         try (DsonOutput dsonOutput = DsonOutputs.newInstance(buffer)) {
             for (int i = 0; i < COUNT; i++) {
-                double v = i * DOUBLE_DELTA;
+                long v = MathCommon.SHARED_RANDOM.nextLong(-100000, 20L * Integer.MAX_VALUE);
                 valueArray[i] = v;
-                WireType wireType = WireType.bestOfDouble(v);
-                wireType.writeDouble(dsonOutput, v);
+                WireType wireType = WireType.bestOfInt64(v);
+                wireType.writeInt64(dsonOutput, v);
                 if (wireType != WireType.FIXED) {
-                    varFloat++;
+                    varInt++;
                 }
             }
             dsonOutput.flush();
@@ -90,13 +85,13 @@ public class FloatCompressTest {
         }
         try (DsonInput dsonInput = DsonInputs.newInstance(buffer, 0, totalSize)) {
             for (int i = 0; i < COUNT; i++) {
-                double v = valueArray[i];
-                WireType wireType = WireType.bestOfDouble(v);
-                double v2 = wireType.readDouble(dsonInput);
+                long v = valueArray[i];
+                WireType wireType = WireType.bestOfInt64(v);
+                long v2 = wireType.readInt64(dsonInput);
                 Assertions.assertEquals(v, v2);
             }
         }
-        System.out.printf("double totalSize: %d, saved: %d, varFloat: %d%n", totalSize, (8 * COUNT - totalSize), varFloat);
+        System.out.printf("int64 totalSize: %d, saved: %d, varInt: %d%n", totalSize, (8 * COUNT - totalSize), varInt);
     }
 
 }

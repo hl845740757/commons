@@ -79,7 +79,7 @@ public final class DsonFloat extends DsonNumber implements Comparable<DsonFloat>
 
     @Override
     public int hashCode() {
-        return (value != 0.0f ? Float.floatToIntBits(value) : 0);
+        return Float.hashCode(value);
     }
 
     @Override

@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using Wjybxx.Commons;
 using Wjybxx.Dson.IO;
 
 namespace Wjybxx.Dson.Internal
@@ -27,20 +28,19 @@ namespace Wjybxx.Dson.Internal
 /// </summary>
 internal static class CodedUtil
 {
-    private const uint INT_CODED_MASK1 = (~0U) << 7; // 低7位0
-    private const uint INT_CODED_MASK2 = (~0U) << 14; // 低14位0
-    private const uint INT_CODED_MASK3 = (~0U) << 21;
-    private const uint INT_CODED_MASK4 = (~0U) << 28;
+    private const int INT_CODED_MASK1 = -1 << 7; // 低7位0
+    private const int INT_CODED_MASK2 = -1 << 14; // 低14位0
+    private const int INT_CODED_MASK3 = -1 << 21;
+    private const int INT_CODED_MASK4 = -1 << 28;
 
-    private const ulong LONG_CODED_MASK1 = (~0UL) << 7;
-    private const ulong LONG_CODED_MASK2 = (~0UL) << 14;
-    private const ulong LONG_CODED_MASK3 = (~0UL) << 21;
-    private const ulong LONG_CODED_MASK4 = (~0UL) << 28;
-    private const ulong LONG_CODED_MASK5 = (~0UL) << 35;
-    private const ulong LONG_CODED_MASK6 = (~0UL) << 42;
-    private const ulong LONG_CODED_MASK7 = (~0UL) << 49;
-    private const ulong LONG_CODED_MASK8 = (~0UL) << 56;
-    private const ulong LONG_CODED_MASK9 = (~0UL) << 63;
+    private const long LONG_CODED_MASK1 = -1L << 8; // 低8位0
+    private const long LONG_CODED_MASK2 = -1L << 15; // 低15位0
+    private const long LONG_CODED_MASK3 = -1L << 22;
+    private const long LONG_CODED_MASK4 = -1L << 29;
+    private const long LONG_CODED_MASK5 = -1L << 36;
+    private const long LONG_CODED_MASK6 = -1L << 43;
+    private const long LONG_CODED_MASK7 = -1L << 50;
+    private const long LONG_CODED_MASK8 = -1L << 57;
 
     /// <summary>
     /// 计算原始的32位变长整形的编码长度
@@ -48,7 +48,7 @@ internal static class CodedUtil
     /// <param name="value"></param>
     /// <returns>编码长度</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int ComputeRawVarInt32Size(uint value) {
+    public static int ComputeRawVarInt32Size(int value) {
         if ((value & INT_CODED_MASK1) == 0) return 1; // 所有高位为0
         if ((value & INT_CODED_MASK2) == 0) return 2;
         if ((value & INT_CODED_MASK3) == 0) return 3;
@@ -62,8 +62,7 @@ internal static class CodedUtil
     /// <param name="value"></param>
     /// <returns>编码长度</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int ComputeRawVarInt64Size(ulong value) {
-        if ((value & LONG_CODED_MASK1) == 0) return 1; // 所有高位为0
+    public static int ComputeRawVarInt64Size(long value) {
         if ((value & LONG_CODED_MASK2) == 0) return 2;
         if ((value & LONG_CODED_MASK3) == 0) return 3;
         if ((value & LONG_CODED_MASK4) == 0) return 4;
@@ -71,22 +70,20 @@ internal static class CodedUtil
         if ((value & LONG_CODED_MASK6) == 0) return 6;
         if ((value & LONG_CODED_MASK7) == 0) return 7;
         if ((value & LONG_CODED_MASK8) == 0) return 8;
-        if ((value & LONG_CODED_MASK9) == 0) return 9;
-        return 10;
+        return 9;
     }
 
     /** https://protobuf.dev/programming-guides/encoding  */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int EncodeZigZag32(int n) => (n << 1 ^ n >> 31);
+    public static int EncodeZigZag32(int n) => (n << 1) ^ (n >> 31);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int DecodeZigZag32(int n) => n >> 1 ^ -(n & 1);
+    public static int DecodeZigZag32(int n) => ((n >> 1) & int.MaxValue) ^ -(n & 1); // & max 实现逻辑右移1位
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long EncodeZigZag64(long n) => (n << 1 ^ n >> 63);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long DecodeZigZag64(long n) => n >> 1 ^ -(n & 1L);
+    public static long DecodeZigZag64(long n) => ((n >> 1) & long.MaxValue) ^ -(n & 1L); // & max 实现逻辑右移1位
 
     #region protobuf decode
 
@@ -131,19 +128,19 @@ internal static class CodedUtil
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static float ReadFloat(byte[] buffer, int pos, out int newPos) {
         int rawBits = ReadRawFixed32(buffer, pos, out newPos);
-        return BitConverter.Int32BitsToSingle((int)rawBits);
+        return BitConverter.Int32BitsToSingle(rawBits);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static float ReadVarFloat(byte[] buffer, int pos, out int newPos) {
-        uint rawBits = ReadRawVarFloat32(buffer, pos, out newPos);
-        return BitConverter.Int32BitsToSingle((int)rawBits);
+        int rawBits = ReadRawVarFloat32(buffer, pos, out newPos);
+        return BitConverter.Int32BitsToSingle(rawBits);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static double ReadDouble(byte[] buffer, int pos, out int newPos) {
         long rawBits = ReadRawFixed64(buffer, pos, out newPos);
-        return BitConverter.Int64BitsToDouble((long)rawBits);
+        return BitConverter.Int64BitsToDouble(rawBits);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -184,34 +181,34 @@ internal static class CodedUtil
     }
 
     private static int ReadRawVarInt32(byte[] buffer, int pos, out int newPos) {
-        // 循环展开
-        byte b = buffer[pos++];
-        int r = (b & 127);
-        if (b < 128U) {
+        // 循环展开 -- C# byte是无符号数，转int高位补0
+        int b = buffer[pos++];
+        int r = (b & 127); // 0~6
+        if (b < 128) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127) << 7;
-        if (b < 128U) {
+        r |= (b & 127) << 7; // 7~13
+        if (b < 128) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127) << 14;
-        if (b < 128U) {
+        r |= (b & 127) << 14; // 14~20
+        if (b < 128) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127) << 21;
-        if (b < 128U) {
+        r |= (b & 127) << 21; // 21~27
+        if (b < 128) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127) << 28;
-        if (b < 128U) {
+        r |= (b & 15) << 28; // 28~31 取后4位
+        if (b < 128) {
             newPos = pos;
             return r;
         }
@@ -220,46 +217,44 @@ internal static class CodedUtil
     }
 
     private static long ReadRawVarInt64(byte[] buffer, int pos, out int newPos) {
-        // int64循环展开的代码太长，还容易写错...
-        long r = 0;
-        int shift = 0;
-        byte b;
-        do {
-            b = buffer[pos++];
+        long r = buffer[pos++] & 0xFFL; // 低8位
+        int shift = 8;
+        for (int i = 0; i < 8; i++) {
+            long b = buffer[pos++];
             r |= (b & 127L) << shift; // 取后7位左移
-            if (b < 128U) { // 高位0
+            if (b < 128L) { // 高位0
                 newPos = pos;
                 return r;
             }
             shift += 7;
-        } while (shift < 64);
-        // 读取超过10个字节
+        }
+        // 读取超过9个字节
         throw new DsonIOException("DsonInput encountered a malformed varint64.");
     }
 
-    private static uint ReadRawVarFloat32(byte[] buffer, int pos, out int newPos) {
-        uint r = (buffer[pos++] & 0xFFU) << 24;
-        byte b = buffer[pos++];
-        r |= (b & 127U) << 17;
-        if (b < 128U) {
+    private static int ReadRawVarFloat32(byte[] buffer, int pos, out int newPos) {
+        int r = buffer[pos++] << 24; // 31~24
+        int b = buffer[pos++];
+        r |= (b & 127) << 17; // 23~17
+        if (b < 128) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127U) << 10;
-        if (b < 128U) {
+        r |= (b & 127) << 10; // 16~10
+        if (b < 128) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127U) << 3;
-        if (b < 128U) {
+        r |= (b & 127) << 3; // 9~3
+        if (b < 128) {
             newPos = pos;
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127U);
-        if (b < 128U) {
+        r |= (b & 7); // 2~0 取后3位
+        if (b < 128) {
             newPos = pos;
             return r;
         }
@@ -268,18 +263,17 @@ internal static class CodedUtil
     }
 
     private static long ReadRawVarFloat64(byte[] buffer, int pos, out int newPos) {
-        long r = (buffer[pos++] & 0xFFL) << 56;
+        long r = (long)buffer[pos++] << 56; // 高8位
         int shift = 49;
-        byte b;
-        do {
-            b = buffer[pos++];
+        for (int i = 0; i < 8; i++) {
+            long b = buffer[pos++];
             r |= (b & 127L) << shift; // 取后7位左移
-            if (b < 128U) { // 高位0
+            if (b < 128L) { // 高位0
                 newPos = pos;
                 return r;
             }
             shift -= 7;
-        } while (shift >= 0);
+        }
         // 读取超过9个字节
         throw new DsonIOException("DsonInput encountered a malformed varfloat64.");
     }
@@ -372,25 +366,56 @@ internal static class CodedUtil
         return pos + 8;
     }
 
+    /** 小端编码：所有bit使用VarInt编码 */
     private static int WriteRawVarInt32(byte[] buffer, int pos, int value) {
-        const int mask = (1 << 25) - 1; // 低25位1，实现逻辑右移7位
-        while (true) {
-            int b = (value & 127); // 取低7位
-            value = (value >> 7) & mask;
-            if (value != 0) {
-                buffer[pos++] = (byte)(b | 128); // 高位补1
-            } else {
-                buffer[pos++] = (byte)b;
-                return pos;
-            }
+        // 循环展开
+        int b = (value & 127); // 0~6
+        value = (value >> 7) & (int.MaxValue >> 6); // 逻辑右移7位，此后可算术右移
+        if (value == 0) {
+            buffer[pos++] = (byte)b;
+            return pos;
         }
+        buffer[pos++] = (byte)(b | 128);
+
+        b = (value & 127); // 7~13
+        value >>= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte)b;
+            return pos;
+        }
+        buffer[pos++] = (byte)(b | 128);
+
+        b = (value & 127); // 14~20
+        value >>= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte)b;
+            return pos;
+        }
+        buffer[pos++] = (byte)(b | 128);
+
+        b = (value & 127); // 21~27
+        value >>= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte)b;
+            return pos;
+        }
+        buffer[pos++] = (byte)(b | 128);
+
+        b = (value & 15); // 28~31 只可取后4位
+        buffer[pos++] = (byte)b;
+        return pos;
     }
 
+    /** 小端编码：低8位固定写入，剩余bit使用VarInt编码 */
     private static int WriteRawVarInt64(byte[] buffer, int pos, long value) {
-        const long mask = (1L << 57) - 1; // 低57位1，实现逻辑右移7位
-        while (true) {
-            long b = (value & 127L); // 取低7位
-            value = (value >> 7) & mask;
+        long b = (value & 255L); // 低8位
+        value = (value >> 8) & (long.MaxValue >> 7); // 逻辑右移8位，此后可算术右移
+        buffer[pos++] = (byte)b;
+
+        // 使用fori循环有利于循环展开
+        for (int i = 0; i < 8; i++) {
+            b = (value & 127L); // 取低7位
+            value >>= 7;
             if (value != 0) {
                 buffer[pos++] = (byte)(b | 128L); // 高位补1
             } else {
@@ -398,33 +423,53 @@ internal static class CodedUtil
                 return pos;
             }
         }
+        // 不可达
+        throw new AssertionError();
     }
 
+    /** 大端编码：高8位固定写入，剩余bit使用VarInt编码； */
     private static int WriteRawVarFloat32(byte[] buffer, int pos, int value) {
-        // 高8位固定写入 -- 剩余采用变长编码，剩余24位，仍需要4字节
-        int b = (value >> 24) & 0xFF;
+        int b = (value >> 24) & 0xFF; // 31~24
         value <<= 8;
         buffer[pos++] = (byte)b;
 
-        while (true) {
-            b = (value >> 25) & 127; // 取高7位
-            value <<= 7;
-            if (value != 0) {
-                buffer[pos++] = (byte)(b | 128); // 高位补1
-            } else {
-                buffer[pos++] = (byte)b;
-                return pos;
-            }
+        b = (value >> 25) & 127; // 23~17
+        value <<= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte)b;
+            return pos;
         }
+        buffer[pos++] = (byte)(b | 128);
+
+        b = (value >> 25) & 127; // 16~10
+        value <<= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte)b;
+            return pos;
+        }
+        buffer[pos++] = (byte)(b | 128);
+
+        b = (value >> 25) & 127; // 9~3
+        value <<= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte)b;
+            return pos;
+        }
+        buffer[pos++] = (byte)(b | 128);
+
+        b = (value >> 29) & 7; // 2~0 只可取后3位
+        buffer[pos++] = (byte)b;
+        return pos;
     }
 
+    /** 大端编码：高8位固定写入，剩余bit使用VarInt编码 */
     private static int WriteRawVarFloat64(byte[] buffer, int pos, long value) {
-        // 高8位固定写入 -- 剩余采用变长编码，剩余56位，刚好8字节
-        long b = (value >> 56) & 0xFFL;
+        long b = (value >> 56) & 0xFFL; // 高8位
         value <<= 8;
         buffer[pos++] = (byte)b;
 
-        while (true) {
+        // 使用fori循环有利于循环展开
+        for (int i = 0; i < 8; i++) {
             b = (value >> 57) & 127L; // 取高7位
             value <<= 7;
             if (value != 0) {
@@ -434,6 +479,8 @@ internal static class CodedUtil
                 return pos;
             }
         }
+        // 不可达
+        throw new AssertionError();
     }
 
     #endregion

@@ -31,7 +31,7 @@ LinkedDictionary特殊接口示例：
     
 ```
 
-## 版本记录
+## ReleaseNotes
 
 ### 1.2.1
 

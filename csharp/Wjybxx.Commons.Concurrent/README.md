@@ -16,6 +16,10 @@
 
 ## ReleaseNotes
 
+### 1.2.1
+
+升级commons.core依赖
+
 ### 1.2.0
 
 C#的异常派发机制和java不同，之前的future异常处理是按照java写的，导致异步任务的异常信息堆栈丢失。

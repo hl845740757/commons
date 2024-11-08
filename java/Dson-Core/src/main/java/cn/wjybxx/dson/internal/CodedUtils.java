@@ -31,20 +31,19 @@ public final class CodedUtils {
     private CodedUtils() {
     }
 
-    private static final int INT_CODED_MASK1 = (-1) << 7; // 低7位0
-    private static final int INT_CODED_MASK2 = (-1) << 14; // 低14位0
-    private static final int INT_CODED_MASK3 = (-1) << 21;
-    private static final int INT_CODED_MASK4 = (-1) << 28;
+    private static final int INT_CODED_MASK1 = -1 << 7; // 低7位0
+    private static final int INT_CODED_MASK2 = -1 << 14; // 低14位0
+    private static final int INT_CODED_MASK3 = -1 << 21;
+    private static final int INT_CODED_MASK4 = -1 << 28;
 
-    private static final long LONG_CODED_MASK1 = (-1L) << 7;
-    private static final long LONG_CODED_MASK2 = (-1L) << 14;
-    private static final long LONG_CODED_MASK3 = (-1L) << 21;
-    private static final long LONG_CODED_MASK4 = (-1L) << 28;
-    private static final long LONG_CODED_MASK5 = (-1L) << 35;
-    private static final long LONG_CODED_MASK6 = (-1L) << 42;
-    private static final long LONG_CODED_MASK7 = (-1L) << 49;
-    private static final long LONG_CODED_MASK8 = (-1L) << 56;
-    private static final long LONG_CODED_MASK9 = (-1L) << 63;
+    private static final long LONG_CODED_MASK1 = -1L << 8; // 低8位0
+    private static final long LONG_CODED_MASK2 = -1L << 15; // 低15位0
+    private static final long LONG_CODED_MASK3 = -1L << 22;
+    private static final long LONG_CODED_MASK4 = -1L << 29;
+    private static final long LONG_CODED_MASK5 = -1L << 36;
+    private static final long LONG_CODED_MASK6 = -1L << 43;
+    private static final long LONG_CODED_MASK7 = -1L << 50;
+    private static final long LONG_CODED_MASK8 = -1L << 57;
 
     /** 计算原始的32位变长整形的编码长度 -- 也可直接通过前导0个数计算 */
     public static int computeRawVarInt32Size(int value) {
@@ -57,7 +56,6 @@ public final class CodedUtils {
 
     /** 计算原始的64位变长整形的编码长度 -- 也可直接通过前导0个数计算 */
     public static int computeRawVarInt64Size(long value) {
-        if ((value & LONG_CODED_MASK1) == 0) return 1; // 所有高位为0
         if ((value & LONG_CODED_MASK2) == 0) return 2;
         if ((value & LONG_CODED_MASK3) == 0) return 3;
         if ((value & LONG_CODED_MASK4) == 0) return 4;
@@ -65,8 +63,7 @@ public final class CodedUtils {
         if ((value & LONG_CODED_MASK6) == 0) return 6;
         if ((value & LONG_CODED_MASK7) == 0) return 7;
         if ((value & LONG_CODED_MASK8) == 0) return 8;
-        if ((value & LONG_CODED_MASK9) == 0) return 9;
-        return 10;
+        return 9;
     }
 
     public static int encodeZigZag32(int n) {
@@ -170,33 +167,33 @@ public final class CodedUtils {
 
     private static int readRawVarInt32(byte[] buffer, int pos, MutableInt newPos) {
         // 循环展开
-        byte b = buffer[pos++];
-        int r = (b & 127);
-        if ((b & 128) == 0) {
+        int b = buffer[pos++];
+        int r = (b & 127); // 0~6
+        if (b > -1) {
             newPos.setValue(pos);
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127) << 7;
-        if ((b & 128) == 0) {
+        r |= (b & 127) << 7; // 7~13
+        if (b > -1) {
             newPos.setValue(pos);
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127) << 14;
-        if ((b & 128) == 0) {
+        r |= (b & 127) << 14; // 14~20
+        if (b > -1) {
             newPos.setValue(pos);
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127) << 21;
-        if ((b & 128) == 0) {
+        r |= (b & 127) << 21; // 21~27
+        if (b > -1) {
             newPos.setValue(pos);
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127) << 28;
-        if ((b & 128) == 0) {
+        r |= (b & 15) << 28; // 28~31 取后4位
+        if (b > -1) {
             newPos.setValue(pos);
             return r;
         }
@@ -205,48 +202,44 @@ public final class CodedUtils {
     }
 
     private static long readRawVarInt64(byte[] buffer, int pos, MutableInt newPos) {
-        // int64循环展开的代码太长，还容易写错...
-        long r = 0;
-        int shift = 0;
-        byte b;
-        do {
-            b = buffer[pos++];
+        long r = buffer[pos++] & 0xFFL; // 低8位
+        int shift = 8;
+        for (int i = 0; i < 8; i++) {
+            long b = buffer[pos++];
             r |= (b & 127L) << shift; // 取后7位左移
-            if ((b & 128L) == 0) { // 高位0
+            if (b > -1L) { // 高位0
                 newPos.setValue(pos);
                 return r;
             }
             shift += 7;
-        } while (shift < 64);
-        // 读取超过10个字节
+        }
+        // 读取超过9个字节
         throw new DsonIOException("DsonInput encountered a malformed varint64.");
     }
 
-    /** 大端编码的VarInt32 */
     private static int readRawVarFloat32(byte[] buffer, int pos, MutableInt newPos) {
-        // 高8位固定读取
-        int r = (buffer[pos++] & 0xFF) << 24;
-        byte b = buffer[pos++];
-        r |= (b & 127) << 17;
-        if ((b & 128) == 0) {
+        int r = buffer[pos++] << 24; // 31~24
+        int b = buffer[pos++];
+        r |= (b & 127) << 17; // 23~17
+        if (b > -1) {
             newPos.setValue(pos);
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127) << 10;
-        if ((b & 128) == 0) {
+        r |= (b & 127) << 10; // 16~10
+        if (b > -1) {
             newPos.setValue(pos);
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127) << 3;
-        if ((b & 128) == 0) {
+        r |= (b & 127) << 3; // 9~3
+        if (b > -1) {
             newPos.setValue(pos);
             return r;
         }
         b = buffer[pos++];
-        r |= (b & 127);
-        if ((b & 128) == 0) {
+        r |= (b & 7); // 2~0 取后3位
+        if (b > -1) {
             newPos.setValue(pos);
             return r;
         }
@@ -254,21 +247,18 @@ public final class CodedUtils {
         throw new DsonIOException("DsonInput encountered a malformed varfloat32.");
     }
 
-    /** 大端编码的VarInt64 */
     private static long readRawVarFloat64(byte[] buffer, int pos, MutableInt newPos) {
-        // 高8位固定读取
-        long r = (buffer[pos++] & 0xFFL) << 56;
+        long r = (long) buffer[pos++] << 56; // 高8位
         int shift = 49;
-        byte b;
-        do {
-            b = buffer[pos++];
+        for (int i = 0; i < 8; i++) {
+            long b = buffer[pos++];
             r |= (b & 127L) << shift; // 取后7位左移
-            if ((b & 128L) == 0) { // 高位0
+            if (b > -1L) { // 高位0
                 newPos.setValue(pos);
                 return r;
             }
             shift -= 7;
-        } while (shift >= 0);
+        }
         // 读取超过9字节
         throw new DsonIOException("DsonInput encountered a malformed varfloat64.");
     }
@@ -349,22 +339,55 @@ public final class CodedUtils {
         return pos + 8;
     }
 
+    /** 小端编码：所有bit使用VarInt编码 */
     private static int writeRawVarInt32(byte[] buffer, int pos, int value) {
-        while (true) {
-            int b = (value & 127); // 取低7位
-            value >>>= 7;
-            if (value != 0) {
-                buffer[pos++] = (byte) (b | 128); // 高位补1
-            } else {
-                buffer[pos++] = (byte) b;
-                return pos;
-            }
+        // 循环展开
+        int b = (value & 127); // 0~6
+        value >>>= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte) b;
+            return pos;
         }
+        buffer[pos++] = (byte) (b | 128);
+
+        b = (value & 127); // 7~13
+        value >>>= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte) b;
+            return pos;
+        }
+        buffer[pos++] = (byte) (b | 128);
+
+        b = (value & 127); // 14~20
+        value >>>= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte) b;
+            return pos;
+        }
+        buffer[pos++] = (byte) (b | 128);
+
+        b = (value & 127); // 21~27
+        value >>>= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte) b;
+            return pos;
+        }
+        buffer[pos++] = (byte) (b | 128);
+
+        b = (value & 15); // 28~31 取后4位
+        buffer[pos++] = (byte) b;
+        return pos;
     }
 
+    /** 小端编码：低8位固定写入，剩余bit使用VarInt编码 */
     private static int writeRawVarInt64(byte[] buffer, int pos, long value) {
-        while (true) {
-            long b = (value & 127L); // 取低7位
+        long b = (value & 255L); // 低8位
+        value >>>= 8;
+        buffer[pos++] = (byte) b;
+
+        // fori循环有利于循环展开
+        for (int i = 0; i < 8; i++) {
+            b = (value & 127L); // 取低7位
             value >>>= 7;
             if (value != 0) {
                 buffer[pos++] = (byte) (b | 128L); // 高位补1
@@ -373,34 +396,53 @@ public final class CodedUtils {
                 return pos;
             }
         }
+        // 不可达
+        throw new AssertionError();
     }
 
+    /** 大端编码：高8位固定写入，剩余bit使用VarInt编码 */
     private static int writeRawVarFloat32(byte[] buffer, int pos, int value) {
-        // 高8位固定写入 -- 剩余采用变长编码，剩余24位，仍需要4字节
-        int b = value >>> 24;
+        int b = (value >>> 24) & 0xFF; // 31~24
         value <<= 8;
         buffer[pos++] = (byte) b;
 
-        while (true) {
-            b = value >>> 25; // 取高7位
-            value <<= 7;
-            if (value != 0) {
-                buffer[pos++] = (byte) (b | 128); // 高位补1
-            } else {
-                buffer[pos++] = (byte) b;
-                return pos;
-            }
+        b = (value >>> 25) & 127; // 23~17
+        value <<= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte) b;
+            return pos;
         }
+        buffer[pos++] = (byte) (b | 128);
+
+        b = (value >>> 25) & 127; // 16~10
+        value <<= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte) b;
+            return pos;
+        }
+        buffer[pos++] = (byte) (b | 128);
+
+        b = (value >>> 25) & 127; // 9~3
+        value <<= 7;
+        if (value == 0) {
+            buffer[pos++] = (byte) b;
+            return pos;
+        }
+        buffer[pos++] = (byte) (b | 128);
+
+        b = (value >>> 29) & 7; // 2~0 取后3位
+        buffer[pos++] = (byte) b;
+        return pos;
     }
 
+    /** 大端编码：高8位固定写入，剩余bit使用VarInt编码 */
     private static int writeRawVarFloat64(byte[] buffer, int pos, long value) {
-        // 高8位固定写入 -- 剩余采用变长编码，剩余56位，刚好8字节
-        long b = value >>> 56;
+        long b = value >>> 56; // 高8位
         value <<= 8;
         buffer[pos++] = (byte) b;
 
-        while (true) {
-            b = value >>> 57; // 取高7位
+        for (int i = 0; i < 8; i++) {
+            b = (value >>> 57) & 127; // 取高7位
             value <<= 7;
             if (value != 0) {
                 buffer[pos++] = (byte) (b | 128L); // 高位补1
@@ -409,6 +451,8 @@ public final class CodedUtils {
                 return pos;
             }
         }
+        // 不可达
+        throw new AssertionError();
     }
     //endregion
 }

@@ -78,8 +78,7 @@ public final class DsonDouble extends DsonNumber implements Comparable<DsonDoubl
 
     @Override
     public int hashCode() {
-        long temp = Double.doubleToLongBits(value);
-        return (int) (temp ^ (temp >>> 32));
+        return Double.hashCode(value);
     }
 
     @Override

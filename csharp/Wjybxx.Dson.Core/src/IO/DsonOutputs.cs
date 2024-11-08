@@ -207,9 +207,9 @@ public static class DsonOutputs
 
         public void WriteString(string value) {
             try {
-                ulong maxByteCount = (ulong)(value.Length * 3L);
+                long maxByteCount = (value.Length * 3L);
                 int maxByteCountVarIntSize = CodedUtil.ComputeRawVarInt64Size(maxByteCount);
-                int minByteCountVarIntSize = CodedUtil.ComputeRawVarInt32Size((uint)value.Length);
+                int minByteCountVarIntSize = CodedUtil.ComputeRawVarInt32Size(value.Length);
                 if (maxByteCountVarIntSize == minByteCountVarIntSize) {
                     // len占用的字节数是可提前确定的，因此无需额外的字节数计算，可直接编码
                     int byteCount = Encoding.UTF8.GetBytes(value, 0, value.Length, _buffer, _bufferPos + minByteCountVarIntSize);

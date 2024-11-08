@@ -164,7 +164,7 @@ public static class WireTypes
     #region 计算最佳WireType
 
     private const int INT_THRESHOLD = (1 << 21) - 1; // 低21位全1
-    private const long LONG_THRESHOLD = (1L << 49) - 1; // 低49位全1
+    private const long LONG_THRESHOLD = (1L << 50) - 1; // 低50位全1
 
     private const int FLOAT_COMPRESS_MASK = (1 << 10) - 1; // 低10位全1
     private const long DOUBLE_COMPRESS_MASK = (1L << 14) - 1; // 低14位全1
@@ -187,7 +187,7 @@ public static class WireTypes
         return WireType.Fixed;
     }
 
-    /** 计算float的最佳序列化格式 */
+    /** 计算float的最佳序列化格式 -- 浮点数是压缩收益几近于无 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static WireType BestOfFloat(float value) {
         int rawBits = BitConverter.SingleToInt32Bits(value);

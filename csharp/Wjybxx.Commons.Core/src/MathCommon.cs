@@ -113,45 +113,39 @@ public static class MathCommon
 
     #region bitcount
 
-    private const uint INT_M1 = 0x55555555;
-    private const uint INT_M2 = 0x33333333;
-    private const uint INT_M4 = 0x0f0f0f0f;
-    private const uint INT_M8 = 0x00ff00ff;
-    private const uint INT_M16 = 0x0000ffff;
+    private const int INT_M1 = 0x5555_5555;
+    private const int INT_M2 = 0x3333_3333;
+    private const int INT_M4 = 0x0f0f_0f0f;
+    private const int INT_M8 = 0x00ff_00ff;
+    private const int INT_M16 = 0x0000_ffff;
 
     /** 计算int32值中1的数量 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int BitCount(int n) {
-        return BitCount((uint)n);
-    }
-
-    /** 计算int32值中1的数量 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BitCount(uint n) {
         n = (n & INT_M1) + ((n >> 1) & INT_M1);
         n = (n & INT_M2) + ((n >> 2) & INT_M2);
         n = (n & INT_M4) + ((n >> 4) & INT_M4);
         n = (n & INT_M8) + ((n >> 8) & INT_M8);
         n = (n & INT_M16) + ((n >> 16) & INT_M16);
-        return (int)n;
+        return n;
     }
 
-    private const ulong LONG_M1 = 0x5555555555555555;
-    private const ulong LONG_M2 = 0x3333333333333333;
-    private const ulong LONG_M4 = 0x0f0f0f0f0f0f0f0f;
-    private const ulong LONG_M8 = 0x00ff00ff00ff00ff;
-    private const ulong LONG_M16 = 0x0000ffff0000ffff;
-    private const ulong LONG_M32 = 0x00000000ffffffff;
+    /** 计算uint32值中1的数量 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BitCount(uint n) {
+        return BitCount((int)n);
+    }
+
+    private const long LONG_M1 = 0x5555_5555_5555_5555;
+    private const long LONG_M2 = 0x3333_3333_3333_3333;
+    private const long LONG_M4 = 0x0f0f_0f0f_0f0f_0f0f;
+    private const long LONG_M8 = 0x00ff_00ff_00ff_00ff;
+    private const long LONG_M16 = 0x0000_ffff_0000_ffff;
+    private const long LONG_M32 = 0x0000_0000_ffff_ffff;
 
     /** 计算int64值中1的数量 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int BitCount(long n) {
-        return BitCount((ulong)n);
-    }
-
-    /** 计算int64值中1的数量 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BitCount(ulong n) {
         n = (n & LONG_M1) + ((n >> 1) & LONG_M1);
         n = (n & LONG_M2) + ((n >> 2) & LONG_M2);
         n = (n & LONG_M4) + ((n >> 4) & LONG_M4);
@@ -159,6 +153,12 @@ public static class MathCommon
         n = (n & LONG_M16) + ((n >> 16) & LONG_M16);
         n = (n & LONG_M32) + ((n >> 32) & LONG_M32);
         return (int)n;
+    }
+
+    /** 计算uint64值中1的数量 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BitCount(ulong n) {
+        return BitCount((long)n);
     }
 
     /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
@@ -209,10 +209,9 @@ public static class MathCommon
     /// <exception cref="ArgumentException">offset非法</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int LogicalShiftRight(int val, int offset) {
-        if (offset < 0) throw new ArgumentException("invalid offset " + offset);
         if (offset == 0) return val;
-        uint uval = (uint)val;
-        return (int)(uval >> offset);
+        int mask = int.MaxValue >> (offset - 1); // 高n位为0
+        return (val >> offset) & mask;
     }
 
     /// <summary>
@@ -224,10 +223,9 @@ public static class MathCommon
     /// <exception cref="ArgumentException">offset非法</exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long LogicalShiftRight(long val, int offset) {
-        if (offset < 0) throw new ArgumentException("invalid offset " + offset);
         if (offset == 0) return val;
-        ulong uval = (ulong)val;
-        return (long)(uval >> offset);
+        long mask = long.MaxValue >> (offset - 1); // 高n位为0
+        return (val >> offset) & mask;
     }
 
     #endregion
