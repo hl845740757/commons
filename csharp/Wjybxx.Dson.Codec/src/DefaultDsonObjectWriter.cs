@@ -41,15 +41,15 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
 
     #region 简单值
 
-    public void WriteInt(string? name, int value, WireType wireType, INumberStyle style) {
+    public void WriteInt(string? name, int value, INumberStyle style) {
         if (value != 0 || (!writer.IsAtName || converter.Options.appendDef)) {
-            writer.WriteInt32(name, value, wireType, style);
+            writer.WriteInt32(name, value, style);
         }
     }
 
-    public void WriteLong(string? name, long value, WireType wireType, INumberStyle style) {
+    public void WriteLong(string? name, long value, INumberStyle style) {
         if (value != 0 || (!writer.IsAtName || converter.Options.appendDef)) {
-            writer.WriteInt64(name, value, wireType, style);
+            writer.WriteInt64(name, value, style);
         }
     }
 

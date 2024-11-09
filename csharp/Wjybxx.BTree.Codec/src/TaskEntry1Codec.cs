@@ -22,7 +22,6 @@ using Wjybxx.Commons.Attributes;
 using Wjybxx.BTree;
 using Wjybxx.Dson.Codec;
 using System;
-using Wjybxx.Dson;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
@@ -40,7 +39,7 @@ public sealed class TaskEntry1Codec<T> : AbstractDsonCodec<TaskEntry<T>> where T
 
     protected override void WriteFields(IDsonObjectWriter writer, ref TaskEntry<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteString(names_name, inst.Name, StringStyle.Auto);
         writer.WriteObject(names_rootTask, inst.RootTask, typeof(Task<T>), null);
         writer.WriteByte(names_type, inst.Type, NumberStyles.Simple);

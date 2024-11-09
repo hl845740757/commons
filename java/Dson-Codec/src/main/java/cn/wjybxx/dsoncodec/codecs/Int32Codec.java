@@ -16,7 +16,6 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
-import cn.wjybxx.dson.WireType;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
@@ -51,7 +50,7 @@ public class Int32Codec implements DsonCodec<Integer> {
         // 由字典或List调用时，declaredType可能是匹配的
         NumberStyle numberStyle = (declaredType.rawType == Integer.class || declaredType.rawType == int.class) ?
                 NumberStyle.SIMPLE : NumberStyle.TYPED;
-        writer.writeInt(null, inst, WireType.UINT, numberStyle);
+        writer.writeInt(null, inst, numberStyle);
     }
 
     @Override

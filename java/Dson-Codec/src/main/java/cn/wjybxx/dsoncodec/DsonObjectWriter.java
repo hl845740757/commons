@@ -17,7 +17,6 @@
 package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.dson.DsonType;
-import cn.wjybxx.dson.WireType;
 import cn.wjybxx.dson.text.INumberStyle;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
@@ -44,9 +43,9 @@ public interface DsonObjectWriter extends AutoCloseable {
 
     // region 简单值
 
-    void writeInt(String name, int value, WireType wireType, INumberStyle style);
+    void writeInt(String name, int value, INumberStyle style);
 
-    void writeLong(String name, long value, WireType wireType, INumberStyle style);
+    void writeLong(String name, long value, INumberStyle style);
 
     void writeFloat(String name, float value, INumberStyle style);
 
@@ -191,19 +190,11 @@ public interface DsonObjectWriter extends AutoCloseable {
 
     // 这里使用simple -- 外部通常包含明确类型
     default void writeInt(String name, int value) {
-        writeInt(name, value, WireType.bestOfInt32(value), NumberStyle.SIMPLE);
-    }
-
-    default void writeInt(String name, int value, WireType wireType) {
-        writeInt(name, value, wireType, NumberStyle.SIMPLE);
+        writeInt(name, value, NumberStyle.SIMPLE);
     }
 
     default void writeLong(String name, long value) {
-        writeLong(name, value, WireType.bestOfInt64(value), NumberStyle.SIMPLE);
-    }
-
-    default void writeLong(String name, long value, WireType wireType) {
-        writeLong(name, value, wireType, NumberStyle.SIMPLE);
+        writeLong(name, value, NumberStyle.SIMPLE);
     }
 
     default void writeFloat(String name, float value) {
@@ -222,27 +213,27 @@ public interface DsonObjectWriter extends AutoCloseable {
 
     /** 应当减少 short/byte/char 的使用，尤其应当避免使用其包装类型，使用的越多越难以扩展，越难以支持跨语言等。 */
     default void writeShort(String name, short value) {
-        writeInt(name, value, WireType.SINT, NumberStyle.SIMPLE);
+        writeInt(name, value, NumberStyle.SIMPLE);
     }
 
     default void writeShort(String name, short value, INumberStyle style) {
-        writeInt(name, value, WireType.SINT, style);
+        writeInt(name, value, style);
     }
 
     default void writeByte(String name, byte value) {
-        writeInt(name, value, WireType.SINT, NumberStyle.SIMPLE); // java的byte是有符号数，容易负数
+        writeInt(name, value, NumberStyle.SIMPLE); // java的byte是有符号数，容易负数
     }
 
     default void writeByte(String name, byte value, INumberStyle style) {
-        writeInt(name, value, WireType.SINT, style);
+        writeInt(name, value, style);
     }
 
     default void writeChar(String name, char value) {
-        writeInt(name, value, WireType.UINT, NumberStyle.SIMPLE);
+        writeInt(name, value, NumberStyle.SIMPLE);
     }
 
     default void writeChar(String name, char value, INumberStyle style) {
-        writeInt(name, value, WireType.UINT, style);
+        writeInt(name, value, style);
     }
 
     // endregion

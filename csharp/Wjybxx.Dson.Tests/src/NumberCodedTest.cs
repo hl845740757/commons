@@ -124,7 +124,7 @@ public class NumberCodedTest
     public void testDouble() {
         WireType wireType = (repeat & 1) == 1 ? WireType.Uint : WireType.Fixed;
         Console.WriteLine("Begin: WireType: " + wireType);
-        
+
         byte[] buffer = new byte[10 * COUNT];
         double[] valueArray = new double[COUNT];
         int totalSize = 0;

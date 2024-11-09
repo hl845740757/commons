@@ -16,7 +16,10 @@
 
 package cn.wjybxx.dsoncodec;
 
-import cn.wjybxx.dson.*;
+import cn.wjybxx.dson.DsonType;
+import cn.wjybxx.dson.DsonValue;
+import cn.wjybxx.dson.DsonWriter;
+import cn.wjybxx.dson.Dsons;
 import cn.wjybxx.dson.text.INumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
@@ -45,16 +48,16 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     // region 简单值
 
     @Override
-    public void writeInt(String name, int value, WireType wireType, INumberStyle style) {
+    public void writeInt(String name, int value, INumberStyle style) {
         if (value != 0 || (!writer.isAtName() || converter.options().appendDef)) {
-            writer.writeInt32(name, value, wireType, style);
+            writer.writeInt32(name, value, style);
         }
     }
 
     @Override
-    public void writeLong(String name, long value, WireType wireType, INumberStyle style) {
+    public void writeLong(String name, long value, INumberStyle style) {
         if (value != 0 || (!writer.isAtName() || converter.options().appendDef)) {
-            writer.writeInt64(name, value, wireType, style);
+            writer.writeInt64(name, value, style);
         }
     }
 

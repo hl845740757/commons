@@ -31,7 +31,6 @@ public class BeanExample
     [DsonProperty(Name = "_name", StringStyle = StringStyle.AutoQuote)]
     private string? name;
 
-    [DsonProperty(WireType = WireType.Uint)]
     private int age;
 
     public string? Name {
@@ -47,7 +46,7 @@ public class BeanExample
     /// <summary>
     /// 测试自动属性
     /// </summary>
-    [DsonProperty(WireType = WireType.Uint, WriteProxy = "WriteType", ReadProxy = "ReadType")]
+    [DsonProperty(WriteProxy = "WriteType", ReadProxy = "ReadType")]
     public int Type { get; set; }
 
     /// <summary>

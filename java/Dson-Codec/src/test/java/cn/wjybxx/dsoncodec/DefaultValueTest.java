@@ -16,7 +16,6 @@
 
 package cn.wjybxx.dsoncodec;
 
-import cn.wjybxx.dson.WireType;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import org.junit.jupiter.api.Assertions;
@@ -140,10 +139,10 @@ public class DefaultValueTest {
 
         @Override
         public void writeFields(DsonObjectWriter writer, Bean inst) {
-            writer.writeInt("iv1", inst.iv1, WireType.UINT, NumberStyle.SIMPLE);
-            writer.writeInt("iv2", inst.iv2, WireType.UINT, NumberStyle.SIMPLE);
-            writer.writeLong("lv1", inst.lv1, WireType.UINT, NumberStyle.SIMPLE);
-            writer.writeLong("lv2", inst.lv2, WireType.UINT, NumberStyle.SIMPLE);
+            writer.writeInt("iv1", inst.iv1, NumberStyle.SIMPLE);
+            writer.writeInt("iv2", inst.iv2, NumberStyle.SIMPLE);
+            writer.writeLong("lv1", inst.lv1, NumberStyle.SIMPLE);
+            writer.writeLong("lv2", inst.lv2, NumberStyle.SIMPLE);
             writer.writeFloat("fv1", inst.fv1, NumberStyle.SIMPLE);
             writer.writeFloat("fv2", inst.fv2, NumberStyle.SIMPLE);
             writer.writeDouble("dv1", inst.dv1, NumberStyle.SIMPLE);

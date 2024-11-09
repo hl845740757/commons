@@ -34,7 +34,7 @@ public static class MorePrimitiveCodecs
             INumberStyle numberStyle = declaredType == typeof(uint)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
-            writer.WriteInt(null, (int)inst, WireType.Uint, numberStyle);
+            writer.WriteInt(null, (int)inst, numberStyle);
         }
 
         public uint ReadObject(IDsonObjectReader reader, Func<uint>? factory = null) {
@@ -50,7 +50,7 @@ public static class MorePrimitiveCodecs
             INumberStyle numberStyle = declaredType == typeof(ulong)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
-            writer.WriteLong(null, (long)inst, WireType.Uint, numberStyle);
+            writer.WriteLong(null, (long)inst, numberStyle);
         }
 
         public ulong ReadObject(IDsonObjectReader reader, Func<ulong>? factory = null) {
@@ -66,7 +66,7 @@ public static class MorePrimitiveCodecs
             INumberStyle numberStyle = declaredType == typeof(short)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
-            writer.WriteInt(null, inst, WireType.Sint, numberStyle);
+            writer.WriteInt(null, inst, numberStyle);
         }
 
         public short ReadObject(IDsonObjectReader reader, Func<short>? factory = null) {
@@ -82,7 +82,7 @@ public static class MorePrimitiveCodecs
             INumberStyle numberStyle = declaredType == typeof(ushort)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
-            writer.WriteInt(null, inst, WireType.Uint, numberStyle);
+            writer.WriteInt(null, inst, numberStyle);
         }
 
         public ushort ReadObject(IDsonObjectReader reader, Func<ushort>? factory = null) {
@@ -98,7 +98,7 @@ public static class MorePrimitiveCodecs
             INumberStyle numberStyle = declaredType == typeof(byte)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
-            writer.WriteInt(null, inst, WireType.Uint, numberStyle); // c# byte是无符号数
+            writer.WriteInt(null, inst, numberStyle); // c# byte是无符号数
         }
 
         public byte ReadObject(IDsonObjectReader reader, Func<byte>? factory = null) {
@@ -114,7 +114,7 @@ public static class MorePrimitiveCodecs
             INumberStyle numberStyle = declaredType == typeof(sbyte)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
-            writer.WriteInt(null, inst, WireType.Sint, numberStyle);
+            writer.WriteInt(null, inst, numberStyle);
         }
 
         public sbyte ReadObject(IDsonObjectReader reader, Func<sbyte>? factory = null) {
@@ -130,7 +130,7 @@ public static class MorePrimitiveCodecs
             INumberStyle numberStyle = declaredType == typeof(char)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
-            writer.WriteInt(null, inst, WireType.Uint, numberStyle);
+            writer.WriteInt(null, inst, numberStyle);
         }
 
         public char ReadObject(IDsonObjectReader reader, Func<char>? factory = null) {

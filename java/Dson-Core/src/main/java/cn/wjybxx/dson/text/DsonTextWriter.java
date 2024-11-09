@@ -17,7 +17,10 @@
 package cn.wjybxx.dson.text;
 
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
-import cn.wjybxx.dson.*;
+import cn.wjybxx.dson.AbstractDsonWriter;
+import cn.wjybxx.dson.DsonContextType;
+import cn.wjybxx.dson.DsonType;
+import cn.wjybxx.dson.DsonWriterState;
 import cn.wjybxx.dson.internal.CommonsLang3;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.types.*;
@@ -369,14 +372,14 @@ public final class DsonTextWriter extends AbstractDsonWriter {
     }
 
     @Override
-    protected void doWriteInt32(int value, WireType wireType, INumberStyle style) {
+    protected void doWriteInt32(int value, INumberStyle style) {
         DsonPrinter printer = this.printer;
         writeCurrentName(printer, DsonType.INT32);
         printInt32(printer, value, style);
     }
 
     @Override
-    protected void doWriteInt64(long value, WireType wireType, INumberStyle style) {
+    protected void doWriteInt64(long value, INumberStyle style) {
         DsonPrinter printer = this.printer;
         writeCurrentName(printer, DsonType.INT64);
         printInt64(printer, value, style);

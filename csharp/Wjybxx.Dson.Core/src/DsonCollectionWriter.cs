@@ -74,11 +74,11 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
 
     #region 简单值
 
-    protected override void DoWriteInt32(int value, WireType wireType, INumberStyle style) {
+    protected override void DoWriteInt32(int value, INumberStyle style) {
         GetContext().Add(new DsonInt32(value));
     }
 
-    protected override void DoWriteInt64(long value, WireType wireType, INumberStyle style) {
+    protected override void DoWriteInt64(long value, INumberStyle style) {
         GetContext().Add(new DsonInt64(value));
     }
 

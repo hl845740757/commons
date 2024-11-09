@@ -30,9 +30,9 @@ public interface IDsonObjectWriter : IDisposable
 {
     #region 基础api
 
-    void WriteInt(string? name, int value, WireType wireType, INumberStyle style);
+    void WriteInt(string? name, int value, INumberStyle style);
 
-    void WriteLong(string? name, long value, WireType wireType, INumberStyle style);
+    void WriteLong(string? name, long value, INumberStyle style);
 
     void WriteFloat(string? name, float value, INumberStyle style);
 
@@ -175,22 +175,12 @@ public interface IDsonObjectWriter : IDisposable
     // 这里使用simple -- 外部通常包含明确类型
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteInt(string? name, int value) {
-        WriteInt(name, value, WireTypes.BestOfInt32(value), NumberStyles.Simple);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteInt(string? name, int value, WireType wireType) {
-        WriteInt(name, value, wireType, NumberStyles.Simple);
+        WriteInt(name, value, NumberStyles.Simple);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteLong(string? name, long value) {
-        WriteLong(name, value, WireTypes.BestOfInt64(value), NumberStyles.Simple);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteLong(string? name, long value, WireType wireType) {
-        WriteLong(name, value, wireType, NumberStyles.Simple);
+        WriteLong(name, value, NumberStyles.Simple);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -203,66 +193,65 @@ public interface IDsonObjectWriter : IDisposable
         WriteDouble(name, value, NumberStyles.Simple);
     }
 
-    // short等不再允许指定WireType
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteShort(string? name, short value) {
-        WriteInt(name, value, WireType.Sint, NumberStyles.Simple);
+        WriteInt(name, value, NumberStyles.Simple);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteShort(string? name, short value, INumberStyle style) {
-        WriteInt(name, value, WireType.Sint, style);
+        WriteInt(name, value, style);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteByte(string? name, byte value) {
-        WriteInt(name, value, WireType.Uint, NumberStyles.Simple); // c#的byte是无符号整数，sbyte才是有符号整数
+        WriteInt(name, value, NumberStyles.Simple); // c#的byte是无符号整数，sbyte才是有符号整数
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteByte(string? name, byte value, INumberStyle style) {
-        WriteInt(name, value, WireType.Uint, style);
+        WriteInt(name, value, style);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteChar(string? name, char value) {
-        WriteInt(name, value, WireType.Uint, NumberStyles.Simple);
+        WriteInt(name, value, NumberStyles.Simple);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteChar(string? name, char value, INumberStyle style) {
-        WriteInt(name, value, WireType.Uint, style);
+        WriteInt(name, value, style);
     }
 
     // unsigned
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteUint(string? name, uint value) {
-        WriteInt(name, (int)value, WireType.Uint, NumberStyles.Unsigned);
+        WriteInt(name, (int)value, NumberStyles.Unsigned);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteUint(string? name, uint value, INumberStyle style) {
-        WriteInt(name, (int)value, WireType.Uint, style);
+        WriteInt(name, (int)value, style);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteUlong(string? name, ulong value) {
-        WriteLong(name, (long)value, WireType.Uint, NumberStyles.Unsigned);
+        WriteLong(name, (long)value, NumberStyles.Unsigned);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteUlong(string? name, ulong value, INumberStyle style) {
-        WriteLong(name, (long)value, WireType.Uint, style);
+        WriteLong(name, (long)value, style);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteUShort(string? name, ushort value) {
-        WriteInt(name, value, WireType.Uint, NumberStyles.Unsigned);
+        WriteInt(name, value, NumberStyles.Unsigned);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteUShort(string? name, ushort value, INumberStyle style) {
-        WriteInt(name, value, WireType.Uint, style);
+        WriteInt(name, value, style);
     }
 
     #endregion

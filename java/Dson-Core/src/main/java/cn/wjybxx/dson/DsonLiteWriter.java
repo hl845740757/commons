@@ -56,9 +56,9 @@ public interface DsonLiteWriter extends AutoCloseable {
 
     // region 简单值
 
-    void writeInt32(int name, int value, WireType wireType);
+    void writeInt32(int name, int value);
 
-    void writeInt64(int name, long value, WireType wireType);
+    void writeInt64(int name, long value);
 
     void writeFloat(int name, float value);
 

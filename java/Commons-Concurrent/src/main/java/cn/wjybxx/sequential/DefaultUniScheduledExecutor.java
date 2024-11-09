@@ -16,7 +16,6 @@
 
 package cn.wjybxx.sequential;
 
-import cn.wjybxx.base.annotation.VisibleForTesting;
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
 import cn.wjybxx.base.time.TimeProvider;

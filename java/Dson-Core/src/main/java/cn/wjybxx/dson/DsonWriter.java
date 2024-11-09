@@ -57,9 +57,9 @@ public interface DsonWriter extends AutoCloseable {
 
     // region 简单值
 
-    void writeInt32(String name, int value, WireType wireType, INumberStyle style);
+    void writeInt32(String name, int value, INumberStyle style);
 
-    void writeInt64(String name, long value, WireType wireType, INumberStyle style);
+    void writeInt64(String name, long value, INumberStyle style);
 
     void writeFloat(String name, float value, INumberStyle style);
 
@@ -84,20 +84,13 @@ public interface DsonWriter extends AutoCloseable {
     void writeTimestamp(String name, Timestamp timestamp);
 
     // 快捷方法
-    default void writeInt32(String name, int value, WireType wireType) {
-        writeInt32(name, value, wireType, NumberStyle.TYPED); // 默认需要打印类型，才能精确解析
-    }
-
-    default void writeInt64(String name, long value, WireType wireType) {
-        writeInt64(name, value, wireType, NumberStyle.TYPED);
-    }
 
     default void writeInt32(String name, int value) {
-        writeInt32(name, value, WireType.bestOfInt32(value), NumberStyle.TYPED);
+        writeInt32(name, value, NumberStyle.TYPED);
     }
 
     default void writeInt64(String name, long value) {
-        writeInt64(name, value, WireType.bestOfInt64(value), NumberStyle.TYPED);
+        writeInt64(name, value, NumberStyle.TYPED);
     }
 
     default void writeFloat(String name, float value) {

@@ -5,13 +5,12 @@ using Wjybxx.Dson.Codec;
 using System.Collections.Generic;
 using System;
 using Wjybxx.Dson.Text;
-using Wjybxx.Dson;
 
 namespace Wjybxx.Dson.Tests.Apt
 {
-  [Generated("Wjybxx.Dson.Apt.CodecProcessor")]
-  public sealed class BeanExampleCodec : AbstractDsonCodec<BeanExample>
-  {
+[Generated("Wjybxx.Dson.Apt.CodecProcessor")]
+public sealed class BeanExampleCodec : AbstractDsonCodec<BeanExample>
+{
     public const string names_name = "_name";
     public const string names_age = "age";
     public const string names_Type = "Type";
@@ -22,33 +21,33 @@ namespace Wjybxx.Dson.Tests.Apt
     public override Type GetEncoderType() => typeof(BeanExample);
 
     protected override void BeforeEncode(IDsonObjectWriter writer, ref BeanExample inst) {
-      inst.BeforeEncode(writer.Options);
+        inst.BeforeEncode(writer.Options);
     }
 
     protected override void WriteFields(IDsonObjectWriter writer, ref BeanExample inst) {
-      inst.WriteObject(writer);
-      writer.WriteString(names_name, inst.Name, StringStyle.AutoQuote);
-      writer.WriteInt(names_age, inst.Age, WireType.Uint, NumberStyles.Simple);
-      inst.WriteType(writer, names_Type);
-      writer.WriteObject(names_hashSet, inst.hashSet, typeof(HashSet<string>), null);
-      writer.WriteObject(names_hashSet2, inst.hashSet2, typeof(ISet<string>), null);
+        inst.WriteObject(writer);
+        writer.WriteString(names_name, inst.Name, StringStyle.AutoQuote);
+        writer.WriteInt(names_age, inst.Age, NumberStyles.Simple);
+        inst.WriteType(writer, names_Type);
+        writer.WriteObject(names_hashSet, inst.hashSet, typeof(HashSet<string>), null);
+        writer.WriteObject(names_hashSet2, inst.hashSet2, typeof(ISet<string>), null);
     }
 
     protected override BeanExample NewInstance(IDsonObjectReader reader) {
-      return BeanExample.NewInstance(reader);
+        return BeanExample.NewInstance(reader);
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref BeanExample inst) {
-      inst.ReadObject(reader);
-      inst.Name = reader.ReadString(names_name);
-      inst.Age = reader.ReadInt(names_age);
-      inst.ReadType(reader, names_Type);
-      inst.hashSet = reader.ReadObject<HashSet<string>>(names_hashSet, typeof(HashSet<string>), null);
-      inst.hashSet2 = reader.ReadObject<HashSet<string>>(names_hashSet2, typeof(ISet<string>), factories_hashSet2);
+        inst.ReadObject(reader);
+        inst.Name = reader.ReadString(names_name);
+        inst.Age = reader.ReadInt(names_age);
+        inst.ReadType(reader, names_Type);
+        inst.hashSet = reader.ReadObject<HashSet<string>>(names_hashSet, typeof(HashSet<string>), null);
+        inst.hashSet2 = reader.ReadObject<HashSet<string>>(names_hashSet2, typeof(ISet<string>), factories_hashSet2);
     }
 
     protected override void AfterDecode(IDsonObjectReader reader, ref BeanExample inst) {
-      inst.AfterDecode(reader.Options);
+        inst.AfterDecode(reader.Options);
     }
-  }
+}
 }

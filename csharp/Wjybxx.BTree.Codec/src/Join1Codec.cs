@@ -23,7 +23,6 @@ using Wjybxx.BTree.Branch;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.BTree;
-using Wjybxx.Dson;
 using Wjybxx.Dson.Text;
 using System.Collections.Generic;
 
@@ -41,7 +40,7 @@ public sealed class Join1Codec<T> : AbstractDsonCodec<Join<T>> where T : class
 
     protected override void WriteFields(IDsonObjectWriter writer, ref Join<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteObject(names_children, inst.Children, typeof(List<Task<T>>), null);
         writer.WriteObject(names_policy, inst.Policy, typeof(JoinPolicy<T>), null);
     }

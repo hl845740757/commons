@@ -62,7 +62,7 @@ class AptFieldProps {
     /** 读代理方法名 */
     public String readProxy = "";
 
-    public String wireType = DEFAULT_WIRE_TYPE;
+    /** 绑定类型 */
     public String dsonType = null; // 该属性只有显式声明才有效
     public int dsonSubType = 0;
 
@@ -83,7 +83,6 @@ class AptFieldProps {
             props.getter = getStringValue(annoValueMap, "getter", props.getter);
             props.setter = getStringValue(annoValueMap, "setter", props.setter);
 
-            props.wireType = getEnumConstantName(annoValueMap, "wireType", props.wireType);
             props.dsonType = getEnumConstantName(annoValueMap, "dsonType", null);
             props.dsonSubType = getIntValue(annoValueMap, "dsonSubType", props.dsonSubType);
 

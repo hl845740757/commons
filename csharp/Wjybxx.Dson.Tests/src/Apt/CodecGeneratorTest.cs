@@ -29,7 +29,7 @@ public class CodecGeneratorTest
         if (!Directory.Exists(csharpOutDir)) {
             return;
         }
-        
+
         CodecProcessor processor = new CodecProcessor(new List<Type>()
         {
             typeof(MyDictionary<,>),

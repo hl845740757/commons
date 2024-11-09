@@ -16,7 +16,6 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
-import cn.wjybxx.dson.WireType;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
@@ -51,7 +50,7 @@ public final class MorePrimitiveCodecs {
         public void writeObject(DsonObjectWriter writer, Short inst, TypeInfo declaredType, ObjectStyle style) {
             NumberStyle numberStyle = (declaredType.rawType == Short.class || declaredType.rawType == short.class) ?
                     NumberStyle.SIMPLE : NumberStyle.TYPED;
-            writer.writeInt(null, inst, WireType.SINT, numberStyle);
+            writer.writeInt(null, inst, numberStyle);
         }
 
         @Override
@@ -76,7 +75,7 @@ public final class MorePrimitiveCodecs {
         public void writeObject(DsonObjectWriter writer, Byte inst, TypeInfo declaredType, ObjectStyle style) {
             NumberStyle numberStyle = (declaredType.rawType == Byte.class || declaredType.rawType == byte.class) ?
                     NumberStyle.SIMPLE : NumberStyle.TYPED;
-            writer.writeInt(null, inst, WireType.SINT, numberStyle);
+            writer.writeInt(null, inst, numberStyle);
         }
 
         @Override
@@ -101,7 +100,7 @@ public final class MorePrimitiveCodecs {
         public void writeObject(DsonObjectWriter writer, Character inst, TypeInfo declaredType, ObjectStyle style) {
             NumberStyle numberStyle = (declaredType.rawType == Character.class || declaredType.rawType == char.class) ?
                     NumberStyle.SIMPLE : NumberStyle.TYPED;
-            writer.writeInt(null, inst, WireType.UINT, numberStyle);
+            writer.writeInt(null, inst, numberStyle);
         }
 
         @Override

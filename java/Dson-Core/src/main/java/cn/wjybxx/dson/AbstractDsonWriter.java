@@ -127,16 +127,16 @@ public abstract class AbstractDsonWriter implements DsonWriter {
 
     // region 简单值
     @Override
-    public void writeInt32(String name, int value, WireType wireType, INumberStyle style) {
+    public void writeInt32(String name, int value, INumberStyle style) {
         advanceToValueState(name);
-        doWriteInt32(value, wireType, style);
+        doWriteInt32(value, style);
         setNextState();
     }
 
     @Override
-    public void writeInt64(String name, long value, WireType wireType, INumberStyle style) {
+    public void writeInt64(String name, long value, INumberStyle style) {
         advanceToValueState(name);
-        doWriteInt64(value, wireType, style);
+        doWriteInt64(value, style);
         setNextState();
     }
 
@@ -224,9 +224,9 @@ public abstract class AbstractDsonWriter implements DsonWriter {
         setNextState();
     }
 
-    protected abstract void doWriteInt32(int value, WireType wireType, INumberStyle style);
+    protected abstract void doWriteInt32(int value, INumberStyle style);
 
-    protected abstract void doWriteInt64(long value, WireType wireType, INumberStyle style);
+    protected abstract void doWriteInt64(long value, INumberStyle style);
 
     protected abstract void doWriteFloat(float value, INumberStyle style);
 

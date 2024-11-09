@@ -68,11 +68,11 @@ public class DsonNumberTest
                 DsonNumber dsonNumber = dsonValue.AsDsonNumber();
                 switch (dsonNumber.DsonType) {
                     case DsonType.Int32: {
-                        writer.WriteInt32(name, dsonNumber.IntValue, WireType.Uint, style);
+                        writer.WriteInt32(name, dsonNumber.IntValue, style);
                         break;
                     }
                     case DsonType.Int64: {
-                        writer.WriteInt64(name, dsonNumber.LongValue, WireType.Uint, style);
+                        writer.WriteInt64(name, dsonNumber.LongValue, style);
                         break;
                     }
                     case DsonType.Float: {

@@ -355,13 +355,13 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         printer.FastPrint(styleOut.Value);
     }
 
-    protected override void DoWriteInt32(int value, WireType wireType, INumberStyle style) {
+    protected override void DoWriteInt32(int value, INumberStyle style) {
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Int32);
         PrintInt32(printer, value, style);
     }
 
-    protected override void DoWriteInt64(long value, WireType wireType, INumberStyle style) {
+    protected override void DoWriteInt64(long value, INumberStyle style) {
         DsonPrinter printer = this._printer;
         WriteCurrentName(printer, DsonType.Int64);
         PrintInt64(printer, value, style);

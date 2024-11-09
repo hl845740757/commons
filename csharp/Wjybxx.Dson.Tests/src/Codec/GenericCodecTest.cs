@@ -42,7 +42,7 @@ public class GenericCodecTest
         DsonCodecConfig codecConfig = new DsonCodecConfig()
             .AddCodec(new Vector3Codec());
         // 
-        codecConfig.AddGenericCodec(typeof(MyDictionary<,>), typeof(MyDictionary2Codec<,>), 
+        codecConfig.AddGenericCodec(typeof(MyDictionary<,>), typeof(MyDictionary2Codec<,>),
             typeof(MyDictionary<,>), "FACTORY");
 
         converter = new DsonConverterBuilder()

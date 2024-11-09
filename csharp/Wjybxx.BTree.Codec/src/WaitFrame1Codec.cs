@@ -23,7 +23,6 @@ using Wjybxx.BTree.Leaf;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.BTree;
-using Wjybxx.Dson;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
@@ -39,8 +38,8 @@ public sealed class WaitFrame1Codec<T> : AbstractDsonCodec<WaitFrame<T>> where T
 
     protected override void WriteFields(IDsonObjectWriter writer, ref WaitFrame<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
-        writer.WriteInt(names_required, inst.Required, WireType.Uint, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
+        writer.WriteInt(names_required, inst.Required, NumberStyles.Simple);
     }
 
     protected override WaitFrame<T> NewInstance(IDsonObjectReader reader) {

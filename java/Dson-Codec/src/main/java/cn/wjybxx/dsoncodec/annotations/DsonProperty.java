@@ -18,7 +18,6 @@ package cn.wjybxx.dsoncodec.annotations;
 
 import cn.wjybxx.base.annotation.StableName;
 import cn.wjybxx.dson.DsonType;
-import cn.wjybxx.dson.WireType;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
@@ -75,12 +74,6 @@ public @interface DsonProperty {
     // endregion
 
     // region tag
-
-    /**
-     * 数字类型属性的编码格式
-     * 设定合适的类型有助于优化二进制编码，修改该值不产生兼容性问题。
-     */
-    WireType wireType() default WireType.UINT;
 
     /**
      * 数据关联的{@link DsonType}，配合{@link #dsonSubType()}使用

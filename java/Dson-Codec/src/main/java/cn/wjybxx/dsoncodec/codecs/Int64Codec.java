@@ -16,7 +16,6 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
-import cn.wjybxx.dson.WireType;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
@@ -50,7 +49,7 @@ public class Int64Codec implements DsonCodec<Long> {
     public void writeObject(DsonObjectWriter writer, Long inst, TypeInfo declaredType, ObjectStyle style) {
         NumberStyle numberStyle = (declaredType.rawType == Long.class || declaredType.rawType == long.class) ?
                 NumberStyle.SIMPLE : NumberStyle.TYPED;
-        writer.writeLong(null, inst, WireType.UINT, numberStyle);
+        writer.writeLong(null, inst, numberStyle);
     }
 
     @Override

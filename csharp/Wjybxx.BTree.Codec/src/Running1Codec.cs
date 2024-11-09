@@ -15,6 +15,7 @@
 // limitations under the License.
 
 #endregion
+
 #pragma warning disable CS1591
 
 using Wjybxx.Commons.Attributes;
@@ -22,31 +23,30 @@ using Wjybxx.BTree.Leaf;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.BTree;
-using Wjybxx.Dson;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
-  [Generated("Wjybxx.Dson.Apt.CodecProcessor")]
-  public sealed class Running1Codec<T> : AbstractDsonCodec<Running<T>> where T : class 
-  {
+[Generated("Wjybxx.Dson.Apt.CodecProcessor")]
+public sealed class Running1Codec<T> : AbstractDsonCodec<Running<T>> where T : class
+{
     public const string names_guard = "guard";
     public const string names_flags = "flags";
 
     public override Type GetEncoderType() => typeof(Running<T>);
 
     protected override void WriteFields(IDsonObjectWriter writer, ref Running<T> inst) {
-      writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-      writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
+        writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
+        writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
     }
 
     protected override Running<T> NewInstance(IDsonObjectReader reader) {
-      return new Running<T>();
+        return new Running<T>();
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref Running<T> inst) {
-      inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-      inst.Flags = reader.ReadInt(names_flags);
+        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
+        inst.Flags = reader.ReadInt(names_flags);
     }
-  }
+}
 }

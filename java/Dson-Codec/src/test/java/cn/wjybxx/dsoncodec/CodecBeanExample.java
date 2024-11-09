@@ -38,7 +38,7 @@ import java.util.*;
 @DsonSerializable
 public class CodecBeanExample {
 
-    @DsonProperty(wireType = WireType.UINT, name = "_age")
+    @DsonProperty(name = "_age")
     public int age;
     public String name;
 

@@ -242,8 +242,8 @@ public class DsonLites {
             writer.writeName(name);
         }
         switch (dsonValue.getDsonType()) {
-            case INT32 -> writer.writeInt32(name, dsonValue.asInt32(), WireType.UINT);
-            case INT64 -> writer.writeInt64(name, dsonValue.asInt64(), WireType.UINT);
+            case INT32 -> writer.writeInt32(name, dsonValue.asInt32());
+            case INT64 -> writer.writeInt64(name, dsonValue.asInt64());
             case FLOAT -> writer.writeFloat(name, dsonValue.asFloat());
             case DOUBLE -> writer.writeDouble(name, dsonValue.asDouble());
             case BOOL -> writer.writeBool(name, dsonValue.asBool());

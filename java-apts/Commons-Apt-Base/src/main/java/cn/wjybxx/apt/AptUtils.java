@@ -542,6 +542,13 @@ public class AptUtils {
         return typeMirror.getKind() == TypeKind.BOOLEAN;
     }
 
+    public static boolean isPrimitiveNumber(TypeMirror typeMirror) {
+        return switch (typeMirror.getKind()) {
+            case INT, LONG, FLOAT, DOUBLE, SHORT, BYTE -> true;
+            default -> false;
+        };
+    }
+
     public static boolean isArrayType(TypeMirror typeMirror) {
         return typeMirror.getKind() == TypeKind.ARRAY;
     }

@@ -352,20 +352,11 @@ internal class PojoCodecGenerator
         string writeMethodName = GetWriteMethodName(fieldInfo);
         Type fieldType = fieldInfo.FieldType;
         if (fieldType.IsPrimitive && numberTypes.Contains(fieldType)) {
-            if (numberHasWireType.Contains(fieldType)) {
-                // int,long
-                // writer.WriteInt(names_fieldName, inst.field, WireType.Uint, NumberStyles.Simple)
-                builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L, $T.$L)",
-                    writeMethodName, SerialName(fieldName), fieldAccess,
-                    processor.typeName_WireType, EnumUtil.GetName(fieldProps.attribute.WireType),
-                    processor.typeName_NumberStyle, EnumUtil.GetName(fieldProps.attribute.NumberStyle));
-            } else {
-                // float,double,uint,ulong,short,ushort,byte,sbyte...
-                // writer.writeInt(names_fieldName, inst.field, NumberStyles.Simple)
-                builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L)",
-                    writeMethodName, SerialName(fieldName), fieldAccess,
-                    processor.typeName_NumberStyle, EnumUtil.GetName(fieldProps.attribute.NumberStyle));
-            }
+            // int,long,float,double,uint,ulong,short,ushort,byte,sbyte...
+            // writer.writeInt(names_fieldName, inst.field, NumberStyles.Simple)
+            builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L)",
+                writeMethodName, SerialName(fieldName), fieldAccess,
+                processor.typeName_NumberStyle, EnumUtil.GetName(fieldProps.attribute.NumberStyle));
             return;
         }
 
@@ -518,11 +509,6 @@ internal class PojoCodecGenerator
             typeof(byte),
             typeof(sbyte),
             typeof(char),
-        });
-        numberHasWireType.AddAll(new[]
-        {
-            typeof(int),
-            typeof(long),
         });
     }
 

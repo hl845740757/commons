@@ -129,15 +129,15 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     #region 简单值
 
-    public void WriteInt32(TName name, int value, WireType wireType, INumberStyle style) {
+    public void WriteInt32(TName name, int value, INumberStyle style) {
         AdvanceToValueState(name);
-        DoWriteInt32(value, wireType, style);
+        DoWriteInt32(value, style);
         SetNextState();
     }
 
-    public void WriteInt64(TName name, long value, WireType wireType, INumberStyle style) {
+    public void WriteInt64(TName name, long value, INumberStyle style) {
         AdvanceToValueState(name);
-        DoWriteInt64(value, wireType, style);
+        DoWriteInt64(value, style);
         SetNextState();
     }
 
@@ -212,9 +212,9 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState();
     }
 
-    protected abstract void DoWriteInt32(int value, WireType wireType, INumberStyle style);
+    protected abstract void DoWriteInt32(int value, INumberStyle style);
 
-    protected abstract void DoWriteInt64(long value, WireType wireType, INumberStyle style);
+    protected abstract void DoWriteInt64(long value, INumberStyle style);
 
     protected abstract void DoWriteFloat(float value, INumberStyle style);
 

@@ -30,7 +30,7 @@ public class Int32Codec : IDsonCodec<int>
         INumberStyle numberStyle = declaredType == typeof(int)
             ? NumberStyles.Simple
             : NumberStyles.Typed;
-        writer.WriteInt(null, inst, WireType.Uint, numberStyle);
+        writer.WriteInt(null, inst, numberStyle);
     }
 
     public int ReadObject(IDsonObjectReader reader, Func<int>? factory = null) {

@@ -23,7 +23,6 @@ using Wjybxx.BTree.Decorator;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.BTree;
-using Wjybxx.Dson;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
@@ -41,9 +40,9 @@ public sealed class UntilCond1Codec<T> : AbstractDsonCodec<UntilCond<T>> where T
 
     protected override void WriteFields(IDsonObjectWriter writer, ref UntilCond<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
-        writer.WriteInt(names_maxLoop, inst.MaxLoop, WireType.Uint, NumberStyles.Simple);
+        writer.WriteInt(names_maxLoop, inst.MaxLoop, NumberStyles.Simple);
         writer.WriteObject(names_cond, inst.Cond, typeof(Task<T>), null);
     }
 

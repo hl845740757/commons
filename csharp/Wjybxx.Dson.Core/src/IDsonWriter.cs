@@ -68,11 +68,10 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     /// </summary>
     /// <param name="name">字段的名字</param>
     /// <param name="value">要写入的值</param>
-    /// <param name="wireType">数字的二进制编码类型</param>
     /// <param name="style">数字的文本编码类型</param>
-    void WriteInt32(TName name, int value, WireType wireType, INumberStyle style);
+    void WriteInt32(TName name, int value, INumberStyle style);
 
-    void WriteInt64(TName name, long value, WireType wireType, INumberStyle style);
+    void WriteInt64(TName name, long value, INumberStyle style);
 
     void WriteFloat(TName name, float value, INumberStyle style);
 
@@ -97,24 +96,15 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     void WriteTimestamp(TName name, in Timestamp timestamp);
 
     // 快捷方法
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteInt32(TName name, int value, WireType wireType) {
-        WriteInt32(name, value, wireType, NumberStyles.Typed); // 默认需要打印类型，才能精确解析
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteInt64(TName name, long value, WireType wireType) {
-        WriteInt64(name, value, wireType, NumberStyles.Typed);
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteInt32(TName name, int value) {
-        WriteInt32(name, value, WireTypes.BestOfInt32(value), NumberStyles.Typed);
+        WriteInt32(name, value, NumberStyles.Typed);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void WriteInt64(TName name, long value) {
-        WriteInt64(name, value, WireTypes.BestOfInt64(value), NumberStyles.Typed);
+        WriteInt64(name, value, NumberStyles.Typed);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

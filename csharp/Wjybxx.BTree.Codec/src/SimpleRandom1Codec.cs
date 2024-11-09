@@ -23,7 +23,6 @@ using Wjybxx.BTree.Leaf;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.BTree;
-using Wjybxx.Dson;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
@@ -39,7 +38,7 @@ public sealed class SimpleRandom1Codec<T> : AbstractDsonCodec<SimpleRandom<T>> w
 
     protected override void WriteFields(IDsonObjectWriter writer, ref SimpleRandom<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteFloat(names_p, inst.P, NumberStyles.Simple);
     }
 

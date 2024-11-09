@@ -23,7 +23,6 @@ using Wjybxx.BTree.FSM;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.BTree;
-using Wjybxx.Dson;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.BTreeCodec.Codecs
@@ -43,12 +42,12 @@ public sealed class ChangeStateTask1Codec<T> : AbstractDsonCodec<ChangeStateTask
 
     protected override void WriteFields(IDsonObjectWriter writer, ref ChangeStateTask<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
-        writer.WriteInt(names_flags, inst.Flags, WireType.Uint, NumberStyles.Simple);
+        writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteString(names_nextStateGuid, inst.NextStateGuid, StringStyle.Auto);
         writer.WriteObject(names_stateProps, inst.StateProps, typeof(object), null);
         writer.WriteString(names_machineName, inst.MachineName, StringStyle.Auto);
         writer.WriteByte(names_delayMode, inst.DelayMode, NumberStyles.Simple);
-        writer.WriteInt(names_delayArg, inst.DelayArg, WireType.Uint, NumberStyles.Simple);
+        writer.WriteInt(names_delayArg, inst.DelayArg, NumberStyles.Simple);
     }
 
     protected override ChangeStateTask<T> NewInstance(IDsonObjectReader reader) {

@@ -55,12 +55,12 @@ public class DsonCollectionWriter extends AbstractDsonWriter {
 
     //region 简单值
     @Override
-    protected void doWriteInt32(int value, WireType wireType, INumberStyle style) {
+    protected void doWriteInt32(int value, INumberStyle style) {
         getContext().add(new DsonInt32(value));
     }
 
     @Override
-    protected void doWriteInt64(long value, WireType wireType, INumberStyle style) {
+    protected void doWriteInt64(long value, INumberStyle style) {
         getContext().add(new DsonInt64(value));
     }
 

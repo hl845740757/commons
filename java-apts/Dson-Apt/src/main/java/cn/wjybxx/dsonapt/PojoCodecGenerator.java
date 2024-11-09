@@ -356,26 +356,15 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
             fieldAccess = fieldName;
         }
 
-        // 处理数字 -- 涉及WireType和Style，short,byte,char不再指定WireType，意义不大
+        // 处理数字 -- 需追加NumberStyle
         final String writeMethodName = getWriteMethodName(variableElement);
-        switch (variableElement.asType().getKind()) {
-            case INT, LONG -> {
-                // writer.writeInt(names_fieldName, inst.field, WireType.VARINT, NumberStyle.SIMPLE)
-                builder.addStatement("writer.$L($L, inst.$L, $T.$L, $T.$L)",
-                        writeMethodName, serialName(fieldName), fieldAccess,
-                        processor.typeName_WireType, fieldProps.wireType,
-                        processor.typeName_NumberStyle, fieldProps.numberStyle);
-                return;
-            }
-            case FLOAT, DOUBLE, SHORT, BYTE, CHAR -> {
-                // writer.writeInt(names_fieldName, inst.field, NumberStyle.SIMPLE)
-                builder.addStatement("writer.$L($L, inst.$L, $T.$L)",
-                        writeMethodName, serialName(fieldName), fieldAccess,
-                        processor.typeName_NumberStyle, fieldProps.numberStyle);
-                return;
-            }
+        if (AptUtils.isPrimitiveNumber(variableElement.asType())) {
+            // writer.writeInt(names_fieldName, inst.field, NumberStyle.SIMPLE)
+            builder.addStatement("writer.$L($L, inst.$L, $T.$L)",
+                    writeMethodName, serialName(fieldName), fieldAccess,
+                    processor.typeName_NumberStyle, fieldProps.numberStyle);
+            return;
         }
-
         // 其它类型
         switch (writeMethodName) {
             case MNAME_WRITE_STRING -> {

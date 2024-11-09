@@ -30,7 +30,7 @@ import cn.wjybxx.dsoncodec.annotations.DsonProperty;
 @DsonCodecLinkerBean(value = ThirdPartyBean2.class)
 public class CodecLinkerBeanTest {
 
-    @DsonProperty(wireType = WireType.UINT)
+    @DsonProperty()
     private ThirdPartyBean2 age;
 
     @DsonProperty(writeProxy = "writeName", readProxy = "readName")

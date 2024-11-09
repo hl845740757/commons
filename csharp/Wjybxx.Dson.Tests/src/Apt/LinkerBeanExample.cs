@@ -42,7 +42,6 @@ public class LinkerBeanExample
     /// <summary>
     /// 属性映射属性
     /// </summary>
-    [DsonProperty(WireType = WireType.Uint)]
     public int Sex { get; set; }
 
     public static void BeforeEncode(ThirdPartyBean2 inst, ConverterOptions options) {

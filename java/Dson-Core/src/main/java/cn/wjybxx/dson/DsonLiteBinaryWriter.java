@@ -96,14 +96,16 @@ public class DsonLiteBinaryWriter extends AbstractDsonLiteWriter {
     // region 简单值
 
     @Override
-    protected void doWriteInt32(int value, WireType wireType) {
+    protected void doWriteInt32(int value) {
+        WireType wireType = WireType.bestOfInt32(value);
         DsonOutput output = this.output;
         writeFullTypeAndCurrentName(output, DsonType.INT32, wireType.getNumber());
         wireType.writeInt32(output, value);
     }
 
     @Override
-    protected void doWriteInt64(long value, WireType wireType) {
+    protected void doWriteInt64(long value) {
+        WireType wireType = WireType.bestOfInt64(value);
         DsonOutput output = this.output;
         writeFullTypeAndCurrentName(output, DsonType.INT64, wireType.getNumber());
         wireType.writeInt64(output, value);
