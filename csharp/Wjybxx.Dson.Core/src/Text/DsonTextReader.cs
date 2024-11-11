@@ -45,9 +45,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
 #nullable disable
     private DsonScanner _scanner;
     private string _nextName;
-    private object _nextValue;
-    /** 值类型，用于避免拆装箱，减少gc */
-    private UnionValue _nextUnionValue;
+    private UnionValue _nextValue;
 
     private bool _marking;
     private readonly Stack<DsonToken> _pushedTokenQueue = new Stack<DsonToken>(6); // 缓存的Token
@@ -98,8 +96,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         }
         _pushedTokenQueue.Clear();
         _nextName = null;
-        _nextValue = null;
-        _nextUnionValue = default;
+        _nextValue = default;
         _marking = false;
         _markedTokenQueue.Clear();
         base.Dispose();
@@ -154,25 +151,13 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         _pushedTokenQueue.Push(token);
     }
 
-    private void PushNextValue(object nextValue) {
-        if (nextValue == null) throw new ArgumentNullException(nameof(nextValue));
+    private void PushNextValue(UnionValue nextValue) {
         this._nextValue = nextValue;
     }
 
-    private object PopNextValue() {
-        object r = this._nextValue!;
-        this._nextValue = null;
-        return r;
-    }
-
-    private void PushNextUnionValue(in UnionValue nextValue) {
-        this._nextValue = null;
-        this._nextUnionValue = nextValue; // copy
-    }
-
-    private UnionValue PopNextUnionValue() {
-        UnionValue r = this._nextUnionValue; // copy
-        this._nextUnionValue.type = DsonType.EndOfObject; // 标记无效
+    private UnionValue PopNextValue() {
+        UnionValue r = this._nextValue!;
+        this._nextValue = default;
         return r;
     }
 
@@ -217,8 +202,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
 
         DsonType dsonType = ReadDsonTypeOfToken();
         _nextName = null; // 丢弃临时数据
-        _nextValue = null;
-        _nextUnionValue = default;
+        _nextValue = default;
 
         ResetPushedQueue(); // 恢复Stack
         _marking = false;
@@ -228,8 +212,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     private DsonType ReadDsonTypeOfToken() {
         // 丢弃旧值
         _nextName = null;
-        _nextValue = null;
-        _nextUnionValue = default;
+        _nextValue = default;
 
         Context context = GetContext();
         // 统一处理逗号分隔符，顶层对象之间可不写分隔符
@@ -264,7 +247,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                         throw DsonIOException.ContainsHeaderDirectly(nameToken);
                     }
                     EnsureCountIsZero(context, nameToken);
-                    PushNextValue(nameToken);
                     return DsonType.Header;
                 }
                 case DsonTokenType.EndObject: {
@@ -284,35 +266,35 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         DsonToken valueToken = PopToken();
         switch (valueToken.type) {
             case DsonTokenType.Int32: {
-                PushNextUnionValue(valueToken.unionValue);
+                PushNextValue(valueToken.value);
                 return DsonType.Int32;
             }
             case DsonTokenType.Int64: {
-                PushNextUnionValue(valueToken.unionValue);
+                PushNextValue(valueToken.value);
                 return DsonType.Int64;
             }
             case DsonTokenType.Float: {
-                PushNextUnionValue(valueToken.unionValue);
+                PushNextValue(valueToken.value);
                 return DsonType.Float;
             }
             case DsonTokenType.Double: {
-                PushNextUnionValue(valueToken.unionValue);
+                PushNextValue(valueToken.value);
                 return DsonType.Double;
             }
             case DsonTokenType.Bool: {
-                PushNextUnionValue(valueToken.unionValue);
+                PushNextValue(valueToken.value);
                 return DsonType.Bool;
             }
             case DsonTokenType.String: {
-                PushNextValue(valueToken.StringValue());
+                PushNextValue(new UnionValue(DsonType.String, valueToken.StringValue()));
                 return DsonType.String;
             }
             case DsonTokenType.Null: {
-                PushNextValue(DsonNull.NULL);
+                PushNextValue(new UnionValue(DsonType.Null));
                 return DsonType.Null;
             }
             case DsonTokenType.Binary: {
-                PushNextValue(valueToken.objValue);
+                PushNextValue(valueToken.value);
                 return DsonType.Binary;
             }
             case DsonTokenType.BuiltinStruct: return ParseAbbreviatedStruct(context, valueToken);
@@ -354,7 +336,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (context.contextType == DsonContextType.Header) {
             switch (_nextName) {
                 case DsonHeaders.Names_ClassName:
-                    PushNextValue(unquotedString);
+                    PushNextValue(new UnionValue(DsonType.String, unquotedString));
                     return DsonType.String;
                 case DsonHeaders.Names_LocalId: {
                     return ParseLocalId(unquotedString);
@@ -365,47 +347,47 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (context.compClsNameToken.HasValue) {
             switch (context.compClsNameToken.Value.StringValue()) {
                 case DsonTexts.LabelInt32: {
-                    PushNextUnionValue(new UnionValue(DsonType.Int32)
+                    PushNextValue(new UnionValue(DsonType.Int32)
                     {
                         iValue = DsonTexts.ParseInt32(unquotedString)
                     });
                     return DsonType.Int32;
                 }
                 case DsonTexts.LabelInt64: {
-                    PushNextUnionValue(new UnionValue(DsonType.Int64)
+                    PushNextValue(new UnionValue(DsonType.Int64)
                     {
                         lValue = DsonTexts.ParseInt64(unquotedString)
                     });
                     return DsonType.Int64;
                 }
                 case DsonTexts.LabelFloat: {
-                    PushNextUnionValue(new UnionValue(DsonType.Float)
+                    PushNextValue(new UnionValue(DsonType.Float)
                     {
                         fValue = DsonTexts.ParseFloat(unquotedString)
                     });
                     return DsonType.Float;
                 }
                 case DsonTexts.LabelDouble: {
-                    PushNextUnionValue(new UnionValue(DsonType.Double)
+                    PushNextValue(new UnionValue(DsonType.Double)
                     {
                         dValue = DsonTexts.ParseDouble(unquotedString)
                     });
                     return DsonType.Double;
                 }
                 case DsonTexts.LabelBool: {
-                    PushNextUnionValue(new UnionValue(DsonType.Bool)
+                    PushNextValue(new UnionValue(DsonType.Bool)
                     {
                         bValue = DsonTexts.ParseBool(unquotedString)
                     });
                     return DsonType.Bool;
                 }
                 case DsonTexts.LabelString: {
-                    PushNextValue(unquotedString);
+                    PushNextValue(new UnionValue(DsonType.String, unquotedString));
                     return DsonType.String;
                 }
                 case DsonTexts.LabelBinary: {
                     byte[] bytes = CommonsLang3.FromHexString(unquotedString);
-                    PushNextValue(bytes); // 直接压入bytes避免Binary再装箱
+                    PushNextValue(new UnionValue(DsonType.Binary, bytes)); // 直接压入bytes避免Binary再装箱
                     return DsonType.Binary;
                 }
             }
@@ -414,45 +396,45 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         // 处理特殊值解析
         bool isTrueString = "true" == unquotedString;
         if (isTrueString || "false" == unquotedString) {
-            PushNextUnionValue(new UnionValue(DsonType.Bool)
+            PushNextValue(new UnionValue(DsonType.Bool)
             {
                 bValue = isTrueString
             });
             return DsonType.Bool;
         }
         if ("null" == unquotedString) {
-            PushNextValue(DsonNull.NULL);
+            PushNextValue(new UnionValue(DsonType.Null));
             return DsonType.Null;
         }
         if (DsonTexts.IsParsable(unquotedString)) {
-            PushNextUnionValue(new UnionValue(DsonType.Double)
+            PushNextValue(new UnionValue(DsonType.Double)
             {
                 dValue = DsonTexts.ParseDouble(unquotedString)
             });
             return DsonType.Double;
         }
-        PushNextValue(unquotedString);
+        PushNextValue(new UnionValue(DsonType.String, unquotedString));
         return DsonType.String;
     }
 
     private DsonType ParseLocalId(string unquotedString) {
         switch (Settings.localIdType) {
             case DsonType.Int32: {
-                PushNextUnionValue(new UnionValue(DsonType.Int32)
+                PushNextValue(new UnionValue(DsonType.Int32)
                 {
                     iValue = DsonTexts.ParseInt32(unquotedString)
                 });
                 return DsonType.Int32;
             }
             case DsonType.Int64: {
-                PushNextUnionValue(new UnionValue(DsonType.Int64)
+                PushNextValue(new UnionValue(DsonType.Int64)
                 {
                     lValue = DsonTexts.ParseInt64(unquotedString)
                 });
                 return DsonType.Int64;
             }
             default: {
-                PushNextValue(unquotedString);
+                PushNextValue(new UnionValue(DsonType.String, unquotedString));
                 return DsonType.String;
             }
         }
@@ -470,19 +452,19 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (DsonTexts.LabelPtr == clsName) { // @ref localId
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context, nextToken);
-            PushNextValue(new ObjectPtr(nextToken.StringValue()));
+            PushNextValue(new UnionValue(DsonType.Pointer, new ObjectPtr(nextToken.StringValue())));
             return DsonType.Pointer;
         }
         if (DsonTexts.LabelLitePtr == clsName) { // @ptr localId
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context, nextToken);
             long localId = DsonTexts.ParseInt64(nextToken.StringValue());
-            PushNextValue(new ObjectLitePtr(localId));
+            PushNextValue(new UnionValue(DsonType.LitePointer, new ObjectLitePtr(localId)));
             return DsonType.LitePointer;
         }
         if (DsonTexts.LabelDateTime == clsName) { // @dt uuuu-MM-dd'T'HH:mm:ss
             DateTime dateTime = ExtDateTime.ParseDateTime(ScanStringUtilComma());
-            PushNextUnionValue(new UnionValue(DsonType.DateTime)
+            PushNextValue(new UnionValue(DsonType.DateTime)
             {
                 dateTime = ExtDateTime.OfDateTime(in dateTime)
             });
@@ -491,7 +473,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (DsonTexts.LabelTimestamp == clsName) { // @ts seconds
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context, nextToken);
-            PushNextUnionValue(new UnionValue(DsonType.Timestamp)
+            PushNextValue(new UnionValue(DsonType.Timestamp)
             {
                 timestamp = Timestamp.Parse(nextToken.StringValue())
             });
@@ -513,36 +495,36 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     private DsonType ParseBeginObjectToken(Context context, in DsonToken valueToken) {
         DsonToken? headerTokenWrapper = PopHeaderToken(context);
         if (!headerTokenWrapper.HasValue) {
-            PushNextValue(valueToken);
+            PushNextValue(new UnionValue(DsonType.Object, valueToken));
             return DsonType.Object;
         }
         DsonToken headerToken = headerTokenWrapper.Value;
         if (headerToken.type != DsonTokenType.BuiltinStruct) {
             // 转换SimpleHeader为标准Header，token需要push以供context保存
             EscapeHeaderAndPush(headerToken);
-            PushNextValue(valueToken);
+            PushNextValue(new UnionValue(DsonType.Object, valueToken));
             return DsonType.Object;
         }
         // 内置结构体
         string clsName = headerToken.StringValue();
         switch (clsName) {
             case DsonTexts.LabelPtr: {
-                PushNextValue(ScanPtr(context));
+                PushNextValue(new UnionValue(DsonType.Pointer, ScanPtr(context)));
                 return DsonType.Pointer;
             }
             case DsonTexts.LabelLitePtr: {
-                PushNextValue(ScanLitePtr(context));
+                PushNextValue(new UnionValue(DsonType.LitePointer, ScanLitePtr(context)));
                 return DsonType.LitePointer;
             }
             case DsonTexts.LabelDateTime: {
-                PushNextUnionValue(new UnionValue(DsonType.DateTime)
+                PushNextValue(new UnionValue(DsonType.DateTime)
                 {
                     dateTime = ScanDateTime(context)
                 });
                 return DsonType.DateTime;
             }
             case DsonTexts.LabelTimestamp: {
-                PushNextUnionValue(new UnionValue(DsonType.Timestamp)
+                PushNextValue(new UnionValue(DsonType.Timestamp)
                 {
                     timestamp = ScanTimestamp(context)
                 });
@@ -559,14 +541,14 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     private DsonType ParseBeginArrayToken(Context context, in DsonToken valueToken) {
         DsonToken? headerTokenWrapper = PopHeaderToken(context);
         if (!headerTokenWrapper.HasValue) {
-            PushNextValue(valueToken);
+            PushNextValue(new UnionValue(DsonType.Object, valueToken));
             return DsonType.Array;
         }
         DsonToken headerToken = headerTokenWrapper.Value;
         if (headerToken.type != DsonTokenType.BuiltinStruct) {
             // 转换SimpleHeader为标准Header，token需要push以供context保存
             EscapeHeaderAndPush(headerToken);
-            PushNextValue(valueToken);
+            PushNextValue(new UnionValue(DsonType.Object, valueToken));
             return DsonType.Array;
         }
         // 内置元组 -- 已尽皆删除
@@ -860,7 +842,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     #region 简单值
 
     protected override int DoReadInt32() {
-        UnionValue unionValue = PopNextUnionValue();
+        UnionValue unionValue = PopNextValue();
         return unionValue.type switch
         {
             DsonType.Int32 => unionValue.iValue,
@@ -872,7 +854,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     protected override long DoReadInt64() {
-        UnionValue unionValue = PopNextUnionValue();
+        UnionValue unionValue = PopNextValue();
         return unionValue.type switch
         {
             DsonType.Int32 => unionValue.iValue,
@@ -884,7 +866,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     protected override float DoReadFloat() {
-        UnionValue unionValue = PopNextUnionValue();
+        UnionValue unionValue = PopNextValue();
         return unionValue.type switch
         {
             DsonType.Int32 => unionValue.iValue,
@@ -896,7 +878,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     protected override double DoReadDouble() {
-        UnionValue unionValue = PopNextUnionValue();
+        UnionValue unionValue = PopNextValue();
         return unionValue.type switch
         {
             DsonType.Int32 => unionValue.iValue,
@@ -908,7 +890,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     protected override bool DoReadBool() {
-        UnionValue unionValue = PopNextUnionValue();
+        UnionValue unionValue = PopNextValue();
         if (unionValue.type != DsonType.Bool) {
             throw new InvalidOperationException();
         }
@@ -916,9 +898,11 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     protected override string DoReadString() {
-        string value = (string)PopNextValue();
-        if (value == null) throw new InvalidOperationException();
-        return value;
+        UnionValue unionValue = PopNextValue();
+        if (unionValue.type != DsonType.String) {
+            throw new InvalidOperationException();
+        }
+        return (string)unionValue.objValue;
     }
 
     protected override void DoReadNull() {
@@ -926,26 +910,31 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     protected override Binary DoReadBinary() {
-        object value = PopNextValue();
-        if (value == null) throw new InvalidOperationException();
-        byte[] bytes = (byte[])value;
-        return Binary.UnsafeWrap(bytes);
+        UnionValue value = PopNextValue();
+        if (value.type != DsonType.Binary) {
+            throw new InvalidOperationException();
+        }
+        return Binary.UnsafeWrap((byte[])value.objValue);
     }
 
     protected override ObjectPtr DoReadPtr() {
-        object value = PopNextValue();
-        if (value == null) throw new InvalidOperationException();
-        return (ObjectPtr)value;
+        UnionValue value = PopNextValue();
+        if (value.type != DsonType.Pointer) {
+            throw new InvalidOperationException();
+        }
+        return (ObjectPtr)value.objValue;
     }
 
     protected override ObjectLitePtr DoReadLitePtr() {
-        object value = PopNextValue();
-        if (value == null) throw new InvalidOperationException();
-        return (ObjectLitePtr)value;
+        UnionValue value = PopNextValue();
+        if (value.type != DsonType.LitePointer) {
+            throw new InvalidOperationException();
+        }
+        return (ObjectLitePtr)value.objValue;
     }
 
     protected override ExtDateTime DoReadDateTime() {
-        UnionValue value = PopNextUnionValue();
+        UnionValue value = PopNextValue();
         if (value.type != DsonType.DateTime) {
             throw new InvalidOperationException();
         }
@@ -953,7 +942,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     protected override Timestamp DoReadTimestamp() {
-        UnionValue value = PopNextUnionValue();
+        UnionValue value = PopNextValue();
         if (value.type != DsonType.Timestamp) {
             throw new InvalidOperationException();
         }

@@ -353,7 +353,8 @@ public sealed class DsonScanner : IDisposable
                 return new DsonToken(DsonTokenType.String, ScanSingleLineText(skipValue), Position);
             }
             case DsonTexts.LabelBinary: {
-                return new DsonToken(DsonTokenType.Binary, ScanBinary(skipValue), Position);
+                UnionValue value = new UnionValue(DsonType.Binary, ScanBinary(skipValue));
+                return new DsonToken(DsonTokenType.Binary, value, Position);
             }
         }
         return new DsonToken(DsonTokenType.BuiltinStruct, className, Position);

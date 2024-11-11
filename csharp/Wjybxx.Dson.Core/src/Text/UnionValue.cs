@@ -19,18 +19,20 @@
 using System;
 using System.Runtime.InteropServices;
 using Wjybxx.Commons;
+using Wjybxx.Dson.Internal;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Text
 {
 /// <summary>
 /// 用于避免对值类型装箱
-/// 本想做得更彻底一点，但引用类型不能和非引用类型重叠，于是只能修改为阉割版...
+/// 本想做得更彻底一点，但引用类型不能和非引用类型重叠，导致Offset计算困难，于是只能修改为阉割版，指针类型仍然装箱...
 /// </summary>
 [StructLayout(LayoutKind.Explicit)]
 public struct UnionValue : IEquatable<UnionValue>
 {
-    // 值的类型
+#nullable disable
+    // 值的类型 -- 偷懒方案，Object表示任意类型
     [FieldOffset(0)] public DsonType type;
     [FieldOffset(1)] public int iValue;
     [FieldOffset(1)] public long lValue;
@@ -38,15 +40,20 @@ public struct UnionValue : IEquatable<UnionValue>
     [FieldOffset(1)] public double dValue;
     [FieldOffset(1)] public bool bValue;
     // 只包含基础值的结构体
-    [FieldOffset(1)] public ExtInt32 extInt32;
-    [FieldOffset(1)] public ExtInt64 extInt64;
-    [FieldOffset(1)] public ExtDouble extDouble;
     [FieldOffset(1)] public ExtDateTime dateTime;
     [FieldOffset(1)] public Timestamp timestamp;
+    // 由于内存对齐的原因，引用类型需要偏移32
+    [FieldOffset(32)] public object objValue;
 
     public UnionValue(DsonType type) : this() {
         this.type = type;
     }
+
+    public UnionValue(DsonType type, object objValue) : this() {
+        this.type = type;
+        this.objValue = objValue;
+    }
+#nullable enable
 
     public bool Equals(UnionValue other) {
         if (type != other.type) {
@@ -61,8 +68,13 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.Bool: return bValue == other.bValue;
             case DsonType.DateTime: return dateTime.Equals(other.dateTime);
             case DsonType.Timestamp: return timestamp.Equals(other.timestamp);
+            case DsonType.Binary: { // 数组特殊处理
+                byte[] lhs = (byte[])objValue;
+                byte[] rhs = (byte[])other.objValue;
+                return ArrayUtil.Equals(lhs, rhs);
+            }
             default:
-                throw new AssertionError();
+                return Equals(objValue, other.objValue);
         }
     }
 
@@ -82,7 +94,8 @@ public struct UnionValue : IEquatable<UnionValue>
             DsonType.Bool => bValue.GetHashCode(),
             DsonType.DateTime => dateTime.GetHashCode(),
             DsonType.Timestamp => timestamp.GetHashCode(),
-            _ => throw new AssertionError()
+            DsonType.Binary => ArrayUtil.HashCode((byte[])objValue), // 数组特殊处理
+            _ => objValue == null ? 0 : objValue.GetHashCode()
         };
         return r * 31 + vhash;
     }
@@ -105,8 +118,9 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.Bool: return $"Type: {type}, Value: {bValue}";
             case DsonType.DateTime: return $"Type: {type}, Value: {dateTime}";
             case DsonType.Timestamp: return $"Type: {type}, Value: {timestamp}";
+            case DsonType.Binary: return $"Type: {type}, Value: {CommonsLang3.ToHexString((byte[])objValue)}";
             default:
-                throw new AssertionError();
+                return $"Type: {type}, Value: {objValue}";
         }
     }
 }

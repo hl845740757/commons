@@ -30,30 +30,27 @@ public readonly struct DsonToken : IEquatable<DsonToken>
 #nullable disable
     /** token的类型 */
     public readonly DsonTokenType type;
-    /** object值 */
-    public readonly object objValue;
     /** 用于避免装箱的联合结构体 */
-    public readonly UnionValue unionValue;
+    public readonly UnionValue value;
     /** token所在的位置，-1表示动态生成的token */
     public readonly int pos;
 #nullable enable
-    public DsonToken(DsonTokenType type, object? value, int pos) {
+    public DsonToken(DsonTokenType type, in UnionValue value, int pos) {
         this.type = type;
-        this.objValue = value; // 这个value好像只有string类型
-        this.unionValue = default;
+        this.value = value;
         this.pos = pos;
     }
 
-    public DsonToken(DsonTokenType type, in UnionValue value, int pos) {
+    // String的情况比较多，提供快捷方式
+    public DsonToken(DsonTokenType type, string? value, int pos) {
         this.type = type;
-        this.objValue = null;
-        this.unionValue = value;
+        this.value = new UnionValue(DsonType.String, value);
         this.pos = pos;
     }
 
     /** 将value转换为字符串值 */
     public string StringValue() {
-        return (string)objValue!;
+        return (string)value.objValue!;
     }
 
     #region equals
@@ -61,17 +58,7 @@ public readonly struct DsonToken : IEquatable<DsonToken>
     // Equals默认不比较位置
 
     public bool Equals(DsonToken other) {
-        if (type != other.type) {
-            return false;
-        }
-        // value可能是字节数组...需要处理以保证测试用例通过
-        if (type == DsonTokenType.Binary) {
-            byte[] src = (byte[])objValue;
-            byte[] dest = (byte[])other.objValue;
-            return ArrayUtil.Equals(src, dest);
-        }
-        return Equals(objValue, other.objValue)
-               && unionValue.Equals(other.unionValue);
+        return type == other.type && value.Equals(other.value);
     }
 
     public override bool Equals(object? obj) {
@@ -80,7 +67,7 @@ public readonly struct DsonToken : IEquatable<DsonToken>
 
     public override int GetHashCode() {
         // 不处理字节数组hash，是因为我们并不会将Token放入Set
-        return HashCode.Combine((int)type, unionValue, objValue);
+        return HashCode.Combine((int)type, value);
     }
 
     public static bool operator ==(DsonToken left, DsonToken right) {
@@ -94,7 +81,7 @@ public readonly struct DsonToken : IEquatable<DsonToken>
     #endregion
 
     public override string ToString() {
-        return $"{nameof(type)}: {type}, objValue: {objValue}, unionValue: {unionValue}, pos: {pos}";
+        return $"{nameof(type)}: {type}, value: {value}, pos: {pos}";
     }
 }
 }

@@ -260,7 +260,6 @@ public final class DsonTextReader extends AbstractDsonReader {
                         throw DsonIOException.containsHeaderDirectly(nameToken);
                     }
                     ensureCountIsZero(context, nameToken);
-                    pushNextValue(nameToken);
                     return DsonType.HEADER;
                 }
                 case END_OBJECT -> {

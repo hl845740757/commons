@@ -27,6 +27,7 @@ namespace Wjybxx.Commons
 /// </summary>
 public static class ArrayUtil
 {
+    // int[]和byte[]可提供额外支持
     #region equals/hashcode
 
     /// <summary>
@@ -57,6 +58,49 @@ public static class ArrayUtil
         return true;
 #endif
     }
+
+    public static bool Equals(byte[]? objA, byte[]? objB) {
+        if (objA == objB) {
+            return true;
+        }
+        if (objA == null || objB == null || objA.Length != objB.Length) {
+            return false;
+        }
+#if NET6_0_OR_GREATER
+        ReadOnlySpan<byte> first = objA;
+        ReadOnlySpan<byte> second = objB;
+        return first.SequenceEqual(second);
+#else
+        for (int i = 0, len = objA.Length; i < len; i++) {
+            if (objA[i] != objB[i]) {
+                return false;
+            }
+        }
+        return true;
+#endif
+    }
+
+    public static bool Equals(int[]? objA, int[]? objB) {
+        if (objA == objB) {
+            return true;
+        }
+        if (objA == null || objB == null || objA.Length != objB.Length) {
+            return false;
+        }
+#if NET6_0_OR_GREATER
+        ReadOnlySpan<int> first = objA;
+        ReadOnlySpan<int> second = objB;
+        return first.SequenceEqual(second);
+#else
+        for (int i = 0, len = objA.Length; i < len; i++) {
+            if (objA[i] != objB[i]) {
+                return false;
+            }
+        }
+        return true;
+#endif
+    }
+    // HashCode
 
     public static int HashCode<T>(T?[]? array) where T : class {
         if (array == null) {
