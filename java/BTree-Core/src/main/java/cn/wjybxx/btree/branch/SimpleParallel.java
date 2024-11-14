@@ -40,7 +40,7 @@ public class SimpleParallel<T> extends ParallelBranch<T> {
 
     @Override
     protected void enter(int reentryId) {
-        initChildHelpers(isCancelTokenPerChild());
+        initChildHelpers();
     }
 
     @Override

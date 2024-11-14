@@ -58,7 +58,7 @@ public class Join<T> : ParallelBranch<T> where T : class
 
     protected override void Enter(int reentryId) {
         // 记录子类上下文 -- 由于beforeEnter可能改变子节点信息，因此在enter时处理
-        InitChildHelpers(IsCancelTokenPerChild);
+        InitChildHelpers();
         policy.Enter(this);
     }
 

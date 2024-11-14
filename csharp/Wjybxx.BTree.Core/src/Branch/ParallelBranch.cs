@@ -63,8 +63,7 @@ public abstract class ParallelBranch<T> : BranchTask<T> where T : class
     /// 1.默认会设置为child的controlData，以避免反向查找开销。
     /// 2.建议在enter方法中调用。
     /// </summary>
-    /// <param name="allocCancelToken">是否分配取消令牌</param>
-    protected void InitChildHelpers(bool allocCancelToken) {
+    protected void InitChildHelpers() {
         List<Task<T>> children = this.children;
         for (int i = 0; i < children.Count; i++) {
             Task<T> child = children[i];
@@ -74,11 +73,6 @@ public abstract class ParallelBranch<T> : BranchTask<T> where T : class
                 child.ControlData = childHelper;
             }
             childHelper.reentryId = child.ReentryId;
-            if (allocCancelToken && childHelper.cancelToken == null) {
-                childHelper.cancelToken = cancelToken.NewInstance();
-            } else {
-                childHelper.cancelToken = null;
-            }
         }
     }
 

@@ -61,7 +61,7 @@ public class Join<T> extends ParallelBranch<T> {
     @Override
     protected void enter(int reentryId) {
         // 记录子类上下文 -- 由于beforeEnter可能改变子节点信息，因此在enter时处理
-        initChildHelpers(isCancelTokenPerChild());
+        initChildHelpers();
         policy.enter(this);
     }
 

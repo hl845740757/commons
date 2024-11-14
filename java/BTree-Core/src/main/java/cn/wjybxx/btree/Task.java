@@ -61,14 +61,14 @@ public abstract class Task<T> implements ICancelTokenListener {
     private static final int MASK_NOT_ACTIVE_IN_HIERARCHY = 1 << 18;
     private static final int MASK_REGISTERED_LISTENER = 1 << 19;
 
+    // ctl属性--运行时属性
     public static final int MASK_SLOW_START = 1 << 24;
     public static final int MASK_AUTO_RESET_CHILDREN = 1 << 25;
     public static final int MASK_MANUAL_CHECK_CANCEL = 1 << 26;
     public static final int MASK_AUTO_LISTEN_CANCEL = 1 << 27;
-    public static final int MASK_CANCEL_TOKEN_PER_CHILD = 1 << 28;
-    public static final int MASK_BLACKBOARD_PER_CHILD = 1 << 29;
-    public static final int MASK_INVERTED_GUARD = 1 << 30;
-    public static final int MASK_BREAK_INLINE = 1 << 31;
+    public static final int MASK_BREAK_INLINE = 1 << 28;
+    // flags属性--静态属性
+    public static final int MASK_INVERTED_GUARD = 1 << 29;
     /** 高8位为流程控制特征值（对外开放） */
     public static final int MASK_CONTROL_FLOW_OPTIONS = (-1) << 24;
 
@@ -732,48 +732,9 @@ public abstract class Task<T> implements ICancelTokenListener {
         return (ctl & MASK_AUTO_LISTEN_CANCEL) != 0;
     }
 
-    /**
-     * 是否每个child一个独立的取消令牌
-     * 1.默认值由{@link #flags}中的信息指定，默认false
-     * 2.要覆盖默认值应当在{@link #beforeEnter()}方法中调用
-     * 3.该值是否生效取决于控制节点的实现，这里只是提供配置接口。
-     */
-    public final void setCancelTokenPerChild(boolean value) {
-        setCtlBit(MASK_CANCEL_TOKEN_PER_CHILD, value);
-    }
-
-    public final boolean isCancelTokenPerChild() {
-        return (ctl & MASK_CANCEL_TOKEN_PER_CHILD) != 0;
-    }
 
     /**
-     * 是否每个child一个独立的黑板（常见于栈式黑板）
-     * 1.默认值由{@link #flags}中的信息指定，默认false
-     * 2.该值是否生效取决于控制节点的实现，这里只是提供配置接口。
-     */
-    public final void setBlackboardPerChild(boolean value) {
-        setCtlBit(MASK_BLACKBOARD_PER_CHILD, value);
-    }
-
-    public final boolean isBlackboardPerChild() {
-        return (ctl & MASK_BLACKBOARD_PER_CHILD) != 0;
-    }
-
-    /**
-     * 当task作为guard节点时，是否取反(减少栈深度) -- 避免套用{@link cn.wjybxx.btree.decorator.Inverter}节点
-     * 1.默认值由{@link #flags}中的信息指定，默认false
-     * 2.要覆盖默认值应当在{@link #beforeEnter()}方法中调用
-     */
-    public final void setInvertedGuard(boolean value) {
-        setCtlBit(MASK_INVERTED_GUARD, value);
-    }
-
-    public final boolean isInvertedGuard() {
-        return (ctl & MASK_INVERTED_GUARD) != 0;
-    }
-
-    /**
-     * 当Task可以被内联时是否打破内联
+     * 当Task可以被内联时是否打破内联（允许运行时调整）
      * 1.默认值由{@link #flags}中的信息指定，默认false
      * 2.要覆盖默认值应当在{@link #beforeEnter()}方法中调用
      * 3.它的作用是避免被内联子节点进入完成状态时产生【过长的恢复路径】
@@ -785,6 +746,21 @@ public abstract class Task<T> implements ICancelTokenListener {
     public final boolean isBreakInline() {
         return (ctl & MASK_BREAK_INLINE) != 0;
     }
+
+    //---------------------Flags静态选项
+
+    /**
+     * 当task作为guard节点时，是否取反
+     * 1.该属性用于避免条件节点套用Inverter装饰节点 -- 性能优化。
+     */
+    public final void setInvertedGuard(boolean value) {
+        setFlagsBit(MASK_INVERTED_GUARD, value);
+    }
+
+    public final boolean isInvertedGuard() {
+        return (flags & MASK_INVERTED_GUARD) != 0;
+    }
+
 
     // endregion
 
@@ -1217,11 +1193,21 @@ public abstract class Task<T> implements ICancelTokenListener {
         }
     }
 
+    /** 设置ctl的bit */
     private void setCtlBit(int mask, boolean enable) {
         if (enable) {
             ctl |= mask;
         } else {
             ctl &= ~mask;
+        }
+    }
+
+    /** 设置flags的bit */
+    private void setFlagsBit(int mask, boolean enable) {
+        if (enable) {
+            flags |= mask;
+        } else {
+            flags &= ~mask;
         }
     }
 

@@ -466,26 +466,18 @@ public final class DsonTextReader extends AbstractDsonReader {
         throw DsonIOException.invalidTokenType(context.contextType, valueToken);
     }
 
-    private DsonToken popHeaderToken(Context context) {
-        DsonToken headerToken = popToken();
-        if (isHeaderOrBuiltStructToken(headerToken)) {
-            return headerToken;
-        }
-        pushToken(headerToken);
-        return null;
-    }
-
     /** 处理内置结构体 */
-    private DsonType parseBeginObjectToken(Context context, final DsonToken valueToken) {
-        DsonToken headerToken = popHeaderToken(context);
-        if (headerToken == null) {
-            pushNextValue(valueToken);
+    private DsonType parseBeginObjectToken(Context context, final DsonToken beginToken) {
+        DsonToken headerToken = popToken();
+        if (!isHeaderOrBuiltStructToken(headerToken)) {
+            pushToken(headerToken);
+//            pushNextValue(beginToken);
             return DsonType.OBJECT;
         }
         if (headerToken.type != DsonTokenType.BUILTIN_STRUCT) {
             // 转换SimpleHeader为标准Header，token需要push以供context保存
             escapeHeaderAndPush(headerToken);
-            pushNextValue(valueToken);
+//            pushNextValue(beginToken);
             return DsonType.OBJECT;
         }
         // 内置结构体
@@ -515,16 +507,17 @@ public final class DsonTextReader extends AbstractDsonReader {
     }
 
     /** 处理内置元组 */
-    private DsonType parseBeginArrayToken(Context context, final DsonToken valueToken) {
-        DsonToken headerToken = popHeaderToken(context);
-        if (headerToken == null) {
-            pushNextValue(valueToken);
+    private DsonType parseBeginArrayToken(Context context, final DsonToken beginToken) {
+        DsonToken headerToken = popToken();
+        if (!isHeaderOrBuiltStructToken(headerToken)) {
+            pushToken(headerToken);
+//            pushNextValue(beginToken);
             return DsonType.ARRAY;
         }
         if (headerToken.type != DsonTokenType.BUILTIN_STRUCT) {
             // 转换SimpleHeader为标准Header，token需要push以供context保存
             escapeHeaderAndPush(headerToken);
-            pushNextValue(valueToken);
+//            pushNextValue(beginToken);
             return DsonType.ARRAY;
         }
         // 内置元组 -- 已尽皆删除...

@@ -53,20 +53,4 @@ internal class Blackboard
         get => map[key];
         set => map[key] = value;
     }
-
-
-    private readonly struct Value
-    {
-        private readonly int type;
-        private readonly long longVal;
-        private readonly double doubleVal;
-        private readonly object? objectVal;
-
-        public Value(int type, long longVal, double doubleVal, object? objectVal) {
-            this.type = type;
-            this.longVal = longVal;
-            this.doubleVal = doubleVal;
-            this.objectVal = objectVal;
-        }
-    }
 }

@@ -36,7 +36,7 @@ public class SimpleParallel<T> : ParallelBranch<T> where T : class
     }
 
     protected override void Enter(int reentryId) {
-        InitChildHelpers(false);
+        InitChildHelpers();
     }
 
     protected override void Execute() {

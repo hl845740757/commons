@@ -732,40 +732,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     }
 
     /// <summary>
-    /// 是否每个child一个独立的取消令牌
-    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认false。
-    /// 2.要覆盖默认值应当在<see cref="BeforeEnter"/>方法中调用
-    /// 3.该值是否生效取决于控制节点的实现，这里只是提供配置接口。
-    /// </summary>
-    public bool IsCancelTokenPerChild {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => (ctl & MASK_CANCEL_TOKEN_PER_CHILD) != 0;
-        set => SetCtlBit(MASK_CANCEL_TOKEN_PER_CHILD, value);
-    }
-
-    /// <summary>
-    /// 是否每个child一个独立的黑板（常见于栈式黑板）
-    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认false。
-    /// 2.该值是否生效取决于控制节点的实现，这里只是提供配置接口。
-    /// </summary>
-    public bool IsBlackboardPerChild {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => (ctl & MASK_BLACKBOARD_PER_CHILD) != 0;
-        set => SetCtlBit(MASK_BLACKBOARD_PER_CHILD, value);
-    }
-
-    /// <summary>
-    /// 当task作为guard节点时，是否取反(减少栈深度) -- 避免套用<see cref="Decorator.Inverter{T}"/>
-    /// 1.默认值由<see cref="Flags"/>中的信息指定，默认false
-    /// 2.要覆盖默认值应当在<see cref="BeforeEnter"/>方法中调用
-    /// </summary>
-    public bool IsInvertedGuard {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => (ctl & MASK_INVERTED_GUARD) != 0;
-        set => SetCtlBit(MASK_INVERTED_GUARD, value);
-    }
-
-    /// <summary>
     /// 当Task可以被内联时是否打破内联
     /// 1.默认值由<see cref="Flags"/>中的信息指定，默认false
     /// 2.要覆盖默认值应当在<see cref="BeforeEnter"/>方法中调用
@@ -775,6 +741,17 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => (ctl & MASK_BREAK_INLINE) != 0;
         set => SetCtlBit(MASK_BREAK_INLINE, value);
+    }
+
+    //---------------------Flags静态选项
+    /// <summary>
+    /// 当task作为guard节点时，是否取反
+    /// 1.该属性用于避免条件节点套用Inverter装饰节点 -- 性能优化。
+    /// </summary>
+    public bool IsInvertedGuard {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => (flags & MASK_INVERTED_GUARD) != 0;
+        set => SetFlagsBit(MASK_INVERTED_GUARD, value);
     }
 
     #endregion
@@ -1227,12 +1204,23 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
     }
 
+    /** 设置ctl的bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SetCtlBit(int mask, bool enable) {
         if (enable) {
             ctl |= mask;
         } else {
             ctl &= ~mask;
+        }
+    }
+
+    /** 设置flags的bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void SetFlagsBit(int mask, bool enable) {
+        if (enable) {
+            flags |= mask;
+        } else {
+            flags &= ~mask;
         }
     }
 

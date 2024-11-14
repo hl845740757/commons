@@ -66,10 +66,8 @@ public abstract class ParallelBranch<T> extends BranchTask<T> {
      * 初始化child关联的helper
      * 1.默认会设置为child的controlData，以避免反向查找开销。
      * 2.建议在enter方法中调用。
-     *
-     * @param allocCancelToken 是否分配取消令牌
      */
-    protected final void initChildHelpers(boolean allocCancelToken) {
+    protected final void initChildHelpers() {
         for (int i = 0; i < children.size(); i++) {
             Task<T> child = children.get(i);
             ParallelChildHelper<T> childHelper = getChildHelper(child);
@@ -78,11 +76,6 @@ public abstract class ParallelBranch<T> extends BranchTask<T> {
                 child.setControlData(childHelper);
             }
             childHelper.reentryId = child.getReentryId();
-            if (allocCancelToken && childHelper.cancelToken == null) {
-                childHelper.cancelToken = cancelToken.newInstance();
-            } else {
-                childHelper.cancelToken = null;
-            }
         }
     }
 

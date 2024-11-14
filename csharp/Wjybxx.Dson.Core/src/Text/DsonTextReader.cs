@@ -482,27 +482,18 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         throw DsonIOException.InvalidTokenType(context.contextType, valueToken);
     }
 
-    private DsonToken? PopHeaderToken(Context context) {
-        DsonToken headerToken = PopToken();
-        if (IsHeaderOrBuiltStruct(headerToken)) {
-            return headerToken;
-        }
-        PushToken(headerToken);
-        return null;
-    }
-
     /** 处理内置结构体 */
-    private DsonType ParseBeginObjectToken(Context context, in DsonToken valueToken) {
-        DsonToken? headerTokenWrapper = PopHeaderToken(context);
-        if (!headerTokenWrapper.HasValue) {
-            PushNextValue(new UnionValue(DsonType.Object, valueToken));
+    private DsonType ParseBeginObjectToken(Context context, in DsonToken beginToken) {
+        DsonToken headerToken = PopToken();
+        if (!IsHeaderOrBuiltStruct(headerToken)) {
+            PushToken(headerToken);
+            // PushNextValue(new UnionValue(DsonType.Object, beginToken));
             return DsonType.Object;
         }
-        DsonToken headerToken = headerTokenWrapper.Value;
         if (headerToken.type != DsonTokenType.BuiltinStruct) {
             // 转换SimpleHeader为标准Header，token需要push以供context保存
             EscapeHeaderAndPush(headerToken);
-            PushNextValue(new UnionValue(DsonType.Object, valueToken));
+            // PushNextValue(new UnionValue(DsonType.Object, beginToken));
             return DsonType.Object;
         }
         // 内置结构体
@@ -538,17 +529,17 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     /** 处理内置元组 */
-    private DsonType ParseBeginArrayToken(Context context, in DsonToken valueToken) {
-        DsonToken? headerTokenWrapper = PopHeaderToken(context);
-        if (!headerTokenWrapper.HasValue) {
-            PushNextValue(new UnionValue(DsonType.Object, valueToken));
+    private DsonType ParseBeginArrayToken(Context context, in DsonToken beginToken) {
+        DsonToken headerToken = PopToken();
+        if (!IsHeaderOrBuiltStruct(headerToken)) {
+            PushToken(headerToken);
+            // PushNextValue(new UnionValue(DsonType.Object, beginToken));
             return DsonType.Array;
         }
-        DsonToken headerToken = headerTokenWrapper.Value;
         if (headerToken.type != DsonTokenType.BuiltinStruct) {
             // 转换SimpleHeader为标准Header，token需要push以供context保存
             EscapeHeaderAndPush(headerToken);
-            PushNextValue(new UnionValue(DsonType.Object, valueToken));
+            // PushNextValue(new UnionValue(DsonType.Object, beginToken));
             return DsonType.Array;
         }
         // 内置元组 -- 已尽皆删除

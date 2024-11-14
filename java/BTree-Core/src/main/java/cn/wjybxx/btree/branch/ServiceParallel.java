@@ -40,7 +40,7 @@ public class ServiceParallel<T> extends ParallelBranch<T> {
 
     @Override
     protected void enter(int reentryId) {
-        initChildHelpers(false);
+        initChildHelpers();
     }
 
     @Override
