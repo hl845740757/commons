@@ -20,6 +20,7 @@ import cn.wjybxx.btree.Decorator;
 import cn.wjybxx.btree.Task;
 import cn.wjybxx.btree.TaskStatus;
 import cn.wjybxx.btree.branch.Join;
+import cn.wjybxx.btree.fsm.handler.DefaultStateMachineHandler;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
@@ -42,8 +43,8 @@ public class StateMachineTask<T> extends Decorator<T> {
 
     /** 待切换的状态，主要用于支持当前状态退出后再切换 */
     protected transient Task<T> tempNextState;
-    /** 默认不序列化 */
-    protected transient StateMachineHandler<T> handler = StateMachineHandlers.defaultHandler();
+    /** handler也加入序列化，用于在编辑器中配置 */
+    protected StateMachineHandler<T> handler = DefaultStateMachineHandler.getInstance();
 
     // region api
 
@@ -346,7 +347,7 @@ public class StateMachineTask<T> extends Decorator<T> {
     }
 
     public void setHandler(StateMachineHandler<T> handler) {
-        this.handler = handler == null ? StateMachineHandlers.defaultHandler() : handler;
+        this.handler = handler == null ? DefaultStateMachineHandler.getInstance() : handler;
     }
     // endregion
 }

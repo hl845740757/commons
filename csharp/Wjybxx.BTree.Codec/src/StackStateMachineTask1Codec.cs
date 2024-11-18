@@ -36,6 +36,7 @@ public sealed class StackStateMachineTask1Codec<T> : AbstractDsonCodec<StackStat
     public const string names_name = "name";
     public const string names_initState = "initState";
     public const string names_initStateProps = "initStateProps";
+    public const string names_handler = "handler";
     public const string names_undoQueueCapacity = "undoQueueCapacity";
     public const string names_redoQueueCapacity = "redoQueueCapacity";
 
@@ -48,6 +49,7 @@ public sealed class StackStateMachineTask1Codec<T> : AbstractDsonCodec<StackStat
         writer.WriteString(names_name, inst.Name, StringStyle.Auto);
         writer.WriteObject(names_initState, inst.InitState, typeof(Task<T>), null);
         writer.WriteObject(names_initStateProps, inst.InitStateProps, typeof(object), null);
+        writer.WriteObject(names_handler, inst.Handler, typeof(IStateMachineHandler<T>), null);
         writer.WriteInt(names_undoQueueCapacity, inst.UndoQueueCapacity, NumberStyles.Simple);
         writer.WriteInt(names_redoQueueCapacity, inst.RedoQueueCapacity, NumberStyles.Simple);
     }
@@ -63,6 +65,7 @@ public sealed class StackStateMachineTask1Codec<T> : AbstractDsonCodec<StackStat
         inst.Name = reader.ReadString(names_name);
         inst.InitState = reader.ReadObject<Task<T>>(names_initState, typeof(Task<T>), null);
         inst.InitStateProps = reader.ReadObject<object>(names_initStateProps, typeof(object), null);
+        inst.Handler = reader.ReadObject<IStateMachineHandler<T>>(names_handler, typeof(IStateMachineHandler<T>), null);
         inst.UndoQueueCapacity = reader.ReadInt(names_undoQueueCapacity);
         inst.RedoQueueCapacity = reader.ReadInt(names_redoQueueCapacity);
     }

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Wjybxx.BTree.Branch;
+using Wjybxx.BTree.FSM.Handler;
 using Wjybxx.Commons;
 
 namespace Wjybxx.BTree.FSM
@@ -41,8 +42,8 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 
     /** 待切换的状态，主要用于支持当前状态退出后再切换 */
     [NonSerialized] private Task<T>? tempNextState;
-    /** 默认不序列化 -- 删除了Listener委托，因为不能反序列化 */
-    [NonSerialized] private IStateMachineHandler<T> handler = StateMachineHandlers.DefaultHandler<T>();
+    /** handler也加入序列化，用于在编辑器中配置 */
+    private IStateMachineHandler<T> handler = DefaultStateMachineHandler<T>.Inst;
 
     #region api
 
@@ -328,7 +329,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 
     public IStateMachineHandler<T>? Handler {
         get => handler;
-        set => handler = value ?? StateMachineHandlers.DefaultHandler<T>();
+        set => handler = value ?? DefaultStateMachineHandler<T>.Inst;
     }
 
     #endregion

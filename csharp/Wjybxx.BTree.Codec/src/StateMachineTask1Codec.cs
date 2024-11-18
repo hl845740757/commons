@@ -36,6 +36,7 @@ public sealed class StateMachineTask1Codec<T> : AbstractDsonCodec<StateMachineTa
     public const string names_name = "name";
     public const string names_initState = "initState";
     public const string names_initStateProps = "initStateProps";
+    public const string names_handler = "handler";
 
     public override Type GetEncoderType() => typeof(StateMachineTask<T>);
 
@@ -46,6 +47,7 @@ public sealed class StateMachineTask1Codec<T> : AbstractDsonCodec<StateMachineTa
         writer.WriteString(names_name, inst.Name, StringStyle.Auto);
         writer.WriteObject(names_initState, inst.InitState, typeof(Task<T>), null);
         writer.WriteObject(names_initStateProps, inst.InitStateProps, typeof(object), null);
+        writer.WriteObject(names_handler, inst.Handler, typeof(IStateMachineHandler<T>), null);
     }
 
     protected override StateMachineTask<T> NewInstance(IDsonObjectReader reader) {
@@ -59,6 +61,7 @@ public sealed class StateMachineTask1Codec<T> : AbstractDsonCodec<StateMachineTa
         inst.Name = reader.ReadString(names_name);
         inst.InitState = reader.ReadObject<Task<T>>(names_initState, typeof(Task<T>), null);
         inst.InitStateProps = reader.ReadObject<object>(names_initStateProps, typeof(object), null);
+        inst.Handler = reader.ReadObject<IStateMachineHandler<T>>(names_handler, typeof(IStateMachineHandler<T>), null);
     }
 }
 }

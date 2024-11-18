@@ -22,6 +22,9 @@ import cn.wjybxx.btree.decorator.*;
 import cn.wjybxx.btree.fsm.ChangeStateTask;
 import cn.wjybxx.btree.fsm.StackStateMachineTask;
 import cn.wjybxx.btree.fsm.StateMachineTask;
+import cn.wjybxx.btree.fsm.handler.DefaultStateMachineHandler;
+import cn.wjybxx.btree.fsm.handler.RedoStateMachineHandler;
+import cn.wjybxx.btree.fsm.handler.UndoStateMachineHandler;
 import cn.wjybxx.btree.leaf.*;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecLinker;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecLinkerGroup;
@@ -43,6 +46,13 @@ public class BtreeCodecLinker {
         private ChangeStateTask<?> changeStateTask;
         private StateMachineTask<?> stateMachineTask;
         private StackStateMachineTask<?> stackStateMachineTask;
+
+        @DsonCodecLinker(props = @DsonSerializable(singleton = "getInstance"))
+        private DefaultStateMachineHandler<?> defaultStateMachineHandler;
+        @DsonCodecLinker(props = @DsonSerializable(singleton = "getInstance"))
+        private RedoStateMachineHandler<?> redoStateMachineHandler;
+        @DsonCodecLinker(props = @DsonSerializable(singleton = "getInstance"))
+        private UndoStateMachineHandler<?> undoStateMachineHandler;
     }
 
     @DsonCodecLinkerGroup(outputPackage = "cn.wjybxx.btreecodec.branch")

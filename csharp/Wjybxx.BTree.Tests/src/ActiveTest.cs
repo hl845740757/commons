@@ -20,6 +20,7 @@ using NUnit.Framework;
 using NUnit.Framework.Internal;
 using Wjybxx.BTree;
 using Wjybxx.BTree.FSM;
+using Wjybxx.BTree.FSM.Handler;
 using Wjybxx.BTree.Leaf;
 
 namespace BTree.Tests;
@@ -29,7 +30,7 @@ public class ActiveTest
     private static TaskEntry<Blackboard> newStateMachineTree() {
         StateMachineTask<Blackboard> stateMachineTask = new StateMachineTask<Blackboard>();
         stateMachineTask.Name = "RootStateMachine";
-        stateMachineTask.Handler = StateMachineHandlers.DefaultHandler<Blackboard>();
+        stateMachineTask.Handler = DefaultStateMachineHandler<Blackboard>.Inst;
 
         TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry();
         taskEntry.RootTask = stateMachineTask;

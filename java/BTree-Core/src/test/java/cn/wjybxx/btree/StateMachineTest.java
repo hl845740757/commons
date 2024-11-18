@@ -17,6 +17,9 @@ package cn.wjybxx.btree;
 
 import cn.wjybxx.base.mutable.MutableInt;
 import cn.wjybxx.btree.fsm.*;
+import cn.wjybxx.btree.fsm.handler.DefaultStateMachineHandler;
+import cn.wjybxx.btree.fsm.handler.RedoStateMachineHandler;
+import cn.wjybxx.btree.fsm.handler.UndoStateMachineHandler;
 import cn.wjybxx.btree.leaf.ActionTask;
 import cn.wjybxx.btree.leaf.Success;
 import cn.wjybxx.btree.leaf.WaitFrame;
@@ -47,7 +50,7 @@ public class StateMachineTest {
         stateMachineTask.setName("RootStateMachine");
         stateMachineTask.setUndoQueueCapacity(queue_size);
         stateMachineTask.setRedoQueueCapacity(queue_size);
-        stateMachineTask.setHandler(StateMachineHandlers.defaultHandler());
+        stateMachineTask.setHandler(DefaultStateMachineHandler.getInstance());
 //        stateMachineTask.setNoneChildStatus(TaskStatus.SUCCESS);
 
         TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry();
@@ -154,7 +157,7 @@ public class StateMachineTest {
         StackStateMachineTask<Blackboard> stateMachine = (StackStateMachineTask<Blackboard>) taskEntry.getRootTask();
         fillRedoQueue(stateMachine);
 
-        stateMachine.setHandler(StateMachineHandlers.redoHandler());
+        stateMachine.setHandler(RedoStateMachineHandler.getInstance());
         stateMachine.redoChangeState(); // 初始化
 
         BtreeTestUtil.untilCompleted(taskEntry);
@@ -170,7 +173,7 @@ public class StateMachineTest {
         StackStateMachineTask<Blackboard> stateMachine = (StackStateMachineTask<Blackboard>) taskEntry.getRootTask();
         fillUndoQueue(stateMachine);
 
-        stateMachine.setHandler(StateMachineHandlers.undoHandler());
+        stateMachine.setHandler(UndoStateMachineHandler.getInstance());
         stateMachine.undoChangeState(); // 初始化
 
         BtreeTestUtil.untilCompleted(taskEntry);

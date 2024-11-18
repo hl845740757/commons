@@ -19,6 +19,7 @@
 using NUnit.Framework;
 using Wjybxx.BTree;
 using Wjybxx.BTree.FSM;
+using Wjybxx.BTree.FSM.Handler;
 using Wjybxx.BTree.Leaf;
 using Wjybxx.Commons;
 
@@ -41,7 +42,7 @@ public class StateMachineTest
         stateMachineTask.Name = ("RootStateMachine");
         stateMachineTask.SetUndoQueueCapacity(queue_size);
         stateMachineTask.SetRedoQueueCapacity(queue_size);
-        stateMachineTask.Handler = StateMachineHandlers.DefaultHandler<Blackboard>();
+        stateMachineTask.Handler = DefaultStateMachineHandler<Blackboard>.Inst;
 
         TaskEntry<Blackboard> taskEntry = BtreeTestUtil.newTaskEntry();
         taskEntry.RootTask = stateMachineTask;
@@ -54,7 +55,7 @@ public class StateMachineTest
     [Test]
     public void testCount() {
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        taskEntry.GetRootStateMachine().Handler = StateMachineHandlers.OfListener<Blackboard>(
+        taskEntry.GetRootStateMachine().Handler = IStateMachineHandler<Blackboard>.OfListener(
             (stateMachineTask, curState, nextState) => {
                 if (curState == null) return; // 首次切换
                 Assert.IsTrue(curState.IsCancelled);
@@ -70,7 +71,7 @@ public class StateMachineTest
     public void testCountDelay() {
         delayChange = true;
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
-        taskEntry.GetRootStateMachine().Handler = StateMachineHandlers.OfListener<Blackboard>(
+        taskEntry.GetRootStateMachine().Handler = IStateMachineHandler<Blackboard>.OfListener(
             (stateMachineTask, curState, nextState) => {
                 if (curState == null) return; // 首次切换
                 Assert.IsTrue(curState.IsSucceeded);
@@ -144,7 +145,7 @@ public class StateMachineTest
         StackStateMachineTask<Blackboard> stateMachine = (StackStateMachineTask<Blackboard>)taskEntry.RootTask;
         fillRedoQueue(stateMachine);
 
-        stateMachine.Handler = StateMachineHandlers.RedoHandler<Blackboard>();
+        stateMachine.Handler = RedoStateMachineHandler<Blackboard>.Inst;
         stateMachine.RedoChangeState(); // 初始化
 
         BtreeTestUtil.untilCompleted(taskEntry);
@@ -159,7 +160,7 @@ public class StateMachineTest
         StackStateMachineTask<Blackboard> stateMachine = (StackStateMachineTask<Blackboard>)taskEntry.RootTask;
         fillUndoQueue(stateMachine);
 
-        stateMachine.Handler = StateMachineHandlers.UndoHandler<Blackboard>();
+        stateMachine.Handler = UndoStateMachineHandler<Blackboard>.Inst;
         stateMachine.UndoChangeState(); // 初始化
 
         BtreeTestUtil.untilCompleted(taskEntry);
@@ -348,7 +349,7 @@ public class StateMachineTest
         int runFrames = 10;
         TaskEntry<Blackboard> taskEntry = newStateMachineTree();
         StateMachineTask<Blackboard> rootStateMachine = taskEntry.GetRootStateMachine();
-        rootStateMachine.Handler = StateMachineHandlers.OfListener<Blackboard>(
+        rootStateMachine.Handler = IStateMachineHandler<Blackboard>.OfListener(
             (stateMachineTask, curState, nextState) => {
                 if (curState != null && nextState != null) {
                     Assert.AreEqual(runFrames, curState.RunFrames);

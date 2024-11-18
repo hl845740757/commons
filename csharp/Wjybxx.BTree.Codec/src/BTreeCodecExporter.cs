@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using Wjybxx.BTree;
 using Wjybxx.BTreeCodec.Codecs;
 using Wjybxx.BTree.FSM;
+using Wjybxx.BTree.FSM.Handler;
 using Wjybxx.BTree.Leaf;
 using Wjybxx.BTree.Decorator;
 using Wjybxx.BTree.Branch;
@@ -35,11 +36,14 @@ namespace Wjybxx.BTreeCodec
 public static class BTreeCodecExporter
 {
     public static Dictionary<Type, Type> ExportCodecs() {
-        var dic = new Dictionary<Type, Type>(36);
+        var dic = new Dictionary<Type, Type>(39);
         dic[typeof(TaskEntry<>)] = typeof(TaskEntry1Codec<>);
         dic[typeof(ChangeStateTask<>)] = typeof(ChangeStateTask1Codec<>);
         dic[typeof(StateMachineTask<>)] = typeof(StateMachineTask1Codec<>);
         dic[typeof(StackStateMachineTask<>)] = typeof(StackStateMachineTask1Codec<>);
+        dic[typeof(DefaultStateMachineHandler<>)] = typeof(DefaultStateMachineHandler1Codec<>);
+        dic[typeof(RedoStateMachineHandler<>)] = typeof(RedoStateMachineHandler1Codec<>);
+        dic[typeof(UndoStateMachineHandler<>)] = typeof(UndoStateMachineHandler1Codec<>);
         dic[typeof(Failure<>)] = typeof(Failure1Codec<>);
         dic[typeof(Running<>)] = typeof(Running1Codec<>);
         dic[typeof(SimpleRandom<>)] = typeof(SimpleRandom1Codec<>);

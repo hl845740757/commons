@@ -20,6 +20,7 @@ using Wjybxx.BTree.Branch;
 using Wjybxx.BTree.Branch.Join;
 using Wjybxx.BTree.Decorator;
 using Wjybxx.BTree.FSM;
+using Wjybxx.BTree.FSM.Handler;
 using Wjybxx.BTree.Leaf;
 using Wjybxx.Dson.Codec.Attributes;
 
@@ -43,6 +44,13 @@ public class BtreeCodecLinker
         private ChangeStateTask<object> changeStateTask;
         private StateMachineTask<object> stateMachineTask;
         private StackStateMachineTask<object> stackStateMachine;
+
+        [DsonCodecLinker(Singleton = "Inst")]
+        private DefaultStateMachineHandler<object> _defHandler;
+        [DsonCodecLinker(Singleton = "Inst")]
+        private RedoStateMachineHandler<object> _redoStateMachineHandler;
+        [DsonCodecLinker(Singleton = "Inst")]
+        private UndoStateMachineHandler<object> _undoStateMachineHandler;
     }
 
     [DsonCodecLinkerGroup("Wjybxx.BTreeCodec.Codecs")]

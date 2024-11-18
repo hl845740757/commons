@@ -54,6 +54,9 @@ public class CodecGenerator
         if (!Directory.Exists(outDir)) {
             return;
         }
+        foreach (string filePath in Directory.GetFiles(outDir)) {
+            File.Delete(filePath);
+        }
 
         CodecProcessor processor = new CodecProcessor(new List<Type>()
             {
