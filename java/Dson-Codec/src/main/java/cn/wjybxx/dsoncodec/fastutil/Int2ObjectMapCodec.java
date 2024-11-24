@@ -66,7 +66,7 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
 
     @Override
     public void writeObject(DsonObjectWriter writer, Int2ObjectMap<V> inst, TypeInfo declaredType, ObjectStyle style) {
-        TypeInfo valueTypeInfo = encoderType.genericArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.typeArgs.get(0);
 
         if (writer.options().writeMapAsDocument) {
             writer.writeStartObject(style, encoderType, declaredType);
@@ -95,7 +95,7 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
 
     @Override
     public Int2ObjectMap<V> readObject(DsonObjectReader reader, Supplier<? extends Int2ObjectMap<V>> factory) {
-        TypeInfo valueTypeInfo = encoderType.genericArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.typeArgs.get(0);
 
         Int2ObjectMap<V> result = factory != null ? factory.get() : newMap();
         if (reader.options().writeMapAsDocument) {

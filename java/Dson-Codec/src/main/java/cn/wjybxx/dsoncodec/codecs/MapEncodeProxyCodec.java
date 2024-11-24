@@ -56,7 +56,7 @@ public class MapEncodeProxyCodec<V> implements DsonCodec<MapEncodeProxy<V>> {
 
     @Override
     public void writeObject(DsonObjectWriter writer, MapEncodeProxy<V> inst, TypeInfo declaredType, ObjectStyle style) {
-        TypeInfo valueTypeInfo = encoderType.genericArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.typeArgs.get(0);
         Collection<Map.Entry<String, V>> entries = Objects.requireNonNull(inst.getEntries());
         switch (inst.getMode()) {
             default -> {
@@ -105,7 +105,7 @@ public class MapEncodeProxyCodec<V> implements DsonCodec<MapEncodeProxy<V>> {
 
     @Override
     public MapEncodeProxy<V> readObject(DsonObjectReader reader, Supplier<? extends MapEncodeProxy<V>> factory) {
-        TypeInfo valueTypeInfo = encoderType.genericArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.typeArgs.get(0);
 
         List<Map.Entry<String, V>> entries = new ArrayList<>();
         MapEncodeProxy<V> result = new MapEncodeProxy<>();

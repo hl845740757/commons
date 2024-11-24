@@ -56,7 +56,7 @@ public final class ClassName {
      * 3. 如果是数组，包含[]，每一阶一组[] —— []之间不可以有空格。
      */
     public final String clsName;
-    /** 泛型参数信息，无泛型时为空List */
+    /** 泛型实参信息，无泛型时为空List */
     public final List<ClassName> typeArgs;
     /**
      * HashCode缓存 -- hashcode查询频率高，因此缓存。

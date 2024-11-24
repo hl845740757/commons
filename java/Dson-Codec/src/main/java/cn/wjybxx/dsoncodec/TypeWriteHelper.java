@@ -56,19 +56,19 @@ public final class TypeWriteHelper {
         if (encoderType.equals(declaredType)) return true;
         if (declaredType.rawType == Object.class) return false;
 
-        if (encoderType.hasGenericArgs()) {
-            if (!declaredType.hasGenericArgs()) {
+        if (encoderType.hasTypeArgs()) {
+            if (!declaredType.hasTypeArgs()) {
                 return false;
             }
             // 都是泛型，如果泛型原型之间配置了可优化，则泛型参数相同时可优化
             ClassPair key = new ClassPair(encoderType.rawType, declaredType.rawType);
             Boolean r = cacheDic.get(key);
             if (r != null) {
-                return r && CollectionUtils.sequenceEqual(declaredType.genericArgs, encoderType.genericArgs);
+                return r && CollectionUtils.sequenceEqual(declaredType.typeArgs, encoderType.typeArgs);
             }
             return false;
         } else {
-            if (declaredType.hasGenericArgs()) {
+            if (declaredType.hasTypeArgs()) {
                 return false;
             }
             // 都不是泛型，如果配置了可优化，则可优化

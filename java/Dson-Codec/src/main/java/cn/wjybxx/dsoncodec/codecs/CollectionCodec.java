@@ -45,8 +45,8 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
 
     @SuppressWarnings("unchecked")
     public CollectionCodec(TypeInfo encoderType, Supplier<? extends Collection<E>> factory) {
-        if (encoderType.genericArgs.size() != 1) {
-            throw new IllegalArgumentException("encoderType.genericArgs.size() != 1");
+        if (encoderType.typeArgs.size() != 1) {
+            throw new IllegalArgumentException("encoderType.typeArgs.size() != 1");
         }
         if (factory == null) {
             factory = DsonConverterUtils.tryNoArgConstructorToSupplier((Class<? extends Collection<E>>) encoderType.rawType);
@@ -58,7 +58,7 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
 
     private static FactoryKind computeFactoryKind(TypeInfo typeInfo) {
         Class<?> clazz = typeInfo.rawType;
-        if (clazz == EnumSet.class && typeInfo.genericArgs.get(0).isEnum()) {
+        if (clazz == EnumSet.class && typeInfo.typeArgs.get(0).isEnum()) {
             return FactoryKind.EnumSet; // 考虑被擦除的情况
         }
         if (Set.class.isAssignableFrom(clazz)) {
@@ -89,7 +89,7 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
         if (factory != null) return factory.get();
         return switch (factoryKind) {
             case EnumSet -> {
-                TypeInfo elementTypeInfo = encoderType.genericArgs.get(0);
+                TypeInfo elementTypeInfo = encoderType.typeArgs.get(0);
                 yield EnumSet.noneOf((Class) elementTypeInfo.rawType);
             }
             case LinkedHashSet -> new LinkedHashSet<>();
@@ -114,7 +114,7 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
 
     @Override
     public void writeObject(DsonObjectWriter writer, Collection<E> inst, TypeInfo declaredType, ObjectStyle style) {
-        TypeInfo elementTypeInfo = encoderType.genericArgs.get(0);
+        TypeInfo elementTypeInfo = encoderType.typeArgs.get(0);
 
         for (E e : inst) {
             writer.writeObject(null, e, elementTypeInfo, null);
@@ -123,7 +123,7 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
 
     @Override
     public Collection<E> readObject(DsonObjectReader reader, Supplier<? extends Collection<E>> factory) {
-        TypeInfo elementTypeInfo = encoderType.genericArgs.get(0);
+        TypeInfo elementTypeInfo = encoderType.typeArgs.get(0);
 
         Collection<E> result = factory != null ? factory.get() : newCollection();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {

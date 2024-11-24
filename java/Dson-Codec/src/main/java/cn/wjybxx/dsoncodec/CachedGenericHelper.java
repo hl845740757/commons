@@ -66,7 +66,7 @@ public final class CachedGenericHelper implements GenericHelper {
                     declaredType.isArrayType() ? declaredType.getRootComponentType() : declaredType);
             // 若是数组，TypeInfo需要恢复
             if (typeInfo != null && runtimeType.isArray()) {
-                typeInfo = TypeInfo.of(runtimeType, typeInfo.genericArgs);
+                typeInfo = TypeInfo.of(runtimeType, typeInfo.typeArgs);
             }
         } else {
             // 查询用户逻辑，逆向迭代 -- 越靠近用户，优先级越高
@@ -77,7 +77,7 @@ public final class CachedGenericHelper implements GenericHelper {
             }
             // 走保底逻辑
             if (typeInfo == null && canInheritTypeArgs(runtimeType, declaredType.rawType)) {
-                typeInfo = TypeInfo.of(runtimeType, declaredType.genericArgs);
+                typeInfo = TypeInfo.of(runtimeType, declaredType.typeArgs);
             }
         }
         if (typeInfo == null) {

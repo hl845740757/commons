@@ -40,7 +40,7 @@ import java.util.*;
  *
  * <h3>数组泛型信息</h3>
  * 注意：由于{@link Class#getComponentType()}不包含泛型信息，
- * 而我们需要这部分数据，因此我们将数组的泛型信息也存储在{@link #genericArgs}中，
+ * 而我们需要这部分数据，因此我们将数组的泛型信息也存储在{@link #typeArgs}中，
  * 因此不能简单根据泛型参数个数判断是否是泛型类，请通过{@link #isConstructedGenericType()}判断。
  * ps：数组不是泛型类。
  *
@@ -53,27 +53,27 @@ public final class TypeInfo {
 
     /** 原始类型 -- 可能是基础类型 */
     public final Class<?> rawType;
-    /** 泛型参数信息 -- 当不为0时，应当和真实泛型参数个数相同 */
-    public final List<TypeInfo> genericArgs;
+    /** 泛型实参信息 -- 当不为0时，应当和真实泛型参数个数相同 */
+    public final List<TypeInfo> typeArgs;
 
     private TypeInfo(Class<?> rawType) {
         this.rawType = Objects.requireNonNull(rawType);
-        this.genericArgs = List.of();
+        this.typeArgs = List.of();
     }
 
     private TypeInfo(Class<?> rawType, TypeInfo typeArg1) {
         this.rawType = Objects.requireNonNull(rawType);
-        this.genericArgs = List.of(typeArg1);
+        this.typeArgs = List.of(typeArg1);
     }
 
     private TypeInfo(Class<?> rawType, TypeInfo typeArg1, TypeInfo typeArg2) {
         this.rawType = Objects.requireNonNull(rawType);
-        this.genericArgs = List.of(typeArg1, typeArg2);
+        this.typeArgs = List.of(typeArg1, typeArg2);
     }
 
-    private TypeInfo(Class<?> rawType, List<TypeInfo> genericArgs) {
+    private TypeInfo(Class<?> rawType, List<TypeInfo> typeArgs) {
         this.rawType = Objects.requireNonNull(rawType);
-        this.genericArgs = genericArgs;
+        this.typeArgs = typeArgs;
     }
 
     // region api
@@ -103,8 +103,8 @@ public final class TypeInfo {
     }
 
     /** 是否包含泛型参数 */
-    public boolean hasGenericArgs() {
-        return genericArgs.size() > 0;
+    public boolean hasTypeArgs() {
+        return typeArgs.size() > 0;
     }
 
     /** 是否是泛型类 -- 不适用数组 */
@@ -112,7 +112,7 @@ public final class TypeInfo {
         if (rawType.isPrimitive() || rawType.isArray()) {
             return false;
         }
-        return genericArgs.size() > 0 || rawType.getTypeParameters().length > 0; // 这个有点浪费，但又没有直接的API
+        return typeArgs.size() > 0 || rawType.getTypeParameters().length > 0; // 这个有点浪费，但又没有直接的API
     }
 
     /** 是否是已构造泛型类 -- 不适用数组 */
@@ -120,12 +120,12 @@ public final class TypeInfo {
         if (rawType.isPrimitive() || rawType.isArray()) {
             return false;
         }
-        return genericArgs.size() > 0;
+        return typeArgs.size() > 0;
     }
 
-    /** 获取泛型参数 */
-    public TypeInfo getGenericArgument(int idx) {
-        return genericArgs.get(idx);
+    /** 获取指定下标实参 */
+    public TypeInfo getTypeArg(int idx) {
+        return typeArgs.get(idx);
     }
 
     /** 是否是数组 */
@@ -146,13 +146,13 @@ public final class TypeInfo {
 
     /** 是否是已构造泛型数组 */
     public boolean isConstructedGenericArrayType() {
-        return rawType.isArray() && genericArgs.size() > 0;
+        return rawType.isArray() && typeArgs.size() > 0;
     }
 
     /** 获取数组的元素类型 */
     public TypeInfo getComponentType() {
         if (rawType.isArray()) {
-            return new TypeInfo(rawType.getComponentType(), genericArgs);  // 继承泛型信息
+            return new TypeInfo(rawType.getComponentType(), typeArgs);  // 继承泛型信息
         }
         throw new IllegalStateException("This operation is only valid on array types");
     }
@@ -161,14 +161,14 @@ public final class TypeInfo {
     public TypeInfo getRootComponentType() {
         if (rawType.isArray()) {
             Class<?> root = ArrayUtils.getRootComponentType(rawType);
-            return new TypeInfo(root, genericArgs); // 继承泛型信息
+            return new TypeInfo(root, typeArgs); // 继承泛型信息
         }
         throw new IllegalStateException("This operation is only valid on array types");
     }
 
     /** 构建数组类型 */
     public TypeInfo makeArrayType() {
-        return new TypeInfo(rawType.arrayType(), genericArgs); // 继承泛型信息
+        return new TypeInfo(rawType.arrayType(), typeArgs); // 继承泛型信息
     }
 
     /** 构建数组类型 -- 可用于减少中间对象 */
@@ -177,7 +177,7 @@ public final class TypeInfo {
         while (rank-- > 0) {
             rawType = rawType.arrayType();
         }
-        return new TypeInfo(rawType, genericArgs);
+        return new TypeInfo(rawType, typeArgs);
     }
 
     // endregion
@@ -198,17 +198,17 @@ public final class TypeInfo {
         if (rawType != that.rawType) { // class可用==代替equals
             return false;
         }
-        if (genericArgs.isEmpty() && that.genericArgs.isEmpty()) { // 多数情况下无泛型参数
+        if (typeArgs.isEmpty() && that.typeArgs.isEmpty()) { // 多数情况下无泛型参数
             return true;
         }
-        return CollectionUtils.sequenceEqual(genericArgs, that.genericArgs);
+        return CollectionUtils.sequenceEqual(typeArgs, that.typeArgs);
     }
 
     @Override
     public int hashCode() {
         int result = rawType.hashCode();
-        for (int i = 0; i < genericArgs.size(); i++) {
-            result = 31 * result + genericArgs.get(i).hashCode();
+        for (int i = 0; i < typeArgs.size(); i++) {
+            result = 31 * result + typeArgs.get(i).hashCode();
         }
         return result;
     }
@@ -217,7 +217,7 @@ public final class TypeInfo {
     public String toString() {
         return "TypeInfo{" +
                 "rawType=" + rawType +
-                ", typeArgs=" + genericArgs +
+                ", typeArgs=" + typeArgs +
                 '}';
     }
 

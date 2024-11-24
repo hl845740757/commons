@@ -160,10 +160,10 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
-            Type[] genericArguments = type.GenericTypeArguments; // 真实泛型参数
-            List<ClassName> typeArgClassNames = new List<ClassName>(genericArguments.Length);
-            foreach (Type genericArgument in genericArguments) {
-                typeArgClassNames.Add(ClassNameOfType(genericArgument));
+            Type[] genericTypeArgs = type.GenericTypeArguments; // 真实泛型参数
+            List<ClassName> typeArgClassNames = new List<ClassName>(genericTypeArgs.Length);
+            foreach (Type genericTypeArg in genericTypeArgs) {
+                typeArgClassNames.Add(ClassNameOfType(genericTypeArg));
             }
             return new ClassName(typeMeta.MainClsName, typeArgClassNames);
         }
@@ -199,11 +199,11 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             // 解析泛型参数
             int typeArgsCount = className.typeArgs.Count;
             if (typeArgsCount > 0) {
-                Type[] typeParameters = new Type[typeArgsCount];
+                Type[] typeArgs = new Type[typeArgsCount];
                 for (int index = 0; index < typeArgsCount; index++) {
-                    typeParameters[index] = TypeOfClassName(className.typeArgs[index]);
+                    typeArgs[index] = TypeOfClassName(className.typeArgs[index]);
                 }
-                elementType = elementType.MakeGenericType(typeParameters);
+                elementType = elementType.MakeGenericType(typeArgs);
             }
         }
         // 构建多维数组 -- 与MakeArrayType(rank)接口获得的结果不一样

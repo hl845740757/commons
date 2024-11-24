@@ -62,7 +62,6 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
         });
     }
 
-
     @Nullable
     @Override
     public DsonCodecImpl<?> getEncoder(final TypeInfo type) {
@@ -153,7 +152,7 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
     private DsonCodecImpl<?> makeGenericCodec(TypeInfo type, GenericCodecInfo genericCodecInfo) {
         assert type.rawType == genericCodecInfo.typeInfo.rawType;
         // 参数可能是丢失了泛型参数的原始类型，亦或是逻辑错误导致泛型参数个数不匹配
-        if (type.genericArgs.size() != genericCodecInfo.typeInfo.genericArgs.size()) {
+        if (type.typeArgs.size() != genericCodecInfo.typeInfo.typeArgs.size()) {
             type = genericCodecInfo.typeInfo;
         }
         Class<?> genericCodecTypeDefine = genericCodecInfo.codecType;
@@ -194,16 +193,16 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
         // 这段保底代码写在这里最为合适，放在用户的Config里还需要考虑冲突问题...
         // 这里其实也需要测试是否可以继承泛型参数，但不想增加复杂度了，用户通过Caster解决
         if (List.class.isAssignableFrom(rawType)) {
-            return TypeInfo.of(List.class, type.genericArgs);
+            return TypeInfo.of(List.class, type.typeArgs);
         }
         if (Set.class.isAssignableFrom(rawType)) {
-            return TypeInfo.of(Set.class, type.genericArgs);
+            return TypeInfo.of(Set.class, type.typeArgs);
         }
         if (Collection.class.isAssignableFrom(rawType)) {
-            return TypeInfo.of(Collection.class, type.genericArgs);
+            return TypeInfo.of(Collection.class, type.typeArgs);
         }
         if (Map.class.isAssignableFrom(rawType)) {
-            return TypeInfo.of(Map.class, type.genericArgs);
+            return TypeInfo.of(Map.class, type.typeArgs);
         }
         return null;
     }

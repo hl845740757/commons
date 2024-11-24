@@ -84,8 +84,8 @@ public final class GenericCodecInfo {
         if (typeParameters.length == 0) {
             throw new IllegalArgumentException("rawType is not genericType, type:" + typeInfo.rawType);
         }
-        if (typeParameters.length != typeInfo.genericArgs.size()) {
-            throw new IllegalArgumentException("rawType.GenericTypeArguments.Length != typeInfo.genericArgs.Length, type: " + typeInfo.rawType);
+        if (typeParameters.length != typeInfo.typeArgs.size()) {
+            throw new IllegalArgumentException("rawType.GenericTypeArguments.Length != typeInfo.typeArgs.Length, type: " + typeInfo.rawType);
         }
         if (typeParameters.length != codecType.getTypeParameters().length) {
             throw new IllegalArgumentException("rawType.GenericTypeArguments.Length != codecType.GenericTypeArguments.Length, type: " + typeInfo.rawType);

@@ -309,7 +309,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
             return declaredType;
         }
         // 尝试继承泛型参数
-        if (declaredType.hasGenericArgs()) {
+        if (declaredType.hasTypeArgs()) {
             TypeInfo typeInfo = converter.genericCodecHelper().inheritTypeArgs(encoderClass, declaredType);
             return typeInfo == null ? TypeInfo.of(encoderClass) : typeInfo;
         }

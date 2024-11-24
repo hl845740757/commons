@@ -152,7 +152,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
      */
     private ClassName classNameOfType(TypeInfo type) {
         if (type.isArrayType()) {
-            TypeInfo rootElementType = TypeInfo.of(ArrayUtils.getRootComponentType(type.rawType), type.genericArgs);
+            TypeInfo rootElementType = TypeInfo.of(ArrayUtils.getRootComponentType(type.rawType), type.typeArgs);
             int arrayRank = ArrayUtils.getArrayRank(type.rawType);
             String clsName = classNameOfType(rootElementType) + ArrayUtils.arrayRankSymbol(arrayRank);
             return new ClassName(clsName);
@@ -163,10 +163,10 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
-            List<TypeInfo> genericArguments = type.genericArgs;
-            List<ClassName> typeArgClassNames = new ArrayList<>(genericArguments.size());
-            for (TypeInfo genericArgument : genericArguments) {
-                typeArgClassNames.add(classNameOfType(genericArgument));
+            List<TypeInfo> genericTypeArgs = type.typeArgs;
+            List<ClassName> typeArgClassNames = new ArrayList<>(genericTypeArgs.size());
+            for (TypeInfo genericTypeArg : genericTypeArgs) {
+                typeArgClassNames.add(classNameOfType(genericTypeArg));
             }
             return new ClassName(typeMeta.mainClsName(), typeArgClassNames);
         }
@@ -203,11 +203,11 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             // 解析泛型参数
             int typeArgsCount = className.typeArgs.size();
             if (typeArgsCount > 0) {
-                TypeInfo[] typeParameters = new TypeInfo[typeArgsCount];
+                TypeInfo[] typeArgs = new TypeInfo[typeArgsCount];
                 for (int index = 0; index < typeArgsCount; index++) {
-                    typeParameters[index] = typeOfClassName(className.typeArgs.get(index));
+                    typeArgs[index] = typeOfClassName(className.typeArgs.get(index));
                 }
-                elementType = TypeInfo.of(elementType.rawType, typeParameters);
+                elementType = TypeInfo.of(elementType.rawType, typeArgs);
             }
         }
         // 构建多维数组
