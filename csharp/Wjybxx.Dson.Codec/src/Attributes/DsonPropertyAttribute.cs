@@ -74,7 +74,23 @@ public class DsonPropertyAttribute : Attribute
     /// 对象类型字段的文本格式。
     /// 注意：该属性只有显式声明才有效，当未声明该属性时，将使用目标类型的默认格式。
     /// </summary>
-    public ObjectStyle? ObjectStyle { get; set; } = null;
+    public ObjectStyle ObjectStyle {
+        get => _objectStyle;
+        set {
+            _objectStyle = value;
+            HasObjectStyle = true;
+        }
+    }
+
+    /// <summary>
+    /// Nullable不是编译时常量，因此不能在构造Attribute时初始化，我们通过额外的Bool标识来解决。
+    /// </summary>
+    private ObjectStyle _objectStyle = ObjectStyle.Indent;
+    
+    /// <summary>
+    /// 以后可能也用于记录其它属性是否有值
+    /// </summary>
+    public bool HasObjectStyle { get; private set; }
 
     #endregion
 

@@ -31,6 +31,7 @@ public class BeanExample
     [DsonProperty(Name = "_name", StringStyle = StringStyle.AutoQuote)]
     private string? name;
 
+    [DsonProperty(NumberStyle = NumberStyle.Unsigned)]
     private int age;
 
     public string? Name {
@@ -56,7 +57,7 @@ public class BeanExample
     /// <summary>
     /// 测试泛型集合
     /// </summary>
-    [DsonProperty(Impl = typeof(HashSet<>))]
+    [DsonProperty(Impl = typeof(HashSet<>), ObjectStyle = ObjectStyle.Flow)]
     public ISet<string>? hashSet2;
 
     public void WriteType(IDsonObjectWriter writer, string dsonName) {

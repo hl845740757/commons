@@ -372,10 +372,10 @@ internal class PojoCodecGenerator
             case MNAME_WRITE_OBJECT: {
                 // 写Object时传入类型信息和Style
                 // writer.writeObject(names_fieldName, inst.getName(), types_name, ObjectStyle.INDENT)
-                if (fieldProps.attribute.ObjectStyle.HasValue) {
+                if (fieldProps.attribute.HasObjectStyle) {
                     builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, typeof($T), $T.$L)",
                         writeMethodName, SerialName(fieldName), fieldAccess, fieldType,
-                        processor.typeName_ObjectStyle, EnumUtil.GetName(fieldProps.attribute.ObjectStyle.Value));
+                        processor.typeName_ObjectStyle, EnumUtil.GetName(fieldProps.attribute.ObjectStyle));
                 } else {
                     builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, typeof($T), null)",
                         writeMethodName, SerialName(fieldName), fieldAccess, fieldType);

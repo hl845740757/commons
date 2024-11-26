@@ -90,7 +90,7 @@ class StringCharStream : AbstractCharStream
                 }
                 c = buffer[++endPos];
                 if (c == '\n') { // CRLF
-                    state = LineInfo.StateCrlf;
+                    state = LineInfo.StateCrLf;
                     break;
                 }
             }

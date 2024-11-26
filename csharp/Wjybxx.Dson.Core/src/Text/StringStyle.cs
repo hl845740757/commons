@@ -21,7 +21,7 @@ namespace Wjybxx.Dson.Text
 /// <summary>
 /// 字符串输出样式
 /// </summary>
-public enum StringStyle
+public enum StringStyle : byte
 {
     /**
      * 自动判别

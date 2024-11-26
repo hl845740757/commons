@@ -30,7 +30,7 @@ public sealed class LineInfo
     /** 扫描到'\n'换行符 */
     public const int StateLf = 1;
     /** 扫描到'\r\n'换行符 */
-    public const int StateCrlf = 2;
+    public const int StateCrLf = 2;
     /** 扫描到文件尾 */
     public const int StateEof = 3;
 
@@ -70,7 +70,7 @@ public sealed class LineInfo
         if (state == StateLf) {
             return endPos - 1;
         }
-        if (state == StateCrlf) {
+        if (state == StateCrLf) {
             return endPos - 2;
         }
         return endPos;
@@ -81,7 +81,7 @@ public sealed class LineInfo
         if (state == StateLf) {
             return startPos + 1 <= endPos; // startPos有字符
         }
-        if (state == StateCrlf) {
+        if (state == StateCrLf) {
             return startPos + 2 <= endPos; // startPos有字符
         }
         return startPos <= endPos; // 适用eof

@@ -21,7 +21,7 @@ namespace Wjybxx.Dson.Text
 /// <summary>
 /// 对象和数组的缩进模式
 /// </summary>
-public enum ObjectStyle
+public enum ObjectStyle : byte
 {
     /**
      * 缩进模式

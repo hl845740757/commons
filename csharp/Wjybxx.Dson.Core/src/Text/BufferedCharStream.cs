@@ -151,7 +151,7 @@ class BufferedCharStream : AbstractCharStream
                         line.endPos++;
                         buffer.Write(c);
                         if (c == '\n') { // CRLF
-                            line.state = LineInfo.StateCrlf;
+                            line.state = LineInfo.StateCrLf;
                             return;
                         }
                     }
