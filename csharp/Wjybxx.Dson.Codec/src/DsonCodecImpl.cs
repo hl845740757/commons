@@ -91,21 +91,21 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     /// <param name="inst">要编码的对象</param>
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="style">编码风格</param>
-    public void WriteObject(IDsonObjectWriter writer, T inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in T inst, Type declaredType, ObjectStyle style) {
         if (_autoStart) {
             if (_writeAsArray) {
                 writer.WriteStartArray(style);
                 writer.WriteTypeInfo(_encoderType, declaredType);
-                _codec.WriteObject(writer, ref inst, declaredType, style);
+                _codec.WriteObject(writer, in inst, declaredType, style);
                 writer.WriteEndArray();
             } else {
                 writer.WriteStartObject(style);
                 writer.WriteTypeInfo(_encoderType, declaredType);
-                _codec.WriteObject(writer, ref inst, declaredType, style);
+                _codec.WriteObject(writer, in inst, declaredType, style);
                 writer.WriteEndObject();
             }
         } else {
-            _codec.WriteObject(writer, ref inst, declaredType, style);
+            _codec.WriteObject(writer, in inst, declaredType, style);
         }
     }
 

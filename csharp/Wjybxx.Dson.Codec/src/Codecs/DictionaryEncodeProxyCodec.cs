@@ -27,7 +27,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
 {
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref DictionaryEncodeProxy<V> inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in DictionaryEncodeProxy<V> inst, Type declaredType, ObjectStyle style) {
         IEnumerable<KeyValuePair<string, V>> entries = inst.Entries ?? throw new NullReferenceException("inst.Entries");
         Type valDeclaredType = typeof(V);
         Type encoderType = typeof(DictionaryEncodeProxy<V>);

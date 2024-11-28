@@ -17,11 +17,30 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
+using System.Reflection;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec
 {
+internal static class AbstractDsonCodec
+{
+    private static readonly ConcurrentDictionary<Type, bool> cache = new ConcurrentDictionary<Type, bool>();
+
+    public static bool IsOverwriteBeforeEncode(Type type) {
+        if (cache.TryGetValue(type, out bool r)) {
+            return r;
+        }
+        MethodInfo methodInfo = type.GetMethod("BeforeEncode", BindingFlags.NonPublic | BindingFlags.Instance);
+        if (methodInfo == null) throw new AssertionError();
+        r = methodInfo.DeclaringType!.GetGenericTypeDefinition() == typeof(AbstractDsonCodec<>);
+        cache.TryAdd(type, r);
+        return r;
+    }
+}
+
 /// <summary>
 /// 生成代码默认都会实现该类
 /// (建议手写代码也继承该类)
@@ -29,6 +48,13 @@ namespace Wjybxx.Dson.Codec
 /// <typeparam name="T"></typeparam>
 public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
 {
+    private readonly bool _isOverwriteBeforeEncode;
+
+    protected AbstractDsonCodec() {
+        _isOverwriteBeforeEncode = AbstractDsonCodec.IsOverwriteBeforeEncode(GetType());
+    }
+    //
+
     [StableName]
     public virtual Type GetEncoderType() => typeof(T);
 
@@ -38,19 +64,23 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
 
     #region Write
 
-    public void WriteObject(IDsonObjectWriter writer, ref T inst, Type declaredType, ObjectStyle style) {
-        if (writer.Options.enableBeforeEncode) {
-            BeforeEncode(writer, ref inst);
+    public void WriteObject(IDsonObjectWriter writer, in T inst, Type declaredType, ObjectStyle style) {
+        if (_isOverwriteBeforeEncode && writer.Options.enableBeforeEncode) {
+            T copiedInst = inst;
+            BeforeEncode(writer, ref copiedInst);
+            WriteFields(writer, in copiedInst);
+        } else {
+            WriteFields(writer, in inst);
         }
-        WriteFields(writer, ref inst);
     }
 
+    // 结构体可能也有序列化前钩子
     [StableName]
     protected virtual void BeforeEncode(IDsonObjectWriter writer, ref T inst) {
     }
 
     [StableName]
-    protected abstract void WriteFields(IDsonObjectWriter writer, ref T inst);
+    protected abstract void WriteFields(IDsonObjectWriter writer, in T inst);
 
     #endregion
 

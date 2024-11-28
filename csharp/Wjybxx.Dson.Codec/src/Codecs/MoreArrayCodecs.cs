@@ -33,7 +33,7 @@ public static class MoreArrayCodecs
     /** 字节数组需要转Binary */
     public class ByteArrayCodec : IDsonCodec<byte[]>
     {
-        public void WriteObject(IDsonObjectWriter writer, ref byte[] inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in byte[] inst, Type declaredType, ObjectStyle style) {
             writer.WriteBinary(null, Binary.CopyFrom(inst)); // 默认拷贝
         }
 
@@ -45,7 +45,7 @@ public static class MoreArrayCodecs
 
     public class IntArrayCodec : IDsonCodec<int[]>
     {
-        public void WriteObject(IDsonObjectWriter writer, ref int[] inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in int[] inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteInt(null, inst[i]);
             }
@@ -64,7 +64,7 @@ public static class MoreArrayCodecs
 
     public class LongArrayCodec : IDsonCodec<long[]>
     {
-        public void WriteObject(IDsonObjectWriter writer, ref long[] inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in long[] inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteLong(null, inst[i]);
             }
@@ -83,7 +83,7 @@ public static class MoreArrayCodecs
 
     public class FloatArrayCodec : IDsonCodec<float[]>
     {
-        public void WriteObject(IDsonObjectWriter writer, ref float[] inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in float[] inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteFloat(null, inst[i]);
             }
@@ -102,7 +102,7 @@ public static class MoreArrayCodecs
 
     public class DoubleArrayCodec : IDsonCodec<double[]>
     {
-        public void WriteObject(IDsonObjectWriter writer, ref double[] inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in double[] inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteDouble(null, inst[i]);
             }
@@ -121,7 +121,7 @@ public static class MoreArrayCodecs
 
     public class BoolArrayCodec : IDsonCodec<bool[]>
     {
-        public void WriteObject(IDsonObjectWriter writer, ref bool[] inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in bool[] inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteBool(null, inst[i]);
             }
@@ -140,7 +140,7 @@ public static class MoreArrayCodecs
 
     public class StringArrayCodec : IDsonCodec<string[]>
     {
-        public void WriteObject(IDsonObjectWriter writer, ref string[] inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in string[] inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteString(null, inst[i]);
             }
@@ -159,7 +159,7 @@ public static class MoreArrayCodecs
 
     public class UIntArrayCodec : IDsonCodec<uint[]>
     {
-        public void WriteObject(IDsonObjectWriter writer, ref uint[] inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in uint[] inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteUint(null, inst[i]);
             }
@@ -178,7 +178,7 @@ public static class MoreArrayCodecs
 
     public class ULongArrayCodec : IDsonCodec<ulong[]>
     {
-        public void WriteObject(IDsonObjectWriter writer, ref ulong[] inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in ulong[] inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Length; i++) {
                 writer.WriteUlong(null, inst[i]);
             }

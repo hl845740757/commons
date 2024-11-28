@@ -153,7 +153,7 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
     /// </summary>
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref T inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in T inst, Type declaredType, ObjectStyle style) {
         if (!_value2EnumDic.TryGetValue(inst, out EnumValueInfo<T> valueInfo)) {
             throw new DsonCodecException($"invalid enum value: {inst}, type: {typeof(T)}");
         }

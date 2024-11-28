@@ -37,7 +37,7 @@ public sealed class SubtreeRef1Codec<T> : AbstractDsonCodec<SubtreeRef<T>> where
 
     public override Type GetEncoderType() => typeof(SubtreeRef<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref SubtreeRef<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in SubtreeRef<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);

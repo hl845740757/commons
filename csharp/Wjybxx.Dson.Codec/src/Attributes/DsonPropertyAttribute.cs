@@ -86,7 +86,7 @@ public class DsonPropertyAttribute : Attribute
     /// Nullable不是编译时常量，因此不能在构造Attribute时初始化，我们通过额外的Bool标识来解决。
     /// </summary>
     private ObjectStyle _objectStyle = ObjectStyle.Indent;
-    
+
     /// <summary>
     /// 以后可能也用于记录其它属性是否有值
     /// </summary>

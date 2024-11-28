@@ -42,7 +42,7 @@ public sealed class StackStateMachineTask1Codec<T> : AbstractDsonCodec<StackStat
 
     public override Type GetEncoderType() => typeof(StackStateMachineTask<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref StackStateMachineTask<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in StackStateMachineTask<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);

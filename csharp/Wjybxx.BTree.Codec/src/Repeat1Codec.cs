@@ -39,7 +39,7 @@ public sealed class Repeat1Codec<T> : AbstractDsonCodec<Repeat<T>> where T : cla
 
     public override Type GetEncoderType() => typeof(Repeat<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref Repeat<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in Repeat<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);

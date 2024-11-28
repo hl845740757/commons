@@ -30,7 +30,7 @@ public static class MorePrimitiveCodecs
     {
         public bool AutoStartEnd => false;
 
-        public void WriteObject(IDsonObjectWriter writer, ref uint inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in uint inst, Type declaredType, ObjectStyle style) {
             INumberStyle numberStyle = declaredType == typeof(uint)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
@@ -46,7 +46,7 @@ public static class MorePrimitiveCodecs
     {
         public bool AutoStartEnd => false;
 
-        public void WriteObject(IDsonObjectWriter writer, ref ulong inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in ulong inst, Type declaredType, ObjectStyle style) {
             INumberStyle numberStyle = declaredType == typeof(ulong)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
@@ -62,7 +62,7 @@ public static class MorePrimitiveCodecs
     {
         public bool AutoStartEnd => false;
 
-        public void WriteObject(IDsonObjectWriter writer, ref short inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in short inst, Type declaredType, ObjectStyle style) {
             INumberStyle numberStyle = declaredType == typeof(short)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
@@ -78,7 +78,7 @@ public static class MorePrimitiveCodecs
     {
         public bool AutoStartEnd => false;
 
-        public void WriteObject(IDsonObjectWriter writer, ref ushort inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in ushort inst, Type declaredType, ObjectStyle style) {
             INumberStyle numberStyle = declaredType == typeof(ushort)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
@@ -94,7 +94,7 @@ public static class MorePrimitiveCodecs
     {
         public bool AutoStartEnd => false;
 
-        public void WriteObject(IDsonObjectWriter writer, ref byte inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in byte inst, Type declaredType, ObjectStyle style) {
             INumberStyle numberStyle = declaredType == typeof(byte)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
@@ -110,7 +110,7 @@ public static class MorePrimitiveCodecs
     {
         public bool AutoStartEnd => false;
 
-        public void WriteObject(IDsonObjectWriter writer, ref sbyte inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in sbyte inst, Type declaredType, ObjectStyle style) {
             INumberStyle numberStyle = declaredType == typeof(sbyte)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;
@@ -126,7 +126,7 @@ public static class MorePrimitiveCodecs
     {
         public bool AutoStartEnd => false;
 
-        public void WriteObject(IDsonObjectWriter writer, ref char inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in char inst, Type declaredType, ObjectStyle style) {
             INumberStyle numberStyle = declaredType == typeof(char)
                 ? NumberStyles.Unsigned
                 : NumberStyles.TypedUnsigned;

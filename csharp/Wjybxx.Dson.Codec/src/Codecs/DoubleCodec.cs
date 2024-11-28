@@ -25,7 +25,7 @@ public class DoubleCodec : IDsonCodec<double>
 {
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref double inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in double inst, Type declaredType, ObjectStyle style) {
         writer.WriteDouble(null, inst, NumberStyles.Simple); // double无需声明类型
     }
 

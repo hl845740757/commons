@@ -108,7 +108,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         return ImmutableLinkedDictionary<K, V>.CreateRange(dictionary);
     }
 
-    public void WriteObject(IDsonObjectWriter writer, ref IDictionary<K, V> inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in IDictionary<K, V> inst, Type declaredType, ObjectStyle style) {
         if (writer.Options.writeMapAsDocument) {
             if (keyKind == KeyKind.Int32) { // 这里转换字符串必定丢失类型，因此是判断实际类型(K)是安全的
                 WriteDictionaryInt(writer, (IDictionary<int, V>)inst, declaredType, style);
@@ -212,7 +212,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 writer.WriteName(keyString);
                 writer.WriteNull(keyString);
             } else {
-                writer.WriteObject(keyString, value, valDeclaredType);
+                writer.WriteObject(keyString, in value, valDeclaredType);
             }
         }
         writer.WriteEndObject();
@@ -230,7 +230,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 writer.WriteName(keyString);
                 writer.WriteNull(keyString);
             } else {
-                writer.WriteObject(keyString, value, valDeclaredType);
+                writer.WriteObject(keyString, in value, valDeclaredType);
             }
         }
         writer.WriteEndObject();
@@ -248,7 +248,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 writer.WriteName(keyString);
                 writer.WriteNull(keyString);
             } else {
-                writer.WriteObject(keyString, value, valDeclaredType);
+                writer.WriteObject(keyString, in value, valDeclaredType);
             }
         }
         writer.WriteEndObject();

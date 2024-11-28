@@ -38,7 +38,7 @@ public sealed class Join1Codec<T> : AbstractDsonCodec<Join<T>> where T : class
 
     public override Type GetEncoderType() => typeof(Join<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref Join<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in Join<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteObject(names_children, inst.Children, typeof(List<Task<T>>), null);

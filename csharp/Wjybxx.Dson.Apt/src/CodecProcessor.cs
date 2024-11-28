@@ -259,6 +259,7 @@ public class CodecProcessor
         context.aptClassProps = aptClassProps;
         context.additionalAnnotations = GetAdditionalAnnotations(aptClassProps);
         CacheFields(context);
+        CacheFieldProps(context);
         // 修正字段的Props —— 将LinkerBean上的注解信息转移到目标类
         {
             CacheFields(linkerBeanContext);
@@ -272,8 +273,6 @@ public class CodecProcessor
             foreach (FieldInfo fieldInfo in context.allFields) {
                 if (fieldName2FieldPropsMap.TryGetValue(fieldInfo.Name, out AptFieldProps? aptFieldProps)) {
                     context.fieldPropsMap[fieldInfo] = aptFieldProps;
-                } else {
-                    context.fieldPropsMap[fieldInfo] = new AptFieldProps();
                 }
             }
         }
@@ -497,7 +496,7 @@ public class CodecProcessor
 
     /** 检查是否包含无参构造方法或解析构造方法 */
     private void CheckConstructor(Type typeElement) {
-        if (typeElement.IsAbstract) {
+        if (typeElement.IsAbstract || typeElement.IsValueType) {
             return;
         }
         if (BeanUtils.ContainsNoArgsConstructor(typeElement)

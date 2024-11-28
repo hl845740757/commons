@@ -25,7 +25,7 @@ public class Int32Codec : IDsonCodec<int>
 {
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref int inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in int inst, Type declaredType, ObjectStyle style) {
         // 由字典或List调用时，declaredType可能是匹配的
         INumberStyle numberStyle = declaredType == typeof(int)
             ? NumberStyles.Simple

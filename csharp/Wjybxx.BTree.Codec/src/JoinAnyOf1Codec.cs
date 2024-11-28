@@ -30,7 +30,7 @@ public sealed class JoinAnyOf1Codec<T> : AbstractDsonCodec<JoinAnyOf<T>> where T
 {
     public override Type GetEncoderType() => typeof(JoinAnyOf<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref JoinAnyOf<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in JoinAnyOf<T> inst) {
     }
 
     protected override JoinAnyOf<T> NewInstance(IDsonObjectReader reader) {

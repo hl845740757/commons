@@ -25,7 +25,7 @@ public class DateTimeCodec : IDsonCodec<DateTime>
 {
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref DateTime inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in DateTime inst, Type declaredType, ObjectStyle style) {
         writer.WriteDateTime(null, in inst);
     }
 

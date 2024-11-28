@@ -37,7 +37,7 @@ public sealed class UntilSuccess1Codec<T> : AbstractDsonCodec<UntilSuccess<T>> w
 
     public override Type GetEncoderType() => typeof(UntilSuccess<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref UntilSuccess<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in UntilSuccess<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);

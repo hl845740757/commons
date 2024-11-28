@@ -21,6 +21,7 @@ namespace Wjybxx.Dson.Text
 /// <summary>
 /// 数字格式化方式
 /// 数字可能有不同的格式化需要，比如控制精度，因此定义为接口，默认实现见<see cref="NumberStyles"/>
+/// 注意：输出的字符串必须是可解析的。
 /// </summary>
 public interface INumberStyle
 {

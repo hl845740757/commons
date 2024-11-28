@@ -273,6 +273,7 @@ public class CodecProcessor extends MyAbstractProcessor {
         context.aptClassProps = aptClassProps;
         context.additionalAnnotations = getAdditionalAnnotations(aptClassProps);
         cacheFields(context);
+        cacheFieldProps(context);
         // 修正字段的Props注解 —— 将LinkerBean上的注解信息转移到目标类
         {
             cacheFields(linkerBeanContext);
@@ -285,8 +286,9 @@ public class CodecProcessor extends MyAbstractProcessor {
             }
             for (VariableElement field : context.allFields) {
                 AptFieldProps aptFieldProps = fieldName2FieldPropsMap.get(field.getSimpleName().toString());
-                if (aptFieldProps == null) aptFieldProps = new AptFieldProps();
-                context.fieldPropsMap.put(field, aptFieldProps);
+                if (aptFieldProps != null) {
+                    context.fieldPropsMap.put(field, aptFieldProps);
+                }
             }
         }
         // 绑定CodecProxy

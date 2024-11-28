@@ -30,7 +30,7 @@ public sealed class JoinSequence1Codec<T> : AbstractDsonCodec<JoinSequence<T>> w
 {
     public override Type GetEncoderType() => typeof(JoinSequence<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref JoinSequence<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in JoinSequence<T> inst) {
     }
 
     protected override JoinSequence<T> NewInstance(IDsonObjectReader reader) {

@@ -30,7 +30,7 @@ public sealed class RedoStateMachineHandler1Codec<T> : AbstractDsonCodec<RedoSta
 {
     public override Type GetEncoderType() => typeof(RedoStateMachineHandler<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref RedoStateMachineHandler<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in RedoStateMachineHandler<T> inst) {
     }
 
     protected override RedoStateMachineHandler<T> NewInstance(IDsonObjectReader reader) {

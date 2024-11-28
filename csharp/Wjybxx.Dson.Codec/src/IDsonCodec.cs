@@ -90,7 +90,7 @@ public interface IDsonCodec<T> : IDsonCodec
     /// <param name="inst">要编码的实例</param>
     /// <param name="declaredType">对象的声明类型，用于判断是否写入类型信息</param>
     /// <param name="style">文本编码样式</param>
-    void WriteObject(IDsonObjectWriter writer, ref T inst, Type declaredType, ObjectStyle style);
+    void WriteObject(IDsonObjectWriter writer, in T inst, Type declaredType, ObjectStyle style);
 
     /// <summary>
     /// 从输入流中解析指定对象。

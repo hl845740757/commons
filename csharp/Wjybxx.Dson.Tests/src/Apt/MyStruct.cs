@@ -1,6 +1,6 @@
-#region LICENSE
+﻿#region LICENSE
 
-// Copyright 2024 wjybxx(845740757@qq.com)
+// Copyright 2023-2024 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,21 +16,20 @@
 
 #endregion
 
-using System;
-using Wjybxx.Dson.Text;
+using Wjybxx.Dson.Codec;
+using Wjybxx.Dson.Codec.Attributes;
 
-namespace Wjybxx.Dson.Codec.Codecs
+namespace Wjybxx.Dson.Tests.Apt;
+
+/// <summary>
+/// 测试结构体钩子
+/// </summary>
+[DsonSerializable]
+public struct MyStruct
 {
-public class BoolCodec : IDsonCodec<bool>
-{
-    public bool AutoStartEnd => false;
+    public float x;
+    public float y;
 
-    public void WriteObject(IDsonObjectWriter writer, in bool inst, Type declaredType, ObjectStyle style) {
-        writer.WriteBool(null, inst);
+    public void BeforeEncode(ConverterOptions options) {
     }
-
-    public bool ReadObject(IDsonObjectReader reader, Func<bool>? factory = null) {
-        return reader.ReadBool(null);
-    }
-}
 }

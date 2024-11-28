@@ -102,7 +102,7 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         return ImmutableList<T>.CreateRange(result);
     }
 
-    public void WriteObject(IDsonObjectWriter writer, ref ICollection<T> inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in ICollection<T> inst, Type declaredType, ObjectStyle style) {
         Type eleDeclaredType = typeof(T);
 
         foreach (T value in inst) {

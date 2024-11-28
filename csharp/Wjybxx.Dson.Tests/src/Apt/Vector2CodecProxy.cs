@@ -1,6 +1,6 @@
-#region LICENSE
+﻿#region LICENSE
 
-// Copyright 2024 wjybxx(845740757@qq.com)
+// Copyright 2023-2024 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,22 +18,25 @@
 
 using System.Numerics;
 using Wjybxx.Dson.Codec;
-using Wjybxx.Dson.Text;
+using Wjybxx.Dson.Codec.Attributes;
 
-namespace Wjybxx.Dson.Tests;
+namespace Wjybxx.Dson.Tests.Apt;
 
-public class Vector3Codec : IDsonCodec<Vector3>
+/// <summary>
+/// 测试外部代理
+/// </summary>
+[DsonCodecLinkerBean(typeof(Vector2))]
+public class Vector2CodecProxy
 {
-    public void WriteObject(IDsonObjectWriter writer, in Vector3 inst, Type declaredType, ObjectStyle style) {
-        writer.WriteFloat("x", inst.X);
-        writer.WriteFloat("y", inst.Y);
-        writer.WriteFloat("z", inst.Z);
+    public static void BeforeEncode(ref Vector2 inst, ConverterOptions options) {
     }
 
-    public Vector3 ReadObject(IDsonObjectReader reader, Func<Vector3>? factory = null) {
-        return new Vector3(
-            reader.ReadFloat("x"),
-            reader.ReadFloat("y"),
-            reader.ReadFloat("z"));
+    public static void WriteObject(in Vector2 inst, IDsonObjectWriter writer) {
+    }
+
+    public static void ReadObject(ref Vector2 inst, IDsonObjectReader reader) {
+    }
+
+    public static void AfterDecode(ref Vector2 inst, ConverterOptions options) {
     }
 }

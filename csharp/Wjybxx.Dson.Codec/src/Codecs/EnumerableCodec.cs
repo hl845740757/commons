@@ -38,7 +38,7 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
 
     public virtual bool IsWriteAsArray => true;
 
-    public void WriteObject(IDsonObjectWriter writer, ref IEnumerable<T> inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in IEnumerable<T> inst, Type declaredType, ObjectStyle style) {
         Type eleDeclaredType = typeof(T);
         foreach (T value in inst) {
             writer.WriteObject<T>(null, in value, eleDeclaredType);

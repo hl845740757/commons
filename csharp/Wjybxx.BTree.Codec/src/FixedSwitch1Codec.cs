@@ -43,7 +43,7 @@ public sealed class FixedSwitch1Codec<T> : AbstractDsonCodec<FixedSwitch<T>> whe
 
     public override Type GetEncoderType() => typeof(FixedSwitch<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref FixedSwitch<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in FixedSwitch<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteObject(names_children, inst.Children, typeof(List<Task<T>>), null);

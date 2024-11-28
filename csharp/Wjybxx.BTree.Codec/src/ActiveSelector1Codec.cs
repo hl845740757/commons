@@ -37,7 +37,7 @@ public sealed class ActiveSelector1Codec<T> : AbstractDsonCodec<ActiveSelector<T
 
     public override Type GetEncoderType() => typeof(ActiveSelector<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref ActiveSelector<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in ActiveSelector<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteObject(names_children, inst.Children, typeof(List<Task<T>>), null);

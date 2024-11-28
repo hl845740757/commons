@@ -39,9 +39,9 @@ namespace Wjybxx.Dson.Codec.Attributes
 ///      public static void WriteObject(MyBean instance, IDsonObjectWriter writer){}
 ///      public static void ReadObject(MyBean instance, IDsonObjectReader reader){}
 ///      public static void AfterDecode(MyBean instance, ConverterOptions options){}
-///      // 结构体需要使用ref
+///      // 结构体需要使用ref和in
 ///      public static void BeforeEncode(ref MyBean instance, ConverterOptions options){}
-///      public static void WriteObject(ref MyBean instance, IDsonObjectWriter writer){}
+///      public static void WriteObject(in MyBean instance, IDsonObjectWriter writer){}
 ///      public static void ReadObject(ref MyBean instance, IDsonObjectReader reader){}
 ///      public static void AfterDecode(ref MyBean instance, ConverterOptions options){}
 /// 

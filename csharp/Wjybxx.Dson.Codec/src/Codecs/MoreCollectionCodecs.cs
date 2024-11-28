@@ -37,7 +37,7 @@ public static class MoreCollectionCodecs
     /// <typeparam name="T"></typeparam>
     public class StackCodec<T> : IDsonCodec<Stack<T>>
     {
-        public void WriteObject(IDsonObjectWriter writer, ref Stack<T> inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in Stack<T> inst, Type declaredType, ObjectStyle style) {
             Type eleDeclaredType = typeof(T);
             // 重复编码以避免Itr装箱
             foreach (T item in inst) {
@@ -63,7 +63,7 @@ public static class MoreCollectionCodecs
     /// <typeparam name="T"></typeparam>
     public class QueueCodec<T> : IDsonCodec<Queue<T>>
     {
-        public void WriteObject(IDsonObjectWriter writer, ref Queue<T> inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in Queue<T> inst, Type declaredType, ObjectStyle style) {
             Type eleDeclaredType = typeof(T);
             // 重复编码以避免Itr装箱
             foreach (T item in inst) {
@@ -97,7 +97,7 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
-        public void WriteObject(IDsonObjectWriter writer, ref IList<int> inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in IList<int> inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteInt(null, inst[i]);
             }
@@ -125,7 +125,7 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
-        public void WriteObject(IDsonObjectWriter writer, ref IList<long> inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in IList<long> inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteLong(null, inst[i]);
             }
@@ -153,7 +153,7 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
-        public void WriteObject(IDsonObjectWriter writer, ref IList<float> inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in IList<float> inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteFloat(null, inst[i]);
             }
@@ -181,7 +181,7 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
-        public void WriteObject(IDsonObjectWriter writer, ref IList<double> inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in IList<double> inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteDouble(null, inst[i]);
             }
@@ -209,7 +209,7 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
-        public void WriteObject(IDsonObjectWriter writer, ref IList<bool> inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in IList<bool> inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteBool(null, inst[i]);
             }
@@ -237,7 +237,7 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
-        public void WriteObject(IDsonObjectWriter writer, ref IList<string> inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in IList<string> inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteString(null, inst[i]);
             }
@@ -265,7 +265,7 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
-        public void WriteObject(IDsonObjectWriter writer, ref IList<uint> inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in IList<uint> inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteUint(null, inst[i]);
             }
@@ -293,7 +293,7 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
-        public void WriteObject(IDsonObjectWriter writer, ref IList<ulong> inst, Type declaredType, ObjectStyle style) {
+        public void WriteObject(IDsonObjectWriter writer, in IList<ulong> inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteUlong(null, inst[i]);
             }

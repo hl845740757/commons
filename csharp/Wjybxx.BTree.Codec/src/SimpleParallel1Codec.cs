@@ -37,7 +37,7 @@ public sealed class SimpleParallel1Codec<T> : AbstractDsonCodec<SimpleParallel<T
 
     public override Type GetEncoderType() => typeof(SimpleParallel<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref SimpleParallel<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in SimpleParallel<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteObject(names_children, inst.Children, typeof(List<Task<T>>), null);

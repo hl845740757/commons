@@ -30,9 +30,9 @@ public class NullableCodec<T> : IDsonCodec<T?> where T : struct
 {
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref T? inst, Type declaredType, ObjectStyle style) {
-        // 我们对Nullable类型编码的时候进行了修正，会走到这里
-        writer.WriteObject(null, inst.Value, typeof(T));
+    public void WriteObject(IDsonObjectWriter writer, in T? inst, Type declaredType, ObjectStyle style) {
+        // 我们对Nullable类型编码的时候进行了修正，会走到这里 -- 走到这里时一定不为null
+        writer.WriteObject(null, inst!.Value, typeof(T));
     }
 
     public T? ReadObject(IDsonObjectReader reader, Func<T?>? factory = null) {

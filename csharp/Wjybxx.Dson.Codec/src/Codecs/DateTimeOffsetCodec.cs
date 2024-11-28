@@ -26,7 +26,7 @@ public class DateTimeOffsetCodec : IDsonCodec<DateTimeOffset>
 {
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref DateTimeOffset inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in DateTimeOffset inst, Type declaredType, ObjectStyle style) {
         int offset = (int)inst.Offset.TotalSeconds;
         ExtDateTime extDateTime = ExtDateTime.OfDateTime(inst.DateTime).WithOffset(offset);
         writer.WriteExtDateTime(null, extDateTime);

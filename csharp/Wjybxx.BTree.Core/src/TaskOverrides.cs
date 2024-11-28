@@ -85,10 +85,8 @@ internal static class TaskOverrides
         if (methodInfo == null) {
             return true;
         }
-        Type declaringType = methodInfo.DeclaringType;
-        Debug.Assert(declaringType != null);
         // 在方法的入口处已经调用GetGenericTypeDefinition，查到的方法的declaringType居然不是绑定的泛型定义类...
-        return declaringType.GetGenericTypeDefinition() == TYPE_TASK;
+        return methodInfo.DeclaringType!.GetGenericTypeDefinition() == TYPE_TASK;
     }
 }
 }

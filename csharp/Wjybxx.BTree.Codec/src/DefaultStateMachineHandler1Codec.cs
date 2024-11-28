@@ -30,7 +30,7 @@ public sealed class DefaultStateMachineHandler1Codec<T> : AbstractDsonCodec<Defa
 {
     public override Type GetEncoderType() => typeof(DefaultStateMachineHandler<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref DefaultStateMachineHandler<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in DefaultStateMachineHandler<T> inst) {
     }
 
     protected override DefaultStateMachineHandler<T> NewInstance(IDsonObjectReader reader) {

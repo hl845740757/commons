@@ -24,13 +24,13 @@ public sealed class BeanExampleCodec : AbstractDsonCodec<BeanExample>
         inst.BeforeEncode(writer.Options);
     }
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref BeanExample inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in BeanExample inst) {
         inst.WriteObject(writer);
         writer.WriteString(names_name, inst.Name, StringStyle.AutoQuote);
-        writer.WriteInt(names_age, inst.Age, NumberStyles.Simple);
+        writer.WriteInt(names_age, inst.Age, NumberStyles.Unsigned);
         inst.WriteType(writer, names_Type);
         writer.WriteObject(names_hashSet, inst.hashSet, typeof(HashSet<string>), null);
-        writer.WriteObject(names_hashSet2, inst.hashSet2, typeof(ISet<string>), null);
+        writer.WriteObject(names_hashSet2, inst.hashSet2, typeof(ISet<string>), ObjectStyle.Flow);
     }
 
     protected override BeanExample NewInstance(IDsonObjectReader reader) {

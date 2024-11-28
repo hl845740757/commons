@@ -163,7 +163,7 @@ internal class PojoCodecGenerator
         if (aptClassProps.codecProxyType != null) {
             if (ContainsHookMethod(aptClassProps, CodecProcessor.MNAME_WRITE_OBJECT)) {
                 string format = typeElement.IsValueType
-                    ? "$T.$L(ref inst, writer)"
+                    ? "$T.$L(in inst, writer)"
                     : "$T.$L(inst, writer)";
                 // CodecProxy.WriteObject(inst, writer);
                 writeFieldsMethodBuilder.codeBuilder.AddStatement(format,

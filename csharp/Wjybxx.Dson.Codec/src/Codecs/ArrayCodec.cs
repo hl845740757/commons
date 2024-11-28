@@ -29,7 +29,7 @@ namespace Wjybxx.Dson.Codec.Codecs
 /// <typeparam name="T"></typeparam>
 public sealed class ArrayCodec<T> : IDsonCodec<T[]>
 {
-    public void WriteObject(IDsonObjectWriter writer, ref T[] inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in T[] inst, Type declaredType, ObjectStyle style) {
         // declaredType只影响inst是否写入类型，不影响数组元素是否写入类型
         Type eleDeclaredType = typeof(T);
 

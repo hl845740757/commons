@@ -25,7 +25,7 @@ public class FloatCodec : IDsonCodec<float>
 {
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref float inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in float inst, Type declaredType, ObjectStyle style) {
         INumberStyle numberStyle = declaredType == typeof(float)
             ? NumberStyles.Simple
             : NumberStyles.Typed;

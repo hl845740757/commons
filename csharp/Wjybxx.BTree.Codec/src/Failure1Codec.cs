@@ -36,7 +36,7 @@ public sealed class Failure1Codec<T> : AbstractDsonCodec<Failure<T>> where T : c
 
     public override Type GetEncoderType() => typeof(Failure<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref Failure<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in Failure<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteInt(names_failureStatus, inst.FailureStatus, NumberStyles.Simple);

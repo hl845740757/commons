@@ -26,7 +26,7 @@ public class ObjectPtrCodec : IDsonCodec<ObjectPtr>
 {
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref ObjectPtr inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in ObjectPtr inst, Type declaredType, ObjectStyle style) {
         writer.WritePtr(null, in inst);
     }
 

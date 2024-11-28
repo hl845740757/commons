@@ -26,7 +26,7 @@ public class BinaryCodec : IDsonCodec<Binary>
 {
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref Binary inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in Binary inst, Type declaredType, ObjectStyle style) {
         writer.WriteBinary(null, inst);
     }
 

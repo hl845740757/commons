@@ -155,7 +155,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             }
             ObjectStyle castStyle = style ?? FindObjectStyle(isNullable ? type : codec.GetEncoderType());
             if (codec is DsonCodecImpl<T> codecImpl) {
-                codecImpl.WriteObject(this, value, declaredType, castStyle);
+                codecImpl.WriteObject(this, in value, declaredType, castStyle);
             } else {
                 codec.WriteObject2(this, value, declaredType, castStyle); // 声明类型是object的情况下，value可能是装箱值类型
             }

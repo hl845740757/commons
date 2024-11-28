@@ -20,7 +20,7 @@ public sealed class ThirdPartyBean2Codec : AbstractDsonCodec<ThirdPartyBean2>
         LinkerBeanExample.BeforeEncode(inst, writer.Options);
     }
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref ThirdPartyBean2 inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in ThirdPartyBean2 inst) {
         LinkerBeanExample.WriteAge(inst, writer, names_age);
         writer.WriteString(names_name, inst.Name, StringStyle.Unquote);
         writer.WriteInt(names_Sex, inst.Sex, NumberStyles.Simple);

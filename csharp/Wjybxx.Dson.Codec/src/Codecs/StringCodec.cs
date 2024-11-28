@@ -25,7 +25,7 @@ public class StringCodec : IDsonCodec<string>
 {
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref string inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in string inst, Type declaredType, ObjectStyle style) {
         writer.WriteString(null, inst, StringStyle.Auto);
     }
 

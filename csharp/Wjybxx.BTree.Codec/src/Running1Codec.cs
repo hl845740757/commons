@@ -35,7 +35,7 @@ public sealed class Running1Codec<T> : AbstractDsonCodec<Running<T>> where T : c
 
     public override Type GetEncoderType() => typeof(Running<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref Running<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in Running<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
     }

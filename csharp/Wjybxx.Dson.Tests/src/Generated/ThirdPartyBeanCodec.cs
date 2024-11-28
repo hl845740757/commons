@@ -15,7 +15,7 @@ public sealed class ThirdPartyBeanCodec : AbstractDsonCodec<ThirdPartyBean>
 
     public override Type GetEncoderType() => typeof(ThirdPartyBean);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref ThirdPartyBean inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in ThirdPartyBean inst) {
         writer.WriteInt(names_age, inst.Age, NumberStyles.Simple);
         writer.WriteString(names_name, inst.Name, StringStyle.Auto);
     }

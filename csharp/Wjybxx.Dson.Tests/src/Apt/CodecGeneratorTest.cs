@@ -36,6 +36,8 @@ public class CodecGeneratorTest
             typeof(BeanExample),
             typeof(LinkerBeanExample),
             typeof(LinkerGroupExample),
+            typeof(MyStruct),
+            typeof(Vector2CodecProxy)
         }, csharpOutDir);
         processor.Process();
     }

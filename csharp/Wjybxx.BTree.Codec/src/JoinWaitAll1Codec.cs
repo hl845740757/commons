@@ -30,7 +30,7 @@ public sealed class JoinWaitAll1Codec<T> : AbstractDsonCodec<JoinWaitAll<T>> whe
 {
     public override Type GetEncoderType() => typeof(JoinWaitAll<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref JoinWaitAll<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in JoinWaitAll<T> inst) {
     }
 
     protected override JoinWaitAll<T> NewInstance(IDsonObjectReader reader) {

@@ -40,7 +40,7 @@ public sealed class ChangeStateTask1Codec<T> : AbstractDsonCodec<ChangeStateTask
 
     public override Type GetEncoderType() => typeof(ChangeStateTask<T>);
 
-    protected override void WriteFields(IDsonObjectWriter writer, ref ChangeStateTask<T> inst) {
+    protected override void WriteFields(IDsonObjectWriter writer, in ChangeStateTask<T> inst) {
         writer.WriteObject(names_guard, inst.Guard, typeof(Task<T>), null);
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteString(names_nextStateGuid, inst.NextStateGuid, StringStyle.Auto);

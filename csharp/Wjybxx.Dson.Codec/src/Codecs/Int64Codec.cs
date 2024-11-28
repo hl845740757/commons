@@ -25,7 +25,7 @@ public class Int64Codec : IDsonCodec<long>
 {
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref long inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in long inst, Type declaredType, ObjectStyle style) {
         INumberStyle numberStyle = declaredType == typeof(long)
             ? NumberStyles.Simple
             : NumberStyles.Typed;

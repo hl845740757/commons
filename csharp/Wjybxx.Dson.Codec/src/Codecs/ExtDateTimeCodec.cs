@@ -26,7 +26,7 @@ public class ExtDateTimeCodec : IDsonCodec<ExtDateTime>
 {
     public bool AutoStartEnd => false;
 
-    public void WriteObject(IDsonObjectWriter writer, ref ExtDateTime inst, Type declaredType, ObjectStyle style) {
+    public void WriteObject(IDsonObjectWriter writer, in ExtDateTime inst, Type declaredType, ObjectStyle style) {
         writer.WriteExtDateTime(null, in inst);
     }
 
