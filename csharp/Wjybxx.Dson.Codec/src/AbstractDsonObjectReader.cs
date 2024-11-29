@@ -107,12 +107,22 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
             return default;
         }
         if (dsonType.IsContainer()) { // 容器类型只能通过codec解码
-            return ReadContainer(declaredType, factory, dsonType);
+            string clsName = ReadClsName(dsonType);
+            DsonCodecImpl codec = FindObjectDecoder(declaredType, factory, clsName);
+            if (codec == null) {
+                throw DsonCodecException.Incompatible(declaredType, clsName);
+            }
+            // 避免结构体装箱
+            if (codec is DsonCodecImpl<T> codecImpl) {
+                return codecImpl.ReadObject(this, factory);
+            } else {
+                return (T)codec.ReadObject2(this, factory);
+            }
         }
-        // 非容器类型 -- Dson内建结构，基础值类型，Enum，String等
+        // 非容器类型 -- Dson内建结构，Enum等
         if (declaredType.IsEnum) {
             DsonCodecImpl<T> codec = (DsonCodecImpl<T>)converter.CodecRegistry.GetDecoder(declaredType)!;
-            return codec.ReadObject(this);
+            return codec.ReadObject(this, factory);
         }
         // 考虑DsonValue
         if (typeof(DsonValue).IsAssignableFrom(declaredType)) {
@@ -120,20 +130,6 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         }
         // 默认类型转换-声明类型可能是个抽象类型，eg：Number
         return (T)DsonCodecHelper.ReadDsonValue(reader, dsonType, name);
-    }
-
-    private T ReadContainer<T>(Type declaredType, Func<T>? factory, DsonType dsonType) {
-        string clsName = ReadClsName(dsonType);
-        DsonCodecImpl codec = FindObjectDecoder(declaredType, factory, clsName);
-        if (codec == null) {
-            throw DsonCodecException.Incompatible(declaredType, clsName);
-        }
-        // 避免结构体装箱
-        if (codec is DsonCodecImpl<T> codecImpl) {
-            return codecImpl.ReadObject(this, factory);
-        } else {
-            return (T)codec.ReadObject2(this, factory);
-        }
     }
 
     #endregion

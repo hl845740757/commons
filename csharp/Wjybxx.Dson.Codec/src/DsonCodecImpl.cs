@@ -115,7 +115,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     /// <param name="reader">reader</param>
     /// <param name="factory">实例工厂</param>
     /// <returns></returns>
-    public T ReadObject(IDsonObjectReader reader, Func<T>? factory = null) {
+    public T ReadObject(IDsonObjectReader reader, Func<T>? factory) {
         if (_autoStart) {
             T result;
             if (_writeAsArray) {

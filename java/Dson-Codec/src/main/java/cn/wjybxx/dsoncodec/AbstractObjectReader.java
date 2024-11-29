@@ -127,18 +127,21 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         if (!readName(name)) { // 字段不存在，返回默认值
             return (T) DsonConverterUtils.getDefaultValue(rawType);
         }
-
         DsonReader reader = this.reader;
         DsonType dsonType = reader.getCurrentDsonType();
         if (dsonType == DsonType.NULL) { // null直接返回
             reader.readNull(name);
-            return (T) DsonConverterUtils.getDefaultValue(rawType); //
+            return (T) DsonConverterUtils.getDefaultValue(rawType);
         }
         if (dsonType.isContainer()) { // 容器类型只能通过codec解码
-            return readContainer(declaredType, factory, dsonType);
+            String clsName = readClsName(dsonType);
+            @SuppressWarnings("unchecked") DsonCodecImpl<T> codec = (DsonCodecImpl<T>) findObjectDecoder(declaredType, factory, clsName);
+            if (codec == null) {
+                throw DsonCodecException.incompatible(declaredType.rawType, clsName);
+            }
+            return codec.readObject(this, declaredType, factory);
         }
-
-        // 非容器类型 -- Dson内建结构，基础值类型，装箱类型，Enum，String等
+        // 非容器类型 -- Dson内建结构，Enum
         DsonCodecImpl<T> codec = (DsonCodecImpl<T>) converter.codecRegistry().getDecoder(declaredType);
         if (codec != null) {
             return codec.readObject(this, declaredType, factory);
@@ -149,15 +152,6 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         }
         // 默认类型转换-声明类型可能是个抽象类型，eg：Number
         return (T) DsonCodecHelper.readDsonValue(reader, dsonType, name);
-    }
-
-    private <T> T readContainer(TypeInfo typeInfo, Supplier<? extends T> factory, DsonType dsonType) {
-        String clsName = readClsName(dsonType);
-        @SuppressWarnings("unchecked") DsonCodecImpl<T> codec = (DsonCodecImpl<T>) findObjectDecoder(typeInfo, factory, clsName);
-        if (codec == null) {
-            throw DsonCodecException.incompatible(typeInfo.rawType, clsName);
-        }
-        return codec.readObject(this, typeInfo, factory);
     }
 
     // endregion
@@ -316,7 +310,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         return clsName;
     }
 
-    private <T> DsonCodecImpl<?> findObjectDecoder(TypeInfo declaredType, Supplier<T> factory, String clsName) {
+    private DsonCodecImpl<?> findObjectDecoder(TypeInfo declaredType, Supplier<?> factory, String clsName) {
         // factory不为null时，直接按照声明类型查找 -- factory创建的实例可能和写入的真实类型不兼容
         if (factory != null) {
             return converter.codecRegistry().getDecoder(declaredType);
