@@ -29,8 +29,8 @@ import java.lang.annotation.Target;
  * 4. 字段的读写代理将映射到【LinkerBean】中的静态方法。
  * 5. {@link DsonSerializable}中提到的钩子方法也将映射到【LinkerBean】中的静态方法。
  * <pre>{@code
- *  class MyBeanLinker {
- *      MyBean field1; // 表示OuterClass的field1字段
+ *  class BeanCodecLinker {
+ *      MyBean field1; // 表示MyBean的field1字段
  *      MyBean field2;
  *
  *      public static void beforeEncode(MyBean inst, ConverterOptions options){}

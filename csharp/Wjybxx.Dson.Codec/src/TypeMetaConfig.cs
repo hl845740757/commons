@@ -34,7 +34,7 @@ namespace Wjybxx.Dson.Codec
 /// <h3>合并规则</h3>
 /// 多个Config合并时，越靠近用户，优先级越高 -- 因为这一定能解决冲突。
 /// </summary>
-public class TypeMetaConfig
+public sealed class TypeMetaConfig
 {
     private readonly IDictionary<Type, TypeMeta> type2MetaDic;
     private readonly IDictionary<string, TypeMeta> name2MetaDic;

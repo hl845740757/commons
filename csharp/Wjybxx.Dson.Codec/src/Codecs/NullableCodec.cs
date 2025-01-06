@@ -31,12 +31,11 @@ public class NullableCodec<T> : IDsonCodec<T?> where T : struct
     public bool AutoStartEnd => false;
 
     public void WriteObject(IDsonObjectWriter writer, in T? inst, Type declaredType, ObjectStyle style) {
-        // 我们对Nullable类型编码的时候进行了修正，会走到这里 -- 走到这里时一定不为null
+        // declaredType 是Nullable<T>的类型，不是T的声明类型
         writer.WriteObject(null, inst!.Value, typeof(T));
     }
 
     public T? ReadObject(IDsonObjectReader reader, Func<T?>? factory = null) {
-        // declaredType 是Nullable<T>的类型，不是T的声明类型 -- 转为读代理
         return reader.ReadObject<T>(null, typeof(T), null);
     }
 }

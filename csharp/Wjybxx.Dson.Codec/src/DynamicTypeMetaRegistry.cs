@@ -33,6 +33,9 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
     /// 用户的原始的类型元数据
     /// </summary>
     private readonly TypeMetaConfig _config;
+    /// <summary>
+    /// clsName的解析结果缓存
+    /// </summary>
     private readonly ConcurrentDictionary<string, ClassName> classNamePool = new ConcurrentDictionary<string, ClassName>();
     private readonly ConcurrentDictionary<Type, TypeMeta> type2MetaDic = new ConcurrentDictionary<Type, TypeMeta>();
     private readonly ConcurrentDictionary<string, TypeMeta> name2MetaDic = new ConcurrentDictionary<string, TypeMeta>();
@@ -125,7 +128,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
 
     #region internal
 
-    public ClassName ParseName(string clsName) {
+    private ClassName ParseName(string clsName) {
         if (clsName == null) throw new ArgumentNullException(nameof(clsName));
         if (classNamePool.TryGetValue(clsName, out ClassName result)) {
             return result;
@@ -185,17 +188,17 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
     private Type TypeOfClassName(in ClassName className) {
         // 先解析泛型类，再构建数组
         int arrayRank = className.ArrayRank;
-        Type elementType;
+        Type result;
         if (arrayRank > 0) {
             // 获取数组根元素的类型
-            elementType = TypeOfClassName(new ClassName(className.RootElement, className.typeArgs));
+            result = TypeOfClassName(new ClassName(className.RootElement, className.typeArgs));
         } else {
             // 解析泛型原型 —— 泛型原型类必须存在于用户的注册表中
             TypeMeta typeMeta = _config.OfName(className.clsName);
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, className: " + className);
             }
-            elementType = typeMeta.type;
+            result = typeMeta.type;
             // 解析泛型参数
             int typeArgsCount = className.typeArgs.Count;
             if (typeArgsCount > 0) {
@@ -203,14 +206,14 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
                 for (int index = 0; index < typeArgsCount; index++) {
                     typeArgs[index] = TypeOfClassName(className.typeArgs[index]);
                 }
-                elementType = elementType.MakeGenericType(typeArgs);
+                result = result.MakeGenericType(typeArgs);
             }
         }
         // 构建多维数组 -- 与MakeArrayType(rank)接口获得的结果不一样
         while (arrayRank-- > 0) {
-            elementType = elementType.MakeArrayType();
+            result = result.MakeArrayType();
         }
-        return elementType;
+        return result;
     }
 
     #endregion

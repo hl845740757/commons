@@ -184,7 +184,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
             if (writer.isAtName()) { // 写入name
                 writer.writeName(name);
             }
-            if (style == null) style = findObjectStyle(codec.getEncoderType());
+            if (style == null) style = findObjectStyle(codec.getEncoderType()); // 可能是超类的Codec
             codec.writeObject(this, value, declaredType, style);
             return;
         }

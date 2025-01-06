@@ -36,7 +36,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
     private final TypeMetaConfig basicRegistry;
-    private final ConcurrentHashMap<String, ClassName> typeNamePool = new ConcurrentHashMap<>(1024);
+    /** clsName解析缓存 */
+    private final ConcurrentHashMap<String, ClassName> classNamePool = new ConcurrentHashMap<>(1024);
+
     private final ConcurrentHashMap<TypeInfo, TypeMeta> type2MetaDic = new ConcurrentHashMap<>(1024);
     private final ConcurrentHashMap<String, TypeMeta> name2MetaDic = new ConcurrentHashMap<>(1024);
 
@@ -130,7 +132,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
     private ClassName parseName(String clsName) {
         Objects.requireNonNull(clsName);
-        ClassName className = typeNamePool.get(clsName);
+        ClassName className = classNamePool.get(clsName);
         if (className != null) {
             return className;
         }
@@ -140,7 +142,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             return ClassName.parse(clsName);
         }
         className = ClassName.parse(clsName);
-        typeNamePool.put(clsName, className);
+        classNamePool.put(clsName, className);
         return className;
     }
 
@@ -189,17 +191,17 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
     private TypeInfo typeOfClassName(ClassName className) {
         // 先解析泛型类，再构建数组
         int arrayRank = className.getArrayRank();
-        TypeInfo elementType;
+        TypeInfo result;
         if (arrayRank > 0) {
             // 获取数组根元素的类型
-            elementType = typeOfClassName(new ClassName(className.getRootElement(), className.typeArgs));
+            result = typeOfClassName(new ClassName(className.getRootElement(), className.typeArgs));
         } else {
             // 解析泛型原型 —— 泛型原型类必须存在于用户的注册表中
             TypeMeta typeMeta = basicRegistry.ofName(className.clsName);
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, className: " + className);
             }
-            elementType = typeMeta.typeInfo;
+            result = typeMeta.typeInfo;
             // 解析泛型参数
             int typeArgsCount = className.typeArgs.size();
             if (typeArgsCount > 0) {
@@ -207,14 +209,14 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
                 for (int index = 0; index < typeArgsCount; index++) {
                     typeArgs[index] = typeOfClassName(className.typeArgs.get(index));
                 }
-                elementType = TypeInfo.of(elementType.rawType, typeArgs);
+                result = TypeInfo.of(result.rawType, typeArgs);
             }
         }
         // 构建多维数组
         if (arrayRank > 0) {
-            elementType = elementType.makeArrayType(arrayRank);
+            result = result.makeArrayType(arrayRank);
         }
-        return elementType;
+        return result;
     }
 
     // endregion

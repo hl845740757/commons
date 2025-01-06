@@ -41,7 +41,7 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
     private static final Logger logger = LoggerFactory.getLogger(DynamicCodecRegistry.class);
     /** 用户配置信息 */
     private final DsonCodecConfig config;
-    /** 类型转换器 */
+    /** 多态类型转换器 */
     private final List<DsonCodecCaster> casters;
 
     /** 一个Type可能只有encoder而没有decoder，因此需要分开缓存 */
@@ -68,7 +68,7 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
         DsonCodecImpl<?> codecImpl = encoderDic.get(type);
         if (codecImpl != null) return codecImpl;
 
-        // 动态生成--java端无法处理泛型
+        // 动态生成
         if (type.isEnum()) {
             codecImpl = makeEnumCodec(type);
         } else if (type.isArrayType()) {
@@ -107,7 +107,7 @@ public final class DynamicCodecRegistry implements DsonCodecRegistry {
         DsonCodecImpl<?> codecImpl = decoderDic.get(type);
         if (codecImpl != null) return codecImpl;
 
-        // 动态生成--java端无法处理泛型
+        // 动态生成
         if (type.isEnum()) {
             codecImpl = makeEnumCodec(type);
         } else if (type.isArrayType()) {

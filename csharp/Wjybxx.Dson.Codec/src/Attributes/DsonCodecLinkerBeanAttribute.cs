@@ -30,8 +30,8 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 6. 如果是泛型类，使用其泛型定义类声明，且当前配置类需要保持相同的泛型参数。
 /// 7. C#端存在自动属性，字段映射字段，属性映射属性 —— 都按名字匹配。
 /// <pre><code>
-///  class MyBeanLinker {
-///      MyBean field1; // 表示OuterClass的field1字段
+///  class BeanCodecLinker {
+///      MyBean field1; // 表示MyBean的field1字段
 ///      MyBean field2;
 ///
 ///      // Class

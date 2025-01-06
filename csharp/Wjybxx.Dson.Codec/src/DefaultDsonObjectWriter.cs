@@ -153,7 +153,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             if (writer.IsAtName) { // 写入name
                 writer.WriteName(name);
             }
-            ObjectStyle castStyle = style ?? FindObjectStyle(isNullable ? type : codec.GetEncoderType());
+            ObjectStyle castStyle = style ?? FindObjectStyle(isNullable ? type : codec.GetEncoderType()); // 可能是超类的codec
             if (codec is DsonCodecImpl<T> codecImpl) {
                 codecImpl.WriteObject(this, in value, declaredType, castStyle);
             } else {

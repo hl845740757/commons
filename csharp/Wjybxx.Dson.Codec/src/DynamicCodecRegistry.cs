@@ -34,7 +34,7 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
 {
     /** 用户的原始的类型Codec */
     private readonly DsonCodecConfig _config;
-    /** 类型转换器 */
+    /** 多态类型转换器 */
     private readonly List<IDsonCodecCaster> _casters;
 
     /** 一个Type可能只有encoder而没有decoder，因此需要分开缓存  */
