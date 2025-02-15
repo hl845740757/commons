@@ -50,10 +50,10 @@ public sealed class Join1Codec<T> : AbstractDsonCodec<Join<T>> where T : class
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref Join<T> inst) {
-        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-        inst.Flags = reader.ReadInt(names_flags);
-        inst.Children = reader.ReadObject<List<Task<T>>>(names_children, typeof(List<Task<T>>), null);
-        inst.Policy = reader.ReadObject<JoinPolicy<T>>(names_policy, typeof(JoinPolicy<T>), null);
+        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
+        if (reader.ReadName(names_children)) inst.Children = reader.ReadObject<List<Task<T>>>(null, typeof(List<Task<T>>), null);
+        if (reader.ReadName(names_policy)) inst.Policy = reader.ReadObject<JoinPolicy<T>>(null, typeof(JoinPolicy<T>), null);
     }
 }
 }

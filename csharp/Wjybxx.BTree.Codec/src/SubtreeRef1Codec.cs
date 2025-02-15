@@ -49,10 +49,10 @@ public sealed class SubtreeRef1Codec<T> : AbstractDsonCodec<SubtreeRef<T>> where
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref SubtreeRef<T> inst) {
-        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-        inst.Flags = reader.ReadInt(names_flags);
-        inst.Child = reader.ReadObject<Task<T>>(names_child, typeof(Task<T>), null);
-        inst.SubtreeName = reader.ReadString(names_subtreeName);
+        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
+        if (reader.ReadName(names_child)) inst.Child = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_subtreeName)) inst.SubtreeName = reader.ReadString(null);
     }
 }
 }

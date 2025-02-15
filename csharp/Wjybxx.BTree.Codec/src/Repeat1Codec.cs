@@ -53,12 +53,12 @@ public sealed class Repeat1Codec<T> : AbstractDsonCodec<Repeat<T>> where T : cla
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref Repeat<T> inst) {
-        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-        inst.Flags = reader.ReadInt(names_flags);
-        inst.Child = reader.ReadObject<Task<T>>(names_child, typeof(Task<T>), null);
-        inst.MaxLoop = reader.ReadInt(names_maxLoop);
-        inst.CountMode = reader.ReadInt(names_countMode);
-        inst.Required = reader.ReadInt(names_required);
+        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
+        if (reader.ReadName(names_child)) inst.Child = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_maxLoop)) inst.MaxLoop = reader.ReadInt(null);
+        if (reader.ReadName(names_countMode)) inst.CountMode = reader.ReadInt(null);
+        if (reader.ReadName(names_required)) inst.Required = reader.ReadInt(null);
     }
 }
 }

@@ -60,15 +60,15 @@ public sealed class FixedSwitch1Codec<T> : AbstractDsonCodec<FixedSwitch<T>> whe
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref FixedSwitch<T> inst) {
-        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-        inst.Flags = reader.ReadInt(names_flags);
-        inst.Children = reader.ReadObject<List<Task<T>>>(names_children, typeof(List<Task<T>>), null);
-        inst.Handler = reader.ReadObject<ISwitchHandler<T>>(names_handler, typeof(ISwitchHandler<T>), null);
-        inst.Branch1 = reader.ReadObject<Task<T>>(names_branch1, typeof(Task<T>), null);
-        inst.Branch2 = reader.ReadObject<Task<T>>(names_branch2, typeof(Task<T>), null);
-        inst.Branch3 = reader.ReadObject<Task<T>>(names_branch3, typeof(Task<T>), null);
-        inst.Branch4 = reader.ReadObject<Task<T>>(names_branch4, typeof(Task<T>), null);
-        inst.Branch5 = reader.ReadObject<Task<T>>(names_branch5, typeof(Task<T>), null);
+        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
+        if (reader.ReadName(names_children)) inst.Children = reader.ReadObject<List<Task<T>>>(null, typeof(List<Task<T>>), null);
+        if (reader.ReadName(names_handler)) inst.Handler = reader.ReadObject<ISwitchHandler<T>>(null, typeof(ISwitchHandler<T>), null);
+        if (reader.ReadName(names_branch1)) inst.Branch1 = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_branch2)) inst.Branch2 = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_branch3)) inst.Branch3 = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_branch4)) inst.Branch4 = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_branch5)) inst.Branch5 = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
     }
 }
 }

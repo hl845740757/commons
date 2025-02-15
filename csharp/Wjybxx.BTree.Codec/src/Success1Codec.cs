@@ -45,8 +45,8 @@ public sealed class Success1Codec<T> : AbstractDsonCodec<Success<T>> where T : c
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref Success<T> inst) {
-        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-        inst.Flags = reader.ReadInt(names_flags);
+        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
     }
 }
 }

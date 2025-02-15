@@ -46,9 +46,9 @@ public sealed class JoinSelectorN1Codec<T> : AbstractDsonCodec<JoinSelectorN<T>>
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref JoinSelectorN<T> inst) {
-        inst.Required = reader.ReadInt(names_required);
-        inst.FailFast = reader.ReadBool(names_failFast);
-        inst.Sequence = reader.ReadInt(names_sequence);
+        if (reader.ReadName(names_required)) inst.Required = reader.ReadInt(null);
+        if (reader.ReadName(names_failFast)) inst.FailFast = reader.ReadBool(null);
+        if (reader.ReadName(names_sequence)) inst.Sequence = reader.ReadInt(null);
     }
 }
 }

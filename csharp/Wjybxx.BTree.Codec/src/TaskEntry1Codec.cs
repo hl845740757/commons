@@ -50,11 +50,11 @@ public sealed class TaskEntry1Codec<T> : AbstractDsonCodec<TaskEntry<T>> where T
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref TaskEntry<T> inst) {
-        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-        inst.Flags = reader.ReadInt(names_flags);
-        inst.Name = reader.ReadString(names_name);
-        inst.RootTask = reader.ReadObject<Task<T>>(names_rootTask, typeof(Task<T>), null);
-        inst.Type = reader.ReadByte(names_type);
+        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
+        if (reader.ReadName(names_name)) inst.Name = reader.ReadString(null);
+        if (reader.ReadName(names_rootTask)) inst.RootTask = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_type)) inst.Type = reader.ReadByte(null);
     }
 }
 }

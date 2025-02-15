@@ -47,9 +47,9 @@ public sealed class AlwaysSuccess1Codec<T> : AbstractDsonCodec<AlwaysSuccess<T>>
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref AlwaysSuccess<T> inst) {
-        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-        inst.Flags = reader.ReadInt(names_flags);
-        inst.Child = reader.ReadObject<Task<T>>(names_child, typeof(Task<T>), null);
+        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
+        if (reader.ReadName(names_child)) inst.Child = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
     }
 }
 }

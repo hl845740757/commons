@@ -48,9 +48,9 @@ public sealed class ActiveSelector1Codec<T> : AbstractDsonCodec<ActiveSelector<T
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref ActiveSelector<T> inst) {
-        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-        inst.Flags = reader.ReadInt(names_flags);
-        inst.Children = reader.ReadObject<List<Task<T>>>(names_children, typeof(List<Task<T>>), null);
+        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
+        if (reader.ReadName(names_children)) inst.Children = reader.ReadObject<List<Task<T>>>(null, typeof(List<Task<T>>), null);
     }
 }
 }

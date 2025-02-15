@@ -47,9 +47,9 @@ public sealed class Failure1Codec<T> : AbstractDsonCodec<Failure<T>> where T : c
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref Failure<T> inst) {
-        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-        inst.Flags = reader.ReadInt(names_flags);
-        inst.FailureStatus = reader.ReadInt(names_failureStatus);
+        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
+        if (reader.ReadName(names_failureStatus)) inst.FailureStatus = reader.ReadInt(null);
     }
 }
 }

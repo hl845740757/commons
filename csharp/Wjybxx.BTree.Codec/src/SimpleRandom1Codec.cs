@@ -47,9 +47,9 @@ public sealed class SimpleRandom1Codec<T> : AbstractDsonCodec<SimpleRandom<T>> w
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref SimpleRandom<T> inst) {
-        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-        inst.Flags = reader.ReadInt(names_flags);
-        inst.P = reader.ReadFloat(names_p);
+        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
+        if (reader.ReadName(names_p)) inst.P = reader.ReadFloat(null);
     }
 }
 }

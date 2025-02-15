@@ -55,13 +55,13 @@ public sealed class StateMachineTask1Codec<T> : AbstractDsonCodec<StateMachineTa
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref StateMachineTask<T> inst) {
-        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-        inst.Flags = reader.ReadInt(names_flags);
-        inst.Child = reader.ReadObject<Task<T>>(names_child, typeof(Task<T>), null);
-        inst.Name = reader.ReadString(names_name);
-        inst.InitState = reader.ReadObject<Task<T>>(names_initState, typeof(Task<T>), null);
-        inst.InitStateProps = reader.ReadObject<object>(names_initStateProps, typeof(object), null);
-        inst.Handler = reader.ReadObject<IStateMachineHandler<T>>(names_handler, typeof(IStateMachineHandler<T>), null);
+        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
+        if (reader.ReadName(names_child)) inst.Child = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_name)) inst.Name = reader.ReadString(null);
+        if (reader.ReadName(names_initState)) inst.InitState = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_initStateProps)) inst.InitStateProps = reader.ReadObject<object>(null, typeof(object), null);
+        if (reader.ReadName(names_handler)) inst.Handler = reader.ReadObject<IStateMachineHandler<T>>(null, typeof(IStateMachineHandler<T>), null);
     }
 }
 }

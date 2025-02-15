@@ -55,13 +55,13 @@ public sealed class ChangeStateTask1Codec<T> : AbstractDsonCodec<ChangeStateTask
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref ChangeStateTask<T> inst) {
-        inst.Guard = reader.ReadObject<Task<T>>(names_guard, typeof(Task<T>), null);
-        inst.Flags = reader.ReadInt(names_flags);
-        inst.NextStateGuid = reader.ReadString(names_nextStateGuid);
-        inst.StateProps = reader.ReadObject<object>(names_stateProps, typeof(object), null);
-        inst.MachineName = reader.ReadString(names_machineName);
-        inst.DelayMode = reader.ReadByte(names_delayMode);
-        inst.DelayArg = reader.ReadInt(names_delayArg);
+        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
+        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
+        if (reader.ReadName(names_nextStateGuid)) inst.NextStateGuid = reader.ReadString(null);
+        if (reader.ReadName(names_stateProps)) inst.StateProps = reader.ReadObject<object>(null, typeof(object), null);
+        if (reader.ReadName(names_machineName)) inst.MachineName = reader.ReadString(null);
+        if (reader.ReadName(names_delayMode)) inst.DelayMode = reader.ReadByte(null);
+        if (reader.ReadName(names_delayArg)) inst.DelayArg = reader.ReadInt(null);
     }
 }
 }
