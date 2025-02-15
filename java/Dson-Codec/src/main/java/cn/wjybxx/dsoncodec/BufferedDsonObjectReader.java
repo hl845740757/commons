@@ -68,8 +68,7 @@ final class BufferedDsonObjectReader extends AbstractObjectReader implements Dso
             if (reader.getCurrentDsonType() == DsonType.END_OF_OBJECT) {
                 return false;
             }
-            reader.readName(name);
-            return true;
+            return name.equals(reader.readName()); // 不抛出异常
         }
     }
 

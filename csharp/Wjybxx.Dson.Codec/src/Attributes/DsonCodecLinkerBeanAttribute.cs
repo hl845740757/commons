@@ -37,6 +37,7 @@ namespace Wjybxx.Dson.Codec.Attributes
 ///      // Class
 ///      public static void BeforeEncode(MyBean instance, ConverterOptions options){}
 ///      public static void WriteObject(MyBean instance, IDsonObjectWriter writer){}
+///      public static MyBean NewInstance(IDsonObjectReader reader){}
 ///      public static void ReadObject(MyBean instance, IDsonObjectReader reader){}
 ///      public static void AfterDecode(MyBean instance, ConverterOptions options){}
 ///      // 结构体需要使用ref和in

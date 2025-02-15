@@ -61,9 +61,11 @@ public class BeanExample
     public ISet<string>? hashSet2;
 
     public void WriteType(IDsonObjectWriter writer, string dsonName) {
+        writer.WriteInt(dsonName, Type);
     }
 
     public void ReadType(IDsonObjectReader reader, string dsonName) {
+        Type = reader.ReadInt(dsonName);
     }
 
     /// <summary>

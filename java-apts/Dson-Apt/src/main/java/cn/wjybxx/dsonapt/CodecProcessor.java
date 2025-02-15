@@ -49,10 +49,11 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     public static final String CNAME_ObjectPtr = "cn.wjybxx.dson.types.ObjectPtr";
     public static final String CNAME_ObjectLitePtr = "cn.wjybxx.dson.types.ObjectLitePtr";
+    public static final String CNAME_Timestamp = "cn.wjybxx.dson.types.Timestamp";
 
     // Dson
     private static final String CNAME_SERIALIZABLE = "cn.wjybxx.dsoncodec.annotations.DsonSerializable";
-    public static final String CNAME_PROPERTY = "cn.wjybxx.dsoncodec.annotations.DsonProperty";
+    private static final String CNAME_PROPERTY = "cn.wjybxx.dsoncodec.annotations.DsonProperty";
     private static final String CNAME_DSON_IGNORE = "cn.wjybxx.dsoncodec.annotations.DsonIgnore";
     private static final String CNAME_DSON_READER = "cn.wjybxx.dsoncodec.DsonObjectReader";
     private static final String CNAME_DSON_WRITER = "cn.wjybxx.dsoncodec.DsonObjectWriter";
@@ -120,6 +121,7 @@ public class CodecProcessor extends MyAbstractProcessor {
     public TypeMirror type_Ptr;
     public TypeMirror type_LitePtr;
     public TypeMirror type_LocalDateTime;
+    public TypeMirror type_Timestamp;
 
     // 集合类型
     public TypeMirror type_Map;
@@ -185,6 +187,7 @@ public class CodecProcessor extends MyAbstractProcessor {
         type_Ptr = elementUtils.getTypeElement(CNAME_ObjectPtr).asType();
         type_LitePtr = elementUtils.getTypeElement(CNAME_ObjectLitePtr).asType();
         type_LocalDateTime = elementUtils.getTypeElement(LocalDateTime.class.getCanonicalName()).asType();
+        type_Timestamp = elementUtils.getTypeElement(CNAME_Timestamp).asType();
 
         // 集合
         type_Map = elementUtils.getTypeElement(Map.class.getCanonicalName()).asType();
@@ -725,6 +728,10 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     protected boolean isLocalDateTime(TypeMirror typeMirror) {
         return typeUtils.isSameType(typeMirror, type_LocalDateTime);
+    }
+
+    protected boolean isTimestamp(TypeMirror typeMirror) {
+        return typeUtils.isSameType(typeMirror, type_Timestamp);
     }
 
     protected boolean isByteArray(TypeMirror typeMirror) {

@@ -209,7 +209,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
                 result = result.MakeGenericType(typeArgs);
             }
         }
-        // 构建多维数组 -- 与MakeArrayType(rank)接口获得的结果不一样
+        // 构建多维数组 -- 与MakeArrayType(rank)接口获得的结果不一样，后者是真多维数组...
         while (arrayRank-- > 0) {
             result = result.MakeArrayType();
         }

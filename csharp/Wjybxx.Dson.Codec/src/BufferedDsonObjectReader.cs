@@ -67,8 +67,7 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
             if (reader.CurrentDsonType == DsonType.EndOfObject) {
                 return false;
             }
-            reader.ReadName(name);
-            return true;
+            return name == reader.ReadName(); // 不抛出异常
         }
     }
 

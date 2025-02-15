@@ -283,15 +283,19 @@ internal class PojoCodecGenerator
         string? readProxy = fieldProps.attribute.ReadProxy;
         if (!string.IsNullOrWhiteSpace(readProxy)) { // 自定义读
             if (aptClassProps.codecProxyType != null) {
-                // 方法名是CodecProxy指定的，因此应当存在，不做校验
+                // CodexProxy.ReadName(inst, reader, dsonName) 方法名是CodecProxy指定的，因此应当存在，不做校验
                 builder.codeBuilder.AddStatement("$T.$L(inst, reader, $L)",
                     aptClassProps.codecProxyClassName, readProxy, SerialName(fieldName));
             } else {
+                // inst.ReadName(reader, dsonName)
                 builder.codeBuilder.AddStatement("inst.$L(reader, $L)",
                     readProxy, SerialName(fieldName));
             }
             return;
         }
+        // 只有字段存在的情况下才读取
+        builder.codeBuilder.Add("if (reader.ReadName($L)) ", SerialName(fieldName));
+
         string readMethodName = GetReadMethodName(fieldInfo);
         PropertyInfo? setterMethod = processor.FindPublicSetter(fieldInfo, allFieldsAndMethodWithInherit, fieldProps);
         // 优先用setter，否则直接赋值 -- C#的属性和字段样式一致
@@ -308,17 +312,17 @@ internal class PojoCodecGenerator
             if (fieldProps.implType != null) {
                 builder.codeBuilder.AddStatement("inst.$L = reader.$L<$T>($L, typeof($T), $L)",
                     fieldAccess, readMethodName, fieldProps.implType,
-                    SerialName(fieldName), fieldInfo.FieldType, SerialFactory(fieldName));
+                    "null", fieldInfo.FieldType, SerialFactory(fieldName));
             } else {
                 builder.codeBuilder.AddStatement("inst.$L = reader.$L<$T>($L, typeof($T), null)",
                     fieldAccess, readMethodName, fieldInfo.FieldType,
-                    SerialName(fieldName), fieldInfo.FieldType);
+                    "null", fieldInfo.FieldType);
             }
         } else {
             // inst.name = reader.readString(names_name)
             builder.codeBuilder.AddStatement("inst.$L = reader.$L($L)",
                 fieldAccess, readMethodName,
-                SerialName(fieldName));
+                "null");
         }
     }
 
@@ -416,11 +420,14 @@ internal class PojoCodecGenerator
         if (fieldType == typeof(ObjectPtr)) {
             return MNAME_WRITE_PTR;
         }
-        if (fieldType == typeof(ObjectPtr)) {
+        if (fieldType == typeof(ObjectLitePtr)) {
             return MNAME_WRITE_LITE_PTR;
         }
         if (fieldType == typeof(DateTime)) {
             return MNAME_WRITE_DATETIME;
+        }
+        if (fieldType == typeof(Timestamp)) {
+            return MNAME_WRITE_TIMESTAMP;
         }
         return MNAME_WRITE_OBJECT;
     }
@@ -440,11 +447,14 @@ internal class PojoCodecGenerator
         if (fieldType == typeof(ObjectPtr)) {
             return MNAME_READ_PTR;
         }
-        if (fieldType == typeof(ObjectPtr)) {
+        if (fieldType == typeof(ObjectLitePtr)) {
             return MNAME_READ_LITE_PTR;
         }
-        if (fieldType == typeof(DateTime)) {
+        if (fieldType == typeof(DateTime)) { // 系统库日期时间
             return MNAME_READ_DATETIME;
+        }
+        if (fieldType == typeof(Timestamp)) {
+            return MNAME_READ_TIMESTAMP;
         }
         return MNAME_READ_OBJECT;
     }

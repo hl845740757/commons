@@ -279,13 +279,17 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         MethodSpec.Builder builder = readFieldsMethodBuilder;
         if (!AptUtils.isBlank(fieldProps.readProxy)) { // 自定义读
             if (aptClassProps.codecProxyTypeElement != null) {
-                // 方法名是CodecProxy指定的，因此应当存在，不做校验
+                // CodexProxy.readName(inst, reader, dsonName) - 方法名是CodecProxy指定的，因此应当存在，不做校验
                 builder.addStatement("$T.$L(inst, reader, $L)", aptClassProps.codecProxyClassName, fieldProps.readProxy, serialName(fieldName));
             } else {
+                // inst.readName(reader, dsonName)
                 builder.addStatement("inst.$L(reader, $L)", fieldProps.readProxy, serialName(fieldName));
             }
             return;
         }
+        // 文本中存在相应字段的情况下才读取
+        builder.addCode("if (reader.readName($L)) ", serialName(fieldName));
+
         final String readMethodName = getReadMethodName(variableElement);
         final ExecutableElement setterMethod = processor.findPublicSetter(variableElement, allFieldsAndMethodWithInherit);
         // 优先用setter，否则直接赋值
@@ -298,17 +302,17 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
                 if (fieldProps.implMirror != null) {
                     builder.addStatement("inst.$L(reader.$L($L, $L, $L))",
                             fieldAccess, readMethodName,
-                            serialName(fieldName), serialTypeArg(fieldName), serialFactory(fieldName));
+                            null, serialTypeArg(fieldName), serialFactory(fieldName));
                 } else {
                     builder.addStatement("inst.$L(reader.$L($L, $L, null))",
                             fieldAccess, readMethodName,
-                            serialName(fieldName), serialTypeArg(fieldName));
+                            null, serialTypeArg(fieldName));
                 }
             } else {
                 // inst.setName(reader.readString(names_.name))
                 builder.addStatement("inst.$L(reader.$L($L))",
                         fieldAccess, readMethodName,
-                        serialName(fieldName));
+                        null);
             }
         } else {
             if (readMethodName.equals(MNAME_READ_OBJECT)) {
@@ -317,17 +321,17 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
                 if (fieldProps.implMirror != null) {
                     builder.addStatement("inst.$L = reader.$L($L, $L, $L)",
                             fieldName, readMethodName,
-                            serialName(fieldName), serialTypeArg(fieldName), serialFactory(fieldName));
+                            null, serialTypeArg(fieldName), serialFactory(fieldName));
                 } else {
                     builder.addStatement("inst.$L = reader.$L($L, $L, null)",
                             fieldName, readMethodName,
-                            serialName(fieldName), serialTypeArg(fieldName));
+                            null, serialTypeArg(fieldName));
                 }
             } else {
                 // inst.name = reader.readString(names_.name)
                 builder.addStatement("inst.$L = reader.$L($L)",
                         fieldName, readMethodName,
-                        serialName(fieldName));
+                        null);
             }
         }
     }
@@ -432,6 +436,9 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         if (processor.isLocalDateTime(typeMirror)) {
             return MNAME_WRITE_DATETIME;
         }
+        if (processor.isTimestamp(typeMirror)) {
+            return MNAME_WRITE_TIMESTAMP;
+        }
         return MNAME_WRITE_OBJECT;
     }
 
@@ -455,6 +462,9 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         }
         if (processor.isLocalDateTime(typeMirror)) {
             return MNAME_READ_DATETIME;
+        }
+        if (processor.isTimestamp(typeMirror)) {
+            return MNAME_READ_TIMESTAMP;
         }
         return MNAME_READ_OBJECT;
     }
