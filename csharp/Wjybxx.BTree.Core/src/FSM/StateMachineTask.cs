@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Wjybxx.BTree.Branch;
@@ -34,30 +35,20 @@ public class StateMachineTask<T> : Decorator<T> where T : class
 {
     /** 状态机名字 */
     private string? name;
-    /** 初始状态 */
-    private Task<T>? initState;
-    /** 初始状态的属性 */
-    private object? initStateProps;
+    /** 初始状态名字 */
+    private string? initStateName;
+    /** 该FSM关联的状态 */
+    private List<FsmStateCfg<T>> stateCfgs = new();
 
     /** 待切换的状态，主要用于支持当前状态退出后再切换 */
     [NonSerialized] private Task<T>? tempNextState;
     /** handler也加入序列化，用于在编辑器中配置 */
     private IStateMachineHandler<T> handler = DefaultStateMachineHandler<T>.Inst;
 
-    #region api
+    #region fsm基础api
 
     /** 获取当前状态 */
     public Task<T>? CurState => child;
-
-    /** 获取临时的下一个状态 */
-    public Task<T>? TempNextState => tempNextState;
-
-    /** 丢弃未切换的临时状态 */
-    public Task<T>? DiscardNextState() {
-        Task<T>? r = tempNextState;
-        if (r != null) tempNextState = null;
-        return r;
-    }
 
     /// <summary>
     /// 撤销到前一个状态
@@ -95,7 +86,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         return false;
     }
 
-    /** 切换状态 -- 如果状态机处于运行中，则立即切换 */
+    /** 切换状态 -- 如果状态机处于运行中，则立即切换；当前状态会进去被取消状态 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ChangeState(Task<T> nextState) {
         ChangeState(nextState, ChangeStateArgs.PLAIN);
@@ -108,14 +99,7 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     /// <param name="curStateResult">当前状态的结果</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ChangeState(Task<T> nextState, int curStateResult) {
-        ChangeStateArgs changeStateArgs = curStateResult switch
-        {
-            TaskStatus.SUCCESS => ChangeStateArgs.PLAIN_SUCCESS,
-            TaskStatus.CANCELLED => ChangeStateArgs.PLAIN_CANCELLED,
-            TaskStatus.ERROR => ChangeStateArgs.PLAIN_ERROR,
-            _ => ChangeStateArgs.PLAIN.WithArg(curStateResult)
-        };
-        ChangeState(nextState, changeStateArgs);
+        ChangeState(nextState, ChangeStateArgs.PlainWithArg(curStateResult));
     }
 
     /// <summary>
@@ -140,6 +124,43 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         }
     }
 
+    /** 通过状态的名字发起状态切换 */
+    public void ChangeState(string stateName, int curStateResult = 0) {
+        FsmStateCfg<T> stateCfg = GetStateCfg(stateName);
+        if (stateCfg == null) {
+            throw new InvalidOperationException("state is absent, name: " + stateName);
+        }
+        // 覆盖输入
+        stateCfg.Task.SharedProps = stateCfg.Props;
+        ChangeState(stateCfg.Task, ChangeStateArgs.PlainWithArg(curStateResult));
+    }
+
+    /** 查找状态配置 */
+    public FsmStateCfg<T>? GetStateCfg(string name, bool loadTask = true) {
+        if (name == null) throw new ArgumentNullException(nameof(name));
+        for (int i = 0; i < stateCfgs.Count; i++) {
+            FsmStateCfg<T> stateCfg = stateCfgs[i];
+            if (name != stateCfg.Name) {
+                continue;
+            }
+            if (loadTask && stateCfg.Task == null) {
+                Task<T> state = TaskEntry.TreeLoader.LoadRootTask<T>(stateCfg.Guid);
+                stateCfg.Task = state;
+            }
+            return stateCfg;
+        }
+        return null;
+    }
+
+    /** 添加状态 */
+    public void AddStateCfg(FsmStateCfg<T> stateCfg) {
+        if (stateCfg == null) throw new ArgumentNullException(nameof(stateCfg));
+        if (GetStateCfg(stateCfg.Name) != null) {
+            throw new ArgumentException("name is duplicate");
+        }
+        stateCfgs.Add(stateCfg);
+    }
+
     #endregion
 
     #region logic
@@ -147,8 +168,11 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     public override void ResetForRestart() {
         base.ResetForRestart();
         handler.ResetForRestart(this);
-        if (initState != null) {
-            initState.ResetForRestart();
+        // 所有关联状态都重置
+        foreach (FsmStateCfg<T> stateCfg in stateCfgs) {
+            if (stateCfg.Task != null) {
+                stateCfg.Task.ResetForRestart();
+            }
         }
         if (child != null) {
             RemoveChild(0);
@@ -159,11 +183,13 @@ public class StateMachineTask<T> : Decorator<T> where T : class
     protected override void BeforeEnter() {
         // base.BeforeEnter();
         handler.BeforeEnter(this);
-        if (initState != null) {
-            initState.SharedProps = initStateProps;
-        }
-        if (tempNextState == null && initState != null) {
-            tempNextState = initState;
+        // 初始化为初始化状态
+        if (tempNextState == null && !string.IsNullOrWhiteSpace(initStateName)) {
+            FsmStateCfg<T> initStateCfg = GetStateCfg(initStateName)!;
+            if (initStateCfg.Props != null) {
+                initStateCfg.Task.SharedProps = initStateCfg.Props;
+            }
+            tempNextState = initStateCfg.Task;
         }
         if (tempNextState != null && tempNextState.ControlData == null) {
             tempNextState.ControlData = ChangeStateArgs.PLAIN;
@@ -316,19 +342,19 @@ public class StateMachineTask<T> : Decorator<T> where T : class
         set => name = value;
     }
 
-    public Task<T>? InitState {
-        get => initState;
-        set => initState = value;
+    public string? InitStateName {
+        get => initStateName;
+        set => initStateName = value;
     }
 
-    public object? InitStateProps {
-        get => initStateProps;
-        set => initStateProps = value;
+    public List<FsmStateCfg<T>> StateCfgs {
+        get => stateCfgs;
+        set => stateCfgs = value ?? new List<FsmStateCfg<T>>(); // null处理
     }
 
     public IStateMachineHandler<T>? Handler {
         get => handler;
-        set => handler = value ?? DefaultStateMachineHandler<T>.Inst;
+        set => handler = value ?? DefaultStateMachineHandler<T>.Inst; // null处理
     }
 
     #endregion

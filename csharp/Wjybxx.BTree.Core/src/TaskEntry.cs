@@ -201,6 +201,12 @@ public class TaskEntry<T> : Task<T> where T : class
         }
     }
 
+    protected override void OnActiveInHierarchyChanged() {
+        if (handler != null) {
+            handler.OnActiveChanged(this);
+        }
+    }
+
     public override bool CanHandleEvent(object eventObj) {
         return blackboard != null && rootTask != null; // 只测isInited的关键属性即可
     }

@@ -118,5 +118,15 @@ public final class ChangeStateArgs {
         }
         return new ChangeStateArgs(cmd, delayMode, delayArg, extraInfo);
     }
+
+    public static ChangeStateArgs plainWithArg(int curStateResult) {
+        return switch (curStateResult) {
+            case 0 -> PLAIN;
+            case TaskStatus.SUCCESS -> PLAIN_SUCCESS;
+            case TaskStatus.CANCELLED -> PLAIN_CANCELLED;
+            case TaskStatus.ERROR -> PLAIN_ERROR;
+            default -> PLAIN.withArg(curStateResult);
+        };
+    }
     // endregion
 }

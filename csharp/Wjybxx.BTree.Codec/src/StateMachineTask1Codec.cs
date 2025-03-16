@@ -24,6 +24,7 @@ using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.BTree;
 using Wjybxx.Dson.Text;
+using System.Collections.Generic;
 
 namespace Wjybxx.BTreeCodec.Codecs
 {
@@ -34,8 +35,8 @@ public sealed class StateMachineTask1Codec<T> : AbstractDsonCodec<StateMachineTa
     public const string names_flags = "flags";
     public const string names_child = "child";
     public const string names_name = "name";
-    public const string names_initState = "initState";
-    public const string names_initStateProps = "initStateProps";
+    public const string names_initStateName = "initStateName";
+    public const string names_stateCfgs = "stateCfgs";
     public const string names_handler = "handler";
 
     public override Type GetEncoderType() => typeof(StateMachineTask<T>);
@@ -45,8 +46,8 @@ public sealed class StateMachineTask1Codec<T> : AbstractDsonCodec<StateMachineTa
         writer.WriteInt(names_flags, inst.Flags, NumberStyles.Simple);
         writer.WriteObject(names_child, inst.Child, typeof(Task<T>), null);
         writer.WriteString(names_name, inst.Name, StringStyle.Auto);
-        writer.WriteObject(names_initState, inst.InitState, typeof(Task<T>), null);
-        writer.WriteObject(names_initStateProps, inst.InitStateProps, typeof(object), null);
+        writer.WriteString(names_initStateName, inst.InitStateName, StringStyle.Auto);
+        writer.WriteObject(names_stateCfgs, inst.StateCfgs, typeof(List<FsmStateCfg<T>>), null);
         writer.WriteObject(names_handler, inst.Handler, typeof(IStateMachineHandler<T>), null);
     }
 
@@ -59,8 +60,8 @@ public sealed class StateMachineTask1Codec<T> : AbstractDsonCodec<StateMachineTa
         if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
         if (reader.ReadName(names_child)) inst.Child = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
         if (reader.ReadName(names_name)) inst.Name = reader.ReadString(null);
-        if (reader.ReadName(names_initState)) inst.InitState = reader.ReadObject<Task<T>>(null, typeof(Task<T>), null);
-        if (reader.ReadName(names_initStateProps)) inst.InitStateProps = reader.ReadObject<object>(null, typeof(object), null);
+        if (reader.ReadName(names_initStateName)) inst.InitStateName = reader.ReadString(null);
+        if (reader.ReadName(names_stateCfgs)) inst.StateCfgs = reader.ReadObject<List<FsmStateCfg<T>>>(null, typeof(List<FsmStateCfg<T>>), null);
         if (reader.ReadName(names_handler)) inst.Handler = reader.ReadObject<IStateMachineHandler<T>>(null, typeof(IStateMachineHandler<T>), null);
     }
 }

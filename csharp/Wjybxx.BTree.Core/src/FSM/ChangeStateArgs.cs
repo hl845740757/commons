@@ -115,6 +115,17 @@ public class ChangeStateArgs
         return new ChangeStateArgs(cmd, delayMode, delayArg, extraInfo);
     }
 
+    public static ChangeStateArgs PlainWithArg(int result) {
+        return result switch
+        {
+            0 => PLAIN,
+            TaskStatus.SUCCESS => PLAIN_SUCCESS,
+            TaskStatus.CANCELLED => PLAIN_CANCELLED,
+            TaskStatus.ERROR => PLAIN_ERROR,
+            _ => PLAIN.WithArg(result)
+        };
+    }
+
     #endregion
 }
 }

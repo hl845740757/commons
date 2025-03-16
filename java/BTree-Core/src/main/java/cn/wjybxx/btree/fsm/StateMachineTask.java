@@ -23,6 +23,8 @@ import cn.wjybxx.btree.branch.Join;
 import cn.wjybxx.btree.fsm.handler.DefaultStateMachineHandler;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -36,33 +38,21 @@ public class StateMachineTask<T> extends Decorator<T> {
 
     /** 状态机名字 */
     private String name;
-    /** 初始状态 */
-    protected Task<T> initState;
-    /** 初始状态的属性 */
-    protected Object initStateProps;
+    /** 初始状态的名字 */
+    protected String initStateName;
+    /** 该FSM关联的状态 */
+    protected List<FsmStateCfg<T>> stateCfgs = new ArrayList<>();
 
     /** 待切换的状态，主要用于支持当前状态退出后再切换 */
     protected transient Task<T> tempNextState;
     /** handler也加入序列化，用于在编辑器中配置 */
     protected StateMachineHandler<T> handler = DefaultStateMachineHandler.getInstance();
 
-    // region api
+    // region fsm基础api
 
     /** 获取当前状态 */
     public final Task<T> getCurState() {
         return child;
-    }
-
-    /** 获取临时的下一个状态 */
-    public final Task<T> getNextState() {
-        return tempNextState;
-    }
-
-    /** 丢弃未切换的临时状态 */
-    public final Task<T> discardNextState() {
-        Task<T> r = tempNextState;
-        if (r != null) tempNextState = null;
-        return r;
     }
 
     /**
@@ -101,7 +91,7 @@ public class StateMachineTask<T> extends Decorator<T> {
         return false;
     }
 
-    /** 切换状态 -- 如果状态机处于运行中，则立即切换 */
+    /** 切换状态 -- 如果状态机处于运行中，则立即切换；当前状态会进去被取消状态 */
     public final void changeState(Task<T> nextState) {
         changeState(nextState, ChangeStateArgs.PLAIN);
     }
@@ -112,13 +102,7 @@ public class StateMachineTask<T> extends Decorator<T> {
      * @param curStateResult 当前状态的结果
      */
     public final void changeState(Task<T> nextState, int curStateResult) {
-        ChangeStateArgs changeStateArgs = switch (curStateResult) {
-            case TaskStatus.SUCCESS -> ChangeStateArgs.PLAIN_SUCCESS;
-            case TaskStatus.CANCELLED -> ChangeStateArgs.PLAIN_CANCELLED;
-            case TaskStatus.ERROR -> ChangeStateArgs.PLAIN_ERROR;
-            default -> ChangeStateArgs.PLAIN.withArg(curStateResult);
-        };
-        changeState(nextState, changeStateArgs);
+        changeState(nextState, ChangeStateArgs.plainWithArg(curStateResult));
     }
 
     /***
@@ -143,14 +127,66 @@ public class StateMachineTask<T> extends Decorator<T> {
         }
     }
 
+    /** 通过状态的名字发起状态切换 */
+    public final void changeState(String stateName) {
+        changeState(stateName, 0);
+    }
+
+    /** 通过状态的名字发起状态切换 */
+    public final void changeState(String stateName, int curStateResult) {
+        FsmStateCfg<T> stateCfg = getStateCfg(name);
+        if (stateCfg == null) {
+            throw new IllegalStateException("state is absent, name: " + stateName);
+        }
+        // 覆盖属性
+        stateCfg.getTask().setSharedProps(stateCfg.getProps());
+        changeState(stateCfg.getTask(), ChangeStateArgs.plainWithArg(curStateResult));
+    }
+
+    /** 查找状态配置 -- 返回前会加载Task */
+    public FsmStateCfg<T> getStateCfg(String name) {
+        return getStateCfg(name, true);
+    }
+
+    /** 查找状态配置 */
+    public FsmStateCfg<T> getStateCfg(String name, boolean loadTask) {
+        Objects.requireNonNull(name, "name");
+        for (int i = 0; i < stateCfgs.size(); i++) {
+            FsmStateCfg<T> stateCfg = stateCfgs.get(i);
+            if (!name.equals(stateCfg.getName())) {
+                continue;
+            }
+            if (loadTask && stateCfg.getTask() == null) {
+                Task<T> state = getTaskEntry().getTreeLoader().loadRootTask(stateCfg.getGuid());
+                stateCfg.setTask(state);
+            }
+            return stateCfg;
+        }
+        return null;
+    }
+
+    /** 添加状态 */
+    public void addStateCfg(FsmStateCfg<T> stateCfg) {
+        Objects.requireNonNull(stateCfg);
+        if (getStateCfg(stateCfg.getName()) != null) {
+            throw new IllegalArgumentException("name is duplicate");
+        }
+        stateCfgs.add(stateCfg);
+    }
+
     // endregion
+
+    // region logic
 
     @Override
     public void resetForRestart() {
         super.resetForRestart();
         handler.resetForRestart(this);
-        if (initState != null) {
-            initState.resetForRestart();
+        // 所有关联状态都重置
+        for (FsmStateCfg<T> stateCfg : stateCfgs) {
+            if (stateCfg.getTask() != null) {
+                stateCfg.getTask().resetForRestart();
+            }
         }
         tempNextState = null;
         if (child != null) {
@@ -162,11 +198,13 @@ public class StateMachineTask<T> extends Decorator<T> {
     protected void beforeEnter() {
 //        super.beforeEnter();
         handler.beforeEnter(this);
-        if (initState != null) {
-            initState.setSharedProps(initStateProps);
-        }
-        if (tempNextState == null && initState != null) {
-            tempNextState = initState;
+        // 初始化为初始化状态
+        if (tempNextState == null && !ObjectUtils.isBlank(initStateName)) {
+            FsmStateCfg<T> initStateCfg = getStateCfg(initStateName);
+            if (initStateCfg.getProps() != null) {
+                initStateCfg.getTask().setSharedProps(initStateCfg.getProps());
+            }
+            tempNextState = initStateCfg.getTask();
         }
         if (tempNextState != null && tempNextState.getControlData() == null) {
             tempNextState.setControlData(ChangeStateArgs.PLAIN);
@@ -252,6 +290,7 @@ public class StateMachineTask<T> extends Decorator<T> {
         removeChild(0);
         beforeChangeState(child, null);
     }
+    // endregion
 
     // region find
 
@@ -326,20 +365,21 @@ public class StateMachineTask<T> extends Decorator<T> {
         this.name = name;
     }
 
-    public Task<T> getInitState() {
-        return initState;
+    public String getInitStateName() {
+        return initStateName;
     }
 
-    public void setInitState(Task<T> initState) {
-        this.initState = initState;
+    public void setInitStateName(String initStateName) {
+        this.initStateName = initStateName;
     }
 
-    public Object getInitStateProps() {
-        return initStateProps;
+    public List<FsmStateCfg<T>> getStateCfgs() {
+        return stateCfgs;
     }
 
-    public void setInitStateProps(Object initStateProps) {
-        this.initStateProps = initStateProps;
+    public StateMachineTask<T> setStateCfgs(List<FsmStateCfg<T>> stateCfgs) {
+        this.stateCfgs = stateCfgs == null ? new ArrayList<>() : stateCfgs; // 处理null
+        return this;
     }
 
     public StateMachineHandler<T> getHandler() {
@@ -347,7 +387,7 @@ public class StateMachineTask<T> extends Decorator<T> {
     }
 
     public void setHandler(StateMachineHandler<T> handler) {
-        this.handler = handler == null ? DefaultStateMachineHandler.getInstance() : handler;
+        this.handler = handler == null ? DefaultStateMachineHandler.getInstance() : handler;  // 处理null
     }
     // endregion
 }

@@ -214,6 +214,13 @@ public class TaskEntry<T> extends Task<T> {
     }
 
     @Override
+    protected void onActiveInHierarchyChanged() {
+        if (handler != null) {
+            handler.onActiveChanged(this);
+        }
+    }
+
+    @Override
     public boolean canHandleEvent(@Nonnull Object event) {
         return blackboard != null && rootTask != null; // 只测isInited的关键属性即可
     }

@@ -591,9 +591,14 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             return;
         }
         SetCtlBit(MASK_NOT_ACTIVE_IN_HIERARCHY, !newState); // 取反
-        if (status == TaskStatus.RUNNING) {
+        if (status != TaskStatus.RUNNING) return;
+        // 激活时先通知父节点，禁用时先通知子节点
+        if (newState) {
             OnActiveInHierarchyChanged();
             VisitChildren(TaskVisitors.RefreshActive<T>(), null);
+        } else {
+            VisitChildren(TaskVisitors.RefreshActive<T>(), null);
+            OnActiveInHierarchyChanged();
         }
     }
 

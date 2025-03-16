@@ -40,6 +40,8 @@ APT包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
 1. 提供了Java的Executor和Future框架，并提供了对应的await语法支持。
 2. 提供了默认的EventLoop实现。
 
+注意：C#的并发包尚不完善，*不建议在生产环境使用*。
+
 ### Disruptor模块
 
 Disruptor是LMAX的Disruptor的C#端实现，但并不是直接实现，而是修改后的实现，与我重写Java版的Disruptor模块一致。

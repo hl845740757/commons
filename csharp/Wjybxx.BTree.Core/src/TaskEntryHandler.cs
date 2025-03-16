@@ -41,5 +41,12 @@ public interface ITaskEntryHandler<T> where T : class
     void AwaitOnCompleted(TaskEntry<T> taskEntry, Action action) {
         throw new NotImplementedException();
     }
+
+    /// <summary>
+    /// 任务的激活状态发生改变
+    /// </summary>
+    /// <param name="taskEntry"></param>
+    void OnActiveChanged(TaskEntry<T> taskEntry) {
+    }
 }
 }
