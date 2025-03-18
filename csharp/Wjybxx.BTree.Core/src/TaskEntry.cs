@@ -172,6 +172,10 @@ public class TaskEntry<T> : Task<T> where T : class
         return IsSucceeded;
     }
 
+    protected override void Enter(int reentryId) {
+        if (handler != null) handler.OnEnter(this);
+    }
+
     protected override void Execute() {
         Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
         if (inlinedChild != null) {
@@ -186,6 +190,7 @@ public class TaskEntry<T> : Task<T> where T : class
     protected override void Exit() {
         inlineHelper.StopInline();
         cancelToken.Reset(); // 避免内存泄漏
+        if (handler != null) handler.OnExit(this);
     }
 
     protected override void OnChildRunning(Task<T> child, bool starting) {

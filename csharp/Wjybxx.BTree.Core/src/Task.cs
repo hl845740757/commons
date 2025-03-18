@@ -388,7 +388,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             this.enterFrame = exitFrame;
             this.reentryId++;
             this.ctl |= MASK_STILLBORN;
-
             this.status = status;
         }
         if ((ctl & MASK_DISABLE_NOTIFY) == 0 && control != null) {
@@ -882,7 +881,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
             return;
         }
-        // 理论上这里可以先检查一下source的取消令牌，但如果source收到取消信号，则被内联的节点的子节点也一定收到取消信号
+        // 如果source收到取消信号，则被内联的节点的子节点也一定收到取消信号
         short sourceReentryId = source.reentryId;
         short reentryId = this.reentryId;
         // 内联template_execute逻辑
@@ -1122,7 +1121,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /** 删除所有的child -- 不是个常用方法 */
     public void RemoveAllChild() {
         for (int idx = ChildCount - 1; idx >= 0; idx--) {
-            RemoveChildImpl(idx).UnsetControl();
+            Task<T> child = RemoveChildImpl(idx);
+            child.UnsetControl();
         }
     }
 

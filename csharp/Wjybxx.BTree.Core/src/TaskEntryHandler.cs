@@ -26,6 +26,19 @@ namespace Wjybxx.BTree
 /// <typeparam name="T"></typeparam>
 public interface ITaskEntryHandler<T> where T : class
 {
+
+    /// <summary>
+    /// 任务启动时调用 -- 同于将任务发布到其它地方，不可执行其它逻辑
+    /// </summary>
+    /// <param name="taskEntry"></param>
+    void OnEnter(TaskEntry<T> taskEntry);
+
+    /// <summary>
+    /// 任务退出时调用 -- 用于删除发布的数据，不可执行其它逻辑
+    /// </summary>
+    /// <param name="taskEntry"></param>
+    void OnExit(TaskEntry<T> taskEntry);
+    
     /// <summary>
     /// 任务进入完成状态
     /// </summary>

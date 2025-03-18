@@ -181,6 +181,11 @@ public class TaskEntry<T> extends Task<T> {
     }
 
     @Override
+    protected void enter(int reentryId) {
+        if (handler != null) handler.onEnter(this);
+    }
+
+    @Override
     protected void execute() {
         Task<T> inlinedChild = inlineHelper.getInlinedChild();
         if (inlinedChild != null) {
@@ -196,6 +201,7 @@ public class TaskEntry<T> extends Task<T> {
     protected void exit() {
         inlineHelper.stopInline();
         cancelToken.reset(); // 避免内存泄漏
+        if (handler != null) handler.onExit(this);
     }
 
     @Override

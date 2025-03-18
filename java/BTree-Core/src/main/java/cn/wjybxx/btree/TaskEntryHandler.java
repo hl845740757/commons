@@ -23,6 +23,16 @@ package cn.wjybxx.btree;
  */
 public interface TaskEntryHandler<T> {
 
+    /** 任务启动时调用 -- 同于将任务发布到其它地方，不可执行其它逻辑 */
+    default void onEnter(TaskEntry<T> taskEntry) {
+
+    }
+
+    /** 任务退出时调用 -- 用于删除发布的数据，不可执行其它逻辑 */
+    default void onExit(TaskEntry<T> taskEntry) {
+
+    }
+
     /** 任务进入完成状态 */
     void onCompleted(TaskEntry<T> taskEntry);
 
