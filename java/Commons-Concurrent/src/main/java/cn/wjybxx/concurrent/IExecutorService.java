@@ -123,7 +123,7 @@ public interface IExecutorService extends ExecutorService, IExecutor {
 
     <T> IFuture<T> submitFunc(Callable<? extends T> task, ICancelToken cancelToken, int options);
 
-    <T> IFuture<T> submitFunc(Function<? super IContext, ? extends T> task, IContext ctx, int options);
+    <T> IFuture<T> submitFunc(Function<Object, ? extends T> task, Object ctx, int options);
 
     IFuture<?> submitAction(Runnable task);
 
@@ -131,7 +131,7 @@ public interface IExecutorService extends ExecutorService, IExecutor {
 
     IFuture<?> submitAction(Runnable task, ICancelToken cancelToken, int options);
 
-    IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options);
+    IFuture<?> submitAction(Consumer<Object> task, Object ctx, int options);
 
     @Deprecated
     @Override

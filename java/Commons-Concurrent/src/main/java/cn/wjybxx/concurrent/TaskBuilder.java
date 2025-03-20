@@ -74,7 +74,7 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         return new TaskBuilder<>(TYPE_ACTION, task, cancelToken);
     }
 
-    public static TaskBuilder<Object> newAction(Consumer<IContext> task, IContext ctx) {
+    public static TaskBuilder<Object> newAction(Consumer<Object> task, Object ctx) {
         return new TaskBuilder<>(TYPE_ACTION_CTX, task, ctx);
     }
 
@@ -86,15 +86,15 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         return new TaskBuilder<>(TYPE_FUNC, task, cancelToken);
     }
 
-    public static <V> TaskBuilder<V> newFunc(Function<IContext, ? extends V> task, IContext ctx) {
+    public static <V> TaskBuilder<V> newFunc(Function<Object, ? extends V> task, Object ctx) {
         return new TaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
     }
 
     public static <V> TaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task) {
-        return new TaskBuilder<>(TYPE_TIMESHARING, task, IContext.NONE);
+        return new TaskBuilder<>(TYPE_TIMESHARING, task, null);
     }
 
-    public static <V> TaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task, IContext ctx) {
+    public static <V> TaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task, Object ctx) {
         return new TaskBuilder<>(TYPE_TIMESHARING, task, ctx);
     }
 
@@ -142,25 +142,19 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         return type;
     }
 
+    /** 绑定的任务 */
     public Object getTask() {
         return task;
     }
 
-    /** 任务是否接收context类型参数 */
-    public boolean isTaskAcceptContext() {
-        return isTaskAcceptContext(type);
-    }
-
     /** 任务的上下文 */
-    public IContext getCtx() {
-        return isTaskAcceptContext(type) ? (IContext) ctx : null;
+    public Object getCtx() {
+        return ctx;
     }
 
-    public TaskBuilder<V> setCtx(IContext ctx) {
-        if (!isTaskAcceptContext(type)) {
-            throw new IllegalStateException();
-        }
-        this.ctx = ctx == null ? IContext.NONE : ctx;
+    /** 设置上下文 */
+    public TaskBuilder<V> setCtx(Object ctx) {
+        this.ctx = ctx;
         return this;
     }
 

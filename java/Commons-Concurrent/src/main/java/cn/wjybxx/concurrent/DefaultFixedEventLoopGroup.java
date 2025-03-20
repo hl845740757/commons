@@ -160,7 +160,7 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
     //
 
     /** 子节点终结状态监听器 */
-    private class ChildrenTerminateListener implements TriConsumer<IContext, Object, Throwable> {
+    private class ChildrenTerminateListener implements TriConsumer<Object, Object, Throwable> {
 
         /** 已关闭的子节点数量 */
         private final AtomicInteger terminatedChildren = new AtomicInteger(0);
@@ -170,7 +170,7 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
         }
 
         @Override
-        public void accept(IContext ctx, Object o, Throwable throwable) {
+        public void accept(Object ctx, Object o, Throwable throwable) {
             if (terminatedChildren.incrementAndGet() == children.length) {
                 try {
                     invokeTerminationHook();

@@ -87,7 +87,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
                 helper, triggerTime);
     }
 
-    public static ScheduledPromiseTask<?> ofAction(Consumer<? super IContext> action, IContext ctx, int options,
+    public static ScheduledPromiseTask<?> ofAction(Consumer<Object> action, Object ctx, int options,
                                                    IScheduledPromise<?> promise, IScheduledHelper helper, long triggerTime) {
         return new ScheduledPromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION_CTX,
                 helper, triggerTime);
@@ -99,7 +99,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
                 helper, triggerTime);
     }
 
-    public static <V> ScheduledPromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IContext ctx, int options,
+    public static <V> ScheduledPromiseTask<V> ofFunction(Function<Object, ? extends V> action, Object ctx, int options,
                                                          IScheduledPromise<V> promise, IScheduledHelper helper, long triggerTime) {
         return new ScheduledPromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_FUNC_CTX,
                 helper, triggerTime);

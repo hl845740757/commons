@@ -251,136 +251,136 @@ public interface IFuture<T> extends Future<T>, ICompletionStage<T> {
     // region 重写签名
 
     @Override
-    <U> IFuture<U> composeApply(BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options);
+    <U> IFuture<U> composeApply(BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn, @Nullable Object ctx, int options);
 
     @Override
-    <U> IFuture<U> composeApply(BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn);
+    <U> IFuture<U> composeApply(BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn);
 
     @Override
-    <U> IFuture<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn);
+    <U> IFuture<U> composeApplyAsync(Executor executor, BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn);
 
     @Override
-    <U> IFuture<U> composeApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options);
+    <U> IFuture<U> composeApplyAsync(Executor executor, BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn, @Nullable Object ctx, int options);
 
     @Override
-    <U> IFuture<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options);
+    <U> IFuture<U> composeCall(Function<Object, ? extends ICompletionStage<U>> fn, @Nullable Object ctx, int options);
 
     @Override
-    <U> IFuture<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn);
+    <U> IFuture<U> composeCall(Function<Object, ? extends ICompletionStage<U>> fn);
 
     @Override
-    <U> IFuture<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn);
+    <U> IFuture<U> composeCallAsync(Executor executor, Function<Object, ? extends ICompletionStage<U>> fn);
 
     @Override
-    <U> IFuture<U> composeCallAsync(Executor executor, Function<? super IContext, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options);
+    <U> IFuture<U> composeCallAsync(Executor executor, Function<Object, ? extends ICompletionStage<U>> fn, @Nullable Object ctx, int options);
 
     @Override
-    <X extends Throwable> IFuture<T> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback, @Nullable IContext ctx, int options);
+    <X extends Throwable> IFuture<T> composeCatching(Class<X> exceptionType, BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback, @Nullable Object ctx, int options);
 
     @Override
-    <X extends Throwable> IFuture<T> composeCatching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback);
+    <X extends Throwable> IFuture<T> composeCatching(Class<X> exceptionType, BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback);
 
     @Override
-    <X extends Throwable> IFuture<T> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback);
+    <X extends Throwable> IFuture<T> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback);
 
     @Override
-    <X extends Throwable> IFuture<T> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback, @Nullable IContext ctx, int options);
+    <X extends Throwable> IFuture<T> composeCatchingAsync(Executor executor, Class<X> exceptionType, BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback, @Nullable Object ctx, int options);
 
     @Override
-    <U> IFuture<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options);
+    <U> IFuture<U> composeHandle(TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn, @Nullable Object ctx, int options);
 
     @Override
-    <U> IFuture<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn);
+    <U> IFuture<U> composeHandle(TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn);
 
     @Override
-    <U> IFuture<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn);
+    <U> IFuture<U> composeHandleAsync(Executor executor, TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn);
 
     @Override
-    <U> IFuture<U> composeHandleAsync(Executor executor, TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn, @Nullable IContext ctx, int options);
+    <U> IFuture<U> composeHandleAsync(Executor executor, TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn, @Nullable Object ctx, int options);
 
     @Override
-    <U> IFuture<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> IFuture<U> thenApply(BiFunction<Object, ? super T, ? extends U> fn, @Nullable Object ctx, int options);
 
     @Override
-    <U> IFuture<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn);
+    <U> IFuture<U> thenApply(BiFunction<Object, ? super T, ? extends U> fn);
 
     @Override
-    <U> IFuture<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn);
+    <U> IFuture<U> thenApplyAsync(Executor executor, BiFunction<Object, ? super T, ? extends U> fn);
 
     @Override
-    <U> IFuture<U> thenApplyAsync(Executor executor, BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> IFuture<U> thenApplyAsync(Executor executor, BiFunction<Object, ? super T, ? extends U> fn, @Nullable Object ctx, int options);
 
     @Override
-    IFuture<Void> thenAccept(BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options);
+    IFuture<Void> thenAccept(BiConsumer<Object, ? super T> action, @Nullable Object ctx, int options);
 
     @Override
-    IFuture<Void> thenAccept(BiConsumer<? super IContext, ? super T> action);
+    IFuture<Void> thenAccept(BiConsumer<Object, ? super T> action);
 
     @Override
-    IFuture<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super T> action);
+    IFuture<Void> thenAcceptAsync(Executor executor, BiConsumer<Object, ? super T> action);
 
     @Override
-    IFuture<Void> thenAcceptAsync(Executor executor, BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options);
+    IFuture<Void> thenAcceptAsync(Executor executor, BiConsumer<Object, ? super T> action, @Nullable Object ctx, int options);
 
     @Override
-    <U> IFuture<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> IFuture<U> thenCall(Function<Object, ? extends U> fn, @Nullable Object ctx, int options);
 
     @Override
-    <U> IFuture<U> thenCall(Function<? super IContext, ? extends U> fn);
+    <U> IFuture<U> thenCall(Function<Object, ? extends U> fn);
 
     @Override
-    <U> IFuture<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn);
+    <U> IFuture<U> thenCallAsync(Executor executor, Function<Object, ? extends U> fn);
 
     @Override
-    <U> IFuture<U> thenCallAsync(Executor executor, Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> IFuture<U> thenCallAsync(Executor executor, Function<Object, ? extends U> fn, @Nullable Object ctx, int options);
 
     @Override
-    IFuture<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options);
+    IFuture<Void> thenRun(Consumer<Object> action, @Nullable Object ctx, int options);
 
     @Override
-    IFuture<Void> thenRun(Consumer<? super IContext> action);
+    IFuture<Void> thenRun(Consumer<Object> action);
 
     @Override
-    IFuture<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action);
+    IFuture<Void> thenRunAsync(Executor executor, Consumer<Object> action);
 
     @Override
-    IFuture<Void> thenRunAsync(Executor executor, Consumer<? super IContext> action, @Nullable IContext ctx, int options);
+    IFuture<Void> thenRunAsync(Executor executor, Consumer<Object> action, @Nullable Object ctx, int options);
 
     @Override
-    <X extends Throwable> IFuture<T> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback, @Nullable IContext ctx, int options);
+    <X extends Throwable> IFuture<T> catching(Class<X> exceptionType, BiFunction<Object, ? super X, ? extends T> fallback, @Nullable Object ctx, int options);
 
     @Override
-    <X extends Throwable> IFuture<T> catching(Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback);
+    <X extends Throwable> IFuture<T> catching(Class<X> exceptionType, BiFunction<Object, ? super X, ? extends T> fallback);
 
     @Override
-    <X extends Throwable> IFuture<T> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback);
+    <X extends Throwable> IFuture<T> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<Object, ? super X, ? extends T> fallback);
 
     @Override
-    <X extends Throwable> IFuture<T> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<? super IContext, ? super X, ? extends T> fallback, @Nullable IContext ctx, int options);
+    <X extends Throwable> IFuture<T> catchingAsync(Executor executor, Class<X> exceptionType, BiFunction<Object, ? super X, ? extends T> fallback, @Nullable Object ctx, int options);
 
     @Override
-    <U> IFuture<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> IFuture<U> handle(TriFunction<Object, ? super T, Throwable, ? extends U> fn, @Nullable Object ctx, int options);
 
     @Override
-    <U> IFuture<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
+    <U> IFuture<U> handle(TriFunction<Object, ? super T, Throwable, ? extends U> fn);
 
     @Override
-    <U> IFuture<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
+    <U> IFuture<U> handleAsync(Executor executor, TriFunction<Object, ? super T, Throwable, ? extends U> fn);
 
     @Override
-    <U> IFuture<U> handleAsync(Executor executor, TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> IFuture<U> handleAsync(Executor executor, TriFunction<Object, ? super T, Throwable, ? extends U> fn, @Nullable Object ctx, int options);
 
     @Override
-    IFuture<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options);
+    IFuture<T> whenComplete(TriConsumer<Object, ? super T, ? super Throwable> action, @Nullable Object ctx, int options);
 
     @Override
-    IFuture<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action);
+    IFuture<T> whenComplete(TriConsumer<Object, ? super T, ? super Throwable> action);
 
     @Override
-    IFuture<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action);
+    IFuture<T> whenCompleteAsync(Executor executor, TriConsumer<Object, ? super T, ? super Throwable> action);
 
     @Override
-    IFuture<T> whenCompleteAsync(Executor executor, TriConsumer<? super IContext, ? super T, ? super Throwable> action, @Nullable IContext ctx, int options);
+    IFuture<T> whenCompleteAsync(Executor executor, TriConsumer<Object, ? super T, ? super Throwable> action, @Nullable Object ctx, int options);
 
     // endregion
 }

@@ -576,7 +576,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private static boolean tryInline(Completion completion, Executor e, int options) {
         // 尝试内联
-        if (Promise.isInlinable(e, options)) {
+        if (FutureUtils.isInlinable(e, options)) {
             return true;
         }
         e.execute(completion);
@@ -744,7 +744,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                if (!Promise.isCancelRequested(ctx, options)) {
+                if (!FutureUtils.isCancelRequested(ctx, options)) {
                     action.accept(source, ctx);
                 }
             } catch (Throwable ex) {
@@ -827,7 +827,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 if (action == null) {
                     return null;
                 }
-                if (!Promise.isCancelRequested(ctx, options)) {
+                if (!FutureUtils.isCancelRequested(ctx, options)) {
                     action.accept(ctx);
                 }
             } catch (Throwable ex) {

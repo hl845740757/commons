@@ -40,6 +40,6 @@ public interface TimeSharingTask<V> {
      * @return 如果返回null，表示任务还需要继续执行。
      */
     @Nullable
-    ResultHolder<V> step(IContext ctx, boolean firstStep) throws Exception;
+    ResultHolder<V> step(Object ctx, boolean firstStep) throws Exception;
 
 }

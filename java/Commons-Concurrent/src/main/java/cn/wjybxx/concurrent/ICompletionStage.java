@@ -71,7 +71,7 @@ import java.util.function.Function;
  * }</pre>
  *
  * <h3>行为取消</h3>
- * Stage并不直接提供删除Action的方法，要取消行为，请通过{@link IContext#cancelToken()}发起取消命令。
+ * Stage并不直接提供删除Action的方法，要取消行为，可将上下文指定为{@link ICancelToken}或{@link IContext}类型。
  * Stage会在执行用户的Action之前检查取消信号，另外用户的Action在运行的过程中也可主动检测取消信号。
  *
  * <h3>其它</h3>
@@ -124,21 +124,20 @@ public interface ICompletionStage<T> {
      * <p>
      * {@link CompletionStage#thenCompose(Function)}
      *
-     * @param ctx     上下文，如果为null，则替换为NONE
+     * @param ctx     上下文
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOptions}
      */
-    <U> ICompletionStage<U> composeApply(BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn,
-                                         @Nullable IContext ctx, int options);
+    <U> ICompletionStage<U> composeApply(BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn,
+                                         @Nullable Object ctx, int options);
 
-    /** @param fn 的ctx参数为{@link IContext#NONE} */
-    <U> ICompletionStage<U> composeApply(BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn);
-
-    <U> ICompletionStage<U> composeApplyAsync(Executor executor,
-                                              BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn);
+    <U> ICompletionStage<U> composeApply(BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn);
 
     <U> ICompletionStage<U> composeApplyAsync(Executor executor,
-                                              BiFunction<? super IContext, ? super T, ? extends ICompletionStage<U>> fn,
-                                              @Nullable IContext ctx, int options);
+                                              BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn);
+
+    <U> ICompletionStage<U> composeApplyAsync(Executor executor,
+                                              BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn,
+                                              @Nullable Object ctx, int options);
 
     /**
      * 该方法表示在当前{@code Future}与返回的{@code Future}中插入一个异步操作，构建异步管道
@@ -154,17 +153,17 @@ public interface ICompletionStage<T> {
      * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOptions}
      */
-    <U> ICompletionStage<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn,
-                                        @Nullable IContext ctx, int options);
+    <U> ICompletionStage<U> composeCall(Function<Object, ? extends ICompletionStage<U>> fn,
+                                        @Nullable Object ctx, int options);
 
-    <U> ICompletionStage<U> composeCall(Function<? super IContext, ? extends ICompletionStage<U>> fn);
-
-    <U> ICompletionStage<U> composeCallAsync(Executor executor,
-                                             Function<? super IContext, ? extends ICompletionStage<U>> fn);
+    <U> ICompletionStage<U> composeCall(Function<Object, ? extends ICompletionStage<U>> fn);
 
     <U> ICompletionStage<U> composeCallAsync(Executor executor,
-                                             Function<? super IContext, ? extends ICompletionStage<U>> fn,
-                                             @Nullable IContext ctx, int options);
+                                             Function<Object, ? extends ICompletionStage<U>> fn);
+
+    <U> ICompletionStage<U> composeCallAsync(Executor executor,
+                                             Function<Object, ? extends ICompletionStage<U>> fn,
+                                             @Nullable Object ctx, int options);
 
     /**
      * 它表示能从从特定的异常中恢复，并异步返回一个正常结果。
@@ -179,21 +178,21 @@ public interface ICompletionStage<T> {
      */
     <X extends Throwable>
     ICompletionStage<T> composeCatching(Class<X> exceptionType,
-                                        BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback,
-                                        @Nullable IContext ctx, int options);
+                                        BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback,
+                                        @Nullable Object ctx, int options);
 
     <X extends Throwable>
     ICompletionStage<T> composeCatching(Class<X> exceptionType,
-                                        BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback);
+                                        BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback);
 
     <X extends Throwable>
     ICompletionStage<T> composeCatchingAsync(Executor executor, Class<X> exceptionType,
-                                             BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback);
+                                             BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback);
 
     <X extends Throwable>
     ICompletionStage<T> composeCatchingAsync(Executor executor, Class<X> exceptionType,
-                                             BiFunction<? super IContext, ? super X, ? extends ICompletionStage<T>> fallback,
-                                             @Nullable IContext ctx, int options);
+                                             BiFunction<Object, ? super X, ? extends ICompletionStage<T>> fallback,
+                                             @Nullable Object ctx, int options);
 
     /**
      * 它表示既能接收任务的正常结果，也可以接收任务异常结果，并异步返回一个运算结果。
@@ -204,17 +203,17 @@ public interface ICompletionStage<T> {
      * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOptions}
      */
-    <U> ICompletionStage<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
-                                          @Nullable IContext ctx, int options);
+    <U> ICompletionStage<U> composeHandle(TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
+                                          @Nullable Object ctx, int options);
 
-    <U> ICompletionStage<U> composeHandle(TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn);
-
-    <U> ICompletionStage<U> composeHandleAsync(Executor executor,
-                                               TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn);
+    <U> ICompletionStage<U> composeHandle(TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn);
 
     <U> ICompletionStage<U> composeHandleAsync(Executor executor,
-                                               TriFunction<? super IContext, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
-                                               @Nullable IContext ctx, int options);
+                                               TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn);
+
+    <U> ICompletionStage<U> composeHandleAsync(Executor executor,
+                                               TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
+                                               @Nullable Object ctx, int options);
     // endregion
 
     // region apply
@@ -229,15 +228,15 @@ public interface ICompletionStage<T> {
      * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOptions}
      */
-    <U> ICompletionStage<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> ICompletionStage<U> thenApply(BiFunction<Object, ? super T, ? extends U> fn, @Nullable Object ctx, int options);
 
-    <U> ICompletionStage<U> thenApply(BiFunction<? super IContext, ? super T, ? extends U> fn);
-
-    <U> ICompletionStage<U> thenApplyAsync(Executor executor,
-                                           BiFunction<? super IContext, ? super T, ? extends U> fn);
+    <U> ICompletionStage<U> thenApply(BiFunction<Object, ? super T, ? extends U> fn);
 
     <U> ICompletionStage<U> thenApplyAsync(Executor executor,
-                                           BiFunction<? super IContext, ? super T, ? extends U> fn, @Nullable IContext ctx, int options);
+                                           BiFunction<Object, ? super T, ? extends U> fn);
+
+    <U> ICompletionStage<U> thenApplyAsync(Executor executor,
+                                           BiFunction<Object, ? super T, ? extends U> fn, @Nullable Object ctx, int options);
 
     // endregion
 
@@ -253,15 +252,15 @@ public interface ICompletionStage<T> {
      * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOptions}
      */
-    ICompletionStage<Void> thenAccept(BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options);
+    ICompletionStage<Void> thenAccept(BiConsumer<Object, ? super T> action, @Nullable Object ctx, int options);
 
-    ICompletionStage<Void> thenAccept(BiConsumer<? super IContext, ? super T> action);
-
-    ICompletionStage<Void> thenAcceptAsync(Executor executor,
-                                           BiConsumer<? super IContext, ? super T> action);
+    ICompletionStage<Void> thenAccept(BiConsumer<Object, ? super T> action);
 
     ICompletionStage<Void> thenAcceptAsync(Executor executor,
-                                           BiConsumer<? super IContext, ? super T> action, @Nullable IContext ctx, int options);
+                                           BiConsumer<Object, ? super T> action);
+
+    ICompletionStage<Void> thenAcceptAsync(Executor executor,
+                                           BiConsumer<Object, ? super T> action, @Nullable Object ctx, int options);
 
     // endregion
 
@@ -275,15 +274,15 @@ public interface ICompletionStage<T> {
      * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOptions}
      */
-    <U> ICompletionStage<U> thenCall(Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options);
+    <U> ICompletionStage<U> thenCall(Function<Object, ? extends U> fn, @Nullable Object ctx, int options);
 
-    <U> ICompletionStage<U> thenCall(Function<? super IContext, ? extends U> fn);
-
-    <U> ICompletionStage<U> thenCallAsync(Executor executor,
-                                          Function<? super IContext, ? extends U> fn);
+    <U> ICompletionStage<U> thenCall(Function<Object, ? extends U> fn);
 
     <U> ICompletionStage<U> thenCallAsync(Executor executor,
-                                          Function<? super IContext, ? extends U> fn, @Nullable IContext ctx, int options);
+                                          Function<Object, ? extends U> fn);
+
+    <U> ICompletionStage<U> thenCallAsync(Executor executor,
+                                          Function<Object, ? extends U> fn, @Nullable Object ctx, int options);
     // endregion
 
     // region run
@@ -298,15 +297,15 @@ public interface ICompletionStage<T> {
      * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOptions}
      */
-    ICompletionStage<Void> thenRun(Consumer<? super IContext> action, @Nullable IContext ctx, int options);
+    ICompletionStage<Void> thenRun(Consumer<Object> action, @Nullable Object ctx, int options);
 
-    ICompletionStage<Void> thenRun(Consumer<? super IContext> action);
-
-    ICompletionStage<Void> thenRunAsync(Executor executor,
-                                        Consumer<? super IContext> action);
+    ICompletionStage<Void> thenRun(Consumer<Object> action);
 
     ICompletionStage<Void> thenRunAsync(Executor executor,
-                                        Consumer<? super IContext> action, @Nullable IContext ctx, int options);
+                                        Consumer<Object> action);
+
+    ICompletionStage<Void> thenRunAsync(Executor executor,
+                                        Consumer<Object> action, @Nullable Object ctx, int options);
     // endregion
 
     // region catching-异常处理
@@ -328,21 +327,21 @@ public interface ICompletionStage<T> {
      */
     <X extends Throwable>
     ICompletionStage<T> catching(Class<X> exceptionType,
-                                 BiFunction<? super IContext, ? super X, ? extends T> fallback,
-                                 @Nullable IContext ctx, int options);
+                                 BiFunction<Object, ? super X, ? extends T> fallback,
+                                 @Nullable Object ctx, int options);
 
     <X extends Throwable>
     ICompletionStage<T> catching(Class<X> exceptionType,
-                                 BiFunction<? super IContext, ? super X, ? extends T> fallback);
+                                 BiFunction<Object, ? super X, ? extends T> fallback);
 
     <X extends Throwable>
     ICompletionStage<T> catchingAsync(Executor executor, Class<X> exceptionType,
-                                      BiFunction<? super IContext, ? super X, ? extends T> fallback);
+                                      BiFunction<Object, ? super X, ? extends T> fallback);
 
     <X extends Throwable>
     ICompletionStage<T> catchingAsync(Executor executor, Class<X> exceptionType,
-                                      BiFunction<? super IContext, ? super X, ? extends T> fallback,
-                                      @Nullable IContext ctx, int options);
+                                      BiFunction<Object, ? super X, ? extends T> fallback,
+                                      @Nullable Object ctx, int options);
     // endregion
 
     // region handle
@@ -359,17 +358,17 @@ public interface ICompletionStage<T> {
      * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOptions}
      */
-    <U> ICompletionStage<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
-                                   @Nullable IContext ctx, int options);
+    <U> ICompletionStage<U> handle(TriFunction<Object, ? super T, Throwable, ? extends U> fn,
+                                   @Nullable Object ctx, int options);
 
-    <U> ICompletionStage<U> handle(TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
-
-    <U> ICompletionStage<U> handleAsync(Executor executor,
-                                        TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn);
+    <U> ICompletionStage<U> handle(TriFunction<Object, ? super T, Throwable, ? extends U> fn);
 
     <U> ICompletionStage<U> handleAsync(Executor executor,
-                                        TriFunction<? super IContext, ? super T, Throwable, ? extends U> fn,
-                                        @Nullable IContext ctx, int options);
+                                        TriFunction<Object, ? super T, Throwable, ? extends U> fn);
+
+    <U> ICompletionStage<U> handleAsync(Executor executor,
+                                        TriFunction<Object, ? super T, Throwable, ? extends U> fn,
+                                        @Nullable Object ctx, int options);
     // endregion
 
     // region when-简单监听
@@ -383,17 +382,17 @@ public interface ICompletionStage<T> {
      * @param ctx     上下文，如果为null，则替换为NONE
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOptions}
      */
-    ICompletionStage<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action,
-                                     @Nullable IContext ctx, int options);
+    ICompletionStage<T> whenComplete(TriConsumer<Object, ? super T, ? super Throwable> action,
+                                     @Nullable Object ctx, int options);
 
-    ICompletionStage<T> whenComplete(TriConsumer<? super IContext, ? super T, ? super Throwable> action);
-
-    ICompletionStage<T> whenCompleteAsync(Executor executor,
-                                          TriConsumer<? super IContext, ? super T, ? super Throwable> action);
+    ICompletionStage<T> whenComplete(TriConsumer<Object, ? super T, ? super Throwable> action);
 
     ICompletionStage<T> whenCompleteAsync(Executor executor,
-                                          TriConsumer<? super IContext, ? super T, ? super Throwable> action,
-                                          @Nullable IContext ctx, int options);
+                                          TriConsumer<Object, ? super T, ? super Throwable> action);
+
+    ICompletionStage<T> whenCompleteAsync(Executor executor,
+                                          TriConsumer<Object, ? super T, ? super Throwable> action,
+                                          @Nullable Object ctx, int options);
     // endregion
 
 }

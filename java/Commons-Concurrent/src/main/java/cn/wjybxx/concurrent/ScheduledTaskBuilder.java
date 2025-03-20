@@ -74,7 +74,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         return new ScheduledTaskBuilder<>(TYPE_ACTION, task, cancelToken);
     }
 
-    public static ScheduledTaskBuilder<Object> newAction(Consumer<IContext> task, IContext ctx) {
+    public static ScheduledTaskBuilder<Object> newAction(Consumer<Object> task, Object ctx) {
         return new ScheduledTaskBuilder<>(TYPE_ACTION_CTX, task, ctx);
     }
 
@@ -86,16 +86,16 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         return new ScheduledTaskBuilder<>(TYPE_FUNC, task, cancelToken);
     }
 
-    public static <V> ScheduledTaskBuilder<V> newFunc(Function<IContext, ? extends V> task, IContext ctx) {
+    public static <V> ScheduledTaskBuilder<V> newFunc(Function<Object, ? extends V> task, Object ctx) {
         return new ScheduledTaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
     }
 
     // PECS -- Task消费泛型参数
     public static <V> ScheduledTaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task) {
-        return new ScheduledTaskBuilder<>(TYPE_TIMESHARING, task, IContext.NONE);
+        return new ScheduledTaskBuilder<>(TYPE_TIMESHARING, task, null);
     }
 
-    public static <V> ScheduledTaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task, IContext ctx) {
+    public static <V> ScheduledTaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task, Object ctx) {
         return new ScheduledTaskBuilder<>(TYPE_TIMESHARING, task, ctx);
     }
 
@@ -300,7 +300,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     }
 
     @Override
-    public TaskBuilder<V> setCtx(IContext ctx) {
+    public TaskBuilder<V> setCtx(Object ctx) {
         super.setCtx(ctx);
         return this;
     }

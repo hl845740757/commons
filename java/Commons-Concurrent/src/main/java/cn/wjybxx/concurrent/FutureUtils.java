@@ -37,7 +37,7 @@ import java.util.function.Supplier;
  */
 public class FutureUtils {
 
-    private static final TriFunction<IContext, Object, Throwable, Object> EXCEPTION_TO_NULL = (ctx, o, throwable) -> {
+    private static final TriFunction<Object, Object, Throwable, Object> EXCEPTION_TO_NULL = (ctx, o, throwable) -> {
         if (throwable != null) {
             return null;
         } else {
@@ -385,13 +385,13 @@ public class FutureUtils {
         return promise;
     }
 
-    public static <T> IFuture<T> submitFunc(Executor executor, Function<? super IContext, ? extends T> task, IContext ctx) {
+    public static <T> IFuture<T> submitFunc(Executor executor, Function<Object, ? extends T> task, Object ctx) {
         IPromise<T> promise = newPromise(executor);
         executor.execute(PromiseTask.ofFunction(task, ctx, 0, promise));
         return promise;
     }
 
-    public static <T> IFuture<T> submitFunc(IExecutor executor, Function<? super IContext, ? extends T> task, IContext ctx, int options) {
+    public static <T> IFuture<T> submitFunc(IExecutor executor, Function<Object, ? extends T> task, Object ctx, int options) {
         IPromise<T> promise = newPromise(executor);
         executor.execute(PromiseTask.ofFunction(task, ctx, options, promise));
         return promise;
@@ -423,13 +423,13 @@ public class FutureUtils {
         return promise;
     }
 
-    public static IFuture<?> submitAction(Executor executor, Consumer<? super IContext> task, IContext ctx) {
+    public static IFuture<?> submitAction(Executor executor, Consumer<Object> task, Object ctx) {
         IPromise<Object> promise = newPromise(executor);
         executor.execute(PromiseTask.ofAction(task, ctx, 0, promise));
         return promise;
     }
 
-    public static IFuture<?> submitAction(IExecutor executor, Consumer<? super IContext> task, IContext ctx, int options) {
+    public static IFuture<?> submitAction(IExecutor executor, Consumer<Object> task, Object ctx, int options) {
         IPromise<Object> promise = newPromise(executor);
         executor.execute(PromiseTask.ofAction(task, ctx, options, promise));
         return promise;
@@ -448,12 +448,12 @@ public class FutureUtils {
         executor.execute(futureTask);
     }
 
-    public static void execute(Executor executor, Consumer<? super IContext> action, IContext ctx) {
+    public static void execute(Executor executor, Consumer<Object> action, Object ctx) {
         ITask futureTask = toTask(action, ctx, 0);
         executor.execute(futureTask);
     }
 
-    public static void execute(IExecutor executor, Consumer<? super IContext> action, IContext ctx, int options) {
+    public static void execute(IExecutor executor, Consumer<Object> action, Object ctx, int options) {
         ITask futureTask = toTask(action, ctx, options);
         executor.execute(futureTask);
     }
@@ -501,9 +501,48 @@ public class FutureUtils {
         return new Task2(action, cancelToken, options);
     }
 
-    public static ITask toTask(Consumer<? super IContext> action, IContext ctx, int options) {
+    public static ITask toTask(Consumer<Object> action, Object ctx, int options) {
         Objects.requireNonNull(action, "action");
         return new Task3(action, ctx, options);
+    }
+
+    // endregion
+
+    // region internal
+
+    /** 获取上下文中的取消令牌 */
+    public static ICancelToken getCancelToken(Object ctx, int options) {
+        if (ctx == null || TaskOptions.isEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
+            return ICancelToken.NONE;
+        }
+        if (ctx instanceof ICancelToken cancelToken) {
+            return cancelToken;
+        }
+        if (ctx instanceof IContext ctx2) {
+            return ctx2.cancelToken();
+        }
+        return ICancelToken.NONE;
+    }
+
+    /** 获取上下文中的取消信号 */
+    public static boolean isCancelRequested(Object ctx, int options) {
+        if (ctx == null || TaskOptions.isEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
+            return false;
+        }
+        if (ctx instanceof ICancelToken cancelToken) {
+            return cancelToken.IsCancelRequested();
+        }
+        if (ctx instanceof IContext ctx2) {
+            return ctx2.cancelToken().IsCancelRequested();
+        }
+        return false;
+    }
+
+    /** 任务是否可以内联执行 */
+    public static boolean isInlinable(Executor e, int options) {
+        return TaskOptions.isEnabled(options, TaskOptions.STAGE_TRY_INLINE)
+                && e instanceof SingleThreadExecutor eventLoop
+                && eventLoop.inEventLoop();
     }
 
     // endregion
@@ -601,11 +640,11 @@ public class FutureUtils {
 
     private static class Task3 implements ITask {
 
-        private Consumer<? super IContext> action;
-        private IContext ctx;
+        private Consumer<Object> action;
+        private Object ctx;
         private final int options;
 
-        public Task3(Consumer<? super IContext> action, IContext ctx, int options) {
+        public Task3(Consumer<Object> action, Object ctx, int options) {
             this.action = action;
             this.ctx = ctx;
             this.options = options;
@@ -618,14 +657,14 @@ public class FutureUtils {
 
         @Override
         public void run() {
-            Consumer<? super IContext> action = this.action;
-            IContext ctx = this.ctx;
+            Consumer<Object> action = this.action;
+            Object ctx = this.ctx;
             {
                 this.action = null;
                 this.ctx = null;
             }
-            if (ctx != null && ctx.cancelToken().IsCancelRequested()) {
-                return; // 抛出异常没有意义，检测信号即可
+            if (isCancelRequested(ctx, options)) {
+                return;
             }
             action.accept(ctx);
         }

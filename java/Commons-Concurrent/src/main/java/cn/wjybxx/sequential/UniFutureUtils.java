@@ -113,13 +113,13 @@ public class UniFutureUtils {
         return promise;
     }
 
-    public static <T> IFuture<T> submitFunc(Executor executor, Function<? super IContext, ? extends T> task, IContext ctx) {
+    public static <T> IFuture<T> submitFunc(Executor executor, Function<Object, ? extends T> task, Object ctx) {
         IPromise<T> promise = newPromise(executor);
         executor.execute(PromiseTask.ofFunction(task, ctx, 0, promise));
         return promise;
     }
 
-    public static <T> IFuture<T> submitFunc(IExecutor executor, Function<? super IContext, ? extends T> task, IContext ctx, int options) {
+    public static <T> IFuture<T> submitFunc(IExecutor executor, Function<Object, ? extends T> task, Object ctx, int options) {
         IPromise<T> promise = newPromise(executor);
         executor.execute(PromiseTask.ofFunction(task, ctx, options, promise));
         return promise;
@@ -151,13 +151,13 @@ public class UniFutureUtils {
         return promise;
     }
 
-    public static IFuture<?> submitAction(Executor executor, Consumer<? super IContext> task, IContext ctx) {
+    public static IFuture<?> submitAction(Executor executor, Consumer<Object> task, Object ctx) {
         IPromise<Object> promise = newPromise(executor);
         executor.execute(PromiseTask.ofAction(task, ctx, 0, promise));
         return promise;
     }
 
-    public static IFuture<?> submitAction(IExecutor executor, Consumer<? super IContext> task, IContext ctx, int options) {
+    public static IFuture<?> submitAction(IExecutor executor, Consumer<Object> task, Object ctx, int options) {
         IPromise<Object> promise = newPromise(executor);
         executor.execute(PromiseTask.ofAction(task, ctx, options, promise));
         return promise;
@@ -176,12 +176,12 @@ public class UniFutureUtils {
         executor.execute(futureTask);
     }
 
-    public static void execute(Executor executor, Consumer<? super IContext> action, IContext ctx) {
+    public static void execute(Executor executor, Consumer<Object> action, Object ctx) {
         ITask futureTask = FutureUtils.toTask(action, ctx, 0);
         executor.execute(futureTask);
     }
 
-    public static void execute(IExecutor executor, Consumer<? super IContext> action, IContext ctx, int options) {
+    public static void execute(IExecutor executor, Consumer<Object> action, Object ctx, int options) {
         ITask futureTask = FutureUtils.toTask(action, ctx, options);
         executor.execute(futureTask);
     }

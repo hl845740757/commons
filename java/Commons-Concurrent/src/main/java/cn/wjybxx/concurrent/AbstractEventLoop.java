@@ -129,7 +129,7 @@ public abstract class AbstractEventLoop implements EventLoop {
     }
 
     @Override
-    public <T> IFuture<T> submitFunc(Function<? super IContext, ? extends T> task, IContext ctx, int options) {
+    public <T> IFuture<T> submitFunc(Function<Object, ? extends T> task, Object ctx, int options) {
         IPromise<T> promise = newPromise();
         execute(PromiseTask.ofFunction(task, ctx, options, promise));
         return promise;
@@ -151,7 +151,7 @@ public abstract class AbstractEventLoop implements EventLoop {
     }
 
     @Override
-    public IFuture<?> submitAction(Consumer<? super IContext> task, IContext ctx, int options) {
+    public IFuture<?> submitAction(Consumer<Object> task, Object ctx, int options) {
         IPromise<Object> promise = newPromise();
         execute(PromiseTask.ofAction(task, ctx, options, promise));
         return promise;

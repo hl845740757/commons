@@ -54,7 +54,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     /** 用户的任务 */
     private Object task;
-    /** 任务上下文 -- {@link IContext}或{@link ICancelToken} */
+    /** 任务上下文 */
     private Object ctx;
     /** 调度选项 */
     protected int options;
@@ -79,14 +79,6 @@ public class PromiseTask<V> implements IFutureTask<V> {
      * @param taskType 任务类型 -- 注意上下文的类型
      */
     protected PromiseTask(Object task, Object ctx, int options, IPromise<V> promise, int taskType) {
-        if (ctx == null) {
-            if (TaskBuilder.isTaskAcceptContext(taskType)) {
-                ctx = IContext.NONE;
-            } else {
-                ctx = ICancelToken.NONE;
-            }
-        }
-
         this.task = Objects.requireNonNull(task, "action");
         this.ctx = ctx;
         this.options = options;
@@ -102,7 +94,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
         return new PromiseTask<>(action, cancelToken, options, promise, TaskBuilder.TYPE_ACTION);
     }
 
-    public static PromiseTask<?> ofAction(Consumer<? super IContext> action, IContext ctx, int options, IPromise<?> promise) {
+    public static PromiseTask<?> ofAction(Consumer<Object> action, Object ctx, int options, IPromise<?> promise) {
         return new PromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION_CTX);
     }
 
@@ -110,7 +102,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
         return new PromiseTask<>(action, cancelToken, options, promise, TaskBuilder.TYPE_FUNC);
     }
 
-    public static <V> PromiseTask<V> ofFunction(Function<? super IContext, ? extends V> action, IContext ctx, int options, IPromise<V> promise) {
+    public static <V> PromiseTask<V> ofFunction(Function<Object, ? extends V> action, Object ctx, int options, IPromise<V> promise) {
         return new PromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_FUNC_CTX);
     }
 
@@ -178,22 +170,14 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     /** 获取关联的取消令牌 */
     protected final ICancelToken getCancelToken() {
-        Object ctx = this.ctx;
-        if (ctx == ICancelToken.NONE || ctx == IContext.NONE) {
-            return ICancelToken.NONE;
-        }
-        if (TaskBuilder.isTaskAcceptContext(getTaskType())) {
-            IContext castCtx = (IContext) ctx;
-            return castCtx.cancelToken();
-        }
-        return (ICancelToken) ctx;
+        return FutureUtils.getCancelToken(ctx, options);
     }
 
     /** 运行分时任务 */
     @SuppressWarnings("unchecked")
     protected final ResultHolder<V> runTimeSharing(boolean first) throws Exception {
         TimeSharingTask<V> task = (TimeSharingTask<V>) this.task;
-        return task.step((IContext) ctx, first);
+        return task.step(ctx, first);
     }
 
     /** 运行其它类型任务 */
@@ -211,12 +195,12 @@ public class PromiseTask<V> implements IFutureTask<V> {
                 return task.call();
             }
             case TaskBuilder.TYPE_FUNC_CTX -> {
-                Function<IContext, V> task = (Function<IContext, V>) this.task;
-                return task.apply((IContext) ctx);
+                Function<Object, V> task = (Function<Object, V>) this.task;
+                return task.apply(ctx);
             }
             case TaskBuilder.TYPE_ACTION_CTX -> {
-                Consumer<IContext> task = (Consumer<IContext>) this.task;
-                task.accept((IContext) ctx);
+                Consumer<Object> task = (Consumer<Object>) this.task;
+                task.accept(ctx);
                 return null;
             }
             default -> {

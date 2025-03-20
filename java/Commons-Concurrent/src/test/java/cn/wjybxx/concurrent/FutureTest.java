@@ -58,10 +58,10 @@ public class FutureTest {
     @Test
     void testCtx() {
         IExecutor executor = immediateExecutor;
-        IContext rootCtx = new Context<>("efg");
-        FutureUtils.submitFunc(executor, (context -> {
-                    Assertions.assertSame(rootCtx, context);
-                    return (String) context.blackboard();
+        String rootCtx = "efg";
+        FutureUtils.submitFunc(executor, (ctx -> {
+                    Assertions.assertSame(rootCtx, ctx);
+                    return (String) ctx;
                 }), rootCtx)
                 .resultNow();
     }
