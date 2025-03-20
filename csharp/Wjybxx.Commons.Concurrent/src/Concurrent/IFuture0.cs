@@ -253,6 +253,44 @@ public interface IFuture
 
     #endregion
 
+    // 不依赖结果的管道函数放该接口
+
+    #region 管道
+
+    /// <summary>
+    /// 该方法表示在当前Future与返回的Future中插入一个异步操作，构建异步管道。
+    /// 
+    /// 该方法返回一个新的Future，它的最终结果与指定的Func返回的Future结果相同。
+    /// 如果当前Future执行失败，则返回的Future将以相同的原因失败，且指定的动作不会执行。
+    /// 如果当前Future执行成功，则当前Future的执行结果将作为指定操作的执行参数。
+    /// 
+    /// </summary>
+    /// <param name="fn"></param>
+    /// <param name="ctx"></param>
+    /// <param name="options"></param>
+    /// <typeparam name="U"></typeparam>
+    /// <returns></returns>
+    IFuture<U> ComposeCall<U>(Func<object, IFuture<U>> fn, object? ctx, int options = 0);
+
+    IFuture<U> ComposeCallAsync<U>(IExecutor executor,
+                                   Func<object, IFuture<U>> fn, object? ctx, int options = 0);
+
+    #endregion
+
+    #region 普通管道
+
+    IFuture<U> ThenCall<U>(Func<object, U> fn, object? ctx, int options = 0);
+
+    IFuture<U> ThenCallAsync<U>(IExecutor executor,
+                                Func<object, U> fn, object? ctx, int options = 0);
+
+    IFuture ThenRun(Action<object> fn, object? ctx, int options = 0);
+
+    IFuture ThenRunAsync(IExecutor executor,
+                            Action<object> fn, object? ctx, int options = 0);
+
+    #endregion
+
     #region util
 
     public static void ThrowIfFailedOrCancelled(IFuture future) {

@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 
@@ -105,6 +106,11 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         _ex = null;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void SetExecutor(IExecutor e) {
+        _executor = e;
+    }
+
     private bool InternalSetResult(T result) {
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
         object preEx = Interlocked.CompareExchange(ref _ex, EX_PUBLISHING, null);
@@ -125,8 +131,8 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return false;
     }
 
-    private bool InternalSetException(Exception exception) {
-        object result = AbstractPromise.WrapException(exception);
+    private bool InternalSetException(object ex) {
+        object result = ex is ExceptionDispatchInfo ? ex : AbstractPromise.WrapException(ex);
         // Debug.Assert(exception != null);
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
         object preEx = Interlocked.CompareExchange(ref _ex, result, null);
@@ -172,9 +178,9 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     /// 获取当前状态
     /// </summary>
     /// <param name="ex">当前的状态信息</param>
-    /// <param name="strict">如果为true，则即将完成的情况也返回计算中</param>
+    /// <param name="strict">是否严格模式；如果为true，则发布结果状态也返回为计算中</param>
     /// <returns></returns>
-    private static int PeekState(object? ex, bool strict = false) {
+    private static int PeekState(object? ex, bool strict = true) {
         if (ex == null) {
             return ST_PENDING;
         }
@@ -206,8 +212,23 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     #region 状态查询
 
     /** 是否表示完成状态 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsDone0(int state) {
         return state >= ST_SUCCESS;
+    }
+
+    /** 是否表示完成状态 -- 不包含发布状态 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsDone0(object? ex) {
+        return ex != null
+               && ex != EX_COMPUTING
+               && ex != EX_PUBLISHING;
+    }
+
+    /** 是否表示成功完成状态 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsSucceed(object? ex) {
+        return ex == EX_SUCCESS;
     }
 
     public TaskStatus Status => (TaskStatus)PeekState(_ex);
@@ -221,8 +242,8 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     public bool IsCompleted => PeekState(_ex) >= ST_SUCCESS;
     public bool IsFailedOrCancelled => PeekState(_ex) >= ST_FAILED;
 
-    protected sealed override bool IsRelaxedCompleted => PeekState(_ex) >= ST_SUCCESS;
-    protected sealed override bool IsStrictlyCompleted => PeekState(_ex, true) >= ST_SUCCESS;
+    internal sealed override bool IsRelaxedCompleted => PeekState(_ex, false) >= ST_SUCCESS;
+    internal sealed override bool IsStrictlyCompleted => PeekState(_ex) >= ST_SUCCESS;
 
     #endregion
 
@@ -321,6 +342,9 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             throw BetterCancellationException.Capture((Exception)_ex!);
         }
         ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex!;
+        if (dispatchInfo.SourceException is CompletionException) {
+            dispatchInfo.Throw();
+        }
         throw new CompletionException(null, ExceptionUtil.RestoreStackTrace(dispatchInfo));
     }
 
@@ -466,6 +490,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         }
     }
 
+    /** 状态机特殊优化 */
     private void PushMoveNextCompletion(IExecutor? executor, Action<object?> continuation, object? state, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsCompleted && executor == null) {
@@ -479,7 +504,934 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #endregion
 
-    #region completion
+    protected virtual Promise<U> NewIncompletePromise<U>(IExecutor? exe) {
+        return new Promise<U>(exe);
+    }
+
+    #region 链式调用
+
+    // 暂不做已完成情况下的优化--降低代码复杂度；另外向已完成的Future添加监听器的情况不常见(至少比例是低的)
+
+    #region ComposeApply
+
+    public IFuture<U> ComposeApply<U>(Func<object, T, IFuture<U>> fn, object? ctx, int options = 0) {
+        return PushUniComposeApply(null, fn, ctx, options);
+    }
+
+    public IFuture<U> ComposeApplyAsync<U>(IExecutor executor, Func<object, T, IFuture<U>> fn, object? ctx, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return PushUniComposeApply(executor, fn, ctx, options);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private IFuture<U> PushUniComposeApply<U>(IExecutor? executor,
+                                              Func<object, T, IFuture<U>> fn, object? ctx, int options) {
+        if (fn == null) throw new ArgumentNullException(nameof(fn));
+        Promise<U> promise = NewIncompletePromise<U>(executor == null ? this.Executor : executor);
+        PushCompletion(new UniComposeApply<T, U>(executor, ctx, options, this, promise, fn));
+        return promise;
+    }
+
+    #endregion
+
+    #region compose-call
+
+    public IFuture<U> ComposeCall<U>(Func<object, IFuture<U>> fn, object? ctx, int options = 0) {
+        return PushComposeCall(null, fn, ctx, options);
+    }
+
+    public IFuture<U> ComposeCallAsync<U>(IExecutor executor, Func<object, IFuture<U>> fn, object? ctx, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return PushComposeCall(executor, fn, ctx, options);
+    }
+
+    private IFuture<U> PushComposeCall<U>(IExecutor? executor,
+                                          Func<object, IFuture<U>> fn, object? ctx, int options) {
+        if (fn == null) throw new ArgumentNullException(nameof(fn));
+        Promise<U> promise = NewIncompletePromise<U>(executor == null ? this.Executor : executor);
+        PushCompletion(new UniComposeCall<T, U>(executor, ctx, options, this, promise, fn));
+        return promise;
+    }
+
+    #endregion
+
+    #region ComposeCatching
+
+    public IFuture<T> ComposeCatching<X>(Func<object, X, IFuture<T>> fallback, object? ctx, int options = 0) where X : Exception {
+        return PushComposeCatching(null, fallback, ctx, options);
+    }
+
+    public IFuture<T> ComposeCatchingAsync<X>(IExecutor executor, Func<object, X, IFuture<T>> fallback, object? ctx, int options = 0) where X : Exception {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return PushComposeCatching(executor, fallback, ctx, options);
+    }
+
+    private IFuture<T> PushComposeCatching<X>(IExecutor? executor,
+                                              Func<object, X, IFuture<T>> fallback, object? ctx, int options) where X : Exception {
+        if (fallback == null) throw new ArgumentNullException(nameof(fallback));
+        Promise<T> promise = NewIncompletePromise<T>(executor == null ? this.Executor : executor);
+        PushCompletion(new UniComposeCatching<X, T>(executor, ctx, options, this, promise, fallback));
+        return promise;
+    }
+
+    #endregion
+
+    #region ComposeHandle
+
+    public IFuture<U> ComposeHandle<U>(Func<object, T, Exception, IFuture<U>> fn, object? ctx, int options = 0) {
+        return PushComposeHandle(null, fn, ctx, options);
+    }
+
+    public IFuture<U> ComposeHandleAsync<U>(IExecutor executor, Func<object, T, Exception, IFuture<U>> fn, object? ctx, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return PushComposeHandle(executor, fn, ctx, options);
+    }
+
+    private IFuture<U> PushComposeHandle<U>(IExecutor? executor,
+                                            Func<object, T, Exception, IFuture<U>> fn, object? ctx, int options) {
+        if (fn == null) throw new ArgumentNullException(nameof(fn));
+        Promise<U> promise = NewIncompletePromise<U>(executor == null ? this.Executor : executor);
+        PushCompletion(new UniComposeHandle<T, U>(executor, ctx, options, this, promise, fn));
+        return promise;
+    }
+
+    #endregion
+
+    #region uni-apply
+
+    public IFuture<U> ThenApply<U>(Func<object, T, U> fn, object? ctx, int options = 0) {
+        return PushUniApply(null, fn, ctx, options);
+    }
+
+    public IFuture<U> ThenApplyAsync<U>(IExecutor executor, Func<object, T, U> fn, object? ctx, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return PushUniApply(executor, fn, ctx, options);
+    }
+
+
+    private IFuture<U> PushUniApply<U>(IExecutor? executor, Func<object, T, U> fn, object? ctx, int options) {
+        if (fn == null) throw new ArgumentNullException(nameof(fn));
+        Promise<U> promise = NewIncompletePromise<U>(executor == null ? this.Executor : executor);
+        PushCompletion(new UniApply<T, U>(executor, ctx, options, this, promise, fn));
+        return promise;
+    }
+
+    #endregion
+
+    #region uni-accpt
+
+    public IFuture ThenAccept(Action<object, T> fn, object? ctx, int options = 0) {
+        return PushUniAccept(null, fn, ctx, options);
+    }
+
+    public IFuture ThenAcceptAsync(IExecutor executor, Action<object, T> fn, object? ctx, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return PushUniAccept(executor, fn, ctx, options);
+    }
+
+    private IFuture PushUniAccept(IExecutor? executor, Action<object, T> fn, object? ctx, int options) {
+        if (fn == null) throw new ArgumentNullException(nameof(fn));
+        Promise<int> promise = NewIncompletePromise<int>(executor == null ? this.Executor : executor);
+        PushCompletion(new UniAccept<T>(executor, ctx, options, this, promise, fn));
+        return promise;
+    }
+
+    #endregion
+
+    #region uni-call
+
+    public IFuture<U> ThenCall<U>(Func<object, U> fn, object? ctx, int options = 0) {
+        return PushUniCall(null, fn, ctx, options);
+    }
+
+    public IFuture<U> ThenCallAsync<U>(IExecutor executor, Func<object, U> fn, object? ctx, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return PushUniCall(executor, fn, ctx, options);
+    }
+
+    private IFuture<U> PushUniCall<U>(IExecutor? executor, Func<object, U> fn, object? ctx, int options) {
+        if (fn == null) throw new ArgumentNullException(nameof(fn));
+        Promise<U> promise = NewIncompletePromise<U>(executor == null ? this.Executor : executor);
+        PushCompletion(new UniCall<T, U>(executor, ctx, options, this, promise, fn));
+        return promise;
+    }
+
+    #endregion
+
+    #region uni-run
+
+    public IFuture ThenRun(Action<object> fn, object? ctx, int options = 0) {
+        return PushUniRun(null, fn, ctx, options);
+    }
+
+    public IFuture ThenRunAsync(IExecutor executor, Action<object> fn, object? ctx, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return PushUniRun(executor, fn, ctx, options);
+    }
+
+    private IFuture PushUniRun(IExecutor? executor, Action<object> fn, object? ctx, int options) {
+        if (fn == null) throw new ArgumentNullException(nameof(fn));
+        Promise<int> promise = NewIncompletePromise<int>(executor == null ? this.Executor : executor);
+        PushCompletion(new UniRun<T>(executor, ctx, options, this, promise, fn));
+        return promise;
+    }
+
+    #endregion
+
+    #region uni-catch
+
+    public IFuture<T> Catching<X>(Func<object, X, T> fallback, object? ctx, int options = 0) where X : Exception {
+        return PushUniCatching(null, fallback, ctx, options);
+    }
+
+    public IFuture<T> CatchingAsync<X>(IExecutor executor, Func<object, X, T> fallback, object? ctx, int options = 0) where X : Exception {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return PushUniCatching(executor, fallback, ctx, options);
+    }
+
+    private IFuture<T> PushUniCatching<X>(IExecutor? executor, Func<object, X, T> fallback, object? ctx, int options) where X : Exception {
+        if (fallback == null) throw new ArgumentNullException(nameof(fallback));
+        Promise<T> promise = NewIncompletePromise<T>(executor == null ? this.Executor : executor);
+        PushCompletion(new UniCatching<X, T>(executor, ctx, options, this, promise, fallback));
+        return promise;
+    }
+
+    #endregion
+
+    #region uni-handle
+
+    public IFuture<U> Handle<U>(Func<object, T, Exception, U> fn, object? ctx, int options = 0) {
+        return PushUniHandle(null, fn, ctx, options);
+    }
+
+    public IFuture<U> HandleAsync<U>(IExecutor executor, Func<object, T, Exception, U> fn, object? ctx, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return PushUniHandle(executor, fn, ctx, options);
+    }
+
+    private IFuture<U> PushUniHandle<U>(IExecutor? executor, Func<object, T, Exception, U> fn, object? ctx, int options) {
+        if (fn == null) throw new ArgumentNullException(nameof(fn));
+        Promise<U> promise = NewIncompletePromise<U>(executor == null ? this.Executor : executor);
+        PushCompletion(new UniHandle<T, U>(executor, ctx, options, this, promise, fn));
+        return promise;
+    }
+
+    #endregion
+
+    #region uni-when-complete
+
+    public IFuture<T> WhenComplete(Action<object, T, Exception> fn, object? ctx, int options = 0) {
+        return PushUniWhenComplete(null, fn, ctx, options);
+    }
+
+    public IFuture<T> WhenComplete(IExecutor executor, Action<object, T, Exception> fn, object? ctx, int options = 0) {
+        if (executor == null) throw new ArgumentNullException(nameof(executor));
+        return PushUniWhenComplete(executor, fn, ctx, options);
+    }
+
+    private IFuture<T> PushUniWhenComplete(IExecutor? executor, Action<object, T, Exception> fn, object? ctx, int options) {
+        if (fn == null) throw new ArgumentNullException(nameof(fn));
+        Promise<T> promise = NewIncompletePromise<T>(executor == null ? this.Executor : executor);
+        PushCompletion(new UniWhenComplete<T>(executor, ctx, options, this, promise, fn));
+        return promise;
+    }
+
+    #endregion
+
+    #endregion
+
+    #region 开放给completion的方法
+
+    // 开放给Completion的方法
+
+    private bool CompleteNull() {
+        return InternalSetResult(default);
+    }
+
+    private bool CompleteValue(T value) {
+        return InternalSetResult(value);
+    }
+
+    private bool CompleteCancelled(ICancelToken cancelToken) {
+        int cancelCode = cancelToken.CancelCode;
+        Debug.Assert(cancelCode > 0);
+        return InternalSetException(StacklessCancellationException.InstOf(cancelCode));
+    }
+
+    /**
+     * 如果一个{@link Completion}在计算中出现异常，则使用该方法使目标进入完成状态。
+     * (出现新的异常)
+     */
+    private bool CompleteThrowable(Exception x) {
+        FutureLogger.LogCause(x);
+        // 统一封装为CompletionException
+        if (x is not CompletionException) {
+            x = new CompletionException(null, x);
+        }
+        return InternalSetException(x);
+    }
+
+    /**
+     * 使用依赖项的结果进入完成状态，通常表示当前{@link Completion}只是一个简单的中继。
+     */
+    private bool CompleteRelay(T r, object ex) {
+        if (ex == EX_SUCCESS) {
+            return InternalSetResult(r);
+        } else {
+            return InternalSetException(ex);
+        }
+    }
+
+    /**
+     * 使用依赖项的异常结果进入完成状态，通常表示当前{@link Completion}只是一个简单的中继。
+     * 在已知依赖项异常完成的时候可以调用该方法，减少开销。
+     * 这里实现和{@link CompletableFuture}不同，这里保留原始结果，不强制将异常转换为{@link CompletionException}。
+     * 这样有助与用户捕获正确的异常类型，而不是一个奇怪的CompletionException
+     */
+    private bool CompleteRelayThrowable(object r) {
+        return InternalSetException(r);
+    }
+
+    #endregion
+
+    private abstract class UniCompletion<V, U> : Completion
+    {
+        protected IExecutor? executor;
+        protected object? ctx;
+        protected int options;
+        protected Promise<V> input;
+        protected Promise<U> output;
+
+        protected UniCompletion(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output) {
+            this.executor = executor;
+            this.ctx = ctx;
+            this.options = options;
+            this.input = input;
+            this.output = output;
+        }
+
+        public override int Options {
+            get => options;
+            set => options = value;
+        }
+
+        public bool Claim() {
+            IExecutor? e = this.executor;
+            if (e == CLAIMED) {
+                return true;
+            }
+            if (!output.TrySetComputing()) { // 被用户取消
+                throw StacklessCancellationException.Default;
+            }
+            this.executor = CLAIMED;
+            if (e != null) {
+                return TryInline(this, e, options);
+            }
+            return true;
+        }
+    }
+
+    #region compose-x
+
+    private static bool TryTransferTo<U>(IFuture<U> input, Promise<U> output) {
+        if (input is Promise<U> promise) {
+            object ex = promise._ex;
+            if (IsDone0(ex)) {
+                return output.CompleteRelay(promise._result, ex!);
+            }
+            return false;
+        }
+        // 有可能是Readonly或其它实现
+        TaskStatus state = input.Status;
+        switch (state) {
+            case TaskStatus.Pending:
+            case TaskStatus.Computing: {
+                return false;
+            }
+            case TaskStatus.Success: {
+                return output.CompleteValue(input.ResultNow());
+            }
+            case TaskStatus.Failed:
+            case TaskStatus.Cancelled: {
+                Exception ex = input.ExceptionNow(false);
+                return output.CompleteRelayThrowable(ex);
+            }
+            default: {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    private class UniComposeApply<V, U> : UniCompletion<V, U>
+    {
+        Func<object, V, IFuture<U>> fn;
+
+        public UniComposeApply(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output,
+                               Func<object, V, IFuture<U>> fn)
+            : base(executor, ctx, options, input, output) {
+            this.fn = fn;
+        }
+
+        public override AbstractPromise? TryFire(int mode) {
+            Promise<V> input = this.input;
+            Promise<U> output = this.output;
+            object ctx = this.ctx;
+            bool setCompleted;
+            {
+                if (output.IsCompleted) {
+                    setCompleted = false;
+                    goto outer;
+                }
+                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                if (cancelToken.IsCancelRequested) {
+                    setCompleted = output.CompleteCancelled(cancelToken);
+                    goto outer;
+                }
+                object rawEx = input._ex!;
+                if (!IsSucceed(rawEx)) {
+                    setCompleted = output.CompleteRelayThrowable(rawEx);
+                    goto outer;
+                }
+                try {
+                    if (mode <= 0 && !Claim()) {
+                        return null; // 等待下次执行
+                    }
+                    IFuture<U> relay = fn(ctx, input._result);
+                    setCompleted = TryTransferTo(relay, output);
+                    if (!setCompleted) { // 添加监听
+                        Executors.SetPromise(output, relay);
+                    }
+                }
+                catch (Exception e) {
+                    setCompleted = output.CompleteThrowable(e);
+                }
+            }
+            outer:
+            // help gc
+            this.ctx = null;
+            this.input = null!;
+            this.output = null!;
+            this.fn = null!;
+            return PostFire(output, mode, setCompleted);
+        }
+    }
+
+    private class UniComposeCall<V, U> : UniCompletion<V, U>
+    {
+        Func<object, IFuture<U>> fn;
+
+        public UniComposeCall(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output,
+                              Func<object, IFuture<U>> fn)
+            : base(executor, ctx, options, input, output) {
+            this.fn = fn;
+        }
+
+        public override AbstractPromise? TryFire(int mode) {
+            Promise<V> input = this.input;
+            Promise<U> output = this.output;
+            object ctx = this.ctx;
+            bool setCompleted;
+            {
+                if (output.IsCompleted) {
+                    setCompleted = false;
+                    goto outer;
+                }
+                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                if (cancelToken.IsCancelRequested) {
+                    setCompleted = output.CompleteCancelled(cancelToken);
+                    goto outer;
+                }
+                object rawEx = input._ex!;
+                if (!IsSucceed(rawEx)) {
+                    setCompleted = output.CompleteRelayThrowable(rawEx);
+                    goto outer;
+                }
+                try {
+                    if (mode <= 0 && !Claim()) {
+                        return null; // 等待下次执行
+                    }
+                    IFuture<U> relay = fn(ctx);
+                    setCompleted = TryTransferTo(relay, output);
+                    if (!setCompleted) { // 添加监听
+                        Executors.SetPromise(output, relay);
+                    }
+                }
+                catch (Exception e) {
+                    setCompleted = output.CompleteThrowable(e);
+                }
+            }
+            outer:
+            // help gc
+            this.ctx = null;
+            this.input = null!;
+            this.output = null!;
+            this.fn = null!;
+            return PostFire(output, mode, setCompleted);
+        }
+    }
+
+    private class UniComposeCatching<X, V> : UniCompletion<V, V> where X : Exception
+    {
+        Func<object, X, IFuture<V>> fn;
+
+        public UniComposeCatching(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<V> output,
+                                  Func<object, X, IFuture<V>> fn)
+            : base(executor, ctx, options, input, output) {
+            this.fn = fn;
+        }
+
+        public override AbstractPromise? TryFire(int mode) {
+            Promise<V> input = this.input;
+            Promise<V> output = this.output;
+            object ctx = this.ctx;
+            bool setCompleted;
+            {
+                if (output.IsCompleted) {
+                    setCompleted = false;
+                    goto outer;
+                }
+                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                if (cancelToken.IsCancelRequested) {
+                    setCompleted = output.CompleteCancelled(cancelToken);
+                    goto outer;
+                }
+                object rawEx = input._ex!;
+                X ex; // 这里暂不恢复堆栈
+                if (IsSucceed(rawEx) || (ex = UnwrapException(rawEx) as X) == null) {
+                    setCompleted = output.CompleteRelay(input._result, rawEx);
+                    goto outer;
+                }
+                try {
+                    if (mode <= 0 && !Claim()) {
+                        return null; // 等待下次执行
+                    }
+                    IFuture<V> relay = fn(ctx, ex);
+                    setCompleted = TryTransferTo(relay, output);
+                    if (!setCompleted) { // 添加监听
+                        Executors.SetPromise(output, relay);
+                    }
+                }
+                catch (Exception e) {
+                    setCompleted = output.CompleteThrowable(e);
+                }
+            }
+            outer:
+            // help gc
+            this.ctx = null;
+            this.input = null!;
+            this.output = null!;
+            this.fn = null!;
+            return PostFire(output, mode, setCompleted);
+        }
+    }
+
+    private class UniComposeHandle<V, U> : UniCompletion<V, U>
+    {
+        Func<object, V, Exception, IFuture<U>> fn;
+
+        public UniComposeHandle(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output,
+                                Func<object, V, Exception, IFuture<U>> fn)
+            : base(executor, ctx, options, input, output) {
+            this.fn = fn;
+        }
+
+        public override AbstractPromise? TryFire(int mode) {
+            Promise<V> input = this.input;
+            Promise<U> output = this.output;
+            object ctx = this.ctx;
+            bool setCompleted;
+            {
+                if (output.IsCompleted) {
+                    setCompleted = false;
+                    goto outer;
+                }
+                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                if (cancelToken.IsCancelRequested) {
+                    setCompleted = output.CompleteCancelled(cancelToken);
+                    goto outer;
+                }
+                try {
+                    if (mode <= 0 && !Claim()) {
+                        return null; // 等待下次执行
+                    }
+                    object rawEx = input._ex!;
+                    Exception ex = IsSucceed(rawEx) ? null : UnwrapException(rawEx);
+                    IFuture<U> relay = fn(ctx, input._result, ex);
+                    setCompleted = TryTransferTo(relay, output);
+                    if (!setCompleted) { // 添加监听
+                        Executors.SetPromise(output, relay);
+                    }
+                }
+                catch (Exception e) {
+                    setCompleted = output.CompleteThrowable(e);
+                }
+            }
+            outer:
+            // help gc
+            this.ctx = null;
+            this.input = null!;
+            this.output = null!;
+            this.fn = null!;
+            return PostFire(output, mode, setCompleted);
+        }
+    }
+
+    #endregion
+
+    #region uni-x
+
+    private class UniApply<V, U> : UniCompletion<V, U>
+    {
+        Func<object, V, U> fn;
+
+        public UniApply(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output,
+                        Func<object, V, U> fn)
+            : base(executor, ctx, options, input, output) {
+            this.fn = fn;
+        }
+
+        public override AbstractPromise? TryFire(int mode) {
+            Promise<V> input = this.input;
+            Promise<U> output = this.output;
+            object ctx = this.ctx;
+            bool setCompleted;
+            {
+                if (output.IsCompleted) {
+                    setCompleted = false;
+                    goto outer;
+                }
+                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                if (cancelToken.IsCancelRequested) {
+                    setCompleted = output.CompleteCancelled(cancelToken);
+                    goto outer;
+                }
+                object rawEx = input._ex!;
+                if (!IsSucceed(rawEx)) {
+                    setCompleted = output.CompleteRelayThrowable(rawEx);
+                    goto outer;
+                }
+                try {
+                    if (mode <= 0 && !Claim()) {
+                        return null; // 等待下次执行
+                    }
+                    setCompleted = output.CompleteValue(fn(ctx, input._result));
+                }
+                catch (Exception e) {
+                    setCompleted = output.CompleteThrowable(e);
+                }
+            }
+            outer:
+            // help gc
+            this.ctx = null;
+            this.input = null!;
+            this.output = null!;
+            this.fn = null!;
+            return PostFire(output, mode, setCompleted);
+        }
+    }
+
+    private class UniAccept<V> : UniCompletion<V, int>
+    {
+        Action<object, V> fn;
+
+        public UniAccept(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<int> output,
+                         Action<object, V> fn)
+            : base(executor, ctx, options, input, output) {
+            this.fn = fn;
+        }
+
+        public override AbstractPromise? TryFire(int mode) {
+            Promise<V> input = this.input;
+            Promise<int> output = this.output;
+            object ctx = this.ctx;
+            bool setCompleted;
+            {
+                if (output.IsCompleted) {
+                    setCompleted = false;
+                    goto outer;
+                }
+                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                if (cancelToken.IsCancelRequested) {
+                    setCompleted = output.CompleteCancelled(cancelToken);
+                    goto outer;
+                }
+                object rawEx = input._ex!;
+                if (!IsSucceed(rawEx)) {
+                    setCompleted = output.CompleteRelayThrowable(rawEx);
+                    goto outer;
+                }
+                try {
+                    if (mode <= 0 && !Claim()) {
+                        return null; // 等待下次执行
+                    }
+                    fn(ctx, input._result);
+                    setCompleted = output.CompleteNull();
+                }
+                catch (Exception e) {
+                    setCompleted = output.CompleteThrowable(e);
+                }
+            }
+            outer:
+            // help gc
+            this.ctx = null;
+            this.input = null!;
+            this.output = null!;
+            this.fn = null!;
+            return PostFire(output, mode, setCompleted);
+        }
+    }
+
+    private class UniCall<V, U> : UniCompletion<V, U>
+    {
+        Func<object, U> fn;
+
+        public UniCall(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output,
+                       Func<object, U> fn)
+            : base(executor, ctx, options, input, output) {
+            this.fn = fn;
+        }
+
+        public override AbstractPromise? TryFire(int mode) {
+            Promise<V> input = this.input;
+            Promise<U> output = this.output;
+            object ctx = this.ctx;
+            bool setCompleted;
+            {
+                if (output.IsCompleted) {
+                    setCompleted = false;
+                    goto outer;
+                }
+                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                if (cancelToken.IsCancelRequested) {
+                    setCompleted = output.CompleteCancelled(cancelToken);
+                    goto outer;
+                }
+                object rawEx = input._ex!;
+                if (!IsSucceed(rawEx)) {
+                    setCompleted = output.CompleteRelayThrowable(rawEx);
+                    goto outer;
+                }
+                try {
+                    if (mode <= 0 && !Claim()) {
+                        return null; // 等待下次执行
+                    }
+                    setCompleted = output.CompleteValue(fn(ctx));
+                }
+                catch (Exception e) {
+                    setCompleted = output.CompleteThrowable(e);
+                }
+            }
+            outer:
+            // help gc
+            this.ctx = null;
+            this.input = null!;
+            this.output = null!;
+            this.fn = null!;
+            return PostFire(output, mode, setCompleted);
+        }
+    }
+
+    private class UniRun<V> : UniCompletion<V, int>
+    {
+        Action<object> fn;
+
+        public UniRun(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<int> output,
+                      Action<object> fn)
+            : base(executor, ctx, options, input, output) {
+            this.fn = fn;
+        }
+
+        public override AbstractPromise? TryFire(int mode) {
+            Promise<V> input = this.input;
+            Promise<int> output = this.output;
+            object ctx = this.ctx;
+            bool setCompleted;
+            {
+                if (output.IsCompleted) {
+                    setCompleted = false;
+                    goto outer;
+                }
+                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                if (cancelToken.IsCancelRequested) {
+                    setCompleted = output.CompleteCancelled(cancelToken);
+                    goto outer;
+                }
+                object rawEx = input._ex!;
+                if (!IsSucceed(rawEx)) {
+                    setCompleted = output.CompleteRelayThrowable(rawEx);
+                    goto outer;
+                }
+                try {
+                    if (mode <= 0 && !Claim()) {
+                        return null; // 等待下次执行
+                    }
+                    fn(ctx);
+                    setCompleted = output.CompleteNull();
+                }
+                catch (Exception e) {
+                    setCompleted = output.CompleteThrowable(e);
+                }
+            }
+            outer:
+            // help gc
+            this.ctx = null;
+            this.input = null!;
+            this.output = null!;
+            this.fn = null!;
+            return PostFire(output, mode, setCompleted);
+        }
+    }
+
+    private class UniCatching<X, V> : UniCompletion<V, V> where X : Exception
+    {
+        Func<object, X, V> fn;
+
+        public UniCatching(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<V> output,
+                           Func<object, X, V> fn)
+            : base(executor, ctx, options, input, output) {
+            this.fn = fn;
+        }
+
+        public override AbstractPromise? TryFire(int mode) {
+            Promise<V> input = this.input;
+            Promise<V> output = this.output;
+            object ctx = this.ctx;
+            bool setCompleted;
+            {
+                if (output.IsCompleted) {
+                    setCompleted = false;
+                    goto outer;
+                }
+                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                if (cancelToken.IsCancelRequested) {
+                    setCompleted = output.CompleteCancelled(cancelToken);
+                    goto outer;
+                }
+                object rawEx = input._ex!;
+                X ex; // 这里暂不恢复堆栈
+                if (IsSucceed(rawEx) || (ex = UnwrapException(rawEx) as X) == null) {
+                    setCompleted = output.CompleteRelay(input._result, rawEx);
+                    goto outer;
+                }
+                try {
+                    if (mode <= 0 && !Claim()) {
+                        return null; // 等待下次执行
+                    }
+                    setCompleted = output.CompleteValue(fn(ctx, ex));
+                }
+                catch (Exception e) {
+                    setCompleted = output.CompleteThrowable(e);
+                }
+            }
+            outer:
+            // help gc
+            this.ctx = null;
+            this.input = null!;
+            this.output = null!;
+            this.fn = null!;
+            return PostFire(output, mode, setCompleted);
+        }
+    }
+
+    private class UniHandle<V, U> : UniCompletion<V, U>
+    {
+        Func<object, V, Exception, U> fn;
+
+        public UniHandle(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<U> output,
+                         Func<object, V, Exception, U> fn)
+            : base(executor, ctx, options, input, output) {
+            this.fn = fn;
+        }
+
+        public override AbstractPromise? TryFire(int mode) {
+            Promise<V> input = this.input;
+            Promise<U> output = this.output;
+            object ctx = this.ctx;
+            bool setCompleted;
+            {
+                if (output.IsCompleted) {
+                    setCompleted = false;
+                    goto outer;
+                }
+                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                if (cancelToken.IsCancelRequested) {
+                    setCompleted = output.CompleteCancelled(cancelToken);
+                    goto outer;
+                }
+                try {
+                    if (mode <= 0 && !Claim()) {
+                        return null; // 等待下次执行
+                    }
+                    object rawEx = input._ex!;
+                    Exception ex = IsSucceed(rawEx) ? null : UnwrapException(rawEx);
+                    setCompleted = output.CompleteValue(fn(ctx, input._result, ex));
+                }
+                catch (Exception e) {
+                    setCompleted = output.CompleteThrowable(e);
+                }
+            }
+            outer:
+            // help gc
+            this.ctx = null;
+            this.input = null!;
+            this.output = null!;
+            this.fn = null!;
+            return PostFire(output, mode, setCompleted);
+        }
+    }
+
+    private class UniWhenComplete<V> : UniCompletion<V, V>
+    {
+        Action<object, V, Exception> fn;
+
+        public UniWhenComplete(IExecutor? executor, object? ctx, int options, Promise<V> input, Promise<V> output,
+                               Action<object, V, Exception> fn)
+            : base(executor, ctx, options, input, output) {
+            this.fn = fn;
+        }
+
+        public override AbstractPromise? TryFire(int mode) {
+            Promise<V> input = this.input;
+            Promise<V> output = this.output;
+            object ctx = this.ctx;
+            bool setCompleted;
+            {
+                if (output.IsCompleted) {
+                    setCompleted = false;
+                    goto outer;
+                }
+                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                if (cancelToken.IsCancelRequested) {
+                    setCompleted = output.CompleteCancelled(cancelToken);
+                    goto outer;
+                }
+                try {
+                    if (mode <= 0 && !Claim()) {
+                        return null; // 等待下次执行
+                    }
+                    object rawEx = input._ex!;
+                    Exception ex = IsSucceed(rawEx) ? null : UnwrapException(rawEx);
+                    fn(ctx, input._result, ex);
+                    setCompleted = output.CompleteRelay(input._result, rawEx);
+                }
+                catch (Exception e) {
+                    FutureLogger.LogCause(e, "UniWhenComplete caught an exception");
+                    setCompleted = output.CompleteRelay(input._result, input._ex!);
+                }
+            }
+            outer:
+            // help gc
+            this.ctx = null;
+            this.input = null!;
+            this.output = null!;
+            this.fn = null!;
+            return PostFire(output, mode, setCompleted);
+        }
+    }
+
+    #endregion
+
+    #region on-complete
 
     private abstract class UniOnCompleted : Completion
     {
@@ -524,7 +1476,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             this.action = action;
         }
 
-        protected internal override AbstractPromise? TryFire(int mode) {
+        public override AbstractPromise? TryFire(int mode) {
             Promise<T>? input = this.input;
             {
                 // 异步模式下已经claim
@@ -567,10 +1519,10 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             this.state = state;
         }
 
-        protected internal override AbstractPromise? TryFire(int mode) {
+        public override AbstractPromise? TryFire(int mode) {
             Promise<T>? input = this.input;
             {
-                if (IsCancelRequested(state, options)) {
+                if (Executors.IsCancelRequested(state, options)) {
                     goto outer;
                 }
                 // 异步模式下已经claim

@@ -139,5 +139,97 @@ public class ForwardFuture<T> : IFuture<T>
     }
 
     #endregion
+
+    #region MyRegion
+
+    public IFuture<U> ComposeCall<U>(Func<object, IFuture<U>> fn, object? ctx, int options = 0) {
+        return future.ComposeCall(fn, ctx, options);
+    }
+
+    public IFuture<U> ComposeCallAsync<U>(IExecutor executor, Func<object, IFuture<U>> fn, object? ctx, int options = 0) {
+        return future.ComposeCallAsync(executor, fn, ctx, options);
+    }
+
+    public IFuture<U> ThenCall<U>(Func<object, U> fn, object? ctx, int options = 0) {
+        return future.ThenCall(fn, ctx, options);
+    }
+
+    public IFuture<U> ThenCallAsync<U>(IExecutor executor, Func<object, U> fn, object? ctx, int options = 0) {
+        return future.ThenCallAsync(executor, fn, ctx, options);
+    }
+
+    public IFuture ThenRun(Action<object> fn, object? ctx, int options = 0) {
+        return future.ThenRun(fn, ctx, options);
+    }
+
+    public IFuture ThenRunAsync(IExecutor executor, Action<object> fn, object? ctx, int options = 0) {
+        return future.ThenRunAsync(executor, fn, ctx, options);
+    }
+
+    public IFuture<U> ComposeApply<U>(Func<object, T, IFuture<U>> fn, object? ctx, int options = 0) {
+        return future.ComposeApply(fn, ctx, options);
+    }
+
+    public IFuture<U> ComposeApplyAsync<U>(IExecutor executor, Func<object, T, IFuture<U>> fn, object? ctx, int options = 0) {
+        return future.ComposeApplyAsync(executor, fn, ctx, options);
+    }
+
+    public IFuture<T> ComposeCatching<X>(Func<object, X, IFuture<T>> fallback, object? ctx, int options = 0) where X : Exception {
+        return future.ComposeCatching(fallback, ctx, options);
+    }
+
+    public IFuture<T> ComposeCatchingAsync<X>(IExecutor executor, Func<object, X, IFuture<T>> fallback, object? ctx, int options = 0) where X : Exception {
+        return future.ComposeCatchingAsync(executor, fallback, ctx, options);
+    }
+
+    public IFuture<U> ComposeHandle<U>(Func<object, T, Exception, IFuture<U>> fn, object? ctx, int options = 0) {
+        return future.ComposeHandle(fn, ctx, options);
+    }
+
+    public IFuture<U> ComposeHandleAsync<U>(IExecutor executor, Func<object, T, Exception, IFuture<U>> fn, object? ctx, int options = 0) {
+        return future.ComposeHandleAsync(executor, fn, ctx, options);
+    }
+
+    public IFuture<U> ThenApply<U>(Func<object, T, U> fn, object? ctx, int options = 0) {
+        return future.ThenApply(fn, ctx, options);
+    }
+
+    public IFuture<U> ThenApplyAsync<U>(IExecutor executor, Func<object, T, U> fn, object? ctx, int options = 0) {
+        return future.ThenApplyAsync(executor, fn, ctx, options);
+    }
+
+    public IFuture ThenAccept(Action<object, T> fn, object? ctx, int options = 0) {
+        return future.ThenAccept(fn, ctx, options);
+    }
+
+    public IFuture ThenAcceptAsync(IExecutor executor, Action<object, T> fn, object? ctx, int options = 0) {
+        return future.ThenAcceptAsync(executor, fn, ctx, options);
+    }
+
+    public IFuture<T> Catching<X>(Func<object, X, T> fallback, object? ctx, int options = 0) where X : Exception {
+        return future.Catching(fallback, ctx, options);
+    }
+
+    public IFuture<T> CatchingAsync<X>(IExecutor executor, Func<object, X, T> fallback, object? ctx, int options = 0) where X : Exception {
+        return future.CatchingAsync(executor, fallback, ctx, options);
+    }
+
+    public IFuture<U> Handle<U>(Func<object, T, Exception, U> fn, object? ctx, int options = 0) {
+        return future.Handle(fn, ctx, options);
+    }
+
+    public IFuture<U> HandleAsync<U>(IExecutor executor, Func<object, T, Exception, U> fn, object? ctx, int options = 0) {
+        return future.HandleAsync(executor, fn, ctx, options);
+    }
+
+    public IFuture<T> WhenComplete(Action<object, T, Exception> fn, object? ctx, int options = 0) {
+        return future.WhenComplete(fn, ctx, options);
+    }
+
+    public IFuture<T> WhenComplete(IExecutor executor, Action<object, T, Exception> fn, object? ctx, int options = 0) {
+        return future.WhenComplete(executor, fn, ctx, options);
+    }
+
+    #endregion
 }
 }

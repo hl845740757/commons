@@ -38,19 +38,19 @@ public abstract class AbstractPromise
     /// 当前对象上的所有监听器，使用栈方式存储
     /// 如果{@code stack}为{@link #TOMBSTONE}，表明当前Future已完成，且正在进行通知，或已通知完毕。
     /// </summary>
-    protected volatile Completion? stack;
+    internal volatile Completion? stack;
 
     /// <summary>
     /// 是否处于宽松完成状态-结果已可获取，或即将可用。
     /// 处于发布结果中也可返回true。
     /// </summary>
-    protected abstract bool IsRelaxedCompleted { get; }
+    internal abstract bool IsRelaxedCompleted { get; }
 
     /// <summary>
     /// 是否已严格完成-结果已可获取.
     /// 如果存在中间状态，则需要返回false。
     /// </summary>
-    protected abstract bool IsStrictlyCompleted { get; }
+    internal abstract bool IsStrictlyCompleted { get; }
 
     #region state
 
@@ -114,7 +114,7 @@ public abstract class AbstractPromise
     /// </summary>
     /// <param name="newHead"></param>
     /// <returns>压栈成功则返回true，否则返回false</returns>
-    protected bool PushCompletion(Completion newHead) {
+    internal bool PushCompletion(Completion newHead) {
         if (IsStrictlyCompleted) {
             newHead.TryFire(SYNC);
             return false;
@@ -205,9 +205,10 @@ public abstract class AbstractPromise
 
     #region util
 
-    protected static bool TryInline(Completion completion, IExecutor e, int options) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (IsInlinable(e, options)) {
+        if (Executors.IsInlinable(e, options)) {
             return true;
         }
         e.Execute(completion);
@@ -215,43 +216,18 @@ public abstract class AbstractPromise
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool IsInlinable(IExecutor e, int options) {
-        return TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
-               && e is ISingleThreadExecutor eventLoop
-               && eventLoop.InEventLoop();
+    internal static Promise<U>? PostFire<U>(Promise<U> output, int mode, bool setCompleted) {
+        if (!setCompleted) { // 未竞争成功
+            return null;
+        }
+        if (mode < 0) { // 嵌套模式
+            return output;
+        }
+        PostComplete(output);
+        return null;
     }
-
-    protected internal static bool IsCancelRequested(object? ctx, int options) {
-        if (ctx == null || TaskOptions.IsEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
-            return false;
-        }
-        if (ctx is ICancelToken cts) {
-            return cts.IsCancelRequested;
-        }
-        if (ctx is IContext ctx2) {
-            return ctx2.CancelToken.IsCancelRequested;
-        }
-        return false;
-    }
-
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static object WrapException(Exception ex) {
-        if (ex == null) throw new ArgumentNullException(nameof(ex));
-        if (ex is OperationCanceledException) {
-            return ex;
-        }
-        return ExceptionDispatchInfo.Capture(ex);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static object WrapException(ExceptionDispatchInfo ex) {
-        if (ex == null) throw new ArgumentNullException(nameof(ex));
-        if (ex.SourceException is OperationCanceledException) {
-            return ex.SourceException;
-        }
-        return ex;
-    }
-
     internal static object WrapException(object ex) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
         if (ex is OperationCanceledException) {
@@ -266,6 +242,12 @@ public abstract class AbstractPromise
             return dispatchInfo.SourceException;
         }
         return ex;
+    }
+    
+    internal static Exception UnwrapException(object ex) {
+        if (ex == null || ex == EX_COMPUTING|| ex == EX_SUCCESS) throw new InvalidOperationException();
+        if (ex is ExceptionDispatchInfo dispatchInfo) return dispatchInfo.SourceException;
+        return (Exception)ex; // 取消
     }
 
     internal static Exception ExceptionNow(int state, object? ex, bool throwIfCancelled) {
@@ -295,7 +277,7 @@ public abstract class AbstractPromise
     /// <summary>
     /// Completion表示一个回调任务
     /// </summary>
-    protected abstract class Completion : ITask
+    internal abstract class Completion : ITask
     {
         /** 非volatile，通过{@link Promise#stack}的原子更新来保证可见性 */
         internal Completion? next;
@@ -326,7 +308,7 @@ public abstract class AbstractPromise
         /// 2. mode指示可以调用{@link #postComplete(Promise)}方法时，则直接推送其进入完成状态的事件。
         /// </summary>
         /// <param name="mode"></param>
-        protected internal abstract AbstractPromise? TryFire(int mode);
+        public abstract AbstractPromise? TryFire(int mode);
     }
 
     /// <summary>
@@ -341,16 +323,16 @@ public abstract class AbstractPromise
             set => throw new AssertionError();
         }
 
-        protected internal override AbstractPromise? TryFire(int mode) {
+        public override AbstractPromise? TryFire(int mode) {
             throw new NotImplementedException();
         }
     }
 
     /// <summary>
     /// 状态机回调特殊优化，由于不依赖Promise的结果，
-    /// 因此不放入泛型内种，可全局缓存。
+    /// 因此不放入泛型类中，可全局缓存。
     /// </summary>
-    protected class MoveNextCompletion : Completion
+    internal class MoveNextCompletion : Completion
     {
 #nullable disable
         protected IExecutor executor;
@@ -394,9 +376,9 @@ public abstract class AbstractPromise
             return true;
         }
 
-        protected internal override AbstractPromise? TryFire(int mode) {
+        public override AbstractPromise? TryFire(int mode) {
             {
-                if (IsCancelRequested(state, options)) {
+                if (Executors.IsCancelRequested(state, options)) {
                     goto outer;
                 }
                 // 异步模式下已经claim
@@ -433,13 +415,13 @@ public abstract class AbstractPromise
         /// </summary>
         internal static readonly IObjectPool<MoveNextCompletion> POOL = new ConcurrentObjectPool<MoveNextCompletion>(
             () => new MoveNextCompletion(), task => task.Reset(),
-            TaskPoolConfig.GetPoolSize<int>(TaskPoolConfig.TaskType.PromiseMoveNext));
+            TaskPoolConfig.GetPoolSize<int>(TaskPoolType.PromiseMoveNext));
     }
 
     /// <summary>
     /// 用于在Future上等待的节点
     /// </summary>
-    protected sealed class Awaiter : Completion
+    internal sealed class Awaiter : Completion
     {
         private readonly IFuture future;
         private int waiterCount;
@@ -453,7 +435,7 @@ public abstract class AbstractPromise
             set => throw new AssertionError();
         }
 
-        protected internal override AbstractPromise? TryFire(int mode) {
+        public override AbstractPromise? TryFire(int mode) {
             ReleaseWaiters();
             return null;
         }

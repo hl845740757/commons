@@ -186,6 +186,7 @@ public abstract class AbstractUniPromise
 
     #region util
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
         if (Executors.IsInlinable(e, options)) {
@@ -193,6 +194,33 @@ public abstract class AbstractUniPromise
         }
         e.Execute(completion);
         return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static UniPromise<U>? PostFire<U>(UniPromise<U> output, int mode, bool setCompleted) {
+        if (!setCompleted) { // 未竞争成功
+            return null;
+        }
+        if (mode < 0) { // 嵌套模式
+            return output;
+        }
+        PostComplete(output);
+        return null;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static object WrapException(object ex) {
+        return AbstractPromise.WrapException(ex);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static Exception UnwrapException(object ex) {
+        return AbstractPromise.UnwrapException(ex);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static Exception ExceptionNow(int state, object? ex, bool throwIfCancelled) {
+        return AbstractPromise.ExceptionNow(state, ex, throwIfCancelled);
     }
 
     #endregion
@@ -233,7 +261,7 @@ public abstract class AbstractUniPromise
         /// 2. mode指示可以调用{@link #postComplete(Promise)}方法时，则直接推送其进入完成状态的事件。
         /// </summary>
         /// <param name="mode"></param>
-        protected internal abstract AbstractUniPromise? TryFire(int mode);
+        public abstract AbstractUniPromise? TryFire(int mode);
     }
 
     /// <summary>
@@ -248,7 +276,7 @@ public abstract class AbstractUniPromise
             set => throw new AssertionError();
         }
 
-        protected internal override AbstractUniPromise? TryFire(int mode) {
+        public override AbstractUniPromise? TryFire(int mode) {
             throw new NotImplementedException();
         }
     }
@@ -302,7 +330,7 @@ public abstract class AbstractUniPromise
             return true;
         }
 
-        protected internal override AbstractUniPromise? TryFire(int mode) {
+        public override AbstractUniPromise? TryFire(int mode) {
             {
                 if (Executors.IsCancelRequested(state, options)) {
                     goto outer;
