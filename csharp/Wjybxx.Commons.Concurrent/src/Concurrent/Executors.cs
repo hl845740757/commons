@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,13 +40,11 @@ public static class Executors
     /// <summary>
     /// 测试Executor是否是事件循环，且当前线程是否在事件循环线程内
     /// </summary>
-    /// <param name="executor"></param>
+    /// <param name="e"></param>
     /// <returns></returns>
-    public static bool InEventLoop(IExecutor executor) {
-        if (executor is ISingleThreadExecutor singleThreadExecutor) {
-            return singleThreadExecutor.InEventLoop();
-        }
-        return false;
+    public static bool InEventLoop(IExecutor e) {
+        return e is ISingleThreadExecutor eventLoop
+               && eventLoop.InEventLoop();
     }
 
     #endregion
@@ -195,7 +194,7 @@ public static class Executors
         return promise;
     }
 
-    public static IFuture<T> SubmitFunc<T>(IExecutor executor, Func<IContext, T> task, IContext ctx, int options = 0) {
+    public static IFuture<T> SubmitFunc<T>(IExecutor executor, Func<object, T> task, object ctx, int options = 0) {
         IPromise<T> promise = NewPromise<T>(executor);
         executor.Execute(PromiseTask.OfFunction(task, ctx, options, promise));
         return promise;
@@ -217,7 +216,7 @@ public static class Executors
         return promise;
     }
 
-    public static IFuture SubmitAction(IExecutor executor, Action<IContext> task, IContext ctx, int options) {
+    public static IFuture SubmitAction(IExecutor executor, Action<object> task, object ctx, int options) {
         IPromise<int> promise = NewPromise(executor);
         executor.Execute(PromiseTask.OfAction(task, ctx, options, promise));
         return promise;
@@ -232,7 +231,7 @@ public static class Executors
         executor.Execute(futureTask);
     }
 
-    public static void Execute(this IExecutor executor, Action<IContext> action, IContext ctx, int options) {
+    public static void Execute(this IExecutor executor, Action<object> action, object ctx, int options) {
         ITask futureTask = ToTask(action, ctx, options);
         executor.Execute(futureTask);
     }
@@ -274,14 +273,54 @@ public static class Executors
         return new ActionWrapper2(action, cancelToken, options);
     }
 
-    public static ITask ToTask(Action<IContext> action, IContext context, int options = 0) {
+    public static ITask ToTask(Action<object> action, object ctx, int options = 0) {
         if (action == null) throw new ArgumentNullException(nameof(action));
-        return new ActionWrapper3(action, context, options);
+        return new ActionWrapper3(action, ctx, options);
     }
 
     public static ITask ToTask(Action action, CancellationToken cancelToken, int options = 0) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         return new ActionWrapper4(action, cancelToken, options);
+    }
+
+    #endregion
+
+    #region internal
+
+    internal static ICancelToken GetCancelToken(object? ctx, int options) {
+        if (ctx == null || TaskOptions.IsEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
+            return ICancelToken.NONE;
+        }
+        if (ctx is ICancelToken cts) {
+            return cts;
+        }
+        if (ctx is IContext ctx2) {
+            return ctx2.CancelToken;
+        }
+        return ICancelToken.NONE;
+    }
+
+    internal static bool IsCancelRequested(object? ctx, int options) {
+        if (ctx == null || TaskOptions.IsEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
+            return false;
+        }
+        if (ctx is ICancelToken cts) {
+            return cts.IsCancelRequested;
+        }
+        if (ctx is IContext ctx2) {
+            return ctx2.CancelToken.IsCancelRequested;
+        }
+        if (ctx is CancellationToken cts2) {
+            return cts2.IsCancellationRequested;
+        }
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool IsInlinable(IExecutor e, int options) {
+        return TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
+               && e is ISingleThreadExecutor eventLoop
+               && eventLoop.InEventLoop();
     }
 
     #endregion
@@ -329,23 +368,23 @@ public static class Executors
 
     private class ActionWrapper3 : ITask
     {
-        private readonly Action<IContext> action;
-        private readonly IContext context;
+        private readonly Action<object> action;
+        private readonly object ctx;
         private readonly int options;
 
-        public ActionWrapper3(Action<IContext> action, IContext context, int options) {
+        public ActionWrapper3(Action<object> action, object ctx, int options) {
             this.action = action;
-            this.context = context;
+            this.ctx = ctx;
             this.options = options;
         }
 
         public int Options => options;
 
         public void Run() {
-            if (context.CancelToken.IsCancelRequested) {
+            if (IsCancelRequested(ctx, options)) {
                 return;
             }
-            action(context);
+            action(ctx);
         }
     }
 

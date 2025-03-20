@@ -96,9 +96,9 @@ public abstract class AbstractUniExecutor : IUniExecutorService
         return promise;
     }
 
-    public virtual IFuture SubmitAction(Action<IContext> action, IContext context, int options = 0) {
+    public virtual IFuture SubmitAction(Action<object> action, object ctx, int options = 0) {
         IPromise<int> promise = NewPromise();
-        Execute(PromiseTask.OfAction(action, context, options, promise));
+        Execute(PromiseTask.OfAction(action, ctx, options, promise));
         return promise;
     }
 
@@ -114,9 +114,9 @@ public abstract class AbstractUniExecutor : IUniExecutorService
         return promise;
     }
 
-    public virtual IFuture<T> SubmitFunc<T>(Func<IContext, T> action, IContext context, int options = 0) {
+    public virtual IFuture<T> SubmitFunc<T>(Func<object, T> action, object ctx, int options = 0) {
         IPromise<T> promise = NewPromise<T>();
-        Execute(PromiseTask.OfFunction(action, context, options, promise));
+        Execute(PromiseTask.OfFunction(action, ctx, options, promise));
         return promise;
     }
 

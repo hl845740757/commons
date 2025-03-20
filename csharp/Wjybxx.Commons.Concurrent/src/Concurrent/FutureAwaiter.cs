@@ -49,8 +49,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
         get {
             if (!_future.IsCompleted) return false;
             if (_executor == null) return true;
-            return TaskOptions.IsEnabled(_options, TaskOptions.STAGE_TRY_INLINE)
-                   && Executors.InEventLoop(_executor);
+            return Executors.IsInlinable(_executor, _options);
         }
     }
 
@@ -116,8 +115,7 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
         get {
             if (!_future.IsCompleted) return false;
             if (_executor == null) return true;
-            return TaskOptions.IsEnabled(_options, TaskOptions.STAGE_TRY_INLINE)
-                   && Executors.InEventLoop(_executor);
+            return Executors.IsInlinable(_executor, _options);
         }
     }
 

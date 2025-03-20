@@ -64,7 +64,7 @@ public abstract class AbstractUniPromise
     /** 表示任务已进入执行阶段 */
     internal static readonly object EX_COMPUTING = new object();
     /** 表示任务已成功完成，但正在发布执行结果 */
-    private static readonly object EX_PUBLISHING = new object();
+    internal static readonly object EX_PUBLISHING = new object();
     /** 表示任务已成功完成，且结果已可见 */
     internal static readonly object EX_SUCCESS = new object();
 
@@ -188,30 +188,10 @@ public abstract class AbstractUniPromise
 
     protected static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (IsInlinable(e, options)) {
+        if (Executors.IsInlinable(e, options)) {
             return true;
         }
         e.Execute(completion);
-        return false;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool IsInlinable(IExecutor e, int options) {
-        return TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
-               && e is ISingleThreadExecutor eventLoop
-               && eventLoop.InEventLoop();
-    }
-
-    protected internal static bool IsCancelRequested(object? ctx, int options) {
-        if (ctx == null || TaskOptions.IsEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
-            return false;
-        }
-        if (ctx is ICancelToken cts) {
-            return cts.IsCancelRequested;
-        }
-        if (ctx is IContext ctx2) {
-            return ctx2.CancelToken.IsCancelRequested;
-        }
         return false;
     }
 
@@ -324,7 +304,7 @@ public abstract class AbstractUniPromise
 
         protected internal override AbstractUniPromise? TryFire(int mode) {
             {
-                if (IsCancelRequested(state, options)) {
+                if (Executors.IsCancelRequested(state, options)) {
                     goto outer;
                 }
                 // 异步模式下已经claim
@@ -361,7 +341,7 @@ public abstract class AbstractUniPromise
         /// </summary>
         internal static readonly IObjectPool<MoveNextCompletion> POOL = new ConcurrentObjectPool<MoveNextCompletion>(
             () => new MoveNextCompletion(), task => task.Reset(),
-            TaskPoolConfig.GetPoolSize<int>(TaskPoolConfig.TaskType.UniPromiseMoveNext));
+            TaskPoolConfig.GetPoolSize<int>(TaskPoolType.UniPromiseMoveNext));
     }
 
     #endregion

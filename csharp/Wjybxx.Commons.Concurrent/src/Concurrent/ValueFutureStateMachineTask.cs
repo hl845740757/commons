@@ -36,7 +36,7 @@ internal sealed class ValueFutureStateMachineTask<T, S> : ValuePromise<T>, IValu
 {
     private static readonly ConcurrentObjectPool<ValueFutureStateMachineTask<T, S>> POOL =
         new(() => new ValueFutureStateMachineTask<T, S>(), driver => driver.Reset(),
-            TaskPoolConfig.GetPoolSize<T>(TaskPoolConfig.TaskType.ValueFutureStateMachineTask));
+            TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ValueFutureStateMachineTask));
 
     /// <summary>
     /// 任务状态机

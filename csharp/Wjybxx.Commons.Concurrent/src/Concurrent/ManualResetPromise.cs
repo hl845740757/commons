@@ -30,21 +30,13 @@ namespace Wjybxx.Commons.Concurrent
 /// <typeparam name="T"></typeparam>
 public sealed class ManualResetPromise<T> : Promise<T>
 {
-    /// <summary>
-    /// 重置Promise的状态。
-    /// 注意：用户只能在Promise不再被使用的情况下调用，否则可能导致难以察觉的bug。
-    /// </summary>
-    public new void Reset() {
-        base.Reset();
-    }
-}
-
-public sealed class PromisePool<T>
-{
     private static readonly ConcurrentObjectPool<ManualResetPromise<T>> POOL = new ConcurrentObjectPool<ManualResetPromise<T>>(
         () => new ManualResetPromise<T>(), (f) => f.Reset(),
-        TaskPoolConfig.GetPoolSize<T>(TaskPoolConfig.TaskType.ManualResetPromise));
+        TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ManualResetPromise));
 
+    // 只可以池中获取
+    private ManualResetPromise() {
+    }
 
     /// <summary>
     /// 从对象池中申请一个Promise
@@ -55,12 +47,21 @@ public sealed class PromisePool<T>
     }
 
     /// <summary>
-    /// 将Promise归还到对象池
-    /// PS：会自动调用Promise的Reset方法
+    /// 从对象池中申请一个Promise
     /// </summary>
-    /// <param name="promise"></param>
-    public static void Release(ManualResetPromise<T> promise) {
-        POOL.Release(promise);
+    /// <param name="e">任务绑定的线程</param>
+    /// <returns></returns>
+    public static ManualResetPromise<T> Acquire(IExecutor e) {
+        ManualResetPromise<T> promise = POOL.Acquire();
+        promise.SetExecutor(e);
+        return promise;
+    }
+
+    /// <summary>
+    /// 将Promise归还到池中
+    /// </summary>
+    public void Release() {
+        POOL.Release(this);
     }
 }
 }

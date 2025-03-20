@@ -29,5 +29,5 @@ namespace Wjybxx.Commons.Concurrent
 /// <param name="firstStep">是否是首次执行</param>
 /// <param name="result">接收任务结果</param>
 /// <returns>执行任务是否成功</returns>
-public delegate bool TimeSharingTask<T>(IContext context, bool firstStep, out T result);
+public delegate bool TimeSharingTask<T>(object context, bool firstStep, out T result);
 }

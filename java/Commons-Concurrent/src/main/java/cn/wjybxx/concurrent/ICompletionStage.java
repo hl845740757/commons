@@ -123,6 +123,7 @@ public interface ICompletionStage<T> {
      * 如果当前{@code Future}执行成功，则当前{@code Future}的执行结果将作为指定操作的执行参数。
      * <p>
      * {@link CompletionStage#thenCompose(Function)}
+     * (为了减少重载，没有定义不含ctx的方法)
      *
      * @param ctx     上下文
      * @param options 调度选项，默认使用0即可，可参考{@link TaskOptions}

@@ -95,7 +95,7 @@ public class UniCancelTokenSource : ICancelTokenSource
         delayer.Schedule(in builder);
     }
 
-    private static void Canceller(IContext rawContext) {
+    private static void Canceller(object rawContext) {
         Context context = (Context)rawContext;
         context.source.Cancel(context.cancelCode);
     }
@@ -375,7 +375,7 @@ public class UniCancelTokenSource : ICancelTokenSource
 
     private static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (AbstractUniPromise.IsInlinable(e, options)) {
+        if (Executors.IsInlinable(e, options)) {
             return true;
         }
         e.Execute(completion);
@@ -541,7 +541,7 @@ public class UniCancelTokenSource : ICancelTokenSource
                 if (action == null) {
                     return null;
                 }
-                if (!AbstractUniPromise.IsCancelRequested(state, options)) {
+                if (!Executors.IsCancelRequested(state, options)) {
                     action(source, state);
                 }
             }
@@ -623,7 +623,7 @@ public class UniCancelTokenSource : ICancelTokenSource
                 if (action == null) {
                     return null;
                 }
-                if (!AbstractUniPromise.IsCancelRequested(state, options)) {
+                if (!Executors.IsCancelRequested(state, options)) {
                     action(state);
                 }
             }

@@ -54,7 +54,7 @@ public interface ScheduledTaskBuilder : TaskBuilder
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
-    public new static ScheduledTaskBuilder<int> NewAction(Action<IContext> task, IContext ctx) {
+    public new static ScheduledTaskBuilder<int> NewAction(Action<object> task, object ctx) {
         TaskBuilder<int> taskBuilder = TaskBuilder.NewAction(task, ctx);
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
@@ -64,12 +64,12 @@ public interface ScheduledTaskBuilder : TaskBuilder
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
-    public new static ScheduledTaskBuilder<T> NewFunc<T>(Func<IContext, T> task, IContext ctx) {
+    public new static ScheduledTaskBuilder<T> NewFunc<T>(Func<object, T> task, object ctx) {
         TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task, ctx);
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
-    public new static ScheduledTaskBuilder<T> NewTimeSharing<T>(TimeSharingTask<T> func, IContext? context = null) {
+    public new static ScheduledTaskBuilder<T> NewTimeSharing<T>(TimeSharingTask<T> func, object? context = null) {
         TaskBuilder<T> taskBuilder = TaskBuilder.NewTimeSharing(func, context);
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
@@ -116,7 +116,7 @@ public struct ScheduledTaskBuilder<T>
 
     public object Task => _core.Task;
 
-    public IContext? Context {
+    public object? Context {
         get => _core.Context;
         set => _core.Context = value;
     }

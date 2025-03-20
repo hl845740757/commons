@@ -41,9 +41,9 @@ public interface ScheduledPromiseTask
             helper, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<int> OfAction(Action<IContext> action, IContext? context, int options,
+    public static ScheduledPromiseTask<int> OfAction(Action<object> action, object? ctx, int options,
                                                      IScheduledPromise<int> promise, IScheduledHelper helper, long nextTriggerTime) {
-        return new ScheduledPromiseTask<int>(action, context, options, promise, TaskBuilder.TYPE_ACTION_CTX,
+        return new ScheduledPromiseTask<int>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION_CTX,
             helper, nextTriggerTime);
     }
 
@@ -53,9 +53,9 @@ public interface ScheduledPromiseTask
             helper, nextTriggerTime);
     }
 
-    public static ScheduledPromiseTask<T> OfFunction<T>(Func<IContext, T> action, IContext? context, int options,
+    public static ScheduledPromiseTask<T> OfFunction<T>(Func<object, T> action, object? ctx, int options,
                                                         IScheduledPromise<T> promise, IScheduledHelper helper, long nextTriggerTime) {
-        return new ScheduledPromiseTask<T>(action, context, options, promise, TaskBuilder.TYPE_FUNC_CTX,
+        return new ScheduledPromiseTask<T>(action, ctx, options, promise, TaskBuilder.TYPE_FUNC_CTX,
             helper, nextTriggerTime);
     }
 

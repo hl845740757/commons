@@ -52,7 +52,7 @@ public static class ValueFutureTask
         return promise;
     }
 
-    public static ValueFuture<T> Call<T>(IExecutor executor, Func<IContext, T> task, IContext ctx, int options = 0) {
+    public static ValueFuture<T> Call<T>(IExecutor executor, Func<object, T> task, object ctx, int options = 0) {
         ValueFutureTask<T> futureTask = ValueFutureTask<T>.Create(task, ctx, options, TaskBuilder.TYPE_FUNC_CTX);
         ValueFuture<T> promise = futureTask.Future;
         executor.Execute(futureTask);
@@ -77,7 +77,7 @@ public static class ValueFutureTask
         return promise;
     }
 
-    public static ValueFuture Run(IExecutor executor, Action<IContext> task, IContext ctx, int options) {
+    public static ValueFuture Run(IExecutor executor, Action<object> task, object ctx, int options) {
         ValueFutureTask<int> futureTask = ValueFutureTask<int>.Create(task, ctx, options, TaskBuilder.TYPE_ACTION_CTX);
         ValueFuture promise = futureTask.VoidFuture;
         executor.Execute(futureTask);
@@ -96,7 +96,7 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
 {
     private static readonly ConcurrentObjectPool<ValueFutureTask<T>> POOL =
         new(() => new ValueFutureTask<T>(), task => task.Reset(),
-            TaskPoolConfig.GetPoolSize<T>(TaskPoolConfig.TaskType.ValueFutureTask));
+            TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ValueFutureTask));
 
 #nullable disable
     /** 用户的委托 */
@@ -113,13 +113,6 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
     }
 
     private void Init(object action, object? ctx, int options, int taskType) {
-        if (ctx == null) {
-            if (TaskBuilder.IsTaskAcceptContext(taskType)) {
-                ctx = IContext.NONE;
-            } else {
-                ctx = ICancelToken.NONE;
-            }
-        }
         this.task = action ?? throw new ArgumentNullException(nameof(action));
         this.ctx = ctx;
         this.options = options;
@@ -177,15 +170,7 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
 
     /** 获取取消令牌 */
     private ICancelToken GetCancelToken() {
-        object ctx = this.ctx;
-        if (ctx == ICancelToken.NONE || ctx == IContext.NONE) {
-            return ICancelToken.NONE;
-        }
-        if (TaskBuilder.IsTaskAcceptContext(TaskType)) {
-            IContext castCtx = (IContext)ctx;
-            return castCtx.CancelToken;
-        }
-        return (ICancelToken)ctx;
+        return Executors.GetCancelToken(ctx, options);
     }
 
     /** 运行可直接得出结果的任务 */
@@ -202,13 +187,13 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
                 return task();
             }
             case TaskBuilder.TYPE_ACTION_CTX: {
-                Action<IContext> task = (Action<IContext>)this.task;
-                task((IContext)ctx);
+                Action<object> task = (Action<object>)this.task;
+                task(ctx);
                 return default;
             }
             case TaskBuilder.TYPE_FUNC_CTX: {
-                Func<IContext, T> task = (Func<IContext, T>)this.task;
-                return task((IContext)ctx);
+                Func<object, T> task = (Func<object, T>)this.task;
+                return task(ctx);
             }
             case TaskBuilder.TYPE_TASK: {
                 ITask task = (ITask)this.task;

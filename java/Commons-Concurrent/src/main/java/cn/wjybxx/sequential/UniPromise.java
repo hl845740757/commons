@@ -134,11 +134,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         return result == NIL ? null : (T) result;
     }
 
-    private static AltResult encodeThrowable(Throwable x) {
-        return new AltResult((x instanceof CompletionException) ? x :
-                new CompletionException(x));
-    }
-
     /**
      * 非取消完成可以由初始状态或不可取消状态进入完成状态
      * CAS{@code null}或者{@link #COMPUTING} 到指定结果值
@@ -591,7 +586,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                               BiFunction<Object, ? super T, ? extends ICompletionStage<U>> fn,
                                               @Nullable Object ctx, int options) {
         Objects.requireNonNull(fn);
-
         UniPromise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
         pushCompletion(new UniComposeApply<>(executor, ctx, options, this, promise, fn));
         return promise;
@@ -629,7 +623,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                              Function<Object, ? extends ICompletionStage<U>> fn,
                                              @Nullable Object ctx, int options) {
         Objects.requireNonNull(fn);
-
         UniPromise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
         pushCompletion(new UniComposeCall<>(executor, ctx, options, this, promise, fn));
         return promise;
@@ -672,7 +665,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                                                    @Nullable Object ctx, int options) {
         Objects.requireNonNull(exceptionType);
         Objects.requireNonNull(fallback);
-
         UniPromise<T> promise = newIncompletePromise(executor == null ? this.executor() : executor);
         pushCompletion(new UniComposeCathing<>(executor, ctx, options, this, promise, exceptionType, fallback));
         return promise;
@@ -710,7 +702,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                                TriFunction<Object, ? super T, ? super Throwable, ? extends ICompletionStage<U>> fn,
                                                @Nullable Object ctx, int options) {
         Objects.requireNonNull(fn);
-
         UniPromise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
         pushCompletion(new UniComposeHandle<>(executor, ctx, options, this, promise, fn));
         return promise;
@@ -745,7 +736,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     private <U> UniPromise<U> uniApply(Executor executor, BiFunction<Object, ? super T, ? extends U> fn,
                                        @Nullable Object ctx, int options) {
         Objects.requireNonNull(fn);
-
         UniPromise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
         pushCompletion(new UniApply<>(executor, ctx, options, this, promise, fn));
         return promise;
@@ -779,7 +769,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
     private UniPromise<Void> uniAccept(Executor executor, BiConsumer<Object, ? super T> action,
                                        @Nullable Object ctx, int options) {
         Objects.requireNonNull(action);
-
         UniPromise<Void> promise = newIncompletePromise(executor == null ? this.executor() : executor);
         pushCompletion(new UniAccept<>(executor, ctx, options, this, promise, action));
         return promise;
@@ -813,7 +802,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
     private <U> UniPromise<U> uniCall(Executor executor, Function<Object, ? extends U> fn, @Nullable Object ctx, int options) {
         Objects.requireNonNull(fn);
-
         UniPromise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
         pushCompletion(new UniCall<>(executor, ctx, options, this, promise, fn));
         return promise;
@@ -847,7 +835,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
 
     private UniPromise<Void> uniRun(Executor executor, Consumer<Object> action, @Nullable Object ctx, int options) {
         Objects.requireNonNull(action);
-
         UniPromise<Void> promise = newIncompletePromise(executor == null ? this.executor() : executor);
         pushCompletion(new UniRun<>(executor, ctx, options, this, promise, action));
         return promise;
@@ -889,7 +876,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                                             @Nullable Object ctx, int options) {
         Objects.requireNonNull(exceptionType, "exceptionType");
         Objects.requireNonNull(fallback, "fallback");
-
         UniPromise<T> promise = newIncompletePromise(executor == null ? this.executor() : executor);
         pushCompletion(new UniCathing<>(executor, ctx, options, this, promise, exceptionType, fallback));
         return promise;
@@ -925,7 +911,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                         TriFunction<Object, ? super T, Throwable, ? extends U> fn,
                                         @Nullable Object ctx, int options) {
         Objects.requireNonNull(fn);
-
         UniPromise<U> promise = newIncompletePromise(executor == null ? this.executor() : executor);
         pushCompletion(new UniHandle<>(executor, ctx, options, this, promise, fn));
         return promise;
@@ -959,7 +944,6 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                                           TriConsumer<Object, ? super T, ? super Throwable> action,
                                           @Nullable Object ctx, int options) {
         Objects.requireNonNull(action);
-
         UniPromise<T> promise = newIncompletePromise(executor == null ? this.executor() : executor);
         pushCompletion(new UniWhenComplete<>(executor, ctx, options, this, promise, action));
         return promise;
@@ -1182,7 +1166,9 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
      */
     private boolean completeThrowable(@Nonnull Throwable x) {
         FutureLogger.logCause(x);
-        return internalComplete(encodeThrowable(x));
+        // 统一封装为CompletionException
+        Throwable cause = (x instanceof CompletionException) ? x : new CompletionException(x);
+        return internalComplete(cause);
     }
 
     /**
@@ -1342,34 +1328,16 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
         }
     }
 
-    private static class UniRelay<V> extends Completion implements Consumer<IFuture<? extends V>> {
+    private static class UniRelay<V> implements Consumer<IFuture<? extends V>> {
 
-        IFuture<? extends V> input;
         UniPromise<V> output;
 
-        public UniRelay(IFuture<? extends V> input, UniPromise<V> output) {
-            this.input = input;
+        public UniRelay(UniPromise<V> output) {
             this.output = output;
         }
 
         @Override
-        public int getOptions() {
-            return 0;
-        }
-
-        @Override
-        public void setOptions(int options) {
-
-        }
-
-        @Override
-        public void accept(IFuture<? extends V> iFuture) {
-            tryFire(SYNC);
-        }
-
-        @Override
-        UniPromise<?> tryFire(int mode) {
-            final IFuture<? extends V> input = this.input;
+        public void accept(IFuture<? extends V> input) {
             final UniPromise<V> output = this.output;
             boolean setCompleted;
             tryComplete:
@@ -1381,9 +1349,8 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                 setCompleted = tryTransferTo(input, output);
             }
             // help gc
-            this.input = null;
             this.output = null;
-            return postFire(output, mode, setCompleted);
+            postFire(output, SYNC, setCompleted);
         }
     }
 
@@ -1426,7 +1393,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     IFuture<U> relay = fn.apply(ctx, input.decodeValue(r)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
-                        relay.onCompleted(new UniRelay<>(relay, output), 0);
+                        relay.onCompleted(new UniRelay<>(output), 0);
                     }
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -1480,7 +1447,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     IFuture<U> relay = fn.apply(ctx).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
-                        relay.onCompleted(new UniRelay<>(relay, output), 0);
+                        relay.onCompleted(new UniRelay<>(output), 0);
                     }
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -1536,7 +1503,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     IFuture<V> relay = fallback.apply(ctx, exceptionType.cast(altResult.cause)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
-                        relay.onCompleted(new UniRelay<>(relay, output), 0);
+                        relay.onCompleted(new UniRelay<>(output), 0);
                     }
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -1592,7 +1559,7 @@ public class UniPromise<T> implements IPromise<T>, IFuture<T> {
                     }
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
-                        relay.onCompleted(new UniRelay<>(relay, output), 0);
+                        relay.onCompleted(new UniRelay<>(output), 0);
                     }
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);

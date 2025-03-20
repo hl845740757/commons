@@ -41,6 +41,7 @@ internal class ValuePromise<T> : IValuePromise<T>
     /// 任务的结果
     /// </summary>
     private T _result;
+#nullable enable
     ///<summary>
     /// 任务失败完成时的结果，也包含了任务的状态。
     /// 
@@ -51,8 +52,7 @@ internal class ValuePromise<T> : IValuePromise<T>
     /// 5. 如果为<see cref="OperationCanceledException"/>，表示取消 -- 避免捕获堆栈。
     /// 6. 如果为<see cref="ExceptionDispatchInfo"/>，表示失败。
     /// </summary>
-    private volatile object _ex;
-#nullable enable
+    private volatile object? _ex;
     /// <summary>
     /// 重入id（归还到池和从池中取出时都加1）
     /// </summary>
@@ -577,7 +577,7 @@ internal class ValuePromise<T> : IValuePromise<T>
             this.executor = CLAIMED;
             if (e != null) {
                 // TryInline
-                if (IsInlinable(e, options)) {
+                if (Executors.IsInlinable(e, options)) {
                     return true;
                 }
                 e.Execute(this);
@@ -587,7 +587,7 @@ internal class ValuePromise<T> : IValuePromise<T>
         }
 
         public void TryFire(int mode) {
-            if (IsCancelRequested(state, options)) {
+            if (Executors.IsCancelRequested(state, options)) {
                 return;
             }
             // 异步模式下已经claim

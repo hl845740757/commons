@@ -80,7 +80,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
         delayer.Schedule(in builder);
     }
 
-    private static void Canceller(IContext rawContext) {
+    private static void Canceller(object rawContext) {
         Context context = (Context)rawContext;
         context.source.Cancel(context.cancelCode);
     }
@@ -371,7 +371,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (AbstractPromise.IsInlinable(e, options)) {
+        if (Executors.IsInlinable(e, options)) {
             return true;
         }
         e.Execute(completion);
@@ -536,7 +536,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
                 if (action == null) {
                     return null;
                 }
-                if (!AbstractPromise.IsCancelRequested(state, options)) {
+                if (!Executors.IsCancelRequested(state, options)) {
                     action(source, state);
                 }
             }
@@ -613,7 +613,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
                 if (action == null) {
                     return null;
                 }
-                if (!AbstractPromise.IsCancelRequested(state, options)) {
+                if (!Executors.IsCancelRequested(state, options)) {
                     action(state);
                 }
             }

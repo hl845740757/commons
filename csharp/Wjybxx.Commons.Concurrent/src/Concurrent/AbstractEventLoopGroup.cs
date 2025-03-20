@@ -78,8 +78,8 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().SubmitAction(action, cancelToken, options);
     }
 
-    public virtual IFuture SubmitAction(Action<IContext> action, IContext context, int options = 0) {
-        return Select().SubmitAction(action, context, options);
+    public virtual IFuture SubmitAction(Action<object> action, object ctx, int options = 0) {
+        return Select().SubmitAction(action, ctx, options);
     }
 
     public virtual IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
@@ -90,8 +90,8 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         return Select().SubmitFunc(action, cancelToken, options);
     }
 
-    public virtual IFuture<T> SubmitFunc<T>(Func<IContext, T> action, IContext context, int options = 0) {
-        return Select().SubmitFunc(action, context, options);
+    public virtual IFuture<T> SubmitFunc<T>(Func<object, T> action, object ctx, int options = 0) {
+        return Select().SubmitFunc(action, ctx, options);
     }
 
     #endregion

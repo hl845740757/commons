@@ -25,9 +25,9 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public static class TaskPoolConfig
 {
-    private static volatile Func<TaskType, Type, int>? poolSizeCalculator;
+    private static volatile Func<TaskPoolType, Type, int>? poolSizeCalculator;
 
-    public static Func<TaskType, Type, int>? PoolSizeCalculator {
+    public static Func<TaskPoolType, Type, int>? PoolSizeCalculator {
         get => poolSizeCalculator;
         set => poolSizeCalculator = value;
     }
@@ -37,38 +37,42 @@ public static class TaskPoolConfig
     /// 
     /// 注意：本库统一使用int代替void，因此当T为int类型时，应当分配更大的池。
     /// </summary>
-    public static int GetPoolSize<T>(TaskType domain) {
-        Func<TaskType, Type, int> func = poolSizeCalculator;
+    /// <param name="poolType">对象池类型</param>
+    public static int GetPoolSize<T>(TaskPoolType poolType) {
+        Func<TaskPoolType, Type, int> func = poolSizeCalculator;
         if (func != null) {
-            return Math.Max(0, func.Invoke(domain, typeof(T)));
+            return Math.Max(0, func.Invoke(poolType, typeof(T)));
         }
-        if (domain == TaskType.PromiseMoveNext
-            || domain == TaskType.UniPromiseMoveNext) {
+        if (poolType == TaskPoolType.PromiseMoveNext
+            || poolType == TaskPoolType.UniPromiseMoveNext) {
             return 500;
         }
         return typeof(T) == typeof(int) ? 100 : 50;
     }
+}
 
-    public enum TaskType
-    {
-        /// <summary>
-        /// 状态机await回调
-        /// </summary>
-        PromiseMoveNext,
-        /// <summary>
-        /// 状态机await回调
-        /// </summary>
-        UniPromiseMoveNext,
-        /// <summary>
-        /// 状态机任务
-        /// </summary>
-        ValueFutureStateMachineTask,
+/// <summary>
+/// 任务池类型
+/// </summary>
+public enum TaskPoolType
+{
+    /// <summary>
+    /// 状态机await回调
+    /// </summary>
+    PromiseMoveNext,
+    /// <summary>
+    /// 状态机await回调
+    /// </summary>
+    UniPromiseMoveNext,
+    /// <summary>
+    /// 状态机任务
+    /// </summary>
+    ValueFutureStateMachineTask,
 
-        PromiseTask,
-        ScheduledPromiseTask,
-        ValueFutureTask,
-        ManualResetPromise,
-        ValuePromise,
-    }
+    PromiseTask,
+    ScheduledPromiseTask,
+    ValueFutureTask,
+    ManualResetPromise,
+    ValuePromise,
 }
 }

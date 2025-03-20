@@ -110,6 +110,9 @@ public interface IEventLoop : IFixedEventLoopGroup, ISingleThreadExecutor
     /// </summary>
     bool IExecutorService.IsShutdown => State >= EventLoopState.Shutdown;
 
+    /// <summary>
+    /// 事件循环是否已完全关闭
+    /// </summary>
     bool IExecutorService.IsTerminated => State >= EventLoopState.Terminated;
 
     #endregion

@@ -56,7 +56,7 @@ public interface PromiseTask
         return new PromiseTask<int>(action, cancelToken, options, promise, TaskBuilder.TYPE_ACTION);
     }
 
-    public static PromiseTask<int> OfAction(Action<IContext> action, IContext? ctx, int options, IPromise<int> promise) {
+    public static PromiseTask<int> OfAction(Action<object> action, object? ctx, int options, IPromise<int> promise) {
         return new PromiseTask<int>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION_CTX);
     }
 
@@ -64,7 +64,7 @@ public interface PromiseTask
         return new PromiseTask<T>(action, cancelToken, options, promise, TaskBuilder.TYPE_FUNC);
     }
 
-    public static PromiseTask<T> OfFunction<T>(Func<IContext, T> action, IContext? ctx, int options, IPromise<T> promise) {
+    public static PromiseTask<T> OfFunction<T>(Func<object, T> action, object? ctx, int options, IPromise<T> promise) {
         return new PromiseTask<T>(action, ctx, options, promise, TaskBuilder.TYPE_FUNC_CTX);
     }
 
@@ -109,13 +109,6 @@ public class PromiseTask<T> : IFutureTask
     /// <param name="promise"></param>
     /// <param name="taskType">任务类型</param>
     protected internal PromiseTask(object action, object? ctx, int options, IPromise<T> promise, int taskType) {
-        if (ctx == null) {
-            if (TaskBuilder.IsTaskAcceptContext(taskType)) {
-                ctx = IContext.NONE;
-            } else {
-                ctx = ICancelToken.NONE;
-            }
-        }
         this.task = action ?? throw new ArgumentNullException(nameof(action));
         this.ctx = ctx;
         this.options = options;
@@ -174,21 +167,13 @@ public class PromiseTask<T> : IFutureTask
     }
 
     protected ICancelToken GetCancelToken() {
-        object ctx = this.ctx;
-        if (ctx == ICancelToken.NONE || ctx == IContext.NONE) {
-            return ICancelToken.NONE;
-        }
-        if (TaskBuilder.IsTaskAcceptContext(TaskType)) {
-            IContext castCtx = (IContext)ctx;
-            return castCtx.CancelToken;
-        }
-        return (ICancelToken)ctx;
+        return Executors.GetCancelToken(ctx, options);
     }
 
     /** 运行分时任务 */
     protected bool RunTimeSharing(bool firstStep, out T result) {
         TimeSharingTask<T> task = (TimeSharingTask<T>)this.task;
-        return task((IContext)ctx, firstStep, out result);
+        return task(ctx, firstStep, out result);
     }
 
     /** 运行可直接得出结果的任务 */
@@ -205,13 +190,13 @@ public class PromiseTask<T> : IFutureTask
                 return task();
             }
             case TaskBuilder.TYPE_ACTION_CTX: {
-                Action<IContext> task = (Action<IContext>)this.task;
-                task((IContext)ctx);
+                Action<object> task = (Action<object>)this.task;
+                task((object)ctx);
                 return default;
             }
             case TaskBuilder.TYPE_FUNC_CTX: {
-                Func<IContext, T> task = (Func<IContext, T>)this.task;
-                return task((IContext)ctx);
+                Func<object, T> task = (Func<object, T>)this.task;
+                return task((object)ctx);
             }
             case TaskBuilder.TYPE_TASK: {
                 ITask task = (ITask)this.task;

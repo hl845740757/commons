@@ -116,18 +116,19 @@ public class FutureUtils {
 
     // region set-future
 
-    public static <V> void setFuture(IPromise<? super V> output, ICompletionStage<V> input) {
+    public static <V> void setPromise(IPromise<? super V> output, ICompletionStage<V> input) {
         Objects.requireNonNull(output, "output");
         input.whenComplete((ctx, v, throwable) -> {
+            @SuppressWarnings("unchecked") IPromise<V> promise = (IPromise<V>) ctx;
             if (throwable != null) {
-                output.trySetException(throwable);
+                promise.trySetException(throwable);
             } else {
-                output.trySetResult(v);
+                promise.trySetResult(v);
             }
-        });
+        }, output, 0); // 避免lambda捕获
     }
 
-    public static <V> void setFuture(IPromise<? super V> output, CompletionStage<V> input) {
+    public static <V> void setPromise(IPromise<? super V> output, CompletionStage<V> input) {
         Objects.requireNonNull(output, "output");
         input.whenComplete((v, throwable) -> {
             if (throwable != null) {
@@ -138,23 +139,24 @@ public class FutureUtils {
         });
     }
 
-    public static <V> void setFutureAsync(Executor executor, IPromise<? super V> output, ICompletionStage<V> input) {
-        setFutureAsync(executor, output, input, 0);
+    public static <V> void setPromiseAsync(Executor executor, IPromise<? super V> output, ICompletionStage<V> input) {
+        setPromiseAsync(executor, output, input, 0);
     }
 
-    public static <V> void setFutureAsync(Executor executor, IPromise<? super V> output, ICompletionStage<V> input, int options) {
+    public static <V> void setPromiseAsync(Executor executor, IPromise<? super V> output, ICompletionStage<V> input, int options) {
         Objects.requireNonNull(output, "output");
         Objects.requireNonNull(executor, "executor");
         input.whenCompleteAsync(executor, (ctx, v, throwable) -> {
+            @SuppressWarnings("unchecked") IPromise<V> promise = (IPromise<V>) ctx;
             if (throwable != null) {
-                output.trySetException(throwable);
+                promise.trySetException(throwable);
             } else {
-                output.trySetResult(v);
+                promise.trySetResult(v);
             }
-        }, null, options);
+        }, output, options); // 避免lambda捕获
     }
 
-    public static <V> void setFutureAsync(Executor executor, IPromise<? super V> output, CompletionStage<V> input) {
+    public static <V> void setPromiseAsync(Executor executor, IPromise<? super V> output, CompletionStage<V> input) {
         input.whenCompleteAsync(((v, throwable) -> {
             if (throwable != null) {
                 output.trySetException(throwable);
@@ -165,7 +167,7 @@ public class FutureUtils {
     }
 
     //
-    public static <V> void setFuture(CompletableFuture<? super V> output, CompletionStage<V> input) {
+    public static <V> void setPromise(CompletableFuture<? super V> output, CompletionStage<V> input) {
         Objects.requireNonNull(output, "output");
         input.whenComplete((v, throwable) -> {
             if (throwable != null) {
@@ -176,18 +178,19 @@ public class FutureUtils {
         });
     }
 
-    public static <V> void setFuture(CompletableFuture<? super V> output, ICompletionStage<V> input) {
+    public static <V> void setPromise(CompletableFuture<? super V> output, ICompletionStage<V> input) {
         Objects.requireNonNull(output, "output");
         input.whenComplete((ctx, v, throwable) -> {
+            @SuppressWarnings("unchecked") CompletableFuture<? super V> promise = (CompletableFuture<? super V>) ctx;
             if (throwable != null) {
-                output.completeExceptionally(throwable);
+                promise.completeExceptionally(throwable);
             } else {
-                output.complete(v);
+                promise.complete(v);
             }
-        });
+        }, output, 0);
     }
 
-    public static <V> void setFutureAsync(Executor executor, CompletableFuture<? super V> output, CompletionStage<V> input) {
+    public static <V> void setPromiseAsync(Executor executor, CompletableFuture<? super V> output, CompletionStage<V> input) {
         input.whenCompleteAsync(((v, throwable) -> {
             if (throwable != null) {
                 output.completeExceptionally(throwable);
@@ -197,24 +200,25 @@ public class FutureUtils {
         }), executor);
     }
 
-    public static <V> void setFutureAsync(Executor executor, CompletableFuture<? super V> output, ICompletionStage<V> input) {
-        setFutureAsync(executor, output, input, 0);
+    public static <V> void setPromiseAsync(Executor executor, CompletableFuture<? super V> output, ICompletionStage<V> input) {
+        setPromiseAsync(executor, output, input, 0);
     }
 
-    public static <V> void setFutureAsync(Executor executor, CompletableFuture<? super V> output, ICompletionStage<V> input, int options) {
+    public static <V> void setPromiseAsync(Executor executor, CompletableFuture<? super V> output, ICompletionStage<V> input, int options) {
         input.whenCompleteAsync(executor, ((ctx, v, throwable) -> {
+            @SuppressWarnings("unchecked") CompletableFuture<? super V> promise = (CompletableFuture<? super V>) ctx;
             if (throwable != null) {
-                output.completeExceptionally(throwable);
+                promise.completeExceptionally(throwable);
             } else {
-                output.complete(v);
+                promise.complete(v);
             }
-        }), null, options);
+        }), output, options);
     }
 
     /** 由{@link EventLoop}通知返回的{@link IPromise} */
-    public static <V> IPromise<V> toEventLoopPromise(EventLoop eventLoop, ICompletionStage<V> input) {
+    public static <V> IPromise<V> bindEventLoop(ICompletionStage<V> future, EventLoop eventLoop) {
         IPromise<V> result = eventLoop.newPromise();
-        setFutureAsync(eventLoop, result, input, TaskOptions.STAGE_TRY_INLINE);
+        setPromiseAsync(eventLoop, result, future, TaskOptions.STAGE_TRY_INLINE);
         return result;
     }
 

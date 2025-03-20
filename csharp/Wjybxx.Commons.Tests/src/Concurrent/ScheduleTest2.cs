@@ -77,7 +77,7 @@ public class ScheduleTest2
     [Test]
     public void testOnlyOnceFail() {
         ScheduledTaskBuilder<string> builder =
-            ScheduledTaskBuilder.NewTimeSharing<string>((IContext ctx, bool firstStep, out string r) => timeSharingJoinString(out r));
+            ScheduledTaskBuilder.NewTimeSharing<string>((object ctx, bool firstStep, out string r) => timeSharingJoinString(out r));
         builder.SetOnlyOnce(0);
 
         IScheduledFuture<string> future = consumer.Schedule(in builder);
@@ -87,7 +87,7 @@ public class ScheduleTest2
 
     [Test]
     public void testOnlyOnceSuccess() {
-        ScheduledTaskBuilder<string> builder = ScheduledTaskBuilder.NewTimeSharing<string>((IContext ctx, bool firstStep, out string r) => {
+        ScheduledTaskBuilder<string> builder = ScheduledTaskBuilder.NewTimeSharing<string>((object ctx, bool firstStep, out string r) => {
             r = untilJoinStringSuccess();
             return true;
         });
@@ -100,7 +100,7 @@ public class ScheduleTest2
     [Test]
     public void testTimeSharingComplete() {
         ScheduledTaskBuilder<string> builder =
-            ScheduledTaskBuilder.NewTimeSharing<string>((IContext ctx, bool firstStep, out string r) => timeSharingJoinString(out r));
+            ScheduledTaskBuilder.NewTimeSharing<string>((object ctx, bool firstStep, out string r) => timeSharingJoinString(out r));
         builder.SetFixedDelay(0, 200);
 
         string result = consumer.Schedule(in builder).Join();
@@ -124,7 +124,7 @@ public class ScheduleTest2
     [Test]
     public void testTimeSharingTimeout() {
         ScheduledTaskBuilder<string> builder =
-            ScheduledTaskBuilder.NewTimeSharing<string>((IContext ctx, bool firstStep, out string r) => timeSharingJoinString(out r));
+            ScheduledTaskBuilder.NewTimeSharing<string>((object ctx, bool firstStep, out string r) => timeSharingJoinString(out r));
         builder.SetFixedDelay(0, 200);
         builder.SetTimeoutByCount(1);
 
@@ -141,7 +141,7 @@ public class ScheduleTest2
     public void testTimeSharingCountLimitSuccess() {
         long startTime = ObjectUtil.SystemTickMillis();
         ScheduledTaskBuilder<string> builder =
-            ScheduledTaskBuilder.NewTimeSharing<string>((IContext ctx, bool firstStep, out string r) => timeSharingJoinString(out r));
+            ScheduledTaskBuilder.NewTimeSharing<string>((object ctx, bool firstStep, out string r) => timeSharingJoinString(out r));
         builder.SetFixedDelay(10, 10);
         builder.CountLimit = (stringList.Count);
 
@@ -156,7 +156,7 @@ public class ScheduleTest2
     public void testTimeSharingCountLimitFail() {
         long startTime = ObjectUtil.SystemTickMillis();
         ScheduledTaskBuilder<string> builder =
-            ScheduledTaskBuilder.NewTimeSharing<string>((IContext ctx, bool firstStep, out string r) => timeSharingJoinString(out r));
+            ScheduledTaskBuilder.NewTimeSharing<string>((object ctx, bool firstStep, out string r) => timeSharingJoinString(out r));
         builder.SetFixedDelay(10, 10);
         builder.CountLimit = (stringList.Count - 1);
 

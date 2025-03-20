@@ -30,7 +30,7 @@ public interface TaskBuilder
     /// </summary>
     public const int TYPE_ACTION = 0;
     /// <summary>
-    /// 表示委托类型为<see cref="Action{IContext}"/>
+    /// 表示委托类型为<see cref="Action{object}"/>
     /// </summary>
     public const int TYPE_ACTION_CTX = 1;
 
@@ -39,7 +39,7 @@ public interface TaskBuilder
     /// </summary>
     public const int TYPE_FUNC = 2;
     /// <summary>
-    /// 表示委托类型为<see cref="Func{IContext,TResult}"/>
+    /// 表示委托类型为<see cref="Func{object,TResult}"/>
     /// </summary>
     public const int TYPE_FUNC_CTX = 3;
 
@@ -56,19 +56,19 @@ public interface TaskBuilder
         return new TaskBuilder<int>(TaskBuilder.TYPE_ACTION, action, cancelToken);
     }
 
-    public static TaskBuilder<int> NewAction(Action<IContext> action, IContext context) {
-        return new TaskBuilder<int>(TaskBuilder.TYPE_ACTION_CTX, action, context);
+    public static TaskBuilder<int> NewAction(Action<object> action, object ctx) {
+        return new TaskBuilder<int>(TaskBuilder.TYPE_ACTION_CTX, action, ctx);
     }
 
     public static TaskBuilder<T> NewFunc<T>(Func<T> func, ICancelToken? cancelToken = null) {
         return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC, func, cancelToken);
     }
 
-    public static TaskBuilder<T> NewFunc<T>(Func<IContext, T> func, IContext context) {
-        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_CTX, func, context);
+    public static TaskBuilder<T> NewFunc<T>(Func<object, T> func, object ctx) {
+        return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_CTX, func, ctx);
     }
 
-    public static TaskBuilder<T> NewTimeSharing<T>(TimeSharingTask<T> func, IContext? context = null) {
+    public static TaskBuilder<T> NewTimeSharing<T>(TimeSharingTask<T> func, object? context = null) {
         return new TaskBuilder<T>(TaskBuilder.TYPE_TIMESHARING, func, context);
     }
 
@@ -94,13 +94,13 @@ public interface TaskBuilder
         Type type = task.GetType();
         if (type.IsGenericType) {
             Type genericTypeDefinition = type.GetGenericTypeDefinition();
-            if (genericTypeDefinition == typeof(Action<>) && type.GenericTypeArguments[0] == typeof(IContext)) {
+            if (genericTypeDefinition == typeof(Action<>) && type.GenericTypeArguments[0] == typeof(object)) {
                 return TYPE_ACTION_CTX;
             }
             if (genericTypeDefinition == typeof(Func<>)) {
                 return TYPE_FUNC;
             }
-            if (genericTypeDefinition == typeof(Func<,>) && type.GenericTypeArguments[0] == typeof(IContext)) {
+            if (genericTypeDefinition == typeof(Func<,>) && type.GenericTypeArguments[0] == typeof(object)) {
                 return TYPE_FUNC_CTX;
             }
             if (genericTypeDefinition == typeof(TimeSharingTask<>)) {
@@ -167,14 +167,9 @@ public struct TaskBuilder<T>
     /// <summary>
     /// 任务的上下文
     /// </summary>
-    public IContext? Context {
-        get => IsTaskAcceptContext ? (IContext?)ctx : null;
-        set {
-            if (!IsTaskAcceptContext) {
-                throw new IllegalStateException();
-            }
-            this.ctx = value ?? IContext.NONE;
-        }
+    public object? Context {
+        get => ctx;
+        set => ctx = value;
     }
 
     /// <summary>
