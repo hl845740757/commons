@@ -69,10 +69,9 @@ public class FutureTest {
     @Test
     void testCancel() {
         CancelTokenSource cts = new CancelTokenSource(1);
-        IContext rootCtx = Context.ofCancelToken(cts);
 
         IExecutor executor = immediateExecutor;
-        IFuture<String> future = FutureUtils.submitFunc(executor, ctx -> "hello", rootCtx);
+        IFuture<String> future = FutureUtils.submitFunc(executor, ctx -> "hello", cts);
         Assertions.assertTrue(future.isCancelled());
     }
 

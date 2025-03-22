@@ -56,26 +56,5 @@ public interface IContext
     /// 2.运行时不为null -- 不要返回null，使用<see cref="NONE"/>代替。
     /// </summary>
     ICancelToken CancelToken { get; }
-
-    /// <summary>
-    /// 任务运行时依赖的黑板（主要上下文）
-    /// 1.每个任务可有独立的黑板（数据）；
-    /// 2.一般而言，黑板需要实现递归向上查找。
-    /// 
-    /// 这里未直接实现为类似Map的读写接口，是故意的。
-    /// 因为提供类似Map的读写接口，会导致创建Context的开销变大，而在许多情况下是不必要的。
-    /// 将黑板设定为Object类型，既可以增加灵活性，也可以减少一般情况下的开销。
-    /// </summary>
-    object Blackboard { get; }
-
-    /// <summary>
-    /// 共享属性（配置上下文）
-    /// 1.用于支持【数据和行为分离】的Task体系。
-    /// 2.共享属性应该是只读的、可共享的，因为它是配置。
-    ///
-    /// PS: 数据和行为分离是指：Task仅包含行为，其属性是外部传入的；属性可能是单个任务的，也可能是多个任务共享的。
-    /// </summary>
-    /// <returns></returns>
-    object SharedProps { get; }
 }
 }

@@ -22,7 +22,6 @@ import cn.wjybxx.base.concurrent.CancelCodeBuilder;
 import cn.wjybxx.base.mutable.MutableInt;
 import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
-import cn.wjybxx.sequential.UniCancelTokenSource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.RepeatedTest;
@@ -54,22 +53,12 @@ public class CancelTokenTest {
         LoggerFactory.getILoggerFactory(); // init
     }
 
-    private static final AtomicInteger mode = new AtomicInteger(0);
-
     private static ICancelTokenSource newTokenSource() {
-        if ((mode.incrementAndGet() & 1) == 0) {
-            return new CancelTokenSource();
-        } else {
-            return new UniCancelTokenSource();
-        }
+        return new CancelTokenSource();
     }
 
     private static ICancelTokenSource newTokenSource(int code) {
-        if ((mode.incrementAndGet() & 1) == 0) {
-            return new CancelTokenSource(code);
-        } else {
-            return new UniCancelTokenSource(code);
-        }
+        return new CancelTokenSource(code);
     }
 
     // region 公共测试
@@ -178,7 +167,7 @@ public class CancelTokenTest {
     @RepeatedTest(4)
     void testThenAcceptCtx() {
         ICancelTokenSource cts = newTokenSource();
-        Context<String> rootCtx = Context.ofBlackboard("root");
+        Object rootCtx = "root";
         {
             final MutableObject<String> signal = new MutableObject<>();
             cts.thenAccept((token, ctx) -> {
@@ -209,7 +198,7 @@ public class CancelTokenTest {
     @RepeatedTest(4)
     void testThenRunCtx() {
         ICancelTokenSource cts = newTokenSource();
-        Context<String> rootCtx = Context.ofBlackboard("root");
+        Object rootCtx = "root";
         {
             final MutableObject<String> signal = new MutableObject<>();
             cts.thenRun((ctx) -> {
@@ -279,7 +268,7 @@ public class CancelTokenTest {
     @Test
     void testThenAcceptCtxAsync() {
         ICancelTokenSource cts = newTokenSource();
-        Context<String> rootCtx = Context.ofBlackboard("root");
+        Object rootCtx = "root";
         {
             final Promise<String> signal = new Promise<>();
             cts.thenAcceptAsync(globalEventLoop, (token, ctx) -> {
@@ -316,7 +305,7 @@ public class CancelTokenTest {
     @Test
     void testThenRunCtxAsync() {
         ICancelTokenSource cts = newTokenSource();
-        Context<String> rootCtx = Context.ofBlackboard("root");
+        Object rootCtx = "root";
         {
             final Promise<String> signal = new Promise<>();
             cts.thenRunAsync(globalEventLoop, (ctx) -> {

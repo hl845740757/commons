@@ -75,30 +75,26 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     public void CancelAfter(int cancelCode, TimeSpan timeSpan, IScheduledExecutorService delayer) {
         if (delayer == null) throw new ArgumentNullException(nameof(delayer));
-        ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(Canceller, new Context(this, cancelCode));
+        ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewTask(new Canceller(this, cancelCode));
         builder.SetOnlyOnce(timeSpan.Ticks, new TimeSpan(1));
         delayer.Schedule(in builder);
     }
 
-    private static void Canceller(object rawContext) {
-        Context context = (Context)rawContext;
-        context.source.Cancel(context.cancelCode);
-    }
-
-    private class Context : IContext
+    private class Canceller : ITask
     {
         internal readonly CancelTokenSource source;
         internal readonly int cancelCode;
 
-        public Context(CancelTokenSource source, int cancelCode) {
+        public Canceller(CancelTokenSource source, int cancelCode) {
             this.source = source;
             this.cancelCode = cancelCode;
         }
 
-        public ICancelToken CancelToken => source;
-        public object? State => null;
-        public object? Blackboard => null;
-        public object? SharedProps => null;
+        public int Options => 0;
+
+        public void Run() {
+            source.Cancel(cancelCode);
+        }
     }
 
     #endregion

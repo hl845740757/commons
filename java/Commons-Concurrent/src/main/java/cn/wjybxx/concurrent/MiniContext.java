@@ -28,8 +28,8 @@ public final class MiniContext implements IContext {
 
     public static final MiniContext SHARABLE = new MiniContext(null, ICancelToken.NONE);
 
-    private final ICancelToken cancelToken;
     private final Object state;
+    private final ICancelToken cancelToken;
 
     private MiniContext(Object state, ICancelToken cancelToken) {
         this.state = state;
@@ -45,11 +45,6 @@ public final class MiniContext implements IContext {
         return new MiniContext(state, cancelToken);
     }
 
-    public static MiniContext ofCancelToken(ICancelToken cancelToken) {
-        if (cancelToken == ICancelToken.NONE) return SHARABLE;
-        return new MiniContext(null, cancelToken);
-    }
-
     @Override
     public Object state() {
         return state;
@@ -59,16 +54,6 @@ public final class MiniContext implements IContext {
     @Override
     public ICancelToken cancelToken() {
         return cancelToken;
-    }
-
-    @Override
-    public Object blackboard() {
-        return null;
-    }
-
-    @Override
-    public Object sharedProps() {
-        return null;
     }
 
 }

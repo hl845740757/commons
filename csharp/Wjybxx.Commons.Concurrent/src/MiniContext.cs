@@ -51,14 +51,6 @@ public sealed class MiniContext : IContext
         return new MiniContext(state, cancelToken);
     }
 
-    public static MiniContext OfCancelToken(ICancelToken? cancelToken) {
-        if (cancelToken == ICancelToken.NONE || cancelToken == null) return SHARABLE;
-        return new MiniContext(null, cancelToken);
-    }
-
-    public object? Blackboard => null;
-    public object? SharedProps => null;
-
     public IContext ToSharable() {
         return SHARABLE;
     }

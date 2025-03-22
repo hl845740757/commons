@@ -24,7 +24,6 @@ using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Concurrent;
 using Wjybxx.Commons.Mutable;
-using Wjybxx.Commons.Sequential;
 using Wjybxx.Disruptor;
 
 namespace Commons.Tests.Concurrent;
@@ -42,15 +41,9 @@ public class CancelTokenTest
     static CancelTokenTest() {
         globalEventLoop.Start().Join();
     }
-
-    private static volatile int mode = 0;
-
+    
     private static ICancelTokenSource newTokenSource(int code = 0) {
-        if ((Interlocked.Increment(ref mode) & 1) == 0) {
-            return new CancelTokenSource(code);
-        } else {
-            return new UniCancelTokenSource(code);
-        }
+        return new CancelTokenSource(code);
     }
 
     #region 公共测试
@@ -154,7 +147,7 @@ public class CancelTokenTest
     [Test] [Repeat(4)]
     public void testThenAcceptCtx() {
         ICancelTokenSource cts = newTokenSource();
-        Context<string> rootCtx = Context<string>.OfBlackboard("root");
+        object rootCtx = "root";
         {
             MutableObject<string> signal = new MutableObject<string>();
             cts.ThenAccept((token, ctx) => {
@@ -183,7 +176,7 @@ public class CancelTokenTest
     [Test] [Repeat(4)]
     public void testThenRunCtx() {
         ICancelTokenSource cts = newTokenSource();
-        Context<string> rootCtx = Context<string>.OfBlackboard("root");
+        object rootCtx = "root";
         {
             MutableObject<string> signal = new MutableObject<string>();
             cts.ThenRun((ctx) => {
@@ -265,7 +258,7 @@ public class CancelTokenTest
     [Test]
     public void testThenAcceptCtxAsync() {
         ICancelTokenSource cts = newTokenSource();
-        Context<string> rootCtx = Context<string>.OfBlackboard("root");
+        object rootCtx = "root";
         {
             Promise<string> signal = new Promise<string>();
             cts.ThenAcceptAsync(globalEventLoop, (token, ctx) => {
@@ -302,7 +295,7 @@ public class CancelTokenTest
     [Test]
     public void testThenRunCtxAsync() {
         ICancelTokenSource cts = newTokenSource();
-        Context<string> rootCtx = Context<string>.OfBlackboard("root");
+        object rootCtx = "root";
         {
             Promise<string> signal = new Promise<string>();
             cts.ThenRunAsync(globalEventLoop, (ctx) => {

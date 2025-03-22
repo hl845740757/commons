@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable CS8603
 
@@ -137,16 +138,19 @@ public class PromiseTask<T> : IFutureTask
     public int TaskType => (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
 
     /** 任务是否启用了指定选项 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsEnabled(int taskOption) {
         return TaskOptions.IsEnabled(options, taskOption);
     }
 
     /** 获取ctl中的某个bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected bool GetCtlBit(int mask) {
         return (ctl & mask) != 0;
     }
 
     /** 设置ctl中的某个bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void SetCtlBit(int mask, bool value) {
         if (value) {
             ctl |= mask;
@@ -166,11 +170,13 @@ public class PromiseTask<T> : IFutureTask
         ctl = 0;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected ICancelToken GetCancelToken() {
         return Executors.GetCancelToken(ctx, options);
     }
 
     /** 运行分时任务 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected bool RunTimeSharing(bool firstStep, out T result) {
         TimeSharingTask<T> task = (TimeSharingTask<T>)this.task;
         return task(ctx, firstStep, out result);
@@ -191,12 +197,12 @@ public class PromiseTask<T> : IFutureTask
             }
             case TaskBuilder.TYPE_ACTION_CTX: {
                 Action<object> task = (Action<object>)this.task;
-                task((object)ctx);
+                task(ctx);
                 return default;
             }
             case TaskBuilder.TYPE_FUNC_CTX: {
                 Func<object, T> task = (Func<object, T>)this.task;
-                return task((object)ctx);
+                return task(ctx);
             }
             case TaskBuilder.TYPE_TASK: {
                 ITask task = (ITask)this.task;
