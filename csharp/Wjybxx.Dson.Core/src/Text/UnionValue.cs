@@ -26,7 +26,6 @@ namespace Wjybxx.Dson.Text
 {
 /// <summary>
 /// 用于避免对值类型装箱
-/// 本想做得更彻底一点，但引用类型不能和非引用类型重叠，导致Offset计算困难，于是只能修改为阉割版，指针类型仍然装箱...
 /// </summary>
 [StructLayout(LayoutKind.Explicit)]
 public struct UnionValue : IEquatable<UnionValue>
@@ -34,16 +33,21 @@ public struct UnionValue : IEquatable<UnionValue>
 #nullable disable
     // 值的类型 -- 偷懒方案，Object表示任意类型
     [FieldOffset(0)] public DsonType type;
+    // 固定8个字节
     [FieldOffset(1)] public int iValue;
     [FieldOffset(1)] public long lValue;
     [FieldOffset(1)] public float fValue;
     [FieldOffset(1)] public double dValue;
     [FieldOffset(1)] public bool bValue;
-    // 只包含基础值的结构体
-    [FieldOffset(1)] public ExtDateTime dateTime;
-    [FieldOffset(1)] public Timestamp timestamp;
-    // 由于内存对齐的原因，引用类型需要偏移32
-    [FieldOffset(32)] public object objValue;
+
+    // 3个扩展int值，支持DateTime、TimeStamp、ObjectPtr、ObjectLitePtr
+    [FieldOffset(9)] public int v2; // nanos, type
+    [FieldOffset(13)] public int v3; // offset, policy
+    [FieldOffset(17)] public byte v4; // enables
+
+    // 由于内存对齐的原因，引用类型需要偏移24
+    [FieldOffset(24)] public object objValue; // localId, string, bytes
+    [FieldOffset(32)] public object objValue2; // namespace
 
     public UnionValue(DsonType type) : this() {
         this.type = type;
@@ -53,6 +57,49 @@ public struct UnionValue : IEquatable<UnionValue>
         this.type = type;
         this.objValue = objValue;
     }
+
+    #region converter
+
+    public ObjectPtr ObjectPtr {
+        get => new ObjectPtr((string)objValue, (string)objValue2, (byte)v2, (byte)v3);
+        set {
+            objValue = value.LocalId;
+            objValue2 = value.Namespace; // 固定value2
+            v2 = value.Type;
+            v3 = value.Policy;
+        }
+    }
+
+    public ObjectLitePtr ObjectLitePtr {
+        get => new ObjectLitePtr(lValue, (string)objValue2, (byte)v2, (byte)v3);
+        set {
+            lValue = value.LocalId;
+            objValue2 = value.Namespace; // 固定value2
+            v2 = value.Type;
+            v3 = value.Policy;
+        }
+    }
+
+    public ExtDateTime DateTime {
+        get => new ExtDateTime(lValue, v2, v3, v4);
+        set {
+            lValue = value.Seconds;
+            v2 = value.Nanos;
+            v3 = value.Offset;
+            v4 = value.Enables;
+        }
+    }
+
+    public Timestamp Timestamp {
+        get => new Timestamp(lValue, v2);
+        set {
+            lValue = value.Seconds;
+            v2 = value.Nanos;
+        }
+    }
+
+    #endregion
+
 #nullable enable
 
     public bool Equals(UnionValue other) {
@@ -66,8 +113,11 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.Float: return fValue.Equals(other.fValue);
             case DsonType.Double: return dValue.Equals(other.dValue);
             case DsonType.Bool: return bValue == other.bValue;
-            case DsonType.DateTime: return dateTime.Equals(other.dateTime);
-            case DsonType.Timestamp: return timestamp.Equals(other.timestamp);
+            case DsonType.Null: return true;
+            case DsonType.Pointer: return ObjectPtr.Equals(other.ObjectPtr);
+            case DsonType.LitePointer: return ObjectLitePtr.Equals(other.ObjectLitePtr);
+            case DsonType.DateTime: return DateTime.Equals(other.DateTime);
+            case DsonType.Timestamp: return Timestamp.Equals(other.Timestamp);
             case DsonType.Binary: { // 数组特殊处理
                 byte[] lhs = (byte[])objValue;
                 byte[] rhs = (byte[])other.objValue;
@@ -92,8 +142,11 @@ public struct UnionValue : IEquatable<UnionValue>
             DsonType.Float => fValue.GetHashCode(),
             DsonType.Double => dValue.GetHashCode(),
             DsonType.Bool => bValue.GetHashCode(),
-            DsonType.DateTime => dateTime.GetHashCode(),
-            DsonType.Timestamp => timestamp.GetHashCode(),
+            DsonType.Null => DsonNull.NULL.GetHashCode(), // null的Hash也特殊处理
+            DsonType.Pointer => ObjectPtr.GetHashCode(),
+            DsonType.LitePointer => ObjectLitePtr.GetHashCode(),
+            DsonType.DateTime => DateTime.GetHashCode(),
+            DsonType.Timestamp => Timestamp.GetHashCode(),
             DsonType.Binary => ArrayUtil.HashCode((byte[])objValue), // 数组特殊处理
             _ => objValue == null ? 0 : objValue.GetHashCode()
         };
@@ -116,8 +169,10 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.Float: return $"Type: {type}, Value: {fValue}";
             case DsonType.Double: return $"Type: {type}, Value: {dValue}";
             case DsonType.Bool: return $"Type: {type}, Value: {bValue}";
-            case DsonType.DateTime: return $"Type: {type}, Value: {dateTime}";
-            case DsonType.Timestamp: return $"Type: {type}, Value: {timestamp}";
+            case DsonType.Pointer: return $"Type: {type}, Value: {ObjectPtr}";
+            case DsonType.LitePointer: return $"Type: {type}, Value: {ObjectLitePtr}";
+            case DsonType.DateTime: return $"Type: {type}, Value: {DateTime}";
+            case DsonType.Timestamp: return $"Type: {type}, Value: {Timestamp}";
             case DsonType.Binary: return $"Type: {type}, Value: {CommonsLang3.ToHexString((byte[])objValue)}";
             default:
                 return $"Type: {type}, Value: {objValue}";

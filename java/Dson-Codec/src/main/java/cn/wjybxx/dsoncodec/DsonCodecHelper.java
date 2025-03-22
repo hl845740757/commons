@@ -227,7 +227,8 @@ final class DsonCodecHelper {
         throw DsonCodecException.unsupportedType(declared);
     }
 
-    public static Object readDsonValue(DsonReader reader, DsonType dsonType, String name) {
+    public static Object readDsonValueValue(DsonReader reader, String name) {
+        DsonType dsonType = reader.getCurrentDsonType();
         return switch (dsonType) {
             case INT32 -> reader.readInt32(name);
             case INT64 -> reader.readInt64(name);

@@ -295,7 +295,8 @@ internal static class DsonCodecHelper
         throw DsonCodecException.UnsupportedType(declared);
     }
 
-    public static object? ReadDsonValue(IDsonReader<string> reader, DsonType dsonType, string? name) {
+    public static object? ReadDsonValueValue(IDsonReader<string> reader, string? name) {
+        DsonType dsonType = reader.CurrentDsonType;
         switch (dsonType) {
             case DsonType.Int32: return reader.ReadInt32(name);
             case DsonType.Int64: return reader.ReadInt64(name);

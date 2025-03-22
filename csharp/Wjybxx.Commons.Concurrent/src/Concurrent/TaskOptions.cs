@@ -39,7 +39,7 @@ public static class TaskOptions
     /// 1. 用于指定异步任务的调度时机。
     /// 2. 主要用于{@link EventLoop}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
     ///</summary>
-    public const int MASK_SCHEDULE_PHASE = 0xF0;
+    [Beta] public const int MASK_SCHEDULE_PHASE = 0xF0;
 
 
     /// <summary>

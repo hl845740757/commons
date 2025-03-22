@@ -164,9 +164,9 @@ internal class ValuePromise<T> : IValuePromise<T>
     /// 获取当前状态
     /// </summary>
     /// <param name="ex">当前的状态信息</param>
-    /// <param name="strict">如果为true，则即将完成的情况也返回计算中</param>
+    /// <param name="strict">是否严格模式；如果为true，则发布结果状态也返回为计算中</param>
     /// <returns></returns>
-    private static int PeekState(object? ex, bool strict = false) {
+    private static int PeekState(object? ex, bool strict = true) {
         if (ex == null) {
             return ST_PENDING;
         }
@@ -411,7 +411,7 @@ internal class ValuePromise<T> : IValuePromise<T>
             }
         }
 
-        options &= (~TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE); // 去重用户的低位
+        options &= (~TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE); // 去除用户的低位
         options |= type;
         options |= (MASK_PUBLISHED | MASK_COMPLETED); // COMPLETED(总是设置不会导致错误)
 

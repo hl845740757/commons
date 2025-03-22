@@ -106,7 +106,8 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
             reader.ReadNull(name);
             return default;
         }
-        if (dsonType.IsContainer()) { // 容器类型只能通过codec解码
+        // 容器类型只能通过codec解码；Flags编码为Int/String数组的情况下，需要自定义Field读写代理处理
+        if (dsonType.IsContainer()) {
             string clsName = ReadClsName(dsonType);
             DsonCodecImpl codec = FindObjectDecoder(declaredType, factory, clsName);
             if (codec == null) {
@@ -119,17 +120,19 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
                 return (T)codec.ReadObject2(this, factory);
             }
         }
-        // 非容器类型 -- Dson内建结构，Enum等
-        if (declaredType.IsEnum) {
+        // 非容器类型 -- Dson内建结构，Enum，Const等
+        {
             DsonCodecImpl<T> codec = (DsonCodecImpl<T>)converter.CodecRegistry.GetDecoder(declaredType)!;
-            return codec.ReadObject(this, factory);
+            if (codec != null) {
+                return codec.ReadObject(this, factory);
+            }
         }
         // 考虑DsonValue
         if (typeof(DsonValue).IsAssignableFrom(declaredType)) {
             return (T)(object)Dsons.ReadDsonValue(reader);
         }
         // 默认类型转换-声明类型可能是个抽象类型，eg：Number
-        return (T)DsonCodecHelper.ReadDsonValue(reader, dsonType, name);
+        return (T)DsonCodecHelper.ReadDsonValueValue(reader, name);
     }
 
     #endregion

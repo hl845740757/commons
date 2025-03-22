@@ -452,21 +452,27 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (DsonTexts.LabelPtr == clsName) { // @ref localId
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context, nextToken);
-            PushNextValue(new UnionValue(DsonType.Pointer, new ObjectPtr(nextToken.StringValue())));
+            PushNextValue(new UnionValue(DsonType.Pointer)
+            {
+                ObjectPtr = new ObjectPtr(nextToken.StringValue())
+            });
             return DsonType.Pointer;
         }
         if (DsonTexts.LabelLitePtr == clsName) { // @ptr localId
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context, nextToken);
             long localId = DsonTexts.ParseInt64(nextToken.StringValue());
-            PushNextValue(new UnionValue(DsonType.LitePointer, new ObjectLitePtr(localId)));
+            PushNextValue(new UnionValue(DsonType.LitePointer)
+            {
+                ObjectLitePtr = new ObjectLitePtr(localId)
+            });
             return DsonType.LitePointer;
         }
         if (DsonTexts.LabelDateTime == clsName) { // @dt uuuu-MM-dd'T'HH:mm:ss
             DateTime dateTime = ExtDateTime.ParseDateTime(ScanStringUtilComma());
             PushNextValue(new UnionValue(DsonType.DateTime)
             {
-                dateTime = ExtDateTime.OfDateTime(in dateTime)
+                DateTime = ExtDateTime.OfDateTime(in dateTime)
             });
             return DsonType.DateTime;
         }
@@ -475,7 +481,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             EnsureStringsToken(context, nextToken);
             PushNextValue(new UnionValue(DsonType.Timestamp)
             {
-                timestamp = Timestamp.Parse(nextToken.StringValue())
+                Timestamp = Timestamp.Parse(nextToken.StringValue())
             });
             return DsonType.Timestamp;
         }
@@ -500,24 +506,30 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         string clsName = headerToken.StringValue();
         switch (clsName) {
             case DsonTexts.LabelPtr: {
-                PushNextValue(new UnionValue(DsonType.Pointer, ScanPtr(context)));
+                PushNextValue(new UnionValue(DsonType.Pointer)
+                {
+                    ObjectPtr = ScanPtr(context)
+                });
                 return DsonType.Pointer;
             }
             case DsonTexts.LabelLitePtr: {
-                PushNextValue(new UnionValue(DsonType.LitePointer, ScanLitePtr(context)));
+                PushNextValue(new UnionValue(DsonType.LitePointer)
+                {
+                    ObjectLitePtr = ScanLitePtr(context)
+                });
                 return DsonType.LitePointer;
             }
             case DsonTexts.LabelDateTime: {
                 PushNextValue(new UnionValue(DsonType.DateTime)
                 {
-                    dateTime = ScanDateTime(context)
+                    DateTime = ScanDateTime(context)
                 });
                 return DsonType.DateTime;
             }
             case DsonTexts.LabelTimestamp: {
                 PushNextValue(new UnionValue(DsonType.Timestamp)
                 {
-                    timestamp = ScanTimestamp(context)
+                    Timestamp = ScanTimestamp(context)
                 });
                 return DsonType.Timestamp;
             }
@@ -913,7 +925,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (value.type != DsonType.Pointer) {
             throw new InvalidOperationException();
         }
-        return (ObjectPtr)value.objValue;
+        return value.ObjectPtr;
     }
 
     protected override ObjectLitePtr DoReadLitePtr() {
@@ -921,7 +933,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (value.type != DsonType.LitePointer) {
             throw new InvalidOperationException();
         }
-        return (ObjectLitePtr)value.objValue;
+        return value.ObjectLitePtr;
     }
 
     protected override ExtDateTime DoReadDateTime() {
@@ -929,7 +941,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (value.type != DsonType.DateTime) {
             throw new InvalidOperationException();
         }
-        return value.dateTime;
+        return value.DateTime;
     }
 
     protected override Timestamp DoReadTimestamp() {
@@ -937,7 +949,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (value.type != DsonType.Timestamp) {
             throw new InvalidOperationException();
         }
-        return value.timestamp;
+        return value.Timestamp;
     }
 
     #endregion

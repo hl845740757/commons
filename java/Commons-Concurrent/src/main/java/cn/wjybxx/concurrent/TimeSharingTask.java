@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
  * 1. 分时任务代表着所有需要自定义管理状态的任务。
  * 2. 该接口尚不稳定，避免用于非EventLoop架构。
  * 3. 用户可以通过ctx和外部通信
+ * 4. 用户可以通过该接口自行调节频率
  *
  * @author wjybxx
  * date 2023/4/3
