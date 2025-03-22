@@ -18,13 +18,12 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Wjybxx.Commons.Concurrent;
 using Wjybxx.Commons.Pool;
-using TaskStatus = Wjybxx.Commons.Concurrent.TaskStatus;
 
-namespace Wjybxx.Commons.Sequential
+namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 该类解决两个问题：
@@ -33,25 +32,25 @@ namespace Wjybxx.Commons.Sequential
 ///
 /// 注意：用户不应该使用该类 - 由于C#禁止超类的访问权限小于子类，该类只能定义为Public...
 /// </summary>
-public abstract class AbstractUniPromise
+public abstract class AbstractPromise
 {
     /// <summary>
     /// 当前对象上的所有监听器，使用栈方式存储
     /// 如果{@code stack}为{@link #TOMBSTONE}，表明当前Future已完成，且正在进行通知，或已通知完毕。
     /// </summary>
-    protected volatile Completion? stack;
+    internal volatile Completion? stack;
 
     /// <summary>
     /// 是否处于宽松完成状态-结果已可获取，或即将可用。
     /// 处于发布结果中也可返回true。
     /// </summary>
-    protected abstract bool IsRelaxedCompleted { get; }
+    internal abstract bool IsRelaxedCompleted { get; }
 
     /// <summary>
     /// 是否已严格完成-结果已可获取.
     /// 如果存在中间状态，则需要返回false。
     /// </summary>
-    protected abstract bool IsStrictlyCompleted { get; }
+    internal abstract bool IsStrictlyCompleted { get; }
 
     #region state
 
@@ -115,22 +114,31 @@ public abstract class AbstractUniPromise
     /// </summary>
     /// <param name="newHead"></param>
     /// <returns>压栈成功则返回true，否则返回false</returns>
-    protected bool PushCompletion(Completion newHead) {
+    internal bool PushCompletion(Completion newHead) {
         if (IsStrictlyCompleted) {
             newHead.TryFire(SYNC);
             return false;
         }
-        // 单线程 - 不存在并发情况
-        newHead.next = this.stack;
-        this.stack = newHead;
-        return true;
+        Completion expectedHead = stack;
+        Completion realHead;
+        while (expectedHead != TOMBSTONE) {
+            newHead.next = expectedHead;
+            realHead = Interlocked.CompareExchange(ref stack, newHead, expectedHead);
+            if (realHead == expectedHead) { // success
+                return true;
+            }
+            expectedHead = realHead; // retry
+        }
+        newHead.next = null;
+        newHead.TryFire(SYNC);
+        return false;
     }
 
     /// <summary>
     /// 推送Future完成事件
     /// </summary>
     /// <param name="future"></param>
-    protected static void PostComplete(AbstractUniPromise future) {
+    protected static void PostComplete(AbstractPromise future) {
         Completion next = null;
         outer:
         while (true) {
@@ -160,21 +168,32 @@ public abstract class AbstractUniPromise
     ///
     /// PS：这将导致无法通过Future删除回调 -- 只能通过取消令牌取消执行。
     /// </summary>
-    private static Completion? ClearListeners(AbstractUniPromise promise, Completion? onto) {
+    private static Completion? ClearListeners(AbstractPromise promise, Completion? onto) {
         // 我们需要进行三件事
         // 1. 原子方式将当前Listeners赋值为TOMBSTONE，因为pushCompletion添加的监听器的可见性是由CAS提供的。
         // 2. 将当前栈内元素逆序，因为即使在接口层进行了说明（不提供监听器执行时序保证），但仍然有人依赖于监听器的执行时序(期望先添加的先执行)
         // 3. 将逆序后的元素插入到'onto'前面，即插入到原本要被通知的下一个监听器的前面
         Completion head = promise.stack;
-        if (head == TOMBSTONE) {
-            return onto;
+        while (true) {
+            if (head == TOMBSTONE) {
+                return onto;
+            }
+            Completion realHead = Interlocked.CompareExchange(ref promise.stack, TOMBSTONE, head);
+            if (realHead == head) {
+                break;
+            }
+            head = realHead;
         }
-        promise.stack = TOMBSTONE;
 
         Completion ontoHead = onto;
         while (head != null) {
             Completion tmpHead = head;
             head = head.next;
+
+            if (tmpHead is Awaiter awaiter) {
+                awaiter.ReleaseWaiters(); // 唤醒等待线程
+                continue;
+            }
 
             tmpHead.next = ontoHead;
             ontoHead = tmpHead;
@@ -187,7 +206,7 @@ public abstract class AbstractUniPromise
     #region util
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static bool TryInline(Completion completion, IExecutor e, int options) {
+    internal static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
         if (Executors.IsInlinable(e, options)) {
             return true;
@@ -197,7 +216,7 @@ public abstract class AbstractUniPromise
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static UniPromise<U>? PostFire<U>(UniPromise<U> output, int mode, bool setCompleted) {
+    internal static Promise<U>? PostFire<U>(Promise<U> output, int mode, bool setCompleted) {
         if (!setCompleted) { // 未竞争成功
             return null;
         }
@@ -210,17 +229,45 @@ public abstract class AbstractUniPromise
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static object WrapException(object ex) {
-        return AbstractPromise.WrapException(ex);
+        if (ex == null) throw new ArgumentNullException(nameof(ex));
+        if (ex is OperationCanceledException) {
+            return ex;
+        }
+        if (ex is Exception ex2) {
+            return ExceptionDispatchInfo.Capture(ex2);
+        }
+        // 恢复取消异常
+        ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)ex;
+        if (dispatchInfo.SourceException is OperationCanceledException) {
+            return dispatchInfo.SourceException;
+        }
+        return ex;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Exception UnwrapException(object ex) {
-        return AbstractPromise.UnwrapException(ex);
+        if (ex == null || ex == EX_COMPUTING || ex == EX_SUCCESS) throw new InvalidOperationException();
+        if (ex is ExceptionDispatchInfo dispatchInfo) return dispatchInfo.SourceException;
+        return (Exception)ex; // 取消
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Exception ExceptionNow(int state, object? ex, bool throwIfCancelled) {
-        return AbstractPromise.ExceptionNow(state, ex, throwIfCancelled);
+        switch (state) {
+            case ST_FAILED: {
+                ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)ex!;
+                return ExceptionUtil.RestoreStackTrace(dispatchInfo);
+            }
+            case ST_CANCELLED: {
+                Exception ex2 = (Exception)ex!;
+                if (throwIfCancelled) {
+                    throw BetterCancellationException.Capture(ex2);
+                }
+                return ex2;
+            }
+            case ST_SUCCESS:
+                throw new IllegalStateException("Task completed with a result");
+            default:
+                throw new IllegalStateException("Task has not completed");
+        }
     }
 
     #endregion
@@ -230,7 +277,7 @@ public abstract class AbstractUniPromise
     /// <summary>
     /// Completion表示一个回调任务
     /// </summary>
-    protected abstract class Completion : ITask
+    internal abstract class Completion : ITask
     {
         /** 非volatile，通过{@link Promise#stack}的原子更新来保证可见性 */
         internal Completion? next;
@@ -261,7 +308,7 @@ public abstract class AbstractUniPromise
         /// 2. mode指示可以调用{@link #postComplete(Promise)}方法时，则直接推送其进入完成状态的事件。
         /// </summary>
         /// <param name="mode"></param>
-        public abstract AbstractUniPromise? TryFire(int mode);
+        public abstract AbstractPromise? TryFire(int mode);
     }
 
     /// <summary>
@@ -276,17 +323,16 @@ public abstract class AbstractUniPromise
             set => throw new AssertionError();
         }
 
-        public override AbstractUniPromise? TryFire(int mode) {
+        public override AbstractPromise? TryFire(int mode) {
             throw new NotImplementedException();
         }
     }
 
-
     /// <summary>
     /// 状态机回调特殊优化，由于不依赖Promise的结果，
-    /// 因此不放入泛型内种，可全局缓存。
+    /// 因此不放入泛型类中，可全局缓存。
     /// </summary>
-    protected class MoveNextCompletion : Completion
+    internal class MoveNextCompletion : Completion
     {
 #nullable disable
         protected IExecutor executor;
@@ -330,7 +376,7 @@ public abstract class AbstractUniPromise
             return true;
         }
 
-        public override AbstractUniPromise? TryFire(int mode) {
+        public override AbstractPromise? TryFire(int mode) {
             {
                 if (Executors.IsCancelRequested(state, options)) {
                     goto outer;
@@ -344,8 +390,8 @@ public abstract class AbstractUniPromise
             POOL.Release(this);
             // help gc
             // this.executor = null;
-            // this.input = null!;
-            // this.action = null!;
+            // this.input = null;
+            // this.action = null;
             // this.state = null;
             return null;
         }
@@ -369,7 +415,149 @@ public abstract class AbstractUniPromise
         /// </summary>
         internal static readonly IObjectPool<MoveNextCompletion> POOL = new ConcurrentObjectPool<MoveNextCompletion>(
             () => new MoveNextCompletion(), task => task.Reset(),
-            TaskPoolConfig.GetPoolSize<int>(TaskPoolType.UniPromiseMoveNext));
+            TaskPoolConfig.GetPoolSize<int>(TaskPoolType.PromiseMoveNext));
+    }
+
+    /// <summary>
+    /// 用于在Future上等待的节点
+    /// </summary>
+    internal sealed class Awaiter : Completion
+    {
+        private readonly IFuture future;
+        private int waiterCount;
+
+        public Awaiter(IFuture future) {
+            this.future = future ?? throw new ArgumentNullException(nameof(future));
+        }
+
+        public override int Options {
+            get => 0;
+            set => throw new AssertionError();
+        }
+
+        public override AbstractPromise? TryFire(int mode) {
+            ReleaseWaiters();
+            return null;
+        }
+
+        public void ReleaseWaiters() {
+            Monitor.Enter(future);
+            try {
+                if (waiterCount > 0) {
+                    Monitor.PulseAll(future);
+                }
+            }
+            finally {
+                Monitor.Exit(future);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void IncWaiter() {
+            waiterCount++;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void DecWaiter() {
+            waiterCount--;
+        }
+
+        public void Await() {
+            Monitor.Enter(future);
+            IncWaiter();
+            try {
+                while (!future.IsCompleted) {
+                    Monitor.Wait(future);
+                }
+            }
+            finally {
+                DecWaiter();
+                Monitor.Exit(future);
+            }
+        }
+
+        public void AwaitUninterruptibly() {
+            Monitor.Enter(future);
+            IncWaiter();
+            bool interrupted = false;
+            try {
+                while (!future.IsCompleted) {
+                    try {
+                        Monitor.Wait(future);
+                    }
+                    catch (ThreadInterruptedException) {
+                        interrupted = true;
+                    }
+                }
+            }
+            finally {
+                DecWaiter();
+                Monitor.Exit(future);
+            }
+            if (interrupted) { // 恢复中断
+                Thread.CurrentThread.Interrupt();
+            }
+        }
+
+        public bool Await(TimeSpan timeout) {
+            // c# 的等待粒度只能是毫秒
+            long milliseconds = (long)timeout.TotalMilliseconds;
+            if (milliseconds < 0) {
+                throw new ArgumentException("negative timeout: " + timeout);
+            }
+
+            long deadline = ObjectUtil.SystemTickMillis() + milliseconds;
+            Monitor.Enter(future);
+            IncWaiter();
+            try {
+                while (!future.IsCompleted) {
+                    int remainMillis = MathCommon.Clamp(deadline - ObjectUtil.SystemTickMillis(), 0, int.MaxValue);
+                    if (remainMillis <= 0) {
+                        return false;
+                    }
+                    Monitor.Wait(future, remainMillis);
+                }
+            }
+            finally {
+                DecWaiter();
+                Monitor.Exit(future);
+            }
+            return true;
+        }
+
+        public bool AwaitUninterruptibly(TimeSpan timeout) {
+            // c# 的等待粒度只能是毫秒
+            long milliseconds = (long)timeout.TotalMilliseconds;
+            if (milliseconds < 0) {
+                throw new ArgumentException("negative timeout: " + timeout);
+            }
+            bool interrupted = false;
+            long deadline = ObjectUtil.SystemTickMillis() + milliseconds;
+            Monitor.Enter(future);
+            IncWaiter();
+            try {
+                while (!future.IsCompleted) {
+                    int remainMillis = MathCommon.Clamp(deadline - ObjectUtil.SystemTickMillis(), 0, int.MaxValue);
+                    if (remainMillis <= 0) {
+                        return false;
+                    }
+                    try {
+                        Monitor.Wait(future, remainMillis);
+                    }
+                    catch (ThreadInterruptedException) {
+                        interrupted = true;
+                    }
+                }
+            }
+            finally {
+                DecWaiter();
+                Monitor.Exit(future);
+            }
+            if (interrupted) { // 恢复中断
+                Thread.CurrentThread.Interrupt();
+            }
+            return true;
+        }
     }
 
     #endregion

@@ -287,7 +287,7 @@ public interface IFuture
     IFuture ThenRun(Action<object> fn, object? ctx, int options = 0);
 
     IFuture ThenRunAsync(IExecutor executor,
-                            Action<object> fn, object? ctx, int options = 0);
+                         Action<object> fn, object? ctx, int options = 0);
 
     #endregion
 
