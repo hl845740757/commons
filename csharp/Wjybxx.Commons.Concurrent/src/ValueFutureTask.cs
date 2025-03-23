@@ -17,8 +17,8 @@
 #endregion
 
 using System;
-using System.Diagnostics;
 using Wjybxx.Commons.Pool;
+using static Wjybxx.Commons.Concurrent.PromiseTask;
 
 #pragma warning disable CS8603
 
@@ -118,7 +118,7 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
         this.options = options;
 
         this.ctl = (options & TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE);
-        this.ctl |= (taskType << PromiseTask.OFFSET_TASK_TYPE);
+        this.ctl |= (taskType << OFFSET_TASK_TYPE);
     }
 
     public static ValueFutureTask<T> Create(object action, object? ctx, int options, int taskType) {
@@ -166,7 +166,7 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
     }
 
     /** 任务的类型 */
-    private int TaskType => (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
+    private int TaskType => (ctl & MASK_TASK_TYPE) >> OFFSET_TASK_TYPE;
 
     /** 获取取消令牌 */
     private ICancelToken GetCancelToken() {
@@ -175,7 +175,7 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
 
     /** 运行可直接得出结果的任务 */
     private T RunTask() {
-        int type = (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
+        int type = (ctl & MASK_TASK_TYPE) >> OFFSET_TASK_TYPE;
         switch (type) {
             case TaskBuilder.TYPE_ACTION: {
                 Action task = (Action)this.task;

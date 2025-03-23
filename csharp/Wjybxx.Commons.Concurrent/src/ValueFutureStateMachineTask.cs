@@ -54,7 +54,7 @@ internal sealed class ValueFutureStateMachineTask<T, S> : ValuePromise<T>, IValu
     public static void SetStateMachine(ref S stateMachine, out IValueFutureStateMachineTask<T> task, out int reentryId) {
         ValueFutureStateMachineTask<T, S> result = POOL.Acquire();
 
-        // driver和reentryId是builder的属性，而builder是状态机的属性，需要在拷贝状态机之前完成初始化
+        // task和reentryId是builder的属性，而builder是状态机的属性，需要在拷贝状态机之前完成初始化
         // init builder before copy state machine
         task = result;
         reentryId = result.IncReentryId(); // 重用时也+1

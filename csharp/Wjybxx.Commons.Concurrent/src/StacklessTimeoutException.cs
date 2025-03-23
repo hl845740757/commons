@@ -23,6 +23,7 @@ namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 不捕获堆栈的超时异常
+/// (c#下意义不大)
 /// </summary>
 public class StacklessTimeoutException : TimeoutException
 {

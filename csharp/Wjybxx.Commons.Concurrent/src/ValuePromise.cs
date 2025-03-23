@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
@@ -153,28 +152,6 @@ internal class ValuePromise<T> : IValuePromise<T>
                 Thread.SpinWait(1);
             }
             return ST_SUCCESS;
-        }
-        if (ex == EX_SUCCESS) {
-            return ST_SUCCESS;
-        }
-        return ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
-    }
-
-    /// <summary>
-    /// 获取当前状态
-    /// </summary>
-    /// <param name="ex">当前的状态信息</param>
-    /// <param name="strict">是否严格模式；如果为true，则发布结果状态也返回为计算中</param>
-    /// <returns></returns>
-    private static int PeekState(object? ex, bool strict = true) {
-        if (ex == null) {
-            return ST_PENDING;
-        }
-        if (ex == EX_COMPUTING) {
-            return ST_COMPUTING;
-        }
-        if (ex == EX_PUBLISHING) {
-            return strict ? ST_COMPUTING : ST_SUCCESS;
         }
         if (ex == EX_SUCCESS) {
             return ST_SUCCESS;
@@ -395,51 +372,49 @@ internal class ValuePromise<T> : IValuePromise<T>
 
     private void SetCompletion(int type, object action, object? state, IExecutor? executor, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
+        // 去除用户的低位，记录type
+        options &= (~TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE);
+        options |= type;
 
         // 先尝试锁定为发布状态，PostComplete会等待发布
         Completion completion = _completion;
-        int oldOptions = Interlocked.CompareExchange(ref completion.options, MASK_PUBLISHING, 0);
-        if (oldOptions != 0) {
-            if (oldOptions != MASK_COMPLETED) {
-                throw new InvalidOperationException("Already continuation registered, can not await twice or get result after await.");
-            }
-            const int lockOptions = MASK_PUBLISHING | MASK_COMPLETED;
-            // 需要再次竞争completion的使用权，多线程添加监听器之间的竞争
-            oldOptions = Interlocked.CompareExchange(ref completion.options, lockOptions, MASK_COMPLETED);
-            if (oldOptions != MASK_COMPLETED) {
-                throw new InvalidOperationException("Already continuation registered, can not await twice or get result after await.");
-            }
+        int oldCtl = Interlocked.CompareExchange(ref completion.ctl, MASK_PUBLISHING, 0);
+        if (oldCtl == 0) {
+            completion.input = this;
+            completion.executor = executor;
+            completion.options = options;
+            completion.action = action;
+            completion.state = state;
+            Volatile.Write(ref completion.ctl, MASK_PUBLISHED);
+            return;
         }
-
-        options &= (~TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE); // 去除用户的低位
-        options |= type;
-        options |= (MASK_PUBLISHED | MASK_COMPLETED); // COMPLETED(总是设置不会导致错误)
-
-        completion.input = this;
-        completion.action = action;
-        completion.state = state;
-        completion.executor = executor;
-        Volatile.Write(ref completion.options, options);
-
-        // future已进入完成状态
-        if (oldOptions == MASK_COMPLETED) {
-            completion.TryFire(SYNC);
+        // 检测重复添加监听器(包含发布标记)
+        if (oldCtl != MASK_FIRED) {
+            throw new InvalidOperationException("Already continuation registered, can not await twice or get result after await.");
         }
+        // Future已完成
+        completion.TryFire(SYNC);
     }
 
     private void PostComplete() {
-        int options = Volatile.Read(ref _completion.options);
-        if (options == 0) {
-            options = Interlocked.CompareExchange(ref _completion.options, MASK_COMPLETED, 0);
-            if (options == 0) {
-                return; // 竞争成功，添加监听器的时候同步通知
+        while (true) {
+            int ctl = Volatile.Read(ref _completion.ctl);
+            if (ctl == MASK_PUBLISHING) {
+                Thread.SpinWait(1);
+                continue;
             }
+            // ctl == 0 || ctl == MASK_PUBLISHED
+            // 需要保留原始ctl，以识是否重复添加监听器
+            int nextCtl = (ctl | MASK_FIRED);
+            if (Interlocked.CompareExchange(ref _completion.ctl, nextCtl, ctl) != ctl) {
+                Thread.SpinWait(1);
+                continue;
+            }
+            if (ctl != 0) {
+                _completion.TryFire(SYNC);
+            }
+            return;
         }
-        // 如果正在发布，则进行等待
-        while ((options & MASK_PUBLISHING) != 0) {
-            options = Volatile.Read(ref _completion.options);
-        }
-        _completion.TryFire(SYNC);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -519,8 +494,8 @@ internal class ValuePromise<T> : IValuePromise<T>
     private const int MASK_PUBLISHING = 0x10;
     /** 已发布回调 */
     private const int MASK_PUBLISHED = 0x20;
-    /** future已完成 */
-    private const int MASK_COMPLETED = 0x40;
+    /** 已通知回调 */
+    private const int MASK_FIRED = 0x40;
 
     private class Completion : ITask
     {
@@ -528,23 +503,27 @@ internal class ValuePromise<T> : IValuePromise<T>
         /// <summary>
         /// 部分回调依赖Promise的数据
         /// </summary>
-        internal volatile ValuePromise<T> input;
+        internal ValuePromise<T> input;
+        /// <summary>
+        /// 控制标识，用于保证可见性
+        /// 1.如果为0表示尚未发布action。
+        /// 2.如果等于<see cref="ValuePromise{T}.MASK_PUBLISHING"/>表示正在发布回调。
+        /// 3.如果包含<see cref="ValuePromise{T}.MASK_PUBLISHED"/>表示已发布回调。
+        /// 4.如果等于<see cref="ValuePromise{T}.MASK_FIRED"/>表示已通知回调。
+        ///
+        /// （不和options共享字段，避免额外的复杂度）
+        /// </summary>
+        internal int ctl;
+
         /// <summary>
         /// 回调线程
         /// </summary>
         internal IExecutor executor;
         /// <summary>
         /// 回调任务选项
-        /// 
-        /// 1.如果为0表示尚未发布action。
-        /// 2.如果等于<see cref="ValuePromise{T}.MASK_PUBLISHING"/>表示正在发布。
-        /// 3.如果包含<see cref="ValuePromise{T}.MASK_PUBLISHED"/>表示已发布。
-        /// 4.如果等于<see cref="ValuePromise{T}.MASK_COMPLETED"/>表示Future已完成，但此时没有回调。
-        /// 
         /// PS：低8位存储任务类型和其它控制标记。
         /// </summary>
         internal int options;
-
         /// <summary>
         /// 回调
         /// </summary>
@@ -557,6 +536,7 @@ internal class ValuePromise<T> : IValuePromise<T>
 
         public void Reset() {
             input = null;
+            ctl = 0;
             action = null;
             state = null;
             executor = null;

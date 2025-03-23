@@ -68,11 +68,17 @@ public enum TaskPoolType
     /// 状态机任务
     /// </summary>
     ValueFutureStateMachineTask,
-
+    /// <summary>
+    /// <see cref="ValueFutureTask{T}"/>
+    /// </summary>
+    ValueFutureTask,
+    /// <summary>
+    /// <see cref="ManualResetPromise{T}"/>
+    /// </summary>
+    ManualResetPromise,
+    
     PromiseTask,
     ScheduledPromiseTask,
-    ValueFutureTask,
-    ManualResetPromise,
     ValuePromise,
 }
 }

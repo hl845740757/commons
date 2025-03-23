@@ -174,28 +174,6 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
     }
 
-    /// <summary>
-    /// 获取当前状态
-    /// </summary>
-    /// <param name="ex">当前的状态信息</param>
-    /// <param name="strict">是否严格模式；如果为true，则发布结果状态也返回为计算中</param>
-    /// <returns></returns>
-    private static int PeekState(object? ex, bool strict = true) {
-        if (ex == null) {
-            return ST_PENDING;
-        }
-        if (ex == EX_COMPUTING) {
-            return ST_COMPUTING;
-        }
-        if (ex == EX_PUBLISHING) {
-            return strict ? ST_COMPUTING : ST_SUCCESS;
-        }
-        if (ex == EX_SUCCESS) {
-            return ST_SUCCESS;
-        }
-        return ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
-    }
-
     #endregion
 
     #region 上下文

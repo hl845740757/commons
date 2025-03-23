@@ -26,9 +26,9 @@ namespace Wjybxx.Commons.Concurrent
 /// 4. 用户可以通过该接口自行调节频率
 /// </summary>
 /// <typeparam name="T"></typeparam>
-/// <param name="context">任务关联的山下文</param>
+/// <param name="ctx">任务关联的上下文</param>
 /// <param name="firstStep">是否是首次执行</param>
 /// <param name="result">接收任务结果</param>
 /// <returns>执行任务是否成功</returns>
-public delegate bool TimeSharingTask<T>(object context, bool firstStep, out T result);
+public delegate bool TimeSharingTask<T>(object ctx, bool firstStep, out T result);
 }
