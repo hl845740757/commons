@@ -137,15 +137,15 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
         return nextImpl(n);
     }
 
-    public long? TryNext() {
+    public long TryNext() {
         return nextImpl(1);
     }
 
-    public long? TryNext(int n) {
+    public long TryNext(int n) {
         return nextImpl(n);
     }
 
-    public long? TryNext(int n, TimeSpan timeout) {
+    public long TryNext(int n, TimeSpan timeout) {
         return nextImpl(n);
     }
 

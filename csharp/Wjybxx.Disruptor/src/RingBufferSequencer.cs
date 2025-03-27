@@ -90,7 +90,7 @@ public abstract class RingBufferSequencer : ProducerBarrier, Sequencer
         }
     }
 
-    public long? TryNext(int n, TimeSpan timeout) {
+    public long TryNext(int n, TimeSpan timeout) {
         return Util.TryNext(n, timeout, this, spinIterations);
     }
 
@@ -132,9 +132,9 @@ public abstract class RingBufferSequencer : ProducerBarrier, Sequencer
 
     public abstract long Next(int n);
 
-    public abstract long? TryNext();
+    public abstract long TryNext();
 
-    public abstract long? TryNext(int n);
+    public abstract long TryNext(int n);
 
     public abstract void Publish(long sequence);
 

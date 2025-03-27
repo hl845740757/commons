@@ -115,11 +115,11 @@ public interface EventSequencer<T> : DataProvider<T>
         return ProducerBarrier.Next(n);
     }
 
-    long? TryNext() {
+    long TryNext() {
         return ProducerBarrier.TryNext();
     }
 
-    long? TryNext(int n) {
+    long TryNext(int n) {
         return ProducerBarrier.TryNext(n);
     }
 
@@ -131,7 +131,7 @@ public interface EventSequencer<T> : DataProvider<T>
         return ProducerBarrier.NextInterruptibly(n);
     }
 
-    long? TryNext(int n, TimeSpan timeout) {
+    long TryNext(int n, TimeSpan timeout) {
         return ProducerBarrier.TryNext(n, timeout);
     }
 

@@ -167,16 +167,16 @@ public sealed class SingleProducerSequencer : RingBufferSequencer
         return nextSequence;
     }
 
-    public override long? TryNext() {
+    public override long TryNext() {
         return TryNext(1);
     }
 
-    public override long? TryNext(int n) {
+    public override long TryNext(int n) {
         if (n < 1 || n > bufferSize) {
             throw new ArgumentException("n: " + n);
         }
         if (!HasAvailableCapacity(n, true)) {
-            return null;
+            return -1;
         }
         long nextSequence = this.produced + n;
         this.produced = nextSequence;

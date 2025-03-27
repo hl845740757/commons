@@ -237,11 +237,11 @@ public sealed class MultiProducerSequencer : RingBufferSequencer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override long? TryNext() {
+    public override long TryNext() {
         return TryNext(1);
     }
 
-    public override long? TryNext(int n) {
+    public override long TryNext(int n) {
         if (n < 1 || n > bufferSize) {
             throw new AggregateException("n: " + n);
         }
@@ -251,7 +251,7 @@ public sealed class MultiProducerSequencer : RingBufferSequencer
             current = cursor.GetVolatile();
             next = current + n;
             if (!hasAvailableCapacity(gatingBarriers, n, current)) {
-                return null;
+                return -1;
             }
         } while (!cursor.CompareAndSet(current, next));
         return next;

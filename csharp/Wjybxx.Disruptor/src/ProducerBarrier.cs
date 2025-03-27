@@ -77,8 +77,8 @@ public interface ProducerBarrier : SequenceBarrier
     /// 尝试获取下一个事件的序列 -- 不会阻塞。
     /// 申请完空间之后,必须使用<see cref="Publish(long)"/>发布，否则会导致整个数据结构不可用。
     /// </summary>
-    /// <returns>申请成功则返回对应的序号，否则返回null</returns>
-    long? TryNext();
+    /// <returns>申请成功则返回对应的序号，否则返回-1</returns>
+    long TryNext();
 
     /// <summary>
     /// 尝试获取接下来n个数据的最后一个数据索引位置。不会阻塞,空间不足时抛出异常。
@@ -94,8 +94,8 @@ public interface ProducerBarrier : SequenceBarrier
     /// </code>
     /// </summary>
     /// <param name="n">需要申请的序号数量</param>
-    /// <returns>申请成功则返回对应的序号，否则返回null</returns>
-    long? TryNext(int n);
+    /// <returns>申请成功则返回对应的序号，否则返回-1</returns>
+    long TryNext(int n);
 
     /// <summary>
     /// 发布指定序号的数据，表示sequence对应的数据可用
@@ -169,7 +169,7 @@ public interface ProducerBarrier : SequenceBarrier
     /// <param name="n">需要申请的序号数量</param>
     /// <param name="timeout">超时时间</param>
     /// <returns>申请成功则返回对应的序号，否则返回null</returns>
-    long? TryNext(int n, TimeSpan timeout);
+    long TryNext(int n, TimeSpan timeout);
 
     /// <summary>
     /// 获取用于阻塞等待序号的阻塞器

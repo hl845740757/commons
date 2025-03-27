@@ -109,11 +109,11 @@ public class MpUnboundedEventSequencer<T> : EventSequencer<T>
         return _sequencer.Next(n);
     }
 
-    public long? TryNext() {
+    public long TryNext() {
         return _sequencer.TryNext(1);
     }
 
-    public long? TryNext(int n) {
+    public long TryNext(int n) {
         return _sequencer.TryNext(n);
     }
 
@@ -125,7 +125,7 @@ public class MpUnboundedEventSequencer<T> : EventSequencer<T>
         return _sequencer.NextInterruptibly(n);
     }
 
-    public long? TryNext(int n, TimeSpan timeout) {
+    public long TryNext(int n, TimeSpan timeout) {
         return _sequencer.TryNext(n, timeout);
     }
 

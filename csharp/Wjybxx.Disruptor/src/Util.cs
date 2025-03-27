@@ -190,22 +190,22 @@ internal static class Util
     /// <param name="barrier">生产者屏障</param>
     /// <param name="spinIterations">生产者自旋参数</param>
     /// <returns></returns>
-    public static long? TryNext(int n, TimeSpan timeout, ProducerBarrier barrier, int spinIterations) {
-        long? sequence = barrier.TryNext(n);
-        if (sequence.HasValue) {
+    public static long TryNext(int n, TimeSpan timeout, ProducerBarrier barrier, int spinIterations) {
+        long sequence = barrier.TryNext(n);
+        if (sequence != -1) {
             return sequence;
         }
         long current = SystemTickMillis();
         long deadline = current + (long)timeout.TotalMilliseconds;
         if (deadline <= current) {
-            return null;
+            return -1;
         }
 
         if (spinIterations > 0) {
             do {
                 Thread.SpinWait(spinIterations);
                 sequence = barrier.TryNext(n);
-                if (sequence.HasValue) {
+                if (sequence != -1) {
                     return sequence;
                 }
             } while (SystemTickMillis() < deadline);
@@ -213,14 +213,14 @@ internal static class Util
             bool interrupted = false;
             do {
                 try {
-                    Thread.Sleep(1);
+                    Thread.Sleep(1); // 目前固定睡眠1毫秒
                 }
                 catch (ThreadInterruptedException) {
                     interrupted = true;
                 }
 
                 sequence = barrier.TryNext(n);
-                if (sequence.HasValue) {
+                if (sequence != -1) {
                     return sequence;
                 }
             } while ((current = SystemTickMillis()) < deadline);
@@ -228,7 +228,7 @@ internal static class Util
                 Thread.CurrentThread.Interrupt();
             }
         }
-        return null;
+        return -1;
     }
 
     /// <summary>
