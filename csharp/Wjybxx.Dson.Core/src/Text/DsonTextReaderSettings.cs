@@ -51,7 +51,7 @@ public class DsonTextReaderSettings : DsonReaderSettings
         public Builder() {
         }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
         public override DsonTextReaderSettings Build() {
 #else
         public override DsonReaderSettings Build() {

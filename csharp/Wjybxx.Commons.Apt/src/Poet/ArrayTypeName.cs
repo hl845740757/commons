@@ -59,7 +59,7 @@ public class ArrayTypeName : TypeName
         return $"{GetType().Name}, {nameof(elementType)}: {elementType}";
     }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
     public override ArrayTypeName WithAttributes(TypeNameAttributes attributes) {
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {

@@ -37,7 +37,7 @@ namespace Wjybxx.Commons.Collections
 /// <typeparam name="TKey"></typeparam>
 [Serializable]
 [Immutable]
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
 public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet<TKey>
 #else
 public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
@@ -478,7 +478,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
         throw new NotImplementedException();
     }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
     bool IReadOnlySet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) {
         throw new NotImplementedException();
     }

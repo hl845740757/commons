@@ -107,7 +107,7 @@ public class DsonTextWriterSettings : DsonWriterSettings
         public Builder() {
         }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
         public override DsonTextWriterSettings Build() {
 #else
         public override DsonWriterSettings Build() {

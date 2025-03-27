@@ -69,7 +69,7 @@ internal static class CommonsLang3
     };
 
     public static string ToHexString(byte[] data) {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
         return Convert.ToHexString(data);
 #else
         char[] buffer = IArrayPool<char>.Shared.Acquire(data.Length * 2);
@@ -84,7 +84,7 @@ internal static class CommonsLang3
     }
 
     public static byte[] FromHexString(string hexString) {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
         return Convert.FromHexString(hexString);
 #else
         return DecodeHex(hexString);

@@ -32,7 +32,7 @@ public static class EnumUtil
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     public static T[] GetValues<T>() where T : struct, Enum {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
         return Enum.GetValues<T>();
 #else
         Array values = Enum.GetValues(typeof(T));
@@ -52,7 +52,7 @@ public static class EnumUtil
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string[] GetNames<T>() where T : struct, Enum {
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
         return Enum.GetNames<T>();
 #else
         return Enum.GetNames(typeof(T));

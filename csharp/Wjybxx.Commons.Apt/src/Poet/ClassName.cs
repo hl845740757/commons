@@ -200,7 +200,7 @@ public class ClassName : TypeName
         return sb.ToString();
     }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
     public override ClassName WithAttributes(TypeNameAttributes attributes) {
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {

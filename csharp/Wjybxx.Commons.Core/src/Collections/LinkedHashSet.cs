@@ -38,7 +38,7 @@ namespace Wjybxx.Commons.Collections
 /// <typeparam name="TKey">元素类型，允许为null</typeparam>
 [Serializable]
 [NotThreadSafe]
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
 public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet<TKey>
 #else
 public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
@@ -869,7 +869,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         throw new NotImplementedException();
     }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
     bool IReadOnlySet<TKey>.IsProperSubsetOf(IEnumerable<TKey> other) {
         throw new NotImplementedException();
     }

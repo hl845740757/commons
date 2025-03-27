@@ -154,7 +154,7 @@ public class MpUnboundedEventSequencer<T> : EventSequencer<T>
             : base(factory) {
         }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
         public override MpUnboundedEventSequencer<T> Build() {
 #else
         public override EventSequencer<T> Build() {

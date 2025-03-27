@@ -50,7 +50,7 @@ public class PointerTypeName : TypeName
         return $"{GetType().Name}, {nameof(targetType)}: {targetType}";
     }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
     public override PointerTypeName WithAttributes(TypeNameAttributes attributes) {
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {

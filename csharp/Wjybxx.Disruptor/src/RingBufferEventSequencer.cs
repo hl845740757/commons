@@ -157,7 +157,7 @@ public class RingBufferEventSequencer<T> : EventSequencer<T>
         public Builder(Func<T> factory) : base(factory) {
         }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
         public override RingBufferEventSequencer<T> Build() {
 #else
         public override EventSequencer<T> Build() {
