@@ -16,8 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.CancelCodes;
-
 /**
  * FutureTask是Executor压入的可获取结果的任务类型
  * 1.该接口暴露给Executor的扩展类，不是用户使用的类。
@@ -37,17 +35,11 @@ public interface IFutureTask<V> extends ITask {
     boolean isCancelRequested();
 
     /**
-     * 取消执行；
-     * 取消可能由调度器触发，因此需要暴露该接口给EventLoop。
-     * 该方法由EventLoop调用，不需要再回调通知EventLoop.
-     * 实现时，优先使用CancelToken中的取消码。
-     *
-     * @param code 取消码
+     * 取消执行
+     * 可能是检测到取消信号，也可能是其它原因，EventLoop主动停止任务。
+     * 如果此时收到了取消信号，可优先使用取消令牌中的取消码进入取消状态。
+     * 如果task已进入完成状态。可忽略该请求。
      */
-    void trySetCancelled(int code);
-
-    default void trySetCancelled() {
-        trySetCancelled(CancelCodes.REASON_SHUTDOWN);
-    }
+    void cancel(int code);
 
 }

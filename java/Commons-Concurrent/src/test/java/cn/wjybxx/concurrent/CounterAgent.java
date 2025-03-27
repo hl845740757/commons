@@ -25,37 +25,27 @@ import javax.annotation.concurrent.NotThreadSafe;
  * date 2023/4/13
  */
 @NotThreadSafe
-final class CounterAgent implements EventLoopAgent<RingBufferEvent> {
+final class CounterAgent implements IEventLoopAgent<AgentEvent> {
 
     final Counter counter = new Counter();
+    long lastTime = System.currentTimeMillis();
 
     public Counter getCounter() {
         return counter;
     }
 
     @Override
-    public void inject(EventLoop eventLoop) {
-
-    }
-
-    @Override
-    public void onStart() throws Exception {
-
-    }
-
-    @Override
-    public void onEvent(long sequence, RingBufferEvent event) throws Exception {
+    public void onEvent(long sequence, AgentEvent event) throws Exception {
         counter.count(event.getType(), event.longVal1);
     }
 
     @Override
-    public void update() throws Exception {
-
+    public boolean checkMainLoop(long threadTime) {
+        return System.currentTimeMillis() - lastTime >= 10;
     }
 
     @Override
-    public void onShutdown() throws Exception {
-
+    public void beforeMainLoop(long threadTime) {
+        lastTime = System.currentTimeMillis();
     }
-
 }

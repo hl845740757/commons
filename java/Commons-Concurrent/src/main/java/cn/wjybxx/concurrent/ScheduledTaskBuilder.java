@@ -49,7 +49,6 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     private long period;
     private long timeout = -1;
     private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
-    /** 执行次数限制 */
     private int countLimit = -1;
 
     private ScheduledTaskBuilder(int type, Object task) {

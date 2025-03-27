@@ -36,6 +36,16 @@ public class ObjectUtils {
         return obj == null ? def : obj;
     }
 
+    /** 0转默认值 */
+    public static int zeroToDef(int value, int def) {
+        return value == 0 ? def : value;
+    }
+
+    /** 0转默认值 */
+    public static long zeroToDef(long value, long def) {
+        return value == 0 ? def : value;
+    }
+
     // region equals/hash/toString
 
     public static int hashCode(Object first) {

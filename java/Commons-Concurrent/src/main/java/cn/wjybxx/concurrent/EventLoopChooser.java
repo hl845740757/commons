@@ -28,15 +28,15 @@ import javax.annotation.concurrent.ThreadSafe;
 public interface EventLoopChooser {
 
     /**
-     * 按默认规则分配一个{@link EventLoop}
+     * 按默认规则分配一个{@link IEventLoop}
      */
-    EventLoop select();
+    IEventLoop select();
 
     /**
-     * 通过给定键选择一个{@link EventLoop}
+     * 通过给定键选择一个{@link IEventLoop}
      *
      * @apiNote 同一个key的选择结果必须是相同的
      */
-    EventLoop select(int key);
+    IEventLoop select(int key);
 
 }

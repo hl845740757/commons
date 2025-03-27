@@ -38,7 +38,7 @@ public class ScheduleTest2 {
     private static final List<String> stringList = List.of("hello", "world", "a", "b", "c");
     private static final String expectedString = String.join(",", stringList);
 
-    private static EventLoop consumer;
+    private static IEventLoop consumer;
     private static StringJoiner joiner;
     private static int index = 0;
 
@@ -47,7 +47,7 @@ public class ScheduleTest2 {
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setEventSequencer(RingBufferEventSequencer
-                        .newMultiProducer(RingBufferEvent::new)
+                        .newMultiProducer(AgentEvent::new)
                         .build())
                 .build();
         consumer.start().join();

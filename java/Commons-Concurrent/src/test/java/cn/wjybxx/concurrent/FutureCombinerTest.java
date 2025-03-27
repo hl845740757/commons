@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class FutureCombinerTest {
 
-    private EventLoopGroup consumer;
+    private IEventLoopGroup consumer;
 
     @BeforeEach
     void setUp() {
@@ -44,7 +44,7 @@ public class FutureCombinerTest {
                         .setParent(parent)
                         .setThreadFactory(threadFactory)
                         .setEventSequencer(RingBufferEventSequencer
-                                .newMultiProducer(RingBufferEvent::new)
+                                .newMultiProducer(AgentEvent::new)
                                 .build())
                         .build())
                 .build();

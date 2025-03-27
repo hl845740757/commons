@@ -19,10 +19,12 @@ package cn.wjybxx.concurrent;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 该接口用户不可调用，否则可能产生错误
+ *
  * @author wjybxx
  * date - 2024/8/9
  */
-public interface IScheduledHelper {
+public interface ISchedulerHelper {
 
     /**
      * 当前线程的时间
@@ -31,6 +33,15 @@ public interface IScheduledHelper {
      * 3. 多线程事件循环，需要支持其它线程查询。
      */
     long tickTime();
+
+    /**
+     * 事件循环是否进入了关闭状态
+     * 1.Task在检测事件循环进入关闭状态后，将自动放弃提交任务
+     */
+    boolean isShutDown();
+
+    /** 是否处于事件循环线程 */
+    boolean inEventLoop();
 
     /**
      * 规格化：将指定时间转换为tick同单位的时间
@@ -51,24 +62,23 @@ public interface IScheduledHelper {
     long denormalize(long localTime, TimeUnit timeUnit);
 
     /**
-     * 请求将当前任务重新压入队列 -- 任务当前已出队列
+     * 任务已出基础队列，请求执行调度
+     * <p>
      * 1.一定从当前线程调用
-     * 2.如果无法继续调度任务，则取消任务
+     * 2.如果不能调度任务，则取消任务
+     * 3.收到取消信号，或检测到EventLoop已开始关闭的情况下不会调用
+     * <p>
+     * 定时任务会检测关闭状态，以避免不必要的初始化
      */
-    void reschedule(ScheduledPromiseTask<?> futureTask);
-
-    /**
-     * 任务不可继续触发 -- 任务当前已出队列
-     * 1.回调给用户，让用户决定是否清理和缓存。
-     * 2.与{@link #reschedule(ScheduledPromiseTask)}成对
-     */
-    void onCompleted(ScheduledPromiseTask<?> futureTask);
+    void doSchedule(ScheduledPromiseTask<?> futureTask);
 
     /**
      * 请求删除给定的任务
      * 1.可能从其它线程调用，需考虑线程安全问题（取决于取消信号）
-     * 2.Task关联的future在调用方法前已进入取消状态，用户处理后续逻辑。
+     * 2.由调度器决定是否立即进入取消状态（可控制Task进入完成状态的时机）。。
      * 3.未保持与JDK的兼容，参数不直接使用{@link ICancelToken}
+     * <p>
+     * 注意：当收到来自其它线程的取消信号时，要小心可见性问题，尤其是对象可能被复用的情况。
      */
     void onCancelRequested(ScheduledPromiseTask<?> futureTask, int cancelCode);
 

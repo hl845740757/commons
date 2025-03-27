@@ -20,37 +20,27 @@ package cn.wjybxx.concurrent;
  * @author wjybxx
  * date 2023/4/11
  */
-public final class EmptyAgent<T> implements EventLoopAgent<T> {
+public final class EmptyAgent<T extends IAgentEvent> implements IEventLoopAgent<T> {
 
-    private static final EmptyAgent<?> INSTANCE = new EmptyAgent<>();
+    private static final EmptyAgent<?> INST = new EmptyAgent<>();
 
     @SuppressWarnings("unchecked")
-    public static <T> EmptyAgent<T> getInstance() {
-        return (EmptyAgent<T>) INSTANCE;
+    public static <T extends IAgentEvent> EmptyAgent<T> getInstance() {
+        return (EmptyAgent<T>) INST;
     }
 
     @Override
-    public void inject(EventLoop eventLoop) {
-
+    public boolean checkMainLoop(long threadTime) {
+        return false;
     }
 
     @Override
-    public void onStart() {
-
-    }
-
-    @Override
-    public void onEvent(long sequence, Object event) throws Exception {
+    public void beforeMainLoop(long threadTime) {
 
     }
 
     @Override
-    public void update() {
-
-    }
-
-    @Override
-    public void onShutdown() {
+    public void onEvent(long sequence, IAgentEvent event) throws Exception {
 
     }
 

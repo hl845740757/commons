@@ -24,11 +24,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 事件循环线程组，它管理着一组{@link EventLoop}。
+ * 事件循环线程组，它管理着一组{@link IEventLoop}。
  * 它的本质是容器，它主要负责管理持有的EventLoop的生命周期。
  *
  * <h1>时序约定</h1>
- * 1.{@link EventLoopGroup}代表着一组线程，不对任务的执行时序提供任何保证，用户只能通过工具自行协调。<br>
+ * 1.{@link IEventLoopGroup}代表着一组线程，不对任务的执行时序提供任何保证，用户只能通过工具自行协调。<br>
  * 2.{@link #execute(Runnable)}{@link #submit(Callable)}系列方法的时序等同于{@code schedule(task, 0, TimeUnit.SECONDS)}
  * <p>
  * Q: 为什么在接口层不提供严格的时序约定？<br>
@@ -41,34 +41,34 @@ import java.util.concurrent.TimeUnit;
  * date 2023/4/7
  */
 @ThreadSafe
-public interface EventLoopGroup extends IScheduledExecutorService, Iterable<EventLoop> {
+public interface IEventLoopGroup extends IScheduledExecutorService, Iterable<IEventLoop> {
 
     /**
-     * 选择一个 {@link EventLoop}用于接下来的任务调度
+     * 选择一个 {@link IEventLoop}用于接下来的任务调度
      */
     @Nonnull
-    EventLoop select();
+    IEventLoop select();
 
     /**
      * 注意；如果包含不定数量的EventLoop，返回的是快照。
      */
     @Nonnull
     @Override
-    Iterator<EventLoop> iterator();
+    Iterator<IEventLoop> iterator();
 
     // ------------------------------ 生命周期相关方法 ----------------------------
 
     /**
-     * 查询{@link EventLoopGroup}是否处于正在关闭状态。
+     * 查询{@link IEventLoopGroup}是否处于正在关闭状态。
      * 正在关闭状态下，拒绝接收新任务，当执行完所有任务后，进入关闭状态。
      *
-     * @return 如果该{@link EventLoopGroup}管理的所有{@link EventLoop}正在关闭或已关闭则返回true
+     * @return 如果该{@link IEventLoopGroup}管理的所有{@link IEventLoop}正在关闭或已关闭则返回true
      */
     @Override
     boolean isShuttingDown();
 
     /**
-     * 查询{@link EventLoopGroup}是否处于关闭状态。
+     * 查询{@link IEventLoopGroup}是否处于关闭状态。
      * 关闭状态下，拒绝接收新任务，执行退出前的清理操作，执行完清理操作后，进入终止状态。
      *
      * @return 如果已关闭，则返回true
@@ -86,7 +86,7 @@ public interface EventLoopGroup extends IScheduledExecutorService, Iterable<Even
 
     /**
      * 返回等待线程终止的future。
-     * 返回的{@link IFuture}会在该Group管理的所有{@link EventLoop}终止后进入完成状态。
+     * 返回的{@link IFuture}会在该Group管理的所有{@link IEventLoop}终止后进入完成状态。
      */
     @Override
     IFuture<?> terminationFuture();

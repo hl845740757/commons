@@ -45,7 +45,7 @@ final class UncancellableToken implements ICancelToken {
     }
 
     @Override
-    public boolean IsCancelRequested() {
+    public boolean isCancelRequested() {
         return false;
     }
 
@@ -161,22 +161,22 @@ final class UncancellableToken implements ICancelToken {
     }
 
     @Override
-    public IRegistration thenNotify(CancelTokenListener action, int options) {
+    public IRegistration thenNotify(ICancelTokenListener action, int options) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenNotify(CancelTokenListener action) {
+    public IRegistration thenNotify(ICancelTokenListener action) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenNotifyAsync(Executor executor, CancelTokenListener action) {
+    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenNotifyAsync(Executor executor, CancelTokenListener action, int options) {
+    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, int options) {
         return TOMBSTONE;
     }
 

@@ -29,20 +29,20 @@ import java.util.concurrent.CompletionException;
  */
 public class EventLoopStartTest {
 
-    private EventLoop newEventLoop(boolean thr, long delay) {
+    private IEventLoop newEventLoop(boolean thr, long delay) {
         return EventLoopBuilder.newDisruptBuilder()
                 .setParent(null)
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setAgent(new Agent(thr, delay))
                 .setEventSequencer(RingBufferEventSequencer
-                        .newMultiProducer(RingBufferEvent::new)
+                        .newMultiProducer(AgentEvent::new)
                         .build())
                 .build();
     }
 
     @Test
     void testSucceeded() {
-        EventLoop eventLoop = newEventLoop(false, 0);
+        IEventLoop eventLoop = newEventLoop(false, 0);
         Assertions.assertDoesNotThrow(() -> {
             eventLoop.start().join();
         });
@@ -52,7 +52,7 @@ public class EventLoopStartTest {
 
     @Test
     void testFailed() {
-        EventLoop eventLoop = newEventLoop(true, 0);
+        IEventLoop eventLoop = newEventLoop(true, 0);
         Assertions.assertThrowsExactly(CompletionException.class, () -> {
             eventLoop.start().join();
         });
@@ -62,7 +62,7 @@ public class EventLoopStartTest {
 
     @Test
     void testDelayFailed() {
-        EventLoop eventLoop = newEventLoop(true, 100);
+        IEventLoop eventLoop = newEventLoop(true, 100);
         Assertions.assertThrowsExactly(CompletionException.class, () -> {
             eventLoop.start();
             eventLoop.shutdown();
@@ -72,7 +72,7 @@ public class EventLoopStartTest {
         eventLoop.shutdownNow();
     }
 
-    private static class Agent implements EventLoopAgent<IAgentEvent> {
+    private static class Agent implements IEventLoopAgent<IAgentEvent> {
 
         final boolean thr;
         final long delay;
@@ -84,28 +84,23 @@ public class EventLoopStartTest {
         }
 
         @Override
-        public void inject(EventLoop eventLoop) {
-
-        }
-
-        @Override
-        public void onStart() throws Exception {
+        public void beforeEventLoopStart() {
             if (delay > 0) ThreadUtils.sleepQuietly(delay);
             if (thr) throw new RuntimeException();
         }
 
         @Override
+        public boolean checkMainLoop(long threadTime) {
+            return false;
+        }
+
+        @Override
+        public void beforeMainLoop(long threadTime) {
+
+        }
+
+        @Override
         public void onEvent(long sequence, IAgentEvent event) throws Exception {
-
-        }
-
-        @Override
-        public void update() throws Exception {
-
-        }
-
-        @Override
-        public void onShutdown() throws Exception {
 
         }
     }

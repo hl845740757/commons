@@ -24,13 +24,13 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * 默认的实现仅仅是简单的将任务分配给某个{@link EventLoop}执行
+ * 默认的实现仅仅是简单的将任务分配给某个{@link IEventLoop}执行
  *
  * @author wjybxx
  * date 2023/4/8
  */
 @SuppressWarnings("deprecation")
-public abstract class AbstractEventLoopGroup implements EventLoopGroup {
+public abstract class AbstractEventLoopGroup implements IEventLoopGroup {
 
     @Override
     public void execute(@Nonnull Runnable command) {

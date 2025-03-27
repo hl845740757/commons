@@ -90,7 +90,7 @@ public interface ICompletionStage<T> {
      * 任务绑定的Executor
      * 1.对于异步任务，Executor是其执行线程；而对于同步任务，Executor不一定是其执行线程 -- 继承得来的而已。
      * 2.在添加下游任务时，如果没有显式指定Executor，将继承当前Stage的Executor。
-     * 3.Executor主要用于死锁检测，为去除{@link EventLoop}的依赖，设计了{@link SingleThreadExecutor}接口
+     * 3.Executor主要用于死锁检测，为去除{@link IEventLoop}的依赖，设计了{@link SingleThreadExecutor}接口
      * <p>
      * 注意：由于死锁检测并不完全正确，当你需要绕过死锁检测时，可通过添加下游任务重新指定Executor来绕过。
      */

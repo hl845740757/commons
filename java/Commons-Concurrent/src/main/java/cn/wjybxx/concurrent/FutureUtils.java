@@ -215,8 +215,8 @@ public class FutureUtils {
         }), output, options);
     }
 
-    /** 由{@link EventLoop}通知返回的{@link IPromise} */
-    public static <V> IPromise<V> bindEventLoop(ICompletionStage<V> future, EventLoop eventLoop) {
+    /** 由{@link IEventLoop}通知返回的{@link IPromise} */
+    public static <V> IPromise<V> bindEventLoop(ICompletionStage<V> future, IEventLoop eventLoop) {
         IPromise<V> result = eventLoop.newPromise();
         setPromiseAsync(eventLoop, result, future, TaskOptions.STAGE_TRY_INLINE);
         return result;
@@ -303,8 +303,8 @@ public class FutureUtils {
         }
     }
 
-    /** @see #newTimeProvider(EventLoop, long) */
-    public static CachedTimeProvider newTimeProvider(EventLoop eventLoop) {
+    /** @see #newTimeProvider(IEventLoop, long) */
+    public static CachedTimeProvider newTimeProvider(IEventLoop eventLoop) {
         return new EventLoopTimeProvider(eventLoop, System.currentTimeMillis());
     }
 
@@ -316,7 +316,7 @@ public class FutureUtils {
      * @param curTime   初始时间
      * @return timeProvider - threadSafe
      */
-    public static CachedTimeProvider newTimeProvider(EventLoop eventLoop, long curTime) {
+    public static CachedTimeProvider newTimeProvider(IEventLoop eventLoop, long curTime) {
         return new EventLoopTimeProvider(eventLoop, curTime);
     }
     // endregion
@@ -534,10 +534,10 @@ public class FutureUtils {
             return false;
         }
         if (ctx instanceof ICancelToken cancelToken) {
-            return cancelToken.IsCancelRequested();
+            return cancelToken.isCancelRequested();
         }
         if (ctx instanceof IContext ctx2) {
-            return ctx2.cancelToken().IsCancelRequested();
+            return ctx2.cancelToken().isCancelRequested();
         }
         return false;
     }
@@ -556,10 +556,10 @@ public class FutureUtils {
     @ThreadSafe
     private static class EventLoopTimeProvider implements CachedTimeProvider {
 
-        private final EventLoop eventLoop;
+        private final IEventLoop eventLoop;
         private volatile long time;
 
-        private EventLoopTimeProvider(EventLoop eventLoop, long time) {
+        private EventLoopTimeProvider(IEventLoop eventLoop, long time) {
             this.eventLoop = eventLoop;
             setTime(time);
         }
@@ -635,7 +635,7 @@ public class FutureUtils {
                 this.action = null;
                 this.cancelToken = null;
             }
-            if (cancelToken != null && cancelToken.IsCancelRequested()) {
+            if (cancelToken != null && cancelToken.isCancelRequested()) {
                 return; // 抛出异常没有意义，检测信号即可
             }
             action.run();

@@ -16,28 +16,32 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.disruptor.EventSequencer;
+
 /**
- * {@link EventLoopAgent}接收的事件类型
+ * {@link IEventLoopAgent}接收的事件类型
  * <p>
  * 1.用于Disruptor或类似的系统，当我们缓存对象时，更适合将字段展开以提高内存利用率
- * 2.支持{@link EventLoopAgent}的都将支持该事件。
+ * 2.支持{@link IEventLoopAgent}的都将支持该事件。
  * 3.实现类最好保持为简单的数据类，不要赋予逻辑。
+ * <p>
+ * 为支持共用{@link EventSequencer}，
  *
  * @author wjybxx
  * date - 2024/1/22
  */
 public interface IAgentEvent {
 
-    /** 表示事件无效 */
-    int TYPE_INVALID = -1;
+    /** 表示事件无效 - 负数期间给事件循环使用；正数区间给用户使用；0表示普通的{@link Runnable} */
+    int TYPE_INVALID = Integer.MIN_VALUE;
 
     /** 获取事件的类型 */
     int getType();
 
     /**
      * 设置事件的类型
-     * 1.用户自定义事件必须大于0，否否则可能影响事件循环的工作。
-     * 2.由于clean的存在，用户忘记赋值的情况下仍然可能为 -1，事件循环的实现者需要注意
+     * 1.用户自定义事件必须大于0，否则可能影响事件循环的工作。
+     * 2.由于clean的存在，用户忘记赋值的情况下仍然可能为{@link #TYPE_INVALID}，事件循环的实现者需要注意
      */
     void setType(int type);
 
@@ -51,21 +55,34 @@ public interface IAgentEvent {
      */
     void setOptions(int options);
 
-    /** 获取事件的第一个参数 */
+    /** 获取事件的第1个参数 */
     Object getObj1();
 
-    /** 设置事件的第一个参数 */
+    /** 设置事件的第1个参数 */
     void setObj1(Object obj);
 
-    /** 获取事件的第二个参数 */
+    /** 获取事件的第2个参数 */
     Object getObj2();
 
-    /** 设置事件的第二个参数 */
+    /** 设置事件的第2个参数 */
     void setObj2(Object obj);
+
+    /** 获取事件的第1个long参数 */
+    long getLongVal1();
+
+    /** 获取事件的第1个long参数 */
+    void setLongVal1(long val);
+
+    /** 获取事件的第2个long参数 */
+    long getLongVal2();
+
+    /** 获取事件的第2个long参数 */
+    void setLongVal2(long val);
 
     /**
      * 清理事件的引用数据 -- 避免内存泄漏
-     * ps:事件循环每处理完事件就会调用该方法以避免内存泄漏
+     * 1.options总是应该被清理
+     * 2.事件循环每处理完事件就会调用该方法以避免内存泄漏
      */
     void clean();
 

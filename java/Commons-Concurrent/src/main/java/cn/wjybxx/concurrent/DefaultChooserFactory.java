@@ -30,7 +30,7 @@ public class DefaultChooserFactory implements EventLoopChooserFactory {
 
     @Nonnull
     @Override
-    public EventLoopChooser newChooser(EventLoop[] children) {
+    public EventLoopChooser newChooser(IEventLoop[] children) {
         if (children.length == 1) {
             return new SingleEventLoopChooser(children[0]);
         }
@@ -41,24 +41,24 @@ public class DefaultChooserFactory implements EventLoopChooserFactory {
     }
 
     /**
-     * 只有单个{@link EventLoop}的选择器
+     * 只有单个{@link IEventLoop}的选择器
      */
     private static final class SingleEventLoopChooser implements EventLoopChooser {
 
-        private final EventLoop eventLoop;
+        private final IEventLoop eventLoop;
 
-        private SingleEventLoopChooser(EventLoop eventLoop) {
+        private SingleEventLoopChooser(IEventLoop eventLoop) {
             this.eventLoop = eventLoop;
         }
 
         @Nonnull
         @Override
-        public EventLoop select() {
+        public IEventLoop select() {
             return eventLoop;
         }
 
         @Override
-        public EventLoop select(int key) {
+        public IEventLoop select(int key) {
             return eventLoop;
         }
     }
@@ -69,22 +69,22 @@ public class DefaultChooserFactory implements EventLoopChooserFactory {
     private static final class PowerOfTwoEventLoopChooser implements EventLoopChooser {
 
         private final AtomicInteger idx = new AtomicInteger();
-        private final EventLoop[] executors;
+        private final IEventLoop[] executors;
 
-        PowerOfTwoEventLoopChooser(EventLoop[] executors) {
+        PowerOfTwoEventLoopChooser(IEventLoop[] executors) {
             this.executors = executors;
         }
 
         @Nonnull
         @Override
-        public EventLoop select() {
+        public IEventLoop select() {
             int key = idx.getAndIncrement();
             return executors[key & (executors.length - 1)];
         }
 
         @Nonnull
         @Override
-        public EventLoop select(int key) {
+        public IEventLoop select(int key) {
             return executors[key & (executors.length - 1)];
         }
     }
@@ -96,22 +96,22 @@ public class DefaultChooserFactory implements EventLoopChooserFactory {
     private static final class RoundRobinEventLoopChooser implements EventLoopChooser {
 
         private final AtomicInteger idx = new AtomicInteger();
-        private final EventLoop[] executors;
+        private final IEventLoop[] executors;
 
-        RoundRobinEventLoopChooser(EventLoop[] executors) {
+        RoundRobinEventLoopChooser(IEventLoop[] executors) {
             assert executors.length > 0;
             this.executors = executors;
         }
 
         @Nonnull
         @Override
-        public EventLoop select() {
+        public IEventLoop select() {
             int key = idx.getAndIncrement();
             return executors[Math.abs(key % executors.length)];
         }
 
         @Override
-        public EventLoop select(int key) {
+        public IEventLoop select(int key) {
             return executors[Math.abs(key % executors.length)];
         }
     }

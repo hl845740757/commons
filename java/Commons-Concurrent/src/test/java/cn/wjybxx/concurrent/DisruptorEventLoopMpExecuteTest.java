@@ -39,7 +39,7 @@ public class DisruptorEventLoopMpExecuteTest {
 
     private static CounterAgent agent;
     private static Counter counter;
-    private static EventLoop consumer;
+    private static IEventLoop consumer;
     private static List<Producer> producerList;
     private static volatile boolean alert;
 
@@ -57,7 +57,7 @@ public class DisruptorEventLoopMpExecuteTest {
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setEventSequencer(RingBufferEventSequencer
-                        .newMultiProducer(RingBufferEvent::new)
+                        .newMultiProducer(AgentEvent::new)
                         .build())
                 .build();
 
@@ -82,7 +82,7 @@ public class DisruptorEventLoopMpExecuteTest {
     void testUnboundedBuffer() throws InterruptedException {
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
-                .setEventSequencer(MpUnboundedEventSequencer.newBuilder(RingBufferEvent::new)
+                .setEventSequencer(MpUnboundedEventSequencer.newBuilder(AgentEvent::new)
                         .build())
                 .build();
 
@@ -117,7 +117,7 @@ public class DisruptorEventLoopMpExecuteTest {
 
         @Override
         public void run() {
-            EventLoop consumer = DisruptorEventLoopMpExecuteTest.consumer;
+            IEventLoop consumer = DisruptorEventLoopMpExecuteTest.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
                 try {

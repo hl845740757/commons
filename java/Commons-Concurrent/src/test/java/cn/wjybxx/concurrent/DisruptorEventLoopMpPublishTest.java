@@ -38,7 +38,7 @@ public class DisruptorEventLoopMpPublishTest {
 
     private static CounterAgent agent;
     private static Counter counter;
-    private static DisruptorEventLoop<RingBufferEvent> consumer;
+    private static DisruptorEventLoop<AgentEvent> consumer;
     private static List<Thread> producerList;
     private static volatile boolean alert;
 
@@ -65,11 +65,11 @@ public class DisruptorEventLoopMpPublishTest {
 
     @Test
     void testRingBuffer() throws InterruptedException {
-        consumer = EventLoopBuilder.<RingBufferEvent>newDisruptBuilder()
+        consumer = EventLoopBuilder.<AgentEvent>newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setAgent(agent)
                 .setEventSequencer(RingBufferEventSequencer
-                        .newMultiProducer(RingBufferEvent::new)
+                        .newMultiProducer(AgentEvent::new)
                         .build())
                 .build();
 
@@ -87,11 +87,11 @@ public class DisruptorEventLoopMpPublishTest {
 
     @Test
     void testUnboundedBuffer() throws InterruptedException {
-        consumer = EventLoopBuilder.<RingBufferEvent>newDisruptBuilder()
+        consumer = EventLoopBuilder.<AgentEvent>newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setAgent(agent)
                 .setEventSequencer(MpUnboundedEventSequencer
-                        .newBuilder(RingBufferEvent::new)
+                        .newBuilder(AgentEvent::new)
                         .build())
                 .build();
 
@@ -121,7 +121,7 @@ public class DisruptorEventLoopMpPublishTest {
 
         @Override
         public void run() {
-            DisruptorEventLoop<RingBufferEvent> consumer = DisruptorEventLoopMpPublishTest.consumer;
+            DisruptorEventLoop<AgentEvent> consumer = DisruptorEventLoopMpPublishTest.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
                 long sequence = consumer.nextSequence();
@@ -129,7 +129,7 @@ public class DisruptorEventLoopMpPublishTest {
                     break;
                 }
                 try {
-                    RingBufferEvent event = consumer.getEvent(sequence); // TODO 这里抛出过异常
+                    AgentEvent event = consumer.getEvent(sequence); // TODO 这里抛出过异常
                     event.setType(type);
                     event.longVal1 = localSequence++;
                 } finally {
@@ -153,7 +153,7 @@ public class DisruptorEventLoopMpPublishTest {
 
         @Override
         public void run() {
-            DisruptorEventLoop<RingBufferEvent> consumer = DisruptorEventLoopMpPublishTest.consumer;
+            DisruptorEventLoop<AgentEvent> consumer = DisruptorEventLoopMpPublishTest.consumer;
             long localSequence = 0;
             while (!alert && localSequence < 1000000) {
                 int batchSize = 100;
@@ -163,7 +163,7 @@ public class DisruptorEventLoopMpPublishTest {
                 }
                 long low = hi - batchSize + 1;
                 for (long sequence = low; sequence <= hi; sequence++) {
-                    RingBufferEvent event = consumer.getEvent(sequence);
+                    AgentEvent event = consumer.getEvent(sequence);
                     event.setType(type);
                     event.longVal1 = localSequence++;
                 }

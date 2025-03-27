@@ -1,0 +1,139 @@
+/*
+ * Copyright 2023-2025 wjybxx(845740757@qq.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package cn.wjybxx.concurrent;
+
+import cn.wjybxx.base.ThreadUtils;
+import cn.wjybxx.base.fx.ComponentDefine;
+import cn.wjybxx.base.fx.ComponentId;
+import cn.wjybxx.base.fx.ComponentKind;
+import cn.wjybxx.disruptor.RingBufferEventSequencer;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+/**
+ * @author wjybxx
+ * date - 2025/3/27
+ */
+public class EventLoopModuleTest {
+
+    private static IEventLoop eventLoop;
+    private static final ComponentId<DataModule> dataCid = EventLoopUtils.GLOBAL.valueOf(DataModule.class);
+    private static final ComponentId<BehaviorModule> behaviorCid = EventLoopUtils.GLOBAL.valueOf(BehaviorModule.class);
+
+    @BeforeEach
+    void setUp() {
+        eventLoop = EventLoopBuilder.<AgentEvent>newDisruptBuilder()
+                .setParent(null)
+                .setThreadFactory(new DefaultThreadFactory("consumer"))
+                .setAgent(new Agent())
+                .setEventSequencer(RingBufferEventSequencer
+                        .newMultiProducer(AgentEvent::new)
+                        .build())
+                // 添加模块
+                .addModule(new DataModule())
+                .addModule(new BehaviorModule())
+                .build();
+    }
+
+    @Test
+    void testUpdate() {
+        eventLoop.start().join();
+        ThreadUtils.sleepQuietly(1000);
+        try {
+            // 数据组件为0
+            DataModule dataModule = eventLoop.getComponent(dataCid);
+            Assertions.assertTrue(dataModule.onReadyInvoked);
+            Assertions.assertEquals(dataModule.updateCount, 0);
+            Assertions.assertEquals(dataModule.lastUpdateCount, 0);
+            // 行为组件非0
+            BehaviorModule behaviorModule = eventLoop.getComponent(behaviorCid);
+            Assertions.assertTrue(behaviorModule.onReadyInvoked);
+            Assertions.assertNotEquals(behaviorModule.updateCount, 0);
+            Assertions.assertNotEquals(behaviorModule.lastUpdateCount, 0);
+        } finally {
+            eventLoop.shutdownNow();
+        }
+    }
+
+    private static class Agent implements IEventLoopAgent<AgentEvent> {
+
+        private long lastUpdateTime = System.currentTimeMillis();
+
+        @Override
+        public boolean checkMainLoop(long threadTime) {
+            return System.currentTimeMillis() - lastUpdateTime >= 10;
+        }
+
+        @Override
+        public void beforeMainLoop(long threadTime) {
+            lastUpdateTime = System.currentTimeMillis();
+        }
+
+        @Override
+        public void onEvent(long sequence, AgentEvent event) throws Exception {
+
+        }
+    }
+
+    @ComponentDefine(kind = ComponentKind.DATA)
+    private static class DataModule extends EventLoopModule {
+
+        boolean onReadyInvoked;
+        long updateCount;
+        long lastUpdateCount;
+
+        @Override
+        public void onReady() {
+            onReadyInvoked = true;
+        }
+
+        @Override
+        public void update() throws Exception {
+            updateCount++;
+        }
+
+        @Override
+        public void lateUpdate() throws Exception {
+            lastUpdateCount++;
+        }
+    }
+
+    @ComponentDefine(kind = ComponentKind.SCRIPT)
+    private static class BehaviorModule extends EventLoopModule {
+
+        boolean onReadyInvoked;
+        long updateCount;
+        long lastUpdateCount;
+
+        @Override
+        public void onReady() {
+            onReadyInvoked = true;
+        }
+
+        @Override
+        public void update() throws Exception {
+            updateCount++;
+        }
+
+        @Override
+        public void lateUpdate() throws Exception {
+            lastUpdateCount++;
+        }
+    }
+
+}

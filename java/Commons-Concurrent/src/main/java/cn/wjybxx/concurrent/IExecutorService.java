@@ -36,15 +36,15 @@ public interface IExecutorService extends ExecutorService, IExecutor {
     // region lifecycle
 
     /**
-     * 查询{@link EventLoopGroup}是否处于正在关闭状态。
+     * 查询{@link IEventLoopGroup}是否处于正在关闭状态。
      * 正在关闭状态下，拒绝接收新任务，当执行完所有任务后，进入关闭状态。
      *
-     * @return 如果该{@link EventLoopGroup}管理的所有{@link EventLoop}正在关闭或已关闭则返回true
+     * @return 如果该{@link IEventLoopGroup}管理的所有{@link IEventLoop}正在关闭或已关闭则返回true
      */
     boolean isShuttingDown();
 
     /**
-     * 查询{@link EventLoopGroup}是否处于关闭状态。
+     * 查询{@link IEventLoopGroup}是否处于关闭状态。
      * 关闭状态下，拒绝接收新任务，执行退出前的清理操作，执行完清理操作后，进入终止状态。
      *
      * @return 如果已关闭，则返回true

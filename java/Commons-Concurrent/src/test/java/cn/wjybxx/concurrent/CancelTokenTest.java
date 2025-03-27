@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author wjybxx
@@ -41,10 +40,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CancelTokenTest {
 
     /** 用于测试异步执行 */
-    private static final EventLoop globalEventLoop = EventLoopBuilder.newDisruptBuilder()
+    private static final IEventLoop globalEventLoop = EventLoopBuilder.newDisruptBuilder()
             .setThreadFactory(new DefaultThreadFactory("Scheduler", true))
             .setEventSequencer(RingBufferEventSequencer
-                    .newMultiProducer(RingBufferEvent::new)
+                    .newMultiProducer(AgentEvent::new)
                     .build())
             .build();
 

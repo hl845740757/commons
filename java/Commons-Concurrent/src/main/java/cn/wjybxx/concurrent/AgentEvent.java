@@ -17,44 +17,31 @@
 package cn.wjybxx.concurrent;
 
 /**
- * 被缓存的事件对象
- * 1.用于Disruptor或类似的系统，当我们缓存对象时，更适合将字段展开以提高内存利用率
- * 2.这只是个简单的数据传输对象，getter/setter什么的不是必要的
- * 3.支持{@link EventLoopAgent}的都将支持该事件。
- * <p>
- * PS:如果要支持判断是否是批量处理的最后一个事件，可以在这里添加字段。
+ * 最基础的{@link IAgentEvent}实现
  *
  * @author wjybxx
  * date 2023/4/10
  */
-public final class RingBufferEvent implements IAgentEvent {
+public final class AgentEvent implements IAgentEvent {
 
     private int type = TYPE_INVALID;
+    private int options;
     public Object obj1;
     public Object obj2;
-    public int options;
-
-    // 扩展字段
-    public int intVal1;
-    public int intVal2;
     public long longVal1;
     public long longVal2;
 
-    public RingBufferEvent copy() {
-        RingBufferEvent event = new RingBufferEvent();
+    public AgentEvent copy() {
+        AgentEvent event = new AgentEvent();
         event.copyFrom(this);
         return event;
     }
 
-    public void copyFrom(RingBufferEvent src) {
+    public void copyFrom(AgentEvent src) {
         this.type = src.type;
+        this.options = src.options;
         this.obj1 = src.obj1;
         this.obj2 = src.obj2;
-        this.options = src.options;
-
-        // 扩展字段
-        this.intVal1 = src.intVal1;
-        this.intVal2 = src.intVal2;
         this.longVal1 = src.longVal1;
         this.longVal2 = src.longVal2;
     }
@@ -62,20 +49,17 @@ public final class RingBufferEvent implements IAgentEvent {
     @Override
     public void clean() {
         type = TYPE_INVALID;
+        options = 0;
         obj1 = null;
         obj2 = null;
-        options = 0;
     }
 
     @Override
     public void cleanAll() {
         type = TYPE_INVALID;
+        options = 0;
         obj1 = null;
         obj2 = null;
-        options = 0;
-
-        intVal1 = 0;
-        intVal2 = 0;
         longVal1 = 0;
         longVal2 = 0;
     }
@@ -91,13 +75,13 @@ public final class RingBufferEvent implements IAgentEvent {
     }
 
     @Override
-    public Object getObj2() {
-        return obj2;
+    public int getOptions() {
+        return options;
     }
 
     @Override
-    public void setObj2(Object obj2) {
-        this.obj2 = obj2;
+    public void setOptions(int options) {
+        this.options = options;
     }
 
     @Override
@@ -111,26 +95,44 @@ public final class RingBufferEvent implements IAgentEvent {
     }
 
     @Override
-    public int getOptions() {
-        return options;
+    public Object getObj2() {
+        return obj2;
     }
 
     @Override
-    public void setOptions(int options) {
-        this.options = options;
+    public void setObj2(Object obj2) {
+        this.obj2 = obj2;
+    }
+
+    @Override
+    public long getLongVal1() {
+        return longVal1;
+    }
+
+    @Override
+    public void setLongVal1(long longVal1) {
+        this.longVal1 = longVal1;
+    }
+
+    @Override
+    public long getLongVal2() {
+        return longVal2;
+    }
+
+    @Override
+    public void setLongVal2(long longVal2) {
+        this.longVal2 = longVal2;
     }
 
     @Override
     public String toString() {
-        return "RingBufferEvent{" +
+        return "AgentEvent{" +
                 "type=" + type +
+                ", options=" + options +
                 ", obj1=" + obj1 +
                 ", obj2=" + obj2 +
-                ", intVal1=" + intVal1 +
-                ", intVal2=" + intVal2 +
                 ", longVal1=" + longVal1 +
                 ", longVal2=" + longVal2 +
                 '}';
     }
-
 }

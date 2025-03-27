@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2023-2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.concurrent;
-
-import javax.annotation.Nonnull;
-
 /**
+ * “fx”的意思是框架(FrameworkX)的意思
+ *
  * @author wjybxx
- * date 2023/4/7
+ * date - 2025/3/26
  */
-public interface EventLoopChooserFactory {
-
-    /** @param children 一定不为空且不存在null元素 */
-    @Nonnull
-    EventLoopChooser newChooser(IEventLoop[] children);
-
-}
+package cn.wjybxx.base.fx;

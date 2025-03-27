@@ -16,7 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.base.concurrent.StacklessCancellationException;
 
 import java.util.Objects;
@@ -46,6 +45,10 @@ public class PromiseTask<V> implements IFutureTask<V> {
     public static final int MASK_HAS_DEADLINE = 1 << 17;
     /** 延时任务有次数限制 */
     public static final int MASK_HAS_COUNTDOWN = 1 << 18;
+    /** 延时任务是否已启动 */
+    public static final int MASK_STARTED = 1 << 19;
+    /** 延时任务是否已停止 */
+    public static final int MASK_STOPPED = 1 << 20;
 
     /** 任务类型的偏移量 */
     public static final int OFFSET_TASK_TYPE = 8;
@@ -120,14 +123,11 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     @Override
     public boolean isCancelRequested() {
-        return promise.isDone() || getCancelToken().IsCancelRequested();
+        return promise.isDone() || getCancelToken().isCancelRequested();
     }
 
-    public void trySetCancelled() {
-        trySetCancelled(promise, getCancelToken(), CancelCodes.REASON_SHUTDOWN);
-    }
-
-    public void trySetCancelled(int code) {
+    @Override
+    public void cancel(int code) {
         trySetCancelled(promise, getCancelToken(), code);
     }
 
@@ -141,26 +141,12 @@ public class PromiseTask<V> implements IFutureTask<V> {
         return TaskOptions.isEnabled(options, taskOption);
     }
 
-    /** 获取ctl中的某个bit */
-    protected final boolean getCtlBit(int mask) {
-        return (ctl & mask) != 0;
-    }
-
-    /** 设置ctl中的某个bit */
-    protected final void setCtlBit(int mask, boolean value) {
-        if (value) {
-            ctl |= mask;
-        } else {
-            ctl &= ~mask;
-        }
-    }
-
     // endregion
 
     // region core
 
     /** 注意：如果task和promise之间是双向绑定的，需要解除绑定 */
-    public void clear() {
+    protected void clear() {
         task = null;
         ctx = null;
         options = 0;
@@ -213,7 +199,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     public void run() {
         IPromise<V> promise = this.promise;
         ICancelToken cancelToken = getCancelToken();
-        if (cancelToken.IsCancelRequested()) {
+        if (cancelToken.isCancelRequested()) {
             trySetCancelled(promise, cancelToken);
             return;
         }

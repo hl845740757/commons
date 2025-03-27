@@ -29,13 +29,13 @@ public class EventLoopGroupBuilder {
 
     //
 
-    /** 创建一个默认的builder - 最终将构建{@link FixedEventLoopGroup} */
+    /** 创建一个默认的builder - 最终将构建{@link IFixedEventLoopGroup} */
     public static EventLoopGroupBuilder newBuilder() {
         return new EventLoopGroupBuilder();
     }
     //
 
-    public EventLoopGroup build() {
+    public IEventLoopGroup build() {
         return new DefaultFixedEventLoopGroup(this);
     }
 

@@ -116,7 +116,9 @@ public interface Constant extends Comparable<Constant> {
 
         /**
          * 获取分配的高速缓存索引 -- -1表示未设置。
-         * 注意：{@link ConstantPool}仅仅分配index，而真正的实现在于常量的使用者。
+         * 注意：
+         * 1.{@link ConstantPool}仅仅分配index，而真正的实现在于常量的使用者。
+         * 2.由于竞争问题，可能无法保证缓存索引是连续的 -- 当尝试创建同名的常量时可能导致浪费。
          */
         public int getCacheIndex() {
             return cacheIndex;
@@ -132,7 +134,8 @@ public interface Constant extends Comparable<Constant> {
             return this;
         }
 
-        public abstract T build();
+        /** 注意！该接口不是由用户调用的，而是由Pool调用的 */
+        protected abstract T build();
 
     }
 

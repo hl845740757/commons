@@ -30,13 +30,13 @@ import java.util.function.Consumer;
  * @author wjybxx
  * date 2023/4/8
  */
-public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implements FixedEventLoopGroup {
+public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implements IFixedEventLoopGroup {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultFixedEventLoopGroup.class);
     private final IPromise<Void> terminationFuture = new Promise<>();
 
-    private final EventLoop[] children;
-    private final List<EventLoop> readonlyChildren;
+    private final IEventLoop[] children;
+    private final List<IEventLoop> readonlyChildren;
     private final EventLoopChooser chooser;
     private final Runnable terminationHook;
 
@@ -54,9 +54,9 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
             chooserFactory = new DefaultChooserFactory();
         }
 
-        children = new EventLoop[numChildren];
+        children = new IEventLoop[numChildren];
         for (int i = 0; i < numChildren; i++) {
-            EventLoop eventLoop = Objects.requireNonNull(eventLoopFactory.newChild(this, i, null));
+            IEventLoop eventLoop = Objects.requireNonNull(eventLoopFactory.newChild(this, i, null));
             if (eventLoop.parent() != this) throw new IllegalStateException("the parent of child is illegal");
             children[i] = eventLoop;
         }
@@ -66,7 +66,7 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
 
         // 最后再监听，否则可能状态错误
         final ChildrenTerminateListener terminationListener = new ChildrenTerminateListener();
-        for (EventLoop child : children) {
+        for (IEventLoop child : children) {
             child.terminationFuture().whenComplete(terminationListener);
         }
     }
@@ -80,12 +80,12 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
 
     @Override
     public boolean isShuttingDown() {
-        return Arrays.stream(children).allMatch(EventLoop::isShuttingDown);
+        return Arrays.stream(children).allMatch(IEventLoop::isShuttingDown);
     }
 
     @Override
     public boolean isShutdown() {
-        return Arrays.stream(children).allMatch(EventLoop::isShutdown);
+        return Arrays.stream(children).allMatch(IEventLoop::isShutdown);
     }
 
     @Override
@@ -100,14 +100,14 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
 
     @Override
     public void shutdown() {
-        forEach(EventLoop::shutdown);
+        forEach(IEventLoop::shutdown);
     }
 
     @Nonnull
     @Override
     public List<Runnable> shutdownNow() {
         List<Runnable> tasks = new ArrayList<>();
-        for (EventLoop eventLoop : children) {
+        for (IEventLoop eventLoop : children) {
             tasks.addAll(eventLoop.shutdownNow());
         }
         return tasks;
@@ -132,29 +132,29 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
 
     @Nonnull
     @Override
-    public EventLoop select() {
+    public IEventLoop select() {
         return chooser.select();
     }
 
     @Nonnull
     @Override
-    public EventLoop select(int key) {
+    public IEventLoop select(int key) {
         return chooser.select(key);
     }
 
     @Nonnull
     @Override
-    public Iterator<EventLoop> iterator() {
+    public Iterator<IEventLoop> iterator() {
         return readonlyChildren.iterator();
     }
 
     @Override
-    public void forEach(Consumer<? super EventLoop> action) {
+    public void forEach(Consumer<? super IEventLoop> action) {
         readonlyChildren.forEach(action);
     }
 
     @Override
-    public Spliterator<EventLoop> spliterator() {
+    public Spliterator<IEventLoop> spliterator() {
         return readonlyChildren.spliterator();
     }
     //

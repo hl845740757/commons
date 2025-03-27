@@ -37,7 +37,7 @@ public final class TaskOptions {
     /**
      * 低位用于存储任务的调度阶段，取值[0, 15]，使用低位可以避免位移。
      * 1. 用于指定异步任务的调度时机。
-     * 2. 主要用于{@link EventLoop}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
+     * 2. 主要用于{@link IEventLoop}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
      */
     public static final int MASK_SCHEDULE_PHASE = 0xF0;
 

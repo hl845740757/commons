@@ -94,7 +94,7 @@ public interface ICancelToken {
      * 是否已收到取消信号
      * 任务的执行者将持有该令牌，在调度任务前会检测取消信号；如果任务已经开始，则由用户的任务自身检测取消和中断信号。
      */
-    default boolean IsCancelRequested() {
+    default boolean isCancelRequested() {
         return cancelCode() != 0;
     }
 
@@ -211,13 +211,13 @@ public interface ICancelToken {
      * 添加一个特定类型的监听器
      * (用于特殊需求时避免额外的闭包 - task经常需要监听取消令牌)
      */
-    IRegistration thenNotify(CancelTokenListener action, int options);
+    IRegistration thenNotify(ICancelTokenListener action, int options);
 
-    IRegistration thenNotify(CancelTokenListener action);
+    IRegistration thenNotify(ICancelTokenListener action);
 
-    IRegistration thenNotifyAsync(Executor executor, CancelTokenListener action);
+    IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action);
 
-    IRegistration thenNotifyAsync(Executor executor, CancelTokenListener action, int options);
+    IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, int options);
 
     // endregion
 

@@ -52,10 +52,6 @@ public class ConstantPool<T extends Constant> {
 
     private final String poolId = UUID.randomUUID().toString();
     private final AtomicInteger idGenerator;
-    /**
-     * 下一个用于高速缓存的index.
-     * cacheIndex和id是独立的，通常用于为特殊的{@link Constant}建立高速索引。
-     */
     private final AtomicInteger cacheIndexGenerator = new AtomicInteger(0);
 
     private ConstantPool(ConstantFactory<? extends T> factory, int firstId) {
@@ -108,6 +104,18 @@ public class ConstantPool<T extends Constant> {
     public final T newInstance(Constant.Builder<? extends T> builder) {
         Objects.requireNonNull(builder, "builder");
         return createOrThrow(builder);
+    }
+
+    /**
+     * 获取或创建常量
+     * 如果已存在关联的常量，则返回关联的常量；
+     * 如果不存在关联的常量，额创建新的常量
+     *
+     * @param builder 构建常量需要的数据
+     */
+    public final T valueOf(Constant.Builder<? extends T> builder) {
+        Objects.requireNonNull(builder, "builder");
+        return getOrCreate(builder);
     }
 
     /**
@@ -176,20 +184,28 @@ public class ConstantPool<T extends Constant> {
 
     // region internal
 
-    /**
-     * 通过名字获取已存在的常量，或者当其不存在时创建新的常量，仅支持简单常量。
-     */
+    /** 通过名字获取已存在的常量，或者当其不存在时创建新的常量，仅支持简单常量。 */
     private T getOrCreate(String name) {
         assert factory != null;
         T constant = constants.get(name);
-        if (constant == null) {
-            final T tempConstant = newConstant(new SimpleBuilder<>(name, factory));
-            constant = constants.putIfAbsent(name, tempConstant);
-            if (constant == null) {
-                return tempConstant;
-            }
+        if (constant != null) {
+            return constant;
         }
-        return constant;
+        constant = newConstant(new SimpleBuilder<>(name, factory));
+        T exist = constants.putIfAbsent(name, constant);
+        return exist == null ? constant : exist;
+    }
+
+    /** 通过名字获取已存在的常量，或者当其不存在时创建新的常量，支持复杂常量。 */
+    private T getOrCreate(Constant.Builder<? extends T> builder) {
+        String name = builder.getName();
+        T constant = constants.get(name);
+        if (constant != null) {
+            return constant;
+        }
+        constant = newConstant(builder);
+        T exist = constants.putIfAbsent(name, constant);
+        return exist == null ? constant : exist;
     }
 
     /**
@@ -199,10 +215,9 @@ public class ConstantPool<T extends Constant> {
         String name = builder.getName();
         T constant = constants.get(name);
         if (constant == null) {
-            final T tempConstant = newConstant(builder);
-            constant = constants.putIfAbsent(name, tempConstant);
-            if (constant == null) {
-                return tempConstant;
+            constant = newConstant(builder);
+            if (constants.putIfAbsent(name, constant) == null) {
+                return constant;
             }
         }
         throw new IllegalArgumentException(name + " is already in use");
@@ -238,7 +253,7 @@ public class ConstantPool<T extends Constant> {
         }
 
         @Override
-        public T build() {
+        protected T build() {
             return factory.newConstant(this);
         }
     }

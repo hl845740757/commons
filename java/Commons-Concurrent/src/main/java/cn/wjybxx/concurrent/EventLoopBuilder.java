@@ -17,10 +17,14 @@
 package cn.wjybxx.concurrent;
 
 
+import cn.wjybxx.base.Preconditions;
 import cn.wjybxx.disruptor.EventSequencer;
 import cn.wjybxx.disruptor.Sequencer;
 import cn.wjybxx.disruptor.WaitStrategy;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -30,22 +34,23 @@ import java.util.concurrent.ThreadFactory;
  */
 public abstract class EventLoopBuilder<T extends IAgentEvent> {
 
-    private EventLoopGroup parent;
+    private IEventLoopGroup parent;
     private int index = -1;
     private RejectedExecutionHandler rejectedExecutionHandler = RejectedExecutionHandlers.abort();
     private ThreadFactory threadFactory;
 
-    private EventLoopAgent<? super T> agent;
-    private EventLoopModule mainModule;
+    private long consumerId;
+    private IEventLoopAgent<T> agent;
+    private final List<EventLoopModule> moduleList = new ArrayList<>();
     private int batchSize = 1024;
 
-    public abstract EventLoop build();
+    public abstract IEventLoop build();
 
-    public EventLoopGroup getParent() {
+    public IEventLoopGroup getParent() {
         return parent;
     }
 
-    public EventLoopBuilder<T> setParent(EventLoopGroup parent) {
+    public EventLoopBuilder<T> setParent(IEventLoopGroup parent) {
         this.parent = parent;
         return this;
     }
@@ -80,28 +85,46 @@ public abstract class EventLoopBuilder<T extends IAgentEvent> {
         return this;
     }
 
-    /** EventLoop的内部代理 */
-    public EventLoopAgent<? super T> getAgent() {
+    /** 事件循环的消费者id - 未指定将使用{@link Thread#threadId()} */
+    public long getConsumerId() {
+        return consumerId;
+    }
+
+    public EventLoopBuilder<T> setConsumerId(long consumerId) {
+        this.consumerId = consumerId;
+        return this;
+    }
+
+    /** 事件循环的内部代理 */
+    public IEventLoopAgent<T> getAgent() {
         return agent;
     }
 
-    public EventLoopBuilder<T> setAgent(EventLoopAgent<? super T> agent) {
+    public EventLoopBuilder<T> setAgent(IEventLoopAgent<T> agent) {
         this.agent = agent;
         return this;
     }
 
-    /** EventLoop的主模块 */
-    public EventLoopModule getMainModule() {
-        return mainModule;
+    /** 事件循环的模块 */
+    public List<EventLoopModule> getModules() {
+        return moduleList;
     }
 
-    public EventLoopBuilder<T> setMainModule(EventLoopModule mainModule) {
-        this.mainModule = mainModule;
+    /** 添加模块 */
+    public EventLoopBuilder<T> addModule(EventLoopModule module) {
+        Objects.requireNonNull(module);
+        moduleList.add(module);
+        return this;
+    }
+
+    public EventLoopBuilder<T> addModules(List<EventLoopModule> modules) {
+        Preconditions.checkNullElements(modules);
+        moduleList.addAll(modules);
         return this;
     }
 
     /**
-     * 每次最多处理多少个事件就尝试执行一次{@link EventLoopAgent#update()}方法
+     * 每次最多处理多少个事件就尝试执行一次主循环方法
      * 该值越小：线程间的同步开销越多；越不容易阻塞生产者（有界Buffer）；EventLoop更容易响应取消；
      * 该值越大：消费者的吞吐量越好，生产者的吞吐量则会降低（有界Buffer）；EventLoop对关闭信号的响应越慢。
      */
@@ -131,13 +154,10 @@ public abstract class EventLoopBuilder<T extends IAgentEvent> {
         private EventSequencer<? extends T> eventSequencer;
         private WaitStrategy waitStrategy;
 
-        private boolean cleanEventAfterConsumed = true;
-        private boolean cleanBufferOnExit = true;
-
         //
 
         @Override
-        public DisruptorBuilder<T> setParent(EventLoopGroup parent) {
+        public DisruptorBuilder<T> setParent(IEventLoopGroup parent) {
             super.setParent(parent);
             return this;
         }
@@ -161,14 +181,26 @@ public abstract class EventLoopBuilder<T extends IAgentEvent> {
         }
 
         @Override
-        public DisruptorBuilder<T> setAgent(EventLoopAgent<? super T> agent) {
+        public DisruptorBuilder<T> setConsumerId(long consumerId) {
+            super.setConsumerId(consumerId);
+            return this;
+        }
+
+        @Override
+        public DisruptorBuilder<T> setAgent(IEventLoopAgent<T> agent) {
             super.setAgent(agent);
             return this;
         }
 
         @Override
-        public DisruptorBuilder<T> setMainModule(EventLoopModule mainModule) {
-            super.setMainModule(mainModule);
+        public DisruptorBuilder<T> addModule(EventLoopModule module) {
+            super.addModule(module);
+            return this;
+        }
+
+        @Override
+        public DisruptorBuilder<T> addModules(List<EventLoopModule> modules) {
+            super.addModules(modules);
             return this;
         }
 
@@ -214,30 +246,6 @@ public abstract class EventLoopBuilder<T extends IAgentEvent> {
 
         public DisruptorBuilder<T> setWaitStrategy(WaitStrategy waitStrategy) {
             this.waitStrategy = waitStrategy;
-            return this;
-        }
-
-        /** 在消费事件后是否调用{@link IAgentEvent#clean()}方法清理引用数据 */
-        public boolean isCleanEventAfterConsumed() {
-            return cleanEventAfterConsumed;
-        }
-
-        public DisruptorBuilder<T> setCleanEventAfterConsumed(boolean cleanEventAfterConsumed) {
-            this.cleanEventAfterConsumed = cleanEventAfterConsumed;
-            return this;
-        }
-
-        /**
-         * EventLoop在退出的时候是否清理buffer
-         * 1. 默认清理
-         * 2. 如果该值为true，意味着当前消费者是消费者的末端，或仅有该EventLoop消费者。
-         */
-        public boolean isCleanBufferOnExit() {
-            return cleanBufferOnExit;
-        }
-
-        public DisruptorBuilder<T> setCleanBufferOnExit(boolean cleanBufferOnExit) {
-            this.cleanBufferOnExit = cleanBufferOnExit;
             return this;
         }
     }

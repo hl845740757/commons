@@ -43,7 +43,7 @@ import java.util.function.Consumer;
  */
 public final class CancelTokenSource implements ICancelTokenSource {
 
-    private static final EventLoop delayer = GlobalEventLoop.INST;
+    private static final IEventLoop delayer = GlobalEventLoop.INST;
 
     /**
      * 取消码
@@ -169,7 +169,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         }
     }
 
-    private static class JDKCanceller implements Runnable, CancelTokenListener {
+    private static class JDKCanceller implements Runnable, ICancelTokenListener {
 
         final CancelTokenSource source;
         final int cancelCode;
@@ -201,7 +201,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     }
 
     @Override
-    public boolean IsCancelRequested() {
+    public boolean isCancelRequested() {
         return code != 0;
     }
 
@@ -264,7 +264,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private IRegistration uniAccept(Executor executor, Consumer<? super ICancelToken> action,
                                     int options) {
         Objects.requireNonNull(action);
-        if (IsCancelRequested() && executor == null) {
+        if (isCancelRequested() && executor == null) {
             UniAccept.fireNow(this, action);
             return TOMBSTONE;
         }
@@ -301,7 +301,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private IRegistration uniAcceptCtx(Executor executor, BiConsumer<? super ICancelToken, Object> action,
                                        Object ctx, int options) {
         Objects.requireNonNull(action);
-        if (IsCancelRequested() && executor == null) {
+        if (isCancelRequested() && executor == null) {
             UniAcceptCtx.fireNow(this, action, ctx);
             return TOMBSTONE;
         }
@@ -337,7 +337,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private IRegistration uniRun(Executor executor, Runnable action, int options) {
         Objects.requireNonNull(action);
-        if (IsCancelRequested() && executor == null) {
+        if (isCancelRequested() && executor == null) {
             UniRun.fireNow(action);
             return TOMBSTONE;
         }
@@ -373,7 +373,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private IRegistration uniRunCtx(Executor executor, Consumer<Object> action, Object ctx, int options) {
         Objects.requireNonNull(action);
-        if (IsCancelRequested() && executor == null) {
+        if (isCancelRequested() && executor == null) {
             UniRunCtx.fireNow(action, ctx);
             return TOMBSTONE;
         }
@@ -386,29 +386,29 @@ public final class CancelTokenSource implements ICancelTokenSource {
     // region uni-notify
 
     @Override
-    public IRegistration thenNotify(CancelTokenListener action, int options) {
+    public IRegistration thenNotify(ICancelTokenListener action, int options) {
         return uniNotify(null, action, options);
     }
 
     @Override
-    public IRegistration thenNotify(CancelTokenListener action) {
+    public IRegistration thenNotify(ICancelTokenListener action) {
         return uniNotify(null, action, 0);
     }
 
     @Override
-    public IRegistration thenNotifyAsync(Executor executor, CancelTokenListener action) {
+    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action) {
         Objects.requireNonNull(executor, "executor");
         return uniNotify(executor, action, 0);
     }
 
     @Override
-    public IRegistration thenNotifyAsync(Executor executor, CancelTokenListener action, int options) {
+    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, int options) {
         Objects.requireNonNull(executor, "executor");
         return uniNotify(executor, action, options);
     }
 
-    private IRegistration uniNotify(Executor executor, CancelTokenListener action, int options) {
-        if (IsCancelRequested() && executor == null) {
+    private IRegistration uniNotify(Executor executor, ICancelTokenListener action, int options) {
+        if (isCancelRequested() && executor == null) {
             UniNotify.fireNow(this, action);
             return TOMBSTONE;
         }
@@ -444,7 +444,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private IRegistration uniTransferTo(Executor executor, ICancelTokenSource child, int options) {
         Objects.requireNonNull(child, "child");
-        if (IsCancelRequested() && executor == null) {
+        if (isCancelRequested() && executor == null) {
             UniTransferTo.fireNow(this, SYNC, child);
             return TOMBSTONE;
         }
@@ -501,7 +501,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     /** @return 是否压栈成功 */
     private boolean pushCompletion(Completion newHead) {
-        if (IsCancelRequested()) {
+        if (isCancelRequested()) {
             newHead.tryFire(SYNC);
             return false;
         }
@@ -850,7 +850,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private static class UniNotify extends Completion {
 
         public UniNotify(Executor executor, int options, CancelTokenSource source,
-                         CancelTokenListener action) {
+                         ICancelTokenListener action) {
             super(executor, options, source, action);
         }
 
@@ -860,7 +860,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 if (mode <= 0 && !claim()) {
                     return null; // 下次执行
                 }
-                CancelTokenListener action = (CancelTokenListener) popAction();
+                ICancelTokenListener action = (ICancelTokenListener) popAction();
                 if (action == null) {
                     return null;
                 }
@@ -873,7 +873,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
             return null;
         }
 
-        static void fireNow(CancelTokenSource source, CancelTokenListener action) {
+        static void fireNow(CancelTokenSource source, ICancelTokenListener action) {
             try {
                 action.onCancelRequested(source);
             } catch (Throwable ex) {

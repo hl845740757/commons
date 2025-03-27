@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2023-2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,25 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.concurrent;
+package cn.wjybxx.base.fx;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * 该接口用于特殊需求时减少闭包
+ * 组件重定向注解。
+ * 用于子类告知框架应当使用它的哪个超类来解析{@link ComponentId}
  *
  * @author wjybxx
- * date - 2024/1/15
+ * date - 2025/3/27
  */
-public interface CancelTokenListener {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface ComponentRedirect {
 
-    void onCancelRequested(ICancelToken cancelToken);
+    /** 真实的组件类型 */
+    Class<?> value();
 
 }

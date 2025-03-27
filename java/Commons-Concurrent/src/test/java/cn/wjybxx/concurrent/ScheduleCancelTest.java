@@ -31,14 +31,14 @@ import java.util.concurrent.TimeUnit;
  */
 public class ScheduleCancelTest {
 
-    private EventLoop consumer;
+    private IEventLoop consumer;
 
     @BeforeEach
     void setUp() {
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setEventSequencer(RingBufferEventSequencer
-                        .newMultiProducer(RingBufferEvent::new)
+                        .newMultiProducer(AgentEvent::new)
                         .build())
                 .build();
         consumer.start().join();

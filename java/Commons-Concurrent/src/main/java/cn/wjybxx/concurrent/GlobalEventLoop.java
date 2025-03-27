@@ -29,18 +29,18 @@ import java.util.concurrent.TimeUnit;
  * @author wjybxx
  * date - 2024/8/21
  */
-public final class GlobalEventLoop extends DisruptorEventLoop<MiniAgentEvent> {
+public final class GlobalEventLoop extends DisruptorEventLoop<AgentEvent> {
 
-    public static final GlobalEventLoop INST = new GlobalEventLoop(EventLoopBuilder.<MiniAgentEvent>newDisruptBuilder()
+    public static final GlobalEventLoop INST = new GlobalEventLoop(EventLoopBuilder.<AgentEvent>newDisruptBuilder()
             .setAgent(EmptyAgent.getInstance())
             .setThreadFactory(new DefaultThreadFactory("GlobalEventLoop", true))
-            .setEventSequencer(MpUnboundedEventSequencer.newBuilder(MiniAgentEvent::new) // 需要使用无界队列
+            .setEventSequencer(MpUnboundedEventSequencer.newBuilder(AgentEvent::new) // 需要使用无界队列
                     .setWaitStrategy(new TimeoutSleepingWaitStrategy()) // 等待策略需要支持超时，否则无法调度定时任务
                     .setChunkSize(1024)
                     .setMaxPooledChunks(1)
                     .build()));
 
-    private GlobalEventLoop(EventLoopBuilder.DisruptorBuilder<MiniAgentEvent> builder) {
+    private GlobalEventLoop(EventLoopBuilder.DisruptorBuilder<AgentEvent> builder) {
         super(builder);
     }
 

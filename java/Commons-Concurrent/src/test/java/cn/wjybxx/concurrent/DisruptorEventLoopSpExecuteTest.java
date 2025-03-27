@@ -35,7 +35,7 @@ public class DisruptorEventLoopSpExecuteTest {
 
     private static CounterAgent agent;
     private static Counter counter;
-    private static EventLoop consumer;
+    private static IEventLoop consumer;
     private static Producer producer;
     private static volatile boolean alert;
 
@@ -53,7 +53,7 @@ public class DisruptorEventLoopSpExecuteTest {
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setEventSequencer(RingBufferEventSequencer
-                        .newMultiProducer(RingBufferEvent::new)
+                        .newMultiProducer(AgentEvent::new)
                         .build())
                 .build();
         producer = new Producer(1);
@@ -75,7 +75,7 @@ public class DisruptorEventLoopSpExecuteTest {
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setEventSequencer(MpUnboundedEventSequencer
-                        .newBuilder(RingBufferEvent::new)
+                        .newBuilder(AgentEvent::new)
                         .build())
                 .build();
         producer = new Producer(1);
@@ -103,7 +103,7 @@ public class DisruptorEventLoopSpExecuteTest {
 
         @Override
         public void run() {
-            EventLoop consumer = DisruptorEventLoopSpExecuteTest.consumer;
+            IEventLoop consumer = DisruptorEventLoopSpExecuteTest.consumer;
             long sequencer = 0;
             while (!alert && sequencer < 1000000) {
                 consumer.execute(counter.newTask(type, sequencer++));

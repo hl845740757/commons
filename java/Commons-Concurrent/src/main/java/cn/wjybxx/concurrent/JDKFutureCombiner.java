@@ -231,7 +231,7 @@ public class JDKFutureCombiner {
                 return false;
             }
             // 包含了require小于等于0的情况
-            final int successRequire = options.isSelectAll() ? futureCount : options.successRequire;
+            final int successRequire = options.isSelectAll() ? futureCount : options.required;
             if (succeedCount >= successRequire) {
                 return aggregatePromise.complete(null);
             }

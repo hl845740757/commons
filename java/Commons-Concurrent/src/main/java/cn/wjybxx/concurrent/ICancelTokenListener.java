@@ -16,16 +16,14 @@
 
 package cn.wjybxx.concurrent;
 
-import javax.annotation.Nonnull;
-
 /**
+ * 该接口用于特殊需求时减少闭包
+ *
  * @author wjybxx
- * date 2023/4/7
+ * date - 2024/1/15
  */
-public interface EventLoopChooserFactory {
+public interface ICancelTokenListener {
 
-    /** @param children 一定不为空且不存在null元素 */
-    @Nonnull
-    EventLoopChooser newChooser(IEventLoop[] children);
+    void onCancelRequested(ICancelToken cancelToken);
 
 }

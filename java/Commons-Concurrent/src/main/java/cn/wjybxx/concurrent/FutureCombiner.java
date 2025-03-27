@@ -112,11 +112,11 @@ public class FutureCombiner {
      * 如果lazy为false，则满足成功/失败条件时立即触发完成；
      * 如果lazy为true，则等待所有任务完成之后才触发成功或失败。
      *
-     * @param successRequire 期望成成功的任务数
-     * @param failFast       是否在不满足条件时立即失败
+     * @param required 期望成成功的任务数
+     * @param failFast 是否在不满足条件时立即失败
      */
-    public IPromise<Object> selectN(int successRequire, boolean failFast) {
-        return finish(AggregateOptions.selectN(futureCount, successRequire, failFast));
+    public IPromise<Object> selectN(int required, boolean failFast) {
+        return finish(AggregateOptions.selectN(futureCount, required, failFast));
     }
 
     /**
@@ -229,7 +229,7 @@ public class FutureCombiner {
                 return false;
             }
             // 包含了require小于等于0的情况
-            final int successRequire = options.isSelectAll() ? futureCount : options.successRequire;
+            final int successRequire = options.isSelectAll() ? futureCount : options.required;
             if (succeedCount >= successRequire) {
                 return aggregatePromise.trySetResult(null);
             }

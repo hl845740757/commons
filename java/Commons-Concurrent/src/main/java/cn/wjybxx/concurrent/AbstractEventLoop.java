@@ -16,6 +16,8 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.fx.ComponentId;
+import cn.wjybxx.base.fx.IComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,44 +33,65 @@ import java.util.function.Function;
  * date 2023/4/7
  */
 @SuppressWarnings({"NullableProblems", "RedundantMethodOverride"})
-public abstract class AbstractEventLoop implements EventLoop {
+public abstract class AbstractEventLoop implements IEventLoop {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractEventLoop.class);
 
-    protected final EventLoopGroup parent;
-    protected final Collection<EventLoop> selfCollection = Collections.singleton(this);
+    protected final IEventLoopGroup parent;
+    protected final Collection<IEventLoop> selfCollection = Collections.singleton(this);
     private final ExecutorServiceAdapter adapter;
 
-    protected AbstractEventLoop(@Nullable EventLoopGroup parent) {
+    /** 所有的模块 -- 不可变List，保留为添加顺序；第一个必须是MainModule */
+    protected final List<EventLoopModule> moduleList;
+    /** 高速缓存的模块列表 */
+    protected final List<EventLoopModule> indexedModuleList;
+    /** 重写了update方法的模块 */
+    protected final List<EventLoopModule> updateModuleList;
+    /** 重写了lateUpdate方法的模块 */
+    protected final List<EventLoopModule> lateUpdateModuleList;
+
+    protected AbstractEventLoop(@Nullable IEventLoopGroup parent,
+                                @Nonnull List<EventLoopModule> moduleList) {
         this.parent = parent;
         this.adapter = new ExecutorServiceAdapter(this);
+        // 需要去重 - 兼容性
+        final LinkedHashSet<EventLoopModule> copiedModuleList = new LinkedHashSet<>(moduleList);
+        this.moduleList = List.copyOf(copiedModuleList);
+        this.indexedModuleList = List.of(EventLoopUtils.toIndexedArray(moduleList));
+        // 需要Update的模块缓存
+        this.updateModuleList = copiedModuleList.stream()
+                .filter(e -> e.getCid().isPrivateScript())
+                .filter(EventLoopUtils::isOverrideUpdate)
+                .toList();
+        this.lateUpdateModuleList = copiedModuleList.stream()
+                .filter(e -> e.getCid().isPrivateScript())
+                .filter(EventLoopUtils::isOverrideLateUpdate)
+                .toList();
     }
 
     @Override
     public abstract void execute(Runnable command);
 
     @Override
-    public void execute(Runnable command, int options) {
-        execute(FutureUtils.toTask(command, options));
-    }
+    public abstract void execute(Runnable command, int options);
 
-    // region EventLoop
+    // region IEventLoop
 
     @Nullable
     @Override
-    public EventLoopGroup parent() {
+    public IEventLoopGroup parent() {
         return parent;
     }
 
     @Nonnull
     @Override
-    public EventLoop select() {
+    public IEventLoop select() {
         return this;
     }
 
     @Nonnull
     @Override
-    public EventLoop select(int key) {
+    public IEventLoop select(int key) {
         return this;
     }
 
@@ -96,6 +119,105 @@ public abstract class AbstractEventLoop implements EventLoop {
         if (inEventLoop()) {
             throw new BlockingOperationException("Calling " + method + " from within the EventLoop is not allowed");
         }
+    }
+
+    // endregion
+
+    // region 组件模式
+
+    @Override
+    public void addComponent(IComponent comp) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean delComponent(IComponent comp) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean containsComponent(IComponent comp) {
+        int index = comp.getCid().index;
+        return index < indexedModuleList.size() && indexedModuleList.get(index) == comp;
+    }
+
+    @Override
+    public List<? extends IComponent> getComponents() {
+        return moduleList;
+    }
+
+    @Override
+    public int getComponents(List<IComponent> outList) {
+        outList.addAll(moduleList);
+        return moduleList.size();
+    }
+
+    @Override
+    public int countComponent() {
+        return moduleList.size();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T extends IComponent> T getComponent(ComponentId<T> cid) {
+        IComponent comp;
+        if (cid.index < indexedModuleList.size()
+                && (comp = indexedModuleList.get(cid.index)) != null
+                && comp.getCid() == cid) {
+            return (T) comp;
+        }
+        return null;
+    }
+
+    @Override
+    public <T extends IComponent> T getLastComponent(ComponentId<T> cid) {
+        return getComponent(cid);
+    }
+
+    @Override
+    public <T extends IComponent> List<T> getComponents(ComponentId<T> cid) {
+        T component = getComponent(cid);
+        if (component == null) {
+            return new ArrayList<>();
+        }
+        ArrayList<T> result = new ArrayList<>(1);
+        result.add(component);
+        return result;
+    }
+
+    @Override
+    public <T extends IComponent> int getComponents(ComponentId<T> cid, List<? super T> outList) {
+        T component = getComponent(cid);
+        if (component == null) {
+            return 0;
+        }
+        outList.add(component);
+        return 1;
+    }
+
+    @Override
+    public <T extends IComponent> T delComponent(ComponentId<T> cid) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T extends IComponent> T delLastComponent(ComponentId<T> cid) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T extends IComponent> List<T> delComponents(ComponentId<T> cid) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <T extends IComponent> int delComponents(ComponentId<T> cid, List<? super T> outList) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int countComponent(ComponentId<?> cid) {
+        return getComponent(cid) != null ? 1 : 0;
     }
 
     // endregion
@@ -182,6 +304,82 @@ public abstract class AbstractEventLoop implements EventLoop {
 
     // endregion
 
+    // region schedule
+
+    @Override
+    public <V> IScheduledPromise<V> newScheduledPromise() {
+        return new ScheduledPromise<>(this);
+    }
+
+    protected abstract ISchedulerHelper helper();
+
+    @Override
+    public <V> IScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder) {
+        IScheduledPromise<V> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        return promise;
+    }
+
+    @Override
+    public <V> IScheduledFuture<V> scheduleFunc(Callable<V> task, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        IScheduledPromise<V> promise = newScheduledPromise();
+        ISchedulerHelper helper = helper();
+
+        execute(ScheduledPromiseTask.ofFunction(task, cancelToken, 0, promise, helper, helper.triggerTime(delay, unit)));
+        return promise;
+    }
+
+    @Override
+    public IScheduledFuture<?> scheduleAction(Runnable task, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        ISchedulerHelper helper = helper();
+
+        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(task, cancelToken, 0, promise, helper, helper.triggerTime(delay, unit));
+        execute(promiseTask);
+        return promise;
+    }
+
+    @Override
+    public IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit, ICancelToken cancelToken) {
+        ScheduledTaskBuilder<Object> builder = ScheduledTaskBuilder.newAction(task, cancelToken)
+                .setFixedDelay(initialDelay, delay, unit);
+
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        return promise;
+    }
+
+    @Override
+    public IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit, ICancelToken cancelToken) {
+        ScheduledTaskBuilder<Object> builder = ScheduledTaskBuilder.newAction(task, cancelToken)
+                .setFixedRate(initialDelay, period, unit);
+
+        IScheduledPromise<Object> promise = newScheduledPromise();
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        return promise;
+    }
+
+    @Override
+    public final IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
+        return scheduleAction(task, delay, unit, ICancelToken.NONE);
+    }
+
+    @Override
+    public final <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
+        return scheduleFunc(task, delay, unit, ICancelToken.NONE);
+    }
+
+    @Override
+    public final IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
+        return scheduleWithFixedDelay(task, initialDelay, delay, unit, ICancelToken.NONE);
+    }
+
+    @Override
+    public final IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
+        return scheduleAtFixedRate(task, initialDelay, period, unit, ICancelToken.NONE);
+    }
+    // endregion
+
     // region invoke
 
     @Nonnull
@@ -217,17 +415,17 @@ public abstract class AbstractEventLoop implements EventLoop {
 
     @Nonnull
     @Override
-    public final Iterator<EventLoop> iterator() {
+    public final Iterator<IEventLoop> iterator() {
         return selfCollection.iterator();
     }
 
     @Override
-    public final void forEach(Consumer<? super EventLoop> action) {
+    public final void forEach(Consumer<? super IEventLoop> action) {
         selfCollection.forEach(action);
     }
 
     @Override
-    public final Spliterator<EventLoop> spliterator() {
+    public final Spliterator<IEventLoop> spliterator() {
         return selfCollection.spliterator();
     }
 

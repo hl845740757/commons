@@ -28,12 +28,12 @@ import cn.wjybxx.base.annotation.Internal;
 public final class AggregateOptions {
 
     private final byte type;
-    public final int successRequire;
+    public final int required;
     public final boolean failFast;
 
-    AggregateOptions(byte type, int successRequire, boolean failFast) {
+    AggregateOptions(byte type, int required, boolean failFast) {
         this.type = type;
-        this.successRequire = successRequire;
+        this.required = required;
         this.failFast = failFast;
     }
 
@@ -70,14 +70,14 @@ public final class AggregateOptions {
     /**
      * 成功完成n个
      *
-     * @param futureCount    future数量
-     * @param successRequire 需要成功完成的数量
-     * @param failFast       是否快速失败
+     * @param futureCount future数量
+     * @param required    需要成功完成的数量0
+     * @param failFast    是否快速失败
      */
-    public static AggregateOptions selectN(int futureCount, int successRequire, boolean failFast) {
-        if (futureCount < 0 || successRequire < 0) {
+    public static AggregateOptions selectN(int futureCount, int required, boolean failFast) {
+        if (futureCount < 0 || required < 0) {
             throw new IllegalArgumentException();
         }
-        return new AggregateOptions(TYPE_SELECT_MANY, successRequire, failFast);
+        return new AggregateOptions(TYPE_SELECT_MANY, required, failFast);
     }
 }

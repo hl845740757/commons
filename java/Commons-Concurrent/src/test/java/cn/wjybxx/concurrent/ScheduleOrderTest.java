@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 public class ScheduleOrderTest {
 
     private Counter counter;
-    private EventLoop consumer;
+    private IEventLoop consumer;
 
     @BeforeEach
     void setUp() {
@@ -40,7 +40,7 @@ public class ScheduleOrderTest {
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setEventSequencer(RingBufferEventSequencer
-                        .newMultiProducer(RingBufferEvent::new)
+                        .newMultiProducer(AgentEvent::new)
                         .build())
                 .build();
     }

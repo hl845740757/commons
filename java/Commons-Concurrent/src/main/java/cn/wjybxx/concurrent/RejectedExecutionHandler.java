@@ -27,8 +27,8 @@ import java.util.concurrent.RejectedExecutionException;
 public interface RejectedExecutionHandler {
 
     /**
-     * Method that may be invoked by a {@link EventLoop} when
-     * {@link EventLoop#execute execute} cannot accept a
+     * Method that may be invoked by a {@link IEventLoop} when
+     * {@link IEventLoop#execute execute} cannot accept a
      * task.  This may occur when no more threads or queue slots are
      * available because their bounds would be exceeded, or upon
      * shutdown of the Executor.
@@ -41,5 +41,5 @@ public interface RejectedExecutionHandler {
      * @param eventLoop the executor attempting to execute this task
      * @throws RejectedExecutionException if there is no remedy
      */
-    void rejected(Runnable r, EventLoop eventLoop);
+    void rejected(Runnable r, IEventLoop eventLoop);
 }

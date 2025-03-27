@@ -16,6 +16,8 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.fx.IEntity;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
@@ -26,7 +28,7 @@ import java.util.Objects;
  * 它是单线程的，它保证任务不会并发执行，且任务的执行顺序和提交顺序一致。
  *
  * <h2>时序</h2>
- * 在{@link EventLoopGroup}的基础上，我们提供这样的时序保证：<br>
+ * 在{@link IEventLoopGroup}的基础上，我们提供这样的时序保证：<br>
  * 1.如果 task1 的执行时间小于等于 task2 的执行时间，且 task1 先提交成功，则保证 task1 在 task2 之前执行。<br>
  * 它可以表述为：不保证后提交的高优先级的任务能先执行。<br>
  * 还可以表述为：消费者按照提交成功顺序执行是合法的。<br>
@@ -47,33 +49,36 @@ import java.util.Objects;
  * 因此，我们只要保证能按照提交顺序执行就是合法的，当所有的初始延迟都负转0时，所有后续提交的任务的优先级都小于等于当前任务，
  * 因此后续提交的任务必定在当前任务之后执行，也就是按照提交顺序执行，因此是合法的。
  *
+ * <h3>组件模式</h3>
+ * EventLoop虽然实现了组件模式，但运行时禁止增删组件；EventLoop应当通过Builder构建。
+ *
  * <h3>警告</h3>
- * 由于{@link EventLoop}都是单线程的，你需要避免死锁等问题。<br>
- * 1. 如果两个{@link EventLoop}存在交互，且其中一个使用有界任务队列，则有可能导致死锁，或大量任务超时。<br>
- * 2. 如果在{@link EventLoop}上执行阻塞或死循环操作，则可能导致死锁，或大量任务超时。<br>
- * 3. 如果{@link EventLoop}支持自定义等待策略，要小心选择或实现，可能导致定时任务不能被及时执行。
+ * 由于{@link IEventLoop}都是单线程的，你需要避免死锁等问题。<br>
+ * 1. 如果两个{@link IEventLoop}存在交互，且其中一个使用有界任务队列，则有可能导致死锁，或大量任务超时。<br>
+ * 2. 如果在{@link IEventLoop}上执行阻塞或死循环操作，则可能导致死锁，或大量任务超时。<br>
+ * 3. 如果{@link IEventLoop}支持自定义等待策略，要小心选择或实现，可能导致定时任务不能被及时执行。
  *
  * @author wjybxx
  * date 2023/4/7
  */
 @ThreadSafe
-public interface EventLoop extends FixedEventLoopGroup, SingleThreadExecutor {
+public interface IEventLoop extends IFixedEventLoopGroup, SingleThreadExecutor, IEntity {
 
     /**
-     * @return this - 由于{@link EventLoop}表示单个线程，因此总是分配自己。
+     * @return this - 由于{@link IEventLoop}表示单个线程，因此总是分配自己。
      */
     @Nonnull
     @Override
-    default EventLoop select() {
+    default IEventLoop select() {
         return this;
     }
 
     /**
-     * @return this - 由于{@link EventLoop}表示单个线程，因此总是选中自己
+     * @return this - 由于{@link IEventLoop}表示单个线程，因此总是选中自己
      */
     @Nonnull
     @Override
-    default EventLoop select(int key) {
+    default IEventLoop select(int key) {
         return this;
     }
 
@@ -82,7 +87,7 @@ public interface EventLoop extends FixedEventLoopGroup, SingleThreadExecutor {
      * 如果没有父节点，返回null。
      */
     @Nullable
-    EventLoopGroup parent();
+    IEventLoopGroup parent();
 
     // region
 
@@ -96,17 +101,10 @@ public interface EventLoop extends FixedEventLoopGroup, SingleThreadExecutor {
 
     /**
      * 唤醒线程
-     * 如果当前{@link EventLoop}线程陷入了阻塞状态，则将线程从阻塞中唤醒；通常用于通知线程及时处理任务和响应关闭。
+     * 如果当前{@link IEventLoop}线程陷入了阻塞状态，则将线程从阻塞中唤醒；通常用于通知线程及时处理任务和响应关闭。
      * 如果线程已停止，则该方法不产生影响
      */
     void wakeup();
-
-    /**
-     * 事件循环的主模块
-     * 主模块是事件循环的外部策略实现，用于暴露特殊的业务接口
-     * （Agent对内，MainModule对外，都是为了避免继承扩展带来的局限性）
-     */
-    EventLoopModule mainModule();
 
     /** @throws GuardedOperationException 如果当前不在EventLoop所在线程 */
     default void ensureInEventLoop() {

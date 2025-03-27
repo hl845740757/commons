@@ -36,7 +36,7 @@ public class FutureTest {
     private static final DisruptorEventLoop<IAgentEvent> globalEventLoop = EventLoopBuilder.newDisruptBuilder()
             .setThreadFactory(new DefaultThreadFactory("Scheduler", true))
             .setEventSequencer(RingBufferEventSequencer
-                    .newMultiProducer(RingBufferEvent::new)
+                    .newMultiProducer(AgentEvent::new)
                     .build())
             .build();
 
