@@ -22,11 +22,15 @@ import cn.wjybxx.base.annotation.Beta;
  * 事件循环的内部代理
  * 1.如果缺少该组件，事件循环的模块将不会被Update。
  * 2.Agent对内，MainModule对外，都是为了避免继承扩展带来的局限性.
+ * 3.由Agent决定监听器的管理和对事件的派发
+ * <p>
+ * Q：为什么监听器的注册也要委托给Agent处理？
+ * A：允许Agent对派发的所有用户事件进行处理。
  *
  * @author wjybxx
  * date - 2023/11/17
  */
-public interface IEventLoopAgent<T extends IAgentEvent> {
+public interface IEventLoopAgent<T extends IAgentEvent> extends IAgentEventHandler<T> {
 
     /**
      * 注入事件循环的引用
@@ -43,6 +47,22 @@ public interface IEventLoopAgent<T extends IAgentEvent> {
      * 事件循环会在启动所有的模块之前调用该方法，Agent可以处理模块之间的特殊依赖
      */
     default void resolveDependence() {
+
+    }
+
+    /**
+     * 用户模块请求注册事件监听器
+     *
+     * @param type    事件类型
+     * @param handler 事件处理器
+     */
+    void subscribe(int type, IAgentEventHandler<? super T> handler);
+
+    /**
+     * 如果当前线程阻塞在中断也无法唤醒的地方，用户需要唤醒线程
+     * 该方法是多线程调用的，要小心并发问题
+     */
+    default void wakeup() {
 
     }
 
@@ -95,22 +115,4 @@ public interface IEventLoopAgent<T extends IAgentEvent> {
     }
     // endregion
 
-    // region 主循环和事件
-
-    /***
-     * 处理提交到EventLoop的事件
-     * 注意：不可以保留事件的引用
-     *
-     * @param sequence 事件序号，有效性取决于事件循环的实现
-     * @param event 事件
-     */
-    void onEvent(long sequence, T event) throws Exception;
-
-    /**
-     * 如果当前线程阻塞在中断也无法唤醒的地方，用户需要唤醒线程
-     * 该方法是多线程调用的，要小心并发问题
-     */
-    default void wakeup() {
-
-    }
 }

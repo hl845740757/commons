@@ -27,7 +27,7 @@ import cn.wjybxx.base.annotation.StableName;
  * @author wjybxx
  * date - 2024/6/22
  */
-public enum Status implements EnumLite {
+public enum ComponentStatus implements EnumLite {
 
     /**
      * 刚刚创建，尚未添加到实体
@@ -60,11 +60,11 @@ public enum Status implements EnumLite {
 
     private final int number;
 
-    Status(int number) {
+    ComponentStatus(int number) {
         this.number = number;
     }
 
-    private static final EnumLiteMap<Status> MAPPER = EnumUtils.mapping(values());
+    private static final EnumLiteMap<ComponentStatus> MAPPER = EnumUtils.mapping(values());
 
     /** 是否尚未启动 */
     public boolean isUnstarted() {
@@ -92,7 +92,7 @@ public enum Status implements EnumLite {
     }
 
     @StableName
-    public static Status forNumber(int number) {
+    public static ComponentStatus forNumber(int number) {
         return MAPPER.checkedForNumber(number);
     }
 }

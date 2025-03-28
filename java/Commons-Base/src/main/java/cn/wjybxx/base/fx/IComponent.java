@@ -28,30 +28,26 @@ import javax.annotation.Nonnull;
  */
 public interface IComponent {
 
+    /** 获取组件挂载的实体，尚未挂载的情况下返回null */
+    IEntity getEntity();
+
     /**
      * 获取组件id
-     * <p>
-     * 1.接口层不提供set方法，组件在使用前必须初始化组件id
-     * 2.组件在添加到实体后，组件id必须保持稳定
+     * 注意：组件在添加到实体后，组件id必须保持稳定
      */
     @Nonnull
     ComponentId<?> getCid();
 
-    /** 获取组件挂载的实体，尚未挂载的情况下返回null */
-    IEntity getEntity();
+    /**
+     * 设置组件id
+     * 注意：只有初始状态下可以设置
+     *
+     * @throws IllegalStateException 如果组件不是{@link ComponentStatus#NEW}状态
+     */
+    void setCid(ComponentId<?> cid);
 
     /** 获取组件的状态 */
-    Status getStatus();
-
-    /**
-     * 是否处于激活状态
-     * 1.对于数据组件来说，仅仅是个标识，可供其它模块使用
-     * 2.enable是否有特殊效果，取决于具体的实现。
-     */
-    boolean isEnable();
-
-    /** 设置为激活状态 */
-    void setEnable(boolean enable);
+    ComponentStatus getStatus();
 
     /**
      * 组件在挂载到实体后调用；

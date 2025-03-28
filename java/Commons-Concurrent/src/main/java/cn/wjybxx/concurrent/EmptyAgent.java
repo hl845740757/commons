@@ -40,6 +40,11 @@ public final class EmptyAgent<T extends IAgentEvent> implements IEventLoopAgent<
     }
 
     @Override
+    public void subscribe(int type, IAgentEventHandler<? super T> handler) {
+
+    }
+
+    @Override
     public void onEvent(long sequence, IAgentEvent event) throws Exception {
 
     }

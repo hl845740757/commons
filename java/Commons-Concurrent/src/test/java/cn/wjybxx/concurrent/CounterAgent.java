@@ -35,6 +35,11 @@ final class CounterAgent implements IEventLoopAgent<AgentEvent> {
     }
 
     @Override
+    public void subscribe(int type, IAgentEventHandler<? super AgentEvent> handler) {
+
+    }
+
+    @Override
     public void onEvent(long sequence, AgentEvent event) throws Exception {
         counter.count(event.getType(), event.longVal1);
     }

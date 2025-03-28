@@ -18,6 +18,7 @@ package cn.wjybxx.base.fx;
 
 import cn.wjybxx.base.AbstractConstant;
 import cn.wjybxx.base.Constant;
+import cn.wjybxx.base.ObjectUtils;
 
 import java.util.Objects;
 
@@ -41,13 +42,13 @@ public class ComponentId<T extends IComponent> extends AbstractConstant {
     public final boolean shared;
     /** 最大可挂载数量 */
     public final int maxCount;
-    /** 启用的函数，扫描重写的方法计算得到 -- 共享组件的该值将被修正为0 */
+    /** 启用的函数，扫描重写的方法计算得到 */
     public final long enableFuncs;
-    /** 关联的类型 -- 不定义为泛型，避免奇怪的问题 */
-    public final Class<?> clazz;
 
     /** 业务自定义flags */
     public final long flags;
+    /** 挂载路径 */
+    public final String mountPath;
     /** 用户扩展数据 -- 必须的不可变的 */
     public final Object extraInfo;
 
@@ -60,9 +61,9 @@ public class ComponentId<T extends IComponent> extends AbstractConstant {
         this.shared = builder.shared;
         this.maxCount = Math.max(1, builder.maxCount);
         this.enableFuncs = builder.enableFuncs;
-        this.clazz = Objects.requireNonNull(builder.clazz, "clazz");
 
         this.flags = builder.flags;
+        this.mountPath = ObjectUtils.blankToDef(builder.mountPath, null);
         this.extraInfo = builder.extraInfo;
     }
 
@@ -71,40 +72,35 @@ public class ComponentId<T extends IComponent> extends AbstractConstant {
         return !shared && kind == ComponentKind.SCRIPT;
     }
 
-    public static <T extends IComponent> Builder<T> newBuilder(String name, Class<?> clazz) {
-        return new Builder<>(name, clazz);
+    public static <T extends IComponent> Builder<T> newBuilder(String name) {
+        return new Builder<>(name);
     }
 
     public static class Builder<T extends IComponent> extends Constant.Builder<ComponentId<T>> {
-        /** 关联的类型 */
-        private final Class<?> clazz;
         /** 组件类型，默认为需要框架调度的脚本 */
         private ComponentKind kind = ComponentKind.SCRIPT;
         /** 是否可共享 */
         private boolean shared = false;
         /** 最大可挂载数量 */
         private int maxCount = 1;
-        /** 启用的函数，扫描重写的方法计算得到 -- 共享组件该值修正为0 */
+        /** 启用的函数，扫描重写的方法计算得到 */
         private long enableFuncs;
 
         /** 业务自定义flags */
         private long flags;
+        /** 挂载路径 */
+        private String mountPath;
         /** 用户扩展数据 -- 必须的不可变的 */
         private Object extraInfo;
 
-        protected Builder(String name, Class<?> clazz) {
+        protected Builder(String name) {
             super(name);
-            this.clazz = Objects.requireNonNull(clazz, "clazz");
             setRequireCacheIndex(true); // 需要分配缓存索引
         }
 
         @Override
         protected ComponentId<T> build() {
             return new ComponentId<>(this);
-        }
-
-        public Class<?> getClazz() {
-            return clazz;
         }
 
         public ComponentKind getKind() {
@@ -149,6 +145,15 @@ public class ComponentId<T extends IComponent> extends AbstractConstant {
 
         public Builder<T> setFlags(long flags) {
             this.flags = flags;
+            return this;
+        }
+
+        public String getMountPath() {
+            return mountPath;
+        }
+
+        public Builder<T> setMountPath(String mountPath) {
+            this.mountPath = mountPath;
             return this;
         }
 

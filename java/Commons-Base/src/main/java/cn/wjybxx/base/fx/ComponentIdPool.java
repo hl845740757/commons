@@ -52,6 +52,8 @@ public final class ComponentIdPool {
         return new ComponentIdPool(ConstantPool.newPool(null), cidParser);
     }
 
+    // region 委托
+
     /** 构建一个组件id */
     @SuppressWarnings("unchecked")
     public <T extends IComponent> ComponentId<T> create(ComponentId.Builder<T> builder) {
@@ -84,6 +86,7 @@ public final class ComponentIdPool {
     public ComponentId<?> getOrThrow(String name) {
         return pool.getOrThrow(name);
     }
+    // endregion
 
     /**
      * 通过类型信息解析组件的id
@@ -112,13 +115,14 @@ public final class ComponentIdPool {
         } else {
             ComponentDefine annotationDefine = clazz.getAnnotation(ComponentDefine.class);
             if (annotationDefine == null) {
-                builder = ComponentId.newBuilder(clazz.getSimpleName(), clazz);
+                builder = ComponentId.newBuilder(clazz.getSimpleName());
             } else {
-                builder = ComponentId.<T>newBuilder(clazz.getSimpleName(), clazz)
+                builder = ComponentId.<T>newBuilder(clazz.getSimpleName())
                         .setKind(annotationDefine.kind())
                         .setShared(annotationDefine.shared())
                         .setMaxCount(annotationDefine.maxCount())
-                        .setFlags(annotationDefine.flags());
+                        .setFlags(annotationDefine.flags())
+                        .setMountPath(annotationDefine.mountPath());
             }
         }
         cid = pool.valueOf(builder);

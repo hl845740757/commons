@@ -18,7 +18,7 @@ package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.fx.ComponentId;
 import cn.wjybxx.base.fx.ComponentKind;
-import cn.wjybxx.base.fx.Status;
+import cn.wjybxx.base.fx.ComponentStatus;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
@@ -32,9 +32,8 @@ import java.util.Objects;
 public abstract class EventLoopModule implements IEventLoopModule {
 
     private IEventLoop eventLoop;
-    private Status status = Status.NEW;
-    private boolean enable = true;
     private ComponentId<?> cid;
+    private ComponentStatus status = ComponentStatus.NEW;
 
     public EventLoopModule() {
     }
@@ -42,7 +41,7 @@ public abstract class EventLoopModule implements IEventLoopModule {
     // region internal
 
     /** 收到修正模块的状态 */
-    final void setStatus(Status status) {
+    final void setStatus(ComponentStatus status) {
         this.status = status;
     }
 
@@ -54,22 +53,24 @@ public abstract class EventLoopModule implements IEventLoopModule {
         }
         getCid(); // 确保组件id完成初始化
         this.eventLoop = eventLoop;
-        this.status = Status.READY;
+        this.status = ComponentStatus.READY;
         this.onReady();
         // 非脚本组件，直接进入完成状态
         if (getCid().kind != ComponentKind.SCRIPT) {
-            this.status = Status.STOPPED;
+            this.status = ComponentStatus.STOPPED;
         }
     }
 
     /** 调用{@link #onDestroy()}方法 */
     final Throwable invokeDestroy() {
         try {
-            status = Status.DESTROYED;
+            status = ComponentStatus.DESTROYED;
             onDestroy();
             return null;
         } catch (Throwable ex) {
             return ex;
+        } finally {
+            eventLoop = null;
         }
     }
 
@@ -77,9 +78,9 @@ public abstract class EventLoopModule implements IEventLoopModule {
     final Throwable invokeStart() {
         assert isScript();
         try {
-            status = Status.STARTING;
+            status = ComponentStatus.STARTING;
             start();
-            status = Status.RUNNING;
+            status = ComponentStatus.RUNNING;
             return null;
         } catch (Throwable ex) {
             return ex;
@@ -90,13 +91,13 @@ public abstract class EventLoopModule implements IEventLoopModule {
     final Throwable invokeStop() {
         assert isScript();
         try {
-            status = Status.STOPPING;
+            status = ComponentStatus.STOPPING;
             stop();
             return null;
         } catch (Throwable ex) {
             return ex;
         } finally {
-            status = Status.STOPPED;
+            status = ComponentStatus.STOPPED;
         }
     }
 
@@ -109,11 +110,12 @@ public abstract class EventLoopModule implements IEventLoopModule {
     // region 默认实现
 
     /** 允许在自动解析组件id前设置组件id */
+    @Override
     public final void setCid(ComponentId<?> cid) {
-        if (this.cid != null) {
+        if (status != ComponentStatus.NEW) {
             throw new IllegalStateException();
         }
-        this.cid = cid; // null是安全的
+        this.cid = cid;
     }
 
     @Nonnull
@@ -131,24 +133,15 @@ public abstract class EventLoopModule implements IEventLoopModule {
     }
 
     @Override
-    public final Status getStatus() {
-        return status;
-    }
-
-    @Override
     public IEventLoop getEntity() {
         return eventLoop;
     }
 
     @Override
-    public boolean isEnable() {
-        return enable;
+    public final ComponentStatus getStatus() {
+        return status;
     }
 
-    @Override
-    public void setEnable(boolean enable) {
-        this.enable = enable;
-    }
     // endregion
 
 }

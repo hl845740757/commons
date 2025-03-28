@@ -100,6 +100,11 @@ public class EventLoopStartTest {
         }
 
         @Override
+        public void subscribe(int type, IAgentEventHandler<? super IAgentEvent> handler) {
+
+        }
+
+        @Override
         public void onEvent(long sequence, IAgentEvent event) throws Exception {
 
         }

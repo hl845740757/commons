@@ -48,6 +48,9 @@ public @interface ComponentDefine {
     /** 用户自定义flags */
     int flags() default 0;
 
+    /** 挂载路径 */
+    String mountPath() default "";
+
     /** 自定义切面数据 -- 用于自定义解析 */
     String customData() default "";
 }

@@ -27,7 +27,7 @@ import cn.wjybxx.base.fx.IComponent;
  * {@link #onReady()}、
  * {@link #start()}、{@link #update()}、{@link #stop()}
  * {@link #onDestroy()}
- * 3.{@link #setEnable(boolean)}暂时无效用
+ * 3.如果支持{@link IAgentEvent}。可以实现{@link IAgentEventHandler}
  *
  * @author wjybxx
  * date - 2023/11/17

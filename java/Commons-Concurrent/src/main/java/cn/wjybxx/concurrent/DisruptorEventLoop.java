@@ -20,7 +20,7 @@ import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.annotation.Beta;
 import cn.wjybxx.base.annotation.VisibleForTesting;
-import cn.wjybxx.base.fx.Status;
+import cn.wjybxx.base.fx.ComponentStatus;
 import cn.wjybxx.disruptor.*;
 
 import javax.annotation.Nonnull;
@@ -80,7 +80,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     /** 任务拒绝策略 */
     protected final RejectedExecutionHandler rejectedExecutionHandler;
     /** 事件循环主模块 */
-    protected final IEventLoopAgent<? super T> agent;
+    protected final IEventLoopAgent<T> agent;
     /** 批量执行任务的大小 */
     private final int batchSize;
 
@@ -267,6 +267,21 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     @Beta
     public final long getConsumerId() {
         return consumerId;
+    }
+
+    /**
+     * 注册事件湖里区
+     * {@link IEventLoopModule}应当在启动时注册。
+     *
+     * @param type    事件类型
+     * @param handler 事件处理器
+     */
+    public void subscribe(int type, IAgentEventHandler<T> handler) {
+        Objects.requireNonNull(handler, "handler");
+        if (!inEventLoop()) {
+            throw new IllegalStateException();
+        }
+        agent.subscribe(type, handler);
     }
 
     /** 获取序号关联的事件 -- 仅限生产者调用，且只应调用一次 */
@@ -509,8 +524,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
             if (!workerModule.getCid().isPrivateScript()) {
                 continue;
             }
-            if (workerModule.getStatus() != Status.STARTING
-                    && workerModule.getStatus() != Status.RUNNING) {
+            if (workerModule.getStatus() != ComponentStatus.STARTING
+                    && workerModule.getStatus() != ComponentStatus.RUNNING) {
                 continue; // 未启动
             }
             Throwable ex = workerModule.invokeStop();
@@ -527,7 +542,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
             if (workerModule.getCid().shared) {
                 continue;
             }
-            if (workerModule.getStatus() == Status.NEW) {
+            if (workerModule.getStatus() == ComponentStatus.NEW) {
                 continue; // 未执行OnReady
             }
             Throwable ex = workerModule.invokeDestroy();
@@ -559,6 +574,15 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
                 }
             }
             agent.afterMainLoop(tickTime);
+        }
+    }
+
+    private void onInternalEvent(long curSequence, T event) throws Exception {
+        int type = event.getType();
+        if (type == TYPE_REMOVE_SCHEDULE) {
+            // 删除延时任务
+            long taskId = event.getLongVal1();
+            schedulerHelper.removeTask(taskId);
         }
     }
 
@@ -775,15 +799,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
             }
             logger.info("cleanBuffer success!  nullCount = {}, taskCount = {}, discardCount {}, cost timeMillis = {}",
                     nullCount, taskCount, discardCount, (System.currentTimeMillis() - startTimeMillis));
-        }
-    }
-
-    private void onInternalEvent(long curSequence, T event) {
-        int type = event.getType();
-        if (type == TYPE_REMOVE_SCHEDULE) {
-            // 删除延时任务
-            long taskId = event.getLongVal1();
-            schedulerHelper.removeTask(taskId);
         }
     }
 

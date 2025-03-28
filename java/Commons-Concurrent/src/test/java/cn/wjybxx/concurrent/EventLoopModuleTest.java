@@ -21,6 +21,8 @@ import cn.wjybxx.base.fx.ComponentDefine;
 import cn.wjybxx.base.fx.ComponentId;
 import cn.wjybxx.base.fx.ComponentKind;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,6 +67,7 @@ public class EventLoopModuleTest {
             Assertions.assertTrue(behaviorModule.onReadyInvoked);
             Assertions.assertNotEquals(behaviorModule.updateCount, 0);
             Assertions.assertNotEquals(behaviorModule.lastUpdateCount, 0);
+            Assertions.assertNotEquals(behaviorModule.eventCount, 0);
         } finally {
             eventLoop.shutdownNow();
         }
@@ -73,6 +76,7 @@ public class EventLoopModuleTest {
     private static class Agent implements IEventLoopAgent<AgentEvent> {
 
         private long lastUpdateTime = System.currentTimeMillis();
+        private final Int2ObjectMap<IAgentEventHandler<? super AgentEvent>> handlerMap = new Int2ObjectArrayMap<>(4);
 
         @Override
         public boolean checkMainLoop(long threadTime) {
@@ -85,8 +89,16 @@ public class EventLoopModuleTest {
         }
 
         @Override
-        public void onEvent(long sequence, AgentEvent event) throws Exception {
+        public void subscribe(int type, IAgentEventHandler<? super AgentEvent> handler) {
+            handlerMap.put(type, handler);
+        }
 
+        @Override
+        public void onEvent(long sequence, AgentEvent event) throws Exception {
+            var handler = handlerMap.get(event.getType());
+            if (handler != null) {
+                handler.onEvent(sequence, event);
+            }
         }
     }
 
@@ -114,20 +126,46 @@ public class EventLoopModuleTest {
     }
 
     @ComponentDefine(kind = ComponentKind.SCRIPT)
-    private static class BehaviorModule extends EventLoopModule {
+    private static class BehaviorModule extends EventLoopModule implements IAgentEventHandler<AgentEvent> {
 
         boolean onReadyInvoked;
         long updateCount;
         long lastUpdateCount;
+        int eventCount;
+        DisruptorEventLoop<AgentEvent> eventLoop;
+
+        @Override
+        public void onEvent(long sequence, AgentEvent event) throws Exception {
+            assert event.getType() == 1;
+            eventCount++;
+        }
+
+        @Override
+        public void start() {
+            eventLoop.subscribe(1, this);
+        }
 
         @Override
         public void onReady() {
-            onReadyInvoked = true;
+            @SuppressWarnings("unchecked") var eventLoop = (DisruptorEventLoop<AgentEvent>) getEntity();
+            this.onReadyInvoked = true;
+            this.eventLoop = eventLoop;
         }
 
         @Override
         public void update() throws Exception {
             updateCount++;
+            if (((updateCount) & 7) == 0) {
+                generateEvent();
+            }
+        }
+
+        private void generateEvent() {
+            long sequence = eventLoop.nextSequence(1);
+            if (sequence < 0) return;
+            AgentEvent event = eventLoop.getEvent(sequence);
+            event.setType(1);
+            eventLoop.publish(sequence);
         }
 
         @Override
