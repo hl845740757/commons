@@ -20,6 +20,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -126,138 +127,150 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     #region uni-accept
 
-    public IRegistration ThenAccept(Action<ICancelToken> action, int options = 0) {
+    public Registration ThenAccept(Action<ICancelToken> action, int options = 0) {
         return PushUniAccept(null, action, options);
     }
 
-    public IRegistration ThenAcceptAsync(IExecutor executor, Action<ICancelToken> action, int options = 0) {
+    public Registration ThenAcceptAsync(IExecutor executor, Action<ICancelToken> action, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         return PushUniAccept(executor, action, options);
     }
 
-    private IRegistration PushUniAccept(IExecutor? executor, Action<ICancelToken> action, int options) {
+    private Registration PushUniAccept(IExecutor? executor, Action<ICancelToken> action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (IsCancelRequested && executor == null) {
-            UniAccept.FireNow(this, action);
-            return TOMBSTONE;
+            Completion.FireNow(this, TYPE_ACCEPT, action, null);
+            return Registration.Closed;
         }
-        Completion completion = new UniAccept(executor, options, this, action);
-        return PushCompletion(completion) ? completion : TOMBSTONE;
+        Completion completion = GetComplete(executor, options, this, TYPE_ACCEPT, action, null);
+        // 需要在Push前拿到_rid
+        Registration registration = new Registration(completion, completion._rid);
+        return PushCompletion(completion) ? registration : Registration.Closed;
     }
 
     #endregion
 
     #region uni-accept-ctx
 
-    public IRegistration ThenAccept(Action<ICancelToken, object> action, object? state, int options = 0) {
+    public Registration ThenAccept(Action<ICancelToken, object> action, object? state, int options = 0) {
         return PushUniAcceptCtx(null, action, state, options);
     }
 
-    public IRegistration ThenAcceptAsync(IExecutor executor, Action<ICancelToken, object> action, object? state, int options = 0) {
+    public Registration ThenAcceptAsync(IExecutor executor, Action<ICancelToken, object> action, object? state, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         return PushUniAcceptCtx(executor, action, state, options);
     }
 
-    private IRegistration PushUniAcceptCtx(IExecutor? executor, Action<ICancelToken, object> action, object? state, int options) {
+    private Registration PushUniAcceptCtx(IExecutor? executor, Action<ICancelToken, object> action, object? state, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (IsCancelRequested && executor == null) {
-            UniAcceptCtx.FireNow(this, action, state);
-            return TOMBSTONE;
+            Completion.FireNow(this, TYPE_ACCEPT_CTX, action, state);
+            return Registration.Closed;
         }
-        Completion completion = new UniAcceptCtx(executor, options, this, action, state);
-        return PushCompletion(completion) ? completion : TOMBSTONE;
+        Completion completion = GetComplete(executor, options, this, TYPE_ACCEPT_CTX, action, state);
+        // 需要在Push前拿到_rid
+        Registration registration = new Registration(completion, completion._rid);
+        return PushCompletion(completion) ? registration : Registration.Closed;
     }
 
     #endregion
 
     #region uni-run
 
-    public IRegistration ThenRun(Action action, int options = 0) {
+    public Registration ThenRun(Action action, int options = 0) {
         return PushUniRun(null, action, options);
     }
 
-    public IRegistration ThenRunAsync(IExecutor executor, Action action, int options = 0) {
+    public Registration ThenRunAsync(IExecutor executor, Action action, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         return PushUniRun(executor, action, options);
     }
 
-    private IRegistration PushUniRun(IExecutor? executor, Action action, int options) {
+    private Registration PushUniRun(IExecutor? executor, Action action, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (IsCancelRequested && executor == null) {
-            UniRun.FireNow(this, action);
-            return TOMBSTONE;
+            Completion.FireNow(this, TYPE_RUN, action, null);
+            return Registration.Closed;
         }
-        Completion completion = new UniRun(executor, options, this, action);
-        return PushCompletion(completion) ? completion : TOMBSTONE;
+        Completion completion = GetComplete(executor, options, this, TYPE_RUN, action, null);
+        // 需要在Push前拿到_rid
+        Registration registration = new Registration(completion, completion._rid);
+        return PushCompletion(completion) ? registration : Registration.Closed;
     }
 
     #endregion
 
     #region uni-run-ctx
 
-    public IRegistration ThenRun(Action<object> action, object? state, int options = 0) {
+    public Registration ThenRun(Action<object> action, object? state, int options = 0) {
         return PushUniRunCtx(null, action, state, options);
     }
 
-    public IRegistration ThenRunAsync(IExecutor executor, Action<object> action, object? state, int options = 0) {
+    public Registration ThenRunAsync(IExecutor executor, Action<object> action, object? state, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         return PushUniRunCtx(executor, action, state, options);
     }
 
-    private IRegistration PushUniRunCtx(IExecutor? executor, Action<object> action, object? state, int options) {
+    private Registration PushUniRunCtx(IExecutor? executor, Action<object> action, object? state, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (IsCancelRequested && executor == null) {
-            UniRunCtx.FireNow(this, action, state);
-            return TOMBSTONE;
+            Completion.FireNow(this, TYPE_RUN_CTX, action, state);
+            return Registration.Closed;
         }
-        Completion completion = new UniRunCtx(executor, options, this, action, state);
-        return PushCompletion(completion) ? completion : TOMBSTONE;
+        Completion completion = GetComplete(executor, options, this, TYPE_RUN_CTX, action, state);
+        // 需要在Push前拿到_rid
+        Registration registration = new Registration(completion, completion._rid);
+        return PushCompletion(completion) ? registration : Registration.Closed;
     }
 
     #endregion
 
     #region uni-notify
 
-    public IRegistration ThenNotify(ICancelTokenListener action, int options = 0) {
+    public Registration ThenNotify(ICancelTokenListener action, int options = 0) {
         return PushUniNotify(null, action, options);
     }
 
-    public IRegistration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, int options = 0) {
+    public Registration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         return PushUniNotify(executor, action, options);
     }
 
-    private IRegistration PushUniNotify(IExecutor? executor, ICancelTokenListener action, int options) {
-        if (action == null) throw new ArgumentNullException(nameof(action));
+    private Registration PushUniNotify(IExecutor? executor, ICancelTokenListener listener, int options) {
+        if (listener == null) throw new ArgumentNullException(nameof(listener));
         if (IsCancelRequested && executor == null) {
-            UniNotify.FireNow(this, action);
-            return TOMBSTONE;
+            Completion.FireNow(this, TYPE_NOTIFY, listener, null);
+            return Registration.Closed;
         }
-        Completion completion = new UniNotify(executor, options, this, action);
-        return PushCompletion(completion) ? completion : TOMBSTONE;
+        Completion completion = GetComplete(executor, options, this, TYPE_NOTIFY, listener, null);
+        // 需要在Push前拿到_rid
+        Registration registration = new Registration(completion, completion._rid);
+        return PushCompletion(completion) ? registration : Registration.Closed;
     }
 
     #endregion
 
     #region uni-transfer
 
-    public IRegistration ThenTransferTo(ICancelTokenSource child, int options = 0) {
+    public Registration ThenTransferTo(ICancelTokenSource child, int options = 0) {
         return PushUniTransfer(null, child, options);
     }
 
-    public IRegistration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
+    public Registration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         return PushUniTransfer(executor, child, options);
     }
 
-    private IRegistration PushUniTransfer(IExecutor? executor, ICancelTokenSource action, int options) {
-        if (action == null) throw new ArgumentNullException(nameof(action));
+    private Registration PushUniTransfer(IExecutor? executor, ICancelTokenSource child, int options) {
+        if (child == null) throw new ArgumentNullException(nameof(child));
         if (IsCancelRequested && executor == null) {
-            UniTransferTo.FireNow(this, SYNC, action);
-            return TOMBSTONE;
+            Completion.FireNow(this, TYPE_TRANSFER, child, null);
+            return Registration.Closed;
         }
-        Completion completion = new UniTransferTo(executor, options, this, action);
-        return PushCompletion(completion) ? completion : TOMBSTONE;
+        Completion completion = GetComplete(executor, options, this, TYPE_TRANSFER, child, null);
+        // 需要在Push前拿到_rid
+        Registration registration = new Registration(completion, completion._rid);
+        return PushCompletion(completion) ? registration : Registration.Closed;
     }
 
     #endregion
@@ -278,20 +291,6 @@ public sealed class CancelTokenSource : ICancelTokenSource
         return Interlocked.CompareExchange(ref code, cancelCode, 0);
     }
 
-    /// <summary>
-    /// 栈顶回调被删除时尝试删除更多的节点
-    /// </summary>
-    /// <param name="expectedHead">当前的head</param>
-    /// <returns>最新栈顶，可能是<see cref="TOMBSTONE"/></returns>
-    private Completion? RemoveHead(Completion expectedHead) {
-        Completion? next = expectedHead.next;
-        while (next != null && next.action == TOMBSTONE) {
-            next = next.next;
-        }
-        Completion realHead = Interlocked.CompareExchange(ref this.stack, next, expectedHead);
-        return realHead == expectedHead ? next : realHead;
-    }
-
     private bool PushCompletion(Completion newHead) {
         if (IsCancelRequested) {
             newHead.TryFire(SYNC);
@@ -300,12 +299,6 @@ public sealed class CancelTokenSource : ICancelTokenSource
         Completion expectedHead = stack;
         Completion realHead;
         while (expectedHead != TOMBSTONE) {
-            // 处理延迟删除
-            if (expectedHead != null && expectedHead.action == TOMBSTONE) {
-                expectedHead = RemoveHead(expectedHead);
-                continue;
-            }
-
             newHead.next = expectedHead;
             realHead = Interlocked.CompareExchange(ref this.stack, newHead, expectedHead);
             if (realHead == expectedHead) { // success
@@ -355,10 +348,6 @@ public sealed class CancelTokenSource : ICancelTokenSource
             Completion tmpHead = head;
             head = head.next;
 
-            if (tmpHead.action == TOMBSTONE) {
-                continue; // 跳过被删除节点
-            }
-
             tmpHead.next = ontoHead;
             ontoHead = tmpHead;
         }
@@ -376,46 +365,97 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     #endregion
 
-    private abstract class Completion : ITask, IRegistration
+    #region completion
+
+    private const int TYPE_ACCEPT = 0;
+    private const int TYPE_ACCEPT_CTX = 1;
+    private const int TYPE_RUN = 2;
+    private const int TYPE_RUN_CTX = 3;
+    private const int TYPE_NOTIFY = 4;
+    private const int TYPE_TRANSFER = 5;
+
+    /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
+    private const int MASK_TASK_TYPE = 0x0F;
+
+
+    private static readonly Completion TOMBSTONE = new Completion();
+    private static readonly ConcurrentObjectPool<Completion> POOL = new(
+        () => new Completion(), c => c.Reset(), TaskPoolConfig.GetPoolSize<int>(TaskPoolType.CtsCompletion));
+
+    /**  申请一个<see cref="Completion"/>实例 */
+    private static Completion GetComplete(IExecutor? executor, int options, CancelTokenSource source,
+                                          int type, object action, object? ctx) {
+        // 去除用户的低位，记录type
+        options &= (~TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE);
+        options |= type;
+
+        Completion completion = POOL.Acquire();
+        int rid = completion._rid + 1;
+        completion._rid = rid;
+        completion._fireId = rid;
+
+        completion.executor = executor;
+        completion.options = options;
+        completion.source = source;
+        completion.action = action;
+        completion.ctx = ctx;
+        return completion;
+    }
+
+    /** 为简化逻辑，我们总是在触发回调的时候才回收对象 */
+    private sealed class Completion : ITask, IPooledDisposable
     {
         /** 非volatile，由栈顶的cas更新保证可见性 */
         internal Completion? next;
+        /** 重入id -- 只增不减 */
+        internal volatile int _rid;
+        /// <summary>
+        /// cts添加回调时的<see cref="_rid"/>快照
+        /// 1.该值永不清理，用于识别能否进行通知
+        /// 2.<see cref="TryFire"/>方法需要通过该值竞争更新<see cref="_rid"/>
+        /// 3.<see cref="Dispose"/>方法通过用户持有的rid竞争更新<see cref="_rid"/>
+        /// </summary>
+        internal int _fireId;
 
-        protected IExecutor? executor;
-        protected int options;
-        protected CancelTokenSource source;
-        /**
-         * 用户回调
-         * 1.通知和清理时置为<see cref="TOMBSTONE"/>
-         * 2.子类在执行action之前需要调用<see cref="PopAction"/>竞争。
-         */
-        internal object action;
+#nullable disable
+        /// <summary>
+        /// 关联的取消令牌
+        /// </summary>
+        internal CancelTokenSource source;
+        /// <summary>
+        /// 绑定的线程
+        /// </summary>
+        internal IExecutor executor;
+        /// <summary>
+        /// 任务的调度选项，包含任务的类型
+        /// </summary>
+        internal int options;
+#nullable enable
+        /// <summary>
+        /// 用户回调
+        /// </summary>
+        internal object? action;
+        /// <summary>
+        /// 回调关联的参数
+        /// </summary>
+        internal object? ctx;
 
-        protected Completion() {
-            executor = null;
+        internal void Reset() {
+            _rid++; // 池化时+1，volatile安全
             source = null!;
+            executor = null;
+            options = 0;
             action = null!;
+            ctx = null;
         }
 
-        protected Completion(IExecutor? executor, int options, CancelTokenSource source, object action) {
-            this.executor = executor;
-            this.options = options;
-            this.source = source;
-            this.action = action ?? throw new ArgumentNullException(nameof(action));
-        }
-
-        public int Options {
-            get => options;
-            set => options = value;
-        }
+        public int Options => options;
 
         public void Run() {
             TryFire(ASYNC);
         }
 
-        protected internal abstract CancelTokenSource? TryFire(int mode);
-
-        protected bool Claim() {
+        private bool Claim() {
             IExecutor e = this.executor;
             if (e == CLAIMED) {
                 return true;
@@ -427,289 +467,96 @@ public sealed class CancelTokenSource : ICancelTokenSource
             return true;
         }
 
-        /// <summary>
-        /// 删除action -- 取消或通知时需要竞争删除action
-        /// </summary>
-        /// <returns>删除成功则返回action，否则返回null</returns>
-        protected object? PopAction() {
-            object? action = this.action;
-            if (action == TOMBSTONE) { // 已被取消
-                return null;
-            }
-            if (Interlocked.CompareExchange(ref this.action, TOMBSTONE, action) == action) {
-                return action;
-            }
-            return null; // 竞争失败-被取消或通知
+        /** 尝试竞争重入id */
+        private bool TryIncrementRid(int reentryId) {
+            return reentryId == _rid
+                   && Interlocked.CompareExchange(ref _rid, reentryId + 1, reentryId) == reentryId;
         }
 
-        public void Dispose() {
-            object? action = PopAction();
-            if (action == null) {
-                return;
-            }
-            if (this == source.stack) {
-                source.RemoveHead(this);
-            }
-            Clear();
-        }
-
-        /// <summary>
-        /// 清理对象上的数据，help gc
-        /// 注意：不可修改action的引用
-        /// </summary>
-        protected virtual void Clear() {
-            executor = null!;
-            source = null!;
-        }
-    }
-
-    /// <summary>
-    /// 该实例表示stack已被清理
-    /// </summary>
-    private static readonly Completion TOMBSTONE = new MockCompletion();
-
-    private class MockCompletion : Completion
-    {
-        public MockCompletion() : base() {
-        }
-
-        protected internal override CancelTokenSource? TryFire(int mode) {
-            throw new NotImplementedException();
-        }
-    }
-
-    private class UniAccept : Completion
-    {
-        public UniAccept(IExecutor? executor, int options, CancelTokenSource source, Action<ICancelToken> action)
-            : base(executor, options, source, action) {
-        }
-
-        protected internal override CancelTokenSource? TryFire(int mode) {
-            try {
+        internal CancelTokenSource? TryFire(int mode) {
+            {
+                // 同步Fire时，必须先竞争Action - 如果竞争失败，需要等待Close调用结束
+                if (mode <= 0 && !TryIncrementRid(_fireId)) {
+                    while (_rid < _fireId + 2) {
+                        Thread.SpinWait(1);
+                    }
+                    goto outer;
+                }
+                if (Executors.IsCancelRequested(ctx, options)) {
+                    goto outer;
+                }
                 if (mode <= 0 && !Claim()) {
                     return null; // 下次执行
                 }
-                var action = (Action<ICancelToken>)PopAction();
-                if (action == null) {
-                    return null;
-                }
-                action(source);
+                Debug.Assert(action != null);
+                FireNow(source, options, action, ctx);
             }
-            catch (Exception ex) {
-                FutureLogger.LogCause(ex, "UniAccept caught an exception");
-            }
-            // help gc
-            Clear();
-            return null;
-        }
-
-        internal static void FireNow(CancelTokenSource source, Action<ICancelToken> action) {
-            try {
-                action(source);
-            }
-            catch (Exception ex) {
-                FutureLogger.LogCause(ex, "UniAccept caught an exception");
-            }
-        }
-    }
-
-    private class UniAcceptCtx : Completion
-    {
-        private object? state;
-
-        public UniAcceptCtx(IExecutor? executor, int options, CancelTokenSource source,
-                            Action<ICancelToken, object> action, object? state)
-            : base(executor, options, source, action) {
-            this.state = state;
-        }
-
-        protected internal override CancelTokenSource? TryFire(int mode) {
-            try {
-                if (mode <= 0 && !Claim()) {
-                    return null; // 下次执行
-                }
-                var action = (Action<ICancelToken, object>)PopAction();
-                if (action == null) {
-                    return null;
-                }
-                if (!Executors.IsCancelRequested(state, options)) {
-                    action(source, state);
-                }
-            }
-            catch (Exception ex) {
-                FutureLogger.LogCause(ex, "UniAcceptCtx caught an exception");
-            }
-            // help gc
-            Clear();
+            outer:
+            POOL.Release(this);
             return null;
         }
 
         internal static void FireNow(CancelTokenSource source,
-                                     Action<ICancelToken, object> action, object? state) {
+                                     int options, object rawAction, object? ctx) {
+            int taskType = (options & MASK_TASK_TYPE);
             try {
-                action(source, state);
+                switch (taskType) {
+                    case TYPE_ACCEPT: {
+                        Action<ICancelToken> action = (Action<ICancelToken>)rawAction;
+                        action(source);
+                        break;
+                    }
+                    case TYPE_ACCEPT_CTX: {
+                        Action<ICancelToken, object> action = (Action<ICancelToken, object>)rawAction;
+                        action(source, ctx);
+                        break;
+                    }
+                    case TYPE_RUN: {
+                        Action action = (Action)rawAction;
+                        action();
+                        break;
+                    }
+                    case TYPE_RUN_CTX: {
+                        Action<object> action = (Action<object>)rawAction;
+                        action(ctx);
+                        break;
+                    }
+                    case TYPE_NOTIFY: {
+                        ICancelTokenListener action = (ICancelTokenListener)rawAction;
+                        action.OnCancelRequested(source);
+                        break;
+                    }
+                    case TYPE_TRANSFER: {
+                        // 这里本来有一个递归优化，为简化逻辑删除了
+                        ICancelTokenSource action = (ICancelTokenSource)rawAction;
+                        action.Cancel(source.code);
+                        break;
+                    }
+                    default: {
+                        throw new IllegalStateException();
+                    }
+                }
             }
             catch (Exception ex) {
-                FutureLogger.LogCause(ex, "UniAcceptCtx caught an exception");
+                FutureLogger.LogCause(ex, "Action caught an exception");
+            }
+        }
+
+        /// <summary>
+        /// 关闭监听器
+        /// </summary>
+        /// <param name="reentryId">重入id</param>
+        public void Dispose(int reentryId) {
+            if (TryIncrementRid(reentryId)) {
+                // 这里只释放action资源
+                this.action = null!;
+                this.ctx = null;
+                // 更新为+2表示关闭完毕
+                _rid = reentryId + 2;
             }
         }
     }
 
-    private class UniRun : Completion
-    {
-        public UniRun(IExecutor? executor, int options, CancelTokenSource source, Action action)
-            : base(executor, options, source, action) {
-        }
-
-        protected internal override CancelTokenSource? TryFire(int mode) {
-            try {
-                if (mode <= 0 && !Claim()) {
-                    return null; // 下次执行
-                }
-                var action = (Action)PopAction();
-                if (action == null) {
-                    return null;
-                }
-                action();
-            }
-            catch (Exception ex) {
-                FutureLogger.LogCause(ex, "UniRun caught an exception");
-            }
-            // help gc
-            Clear();
-            return null;
-        }
-
-        internal static void FireNow(CancelTokenSource source, Action action) {
-            try {
-                action();
-            }
-            catch (Exception ex) {
-                FutureLogger.LogCause(ex, "UniRun caught an exception");
-            }
-        }
-    }
-
-    private class UniRunCtx : Completion
-    {
-        private object? state;
-
-        public UniRunCtx(IExecutor? executor, int options, CancelTokenSource source,
-                         Action<object> action, object? state)
-            : base(executor, options, source, action) {
-            this.state = state;
-        }
-
-        protected internal override CancelTokenSource? TryFire(int mode) {
-            try {
-                if (mode <= 0 && !Claim()) {
-                    return null; // 下次执行
-                }
-                var action = (Action<object>)PopAction();
-                if (action == null) {
-                    return null;
-                }
-                if (!Executors.IsCancelRequested(state, options)) {
-                    action(state);
-                }
-            }
-            catch (Exception ex) {
-                FutureLogger.LogCause(ex, "UniRunCtx caught an exception");
-            }
-            // help gc
-            Clear();
-            return null;
-        }
-
-        internal static void FireNow(CancelTokenSource source, Action<object> action, object? state) {
-            try {
-                action(state);
-            }
-            catch (Exception ex) {
-                FutureLogger.LogCause(ex, "UniRunCtx caught an exception");
-            }
-        }
-    }
-
-    private class UniNotify : Completion
-    {
-        public UniNotify(IExecutor? executor, int options, CancelTokenSource source,
-                         ICancelTokenListener action)
-            : base(executor, options, source, action) {
-        }
-
-        protected internal override CancelTokenSource? TryFire(int mode) {
-            try {
-                if (mode <= 0 && !Claim()) {
-                    return null; // 下次执行
-                }
-                var action = (ICancelTokenListener)PopAction();
-                if (action == null) {
-                    return null;
-                }
-                action.OnCancelRequested(source);
-            }
-            catch (Exception ex) {
-                FutureLogger.LogCause(ex, "UniNotify caught an exception");
-            }
-            // help gc
-            Clear();
-            return null;
-        }
-
-        internal static void FireNow(CancelTokenSource source, ICancelTokenListener action) {
-            try {
-                action.OnCancelRequested(source);
-            }
-            catch (Exception ex) {
-                FutureLogger.LogCause(ex, "UniNotify caught an exception");
-            }
-        }
-    }
-
-    private class UniTransferTo : Completion
-    {
-        public UniTransferTo(IExecutor? executor, int options, CancelTokenSource source,
-                             ICancelTokenSource action)
-            : base(executor, options, source, action) {
-        }
-
-        protected internal override CancelTokenSource? TryFire(int mode) {
-            CancelTokenSource output;
-            try {
-                if (mode <= 0 && !Claim()) {
-                    return null; // 下次执行
-                }
-                var action = (ICancelTokenSource)PopAction();
-                if (action == null) {
-                    return null;
-                }
-                output = FireNow(source, mode, action);
-            }
-            catch (Exception ex) {
-                output = null;
-                FutureLogger.LogCause(ex, "UniNotify caught an exception");
-            }
-            // help gc
-            Clear();
-            return output;
-        }
-
-        internal static CancelTokenSource? FireNow(CancelTokenSource source, int mode,
-                                                   ICancelTokenSource child) {
-            if (child is not CancelTokenSource childSource) {
-                child.Cancel(source.code);
-                return null;
-            }
-            if (childSource.InternalCancel(source.code) == 0) {
-                if (mode < 0) { // 嵌套模式
-                    return childSource;
-                }
-                PostComplete(childSource);
-                return null;
-            }
-            return null;
-        }
-    }
+    #endregion
 }
 }

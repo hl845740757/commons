@@ -38,13 +38,15 @@ public static class TaskPoolConfig
     /// 注意：本库统一使用int代替void，因此当T为int类型时，应当分配更大的池。
     /// </summary>
     /// <param name="poolType">对象池类型</param>
+    /// <typeparam name="T">对象的泛型参数类型</typeparam>
     public static int GetPoolSize<T>(TaskPoolType poolType) {
         Func<TaskPoolType, Type, int> func = poolSizeCalculator;
         if (func != null) {
             return Math.Max(0, func.Invoke(poolType, typeof(T)));
         }
         if (poolType == TaskPoolType.PromiseMoveNext
-            || poolType == TaskPoolType.UniPromiseMoveNext) {
+            || poolType == TaskPoolType.UniPromiseMoveNext
+            || poolType == TaskPoolType.CtsCompletion) {
             return 500;
         }
         return typeof(T) == typeof(int) ? 100 : 50;
@@ -76,7 +78,11 @@ public enum TaskPoolType
     /// <see cref="ManualResetPromise{T}"/>
     /// </summary>
     ManualResetPromise,
-    
+    /// <summary>
+    /// 取消令牌的监听器
+    /// </summary>
+    CtsCompletion,
+
     PromiseTask,
     ScheduledPromiseTask,
     ValuePromise,

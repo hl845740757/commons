@@ -139,12 +139,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         return agent;
     }
 
-    /** 当前消费序号 */
-    @VisibleForTesting
-    long curSequence() {
-        return worker.sequence.getVolatile();
-    }
-
     // region 状态查询
 
     @Override
@@ -255,7 +249,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         // RingBuffer不再私有，不可测试sequence == 0
         if (state == EventLoopState.ST_UNSTARTED) {
             ensureThreadStarted();
-        } else if (TaskOptions.isEnabled(options, TaskOptions.WAKEUP_THREAD) && !inEventLoop()) {
+        } else if ((options & TaskOptions.WAKEUP_THREAD) != 0 && !inEventLoop()) {
             wakeup();
         }
     }

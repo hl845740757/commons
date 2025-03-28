@@ -103,7 +103,7 @@ public sealed class ComponentIdPool
     /// 主要用于运行时获取对应的组件id
     /// </summary>
     /// <param name="type"></param>
-    /// <returns></returns>
+    /// <returns>返回的可能是超类的组件id</returns>
     public ComponentId ValueOf(Type type) {
         if (type == null) throw new ArgumentNullException(nameof(type));
         // 先从缓存中查询

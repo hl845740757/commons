@@ -149,10 +149,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
     [VisibleForTesting]
     internal IEventLoopAgent<T> Agent => agent;
 
-    /** 当前消费序号 */
-    [VisibleForTesting]
-    internal long CurSequence => sequence.GetVolatile();
-
     #region 状态查询
 
     public sealed override EventLoopState State => (EventLoopState)state;
@@ -235,7 +231,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
         if (state == ST_UNSTARTED) {
             // RingBuffer不再私有，不可测试sequence == 0
             EnsureThreadStarted();
-        } else if (TaskOptions.IsEnabled(options, TaskOptions.WAKEUP_THREAD) && !InEventLoop()) {
+        } else if ((options & TaskOptions.WAKEUP_THREAD) != 0 && !InEventLoop()) {
             Wakeup();
         }
     }
@@ -243,7 +239,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
     /** 获取事件循环的消费者id */
     [Beta]
     public long ConsumerId => consumerId;
-
 
     /// <summary>
     /// 注册事件处理器
@@ -723,7 +718,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
                     agent.OnEvent(curSequence, ref eventObj);
                 } else if (type != TYPE_INVALID) {
                     // 事件循环事件
-                    OnInternalEvent(CurSequence, ref eventObj);
+                    OnInternalEvent(curSequence, ref eventObj);
                 } else {
                     // 生产者放弃序号
                     if (IsShuttingDown) {

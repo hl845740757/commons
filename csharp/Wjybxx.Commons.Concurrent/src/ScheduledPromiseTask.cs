@@ -106,7 +106,7 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
     /** 在队列中的下标 */
     private int queueIndex = IIndexedElement.IndexNotFound;
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
-    private IRegistration cancelRegistration;
+    private Registration cancelRegistration;
 #nullable enable
 
     internal ScheduledPromiseTask(in ScheduledTaskBuilder<T> builder, IScheduledPromise<T> promise,
@@ -339,18 +339,16 @@ public class ScheduledPromiseTask<T> : PromiseTask<T>,
     private void RegisterCancellation() {
         // C# 的future中无取消方法，因此只需要监听取消令牌
         ICancelToken cancelToken = GetCancelToken();
-        if (cancelRegistration == null && cancelToken.CanBeCancelled) {
+        if (cancelToken.CanBeCancelled) {
             cancelRegistration = cancelToken.ThenNotify(this);
         }
     }
 
     /** 关闭取消令牌的监听 */
     private void CloseRegistration() {
-        IRegistration registration = this.cancelRegistration;
-        if (registration != null) {
-            this.cancelRegistration = null;
-            registration.Dispose();
-        }
+        Registration registration = this.cancelRegistration;
+        this.cancelRegistration = default;
+        registration.Dispose();
     }
 
     [Obsolete("该方法为中转方法，EventLoop不应该调用")]

@@ -384,7 +384,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     private void registerCancellation() {
         // java端放弃监听future的完成事件，延迟删除
         ICancelToken cancelToken = getCancelToken();
-        if (cancelRegistration == null && cancelToken.canBeCancelled()) {
+        if (cancelToken.canBeCancelled()) {
             cancelRegistration = cancelToken.thenNotify(this);
         }
     }

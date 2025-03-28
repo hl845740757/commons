@@ -102,9 +102,10 @@ public final class ComponentIdPool {
      * 通过类型信息解析组件的id
      *
      * @param clazz 应该使用超类的class查询，否则可能导致异常
+     * @return 可能是超类的组件id
      */
     @SuppressWarnings("unchecked")
-    public <T extends IComponent> ComponentId<T> valueOf(Class<T> clazz) {
+    public <T extends IComponent> ComponentId<? super T> valueOf(Class<T> clazz) {
         Objects.requireNonNull(clazz, "clazz");
         // 先从缓存中查询
         ComponentId<?> cid = class2CidMap.get(clazz);

@@ -34,8 +34,12 @@ import org.junit.jupiter.api.Test;
 public class EventLoopModuleTest {
 
     private static IEventLoop eventLoop;
-    private static final ComponentId<DataModule> dataCid = EventLoopUtils.GLOBAL.valueOf(DataModule.class);
-    private static final ComponentId<BehaviorModule> behaviorCid = EventLoopUtils.GLOBAL.valueOf(BehaviorModule.class);
+    @SuppressWarnings("unchecked")
+    private static final ComponentId<DataModule> dataCid =
+            (ComponentId<DataModule>) EventLoopUtils.GLOBAL.valueOf(DataModule.class);
+    @SuppressWarnings("unchecked")
+    private static final ComponentId<BehaviorModule> behaviorCid =
+            (ComponentId<BehaviorModule>) EventLoopUtils.GLOBAL.valueOf(BehaviorModule.class);
 
     @BeforeEach
     void setUp() {
@@ -50,11 +54,11 @@ public class EventLoopModuleTest {
                 .addModule(new DataModule())
                 .addModule(new BehaviorModule())
                 .build();
+        eventLoop.start().join();
     }
 
     @Test
     void testUpdate() {
-        eventLoop.start().join();
         ThreadUtils.sleepQuietly(1000);
         try {
             // 数据组件为0
@@ -135,9 +139,10 @@ public class EventLoopModuleTest {
         DisruptorEventLoop<AgentEvent> eventLoop;
 
         @Override
-        public void onEvent(long sequence, AgentEvent event) throws Exception {
-            assert event.getType() == 1;
-            eventCount++;
+        public void onReady() {
+            @SuppressWarnings("unchecked") var eventLoop = (DisruptorEventLoop<AgentEvent>) getEntity();
+            this.onReadyInvoked = true;
+            this.eventLoop = eventLoop;
         }
 
         @Override
@@ -146,18 +151,16 @@ public class EventLoopModuleTest {
         }
 
         @Override
-        public void onReady() {
-            @SuppressWarnings("unchecked") var eventLoop = (DisruptorEventLoop<AgentEvent>) getEntity();
-            this.onReadyInvoked = true;
-            this.eventLoop = eventLoop;
-        }
-
-        @Override
         public void update() throws Exception {
             updateCount++;
             if (((updateCount) & 7) == 0) {
                 generateEvent();
             }
+        }
+
+        @Override
+        public void lateUpdate() throws Exception {
+            lastUpdateCount++;
         }
 
         private void generateEvent() {
@@ -169,9 +172,11 @@ public class EventLoopModuleTest {
         }
 
         @Override
-        public void lateUpdate() throws Exception {
-            lastUpdateCount++;
+        public void onEvent(long sequence, AgentEvent event) throws Exception {
+            assert event.getType() == 1;
+            eventCount++;
         }
+
     }
 
 }

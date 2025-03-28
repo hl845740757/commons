@@ -53,62 +53,54 @@ sealed class UncancellableToken : ICancelToken
 
     #region 监听器
 
-    public IRegistration ThenAccept(Action<ICancelToken> action, int options = 0) {
-        return TOMBSTONE;
+    public Registration ThenAccept(Action<ICancelToken> action, int options = 0) {
+        return Registration.Closed;
     }
 
-    public IRegistration ThenAcceptAsync(IExecutor executor, Action<ICancelToken> action, int options = 0) {
-        return TOMBSTONE;
+    public Registration ThenAcceptAsync(IExecutor executor, Action<ICancelToken> action, int options = 0) {
+        return Registration.Closed;
     }
 
-    public IRegistration ThenAccept(Action<ICancelToken, object?> action, object? ctx, int options = 0) {
-        return TOMBSTONE;
+    public Registration ThenAccept(Action<ICancelToken, object?> action, object? ctx, int options = 0) {
+        return Registration.Closed;
     }
 
-    public IRegistration ThenAcceptAsync(IExecutor executor, Action<ICancelToken, object?> action, object? ctx, int options = 0) {
-        return TOMBSTONE;
+    public Registration ThenAcceptAsync(IExecutor executor, Action<ICancelToken, object?> action, object? ctx, int options = 0) {
+        return Registration.Closed;
     }
 
-    public IRegistration ThenRun(Action action, int options = 0) {
-        return TOMBSTONE;
+    public Registration ThenRun(Action action, int options = 0) {
+        return Registration.Closed;
     }
 
-    public IRegistration ThenRunAsync(IExecutor executor, Action action, int options = 0) {
-        return TOMBSTONE;
+    public Registration ThenRunAsync(IExecutor executor, Action action, int options = 0) {
+        return Registration.Closed;
     }
 
-    public IRegistration ThenRun(Action<object?> action, object? ctx, int options = 0) {
-        return TOMBSTONE;
+    public Registration ThenRun(Action<object?> action, object? ctx, int options = 0) {
+        return Registration.Closed;
     }
 
-    public IRegistration ThenRunAsync(IExecutor executor, Action<object?> action, object? ctx, int options = 0) {
-        return TOMBSTONE;
+    public Registration ThenRunAsync(IExecutor executor, Action<object?> action, object? ctx, int options = 0) {
+        return Registration.Closed;
     }
 
-    public IRegistration ThenNotify(ICancelTokenListener action, int options = 0) {
-        return TOMBSTONE;
+    public Registration ThenNotify(ICancelTokenListener action, int options = 0) {
+        return Registration.Closed;
     }
 
-    public IRegistration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, int options = 0) {
-        return TOMBSTONE;
+    public Registration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, int options = 0) {
+        return Registration.Closed;
     }
 
-    public IRegistration ThenTransferTo(ICancelTokenSource child, int options = 0) {
-        return TOMBSTONE;
+    public Registration ThenTransferTo(ICancelTokenSource child, int options = 0) {
+        return Registration.Closed;
     }
 
-    public IRegistration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
-        return TOMBSTONE;
+    public Registration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
+        return Registration.Closed;
     }
 
     #endregion
-
-    private static readonly IRegistration TOMBSTONE = new MockRegistration();
-
-    private class MockRegistration : IRegistration
-    {
-        public void Dispose() {
-        }
-    }
 }
 }

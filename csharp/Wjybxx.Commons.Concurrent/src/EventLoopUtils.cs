@@ -51,12 +51,12 @@ public static class EventLoopUtils
 
     /** 是否重写了<see cref="IEventLoopModule.Update"/>方法 */
     public static bool IsOverrideUpdate(IEventLoopModule module) {
-        return IsSkippable(module.GetType(), "Update", Array.Empty<Type>());
+        return !IsSkippable(module.GetType(), "Update", Array.Empty<Type>());
     }
 
     /** 是否重写了<see cref="IEventLoopModule.LateUpdate"/>方法 */
     public static bool IsOverrideLateUpdate(IEventLoopModule module) {
-        return IsSkippable(module.GetType(), "LateUpdate", Array.Empty<Type>());
+        return !IsSkippable(module.GetType(), "LateUpdate", Array.Empty<Type>());
     }
 
     /** 方法是否可跳过 */

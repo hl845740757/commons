@@ -75,10 +75,12 @@ public interface IValuePromise
     /// <summary>
     /// 用于传输结果
     /// </summary>
-    /// <param name="reentryId"></param>
-    /// <param name="promise"></param>
     void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise);
 
+    /// <summary>
+    /// 用户不需要结果，Promise进入完成状态时即可回收
+    /// </summary>
+    void Forget(int reentryId);
     #endregion
 
     #region promise

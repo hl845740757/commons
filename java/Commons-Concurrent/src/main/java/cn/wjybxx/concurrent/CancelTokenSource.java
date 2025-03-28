@@ -16,12 +16,14 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.IPooledCloseable;
 import cn.wjybxx.base.IRegistration;
+import cn.wjybxx.base.Registration;
 import cn.wjybxx.base.concurrent.BetterCancellationException;
 import cn.wjybxx.base.concurrent.CancelCodeBuilder;
 import cn.wjybxx.base.concurrent.CancelCodes;
+import cn.wjybxx.base.pool.ConcurrentObjectPool;
 
-import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.Objects;
@@ -29,6 +31,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -265,11 +268,13 @@ public final class CancelTokenSource implements ICancelTokenSource {
                                     int options) {
         Objects.requireNonNull(action);
         if (isCancelRequested() && executor == null) {
-            UniAccept.fireNow(this, action);
-            return TOMBSTONE;
+            Completion.fireNow(this, TYPE_ACCEPT, action, null);
+            return Registration.CLOSED;
         }
-        Completion completion = new UniAccept(executor, options, this, action);
-        return pushCompletion(completion) ? completion : TOMBSTONE;
+        Completion completion = getComplete(executor, options, this, TYPE_ACCEPT, action, null);
+        // 需要在Push前拿到_rid
+        Registration registration = new Registration(completion, completion.rid);
+        return pushCompletion(completion) ? registration : Registration.CLOSED;
     }
 
     // endregion
@@ -302,11 +307,13 @@ public final class CancelTokenSource implements ICancelTokenSource {
                                        Object ctx, int options) {
         Objects.requireNonNull(action);
         if (isCancelRequested() && executor == null) {
-            UniAcceptCtx.fireNow(this, action, ctx);
-            return TOMBSTONE;
+            Completion.fireNow(this, TYPE_ACCEPT_CTX, action, ctx);
+            return Registration.CLOSED;
         }
-        Completion completion = new UniAcceptCtx(executor, options, this, action, ctx);
-        return pushCompletion(completion) ? completion : TOMBSTONE;
+        Completion completion = getComplete(executor, options, this, TYPE_ACCEPT_CTX, action, ctx);
+        // 需要在Push前拿到_rid
+        Registration registration = new Registration(completion, completion.rid);
+        return pushCompletion(completion) ? registration : Registration.CLOSED;
     }
 
     // endregion
@@ -338,11 +345,13 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private IRegistration uniRun(Executor executor, Runnable action, int options) {
         Objects.requireNonNull(action);
         if (isCancelRequested() && executor == null) {
-            UniRun.fireNow(action);
-            return TOMBSTONE;
+            Completion.fireNow(this, TYPE_RUN, action, null);
+            return Registration.CLOSED;
         }
-        Completion completion = new UniRun(executor, options, this, action);
-        return pushCompletion(completion) ? completion : TOMBSTONE;
+        Completion completion = getComplete(executor, options, this, TYPE_RUN, action, null);
+        // 需要在Push前拿到_rid
+        Registration registration = new Registration(completion, completion.rid);
+        return pushCompletion(completion) ? registration : Registration.CLOSED;
     }
 
     // endregion
@@ -374,11 +383,13 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private IRegistration uniRunCtx(Executor executor, Consumer<Object> action, Object ctx, int options) {
         Objects.requireNonNull(action);
         if (isCancelRequested() && executor == null) {
-            UniRunCtx.fireNow(action, ctx);
-            return TOMBSTONE;
+            Completion.fireNow(this, TYPE_RUN_CTX, action, ctx);
+            return Registration.CLOSED;
         }
-        Completion completion = new UniRunCtx(executor, options, this, action, ctx);
-        return pushCompletion(completion) ? completion : TOMBSTONE;
+        Completion completion = getComplete(executor, options, this, TYPE_RUN_CTX, action, ctx);
+        // 需要在Push前拿到_rid
+        Registration registration = new Registration(completion, completion.rid);
+        return pushCompletion(completion) ? registration : Registration.CLOSED;
     }
 
     // endregion
@@ -407,13 +418,15 @@ public final class CancelTokenSource implements ICancelTokenSource {
         return uniNotify(executor, action, options);
     }
 
-    private IRegistration uniNotify(Executor executor, ICancelTokenListener action, int options) {
+    private IRegistration uniNotify(Executor executor, ICancelTokenListener listener, int options) {
         if (isCancelRequested() && executor == null) {
-            UniNotify.fireNow(this, action);
-            return TOMBSTONE;
+            Completion.fireNow(this, TYPE_NOTIFY, listener, null);
+            return Registration.CLOSED;
         }
-        Completion completion = new UniNotify(executor, options, this, action);
-        return pushCompletion(completion) ? completion : TOMBSTONE;
+        Completion completion = getComplete(executor, options, this, TYPE_NOTIFY, listener, null);
+        // 需要在Push前拿到_rid
+        Registration registration = new Registration(completion, completion.rid);
+        return pushCompletion(completion) ? registration : Registration.CLOSED;
     }
 
     // endregion
@@ -445,29 +458,31 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private IRegistration uniTransferTo(Executor executor, ICancelTokenSource child, int options) {
         Objects.requireNonNull(child, "child");
         if (isCancelRequested() && executor == null) {
-            UniTransferTo.fireNow(this, SYNC, child);
-            return TOMBSTONE;
+            Completion.fireNow(this, TYPE_TRANSFER, child, null);
+            return Registration.CLOSED;
         }
-        Completion completion = new UniTransferTo(executor, options, this, child);
-        return pushCompletion(completion) ? completion : TOMBSTONE;
+        Completion completion = getComplete(executor, options, this, TYPE_TRANSFER, child, null);
+        // 需要在Push前拿到_rid
+        Registration registration = new Registration(completion, completion.rid);
+        return pushCompletion(completion) ? registration : Registration.CLOSED;
     }
 
     // endregion
 
     // endregion
 
-    // region internal
+    // region core
 
     private static final VarHandle VH_CODE;
     private static final VarHandle VH_STACK;
-    private static final VarHandle VH_ACTION;
+    private static final VarHandle VH_RID;
 
     static {
         try {
             MethodHandles.Lookup l = MethodHandles.lookup();
             VH_CODE = l.findVarHandle(CancelTokenSource.class, "code", int.class);
             VH_STACK = l.findVarHandle(CancelTokenSource.class, "stack", Completion.class);
-            VH_ACTION = l.findVarHandle(Completion.class, "action", Object.class);
+            VH_RID = l.findVarHandle(Completion.class, "rid", int.class);
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -478,25 +493,10 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private static final int NESTED = Promise.NESTED;
     private static final Executor CLAIMED = Promise.CLAIMED;
 
-
     /** @return preCode */
     private int internalCancel(int cancelCode) {
 //        assert cancelCode != 0;
         return (int) VH_CODE.compareAndExchange(this, 0, cancelCode);
-    }
-
-    /**
-     * 栈顶回调被删除时尝试删除更多的节点
-     *
-     * @return 最新栈顶 -- 可能是{@link #TOMBSTONE}
-     */
-    private Completion removeHead(Completion expectedHead) {
-        Completion next = expectedHead.next;
-        while (next != null && next.action == TOMBSTONE) {
-            next = next.next;
-        }
-        Completion realHead = (Completion) VH_STACK.compareAndExchange(this, expectedHead, next);
-        return realHead == expectedHead ? next : realHead;
     }
 
     /** @return 是否压栈成功 */
@@ -508,12 +508,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
         Completion expectedHead = stack;
         Completion realHead;
         while (expectedHead != TOMBSTONE) {
-            // 处理延迟删除
-            if (expectedHead != null && expectedHead.action == TOMBSTONE) {
-                expectedHead = removeHead(expectedHead);
-                continue;
-            }
-
             newHead.next = expectedHead;
             realHead = (Completion) VH_STACK.compareAndExchange(this, expectedHead, newHead);
             if (realHead == expectedHead) { // success
@@ -564,10 +558,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
             Completion tmpHead = head;
             head = head.next;
 
-            if (tmpHead.action == TOMBSTONE) {
-                continue; // 处理延迟删除
-            }
-
             tmpHead.next = ontoHead;
             ontoHead = tmpHead;
         }
@@ -582,32 +572,73 @@ public final class CancelTokenSource implements ICancelTokenSource {
         e.execute(completion);
         return false;
     }
+    // endregion
 
-    /** 不需要复用对象的情况下无需分配唯一id */
-    private static abstract class Completion implements IRegistration, ITask {
+    // region completion
+
+    private static final int TYPE_ACCEPT = 0;
+    private static final int TYPE_ACCEPT_CTX = 1;
+    private static final int TYPE_RUN = 2;
+    private static final int TYPE_RUN_CTX = 3;
+    private static final int TYPE_NOTIFY = 4;
+    private static final int TYPE_TRANSFER = 5;
+
+    /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
+    private static final int MASK_TASK_TYPE = 0x0F;
+
+    private static final Completion TOMBSTONE = new Completion();
+    private static final ConcurrentObjectPool<Completion> POOL = new ConcurrentObjectPool<>(Completion::new,
+            Completion::reset, 100);
+
+    /** 申请一个{@link Completion}对象 */
+    private static Completion getComplete(Executor executor, int options, CancelTokenSource source,
+                                          int type, Object action, Object ctx) {
+        // 去除用户的低位，记录type
+        options &= (~TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE);
+        options |= type;
+
+        Completion completion = POOL.acquire();
+        int rid = completion.rid + 1;
+        completion.rid = rid;
+        completion.fireId = rid;
+
+        completion.executor = executor;
+        completion.options = options;
+        completion.source = source;
+        completion.action = action;
+        completion.ctx = ctx;
+        return completion;
+    }
+
+    /** 为简化逻辑，我们总是在触发回调的时候才回收对象 */
+    private static class Completion implements ITask, IPooledCloseable {
 
         /** 非volatile，由栈顶的cas更新保证可见性 */
         Completion next;
-        CancelTokenSource source;
-
-        Executor executor;
-        int options;
+        /** 重入id -- 只增不减 */
+        volatile int rid;
         /**
-         * 用户回调
-         * 1.通知和清理时置为{@link #TOMBSTONE}
-         * 2.子类在执行action之前需要调用{@link #popAction()}竞争。
+         * cts添加回调时的{@link #rid}快照
+         * 1.该值永不清理，用于识别能否进行通知
+         * 2.{@link #tryFire(int)}方法需要通过该值竞争更新{@link #rid}
+         * 3.{@link #close(int)}方法通过用户持有的rid竞争更新{@link #rid}
          */
-        volatile Object action;
+        int fireId;
 
-        public Completion() {
+        CancelTokenSource source;
+        Executor executor;
+        /** 任务的调度选项，包含任务的类型 */
+        int options;
+        Object action;
+        Object ctx;
+
+        protected void reset() {
+            rid++; // 池化时+1，volatile安全
             source = null;
-        }
-
-        public Completion(Executor executor, int options, CancelTokenSource source, Object action) {
-            this.executor = executor;
-            this.options = options;
-            this.source = source;
-            VH_ACTION.setRelease(this, action);
+            executor = null;
+            options = 0;
+            action = null;
+            ctx = null;
         }
 
         @Override
@@ -615,16 +646,10 @@ public final class CancelTokenSource implements ICancelTokenSource {
             return options;
         }
 
-        public void setOptions(int options) {
-            this.options = options;
-        }
-
         @Override
         public final void run() {
             tryFire(ASYNC);
         }
-
-        public abstract CancelTokenSource tryFire(int mode);
 
         /** 可参考{@link Promise}中的该方法 */
         public final boolean claim() {
@@ -639,291 +664,85 @@ public final class CancelTokenSource implements ICancelTokenSource {
             return tryInline(this, e, options);
         }
 
-        /**
-         * 删除action
-         *
-         * @return 如果action已被删除则返回null，否则返回绑定的action
-         */
-        @Nullable
-        protected final Object popAction() {
-            Object action = this.action;
-            if (action == TOMBSTONE) { // 已被取消
-                return null;
-            }
-            if (action == VH_ACTION.compareAndExchange(this, action, TOMBSTONE)) {
-                return action;
-            }
-            return null; // 竞争失败-被取消或通知
+        private boolean tryIncrementRid(int reentryId) {
+            return VH_RID.compareAndSet(this, reentryId, reentryId + 1);
         }
+
+        public CancelTokenSource tryFire(int mode) {
+            outer:
+            {
+                // 同步Fire时，必须先竞争Action - 如果竞争失败，需要等待Close调用结束
+                if (mode <= 0 && !tryIncrementRid(fireId)) {
+                    while (rid < fireId + 2) { // 等待close完毕
+                        LockSupport.parkNanos(1);
+                    }
+                    break outer;
+                }
+                if (FutureUtils.isCancelRequested(ctx, options)) {
+                    break outer;
+                }
+                if (mode <= 0 && !claim()) {
+                    return null; // 下次执行
+                }
+                assert action != null;
+                fireNow(source, options, action, ctx);
+            }
+            outer:
+            POOL.release(this);
+            return null;
+        }
+
+        @SuppressWarnings("unchecked")
+        private static void fireNow(CancelTokenSource source,
+                                    int options, Object rawAction, Object ctx) {
+            int type = options & MASK_TASK_TYPE;
+            try {
+                switch (type) {
+                    case TYPE_ACCEPT -> {
+                        Consumer<ICancelToken> action = (Consumer<ICancelToken>) rawAction;
+                        action.accept(source);
+                    }
+                    case TYPE_ACCEPT_CTX -> {
+                        BiConsumer<ICancelToken, Object> action = (BiConsumer<ICancelToken, Object>) rawAction;
+                        action.accept(source, ctx);
+                    }
+                    case TYPE_RUN -> {
+                        Runnable action = (Runnable) rawAction;
+                        action.run();
+                    }
+                    case TYPE_RUN_CTX -> {
+                        Consumer<Object> action = (Consumer<Object>) rawAction;
+                        action.accept(ctx);
+                    }
+                    case TYPE_NOTIFY -> {
+                        ICancelTokenListener action = (ICancelTokenListener) rawAction;
+                        action.onCancelRequested(source);
+                    }
+                    case TYPE_TRANSFER -> {
+                        // 这里本来有一个递归优化，为简化逻辑删除了
+                        ICancelTokenSource action = (ICancelTokenSource) rawAction;
+                        action.cancel(source.code);
+                    }
+                    default -> {
+                        throw new IllegalStateException();
+                    }
+                }
+            } catch (Throwable ex) {
+                FutureLogger.logCause(ex, "Action caught an exception");
+            }
+        }
+
 
         @Override
-        public final void close() {
-            Object action = popAction();
-            if (action == null) {
-                return;
+        public final void close(int reentryId) {
+            if (tryIncrementRid(reentryId)) {
+                // 这里只释放action资源
+                action = null;
+                ctx = null;
+                // 更新为+2表示关闭完毕
+                rid = reentryId + 2;
             }
-            if (this == source.stack) {
-                source.removeHead(this);
-            }
-            clear();
-        }
-
-        /** 注意：不能修改{@link #action}的引用 */
-        protected void clear() {
-            executor = null;
-            source = null;
         }
     }
     // endregion
-
-    private static final Completion TOMBSTONE = new Completion() {
-        @Override
-        public CancelTokenSource tryFire(int mode) {
-            return null;
-        }
-    };
-
-    private static class UniAccept extends Completion {
-
-        public UniAccept(Executor executor, int options, CancelTokenSource source,
-                         Consumer<? super ICancelToken> action) {
-            super(executor, options, source, action);
-        }
-
-        @Override
-        public CancelTokenSource tryFire(int mode) {
-            try {
-                if (mode <= 0 && !claim()) {
-                    return null; // 下次执行
-                }
-                @SuppressWarnings("unchecked") var action = (Consumer<? super ICancelToken>) popAction();
-                if (action == null) {
-                    return null;
-                }
-                action.accept(source);
-            } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniAccept caught an exception");
-            }
-            // help gc
-            clear();
-            return null;
-        }
-
-        static void fireNow(CancelTokenSource source, Consumer<? super ICancelToken> action) {
-            try {
-                action.accept(source);
-            } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniAccept caught an exception");
-            }
-        }
-    }
-
-    private static class UniAcceptCtx extends Completion {
-
-        Object ctx;
-
-        public UniAcceptCtx(Executor executor, int options, CancelTokenSource source,
-                            BiConsumer<? super ICancelToken, Object> action, Object ctx) {
-            super(executor, options, source, action);
-            this.ctx = ctx;
-        }
-
-        @Override
-        protected void clear() {
-            super.clear();
-            ctx = null;
-        }
-
-        @Override
-        public CancelTokenSource tryFire(int mode) {
-            try {
-                if (mode <= 0 && !claim()) {
-                    return null; // 下次执行
-                }
-                @SuppressWarnings("unchecked") var action = (BiConsumer<? super ICancelToken, Object>) popAction();
-                if (action == null) {
-                    return null;
-                }
-                if (!FutureUtils.isCancelRequested(ctx, options)) {
-                    action.accept(source, ctx);
-                }
-            } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniAcceptCtx caught an exception");
-            }
-            // help gc
-            clear();
-            return null;
-        }
-
-        static void fireNow(CancelTokenSource source,
-                            BiConsumer<? super ICancelToken, Object> action, Object ctx) {
-            try {
-                action.accept(source, ctx);
-            } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniAcceptCtx caught an exception");
-            }
-        }
-
-    }
-
-    private static class UniRun extends Completion {
-
-        public UniRun(Executor executor, int options, CancelTokenSource source,
-                      Runnable action) {
-            super(executor, options, source, action);
-        }
-
-        @Override
-        public CancelTokenSource tryFire(int mode) {
-            try {
-                if (mode <= 0 && !claim()) {
-                    return null; // 下次执行
-                }
-                Runnable action = (Runnable) popAction();
-                if (action == null) {
-                    return null;
-                }
-                action.run();
-            } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniRun caught an exception");
-            }
-            // help gc
-            clear();
-            return null;
-        }
-
-        static void fireNow(Runnable action) {
-            try {
-                action.run();
-            } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniRun caught an exception");
-            }
-        }
-    }
-
-    private static class UniRunCtx extends Completion {
-
-        Object ctx;
-
-        public UniRunCtx(Executor executor, int options, CancelTokenSource source,
-                         Consumer<Object> action, Object ctx) {
-            super(executor, options, source, action);
-            this.ctx = ctx;
-        }
-
-        @Override
-        protected void clear() {
-            super.clear();
-            ctx = null;
-        }
-
-        @Override
-        public CancelTokenSource tryFire(int mode) {
-            try {
-                if (mode <= 0 && !claim()) {
-                    return null; // 下次执行
-                }
-                @SuppressWarnings("unchecked") var action = (Consumer<Object>) popAction();
-                if (action == null) {
-                    return null;
-                }
-                if (!FutureUtils.isCancelRequested(ctx, options)) {
-                    action.accept(ctx);
-                }
-            } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniRunCtx caught an exception");
-            }
-            // help gc
-            clear();
-            return null;
-        }
-
-        static void fireNow(Consumer<Object> action, Object ctx) {
-            try {
-                action.accept(ctx);
-            } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniRunCtx caught an exception");
-            }
-        }
-    }
-
-    private static class UniNotify extends Completion {
-
-        public UniNotify(Executor executor, int options, CancelTokenSource source,
-                         ICancelTokenListener action) {
-            super(executor, options, source, action);
-        }
-
-        @Override
-        public CancelTokenSource tryFire(int mode) {
-            try {
-                if (mode <= 0 && !claim()) {
-                    return null; // 下次执行
-                }
-                ICancelTokenListener action = (ICancelTokenListener) popAction();
-                if (action == null) {
-                    return null;
-                }
-                action.onCancelRequested(source);
-            } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniNotify caught an exception");
-            }
-            // help gc
-            clear();
-            return null;
-        }
-
-        static void fireNow(CancelTokenSource source, ICancelTokenListener action) {
-            try {
-                action.onCancelRequested(source);
-            } catch (Throwable ex) {
-                FutureLogger.logCause(ex, "UniNotify caught an exception");
-            }
-        }
-    }
-
-    private static class UniTransferTo extends Completion {
-
-        public UniTransferTo(Executor executor, int options, CancelTokenSource source,
-                             ICancelTokenSource action) {
-            super(executor, options, source, action);
-        }
-
-        @Override
-        public CancelTokenSource tryFire(int mode) {
-            CancelTokenSource output;
-            try {
-                if (mode <= 0 && !claim()) {
-                    return null; // 下次执行
-                }
-                ICancelTokenSource child = (ICancelTokenSource) popAction();
-                if (child == null) {
-                    return null;
-                }
-                output = fireNow(source, mode, child);
-            } catch (Throwable ex) {
-                output = null;
-                FutureLogger.logCause(ex, "UniTransferTo caught an exception");
-            }
-            // help gc
-            clear();
-            return output;
-        }
-
-        static CancelTokenSource fireNow(CancelTokenSource source, int mode,
-                                         ICancelTokenSource child) {
-            if (!(child instanceof CancelTokenSource childSource)) {
-                child.cancel(source.code);
-                return null;
-            }
-            if (childSource.internalCancel(source.code) == 0) {
-                if (mode < 0) { // 嵌套模式
-                    return childSource;
-                }
-                postComplete(childSource);
-                return null;
-            }
-            return null;
-        }
-    }
 }

@@ -95,9 +95,9 @@ public interface ICancelToken
     /// <param name="action">回调任务</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    IRegistration ThenAccept(Action<ICancelToken> action, int options = 0);
+    Registration ThenAccept(Action<ICancelToken> action, int options = 0);
 
-    IRegistration ThenAcceptAsync(IExecutor executor,
+    Registration ThenAcceptAsync(IExecutor executor,
                                   Action<ICancelToken> action, int options = 0);
 
     // endregion
@@ -114,26 +114,26 @@ public interface ICancelToken
     /// <param name="state">上下文</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    IRegistration ThenAccept(Action<ICancelToken, object> action, object? state, int options = 0);
+    Registration ThenAccept(Action<ICancelToken, object> action, object? state, int options = 0);
 
-    IRegistration ThenAcceptAsync(IExecutor executor,
+    Registration ThenAcceptAsync(IExecutor executor,
                                   Action<ICancelToken, object> action, object? state, int options = 0);
 
     // endregion
 
     // region run
 
-    IRegistration ThenRun(Action action, int options = 0);
+    Registration ThenRun(Action action, int options = 0);
 
-    IRegistration ThenRunAsync(IExecutor executor, Action action, int options = 0);
+    Registration ThenRunAsync(IExecutor executor, Action action, int options = 0);
 
     // endregion
 
     // region run-ctx
 
-    IRegistration ThenRun(Action<object> action, object? state, int options = 0);
+    Registration ThenRun(Action<object> action, object? state, int options = 0);
 
-    IRegistration ThenRunAsync(IExecutor executor,
+    Registration ThenRunAsync(IExecutor executor,
                                Action<object> action, object? state, int options = 0);
 
     // endregion
@@ -144,9 +144,9 @@ public interface ICancelToken
      * 添加一个特定类型的监听器
      * (用于特殊需求时避免额外的闭包 - task经常需要监听取消令牌)
      */
-    IRegistration ThenNotify(ICancelTokenListener action, int options = 0);
+    Registration ThenNotify(ICancelTokenListener action, int options = 0);
 
-    IRegistration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, int options = 0);
+    Registration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, int options = 0);
 
     // endregion
 
@@ -157,9 +157,9 @@ public interface ICancelToken
      * 1.子token会在当前token进入取消状态时被取消
      * 2.该接口本质是一个快捷方法，但允许子类优化
      */
-    IRegistration ThenTransferTo(ICancelTokenSource child, int options = 0);
+    Registration ThenTransferTo(ICancelTokenSource child, int options = 0);
 
-    IRegistration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0);
+    Registration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0);
 
     // endregion
 

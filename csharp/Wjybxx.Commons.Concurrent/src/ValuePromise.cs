@@ -351,18 +351,23 @@ internal class ValuePromise<T> : IValuePromise<T>
 
     public void OnCompleted(int reentryId, Action<object?> continuation, object? state, int options = 0) {
         ValidateReentryId(reentryId);
-        SetCompletion(TYPE_ACTION_STATE, continuation, state, null, options);
+        SetCompletion(TYPE_RUN_CTX, continuation, state, null, options);
     }
 
     public void OnCompletedAsync(int reentryId, IExecutor executor, Action<object?> continuation, object? state, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         ValidateReentryId(reentryId);
-        SetCompletion(TYPE_ACTION_STATE, continuation, state, executor, options);
+        SetCompletion(TYPE_RUN_CTX, continuation, state, executor, options);
     }
 
     public void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise) {
         ValidateReentryId(reentryId);
         SetCompletion(TYPE_SET_VOID_PROMISE, promise, null, null, 0);
+    }
+
+    public void Forget(int reentryId) {
+        ValidateReentryId(reentryId);
+        SetCompletion(TYPE_FORGET, "", null, null, 0);
     }
 
     public void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise) {
@@ -478,14 +483,11 @@ internal class ValuePromise<T> : IValuePromise<T>
 
     #region completion
 
-    /** 回调为无参的普通的Action */
-    private const int TYPE_ACTION = 0;
-    /** 回调为Action + State */
-    private const int TYPE_ACTION_STATE = 1;
-    /** 回调为设置VoidPromise */
+    private const int TYPE_RUN = 0;
+    private const int TYPE_RUN_CTX = 1;
     private const int TYPE_SET_VOID_PROMISE = 2;
-    /** 回调为设置Promise */
     private const int TYPE_SET_PROMISE = 3;
+    private const int TYPE_FORGET = 4;
 
     /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
     private const int MASK_TASK_TYPE = 0x0F;
@@ -574,53 +576,58 @@ internal class ValuePromise<T> : IValuePromise<T>
             if (mode <= 0 && !Claim()) {
                 return;
             }
+            FireNow();
+            // 这里不能清理数据，由用户的Action调用GetResult触发回收时清理
+        }
+
+        private void FireNow() {
+            int taskType = (options & MASK_TASK_TYPE);
             try {
-                RunAction();
+                switch (taskType) {
+                    case TYPE_RUN: {
+                        Action action = (Action)this.action;
+                        action();
+                        break;
+                    }
+                    case TYPE_RUN_CTX: {
+                        Action<object> action = (Action<object>)this.action;
+                        action(state);
+                        break;
+                    }
+                    case TYPE_SET_VOID_PROMISE: {
+                        IPromise<int> output = (IPromise<int>)this.action;
+                        if (input.Status == TaskStatus.Success) {
+                            output.TrySetResult(0);
+                        } else {
+                            output.TrySetException(input.ExceptionNow(false));
+                        }
+                        // 用户已获取结果
+                        input.PrepareToRecycle();
+                        break;
+                    }
+                    case TYPE_SET_PROMISE: {
+                        IPromise<T> output = (IPromise<T>)this.action;
+                        if (input.Status == TaskStatus.Success) {
+                            output.TrySetResult(input.ResultNow());
+                        } else {
+                            output.TrySetException(input.ExceptionNow(false));
+                        }
+                        // 用户已获取结果
+                        input.PrepareToRecycle();
+                        break;
+                    }
+                    case TYPE_FORGET: {
+                        // 用户不需要结果
+                        input.PrepareToRecycle();
+                        break;
+                    }
+                    default: {
+                        throw new IllegalStateException();
+                    }
+                }
             }
             catch (Exception ex) {
                 FutureLogger.LogCause(ex, "Value promise fire caught exception");
-            }
-            // 与Promise中的实现不同，这里不能清理数据，因为用户的回调可能触发对象回收再复用
-        }
-
-        private void RunAction() {
-            int taskType = (options & MASK_TASK_TYPE);
-            switch (taskType) {
-                case TYPE_ACTION: {
-                    Action action = (Action)this.action;
-                    action();
-                    break;
-                }
-                case TYPE_ACTION_STATE: {
-                    Action<object> action = (Action<object>)this.action;
-                    action(state);
-                    break;
-                }
-                case TYPE_SET_VOID_PROMISE: {
-                    IPromise<int> output = (IPromise<int>)this.action;
-                    if (input.Status == TaskStatus.Success) {
-                        output.TrySetResult(0);
-                    } else {
-                        output.TrySetException(input.ExceptionNow(false));
-                    }
-                    // 用户已获取结果
-                    input.PrepareToRecycle();
-                    break;
-                }
-                case TYPE_SET_PROMISE: {
-                    IPromise<T> output = (IPromise<T>)this.action;
-                    if (input.Status == TaskStatus.Success) {
-                        output.TrySetResult(input.ResultNow());
-                    } else {
-                        output.TrySetException(input.ExceptionNow(false));
-                    }
-                    // 用户已获取结果
-                    input.PrepareToRecycle();
-                    break;
-                }
-                default: {
-                    throw new AssertionError();
-                }
             }
         }
     }

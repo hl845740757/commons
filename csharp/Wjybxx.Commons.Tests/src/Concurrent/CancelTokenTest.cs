@@ -41,7 +41,7 @@ public class CancelTokenTest
     static CancelTokenTest() {
         globalEventLoop.Start().Join();
     }
-    
+
     private static ICancelTokenSource newTokenSource(int code = 0) {
         return new CancelTokenSource(code);
     }
@@ -77,7 +77,7 @@ public class CancelTokenTest
         ICancelTokenSource cts = newTokenSource(0);
         {
             MutableObject<string> signal = new MutableObject<string>();
-            IRegistration handle = cts.ThenRun(() => { signal.Value = "cancelled"; });
+            Registration handle = cts.ThenRun(() => { signal.Value = "cancelled"; });
             handle.Dispose();
 
             cts.Cancel(1);
@@ -93,7 +93,7 @@ public class CancelTokenTest
             // 通知是单线程的，因此无需使用Atomic
             MutableInt counter = new MutableInt(0);
             int count = 10;
-            List<IRegistration> registrationList = new List<IRegistration>(count);
+            List<Registration> registrationList = new List<Registration>(count);
             for (int i = 0; i < count; i++) {
                 registrationList.Add(cts.ThenRun(counter.Increment));
             }
@@ -363,6 +363,27 @@ public class CancelTokenTest
         Assert.AreEqual(reason, cts.Reason);
         Assert.AreEqual(degree, cts.Degree);
         Assert.IsTrue(cts.IsInterruptible);
+    }
+
+    #endregion
+
+    #region 池化
+
+    /// <summary>
+    /// 测试池化对象的关闭和取消是否冲突
+    /// </summary>
+    [Test]
+    public void testPool() {
+        for (int i = 0; i < 10000; i++) {
+            CancelTokenSource cts = new CancelTokenSource();
+            Registration registration = cts.ThenRun(() => { });
+            // 主线程关闭，子线程通知
+            globalEventLoop.Execute(() => cts.Cancel(1));
+            registration.Dispose();
+
+            cts.ThenRun(() => { });
+        }
+        Thread.Sleep(1000);
     }
 
     #endregion

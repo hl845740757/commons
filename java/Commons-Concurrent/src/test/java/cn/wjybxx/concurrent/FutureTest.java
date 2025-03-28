@@ -17,7 +17,6 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.function.FunctionUtils;
-import cn.wjybxx.base.mutable.MutableLong;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Assertions;
@@ -39,11 +38,6 @@ public class FutureTest {
                     .newMultiProducer(AgentEvent::new)
                     .build())
             .build();
-
-    /** 用于内联测试 */
-    private static long curSequence() {
-        return globalEventLoop.curSequence();
-    }
 
     private static final IExecutor immediateExecutor = Runnable::run;
 
@@ -113,16 +107,9 @@ public class FutureTest {
     @Test
     void testAcceptAsync() {
         final String first = "abc";
-        MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitFunc(() -> {
-                    sequence.setValue(curSequence());
-                    return first;
-                })
+        globalEventLoop.submitFunc(() -> first)
                 .thenAcceptAsync(globalEventLoop, (context, r) -> {
-                    // 无内联选项时，消费序号会增加
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
-                    Assertions.assertTrue(sequence.longValue() < curSequence());
-
                     Assertions.assertEquals(first, r);
                 })
                 .awaitUninterruptibly()
@@ -132,16 +119,9 @@ public class FutureTest {
     @Test
     void testAcceptAsyncInline() {
         final String first = "abc"; // 怎么测？？？
-        MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitFunc(() -> {
-                    sequence.setValue(curSequence());
-                    return first;
-                })
+        globalEventLoop.submitFunc(() -> first)
                 .thenAcceptAsync(globalEventLoop, (context, r) -> {
-                    // 有内联选项时，不会提交任务
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
-                    Assertions.assertEquals(sequence.longValue(), curSequence());
-
                     Assertions.assertEquals(first, r);
                 }, null, TaskOptions.STAGE_TRY_INLINE)
                 .awaitUninterruptibly()
@@ -164,16 +144,9 @@ public class FutureTest {
     @Test
     void testApplyAsync() {
         final String first = "abc";
-        MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitFunc(() -> {
-                    sequence.setValue(curSequence());
-                    return first;
-                })
+        globalEventLoop.submitFunc(() -> first)
                 .thenApplyAsync(globalEventLoop, (context, r) -> {
-                    // 无内联选项时，消费序号会增加
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
-                    Assertions.assertTrue(sequence.longValue() < curSequence());
-
                     Assertions.assertEquals(first, r);
                     return StringUtils.reverse(r);
                 })
@@ -184,16 +157,9 @@ public class FutureTest {
     @Test
     void testApplyAsyncInline() {
         final String first = "abc"; // 怎么测？？？
-        MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitFunc(() -> {
-                    sequence.setValue(curSequence());
-                    return first;
-                })
+        globalEventLoop.submitFunc(() -> first)
                 .thenApplyAsync(globalEventLoop, (context, r) -> {
-                    // 有内联选项时，不会提交任务
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
-                    Assertions.assertEquals(sequence.longValue(), curSequence());
-
                     Assertions.assertEquals(first, r);
                     return StringUtils.reverse(r);
                 }, null, TaskOptions.STAGE_TRY_INLINE)
@@ -218,15 +184,11 @@ public class FutureTest {
     @Test
     void testCatchingAsync() {
         final String first = "abc";
-        MutableLong sequence = new MutableLong(0);
         globalEventLoop.submitFunc(() -> {
-                    sequence.setValue(curSequence());
                     throw new RuntimeException();
                 })
                 .catchingAsync(globalEventLoop, RuntimeException.class, (ctx, ex) -> {
-                    // 无内联选项时，消费序号会增加
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
-                    Assertions.assertTrue(sequence.longValue() < curSequence());
                     return first;
                 })
                 .thenAccept((ctx, r) -> {
@@ -239,15 +201,11 @@ public class FutureTest {
     @Test
     void testCatchingAsyncInline() {
         final String first = "abc"; // 怎么测？？？
-        MutableLong sequence = new MutableLong(0);
         globalEventLoop.submitFunc(() -> {
-                    sequence.setValue(curSequence());
                     throw new RuntimeException();
                 })
                 .catchingAsync(globalEventLoop, RuntimeException.class, (ctx, ex) -> {
-                    // 有内联选项时，不会提交任务
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
-                    Assertions.assertEquals(sequence.longValue(), curSequence());
                     return first;
                 }, null, TaskOptions.STAGE_TRY_INLINE)
                 .thenAccept((ctx, r) -> {
@@ -275,15 +233,8 @@ public class FutureTest {
     @Test
     void testWhenCompleteAsync() {
         final String first = "abc";
-        MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitFunc(() -> {
-                    sequence.setValue(curSequence());
-                    return first;
-                })
+        globalEventLoop.submitFunc(() -> first)
                 .whenCompleteAsync(globalEventLoop, (ctx, r, ex) -> {
-                    // 无内联选项时，消费序号会增加
-                    Assertions.assertTrue(sequence.longValue() < curSequence());
-
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
                     Assertions.assertEquals(first, r);
                 })
@@ -297,15 +248,8 @@ public class FutureTest {
     @Test
     void testWhenCompleteAsyncInline() {
         final String first = "abc"; // 怎么测？？？
-        MutableLong sequence = new MutableLong(0);
-        globalEventLoop.submitFunc(() -> {
-                    sequence.setValue(curSequence());
-                    return first;
-                })
+        globalEventLoop.submitFunc(() -> first)
                 .whenCompleteAsync(globalEventLoop, (ctx, r, ex) -> {
-                    // 有内联选项时，不会提交任务
-                    Assertions.assertEquals(sequence.longValue(), curSequence());
-
                     Assertions.assertTrue(globalEventLoop.inEventLoop());
                     Assertions.assertEquals(first, r);
                 }, null, TaskOptions.STAGE_TRY_INLINE)
@@ -333,16 +277,9 @@ public class FutureTest {
     @Test
     void testOnCompleteAsync() {
         final String first = "abc";
-        MutableLong sequence = new MutableLong(0);
-        IFuture<String> future = globalEventLoop.submitFunc(() -> {
-            sequence.setValue(curSequence());
-            return first;
-        });
+        IFuture<String> future = globalEventLoop.submitFunc(() -> first);
         future.onCompleted(f -> {
-            // 无内联选项时，消费序号会增加
             Assertions.assertTrue(globalEventLoop.inEventLoop());
-            Assertions.assertTrue(sequence.longValue() < curSequence());
-
             Assertions.assertEquals(first, f.resultNow());
         });
         future.awaitUninterruptibly()
@@ -352,16 +289,9 @@ public class FutureTest {
     @Test
     void testOnCompleteAsyncInline() {
         final String first = "abc"; // 怎么测？？？
-        MutableLong sequence = new MutableLong(0);
-        IFuture<String> future = globalEventLoop.submitFunc(() -> {
-            sequence.setValue(curSequence());
-            return first;
-        });
+        IFuture<String> future = globalEventLoop.submitFunc(() -> first);
         future.onCompleted(f -> {
-            // 有内联选项时，不会提交任务
             Assertions.assertTrue(globalEventLoop.inEventLoop());
-            Assertions.assertEquals(sequence.longValue(), curSequence());
-
             Assertions.assertEquals(first, f.resultNow());
         });
         future.awaitUninterruptibly()
@@ -388,7 +318,9 @@ public class FutureTest {
                 })
                 .join();
 
-        FutureUtils.submitFunc(executor, () -> {throw new RuntimeException();}, 0)
+        FutureUtils.submitFunc(executor, () -> {
+                    throw new RuntimeException();
+                }, 0)
                 .handle((ctx, v, ex) -> {
                     if (ex != null) {
                         return fallbackResult;

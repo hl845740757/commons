@@ -160,10 +160,14 @@ public readonly struct ValueFuture
     public ValueFuture Preserve() => new ValueFuture(AsFuture());
 
     /// <summary>
-    /// 用于压制警告
+    /// 如果用户不需要结果，可以调用该函数，告知Promise在任务完成后自动回收。
+    /// 也用于压制警告
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Forget() {
+        if (_future is IValuePromise valuePromise) {
+            valuePromise.Forget(_reentryId);
+        }
     }
 
     #region internal
@@ -364,8 +368,15 @@ public readonly struct ValueFuture<T>
 
     public ValueFuture<T> Preserve() => new ValueFuture<T>(AsFuture());
 
+    /// <summary>
+    /// 如果用户不需要结果，可以调用该函数，告知Promise在任务完成后自动回收。
+    /// 也用于压制警告
+    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Forget() {
+        if (_future is IValuePromise valuePromise) {
+            valuePromise.Forget(_reentryId);
+        }
     }
 
     public ValueFuture ToVoid() {

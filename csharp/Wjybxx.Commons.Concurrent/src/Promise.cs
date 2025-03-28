@@ -453,18 +453,18 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     private void PushUniOnCompleted1(IExecutor? executor, Action<IFuture<T>> continuation, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsCompleted && executor == null) {
-            UniOnCompleted1.FireNow(this, continuation, null);
+            UniOnCompleted.FireNow(this, continuation, null, null);
         } else {
-            PushCompletion(new UniOnCompleted1(executor, options, this, continuation));
+            PushCompletion(new UniOnCompleted(executor, options, this, continuation, null));
         }
     }
 
     private void PushUniOnCompleted2(IExecutor? executor, Action<IFuture<T>, object> continuation, object? state, int options = 0) {
         if (continuation == null) throw new ArgumentNullException(nameof(continuation));
         if (IsCompleted && executor == null) {
-            UniOnCompleted2.FireNow(this, continuation, state, null);
+            UniOnCompleted.FireNow(this, continuation, state, null);
         } else {
-            PushCompletion(new UniOnCompleted2(executor, options, this, continuation, state));
+            PushCompletion(new UniOnCompleted(executor, options, this, continuation, state));
         }
     }
 
@@ -1411,18 +1411,23 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region on-complete
 
-    private abstract class UniOnCompleted : Completion
+    private class UniOnCompleted : Completion
     {
 #nullable disable
-        protected IExecutor executor;
-        protected int options;
-        protected Promise<T> input;
+        private IExecutor executor;
+        private int options;
+        private Promise<T> input;
+        private object action;
+        private object ctx;
 #nullable enable
 
-        protected UniOnCompleted(IExecutor? executor, int options, Promise<T> input) {
+        internal UniOnCompleted(IExecutor? executor, int options, Promise<T> input,
+                                object action, object? ctx) {
             this.executor = executor;
             this.options = options;
             this.input = input;
+            this.action = action;
+            this.ctx = ctx;
         }
 
         public override int Options {
@@ -1441,70 +1446,15 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             }
             return true;
         }
-    }
-
-    private class UniOnCompleted1 : UniOnCompleted
-    {
-#nullable disable
-        private Action<IFuture<T>> action;
-#nullable enable
-
-        public UniOnCompleted1(IExecutor? executor, int options, Promise<T> input, Action<IFuture<T>> action)
-            : base(executor, options, input) {
-            this.action = action;
-        }
 
         public override AbstractPromise? TryFire(int mode) {
             Promise<T>? input = this.input;
             {
-                // 异步模式下已经claim
-                if (!FireNow(input, action, mode > 0 ? null : this)) {
-                    return null;
-                }
-            }
-            // help gc
-            this.executor = null;
-            this.input = null;
-            this.action = null;
-            return null;
-        }
-
-        public static bool FireNow(Promise<T> input, Action<IFuture<T>> action,
-                                   UniOnCompleted1? c) {
-            try {
-                if (c != null && !c.Claim()) {
-                    return false;
-                }
-                action(input);
-            }
-            catch (Exception e) {
-                FutureLogger.LogCause(e, "UniOnCompleted1 caught an exception");
-            }
-            return true;
-        }
-    }
-
-    private class UniOnCompleted2 : UniOnCompleted
-    {
-#nullable disable
-        private Action<IFuture<T>, object> action;
-        private object state;
-#nullable enable
-
-        public UniOnCompleted2(IExecutor? executor, int options, Promise<T> input, Action<IFuture<T>, object?> action, object? state)
-            : base(executor, options, input) {
-            this.action = action;
-            this.state = state;
-        }
-
-        public override AbstractPromise? TryFire(int mode) {
-            Promise<T>? input = this.input;
-            {
-                if (Executors.IsCancelRequested(state, options)) {
+                if (Executors.IsCancelRequested(ctx, options)) {
                     goto outer;
                 }
                 // 异步模式下已经claim
-                if (!FireNow(input, action, state, mode > 0 ? null : this)) {
+                if (!FireNow(input, action, ctx, mode > 0 ? null : this)) {
                     return null;
                 }
             }
@@ -1513,21 +1463,26 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             this.executor = null;
             this.input = null;
             this.action = null;
-            this.state = null;
+            this.ctx = null;
             return null;
         }
 
         public static bool FireNow(Promise<T> input,
-                                   Action<IFuture<T>, object?> action, object? state,
-                                   UniOnCompleted2? c) {
+                                   object rawAction, object? ctx,
+                                   UniOnCompleted? c) {
             try {
                 if (c != null && !c.Claim()) {
                     return false;
                 }
-                action(input, state);
+                if (rawAction is Action<IFuture<T>> action1) {
+                    action1.Invoke(input);
+                } else {
+                    Action<IFuture<T>, object?> action2 = (Action<IFuture<T>, object?>)rawAction;
+                    action2.Invoke(input, ctx);
+                }
             }
             catch (Exception e) {
-                FutureLogger.LogCause(e, "UniOnCompleted2 caught an exception");
+                FutureLogger.LogCause(e, "UniOnCompleted caught an exception");
             }
             return true;
         }

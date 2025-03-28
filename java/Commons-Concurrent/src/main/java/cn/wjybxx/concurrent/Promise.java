@@ -1022,9 +1022,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             return;
         }
         if (this.isDone() && executor == null) { // listener避免不必要的插入
-            UniOnComplete1.fireNow(this, action, null);
+            UniOnComplete.fireNow(this, action, null, null);
         } else {
-            pushCompletion(new UniOnComplete1<>(executor, options, this, action));
+            pushCompletion(new UniOnComplete<>(executor, options, this, action, null));
         }
     }
 
@@ -1058,9 +1058,9 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             return;
         }
         if (this.isDone() && executor == null) { // listener避免不必要的插入
-            UniOnComplete2.fireNow(this, action, ctx, null);
+            UniOnComplete.fireNow(this, action, ctx, null);
         } else {
-            pushCompletion(new UniOnComplete2<>(executor, options, this, action, ctx));
+            pushCompletion(new UniOnComplete<>(executor, options, this, action, ctx));
         }
     }
 
@@ -2159,16 +2159,21 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     // region UniOnComplete
 
     /** 普通回调式计算的超类 -- 泛型T就是Promise的T，因此命名相同 */
-    private static abstract class UniOnComplete<T> extends Completion {
+    private static class UniOnComplete<T> extends Completion {
 
         Executor executor;
         int options;
         Promise<T> input;
+        Object action;
+        Object ctx;
 
-        public UniOnComplete(Executor executor, int options, Promise<T> input) {
+        public UniOnComplete(Executor executor, int options, Promise<T> input,
+                             Object action, Object ctx) {
             this.options = options;
             this.executor = executor;
             this.input = input;
+            this.action = action;
+            this.ctx = ctx;
         }
 
         @Override
@@ -2192,58 +2197,6 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             }
             return true;
         }
-    }
-
-    private static class UniOnComplete1<T> extends UniOnComplete<T> {
-
-        Consumer<? super IFuture<T>> action;
-
-        public UniOnComplete1(Executor executor, int options, Promise<T> input,
-                              Consumer<? super IFuture<T>> action) {
-            super(executor, options, input);
-            this.action = action;
-        }
-
-        @Override
-        Promise<?> tryFire(int mode) {
-            final Promise<T> input = this.input;
-            // 异步模式下已经claim
-            if (!fireNow(input, action, mode > 0 ? null : this)) {
-                return null;
-            }
-            // help gc
-            this.executor = null;
-            this.input = null;
-            this.action = null;
-            return null;
-        }
-
-        static <T> boolean fireNow(Promise<T> input,
-                                   Consumer<? super IFuture<T>> action,
-                                   UniOnComplete1<T> c) {
-            try {
-                if (c != null && !c.claim()) {
-                    return false;
-                }
-                action.accept(input);
-            } catch (Throwable e) {
-                FutureLogger.logCause(e, "UniOnComplete1 caught an exception");
-            }
-            return true;
-        }
-    }
-
-    private static class UniOnComplete2<T> extends UniOnComplete<T> {
-
-        BiConsumer<? super IFuture<T>, Object> action;
-        Object ctx;
-
-        public UniOnComplete2(Executor executor, int options, Promise<T> input,
-                              BiConsumer<? super IFuture<T>, Object> action, Object ctx) {
-            super(executor, options, input);
-            this.action = action;
-            this.ctx = ctx;
-        }
 
         @Override
         Promise<?> tryFire(int mode) {
@@ -2266,21 +2219,27 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             return null;
         }
 
+        @SuppressWarnings("unchecked")
         static <T> boolean fireNow(Promise<T> input,
-                                   BiConsumer<? super IFuture<T>, Object> action, Object ctx,
-                                   UniOnComplete2<T> c) {
+                                   Object rawAction, Object ctx,
+                                   UniOnComplete<T> c) {
             try {
                 if (c != null && !c.claim()) {
                     return false;
                 }
-                action.accept(input, ctx);
+                if (rawAction instanceof Consumer<?>) {
+                    var action = (Consumer<? super IFuture<T>>) rawAction;
+                    action.accept(input);
+                } else {
+                    var action = (BiConsumer<? super IFuture<T>, Object>) rawAction;
+                    action.accept(input, ctx);
+                }
             } catch (Throwable e) {
-                FutureLogger.logCause(e, "UniOnComplete2 caught an exception");
+                FutureLogger.logCause(e, "UniOnComplete caught an exception");
             }
             return true;
         }
     }
-
     // endregion
 
 }

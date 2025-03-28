@@ -74,20 +74,18 @@ public static class TaskOptions
     ///</summary>
     public const int TIMEOUT_BEFORE_RUN = 1 << 16;
     /// <summary>
-    /// 延时任务：忽略来自future的取消
-    /// 1. 由于要和jdk保持兼容，默认是需要监听来自Future的取消信号的。
-    /// 2. 同时我们需要监听来自{@link ICancelToken}的取消，两端都监听有冗余开销。
-    /// 3. 用户可以启用该选项以避免监听来自Future的取消。
+    /// 延时任务：监听来自future的取消信号
     /// 
     /// ps:监听取消信号的目的在于及时从队列中删除任务。
     ///</summary>
-    private const int IGNORE_FUTURE_CANCEL = 1 << 17;
-
+    private const int LISTEN_FUTURE_CANCEL = 1 << 17;
     /// <summary>
-    /// 该选项表示异步任务需要继承上游任务的取消令牌。
-    /// 注意： 在显式指定了上下文的情况下无效。
+    /// 延时任务：监听取消令牌中的取消信号
+    ///
+    /// ps:监听取消信号的目的在于及时从队列中删除任务。
     /// </summary>
-    public const int STAGE_INHERIT_CANCEL_TOKEN = 18;
+    public const int LISTEN_CTS_CANCEL = 18;
+
     /// <summary>
     /// 如果一个异步任务当前已在目标<see cref="ISingleThreadExecutor"/>线程，则立即执行，而不提交任务。
     /// 仅用于{@link ICompletionStage}
