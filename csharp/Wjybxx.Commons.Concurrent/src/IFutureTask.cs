@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Concurrent
 /// 1. 该接口暴露给Executor的扩展类，不是用户使用的类。
 /// 2. 需要获取结果的任务，我们将调度选项保存下来；普通任务的调度选项可能在execute。
 /// 3. 该接口的实例通常是不应该被序列化的。
-/// 4. 接口不再暴露Future，以允许Task在完成后清理Future。
+/// 4. 接口不再暴露Future，以允许Task在完成后清理Future(这样才能池化Future)。
 /// </summary>
 public interface IFutureTask : ITask
 {
@@ -36,16 +36,10 @@ public interface IFutureTask : ITask
 
     /// <summary>
     /// 取消执行
-    /// 取消可能由调度器触发，因此需要暴露该接口给EventLoop。
-    /// 该方法由EventLoop调用，不需要再回调通知EventLoop.
-    /// 实现时，优先使用CancelToken中的取消码。
+    /// 可能是检测到取消信号，也可能是其它原因，EventLoop主动停止任务。
+    /// 如果此时收到了取消信号，可优先使用取消令牌中的取消码进入取消状态。
+    /// 如果task已进入完成状态。可忽略该请求。
     /// </summary>
-    /// <param name="code">默认取消码</param>
-    void TrySetCancelled(int code = CancelCodes.REASON_SHUTDOWN);
-
-    /// <summary>
-    /// 清理任务
-    /// </summary>
-    void Clear();
+    void Cancel(int code);
 }
 }

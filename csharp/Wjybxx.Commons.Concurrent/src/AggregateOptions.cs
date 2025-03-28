@@ -23,12 +23,12 @@ namespace Wjybxx.Commons.Concurrent
 internal readonly struct AggregateOptions
 {
     private readonly byte type;
-    public readonly int successRequire;
+    public readonly int required;
     public readonly bool failFast;
 
-    private AggregateOptions(byte type, int successRequire, bool failFast) {
+    private AggregateOptions(byte type, int required, bool failFast) {
         this.type = type;
-        this.successRequire = successRequire;
+        this.required = required;
         this.failFast = failFast;
     }
 
@@ -65,15 +65,15 @@ internal readonly struct AggregateOptions
     /// 成功完成n个
     /// </summary>
     /// <param name="futureCount">future数量</param>
-    /// <param name="successRequire">需要成功完成的数量</param>
+    /// <param name="required">需要成功完成的数量</param>
     /// <param name="failFast">是否快速失败</param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    public static AggregateOptions SelectN(int futureCount, int successRequire, bool failFast) {
-        if (futureCount < 0 || successRequire < 0) {
+    public static AggregateOptions SelectN(int futureCount, int required, bool failFast) {
+        if (futureCount < 0 || required < 0) {
             throw new ArgumentException();
         }
-        return new AggregateOptions(TYPE_SELECT_MANY, successRequire, failFast);
+        return new AggregateOptions(TYPE_SELECT_MANY, required, failFast);
     }
 }
 }

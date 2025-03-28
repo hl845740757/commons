@@ -31,10 +31,10 @@ namespace Commons.Tests.Concurrent;
 public class CancelTokenTest
 {
     /** 用于测试异步执行 */
-    private static readonly IEventLoop globalEventLoop = new DisruptorEventLoopBuilder<MiniAgentEvent>()
+    private static readonly IEventLoop globalEventLoop = new DisruptorEventLoopBuilder<AgentEvent>()
     {
         ThreadFactory = new DefaultThreadFactory("Scheduler", true),
-        EventSequencer = new RingBufferEventSequencer<MiniAgentEvent>.Builder(MiniAgentEvent.FACTORY)
+        EventSequencer = new RingBufferEventSequencer<AgentEvent>.Builder(AgentEvent.FACTORY)
             .Build()
     }.Build();
 

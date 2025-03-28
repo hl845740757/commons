@@ -20,6 +20,7 @@ import cn.wjybxx.base.ArrayUtils;
 import cn.wjybxx.base.fx.ComponentIdPool;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -32,7 +33,7 @@ public class EventLoopUtils {
     public static final ComponentIdPool GLOBAL = ComponentIdPool.newPool();
 
     /** 将组件散开为基于组件index的数组 -- 暂时禁止组件重复 */
-    public static EventLoopModule[] toIndexedArray(List<EventLoopModule> moduleList) {
+    public static EventLoopModule[] toIndexedArray(Collection<EventLoopModule> moduleList) {
         if (moduleList.isEmpty()) {
             return new EventLoopModule[0];
         }

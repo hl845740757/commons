@@ -34,7 +34,7 @@ public class DisruptorEventLoopMpExecuteTest
 
     private static CounterAgent agent;
     private static Counter counter;
-    private static DisruptorEventLoop<CounterEvent> consumer;
+    private static DisruptorEventLoop<AgentEvent> consumer;
     private static IList<Thread> producerList;
     private static volatile bool alert;
 
@@ -49,10 +49,10 @@ public class DisruptorEventLoopMpExecuteTest
 
     [Test]
     public void TestRingBuffer() {
-        consumer = new DisruptorEventLoopBuilder<CounterEvent>()
+        consumer = new DisruptorEventLoopBuilder<AgentEvent>()
         {
             ThreadFactory = new DefaultThreadFactory("consumer"),
-            EventSequencer = new RingBufferEventSequencer<CounterEvent>.Builder(() => new CounterEvent()).Build(),
+            EventSequencer = new RingBufferEventSequencer<AgentEvent>.Builder(() => new AgentEvent()).Build(),
             Agent = agent
         }.Build();
 
@@ -81,10 +81,10 @@ public class DisruptorEventLoopMpExecuteTest
 
     [Test]
     public void TestUnboundedBuffer() {
-        consumer = new DisruptorEventLoopBuilder<CounterEvent>()
+        consumer = new DisruptorEventLoopBuilder<AgentEvent>()
         {
             ThreadFactory = new DefaultThreadFactory("consumer"),
-            EventSequencer = new MpUnboundedEventSequencer<CounterEvent>.Builder(() => new CounterEvent()).Build(),
+            EventSequencer = new MpUnboundedEventSequencer<AgentEvent>.Builder(() => new AgentEvent()).Build(),
             Agent = agent
         }.Build();
 
@@ -112,7 +112,7 @@ public class DisruptorEventLoopMpExecuteTest
     }
 
     private static void ProducerLoop(int type) {
-        DisruptorEventLoop<CounterEvent> consumer = DisruptorEventLoopMpExecuteTest.consumer;
+        DisruptorEventLoop<AgentEvent> consumer = DisruptorEventLoopMpExecuteTest.consumer;
         long localSequence = 0;
         while (!alert && localSequence < 1000000) {
             try {

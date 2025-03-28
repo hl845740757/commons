@@ -30,10 +30,10 @@ public class ScheduleCancelTest
 
     [SetUp]
     public void SetUp() {
-        consumer = new DisruptorEventLoopBuilder<MiniAgentEvent>()
+        consumer = new DisruptorEventLoopBuilder<AgentEvent>()
         {
             ThreadFactory = new DefaultThreadFactory("Scheduler", true),
-            EventSequencer = new RingBufferEventSequencer<MiniAgentEvent>.Builder(MiniAgentEvent.FACTORY)
+            EventSequencer = new RingBufferEventSequencer<AgentEvent>.Builder(AgentEvent.FACTORY)
                 .Build()
         }.Build();
         consumer.Start().Join();

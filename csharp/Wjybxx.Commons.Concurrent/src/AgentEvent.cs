@@ -21,23 +21,29 @@ using System;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 提供最小支持的AgentEvent
+/// 最基础的<see cref="IAgentEvent"/>实现
 /// </summary>
-public struct MiniAgentEvent : IAgentEvent
+public struct AgentEvent : IAgentEvent
 {
     private int type;
-    private object? obj1;
-    private object? obj2;
     private int options;
+    public object? obj1;
+    public object? obj2;
+    public long longVal1;
+    public long longVal2;
 
     /// <summary>
     /// 构造函数将type声明为可选值，会导致不被调用构造函数
     /// </summary>
-    public static readonly Func<MiniAgentEvent> FACTORY = () => {
-        MiniAgentEvent r = default;
+    public static readonly Func<AgentEvent> FACTORY = () => {
+        AgentEvent r = default;
         r.type = IAgentEvent.TYPE_INVALID;
         return r;
     };
+
+    public AgentEvent(int type) : this() {
+        this.type = type;
+    }
 
     public int Type {
         get => type;
@@ -59,6 +65,15 @@ public struct MiniAgentEvent : IAgentEvent
         set => obj2 = value;
     }
 
+    public long LongVal1 {
+        get => longVal1;
+        set => longVal1 = value;
+    }
+    public long LongVal2 {
+        get => longVal2;
+        set => longVal2 = value;
+    }
+
     public void Clean() {
         type = IAgentEvent.TYPE_INVALID;
         options = 0;
@@ -71,6 +86,17 @@ public struct MiniAgentEvent : IAgentEvent
         options = 0;
         obj1 = null;
         obj2 = null;
+        longVal1 = 0;
+        longVal2 = 0;
+    }
+
+    public override string ToString() {
+        return $"{nameof(type)}: {type}," +
+               $" {nameof(options)}: {options}," +
+               $" {nameof(obj1)}: {obj1}," +
+               $" {nameof(obj2)}: {obj2}," +
+               $" {nameof(longVal1)}: {longVal1}," +
+               $" {nameof(longVal2)}: {longVal2}";
     }
 }
 }

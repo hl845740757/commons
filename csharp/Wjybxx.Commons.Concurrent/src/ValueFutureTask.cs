@@ -150,19 +150,12 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
     }
 
     /** 设置为取消状态 */
-    public void TrySetCancelled(int code = CancelCodes.REASON_SHUTDOWN) {
-        ICancelToken cancelToken = GetCancelToken();
-        int cancelCode = cancelToken.CancelCode;
+    public void Cancel(int code) {
+        int cancelCode = GetCancelToken().CancelCode;
         if (cancelCode == 0) {
             cancelCode = code;
         }
         Internal_TrySetCancelled(cancelCode);
-    }
-
-    /// <summary>
-    /// 该方法可能被EventLoop调用，但我们空实现
-    /// </summary>
-    public void Clear() {
     }
 
     /** 任务的类型 */
@@ -206,7 +199,7 @@ internal class ValueFutureTask<T> : ValuePromise<T>, IFutureTask
         }
     }
 
-    public void Run() {
+    public virtual void Run() {
         ICancelToken cancelToken = GetCancelToken();
         if (cancelToken.IsCancelRequested) {
             Internal_TrySetCancelled(cancelToken.CancelCode);

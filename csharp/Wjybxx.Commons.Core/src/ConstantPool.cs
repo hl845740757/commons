@@ -17,7 +17,9 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Wjybxx.Commons
 {
@@ -29,32 +31,26 @@ namespace Wjybxx.Commons
 /// <typeparam name="TConstant"></typeparam>
 public class ConstantPool<TConstant> where TConstant : class, IConstant
 {
-    /** ConstantPool不需要多高的查询性能，因此使用普通的字典更合适，可以保证id分配的连续性 */
-    private readonly Dictionary<string, TConstant> _constantMap = new();
+    private readonly ConcurrentDictionary<string, TConstant> _constantMap = new();
     private readonly ConstantFactory<TConstant>? _factory;
 
     private readonly string poolId = Guid.NewGuid().ToString();
-    /** 下一个要分配的常量Id，总是分配 --由lock保护 */
-    private int _nextId;
-    /**
-     * 下一个要分配的缓存索引，只有builder显式申请的情况下分配。
-     * cacheIndex和id是独立的，通常用于为特殊的<see cref="IConstant"/>建立高速索引。
-     */
-    private int _nextIndex = 0;
+    private volatile int _idGenerator;
+    private volatile int _cacheIndexGenerator;
 
-    private ConstantPool(ConstantFactory<TConstant>? factory, int nextId) {
+    private ConstantPool(ConstantFactory<TConstant>? factory, int firstId) {
         _factory = factory;
-        _nextId = nextId;
+        _idGenerator = firstId;
     }
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="factory">简单工厂，如果为null，则不能通过<see cref="ValueOf"/>等创建实例</param>
-    /// <param name="nextId">初始id</param>
+    /// <param name="factory">简单工厂，如果为null，则不能通过<see cref="ValueOf(string)"/>等创建实例</param>
+    /// <param name="firstId">初始id</param>
     /// <returns></returns>
-    public static ConstantPool<TConstant> NewPool(ConstantFactory<TConstant>? factory, int nextId = 0) {
-        return new ConstantPool<TConstant>(factory, nextId);
+    public static ConstantPool<TConstant> NewPool(ConstantFactory<TConstant>? factory, int firstId = 0) {
+        return new ConstantPool<TConstant>(factory, firstId);
     }
 
     /// <summary>
@@ -91,6 +87,34 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
         if (builder == null) throw new ArgumentNullException(nameof(builder));
         return CreateOrThrow(builder);
     }
+    
+    /** 提供类型转换 */
+    public TConstant NewInstance(IConstant.IBuilder builder) {
+        if (builder == null) throw new ArgumentNullException(nameof(builder));
+        IConstant.Builder<TConstant> castBuilder = (IConstant.Builder<TConstant>)builder;
+        return CreateOrThrow(castBuilder);
+    }
+
+    /// <summary>
+    /// 获取给定名字对应的常量
+    ///
+    /// 1.如果给定的常量存在，则返回存在的常量。
+    /// 2.如果给定的常量不存在，则根据Builder的信息初始化。
+    /// </summary>
+    /// <param name="builder"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public TConstant ValueOf(IConstant.Builder<TConstant> builder) {
+        if (builder == null) throw new ArgumentNullException(nameof(builder));
+        return GetOrCreate(builder);
+    }
+
+    /** 提供类型转换 */
+    public TConstant ValueOf(IConstant.IBuilder builder) {
+        if (builder == null) throw new ArgumentNullException(nameof(builder));
+        IConstant.Builder<TConstant> castBuilder = (IConstant.Builder<TConstant>)builder;
+        return GetOrCreate(castBuilder);
+    }
 
     /// <summary>
     /// 判断对应的常量是否存在
@@ -99,9 +123,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     /// <returns></returns>
     public bool Exists(string name) {
         IConstant.CheckName(name);
-        lock (_constantMap) {
-            return _constantMap.ContainsKey(name);
-        }
+        return _constantMap.ContainsKey(name);
     }
 
     /// <summary>
@@ -111,9 +133,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     /// <returns></returns>
     public TConstant? Get(string name) {
         IConstant.CheckName(name);
-        lock (_constantMap) {
-            return _constantMap.TryGetValue(name, out var constant) ? constant : null;
-        }
+        return _constantMap.TryGetValue(name, out TConstant constant) ? constant : null;
     }
 
     /// <summary>
@@ -123,12 +143,10 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     /// <returns></returns>
     public TConstant GetOrThrow(string name) {
         IConstant.CheckName(name);
-        lock (_constantMap) {
-            if (_constantMap.TryGetValue(name, out var constant)) {
-                return constant;
-            }
-            throw new ArgumentException(name + " does not exist");
+        if (_constantMap.TryGetValue(name, out TConstant constant)) {
+            return constant;
         }
+        throw new ArgumentException(name + " does not exist");
     }
 
     /// <summary>
@@ -142,24 +160,16 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     /// </summary>
     public List<TConstant> Values {
         get {
-            lock (_constantMap) {
-                List<TConstant> r = new List<TConstant>(_constantMap.Values);
-                r.Sort();
-                return r;
-            }
+            List<TConstant> r = new List<TConstant>(_constantMap.Values);
+            r.Sort();
+            return r;
         }
     }
 
     /// <summary>
     /// 获取常量池中的常量数量
     /// </summary>
-    public int Count {
-        get {
-            lock (_constantMap) {
-                return _constantMap.Count;
-            }
-        }
-    }
+    public int Count => _constantMap.Count;
 
     /// <summary>
     /// 创建一个当前常量池的快照
@@ -171,26 +181,37 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
 
     private TConstant GetOrCreate(string name) {
         IConstant.CheckName(name);
-        lock (_constantMap) {
-            if (_constantMap.TryGetValue(name, out var constant)) {
-                return constant;
-            }
-            constant = NewConstant(new SimpleBuilder(name, _factory!));
-            _constantMap.Add(constant.Name, constant);
+        if (_constantMap.TryGetValue(name, out TConstant constant)) {
             return constant;
         }
+        constant = NewConstant(new SimpleBuilder(name, _factory!));
+        if (_constantMap.TryAdd(name, constant)) {
+            return constant;
+        }
+        return _constantMap[name];
+    }
+
+    private TConstant GetOrCreate(IConstant.Builder<TConstant> builder) {
+        string name = builder.Name;
+        if (_constantMap.TryGetValue(name, out TConstant constant)) {
+            return constant;
+        }
+        constant = NewConstant(builder);
+        if (_constantMap.TryAdd(name, constant)) {
+            return constant;
+        }
+        return _constantMap[name];
     }
 
     private TConstant CreateOrThrow(IConstant.Builder<TConstant> builder) {
         string name = builder.Name;
-        lock (_constantMap) {
-            if (_constantMap.ContainsKey(name)) {
-                throw new ArgumentException($"'{name}' is already in use");
+        if (!_constantMap.TryGetValue(name, out TConstant constant)) {
+            constant = NewConstant(builder);
+            if (_constantMap.TryAdd(name, constant)) {
+                return constant;
             }
-            TConstant constant = NewConstant(builder);
-            _constantMap.Add(constant.Name, constant);
-            return constant;
         }
+        throw new ArgumentException($"'{name}' is already in use");
     }
 
     /// <summary>
@@ -200,8 +221,10 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     /// <returns></returns>
     private TConstant NewConstant(IConstant.Builder<TConstant> builder) {
         string name = builder.Name;
-        int nextId = _nextId++;
-        int cacheIndex = builder.RequireCacheIndex ? _nextIndex++ : -1;
+        int nextId = Interlocked.Increment(ref _idGenerator) - 1;
+        int cacheIndex = builder.RequireCacheIndex
+            ? Interlocked.Increment(ref _cacheIndexGenerator) - 1
+            : -1;
         builder.SetId(poolId, nextId, cacheIndex);
 
         TConstant constant = builder.Build();
@@ -223,7 +246,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
             _factory = factory;
         }
 
-        public override TConstant Build() {
+        protected internal override TConstant Build() {
             return _factory(this);
         }
     }

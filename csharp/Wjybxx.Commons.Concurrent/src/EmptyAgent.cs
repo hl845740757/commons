@@ -29,19 +29,21 @@ public class EmptyAgent<TEvent> : IEventLoopAgent<TEvent> where TEvent : IAgentE
     private EmptyAgent() {
     }
 
-    public void Inject(IEventLoop eventLoop) {
+    public void Inject(IEventLoop eventLoop, long cid) {
     }
 
-    public void OnStart() {
+    public void Subscribe(int type, IAgentEventHandler<TEvent> handler) {
+        throw new System.NotImplementedException();
     }
 
     public void OnEvent(long sequence, ref TEvent evt) {
     }
 
-    public void Update() {
+    public bool CheckMainLoop(long threadTime) {
+        return false;
     }
 
-    public void OnShutdown() {
+    public void BeforeMainLoop(long threadTime) {
     }
 }
 }

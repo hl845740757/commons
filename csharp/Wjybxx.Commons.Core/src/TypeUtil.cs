@@ -28,7 +28,7 @@ namespace Wjybxx.Commons
 internal static class TypeUtil
 {
     /// <summary>
-    /// 获取的Type的简单名，不包含
+    /// 获取的Type的简单名，不包含泛型信息
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>

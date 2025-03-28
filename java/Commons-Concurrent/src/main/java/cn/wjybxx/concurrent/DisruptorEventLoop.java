@@ -108,11 +108,9 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         this.dataProvider = eventSequencer.dataProvider();
         this.schedulerHelper = new DisruptorSchedulerHelper(this);
 
-        this.rejectedExecutionHandler = ObjectUtils.nullToDef(builder.getRejectedExecutionHandler(),
-                RejectedExecutionHandlers.abort());
+        this.rejectedExecutionHandler = ObjectUtils.nullToDef(builder.getRejectedExecutionHandler(), RejectedExecutionHandlers.abort());
         this.agent = ObjectUtils.nullToDef(builder.getAgent(), EmptyAgent.getInstance());
         this.batchSize = MathCommon.clamp(builder.getBatchSize(), MIN_BATCH_SIZE, MAX_BATCH_SIZE);
-
         // 缓存
         if (dataProvider instanceof MpUnboundedBuffer<? extends T> unboundedBuffer2) {
             this.unboundedBuffer = unboundedBuffer2;
@@ -126,7 +124,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         thread = Objects.requireNonNull(threadFactory.newThread(worker), "newThread");
         consumerId = ObjectUtils.zeroToDef(builder.getConsumerId(), thread.threadId());
         DefaultThreadFactory.checkUncaughtExceptionHandler(thread);
-
         // 添加worker的sequence为网关sequence，生产者们会监听到线程的消费进度
         eventSequencer.addGatingBarriers(barrier);
 
@@ -270,7 +267,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     }
 
     /**
-     * 注册事件湖里区
+     * 注册事件处理器
      * {@link IEventLoopModule}应当在启动时注册。
      *
      * @param type    事件类型
@@ -297,7 +294,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
      * <pre> {@code
      *      long sequence = eventLoop.nextSequence();
      *      try {
-     *          IAgentEvent event = eventLoop.getEvent(sequence);
+     *          AgentEvent event = eventLoop.getEvent(sequence);
      *          // Do work.
      *      } finally {
      *          eventLoop.publish(sequence)
@@ -312,7 +309,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
 
     /** 发布申请的序号 */
     public final void publish(long sequence) {
-        eventSequencer.publish(sequence);
+        eventSequencer.producerBarrier().publish(sequence);
         // RingBuffer不再私有，不可测试sequence == 0
         if (state == EventLoopState.ST_UNSTARTED) {
             ensureThreadStarted();
@@ -329,7 +326,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
      *   try {
      *      long lo = hi - (n - 1);
      *      for (long sequence = lo; sequence <= hi; sequence++) {
-     *          IAgentEvent event = eventLoop.getEvent(sequence);
+     *          AgentEvent event = eventLoop.getEvent(sequence);
      *          // Do work.
      *      }
      *   } finally {
@@ -519,7 +516,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     /** 停止所有模块 */
     protected final void stopModules() {
         // 逆序停止
-        for (int i = 0, size = moduleList.size(); i < size; i++) {
+        for (int i = moduleList.size() - 1; i >= 0; i--) {
             EventLoopModule workerModule = moduleList.get(i);
             if (!workerModule.getCid().isPrivateScript()) {
                 continue;
@@ -766,7 +763,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
                 final T event = dataProvider.consumerGet(nextSequence);
                 final int type = event.getType();
                 try {
-                    if (type == IAgentEvent.TYPE_INVALID) {
+                    if (type == TYPE_INVALID) {
                         nullCount++;
                         continue;
                     }

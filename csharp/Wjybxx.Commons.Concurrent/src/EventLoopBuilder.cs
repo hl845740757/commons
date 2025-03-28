@@ -17,6 +17,8 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
+using System.Threading;
 using Wjybxx.Disruptor;
 
 namespace Wjybxx.Commons.Concurrent
@@ -31,8 +33,9 @@ public abstract class EventLoopBuilder<T> where T : IAgentEvent
     private RejectedExecutionHandler _rejectedExecutionHandler = RejectedExecutionHandlers.ABORT;
     private ThreadFactory? _threadFactory;
 
+    private long consumerId;
     private IEventLoopAgent<T>? _agent = EmptyAgent<T>.Inst;
-    private IEventLoopModule? _mainModule;
+    private readonly List<EventLoopModule> _moduleList = new List<EventLoopModule>();
     private int _batchSize = 1024;
 
     public EventLoopBuilder() {
@@ -67,6 +70,14 @@ public abstract class EventLoopBuilder<T> where T : IAgentEvent
     }
 
     /// <summary>
+    /// 事件循环的消费者id - 未指定将使用<see cref="Thread.ManagedThreadId"/>
+    /// </summary>
+    public long ConsumerId {
+        get => consumerId;
+        set => consumerId = value;
+    }
+
+    /// <summary>
     /// 事件循环的内部代理
     /// </summary>
     public IEventLoopAgent<T>? Agent {
@@ -75,11 +86,23 @@ public abstract class EventLoopBuilder<T> where T : IAgentEvent
     }
 
     /// <summary>
-    /// 事件循环的主模块
+    /// 事件循环的模块
     /// </summary>
-    public IEventLoopModule? MainModule {
-        get => _mainModule;
-        set => _mainModule = value;
+    public List<EventLoopModule> ModuleList => _moduleList;
+
+    /// <summary>
+    /// 添加模块
+    /// </summary>
+    /// <param name="module"></param>
+    /// <exception cref="ArgumentNullException"></exception>
+    public void AddModule(EventLoopModule module) {
+        if (module == null) throw new ArgumentNullException(nameof(module));
+        _moduleList.Add(module);
+    }
+
+    public void AddModules(List<EventLoopModule> modules) {
+        if (modules == null) throw new ArgumentNullException(nameof(modules));
+        _moduleList.AddRange(modules);
     }
 
     /// <summary>
@@ -93,8 +116,9 @@ public abstract class EventLoopBuilder<T> where T : IAgentEvent
 
 public class DisruptorEventLoopBuilder<T> : EventLoopBuilder<T> where T : IAgentEvent
 {
+#nullable disable
     private EventSequencer<T> eventSequencer;
-    private WaitStrategy? waitStrategy;
+    private WaitStrategy waitStrategy;
     private bool cleanEventAfterConsumed = true;
     private bool cleanBufferOnExit = true;
 
@@ -107,7 +131,7 @@ public class DisruptorEventLoopBuilder<T> : EventLoopBuilder<T> where T : IAgent
         }
     }
 
-#if NET5_0_OR_GREATER
+#if NET6_0_OR_GREATER
     public override DisruptorEventLoop<T> Build() {
 #else
     public override IEventLoop Build() {
@@ -132,7 +156,7 @@ public class DisruptorEventLoopBuilder<T> : EventLoopBuilder<T> where T : IAgent
     /// 2.应当避免使用无超时的等待策略，EventLoop需要处理定时任务，不能一直等待生产者。
     /// </summary>
     /// <exception cref="ArgumentNullException"></exception>
-    public WaitStrategy? WaitStrategy {
+    public WaitStrategy WaitStrategy {
         get => waitStrategy;
         set => waitStrategy = value;
     }

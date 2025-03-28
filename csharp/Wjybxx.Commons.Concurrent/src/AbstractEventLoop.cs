@@ -19,9 +19,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Wjybxx.Commons.Collections;
+using Wjybxx.Commons.Fx;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -35,12 +37,34 @@ public abstract class AbstractEventLoop : IEventLoop
     private readonly SynchronizationContext _syncContext;
     private readonly TaskScheduler _scheduler;
 
-    protected AbstractEventLoop(IEventLoopGroup? parent) {
+    /** 所有的模块 -- 不可变List，保留为添加顺序 */
+    protected readonly ImmutableList<EventLoopModule> _moduleList;
+    /** 高速缓存的模块列表 */
+    protected readonly ImmutableList<EventLoopModule?> _indexedModuleList;
+    /** 重写了update方法的模块 */
+    protected readonly ImmutableList<EventLoopModule> _updateModuleList;
+    /** 重写了lateUpdate方法的模块 */
+    protected readonly ImmutableList<EventLoopModule> _lateUpdateModuleList;
+
+    protected AbstractEventLoop(IEventLoopGroup? parent,
+                                List<EventLoopModule> moduleList) {
         _parent = parent;
         _selfCollection = ImmutableList<IEventLoop>.CreateRange(new[] { this });
-
         _syncContext = new ExecutorSynchronizationContext(this);
         _scheduler = new ExecutorTaskScheduler(this);
+        // 需要去重
+        LinkedHashSet<EventLoopModule> copiedModuleList = new LinkedHashSet<EventLoopModule>(moduleList);
+        _moduleList = copiedModuleList.ToImmutableList2();
+        _indexedModuleList = EventLoopUtils.ToIndexedArray(copiedModuleList).ToImmutableList2();
+        // 需要update的模块缓存
+        _updateModuleList = copiedModuleList
+            .Where(e => e.Cid.IsPrivateScript)
+            .Where(EventLoopUtils.IsOverrideUpdate)
+            .ToImmutableList2();
+        _lateUpdateModuleList = copiedModuleList
+            .Where(e => e.Cid.IsPrivateScript)
+            .Where(EventLoopUtils.IsOverrideLateUpdate)
+            .ToImmutableList2();
     }
 
     public SynchronizationContext AsSyncContext() => _syncContext;
@@ -55,8 +79,6 @@ public abstract class AbstractEventLoop : IEventLoop
 
     // 允许子类转换类型
     public virtual IEventLoop Select(int key) => this;
-
-    public abstract IEventLoopModule? MainModule { get; }
 
     public int ChildCount => 1;
 
@@ -191,25 +213,180 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public virtual IScheduledPromise<int> NewScheduledPromise() => new ScheduledPromise<int>(this);
 
+    protected abstract ISchedulerHelper Helper { get; }
+
     public virtual IScheduledFuture<TResult> Schedule<TResult>(in ScheduledTaskBuilder<TResult> builder) {
-        throw new NotImplementedException();
+        IScheduledPromise<TResult> promise = NewScheduledPromise<TResult>();
+        Execute(ScheduledPromiseTask.OfBuilder(in builder, promise, Helper));
+        return promise;
     }
 
     public virtual IScheduledFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
-        throw new NotImplementedException();
+        IScheduledPromise<int> promise = NewScheduledPromise();
+        Execute(ScheduledPromiseTask.OfAction(action, cancelToken, 0, promise, Helper, Helper.TriggerTime(1, delay)));
+        return promise;
     }
 
     public virtual IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
-        throw new NotImplementedException();
+        IScheduledPromise<TResult> promise = NewScheduledPromise<TResult>();
+        Execute(ScheduledPromiseTask.OfFunction(action, cancelToken, 0, promise, Helper, Helper.TriggerTime(1, delay)));
+        return promise;
     }
 
     public virtual IScheduledFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
-        throw new NotImplementedException();
+        ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(action, cancelToken);
+        builder.SetFixedDelay(delay.Ticks, period.Ticks, new TimeSpan(1));
+
+        IScheduledPromise<int> promise = NewScheduledPromise();
+        Execute(ScheduledPromiseTask.OfBuilder(in builder, promise, Helper));
+        return promise;
     }
 
     public virtual IScheduledFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+        ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(action, cancelToken);
+        builder.SetFixedRate(delay.Ticks, period.Ticks, new TimeSpan(1));
+
+        IScheduledPromise<int> promise = NewScheduledPromise();
+        Execute(ScheduledPromiseTask.OfBuilder(in builder, promise, Helper));
+        return promise;
+    }
+
+    #endregion
+
+    #region 组件模式
+
+    public void AddComponent(IComponent comp) {
         throw new NotImplementedException();
     }
+
+    public bool DelComponent(IComponent comp) {
+        throw new NotImplementedException();
+    }
+
+    public bool ContainsComponent(IComponent comp) {
+        int index = comp.Cid.Index;
+        return index < _indexedModuleList.Count && _indexedModuleList[index] == comp;
+    }
+
+    public IList<IComponent> GetComponents() {
+        // .net8 才支持泛型协变
+        return new List<IComponent>(_moduleList);
+    }
+
+    public int GetComponents(List<IComponent> outList) {
+        outList.AddRange(_moduleList);
+        return _moduleList.Count;
+    }
+
+    public int CountComponent() {
+        return _moduleList.Count;
+    }
+
+    #region 泛型
+
+    public T GetComponent<T>(ComponentId<T> cid) where T : IComponent {
+        IComponent? comp;
+        if (cid.Index < _indexedModuleList.Count
+            && (comp = _indexedModuleList[cid.Index]) != null
+            && ReferenceEquals(comp.Cid, cid)) {
+            return (T)comp;
+        }
+        return default;
+    }
+
+    public T GetLastComponent<T>(ComponentId<T> cid) where T : IComponent {
+        return GetComponent(cid);
+    }
+
+    public List<T> GetComponents<T>(ComponentId<T> cid) where T : IComponent {
+        T component = GetComponent(cid);
+        if (component == null) {
+            return new List<T>(0);
+        }
+        return new List<T>(1) { component };
+    }
+
+    public int GetComponents<T>(ComponentId<T> cid, List<T> outList) where T : IComponent {
+        T component = GetComponent(cid);
+        if (component == null) {
+            return 0;
+        }
+        outList.Add(component);
+        return 1;
+    }
+
+    public T DelComponent<T>(ComponentId<T> cid) where T : IComponent {
+        throw new NotImplementedException();
+    }
+
+    public T DelLastComponent<T>(ComponentId<T> cid) where T : IComponent {
+        throw new NotImplementedException();
+    }
+
+    public List<T> DelComponents<T>(ComponentId<T> cid) where T : IComponent {
+        throw new NotImplementedException();
+    }
+
+    public int DelComponents<T>(ComponentId<T> cid, List<T> outList) where T : IComponent {
+        throw new NotImplementedException();
+    }
+
+    #endregion
+
+    #region 非泛型
+
+    public int CountComponent(ComponentId cid) {
+        return GetComponent(cid) == null ? 0 : 1;
+    }
+
+    public IComponent? GetComponent(ComponentId cid) {
+        IComponent? comp;
+        if (cid.Index < _indexedModuleList.Count
+            && (comp = _indexedModuleList[cid.Index]) != null
+            && ReferenceEquals(comp.Cid, cid)) {
+            return comp;
+        }
+        return null;
+    }
+
+    public IComponent? GetLastComponent(ComponentId cid) {
+        return GetComponent(cid);
+    }
+
+    public List<IComponent> GetComponents(ComponentId cid) {
+        IComponent component = GetComponent(cid);
+        if (component == null) {
+            return new List<IComponent>(0);
+        }
+        return new List<IComponent>(1) { component };
+    }
+
+    public int GetComponents(ComponentId cid, List<IComponent> outList) {
+        IComponent component = GetComponent(cid);
+        if (component == null) {
+            return 0;
+        }
+        outList.Add(component);
+        return 1;
+    }
+
+    public IComponent DelComponent(ComponentId cid) {
+        throw new NotImplementedException();
+    }
+
+    public IComponent DelLastComponent(ComponentId cid) {
+        throw new NotImplementedException();
+    }
+
+    public List<IComponent> DelComponents(ComponentId cid) {
+        throw new NotImplementedException();
+    }
+
+    public int DelComponents(ComponentId cid, List<IComponent> outList) {
+        throw new NotImplementedException();
+    }
+
+    #endregion
 
     #endregion
 }

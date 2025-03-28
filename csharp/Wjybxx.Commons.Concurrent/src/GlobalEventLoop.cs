@@ -25,13 +25,13 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 全局事件循环，用于执行一些简单的任务
 /// </summary>
-public sealed class GlobalEventLoop : DisruptorEventLoop<MiniAgentEvent>
+public sealed class GlobalEventLoop : DisruptorEventLoop<AgentEvent>
 {
-    public static GlobalEventLoop Inst { get; } = new GlobalEventLoop(new DisruptorEventLoopBuilder<MiniAgentEvent>()
+    public static GlobalEventLoop Inst { get; } = new GlobalEventLoop(new DisruptorEventLoopBuilder<AgentEvent>()
     {
-        Agent = EmptyAgent<MiniAgentEvent>.Inst,
+        Agent = EmptyAgent<AgentEvent>.Inst,
         ThreadFactory = new DefaultThreadFactory("GlobalEventLoop", true),
-        EventSequencer = new MpUnboundedEventSequencer<MiniAgentEvent>.Builder(MiniAgentEvent.FACTORY) // 需要使用无界队列
+        EventSequencer = new MpUnboundedEventSequencer<AgentEvent>.Builder(AgentEvent.FACTORY) // 需要使用无界队列
             {
                 WaitStrategy = new TimeoutSleepingWaitStrategy(10, 1, 10), // 等待策略需要支持超时，否则无法调度定时任务
                 ChunkLength = 1024,
@@ -40,7 +40,7 @@ public sealed class GlobalEventLoop : DisruptorEventLoop<MiniAgentEvent>
             .Build()
     });
 
-    private GlobalEventLoop(DisruptorEventLoopBuilder<MiniAgentEvent> builder)
+    private GlobalEventLoop(DisruptorEventLoopBuilder<AgentEvent> builder)
         : base(builder) {
     }
 

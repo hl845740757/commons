@@ -51,7 +51,6 @@ public abstract class EventLoopModule implements IEventLoopModule {
         if (this.eventLoop != null) {
             throw new IllegalStateException("already bind");
         }
-        getCid(); // 确保组件id完成初始化
         this.eventLoop = eventLoop;
         this.status = ComponentStatus.READY;
         this.onReady();
@@ -109,15 +108,6 @@ public abstract class EventLoopModule implements IEventLoopModule {
 
     // region 默认实现
 
-    /** 允许在自动解析组件id前设置组件id */
-    @Override
-    public final void setCid(ComponentId<?> cid) {
-        if (status != ComponentStatus.NEW) {
-            throw new IllegalStateException();
-        }
-        this.cid = cid;
-    }
-
     @Nonnull
     @Override
     public final ComponentId<?> getCid() {
@@ -125,6 +115,15 @@ public abstract class EventLoopModule implements IEventLoopModule {
             cid = Objects.requireNonNull(parseCid(), "cid");
         }
         return cid;
+    }
+
+    /** 允许在自动解析组件id前设置组件id */
+    @Override
+    public final void setCid(ComponentId<?> cid) {
+        if (status != ComponentStatus.NEW) {
+            throw new IllegalStateException();
+        }
+        this.cid = cid;
     }
 
     /** 解析组件id -- 允许重写方法，从另外的池解析组件id */

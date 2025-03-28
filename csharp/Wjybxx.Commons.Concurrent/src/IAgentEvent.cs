@@ -33,7 +33,7 @@ public interface IAgentEvent
 {
 #nullable disable
     /** 表示事件无效 */
-    const int TYPE_INVALID = -1;
+    const int TYPE_INVALID = int.MinValue;
 
     /// <summary>
     /// 事件的类型
@@ -52,17 +52,30 @@ public interface IAgentEvent
     int Options { get; set; }
 
     /// <summary>
-    /// 事件的第一个参数
+    /// 事件的第1个参数
     /// </summary>
     object Obj1 { get; set; }
 
     /// <summary>
-    /// 事件的第二个参数
+    /// 事件的第2个参数
     /// </summary>
     object Obj2 { get; set; }
 
     /// <summary>
+    /// 事件的第1个Long参数
+    /// </summary>
+    long LongVal1 { get; set; }
+
+    /// <summary>
+    /// 事件的第2个Long参数
+    /// </summary>
+    long LongVal2 { get; set; }
+
+    /// <summary>
     /// 清理事件的引用数据 -- 避免内存泄漏
+    ///
+    /// 1.options总是应该被清理
+    /// 2.事件循环每处理完事件就会调用该方法以避免内存泄漏
     /// </summary>
     void Clean();
 

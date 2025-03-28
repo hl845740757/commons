@@ -40,7 +40,9 @@ public interface IComponent {
 
     /**
      * 设置组件id
-     * 注意：只有初始状态下可以设置
+     * 注意：
+     * 1.只有初始状态下可以设置
+     * 2.泛型类如果想指向不同的组件id，必须手动设置组件id
      *
      * @throws IllegalStateException 如果组件不是{@link ComponentStatus#NEW}状态
      */

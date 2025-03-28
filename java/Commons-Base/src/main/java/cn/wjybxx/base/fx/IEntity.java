@@ -19,7 +19,7 @@ package cn.wjybxx.base.fx;
 import java.util.List;
 
 /**
- * 实体抽象
+ * 组件模式的实体抽象
  * <p>
  * Q：需要提供根据{@link Class}查询组件的接口吗？
  * A：不需要！用户可以根据{@link Class}查询关联的组件id，再来查询。
@@ -60,7 +60,7 @@ public interface IEntity {
     <T extends IComponent> T getLastComponent(ComponentId<T> cid);
 
     /** 获取指定组件id关联的所有组件 */
-    <T extends IComponent> Object getComponents(ComponentId<T> cid);
+    <T extends IComponent> List<T> getComponents(ComponentId<T> cid);
 
     /** 获取指定组件id关联的所有组件，返回返回的组件数量 */
     <T extends IComponent> int getComponents(ComponentId<T> cid, List<? super T> outList);

@@ -41,7 +41,7 @@ public abstract class AbstractEventLoop implements IEventLoop {
     protected final Collection<IEventLoop> selfCollection = Collections.singleton(this);
     private final ExecutorServiceAdapter adapter;
 
-    /** 所有的模块 -- 不可变List，保留为添加顺序；第一个必须是MainModule */
+    /** 所有的模块 -- 不可变List，保留为添加顺序 */
     protected final List<EventLoopModule> moduleList;
     /** 高速缓存的模块列表 */
     protected final List<EventLoopModule> indexedModuleList;
@@ -57,7 +57,7 @@ public abstract class AbstractEventLoop implements IEventLoop {
         // 需要去重 - 兼容性
         final LinkedHashSet<EventLoopModule> copiedModuleList = new LinkedHashSet<>(moduleList);
         this.moduleList = List.copyOf(copiedModuleList);
-        this.indexedModuleList = List.of(EventLoopUtils.toIndexedArray(moduleList));
+        this.indexedModuleList = List.of(EventLoopUtils.toIndexedArray(copiedModuleList));
         // 需要Update的模块缓存
         this.updateModuleList = copiedModuleList.stream()
                 .filter(e -> e.getCid().isPrivateScript())
@@ -119,105 +119,6 @@ public abstract class AbstractEventLoop implements IEventLoop {
         if (inEventLoop()) {
             throw new BlockingOperationException("Calling " + method + " from within the EventLoop is not allowed");
         }
-    }
-
-    // endregion
-
-    // region 组件模式
-
-    @Override
-    public void addComponent(IComponent comp) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean delComponent(IComponent comp) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean containsComponent(IComponent comp) {
-        int index = comp.getCid().index;
-        return index < indexedModuleList.size() && indexedModuleList.get(index) == comp;
-    }
-
-    @Override
-    public List<? extends IComponent> getComponents() {
-        return moduleList;
-    }
-
-    @Override
-    public int getComponents(List<IComponent> outList) {
-        outList.addAll(moduleList);
-        return moduleList.size();
-    }
-
-    @Override
-    public int countComponent() {
-        return moduleList.size();
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T extends IComponent> T getComponent(ComponentId<T> cid) {
-        IComponent comp;
-        if (cid.index < indexedModuleList.size()
-                && (comp = indexedModuleList.get(cid.index)) != null
-                && comp.getCid() == cid) {
-            return (T) comp;
-        }
-        return null;
-    }
-
-    @Override
-    public <T extends IComponent> T getLastComponent(ComponentId<T> cid) {
-        return getComponent(cid);
-    }
-
-    @Override
-    public <T extends IComponent> List<T> getComponents(ComponentId<T> cid) {
-        T component = getComponent(cid);
-        if (component == null) {
-            return new ArrayList<>();
-        }
-        ArrayList<T> result = new ArrayList<>(1);
-        result.add(component);
-        return result;
-    }
-
-    @Override
-    public <T extends IComponent> int getComponents(ComponentId<T> cid, List<? super T> outList) {
-        T component = getComponent(cid);
-        if (component == null) {
-            return 0;
-        }
-        outList.add(component);
-        return 1;
-    }
-
-    @Override
-    public <T extends IComponent> T delComponent(ComponentId<T> cid) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T extends IComponent> T delLastComponent(ComponentId<T> cid) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T extends IComponent> List<T> delComponents(ComponentId<T> cid) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T extends IComponent> int delComponents(ComponentId<T> cid, List<? super T> outList) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int countComponent(ComponentId<?> cid) {
-        return getComponent(cid) != null ? 1 : 0;
     }
 
     // endregion
@@ -438,5 +339,104 @@ public abstract class AbstractEventLoop implements IEventLoop {
             logger.warn("A task raised an exception.", t);
         }
     }
+
+    // region 组件模式
+
+    @Override
+    public final void addComponent(IComponent comp) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final boolean delComponent(IComponent comp) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final boolean containsComponent(IComponent comp) {
+        int index = comp.getCid().index;
+        return index < indexedModuleList.size() && indexedModuleList.get(index) == comp;
+    }
+
+    @Override
+    public final List<? extends IComponent> getComponents() {
+        return moduleList;
+    }
+
+    @Override
+    public final int getComponents(List<IComponent> outList) {
+        outList.addAll(moduleList);
+        return moduleList.size();
+    }
+
+    @Override
+    public final int countComponent() {
+        return moduleList.size();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public final <T extends IComponent> T getComponent(ComponentId<T> cid) {
+        IComponent comp;
+        if (cid.index < indexedModuleList.size()
+                && (comp = indexedModuleList.get(cid.index)) != null
+                && comp.getCid() == cid) {
+            return (T) comp;
+        }
+        return null;
+    }
+
+    @Override
+    public final <T extends IComponent> T getLastComponent(ComponentId<T> cid) {
+        return getComponent(cid);
+    }
+
+    @Override
+    public final <T extends IComponent> List<T> getComponents(ComponentId<T> cid) {
+        T component = getComponent(cid);
+        if (component == null) {
+            return new ArrayList<>();
+        }
+        ArrayList<T> result = new ArrayList<>(1);
+        result.add(component);
+        return result;
+    }
+
+    @Override
+    public final <T extends IComponent> int getComponents(ComponentId<T> cid, List<? super T> outList) {
+        T component = getComponent(cid);
+        if (component == null) {
+            return 0;
+        }
+        outList.add(component);
+        return 1;
+    }
+
+    @Override
+    public final <T extends IComponent> T delComponent(ComponentId<T> cid) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final <T extends IComponent> T delLastComponent(ComponentId<T> cid) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final <T extends IComponent> List<T> delComponents(ComponentId<T> cid) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final <T extends IComponent> int delComponents(ComponentId<T> cid, List<? super T> outList) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final int countComponent(ComponentId<?> cid) {
+        return getComponent(cid) != null ? 1 : 0;
+    }
+
+    // endregion
 
 }

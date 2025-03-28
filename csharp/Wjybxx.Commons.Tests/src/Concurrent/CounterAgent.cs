@@ -16,29 +16,36 @@
 
 #endregion
 
+using Wjybxx.Commons;
 using Wjybxx.Commons.Concurrent;
 
 namespace Commons.Tests.Concurrent;
 
-public class CounterAgent : IEventLoopAgent<CounterEvent>
+public class CounterAgent : IEventLoopAgent<AgentEvent>
 {
     private readonly Counter _counter = new Counter();
+    private long systemTickMillis = ObjectUtil.SystemTickMillis();
+    private long lastUpdateTime = ObjectUtil.SystemTickMillis();
 
     public Counter Counter => _counter;
 
-    public void Inject(IEventLoop eventLoop) {
+    public void Inject(IEventLoop eventLoop, long cid) {
     }
 
-    public void OnStart() {
+    public void Subscribe(int type, IAgentEventHandler<AgentEvent> handler) {
+        throw new System.NotImplementedException();
     }
 
-    public void OnEvent(long sequence, ref CounterEvent evt) {
-        _counter.Count(evt.Type, evt.longVal1);
+    public bool CheckMainLoop(long threadTime) {
+        systemTickMillis = ObjectUtil.SystemTickMillis();
+        return systemTickMillis - lastUpdateTime >= 10;
     }
 
-    public void Update() {
+    public void BeforeMainLoop(long threadTime) {
+        lastUpdateTime = systemTickMillis;
     }
 
-    public void OnShutdown() {
+    public void OnEvent(long sequence, ref AgentEvent evt) {
+        _counter.Count(evt.Type, evt.LongVal1);
     }
 }

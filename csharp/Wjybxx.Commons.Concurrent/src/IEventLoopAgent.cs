@@ -16,55 +16,93 @@
 
 #endregion
 
-using System.Threading;
-
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 事件循环的内部代理
+/// 1.如果缺少该组件，事件循环的模块将不会被Update。
+/// 2.Agent对内，MainModule对外，都是为了避免继承扩展带来的局限性.
+/// 3.由Agent决定监听器的管理和对事件的派发
+///
+/// Q：为什么监听器的注册也要委托给Agent处理？
+/// A：允许Agent对派发的所有用户事件进行处理。
 /// </summary>
-public interface IEventLoopAgent<TEvent> where TEvent : IAgentEvent
+public interface IEventLoopAgent<T> : IAgentEventHandler<T> where T : IAgentEvent
 {
     /// <summary>
-    /// 注入EventLoop实例。
-    ///
-    /// 注意：此时EventLoop可能尚未完全初始化，建议只是单纯保存引用！
+    /// 注入事件循环的引用
     /// </summary>
     /// <param name="eventLoop">事件循环</param>
-    void Inject(IEventLoop eventLoop);
+    /// <param name="consumerId">事件循环的消费者id</param>
+    void Inject(IEventLoop eventLoop, long consumerId) {
+    }
 
     /// <summary>
-    /// 事件循环线程启动的时候
-    /// 注意：该方法抛出任何异常都将导致事件循环线程终止！启动期间提交任务时要小心死锁。
+    /// 用户模块请求注册事件监听器
     /// </summary>
-    void OnStart();
+    /// <param name="type">事件类型</param>
+    /// <param name="handler">事件处理器</param>
+    void Subscribe(int type, IAgentEventHandler<T> handler);
 
     /// <summary>
-    /// 收到一个用户自定义事件或任务
-    /// ps：由于事件可能是结构体类型，因此使用ref。
+    /// 处理依赖问题
+    /// 事件循环会在启动所有的模块之前调用该方法，Agent可以处理模块之间的特殊依赖
     /// </summary>
-    /// <param name="sequence">事件序号，如果是Disruptor类事件循环则有值</param>
-    /// <param name="evt">事件</param>
-    void OnEvent(long sequence, ref TEvent evt);
+    void ResolveDependence() {
+    }
 
     /// <summary>
-    /// 当事件循环等待较长时间或处理完一批事件之后都将调用该方法
-    /// 注意：该方法的调用时机和频率是不确定的，因此用户应该自行控制内部逻辑频率。
-    /// </summary>
-    void Update();
-
-    /// <summary>
-    ///  如果当前线程阻塞在中断也无法唤醒的地方，用户需要唤醒线程
+    /// 如果当前线程阻塞在中断也无法唤醒的地方，用户需要唤醒线程
     /// 该方法是多线程调用的，要小心并发问题
     /// </summary>
     void Wakeup() {
     }
 
+    #region 事件循环
+
+    //
     /// <summary>
-    /// 当事件循环退出时将调用该方法
-    /// 退出前进行必要的清理，释放系统资源。
-    /// 注意：此时EventLoop已清理<see cref="SynchronizationContext"/>，因此Shutdown钩子中使用await要小心线程问题。
+    /// 当事件循环启动的时候将调用该方法，可以用于解决模块之间的特殊依赖
+    /// 注意：该方法抛出任何异常，都将导致事件循环线程终止！启动期间提交任务时要小心死锁！
     /// </summary>
-    void OnShutdown();
+    void BeforeEventLoopStart() {
+    }
+
+    /** 在事件循环启动成功后调用 */
+    void AfterEventLoopStart() {
+    }
+
+    /// <summary>
+    /// 当事件循环等待较长时间或处理完一批事件之后都将调用该方法，以检查是否需要执行主循环。
+    /// 事件循环会反复调用该方法，直到该方法返回false，以允许业务层补帧（实现为固定帧率循环）。
+    /// 示例代码如下：
+    /// <code>
+    /// while(mainModule.checkMainLoop(threadTime)) {
+    ///     update(modules)
+    /// }
+    /// </code>
+    /// 1.该方法的调用时机和频率是不确定的，因此用户应该自行控制内部逻辑频率。
+    /// 2.该方法建议实现为无副作用的，更新时间请在{@link #beforeMainLoop(long)}执行
+    /// </summary>
+    /// <param name="threadTime">线程时间(单位与具体时间循环有关)，不建议依赖该值</param>
+    /// <returns></returns>
+    bool CheckMainLoop(long threadTime);
+
+    /** 在每次开始主循环之前调用 */
+    void BeforeMainLoop(long threadTime);
+
+    /** 在每次主循环结束后调用 */
+    void AfterMainLoop(long threadTime) {
+    }
+
+    /** 在停止所有Module前调用 */
+    void BeforeEventLoopShutdown() {
+    }
+
+    /** 在EventLoop停止所有Module之后调用 */
+    void AfterEventLoopShutdown() {
+    }
+
+    #endregion
 }
 }

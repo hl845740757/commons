@@ -16,7 +16,9 @@
 
 package cn.wjybxx.base.fx;
 
+import cn.wjybxx.base.ConstantMap;
 import cn.wjybxx.base.ConstantPool;
+import cn.wjybxx.base.ObjectUtils;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -86,6 +88,14 @@ public final class ComponentIdPool {
     public ComponentId<?> getOrThrow(String name) {
         return pool.getOrThrow(name);
     }
+
+    /**
+     * 创建一个常量对象快照
+     */
+    public ConstantMap<ComponentId<?>> newConstantMap() {
+        return pool.newConstantMap();
+    }
+
     // endregion
 
     /**
@@ -101,7 +111,7 @@ public final class ComponentIdPool {
         if (cid != null) {
             return (ComponentId<T>) cid;
         }
-        // 处理重定向
+        // 优先处理重定向
         ComponentRedirect annotationRedirect = clazz.getAnnotation(ComponentRedirect.class);
         if (annotationRedirect != null) {
             cid = valueOf((Class<? extends IComponent>) annotationRedirect.value());
@@ -117,7 +127,11 @@ public final class ComponentIdPool {
             if (annotationDefine == null) {
                 builder = ComponentId.newBuilder(clazz.getSimpleName());
             } else {
-                builder = ComponentId.<T>newBuilder(clazz.getSimpleName())
+                String compName = annotationDefine.name();
+                if (ObjectUtils.isBlank(compName)) {
+                    compName = clazz.getSimpleName();
+                }
+                builder = ComponentId.<T>newBuilder(compName)
                         .setKind(annotationDefine.kind())
                         .setShared(annotationDefine.shared())
                         .setMaxCount(annotationDefine.maxCount())

@@ -25,7 +25,8 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 定时任务
 ///
-/// 部分属性定义在这里，以支持排序等
+/// 1.如果是可重用的对象，不可以监听用户的取消令牌，否则事件循环处理
+/// 2.部分属性定义在这里，以支持排序等
 /// </summary>
 public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 {
@@ -35,6 +36,7 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 
     /// <summary>
     /// 任务的唯一id，不同的任务之间id不可重复
+    /// (执行清理后应该为0)
     /// </summary>
     long Id { get; set; }
 
@@ -65,13 +67,6 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     /// <param name="tickTime">当前时间戳</param>
     /// <returns>是否还需要压入队列</returns>
     bool Trigger(long tickTime);
-
-    /// <summary>
-    /// 监听取消令牌中的取消信号
-    /// 1. 该方法由EventLoop调用，通常在Task成功压入队列后调用。
-    /// 2. 可检测是否已注册。
-    /// </summary>
-    void RegisterCancellation();
 
     #endregion
 }

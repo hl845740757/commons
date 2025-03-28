@@ -41,6 +41,10 @@ public interface PromiseTask
     public const int MASK_HAS_DEADLINE = 1 << 17;
     /** 延时任务有次数限制 */
     public const int MASK_HAS_COUNTDOWN = 1 << 18;
+    /** 任务是否启动了 */
+    public const int MASK_STARTED = 1 << 19;
+    /** 任务是否已停止 */
+    public const int MASK_STOPPED = 1 << 20;
 
     /** 任务类型的偏移量 */
     public const int OFFSET_TASK_TYPE = 8;
@@ -121,16 +125,13 @@ public class PromiseTask<T> : IFutureTask
 
     #region Props
 
-    /** 任务的调度选项 */
     public int Options => options;
 
-    /** 是否收到了取消信号 */
     public bool IsCancelRequested() {
         return promise.IsCompleted || GetCancelToken().IsCancelRequested;
     }
 
-    /** 设置为取消状态 */
-    public void TrySetCancelled(int code = CancelCodes.REASON_SHUTDOWN) {
+    public virtual void Cancel(int code) {
         TrySetCancelled(promise, GetCancelToken(), code);
     }
 
@@ -143,26 +144,10 @@ public class PromiseTask<T> : IFutureTask
         return TaskOptions.IsEnabled(options, taskOption);
     }
 
-    /** 获取ctl中的某个bit */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected bool GetCtlBit(int mask) {
-        return (ctl & mask) != 0;
-    }
-
-    /** 设置ctl中的某个bit */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void SetCtlBit(int mask, bool value) {
-        if (value) {
-            ctl |= mask;
-        } else {
-            ctl &= ~mask;
-        }
-    }
-
     #endregion
 
     /** 注意：如果task和promise之间是双向绑定的，需要解除绑定 */
-    public virtual void Clear() {
+    protected virtual void Clear() {
         task = null;
         ctx = null;
         promise = null;
@@ -170,6 +155,7 @@ public class PromiseTask<T> : IFutureTask
         ctl = 0;
     }
 
+    /** 获取上下文中的取消令牌 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected ICancelToken GetCancelToken() {
         return Executors.GetCancelToken(ctx, options);

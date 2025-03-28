@@ -48,12 +48,12 @@ public class EventLoopFactory : IEventLoopFactory
     }
 
     public IEventLoop NewChild(IEventLoopGroup parent, int index, object? extraInfo = null) {
-        return new DisruptorEventLoopBuilder<MiniAgentEvent>()
+        return new DisruptorEventLoopBuilder<AgentEvent>()
         {
             Parent = parent,
             Index = index,
             ThreadFactory = threadFactory,
-            EventSequencer = new MpUnboundedEventSequencer<MiniAgentEvent>.Builder(MiniAgentEvent.FACTORY)
+            EventSequencer = new MpUnboundedEventSequencer<AgentEvent>.Builder(AgentEvent.FACTORY)
             {
                 ChunkLength = 1024,
                 MaxPooledChunks = 4,

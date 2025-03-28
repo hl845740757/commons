@@ -105,11 +105,11 @@ public sealed class FutureCombiner
     /// 如果lazy为true，则等待所有任务完成之后才触发成功或失败。
     /// </p>
     /// </summary>
-    /// <param name="successRequire">期望成成功的任务数</param>
+    /// <param name="required">期望成成功的任务数</param>
     /// <param name="failFast">是否在不满足条件时立即失败</param>
     /// <returns></returns>
-    public IPromise<object> SelectN(int successRequire, bool failFast) {
-        return Finish(AggregateOptions.SelectN(futureCount, successRequire, failFast));
+    public IPromise<object> SelectN(int required, bool failFast) {
+        return Finish(AggregateOptions.SelectN(futureCount, required, failFast));
     }
 
     /// <summary>
@@ -219,7 +219,7 @@ public sealed class FutureCombiner
                 return false;
             }
             // 包含了require小于等于0的情况
-            int successRequire = options.IsSelectAll ? futureCount : options.successRequire;
+            int successRequire = options.IsSelectAll ? futureCount : options.required;
             if (succeedCount >= successRequire) {
                 return aggregatePromise!.TrySetResult(null);
             }

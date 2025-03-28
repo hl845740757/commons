@@ -82,8 +82,8 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private class Canceller : ITask
     {
-        internal readonly CancelTokenSource source;
-        internal readonly int cancelCode;
+        private readonly CancelTokenSource source;
+        private readonly int cancelCode;
 
         public Canceller(CancelTokenSource source, int cancelCode) {
             this.source = source;

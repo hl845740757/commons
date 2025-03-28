@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Commons.Fx;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -53,20 +54,13 @@ namespace Wjybxx.Commons.Concurrent
 /// 2. 如果在{@link EventLoop}上执行阻塞或死循环操作，则可能导致死锁，或大量任务超时。
 /// 3. 如果{@link EventLoop}支持自定义等待策略，要小心选择或实现，可能导致定时任务不能被及时执行。 
 /// </summary>
-public interface IEventLoop : IFixedEventLoopGroup, ISingleThreadExecutor
+public interface IEventLoop : IFixedEventLoopGroup, ISingleThreadExecutor, IEntity
 {
     /// <summary>
     /// 返回该EventLoop线程所在的线程组（管理该EventLoop的容器）。
     /// 如果没有父节点，返回null。
     /// </summary>
     IEventLoopGroup? Parent { get; }
-
-    /// <summary>
-    /// 事件循环的主模块，
-    /// 主模块是事件循环的外部策略实现，用于暴露特殊的业务接口
-    ///（Agent对内，MainModule对外，都是为了避免继承扩展带来的局限性）
-    /// </summary>
-    IEventLoopModule MainModule { get; }
 
     /// <summary>
     /// 唤醒线程

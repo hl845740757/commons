@@ -31,7 +31,7 @@ public abstract class AbstractConstant : IConstant
     private readonly string _name;
     private readonly string _poolId;
 
-    protected AbstractConstant(IConstant.Builder builder) {
+    protected AbstractConstant(IConstant.IBuilder builder) {
         _id = builder.GetIdOrThrow();
         _name = builder.Name;
         _poolId = builder.PoolId ?? throw new ArgumentException("PoolId");

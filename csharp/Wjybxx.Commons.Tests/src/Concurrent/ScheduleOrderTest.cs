@@ -35,10 +35,10 @@ public class ScheduleOrderTest
     [SetUp]
     public void SetUp() {
         counter = new Counter();
-        consumer = new DisruptorEventLoopBuilder<MiniAgentEvent>()
+        consumer = new DisruptorEventLoopBuilder<AgentEvent>()
         {
             ThreadFactory = new DefaultThreadFactory("Scheduler", true),
-            EventSequencer = new RingBufferEventSequencer<MiniAgentEvent>.Builder(MiniAgentEvent.FACTORY)
+            EventSequencer = new RingBufferEventSequencer<AgentEvent>.Builder(AgentEvent.FACTORY)
                 .Build()
         }.Build();
     }

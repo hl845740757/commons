@@ -49,6 +49,22 @@ public static class ObjectUtil
     }
 
     /// <summary>
+    /// 0转为默认值
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int ZeroToDef(int value, int def) {
+        return value == 0 ? def : value;
+    }
+
+    /// <summary>
+    /// 0转为默认值
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long ZeroToDef(long value, long def) {
+        return value == 0 ? def : value;
+    }
+
+    /// <summary>
     /// 获取系统的tick数
     /// (稳定值与平台无关)
     /// </summary>

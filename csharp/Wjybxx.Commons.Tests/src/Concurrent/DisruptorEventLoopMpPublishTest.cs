@@ -34,7 +34,7 @@ public class DisruptorEventLoopMpPublishTest
 
     private static CounterAgent agent;
     private static Counter counter;
-    private static DisruptorEventLoop<CounterEvent> consumer;
+    private static DisruptorEventLoop<AgentEvent> consumer;
     private static IList<Thread> producerList;
     private static volatile bool alert;
 
@@ -63,10 +63,10 @@ public class DisruptorEventLoopMpPublishTest
 
     [Test]
     public void TestRingBuffer() {
-        consumer = new DisruptorEventLoopBuilder<CounterEvent>()
+        consumer = new DisruptorEventLoopBuilder<AgentEvent>()
         {
             ThreadFactory = new DefaultThreadFactory("consumer"),
-            EventSequencer = new RingBufferEventSequencer<CounterEvent>.Builder(() => new CounterEvent()).Build(),
+            EventSequencer = new RingBufferEventSequencer<AgentEvent>.Builder(() => new AgentEvent()).Build(),
             Agent = agent
         }.Build();
 
@@ -89,10 +89,10 @@ public class DisruptorEventLoopMpPublishTest
     
     [Test]
     public void TestUnboundedBuffer() {
-        consumer = new DisruptorEventLoopBuilder<CounterEvent>()
+        consumer = new DisruptorEventLoopBuilder<AgentEvent>()
         {
             ThreadFactory = new DefaultThreadFactory("consumer"),
-            EventSequencer = new MpUnboundedEventSequencer<CounterEvent>.Builder(() => new CounterEvent()).Build(),
+            EventSequencer = new MpUnboundedEventSequencer<AgentEvent>.Builder(() => new AgentEvent()).Build(),
             Agent = agent
         }.Build();
         
@@ -113,44 +113,44 @@ public class DisruptorEventLoopMpPublishTest
     }
 
     private static void ProducerLoop(int type) {
-        DisruptorEventLoop<CounterEvent> consumer = DisruptorEventLoopMpPublishTest.consumer;
+        DisruptorEventLoop<AgentEvent> consumer = DisruptorEventLoopMpPublishTest.consumer;
         long localSequence = 0;
         while (!alert && localSequence < 1000000) {
-            long? sequence = consumer.NextSequence();
-            if (sequence == null) {
+            long sequence = consumer.NextSequence();
+            if (sequence < 0) {
                 break;
             }
             try {
-                CounterEvent agentEvent = new CounterEvent(type);
+                AgentEvent agentEvent = new AgentEvent(type);
                 agentEvent.longVal1 = localSequence++;
-                consumer.SetEvent(sequence.Value, agentEvent);
+                consumer.SetEvent(sequence, agentEvent);
             }
             finally {
-                consumer.Publish(sequence.Value);
+                consumer.Publish(sequence);
             }
         }
     }
 
     /** 批量申请和发布 */
     private static void ProducerLoopBatch(int type) {
-        DisruptorEventLoop<CounterEvent> consumer = DisruptorEventLoopMpPublishTest.consumer;
+        DisruptorEventLoop<AgentEvent> consumer = DisruptorEventLoopMpPublishTest.consumer;
         long localSequence = 0;
         while (!alert && localSequence < 1000000) {
             int batchSize = 10;
-            long? hi = consumer.NextSequence(batchSize);
-            if (hi == null) {
+            long hi = consumer.NextSequence(batchSize);
+            if (hi < 0) {
                 break;
             }
-            long low = hi.Value - batchSize + 1;
+            long low = hi - batchSize + 1;
             try {
-                for (long sequence = low; sequence <= hi.Value; sequence++) {
-                    CounterEvent agentEvent = new CounterEvent(type);
+                for (long sequence = low; sequence <= hi; sequence++) {
+                    AgentEvent agentEvent = new AgentEvent(type);
                     agentEvent.longVal1 = localSequence++;
                     consumer.SetEvent(sequence, agentEvent);
                 }
             }
             finally {
-                consumer.Publish(low, hi.Value);
+                consumer.Publish(low, hi);
             }
         }
     }
