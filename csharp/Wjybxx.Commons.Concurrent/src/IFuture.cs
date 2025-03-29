@@ -248,7 +248,6 @@ public interface IFuture<T> : IFuture
 
     #endregion
 
-
     #region 接口适配
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

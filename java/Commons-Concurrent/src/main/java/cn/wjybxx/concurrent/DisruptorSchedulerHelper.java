@@ -49,7 +49,7 @@ final class DisruptorSchedulerHelper implements ISchedulerHelper {
         final DisruptorEventLoop<?> eventLoop = this.eventLoop;
 
         ScheduledPromiseTask<?> futureTask;
-        while ((futureTask = taskQueue.peek()) != null) {
+        while ((futureTask = taskQueue.peek()) != null && !eventLoop.isShutdown()) {
             if (tickTime < futureTask.getNextTriggerTime()) {
                 return;
             }
@@ -59,20 +59,13 @@ final class DisruptorSchedulerHelper implements ISchedulerHelper {
                 if (futureTask.isTriggered() || futureTask.trigger(tickTime)) {
                     futureTask.cancel(CancelCodes.REASON_SHUTDOWN);
                 }
-            } else {
+            } else if (futureTask.trigger(tickTime)) {
                 // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务 -- 和下面相同
-                if (futureTask.trigger(tickTime)) {
-                    if (eventLoop.isShuttingDown()) {
-                        futureTask.cancel(CancelCodes.REASON_SHUTDOWN);
-                    } else {
-                        taskQueue.offer(futureTask);
-                        continue;
-                    }
+                if (eventLoop.isShuttingDown()) {
+                    futureTask.cancel(CancelCodes.REASON_SHUTDOWN);
+                } else {
+                    taskQueue.offer(futureTask);
                 }
-            }
-            // 响应关闭
-            if (eventLoop.isShutdown()) {
-                return;
             }
         }
     }
@@ -96,23 +89,17 @@ final class DisruptorSchedulerHelper implements ISchedulerHelper {
     }
 
     @Override
-    public void onCancelRequested(ScheduledPromiseTask<?> futureTask, int cancelCode) {
+    public void onCancelRequested(ICancelToken cancelToken, Object ctx) {
+        int cancelCode = cancelToken.cancelCode();
+        long taskId = (long) ctx;
         if (eventLoop.inEventLoop()) {
-            // 如果不再调度队列，两种情况：
-            // 1.还在RingBuffer队列，出队列时会检测到promise被取消
-            // 2.正在执行Trigger方法，在执行完用户回调后会检测到promise被取消
-            int index = futureTask.collectionIndex(taskQueue);
-            if (index >= 0) {
-                taskQueue.remove(futureTask);
+            // 如果不在调度队列，应当正在执行Trigger方法，在执行完用户回调后会检测到取消信号
+            ScheduledPromiseTask<?> task = removeTask(taskId);
+            if (task != null) {
+                task.cancel(cancelCode);
             }
-            // 同线程时立即进入取消状态，避免时序错误
-            futureTask.cancel(cancelCode);
         } else {
-            // 如果在其它线程，尝试发布一个删除任务，需要小心可见性问题
-            long taskId = futureTask.getId();
-            if (taskId < 0) {
-                return;
-            }
+            // 如果在其它线程，尝试发布一个删除任务（能收到取消信号，通常证明Task还未结束）
             long sequence = eventLoop.nextSequence(1);
             if (sequence < 0) {
                 return;
@@ -125,19 +112,24 @@ final class DisruptorSchedulerHelper implements ISchedulerHelper {
     }
 
     /** 删除指定id的任务 */
-    public void removeTask(long taskId) {
+    public ScheduledPromiseTask<?> removeTask(long taskId) {
         // 暂时迭代处理
         for (ScheduledPromiseTask<?> task : taskQueue) {
             if (task.getId() == taskId) {
                 taskQueue.remove(task);
-                return;
+                return task;
             }
         }
+        return null;
     }
 
     /** 清理任务队列 */
-    public void clearIgnoringIndexes() {
-        taskQueue.clearIgnoringIndexes();
+    public void clearTaskQueue() {
+        // 需要归还到池中
+        ScheduledPromiseTask<?> futureTask;
+        while ((futureTask = taskQueue.poll()) != null) {
+            futureTask.cancel(CancelCodes.REASON_SHUTDOWN);
+        }
     }
 
     // endregion

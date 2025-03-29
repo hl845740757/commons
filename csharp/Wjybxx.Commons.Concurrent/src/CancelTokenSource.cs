@@ -227,22 +227,22 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     #region uni-notify
 
-    public Registration ThenNotify(ICancelTokenListener action, int options = 0) {
-        return PushUniNotify(null, action, options);
+    public Registration ThenNotify(ICancelTokenListener action, object? ctx, int options = 0) {
+        return PushUniNotify(null, action, ctx, options);
     }
 
-    public Registration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, int options = 0) {
+    public Registration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, object? ctx, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniNotify(executor, action, options);
+        return PushUniNotify(executor, action, ctx, options);
     }
 
-    private Registration PushUniNotify(IExecutor? executor, ICancelTokenListener listener, int options) {
+    private Registration PushUniNotify(IExecutor? executor, ICancelTokenListener listener, object? ctx, int options) {
         if (listener == null) throw new ArgumentNullException(nameof(listener));
         if (IsCancelRequested && executor == null) {
-            Completion.FireNow(this, TYPE_NOTIFY, listener, null);
+            Completion.FireNow(this, TYPE_NOTIFY, listener, ctx);
             return Registration.Closed;
         }
-        Completion completion = GetComplete(executor, options, this, TYPE_NOTIFY, listener, null);
+        Completion completion = GetComplete(executor, options, this, TYPE_NOTIFY, listener, ctx);
         // 需要在Push前拿到_rid
         Registration registration = new Registration(completion, completion._rid);
         return PushCompletion(completion) ? registration : Registration.Closed;
@@ -356,7 +356,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (Executors.IsInlinable(e, options)) {
+        if (ExecutorUtil.IsInlinable(e, options)) {
             return true;
         }
         e.Execute(completion);
@@ -477,12 +477,12 @@ public sealed class CancelTokenSource : ICancelTokenSource
             {
                 // 同步Fire时，必须先竞争Action - 如果竞争失败，需要等待Close调用结束
                 if (mode <= 0 && !TryIncrementRid(_fireId)) {
-                    while (_rid < _fireId + 2) {
+                    while (_rid != _fireId + 2) { // // 等待close完毕，不能使用小于测试(可能越界)
                         Thread.SpinWait(1);
                     }
                     goto outer;
                 }
-                if (Executors.IsCancelRequested(ctx, options)) {
+                if (ExecutorUtil.IsCancelRequested(ctx, options)) {
                     goto outer;
                 }
                 if (mode <= 0 && !Claim()) {
@@ -523,7 +523,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
                     }
                     case TYPE_NOTIFY: {
                         ICancelTokenListener action = (ICancelTokenListener)rawAction;
-                        action.OnCancelRequested(source);
+                        action.OnCancelRequested(source, ctx);
                         break;
                     }
                     case TYPE_TRANSFER: {

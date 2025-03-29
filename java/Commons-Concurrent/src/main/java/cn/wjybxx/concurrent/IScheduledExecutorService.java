@@ -66,6 +66,7 @@ public interface IScheduledExecutorService extends IExecutorService, ScheduledEx
 
     /**
      * 以固定延迟执行给定的任务(少执行了就少执行了)
+     * FixedDelay只保证两次任务的执行间隔一定大于等于给定延迟
      */
     IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit, ICancelToken cancelToken);
 

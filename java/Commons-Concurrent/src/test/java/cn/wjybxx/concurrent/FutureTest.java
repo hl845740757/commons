@@ -53,7 +53,7 @@ public class FutureTest {
     void testCtx() {
         IExecutor executor = immediateExecutor;
         String rootCtx = "efg";
-        FutureUtils.submitFunc(executor, (ctx -> {
+        ExecutorUtils.submitFunc(executor, (ctx -> {
                     Assertions.assertSame(rootCtx, ctx);
                     return (String) ctx;
                 }), rootCtx)
@@ -65,7 +65,7 @@ public class FutureTest {
         CancelTokenSource cts = new CancelTokenSource(1);
 
         IExecutor executor = immediateExecutor;
-        IFuture<String> future = FutureUtils.submitFunc(executor, ctx -> "hello", cts);
+        IFuture<String> future = ExecutorUtils.submitFunc(executor, ctx -> "hello", cts);
         Assertions.assertTrue(future.isCancelled());
     }
 
@@ -97,7 +97,7 @@ public class FutureTest {
     void testAccept() {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
-        FutureUtils.submitFunc(executor, () -> first, 0)
+        ExecutorUtils.submitFunc(executor, () -> first, 0)
                 .thenAccept((context, r) -> {
                     Assertions.assertEquals(first, r);
                 })
@@ -135,7 +135,7 @@ public class FutureTest {
     void testApply() {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
-        String r2 = FutureUtils.submitFunc(executor, () -> first, 0)
+        String r2 = ExecutorUtils.submitFunc(executor, () -> first, 0)
                 .thenApply((ctx, r) -> StringUtils.reverse(r))
                 .resultNow();
         Assertions.assertEquals(StringUtils.reverse(first), r2);
@@ -174,7 +174,7 @@ public class FutureTest {
     void testCatching() {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
-        FutureUtils.submitFunc(executor, () -> {throw new RuntimeException();})
+        ExecutorUtils.submitFunc(executor, () -> {throw new RuntimeException();})
                 .catching(RuntimeException.class, (ctx, ex) -> first)
                 .thenAccept((ctx, s) -> {
                     Assertions.assertEquals(first, s);
@@ -223,7 +223,7 @@ public class FutureTest {
     void testWhenComplete() {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
-        FutureUtils.submitFunc(executor, () -> first, 0)
+        ExecutorUtils.submitFunc(executor, () -> first, 0)
                 .whenComplete((k, v, s) -> {})
                 .thenAccept((iContext, s) -> {
                     Assertions.assertEquals(first, s);
@@ -267,7 +267,7 @@ public class FutureTest {
     void testOnComplete() {
         final String first = "abc";
         IExecutor executor = immediateExecutor;
-        IFuture<String> future = FutureUtils.submitFunc(executor, () -> first, 0);
+        IFuture<String> future = ExecutorUtils.submitFunc(executor, () -> first, 0);
 
         future.onCompleted((f) -> {
             Assertions.assertEquals(first, f.resultNow());
@@ -306,7 +306,7 @@ public class FutureTest {
         final String first = "abc";
         final String fallbackResult = "fallback:" + first;
         IExecutor executor = immediateExecutor;
-        FutureUtils.submitFunc(executor, () -> first, 0)
+        ExecutorUtils.submitFunc(executor, () -> first, 0)
                 .handle((ctx, v, ex) -> {
                     if (ex != null) {
                         return fallbackResult;
@@ -318,7 +318,7 @@ public class FutureTest {
                 })
                 .join();
 
-        FutureUtils.submitFunc(executor, () -> {
+        ExecutorUtils.submitFunc(executor, () -> {
                     throw new RuntimeException();
                 }, 0)
                 .handle((ctx, v, ex) -> {

@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.concurrent.StacklessCancellationException;
+import cn.wjybxx.base.pool.ConcurrentObjectPool;
 
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -26,7 +27,7 @@ import java.util.function.Function;
 /**
  * ps：
  * 1.该类的数据是（部分）开放的，以支持不同的扩展。
- * 2.周期性任务通常不适合池化，因为生存周期较长，反而是Submit创建的PromiseTask适合缓存。
+ * 2.该对象不可以返回给用户，底层会进行池化
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -66,22 +67,13 @@ public class PromiseTask<V> implements IFutureTask<V> {
     /** 控制标记 */
     protected int ctl;
 
-    /**
-     * @param builder 任务构建器
-     * @param promise 任务关联的promise
-     */
-    public PromiseTask(TaskBuilder<V> builder, IPromise<V> promise) {
-        this(builder.getTask(), builder.getCtx(), builder.getOptions(), promise, builder.getType());
+    protected PromiseTask() {
     }
 
-    /**
-     * @param task     用户的任务，支持的类型见{@link TaskBuilder#taskType(Object)}
-     * @param ctx      任务关联的上下文
-     * @param options  任务的调度选项
-     * @param promise  任务关联的promise
-     * @param taskType 任务类型 -- 注意上下文的类型
-     */
-    protected PromiseTask(Object task, Object ctx, int options, IPromise<V> promise, int taskType) {
+    // region init
+
+    /** 用于池化 */
+    protected final void init(int taskType, Object task, Object ctx, int options, IPromise<V> promise) {
         this.task = Objects.requireNonNull(task, "action");
         this.ctx = ctx;
         this.options = options;
@@ -91,27 +83,6 @@ public class PromiseTask<V> implements IFutureTask<V> {
         this.ctl |= (taskType << OFFSET_TASK_TYPE);
     }
 
-    // region factory
-
-    public static PromiseTask<?> ofAction(Runnable action, ICancelToken cancelToken, int options, IPromise<?> promise) {
-        return new PromiseTask<>(action, cancelToken, options, promise, TaskBuilder.TYPE_ACTION);
-    }
-
-    public static PromiseTask<?> ofAction(Consumer<Object> action, Object ctx, int options, IPromise<?> promise) {
-        return new PromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION_CTX);
-    }
-
-    public static <V> PromiseTask<V> ofFunction(Callable<? extends V> action, ICancelToken cancelToken, int options, IPromise<V> promise) {
-        return new PromiseTask<>(action, cancelToken, options, promise, TaskBuilder.TYPE_FUNC);
-    }
-
-    public static <V> PromiseTask<V> ofFunction(Function<Object, ? extends V> action, Object ctx, int options, IPromise<V> promise) {
-        return new PromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_FUNC_CTX);
-    }
-
-    public static <V> PromiseTask<V> ofBuilder(TaskBuilder<V> builder, IPromise<V> promise) {
-        return new PromiseTask<>(builder, promise);
-    }
     // endregion
 
     // region open
@@ -122,13 +93,8 @@ public class PromiseTask<V> implements IFutureTask<V> {
     }
 
     @Override
-    public boolean isCancelRequested() {
-        return promise.isDone() || getCancelToken().isCancelRequested();
-    }
-
-    @Override
-    public void cancel(int code) {
-        trySetCancelled(promise, getCancelToken(), code);
+    public final IFuture<V> future() {
+        return promise;
     }
 
     /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
@@ -145,8 +111,14 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     // region core
 
+    protected void prepareToRecycle() {
+        if (getClass() == PromiseTask.class) {
+            POOL.release(this);
+        }
+    }
+
     /** 注意：如果task和promise之间是双向绑定的，需要解除绑定 */
-    protected void clear() {
+    protected void reset() {
         task = null;
         ctx = null;
         options = 0;
@@ -156,7 +128,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     /** 获取关联的取消令牌 */
     protected final ICancelToken getCancelToken() {
-        return FutureUtils.getCancelToken(ctx, options);
+        return ExecutorUtils.getCancelToken(ctx, options);
     }
 
     /** 运行分时任务 */
@@ -195,30 +167,37 @@ public class PromiseTask<V> implements IFutureTask<V> {
         }
     }
 
+    /** 子类不要直接调用该方法，该方法会触发回收 */
     @Override
     public void run() {
+        runImpl();
+        prepareToRecycle();
+    }
+
+    protected final void runImpl() {
         IPromise<V> promise = this.promise;
         ICancelToken cancelToken = getCancelToken();
         if (cancelToken.isCancelRequested()) {
             trySetCancelled(promise, cancelToken);
             return;
         }
-        if (promise.trySetComputing()) {
-            try {
-                if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
-                    ResultHolder<V> resultHolder = runTimeSharing(true);
-                    if (resultHolder != null) {
-                        promise.trySetResult(resultHolder.getResult());
-                    } else {
-                        promise.trySetException(StacklessCancellationException.TIMEOUT);
-                    }
+        if (!promise.trySetComputing()) {
+            return;
+        }
+        try {
+            if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
+                ResultHolder<V> resultHolder = runTimeSharing(true);
+                if (resultHolder != null) {
+                    promise.trySetResult(resultHolder.getResult());
                 } else {
-                    V result = runTask();
-                    promise.trySetResult(result);
+                    promise.trySetException(StacklessCancellationException.TIMEOUT);
                 }
-            } catch (Throwable e) {
-                promise.trySetException(e);
+            } else {
+                V result = runTask();
+                promise.trySetResult(result);
             }
+        } catch (Throwable e) {
+            promise.trySetException(e);
         }
     }
 
@@ -237,4 +216,47 @@ public class PromiseTask<V> implements IFutureTask<V> {
     }
 
     // endregion
+
+    // region factory
+    private static final ConcurrentObjectPool<PromiseTask<?>> POOL = new ConcurrentObjectPool<>(
+            PromiseTask::new, PromiseTask::reset, TaskPoolConfig.getPoolSize(TaskPoolType.PROMISE_TASK));
+
+    /**
+     * 申请一个PromiseTask对象，Task在进入完成状态后会自动回收。
+     * 注意：该对象不可返回给用户！该对象不可返回给用户！该对象不可返回给用户！
+     *
+     * @param taskType 任务类型 -- 注意上下文的类型
+     * @param task     用户的任务，支持的类型见{@link TaskBuilder#taskType(Object)}
+     * @param ctx      任务关联的上下文
+     * @param options  任务的调度选项
+     * @param promise  任务关联的promise
+     */
+    public static <V> PromiseTask<V> acquire(int taskType, Object task, Object ctx, int options,
+                                             IPromise<V> promise) {
+        @SuppressWarnings("unchecked") PromiseTask<V> promiseTask = (PromiseTask<V>) POOL.acquire();
+        promiseTask.init(taskType, task, ctx, options, promise);
+        return promiseTask;
+    }
+
+    public static PromiseTask<?> ofAction(Runnable action, ICancelToken cancelToken, int options, IPromise<?> promise) {
+        return acquire(TaskBuilder.TYPE_ACTION, action, cancelToken, options, promise);
+    }
+
+    public static PromiseTask<?> ofAction(Consumer<Object> action, Object ctx, int options, IPromise<?> promise) {
+        return acquire(TaskBuilder.TYPE_ACTION_CTX, action, ctx, options, promise);
+    }
+
+    public static <V> PromiseTask<V> ofFunction(Callable<? extends V> action, ICancelToken cancelToken, int options, IPromise<V> promise) {
+        return acquire(TaskBuilder.TYPE_FUNC, action, cancelToken, options, promise);
+    }
+
+    public static <V> PromiseTask<V> ofFunction(Function<Object, ? extends V> action, Object ctx, int options, IPromise<V> promise) {
+        return acquire(TaskBuilder.TYPE_FUNC_CTX, action, ctx, options, promise);
+    }
+
+    public static <V> PromiseTask<V> ofBuilder(TaskBuilder<V> builder, IPromise<V> promise) {
+        return acquire(builder.getType(), builder.getTask(), builder.getCtx(), builder.getOptions(), promise);
+    }
+    // endregion
+
 }

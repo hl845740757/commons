@@ -98,7 +98,7 @@ public interface ICancelToken
     Registration ThenAccept(Action<ICancelToken> action, int options = 0);
 
     Registration ThenAcceptAsync(IExecutor executor,
-                                  Action<ICancelToken> action, int options = 0);
+                                 Action<ICancelToken> action, int options = 0);
 
     // endregion
 
@@ -117,7 +117,7 @@ public interface ICancelToken
     Registration ThenAccept(Action<ICancelToken, object> action, object? state, int options = 0);
 
     Registration ThenAcceptAsync(IExecutor executor,
-                                  Action<ICancelToken, object> action, object? state, int options = 0);
+                                 Action<ICancelToken, object> action, object? state, int options = 0);
 
     // endregion
 
@@ -134,7 +134,7 @@ public interface ICancelToken
     Registration ThenRun(Action<object> action, object? state, int options = 0);
 
     Registration ThenRunAsync(IExecutor executor,
-                               Action<object> action, object? state, int options = 0);
+                              Action<object> action, object? state, int options = 0);
 
     // endregion
 
@@ -144,9 +144,9 @@ public interface ICancelToken
      * 添加一个特定类型的监听器
      * (用于特殊需求时避免额外的闭包 - task经常需要监听取消令牌)
      */
-    Registration ThenNotify(ICancelTokenListener action, int options = 0);
+    Registration ThenNotify(ICancelTokenListener action, object? ctx, int options = 0);
 
-    Registration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, int options = 0);
+    Registration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, object? ctx, int options = 0);
 
     // endregion
 

@@ -26,6 +26,9 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public interface IEventLoopModule : IComponent
 {
+    /** 事件循环的全局组件id池 */
+    public static readonly ComponentIdPool GLOBAL = ComponentIdPool.NewPool();
+
     /** 修正返回值类型 */
     new IEventLoop Entity { get; }
 

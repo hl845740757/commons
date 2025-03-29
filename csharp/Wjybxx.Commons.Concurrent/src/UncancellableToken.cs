@@ -85,11 +85,11 @@ sealed class UncancellableToken : ICancelToken
         return Registration.Closed;
     }
 
-    public Registration ThenNotify(ICancelTokenListener action, int options = 0) {
+    public Registration ThenNotify(ICancelTokenListener action, object? ctx, int options = 0) {
         return Registration.Closed;
     }
 
-    public Registration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, int options = 0) {
+    public Registration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, object? ctx, int options = 0) {
         return Registration.Closed;
     }
 

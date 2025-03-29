@@ -197,7 +197,7 @@ public class CancelTokenTest
             cts.ThenNotify(new Listener((token) => {
                 Assert.AreSame(cts, token);
                 signal.Value = ("cancelled");
-            }));
+            }), null);
             Assert.IsNull(signal.Value);
             cts.Cancel(1);
             Assert.IsNotNull(signal.Value);
@@ -228,7 +228,7 @@ public class CancelTokenTest
         }
 
 
-        public void OnCancelRequested(ICancelToken cancelToken) {
+        public void OnCancelRequested(ICancelToken cancelToken, object? ctx) {
             listener.Invoke(cancelToken);
         }
     }

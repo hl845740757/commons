@@ -16,6 +16,7 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.fx.ComponentIdPool;
 import cn.wjybxx.base.fx.ComponentKind;
 import cn.wjybxx.base.fx.IComponent;
 
@@ -33,6 +34,9 @@ import cn.wjybxx.base.fx.IComponent;
  * date - 2023/11/17
  */
 public interface IEventLoopModule extends IComponent {
+
+    /** 事件循环的全局组件id池 */
+    ComponentIdPool GLOBAL = ComponentIdPool.newPool();
 
     /** 修正返回值类型 */
     @Override

@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
+import cn.wjybxx.base.annotation.Internal;
 import cn.wjybxx.base.function.TriFunction;
 import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.base.time.CachedTimeProvider;
@@ -35,7 +36,7 @@ import java.util.function.Supplier;
  * @author wjybxx
  * date 2023/4/9
  */
-public class FutureUtils {
+public class ExecutorUtils {
 
     private static final TriFunction<Object, Object, Throwable, Object> EXCEPTION_TO_NULL = (ctx, o, throwable) -> {
         if (throwable != null) {
@@ -515,6 +516,7 @@ public class FutureUtils {
     // region internal
 
     /** 获取上下文中的取消令牌 */
+    @Internal
     public static ICancelToken getCancelToken(Object ctx, int options) {
         if (ctx == null || TaskOptions.isEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
             return ICancelToken.NONE;
@@ -529,6 +531,7 @@ public class FutureUtils {
     }
 
     /** 获取上下文中的取消信号 */
+    @Internal
     public static boolean isCancelRequested(Object ctx, int options) {
         if (ctx == null || TaskOptions.isEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
             return false;
@@ -543,6 +546,7 @@ public class FutureUtils {
     }
 
     /** 任务是否可以内联执行 */
+    @Internal
     public static boolean isInlinable(Executor e, int options) {
         return TaskOptions.isEnabled(options, TaskOptions.STAGE_TRY_INLINE)
                 && e instanceof SingleThreadExecutor eventLoop

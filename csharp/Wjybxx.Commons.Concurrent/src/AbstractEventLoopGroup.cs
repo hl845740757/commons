@@ -66,31 +66,31 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     public virtual IPromise<int> NewPromise() => new Promise<int>(this);
 
-    public virtual IFuture<T> Submit<T>(in TaskBuilder<T> builder) {
+    public virtual ValueFuture<T> Submit<T>(in TaskBuilder<T> builder) {
         return Select().Submit(in builder);
     }
 
-    public virtual IFuture SubmitAction(Action action, int options = 0) {
+    public virtual ValueFuture SubmitAction(Action action, int options = 0) {
         return Select().SubmitAction(action, options);
     }
 
-    public virtual IFuture SubmitAction(Action action, ICancelToken cancelToken, int options = 0) {
+    public virtual ValueFuture SubmitAction(Action action, ICancelToken cancelToken, int options = 0) {
         return Select().SubmitAction(action, cancelToken, options);
     }
 
-    public virtual IFuture SubmitAction(Action<object> action, object ctx, int options = 0) {
+    public virtual ValueFuture SubmitAction(Action<object> action, object ctx, int options = 0) {
         return Select().SubmitAction(action, ctx, options);
     }
 
-    public virtual IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
         return Select().SubmitFunc(action, options);
     }
 
-    public virtual IFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken cancelToken, int options = 0) {
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken cancelToken, int options = 0) {
         return Select().SubmitFunc(action, cancelToken, options);
     }
 
-    public virtual IFuture<T> SubmitFunc<T>(Func<object, T> action, object ctx, int options = 0) {
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<object, T> action, object ctx, int options = 0) {
         return Select().SubmitFunc(action, ctx, options);
     }
 
@@ -98,27 +98,23 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     #region schedule
 
-    public virtual IScheduledPromise<T> NewScheduledPromise<T>() => new ScheduledPromise<T>(this);
-
-    public virtual IScheduledPromise<int> NewScheduledPromise() => new ScheduledPromise<int>(this);
-
-    public virtual IScheduledFuture<TResult> Schedule<TResult>(in ScheduledTaskBuilder<TResult> builder) {
+    public virtual ValueFuture<TResult> Schedule<TResult>(in ScheduledTaskBuilder<TResult> builder) {
         return Select().Schedule(in builder);
     }
 
-    public virtual IScheduledFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
         return Select().ScheduleAction(action, delay, cancelToken);
     }
 
-    public virtual IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
         return Select().ScheduleFunc(action, delay, cancelToken);
     }
 
-    public virtual IScheduledFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
         return Select().ScheduleWithFixedDelay(action, delay, period, cancelToken);
     }
 
-    public virtual IScheduledFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
         return Select().ScheduleAtFixedRate(action, delay, period, cancelToken);
     }
 

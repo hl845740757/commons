@@ -16,15 +16,17 @@
 
 package cn.wjybxx.concurrent;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
  * 该接口用户不可调用，否则可能产生错误
+ * 注意：Task监听取消令牌时，应当使用{@code helper}接受回调，Task不能将自己发布出去。
  *
  * @author wjybxx
  * date - 2024/8/9
  */
-public interface ISchedulerHelper {
+public interface ISchedulerHelper extends ICancelTokenListener {
 
     /**
      * 当前线程的时间
@@ -72,30 +74,23 @@ public interface ISchedulerHelper {
      */
     void doSchedule(ScheduledPromiseTask<?> futureTask);
 
-    /**
-     * 请求删除给定的任务
-     * 1.可能从其它线程调用，需考虑线程安全问题（取决于取消信号）
-     * 2.由调度器决定是否立即进入取消状态（可控制Task进入完成状态的时机）。。
-     * 3.未保持与JDK的兼容，参数不直接使用{@link ICancelToken}
-     * <p>
-     * 注意：当收到来自其它线程的取消信号时，要小心可见性问题，尤其是对象可能被复用的情况。
-     */
-    void onCancelRequested(ScheduledPromiseTask<?> futureTask, int cancelCode);
-
     /** 计算任务的触发时间 -- 允许修正 */
     default long triggerTime(long delay, TimeUnit timeUnit) {
+        Objects.requireNonNull(timeUnit, "timeUnit");
         if (delay <= 0) return tickTime();
         return tickTime() + normalize(delay, timeUnit);
     }
 
     /** 计算任务的触发间隔 -- 允许修正，但必须大于0 */
     default long triggerPeriod(long period, TimeUnit timeUnit) {
+        Objects.requireNonNull(timeUnit, "timeUnit");
         if (period <= 0) return 1;
         return normalize(period, timeUnit);
     }
 
     /** 计算任务的下次触发延迟 */
     default long getDelay(long triggerTime, TimeUnit timeUnit) {
+        Objects.requireNonNull(timeUnit, "timeUnit");
         long delay = triggerTime - tickTime();
         if (delay <= 0) return 0;
         return denormalize(delay, timeUnit);

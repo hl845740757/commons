@@ -73,14 +73,16 @@ public interface IValuePromise
     void OnCompletedAsync(int reentryId, IExecutor executor, Action<object?> continuation, object? state, int options = 0);
 
     /// <summary>
-    /// 用于传输结果
+    /// 转换为普通的Future
+    /// 需要支持死锁检测
     /// </summary>
-    void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise);
+    IFuture AsVoidFuture(int reentryId);
 
     /// <summary>
     /// 用户不需要结果，Promise进入完成状态时即可回收
     /// </summary>
     void Forget(int reentryId);
+
     #endregion
 
     #region promise
@@ -181,11 +183,10 @@ public interface IValuePromise<T> : IValuePromise
     T GetResult(int reentryId, bool ignoreReentrant = false);
 
     /// <summary>
-    /// 用于传输结果
+    /// 转换为普通的Future
+    /// 需要支持死锁检测
     /// </summary>
-    /// <param name="reentryId"></param>
-    /// <param name="promise"></param>
-    void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise);
+    IFuture<T> AsFuture(int reentryId);
 
     /// <summary>
     /// 尝试将future置为成功完成状态，如果future已进入完成状态，则返回false

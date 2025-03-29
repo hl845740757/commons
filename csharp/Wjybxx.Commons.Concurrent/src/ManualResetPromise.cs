@@ -30,13 +30,22 @@ namespace Wjybxx.Commons.Concurrent
 /// <typeparam name="T"></typeparam>
 public sealed class ManualResetPromise<T> : Promise<T>
 {
-    private static readonly ConcurrentObjectPool<ManualResetPromise<T>> POOL = new ConcurrentObjectPool<ManualResetPromise<T>>(
-        () => new ManualResetPromise<T>(), (f) => f.Reset(),
-        TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ManualResetPromise));
-
     // 只可以池中获取
     private ManualResetPromise() {
     }
+
+    /// <summary>
+    /// 将Promise归还到池中-用户手动调用
+    /// </summary>
+    public void Release() {
+        POOL.Release(this);
+    }
+
+    #region factory
+
+    private static readonly ConcurrentObjectPool<ManualResetPromise<T>> POOL =
+        new(() => new ManualResetPromise<T>(), (f) => f.Reset(),
+            TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ManualResetPromise));
 
     /// <summary>
     /// 从对象池中申请一个Promise
@@ -57,11 +66,6 @@ public sealed class ManualResetPromise<T> : Promise<T>
         return promise;
     }
 
-    /// <summary>
-    /// 将Promise归还到池中
-    /// </summary>
-    public void Release() {
-        POOL.Release(this);
-    }
+    #endregion
 }
 }

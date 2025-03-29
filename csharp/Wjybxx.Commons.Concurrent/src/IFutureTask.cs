@@ -27,19 +27,5 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public interface IFutureTask : ITask
 {
-    /// <summary>
-    /// 是否收到了取消信号
-    /// 调度器会检查任务的取消信号，以避免不必要的执行。
-    /// </summary>
-    /// <returns></returns>
-    bool IsCancelRequested();
-
-    /// <summary>
-    /// 取消执行
-    /// 可能是检测到取消信号，也可能是其它原因，EventLoop主动停止任务。
-    /// 如果此时收到了取消信号，可优先使用取消令牌中的取消码进入取消状态。
-    /// 如果task已进入完成状态。可忽略该请求。
-    /// </summary>
-    void Cancel(int code);
 }
 }

@@ -99,11 +99,20 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #region internal
 
+    /// <summary>
+    /// 
+    /// </summary>
     internal void Reset() {
         stack = null;
         _executor = null;
         _result = default;
         _ex = null;
+    }
+
+    /// <summary>
+    /// Promise进入了完成状态，子类可清理不再需要的数据，不可执行其它逻辑
+    /// </summary>
+    protected virtual void OnCompleted() {
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -245,6 +254,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     public bool TrySetResult(T result) {
         if (InternalSetResult(result)) {
+            OnCompleted();
             PostComplete(this);
             return true;
         }
@@ -261,6 +271,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         if (cause == null) throw new ArgumentNullException(nameof(cause));
         if (InternalSetException(cause)) {
             FutureLogger.LogCause(cause); // 记录日志
+            OnCompleted();
             PostComplete(this);
             return true;
         }
@@ -275,6 +286,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     public bool TrySetCancelled(int cancelCode) {
         if (InternalSetException(StacklessCancellationException.InstOf(cancelCode))) {
+            OnCompleted();
             PostComplete(this);
             return true;
         }
@@ -421,25 +433,38 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     #endregion
 
-    #region async
+    #region OnCompleted
 
     public void OnCompleted(Action<IFuture<T>> continuation, int options = 0) {
-        PushUniOnCompleted1(null, continuation, options);
+        PushUniOnCompleted(null, continuation, null, options);
     }
 
     public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>> continuation, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        PushUniOnCompleted1(executor, continuation, options);
+        PushUniOnCompleted(executor, continuation, null, options);
     }
 
     public void OnCompleted(Action<IFuture<T>, object?> continuation, object? state, int options = 0) {
-        PushUniOnCompleted2(null, continuation, state, options);
+        PushUniOnCompleted(null, continuation, state, options);
     }
 
     public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object?> continuation, object? state, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        PushUniOnCompleted2(executor, continuation, state, options);
+        PushUniOnCompleted(executor, continuation, state, options);
     }
+
+    private void PushUniOnCompleted(IExecutor? executor, object continuation, object? state, int options = 0) {
+        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
+        if (IsCompleted && executor == null) {
+            UniOnCompleted.FireNow(this, continuation, state, null);
+        } else {
+            PushCompletion(new UniOnCompleted(executor, options, this, continuation, state));
+        }
+    }
+
+    #endregion
+
+    #region fsm
 
     public void OnCompleted(Action<object?> continuation, object? state, int options = 0) {
         PushMoveNextCompletion(null, continuation, state, options);
@@ -448,24 +473,6 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     public void OnCompletedAsync(IExecutor executor, Action<object?> continuation, object? state, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
         PushMoveNextCompletion(executor, continuation, state, options);
-    }
-
-    private void PushUniOnCompleted1(IExecutor? executor, Action<IFuture<T>> continuation, int options = 0) {
-        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (IsCompleted && executor == null) {
-            UniOnCompleted.FireNow(this, continuation, null, null);
-        } else {
-            PushCompletion(new UniOnCompleted(executor, options, this, continuation, null));
-        }
-    }
-
-    private void PushUniOnCompleted2(IExecutor? executor, Action<IFuture<T>, object> continuation, object? state, int options = 0) {
-        if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-        if (IsCompleted && executor == null) {
-            UniOnCompleted.FireNow(this, continuation, state, null);
-        } else {
-            PushCompletion(new UniOnCompleted(executor, options, this, continuation, state));
-        }
     }
 
     /** 状态机特殊优化 */
@@ -860,7 +867,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -877,7 +884,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     IFuture<U> relay = fn(ctx, input._result);
                     setCompleted = TryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
-                        Executors.SetPromise(output, relay);
+                        ExecutorUtil.SetPromise(output, relay);
                     }
                 }
                 catch (Exception e) {
@@ -914,7 +921,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -931,7 +938,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     IFuture<U> relay = fn(ctx);
                     setCompleted = TryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
-                        Executors.SetPromise(output, relay);
+                        ExecutorUtil.SetPromise(output, relay);
                     }
                 }
                 catch (Exception e) {
@@ -968,7 +975,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -986,7 +993,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     IFuture<V> relay = fn(ctx, ex);
                     setCompleted = TryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
-                        Executors.SetPromise(output, relay);
+                        ExecutorUtil.SetPromise(output, relay);
                     }
                 }
                 catch (Exception e) {
@@ -1023,7 +1030,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1037,7 +1044,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     IFuture<U> relay = fn(ctx, input._result, ex);
                     setCompleted = TryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
-                        Executors.SetPromise(output, relay);
+                        ExecutorUtil.SetPromise(output, relay);
                     }
                 }
                 catch (Exception e) {
@@ -1078,7 +1085,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1128,7 +1135,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1179,7 +1186,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1229,7 +1236,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1280,7 +1287,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1331,7 +1338,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1378,7 +1385,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = Executors.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1450,7 +1457,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         public override AbstractPromise? TryFire(int mode) {
             Promise<T>? input = this.input;
             {
-                if (Executors.IsCancelRequested(ctx, options)) {
+                if (ExecutorUtil.IsCancelRequested(ctx, options)) {
                     goto outer;
                 }
                 // 异步模式下已经claim

@@ -80,7 +80,7 @@ public class ScheduleTest2
             ScheduledTaskBuilder.NewTimeSharing<string>((object ctx, bool firstStep, out string r) => timeSharingJoinString(out r));
         builder.SetOnlyOnce(0);
 
-        IScheduledFuture<string> future = consumer.Schedule(in builder);
+        IFuture<string> future = consumer.Schedule(in builder).AsFuture();
         future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
         Assert.IsTrue(future.ExceptionNow(false) is BetterCancellationException);
     }
@@ -93,7 +93,7 @@ public class ScheduleTest2
         });
         builder.SetOnlyOnce(0);
 
-        string result = consumer.Schedule(in builder).Join();
+        string result = consumer.Schedule(in builder).AsFuture().Join();
         Assert.AreEqual(expectedString, result);
     }
 
@@ -103,7 +103,7 @@ public class ScheduleTest2
             ScheduledTaskBuilder.NewTimeSharing<string>((object ctx, bool firstStep, out string r) => timeSharingJoinString(out r));
         builder.SetFixedDelay(0, 200);
 
-        string result = consumer.Schedule(in builder).Join();
+        string result = consumer.Schedule(in builder).AsFuture().Join();
         Assert.AreEqual(expectedString, result);
     }
 
@@ -115,7 +115,7 @@ public class ScheduleTest2
         builder.SetFixedDelay(0, 200);
         builder.SetTimeoutByCount(1);
 
-        IScheduledFuture<int> future = consumer.Schedule(in builder);
+        IFuture<int> future = consumer.Schedule(in builder).AsFuture();
         future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
         Assert.IsTrue(future.ExceptionNow(false) is BetterCancellationException);
     }
@@ -128,7 +128,7 @@ public class ScheduleTest2
         builder.SetFixedDelay(0, 200);
         builder.SetTimeoutByCount(1);
 
-        IScheduledFuture<string> future = consumer.Schedule(in builder);
+        IFuture<string> future = consumer.Schedule(in builder).AsFuture();
         future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
         Assert.IsTrue(future.ExceptionNow(false) is BetterCancellationException);
     }
@@ -145,7 +145,7 @@ public class ScheduleTest2
         builder.SetFixedDelay(10, 10);
         builder.CountLimit = (stringList.Count);
 
-        IScheduledFuture<string> future = consumer.Schedule(in builder);
+        IFuture<string> future = consumer.Schedule(in builder).AsFuture();
         future.AwaitUninterruptibly();
         Console.WriteLine("costTime: " + (ObjectUtil.SystemTickMillis() - startTime));
 
@@ -160,7 +160,7 @@ public class ScheduleTest2
         builder.SetFixedDelay(10, 10);
         builder.CountLimit = (stringList.Count - 1);
 
-        IScheduledFuture<string> future = consumer.Schedule(in builder);
+        IFuture<string> future = consumer.Schedule(in builder).AsFuture();
         future.AwaitUninterruptibly();
         Console.WriteLine("costTime: " + (ObjectUtil.SystemTickMillis() - startTime));
 

@@ -96,7 +96,7 @@ public struct ScheduledTaskBuilder<T>
     private long period;
     private long timeout;
     /** 时间单位 -- 默认毫秒 */
-    private TimeSpan timeunit;
+    private TimeSpan _timeUnit;
     /** 执行次数限制 */
     private int countLimit;
 
@@ -106,7 +106,7 @@ public struct ScheduledTaskBuilder<T>
         initialDelay = 0;
         period = 0;
         timeout = -1;
-        timeunit = TimeSpan.FromMilliseconds(1);
+        _timeUnit = TimeSpan.FromMilliseconds(1);
         countLimit = -1;
     }
 
@@ -168,13 +168,13 @@ public struct ScheduledTaskBuilder<T>
 
     public long Period => period;
 
-    public TimeSpan Timeunit {
-        get => timeunit;
+    public TimeSpan TimeUnit {
+        get => _timeUnit;
         set {
             if (value.Ticks <= 0) {
                 throw new ArgumentException("invalid timeunit");
             }
-            timeunit = value;
+            _timeUnit = value;
         }
     }
 
@@ -200,7 +200,7 @@ public struct ScheduledTaskBuilder<T>
     /// <param name="timeunit">时间单位</param>
     public void SetOnlyOnce(long delay, TimeSpan timeunit) {
         SetOnlyOnce(delay);
-        Timeunit = timeunit;
+        TimeUnit = timeunit;
     }
 
     public bool IsFixedDelay => scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_DELAY;
@@ -225,7 +225,7 @@ public struct ScheduledTaskBuilder<T>
     /// <param name="timeunit">时间单位</param>
     public void SetFixedDelay(long initialDelay, long period, TimeSpan timeunit) {
         SetFixedDelay(initialDelay, period);
-        Timeunit = timeunit;
+        TimeUnit = timeunit;
     }
 
     public bool IsFixedRate => scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE;
@@ -251,7 +251,7 @@ public struct ScheduledTaskBuilder<T>
     /// <param name="timeunit">时间单位</param>
     public void SetFixedRate(long initialDelay, long period, TimeSpan timeunit) {
         SetFixedRate(initialDelay, period);
-        Timeunit = timeunit;
+        TimeUnit = timeunit;
     }
 
     /// <summary>

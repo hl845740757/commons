@@ -54,10 +54,15 @@ public sealed class FutureLogger
     public static void LogCause(Exception ex, string? message = null) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
         message = message ?? "Future caught an exception";
-        if (_handler != null) {
-            _handler.LogCause(ex, message);
-        } else {
-            logger.Info(ex, message);
+        try {
+            if (_handler != null) {
+                _handler.LogCause(ex, message);
+            } else {
+                logger.Info(ex, message);
+            }
+        }
+        catch (Exception) {
+            // 该接口不能出现异常，这里的异常只能被丢弃
         }
     }
 
@@ -68,7 +73,7 @@ public sealed class FutureLogger
     public interface ILogHandler
     {
         /// <summary>
-        /// 
+        /// 一定不能抛出异常！！！！
         /// </summary>
         /// <param name="ex">底层运算产生的异常</param>
         /// <param name="message">额外消息</param>

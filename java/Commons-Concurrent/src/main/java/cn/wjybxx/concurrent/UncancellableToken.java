@@ -161,22 +161,22 @@ final class UncancellableToken implements ICancelToken {
     }
 
     @Override
-    public IRegistration thenNotify(ICancelTokenListener action, int options) {
+    public IRegistration thenNotify(ICancelTokenListener action, Object ctx, int options) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenNotify(ICancelTokenListener action) {
+    public IRegistration thenNotify(ICancelTokenListener action, Object ctx) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action) {
+    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx) {
         return TOMBSTONE;
     }
 
     @Override
-    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, int options) {
+    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx, int options) {
         return TOMBSTONE;
     }
 

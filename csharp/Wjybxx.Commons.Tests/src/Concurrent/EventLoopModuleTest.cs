@@ -30,9 +30,9 @@ public class EventLoopModuleTest
 {
     private static IEventLoop eventLoop;
     private static ComponentId<DataModule> dataCid =
-        (ComponentId<DataModule>)EventLoopUtils.GLOBAL.ValueOf(typeof(DataModule));
+        (ComponentId<DataModule>)IEventLoopModule.GLOBAL.ValueOf(typeof(DataModule));
     private static ComponentId<BehaviorModule> behaviorCid =
-        (ComponentId<BehaviorModule>)EventLoopUtils.GLOBAL.ValueOf(typeof(BehaviorModule));
+        (ComponentId<BehaviorModule>)IEventLoopModule.GLOBAL.ValueOf(typeof(BehaviorModule));
 
     [SetUp]
     public void SetUp() {

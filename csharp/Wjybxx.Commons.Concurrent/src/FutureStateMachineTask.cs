@@ -22,8 +22,8 @@ using System.Runtime.CompilerServices;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-///
-/// PS：该类型由于不复用，因此可直接继承Promise。
+/// 由于任务关联的Promise不能被复用，因此我们直接继承Promise，减少对象数。
+/// 为避免内存泄漏，Promise提供了额外的钩子来支持在进入完成状态时执行清理。
 /// </summary>
 /// <typeparam name="T">任务的结果类型</typeparam>
 /// <typeparam name="S">状态机类型</typeparam>
@@ -52,8 +52,19 @@ internal sealed class FutureStateMachineTask<T, S> : Promise<T>, IFutureStateMac
         result._stateMachine = stateMachine;
     }
 
-    public void Run() {
+    /// <summary>
+    /// 驱动状态机的委托
+    /// </summary>
+    private void Run() {
         _stateMachine.MoveNext();
+    }
+
+    /// <summary>
+    /// 任务完成后执行清理
+    /// </summary>
+    protected override void OnCompleted() {
+        _stateMachine = default;
+        _moveToNext = null!;
     }
 
     /// <summary>

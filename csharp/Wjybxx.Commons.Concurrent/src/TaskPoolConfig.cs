@@ -44,12 +44,14 @@ public static class TaskPoolConfig
         if (func != null) {
             return Math.Max(0, func.Invoke(poolType, typeof(T)));
         }
+        if (poolType == TaskPoolType.ValuePromise) {
+            return 1000;
+        }
         if (poolType == TaskPoolType.PromiseMoveNext
-            || poolType == TaskPoolType.UniPromiseMoveNext
             || poolType == TaskPoolType.CtsCompletion) {
             return 500;
         }
-        return typeof(T) == typeof(int) ? 100 : 50;
+        return typeof(T) == typeof(int) ? 100 : 20;
     }
 }
 
@@ -59,21 +61,29 @@ public static class TaskPoolConfig
 public enum TaskPoolType
 {
     /// <summary>
-    /// 状态机await回调
+    /// 普通Future的状态机await回调
     /// </summary>
     PromiseMoveNext,
     /// <summary>
-    /// 状态机await回调
-    /// </summary>
-    UniPromiseMoveNext,
-    /// <summary>
-    /// 状态机任务
+    /// ValueFuture状态机任务
     /// </summary>
     ValueFutureStateMachineTask,
+
     /// <summary>
-    /// <see cref="ValueFutureTask{T}"/>
+    /// 最基础的<see cref="ValuePromise{T}"/>回调
     /// </summary>
-    ValueFutureTask,
+    ValuePromise,
+    /// <summary>
+    /// 池化的普通任务
+    /// <see cref="PromiseTask{T}"/>
+    /// </summary>
+    PromiseTask,
+    /// <summary>
+    /// 池化的定时任务
+    /// <see cref="ScheduledPromiseTask{T}"/>
+    /// </summary>
+    ScheduledPromiseTask,
+
     /// <summary>
     /// <see cref="ManualResetPromise{T}"/>
     /// </summary>
@@ -82,9 +92,5 @@ public enum TaskPoolType
     /// 取消令牌的监听器
     /// </summary>
     CtsCompletion,
-
-    PromiseTask,
-    ScheduledPromiseTask,
-    ValuePromise,
 }
 }

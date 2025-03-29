@@ -45,31 +45,23 @@ internal class ScheduledHelper<T> : ISchedulerHelper where T : IAgentEvent
         DisruptorEventLoop<T> eventLoop = this._eventLoop;
 
         IScheduledFutureTask futureTask;
-        while (taskQueue.TryPeekHead(out futureTask)) {
+        while (taskQueue.TryPeekHead(out futureTask) && !eventLoop.IsShutdown) {
             if (tickTime < futureTask.NextTriggerTime) {
                 return;
             }
-
             taskQueue.Dequeue();
             if (shuttingDownMode) {
                 // 关闭模式下，不再重复执行任务
                 if (futureTask.IsTriggered || futureTask.Trigger(tickTime)) {
                     futureTask.Cancel(CancelCodes.REASON_SHUTDOWN);
                 }
-            } else {
+            } else if (futureTask.Trigger(tickTime)) {
                 // 非关闭模式下，如果检测到开始关闭，也不再重复执行任务 -- 和下面相同
-                if (futureTask.Trigger(tickTime)) {
-                    if (eventLoop.IsShuttingDown) {
-                        futureTask.Cancel(CancelCodes.REASON_SHUTDOWN);
-                    } else {
-                        taskQueue.Enqueue(futureTask);
-                        continue;
-                    }
+                if (eventLoop.IsShuttingDown) {
+                    futureTask.Cancel(CancelCodes.REASON_SHUTDOWN);
+                } else {
+                    taskQueue.Enqueue(futureTask);
                 }
-            }
-            // 响应关闭
-            if (eventLoop.IsShutdown) {
-                return;
             }
         }
     }
@@ -91,23 +83,17 @@ internal class ScheduledHelper<T> : ISchedulerHelper where T : IAgentEvent
         }
     }
 
-    public void OnCancelRequested(IScheduledFutureTask futureTask, int cancelCode) {
+    public void OnCancelRequested(ICancelToken cancelToken, object ctx) {
+        int cancelCode = cancelToken.CancelCode;
+        long taskId = (long)ctx;
         if (_eventLoop.InEventLoop()) {
-            // 如果不再调度队列，两种情况：
-            // 1.还在RingBuffer队列，出队列时会检测到promise被取消
-            // 2.正在执行Trigger方法，在执行完用户回调后会检测到promise被取消
-            int index = futureTask.CollectionIndex((_taskQueue));
-            if (index >= 0) {
-                _taskQueue.Remove(futureTask);
+            // 如果不在调度队列，应当正在执行Trigger方法，在执行完用户回调后会检测到取消信号
+            IScheduledFutureTask task = RemoveTask(taskId);
+            if (task != null) {
+                task.Cancel(cancelCode);
             }
-            // 同线程时立即进入取消状态，避免时序错误
-            futureTask.Cancel(cancelCode);
         } else {
-            // 如果在其它线程，尝试发布一个删除任务，需要小心可见性问题
-            long taskId = futureTask.Id;
-            if (taskId < 0) {
-                return;
-            }
+            // 如果在其它线程，尝试发布一个删除任务（能收到取消信号，通常证明Task还未结束）
             long sequence = _eventLoop.NextSequence(1);
             if (sequence < 0) {
                 return;
@@ -123,21 +109,26 @@ internal class ScheduledHelper<T> : ISchedulerHelper where T : IAgentEvent
     /// 删除指定id的任务
     /// </summary>
     /// <param name="taskId"></param>
-    public void RemoveTask(long taskId) {
+    public IScheduledFutureTask? RemoveTask(long taskId) {
         // 暂时迭代处理
         foreach (IScheduledFutureTask task in _taskQueue) {
             if (task.Id == taskId) {
                 _taskQueue.Remove(task);
-                return;
+                return task;
             }
         }
+        return null;
     }
 
     /// <summary>
     /// 清理任务队列
     /// </summary>
-    public void ClearIgnoringIndexes() {
-        _taskQueue.ClearIgnoringIndexes();
+    public void ClearTaskQueue() {
+        // 需要归还到池
+        IScheduledFutureTask futureTask;
+        while (_taskQueue.TryDequeue(out futureTask)) {
+            futureTask.Cancel(CancelCodes.REASON_SHUTDOWN);
+        }
     }
 
     #endregion
@@ -150,7 +141,7 @@ internal class ScheduledHelper<T> : ISchedulerHelper where T : IAgentEvent
 
     public bool InEventLoop() => _eventLoop.InEventLoop();
 
-        public long Normalize(long worldTime, TimeSpan timeUnit) {
+    public long Normalize(long worldTime, TimeSpan timeUnit) {
         return worldTime * timeUnit.Ticks;
     }
 

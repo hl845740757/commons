@@ -35,7 +35,7 @@ public readonly struct ExecutorAwaiter : ICriticalNotifyCompletion
 
     // 1.IsCompleted
     // IsCompleted只在Start后调用一次，EventLoop可以通过接口查询是否已在线程中
-    public bool IsCompleted => Executors.InEventLoop(_executor);
+    public bool IsCompleted => ExecutorUtil.InEventLoop(_executor);
 
     // 2. GetResult
     // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此空实现安全 -- 不可手动调用，不会阻塞

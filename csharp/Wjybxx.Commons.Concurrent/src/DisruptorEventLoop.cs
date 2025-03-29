@@ -193,7 +193,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
         if (command == null) throw new ArgumentNullException(nameof(command));
         long sequence = NextSequence(1);
         if (sequence < 0) {
-            rejectedExecutionHandler.Rejected(Executors.ToTask(command, options), this);
+            rejectedExecutionHandler.Rejected(ExecutorUtil.ToTask(command, options), this);
             return;
         }
         PublishTask(command, sequence, options);
@@ -224,7 +224,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
         eventObj.Obj1 = task;
         eventObj.Options = options;
         if (task is IScheduledFutureTask futureTask) {
-            futureTask.Id = sequence; // nice
+            futureTask.Inject(schedulerHelper, sequence); // nice
         }
         eventSequencer.Publish(sequence);
 
@@ -363,8 +363,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
             EnsureThreadStarted();
         }
     }
-
-    protected override ISchedulerHelper Helper => schedulerHelper;
 
     protected internal long TickTime {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -619,7 +617,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
             try {
                 // 清理ringBuffer中的数据
                 CleanBuffer();
-                schedulerHelper.ClearIgnoringIndexes();
+                schedulerHelper.ClearTaskQueue();
             }
             finally {
                 RemoveFromGatingBarriers();
@@ -757,7 +755,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
         // 处理延迟任务，保证时序 -- 外部清理
         long tickTime = UpdateTickTime();
         schedulerHelper.Update(tickTime, true);
-        schedulerHelper.ClearIgnoringIndexes(); // 执行一次清理，避免下面的内部事件执行
+        schedulerHelper.ClearTaskQueue(); // 执行一次清理，避免下面的内部事件执行
 
         // 在新的架构下，EventSequencer可能是无界队列，这种情况下我们采用笨方法来清理；
         // 从当前序列开始消费，一直消费到最新的cursor，然后将自己从gatingBarrier中删除 -- 此时不论有界无界，生产者都将醒来。

@@ -88,7 +88,7 @@ public abstract class AbstractPromise
         }
         return ex is OperationCanceledException ? ST_CANCELLED : ST_FAILED;
     }
-    
+
     #endregion
 
     #region notify
@@ -230,7 +230,7 @@ public abstract class AbstractPromise
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool TryInline(Completion completion, IExecutor e, int options) {
         // 尝试内联
-        if (Executors.IsInlinable(e, options)) {
+        if (ExecutorUtil.IsInlinable(e, options)) {
             return true;
         }
         e.Execute(completion);
@@ -400,7 +400,7 @@ public abstract class AbstractPromise
 
         public override AbstractPromise? TryFire(int mode) {
             {
-                if (Executors.IsCancelRequested(state, options)) {
+                if (ExecutorUtil.IsCancelRequested(state, options)) {
                     goto outer;
                 }
                 // 异步模式下已经claim
@@ -410,11 +410,6 @@ public abstract class AbstractPromise
             }
             outer:
             POOL.Release(this);
-            // help gc
-            // this.executor = null;
-            // this.input = null;
-            // this.action = null;
-            // this.state = null;
             return null;
         }
 
@@ -435,9 +430,9 @@ public abstract class AbstractPromise
         /// <summary>
         /// 放在类内部，避免随着Promise就初始化
         /// </summary>
-        internal static readonly IObjectPool<MoveNextCompletion> POOL = new ConcurrentObjectPool<MoveNextCompletion>(
-            () => new MoveNextCompletion(), task => task.Reset(),
-            TaskPoolConfig.GetPoolSize<int>(TaskPoolType.PromiseMoveNext));
+        internal static readonly ConcurrentObjectPool<MoveNextCompletion> POOL =
+            new(() => new MoveNextCompletion(), task => task.Reset(),
+                TaskPoolConfig.GetPoolSize<int>(TaskPoolType.PromiseMoveNext));
     }
 
     /// <summary>

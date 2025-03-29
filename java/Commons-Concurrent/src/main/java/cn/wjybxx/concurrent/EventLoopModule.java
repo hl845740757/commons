@@ -16,12 +16,14 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.ArrayUtils;
 import cn.wjybxx.base.fx.ComponentId;
 import cn.wjybxx.base.fx.ComponentKind;
 import cn.wjybxx.base.fx.ComponentStatus;
 
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
+import java.lang.reflect.Method;
 import java.util.Objects;
 
 /**
@@ -128,7 +130,7 @@ public abstract class EventLoopModule implements IEventLoopModule {
 
     /** 解析组件id -- 允许重写方法，从另外的池解析组件id */
     protected ComponentId<?> parseCid() {
-        return EventLoopUtils.GLOBAL.valueOf(getClass());
+        return IEventLoopModule.GLOBAL.valueOf(getClass());
     }
 
     @Override
@@ -143,4 +145,26 @@ public abstract class EventLoopModule implements IEventLoopModule {
 
     // endregion
 
+    // region util
+
+    /** 是否重写了{@link IEventLoopModule#update()}方法 */
+    public static boolean isOverrideUpdate(IEventLoopModule module) {
+        try {
+            Method method = module.getClass().getMethod("update", ArrayUtils.EMPTY_CLASS_ARRAY);
+            return !method.getDeclaringClass().isInterface();
+        } catch (NoSuchMethodException ignore) {
+            return false;
+        }
+    }
+
+    /** 是否重写了{@link  IEventLoopModule#lateUpdate}方法 */
+    public static boolean isOverrideLateUpdate(IEventLoopModule module) {
+        try {
+            Method method = module.getClass().getMethod("lateUpdate", ArrayUtils.EMPTY_CLASS_ARRAY);
+            return !method.getDeclaringClass().isInterface();
+        } catch (NoSuchMethodException ignore) {
+            return false;
+        }
+    }
+    // endregion
 }

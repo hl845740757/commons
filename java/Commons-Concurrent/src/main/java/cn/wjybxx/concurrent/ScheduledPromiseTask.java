@@ -21,13 +21,12 @@ import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.collection.IndexedElement;
 import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.base.concurrent.StacklessCancellationException;
+import cn.wjybxx.base.pool.ConcurrentObjectPool;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * 定时任务的Task抽象
@@ -38,7 +37,7 @@ import java.util.function.Function;
  * date - 2024/1/8
  */
 public final class ScheduledPromiseTask<V> extends PromiseTask<V>
-        implements IScheduledFutureTask<V>, IndexedElement, ICancelTokenListener {
+        implements IScheduledFutureTask<V>, IndexedElement {
 
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
     private long id = -1;
@@ -59,91 +58,57 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
     private IRegistration cancelRegistration;
 
-    /**
-     * @param promise         任务关联的promise
-     * @param nextTriggerTime 任务的首次触发时间
-     */
-    private ScheduledPromiseTask(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise,
-                                 ISchedulerHelper helper, long nextTriggerTime, long period) {
-        super(builder, promise);
-        this.helper = helper;
-        this.nextTriggerTime = nextTriggerTime;
-        this.period = period;
-        setScheduleType(builder.getScheduleType());
+    private ScheduledPromiseTask() {
     }
 
+    // region init
+
     /** 用于简单情况下的对象创建 -- 非周期性任务 */
-    private ScheduledPromiseTask(Object action, Object ctx, int options, IScheduledPromise<V> promise, int taskType,
-                                 ISchedulerHelper helper, long nextTriggerTime) {
-        super(action, ctx, options, promise, taskType);
-        this.helper = helper;
-        this.nextTriggerTime = nextTriggerTime;
+    private void init(int taskType, Object action, Object ctx, int options, IScheduledPromise<V> promise,
+                      long firstDelay, TimeUnit timeUnit) {
+        init(taskType, action, ctx, options, promise);
+        // 时间戳先保存为nanos单位
+        this.nextTriggerTime = timeUnit.toNanos(firstDelay);
         this.period = 0;
     }
 
-    // region factory
-
-    public static ScheduledPromiseTask<?> ofAction(Runnable action, ICancelToken cancelToken, int options,
-                                                   IScheduledPromise<?> promise,
-                                                   ISchedulerHelper helper, long triggerTime) {
-        return new ScheduledPromiseTask<>(action, cancelToken, options, promise, TaskBuilder.TYPE_ACTION,
-                helper, triggerTime);
-    }
-
-    public static ScheduledPromiseTask<?> ofAction(Consumer<Object> action, Object ctx, int options,
-                                                   IScheduledPromise<?> promise,
-                                                   ISchedulerHelper helper, long triggerTime) {
-        return new ScheduledPromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION_CTX,
-                helper, triggerTime);
-    }
-
-    public static <V> ScheduledPromiseTask<V> ofFunction(Callable<? extends V> action, ICancelToken cancelToken, int options,
-                                                         IScheduledPromise<V> promise,
-                                                         ISchedulerHelper helper, long triggerTime) {
-        return new ScheduledPromiseTask<>(action, cancelToken, options, promise, TaskBuilder.TYPE_FUNC,
-                helper, triggerTime);
-    }
-
-    public static <V> ScheduledPromiseTask<V> ofFunction(Function<Object, ? extends V> action, Object ctx, int options,
-                                                         IScheduledPromise<V> promise,
-                                                         ISchedulerHelper helper, long triggerTime) {
-        return new ScheduledPromiseTask<>(action, ctx, options, promise, TaskBuilder.TYPE_FUNC_CTX,
-                helper, triggerTime);
-    }
-
-    public static <V> ScheduledPromiseTask<V> ofBuilder(TaskBuilder<V> builder, IScheduledPromise<V> promise,
-                                                        ISchedulerHelper helper) {
-        if (builder instanceof ScheduledTaskBuilder<V> sb) {
-            return ofBuilder(sb, promise, helper);
+    private void init(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise) {
+        init(builder.getType(), builder.getTask(), builder.getCtx(), builder.getOptions(), promise);
+        setScheduleType(builder.getScheduleType());
+        // 时间戳先保存为nanos单位
+        TimeUnit timeUnit = builder.getTimeUnit();
+        this.nextTriggerTime = timeUnit.toNanos(builder.getInitialDelay());
+        this.period = timeUnit.toNanos(builder.getPeriod());
+        // 初始化周期任务数据
+        if (builder.isPeriodic()) {
+            if (builder.hasTimeout()) {
+                ctl |= PromiseTask.MASK_HAS_DEADLINE;
+                this.deadline = timeUnit.toNanos(builder.getTimeout());
+            }
+            if (builder.hasCountLimit()) {
+                ctl |= PromiseTask.MASK_HAS_COUNTDOWN;
+                this.countdown = builder.getCountLimit();
+            }
         }
-        return new ScheduledPromiseTask<>(builder.getTask(), builder.getCtx(), builder.getOptions(), promise, builder.getType(),
-                helper, helper.tickTime());
     }
 
     /**
-     * @param builder builder
-     * @param promise 监听结果的promise
-     * @param helper  helper
-     * @return PromiseTask
+     * 事件循环在将任务插入到队列时调用该方法初始化任务
+     *
+     * @param helper 事件循环的helper
+     * @param id     任务的id
      */
-    public static <V> ScheduledPromiseTask<V> ofBuilder(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise,
-                                                        ISchedulerHelper helper) {
-        final long triggerTime = helper.triggerTime(builder.getInitialDelay(), builder.getTimeUnit());
-        final long period = builder.isPeriodic()
-                ? helper.triggerPeriod(builder.getPeriod(), builder.getTimeUnit())
-                : 0;
-        ScheduledPromiseTask<V> promiseTask = new ScheduledPromiseTask<>(builder, promise, helper, triggerTime, period);
-        if (builder.isPeriodic()) {
-            if (builder.hasTimeout()) {
-                promiseTask.enableTimeout(helper.triggerTime(builder.getTimeout(), builder.getTimeUnit()));
-            }
-            if (builder.hasCountLimit()) {
-                promiseTask.enableCountLimit(builder.getCountLimit());
-            }
+    public void inject(ISchedulerHelper helper, long id) {
+        this.helper = helper;
+        this.id = id;
+        this.nextTriggerTime = helper.triggerTime(nextTriggerTime, TimeUnit.NANOSECONDS);
+        if (isPeriodic()) {
+            this.period = helper.triggerPeriod(period, TimeUnit.NANOSECONDS);
         }
-        return promiseTask;
+        if (hasTimeout()) {
+            this.deadline = helper.triggerTime(deadline, TimeUnit.NANOSECONDS);
+        }
     }
-
     // endregion
 
     // region api-对EventLoop开放
@@ -152,14 +117,11 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         return id;
     }
 
-    public void setId(long id) {
-        this.id = id;
-    }
-
     public long getNextTriggerTime() {
         return nextTriggerTime;
     }
 
+    /** 保留set以允许外部调整优先级 */
     public void setNextTriggerTime(long nextTriggerTime) {
         this.nextTriggerTime = nextTriggerTime;
     }
@@ -204,78 +166,73 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         this.queueIndex = index;
     }
 
-    @Override
-    protected void clear() {
-        super.clear();
-        closeRegistration();
-        id = -1;
-        nextTriggerTime = 0;
-        period = 0;
-        helper = null;
-    }
-
     private boolean hasTimeout() {
         return (ctl & PromiseTask.MASK_HAS_DEADLINE) != 0;
-    }
-
-    private void enableTimeout(long deadline) {
-        ctl |= PromiseTask.MASK_HAS_DEADLINE;
-        this.deadline = deadline;
     }
 
     private boolean hasCountLimit() {
         return (ctl & PromiseTask.MASK_HAS_COUNTDOWN) != 0;
     }
 
-    private void enableCountLimit(int countdown) {
-        ctl |= PromiseTask.MASK_HAS_COUNTDOWN;
-        this.countdown = countdown;
-    }
-
     // endregion
 
     // region core
 
-    private void start() {
-        if ((ctl & MASK_STARTED) == 0) {
-            ctl |= MASK_STARTED;
-            registerCancellation();
-        }
+    @Override
+    protected void prepareToRecycle() {
+        closeRegistration();
+        POOL.release(this); // sealed class
     }
 
-    private void stop() {
-        if ((ctl & MASK_STARTED) != 0 && (ctl & MASK_STOPPED) == 0) {
-            ctl |= MASK_STOPPED;
-            clear();
-        }
+    @Override
+    protected void reset() {
+        super.reset();
+        id = -1;
+        nextTriggerTime = 0;
+        period = 0;
+        deadline = 0;
+        countdown = 0;
+        helper = null;
+        cancelRegistration = null;
     }
 
     @Override
     public void cancel(int code) {
-        super.cancel(code);
-        if (helper.inEventLoop()) {
-            stop();
-        } // else尚未启动
+        // 只支持在EventLoop线程主动取消，否则存在数据可见性问题
+        if (helper == null || !helper.inEventLoop()) {
+            throw new IllegalStateException();
+        }
+        trySetCancelled(promise, getCancelToken(), code);
+        prepareToRecycle();
     }
 
     @Override
     public void run() {
+        if (helper == null) {
+            throw new IllegalStateException("helper is uninitialized");
+        }
         // 该方法只能执行一次
         if ((ctl & MASK_STARTED) != 0) {
             throw new IllegalStateException();
         }
-        // 检测取消和关闭，避免不必要的启动和停止(监听器) -- 取消可能来自EventLoop，所以要测试promise
+        ctl |= MASK_STARTED;
+
+        // 检测取消和关闭，避免不必要的启动和停止(监听器)
         ICancelToken cancelToken = getCancelToken();
-        if (cancelToken.isCancelRequested() || promise.isDone() || helper.isShutDown()) {
+        if (cancelToken.isCancelRequested() || helper.isShutDown()) {
             trySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
+            prepareToRecycle();
             return;
         }
-        start();
+        // 先监听取消信号
+        registerCancellation();
         helper.doSchedule(this);
     }
 
     /**
-     * 外部确定性触发，不需要回调的方式重新压入队列
+     * 外部确定性触发。
+     * 该方法由EventLoop调用，不需要回调的方式重新压入队列，而是返回bool值告知EventLoop是否需要继续执行。
+     * 在该方法返回false后，EventLoop不可再持有Task的引用。
      *
      * @return 如果需要再压入队列则返回true
      */
@@ -283,7 +240,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         if (trigger0(tickTime)) {
             return true;
         }
-        stop();
+        prepareToRecycle();
         return false;
     }
 
@@ -296,7 +253,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
         final int scheduleType = getScheduleType();
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
-            super.run();
+            super.runImpl(); // 不能调用基类的Run
             return false;
         }
 
@@ -383,9 +340,10 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     /** 监听取消令牌中的取消信号 */
     private void registerCancellation() {
         // java端放弃监听future的完成事件，延迟删除
+        // 注意：监听需要回调给Helper，参数为taskId -- 不能回调给自己，否则可能对象复用bug
         ICancelToken cancelToken = getCancelToken();
         if (cancelToken.canBeCancelled()) {
-            cancelRegistration = cancelToken.thenNotify(this);
+            cancelRegistration = cancelToken.thenNotify(helper, getId());
         }
     }
 
@@ -396,18 +354,6 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
             this.cancelRegistration = null;
             cancelRegistration.close();
         }
-    }
-
-    /** 该方法为中转方法，EventLoop不应该调用 */
-    @Deprecated
-    @Override
-    public void onCancelRequested(ICancelToken cancelToken) {
-        // 由EventLoop处理多线程下的可见性问题
-        ISchedulerHelper helper = this.helper;
-        if (helper == null) {
-            return; // cleared
-        }
-        helper.onCancelRequested(this, cancelToken.cancelCode());
     }
 
     // endregion
@@ -447,4 +393,56 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         }
         return r;
     }
+
+    // region factory
+
+    private static final ConcurrentObjectPool<ScheduledPromiseTask<?>> POOL = new ConcurrentObjectPool<>(
+            ScheduledPromiseTask::new, ScheduledPromiseTask::reset,
+            TaskPoolConfig.getPoolSize(TaskPoolType.SCHEDULED_PROMISE_TASK));
+
+    /**
+     * 申请一个Task对象，Task在进入完成状态后会自动回收。
+     * 注意：该对象不可返回给用户！该对象不可返回给用户！该对象不可返回给用户！
+     *
+     * @param taskType 任务类型 -- 注意上下文的类型
+     * @param task     用户的任务，支持的类型见{@link TaskBuilder#taskType(Object)}
+     * @param ctx      任务关联的上下文
+     * @param options  任务的调度选项
+     * @param promise  任务关联的promise
+     * @param delay    触发延迟
+     * @param timeUnit 时间单位
+     */
+    public static <V> ScheduledPromiseTask<V> acquire(int taskType, Object task, Object ctx, int options, IScheduledPromise<V> promise,
+                                                      long delay, TimeUnit timeUnit) {
+        @SuppressWarnings("unchecked") ScheduledPromiseTask<V> promiseTask = (ScheduledPromiseTask<V>) POOL.acquire();
+        promiseTask.init(taskType, task, ctx, options, promise, delay, timeUnit);
+        return promiseTask;
+    }
+
+    public static <V> ScheduledPromiseTask<V> acquire(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise) {
+        @SuppressWarnings("unchecked") ScheduledPromiseTask<V> promiseTask = (ScheduledPromiseTask<V>) POOL.acquire();
+        promiseTask.init(builder, promise);
+        return promiseTask;
+    }
+
+    public static ScheduledPromiseTask<?> ofAction(Runnable action, ICancelToken cancelToken, int options,
+                                                   IScheduledPromise<?> promise,
+                                                   long delay, TimeUnit timeUnit) {
+        return acquire(TaskBuilder.TYPE_ACTION, action, cancelToken, options, promise,
+                delay, timeUnit);
+    }
+
+    public static <V> ScheduledPromiseTask<V> ofFunction(Callable<? extends V> action, ICancelToken cancelToken, int options,
+                                                         IScheduledPromise<V> promise,
+                                                         long delay, TimeUnit timeUnit) {
+        return acquire(TaskBuilder.TYPE_FUNC, action, cancelToken, options, promise,
+                delay, timeUnit);
+    }
+
+    public static <V> ScheduledPromiseTask<V> ofBuilder(ScheduledTaskBuilder<V> builder, IScheduledPromise<V> promise) {
+        return acquire(builder, promise);
+    }
+
+    // endregion
+
 }

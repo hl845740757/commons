@@ -49,7 +49,7 @@ public interface IExecutorService : IExecutor
 
     /// <summary>
     /// 返回Future将在Executor终止时进入完成状态
-    /// 1. 返回Future应当是只读的，<see cref="IFuture.AsReadonly"/>
+    /// 1. 返回Future应当是只读的，<see cref="ValueFuture.AsReadonly"/>
     /// 2. 用户可以在该Future上等待。
     /// </summary>
     /// <returns></returns>
@@ -114,7 +114,7 @@ public interface IExecutorService : IExecutor
     /// </summary>
     /// <param name="builder">任务构建器</param>
     /// <returns></returns>
-    IFuture<T> Submit<T>(in TaskBuilder<T> builder);
+    ValueFuture<T> Submit<T>(in TaskBuilder<T> builder);
 
     /// <summary>
     /// 提交一个任务
@@ -122,33 +122,7 @@ public interface IExecutorService : IExecutor
     /// <param name="action">待执行的函数</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    IFuture SubmitAction(Action action, int options = 0);
-
-    /// <summary>
-    /// 提交一个任务
-    /// </summary>
-    /// <param name="action">待执行的函数</param>
-    /// <param name="cancelToken">取消令牌</param>
-    /// <param name="options">调度选项</param>
-    /// <returns></returns>
-    IFuture SubmitAction(Action action, ICancelToken cancelToken, int options = 0);
-
-    /// <summary>
-    /// 提交一个任务
-    /// </summary>
-    /// <param name="action">待执行的函数</param>
-    /// <param name="ctx">任务上下文</param>
-    /// <param name="options">调度选项</param>
-    /// <returns></returns>
-    IFuture SubmitAction(Action<object> action, object ctx, int options = 0);
-
-    /// <summary>
-    /// 提交一个任务
-    /// </summary>
-    /// <param name="action">待执行的函数</param>
-    /// <param name="options">调度选项</param>
-    /// <returns></returns>
-    IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0);
+    ValueFuture SubmitAction(Action action, int options = 0);
 
     /// <summary>
     /// 提交一个任务
@@ -157,7 +131,7 @@ public interface IExecutorService : IExecutor
     /// <param name="cancelToken">取消令牌</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    IFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken cancelToken, int options = 0);
+    ValueFuture SubmitAction(Action action, ICancelToken cancelToken, int options = 0);
 
     /// <summary>
     /// 提交一个任务
@@ -166,7 +140,33 @@ public interface IExecutorService : IExecutor
     /// <param name="ctx">任务上下文</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    IFuture<T> SubmitFunc<T>(Func<object, T> action, object ctx, int options = 0);
+    ValueFuture SubmitAction(Action<object> action, object ctx, int options = 0);
+
+    /// <summary>
+    /// 提交一个任务
+    /// </summary>
+    /// <param name="action">待执行的函数</param>
+    /// <param name="options">调度选项</param>
+    /// <returns></returns>
+    ValueFuture<T> SubmitFunc<T>(Func<T> action, int options = 0);
+
+    /// <summary>
+    /// 提交一个任务
+    /// </summary>
+    /// <param name="action">待执行的函数</param>
+    /// <param name="cancelToken">取消令牌</param>
+    /// <param name="options">调度选项</param>
+    /// <returns></returns>
+    ValueFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken cancelToken, int options = 0);
+
+    /// <summary>
+    /// 提交一个任务
+    /// </summary>
+    /// <param name="action">待执行的函数</param>
+    /// <param name="ctx">任务上下文</param>
+    /// <param name="options">调度选项</param>
+    /// <returns></returns>
+    ValueFuture<T> SubmitFunc<T>(Func<object, T> action, object ctx, int options = 0);
 
     #endregion
 }

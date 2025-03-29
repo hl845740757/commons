@@ -120,16 +120,25 @@ public readonly struct ValueFuture
     }
 
     /// <summary>
+    /// 转换为可多次await的ValueFuture
+    /// </summary>
+    /// <returns></returns>
+    public ValueFuture Preserve() => new ValueFuture(AsFuture());
+
+    /// <summary>
     /// 转换为普通的Future
     /// 该方法应当避免调用多次，且不可以在await以后调用
     /// </summary>
     public IFuture AsFuture() {
         if (_future == null) {
             if (_ex == null) {
-                return Promise<int>.FromResult(0);
+                return Promise<int>.COMPLETED;
             }
             if (_ex is OperationCanceledException canceledException) {
-                return Promise<int>.FromException(canceledException);
+                // 可能是子类，有特殊逻辑
+                return _ex.GetType() == typeof(OperationCanceledException)
+                    ? Promise<int>.CANCELLED
+                    : Promise<int>.FromException(canceledException);
             }
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
             return Promise<int>.FromException(dispatchInfo);
@@ -138,26 +147,8 @@ public readonly struct ValueFuture
             return future;
         }
         IValuePromise valuePromise = (IValuePromise)_future;
-        TaskStatus status = valuePromise.GetStatus(_reentryId);
-        switch (status) {
-            case TaskStatus.Success: {
-                valuePromise.GetVoidResult(_reentryId);
-                return Promise<int>.FromResult(0);
-            }
-            case TaskStatus.Cancelled:
-            case TaskStatus.Failed: {
-                Exception ex = valuePromise.GetException(_reentryId);
-                return Promise<int>.FromException(ex);
-            }
-            default: {
-                Promise<int> promise = new Promise<int>();
-                valuePromise.SetVoidPromiseWhenCompleted(_reentryId, promise);
-                return promise;
-            }
-        }
+        return valuePromise.AsVoidFuture(_reentryId);
     }
-
-    public ValueFuture Preserve() => new ValueFuture(AsFuture());
 
     /// <summary>
     /// 如果用户不需要结果，可以调用该函数，告知Promise在任务完成后自动回收。
@@ -330,6 +321,12 @@ public readonly struct ValueFuture<T>
     }
 
     /// <summary>
+    /// 转换为可多次await的ValueFuture
+    /// </summary>
+    /// <returns></returns>
+    public ValueFuture<T> Preserve() => new ValueFuture<T>(AsFuture());
+
+    /// <summary>
     /// 转换为普通的Future
     /// 该方法应当避免调用多次，且不可以在await以后调用
     /// </summary>
@@ -339,7 +336,10 @@ public readonly struct ValueFuture<T>
                 return Promise<T>.FromResult(_result);
             }
             if (_ex is OperationCanceledException canceledException) {
-                return Promise<T>.FromException(canceledException);
+                // 可能是子类，有特殊逻辑
+                return _ex.GetType() == typeof(OperationCanceledException)
+                    ? Promise<T>.CANCELLED
+                    : Promise<T>.FromException(canceledException);
             }
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
             return Promise<T>.FromException(dispatchInfo);
@@ -348,25 +348,8 @@ public readonly struct ValueFuture<T>
             return future;
         }
         IValuePromise<T> valuePromise = (IValuePromise<T>)_future;
-        TaskStatus status = valuePromise.GetStatus(_reentryId);
-        switch (status) {
-            case TaskStatus.Success: {
-                return Promise<T>.FromResult(valuePromise.GetResult(_reentryId));
-            }
-            case TaskStatus.Cancelled:
-            case TaskStatus.Failed: {
-                Exception ex = valuePromise.GetException(_reentryId);
-                return Promise<T>.FromException(ex);
-            }
-            default: {
-                Promise<T> promise = new Promise<T>();
-                valuePromise.SetPromiseWhenCompleted(_reentryId, promise);
-                return promise;
-            }
-        }
+        return valuePromise.AsFuture(_reentryId);
     }
-
-    public ValueFuture<T> Preserve() => new ValueFuture<T>(AsFuture());
 
     /// <summary>
     /// 如果用户不需要结果，可以调用该函数，告知Promise在任务完成后自动回收。

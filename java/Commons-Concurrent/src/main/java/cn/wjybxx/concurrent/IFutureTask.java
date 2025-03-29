@@ -29,17 +29,9 @@ package cn.wjybxx.concurrent;
 public interface IFutureTask<V> extends ITask {
 
     /**
-     * 是否收到了取消信号；
-     * 调度器会检查任务的取消信号，以避免不必要的执行。
+     * 任务关联的Future，创建任务后返回给用户的句柄
+     * 必须在提交任务之前调用该方法，否则future可能在任务执行完成后被清理。
      */
-    boolean isCancelRequested();
-
-    /**
-     * 取消执行
-     * 可能是检测到取消信号，也可能是其它原因，EventLoop主动停止任务。
-     * 如果此时收到了取消信号，可优先使用取消令牌中的取消码进入取消状态。
-     * 如果task已进入完成状态。可忽略该请求。
-     */
-    void cancel(int code);
+    IFuture<V> future();
 
 }

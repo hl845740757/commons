@@ -42,21 +42,43 @@ public interface IEventLoopFactory
 public class EventLoopFactory : IEventLoopFactory
 {
     private readonly ThreadFactory threadFactory;
+    private readonly int bufferSize;
 
-    public EventLoopFactory(ThreadFactory threadFactory) {
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="threadFactory"></param>
+    /// <param name="bufferSize">缓冲区大小，-1表示无界</param>
+    /// <exception cref="ArgumentNullException"></exception>
+    public EventLoopFactory(ThreadFactory threadFactory, int bufferSize = -1) {
         this.threadFactory = threadFactory ?? throw new ArgumentNullException(nameof(threadFactory));
+        this.bufferSize = bufferSize;
     }
 
     public IEventLoop NewChild(IEventLoopGroup parent, int index, object? extraInfo = null) {
+        // 无界
+        if (bufferSize < 0) {
+            return new DisruptorEventLoopBuilder<AgentEvent>()
+            {
+                Parent = parent,
+                Index = index,
+                ThreadFactory = threadFactory,
+                EventSequencer = new MpUnboundedEventSequencer<AgentEvent>.Builder(AgentEvent.FACTORY)
+                {
+                    ChunkLength = 1024,
+                    MaxPooledChunks = 4,
+                }.Build()
+            }.Build();
+        }
+        // 有界
         return new DisruptorEventLoopBuilder<AgentEvent>()
         {
             Parent = parent,
             Index = index,
             ThreadFactory = threadFactory,
-            EventSequencer = new MpUnboundedEventSequencer<AgentEvent>.Builder(AgentEvent.FACTORY)
+            EventSequencer = new RingBufferEventSequencer<AgentEvent>.Builder(AgentEvent.FACTORY)
             {
-                ChunkLength = 1024,
-                MaxPooledChunks = 4,
+                BufferLength = bufferSize,
             }.Build()
         }.Build();
     }

@@ -242,7 +242,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         event.setObj1(task);
         event.setOptions(options);
         if (task instanceof ScheduledPromiseTask<?> futureTask) {
-            futureTask.setId(sequence); // nice
+            futureTask.inject(schedulerHelper, sequence); // nice
         }
         eventSequencer.publish(sequence);
 
@@ -367,11 +367,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         if (state == EventLoopState.ST_UNSTARTED) {
             ensureThreadStarted();
         }
-    }
-
-    @Override
-    protected final ISchedulerHelper helper() {
-        return schedulerHelper;
     }
 
     protected final long tickTime() {
@@ -625,7 +620,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
                 try {
                     // 清理ringBuffer中的数据
                     cleanBuffer();
-                    schedulerHelper.clearIgnoringIndexes();
+                    schedulerHelper.clearTaskQueue();
                 } finally {
                     removeFromGatingBarriers();
                     // 标记为已进入最终清理阶段
@@ -735,7 +730,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
             // 处理延迟任务，保证时序 - 外部清理
             tickTime = System.nanoTime();
             schedulerHelper.update(tickTime, true);
-            schedulerHelper.clearIgnoringIndexes(); // 执行一次清理，避免下面的内部事件执行
+            schedulerHelper.clearTaskQueue(); // 执行一次清理，避免下面的内部事件执行
 
             // 在新的架构下，EventSequencer可能是无界队列，这种情况下我们采用笨方法来清理；
             // 从当前序列开始消费，一直消费到最新的cursor，然后将自己从gatingBarrier中删除 -- 此时不论有界无界，生产者都将醒来。

@@ -42,7 +42,7 @@ public class ScheduleCancelTest
     [Test]
     public void testCancel() {
         CancelTokenSource cts = new CancelTokenSource();
-        IScheduledFuture future = consumer.ScheduleAction(() =>{}, TimeSpan.FromMilliseconds(1000), cts);
+        IFuture future = consumer.ScheduleAction(() => { }, TimeSpan.FromMilliseconds(1000), cts).AsFuture();
 
         cts.Cancel(1);
         future.AwaitUninterruptibly();

@@ -57,15 +57,15 @@ public abstract class AbstractEventLoop implements IEventLoop {
         // 需要去重 - 兼容性
         final LinkedHashSet<EventLoopModule> copiedModuleList = new LinkedHashSet<>(moduleList);
         this.moduleList = List.copyOf(copiedModuleList);
-        this.indexedModuleList = List.of(EventLoopUtils.toIndexedArray(copiedModuleList));
+        this.indexedModuleList = List.of(toIndexedArray(copiedModuleList));
         // 需要Update的模块缓存
         this.updateModuleList = copiedModuleList.stream()
                 .filter(e -> e.getCid().isPrivateScript())
-                .filter(EventLoopUtils::isOverrideUpdate)
+                .filter(EventLoopModule::isOverrideUpdate)
                 .toList();
         this.lateUpdateModuleList = copiedModuleList.stream()
                 .filter(e -> e.getCid().isPrivateScript())
-                .filter(EventLoopUtils::isOverrideLateUpdate)
+                .filter(EventLoopModule::isOverrideLateUpdate)
                 .toList();
     }
 
@@ -212,31 +212,24 @@ public abstract class AbstractEventLoop implements IEventLoop {
         return new ScheduledPromise<>(this);
     }
 
-    protected abstract ISchedulerHelper helper();
-
     @Override
     public <V> IScheduledFuture<V> schedule(ScheduledTaskBuilder<V> builder) {
         IScheduledPromise<V> promise = newScheduledPromise();
-        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise));
         return promise;
     }
 
     @Override
     public <V> IScheduledFuture<V> scheduleFunc(Callable<V> task, long delay, TimeUnit unit, ICancelToken cancelToken) {
         IScheduledPromise<V> promise = newScheduledPromise();
-        ISchedulerHelper helper = helper();
-
-        execute(ScheduledPromiseTask.ofFunction(task, cancelToken, 0, promise, helper, helper.triggerTime(delay, unit)));
+        execute(ScheduledPromiseTask.ofFunction(task, cancelToken, 0, promise, delay, unit));
         return promise;
     }
 
     @Override
     public IScheduledFuture<?> scheduleAction(Runnable task, long delay, TimeUnit unit, ICancelToken cancelToken) {
         IScheduledPromise<Object> promise = newScheduledPromise();
-        ISchedulerHelper helper = helper();
-
-        ScheduledPromiseTask<?> promiseTask = ScheduledPromiseTask.ofAction(task, cancelToken, 0, promise, helper, helper.triggerTime(delay, unit));
-        execute(promiseTask);
+        execute(ScheduledPromiseTask.ofAction(task, cancelToken, 0, promise, delay, unit));
         return promise;
     }
 
@@ -246,7 +239,7 @@ public abstract class AbstractEventLoop implements IEventLoop {
                 .setFixedDelay(initialDelay, delay, unit);
 
         IScheduledPromise<Object> promise = newScheduledPromise();
-        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise));
         return promise;
     }
 
@@ -256,7 +249,7 @@ public abstract class AbstractEventLoop implements IEventLoop {
                 .setFixedRate(initialDelay, period, unit);
 
         IScheduledPromise<Object> promise = newScheduledPromise();
-        execute(ScheduledPromiseTask.ofBuilder(builder, promise, helper()));
+        execute(ScheduledPromiseTask.ofBuilder(builder, promise));
         return promise;
     }
 
@@ -331,14 +324,6 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     // endregion
-
-    protected static void logCause(Throwable t) {
-        if (t instanceof VirtualMachineError) {
-            logger.error("A task raised an exception.", t);
-        } else {
-            logger.warn("A task raised an exception.", t);
-        }
-    }
 
     // region 组件模式
 
@@ -439,4 +424,35 @@ public abstract class AbstractEventLoop implements IEventLoop {
 
     // endregion
 
+    // region util
+
+    protected static void logCause(Throwable t) {
+        if (t instanceof VirtualMachineError) {
+            logger.error("A task raised an exception.", t);
+        } else {
+            logger.warn("A task raised an exception.", t);
+        }
+    }
+
+    /** 将组件散开为基于组件index的数组 -- 暂时禁止组件重复 */
+    private static EventLoopModule[] toIndexedArray(Collection<EventLoopModule> moduleList) {
+        if (moduleList.isEmpty()) {
+            return new EventLoopModule[0];
+        }
+        int maxIndex = moduleList.stream()
+                .mapToInt(e -> e.getCid().index)
+                .max()
+                .orElseThrow();
+
+        EventLoopModule[] result = new EventLoopModule[maxIndex + 1];
+        for (EventLoopModule module : moduleList) {
+            EventLoopModule exist = result[module.getCid().index];
+            if (exist != null) {
+                throw new IllegalStateException("module is duplicate, cid: " + module.getCid());
+            }
+            result[module.getCid().index] = module;
+        }
+        return result;
+    }
+    // endregion
 }

@@ -31,11 +31,10 @@ public abstract class ConcurrentObjectPool
     private static readonly int SBP_SIZE = EnvironmentUtil.GetIntVar("Wjybxx.Commons.IO.SharedStringBuilderPool.PoolSize", 64);
 
     /** 默认的全局StringBuilderPool */
-    public static readonly ConcurrentObjectPool<StringBuilder> SharedStringBuilderPool = new ConcurrentObjectPool<StringBuilder>(
-        () => new StringBuilder(1024),
-        sb => sb.Clear(),
+    public static readonly ConcurrentObjectPool<StringBuilder> SharedStringBuilderPool = 
+        new(() => new StringBuilder(1024), builder => builder.Clear(),
         SBP_SIZE,
-        sb => sb.Capacity >= 1024 && sb.Capacity <= SBP_MAX_CAPACITY);
+        builder => builder.Capacity >= 1024 && builder.Capacity <= SBP_MAX_CAPACITY);
 
     /// <summary>
     /// 提供统一API清理对象池

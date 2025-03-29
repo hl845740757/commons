@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 该接口用户不可调用，否则可能产生错误
 /// </summary>
-public interface ISchedulerHelper
+public interface ISchedulerHelper : ICancelTokenListener
 {
     /// <summary>
     /// 当前线程的时间
@@ -45,7 +45,7 @@ public interface ISchedulerHelper
     /// </summary>
     /// <returns></returns>
     bool InEventLoop();
-    
+
     /// <summary>
     /// 规格化：将指定时间转换为tick同单位的时间
     /// (c#可根据tick数归一化)
@@ -71,27 +71,17 @@ public interface ISchedulerHelper
     /// <param name="futureTask"></param>
     void DoSchedule(IScheduledFutureTask futureTask);
 
-    /// <summary>
-    /// 收到用户的取消请求
-    /// 1.可能从其它线程调用，需考虑线程安全问题（取决于取消信号）
-    /// 2.由调度器决定是否立即进入取消状态（可控制Task进入完成状态的时机）。
-    /// 3.如果是可重用的对象，不可以监听用户的取消令牌，否则事件循环无法处理
-    /// 
-    /// 注意：当收到来自其它线程的取消信号时，要小心可见性问题，尤其是对象可能被复用的情况
-    /// </summary>
-    /// <param name="futureTask"></param>
-    /// <param name="cancelCode"></param>
-    void OnCancelRequested(IScheduledFutureTask futureTask, int cancelCode);
-
     /** 计算任务的触发时间 -- 允许修正 */
     long TriggerTime(long delay, TimeSpan timeUnit) {
         if (delay <= 0) return TickTime;
+        if (timeUnit.Ticks < 1) throw new ArgumentException("timeUnit.Ticks < 1");
         return TickTime + Normalize(delay, timeUnit);
     }
 
     /** 计算任务的触发间隔 -- 允许修正，但必须大于0 */
     long TriggerPeriod(long period, TimeSpan timeUnit) {
         if (period <= 0) return 1;
+        if (timeUnit.Ticks < 1) throw new ArgumentException("timeUnit.Ticks < 1");
         return Normalize(period, timeUnit);
     }
 
@@ -99,6 +89,7 @@ public interface ISchedulerHelper
     long GetDelay(long triggerTime, TimeSpan timeUnit) {
         long delay = triggerTime - TickTime;
         if (delay <= 0) return 0;
+        if (timeUnit.Ticks < 1) throw new ArgumentException("timeUnit.Ticks < 1");
         return Denormalize(delay, timeUnit);
     }
 }

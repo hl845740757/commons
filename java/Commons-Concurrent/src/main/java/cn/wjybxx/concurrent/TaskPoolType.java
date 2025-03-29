@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2023-2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,25 @@
 package cn.wjybxx.concurrent;
 
 /**
- * 该接口用于特殊需求时减少闭包
+ * 对象池类型
  *
  * @author wjybxx
- * date - 2024/1/15
+ * date - 2025/3/29
  */
-public interface ICancelTokenListener {
+public enum TaskPoolType {
 
-    void onCancelRequested(ICancelToken cancelToken, Object ctx);
+    /**
+     * 池化的普通任务{@link PromiseTask}
+     */
+    PROMISE_TASK,
 
+    /**
+     * 池化的定时任务{@link ScheduledPromiseTask}
+     */
+    SCHEDULED_PROMISE_TASK,
+
+    /**
+     * 取消令牌的回调接地啊
+     */
+    CTS_COMPLETION,
 }

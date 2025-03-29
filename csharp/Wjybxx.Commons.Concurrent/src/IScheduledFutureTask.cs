@@ -30,15 +30,20 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 {
-    #region internal
+#nullable disable
 
-    // 以下接口应该仅用于Executor内部，不应该对用户开放
+    /// <summary>
+    /// 初始化
+    /// </summary>
+    /// <param name="helper"></param>
+    /// <param name="id"></param>
+    void Inject(ISchedulerHelper helper, long id);
 
     /// <summary>
     /// 任务的唯一id，不同的任务之间id不可重复
     /// (执行清理后应该为0)
     /// </summary>
-    long Id { get; set; }
+    long Id { get; }
 
     /// <summary>
     /// 是否是周期性任务
@@ -47,6 +52,7 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 
     /// <summary>
     /// 下次触发时间
+    /// (保留set以允许外部调整优先级)
     /// </summary>
     long NextTriggerTime { get; set; }
 
@@ -62,13 +68,19 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
 
     /// <summary>
     /// 外部确定性触发
-    /// 该方法由EventLoop调用，不需要回调的方式重新压入队列，而是返回bool值告知EventLoop是否需要继续执行
+    /// 该方法由EventLoop调用，不需要回调的方式重新压入队列，而是返回bool值告知EventLoop是否需要继续执行。
+    /// 在该方法返回false后，EventLoop不可再持有Task的引用。
     /// </summary>
     /// <param name="tickTime">当前时间戳</param>
     /// <returns>是否还需要压入队列</returns>
     bool Trigger(long tickTime);
 
-    #endregion
+    /// <summary>
+    /// 取消执行
+    /// 可能是检测到取消信号，也可能是其它原因，EventLoop主动停止任务。
+    /// 如果此时收到了取消信号，可优先使用取消令牌中的取消码进入取消状态。
+    /// </summary>
+    void Cancel(int code);
 }
 
 /// <summary>

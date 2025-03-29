@@ -27,7 +27,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 并发工具类
 /// </summary>
-public static class Executors
+public static class ExecutorUtil
 {
     #region EventLoop
 
@@ -172,66 +172,66 @@ public static class Executors
 
     #region submit
 
-    public static IFuture<T> Submit<T>(IExecutor executor, in TaskBuilder<T> builder) {
-        IPromise<T> promise = NewPromise<T>(executor);
-        executor.Execute(PromiseTask.OfBuilder(builder, promise));
-        return promise;
+    public static ValueFuture<T> Submit<T>(IExecutor executor, in TaskBuilder<T> builder) {
+        ValuePromise<T> promise = ValuePromise<T>.Acquire(executor);
+        executor.Execute(PromiseTask.OfBuilder(in builder, promise));
+        return promise.Future;
     }
 
     // submit 方法不能定义为扩展方法，因为Promise有区别
 
     #region submit func
 
-    public static IFuture<T> SubmitFunc<T>(IExecutor executor, Func<T> task, int options = 0) {
-        IPromise<T> promise = NewPromise<T>(executor);
+    public static ValueFuture<T> SubmitFunc<T>(IExecutor executor, Func<T> task, int options = 0) {
+        ValuePromise<T> promise = ValuePromise<T>.Acquire(executor);
         executor.Execute(PromiseTask.OfFunction(task, null, options, promise));
-        return promise;
+        return promise.Future;
     }
 
-    public static IFuture<T> SubmitFunc<T>(IExecutor executor, Func<T> task, ICancelToken cancelToken, int options = 0) {
-        IPromise<T> promise = NewPromise<T>(executor);
+    public static ValueFuture<T> SubmitFunc<T>(IExecutor executor, Func<T> task, ICancelToken? cancelToken, int options = 0) {
+        ValuePromise<T> promise = ValuePromise<T>.Acquire(executor);
         executor.Execute(PromiseTask.OfFunction(task, cancelToken, options, promise));
-        return promise;
+        return promise.Future;
     }
 
-    public static IFuture<T> SubmitFunc<T>(IExecutor executor, Func<object, T> task, object ctx, int options = 0) {
-        IPromise<T> promise = NewPromise<T>(executor);
+    public static ValueFuture<T> SubmitFunc<T>(IExecutor executor, Func<object, T> task, object? ctx, int options = 0) {
+        ValuePromise<T> promise = ValuePromise<T>.Acquire(executor);
         executor.Execute(PromiseTask.OfFunction(task, ctx, options, promise));
-        return promise;
+        return promise.Future;
     }
 
     #endregion
 
     #region submit action
 
-    public static IFuture SubmitAction(IExecutor executor, Action task, int options = 0) {
-        IPromise<int> promise = NewPromise(executor);
+    public static ValueFuture SubmitAction(IExecutor executor, Action task, int options = 0) {
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(executor);
         executor.Execute(PromiseTask.OfAction(task, null, options, promise));
-        return promise;
+        return promise.VoidFuture;
     }
 
-    public static IFuture SubmitAction(IExecutor executor, Action task, ICancelToken cancelToken, int options) {
-        IPromise<int> promise = NewPromise(executor);
+    public static ValueFuture SubmitAction(IExecutor executor, Action task, ICancelToken? cancelToken, int options) {
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(executor);
         executor.Execute(PromiseTask.OfAction(task, cancelToken, options, promise));
-        return promise;
+        return promise.VoidFuture;
     }
 
-    public static IFuture SubmitAction(IExecutor executor, Action<object> task, object ctx, int options) {
-        IPromise<int> promise = NewPromise(executor);
+    public static ValueFuture SubmitAction(IExecutor executor, Action<object> task, object? ctx, int options) {
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(executor);
         executor.Execute(PromiseTask.OfAction(task, ctx, options, promise));
-        return promise;
+        return promise.VoidFuture;
     }
 
     #endregion
 
     #region execute
 
-    public static void Execute(this IExecutor executor, Action action, ICancelToken cancelToken, int options) {
+    public static void Execute(this IExecutor executor, Action action, ICancelToken? cancelToken, int options) {
         ITask futureTask = ToTask(action, cancelToken, options);
         executor.Execute(futureTask);
     }
 
-    public static void Execute(this IExecutor executor, Action<object> action, object ctx, int options) {
+    public static void Execute(this IExecutor executor, Action<object> action, object? ctx, int options) {
         ITask futureTask = ToTask(action, ctx, options);
         executor.Execute(futureTask);
     }
@@ -267,13 +267,13 @@ public static class Executors
         return new ActionWrapper1(action, options);
     }
 
-    public static ITask ToTask(Action action, ICancelToken cancelToken, int options = 0) {
+    public static ITask ToTask(Action action, ICancelToken? cancelToken, int options = 0) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         if (cancelToken == null) throw new ArgumentNullException(nameof(cancelToken));
         return new ActionWrapper2(action, cancelToken, options);
     }
 
-    public static ITask ToTask(Action<object> action, object ctx, int options = 0) {
+    public static ITask ToTask(Action<object> action, object? ctx, int options = 0) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         return new ActionWrapper3(action, ctx, options);
     }
@@ -347,10 +347,10 @@ public static class Executors
     private class ActionWrapper2 : ITask
     {
         private readonly Action action;
-        private readonly ICancelToken cancelToken;
+        private readonly ICancelToken? cancelToken;
         private readonly int options;
 
-        public ActionWrapper2(Action action, ICancelToken cancelToken, int options) {
+        public ActionWrapper2(Action action, ICancelToken? cancelToken, int options) {
             this.action = action;
             this.cancelToken = cancelToken;
             this.options = options;
@@ -359,7 +359,7 @@ public static class Executors
         public int Options => options;
 
         public void Run() {
-            if (cancelToken.IsCancelRequested) {
+            if (cancelToken != null && cancelToken.IsCancelRequested) {
                 return;
             }
             action();
@@ -369,10 +369,10 @@ public static class Executors
     private class ActionWrapper3 : ITask
     {
         private readonly Action<object> action;
-        private readonly object ctx;
+        private readonly object? ctx;
         private readonly int options;
 
-        public ActionWrapper3(Action<object> action, object ctx, int options) {
+        public ActionWrapper3(Action<object> action, object? ctx, int options) {
             this.action = action;
             this.ctx = ctx;
             this.options = options;

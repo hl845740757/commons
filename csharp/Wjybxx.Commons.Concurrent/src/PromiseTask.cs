@@ -19,6 +19,8 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Wjybxx.Commons.Pool;
+using static Wjybxx.Commons.Concurrent.TaskBuilder;
 
 #pragma warning disable CS8603
 
@@ -53,37 +55,42 @@ public interface PromiseTask
 
     #region factory
 
-    public static PromiseTask<int> OfTask(ITask task, ICancelToken? cancelToken, int options, IPromise<int> promise) {
-        return new PromiseTask<int>(task, cancelToken, options, promise, TaskBuilder.TYPE_TASK);
+    public static PromiseTask<int> OfTask(ITask task, ICancelToken? cancelToken, int options,
+                                          ValuePromise<int> promise) {
+        return PromiseTask<int>.Acquire(TYPE_TASK, task, cancelToken, options, promise);
     }
 
-    public static PromiseTask<int> OfAction(Action action, ICancelToken? cancelToken, int options, IPromise<int> promise) {
-        return new PromiseTask<int>(action, cancelToken, options, promise, TaskBuilder.TYPE_ACTION);
+    public static PromiseTask<int> OfAction(Action action, ICancelToken? cancelToken, int options,
+                                            ValuePromise<int> promise) {
+        return PromiseTask<int>.Acquire(TYPE_ACTION, action, cancelToken, options, promise);
     }
 
-    public static PromiseTask<int> OfAction(Action<object> action, object? ctx, int options, IPromise<int> promise) {
-        return new PromiseTask<int>(action, ctx, options, promise, TaskBuilder.TYPE_ACTION_CTX);
+    public static PromiseTask<int> OfAction(Action<object> action, object? ctx, int options,
+                                            ValuePromise<int> promise) {
+        return PromiseTask<int>.Acquire(TYPE_ACTION_CTX, action, ctx, options, promise);
     }
 
-    public static PromiseTask<T> OfFunction<T>(Func<T> action, ICancelToken? cancelToken, int options, IPromise<T> promise) {
-        return new PromiseTask<T>(action, cancelToken, options, promise, TaskBuilder.TYPE_FUNC);
+    public static PromiseTask<T> OfFunction<T>(Func<T> action, ICancelToken? cancelToken, int options,
+                                               ValuePromise<T> promise) {
+        return PromiseTask<T>.Acquire(TYPE_FUNC, action, cancelToken, options, promise);
     }
 
-    public static PromiseTask<T> OfFunction<T>(Func<object, T> action, object? ctx, int options, IPromise<T> promise) {
-        return new PromiseTask<T>(action, ctx, options, promise, TaskBuilder.TYPE_FUNC_CTX);
+    public static PromiseTask<T> OfFunction<T>(Func<object, T> action, object? ctx, int options,
+                                               ValuePromise<T> promise) {
+        return PromiseTask<T>.Acquire(TYPE_FUNC_CTX, action, ctx, options, promise);
     }
 
-    public static PromiseTask<T> OfBuilder<T>(in TaskBuilder<T> builder, IPromise<T> promise) {
-        return new PromiseTask<T>(in builder, promise);
+    public static PromiseTask<T> OfBuilder<T>(in TaskBuilder<T> builder, ValuePromise<T> promise) {
+        return PromiseTask<T>.Acquire(builder.Type, builder.Task, builder.Context, builder.Options, promise);
     }
 
     #endregion
 }
 
 /// <summary>
-/// ps：
 /// 1.该类的数据是（部分）开放的，以支持不同的扩展。
-/// 2.周期性任务通常不适合池化，因为生存周期较长，反而是Submit创建的PromiseTask适合缓存。
+/// 2.未继承<see cref="ValuePromise{T}"/>，各执行各的池化
+/// 3.该对象不可返回给用户！否则可能导致内存泄漏，复用错误。
 /// </summary>
 /// <typeparam name="T">结果类型</typeparam>
 public class PromiseTask<T> : IFutureTask
@@ -95,25 +102,16 @@ public class PromiseTask<T> : IFutureTask
     private object ctx;
     /** 任务的调度选项 */
     protected int options;
-    /** 任务关联的promise */
-    protected IPromise<T> promise;
+    /** 任务关联的promise -- 不会返回给用户 */
+    protected ValuePromise<T> promise;
     /** 任务的控制标记 */
     protected int ctl;
 #nullable enable
 
-    public PromiseTask(in TaskBuilder<T> builder, IPromise<T> promise)
-        : this(builder.Task, builder.Context, builder.Options, promise, builder.Type) {
+    protected PromiseTask() {
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="action">任务</param>
-    /// <param name="ctx">任务的上下文</param>
-    /// <param name="options">任务的调度选项</param>
-    /// <param name="promise"></param>
-    /// <param name="taskType">任务类型</param>
-    protected internal PromiseTask(object action, object? ctx, int options, IPromise<T> promise, int taskType) {
+    protected void Init(int taskType, object action, object? ctx, int options, ValuePromise<T> promise) {
         this.task = action ?? throw new ArgumentNullException(nameof(action));
         this.ctx = ctx;
         this.options = options;
@@ -123,17 +121,24 @@ public class PromiseTask<T> : IFutureTask
         this.ctl |= (taskType << PromiseTask.OFFSET_TASK_TYPE);
     }
 
+    protected virtual void Reset() {
+        this.task = null;
+        this.ctx = null;
+        this.options = 0;
+        this.promise = null;
+        this.ctl = 0;
+    }
+
+    /** 准备回收 */
+    protected virtual void PrepareToRecycle() {
+        if (GetType() == typeof(PromiseTask<T>)) {
+            POOL.Release(this);
+        }
+    }
+
     #region Props
 
     public int Options => options;
-
-    public bool IsCancelRequested() {
-        return promise.IsCompleted || GetCancelToken().IsCancelRequested;
-    }
-
-    public virtual void Cancel(int code) {
-        TrySetCancelled(promise, GetCancelToken(), code);
-    }
 
     /** 获取任务的类型 -- 在可能包含分时任务的情况下要进行判断 */
     public int TaskType => (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
@@ -146,19 +151,10 @@ public class PromiseTask<T> : IFutureTask
 
     #endregion
 
-    /** 注意：如果task和promise之间是双向绑定的，需要解除绑定 */
-    protected virtual void Clear() {
-        task = null;
-        ctx = null;
-        promise = null;
-        options = 0;
-        ctl = 0;
-    }
-
     /** 获取上下文中的取消令牌 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected ICancelToken GetCancelToken() {
-        return Executors.GetCancelToken(ctx, options);
+        return ExecutorUtil.GetCancelToken(ctx, options);
     }
 
     /** 运行分时任务 */
@@ -172,25 +168,25 @@ public class PromiseTask<T> : IFutureTask
     protected T RunTask() {
         int type = (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
         switch (type) {
-            case TaskBuilder.TYPE_ACTION: {
+            case TYPE_ACTION: {
                 Action task = (Action)this.task;
                 task();
                 return default;
             }
-            case TaskBuilder.TYPE_FUNC: {
+            case TYPE_FUNC: {
                 Func<T> task = (Func<T>)this.task;
                 return task();
             }
-            case TaskBuilder.TYPE_ACTION_CTX: {
+            case TYPE_ACTION_CTX: {
                 Action<object> task = (Action<object>)this.task;
                 task(ctx);
                 return default;
             }
-            case TaskBuilder.TYPE_FUNC_CTX: {
+            case TYPE_FUNC_CTX: {
                 Func<object, T> task = (Func<object, T>)this.task;
                 return task(ctx);
             }
-            case TaskBuilder.TYPE_TASK: {
+            case TYPE_TASK: {
                 ITask task = (ITask)this.task;
                 task.Run();
                 return default;
@@ -201,44 +197,81 @@ public class PromiseTask<T> : IFutureTask
         }
     }
 
+    /** 子类不要调用该方法，会导致自动回收 */
     public virtual void Run() {
-        IPromise<T> promise = this.promise;
+        RunImpl();
+        PrepareToRecycle();
+    }
+
+    /// <summary>
+    /// 支持
+    /// </summary>
+    protected void RunImpl() {
+        ValuePromise<T> promise = this.promise;
         ICancelToken cancelToken = GetCancelToken();
         if (cancelToken.IsCancelRequested) {
             TrySetCancelled(promise, cancelToken);
             return;
         }
-        if (promise.TrySetComputing()) {
-            try {
-                if (TaskType == TaskBuilder.TYPE_TIMESHARING) {
-                    if (RunTimeSharing(true, out T result)) {
-                        promise.TrySetResult(result);
-                    } else {
-                        promise.TrySetException(StacklessCancellationException.Timeout);
-                    }
+        if (!promise.Internal_TrySetComputing()) {
+            return;
+        }
+        try {
+            if (TaskType == TYPE_TIMESHARING) {
+                if (RunTimeSharing(true, out T result)) {
+                    promise.Internal_TrySetResult(result);
                 } else {
-                    T value = RunTask();
-                    promise.TrySetResult(value);
+                    promise.Internal_TrySetException(StacklessCancellationException.Timeout);
                 }
+            } else {
+                T value = RunTask();
+                promise.Internal_TrySetResult(value);
             }
-            catch (Exception e) {
-                promise.TrySetException(e);
-            }
+        }
+        catch (Exception e) {
+            promise.Internal_TrySetException(e);
         }
     }
 
     #region util
 
-    protected static bool TrySetCancelled(IPromise promise, ICancelToken cancelToken) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected static bool TrySetCancelled(ValuePromise<T> promise, ICancelToken cancelToken) {
         int cancelCode = cancelToken.CancelCode;
         Debug.Assert(cancelCode != 0);
-        return promise.TrySetCancelled(cancelCode);
+        return promise.Internal_TrySetCancelled(cancelCode);
     }
 
-    protected static bool TrySetCancelled(IPromise promise, ICancelToken cancelToken, int def) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected static bool TrySetCancelled(ValuePromise<T> promise, ICancelToken cancelToken, int def) {
         int cancelCode = cancelToken.CancelCode;
         if (cancelCode == 0) cancelCode = def;
-        return promise.TrySetCancelled(cancelCode);
+        return promise.Internal_TrySetCancelled(cancelCode);
+    }
+
+    #endregion
+
+    #region factory
+
+    private static readonly ConcurrentObjectPool<PromiseTask<T>> POOL =
+        new(() => new PromiseTask<T>(), e => e.Reset(),
+            TaskPoolConfig.GetPoolSize<T>(TaskPoolType.PromiseTask));
+
+    /// <summary>
+    /// 申请一个PromiseTask对象，Task在进入完成状态后会自动回收。
+    /// 注意：该对象不可返回给用户！该对象不可返回给用户！该对象不可返回给用户！
+    /// </summary>
+    /// <param name="taskType">任务类型</param>
+    /// <param name="action">任务</param>
+    /// <param name="ctx">任务关联上下文</param>
+    /// <param name="options">任务调度选项</param>
+    /// <param name="promise">关联的Promise</param>
+    /// <returns></returns>
+    public static PromiseTask<T> Acquire(int taskType, object action, object? ctx, int options,
+                                         ValuePromise<T> promise) {
+        PromiseTask<T> promiseTask = POOL.Acquire();
+        promiseTask.Init(taskType, action, ctx, options, promise);
+        return promiseTask;
     }
 
     #endregion

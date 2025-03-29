@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -39,7 +40,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public FutureAwaiter(IFuture future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = executor;
+        _executor = FutureAwaiter.GetAwaiterExecutor(executor);
         _options = options;
     }
 
@@ -49,7 +50,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
         get {
             if (!_future.IsCompleted) return false;
             if (_executor == null) return true;
-            return Executors.IsInlinable(_executor, _options);
+            return ExecutorUtil.IsInlinable(_executor, _options);
         }
     }
 
@@ -85,6 +86,16 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
             _future.OnCompletedAsync(_executor, invoker, continuation, _options);
         }
     }
+
+    internal static IExecutor? GetAwaiterExecutor(IExecutor? executor) {
+        if (executor != null) {
+            return executor;
+        }
+        if (SynchronizationContext.Current is ExecutorSynchronizationContext context) {
+            return context.Executor;
+        }
+        return null;
+    }
 }
 
 /// <summary>
@@ -105,7 +116,7 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public FutureAwaiter(IFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = executor;
+        _executor = FutureAwaiter.GetAwaiterExecutor(executor);
         _options = options;
     }
 
@@ -115,7 +126,7 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
         get {
             if (!_future.IsCompleted) return false;
             if (_executor == null) return true;
-            return Executors.IsInlinable(_executor, _options);
+            return ExecutorUtil.IsInlinable(_executor, _options);
         }
     }
 

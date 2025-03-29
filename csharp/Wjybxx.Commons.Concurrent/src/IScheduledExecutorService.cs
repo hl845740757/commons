@@ -26,26 +26,12 @@ namespace Wjybxx.Commons.Concurrent
 public interface IScheduledExecutorService : IExecutorService
 {
     /// <summary>
-    /// 创建一个promise以用于任务调度
-    /// </summary>
-    /// <returns></returns>
-    IScheduledPromise<T> NewScheduledPromise<T>();
-
-    /// <summary>
-    /// 创建一个promise以用于任务调度
-    ///
-    /// 注意：我们统一使用int代替void，业务不应该使用该Promise的结果。
-    /// </summary>
-    /// <returns></returns>
-    IScheduledPromise<int> NewScheduledPromise();
-
-    /// <summary>
     /// 提交一个任务
     /// </summary>
     /// <param name="builder">任务构建器</param>
-    /// <typeparam name="TResult"></typeparam>
+    /// <typeparam name="T">结果类型</typeparam>
     /// <returns></returns>
-    IScheduledFuture<TResult> Schedule<TResult>(in ScheduledTaskBuilder<TResult> builder);
+    ValueFuture<T> Schedule<T>(in ScheduledTaskBuilder<T> builder);
 
     #region action
 
@@ -56,7 +42,7 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="delay">执行延迟</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    IScheduledFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null);
+    ValueFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null);
 
     /// <summary>
     /// 在给定的延迟之后执行给定的委托
@@ -65,28 +51,28 @@ public interface IScheduledExecutorService : IExecutorService
     /// <param name="delay">执行延迟</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null);
+    ValueFuture<T> ScheduleFunc<T>(Func<T> action, TimeSpan delay, ICancelToken? cancelToken = null);
 
     /// <summary>
-    /// 按固定延迟执行任务，FixedDelay只保证两次任务的执行间隔一定大于等于给定延迟
+    /// 以固定延迟执行给定的任务(少执行了就少执行了)
+    /// FixedDelay只保证两次任务的执行间隔一定大于等于给定延迟
     /// </summary>
     /// <param name="action">要调度的任务</param>
     /// <param name="delay">首次执行延迟</param>
     /// <param name="period">后续执行间隔</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    IScheduledFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
+    ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
 
     /// <summary>
-    /// 按给定频率执行任务，FixedRate
-    /// 
+    /// 以固定频率执行给定的任务（少执行了会补-慎用）
     /// </summary>
     /// <param name="action">要调度的任务</param>
     /// <param name="delay">首次执行延迟</param>
     /// <param name="period">后续执行间隔</param>
     /// <param name="cancelToken">取消令牌</param>
     /// <returns></returns>
-    IScheduledFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
+    ValueFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null);
 
     #endregion
 }

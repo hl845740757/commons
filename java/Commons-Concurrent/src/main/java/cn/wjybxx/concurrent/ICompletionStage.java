@@ -109,7 +109,7 @@ public interface ICompletionStage<T> {
      * 该接口用于与依赖{@link CompletableFuture}的库进行协作
      */
     default CompletableFuture<T> toCompletableFuture() {
-        return FutureUtils.toJDKFuture(this);
+        return ExecutorUtils.toJDKFuture(this);
     }
 
     // region compose-管道

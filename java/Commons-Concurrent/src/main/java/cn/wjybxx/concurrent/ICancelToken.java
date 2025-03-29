@@ -211,13 +211,13 @@ public interface ICancelToken {
      * 添加一个特定类型的监听器
      * (用于特殊需求时避免额外的闭包 - task经常需要监听取消令牌)
      */
-    IRegistration thenNotify(ICancelTokenListener action, int options);
+    IRegistration thenNotify(ICancelTokenListener action, Object ctx, int options);
 
-    IRegistration thenNotify(ICancelTokenListener action);
+    IRegistration thenNotify(ICancelTokenListener action, Object ctx);
 
-    IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action);
+    IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx);
 
-    IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, int options);
+    IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx, int options);
 
     // endregion
 

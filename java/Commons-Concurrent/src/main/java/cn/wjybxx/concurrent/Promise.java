@@ -995,64 +995,50 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     @Override
     public void onCompleted(Consumer<? super IFuture<T>> action, int options) {
-        uniOnCompleted1(null, action, options);
+        uniOnCompleted(null, action, null, options);
     }
 
     @Override
     public void onCompleted(Consumer<? super IFuture<T>> action) {
-        uniOnCompleted1(null, action, 0);
+        uniOnCompleted(null, action, null, 0);
     }
 
     @Override
     public void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action) {
         Objects.requireNonNull(executor);
-        uniOnCompleted1(executor, action, 0);
+        uniOnCompleted(executor, action, null, 0);
     }
 
     @Override
     public void onCompletedAsync(Executor executor, Consumer<? super IFuture<T>> action, int options) {
         Objects.requireNonNull(executor);
-        uniOnCompleted1(executor, action, options);
-    }
-
-    private void uniOnCompleted1(Executor executor, Consumer<? super IFuture<T>> action, int options) {
-        Objects.requireNonNull(action, "action");
-        if (action instanceof Completion completion) { // 主要是Relay
-            pushCompletion(completion);
-            return;
-        }
-        if (this.isDone() && executor == null) { // listener避免不必要的插入
-            UniOnComplete.fireNow(this, action, null, null);
-        } else {
-            pushCompletion(new UniOnComplete<>(executor, options, this, action, null));
-        }
+        uniOnCompleted(executor, action, null, options);
     }
 
     @Override
     public void onCompleted(BiConsumer<? super IFuture<T>, Object> action, Object ctx, int options) {
-        uniOnCompleted2(null, action, ctx, options);
+        uniOnCompleted(null, action, ctx, options);
     }
 
     @Override
     public void onCompleted(BiConsumer<? super IFuture<T>, Object> action, Object ctx) {
-        uniOnCompleted2(null, action, ctx, 0);
+        uniOnCompleted(null, action, ctx, 0);
     }
 
     @Override
     public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<T>, Object> action, Object ctx) {
         Objects.requireNonNull(executor, "executor");
-        uniOnCompleted2(executor, action, ctx, 0);
+        uniOnCompleted(executor, action, ctx, 0);
     }
 
     @Override
     public void onCompletedAsync(Executor executor, BiConsumer<? super IFuture<T>, Object> action, Object ctx, int options) {
         Objects.requireNonNull(executor, "executor");
-        uniOnCompleted2(executor, action, ctx, options);
+        uniOnCompleted(executor, action, ctx, options);
     }
 
-    private void uniOnCompleted2(Executor executor, BiConsumer<? super IFuture<T>, Object> action, Object ctx, int options) {
+    private void uniOnCompleted(Executor executor, Object action, Object ctx, int options) {
         Objects.requireNonNull(action, "action");
-        Objects.requireNonNull(ctx, "ctx");
         if (action instanceof Completion completion) { // 主要是Relay
             pushCompletion(completion);
             return;
@@ -1213,7 +1199,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
 
     private static boolean tryInline(Completion completion, Executor e, int options) {
         // 尝试内联
-        if (FutureUtils.isInlinable(e, options)) {
+        if (ExecutorUtils.isInlinable(e, options)) {
             return true;
         }
         e.execute(completion);
@@ -1536,19 +1522,31 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
     }
 
     /**
-     * 相比{@link FutureUtils#setPromise(IPromise, ICompletionStage)},
-     * 它的优点是可以访问私有字段
+     * 相比{@link ExecutorUtils#setPromise(IPromise, ICompletionStage)},
+     * 它的优点是可以避免额外的封装，见{@link #uniOnCompleted(Executor, Object, Object, int)}
      */
-    private static class UniRelay<V> implements Consumer<IFuture<? extends V>> {
+    private static class UniRelay<V> extends Completion implements Consumer<IFuture<V>> {
 
+        IFuture<V> input;
         Promise<V> output;
 
-        public UniRelay(Promise<V> output) {
+        public UniRelay(IFuture<V> input, Promise<V> output) {
+            this.input = input;
             this.output = output;
         }
 
         @Override
-        public void accept(IFuture<? extends V> input) {
+        public int getOptions() {
+            return 0;
+        }
+
+        @Override
+        public void setOptions(int options) {
+
+        }
+
+        @Override
+        Promise<?> tryFire(int mode) {
             Promise<V> output = this.output;
             boolean setCompleted;
             tryComplete:
@@ -1562,6 +1560,12 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             // help gc
             this.output = null;
             postFire(output, SYNC, setCompleted);
+            return null;
+        }
+
+        @Override
+        public void accept(IFuture<V> future) {
+            tryFire(SYNC);
         }
     }
 
@@ -1587,7 +1591,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = FutureUtils.getCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isCancelRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1604,7 +1608,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     IFuture<U> relay = fn.apply(ctx, input.decodeValue(r)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
-                        relay.onCompleted(new UniRelay<>(output), 0);
+                        relay.onCompleted(new UniRelay<>(relay, output), 0);
                     }
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -1641,7 +1645,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = FutureUtils.getCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isCancelRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1658,7 +1662,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     IFuture<U> relay = fn.apply(ctx).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
-                        relay.onCompleted(new UniRelay<>(output), 0);
+                        relay.onCompleted(new UniRelay<>(relay, output), 0);
                     }
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -1697,7 +1701,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = FutureUtils.getCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isCancelRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1714,7 +1718,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     IFuture<V> relay = fallback.apply(ctx, exceptionType.cast(altResult.cause)).toFuture();
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
-                        relay.onCompleted(new UniRelay<>(output), 0);
+                        relay.onCompleted(new UniRelay<>(relay, output), 0);
                     }
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -1752,7 +1756,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = FutureUtils.getCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isCancelRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1770,7 +1774,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     }
                     setCompleted = tryTransferTo(relay, output);
                     if (!setCompleted) { // 添加监听
-                        relay.onCompleted(new UniRelay<>(output), 0);
+                        relay.onCompleted(new UniRelay<>(relay, output), 0);
                     }
                 } catch (Throwable e) {
                     setCompleted = output.completeThrowable(e);
@@ -1811,7 +1815,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = FutureUtils.getCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isCancelRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1861,7 +1865,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = FutureUtils.getCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isCancelRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1912,7 +1916,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = FutureUtils.getCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isCancelRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -1962,7 +1966,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = FutureUtils.getCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isCancelRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -2015,7 +2019,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = FutureUtils.getCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isCancelRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -2067,7 +2071,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = FutureUtils.getCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isCancelRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -2120,7 +2124,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
                     setCompleted = false;
                     break tryComplete;
                 }
-                ICancelToken cancelToken = FutureUtils.getCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorUtils.getCancelToken(ctx, options);
                 if (cancelToken.isCancelRequested()) {
                     setCompleted = output.completeCancelled(cancelToken);
                     break tryComplete;
@@ -2203,7 +2207,7 @@ public class Promise<T> implements IPromise<T>, IFuture<T> {
             final Promise<T> input = this.input;
             tryComplete:
             {
-                if (FutureUtils.isCancelRequested(ctx, options)) {
+                if (ExecutorUtils.isCancelRequested(ctx, options)) {
                     break tryComplete;
                 }
                 // 异步模式下已经claim

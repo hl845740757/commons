@@ -36,10 +36,10 @@ public class EventLoopModuleTest {
     private static IEventLoop eventLoop;
     @SuppressWarnings("unchecked")
     private static final ComponentId<DataModule> dataCid =
-            (ComponentId<DataModule>) EventLoopUtils.GLOBAL.valueOf(DataModule.class);
+            (ComponentId<DataModule>) IEventLoopModule.GLOBAL.valueOf(DataModule.class);
     @SuppressWarnings("unchecked")
     private static final ComponentId<BehaviorModule> behaviorCid =
-            (ComponentId<BehaviorModule>) EventLoopUtils.GLOBAL.valueOf(BehaviorModule.class);
+            (ComponentId<BehaviorModule>) IEventLoopModule.GLOBAL.valueOf(BehaviorModule.class);
 
     @BeforeEach
     void setUp() {

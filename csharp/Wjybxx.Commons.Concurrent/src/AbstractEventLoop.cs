@@ -55,15 +55,15 @@ public abstract class AbstractEventLoop : IEventLoop
         // 需要去重
         LinkedHashSet<EventLoopModule> copiedModuleList = new LinkedHashSet<EventLoopModule>(moduleList);
         _moduleList = copiedModuleList.ToImmutableList2();
-        _indexedModuleList = EventLoopUtils.ToIndexedArray(copiedModuleList).ToImmutableList2();
+        _indexedModuleList = ToIndexedArray(copiedModuleList).ToImmutableList2();
         // 需要update的模块缓存
         _updateModuleList = copiedModuleList
             .Where(e => e.Cid.IsPrivateScript)
-            .Where(EventLoopUtils.IsOverrideUpdate)
+            .Where(EventLoopModule.IsOverrideUpdate)
             .ToImmutableList2();
         _lateUpdateModuleList = copiedModuleList
             .Where(e => e.Cid.IsPrivateScript)
-            .Where(EventLoopUtils.IsOverrideLateUpdate)
+            .Where(EventLoopModule.IsOverrideLateUpdate)
             .ToImmutableList2();
     }
 
@@ -150,7 +150,7 @@ public abstract class AbstractEventLoop : IEventLoop
     public abstract void Execute(ITask task);
 
     public virtual void Execute(Action action, int options = 0) {
-        Execute(Executors.ToTask(action, options));
+        Execute(ExecutorUtil.ToTask(action, options));
     }
 
     #endregion
@@ -161,94 +161,86 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public virtual IPromise<int> NewPromise() => new Promise<int>(this);
 
-    public virtual IFuture<T> Submit<T>(in TaskBuilder<T> builder) {
-        IPromise<T> promise = NewPromise<T>();
+    public virtual ValueFuture<T> Submit<T>(in TaskBuilder<T> builder) {
+        ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
         Execute(PromiseTask.OfBuilder(in builder, promise));
-        return promise;
+        return promise.Future;
     }
 
-    public virtual IFuture SubmitAction(Action action, int options = 0) {
-        IPromise<int> promise = NewPromise();
+    public virtual ValueFuture SubmitAction(Action action, int options = 0) {
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
         Execute(PromiseTask.OfAction(action, null, options, promise));
-        return promise;
+        return promise.VoidFuture;
     }
 
-    public virtual IFuture SubmitAction(Action action, ICancelToken cancelToken, int options = 0) {
-        IPromise<int> promise = NewPromise();
+    public virtual ValueFuture SubmitAction(Action action, ICancelToken cancelToken, int options = 0) {
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
         Execute(PromiseTask.OfAction(action, cancelToken, options, promise));
-        return promise;
+        return promise.VoidFuture;
     }
 
-    public virtual IFuture SubmitAction(Action<object> action, object context, int options = 0) {
-        IPromise<int> promise = NewPromise();
-        Execute(PromiseTask.OfAction(action, context, options, promise));
-        return promise;
+    public virtual ValueFuture SubmitAction(Action<object> action, object ctx, int options = 0) {
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
+        Execute(PromiseTask.OfAction(action, ctx, options, promise));
+        return promise.VoidFuture;
     }
 
-    public virtual IFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
-        IPromise<T> promise = NewPromise<T>();
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, int options = 0) {
+        ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
         Execute(PromiseTask.OfFunction(action, null, options, promise));
-        return promise;
+        return promise.Future;
     }
 
-    public virtual IFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken cancelToken, int options = 0) {
-        IPromise<T> promise = NewPromise<T>();
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<T> action, ICancelToken cancelToken, int options = 0) {
+        ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
         Execute(PromiseTask.OfFunction(action, cancelToken, options, promise));
-        return promise;
+        return promise.Future;
     }
 
-    public virtual IFuture<T> SubmitFunc<T>(Func<object, T> action, object context, int options = 0) {
-        IPromise<T> promise = NewPromise<T>();
-        Execute(PromiseTask.OfFunction(action, context, options, promise));
-        return promise;
+    public virtual ValueFuture<T> SubmitFunc<T>(Func<object, T> action, object ctx, int options = 0) {
+        ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
+        Execute(PromiseTask.OfFunction(action, ctx, options, promise));
+        return promise.Future;
     }
 
     #endregion
 
     #region Schedule
 
-    // 默认不支持定时任务
-
-    public virtual IScheduledPromise<T> NewScheduledPromise<T>() => new ScheduledPromise<T>(this);
-
-    public virtual IScheduledPromise<int> NewScheduledPromise() => new ScheduledPromise<int>(this);
-
-    protected abstract ISchedulerHelper Helper { get; }
-
-    public virtual IScheduledFuture<TResult> Schedule<TResult>(in ScheduledTaskBuilder<TResult> builder) {
-        IScheduledPromise<TResult> promise = NewScheduledPromise<TResult>();
-        Execute(ScheduledPromiseTask.OfBuilder(in builder, promise, Helper));
-        return promise;
+    public virtual ValueFuture<T> Schedule<T>(in ScheduledTaskBuilder<T> builder) {
+        ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
+        Execute(ScheduledPromiseTask.OfBuilder(in builder, promise));
+        return promise.Future;
     }
 
-    public virtual IScheduledFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
-        IScheduledPromise<int> promise = NewScheduledPromise();
-        Execute(ScheduledPromiseTask.OfAction(action, cancelToken, 0, promise, Helper, Helper.TriggerTime(1, delay)));
-        return promise;
+    public virtual ValueFuture ScheduleAction(Action action, TimeSpan delay, ICancelToken? cancelToken = null) {
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
+        Execute(ScheduledPromiseTask.OfAction(action, cancelToken, 0, promise, delay));
+        return promise.VoidFuture;
     }
 
-    public virtual IScheduledFuture<TResult> ScheduleFunc<TResult>(Func<TResult> action, TimeSpan delay, ICancelToken? cancelToken = null) {
-        IScheduledPromise<TResult> promise = NewScheduledPromise<TResult>();
-        Execute(ScheduledPromiseTask.OfFunction(action, cancelToken, 0, promise, Helper, Helper.TriggerTime(1, delay)));
-        return promise;
+    public virtual ValueFuture<T> ScheduleFunc<T>(Func<T> action, TimeSpan delay, ICancelToken? cancelToken = null) {
+        ValuePromise<T> promise = ValuePromise<T>.Acquire(this);
+        Execute(ScheduledPromiseTask.OfFunction(action, cancelToken, 0, promise, delay));
+        return promise.Future;
     }
 
-    public virtual IScheduledFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture ScheduleWithFixedDelay(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
         ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(action, cancelToken);
         builder.SetFixedDelay(delay.Ticks, period.Ticks, new TimeSpan(1));
 
-        IScheduledPromise<int> promise = NewScheduledPromise();
-        Execute(ScheduledPromiseTask.OfBuilder(in builder, promise, Helper));
-        return promise;
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
+        Execute(ScheduledPromiseTask.OfBuilder(in builder, promise));
+        return promise.VoidFuture;
     }
 
-    public virtual IScheduledFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
+    public virtual ValueFuture ScheduleAtFixedRate(Action action, TimeSpan delay, TimeSpan period, ICancelToken? cancelToken = null) {
         ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(action, cancelToken);
         builder.SetFixedRate(delay.Ticks, period.Ticks, new TimeSpan(1));
 
-        IScheduledPromise<int> promise = NewScheduledPromise();
-        Execute(ScheduledPromiseTask.OfBuilder(in builder, promise, Helper));
-        return promise;
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(this);
+        Execute(ScheduledPromiseTask.OfBuilder(in builder, promise));
+        return promise.VoidFuture;
     }
 
     #endregion
@@ -387,6 +379,30 @@ public abstract class AbstractEventLoop : IEventLoop
     }
 
     #endregion
+
+    #endregion
+
+    #region util
+
+    /** 将组件散开为基于组件index的数组 -- 暂时禁止组件重复 */
+    private static EventLoopModule[] ToIndexedArray(ICollection<EventLoopModule> moduleList) {
+        if (moduleList.Count == 0) {
+            return Array.Empty<EventLoopModule>();
+        }
+        int maxIndex = moduleList
+            .Select(e => e.Cid.Index)
+            .Max();
+
+        EventLoopModule[] result = new EventLoopModule[maxIndex + 1];
+        foreach (EventLoopModule module in moduleList) {
+            EventLoopModule exist = result[module.Cid.Index];
+            if (exist != null) {
+                throw new IllegalStateException("module is duplicate, cid: " + module.Cid);
+            }
+            result[module.Cid.Index] = module;
+        }
+        return result;
+    }
 
     #endregion
 }

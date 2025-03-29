@@ -151,7 +151,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 JDKCanceller canceller = new JDKCanceller(this, cancelCode);
                 canceller.future = executor.schedule(canceller, delay, timeUnit);
                 // jdk的scheduler不会响应取消令牌，我们通过Future及时取消定时任务 -- 未来更换实现后可避免
-                this.thenNotify(canceller);
+                this.thenNotify(canceller, null);
             }
         }
     }
@@ -189,7 +189,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         }
 
         @Override
-        public void onCancelRequested(ICancelToken cancelToken) {
+        public void onCancelRequested(ICancelToken cancelToken, Object ctx) {
             future.cancel(false);
         }
     }
@@ -397,33 +397,33 @@ public final class CancelTokenSource implements ICancelTokenSource {
     // region uni-notify
 
     @Override
-    public IRegistration thenNotify(ICancelTokenListener action, int options) {
-        return uniNotify(null, action, options);
+    public IRegistration thenNotify(ICancelTokenListener action, Object ctx, int options) {
+        return uniNotify(null, action, ctx, options);
     }
 
     @Override
-    public IRegistration thenNotify(ICancelTokenListener action) {
-        return uniNotify(null, action, 0);
+    public IRegistration thenNotify(ICancelTokenListener action, Object ctx) {
+        return uniNotify(null, action, ctx, 0);
     }
 
     @Override
-    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action) {
+    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx) {
         Objects.requireNonNull(executor, "executor");
-        return uniNotify(executor, action, 0);
+        return uniNotify(executor, action, ctx, 0);
     }
 
     @Override
-    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, int options) {
+    public IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx, int options) {
         Objects.requireNonNull(executor, "executor");
-        return uniNotify(executor, action, options);
+        return uniNotify(executor, action, ctx, options);
     }
 
-    private IRegistration uniNotify(Executor executor, ICancelTokenListener listener, int options) {
+    private IRegistration uniNotify(Executor executor, ICancelTokenListener listener, Object ctx, int options) {
         if (isCancelRequested() && executor == null) {
-            Completion.fireNow(this, TYPE_NOTIFY, listener, null);
+            Completion.fireNow(this, TYPE_NOTIFY, listener, ctx);
             return Registration.CLOSED;
         }
-        Completion completion = getComplete(executor, options, this, TYPE_NOTIFY, listener, null);
+        Completion completion = getComplete(executor, options, this, TYPE_NOTIFY, listener, ctx);
         // 需要在Push前拿到_rid
         Registration registration = new Registration(completion, completion.rid);
         return pushCompletion(completion) ? registration : Registration.CLOSED;
@@ -566,7 +566,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private static boolean tryInline(Completion completion, Executor e, int options) {
         // 尝试内联
-        if (FutureUtils.isInlinable(e, options)) {
+        if (ExecutorUtils.isInlinable(e, options)) {
             return true;
         }
         e.execute(completion);
@@ -588,7 +588,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private static final Completion TOMBSTONE = new Completion();
     private static final ConcurrentObjectPool<Completion> POOL = new ConcurrentObjectPool<>(Completion::new,
-            Completion::reset, 100);
+            Completion::reset, TaskPoolConfig.getPoolSize(TaskPoolType.CTS_COMPLETION));
 
     /** 申请一个{@link Completion}对象 */
     private static Completion getComplete(Executor executor, int options, CancelTokenSource source,
@@ -673,12 +673,12 @@ public final class CancelTokenSource implements ICancelTokenSource {
             {
                 // 同步Fire时，必须先竞争Action - 如果竞争失败，需要等待Close调用结束
                 if (mode <= 0 && !tryIncrementRid(fireId)) {
-                    while (rid < fireId + 2) { // 等待close完毕
+                    while (rid != fireId + 2) { // 等待close完毕，不能使用小于测试(可能越界)
                         LockSupport.parkNanos(1);
                     }
                     break outer;
                 }
-                if (FutureUtils.isCancelRequested(ctx, options)) {
+                if (ExecutorUtils.isCancelRequested(ctx, options)) {
                     break outer;
                 }
                 if (mode <= 0 && !claim()) {
@@ -716,7 +716,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
                     }
                     case TYPE_NOTIFY -> {
                         ICancelTokenListener action = (ICancelTokenListener) rawAction;
-                        action.onCancelRequested(source);
+                        action.onCancelRequested(source, ctx);
                     }
                     case TYPE_TRANSFER -> {
                         // 这里本来有一个递归优化，为简化逻辑删除了

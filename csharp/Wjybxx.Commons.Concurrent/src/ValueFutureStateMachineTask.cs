@@ -23,21 +23,15 @@ using Wjybxx.Commons.Pool;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 
-/// 
-/// PS：
 /// 1.该类型由于要复用，不能继承Promise，否则可能导致用户使用到错误的接口。
 /// 2.用户在获取结果时触发回收。
-/// 3.该实现并不是严格线程安全的，用在非StateMachine场景可能导致以错误。
+/// 3.该实现并不是严格线程安全的，用在非StateMachine场景可能导致错误。
 /// </summary>
 /// <typeparam name="T">任务的结果类型</typeparam>
 /// <typeparam name="S">状态机类型</typeparam>
-internal sealed class ValueFutureStateMachineTask<T, S> : ValuePromise<T>, IValueFutureStateMachineTask<T> where S : IAsyncStateMachine
+internal sealed class ValueFutureStateMachineTask<T, S> : ValuePromise<T>, IValueFutureStateMachineTask<T>
+    where S : IAsyncStateMachine
 {
-    private static readonly ConcurrentObjectPool<ValueFutureStateMachineTask<T, S>> POOL =
-        new(() => new ValueFutureStateMachineTask<T, S>(), driver => driver.Reset(),
-            TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ValueFutureStateMachineTask));
-
     /// <summary>
     /// 任务状态机
     /// </summary>
@@ -51,6 +45,30 @@ internal sealed class ValueFutureStateMachineTask<T, S> : ValuePromise<T>, IValu
         _moveToNext = Run;
     }
 
+    private void Run() {
+        _stateMachine.MoveNext();
+    }
+
+    /// <summary>
+    /// 用于驱动StateMachine的Action委托
+    /// </summary>
+    public Action MoveToNext => _moveToNext;
+
+    protected override void Reset() {
+        base.Reset();
+        _stateMachine = default;
+    }
+
+    protected override void PrepareToRecycle() {
+        POOL.Release(this);
+    }
+
+    #region factory
+
+    private static readonly ConcurrentObjectPool<ValueFutureStateMachineTask<T, S>> POOL =
+        new(() => new ValueFutureStateMachineTask<T, S>(), task => task.Reset(),
+            TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ValueFutureStateMachineTask));
+
     public static void SetStateMachine(ref S stateMachine, out IValueFutureStateMachineTask<T> task, out int reentryId) {
         ValueFutureStateMachineTask<T, S> result = POOL.Acquire();
 
@@ -63,22 +81,6 @@ internal sealed class ValueFutureStateMachineTask<T, S> : ValuePromise<T>, IValu
         result._stateMachine = stateMachine;
     }
 
-    private void Run() {
-        _stateMachine.MoveNext();
-    }
-
-    /// <summary>
-    /// 用于驱动StateMachine的Action委托
-    /// </summary>
-    public Action MoveToNext => _moveToNext;
-
-    public override void Reset() {
-        base.Reset();
-        _stateMachine = default;
-    }
-
-    protected override void PrepareToRecycle() {
-        POOL.Release(this);
-    }
+    #endregion
 }
 }

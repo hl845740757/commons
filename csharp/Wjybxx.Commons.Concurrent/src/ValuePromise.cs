@@ -20,6 +20,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
+using Wjybxx.Commons.Pool;
 using static Wjybxx.Commons.Concurrent.AbstractPromise;
 
 namespace Wjybxx.Commons.Concurrent
@@ -33,7 +34,7 @@ namespace Wjybxx.Commons.Concurrent
 /// 3.该实现并不是严格线程安全的，但在使用<see cref="ValueFuture{T}"/>的情况下是安全的。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-internal class ValuePromise<T> : IValuePromise<T>
+public class ValuePromise<T> : IValuePromise<T>
 {
 #nullable disable
     /// <summary>
@@ -64,34 +65,50 @@ internal class ValuePromise<T> : IValuePromise<T>
     /// （回调实现为伴生对象）
     /// </summary>
     private readonly Completion _completion = new Completion();
+    /// <summary>
+    /// 任务绑定的Executor，用于检测死锁
+    /// </summary>
+    private IExecutor? _executor;
+
+    protected ValuePromise() {
+    }
 
     /// <summary>
     /// 当前重入id
     /// </summary>
-    public int ReentryId => _reentryId;
+    internal int ReentryId => _reentryId;
 
     /// <summary>
     /// 增加重入id(重用对象时调用)
     /// </summary>
     /// <returns>增加后的值</returns>
-    public int IncReentryId() {
+    protected int IncReentryId() {
         return ++_reentryId;
     }
 
     /// <summary>
+    /// 任务绑定的线程，检测死锁
+    /// </summary>
+    public IExecutor? Executor => _executor;
+
+    /// <summary>
     /// 重置数据
     /// </summary>
-    public virtual void Reset() {
+    protected virtual void Reset() {
         _reentryId++;
         _result = default!;
         _ex = null;
         _completion.Reset();
+        _executor = null;
     }
 
     /// <summary>
     /// 用户已正常获取结果信息，可以尝试回收
     /// </summary>
     protected virtual void PrepareToRecycle() {
+        if (GetType() == typeof(ValuePromise<T>)) {
+            POOL.Release(this);
+        }
     }
 
     #region internal
@@ -163,8 +180,15 @@ internal class ValuePromise<T> : IValuePromise<T>
 
     #region promise
 
-    protected internal TaskStatus Status => (TaskStatus)PeekState(_ex);
-    protected internal bool IsCompleted => PeekState(_ex) >= ST_SUCCESS;
+    internal TaskStatus Status => (TaskStatus)PeekState(_ex);
+    internal bool IsPending => _ex == null;
+    internal bool IsComputing => _ex == EX_COMPUTING;
+    internal bool IsSucceeded => PeekState(_ex) == ST_SUCCESS;
+    internal bool IsFailed => PeekState(_ex) == ST_FAILED;
+    internal bool IsCancelled => PeekState(_ex) == ST_CANCELLED;
+
+    internal bool IsCompleted => PeekState(_ex) >= ST_SUCCESS;
+    internal bool IsFailedOrCancelled => PeekState(_ex) >= ST_FAILED;
 
     private T ResultNow() {
         int state = PollState();
@@ -183,7 +207,7 @@ internal class ValuePromise<T> : IValuePromise<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected internal bool Internal_TrySetComputing() {
+    internal bool Internal_TrySetComputing() {
         object? preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
         return preState == null;
     }
@@ -201,7 +225,8 @@ internal class ValuePromise<T> : IValuePromise<T>
         }
     }
 
-    protected internal bool Internal_TrySetResult(T result) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool Internal_TrySetResult(T result) {
         if (InternalSetResult(result)) {
             PostComplete();
             return true;
@@ -216,7 +241,8 @@ internal class ValuePromise<T> : IValuePromise<T>
         }
     }
 
-    protected internal bool Internal_TrySetException(Exception cause) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool Internal_TrySetException(Exception cause) {
         if (cause == null) throw new ArgumentNullException(nameof(cause));
         if (InternalSetException(cause)) {
             FutureLogger.LogCause(cause); // 记录日志
@@ -233,7 +259,8 @@ internal class ValuePromise<T> : IValuePromise<T>
         }
     }
 
-    protected internal bool Internal_TrySetCancelled(int cancelCode) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool Internal_TrySetCancelled(int cancelCode) {
         if (InternalSetException(StacklessCancellationException.InstOf(cancelCode))) {
             PostComplete();
             return true;
@@ -287,6 +314,8 @@ internal class ValuePromise<T> : IValuePromise<T>
             }
         }
     }
+
+    #region core
 
     public TaskStatus GetStatus(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
@@ -349,6 +378,69 @@ internal class ValuePromise<T> : IValuePromise<T>
         return r;
     }
 
+    public IFuture AsVoidFuture(int reentryId) {
+        ValidateReentryId(reentryId);
+        TaskStatus status = Status;
+        switch (status) {
+            case TaskStatus.Success: {
+                GetVoidResult(reentryId); // 触发回收
+                return Promise<int>.COMPLETED; // 共享对象
+            }
+            case TaskStatus.Cancelled: {
+                Exception ex = GetException(reentryId); // 可能是子类异常
+                return ex.GetType() == typeof(OperationCanceledException)
+                    ? Promise<int>.CANCELLED
+                    : Promise<int>.FromException(ex);
+            }
+            case TaskStatus.Failed: {
+                Exception ex = GetException(reentryId);
+                return Promise<T>.FromException(ex);
+            }
+            default: {
+                // 添加回调
+                Promise<int> promise = new Promise<int>(_executor);
+                SetCompletion(TYPE_SET_VOID_PROMISE, promise, null, null, 0);
+                return promise;
+            }
+        }
+    }
+
+    public IFuture<T> AsFuture(int reentryId) {
+        ValidateReentryId(reentryId);
+        TaskStatus status = Status;
+        switch (status) {
+            case TaskStatus.Success: {
+                T result = GetResult(reentryId); // 触发回收
+                return Promise<T>.FromResult(result);
+            }
+            case TaskStatus.Cancelled: {
+                Exception ex = GetException(reentryId); // 可能是子类异常
+                return ex.GetType() == typeof(OperationCanceledException)
+                    ? Promise<T>.CANCELLED
+                    : Promise<T>.FromException(ex);
+            }
+            case TaskStatus.Failed: {
+                Exception ex = GetException(reentryId);
+                return Promise<T>.FromException(ex);
+            }
+            default: {
+                // 添加回调
+                Promise<T> promise = new Promise<T>(_executor);
+                SetCompletion(TYPE_SET_PROMISE, promise, null, null, 0);
+                return promise;
+            }
+        }
+    }
+
+    public void Forget(int reentryId) {
+        ValidateReentryId(reentryId);
+        SetCompletion(TYPE_FORGET, "", null, null, 0);
+    }
+
+    #endregion
+
+    #region 回调
+
     public void OnCompleted(int reentryId, Action<object?> continuation, object? state, int options = 0) {
         ValidateReentryId(reentryId);
         SetCompletion(TYPE_RUN_CTX, continuation, state, null, options);
@@ -360,20 +452,7 @@ internal class ValuePromise<T> : IValuePromise<T>
         SetCompletion(TYPE_RUN_CTX, continuation, state, executor, options);
     }
 
-    public void SetVoidPromiseWhenCompleted(int reentryId, IPromise<int> promise) {
-        ValidateReentryId(reentryId);
-        SetCompletion(TYPE_SET_VOID_PROMISE, promise, null, null, 0);
-    }
-
-    public void Forget(int reentryId) {
-        ValidateReentryId(reentryId);
-        SetCompletion(TYPE_FORGET, "", null, null, 0);
-    }
-
-    public void SetPromiseWhenCompleted(int reentryId, IPromise<T> promise) {
-        ValidateReentryId(reentryId);
-        SetCompletion(TYPE_SET_PROMISE, promise, null, null, 0);
-    }
+    #endregion
 
     private void SetCompletion(int type, object action, object? state, IExecutor? executor, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
@@ -539,10 +618,10 @@ internal class ValuePromise<T> : IValuePromise<T>
         public void Reset() {
             input = null;
             ctl = 0;
-            action = null;
-            state = null;
             executor = null;
             options = 0;
+            action = null;
+            state = null;
         }
 
         public int Options => options;
@@ -559,7 +638,7 @@ internal class ValuePromise<T> : IValuePromise<T>
             this.executor = CLAIMED;
             if (e != null) {
                 // TryInline
-                if (Executors.IsInlinable(e, options)) {
+                if (ExecutorUtil.IsInlinable(e, options)) {
                     return true;
                 }
                 e.Execute(this);
@@ -569,7 +648,7 @@ internal class ValuePromise<T> : IValuePromise<T>
         }
 
         public void TryFire(int mode) {
-            if (Executors.IsCancelRequested(state, options)) {
+            if (ExecutorUtil.IsCancelRequested(state, options)) {
                 return;
             }
             // 异步模式下已经claim
@@ -630,6 +709,27 @@ internal class ValuePromise<T> : IValuePromise<T>
                 FutureLogger.LogCause(ex, "Value promise fire caught exception");
             }
         }
+    }
+
+    #endregion
+
+    #region factory
+
+    private static readonly ConcurrentObjectPool<ValuePromise<T>> POOL =
+        new(() => new ValuePromise<T>(), e => e.Reset(),
+            TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ValuePromise));
+
+    /// <summary>
+    /// 申请一个对象，使用完毕后会自动归还
+    /// 如果没有回调添加，可使用<see cref="Forget"/>触发。
+    /// </summary>
+    /// <param name="executor">任务关联的线程</param>
+    /// <returns></returns>
+    public static ValuePromise<T> Acquire(IExecutor? executor = null) {
+        ValuePromise<T> promise = POOL.Acquire();
+        promise.IncReentryId();
+        promise._executor = executor;
+        return promise;
     }
 
     #endregion

@@ -32,6 +32,14 @@ public interface IScheduledFutureTask<V> extends IFutureTask<V>, Delayed {
     boolean isPeriodic();
 
     /**
+     * 取消执行
+     * 可能是检测到取消信号，也可能是其它原因，EventLoop主动停止任务。
+     * 如果此时收到了取消信号，可优先使用取消令牌中的取消码进入取消状态。
+     * 如果task已进入完成状态。可忽略该请求。
+     */
+    void cancel(int code);
+
+    /**
      * 获取任务下次执行的延迟。
      * ps：该接口的可见性取决于实现，某些实现不提供即时的可见性，查询可能是不准确的。
      */

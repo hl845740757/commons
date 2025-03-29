@@ -32,6 +32,11 @@ public class ExecutorSynchronizationContext : SynchronizationContext
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
     }
 
+    /// <summary>
+    /// 用于await获取
+    /// </summary>
+    public IExecutor Executor => _executor;
+
     public override void Post(SendOrPostCallback d, object? state) {
         // 不能随意内联，否则可能导致时序错误
         _executor.Execute(new PostCallbackWrapper(d, state));

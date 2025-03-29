@@ -24,7 +24,7 @@ namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 异步任务的执行器
-/// 该接口需要保持较高的抽象，因此将submit之类的方法下沉到子接口。如果需要获取任务结果，可通过<see cref="Executors"/>类中的工具方法实现。
+/// 该接口需要保持较高的抽象，因此将submit之类的方法下沉到子接口。如果需要获取任务结果，可通过<see cref="ExecutorUtil"/>类中的工具方法实现。
 /// 
 /// ps：C#的<see cref="Task{TResult}"/>和<see cref="TaskScheduler"/>是套糟糕的抽象。
 /// 它最大的问题是：把特定领域(UI)的解决方案定为基础方案，用户对上下文和线程的控制力太差 => 隐式上下文在并发编程中是糟糕的。
@@ -64,7 +64,7 @@ public interface IExecutor
     /// <param name="action">要执行的任务</param>
     /// <param name="options">任务的调度特征值，见<see cref="TaskOptions"/></param>
     void Execute(Action action, int options = 0) {
-        Execute(Executors.ToTask(action, options));
+        Execute(ExecutorUtil.ToTask(action, options));
     }
 }
 }

@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Reflection;
 using Wjybxx.Commons.Fx;
 
 namespace Wjybxx.Commons.Concurrent
@@ -122,7 +123,7 @@ public abstract class EventLoopModule : IEventLoopModule
 
     /** 解析组件id -- 允许重写方法，从另外的池解析组件id  */
     protected virtual ComponentId ParseCid() {
-        return EventLoopUtils.GLOBAL.ValueOf(GetType());
+        return IEventLoopModule.GLOBAL.ValueOf(GetType());
     }
 
     public ComponentStatus Status => _status;
@@ -150,6 +151,36 @@ public abstract class EventLoopModule : IEventLoopModule
     }
 
     public virtual void Stop() {
+    }
+
+    #endregion
+
+    #region util
+
+    /** 是否重写了<see cref="Wjybxx.Commons.Concurrent.IEventLoopModule.Update()"/>方法 */
+    public static bool IsOverrideUpdate(IEventLoopModule module) {
+        return IsOverride(module.GetType(), "Update", Array.Empty<Type>());
+    }
+
+    /** 是否重写了<see cref="Wjybxx.Commons.Concurrent.IEventLoopModule.LateUpdate()"/>方法 */
+    public static bool IsOverrideLateUpdate(IEventLoopModule module) {
+        return IsOverride(module.GetType(), "LateUpdate", Array.Empty<Type>());
+    }
+
+    /** 是否重写了某个方法 */
+    private static bool IsOverride(Type handlerType, string methodName, params Type[] paramTypes) {
+        MethodInfo methodInfo = handlerType.GetMethod(methodName,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            binder: null, paramTypes, modifiers: null);
+        if (methodInfo == null) {
+            return true;
+        }
+        // 抽象类覆盖了所有的接口方法，因此是测试抽象类
+        Type declaringType = methodInfo.DeclaringType!;
+        if (declaringType.IsGenericType) {
+            return declaringType.GetGenericTypeDefinition() != typeof(EventLoopModule);
+        }
+        return declaringType != typeof(EventLoopModule);
     }
 
     #endregion

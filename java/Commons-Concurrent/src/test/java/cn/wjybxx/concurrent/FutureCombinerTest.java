@@ -55,7 +55,7 @@ public class FutureCombinerTest {
         final ThreadLocalRandom random = ThreadLocalRandom.current();
         final TimeUnit milliseconds = TimeUnit.MILLISECONDS;
 
-        final FutureCombiner combiner = FutureUtils.newCombiner();
+        final FutureCombiner combiner = ExecutorUtils.newCombiner();
         final int taskCount = 20000;
         int succeedCount = 0;
         for (int i = 0; i < taskCount; i++) {
@@ -79,7 +79,7 @@ public class FutureCombinerTest {
 
     @Test
     void testZero() {
-        final FutureCombiner combiner = FutureUtils.newCombiner();
+        final FutureCombiner combiner = ExecutorUtils.newCombiner();
         IPromise<Object> promise = combiner.anyOf();
         promise.awaitUninterruptibly(1, TimeUnit.SECONDS);
         Assertions.assertTrue(!promise.isDone());

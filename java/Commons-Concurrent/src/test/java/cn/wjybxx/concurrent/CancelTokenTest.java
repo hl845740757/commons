@@ -215,10 +215,10 @@ public class CancelTokenTest {
         ICancelTokenSource cts = newTokenSource();
         {
             final MutableObject<String> signal = new MutableObject<>();
-            cts.thenNotify((token) -> {
+            cts.thenNotify((token, ctx) -> {
                 Assertions.assertSame(cts, token);
                 signal.setValue("cancelled");
-            });
+            }, null);
             Assertions.assertNull(signal.getValue());
             cts.cancel(1);
             Assertions.assertNotNull(signal.getValue());
