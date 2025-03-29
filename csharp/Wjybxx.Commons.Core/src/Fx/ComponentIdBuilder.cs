@@ -66,9 +66,15 @@ public partial interface ComponentId
             RequireCacheIndex = true; // 需要分配缓存索引
         }
 
+#if NET6_0_OR_GREATER
         protected internal override ComponentId<T> Build() {
             return new ComponentId<T>(this);
         }
+#else
+        protected internal override ComponentId Build() {
+            return new ComponentId<T>(this);
+        }
+#endif
 
         #region props
 

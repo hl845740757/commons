@@ -21,6 +21,7 @@ using System.Collections.Generic;
 
 namespace Wjybxx.Commons.Collections
 {
+#if NET6_0_OR_GREATER
 /// <summary>
 /// Set工具类
 /// 该类暂不兼容Unity —— Unity没有IReadOnlySet，拷贝到Unity时可删除该文件
@@ -221,4 +222,5 @@ public static class SetExtension
         return false;
     }
 }
+#endif
 }

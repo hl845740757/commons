@@ -68,16 +68,16 @@ public class EventLoopChooserFactory
     public class PowerOfTwoEventLoopChooser : IEventLoopChooser
     {
         private readonly IEventLoop[] _eventLoops;
-        private uint idx = 0;
+        private int idx = 0;
 
         public PowerOfTwoEventLoopChooser(IEventLoop[] children) {
             this._eventLoops = children ?? throw new ArgumentNullException(nameof(children));
         }
 
-        private uint NextIndex() => Interlocked.Increment(ref idx) - 1;
+        private int NextIndex() => Interlocked.Increment(ref idx) - 1;
 
         public IEventLoop Select() {
-            uint key = NextIndex();
+            int key = NextIndex();
             return _eventLoops[key & (_eventLoops.Length - 1)];
         }
 

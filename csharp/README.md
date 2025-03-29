@@ -91,5 +91,7 @@ btree-codec是基于dson-codec的行为树序列化实现；btree-codec模块仅
 
 ## 个人公众号(游戏开发)
 
-![写代码的诗人](../docs/res/qrcode_for_wjybxx.jpg)
-
+<figure class="half">
+    <img src="../docs/res/qrcode_for_wjybxx.jpg" title="公众号"  width="150" height="150">
+    <img src="../docs/res/qrcode_readers.jpg" title="读者群" width="150" height="300">
+</figure>

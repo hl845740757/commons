@@ -444,7 +444,9 @@ public sealed class DsonCodecConfig
         config.AddOptimizedType(typeof(List<>), typeof(IReadOnlyCollection<>));
         // Set
         config.AddOptimizedType(typeof(HashSet<>), typeof(ISet<>));
+#if NET6_0_OR_GREATER
         config.AddOptimizedType(typeof(HashSet<>), typeof(IReadOnlySet<>));
+#endif
         // Map
         config.AddOptimizedType(typeof(Dictionary<,>), typeof(IDictionary<,>));
         config.AddOptimizedType(typeof(Dictionary<,>), typeof(IReadOnlyDictionary<,>));

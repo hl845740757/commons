@@ -80,9 +80,11 @@ public static class ExecutorUtil
         PromiseHelper.FlatSetVoidPromise(promise, task);
     }
 
+#if NET6_0_OR_GREATER
     public static Task ToTask(IFuture future) {
         return TaskConverterHelper.ToTask(future);
     }
+#endif
 
     public static Task<T> ToTask<T>(IFuture<T> future) {
         return TaskConverterHelper<T>.ToTask(future);
@@ -557,6 +559,7 @@ public static class ExecutorUtil
     {
         #region converter
 
+#if NET6_0_OR_GREATER
         private static readonly Action<IFuture, object> _invokerToTask = (future, state) => {
             TaskCompletionSource cts = (TaskCompletionSource)state;
             switch (future.Status) {
@@ -596,6 +599,7 @@ public static class ExecutorUtil
                 }
             }
         }
+#endif
 
         ////////////////////////////////////
         private static readonly Action<Task, object> _invokerToFuture = (task, state) => {

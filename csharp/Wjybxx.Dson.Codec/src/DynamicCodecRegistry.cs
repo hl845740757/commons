@@ -235,9 +235,11 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
                 || genericTypeDefinition == typeof(IEnumerable<>)) {
                 return typeof(List<>).MakeGenericType(type.GenericTypeArguments);
             }
+#if NET6_0_OR_GREATER
             if (genericTypeDefinition == typeof(IReadOnlySet<>)) {
                 return typeof(HashSet<>).MakeGenericType(type.GenericTypeArguments);
             }
+#endif
             if (genericTypeDefinition == typeof(IReadOnlyDictionary<,>)) {
                 return typeof(Dictionary<,>).MakeGenericType(type.GenericTypeArguments);
             }
