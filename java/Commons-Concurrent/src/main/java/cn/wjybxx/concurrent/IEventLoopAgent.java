@@ -43,14 +43,6 @@ public interface IEventLoopAgent<T extends IAgentEvent> extends IAgentEventHandl
     }
 
     /**
-     * 处理依赖问题
-     * 事件循环会在启动所有的模块之前调用该方法，Agent可以处理模块之间的特殊依赖
-     */
-    default void resolveDependence() {
-
-    }
-
-    /**
      * 用户模块请求注册事件监听器
      *
      * @param type    事件类型

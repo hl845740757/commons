@@ -141,6 +141,9 @@ public abstract class EventLoopModule : IEventLoopModule
     public virtual void OnDestroy() {
     }
 
+    public void ResolveDependence() {
+    }
+
     public virtual void Start() {
     }
 

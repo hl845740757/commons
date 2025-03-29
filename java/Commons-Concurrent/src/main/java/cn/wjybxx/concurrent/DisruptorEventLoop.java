@@ -465,7 +465,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     /** 事件循环启动 */
     protected void onStart() throws Throwable {
         agent.beforeEventLoopStart();
-        agent.resolveDependence();
         startModules();
         agent.afterEventLoopStart();
     }
@@ -489,6 +488,13 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
                 continue; // 通常是主模块提前完成了绑定
             }
             workerModule.setEventLoop(this);
+        }
+        // 解决模块之间的依赖
+        for (EventLoopModule workerModule : moduleList) {
+            if (!workerModule.getCid().isPrivateScript()) {
+                continue;
+            }
+            workerModule.resolveDependence();
         }
         // 顺序启动 - Start
         for (EventLoopModule workerModule : moduleList) {

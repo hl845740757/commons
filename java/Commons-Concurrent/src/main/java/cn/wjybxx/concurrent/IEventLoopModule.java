@@ -25,8 +25,8 @@ import cn.wjybxx.base.fx.IComponent;
  * 1.只有为{@link ComponentKind#SCRIPT}类型时才会被事件循环特殊调度，
  * 否则只调用{@link #onReady()}和{@link #onDestroy()}方法。
  * 2.执行顺序为
- * {@link #onReady()}、
- * {@link #start()}、{@link #update()}、{@link #stop()}
+ * {@link #onReady()}、{@link #resolveDependence()}、
+ * {@link #start()}、{@link #update()}、{@link #stop()}、
  * {@link #onDestroy()}
  * 3.如果支持{@link IAgentEvent}。可以实现{@link IAgentEventHandler}
  *
@@ -43,8 +43,15 @@ public interface IEventLoopModule extends IComponent {
     IEventLoop getEntity();
 
     /**
+     * 处理依赖问题
+     * 事件循环会在启动所有的模块之前调用该方法，此时所有的模块已执行{@link #onReady()}
+     */
+    default void resolveDependence() {
+
+    }
+
+    /**
      * worker会在启动时执行所有模块的start方法
-     * 注意：不要假设start方法的执行时机
      */
     default void start() {
 

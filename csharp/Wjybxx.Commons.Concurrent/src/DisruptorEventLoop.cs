@@ -464,7 +464,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
     /** 事件循环启动 */
     protected virtual void OnStart() {
         agent.BeforeEventLoopStart();
-        agent.ResolveDependence();
         StartModules();
         agent.AfterEventLoopStart();
     }
@@ -488,6 +487,13 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
                 continue; // 通常是主模块提前完成了绑定
             }
             workerModule.SetEventLoop(this);
+        }
+        // 解决模块之间的依赖
+        foreach (EventLoopModule workerModule in _moduleList) {
+            if (!workerModule.Cid.IsPrivateScript) {
+                continue;
+            }
+            workerModule.ResolveDependence();
         }
         // 顺序启动 - Start
         foreach (EventLoopModule workerModule in _moduleList) {

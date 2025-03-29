@@ -43,8 +43,8 @@ public abstract class AbstractEventLoop implements IEventLoop {
 
     /** 所有的模块 -- 不可变List，保留为添加顺序 */
     protected final List<EventLoopModule> moduleList;
-    /** 高速缓存的模块列表 */
-    protected final List<EventLoopModule> indexedModuleList;
+    /** 高速缓存的模块列表 -- jdk的List不支持有null元素，我们使用数组，不可对外暴露 */
+    private final EventLoopModule[] indexedModuleList;
     /** 重写了update方法的模块 */
     protected final List<EventLoopModule> updateModuleList;
     /** 重写了lateUpdate方法的模块 */
@@ -57,7 +57,8 @@ public abstract class AbstractEventLoop implements IEventLoop {
         // 需要去重 - 兼容性
         final LinkedHashSet<EventLoopModule> copiedModuleList = new LinkedHashSet<>(moduleList);
         this.moduleList = List.copyOf(copiedModuleList);
-        this.indexedModuleList = List.of(toIndexedArray(copiedModuleList));
+        this.indexedModuleList = toIndexedArray(copiedModuleList);
+
         // 需要Update的模块缓存
         this.updateModuleList = copiedModuleList.stream()
                 .filter(e -> e.getCid().isPrivateScript())
@@ -340,7 +341,7 @@ public abstract class AbstractEventLoop implements IEventLoop {
     @Override
     public final boolean containsComponent(IComponent comp) {
         int index = comp.getCid().index;
-        return index < indexedModuleList.size() && indexedModuleList.get(index) == comp;
+        return index < indexedModuleList.length && indexedModuleList[index] == comp;
     }
 
     @Override
@@ -363,8 +364,8 @@ public abstract class AbstractEventLoop implements IEventLoop {
     @Override
     public final <T extends IComponent> T getComponent(ComponentId<T> cid) {
         IComponent comp;
-        if (cid.index < indexedModuleList.size()
-                && (comp = indexedModuleList.get(cid.index)) != null
+        if (cid.index < indexedModuleList.length
+                && (comp = indexedModuleList[cid.index]) != null
                 && comp.getCid() == cid) {
             return (T) comp;
         }

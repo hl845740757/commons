@@ -45,13 +45,6 @@ public interface IEventLoopAgent<T> : IAgentEventHandler<T> where T : IAgentEven
     void Subscribe(int type, IAgentEventHandler<T> handler);
 
     /// <summary>
-    /// 处理依赖问题
-    /// 事件循环会在启动所有的模块之前调用该方法，Agent可以处理模块之间的特殊依赖
-    /// </summary>
-    void ResolveDependence() {
-    }
-
-    /// <summary>
     /// 如果当前线程阻塞在中断也无法唤醒的地方，用户需要唤醒线程
     /// 该方法是多线程调用的，要小心并发问题
     /// </summary>
