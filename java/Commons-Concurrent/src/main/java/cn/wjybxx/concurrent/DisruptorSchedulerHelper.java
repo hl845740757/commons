@@ -26,13 +26,13 @@ import java.util.concurrent.TimeUnit;
  * @author wjybxx
  * date - 2025/3/23
  */
-final class DisruptorSchedulerHelper implements ISchedulerHelper {
+public class DisruptorSchedulerHelper implements ISchedulerHelper {
 
     /** 周期性任务队列 -- 既有的任务都是先于Sequencer中的任务提交的 */
     private final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue;
-    private final DisruptorEventLoop<?> eventLoop;
+    private final IDisruptorEventLoop<?> eventLoop;
 
-    DisruptorSchedulerHelper(DisruptorEventLoop<?> eventLoop) {
+    public DisruptorSchedulerHelper(IDisruptorEventLoop<?> eventLoop) {
         this.eventLoop = eventLoop;
         this.taskQueue = new DefaultIndexedPriorityQueue<>(ScheduledPromiseTask::compareToExplicitly, 64);
     }
@@ -46,7 +46,7 @@ final class DisruptorSchedulerHelper implements ISchedulerHelper {
      */
     public void update(long tickTime, boolean shuttingDownMode) {
         final IndexedPriorityQueue<ScheduledPromiseTask<?>> taskQueue = this.taskQueue;
-        final DisruptorEventLoop<?> eventLoop = this.eventLoop;
+        final IDisruptorEventLoop<?> eventLoop = this.eventLoop;
 
         ScheduledPromiseTask<?> futureTask;
         while ((futureTask = taskQueue.peek()) != null && !eventLoop.isShutdown()) {

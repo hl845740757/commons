@@ -47,7 +47,7 @@ import java.util.concurrent.locks.LockSupport;
  * @author wjybxx
  * date 2023/4/10
  */
-public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop {
+public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop implements IDisruptorEventLoop<T> {
 
     private static final int MIN_BATCH_SIZE = 64;
     private static final int MAX_BATCH_SIZE = 64 * 1024;
@@ -139,6 +139,11 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         return agent;
     }
 
+    @Override
+    public final long tickTime() {
+        return tickTime;
+    }
+
     // region 状态查询
 
     @Override
@@ -189,14 +194,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     @Override
     public final boolean inEventLoop(Thread thread) {
         return this.thread == thread;
-    }
-
-    @Override
-    public void wakeup() {
-        if (!inEventLoop() && thread.isAlive()) {
-            thread.interrupt();
-            agent.wakeup();
-        }
     }
 
     // endregion
@@ -260,48 +257,17 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         return consumerId;
     }
 
-    /**
-     * 注册事件处理器
-     * {@link IEventLoopModule}应当在启动时注册。
-     *
-     * @param type    事件类型
-     * @param handler 事件处理器
-     */
-    public void subscribe(int type, IAgentEventHandler<T> handler) {
-        Objects.requireNonNull(handler, "handler");
-        if (!inEventLoop()) {
-            throw new IllegalStateException();
-        }
-        agent.subscribe(type, handler);
-    }
-
-    /** 获取序号关联的事件 -- 仅限生产者调用，且只应调用一次 */
+    @Override
     public final T getEvent(long sequence) {
         return dataProvider.producerGet(sequence);
     }
 
-    /**
-     * 开放的特殊接口
-     * 1.按照规范，在调用该方法后，必须在finally块中进行发布。
-     * 2.事件类型必须大于等于0，否则可能导致异常
-     * 3.返回值为-1时必须检查
-     * <pre> {@code
-     *      long sequence = eventLoop.nextSequence();
-     *      try {
-     *          AgentEvent event = eventLoop.getEvent(sequence);
-     *          // Do work.
-     *      } finally {
-     *          eventLoop.publish(sequence)
-     *      }
-     * }</pre>
-     *
-     * @return 如果申请成功，则返回对应的sequence，否则返回 -1
-     */
+    @Override
     public final long nextSequence() {
         return nextSequence(1);
     }
 
-    /** 发布申请的序号 */
+    @Override
     public final void publish(long sequence) {
         eventSequencer.producerBarrier().publish(sequence);
         // RingBuffer不再私有，不可测试sequence == 0
@@ -310,27 +276,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         }
     }
 
-    /**
-     * 1.按照规范，在调用该方法后，必须在finally块中进行发布。
-     * 2.事件类型必须大于等于0，否则可能导致异常
-     * 3.返回值为-1时必须检查
-     * <pre>{@code
-     *   int n = 10;
-     *   long hi = eventLoop.nextSequence(n);
-     *   try {
-     *      long lo = hi - (n - 1);
-     *      for (long sequence = lo; sequence <= hi; sequence++) {
-     *          AgentEvent event = eventLoop.getEvent(sequence);
-     *          // Do work.
-     *      }
-     *   } finally {
-     *      eventLoop.publish(lo, hi);
-     *   }
-     * }</pre>
-     *
-     * @param size 申请的空间大小
-     * @return 如果申请成功，则返回申请空间的最大序号，否则返回-1
-     */
+
+    @Override
     public final long nextSequence(int size) {
         if (isShuttingDown()) {
             return -1;
@@ -358,10 +305,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         return sequence;
     }
 
-    /**
-     * @param lo inclusive
-     * @param hi inclusive
-     */
+
+    @Override
     public final void publish(long lo, long hi) {
         eventSequencer.producerBarrier().publish(lo, hi);
         if (state == EventLoopState.ST_UNSTARTED) {
@@ -369,13 +314,26 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         }
     }
 
-    protected final long tickTime() {
-        return tickTime;
+    @Override
+    public void subscribe(int type, IAgentEventHandler<? super T> handler) {
+        Objects.requireNonNull(handler, "handler");
+        if (!inEventLoop()) {
+            throw new IllegalStateException();
+        }
+        agent.subscribe(type, handler);
     }
 
     // endregion
 
     // region 线程状态切换
+
+    @Override
+    public void wakeup() {
+        if (!inEventLoop() && thread.isAlive()) {
+            thread.interrupt();
+            agent.wakeup();
+        }
+    }
 
     @Override
     public IFuture<?> start() {

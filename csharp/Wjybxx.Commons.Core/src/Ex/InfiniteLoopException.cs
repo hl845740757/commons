@@ -35,6 +35,7 @@ public class InfiniteLoopException : Exception
     public InfiniteLoopException(string? message, Exception? innerException) : base(message, innerException) {
     }
 
+    [Obsolete]
     protected InfiniteLoopException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 }

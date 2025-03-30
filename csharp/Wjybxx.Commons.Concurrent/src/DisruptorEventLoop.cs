@@ -43,7 +43,7 @@ namespace Wjybxx.Commons.Concurrent
 /// 2.我们总是先取得一个时间快照，然后先执行<see cref="schedulerHelper"/>中的任务，再执行<see cref="dataProvider"/>中的任务，
 /// 因此满足优先级相同时，先提交的任务先执行的约定；反之，如果不使用时间快照，就可能导致后提交的任务先满足触发时间。
 /// </summary>
-public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
+public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> where T : IAgentEvent
 {
     private static readonly ILogger logger = LoggerFactory.GetLogger(typeof(DisruptorEventLoop<T>));
 
@@ -78,7 +78,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
     /** 缓存值 -- 减少运行时测试 */
     private readonly MpUnboundedBuffer<T>? unboundedBuffer;
     /** 周期性任务队列 -- 既有的任务都是先于Sequencer中的任务提交的 */
-    private readonly ScheduledHelper<T> schedulerHelper;
+    private readonly DisruptorSchedulerHelper<T> schedulerHelper;
     /** 任务拒绝策略 */
     private readonly RejectedExecutionHandler rejectedExecutionHandler;
     /** 内部代理 */
@@ -114,7 +114,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
         this._tickTime = ObjectUtil.SystemTicks();
         this.eventSequencer = builder.EventSequencer ?? throw new ArgumentException("builder.EventSequencer");
         this.dataProvider = eventSequencer.DataProvider;
-        this.schedulerHelper = new ScheduledHelper<T>(this);
+        this.schedulerHelper = new DisruptorSchedulerHelper<T>(this);
 
         this.rejectedExecutionHandler = builder.RejectedExecutionHandler ?? RejectedExecutionHandlers.ABORT;
         this.agent = builder.Agent ?? EmptyAgent<T>.Inst;
@@ -148,6 +148,18 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
     [VisibleForTesting]
     internal IEventLoopAgent<T> Agent => agent;
 
+    public override long TickTime {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => Volatile.Read(ref _tickTime);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private long UpdateTickTime() {
+        long tickTime = ObjectUtil.SystemTicks();
+        Volatile.Write(ref _tickTime, tickTime);
+        return tickTime;
+    }
+
     #region 状态查询
 
     public sealed override EventLoopState State => (EventLoopState)state;
@@ -165,13 +177,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
 
     public sealed override bool InEventLoop(Thread thread) {
         return this.thread == thread;
-    }
-
-    public override void Wakeup() {
-        if (!InEventLoop() && thread.IsAlive) {
-            thread.Interrupt();
-            agent.Wakeup();
-        }
     }
 
     #endregion
@@ -235,65 +240,34 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
         }
     }
 
+    #endregion
+
+    #region disruptor接口
+
     /** 获取事件循环的消费者id */
     [Beta]
     public long ConsumerId => consumerId;
 
-    /// <summary>
-    /// 注册事件处理器
-    /// <see cref="IEventLoopModule"/>应当在启动时注册
-    /// </summary>
-    /// <param name="type">事件类型</param>
-    /// <param name="handler">事件处理器</param>
-    public void Subscribe(int type, IAgentEventHandler<T> handler) {
-        if (handler == null) throw new ArgumentNullException(nameof(handler));
-        if (!InEventLoop()) {
-            throw new IllegalStateException();
-        }
-        agent.Subscribe(type, handler);
-    }
-
-    /** 适用Class类型事件 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetEvent(long sequence) {
         return dataProvider.ProducerGet(sequence);
     }
 
-    /** 适用结构体类型事件 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T GetEventRef(long sequence) {
         return ref dataProvider.ProducerGetRef(sequence);
     }
 
-    /** 适用结构体类型事件 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetEvent(long sequence, T eventObj) {
         dataProvider.ProducerSet(sequence, eventObj);
     }
 
-    /**
-     * 开放的特殊接口
-     * 1.按照规范，在调用该方法后，必须在finally块中进行发布。
-     * 2.事件类型必须大于等于0，否则可能导致异常
-     * 3.返回值为null时必须检查
-     * <code>
-     *      long sequence = eventLoop.NextSequence();
-     *      try {
-     *          AgentEvent event = eventLoop.GetEvent(sequence);
-     *          // Do work.
-     *      } finally {
-     *          eventLoop.Publish(sequence)
-     *      }
-     * </code>
-     *
-     * @return 如果申请成功，则返回对应的sequence，否则返回null
-     */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long NextSequence() {
         return NextSequence(1);
     }
 
-    /** 发布申请的序号 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(long sequence) {
         eventSequencer.ProducerBarrier.Publish(sequence);
@@ -303,27 +277,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
         }
     }
 
-    /**
-     * 1.按照规范，在调用该方法后，必须在finally块中进行发布。
-     * 2.事件类型必须大于等于0，否则可能导致异常
-     * 3.返回值为null时必须检查
-     * <code>
-     *   int n = 10;
-     *   long hi = eventLoop.NextSequence(n);
-     *   try {
-     *      long lo = hi - (n - 1);
-     *      for (long sequence = lo; sequence &lt;= hi; sequence++) {
-     *          AgentEvent event = eventLoop.GetEvent(sequence);
-     *          // Do work.
-     *      }
-     *   } finally {
-     *      eventLoop.Publish(lo, hi);
-     *   }
-     * </code>
-     *
-     * @param size 申请的空间大小
-     * @return 如果申请成功，则返回申请空间的最大序号，否则返回null
-     */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long NextSequence(int size) {
         if (IsShuttingDown) {
@@ -352,10 +305,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
         return sequence;
     }
 
-    /**
-     * @param lo inclusive
-     * @param hi inclusive
-     */
     public void Publish(long lo, long hi) {
         eventSequencer.ProducerBarrier.Publish(lo, hi);
         if (state == ST_UNSTARTED) {
@@ -363,21 +312,24 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
         }
     }
 
-    protected internal long TickTime {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Volatile.Read(ref _tickTime);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private long UpdateTickTime() {
-        long tickTime = ObjectUtil.SystemTicks();
-        Volatile.Write(ref _tickTime, tickTime);
-        return tickTime;
+    public void Subscribe(int type, IAgentEventHandler<T> handler) {
+        if (handler == null) throw new ArgumentNullException(nameof(handler));
+        if (!InEventLoop()) {
+            throw new IllegalStateException();
+        }
+        agent.Subscribe(type, handler);
     }
 
     #endregion
 
     #region 线程状态切换
+
+    public override void Wakeup() {
+        if (!InEventLoop() && thread.IsAlive) {
+            thread.Interrupt();
+            agent.Wakeup();
+        }
+    }
 
     public override IFuture Start() {
         EnsureThreadStarted();

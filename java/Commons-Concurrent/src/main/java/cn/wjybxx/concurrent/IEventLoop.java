@@ -89,22 +89,46 @@ public interface IEventLoop extends IFixedEventLoopGroup, SingleThreadExecutor, 
     @Nullable
     IEventLoopGroup parent();
 
-    // region
-
-    /** {@inheritDoc} */
-    @Override
-    boolean inEventLoop();
-
-    /** {@inheritDoc} */
-    @Override
-    boolean inEventLoop(Thread thread);
-
     /**
      * 唤醒线程
      * 如果当前{@link IEventLoop}线程陷入了阻塞状态，则将线程从阻塞中唤醒；通常用于通知线程及时处理任务和响应关闭。
      * 如果线程已停止，则该方法不产生影响
      */
     void wakeup();
+
+    /**
+     * 主动启动EventLoop
+     * 一般而言，我们可以不主动启动EventLoop，在提交任务时会自动启动EventLoop，但如果我们需要确保EventLoop处于正确的状态才能对外提供服务时，则可以主动启动时EventLoop。
+     * 另外，通过提交任务启动EventLoop，是无法根据任务的执行结果来判断启动是否成功的。
+     *
+     * @return {@link #runningFuture()}
+     */
+    IFuture<?> start();
+
+    /**
+     * 等待线程进入运行状态的future
+     * future会在EventLoop成功启动的时候进入完成状态
+     * <p>
+     * 1.如果EventLoop启动失败，则Future进入失败完成状态
+     * 2.如果EventLoop未启动直接关闭，则Future进入失败完成状态
+     * 3.EventLoop关闭时，Future保持之前的结果
+     */
+    IFuture<?> runningFuture();
+
+    /**
+     * 当前线程的时间
+     * 1.可以使用缓存的时间，也可以实时查询，只要不破坏任务的执行约定即可。
+     * 2.多线程事件循环，需要支持其它线程查询。
+     */
+    long tickTime();
+
+    /** @return EventLoop的当前状态 */
+    EventLoopState state();
+
+    /** 是否处于运行状态 */
+    boolean isRunning();
+
+    // region util
 
     /** @throws GuardedOperationException 如果当前不在EventLoop所在线程 */
     default void ensureInEventLoop() {
@@ -120,33 +144,5 @@ public interface IEventLoop extends IFixedEventLoopGroup, SingleThreadExecutor, 
             throw new GuardedOperationException("Calling " + method + " must in the EventLoop");
         }
     }
-
-    // endregion
-
-    /** @return EventLoop的当前状态 */
-    EventLoopState state();
-
-    /** 是否处于运行状态 */
-    boolean isRunning();
-
-    /**
-     * 等待线程进入运行状态的future
-     * future会在EventLoop成功启动的时候进入完成状态
-     * <p>
-     * 1.如果EventLoop启动失败，则Future进入失败完成状态
-     * 2.如果EventLoop未启动直接关闭，则Future进入失败完成状态
-     * 3.EventLoop关闭时，Future保持之前的结果
-     */
-    IFuture<?> runningFuture();
-
-    /**
-     * 主动启动EventLoop
-     * 一般而言，我们可以不主动启动EventLoop，在提交任务时会自动启动EventLoop，但如果我们需要确保EventLoop处于正确的状态才能对外提供服务时，则可以主动启动时EventLoop。
-     * 另外，通过提交任务启动EventLoop，是无法根据任务的执行结果来判断启动是否成功的。
-     *
-     * @return {@link #runningFuture()}
-     */
-    IFuture<?> start();
-
     // endregion
 }

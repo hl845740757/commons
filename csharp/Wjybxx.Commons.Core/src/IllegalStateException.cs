@@ -35,6 +35,7 @@ public class IllegalStateException : InvalidOperationException
     public IllegalStateException(string? message, Exception? innerException) : base(message, innerException) {
     }
 
+    [Obsolete]
     protected IllegalStateException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 }

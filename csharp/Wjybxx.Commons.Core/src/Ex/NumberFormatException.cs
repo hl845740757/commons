@@ -41,6 +41,7 @@ public class NumberFormatException : ArgumentException
     public NumberFormatException(string? message, string? paramName, Exception? innerException) : base(message, paramName, innerException) {
     }
 
+    [Obsolete]
     protected NumberFormatException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 }

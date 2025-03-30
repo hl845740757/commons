@@ -30,9 +30,7 @@ public interface ISchedulerHelper extends ICancelTokenListener {
 
     /**
      * 当前线程的时间
-     * 1. 可以使用缓存的时间，也可以实时查询，只要不破坏任务的执行约定即可。
-     * 2. 如果使用缓存时间，接口中并不约定时间的更新时机，也不约定一个大循环只更新一次。也就是说，线程可能在任意时间点更新缓存的时间，只要不破坏线程安全性和约定的任务时序。
-     * 3. 多线程事件循环，需要支持其它线程查询。
+     * {@link IEventLoop#tickTime()}
      */
     long tickTime();
 

@@ -29,13 +29,13 @@
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <TargetFrameworks>net6.0;net7.0;net8.0;</TargetFrameworks>
     </PropertyGroup>
-    
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <NoWarn>1701;1702;1591;</NoWarn>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <NoWarn>1701;1702;1591;8632</NoWarn>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-        <NoWarn>1701;1702;1591;</NoWarn>
+        <NoWarn>1701;1702;1591;8632</NoWarn>
     </PropertyGroup>
     
     <ItemGroup>

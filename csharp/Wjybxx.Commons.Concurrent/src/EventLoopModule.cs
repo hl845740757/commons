@@ -25,6 +25,7 @@ namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 第三方程序集需要自定义调度时，可使用<see cref="EventLoopUtil"/>中的方法调用
+/// Unity下不继承MonoBehavior，因为我们要自己调度。
 /// </summary>
 public abstract class EventLoopModule : IEventLoopModule
 {
@@ -151,6 +152,9 @@ public abstract class EventLoopModule : IEventLoopModule
     }
 
     public virtual void Start() {
+    }
+
+    public virtual void FixedUpdate() {
     }
 
     public virtual void Update() {

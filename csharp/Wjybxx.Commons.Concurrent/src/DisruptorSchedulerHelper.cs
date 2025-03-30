@@ -22,13 +22,13 @@ using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Commons.Concurrent
 {
-internal class ScheduledHelper<T> : ISchedulerHelper where T : IAgentEvent
+public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEvent
 {
-    private readonly DisruptorEventLoop<T> _eventLoop;
+    private readonly IDisruptorEventLoop<T> _eventLoop;
     private readonly IndexedPriorityQueue<IScheduledFutureTask> _taskQueue;
 
-    public ScheduledHelper(DisruptorEventLoop<T> eventLoop) {
-        _eventLoop = eventLoop;
+    public DisruptorSchedulerHelper(IDisruptorEventLoop<T> eventLoop) {
+        _eventLoop = eventLoop ?? throw new ArgumentNullException(nameof(eventLoop));
         _taskQueue = new IndexedPriorityQueue<IScheduledFutureTask>(new ScheduledTaskComparator(), 64);
     }
 
@@ -42,7 +42,7 @@ internal class ScheduledHelper<T> : ISchedulerHelper where T : IAgentEvent
     /// <param name="shuttingDownMode">是否是退出模式</param>
     public void Update(long tickTime, bool shuttingDownMode) {
         IndexedPriorityQueue<IScheduledFutureTask> taskQueue = this._taskQueue;
-        DisruptorEventLoop<T> eventLoop = this._eventLoop;
+        IDisruptorEventLoop<T> eventLoop = this._eventLoop;
 
         IScheduledFutureTask futureTask;
         while (taskQueue.TryPeekHead(out futureTask) && !eventLoop.IsShutdown) {

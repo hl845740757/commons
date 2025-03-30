@@ -17,7 +17,7 @@
 package cn.wjybxx.concurrent;
 
 /**
- * EventLoop的状态 -- UniExecutor也使用该枚举。
+ * EventLoop的状态
  *
  * @author wjybxx
  * date - 2024/1/14

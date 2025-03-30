@@ -24,7 +24,6 @@ namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 ///
-/// PS：如果想节省提交任务的开销，请移步<see cref="ValueFutureTask"/>
 /// </summary>
 public interface IExecutorService : IExecutor
 {
@@ -49,7 +48,7 @@ public interface IExecutorService : IExecutor
 
     /// <summary>
     /// 返回Future将在Executor终止时进入完成状态
-    /// 1. 返回Future应当是只读的，<see cref="ValueFuture.AsReadonly"/>
+    /// 1. 返回Future应当是只读的，<see cref="IFuture.AsReadonly"/>
     /// 2. 用户可以在该Future上等待。
     /// </summary>
     /// <returns></returns>

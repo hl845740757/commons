@@ -43,11 +43,13 @@ public class ErrorCodeException : Exception, IErrorCodeException, NoLogRequiredE
 
     #region seril
 
+    [Obsolete]
     protected ErrorCodeException(SerializationInfo info, StreamingContext context)
         : base(info, context) {
         this.errorCode = info.GetInt32("code");
     }
 
+    [Obsolete]
     public override void GetObjectData(SerializationInfo info, StreamingContext context) {
         base.GetObjectData(info, context);
         info.AddValue("code", errorCode);

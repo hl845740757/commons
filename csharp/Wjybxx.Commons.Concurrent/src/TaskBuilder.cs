@@ -30,7 +30,7 @@ public interface TaskBuilder
     /// </summary>
     public const int TYPE_ACTION = 0;
     /// <summary>
-    /// 表示委托类型为<see cref="Action{object}"/>
+    /// 表示委托类型为<see cref="Action{T}"/>
     /// </summary>
     public const int TYPE_ACTION_CTX = 1;
 
@@ -39,7 +39,7 @@ public interface TaskBuilder
     /// </summary>
     public const int TYPE_FUNC = 2;
     /// <summary>
-    /// 表示委托类型为<see cref="Func{object,TResult}"/>
+    /// 表示委托类型为<see cref="Func{T,R}"/>
     /// </summary>
     public const int TYPE_FUNC_CTX = 3;
 

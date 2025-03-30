@@ -83,6 +83,13 @@ public interface IEventLoop : IFixedEventLoopGroup, ISingleThreadExecutor, IEnti
     IFuture RunningFuture { get; }
 
     /// <summary>
+    /// 当前线程的时间
+    /// 1.可以使用缓存的时间，也可以实时查询，只要不破坏任务的执行约定即可。
+    /// 2.多线程事件循环，需要支持其它线程查询。
+    /// </summary>
+    long TickTime { get; }
+
+    /// <summary>
     /// 事件循环的生命周期状态
     /// </summary>
     EventLoopState State { get; }
