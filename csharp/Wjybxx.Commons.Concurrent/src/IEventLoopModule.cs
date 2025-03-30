@@ -28,6 +28,7 @@ public interface IEventLoopModule : IComponent
 {
     /** 事件循环的全局组件id池 */
     public static readonly ComponentIdPool GLOBAL = ComponentIdPool.NewPool();
+#nullable disable
 
     /** 修正返回值类型 */
     new IEventLoop Entity { get; }
@@ -43,6 +44,12 @@ public interface IEventLoopModule : IComponent
     /// worker会在启动时执行所有模块的start方法
     /// </summary>
     void Start() {
+    }
+
+    /// <summary>
+    /// Unity项目才应该实现该接口
+    /// </summary>
+    void FixedUpdate() {
     }
 
     /// <summary>

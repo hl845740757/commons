@@ -88,13 +88,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     }
 
     internal static IExecutor? GetAwaiterExecutor(IExecutor? executor) {
-        if (executor != null) {
-            return executor;
-        }
-        if (SynchronizationContext.Current is ExecutorSynchronizationContext context) {
-            return context.Executor;
-        }
-        return null;
+        return executor ?? EventLoopUtil.Current;
     }
 }
 

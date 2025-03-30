@@ -16,7 +16,7 @@
 
 #endregion
 
-#if UNITY_2018_4_OR_NEWER
+#if UNITY_2021_3_OR_NEWER
 using System;
 using UnityEngine;
 

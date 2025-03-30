@@ -33,11 +33,6 @@ import java.util.Objects;
  */
 public final class MpmcObjectBucket<E> {
 
-    // region padding
-    @SuppressWarnings("unused")
-    private long p1, p2, p3, p4, p5, p6, p7, p8;
-    // endregion
-
     /** 桶大小 -- 不一定为2的幂 */
     private final int length;
     /** 环形缓冲区 */
@@ -50,7 +45,7 @@ public final class MpmcObjectBucket<E> {
 
     // region padding
     @SuppressWarnings("unused")
-    private long p11, p12, p13, p14, p15, p16, p17, p18;
+    private long p11, p12, p13, p14, p15, p16, p17;
     // endregion
 
     /** 生产者索引 */

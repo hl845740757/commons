@@ -16,6 +16,8 @@
 
 #endregion
 
+using Wjybxx.Commons.Attributes;
+
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
@@ -29,6 +31,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <param name="ctx">任务关联的上下文</param>
 /// <param name="firstStep">是否是首次执行</param>
 /// <param name="result">接收任务结果</param>
-/// <returns>执行任务是否成功</returns>
+/// <returns>执行任务是否结束</returns>
+[Beta]
 public delegate bool TimeSharingTask<T>(object ctx, bool firstStep, out T result);
 }

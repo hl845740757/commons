@@ -31,10 +31,6 @@ namespace Wjybxx.Commons.Pool
 /// </summary>
 public sealed class MpmcObjectBucket<T>
 {
-    // region padding
-    private long p1, p2, p3, p4, p5, p6, p7, p8;
-    // endregion
-
     /** 桶的大小 -- 不一定为2的幂 */
     private readonly int length;
     /** 环形缓冲区 */
@@ -47,21 +43,21 @@ public sealed class MpmcObjectBucket<T>
     private readonly long[] consumed;
 
     // region padding
-    private long p11, p12, p13, p14, p15, p16, p17, p18;
+    private long p11, p12, p13, p14, p15, p16, p17;
     // endregion
 
     /** 生产者索引 -- volatile读写 */
     private long producerIndex = -1;
 
     // region padding
-    private long p21, p22, p23, p24, p25, p26, p27, p28;
+    private long p21, p22, p23, p24, p25, p26, p27;
     // endregion
 
     /** 消费者索引 -- volatile读写 */
     private long consumerIndex = -1;
 
     // region padding
-    private long p31, p32, p33, p34, p35, p36, p37, p38;
+    private long p31, p32, p33, p34, p35, p36, p37;
     // endregion
 
     public MpmcObjectBucket(int length) {

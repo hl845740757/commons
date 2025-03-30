@@ -27,6 +27,7 @@ namespace Wjybxx.Commons.Fx
 /// </summary>
 public interface IComponent
 {
+#nullable disable
     /** 获取组件挂载的实体，尚未挂载的情况下返回null */
     IEntity Entity { get; }
 

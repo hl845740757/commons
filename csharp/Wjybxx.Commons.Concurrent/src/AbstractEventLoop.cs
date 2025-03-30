@@ -25,12 +25,21 @@ using System.Threading.Tasks;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Fx;
 
+#if UNITY_2021_3_OR_NEWER
+using UnityEngine;
+#endif
+
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 
+/// 事件循环的模板实现
+/// (Unity项目中继承MonoBehavior)
 /// </summary>
+#if UNITY_2021_3_OR_NEWER
+public abstract class AbstractEventLoop : MonoBehaviour, IEventLoop
+#else
 public abstract class AbstractEventLoop : IEventLoop
+#endif
 {
     private readonly IEventLoopGroup? _parent;
     private readonly IList<IEventLoop> _selfCollection;
@@ -45,6 +54,8 @@ public abstract class AbstractEventLoop : IEventLoop
     protected readonly ImmutableList<EventLoopModule> _updateModuleList;
     /** 重写了lateUpdate方法的模块 */
     protected readonly ImmutableList<EventLoopModule> _lateUpdateModuleList;
+    /** 重写了fixedUpdate方法的模块 -- unity才有 */
+    protected readonly ImmutableList<EventLoopModule> _fixedUpdateModuleList;
 
     protected AbstractEventLoop(IEventLoopGroup? parent,
                                 List<EventLoopModule> moduleList) {
@@ -64,6 +75,10 @@ public abstract class AbstractEventLoop : IEventLoop
         _lateUpdateModuleList = copiedModuleList
             .Where(e => e.Cid.IsPrivateScript)
             .Where(EventLoopModule.IsOverrideLateUpdate)
+            .ToImmutableList2();
+        _fixedUpdateModuleList = copiedModuleList
+            .Where(e => e.Cid.IsPrivateScript)
+            .Where(EventLoopModule.IsOverrideFixedUpdate)
             .ToImmutableList2();
     }
 

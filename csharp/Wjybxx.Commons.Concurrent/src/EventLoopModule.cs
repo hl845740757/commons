@@ -23,16 +23,20 @@ using Wjybxx.Commons.Fx;
 
 namespace Wjybxx.Commons.Concurrent
 {
+/// <summary>
+/// 第三方程序集需要自定义调度时，可使用<see cref="EventLoopUtil"/>中的方法调用
+/// </summary>
 public abstract class EventLoopModule : IEventLoopModule
 {
 #nullable disable
     private IEventLoop _eventLoop;
     private ComponentId _cid;
     private ComponentStatus _status = ComponentStatus.New;
+#nullable enable
 
     #region internal
 
-    /** 收到修正模块的状态 */
+    /** 设置模块的状态，通过该接口可以实现自定义流程 */
     internal void SetStatus(ComponentStatus status) {
         this._status = status;
     }
@@ -104,6 +108,8 @@ public abstract class EventLoopModule : IEventLoopModule
 
     #endregion
 
+#nullable disable
+
     #region 默认实现
 
     public ComponentId Cid {
@@ -126,8 +132,8 @@ public abstract class EventLoopModule : IEventLoopModule
         return IEventLoopModule.GLOBAL.ValueOf(GetType());
     }
 
-    public ComponentStatus Status => _status;
     public IEventLoop Entity => _eventLoop;
+    public ComponentStatus Status => _status;
 
     #endregion
 
@@ -158,7 +164,14 @@ public abstract class EventLoopModule : IEventLoopModule
 
     #endregion
 
+#nullable enable
+
     #region util
+
+    /** 是否重写了<see cref="Wjybxx.Commons.Concurrent.IEventLoopModule.FixedUpdate()"/>方法 */
+    public static bool IsOverrideFixedUpdate(IEventLoopModule module) {
+        return IsOverride(module.GetType(), "FixedUpdate", Array.Empty<Type>());
+    }
 
     /** 是否重写了<see cref="Wjybxx.Commons.Concurrent.IEventLoopModule.Update()"/>方法 */
     public static bool IsOverrideUpdate(IEventLoopModule module) {
@@ -172,7 +185,7 @@ public abstract class EventLoopModule : IEventLoopModule
 
     /** 是否重写了某个方法 */
     private static bool IsOverride(Type handlerType, string methodName, params Type[] paramTypes) {
-        MethodInfo methodInfo = handlerType.GetMethod(methodName,
+        MethodInfo? methodInfo = handlerType.GetMethod(methodName,
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             binder: null, paramTypes, modifiers: null);
         if (methodInfo == null) {

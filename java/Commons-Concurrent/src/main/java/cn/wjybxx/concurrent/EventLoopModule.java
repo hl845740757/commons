@@ -42,7 +42,7 @@ public abstract class EventLoopModule implements IEventLoopModule {
 
     // region internal
 
-    /** 收到修正模块的状态 */
+    /** 设置模块的状态，通过该接口可以实现自定义流程 */
     final void setStatus(ComponentStatus status) {
         this.status = status;
     }

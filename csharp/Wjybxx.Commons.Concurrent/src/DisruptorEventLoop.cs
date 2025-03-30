@@ -101,7 +101,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
     private readonly IFuture runningFuture;
     private readonly IFuture terminationFuture;
 
-
     /// <summary>
     /// 
     /// </summary>
@@ -479,28 +478,28 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
     /** 启动所有模块 */
     protected void StartModules() {
         // 模块的部分数据初始化 - OnReady
-        foreach (EventLoopModule workerModule in _moduleList) {
-            if (workerModule.Cid.Shared) {
+        foreach (EventLoopModule module in _moduleList) {
+            if (module.Cid.Shared) {
                 continue; // 共享组件
             }
-            if (workerModule.Entity != null) {
+            if (module.Entity != null) {
                 continue; // 通常是主模块提前完成了绑定
             }
-            workerModule.SetEventLoop(this);
+            module.SetEventLoop(this);
         }
         // 解决模块之间的依赖
-        foreach (EventLoopModule workerModule in _moduleList) {
-            if (!workerModule.Cid.IsPrivateScript) {
+        foreach (EventLoopModule module in _moduleList) {
+            if (!module.Cid.IsPrivateScript) {
                 continue;
             }
-            workerModule.ResolveDependence();
+            module.ResolveDependence();
         }
         // 顺序启动 - Start
-        foreach (EventLoopModule workerModule in _moduleList) {
-            if (!workerModule.Cid.IsPrivateScript) {
+        foreach (EventLoopModule module in _moduleList) {
+            if (!module.Cid.IsPrivateScript) {
                 continue;
             }
-            Exception? ex = workerModule.InvokeStart();
+            Exception? ex = module.InvokeStart();
             if (ex != null) {
                 ExceptionDispatchInfo.Throw(ex);
             }
@@ -511,15 +510,15 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
     protected void StopModules() {
         // 逆序停止
         for (int index = _moduleList.Count - 1; index >= 0; index--) {
-            EventLoopModule workerModule = _moduleList[index];
-            if (!workerModule.Cid.IsPrivateScript) {
+            EventLoopModule module = _moduleList[index];
+            if (!module.Cid.IsPrivateScript) {
                 continue;
             }
-            if (workerModule.Status != ComponentStatus.Starting
-                && workerModule.Status != ComponentStatus.Running) {
+            if (module.Status != ComponentStatus.Starting
+                && module.Status != ComponentStatus.Running) {
                 continue; // 未启动
             }
-            Exception? ex = workerModule.InvokeStop();
+            Exception? ex = module.InvokeStop();
             if (ex != null) { // stop异常记录下来，继续停止其它模块
                 logger.Warn(ex, "stop module caught exception");
             }
@@ -529,14 +528,14 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
     /** 销毁所有模块 -- 不删除引用 */
     protected void DestroyModules() {
         // 顺序销毁 -- 组件之间不能有时序依赖
-        foreach (EventLoopModule workerModule in _moduleList) {
-            if (workerModule.Cid.Shared) {
+        foreach (EventLoopModule module in _moduleList) {
+            if (module.Cid.Shared) {
                 continue;
             }
-            if (workerModule.Status == ComponentStatus.New) {
+            if (module.Status == ComponentStatus.New) {
                 continue; // 未执行OnReady
             }
-            Exception? ex = workerModule.InvokeDestroy();
+            Exception? ex = module.InvokeDestroy();
             if (ex != null) { // destroy异常记录下来，继续销毁其它模块
                 logger.Warn(ex, "module.destroy caught exception");
             }
@@ -585,12 +584,12 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
 
     /// <summary>
     /// 主循环入口
-    /// 由于C#的委托与Java有所差异，不能直接实现委托，因此我们将数据存储在EventLoop上，数据。
+    /// 由于C#的委托与Java有所差异，不能直接实现委托，因此我们将数据存储在EventLoop上。
     /// </summary>
     private void MainLoopEntry() {
         // 设置同步上下文，使得EventLoop创建的Task的下游任务默认继续在EventLoop上执行
-        // 用户可以在启动钩子里删除该设置
         SynchronizationContext.SetSynchronizationContext(AsSyncContext());
+        EventLoopUtil.SetExecutor(this);
         try {
             UpdateTickTime();
             if (!runningPromise.TrySetComputing()) {
@@ -627,22 +626,22 @@ public class DisruptorEventLoop<T> : AbstractEventLoop where T : IAgentEvent
             }
             finally {
                 RemoveFromGatingBarriers();
-                // 标记为已进入最终清理阶段
                 AdvanceRunState(ST_SHUTDOWN);
 
                 // 退出前进行必要的清理，释放系统资源
                 try {
-                    SynchronizationContext.SetSynchronizationContext(null);
                     OnShutdown();
                 }
                 catch (Exception e) {
                     logger.Error(e, "thread exit caught exception!");
                 }
                 finally {
-                    // 设置为终止状态
                     state = ST_TERMINATED;
                     terminationPromise.TrySetResult(0);
                 }
+                // 清理同步上下文
+                EventLoopUtil.SetExecutor(null);
+                SynchronizationContext.SetSynchronizationContext(null);
             }
         }
     }

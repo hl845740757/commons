@@ -480,28 +480,28 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     /** 启动所有模块 */
     protected final void startModules() throws Throwable {
         // 模块的部分数据初始化 - OnReady
-        for (EventLoopModule workerModule : moduleList) {
-            if (workerModule.getCid().shared) {
+        for (EventLoopModule module : moduleList) {
+            if (module.getCid().shared) {
                 continue; // 共享组件
             }
-            if (workerModule.getEntity() != null) {
+            if (module.getEntity() != null) {
                 continue; // 通常是主模块提前完成了绑定
             }
-            workerModule.setEventLoop(this);
+            module.setEventLoop(this);
         }
         // 解决模块之间的依赖
-        for (EventLoopModule workerModule : moduleList) {
-            if (!workerModule.getCid().isPrivateScript()) {
+        for (EventLoopModule module : moduleList) {
+            if (!module.getCid().isPrivateScript()) {
                 continue;
             }
-            workerModule.resolveDependence();
+            module.resolveDependence();
         }
         // 顺序启动 - Start
-        for (EventLoopModule workerModule : moduleList) {
-            if (!workerModule.getCid().isPrivateScript()) {
+        for (EventLoopModule module : moduleList) {
+            if (!module.getCid().isPrivateScript()) {
                 continue;
             }
-            Throwable ex = workerModule.invokeStart();
+            Throwable ex = module.invokeStart();
             if (ex != null) {
                 throw ex;
             }
@@ -512,15 +512,15 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     protected final void stopModules() {
         // 逆序停止
         for (int i = moduleList.size() - 1; i >= 0; i--) {
-            EventLoopModule workerModule = moduleList.get(i);
-            if (!workerModule.getCid().isPrivateScript()) {
+            EventLoopModule module = moduleList.get(i);
+            if (!module.getCid().isPrivateScript()) {
                 continue;
             }
-            if (workerModule.getStatus() != ComponentStatus.STARTING
-                    && workerModule.getStatus() != ComponentStatus.RUNNING) {
+            if (module.getStatus() != ComponentStatus.STARTING
+                    && module.getStatus() != ComponentStatus.RUNNING) {
                 continue; // 未启动
             }
-            Throwable ex = workerModule.invokeStop();
+            Throwable ex = module.invokeStop();
             if (ex != null) { // stop异常记录下来，继续停止其它模块
                 logger.warn("stop module caught exception", ex);
             }
@@ -530,14 +530,14 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     /** 销毁所有模块 -- 不删除引用 */
     protected final void destroyModules() {
         // 顺序销毁 -- 组件之间不能有时序依赖
-        for (EventLoopModule workerModule : moduleList) {
-            if (workerModule.getCid().shared) {
+        for (EventLoopModule module : moduleList) {
+            if (module.getCid().shared) {
                 continue;
             }
-            if (workerModule.getStatus() == ComponentStatus.NEW) {
+            if (module.getStatus() == ComponentStatus.NEW) {
                 continue; // 未执行OnReady
             }
-            Throwable ex = workerModule.invokeDestroy();
+            Throwable ex = module.invokeDestroy();
             if (ex != null) { // destroy异常记录下来，继续销毁其它模块
                 logger.warn("module.destroy caught exception", ex);
             }
@@ -629,7 +629,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
                     schedulerHelper.clearTaskQueue();
                 } finally {
                     removeFromGatingBarriers();
-                    // 标记为已进入最终清理阶段
                     advanceRunState(EventLoopState.ST_SHUTDOWN);
 
                     // 退出前进行必要的清理，释放系统资源
