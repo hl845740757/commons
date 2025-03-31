@@ -28,7 +28,7 @@ public class ScheduleCancelTest
 {
     private static IEventLoop consumer;
 
-    [SetUp]
+    [OneTimeSetUp]
     public void SetUp() {
         consumer = new DisruptorEventLoopBuilder<AgentEvent>()
         {
@@ -39,6 +39,12 @@ public class ScheduleCancelTest
         consumer.Start().Join();
     }
 
+    [OneTimeTearDown]
+    public void TearDown() {
+        consumer.ShutdownNow();
+        consumer.TerminationFuture.Join();
+    }
+    
     [Test]
     public void testCancel() {
         CancelTokenSource cts = new CancelTokenSource();
@@ -47,5 +53,27 @@ public class ScheduleCancelTest
         cts.Cancel(1);
         future.AwaitUninterruptibly();
         Assert.IsTrue(future.IsCancelled);
+    }
+    
+    [Test]
+    public void testTimeout() {
+        ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(() => { });
+        builder.SetFixedDelay(0, 200);
+        builder.SetTimeoutByCount(1);
+
+        IFuture<int> future = consumer.Schedule(in builder).AsFuture();
+        future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
+        Assert.IsTrue(future.ExceptionNow(false) is BetterCancellationException);
+    }
+    
+    [Test]
+    public void testCountLimit() {
+        ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(() => { });
+        builder.SetFixedDelay(0, 200);
+        builder.SetTimeoutByCount(1);
+
+        IFuture<int> future = consumer.Schedule(in builder).AsFuture();
+        future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
+        Assert.IsTrue(future.ExceptionNow(false) is BetterCancellationException);
     }
 }

@@ -16,9 +16,11 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.BetterCancellationException;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -31,10 +33,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class ScheduleCancelTest {
 
-    private IEventLoop consumer;
+    private static IEventLoop consumer;
 
-    @BeforeEach
-    void setUp() {
+    @BeforeAll
+    static void setUp() {
         consumer = EventLoopBuilder.newDisruptBuilder()
                 .setThreadFactory(new DefaultThreadFactory("consumer"))
                 .setEventSequencer(RingBufferEventSequencer
@@ -42,6 +44,12 @@ public class ScheduleCancelTest {
                         .build())
                 .build();
         consumer.start().join();
+    }
+
+    @AfterAll
+    static void tearDown() {
+        consumer.shutdown();
+        consumer.terminationFuture().join();
     }
 
     @Test
@@ -64,8 +72,25 @@ public class ScheduleCancelTest {
 //            future.cancel(false);
 //            Assertions.assertTrue(!future.isCancelled(), () -> future.status().name());
         }
-        consumer.shutdown();
-        consumer.terminationFuture().join();
     }
 
+    @Test
+    void testTimeout() {
+        IScheduledFuture<?> future = consumer.schedule(ScheduledTaskBuilder.newFunc(() -> "hello world")
+                .setFixedDelay(0, 200)
+                .setTimeoutByCount(1));
+
+        future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
+        Assertions.assertTrue(future.exceptionNow(false) instanceof BetterCancellationException);
+    }
+
+    @Test
+    void testCountLimit() {
+        IScheduledFuture<?> future = consumer.schedule(ScheduledTaskBuilder.newFunc(() -> "hello world")
+                .setFixedDelay(0, 200)
+                .setCountLimit(1));
+
+        future.awaitUninterruptibly(300, TimeUnit.MILLISECONDS);
+        Assertions.assertTrue(future.exceptionNow(false) instanceof BetterCancellationException);
+    }
 }
