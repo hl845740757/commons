@@ -29,6 +29,22 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public static class ExecutorUtil
 {
+    #region exception
+
+    /// <summary>
+    ///  异步任务总是使用<see cref="CompletionException"/>包装异常，我们需要找到原始异常
+    /// </summary>
+    /// <param name="ex"></param>
+    /// <returns></returns>
+    public static Exception UnwrapCompletionException(Exception ex) {
+        while (ex is CompletionException && ex.InnerException != null) {
+            ex = ex.InnerException;
+        }
+        return ex;
+    }
+
+    #endregion
+    
     #region EventLoop
 
     /// <summary>

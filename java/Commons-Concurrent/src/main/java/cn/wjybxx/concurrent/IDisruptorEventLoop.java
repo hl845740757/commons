@@ -25,7 +25,7 @@ package cn.wjybxx.concurrent;
 public interface IDisruptorEventLoop<T extends IAgentEvent> extends IEventLoop {
 
     /** 获取序号关联的事件 -- 仅限生产者调用，且只应调用一次 */
-    IAgentEvent getEvent(long sequence);
+    T getEvent(long sequence);
 
     /**
      * 开放的特殊接口

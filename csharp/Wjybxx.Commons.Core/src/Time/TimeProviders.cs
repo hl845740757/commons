@@ -57,7 +57,7 @@ public static class TimeProviders
     {
         internal static readonly CSystemTickProvider INSTANCE = new();
 
-        public long Current => ObjectUtil.SystemTicks();
+        public long Time => ObjectUtil.SystemTicks();
 
         public override string ToString() {
             return "SystemTickProvider{}";
@@ -68,7 +68,7 @@ public static class TimeProviders
     {
         internal static readonly CSystemMillisProvider INSTANCE = new();
 
-        public long Current => DatetimeUtil.CurrentEpochMillis();
+        public long Time => DatetimeUtil.CurrentEpochMillis();
 
         public override string ToString() {
             return "SystemMillisProvider{}";

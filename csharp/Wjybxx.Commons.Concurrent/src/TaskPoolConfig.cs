@@ -44,12 +44,13 @@ public static class TaskPoolConfig
         if (func != null) {
             return Math.Max(0, func.Invoke(poolType, typeof(T)));
         }
-        if (poolType == TaskPoolType.ValuePromise) {
-            return 1000;
+        if (poolType == TaskPoolType.ValuePromise
+            || poolType == TaskPoolType.PromiseMoveNext) {
+            // 区分泛型，int表示void，可以多分配
+            return typeof(T) == typeof(int) ? 1000 : 50;
         }
-        if (poolType == TaskPoolType.PromiseMoveNext
-            || poolType == TaskPoolType.CtsCompletion) {
-            return 500;
+        if (poolType == TaskPoolType.CtsCompletion) {
+            return 500; // 不区分泛型
         }
         return typeof(T) == typeof(int) ? 100 : 20;
     }

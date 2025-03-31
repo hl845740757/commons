@@ -69,11 +69,6 @@ public interface ScheduledTaskBuilder : TaskBuilder
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
-    public new static ScheduledTaskBuilder<T> NewTimeSharing<T>(TimeSharingTask<T> func, object? context = null) {
-        TaskBuilder<T> taskBuilder = TaskBuilder.NewTimeSharing(func, context);
-        return new ScheduledTaskBuilder<T>(ref taskBuilder);
-    }
-
     public new static ScheduledTaskBuilder<int> NewTask(ITask task) {
         TaskBuilder<int> taskBuilder = TaskBuilder.NewTask(task);
         return new ScheduledTaskBuilder<int>(ref taskBuilder);

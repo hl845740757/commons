@@ -1,6 +1,6 @@
-﻿#region LICENSE
+#region LICENSE
 
-// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,29 +16,15 @@
 
 #endregion
 
-namespace Wjybxx.Commons.Time
-{
-/// <summary>
-/// 时间提供者
-/// </summary>
-public interface ITimeProvider
-{
-    /// <summary>
-    /// 获取当前时间
-    /// </summary>
-    /// <returns></returns>
-    long Time { get; }
-}
+using System;
 
-/// <summary>
-/// 该接口表示实现类是基于缓存时间戳的，需要外部定时去更新
-/// 线程安全性取决于实现类
-/// </summary>
-public interface ICachedTimeProvider : ITimeProvider
+namespace Wjybxx.Commons.Attributes
 {
-    /// <summary>
-    /// 设置当前时间戳
-    /// </summary>
-    new long Time { set; }
+/// <summary>
+/// 用于标准接口仅限内部使用
+/// （C#的接口不能定义internal方法 -- 不能实现...）
+/// </summary>
+public sealed class InternalAttribute : Attribute
+{
 }
 }

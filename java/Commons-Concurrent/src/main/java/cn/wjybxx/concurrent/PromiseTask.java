@@ -16,7 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.StacklessCancellationException;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 
 import java.util.Objects;
@@ -131,13 +130,6 @@ public class PromiseTask<V> implements IFutureTask<V> {
         return ExecutorUtils.getCancelToken(ctx, options);
     }
 
-    /** 运行分时任务 */
-    @SuppressWarnings("unchecked")
-    protected final ResultHolder<V> runTimeSharing(boolean first) throws Exception {
-        TimeSharingTask<V> task = (TimeSharingTask<V>) this.task;
-        return task.step(ctx, first);
-    }
-
     /** 运行其它类型任务 */
     @SuppressWarnings("unchecked")
     protected final V runTask() throws Exception {
@@ -185,17 +177,8 @@ public class PromiseTask<V> implements IFutureTask<V> {
             return;
         }
         try {
-            if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
-                ResultHolder<V> resultHolder = runTimeSharing(true);
-                if (resultHolder != null) {
-                    promise.trySetResult(resultHolder.getResult());
-                } else {
-                    promise.trySetException(StacklessCancellationException.TIMEOUT);
-                }
-            } else {
-                V result = runTask();
-                promise.trySetResult(result);
-            }
+            V result = runTask();
+            promise.trySetResult(result);
         } catch (Throwable e) {
             promise.trySetException(e);
         }

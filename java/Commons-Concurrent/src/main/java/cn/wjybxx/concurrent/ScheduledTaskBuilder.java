@@ -89,15 +89,6 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         return new ScheduledTaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
     }
 
-    // PECS -- Task消费泛型参数
-    public static <V> ScheduledTaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task) {
-        return new ScheduledTaskBuilder<>(TYPE_TIMESHARING, task, null);
-    }
-
-    public static <V> ScheduledTaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task, Object ctx) {
-        return new ScheduledTaskBuilder<>(TYPE_TIMESHARING, task, ctx);
-    }
-
     /** 适用于禁止初始延迟小于0的情况 */
     public static void validateInitialDelay(long initialDelay) {
         if (initialDelay < 0) {

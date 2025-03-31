@@ -37,6 +37,8 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
     public static final int TYPE_FUNC = 2;
     public static final int TYPE_FUNC_CTX = 3;
 
+    /** @deprecated 通过协程任务代替 */
+    @Deprecated
     public static final int TYPE_TIMESHARING = 4;
     @Deprecated
     public static final int TYPE_TASK = 5; // java端不使用，用于C#
@@ -90,14 +92,6 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         return new TaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
     }
 
-    public static <V> TaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task) {
-        return new TaskBuilder<>(TYPE_TIMESHARING, task, null);
-    }
-
-    public static <V> TaskBuilder<V> newTimeSharing(TimeSharingTask<? super V> task, Object ctx) {
-        return new TaskBuilder<>(TYPE_TIMESHARING, task, ctx);
-    }
-
     /** 计算任务的类型 */
     public static int taskType(Object task) {
         Objects.requireNonNull(task);
@@ -112,9 +106,6 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         }
         if (task instanceof Function<?, ?>) {
             return TYPE_FUNC_CTX;
-        }
-        if (task instanceof TimeSharingTask<?>) {
-            return TYPE_TIMESHARING;
         }
         throw new IllegalArgumentException("unsupported task type: " + task.getClass());
     }

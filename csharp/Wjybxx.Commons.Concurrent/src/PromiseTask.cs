@@ -157,13 +157,6 @@ public class PromiseTask<T> : IFutureTask
         return ExecutorUtil.GetCancelToken(ctx, options);
     }
 
-    /** 运行分时任务 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected bool RunTimeSharing(bool firstStep, out T result) {
-        TimeSharingTask<T> task = (TimeSharingTask<T>)this.task;
-        return task(ctx, firstStep, out result);
-    }
-
     /** 运行可直接得出结果的任务 */
     protected T RunTask() {
         int type = (ctl & PromiseTask.MASK_TASK_TYPE) >> PromiseTask.OFFSET_TASK_TYPE;
@@ -217,16 +210,8 @@ public class PromiseTask<T> : IFutureTask
             return;
         }
         try {
-            if (TaskType == TYPE_TIMESHARING) {
-                if (RunTimeSharing(true, out T result)) {
-                    promise.Internal_TrySetResult(result);
-                } else {
-                    promise.Internal_TrySetException(StacklessCancellationException.Timeout);
-                }
-            } else {
-                T value = RunTask();
-                promise.Internal_TrySetResult(value);
-            }
+            T value = RunTask();
+            promise.Internal_TrySetResult(value);
         }
         catch (Exception e) {
             promise.Internal_TrySetException(e);

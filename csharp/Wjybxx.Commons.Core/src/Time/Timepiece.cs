@@ -33,7 +33,7 @@ public class Timepiece : ITimepiece
     public Timepiece() {
     }
 
-    public long Current => _time;
+    public long Time => _time;
     public int DeltaTime => _deltaTime;
 
     public int FrameCount => _frameCount;

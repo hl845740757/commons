@@ -33,8 +33,9 @@ public class TimeProvider : ICachedTimeProvider
         this._time = time;
     }
 
-    public long Current => _time;
-
-    public void SetCurrent(long time) => this._time = time;
+    public long Time {
+        get => _time;
+        set => _time = value;
+    }
 }
 }

@@ -44,6 +44,7 @@ public interface TaskBuilder
     public const int TYPE_FUNC_CTX = 3;
 
     /** 分时任务 */
+    [Obsolete("通过协程代替")]
     public const int TYPE_TIMESHARING = 4;
     /// <summary>
     /// 表示委托类型为<see cref="ITask"/>，通常表示二次封装
@@ -66,10 +67,6 @@ public interface TaskBuilder
 
     public static TaskBuilder<T> NewFunc<T>(Func<object, T> func, object ctx) {
         return new TaskBuilder<T>(TaskBuilder.TYPE_FUNC_CTX, func, ctx);
-    }
-
-    public static TaskBuilder<T> NewTimeSharing<T>(TimeSharingTask<T> func, object? context = null) {
-        return new TaskBuilder<T>(TaskBuilder.TYPE_TIMESHARING, func, context);
     }
 
     public static TaskBuilder<int> NewTask(ITask task) {
@@ -103,9 +100,6 @@ public interface TaskBuilder
             if (genericTypeDefinition == typeof(Func<,>) && type.GenericTypeArguments[0] == typeof(object)) {
                 return TYPE_FUNC_CTX;
             }
-            if (genericTypeDefinition == typeof(TimeSharingTask<>)) {
-                return TYPE_TIMESHARING;
-            }
         }
         throw new ArgumentException("unsupported task type: " + type);
     }
@@ -114,8 +108,7 @@ public interface TaskBuilder
     public static bool IsTaskAcceptContext(int type) {
         switch (type) {
             case TYPE_ACTION_CTX:
-            case TYPE_FUNC_CTX:
-            case TYPE_TIMESHARING: {
+            case TYPE_FUNC_CTX: {
                 return true;
             }
             default: {

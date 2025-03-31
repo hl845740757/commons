@@ -276,15 +276,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
             return false;
         }
         try {
-            if (TaskType == TYPE_TIMESHARING) {
-                // 周期性任务，只有分时任务可以有结果
-                if (RunTimeSharing(firstTrigger, out T result)) {
-                    promise.Internal_TrySetResult(result);
-                    return false;
-                }
-            } else {
-                RunTask();
-            }
+            RunTask();
         }
         catch (Exception ex) {
             ThreadUtil.RecoveryInterrupted(ex);
@@ -315,9 +307,6 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
 
     private bool CanCaughtException(Exception ex) {
         if (ScheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
-            return false;
-        }
-        if (TaskType == TYPE_TIMESHARING) {
             return false;
         }
         return TaskOptions.IsEnabled(options, TaskOptions.CAUGHT_EXCEPTION);

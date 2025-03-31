@@ -278,16 +278,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         }
 
         try {
-            // 周期性任务，只有分时任务可以有结果
-            if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
-                ResultHolder<V> holder = runTimeSharing(firstTrigger);
-                if (holder != null) {
-                    promise.trySetResult(holder.getResult());
-                    return false;
-                }
-            } else {
-                runTask();
-            }
+            runTask();
         } catch (Throwable ex) {
             ThreadUtils.recoveryInterrupted(ex);
             if (!canCaughtException(ex)) {
@@ -317,9 +308,6 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     private boolean canCaughtException(Throwable ex) {
         if (getScheduleType() == ScheduledTaskBuilder.SCHEDULE_ONCE) {
-            return false;
-        }
-        if (getTaskType() == TaskBuilder.TYPE_TIMESHARING) {
             return false;
         }
         return TaskOptions.isEnabled(options, TaskOptions.CAUGHT_EXCEPTION);
