@@ -161,7 +161,7 @@ public class SystemPropsUtils {
 
     /** 从jar包读取配置原始的配置 */
     public static Properties loadPropertiesFromJar(String path) throws IOException {
-        return loadPropertiesFromJar(path, System.class.getClassLoader());
+        return loadPropertiesFromJar(path, SystemPropsUtils.class.getClassLoader());
     }
 
     public static Properties loadPropertiesFromJar(String path, ClassLoader classLoader) throws IOException {

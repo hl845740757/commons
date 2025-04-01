@@ -49,6 +49,8 @@ public class ForwardFuture<V> implements IFuture<V> {
         return future.toCompletableFuture(); // 避免额外封装
     }
 
+    // region 不可直接转发
+
     @Override
     @Nonnull
     public ForwardFuture<V> toFuture() {
@@ -68,24 +70,29 @@ public class ForwardFuture<V> implements IFuture<V> {
     }
 
     // onCompleted不能直接转发，否则会导致封装泄漏
+    private static final BiConsumer<? super IFuture<?>, Object> invoker = (f, ctx) -> {
+        @SuppressWarnings("unchecked") Consumer<? super IFuture<?>> action = (Consumer<? super IFuture<?>>) ctx;
+        action.accept(f);
+    };
+
     @Override
     public void onCompleted(Consumer<? super IFuture<V>> action, int options) {
-        future.onCompleted(wrapAction(action), options);
+        future.onCompleted(invoker, action, options);
     }
 
     @Override
     public void onCompleted(Consumer<? super IFuture<V>> action) {
-        future.onCompleted(wrapAction(action));
+        future.onCompleted(invoker, action);
     }
 
     @Override
     public void onCompletedAsync(Executor executor, Consumer<? super IFuture<V>> action) {
-        future.onCompletedAsync(executor, wrapAction(action));
+        future.onCompletedAsync(executor, invoker, action);
     }
 
     @Override
     public void onCompletedAsync(Executor executor, Consumer<? super IFuture<V>> action, int options) {
-        future.onCompletedAsync(executor, wrapAction(action), options);
+        future.onCompletedAsync(executor, invoker, action, options);
     }
 
     @Override
@@ -108,13 +115,10 @@ public class ForwardFuture<V> implements IFuture<V> {
         future.onCompletedAsync(executor, wrapAction(action), ctx, options);
     }
 
-    private Consumer<? super IFuture<V>> wrapAction(Consumer<? super IFuture<V>> action) {
-        return f -> action.accept(this);
-    }
-
     private BiConsumer<? super IFuture<V>, Object> wrapAction(BiConsumer<? super IFuture<V>, Object> action) {
         return (f, ctx) -> action.accept(this, ctx);
     }
+    // endregion
 
     // region future
 

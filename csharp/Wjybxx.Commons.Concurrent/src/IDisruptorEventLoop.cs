@@ -16,14 +16,32 @@
 
 #endregion
 
+using System;
+
 namespace Wjybxx.Commons.Concurrent
 {
+/// <summary>
+/// 该接口用于外部获取事件的类型，测试事件类型的兼容性
+/// </summary>
+public interface IDisruptorEventLoop
+{
+    /// <summary>
+    /// 事件的类型
+    /// </summary>
+    Type EventType { get; }
+}
+
 /// <summary>
 /// 基于Disruptor架构的事件循环需要对外开放的接口
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface IDisruptorEventLoop<T> : IEventLoop where T : IAgentEvent
+public interface IDisruptorEventLoop<T> : IDisruptorEventLoop, IEventLoop where T : IAgentEvent
 {
+    /// <summary>
+    /// 事件的类型
+    /// </summary>
+    Type IDisruptorEventLoop.EventType => typeof(T);
+
     /// <summary>
     /// 获取序号对应的事件 -- 适用Class类型事件
     /// </summary>

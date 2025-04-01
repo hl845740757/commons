@@ -214,21 +214,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
     }
 
     @Override
-    public int degree() {
-        return CancelCodes.getDegree(code);
-    }
-
-    @Override
-    public boolean isInterruptible() {
-        return CancelCodes.isInterruptible(code);
-    }
-
-    @Override
-    public boolean isWithoutRemove() {
-        return CancelCodes.isWithoutRemove(code);
-    }
-
-    @Override
     public void checkCancel() {
         int code = this.code;
         if (code != 0) {

@@ -108,12 +108,6 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     public int Reason => CancelCodes.GetReason(code);
 
-    public int Degree => CancelCodes.GetDegree(code);
-
-    public bool IsInterruptible => CancelCodes.IsInterruptible(code);
-
-    public bool IsWithoutRemove => CancelCodes.IsWithoutRemove(code);
-
     public void CheckCancel() {
         int code = this.code;
         if (code != 0) {
@@ -152,13 +146,13 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     #region uni-accept-ctx
 
-    public Registration ThenAccept(Action<ICancelToken, object> action, object? state, int options = 0) {
-        return PushUniAcceptCtx(null, action, state, options);
+    public Registration ThenAccept(Action<ICancelToken, object> action, object? ctx, int options = 0) {
+        return PushUniAcceptCtx(null, action, ctx, options);
     }
 
-    public Registration ThenAcceptAsync(IExecutor executor, Action<ICancelToken, object> action, object? state, int options = 0) {
+    public Registration ThenAcceptAsync(IExecutor executor, Action<ICancelToken, object> action, object? ctx, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniAcceptCtx(executor, action, state, options);
+        return PushUniAcceptCtx(executor, action, ctx, options);
     }
 
     private Registration PushUniAcceptCtx(IExecutor? executor, Action<ICancelToken, object> action, object? state, int options) {
@@ -202,13 +196,13 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     #region uni-run-ctx
 
-    public Registration ThenRun(Action<object> action, object? state, int options = 0) {
-        return PushUniRunCtx(null, action, state, options);
+    public Registration ThenRun(Action<object> action, object? ctx, int options = 0) {
+        return PushUniRunCtx(null, action, ctx, options);
     }
 
-    public Registration ThenRunAsync(IExecutor executor, Action<object> action, object? state, int options = 0) {
+    public Registration ThenRunAsync(IExecutor executor, Action<object> action, object? ctx, int options = 0) {
         if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniRunCtx(executor, action, state, options);
+        return PushUniRunCtx(executor, action, ctx, options);
     }
 
     private Registration PushUniRunCtx(IExecutor? executor, Action<object> action, object? state, int options) {

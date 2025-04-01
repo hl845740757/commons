@@ -58,12 +58,17 @@ public class ForwardFuture<T> : IFuture<T>
     }
 
     // onCompleted不能直接转发，否则会导致封装泄漏
+    private static readonly Action<IFuture<T>, object> invoker = ((f, ctx) => {
+        Action<IFuture<T>> callback = (Action<IFuture<T>>)ctx;
+        callback(f);
+    });
+
     public void OnCompleted(Action<IFuture<T>> continuation, int options = 0) {
-        future.OnCompleted(WrapAction(continuation), options);
+        future.OnCompleted(invoker, continuation, options);
     }
 
     public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>> continuation, int options = 0) {
-        future.OnCompletedAsync(executor, WrapAction(continuation), options);
+        future.OnCompletedAsync(executor, invoker, continuation, options);
     }
 
     public void OnCompleted(Action<IFuture<T>, object> continuation, object state, int options = 0) {
@@ -72,11 +77,6 @@ public class ForwardFuture<T> : IFuture<T>
 
     public void OnCompletedAsync(IExecutor executor, Action<IFuture<T>, object> continuation, object state, int options = 0) {
         future.OnCompletedAsync(executor, WrapAction(continuation), state, options);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Action<IFuture<T>> WrapAction(Action<IFuture<T>> action) {
-        return _ => action(this);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -78,6 +78,7 @@ import java.util.function.Function;
  * 1.关于Future之间的聚合，见：{@link FutureCombiner}
  * 2.java参数不支持默认值，为减少方法数，我们只提供一种重载。
  * 3.大家可以先熟悉JDK的{@link CompletionStage}和{@link CompletableFuture}
+ * 4.该接口其实类似于C#的{@code Awaitable}，只能异步等待，不能阻塞获取结果。
  *
  * @author wjybxx
  * date - 2024/1/10

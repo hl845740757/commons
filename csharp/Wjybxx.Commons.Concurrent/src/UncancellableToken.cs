@@ -40,12 +40,6 @@ sealed class UncancellableToken : ICancelToken
 
     public int Reason => 0;
 
-    public int Degree => 0;
-
-    public bool IsInterruptible => false;
-
-    public bool IsWithoutRemove => false;
-
     public void CheckCancel() {
     }
 

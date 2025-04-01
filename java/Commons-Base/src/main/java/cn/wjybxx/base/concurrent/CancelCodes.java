@@ -94,16 +94,6 @@ public final class CancelCodes {
 
     // region util
 
-    /** 设置紧急程度 */
-    public static int setDegree(int code, int value) {
-        if (value < 0 || value > MAX_DEGREE) {
-            throw new IllegalArgumentException("degree");
-        }
-        code &= (~MASK_DEGREE);
-        code |= (value << OFFSET_DEGREE);
-        return code;
-    }
-
     /** 设置取消原因 */
     public static int setReason(int code, int value) {
         if (value <= 0 || value > MAX_REASON) {
@@ -111,6 +101,16 @@ public final class CancelCodes {
         }
         code &= (~MASK_REASON);
         code |= value;
+        return code;
+    }
+
+    /** 设置紧急程度 */
+    public static int setDegree(int code, int value) {
+        if (value < 0 || value > MAX_DEGREE) {
+            throw new IllegalArgumentException("degree");
+        }
+        code &= (~MASK_DEGREE);
+        code |= (value << OFFSET_DEGREE);
         return code;
     }
 

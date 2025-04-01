@@ -38,4 +38,9 @@ public enum TaskPoolType {
      * 取消令牌的回调接地啊
      */
     CTS_COMPLETION,
+
+    /**
+     * 协程任务（分时任务的新实现）
+     */
+    COROUTINE,
 }

@@ -93,5 +93,10 @@ public enum TaskPoolType
     /// 取消令牌的监听器
     /// </summary>
     CtsCompletion,
+
+    /// <summary>
+    /// 协程任务(分时任务的新实现)
+    /// </summary>
+    Coroutine,
 }
 }

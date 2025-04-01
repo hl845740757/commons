@@ -126,6 +126,48 @@ public readonly struct ValueFuture
     public ValueFuture Preserve() => new ValueFuture(AsFuture());
 
     /// <summary>
+    /// 将Future的结果拷贝下来
+    /// </summary>
+    /// <returns></returns>
+    public ValueFuture Memorize() {
+        if (!IsCompleted) {
+            throw new InvalidOperationException();
+        }
+        if (_future == null) {
+            return this; // copy
+        }
+        if (_future is IValuePromise valuePromise) {
+            switch (valuePromise.GetStatus(_reentryId)) {
+                case TaskStatus.Success: {
+                    return COMPLETED;
+                }
+                case TaskStatus.Cancelled: {
+                    return CANCELLED;
+                }
+                case TaskStatus.Failed: {
+                    return new ValueFuture(valuePromise.GetException(_reentryId));
+                }
+                default: throw new AssertionError();
+            }
+        }
+        {
+            IFuture future = (IFuture)_future;
+            switch (future.Status) {
+                case TaskStatus.Success: {
+                    return COMPLETED;
+                }
+                case TaskStatus.Cancelled: {
+                    return CANCELLED;
+                }
+                case TaskStatus.Failed: {
+                    return new ValueFuture(future.ExceptionNow(false));
+                }
+                default: throw new AssertionError();
+            }
+        }
+    }
+
+    /// <summary>
     /// 转换为普通的Future
     /// 该方法应当避免调用多次，且不可以在await以后调用
     /// </summary>
@@ -325,6 +367,48 @@ public readonly struct ValueFuture<T>
     /// </summary>
     /// <returns></returns>
     public ValueFuture<T> Preserve() => new ValueFuture<T>(AsFuture());
+
+    /// <summary>
+    /// 将Future的结果拷贝下来
+    /// </summary>
+    /// <returns></returns>
+    public ValueFuture<T> Memorize() {
+        if (!IsCompleted) {
+            throw new InvalidOperationException();
+        }
+        if (_future == null) {
+            return this; // copy
+        }
+        if (_future is IValuePromise<T> valuePromise) {
+            switch (valuePromise.GetStatus(_reentryId)) {
+                case TaskStatus.Success: {
+                    return new ValueFuture<T>(valuePromise.GetResult(_reentryId), null);
+                }
+                case TaskStatus.Cancelled: {
+                    return CANCELLED;
+                }
+                case TaskStatus.Failed: {
+                    return new ValueFuture<T>(default, valuePromise.GetException(_reentryId));
+                }
+                default: throw new AssertionError();
+            }
+        }
+        {
+            IFuture<T> future = (IFuture<T>)_future;
+            switch (future.Status) {
+                case TaskStatus.Success: {
+                    return new ValueFuture<T>(future.ResultNow(), null);
+                }
+                case TaskStatus.Cancelled: {
+                    return CANCELLED;
+                }
+                case TaskStatus.Failed: {
+                    return new ValueFuture<T>(default, future.ExceptionNow(false));
+                }
+                default: throw new AssertionError();
+            }
+        }
+    }
 
     /// <summary>
     /// 转换为普通的Future

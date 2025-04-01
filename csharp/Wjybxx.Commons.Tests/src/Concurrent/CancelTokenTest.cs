@@ -355,14 +355,15 @@ public class CancelTokenTest
         Assert.AreEqual(degree, builder.Degree);
         Assert.IsTrue(builder.IsInterruptible);
 
-        int code = builder.Build();
+        int expectedCode = builder.Build();
         ICancelTokenSource cts = newTokenSource(0);
-        cts.Cancel(code);
+        cts.Cancel(expectedCode);
 
-        Assert.AreEqual(code, cts.CancelCode);
-        Assert.AreEqual(reason, cts.Reason);
-        Assert.AreEqual(degree, cts.Degree);
-        Assert.IsTrue(cts.IsInterruptible);
+        int realCode = cts.CancelCode;
+        Assert.AreEqual(expectedCode, realCode);
+        Assert.AreEqual(reason, CancelCodes.GetReason(realCode));
+        Assert.AreEqual(degree, CancelCodes.GetDegree(realCode));
+        Assert.IsTrue(CancelCodes.IsInterruptible(realCode));
     }
 
     #endregion

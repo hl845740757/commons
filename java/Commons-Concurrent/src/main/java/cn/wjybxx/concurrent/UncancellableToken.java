@@ -55,21 +55,6 @@ final class UncancellableToken implements ICancelToken {
     }
 
     @Override
-    public int degree() {
-        return 0;
-    }
-
-    @Override
-    public boolean isInterruptible() {
-        return false;
-    }
-
-    @Override
-    public boolean isWithoutRemove() {
-        return false;
-    }
-
-    @Override
     public void checkCancel() {
 
     }

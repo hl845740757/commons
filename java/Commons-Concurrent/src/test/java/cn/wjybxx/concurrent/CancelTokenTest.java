@@ -19,6 +19,7 @@ package cn.wjybxx.concurrent;
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.concurrent.CancelCodeBuilder;
+import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.base.mutable.MutableInt;
 import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
@@ -355,14 +356,15 @@ public class CancelTokenTest {
         Assertions.assertEquals(degree, builder.getDegree());
         Assertions.assertTrue(builder.isInterruptible());
 
-        final int code = builder.build();
+        final int expectedCode = builder.build();
         ICancelTokenSource cts = newTokenSource(0);
-        cts.cancel(code);
+        cts.cancel(expectedCode);
 
-        Assertions.assertEquals(code, cts.cancelCode());
-        Assertions.assertEquals(reason, cts.reason());
-        Assertions.assertEquals(degree, cts.degree());
-        Assertions.assertTrue(cts.isInterruptible());
+        int realCode = cts.cancelCode();
+        Assertions.assertEquals(expectedCode, realCode);
+        Assertions.assertEquals(reason, CancelCodes.getReason(realCode));
+        Assertions.assertEquals(degree, CancelCodes.getDegree(realCode));
+        Assertions.assertTrue(CancelCodes.isInterruptible(realCode));
     }
     // endregion
 }

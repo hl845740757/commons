@@ -32,18 +32,21 @@ public interface ScheduledPromiseTask
 {
     #region factory
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ScheduledPromiseTask<int> OfAction(Action action, ICancelToken? cancelToken, int options,
                                                      ValuePromise<int> promise,
                                                      TimeSpan delay) {
         return ScheduledPromiseTask<int>.Acquire(TYPE_ACTION, action, cancelToken, options, promise, delay);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ScheduledPromiseTask<T> OfFunction<T>(Func<T> action, ICancelToken? cancelToken, int options,
                                                         ValuePromise<T> promise,
                                                         TimeSpan delay) {
         return ScheduledPromiseTask<T>.Acquire(TYPE_FUNC, action, cancelToken, options, promise, delay);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ScheduledPromiseTask<T> OfBuilder<T>(in ScheduledTaskBuilder<T> builder,
                                                        ValuePromise<T> promise) {
         return ScheduledPromiseTask<T>.Acquire(in builder, promise);
@@ -288,7 +291,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         }
         // 任务执行后检测取消
         if (cancelToken.IsCancelRequested || !promise.IsComputing) {
-            TrySetCancelled(promise, cancelToken);
+            TrySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
             return false;
         }
         // 未被取消的情况下检测超时
@@ -357,6 +360,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     /// <param name="promise">关联的Promise</param>
     /// <param name="delay">延迟时间</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ScheduledPromiseTask<T> Acquire(int taskType, object action, object? ctx, int options,
                                                   ValuePromise<T> promise,
                                                   TimeSpan delay) {
@@ -365,6 +369,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         return promiseTask;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ScheduledPromiseTask<T> Acquire(in ScheduledTaskBuilder<T> builder, ValuePromise<T> promise) {
         ScheduledPromiseTask<T> promiseTask = POOL.Acquire();
         promiseTask.Init(builder, promise);

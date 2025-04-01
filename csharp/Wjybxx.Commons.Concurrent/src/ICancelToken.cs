@@ -44,6 +44,8 @@ public interface ICancelToken
     /// 2. 低20位为取消原因；高12位为特殊信息 <see cref="CancelCodes.MASK_REASON"/>
     /// 3. 不为0表示已发起取消请求
     /// 4. 取消时至少赋值一个信息，reason通常应该赋值
+    ///
+    /// 分析取消码，可使用<see cref="CancelCodes"/>中的工具方法。
     /// </summary>
     /// <value></value>
     int CancelCode { get; }
@@ -61,19 +63,10 @@ public interface ICancelToken
      */
     int Reason => CancelCodes.GetReason(CancelCode);
 
-    /** 取消的紧急程度 */
-    int Degree => CancelCodes.GetDegree(CancelCode);
-
-    /** 取消指令中是否要求了中断线程 */
-    bool IsInterruptible => CancelCodes.IsInterruptible(CancelCode);
-
-    /** 取消指令中是否要求了无需删除 */
-    bool IsWithoutRemove => CancelCodes.IsWithoutRemove(CancelCode);
-
-    /**
-     * 检测取消信号
-     * 如果收到取消信号，则抛出<see cref="OperationCanceledException"/>
-     */
+    /// <summary>
+    /// 检测取消信号
+    /// 如果收到取消信号，则抛出<see cref="OperationCanceledException"/>
+    /// </summary>
     void CheckCancel() {
         int code = CancelCode;
         if (code != 0) {
@@ -111,13 +104,13 @@ public interface ICancelToken
     /// 3.如果不期望检测state中潜在的取消信号，可通过<see cref="TaskOptions.STAGE_UNCANCELLABLE_CTX"/>关闭。
     /// </summary>
     /// <param name="action">回调任务</param>
-    /// <param name="state">上下文</param>
+    /// <param name="ctx">上下文</param>
     /// <param name="options">调度选项</param>
     /// <returns></returns>
-    Registration ThenAccept(Action<ICancelToken, object> action, object? state, int options = 0);
+    Registration ThenAccept(Action<ICancelToken, object> action, object? ctx, int options = 0);
 
     Registration ThenAcceptAsync(IExecutor executor,
-                                 Action<ICancelToken, object> action, object? state, int options = 0);
+                                 Action<ICancelToken, object> action, object? ctx, int options = 0);
 
     // endregion
 
@@ -131,10 +124,10 @@ public interface ICancelToken
 
     // region run-ctx
 
-    Registration ThenRun(Action<object> action, object? state, int options = 0);
+    Registration ThenRun(Action<object> action, object? ctx, int options = 0);
 
     Registration ThenRunAsync(IExecutor executor,
-                              Action<object> action, object? state, int options = 0);
+                              Action<object> action, object? ctx, int options = 0);
 
     // endregion
 

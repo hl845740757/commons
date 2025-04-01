@@ -55,31 +55,37 @@ public interface PromiseTask
 
     #region factory
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<int> OfTask(ITask task, ICancelToken? cancelToken, int options,
                                           ValuePromise<int> promise) {
         return PromiseTask<int>.Acquire(TYPE_TASK, task, cancelToken, options, promise);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<int> OfAction(Action action, ICancelToken? cancelToken, int options,
                                             ValuePromise<int> promise) {
         return PromiseTask<int>.Acquire(TYPE_ACTION, action, cancelToken, options, promise);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<int> OfAction(Action<object> action, object? ctx, int options,
                                             ValuePromise<int> promise) {
         return PromiseTask<int>.Acquire(TYPE_ACTION_CTX, action, ctx, options, promise);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<T> OfFunction<T>(Func<T> action, ICancelToken? cancelToken, int options,
                                                ValuePromise<T> promise) {
         return PromiseTask<T>.Acquire(TYPE_FUNC, action, cancelToken, options, promise);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<T> OfFunction<T>(Func<object, T> action, object? ctx, int options,
                                                ValuePromise<T> promise) {
         return PromiseTask<T>.Acquire(TYPE_FUNC_CTX, action, ctx, options, promise);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<T> OfBuilder<T>(in TaskBuilder<T> builder, ValuePromise<T> promise) {
         return PromiseTask<T>.Acquire(builder.Type, builder.Task, builder.Context, builder.Options, promise);
     }
@@ -252,6 +258,7 @@ public class PromiseTask<T> : IFutureTask
     /// <param name="options">任务调度选项</param>
     /// <param name="promise">关联的Promise</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static PromiseTask<T> Acquire(int taskType, object action, object? ctx, int options,
                                          ValuePromise<T> promise) {
         PromiseTask<T> promiseTask = POOL.Acquire();

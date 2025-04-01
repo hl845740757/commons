@@ -87,6 +87,8 @@ public interface ICancelToken {
      * 2. 低20位为取消原因；高12位为特殊信息 {@link CancelCodes#MASK_REASON}
      * 3. 不为0表示已发起取消请求
      * 4. 取消时至少赋值一个信息，reason通常应该赋值
+     * <p>
+     * 分析取消码，可使用{@link CancelCodes}中的工具方法。
      */
     int cancelCode();
 
@@ -104,21 +106,6 @@ public interface ICancelToken {
      */
     default int reason() {
         return CancelCodes.getReason(cancelCode());
-    }
-
-    /** 取消的紧急程度 */
-    default int degree() {
-        return CancelCodes.getDegree(cancelCode());
-    }
-
-    /** 取消指令中是否要求了中断线程 */
-    default boolean isInterruptible() {
-        return CancelCodes.isInterruptible(cancelCode());
-    }
-
-    /** 取消指令中是否要求了无需删除 */
-    default boolean isWithoutRemove() {
-        return CancelCodes.isWithoutRemove(cancelCode());
     }
 
     /**

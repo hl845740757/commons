@@ -98,16 +98,6 @@ public static class CancelCodes
 
     #region util
 
-    /** 设置紧急程度 */
-    public static int SetDegree(int code, int value) {
-        if (value < 0 || value > MAX_DEGREE) {
-            throw new ArgumentException("degree");
-        }
-        code &= (~MASK_DEGREE);
-        code |= (value << OFFSET_DEGREE);
-        return code;
-    }
-
     /** 设置取消原因 */
     public static int SetReason(int code, int value) {
         if (value <= 0 || value > MAX_REASON) {
@@ -115,6 +105,16 @@ public static class CancelCodes
         }
         code &= (~MASK_REASON);
         code |= value;
+        return code;
+    }
+
+    /** 设置紧急程度 */
+    public static int SetDegree(int code, int value) {
+        if (value < 0 || value > MAX_DEGREE) {
+            throw new ArgumentException("degree");
+        }
+        code &= (~MASK_DEGREE);
+        code |= (value << OFFSET_DEGREE);
         return code;
     }
 
@@ -134,11 +134,7 @@ public static class CancelCodes
 
     #endregion
 
-    /**
-     * 检查取消码的合法性
-     *
-     * @return argument
-     */
+    /** 检查取消码的合法性 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int CheckCode(int code) {
         if (GetReason(code) == 0) {

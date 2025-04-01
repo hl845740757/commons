@@ -289,7 +289,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         }
         // 任务执行后检测取消
         if (cancelToken.isCancelRequested() || !promise.isComputing()) {
-            trySetCancelled(promise, cancelToken);
+            trySetCancelled(promise, cancelToken, CancelCodes.REASON_DEFAULT);
             return false;
         }
         // 未被取消的情况下检测超时
