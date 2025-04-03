@@ -49,6 +49,11 @@ public static class LoggerFactory
         return provider.GetLogger(name);
     }
 
+    public static ILogger GetLogger<T>() {
+        string name = GetName(typeof(T));
+        return provider.GetLogger(name);
+    }
+
     /// <summary>
     /// 获取指定name的logger。
     /// 如果logger不存在，则创建新的Logger并记录下来，下次调用该接口将返回同一个实例。

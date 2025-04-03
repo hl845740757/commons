@@ -25,14 +25,14 @@ namespace Wjybxx.Commons.Fx
 /// 用于子类告知框架应当使用它的哪个超类来解析<see cref="ComponentId"/>
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
-public sealed class ComponentRedirect : Attribute
+public sealed class ComponentRedirectAttribute : Attribute
 {
     /// <summary>
     /// 真实组件类型
     /// </summary>
     public readonly Type baseType;
 
-    public ComponentRedirect(Type baseType) {
+    public ComponentRedirectAttribute(Type baseType) {
         this.baseType = baseType ?? throw new ArgumentNullException(nameof(baseType));
     }
 }

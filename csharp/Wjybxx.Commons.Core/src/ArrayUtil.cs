@@ -28,6 +28,7 @@ namespace Wjybxx.Commons
 public static class ArrayUtil
 {
     // int[]和byte[]可提供额外支持
+
     #region equals/hashcode
 
     /// <summary>

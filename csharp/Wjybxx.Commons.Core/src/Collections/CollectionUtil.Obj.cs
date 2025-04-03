@@ -125,11 +125,18 @@ public static partial class CollectionUtil
     /// <param name="collection"></param>
     /// <typeparam name="TKey"></typeparam>
     /// <returns></returns>
-    public static int ContentHasCode<TKey>(ICollection<TKey>? collection) {
+    public static int ContentHashCode<TKey>(ICollection<TKey>? collection) {
         if (collection == null) return 0;
         int r = 0;
-        foreach (TKey key in collection) {
-            r = r * 31 + (key == null ? 0 : key.GetHashCode());
+        if (typeof(TKey).IsValueType) {
+            EqualityComparer<TKey> comparer = EqualityComparer<TKey>.Default;
+            foreach (TKey key in collection) {
+                r = r * 31 + (key == null ? 0 : comparer.GetHashCode(key));
+            }
+        } else {
+            foreach (TKey key in collection) {
+                r = r * 31 + (key == null ? 0 : key.GetHashCode());
+            }
         }
         return r;
     }

@@ -55,7 +55,7 @@ public interface IPromise : IFuture
     /// 尝试将future置为成功完成状态，如果future已进入完成状态，则返回false
     /// </summary>
     /// <exception cref="InvalidCastException">如果数据类型不兼容</exception>
-    bool TrySetResult(object result);
+    bool TrySetResult(object? result);
 
     /// <summary>
     /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
@@ -63,7 +63,7 @@ public interface IPromise : IFuture
     /// <param name="result"></param>
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
     /// <exception cref="InvalidCastException">如果数据类型不兼容</exception>
-    void SetResult(object result);
+    void SetResult(object? result);
 
     /// <summary>
     /// 尝试将future置为失败完成状态，如果future已进入完成状态，则返回false
@@ -103,14 +103,14 @@ public interface IPromise<T> : IFuture<T>, IPromise
     /// <summary>
     /// 尝试将future置为成功完成状态，如果future已进入完成状态，则返回false
     /// </summary>
-    bool TrySetResult(T result);
+    bool TrySetResult(T? result);
 
     /// <summary>
     /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
     /// </summary>
     /// <param name="result"></param>
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
-    void SetResult(T result);
+    void SetResult(T? result);
 
     #region 接口适配
 

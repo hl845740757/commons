@@ -125,6 +125,10 @@ public class ForwardFuture<T> : IFuture<T>
     public T Get() {
         return future.Get();
     }
+    
+    public T Get(TimeSpan timeout) {
+        return future.Get(timeout);
+    }
 
     public T Join() {
         return future.Join();

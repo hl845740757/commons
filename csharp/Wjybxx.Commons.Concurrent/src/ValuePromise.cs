@@ -97,9 +97,9 @@ public class ValuePromise<T> : IValuePromise<T>
     protected virtual void Reset() {
         _reentryId++;
         _result = default!;
-        _ex = null;
         _completion.Reset();
         _executor = null;
+        _ex = null; // store fence
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public class ValuePromise<T> : IValuePromise<T>
 
     #region internal
 
-    private bool InternalSetResult(T result) {
+    private bool InternalSetResult(T? result) {
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
         object? preEx = Interlocked.CompareExchange(ref _ex, EX_PUBLISHING, null);
         if (preEx == null) {
@@ -226,7 +226,7 @@ public class ValuePromise<T> : IValuePromise<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool Internal_TrySetResult(T result) {
+    internal bool Internal_TrySetResult(T? result) {
         if (InternalSetResult(result)) {
             PostComplete();
             return true;
@@ -235,7 +235,7 @@ public class ValuePromise<T> : IValuePromise<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Internal_SetResult(T result) {
+    private void Internal_SetResult(T? result) {
         if (!Internal_TrySetResult(result)) {
             throw new IllegalStateException("Already complete");
         }
@@ -728,6 +728,19 @@ public class ValuePromise<T> : IValuePromise<T>
     public static ValuePromise<T> Acquire(IExecutor? executor = null) {
         ValuePromise<T> promise = POOL.Acquire();
         promise.IncReentryId();
+        promise._executor = executor;
+        return promise;
+    }
+
+    /// <summary>
+    /// 该接口用于外部库申请ValuePromise
+    /// </summary>
+    /// <param name="rid">接收Promise的重入版本id</param>
+    /// <param name="executor">任务关联的线程</param>
+    /// <returns></returns>
+    public static ValuePromise<T> Acquire(out int rid, IExecutor? executor) {
+        ValuePromise<T> promise = POOL.Acquire();
+        rid = promise.IncReentryId();
         promise._executor = executor;
         return promise;
     }

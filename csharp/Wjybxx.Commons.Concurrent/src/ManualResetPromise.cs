@@ -21,6 +21,14 @@ using Wjybxx.Commons.Pool;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
+/// 该接口用于处理泛型问题
+/// </summary>
+public interface IManualResetPromise : IPromise
+{
+    void Release();
+}
+
+/// <summary>
 /// 可手动重置状态的Promise。
 ///
 /// Q：为什么是手动重置？
@@ -28,7 +36,7 @@ namespace Wjybxx.Commons.Concurrent
 /// 尤其是有异步回调的情况下，Promise就更难以正确回收。
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public sealed class ManualResetPromise<T> : Promise<T>
+public sealed class ManualResetPromise<T> : Promise<T>, IManualResetPromise
 {
     // 只可以池中获取
     private ManualResetPromise() {

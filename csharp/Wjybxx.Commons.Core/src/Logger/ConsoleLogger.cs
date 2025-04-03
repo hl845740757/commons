@@ -81,7 +81,7 @@ internal class ConsoleLogger : ILogger
 
     #region util
 
-    private static readonly ConcurrentObjectPool<StringBuilder> stringBuilderPool 
+    private static readonly ConcurrentObjectPool<StringBuilder> stringBuilderPool
         = new(() => new StringBuilder(64), builder => builder.Clear(), 32);
 
     private static string FormatDateTime(DateTime dateTime) {

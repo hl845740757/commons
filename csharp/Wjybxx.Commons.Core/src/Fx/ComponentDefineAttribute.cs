@@ -24,10 +24,10 @@ namespace Wjybxx.Commons.Fx
 /// 默认的组件id定义注解
 /// 1.该注解不会被继承，使用子类的Class查询得到的将是另一个组件id。
 /// 2.可以通过额外的注解附加信息，需要定制解析器
-/// 3.组件id解析重定向，请使用<see cref="ComponentRedirect"/>
+/// 3.组件id解析重定向，请使用<see cref="ComponentRedirectAttribute"/>
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
-public class ComponentDefine : Attribute
+public class ComponentDefineAttribute : Attribute
 {
     /// <summary>
     /// 组件的名字

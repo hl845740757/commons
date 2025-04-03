@@ -28,6 +28,7 @@ namespace Wjybxx.Commons.Pool
 /// 这是一个特定实现的多生产者多消费者的数组队列（MpmcArrayQueue）
 /// 这里没有强制数组大小必须是2的幂，因为要严格保证池的大小符合预期。
 /// (这里的算法参照了Disruptor模块的实现，但针对对象池进行了特殊的修改，但没有做极致的优化)
+/// (泛型类不能显式定于内存布局)
 /// </summary>
 public sealed class MpmcObjectBucket<T>
 {

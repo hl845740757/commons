@@ -33,7 +33,7 @@ public partial interface ComponentId : IConstant
     public int MaxCount { get; }
     /** 最大可挂载数量 */
     public long EnableFuncs { get; }
-    
+
     /** 业务自定义flags */
     public long Flags { get; }
     /** 挂载路径 */

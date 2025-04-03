@@ -506,10 +506,14 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     #region core
 
     private static IEqualityComparer<TValue> ValComparer => EqualityComparer<TValue>.Default;
+    private static bool IsKeyValueType = typeof(TKey).IsValueType;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int KeyHash(TKey? key, IEqualityComparer<TKey> keyComparer) {
-        return key == null ? 0 : HashCommon.Mix(keyComparer.GetHashCode(key));
+    private static int KeyHash(TKey key, IEqualityComparer<TKey> keyComparer) {
+        if (!IsKeyValueType && key == null) { // 否则会装箱....
+            return 0;
+        }
+        return HashCommon.Mix(keyComparer.GetHashCode(key!));
     }
 
     /// <summary>

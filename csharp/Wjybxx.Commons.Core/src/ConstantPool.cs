@@ -87,7 +87,7 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
         if (builder == null) throw new ArgumentNullException(nameof(builder));
         return CreateOrThrow(builder);
     }
-    
+
     /** 提供类型转换 */
     public TConstant NewInstance(IConstant.IBuilder builder) {
         if (builder == null) throw new ArgumentNullException(nameof(builder));

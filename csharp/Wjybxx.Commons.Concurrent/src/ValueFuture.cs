@@ -203,6 +203,11 @@ public readonly struct ValueFuture
         }
     }
 
+    /// <summary>
+    /// 是否是Future的包装类
+    /// </summary>
+    public bool IsWrapper => _future != null;
+
     #region internal
 
     // internal是因为不希望用户调用
@@ -445,6 +450,11 @@ public readonly struct ValueFuture<T>
             valuePromise.Forget(_reentryId);
         }
     }
+
+    /// <summary>
+    /// 是否是Future的包装类
+    /// </summary>
+    public bool IsWrapper => _future != null;
 
     public ValueFuture ToVoid() {
         if (_future == null) {

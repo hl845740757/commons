@@ -660,10 +660,14 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     #region core
 
     private static IEqualityComparer<TValue> ValComparer => EqualityComparer<TValue>.Default;
+    private static bool IsKeyValueType = typeof(TKey).IsValueType;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int KeyHash(TKey key, IEqualityComparer<TKey> keyComparer) {
-        return key == null ? 0 : HashCommon.Mix(keyComparer.GetHashCode(key));
+        if (!IsKeyValueType && key == null) { // 否则会装箱....
+            return 0;
+        }
+        return HashCommon.Mix(keyComparer.GetHashCode(key));
     }
 
     /// <summary>
@@ -680,7 +684,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         if (table == null) {
             return -1;
         }
-        if (key == null) {
+        if (!IsKeyValueType && key == null) {
             Node nullNode = table[_mask + 1];
             return nullNode.index == null ? -(_mask + 2) : (_mask + 1);
         }

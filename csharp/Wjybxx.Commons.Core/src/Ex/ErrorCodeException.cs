@@ -24,8 +24,11 @@ namespace Wjybxx.Commons.Ex
 /// <summary>
 /// 包含错误码的异常
 /// </summary>
-public class ErrorCodeException : Exception, IErrorCodeException, NoLogRequiredException, ISerializable
+public class ErrorCodeException : Exception, IErrorCodeException, NoLogRequiredException
 {
+    public static readonly ErrorCodeException SUCCESS = new ErrorCodeException(0);
+
+    /** 0表示成功 */
     private readonly int errorCode;
 
     public ErrorCodeException(int errorCode) {
@@ -40,6 +43,10 @@ public class ErrorCodeException : Exception, IErrorCodeException, NoLogRequiredE
     /// 错误码
     /// </summary>
     public int ErrorCode => errorCode;
+    /// <summary>
+    /// 不构建堆栈
+    /// </summary>
+    public override string? StackTrace => null;
 
     #region seril
 

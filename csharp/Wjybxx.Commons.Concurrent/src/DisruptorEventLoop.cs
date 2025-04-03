@@ -23,7 +23,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using Wjybxx.Commons.Attributes;
-using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Fx;
 using Wjybxx.Commons.Logger;
 using Wjybxx.Disruptor;
@@ -80,9 +79,9 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     /** 周期性任务队列 -- 既有的任务都是先于Sequencer中的任务提交的 */
     private readonly DisruptorSchedulerHelper<T> schedulerHelper;
     /** 任务拒绝策略 */
-    private readonly RejectedExecutionHandler rejectedExecutionHandler;
+    protected readonly RejectedExecutionHandler rejectedExecutionHandler;
     /** 内部代理 */
-    private readonly IEventLoopAgent<T> agent;
+    protected readonly IEventLoopAgent<T> agent;
     /** 批量执行任务的大小 */
     private readonly int batchSize;
 

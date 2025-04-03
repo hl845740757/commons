@@ -81,6 +81,7 @@ public interface IEntity
     #endregion
 
     #region cid-非泛型
+
     // 真泛型要付出大量的额外工作量...
 
     /** 获取指定组件id关联的第一个组件 */

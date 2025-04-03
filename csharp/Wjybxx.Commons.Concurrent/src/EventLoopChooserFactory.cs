@@ -77,11 +77,12 @@ public class EventLoopChooserFactory
         private int NextIndex() => Interlocked.Increment(ref idx) - 1;
 
         public IEventLoop Select() {
-            int key = NextIndex();
+            int key = Math.Abs(NextIndex()); // 改为普通int需要取绝对值
             return _eventLoops[key & (_eventLoops.Length - 1)];
         }
 
         public IEventLoop Select(int key) {
+            key = Math.Abs(key);
             return _eventLoops[key & (_eventLoops.Length - 1)];
         }
     }
@@ -98,11 +99,12 @@ public class EventLoopChooserFactory
         private int NextIndex() => Interlocked.Increment(ref idx) - 1;
 
         public IEventLoop Select() {
-            int key = NextIndex();
+            int key = Math.Abs(NextIndex()); // 改为普通int需要取绝对值
             return _eventLoops[key % _eventLoops.Length];
         }
 
         public IEventLoop Select(int key) {
+            key = Math.Abs(key);
             return _eventLoops[key % _eventLoops.Length];
         }
     }

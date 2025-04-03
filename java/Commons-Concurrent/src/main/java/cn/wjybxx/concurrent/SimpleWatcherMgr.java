@@ -43,7 +43,7 @@ public final class SimpleWatcherMgr<E> implements WatcherMgr<E> {
     private volatile Watcher<? super E> watcher;
 
     @SuppressWarnings("unused")
-    private long p9, p10, p11, p12, p13, p14, p15, p16;
+    private long p11, p12, p13, p14, p15, p16, p17, p18;
 
     public Watcher<? super E> getWatcher() {
         return watcher;

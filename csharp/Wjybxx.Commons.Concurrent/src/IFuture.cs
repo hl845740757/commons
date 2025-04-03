@@ -65,6 +65,15 @@ public interface IFuture<T> : IFuture
     new T Get();
 
     /// <summary>
+    /// 如果Future关联的任务尚未完成，该方法将阻塞到Future进入完成状态或超时。
+    /// 如果对应的计算失败，则抛出对应的异常。
+    /// </summary>
+    /// <param name="timeout">超时时间</param>
+    /// <returns></returns>
+    /// <exception cref="TimeoutException">等待超时</exception>
+    new T Get(TimeSpan timeout);
+
+    /// <summary>
     /// 如果Future关联的任务尚未完成，该方法将阻塞到Future进入完成状态 -- 不响应中断信号。
     /// 如果对应的计算失败，则抛出对应的异常。
     /// 如果计算成功，则返回计算结果。
@@ -258,6 +267,9 @@ public interface IFuture<T> : IFuture
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     object IFuture.Get() => Get();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    object IFuture.Get(TimeSpan timeout) => Get(timeout);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     object IFuture.Join() => Join();

@@ -111,7 +111,7 @@ public sealed class ComponentIdPool
             return cid;
         }
         // 优先处理重定向
-        ComponentRedirect componentRedirect = type.GetCustomAttribute<ComponentRedirect>();
+        ComponentRedirectAttribute componentRedirect = type.GetCustomAttribute<ComponentRedirectAttribute>();
         if (componentRedirect != null) {
             cid = ValueOf(componentRedirect.baseType);
             class2CidMap.TryAdd(type, cid);
@@ -123,7 +123,7 @@ public sealed class ComponentIdPool
             builder = cidParser.Invoke(type);
         } else {
             // 泛型类，在自动处理的情况下指向同一个组件id
-            ComponentDefine componentDefine = type.GetCustomAttribute<ComponentDefine>();
+            ComponentDefineAttribute componentDefine = type.GetCustomAttribute<ComponentDefineAttribute>();
             if (componentDefine == null) {
                 string compName = GetRawTypeName(type);
                 builder = ComponentId.NewBuilder(compName, type);

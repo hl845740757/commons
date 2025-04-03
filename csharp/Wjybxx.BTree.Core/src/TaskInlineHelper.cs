@@ -36,7 +36,7 @@ public static class TaskInlineHelper
 
 /// <summary>
 /// 内联工具类
-/// 1.只有不能被内联的节点，才需要该工具类。
+/// 1.理论上可以只有不能被内联的节点，才需要该工具类。
 /// 2.实现内联优化时，应当在<see cref="Task{T}.OnChildRunning"/>时开启内联和<see cref="Task{T}.OnChildCompleted"/>时停止内联。
 /// 3.在<see cref="Task{T}.Exit"/>时也调用一次停止内联可避免内存泄漏(不必要的引用)。
 /// 4.在<see cref="Task{T}.OnEventImpl"/>时应当尝试将事件转发给被内联的子节点，可使用工具方法<see cref="OnEvent"/>。

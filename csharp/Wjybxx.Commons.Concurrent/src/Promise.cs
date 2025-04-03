@@ -106,7 +106,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         stack = null;
         _executor = null;
         _result = default;
-        _ex = null;
+        _ex = null; // store fence
     }
 
     /// <summary>
@@ -120,7 +120,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         _executor = e;
     }
 
-    private bool InternalSetResult(T result) {
+    private bool InternalSetResult(T? result) {
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
         object preEx = Interlocked.CompareExchange(ref _ex, EX_PUBLISHING, null);
         if (preEx == null) {
@@ -252,7 +252,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         }
     }
 
-    public bool TrySetResult(T result) {
+    public bool TrySetResult(T? result) {
         if (InternalSetResult(result)) {
             OnCompleted();
             PostComplete(this);
@@ -261,7 +261,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return false;
     }
 
-    public void SetResult(T result) {
+    public void SetResult(T? result) {
         if (!TrySetResult(result)) {
             throw new IllegalStateException("Already complete");
         }
@@ -355,6 +355,17 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         }
         Await();
         return ReportJoin(PollState());
+    }
+
+    public T Get(TimeSpan timeout) {
+        int state = PollState();
+        if (IsDone0(state)) {
+            return ReportJoin(state);
+        }
+        if (Await(timeout)) {
+            return ReportJoin(PollState());
+        }
+        throw new TimeoutException();
     }
 
     public T Join() {
@@ -733,7 +744,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         return InternalSetResult(default);
     }
 
-    private bool CompleteValue(T value) {
+    private bool CompleteValue(T? value) {
         return InternalSetResult(value);
     }
 
@@ -759,7 +770,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
     /**
      * 使用依赖项的结果进入完成状态，通常表示当前{@link Completion}只是一个简单的中继。
      */
-    private bool CompleteRelay(T r, object ex) {
+    private bool CompleteRelay(T? r, object ex) {
         if (ex == EX_SUCCESS) {
             return InternalSetResult(r);
         } else {

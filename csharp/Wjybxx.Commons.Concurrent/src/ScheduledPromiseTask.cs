@@ -19,6 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
+using Wjybxx.Commons.Ex;
 using Wjybxx.Commons.Pool;
 using static Wjybxx.Commons.Concurrent.PromiseTask;
 using static Wjybxx.Commons.Concurrent.TaskBuilder;
@@ -282,6 +283,10 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
             RunTask();
         }
         catch (Exception ex) {
+            if (ex == ErrorCodeException.SUCCESS) {
+                promise.Internal_TrySetResult(default);
+                return false;
+            }
             ThreadUtil.RecoveryInterrupted(ex);
             if (!CanCaughtException(ex)) {
                 promise.Internal_TrySetException(ex);

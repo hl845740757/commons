@@ -24,6 +24,10 @@ package cn.wjybxx.base.ex;
  */
 public final class ErrorCodeException extends RuntimeException implements NoLogRequiredException {
 
+    /** 成功 */
+    public static final ErrorCodeException SUCCESS = new ErrorCodeException(0, "");
+
+    /** 0表示成功 */
     private final int errorCode;
 
     public ErrorCodeException(int errorCode, String message) {
