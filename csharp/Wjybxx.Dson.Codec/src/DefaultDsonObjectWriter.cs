@@ -135,25 +135,36 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
 
     public void WriteObject<T>(string? name, in T? value, Type declaredType, ObjectStyle? style = null) {
         if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
-        if (value == null) {
+        // Nullable支持：
+        // 1. value.GetType 会直接返回被装箱的值的类型，而泛型参数T可能是Nullable<>，为避免装箱，我们需要转换为查找Nullable的Codec
+        // 2. 泛型参数 T == null 可能导致装箱测试，Nullable的null测试交给NullableCodec处理
+        bool isNullable = declaredType.IsValueType
+                          && declaredType.IsGenericType
+                          && declaredType.GetGenericTypeDefinition() == typeof(Nullable<>);
+        if (isNullable) {
+            DsonCodecImpl<T> nullableCodec = converter.CodecRegistry.GetEncoder(declaredType) as DsonCodecImpl<T>;
+            if (nullableCodec == null) {
+                throw DsonCodecException.UnsupportedType(declaredType);
+            }
+            if (writer.IsAtName) { // 写入name
+                writer.WriteName(name);
+            }
+            nullableCodec.WriteObject(this, value, declaredType, ObjectStyle.Flow); // 这里的Style会被忽略
+            return;
+        }
+
+        // Null测试时，需要避免结构体装箱
+        if (!declaredType.IsValueType && value == null) {
             WriteNull(name);
             return;
         }
-        // Nullable会直接返回被装箱的值的类型，而泛型参数T可能是Nullable<>，为避免装箱，我们需要转换为查找Nullable的Codec
-        Type type = value.GetType();
-        bool isNullable = type.IsValueType && declaredType.IsGenericType
-                                           && declaredType.GetGenericTypeDefinition() == typeof(Nullable<>);
-        DsonCodecImpl? codec;
-        if (isNullable) {
-            codec = converter.CodecRegistry.GetEncoder(declaredType);
-        } else {
-            codec = converter.CodecRegistry.GetEncoder(type);
-        }
+        Type type = value!.GetType();
+        DsonCodecImpl? codec = converter.CodecRegistry.GetEncoder(type);
         if (codec != null) {
             if (writer.IsAtName) { // 写入name
                 writer.WriteName(name);
             }
-            ObjectStyle castStyle = style ?? FindObjectStyle(isNullable ? type : codec.GetEncoderType()); // 可能是超类的codec
+            ObjectStyle castStyle = style ?? FindObjectStyle(codec.GetEncoderType()); // 可能是超类的codec
             if (codec is DsonCodecImpl<T> codecImpl) {
                 codecImpl.WriteObject(this, in value, declaredType, castStyle);
             } else {
