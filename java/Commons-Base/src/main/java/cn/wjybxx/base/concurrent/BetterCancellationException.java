@@ -55,11 +55,8 @@ public class BetterCancellationException extends CancellationException {
      * 捕获目标异常 -- 在目标异常的堆栈基础上增加当前堆栈。
      * 作用：异步任务在重新抛出异常时应当记录当前堆栈，否则会导致用户的代码被中断而没有被记录。
      */
-    public static BetterCancellationException capture(Exception ex) {
+    public static BetterCancellationException capture(CancellationException ex) {
         Objects.requireNonNull(ex);
-        if (ex instanceof StacklessCancellationException slex) {
-            return new BetterCancellationException(slex.getCode(), slex.getMessage());
-        }
         BetterCancellationException r;
         if (ex instanceof BetterCancellationException ex2) {
             r = new BetterCancellationException(ex2.getCode(), ex.getMessage());

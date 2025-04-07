@@ -334,27 +334,38 @@ public class AptUtils {
     }
 
     /** 注意：无法保证顺序 -- 这个方法还不太稳定 */
-    public static List<TypeMirror> findAllInterfaces(Types typeUtil, Elements elementUtil, TypeElement typeElement) {
+    public static List<? extends TypeMirror> findAllInterfaces(Types typeUtil, Elements elementUtil, TypeElement typeElement) {
         // 避免每次都查找
         TypeMirror objectTypeMirror = getTypeMirrorOfClass(elementUtil, Object.class);
-        // 直接接口一定是不重复的，但直接接口的父接口可能会和直接接口重复
         List<TypeMirror> result = new ArrayList<>(typeElement.getInterfaces());
-        for (TypeMirror sup : typeElement.getInterfaces()) { // 这里不能遍历result，迭代的时候会变化
+
+        // 先把每个超类直接实现的接口存储下来，再递归检索
+        List<TypeElement> superTypeElements = flatInherit(typeElement);
+        for (TypeElement superTypeElement : superTypeElements) {
+            for (TypeMirror superTypeMirror : superTypeElement.getInterfaces()) {
+                if (containsTypeMirror(typeUtil, result, superTypeMirror)) {
+                    continue;
+                }
+                result.add(superTypeMirror);
+            }
+        }
+        // 这里不能遍历result，迭代的时候会变化
+        for (TypeMirror sup : new ArrayList<>(result)) {
             recursiveFindInterfaces(typeUtil, objectTypeMirror, result, sup);
         }
         return result;
     }
 
-    private static void recursiveFindInterfaces(Types typeUtil, TypeMirror objectMirror, List<TypeMirror> typeMirrors, TypeMirror current) {
-        for (TypeMirror sup : typeUtil.directSupertypes(current)) {
-            if (isSameTypeIgnoreTypeParameter(typeUtil, objectMirror, sup)) { // 这里要过滤Object
+    private static void recursiveFindInterfaces(Types typeUtil, TypeMirror objectMirror, List<TypeMirror> result, TypeMirror current) {
+        for (TypeMirror superTypeMirror : typeUtil.directSupertypes(current)) {
+            if (isSameTypeIgnoreTypeParameter(typeUtil, objectMirror, superTypeMirror)) { // 这里要过滤Object
                 continue;
             }
-            if (containsTypeMirror(typeUtil, typeMirrors, sup)) { // 这里要排除重复
+            if (containsTypeMirror(typeUtil, result, superTypeMirror)) { // 这里要排除重复
                 continue;
             }
-            typeMirrors.add(sup);
-            recursiveFindInterfaces(typeUtil, objectMirror, typeMirrors, sup);
+            result.add(superTypeMirror);
+            recursiveFindInterfaces(typeUtil, objectMirror, result, superTypeMirror);
         }
     }
 

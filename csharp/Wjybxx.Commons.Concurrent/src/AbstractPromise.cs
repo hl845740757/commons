@@ -279,7 +279,7 @@ public abstract class AbstractPromise
                 return ExceptionUtil.RestoreStackTrace(dispatchInfo);
             }
             case ST_CANCELLED: {
-                Exception ex2 = (Exception)ex!;
+                OperationCanceledException ex2 = (OperationCanceledException)ex!;
                 if (throwIfCancelled) {
                     throw BetterCancellationException.Capture(ex2);
                 }
@@ -307,6 +307,7 @@ public abstract class AbstractPromise
         /// <summary>
         /// 用于池化
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual void Reset() {
             next = null;
         }
@@ -422,7 +423,7 @@ public abstract class AbstractPromise
                 action(state);
             }
             catch (Exception e) {
-                FutureLogger.LogCause(e, "UniOnCompleted4 caught an exception");
+                FutureLogger.LogCause(e, "MoveNextCompletion caught an exception");
             }
             return true;
         }

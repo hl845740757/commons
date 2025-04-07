@@ -329,7 +329,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
             return _result;
         }
         if (state == ST_CANCELLED) {
-            throw BetterCancellationException.Capture((Exception)_ex!);
+            throw BetterCancellationException.Capture((OperationCanceledException)_ex!);
         }
         ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex!;
         if (dispatchInfo.SourceException is CompletionException) {

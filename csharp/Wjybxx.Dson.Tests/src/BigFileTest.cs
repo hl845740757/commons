@@ -21,6 +21,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using NUnit.Framework;
+using Wjybxx.Commons.Pool;
 using Wjybxx.Commons.Time;
 using Wjybxx.Dson.Codec.Attributes;
 using Wjybxx.Dson.Text;
@@ -44,9 +45,9 @@ namespace Wjybxx.Dson.Tests;
 /// StopWatch[MongoDB.Bson=64ms][Read=45ms,Write=18ms]
 /// </code>
 /// ps：
-/// 1. 本机设备信息：I7-9750H 2.6GHz  16G内存
-/// 2. 后面测试了一下小文件(25k)，dson全面第一，耗时只有系统库的1/3。
-/// 3. newtonsoft不能直接读写文件。。。因此不在此测试中。
+/// 1.本机设备信息：I7-9750H 2.6GHz  16G内存
+/// 2.newtonsoft不能直接读写文件。。。因此不在此测试中。
+/// 3.Dson自从全面池化以后，速度变慢了，可能是<see cref="MpmcObjectBucket{T}"/>的原因。
 /// </summary>
 public class BigFileTest
 {

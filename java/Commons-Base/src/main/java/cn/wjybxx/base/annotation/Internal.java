@@ -28,4 +28,6 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.SOURCE)
 public @interface Internal {
 
+    /** 注释 */
+    String value() default "";
 }
