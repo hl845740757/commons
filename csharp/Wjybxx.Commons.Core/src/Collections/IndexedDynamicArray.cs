@@ -118,7 +118,6 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
         elements[len++] = e;
     }
 
-    /** 插入元素（迭代期间禁止插入，不论index是否特殊） */
     public void Insert(int index, E e) {
         if (e == null) throw new ArgumentNullException(nameof(e));
         if (helper.CollectionIndex(this, e) != IndexNotFound) {

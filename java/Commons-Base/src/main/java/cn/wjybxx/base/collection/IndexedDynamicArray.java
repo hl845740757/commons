@@ -131,7 +131,9 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
             throw new IllegalArgumentException("e.queueIndex(): %d (expected: %d) + e: %s"
                     .formatted(helper.collectionIndex(this, e), INDEX_NOT_FOUND, e));
         }
+
         Objects.checkIndex(index, len); // 还是要求index已存在更好
+        ensureNotIterating();
         if (len == elements.length) {
             ensureCapacity(len + 1);
         }

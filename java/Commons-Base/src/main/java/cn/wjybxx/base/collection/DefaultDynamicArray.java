@@ -118,6 +118,7 @@ public final class DefaultDynamicArray<E> implements DynamicArray<E> {
     public void insert(int index, E e) {
         Objects.requireNonNull(e);
         Objects.checkIndex(index, len); // 还是要求index已存在更好
+        ensureNotIterating();
         if (len == elements.length) {
             ensureCapacity(len + 1);
         }
