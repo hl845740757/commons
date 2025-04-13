@@ -78,35 +78,15 @@ public static class MathCommon
     /** 计算num最接近下一个整2次幂；如果自身是2的整次幂，则会返回自身 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int NextPowerOfTwo(int num) {
-        if (num < 1) {
-            return 1;
-        }
-        // https://acius2.blogspot.com/2007/11/calculating-next-power-of-2.html
-        // C#未提供获取前导0数量的接口，因此我们选用该算法
-        // 先减1，兼容自身已经是2的整次幂的情况；然后通过移位使得后续bit全部为1，再加1即获得结果
-        num--;
-        num = (num >> 1) | num;
-        num = (num >> 2) | num;
-        num = (num >> 4) | num;
-        num = (num >> 8) | num;
-        num = (num >> 16) | num;
-        return ++num;
+        if (num < 1) return 1;
+        return 1 << (32 - NumberOfLeadingZeros(num - 1));
     }
 
     /** 计算num最接近下一个整2次幂；如果自身是2的整次幂，则会返回自身 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long NextPowerOfTwo(long num) {
-        if (num < 1) {
-            return 1;
-        }
-        num--;
-        num = (num >> 1) | num;
-        num = (num >> 2) | num;
-        num = (num >> 4) | num;
-        num = (num >> 8) | num;
-        num = (num >> 16) | num;
-        num = (num >> 32) | num;
-        return ++num;
+        if (num < 1) return 1;
+        return 1L << (64 - NumberOfLeadingZeros(num - 1));
     }
 
     #endregion
@@ -121,13 +101,15 @@ public static class MathCommon
 
     /** 计算int32值中1的数量 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BitCount(int n) {
+    public static int BitCount(int n0) {
+        // c#不支持逻辑右移，我们先去掉高位1
+        int n = n0 & int.MaxValue;
         n = (n & INT_M1) + ((n >> 1) & INT_M1);
         n = (n & INT_M2) + ((n >> 2) & INT_M2);
         n = (n & INT_M4) + ((n >> 4) & INT_M4);
         n = (n & INT_M8) + ((n >> 8) & INT_M8);
         n = (n & INT_M16) + ((n >> 16) & INT_M16);
-        return n;
+        return n0 < 0 ? n + 1 : n;
     }
 
     /** 计算uint32值中1的数量 */
@@ -145,14 +127,16 @@ public static class MathCommon
 
     /** 计算int64值中1的数量 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BitCount(long n) {
+    public static int BitCount(long n0) {
+        // c#不支持逻辑右移，我们先去掉高位1
+        long n = n0 & long.MaxValue;
         n = (n & LONG_M1) + ((n >> 1) & LONG_M1);
         n = (n & LONG_M2) + ((n >> 2) & LONG_M2);
         n = (n & LONG_M4) + ((n >> 4) & LONG_M4);
         n = (n & LONG_M8) + ((n >> 8) & LONG_M8);
         n = (n & LONG_M16) + ((n >> 16) & LONG_M16);
         n = (n & LONG_M32) + ((n >> 32) & LONG_M32);
-        return (int)n;
+        return n0 < 0 ? (int)n + 1 : (int)n;
     }
 
     /** 计算uint64值中1的数量 */
@@ -163,36 +147,131 @@ public static class MathCommon
 
     /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BitCountFast(int n) {
-        return BitCountFast((uint)n);
+    public static int BitCountFast(int n0) {
+        int n = n0 & int.MaxValue; // 清除最高位1，使得下方的n-1安全
+        int c = 0;
+        while (n != 0) {
+            n &= (n - 1); // 清除最低位的1
+            c++;
+        }
+        return n0 < 0 ? c + 1 : c;
     }
 
     /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int BitCountFast(uint n) {
+        return BitCountFast((int)n);
+    }
+
+    /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int BitCountFast(long n0) {
+        long n = n0 & long.MaxValue; // 清除最高位1，使得下方的n-1安全
         int c = 0;
         while (n != 0) {
             n &= (n - 1); // 清除最低位的1
             c++;
         }
-        return c;
-    }
-
-    /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BitCountFast(long n) {
-        return BitCountFast((ulong)n);
+        return n0 < 0 ? c + 1 : c;
     }
 
     /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int BitCountFast(ulong n) {
-        int c = 0;
-        while (n != 0) {
-            n &= (n - 1); // 清除最低位的1
-            c++;
+        return BitCountFast((long)n);
+    }
+
+    #endregion
+
+    #region bitZeros
+
+    /// <summary>
+    /// 计算int值的前导0数量
+    /// (高位0)
+    /// </summary>
+    /// <param name="x"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int NumberOfLeadingZeros(int x) {
+        if (x <= 0) return x == 0 ? 32 : 0;
+        // 下面x为正数，算术右移等同逻辑右移
+        int c = 31;
+        if (x >= (1 << 16)) {
+            c -= 16;
+            x >>= 16;
         }
-        return c;
+        if (x >= (1 << 8)) {
+            c -= 8;
+            x >>= 8;
+        }
+        if (x >= (1 << 4)) {
+            c -= 4;
+            x >>= 4;
+        }
+        if (x >= (1 << 2)) {
+            c -= 2;
+            x >>= 2;
+        }
+        return c - (x >> 1);
+    }
+
+    /// <summary>
+    /// 计算int值的后导0数量
+    /// (低位0)
+    /// </summary>
+    /// <param name="x"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int NumberOfTrailingZeros(int x) {
+        x = ~x & (x - 1);
+        if (x <= 0) return x & 32;
+        // 下面x为正数，算术右移等同逻辑右移
+        int c = 1;
+        if (x > (1 << 16)) {
+            c += 16;
+            x >>= 16;
+        }
+        if (x > (1 << 8)) {
+            c += 8;
+            x >>= 8;
+        }
+        if (x > (1 << 4)) {
+            c += 4;
+            x >>= 4;
+        }
+        if (x > (1 << 2)) {
+            c += 2;
+            x >>= 2;
+        }
+        return c + (x >> 1);
+    }
+
+    /// <summary>
+    /// 计算long值的前导0数量
+    /// (高位0)
+    /// </summary>
+    /// <param name="i"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int NumberOfLeadingZeros(long i) {
+        int x = (int)LogicalShiftRight(i, 32); // 测试高32位是否为0
+        return x == 0
+            ? 32 + NumberOfLeadingZeros((int)i)
+            : NumberOfLeadingZeros(x);
+    }
+
+    /// <summary>
+    /// 计算long值的后导0数量
+    /// (低位0)
+    /// </summary>
+    /// <param name="i"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int NumberOfTrailingZeros(long i) {
+        int x = (int)i; // 测试低32位是否为0
+        return x == 0
+            ? 32 + NumberOfTrailingZeros((int)LogicalShiftRight(i, 32))
+            : NumberOfTrailingZeros(x);
     }
 
     #endregion

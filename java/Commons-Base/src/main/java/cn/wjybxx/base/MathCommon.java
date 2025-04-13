@@ -144,23 +144,25 @@ public class MathCommon {
     }
 
     /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
-    public static int BitCountFast(int n) {
+    public static int BitCountFast(int n0) {
+        int n = n0 >>> 1; // 清除最高位1，使得下方的n-1安全
         int c = 0;
         while (n != 0) {
             n &= (n - 1); // 清除最低位的1
             c++;
         }
-        return c;
+        return n0 < 0 ? c + 1 : c;
     }
 
     /** 计算int值中1的数量 -- 适用于多数位为0的情况 */
-    public static int BitCountFast(long n) {
+    public static int BitCountFast(long n0) {
+        long n = n0 >>> 1; // 清除最高位1，使得下方的n-1安全
         int c = 0;
         while (n != 0) {
             n &= (n - 1); // 清除最低位的1
             c++;
         }
-        return c;
+        return n0 < 0 ? c + 1 : c;
     }
 
     // endregion

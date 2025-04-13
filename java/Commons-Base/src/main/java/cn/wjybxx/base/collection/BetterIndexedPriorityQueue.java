@@ -16,8 +16,6 @@
 
 package cn.wjybxx.base.collection;
 
-import cn.wjybxx.base.reflect.TypeParameterFinder;
-
 import javax.annotation.Nonnull;
 import java.util.*;
 
@@ -36,24 +34,39 @@ public class BetterIndexedPriorityQueue<T>
     private static final Object[] EMPTY_ARRAY = new Object[0];
     private static final int DEFAULT_CAPACITY = 16;
 
-    private final Comparator<? super T> comparator;
     private final IndexedElementHelper<? super T> helper;
     private final Class<?> componentType;
 
+    private final Comparator<? super T> comparator;
     private T[] queue;
     private int size;
 
-    public BetterIndexedPriorityQueue(Comparator<? super T> comparator, IndexedElementHelper<? super T> helper) {
-        this(comparator, helper, DEFAULT_CAPACITY);
+    /**
+     * @param helper        helper
+     * @param componentType 元素类型
+     * @param comparator    比较器
+     */
+    public BetterIndexedPriorityQueue(IndexedElementHelper<? super T> helper, Class<T> componentType,
+                                      Comparator<? super T> comparator) {
+        this(helper, componentType, comparator, DEFAULT_CAPACITY);
     }
 
-    @SuppressWarnings("unchecked")
-    public BetterIndexedPriorityQueue(Comparator<? super T> comparator, IndexedElementHelper<? super T> helper, int initialSize) {
-        this.comparator = Objects.requireNonNull(comparator, "comparator");
+    /**
+     * 虽然我们可以通过反射拿到T的类型，但明显用户传入更加高效
+     *
+     * @param helper        helper
+     * @param componentType 元素类型
+     * @param comparator    比较器
+     * @param initCapacity  初始空间
+     */
+    public BetterIndexedPriorityQueue(IndexedElementHelper<? super T> helper, Class<T> componentType,
+                                      Comparator<? super T> comparator, int initCapacity) {
         this.helper = Objects.requireNonNull(helper, "helper");
+        this.componentType = Objects.requireNonNull(componentType, "componentType");
 
-        componentType = TypeParameterFinder.findTypeParameter(helper, IndexedElementHelper.class, "E");
-        queue = (T[]) (initialSize != 0 ? new Object[initialSize] : EMPTY_ARRAY);
+        this.comparator = Objects.requireNonNull(comparator, "comparator");
+        @SuppressWarnings("unchecked") T[] elements = (T[]) (initCapacity != 0 ? new Object[initCapacity] : EMPTY_ARRAY);
+        this.queue = elements;
     }
 
     @Override

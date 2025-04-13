@@ -16,11 +16,9 @@
 
 package cn.wjybxx.btree;
 
-import cn.wjybxx.base.CollectionUtils;
-import cn.wjybxx.base.collection.SmallArrayList;
+import cn.wjybxx.base.collection.RegularListenerArray;
 import cn.wjybxx.base.concurrent.CancelCodes;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -38,10 +36,8 @@ public class CancelToken implements ICancelTokenListener {
 
     /** 取消码 -- 0表示未收到信号 */
     private int code;
-    /** 监听器列表 -- 通知期间可能会被重用 */ //
-    private final List<ICancelTokenListener> listeners = new SmallArrayList<>();
-    /** 是否正在通知 -- 处理通知期间删除监听器问题 */
-    private boolean firing;
+    /** 监听器列表 -- 通知期间可能会被重用 */
+    private final RegularListenerArray<ICancelTokenListener> listeners = new RegularListenerArray<>(4);
     /** 用于检测复用 -- short应当足够 */
     private short reentryId;
 
@@ -75,7 +71,6 @@ public class CancelToken implements ICancelTokenListener {
         reentryId++;
         code = 0;
         listeners.clear();
-        firing = false;
     }
 
     /** 重入id，允许外部捕获 */
@@ -83,8 +78,9 @@ public class CancelToken implements ICancelTokenListener {
         return reentryId;
     }
 
+    /** 是否正在通知监听器 */
     protected final boolean isFiring() {
-        return firing;
+        return listeners.isIterating();
     }
 
     //region query
@@ -151,14 +147,17 @@ public class CancelToken implements ICancelTokenListener {
     }
 
     private static void postComplete(CancelToken cancelToken) {
-        List<ICancelTokenListener> listeners = cancelToken.listeners;
-        if (listeners.isEmpty()) {
+        RegularListenerArray<ICancelTokenListener> listeners = cancelToken.listeners;
+        if (listeners.length() == 0) {
             return;
         }
         int reentryId = cancelToken.reentryId;
-        cancelToken.firing = true;
-        for (int idx = 0; idx < listeners.size(); idx++) {
-            var listener = listeners.set(idx, TOMBSTONE); // 标记为删除，HasListener将返回false
+        listeners.beginItr();
+        for (int idx = 0, len = listeners.length(); idx < len; idx++) {
+            var listener = listeners.set(idx, null); // 通知期间查询引用将返回null
+            if (listener == null) {
+                continue;
+            }
             try {
                 listener.onCancelRequested(cancelToken);
             } catch (Throwable e) {
@@ -169,8 +168,8 @@ public class CancelToken implements ICancelTokenListener {
                 return;
             }
         }
+        listeners.endItr();
         listeners.clear();
-        cancelToken.firing = false;
     }
 
     //endregion
@@ -207,22 +206,23 @@ public class CancelToken implements ICancelTokenListener {
      */
     public final boolean remListener(ICancelTokenListener listener, boolean firstOccurrence) {
         int index = firstOccurrence
-                ? CollectionUtils.indexOfRef(listeners, listener)
-                : CollectionUtils.lastIndexOfRef(listeners, listener);
+                ? listeners.indexOfRef(listener)
+                : listeners.lastIndexOfRef(listener);
         if (index < 0) {
             return false;
         }
-        if (firing) {
-            listeners.set(index, TOMBSTONE);
-        } else {
-            listeners.remove(index);
-        }
+        listeners.removeAt(index);
         return true;
     }
 
     /** 查询是否存在给定的监听器 */
     public final boolean hasListener(ICancelTokenListener listener) {
-        return CollectionUtils.lastIndexOfRef(listeners, listener) >= 0;
+        return listeners.containsRef(listener);
+    }
+
+    /** 监听器数量 */
+    public final int listenerCount() {
+        return listeners.elementCount();
     }
 
     //endregion
@@ -232,8 +232,5 @@ public class CancelToken implements ICancelTokenListener {
     public final void onCancelRequested(CancelToken cancelToken) {
         cancel(cancelToken.cancelCode());
     }
-
-    /** 在派发监听器时先置为该值，避免用户在回调中主动删除自己时产生异常 */
-    private static final ICancelTokenListener TOMBSTONE = cancelToken -> {};
 
 }

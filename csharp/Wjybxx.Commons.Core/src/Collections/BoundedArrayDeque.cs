@@ -338,7 +338,7 @@ public class BoundedArrayDeque<T> : IDeque<T>
         }
         _tail = _head = -1;
         _version++;
-        Array.Fill(_elements, default);
+        // Array.Fill(_elements, default);
     }
 
     private void RemoveAt(int index) {
@@ -386,8 +386,8 @@ public class BoundedArrayDeque<T> : IDeque<T>
     private int IndexOf(T item) {
         int head = _head;
         int tail = _tail;
-        // item为null的情况不多，这可以简化代码
-        IEqualityComparer<T> comparer = item == null ? NullEquality<T>.Default : EqualityComparer<T>.Default;
+        // 显式测试null可能导致装箱
+        IEqualityComparer<T> comparer = EqualityComparer<T>.Default;
         if (head <= tail) {
             for (int i = head; i <= tail; i++) {
                 if (comparer.Equals(item, _elements[i])) {

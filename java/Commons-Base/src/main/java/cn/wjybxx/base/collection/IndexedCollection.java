@@ -36,7 +36,7 @@ public interface IndexedCollection<E> extends Collection<E> {
     boolean containsTyped(E node);
 
     /**
-     * 清除队列中的所有元素，并不更新队列中节点的索引，通常用在最后清理释放内存的时候。
+     * 清除集合中的所有元素，并不更新队列中节点的索引，通常用在最后清理释放内存的时候。
      * (请确保调用该方法后，不会再访问该集合)
      */
     void clearIgnoringIndexes();

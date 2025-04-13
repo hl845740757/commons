@@ -182,7 +182,7 @@ public class CodeWriter
     private static readonly Predicate<ISpecification> namespaceFilter = e => e.SpecType == SpecType.Namespace;
 
     private void EmitFile() {
-        int firstIndex = csharpFile.nestedSpecs.IndexOfCustom(namespaceFilter);
+        int firstIndex = CollectionUtil.IndexOfCustom(csharpFile.nestedSpecs, namespaceFilter);
         if (firstIndex == -1) {
             // 没有命名空间，认为是空文件 -- 不处理自动导入等文件
             foreach (ISpecification nestedSpec in csharpFile.nestedSpecs) {
@@ -216,7 +216,7 @@ public class CodeWriter
 
         // 如果启用了文件范围命名空间，且只有一个namespace定义，则输出为平铺结构
         if (enableFileScopedNamespace) {
-            int lastIndex = csharpFile.nestedSpecs.LastIndexOfCustom(namespaceFilter);
+            int lastIndex = CollectionUtil.LastIndexOfCustom(csharpFile.nestedSpecs, namespaceFilter);
             if (lastIndex == firstIndex) {
                 NamespaceSpec namespaceSpec = (NamespaceSpec)csharpFile.nestedSpecs[firstIndex];
                 namespaceStack.Push(namespaceSpec);

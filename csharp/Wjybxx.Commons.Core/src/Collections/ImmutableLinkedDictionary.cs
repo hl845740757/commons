@@ -510,7 +510,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int KeyHash(TKey key, IEqualityComparer<TKey> keyComparer) {
-        if (!IsKeyValueType && key == null) { // 否则会装箱....
+        if (!IsKeyValueType && key == null) { // 否则会装箱....不支持nullable
             return 0;
         }
         return HashCommon.Mix(keyComparer.GetHashCode(key!));

@@ -240,7 +240,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     }
 
     public bool ContainsValue(TValue value) {
-        if (value == null) {
+        if (!typeof(TValue).IsValueType && value == null) {
             for (int index = _tail; index >= 0;) {
                 ref Node e = ref _table[index];
                 if (e.value == null) {
@@ -664,7 +664,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int KeyHash(TKey key, IEqualityComparer<TKey> keyComparer) {
-        if (!IsKeyValueType && key == null) { // 否则会装箱....
+        if (!IsKeyValueType && key == null) { // 否则会装箱....不支持nullable
             return 0;
         }
         return HashCommon.Mix(keyComparer.GetHashCode(key));

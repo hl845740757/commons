@@ -25,21 +25,21 @@ import org.junit.jupiter.api.Test;
  * @author wjybxx
  * date - 2024/8/4
  */
-public class DelayedCompressListTest {
+public class ListenerArrayTest {
 
-    private static final int capacity = 8;
-    private static DelayedCompressList<Integer> list;
-    private static int[] valArray;
+    private static final int capacity = 64;
+    private static ListenerArray<String> list;
+    private static String[] valArray;
 
     @BeforeEach
     void setUp() {
-        list = new DelayedCompressList<>(capacity / 3); // 测试扩容
+        list = new RegularListenerArray<>(capacity / 3); // 测试扩容
         for (int i = 0; i < capacity; i++) {
-            list.add(i);
+            list.add(Integer.toString(i));
         }
-        valArray = new int[capacity];
+        valArray = new String[capacity];
         for (int i = 0; i < capacity; i++) {
-            valArray[i] = i;
+            valArray[i] = Integer.toString(i);
         }
         ArrayUtils.shuffle(valArray);
     }
@@ -47,12 +47,12 @@ public class DelayedCompressListTest {
     @Test
     void testRemove() {
         for (int i = 0; i < valArray.length; i++) {
-            Integer val = valArray[i];
+            String val = valArray[i];
             list.remove(val);
 
             Assertions.assertFalse(list.contains(val), "remove failed");
             for (int j = i + 1; j < valArray.length; j++) {
-                Integer jVal = valArray[j];
+                String jVal = valArray[j];
                 Assertions.assertTrue(list.contains(jVal), "val is absent" + jVal);
             }
         }
@@ -64,20 +64,20 @@ public class DelayedCompressListTest {
         list.beginItr();
         try {
             for (int i = 0; i < valArray.length; i++) {
-                Integer val = valArray[i];
+                String val = valArray[i];
                 list.remove(val);
 
                 Assertions.assertFalse(list.contains(val), "remove failed");
                 for (int j = i + 1; j < valArray.length; j++) {
-                    Integer jVal = valArray[j];
+                    String jVal = valArray[j];
                     Assertions.assertTrue(list.contains(jVal), "val is absent" + jVal);
                 }
             }
-            Assertions.assertEquals(capacity, list.size());
+            Assertions.assertEquals(capacity, list.length());
         } finally {
             list.endItr();
-            Assertions.assertEquals(0, list.elementCount());
         }
+        Assertions.assertEquals(0, list.elementCount());
     }
 
 }

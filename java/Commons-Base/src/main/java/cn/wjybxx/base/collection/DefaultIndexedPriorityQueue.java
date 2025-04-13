@@ -42,10 +42,10 @@ public class DefaultIndexedPriorityQueue<T extends IndexedElement>
         this(comparator, DEFAULT_CAPACITY);
     }
 
-    @SuppressWarnings("unchecked")
-    public DefaultIndexedPriorityQueue(Comparator<? super T> comparator, int initialSize) {
+    public DefaultIndexedPriorityQueue(Comparator<? super T> comparator, int initCapacity) {
         this.comparator = Objects.requireNonNull(comparator, "comparator");
-        queue = (T[]) (initialSize != 0 ? new IndexedElement[initialSize] : EMPTY_ARRAY);
+        @SuppressWarnings("unchecked") T[] elements = (T[]) (initCapacity != 0 ? new IndexedElement[initCapacity] : EMPTY_ARRAY);
+        this.queue = elements;
     }
 
     @Override

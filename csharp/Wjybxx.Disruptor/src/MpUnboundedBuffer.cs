@@ -26,6 +26,7 @@ namespace Wjybxx.Disruptor
 {
 public abstract class MpUnboundedBufferFields<E>
 {
+#nullable disable
     /** 该引用表示生产者或消费者块正在执行更新 */
     internal static readonly MpUnboundedBufferChunk<E> ROTATION = new MpUnboundedBufferChunk<E>(0, -2, null);
 

@@ -156,19 +156,19 @@ public static class ArrayUtil
     #region index
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int IndexOf<T>(this T[] list, T element, IEqualityComparer<T> comparer = null) {
+    public static int IndexOf<T>(T[] list, T element, IEqualityComparer<T> comparer = null) {
         return IndexOf(list, element, 0, list.Length, comparer);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int LastIndexOf<T>(this T[] list, T element, IEqualityComparer<T> comparer = null) {
+    public static int LastIndexOf<T>(T[] list, T element, IEqualityComparer<T> comparer = null) {
         return LastIndexOf(list, element, 0, list.Length, comparer);
     }
 
     /** 查对象在数组中的下标 */
-    public static int IndexOf<T>(this T[] list, T element, int start, int end, IEqualityComparer<T> comparer = null) {
+    public static int IndexOf<T>(T[] list, T element, int start, int end, IEqualityComparer<T> comparer = null) {
         if (list == null) throw new ArgumentNullException(nameof(list));
-        if (element == null) {
+        if (!typeof(T).IsValueType && element == null) { // 否则可能装箱
             for (int i = start; i < end; i++) {
                 if (list[i] == null) {
                     return i;
@@ -188,8 +188,8 @@ public static class ArrayUtil
     }
 
     /** 反向查对象在数组中的下标 */
-    public static int LastIndexOf<T>(this T[] list, T element, int start, int end, IEqualityComparer<T> comparer = null) {
-        if (element == null) {
+    public static int LastIndexOf<T>(T[] list, T element, int start, int end, IEqualityComparer<T> comparer = null) {
+        if (!typeof(T).IsValueType && element == null) { // 否则可能装箱
             for (int i = end - 1; i >= start; i--) {
                 if (list[i] == null) {
                     return i;
@@ -214,19 +214,19 @@ public static class ArrayUtil
 
     /** 查询List中是否包含指定对象引用 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool ContainsRef<T>(this T[] list, T element) where T : class {
+    public static bool ContainsRef<T>(T[] list, T element) where T : class {
         return IndexOfRef(list, element, 0, list.Length) >= 0;
     }
 
     /** 查对象引用在数组中的下标 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int IndexOfRef<T>(this T[] list, object element) where T : class {
+    public static int IndexOfRef<T>(T[] list, object element) where T : class {
         return IndexOfRef(list, element, 0, list.Length);
     }
 
     /** 反向查对象引用在数组中的下标 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int LastIndexOfRef<T>(this T[] list, object element) where T : class {
+    public static int LastIndexOfRef<T>(T[] list, object element) where T : class {
         return LastIndexOfRef(list, element, 0, list.Length);
     }
 
@@ -238,7 +238,7 @@ public static class ArrayUtil
     /// <param name="start">开始下标，包含</param>
     /// <param name="end">结束下标，不包含</param>
     /// <typeparam name="T"></typeparam>
-    public static int IndexOfRef<T>(this T[] list, object element, int start, int end) where T : class {
+    public static int IndexOfRef<T>(T[] list, object element, int start, int end) where T : class {
         if (list == null) throw new ArgumentNullException(nameof(list));
         if (element == null) {
             for (int i = start; i < end; i++) {
@@ -264,7 +264,7 @@ public static class ArrayUtil
     /// <param name="start">开始下标，包含</param>
     /// <param name="end">结束下标，不包含</param>
     /// <typeparam name="T"></typeparam>
-    public static int LastIndexOfRef<T>(this T[] list, object element, int start, int end) where T : class {
+    public static int LastIndexOfRef<T>(T[] list, object element, int start, int end) where T : class {
         if (element == null) {
             for (int i = end - 1; i >= start; i--) {
                 if (list[i] == null) {
@@ -286,12 +286,12 @@ public static class ArrayUtil
     #region indexCustom
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int IndexOfCustom<T>(this T[] list, Predicate<T> filter) {
+    public static int IndexOfCustom<T>(T[] list, Predicate<T> filter) {
         return IndexOfCustom(list, filter, 0, list.Length);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int LastIndexOfCustom<T>(this T[] list, Predicate<T> filter) {
+    public static int LastIndexOfCustom<T>(T[] list, Predicate<T> filter) {
         return LastIndexOfCustom(list, filter, 0, list.Length);
     }
 
@@ -303,7 +303,7 @@ public static class ArrayUtil
     /// <param name="start">开始下标，包含</param>
     /// <param name="end">结束下标，不包含</param>
     /// <typeparam name="T"></typeparam>
-    public static int IndexOfCustom<T>(this T[] list, Predicate<T> filter, int start, int end) {
+    public static int IndexOfCustom<T>(T[] list, Predicate<T> filter, int start, int end) {
         for (int idx = start; idx < end; idx++) {
             if (filter(list[idx])) {
                 return idx;
@@ -320,7 +320,7 @@ public static class ArrayUtil
     /// <param name="start">开始下标，包含</param>
     /// <param name="end">结束下标，不包含</param>
     /// <typeparam name="T"></typeparam>
-    public static int LastIndexOfCustom<T>(this T[] list, Predicate<T> filter, int start, int end) {
+    public static int LastIndexOfCustom<T>(T[] list, Predicate<T> filter, int start, int end) {
         for (int i = end - 1; i >= start; i--) {
             if (filter(list[i])) {
                 return i;
@@ -424,7 +424,19 @@ public static class ArrayUtil
     /// <param name="src"></param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T[] Copy<T>(this T[] src) {
+        return CopyOf(src);
+    }
+
+    /// <summary>
+    /// 拷贝数组
+    /// </summary>
+    /// <param name="src">原始数组</param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T[] CopyOf<T>(T[] src) {
         if (src == null) throw new ArgumentNullException(nameof(src));
         if (src.Length == 0) {
             return src;
@@ -437,17 +449,17 @@ public static class ArrayUtil
     /// <summary>
     /// 拷贝数组
     /// </summary>
-    /// <param name="src">原始四组</param>
+    /// <param name="src">原始数组</param>
     /// <param name="offset">拷贝的起始偏移量</param>
-    /// <param name="newLen">可大于或小于原始数组长度</param>
+    /// <param name="len">要拷贝的长度；可大于或小于原始数组长度</param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    public static T[] CopyOf<T>(T[] src, int offset, int newLen) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T[] CopyOf<T>(T[] src, int offset, int len) {
         if (src == null) throw new ArgumentNullException(nameof(src));
-        if (offset < 0) throw new ArgumentException("offset cant be negative");
-        if (newLen < 0) throw new ArgumentException("newLen cant be negative");
-        T[] result = new T[newLen];
-        Array.Copy(src, offset, result, 0, Math.Min(src.Length - offset, newLen));
+        T[] result = new T[len];
+        int copyLen = Math.Min(src.Length - offset, len);
+        Array.Copy(src, offset, result, 0, copyLen);
         return result;
     }
 
@@ -516,7 +528,7 @@ public static class ArrayUtil
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static void CheckIndex(int index, int length) {
         if (index < 0 || index >= length) {
-            throw new IndexOutOfRangeException($"index {index}, length: {length}");
+            throw new IndexOutOfRangeException($"length: {length}, index {index}");
         }
     }
 

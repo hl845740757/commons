@@ -38,9 +38,7 @@ public class CancelToken : ICancelTokenListener
     /** 取消码 -- 0表示未收到信号 */
     private int code;
     /** 监听器列表 -- 通知期间可能会被重用 */
-    private readonly List<ICancelTokenListener> listeners = new List<ICancelTokenListener>();
-    /** 是否正在通知 -- 处理通知期间删除监听器问题 */
-    private bool firing;
+    private readonly RegularListenerArray<ICancelTokenListener> listeners = new(4);
     /** 用于检测复用 -- short应当足够 */
     private short reentryId;
 
@@ -69,7 +67,6 @@ public class CancelToken : ICancelTokenListener
         reentryId++;
         code = 0;
         listeners.Clear();
-        firing = false;
     }
 
     /// <summary>
@@ -77,8 +74,11 @@ public class CancelToken : ICancelTokenListener
     /// </summary>
     public int ReentryId => reentryId;
 
-    protected bool IsFiring => firing;
-    
+    /// <summary>
+    /// 当前是否正在进行通知
+    /// </summary>
+    protected bool IsFiring => listeners.IsIterating;
+
     #region query
 
     /// <summary>
@@ -135,15 +135,17 @@ public class CancelToken : ICancelTokenListener
     }
 
     private static void PostComplete(CancelToken cancelToken) {
-        List<ICancelTokenListener> listeners = cancelToken.listeners;
-        if (listeners.Count == 0) {
+        RegularListenerArray<ICancelTokenListener> listeners = cancelToken.listeners;
+        if (listeners.Length == 0) {
             return;
         }
         int reentryId = cancelToken.reentryId;
-        cancelToken.firing = true;
-        for (int idx = 0; idx < listeners.Count; idx++) {
-            var listener = listeners[idx];
-            listeners[idx] = TOMBSTONE; // 标记为删除，HasListener将返回false
+        listeners.BeginItr();
+        for (int idx = 0; idx < listeners.Length; idx++) {
+            var listener = listeners.Set(idx, null); // 通知期间查询引用将返回null
+            if (listener == null) {
+                continue;
+            }
             try {
                 listener.OnCancelRequested(cancelToken);
             }
@@ -155,8 +157,8 @@ public class CancelToken : ICancelTokenListener
                 return;
             }
         }
+        listeners.EndItr();
         listeners.Clear();
-        cancelToken.firing = false;
     }
 
     #endregion
@@ -195,11 +197,7 @@ public class CancelToken : ICancelTokenListener
         if (index < 0) {
             return false;
         }
-        if (firing) {
-            listeners[index] = TOMBSTONE;
-        } else {
-            listeners.RemoveAt(index);
-        }
+        listeners.RemoveAt(index);
         return true;
     }
 
@@ -209,8 +207,13 @@ public class CancelToken : ICancelTokenListener
     /// <param name="listener">要查询的监听器</param>
     /// <returns>如果存在则返回true，否则返回false</returns>
     public bool HasListener(ICancelTokenListener listener) {
-        return listeners.LastIndexOfRef(listener) >= 0;
+        return listeners.ContainsRef(listener);
     }
+
+    /// <summary>
+    /// 监听器数量
+    /// </summary>
+    public int ListenerCount => listeners.ElementCount;
 
     #endregion
 
@@ -220,15 +223,6 @@ public class CancelToken : ICancelTokenListener
     /// <param name="parent"></param>
     void ICancelTokenListener.OnCancelRequested(CancelToken parent) {
         Cancel(parent.CancelCode);
-    }
-
-    /** 在派发监听器时先置为该值，避免用户在回调中主动删除自己时产生异常 */
-    private static readonly ICancelTokenListener TOMBSTONE = new MockCompletion();
-
-    private class MockCompletion : ICancelTokenListener
-    {
-        public void OnCancelRequested(CancelToken cancelToken) {
-        }
     }
 }
 }
