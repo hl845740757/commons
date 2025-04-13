@@ -29,7 +29,7 @@
         <TargetFrameworks>net6.0;net7.0;net8.0;</TargetFrameworks>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <NoWarn>1701;1702;1591;8632</NoWarn>
     </PropertyGroup>
 

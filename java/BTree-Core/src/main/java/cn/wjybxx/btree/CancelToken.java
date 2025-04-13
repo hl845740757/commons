@@ -16,7 +16,7 @@
 
 package cn.wjybxx.btree;
 
-import cn.wjybxx.base.collection.RegularListenerArray;
+import cn.wjybxx.base.collection.SmallDynamicArray;
 import cn.wjybxx.base.concurrent.CancelCodes;
 
 import java.util.Objects;
@@ -37,7 +37,7 @@ public class CancelToken implements ICancelTokenListener {
     /** 取消码 -- 0表示未收到信号 */
     private int code;
     /** 监听器列表 -- 通知期间可能会被重用 */
-    private final RegularListenerArray<ICancelTokenListener> listeners = new RegularListenerArray<>(4);
+    private final SmallDynamicArray<ICancelTokenListener> listeners = new SmallDynamicArray<>(4);
     /** 用于检测复用 -- short应当足够 */
     private short reentryId;
 
@@ -147,7 +147,7 @@ public class CancelToken implements ICancelTokenListener {
     }
 
     private static void postComplete(CancelToken cancelToken) {
-        RegularListenerArray<ICancelTokenListener> listeners = cancelToken.listeners;
+        SmallDynamicArray<ICancelTokenListener> listeners = cancelToken.listeners;
         if (listeners.length() == 0) {
             return;
         }
@@ -211,7 +211,7 @@ public class CancelToken implements ICancelTokenListener {
         if (index < 0) {
             return false;
         }
-        listeners.removeAt(index);
+        listeners.set(index, null);
         return true;
     }
 

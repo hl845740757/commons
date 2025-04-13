@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 wjybxx(845740757@qq.com)
+ * Copyright 2023-2024 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,64 +17,48 @@
 package cn.wjybxx.base.collection;
 
 import cn.wjybxx.base.ArrayUtils;
-import cn.wjybxx.base.MathCommon;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.ObjIntConsumer;
 
+import static cn.wjybxx.base.collection.DynamicArrayHelper.wordCount;
+import static cn.wjybxx.base.collection.DynamicArrayHelper.wordIndex;
+
 /**
- * 基础的ListenerList，最大支持64个监听器。
- *
- * <h3>null元素比重</h3>
- * 如果等于0，则总是压缩空间；如果等于1，则全为null才压缩空间；如果大于1，则表示不主动压缩空间；
+ * 默认的动态数组
  *
  * @author wjybxx
  * date - 2025/4/11
  */
-public final class RegularListenerArray<E> implements ListenerArray<E> {
-
-    private static final int MAX_CAPACITY = 64;
+public final class DefaultDynamicArray<E> implements DynamicArray<E> {
 
     private Object[] elements;
+    private long[] elementsMask;
     private final float nullFactor;
 
     private int len;
-    private long elementsMask;
+    private int elementCount;
     private int recursionDepth;
 
-    public RegularListenerArray(int initCapacity) {
-        this(initCapacity, 0.25f);
+    public DefaultDynamicArray(int initCapacity) {
+        this(initCapacity, 0.125f); // 避免迭代时大量的null
     }
 
-    /**
-     * @param initCapacity 初始空间大小
-     * @param nullFactor   null元素的比重
-     */
-    public RegularListenerArray(int initCapacity, float nullFactor) {
-        if (initCapacity > MAX_CAPACITY) {
-            throw new IllegalArgumentException("initCapacity: " + initCapacity);
-        }
+    public DefaultDynamicArray(int initCapacity, float nullFactor) {
         this.elements = new Object[initCapacity];
+        this.elementsMask = new long[wordCount(initCapacity)];
         this.nullFactor = Math.max(0, nullFactor);
     }
 
-    private void setBit(int index, boolean val) {
-        if (val) {
-            elementsMask |= (1L << index);
-        } else {
-            elementsMask &= ~(1L << index);
-        }
-    }
-
     // region itr
-
     @Override
     public boolean isIterating() {
         return recursionDepth > 0;
     }
 
+    @Override
     public void beginItr() {
         recursionDepth++;
     }
@@ -95,7 +79,6 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
 
     @SuppressWarnings("unchecked")
     @Nullable
-    @Override
     public E get(int index) {
         Objects.checkIndex(index, len);
         return (E) elements[index];
@@ -106,8 +89,17 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
     public E set(int index, @Nullable E e) {
         Objects.checkIndex(index, len);
         E prev = (E) elements[index];
+        if (prev != null) {
+            elementCount--;
+        }
+        if (e != null) {
+            elementCount++;
+        }
         setBit(index, e != null);
         elements[index] = e;
+        if (e == null && recursionDepth == 0 && isCompressionNeeded()) {
+            removeNullElements();
+        }
         return prev;
     }
 
@@ -117,6 +109,7 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
         if (len == elements.length) {
             ensureCapacity(len + 1);
         }
+        elementCount++;
         setBit(len, true);
         elements[len++] = e;
     }
@@ -125,40 +118,25 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
     public void insert(int index, E e) {
         Objects.requireNonNull(e);
         Objects.checkIndex(index, len); // 还是要求index已存在更好
-        ensureNotIterating();
         if (len == elements.length) {
             ensureCapacity(len + 1);
         }
         if (index < len) {
             System.arraycopy(elements, index, elements, index + 1, len - index);
-            long high = (elementsMask << 1) & (-1L << (index + 1)); // [0, index] 全0，使index位为0
-            long lower = (elementsMask) & ((1L << index) - 1); // [0, index -1] 全1
-            elementsMask = high | lower;
+            insertBit(index);
         }
+        elementCount++;
         setBit(index, true);
         elements[index] = e;
         len++;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public E removeAt(int index) {
-        Objects.checkIndex(index, len);
-        E prev = (E) elements[index];
-        setBit(index, false);
-        elements[index] = null;
-        // 尝试压缩空间
-        if (recursionDepth == 0 && isCompressionNeeded()) {
-            removeNullElements();
-        }
-        return prev;
-    }
-
     @Override
     public boolean remove(E e) {
+        if (e == null) return false;
         int i = indexOf(e);
         if (i >= 0) {
-            removeAt(i);
+            set(i, null);
             return true;
         }
         return false;
@@ -166,9 +144,10 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
 
     @Override
     public boolean removeRef(E e) {
+        if (e == null) return false;
         int i = indexOfRef(e);
         if (i >= 0) {
-            removeAt(i);
+            set(i, null);
             return true;
         }
         return false;
@@ -179,13 +158,21 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
         if (len == 0) {
             return;
         }
-        Arrays.fill(elements, 0, len, null);
-        elementsMask = 0;
+        for (int idx = 0, len = this.len; idx < len; idx++) {
+            @SuppressWarnings("unchecked") E e = (E) elements[idx];
+            if (e == null) {
+                continue;
+            }
+            elements[idx] = null;
+        }
+        for (int idx = 0, wordCount = wordCount(len); idx < wordCount; idx++) {
+            elementsMask[idx] = 0;
+        }
+        elementCount = 0;
         if (recursionDepth == 0) {
             len = 0;
         }
     }
-
     // endregion
 
     // region indexOf
@@ -233,20 +220,30 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
     }
 
     private int firstNullIndex() {
-        if (len == 0) return -1;
-        // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
-        return Long.numberOfTrailingZeros(~elementsMask);
+        if (elementCount == len) return -1;
+        for (int idx = 0, wordCount = wordCount(len); idx < wordCount; idx++) {
+            long word = elementsMask[idx];
+            if (word == -1) continue;
+            // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
+            return (idx * 64) + Long.numberOfTrailingZeros(~word);
+        }
+        throw new AssertionError();
     }
 
     private int lastNullIndex() {
-        if (len == 0) return -1;
-        // 先将len到64这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位居然还是-1，我还以为是0
-        long tempMask = len == 64
-                ? ~(elementsMask)
-                : ~(elementsMask | (-1L << len));
-        return 63 - Long.numberOfLeadingZeros(tempMask);
+        if (elementCount == len) return -1;
+        int wordCount = wordCount(len);
+        for (int idx = wordCount - 1; idx >= 0; idx--) {
+            long word = elementsMask[idx];
+            // 先将超出len这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位居然还是-1，我还以为是0
+            if (idx == wordCount - 1 && (len & 63) != 0) {
+                word |= -1L << len;
+            }
+            if (word == -1) continue;
+            return (idx * 64) + (63 - Long.numberOfLeadingZeros(~word));
+        }
+        throw new AssertionError();
     }
-
     // endregion
 
     // region len
@@ -258,18 +255,17 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
 
     @Override
     public int elementCount() {
-        return MathCommon.bitCount(elementsMask);
+        return elementCount;
     }
 
     @Override
     public int nullCount() {
-        // 不能直接计算0的数量，0的数量可能超过len
-        return len - MathCommon.bitCount(elementsMask);
+        return len - elementCount;
     }
 
     @Override
     public boolean containsNull() {
-        return len > 0 && elementsMask == 0;
+        return elementCount < len;
     }
 
     // endregion
@@ -289,9 +285,27 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
     }
 
     @Override
-    public void compress(boolean ignoreFactor) {
+    public void ensureCapacity(int minCapacity) {
+        int oldCapacity = elements.length;
+        if (minCapacity <= oldCapacity) {
+            return;
+        }
+        // 我们需要较快的成长速度
+        int grow = oldCapacity >> 1;
+        int newCapacity = Math.clamp((long) oldCapacity + grow, 16, Integer.MAX_VALUE - 8);
+        if (newCapacity < minCapacity) {
+            newCapacity = minCapacity;
+        }
+        elements = Arrays.copyOf(elements, newCapacity);
+        if (wordCount(oldCapacity) < wordCount(newCapacity)) {
+            elementsMask = Arrays.copyOf(elementsMask, wordCount(newCapacity));
+        }
+    }
+
+    @Override
+    public void compress(boolean force) {
         ensureNotIterating();
-        if (ignoreFactor || isCompressionNeeded()) {
+        if (force || isCompressionNeeded()) {
             removeNullElements();
         }
     }
@@ -299,15 +313,14 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
     @Override
     public void forEach(ObjIntConsumer<? super E> action) {
         Objects.requireNonNull(action);
-        final int len = this.len;
-        if (len == 0) {
+        final int size = this.len;
+        if (size == 0) {
             return;
         }
-
         beginItr();
         try {
             Object[] elements = this.elements;
-            for (int index = 0; index < len; index++) {
+            for (int index = 0; index < size; index++) {
                 @SuppressWarnings("unchecked") final E e = (E) elements[index];
                 if (e != null) {
                     action.accept(e, index);
@@ -320,8 +333,8 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
 
     @Override
     public List<E> toList() {
-        final int count = elementCount();
-        final List<E> result = new ArrayList<>(count);
+        final List<E> result = new ArrayList<>(elementCount);
+        final Object[] elements = this.elements;
         for (int i = 0, end = len; i < end; i++) {
             @SuppressWarnings("unchecked") E e = (E) elements[i];
             if (e != null) {
@@ -334,6 +347,19 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
     // endregion
 
     // region internal
+
+    private void setBit(int index, boolean val) {
+        // 左移和右移运算符会自动取余
+        if (val) {
+            elementsMask[wordIndex(index)] |= (1L << index);
+        } else {
+            elementsMask[wordIndex(index)] &= ~(1L << index);
+        }
+    }
+
+    private void insertBit(int bitIndex) {
+        DynamicArrayHelper.insertBit(elementsMask, len, bitIndex);
+    }
 
     private void ensureNotIterating() {
         if (recursionDepth != 0) {
@@ -354,13 +380,13 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
     }
 
     private void removeNullElements() {
-        int elementCount = elementCount();
+        assert recursionDepth == 0;
+        int elementCount = this.elementCount;
         if (elementCount == len) {
             return;
         }
         if (elementCount == 0) {
             this.len = 0;
-            this.elementsMask = 0;
             return;
         }
         // 零散前移
@@ -372,6 +398,10 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
             if (element == null) {
                 continue;
             }
+            setBit(index, false);
+            setBit(firstNullIndex, true);
+
+            elements[index] = null; // help debug
             elements[firstNullIndex++] = element;
         }
         // 批量前移
@@ -379,33 +409,12 @@ public final class RegularListenerArray<E> implements ListenerArray<E> {
         if (copyStart < len) {
             System.arraycopy(elements, copyStart, elements, firstNullIndex, (len - copyStart));
         }
+        DynamicArrayHelper.setBit(elementsMask, firstNullIndex, elementCount);
+        DynamicArrayHelper.clearBit(elementsMask, elementCount, len);
         Arrays.fill(elements, elementCount, len, null);
         this.len = elementCount;
-        this.elementsMask = (1L << elementCount) - 1;
     }
 
-    private void ensureCapacity(int minCapacity) {
-        if (minCapacity > MAX_CAPACITY) {
-            throw new IllegalStateException("overflow");
-        }
-        int oldCapacity = elements.length;
-        if (minCapacity <= oldCapacity) {
-            return;
-        }
-        // 监听器的数量增长是较慢的，因此不必按倍率扩容
-        int grow;
-        if (oldCapacity < 16) {
-            grow = 4;
-        } else if (oldCapacity < 32) {
-            grow = 8;
-        } else {
-            grow = 16;
-        }
-        int newCapacity = Math.min(oldCapacity + grow, MAX_CAPACITY);
-        if (newCapacity < minCapacity) {
-            newCapacity = minCapacity;
-        }
-        elements = Arrays.copyOf(elements, newCapacity);
-    }
     // endregion
+
 }

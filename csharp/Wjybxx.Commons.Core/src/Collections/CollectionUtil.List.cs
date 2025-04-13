@@ -274,7 +274,7 @@ public static partial class CollectionUtil
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BinarySearch<T>(List<T> array, T value, Comparer<T> comparer) {
+    public static int BinarySearch<T>(IList<T> array, T value, Comparer<T> comparer) {
         return ArraySortHelper.BinarySearch(array, 0, array.Count, value, comparer);
     }
 
@@ -289,7 +289,7 @@ public static partial class CollectionUtil
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BinarySearch<T>(List<T> array, T value, Comparer<T> comparer, int fromIndex, int toIndex) {
+    public static int BinarySearch<T>(IList<T> array, T value, Comparer<T> comparer, int fromIndex, int toIndex) {
         ArrayUtil.RangeCheck(array.Count, fromIndex, toIndex);
         return ArraySortHelper.BinarySearch(array, fromIndex, toIndex, value, comparer);
     }
@@ -302,7 +302,7 @@ public static partial class CollectionUtil
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BinarySearch<T>(List<T> array, Func<T, int> comparer) {
+    public static int BinarySearch<T>(IList<T> array, Func<T, int> comparer) {
         return ArraySortHelper.BinarySearch(array, 0, array.Count, comparer);
     }
 
@@ -316,7 +316,7 @@ public static partial class CollectionUtil
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BinarySearch<T>(List<T> array, Func<T, int> comparer, int fromIndex, int toIndex) {
+    public static int BinarySearch<T>(IList<T> array, Func<T, int> comparer, int fromIndex, int toIndex) {
         ArrayUtil.RangeCheck(array.Count, fromIndex, toIndex);
         return ArraySortHelper.BinarySearch(array, fromIndex, toIndex, comparer);
     }

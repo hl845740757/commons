@@ -672,7 +672,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 assert action != null;
                 fireNow(source, options, action, ctx);
             }
-            outer:
             POOL.release(this);
             return null;
         }

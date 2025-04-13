@@ -23,7 +23,7 @@ namespace Wjybxx.Commons
 /// <summary>
 /// Flags工具类
 /// </summary>
-public class BitFlags
+public static class BitFlags
 {
     #region int
 

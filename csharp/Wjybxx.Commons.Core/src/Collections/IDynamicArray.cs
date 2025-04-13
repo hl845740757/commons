@@ -22,10 +22,11 @@ using System.Collections.Generic;
 namespace Wjybxx.Commons.Collections
 {
 /// <summary>
-/// 监听器数组
-/// (并非仅适用监听器管理，所有在迭代期间需要删除元素的场景都可以使用，名字实在不好取...)
+/// 动态数组
+/// (支持迭代期间删除元素和扩容)
 /// <h3>约定</h3>
-/// 1.Add和Insert一定会增加length；但Remove方法不一定会减少length。
+/// 0.Set(index, null) 即表示删除元素
+/// 1.Add和Insert一定会增加length；但Remove和Set方法不一定会减少length。
 /// 2.在迭代期间删除元素，一定不会减少length；在迭代结束后，可能会压缩空间减少length -- 允许一定比例的null是该List的核心；
 /// 3.在迭代期间添加元素，元素会被添加到List末尾并增加length；在迭代结束后，可能会压缩空间减少length。
 /// 4.在非迭代期间，删除元素可能立即触发空间压缩。
@@ -49,7 +50,7 @@ namespace Wjybxx.Commons.Collections
 /// 
 /// </summary>
 /// <typeparam name="E"></typeparam>
-public interface ListenerArray<E> where E : class
+public interface IDynamicArray<E> where E : class
 {
     /// <summary>
     /// 当前是否正在迭代
@@ -65,7 +66,7 @@ public interface ListenerArray<E> where E : class
     /// 迭代结束 -- 特殊情况下可以反复调用该接口修复状态
     /// </summary>
     void EndItr();
-    
+
     /// <summary>
     /// 获取指定位置的元素
     /// </summary>
@@ -74,12 +75,14 @@ public interface ListenerArray<E> where E : class
 
     /// <summary>
     /// 设置指定位置的元素，同时返回旧值
+    ///
+    /// Set为Null即表示删除元素。
     /// </summary>
     /// <param name="index">数组下标</param>
     /// <param name="e">新值</param>
     /// <returns>当前位置的旧值</returns>
     E? Set(int index, E? e);
-    
+
     /// <summary>
     /// 添加元素
     /// 不论是否正在迭代，len一定会增加。
@@ -100,18 +103,10 @@ public interface ListenerArray<E> where E : class
     void Insert(int index, E e);
 
     /// <summary>
-    /// 删除给定位置的元素
-    /// 注意：不论是否正在迭代，length都可能不会变化。
-    /// </summary>
-    /// <param name="index"></param>
-    /// <returns>如果指定位置存在元素，则返回对应的元素，否则返回Null</returns>
-    E? RemoveAt(int index);
-
-    /// <summary>
     /// 根据equals相等删除元素
     /// 注意：不论是否正在迭代，length都可能不会变化。
     /// </summary>
-    /// <param name="e"></param>
+    /// <param name="e">null固定返回false</param>
     /// <returns>如果元素在集合中则删除并返回true</returns>
     bool Remove(E? e);
 
@@ -119,7 +114,7 @@ public interface ListenerArray<E> where E : class
     /// 根据引用相等删除元素
     /// 注意：不论是否正在迭代，length都可能不会变化。
     /// </summary>
-    /// <param name="e"></param>
+    /// <param name="e">null固定返回false</param>
     /// <returns>如果元素在集合中则删除并返回true</returns>
     bool RemoveRef(E? e);
 
@@ -137,7 +132,6 @@ public interface ListenerArray<E> where E : class
     /// <param name="e"></param>
     /// <returns></returns>
     bool Contains(E? e);
-
 
     /// <summary>
     /// 基于引用相等查询一个元素是否在List中
@@ -203,7 +197,13 @@ public interface ListenerArray<E> where E : class
     /// </summary>
     /// <param name="comparator"></param>
     /// <exception cref="IllegalStateException">如果当前正在迭代</exception>
-    void Sort(Comparer<E> comparator);
+    void Sort(IComparer<E> comparator);
+
+    /// <summary>
+    /// 确保空间足够（减少不必要的扩容）
+    /// </summary>
+    /// <param name="minCapacity">期望的最小空间</param>
+    void EnsureCapacity(int minCapacity);
 
     /// <summary>
     /// 压缩数组

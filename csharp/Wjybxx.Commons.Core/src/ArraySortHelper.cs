@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 namespace Wjybxx.Commons
 {
-internal class ArraySortHelper
+internal static class ArraySortHelper
 {
     #region array
 
@@ -96,7 +96,7 @@ internal class ArraySortHelper
 
     #region list
 
-    public static int BinarySearch<T>(List<T> a, int fromIndex, int toIndex,
+    public static int BinarySearch<T>(IList<T> a, int fromIndex, int toIndex,
                                       T key, Comparer<T> c) {
         int low = fromIndex;
         int high = toIndex - 1;
@@ -115,7 +115,7 @@ internal class ArraySortHelper
         return -(low + 1); // key not found.
     }
 
-    public static int BinarySearch<T>(List<T> a, int fromIndex, int toIndex,
+    public static int BinarySearch<T>(IList<T> a, int fromIndex, int toIndex,
                                       Func<T, int> c) {
         int low = fromIndex;
         int high = toIndex - 1;

@@ -23,11 +23,12 @@ import java.util.List;
 import java.util.function.ObjIntConsumer;
 
 /**
- * 监听器数组
- * (并非仅适用监听器管理，所有在迭代期间需要删除元素的场景都可以使用，名字实在不好取...)
+ * 动态数组
+ * (支持迭代期间删除元素和扩容)
  *
  * <h3>约定</h3>
- * 1.{@link #add(Object)}和{@link #insert(int, Object)}一定会增加length；但{@link #remove(Object)}方法不一定会减少length。
+ * 0.Set(index, null) 即表示删除元素
+ * 1.Add和Insert一定会增加length；但Remove和Set方法不一定会减少length。
  * 2.在迭代期间删除元素，一定不会减少length；在迭代结束后，可能会压缩空间减少length -- 允许一定比例的null是该List的核心；
  * 3.在迭代期间添加元素，元素会被添加到List末尾并增加length；在迭代结束后，可能会压缩空间减少length。
  * 4.在非迭代期间，删除元素可能立即触发空间压缩。
@@ -37,7 +38,7 @@ import java.util.function.ObjIntConsumer;
  * <pre><code>
  *     list.beginItr();
  *     try {
- *         for(int i = 0, length = list.length();i < length; i++){
+ *         for(int i = 0, len = list.length();i < len; i++){
  *              E e = list.get(i);
  *              if (e == null) {
  *                  continue;
@@ -52,7 +53,7 @@ import java.util.function.ObjIntConsumer;
  * @author wjybxx
  * date - 2025/4/11
  */
-public interface ListenerArray<E> {
+public interface DynamicArray<E> {
 
     /** 当前是否正在迭代 */
     boolean isIterating();
@@ -74,6 +75,8 @@ public interface ListenerArray<E> {
     /**
      * 将给定元素赋值到给定位置
      *
+     * @param index 元素下标
+     * @param e     如果为null表示删除
      * @return 该位置的前一个值
      */
     E set(int index, @Nullable E e);
@@ -98,17 +101,10 @@ public interface ListenerArray<E> {
     void insert(int index, E e);
 
     /**
-     * 删除给定位置的元素
-     * 注意：不论是否正在迭代，length都可能不会变化。
-     *
-     * @return 如果指定位置存在元素，则返回对应的元素，否则返回Null
-     */
-    E removeAt(int index);
-
-    /**
      * 根据equals相等删除元素
      * 注意：不论是否正在迭代，length都可能不会变化。
      *
+     * @param e null固定返回false
      * @return 如果元素在集合中则删除并返回true
      */
     boolean remove(E e);
@@ -117,6 +113,7 @@ public interface ListenerArray<E> {
      * 根据引用相等删除元素
      * 注意：不论是否正在迭代，length都可能不会变化。
      *
+     * @param e null固定返回false
      * @return 如果元素在集合中则删除并返回true
      */
     boolean removeRef(E e);
@@ -207,6 +204,13 @@ public interface ListenerArray<E> {
      * @throws IllegalStateException 如果当前正在迭代
      */
     void sort(@Nonnull Comparator<? super E> comparator);
+
+    /**
+     * 确保空间足够（减少不必要的扩容）
+     *
+     * @param minCapacity 期望的最小空间
+     */
+    void ensureCapacity(int minCapacity);
 
     /**
      * 压缩数组空间

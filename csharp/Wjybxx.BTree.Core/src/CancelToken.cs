@@ -38,7 +38,7 @@ public class CancelToken : ICancelTokenListener
     /** 取消码 -- 0表示未收到信号 */
     private int code;
     /** 监听器列表 -- 通知期间可能会被重用 */
-    private readonly RegularListenerArray<ICancelTokenListener> listeners = new(4);
+    private readonly SmallDynamicArray<ICancelTokenListener> listeners = new(4);
     /** 用于检测复用 -- short应当足够 */
     private short reentryId;
 
@@ -135,7 +135,7 @@ public class CancelToken : ICancelTokenListener
     }
 
     private static void PostComplete(CancelToken cancelToken) {
-        RegularListenerArray<ICancelTokenListener> listeners = cancelToken.listeners;
+        SmallDynamicArray<ICancelTokenListener> listeners = cancelToken.listeners;
         if (listeners.Length == 0) {
             return;
         }
@@ -197,7 +197,7 @@ public class CancelToken : ICancelTokenListener
         if (index < 0) {
             return false;
         }
-        listeners.RemoveAt(index);
+        listeners.Set(index, null);
         return true;
     }
 
