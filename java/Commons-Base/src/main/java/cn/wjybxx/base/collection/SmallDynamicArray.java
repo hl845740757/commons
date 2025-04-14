@@ -68,6 +68,7 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
         return recursionDepth > 0;
     }
 
+    @Override
     public void beginItr() {
         recursionDepth++;
     }
@@ -289,10 +290,7 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
         } else {
             grow = 16;
         }
-        int newCapacity = Math.min(oldCapacity + grow, MAX_CAPACITY);
-        if (newCapacity < minCapacity) {
-            newCapacity = minCapacity;
-        }
+        int newCapacity = MathCommon.clamp(oldCapacity + grow, minCapacity, MAX_CAPACITY);
         elements = Arrays.copyOf(elements, newCapacity);
     }
 

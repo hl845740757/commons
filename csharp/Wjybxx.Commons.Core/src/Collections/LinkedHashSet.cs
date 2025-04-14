@@ -408,7 +408,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         }
         if (!IsKeyValueType && key == null) {
             Node nullNode = table[_mask + 1];
-            return nullNode.index == null ? -(_mask + 2) : (_mask + 1);
+            return nullNode.IsNull() ? -(_mask + 2) : (_mask + 1);
         }
 
         IEqualityComparer<TKey> keyComparer = _keyComparer;
@@ -416,7 +416,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         // 先测试无冲突位置
         int pos = mask & hash;
         ref Node node = ref table[pos];
-        if (node.index == null) return -(pos + 1);
+        if (node.IsNull()) return -(pos + 1);
         if (node.hash == hash && keyComparer.Equals(node.key, key)) {
             return pos;
         }
@@ -426,7 +426,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         for (int i = 0; i < mask; i++) {
             pos = (pos + 1) & mask;
             node = ref table[pos];
-            if (node.index == null) return -(pos + 1);
+            if (node.IsNull()) return -(pos + 1);
             if (node.hash == hash && keyComparer.Equals(node.key, key)) {
                 return pos;
             }
@@ -569,7 +569,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         _version++;
 
         FixPointers(in node);
-        ShiftKeys(node.index!.Value);
+        ShiftKeys(node.index);
     }
 
     /// <summary>
@@ -593,7 +593,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
             pos = (pos + 1) & mask; // + 1 可能绕回到首部
             while (true) {
                 ref Node curr = ref table[pos];
-                if (curr.index == null) {
+                if (curr.IsNull()) {
                     table[last] = default;
                     return;
                 }
@@ -616,7 +616,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     /// </summary>
     /// <param name="node">要解除引用的节点</param>
     private void FixPointers(in Node node) {
-        int pos = node.index!.Value;
+        int pos = node.index;
         if (_count == 0) {
             _head = _tail = -1;
         } else if (pos == _head) {
@@ -668,7 +668,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     }
 
     private void MoveToFirst(ref Node node) {
-        int pos = node.index!.Value;
+        int pos = node.index;
         if (pos == _head) {
             return;
         }
@@ -692,7 +692,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     }
 
     private void MoveToLast(ref Node node) {
-        int pos = node.index!.Value;
+        int pos = node.index;
         if (pos == _tail) {
             return;
         }
@@ -762,7 +762,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
             if (_version != _hashSet._version) {
                 throw new InvalidOperationException("EnumFailedVersion");
             }
-            if (_currNode.index == null) {
+            if (_currNode.IsNull()) {
                 throw new InvalidOperationException("AlreadyRemoved");
             }
             _hashSet.RemoveNode(_currNode);
@@ -794,30 +794,36 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     private struct Node
     {
 #nullable disable
-        /** 由于Key的hash使用频率极高，缓存以减少求值开销 */
-        internal int hash;
         internal TKey key;
-
-        internal int? index; // null表示Node无效，低版本不支持无参构造函数，无法指定为-1
+        
+        internal bool hasKey; // 判断node是否有效，代替将index封装为Nullable<int>
+        internal int hash; // Key的hash使用频率极高，缓存以减少求值开销
+        internal int index;
         internal int prev;
         internal int next;
 
         public Node(int hash, TKey key, int index) {
-            this.hash = hash;
             this.key = key;
-            this.index = index;
 
+            this.hasKey = true;
+            this.hash = hash;
+            this.index = index;
             this.prev = -1;
             this.next = -1;
         }
 
         public Node(int hash, TKey key, int index, int prev) {
-            this.hash = hash;
             this.key = key;
+            
+            this.hasKey = true;
+            this.hash = hash;
             this.index = index;
             this.prev = prev;
             this.next = -1;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsNull() => hasKey == false;
 
 #if DEBUG
         public override string ToString() {

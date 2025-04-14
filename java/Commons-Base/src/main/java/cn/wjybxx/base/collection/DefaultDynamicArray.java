@@ -221,30 +221,13 @@ public final class DefaultDynamicArray<E> implements DynamicArray<E> {
     }
 
     private int firstNullIndex() {
-        if (elementCount == len) return -1;
-        for (int idx = 0, wordCount = wordCount(len); idx < wordCount; idx++) {
-            long word = elementsMask[idx];
-            if (word == -1) continue;
-            // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
-            return (idx * 64) + Long.numberOfTrailingZeros(~word);
-        }
-        throw new AssertionError();
+        return DynamicArrayHelper.firstNullIndex(elementsMask, len, elementCount);
     }
 
     private int lastNullIndex() {
-        if (elementCount == len) return -1;
-        int wordCount = wordCount(len);
-        for (int idx = wordCount - 1; idx >= 0; idx--) {
-            long word = elementsMask[idx];
-            // 先将超出len这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位居然还是-1，我还以为是0
-            if (idx == wordCount - 1 && (len & 63) != 0) {
-                word |= -1L << len;
-            }
-            if (word == -1) continue;
-            return (idx * 64) + (63 - Long.numberOfLeadingZeros(~word));
-        }
-        throw new AssertionError();
+        return DynamicArrayHelper.lastNullIndex(elementsMask, len, elementCount);
     }
+
     // endregion
 
     // region len
@@ -369,15 +352,7 @@ public final class DefaultDynamicArray<E> implements DynamicArray<E> {
     }
 
     private boolean isCompressionNeeded() {
-        float nullFactor = this.nullFactor;
-        if (nullFactor == 0) return true;
-        if (nullFactor > 1) return false;
-
-        int nullCount = len - elementCount();
-        if (nullFactor == 1) {
-            return nullCount == len;
-        }
-        return nullCount >= 4 && nullCount >= len * nullFactor;
+        return DynamicArrayHelper.isCompressionNeeded(nullFactor, len, elementCount);
     }
 
     private void removeNullElements() {
@@ -399,10 +374,10 @@ public final class DefaultDynamicArray<E> implements DynamicArray<E> {
             if (element == null) {
                 continue;
             }
-            setBit(index, false);
-            setBit(firstNullIndex, true);
+//            setBit(index, false);
+//            elements[index] = null; // help debug
 
-            elements[index] = null; // help debug
+            setBit(firstNullIndex, true);
             elements[firstNullIndex++] = element;
         }
         // 批量前移

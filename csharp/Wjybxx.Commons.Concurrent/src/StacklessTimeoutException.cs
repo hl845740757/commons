@@ -39,6 +39,7 @@ public class StacklessTimeoutException : TimeoutException
     public StacklessTimeoutException(string? message, Exception? innerException) : base(message, innerException) {
     }
 
+    [Obsolete]
     protected StacklessTimeoutException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 

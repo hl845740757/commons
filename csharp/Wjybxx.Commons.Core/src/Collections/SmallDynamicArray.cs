@@ -258,10 +258,7 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
         } else {
             grow = 16;
         }
-        int newCapacity = Math.Min(oldCapacity + grow, MAX_CAPACITY);
-        if (newCapacity < minCapacity) {
-            newCapacity = minCapacity;
-        }
+        int newCapacity = MathCommon.Clamp(oldCapacity + grow, minCapacity, MAX_CAPACITY);
         elements = ArrayUtil.CopyOf(elements, 0, newCapacity);
     }
 

@@ -42,7 +42,6 @@ public struct MarkableIterator<T> : ISequentialEnumerator<T>
 
     private T _current;
     private T _markedValue;
-#nullable enable
 
     /// <summary>
     /// 

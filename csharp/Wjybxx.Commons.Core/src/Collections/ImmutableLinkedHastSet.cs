@@ -335,7 +335,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
         }
         if (key == null) {
             Node nullNode = table[_mask + 1];
-            return nullNode.index == null ? -(_mask + 2) : (_mask + 1);
+            return nullNode.IsNull() ? -(_mask + 2) : (_mask + 1);
         }
 
         IEqualityComparer<TKey> keyComparer = _keyComparer;
@@ -343,7 +343,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
         // 先测试无冲突位置
         int pos = mask & hash;
         ref Node node = ref table[pos];
-        if (node.index == null) return -(pos + 1);
+        if (node.IsNull()) return -(pos + 1);
         if (node.hash == hash && keyComparer.Equals(node.key, key)) {
             return pos;
         }
@@ -353,7 +353,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
         for (int i = 0; i < mask; i++) {
             pos = (pos + 1) & mask;
             node = ref table[pos];
-            if (node.index == null) return -(pos + 1);
+            if (node.IsNull()) return -(pos + 1);
             if (node.hash == hash && keyComparer.Equals(node.key, key)) {
                 return pos;
             }
@@ -414,21 +414,27 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
     /** 在构建table完成之后不再修改 */
     private struct Node
     {
-        /** 由于Key的hash使用频率极高，缓存以减少求值开销 */
-        internal readonly int hash;
-        internal readonly TKey? key;
+#nullable disable
+        internal readonly TKey key;
 
-        internal readonly int? index; // null表未Node无效，低版本不支持无参构造函数，无法指定为-1
+        internal readonly bool hasKey; // 判断node是否有效，代替将index封装为Nullable<int>
+        internal readonly int hash; // Key的hash使用频率极高，缓存以减少求值开销
+        internal readonly int index;
         internal int prev;
         internal int next;
 
-        public Node(int hash, TKey? key, int? index, int prev) {
-            this.hash = hash;
+        public Node(int hash, TKey key, int index, int prev) {
             this.key = key;
+
+            this.hasKey = true;
+            this.hash = hash;
             this.index = index;
             this.prev = prev;
             this.next = -1;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsNull() => hasKey == false;
 
 #if DEBUG
         public override string ToString() {

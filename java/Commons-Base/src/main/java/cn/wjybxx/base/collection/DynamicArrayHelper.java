@@ -33,7 +33,56 @@ final class DynamicArrayHelper {
         return (bitCount >> ADDRESS_BITS_PER_WORD) + 1;
     }
 
-    static void insertBit(long[] elementsMask, int len, int bitIndex) {
+    public static boolean isCompressionNeeded(float nullFactor, int len, int elementCount) {
+        if (nullFactor == 0) return true;
+        if (nullFactor > 1) return false;
+
+        int nullCount = len - elementCount;
+        if (nullFactor == 1) {
+            return nullCount == len;
+        }
+        return nullCount >= 4 && nullCount >= len * nullFactor;
+    }
+
+    // region index-null
+
+    public static int firstNullIndex(long[] elementsMask, int len, int elementCount) {
+        if (elementCount == len) return -1;
+        for (int idx = 0, wordCount = wordCount(len); idx < wordCount; idx++) {
+            long word = elementsMask[idx];
+            if (word == -1) continue;
+            // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
+            return (idx * 64) + Long.numberOfTrailingZeros(~word);
+        }
+        throw new AssertionError();
+    }
+
+    public static int lastNullIndex(long[] elementsMask, int len, int elementCount) {
+        if (elementCount == len) return -1;
+        int wordCount = wordCount(len);
+        for (int idx = wordCount - 1; idx >= 0; idx--) {
+            long word = elementsMask[idx];
+            // 先将超出len这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位居然还是-1，我还以为是0
+            if (idx == wordCount - 1 && (len & 63) != 0) {
+                word |= -1L << len;
+            }
+            if (word == -1) continue;
+            return (idx * 64) + (63 - Long.numberOfLeadingZeros(~word));
+        }
+        throw new AssertionError();
+    }
+    // endregion
+
+    // region bit-update
+
+    public static long insertBit(long word, int bitIndex) {
+        int index = bitIndex & 63;
+        long high = (word << 1) & (-1L << (index + 1)); // [0, index] 全0，使index位为0
+        long lower = (word) & ((1L << index) - 1); // [0, index -1] 全1
+        return high | lower;
+    }
+
+    public static void insertBit(long[] elementsMask, int len, int bitIndex) {
         int wordIndex = wordIndex(bitIndex);
         for (int idx = wordCount(len) - 1; idx > wordIndex; idx--) {
             elementsMask[idx] = elementsMask[idx] << 1;
@@ -46,7 +95,7 @@ final class DynamicArrayHelper {
         elementsMask[wordIndex] = high | lower;
     }
 
-    static void setBit(long[] elementsMask, int fromIndex, int toIndex) {
+    public static void setBit(long[] elementsMask, int fromIndex, int toIndex) {
         if (fromIndex == toIndex) return;
 
         // Increase capacity if necessary
@@ -72,7 +121,7 @@ final class DynamicArrayHelper {
         }
     }
 
-    static void clearBit(long[] elementsMask, int fromIndex, int toIndex) {
+    public static void clearBit(long[] elementsMask, int fromIndex, int toIndex) {
         if (fromIndex == toIndex) return;
 
         int startWordIndex = wordIndex(fromIndex);
@@ -96,4 +145,5 @@ final class DynamicArrayHelper {
             elementsMask[endWordIndex] &= ~lastWordMask;
         }
     }
+    // endregion
 }

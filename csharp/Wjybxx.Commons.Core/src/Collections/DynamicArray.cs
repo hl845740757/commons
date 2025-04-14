@@ -208,30 +208,14 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
         return ArrayUtil.LastIndexOfRef(elements, e, 0, len);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int FirstNullIndex() {
-        if (elementCount == len) return -1;
-        for (int idx = 0, wordCount = WordCount(len); idx < wordCount; idx++) {
-            long word = elementsMask[idx];
-            if (word == -1) continue;
-            // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
-            return (idx * 64) + MathCommon.NumberOfTrailingZeros(~word);
-        }
-        throw new AssertionError();
+        return DynamicArrayHelper.FirstNullIndex(elementsMask, len, elementCount);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int LastNullIndex() {
-        if (elementCount == len) return -1;
-        int wordCount = WordCount(len);
-        for (int idx = wordCount - 1; idx >= 0; idx--) {
-            long word = elementsMask[idx];
-            // 先将超出len这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位居然还是-1，我还以为是0
-            if (idx == wordCount - 1 && (len & 63) != 0) {
-                word |= -1L << len;
-            }
-            if (word == -1) continue;
-            return (idx * 64) + (63 - MathCommon.NumberOfLeadingZeros(~word));
-        }
-        throw new AssertionError();
+        return DynamicArrayHelper.LastNullIndex(elementsMask, len, elementCount);
     }
 
     #endregion
@@ -343,16 +327,9 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool IsCompressionNeeded() {
-        float nullFactor = this.nullFactor;
-        if (nullFactor == 0) return true;
-        if (nullFactor > 1) return false;
-
-        int nullCount = len - ElementCount;
-        if (nullFactor == 1) {
-            return nullCount == len;
-        }
-        return nullCount >= 4 && nullCount >= len * nullFactor;
+        return DynamicArrayHelper.IsCompressionNeeded(nullFactor, len, elementCount);
     }
 
     private void RemoveNullElements() {
@@ -374,10 +351,10 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
             if (element == null) {
                 continue;
             }
-            SetBit(index, false);
-            SetBit(firstNullIndex, true);
+            // SetBit(index, false);
+            // elements[index] = null; // help debug
 
-            elements[index] = null; // help debug
+            SetBit(firstNullIndex, true);
             elements[firstNullIndex++] = element;
         }
         // 批量前移

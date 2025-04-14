@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+#pragma warning disable CS0169
 
 namespace Wjybxx.Commons.Concurrent
 {

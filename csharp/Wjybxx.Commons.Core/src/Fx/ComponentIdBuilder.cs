@@ -16,7 +16,7 @@
 
 #endregion
 
-
+#pragma warning disable CS0108
 namespace Wjybxx.Commons.Fx
 {
 public partial interface ComponentId

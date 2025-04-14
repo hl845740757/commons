@@ -103,12 +103,7 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
     }
 
     public void Add(E e) {
-        if (e == null) throw new ArgumentNullException(nameof(e));
-        if (helper.CollectionIndex(this, e) != IndexNotFound) {
-            throw new ArgumentException($"e.queueIndex(): {helper.CollectionIndex(this, e)} " +
-                                        $"(expected: {IndexNotFound}) + e: %s");
-        }
-
+        RequireNonNullAndNotContains(e);
         if (len == elements.Length) {
             EnsureCapacity(len + 1);
         }
@@ -119,12 +114,7 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
     }
 
     public void Insert(int index, E e) {
-        if (e == null) throw new ArgumentNullException(nameof(e));
-        if (helper.CollectionIndex(this, e) != IndexNotFound) {
-            throw new ArgumentException($"e.queueIndex(): {helper.CollectionIndex(this, e)} " +
-                                        $"(expected: {IndexNotFound}) + e: %s");
-        }
-
+        RequireNonNullAndNotContains(e);
         ArrayUtil.CheckIndex(index, len); // 还是要求index已存在更好
         EnsureNotIterating();
         if (len == elements.Length) {
@@ -182,6 +172,15 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void RequireNonNullAndNotContains(E e) {
+        if (e == null) throw new ArgumentNullException(nameof(e));
+        if (helper.CollectionIndex(this, e) != IndexNotFound) {
+            throw new ArgumentException($"e.queueIndex(): {helper.CollectionIndex(this, e)} " +
+                                        $"(expected: {IndexNotFound}) + e: %s");
+        }
+    }
+
     #endregion
 
     #region indexOf
@@ -224,30 +223,14 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
         return helper.CollectionIndex(this, e);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int FirstNullIndex() {
-        if (elementCount == len) return -1;
-        for (int idx = 0, wordCount = WordCount(len); idx < wordCount; idx++) {
-            long word = elementsMask[idx];
-            if (word == -1) continue;
-            // 将末尾的1转为0，这样低位的第一个1就是第一个null元素位置
-            return (idx * 64) + MathCommon.NumberOfTrailingZeros(~word);
-        }
-        throw new AssertionError();
+        return DynamicArrayHelper.FirstNullIndex(elementsMask, len, elementCount);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int LastNullIndex() {
-        if (elementCount == len) return -1;
-        int wordCount = WordCount(len);
-        for (int idx = wordCount - 1; idx >= 0; idx--) {
-            long word = elementsMask[idx];
-            // 先将超出len这部分也转为1，再整体取反转0，这样高位的第一个1就是第一个null元素位置 -- -1左移64位居然还是-1，我还以为是0
-            if (idx == wordCount - 1 && (len & 63) != 0) {
-                word |= -1L << len;
-            }
-            if (word == -1) continue;
-            return (idx * 64) + (63 - MathCommon.NumberOfLeadingZeros(~word));
-        }
-        throw new AssertionError();
+        return DynamicArrayHelper.LastNullIndex(elementsMask, len, elementCount);
     }
 
     #endregion
@@ -360,16 +343,9 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool IsCompressionNeeded() {
-        float nullFactor = this.nullFactor;
-        if (nullFactor == 0) return true;
-        if (nullFactor > 1) return false;
-
-        int nullCount = len - ElementCount;
-        if (nullFactor == 1) {
-            return nullCount == len;
-        }
-        return nullCount >= 4 && nullCount >= len * nullFactor;
+        return DynamicArrayHelper.IsCompressionNeeded(nullFactor, len, elementCount);
     }
 
     private void RemoveNullElements() {
@@ -394,10 +370,10 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
             }
             helper.CollectionIndex(this, element, firstNullIndex);
 
-            SetBit(index, false);
-            SetBit(firstNullIndex, true);
+            // SetBit(index, false);
+            // elements[index] = null; // help debug
 
-            elements[index] = null; // help debug
+            SetBit(firstNullIndex, true);
             elements[firstNullIndex++] = element;
         }
         // 批量前移
@@ -412,6 +388,7 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
         this.len = elementCount;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void BatchUpdateIndex(E[] elements, int start, int end) {
         IIndexedElementHelper<E> helper = this.helper;
         for (int index = start; index < end; index++) {
@@ -419,7 +396,6 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
             helper.CollectionIndex(this, castE, index);
         }
     }
-
 
     #endregion
 }
