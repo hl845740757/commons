@@ -37,7 +37,7 @@ public interface TaskVisitor<T> {
     /**
      * 访问钩子节点(无法通过GetChild拿到的子节点，也不在ChildCount计数中)
      * 理论上钩子还可能是List或Map，但我们这个访问者只是为了做一些简单的遍历工作，并不需要如此精细的信息，
-     * 因此方法参数可以未声明index/key等信息，以避免额外的开销和复杂度。
+     * 因此方法参数未声明index/key等信息，以避免额外的开销和复杂度。
      *
      * @param child 钩子子节点
      * @param param 用户参数

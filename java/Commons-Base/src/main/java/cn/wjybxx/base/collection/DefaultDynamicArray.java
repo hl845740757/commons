@@ -17,6 +17,7 @@
 package cn.wjybxx.base.collection;
 
 import cn.wjybxx.base.ArrayUtils;
+import cn.wjybxx.base.MathCommon;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -33,6 +34,8 @@ import static cn.wjybxx.base.collection.DynamicArrayHelper.wordIndex;
  * date - 2025/4/11
  */
 public final class DefaultDynamicArray<E> implements DynamicArray<E> {
+
+    private static final int MAX_CAPACITY = Integer.MAX_VALUE - 8;
 
     private Object[] elements;
     private long[] elementsMask;
@@ -274,12 +277,13 @@ public final class DefaultDynamicArray<E> implements DynamicArray<E> {
         if (minCapacity <= oldCapacity) {
             return;
         }
-        // 我们需要较快的成长速度
-        int grow = oldCapacity >> 1;
-        int newCapacity = Math.clamp((long) oldCapacity + grow, 16, Integer.MAX_VALUE - 8);
-        if (newCapacity < minCapacity) {
-            newCapacity = minCapacity;
+        if (minCapacity > MAX_CAPACITY) {
+            throw new OutOfMemoryError("Required array length " + minCapacity + " is too large");
         }
+
+        // 中度的成长速度
+        int grow = Math.max(8, oldCapacity >> 1);
+        int newCapacity = MathCommon.clamp((long) oldCapacity + grow, minCapacity, MAX_CAPACITY);
         elements = Arrays.copyOf(elements, newCapacity);
         if (wordCount(oldCapacity) < wordCount(newCapacity)) {
             elementsMask = Arrays.copyOf(elementsMask, wordCount(newCapacity));

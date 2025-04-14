@@ -29,7 +29,7 @@ import java.util.function.Function;
  * @author wjybxx
  * date 2023/4/8
  */
-@SuppressWarnings("deprecation")
+@SuppressWarnings("NullableProblems")
 public abstract class AbstractEventLoopGroup implements IEventLoopGroup {
 
     @Override
@@ -93,16 +93,24 @@ public abstract class AbstractEventLoopGroup implements IEventLoopGroup {
         return select().submitAction(task, ctx, options);
     }
 
+    @Deprecated
     @Nonnull
     @Override
     public final <T> IFuture<T> submit(@Nonnull Callable<T> task) {
         return select().submitFunc(task);
     }
 
+    @Deprecated
     @Nonnull
     @Override
     public final IFuture<?> submit(@Nonnull Runnable task) {
         return select().submitAction(task);
+    }
+
+    @Deprecated
+    @Override
+    public <T> Future<T> submit(@Nonnull Runnable task, T result) {
+        return select().submit(task, result);
     }
 
     // endregion

@@ -265,12 +265,13 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
         if (minCapacity <= oldCapacity) {
             return;
         }
-        // 我们需要较快的成长速度
-        int grow = oldCapacity >> 1;
-        int newCapacity = MathCommon.Clamp((long)oldCapacity + grow, 16, int.MaxValue - 8);
-        if (newCapacity < minCapacity) {
-            newCapacity = minCapacity;
+        if (minCapacity > MAX_CAPACITY) {
+            throw new OutOfMemoryException("Required array length " + minCapacity + " is too large");
         }
+
+        // 较快的成长速度
+        int grow = Math.Max(16, oldCapacity >> 1);
+        int newCapacity = MathCommon.Clamp((long)oldCapacity + grow, minCapacity, MAX_CAPACITY);
         elements = ArrayUtil.CopyOf(elements, 0, newCapacity);
         if (WordCount(oldCapacity) < WordCount(newCapacity)) {
             elementsMask = ArrayUtil.CopyOf(elementsMask, 0, WordCount(newCapacity));

@@ -44,7 +44,7 @@ public class FutureTest {
     @BeforeEach
     void setUp() {
         // 必须等待其它任务完成
-        globalEventLoop.submit(FunctionUtils.emptyRunnable()).awaitUninterruptibly();
+        globalEventLoop.submitAction(FunctionUtils.emptyRunnable()).awaitUninterruptibly();
     }
 
     // region basic

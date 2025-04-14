@@ -139,6 +139,11 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     @Override
+    public final <T> IFuture<T> submitFunc(Callable<? extends T> task) {
+        return submitFunc(task, 0);
+    }
+
+    @Override
     public <T> IFuture<T> submitFunc(Callable<? extends T> task, int options) {
         IPromise<T> promise = newPromise();
         execute(PromiseTask.ofFunction(task, null, options, promise));
@@ -159,7 +164,11 @@ public abstract class AbstractEventLoop implements IEventLoop {
         return promise;
     }
 
-    /** 该方法可能和{@link ExecutorService#submit(Runnable, Object)}冲突，因此我们要带后缀 */
+    @Override
+    public final IFuture<?> submitAction(Runnable task) {
+        return submitAction(task, 0);
+    }
+
     @Override
     public IFuture<?> submitAction(Runnable task, int options) {
         IPromise<Object> promise = newPromise();
@@ -181,27 +190,24 @@ public abstract class AbstractEventLoop implements IEventLoop {
         return promise;
     }
 
-    @Override
-    public final <T> IFuture<T> submitFunc(Callable<? extends T> task) {
-        return submitFunc(task, 0);
-    }
-
-    @Override
-    public final IFuture<?> submitAction(Runnable task) {
-        return submitAction(task, 0);
-    }
-
-    @SuppressWarnings("deprecation")
+    // 不再建议使用
+    @Deprecated
     @Nonnull
     @Override
     public final <T> IFuture<T> submit(Callable<T> task) {
         return submitFunc(task, 0);
     }
 
-    @SuppressWarnings("deprecation")
+    @Deprecated
     @Override
     public final IFuture<?> submit(Runnable task) {
         return submitAction(task, 0);
+    }
+
+    @Deprecated
+    @Override
+    public final <T> Future<T> submit(Runnable task, T result) {
+        return submitFunc(Executors.callable(task, result));
     }
 
     // endregion

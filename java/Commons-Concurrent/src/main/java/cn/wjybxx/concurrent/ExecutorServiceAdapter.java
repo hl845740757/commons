@@ -29,9 +29,9 @@ import java.util.concurrent.*;
 @SuppressWarnings("NullableProblems")
 public final class ExecutorServiceAdapter extends AbstractExecutorService {
 
-    public final IExecutorService eventLoop;
+    public final IEventLoopGroup eventLoop;
 
-    public ExecutorServiceAdapter(IExecutorService eventLoop) {
+    public ExecutorServiceAdapter(IEventLoopGroup eventLoop) {
         this.eventLoop = eventLoop;
     }
 

@@ -27,7 +27,6 @@ import org.junit.jupiter.api.RepeatedTest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author wjybxx
@@ -58,7 +57,7 @@ public class DynamicArrayTest {
             dynamicArray = new SmallDynamicArray<>(capacity / 3); // 测试扩容
         } else {
             capacity = 1000;
-            dynamicArray = new IndexedDynamicArray<>(Helper.INST, capacity / 6); // 测试扩容
+            dynamicArray = new IndexedDynamicArray<>(Helper.INST, (capacity / 64) - 1); // 测试扩容
         }
         for (int i = 0; i < capacity; i++) {
             dynamicArray.add(valueOf(i));

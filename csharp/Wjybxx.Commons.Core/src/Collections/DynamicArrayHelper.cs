@@ -22,6 +22,7 @@ namespace Wjybxx.Commons.Collections
 {
 internal static class DynamicArrayHelper
 {
+    public static int MAX_CAPACITY = int.MaxValue - 8;
     private const long WORD_MASK = -1;
     private const int ADDRESS_BITS_PER_WORD = 6;
 

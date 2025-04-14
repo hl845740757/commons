@@ -17,9 +17,10 @@
 package cn.wjybxx.concurrent;
 
 import javax.annotation.Nonnull;
-import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -30,26 +31,20 @@ import java.util.function.Function;
  * @author wjybxx
  * date - 2024/1/9
  */
-@SuppressWarnings("NullableProblems")
-public interface IExecutorService extends ExecutorService, IExecutor {
+public interface IExecutorService extends IExecutor {
 
     // region lifecycle
 
     /**
-     * 查询{@link IEventLoopGroup}是否处于正在关闭状态。
+     * 查询{@link IExecutorService}是否处于正在关闭状态。
      * 正在关闭状态下，拒绝接收新任务，当执行完所有任务后，进入关闭状态。
-     *
-     * @return 如果该{@link IEventLoopGroup}管理的所有{@link IEventLoop}正在关闭或已关闭则返回true
      */
     boolean isShuttingDown();
 
     /**
      * 查询{@link IEventLoopGroup}是否处于关闭状态。
      * 关闭状态下，拒绝接收新任务，执行退出前的清理操作，执行完清理操作后，进入终止状态。
-     *
-     * @return 如果已关闭，则返回true
      */
-    @Override
     boolean isShutdown();
 
     /**
@@ -57,7 +52,6 @@ public interface IExecutorService extends ExecutorService, IExecutor {
      *
      * @return 如果已处于终止状态，则返回true
      */
-    @Override
     boolean isTerminated();
 
     /**
@@ -76,7 +70,6 @@ public interface IExecutorService extends ExecutorService, IExecutor {
      * @return 在方法返回前是否已进入终止状态
      * @throws InterruptedException 如果在等待期间线程被中断，则抛出该异常。
      */
-    @Override
     boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException;
 
     /**
@@ -87,7 +80,6 @@ public interface IExecutorService extends ExecutorService, IExecutor {
      * 该方法会立即返回，如果想等待 ExecutorService 进入终止状态，
      * 可以使用{@link #awaitTermination(long, TimeUnit)}或{@link #terminationFuture()} 进行等待
      */
-    @Override
     void shutdown();
 
     /**
@@ -100,7 +92,6 @@ public interface IExecutorService extends ExecutorService, IExecutor {
      *
      * @return 被取消的任务
      */
-    @Override
     List<Runnable> shutdownNow();
 
     // endregion
@@ -133,53 +124,5 @@ public interface IExecutorService extends ExecutorService, IExecutor {
 
     IFuture<?> submitAction(Consumer<Object> task, Object ctx, int options);
 
-    @Deprecated
-    @Override
-    default <T> IFuture<T> submit(@Nonnull Callable<T> task) {
-        return submitFunc(task);
-    }
-
-    @Deprecated
-    @Override
-    default IFuture<?> submit(@Nonnull Runnable task) {
-        return submitAction(task);
-    }
-
-    /**
-     * 从Java引入lambda开始，对接收函数式接口的方法进行重载时，必须要具备明显的差异才可。
-     * 如果接口的差异过小，建议使用不同的方法名，而不是重载。
-     *
-     * @deprecated {{@link #submitAction(Runnable)}}
-     */
-    @Deprecated
-    @Override
-    default <T> IFuture<T> submit(@Nonnull Runnable task, T result) {
-        return submitFunc(Executors.callable(task, result));
-    }
-
     // endregion
-
-    // REGION 不建议使用的API
-    // 这些API定义在这里是个错误，这是历史遗留问题--应该是最初没想好解决方案。
-
-    @Nonnull
-    @Override
-    <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)
-            throws InterruptedException;
-
-    @Nonnull
-    @Override
-    <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
-            throws InterruptedException;
-
-    @Nonnull
-    @Override
-    <T> T invokeAny(Collection<? extends Callable<T>> tasks)
-            throws InterruptedException, ExecutionException;
-
-    @Override
-    <T> T invokeAny(Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit) throws
-            InterruptedException, ExecutionException, TimeoutException;
-
-    // ENDREGION
 }

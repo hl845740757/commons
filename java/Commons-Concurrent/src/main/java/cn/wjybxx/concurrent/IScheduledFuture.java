@@ -22,7 +22,9 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 定时任务关联的Future。
- * ps：不能立即获得结果的任务，都应该关联该类型的Future。
+ * ps：
+ * 1.不能立即获得结果的任务，都应该关联该类型的Future。
+ * 2.该接口其实主要还是用于兼容JDK。
  *
  * @author wjybxx
  * date 2023/4/9

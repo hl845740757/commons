@@ -806,12 +806,10 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             if (reentryId != this.reentryId) {
                 return;
             }
-#if !TASK_MANUAL_CHECK_CANCEL
             if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
                 SetCompleted(TaskStatus.CANCELLED, false);
                 return;
             }
-#endif
         }
         if (CheckSlowStart(ctl)) { // 需要使用最新的ctl
             if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
@@ -824,12 +822,10 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (reentryId != this.reentryId) {
             return;
         }
-#if !TASK_MANUAL_CHECK_CANCEL
         if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
             SetCompleted(TaskStatus.CANCELLED, false);
             return;
         }
-#endif
         if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
             control.OnChildRunning(this, true);
         }
@@ -847,23 +843,19 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         if (fromControl && (ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
             return;
         }
-#if !TASK_MANUAL_CHECK_CANCEL
         if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
             SetCompleted(TaskStatus.CANCELLED, false);
             return;
         }
-#endif
         short reentryId = this.reentryId;
         Execute();
         if (reentryId != this.reentryId) {
             return;
         }
-#if !TASK_MANUAL_CHECK_CANCEL
         if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
             SetCompleted(TaskStatus.CANCELLED, false);
             return;
         }
-#endif
         // 如果可以被内联的子节点没有被内联执行，则尝试通知父节点修复内联
         if (fromControl && IsInlinable && (ctl & MASK_DISABLE_NOTIFY) == 0) {
             control.OnChildRunning(this, false);
@@ -886,21 +878,17 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         short reentryId = this.reentryId;
         // 内联template_execute逻辑
         {
-#if !TASK_MANUAL_CHECK_CANCEL
             if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
                 SetCompleted(TaskStatus.CANCELLED, false);
                 goto outer;
             }
-#endif
             Execute();
             if (reentryId != this.reentryId) {
                 goto outer;
             }
-#if !TASK_MANUAL_CHECK_CANCEL
             if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
                 SetCompleted(TaskStatus.CANCELLED, false);
             }
-#endif
         }
         outer:
         {

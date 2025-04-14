@@ -16,6 +16,7 @@
 
 package cn.wjybxx.concurrent;
 
+import javax.annotation.Nullable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -28,8 +29,7 @@ import java.util.concurrent.TimeUnit;
  * @author wjybxx
  * date - 2024/1/9
  */
-@SuppressWarnings("NullableProblems")
-public interface IScheduledExecutorService extends IExecutorService, ScheduledExecutorService {
+public interface IScheduledExecutorService extends IExecutorService {
 
     /**
      * 创建一个promise以用于任务调度
@@ -54,7 +54,8 @@ public interface IScheduledExecutorService extends IExecutorService, ScheduledEx
      * @param task        要执行的任务
      * @param cancelToken 取消令牌
      */
-    <V> IScheduledFuture<V> scheduleFunc(Callable<V> task, long delay, TimeUnit unit, ICancelToken cancelToken);
+    <V> IScheduledFuture<V> scheduleFunc(Callable<V> task, long delay, TimeUnit unit,
+                                         @Nullable ICancelToken cancelToken);
 
     /**
      * 延迟指定时间后执行给定的任务
@@ -62,18 +63,21 @@ public interface IScheduledExecutorService extends IExecutorService, ScheduledEx
      * @param task        要执行的任务
      * @param cancelToken 取消令牌
      */
-    IScheduledFuture<?> scheduleAction(Runnable task, long delay, TimeUnit unit, ICancelToken cancelToken);
+    IScheduledFuture<?> scheduleAction(Runnable task, long delay, TimeUnit unit,
+                                       @Nullable ICancelToken cancelToken);
 
     /**
      * 以固定延迟执行给定的任务(少执行了就少执行了)
      * FixedDelay只保证两次任务的执行间隔一定大于等于给定延迟
      */
-    IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit, ICancelToken cancelToken);
+    IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit,
+                                               @Nullable ICancelToken cancelToken);
 
     /**
      * 以固定频率执行给定的任务（少执行了会补-慎用）
      */
-    IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit, ICancelToken cancelToken);
+    IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit,
+                                            @Nullable ICancelToken cancelToken);
 
     // region jdk
 
@@ -81,37 +85,25 @@ public interface IScheduledExecutorService extends IExecutorService, ScheduledEx
      * 延迟指定时间后执行给定的任务
      * {@inheritDoc}
      */
-    @Override
-    default IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
-        return scheduleAction(task, delay, unit, ICancelToken.NONE);
-    }
+    IScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit);
 
     /**
      * 延迟指定时间后执行给定的任务
      * {@inheritDoc}
      */
-    @Override
-    default <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit) {
-        return scheduleFunc(task, delay, unit, ICancelToken.NONE);
-    }
+    <V> IScheduledFuture<V> schedule(Callable<V> task, long delay, TimeUnit unit);
 
     /**
      * 以固定延迟执行给定的任务(少执行了就少执行了)
      * {@inheritDoc}
      */
-    @Override
-    default IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit) {
-        return scheduleWithFixedDelay(task, initialDelay, delay, unit, ICancelToken.NONE);
-    }
+    IScheduledFuture<?> scheduleWithFixedDelay(Runnable task, long initialDelay, long delay, TimeUnit unit);
 
     /**
      * 以固定频率执行给定的任务（少执行了会补-慎用）
      * {@inheritDoc}
      */
-    @Override
-    default IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit) {
-        return scheduleAtFixedRate(task, initialDelay, period, unit, ICancelToken.NONE);
-    }
+    IScheduledFuture<?> scheduleAtFixedRate(Runnable task, long initialDelay, long period, TimeUnit unit);
 
     // ENDREGION
 }
