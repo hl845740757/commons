@@ -457,7 +457,7 @@ public class ValuePromise<T> : IValuePromise<T>
     private void SetCompletion(int type, object action, object? state, IExecutor? executor, int options) {
         if (action == null) throw new ArgumentNullException(nameof(action));
         // 去除用户的低位，记录type
-        options &= (~TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE);
+        options &= (~TaskOptions.MASK_CTL_RESERVED);
         options |= type;
 
         // 先尝试锁定为发布状态，PostComplete会等待发布

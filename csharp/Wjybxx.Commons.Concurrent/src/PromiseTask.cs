@@ -123,7 +123,7 @@ public class PromiseTask<T> : IFutureTask
         this.options = options;
         this.promise = promise ?? throw new ArgumentNullException(nameof(promise));
 
-        this.ctl = (options & TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE);
+        this.ctl = (options & TaskOptions.MASK_CTL_RESERVED);
         this.ctl |= (taskType << PromiseTask.OFFSET_TASK_TYPE);
     }
 

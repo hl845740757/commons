@@ -27,102 +27,92 @@ import cn.wjybxx.base.annotation.Beta;
 public final class TaskOptions {
 
     /**
+     * 调度器使用的控制标识位(低8位)
+     * 调度器会擦除掉用户的低8位，存储调度器的信息
+     */
+    public static final int MASK_CTL_RESERVED = 0xFF;
+
+    /**
      * 延时任务的优先级，取值[0, 15]
      * 1. 当任务的触发时间相同时，按照优先级排序，值越低优先级越高。
      * 2. 由于0需要表示未设置优先级，因此Executor会对值进行偏移，通常而言是减1。
      * 3. 优先级值的约定取决于各自的实现。
      */
     @Beta
-    public static final int MASK_PRIORITY = 0x0F;
+    public static final int MASK_PRIORITY = 0x0F00;
     /**
-     * 低位用于存储任务的调度阶段，取值[0, 15]，使用低位可以避免位移。
+     * 任务的调度阶段，取值[0, 15]。
      * 1. 用于指定异步任务的调度时机。
      * 2. 主要用于{@link IEventLoop}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
      */
-    public static final int MASK_SCHEDULE_PHASE = 0xF0;
+    @Beta
+    public static final int MASK_SCHEDULE_PHASE = 0xF000;
 
     /**
      * 事件循环在执行该任务前必须先处理一次定时任务队列。
      * 1. EventLoop收到具有该特征的任务时，需要更新时间戳，尝试执行该任务之前的所有定时任务。
      * 2. 该选项不一定能保证时序，因为存在时序依赖的任务可能同时提交成功。
      */
-    public static final int SCHEDULE_BARRIER = 1 << 12;
-
+    public static final int SCHEDULE_BARRIER = 1 << 16;
     /**
      * 本地序（可以与其它线程无序）
      * 对于EventLoop内部的任务，启用该特征值可跳过全局队列，这在EventLoop是有界的情况下可以避免死锁或阻塞。
      */
-    public static final int LOCAL_ORDER = 1 << 13;
+    public static final int LOCAL_ORDER = 1 << 17;
 
     /**
      * 唤醒事件循环线程
      * 事件循环线程可能阻塞某些操作上，如果一个任务需要EventLoop及时处理，则可以启用该选项唤醒线程。
      */
-    public static final int WAKEUP_THREAD = 1 << 14;
+    public static final int WAKEUP_THREAD = 1 << 18;
 
     /**
      * 延时任务：在出现异常后继续执行。
      * 1.只适用无需结果的周期性任务 -- 分时任务会失败。
      * 2.如果需要取消任务，需通过取消令牌实现。
      */
-    public static final int CAUGHT_EXCEPTION = 1 << 15;
+    public static final int CAUGHT_EXCEPTION = 1 << 19;
     /**
      * 延时任务：在执行任务前检测超时
      * 1. 也就是说在已经超时的情况下不执行任务。
      * 2. 在执行后一定会检测一次超时。
      */
-    public static final int TIMEOUT_BEFORE_RUN = 1 << 16;
+    public static final int TIMEOUT_BEFORE_RUN = 1 << 20;
     /**
      * 延时任务：监听future中的取消信号
      * <p>
      * ps:监听取消信号的目的在于及时从队列中删除任务。
      */
-    public static final int LISTEN_FUTURE_CANCEL = 1 << 17;
+    public static final int LISTEN_FUTURE_CANCEL = 1 << 21;
     /**
      * 延时任务：监听取消令牌中的取消信号
      * <p>
      * ps:监听取消信号的目的在于及时从队列中删除任务。
      */
-    public static final int LISTEN_CTS_CANCEL = 1 << 18;
+    public static final int LISTEN_CTS_CANCEL = 1 << 22;
 
     /**
      * 如果一个异步任务当前已在目标{@link SingleThreadExecutor}线程，则立即执行，而不提交任务。
      * 仅用于{@link ICompletionStage}
      */
-    public static final int STAGE_TRY_INLINE = 1 << 19;
-    /**
-     * 默认情况下，stage的options仅用于自身，
-     * 如果一个异步任务的Executor是{@link IExecutor}类型，且期望将options传递给Executor时，可以启用该选项。
-     *
-     * @deprecated 不冲突，总是传递；另外，不传递我们还需要存储两份options。
-     */
-    @Deprecated
-    public static final int STAGE_PROPAGATE_OPTIONS = 1 << 20;
+    public static final int STAGE_TRY_INLINE = 1 << 23;
     /**
      * 默认情况下，Stage会在触发回调之前检测ctx否为{@link IContext}或{@link ICancelToken}类型，并检测取消信号。
      * 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
      */
-    public static final int STAGE_UNCANCELLABLE_CTX = 1 << 21;
-
-    /**
-     * 分帧任务：慢启动。
-     * 默认情况下，分帧任务的start方法和update方法是同步执行的；
-     * 如果期望首次运行时仅执行start方法，可通过该选项启用。
-     */
-    public static final int TIMESHARING_SLOW_START = 1 << 22;
+    public static final int STAGE_UNCANCELLABLE_CTX = 1 << 24;
 
     // region util
     /** 优先级的存储偏移量 */
-    public static final int OFFSET_PRIORITY = 0;
+    public static final int OFFSET_PRIORITY = 8;
     /** 优先级的存储偏移量 */
-    public static final int OFFSET_SCHEDULE_PHASE = 4;
+    public static final int OFFSET_SCHEDULE_PHASE = 12;
 
     /** 优先级的最大值 */
-    public static final int MAX_PRIORITY = MASK_PRIORITY;
+    public static final int MAX_PRIORITY = 15;
     /** 调度阶段的最大值 */
-    public static final int MAX_SCHEDULE_PHASE = MASK_SCHEDULE_PHASE >> OFFSET_SCHEDULE_PHASE;
-    /** 调度阶段和优先级的掩码 */
-    public static final int MASK_PRIORITY_AND_SCHEDULE_PHASE = MASK_PRIORITY | MASK_SCHEDULE_PHASE;
+    public static final int MAX_SCHEDULE_PHASE = 15;
+
 
     /** 是否启用了所有选项 */
     public static boolean isEnabled(int flags, int option) {

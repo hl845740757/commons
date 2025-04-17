@@ -380,7 +380,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
     private static Completion GetComplete(IExecutor? executor, int options, CancelTokenSource source,
                                           int type, object action, object? ctx) {
         // 去除用户的低位，记录type
-        options &= (~TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE);
+        options &= (~TaskOptions.MASK_CTL_RESERVED);
         options |= type;
 
         Completion completion = POOL.Acquire();

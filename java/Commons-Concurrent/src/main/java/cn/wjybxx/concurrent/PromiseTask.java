@@ -78,7 +78,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
         this.options = options;
         this.promise = Objects.requireNonNull(promise, "promise");
 
-        this.ctl = (options & TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE);
+        this.ctl = (options & TaskOptions.MASK_CTL_RESERVED);
         this.ctl |= (taskType << OFFSET_TASK_TYPE);
     }
 

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Logger;
 using ILogger = Wjybxx.Commons.Logger.ILogger;
 
@@ -33,7 +34,7 @@ public sealed class SeriLoggerFactory : ILoggerFactory
     /// <summary>
     /// 所有的Logger
     /// </summary>
-    private readonly ConcurrentDictionary<string, SeriLoggerAdapter> _loggerMap = new ConcurrentDictionary<string, SeriLoggerAdapter>();
+    private readonly ConcurrentDictionary<string, SeriLogger> _loggerMap = new ConcurrentDictionary<string, SeriLogger>();
 
     /// <summary>
     /// 
@@ -60,7 +61,7 @@ public sealed class SeriLoggerFactory : ILoggerFactory
         if (_loggerMap.TryGetValue(name, out var logger)) {
             return logger;
         }
-        logger = new SeriLoggerAdapter(name, _logger, _appendName);
+        logger = new SeriLogger(_logger, name, _appendName);
         logger = _loggerMap.GetOrAdd(name, logger);
         return logger;
     }

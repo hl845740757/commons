@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Logger
 {
@@ -37,9 +38,10 @@ public sealed class ConsoleLoggerFactory : ILoggerFactory
     /// </summary>
     private readonly ConcurrentDictionary<string, ConsoleLogger> _loggerMap = new ConcurrentDictionary<string, ConsoleLogger>();
     /// <summary>
-    /// 启用的log等级
+    /// 全局log等级
+    /// (TODO 根据配置指定子logger的log等级)
     /// </summary>
-    private volatile Level _enabledLevel = Level.Info;
+    private volatile Level _rootLevel = Level.Info;
 
     private ConsoleLoggerFactory() {
     }
@@ -51,9 +53,9 @@ public sealed class ConsoleLoggerFactory : ILoggerFactory
     /// <summary>
     /// level可以在枚举外，0表示全部打印，[Error + 1]表示不打印
     /// </summary>
-    public Level EnabledLevel {
-        get => _enabledLevel;
-        set => _enabledLevel = value;
+    public Level RootLevel {
+        get => _rootLevel;
+        set => _rootLevel = value;
     }
 
     public ILogger GetLogger(string name) {
@@ -66,8 +68,9 @@ public sealed class ConsoleLoggerFactory : ILoggerFactory
         return logger;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool IsEnabled(Level level) {
-        return level >= _enabledLevel;
+        return level >= _rootLevel;
     }
 }
 }

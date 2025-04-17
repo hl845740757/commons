@@ -43,13 +43,10 @@ public interface TaskBuilder
     /// </summary>
     public const int TYPE_FUNC_CTX = 3;
 
-    /** 分时任务 */
-    [Obsolete("通过协程代替")]
-    public const int TYPE_TIMESHARING = 4;
     /// <summary>
     /// 表示委托类型为<see cref="ITask"/>，通常表示二次封装
     /// </summary>
-    public const int TYPE_TASK = 5;
+    public const int TYPE_TASK = 4;
 
     #region factory
 

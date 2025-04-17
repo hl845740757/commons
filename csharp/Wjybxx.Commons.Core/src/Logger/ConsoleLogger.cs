@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Wjybxx.Commons.Pool;
 
@@ -37,12 +38,13 @@ internal class ConsoleLogger : ILogger
 
     public string Name => _name;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsEnabled(Level level) {
         return _factory.IsEnabled(level);
     }
 
     public void Log(Level level, Exception? ex) {
-        if (!_factory.IsEnabled(level)) {
+        if (!IsEnabled(level)) {
             return;
         }
         if (ex == null) {
@@ -53,14 +55,14 @@ internal class ConsoleLogger : ILogger
     }
 
     public void Log(Level level, string format, params object?[] args) {
-        if (!_factory.IsEnabled(level)) {
+        if (!IsEnabled(level)) {
             return;
         }
         Console.WriteLine($"[{FormatDateTime(DateTime.Now)}] [{level}] [{_name}] {format}", args);
     }
 
     public void Log(Level level, Exception? ex, string format) {
-        if (!_factory.IsEnabled(level)) {
+        if (!IsEnabled(level)) {
             return;
         }
         Console.WriteLine($"[{FormatDateTime(DateTime.Now)}] [{level}] [{_name}] {format}");
@@ -70,7 +72,7 @@ internal class ConsoleLogger : ILogger
     }
 
     public void Log(Level level, Exception? ex, string format, params object?[] args) {
-        if (!_factory.IsEnabled(level)) {
+        if (!IsEnabled(level)) {
             return;
         }
         Console.WriteLine($"[{FormatDateTime(DateTime.Now)}] [{level}] [{_name}] {format}", args);

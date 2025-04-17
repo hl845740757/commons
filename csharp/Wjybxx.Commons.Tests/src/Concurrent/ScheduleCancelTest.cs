@@ -17,6 +17,8 @@
 using System;
 using NUnit.Framework;
 using Wjybxx.Commons.Concurrent;
+using Wjybxx.Commons.Ex;
+using Wjybxx.Commons.Mutable;
 using Wjybxx.Disruptor;
 
 namespace Commons.Tests.Concurrent;
@@ -75,5 +77,21 @@ public class ScheduleCancelTest
         IFuture<int> future = consumer.Schedule(in builder).AsFuture();
         future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
         Assert.IsTrue(future.ExceptionNow(false) is BetterCancellationException);
+    }
+    
+    
+    [Test]
+    public void testErrorCode() {
+        MutableInt counter = new MutableInt(0);
+        ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(() => {
+            if (counter.IncrementAndGet() > 5) {
+                throw ErrorCodeException.SUCCESS;
+            }
+        });
+        builder.SetFixedDelay(0, 10);
+
+        IFuture<int> future = consumer.Schedule(in builder).AsFuture();
+        future.AwaitUninterruptibly(TimeSpan.FromMilliseconds(300));
+        Assert.IsTrue(future.IsSucceeded);
     }
 }

@@ -579,7 +579,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private static Completion getComplete(Executor executor, int options, CancelTokenSource source,
                                           int type, Object action, Object ctx) {
         // 去除用户的低位，记录type
-        options &= (~TaskOptions.MASK_PRIORITY_AND_SCHEDULE_PHASE);
+        options &= (~TaskOptions.MASK_CTL_RESERVED);
         options |= type;
 
         Completion completion = POOL.acquire();
