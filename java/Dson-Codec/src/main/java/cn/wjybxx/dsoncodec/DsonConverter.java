@@ -110,15 +110,6 @@ public interface DsonConverter extends Converter {
      */
     DsonValue readAsDsonValue(Reader source);
 
-    /**
-     * 将Dson源解码为DsonValue中间对象 -- 读取全部数据，header存储在外层容器(DsonArray)上。
-     * 外部可以保存该对象，以提高重复反序列化的效率。
-     * (默认不关闭Reader)
-     *
-     * @param source 数据源
-     * @return 中间对象
-     */
-    DsonArray<String> readAsDsonCollection(Reader source);
     // endregion
 
     // region 快捷方法

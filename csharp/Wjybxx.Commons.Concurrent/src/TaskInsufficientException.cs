@@ -36,6 +36,7 @@ public class TaskInsufficientException : Exception, NoLogRequiredException
     public TaskInsufficientException(string? message, Exception? innerException) : base(message, innerException) {
     }
 
+    [Obsolete]
     protected TaskInsufficientException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 

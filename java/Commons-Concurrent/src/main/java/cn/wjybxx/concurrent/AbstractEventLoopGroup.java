@@ -176,6 +176,7 @@ public abstract class AbstractEventLoopGroup implements IEventLoopGroup {
 
     // 以下API并不常用，因此不做优化
 
+    @Deprecated
     @Nonnull
     @Override
     public <T> List<Future<T>> invokeAll(@Nonnull Collection<? extends Callable<T>> tasks)
@@ -183,6 +184,7 @@ public abstract class AbstractEventLoopGroup implements IEventLoopGroup {
         return select().invokeAll(tasks);
     }
 
+    @Deprecated
     @Nonnull
     @Override
     public <T> List<Future<T>> invokeAll(@Nonnull Collection<? extends Callable<T>> tasks, long timeout, @Nonnull TimeUnit unit)
@@ -190,6 +192,7 @@ public abstract class AbstractEventLoopGroup implements IEventLoopGroup {
         return select().invokeAll(tasks, timeout, unit);
     }
 
+    @Deprecated
     @Nonnull
     @Override
     public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> tasks)
@@ -197,6 +200,7 @@ public abstract class AbstractEventLoopGroup implements IEventLoopGroup {
         return select().invokeAny(tasks);
     }
 
+    @Deprecated
     @Override
     public <T> T invokeAny(@Nonnull Collection<? extends Callable<T>> tasks, long timeout, @Nonnull TimeUnit unit)
             throws InterruptedException, ExecutionException, TimeoutException {

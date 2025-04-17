@@ -97,11 +97,6 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     @Override
-    public int childCount() {
-        return 1;
-    }
-
-    @Override
     public final void ensureInEventLoop() {
         if (!inEventLoop()) {
             throw new GuardedOperationException();

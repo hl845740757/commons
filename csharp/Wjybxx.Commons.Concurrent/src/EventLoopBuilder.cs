@@ -119,8 +119,6 @@ public class DisruptorEventLoopBuilder<T> : EventLoopBuilder<T> where T : IAgent
 #nullable disable
     private EventSequencer<T> eventSequencer;
     private WaitStrategy waitStrategy;
-    private bool cleanEventAfterConsumed = true;
-    private bool cleanBufferOnExit = true;
 
     private void CheckBuild() {
         if (ThreadFactory == null) {
@@ -159,24 +157,6 @@ public class DisruptorEventLoopBuilder<T> : EventLoopBuilder<T> where T : IAgent
     public WaitStrategy WaitStrategy {
         get => waitStrategy;
         set => waitStrategy = value;
-    }
-
-    /// <summary>
-    /// 在消费事件后是否调用<see cref="IAgentEvent.Clean()"/>方法清理引用数据 
-    /// </summary>
-    public bool CleanEventAfterConsumed {
-        get => cleanEventAfterConsumed;
-        set => cleanEventAfterConsumed = value;
-    }
-
-    /// <summary>
-    /// EventLoop在退出的时候是否清理buffer
-    /// 1. 默认清理
-    /// 2. 如果该值为true，意味着当前消费者是消费者的末端，或仅有该EventLoop消费者。
-    /// </summary>
-    public bool CleanBufferOnExit {
-        get => cleanBufferOnExit;
-        set => cleanBufferOnExit = value;
     }
 }
 }

@@ -36,6 +36,7 @@ public class GuardedOperationException : Exception
     public GuardedOperationException(string? message, Exception? innerException) : base(message, innerException) {
     }
 
+    [Obsolete]
     protected GuardedOperationException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 }

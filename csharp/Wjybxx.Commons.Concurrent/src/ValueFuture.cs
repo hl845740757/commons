@@ -456,6 +456,10 @@ public readonly struct ValueFuture<T>
     /// </summary>
     public bool IsWrapper => _future != null;
 
+    /// <summary>
+    /// 转换为不接收结果的Future
+    /// </summary>
+    /// <returns></returns>
     public ValueFuture ToVoid() {
         if (_future == null) {
             if (_ex == null) {

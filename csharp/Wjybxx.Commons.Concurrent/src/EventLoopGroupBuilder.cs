@@ -28,7 +28,7 @@ public class EventLoopGroupBuilder
     private EventLoopChooserFactory? chooserFactory;
 
     public virtual IEventLoopGroup Build() {
-        return new FixedEventLoopGroup(this);
+        return new DefaultEventLoopGroup(this);
     }
 
     public int NumChildren {

@@ -41,5 +41,16 @@ public interface IEventLoopGroup : IScheduledExecutorService, IEnumerable<IEvent
     /// </summary>
     /// <returns></returns>
     IEventLoop Select();
+
+    /// <summary>
+    /// 通过一个键选择一个<see cref="IEventLoop"/>用于接下来的任务调度。
+    /// 如果事件循环组的事件循环数量是动态的，那么同一个key可能返回不同的{@link IEventLoop}，也可能在事件循环销毁前总是返回同一个事件循环；
+    /// 如果事件循环组的事件循环数量是固定的，那么同一个key应当返回固定的{@link IEventLoop};
+    ///
+    /// 这提供了另一种绑定事件循环的方式，使得业务不必保存事件循环的引用。
+    /// </summary>
+    /// <param name="key">计算索引的键</param>
+    /// <returns></returns>
+    IEventLoop Select(int key);
 }
 }

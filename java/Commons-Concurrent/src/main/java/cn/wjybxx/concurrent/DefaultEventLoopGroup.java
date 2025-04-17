@@ -30,9 +30,9 @@ import java.util.function.Consumer;
  * @author wjybxx
  * date 2023/4/8
  */
-public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implements IFixedEventLoopGroup {
+public class DefaultEventLoopGroup extends AbstractEventLoopGroup implements IEventLoopGroup {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultFixedEventLoopGroup.class);
+    private static final Logger logger = LoggerFactory.getLogger(DefaultEventLoopGroup.class);
     private final IPromise<Void> terminationFuture = new Promise<>();
 
     private final IEventLoop[] children;
@@ -40,7 +40,7 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
     private final EventLoopChooser chooser;
     private final Runnable terminationHook;
 
-    public DefaultFixedEventLoopGroup(EventLoopGroupBuilder builder) {
+    public DefaultEventLoopGroup(EventLoopGroupBuilder builder) {
         int numChildren = builder.getNumChildren();
         if (numChildren < 1) {
             throw new IllegalArgumentException("childCount must greater than 0");
@@ -124,11 +124,6 @@ public class DefaultFixedEventLoopGroup extends AbstractEventLoopGroup implement
     }
 
     // ------------------------------------- 迭代 ----------------------------
-
-    @Override
-    public int childCount() {
-        return children.length;
-    }
 
     @Nonnull
     @Override

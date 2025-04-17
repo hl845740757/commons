@@ -29,14 +29,14 @@ public class EventLoopGroupBuilder {
 
     //
 
-    /** 创建一个默认的builder - 最终将构建{@link IFixedEventLoopGroup} */
+    /** 创建一个默认的builder */
     public static EventLoopGroupBuilder newBuilder() {
         return new EventLoopGroupBuilder();
     }
     //
 
     public IEventLoopGroup build() {
-        return new DefaultFixedEventLoopGroup(this);
+        return new DefaultEventLoopGroup(this);
     }
 
     public int getNumChildren() {

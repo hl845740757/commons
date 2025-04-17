@@ -85,7 +85,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     private Registration cancelRegistration;
 #nullable enable
 
-    protected ScheduledPromiseTask() {
+    private ScheduledPromiseTask() {
     }
 
     /// <summary>

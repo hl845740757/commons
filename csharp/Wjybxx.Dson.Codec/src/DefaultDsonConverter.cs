@@ -100,7 +100,9 @@ public class DefaultDsonConverter : IDsonConverter
 
     public T Read<T>(DsonChunk chunk, Type declaredType, Func<T>? factory = null) {
         IDsonInput inputStream = DsonInputs.NewInstance(chunk.Buffer, chunk.Offset, chunk.Length);
-        return DecodeObject<T>(inputStream, declaredType, factory);
+        T result = DecodeObject<T>(inputStream, declaredType, factory);
+        chunk.Used = inputStream.Position;
+        return result;
     }
 
     public T CloneObject<T>(T value, Func<T>? factory = null) {
@@ -221,8 +223,9 @@ public class DefaultDsonConverter : IDsonConverter
         if (!source.DsonType.IsContainer()) {
             throw new ArgumentException("value must be container");
         }
+        DsonArray<string> dsonArray = new DsonArray<string>(1).Append(source);
         DsonCollectionReader<string> objectReader =
-            new DsonCollectionReader<string>(options.binReaderSettings, new DsonArray<string>().Append(source));
+            new DsonCollectionReader<string>(options.binReaderSettings, dsonArray);
         using IDsonObjectReader wrapper = new BufferedDsonObjectReader(this, objectReader);
         return wrapper.ReadObject(null, declaredType, factory);
     }
@@ -230,11 +233,6 @@ public class DefaultDsonConverter : IDsonConverter
     public DsonValue ReadAsDsonValue(TextReader source) {
         using DsonTextReader textReader = new DsonTextReader(options.textReaderSettings, Dsons.NewStreamScanner(source, false));
         return Dsons.ReadTopDsonValue(textReader)!;
-    }
-
-    public DsonArray<string> ReadAsDsonCollection(TextReader source) {
-        using DsonTextReader textReader = new DsonTextReader(options.textReaderSettings, Dsons.NewStreamScanner(source, false));
-        return Dsons.ReadCollection(textReader)!;
     }
 
     #endregion

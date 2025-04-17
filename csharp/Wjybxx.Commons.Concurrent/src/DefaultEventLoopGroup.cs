@@ -27,7 +27,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 默认的固定Child的事件循环组
 /// </summary>
-public class FixedEventLoopGroup : AbstractEventLoopGroup, IFixedEventLoopGroup
+public class DefaultEventLoopGroup : AbstractEventLoopGroup, IEventLoopGroup
 {
     private readonly IPromise<int> terminationPromise = new Promise<int>();
     private readonly IEventLoop[] children;
@@ -35,7 +35,7 @@ public class FixedEventLoopGroup : AbstractEventLoopGroup, IFixedEventLoopGroup
     private readonly IEventLoopChooser chooser;
     private volatile int terminatedChildren;
 
-    public FixedEventLoopGroup(EventLoopGroupBuilder builder) {
+    public DefaultEventLoopGroup(EventLoopGroupBuilder builder) {
         int numChildren = builder.NumChildren;
         if (numChildren < 1) {
             throw new ArgumentException("childCount must greater than 0");
@@ -65,13 +65,11 @@ public class FixedEventLoopGroup : AbstractEventLoopGroup, IFixedEventLoopGroup
         }
     }
 
-    public int ChildCount => children.Length;
-
     public override IEventLoop Select() {
         return chooser.Select();
     }
 
-    public IEventLoop Select(int key) {
+    public override IEventLoop Select(int key) {
         return chooser.Select(key);
     }
 

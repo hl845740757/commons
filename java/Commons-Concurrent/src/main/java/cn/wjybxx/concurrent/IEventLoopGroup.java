@@ -43,10 +43,22 @@ import java.util.concurrent.ScheduledExecutorService;
 public interface IEventLoopGroup extends IScheduledExecutorService, ScheduledExecutorService, Iterable<IEventLoop> {
 
     /**
-     * 选择一个 {@link IEventLoop}用于接下来的任务调度
+     * 随机选择一个{@link IEventLoop}用于接下来的任务调度
      */
     @Nonnull
     IEventLoop select();
+
+    /**
+     * 通过一个键选择一个{@link IEventLoop}
+     * 如果事件循环组的事件循环数量是动态的，那么同一个key可能返回不同的{@link IEventLoop}，也可能在事件循环销毁前总是返回同一个事件循环；
+     * 如果事件循环组的事件循环数量是固定的，那么同一个key应当返回固定的{@link IEventLoop};
+     * <p>
+     * 这提供了另一种绑定事件循环的方式，使得业务不必保存事件循环的引用。
+     *
+     * @param key 计算索引的键；限定int可保证选择性能
+     */
+    @Nonnull
+    IEventLoop select(int key);
 
     /**
      * 注意；如果包含不定数量的EventLoop，返回的是快照。

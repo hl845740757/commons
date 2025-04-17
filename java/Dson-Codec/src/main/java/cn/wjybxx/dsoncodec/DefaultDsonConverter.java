@@ -110,7 +110,9 @@ class DefaultDsonConverter implements DsonConverter {
     @Override
     public <T> T read(DsonChunk chunk, TypeInfo declaredType, Supplier<? extends T> factory) {
         final DsonInput inputStream = DsonInputs.newInstance(chunk.getBuffer(), chunk.getOffset(), chunk.getLength());
-        return decodeObject(inputStream, declaredType, factory);
+        T result = decodeObject(inputStream, declaredType, factory);
+        chunk.setUsed(inputStream.getPosition());
+        return result;
     }
 
     @Override
@@ -213,7 +215,7 @@ class DefaultDsonConverter implements DsonConverter {
         if (!source.getDsonType().isContainer()) {
             throw new IllegalArgumentException("value must be container");
         }
-        DsonArray<String> dsonArray = new DsonArray<String>().append(source);
+        DsonArray<String> dsonArray = new DsonArray<String>(1).append(source);
         try (DsonObjectReader wrapper = new BufferedDsonObjectReader(this,
                 new DsonCollectionReader(options.binReaderSettings, dsonArray))) {
             return wrapper.readObject(null, declaredType, factory);
@@ -224,13 +226,6 @@ class DefaultDsonConverter implements DsonConverter {
     public DsonValue readAsDsonValue(Reader source) {
         try (DsonReader textReader = new DsonTextReader(options.textReaderSettings, Dsons.newStreamScanner(source, false))) {
             return Dsons.readTopDsonValue(textReader);
-        }
-    }
-
-    @Override
-    public DsonArray<String> readAsDsonCollection(Reader source) {
-        try (DsonReader textReader = new DsonTextReader(options.textReaderSettings, Dsons.newStreamScanner(source, false))) {
-            return Dsons.readCollection(textReader);
         }
     }
 }

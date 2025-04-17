@@ -40,6 +40,8 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
 
     public abstract IEventLoop Select();
 
+    public abstract IEventLoop Select(int key);
+
     #region 生命周期
 
     public abstract void Shutdown();

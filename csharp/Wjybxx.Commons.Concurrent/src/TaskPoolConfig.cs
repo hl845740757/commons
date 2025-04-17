@@ -44,15 +44,16 @@ public static class TaskPoolConfig
         if (func != null) {
             return Math.Max(0, func.Invoke(poolType, typeof(T)));
         }
+        // 通常使用int代替void，而object适用装箱场景
+        bool isIntOrObject = typeof(T) == typeof(int) || typeof(T) == typeof(object);
         if (poolType == TaskPoolType.ValuePromise
             || poolType == TaskPoolType.PromiseMoveNext) {
-            // 区分泛型，int表示void，可以多分配
-            return typeof(T) == typeof(int) ? 1000 : 50;
+            return isIntOrObject ? 1000 : 50;
         }
         if (poolType == TaskPoolType.CtsCompletion) {
             return 500; // 不区分泛型
         }
-        return typeof(T) == typeof(int) ? 100 : 20;
+        return isIntOrObject ? 100 : 20;
     }
 }
 

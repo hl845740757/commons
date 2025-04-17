@@ -501,7 +501,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
                         break;
                     }
                     case TYPE_ACCEPT_CTX: {
-                        Action<ICancelToken, object> action = (Action<ICancelToken, object>)rawAction;
+                        Action<ICancelToken, object?> action = (Action<ICancelToken, object?>)rawAction;
                         action(source, ctx);
                         break;
                     }
@@ -511,7 +511,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
                         break;
                     }
                     case TYPE_RUN_CTX: {
-                        Action<object> action = (Action<object>)rawAction;
+                        Action<object?> action = (Action<object?>)rawAction;
                         action(ctx);
                         break;
                     }

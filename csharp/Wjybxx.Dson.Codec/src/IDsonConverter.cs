@@ -100,13 +100,6 @@ public interface IDsonConverter : IConverter
     /// <returns></returns>
     DsonValue ReadAsDsonValue(TextReader source);
 
-    /// <summary>
-    /// 将Dson源解码为DsonValue中间对象 -- 读取全部数据，header存储在外层容器(DsonArray)上。
-    /// 外部可以保存该对象，以提高重复反序列化的效率。
-    /// </summary>
-    /// <returns></returns>
-    DsonArray<string> ReadAsDsonCollection(TextReader chunk);
-
     // 非泛型重载和默认T为声明类型的重载
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     string WriteAsDson<T>(in T value, ObjectStyle? style = null) {

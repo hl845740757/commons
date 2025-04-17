@@ -18,10 +18,10 @@ package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.fx.IEntity;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.Objects;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * 事件循环
@@ -62,25 +62,7 @@ import java.util.Objects;
  * date 2023/4/7
  */
 @ThreadSafe
-public interface IEventLoop extends IFixedEventLoopGroup, SingleThreadExecutor, IEntity {
-
-    /**
-     * @return this - 由于{@link IEventLoop}表示单个线程，因此总是分配自己。
-     */
-    @Nonnull
-    @Override
-    default IEventLoop select() {
-        return this;
-    }
-
-    /**
-     * @return this - 由于{@link IEventLoop}表示单个线程，因此总是选中自己
-     */
-    @Nonnull
-    @Override
-    default IEventLoop select(int key) {
-        return this;
-    }
+public interface IEventLoop extends IEventLoopGroup, SingleThreadExecutor, IEntity {
 
     /**
      * 返回该EventLoop线程所在的线程组（管理该EventLoop的容器）。

@@ -25,6 +25,7 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public interface ICancelTokenListener
 {
+#nullable disable
     /// <summary>
     /// 该方法在取消令牌收到取消信号时执行
     /// </summary>

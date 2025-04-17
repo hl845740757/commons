@@ -17,11 +17,8 @@
 #endregion
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Wjybxx.Commons.Collections;
-using Wjybxx.Dson.Text;
-using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec
 {
