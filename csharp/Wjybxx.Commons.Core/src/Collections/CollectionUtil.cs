@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -64,7 +65,7 @@ public static partial class CollectionUtil
     /// 判断集合是否为空或null
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsNullOrEmpty<T>(ICollection<T>? self) => self == null || self.Count == 0;
+    public static bool IsNullOrEmpty<T>([NotNullWhen(false)] ICollection<T>? self) => self == null || self.Count == 0;
 
     /// <summary>
     /// 判断集合是否为空
@@ -160,7 +161,7 @@ public static partial class CollectionUtil
     /// 判断字典是否为空或null
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsNullOrEmpty<K, V>(IDictionary<K, V>? self) => self == null || self.Count == 0;
+    public static bool IsNullOrEmpty<K, V>([NotNullWhen(false)] IDictionary<K, V>? self) => self == null || self.Count == 0;
 
     /// <summary>
     /// 判断字典是否为空

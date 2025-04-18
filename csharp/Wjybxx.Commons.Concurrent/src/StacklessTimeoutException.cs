@@ -17,7 +17,7 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
+
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -37,10 +37,6 @@ public class StacklessTimeoutException : TimeoutException
     }
 
     public StacklessTimeoutException(string? message, Exception? innerException) : base(message, innerException) {
-    }
-
-    [Obsolete]
-    protected StacklessTimeoutException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 
     public override string? StackTrace => null;

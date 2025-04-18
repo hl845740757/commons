@@ -18,6 +18,7 @@
 
 #if UNITY_2021_3_OR_NEWER
 using System;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Wjybxx.Commons.Logger
@@ -34,6 +35,7 @@ internal class UnityLogger : ILogger
 
     public string Name => _name;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsEnabled(Level level) {
         return _factory.IsEnabled(level);
     }

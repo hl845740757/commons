@@ -1392,7 +1392,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         public Node(int hash, TKey key, TValue value, int index, int prev) {
             this.key = key;
             this.value = value;
-            
+
             this.hasKey = true;
             this.hash = hash;
             this.index = index;

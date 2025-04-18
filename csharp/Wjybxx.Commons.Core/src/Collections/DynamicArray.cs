@@ -252,7 +252,7 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
         if (minCapacity > MAX_CAPACITY) {
             throw new OutOfMemoryException("Required array length " + minCapacity + " is too large");
         }
-        
+
         // 中度的成长速度
         int grow = Math.Max(8, oldCapacity >> 1);
         int newCapacity = MathCommon.Clamp((long)oldCapacity + grow, minCapacity, MAX_CAPACITY);

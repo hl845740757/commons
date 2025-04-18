@@ -57,7 +57,7 @@ internal class AptFieldProps
             // 需要处理泛型参数，将字段的泛型参数拷贝给Impl
             props.implType = props.attribute.Impl;
             if (props.implType != null && props.implType.IsGenericType) {
-                Type fieldType = BeanUtils.GetMemberType(memberInfo);
+                Type fieldType = BeanUtils.GetFieldType(memberInfo);
                 props.implType = props.implType.GetGenericTypeDefinition()
                     .MakeGenericType(fieldType.GetGenericArguments());
             }

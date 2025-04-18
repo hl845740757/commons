@@ -17,7 +17,7 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
+
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -34,10 +34,6 @@ public class BlockingOperationException : Exception
     }
 
     public BlockingOperationException(string? message, Exception? innerException) : base(message, innerException) {
-    }
-
-    [Obsolete]
-    protected BlockingOperationException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 }
 }

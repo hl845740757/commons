@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
 using Wjybxx.Dson.IO;
 
 namespace Wjybxx.Dson.Text
@@ -34,9 +33,6 @@ public class DsonParseException : DsonIOException
     }
 
     public DsonParseException(string? message, Exception? innerException) : base(message, innerException) {
-    }
-
-    protected DsonParseException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 
     public new static DsonParseException Wrap(Exception e, string? message = null) {

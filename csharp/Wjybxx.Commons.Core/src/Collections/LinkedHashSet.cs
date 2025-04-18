@@ -795,7 +795,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     {
 #nullable disable
         internal TKey key;
-        
+
         internal bool hasKey; // 判断node是否有效，代替将index封装为Nullable<int>
         internal int hash; // Key的hash使用频率极高，缓存以减少求值开销
         internal int index;
@@ -814,7 +814,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
 
         public Node(int hash, TKey key, int index, int prev) {
             this.key = key;
-            
+
             this.hasKey = true;
             this.hash = hash;
             this.index = index;

@@ -17,7 +17,7 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
+
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -33,10 +33,6 @@ public class StartFailedException : Exception
     }
 
     public StartFailedException(string? message, Exception? innerException) : base(message, innerException) {
-    }
-
-    [Obsolete]
-    protected StartFailedException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 }
 }

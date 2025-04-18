@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using Wjybxx.Dson.Internal;
 using Wjybxx.Dson.Text;
 
@@ -36,9 +35,6 @@ public class DsonIOException : Exception
     }
 
     public DsonIOException(string? message, Exception? innerException) : base(message, innerException) {
-    }
-
-    protected DsonIOException(SerializationInfo info, StreamingContext context) : base(info, context) {
     }
 
     public static DsonIOException Wrap(Exception e, string? message = null) {

@@ -17,7 +17,7 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
+
 
 namespace Wjybxx.Commons.Ex
 {
@@ -47,21 +47,5 @@ public class ErrorCodeException : Exception, IErrorCodeException, NoLogRequiredE
     /// 不构建堆栈
     /// </summary>
     public override string? StackTrace => null;
-
-    #region seril
-
-    [Obsolete]
-    protected ErrorCodeException(SerializationInfo info, StreamingContext context)
-        : base(info, context) {
-        this.errorCode = info.GetInt32("code");
-    }
-
-    [Obsolete]
-    public override void GetObjectData(SerializationInfo info, StreamingContext context) {
-        base.GetObjectData(info, context);
-        info.AddValue("code", errorCode);
-    }
-
-    #endregion
 }
 }

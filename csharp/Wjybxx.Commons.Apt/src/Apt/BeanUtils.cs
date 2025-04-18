@@ -57,6 +57,25 @@ public class BeanUtils
     }
 
     /// <summary>
+    /// 获取关联的字段类型
+    /// </summary>
+    /// <param name="memberInfo"></param>
+    /// <returns></returns>
+    public static Type GetFieldType(MemberInfo memberInfo) {
+        switch (memberInfo) {
+            case FieldInfo fieldInfo: {
+                return fieldInfo.FieldType;
+            }
+            case PropertyInfo propertyInfo: {
+                return propertyInfo.PropertyType;
+            }
+            default: {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    /// <summary>
     /// 判断是否是静态属性
     /// </summary>
     public static bool IsStaticMember(MemberInfo memberInfo) {
@@ -79,25 +98,6 @@ public class BeanUtils
             }
             default: {
                 return true;
-            }
-        }
-    }
-
-    /// <summary>
-    /// 获取成员的类型(字段和属性)
-    /// </summary>
-    /// <param name="memberInfo"></param>
-    /// <returns></returns>
-    public static Type GetMemberType(MemberInfo memberInfo) {
-        switch (memberInfo) {
-            case FieldInfo fieldInfo: {
-                return fieldInfo.FieldType;
-            }
-            case PropertyInfo propertyInfo: {
-                return propertyInfo.PropertyType;
-            }
-            default: {
-                throw new AssertionError();
             }
         }
     }
