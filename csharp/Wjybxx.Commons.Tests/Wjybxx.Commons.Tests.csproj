@@ -29,6 +29,7 @@
         <ProjectReference Include="..\Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj" />
         <ProjectReference Include="..\Wjybxx.Commons.Concurrent\Wjybxx.Commons.Concurrent.csproj" />
         <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
+        <ProjectReference Include="..\Wjybxx.Commons.Inject\Wjybxx.Commons.Inject.csproj" />
         <ProjectReference Include="..\Wjybxx.Logger.Serilog\Wjybxx.Logger.Serilog.csproj" />
     </ItemGroup>
 

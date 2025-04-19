@@ -259,7 +259,8 @@ public static partial class CollectionUtil
         return ImmutableLinkedHastSet<T>.CreateRange(source, keyComparer);
     }
 
-    public static ImmutableLinkedDictionary<TKey, TValue> ToImmutableLinkedDictionary<TSource, TKey, TValue>(this IEnumerable<TSource> source,
+    public static ImmutableLinkedDictionary<TKey, TValue> ToImmutableLinkedDictionary<TSource, TKey, TValue>(
+        this IEnumerable<TSource> source,
         Func<TSource, TKey> keySelector,
         Func<TSource, TValue> elementSelector,
         IEqualityComparer<TKey>? keyComparer = null) {
