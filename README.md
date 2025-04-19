@@ -12,7 +12,8 @@ Wjybxx的公共模块，抽取以方便我的其它开源项目依赖这里的�
 3. 通用任务树(行为树) -- [行为树](docs/BTree.md)、[Java实现](java/BTree-Core)、[c#实现](csharp/Wjybxx.BTree.Core)
 4. 改进的Disruptor实现 -- [Java实现](java/Disruptor)、[C#实现](csharp/Wjybxx.Disruptor)
 5. 改进的并发库 -- [Java核心并发库](java/Commons-Concurrent)、[C#核心并发库](csharp/Wjybxx.Commons.Concurrent)
-6. [参考javapoet的C#代码生成工具](csharp/Wjybxx.Commons.Apt)
+6. [C#代码生成工具 -- JavaPoet移植](csharp/Wjybxx.Commons.Apt)
+7. [C#依赖注入框架](csharp/Wjybxx.Commons.Inject)
 
 ## 源码Unity兼容
 
@@ -20,4 +21,4 @@ Wjybxx的公共模块，抽取以方便我的其它开源项目依赖这里的�
 
 ## 个人公众号(游戏开发)
 
-![写代码的诗人](https://github.com/hl845740757/commons/blob/dev/docs/res/qrcode_for_wjybxx.jpg)
+![写代码的诗人](docs/res/qrcode_for_wjybxx.jpg)

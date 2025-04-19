@@ -80,7 +80,7 @@ public abstract class AbstractDsonObject<TK> : DsonValue, IGenericDictionary<TK,
         return _valueMap.Put(key, value);
     }
 
-    public virtual AbstractDsonObject<TK> Append(TK key, DsonValue value) {
+    public AbstractDsonObject<TK> Append(TK key, DsonValue value) {
         CheckElement(key, value);
         _valueMap[key!] = value;
         return this;

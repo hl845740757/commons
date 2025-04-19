@@ -46,6 +46,10 @@ APT包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
 
 Disruptor是LMAX的Disruptor的C#端实现，但并不是直接实现，而是修改后的实现，与我重写Java版的Disruptor模块一致。
 
+### Commons.Inject
+
+Inject模块是一个轻量级的依赖注入框架，主要用于框架层对象管理。
+
 ### Dson.Core
 
 Dson是我设计的文本格式，Dson.Core则是Dson文本格式的C#端实现。

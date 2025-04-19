@@ -100,67 +100,6 @@ public interface IDsonConverter : IConverter
     /// <returns></returns>
     DsonValue ReadAsDsonValue(TextReader source);
 
-    // 非泛型重载和默认T为声明类型的重载
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    string WriteAsDson<T>(in T value, ObjectStyle? style = null) {
-        return WriteAsDson<T>(in value, typeof(T), style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    string WriteAsDson(object value, Type declaredType, ObjectStyle? style = null) {
-        return WriteAsDson<object>(value, declaredType, style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    T ReadFromDson<T>(string source, Func<T>? factory = null) {
-        return ReadFromDson<T>(source, typeof(T), factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    object ReadFromDson(string source, Type declaredType, Func<object>? factory = null) {
-        return ReadFromDson<object>(source, declaredType, factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteAsDson<T>(in T value, TextWriter writer, ObjectStyle? style = null) {
-        WriteAsDson(in value, typeof(T), writer, style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteAsDson(object value, Type declaredType, TextWriter writer, ObjectStyle? style = null) {
-        WriteAsDson<object>(value, declaredType, writer, style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    T ReadFromDson<T>(TextReader source, Func<T>? factory = null) {
-        return ReadFromDson<T>(source, typeof(T), factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    object ReadFromDson(TextReader source, Type declaredType, Func<object>? factory = null) {
-        return ReadFromDson<object>(source, declaredType, factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    DsonValue WriteAsDsonValue<T>(in T value) {
-        return WriteAsDsonValue<T>(in value, typeof(T));
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    DsonValue WriteAsDsonValue(object value, Type declaredType) {
-        return WriteAsDsonValue<object>(value, declaredType);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    T ReadFromDsonValue<T>(DsonValue source, Func<T>? factory = null) {
-        return ReadFromDsonValue<T>(source, typeof(T), factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    object ReadFromDsonValue(DsonValue source, Type declaredType, Func<object>? factory = null) {
-        return ReadFromDsonValue<object>(source, declaredType, factory);
-    }
-
     #endregion
 
     #region other

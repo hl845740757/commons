@@ -153,22 +153,25 @@ public class CancelToken implements ICancelTokenListener {
         }
         int reentryId = cancelToken.reentryId;
         listeners.beginItr();
-        for (int idx = 0, len = listeners.length(); idx < len; idx++) {
-            var listener = listeners.set(idx, null); // 通知期间查询引用将返回null
-            if (listener == null) {
-                continue;
+        try {
+            for (int idx = 0, len = listeners.length(); idx < len; idx++) {
+                var listener = listeners.set(idx, null); // 通知期间查询引用将返回null
+                if (listener == null) {
+                    continue;
+                }
+                try {
+                    listener.onCancelRequested(cancelToken);
+                } catch (Throwable e) {
+                    Task.logger.info("listener caught exception", e);
+                }
+                // 在通知期间被Reset
+                if (reentryId != cancelToken.reentryId) {
+                    return;
+                }
             }
-            try {
-                listener.onCancelRequested(cancelToken);
-            } catch (Throwable e) {
-                Task.logger.info("listener caught exception", e);
-            }
-            // 在通知期间被Reset
-            if (reentryId != cancelToken.reentryId) {
-                return;
-            }
+        } finally {
+            listeners.endItr();
         }
-        listeners.endItr();
         listeners.clear();
     }
 

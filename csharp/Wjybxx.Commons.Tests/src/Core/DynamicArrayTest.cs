@@ -150,7 +150,7 @@ public class DynamicArrayTest
     
     private class Indexed : IEquatable<Indexed>
     {
-        internal int val;
+        internal readonly int val;
         internal int qIndex = -1;
 
         public Indexed(int val) {

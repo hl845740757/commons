@@ -47,7 +47,7 @@ PS：如果实现类是泛型的，那么不同运行时类型之间的单例也
         [InjectService("json")] // 指定注入命名为json的Service1
         public IService1 service1;
 
-        [Inject]
+        [Inject] // 注入 IService2，不存在时抛出异常
         public IService2 service2;
 
         [Inject]
@@ -62,6 +62,6 @@ PS：如果实现类是泛型的，那么不同运行时类型之间的单例也
 
 ## 反射
 
-默认实现是基于反射的，不适用于高频**创建**对象的场景，也不适用GameObject的管理，通常仅用于框架层的对象管理，因此对性能要求不高。
+默认实现是基于反射的，不适用于高频**创建**对象的场景，也不适用GameObject的管理，通常用于框架层的对象管理。
 
 PS：单例对象的效率是不差的。

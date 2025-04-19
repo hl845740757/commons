@@ -205,9 +205,6 @@ public class CodecProcessor
                 } else {
                     ProcessDirectType(context);
                 }
-
-                context.aptClassProps = new AptClassProps();
-                context.aptClassProps.attribute = context.dsonSerilAttribute;
             }
             catch (Exception e) {
                 throw new Exception($"type: {type}", e);

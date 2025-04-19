@@ -70,7 +70,7 @@ public abstract class AbstractDsonArray : DsonValue, IList<DsonValue>, IEquatabl
         _values.Insert(index, item);
     }
 
-    public virtual AbstractDsonArray Append(DsonValue item) {
+    public AbstractDsonArray Append(DsonValue item) {
         CheckElement(item);
         _values.Add(item);
         return this;

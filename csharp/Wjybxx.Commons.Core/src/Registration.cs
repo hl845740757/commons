@@ -16,12 +16,14 @@
 
 #endregion
 
+using System;
+
 namespace Wjybxx.Commons
 {
 /// <summary>
 /// 默认的关闭句柄
 /// </summary>
-public readonly struct Registration : IRegistration
+public readonly struct Registration : IRegistration, IEquatable<Registration>
 {
     public static Registration Closed => new Registration();
 
@@ -41,6 +43,28 @@ public readonly struct Registration : IRegistration
 
     public void Dispose() {
         _res?.Dispose(_rid);
+    }
+
+    public bool Equals(Registration other) {
+        return _rid == other._rid && _res == other._res; // 引用相等
+    }
+
+    public override bool Equals(object? obj) {
+        return obj is Registration other && Equals(other);
+    }
+
+    public override int GetHashCode() {
+        unchecked {
+            return ((_res != null ? _res.GetHashCode() : 0) * 397) ^ _rid;
+        }
+    }
+
+    public static bool operator ==(Registration left, Registration right) {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(Registration left, Registration right) {
+        return !left.Equals(right);
     }
 }
 }

@@ -71,69 +71,7 @@ public interface IConverter
     /// <returns></returns>
     T Read<T>(DsonChunk source, Type declaredType, Func<T>? factory = null);
 
-    #region 快捷方法
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    byte[] Write<T>(in T value) {
-        return Write(in value, typeof(object)); // 默认写入对象类型，因此不是value.GetType
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    byte[] Write(object value, Type declaredType) {
-        return Write<object>(value, declaredType);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    T Read<T>(byte[] source, Func<T>? factory = null) {
-        return Read<T>(source, typeof(T), factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    object Read(byte[] source, Type declaredType, Func<object>? factory = null) {
-        return Read<object>(source, declaredType, factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Write<T>(in T value, DsonChunk chunk) {
-        Write(in value, typeof(T), chunk);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void Write(object value, Type declaredType, DsonChunk chunk) {
-        Write<object>(value, declaredType, chunk);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    T Read<T>(DsonChunk source, Func<T>? factory = null) {
-        return Read<T>(source, typeof(T), factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    object Read(DsonChunk source, Type declaredType, Func<object>? factory = null) {
-        return Read<object>(source, declaredType, factory);
-    }
-
-    /// <summary>
-    /// 将对象写入指定buffer，并返回写入的字节数
-    /// </summary>
-    /// <param name="value">要序列化的对象</param>
-    /// <param name="declaredType">对象的声明类型</param>
-    /// <param name="buffer">序列化输出buffer</param>
-    /// <typeparam name="T">对象的声明类型</typeparam>
-    /// <returns>写入的字节数</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    int Write<T>(in T value, Type declaredType, byte[] buffer) {
-        DsonChunk chunk = new DsonChunk(buffer);
-        Write(in value, declaredType, chunk);
-        return chunk.Used;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    int Write(object value, Type declaredType, byte[] buffer) {
-        DsonChunk chunk = new DsonChunk(buffer);
-        Write<object>(value, declaredType, chunk);
-        return chunk.Used;
-    }
+    #region Clone
 
     /// <summary>
     /// 克隆一个实例
