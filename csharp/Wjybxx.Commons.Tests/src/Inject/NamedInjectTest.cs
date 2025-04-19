@@ -24,6 +24,9 @@ using Wjybxx.Commons.Inject.Attributes;
 
 namespace Commons.Tests.Inject;
 
+/// <summary>
+/// 命名服务注入测试
+/// </summary>
 public class NamedInjectTest
 {
     [Test]
@@ -31,27 +34,24 @@ public class NamedInjectTest
         IInjector injector = InjectorExtensions.CreateInjector(new Module1());
         // service1是绑定了name的，不应该被匹配
         Assert.IsNull(injector.GetInstance<IService1>(null, true));
-
-        // service1是绑定了name的，不应该被匹配
+        // service1根据name的查找应当是存在的
         IService1 service1 = injector.GetInstance<IService1>("json");
         Assert.NotNull(service1);
 
+        // 顺带测试单例
         ServiceImpl serviceImpl = injector.GetInstance<ServiceImpl>();
         Assert.AreSame(serviceImpl.service1, service1);
 
-        IService2 service2 = injector.GetInstance<IService2>();
-        Assert.NotNull(service2);
-        Assert.AreSame(serviceImpl.service2, service2);
-
-        // 可选注入
-        Assert.IsNull(serviceImpl.service3);
+        // 多注入
+        Assert.IsNotNull(serviceImpl.service2);
+        Assert.AreEqual(2, serviceImpl.service2.Count);
 
         // 多注入
-        Assert.IsNotNull(serviceImpl.service4);
-        Assert.AreEqual(2, serviceImpl.service4.Count);
+        Assert.IsNotNull(serviceImpl.service3);
+        Assert.AreEqual(1, serviceImpl.service3.Count);
 
         // 单注入--但皆未绑定
-        Assert.IsNull(serviceImpl.service5);
+        Assert.IsNull(serviceImpl.service4);
     }
 
     private class Module1 : IInjectModule
@@ -59,10 +59,9 @@ public class NamedInjectTest
         public void Configure(IInjectBinder binder) {
             binder.Bind<ServiceImpl>();
             binder.Bind<IService1>("json");
-            binder.Bind<IService2>();
 
             // 同时绑定aaa,bbb服务
-            Type typeOfService4 = typeof(IService4);
+            Type typeOfService4 = typeof(IService2);
             binder.Bind(typeOfService4, InjectScope.Singleton,
                 new ServiceKey(typeOfService4, "aaa"),
                 new ServiceKey(typeOfService4, "bbb"));
@@ -77,14 +76,6 @@ public class NamedInjectTest
     {
     }
 
-    private class IService3
-    {
-    }
-
-    private class IService4
-    {
-    }
-
 #nullable disable
     private class ServiceImpl
     {
@@ -92,23 +83,22 @@ public class NamedInjectTest
         [InjectService("json")]
         public IService1 service1;
 
-        [Inject]
-        public IService2 service2;
-
-        [Inject]
-        [InjectService(true)]
-        public IService3 service3;
-
-        // 正常的多注入
+        // 正常的多注入 -- count应该为2
         [Inject]
         [InjectService("aaa")]
         [InjectService("bbb")]
-        public List<IService4> service4;
+        public List<IService2> service2;
 
-        // 单注入，按声明信息依次查找 -- 查找到ddd时结束
+        // 正常的多注入，其中一个不存在 -- count应该为1
+        [Inject]
+        [InjectService("aaa")]
+        [InjectService("ccc", optional: true)]
+        public Dictionary<string, IService2> service3;
+
+        // 单注入，按声明信息依次查找 -- 查找到ddd时结束，最后为null
         [Inject]
         [InjectService("ccc", optional: true)]
         [InjectService("ddd", optional: true)]
-        public IService4 service5;
+        public IService2 service4;
     }
 }

@@ -257,6 +257,9 @@ internal class Injector : IInjector
             object list = Activator.CreateInstance(dependency.listType!);
             foreach (var attribute in dependency.serviceAttributes!) {
                 object serviceInst = GetInstance(dependency.serviceType, attribute.name, attribute.optional);
+                if (serviceInst == null) {
+                    continue; // 可选的
+                }
                 dependency.addMethod!.Invoke(list, new[] { serviceInst }); // Add(inst)
             }
             return list;
@@ -266,6 +269,9 @@ internal class Injector : IInjector
             object dictionary = Activator.CreateInstance(dependency.dictionaryType!);
             foreach (var attribute in dependency.serviceAttributes!) {
                 object serviceInst = GetInstance(dependency.serviceType, attribute.name, attribute.optional);
+                if (serviceInst == null) {
+                    continue;  // 可选的
+                }
                 dependency.addMethod!.Invoke(dictionary, new[] { attribute.name, serviceInst }); // Add(string, inst)
             }
             return dictionary;

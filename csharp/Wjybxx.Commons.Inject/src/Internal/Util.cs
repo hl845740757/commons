@@ -107,6 +107,9 @@ internal static class Util
                 if (!memberInfo.IsDefined(typeof(InjectAttribute))) {
                     continue;
                 }
+                if (memberInfo is PropertyInfo propertyInfo && propertyInfo.SetMethod == null) {
+                    continue; // 其实用户没定义set方法时，反射是可以拿到字段进行注入的，但没必要
+                }
                 Dependency dependency = ParseDependency(memberInfo);
                 result.Add(new InjectionPoint(memberInfo, dependency));
             }
