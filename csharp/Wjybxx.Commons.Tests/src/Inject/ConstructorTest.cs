@@ -67,7 +67,7 @@ public class ConstructorTest
 
         [Inject]
         public LogicModule(IService1 service1, IService2 service2,
-                           [InjectService(true)] IService3 service3) {
+                           [Inject(true)] IService3 service3) {
             this.service1 = service1;
             this.service2 = service2;
             this.service3 = service3;

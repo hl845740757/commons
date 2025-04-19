@@ -43,15 +43,13 @@ PS：如果实现类是泛型的，那么不同运行时类型之间的单例也
     //
    private class ServiceImpl
     {
-        [Inject]
-        [InjectService("json")] // 指定注入命名为json的Service1
+        [Inject("json")] // 指定注入命名为json的Service1
         public IService1 service1;
 
         [Inject] // 注入 IService2，不存在时抛出异常
         public IService2 service2;
 
-        [Inject]
-        [InjectService(true)] // Service3不存在时保持null
+        [Inject(true)] // Service3不存在时保持null
         public IService3 service3;
     }
 ```

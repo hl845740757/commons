@@ -27,7 +27,7 @@ namespace Wjybxx.Commons.Inject.Attributes
 /// 2.注意！当对象之间存在循环依赖时，依赖的对象可能是尚未完整初始化的！
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
-public sealed class InjectOnCreateAttribute : InjectAttribute
+public sealed class InjectOnCreateAttribute : Attribute
 {
 }
 }

@@ -79,26 +79,22 @@ public class NamedInjectTest
 #nullable disable
     private class ServiceImpl
     {
-        [Inject]
-        [InjectService("json")]
+        [Inject("json")]
         public IService1 service1;
 
         // 正常的多注入 -- count应该为2
-        [Inject]
-        [InjectService("aaa")]
-        [InjectService("bbb")]
+        [Inject("aaa")]
+        [Inject("bbb")]
         public List<IService2> service2;
 
         // 正常的多注入，其中一个不存在 -- count应该为1
-        [Inject]
-        [InjectService("aaa")]
-        [InjectService("ccc", optional: true)]
+        [Inject("aaa")]
+        [Inject("ccc", optional: true)]
         public Dictionary<string, IService2> service3;
 
         // 单注入，按声明信息依次查找 -- 查找到ddd时结束，最后为null
-        [Inject]
-        [InjectService("ccc", optional: true)]
-        [InjectService("ddd", optional: true)]
+        [Inject("ccc", optional: true)]
+        [Inject("ddd", optional: true)]
         public IService2 service4;
     }
 }

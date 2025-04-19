@@ -70,14 +70,14 @@ public class FieldInjectTest
 
         [Inject] public IService2 service2;
 
-        [Inject] [InjectService(true)]
+        [Inject(true)]
         public IService3? service3;
 
         [Inject] public IService1 Props1 { get; private set; }
 
         [Inject] public IService2 Props2 { get; private set; }
 
-        [Inject] [InjectService(true)]
+        [Inject(true)]
         public IService3 Props3 { get; private set; }
 
         /// <summary>

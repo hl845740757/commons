@@ -105,7 +105,7 @@ internal static class Util
                     continue; // 可能有构造函数
                 }
                 if (!memberInfo.IsDefined(typeof(InjectAttribute))) {
-                    continue;
+                    continue; // 不包含注解
                 }
                 if (memberInfo is PropertyInfo propertyInfo && propertyInfo.SetMethod == null) {
                     continue; // 其实用户没定义set方法时，反射是可以拿到字段进行注入的，但没必要
@@ -123,8 +123,8 @@ internal static class Util
     /// <param name="memberInfo"></param>
     /// <returns></returns>
     public static Dependency ParseDependency(MemberInfo memberInfo) {
-        ImmutableList<InjectServiceAttribute> serviceAttribute = memberInfo.GetCustomAttributes<InjectServiceAttribute>().ToImmutableList2();
-        return new Dependency(GetFieldType(memberInfo), serviceAttribute, -1);
+        ImmutableList<InjectAttribute> injectAttributes = memberInfo.GetCustomAttributes<InjectAttribute>().ToImmutableList2();
+        return new Dependency(GetFieldType(memberInfo), injectAttributes, -1);
     }
 
     /// <summary>
@@ -134,8 +134,8 @@ internal static class Util
     /// <param name="index"></param>
     /// <returns></returns>
     public static Dependency ParseDependency(ParameterInfo parameterInfo, int index) {
-        ImmutableList<InjectServiceAttribute> serviceAttribute = parameterInfo.GetCustomAttributes<InjectServiceAttribute>().ToImmutableList2();
-        return new Dependency(parameterInfo.ParameterType, serviceAttribute, index);
+        ImmutableList<InjectAttribute> injectAttributes = parameterInfo.GetCustomAttributes<InjectAttribute>().ToImmutableList2();
+        return new Dependency(parameterInfo.ParameterType, injectAttributes, index);
     }
 
     /// <summary>

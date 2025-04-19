@@ -255,7 +255,7 @@ internal class Injector : IInjector
         if (dependency.IsList) {
             // 反射构建List
             object list = Activator.CreateInstance(dependency.listType!);
-            foreach (var attribute in dependency.serviceAttributes!) {
+            foreach (var attribute in dependency.injectAttributes!) {
                 object serviceInst = GetInstance(dependency.serviceType, attribute.name, attribute.optional);
                 if (serviceInst == null) {
                     continue; // 可选的
@@ -267,18 +267,18 @@ internal class Injector : IInjector
         if (dependency.IsDictionary) {
             // 反射构建字典
             object dictionary = Activator.CreateInstance(dependency.dictionaryType!);
-            foreach (var attribute in dependency.serviceAttributes!) {
+            foreach (var attribute in dependency.injectAttributes!) {
                 object serviceInst = GetInstance(dependency.serviceType, attribute.name, attribute.optional);
                 if (serviceInst == null) {
-                    continue;  // 可选的
+                    continue; // 可选的
                 }
                 dependency.addMethod!.Invoke(dictionary, new[] { attribute.name, serviceInst }); // Add(string, inst)
             }
             return dictionary;
         }
         // 非List或字典时，我们按配置依次查找
-        if (dependency.serviceAttributes.Count > 0) {
-            foreach (var attribute in dependency.serviceAttributes) {
+        if (dependency.injectAttributes.Count > 0) {
+            foreach (var attribute in dependency.injectAttributes) {
                 object serviceInst = GetInstance(dependency.serviceType, attribute.name, attribute.optional);
                 if (serviceInst != null) {
                     return serviceInst;

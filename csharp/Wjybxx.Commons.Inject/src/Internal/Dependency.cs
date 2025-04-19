@@ -47,7 +47,7 @@ internal sealed class Dependency
     /// <summary>
     /// 依赖的服务信息，单注入和多注入都有效
     /// </summary>
-    public readonly ImmutableList<InjectServiceAttribute> serviceAttributes;
+    public readonly ImmutableList<InjectAttribute> injectAttributes;
     /// <summary>
     /// 构造函数中的下标
     /// </summary>
@@ -66,10 +66,10 @@ internal sealed class Dependency
     /// </summary>
     public readonly MethodInfo? addMethod;
 
-    public Dependency(Type fieldType, ImmutableList<InjectServiceAttribute> serviceAttributes, int parameterIndex) {
+    public Dependency(Type fieldType, ImmutableList<InjectAttribute> injectAttributes, int parameterIndex) {
         this.fieldType = fieldType ?? throw new ArgumentNullException(nameof(fieldType));
         this.serviceType = Util.GetServiceType(fieldType);
-        this.serviceAttributes = serviceAttributes;
+        this.injectAttributes = injectAttributes;
         this.parameterIndex = parameterIndex;
 
         // 缓存对应的类型
