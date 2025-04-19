@@ -64,6 +64,13 @@ public interface IDisruptorEventLoop<T> : IDisruptorEventLoop, IEventLoop where 
     void SetEvent(long sequence, T eventObj);
 
     /// <summary>
+    ///
+    /// </summary>
+    /// <param name="size">申请的序号数</param>
+    /// <returns>如果申请成功，则返回对应的sequence，否则返回-1</returns>
+    long TryNextSequence(int size = 1);
+
+    /// <summary>
     /// 申请事件序号
     /// 1.按照规范，在调用该方法后，必须在finally块中进行发布。
     /// 2.事件类型必须大于等于0，否则可能导致异常

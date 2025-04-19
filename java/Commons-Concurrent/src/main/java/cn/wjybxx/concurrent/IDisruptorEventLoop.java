@@ -28,6 +28,12 @@ public interface IDisruptorEventLoop<T extends IAgentEvent> extends IEventLoop {
     T getEvent(long sequence);
 
     /**
+     * @param size 申请的序号数量
+     * @return 如果申请成功，则返回对应的sequence，否则返回 -1
+     */
+    long tryNextSequence(int size);
+
+    /**
      * 开放的特殊接口
      * 1.按照规范，在调用该方法后，必须在finally块中进行发布。
      * 2.事件类型必须大于等于0，否则可能导致异常

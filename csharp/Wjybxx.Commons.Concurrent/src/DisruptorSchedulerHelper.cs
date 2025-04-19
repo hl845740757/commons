@@ -94,9 +94,9 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
             }
         } else {
             // 如果在其它线程，尝试发布一个删除任务（能收到取消信号，通常证明Task还未结束）
-            long sequence = _eventLoop.NextSequence(1);
+            long sequence = _eventLoop.TryNextSequence(1);
             if (sequence < 0) {
-                return;
+                return; // TODO 可通过GlobalEventLoop不断重试
             }
             ref T evt = ref _eventLoop.GetEventRef(sequence);
             evt.Type = DisruptorEventLoop<T>.TYPE_REMOVE_SCHEDULE;

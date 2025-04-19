@@ -263,6 +263,27 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
     }
 
     @Override
+    public final long tryNextSequence(int size) {
+        if (isShuttingDown()) {
+            return -1;
+        }
+        long sequence = eventSequencer.tryNext(size);
+        if (sequence == -1) {
+            return -1;
+        }
+        if (isShuttingDown()) {
+            if (size == 1) {
+                eventSequencer.publish(sequence);
+            } else {
+                long lo = sequence - (size - 1);
+                eventSequencer.publish(lo, sequence);
+            }
+            return -1;
+        }
+        return sequence;
+    }
+
+    @Override
     public final long nextSequence() {
         return nextSequence(1);
     }
@@ -275,7 +296,6 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
             ensureThreadStarted();
         }
     }
-
 
     @Override
     public final long nextSequence(int size) {

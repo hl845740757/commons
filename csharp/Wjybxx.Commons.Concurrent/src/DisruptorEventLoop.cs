@@ -262,6 +262,27 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         dataProvider.ProducerSet(sequence, eventObj);
     }
 
+    public long TryNextSequence(int size = 1) {
+        if (IsShuttingDown) {
+            return -1;
+        }
+        long sequence = eventSequencer.TryNext(size);
+        if (sequence < 0) {
+            return -1;
+        }
+        if (IsShuttingDown) {
+            // 申请序号期间收到关闭序号
+            if (size == 1) {
+                eventSequencer.Publish(sequence);
+            } else {
+                long lo = sequence - (size - 1);
+                eventSequencer.Publish(lo, sequence);
+            }
+            return -1;
+        }
+        return sequence;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long NextSequence() {
         return NextSequence(1);
