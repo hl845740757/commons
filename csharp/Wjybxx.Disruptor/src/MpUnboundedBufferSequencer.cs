@@ -63,6 +63,13 @@ public sealed class MpUnboundedBufferSequencer<T> : ProducerBarrier, Sequencer
 
     #region producer
 
+    public void Publish(long sequence, in T evt) {
+        MpUnboundedBufferChunk<T> chunk = buffer.ProducerChunkForSequence(sequence);
+        int index = (int)(sequence - chunk.MinSequence());
+        chunk.SpElement(index, in evt);
+        chunk.Publish(index);
+    }
+
     public void Publish(long sequence) {
         MpUnboundedBufferChunk<T> chunk = buffer.ProducerChunkForSequence(sequence);
         chunk.Publish((int)(sequence - chunk.MinSequence()));

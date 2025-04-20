@@ -63,6 +63,15 @@ public interface EventSequencer<T> : DataProvider<T>
     /** 数据提供者 */
     DataProvider<T> DataProvider { get; }
 
+    /// <summary>
+    /// 发布事件
+    /// 
+    /// 该接口为C#特殊支持，当事件为值类型且事件生成器为无界队列时，使用该接口可以避免二次查找。
+    /// </summary>
+    /// <param name="sequence">事件序号</param>
+    /// <param name="evt">要发布的事件</param>
+    void Publish(long sequence, in T evt);
+
     #endregion
 
     #region 转发-提高易用性

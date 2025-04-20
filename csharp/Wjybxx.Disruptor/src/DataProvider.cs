@@ -52,7 +52,7 @@ public interface DataProvider<T>
     /// </summary>
     /// <param name="sequence"></param>
     /// <param name="data"></param>
-    void ProducerSet(long sequence, T data);
+    void ProducerSet(long sequence, in T data);
 
     /// <summary>
     /// 该接口用于消费者覆盖数据(通常用于删除数据)
@@ -61,7 +61,7 @@ public interface DataProvider<T>
     /// </summary>
     /// <param name="sequence"></param>
     /// <param name="data"></param>
-    void ConsumerSet(long sequence, T data);
+    void ConsumerSet(long sequence, in T data);
 
     /// <summary>
     /// 该接口用于优化生产者查询数据

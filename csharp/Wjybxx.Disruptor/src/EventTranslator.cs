@@ -16,6 +16,8 @@
 
 #endregion
 
+using System;
+
 namespace Wjybxx.Disruptor
 {
 /// <summary>
@@ -25,6 +27,7 @@ namespace Wjybxx.Disruptor
 /// A：因为需要支持转为其它接口类型的对象。
 /// </summary>
 /// <typeparam name="T"></typeparam>
+[Obsolete]
 public interface EventTranslator<in T>
 {
     /// <summary>

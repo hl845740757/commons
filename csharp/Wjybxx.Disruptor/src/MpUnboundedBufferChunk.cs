@@ -85,21 +85,25 @@ public sealed class MpUnboundedBufferChunk<E>
     }
 
     /** load volatile next */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal MpUnboundedBufferChunk<E>? LvNext() {
         return next;
     }
 
     /** store ordered next */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SoNext(MpUnboundedBufferChunk<E>? value) {
         this.next = value;
     }
 
     /** load volatile prev */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal MpUnboundedBufferChunk<E>? LvPrev() {
         return prev;
     }
 
     /** store ordered prev */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SoPrev(MpUnboundedBufferChunk<E>? value) {
         this.prev = value;
     }
@@ -107,13 +111,14 @@ public sealed class MpUnboundedBufferChunk<E>
     #endregion
 
     /** load plain element ref */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref E LpElementRef(int index) {
         return ref buffer[index];
     }
 
     /** store plain element */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SpElement(int index, E e) {
+    public void SpElement(int index, in E e) {
         buffer[index] = e;
     }
 
@@ -124,11 +129,13 @@ public sealed class MpUnboundedBufferChunk<E>
     }
 
     /** 将指定槽位标记为已发布 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(int index) {
         Volatile.Write(ref published[index], LpChunkIndex());
     }
 
     /** 批量发布数据 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(int low, int high) {
         long[] published = this.published;
         long chunkIndex = LpChunkIndex();
@@ -142,6 +149,7 @@ public sealed class MpUnboundedBufferChunk<E>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsPublished(int index) {
         long flag = Volatile.Read(ref published[index]);
         return flag == LpChunkIndex();
@@ -160,12 +168,14 @@ public sealed class MpUnboundedBufferChunk<E>
     }
 
     /** 获取chunk上数据的最小sequence -- plain内存语义 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long MinSequence() {
         int length = buffer.Length;
         return LpChunkIndex() * length;
     }
 
     /** 获取chunk上数据的最大sequence -- plain内存语义 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long MaxSequence() {
         int length = buffer.Length;
         return LpChunkIndex() * length + (length - 1);

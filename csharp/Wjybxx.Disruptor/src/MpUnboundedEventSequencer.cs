@@ -67,12 +67,12 @@ public class MpUnboundedEventSequencer<T> : EventSequencer<T>
         return buffer.ConsumerGet(sequence);
     }
 
-    public void ProducerSet(long sequence, T data) {
-        buffer.ProducerSet(sequence, data);
+    public void ProducerSet(long sequence, in T data) {
+        buffer.ProducerSet(sequence, in data);
     }
 
-    public void ConsumerSet(long sequence, T data) {
-        buffer.ConsumerSet(sequence, data);
+    public void ConsumerSet(long sequence, in T data) {
+        buffer.ConsumerSet(sequence, in data);
     }
 
     public ref T ProducerGetRef(long sequence) {
@@ -92,6 +92,10 @@ public class MpUnboundedEventSequencer<T> : EventSequencer<T>
     public ProducerBarrier ProducerBarrier => _sequencer;
 
     public DataProvider<T> DataProvider => buffer;
+
+    public void Publish(long sequence, in T evt) {
+        _sequencer.Publish(sequence, in evt);
+    }
 
     #endregion
 

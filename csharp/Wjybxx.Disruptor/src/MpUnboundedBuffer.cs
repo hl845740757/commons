@@ -224,7 +224,7 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
         return cChunk.LpElement(seqChunkOffset);
     }
 
-    public void ProducerSet(long sequence, E data) {
+    public void ProducerSet(long sequence, in E data) {
         if (sequence < 0) {
             throw new ArgumentException("sequence: " + sequence);
         }
@@ -234,10 +234,10 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
             pChunk = ProducerChunkForIndex(pChunk, seqChunkIndex);
         }
         int seqChunkOffset = (int)(sequence & chunkMask);
-        pChunk.SpElement(seqChunkOffset, data);
+        pChunk.SpElement(seqChunkOffset, in data);
     }
 
-    public void ConsumerSet(long sequence, E data) {
+    public void ConsumerSet(long sequence, in E data) {
         if (sequence < 0) {
             throw new ArgumentException("sequence: " + sequence);
         }
@@ -247,7 +247,7 @@ public sealed class MpUnboundedBuffer<E> : MpUnboundedBufferFields<E>, DataProvi
             cChunk = ConsumerChunkForIndex(cChunk, seqChunkIndex);
         }
         int seqChunkOffset = (int)(sequence & chunkMask);
-        cChunk.SpElement(seqChunkOffset, data);
+        cChunk.SpElement(seqChunkOffset, in data);
     }
 
     public ref E ProducerGetRef(long sequence) {

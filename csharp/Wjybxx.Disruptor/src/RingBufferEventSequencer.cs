@@ -59,12 +59,12 @@ public class RingBufferEventSequencer<T> : EventSequencer<T>
         return buffer.GetElement(sequence);
     }
 
-    public void ProducerSet(long sequence, T data) {
-        buffer.SetElement(sequence, data);
+    public void ProducerSet(long sequence, in T data) {
+        buffer.SetElement(sequence, in data);
     }
 
-    public void ConsumerSet(long sequence, T data) {
-        buffer.SetElement(sequence, data);
+    public void ConsumerSet(long sequence, in T data) {
+        buffer.SetElement(sequence, in data);
     }
 
     public ref T ProducerGetRef(long sequence) {
@@ -84,6 +84,11 @@ public class RingBufferEventSequencer<T> : EventSequencer<T>
     public ProducerBarrier ProducerBarrier => _sequencer;
 
     public DataProvider<T> DataProvider => buffer;
+
+    public void Publish(long sequence, in T evt) {
+        buffer.SetElement(sequence, in evt);
+        _sequencer.Publish(sequence);
+    }
 
     #endregion
 

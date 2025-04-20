@@ -86,7 +86,7 @@ public sealed class RingBuffer<E> : DataProvider<E>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void SetElement(long sequence, E element) {
+    internal void SetElement(long sequence, in E element) {
         if (sequence < 0) {
             throw new ArgumentException("sequence: " + sequence);
         }
@@ -123,13 +123,13 @@ public sealed class RingBuffer<E> : DataProvider<E>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ProducerSet(long sequence, E data) {
-        SetElement(sequence, data);
+    public void ProducerSet(long sequence, in E data) {
+        SetElement(sequence, in data);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ConsumerSet(long sequence, E data) {
-        SetElement(sequence, data);
+    public void ConsumerSet(long sequence, in E data) {
+        SetElement(sequence, in data);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
