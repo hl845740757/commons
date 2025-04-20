@@ -283,6 +283,13 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         return sequence;
     }
 
+    public void Publish(long sequence, in T evt) {
+        eventSequencer.Publish(sequence, in evt);
+        if (state == ST_UNSTARTED) {
+            EnsureThreadStarted();
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long NextSequence() {
         return NextSequence(1);

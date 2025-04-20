@@ -71,6 +71,15 @@ public interface IDisruptorEventLoop<T> : IDisruptorEventLoop, IEventLoop where 
     long TryNextSequence(int size = 1);
 
     /// <summary>
+    /// 发布事件
+    ///
+    /// 该接口为C#特殊支持，当事件为值类型且事件生成器为无界队列时，聚合数据写入和发布操作，可以提高生产者的效率。
+    /// </summary>
+    /// <param name="sequence"></param>
+    /// <param name="evt"></param>
+    void Publish(long sequence, in T evt);
+    
+    /// <summary>
     /// 申请事件序号
     /// 1.按照规范，在调用该方法后，必须在finally块中进行发布。
     /// 2.事件类型必须大于等于0，否则可能导致异常
