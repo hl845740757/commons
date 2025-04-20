@@ -84,6 +84,8 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     protected readonly IEventLoopAgent<T> agent;
     /** 批量执行任务的大小 */
     private readonly int batchSize;
+    /** 发布事件时是否采用copy的方式 -- C#特殊支持 */
+    private readonly bool publishValueEventWithCopy;
 
     private readonly Thread thread;
     private readonly long consumerId;
@@ -118,6 +120,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         this.rejectedExecutionHandler = builder.RejectedExecutionHandler ?? RejectedExecutionHandlers.ABORT;
         this.agent = builder.Agent ?? EmptyAgent<T>.Inst;
         this.batchSize = Math.Clamp(builder.BatchSize, MIN_BATCH_SIZE, MAX_BATCH_SIZE);
+        this.publishValueEventWithCopy = typeof(T).IsValueType && builder.PublishValueEventWithCopy;
         // 缓存
         if (dataProvider is MpUnboundedBuffer<T> unboundedBuffer2) {
             this.unboundedBuffer = unboundedBuffer2;
@@ -222,17 +225,36 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     /// <param name="sequence"></param>
     /// <param name="options"></param>
     private void PublishTask(object task, long sequence, int options) {
-        ref T eventObj = ref dataProvider.ProducerGetRef(sequence);
-        eventObj.Type = 0;
-        eventObj.Obj1 = task;
-        eventObj.Options = options;
-        if (task is IScheduledFutureTask futureTask) {
-            futureTask.Inject(schedulerHelper, sequence); // nice
+        if (publishValueEventWithCopy) {
+            T eventObj = default;
+            try {
+                eventObj!.Type = 0;
+                eventObj.Obj1 = task;
+                eventObj.Options = options;
+                if (task is IScheduledFutureTask futureTask) {
+                    futureTask.Inject(schedulerHelper, sequence); // nice
+                }
+            }
+            finally {
+                eventSequencer.Publish(sequence, in eventObj);
+            }
+        } else {
+            ref T eventObj = ref dataProvider.ProducerGetRef(sequence);
+            try {
+                eventObj.Type = 0;
+                eventObj.Obj1 = task;
+                eventObj.Options = options;
+                if (task is IScheduledFutureTask futureTask) {
+                    futureTask.Inject(schedulerHelper, sequence); // nice
+                }
+            }
+            finally {
+                eventSequencer.Publish(sequence);
+            }
         }
-        eventSequencer.Publish(sequence);
 
+        // RingBuffer不再私有，不可测试sequence == 0
         if (state == ST_UNSTARTED) {
-            // RingBuffer不再私有，不可测试sequence == 0
             EnsureThreadStarted();
         } else if ((options & TaskOptions.WAKEUP_THREAD) != 0 && !InEventLoop()) {
             Wakeup();
@@ -297,7 +319,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Publish(long sequence) {
-        eventSequencer.ProducerBarrier.Publish(sequence);
+        eventSequencer.Publish(sequence);
         // RingBuffer不再私有，不可测试sequence == 0
         if (state == ST_UNSTARTED) {
             EnsureThreadStarted();
@@ -333,7 +355,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     }
 
     public void Publish(long lo, long hi) {
-        eventSequencer.ProducerBarrier.Publish(lo, hi);
+        eventSequencer.Publish(lo, hi);
         if (state == ST_UNSTARTED) {
             EnsureThreadStarted();
         }

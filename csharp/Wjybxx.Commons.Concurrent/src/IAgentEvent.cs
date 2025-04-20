@@ -24,6 +24,7 @@ namespace Wjybxx.Commons.Concurrent
 /// 1.用于Disruptor或类似的系统，当我们缓存对象时，更适合将字段展开以提高内存利用率
 /// 2.支持<see cref="IEventLoopAgent{TEvent}"/>的都将支持该事件。
 /// 3.实现类最好保持为简单的数据类，不要赋予逻辑。
+/// 4.<see cref="DisruptorEventLoop{T}"/>并未使用全部的字段，因此如果想节省开销，可以实现更小的结构。
 ///
 /// 注意：
 /// 1.实现类最好保持为简单的数据类，不要赋予逻辑。

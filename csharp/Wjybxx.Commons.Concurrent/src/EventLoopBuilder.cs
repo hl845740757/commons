@@ -119,6 +119,10 @@ public class DisruptorEventLoopBuilder<T> : EventLoopBuilder<T> where T : IAgent
 #nullable disable
     private EventSequencer<T> eventSequencer;
     private WaitStrategy waitStrategy;
+    private bool publishValueEventWithCopy;
+
+    public DisruptorEventLoopBuilder() {
+    }
 
     private void CheckBuild() {
         if (ThreadFactory == null) {
@@ -157,6 +161,18 @@ public class DisruptorEventLoopBuilder<T> : EventLoopBuilder<T> where T : IAgent
     public WaitStrategy WaitStrategy {
         get => waitStrategy;
         set => waitStrategy = value;
+    }
+
+    /// <summary>
+    /// 当事件类型为值类型时，发布事件时是否采用copy的方式。
+    /// 对于无界队列来说，采用copy的方式可以减少一次根据sequence查找data槽的开销，在生产者竞争较强的情况下可以提高性能。
+    /// 对于有界队列来说，采用copy可以减少一小部分方法调用，影响可能不大。
+    /// 用户需要权衡拷贝1次事件的开销和根据sequence查找data槽的开销。
+    /// <see cref="EventSequencer.Publish(long, T)"/>
+    /// </summary>
+    public bool PublishValueEventWithCopy {
+        get => publishValueEventWithCopy;
+        set => publishValueEventWithCopy = value;
     }
 }
 }

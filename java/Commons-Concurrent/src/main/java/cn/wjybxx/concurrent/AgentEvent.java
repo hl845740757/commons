@@ -26,10 +26,10 @@ public final class AgentEvent implements IAgentEvent {
 
     private int type = TYPE_INVALID;
     private int options;
-    public Object obj1;
-    public Object obj2;
     public long longVal1;
     public long longVal2;
+    public Object obj1;
+    public Object obj2;
 
     public AgentEvent copy() {
         AgentEvent event = new AgentEvent();

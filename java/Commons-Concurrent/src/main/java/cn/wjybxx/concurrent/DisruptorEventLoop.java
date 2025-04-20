@@ -235,13 +235,16 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
      */
     private void publishTask(@Nonnull Runnable task, long sequence, int options) {
         T event = dataProvider.producerGet(sequence);
-        event.setType(0);
-        event.setObj1(task);
-        event.setOptions(options);
-        if (task instanceof ScheduledPromiseTask<?> futureTask) {
-            futureTask.inject(schedulerHelper, sequence); // nice
+        try {
+            event.setType(0);
+            event.setObj1(task);
+            event.setOptions(options);
+            if (task instanceof ScheduledPromiseTask<?> futureTask) {
+                futureTask.inject(schedulerHelper, sequence); // nice
+            }
+        } finally {
+            eventSequencer.publish(sequence);
         }
-        eventSequencer.publish(sequence);
 
         // RingBuffer不再私有，不可测试sequence == 0
         if (state == EventLoopState.ST_UNSTARTED) {
@@ -290,7 +293,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
 
     @Override
     public final void publish(long sequence) {
-        eventSequencer.producerBarrier().publish(sequence);
+        eventSequencer.publish(sequence);
         // RingBuffer不再私有，不可测试sequence == 0
         if (state == EventLoopState.ST_UNSTARTED) {
             ensureThreadStarted();
@@ -328,7 +331,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
 
     @Override
     public final void publish(long lo, long hi) {
-        eventSequencer.producerBarrier().publish(lo, hi);
+        eventSequencer.publish(lo, hi);
         if (state == EventLoopState.ST_UNSTARTED) {
             ensureThreadStarted();
         }

@@ -37,7 +37,8 @@ public sealed class GlobalEventLoop : DisruptorEventLoop<AgentEvent>
                 ChunkLength = 1024,
                 MaxPooledChunks = 1
             }
-            .Build()
+            .Build(),
+        PublishValueEventWithCopy = true
     });
 
     private GlobalEventLoop(DisruptorEventLoopBuilder<AgentEvent> builder)

@@ -43,9 +43,9 @@ public struct UnionValue : IEquatable<UnionValue>
     // 3个扩展int值，支持DateTime、TimeStamp、ObjectPtr、ObjectLitePtr
     [FieldOffset(9)] public int v2; // nanos, type
     [FieldOffset(13)] public int v3; // offset, policy
-    [FieldOffset(17)] public byte v4; // enables
+    [FieldOffset(17)] public int v4; // enables
 
-    // 由于内存对齐的原因，引用类型需要偏移24
+    // 由于内存对齐的原因，引用类型需要偏移24 -- 所以上面的v4可以声明为int
     [FieldOffset(24)] public object objValue; // localId, string, bytes
     [FieldOffset(32)] public object objValue2; // namespace
 
@@ -81,7 +81,7 @@ public struct UnionValue : IEquatable<UnionValue>
     }
 
     public ExtDateTime DateTime {
-        get => new ExtDateTime(lValue, v2, v3, v4);
+        get => new ExtDateTime(lValue, v2, v3, (byte)v4);
         set {
             lValue = value.Seconds;
             v2 = value.Nanos;

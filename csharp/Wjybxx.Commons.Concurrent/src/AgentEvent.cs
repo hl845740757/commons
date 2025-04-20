@@ -27,10 +27,10 @@ public struct AgentEvent : IAgentEvent
 {
     private int type;
     private int options;
-    public object? obj1;
-    public object? obj2;
     public long longVal1;
     public long longVal2;
+    public object? obj1;
+    public object? obj2;
 
     /// <summary>
     /// 构造函数将type声明为可选值，会导致不被调用构造函数
