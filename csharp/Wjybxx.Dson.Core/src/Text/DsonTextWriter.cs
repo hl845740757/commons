@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Pool;
 using Wjybxx.Dson.Internal;
 using Wjybxx.Dson.Types;
@@ -50,6 +51,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
 
     public new DsonTextWriterSettings Settings => _settings;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private new Context GetContext() {
         return (Context)context;
     }
@@ -170,11 +172,13 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool CanPrintAsUnquote(string str, DsonTextWriterSettings settings) {
         return DsonTexts.CanUnquoteString(str, settings.maxLengthOfUnquoteString)
                && (!settings.unicodeChar || DsonTexts.IsAsciiText(str));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool CanPrintAsText(string str, DsonTextWriterSettings settings) {
         return settings.enableText && (str.Length > settings.textStringLength);
     }
@@ -323,6 +327,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
 
     #region 简单值
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PrintInt32(DsonPrinter printer, int value, INumberStyle style) {
         StyleOut styleOut = style.ToString(value);
         if (styleOut.IsTyped) {
@@ -331,6 +336,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         printer.FastPrint(styleOut.Value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PrintInt64(DsonPrinter printer, long value, INumberStyle style) {
         StyleOut styleOut = style.ToString(value);
         if (styleOut.IsTyped) {
@@ -339,6 +345,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         printer.FastPrint(styleOut.Value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PrintFloat(DsonPrinter printer, float value, INumberStyle style) {
         StyleOut styleOut = style.ToString(value);
         if (styleOut.IsTyped) {
@@ -347,6 +354,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         printer.FastPrint(styleOut.Value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PrintDouble(DsonPrinter printer, double value, INumberStyle style) {
         StyleOut styleOut = style.ToString(value);
         if (styleOut.IsTyped) {
@@ -649,12 +657,14 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         () => new Context(), context => context.Reset(),
         DsonInternals.CONTEXT_POOL_SIZE);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Context NewContext(Context parent, DsonContextType contextType, DsonType dsonType) {
         Context context = contextPool.Acquire();
         context.Init(parent, contextType, dsonType);
         return context;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ReturnContext(Context context) {
         contextPool.Release(context);
     }

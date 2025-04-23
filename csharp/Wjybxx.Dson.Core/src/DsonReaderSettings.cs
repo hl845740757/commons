@@ -29,12 +29,12 @@ public class DsonReaderSettings
 
     public readonly int recursionLimit;
     public readonly bool autoClose;
-    public readonly bool enableFieldIntern;
+    public readonly bool? enableNameIntern;
 
     public DsonReaderSettings(Builder builder) {
         recursionLimit = Math.Max(1, builder.RecursionLimit);
         autoClose = builder.AutoClose;
-        enableFieldIntern = builder.EnableFieldIntern;
+        enableNameIntern = builder.EnableNameIntern;
     }
 
     public static Builder NewBuilder() {
@@ -53,10 +53,11 @@ public class DsonReaderSettings
         public bool AutoClose { get; set; } = true;
         /// <summary>
         /// 是否池化字段名
-        /// 字段名几乎都是常量，因此命中率几乎百分之百。
-        /// 池化字段名可以降低字符串内存占用，有一定的查找开销。
+        /// 1.字段名几乎都是常量，因此命中率几乎百分之百 -- 字典由Codec处理。
+        /// 2.池化字段名可以降低字符串内存占用，有一定的查找开销。
+        /// 3.如果未设置，则完全由代码控制；如果为false，则全局禁用；如果为true，则全局启用，用户可临时关闭；
         /// </summary>
-        public bool EnableFieldIntern { get; set; } = false;
+        public bool? EnableNameIntern { get; set; } = false;
 
         public Builder() {
         }

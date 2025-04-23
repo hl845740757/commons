@@ -48,12 +48,6 @@ namespace Wjybxx.Dson.Codec
 public struct ClassName : IEquatable<ClassName>
 {
     /// <summary>
-    /// 分割类名和泛型个数数字的分隔符，暂定为C#使用的反引号。
-    /// 注意：在跨语言通信时，不建议使用泛型类的简单名，而是提供无反引号的类型别名。
-    /// </summary>
-    public const char SPILT_CHAR = '`';
-
-    /// <summary>
     /// 无泛型参数的类型别名(简单名)。
     /// 1. 如果不是泛型类，类名仅包含类的简单名。
     /// 2. 如果是泛型类，类名包含泛型参数的个数 -- 别名可能不包含。

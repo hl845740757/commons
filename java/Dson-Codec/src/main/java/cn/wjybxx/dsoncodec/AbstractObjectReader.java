@@ -273,6 +273,11 @@ abstract class AbstractObjectReader implements DsonObjectReader {
     }
 
     @Override
+    public void setEnableNameIntern(@Nullable Boolean value) {
+        reader.setEnableNameIntern(value);
+    }
+
+    @Override
     public void setComponentType(DsonType dsonType) {
         if (reader instanceof DsonTextReader textReader) {
             DsonToken token = DsonTexts.clsNameTokenOfType(dsonType);

@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dson;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /**
@@ -29,12 +30,12 @@ public class DsonReaderSettings {
 
     public final int recursionLimit;
     public final boolean autoClose;
-    public final boolean enableFieldIntern;
+    public final Boolean enableNameIntern;
 
     public DsonReaderSettings(Builder builder) {
         this.recursionLimit = Math.max(1, builder.recursionLimit);
         this.autoClose = builder.autoClose;
-        this.enableFieldIntern = builder.enableFieldIntern;
+        this.enableNameIntern = builder.enableNameIntern;
     }
 
     public static Builder newBuilder() {
@@ -49,10 +50,11 @@ public class DsonReaderSettings {
         private boolean autoClose = true;
         /**
          * 是否池化字段名
-         * 字段名几乎都是常量，因此命中率几乎百分之百。
-         * 池化字段名可以降低字符串内存占用，有一定的查找开销。
+         * 1.字段名几乎都是常量，因此命中率几乎百分之百 —— 字典由Codec处理。
+         * 2.池化字段名可以降低字符串内存占用，有一定的查找开销。
+         * 3.如果未设置，则完全由代码控制；如果为false，则全局禁用；如果为true，则全局启用，用户可临时关闭；
          */
-        private boolean enableFieldIntern = false;
+        private Boolean enableNameIntern = null;
 
         protected Builder() {
         }
@@ -66,12 +68,13 @@ public class DsonReaderSettings {
             return this;
         }
 
-        public boolean isEnableFieldIntern() {
-            return enableFieldIntern;
+        @Nullable
+        public Boolean isEnableNameIntern() {
+            return enableNameIntern;
         }
 
-        public Builder setEnableFieldIntern(boolean enableFieldIntern) {
-            this.enableFieldIntern = enableFieldIntern;
+        public Builder setEnableNameIntern(Boolean enableNameIntern) {
+            this.enableNameIntern = enableNameIntern;
             return this;
         }
 

@@ -31,11 +31,11 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <NoWarn>1701;1702;1591;8632;1574;0419</NoWarn>
+        <NoWarn>1701;1702;1591;8632;0419</NoWarn>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-        <NoWarn>1701;1702;1591;8632;1574;0419</NoWarn>
+        <NoWarn>1701;1702;1591;8632;0419</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

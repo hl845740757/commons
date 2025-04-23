@@ -52,16 +52,19 @@ public static class DsonReaderUtils
 
     #region binary
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteBinary(IDsonOutput output, Binary binary) {
         output.WriteUInt32(binary.Length);
         output.WriteRawBytes(binary.UnsafeBuffer);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteBinary(IDsonOutput output, byte[] bytes, int offset, int len) {
         output.WriteUInt32(len);
         output.WriteRawBytes(bytes, offset, len);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Binary ReadBinary(IDsonInput input) {
         int size = input.ReadUInt32();
         int oldLimit = input.PushLimit(size);
@@ -77,6 +80,7 @@ public static class DsonReaderUtils
 
     #region 内置结构体
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WireTypeOfPtr(in ObjectPtr objectPtr) {
         int v = 0;
         if (objectPtr.HasNamespace) {
@@ -91,6 +95,7 @@ public static class DsonReaderUtils
         return v;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WritePtr(IDsonOutput output, in ObjectPtr objectPtr) {
         output.WriteString(objectPtr.LocalId);
         if (objectPtr.HasNamespace) {
@@ -104,6 +109,7 @@ public static class DsonReaderUtils
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ObjectPtr ReadPtr(IDsonInput input, int wireTypeBits) {
         string localId = input.ReadString();
         string ns = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskNamespace) ? input.ReadString() : null;
@@ -112,6 +118,7 @@ public static class DsonReaderUtils
         return new ObjectPtr(localId, ns, type, policy);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WireTypeOfLitePtr(in ObjectLitePtr objectLitePtr) {
         int v = 0;
         if (objectLitePtr.HasNamespace) {
@@ -126,6 +133,7 @@ public static class DsonReaderUtils
         return v;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteLitePtr(IDsonOutput output, in ObjectLitePtr objectLiteRef) {
         output.WriteUInt64(objectLiteRef.LocalId);
         if (objectLiteRef.HasNamespace) {
@@ -139,6 +147,7 @@ public static class DsonReaderUtils
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ObjectLitePtr ReadLitePtr(IDsonInput input, int wireTypeBits) {
         long localId = input.ReadUInt64();
         string ns = DsonInternals.IsSet(wireTypeBits, ObjectPtr.MaskNamespace) ? input.ReadString() : null;
@@ -147,6 +156,7 @@ public static class DsonReaderUtils
         return new ObjectLitePtr(localId, ns, type, policy);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteDateTime(IDsonOutput output, in ExtDateTime dateTime) {
         output.WriteUInt64(dateTime.Seconds);
         output.WriteUInt32(dateTime.Nanos);
@@ -154,6 +164,7 @@ public static class DsonReaderUtils
         // output.WriteRawByte(dateTime.Enables);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ExtDateTime ReadDateTime(IDsonInput input, int wireTypeBits) {
         return new ExtDateTime(
             input.ReadUInt64(),
@@ -162,11 +173,13 @@ public static class DsonReaderUtils
             (byte)wireTypeBits);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteTimestamp(IDsonOutput output, in Timestamp timestamp) {
         output.WriteUInt64(timestamp.Seconds);
         output.WriteUInt32(timestamp.Nanos);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Timestamp ReadTimestamp(IDsonInput input) {
         return new Timestamp(
             input.ReadUInt64(),
@@ -177,6 +190,7 @@ public static class DsonReaderUtils
 
     #region 特殊
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteValueBytes(IDsonOutput output, DsonType dsonType, byte[] data) {
         if (dsonType == DsonType.String || dsonType == DsonType.Binary) {
             output.WriteUInt32(data.Length);
@@ -186,6 +200,7 @@ public static class DsonReaderUtils
         output.WriteRawBytes(data);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static byte[] ReadValueAsBytes(IDsonInput input, DsonType dsonType) {
         int size;
         if (dsonType == DsonType.String || dsonType == DsonType.Binary) {
@@ -196,18 +211,21 @@ public static class DsonReaderUtils
         return input.ReadRawBytes(size);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void CheckReadValueAsBytes(DsonType dsonType) {
         if (!ValueBytesTypes.Contains(dsonType)) {
             throw DsonIOException.InvalidDsonType(ValueBytesTypes, dsonType);
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void CheckWriteValueAsBytes(DsonType dsonType) {
         if (!ValueBytesTypes.Contains(dsonType)) {
             throw DsonIOException.InvalidDsonType(ValueBytesTypes, dsonType);
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void SkipToEndOfObject(IDsonInput input) {
         int size = input.GetBytesUntilLimit();
         if (size > 0) {

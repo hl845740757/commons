@@ -74,7 +74,7 @@ public final class DsonCollectionReader extends AbstractDsonReader {
 
     @Override
     protected Context getContext() {
-        return (Context) super.getContext();
+        return (Context) context;
     }
 
     @Override

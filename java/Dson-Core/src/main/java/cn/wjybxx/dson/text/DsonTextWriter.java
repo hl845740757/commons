@@ -69,7 +69,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
 
     @Override
     protected Context getContext() {
-        return (Context) super.getContext();
+        return (Context) context;
     }
 
     @Override

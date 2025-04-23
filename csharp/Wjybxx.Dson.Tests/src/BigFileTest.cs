@@ -96,7 +96,7 @@ public class BigFileTest
 
         DsonTextReaderSettings readerSettings = new DsonTextReaderSettings.Builder()
         {
-            EnableFieldIntern = false
+            EnableNameIntern = false
         }.Build();
 
         using DsonTextReader reader = new DsonTextReader(readerSettings, new StreamReader(NewInputStream()));

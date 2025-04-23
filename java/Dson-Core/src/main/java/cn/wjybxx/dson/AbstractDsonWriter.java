@@ -33,7 +33,7 @@ import java.util.Objects;
 public abstract class AbstractDsonWriter implements DsonWriter {
 
     protected final DsonWriterSettings settings;
-    private Context context;
+    protected Context context;
     protected int recursionDepth;
 
     protected AbstractDsonWriter(DsonWriterSettings settings) {

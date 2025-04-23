@@ -384,6 +384,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         EnsureValueState(context, dsonType);
         DoReadStartContainer(contextType, dsonType);
         SetNextState(); // 设置新上下文状态
+        SetEnableNameIntern(contextType == DsonContextType.Header ? true : null); // header默认启用name池化
     }
 
     private void ReadEndContainer(DsonContextType contextType) {
@@ -393,6 +394,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         SetNextState(); // parent前进一个状态
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void AutoStartTopLevel(Context context) {
         if (context.contextType == DsonContextType.TopLevel
             && (context.state == DsonReaderState.Initial || context.state == DsonReaderState.Type)) {
@@ -400,6 +402,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CheckEndContext(Context context, DsonContextType contextType) {
         if (context.contextType != contextType) {
             throw DsonIOException.ContextError(contextType, context.contextType);
@@ -473,6 +476,16 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         return data;
     }
 
+    public void SetEnableNameIntern(bool? value) {
+        if (value == null) {
+            context.enableNameIntern = settings.enableNameIntern != null && settings.enableNameIntern.Value;
+        } else if (value.Value) {
+            context.enableNameIntern = settings.enableNameIntern == null || settings.enableNameIntern.Value;
+        } else {
+            context.enableNameIntern = false;
+        }
+    }
+
     public object Attach(object userData) {
         return context.Attach(userData);
     }
@@ -504,6 +517,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         protected internal DsonType dsonType = DsonTypes.INVALID;
         protected internal DsonReaderState state = DsonReaderState.Initial;
         protected internal TName name;
+        protected internal bool enableNameIntern;
         protected internal object userData;
 
         public Context() {
@@ -522,11 +536,12 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
             dsonType = DsonTypes.INVALID;
             state = default;
             name = default;
+            enableNameIntern = false;
             userData = null;
         }
 
         public object Attach(object userData) {
-            var r = this.userData;
+            object r = this.userData;
             this.userData = userData;
             return r;
         }

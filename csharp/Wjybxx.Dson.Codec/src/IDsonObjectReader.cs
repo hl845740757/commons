@@ -153,6 +153,12 @@ public interface IDsonObjectReader : IDisposable
     T DecodeKey<T>(string keyString);
 
     /// <summary>
+    /// 设置是否启用name池化
+    /// </summary>
+    /// <param name="value"></param>
+    void SetEnableNameIntern(bool? value);
+
+    /// <summary>
     /// 设置数组/object的value的类型，用于精确解析Dson文本。
     /// </summary>
     /// <param name="dsonType">value的类型</param>

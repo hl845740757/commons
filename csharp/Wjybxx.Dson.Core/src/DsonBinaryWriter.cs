@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Pool;
 using Wjybxx.Dson.Internal;
 using Wjybxx.Dson.IO;
@@ -53,6 +54,7 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
         SetContext(context);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private new Context GetContext() {
         return (Context)context;
     }
@@ -238,12 +240,14 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
         () => new Context(), context => context.Reset(),
         DsonInternals.CONTEXT_POOL_SIZE);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Context NewContext(Context parent, DsonContextType contextType, DsonType dsonType) {
         Context context = contextPool.Acquire();
         context.Init(parent, contextType, dsonType);
         return context;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ReturnContext(Context context) {
         contextPool.Release(context);
     }

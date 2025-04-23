@@ -36,7 +36,7 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
     protected static final int INVALID_NAME = -1;
 
     protected final DsonReaderSettings settings;
-    private Context context;
+    protected Context context;
     // 这些值放外面，不需要上下文隔离，但需要能恢复
     protected int recursionDepth;
     protected DsonType currentDsonType;

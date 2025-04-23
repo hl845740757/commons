@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
@@ -78,6 +79,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
 
     public new DsonTextReaderSettings Settings => (DsonTextReaderSettings)settings;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private new Context GetContext() {
         return (Context)context;
     }
@@ -107,6 +109,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     /// <summary>
     /// 保存Stack的原始快照
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void InitMarkQueue() {
         if (_pushedTokenQueue.Count <= 0) {
             return;
@@ -119,6 +122,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     /// <summary>
     /// 通过快照恢复Stack
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ResetPushedQueue() {
         _pushedTokenQueue.Clear();
         for (int i = _markedTokenQueue.Count - 1; i >= 0; i--) {
@@ -127,6 +131,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         _markedTokenQueue.Clear();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private DsonToken PopToken() {
         if (_pushedTokenQueue.Count == 0) {
             DsonToken dsonToken = _scanner.NextToken();
@@ -139,6 +144,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private DsonToken SkipToken() {
         if (_pushedTokenQueue.Count == 0) {
             return _scanner.NextToken(skipValue: true);
@@ -146,25 +152,30 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         return _pushedTokenQueue.Pop();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PushToken(DsonToken token) {
         // if (token == null) throw new ArgumentNullException(nameof(token));
         _pushedTokenQueue.Push(token);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PushNextValue(UnionValue nextValue) {
         this._nextValue = nextValue;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private UnionValue PopNextValue() {
         UnionValue r = this._nextValue!;
         this._nextValue = default;
         return r;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PushNextName(string nextName) {
         this._nextName = nextName ?? throw new ArgumentNullException(nameof(nextName));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private string PopNextName() {
         string r = this._nextName;
         this._nextName = null;
@@ -786,6 +797,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CheckSeparator(Context context) {
         // 每读取一个值，判断下分隔符，尾部最多只允许一个逗号 -- 这里在尾部更容易处理
         DsonToken keyToken;
@@ -800,6 +812,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     #endregion
 
     /** header不可以在中途出现 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void EnsureCountIsZero(Context context, DsonToken headerToken) {
         if (context.count > 0) {
             throw DsonIOException.InvalidTokenType(context.contextType, headerToken,
@@ -807,6 +820,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void EnsureStringsToken(Context context, DsonToken token) {
         if (token.type != DsonTokenType.String && token.type != DsonTokenType.UnquoteString) {
             throw DsonIOException.InvalidTokenType(context.contextType, token,
@@ -814,18 +828,21 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsHeaderOrBuiltStruct(DsonToken token) {
         return token.type == DsonTokenType.BuiltinStruct
                || token.type == DsonTokenType.BeginHeader
                || token.type == DsonTokenType.SimpleHeader;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void VerifyTokenType(Context context, DsonToken token, DsonTokenType expected) {
         if (token.type != expected) {
             throw DsonIOException.InvalidTokenType(context.contextType, token, expected);
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void VerifyTokenType(Context context, DsonToken token, List<DsonTokenType> expected) {
         if (!expected.Contains(token.type)) {
             throw DsonIOException.InvalidTokenType(context.contextType, token, expected);
@@ -833,7 +850,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     protected override void DoReadName() {
-        if (settings.enableFieldIntern) {
+        if (context.enableNameIntern) {
             currentName = Dsons.InternField(PopNextName());
         } else {
             currentName = PopNextName() ?? throw new NullReferenceException();
@@ -1056,12 +1073,14 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         () => new Context(), context => context.Reset(),
         DsonInternals.CONTEXT_POOL_SIZE);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Context NewContext(Context parent, DsonContextType contextType, DsonType dsonType) {
         Context context = contextPool.Acquire();
         context.Init(parent, contextType, dsonType);
         return context;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ReturnContext(Context context) {
         contextPool.Release(context);
     }

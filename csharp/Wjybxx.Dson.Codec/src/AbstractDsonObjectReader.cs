@@ -241,13 +241,17 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         throw DsonCodecException.EnumAbsent(type, keyString);
     }
 
+    public void SetEnableNameIntern(bool? value) {
+        reader.SetEnableNameIntern(value);
+    }
+
     public void SetComponentType(DsonType dsonType) {
         if (reader is DsonTextReader textReader) {
             DsonToken token = DsonTexts.ClsNameTokenOfType(dsonType);
             textReader.SetCompClsNameToken(token);
         }
     }
-
+    
     public void Dispose() {
         reader.Dispose();
     }

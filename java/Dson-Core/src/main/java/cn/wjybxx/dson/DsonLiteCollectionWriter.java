@@ -30,7 +30,7 @@ public class DsonLiteCollectionWriter extends AbstractDsonLiteWriter {
 
     @Override
     protected Context getContext() {
-        return (Context) super.getContext();
+        return (Context) context;
     }
 
     @Override

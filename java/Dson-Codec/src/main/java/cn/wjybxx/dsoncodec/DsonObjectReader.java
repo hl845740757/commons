@@ -139,6 +139,9 @@ public interface DsonObjectReader extends AutoCloseable {
     /** 解码字典的key */
     <T> T decodeKey(String keyString, TypeInfo keyTypeInfo);
 
+    /** 设置是否启用name池化 */
+    void setEnableNameIntern(@Nullable Boolean value);
+
     /** 设置数组/object的value的类型，用于精确解析Dson文本 */
     void setComponentType(DsonType dsonType);
 

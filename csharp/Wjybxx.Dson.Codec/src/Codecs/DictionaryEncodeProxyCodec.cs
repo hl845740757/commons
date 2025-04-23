@@ -88,6 +88,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
     }
 
     public DictionaryEncodeProxy<V> ReadObject(IDsonObjectReader reader, Func<DictionaryEncodeProxy<V>>? factory = null) {
+        reader.SetEnableNameIntern(false); // 禁用字典的name池化
         Type valDeclaredType = typeof(V);
 
         List<KeyValuePair<string, V>> entries = new List<KeyValuePair<string, V>>();

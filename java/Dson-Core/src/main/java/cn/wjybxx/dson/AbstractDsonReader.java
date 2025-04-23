@@ -36,7 +36,7 @@ public abstract class AbstractDsonReader implements DsonReader {
     protected static final String INVALID_NAME = null;
 
     protected final DsonReaderSettings settings;
-    private Context context;
+    protected Context context;
     // 这些值放外面，不需要上下文隔离，但需要能恢复
     protected int recursionDepth;
     protected DsonType currentDsonType;
@@ -409,6 +409,7 @@ public abstract class AbstractDsonReader implements DsonReader {
         ensureValueState(context, dsonType);
         doReadStartContainer(contextType, dsonType);
         setNextState(); // 设置新上下文状态
+        setEnableNameIntern(contextType == DsonContextType.HEADER ? true : null); // header默认启用name池化
     }
 
     private void readEndContainer(DsonContextType contextType) {
@@ -507,6 +508,17 @@ public abstract class AbstractDsonReader implements DsonReader {
     }
 
     @Override
+    public void setEnableNameIntern(@Nullable Boolean value) {
+        if (value == null) {
+            context.enableNameIntern = settings.enableNameIntern != null && settings.enableNameIntern;
+        } else if (value) {
+            context.enableNameIntern = settings.enableNameIntern == null || settings.enableNameIntern;
+        } else {
+            context.enableNameIntern = false;
+        }
+    }
+
+    @Override
     public Object attach(Object userData) {
         return context.attach(userData);
     }
@@ -540,6 +552,7 @@ public abstract class AbstractDsonReader implements DsonReader {
         public DsonType dsonType;
         public DsonReaderState state = DsonReaderState.INITIAL;
         public String name = INVALID_NAME;
+        public boolean enableNameIntern;
         public Object userData;
 
         public Context() {
@@ -558,6 +571,7 @@ public abstract class AbstractDsonReader implements DsonReader {
             dsonType = null;
             state = DsonReaderState.INITIAL;
             name = INVALID_NAME;
+            enableNameIntern = false;
             userData = null;
         }
 

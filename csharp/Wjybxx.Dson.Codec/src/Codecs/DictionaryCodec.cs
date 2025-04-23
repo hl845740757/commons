@@ -151,6 +151,8 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     }
 
     public IDictionary<K, V> ReadObject(IDsonObjectReader reader, Func<IDictionary<K, V>>? factory = null) {
+        reader.SetEnableNameIntern(false); // 禁用字典的name池化
+        
         IDictionary<K, V> result = factory != null ? factory() : NewDictionary();
         if (reader.Options.writeMapAsDocument) {
             if (keyKind == KeyKind.Int32) {

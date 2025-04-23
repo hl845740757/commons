@@ -105,6 +105,7 @@ public class MapEncodeProxyCodec<V> implements DsonCodec<MapEncodeProxy<V>> {
 
     @Override
     public MapEncodeProxy<V> readObject(DsonObjectReader reader, Supplier<? extends MapEncodeProxy<V>> factory) {
+        reader.setEnableNameIntern(false); // 禁用字典的name池化
         TypeInfo valueTypeInfo = encoderType.typeArgs.get(0);
 
         List<Map.Entry<String, V>> entries = new ArrayList<>();

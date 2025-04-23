@@ -47,8 +47,6 @@ import java.util.Objects;
 @Immutable
 public final class ClassName {
 
-    private static final char SPLIT_CHAR = '`';
-
     /**
      * 无泛型参数的类型别名(简单名)。
      * 1. 如果不是泛型类，类名仅包含类的简单名。

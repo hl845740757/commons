@@ -100,7 +100,7 @@ public final class DsonTextReader extends AbstractDsonReader {
 
     @Override
     protected Context getContext() {
-        return (Context) super.getContext();
+        return (Context) context;
     }
 
     @Override
@@ -776,7 +776,7 @@ public final class DsonTextReader extends AbstractDsonReader {
 
     @Override
     protected void doReadName() {
-        if (settings.enableFieldIntern) {
+        if (getContext().enableNameIntern) {
             currentName = Dsons.internField(popNextName());
         } else {
             currentName = Objects.requireNonNull(popNextName());

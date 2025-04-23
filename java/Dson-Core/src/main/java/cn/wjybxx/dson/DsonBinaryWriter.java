@@ -51,7 +51,7 @@ public class DsonBinaryWriter extends AbstractDsonWriter {
 
     @Override
     protected Context getContext() {
-        return (Context) super.getContext();
+        return (Context) context;
     }
 
     @Override

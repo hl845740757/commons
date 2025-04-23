@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.IO;
 using Wjybxx.Dson.IO;
@@ -43,10 +44,12 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
 
     public DsonWriterSettings Settings => settings;
 
-    protected virtual Context GetContext() {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected Context GetContext() {
         return context;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void SetContext(Context context) {
         this.context = context;
     }
@@ -89,6 +92,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
     protected void DoWriteName(TName name) {
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void AdvanceToValueState(TName name) {
         Context context = this.context;
         if (context.state == DsonWriterState.Name) {
@@ -99,12 +103,14 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void EnsureValueState(Context context) {
         if (context.state != DsonWriterState.Value) {
             throw InvalidState(CollectionUtil.NewList(DsonWriterState.Value), context.state);
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void SetNextState() {
         switch (context.contextType) {
             case DsonContextType.Object:
@@ -289,6 +295,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         SetNextState(); // parent前进一个状态
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void AutoStartTopLevel(Context context) {
         if (context.contextType == DsonContextType.TopLevel
             && context.state == DsonWriterState.Initial) {
@@ -296,6 +303,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void CheckEndContext(Context context, DsonContextType contextType, DsonWriterState state) {
         if (context.contextType != contextType) {
             throw DsonIOException.ContextError(contextType, context.contextType);

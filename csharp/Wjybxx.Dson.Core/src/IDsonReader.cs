@@ -215,6 +215,14 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
     byte[] ReadValueAsBytes(TName name);
 
 #nullable disable
+
+    /// <summary>
+    /// 1.该接口主要用于避免池化字典类对象的key -- key范围是不定的，
+    /// 2.如果value为null，则表示使用全局设置；如果为false，则表示禁用；如果为true，则由全局设置决定是否可启用。
+    /// </summary>
+    /// <param name="value"></param>
+    void SetEnableNameIntern(bool? value);
+
     /// <summary>
     /// 附近一个数据到当前上下文
     /// </summary>

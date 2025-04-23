@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Pool;
 using Wjybxx.Dson.Internal;
 using Wjybxx.Dson.IO;
@@ -54,6 +55,7 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
     /// </summary>
     public DsonArray<TName> OutList => outList; // 不能通过Context查询，close后context会被清理
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private new Context GetContext() {
         return (Context)context;
     }
@@ -180,12 +182,14 @@ public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> wher
         () => new Context(), context => context.Reset(),
         DsonInternals.CONTEXT_POOL_SIZE);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Context NewContext(Context parent, DsonContextType contextType, DsonType dsonType) {
         Context context = contextPool.Acquire();
         context.Init(parent, contextType, dsonType);
         return context;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ReturnContext(Context context) {
         contextPool.Release(context);
     }

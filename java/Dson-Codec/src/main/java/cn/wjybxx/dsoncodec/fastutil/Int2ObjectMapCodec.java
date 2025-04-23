@@ -95,6 +95,7 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
 
     @Override
     public Int2ObjectMap<V> readObject(DsonObjectReader reader, Supplier<? extends Int2ObjectMap<V>> factory) {
+        reader.setEnableNameIntern(false); // 禁用字典的name池化
         TypeInfo valueTypeInfo = encoderType.typeArgs.get(0);
 
         Int2ObjectMap<V> result = factory != null ? factory.get() : newMap();

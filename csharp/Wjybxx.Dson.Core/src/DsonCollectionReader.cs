@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Pool;
 using Wjybxx.Dson.Ext;
@@ -84,6 +85,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         return context.dsonObject.Keys;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private new Context GetContext() {
         return (Context)context;
     }
@@ -103,21 +105,25 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
     #region state
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PushNextValue(DsonValue nextValue) {
         if (nextValue == null) throw new ArgumentNullException(nameof(nextValue));
         this._nextValue = nextValue;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private DsonValue PopNextValue() {
         DsonValue r = this._nextValue;
         this._nextValue = null;
         return r!;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void PushNextName(TName nextName) {
         this._nextName = nextName;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private TName PopNextName() {
         TName r = this._nextName;
         this._nextName = default;
@@ -316,12 +322,14 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         () => new Context(), context => context.Reset(),
         DsonInternals.CONTEXT_POOL_SIZE);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Context NewContext(Context parent, DsonContextType contextType, DsonType dsonType) {
         Context context = contextPool.Acquire();
         context.Init(parent, contextType, dsonType);
         return context;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void ReturnContext(Context context) {
         contextPool.Release(context);
     }

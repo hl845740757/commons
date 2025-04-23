@@ -145,6 +145,8 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
 
     @Override
     public Map<K, V> readObject(DsonObjectReader reader, Supplier<? extends Map<K, V>> factory) {
+        reader.setEnableNameIntern(false); // 禁用字典的name池化
+
         TypeInfo keyTypeInfo = encoderType.typeArgs.get(0);
         TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
         //

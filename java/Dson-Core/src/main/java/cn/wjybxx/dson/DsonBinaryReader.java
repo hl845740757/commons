@@ -48,7 +48,7 @@ public final class DsonBinaryReader extends AbstractDsonReader {
 
     @Override
     protected Context getContext() {
-        return (Context) super.getContext();
+        return (Context) context;
     }
 
     @Override
@@ -101,7 +101,7 @@ public final class DsonBinaryReader extends AbstractDsonReader {
     @Override
     protected void doReadName() {
         String fieldName = input.readString();
-        if (settings.enableFieldIntern) {
+        if (context.enableNameIntern) {
             currentName = Dsons.internField(fieldName);
         } else {
             currentName = fieldName;

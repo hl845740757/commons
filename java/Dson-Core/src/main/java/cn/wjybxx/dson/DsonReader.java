@@ -19,6 +19,7 @@ package cn.wjybxx.dson;
 import cn.wjybxx.dson.types.*;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * 1.读取数组内普通成员时，name传null，读取嵌套对象时使用无name参数的start方法
@@ -193,6 +194,12 @@ public interface DsonReader extends AutoCloseable {
      * </pre>
      */
     byte[] readValueAsBytes(String name);
+
+    /**
+     * 1.该接口主要用于避免池化字典类对象的key -- key范围是不定的，
+     * 2.如果value为null，则表示使用全局设置；如果为false，则表示禁用；如果为true，则由全局设置决定是否可启用。
+     */
+    void setEnableNameIntern(@Nullable Boolean value);
 
     /**
      * 附近一个数据到当前上下文

@@ -48,7 +48,7 @@ public final class DsonLiteBinaryReader extends AbstractDsonLiteReader {
 
     @Override
     protected Context getContext() {
-        return (Context) super.getContext();
+        return (Context) context;
     }
 
     @Override
