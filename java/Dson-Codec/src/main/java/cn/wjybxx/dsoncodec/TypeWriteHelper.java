@@ -17,6 +17,7 @@
 package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.TypeInfo;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

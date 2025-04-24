@@ -16,6 +16,8 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.TypeInfo;
+
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 

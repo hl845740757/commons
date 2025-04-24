@@ -36,7 +36,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
     /// <summary>
     /// clsName的解析结果缓存
     /// </summary>
-    private readonly ConcurrentDictionary<string, ClassName> classNamePool = new ConcurrentDictionary<string, ClassName>();
+    private readonly ConcurrentDictionary<string, TypeName> classNamePool = new ConcurrentDictionary<string, TypeName>();
     private readonly ConcurrentDictionary<Type, TypeMeta> type2MetaDic = new ConcurrentDictionary<Type, TypeMeta>();
     private readonly ConcurrentDictionary<string, TypeMeta> name2MetaDic = new ConcurrentDictionary<string, TypeMeta>();
 
@@ -74,8 +74,8 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             }
             style = rawTypeMeta.style; // 保留泛型类的Style
         }
-        ClassName className = ClassNameOfType(type); // 放前方可检测泛型
-        string mainClsName = className.ToString();
+        TypeName typeName = ClassNameOfType(type); // 放前方可检测泛型
+        string mainClsName = typeName.ToString();
 
         // 需要动态生成TypeMeta并缓存下来
         typeMeta = TypeMeta.Of(type, style, mainClsName);
@@ -97,9 +97,9 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             return typeMeta;
         }
         // 走到这里，通常意味着clsName是数组或泛型 -- 别名可能导致断言失败
-        ClassName className = ParseName(clsName);
+        TypeName typeName = ParseName(clsName);
         // Debug.Assert(className.IsArray || className.IsGeneric);
-        Type type = TypeOfClassName(className);
+        Type type = TypeOfClassName(typeName);
 
         // 通过Type初始化TypeMeta，我们尽量合并TypeMeta -- clsName包含空白时不缓存
         typeMeta = OfType(type);
@@ -128,17 +128,17 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
 
     #region internal
 
-    private ClassName ParseName(string clsName) {
+    private TypeName ParseName(string clsName) {
         if (clsName == null) throw new ArgumentNullException(nameof(clsName));
-        if (classNamePool.TryGetValue(clsName, out ClassName result)) {
+        if (classNamePool.TryGetValue(clsName, out TypeName result)) {
             return result;
         }
         // 程序生成的clsName通常是紧凑的，不包含空白字符(缩进)的，因此可以安全缓存；
         // 如果clsName包含空白字符，通常是用户手写的，缓存有一定的风险性 —— 可能产生恶意缓存
         if (ObjectUtil.ContainsWhitespace(clsName)) {
-            return ClassName.Parse(clsName);
+            return TypeName.Parse(clsName);
         }
-        result = ClassName.Parse(clsName);
+        result = TypeName.Parse(clsName);
         classNamePool.TryAdd(clsName, result);
         return result;
     }
@@ -150,12 +150,12 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    private ClassName ClassNameOfType(Type type) {
+    private TypeName ClassNameOfType(Type type) {
         if (type.IsArray) {
             Type rootElementType = ArrayUtil.GetRootElementType(type);
             int arrayRank = ArrayUtil.GetArrayRank(type);
             string clsName = ClassNameOfType(rootElementType) + ArrayUtil.ArrayRankSymbol(arrayRank);
-            return new ClassName(clsName);
+            return new TypeName(clsName);
         }
         if (type.IsGenericType) {
             // 泛型原型类必须存在于用户的注册表中
@@ -164,11 +164,11 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
             Type[] genericTypeArgs = type.GenericTypeArguments; // 真实泛型参数
-            List<ClassName> typeArgClassNames = new List<ClassName>(genericTypeArgs.Length);
+            List<TypeName> typeArgClassNames = new List<TypeName>(genericTypeArgs.Length);
             foreach (Type genericTypeArg in genericTypeArgs) {
                 typeArgClassNames.Add(ClassNameOfType(genericTypeArg));
             }
-            return new ClassName(typeMeta.MainClsName, typeArgClassNames);
+            return new TypeName(typeMeta.MainClsName, typeArgClassNames);
         }
         // 非泛型非数组，必须存在于用户的注册表中
         {
@@ -176,7 +176,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
-            return new ClassName(typeMeta.MainClsName);
+            return new TypeName(typeMeta.MainClsName);
         }
     }
 
@@ -185,26 +185,26 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
     /// 1.ClassName到Type之间是多对一关系。
     /// 2.解析的开销较大，需要缓存最终结果。
     /// </summary>
-    private Type TypeOfClassName(in ClassName className) {
+    private Type TypeOfClassName(TypeName typeName) {
         // 先解析泛型类，再构建数组
-        int arrayRank = className.ArrayRank;
+        int arrayRank = typeName.ArrayRank;
         Type result;
         if (arrayRank > 0) {
             // 获取数组根元素的类型
-            result = TypeOfClassName(new ClassName(className.RootElement, className.typeArgs));
+            result = TypeOfClassName(new TypeName(typeName.RootElement, typeName.typeArgs));
         } else {
             // 解析泛型原型 —— 泛型原型类必须存在于用户的注册表中
-            TypeMeta typeMeta = _config.OfName(className.clsName);
+            TypeMeta typeMeta = _config.OfName(typeName.name);
             if (typeMeta == null) {
-                throw new DsonCodecException("typeMeta absent, className: " + className);
+                throw new DsonCodecException("typeMeta absent, className: " + typeName);
             }
             result = typeMeta.type;
             // 解析泛型参数
-            int typeArgsCount = className.typeArgs.Count;
+            int typeArgsCount = typeName.typeArgs.Count;
             if (typeArgsCount > 0) {
                 Type[] typeArgs = new Type[typeArgsCount];
                 for (int index = 0; index < typeArgsCount; index++) {
-                    typeArgs[index] = TypeOfClassName(className.typeArgs[index]);
+                    typeArgs[index] = TypeOfClassName(typeName.typeArgs[index]);
                 }
                 result = result.MakeGenericType(typeArgs);
             }

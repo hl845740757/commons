@@ -42,9 +42,7 @@ public readonly struct ServiceKey : IEquatable<ServiceKey>
     }
 
     public override int GetHashCode() {
-        unchecked {
-            return (serviceType.GetHashCode() * 397) ^ (serviceName != null ? serviceName.GetHashCode() : 0);
-        }
+        return (serviceType.GetHashCode() * 397) ^ (serviceName != null ? serviceName.GetHashCode() : 0);
     }
 
     public static bool operator ==(ServiceKey left, ServiceKey right) {

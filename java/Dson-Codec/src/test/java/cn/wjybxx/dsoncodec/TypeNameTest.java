@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.TypeName;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +24,7 @@ import org.junit.jupiter.api.Test;
  * @author wjybxx
  * date - 2024/4/25
  */
-public class ClassNameTest {
+public class TypeNameTest {
 
     private static final String genericTypeName = """
             System.Collections.Generic.Dictionary`2
@@ -56,11 +57,11 @@ public class ClassNameTest {
     }
 
     private static void parseTest(String dsonClassName) {
-        ClassName className = ClassName.parse(dsonClassName);
-        String formatted = className.toString();
+        TypeName typeName = TypeName.parse(dsonClassName);
+        String formatted = typeName.toString();
         System.out.println(formatted);
 
-        ClassName cloned = ClassName.parse(formatted); // 解析格式化导出的文本
-        Assertions.assertEquals(className, cloned);
+        TypeName cloned = TypeName.parse(formatted); // 解析格式化导出的文本
+        Assertions.assertEquals(typeName, cloned);
     }
 }

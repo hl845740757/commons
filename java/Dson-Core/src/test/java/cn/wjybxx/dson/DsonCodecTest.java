@@ -141,18 +141,18 @@ public class DsonCodecTest {
         final byte[] buffer = new byte[4096];
         final int loop = 3;
 
-        List<DsonObject<FieldNumber>> srcList = new ArrayList<>(loop);
-        List<DsonObject<FieldNumber>> copiedList = new ArrayList<>(loop);
+        List<DsonObject<Integer>> srcList = new ArrayList<>(loop);
+        List<DsonObject<Integer>> copiedList = new ArrayList<>(loop);
 
         int totalBytesWritten;
         try (DsonOutput dsonOutput = DsonOutputs.newInstance(buffer)) {
             DsonLiteWriter writer = new DsonLiteBinaryWriter(DsonWriterSettings.DEFAULT, dsonOutput);
             for (int i = 0; i < loop; i++) {
-                DsonObject<FieldNumber> obj1 = new DsonObject<FieldNumber>(6);
-                obj1.append(FieldNumber.ofLnumber(0), new DsonString("wjybxx"))
-                        .append(FieldNumber.ofLnumber(1), new DsonInt32(RandomUtils.nextInt(28, 32)))
-                        .append(FieldNumber.ofLnumber(2), new DsonString("www.wjybxx.cn"))
-                        .append(FieldNumber.ofLnumber(3), new DsonInt64(System.currentTimeMillis() + RandomUtils.nextLong(0, 1000)));
+                DsonObject<Integer> obj1 = new DsonObject<Integer>(6);
+                obj1.append(0, new DsonString("wjybxx"))
+                        .append(1, new DsonInt32(RandomUtils.nextInt(28, 32)))
+                        .append(2, new DsonString("www.wjybxx.cn"))
+                        .append(3, new DsonInt64(System.currentTimeMillis() + RandomUtils.nextLong(0, 1000)));
                 srcList.add(obj1);
                 DsonLites.writeObject(writer, obj1);
             }

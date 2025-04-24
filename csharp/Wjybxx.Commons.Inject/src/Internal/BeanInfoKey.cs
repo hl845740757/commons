@@ -42,9 +42,7 @@ internal readonly struct BeanInfoKey : IEquatable<BeanInfoKey>
     }
 
     public override int GetHashCode() {
-        unchecked {
-            return (configId * 397) ^ implType.GetHashCode();
-        }
+        return (configId * 397) ^ implType.GetHashCode();
     }
 
     public static bool operator ==(BeanInfoKey left, BeanInfoKey right) {

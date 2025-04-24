@@ -53,5 +53,9 @@ public readonly struct TypePair : IEquatable<TypePair>
     public static bool operator !=(TypePair left, TypePair right) {
         return !left.Equals(right);
     }
+
+    public override string ToString() {
+        return $"{nameof(first)}: {first}, {nameof(second)}: {second}";
+    }
 }
 }

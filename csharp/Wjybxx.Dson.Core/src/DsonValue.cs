@@ -75,11 +75,11 @@ public abstract class DsonValue
 
     public DsonObject<string> AsObject() => (DsonObject<string>)this;
 
-    public DsonHeader<FieldNumber> AsHeaderLite() => (DsonHeader<FieldNumber>)this;
+    public DsonHeader<int> AsHeaderLite() => (DsonHeader<int>)this;
 
-    public DsonArray<FieldNumber> AsArrayLite() => (DsonArray<FieldNumber>)this;
+    public DsonArray<int> AsArrayLite() => (DsonArray<int>)this;
 
-    public DsonObject<FieldNumber> AsObjectLite() => (DsonObject<FieldNumber>)this;
+    public DsonObject<int> AsObjectLite() => (DsonObject<int>)this;
 
     #endregion
 }

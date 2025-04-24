@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec.fastutil;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.*;

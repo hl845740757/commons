@@ -35,7 +35,7 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
     private IDsonInput _input;
     private readonly bool _autoClose;
     private readonly AbstractDsonReader<string> _textReader;
-    private readonly AbstractDsonReader<FieldNumber> _binReader;
+    private readonly AbstractDsonReader<int> _binReader;
 
     public DsonBinaryReader(DsonReaderSettings settings, IDsonInput input, bool? autoClose = null)
         : base(settings) {
@@ -44,7 +44,7 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
             this._binReader = null;
         } else {
             this._textReader = null;
-            this._binReader = this as AbstractDsonReader<FieldNumber>;
+            this._binReader = this as AbstractDsonReader<int>;
         }
 
         this._input = input ?? throw new ArgumentNullException(nameof(input));
@@ -111,7 +111,7 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
             }
             _textReader.currentName = filedName;
         } else {
-            _binReader!.currentName = FieldNumber.OfFullNumber(_input.ReadUInt32());
+            _binReader!.currentName = _input.ReadUInt32();
         }
     }
 

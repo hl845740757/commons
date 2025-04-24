@@ -211,21 +211,6 @@ public static class Dsons
         return lnumber << IdepBits;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long MakeClassGuid(int ns, int classId) {
-        return ((long)ns << 32) | (classId & 0xFFFF_FFFFL);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int NamespaceOfClassGuid(long guid) {
-        return (int)MathCommon.LogicalShiftRight(guid, 32);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int LclassIdOfClassGuid(long guid) {
-        return (int)guid;
-    }
-
     /// <summary>
     /// 计算一个类的继承深度
     /// </summary>
@@ -397,8 +382,8 @@ public static class Dsons
     }
 
     public static void WriteHeader<TName>(IDsonWriter<TName> writer, DsonHeader<TName> header) where TName : IEquatable<TName> {
-        if (header.Count == 1 && typeof(TName) == typeof(string)) {
-            if (header.AsHeader<string>().TryGetValue(DsonHeaders.Names_ClassName, out DsonValue clsName)) {
+        if (header.Count == 1) {
+            if (header is DsonHeader<string> header1 && header1.TryGetValue(DsonHeaders.Names_ClassName, out DsonValue clsName)) {
                 writer.WriteSimpleHeader(clsName.AsString()); // header只包含clsName时打印为简单模式
                 return;
             }

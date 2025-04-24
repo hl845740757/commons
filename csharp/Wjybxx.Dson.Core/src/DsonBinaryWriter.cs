@@ -36,7 +36,7 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
     private IDsonOutput _output;
     private readonly bool _autoClose;
     private readonly AbstractDsonWriter<string> _textWriter;
-    private readonly AbstractDsonWriter<FieldNumber> _binWriter;
+    private readonly AbstractDsonWriter<int> _binWriter;
 
     public DsonBinaryWriter(DsonWriterSettings settings, IDsonOutput output, bool? autoClose = null)
         : base(settings) {
@@ -45,7 +45,7 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
             _binWriter = null;
         } else {
             _textWriter = null;
-            _binWriter = this as AbstractDsonWriter<FieldNumber>;
+            _binWriter = this as AbstractDsonWriter<int>;
         }
         this._output = output ?? throw new ArgumentNullException(nameof(output));
         this._autoClose = autoClose ?? settings.autoClose;
@@ -93,7 +93,7 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
             if (_textWriter != null) { // 避免装箱
                 output.WriteString(_textWriter.context.curName);
             } else {
-                output.WriteUInt32(_binWriter!.context.curName.FullNumber);
+                output.WriteUInt32(_binWriter!.context.curName);
             }
         }
     }
@@ -225,6 +225,16 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
     #endregion
 
     #region 特殊
+
+    public override void WriteSimpleHeader(string clsName) {
+        WriteStartHeader(ObjectStyle.Flow);
+        if (_textWriter != null) {
+            _textWriter.WriteString(DsonHeaders.Names_ClassName, clsName);
+        } else {
+            _binWriter.WriteString(DsonHeaders.Numbers_ClassName, clsName);
+        }
+        WriteEndHeader();
+    }
 
     protected override void DoWriteValueBytes(DsonType type, byte[] data) {
         IDsonOutput output = this._output;

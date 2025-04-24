@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dsoncodec.codecs.ArrayCodec;
 import cn.wjybxx.dsoncodec.codecs.EnumCodec;
 import org.slf4j.Logger;

@@ -52,10 +52,10 @@ internal static class DsonInternals
         if (typeof(TName) == typeof(string)) {
             return true;
         }
-        if (typeof(TName) == typeof(FieldNumber)) {
+        if (typeof(TName) == typeof(int)) {
             return false;
         }
-        throw new InvalidCastException("Cant cast TName to string or FieldNumber, type: " + typeof(TName));
+        throw new InvalidCastException("Cant cast TName to string or int, type: " + typeof(TName));
     }
 
     #region 集合Util

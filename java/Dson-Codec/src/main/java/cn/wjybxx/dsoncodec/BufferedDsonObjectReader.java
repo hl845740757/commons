@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.*;
 

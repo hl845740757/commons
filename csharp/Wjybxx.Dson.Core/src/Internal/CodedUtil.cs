@@ -80,6 +80,7 @@ internal static class CodedUtil
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int DecodeZigZag32(int n) => ((n >> 1) & int.MaxValue) ^ -(n & 1); // & max 实现逻辑右移1位
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long EncodeZigZag64(long n) => (n << 1 ^ n >> 63);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -20,12 +20,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
-using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 
-namespace Wjybxx.Dson.Codec
+namespace Wjybxx.Commons
 {
 /// <summary>
 /// 结构化的类型名
@@ -45,10 +45,10 @@ namespace Wjybxx.Dson.Codec
 /// 2. 泛型参数放在一对方括号中'[,]'，通过逗号分隔；
 /// </summary>
 [Immutable]
-public struct ClassName : IEquatable<ClassName>
+public sealed class TypeName : IEquatable<TypeName>
 {
     /// <summary>
-    /// 无泛型参数的类型别名(简单名)。
+    /// 无泛型参数的类型别名(简单名，可包含命名空间)。
     /// 1. 如果不是泛型类，类名仅包含类的简单名。
     /// 2. 如果是泛型类，类名包含泛型参数的个数 -- 别名可能不包含。
     /// 3. 如果是数组，包含[]，每一阶一组[] —— '[]'之间不可以有空格。
@@ -57,20 +57,20 @@ public struct ClassName : IEquatable<ClassName>
     /// List`1
     /// </code>
     /// </summary>
-    public readonly string clsName;
+    public readonly string name;
     /// <summary>
     /// 泛型参数信息，无泛型时为空List
     /// </summary>
-    public readonly IList<ClassName> typeArgs;
+    public readonly IList<TypeName> typeArgs;
     /// <summary>
     /// HashCode缓存 -- hashcode查询频率高，因此缓存。
     /// (此优化不破坏不可变约束)
     /// </summary>
     private int _hashcode;
 
-    public ClassName(string clsName, IList<ClassName>? typeArgs = null) {
-        this.clsName = clsName ?? throw new ArgumentNullException(nameof(clsName));
-        this.typeArgs = typeArgs?.ToImmutableList2() ?? ImmutableList<ClassName>.Empty;
+    public TypeName(string clsName, IList<TypeName>? typeArgs = null) {
+        this.name = clsName ?? throw new ArgumentNullException(nameof(clsName));
+        this.typeArgs = typeArgs?.ToImmutableList2() ?? ImmutableList<TypeName>.Empty;
         this._hashcode = 0;
     }
 
@@ -82,8 +82,8 @@ public struct ClassName : IEquatable<ClassName>
     /// </summary>
     public bool IsArray {
         get {
-            int idx = clsName.Length - 1;
-            return clsName[idx] == ']' && clsName[idx - 1] == '[';
+            int idx = name.Length - 1;
+            return name[idx] == ']' && name[idx - 1] == '[';
         }
     }
 
@@ -94,8 +94,8 @@ public struct ClassName : IEquatable<ClassName>
     public int ArrayRank {
         get {
             int r = 0;
-            int idx = clsName.Length - 1;
-            while (clsName[idx] == ']' && clsName[idx - 1] == '[') {
+            int idx = name.Length - 1;
+            while (name[idx] == ']' && name[idx - 1] == '[') {
                 idx -= 2;
                 r++;
             }
@@ -106,15 +106,15 @@ public struct ClassName : IEquatable<ClassName>
     /// <summary>
     /// 获取根元素类型。
     /// 如果是数组，则返回数组的最终元素类型 —— 非数组的clsName；
-    /// 如果不是数组，则直接返回<see cref="clsName"/>
+    /// 如果不是数组，则直接返回<see cref="name"/>
     /// </summary>
     public string RootElement {
         get {
-            int idx = clsName.Length - 1;
-            while (clsName[idx] == ']' && clsName[idx - 1] == '[') {
+            int idx = name.Length - 1;
+            while (name[idx] == ']' && name[idx - 1] == '[') {
                 idx -= 2;
             }
-            return clsName.Substring(0, idx + 1);
+            return name.Substring(0, idx + 1);
         }
     }
 
@@ -123,8 +123,8 @@ public struct ClassName : IEquatable<ClassName>
     /// </summary>
     public bool IsGeneric {
         get {
-            int idx = clsName.Length - 1;
-            return clsName[idx] != ']' && typeArgs.Count > 0; // 不能是数组
+            int idx = name.Length - 1;
+            return name[idx] != ']' && typeArgs.Count > 0; // 不能是数组
         }
     }
 
@@ -132,34 +132,38 @@ public struct ClassName : IEquatable<ClassName>
 
     #region equals
 
-    public bool Equals(ClassName other) {
-        return clsName == other.clsName
-               && typeArgs.SequenceEqual(other.typeArgs);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool Equals(IList<TypeName> lhs, IList<TypeName> rhs) {
+        int size = lhs.Count;
+        if (size != rhs.Count) return false;
+        for (int idx = 0; idx < size; idx++) {
+            if (!lhs[idx].Equals(rhs[idx])) return false;
+        }
+        return true;
+    }
+
+    public bool Equals(TypeName? other) {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return name == other.name
+               && Equals(typeArgs, other.typeArgs);
     }
 
     public override bool Equals(object? obj) {
-        return obj is ClassName other && Equals(other);
+        return obj is TypeName other && Equals(other);
     }
 
+    // ReSharper disable NonReadonlyMemberInGetHashCode
     public override int GetHashCode() {
         int r = _hashcode;
         if (r != 0) return r;
 
-        r = clsName.GetHashCode();
+        r = name.GetHashCode();
         for (int i = 0; i < typeArgs.Count; i++) {
             r = r * 31 + typeArgs[i].GetHashCode();
         }
-
         _hashcode = r;
         return r;
-    }
-
-    public static bool operator ==(ClassName left, ClassName right) {
-        return left.Equals(right);
-    }
-
-    public static bool operator !=(ClassName left, ClassName right) {
-        return !left.Equals(right);
     }
 
     public override string ToString() {
@@ -171,18 +175,18 @@ public struct ClassName : IEquatable<ClassName>
     #region convert
 
     /// <summary>
-    /// 将<see cref="ClassName"/>转换为Dson字符串格式
+    /// 将<see cref="TypeName"/>转换为Dson字符串格式
     /// </summary>
     /// <param name="sb">方便外部池化减少开销</param>
     /// <returns>fullClsName</returns>
     public StringBuilder ToString(StringBuilder? sb) {
-        if (sb == null) sb = new StringBuilder(clsName.Length);
+        if (sb == null) sb = new StringBuilder(name.Length);
         // 元类型放首部
         int arrayRank = ArrayRank;
         if (arrayRank == 0) {
-            sb.Append(clsName);
+            sb.Append(name);
         } else {
-            sb.Append(clsName, 0, clsName.Length - arrayRank * 2);
+            sb.Append(name, 0, name.Length - arrayRank * 2);
         }
         // 泛型信息放中部，递归的情况不多见，这里不优化
         if (typeArgs.Count > 0) {
@@ -207,7 +211,7 @@ public struct ClassName : IEquatable<ClassName>
     /// </summary>
     /// <param name="fullClsName">Dson格式的完整类名</param>
     /// <returns>结构化的类名</returns>
-    public static ClassName Parse(string fullClsName) {
+    public static TypeName Parse(string fullClsName) {
         return Parse(fullClsName, 0, fullClsName.Length - 1);
     }
 
@@ -220,7 +224,7 @@ public struct ClassName : IEquatable<ClassName>
     /// <param name="rawEndIndex">结束索引(包含)</param>
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
-    internal static ClassName Parse(string fullClsName, int rawStartIndex, int rawEndIndex) {
+    internal static TypeName Parse(string fullClsName, int rawStartIndex, int rawEndIndex) {
         // 跳过两端空白，避免分割字符串
         SkipLeading(fullClsName, ref rawStartIndex);
         SkipTrailing(fullClsName, ref rawEndIndex);
@@ -244,14 +248,14 @@ public struct ClassName : IEquatable<ClassName>
             // 截取类简单名 List`1
             int clsNameEndIndex = typeArgStartIdx - 1;
             SkipTrailing(fullClsName, ref clsNameEndIndex);
-            string clsName = fullClsName.Substring(rawStartIndex, clsNameEndIndex - rawStartIndex + 1);
+            string clsName = fullClsName.Substring2(rawStartIndex, clsNameEndIndex + 1);
             // 简单名需要拼接数组符号
             if (arrayRank > 0) {
                 clsName = clsName + ArrayUtil.ArrayRankSymbol(arrayRank);
             }
 
             // 解析泛型参数 -- 不能简单逗号分隔，需按Token匹配；泛型个数通常不超过2
-            List<ClassName> typeArgs = new List<ClassName>(2);
+            List<TypeName> typeArgs = new List<TypeName>(2);
             int eleStartIdx = typeArgStartIdx + 1;
             while (eleStartIdx > 0) {
                 string typeArg = ScanNextTypeArg(fullClsName, eleStartIdx, typeArgEndIdx - 1, out eleStartIdx);
@@ -261,14 +265,14 @@ public struct ClassName : IEquatable<ClassName>
                 if (typeArg.IndexOf('[') > 0) { // 嵌套泛型，递归情况不多，不优化
                     typeArgs.Add(Parse(typeArg, 0, typeArg.Length - 1));
                 } else {
-                    typeArgs.Add(new ClassName(typeArg, null));
+                    typeArgs.Add(new TypeName(typeArg, null));
                 }
             }
-            return new ClassName(clsName, typeArgs);
+            return new TypeName(clsName, typeArgs);
         } else {
             // 非泛型
             // Debug.Assert(fullClsName.LastIndexOf('[', rawEndIndex) < 0);
-            return new ClassName(fullClsName, null);
+            return new TypeName(fullClsName, null);
         }
     }
 
@@ -296,7 +300,7 @@ public struct ClassName : IEquatable<ClassName>
                 nextStartIndex = index + 1;
                 index--;
                 SkipTrailing(typeArgs, ref index);
-                return typeArgs.Substring(startIndex, index - startIndex + 1);
+                return typeArgs.Substring2(startIndex, index + 1);
             }
             if (c == '[') { // 入栈
                 stackDepth++;
@@ -307,7 +311,7 @@ public struct ClassName : IEquatable<ClassName>
                 Debug.Assert(stackDepth == 0);
                 nextStartIndex = -1;
                 SkipTrailing(typeArgs, ref index);
-                return typeArgs.Substring(startIndex, index - startIndex + 1);
+                return typeArgs.Substring2(startIndex, index + 1);
             }
             index++;
         }

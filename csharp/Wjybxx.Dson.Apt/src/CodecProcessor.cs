@@ -32,6 +32,7 @@ using Wjybxx.Dson.Codec.Attributes;
 using Wjybxx.Dson.Text;
 using static System.Reflection.BindingFlags;
 using ClassName = Wjybxx.Commons.Poet.ClassName;
+using TypeName = Wjybxx.Commons.Poet.TypeName;
 
 namespace Wjybxx.Dson.Apt
 {

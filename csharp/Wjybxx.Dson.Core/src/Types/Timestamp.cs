@@ -139,9 +139,6 @@ public readonly struct Timestamp : IEquatable<Timestamp>
     public const string NamesNanos = "nanos";
     public const string NamesMillis = "millis";
 
-    public static readonly FieldNumber NumbersSeconds = FieldNumber.OfLnumber(0);
-    public static readonly FieldNumber NumbersNanos = FieldNumber.OfLnumber(1);
-
     #endregion
 }
 }

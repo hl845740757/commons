@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 import cn.wjybxx.dsoncodec.annotations.DsonSerializable;

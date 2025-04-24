@@ -93,11 +93,6 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     public const string NamesType = "type";
     public const string NamesPolicy = "policy";
 
-    public static readonly FieldNumber NumbersNamespace = FieldNumber.OfLnumber(0);
-    public static readonly FieldNumber NumbersLocalId = FieldNumber.OfLnumber(1);
-    public static readonly FieldNumber NumbersType = FieldNumber.OfLnumber(2);
-    public static readonly FieldNumber NumbersPolicy = FieldNumber.OfLnumber(3);
-
     #endregion
 }
 }

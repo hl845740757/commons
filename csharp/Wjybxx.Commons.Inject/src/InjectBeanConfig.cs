@@ -114,9 +114,7 @@ public sealed class InjectBeanConfig : IEquatable<InjectBeanConfig>
     }
 
     public override int GetHashCode() {
-        unchecked {
-            return (configId * 397) ^ implType.GetHashCode();
-        }
+        return (configId * 397) ^ implType.GetHashCode();
     }
 
     public static bool operator ==(InjectBeanConfig? left, InjectBeanConfig? right) {

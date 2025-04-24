@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.base.io.StringBuilderWriter;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.io.*;

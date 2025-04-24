@@ -176,6 +176,53 @@ public class ObjectUtils {
         return false;
     }
 
+    /** 索引首个空白字符 */
+    public static int indexOfWhitespace(CharSequence cs) {
+        return indexOfWhitespace(cs, 0);
+    }
+
+    /** 索引首个空白字符 */
+    public static int indexOfWhitespace(CharSequence cs, final int startIndex) {
+        if (startIndex < 0) {
+            throw new IllegalArgumentException("startIndex " + startIndex);
+        }
+        int length = length(cs);
+        if (length == 0) {
+            return -1;
+        }
+        for (int i = startIndex; i < length; i++) {
+            if (Character.isWhitespace(cs.charAt(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** 逆向索引首个空白字符 */
+    public static int lastIndexOfWhitespace(CharSequence cs) {
+        return lastIndexOfWhitespace(cs, -1);
+    }
+
+    /** 逆向索引首个空白字符 */
+    public static int lastIndexOfWhitespace(CharSequence cs, int startIndex) {
+        if (startIndex < -1) {
+            throw new IllegalArgumentException("startIndex " + startIndex);
+        }
+        int length = length(cs);
+        if (length == 0) {
+            return -1;
+        }
+        if (startIndex == -1 || startIndex >= length) {
+            startIndex = length - 1;
+        }
+        for (int i = startIndex; i >= 0; i--) {
+            if (Character.isWhitespace(cs.charAt(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /** 获取跨语言统一的HashCode */
     public static int getUnifiedHashCode(String s) {
         final int strLen = length(s);

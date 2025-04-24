@@ -16,6 +16,8 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.TypeInfo;
+import cn.wjybxx.base.TypeName;
 import cn.wjybxx.dson.DsonArray;
 import cn.wjybxx.dson.DsonObject;
 import cn.wjybxx.dson.DsonValue;
@@ -38,6 +40,16 @@ import java.util.function.Supplier;
  * 4.文档型结构不支持key为复杂Object，默认只支持{@link Integer}{@link Long}{@link String}，即基础的整数（转字符串）和直接字符串，
  * 5.对于枚举，为保持跨语言兼容性，枚举默认编码为{@code int32}或{@code string}，因此枚举不能被装箱，否则无法精确反序列化。
  * 至于是否支持枚举key和字符串之间的转换，与具体的实现有关。
+ *
+ * <h3>编码-有限泛型</h3>
+ * 由于Java是伪泛型，在运行时无法获得对象的完整类型信息，因此编码时无法总是精确写入完整的泛型参数信息；
+ * 如果字段的泛型参数在编译期是已知的，则APT可精确生成其类型信息，eg：{@code Map<String, Task<Blackboard>}；
+ * 如果想实现更加精确的泛型处理，可扩展{@link GenericHelper}。
+ *
+ * <h3>解码-完整泛型</h3>
+ * 虽然我们无法在运行时导出对象的完整的泛型信息，但编辑器可以 —— 编辑器中的泛型都是已构造泛型。
+ * 编辑器导出的Dson文件包含完整的泛型信息是有意义的，这使得我们在Java和C#端都可以精确解析Dson文件。
+ * 要精确解析Dson文件中的clsName，我们的TypeInfo必须和{@link TypeName}一样是递归的。
  *
  * @author wjybxx
  * date 2023/4/4

@@ -30,9 +30,8 @@ namespace Wjybxx.Dson
 /// 3. 为减少API数量，我们的所有简单值写入都是带有name参数的，在已经写入name的情况下，接口的name参数将被忽略。
 /// 4. double、bool、null由于可以从无符号字符串精确解析得出，因此可以总是不输出类型标签；
 /// 5. 内置结构体总是输出类型标签，且总是Flow模式，可以降低使用复杂度；
-/// 6. C#由于有值类型，直接使用<see cref="FieldNumber"/>作为name参数，可大幅简化api；
 /// </summary>
-/// <typeparam name="TName">name的类型，string或<see cref="FieldNumber"/></typeparam>
+/// <typeparam name="TName">name的类型，string或<see cref="int"/></typeparam>
 public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName>
 {
     /** 刷新写缓冲区 */
@@ -188,13 +187,7 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     /// </summary>
     /// <param name="clsName"></param>
     /// <exception cref="ArgumentNullException"></exception>
-    void WriteSimpleHeader(string clsName) {
-        if (clsName == null) throw new ArgumentNullException(nameof(clsName));
-        IDsonWriter<string> textWrite = (IDsonWriter<string>)this;
-        textWrite.WriteStartHeader();
-        textWrite.WriteString(DsonHeaders.Names_ClassName, clsName, StringStyle.AutoQuote);
-        textWrite.WriteEndHeader();
-    }
+    void WriteSimpleHeader(string clsName);
 
     /// <summary>
     /// 直接写入一个已编码的字节数组

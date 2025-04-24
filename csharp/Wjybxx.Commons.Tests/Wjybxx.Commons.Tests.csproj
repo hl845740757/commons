@@ -2,7 +2,8 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
-        <ImplicitUsings>disable</ImplicitUsings>
+        <LangVersion>11</LangVersion>
+        <ImplicitUsings>true</ImplicitUsings>
         <Nullable>annotations</Nullable>
 
         <AssemblyName>Wjybxx.Commons.Tests</AssemblyName>

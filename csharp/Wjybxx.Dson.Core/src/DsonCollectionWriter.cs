@@ -29,7 +29,6 @@ namespace Wjybxx.Dson
 /// <summary>
 /// 将对象写入<see cref="DsonArray{TName}"/>
 /// </summary>
-/// <typeparam name="TName"></typeparam>
 public sealed class DsonCollectionWriter<TName> : AbstractDsonWriter<TName> where TName : IEquatable<TName>
 {
 #nullable disable

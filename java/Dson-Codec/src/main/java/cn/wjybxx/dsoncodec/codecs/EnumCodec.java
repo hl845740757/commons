@@ -23,7 +23,7 @@ import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dsoncodec.DsonCodecException;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.dsoncodec.TypeInfo;
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 import cn.wjybxx.dsoncodec.annotations.DsonProperty;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;

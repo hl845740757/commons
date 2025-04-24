@@ -21,7 +21,7 @@ import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.dsoncodec.TypeInfo;
+import cn.wjybxx.base.TypeInfo;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Array;

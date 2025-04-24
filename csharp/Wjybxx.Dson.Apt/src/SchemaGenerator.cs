@@ -23,6 +23,7 @@ using Wjybxx.Commons;
 using Wjybxx.Commons.Poet;
 using Wjybxx.Dson.Codec;
 using ClassName = Wjybxx.Commons.Poet.ClassName;
+using TypeName = Wjybxx.Commons.Poet.TypeName;
 
 namespace Wjybxx.Dson.Apt
 {

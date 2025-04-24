@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Commons;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Attributes
@@ -88,7 +89,7 @@ namespace Wjybxx.Dson.Codec.Attributes
 public class DsonSerializableAttribute : Attribute
 {
     /// <summary>
-    /// 字符串类型名 -- 相关类<see cref="ClassName"/>。
+    /// 字符串类型名 -- 相关类<see cref="TypeName"/>。
     ///
     /// 1.第一个元素为默认名。
     /// 2.支持多个以支持别名。

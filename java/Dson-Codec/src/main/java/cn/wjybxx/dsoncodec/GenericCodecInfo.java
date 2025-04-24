@@ -16,6 +16,8 @@
 
 package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.TypeInfo;
+
 import java.lang.reflect.TypeVariable;
 import java.util.function.Supplier;
 

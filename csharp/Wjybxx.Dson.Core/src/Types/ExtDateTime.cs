@@ -233,11 +233,6 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
     public const string NamesOffset = "offset";
     public const string NamesEnables = "enables";
 
-    public static readonly FieldNumber NumbersSeconds = FieldNumber.OfLnumber(0);
-    public static readonly FieldNumber NumbersNanos = FieldNumber.OfLnumber(1);
-    public static readonly FieldNumber NumbersOffset = FieldNumber.OfLnumber(2);
-    public static readonly FieldNumber NumbersEnables = FieldNumber.OfLnumber(3);
-
     #endregion
 }
 }

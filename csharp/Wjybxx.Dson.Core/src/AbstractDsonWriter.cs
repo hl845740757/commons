@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.IO;
 using Wjybxx.Dson.IO;
@@ -324,11 +325,15 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
     #region 特殊
 
     public virtual void WriteSimpleHeader(string clsName) {
-        if (clsName == null) throw new ArgumentNullException(nameof(clsName));
-        IDsonWriter<string> textWrite = (IDsonWriter<string>)this;
-        textWrite.WriteStartHeader();
-        textWrite.WriteString(DsonHeaders.Names_ClassName, clsName, StringStyle.AutoQuote);
-        textWrite.WriteEndHeader();
+        WriteStartHeader(ObjectStyle.Flow);
+        if (this is AbstractDsonWriter<string> writer1) {
+            writer1.WriteString(DsonHeaders.Names_ClassName, clsName);
+        } else if (this is AbstractDsonWriter<int> writer2) {
+            writer2.WriteString(DsonHeaders.Numbers_ClassName, clsName);
+        } else {
+            throw new AssertionError();
+        }
+        WriteEndHeader();
     }
 
     public void WriteValueBytes(TName name, DsonType type, byte[] data) {

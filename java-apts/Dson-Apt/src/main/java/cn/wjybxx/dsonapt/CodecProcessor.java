@@ -44,7 +44,9 @@ public class CodecProcessor extends MyAbstractProcessor {
     public static final String CNAME_NumberStyle = "cn.wjybxx.dson.text.NumberStyle";
     public static final String CNAME_StringStyle = "cn.wjybxx.dson.text.StringStyle";
     public static final String CNAME_ObjectStyle = "cn.wjybxx.dson.text.ObjectStyle";
-    public static final String CNAME_TypeInfo = "cn.wjybxx.dsoncodec.TypeInfo";
+
+    public static final String CNAME_TypeInfo = "cn.wjybxx.base.TypeInfo";
+    public static final String CNAME_TypeName = "cn.wjybxx.base.TypeName";
     public static final String CNAME_Options = "cn.wjybxx.dsoncodec.ConverterOptions";
 
     public static final String CNAME_ObjectPtr = "cn.wjybxx.dson.types.ObjectPtr";

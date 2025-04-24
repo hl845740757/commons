@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2023-2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.dsoncodec;
+package cn.wjybxx.base;
 
 
-import cn.wjybxx.base.ArrayUtils;
-import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.base.annotation.StableName;
 
 import javax.annotation.concurrent.Immutable;
@@ -26,17 +24,6 @@ import java.util.*;
 
 /**
  * 类型信息
- *
- * <h3>编码-有限泛型</h3>
- * 由于Java是伪泛型，在运行时无法获得对象的完整类型信息，因此编码时无法总是精确写入完整的泛型参数信息；
- * 如果字段的泛型参数在编译期是已知的，则APT可精确生成其类型信息，eg：{@code Map<String, Task<Blackboard>}；
- * <p>
- * 如果想尽可能精确的写入泛型信息，需要扩展{@link GenericHelper}。
- *
- * <h3>解码-完整泛型</h3>
- * 虽然我们无法在运行时导出对象的完整的泛型信息，但编辑器可以 —— 编辑器中的泛型都是已构造泛型。
- * 编辑器导出的Dson文件包含完整的泛型信息是有意义的，这使得我们在Java和C#端都可以精确解析Dson文件。
- * 要精确解析Dson文件中的clsName，我们的TypeInfo必须和{@link ClassName}一样是递归的。
  *
  * <h3>数组泛型信息</h3>
  * 注意：由于{@link Class#getComponentType()}不包含泛型信息，

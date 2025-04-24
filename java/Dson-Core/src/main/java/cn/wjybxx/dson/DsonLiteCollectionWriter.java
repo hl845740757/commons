@@ -12,9 +12,9 @@ import java.util.Objects;
  */
 public class DsonLiteCollectionWriter extends AbstractDsonLiteWriter {
 
-    private final DsonArray<FieldNumber> outList;
+    private final DsonArray<Integer> outList;
 
-    public DsonLiteCollectionWriter(DsonWriterSettings settings, DsonArray<FieldNumber> outList) {
+    public DsonLiteCollectionWriter(DsonWriterSettings settings, DsonArray<Integer> outList) {
         super(settings);
         this.outList = Objects.requireNonNull(outList);
 
@@ -24,7 +24,7 @@ public class DsonLiteCollectionWriter extends AbstractDsonLiteWriter {
     }
 
     /** 获取传入的OutList */
-    public DsonArray<FieldNumber> getOutList() {
+    public DsonArray<Integer> getOutList() {
         return outList; // 不能通过Context查询，close后context会被清理
     }
 
@@ -190,7 +190,7 @@ public class DsonLiteCollectionWriter extends AbstractDsonLiteWriter {
             container = null;
         }
 
-        public DsonHeader<FieldNumber> getHeader() {
+        public DsonHeader<Integer> getHeader() {
             if (container.getDsonType() == DsonType.OBJECT) {
                 return container.asObjectLite().getHeader();
             } else {
@@ -201,11 +201,11 @@ public class DsonLiteCollectionWriter extends AbstractDsonLiteWriter {
         @SuppressWarnings("unchecked")
         public void add(DsonValue value) {
             if (container.getDsonType() == DsonType.OBJECT) {
-                ((DsonObject<FieldNumber>) container).put(FieldNumber.ofFullNumber(curName), value);
+                ((DsonObject<Integer>) container).put(curName, value);
             } else if (container.getDsonType() == DsonType.ARRAY) {
-                ((DsonArray<FieldNumber>) container).add(value);
+                ((DsonArray<Integer>) container).add(value);
             } else {
-                ((DsonHeader<FieldNumber>) container).put(FieldNumber.ofFullNumber(curName), value);
+                ((DsonHeader<Integer>) container).put(curName, value);
             }
         }
 

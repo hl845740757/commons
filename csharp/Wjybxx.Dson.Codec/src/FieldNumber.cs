@@ -19,7 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Wjybxx.Dson
+namespace Wjybxx.Dson.Codec
 {
 /// <summary>
 /// 字段编号

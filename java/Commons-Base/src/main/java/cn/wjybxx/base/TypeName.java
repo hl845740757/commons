@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2023-2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.dsoncodec;
+package cn.wjybxx.base;
 
-import cn.wjybxx.base.ArrayUtils;
 import cn.wjybxx.base.mutable.MutableInt;
 
 import javax.annotation.concurrent.Immutable;
@@ -45,30 +44,30 @@ import java.util.Objects;
  * date - 2024/4/24
  */
 @Immutable
-public final class ClassName {
+public final class TypeName {
 
     /**
-     * 无泛型参数的类型别名(简单名)。
+     * 无泛型参数的类型别名(简单名，可包含命名空间)。
      * 1. 如果不是泛型类，类名仅包含类的简单名。
      * 2. 如果是泛型类，类名包含泛型参数的个数 —— 别名可能不包含。
      * 3. 如果是数组，包含[]，每一阶一组[] —— []之间不可以有空格。
      */
-    public final String clsName;
+    public final String name;
     /** 泛型实参信息，无泛型时为空List */
-    public final List<ClassName> typeArgs;
+    public final List<TypeName> typeArgs;
     /**
      * HashCode缓存 -- hashcode查询频率高，因此缓存。
      * (此优化不破坏不可变约束)
      */
     private int _hashcode;
 
-    public ClassName(String clsName) {
-        this.clsName = clsName;
+    public TypeName(String name) {
+        this.name = name;
         this.typeArgs = List.of();
     }
 
-    public ClassName(String clsName, List<ClassName> typeArgs) {
-        this.clsName = Objects.requireNonNull(clsName, "clsName");
+    public TypeName(String name, List<TypeName> typeArgs) {
+        this.name = Objects.requireNonNull(name, "clsName");
         this.typeArgs = typeArgs == null ? List.of() : List.copyOf(typeArgs);
     }
 
@@ -79,8 +78,8 @@ public final class ClassName {
      * 注意：如果为特定类型数组取了别名，该测试不一定准确；应尽量避免为数组定义别名。
      */
     public boolean isArray() {
-        int idx = clsName.length() - 1;
-        return clsName.charAt(idx) == ']' && clsName.charAt(idx - 1) == '[';
+        int idx = name.length() - 1;
+        return name.charAt(idx) == ']' && name.charAt(idx - 1) == '[';
     }
 
     /**
@@ -89,8 +88,8 @@ public final class ClassName {
      */
     public int getArrayRank() {
         int r = 0;
-        int idx = clsName.length() - 1;
-        while (clsName.charAt(idx) == ']' && clsName.charAt(idx - 1) == '[') {
+        int idx = name.length() - 1;
+        while (name.charAt(idx) == ']' && name.charAt(idx - 1) == '[') {
             idx -= 2;
             r++;
         }
@@ -99,14 +98,14 @@ public final class ClassName {
 
     /**
      * 获取根元素类型。
-     * 如果是数组，则返回数组的最终元素类型，否则直接返回{@link #clsName}
+     * 如果是数组，则返回数组的最终元素类型，否则直接返回{@link #name}
      */
     public String getRootElement() {
-        int idx = clsName.length() - 1;
-        while (clsName.charAt(idx) == ']' && clsName.charAt(idx - 1) == '[') {
+        int idx = name.length() - 1;
+        while (name.charAt(idx) == ']' && name.charAt(idx - 1) == '[') {
             idx -= 2;
         }
-        return clsName.substring(0, idx + 1);
+        return name.substring(0, idx + 1);
     }
 
     /**
@@ -114,8 +113,8 @@ public final class ClassName {
      * 注意：如果为特定构造泛型取了别名，该测试不一定准确。
      */
     public boolean isGeneric() {
-        int idx = clsName.length() - 1;
-        return clsName.charAt(idx) != ']' && typeArgs.size() > 0; // 不能是数组
+        int idx = name.length() - 1;
+        return name.charAt(idx) != ']' && typeArgs.size() > 0; // 不能是数组
     }
 
     // endregion
@@ -127,9 +126,18 @@ public final class ClassName {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        ClassName className = (ClassName) o;
-        if (!clsName.equals(className.clsName)) return false;
-        return typeArgs.equals(className.typeArgs);
+        TypeName other = (TypeName) o;
+        return name.equals(other.name)
+                && equals(typeArgs, other.typeArgs);
+    }
+
+    private static boolean equals(List<TypeName> lhs, List<TypeName> rhs) {
+        int size = lhs.size();
+        if (size != rhs.size()) return false;
+        for (int idx = 0; idx < size; idx++) {
+            if (!lhs.get(idx).equals(rhs.get(idx))) return false;
+        }
+        return true;
     }
 
     @Override
@@ -137,7 +145,7 @@ public final class ClassName {
         int r = _hashcode;
         if (r != 0) return r;
 
-        r = clsName.hashCode();
+        r = name.hashCode();
         for (int i = 0; i < typeArgs.size(); i++) {
             r = 31 * r + typeArgs.get(i).hashCode();
         }
@@ -156,19 +164,19 @@ public final class ClassName {
     // region convert
 
     /**
-     * 将{@link ClassName}转换为Dson字符串格式
+     * 将{@link TypeName}转换为Dson字符串格式
      *
      * @param sb 方便外部池化减少开销
      * @return fullClsName
      */
     public StringBuilder toString(StringBuilder sb) {
-        if (sb == null) sb = new StringBuilder(clsName.length());
+        if (sb == null) sb = new StringBuilder(name.length());
         // 元类型放首部
         int arrayRank = getArrayRank();
         if (arrayRank == 0) {
-            sb.append(clsName);
+            sb.append(name);
         } else {
-            sb.append(clsName, 0, clsName.length() - arrayRank * 2);
+            sb.append(name, 0, name.length() - arrayRank * 2);
         }
         // 泛型信息放中部，递归的情况不多见，这里不优化
         if (typeArgs.size() > 0) {
@@ -194,7 +202,7 @@ public final class ClassName {
      * @param fullClsName Dson格式的完整类名
      * @return 结构化的类名
      */
-    public static ClassName parse(String fullClsName) {
+    public static TypeName parse(String fullClsName) {
         return parse(fullClsName, 0, fullClsName.length() - 1);
     }
 
@@ -207,7 +215,7 @@ public final class ClassName {
      * @param rawEndIndex   结束索引(包含)
      * @return 结构化类型名
      */
-    private static ClassName parse(String fullClsName, int rawStartIndex, int rawEndIndex) {
+    private static TypeName parse(String fullClsName, int rawStartIndex, int rawEndIndex) {
         // 跳过两端空白，避免分割字符串
         rawStartIndex = skipLeading(fullClsName, rawStartIndex);
         rawEndIndex = skipTrailing(fullClsName, rawEndIndex);
@@ -237,7 +245,7 @@ public final class ClassName {
             }
 
             // 解析泛型参数 -- 不能简单逗号分隔，需按Token匹配；泛型个数通常不超过2
-            List<ClassName> typeArgs = new ArrayList<>(2);
+            List<TypeName> typeArgs = new ArrayList<>(2);
             MutableInt eleStartIdx = new MutableInt(typeArgStartIdx + 1);
             while (eleStartIdx.getValue() > 0) {
                 String typeArg = scanNextTypeArg(fullClsName, eleStartIdx.getValue(), typeArgEndIdx - 1, eleStartIdx);
@@ -247,14 +255,14 @@ public final class ClassName {
                 if (typeArg.indexOf('[') > 0) { // 嵌套泛型，递归情况不多，不优化
                     typeArgs.add(parse(typeArg, 0, typeArg.length() - 1));
                 } else {
-                    typeArgs.add(new ClassName(typeArg, null));
+                    typeArgs.add(new TypeName(typeArg, null));
                 }
             }
-            return new ClassName(clsName, typeArgs);
+            return new TypeName(clsName, typeArgs);
         } else {
             // 非泛型
             // Debug.Assert(fullClsName.LastIndexOf('[', rawEndIndex) < 0);
-            return new ClassName(fullClsName, null);
+            return new TypeName(fullClsName, null);
         }
     }
 

@@ -25,6 +25,8 @@ using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Poet;
 using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
+using ClassName = Wjybxx.Commons.Poet.ClassName;
+using TypeName = Wjybxx.Commons.Poet.TypeName;
 
 namespace Wjybxx.Dson.Apt
 {

@@ -16,7 +16,7 @@
 
 package cn.wjybxx.dsoncodec;
 
-import cn.wjybxx.dson.WireType;
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecLinkerBean;
 import cn.wjybxx.dsoncodec.annotations.DsonProperty;

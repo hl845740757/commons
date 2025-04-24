@@ -17,6 +17,7 @@
 package cn.wjybxx.dsoncodec.codecs;
 
 import cn.wjybxx.base.CollectionUtils;
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.*;

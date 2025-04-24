@@ -27,7 +27,7 @@ public class DsonLites {
     /** 类字段占用的最大比特位数 - 暂不对外开放 */
     private static final int LNUMBER_MAX_BITS = 13;
 
-    // fieldNumber
+    // region fieldNumber
 
     /** 计算一个类的继承深度 */
     public static int calIdep(Class<?> clazz) {
@@ -65,18 +65,7 @@ public class DsonLites {
         return lnumber << IDEP_BITS;
     }
 
-    // classId
-    public static long makeClassGuid(int namespace, int classId) {
-        return ((long) namespace << 32) | ((long) classId & 0xFFFF_FFFFL);
-    }
-
-    public static int namespaceOfClassGuid(long guid) {
-        return (int) (guid >>> 32);
-    }
-
-    public static int lclassIdOfClassGuid(long guid) {
-        return (int) guid;
-    }
+    // endregion
 
     // region read/write
 
@@ -84,8 +73,8 @@ public class DsonLites {
      * 读取顶层集合
      * 会将独立的header合并到容器中，会将分散的元素读取存入数组
      */
-    public static DsonArray<FieldNumber> readCollection(DsonLiteReader reader) {
-        final DsonArray<FieldNumber> collection = new DsonArray<>(4);
+    public static DsonArray<Integer> readCollection(DsonLiteReader reader) {
+        final DsonArray<Integer> collection = new DsonArray<>(4);
         DsonType dsonType;
         while ((dsonType = reader.readDsonType()) != DsonType.END_OF_OBJECT) {
             if (dsonType == DsonType.HEADER) {
@@ -105,7 +94,7 @@ public class DsonLites {
      * 写入顶层集合
      * 顶层容器的header和元素将被展开，而不是嵌套在数组中
      */
-    public static void writeCollection(DsonLiteWriter writer, DsonArray<FieldNumber> collection) {
+    public static void writeCollection(DsonLiteWriter writer, DsonArray<Integer> collection) {
         if (!collection.getHeader().isEmpty()) {
             writeHeader(writer, collection.getHeader());
         }
@@ -142,7 +131,7 @@ public class DsonLites {
      * @param fileHeader 用于接收文件头信息;如果读取到header，则存储给定参数中，并返回给定对象
      * @return 如果到达文件尾部，则返回null
      */
-    public static DsonValue readTopDsonValue(DsonLiteReader reader, DsonHeader<FieldNumber> fileHeader) {
+    public static DsonValue readTopDsonValue(DsonLiteReader reader, DsonHeader<Integer> fileHeader) {
         DsonType dsonType = reader.readDsonType();
         if (dsonType == DsonType.END_OF_OBJECT) {
             return null;
@@ -158,26 +147,26 @@ public class DsonLites {
     }
 
     /** 如果需要写入名字，外部写入 */
-    public static void writeObject(DsonLiteWriter writer, DsonObject<FieldNumber> dsonObject) {
+    public static void writeObject(DsonLiteWriter writer, DsonObject<Integer> dsonObject) {
         writer.writeStartObject();
         if (!dsonObject.getHeader().isEmpty()) {
             writeHeader(writer, dsonObject.getHeader());
         }
-        dsonObject.forEach((name, dsonValue) -> writeDsonValue(writer, dsonValue, name.getFullNumber()));
+        dsonObject.forEach((name, dsonValue) -> writeDsonValue(writer, dsonValue, name));
         writer.writeEndObject();
     }
 
-    public static DsonObject<FieldNumber> readObject(DsonLiteReader reader) {
-        DsonObject<FieldNumber> dsonObject = new DsonObject<>();
+    public static DsonObject<Integer> readObject(DsonLiteReader reader) {
+        DsonObject<Integer> dsonObject = new DsonObject<>();
         DsonType dsonType;
-        FieldNumber name;
+        int name;
         DsonValue value;
         reader.readStartObject();
         while ((dsonType = reader.readDsonType()) != DsonType.END_OF_OBJECT) {
             if (dsonType == DsonType.HEADER) {
                 readHeader(reader, dsonObject.getHeader());
             } else {
-                name = FieldNumber.ofFullNumber(reader.readName());
+                name = reader.readName();
                 value = readDsonValue(reader);
                 dsonObject.put(name, value);
             }
@@ -187,7 +176,7 @@ public class DsonLites {
     }
 
     /** 如果需要写入名字，外部写入 */
-    public static void writeArray(DsonLiteWriter writer, DsonArray<FieldNumber> dsonArray) {
+    public static void writeArray(DsonLiteWriter writer, DsonArray<Integer> dsonArray) {
         writer.writeStartArray();
         if (!dsonArray.getHeader().isEmpty()) {
             writeHeader(writer, dsonArray.getHeader());
@@ -198,8 +187,8 @@ public class DsonLites {
         writer.writeEndArray();
     }
 
-    public static DsonArray<FieldNumber> readArray(DsonLiteReader reader) {
-        DsonArray<FieldNumber> dsonArray = new DsonArray<>();
+    public static DsonArray<Integer> readArray(DsonLiteReader reader) {
+        DsonArray<Integer> dsonArray = new DsonArray<>();
         DsonType dsonType;
         DsonValue value;
         reader.readStartArray();
@@ -215,21 +204,21 @@ public class DsonLites {
         return dsonArray;
     }
 
-    public static void writeHeader(DsonLiteWriter writer, DsonHeader<FieldNumber> header) {
+    public static void writeHeader(DsonLiteWriter writer, DsonHeader<Integer> header) {
         writer.writeStartHeader();
-        header.forEach((key, value) -> writeDsonValue(writer, value, key.getFullNumber()));
+        header.forEach((key, value) -> writeDsonValue(writer, value, key));
         writer.writeEndHeader();
     }
 
-    public static DsonHeader<FieldNumber> readHeader(DsonLiteReader reader, @Nullable DsonHeader<FieldNumber> header) {
+    public static DsonHeader<Integer> readHeader(DsonLiteReader reader, @Nullable DsonHeader<Integer> header) {
         if (header == null) header = new DsonHeader<>();
         DsonType dsonType;
-        FieldNumber name;
+        int name;
         DsonValue value;
         reader.readStartHeader();
         while ((dsonType = reader.readDsonType()) != DsonType.END_OF_OBJECT) {
             assert dsonType != DsonType.HEADER;
-            name = FieldNumber.ofFullNumber(reader.readName());
+            name = reader.readName();
             value = readDsonValue(reader);
             header.put(name, value);
         }
@@ -282,7 +271,7 @@ public class DsonLites {
             case DATETIME -> new DsonDateTime(reader.readDateTime(name));
             case TIMESTAMP -> new DsonTimestamp(reader.readTimestamp(name));
             case HEADER -> {
-                DsonHeader<FieldNumber> header = new DsonHeader<>();
+                DsonHeader<Integer> header = new DsonHeader<>();
                 readHeader(reader, header);
                 yield header;
             }
@@ -309,22 +298,22 @@ public class DsonLites {
         if (stack > 100) throw new IllegalStateException("Check for circular references");
         switch (dsonValue.getDsonType()) {
             case OBJECT -> {
-                DsonObject<FieldNumber> src = dsonValue.asObjectLite();
-                DsonObject<FieldNumber> result = new DsonObject<>(src.size());
+                DsonObject<Integer> src = dsonValue.asObjectLite();
+                DsonObject<Integer> result = new DsonObject<>(src.size());
                 copyKVPair(src.getHeader(), result.getHeader(), stack);
                 copyKVPair(src, result, stack);
                 return result;
             }
             case ARRAY -> {
-                DsonArray<FieldNumber> src = dsonValue.asArrayLite();
-                DsonArray<FieldNumber> result = new DsonArray<>(src.size());
+                DsonArray<Integer> src = dsonValue.asArrayLite();
+                DsonArray<Integer> result = new DsonArray<>(src.size());
                 copyKVPair(src.getHeader(), result.getHeader(), stack);
                 copyElements(src, result, stack);
                 return result;
             }
             case HEADER -> {
-                DsonHeader<FieldNumber> src = dsonValue.asHeaderLite();
-                DsonHeader<FieldNumber> result = new DsonHeader<>();
+                DsonHeader<Integer> src = dsonValue.asHeaderLite();
+                DsonHeader<Integer> result = new DsonHeader<>();
                 copyKVPair(src, result, stack);
                 return result;
             }
@@ -337,7 +326,7 @@ public class DsonLites {
         }
     }
 
-    private static void copyKVPair(AbstractDsonObject<FieldNumber> src, AbstractDsonObject<FieldNumber> dest, int stack) {
+    private static void copyKVPair(AbstractDsonObject<Integer> src, AbstractDsonObject<Integer> dest, int stack) {
         if (!src.isEmpty()) {
             src.forEach((s, dsonValue) -> dest.put(s, mutableDeepCopy(dsonValue, stack + 1)));
         }

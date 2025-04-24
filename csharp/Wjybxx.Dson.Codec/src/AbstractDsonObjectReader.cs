@@ -251,7 +251,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
             textReader.SetCompClsNameToken(token);
         }
     }
-    
+
     public void Dispose() {
         reader.Dispose();
     }

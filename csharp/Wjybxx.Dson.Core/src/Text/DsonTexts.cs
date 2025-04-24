@@ -318,8 +318,8 @@ public static class DsonTexts
                 }
                 hasUnderline = true;
             } else {
-                sb.Append(c);
                 hasUnderline = false;
+                sb.Append(c);
             }
         }
         return sb.ToString();

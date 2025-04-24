@@ -54,9 +54,7 @@ public readonly struct Registration : IRegistration, IEquatable<Registration>
     }
 
     public override int GetHashCode() {
-        unchecked {
-            return ((_res != null ? _res.GetHashCode() : 0) * 397) ^ _rid;
-        }
+        return ((_res != null ? _res.GetHashCode() : 0) * 397) ^ _rid;
     }
 
     public static bool operator ==(Registration left, Registration right) {

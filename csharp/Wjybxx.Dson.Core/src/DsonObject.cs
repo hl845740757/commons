@@ -24,7 +24,6 @@ namespace Wjybxx.Dson
 /// <summary>
 /// DsonObject
 /// </summary>
-/// <typeparam name="TK">String或<see cref="FieldNumber"/></typeparam>
 public class DsonObject<TK> : AbstractDsonObject<TK>
 {
     private readonly DsonHeader<TK> _header;

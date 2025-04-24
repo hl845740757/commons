@@ -108,18 +108,18 @@ public abstract class DsonValue {
     //
 
     @SuppressWarnings("unchecked")
-    public DsonHeader<FieldNumber> asHeaderLite() {
-        return (DsonHeader<FieldNumber>) this;
+    public DsonHeader<Integer> asHeaderLite() {
+        return (DsonHeader<Integer>) this;
     }
 
     @SuppressWarnings("unchecked")
-    public DsonArray<FieldNumber> asArrayLite() {
-        return (DsonArray<FieldNumber>) this;
+    public DsonArray<Integer> asArrayLite() {
+        return (DsonArray<Integer>) this;
     }
 
     @SuppressWarnings("unchecked")
-    public DsonObject<FieldNumber> asObjectLite() {
-        return (DsonObject<FieldNumber>) this;
+    public DsonObject<Integer> asObjectLite() {
+        return (DsonObject<Integer>) this;
     }
 
     // endregion

@@ -275,8 +275,8 @@ public class DsonTexts {
                     if (hasUnderline) throw new NumberFormatException(str); // 不能多个连续下划线
                     hasUnderline = true;
                 } else {
-                    sb.append(c);
                     hasUnderline = false;
+                    sb.append(c);
                 }
             }
             return sb.toString();

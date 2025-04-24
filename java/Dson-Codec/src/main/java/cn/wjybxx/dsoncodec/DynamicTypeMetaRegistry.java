@@ -18,6 +18,8 @@ package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.base.ArrayUtils;
 import cn.wjybxx.base.ObjectUtils;
+import cn.wjybxx.base.TypeInfo;
+import cn.wjybxx.base.TypeName;
 import cn.wjybxx.dson.text.ObjectStyle;
 
 import javax.annotation.Nullable;
@@ -37,7 +39,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
     private final TypeMetaConfig basicRegistry;
     /** clsName解析缓存 */
-    private final ConcurrentHashMap<String, ClassName> classNamePool = new ConcurrentHashMap<>(1024);
+    private final ConcurrentHashMap<String, TypeName> classNamePool = new ConcurrentHashMap<>(1024);
 
     private final ConcurrentHashMap<TypeInfo, TypeMeta> type2MetaDic = new ConcurrentHashMap<>(1024);
     private final ConcurrentHashMap<String, TypeMeta> name2MetaDic = new ConcurrentHashMap<>(1024);
@@ -74,8 +76,8 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             }
             style = rawTypeMeta.style; // 保留泛型类的Style
         }
-        ClassName className = classNameOfType(type); // 放前方可检测泛型
-        String mainClsName = className.toString();
+        TypeName typeName = classNameOfType(type); // 放前方可检测泛型
+        String mainClsName = typeName.toString();
 
         // 动态生成TypeMeta并缓存下来
         typeMeta = TypeMeta.of(type, style, mainClsName);
@@ -99,9 +101,9 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             return typeMeta;
         }
         // 走到这里，通常意味着clsName是数组或泛型 -- 别名可能导致断言失败
-        ClassName className = parseName(clsName);
-//        assert className.isArray() || className.isGeneric()
-        TypeInfo type = typeOfClassName(className);
+        TypeName typeName = parseName(clsName);
+//        assert typeName.isArray() || typeName.isGeneric()
+        TypeInfo type = typeOfClassName(typeName);
 
         // 通过Type初始化TypeMeta，我们尽量合并TypeMeta -- clsName包含空白时不缓存
         typeMeta = ofType(type);
@@ -130,20 +132,20 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
     // region internal
 
-    private ClassName parseName(String clsName) {
+    private TypeName parseName(String clsName) {
         Objects.requireNonNull(clsName);
-        ClassName className = classNamePool.get(clsName);
-        if (className != null) {
-            return className;
+        TypeName typeName = classNamePool.get(clsName);
+        if (typeName != null) {
+            return typeName;
         }
         // 程序生成的clsName通常是紧凑的，不包含空白字符(缩进)的，因此可以安全缓存；
         // 如果clsName包含空白字符，通常是用户手写的，缓存有一定的风险性 —— 可能产生恶意缓存
         if (ObjectUtils.containsWhitespace(clsName)) {
-            return ClassName.parse(clsName);
+            return TypeName.parse(clsName);
         }
-        className = ClassName.parse(clsName);
-        classNamePool.put(clsName, className);
-        return className;
+        typeName = TypeName.parse(clsName);
+        classNamePool.put(clsName, typeName);
+        return typeName;
     }
 
     /**
@@ -152,12 +154,12 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
      * 2.解析的开销较大，需要缓存最终结果。
      * 3.Java禁止递归的泛型
      */
-    private ClassName classNameOfType(TypeInfo type) {
+    private TypeName classNameOfType(TypeInfo type) {
         if (type.isArrayType()) {
             TypeInfo rootElementType = TypeInfo.of(ArrayUtils.getRootComponentType(type.rawType), type.typeArgs);
             int arrayRank = ArrayUtils.getArrayRank(type.rawType);
             String clsName = classNameOfType(rootElementType) + ArrayUtils.arrayRankSymbol(arrayRank);
-            return new ClassName(clsName);
+            return new TypeName(clsName);
         }
         if (type.isGenericType()) {
             // 泛型原型类必须存在于用户的注册表中
@@ -166,11 +168,11 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
             List<TypeInfo> genericTypeArgs = type.typeArgs;
-            List<ClassName> typeArgClassNames = new ArrayList<>(genericTypeArgs.size());
+            List<TypeName> typeArgTypeNames = new ArrayList<>(genericTypeArgs.size());
             for (TypeInfo genericTypeArg : genericTypeArgs) {
-                typeArgClassNames.add(classNameOfType(genericTypeArg));
+                typeArgTypeNames.add(classNameOfType(genericTypeArg));
             }
-            return new ClassName(typeMeta.mainClsName(), typeArgClassNames);
+            return new TypeName(typeMeta.mainClsName(), typeArgTypeNames);
         }
         // 非泛型非数组，必须存在于用户的注册表中
         {
@@ -178,7 +180,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta absent, type: " + type);
             }
-            return new ClassName(typeMeta.mainClsName());
+            return new TypeName(typeMeta.mainClsName());
         }
     }
 
@@ -188,26 +190,26 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
      * 2.解析的开销较大，需要缓存最终结果。
      * 3.Java禁止递归的泛型
      */
-    private TypeInfo typeOfClassName(ClassName className) {
+    private TypeInfo typeOfClassName(TypeName typeName) {
         // 先解析泛型类，再构建数组
-        int arrayRank = className.getArrayRank();
+        int arrayRank = typeName.getArrayRank();
         TypeInfo result;
         if (arrayRank > 0) {
             // 获取数组根元素的类型
-            result = typeOfClassName(new ClassName(className.getRootElement(), className.typeArgs));
+            result = typeOfClassName(new TypeName(typeName.getRootElement(), typeName.typeArgs));
         } else {
             // 解析泛型原型 —— 泛型原型类必须存在于用户的注册表中
-            TypeMeta typeMeta = basicRegistry.ofName(className.clsName);
+            TypeMeta typeMeta = basicRegistry.ofName(typeName.name);
             if (typeMeta == null) {
-                throw new DsonCodecException("typeMeta absent, className: " + className);
+                throw new DsonCodecException("typeMeta absent, typeName: " + typeName);
             }
             result = typeMeta.typeInfo;
             // 解析泛型参数
-            int typeArgsCount = className.typeArgs.size();
+            int typeArgsCount = typeName.typeArgs.size();
             if (typeArgsCount > 0) {
                 TypeInfo[] typeArgs = new TypeInfo[typeArgsCount];
                 for (int index = 0; index < typeArgsCount; index++) {
-                    typeArgs[index] = typeOfClassName(className.typeArgs.get(index));
+                    typeArgs[index] = typeOfClassName(typeName.typeArgs.get(index));
                 }
                 result = TypeInfo.of(result.rawType, typeArgs);
             }

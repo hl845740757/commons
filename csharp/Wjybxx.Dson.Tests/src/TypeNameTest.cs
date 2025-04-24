@@ -16,15 +16,13 @@
 
 #endregion
 
-using System.Numerics;
 using NUnit.Framework;
-using Wjybxx.Commons.Collections;
-using Wjybxx.Dson.Codec;
+using Wjybxx.Commons;
 using Wjybxx.Dson.Tests.Apt;
 
 namespace Wjybxx.Dson.Tests;
 
-public class ClassNameTest
+public class TypeNameTest
 {
     // 用于输出测试文本
     // [Test]
@@ -81,11 +79,11 @@ public class ClassNameTest
     }
 
     private static void ParseTest(string dsonClassName) {
-        ClassName className = ClassName.Parse(dsonClassName);
-        string formatted = className.ToString();
+        TypeName typeName = TypeName.Parse(dsonClassName);
+        string formatted = typeName.ToString();
         Console.WriteLine(formatted);
 
-        ClassName cloned = ClassName.Parse(formatted); // 解析格式化导出的文本
-        Assert.That(cloned, Is.EqualTo(className));
+        TypeName cloned = TypeName.Parse(formatted); // 解析格式化导出的文本
+        Assert.That(cloned, Is.EqualTo(typeName));
     }
 }

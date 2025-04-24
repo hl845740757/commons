@@ -26,7 +26,7 @@ namespace Wjybxx.Dson
 /// 1. 读取数组内普通成员时，name传null或零值，读取嵌套对象时使用无name参数的start方法
 /// 2. 为减少API数量，我们的所有简单值读取都是带有name参数的，在已读取name的情况下，接口的name参数将被忽略。
 /// </summary>
-/// <typeparam name="TName">name的类型，string或<see cref="FieldNumber"/></typeparam>
+/// <typeparam name="TName">name的类型，string或<see cref="int"/></typeparam>
 public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName>
 {
     #region Ctx

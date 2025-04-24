@@ -32,7 +32,6 @@ namespace Wjybxx.Dson
 /// <summary>
 /// 从<see cref="DsonArray{TK}"/>中读取输入
 /// </summary>
-/// <typeparam name="TName"></typeparam>
 public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> where TName : IEquatable<TName>
 {
 #nullable disable

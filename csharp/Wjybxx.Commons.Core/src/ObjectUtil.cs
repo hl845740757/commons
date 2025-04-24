@@ -102,6 +102,17 @@ public static class ObjectUtil
     }
 
     /// <summary>
+    /// 该接口用于统一API -- 避免一会用原生API，一会儿用自定义API
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="start">开始索引 inclusive</param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string Substring2(this string value, int start) {
+        return value.Substring(start);
+    }
+
+    /// <summary>
     /// 获取字符串的长度，如果字符为null，则返回0
     /// </summary>
     /// <param name="value"></param>
@@ -187,6 +198,68 @@ public static class ObjectUtil
             }
         }
         return false;
+    }
+
+    /// <summary>
+    /// 索引首个空白字符
+    /// </summary>
+    public static int IndexOfWhitespace(string cs, int startIndex = 0) {
+        if (startIndex < 0) {
+            throw new ArgumentException("startIndex " + startIndex);
+        }
+        int length = Length(cs);
+        if (length == 0) {
+            return -1;
+        }
+        for (int i = startIndex; i < length; i++) {
+            if (char.IsWhiteSpace(cs[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// 反向索引首个空白字符
+    /// </summary>
+    public static int LastIndexOfWhitespace(string cs, int startIndex = -1) {
+        if (startIndex < -1) {
+            throw new ArgumentException("startIndex " + startIndex);
+        }
+        int length = Length(cs);
+        if (length == 0) {
+            return -1;
+        }
+        if (startIndex == -1 || startIndex >= length) {
+            startIndex = length - 1;
+        }
+        for (int i = startIndex; i >= 0; i--) {
+            if (char.IsWhiteSpace(cs[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// 删除字符串中的空白字符
+    /// </summary>
+    /// <param name="str"></param>
+    /// <returns></returns>
+    public static string DeleteWhitespace(string str) {
+        if (IndexOfWhitespace(str) < 0) {
+            return str;
+        }
+        int len = str.Length;
+        StringBuilder sb = new StringBuilder(len);
+        for (int idx = 0; idx < len; idx++) {
+            char c = str[idx];
+            if (char.IsWhiteSpace(c)) {
+                continue;
+            }
+            sb.Append(c);
+        }
+        return sb.ToString();
     }
 
     /// <summary>
