@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -27,7 +26,6 @@ namespace Wjybxx.Commons.Poet
 /// 属性
 /// 暂不支持getter/setter上的独立注解
 /// </summary>
-[Immutable]
 public class PropertySpec : ISpecification
 {
     public readonly TypeName type; // valueType
@@ -275,7 +273,7 @@ public class PropertySpec : ISpecification
 
         public Builder Initializer(CodeBlock codeBlock) {
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
-            if (this.initializer != null) throw new IllegalStateException("initializer was already set");
+            if (this.initializer != null) throw new InvalidOperationException("initializer was already set");
             this.initializer = codeBlock;
             this.hasGetter = true;
             return this;
@@ -287,7 +285,7 @@ public class PropertySpec : ISpecification
 
         public Builder Getter(CodeBlock codeBlock) {
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
-            if (this.getter != null) throw new IllegalStateException("getter was already set");
+            if (this.getter != null) throw new InvalidOperationException("getter was already set");
             this.getter = codeBlock;
             this.hasGetter = true;
             return this;
@@ -299,7 +297,7 @@ public class PropertySpec : ISpecification
 
         public Builder Setter(CodeBlock codeBlock) {
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
-            if (this.setter != null) throw new IllegalStateException("setter was already set");
+            if (this.setter != null) throw new InvalidOperationException("setter was already set");
             this.setter = codeBlock;
             this.hasSetter = true;
             return this;

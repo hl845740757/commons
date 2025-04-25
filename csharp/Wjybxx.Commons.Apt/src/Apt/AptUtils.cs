@@ -19,15 +19,14 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Poet;
 
 namespace Wjybxx.Commons.Apt
 {
-public class AptUtils
+public static class AptUtils
 {
-    private static readonly ClassName clsName_GeneratedAttribute = ClassName.Get(typeof(GeneratedAttribute));
-    private static readonly ClassName clsName_SourceFileRef = ClassName.Get(typeof(SourceFileRefAttribute));
+    private static readonly ClassName clsName_GeneratedAttribute = ClassName.Get("Wjybxx.Commons.Attributes", "GeneratedAttribute");
+    private static readonly ClassName clsName_SourceFileRef = ClassName.Get("Wjybxx.Commons.Attributes", "SourceFileRefAttribute");
 
     /// <summary>
     /// 为生成代码的注解处理器创建一个通用注解
@@ -99,7 +98,7 @@ public class AptUtils
             proxyName = string.Join("_", simpleNames) + suffix;
         }
         // C#泛型的simpleName会包含反引号...没有删除字符的快捷方法
-        if (proxyName.Contains('`')) {
+        if (proxyName.IndexOf('`') >= 0) {
             StringBuilder builder = new StringBuilder(proxyName.Length);
             for (var i = 0; i < proxyName.Length; i++) {
                 if (proxyName[i] != '`') {

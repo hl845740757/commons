@@ -17,14 +17,12 @@
 #endregion
 
 using System;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
 /// <summary>
 /// 表示类型导入(using xxx)
 /// </summary>
-[Immutable]
 public class ImportSpec : IEquatable<ImportSpec>, ISpecification
 {
     public static readonly ImportSpec System = new ImportSpec("System", null);
@@ -91,7 +89,7 @@ public class ImportSpec : IEquatable<ImportSpec>, ISpecification
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(name, alias);
+        return (name.GetHashCode() * 397) ^ (alias != null ? alias.GetHashCode() : 0);
     }
 
     public override string ToString() {

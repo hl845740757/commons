@@ -392,7 +392,7 @@ public static class ArrayUtil
     /// </summary>
     /// <param name="array"></param>
     /// <param name="comparer">比较器</param>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">mid</typeparam>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int BinarySearch<T>(T[] array, Func<T, int> comparer) {
@@ -406,7 +406,7 @@ public static class ArrayUtil
     /// <param name="comparer">比较器</param>
     /// <param name="fromIndex">包含</param>
     /// <param name="toIndex">不包含</param>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">mid</typeparam>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int BinarySearch<T>(T[] array, Func<T, int> comparer, int fromIndex, int toIndex) {

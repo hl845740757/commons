@@ -19,8 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Wjybxx.Commons.Attributes;
-using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -32,15 +30,12 @@ namespace Wjybxx.Commons.Poet
 /// 2.ClassName始终通过<see cref="WithAttributes"/>方法设置属性，避免工厂方法参数过多。
 /// 3.要想输出未构造泛型的typeof，可使用空名字的<see cref="TypeVariableName"/>。
 /// </summary>
-[Immutable]
 public class ClassName : TypeName
 {
     // 一些常用ClassName
     public static readonly ClassName VALUE_TYPE = InternalGet(typeof(ValueType));
     public static readonly ClassName ATTRIBUTE = InternalGet(typeof(Attribute));
     public static readonly ClassName NULLABLE = InternalGet(typeof(Nullable<>));
-    public static readonly ClassName SPAN = InternalGet(typeof(Span<>));
-    public static readonly ClassName VOID_CLASS = InternalGet(typeof(VoidClass));
 
     /// <summary>
     /// namespace
@@ -228,7 +223,7 @@ public class ClassName : TypeName
     /// <returns></returns>
     public ClassName NestedClass(string name, IList<TypeName>? typeArguments = null, bool inheritTypeArguments = true) {
         if (inheritTypeArguments) {
-            typeArguments = CollectionUtil.Concat(this.typeArguments, typeArguments);
+            typeArguments = Util.Concat(this.typeArguments, typeArguments);
         }
         return new ClassName(ns, this, name, typeArguments);
     }
@@ -258,7 +253,7 @@ public class ClassName : TypeName
         if (enclosingClassName == null || enclosingClassName.typeArguments.Count == 0) {
             return new ClassName(ns, enclosingClassName, simpleName, actualTypeArguments, attributes); // 需保留attributes
         } else {
-            List<TypeName> typeArguments = CollectionUtil.Concat(enclosingClassName.typeArguments, actualTypeArguments);
+            List<TypeName> typeArguments = Util.Concat(enclosingClassName.typeArguments, actualTypeArguments);
             return new ClassName(ns, enclosingClassName, simpleName, typeArguments, attributes);
         }
     }
@@ -289,8 +284,6 @@ public class ClassName : TypeName
         if (type == typeof(ValueType)) return VALUE_TYPE;
         if (type == typeof(Attribute)) return ATTRIBUTE;
         if (type == typeof(Nullable<>)) return NULLABLE;
-        if (type == typeof(Span<>)) return SPAN;
-        if (type == typeof(VoidClass)) return VOID_CLASS;
         return InternalGet(type);
     }
 

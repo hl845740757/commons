@@ -88,7 +88,7 @@ public class AttributeSpec : ISpecification
 
         public Builder Constructor(CodeBlock codeBlock) {
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
-            if (this.constructor != null) throw new IllegalStateException("constructor was already set");
+            if (this.constructor != null) throw new InvalidOperationException("constructor was already set");
             this.constructor = codeBlock;
             return this;
         }

@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -25,7 +24,6 @@ namespace Wjybxx.Commons.Poet
 /// 传递对象的引用
 /// <code>ref int, ref int* , in int, out int</code>
 /// </summary>
-[Immutable]
 public class ByRefTypeName : TypeName
 {
     /// <summary>

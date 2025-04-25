@@ -20,9 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Wjybxx.Commons.Attributes;
 using System.Runtime.CompilerServices;
-using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -35,8 +33,7 @@ namespace Wjybxx.Commons.Poet
 ///     Dictionay<int, string>.Enumerator
 /// ]]>
 /// </summary>
-[NotThreadSafe]
-public class CodeWriter
+public sealed class CodeWriter
 {
     private readonly string indent;
     private readonly LineWrapper codeOut;
@@ -70,7 +67,7 @@ public class CodeWriter
     /// <summary>
     /// 动态解析的命名空间
     /// </summary>
-    private readonly LinkedDictionary<string, string?> importableNamespaces = new LinkedDictionary<string, string?>();
+    private readonly Dictionary<string, string?> importableNamespaces = new Dictionary<string, string?>();
     /// <summary>
     /// 当前类型上下文
     /// </summary>
@@ -79,6 +76,9 @@ public class CodeWriter
     /// 当前命名空间上下文
     /// </summary>
     private readonly Stack<NamespaceSpec> namespaceStack = new Stack<NamespaceSpec>();
+
+    // 内部对象池
+    private readonly Stack<string> pooledTypeNameStack = new Stack<string>(4);
 
     /// <summary>
     /// 
@@ -182,7 +182,7 @@ public class CodeWriter
     private static readonly Predicate<ISpecification> namespaceFilter = e => e.SpecType == SpecType.Namespace;
 
     private void EmitFile() {
-        int firstIndex = CollectionUtil.IndexOfCustom(csharpFile.nestedSpecs, namespaceFilter);
+        int firstIndex = Util.IndexOfCustom(csharpFile.nestedSpecs, namespaceFilter);
         if (firstIndex == -1) {
             // 没有命名空间，认为是空文件 -- 不处理自动导入等文件
             foreach (ISpecification nestedSpec in csharpFile.nestedSpecs) {
@@ -216,7 +216,7 @@ public class CodeWriter
 
         // 如果启用了文件范围命名空间，且只有一个namespace定义，则输出为平铺结构
         if (enableFileScopedNamespace) {
-            int lastIndex = CollectionUtil.LastIndexOfCustom(csharpFile.nestedSpecs, namespaceFilter);
+            int lastIndex = Util.LastIndexOfCustom(csharpFile.nestedSpecs, namespaceFilter);
             if (lastIndex == firstIndex) {
                 NamespaceSpec namespaceSpec = (NamespaceSpec)csharpFile.nestedSpecs[firstIndex];
                 namespaceStack.Push(namespaceSpec);
@@ -232,7 +232,7 @@ public class CodeWriter
                     EmitSpec(csharpFile.nestedSpecs[i]);
                 }
                 if (!ReferenceEquals(namespaceStack.Pop(), namespaceSpec)) {
-                    throw new IllegalStateException();
+                    throw new InvalidOperationException();
                 }
                 return;
             }
@@ -265,7 +265,7 @@ public class CodeWriter
         Emit("}\n");
 
         if (!ReferenceEquals(namespaceStack.Pop(), namespaceSpec)) {
-            throw new IllegalStateException();
+            throw new InvalidOperationException();
         }
     }
 
@@ -309,7 +309,7 @@ public class CodeWriter
             }
             case SpecType.Parameter:
             default: {
-                throw new IllegalStateException(); // 不应该走到这里
+                throw new InvalidOperationException(); // 不应该走到这里
             }
         }
     }
@@ -461,7 +461,7 @@ public class CodeWriter
         }
 
         if (!ReferenceEquals(typeSpecStack.Pop(), typeSpec)) {
-            throw new IllegalStateException();
+            throw new InvalidOperationException();
         }
     }
 
@@ -601,7 +601,7 @@ public class CodeWriter
 
     private void EmitMethod(MethodSpec methodSpec, bool delegator = false) {
         if (methodSpec.IsConstructor && delegator) {
-            throw new IllegalStateException();
+            throw new InvalidOperationException();
         }
         Emit("\n"); // 方法前空一行
         EmitDocument(methodSpec.document);
@@ -1054,8 +1054,6 @@ public class CodeWriter
         }
     }
 
-    private readonly Stack<string> pooledTypeNameStack = new Stack<string>(4);
-
     private void EmitTypeName(TypeName typeName, bool isAttribute = false) {
         // System.String[]*[]&
         if (typeName is ByRefTypeName refTypeName) { // 引用类型
@@ -1251,17 +1249,20 @@ public class CodeWriter
         trailingNewline = false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void EmitIndentation() {
         for (int j = 0; j < indentLevel; j++) {
             codeOut.Append(indent);
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void Indent(int levels = 1) {
         Util.CheckArgument(levels >= 0, "cannot Indent {0} from {1}", levels, indentLevel);
         indentLevel += levels;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void Unindent(int levels = 1) {
         Util.CheckArgument(levels >= 0 && (indentLevel - levels) >= 0, "cannot unindent {0} from {1}", levels, indentLevel);
         indentLevel -= levels;

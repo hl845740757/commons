@@ -19,8 +19,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Wjybxx.Commons.Attributes;
-using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -37,7 +35,6 @@ namespace Wjybxx.Commons.Poet
 /// $[ 开始一个语句。对于多行语句，第一行之后的每一行都是双缩进的。
 /// $] 结束语句。
 /// </summary>
-[Immutable]
 public class CodeBlock
 {
     /// <summary>
@@ -95,9 +92,9 @@ public class CodeBlock
     /// 空代码块
     /// </summary>
     public static CodeBlock Empty { get; } = new CodeBlock();
-
+    
     public override string ToString() {
-        return CollectionUtil.ToString(formatParts); // TODO
+        return Util.ToString(formatParts); // TODO
     }
 
     #region builder

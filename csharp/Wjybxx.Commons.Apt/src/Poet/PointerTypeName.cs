@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -25,7 +24,6 @@ namespace Wjybxx.Commons.Poet
 /// 指针类型(不建议真的使用)
 /// <code>int*</code>
 /// </summary>
-[Immutable]
 public class PointerTypeName : TypeName
 {
     /// <summary>

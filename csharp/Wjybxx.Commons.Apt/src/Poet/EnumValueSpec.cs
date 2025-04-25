@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -25,7 +24,6 @@ namespace Wjybxx.Commons.Poet
 /// 表示一个枚举值定义
 /// (equals默认不比较文档)
 /// </summary>
-[Immutable]
 public class EnumValueSpec : IEquatable<EnumValueSpec>, ISpecification
 {
     /** 枚举名 */
@@ -73,7 +71,7 @@ public class EnumValueSpec : IEquatable<EnumValueSpec>, ISpecification
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(name, number);
+        return (name.GetHashCode() * 397) ^ number.GetHashCode();
     }
 
     public override string ToString() {

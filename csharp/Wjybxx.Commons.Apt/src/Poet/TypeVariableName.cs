@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -28,7 +27,6 @@ namespace Wjybxx.Commons.Poet
 /// 类型变量名
 /// (注意：并不是只有该类型才可以作为泛型参数，只是使用该类型时表示未构造泛型)
 /// </summary>
-[Immutable]
 public class TypeVariableName : TypeName
 {
     /// <summary>
@@ -195,7 +193,7 @@ public class TypeVariableName : TypeName
     /// <returns></returns>
     public string ConstraintsToString() {
         if (attributes == 0 && bounds.Count == 0) {
-            throw new IllegalStateException("none constraints");
+            throw new InvalidOperationException("none constraints");
         }
         if ((attributes & TypeNameAttributes.NotNullableValueTypeConstraint) != 0) {
             return "struct";

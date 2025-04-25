@@ -23,7 +23,7 @@ using System.Diagnostics;
 namespace Wjybxx.Dson.Text
 {
 /// <summary>
-/// CharStram抽象类实现
+/// CharStream抽象类实现
 /// </summary>
 public abstract class AbstractCharStream : IDsonCharStream
 {

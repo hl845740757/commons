@@ -21,14 +21,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
 /// <summary>
 /// 方法或构造函数
 /// </summary>
-[Immutable]
 public class MethodSpec : ISpecification
 {
     public readonly Kind kind;
@@ -365,21 +363,21 @@ public class MethodSpec : ISpecification
         //
         public Builder ExplicitImpl(TypeName baseType) {
             if (baseType == null) throw new ArgumentNullException(nameof(baseType));
-            if (this.explicitBaseType != null) throw new IllegalStateException("explicitImpl was already set");
+            if (this.explicitBaseType != null) throw new InvalidOperationException("explicitImpl was already set");
             this.explicitBaseType = baseType;
             return this;
         }
 
         public Builder Code(CodeBlock codeBlock) {
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
-            if (this.code != null) throw new IllegalStateException("code was already set");
+            if (this.code != null) throw new InvalidOperationException("code was already set");
             this.code = codeBlock;
             return this;
         }
 
         public Builder ConstructorInvoker(CodeBlock codeBlock) {
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
-            if (this.constructorInvoker != null) throw new IllegalStateException("constructorInvoker was already set");
+            if (this.constructorInvoker != null) throw new InvalidOperationException("constructorInvoker was already set");
             this.constructorInvoker = codeBlock;
             return this;
         }

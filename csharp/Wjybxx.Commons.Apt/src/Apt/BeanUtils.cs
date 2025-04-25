@@ -27,7 +27,7 @@ namespace Wjybxx.Commons.Apt
 /// <summary>
 /// 
 /// </summary>
-public class BeanUtils
+public static class BeanUtils
 {
     /// <summary>
     /// 是否包含无参构造方法
@@ -70,7 +70,7 @@ public class BeanUtils
                 return propertyInfo.PropertyType;
             }
             default: {
-                throw new AssertionError();
+                throw new InvalidOperationException();
             }
         }
     }

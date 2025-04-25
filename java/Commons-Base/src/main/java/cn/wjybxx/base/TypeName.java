@@ -127,30 +127,22 @@ public final class TypeName {
         if (o == null || getClass() != o.getClass()) return false;
 
         TypeName other = (TypeName) o;
-        return name.equals(other.name)
-                && equals(typeArgs, other.typeArgs);
-    }
-
-    private static boolean equals(List<TypeName> lhs, List<TypeName> rhs) {
-        int size = lhs.size();
-        if (size != rhs.size()) return false;
-        for (int idx = 0; idx < size; idx++) {
-            if (!lhs.get(idx).equals(rhs.get(idx))) return false;
+        if (!name.equals(other.name)) {
+            return false;
         }
-        return true;
+        if (typeArgs.isEmpty() && other.typeArgs.isEmpty()) {
+            return true; // 多数情况下无泛型参数
+        }
+        return CollectionUtils.sequenceEqual(typeArgs, other.typeArgs);
     }
 
     @Override
     public int hashCode() {
         int r = _hashcode;
-        if (r != 0) return r;
-
-        r = name.hashCode();
-        for (int i = 0; i < typeArgs.size(); i++) {
-            r = 31 * r + typeArgs.get(i).hashCode();
+        if (r == 0) {
+            r = name.hashCode() * 31 + CollectionUtils.hashcode(typeArgs);
+            _hashcode = r;
         }
-
-        _hashcode = r;
         return r;
     }
 

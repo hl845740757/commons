@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -33,7 +32,6 @@ namespace Wjybxx.Commons.Poet
 ///
 /// ps:命名空间由<see cref="NamespaceSpec"/>指定。
 /// </summary>
-[Immutable]
 public class TypeSpec : ISpecification
 {
     public readonly Kind kind;
@@ -62,7 +60,7 @@ public class TypeSpec : ISpecification
         // 委托检查
         if (kind == Kind.Delegator) {
             if (nestedSpecs.Count != 1 || nestedSpecs[0].SpecType != SpecType.Method) {
-                throw new IllegalStateException("Delegator method is absent");
+                throw new InvalidOperationException("Delegator method is absent");
             }
         }
     }

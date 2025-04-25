@@ -49,6 +49,17 @@ public static partial class CollectionUtil
 
     #region equals/hashcode
 
+    public static bool SequenceEqual<T>(IList<T>? lhs, IList<T>? rhs) where T : class {
+        if (ReferenceEquals(lhs, rhs)) return true;
+        if (lhs == null || rhs == null) return false;
+        int count = lhs.Count;
+        if (count != rhs.Count) return false;
+        for (int idx = 0; idx < count; idx++) {
+            if (!Equals(lhs[idx], rhs[idx])) return false;
+        }
+        return true;
+    }
+
     public static int HashCode<T>(IList<T?>? list) where T : class {
         if (list == null) {
             return 0;

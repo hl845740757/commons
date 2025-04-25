@@ -150,8 +150,8 @@ public static partial class CollectionUtil
     /// （暂不递归）
     /// </summary>
     [Beta]
-    public static string ToString<T>(IEnumerable<T> collection) {
-        if (collection == null) throw new ArgumentNullException(nameof(collection));
+    public static string ToString<T>(IEnumerable<T>? collection) {
+        if (collection == null) return "null";
         StringBuilder sb = new StringBuilder(64);
         sb.Append('[');
         bool first = true;
@@ -179,8 +179,8 @@ public static partial class CollectionUtil
     /// </code>
     /// </summary>
     [Beta]
-    public static string ToString<TKey, TValue>(IDictionary<TKey, TValue> dictionary) {
-        if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
+    public static string ToString<TKey, TValue>(IDictionary<TKey, TValue>? dictionary) {
+        if (dictionary == null) return "null";
         StringBuilder sb = new StringBuilder(64);
         sb.Append('[');
         bool first = true;

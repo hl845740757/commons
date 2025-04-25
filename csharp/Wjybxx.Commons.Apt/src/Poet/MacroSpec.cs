@@ -18,9 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Wjybxx.Commons.Attributes;
-using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -28,7 +25,6 @@ namespace Wjybxx.Commons.Poet
 /// 宏
 /// (宏本身只是语句，通过成对的宏的来构成块)
 /// </summary>
-[Immutable]
 public class MacroSpec : ISpecification, IEquatable<MacroSpec>
 {
     /// <summary>
@@ -67,7 +63,7 @@ public class MacroSpec : ISpecification, IEquatable<MacroSpec>
     public bool Equals(MacroSpec? other) {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
-        return name == other.name && arguments.SequenceEqual(other.arguments);
+        return name == other.name && Util.SequenceEqual(arguments, other.arguments);
     }
 
     public override bool Equals(object? obj) {
@@ -78,11 +74,11 @@ public class MacroSpec : ISpecification, IEquatable<MacroSpec>
     }
 
     public override int GetHashCode() {
-        return name.GetHashCode() * 31 + CollectionUtil.HashCode(arguments);
+        return name.GetHashCode() * 31 + Util.HashCode(arguments);
     }
 
     public override string ToString() {
-        return $"{nameof(name)}: {name}, {nameof(arguments)}: {CollectionUtil.ToString(arguments)}";
+        return $"{nameof(name)}: {name}, {nameof(arguments)}: {Util.ToString(arguments)}";
     }
 
     #endregion

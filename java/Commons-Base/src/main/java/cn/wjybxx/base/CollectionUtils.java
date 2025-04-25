@@ -372,6 +372,9 @@ public class CollectionUtils {
      * 如果元素存在，则返回元素对应的下标；
      * 如果元素不存在，则返回(-(insertion point) - 1)
      * 即： (index + 1) * -1 可得应当插入的下标。
+     * <p>
+     * 如果comparer返回的是 mid.CompareTo(any)，适用递增数组；
+     * 如果comparer返回的是 any.CompareTo(mid)，适用递减数组
      *
      * @param array 数组
      * @param c     比较器
@@ -385,6 +388,9 @@ public class CollectionUtils {
      * 如果元素存在，则返回元素对应的下标；
      * 如果元素不存在，则返回(-(insertion point) - 1)
      * 即： (index + 1) * -1 可得应当插入的下标。
+     * <p>
+     * 如果comparer返回的是 mid.CompareTo(any)，适用递增数组；
+     * 如果comparer返回的是 any.CompareTo(mid)，适用递减数组
      *
      * @param array     数组
      * @param fromIndex 开始索引
@@ -531,10 +537,8 @@ public class CollectionUtils {
 
     /** 比较List的相等性 -- 按序相等 */
     public static <E> boolean sequenceEqual(List<E> first, List<E> second) {
-        Objects.requireNonNull(first, "first");
-        Objects.requireNonNull(second, "second");
-
         if (first == second) return true;
+        if (first == null || second == null) return false;
         if (first.size() != second.size()) return false;
         for (int i = 0, size = first.size(); i < size; i++) {
             if (!Objects.equals(first.get(i), second.get(i))) {

@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -27,7 +26,6 @@ namespace Wjybxx.Commons.Poet
 /// （这里的实现并不完整，只用于简单的代码生成）
 /// （继承是为了节省内存，否则需要实现为标签类）
 /// </summary>
-[Immutable]
 public class TypeName : IEquatable<TypeName>
 {
     public static readonly TypeName INT = new TypeName("int");
@@ -72,7 +70,7 @@ public class TypeName : IEquatable<TypeName>
     /// <summary>
     /// 非基础类型的关键字
     /// </summary>
-    private static readonly HashSet<string> nonPrimitiveTypeKeywords = new HashSet<string>(4)
+    private static readonly HashSet<string> nonPrimitiveTypeKeywords = new HashSet<string>()
     {
         STRING.keyword,
         OBJECT.keyword,
@@ -89,7 +87,7 @@ public class TypeName : IEquatable<TypeName>
     /// 获取类型运行时的字符串名
     /// </summary>
     /// <returns></returns>
-    /// <exception cref="IllegalStateException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
     public virtual string ReflectionName() {
         return keyword switch
         {
@@ -111,7 +109,7 @@ public class TypeName : IEquatable<TypeName>
             "string" => typeof(string).ToString(),
             "object" => typeof(object).ToString(),
             "void" => typeof(void).ToString(),
-            _ => throw new AssertionError()
+            _ => throw new InvalidOperationException()
         };
     }
 
@@ -128,7 +126,7 @@ public class TypeName : IEquatable<TypeName>
 
     /** 注意：ToString影响Equals测试 */
     protected virtual string ToStringImpl() {
-        if (keyword == null) throw new AssertionError();
+        if (keyword == null) throw new InvalidOperationException();
         return $"{GetType().Name}, keyword: {keyword}";
     }
 
@@ -182,7 +180,7 @@ public class TypeName : IEquatable<TypeName>
     /// <returns></returns>
     public ByRefTypeName MakeByRefType(ByRefTypeName.Kind kind = ByRefTypeName.Kind.Ref) {
         if (this is ByRefTypeName) {
-            throw new IllegalStateException();
+            throw new InvalidOperationException();
         }
         return ByRefTypeName.Of(this, kind);
     }

@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -28,7 +27,6 @@ namespace Wjybxx.Commons.Poet
 /// Q: 为什么要显式支持？
 /// A: Unity不支持文件范围命名空间...
 /// </summary>
-[Immutable]
 public class NamespaceSpec : ISpecification
 {
     public readonly string name;

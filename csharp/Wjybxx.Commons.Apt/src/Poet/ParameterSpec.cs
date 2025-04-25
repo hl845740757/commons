@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -27,7 +26,6 @@ namespace Wjybxx.Commons.Poet
 /// 方法参数
 /// 注意：方法参数的 ref/in/out 不是单纯的修饰符，而是修改了字段的类型。
 /// </summary>
-[Immutable]
 public class ParameterSpec : ISpecification
 {
     public readonly TypeName type;
@@ -165,7 +163,7 @@ public class ParameterSpec : ISpecification
 
         public Builder DefaultValue(CodeBlock codeBlock) {
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
-            if (this.defaultValue != null) throw new IllegalStateException("defaultValue was already set");
+            if (this.defaultValue != null) throw new InvalidOperationException("defaultValue was already set");
             this.defaultValue = codeBlock;
             return this;
         }

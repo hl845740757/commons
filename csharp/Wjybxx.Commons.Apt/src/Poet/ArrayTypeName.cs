@@ -17,14 +17,12 @@
 #endregion
 
 using System;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
 /// <summary>
 /// 表示一个数组类型
 /// </summary>
-[Immutable]
 public class ArrayTypeName : TypeName
 {
     public static readonly ArrayTypeName INT_ARRAY = new ArrayTypeName(TypeName.INT);

@@ -78,7 +78,7 @@ internal class LineWrapper
     /// 追加文本内容
     /// </summary>
     /// <param name="s"></param>
-    /// <exception cref="IllegalStateException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
     public void Append(string s) {
         if (nullWriter) {
             return;
@@ -107,7 +107,7 @@ internal class LineWrapper
     /// 写入一个空格或换行符
     /// </summary>
     /// <param name="indentLevel"></param>
-    /// <exception cref="IllegalStateException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
     public void WrappingSpace(int indentLevel) {
         if (this.nextFlush != null) Flush(this.nextFlush.Value); // 先Flush之前的内容
         this.column++; // 即使将空格延迟到下一次调用flush()，也要增加列
@@ -153,7 +153,7 @@ internal class LineWrapper
             case FlushType.Empty: {
                 break;
             }
-            default: throw new AssertionError();
+            default: throw new InvalidOperationException();
         }
         codeOut.Append(buffer);
         buffer.Length = 0;

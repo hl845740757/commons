@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -26,7 +25,6 @@ namespace Wjybxx.Commons.Poet
 /// 字段(或事件)
 /// 注意：C#的事件本身并不是字段，但实在不想整那么复杂了...
 /// </summary>
-[Immutable]
 public class FieldSpec : ISpecification
 {
     public readonly Kind kind;
@@ -180,7 +178,7 @@ public class FieldSpec : ISpecification
 
         public Builder Initializer(CodeBlock codeBlock) {
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
-            if (this.initializer != null) throw new IllegalStateException("initializer was already set");
+            if (this.initializer != null) throw new InvalidOperationException("initializer was already set");
             this.initializer = codeBlock;
             return this;
         }

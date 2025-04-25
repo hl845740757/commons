@@ -19,8 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
@@ -132,21 +130,16 @@ public sealed class TypeName : IEquatable<TypeName>
 
     #region equals
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool Equals(IList<TypeName> lhs, IList<TypeName> rhs) {
-        int size = lhs.Count;
-        if (size != rhs.Count) return false;
-        for (int idx = 0; idx < size; idx++) {
-            if (!lhs[idx].Equals(rhs[idx])) return false;
-        }
-        return true;
-    }
-
     public bool Equals(TypeName? other) {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
-        return name == other.name
-               && Equals(typeArgs, other.typeArgs);
+        if (name != other.name) {
+            return false;
+        }
+        if (typeArgs.Count == 0 && other.typeArgs.Count == 0) {
+            return true; // 多数情况下无泛型参数
+        }
+        return CollectionUtil.SequenceEqual(typeArgs, other.typeArgs);
     }
 
     public override bool Equals(object? obj) {
@@ -156,13 +149,10 @@ public sealed class TypeName : IEquatable<TypeName>
     // ReSharper disable NonReadonlyMemberInGetHashCode
     public override int GetHashCode() {
         int r = _hashcode;
-        if (r != 0) return r;
-
-        r = name.GetHashCode();
-        for (int i = 0; i < typeArgs.Count; i++) {
-            r = r * 31 + typeArgs[i].GetHashCode();
+        if (r == 0) {
+            r = (name.GetHashCode() * 397) ^ CollectionUtil.HashCode(typeArgs);
+            _hashcode = r;
         }
-        _hashcode = r;
         return r;
     }
 
