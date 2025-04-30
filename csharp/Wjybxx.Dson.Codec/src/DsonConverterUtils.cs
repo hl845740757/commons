@@ -275,5 +275,222 @@ public static class DsonConverterUtils
     }
 
     #endregion
+
+    #region reader
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static short ReadShort(this IDsonObjectReader reader, string? name) {
+        return (short)reader.ReadInt(name);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static byte ReadByte(this IDsonObjectReader reader, string? name) {
+        return (byte)reader.ReadInt(name);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static char ReadChar(this IDsonObjectReader reader, string? name) {
+        return (char)reader.ReadInt(name);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static uint ReadUint(this IDsonObjectReader reader, string? name) {
+        return (uint)reader.ReadInt(name);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ulong ReadUlong(this IDsonObjectReader reader, string? name) {
+        return (ulong)reader.ReadLong(name);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ushort ReadUshort(this IDsonObjectReader reader, string? name) {
+        return (ushort)reader.ReadInt(name);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static sbyte ReadSbyte(this IDsonObjectReader reader, string? name) {
+        return (sbyte)reader.ReadInt(name);
+    }
+
+    // object
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T ReadObject<T>(this IDsonObjectReader reader, string? name, Func<T>? factory = null) {
+        return reader.ReadObject<T>(name, typeof(T), factory);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static object ReadObject(this IDsonObjectReader reader, string? name, Type declaredType, Func<object>? factory = null) {
+        return reader.ReadObject<object>(name, declaredType, factory);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="reader">reader</param>
+    /// <param name="name">字段的名字</param>
+    /// <returns>如果存在对应的字段则返回true</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool ReadStartObject(this IDsonObjectReader reader, string? name) {
+        if (reader.ReadName(name)) {
+            reader.ReadStartObject();
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="reader">reader</param>
+    /// <param name="name">字段的名字</param>
+    /// <returns>如果存在对应的字段则返回true</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool ReadStartArray(this IDsonObjectReader reader, string? name) {
+        if (reader.ReadName(name)) {
+            reader.ReadStartArray();
+            return true;
+        }
+        return false;
+    }
+
+    #endregion
+
+    #region writer
+
+    // 这里使用simple -- 外部通常包含明确类型
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteInt(this IDsonObjectWriter writer, string? name, int value) {
+        writer.WriteInt(name, value, NumberStyles.Simple);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteLong(this IDsonObjectWriter writer, string? name, long value) {
+        writer.WriteLong(name, value, NumberStyles.Simple);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteFloat(this IDsonObjectWriter writer, string? name, float value) {
+        writer.WriteFloat(name, value, NumberStyles.Simple);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteDouble(this IDsonObjectWriter writer, string? name, double value) {
+        writer.WriteDouble(name, value, NumberStyles.Simple);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteShort(this IDsonObjectWriter writer, string? name, short value) {
+        writer.WriteInt(name, value, NumberStyles.Simple);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteShort(this IDsonObjectWriter writer, string? name, short value, INumberStyle style) {
+        writer.WriteInt(name, value, style);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteByte(this IDsonObjectWriter writer, string? name, byte value) {
+        writer.WriteInt(name, value, NumberStyles.Simple); // c#的byte是无符号整数，sbyte才是有符号整数
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteByte(this IDsonObjectWriter writer, string? name, byte value, INumberStyle style) {
+        writer.WriteInt(name, value, style);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteChar(this IDsonObjectWriter writer, string? name, char value) {
+        writer.WriteInt(name, value, NumberStyles.Simple);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteChar(this IDsonObjectWriter writer, string? name, char value, INumberStyle style) {
+        writer.WriteInt(name, value, style);
+    }
+
+    // unsigned
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteUint(this IDsonObjectWriter writer, string? name, uint value) {
+        writer.WriteInt(name, (int)value, NumberStyles.Unsigned);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteUint(this IDsonObjectWriter writer, string? name, uint value, INumberStyle style) {
+        writer.WriteInt(name, (int)value, style);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteUlong(this IDsonObjectWriter writer, string? name, ulong value) {
+        writer.WriteLong(name, (long)value, NumberStyles.Unsigned);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteUlong(this IDsonObjectWriter writer, string? name, ulong value, INumberStyle style) {
+        writer.WriteLong(name, (long)value, style);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteUShort(this IDsonObjectWriter writer, string? name, ushort value) {
+        writer.WriteInt(name, value, NumberStyles.Unsigned);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteUShort(this IDsonObjectWriter writer, string? name, ushort value, INumberStyle style) {
+        writer.WriteInt(name, value, style);
+    }
+
+    // object
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteObject<T>(this IDsonObjectWriter writer, string? name, in T? value, ObjectStyle? style = null) {
+        writer.WriteObject(name, value, typeof(T), style);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteObject(this IDsonObjectWriter writer, string? name, object? value, Type declaredType, ObjectStyle? style = null) {
+        writer.WriteObject<object>(name, value, declaredType, style);
+    }
+
+    // 流程
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteStartObject(this IDsonObjectWriter writer, ObjectStyle style, Type encoderType, Type declaredType) {
+        writer.WriteStartObject(style);
+        writer.WriteTypeInfo(encoderType, declaredType);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteStartObject(this IDsonObjectWriter writer, string name, ObjectStyle style) {
+        writer.WriteName(name);
+        writer.WriteStartObject(style);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteStartObject(this IDsonObjectWriter writer, string name, ObjectStyle style, Type encoderType, Type declaredType) {
+        writer.WriteName(name);
+        writer.WriteStartObject(style);
+        writer.WriteTypeInfo(encoderType, declaredType);
+    }
+
+    //
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteStartArray(this IDsonObjectWriter writer, ObjectStyle style, Type encoderType, Type declaredType) {
+        writer.WriteStartArray(style);
+        writer.WriteTypeInfo(encoderType, declaredType);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteStartArray(this IDsonObjectWriter writer, string name, ObjectStyle style) {
+        writer.WriteName(name);
+        writer.WriteStartArray(style);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteStartArray(this IDsonObjectWriter writer, string name, ObjectStyle style, Type encoderType, Type declaredType) {
+        writer.WriteName(name);
+        writer.WriteStartArray(style);
+        writer.WriteTypeInfo(encoderType, declaredType);
+    }
+
+    #endregion
 }
 }

@@ -27,7 +27,9 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <EmbedAllSources>true</EmbedAllSources>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <TargetFrameworks>net6.0;net7.0;net8.0;</TargetFrameworks>
+
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -43,9 +45,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj" />
-        <ProjectReference Include="..\Wjybxx.Dson.Codec\Wjybxx.Dson.Codec.csproj" />
-        <ProjectReference Include="..\Wjybxx.Dson.Core\Wjybxx.Dson.Core.csproj" />
+      <ProjectReference Include="..\Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj" />
+      <ProjectReference Include="..\Wjybxx.Commons.Poet\Wjybxx.Commons.Poet.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.3.1" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" PrivateAssets="all" />
     </ItemGroup>
     
 </Project>

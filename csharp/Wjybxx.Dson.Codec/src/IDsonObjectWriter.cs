@@ -79,16 +79,6 @@ public interface IDsonObjectWriter : IDisposable
     /// <typeparam name="T">避免拆装箱</typeparam>
     void WriteObject<T>(string? name, in T? value, Type declaredType, ObjectStyle? style = null);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteObject<T>(string? name, in T? value, ObjectStyle? style = null) {
-        WriteObject(name, value, typeof(T), style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteObject(string? name, object? value, Type declaredType, ObjectStyle? style = null) {
-        WriteObject<object>(name, value, declaredType, style);
-    }
-
     #endregion
 
     #region 流程
@@ -97,6 +87,10 @@ public interface IDsonObjectWriter : IDisposable
 
     string CurrentName { get; }
 
+    /// <summary>
+    /// 写入下一个字段的名字
+    /// </summary>
+    /// <param name="name"></param>
     void WriteName(string name);
 
     /// <summary>
@@ -127,132 +121,6 @@ public interface IDsonObjectWriter : IDisposable
     string EncodeKey<T>(T key);
 
     void Flush();
-
-    // defaults
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartObject(ObjectStyle style, Type encoderType, Type declaredType) {
-        WriteStartObject(style);
-        WriteTypeInfo(encoderType, declaredType);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartObject(string name, ObjectStyle style) {
-        WriteName(name);
-        WriteStartObject(style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartObject(string name, ObjectStyle style, Type encoderType, Type declaredType) {
-        WriteName(name);
-        WriteStartObject(style);
-        WriteTypeInfo(encoderType, declaredType);
-    }
-
-    //
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartArray(ObjectStyle style, Type encoderType, Type declaredType) {
-        WriteStartArray(style);
-        WriteTypeInfo(encoderType, declaredType);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartArray(string name, ObjectStyle style) {
-        WriteName(name);
-        WriteStartArray(style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteStartArray(string name, ObjectStyle style, Type encoderType, Type declaredType) {
-        WriteName(name);
-        WriteStartArray(style);
-        WriteTypeInfo(encoderType, declaredType);
-    }
-
-    #endregion
-
-    #region 快捷方法
-
-    // 这里使用simple -- 外部通常包含明确类型
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteInt(string? name, int value) {
-        WriteInt(name, value, NumberStyles.Simple);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteLong(string? name, long value) {
-        WriteLong(name, value, NumberStyles.Simple);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteFloat(string? name, float value) {
-        WriteFloat(name, value, NumberStyles.Simple);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteDouble(string? name, double value) {
-        WriteDouble(name, value, NumberStyles.Simple);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteShort(string? name, short value) {
-        WriteInt(name, value, NumberStyles.Simple);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteShort(string? name, short value, INumberStyle style) {
-        WriteInt(name, value, style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteByte(string? name, byte value) {
-        WriteInt(name, value, NumberStyles.Simple); // c#的byte是无符号整数，sbyte才是有符号整数
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteByte(string? name, byte value, INumberStyle style) {
-        WriteInt(name, value, style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteChar(string? name, char value) {
-        WriteInt(name, value, NumberStyles.Simple);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteChar(string? name, char value, INumberStyle style) {
-        WriteInt(name, value, style);
-    }
-
-    // unsigned
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteUint(string? name, uint value) {
-        WriteInt(name, (int)value, NumberStyles.Unsigned);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteUint(string? name, uint value, INumberStyle style) {
-        WriteInt(name, (int)value, style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteUlong(string? name, ulong value) {
-        WriteLong(name, (long)value, NumberStyles.Unsigned);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteUlong(string? name, ulong value, INumberStyle style) {
-        WriteLong(name, (long)value, style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteUShort(string? name, ushort value) {
-        WriteInt(name, value, NumberStyles.Unsigned);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteUShort(string? name, ushort value, INumberStyle style) {
-        WriteInt(name, value, style);
-    }
 
     #endregion
 }

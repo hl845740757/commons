@@ -16,6 +16,8 @@
 
 #endregion
 
+using System;
+using System.Collections.Generic;
 using System.Numerics;
 using NUnit.Framework;
 using Wjybxx.Commons.Collections;
@@ -42,7 +44,12 @@ public class GenericCodecTest
         DsonCodecConfig codecConfig = new DsonCodecConfig()
             .AddCodec(new Vector3Codec());
         // 
-        codecConfig.AddGenericCodec(typeof(MyDictionary<,>), typeof(MyDictionary2Codec<,>),
+        Type codecType = typeof(MyDictionary<,>).Assembly.GetType("Wjybxx.Dson.Tests.Apt.MyDictionary2Codec`2");
+        if (codecType == null) {
+            throw new Exception("The codec has not been generated");
+        }
+        
+        codecConfig.AddGenericCodec(typeof(MyDictionary<,>), codecType,
             typeof(MyDictionary<,>), "FACTORY");
 
         converter = new DsonConverterBuilder()

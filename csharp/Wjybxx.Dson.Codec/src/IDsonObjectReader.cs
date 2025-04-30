@@ -79,17 +79,7 @@ public interface IDsonObjectReader : IDisposable
     /// <typeparam name="T">返回值类型，避免装箱</typeparam>
     /// <returns></returns>
     T ReadObject<T>(string? name, Type declaredType, Func<T>? factory = null);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    T ReadObject<T>(string? name, Func<T>? factory = null) {
-        return ReadObject<T>(name, typeof(T), factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    object ReadObject(string? name, Type declaredType, Func<object>? factory = null) {
-        return ReadObject<object>(name, declaredType, factory);
-    }
-
+    
     #endregion
 
     #region 流程
@@ -164,71 +154,7 @@ public interface IDsonObjectReader : IDisposable
     /// <param name="dsonType">value的类型</param>
     void SetComponentType(DsonType dsonType);
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="name">字段的名字</param>
-    /// <returns>如果存在对应的字段则返回true</returns>
-    bool ReadStartObject(string? name) {
-        if (ReadName(name)) {
-            ReadStartObject();
-            return true;
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="name">字段的名字</param>
-    /// <returns>如果存在对应的字段则返回true</returns>
-    bool ReadStartArray(string? name) {
-        if (ReadName(name)) {
-            ReadStartArray();
-            return true;
-        }
-        return false;
-    }
-
     #endregion
-
-    #region 快捷方法
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    short ReadShort(string? name) {
-        return (short)ReadInt(name);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    byte ReadByte(string? name) {
-        return (byte)ReadInt(name);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    char ReadChar(string? name) {
-        return (char)ReadInt(name);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    uint ReadUint(string? name) {
-        return (uint)ReadInt(name);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    ulong ReadUlong(string? name) {
-        return (ulong)ReadLong(name);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    ushort ReadUshort(string? name) {
-        return (ushort)ReadInt(name);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    sbyte ReadSbyte(string? name) {
-        return (sbyte)ReadInt(name);
-    }
-
-    #endregion
+    
 }
 }

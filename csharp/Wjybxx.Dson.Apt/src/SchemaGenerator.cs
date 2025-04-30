@@ -18,10 +18,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using Wjybxx.Commons;
+using Microsoft.CodeAnalysis;
 using Wjybxx.Commons.Poet;
-using Wjybxx.Dson.Codec;
 using ClassName = Wjybxx.Commons.Poet.ClassName;
 using TypeName = Wjybxx.Commons.Poet.TypeName;
 
@@ -70,9 +68,9 @@ internal class SchemaGenerator
 
     private List<FieldSpec> GenFactoryFields() {
         List<FieldSpec> result = new List<FieldSpec>();
-        foreach (FieldInfo fieldInfo in context.serialFields) {
+        foreach (IFieldSymbol fieldInfo in context.serialFields) {
             AptFieldProps props = context.fieldPropsMap[fieldInfo];
-            if (props.implType != null) {
+            if (props.implTypeName != null) {
                 result.Add(GenFactoryField(fieldInfo, props));
             }
         }
@@ -80,12 +78,12 @@ internal class SchemaGenerator
     }
 
     // 不能在编译时生成过多的factory，因为即使字段的声明类型是具体类型，其运行时类型仍可能是子类型，因此默认分配factory不安全
-    private FieldSpec GenFactoryField(MemberInfo memberInfo, AptFieldProps props) {
+    private FieldSpec GenFactoryField(IFieldSymbol fieldSymbol, AptFieldProps props) {
         // dotnet 6泛型不支持协变
-        ClassName factoryFieldType = className_Func.WithActualTypeVariables(TypeName.Get(props.implType!));
-        return FieldSpec.NewBuilder(factoryFieldType, GetFactoryFieldName(memberInfo.Name),
+        ClassName factoryFieldType = className_Func.WithActualTypeVariables(props.implTypeName);
+        return FieldSpec.NewBuilder(factoryFieldType, GetFactoryFieldName(fieldSymbol.Name),
                 Modifiers.Public | Modifiers.Static | Modifiers.Readonly)
-            .Initializer(CodeBlock.Of("() => new $T()", props.implType!))
+            .Initializer(CodeBlock.Of("() => new $T()", props.implTypeName))
             .Build();
     }
 
@@ -93,12 +91,12 @@ internal class SchemaGenerator
         List<FieldSpec> result = new List<FieldSpec>();
         HashSet<string> dsonNameSet = new HashSet<string>();
 
-        foreach (FieldInfo fieldInfo in context.serialFields) {
+        foreach (IFieldSymbol fieldInfo in context.serialFields) {
             AptFieldProps props = context.fieldPropsMap[fieldInfo];
             string fieldName = fieldInfo.Name;
             string dsonName;
-            if (!string.IsNullOrWhiteSpace(props.attribute.Name)) {
-                dsonName = props.attribute.Name.Trim();
+            if (!string.IsNullOrWhiteSpace(props.name)) {
+                dsonName = props.name.Trim();
             } else if (props.autoProperty != null) {
                 // 自动属性使用属性名
                 dsonName = props.autoProperty.Name;

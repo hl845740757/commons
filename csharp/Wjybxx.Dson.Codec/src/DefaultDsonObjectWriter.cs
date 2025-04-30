@@ -264,48 +264,5 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
     }
 
     #endregion
-
-    #region 重复实现，提高效率
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartObject(ObjectStyle style, Type encoderType, Type declaredType) {
-        writer.WriteStartObject(style);
-        WriteTypeInfo(encoderType, declaredType);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartObject(string name, ObjectStyle style) {
-        writer.WriteName(name);
-        writer.WriteStartObject(style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartObject(string name, ObjectStyle style, Type encoderType, Type declaredType) {
-        writer.WriteName(name);
-        writer.WriteStartObject(style);
-        WriteTypeInfo(encoderType, declaredType);
-    }
-
-    //
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartArray(ObjectStyle style, Type encoderType, Type declaredType) {
-        writer.WriteStartArray(style);
-        WriteTypeInfo(encoderType, declaredType);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartArray(string name, ObjectStyle style) {
-        writer.WriteName(name);
-        writer.WriteStartArray(style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void WriteStartArray(string name, ObjectStyle style, Type encoderType, Type declaredType) {
-        writer.WriteName(name);
-        writer.WriteStartArray(style);
-        WriteTypeInfo(encoderType, declaredType);
-    }
-
-    #endregion
 }
 }

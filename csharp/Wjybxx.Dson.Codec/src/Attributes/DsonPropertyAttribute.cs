@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Commons.Attributes;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Attributes
@@ -34,17 +35,17 @@ public class DsonPropertyAttribute : Attribute
     /// 用于文档型序列化时字段名
     /// 可用于枚举。
     /// </summary>
-    public string? Name { get; set; }
+    [StableName] public string? Name { get; set; }
 
     /// <summary>
     /// 获取字段的属性或方法 -- 特殊情况下使用
     /// </summary>
-    public string? Getter { get; set; }
+    [StableName] public string? Getter { get; set; }
 
     /// <summary>
     /// 赋值字段的属性或方法 -- 特殊情况下使用
     /// </summary>
-    public string? Setter { get; set; }
+    [StableName] public string? Setter { get; set; }
 
     #region tag
 
@@ -52,29 +53,29 @@ public class DsonPropertyAttribute : Attribute
     /// 数据关联的{@link DsonType}，配合<see cref="DsonSubType"/>使用
     /// <see cref="DsonBinary"/>
     /// </summary>
-    public DsonType DsonType { get; set; } = DsonType.EndOfObject;
+    [StableName] public DsonType DsonType { get; set; } = DsonType.EndOfObject;
 
     /// <summary>
     /// 用于声明子类型，项目可以定义一个自己的常量类。
     /// <see cref="Wjybxx.Dson.DsonType.Binary"/>
     /// </summary>
-    public int DsonSubType { get; set; } = 0;
+    [StableName] public int DsonSubType { get; set; } = 0;
 
     /// <summary>
     /// 数字类型字段的文本格式
     /// </summary>
-    public NumberStyle NumberStyle { get; set; } = NumberStyle.Simple;
+    [StableName] public NumberStyle NumberStyle { get; set; } = NumberStyle.Simple;
 
     /// <summary>
     /// 字符串类型字段的文本格式
     /// </summary>
-    public StringStyle StringStyle { get; set; } = StringStyle.Auto;
+    [StableName] public StringStyle StringStyle { get; set; } = StringStyle.Auto;
 
     /// <summary>
     /// 对象类型字段的文本格式。
     /// 注意：该属性只有显式声明才有效，当未声明该属性时，将使用目标类型的默认格式。
     /// </summary>
-    public ObjectStyle ObjectStyle {
+    [StableName] public ObjectStyle ObjectStyle {
         get => _objectStyle;
         set {
             _objectStyle = value;
@@ -104,7 +105,7 @@ public class DsonPropertyAttribute : Attribute
     /// 4. 使用<see cref="ReadProxy"/>时忽略该属性。
     /// 5. 不要轻易使用该属性，这会导致总是按照固定类型解析，从而导致多态失效。
     /// </summary>
-    public Type? Impl { get; set; }
+    [StableName] public Type? Impl { get; set; }
 
     /// <summary>
     /// 写代理：自定义写方法。
@@ -122,7 +123,7 @@ public class DsonPropertyAttribute : Attribute
     ///  }
     /// </code>
     /// </summary>
-    public string? WriteProxy { get; set; }
+    [StableName] public string? WriteProxy { get; set; }
 
     /// <summary>
     /// 读代理：自定义读方法。
@@ -140,7 +141,7 @@ public class DsonPropertyAttribute : Attribute
     ///  }
     /// </code>
     /// </summary>
-    public string? ReadProxy { get; set; }
+    [StableName] public string? ReadProxy { get; set; }
 
     #endregion
 }

@@ -40,18 +40,16 @@ import java.util.*;
 public class CodecProcessor extends MyAbstractProcessor {
 
     // region 常量
-    public static final String CNAME_WireType = "cn.wjybxx.dson.WireType";
-    public static final String CNAME_NumberStyle = "cn.wjybxx.dson.text.NumberStyle";
-    public static final String CNAME_StringStyle = "cn.wjybxx.dson.text.StringStyle";
-    public static final String CNAME_ObjectStyle = "cn.wjybxx.dson.text.ObjectStyle";
-
-    public static final String CNAME_TypeInfo = "cn.wjybxx.base.TypeInfo";
-    public static final String CNAME_TypeName = "cn.wjybxx.base.TypeName";
-    public static final String CNAME_Options = "cn.wjybxx.dsoncodec.ConverterOptions";
-
-    public static final String CNAME_ObjectPtr = "cn.wjybxx.dson.types.ObjectPtr";
-    public static final String CNAME_ObjectLitePtr = "cn.wjybxx.dson.types.ObjectLitePtr";
-    public static final String CNAME_Timestamp = "cn.wjybxx.dson.types.Timestamp";
+    private static final String CNAME_WireType = "cn.wjybxx.dson.WireType";
+    private static final String CNAME_NumberStyle = "cn.wjybxx.dson.text.NumberStyle";
+    private static final String CNAME_StringStyle = "cn.wjybxx.dson.text.StringStyle";
+    private static final String CNAME_ObjectStyle = "cn.wjybxx.dson.text.ObjectStyle";
+    private static final String CNAME_ObjectPtr = "cn.wjybxx.dson.types.ObjectPtr";
+    private static final String CNAME_ObjectLitePtr = "cn.wjybxx.dson.types.ObjectLitePtr";
+    private static final String CNAME_Timestamp = "cn.wjybxx.dson.types.Timestamp";
+    // commons
+    private static final String CNAME_TypeInfo = "cn.wjybxx.base.TypeInfo";
+    private static final String CNAME_TypeName = "cn.wjybxx.base.TypeName";
 
     // Dson
     private static final String CNAME_SERIALIZABLE = "cn.wjybxx.dsoncodec.annotations.DsonSerializable";
@@ -59,13 +57,14 @@ public class CodecProcessor extends MyAbstractProcessor {
     private static final String CNAME_DSON_IGNORE = "cn.wjybxx.dsoncodec.annotations.DsonIgnore";
     private static final String CNAME_DSON_READER = "cn.wjybxx.dsoncodec.DsonObjectReader";
     private static final String CNAME_DSON_WRITER = "cn.wjybxx.dsoncodec.DsonObjectWriter";
-    private static final String CNAME_DSON_SCAN_IGNORE = "cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore";
+    private static final String CNAME_OPTIONS = "cn.wjybxx.dsoncodec.ConverterOptions";
     // Linker
     private static final String CNAME_CODEC_LINKER_GROUP = "cn.wjybxx.dsoncodec.annotations.DsonCodecLinkerGroup";
     private static final String CNAME_CODEC_LINKER = "cn.wjybxx.dsoncodec.annotations.DsonCodecLinker";
     private static final String CNAME_CODEC_LINKER_BEAN = "cn.wjybxx.dsoncodec.annotations.DsonCodecLinkerBean";
     private static final String MNAME_OUTPUT = "outputPackage";
-    private static final String MNAME_CLASS_PROPS = "props";
+    private static final String MNAME_CLASS_PROPS = "props"; // Java的注解是组合式
+    private static final String MNAME_VALUE = "value"; // 链接的目标
 
     // Codec
     public static final String CNAME_CODEC = "cn.wjybxx.dsoncodec.DsonCodec";
@@ -79,21 +78,21 @@ public class CodecProcessor extends MyAbstractProcessor {
     public static final String MNAME_NEW_INSTANCE = "newInstance";
     public static final String MNAME_READ_FIELDS = "readFields";
     public static final String MNAME_AFTER_DECODE = "afterDecode";
-    // EnumCodec
+    // EnumCodec -- 已废弃
     private static final String CNAME_ENUM_CODEC = "cn.wjybxx.dsoncodec.codecs.EnumCodec";
-    public static final String CNAME_ENUM_LITE = "cn.wjybxx.base.EnumLite";
-    public static final String MNAME_FOR_NUMBER = "forNumber";
-    public static final String MNAME_GET_NUMBER = "getNumber";
+    private static final String CNAME_ENUM_LITE = "cn.wjybxx.base.EnumLite";
+    private static final String MNAME_FOR_NUMBER = "forNumber";
+    private static final String MNAME_GET_NUMBER = "getNumber";
+
+    public static final ClassName typeName_TypeInfo = AptUtils.classNameOfCanonicalName(CNAME_TypeInfo);
+    public static final ClassName typeName_WireType = AptUtils.classNameOfCanonicalName(CNAME_WireType);
+    public static final ClassName typeName_NumberStyle = AptUtils.classNameOfCanonicalName(CNAME_NumberStyle);
+    public static final ClassName typeName_StringStyle = AptUtils.classNameOfCanonicalName(CNAME_StringStyle);
+    public static final ClassName typeName_ObjectStyle = AptUtils.classNameOfCanonicalName(CNAME_ObjectStyle);
 
     //endregion
 
     // region 字段
-    public ClassName typeName_TypeInfo;
-    public ClassName typeName_WireType;
-    public ClassName typeName_NumberStyle;
-    public ClassName typeName_StringStyle;
-    public ClassName typeName_ObjectStyle;
-    public TypeMirror type_Options;
 
     // Dson
     public TypeElement anno_DsonSerializable;
@@ -101,6 +100,7 @@ public class CodecProcessor extends MyAbstractProcessor {
     public TypeMirror anno_DsonIgnore;
     public TypeMirror typeMirror_DsonReader;
     public TypeMirror typeMirror_dsonWriter;
+    public TypeMirror typeMirror_Options;
 
     // linker
     public TypeElement anno_CodecLinkerGroup;
@@ -109,7 +109,7 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     // abstractCodec
     public TypeElement abstractCodecTypeElement;
-    public ExecutableElement getEncoderClassMethod;
+    public ExecutableElement getEncoderTypeMethod;
     public ExecutableElement newInstanceMethod;
     public ExecutableElement readFieldsMethod;
     public ExecutableElement afterDecodeMethod;
@@ -120,9 +120,9 @@ public class CodecProcessor extends MyAbstractProcessor {
     // 基础类型
     public TypeMirror type_String;
     public TypeMirror type_Object;
+    public TypeMirror type_LocalDateTime;
     public TypeMirror type_Ptr;
     public TypeMirror type_LitePtr;
-    public TypeMirror type_LocalDateTime;
     public TypeMirror type_Timestamp;
 
     // 集合类型
@@ -147,14 +147,7 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     @Override
     protected void ensureInited() {
-        if (typeName_WireType != null) return;
-        // common
-        typeName_TypeInfo = ClassName.get(elementUtils.getTypeElement(CNAME_TypeInfo));
-        typeName_WireType = AptUtils.classNameOfCanonicalName(CNAME_WireType);
-        typeName_NumberStyle = AptUtils.classNameOfCanonicalName(CNAME_NumberStyle);
-        typeName_StringStyle = AptUtils.classNameOfCanonicalName(CNAME_StringStyle);
-        typeName_ObjectStyle = AptUtils.classNameOfCanonicalName(CNAME_ObjectStyle);
-        type_Options = elementUtils.getTypeElement(CNAME_Options).asType();
+        if (anno_DsonSerializable != null) return;
 
         // dson
         anno_DsonSerializable = elementUtils.getTypeElement(CNAME_SERIALIZABLE);
@@ -162,6 +155,7 @@ public class CodecProcessor extends MyAbstractProcessor {
         anno_DsonIgnore = elementUtils.getTypeElement(CNAME_DSON_IGNORE).asType();
         typeMirror_DsonReader = elementUtils.getTypeElement(CNAME_DSON_READER).asType();
         typeMirror_dsonWriter = elementUtils.getTypeElement(CNAME_DSON_WRITER).asType();
+        typeMirror_Options = elementUtils.getTypeElement(CNAME_OPTIONS).asType();
         // linker
         anno_CodecLinkerGroup = elementUtils.getTypeElement(CNAME_CODEC_LINKER_GROUP);
         anno_CodecLinker = elementUtils.getTypeElement(CNAME_CODEC_LINKER);
@@ -169,7 +163,7 @@ public class CodecProcessor extends MyAbstractProcessor {
 
         // Codec
         TypeElement codecTypeElement = elementUtils.getTypeElement(CNAME_CODEC);
-        getEncoderClassMethod = AptUtils.findMethodByName(codecTypeElement, MNAME_GET_ENCODER_TYPE);
+        getEncoderTypeMethod = AptUtils.findMethodByName(codecTypeElement, MNAME_GET_ENCODER_TYPE);
         // abstractCodec
         abstractCodecTypeElement = elementUtils.getTypeElement(CNAME_ABSTRACT_CODEC);
         {
@@ -186,9 +180,9 @@ public class CodecProcessor extends MyAbstractProcessor {
         // 基础类型
         type_String = elementUtils.getTypeElement(String.class.getCanonicalName()).asType();
         type_Object = elementUtils.getTypeElement(Object.class.getCanonicalName()).asType();
+        type_LocalDateTime = elementUtils.getTypeElement(LocalDateTime.class.getCanonicalName()).asType();
         type_Ptr = elementUtils.getTypeElement(CNAME_ObjectPtr).asType();
         type_LitePtr = elementUtils.getTypeElement(CNAME_ObjectLitePtr).asType();
-        type_LocalDateTime = elementUtils.getTypeElement(LocalDateTime.class.getCanonicalName()).asType();
         type_Timestamp = elementUtils.getTypeElement(CNAME_Timestamp).asType();
 
         // 集合
@@ -260,7 +254,7 @@ public class CodecProcessor extends MyAbstractProcessor {
         // 真实需要生成Codec的类型
         DeclaredType targetType;
         {
-            AnnotationValue annotationValue = AptUtils.getAnnotationValue(linkerBeanAnnoMirror, "value");
+            AnnotationValue annotationValue = AptUtils.getAnnotationValue(linkerBeanAnnoMirror, MNAME_VALUE);
             Objects.requireNonNull(annotationValue, "classProps");
             targetType = AptUtils.findDeclaredType(AptUtils.getAnnotationValueTypeMirror(annotationValue));
             Objects.requireNonNull(targetType);
@@ -301,7 +295,6 @@ public class CodecProcessor extends MyAbstractProcessor {
             TypeMirror linkerBeanTypeMirror = linkerBeanContext.typeElement.asType();
             aptClassProps.codecProxyTypeElement = linkerBeanContext.typeElement;
             aptClassProps.codecProxyClassName = TypeName.get(typeUtils.erasure(linkerBeanTypeMirror));
-            aptClassProps.codecProxyEnclosedElements = linkerBeanContext.typeElement.getEnclosedElements();
         }
         // 检查数据
         {
@@ -313,11 +306,11 @@ public class CodecProcessor extends MyAbstractProcessor {
         }
     }
 
-    private void processLinkerGroup(Context groupContext) {
-        final String outPackage = getOutputPackage(groupContext.typeElement, groupContext.linkerGroupAnnoMirror);
+    private void processLinkerGroup(Context linkerGroupContext) {
+        final String outPackage = getOutputPackage(linkerGroupContext.typeElement, linkerGroupContext.linkerGroupAnnoMirror);
 
-        cacheFields(groupContext);
-        for (VariableElement variableElement : groupContext.allFields) {
+        cacheFields(linkerGroupContext);
+        for (VariableElement variableElement : linkerGroupContext.allFields) {
             DeclaredType targetType = AptUtils.findDeclaredType(variableElement.asType());
             if (targetType == null) {
                 messager.printMessage(Diagnostic.Kind.ERROR, "Bad Linker Target", variableElement);
@@ -332,7 +325,7 @@ public class CodecProcessor extends MyAbstractProcessor {
             // 创建模拟数据
             TypeElement typeElement = (TypeElement) targetType.asElement();
             Context context = new Context(typeElement);
-            context.linkerGroupAnnoMirror = groupContext.linkerGroupAnnoMirror;
+            context.linkerGroupAnnoMirror = linkerGroupContext.linkerGroupAnnoMirror;
             context.outPackage = outPackage;
 
             context.aptClassProps = aptClassProps;
@@ -464,7 +457,7 @@ public class CodecProcessor extends MyAbstractProcessor {
             return;
         }
         TypeElement typeElement = context.typeElement;
-        checkConstructor(typeElement);
+        checkConstructor(typeElement, aptClassProps);
 
         final List<? extends Element> allFieldsAndMethodWithInherit = context.allFieldsAndMethodWithInherit;
         final List<? extends Element> instMethodList = context.allFieldsAndMethodWithInherit.stream()
@@ -479,42 +472,53 @@ public class CodecProcessor extends MyAbstractProcessor {
             context.serialFields.add(variableElement);
 
             if (isAutoWriteField(variableElement, aptClassProps, aptFieldProps)) {
-                if (!AptUtils.isBlank(aptFieldProps.writeProxy)) {
-                    continue;
-                }
-                // 工具写：需要提供可直接取值或包含非private的getter方法
-                if (AptUtils.isBlank(aptFieldProps.getter)
-                        && !canGetDirectly(variableElement)
-                        && findPublicGetter(variableElement, allFieldsAndMethodWithInherit) == null) {
-                    messager.printMessage(Diagnostic.Kind.ERROR,
-                            String.format("auto write field (%s) must be public or contains a public getter", variableElement.getSimpleName()),
-                            typeElement); // 可能无法定位到超类字段，因此打印到Type
-                    continue;
-                }
+                checkAutoWriteField(variableElement, aptFieldProps, allFieldsAndMethodWithInherit, typeElement);
             }
             if (isAutoReadField(variableElement, aptClassProps, aptFieldProps)) {
-                if (!AptUtils.isBlank(aptFieldProps.readProxy)) {
-                    continue;
-                }
-                // 工具读：需要提供可直接赋值或非private的setter方法
-                if (AptUtils.isBlank(aptFieldProps.setter)
-                        && !canSetDirectly(variableElement)
-                        && findPublicSetter(variableElement, allFieldsAndMethodWithInherit) == null) {
-                    messager.printMessage(Diagnostic.Kind.ERROR,
-                            String.format("auto read field (%s) must be public or contains a public getter", variableElement.getSimpleName()),
-                            typeElement); // 可能无法定位到超类字段，因此打印到Type
-                    continue;
-                }
+                checkAutoReadField(variableElement, aptFieldProps, allFieldsAndMethodWithInherit, typeElement);
             }
         }
     }
 
+    private void checkAutoReadField(VariableElement variableElement, AptFieldProps aptFieldProps,
+                                    List<? extends Element> allFieldsAndMethodWithInherit,TypeElement typeElement) {
+        if (!AptUtils.isBlank(aptFieldProps.readProxy)) {
+            return;
+        }
+        // 工具读：需要提供可直接赋值或非private的setter方法
+        if (AptUtils.isBlank(aptFieldProps.setter)
+                && !canSetDirectly(variableElement)
+                && findPublicSetter(variableElement, allFieldsAndMethodWithInherit) == null) {
+            messager.printMessage(Diagnostic.Kind.ERROR,
+                    String.format("auto read field (%s) must be public or contains a public getter", variableElement.getSimpleName()),
+                    typeElement); // 可能无法定位到超类字段，因此打印到Type
+        }
+    }
+
+    private void checkAutoWriteField(VariableElement variableElement, AptFieldProps aptFieldProps,
+                                     List<? extends Element> allFieldsAndMethodWithInherit, TypeElement typeElement) {
+        if (!AptUtils.isBlank(aptFieldProps.writeProxy)) {
+            return;
+        }
+        // 工具写：需要提供可直接取值或包含非private的getter方法
+        if (AptUtils.isBlank(aptFieldProps.getter)
+                && !canGetDirectly(variableElement)
+                && findPublicGetter(variableElement, allFieldsAndMethodWithInherit) == null) {
+            messager.printMessage(Diagnostic.Kind.ERROR,
+                    String.format("auto write field (%s) must be public or contains a public getter", variableElement.getSimpleName()),
+                    typeElement); // 可能无法定位到超类字段，因此打印到Type
+        }
+    }
+
     /** 检查是否包含无参构造方法或解析构造方法 */
-    private void checkConstructor(TypeElement typeElement) {
+    private void checkConstructor(TypeElement typeElement, AptClassProps aptClassProps) {
         if (typeElement.getModifiers().contains(Modifier.ABSTRACT)) {
             return;
         }
-        // TODO 其实还应该测试一下静态代理
+        // 静态类包含nesInstance代理方法
+        if (aptClassProps.containsHookMethod(CodecProcessor.MNAME_NEW_INSTANCE)) {
+            return;
+        }
         if (BeanUtils.containsNoArgsConstructor(typeElement)
                 || containsReaderConstructor(typeElement)
                 || containsNewInstanceMethod(typeElement)) {
@@ -557,12 +561,12 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     /** 是否包含 beforeEncode 实例方法 */
     public boolean containsBeforeEncodeMethod(List<? extends Element> allFieldsAndMethodWithInherit) {
-        return containsHookMethod(allFieldsAndMethodWithInherit, MNAME_BEFORE_ENCODE, type_Options);
+        return containsHookMethod(allFieldsAndMethodWithInherit, MNAME_BEFORE_ENCODE, typeMirror_Options);
     }
 
     /** 是否包含 afterDecode 实例方法 */
     public boolean containsAfterDecodeMethod(List<? extends Element> allFieldsAndMethodWithInherit) {
-        return containsHookMethod(allFieldsAndMethodWithInherit, MNAME_AFTER_DECODE, type_Options);
+        return containsHookMethod(allFieldsAndMethodWithInherit, MNAME_AFTER_DECODE, typeMirror_Options);
     }
 
     private boolean containsHookMethod(List<? extends Element> allFieldsAndMethodWithInherit, String methodName, TypeMirror argTypeMirror) {
@@ -640,7 +644,7 @@ public class CodecProcessor extends MyAbstractProcessor {
             return false;
         }
         // 有注解的情况下，取决于注解的值 -- 取反。。。
-        Boolean ignore = aptFieldProps.dsonIgnore;
+        Boolean ignore = aptFieldProps.ignore;
         if (ignore != null) return !ignore;
         // 无注解的情况下，默认忽略 transient 字段
         if (variableElement.getModifiers().contains(Modifier.TRANSIENT)) {
@@ -764,7 +768,7 @@ public class CodecProcessor extends MyAbstractProcessor {
     // region overriding util
 
     public MethodSpec newGetEncoderTypeMethod(DeclaredType superDeclaredType, ClassName rawTypeName) {
-        return MethodSpec.overriding(getEncoderClassMethod, superDeclaredType, typeUtils)
+        return MethodSpec.overriding(getEncoderTypeMethod, superDeclaredType, typeUtils)
                 .addStatement("return encoderType") // final字段
                 .addAnnotation(AptUtils.ANNOTATION_NONNULL)
                 .build();

@@ -92,8 +92,8 @@ public readonly struct GenericCodecInfo
     }
 
     private static GenericCodecInfo CreateImpl(Type genericType, Type codecType, Type? factoryDeclaringType, string? factoryField) {
-        if (!genericType.IsGenericTypeDefinition) throw new ArgumentException("genericType must be GenericTypeDefinition");
-        if (!codecType.IsGenericTypeDefinition) throw new ArgumentException("codecType must be GenericTypeDefinition");
+        if (!genericType.IsGenericTypeDefinition) throw new ArgumentException($"genericType: {genericType} must be GenericTypeDefinition");
+        if (!codecType.IsGenericTypeDefinition) throw new ArgumentException($"codecType: {codecType} must be GenericTypeDefinition");
 
         // GenericTypeArguments 属性获取真实泛型参数，GetGenericArguments() 方法则获取泛型参数定义
         if (genericType.GetGenericArguments().Length != codecType.GetGenericArguments().Length) {

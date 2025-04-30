@@ -18,6 +18,7 @@
 
 using System;
 using Wjybxx.Commons;
+using Wjybxx.Commons.Attributes;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec.Attributes
@@ -104,17 +105,17 @@ public class DsonSerializableAttribute : Attribute
     /// <summary>
     /// 获取单例的方法名（兼容属性）
     /// </summary>
-    public string? Singleton { get; set; }
+    [StableName] public string? Singleton { get; set; }
 
     /// <summary>
     /// 不自动编解码的字段和属性，通常用于跳过不能直接访问的超类字段和属性，然后手动编解码。
     /// (注意：skip仅仅表示不自动读，被跳过的字段仍然会占用字段编号和name！)
     /// </summary>
-    public string[] SkipFields { get; set; } = Array.Empty<string>();
+    [StableName] public string[] SkipFields { get; set; } = Array.Empty<string>();
 
     /// <summary>
     /// 为生成代码附加的注解(只支持无参注解)
     /// </summary>
-    public Type[] Attributes { get; set; } = Array.Empty<Type>();
+    [StableName] public Type[] Attributes { get; set; } = Array.Empty<Type>();
 }
 }

@@ -16,6 +16,7 @@
 
 #endregion
 
+using System.Collections.Generic;
 using Wjybxx.Dson.Codec;
 using Wjybxx.Dson.Codec.Attributes;
 using Wjybxx.Dson.Text;

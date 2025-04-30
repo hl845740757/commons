@@ -17,9 +17,7 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using NUnit.Framework;
-using Wjybxx.Commons.Apt;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Poet;
@@ -64,7 +62,7 @@ public class GeneratorTest
         string fileString = codeWriter.Write(csharpFile);
         Console.WriteLine(fileString);
     }
-    
+
     private static TypeSpec BuildIndexerType() {
         return TypeSpec.NewClassBuilder("MyDictionary")
             .AddModifiers(Modifiers.Public)

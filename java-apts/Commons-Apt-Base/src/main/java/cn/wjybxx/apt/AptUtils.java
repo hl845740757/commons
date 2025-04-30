@@ -206,6 +206,8 @@ public class AptUtils {
 
     // ----------------------------------------------------- 分割线 -----------------------------------------------
 
+    // region methodSpec
+
     /**
      * 复制一个方法信息，当然不包括代码块。
      *
@@ -280,8 +282,11 @@ public class AptUtils {
             builder.addException(TypeName.get(thrownType));
         }
     }
+    // endregion
 
     // ----------------------------------------------------- 分割线 -----------------------------------------------
+
+    // region flat
 
     /**
      * 通过名字查找对应的方法
@@ -377,8 +382,11 @@ public class AptUtils {
         }
         return false;
     }
+    // endregion
 
     // ----------------------------------------------------- 分割线 -----------------------------------------------
+
+    // region annotation
 
     /**
      * 查找指定注解是否出现
@@ -506,6 +514,9 @@ public class AptUtils {
             }
         }, null);
     }
+    // endregion
+
+    // region 类型测试
 
     /**
      * 忽略两个类型的泛型参数，判断第一个是否是第二个的子类型。
@@ -523,9 +534,7 @@ public class AptUtils {
         return typeUtil.isSameType(typeUtil.erasure(first), typeUtil.erasure(second));
     }
 
-    /**
-     * 获取一个元素的声明类型
-     */
+    /** 获取一个元素的声明类型 */
     @Nullable
     public static DeclaredType findDeclaredType(TypeMirror typeMirror) {
         return typeMirror.accept(new SimpleTypeVisitor8<>() {
@@ -549,24 +558,11 @@ public class AptUtils {
         return elementUtils.getTypeElement(clazz.getCanonicalName()).asType();
     }
 
-    public static boolean isPrimitiveBoolean(TypeMirror typeMirror) {
-        return typeMirror.getKind() == TypeKind.BOOLEAN;
-    }
-
     public static boolean isPrimitiveNumber(TypeMirror typeMirror) {
         return switch (typeMirror.getKind()) {
             case INT, LONG, FLOAT, DOUBLE, SHORT, BYTE -> true;
             default -> false;
         };
-    }
-
-    public static boolean isArrayType(TypeMirror typeMirror) {
-        return typeMirror.getKind() == TypeKind.ARRAY;
-    }
-
-    public static TypeMirror getComponentType(TypeMirror typeMirror) {
-        ArrayType arrayType = (ArrayType) typeMirror;
-        return arrayType.getComponentType();
     }
 
     public static TypeMirror getRootComponentType(ArrayType arrayType) {
@@ -589,9 +585,6 @@ public class AptUtils {
         return r;
     }
 
-    /**
-     * 判断一个对象是否是字节数组
-     */
     public static boolean isByteArray(TypeMirror typeMirror) {
         if (typeMirror.getKind() == TypeKind.ARRAY) {
             ArrayType arrayType = (ArrayType) typeMirror;
@@ -600,9 +593,6 @@ public class AptUtils {
         return false;
     }
 
-    /**
-     * 获取第一个泛型参数
-     */
     @Nullable
     public static TypeMirror findFirstTypeParameter(TypeMirror typeMirror) {
         return typeMirror.accept(new SimpleTypeVisitor8<TypeMirror, Void>() {
@@ -645,8 +635,11 @@ public class AptUtils {
         }
         throw new IllegalArgumentException(String.format("self: %s, target: %s", self, target));
     }
+    // endregion
 
     // ------------------------------------------ 分割线 ------------------------------------------------
+
+    // region 代码生成
 
     /**
      * 根据原类型，生成获得对应的辅助类的类名
@@ -699,12 +692,12 @@ public class AptUtils {
         }
     }
 
-    /**
-     * 获取一个类或接口所属的包名
-     */
+    /** 获取类型所在的包名 */
     public static String getPackageName(TypeElement typeElement, Elements elementUtils) {
         return elementUtils.getPackageOf(typeElement).getQualifiedName().toString();
     }
+
+    // endregion
 
     // region 避免外部依赖
 

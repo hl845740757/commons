@@ -44,21 +44,20 @@ public class BTreeCodecTest
 
     [SetUp]
     public void SetUp() {
-        DsonCodecConfig codecConfig = new DsonCodecConfig();
-        Dictionary<Type, Type> rawType2CodecTypeDic = BTreeCodecExporter.ExportCodecs();
-        foreach (KeyValuePair<Type, Type> pair in rawType2CodecTypeDic) {
-            codecConfig.AddGenericCodec(pair.Key, pair.Value);
-        }
-
-        List<TypeMeta> typeMetas = rawType2CodecTypeDic.Keys
-            .Select(e => TypeMeta.Of(e, ObjectStyle.Indent, RemoveGenericInfo(e.Name)))
+        DsonConverterBuilder builder = new DsonConverterBuilder();
+        // 反射查找所有的Codec
+        List<Type> codecTypes = typeof(BtreeCodecLinker).Assembly.GetTypes()
+            .Where(e => e.GetInterface("Wjybxx.Dson.Codec.IDsonCodec`1") != null)
             .ToList();
+        foreach (Type codecType in codecTypes) {
+            // 传递给AbstractCodec的才是EncoderType
+            Type encoderType = codecType.BaseType!.GenericTypeArguments[0].GetGenericTypeDefinition();
+            builder.AddGenericCodec(encoderType, codecType);
 
-        converter = new DsonConverterBuilder()
-            .AddTypeMetas(typeMetas)
-            .AddCodecConfig(codecConfig)
-            .SetOptions(ConverterOptions.DEFAULT)
-            .Build();
+            TypeMeta typeMeta = TypeMeta.Of(encoderType, ObjectStyle.Indent, RemoveGenericInfo(encoderType.Name));
+            builder.AddTypeMeta(typeMeta);
+        }
+        converter = builder.Build();
     }
 
     private static string RemoveGenericInfo(string clsName) {

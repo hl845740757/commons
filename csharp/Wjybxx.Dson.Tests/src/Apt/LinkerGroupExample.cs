@@ -21,7 +21,7 @@ using Wjybxx.Dson.Codec.Attributes;
 
 namespace Wjybxx.Dson.Tests.Apt;
 
-[DsonCodecLinkerGroup()]
+[DsonCodecLinkerGroup]
 public class LinkerGroupExample
 {
 #nullable disable

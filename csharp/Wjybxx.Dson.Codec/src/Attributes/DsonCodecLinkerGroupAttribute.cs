@@ -32,10 +32,9 @@ namespace Wjybxx.Dson.Codec.Attributes
 public sealed class DsonCodecLinkerGroupAttribute : Attribute
 {
     /** 生成类的命名空间 -- 默认为配置类的命名空间 */
-    public string? OutputNamespace { get; }
+    public string? OutputNamespace { get; set; }
 
-    public DsonCodecLinkerGroupAttribute(string? outputNamespace = null) {
-        OutputNamespace = outputNamespace;
+    public DsonCodecLinkerGroupAttribute() {
     }
 }
 }

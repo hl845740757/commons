@@ -28,6 +28,8 @@ import java.lang.annotation.Target;
  * 3. 【LinkerBean】字段上的{@link DsonProperty}、{@link DsonIgnore}将被映射到【目标Bean】。
  * 4. 字段的读写代理将映射到【LinkerBean】中的静态方法。
  * 5. {@link DsonSerializable}中提到的钩子方法也将映射到【LinkerBean】中的静态方法。
+ * <p>
+ * 注意：linker类不应该存在继承关系，否则可能导致方法绑定错误。
  * <pre>{@code
  *  class BeanCodecLinker {
  *      MyBean field1; // 表示MyBean的field1字段

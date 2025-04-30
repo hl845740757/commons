@@ -23,10 +23,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Wjybxx.BTree.Codec\Wjybxx.BTree.Codec.csproj"/>
-        <ProjectReference Include="..\Wjybxx.BTree.Core\Wjybxx.BTree.Core.csproj"/>
-        <ProjectReference Include="..\Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj"/>
-        <ProjectReference Include="..\Wjybxx.Dson.Apt\Wjybxx.Dson.Apt.csproj"/>
+        <ProjectReference Include="..\Wjybxx.BTree.Codec\Wjybxx.BTree.Codec.csproj" />
+        <ProjectReference Include="..\Wjybxx.BTree.Core\Wjybxx.BTree.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\Wjybxx.Dson.Apt\Wjybxx.Dson.Apt.csproj"
+                          OutputItemType="Analyzer"
+                          ReferenceOutputAssembly="false"/>
+    </ItemGroup>
+    
 </Project>

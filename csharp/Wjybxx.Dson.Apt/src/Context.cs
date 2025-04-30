@@ -18,10 +18,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
+using Microsoft.CodeAnalysis;
 using Wjybxx.Commons.Poet;
-using Wjybxx.Dson.Codec;
-using Wjybxx.Dson.Codec.Attributes;
 
 namespace Wjybxx.Dson.Apt
 {
@@ -35,30 +33,30 @@ internal class Context
     /// <summary>
     /// 要处理的类型
     /// </summary>
-    public readonly Type type;
+    public readonly INamedTypeSymbol type;
     /// <summary>
-    /// 基于<see cref="DsonSerializableAttribute"/>生成Codec时的数据
+    /// 基于<code>DsonSerializableAttribute</code>生成Codec时的数据
     /// </summary>
-    public DsonSerializableAttribute dsonSerilAttribute;
+    public AttributeData dsonSerilAttribute;
     /// <summary>
-    ///  基于<see cref="DsonCodecLinkerGroupAttribute"/>生成Codec时的数据
+    ///  基于<code>DsonCodecLinkerGroupAttribute</code>生成Codec时的数据
     /// </summary>
-    public DsonCodecLinkerGroupAttribute linkerGroupAttribute;
+    public AttributeData linkerGroupAttribute;
     /// <summary>
-    /// 基于<see cref="DsonCodecLinkerBeanAttribute"/>生成codec时的数据
+    /// 基于<code>DsonCodecLinkerBeanAttribute</code>生成codec时的数据
     /// </summary>
-    public DsonCodecLinkerBeanAttribute linkerBeanAttribute;
+    public AttributeData linkerBeanAttribute;
 
     #region Cache
 
     /// <summary>
     /// 所有的字段和方法（和属性）缓存
     /// </summary>
-    public List<MemberInfo> allFieldsAndMethodWithInherit;
+    public List<ISymbol> allFieldsAndMethodWithInherit;
     /// <summary>
     /// 所有的实例字段缓存（包含自动属性字段）
     /// </summary>
-    public List<FieldInfo> allFields;
+    public List<IFieldSymbol> allFields;
 
     /// <summary>
     /// 要处理的类的注解信息
@@ -71,27 +69,27 @@ internal class Context
     /// <summary>
     /// 所有的字段注解信息缓存（包含自动属性字段）
     /// </summary>
-    public readonly Dictionary<FieldInfo, AptFieldProps> fieldPropsMap = new Dictionary<FieldInfo, AptFieldProps>();
+    public readonly Dictionary<IFieldSymbol, AptFieldProps> fieldPropsMap = new(SymbolEqualityComparer.Default);
     /// <summary>
     /// 需要序列化的字缓存
     /// </summary>
-    public readonly List<FieldInfo> serialFields = new List<FieldInfo>();
+    public readonly List<IFieldSymbol> serialFields = new();
 
     #endregion
 
     #region CTX
 
     /// <summary>
-    /// <see cref="AbstractDsonCodec{T}"/>
+    /// <code>AbstractDsonCodec{T}</code>
     /// c#是真实泛型，我们需要构造类型后再获取对应的需要overriding方法
     /// </summary>
-    public Type superDeclaredType;
+    public INamedTypeSymbol superDeclaredType;
     public TypeSpec.Builder typeBuilder;
     public string outputNamespace;
 
     #endregion
 
-    public Context(Type type) {
+    public Context(INamedTypeSymbol type) {
         this.type = type ?? throw new ArgumentNullException(nameof(type));
     }
 }

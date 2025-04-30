@@ -16,10 +16,8 @@
 
 #endregion
 
-using System;
 using System.Reflection;
 using NUnit.Framework;
-using Wjybxx.Commons.Apt;
 
 namespace Commons.Tests.Apt;
 

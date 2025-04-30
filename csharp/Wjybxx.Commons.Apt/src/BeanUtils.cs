@@ -1,0 +1,479 @@
+#region LICENSE
+
+// Copyright 2024 wjybxx(845740757@qq.com)
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#endregion
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text;
+using Microsoft.CodeAnalysis;
+using Wjybxx.Commons.Poet;
+
+namespace Wjybxx.Commons.Apt
+{
+/// <summary>
+///
+/// </summary>
+public static class BeanUtils
+{
+    #region constructors
+
+    /// <summary>
+    /// 是否包含无参构造方法
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public static bool ContainsNoArgsConstructor(Type type) {
+        return type.GetConstructor(BindingFlags.Instance
+                                   | BindingFlags.Public
+                                   | BindingFlags.NonPublic,
+            binder: null, Array.Empty<Type>(), null) != null;
+    }
+
+    /// <summary>
+    /// 是否包含给定参数类型的构造方法
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="argType"></param>
+    /// <returns></returns>
+    public static bool ContainsOneArgsConstructor(Type type, Type argType) {
+        // TODO 参数如果是未构造泛型是否有问题
+        return type.GetConstructor(BindingFlags.Instance
+                                   | BindingFlags.Public
+                                   | BindingFlags.NonPublic,
+            binder: null, new Type[] { argType }, null) != null;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public static bool ContainsNoArgsConstructor(INamedTypeSymbol type) {
+        foreach (var methodSymbol in type.InstanceConstructors) {
+            if (methodSymbol.Parameters.Length == 0) return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 是否包含给定参数类型的构造方法
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="argType"></param>
+    /// <returns></returns>
+    public static bool ContainsOneArgsConstructor(INamedTypeSymbol type, ITypeSymbol argType) {
+        // TODO 参数如果是未构造泛型是否有问题
+        SymbolEqualityComparer comparer = SymbolEqualityComparer.Default;
+        foreach (var methodSymbol in type.InstanceConstructors) {
+            if (methodSymbol.Parameters.Length != 1) continue;
+            if (argType.Equals(methodSymbol.Parameters[0], comparer)) return true;
+        }
+        return false;
+    }
+
+    #endregion
+
+    #region get-members
+
+    /// <summary>
+    /// 获取类的所有字段和方法，包含继承得到的字段和方法和属性。
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="memberTypes"></param>
+    /// <returns></returns>
+    public static List<MemberInfo> GetAllMembersWithInherit(Type type, MemberTypes memberTypes = MemberTypes.Field
+                                                                                                 | MemberTypes.Property
+                                                                                                 | MemberTypes.Method) {
+        // FlattenHierarchy 不能拉取到超类的private字段
+        return AptUtils.FlatInheritAndReverse(type)
+            .SelectMany(e => e.GetMembers(BindingFlags.DeclaredOnly
+                                          | BindingFlags.Public | BindingFlags.NonPublic
+                                          | BindingFlags.Static | BindingFlags.Instance))
+            .Where(e => (e.MemberType & memberTypes) != 0)
+            .ToList();
+    }
+
+    /// <summary>
+    /// 获取类定义的所有字段
+    /// (会包含自动生成的字段)
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public static List<FieldInfo> GetAllFieldsWithInherit(Type type) {
+        return AptUtils.FlatInheritAndReverse(type)
+            .SelectMany(e => e.GetMembers(BindingFlags.DeclaredOnly
+                                          | BindingFlags.Public | BindingFlags.NonPublic
+                                          | BindingFlags.Static | BindingFlags.Instance))
+            .Where(e => e.MemberType == MemberTypes.Field)
+            .Cast<FieldInfo>()
+            .ToList();
+    }
+
+    /// <summary>
+    /// 获取类定义的所有方法
+    /// (会包含自动生成的方法)
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
+    public static List<MethodInfo> GetAllMethodsWithInherit(Type type) {
+        return AptUtils.FlatInheritAndReverse(type)
+            .SelectMany(e => e.GetMembers(BindingFlags.DeclaredOnly
+                                          | BindingFlags.Public | BindingFlags.NonPublic
+                                          | BindingFlags.Static | BindingFlags.Instance))
+            .Where(e => e.MemberType == MemberTypes.Method)
+            .Cast<MethodInfo>()
+            .ToList();
+    }
+
+    /// <summary>
+    /// 获取类的所有成员，包含继承得到的字段和方法和属性。
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static List<ISymbol> GetAllMembersWithInherit(INamedTypeSymbol type) {
+        return GetAllMembersWithInherit(type, new List<SymbolKind>() { SymbolKind.Field, SymbolKind.Method, SymbolKind.Property });
+    }
+
+    /// <summary>
+    /// 获取类的所有成员
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="kinds"></param>
+    /// <returns></returns>
+    public static List<ISymbol> GetAllMembersWithInherit(INamedTypeSymbol type, List<SymbolKind> kinds) {
+        return AptUtils.FlatInheritAndReverse(type)
+            .SelectMany(typeSymbol => typeSymbol.GetMembers().Where(e => kinds.Contains(e.Kind)))
+            .ToList();
+    }
+
+    /// <summary>
+    /// 获取类定义的所有字段
+    /// (会包含自动生成的字段)
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public static List<IFieldSymbol> GetAllFieldsWithInherit(INamedTypeSymbol type) {
+        return AptUtils.FlatInheritAndReverse(type)
+            .SelectMany(typeSymbol => typeSymbol.GetMembers().Where(e => e.Kind == SymbolKind.Field))
+            .Cast<IFieldSymbol>()
+            .ToList();
+    }
+
+    /// <summary>
+    /// 获取类定义的所有方法
+    /// (会包含自动生成的方法)
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public static List<IMethodSymbol> GetAllMethodsWithInherit(INamedTypeSymbol type) {
+        return AptUtils.FlatInheritAndReverse(type)
+            .SelectMany(typeSymbol => typeSymbol.GetMembers().Where(e => e.Kind == SymbolKind.Method))
+            .Cast<IMethodSymbol>()
+            .ToList();
+    }
+
+    /// <summary>
+    /// 获取第一个指定名称的成员
+    /// </summary>
+    /// <param name="typeSymbol"></param>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    public static ISymbol? GetFirstMember(this INamedTypeSymbol typeSymbol, string name) {
+        foreach (ISymbol member in typeSymbol.GetMembers()) {
+            if (member.Name == name) return member;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 获取第一个指定名称的方法
+    /// </summary>
+    /// <param name="typeSymbol"></param>
+    /// <param name="name"></param>
+    /// <returns></returns>
+    public static IMethodSymbol? GetFirstMethod(this INamedTypeSymbol typeSymbol, string name) {
+        foreach (ISymbol member in typeSymbol.GetMembers()) {
+            if (member.Kind == SymbolKind.Method && member.Name == name) return (IMethodSymbol?)member;
+        }
+        return null;
+    }
+
+    #endregion
+
+    #region getter/setter
+
+    /// <summary>
+    /// 是否包含public的Getter属性
+    /// </summary>
+    public static bool ContainsPublicGetter(FieldInfo fieldInfo,
+                                            List<MemberInfo> allFieldsAndMethodWithInherit) {
+        return FindPublicGetter(fieldInfo, allFieldsAndMethodWithInherit) != null;
+    }
+
+    /// <summary>
+    /// 是否包含public的setter属性
+    /// </summary>
+    public static bool ContainsPublicSetter(FieldInfo fieldInfo,
+                                            List<MemberInfo> allFieldsAndMethodWithInherit) {
+        return FindPublicSetter(fieldInfo, allFieldsAndMethodWithInherit) != null;
+    }
+
+    /// <summary>
+    /// 查询字段关联的Getter属性
+    /// </summary>
+    /// <param name="fieldInfo"></param>
+    /// <param name="allFieldsAndMethodWithInherit"></param>
+    /// <returns></returns>
+    public static PropertyInfo? FindPublicGetter(FieldInfo fieldInfo,
+                                                 List<MemberInfo> allFieldsAndMethodWithInherit) {
+        string propertyName = PropertyNameOfField(fieldInfo.Name);
+        return allFieldsAndMethodWithInherit.Where(e => e.MemberType == MemberTypes.Property)
+            .Cast<PropertyInfo>()
+            .FirstOrDefault(propertyInfo => {
+                if (propertyInfo.Name != propertyName) {
+                    return false;
+                }
+                MethodInfo getMethod = propertyInfo.GetMethod;
+                return getMethod != null && getMethod.IsPublic;
+            });
+    }
+
+    /// <summary>
+    /// 查询字段关联的Setter属性
+    /// </summary>
+    public static PropertyInfo? FindPublicSetter(FieldInfo fieldInfo,
+                                                 List<MemberInfo> allFieldsAndMethodWithInherit) {
+        string propertyName = PropertyNameOfField(fieldInfo.Name);
+        return allFieldsAndMethodWithInherit.Where(e => e.MemberType == MemberTypes.Property)
+            .Cast<PropertyInfo>()
+            .FirstOrDefault(propertyInfo => {
+                if (propertyInfo.Name != propertyName) {
+                    return false;
+                }
+                MethodInfo setMethod = propertyInfo.SetMethod;
+                return setMethod != null && setMethod.IsPublic;
+            });
+    }
+
+    /// <summary>
+    /// 是否包含public的Getter属性
+    /// </summary>
+    public static bool ContainsPublicGetter(IFieldSymbol fieldInfo,
+                                            List<ISymbol> allFieldsAndMethodWithInherit) {
+        return FindPublicGetter(fieldInfo, allFieldsAndMethodWithInherit) != null;
+    }
+
+    /// <summary>
+    /// 是否包含public的setter属性
+    /// </summary>
+    public static bool ContainsPublicSetter(IFieldSymbol fieldInfo,
+                                            List<ISymbol> allFieldsAndMethodWithInherit) {
+        return FindPublicSetter(fieldInfo, allFieldsAndMethodWithInherit) != null;
+    }
+
+    /// <summary>
+    /// 查询字段关联的Getter属性
+    /// </summary>
+    public static IPropertySymbol? FindPublicGetter(IFieldSymbol fieldInfo,
+                                                    List<ISymbol> allFieldsAndMethodWithInherit) {
+        string propertyName = PropertyNameOfField(fieldInfo.Name);
+        return allFieldsAndMethodWithInherit.Where(e => e.Kind == SymbolKind.Property)
+            .Cast<IPropertySymbol>()
+            .FirstOrDefault(propertySymbol => {
+                if (propertySymbol.Name != propertyName) {
+                    return false;
+                }
+                IMethodSymbol getMethod = propertySymbol.GetMethod;
+                return getMethod != null && getMethod.DeclaredAccessibility == Accessibility.Public;
+            });
+    }
+
+    /// <summary>
+    /// 查询字段关联的Setter属性
+    /// </summary>
+    public static IPropertySymbol? FindPublicSetter(IFieldSymbol fieldInfo,
+                                                    List<ISymbol> allFieldsAndMethodWithInherit) {
+        string propertyName = PropertyNameOfField(fieldInfo.Name);
+        return allFieldsAndMethodWithInherit.Where(e => e.Kind == SymbolKind.Property)
+            .Cast<IPropertySymbol>()
+            .FirstOrDefault(propertySymbol => {
+                if (propertySymbol.Name != propertyName) {
+                    return false;
+                }
+                IMethodSymbol setMethod = propertySymbol.SetMethod;
+                return setMethod != null && setMethod.DeclaredAccessibility == Accessibility.Public;
+            });
+    }
+
+    #endregion
+
+    #region fields-props
+
+    /// <summary>
+    /// 查询字段关联的属性(支持非public)
+    /// </summary>
+    /// <param name="fieldInfo"></param>
+    /// <param name="allFieldsAndMethodWithInherit"></param>
+    /// <returns></returns>
+    public static PropertyInfo? FindProperty(FieldInfo fieldInfo,
+                                             List<MemberInfo> allFieldsAndMethodWithInherit) {
+        string propertyName = PropertyNameOfField(fieldInfo.Name);
+        return allFieldsAndMethodWithInherit.Where(e => e.MemberType == MemberTypes.Property)
+            .Cast<PropertyInfo>()
+            .FirstOrDefault(e => e.Name == propertyName);
+    }
+
+    /// <summary>
+    /// 查询字段关联的属性(支持非public)
+    /// </summary>
+    /// <param name="fieldInfo"></param>
+    /// <param name="allFieldsAndMethodWithInherit"></param>
+    /// <returns></returns>
+    public static IPropertySymbol? FindProperty(IFieldSymbol fieldInfo,
+                                                List<ISymbol> allFieldsAndMethodWithInherit) {
+        string propertyName = PropertyNameOfField(fieldInfo.Name);
+        return allFieldsAndMethodWithInherit.Where(e => e.Kind == SymbolKind.Property)
+            .Cast<IPropertySymbol>()
+            .FirstOrDefault(e => e.Name == propertyName);
+    }
+
+    /// <summary>
+    /// 是否是自动属性生成的字段
+    /// </summary>
+    /// <param name="fieldName"></param>
+    /// <returns></returns>
+    public static bool IsAutoPropertyField(string fieldName) {
+        // <PropertyName>k__BackingField
+        return fieldName[0] == '<' && fieldName.EndsWith("k__BackingField");
+    }
+
+    /// <summary>
+    /// 获取字段的属性名
+    /// (C#的规则是删除下划线，然后下划线后首个字符大写)
+    /// </summary>
+    public static string PropertyNameOfField(string fieldName) {
+        if (fieldName[0] == '<') {
+            // 自动属性字段
+            int endIndex = fieldName.IndexOf('>');
+            return fieldName.Substring(1, endIndex - 1);
+        }
+        if (fieldName.Contains('_')) {
+            StringBuilder sb = new StringBuilder(fieldName.Length);
+            bool nextUpper = true; // 首字符大写
+            for (var i = 0; i < fieldName.Length; i++) {
+                char c = fieldName[i];
+                if (c == '_') {
+                    nextUpper = true;
+                } else {
+                    if (nextUpper) {
+                        nextUpper = false;
+                        sb.Append(char.ToUpper(c));
+                    } else {
+                        sb.Append(c);
+                    }
+                }
+            }
+            return sb.ToString();
+        }
+        return Util.FirstCharToUpperCase(fieldName);
+    }
+
+    /// <summary>
+    /// 获取关联的字段类型
+    /// </summary>
+    /// <param name="memberInfo"></param>
+    /// <returns></returns>
+    public static Type GetFieldType(MemberInfo memberInfo) {
+        switch (memberInfo) {
+            case FieldInfo fieldInfo: {
+                return fieldInfo.FieldType;
+            }
+            case PropertyInfo propertyInfo: {
+                return propertyInfo.PropertyType;
+            }
+            default: {
+                throw new InvalidOperationException();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取关联的字段类型
+    /// </summary>
+    /// <param name="memberInfo"></param>
+    /// <returns></returns>
+    public static ITypeSymbol GetFieldType(ISymbol memberInfo) {
+        switch (memberInfo) {
+            case IFieldSymbol fieldInfo: {
+                return fieldInfo.Type;
+            }
+            case IPropertySymbol propertyInfo: {
+                return propertyInfo.Type;
+            }
+            default: {
+                throw new InvalidOperationException();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 判断是否是静态属性
+    /// </summary>
+    public static bool IsStaticMember(MemberInfo memberInfo) {
+        switch (memberInfo) {
+            case FieldInfo fieldInfo: {
+                return fieldInfo.IsStatic;
+            }
+            case PropertyInfo propertyInfo: {
+                return IsStaticProperty(propertyInfo);
+            }
+            case MethodInfo methodInfo: {
+                return methodInfo.IsStatic;
+            }
+            case ConstructorInfo constructorInfo: {
+                return constructorInfo.IsStatic;
+            }
+            case EventInfo eventInfo: {
+                MethodInfo raiseMethod = eventInfo.RaiseMethod!;
+                return raiseMethod.IsStatic;
+            }
+            default: {
+                return true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 判断是否是静态属性
+    /// </summary>
+    public static bool IsStaticProperty(PropertyInfo propertyInfo) {
+        MethodInfo getMethod = propertyInfo.GetMethod;
+        if (getMethod != null) {
+            return getMethod.IsStatic;
+        }
+        MethodInfo setMethod = propertyInfo.SetMethod!;
+        return setMethod.IsStatic;
+    }
+
+    #endregion
+}
+}

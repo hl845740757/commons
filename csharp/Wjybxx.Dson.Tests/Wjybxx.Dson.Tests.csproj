@@ -1,32 +1,41 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <LangVersion>11</LangVersion>
-    <ImplicitUsings>true</ImplicitUsings>
-    <Nullable>annotations</Nullable>
-    <RootNamespace>Wjybxx.Dson.Tests</RootNamespace>
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <LangVersion>11</LangVersion>
+        <ImplicitUsings>true</ImplicitUsings>
+        <Nullable>annotations</Nullable>
+        <RootNamespace>Wjybxx.Dson.Tests</RootNamespace>
 
-    <AssemblyName>Wjybxx.Dson.Tests</AssemblyName>
-    <PackageId>Wjybxx.Dson.Tests</PackageId>
+        <AssemblyName>Wjybxx.Dson.Tests</AssemblyName>
+        <PackageId>Wjybxx.Dson.Tests</PackageId>
+
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
+        <PackageReference Include="MongoDB.Bson" Version="2.23.1" />
+        <PackageReference Include="NUnit" Version="3.13.3" />
+        <PackageReference Include="NUnit3TestAdapter" Version="4.4.2" />
+        <PackageReference Include="NUnit.Analyzers" Version="3.6.1" />
+        <PackageReference Include="coverlet.collector" Version="3.2.0" />
+        <PackageReference Include="Google.Protobuf" Version="3.25.1" />
+    </ItemGroup>
     
-    <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
-    <PackageReference Include="MongoDB.Bson" Version="2.23.1" />
-    <PackageReference Include="NUnit" Version="3.13.3" />
-    <PackageReference Include="NUnit3TestAdapter" Version="4.4.2" />
-    <PackageReference Include="NUnit.Analyzers" Version="3.6.1" />
-    <PackageReference Include="coverlet.collector" Version="3.2.0" />
-    <PackageReference Include="Google.Protobuf" Version="3.25.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Wjybxx.Dson.Apt\Wjybxx.Dson.Apt.csproj" />
-    <ProjectReference Include="..\Wjybxx.Dson.Codec\Wjybxx.Dson.Codec.csproj" />
-    <ProjectReference Include="..\Wjybxx.Dson.Core\Wjybxx.Dson.Core.csproj" />
-  </ItemGroup>
+    <!-- OutputItemType="Analyzer" 表示将项目添加为分析器，ReferenceOutputAssembly="false" 表示此项目无需引用分析器项目的程序集 -->
+    <!-- 如果改为true，需要注意集合和Json库的兼容性 -->
+    <ItemGroup>
+        <ProjectReference Include="..\Wjybxx.Dson.Core\Wjybxx.Dson.Core.csproj" />
+        <ProjectReference Include="..\Wjybxx.Dson.Codec\Wjybxx.Dson.Codec.csproj" />
+        
+        <ProjectReference Include="..\Wjybxx.Commons.Poet\Wjybxx.Commons.Poet.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Wjybxx.Dson.Apt\Wjybxx.Dson.Apt.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
 </Project>

@@ -16,13 +16,8 @@
 
 #endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using NUnit.Framework;
-using Wjybxx.Commons.Apt;
 using Wjybxx.Commons.Concurrent;
 using Wjybxx.Commons.Poet;
 
@@ -80,10 +75,10 @@ public class TypeInfoTest
     public void TestAsyncMethod() {
         Type type = typeof(TypeInfoTest);
         MethodInfo methodInfo = type.GetMethod("GetValueAsync", BindingFlags.NonPublic | BindingFlags.Instance);
-        MethodSpec.Builder builder = MethodSpec.Overriding(methodInfo);
+        MethodSpec.Builder builder = MethodSpec.Overriding(methodInfo!);
 
         Assert.True((builder.modifiers & Modifiers.Async) != 0, "async");
-        Assert.True((builder.varargs), "varargs");
+        Assert.True((builder.isVarargs), "varargs");
     }
 
     [Test]

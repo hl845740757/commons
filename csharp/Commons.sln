@@ -6,7 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Tests", "Wjy
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Concurrent", "Wjybxx.Commons.Concurrent\Wjybxx.Commons.Concurrent.csproj", "{255C40F9-8835-4FAA-ABCB-FABD969254C6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Apt", "Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj", "{F74A7DE9-2D52-4A2F-9AF9-6EA085FF728E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Poet", "Wjybxx.Commons.Poet\Wjybxx.Commons.Poet.csproj", "{F74A7DE9-2D52-4A2F-9AF9-6EA085FF728E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Dson.Core", "Wjybxx.Dson.Core\Wjybxx.Dson.Core.csproj", "{85A4DD0E-E41E-4DF3-89F6-5719F2EAC738}"
 EndProject
@@ -27,6 +27,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Logger.Serilog", "Wjybxx.Logger.Serilog\Wjybxx.Logger.Serilog.csproj", "{19EB6683-3573-4AA7-B388-1272E285B826}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Inject", "Wjybxx.Commons.Inject\Wjybxx.Commons.Inject.csproj", "{FC6AA637-6176-42AB-8BE5-A80B1C86AD5B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Apt", "Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj", "{2A827D1C-B6D1-483B-BA80-EEE034141394}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -90,5 +92,9 @@ Global
 		{FC6AA637-6176-42AB-8BE5-A80B1C86AD5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC6AA637-6176-42AB-8BE5-A80B1C86AD5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC6AA637-6176-42AB-8BE5-A80B1C86AD5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A827D1C-B6D1-483B-BA80-EEE034141394}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A827D1C-B6D1-483B-BA80-EEE034141394}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A827D1C-B6D1-483B-BA80-EEE034141394}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A827D1C-B6D1-483B-BA80-EEE034141394}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

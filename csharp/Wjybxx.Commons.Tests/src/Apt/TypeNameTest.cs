@@ -16,11 +16,8 @@
 
 #endregion
 
-using System;
-using System.Collections.Generic;
 using System.Numerics;
 using NUnit.Framework;
-using Wjybxx.Commons.Apt;
 using Wjybxx.Commons.Poet;
 
 namespace Commons.Tests.Apt;

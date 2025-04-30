@@ -320,46 +320,4 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     // endregion
-
-    // region 重复实现，提高效率
-
-    @Override
-    public void writeStartObject(ObjectStyle style, TypeInfo encoderType, TypeInfo declaredType) {
-        writer.writeStartObject(style);
-        writeTypeInfo(encoderType, declaredType);
-    }
-
-    @Override
-    public void writeStartObject(String name, ObjectStyle style) {
-        writer.writeName(name);
-        writer.writeStartObject(style);
-    }
-
-    @Override
-    public void writeStartObject(String name, ObjectStyle style, TypeInfo encoderType, TypeInfo declaredType) {
-        writer.writeName(name);
-        writer.writeStartObject(style);
-        writeTypeInfo(encoderType, declaredType);
-    }
-    //
-
-    @Override
-    public void writeStartArray(ObjectStyle style, TypeInfo encoderType, TypeInfo declaredType) {
-        writer.writeStartArray(style);
-        writeTypeInfo(encoderType, declaredType);
-    }
-
-    @Override
-    public void writeStartArray(String name, ObjectStyle style) {
-        writer.writeName(name);
-        writer.writeStartArray(style);
-    }
-
-    @Override
-    public void writeStartArray(String name, ObjectStyle style, TypeInfo encoderType, TypeInfo declaredType) {
-        writer.writeName(name);
-        writer.writeStartArray(style);
-        writeTypeInfo(encoderType, declaredType);
-    }
-    // endregion
 }

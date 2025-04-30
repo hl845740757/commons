@@ -49,7 +49,7 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
     public SchemaGenerator(CodecProcessor processor, Context context) {
         super(processor, context.typeElement);
         this.context = context;
-        this.typeName_TypeInfo = processor.typeName_TypeInfo;
+        this.typeName_TypeInfo = CodecProcessor.typeName_TypeInfo;
     }
 
     @Override

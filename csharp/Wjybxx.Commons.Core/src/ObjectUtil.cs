@@ -247,12 +247,15 @@ public static class ObjectUtil
     /// <param name="str"></param>
     /// <returns></returns>
     public static string DeleteWhitespace(string str) {
-        if (IndexOfWhitespace(str) < 0) {
+        int startIndex = IndexOfWhitespace(str);
+        if (startIndex < 0) {
             return str;
         }
         int len = str.Length;
         StringBuilder sb = new StringBuilder(len);
-        for (int idx = 0; idx < len; idx++) {
+        sb.Append(str, 0, startIndex);
+        //
+        for (int idx = startIndex + 1; idx < len; idx++) {
             char c = str[idx];
             if (char.IsWhiteSpace(c)) {
                 continue;

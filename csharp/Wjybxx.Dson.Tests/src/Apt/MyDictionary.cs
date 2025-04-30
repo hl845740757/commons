@@ -16,6 +16,8 @@
 
 #endregion
 
+using System;
+using System.Collections.Generic;
 using Wjybxx.Dson.Codec.Attributes;
 
 namespace Wjybxx.Dson.Tests.Apt;

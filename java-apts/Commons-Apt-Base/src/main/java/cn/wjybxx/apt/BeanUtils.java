@@ -19,6 +19,7 @@ package cn.wjybxx.apt;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.lang.model.element.*;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
  */
 public class BeanUtils {
 
-    // region 构造器
+    // region constructors
 
     /** 判断一个类是否包含无参构造方法 */
     public static boolean containsNoArgsConstructor(TypeElement typeElement) {
@@ -69,7 +70,7 @@ public class BeanUtils {
     }
     // endregion
 
-    // region flat
+    // region get-members
 
     /**
      * 获取类的所有字段和方法，包含继承得到的字段和方法
@@ -84,6 +85,9 @@ public class BeanUtils {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 获取类的所有字段，包含继承得到的字段
+     */
     public static List<Element> getAllFieldsWithInherit(TypeElement typeElement) {
         final List<TypeElement> flatInherit = AptUtils.flatInheritAndReverse(typeElement);
         return flatInherit.stream()
@@ -133,7 +137,8 @@ public class BeanUtils {
     public static ExecutableElement findPublicSetter(Types typeUtils, VariableElement variableElement,
                                                      List<? extends Element> allFieldsAndMethodWithInherit) {
         final String fieldName = variableElement.getSimpleName().toString();
-        final String setterMethodName = BeanUtils.setterMethodName(fieldName, AptUtils.isPrimitiveBoolean(variableElement.asType()));
+        TypeMirror typeMirror = variableElement.asType();
+        final String setterMethodName = BeanUtils.setterMethodName(fieldName, typeMirror.getKind() == TypeKind.BOOLEAN);
         final String setterMethodName2 = "set" + BeanUtils.firstCharToUpperCase(fieldName);
         return allFieldsAndMethodWithInherit.stream()
                 .filter(e -> e.getKind() == ElementKind.METHOD)
@@ -160,7 +165,8 @@ public class BeanUtils {
     public static ExecutableElement findPublicGetter(Types typeUtils, VariableElement variableElement,
                                                      List<? extends Element> allFieldsAndMethodWithInherit) {
         final String fieldName = variableElement.getSimpleName().toString();
-        final String getterMethodName = BeanUtils.getterMethodName(fieldName, AptUtils.isPrimitiveBoolean(variableElement.asType()));
+        TypeMirror typeMirror = variableElement.asType();
+        final String getterMethodName = BeanUtils.getterMethodName(fieldName, typeMirror.getKind() == TypeKind.BOOLEAN);
         final String getterMethodName2 = "get" + BeanUtils.firstCharToUpperCase(fieldName);
         return allFieldsAndMethodWithInherit.stream()
                 .filter(e -> e.getKind() == ElementKind.METHOD)
@@ -214,7 +220,8 @@ public class BeanUtils {
     /**
      * 获取标准setter方法的名字
      *
-     * @param filedName 字段名字
+     * @param filedName          字段名字
+     * @param isPrimitiveBoolean 是否是基础类型的bool类型
      * @return 方法名
      */
     public static String setterMethodName(String filedName, boolean isPrimitiveBoolean) {

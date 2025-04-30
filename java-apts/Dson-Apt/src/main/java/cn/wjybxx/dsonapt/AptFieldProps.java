@@ -44,7 +44,6 @@ class AptFieldProps {
     public static final String TYPE_EXT_INT64 = "EXT_INT64";
     public static final String TYPE_EXT_DOUBLE = "EXT_DOUBLE";
 
-    public static final String DEFAULT_WIRE_TYPE = "UINT";
     public static final String DEFAULT_NUMBER_STYLE = "SIMPLE";
     public static final String DEFAULT_STRING_STYLE = "AUTO";
 
@@ -66,36 +65,40 @@ class AptFieldProps {
     public String dsonType = null; // 该属性只有显式声明才有效
     public int dsonSubType = 0;
 
+    /** 绑定style */
     public String numberStyle = DEFAULT_NUMBER_STYLE;
     public String stringStyle = DEFAULT_STRING_STYLE;
     public String objectStyle = null; // 该属性只有显式声明才有效
 
-    public Boolean dsonIgnore;
+    /** 序列化是否忽略 -- null表示未指定 */
+    public Boolean ignore;
 
     // region parse
     @Nonnull
     public static AptFieldProps parse(Types typeUtils, VariableElement element, TypeMirror annoMirror) {
-        final AptFieldProps props = new AptFieldProps();
         final AnnotationMirror annotationMirror = AptUtils.findAnnotation(typeUtils, element, annoMirror);
-        if (annotationMirror != null) {
-            final Map<String, AnnotationValue> annoValueMap = AptUtils.getAnnotationValuesMap(annotationMirror);
-            props.name = getStringValue(annoValueMap, "name", props.name);
-            props.getter = getStringValue(annoValueMap, "getter", props.getter);
-            props.setter = getStringValue(annoValueMap, "setter", props.setter);
+        if (annotationMirror == null) {
+            return new AptFieldProps();
+        }
 
-            props.dsonType = getEnumConstantName(annoValueMap, "dsonType", null);
-            props.dsonSubType = getIntValue(annoValueMap, "dsonSubType", props.dsonSubType);
+        final AptFieldProps props = new AptFieldProps();
+        final Map<String, AnnotationValue> annoValueMap = AptUtils.getAnnotationValuesMap(annotationMirror);
+        props.name = getStringValue(annoValueMap, "name", props.name);
+        props.getter = getStringValue(annoValueMap, "getter", props.getter);
+        props.setter = getStringValue(annoValueMap, "setter", props.setter);
 
-            props.numberStyle = getEnumConstantName(annoValueMap, "numberStyle", props.numberStyle);
-            props.stringStyle = getEnumConstantName(annoValueMap, "stringStyle", props.stringStyle);
-            props.objectStyle = getEnumConstantName(annoValueMap, "objectStyle", props.objectStyle);
+        props.dsonType = getEnumConstantName(annoValueMap, "dsonType", null);
+        props.dsonSubType = getIntValue(annoValueMap, "dsonSubType", props.dsonSubType);
 
-            final AnnotationValue impl = annoValueMap.get("impl");
-            if (impl != null) {
-                props.implMirror = AptUtils.getAnnotationValueTypeMirror(impl);
-            }
-            props.writeProxy = getStringValue(annoValueMap, "writeProxy", props.writeProxy);
-            props.readProxy = getStringValue(annoValueMap, "readProxy", props.readProxy);
+        props.numberStyle = getEnumConstantName(annoValueMap, "numberStyle", props.numberStyle);
+        props.stringStyle = getEnumConstantName(annoValueMap, "stringStyle", props.stringStyle);
+        props.objectStyle = getEnumConstantName(annoValueMap, "objectStyle", props.objectStyle);
+
+        props.writeProxy = getStringValue(annoValueMap, "writeProxy", props.writeProxy);
+        props.readProxy = getStringValue(annoValueMap, "readProxy", props.readProxy);
+        final AnnotationValue impl = annoValueMap.get("impl");
+        if (impl != null) {
+            props.implMirror = AptUtils.getAnnotationValueTypeMirror(impl);
         }
         return props;
     }
@@ -103,7 +106,7 @@ class AptFieldProps {
     public void parseIgnore(Types typeUtils, VariableElement element, TypeMirror ignoreTypeMirror) {
         AnnotationMirror annotationMirror = AptUtils.findAnnotation(typeUtils, element, ignoreTypeMirror);
         if (annotationMirror != null) {
-            this.dsonIgnore = AptUtils.getAnnotationValueValue(annotationMirror, "value");
+            this.ignore = AptUtils.getAnnotationValueValue(annotationMirror, "value");
         }
     }
 

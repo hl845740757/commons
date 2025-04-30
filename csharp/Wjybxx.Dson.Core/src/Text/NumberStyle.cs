@@ -19,7 +19,7 @@
 namespace Wjybxx.Dson.Text
 {
 /// <summary>
-/// 这里提供默认数字格式化方式
+/// 该枚举仅用于代码生成工具，用户直接使用<see cref="NumberStyles"/>
 /// </summary>
 public enum NumberStyle : byte
 {

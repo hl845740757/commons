@@ -19,12 +19,12 @@ package cn.wjybxx.dsonapt;
 import cn.wjybxx.apt.AbstractGenerator;
 import cn.wjybxx.apt.AptUtils;
 import cn.wjybxx.apt.BeanUtils;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.FieldSpec;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeSpec;
+import com.squareup.javapoet.*;
 
-import javax.lang.model.element.*;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -111,7 +111,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
 
         // 控制方法生成顺序
         // typeInfo 字段
-        typeBuilder.addField(FieldSpec.builder(processor.typeName_TypeInfo, "encoderType", Modifier.PRIVATE, Modifier.FINAL).build());
+        typeBuilder.addField(FieldSpec.builder(CodecProcessor.typeName_TypeInfo, "encoderType", Modifier.PRIVATE, Modifier.FINAL).build());
         // 生成默认构造函数，使用全局默认TypeInfo
         typeBuilder.addMethod(MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
@@ -120,7 +120,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         // 再生成一个指定TypeInfo的工作函数 -- 非泛型类的抽象类也可能需要
         typeBuilder.addMethod(MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(processor.typeName_TypeInfo, "encoderType")
+                .addParameter(CodecProcessor.typeName_TypeInfo, "encoderType")
                 .addStatement("this.encoderType = encoderType")
                 .build());
 
@@ -147,16 +147,10 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
 
     // region hook
 
-    private static boolean containsHookMethod(AptClassProps aptClassProps, String methodName) {
-        return aptClassProps.codecProxyEnclosedElements.stream()
-                .filter(e -> e.getKind() == ElementKind.METHOD && e.getModifiers().contains(Modifier.STATIC))
-                .anyMatch(e -> e.getSimpleName().toString().equals(methodName));
-    }
-
     /** 调用用户的readObject方法 */
     private boolean genReadObjectMethod(AptClassProps aptClassProps) {
         if (aptClassProps.codecProxyTypeElement != null) {
-            if (containsHookMethod(aptClassProps, CodecProcessor.MNAME_READ_OBJECT)) {
+            if (aptClassProps.containsHookMethod(CodecProcessor.MNAME_READ_OBJECT)) {
                 // CodecProxy.readObject(inst, reader);
                 readFieldsMethodBuilder.addStatement("$T.$L(inst, reader)",
                         aptClassProps.codecProxyClassName, CodecProcessor.MNAME_READ_OBJECT);
@@ -176,7 +170,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     /** 调用用户的writeObject方法 */
     private boolean genWriteObjectMethod(AptClassProps aptClassProps) {
         if (aptClassProps.codecProxyTypeElement != null) {
-            if (containsHookMethod(aptClassProps, CodecProcessor.MNAME_WRITE_OBJECT)) {
+            if (aptClassProps.containsHookMethod(CodecProcessor.MNAME_WRITE_OBJECT)) {
                 // CodecProxy.writeObject(inst, writer);
                 writeFieldsMethodBuilder.addStatement("$T.$L(inst, writer)",
                         aptClassProps.codecProxyClassName, CodecProcessor.MNAME_WRITE_OBJECT);
@@ -196,7 +190,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     /** 调用用户beforeEncode钩子方法 -- 需要支持codecProxy来处理 */
     private boolean genBeforeEncodeMethod(AptClassProps aptClassProps) {
         if (aptClassProps.codecProxyTypeElement != null) {
-            if (containsHookMethod(aptClassProps, CodecProcessor.MNAME_BEFORE_ENCODE)) {
+            if (aptClassProps.containsHookMethod(CodecProcessor.MNAME_BEFORE_ENCODE)) {
                 // CodecProxy.beforeEncode(inst, writer.options());
                 beforeEncodeMethodBuilder.addStatement("$T.$L(inst, writer.options())",
                         aptClassProps.codecProxyClassName, CodecProcessor.MNAME_BEFORE_ENCODE);
@@ -216,7 +210,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     /** 调用用户afterDecode钩子方法 -- 需要支持CodecProxy来处理 */
     private boolean genAfterDecodeMethod(AptClassProps aptClassProps) {
         if (aptClassProps.codecProxyTypeElement != null) {
-            if (containsHookMethod(aptClassProps, CodecProcessor.MNAME_AFTER_DECODE)) {
+            if (aptClassProps.containsHookMethod(CodecProcessor.MNAME_AFTER_DECODE)) {
                 // CodecProxy.afterDecode(inst, reader.options());
                 afterDecodeMethodBuilder.addStatement("$T.$L(inst, reader.options())",
                         aptClassProps.codecProxyClassName, CodecProcessor.MNAME_AFTER_DECODE);
@@ -237,13 +231,13 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private void genNewInstanceMethod(AptClassProps aptClassProps) {
         if (aptClassProps.isSingleton()) {
             // 有CodecProxy的情况下，单例也交由CodecProxy实现 -- 方法名是CodecProxy指定的，因此应当存在，不做校验
+            TypeName holder;
             if (aptClassProps.codecProxyTypeElement != null) {
-                newInstanceMethodBuilder.addStatement("return $T.$L()",
-                        aptClassProps.codecProxyClassName, aptClassProps.singleton);
+                holder = aptClassProps.codecProxyClassName;
             } else {
-                newInstanceMethodBuilder.addStatement("return $T.$L()",
-                        rawTypeName, aptClassProps.singleton);
+                holder = rawTypeName;
             }
+            newInstanceMethodBuilder.addStatement("return $T.$L()", holder, aptClassProps.singleton);
             return;
         }
         // 理论上，如果当前类是泛型类，需要<>表示泛型，避免不必要的警告
@@ -253,7 +247,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         }
 
         if (aptClassProps.codecProxyTypeElement != null) {
-            if (containsHookMethod(aptClassProps, CodecProcessor.MNAME_NEW_INSTANCE)) {
+            if (aptClassProps.containsHookMethod(CodecProcessor.MNAME_NEW_INSTANCE)) {
                 // CodecProxy.newInstance(reader, getEncoderType());
                 newInstanceMethodBuilder.addStatement("return $T.$L(reader, $L())",
                         aptClassProps.codecProxyClassName, CodecProcessor.MNAME_NEW_INSTANCE, CodecProcessor.MNAME_GET_ENCODER_TYPE);
@@ -366,7 +360,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
             // writer.writeInt(names_fieldName, inst.field, NumberStyle.SIMPLE)
             builder.addStatement("writer.$L($L, inst.$L, $T.$L)",
                     writeMethodName, serialName(fieldName), fieldAccess,
-                    processor.typeName_NumberStyle, fieldProps.numberStyle);
+                    CodecProcessor.typeName_NumberStyle, fieldProps.numberStyle);
             return;
         }
         // 其它类型
@@ -375,7 +369,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
                 // writer.writeString(names_fieldName, inst.getName(), StringStyle.AUTO)
                 builder.addStatement("writer.$L($L, inst.$L, $T.$L)",
                         writeMethodName, serialName(fieldName), fieldAccess,
-                        processor.typeName_StringStyle, fieldProps.stringStyle);
+                        CodecProcessor.typeName_StringStyle, fieldProps.stringStyle);
             }
             case MNAME_WRITE_OBJECT -> {
                 // 写Object时传入类型信息和Style
@@ -383,7 +377,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
                 if (fieldProps.objectStyle != null) {
                     builder.addStatement("writer.$L($L, inst.$L, $L, $T.$L)",
                             writeMethodName, serialName(fieldName), fieldAccess, serialTypeArg(fieldName),
-                            processor.typeName_ObjectStyle, fieldProps.objectStyle);
+                            CodecProcessor.typeName_ObjectStyle, fieldProps.objectStyle);
                 } else {
                     builder.addStatement("writer.$L($L, inst.$L, $L, null)",
                             writeMethodName, serialName(fieldName), fieldAccess, serialTypeArg(fieldName));

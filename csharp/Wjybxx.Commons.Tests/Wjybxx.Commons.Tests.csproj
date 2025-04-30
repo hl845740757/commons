@@ -16,7 +16,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <NoWarn>1701;1702;1591;</NoWarn>
+        <NoWarn>1701;1702;1591;0649</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
@@ -27,7 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj" />
+        <ProjectReference Include="..\Wjybxx.Commons.Poet\Wjybxx.Commons.Poet.csproj" />
         <ProjectReference Include="..\Wjybxx.Commons.Concurrent\Wjybxx.Commons.Concurrent.csproj" />
         <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
         <ProjectReference Include="..\Wjybxx.Commons.Inject\Wjybxx.Commons.Inject.csproj" />
