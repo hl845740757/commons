@@ -17,8 +17,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using NUnit.Framework;
 using Wjybxx.Commons.Collections;
@@ -66,7 +64,6 @@ public class CodecTest
             Sex.Male,
             Sex.Female,
         };
-
         string dson = converter.WriteAsDson(list, ObjectStyle.Flow);
         Console.WriteLine(dson);
 

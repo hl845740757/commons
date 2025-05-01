@@ -118,15 +118,13 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 WriteDictionaryObject(writer, inst, declaredType, style);
             }
         } else {
-            Type keyDeclaredType = typeof(K);
-            Type valDeclaredType = typeof(V);
             if (keyKind == KeyKind.Int32) {
                 // int2object
                 IDictionary<int, V> int2ObjDic = (IDictionary<int, V>)inst;
                 writer.WriteStartArray(style, encoderType, declaredType);
                 foreach (KeyValuePair<int, V> pair in int2ObjDic) {
                     writer.WriteInt(null, pair.Key);
-                    writer.WriteObject(null, pair.Value, valDeclaredType);
+                    writer.WriteObject(null, pair.Value);
                 }
                 writer.WriteEndArray();
             } else if (keyKind == KeyKind.Int64) {
@@ -135,25 +133,25 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 writer.WriteStartArray(style, encoderType, declaredType);
                 foreach (KeyValuePair<long, V> pair in long2ObjDic) {
                     writer.WriteLong(null, pair.Key);
-                    writer.WriteObject(null, pair.Value, valDeclaredType);
+                    writer.WriteObject(null, pair.Value);
                 }
                 writer.WriteEndArray();
             } else {
                 // generic
                 writer.WriteStartArray(style, encoderType, declaredType);
                 foreach (KeyValuePair<K, V> pair in inst) {
-                    writer.WriteObject(null, pair.Key, keyDeclaredType);
-                    writer.WriteObject(null, pair.Value, valDeclaredType);
+                    writer.WriteObject(null, pair.Key);
+                    writer.WriteObject(null, pair.Value);
                 }
                 writer.WriteEndArray();
             }
         }
     }
 
-    public IDictionary<K, V> ReadObject(IDsonObjectReader reader, Func<IDictionary<K, V>>? factory = null) {
+    public IDictionary<K, V> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
         reader.SetEnableNameIntern(false); // 禁用字典的name池化
 
-        IDictionary<K, V> result = factory != null ? factory() : NewDictionary();
+        IDictionary<K, V> result = factory != null ? (IDictionary<K, V>)factory() : NewDictionary();
         if (reader.Options.writeMapAsDocument) {
             if (keyKind == KeyKind.Int32) {
                 ReadDictionaryInt(reader, (IDictionary<int, V>)result);
@@ -163,15 +161,13 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 ReadDictionaryObject(reader, result);
             }
         } else {
-            Type keyDeclaredType = typeof(K);
-            Type valDeclaredType = typeof(V);
             if (keyKind == KeyKind.Int32) {
                 // int2object
                 IDictionary<int, V> int2ObjDic = (IDictionary<int, V>)result;
                 reader.ReadStartArray();
                 while (reader.ReadDsonType() != DsonType.EndOfObject) {
                     int key = reader.ReadInt(null);
-                    V value = reader.ReadObject<V>(null, valDeclaredType);
+                    V value = reader.ReadObject<V>(null);
                     int2ObjDic[key] = value;
                 }
                 reader.ReadEndArray();
@@ -181,7 +177,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 reader.ReadStartArray();
                 while (reader.ReadDsonType() != DsonType.EndOfObject) {
                     long key = reader.ReadLong(null);
-                    V value = reader.ReadObject<V>(null, valDeclaredType);
+                    V value = reader.ReadObject<V>(null);
                     long2ObjDic[key] = value;
                 }
                 reader.ReadEndArray();
@@ -189,8 +185,8 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 // generic
                 reader.ReadStartArray();
                 while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                    K key = reader.ReadObject<K>(null, keyDeclaredType);
-                    V value = reader.ReadObject<V>(null, valDeclaredType);
+                    K key = reader.ReadObject<K>(null);
+                    V value = reader.ReadObject<V>(null);
                     result[key] = value;
                 }
                 reader.ReadEndArray();
@@ -204,7 +200,6 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     // 通过重复编码避免拆装箱
     private void WriteDictionaryObject(IDsonObjectWriter writer, IDictionary<K, V> inst,
                                        Type declaredType, ObjectStyle style) {
-        Type valDeclaredType = typeof(V);
         writer.WriteStartObject(style, encoderType, declaredType);
         foreach (KeyValuePair<K, V> pair in inst) {
             string keyString = writer.EncodeKey(pair.Key);
@@ -214,7 +209,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 writer.WriteName(keyString);
                 writer.WriteNull(keyString);
             } else {
-                writer.WriteObject(keyString, in value, valDeclaredType);
+                writer.WriteObject(keyString, in value);
             }
         }
         writer.WriteEndObject();
@@ -222,7 +217,6 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
 
     private void WriteDictionaryInt(IDsonObjectWriter writer, IDictionary<int, V> inst,
                                     Type declaredType, ObjectStyle style) {
-        Type valDeclaredType = typeof(V);
         writer.WriteStartObject(style, encoderType, declaredType);
         foreach (KeyValuePair<int, V> pair in inst) {
             string keyString = pair.Key.ToString();
@@ -232,7 +226,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 writer.WriteName(keyString);
                 writer.WriteNull(keyString);
             } else {
-                writer.WriteObject(keyString, in value, valDeclaredType);
+                writer.WriteObject(keyString, in value);
             }
         }
         writer.WriteEndObject();
@@ -240,7 +234,6 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
 
     private void WriteDictionaryLong(IDsonObjectWriter writer, IDictionary<long, V> inst,
                                      Type declaredType, ObjectStyle style) {
-        Type valDeclaredType = typeof(V);
         writer.WriteStartObject(style, encoderType, declaredType);
         foreach (KeyValuePair<long, V> pair in inst) {
             string keyString = pair.Key.ToString();
@@ -250,7 +243,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 writer.WriteName(keyString);
                 writer.WriteNull(keyString);
             } else {
-                writer.WriteObject(keyString, in value, valDeclaredType);
+                writer.WriteObject(keyString, in value);
             }
         }
         writer.WriteEndObject();
@@ -262,36 +255,33 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
 
     // 通过重复编码避免拆装箱
     private void ReadDictionaryObject(IDsonObjectReader reader, IDictionary<K, V> result) {
-        Type valDeclaredType = typeof(V);
         reader.ReadStartObject();
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             string keyString = reader.ReadName();
             K key = reader.DecodeKey<K>(keyString);
-            V value = reader.ReadObject<V>(keyString, valDeclaredType);
+            V value = reader.ReadObject<V>(keyString);
             result[key] = value;
         }
         reader.ReadEndObject();
     }
 
     private void ReadDictionaryInt(IDsonObjectReader reader, IDictionary<int, V> result) {
-        Type valDeclaredType = typeof(V);
         reader.ReadStartObject();
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             string keyString = reader.ReadName();
             int key = int.Parse(keyString);
-            V value = reader.ReadObject<V>(keyString, valDeclaredType);
+            V value = reader.ReadObject<V>(keyString);
             result[key] = value;
         }
         reader.ReadEndObject();
     }
 
     private void ReadDictionaryLong(IDsonObjectReader reader, IDictionary<long, V> result) {
-        Type valDeclaredType = typeof(V);
         reader.ReadStartObject();
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             string keyString = reader.ReadName();
             long key = long.Parse(keyString);
-            V value = reader.ReadObject<V>(keyString, valDeclaredType);
+            V value = reader.ReadObject<V>(keyString);
             result[key] = value;
         }
         reader.ReadEndObject();

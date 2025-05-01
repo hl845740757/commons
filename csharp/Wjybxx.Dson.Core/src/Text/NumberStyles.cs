@@ -19,6 +19,7 @@
 using System;
 using System.Globalization;
 using System.Text;
+using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Dson.Text
 {
@@ -28,26 +29,26 @@ namespace Wjybxx.Dson.Text
 public static class NumberStyles
 {
     /** 普通打印 -- 超过表示范围时会添加类型标签 */
-    public static INumberStyle Simple { get; } = new SimpleStyle();
+    [StableName] public static INumberStyle Simple { get; } = new SimpleStyle();
     /** 总是打印类型 */
-    public static INumberStyle Typed { get; } = new TypedStyle();
+    [StableName] public static INumberStyle Typed { get; } = new TypedStyle();
 
     /** 打印为无符号数 -- 超过表示范围时会添加类型标签；通常用于打印Flags类型 */
-    public static INumberStyle Unsigned { get; } = new UnsignedStyle();
+    [StableName] public static INumberStyle Unsigned { get; } = new UnsignedStyle();
     /** 打印为带类型无符号数；通常用于打印Flags类型 */
-    public static INumberStyle TypedUnsigned { get; } = new TypedUnsignedStyle();
+    [StableName] public static INumberStyle TypedUnsigned { get; } = new TypedUnsignedStyle();
 
     /** 16进制，打印正负号 -- 不支持浮点数 */
-    public static INumberStyle SignedHex { get; } = new SignedHexStyle();
+    [StableName] public static INumberStyle SignedHex { get; } = new SignedHexStyle();
     /** 无符号16进制，按位打印 -- 不支持浮点数 */
-    public static INumberStyle UnsignedHex { get; } = new UnsignedHexStyle();
+    [StableName] public static INumberStyle UnsignedHex { get; } = new UnsignedHexStyle();
 
     /** 2进制，打印正负号 -- 不支持浮点数 */
-    public static INumberStyle SignedBinary { get; } = new SignedBinaryStyle();
+    [StableName] public static INumberStyle SignedBinary { get; } = new SignedBinaryStyle();
     /** 无符号2进制，按位打印 -- 不支持浮点数 */
-    public static INumberStyle UnsignedBinary { get; } = new UnsignedBinaryStyle();
+    [StableName] public static INumberStyle UnsignedBinary { get; } = new UnsignedBinaryStyle();
     /** 固定位数2进制，按位打印 -- 不支持浮点数 */
-    public static INumberStyle FixedBinary { get; } = new FixedBinaryStyle();
+    [StableName] public static INumberStyle FixedBinary { get; } = new FixedBinaryStyle();
 
     /** double能精确表示的最大整数 */
     private const long DoubleMaxLong = (1L << 53) - 1;

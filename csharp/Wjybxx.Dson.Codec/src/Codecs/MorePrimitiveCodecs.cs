@@ -37,7 +37,7 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(null, (int)inst, numberStyle);
         }
 
-        public uint ReadObject(IDsonObjectReader reader, Func<uint>? factory = null) {
+        public uint ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
             return (uint)reader.ReadInt(null);
         }
     }
@@ -53,7 +53,7 @@ public static class MorePrimitiveCodecs
             writer.WriteLong(null, (long)inst, numberStyle);
         }
 
-        public ulong ReadObject(IDsonObjectReader reader, Func<ulong>? factory = null) {
+        public ulong ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
             return (ulong)reader.ReadLong(null);
         }
     }
@@ -69,7 +69,7 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(null, inst, numberStyle);
         }
 
-        public short ReadObject(IDsonObjectReader reader, Func<short>? factory = null) {
+        public short ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
             return (short)reader.ReadInt(null);
         }
     }
@@ -85,7 +85,7 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(null, inst, numberStyle);
         }
 
-        public ushort ReadObject(IDsonObjectReader reader, Func<ushort>? factory = null) {
+        public ushort ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
             return (ushort)reader.ReadInt(null);
         }
     }
@@ -101,7 +101,7 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(null, inst, numberStyle); // c# byte是无符号数
         }
 
-        public byte ReadObject(IDsonObjectReader reader, Func<byte>? factory = null) {
+        public byte ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
             return (byte)reader.ReadInt(null);
         }
     }
@@ -117,7 +117,7 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(null, inst, numberStyle);
         }
 
-        public sbyte ReadObject(IDsonObjectReader reader, Func<sbyte>? factory = null) {
+        public sbyte ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
             return (sbyte)reader.ReadInt(null);
         }
     }
@@ -133,7 +133,7 @@ public static class MorePrimitiveCodecs
             writer.WriteInt(null, inst, numberStyle);
         }
 
-        public char ReadObject(IDsonObjectReader reader, Func<char>? factory = null) {
+        public char ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
             return (char)reader.ReadInt(null);
         }
     }

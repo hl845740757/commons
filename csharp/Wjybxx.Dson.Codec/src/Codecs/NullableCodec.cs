@@ -34,14 +34,14 @@ public class NullableCodec<T> : IDsonCodec<T?> where T : struct
         // declaredType 是Nullable<T>的类型，不是T的声明类型
         // 为避免外部测试是否为null导致装箱，Nullable结构体的null测试由Codec处理
         if (inst.HasValue) {
-            writer.WriteObject(null, inst.Value, typeof(T));
+            writer.WriteObject(null, inst.Value);
         } else {
             writer.WriteNull(null);
         }
     }
 
-    public T? ReadObject(IDsonObjectReader reader, Func<T?>? factory = null) {
-        return reader.ReadObject<T>(null, typeof(T), null);
+    public T? ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        return reader.ReadObject<T>(null, null);
     }
 }
 }

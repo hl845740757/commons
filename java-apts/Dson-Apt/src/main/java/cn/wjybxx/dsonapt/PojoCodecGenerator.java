@@ -293,39 +293,25 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
             if (readMethodName.equals(MNAME_READ_OBJECT)) {
                 // 读对象时要传入类型信息和Factory
                 // inst.setName(reader.readObject(names_name, types_name, factories_name))
-                if (fieldProps.implMirror != null) {
-                    builder.addStatement("inst.$L(reader.$L($L, $L, $L))",
-                            fieldAccess, readMethodName,
-                            null, serialTypeArg(fieldName), serialFactory(fieldName));
-                } else {
-                    builder.addStatement("inst.$L(reader.$L($L, $L, null))",
-                            fieldAccess, readMethodName,
-                            null, serialTypeArg(fieldName));
-                }
+                builder.addStatement("inst.$L(reader.$L(null, $L, $L))",
+                        fieldAccess, readMethodName, serialTypeInfo(fieldName),
+                        fieldProps.implMirror == null ? "null" : serialFactory(fieldName));
             } else {
                 // inst.setName(reader.readString(names_.name))
-                builder.addStatement("inst.$L(reader.$L($L))",
-                        fieldAccess, readMethodName,
-                        null);
+                builder.addStatement("inst.$L(reader.$L(null))",
+                        fieldAccess, readMethodName);
             }
         } else {
             if (readMethodName.equals(MNAME_READ_OBJECT)) {
                 // 读对象时要传入类型信息和Factory
                 // inst.name = reader.readObject(names_name, types_name, factories_name)
-                if (fieldProps.implMirror != null) {
-                    builder.addStatement("inst.$L = reader.$L($L, $L, $L)",
-                            fieldName, readMethodName,
-                            null, serialTypeArg(fieldName), serialFactory(fieldName));
-                } else {
-                    builder.addStatement("inst.$L = reader.$L($L, $L, null)",
-                            fieldName, readMethodName,
-                            null, serialTypeArg(fieldName));
-                }
+                builder.addStatement("inst.$L = reader.$L(null, $L, $L)",
+                        fieldName, readMethodName, serialTypeInfo(fieldName),
+                        fieldProps.implMirror == null ? "null" : serialFactory(fieldName));
             } else {
                 // inst.name = reader.readString(names_.name)
-                builder.addStatement("inst.$L = reader.$L($L)",
-                        fieldName, readMethodName,
-                        null);
+                builder.addStatement("inst.$L = reader.$L(null)",
+                        fieldName, readMethodName);
             }
         }
     }
@@ -376,11 +362,11 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
                 // writer.writeObject(names_fieldName, inst.getName(), types_name, ObjectStyle.INDENT)
                 if (fieldProps.objectStyle != null) {
                     builder.addStatement("writer.$L($L, inst.$L, $L, $T.$L)",
-                            writeMethodName, serialName(fieldName), fieldAccess, serialTypeArg(fieldName),
+                            writeMethodName, serialName(fieldName), fieldAccess, serialTypeInfo(fieldName),
                             CodecProcessor.typeName_ObjectStyle, fieldProps.objectStyle);
                 } else {
                     builder.addStatement("writer.$L($L, inst.$L, $L, null)",
-                            writeMethodName, serialName(fieldName), fieldAccess, serialTypeArg(fieldName));
+                            writeMethodName, serialName(fieldName), fieldAccess, serialTypeInfo(fieldName));
                 }
             }
             default -> {
@@ -401,7 +387,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         return SchemaGenerator.nameFileName(fieldName);
     }
 
-    private String serialTypeArg(String fieldName) {
+    private String serialTypeInfo(String fieldName) {
         return SchemaGenerator.typeInfoFieldName(fieldName);
     }
 

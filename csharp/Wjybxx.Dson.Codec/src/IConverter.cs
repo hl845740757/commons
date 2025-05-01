@@ -17,14 +17,14 @@
 #endregion
 
 using System;
-using System.Runtime.CompilerServices;
 using Wjybxx.Dson.IO;
 
 namespace Wjybxx.Dson.Codec
 {
 /// <summary>
-/// 1.由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
-/// 2.非泛型接口用于反射等统一API。
+/// 
+/// Converter接口去除了泛型相关的接口，这有利于减少API。
+/// 这并不会对效率产生影响，因为Converter接收的对象绝大多数情况下都是Class，鲜有Struct。
 /// </summary>
 public interface IConverter
 {
@@ -35,9 +35,8 @@ public interface IConverter
     /// </summary>
     /// <param name="value">要序列化的对象</param>
     /// <param name="declaredType">对象的声明类型</param>
-    /// <typeparam name="T">运行时类型，避免装箱</typeparam>
     /// <returns></returns>
-    byte[] Write<T>(in T value, Type declaredType);
+    byte[] Write(object value, Type declaredType);
 
     /// <summary>
     /// 从数据源中读取一个对象
@@ -47,40 +46,31 @@ public interface IConverter
     /// <param name="source">数据源</param>
     /// <param name="declaredType"></param>
     /// <param name="factory">对象工厂</param>
-    /// <typeparam name="T">对象的声明类型</typeparam>
     /// <returns></returns>
-    T Read<T>(byte[] source, Type declaredType, Func<T>? factory = null);
+    object Read(byte[] source, Type declaredType, Func<object>? factory = null);
 
     /// <summary>
     /// 将一个对象转换为字节数组
+    ///
+    /// 注意：写入的字节数回设置到<see cref="DsonChunk"/>
     /// </summary>
     /// <param name="value">要序列化的对象</param>
     /// <param name="declaredType">对象的声明类型</param>
-    /// <param name="chunk">二进制块，写入的字节数设置到<see cref="DsonChunk"/></param>
-    /// <typeparam name="T">对象的声明类型，可以是value的超类</typeparam>
-    /// <returns>序列化结果</returns>
-    void Write<T>(in T value, Type declaredType, DsonChunk chunk);
+    /// <param name="chunk">二进制块</param>
+    void Write(object value, Type declaredType, DsonChunk chunk);
 
     /// <summary>
     /// 从数据源中读取一个对象
+    ///
+    /// 注意：读取的字节数会设置到<see cref="DsonChunk"/>
     /// </summary>
     /// <param name="source">数据源</param>
-    /// <param name="declaredType"></param>
+    /// <param name="declaredType">对象的声明类型</param>
     /// <param name="factory">对象工厂</param>
-    /// <typeparam name="T">对象的声明类型</typeparam>
     /// <returns></returns>
-    T Read<T>(DsonChunk source, Type declaredType, Func<T>? factory = null);
+    object Read(DsonChunk source, Type declaredType, Func<object>? factory = null);
 
     #region Clone
-
-    /// <summary>
-    /// 克隆一个实例
-    /// </summary>
-    /// <param name="value">要克隆的对象</param>
-    /// <param name="factory">返回对象类型工厂</param>
-    /// <typeparam name="T">对象的声明类型</typeparam>
-    /// <returns></returns>
-    T CloneObject<T>(T? value, Func<T>? factory = null);
 
     /// <summary>
     /// 克隆一个实例

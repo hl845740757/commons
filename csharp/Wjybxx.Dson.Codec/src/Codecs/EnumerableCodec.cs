@@ -39,9 +39,8 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
     public virtual bool IsWriteAsArray => true;
 
     public void WriteObject(IDsonObjectWriter writer, in IEnumerable<T> inst, Type declaredType, ObjectStyle style) {
-        Type eleDeclaredType = typeof(T);
         foreach (T value in inst) {
-            writer.WriteObject<T>(null, in value, eleDeclaredType);
+            writer.WriteObject<T>(null, in value);
         }
     }
 
@@ -51,12 +50,11 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
     /// <param name="reader">reader</param>
     /// <param name="factory">支持factory为集合类型</param>
     /// <returns></returns>
-    public IEnumerable<T> ReadObject(IDsonObjectReader reader, Func<IEnumerable<T>>? factory = null) {
+    public IEnumerable<T> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
         if (factory != null) {
-            Type eleDeclaredType = typeof(T);
             ICollection<T> result = factory() as ICollection<T> ?? new List<T>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                T value = reader.ReadObject<T>(null, eleDeclaredType);
+                T value = reader.ReadObject<T>(null);
                 result.Add(value);
             }
             return result;
@@ -65,11 +63,9 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
     }
 
     public static List<T> ReadAsList(IDsonObjectReader reader) {
-        Type eleDeclaredType = typeof(T);
-
         List<T> result = new List<T>();
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
-            T value = reader.ReadObject<T>(null, eleDeclaredType);
+            T value = reader.ReadObject<T>(null);
             result.Add(value);
         }
         return result;

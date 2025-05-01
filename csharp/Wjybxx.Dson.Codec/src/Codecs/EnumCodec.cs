@@ -164,7 +164,7 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
         }
     }
 
-    public T ReadObject(IDsonObjectReader reader, Func<T>? factory = null) {
+    public T ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
         if (reader.Options.writeEnumAsString) {
             string name = reader.ReadString(null);
             if (_name2EnumDic.TryGetValue(name, out EnumValueInfo<T> valueInfo)) {

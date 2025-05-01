@@ -95,7 +95,19 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
 
     #region object处理
 
-    public T ReadObject<T>(string? name, Type declaredType, Func<T>? factory = null) {
+    public object ReadObject(string? name, Type declaredType, Func<object>? factory = null) {
+        return ReadObject<object>(name, declaredType, factory);
+    }
+
+    public T ReadObject<T>(string? name, Func<object>? factory = null) {
+        return ReadObject<T>(name, typeof(T), factory);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T">仅用于避免装箱，不能用于其它语义</typeparam>
+    private T ReadObject<T>(string? name, Type declaredType, Func<object>? factory = null) {
         if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
         if (!ReadName(name)) { //  字段不存在，返回默认值
             return default;

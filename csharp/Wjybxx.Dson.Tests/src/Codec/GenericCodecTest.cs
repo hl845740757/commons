@@ -44,7 +44,7 @@ public class GenericCodecTest
         DsonCodecConfig codecConfig = new DsonCodecConfig()
             .AddCodec(new Vector3Codec());
         // 
-        Type codecType = typeof(MyDictionary<,>).Assembly.GetType("Wjybxx.Dson.Tests.Apt.MyDictionary2Codec`2");
+        Type codecType = typeof(MyDictionary<,>).Assembly.GetType("Wjybxx.Dson.Tests.Apt.MyDictionaryCodec`2");
         if (codecType == null) {
             throw new Exception("The codec has not been generated");
         }

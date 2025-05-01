@@ -50,20 +50,21 @@ public class CodecProcessor : IIncrementalGenerator
     private const string CNAME_Timestamp = "Wjybxx.Dson.Types.Timestamp";
     private const string CNAME_NumberStyles = "Wjybxx.Dson.Text.NumberStyles"; // 生成器直接指向工具类
 
+    private const string CNAME_NonSerialize = "System.NonSerializedAttribute";
     private const string CNAME_TypeInfo = "Wjybxx.Commons.TypeInfo";
     private const string CNAME_TypeName = "Wjybxx.Commons.TypeName";
 
     // dson
     private const string CNAME_SERIALIZABLE = "Wjybxx.Dson.Codec.Attributes.DsonSerializableAttribute";
     private const string CNAME_PROPERTY = "Wjybxx.Dson.Codec.Attributes.DsonPropertyAttribute";
-    private const string CNAME_DSON_IGNORE = "Wjybxx.Dson.Codec.Attributes.DsonIgnore";
+    private const string CNAME_DSON_IGNORE = "Wjybxx.Dson.Codec.Attributes.DsonIgnoreAttribute";
     private const string CNAME_DSON_READER = "Wjybxx.Dson.Codec.IDsonObjectReader";
     private const string CNAME_DSON_WRITER = "Wjybxx.Dson.Codec.IDsonObjectWriter";
     private const string CNAME_OPTIONS = "Wjybxx.Dson.Codec.ConverterOptions";
     // linker
     private const string CNAME_CODEC_LINKER_GROUP = "Wjybxx.Dson.Codec.Attributes.DsonCodecLinkerGroupAttribute";
     private const string CNAME_CODEC_LINKER = "Wjybxx.Dson.Codec.Attributes.DsonCodecLinkerAttribute";
-    private const string CNAME_CODEC_LINKER_BEAN = "Wjybxx.Dson.Codec.Attributes..DsonCodecLinkerBeanAttribute";
+    private const string CNAME_CODEC_LINKER_BEAN = "Wjybxx.Dson.Codec.Attributes.DsonCodecLinkerBeanAttribute";
     private const string MNAME_OUTPUT = "OutputNamespace"; // 输出命名空间
     private const string MNAME_TARGET = "Target"; // 链接的目标--C#是构造函数
 
@@ -262,7 +263,7 @@ public class CodecProcessor : IIncrementalGenerator
             CacheFieldProps(linkerBeanContext);
 
             // 按name缓存，提高效率
-            Dictionary<string, AptFieldProps> fieldName2FieldPropsMap = new Dictionary<string, AptFieldProps>(linkerBeanContext.fieldPropsMap.Count);
+            Dictionary<string, AptFieldProps> fieldName2FieldPropsMap = new(linkerBeanContext.fieldPropsMap.Count);
             foreach (KeyValuePair<IFieldSymbol, AptFieldProps> pair in linkerBeanContext.fieldPropsMap) {
                 fieldName2FieldPropsMap[pair.Key.Name] = pair.Value;
             }
@@ -472,7 +473,7 @@ public class CodecProcessor : IIncrementalGenerator
         List<ISymbol> allFieldsAndMethodWithInherit = context.allFieldsAndMethodWithInherit;
         List<ISymbol> instMethodWithInherit = allFieldsAndMethodWithInherit
             .Where(e => e.Kind == SymbolKind.Method || e.Kind == SymbolKind.Property)
-            .Where(e => e.IsStatic)
+            .Where(e => !e.IsStatic)
             .ToList();
 
         foreach (IFieldSymbol fieldInfo in context.allFields) {
@@ -682,6 +683,10 @@ public class CodecProcessor : IIncrementalGenerator
         // 有注解的情况取决于注解的值，需取反 -- 注解已提前解析
         if (aptFieldProps.ignore.HasValue) {
             return !aptFieldProps.ignore.Value;
+        }
+        // 无注解的情况下，默认忽略 NonSerialized 字段
+        if (AptUtils.GetAttribute(fieldInfo.GetAttributes(), CNAME_NonSerialize) != null) {
+            return false;
         }
         // 判断public和getter/setter
         if (fieldInfo.IsPublic()) {

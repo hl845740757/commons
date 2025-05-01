@@ -133,10 +133,22 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
 
     #region object
 
-    public void WriteObject<T>(string? name, in T? value, Type declaredType, ObjectStyle? style = null) {
+    public void WriteObject(string? name, object? value, Type declaredType, ObjectStyle? style = null) {
+        WriteObject<object>(name, value, declaredType, style);
+    }
+
+    public void WriteObject<T>(string? name, in T? value, ObjectStyle? style = null) {
+        WriteObject(name, in value, typeof(T), style);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T">仅用于避免装箱，不能用于其它语义</typeparam>
+    private void WriteObject<T>(string? name, in T? value, Type declaredType, ObjectStyle? style = null) {
         if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
         // Nullable支持：
-        // 1. value.GetType 会直接返回被装箱的值的类型，而泛型参数T可能是Nullable<>，为避免装箱，我们需要转换为查找Nullable的Codec
+        // 1. value.GetType 会直接返回被装箱的值的类型，为避免装箱，我们需要转换为查找Nullable的Codec
         // 2. 泛型参数 T == null 可能导致装箱测试，Nullable的null测试交给NullableCodec处理
         bool isNullable = declaredType.IsValueType
                           && declaredType.IsGenericType

@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Runtime.CompilerServices;
 using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
 
@@ -71,13 +70,24 @@ public interface IDsonObjectWriter : IDisposable
     /// <summary>
     /// 写嵌套对象
     /// 1.由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
+    /// 2.小心：显式传入声明类型会导致装箱！
     /// </summary>
     /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
     /// <param name="value">要写入的对象</param>
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="style">如果为null，则表示使用对象对象默认的文本编码样式</param>
-    /// <typeparam name="T">避免拆装箱</typeparam>
-    void WriteObject<T>(string? name, in T? value, Type declaredType, ObjectStyle? style = null);
+    void WriteObject(string? name, object? value, Type declaredType, ObjectStyle? style = null);
+
+    /// <summary>
+    /// 写嵌套对象
+    /// 
+    /// 该接口用于避免结构体装箱
+    /// </summary>
+    /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
+    /// <param name="value">要写入的对象</param>
+    /// <param name="style">如果为null，则表示使用对象对象默认的文本编码样式</param>
+    /// <typeparam name="T">对象的声明类型</typeparam>
+    void WriteObject<T>(string? name, in T? value, ObjectStyle? style = null);
 
     #endregion
 

@@ -136,142 +136,74 @@ public static class DsonConverterUtils
 
     #endregion
 
+    // 对于Converter，泛型方法只是辅助编码的方法
+#nullable disable
+
     #region converter
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte[] Write<T>(this IConverter converter, in T value) {
-        return converter.Write(in value, typeof(T));
+    public static byte[] Write<T>(this IConverter converter, T value) {
+        return converter.Write(value, typeof(T));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static byte[] Write(this IConverter converter, object value, Type declaredType) {
-        return converter.Write<object>(value, declaredType);
+    public static T Read<T>(this IConverter converter, byte[] source, Func<object>? factory = null) {
+        return (T)converter.Read(source, typeof(T), factory);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T Read<T>(this IConverter converter, byte[] source, Func<T>? factory = null) {
-        return converter.Read<T>(source, typeof(T), factory);
+    public static void Write<T>(this IConverter converter, T value, DsonChunk chunk) {
+        converter.Write(value, typeof(T), chunk);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static object Read(this IConverter converter, byte[] source, Type declaredType, Func<object>? factory = null) {
-        return converter.Read<object>(source, declaredType, factory);
+    public static T Read<T>(this IConverter converter, DsonChunk source, Func<object>? factory = null) {
+        return (T)converter.Read(source, typeof(T), factory);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Write<T>(this IConverter converter, in T value, DsonChunk chunk) {
-        converter.Write(in value, typeof(T), chunk);
+    public static object CloneObject(this IConverter converter, object? value, Type declaredType, Func<object>? factory = null) {
+        return converter.CloneObject(value, declaredType, declaredType, factory);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Write(this IConverter converter, object value, Type declaredType, DsonChunk chunk) {
-        converter.Write<object>(value, declaredType, chunk);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T Read<T>(this IConverter converter, DsonChunk source, Func<T>? factory = null) {
-        return converter.Read<T>(source, typeof(T), factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static object Read(this IConverter converter, DsonChunk source, Type declaredType, Func<object>? factory = null) {
-        return converter.Read<object>(source, declaredType, factory);
-    }
-
-    /// <summary>
-    /// 将对象写入指定buffer，并返回写入的字节数
-    /// </summary>
-    /// <param name="converter">converter</param>
-    /// <param name="value">要序列化的对象</param>
-    /// <param name="declaredType">对象的声明类型</param>
-    /// <param name="buffer">序列化输出buffer</param>
-    /// <typeparam name="T">对象的声明类型</typeparam>
-    /// <returns>写入的字节数</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int Write<T>(this IConverter converter, in T value, Type declaredType, byte[] buffer) {
-        DsonChunk chunk = new DsonChunk(buffer);
-        converter.Write(in value, declaredType, chunk);
-        return chunk.Used;
-    }
-
-    /// <summary>
-    /// 将对象写入指定buffer，并返回写入的字节数
-    /// </summary>
-    /// <param name="converter">converter</param>
-    /// <param name="value">要序列化的对象</param>
-    /// <param name="declaredType">对象的声明类型</param>
-    /// <param name="buffer">序列化输出buffer</param>
-    /// <returns>写入的字节数</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int Write(this IConverter converter, object value, Type declaredType, byte[] buffer) {
-        DsonChunk chunk = new DsonChunk(buffer);
-        converter.Write<object>(value, declaredType, chunk);
-        return chunk.Used;
+    public static T CloneObject<T>(this IConverter converter, T value, Func<object>? factory = null) {
+        Type declaredType = typeof(T);
+        return (T)converter.CloneObject(value, declaredType, declaredType, factory);
     }
 
     #endregion
 
     #region dson-converter
 
-    // 非泛型重载和默认T为声明类型的重载
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string WriteAsDson<T>(this IDsonConverter converter, in T value, ObjectStyle? style = null) {
-        return converter.WriteAsDson<T>(in value, typeof(T), style);
+    public static string WriteAsDson<T>(this IDsonConverter converter, T value, ObjectStyle? style = null) {
+        return converter.WriteAsDson(value, typeof(T), style);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string WriteAsDson(this IDsonConverter converter, object value, Type declaredType, ObjectStyle? style = null) {
-        return converter.WriteAsDson<object>(value, declaredType, style);
+    public static T ReadFromDson<T>(this IDsonConverter converter, string source, Func<object>? factory = null) {
+        return (T)converter.ReadFromDson(source, typeof(T), factory);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T ReadFromDson<T>(this IDsonConverter converter, string source, Func<T>? factory = null) {
-        return converter.ReadFromDson<T>(source, typeof(T), factory);
+    public static void WriteAsDson<T>(this IDsonConverter converter, T value, TextWriter writer, ObjectStyle? style = null) {
+        converter.WriteAsDson(value, typeof(T), writer, style);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static object ReadFromDson(this IDsonConverter converter, string source, Type declaredType, Func<object>? factory = null) {
-        return converter.ReadFromDson<object>(source, declaredType, factory);
+    public static T ReadFromDson<T>(this IDsonConverter converter, TextReader source, Func<object>? factory = null) {
+        return (T)converter.ReadFromDson(source, typeof(T), factory);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteAsDson<T>(this IDsonConverter converter, in T value, TextWriter writer, ObjectStyle? style = null) {
-        converter.WriteAsDson(in value, typeof(T), writer, style);
+    public static DsonValue WriteAsDsonValue<T>(this IDsonConverter converter, T value) {
+        return converter.WriteAsDsonValue(value, typeof(T));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteAsDson(this IDsonConverter converter, object value, Type declaredType, TextWriter writer, ObjectStyle? style = null) {
-        converter.WriteAsDson<object>(value, declaredType, writer, style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T ReadFromDson<T>(this IDsonConverter converter, TextReader source, Func<T>? factory = null) {
-        return converter.ReadFromDson<T>(source, typeof(T), factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static object ReadFromDson(this IDsonConverter converter, TextReader source, Type declaredType, Func<object>? factory = null) {
-        return converter.ReadFromDson<object>(source, declaredType, factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static DsonValue WriteAsDsonValue<T>(this IDsonConverter converter, in T value) {
-        return converter.WriteAsDsonValue<T>(in value, typeof(T));
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static DsonValue WriteAsDsonValue(this IDsonConverter converter, object value, Type declaredType) {
-        return converter.WriteAsDsonValue<object>(value, declaredType);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T ReadFromDsonValue<T>(this IDsonConverter converter, DsonValue source, Func<T>? factory = null) {
-        return converter.ReadFromDsonValue<T>(source, typeof(T), factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static object ReadFromDsonValue(this IDsonConverter converter, DsonValue source, Type declaredType, Func<object>? factory = null) {
-        return converter.ReadFromDsonValue<object>(source, declaredType, factory);
+    public static T ReadFromDsonValue<T>(this IDsonConverter converter, DsonValue source, Func<object>? factory = null) {
+        return (T)converter.ReadFromDsonValue(source, typeof(T), factory);
     }
 
     #endregion
@@ -315,13 +247,8 @@ public static class DsonConverterUtils
 
     // object
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T ReadObject<T>(this IDsonObjectReader reader, string? name, Func<T>? factory = null) {
-        return reader.ReadObject<T>(name, typeof(T), factory);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static object ReadObject(this IDsonObjectReader reader, string? name, Type declaredType, Func<object>? factory = null) {
-        return reader.ReadObject<object>(name, declaredType, factory);
+    public static T ReadObject<T>(this IDsonObjectReader reader, string? name, Func<object>? factory = null) {
+        return (T)reader.ReadObject(name, typeof(T), factory);
     }
 
     /// <summary>
@@ -440,17 +367,6 @@ public static class DsonConverterUtils
         writer.WriteInt(name, value, style);
     }
 
-    // object
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteObject<T>(this IDsonObjectWriter writer, string? name, in T? value, ObjectStyle? style = null) {
-        writer.WriteObject(name, value, typeof(T), style);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteObject(this IDsonObjectWriter writer, string? name, object? value, Type declaredType, ObjectStyle? style = null) {
-        writer.WriteObject<object>(name, value, declaredType, style);
-    }
-
     // 流程
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteStartObject(this IDsonObjectWriter writer, ObjectStyle style, Type encoderType, Type declaredType) {
@@ -471,7 +387,6 @@ public static class DsonConverterUtils
         writer.WriteTypeInfo(encoderType, declaredType);
     }
 
-    //
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteStartArray(this IDsonObjectWriter writer, ObjectStyle style, Type encoderType, Type declaredType) {
         writer.WriteStartArray(style);

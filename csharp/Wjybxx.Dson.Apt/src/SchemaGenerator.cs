@@ -30,7 +30,9 @@ namespace Wjybxx.Dson.Apt
 /// </summary>
 internal class SchemaGenerator
 {
+    // 新实现下，工厂对象已约定为Func<object>
     private static readonly ClassName className_Func = ClassName.Get(typeof(Func<>));
+    private static readonly ClassName factoryTypeName = ClassName.Get(typeof(Func<object>));
 
     private readonly CodecProcessor processor;
     private readonly Context context;
@@ -79,9 +81,8 @@ internal class SchemaGenerator
 
     // 不能在编译时生成过多的factory，因为即使字段的声明类型是具体类型，其运行时类型仍可能是子类型，因此默认分配factory不安全
     private FieldSpec GenFactoryField(IFieldSymbol fieldSymbol, AptFieldProps props) {
-        // dotnet 6泛型不支持协变
-        ClassName factoryFieldType = className_Func.WithActualTypeVariables(props.implTypeName);
-        return FieldSpec.NewBuilder(factoryFieldType, GetFactoryFieldName(fieldSymbol.Name),
+        // dotnet 6泛型不支持协变 -- 现在的工厂统一为了Func<object>
+        return FieldSpec.NewBuilder(factoryTypeName, GetFactoryFieldName(fieldSymbol.Name),
                 Modifiers.Public | Modifiers.Static | Modifiers.Readonly)
             .Initializer(CodeBlock.Of("() => new $T()", props.implTypeName))
             .Build();

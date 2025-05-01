@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Runtime.CompilerServices;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec
@@ -76,10 +75,19 @@ public interface IDsonObjectReader : IDisposable
     /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
-    /// <typeparam name="T">返回值类型，避免装箱</typeparam>
     /// <returns></returns>
-    T ReadObject<T>(string? name, Type declaredType, Func<T>? factory = null);
-    
+    object ReadObject(string? name, Type declaredType, Func<object>? factory = null);
+
+    /// <summary>
+    /// 从输入流中读取一个对象
+    /// 
+    /// 该方法用于避免结构体类型装箱
+    /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
+    /// <param name="factory">对象工厂，创建的实例必须是声明类型的子类型</param>
+    /// <typeparam name="T">对象的声明类型</typeparam>
+    /// </summary>
+    T ReadObject<T>(string? name, Func<object>? factory = null);
+
     #endregion
 
     #region 流程
@@ -155,6 +163,5 @@ public interface IDsonObjectReader : IDisposable
     void SetComponentType(DsonType dsonType);
 
     #endregion
-    
 }
 }

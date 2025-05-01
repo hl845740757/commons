@@ -18,7 +18,6 @@
 
 using System;
 using System.IO;
-using System.Runtime.CompilerServices;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec
@@ -38,9 +37,8 @@ public interface IDsonConverter : IConverter
     /// <param name="value">要序列化的对象</param>
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="style">缩进格式</param>
-    /// <typeparam name="T">运行时类型，避免装箱</typeparam>
     /// <returns></returns>
-    string WriteAsDson<T>(in T value, Type declaredType, ObjectStyle? style = null);
+    string WriteAsDson(object value, Type declaredType, ObjectStyle? style = null);
 
     /// <summary>
     /// 从数据源中读取一个对象
@@ -48,9 +46,8 @@ public interface IDsonConverter : IConverter
     /// <param name="source">数据源</param>
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="factory">实例工厂</param>
-    /// <typeparam name="T">返回值类型</typeparam>
     /// <returns></returns>
-    T ReadFromDson<T>(string source, Type declaredType, Func<T>? factory = null);
+    object ReadFromDson(string source, Type declaredType, Func<object>? factory = null);
 
     /// <summary>
     /// 将一个对象写入Writer
@@ -60,8 +57,7 @@ public interface IDsonConverter : IConverter
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="writer">接收输出</param>
     /// <param name="style">缩进格式</param>
-    /// <typeparam name="T">运行时类型，避免装箱</typeparam>
-    void WriteAsDson<T>(in T value, Type declaredType, TextWriter writer, ObjectStyle? style = null);
+    void WriteAsDson(object value, Type declaredType, TextWriter writer, ObjectStyle? style = null);
 
     /// <summary>
     /// 从数据源中读取一个对象
@@ -71,17 +67,15 @@ public interface IDsonConverter : IConverter
     /// <param name="source">数据源</param>
     /// <param name="declaredType">对象的声明类型</param>
     /// <param name="factory">实例工厂</param>
-    /// <typeparam name="T">返回值类型</typeparam>
-    T ReadFromDson<T>(TextReader source, Type declaredType, Func<T>? factory = null);
+    object ReadFromDson(TextReader source, Type declaredType, Func<object>? factory = null);
 
     /// <summary>
     /// 将一个对象写为<see cref="DsonObject{TK}"/>或<see cref="DsonArray{TK}"/>
     /// </summary>
     /// <param name="value">顶层对象必须的容器对象，Object和数组</param>
     /// <param name="declaredType">对象的声明类型</param>
-    /// <typeparam name="T">运行时类型，避免装箱</typeparam>
     /// <returns></returns>
-    DsonValue WriteAsDsonValue<T>(in T value, Type declaredType);
+    DsonValue WriteAsDsonValue(object value, Type declaredType);
 
     /// <summary>
     /// 从数据源中读取一个对象
@@ -89,14 +83,15 @@ public interface IDsonConverter : IConverter
     /// <param name="source">数据源</param>
     /// <param name="declaredType"></param>
     /// <param name="factory">实例工厂</param>
-    /// <typeparam name="T">对象的声明类型</typeparam>
-    T ReadFromDsonValue<T>(DsonValue source, Type declaredType, Func<T>? factory = null);
+    object ReadFromDsonValue(DsonValue source, Type declaredType, Func<object>? factory = null);
 
     /// <summary>
     /// 将Dson源解码为DsonValue中间对象 -- 只读取一个顶层对象。
-    /// 外部可以保存该对象，以提高重复反序列化的效率。
-    /// (默认不关闭Reader)
+    ///
+    /// 1.外部可以保存该对象，以提高重复反序列化的效率。
+    /// 2.默认不关闭Reader
     /// </summary>
+    /// <param name="source">输入流</param>
     /// <returns></returns>
     DsonValue ReadAsDsonValue(TextReader source);
 

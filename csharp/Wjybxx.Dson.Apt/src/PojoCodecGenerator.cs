@@ -298,23 +298,17 @@ internal class PojoCodecGenerator
             fieldAccess = fieldName;
         }
         if (readMethodName == MNAME_READ_OBJECT) {
-            TypeName fieldTypeName = AptUtils.ParseType(fieldInfo.Type);
-            // 读对象时要传入类型信息和Factory -- C#还要传泛型参数，有实现类时传实现类的类型，否则传声明类型；还需要去除其它特殊属性
-            // inst.name = reader.readObject(names_name, types_name, factories_name)
-            if (fieldProps.implTypeName != null) {
-                builder.codeBuilder.AddStatement("inst.$L = reader.$L<$T>($L, typeof($T), $L)",
-                    fieldAccess, readMethodName, fieldProps.implTypeName,
-                    "null", fieldTypeName.WithAttributes(0), SerialFactory(fieldName));
-            } else {
-                builder.codeBuilder.AddStatement("inst.$L = reader.$L<$T>($L, typeof($T), null)",
-                    fieldAccess, readMethodName, fieldTypeName,
-                    "null", fieldTypeName.WithAttributes(0));
-            }
+            // 需要去除nullable
+            TypeName fieldTypeName = AptUtils.ParseType(fieldInfo.Type).WithAttributes(0);
+            // 读对象时要传入类型信息和Factory -- C#还要传泛型参数；name在前面已读，因此这里传入null
+            // inst.name = reader.readObject<Type>(names_name, factories_name)
+            builder.codeBuilder.AddStatement("inst.$L = reader.$L<$T>(null, $L)",
+                fieldAccess, readMethodName, fieldTypeName,
+                fieldProps.implTypeName == null ? "null" : SerialFactory(fieldName));
         } else {
             // inst.name = reader.readString(names_name)
-            builder.codeBuilder.AddStatement("inst.$L = reader.$L($L)",
-                fieldAccess, readMethodName,
-                "null");
+            builder.codeBuilder.AddStatement("inst.$L = reader.$L(null)",
+                fieldAccess, readMethodName);
         }
     }
 
@@ -346,7 +340,6 @@ internal class PojoCodecGenerator
 
         // 处理数字 -- 涉及WireType和Style，注解使用的是枚举，我们转换为NumberStyles静态类
         string writeMethodName = GetWriteMethodName(fieldInfo);
-        TypeName fieldTypeName = AptUtils.ParseType(fieldInfo.Type);
         if (fieldInfo.Type.IsPrimitiveNumber()) {
             // int,long,float,double,uint,ulong,short,ushort,byte,sbyte...
             // writer.writeInt(names_fieldName, inst.field, NumberStyles.Simple)
@@ -366,15 +359,15 @@ internal class PojoCodecGenerator
                 break;
             }
             case MNAME_WRITE_OBJECT: {
-                // 写Object时传入类型信息和Style
-                // writer.writeObject(names_fieldName, inst.getName(), types_name, ObjectStyle.INDENT)
+                // 写Object时传入类型信息和Style -- 会自动匹配泛型方法
+                // writer.writeObject(names_fieldName, inst.getName(), ObjectStyle.INDENT)
                 if (!string.IsNullOrWhiteSpace(fieldProps.objectStyle)) {
-                    builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, typeof($T), $T.$L)",
-                        writeMethodName, SerialName(fieldName), fieldAccess, fieldTypeName.WithAttributes(0),
+                    builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L)",
+                        writeMethodName, SerialName(fieldName), fieldAccess,
                         CodecProcessor.typeName_ObjectStyle, fieldProps.objectStyle);
                 } else {
-                    builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, typeof($T), null)",
-                        writeMethodName, SerialName(fieldName), fieldAccess, fieldTypeName.WithAttributes(0));
+                    builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, null)",
+                        writeMethodName, SerialName(fieldName), fieldAccess);
                 }
                 break;
             }

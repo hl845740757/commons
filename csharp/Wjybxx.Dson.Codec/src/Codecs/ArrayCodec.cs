@@ -30,21 +30,16 @@ namespace Wjybxx.Dson.Codec.Codecs
 public sealed class ArrayCodec<T> : IDsonCodec<T[]>
 {
     public void WriteObject(IDsonObjectWriter writer, in T[] inst, Type declaredType, ObjectStyle style) {
-        // declaredType只影响inst是否写入类型，不影响数组元素是否写入类型
-        Type eleDeclaredType = typeof(T);
-
         for (int i = 0; i < inst.Length; i++) {
-            writer.WriteObject(null, inst[i], eleDeclaredType);
+            writer.WriteObject(null, inst[i]);
         }
     }
 
-    public T[] ReadObject(IDsonObjectReader reader, Func<T[]>? factory = null) {
-        Type eleDeclaredType = typeof(T);
-
+    public T[] ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
         // 由于长度未知，只能先存储为List再转...
         List<T> result = new List<T>();
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
-            T value = reader.ReadObject<T>(null, eleDeclaredType);
+            T value = reader.ReadObject<T>(null);
             result.Add(value);
         }
         return result.ToArray();

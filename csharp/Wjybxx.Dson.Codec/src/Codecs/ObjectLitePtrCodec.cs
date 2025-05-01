@@ -30,7 +30,7 @@ public class ObjectLitePtrCodec : IDsonCodec<ObjectLitePtr>
         writer.WriteLitePtr(null, in inst);
     }
 
-    public ObjectLitePtr ReadObject(IDsonObjectReader reader, Func<ObjectLitePtr>? factory = null) {
+    public ObjectLitePtr ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
         return reader.ReadLitePtr(null);
     }
 }

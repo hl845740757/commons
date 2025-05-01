@@ -36,7 +36,7 @@ public interface IDsonCodec
     /// 该方法用于告知<see cref="DsonCodecImpl{T}"/>是否自动调用以下方法：
     /// <see cref="IDsonObjectWriter.WriteStartObject"/>
     /// <see cref="IDsonObjectWriter.WriteEndObject"/>
-    /// <see cref="IDsonObjectReader.ReadStartObject(System.Type)"/>
+    /// <see cref="IDsonObjectReader.ReadStartObject()"/>
     /// <see cref="IDsonObjectReader.ReadEndObject"/>
     /// 
     /// Q：禁用该属性有什么用？
@@ -102,6 +102,6 @@ public interface IDsonCodec<T> : IDsonCodec
     /// <param name="reader">reader</param>
     /// <param name="factory">实例工厂</param>
     /// <returns></returns>
-    T ReadObject(IDsonObjectReader reader, Func<T>? factory = null);
+    T ReadObject(IDsonObjectReader reader, Func<object>? factory = null);
 }
 }

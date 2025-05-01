@@ -447,6 +447,17 @@ public static partial class Util
                && methodInfo.IsDefined(typeof(DllImportAttribute), inherit: false);
     }
 
+    /// <summary>
+    /// 是否是自动属性关联的字段
+    /// </summary>
+    /// <param name="fieldName"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsAutoPropertyField(string fieldName) {
+        // <PropertyName>k__BackingField
+        return fieldName[0] == '<' && fieldName.EndsWith("k__BackingField");
+    }
+
     #endregion
 }
 }

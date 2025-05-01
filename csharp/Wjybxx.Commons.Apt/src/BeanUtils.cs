@@ -362,8 +362,7 @@ public static class BeanUtils
     /// <param name="fieldName"></param>
     /// <returns></returns>
     public static bool IsAutoPropertyField(string fieldName) {
-        // <PropertyName>k__BackingField
-        return fieldName[0] == '<' && fieldName.EndsWith("k__BackingField");
+        return Util.IsAutoPropertyField(fieldName);
     }
 
     /// <summary>

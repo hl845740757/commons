@@ -29,16 +29,6 @@ namespace Wjybxx.Dson.Codec.Codecs
 /// <typeparam name="T"></typeparam>
 public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
 {
-    #region factory
-
-    // 泛型参数需要和Codec传递给DsonCodec的泛型参数一致 -- 即和构造函数一致
-    // 我们通过简单名进行字段匹配，这样可以保证正确性 -- factory + type.Name
-    public static readonly Func<ICollection<T>> factory_List = () => new List<T>();
-    public static readonly Func<ICollection<T>> factory_HashSet = () => new HashSet<T>();
-    public static readonly Func<ICollection<T>> factory_LinkedHashSet = () => new LinkedHashSet<T>();
-
-    #endregion
-
     private readonly Type encoderType;
     private readonly Func<ICollection<T>>? factory;
     private readonly FactoryKind factoryKind; // 处理默认情况
@@ -103,19 +93,15 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
     }
 
     public void WriteObject(IDsonObjectWriter writer, in ICollection<T> inst, Type declaredType, ObjectStyle style) {
-        Type eleDeclaredType = typeof(T);
-
         foreach (T value in inst) {
-            writer.WriteObject<T>(null, in value, eleDeclaredType); // value向上转型为T
+            writer.WriteObject(null, in value); // value向上转型为T
         }
     }
 
-    public ICollection<T> ReadObject(IDsonObjectReader reader, Func<ICollection<T>>? factory = null) {
-        Type eleDeclaredType = typeof(T);
-
-        ICollection<T> result = factory != null ? factory() : NewCollection();
+    public ICollection<T> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        ICollection<T> result = factory != null ? (ICollection<T>)factory() : NewCollection();
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
-            T value = reader.ReadObject<T>(null, eleDeclaredType);
+            T value = reader.ReadObject<T>(null);
             result.Add(value);
         }
         return reader.Options.readAsImmutable ? ToImmutable(result) : result;

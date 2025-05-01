@@ -143,11 +143,11 @@ public static class AptUtils
      * 将继承体系展开，不包含实现的接口。
      * （超类在后，包含object）
      */
-    public static List<Type> FlatInherit(Type typeElement) {
+    public static List<Type> FlatInherit(Type type) {
         List<Type> result = new List<Type>(4);
-        result.Add(typeElement);
-        while ((typeElement = typeElement.BaseType) != null) {
-            result.Add(typeElement);
+        result.Add(type);
+        while ((type = type.BaseType) != null) {
+            result.Add(type);
         }
         return result;
     }
@@ -156,8 +156,8 @@ public static class AptUtils
      * 将继承体系展开，并逆序返回，不包含实现的接口。
      * （超类在前，包含object）
      */
-    public static List<Type> FlatInheritAndReverse(Type typeElement) {
-        List<Type> result = FlatInherit(typeElement);
+    public static List<Type> FlatInheritAndReverse(Type type) {
+        List<Type> result = FlatInherit(type);
         result.Reverse();
         return result;
     }
@@ -166,11 +166,11 @@ public static class AptUtils
      * 将继承体系展开，不包含实现的接口。
      * （超类在后，包含object）
      */
-    public static List<INamedTypeSymbol> FlatInherit(INamedTypeSymbol typeElement) {
+    public static List<INamedTypeSymbol> FlatInherit(INamedTypeSymbol typeSymbol) {
         List<INamedTypeSymbol> result = new List<INamedTypeSymbol>(4);
-        result.Add(typeElement);
-        while ((typeElement = typeElement.BaseType) != null) {
-            result.Add(typeElement);
+        result.Add(typeSymbol);
+        while ((typeSymbol = typeSymbol.BaseType) != null) {
+            result.Add(typeSymbol);
         }
         return result;
     }
@@ -179,8 +179,8 @@ public static class AptUtils
      * 将继承体系展开，并逆序返回，不包含实现的接口。
      * （超类在前，包含object）
      */
-    public static List<INamedTypeSymbol> FlatInheritAndReverse(INamedTypeSymbol typeElement) {
-        List<INamedTypeSymbol> result = FlatInherit(typeElement);
+    public static List<INamedTypeSymbol> FlatInheritAndReverse(INamedTypeSymbol typeSymbol) {
+        List<INamedTypeSymbol> result = FlatInherit(typeSymbol);
         result.Reverse();
         return result;
     }

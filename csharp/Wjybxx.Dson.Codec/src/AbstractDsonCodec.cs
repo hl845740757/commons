@@ -30,12 +30,13 @@ internal static class AbstractDsonCodec
     private static readonly ConcurrentDictionary<Type, bool> cache = new ConcurrentDictionary<Type, bool>();
 
     public static bool IsOverwriteBeforeEncode(Type type) {
+        type = type.GetGenericTypeDefinition();
         if (cache.TryGetValue(type, out bool r)) {
             return r;
         }
         MethodInfo methodInfo = type.GetMethod("BeforeEncode", BindingFlags.NonPublic | BindingFlags.Instance);
         if (methodInfo == null) throw new AssertionError();
-        r = methodInfo.DeclaringType!.GetGenericTypeDefinition() == typeof(AbstractDsonCodec<>);
+        r = methodInfo.DeclaringType!.GetGenericTypeDefinition() != typeof(AbstractDsonCodec<>);
         cache.TryAdd(type, r);
         return r;
     }
@@ -87,8 +88,9 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
     #region Read
 
     [StableName]
-    public T ReadObject(IDsonObjectReader reader, Func<T>? factory = null) {
-        T inst = factory != null ? factory() : NewInstance(reader);
+    public T ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        // cast失败则抛出异常，不能测试类型导致隐藏错误
+        T inst = factory != null ? (T)factory() : NewInstance(reader);
         ReadFields(reader, ref inst);
         if (reader.Options.enableAfterDecode) {
             AfterDecode(reader, ref inst);

@@ -25,7 +25,7 @@ namespace Wjybxx.Dson.Codec
 public class DsonConverterBuilder
 {
     // 用于简化build
-    public readonly TypeMetaConfig typeMetaConfig = new TypeMetaConfig();
+    private readonly TypeMetaConfig typeMetaConfig = new TypeMetaConfig();
     private readonly DsonCodecConfig codecConfig = new DsonCodecConfig();
     private ConverterOptions options = ConverterOptions.DEFAULT;
 
