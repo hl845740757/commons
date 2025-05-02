@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 
 namespace Wjybxx.Commons.Inject.Attributes
 {
@@ -29,7 +30,7 @@ namespace Wjybxx.Commons.Inject.Attributes
 /// <h3>多实例注入</h3>
 /// 在字段/属性/参数上可重复声明该属性，从而申请多个服务实例；
 /// 以字段为例，如果字段是<see cref="IList{T}"/>类型，则会将所有存在的服务注入到List。
-/// 如果字段是<see cref="IDictioary{K,V}"/>类型，则会将所有的存在的服务注入到字典 -- Key固定为服务的名字。
+/// 如果字段是<see cref="IDictionary{K,V}"/>类型，则会将所有的存在的服务注入到字典 -- Key固定为服务的名字。
 /// 如果字段不是List和字段，则按照声明信息依次查找服务，直到注入成功或抛出异常 -- 如果所有服务都是可选的，则最终为null。
 /// <code>
 /// [Inject("dson", true)]

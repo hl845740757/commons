@@ -28,8 +28,8 @@ public class BitFlags {
 
     //region int
 
-    /** 是否设置了mask关联的任意bit */
-    public static boolean isAnySet(int flags, int mask) {
+    /** 是否相交 -- 是否设置了mask关联的任意bit */
+    public static boolean isIntersect(int flags, int mask) {
         return (flags & mask) != 0;
     }
 
@@ -102,7 +102,7 @@ public class BitFlags {
     // region long
 
     /** 是否设置了mask关联的任意bit */
-    public static boolean isAnySet(long flags, long mask) {
+    public static boolean isIntersect(long flags, long mask) {
         return (flags & mask) != 0;
     }
 

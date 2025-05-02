@@ -239,7 +239,25 @@ public class ClassName : TypeName
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {
 #endif
+        if (this.attributes == attributes) return this;
         return new ClassName(ns, enclosingClassName, simpleName, typeArguments, attributes);
+    }
+
+#if NET6_0_OR_GREATER
+    public override ClassName RemoveAllNullableAttribute() {
+#else
+    public override TypeName RemoveAllNullableAttribute() {
+#endif
+        if (typeArguments.Count == 0) {
+            if (!attributes.IsSet(TypeNameAttributes.NullableReferenceType)) return this;
+            return Get(ns, simpleName, null, attributes.Unset(TypeNameAttributes.NullableReferenceType));
+        }
+        // 不再做过多测试，直接构建新对象
+        List<TypeName> tempTypeArguments = new List<TypeName>(typeArguments.Count);
+        foreach (TypeName typeArgument in typeArguments) {
+            tempTypeArguments.Add(typeArgument.RemoveAllNullableAttribute());
+        }
+        return Get(ns, simpleName, tempTypeArguments, attributes.Unset(TypeNameAttributes.NullableReferenceType));
     }
 
     #endregion

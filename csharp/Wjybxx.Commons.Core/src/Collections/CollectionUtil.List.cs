@@ -31,16 +31,19 @@ public static partial class CollectionUtil
     #region factory
 
     /** 创建一个元素的List */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static List<T> NewList<T>(T first) {
         return new List<T>(1) { first };
     }
 
     /** 创建2个元素的List */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static List<T> NewList<T>(T first, T second) {
         return new List<T>(2) { first, second };
     }
 
     /** 创建3个元素的List */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static List<T> NewList<T>(T first, T second, T third) {
         return new List<T>(3) { first, second, third };
     }

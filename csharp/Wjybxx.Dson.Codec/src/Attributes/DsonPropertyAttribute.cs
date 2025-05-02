@@ -25,7 +25,8 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// <summary>
 /// 字段实现信息
 ///
-/// 由于属性较多，因此属性都是get/set，但只应该初始化一次
+/// 1.由于属性较多，因此属性都是get/set，但只应该初始化一次
+/// 2.由于要支持属性，因此不能关闭继承属性
 /// </summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 [Serializable]

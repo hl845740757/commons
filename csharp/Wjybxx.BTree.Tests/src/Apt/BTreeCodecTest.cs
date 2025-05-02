@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using Wjybxx.BTree.Leaf;
 using Wjybxx.BTreeCodec;
 using Wjybxx.Dson.Codec;
 using Wjybxx.Dson.Text;
@@ -32,7 +33,6 @@ namespace Wjybxx.BTree.Codec;
 public class BTreeCodecTest
 {
     private static string dsonString = """
-
     {@{AlwaysSuccess[string]}
         child: {@{SimpleRandom[string]}
             p: 0.5
@@ -71,6 +71,8 @@ public class BTreeCodecTest
     [Test]
     public void DeserializeTest() {
         Task<string> task = converter.ReadFromDson<Task<string>>(dsonString);
-        Console.WriteLine(task);
+        SimpleRandom<string> simpleRandom = task.GetChild(0) as SimpleRandom<string>;
+        Assert.NotNull(simpleRandom);
+        Assert.AreEqual(0.5, simpleRandom.P);
     }
 }

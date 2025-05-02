@@ -46,10 +46,13 @@ public static class AptUtils
     /// <summary>
     /// 为生成代码的注解处理器创建一个通用注解
     /// </summary>
-    public static AttributeSpec NewProcessorInfoAnnotation(Type type) {
-        return AttributeSpec.NewBuilder(clsName_GeneratedAttribute)
-            .Constructor(CodeBlock.Of("$S", type.ToString()))
-            .Build();
+    public static AttributeSpec NewProcessorInfoAnnotation(Type type, DateTime? dateTime = null) {
+        var builder = AttributeSpec.NewBuilder(clsName_GeneratedAttribute)
+            .Constructor(CodeBlock.Of("$S", type.ToString()));
+        if (dateTime != null) {
+            builder.AddMember("DateTime", "$S", dateTime.Value.ToString("s"));
+        }
+        return builder.Build();
     }
 
     /// <summary>
@@ -452,7 +455,7 @@ public static class AptUtils
         List<TypeName>? genericArgumentNames = null;
         if (typeSymbol.IsUnboundGenericType) {
             // typeof(IDictionary<,>)
-            int typeArgumentsLength = typeSymbol.ConstructedFrom.TypeArguments.Length;
+            int typeArgumentsLength = typeSymbol.OriginalDefinition.TypeArguments.Length;
             genericArgumentNames = new List<TypeName>(typeArgumentsLength);
             for (int i = 0; i < typeArgumentsLength; i++) {
                 genericArgumentNames.Add(TypeVariableName.Empty);
@@ -494,7 +497,7 @@ public static class AptUtils
     public static PointerTypeName ParsePointerType(IPointerTypeSymbol pointerTypeSymbol) {
         // NRT
         TypeNameAttributes attributes = pointerTypeSymbol.NullableAnnotation.ToTypeNameAttributes();
-        return PointerTypeName.Of(ParseType(pointerTypeSymbol.PointedAtType), attributes);
+        return PointerTypeName.Get(ParseType(pointerTypeSymbol.PointedAtType), attributes);
     }
 
     /// <summary>

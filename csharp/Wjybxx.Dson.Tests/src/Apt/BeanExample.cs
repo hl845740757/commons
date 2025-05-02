@@ -16,7 +16,6 @@
 
 #endregion
 
-using System.Collections.Generic;
 using Wjybxx.Dson.Codec;
 using Wjybxx.Dson.Codec.Attributes;
 using Wjybxx.Dson.Text;
@@ -24,10 +23,60 @@ using Wjybxx.Dson.Text;
 namespace Wjybxx.Dson.Tests.Apt;
 
 /// <summary>
+/// 用于测试继承问题
+/// </summary>
+public class BaseTypeExample
+{
+    /// <summary>
+    /// 需要序列化
+    /// </summary>
+    private int value;
+
+    /// <summary>
+    /// 测试字段忽略
+    /// </summary>
+    [DsonIgnore] public int ignoreA;
+    /// <summary>
+    /// 测试字段忽略
+    /// </summary>
+    [DsonIgnore] private int ignoreB;
+
+    /// <summary>
+    /// 测试字段忽略
+    /// </summary>
+    [NonSerialized] public int ignoreC;
+    /// <summary>
+    /// 测试字段忽略
+    /// </summary>
+    [NonSerialized] public int ignoreD;
+
+    public int Value {
+        get => value;
+        set => this.value = value;
+    }
+    public int IgnoreA {
+        get => ignoreA;
+        set => ignoreA = value;
+    }
+    public int IgnoreB {
+        get => ignoreB;
+        set => ignoreB = value;
+    }
+    public int IgnoreC {
+        get => ignoreC;
+        set => ignoreC = value;
+    }
+    public int IgnoreD {
+        get => ignoreD;
+        set => ignoreD = value;
+    }
+}
+
+/// <summary>
 /// 
 /// </summary>
 [DsonSerializable]
-public class BeanExample
+public class BeanExample : BaseTypeExample
 {
     [DsonProperty(Name = "_name", StringStyle = StringStyle.AutoQuote)]
     private string? name;
@@ -60,6 +109,17 @@ public class BeanExample
     /// </summary>
     [DsonProperty(Impl = typeof(HashSet<>), ObjectStyle = ObjectStyle.Flow)]
     public ISet<string>? hashSet2;
+
+    /// <summary>
+    /// 测试字段忽略
+    /// </summary>
+    [DsonIgnore()]
+    public HashSet<string>? ignoreSet;
+
+    /// <summary>
+    /// 测试字段忽略
+    /// </summary>
+    [NonSerialized] public HashSet<string>? ignoreSet2;
 
     public void WriteType(IDsonObjectWriter writer, string dsonName) {
         writer.WriteInt(dsonName, Type);

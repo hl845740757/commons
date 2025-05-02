@@ -70,7 +70,21 @@ public class ByRefTypeName : TypeName
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {
 #endif
+        if (this.attributes == attributes) return this;
         return new ByRefTypeName(targetType, kind, attributes);
+    }
+
+#if NET6_0_OR_GREATER
+    public override ByRefTypeName RemoveAllNullableAttribute() {
+#else
+    public override TypeName RemoveAllNullableAttribute() {
+#endif
+        TypeName tempElementType = targetType.RemoveAllNullableAttribute();
+        if (ReferenceEquals(tempElementType, targetType) 
+            && !attributes.IsSet(TypeNameAttributes.NullableReferenceType)) {
+            return this;
+        }
+        return Get(tempElementType, kind, attributes.Unset(TypeNameAttributes.NullableReferenceType));
     }
 
     #endregion

@@ -187,7 +187,9 @@ public class CodecProcessor : IIncrementalGenerator
                 (node, _) => node);
             context.RegisterSourceOutput(provider, (a, b) => {
                 try {
-                    ProcessDirectType(a, b);
+                    if (IsBuildingAssemblyNode(b)) {
+                        ProcessDirectType(a, b);
+                    }
                 }
                 catch (Exception ex) {
                     ReportException(ex, b.TargetSymbol);
@@ -201,7 +203,9 @@ public class CodecProcessor : IIncrementalGenerator
                 (node, _) => node);
             context.RegisterSourceOutput(provider, (a, b) => {
                 try {
-                    ProcessLinkerGroup(a, b);
+                    if (IsBuildingAssemblyNode(b)) {
+                        ProcessLinkerGroup(a, b);
+                    }
                 }
                 catch (Exception ex) {
                     ReportException(ex, b.TargetSymbol);
@@ -215,7 +219,9 @@ public class CodecProcessor : IIncrementalGenerator
                 (node, _) => node);
             context.RegisterSourceOutput(provider, (a, b) => {
                 try {
-                    ProcessLinkerBean(a, b);
+                    if (IsBuildingAssemblyNode(b)) {
+                        ProcessLinkerBean(a, b);
+                    }
                 }
                 catch (Exception ex) {
                     ReportException(ex, b.TargetSymbol);
@@ -319,7 +325,7 @@ public class CodecProcessor : IIncrementalGenerator
                 continue;
             }
             if (targetType.IsGenericType) {
-                targetType = targetType.ConstructedFrom;
+                targetType = targetType.OriginalDefinition;
             }
 
             Context context = new Context(targetType);
@@ -339,6 +345,13 @@ public class CodecProcessor : IIncrementalGenerator
                 GenericCodec(context);
             }
         }
+    }
+
+    private static bool IsBuildingAssemblyNode(GeneratorAttributeSyntaxContext node) {
+        // Dotnet的编译有点奇怪，似乎是多个Assembly同时编译，生成的文件乱串....
+        IAssemblySymbol buildingAssembly = node.SemanticModel.Compilation.Assembly;
+        IAssemblySymbol nodeAssembly = node.TargetSymbol.ContainingAssembly;
+        return nodeAssembly.Equals(buildingAssembly, SymbolEqualityComparer.Default);
     }
 
     private void ProcessDirectType(SourceProductionContext sourceProductionContext, GeneratorAttributeSyntaxContext node) {
@@ -409,8 +422,10 @@ public class CodecProcessor : IIncrementalGenerator
             AptFieldProps aptFieldProps = AptFieldProps.Parse(attributeHolder, CNAME_PROPERTY,
                 type_NumberStyle, type_StringStyle, type_ObjectStyle);
             aptFieldProps.ParseIgnore(attributeHolder, CNAME_DSON_IGNORE);
-
-            aptFieldProps.autoProperty = attributeHolder as IPropertySymbol;
+            // 缓存自动属性
+            if (attributeHolder.Kind == SymbolKind.Property) {
+                aptFieldProps.autoProperty = attributeHolder as IPropertySymbol;
+            }
             context.fieldPropsMap[fieldInfo] = aptFieldProps;
         }
     }

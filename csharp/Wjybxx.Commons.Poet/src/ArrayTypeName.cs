@@ -64,7 +64,21 @@ public class ArrayTypeName : TypeName
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {
 #endif
+        if (this.attributes == attributes) return this;
         return new ArrayTypeName(elementType, attributes);
+    }
+
+#if NET6_0_OR_GREATER
+    public override ArrayTypeName RemoveAllNullableAttribute() {
+#else
+    public override TypeName RemoveAllNullableAttribute() {
+#endif
+        TypeName tempElementType = elementType.RemoveAllNullableAttribute();
+        if (ReferenceEquals(tempElementType, elementType)
+            && !attributes.IsSet(TypeNameAttributes.NullableReferenceType)) {
+            return this;
+        }
+        return Get(elementType, attributes.Unset(TypeNameAttributes.NullableReferenceType));
     }
 
     #endregion

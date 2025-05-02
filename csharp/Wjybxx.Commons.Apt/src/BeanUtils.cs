@@ -17,6 +17,8 @@
 #endregion
 
 using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -150,7 +152,10 @@ public static class BeanUtils
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static List<ISymbol> GetAllMembersWithInherit(INamedTypeSymbol type) {
-        return GetAllMembersWithInherit(type, new List<SymbolKind>() { SymbolKind.Field, SymbolKind.Method, SymbolKind.Property });
+        return GetAllMembersWithInherit(type, new List<SymbolKind>()
+        {
+            SymbolKind.Field, SymbolKind.Method, SymbolKind.Property
+        });
     }
 
     /// <summary>
@@ -370,30 +375,7 @@ public static class BeanUtils
     /// (C#的规则是删除下划线，然后下划线后首个字符大写)
     /// </summary>
     public static string PropertyNameOfField(string fieldName) {
-        if (fieldName[0] == '<') {
-            // 自动属性字段
-            int endIndex = fieldName.IndexOf('>');
-            return fieldName.Substring(1, endIndex - 1);
-        }
-        if (fieldName.Contains('_')) {
-            StringBuilder sb = new StringBuilder(fieldName.Length);
-            bool nextUpper = true; // 首字符大写
-            for (var i = 0; i < fieldName.Length; i++) {
-                char c = fieldName[i];
-                if (c == '_') {
-                    nextUpper = true;
-                } else {
-                    if (nextUpper) {
-                        nextUpper = false;
-                        sb.Append(char.ToUpper(c));
-                    } else {
-                        sb.Append(c);
-                    }
-                }
-            }
-            return sb.ToString();
-        }
-        return Util.FirstCharToUpperCase(fieldName);
+        return Util.PropertyNameOfField(fieldName);
     }
 
     /// <summary>
@@ -471,6 +453,106 @@ public static class BeanUtils
         }
         MethodInfo setMethod = propertyInfo.SetMethod!;
         return setMethod.IsStatic;
+    }
+
+    #endregion
+
+    #region internal
+
+    private static readonly ConcurrentDictionary<CacheKey, MemberInfo> memberInfoCache = new();
+
+    /// <summary>
+    /// <see cref="INamespaceOrTypeSymbol.GetMembers()"/>方法默认只返回Public和Private成员，这导致我们的部分工具无法编写。
+    /// 想了许多方法，还是反射获取底层的实现最好，可以避免上层做过多的逻辑。
+    /// </summary>
+    /// <param name="typeSymbol"></param>
+    /// <returns></returns>
+    private static List<ISymbol> GetMembersInternal(INamespaceOrTypeSymbol typeSymbol) {
+        PropertyInfo propertyInfo = InternalFindProperty(typeSymbol.GetType(), "UnderlyingNamespaceOrTypeSymbol");
+        object underlyingTypeSymbol = propertyInfo.GetValue(typeSymbol);
+        if (underlyingTypeSymbol == null) {
+            throw new Exception("UnderlyingNamespaceOrTypeSymbol is null");
+        }
+        // 方法存在重载，我们要调用的是无参方法
+        MethodInfo methodGetMembers = InternalFindMethod(underlyingTypeSymbol.GetType(), "GetMembers", Array.Empty<Type>());
+        IList internalMemberArray = (IList)methodGetMembers.Invoke(underlyingTypeSymbol, Array.Empty<object>());
+
+        // 返回的对象并不直接是ISymbol接口的对象，需要通过GetISymbol方法进行转换
+        // ISymbol ISymbolInternal.GetISymbol() => this.ISymbol
+        // 不过，由于方法的实现是隐式实现，查找的时候居然匹配不到，因此我们改为查找属性
+        List<ISymbol> result = new List<ISymbol>(internalMemberArray.Count);
+        foreach (object internalSymbol in internalMemberArray) {
+            PropertyInfo propertyISymbol = InternalFindProperty(internalSymbol.GetType(), "ISymbol");
+            ISymbol symbol = (ISymbol)propertyISymbol.GetValue(internalSymbol);
+            result.Add(symbol);
+        }
+        return result;
+    }
+
+    private static MethodInfo InternalFindMethod(Type type, string methodName, Type[] parameterTypes) {
+        CacheKey cacheKey = new CacheKey(type, methodName);
+        MethodInfo? methodInfo;
+        if (memberInfoCache.TryGetValue(cacheKey, out MemberInfo refMemberInfo)) {
+            methodInfo = (MethodInfo)refMemberInfo;
+        } else {
+            methodInfo = type.GetMethod(cacheKey.memberName, parameterTypes);
+            if (methodInfo == null) {
+                throw new Exception($"cant find {methodName} method form {type}");
+            }
+            memberInfoCache.TryAdd(cacheKey, methodInfo);
+        }
+        return methodInfo;
+    }
+
+    private static PropertyInfo InternalFindProperty(Type type, string propertyName) {
+        CacheKey cacheKey = new CacheKey(type, propertyName);
+        PropertyInfo property;
+        if (memberInfoCache.TryGetValue(cacheKey, out MemberInfo refMemberInfo)) {
+            property = (PropertyInfo)refMemberInfo;
+        } else {
+            property = type.GetProperty(cacheKey.memberName,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (property == null) {
+                throw new Exception($"cant find {propertyName} property form {type}");
+            }
+            memberInfoCache.TryAdd(cacheKey, property);
+        }
+        return property;
+    }
+
+    private readonly struct CacheKey : IEquatable<CacheKey>
+    {
+        public readonly Type type;
+        public readonly string memberName;
+
+        public CacheKey(Type type, string memberName) {
+            this.type = type;
+            this.memberName = memberName;
+        }
+
+        public bool Equals(CacheKey other) {
+            return type == other.type && memberName == other.memberName;
+        }
+
+        public override bool Equals(object? obj) {
+            return obj is CacheKey other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return (type.GetHashCode() * 397) ^ memberName.GetHashCode();
+        }
+
+        public static bool operator ==(CacheKey left, CacheKey right) {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(CacheKey left, CacheKey right) {
+            return !left.Equals(right);
+        }
+
+        public override string ToString() {
+            return $"{nameof(type)}: {type}, {nameof(memberName)}: {memberName}";
+        }
     }
 
     #endregion

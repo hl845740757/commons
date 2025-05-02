@@ -103,12 +103,27 @@ public class TypeName : IEquatable<TypeName>
 
     /// <summary>
     /// 增加约束<see cref="TypeNameAttributes"/>
+    /// 
     /// </summary>
     /// <param name="attributes"></param>
-    /// <returns></returns>
+    /// <returns>如果attributes和当前attributes相同，可返回自身</returns>
     public virtual TypeName WithAttributes(TypeNameAttributes attributes) {
         if (keyword != null) {
-            return new TypeName(keyword, attributes);
+            return this.attributes == attributes ? this : new TypeName(keyword, attributes);
+        }
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// 删除所有的Nullable信息
+    ///
+    /// 原因：<code>typeof(string?)</code>是非法的，禁止在typeof中使用Nullable注解。
+    /// </summary>
+    /// <returns>如果当前不包含nullable信息，可返回自身</returns>
+    public virtual TypeName RemoveAllNullableAttribute() {
+        if (keyword != null) {
+            if (!attributes.IsSet(TypeNameAttributes.NullableReferenceType)) return this;
+            return new TypeName(keyword, attributes.Unset(TypeNameAttributes.NullableReferenceType));
         }
         throw new NotImplementedException();
     }
@@ -134,47 +149,6 @@ public class TypeName : IEquatable<TypeName>
 
     #endregion
 
-    #region make
-
-    /// <summary>
-    /// 构建一个数组类型
-    /// </summary>
-    /// <returns></returns>
-    public ArrayTypeName MakeArrayType() {
-        return ArrayTypeName.Get(this);
-    }
-
-    /// <summary>
-    /// 构建引用传值类型
-    /// </summary>
-    /// <param name="kind">引用类型</param>
-    /// <returns></returns>
-    public ByRefTypeName MakeByRefType(ByRefTypeName.Kind kind = ByRefTypeName.Kind.Ref) {
-        if (this is ByRefTypeName) {
-            throw new InvalidOperationException();
-        }
-        return ByRefTypeName.Get(this, kind);
-    }
-
-    /// <summary>
-    /// 构造一个引用类型
-    /// </summary>
-    /// <returns></returns>
-    public PointerTypeName MakePointerType() {
-        return PointerTypeName.Of(this);
-    }
-
-    /// <summary>
-    /// 构造一个Nullable结构体,。
-    /// <see cref="Nullable{T}"/>
-    /// </summary>
-    /// <returns></returns>
-    public ClassName MakeNullableType() {
-        return ClassName.NULLABLE.WithActualTypeVariables(this);
-    }
-
-    #endregion
-
     #region get-parse
 
     /// <summary>
@@ -190,7 +164,7 @@ public class TypeName : IEquatable<TypeName>
             // byRef也是GetElementType拿...
             Type elementType = type.GetElementType();
             if (elementType == null) throw new ArgumentException("unsupported type: " + type);
-            return type.IsByRef ? ByRefTypeName.Get(elementType) : PointerTypeName.Of(elementType);
+            return type.IsByRef ? ByRefTypeName.Get(elementType) : PointerTypeName.Get(elementType);
         }
         // 数组
         if (type.IsArray) {

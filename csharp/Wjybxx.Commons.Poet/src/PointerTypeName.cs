@@ -55,16 +55,30 @@ public class PointerTypeName : TypeName
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {
 #endif
+        if (this.attributes == attributes) return this;
         return new PointerTypeName(targetType, attributes);
+    }
+
+#if NET6_0_OR_GREATER
+    public override PointerTypeName RemoveAllNullableAttribute() {
+#else
+    public override TypeName RemoveAllNullableAttribute() {
+#endif
+        TypeName tempElementType = targetType.RemoveAllNullableAttribute();
+        if (ReferenceEquals(tempElementType, targetType) 
+            && !attributes.IsSet(TypeNameAttributes.NullableReferenceType)) {
+            return this;
+        }
+        return Get(tempElementType, attributes.Unset(TypeNameAttributes.NullableReferenceType));
     }
 
     #endregion
 
-    public static PointerTypeName Of(TypeName targetType, TypeNameAttributes attributes = TypeNameAttributes.None) {
+    public static PointerTypeName Get(TypeName targetType, TypeNameAttributes attributes = TypeNameAttributes.None) {
         return new PointerTypeName(targetType, attributes);
     }
 
-    public static PointerTypeName Of(Type targetType, TypeNameAttributes attributes = TypeNameAttributes.None) {
+    public static PointerTypeName Get(Type targetType, TypeNameAttributes attributes = TypeNameAttributes.None) {
         return new PointerTypeName(TypeName.Get(targetType), attributes);
     }
 

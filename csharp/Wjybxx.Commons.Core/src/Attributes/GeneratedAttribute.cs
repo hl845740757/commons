@@ -30,6 +30,12 @@ public class GeneratedAttribute : Attribute
     /// 生成类文件的处理器的限定名
     /// </summary>
     public readonly string processor;
+    
+    /// <summary>
+    /// 生成文件的时间，该文件主要用于Debug
+    /// (有时候发现生成的文件没有变化，但又不确定是否是最新的文件)
+    /// </summary>
+    public string? DateTime { get; set; }
 
     public GeneratedAttribute(string processor) {
         this.processor = processor ?? throw new ArgumentNullException(nameof(processor));

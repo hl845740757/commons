@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Wjybxx.Commons.Poet
@@ -76,7 +75,26 @@ public class TypeVariableName : TypeName
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {
 #endif
+        if (this.attributes == attributes) return this;
         return new TypeVariableName(name, bounds, attributes);
+    }
+
+#if NET6_0_OR_GREATER
+    public override TypeVariableName RemoveAllNullableAttribute() {
+#else
+    public override TypeName RemoveAllNullableAttribute() {
+#endif
+        // bounds上也可以有Nullable....
+        if (bounds.Count == 0) {
+            if (!attributes.IsSet(TypeNameAttributes.NullableReferenceType)) return this;
+            return Get(name, bounds, attributes.Unset(TypeNameAttributes.NullableReferenceType));
+        }
+        // 不再做过多测试，直接构建新对象
+        List<TypeName> tempBounds = new List<TypeName>(bounds.Count);
+        foreach (TypeName typeArgument in bounds) {
+            tempBounds.Add(typeArgument.RemoveAllNullableAttribute());
+        }
+        return Get(name, tempBounds, attributes.Unset(TypeNameAttributes.NullableReferenceType));
     }
 
     #endregion

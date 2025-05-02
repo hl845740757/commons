@@ -299,7 +299,7 @@ internal class PojoCodecGenerator
         }
         if (readMethodName == MNAME_READ_OBJECT) {
             // 需要去除nullable
-            TypeName fieldTypeName = AptUtils.ParseType(fieldInfo.Type).WithAttributes(0);
+            TypeName fieldTypeName = AptUtils.ParseType(fieldInfo.Type).RemoveAllNullableAttribute();
             // 读对象时要传入类型信息和Factory -- C#还要传泛型参数；name在前面已读，因此这里传入null
             // inst.name = reader.readObject<Type>(names_name, factories_name)
             builder.codeBuilder.AddStatement("inst.$L = reader.$L<$T>(null, $L)",

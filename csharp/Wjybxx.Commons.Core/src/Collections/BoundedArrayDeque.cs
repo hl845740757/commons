@@ -64,7 +64,7 @@ public class BoundedArrayDeque<T> : IDeque<T>
     public bool IsReadOnly => false;
     public int Count => _head < 0 ? 0 : Length(_tail, _head, _elements.Length);
     public bool IsEmpty => _head < 0;
-    public bool IsFull => (_tail + 1 == _head) || (_head == 0 && (_tail + 1 == +_elements.Length));
+    public bool IsFull => (_tail + 1 == _head) || (_head == 0 && (_tail + 1 == _elements.Length));
 
     /// <summary>
     /// 读写特定索引下的元素
@@ -140,22 +140,26 @@ public class BoundedArrayDeque<T> : IDeque<T>
         _version++;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int Length(int tail, int head, int modulus) {
         Debug.Assert(head >= 0);
         if ((tail -= head) < 0) tail += modulus;
         return tail + 1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int Inc(int i, int distance, int modulus) {
         if ((i += distance) >= modulus) i -= modulus;
         return i;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int Inc(int i, int modulus) {
         if (++i >= modulus) i = 0;
         return i;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int Dec(int i, int modulus) {
         if (--i < 0) i = modulus - 1;
         return i;

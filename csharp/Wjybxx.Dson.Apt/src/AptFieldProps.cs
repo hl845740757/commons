@@ -101,7 +101,7 @@ internal class AptFieldProps
                     throw new InvalidOperationException();
                 }
                 if (implType.IsUnboundGenericType) {
-                    implType = implType.ConstructedFrom.Construct(fieldType.TypeArguments.ToArray());
+                    implType = implType.OriginalDefinition.Construct(fieldType.TypeArguments.ToArray());
                 }
                 props.implType = implType;
                 props.implTypeName = AptUtils.ParseType(implType);

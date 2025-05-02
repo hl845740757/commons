@@ -458,6 +458,36 @@ public static partial class Util
         return fieldName[0] == '<' && fieldName.EndsWith("k__BackingField");
     }
 
+    /// <summary>
+    /// 获取字段的属性名
+    /// (C#的规则是删除下划线，然后下划线后首个字符大写)
+    /// </summary>
+    public static string PropertyNameOfField(string fieldName) {
+        if (fieldName[0] == '<') {
+            // 自动属性字段
+            int endIndex = fieldName.IndexOf('>');
+            return fieldName.Substring(1, endIndex - 1);
+        }
+        if (fieldName.IndexOf('_') >= 0) {
+            StringBuilder sb = new StringBuilder(fieldName.Length);
+            bool nextUpper = true; // 首字符大写
+            foreach (char c in fieldName) {
+                if (c == '_') {
+                    nextUpper = true;
+                } else {
+                    if (nextUpper) {
+                        nextUpper = false;
+                        sb.Append(char.ToUpper(c));
+                    } else {
+                        sb.Append(c);
+                    }
+                }
+            }
+            return sb.ToString();
+        }
+        return FirstCharToUpperCase(fieldName);
+    }
+
     #endregion
 }
 }

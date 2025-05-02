@@ -27,9 +27,9 @@ public static class BitFlags
 {
     #region int
 
-    /** 是否设置了mask关联的任意bit */
+    /** 是否相交 -- 是否设置了mask关联的任意bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsAnySet(int flags, int mask) {
+    public static bool IsIntersect(int flags, int mask) {
         return (flags & mask) != 0;
     }
 
@@ -130,7 +130,7 @@ public static class BitFlags
 
     /** 是否设置了mask关联的任意bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsAnySet(long flags, long mask) {
+    public static bool IsIntersect(long flags, long mask) {
         return (flags & mask) != 0;
     }
 
