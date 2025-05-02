@@ -131,7 +131,7 @@ public class FieldSpec : ISpecification
             return this;
         }
 
-        public Builder AddDocument(string format, params object[] args) {
+        public Builder AddDocument(string format, params object?[] args) {
             document.Add(format, args);
             return this;
         }
@@ -141,7 +141,7 @@ public class FieldSpec : ISpecification
             return this;
         }
 
-        public Builder AddHeaderCode(string format, params object[] args) {
+        public Builder AddHeaderCode(string format, params object?[] args) {
             headerCode.Add(format, args);
             return this;
         }
@@ -172,7 +172,7 @@ public class FieldSpec : ISpecification
             return this;
         }
 
-        public Builder Initializer(string format, params object[] args) {
+        public Builder Initializer(string format, params object?[] args) {
             return Initializer(CodeBlock.Of(format, args));
         }
 

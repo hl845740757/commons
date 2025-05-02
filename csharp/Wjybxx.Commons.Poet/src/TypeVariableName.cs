@@ -86,7 +86,7 @@ public class TypeVariableName : TypeName
 #endif
         // bounds上也可以有Nullable....
         if (bounds.Count == 0) {
-            if (!attributes.IsSet(TypeNameAttributes.NullableReferenceType)) return this;
+            if (!attributes.IsIntersect(TypeNameAttributes.NullableReferenceType)) return this;
             return Get(name, bounds, attributes.Unset(TypeNameAttributes.NullableReferenceType));
         }
         // 不再做过多测试，直接构建新对象

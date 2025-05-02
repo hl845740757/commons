@@ -462,12 +462,11 @@ public static class BeanUtils
     private static readonly ConcurrentDictionary<CacheKey, MemberInfo> memberInfoCache = new();
 
     /// <summary>
-    /// <see cref="INamespaceOrTypeSymbol.GetMembers()"/>方法默认只返回Public和Private成员，这导致我们的部分工具无法编写。
-    /// 想了许多方法，还是反射获取底层的实现最好，可以避免上层做过多的逻辑。
+    /// 
     /// </summary>
     /// <param name="typeSymbol"></param>
     /// <returns></returns>
-    private static List<ISymbol> GetMembersInternal(INamespaceOrTypeSymbol typeSymbol) {
+    internal static List<ISymbol> InternalGetMembers(INamespaceOrTypeSymbol typeSymbol) {
         PropertyInfo propertyInfo = InternalFindProperty(typeSymbol.GetType(), "UnderlyingNamespaceOrTypeSymbol");
         object underlyingTypeSymbol = propertyInfo.GetValue(typeSymbol);
         if (underlyingTypeSymbol == null) {

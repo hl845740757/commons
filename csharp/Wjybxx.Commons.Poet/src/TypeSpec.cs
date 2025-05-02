@@ -70,19 +70,19 @@ public class TypeSpec : ISpecification
 
     public enum Kind
     {
-        Class,
-        Struct,
-        Interface,
-        Enum,
+        Class = 0,
+        Struct = 1,
+        Enum = 2,
+        Interface = 3,
         /// <summary>
         /// C#委托是Type，不是Method；每一个委托都定义了一个类型。
         /// C#委托只允许有一个嵌套成员，即方法定义。
         /// </summary>
-        Delegator,
+        Delegator = 4,
         /// <summary>
         /// ref struct
         /// </summary>
-        RefStruct,
+        RefStruct = 5,
     }
 
     #region builder
@@ -162,7 +162,7 @@ public class TypeSpec : ISpecification
             return this;
         }
 
-        public Builder AddDocument(string format, params object[] args) {
+        public Builder AddDocument(string format, params object?[] args) {
             document.Add(format, args);
             return this;
         }
@@ -172,7 +172,7 @@ public class TypeSpec : ISpecification
             return this;
         }
 
-        public Builder AddHeaderCode(string format, params object[] args) {
+        public Builder AddHeaderCode(string format, params object?[] args) {
             headerCode.Add(format, args);
             return this;
         }

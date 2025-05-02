@@ -75,7 +75,7 @@ public class ArrayTypeName : TypeName
 #endif
         TypeName tempElementType = elementType.RemoveAllNullableAttribute();
         if (ReferenceEquals(tempElementType, elementType)
-            && !attributes.IsSet(TypeNameAttributes.NullableReferenceType)) {
+            && !attributes.IsIntersect(TypeNameAttributes.NullableReferenceType)) {
             return this;
         }
         return Get(elementType, attributes.Unset(TypeNameAttributes.NullableReferenceType));

@@ -122,7 +122,7 @@ public class TypeName : IEquatable<TypeName>
     /// <returns>如果当前不包含nullable信息，可返回自身</returns>
     public virtual TypeName RemoveAllNullableAttribute() {
         if (keyword != null) {
-            if (!attributes.IsSet(TypeNameAttributes.NullableReferenceType)) return this;
+            if (!attributes.IsIntersect(TypeNameAttributes.NullableReferenceType)) return this;
             return new TypeName(keyword, attributes.Unset(TypeNameAttributes.NullableReferenceType));
         }
         throw new NotImplementedException();

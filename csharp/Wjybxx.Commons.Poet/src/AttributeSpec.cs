@@ -93,7 +93,7 @@ public class AttributeSpec : ISpecification
             return this;
         }
 
-        public Builder AddMember(string name, string format, params object[] args) {
+        public Builder AddMember(string name, string format, params object?[] args) {
             if (name == null) throw new ArgumentNullException(nameof(name));
             props[name] = CodeBlock.Of(format, args);
             return this;

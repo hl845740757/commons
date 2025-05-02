@@ -36,7 +36,7 @@ public static class BitFlags
     /** 是否设置了mask关联的所有bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsSet(int flags, int mask) {
-        return (flags & mask) == mask;
+        return (flags & mask) == mask && (mask != 0);
     }
 
     /** 启用指定bit */
@@ -137,7 +137,7 @@ public static class BitFlags
     /** 是否设置了mask关联的所有bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsSet(long flags, long mask) {
-        return (flags & mask) == mask;
+        return (flags & mask) == mask && (mask != 0);
     }
 
     /** 启用指定bit */

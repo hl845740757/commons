@@ -249,7 +249,7 @@ public class ClassName : TypeName
     public override TypeName RemoveAllNullableAttribute() {
 #endif
         if (typeArguments.Count == 0) {
-            if (!attributes.IsSet(TypeNameAttributes.NullableReferenceType)) return this;
+            if (!attributes.IsIntersect(TypeNameAttributes.NullableReferenceType)) return this;
             return Get(ns, simpleName, null, attributes.Unset(TypeNameAttributes.NullableReferenceType));
         }
         // 不再做过多测试，直接构建新对象

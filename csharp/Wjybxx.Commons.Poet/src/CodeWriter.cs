@@ -967,7 +967,7 @@ public sealed class CodeWriter
     #region codeblock
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Emit(string format, params object[] args) {
+    private void Emit(string format, params object?[] args) {
         Emit(CodeBlock.Of(format, args), false);
     }
 

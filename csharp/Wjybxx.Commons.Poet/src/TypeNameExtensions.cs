@@ -138,11 +138,6 @@ public static class TypeNameExtensions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsSet(this TypeNameAttributes self, TypeNameAttributes other) {
-        return (self & other) == other;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TypeNameAttributes Set(this TypeNameAttributes self, TypeNameAttributes other) {
         return self | other;
     }

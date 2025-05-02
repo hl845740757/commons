@@ -65,8 +65,8 @@ public class PointerTypeName : TypeName
     public override TypeName RemoveAllNullableAttribute() {
 #endif
         TypeName tempElementType = targetType.RemoveAllNullableAttribute();
-        if (ReferenceEquals(tempElementType, targetType) 
-            && !attributes.IsSet(TypeNameAttributes.NullableReferenceType)) {
+        if (ReferenceEquals(tempElementType, targetType)
+            && !attributes.IsIntersect(TypeNameAttributes.NullableReferenceType)) {
             return this;
         }
         return Get(tempElementType, attributes.Unset(TypeNameAttributes.NullableReferenceType));

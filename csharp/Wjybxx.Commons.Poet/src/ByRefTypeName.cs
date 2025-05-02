@@ -47,10 +47,10 @@ public class ByRefTypeName : TypeName
 
     public enum Kind
     {
-        Ref,
-        In,
-        Out,
-        RefReadOnly // C#这个语法真的....
+        Ref = 1,
+        In = 2,
+        Out = 3,
+        RefReadOnly = 4
     }
 
     #region overrides
@@ -80,8 +80,8 @@ public class ByRefTypeName : TypeName
     public override TypeName RemoveAllNullableAttribute() {
 #endif
         TypeName tempElementType = targetType.RemoveAllNullableAttribute();
-        if (ReferenceEquals(tempElementType, targetType) 
-            && !attributes.IsSet(TypeNameAttributes.NullableReferenceType)) {
+        if (ReferenceEquals(tempElementType, targetType)
+            && !attributes.IsIntersect(TypeNameAttributes.NullableReferenceType)) {
             return this;
         }
         return Get(tempElementType, kind, attributes.Unset(TypeNameAttributes.NullableReferenceType));

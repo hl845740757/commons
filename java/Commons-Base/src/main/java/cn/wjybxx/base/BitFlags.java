@@ -35,7 +35,7 @@ public class BitFlags {
 
     /** 是否设置了mask关联的所有bit */
     public static boolean isSet(int flags, int mask) {
-        return (flags & mask) == mask;
+        return (flags & mask) == mask && (mask != 0);
     }
 
     /** 启用指定bit */
@@ -108,7 +108,7 @@ public class BitFlags {
 
     /** 是否设置了mask关联的所有bit */
     public static boolean isSet(long flags, long mask) {
-        return (flags & mask) == mask;
+        return (flags & mask) == mask && (mask != 0);
     }
 
     /** 启用指定bit */

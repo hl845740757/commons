@@ -223,7 +223,7 @@ public class PropertySpec : ISpecification
             return this;
         }
 
-        public Builder AddDocument(string format, params object[] args) {
+        public Builder AddDocument(string format, params object?[] args) {
             document.Add(format, args);
             return this;
         }
@@ -233,7 +233,7 @@ public class PropertySpec : ISpecification
             return this;
         }
 
-        public Builder AddHeaderCode(string format, params object[] args) {
+        public Builder AddHeaderCode(string format, params object?[] args) {
             headerCode.Add(format, args);
             return this;
         }
@@ -264,7 +264,7 @@ public class PropertySpec : ISpecification
             return this;
         }
 
-        public Builder Initializer(string format, params object[] args) {
+        public Builder Initializer(string format, params object?[] args) {
             return Initializer(CodeBlock.Of(format, args));
         }
 
@@ -276,7 +276,7 @@ public class PropertySpec : ISpecification
             return this;
         }
 
-        public Builder Getter(string format, params object[] args) {
+        public Builder Getter(string format, params object?[] args) {
             return Getter(CodeBlock.Of(format, args));
         }
 
@@ -288,7 +288,7 @@ public class PropertySpec : ISpecification
             return this;
         }
 
-        public Builder Setter(string format, params object[] args) {
+        public Builder Setter(string format, params object?[] args) {
             return Setter(CodeBlock.Of(format, args));
         }
 

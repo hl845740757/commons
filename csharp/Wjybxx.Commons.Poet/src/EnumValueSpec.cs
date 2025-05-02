@@ -95,7 +95,7 @@ public class EnumValueSpec : IEquatable<EnumValueSpec>, ISpecification
             return new EnumValueSpec(name, number, document.Build());
         }
 
-        public Builder AddDocument(string format, params object[] args) {
+        public Builder AddDocument(string format, params object?[] args) {
             document.Add(format, args);
             return this;
         }

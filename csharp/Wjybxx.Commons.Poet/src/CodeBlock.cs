@@ -99,11 +99,11 @@ public class CodeBlock
 
     #region builder
 
-    public static CodeBlock Of(string format, params object[] args) {
+    public static CodeBlock Of(string format, params object?[] args) {
         return new Builder().Add(format, args).Build(); // 需要拆解format
     }
 
-    public static Builder NewBuilder(string format, params object[] args) {
+    public static Builder NewBuilder(string format, params object?[] args) {
         return new Builder().Add(format, args);
     }
 
