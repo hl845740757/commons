@@ -146,5 +146,10 @@ public static class TypeNameExtensions
     public static TypeNameAttributes Unset(this TypeNameAttributes self, TypeNameAttributes other) {
         return self & ~other;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsIntersect(this Modifiers self, Modifiers other) {
+        return (self & other) != 0;
+    }
 }
 }

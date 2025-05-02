@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -33,7 +32,7 @@ public class ParameterSpec : ISpecification
     public readonly string name;
     public readonly Modifiers modifiers; // c#其实没有 -- ref/in/out其实是修改了type
     public readonly CodeBlock document; // 暂时可能不生成
-    public readonly IList<AttributeSpec> attributes; // 暂时不想支持代码生成
+    public readonly IList<AttributeSpec> attributes;
 
     public readonly CodeBlock? defaultValue; // 默认值
 
@@ -69,16 +68,27 @@ public class ParameterSpec : ISpecification
         //     typeName = typeName.AddAttributes(TypeNameAttributes.NullableReferenceType);
         // }
 #endif
+        // 修正参数的ref关键字
         if (typeName is ByRefTypeName refTypeName) {
-            // 修正参数的ref关键字
             if (parameterInfo.IsIn) {
                 typeName = ByRefTypeName.Get(refTypeName.targetType, ByRefTypeName.Kind.In);
             } else if (parameterInfo.IsOut) {
                 typeName = ByRefTypeName.Get(refTypeName.targetType, ByRefTypeName.Kind.Out);
             }
         }
-        return NewBuilder(typeName, parameterInfo.Name!)
-            .Build();
+        Builder builder = NewBuilder(typeName, parameterInfo.Name!);
+        // 处理默认值
+        if (parameterInfo.HasDefaultValue) {
+            object defValue = parameterInfo.DefaultValue;
+            if (defValue == null) {
+                builder.DefaultValue("default"); // 统一使用default虽然不优美，但一定正确；适用泛型和值类型
+            } else if (defValue is string) {
+                builder.DefaultValue("$S", defValue);
+            } else {
+                builder.DefaultValue("$L", defValue);
+            }
+        }
+        return builder.Build();
     }
 
     public static List<ParameterSpec> ParametersOf(MethodBase method) {

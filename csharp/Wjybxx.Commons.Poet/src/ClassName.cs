@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Wjybxx.Commons.Poet
@@ -42,6 +43,9 @@ public class ClassName : TypeName
 
     public static readonly ClassName ENUM = InternalGet(typeof(Enum));
     public static readonly ClassName ATTRIBUTE = InternalGet(typeof(Attribute));
+    public static readonly ClassName SERIALIZABLE = InternalGet(typeof(SerializableAttribute));
+    public static readonly ClassName NON_SERIALIZED = InternalGet(typeof(NonSerializedAttribute));
+    public static readonly ClassName OPTIONAL = InternalGet(typeof(OptionalAttribute));
 
     /// <summary>
     /// namespace

@@ -597,9 +597,6 @@ public static class AptUtils
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static MethodSpec.Builder Overriding(IMethodSymbol methodInfo) {
-        if (methodInfo.IsStatic || methodInfo.IsPrivate() || methodInfo.IsSealed) {
-            throw new ArgumentException("cannot override target method: " + methodInfo);
-        }
         return CopyMethod(methodInfo, true);
     }
 
@@ -641,8 +638,24 @@ public static class AptUtils
     /// </summary>
     public static void CopyParameters(MethodSpec.Builder builder, IMethodSymbol methodInfo) {
         foreach (IParameterSymbol parameter in methodInfo.Parameters) {
-            builder.AddParameter(ParameterSpec.NewBuilder(ParseMethodParameterType(parameter), parameter.Name).Build());
+            builder.AddParameter(ParseMethodParameter(parameter));
         }
+    }
+
+    public static ParameterSpec ParseMethodParameter(IParameterSymbol parameterInfo) {
+        var builder = ParameterSpec.NewBuilder(ParseMethodParameterType(parameterInfo), parameterInfo.Name);
+        // 处理默认值问题，值类型如果返回null需要使用default代替
+        if (parameterInfo.HasExplicitDefaultValue) {
+            object defValue = parameterInfo.ExplicitDefaultValue;
+            if (defValue == null) {
+                builder.DefaultValue("default"); // 统一使用default虽然不优美，但一定正确；适用泛型和值类型
+            } else if (defValue is string) {
+                builder.DefaultValue("$S", defValue);
+            } else {
+                builder.DefaultValue("$L", defValue);
+            }
+        }
+        return builder.Build();
     }
 
     /// <summary>

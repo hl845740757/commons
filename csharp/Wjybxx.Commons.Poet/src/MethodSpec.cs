@@ -113,9 +113,6 @@ public class MethodSpec : ISpecification
     /// （注意：如果是泛型类的方法，通常需要先构造目标泛型类以确定泛型参数）
     /// </summary>
     public static Builder Overriding(MethodInfo methodInfo) {
-        if (methodInfo.IsFinal || methodInfo.IsStatic || methodInfo.IsPrivate) {
-            throw new ArgumentException("cannot override target method: " + methodInfo);
-        }
         return CopyMethod(methodInfo, true);
     }
 

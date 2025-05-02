@@ -16,7 +16,9 @@
 
 #endregion
 
+using System.Numerics;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using NUnit.Framework;
 using Wjybxx.Commons.Concurrent;
 using Wjybxx.Commons.Poet;
@@ -74,7 +76,7 @@ public class TypeInfoTest
     [Test]
     public void TestAsyncMethod() {
         Type type = typeof(TypeInfoTest);
-        MethodInfo methodInfo = type.GetMethod("GetValueAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+        MethodInfo methodInfo = type.GetMethod("GetValueAsync", BindingFlags.NonPublic | BindingFlags.Static);
         MethodSpec.Builder builder = MethodSpec.Overriding(methodInfo!);
 
         Assert.True((builder.modifiers & Modifiers.Async) != 0, "async");
@@ -88,7 +90,20 @@ public class TypeInfoTest
         Console.WriteLine(methodInfo);
     }
 
-    protected virtual async Task<int> GetValueAsync(params int[] args) {
+    [Test]
+    public void TestMethodWithDefault() {
+        Type type = typeof(TypeInfoTest);
+        MethodInfo methodInfo = type.GetMethod("MethodWithDefault", BindingFlags.NonPublic | BindingFlags.Static);
+        Console.WriteLine(methodInfo);
+    }
+
+    protected static void MethodWithDefault(int value, [Optional] string str,
+                                            string? p0 = default,
+                                            int p1 = default,
+                                            Vector2 p2 = default) {
+    }
+
+    protected static async Task<int> GetValueAsync(params int[] args) {
         return await Promise<int>.FromResult(0);
     }
 

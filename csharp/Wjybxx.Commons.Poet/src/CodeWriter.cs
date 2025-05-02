@@ -688,6 +688,7 @@ public sealed class CodeWriter
                 Emit("params ");
             }
 
+            EmitAttributes(parameter.attributes);
             EmitTypeName(parameter.type);
             Emit(" ");
             Emit(parameter.name);
