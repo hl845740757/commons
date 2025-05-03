@@ -89,6 +89,15 @@ public static class EventLoopUtil
         localSyncContext.Value = context;
     }
 
+    /// <summary>
+    /// 获取用于回调的线程
+    /// </summary>
+    /// <param name="executor"></param>
+    /// <returns></returns>
+    public static IExecutor? GetAwaiterExecutor(IExecutor? executor) {
+        return executor ?? localSyncContext.Value;
+    }
+
     #endregion
 }
 }

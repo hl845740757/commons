@@ -83,4 +83,40 @@ public class FutureAwaitTest
         await globalEventLoop;
         Assert.IsTrue(globalEventLoop.InEventLoop(), "after globalEventLoop.InEventLoop()");
     }
+    
+    [Test]
+    public async Task TestSuppressCancellation() {
+        {
+            ValueFuture future = globalEventLoop.ScheduleAction(() => throw new OperationCanceledException(),
+                TimeSpan.FromSeconds(1));
+            TaskResult<int> result = await future.GetAwaitable(globalEventLoop, SuppressedTypes.Cancellation)
+                .WithOptions(TaskOptions.STAGE_TRY_INLINE);
+            Assert.IsTrue(result.IsCancelled);
+        }
+        {
+            ValueFuture<string> future2 = globalEventLoop.ScheduleFunc<string>(() => throw new OperationCanceledException(),
+                TimeSpan.FromSeconds(1));
+            TaskResult<string> result2 = await future2.GetAwaitable(globalEventLoop, SuppressedTypes.Cancellation)
+                .WithOptions(TaskOptions.STAGE_TRY_INLINE);
+            Assert.IsTrue(result2.IsCancelled);
+        }
+    }
+    
+    [Test]
+    public async Task TestSuppressError() {
+        {
+            ValueFuture future = globalEventLoop.ScheduleAction(() => throw new Exception(),
+                TimeSpan.FromSeconds(1));
+            TaskResult<int> result = await future.GetAwaitable(globalEventLoop, SuppressedTypes.Error)
+                .WithOptions(TaskOptions.STAGE_TRY_INLINE);
+            Assert.IsTrue(result.IsFailed);
+        }
+        {
+            ValueFuture<string> future2 = globalEventLoop.ScheduleFunc<string>(() => throw new Exception(),
+                TimeSpan.FromSeconds(1));
+            TaskResult<string> result2 = await future2.GetAwaitable(globalEventLoop, SuppressedTypes.Error)
+                .WithOptions(TaskOptions.STAGE_TRY_INLINE);
+            Assert.IsTrue(result2.IsFailed);
+        }
+    }
 }

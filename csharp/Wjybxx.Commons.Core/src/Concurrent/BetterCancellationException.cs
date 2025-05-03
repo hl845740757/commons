@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 
 
 namespace Wjybxx.Commons.Concurrent
@@ -57,6 +58,7 @@ public class BetterCancellationException : OperationCanceledException
     /// 捕获目标异常 -- 在目标异常的堆栈基础上增加当前堆栈。
     /// 作用：异步任务在重新抛出异常时应当记录当前堆栈，否则会导致用户的代码被中断而没有被记录。
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static BetterCancellationException Capture(OperationCanceledException ex) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
         BetterCancellationException r;

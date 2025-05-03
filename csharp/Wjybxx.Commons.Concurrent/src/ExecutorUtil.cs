@@ -341,6 +341,20 @@ public static class ExecutorUtil
                && eventLoop.InEventLoop();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool IsSuppressible(this SuppressedTypes self, TaskStatus status) {
+        return (self.HasFlag(SuppressedTypes.Cancellation) && status == TaskStatus.Cancelled)
+               || (self.HasFlag(SuppressedTypes.Error) && status == TaskStatus.Failed);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool IsSuppressible(this SuppressedTypes self, Exception ex) {
+        if (ex is OperationCanceledException) {
+            return self.HasFlag(SuppressedTypes.Cancellation);
+        }
+        return self.HasFlag(SuppressedTypes.Error);
+    }
+
     #endregion
 
     #region box-class

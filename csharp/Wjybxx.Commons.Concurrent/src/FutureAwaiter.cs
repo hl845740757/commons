@@ -40,7 +40,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public FutureAwaiter(IFuture future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = FutureAwaiter.GetAwaiterExecutor(executor);
+        _executor = EventLoopUtil.GetAwaiterExecutor(executor);
         _options = options;
     }
 
@@ -58,6 +58,10 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中 -- 不可手动调用
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void GetResult() {
+        SuppressedTypes suppressedTypes = (SuppressedTypes)_options;
+        if (suppressedTypes.IsSuppressible(_future.Status)) {
+            return;
+        }
         _future.ThrowIfFailedOrCancelled();
     }
 
@@ -86,10 +90,6 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
             _future.OnCompletedAsync(_executor, invoker, continuation, _options);
         }
     }
-
-    internal static IExecutor? GetAwaiterExecutor(IExecutor? executor) {
-        return executor ?? EventLoopUtil.Current;
-    }
 }
 
 /// <summary>
@@ -110,7 +110,7 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public FutureAwaiter(IFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = FutureAwaiter.GetAwaiterExecutor(executor);
+        _executor = EventLoopUtil.GetAwaiterExecutor(executor);
         _options = options;
     }
 
@@ -128,6 +128,10 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中 -- 不可手动调用
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetResult() {
+        SuppressedTypes suppressedTypes = (SuppressedTypes)_options;
+        if (suppressedTypes.IsSuppressible(_future.Status)) {
+            return default;
+        }
         return _future.Get();
     }
 

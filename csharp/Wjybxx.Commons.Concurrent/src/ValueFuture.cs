@@ -64,9 +64,18 @@ public readonly struct ValueFuture
         _ex = null;
     }
 
-    public ValueFutureAwaiter GetAwaiter() => new ValueFutureAwaiter(this);
+    public ValueFutureAwaiter GetAwaiter() => new(this);
 
-    public ValueFutureAwaitable GetAwaitable(IExecutor executor, int options = 0) => new ValueFutureAwaitable(this, executor, options);
+    /// <summary>
+    /// <see cref="IFuture.GetAwaitable"/>
+    /// </summary>
+    public ValueFutureAwaitable GetAwaitable(IExecutor executor, int options = 0) => new(this, executor, options);
+
+    /// <summary>
+    /// <see cref="IFuture.GetAwaitable"/>
+    /// </summary>
+    public SuppressibleAwaitable GetAwaitable(IExecutor executor, SuppressedTypes suppressedTypes, int options = 0) =>
+        new(this, executor, (int)suppressedTypes | options);
 
     public static ValueFuture FromResult() {
         return new ValueFuture((Exception)null);
@@ -237,6 +246,40 @@ public readonly struct ValueFuture
         }
     }
 
+    internal TaskResult<int> GetResult(SuppressedTypes suppressedTypes) {
+        if (_future == null) {
+            if (_ex == null) {
+                return new TaskResult<int>(0, null);
+            }
+            if (_ex is OperationCanceledException canceledException) {
+                if (suppressedTypes.HasFlag(SuppressedTypes.Cancellation)) {
+                    return new TaskResult<int>(default, canceledException);
+                }
+                throw BetterCancellationException.Capture(canceledException);
+            }
+            ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
+            if (suppressedTypes.HasFlag(SuppressedTypes.Error)) {
+                return new TaskResult<int>(default, dispatchInfo.SourceException);
+            }
+            dispatchInfo.Throw();
+            return default;
+        }
+        if (_future is IValuePromise valuePromise) {
+            if (suppressedTypes.IsSuppressible(valuePromise.GetStatus(_reentryId))) {
+                return new TaskResult<int>(default, valuePromise.GetException(_reentryId));
+            }
+            valuePromise.GetVoidResult(_reentryId);
+            return default;
+        } else {
+            IFuture future = (IFuture)_future;
+            if (suppressedTypes.IsSuppressible(future.Status)) {
+                return new TaskResult<int>(default, future.ExceptionNow(false));
+            }
+            future.Get();
+            return default;
+        }
+    }
+
     internal static readonly Action<object> invoker = (state) => ((Action)state).Invoke();
 
     internal void OnCompleted(Action action, IExecutor? executor, int options) {
@@ -309,9 +352,19 @@ public readonly struct ValueFuture<T>
         _ex = null;
     }
 
-    public ValueFutureAwaiter<T> GetAwaiter() => new ValueFutureAwaiter<T>(this);
+    public ValueFutureAwaiter<T> GetAwaiter() => new(this);
 
-    public ValueFutureAwaitable<T> GetAwaitable(IExecutor executor, int options = 0) => new ValueFutureAwaitable<T>(this, executor, options);
+    /// <summary>
+    /// <see cref="IFuture.GetAwaitable"/>
+    /// </summary>
+    public ValueFutureAwaitable<T> GetAwaitable(IExecutor executor, int options = 0) => new(this, executor, options);
+
+    /// <summary>
+    /// <see cref="IFuture.GetAwaitable"/>
+    /// </summary>
+    public SuppressibleAwaitable<T> GetAwaitable(IExecutor executor, SuppressedTypes suppressedTypes, int options = 0) =>
+        new(this, executor, (int)suppressedTypes | options);
+
 
     public static ValueFuture<T> FromResult(T result) {
         return new ValueFuture<T>(result, null);
@@ -501,6 +554,38 @@ public readonly struct ValueFuture<T>
             return valuePromise.GetResult(_reentryId);
         } else {
             IFuture<T> future = (IFuture<T>)_future;
+            return future.Get();
+        }
+    }
+
+    internal TaskResult<T> GetResult(SuppressedTypes suppressedTypes) {
+        if (_future == null) {
+            if (_ex == null) {
+                return new TaskResult<T>(_result, null);
+            }
+            if (_ex is OperationCanceledException canceledException) {
+                if (suppressedTypes.HasFlag(SuppressedTypes.Cancellation)) {
+                    return new TaskResult<T>(default, canceledException);
+                }
+                throw BetterCancellationException.Capture(canceledException);
+            }
+            ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
+            if (suppressedTypes.HasFlag(SuppressedTypes.Error)) {
+                return new TaskResult<T>(default, dispatchInfo.SourceException);
+            }
+            dispatchInfo.Throw();
+            return default;
+        }
+        if (_future is IValuePromise<T> valuePromise) {
+            if (suppressedTypes.IsSuppressible(valuePromise.GetStatus(_reentryId))) {
+                return new TaskResult<T>(default, valuePromise.GetException(_reentryId));
+            }
+            return valuePromise.GetResult(_reentryId);
+        } else {
+            IFuture<T> future = (IFuture<T>)_future;
+            if (suppressedTypes.IsSuppressible(future.Status)) {
+                return new TaskResult<T>(default, future.ExceptionNow(false));
+            }
             return future.Get();
         }
     }

@@ -21,16 +21,16 @@ using System;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 用于绑定回调线程
+/// 用于绑定回调线程和禁止异常抛出
 /// 注意：不可手动获取<see cref="GetAwaiter"/>。
 /// </summary>
-public readonly struct ValueFutureAwaitable
+public readonly struct SuppressibleAwaitable
 {
     private readonly ValueFuture _future;
     private readonly IExecutor _executor;
     private readonly int _options;
 
-    public ValueFutureAwaitable(ValueFuture future, IExecutor executor, int options) {
+    public SuppressibleAwaitable(ValueFuture future, IExecutor executor, int options) {
         _future = future;
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _options = options;
@@ -41,33 +41,34 @@ public readonly struct ValueFutureAwaitable
     /// </summary>
     /// <param name="options"></param>
     /// <returns></returns>
-    public ValueFutureAwaitable AddOptions(int options) {
-        return new ValueFutureAwaitable(_future, _executor, _options | options);
+    public SuppressibleAwaitable AddOptions(int options) {
+        return new SuppressibleAwaitable(_future, _executor, _options | options);
     }
 
     /// <summary>
-    /// 替换调度选项
+    /// 替换调度选项(保留异常禁用信息)
     /// </summary>
     /// <param name="options"></param>
     /// <returns></returns>
-    public ValueFutureAwaitable WithOptions(int options) {
-        return new ValueFutureAwaitable(_future, _executor, options);
+    public SuppressibleAwaitable WithOptions(int options) {
+        int suppressed = _options & (int)SuppressedTypes.All;
+        return new SuppressibleAwaitable(_future, _executor, suppressed | options);
     }
 
-    public ValueFutureAwaiter GetAwaiter() => new(_future, _executor, _options);
+    public SuppressibleAwaiter GetAwaiter() => new(_future, _executor, _options);
 }
 
 /// <summary>
 /// 用于绑定回调线程
 /// 注意：不可手动获取<see cref="GetAwaiter"/>。
 /// </summary>
-public readonly struct ValueFutureAwaitable<T>
+public readonly struct SuppressibleAwaitable<T>
 {
     private readonly ValueFuture<T> _future;
     private readonly IExecutor _executor;
     private readonly int _options;
 
-    public ValueFutureAwaitable(ValueFuture<T> future, IExecutor executor, int options) {
+    public SuppressibleAwaitable(ValueFuture<T> future, IExecutor executor, int options) {
         _future = future;
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _options = options;
@@ -78,19 +79,20 @@ public readonly struct ValueFutureAwaitable<T>
     /// </summary>
     /// <param name="options"></param>
     /// <returns></returns>
-    public ValueFutureAwaitable<T> AddOptions(int options) {
-        return new ValueFutureAwaitable<T>(_future, _executor, _options | options);
+    public SuppressibleAwaitable<T> AddOptions(int options) {
+        return new SuppressibleAwaitable<T>(_future, _executor, _options | options);
     }
 
     /// <summary>
-    /// 替换调度选项
+    /// 替换调度选项(保留异常禁用信息)
     /// </summary>
     /// <param name="options"></param>
     /// <returns></returns>
-    public ValueFutureAwaitable<T> WithOptions(int options) {
-        return new ValueFutureAwaitable<T>(_future, _executor, options);
+    public SuppressibleAwaitable<T> WithOptions(int options) {
+        int suppressed = _options & (int)SuppressedTypes.All;
+        return new SuppressibleAwaitable<T>(_future, _executor, suppressed | options);
     }
 
-    public ValueFutureAwaiter<T> GetAwaiter() => new(_future, _executor, _options);
+    public SuppressibleAwaiter<T> GetAwaiter() => new(_future, _executor, _options);
 }
 }

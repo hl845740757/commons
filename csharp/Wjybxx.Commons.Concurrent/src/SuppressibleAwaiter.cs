@@ -1,6 +1,6 @@
 #region LICENSE
 
-// Copyright 2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 
 /// </summary>
-public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
+public readonly struct SuppressibleAwaiter : ICriticalNotifyCompletion
 {
     private readonly ValueFuture _future;
     private readonly IExecutor? _executor;
@@ -36,7 +36,7 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
     /// <param name="future"></param>
     /// <param name="executor"></param>
     /// <param name="options"></param>
-    public ValueFutureAwaiter(ValueFuture future, IExecutor? executor = null, int options = 0) {
+    public SuppressibleAwaiter(ValueFuture future, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = EventLoopUtil.GetAwaiterExecutor(executor);
         _options = options;
@@ -55,8 +55,8 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
     // 2. GetResult
     // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void GetResult() {
-        _future.GetResult();
+    public TaskResult<int> GetResult() {
+        return _future.GetResult((SuppressedTypes)_options);
     }
 
     // 3. OnCompleted
@@ -76,7 +76,7 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
     }
 }
 
-public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
+public readonly struct SuppressibleAwaiter<T> : ICriticalNotifyCompletion
 {
     private readonly ValueFuture<T> _future;
     private readonly IExecutor? _executor;
@@ -88,7 +88,7 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="future"></param>
     /// <param name="executor"></param>
     /// <param name="options"></param>
-    public ValueFutureAwaiter(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
+    public SuppressibleAwaiter(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = EventLoopUtil.GetAwaiterExecutor(executor);
         _options = options;
@@ -107,8 +107,8 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
     // 2. GetResult
     // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T GetResult() {
-        return _future.GetResult();
+    public TaskResult<T> GetResult() {
+        return _future.GetResult((SuppressedTypes)_options);
     }
 
     // 3. OnCompleted

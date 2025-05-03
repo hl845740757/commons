@@ -101,6 +101,14 @@ public static class TaskOptions
     /// 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
     /// </summary>
     public const int STAGE_UNCANCELLABLE_CTX = 1 << 24;
+    /// <summary>
+    /// 抑制await抛出取消异常(性能因素)
+    /// </summary>
+    public const int SUPPRESS_CANCELLATION_THROW = 1 << 25;
+    /// <summary>
+    /// 抑制await抛出失败异常(性能因素)
+    /// </summary>
+    public const int SUPPRESS_ERROR_THROW = 1 << 26;
 
     #region util
 
