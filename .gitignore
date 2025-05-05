@@ -42,3 +42,6 @@ build/
 
 ### 临时目录
 **/temp/*
+csharp/Wjybxx.BTree.Codec/Generated/*
+csharp/Wjybxx.BTree.Tests/Generated/*
+csharp/Wjybxx.Dson.Tests/Generated/*

@@ -162,7 +162,6 @@ internal class AptFieldProps
     private static PropertyInfo refPropertyGetter;
     private static PropertyInfo refPropertySetter;
 
-    private static PropertyInfo refPropertyDsonType;
     private static PropertyInfo refPropertyNumberStyle;
     private static PropertyInfo refPropertyStringStyle;
     private static PropertyInfo refPropertyObjectStyle;
@@ -172,13 +171,13 @@ internal class AptFieldProps
     private static PropertyInfo refPropertyReadProxy;
     private static PropertyInfo refPropertyImpl;
     // DsonIgnore
-    private static PropertyInfo refPropertyValue;
+    private static PropertyInfo refPropertyIgnoreValue;
 
     /// <summary>
     /// 该方法只有出现反射数据的时候才可调用
     /// </summary>
     private static void InitReflectEnv() {
-        if (refPropertyValue != null) {
+        if (refPropertyIgnoreValue != null) {
             return;
         }
         {
@@ -190,7 +189,6 @@ internal class AptFieldProps
             refPropertyGetter = type.GetProperty("Getter");
             refPropertySetter = type.GetProperty("Setter");
 
-            refPropertyDsonType = type.GetProperty("DsonType");
             refPropertyNumberStyle = type.GetProperty("NumberStyle");
             refPropertyStringStyle = type.GetProperty("StringStyle");
             refPropertyObjectStyle = type.GetProperty("ObjectStyle");
@@ -205,7 +203,7 @@ internal class AptFieldProps
             if (type == null) {
                 throw new Exception($"load type {CodecProcessor.CNAME_DSON_IGNORE} failed");
             }
-            refPropertyValue = type.GetProperty("Value");
+            refPropertyIgnoreValue = type.GetProperty("Value");
         }
     }
 #nullable enable
@@ -263,9 +261,14 @@ internal class AptFieldProps
         if (attributeData == null) {
             return;
         }
-        // 属性在构造函数中
-        TypedConstant typedConstant = attributeData.CompilationData.ConstructorArguments[0];
-        ignore = (bool?)typedConstant.Value;
+        if (attributeData.CompilationData != null) {
+            // 属性在构造函数中
+            TypedConstant typedConstant = attributeData.CompilationData.ConstructorArguments[0];
+            ignore = (bool)typedConstant.Value!;
+        } else if (attributeData.ReflectionData != null) {
+            // Value属性
+            ignore = (bool)refPropertyIgnoreValue.GetValue(attributeData.ReflectionData);
+        }
     }
 
     #endregion

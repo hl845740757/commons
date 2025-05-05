@@ -47,9 +47,16 @@ public static class AptUtils
     /// <summary>
     /// 为生成代码的注解处理器创建一个通用注解
     /// </summary>
-    public static AttributeSpec NewProcessorInfoAnnotation(Type type, DateTime? dateTime = null) {
+    /// <param name="type">生成器的类型信息</param>
+    /// <param name="version">生成器的版本</param>
+    /// <param name="dateTime">执行时间</param>
+    /// <returns></returns>
+    public static AttributeSpec NewProcessorInfoAnnotation(Type type, string? version = null, DateTime? dateTime = null) {
         var builder = AttributeSpec.NewBuilder(clsName_GeneratedAttribute)
             .Constructor(CodeBlock.Of("$S", type.ToString()));
+        if (version != null) {
+            builder.AddMember("Version", "$S", version);
+        }
         if (dateTime != null) {
             builder.AddMember("DateTime", "$S", dateTime.Value.ToString("s"));
         }

@@ -12,6 +12,8 @@
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
         <RootNamespace>BTree.Tests</RootNamespace>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
     </PropertyGroup>
 
     <ItemGroup>
@@ -30,5 +32,12 @@
         <ProjectReference Include="..\Wjybxx.Commons.Apt\Wjybxx.Commons.Apt.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
         <ProjectReference Include="..\Wjybxx.Dson.Apt\Wjybxx.Dson.Apt.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
-    
+
+    <!-- 排除生成文件目录 -->
+    <ItemGroup>
+        <Compile Remove="Generated\**" />
+    </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Remove="Generated\**" />
+    </ItemGroup>
 </Project>
