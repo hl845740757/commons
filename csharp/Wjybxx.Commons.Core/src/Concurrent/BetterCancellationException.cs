@@ -56,18 +56,21 @@ public class BetterCancellationException : OperationCanceledException
 
     /// <summary>
     /// 捕获目标异常 -- 在目标异常的堆栈基础上增加当前堆栈。
+    ///
     /// 作用：异步任务在重新抛出异常时应当记录当前堆栈，否则会导致用户的代码被中断而没有被记录。
+    /// C#的异常处理机制与Java不同，异常重新抛出时会重新填充堆栈，因此我们这里不需要做处理
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static BetterCancellationException Capture(OperationCanceledException ex) {
-        if (ex == null) throw new ArgumentNullException(nameof(ex));
-        BetterCancellationException r;
-        if (ex is BetterCancellationException ex2) {
-            r = new BetterCancellationException(ex2.Code, ex2.Message, ex);
-        } else {
-            r = new BetterCancellationException(CancelCodes.REASON_DEFAULT, null, ex);
-        }
-        return r;
+    public static OperationCanceledException Capture(OperationCanceledException ex) {
+        return ex;
+        // if (ex == null) throw new ArgumentNullException(nameof(ex));
+        // BetterCancellationException r;
+        // if (ex is BetterCancellationException ex2) {
+        //     r = new BetterCancellationException(ex2.Code, ex2.Message, ex);
+        // } else {
+        //     r = new BetterCancellationException(CancelCodes.REASON_DEFAULT, null, ex);
+        // }
+        // return r;
     }
 }
 }

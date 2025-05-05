@@ -266,9 +266,14 @@ public abstract class AbstractPromise
         return ex;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Exception UnwrapException(object ex) {
-        if (ex == null || ex == EX_COMPUTING || ex == EX_SUCCESS) throw new InvalidOperationException();
-        if (ex is ExceptionDispatchInfo dispatchInfo) return dispatchInfo.SourceException;
+        if (ex == null || ex == EX_COMPUTING || ex == EX_SUCCESS) {
+            throw new InvalidOperationException();
+        }
+        if (ex is ExceptionDispatchInfo dispatchInfo) {
+            return ExceptionUtil.RestoreStackTrace(dispatchInfo);
+        }
         return (Exception)ex; // 取消
     }
 
@@ -284,6 +289,20 @@ public abstract class AbstractPromise
                     throw BetterCancellationException.Capture(ex2);
                 }
                 return ex2;
+            }
+            case ST_SUCCESS:
+                throw new IllegalStateException("Task completed with a result");
+            default:
+                throw new IllegalStateException("Task has not completed");
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static object ExceptionOrDispatchInfoNow(int state, object? ex) {
+        switch (state) {
+            case ST_FAILED:
+            case ST_CANCELLED: {
+                return ex!;
             }
             case ST_SUCCESS:
                 throw new IllegalStateException("Task completed with a result");

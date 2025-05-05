@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using Wjybxx.Commons.Collections;
@@ -33,6 +34,19 @@ namespace Wjybxx.Commons
 /// </summary>
 public static class ExceptionUtil
 {
+    /// <summary>
+    /// 用于恢复异常的堆栈数据，比抛出异常再捕获肯定是更高效的
+    /// </summary>
+    private static readonly MethodInfo ref_RestoreDispatchState;
+    private static readonly FieldInfo ref_DispatchState;
+
+    static ExceptionUtil() {
+        ref_RestoreDispatchState = typeof(Exception).GetMethod("RestoreDispatchState", BindingFlags.NonPublic | BindingFlags.Instance)
+                                   ?? throw new Exception("Method 'Exception.RestoreDispatchState' not found");
+        ref_DispatchState = typeof(ExceptionDispatchInfo).GetField("_dispatchState", BindingFlags.NonPublic | BindingFlags.Instance)
+                            ?? throw new Exception("Field 'ExceptionDispatchInfo._dispatchState' not found");
+    }
+
     /// <summary>
     /// 获取异常的根
     /// </summary>
@@ -58,35 +72,16 @@ public static class ExceptionUtil
     }
 
     /// <summary>
-    /// 捕获异常堆栈
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#if NET6_0_OR_GREATER
-    [StackTraceHidden]
-#endif
-    public static ExceptionDispatchInfo? TryCapture(Exception? ex) {
-        return ex == null ? null : ExceptionDispatchInfo.Capture(ex);
-    }
-
-    /// <summary>
     /// 恢复异常的堆栈
     /// </summary>
     /// <param name="dispatchInfo"></param>
     /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#if NET6_0_OR_GREATER
-    [StackTraceHidden]
-#endif
     public static Exception RestoreStackTrace(ExceptionDispatchInfo dispatchInfo) {
         if (dispatchInfo == null) throw new ArgumentNullException(nameof(dispatchInfo));
-        // c# 没有开放接口直接恢复堆栈，我们通过重新抛出异常来恢复堆栈
-        try {
-            dispatchInfo.Throw();
-            return dispatchInfo.SourceException;
-        }
-        catch (Exception e) {
-            return e;
-        }
+        // 这里会产生装箱，但也比抛出异常再捕获强得多
+        object state = ref_DispatchState.GetValue(dispatchInfo);
+        ref_RestoreDispatchState.Invoke(dispatchInfo.SourceException, new[] { state });
+        return dispatchInfo.SourceException;
     }
 }
 }

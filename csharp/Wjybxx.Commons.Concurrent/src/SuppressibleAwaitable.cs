@@ -29,11 +29,17 @@ public readonly struct SuppressibleAwaitable
     private readonly ValueFuture _future;
     private readonly IExecutor _executor;
     private readonly int _options;
+    private readonly bool _requireResult;
 
-    public SuppressibleAwaitable(ValueFuture future, IExecutor executor, int options) {
+    /// <param name="future">future</param>
+    /// <param name="executor">回调线程</param>
+    /// <param name="options">调度选项</param>
+    /// <param name="requireResult">是否需要获取最终结果</param>
+    public SuppressibleAwaitable(ValueFuture future, IExecutor executor, int options, bool requireResult) {
         _future = future;
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _options = options;
+        _requireResult = requireResult;
     }
 
     /// <summary>
@@ -42,7 +48,7 @@ public readonly struct SuppressibleAwaitable
     /// <param name="options"></param>
     /// <returns></returns>
     public SuppressibleAwaitable AddOptions(int options) {
-        return new SuppressibleAwaitable(_future, _executor, _options | options);
+        return new SuppressibleAwaitable(_future, _executor, _options | options, _requireResult);
     }
 
     /// <summary>
@@ -52,10 +58,19 @@ public readonly struct SuppressibleAwaitable
     /// <returns></returns>
     public SuppressibleAwaitable WithOptions(int options) {
         int suppressed = _options & (int)SuppressedTypes.All;
-        return new SuppressibleAwaitable(_future, _executor, suppressed | options);
+        return new SuppressibleAwaitable(_future, _executor, suppressed | options, _requireResult);
     }
 
-    public SuppressibleAwaiter GetAwaiter() => new(_future, _executor, _options);
+    /// <summary>
+    /// 设置是否获取最终的结果
+    /// </summary>
+    /// <param name="requireResult"></param>
+    /// <returns></returns>
+    public SuppressibleAwaitable RequireResult(bool requireResult = true) {
+        return new SuppressibleAwaitable(_future, _executor, _options, requireResult);
+    }
+
+    public SuppressibleAwaiter GetAwaiter() => new(_future, _executor, _options, _requireResult);
 }
 
 /// <summary>

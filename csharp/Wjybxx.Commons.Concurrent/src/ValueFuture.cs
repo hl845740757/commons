@@ -29,73 +29,87 @@ namespace Wjybxx.Commons.Concurrent
 public readonly struct ValueFuture
 {
     public static readonly ValueFuture COMPLETED = new ValueFuture();
-    public static readonly ValueFuture CANCELLED = new ValueFuture(StacklessCancellationException.Default);
+    public static readonly ValueFuture CANCELLED = new ValueFuture(null, StacklessCancellationException.Default);
 
     private readonly object? _future;
     private readonly int _reentryId;
+    private readonly object? _result;
     private readonly object? _ex;
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="ex">如果为null，则表示成功</param>
-    public ValueFuture(Exception? ex) {
+    /** 用工厂方法构建，避免歧义 */
+    private ValueFuture(object? r, object? ex) {
         _future = null;
         _reentryId = 0;
-        _ex = ex == null ? null : AbstractPromise.WrapException(ex);
-    }
-
-    public ValueFuture(ExceptionDispatchInfo ex) {
-        if (ex == null) throw new ArgumentNullException(nameof(ex));
-        _future = null;
-        _reentryId = 0;
-        _ex = AbstractPromise.WrapException(ex);
+        _result = r;
+        _ex = ex != null ? AbstractPromise.WrapException(ex) : null;
     }
 
     public ValueFuture(IFuture future) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = 0;
+        _result = null;
         _ex = null;
     }
 
     public ValueFuture(IValuePromise future, int reentryId) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
         _reentryId = reentryId;
+        _result = null;
         _ex = null;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaiter GetAwaiter() => new(this);
 
     /// <summary>
     /// <see cref="IFuture.GetAwaitable"/>
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaitable GetAwaitable(IExecutor executor, int options = 0) => new(this, executor, options);
 
     /// <summary>
     /// <see cref="IFuture.GetAwaitable"/>
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public SuppressibleAwaitable GetAwaitable(IExecutor executor, SuppressedTypes suppressedTypes, int options = 0) =>
-        new(this, executor, (int)suppressedTypes | options);
+        new(this, executor, (int)suppressedTypes | options, false);
 
-    public static ValueFuture FromResult() {
-        return new ValueFuture((Exception)null);
+    #region factory
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ValueFuture FromResult(object? r = null) {
+        return r == null ? default : new ValueFuture(r, null);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ValueFuture FromException(Exception ex) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
-        return new ValueFuture(ex);
+        return new ValueFuture(null, ex);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ValueFuture FromException(ExceptionDispatchInfo ex) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
-        return new ValueFuture(ex);
+        return new ValueFuture(null, ex);
     }
 
-    public static ValueFuture FromCancelled(int cancelCode) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ValueFuture FromCancelled(int cancelCode = 1) {
         Exception ex = StacklessCancellationException.InstOf(cancelCode);
-        return new ValueFuture(ex);
+        return new ValueFuture(null, ex);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static ValueFuture InternalFromException(object ex) {
+        if (ex == null) throw new ArgumentNullException(nameof(ex));
+        return new ValueFuture(null, ex);
+    }
+
+    #endregion
+
+    /// <summary>
+    /// 关联的任务的状态
+    /// </summary>
     public TaskStatus Status {
         get {
             if (_future == null) {
@@ -135,70 +149,30 @@ public readonly struct ValueFuture
     public ValueFuture Preserve() => new ValueFuture(AsFuture());
 
     /// <summary>
-    /// 将Future的结果拷贝下来
-    /// </summary>
-    /// <returns></returns>
-    public ValueFuture Memorize() {
-        if (!IsCompleted) {
-            throw new InvalidOperationException();
-        }
-        if (_future == null) {
-            return this; // copy
-        }
-        if (_future is IValuePromise valuePromise) {
-            switch (valuePromise.GetStatus(_reentryId)) {
-                case TaskStatus.Success: {
-                    return COMPLETED;
-                }
-                case TaskStatus.Cancelled: {
-                    return CANCELLED;
-                }
-                case TaskStatus.Failed: {
-                    return new ValueFuture(valuePromise.GetException(_reentryId));
-                }
-                default: throw new AssertionError();
-            }
-        }
-        {
-            IFuture future = (IFuture)_future;
-            switch (future.Status) {
-                case TaskStatus.Success: {
-                    return COMPLETED;
-                }
-                case TaskStatus.Cancelled: {
-                    return CANCELLED;
-                }
-                case TaskStatus.Failed: {
-                    return new ValueFuture(future.ExceptionNow(false));
-                }
-                default: throw new AssertionError();
-            }
-        }
-    }
-
-    /// <summary>
     /// 转换为普通的Future
     /// 该方法应当避免调用多次，且不可以在await以后调用
     /// </summary>
     public IFuture AsFuture() {
         if (_future == null) {
             if (_ex == null) {
-                return Promise<int>.COMPLETED;
+                return _result == null
+                    ? Promise<object>.COMPLETED
+                    : Promise<object>.FromResult(_result);
             }
             if (_ex is OperationCanceledException canceledException) {
-                // 可能是子类，有特殊逻辑
+                // 可能是子类，子类有额外数据 -- 避免创建额外实例
                 return _ex.GetType() == typeof(OperationCanceledException)
-                    ? Promise<int>.CANCELLED
-                    : Promise<int>.FromException(canceledException);
+                    ? Promise<object>.CANCELLED
+                    : Promise<object>.FromException(canceledException);
             }
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
-            return Promise<int>.FromException(dispatchInfo);
+            return Promise<object>.FromException(dispatchInfo);
         }
         if (_future is IFuture future) {
             return future;
         }
         IValuePromise valuePromise = (IValuePromise)_future;
-        return valuePromise.AsVoidFuture(_reentryId);
+        return valuePromise.AsFuture(_reentryId);
     }
 
     /// <summary>
@@ -246,37 +220,51 @@ public readonly struct ValueFuture
         }
     }
 
-    internal TaskResult<int> GetResult(SuppressedTypes suppressedTypes) {
+    /// <summary>
+    /// 获取任务的结果，可抑制异常的抛出
+    /// </summary>
+    /// <param name="suppressedTypes">禁止抛出信息</param>
+    /// <param name="requireResult">是否返回装箱的结果</param>
+    /// <returns></returns>
+    internal TaskResult GetResult(SuppressedTypes suppressedTypes, bool requireResult) {
         if (_future == null) {
             if (_ex == null) {
-                return new TaskResult<int>(0, null);
+                return TaskResult.FromResult(requireResult ? _result : null);
             }
             if (_ex is OperationCanceledException canceledException) {
                 if (suppressedTypes.HasFlag(SuppressedTypes.Cancellation)) {
-                    return new TaskResult<int>(default, canceledException);
+                    return TaskResult.FromException(canceledException);
                 }
                 throw BetterCancellationException.Capture(canceledException);
             }
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
             if (suppressedTypes.HasFlag(SuppressedTypes.Error)) {
-                return new TaskResult<int>(default, dispatchInfo.SourceException);
+                return TaskResult.FromException(dispatchInfo);
             }
             dispatchInfo.Throw();
             return default;
         }
         if (_future is IValuePromise valuePromise) {
             if (suppressedTypes.IsSuppressible(valuePromise.GetStatus(_reentryId))) {
-                return new TaskResult<int>(default, valuePromise.GetException(_reentryId));
+                return TaskResult.InternalFromException(valuePromise.GetExceptionOrDispatchInfo(_reentryId));
             }
-            valuePromise.GetVoidResult(_reentryId);
-            return default;
+            if (requireResult) {
+                return TaskResult.FromResult(valuePromise.GetResult(_reentryId));
+            } else {
+                valuePromise.GetVoidResult(_reentryId);
+                return default;
+            }
         } else {
             IFuture future = (IFuture)_future;
             if (suppressedTypes.IsSuppressible(future.Status)) {
-                return new TaskResult<int>(default, future.ExceptionNow(false));
+                return TaskResult.FromException(future.ExceptionNow(false));
             }
-            future.Get();
-            return default;
+            if (requireResult) {
+                return TaskResult.FromResult(future.Get());
+            } else {
+                future.ThrowIfFailedOrCancelled();
+                return default;
+            }
         }
     }
 
@@ -306,11 +294,16 @@ public readonly struct ValueFuture
     #endregion
 }
 
+/// <summary>
+///
+/// </summary>
+/// <typeparam name="T"></typeparam>
 [AsyncMethodBuilder(typeof(AsyncValueFutureMethodBuilder<>))]
 public readonly struct ValueFuture<T>
 {
     public static readonly ValueFuture<T> COMPLETED = new ValueFuture<T>(default, null);
     public static readonly ValueFuture<T> CANCELLED = new ValueFuture<T>(default, StacklessCancellationException.Default);
+    private static readonly bool IsReferenceType = typeof(T).IsClass;
 
     private readonly object? _future;
     private readonly int _reentryId;
@@ -318,24 +311,12 @@ public readonly struct ValueFuture<T>
     private readonly T? _result;
     private readonly object? _ex;
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="result"></param>
-    /// <param name="ex">如果为null，则表示成功</param>
-    public ValueFuture(T? result, Exception? ex) {
+    /** 通过工厂方法创建 */
+    private ValueFuture(T? result, object? ex) {
         _future = null;
         _reentryId = 0;
         _result = result;
-        _ex = ex == null ? null : AbstractPromise.WrapException(ex);
-    }
-
-    public ValueFuture(ExceptionDispatchInfo ex) {
-        if (ex == null) throw new ArgumentNullException(nameof(ex));
-        _future = null;
-        _reentryId = 0;
-        _result = default;
-        _ex = AbstractPromise.WrapException(ex);
+        _ex = ex != null ? AbstractPromise.WrapException(ex) : null;
     }
 
     public ValueFuture(IFuture<T> future) {
@@ -352,41 +333,57 @@ public readonly struct ValueFuture<T>
         _ex = null;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaiter<T> GetAwaiter() => new(this);
 
     /// <summary>
     /// <see cref="IFuture.GetAwaitable"/>
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaitable<T> GetAwaitable(IExecutor executor, int options = 0) => new(this, executor, options);
 
     /// <summary>
     /// <see cref="IFuture.GetAwaitable"/>
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public SuppressibleAwaitable<T> GetAwaitable(IExecutor executor, SuppressedTypes suppressedTypes, int options = 0) =>
         new(this, executor, (int)suppressedTypes | options);
 
+    #region factory
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ValueFuture<T> FromResult(T result) {
         return new ValueFuture<T>(result, null);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ValueFuture<T> FromException(Exception ex) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
         return new ValueFuture<T>(default, ex);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ValueFuture<T> FromException(ExceptionDispatchInfo ex) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
-        return new ValueFuture<T>(ex);
+        return new ValueFuture<T>(default, ex);
     }
 
-    public static ValueFuture<T> FromCancelled(int cancelCode) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ValueFuture<T> FromCancelled(int cancelCode = 1) {
         Exception ex = StacklessCancellationException.InstOf(cancelCode);
         return new ValueFuture<T>(default, ex);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static ValueFuture<T> InternalFromException(object ex) {
+        if (ex == null) throw new ArgumentNullException(nameof(ex));
+        return new ValueFuture<T>(default, ex);
+    }
+
+    #endregion
+
     /// <summary>
-    /// 获取任务当前的状态
+    /// 获取关联任务的状态
     /// </summary>
     public TaskStatus Status {
         get {
@@ -427,58 +424,18 @@ public readonly struct ValueFuture<T>
     public ValueFuture<T> Preserve() => new ValueFuture<T>(AsFuture());
 
     /// <summary>
-    /// 将Future的结果拷贝下来
-    /// </summary>
-    /// <returns></returns>
-    public ValueFuture<T> Memorize() {
-        if (!IsCompleted) {
-            throw new InvalidOperationException();
-        }
-        if (_future == null) {
-            return this; // copy
-        }
-        if (_future is IValuePromise<T> valuePromise) {
-            switch (valuePromise.GetStatus(_reentryId)) {
-                case TaskStatus.Success: {
-                    return new ValueFuture<T>(valuePromise.GetResult(_reentryId), null);
-                }
-                case TaskStatus.Cancelled: {
-                    return CANCELLED;
-                }
-                case TaskStatus.Failed: {
-                    return new ValueFuture<T>(default, valuePromise.GetException(_reentryId));
-                }
-                default: throw new AssertionError();
-            }
-        }
-        {
-            IFuture<T> future = (IFuture<T>)_future;
-            switch (future.Status) {
-                case TaskStatus.Success: {
-                    return new ValueFuture<T>(future.ResultNow(), null);
-                }
-                case TaskStatus.Cancelled: {
-                    return CANCELLED;
-                }
-                case TaskStatus.Failed: {
-                    return new ValueFuture<T>(default, future.ExceptionNow(false));
-                }
-                default: throw new AssertionError();
-            }
-        }
-    }
-
-    /// <summary>
     /// 转换为普通的Future
     /// 该方法应当避免调用多次，且不可以在await以后调用
     /// </summary>
     public IFuture<T> AsFuture() {
         if (_future == null) {
             if (_ex == null) {
-                return Promise<T>.FromResult(_result);
+                return (IsReferenceType && _result == null) // 避免测试null装箱
+                    ? Promise<T>.COMPLETED
+                    : Promise<T>.FromResult(_result);
             }
             if (_ex is OperationCanceledException canceledException) {
-                // 可能是子类，有特殊逻辑
+                // 可能是子类，有特殊数据 -- 避免创建额外实例
                 return _ex.GetType() == typeof(OperationCanceledException)
                     ? Promise<T>.CANCELLED
                     : Promise<T>.FromException(canceledException);
@@ -510,18 +467,18 @@ public readonly struct ValueFuture<T>
     public bool IsWrapper => _future != null;
 
     /// <summary>
-    /// 转换为不接收结果的Future
+    /// 转换为ValueFuture，可选择是否追踪最终结果。
+    /// 如果选择追踪最终结果，可以再通过<see cref="ValueFuture.GetAwaitable(IExecutor, SuppressedTypes, int)"/>
+    /// 装箱统一处理结果。
     /// </summary>
+    /// <param name="requireResult">是否需要最终结果</param>
     /// <returns></returns>
-    public ValueFuture ToVoid() {
+    public ValueFuture ToVoid(bool requireResult = false) {
         if (_future == null) {
             if (_ex == null) {
-                return ValueFuture.COMPLETED;
+                return ValueFuture.FromResult(requireResult ? _result : null);
             }
-            if (_ex is OperationCanceledException canceledException) {
-                return new ValueFuture(canceledException);
-            }
-            return new ValueFuture((ExceptionDispatchInfo)_ex);
+            return ValueFuture.InternalFromException(_ex);
         }
         if (_future is IFuture future) {
             return new ValueFuture(future);
@@ -558,35 +515,40 @@ public readonly struct ValueFuture<T>
         }
     }
 
+    /// <summary>
+    /// 获取任务的结果，可抑制异常的抛出
+    /// </summary>
+    /// <param name="suppressedTypes">禁止抛出信息</param>
+    /// <returns></returns>
     internal TaskResult<T> GetResult(SuppressedTypes suppressedTypes) {
         if (_future == null) {
             if (_ex == null) {
-                return new TaskResult<T>(_result, null);
+                return TaskResult<T>.FromResult(_result);
             }
             if (_ex is OperationCanceledException canceledException) {
                 if (suppressedTypes.HasFlag(SuppressedTypes.Cancellation)) {
-                    return new TaskResult<T>(default, canceledException);
+                    return TaskResult<T>.FromException(canceledException);
                 }
                 throw BetterCancellationException.Capture(canceledException);
             }
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
             if (suppressedTypes.HasFlag(SuppressedTypes.Error)) {
-                return new TaskResult<T>(default, dispatchInfo.SourceException);
+                return TaskResult<T>.FromException(dispatchInfo);
             }
             dispatchInfo.Throw();
             return default;
         }
         if (_future is IValuePromise<T> valuePromise) {
             if (suppressedTypes.IsSuppressible(valuePromise.GetStatus(_reentryId))) {
-                return new TaskResult<T>(default, valuePromise.GetException(_reentryId));
+                return TaskResult<T>.InternalFromException(valuePromise.GetExceptionOrDispatchInfo(_reentryId));
             }
-            return valuePromise.GetResult(_reentryId);
+            return TaskResult<T>.FromResult(valuePromise.GetResult(_reentryId));
         } else {
             IFuture<T> future = (IFuture<T>)_future;
             if (suppressedTypes.IsSuppressible(future.Status)) {
-                return new TaskResult<T>(default, future.ExceptionNow(false));
+                return TaskResult<T>.InternalFromException(future.ExceptionNow(false));
             }
-            return future.Get();
+            return TaskResult<T>.FromResult(future.Get());
         }
     }
 

@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -47,11 +48,29 @@ public interface IValuePromise
     Exception GetException(int reentryId, bool ignoreReentrant = false);
 
     /// <summary>
+    /// 返回原始的异常数据
+    /// 
+    /// 返回值类型：<see cref="OperationCanceledException"/>或<see cref="ExceptionDispatchInfo"/>
+    /// </summary>
+    /// <param name="reentryId"></param>
+    /// <param name="ignoreReentrant"></param>
+    /// <returns></returns>
+    object GetExceptionOrDispatchInfo(int reentryId, bool ignoreReentrant = false);
+
+    /// <summary>
     /// 如果任务成功完成，则触发回收；如果任务失败（含取消）则抛出异常
     /// </summary>
     /// <param name="reentryId"></param>
     /// <param name="ignoreReentrant"></param>
     void GetVoidResult(int reentryId, bool ignoreReentrant = false);
+
+    /// <summary>
+    /// 获取装箱的结果
+    /// </summary>
+    /// <param name="reentryId"></param>
+    /// <param name="ignoreReentrant"></param>
+    /// <returns></returns>
+    object GetResult(int reentryId, bool ignoreReentrant = false);
 
     /// <summary>
     /// 添加一个完成回调
@@ -76,7 +95,7 @@ public interface IValuePromise
     /// 转换为普通的Future
     /// 需要支持死锁检测
     /// </summary>
-    IFuture AsVoidFuture(int reentryId);
+    IFuture AsFuture(int reentryId);
 
     /// <summary>
     /// 用户不需要结果，Promise进入完成状态时即可回收
@@ -180,13 +199,13 @@ public interface IValuePromise<T> : IValuePromise
     /// <param name="reentryId">重入id，校验是否被重用</param>
     /// <param name="ignoreReentrant">是否忽略重入检测</param>
     /// <returns></returns>
-    T GetResult(int reentryId, bool ignoreReentrant = false);
+    new T GetResult(int reentryId, bool ignoreReentrant = false);
 
     /// <summary>
     /// 转换为普通的Future
     /// 需要支持死锁检测
     /// </summary>
-    IFuture<T> AsFuture(int reentryId);
+    new IFuture<T> AsFuture(int reentryId);
 
     /// <summary>
     /// 尝试将future置为成功完成状态，如果future已进入完成状态，则返回false
@@ -210,6 +229,16 @@ public interface IValuePromise<T> : IValuePromise
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void IValuePromise.SetResult(int reentryId, object result) {
         SetResult(reentryId, (T)result);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    object IValuePromise.GetResult(int reentryId, bool ignoreReentrant) {
+        return GetResult(reentryId, ignoreReentrant);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    IFuture IValuePromise.AsFuture(int reentryId) {
+        return AsFuture(reentryId);
     }
 
     #endregion

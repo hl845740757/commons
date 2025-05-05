@@ -202,8 +202,13 @@ public class ValuePromise<T> : IValuePromise<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Exception ExceptionNow(bool throwIfCancelled = true) {
+    private Exception ExceptionNow(bool throwIfCancelled) {
         return AbstractPromise.ExceptionNow(PollState(), _ex, throwIfCancelled);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private object ExceptionOrDispatchInfoNow() {
+        return AbstractPromise.ExceptionOrDispatchInfoNow(PollState(), _ex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -279,41 +284,10 @@ public class ValuePromise<T> : IValuePromise<T>
 
     #region api-future
 
-    public ValueFuture VoidFuture {
-        get {
-            TaskStatus status = Status;
-            switch (status) {
-                case TaskStatus.Success: {
-                    return new ValueFuture();
-                }
-                case TaskStatus.Cancelled:
-                case TaskStatus.Failed: {
-                    return new ValueFuture(ExceptionNow(false));
-                }
-                default: {
-                    return new ValueFuture(this, _reentryId);
-                }
-            }
-        }
-    }
+    // 这里我们不再进行特殊的优化，以允许ValueFuture获取装箱的结果；而且Promise一创建就完成的概率是比较低的
+    public ValueFuture VoidFuture => new ValueFuture(this, _reentryId);
 
-    public ValueFuture<T> Future {
-        get {
-            TaskStatus status = Status;
-            switch (status) {
-                case TaskStatus.Success: {
-                    return new ValueFuture<T>(ResultNow(), null);
-                }
-                case TaskStatus.Cancelled:
-                case TaskStatus.Failed: {
-                    return new ValueFuture<T>(default, ExceptionNow(false));
-                }
-                default: {
-                    return new ValueFuture<T>(this, _reentryId);
-                }
-            }
-        }
-    }
+    public ValueFuture<T> Future => new ValueFuture<T>(this, _reentryId);
 
     #region core
 
@@ -325,6 +299,16 @@ public class ValuePromise<T> : IValuePromise<T>
     public Exception GetException(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
         Exception ex = ExceptionNow(false);
+        // GetResult以后归还到池
+        if (!ignoreReentrant) {
+            PrepareToRecycle();
+        }
+        return ex;
+    }
+
+    public object GetExceptionOrDispatchInfo(int reentryId, bool ignoreReentrant = false) {
+        ValidateReentryId(reentryId, ignoreReentrant);
+        object ex = ExceptionOrDispatchInfoNow();
         // GetResult以后归还到池
         if (!ignoreReentrant) {
             PrepareToRecycle();
@@ -378,33 +362,6 @@ public class ValuePromise<T> : IValuePromise<T>
         return r;
     }
 
-    public IFuture AsVoidFuture(int reentryId) {
-        ValidateReentryId(reentryId);
-        TaskStatus status = Status;
-        switch (status) {
-            case TaskStatus.Success: {
-                GetVoidResult(reentryId); // 触发回收
-                return Promise<int>.COMPLETED; // 共享对象
-            }
-            case TaskStatus.Cancelled: {
-                Exception ex = GetException(reentryId); // 可能是子类异常
-                return ex.GetType() == typeof(OperationCanceledException)
-                    ? Promise<int>.CANCELLED
-                    : Promise<int>.FromException(ex);
-            }
-            case TaskStatus.Failed: {
-                Exception ex = GetException(reentryId);
-                return Promise<T>.FromException(ex);
-            }
-            default: {
-                // 添加回调
-                Promise<int> promise = new Promise<int>(_executor);
-                SetCompletion(TYPE_SET_VOID_PROMISE, promise, null, null, 0);
-                return promise;
-            }
-        }
-    }
-
     public IFuture<T> AsFuture(int reentryId) {
         ValidateReentryId(reentryId);
         TaskStatus status = Status;
@@ -414,14 +371,14 @@ public class ValuePromise<T> : IValuePromise<T>
                 return Promise<T>.FromResult(result);
             }
             case TaskStatus.Cancelled: {
-                Exception ex = GetException(reentryId); // 可能是子类异常
+                Exception ex = GetException(reentryId); // 触发回收-可能是子类异常
                 return ex.GetType() == typeof(OperationCanceledException)
                     ? Promise<T>.CANCELLED
                     : Promise<T>.FromException(ex);
             }
             case TaskStatus.Failed: {
-                Exception ex = GetException(reentryId);
-                return Promise<T>.FromException(ex);
+                object ex = GetExceptionOrDispatchInfo(reentryId);
+                return Promise<T>.FromException((ExceptionDispatchInfo)ex);
             }
             default: {
                 // 添加回调

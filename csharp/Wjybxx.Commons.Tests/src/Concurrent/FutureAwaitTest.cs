@@ -89,7 +89,7 @@ public class FutureAwaitTest
         {
             ValueFuture future = globalEventLoop.ScheduleAction(() => throw new OperationCanceledException(),
                 TimeSpan.FromSeconds(1));
-            TaskResult<int> result = await future.GetAwaitable(globalEventLoop, SuppressedTypes.Cancellation)
+            TaskResult result = await future.GetAwaitable(globalEventLoop, SuppressedTypes.Cancellation)
                 .WithOptions(TaskOptions.STAGE_TRY_INLINE);
             Assert.IsTrue(result.IsCancelled);
         }
@@ -107,7 +107,7 @@ public class FutureAwaitTest
         {
             ValueFuture future = globalEventLoop.ScheduleAction(() => throw new Exception(),
                 TimeSpan.FromSeconds(1));
-            TaskResult<int> result = await future.GetAwaitable(globalEventLoop, SuppressedTypes.Error)
+            TaskResult result = await future.GetAwaitable(globalEventLoop, SuppressedTypes.Error)
                 .WithOptions(TaskOptions.STAGE_TRY_INLINE);
             Assert.IsTrue(result.IsFailed);
         }

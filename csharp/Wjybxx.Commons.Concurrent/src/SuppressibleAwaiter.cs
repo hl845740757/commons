@@ -29,17 +29,20 @@ public readonly struct SuppressibleAwaiter : ICriticalNotifyCompletion
     private readonly ValueFuture _future;
     private readonly IExecutor? _executor;
     private readonly int _options;
+    private readonly bool _requireResult;
 
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="future"></param>
-    /// <param name="executor"></param>
-    /// <param name="options"></param>
-    public SuppressibleAwaiter(ValueFuture future, IExecutor? executor = null, int options = 0) {
+    /// <param name="future">future</param>
+    /// <param name="executor">回调线程</param>
+    /// <param name="options">调度选项</param>
+    /// <param name="requireResult">是否需要获取最终结果</param>
+    public SuppressibleAwaiter(ValueFuture future, IExecutor? executor, int options, bool requireResult) {
         _future = future;
         _executor = EventLoopUtil.GetAwaiterExecutor(executor);
         _options = options;
+        _requireResult = requireResult;
     }
 
     // 1.IsCompleted
@@ -55,8 +58,8 @@ public readonly struct SuppressibleAwaiter : ICriticalNotifyCompletion
     // 2. GetResult
     // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TaskResult<int> GetResult() {
-        return _future.GetResult((SuppressedTypes)_options);
+    public TaskResult GetResult() {
+        return _future.GetResult((SuppressedTypes)_options, _requireResult);
     }
 
     // 3. OnCompleted
