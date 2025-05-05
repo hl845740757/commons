@@ -27,6 +27,7 @@ namespace Wjybxx.Dson.Codec.Attributes
 ///
 /// 1.由于属性较多，因此属性都是get/set，但只应该初始化一次
 /// 2.由于要支持属性，因此不能关闭继承属性
+/// 3.如果是非自动属性，注解必须添加到字段上
 /// </summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 [Serializable]
@@ -48,19 +49,7 @@ public class DsonPropertyAttribute : Attribute
     /// </summary>
     [StableName] public string? Setter { get; set; }
 
-    #region tag
-
-    /// <summary>
-    /// 数据关联的{@link DsonType}，配合<see cref="DsonSubType"/>使用
-    /// <see cref="DsonBinary"/>
-    /// </summary>
-    [StableName] public DsonType DsonType { get; set; } = DsonType.EndOfObject;
-
-    /// <summary>
-    /// 用于声明子类型，项目可以定义一个自己的常量类。
-    /// <see cref="Wjybxx.Dson.DsonType.Binary"/>
-    /// </summary>
-    [StableName] public int DsonSubType { get; set; } = 0;
+    #region style
 
     /// <summary>
     /// 数字类型字段的文本格式

@@ -17,7 +17,6 @@
 package cn.wjybxx.dsoncodec.annotations;
 
 import cn.wjybxx.base.annotation.StableName;
-import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
@@ -73,20 +72,7 @@ public @interface DsonProperty {
 
     // endregion
 
-    // region tag
-
-    /**
-     * 数据关联的{@link DsonType}，配合{@link #dsonSubType()}使用
-     * 1.可声明 byte[] 的子类型
-     * 2.可将普通的int32/int64/double/string声明为带标签的对应结构
-     */
-    DsonType dsonType() default DsonType.END_OF_OBJECT;
-
-    /**
-     * 用于声明子类型，项目可以定义一个自己的常量类
-     * {@link DsonType#BINARY}
-     */
-    int dsonSubType() default 0;
+    // region style
 
     /** 数字类型字段的文本格式 */
     NumberStyle numberStyle() default NumberStyle.SIMPLE;

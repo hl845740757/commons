@@ -65,6 +65,7 @@ public enum Modifiers
     Virtual = 0x0020,
     /// <summary>
     /// 重写方法
+    /// (override和sealed可同时出现)
     /// </summary>
     Override = 0x0040,
     /// <summary>
@@ -97,7 +98,7 @@ public enum Modifiers
     /// <summary>
     /// 只读(类和方法)
     /// </summary>
-    Readonly = 0x1000,
+    ReadOnly = 0x1000,
     /// <summary>
     /// 常量
     /// </summary>

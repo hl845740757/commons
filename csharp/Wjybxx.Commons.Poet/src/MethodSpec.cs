@@ -110,16 +110,21 @@ public class MethodSpec : ISpecification
 
     /// <summary>
     /// 重写给定方法
-    /// （注意：如果是泛型类的方法，通常需要先构造目标泛型类以确定泛型参数）
+    ///
+    /// 1.如果是泛型类的方法，通常需要先构造目标泛型类以确定泛型参数。
+    /// 2.默认会删除<see cref="Modifiers.Abstract"/>和<see cref="Modifiers.Virtual"/>，
+    /// 如果方法来自于Class，则还会添加<see cref="Modifiers.Override"/>修饰符。
     /// </summary>
     public static Builder Overriding(MethodInfo methodInfo) {
         return CopyMethod(methodInfo, true);
     }
 
     private static Builder CopyMethod(MethodInfo methodInfo, bool overriding) {
+        Modifiers modifiers = Util.ParseModifiers(methodInfo);
+        if (overriding) {
+            modifiers = Util.AddOverrideModifiers(modifiers, methodInfo.DeclaringType!.IsClass);
+        }
         Builder builder = NewMethodBuilder(methodInfo.Name);
-        // MethodInfo.GetBaseDefinition() 可判断是否是重写方法
-        Modifiers modifiers = ParseModifiers(methodInfo, overriding);
         builder.AddModifiers(modifiers);
         // 拷贝泛型参数
         CopyTypeVariables(builder, methodInfo);
@@ -158,44 +163,6 @@ public class MethodSpec : ISpecification
         foreach (ParameterInfo parameter in parameters) {
             builder.AddParameter(ParameterSpec.Get(parameter));
         }
-    }
-
-    /// <summary>
-    /// 解析方法的修饰符
-    /// </summary>
-    /// <param name="methodInfo">方法信息</param>
-    /// <param name="overriding">是否用于重写</param>
-    /// <returns></returns>
-    public static Modifiers ParseModifiers(MethodInfo methodInfo, bool overriding = false) {
-        Modifiers modifiers = Modifiers.None;
-        if (methodInfo.IsPublic) modifiers |= Modifiers.Public;
-        if (methodInfo.IsAssembly) modifiers |= Modifiers.Internal;
-        if (methodInfo.IsPrivate) modifiers |= Modifiers.Private;
-        if (methodInfo.IsFamily) modifiers |= Modifiers.Protected;
-        // 重写相关
-        if (methodInfo.IsFinal) modifiers |= Modifiers.Sealed;
-        if (!overriding && methodInfo.DeclaringType!.IsClass) {
-            if (methodInfo.IsAbstract) modifiers |= Modifiers.Abstract;
-            if (methodInfo.IsVirtual) modifiers |= Modifiers.Virtual;
-        }
-        if (methodInfo.IsStatic) modifiers |= Modifiers.Static;
-        if (Util.IsAsyncMethod(methodInfo)) modifiers |= Modifiers.Async;
-        // 处理unsafe
-        bool hasPointerType = methodInfo.ReturnType.IsPointer;
-        if (!hasPointerType) {
-            ParameterInfo[] parameterInfos = methodInfo.GetParameters();
-            foreach (ParameterInfo parameterInfo in parameterInfos) {
-                hasPointerType |= parameterInfo.ParameterType.IsPointer;
-            }
-        }
-        if (hasPointerType) {
-            modifiers |= Modifiers.Unsafe;
-        }
-        // 处理override -- 接口方法不需要override关键字，不论方法有没有默认实现
-        if (overriding && methodInfo.DeclaringType!.IsClass) {
-            modifiers |= Modifiers.Override;
-        }
-        return modifiers;
     }
 
     #endregion

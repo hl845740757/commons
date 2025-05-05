@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
@@ -193,6 +194,16 @@ public static class AptUtils
     #region baisc
 
     /// <summary>
+    /// 获取symbol的第一个位置
+    /// </summary>
+    /// <param name="symbol"></param>
+    /// <returns></returns>
+    public static Location? GetFirstLocation(this ISymbol symbol) {
+        ImmutableArray<Location> locations = symbol.Locations;
+        return locations.Length == 0 ? null : locations[0];
+    }
+
+    /// <summary>
     /// 是否出现了Nullable注解（NRT）
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -241,6 +252,55 @@ public static class AptUtils
         if (parameters.Length == 0) return false;
         // c#12支持params collection.... Span<int>
         return parameters[parameters.Length - 1].IsParams;
+    }
+
+    /// <summary>
+    /// 属性是否可读
+    /// </summary>
+    /// <param name="symbol"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool CanRead(this IPropertySymbol symbol) {
+        return !symbol.IsWriteOnly;
+    }
+
+    /// <summary>
+    /// 属性是否可写
+    /// </summary>
+    /// <param name="symbol"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool CanWrite(this IPropertySymbol symbol) {
+        return !symbol.IsReadOnly;
+    }
+
+    /// <summary>
+    /// 获取类型的完整MetadataName
+    /// <code>System.Collections.Generic.Dictionary`2+Enumerator</code>
+    /// </summary>
+    /// <param name="typeSymbol"></param>
+    /// <returns></returns>
+    public static string GetFullMetadataName(INamedTypeSymbol typeSymbol) {
+        string ns = typeSymbol.ContainingNamespace.ToDisplayString();
+        if (typeSymbol.ContainingType == null) {
+            return ns + "." + typeSymbol.MetadataName;
+        }
+        List<INamedTypeSymbol> containingTypes = new List<INamedTypeSymbol>();
+        INamedTypeSymbol temp = typeSymbol.ContainingType;
+        while (temp != null) {
+            containingTypes.Add(temp);
+            temp = temp.ContainingType;
+        }
+        containingTypes.Reverse();
+
+        StringBuilder sb = new StringBuilder(32);
+        sb.Append(sb).Append('.');
+        foreach (INamedTypeSymbol containingType in containingTypes) {
+            sb.Append(containingType.MetadataName);
+            sb.Append('+');
+        }
+        sb.Append(typeSymbol.MetadataName);
+        return sb.ToString();
     }
 
     /// <summary>
@@ -404,6 +464,12 @@ public static class AptUtils
     #region Parse-TypeSymbol
 
     /// <summary>
+    /// name解析缓存--避免频繁解析Symbol
+    /// 注意：需要包含Nullable注解信息
+    /// </summary>
+    private static readonly ConcurrentDictionary<INamedTypeSymbol, TypeName> typeSymbol2NameCache = new(SymbolEqualityComparer.IncludeNullability);
+
+    /// <summary>
     /// 解析编译时的<see cref="ITypeSymbol"/>为<see cref="TypeName"/>
     /// </summary>
     /// <param name="typeSymbol"></param>
@@ -451,7 +517,9 @@ public static class AptUtils
             case SpecialType.System_IntPtr: return ClassName.INT_PTR;
             case SpecialType.System_UIntPtr: return ClassName.UINT_PTR;
         }
-
+        if (typeSymbol2NameCache.TryGetValue(typeSymbol, out TypeName r)) {
+            return r;
+        }
         List<TypeName>? genericArgumentNames = null;
         if (typeSymbol.IsUnboundGenericType) {
             // typeof(IDictionary<,>)
@@ -472,12 +540,15 @@ public static class AptUtils
         }
         if (typeSymbol.ContainingType != null) {
             ClassName outerClassName = (ClassName)ParseNamedType(typeSymbol.ContainingType);
-            return outerClassName.NestedClass(typeSymbol.Name, genericArgumentNames, false,
+            r = outerClassName.NestedClass(typeSymbol.Name, genericArgumentNames, false,
+                typeSymbol.NullableAnnotation.ToTypeNameAttributes());
+        } else {
+            r = ClassName.Get(typeSymbol.ContainingNamespace.ToDisplayString(),
+                typeSymbol.Name, genericArgumentNames,
                 typeSymbol.NullableAnnotation.ToTypeNameAttributes());
         }
-        return ClassName.Get(typeSymbol.ContainingNamespace.ToDisplayString(),
-            typeSymbol.Name, genericArgumentNames,
-            typeSymbol.NullableAnnotation.ToTypeNameAttributes());
+        typeSymbol2NameCache[typeSymbol] = r;
+        return r;
     }
 
     /// <summary>
@@ -589,7 +660,7 @@ public static class AptUtils
 
     #endregion
 
-    #region overriding-roslyn
+    #region overriding-method
 
     /// <summary>
     /// 重写给定方法
@@ -601,7 +672,10 @@ public static class AptUtils
     }
 
     private static MethodSpec.Builder CopyMethod(IMethodSymbol methodInfo, bool overriding = false) {
-        Modifiers modifiers = ParseModifiers(methodInfo, overriding);
+        Modifiers modifiers = ParseModifiers(methodInfo);
+        if (overriding) {
+            modifiers = Util.AddOverrideModifiers(modifiers, methodInfo.ContainingType.TypeKind == TypeKind.Class);
+        }
         MethodSpec.Builder builder;
         if (methodInfo.MethodKind == MethodKind.Constructor) {
             builder = MethodSpec.NewConstructorBuilder();
@@ -658,34 +732,83 @@ public static class AptUtils
         return builder.Build();
     }
 
+    #endregion
+
+    #region override-property
+
+    /// <summary>
+    /// 重写给定属性
+    /// </summary>
+    /// <param name="propertySymbol"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static PropertySpec.Builder Overriding(IPropertySymbol propertySymbol) {
+        return CopyProperty(propertySymbol, true);
+    }
+
+    private static PropertySpec.Builder CopyProperty(IPropertySymbol propertySymbol, bool overriding) {
+        PropertySpec.Builder builder;
+        if (propertySymbol.IsIndexer) {
+            IParameterSymbol parameterSymbol = propertySymbol.Parameters[0];
+            TypeName indexType = ParseType(parameterSymbol.Type);
+            string indexName = propertySymbol.Name;
+            builder = PropertySpec.NewIndexerBuilder(ParseType(propertySymbol.Type), indexType, indexName);
+        } else {
+            builder = PropertySpec.NewBuilder(ParseType(propertySymbol.Type), propertySymbol.Name);
+        }
+        builder.hasGetter = propertySymbol.CanRead();
+        builder.hasSetter = propertySymbol.CanWrite();
+
+        ParseModifiers(propertySymbol, out var getterModifiers, out var setterModifiers);
+        if (overriding) {
+            bool fromClass = propertySymbol.ContainingType.TypeKind == TypeKind.Class;
+            getterModifiers = Util.AddOverrideModifiers(getterModifiers, fromClass);
+            setterModifiers = Util.AddOverrideModifiers(setterModifiers, fromClass);
+        }
+        // 隐藏setter中包含的getter修饰符
+        if (propertySymbol.CanRead() && propertySymbol.CanWrite()) {
+            setterModifiers &= ~getterModifiers;
+        }
+        builder.AddGetterModifiers(getterModifiers);
+        builder.AddSetterModifiers(setterModifiers);
+        return builder;
+    }
+
+    #endregion
+
+    #region parse-modifiers
+
+    /** 解析访问权限 */
+    private static Modifiers ParseAccessibility(ISymbol symbol) {
+        switch (symbol.DeclaredAccessibility) {
+            case Accessibility.Public: return Modifiers.Public;
+            case Accessibility.Private: return Modifiers.Private;
+            case Accessibility.Protected: return Modifiers.Protected;
+            case Accessibility.Internal: return Modifiers.Internal;
+            case Accessibility.ProtectedAndInternal: return Modifiers.Protected | Modifiers.Internal;
+            default: return Modifiers.None; // 默认解析为空
+        }
+    }
+
     /// <summary>
     /// 解析方法的修饰符
     /// </summary>
-    /// <param name="methodInfo">方法信息</param>
-    /// <param name="overriding">是否用于重写</param>
-    /// <returns></returns>
-    public static Modifiers ParseModifiers(IMethodSymbol methodInfo, bool overriding = false) {
-        Modifiers modifiers = methodInfo.DeclaredAccessibility switch
-        {
-            Accessibility.Public => Modifiers.Public,
-            Accessibility.Private => Modifiers.Private,
-            Accessibility.ProtectedAndInternal => Modifiers.Protected | Modifiers.Internal,
-            Accessibility.Protected => Modifiers.Protected,
-            Accessibility.Internal => Modifiers.Internal,
-            _ => Modifiers.None // 不能识别一律置空
-        };
-        if (methodInfo.IsStatic) modifiers |= Modifiers.Static;
-        if (methodInfo.IsAsync) modifiers |= Modifiers.Async;
+    public static Modifiers ParseModifiers(IMethodSymbol methodSymbol) {
+        Modifiers modifiers = ParseAccessibility(methodSymbol);
+        if (methodSymbol.IsStatic) modifiers |= Modifiers.Static;
+        if (methodSymbol.IsReadOnly) modifiers |= Modifiers.ReadOnly; // 方法的Readonly是啥???
+        if (methodSymbol.IsAsync) modifiers |= Modifiers.Async;
+        if (methodSymbol.IsExtern) modifiers |= Modifiers.Extern;
+        //
         // 重写相关
-        if (methodInfo.IsSealed) modifiers |= Modifiers.Sealed;
-        if (!overriding && methodInfo.ContainingType.TypeKind == TypeKind.Class) {
-            if (methodInfo.IsAbstract) modifiers |= Modifiers.Abstract;
-            if (methodInfo.IsVirtual) modifiers |= Modifiers.Virtual;
-        }
+        if (methodSymbol.IsSealed) modifiers |= Modifiers.Sealed;
+        if (methodSymbol.IsAbstract) modifiers |= Modifiers.Abstract;
+        if (methodSymbol.IsVirtual) modifiers |= Modifiers.Virtual;
+        if (methodSymbol.IsOverride) modifiers |= Modifiers.Override;
         // 处理unsafe
-        bool hasPointerType = methodInfo.ReturnType.Kind == SymbolKind.PointerType;
+        bool hasPointerType = methodSymbol.ReturnType.Kind == SymbolKind.PointerType;
         if (!hasPointerType) {
-            ImmutableArray<IParameterSymbol> parameterInfos = methodInfo.Parameters;
+            ImmutableArray<IParameterSymbol> parameterInfos = methodSymbol.Parameters;
             foreach (IParameterSymbol parameterInfo in parameterInfos) {
                 hasPointerType |= parameterInfo.Type.Kind == SymbolKind.PointerType;
             }
@@ -693,10 +816,52 @@ public static class AptUtils
         if (hasPointerType) {
             modifiers |= Modifiers.Unsafe;
         }
-        // 处理override -- 接口方法不需要override关键字，不论方法有没有默认实现
-        if (overriding && methodInfo.ContainingType.TypeKind == TypeKind.Class) {
-            modifiers |= Modifiers.Override;
+        return modifiers;
+    }
+
+    /// <summary>
+    /// 解析属性的修饰符
+    ///
+    /// 注意：属性可能只有setter没有getter
+    /// </summary>
+    public static void ParseModifiers(IPropertySymbol propertySymbol,
+                                      out Modifiers getterModifiers,
+                                      out Modifiers setterModifiers) {
+        getterModifiers = 0;
+        setterModifiers = 0;
+        if (propertySymbol.CanRead()) {
+            getterModifiers = ParseModifiers(propertySymbol.GetMethod!);
         }
+        if (propertySymbol.CanWrite()) {
+            setterModifiers = ParseModifiers(propertySymbol.SetMethod!);
+        }
+    }
+
+    /// <summary>
+    /// 解析字段的修饰符
+    /// </summary>
+    /// <param name="fieldSymbol"></param>
+    /// <returns></returns>
+    public static Modifiers ParseModifiers(IFieldSymbol fieldSymbol) {
+        Modifiers modifiers = ParseAccessibility(fieldSymbol);
+        if (fieldSymbol.IsStatic) modifiers |= Modifiers.Static;
+        if (fieldSymbol.IsReadOnly) modifiers |= Modifiers.ReadOnly;
+        if (fieldSymbol.IsVolatile) modifiers |= Modifiers.Volatile;
+        return modifiers;
+    }
+
+    /// <summary>
+    /// 解析类型的修饰符
+    /// </summary>
+    /// <param name="typeSymbol"></param>
+    /// <returns></returns>
+    public static Modifiers ParseModifiers(ITypeSymbol typeSymbol) {
+        Modifiers modifiers = ParseAccessibility(typeSymbol);
+        if (typeSymbol.IsStatic) modifiers |= Modifiers.Static;
+        if (typeSymbol.IsReadOnly) modifiers |= Modifiers.ReadOnly;
+        // 重写相关--sealed abstract是静态类...
+        if (typeSymbol.IsSealed) modifiers |= Modifiers.Sealed;
+        if (typeSymbol.IsAbstract) modifiers |= Modifiers.Abstract;
         return modifiers;
     }
 

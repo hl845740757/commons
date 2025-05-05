@@ -48,24 +48,20 @@ class AptFieldProps {
     public static final String DEFAULT_STRING_STYLE = "AUTO";
 
     /** 字段序列化时的名字 */
-    public String name = "";
+    public String name;
     /** 取值方法 */
-    public String getter = "";
+    public String getter;
     /** 赋值方法 */
-    public String setter = "";
+    public String setter;
 
     /** 实现类 */
     public TypeMirror implMirror;
     /** 写代理方法名 */
-    public String writeProxy = "";
+    public String writeProxy;
     /** 读代理方法名 */
-    public String readProxy = "";
+    public String readProxy;
 
-    /** 绑定类型 */
-    public String dsonType = null; // 该属性只有显式声明才有效
-    public int dsonSubType = 0;
-
-    /** 绑定style */
+    /** 绑定style -- 需要正确初始化，可能没有注解 */
     public String numberStyle = DEFAULT_NUMBER_STYLE;
     public String stringStyle = DEFAULT_STRING_STYLE;
     public String objectStyle = null; // 该属性只有显式声明才有效
@@ -83,19 +79,16 @@ class AptFieldProps {
 
         final AptFieldProps props = new AptFieldProps();
         final Map<String, AnnotationValue> annoValueMap = AptUtils.getAnnotationValuesMap(annotationMirror);
-        props.name = getStringValue(annoValueMap, "name", props.name);
-        props.getter = getStringValue(annoValueMap, "getter", props.getter);
-        props.setter = getStringValue(annoValueMap, "setter", props.setter);
-
-        props.dsonType = getEnumConstantName(annoValueMap, "dsonType", null);
-        props.dsonSubType = getIntValue(annoValueMap, "dsonSubType", props.dsonSubType);
+        props.name = getStringValue(annoValueMap, "name", null);
+        props.getter = getStringValue(annoValueMap, "getter", null);
+        props.setter = getStringValue(annoValueMap, "setter", null);
 
         props.numberStyle = getEnumConstantName(annoValueMap, "numberStyle", props.numberStyle);
         props.stringStyle = getEnumConstantName(annoValueMap, "stringStyle", props.stringStyle);
-        props.objectStyle = getEnumConstantName(annoValueMap, "objectStyle", props.objectStyle);
+        props.objectStyle = getEnumConstantName(annoValueMap, "objectStyle", null);
 
-        props.writeProxy = getStringValue(annoValueMap, "writeProxy", props.writeProxy);
-        props.readProxy = getStringValue(annoValueMap, "readProxy", props.readProxy);
+        props.writeProxy = getStringValue(annoValueMap, "writeProxy", null);
+        props.readProxy = getStringValue(annoValueMap, "readProxy", null);
         final AnnotationValue impl = annoValueMap.get("impl");
         if (impl != null) {
             props.implMirror = AptUtils.getAnnotationValueTypeMirror(impl);

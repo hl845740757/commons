@@ -258,6 +258,17 @@ public static partial class Util
         return result;
     }
 
+    /// <summary>
+    /// 数组转List
+    /// </summary>
+    public static List<T> ToList<T>(T[] array) {
+        List<T> list = new(array.Length);
+        foreach (T e in array) {
+            list.Add(e);
+        }
+        return list;
+    }
+
     #endregion
 
     #region colletion
@@ -448,6 +459,76 @@ public static partial class Util
     }
 
     /// <summary>
+    /// 是否是volatile字段
+    /// 
+    /// (c#把volatile也搞成属性，有点难崩...性能真的好吗，Flags不更高效?)
+    /// </summary>
+    /// <param name="fieldInfo"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsVolatileField(FieldInfo fieldInfo) {
+        // RequiredCustomModifiers: volatile、readonly
+        foreach (Type customModifier in fieldInfo.GetRequiredCustomModifiers()) {
+            if (customModifier == typeof(IsVolatile)) return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 是否是普通类型
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsNamedType(Type type) {
+        return type.IsInterface || type.IsClass || type.IsValueType || type.IsEnum;
+    }
+
+    /// <summary>
+    /// 获取类型的简单名 -- 不包含泛型参数个数信息
+    /// </summary>
+    /// <param name="namedType"></param>
+    /// <returns></returns>
+    public static string GetSimpleName(Type namedType) {
+        string name = namedType.Name;
+        int index = name.LastIndexOf('`');
+        return index > 0 ? name.Substring2(0, index) : name;
+    }
+
+    /// <summary>
+    /// 获取普通类型的元数据名
+    /// <see cref="ClassName.ReflectionName()"/>
+    /// </summary>
+    /// <param name="namedType">普通类型</param>
+    /// <returns></returns>
+    public static string GetFullMetadataName(Type namedType) {
+        string typeString = namedType.ToString();
+        int index = typeString.LastIndexOf('[');
+        if (index > 0 && typeString[index - 1] == '`') {
+            return typeString.Substring2(0, index);
+        }
+        return typeString;
+    }
+
+    /// <summary>
+    /// 是否是索引器属性
+    /// </summary>
+    /// <param name="propertyInfo"></param>
+    /// <returns></returns>
+    public static bool IsIndexerProperty(PropertyInfo propertyInfo) {
+        if (!propertyInfo.Name.Equals("Item")) return false;
+        if (propertyInfo.CanRead) {
+            MethodInfo getMethod = propertyInfo.GetGetMethod(true)!;
+            return getMethod.GetParameters().Length > 0;
+        }
+        if (propertyInfo.CanWrite) {
+            MethodInfo setMethod = propertyInfo.GetSetMethod(true)!;
+            return setMethod.GetParameters().Length > 1;
+        }
+        return false;
+    }
+
+    /// <summary>
     /// 是否是自动属性关联的字段
     /// </summary>
     /// <param name="fieldName"></param>
@@ -486,6 +567,118 @@ public static partial class Util
             return sb.ToString();
         }
         return FirstCharToUpperCase(fieldName);
+    }
+
+    /// <summary>
+    /// 解析方法的修饰符
+    /// </summary>
+    public static Modifiers ParseModifiers(MethodInfo methodInfo) {
+        Modifiers modifiers = Modifiers.None;
+        if (methodInfo.IsPublic) modifiers |= Modifiers.Public;
+        if (methodInfo.IsAssembly) modifiers |= Modifiers.Internal;
+        if (methodInfo.IsPrivate) modifiers |= Modifiers.Private;
+        if (methodInfo.IsFamily) modifiers |= Modifiers.Protected;
+        // 重写相关
+        if (methodInfo.IsFinal) modifiers |= Modifiers.Sealed;
+        if (methodInfo.IsAbstract) modifiers |= Modifiers.Abstract;
+        if (methodInfo.IsVirtual) modifiers |= Modifiers.Virtual;
+        if (methodInfo != methodInfo.GetBaseDefinition()) {
+            modifiers |= Modifiers.Override;
+        }
+        //
+        if (methodInfo.IsStatic) modifiers |= Modifiers.Static;
+        if (IsAsyncMethod(methodInfo)) modifiers |= Modifiers.Async;
+        // 解析unsafe
+        bool hasPointerType = methodInfo.ReturnType.IsPointer;
+        if (!hasPointerType) {
+            ParameterInfo[] parameterInfos = methodInfo.GetParameters();
+            foreach (ParameterInfo parameterInfo in parameterInfos) {
+                hasPointerType |= parameterInfo.ParameterType.IsPointer;
+            }
+        }
+        if (hasPointerType) {
+            modifiers |= Modifiers.Unsafe;
+        }
+        return modifiers;
+    }
+
+    /// <summary>
+    /// 解析属性的Modifiers
+    ///
+    /// 注意：属性可能没有Getter或Setter
+    /// </summary>
+    public static void ParseModifiers(PropertyInfo propertyInfo,
+                                      out Modifiers getterModifiers,
+                                      out Modifiers setterModifiers) {
+        getterModifiers = Modifiers.None;
+        setterModifiers = Modifiers.None;
+        if (propertyInfo.CanRead) {
+            MethodInfo getMethod = propertyInfo.GetGetMethod(true)!;
+            getterModifiers = ParseModifiers(getMethod);
+        }
+        if (propertyInfo.CanWrite) {
+            MethodInfo setMethod = propertyInfo.GetSetMethod(true)!;
+            setterModifiers = ParseModifiers(setMethod);
+        }
+    }
+
+    /// <summary>
+    /// 解析字段的修饰符
+    /// </summary>
+    /// <param name="fieldInfo"></param>
+    /// <returns></returns>
+    public static Modifiers ParseModifiers(FieldInfo fieldInfo) {
+        Modifiers modifiers = Modifiers.None;
+        if (fieldInfo.IsStatic) modifiers |= Modifiers.Static;
+        if (fieldInfo.IsPublic) modifiers |= Modifiers.Public;
+        if (fieldInfo.IsPrivate) modifiers |= Modifiers.Private;
+        if (fieldInfo.IsFamily) modifiers |= Modifiers.Protected;
+        if (fieldInfo.IsAssembly) modifiers |= Modifiers.Internal;
+
+        if (fieldInfo.IsInitOnly) modifiers |= Modifiers.ReadOnly;
+        if (IsVolatileField(fieldInfo)) modifiers |= Modifiers.Volatile;
+        return modifiers;
+    }
+
+    /// <summary>
+    /// 解析类型的修饰符
+    /// (注意：这里会返回static，但static不应该打印)
+    /// </summary>
+    /// <param name="typeInfo"></param>
+    /// <returns></returns>
+    public static Modifiers ParseModifiers(Type typeInfo) {
+        Modifiers modifiers = Modifiers.None;
+        if (!typeInfo.IsNested) {
+            // 外部类未声明为public则为internal
+            modifiers = typeInfo.IsPublic ? Modifiers.Public : Modifiers.Internal;
+        } else {
+            // 嵌套类修饰符
+            if (typeInfo.IsNestedPublic) modifiers |= Modifiers.Public;
+            if (typeInfo.IsNestedPrivate) modifiers |= Modifiers.Private;
+            if (typeInfo.IsNestedFamily) modifiers |= Modifiers.Protected;
+            if (typeInfo.IsNestedAssembly) modifiers |= Modifiers.Internal;
+        }
+        if (typeInfo.IsSealed) modifiers |= Modifiers.Sealed;
+        if (typeInfo.IsAbstract) modifiers |= Modifiers.Abstract;
+        if (typeInfo.IsSealed && typeInfo.IsAbstract) {
+            modifiers |= Modifiers.Static; // 静态类是密封抽象类...
+        }
+        return modifiers;
+    }
+
+    /// <summary>
+    /// 修正重写方法或属性时的修饰符
+    /// </summary>
+    /// <param name="modifiers">当前修饰符</param>
+    /// <param name="fromClass">重新的元素是否来自于class</param>
+    /// <returns></returns>
+    public static Modifiers AddOverrideModifiers(Modifiers modifiers, bool fromClass) {
+        if (fromClass) {
+            modifiers |= Modifiers.Override; // 重写class的成员时追加Override
+        }
+        modifiers &= ~Modifiers.Abstract;
+        modifiers &= ~Modifiers.Virtual;
+        return modifiers;
     }
 
     #endregion

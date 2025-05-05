@@ -524,7 +524,12 @@ public sealed class CodeWriter
         Emit(propertySpec.headerCode, true);
         EmitAttributes(propertySpec.attributes);
 
-        EmitModifiers(propertySpec.modifiers); // 可能无修饰符
+        // 有getter时使用getter的修饰符
+        if (propertySpec.hasGetter) {
+            EmitModifiers(propertySpec.getterModifiers);
+        } else {
+            EmitModifiers(propertySpec.setterModifiers);
+        }
         // Type name
         EmitTypeName(propertySpec.type);
         if (propertySpec.IsIndexer) {
@@ -547,7 +552,9 @@ public sealed class CodeWriter
                 Emit(" get;");
             }
             if (propertySpec.hasSetter) {
-                EmitModifiers(propertySpec.setterModifiers);
+                if (propertySpec.hasGetter) {
+                    EmitModifiers(propertySpec.setterModifiers);
+                }
                 Emit(" set;");
             }
             Emit(" }");
@@ -805,7 +812,7 @@ public sealed class CodeWriter
             if ((modifiers & Modifiers.Volatile) != 0) {
                 modifierList.Add("volatile");
             }
-            if ((modifiers & Modifiers.Readonly) != 0) {
+            if ((modifiers & Modifiers.ReadOnly) != 0) {
                 modifierList.Add("readonly");
             }
             if ((modifiers & Modifiers.Const) != 0) {

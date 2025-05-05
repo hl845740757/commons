@@ -32,7 +32,6 @@ public class PropertySpec : ISpecification
     public readonly string name; // 索引器为Item
     public readonly TypeName? indexType; // 索引类型 
     public readonly string? indexName; // 索引名字
-    public readonly Modifiers modifiers;
     public readonly CodeBlock document;
     public readonly CodeBlock headerCode;
     public readonly IList<AttributeSpec> attributes;
@@ -40,6 +39,7 @@ public class PropertySpec : ISpecification
     public readonly CodeBlock? initializer; // 自动属性的默认值
     public readonly CodeBlock? getter; // getter代码块（可选）
     public readonly CodeBlock? setter; // setter代码块（可选）
+    public readonly Modifiers getterModifiers; // getter修饰符
     public readonly Modifiers setterModifiers; // setter修饰符
 
     public readonly bool hasGetter; // 是否有getter
@@ -50,7 +50,6 @@ public class PropertySpec : ISpecification
         name = builder.name;
         indexType = builder.indexType;
         indexName = builder.indexName;
-        modifiers = builder.modifiers;
         document = builder.document.Build();
         headerCode = builder.headerCode.Build();
         attributes = Util.ToImmutableList(builder.attributes);
@@ -58,6 +57,7 @@ public class PropertySpec : ISpecification
         initializer = builder.initializer;
         getter = builder.getter;
         setter = builder.setter;
+        getterModifiers = builder.getterModifiers;
         setterModifiers = builder.setterModifiers;
 
         hasGetter = builder.hasGetter;
@@ -95,7 +95,7 @@ public class PropertySpec : ISpecification
     }
 
     public Builder ToBuilder() {
-        Builder builder = new Builder(type, name, indexType, indexName, modifiers)
+        Builder builder = new Builder(type, name, indexType, indexName, getterModifiers)
             .AddDocument(document)
             .AddHeaderCode(headerCode)
             .AddAttributes(attributes);
@@ -103,6 +103,7 @@ public class PropertySpec : ISpecification
         builder.initializer = initializer;
         builder.getter = getter;
         builder.setter = setter;
+        builder.getterModifiers = getterModifiers;
         builder.setterModifiers = setterModifiers;
 
         builder.hasGetter = hasGetter;
@@ -118,16 +119,12 @@ public class PropertySpec : ISpecification
     /// 忘了属性也是可重写的...属性本质是方法
     /// </summary>
     public static Builder Overriding(PropertyInfo propertyInfo) {
-        MethodInfo methodInfo = propertyInfo.GetMethod ?? propertyInfo.SetMethod!;
-        if (methodInfo.IsFinal || methodInfo.IsStatic || methodInfo.IsPrivate) {
-            throw new ArgumentException("cannot override method with modifiers: " + methodInfo.Attributes);
-        }
         return CopyProperty(propertyInfo, true);
     }
 
     private static Builder CopyProperty(PropertyInfo propertyInfo, bool overriding) {
         Builder builder;
-        if (IsIndexerProperty(propertyInfo)) {
+        if (Util.IsIndexerProperty(propertyInfo)) {
             ParameterInfo parameterInfo;
             if (propertyInfo.CanRead) {
                 parameterInfo = propertyInfo.GetGetMethod(true)!.GetParameters()[0];
@@ -143,41 +140,19 @@ public class PropertySpec : ISpecification
         builder.hasGetter = propertyInfo.CanRead;
         builder.hasSetter = propertyInfo.CanWrite;
 
-        Modifiers modifiers = Modifiers.None;
-        if (propertyInfo.CanRead) {
-            MethodInfo getMethod = propertyInfo.GetGetMethod(true)!;
-            modifiers = MethodSpec.ParseModifiers(getMethod, overriding);
-
-            MethodInfo setMethod = propertyInfo.GetSetMethod(true);
-            if (setMethod != null) {
-                builder.setterModifiers = MethodSpec.ParseModifiers(setMethod, overriding);
-                // 隐藏setter中包含的getter修饰符
-                builder.setterModifiers &= (~modifiers);
-            }
-        } else {
-            MethodInfo setMethod = propertyInfo.GetSetMethod(true)!;
-            modifiers = MethodSpec.ParseModifiers(setMethod, overriding);
+        Util.ParseModifiers(propertyInfo, out Modifiers getterModifiers, out Modifiers setterModifiers);
+        if (overriding) {
+            bool fromClass = propertyInfo.DeclaringType!.IsClass;
+            getterModifiers = Util.AddOverrideModifiers(getterModifiers, fromClass);
+            setterModifiers = Util.AddOverrideModifiers(setterModifiers, fromClass);
         }
-        builder.AddModifiers(modifiers);
+        // 隐藏setter中包含的getter修饰符
+        if (propertyInfo.CanRead && propertyInfo.CanWrite) {
+            setterModifiers &= (~getterModifiers);
+        }
+        builder.AddGetterModifiers(getterModifiers);
+        builder.AddSetterModifiers(setterModifiers);
         return builder;
-    }
-
-    /// <summary>
-    /// 是否是索引器属性
-    /// </summary>
-    /// <param name="propertyInfo"></param>
-    /// <returns></returns>
-    public static bool IsIndexerProperty(PropertyInfo propertyInfo) {
-        if (!propertyInfo.Name.Equals("Item")) return false;
-        if (propertyInfo.CanRead) {
-            MethodInfo getMethod = propertyInfo.GetGetMethod(true)!;
-            return getMethod.GetParameters().Length > 0;
-        }
-        if (propertyInfo.CanWrite) {
-            MethodInfo setMethod = propertyInfo.GetSetMethod(true)!;
-            return setMethod.GetParameters().Length > 1;
-        }
-        return false;
     }
 
     #endregion
@@ -188,7 +163,6 @@ public class PropertySpec : ISpecification
         public readonly string name;
         public readonly TypeName? indexType;
         public readonly string? indexName;
-        public Modifiers modifiers;
         public readonly CodeBlock.Builder document = CodeBlock.NewBuilder();
         public readonly CodeBlock.Builder headerCode = CodeBlock.NewBuilder();
         public readonly List<AttributeSpec> attributes = new List<AttributeSpec>();
@@ -196,31 +170,22 @@ public class PropertySpec : ISpecification
         internal CodeBlock? initializer;
         internal CodeBlock? getter;
         internal CodeBlock? setter;
+        public Modifiers getterModifiers;
         public Modifiers setterModifiers;
 
         public bool hasGetter = true;
         public bool hasSetter = true;
 
-        internal Builder(TypeName type, string name, TypeName? indexType, string? indexName, Modifiers modifiers) {
+        internal Builder(TypeName type, string name, TypeName? indexType, string? indexName, Modifiers getterModifiers) {
             this.type = type ?? throw new ArgumentNullException(nameof(type));
             this.name = Util.CheckNotBlank(name, "name is blank");
             this.indexType = indexType;
             this.indexName = indexName;
-            this.modifiers = modifiers;
+            this.getterModifiers = getterModifiers;
         }
 
         public PropertySpec Build() {
             return new PropertySpec(this);
-        }
-
-        public Builder AddModifiers(Modifiers modifiers) {
-            this.modifiers |= modifiers;
-            return this;
-        }
-
-        public Builder RemModifiers(Modifiers modifiers) {
-            this.modifiers &= ~modifiers;
-            return this;
         }
 
         public Builder AddDocument(string format, params object?[] args) {
@@ -300,13 +265,18 @@ public class PropertySpec : ISpecification
             return this;
         }
 
-        public Builder HasGetter(bool value = true) {
-            this.hasGetter = value;
+        public Builder RemoveGetter() {
+            this.hasGetter = false;
             return this;
         }
 
-        public Builder HasSetter(bool value = true) {
-            this.hasSetter = value;
+        public Builder RemoveSetter() {
+            this.hasSetter = false;
+            return this;
+        }
+
+        public Builder AddGetterModifiers(Modifiers modifiers) {
+            this.getterModifiers |= modifiers;
             return this;
         }
 

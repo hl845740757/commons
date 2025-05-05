@@ -38,7 +38,7 @@ internal class PojoCodecGenerator
 #nullable disable
     private readonly INamedTypeSymbol typeSymbol;
     private readonly TypeSpec.Builder typeBuilder;
-    private readonly List<ISymbol> allFieldsAndMethodWithInherit;
+    private readonly List<ISymbol> allMembers;
 
     private ClassName rawTypeName;
     private bool containsReaderConstructor;
@@ -60,7 +60,7 @@ internal class PojoCodecGenerator
 
         this.typeSymbol = context.type;
         this.typeBuilder = context.typeBuilder;
-        this.allFieldsAndMethodWithInherit = context.allFieldsAndMethodWithInherit;
+        this.allMembers = context.allMembers;
     }
 #nullable enable
 
@@ -73,10 +73,10 @@ internal class PojoCodecGenerator
         rawTypeName = (ClassName)AptUtils.ParseType(typeSymbol);
         containsReaderConstructor = processor.ContainsReaderConstructor(typeSymbol);
         containsNewInstanceMethod = processor.ContainsNewInstanceMethod(typeSymbol);
-        containsReadObjectMethod = processor.ContainsReadObjectMethod(allFieldsAndMethodWithInherit);
-        containsWriteObjectMethod = processor.ContainsWriteObjectMethod(allFieldsAndMethodWithInherit);
-        containsBeforeEncodeMethod = processor.ContainsBeforeEncodeMethod(allFieldsAndMethodWithInherit);
-        containsAfterDecodeMethod = processor.ContainsAfterDecodeMethod(allFieldsAndMethodWithInherit);
+        containsReadObjectMethod = processor.ContainsReadObjectMethod(allMembers);
+        containsWriteObjectMethod = processor.ContainsWriteObjectMethod(allMembers);
+        containsBeforeEncodeMethod = processor.ContainsBeforeEncodeMethod(allMembers);
+        containsAfterDecodeMethod = processor.ContainsAfterDecodeMethod(allMembers);
 
         // 需要先初始化superDeclaredType
         INamedTypeSymbol superDeclaredType = context.superDeclaredType;
@@ -94,7 +94,7 @@ internal class PojoCodecGenerator
             GenWriteObjectMethod(aptClassProps);
             GenReadObjectMethod(aptClassProps);
             // 普通字段读写
-            foreach (IFieldSymbol? fieldInfo in context.serialFields) {
+            foreach (AptFieldInfo? fieldInfo in context.serialFields) {
                 AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
                 if (processor.IsAutoWriteField(fieldInfo, aptClassProps, aptFieldProps)) {
                     AddWriteStatement(fieldInfo, aptFieldProps, aptClassProps);
@@ -268,7 +268,7 @@ internal class PojoCodecGenerator
 
     #region field
 
-    private void AddReadStatement(IFieldSymbol fieldInfo, AptFieldProps fieldProps, AptClassProps aptClassProps) {
+    private void AddReadStatement(AptFieldInfo fieldInfo, AptFieldProps fieldProps, AptClassProps aptClassProps) {
         MethodSpec.Builder builder = readFieldsMethodBuilder;
         string fieldName = fieldInfo.Name;
         string? readProxy = fieldProps.readProxy;
@@ -288,18 +288,16 @@ internal class PojoCodecGenerator
         builder.codeBuilder.Add("if (reader.ReadName($L)) ", SerialName(fieldName));
 
         string readMethodName = GetReadMethodName(fieldInfo);
-        IPropertySymbol? setterMethod = processor.FindPublicSetter(fieldInfo, allFieldsAndMethodWithInherit, fieldProps);
         // 优先用setter，否则直接赋值 -- C#的属性和字段样式一致
         bool hasCustomSetter = !string.IsNullOrWhiteSpace(fieldProps.setter);
         string fieldAccess;
-        if (hasCustomSetter || setterMethod != null) {
-            fieldAccess = hasCustomSetter ? fieldProps.setter! : setterMethod!.Name;
+        if (hasCustomSetter || fieldInfo.HasPublicSetter) {
+            fieldAccess = hasCustomSetter ? fieldProps.setter! : fieldInfo.propertySymbol!.Name;
         } else {
             fieldAccess = fieldName;
         }
         if (readMethodName == MNAME_READ_OBJECT) {
-            // 需要去除nullable
-            TypeName fieldTypeName = AptUtils.ParseType(fieldInfo.Type).RemoveAllNullableAttribute();
+            TypeName fieldTypeName = fieldInfo.typeName!;
             // 读对象时要传入类型信息和Factory -- C#还要传泛型参数；name在前面已读，因此这里传入null
             // inst.name = reader.readObject<Type>(names_name, factories_name)
             builder.codeBuilder.AddStatement("inst.$L = reader.$L<$T>(null, $L)",
@@ -312,7 +310,7 @@ internal class PojoCodecGenerator
         }
     }
 
-    private void AddWriteStatement(IFieldSymbol fieldInfo, AptFieldProps fieldProps, AptClassProps aptClassProps) {
+    private void AddWriteStatement(AptFieldInfo fieldInfo, AptFieldProps fieldProps, AptClassProps aptClassProps) {
         string fieldName = fieldInfo.Name;
         MethodSpec.Builder builder = this.writeFieldsMethodBuilder;
         if (!string.IsNullOrWhiteSpace(fieldProps.writeProxy)) { // 自定义写
@@ -329,18 +327,17 @@ internal class PojoCodecGenerator
         // 优先用getter，否则直接访问 -- C#的属性和字段样式一致
         string fieldAccess;
         bool hasCustomGetter = !string.IsNullOrWhiteSpace(fieldProps.getter);
-        IPropertySymbol? getterMethod = processor.FindPublicGetter(fieldInfo, allFieldsAndMethodWithInherit, fieldProps);
         if (hasCustomGetter) {
             fieldAccess = fieldProps.getter!;
-        } else if (getterMethod != null) {
-            fieldAccess = getterMethod.Name;
+        } else if (fieldInfo.HasPublicGetter) {
+            fieldAccess = fieldInfo.propertySymbol!.Name;
         } else {
             fieldAccess = fieldName;
         }
 
         // 处理数字 -- 涉及WireType和Style，注解使用的是枚举，我们转换为NumberStyles静态类
         string writeMethodName = GetWriteMethodName(fieldInfo);
-        if (fieldInfo.Type.IsPrimitiveNumber()) {
+        if (fieldInfo.FieldType!.IsPrimitiveNumber()) {
             // int,long,float,double,uint,ulong,short,ushort,byte,sbyte...
             // writer.writeInt(names_fieldName, inst.field, NumberStyles.Simple)
             builder.codeBuilder.AddStatement("writer.$L($L, inst.$L, $T.$L)",
@@ -393,8 +390,8 @@ internal class PojoCodecGenerator
     }
 
     /** 获取writer写字段的方法名 */
-    private string GetWriteMethodName(IFieldSymbol fieldInfo) {
-        ITypeSymbol fieldType = fieldInfo.Type;
+    private string GetWriteMethodName(AptFieldInfo fieldInfo) {
+        ITypeSymbol fieldType = fieldInfo.FieldType!;
         if (primitiveWriteMethodNameMap.TryGetValue(fieldType.SpecialType, out string? r)) {
             return r;
         }
@@ -420,8 +417,8 @@ internal class PojoCodecGenerator
     }
 
     /** 获取reader读字段的方法名 */
-    private string GetReadMethodName(IFieldSymbol fieldInfo) {
-        ITypeSymbol fieldType = fieldInfo.Type;
+    private string GetReadMethodName(AptFieldInfo fieldInfo) {
+        ITypeSymbol fieldType = fieldInfo.FieldType!;
         if (primitiveReadMethodNameMap.TryGetValue(fieldType.SpecialType, out string? r)) {
             return r;
         }

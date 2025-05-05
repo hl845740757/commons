@@ -78,11 +78,6 @@ public class CodecProcessor extends MyAbstractProcessor {
     public static final String MNAME_NEW_INSTANCE = "newInstance";
     public static final String MNAME_READ_FIELDS = "readFields";
     public static final String MNAME_AFTER_DECODE = "afterDecode";
-    // EnumCodec -- 已废弃
-    private static final String CNAME_ENUM_CODEC = "cn.wjybxx.dsoncodec.codecs.EnumCodec";
-    private static final String CNAME_ENUM_LITE = "cn.wjybxx.base.EnumLite";
-    private static final String MNAME_FOR_NUMBER = "forNumber";
-    private static final String MNAME_GET_NUMBER = "getNumber";
 
     public static final ClassName typeName_TypeInfo = AptUtils.classNameOfCanonicalName(CNAME_TypeInfo);
     public static final ClassName typeName_WireType = AptUtils.classNameOfCanonicalName(CNAME_WireType);
@@ -126,14 +121,8 @@ public class CodecProcessor extends MyAbstractProcessor {
     public TypeMirror type_Timestamp;
 
     // 集合类型
-    public TypeMirror type_Map;
-    public TypeMirror type_Collection;
-    public TypeMirror type_Set;
     public TypeMirror type_EnumSet;
     public TypeMirror type_EnumMap;
-    public TypeMirror type_LinkedHashMap;
-    public TypeMirror type_LinkedHashSet;
-    public TypeMirror type_ArrayList;
 
     // endregion
 
@@ -184,16 +173,9 @@ public class CodecProcessor extends MyAbstractProcessor {
         type_Ptr = elementUtils.getTypeElement(CNAME_ObjectPtr).asType();
         type_LitePtr = elementUtils.getTypeElement(CNAME_ObjectLitePtr).asType();
         type_Timestamp = elementUtils.getTypeElement(CNAME_Timestamp).asType();
-
-        // 集合
-        type_Map = elementUtils.getTypeElement(Map.class.getCanonicalName()).asType();
-        type_Collection = elementUtils.getTypeElement(Collection.class.getCanonicalName()).asType();
-        type_Set = elementUtils.getTypeElement(Set.class.getCanonicalName()).asType();
+        // 特殊集合
         type_EnumSet = typeUtils.erasure(AptUtils.getTypeMirrorOfClass(elementUtils, EnumSet.class));
         type_EnumMap = typeUtils.erasure(AptUtils.getTypeMirrorOfClass(elementUtils, EnumMap.class));
-        type_LinkedHashMap = typeUtils.erasure(AptUtils.getTypeMirrorOfClass(elementUtils, LinkedHashMap.class));
-        type_LinkedHashSet = typeUtils.erasure(AptUtils.getTypeMirrorOfClass(elementUtils, LinkedHashSet.class));
-        type_ArrayList = typeUtils.erasure(AptUtils.getTypeMirrorOfClass(elementUtils, ArrayList.class));
     }
 
     private ExecutableElement findCodecMethod(List<ExecutableElement> allMethodsWithInherit,
@@ -213,17 +195,20 @@ public class CodecProcessor extends MyAbstractProcessor {
                 anno_DsonSerializable, anno_CodecLinkerGroup, anno_CodecLinkerBean);
         for (TypeElement typeElement : allTypeElements) {
             try {
-                Context context = createContext(typeElement);
-                // 判断是哪类注解 -- LinkerBean外部代理优先级最高
-                if (context.linkerBeanAnnoMirror != null) {
-                    // 不是为自己生成，当前类是Codec配置类
-                    processLinkerBean(context);
-                } else if (context.linkerGroupAnnoMirror != null) {
-                    // 不是为自己生成，而是为字段类型生成
-                    processLinkerGroup(context);
-                } else {
-                    assert context.dsonSerialAnnoMirror != null;
-                    processDirectType(context);
+                AnnotationMirror dsonSerialAnnoMirror = AptUtils.findAnnotation(typeUtils, typeElement, anno_DsonSerializable.asType());
+                if (dsonSerialAnnoMirror != null) {
+                    processDirectType(typeElement, dsonSerialAnnoMirror);
+                    continue;
+                }
+                AnnotationMirror linkerBeanAnnoMirror = AptUtils.findAnnotation(typeUtils, typeElement, anno_CodecLinkerBean.asType());
+                if (linkerBeanAnnoMirror != null) {
+                    processLinkerBean(typeElement, linkerBeanAnnoMirror);
+                    continue;
+                }
+                AnnotationMirror linkerGroupAnnoMirror = AptUtils.findAnnotation(typeUtils, typeElement, anno_CodecLinkerGroup.asType());
+                if (linkerGroupAnnoMirror != null) {
+                    processLinkerGroup(typeElement, linkerGroupAnnoMirror);
+                    continue;
                 }
             } catch (Throwable e) {
                 messager.printMessage(Diagnostic.Kind.ERROR, AptUtils.getStackTrace(e), typeElement);
@@ -232,32 +217,17 @@ public class CodecProcessor extends MyAbstractProcessor {
         return true;
     }
 
-    private Context createContext(TypeElement typeElement) {
-        Context context = new Context(typeElement);
-        context.dsonSerialAnnoMirror = AptUtils.findAnnotation(typeUtils, typeElement, anno_DsonSerializable.asType());
-        if (context.dsonSerialAnnoMirror != null) {
-            return context;
-        }
-        context.linkerBeanAnnoMirror = AptUtils.findAnnotation(typeUtils, typeElement, anno_CodecLinkerBean.asType());
-        if (context.linkerBeanAnnoMirror != null) {
-            return context;
-        }
-        context.linkerGroupAnnoMirror = AptUtils.findAnnotation(typeUtils, typeElement, anno_CodecLinkerGroup.asType());
-        return context;
-    }
-
     // region process
 
-    private void processLinkerBean(Context linkerBeanContext) {
-        final AnnotationMirror linkerBeanAnnoMirror = linkerBeanContext.linkerBeanAnnoMirror;
-        final String outPackage = getOutputPackage(linkerBeanContext.typeElement, linkerBeanAnnoMirror);
+    private void processLinkerBean(TypeElement linkerBeanType, AnnotationMirror linkerBeanAnnoMirror) {
+        final String outPackage = getOutputPackage(linkerBeanType, linkerBeanAnnoMirror);
         // 真实需要生成Codec的类型
         DeclaredType targetType;
         {
             AnnotationValue annotationValue = AptUtils.getAnnotationValue(linkerBeanAnnoMirror, MNAME_VALUE);
-            Objects.requireNonNull(annotationValue, "classProps");
+            Objects.requireNonNull(annotationValue, "targetType");
             targetType = AptUtils.findDeclaredType(AptUtils.getAnnotationValueTypeMirror(annotationValue));
-            Objects.requireNonNull(targetType);
+            Objects.requireNonNull(targetType, "targetType");
         }
         AnnotationValue classPropsAnnoValue = AptUtils.getAnnotationValue(linkerBeanAnnoMirror, MNAME_CLASS_PROPS);
         AptClassProps aptClassProps = classPropsAnnoValue == null ?
@@ -266,25 +236,27 @@ public class CodecProcessor extends MyAbstractProcessor {
         // 创建模拟数据
         TypeElement targetTypeElement = (TypeElement) targetType.asElement();
         Context context = new Context(targetTypeElement);
-        context.linkerBeanAnnoMirror = linkerBeanAnnoMirror;
         context.outPackage = outPackage;
-
         context.aptClassProps = aptClassProps;
         context.additionalAnnotations = getAdditionalAnnotations(aptClassProps);
         cacheFields(context);
         cacheFieldProps(context);
         // 修正字段的Props注解 —— 将LinkerBean上的注解信息转移到目标类
         {
+            Context linkerBeanContext = new Context(linkerBeanType);
             cacheFields(linkerBeanContext);
             cacheFieldProps(linkerBeanContext);
 
             // 按name缓存，提高效率
-            Map<String, AptFieldProps> fieldName2FieldPropsMap = HashMap.newHashMap(linkerBeanContext.fieldPropsMap.size());
+            Map<FieldKey, AptFieldProps> fieldName2FieldPropsMap = HashMap.newHashMap(linkerBeanContext.fieldPropsMap.size());
             for (Map.Entry<VariableElement, AptFieldProps> entry : linkerBeanContext.fieldPropsMap.entrySet()) {
-                fieldName2FieldPropsMap.put(entry.getKey().getSimpleName().toString(), entry.getValue());
+                VariableElement field = entry.getKey();
+                FieldKey fieldKey = new FieldKey(field.getEnclosingElement().getSimpleName().toString(), field.getSimpleName().toString());
+                fieldName2FieldPropsMap.put(fieldKey, entry.getValue());
             }
             for (VariableElement field : context.allFields) {
-                AptFieldProps aptFieldProps = fieldName2FieldPropsMap.get(field.getSimpleName().toString());
+                FieldKey fieldKey = new FieldKey(field.getEnclosingElement().getSimpleName().toString(), field.getSimpleName().toString());
+                AptFieldProps aptFieldProps = fieldName2FieldPropsMap.get(fieldKey);
                 if (aptFieldProps != null) {
                     context.fieldPropsMap.put(field, aptFieldProps);
                 }
@@ -292,8 +264,8 @@ public class CodecProcessor extends MyAbstractProcessor {
         }
         // 绑定CodecProxy
         {
-            TypeMirror linkerBeanTypeMirror = linkerBeanContext.typeElement.asType();
-            aptClassProps.codecProxyTypeElement = linkerBeanContext.typeElement;
+            TypeMirror linkerBeanTypeMirror = linkerBeanType.asType();
+            aptClassProps.codecProxyTypeElement = linkerBeanType;
             aptClassProps.codecProxyClassName = TypeName.get(typeUtils.erasure(linkerBeanTypeMirror));
         }
         // 检查数据
@@ -306,11 +278,10 @@ public class CodecProcessor extends MyAbstractProcessor {
         }
     }
 
-    private void processLinkerGroup(Context linkerGroupContext) {
-        final String outPackage = getOutputPackage(linkerGroupContext.typeElement, linkerGroupContext.linkerGroupAnnoMirror);
+    private void processLinkerGroup(TypeElement groupTypeElement, AnnotationMirror linkerGroupAnnoMirror) {
+        final String outPackage = getOutputPackage(groupTypeElement, linkerGroupAnnoMirror);
 
-        cacheFields(linkerGroupContext);
-        for (VariableElement variableElement : linkerGroupContext.allFields) {
+        for (VariableElement variableElement : BeanUtils.getAllFieldsWithInherit(groupTypeElement)) {
             DeclaredType targetType = AptUtils.findDeclaredType(variableElement.asType());
             if (targetType == null) {
                 messager.printMessage(Diagnostic.Kind.ERROR, "Bad Linker Target", variableElement);
@@ -325,9 +296,7 @@ public class CodecProcessor extends MyAbstractProcessor {
             // 创建模拟数据
             TypeElement typeElement = (TypeElement) targetType.asElement();
             Context context = new Context(typeElement);
-            context.linkerGroupAnnoMirror = linkerGroupContext.linkerGroupAnnoMirror;
             context.outPackage = outPackage;
-
             context.aptClassProps = aptClassProps;
             context.additionalAnnotations = getAdditionalAnnotations(aptClassProps);
             cacheFields(context);
@@ -343,11 +312,12 @@ public class CodecProcessor extends MyAbstractProcessor {
         }
     }
 
-    private void processDirectType(Context context) {
+    private void processDirectType(TypeElement typeElement, AnnotationMirror dsonSerialAnnoMirror) {
+        Context context = new Context(typeElement);
+        context.aptClassProps = AptClassProps.parse(dsonSerialAnnoMirror);
+        context.additionalAnnotations = getAdditionalAnnotations(context.aptClassProps);
         cacheFields(context);
         cacheFieldProps(context);
-        context.aptClassProps = AptClassProps.parse(context.dsonSerialAnnoMirror);
-        context.additionalAnnotations = getAdditionalAnnotations(context.aptClassProps);
         // 检查数据
         {
             checkTypeElement(context);
@@ -380,8 +350,8 @@ public class CodecProcessor extends MyAbstractProcessor {
     }
 
     private void cacheFields(Context context) {
-        context.allFieldsAndMethodWithInherit = BeanUtils.getAllFieldsAndMethodsWithInherit(context.typeElement);
-        context.allFields = context.allFieldsAndMethodWithInherit.stream()
+        context.allMembers = BeanUtils.getAllFieldsAndMethodsWithInherit(context.typeElement);
+        context.allFields = context.allMembers.stream()
                 .filter(e -> e.getKind() == ElementKind.FIELD && !e.getModifiers().contains(Modifier.STATIC))
                 .map(e -> (VariableElement) e)
                 .toList();
@@ -459,8 +429,8 @@ public class CodecProcessor extends MyAbstractProcessor {
         TypeElement typeElement = context.typeElement;
         checkConstructor(typeElement, aptClassProps);
 
-        final List<? extends Element> allFieldsAndMethodWithInherit = context.allFieldsAndMethodWithInherit;
-        final List<? extends Element> instMethodList = context.allFieldsAndMethodWithInherit.stream()
+        final List<? extends Element> allMembers = context.allMembers;
+        final List<? extends Element> instMethodList = context.allMembers.stream()
                 .filter(e -> e.getKind() == ElementKind.METHOD && !e.getModifiers().contains(Modifier.STATIC))
                 .toList();
 
@@ -472,23 +442,23 @@ public class CodecProcessor extends MyAbstractProcessor {
             context.serialFields.add(variableElement);
 
             if (isAutoWriteField(variableElement, aptClassProps, aptFieldProps)) {
-                checkAutoWriteField(variableElement, aptFieldProps, allFieldsAndMethodWithInherit, typeElement);
+                checkAutoWriteField(variableElement, aptFieldProps, allMembers, typeElement);
             }
             if (isAutoReadField(variableElement, aptClassProps, aptFieldProps)) {
-                checkAutoReadField(variableElement, aptFieldProps, allFieldsAndMethodWithInherit, typeElement);
+                checkAutoReadField(variableElement, aptFieldProps, allMembers, typeElement);
             }
         }
     }
 
     private void checkAutoReadField(VariableElement variableElement, AptFieldProps aptFieldProps,
-                                    List<? extends Element> allFieldsAndMethodWithInherit,TypeElement typeElement) {
+                                    List<? extends Element> allMembers, TypeElement typeElement) {
         if (!AptUtils.isBlank(aptFieldProps.readProxy)) {
             return;
         }
         // 工具读：需要提供可直接赋值或非private的setter方法
         if (AptUtils.isBlank(aptFieldProps.setter)
                 && !canSetDirectly(variableElement)
-                && findPublicSetter(variableElement, allFieldsAndMethodWithInherit) == null) {
+                && findPublicSetter(variableElement, allMembers) == null) {
             messager.printMessage(Diagnostic.Kind.ERROR,
                     String.format("auto read field (%s) must be public or contains a public getter", variableElement.getSimpleName()),
                     typeElement); // 可能无法定位到超类字段，因此打印到Type
@@ -496,14 +466,14 @@ public class CodecProcessor extends MyAbstractProcessor {
     }
 
     private void checkAutoWriteField(VariableElement variableElement, AptFieldProps aptFieldProps,
-                                     List<? extends Element> allFieldsAndMethodWithInherit, TypeElement typeElement) {
+                                     List<? extends Element> allMembers, TypeElement typeElement) {
         if (!AptUtils.isBlank(aptFieldProps.writeProxy)) {
             return;
         }
         // 工具写：需要提供可直接取值或包含非private的getter方法
         if (AptUtils.isBlank(aptFieldProps.getter)
                 && !canGetDirectly(variableElement)
-                && findPublicGetter(variableElement, allFieldsAndMethodWithInherit) == null) {
+                && findPublicGetter(variableElement, allMembers) == null) {
             messager.printMessage(Diagnostic.Kind.ERROR,
                     String.format("auto write field (%s) must be public or contains a public getter", variableElement.getSimpleName()),
                     typeElement); // 可能无法定位到超类字段，因此打印到Type
@@ -550,27 +520,27 @@ public class CodecProcessor extends MyAbstractProcessor {
     }
 
     /** 是否包含 readerObject(reader) 实例方法 */
-    public boolean containsReadObjectMethod(List<? extends Element> allFieldsAndMethodWithInherit) {
-        return containsHookMethod(allFieldsAndMethodWithInherit, MNAME_READ_OBJECT, typeMirror_DsonReader);
+    public boolean containsReadObjectMethod(List<? extends Element> allMembers) {
+        return containsHookMethod(allMembers, MNAME_READ_OBJECT, typeMirror_DsonReader);
     }
 
     /** 是否包含 writeObject(writer) 实例方法 */
-    public boolean containsWriteObjectMethod(List<? extends Element> allFieldsAndMethodWithInherit) {
-        return containsHookMethod(allFieldsAndMethodWithInherit, MNAME_WRITE_OBJECT, typeMirror_dsonWriter);
+    public boolean containsWriteObjectMethod(List<? extends Element> allMembers) {
+        return containsHookMethod(allMembers, MNAME_WRITE_OBJECT, typeMirror_dsonWriter);
     }
 
     /** 是否包含 beforeEncode 实例方法 */
-    public boolean containsBeforeEncodeMethod(List<? extends Element> allFieldsAndMethodWithInherit) {
-        return containsHookMethod(allFieldsAndMethodWithInherit, MNAME_BEFORE_ENCODE, typeMirror_Options);
+    public boolean containsBeforeEncodeMethod(List<? extends Element> allMembers) {
+        return containsHookMethod(allMembers, MNAME_BEFORE_ENCODE, typeMirror_Options);
     }
 
     /** 是否包含 afterDecode 实例方法 */
-    public boolean containsAfterDecodeMethod(List<? extends Element> allFieldsAndMethodWithInherit) {
-        return containsHookMethod(allFieldsAndMethodWithInherit, MNAME_AFTER_DECODE, typeMirror_Options);
+    public boolean containsAfterDecodeMethod(List<? extends Element> allMembers) {
+        return containsHookMethod(allMembers, MNAME_AFTER_DECODE, typeMirror_Options);
     }
 
-    private boolean containsHookMethod(List<? extends Element> allFieldsAndMethodWithInherit, String methodName, TypeMirror argTypeMirror) {
-        return allFieldsAndMethodWithInherit.stream()
+    private boolean containsHookMethod(List<? extends Element> allMembers, String methodName, TypeMirror argTypeMirror) {
+        return allMembers.stream()
                 .filter(e -> e.getKind() == ElementKind.METHOD)
                 .map(e -> (ExecutableElement) e)
                 .anyMatch(e -> e.getModifiers().contains(Modifier.PUBLIC)
@@ -604,16 +574,6 @@ public class CodecProcessor extends MyAbstractProcessor {
             return false;
         }
         return variableElement.getModifiers().contains(Modifier.PUBLIC);
-    }
-
-    /** 字段是否是类的成员或同包类的成员 -- 兼容性不好，生成的Codec可能在其它包 */
-    @Deprecated
-    private boolean isMemberOrPackageMember(VariableElement variableElement, TypeElement typeElement) {
-        final TypeElement enclosingElement = (TypeElement) variableElement.getEnclosingElement();
-        if (enclosingElement.equals(typeElement)) {
-            return true;
-        }
-        return elementUtils.getPackageOf(enclosingElement).equals(elementUtils.getPackageOf(typeElement));
     }
 
     /**
@@ -715,10 +675,6 @@ public class CodecProcessor extends MyAbstractProcessor {
     // endregion
 
     // region 类型测试
-    protected boolean isClassOrEnum(TypeElement typeElement) {
-        return typeElement.getKind() == ElementKind.CLASS
-                || typeElement.getKind() == ElementKind.ENUM;
-    }
 
     protected boolean isString(TypeMirror typeMirror) {
         return typeUtils.isSameType(typeMirror, type_String);
@@ -742,18 +698,6 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     protected boolean isByteArray(TypeMirror typeMirror) {
         return AptUtils.isByteArray(typeMirror);
-    }
-
-    protected boolean isMap(TypeMirror typeMirror) {
-        return AptUtils.isSubTypeIgnoreTypeParameter(typeUtils, typeMirror, type_Map);
-    }
-
-    protected boolean isCollection(TypeMirror typeMirror) {
-        return AptUtils.isSubTypeIgnoreTypeParameter(typeUtils, typeMirror, type_Collection);
-    }
-
-    protected boolean isSet(TypeMirror typeMirror) {
-        return AptUtils.isSubTypeIgnoreTypeParameter(typeUtils, typeMirror, type_Set);
     }
 
     protected boolean isEnumSet(TypeMirror typeMirror) {

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.CodeAnalysis;
 using Wjybxx.Commons.Apt;
@@ -56,8 +57,8 @@ public class CodecProcessor : IIncrementalGenerator
 
     // dson
     private const string CNAME_SERIALIZABLE = "Wjybxx.Dson.Codec.Attributes.DsonSerializableAttribute";
-    private const string CNAME_PROPERTY = "Wjybxx.Dson.Codec.Attributes.DsonPropertyAttribute";
-    private const string CNAME_DSON_IGNORE = "Wjybxx.Dson.Codec.Attributes.DsonIgnoreAttribute";
+    internal const string CNAME_PROPERTY = "Wjybxx.Dson.Codec.Attributes.DsonPropertyAttribute";
+    internal const string CNAME_DSON_IGNORE = "Wjybxx.Dson.Codec.Attributes.DsonIgnoreAttribute";
     private const string CNAME_DSON_READER = "Wjybxx.Dson.Codec.IDsonObjectReader";
     private const string CNAME_DSON_WRITER = "Wjybxx.Dson.Codec.IDsonObjectWriter";
     private const string CNAME_OPTIONS = "Wjybxx.Dson.Codec.ConverterOptions";
@@ -125,6 +126,7 @@ public class CodecProcessor : IIncrementalGenerator
     internal INamedTypeSymbol type_ObjectStyle;
 
     private SourceProductionContext sourceProductionContext;
+    private Compilation compilation;
     private readonly CodeWriter _codeWriter = new CodeWriter();
 
     #endregion
@@ -137,6 +139,7 @@ public class CodecProcessor : IIncrementalGenerator
     private void EnsureInited(SourceProductionContext sourceProductionContext, Compilation compilation) {
         if (anno_DsonSerializable != null) return;
         this.sourceProductionContext = sourceProductionContext;
+        this.compilation = compilation;
 
         // dson
         anno_DsonSerializable = compilation.GetTypeByMetadataName(CNAME_SERIALIZABLE);
@@ -166,12 +169,12 @@ public class CodecProcessor : IIncrementalGenerator
         type_ObjectStyle = compilation.GetTypeByMetadataName(CNAME_ObjectStyle);
     }
 
-    private void ReportDiagnostic(DiagnosticDescriptor descriptor, ISymbol symbol, params object[] args) {
-        Location? location = symbol.Locations == null ? null : symbol.Locations[0];
+    private void ReportDiagnostic(DiagnosticDescriptor descriptor, ISymbol? symbol, params object[] args) {
+        Location? location = symbol == null ? null : symbol.GetFirstLocation();
         sourceProductionContext.ReportDiagnostic(Diagnostic.Create(descriptor, location, args));
     }
 
-    private void ReportException(Exception ex, ISymbol symbol) {
+    private void ReportException(Exception ex, ISymbol? symbol) {
         ReportDiagnostic(new DiagnosticDescriptor("DS0000",
                 "Exception",
                 "Generator Code Caught Exception message: {0}, stackTrace: {1}", "DsonCodec",
@@ -241,48 +244,41 @@ public class CodecProcessor : IIncrementalGenerator
         EnsureInited(sourceProductionContext, node.SemanticModel.Compilation);
         AttributeData linkerBeanAttribute = AptUtils.GetAttribute(node.Attributes, CNAME_CODEC_LINKER_BEAN);
         Debug.Assert(linkerBeanAttribute != null);
-        // LinkerBean
-        Context linkerBeanContext = new Context(node.TargetSymbol as INamedTypeSymbol);
-        linkerBeanContext.linkerBeanAttribute = linkerBeanAttribute;
-        // Target是构造函数参数，而Namespace是属性参数
-        INamedTypeSymbol targetType = linkerBeanAttribute.ConstructorArguments[0].Value as INamedTypeSymbol;
-        string? outNamespace = null;
-        if (AptUtils.GetAttributeValue(linkerBeanAttribute, MNAME_OUTPUT, out TypedConstant typedConstant)) {
-            outNamespace = typedConstant.GetValueAsString();
-        }
-        outNamespace = GetOutputNamespace(linkerBeanContext.type, outNamespace);
 
-        // 真实需要生成Codec的类型
+        // Target是构造函数参数，而Namespace是属性参数
+        INamedTypeSymbol linkerBeanType = (INamedTypeSymbol)node.TargetSymbol;
+        INamedTypeSymbol targetType = (INamedTypeSymbol)linkerBeanAttribute.ConstructorArguments[0].Value;
+        string outNamespace = GetOutputNamespace((INamedTypeSymbol)node.TargetSymbol, linkerBeanAttribute);
         AptClassProps aptClassProps = AptClassProps.Parse(linkerBeanAttribute);
+
         // 创建模拟数据
         Context context = new Context(targetType);
-        context.linkerBeanAttribute = linkerBeanAttribute;
         context.outputNamespace = outNamespace;
-
         context.aptClassProps = aptClassProps;
         context.additionalAnnotations = GetAdditionalAnnotations(aptClassProps);
         CacheFields(context);
         CacheFieldProps(context);
         // 修正字段的Props —— 将LinkerBean上的注解信息转移到目标类
         {
+            Context linkerBeanContext = new Context(linkerBeanType);
             CacheFields(linkerBeanContext);
             CacheFieldProps(linkerBeanContext);
 
             // 按name缓存，提高效率
-            Dictionary<string, AptFieldProps> fieldName2FieldPropsMap = new(linkerBeanContext.fieldPropsMap.Count);
-            foreach (KeyValuePair<IFieldSymbol, AptFieldProps> pair in linkerBeanContext.fieldPropsMap) {
-                fieldName2FieldPropsMap[pair.Key.Name] = pair.Value;
+            Dictionary<FieldKey, AptFieldProps> fieldName2FieldPropsMap = new(linkerBeanContext.fieldPropsMap.Count);
+            foreach (KeyValuePair<AptFieldInfo, AptFieldProps> pair in linkerBeanContext.fieldPropsMap) {
+                fieldName2FieldPropsMap[pair.Key.FieldKey] = pair.Value;
             }
-            foreach (IFieldSymbol fieldInfo in context.allFields) {
-                if (fieldName2FieldPropsMap.TryGetValue(fieldInfo.Name, out AptFieldProps? aptFieldProps)) {
+            foreach (AptFieldInfo fieldInfo in context.allFields) {
+                if (fieldName2FieldPropsMap.TryGetValue(fieldInfo.FieldKey, out AptFieldProps? aptFieldProps)) {
                     context.fieldPropsMap[fieldInfo] = aptFieldProps;
                 }
             }
         }
         // 绑定CodecProxy
         {
-            aptClassProps.codecProxyType = linkerBeanContext.type;
-            aptClassProps.codecProxyClassName = AptUtils.ParseType(linkerBeanContext.type);
+            aptClassProps.codecProxyType = linkerBeanType;
+            aptClassProps.codecProxyClassName = AptUtils.ParseType(linkerBeanType);
         }
         // 检查数据
         {
@@ -303,35 +299,27 @@ public class CodecProcessor : IIncrementalGenerator
         EnsureInited(sourceProductionContext, node.SemanticModel.Compilation);
         AttributeData linkerGroupAttribute = AptUtils.GetAttribute(node.Attributes, CNAME_CODEC_LINKER_GROUP);
         Debug.Assert(linkerGroupAttribute != null);
-
-        Context linkerGroupContext = new Context(node.TargetSymbol as INamedTypeSymbol);
-        linkerGroupContext.linkerGroupAttribute = linkerGroupAttribute;
-        // Namespace是属性参数
-        string? outNamespace = null;
-        if (AptUtils.GetAttributeValue(linkerGroupAttribute, MNAME_OUTPUT, out TypedConstant typedConstant)) {
-            outNamespace = typedConstant.GetValueAsString();
-        }
-        outNamespace = GetOutputNamespace(linkerGroupContext.type, outNamespace);
-
-        CacheFields(linkerGroupContext);
-        foreach (IFieldSymbol fieldInfo in linkerGroupContext.allFields) {
+        //
+        INamedTypeSymbol linkerGroupType = (INamedTypeSymbol)node.TargetSymbol;
+        string outNamespace = GetOutputNamespace(linkerGroupType, linkerGroupAttribute);
+        // 扫描LinkerGroup的字段
+        List<IFieldSymbol> linkerGroupFields = BeanUtils.GetAllMembersWithInherit(linkerGroupType, new List<SymbolKind>() { SymbolKind.Field })
+            .Cast<IFieldSymbol>()
+            .ToList();
+        foreach (IFieldSymbol fieldSymbol in linkerGroupFields) {
             // 查找字段的配置
-            AttributeData linkerAttribute = AptUtils.GetAttribute(fieldInfo.GetAttributes(), CNAME_CODEC_LINKER);
+            AttributeData linkerAttribute = AptUtils.GetAttribute(fieldSymbol.GetAttributes(), CNAME_CODEC_LINKER);
             AptClassProps aptClassProps = AptClassProps.Parse(linkerAttribute);
 
             // 泛型字段需要转换为泛型定义类 -- 不能连接到特殊类型
-            INamedTypeSymbol targetType = fieldInfo.Type as INamedTypeSymbol;
-            if (targetType == null) {
-                continue;
-            }
+            INamedTypeSymbol targetType = fieldSymbol.Type as INamedTypeSymbol;
+            if (targetType == null) continue;
             if (targetType.IsGenericType) {
                 targetType = targetType.OriginalDefinition;
             }
-
+            // 创建模拟数据
             Context context = new Context(targetType);
-            context.linkerGroupAttribute = linkerGroupAttribute;
             context.outputNamespace = outNamespace;
-
             context.aptClassProps = aptClassProps;
             context.additionalAnnotations = GetAdditionalAnnotations(aptClassProps);
             CacheFields(context);
@@ -360,11 +348,9 @@ public class CodecProcessor : IIncrementalGenerator
         Debug.Assert(serializableAttribute != null);
 
         Context context = new Context(node.TargetSymbol as INamedTypeSymbol);
-        context.dsonSerilAttribute = serializableAttribute;
-
         CacheFields(context);
         CacheFieldProps(context);
-        context.aptClassProps = AptClassProps.Parse(context.dsonSerilAttribute);
+        context.aptClassProps = AptClassProps.Parse(serializableAttribute);
         context.additionalAnnotations = GetAdditionalAnnotations(context.aptClassProps);
         // 检查数据
         {
@@ -390,7 +376,7 @@ public class CodecProcessor : IIncrementalGenerator
         codecGenerator.Execute();
 
         // 写入文件
-        string outputNamespace = GetOutputNamespace(type, context.outputNamespace);
+        string outputNamespace = context.outputNamespace ?? type.ContainingNamespace.ToDisplayString();
         CsharpFile csharpFile = CsharpFile.NewBuilder(context.typeBuilder.name)
             .AddSpec(new MacroSpec("pragma", "warning disable CS1591"))
             .AddSpec(NamespaceSpec.Of(outputNamespace, context.typeBuilder.Build()))
@@ -402,40 +388,89 @@ public class CodecProcessor : IIncrementalGenerator
     }
 
     private void CacheFields(Context context) {
-        context.allFieldsAndMethodWithInherit = BeanUtils.GetAllMembersWithInherit(context.type);
-        // 包含自动属性字段
-        context.allFields = context.allFieldsAndMethodWithInherit
-            .Where(e => e.Kind == SymbolKind.Field && !e.IsStatic)
-            .Cast<IFieldSymbol>()
-            .ToList();
+        context.allMembers = BeanUtils.GetAllMembersWithInherit(context.type);
+
+        // 反射字段
+        Dictionary<FieldKey, FieldInfo> reflectionFieldDic = GetReflectionFields(context.type)
+            .ToDictionary(e => new FieldKey(Util.GetSimpleName(e.DeclaringType!), e.Name), e => e);
+        // 编译字段
+        Dictionary<FieldKey, IFieldSymbol> compilationFieldDic = new Dictionary<FieldKey, IFieldSymbol>(context.allMembers.Count);
+        foreach (ISymbol symbol in context.allMembers) {
+            if (symbol.Kind != SymbolKind.Field) continue;
+            IFieldSymbol fieldSymbol = (IFieldSymbol)symbol;
+            FieldKey key = new FieldKey(fieldSymbol.ContainingType.Name, fieldSymbol.Name);
+            compilationFieldDic.Add(key, fieldSymbol); // 使用add，如果出现重复可以发现
+        }
+        // 合并信息
+        HashSet<FieldKey> fieldKeys = new HashSet<FieldKey>();
+        fieldKeys.AddAll(reflectionFieldDic.Keys);
+        fieldKeys.AddAll(compilationFieldDic.Keys);
+        
+        List<AptFieldInfo> allFields = new List<AptFieldInfo>(fieldKeys.Count);
+        foreach (FieldKey key in fieldKeys) {
+            reflectionFieldDic.TryGetValue(key, out FieldInfo? fieldInfo);
+            compilationFieldDic.TryGetValue(key, out IFieldSymbol? fieldSymbol);
+            IPropertySymbol propertySymbol = BeanUtils.FindProperty(key.fieldName, context.allMembers);
+
+            AptFieldInfo aptFieldInfo = new AptFieldInfo(fieldInfo, fieldSymbol, propertySymbol);
+            ITypeSymbol? fieldType = aptFieldInfo.FieldType;
+            if (fieldType != null) {
+                aptFieldInfo.typeName = AptUtils.ParseType(fieldType).RemoveAllNullableAttribute();
+            }
+            allFields.Add(aptFieldInfo);
+        }
+        context.allFields = allFields;
+    }
+
+    private List<FieldInfo> GetReflectionFields(INamedTypeSymbol typeSymbol) {
+        string buildingAssemblyName = compilation.Assembly.Identity.Name;
+        int index = 0;
+        List<INamedTypeSymbol> namedTypeSymbols = AptUtils.FlatInheritAndReverse(typeSymbol);
+        for (; index < namedTypeSymbols.Count; index++) {
+            INamedTypeSymbol namedTypeSymbol = namedTypeSymbols[index];
+            string typeAssemblyName = namedTypeSymbol.ContainingAssembly.Name;
+            if (typeAssemblyName == buildingAssemblyName) {
+                break;
+            }
+        }
+        if (index > 0) {
+            INamedTypeSymbol namedTypeSymbol = namedTypeSymbols[index - 1];
+            string typeAssemblyName = namedTypeSymbol.ContainingAssembly.Name;
+            string path = $"{AptUtils.GetFullMetadataName(namedTypeSymbol)}, {typeAssemblyName}";
+            Type reflectType = Type.GetType(path);
+            if (reflectType == null) {
+                throw new Exception($"load assembly failed: {typeAssemblyName}");
+            }
+            return BeanUtils.GetAllMembersWithInherit(reflectType, MemberTypes.Field)
+                .Cast<FieldInfo>()
+                .ToList();
+        }
+        return new List<FieldInfo>();
     }
 
     private void CacheFieldProps(Context context) {
-        foreach (IFieldSymbol fieldInfo in context.allFields) {
-            // 最终序列化的都是字段，自动属性是定义字段的快捷方法
-            ISymbol attributeHolder;
-            if (BeanUtils.IsAutoPropertyField(fieldInfo.Name)) {
-                attributeHolder = BeanUtils.FindProperty(fieldInfo, context.allFieldsAndMethodWithInherit)!;
-            } else {
-                attributeHolder = fieldInfo;
+        foreach (AptFieldInfo fieldInfo in context.allFields) {
+            if (fieldInfo.FieldType == null) {
+                context.fieldPropsMap[fieldInfo] = new AptFieldProps();
+                continue;
             }
-            AptFieldProps aptFieldProps = AptFieldProps.Parse(attributeHolder, CNAME_PROPERTY,
-                type_NumberStyle, type_StringStyle, type_ObjectStyle);
-            aptFieldProps.ParseIgnore(attributeHolder, CNAME_DSON_IGNORE);
-            // 缓存自动属性
-            if (attributeHolder.Kind == SymbolKind.Property) {
-                aptFieldProps.autoProperty = attributeHolder as IPropertySymbol;
-            }
+            // dson-property
+            AptFieldProps aptFieldProps = AptFieldProps.Parse(fieldInfo, CNAME_PROPERTY,
+                type_NumberStyle, type_StringStyle, type_ObjectStyle, compilation);
+            // dson-ignore
+            aptFieldProps.ParseIgnore(fieldInfo, CNAME_DSON_IGNORE);
+            //
             context.fieldPropsMap[fieldInfo] = aptFieldProps;
         }
     }
 
     /** 获取输出命名空间 -- 默认为配置类的命名空间 */
-    private string GetOutputNamespace(INamedTypeSymbol type, string? outNamespace) {
-        if (string.IsNullOrWhiteSpace(outNamespace)) {
-            return type.ContainingNamespace.ToDisplayString() ?? throw new Exception();
+    private string GetOutputNamespace(INamedTypeSymbol configType, AttributeData attributeData) {
+        // Namespace是属性参数
+        if (AptUtils.GetAttributeValue(attributeData, MNAME_OUTPUT, out TypedConstant typedConstant)) {
+            return typedConstant.GetValueAsString();
         }
-        return outNamespace;
+        return configType.ContainingNamespace.ToDisplayString();
     }
 
     /** 获取为生成的Codec附加的注解 */
@@ -485,13 +520,13 @@ public class CodecProcessor : IIncrementalGenerator
         INamedTypeSymbol targetType = context.type;
         CheckConstructor(targetType, aptClassProps);
 
-        List<ISymbol> allFieldsAndMethodWithInherit = context.allFieldsAndMethodWithInherit;
-        List<ISymbol> instMethodWithInherit = allFieldsAndMethodWithInherit
+        List<ISymbol> allMembers = context.allMembers;
+        List<ISymbol> instMethodWithInherit = allMembers
             .Where(e => e.Kind == SymbolKind.Method || e.Kind == SymbolKind.Property)
             .Where(e => !e.IsStatic)
             .ToList();
 
-        foreach (IFieldSymbol fieldInfo in context.allFields) {
+        foreach (AptFieldInfo fieldInfo in context.allFields) {
             AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
             if (!IsSerializableField(fieldInfo, instMethodWithInherit, aptFieldProps!)) {
                 continue;
@@ -499,23 +534,23 @@ public class CodecProcessor : IIncrementalGenerator
             context.serialFields.Add(fieldInfo);
 
             if (IsAutoWriteField(fieldInfo, aptClassProps, aptFieldProps)) {
-                CheckAutoWriteField(fieldInfo, aptFieldProps, allFieldsAndMethodWithInherit);
+                CheckAutoWriteField(fieldInfo, aptFieldProps, allMembers);
             }
             if (IsAutoReadField(fieldInfo, aptClassProps, aptFieldProps)) {
-                CheckAutoReadField(fieldInfo, aptFieldProps, allFieldsAndMethodWithInherit);
+                CheckAutoReadField(fieldInfo, aptFieldProps, allMembers);
             }
         }
     }
 
     /** 检查自动读字段 */
-    private void CheckAutoReadField(IFieldSymbol fieldInfo, AptFieldProps aptFieldProps, List<ISymbol> allFieldsAndMethodWithInherit) {
+    private void CheckAutoReadField(AptFieldInfo fieldInfo, AptFieldProps aptFieldProps, List<ISymbol> allMembers) {
         if (!string.IsNullOrWhiteSpace(aptFieldProps.readProxy)) {
             return;
         }
         // 工具读：需要是public或包含public setter
         if (!CanSetDirectly(fieldInfo)
             && string.IsNullOrWhiteSpace(aptFieldProps.setter)
-            && FindPublicSetter(fieldInfo, allFieldsAndMethodWithInherit, aptFieldProps) == null) {
+            && !fieldInfo.HasPublicSetter) {
             //
             ReportDiagnostic(new DiagnosticDescriptor(
                     id: "DC1002",
@@ -524,19 +559,19 @@ public class CodecProcessor : IIncrementalGenerator
                     category: "DsonCodec",
                     DiagnosticSeverity.Error,
                     isEnabledByDefault: true),
-                fieldInfo, fieldInfo.Name);
+                fieldInfo.fieldSymbol, fieldInfo.Name);
         }
     }
 
     /** 检查自动写字段 */
-    private void CheckAutoWriteField(IFieldSymbol fieldInfo, AptFieldProps aptFieldProps, List<ISymbol> allFieldsAndMethodWithInherit) {
+    private void CheckAutoWriteField(AptFieldInfo fieldInfo, AptFieldProps aptFieldProps, List<ISymbol> allMembers) {
         if (!string.IsNullOrWhiteSpace(aptFieldProps.writeProxy)) {
             return;
         }
         // 工具写：需要是public字段或包含public getter
         if (!CanGetDirectly(fieldInfo)
             && string.IsNullOrWhiteSpace(aptFieldProps.getter)
-            && FindPublicGetter(fieldInfo, allFieldsAndMethodWithInherit, aptFieldProps) == null) {
+            && !fieldInfo.HasPublicGetter) {
             //
             ReportDiagnostic(new DiagnosticDescriptor(
                     id: "DC1002",
@@ -545,7 +580,7 @@ public class CodecProcessor : IIncrementalGenerator
                     category: "DsonCodec",
                     DiagnosticSeverity.Error,
                     isEnabledByDefault: true),
-                fieldInfo, fieldInfo.Name);
+                fieldInfo.fieldSymbol, fieldInfo.Name);
         }
     }
 
@@ -586,48 +621,49 @@ public class CodecProcessor : IIncrementalGenerator
     /** 是否包含 newInstance(reader) 静态解码方法 -- 只能从当前类型查询 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool ContainsNewInstanceMethod(INamedTypeSymbol typeElement) {
-        var staticMembers = typeElement.GetMembers().Where(e => e.IsStatic);
+        List<ISymbol> staticMembers = typeElement.GetMembers()
+            .Where(e => e.IsStatic && e.Kind == SymbolKind.Method)
+            .ToList();
         return ContainsHookMethod(staticMembers, MNAME_NEW_INSTANCE, type_DsonReader);
     }
 
     /** 是否包含 readerObject(reader) 实例方法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool ContainsReadObjectMethod(List<ISymbol> allFieldsAndMethodWithInherit) {
-        return ContainsHookMethod(allFieldsAndMethodWithInherit, MNAME_READ_OBJECT, type_DsonReader);
+    internal bool ContainsReadObjectMethod(List<ISymbol> allMembers) {
+        return ContainsHookMethod(allMembers, MNAME_READ_OBJECT, type_DsonReader);
     }
 
     /** 是否包含 writeObject(writer) 实例方法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool ContainsWriteObjectMethod(List<ISymbol> allFieldsAndMethodWithInherit) {
-        return ContainsHookMethod(allFieldsAndMethodWithInherit, MNAME_WRITE_OBJECT, type_DsonWriter);
+    internal bool ContainsWriteObjectMethod(List<ISymbol> allMembers) {
+        return ContainsHookMethod(allMembers, MNAME_WRITE_OBJECT, type_DsonWriter);
     }
 
     /** 是否包含 beforeEncode 实例方法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool ContainsBeforeEncodeMethod(List<ISymbol> allFieldsAndMethodWithInherit) {
-        return ContainsHookMethod(allFieldsAndMethodWithInherit, MNAME_BEFORE_ENCODE, type_Options);
+    internal bool ContainsBeforeEncodeMethod(List<ISymbol> allMembers) {
+        return ContainsHookMethod(allMembers, MNAME_BEFORE_ENCODE, type_Options);
     }
 
     /** 是否包含 afterDecode 实例方法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool ContainsAfterDecodeMethod(List<ISymbol> allFieldsAndMethodWithInherit) {
-        return ContainsHookMethod(allFieldsAndMethodWithInherit, MNAME_AFTER_DECODE, type_Options);
+    internal bool ContainsAfterDecodeMethod(List<ISymbol> allMembers) {
+        return ContainsHookMethod(allMembers, MNAME_AFTER_DECODE, type_Options);
     }
 
     /** 是否包含指定参数的钩子方法 */
-    private static bool ContainsHookMethod(IEnumerable<ISymbol> allFieldsAndMethodWithInherit, string methodName, ITypeSymbol argType) {
-        return allFieldsAndMethodWithInherit
-            .Where(e => e.Kind == SymbolKind.Method)
+    private bool ContainsHookMethod(IEnumerable<ISymbol> allMembers, string methodName, ITypeSymbol argType) {
+        return allMembers.Where(e => e.Kind == SymbolKind.Method)
             .Cast<IMethodSymbol>()
-            .Any(e => {
-                if (!e.IsPublic() || e.Name != methodName) {
+            .Any(symbol => {
+                if (!symbol.IsPublic() || symbol.Name != methodName) {
                     return false;
                 }
-                ImmutableArray<IParameterSymbol> parameterInfos = e.Parameters;
-                if (parameterInfos.Length == 0) {
+                ImmutableArray<IParameterSymbol> parameters = symbol.Parameters;
+                if (parameters.Length == 0) {
                     return false;
                 }
-                return parameterInfos[0].Type.Equals(argType, SymbolEqualityComparer.Default);
+                return parameters[0].Type.IsSubTypeOf(argType);
             });
     }
 
@@ -641,8 +677,8 @@ public class CodecProcessor : IIncrementalGenerator
     /// <param name="fieldInfo">类字段，可能是继承的字段</param>
     /// <returns>如果可直接取值，则返回true</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool CanGetDirectly(IFieldSymbol fieldInfo) {
-        return fieldInfo.IsPublic();
+    internal bool CanGetDirectly(AptFieldInfo fieldInfo) {
+        return fieldInfo.IsPublic;
     }
 
     /// <summary>
@@ -651,39 +687,11 @@ public class CodecProcessor : IIncrementalGenerator
     /// <param name="fieldInfo">类字段，可能是继承的字段</param>
     /// <returns>如果可直接赋值，则返回true</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool CanSetDirectly(IFieldSymbol fieldInfo) {
+    internal bool CanSetDirectly(AptFieldInfo fieldInfo) {
         if (fieldInfo.IsReadOnly) {
             return false;
         }
-        return fieldInfo.IsPublic();
-    }
-
-    /**
-     * 查找非private的getter方法
-     *
-     * @param allMethodWithInherit 所有的字段和方法，可能在父类中
-     */
-    internal IPropertySymbol? FindPublicGetter(IFieldSymbol fieldSymbol, List<ISymbol> allMethodWithInherit, AptFieldProps aptFieldProps) {
-        IPropertySymbol? autoProperty = aptFieldProps.autoProperty;
-        if (autoProperty != null) {
-            IMethodSymbol? getMethod = autoProperty.GetMethod;
-            return (getMethod != null && getMethod.IsPublic()) ? autoProperty : null;
-        }
-        return BeanUtils.FindPublicGetter(fieldSymbol, allMethodWithInherit);
-    }
-
-    /**
-     * 查找非private的setter方法
-     *
-     * @param allMethodWithInherit 所有的字段和方法，可能在父类中
-     */
-    internal IPropertySymbol? FindPublicSetter(IFieldSymbol fieldSymbol, List<ISymbol> allMethodWithInherit, AptFieldProps aptFieldProps) {
-        IPropertySymbol? autoProperty = aptFieldProps.autoProperty;
-        if (autoProperty != null) {
-            IMethodSymbol? setMethod = autoProperty.SetMethod;
-            return (setMethod != null && setMethod.IsPublic()) ? autoProperty : null;
-        }
-        return BeanUtils.FindPublicSetter(fieldSymbol, allMethodWithInherit);
+        return fieldInfo.IsPublic;
     }
 
     /**
@@ -691,36 +699,27 @@ public class CodecProcessor : IIncrementalGenerator
      * 1.默认只序列化 public 字段
      * 2.默认忽略 <see cref="NonSerializedAttribute"/> 字段
      */
-    internal bool IsSerializableField(IFieldSymbol fieldInfo, List<ISymbol> allMethodWithInherit, AptFieldProps aptFieldProps) {
-        if (fieldInfo.IsStatic) {
-            return false;
-        }
+    internal bool IsSerializableField(AptFieldInfo fieldInfo, List<ISymbol> allMethodWithInherit, AptFieldProps aptFieldProps) {
+        if (fieldInfo.FieldType == null) return false;
+        if (fieldInfo.IsStatic) return false;
         // 有注解的情况取决于注解的值，需取反 -- 注解已提前解析
         if (aptFieldProps.ignore.HasValue) {
             return !aptFieldProps.ignore.Value;
         }
         // 无注解的情况下，默认忽略 NonSerialized 字段
-        if (AptUtils.GetAttribute(fieldInfo.GetAttributes(), CNAME_NonSerialize) != null) {
+        if (fieldInfo.GetAttribute(CNAME_NonSerialize) != null) {
             return false;
         }
         // 判断public和getter/setter
-        if (fieldInfo.IsPublic()) {
+        if (fieldInfo.IsPublic) {
             return true;
         }
-        // 自动属性优化
-        if (aptFieldProps.autoProperty != null) {
-            IMethodSymbol? getMethod = aptFieldProps.autoProperty.GetMethod;
-            IMethodSymbol? setMethod = aptFieldProps.autoProperty.SetMethod;
-            return (getMethod != null && getMethod.IsPublic())
-                   && (setMethod != null && setMethod.IsPublic());
-        }
-        // setter更容易失败
-        return BeanUtils.ContainsPublicSetter(fieldInfo, allMethodWithInherit)
-               && BeanUtils.ContainsPublicGetter(fieldInfo, allMethodWithInherit);
+        // 我们在Props上缓存了关联的属性
+        return fieldInfo.HasPublicSetter && fieldInfo.HasPublicGetter;
     }
 
     /** 是否是托管写的字段 */
-    internal bool IsAutoWriteField(IFieldSymbol fieldInfo, AptClassProps aptClassProps, AptFieldProps aptFieldProps) {
+    internal bool IsAutoWriteField(AptFieldInfo fieldInfo, AptClassProps aptClassProps, AptFieldProps aptFieldProps) {
         if (aptClassProps.IsSingleton) {
             return false;
         }
@@ -731,7 +730,7 @@ public class CodecProcessor : IIncrementalGenerator
     }
 
     /** 是否是托管读的字段 */
-    internal bool IsAutoReadField(IFieldSymbol fieldInfo, AptClassProps aptClassProps, AptFieldProps aptFieldProps) {
+    internal bool IsAutoReadField(AptFieldInfo fieldInfo, AptClassProps aptClassProps, AptFieldProps aptFieldProps) {
         if (aptClassProps.IsSingleton) {
             return false;
         }
@@ -746,20 +745,25 @@ public class CodecProcessor : IIncrementalGenerator
     }
 
     /** skip仅仅代表不自动读 */
-    private static bool IsSkipField(IFieldSymbol fieldInfo, AptClassProps aptClassProps, AptFieldProps aptFieldProps) {
+    private static bool IsSkipField(AptFieldInfo fieldInfo, AptClassProps aptClassProps, AptFieldProps aptFieldProps) {
         if (aptClassProps.skipFields.Count == 0) {
             return false;
         }
         // 如果是自动属性，则使用属性名
-        string fieldName = aptFieldProps.autoProperty != null ? aptFieldProps.autoProperty.Name : fieldInfo.Name;
+        string fieldName;
+        if (fieldInfo.IsAutoPropertyField) {
+            fieldName = fieldInfo.propertySymbol!.Name;
+        } else {
+            fieldName = fieldInfo.Name;
+        }
         if (aptClassProps.skipFields.Contains(fieldName)) {
             return true; // 完全匹配
         }
         if (!aptClassProps.clippedSkipFields.Contains(fieldName)) {
             return false; // 简单名不存在
         }
-        // 测试类名 -- 不测试FullName，C#的FullName并不易编写 
-        string declaringTypeName = fieldInfo.ContainingType!.Name;
+        // 测试类名 -- 不测试FullName，C#的FullName并不易编写
+        string declaringTypeName = fieldInfo.FieldKey.ToString();
         if (aptClassProps.skipFields.Contains(declaringTypeName + "." + fieldName)) {
             return true;
         }

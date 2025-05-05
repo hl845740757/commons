@@ -147,6 +147,14 @@ public class TypeName : IEquatable<TypeName>
         return ToString().GetHashCode();
     }
 
+    public static bool operator ==(TypeName? left, TypeName? right) {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(TypeName? left, TypeName? right) {
+        return !Equals(left, right);
+    }
+
     #endregion
 
     #region get-parse

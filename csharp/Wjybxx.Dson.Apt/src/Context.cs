@@ -34,29 +34,18 @@ internal class Context
     /// 要处理的类型
     /// </summary>
     public readonly INamedTypeSymbol type;
-    /// <summary>
-    /// 基于<code>DsonSerializableAttribute</code>生成Codec时的数据
-    /// </summary>
-    public AttributeData dsonSerilAttribute;
-    /// <summary>
-    ///  基于<code>DsonCodecLinkerGroupAttribute</code>生成Codec时的数据
-    /// </summary>
-    public AttributeData linkerGroupAttribute;
-    /// <summary>
-    /// 基于<code>DsonCodecLinkerBeanAttribute</code>生成codec时的数据
-    /// </summary>
-    public AttributeData linkerBeanAttribute;
 
     #region Cache
 
     /// <summary>
-    /// 所有的字段和方法（和属性）缓存
+    /// 所有的public/protected字段、方法、属性缓存
+    /// (当前程序集可访问到的所有成员)
     /// </summary>
-    public List<ISymbol> allFieldsAndMethodWithInherit;
+    public List<ISymbol> allMembers;
     /// <summary>
-    /// 所有的实例字段缓存（包含自动属性字段）
+    /// 所有的实例字段缓存（包含私有字段，包含自动属性字段）
     /// </summary>
-    public List<IFieldSymbol> allFields;
+    public List<AptFieldInfo> allFields;
 
     /// <summary>
     /// 要处理的类的注解信息
@@ -69,11 +58,11 @@ internal class Context
     /// <summary>
     /// 所有的字段注解信息缓存（包含自动属性字段）
     /// </summary>
-    public readonly Dictionary<IFieldSymbol, AptFieldProps> fieldPropsMap = new(SymbolEqualityComparer.Default);
+    public readonly Dictionary<AptFieldInfo, AptFieldProps> fieldPropsMap = new();
     /// <summary>
     /// 需要序列化的字缓存
     /// </summary>
-    public readonly List<IFieldSymbol> serialFields = new();
+    public readonly List<AptFieldInfo> serialFields = new();
 
     #endregion
 

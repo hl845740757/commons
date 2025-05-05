@@ -100,7 +100,7 @@ public class GeneratorTest
             // 字段
             .AddField(TypeName.INT, "age", Modifiers.Private)
             .AddField(TypeName.STRING, "name", Modifiers.Private)
-            .AddSpec(FieldSpec.NewBuilder(dictionaryTypeName, "blackboard", Modifiers.Public | Modifiers.Readonly)
+            .AddSpec(FieldSpec.NewBuilder(dictionaryTypeName, "blackboard", Modifiers.Public | Modifiers.ReadOnly)
                 .Initializer("new $T()", dictionaryTypeName)
                 .Build())
             // 构造函数

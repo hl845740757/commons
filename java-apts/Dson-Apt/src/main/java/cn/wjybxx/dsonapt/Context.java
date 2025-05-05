@@ -19,7 +19,6 @@ package cn.wjybxx.dsonapt;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.TypeSpec;
 
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -36,12 +35,8 @@ import java.util.Map;
 class Context {
 
     final TypeElement typeElement;
-    AnnotationMirror dsonSerialAnnoMirror;
-    AnnotationMirror linkerGroupAnnoMirror;
-    AnnotationMirror linkerBeanAnnoMirror;
-
     // region cache
-    List<? extends Element> allFieldsAndMethodWithInherit; // 所有的字段和方法缓存
+    List<? extends Element> allMembers; // 所有的字段和方法缓存
     List<VariableElement> allFields; // 所有的实例字段缓存
 
     AptClassProps aptClassProps; // 类注解缓存

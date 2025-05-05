@@ -40,7 +40,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
 
     private final Context context;
     private final TypeSpec.Builder typeBuilder;
-    private final List<? extends Element> allFieldsAndMethodWithInherit;
+    private final List<? extends Element> allMembers;
 
     private ClassName rawTypeName;
     private boolean containsReaderConstructor;
@@ -60,7 +60,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         super(processor, context.typeElement);
         this.context = context;
         this.typeBuilder = context.typeBuilder;
-        this.allFieldsAndMethodWithInherit = context.allFieldsAndMethodWithInherit;
+        this.allMembers = context.allMembers;
     }
 
     // region codec
@@ -76,10 +76,10 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         rawTypeName = ClassName.get(typeElement);
         containsReaderConstructor = processor.containsReaderConstructor(typeElement);
         containsNewInstanceMethod = processor.containsNewInstanceMethod(typeElement);
-        containsReadObjectMethod = processor.containsReadObjectMethod(allFieldsAndMethodWithInherit);
-        containsWriteObjectMethod = processor.containsWriteObjectMethod(allFieldsAndMethodWithInherit);
-        containsBeforeEncodeMethod = processor.containsBeforeEncodeMethod(allFieldsAndMethodWithInherit);
-        containsAfterDecodeMethod = processor.containsAfterDecodeMethod(allFieldsAndMethodWithInherit);
+        containsReadObjectMethod = processor.containsReadObjectMethod(allMembers);
+        containsWriteObjectMethod = processor.containsWriteObjectMethod(allMembers);
+        containsBeforeEncodeMethod = processor.containsBeforeEncodeMethod(allMembers);
+        containsAfterDecodeMethod = processor.containsAfterDecodeMethod(allMembers);
 
         // 需要先初始化superDeclaredType
         DeclaredType superDeclaredType = context.superDeclaredType;
@@ -285,7 +285,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         builder.addCode("if (reader.readName($L)) ", serialName(fieldName));
 
         final String readMethodName = getReadMethodName(variableElement);
-        final ExecutableElement setterMethod = processor.findPublicSetter(variableElement, allFieldsAndMethodWithInherit);
+        final ExecutableElement setterMethod = processor.findPublicSetter(variableElement, allMembers);
         // 优先用setter，否则直接赋值
         boolean hasCustomSetter = !AptUtils.isBlank(fieldProps.setter);
         if (hasCustomSetter || setterMethod != null) {
@@ -331,7 +331,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         // 优先用getter，否则直接访问
         String fieldAccess;
         boolean hasCustomGetter = !AptUtils.isBlank(fieldProps.getter);
-        ExecutableElement getterMethod = processor.findPublicGetter(variableElement, allFieldsAndMethodWithInherit);
+        ExecutableElement getterMethod = processor.findPublicGetter(variableElement, allMembers);
         if (hasCustomGetter) {
             fieldAccess = fieldProps.getter + "()";
         } else if (getterMethod != null) {

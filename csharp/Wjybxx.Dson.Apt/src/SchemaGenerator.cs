@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
+using Wjybxx.Commons.Apt;
 using Wjybxx.Commons.Poet;
 using ClassName = Wjybxx.Commons.Poet.ClassName;
 using TypeName = Wjybxx.Commons.Poet.TypeName;
@@ -70,7 +71,7 @@ internal class SchemaGenerator
 
     private List<FieldSpec> GenFactoryFields() {
         List<FieldSpec> result = new List<FieldSpec>();
-        foreach (IFieldSymbol fieldInfo in context.serialFields) {
+        foreach (AptFieldInfo fieldInfo in context.serialFields) {
             AptFieldProps props = context.fieldPropsMap[fieldInfo];
             if (props.implTypeName != null) {
                 result.Add(GenFactoryField(fieldInfo, props));
@@ -80,10 +81,10 @@ internal class SchemaGenerator
     }
 
     // 不能在编译时生成过多的factory，因为即使字段的声明类型是具体类型，其运行时类型仍可能是子类型，因此默认分配factory不安全
-    private FieldSpec GenFactoryField(IFieldSymbol fieldSymbol, AptFieldProps props) {
+    private FieldSpec GenFactoryField(AptFieldInfo fieldInfo, AptFieldProps props) {
         // dotnet 6泛型不支持协变 -- 现在的工厂统一为了Func<object>
-        return FieldSpec.NewBuilder(factoryTypeName, GetFactoryFieldName(fieldSymbol.Name),
-                Modifiers.Public | Modifiers.Static | Modifiers.Readonly)
+        return FieldSpec.NewBuilder(factoryTypeName, GetFactoryFieldName(fieldInfo.Name),
+                Modifiers.Public | Modifiers.Static | Modifiers.ReadOnly)
             .Initializer(CodeBlock.Of("() => new $T()", props.implTypeName))
             .Build();
     }
@@ -92,15 +93,15 @@ internal class SchemaGenerator
         List<FieldSpec> result = new List<FieldSpec>();
         HashSet<string> dsonNameSet = new HashSet<string>();
 
-        foreach (IFieldSymbol fieldInfo in context.serialFields) {
+        foreach (AptFieldInfo fieldInfo in context.serialFields) {
             AptFieldProps props = context.fieldPropsMap[fieldInfo];
             string fieldName = fieldInfo.Name;
             string dsonName;
             if (!string.IsNullOrWhiteSpace(props.name)) {
                 dsonName = props.name.Trim();
-            } else if (props.autoProperty != null) {
-                // 自动属性使用属性名
-                dsonName = props.autoProperty.Name;
+            } else if (fieldInfo.IsAutoPropertyField) {
+                // 自动属性字段使用属性名
+                dsonName = fieldInfo.propertySymbol!.Name;
             } else {
                 // 普通私有字段去除下划线
                 dsonName = (fieldName[0] == '_' && fieldName[1] != '_')

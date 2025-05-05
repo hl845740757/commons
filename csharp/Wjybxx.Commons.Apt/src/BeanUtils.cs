@@ -17,13 +17,10 @@
 #endregion
 
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 using Microsoft.CodeAnalysis;
 using Wjybxx.Commons.Poet;
 
@@ -96,6 +93,7 @@ public static class BeanUtils
 
     /// <summary>
     /// 获取类的所有字段和方法，包含继承得到的字段和方法和属性。
+    /// (查询的开销较大，用户应当缓存结果)
     /// </summary>
     /// <param name="type"></param>
     /// <param name="memberTypes"></param>
@@ -113,44 +111,12 @@ public static class BeanUtils
     }
 
     /// <summary>
-    /// 获取类定义的所有字段
-    /// (会包含自动生成的字段)
+    /// 获取类的所有成员
+    /// (查询的开销较大，用户应当缓存结果)
+    /// (未指定类型列表时，默认返回字段、方法、属性)
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    public static List<FieldInfo> GetAllFieldsWithInherit(Type type) {
-        return AptUtils.FlatInheritAndReverse(type)
-            .SelectMany(e => e.GetMembers(BindingFlags.DeclaredOnly
-                                          | BindingFlags.Public | BindingFlags.NonPublic
-                                          | BindingFlags.Static | BindingFlags.Instance))
-            .Where(e => e.MemberType == MemberTypes.Field)
-            .Cast<FieldInfo>()
-            .ToList();
-    }
-
-    /// <summary>
-    /// 获取类定义的所有方法
-    /// (会包含自动生成的方法)
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
-    public static List<MethodInfo> GetAllMethodsWithInherit(Type type) {
-        return AptUtils.FlatInheritAndReverse(type)
-            .SelectMany(e => e.GetMembers(BindingFlags.DeclaredOnly
-                                          | BindingFlags.Public | BindingFlags.NonPublic
-                                          | BindingFlags.Static | BindingFlags.Instance))
-            .Where(e => e.MemberType == MemberTypes.Method)
-            .Cast<MethodInfo>()
-            .ToList();
-    }
-
-    /// <summary>
-    /// 获取类的所有成员，包含继承得到的字段和方法和属性。
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static List<ISymbol> GetAllMembersWithInherit(INamedTypeSymbol type) {
         return GetAllMembersWithInherit(type, new List<SymbolKind>()
         {
@@ -160,6 +126,7 @@ public static class BeanUtils
 
     /// <summary>
     /// 获取类的所有成员
+    /// (查询的开销较大，用户应当缓存结果)
     /// </summary>
     /// <param name="type"></param>
     /// <param name="kinds"></param>
@@ -167,32 +134,6 @@ public static class BeanUtils
     public static List<ISymbol> GetAllMembersWithInherit(INamedTypeSymbol type, List<SymbolKind> kinds) {
         return AptUtils.FlatInheritAndReverse(type)
             .SelectMany(typeSymbol => typeSymbol.GetMembers().Where(e => kinds.Contains(e.Kind)))
-            .ToList();
-    }
-
-    /// <summary>
-    /// 获取类定义的所有字段
-    /// (会包含自动生成的字段)
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    public static List<IFieldSymbol> GetAllFieldsWithInherit(INamedTypeSymbol type) {
-        return AptUtils.FlatInheritAndReverse(type)
-            .SelectMany(typeSymbol => typeSymbol.GetMembers().Where(e => e.Kind == SymbolKind.Field))
-            .Cast<IFieldSymbol>()
-            .ToList();
-    }
-
-    /// <summary>
-    /// 获取类定义的所有方法
-    /// (会包含自动生成的方法)
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    public static List<IMethodSymbol> GetAllMethodsWithInherit(INamedTypeSymbol type) {
-        return AptUtils.FlatInheritAndReverse(type)
-            .SelectMany(typeSymbol => typeSymbol.GetMembers().Where(e => e.Kind == SymbolKind.Method))
-            .Cast<IMethodSymbol>()
             .ToList();
     }
 
@@ -224,125 +165,18 @@ public static class BeanUtils
 
     #endregion
 
-    #region getter/setter
-
-    /// <summary>
-    /// 是否包含public的Getter属性
-    /// </summary>
-    public static bool ContainsPublicGetter(FieldInfo fieldInfo,
-                                            List<MemberInfo> allFieldsAndMethodWithInherit) {
-        return FindPublicGetter(fieldInfo, allFieldsAndMethodWithInherit) != null;
-    }
-
-    /// <summary>
-    /// 是否包含public的setter属性
-    /// </summary>
-    public static bool ContainsPublicSetter(FieldInfo fieldInfo,
-                                            List<MemberInfo> allFieldsAndMethodWithInherit) {
-        return FindPublicSetter(fieldInfo, allFieldsAndMethodWithInherit) != null;
-    }
-
-    /// <summary>
-    /// 查询字段关联的Getter属性
-    /// </summary>
-    /// <param name="fieldInfo"></param>
-    /// <param name="allFieldsAndMethodWithInherit"></param>
-    /// <returns></returns>
-    public static PropertyInfo? FindPublicGetter(FieldInfo fieldInfo,
-                                                 List<MemberInfo> allFieldsAndMethodWithInherit) {
-        string propertyName = PropertyNameOfField(fieldInfo.Name);
-        return allFieldsAndMethodWithInherit.Where(e => e.MemberType == MemberTypes.Property)
-            .Cast<PropertyInfo>()
-            .FirstOrDefault(propertyInfo => {
-                if (propertyInfo.Name != propertyName) {
-                    return false;
-                }
-                MethodInfo getMethod = propertyInfo.GetMethod;
-                return getMethod != null && getMethod.IsPublic;
-            });
-    }
-
-    /// <summary>
-    /// 查询字段关联的Setter属性
-    /// </summary>
-    public static PropertyInfo? FindPublicSetter(FieldInfo fieldInfo,
-                                                 List<MemberInfo> allFieldsAndMethodWithInherit) {
-        string propertyName = PropertyNameOfField(fieldInfo.Name);
-        return allFieldsAndMethodWithInherit.Where(e => e.MemberType == MemberTypes.Property)
-            .Cast<PropertyInfo>()
-            .FirstOrDefault(propertyInfo => {
-                if (propertyInfo.Name != propertyName) {
-                    return false;
-                }
-                MethodInfo setMethod = propertyInfo.SetMethod;
-                return setMethod != null && setMethod.IsPublic;
-            });
-    }
-
-    /// <summary>
-    /// 是否包含public的Getter属性
-    /// </summary>
-    public static bool ContainsPublicGetter(IFieldSymbol fieldInfo,
-                                            List<ISymbol> allFieldsAndMethodWithInherit) {
-        return FindPublicGetter(fieldInfo, allFieldsAndMethodWithInherit) != null;
-    }
-
-    /// <summary>
-    /// 是否包含public的setter属性
-    /// </summary>
-    public static bool ContainsPublicSetter(IFieldSymbol fieldInfo,
-                                            List<ISymbol> allFieldsAndMethodWithInherit) {
-        return FindPublicSetter(fieldInfo, allFieldsAndMethodWithInherit) != null;
-    }
-
-    /// <summary>
-    /// 查询字段关联的Getter属性
-    /// </summary>
-    public static IPropertySymbol? FindPublicGetter(IFieldSymbol fieldInfo,
-                                                    List<ISymbol> allFieldsAndMethodWithInherit) {
-        string propertyName = PropertyNameOfField(fieldInfo.Name);
-        return allFieldsAndMethodWithInherit.Where(e => e.Kind == SymbolKind.Property)
-            .Cast<IPropertySymbol>()
-            .FirstOrDefault(propertySymbol => {
-                if (propertySymbol.Name != propertyName) {
-                    return false;
-                }
-                IMethodSymbol getMethod = propertySymbol.GetMethod;
-                return getMethod != null && getMethod.DeclaredAccessibility == Accessibility.Public;
-            });
-    }
-
-    /// <summary>
-    /// 查询字段关联的Setter属性
-    /// </summary>
-    public static IPropertySymbol? FindPublicSetter(IFieldSymbol fieldInfo,
-                                                    List<ISymbol> allFieldsAndMethodWithInherit) {
-        string propertyName = PropertyNameOfField(fieldInfo.Name);
-        return allFieldsAndMethodWithInherit.Where(e => e.Kind == SymbolKind.Property)
-            .Cast<IPropertySymbol>()
-            .FirstOrDefault(propertySymbol => {
-                if (propertySymbol.Name != propertyName) {
-                    return false;
-                }
-                IMethodSymbol setMethod = propertySymbol.SetMethod;
-                return setMethod != null && setMethod.DeclaredAccessibility == Accessibility.Public;
-            });
-    }
-
-    #endregion
-
     #region fields-props
 
     /// <summary>
     /// 查询字段关联的属性(支持非public)
     /// </summary>
     /// <param name="fieldInfo"></param>
-    /// <param name="allFieldsAndMethodWithInherit"></param>
+    /// <param name="allMembers"></param>
     /// <returns></returns>
     public static PropertyInfo? FindProperty(FieldInfo fieldInfo,
-                                             List<MemberInfo> allFieldsAndMethodWithInherit) {
+                                             List<MemberInfo> allMembers) {
         string propertyName = PropertyNameOfField(fieldInfo.Name);
-        return allFieldsAndMethodWithInherit.Where(e => e.MemberType == MemberTypes.Property)
+        return allMembers.Where(e => e.MemberType == MemberTypes.Property)
             .Cast<PropertyInfo>()
             .FirstOrDefault(e => e.Name == propertyName);
     }
@@ -351,12 +185,26 @@ public static class BeanUtils
     /// 查询字段关联的属性(支持非public)
     /// </summary>
     /// <param name="fieldInfo"></param>
-    /// <param name="allFieldsAndMethodWithInherit"></param>
+    /// <param name="allMembers"></param>
     /// <returns></returns>
     public static IPropertySymbol? FindProperty(IFieldSymbol fieldInfo,
-                                                List<ISymbol> allFieldsAndMethodWithInherit) {
+                                                List<ISymbol> allMembers) {
         string propertyName = PropertyNameOfField(fieldInfo.Name);
-        return allFieldsAndMethodWithInherit.Where(e => e.Kind == SymbolKind.Property)
+        return allMembers.Where(e => e.Kind == SymbolKind.Property)
+            .Cast<IPropertySymbol>()
+            .FirstOrDefault(e => e.Name == propertyName);
+    }
+
+    /// <summary>
+    /// 查询字段关联的属性(支持非public)
+    /// </summary>
+    /// <param name="fieldName"></param>
+    /// <param name="allMembers"></param>
+    /// <returns></returns>
+    public static IPropertySymbol? FindProperty(string fieldName,
+                                                List<ISymbol> allMembers) {
+        string propertyName = PropertyNameOfField(fieldName);
+        return allMembers.Where(e => e.Kind == SymbolKind.Property)
             .Cast<IPropertySymbol>()
             .FirstOrDefault(e => e.Name == propertyName);
     }
@@ -366,6 +214,7 @@ public static class BeanUtils
     /// </summary>
     /// <param name="fieldName"></param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsAutoPropertyField(string fieldName) {
         return Util.IsAutoPropertyField(fieldName);
     }
@@ -374,6 +223,7 @@ public static class BeanUtils
     /// 获取字段的属性名
     /// (C#的规则是删除下划线，然后下划线后首个字符大写)
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string PropertyNameOfField(string fieldName) {
         return Util.PropertyNameOfField(fieldName);
     }
@@ -453,105 +303,6 @@ public static class BeanUtils
         }
         MethodInfo setMethod = propertyInfo.SetMethod!;
         return setMethod.IsStatic;
-    }
-
-    #endregion
-
-    #region internal
-
-    private static readonly ConcurrentDictionary<CacheKey, MemberInfo> memberInfoCache = new();
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="typeSymbol"></param>
-    /// <returns></returns>
-    internal static List<ISymbol> InternalGetMembers(INamespaceOrTypeSymbol typeSymbol) {
-        PropertyInfo propertyInfo = InternalFindProperty(typeSymbol.GetType(), "UnderlyingNamespaceOrTypeSymbol");
-        object underlyingTypeSymbol = propertyInfo.GetValue(typeSymbol);
-        if (underlyingTypeSymbol == null) {
-            throw new Exception("UnderlyingNamespaceOrTypeSymbol is null");
-        }
-        // 方法存在重载，我们要调用的是无参方法
-        MethodInfo methodGetMembers = InternalFindMethod(underlyingTypeSymbol.GetType(), "GetMembers", Array.Empty<Type>());
-        IList internalMemberArray = (IList)methodGetMembers.Invoke(underlyingTypeSymbol, Array.Empty<object>());
-
-        // 返回的对象并不直接是ISymbol接口的对象，需要通过GetISymbol方法进行转换
-        // ISymbol ISymbolInternal.GetISymbol() => this.ISymbol
-        // 不过，由于方法的实现是隐式实现，查找的时候居然匹配不到，因此我们改为查找属性
-        List<ISymbol> result = new List<ISymbol>(internalMemberArray.Count);
-        foreach (object internalSymbol in internalMemberArray) {
-            PropertyInfo propertyISymbol = InternalFindProperty(internalSymbol.GetType(), "ISymbol");
-            ISymbol symbol = (ISymbol)propertyISymbol.GetValue(internalSymbol);
-            result.Add(symbol);
-        }
-        return result;
-    }
-
-    private static MethodInfo InternalFindMethod(Type type, string methodName, Type[] parameterTypes) {
-        CacheKey cacheKey = new CacheKey(type, methodName);
-        MethodInfo? methodInfo;
-        if (memberInfoCache.TryGetValue(cacheKey, out MemberInfo refMemberInfo)) {
-            methodInfo = (MethodInfo)refMemberInfo;
-        } else {
-            methodInfo = type.GetMethod(cacheKey.memberName, parameterTypes);
-            if (methodInfo == null) {
-                throw new Exception($"cant find {methodName} method form {type}");
-            }
-            memberInfoCache.TryAdd(cacheKey, methodInfo);
-        }
-        return methodInfo;
-    }
-
-    private static PropertyInfo InternalFindProperty(Type type, string propertyName) {
-        CacheKey cacheKey = new CacheKey(type, propertyName);
-        PropertyInfo property;
-        if (memberInfoCache.TryGetValue(cacheKey, out MemberInfo refMemberInfo)) {
-            property = (PropertyInfo)refMemberInfo;
-        } else {
-            property = type.GetProperty(cacheKey.memberName,
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (property == null) {
-                throw new Exception($"cant find {propertyName} property form {type}");
-            }
-            memberInfoCache.TryAdd(cacheKey, property);
-        }
-        return property;
-    }
-
-    private readonly struct CacheKey : IEquatable<CacheKey>
-    {
-        public readonly Type type;
-        public readonly string memberName;
-
-        public CacheKey(Type type, string memberName) {
-            this.type = type;
-            this.memberName = memberName;
-        }
-
-        public bool Equals(CacheKey other) {
-            return type == other.type && memberName == other.memberName;
-        }
-
-        public override bool Equals(object? obj) {
-            return obj is CacheKey other && Equals(other);
-        }
-
-        public override int GetHashCode() {
-            return (type.GetHashCode() * 397) ^ memberName.GetHashCode();
-        }
-
-        public static bool operator ==(CacheKey left, CacheKey right) {
-            return left.Equals(right);
-        }
-
-        public static bool operator !=(CacheKey left, CacheKey right) {
-            return !left.Equals(right);
-        }
-
-        public override string ToString() {
-            return $"{nameof(type)}: {type}, {nameof(memberName)}: {memberName}";
-        }
     }
 
     #endregion

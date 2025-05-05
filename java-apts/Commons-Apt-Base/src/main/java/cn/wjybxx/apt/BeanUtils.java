@@ -88,11 +88,12 @@ public class BeanUtils {
     /**
      * 获取类的所有字段，包含继承得到的字段
      */
-    public static List<Element> getAllFieldsWithInherit(TypeElement typeElement) {
+    public static List<VariableElement> getAllFieldsWithInherit(TypeElement typeElement) {
         final List<TypeElement> flatInherit = AptUtils.flatInheritAndReverse(typeElement);
         return flatInherit.stream()
                 .flatMap(e -> e.getEnclosedElements().stream())
                 .filter(e -> e.getKind() == ElementKind.FIELD)
+                .map(e -> (VariableElement) e)
                 .collect(Collectors.toList());
     }
 
@@ -119,28 +120,28 @@ public class BeanUtils {
      * 是否包含非private的setter方法
      */
     public static boolean containsPublicSetter(Types typeUtils, VariableElement variableElement,
-                                               List<? extends Element> allFieldsAndMethodWithInherit) {
-        return findPublicSetter(typeUtils, variableElement, allFieldsAndMethodWithInherit) != null;
+                                               List<? extends Element> allMembers) {
+        return findPublicSetter(typeUtils, variableElement, allMembers) != null;
     }
 
     /**
      * 是否包含非private的getter方法
      */
     public static boolean containsPublicGetter(Types typeUtils, VariableElement variableElement,
-                                               List<? extends Element> allFieldsAndMethodWithInherit) {
-        return findPublicGetter(typeUtils, variableElement, allFieldsAndMethodWithInherit) != null;
+                                               List<? extends Element> allMembers) {
+        return findPublicGetter(typeUtils, variableElement, allMembers) != null;
     }
 
     /**
      * 该方法会查询标准的setter命名，同时会查询{@code set + firstCharToUpperCase(fieldName)}格式的命名
      */
     public static ExecutableElement findPublicSetter(Types typeUtils, VariableElement variableElement,
-                                                     List<? extends Element> allFieldsAndMethodWithInherit) {
+                                                     List<? extends Element> allMembers) {
         final String fieldName = variableElement.getSimpleName().toString();
         TypeMirror typeMirror = variableElement.asType();
         final String setterMethodName = BeanUtils.setterMethodName(fieldName, typeMirror.getKind() == TypeKind.BOOLEAN);
         final String setterMethodName2 = "set" + BeanUtils.firstCharToUpperCase(fieldName);
-        return allFieldsAndMethodWithInherit.stream()
+        return allMembers.stream()
                 .filter(e -> e.getKind() == ElementKind.METHOD)
                 .map(e -> (ExecutableElement) e)
                 .filter(e -> {
@@ -163,12 +164,12 @@ public class BeanUtils {
      * 该方法会查询标准的getter命名，同时会查询{@code get + firstCharToUpperCase(fieldName)}格式的命名
      */
     public static ExecutableElement findPublicGetter(Types typeUtils, VariableElement variableElement,
-                                                     List<? extends Element> allFieldsAndMethodWithInherit) {
+                                                     List<? extends Element> allMembers) {
         final String fieldName = variableElement.getSimpleName().toString();
         TypeMirror typeMirror = variableElement.asType();
         final String getterMethodName = BeanUtils.getterMethodName(fieldName, typeMirror.getKind() == TypeKind.BOOLEAN);
         final String getterMethodName2 = "get" + BeanUtils.firstCharToUpperCase(fieldName);
-        return allFieldsAndMethodWithInherit.stream()
+        return allMembers.stream()
                 .filter(e -> e.getKind() == ElementKind.METHOD)
                 .map(e -> (ExecutableElement) e)
                 .filter(e -> {
