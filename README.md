@@ -12,12 +12,30 @@ Wjybxx的公共模块，抽取以方便我的其它开源项目依赖这里的�
 3. 通用任务树(行为树) -- [行为树](docs/BTree.md)、[Java实现](java/BTree-Core)、[c#实现](csharp/Wjybxx.BTree.Core)
 4. 改进的Disruptor实现 -- [Java实现](java/Disruptor)、[C#实现](csharp/Wjybxx.Disruptor)
 5. 改进的并发库 -- [Java核心并发库](java/Commons-Concurrent)、[C#核心并发库](csharp/Wjybxx.Commons.Concurrent)
-6. [C#代码生成工具 -- JavaPoet移植](csharp/Wjybxx.Commons.Apt)
+6. [C#代码生成工具 -- JavaPoet移植](csharp/Wjybxx.Commons.Poet)
 7. [C#依赖注入框架](csharp/Wjybxx.Commons.Inject)
 
 ## 源码Unity兼容
 
-由于无法简单打出dll引入到unity，所以在unity中使用该项目的代码时，请直接下载源码。
+由于无法简单打出dll引入到unity，所以在unity中使用该项目的代码时，请使用包管理器下载源码。
+可直接修改`mainfest.json`添加以下包：
+
+```
+    "wjybxx.btree.codec": "https://github.com/hl845740757/commons.git?path=/unity/Assets/Scripts/Wjybxx.BTree.Codec#upkg",
+    "wjybxx.btree.core": "https://github.com/hl845740757/commons.git?path=/unity/Assets/Scripts/Wjybxx.BTree.Core#upkg",
+    "wjybxx.commons.concurrent": "https://github.com/hl845740757/commons.git?path=/unity/Assets/Scripts/Wjybxx.Commons.Concurrent#upkg",
+    "wjybxx.commons.core": "https://github.com/hl845740757/commons.git?path=/unity/Assets/Scripts/Wjybxx.Commons.Core#upkg",
+    "wjybxx.commons.inject": "https://github.com/hl845740757/commons.git?path=/unity/Assets/Scripts/Wjybxx.Commons.Inject#upkg",
+    "wjybxx.disruptor": "https://github.com/hl845740757/commons.git?path=/unity/Assets/Scripts/Wjybxx.Disruptor#upkg",
+    "wjybxx.dson.codec": "https://github.com/hl845740757/commons.git?path=/unity/Assets/Scripts/Wjybxx.Dson.Codec#upkg",
+    "wjybxx.dson.core": "https://github.com/hl845740757/commons.git?path=/unity/Assets/Scripts/Wjybxx.Dson.Core#upkg",
+```
+
+解释：
+
+1. 为避免unity相关逻辑影响dev分支（主要是代码重复），unity的包是在`upkg`分支发布的。
+2. upkg的同步频率可能不及时，用户如果需要最新的代码，可自行根据commons库制作本地包。
+
 
 ## 个人公众号(游戏开发)
 
