@@ -31,7 +31,7 @@ namespace Wjybxx.Dson.Codec.Codecs
 public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
 {
     private readonly Type encoderType; // KV应当和encoderType的泛型参数相同，因为Codec就是根据encoderType的泛型参数构建的
-    private readonly Func<IDictionary<K, V>>? factory;
+    private readonly Func<object>? factory;
     private readonly FactoryKind factoryKind; // 处理默认情况
     private readonly KeyKind keyKind;
 
@@ -40,7 +40,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     /// </summary>
     /// <param name="encoderType"></param>
     /// <param name="factory"></param>
-    public DictionaryCodec(Type encoderType, Func<IDictionary<K, V>>? factory = null) {
+    public DictionaryCodec(Type encoderType, Func<object>? factory = null) {
         this.encoderType = encoderType;
         this.factory = factory;
         if (factory == null) {
@@ -95,7 +95,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
 
     /** <see cref="encoderType"/>一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
     private IDictionary<K, V> NewDictionary() {
-        if (factory != null) return factory.Invoke();
+        if (factory != null) return (IDictionary<K, V>)factory.Invoke();
         return factoryKind switch
         {
             FactoryKind.LinkedDictionary => new LinkedDictionary<K, V>(),
