@@ -31,7 +31,7 @@ namespace Wjybxx.Dson.Tests.Apt;
 public class MyDictionary<TKey, TValue> where TKey : notnull
 {
     /** 测试泛型指定工厂 */
-    public static readonly Func<MyDictionary<TKey, TValue>> FACTORY = () => new MyDictionary<TKey, TValue>();
+    public static readonly Func<object> FACTORY = () => new MyDictionary<TKey, TValue>();
 
     public Dictionary<TKey, TValue> dictionary = new Dictionary<TKey, TValue>();
 

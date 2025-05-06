@@ -18,4 +18,4 @@
 
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("BTree.Tests")]
+[assembly: InternalsVisibleTo("Wjybxx.BTree.Tests")]

@@ -175,7 +175,7 @@ public class CodecProcessor : IIncrementalGenerator
     }
 
     private void ReportException(Exception ex, ISymbol? symbol) {
-        ReportDiagnostic(new DiagnosticDescriptor("DS0000",
+        ReportDiagnostic(new DiagnosticDescriptor("DS0001",
                 "Exception",
                 "Generator Code Caught Exception message: {0}, stackTrace: {1}", "DsonCodec",
                 DiagnosticSeverity.Error, true),
@@ -336,10 +336,10 @@ public class CodecProcessor : IIncrementalGenerator
     }
 
     private static bool IsBuildingAssemblyNode(GeneratorAttributeSyntaxContext node) {
-        // Dotnet的编译有点奇怪，似乎是多个Assembly同时编译，生成的文件乱串....
         IAssemblySymbol buildingAssembly = node.SemanticModel.Compilation.Assembly;
         IAssemblySymbol nodeAssembly = node.TargetSymbol.ContainingAssembly;
-        return nodeAssembly.Equals(buildingAssembly, SymbolEqualityComparer.Default);
+        return buildingAssembly.Name == nodeAssembly.Name;
+        // return nodeAssembly.Equals(buildingAssembly, SymbolEqualityComparer.Default);
     }
 
     private void ProcessDirectType(SourceProductionContext sourceProductionContext, GeneratorAttributeSyntaxContext node) {
@@ -553,7 +553,7 @@ public class CodecProcessor : IIncrementalGenerator
             && !fieldInfo.HasPublicSetter) {
             //
             ReportDiagnostic(new DiagnosticDescriptor(
-                    id: "DC1002",
+                    id: "DC1001",
                     title: "Setter Absent",
                     messageFormat: "auto write field {0} must be public or contains a public setter",
                     category: "DsonCodec",

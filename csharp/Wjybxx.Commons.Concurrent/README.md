@@ -16,6 +16,16 @@
 
 ## ReleaseNotes
 
+### 1.3.0
+
+1. `EventLoop`模块化，大幅增强`DisruptorEventLoop`。
+2. `IFuture`取消对上下文的类型约束，默认为object。
+3. `ValueFuture{T}`增加装箱支持，`await`可抑制异常抛出 -- `IFuture`亦支持。
+4. `ValueFuture`的异常传递优化，避免频繁Catch再恢复。
+5. `ValueFuture`转`IFuture`时保留工作线程，帮助死锁检测。
+6. `PromiseTask`，`SchedulePromiseTask`加入池化逻辑。
+7. `CancelTokenSource`监听优化，监听节点`Completion`池化。
+
 ### 1.2.1
 
 升级commons.core依赖

@@ -6,8 +6,8 @@
         <Nullable>annotations</Nullable>
         <LangVersion>11</LangVersion>
 
-        <AssemblyName>BTree.Tests</AssemblyName>
-        <PackageId>BTree.Tests</PackageId>
+        <AssemblyName>Wjybxx.BTree.Tests</AssemblyName>
+        <PackageId>Wjybxx.BTree.Tests</PackageId>
 
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>

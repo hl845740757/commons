@@ -27,7 +27,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <EmbedAllSources>true</EmbedAllSources>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <TargetFrameworks>net6.0;</TargetFrameworks>
+        <TargetFrameworks>net6.0;net8.0;</TargetFrameworks>
         <!-- 指定生成文件目录，这样我们才可以拷贝unity；编译时需要排除生成文件目录.... -->
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
