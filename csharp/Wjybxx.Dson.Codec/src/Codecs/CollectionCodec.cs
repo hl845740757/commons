@@ -30,7 +30,7 @@ namespace Wjybxx.Dson.Codec.Codecs
 public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
 {
     private readonly Type encoderType;
-    private readonly Func<object>? factory;
+    private readonly Func<ICollection<T>>? factory;
     private readonly FactoryKind factoryKind; // 处理默认情况
 
     /// <summary>
@@ -38,7 +38,7 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
     /// </summary>
     /// <param name="encoderType"></param>
     /// <param name="factory"></param>
-    public CollectionCodec(Type encoderType, Func<object>? factory = null) {
+    public CollectionCodec(Type encoderType, Func<ICollection<T>>? factory = null) {
         this.encoderType = encoderType;
         this.factory = factory;
         if (factory == null) {
@@ -75,7 +75,7 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
 
     /** <see cref="encoderType"/>一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
     private ICollection<T> NewCollection() {
-        if (factory != null) return (ICollection<T>)factory();
+        if (factory != null) return factory();
         return factoryKind switch
         {
             FactoryKind.HashSet => new HashSet<T>(),

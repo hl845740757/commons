@@ -40,8 +40,17 @@ build/
 ### maven
 */.flattened-pom.xml
 
-### 临时目录
+#################################################3
+
+# 临时文件
+~$*
+temp-*
 **/temp/*
-csharp/Wjybxx.BTree.Codec/Generated/*
-csharp/Wjybxx.BTree.Tests/Generated/*
-csharp/Wjybxx.Dson.Tests/Generated/*
+
+
+# Java项目临时文件
+*.flattened-pom.xml
+
+
+# C#生成文件
+csharp/*/Generated

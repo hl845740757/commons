@@ -161,9 +161,9 @@ public sealed class DynamicCodecRegistry : IDsonCodecRegistry
         Type genericCodecType = genericCodecInfo.codecType.MakeGenericType(type.GenericTypeArguments);
 
         IDsonCodec codec;
-        // 先查找包含Type和Func的构造函数 -- factory的泛型参数是传递给DsonCodec泛型参数的类型
-        // Type interfaceType = genericCodecType.GetInterface(typeof(IDsonCodec<>).Name)!;
-        Type factoryType = typeof(Func<object>); // 最新已限定为Func<object>
+        // 先查找包含Type和Func的构造函数 -- factory的泛型参数是传递给DsonCodec泛型参数的类型；这里的factory类型和ReadObject无关
+        Type interfaceType = genericCodecType.GetInterface(typeof(IDsonCodec<>).Name)!;
+        Type factoryType = typeof(Func<>).MakeGenericType(interfaceType.GenericTypeArguments[0]);
         ConstructorInfo constructorInfo = genericCodecType.GetConstructor(new[] { typeof(Type), factoryType });
         if (constructorInfo != null) {
             // 如果用户指定了Factory，则获取具体实例，否则传入null
