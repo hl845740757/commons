@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Dson.IO;
 using Wjybxx.Dson.Text;
@@ -76,31 +77,26 @@ public class DefaultDsonConverter : IDsonConverter
     public byte[] Write(object value, Type declaredType) {
         if (value == null) throw new ArgumentNullException(nameof(value));
         if (declaredType == null) throw new ArgumentNullException(nameof(declaredType));
-        byte[] localBuffer = options.bufferPool.Acquire(options.bufferSize);
-        try {
-            DsonChunk chunk = new DsonChunk(localBuffer);
-            Write(value, declaredType, chunk);
-            return chunk.UsedPayload();
-        }
-        finally {
-            options.bufferPool.Release(localBuffer);
-        }
+        // 外部销毁流，确保buffer规划到池
+        using var outputStream = DsonOutputs.NewInstance(options.bufferPool, options.bufferLength, options.maxBufferLength);
+        EncodeObject(outputStream, value, declaredType);
+        return ArrayUtil.CopyOf(outputStream.Buffer, 0, outputStream.Position);
     }
 
     public object Read(byte[] source, Type declaredType, Func<object>? factory = null) {
-        IDsonInput inputStream = DsonInputs.NewInstance(source);
+        using IDsonInput inputStream = DsonInputs.NewInstance(source);
         return DecodeObject(inputStream, declaredType, factory);
     }
 
     public void Write(object value, Type declaredType, DsonChunk chunk) {
         if (value == null) throw new ArgumentNullException(nameof(value));
-        IDsonOutput outputStream = DsonOutputs.NewInstance(chunk.Buffer, chunk.Offset, chunk.Length);
+        using IDsonOutput outputStream = DsonOutputs.NewInstance(chunk.Buffer, chunk.Offset, chunk.Length);
         EncodeObject(outputStream, value, declaredType);
         chunk.Used = outputStream.Position;
     }
 
     public object Read(DsonChunk chunk, Type declaredType, Func<object>? factory = null) {
-        IDsonInput inputStream = DsonInputs.NewInstance(chunk.Buffer, chunk.Offset, chunk.Length);
+        using IDsonInput inputStream = DsonInputs.NewInstance(chunk.Buffer, chunk.Offset, chunk.Length);
         object result = DecodeObject(inputStream, declaredType, factory);
         chunk.Used = inputStream.Position;
         return result;
@@ -110,30 +106,26 @@ public class DefaultDsonConverter : IDsonConverter
         if (value == null) return null!;
         if (value.GetType().IsValueType) return value;
 
-        byte[] localBuffer = options.bufferPool.Acquire(options.bufferSize);
-        try {
-            IDsonOutput outputStream = DsonOutputs.NewInstance(localBuffer);
-            EncodeObject(outputStream, value, declaredType);
-
-            IDsonInput inputStream = DsonInputs.NewInstance(localBuffer, 0, outputStream.Position);
-            return DecodeObject(inputStream, targetType, factory);
-        }
-        finally {
-            options.bufferPool.Release(localBuffer);
-        }
+        using var dsonOutput = DsonOutputs.NewInstance(options.bufferPool, options.bufferLength, options.maxBufferLength);
+        EncodeObject(dsonOutput, value, declaredType);
+        // 不销毁
+        IDsonInput inputStream = DsonInputs.NewInstance(dsonOutput.Buffer, 0, dsonOutput.Position);
+        return DecodeObject(inputStream, targetType, factory);
     }
 
+    /** 注意：由外部销毁输出流 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void EncodeObject(IDsonOutput outputStream, object value, Type declaredType) {
-        DsonBinaryWriter<string> binaryWriter = new DsonBinaryWriter<string>(options.binWriterSettings, outputStream);
+        DsonBinaryWriter<string> binaryWriter = new DsonBinaryWriter<string>(options.binWriterSettings, outputStream, autoClose: false);
         using DefaultDsonObjectWriter wrapper = new DefaultDsonObjectWriter(this, typeWriteHelper, binaryWriter);
         wrapper.WriteObject(null, value, declaredType);
         wrapper.Flush();
     }
 
+    /** 注意：由外部销毁输入流 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private object DecodeObject(IDsonInput inputStream, Type declaredType, Func<object>? factory) {
-        DsonBinaryReader<string> binaryReader = new DsonBinaryReader<string>(options.binReaderSettings, inputStream);
+        DsonBinaryReader<string> binaryReader = new DsonBinaryReader<string>(options.binReaderSettings, inputStream, autoClose: false);
         using IDsonObjectReader wrapper = WrapReader(binaryReader);
         return wrapper.ReadObject(null, declaredType, factory);
     }

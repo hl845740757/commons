@@ -45,7 +45,7 @@ public class DsonInputs {
         private final int rawLimit;
 
         private int bufferPos;
-        private int bufferPosLimit;
+        private int posLimit;
         private final MutableInt newPos = new MutableInt();
 
         ArrayDsonInput(byte[] buffer, int offset, int length) {
@@ -55,15 +55,15 @@ public class DsonInputs {
             this.rawLimit = offset + length;
 
             this.bufferPos = offset;
-            this.bufferPosLimit = offset + length;
+            this.posLimit = offset + length;
         }
 
         // region check
 
         private int checkNewBufferPos(int newBufferPos) {
-            if (newBufferPos < rawOffset || newBufferPos > bufferPosLimit) {
+            if (newBufferPos < rawOffset || newBufferPos > posLimit) {
                 throw new DsonIOException("BytesLimited, LimitPos: %d, position: %d, newPosition: %d"
-                        .formatted(bufferPosLimit, bufferPos, newBufferPos));
+                        .formatted(posLimit, bufferPos, newBufferPos));
             }
             return newBufferPos;
         }
@@ -266,12 +266,12 @@ public class DsonInputs {
         @Override
         public int pushLimit(int byteLimit) {
             if (byteLimit < 0) throw new IllegalArgumentException("byteLimit");
-            int oldPosLimit = bufferPosLimit;
+            int oldPosLimit = posLimit;
             int newPosLimit = bufferPos + byteLimit;
 
             // 不可超过原始限制
             ByteBufferUtils.checkBuffer(rawLimit, rawOffset, newPosLimit - rawOffset);
-            bufferPosLimit = newPosLimit;
+            posLimit = newPosLimit;
             return oldPosLimit;
         }
 
@@ -279,17 +279,17 @@ public class DsonInputs {
         public void popLimit(int oldLimit) {
             // 不可超过原始限制
             ByteBufferUtils.checkBuffer(rawLimit, rawOffset, oldLimit - rawOffset);
-            bufferPosLimit = oldLimit;
+            posLimit = oldLimit;
         }
 
         @Override
         public int getBytesUntilLimit() {
-            return (bufferPosLimit - bufferPos);
+            return (posLimit - bufferPos);
         }
 
         @Override
         public boolean isAtEnd() {
-            return bufferPos >= bufferPosLimit;
+            return bufferPos >= posLimit;
         }
 
         @Override

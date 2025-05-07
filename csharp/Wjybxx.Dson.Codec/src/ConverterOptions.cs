@@ -105,7 +105,9 @@ public class ConverterOptions
     public readonly int usage;
 
     /** 序列化申请的字节数组大小 */
-    public readonly int bufferSize;
+    public readonly int bufferLength;
+    /** 序列化申请的最大字节数组大小 */
+    public readonly int maxBufferLength;
     /** 字节数组缓存池 -- 多线程下需要注意线程安全问题 */
     public readonly IArrayPool<byte> bufferPool;
     /** 字符串缓存池 -- 多线程下需要注意线程安全问题 */
@@ -134,7 +136,8 @@ public class ConverterOptions
         this.pbBinaryType = builder.PbBinaryType;
         this.usage = builder.Usage;
 
-        this.bufferSize = builder.BufferSize;
+        this.bufferLength = builder.BufferLength;
+        this.maxBufferLength = builder.MaxBufferLength;
         this.bufferPool = builder.BufferPool;
         this.stringBuilderPool = builder.StringBuilderPool;
 
@@ -165,7 +168,8 @@ public class ConverterOptions
         builder.PbBinaryType = pbBinaryType;
         builder.Usage = usage;
 
-        builder.BufferSize = bufferSize;
+        builder.BufferLength = bufferLength;
+        builder.MaxBufferLength = maxBufferLength;
         builder.BufferPool = bufferPool;
         builder.StringBuilderPool = stringBuilderPool;
 
@@ -197,7 +201,8 @@ public class ConverterOptions
         public int PbBinaryType { get; set; } = 127;
         public int Usage { get; set; } = 0;
 
-        public int BufferSize { get; set; } = 8192;
+        public int BufferLength { get; set; } = 8192;
+        public int MaxBufferLength { get; set; } = 1024 * 1024;
         public IArrayPool<byte> BufferPool { get; set; } = IArrayPool<byte>.Shared;
         public IObjectPool<StringBuilder> StringBuilderPool { get; set; } = ConcurrentObjectPool.SharedStringBuilderPool;
 

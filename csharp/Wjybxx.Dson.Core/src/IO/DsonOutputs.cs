@@ -17,10 +17,10 @@
 #endregion
 
 using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Text;
+using Wjybxx.Commons;
 using Wjybxx.Commons.IO;
+using Wjybxx.Commons.Pool;
 using Wjybxx.Dson.Internal;
 
 namespace Wjybxx.Dson.IO
@@ -45,14 +45,33 @@ public static class DsonOutputs
         return new ArrayDsonOutput(buffer, offset, length);
     }
 
-    private class ArrayDsonOutput : IDsonOutput
-    {
-        private readonly byte[] _buffer;
-        private readonly int _rawOffset;
-        private readonly int _rawLimit;
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="bufferPool">buffer池</param>
+    /// <param name="initCapacity">初始空间</param>
+    /// <param name="maxCapacity">最大空间</param>
+    /// <returns></returns>
+    public static ArrayDsonOutput NewInstance(IArrayPool<byte> bufferPool, int initCapacity, int maxCapacity) {
+        if (maxCapacity < initCapacity) {
+            throw new ArgumentException($"initCapacity: {initCapacity}, maxCapacity: {maxCapacity}");
+        }
+        byte[] buffer = bufferPool.Acquire(initCapacity);
+        return new ArrayDsonOutput(buffer, bufferPool, maxCapacity);
+    }
 
-        private int _bufferPos;
-        private int _bufferPosLimit;
+    /// <summary>
+    /// 注意：是用户持有该对象的引用，因此不能内部隐式池化。
+    /// </summary>
+    public class ArrayDsonOutput : IDsonOutput
+    {
+        private byte[] _buffer;
+        private readonly int _rawOffset;
+        private readonly int _rawLimit; // 如果是池化的buffer，该值表示最大空间
+        private IArrayPool<byte>? _bufferPool;
+
+        private int _bufferPos; // 当前写位置
+        private int _posLimit; // 当前限制位置-不可写入位置
 
         internal ArrayDsonOutput(byte[] buffer, int offset, int length) {
             ByteBufferUtil.CheckBuffer(buffer, offset, length);
@@ -61,181 +80,126 @@ public static class DsonOutputs
             this._rawLimit = offset + length;
 
             this._bufferPos = offset;
-            this._bufferPosLimit = offset + length;
+            this._posLimit = offset + length;
         }
 
-        #region check
+        internal ArrayDsonOutput(byte[] buffer, IArrayPool<byte> bufferPool, int maxCapacity) {
+            _buffer = buffer;
+            _bufferPool = bufferPool;
+            _rawOffset = 0;
+            _rawLimit = maxCapacity;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int CheckNewBufferPos(int newBufferPos) {
-            if (newBufferPos < _rawOffset || newBufferPos > _bufferPosLimit) {
-                throw new DsonIOException($"BytesLimited, LimitPos: {_bufferPosLimit}," +
-                                          $" position: {_bufferPos}," +
-                                          $" newPosition: {newBufferPos}");
+            _bufferPos = 0;
+            _posLimit = buffer.Length;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="required">需要的字节数</param>
+        private void EnsureCapacity(int required) {
+            int minCapacity = _bufferPos + required;
+            if (minCapacity <= _posLimit) {
+                return;
             }
-            return newBufferPos;
+            if (_bufferPool != null && minCapacity <= _rawLimit) {
+                int capacity = MathCommon.Clamp(_buffer.Length * 2L, minCapacity, _rawLimit);
+                // 注意：申请得到的buffer的长度可能大于capacity，因此可能大于maxCapacity
+                byte[] newBuffer = _bufferPool.Acquire(capacity);
+                Array.Copy(_buffer, 0, newBuffer, 0, _bufferPos);
+                // 勿调整顺序!
+                _buffer = newBuffer;
+                _posLimit = newBuffer.Length;
+                _bufferPool.Release(_buffer);
+                return;
+            }
+            throw new DsonIOException($"BytesLimited, PosLimit: {_posLimit}, position: {_bufferPos}, required: {required}");
         }
-
-        #endregion
 
         #region basic
 
         public void WriteRawByte(byte value) {
-            CheckNewBufferPos(_bufferPos + 1);
+            EnsureCapacity(1);
             _buffer[_bufferPos++] = value;
         }
 
         public void WriteFixed16(int value) {
-            try {
-                int newPos = CodedUtil.WriteFixed16(_buffer, _bufferPos, value);
-                _bufferPos = CheckNewBufferPos(newPos);
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
+            EnsureCapacity(2);
+            _bufferPos = CodedUtil.WriteFixed16(_buffer, _bufferPos, value);
         }
 
         public void WriteUInt32(int value) {
-            try {
-                int newPos = CodedUtil.WriteUInt32(_buffer, _bufferPos, value);
-                _bufferPos = CheckNewBufferPos(newPos);
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
+            EnsureCapacity(CodedUtil.MAX_VAR_INT32_LENGTH);
+            _bufferPos = CodedUtil.WriteUInt32(_buffer, _bufferPos, value);
         }
 
         public void WriteSInt32(int value) {
-            try {
-                int newPos = CodedUtil.WriteSInt32(_buffer, _bufferPos, value);
-                _bufferPos = CheckNewBufferPos(newPos);
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
+            EnsureCapacity(CodedUtil.MAX_VAR_INT32_LENGTH);
+            _bufferPos = CodedUtil.WriteSInt32(_buffer, _bufferPos, value);
         }
 
         public void WriteFixed32(int value) {
-            try {
-                int newPos = CodedUtil.WriteFixed32(_buffer, _bufferPos, value);
-                _bufferPos = CheckNewBufferPos(newPos);
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
+            EnsureCapacity(4);
+            _bufferPos = CodedUtil.WriteFixed32(_buffer, _bufferPos, value);
         }
 
         public void WriteUInt64(long value) {
-            try {
-                int newPos = CodedUtil.WriteUInt64(_buffer, _bufferPos, value);
-                _bufferPos = CheckNewBufferPos(newPos);
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
+            EnsureCapacity(CodedUtil.MAX_VAR_INT64_LENGTH);
+            _bufferPos = CodedUtil.WriteUInt64(_buffer, _bufferPos, value);
         }
 
         public void WriteSInt64(long value) {
-            try {
-                int newPos = CodedUtil.WriteSInt64(_buffer, _bufferPos, value);
-                _bufferPos = CheckNewBufferPos(newPos);
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
+            EnsureCapacity(CodedUtil.MAX_VAR_INT64_LENGTH);
+            _bufferPos = CodedUtil.WriteSInt64(_buffer, _bufferPos, value);
         }
 
         public void WriteFixed64(long value) {
-            try {
-                int newPos = CodedUtil.WriteFixed64(_buffer, _bufferPos, value);
-                _bufferPos = CheckNewBufferPos(newPos);
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
+            EnsureCapacity(8);
+            _bufferPos = CodedUtil.WriteFixed64(_buffer, _bufferPos, value);
         }
 
         public void WriteFloat(float value) {
-            try {
-                int newPos = CodedUtil.WriteFloat(_buffer, _bufferPos, value);
-                _bufferPos = CheckNewBufferPos(newPos);
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
+            EnsureCapacity(4);
+            _bufferPos = CodedUtil.WriteFloat(_buffer, _bufferPos, value);
         }
 
         public void WriteVarFloat(float value) {
-            try {
-                int newPos = CodedUtil.WriteVarFloat(_buffer, _bufferPos, value);
-                _bufferPos = CheckNewBufferPos(newPos);
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
+            EnsureCapacity(CodedUtil.MAX_VAR_FLOAT32_LENGTH);
+            _bufferPos = CodedUtil.WriteVarFloat(_buffer, _bufferPos, value);
         }
 
         public void WriteDouble(double value) {
-            try {
-                int newPos = CodedUtil.WriteDouble(_buffer, _bufferPos, value);
-                _bufferPos = CheckNewBufferPos(newPos);
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
+            EnsureCapacity(8);
+            _bufferPos = CodedUtil.WriteDouble(_buffer, _bufferPos, value);
         }
 
         public void WriteVarDouble(double value) {
-            try {
-                int newPos = CodedUtil.WriteVarDouble(_buffer, _bufferPos, value);
-                _bufferPos = CheckNewBufferPos(newPos);
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
+            EnsureCapacity(CodedUtil.MAX_VAR_FLOAT64_LENGTH);
+            _bufferPos = CodedUtil.WriteVarDouble(_buffer, _bufferPos, value);
         }
 
         public void WriteBool(bool value) {
-            try {
-                int newPos = CodedUtil.WriteUInt32(_buffer, _bufferPos, value ? 1 : 0);
-                _bufferPos = CheckNewBufferPos(newPos);
-            }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e, "buffer overflow");
-            }
+            EnsureCapacity(1);
+            _bufferPos = CodedUtil.WriteUInt32(_buffer, _bufferPos, value ? 1 : 0);
         }
 
         public void WriteString(string value) {
-            try {
-                long maxByteCount = (value.Length * 3L);
-                int maxByteCountVarIntSize = CodedUtil.ComputeRawVarInt64Size(maxByteCount);
-                int minByteCountVarIntSize = CodedUtil.ComputeRawVarInt32Size(value.Length);
-                if (maxByteCountVarIntSize == minByteCountVarIntSize) {
-                    // len占用的字节数是可提前确定的，因此无需额外的字节数计算，可直接编码
-                    int byteCount = Encoding.UTF8.GetBytes(value, 0, value.Length, _buffer, _bufferPos + minByteCountVarIntSize);
-                    int newPos = CodedUtil.WriteUInt32(_buffer, _bufferPos, byteCount);
-                    _bufferPos = CheckNewBufferPos(newPos + byteCount);
-                } else {
-                    // 注意，这里写的编码后的字节长度；而不是字符串长度 -- 提前计算UTF8的长度是很有用的方法
-                    int byteCount = Encoding.UTF8.GetByteCount(value);
-                    int newPos = CodedUtil.WriteUInt32(_buffer, _bufferPos, byteCount);
-                    if (byteCount > 0) {
-                        CheckNewBufferPos(newPos + byteCount);
-                        //  如果需要限制buffer访问区域，可使用Span；但这里预计算过，因此是安全的
-                        int realByteCount = Encoding.UTF8.GetBytes(value, 0, value.Length, _buffer, newPos);
-                        Debug.Assert(byteCount == realByteCount);
-                    }
-                    _bufferPos = (newPos + byteCount);
-                }
+            if (string.IsNullOrEmpty(value)) {
+                EnsureCapacity(1);
+                _buffer[_bufferPos++] = 0;
+                return;
             }
-            catch (Exception e) {
-                throw DsonIOException.Wrap(e);
-            }
+            // 提前计算UTF8字符串的长度会导致一定的开销 -- 但我们要保证数据不越界
+            int byteCount = Encoding.UTF8.GetByteCount(value);
+            EnsureCapacity(CodedUtil.MAX_VAR_INT32_LENGTH + byteCount);
+            _bufferPos = CodedUtil.WriteUInt32(_buffer, _bufferPos, byteCount);
+            Encoding.UTF8.GetBytes(value, 0, value.Length, _buffer, _bufferPos);
+            _bufferPos += byteCount;
         }
 
         public void WriteRawBytes(byte[] data, int offset, int length) {
             ByteBufferUtil.CheckBuffer(data, offset, length);
-            CheckNewBufferPos(_bufferPos + length);
+            EnsureCapacity(length);
 
             Array.Copy(data, offset, _buffer, _bufferPos, length);
             _bufferPos += length;
@@ -245,7 +209,9 @@ public static class DsonOutputs
 
         #region Special
 
-        public int SpaceLeft => _bufferPosLimit - _bufferPos;
+        public int SpaceLeft => _bufferPool != null
+            ? -_rawLimit - _bufferPos
+            : _posLimit - _bufferPos;
 
         public int Position {
             get => _bufferPos - _rawOffset;
@@ -279,7 +245,21 @@ public static class DsonOutputs
         }
 
         public void Dispose() {
+            // 需要归还buffer
+            byte[] buffer = this._buffer;
+            IArrayPool<byte> bufferPool = this._bufferPool;
+            this._buffer = null!;
+            this._bufferPool = null;
+            //
+            if (bufferPool != null) {
+                bufferPool.Release(buffer);
+            }
         }
+
+        /// <summary>
+        /// 获取底层的buffer，慎重使用
+        /// </summary>
+        public byte[] Buffer => _buffer;
     }
 }
 }

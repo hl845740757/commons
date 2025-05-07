@@ -27,6 +27,7 @@ import cn.wjybxx.dson.text.ObjectStyle;
 import javax.annotation.Nonnull;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -79,68 +80,69 @@ class DefaultDsonConverter implements DsonConverter {
         Objects.requireNonNull(options);
         return new DefaultDsonConverter(typeMetaRegistry, codecRegistry, genericHelper, typeWriteHelper, options);
     }
+    // region binary
 
     @Nonnull
     @Override
     public byte[] write(Object value, @Nonnull TypeInfo declaredType) {
         Objects.requireNonNull(value);
-        final byte[] localBuffer = options.bufferPool.acquire(options.bufferSize);
-        try {
-            final DsonChunk chunk = new DsonChunk(localBuffer);
-            write(value, declaredType, chunk);
-            return chunk.usedPayload();
-        } finally {
-            options.bufferPool.release(localBuffer);
+        // 外部销毁，确保buffer归还
+        try (var outputStream = DsonOutputs.newInstance(options.bufferPool, options.bufferLength, options.maxBufferLength)) {
+            encodeObject(outputStream, value, declaredType);
+            return Arrays.copyOfRange(outputStream.getBuffer(), 0, outputStream.getPosition());
         }
     }
 
     @Override
     public <T> T read(byte[] source, @Nonnull TypeInfo declaredType, Supplier<? extends T> factory) {
-        final DsonInput inputStream = DsonInputs.newInstance(source);
-        return decodeObject(inputStream, declaredType, factory);
+        try (DsonInput inputStream = DsonInputs.newInstance(source)) {
+            return decodeObject(inputStream, declaredType, factory);
+        }
     }
 
     @Override
     public void write(Object value, TypeInfo declaredType, DsonChunk chunk) {
         Objects.requireNonNull(value);
-        final DsonOutput outputStream = DsonOutputs.newInstance(chunk.getBuffer(), chunk.getOffset(), chunk.getLength());
-        encodeObject(outputStream, value, declaredType);
-        chunk.setUsed(outputStream.getPosition());
+        try (DsonOutput outputStream = DsonOutputs.newInstance(chunk.getBuffer(), chunk.getOffset(), chunk.getLength())) {
+            encodeObject(outputStream, value, declaredType);
+            chunk.setUsed(outputStream.getPosition());
+        }
     }
 
     @Override
     public <T> T read(DsonChunk chunk, TypeInfo declaredType, Supplier<? extends T> factory) {
-        final DsonInput inputStream = DsonInputs.newInstance(chunk.getBuffer(), chunk.getOffset(), chunk.getLength());
-        T result = decodeObject(inputStream, declaredType, factory);
-        chunk.setUsed(inputStream.getPosition());
-        return result;
+        try (DsonInput inputStream = DsonInputs.newInstance(chunk.getBuffer(), chunk.getOffset(), chunk.getLength())) {
+            T result = decodeObject(inputStream, declaredType, factory);
+            chunk.setUsed(inputStream.getPosition());
+            return result;
+        }
     }
 
     @Override
     public <T> T cloneObject(Object value, TypeInfo declaredType, TypeInfo targetType, Supplier<? extends T> factory) {
         if (value == null) return null;
-        final byte[] localBuffer = options.bufferPool.acquire(options.bufferSize);
-        try {
-            final DsonOutput outputStream = DsonOutputs.newInstance(localBuffer);
+        try (var outputStream = DsonOutputs.newInstance(options.bufferPool, options.bufferLength, options.maxBufferLength)) {
             encodeObject(outputStream, value, declaredType);
-
-            final DsonInput inputStream = DsonInputs.newInstance(localBuffer, 0, outputStream.getPosition());
+            // 不销毁
+            DsonInput inputStream = DsonInputs.newInstance(outputStream.getBuffer(), 0, outputStream.getPosition());
             return decodeObject(inputStream, targetType, factory);
-        } finally {
-            options.bufferPool.release(localBuffer);
         }
     }
 
+
+    /** 注意：由外部销毁输出流 */
     private void encodeObject(DsonOutput outputStream, Object value, TypeInfo typeInfo) {
-        try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this, typeWriteHelper,
-                new DsonBinaryWriter(options.binWriterSettings, outputStream))) {
+        DsonBinaryWriter binaryWriter = new DsonBinaryWriter(options.binWriterSettings, outputStream, false);
+        try (DsonObjectWriter wrapper = new DefaultDsonObjectWriter(this, typeWriteHelper, binaryWriter)) {
             wrapper.writeObject(null, value, typeInfo, null);
             wrapper.flush();
         }
     }
 
+    /** 注意：由外部销毁输入流 */
     private <T> T decodeObject(DsonInput inputStream, TypeInfo typeInfo, Supplier<? extends T> factory) {
-        try (DsonObjectReader wrapper = wrapReader(new DsonBinaryReader(options.binReaderSettings, inputStream))) {
+        DsonBinaryReader binaryReader = new DsonBinaryReader(options.binReaderSettings, inputStream, false);
+        try (DsonObjectReader wrapper = wrapReader(binaryReader)) {
             return wrapper.readObject(null, typeInfo, factory);
         }
     }
@@ -158,7 +160,9 @@ class DefaultDsonConverter implements DsonConverter {
         DsonValue dsonValue = Dsons.readTopDsonValue(dsonReader);
         return new DsonCollectionReader(options.binReaderSettings, new DsonArray<String>().append(dsonValue));
     }
+    // endregion
 
+    // region text
     @Nonnull
     @Override
     public String writeAsDson(Object value, @Nonnull TypeInfo declaredType, ObjectStyle style) {
@@ -229,4 +233,5 @@ class DefaultDsonConverter implements DsonConverter {
             return Dsons.readTopDsonValue(textReader);
         }
     }
+    // endregion
 }

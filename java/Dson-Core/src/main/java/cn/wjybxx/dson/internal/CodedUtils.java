@@ -45,6 +45,11 @@ public final class CodedUtils {
     private static final long LONG_CODED_MASK7 = -1L << 50;
     private static final long LONG_CODED_MASK8 = -1L << 57;
 
+    public static final int MAX_VAR_INT32_LENGTH = 5; // 7 * 5 = 35
+    public static final int MAX_VAR_INT64_LENGTH = 10; // 7 * 9 = 63
+    public static final int MAX_VAR_FLOAT32_LENGTH = 5; // 8 + 7 * 4
+    public static final int MAX_VAR_FLOAT64_LENGTH = 9; // 8 + 7 * 8 =64
+
     /** 计算原始的32位变长整形的编码长度 -- 也可直接通过前导0个数计算 */
     public static int computeRawVarInt32Size(int value) {
         if ((value & INT_CODED_MASK1) == 0) return 1; // 所有高位为0

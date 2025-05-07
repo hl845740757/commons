@@ -105,7 +105,9 @@ public class ConverterOptions {
     public final int usage;
 
     /** 序列化申请的字节数组大小 */
-    public final int bufferSize;
+    public final int bufferLength;
+    /** 序列化申请的最大字节数组大小 */
+    public final int maxBufferLength;
     /** 字节数组缓存池 -- 多线程下需要注意线程安全问题 */
     public final ArrayPool<byte[]> bufferPool;
     /** 字符串缓存池 -- 多线程下需要注意线程安全问题 */
@@ -134,7 +136,8 @@ public class ConverterOptions {
         this.pbBinaryType = builder.pbBinaryType;
         this.usage = builder.usage;
 
-        this.bufferSize = builder.bufferSize;
+        this.bufferLength = builder.bufferLength;
+        this.maxBufferLength = builder.maxBufferLength;
         this.bufferPool = Objects.requireNonNull(builder.bufferPool);
         this.stringBuilderPool = Objects.requireNonNull(builder.stringBuilderPool);
 
@@ -166,7 +169,7 @@ public class ConverterOptions {
         builder.pbBinaryType = pbBinaryType;
         builder.usage = usage;
 
-        builder.bufferSize = bufferSize;
+        builder.bufferLength = bufferLength;
         builder.bufferPool = bufferPool;
         builder.stringBuilderPool = stringBuilderPool;
 
@@ -198,7 +201,8 @@ public class ConverterOptions {
         private int pbBinaryType = 127;
         private int usage;
 
-        private int bufferSize = 8192;
+        private int bufferLength = 8192;
+        private int maxBufferLength = 1024 * 1024;
         private ArrayPool<byte[]> bufferPool = ConcurrentArrayPool.SHARED_BYTE_ARRAY_POOL;
         private ObjectPool<StringBuilder> stringBuilderPool = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL;
 
@@ -310,13 +314,21 @@ public class ConverterOptions {
             return this;
         }
 
-        public int getBufferSize() {
-            return bufferSize;
+        public int getBufferLength() {
+            return bufferLength;
         }
 
-        public Builder setBufferSize(int bufferSize) {
-            this.bufferSize = bufferSize;
+        public Builder setBufferLength(int bufferLength) {
+            this.bufferLength = bufferLength;
             return this;
+        }
+
+        public int getMaxBufferLength() {
+            return maxBufferLength;
+        }
+
+        public void setMaxBufferLength(int maxBufferLength) {
+            this.maxBufferLength = maxBufferLength;
         }
 
         public ArrayPool<byte[]> getBufferPool() {

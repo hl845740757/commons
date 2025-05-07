@@ -56,7 +56,7 @@ public static class DsonInputs
         private readonly int _rawLimit;
 
         private int _bufferPos;
-        private int _bufferPosLimit;
+        private int _posLimit;
 
         internal ArrayDsonInput(byte[] buffer, int offset, int length) {
             ByteBufferUtil.CheckBuffer(buffer, offset, length);
@@ -65,17 +65,15 @@ public static class DsonInputs
             this._rawLimit = offset + length;
 
             this._bufferPos = offset;
-            this._bufferPosLimit = offset + length;
+            this._posLimit = offset + length;
         }
 
         #region check
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int CheckNewBufferPos(int newBufferPos) {
-            if (newBufferPos < _rawOffset || newBufferPos > _bufferPosLimit) {
-                throw new DsonIOException($"BytesLimited, LimitPos: {_bufferPosLimit}," +
-                                          $" position: {_bufferPos}," +
-                                          $" newPosition: {newBufferPos}");
+            if (newBufferPos < _rawOffset || newBufferPos > _posLimit) {
+                throw new DsonIOException($"BytesLimited, LimitPos: {_posLimit}, position: {_bufferPos}, newPosition: {newBufferPos}");
             }
             return newBufferPos;
         }
@@ -269,24 +267,24 @@ public static class DsonInputs
 
         public int PushLimit(int byteLimit) {
             if (byteLimit < 0) throw new ArgumentException(nameof(byteLimit));
-            int oldPosLimit = _bufferPosLimit;
+            int oldPosLimit = _posLimit;
             int newPosLimit = _bufferPos + byteLimit;
 
             // 不可超过原始限制
             ByteBufferUtil.CheckBuffer(_rawLimit, _rawOffset, newPosLimit - _rawOffset);
-            _bufferPosLimit = newPosLimit;
+            _posLimit = newPosLimit;
             return oldPosLimit;
         }
 
         public void PopLimit(int oldLimit) {
             // 不可超过原始限制
             ByteBufferUtil.CheckBuffer(_rawLimit, _rawOffset, oldLimit - _rawOffset);
-            _bufferPosLimit = oldLimit;
+            _posLimit = oldLimit;
         }
 
-        public int GetBytesUntilLimit() => (_bufferPosLimit - _bufferPos);
+        public int GetBytesUntilLimit() => (_posLimit - _bufferPos);
 
-        public bool IsAtEnd() => _bufferPos >= _bufferPosLimit;
+        public bool IsAtEnd() => _bufferPos >= _posLimit;
 
         #endregion
 
