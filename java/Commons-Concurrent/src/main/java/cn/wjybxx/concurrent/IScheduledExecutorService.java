@@ -24,7 +24,9 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 不继承{@link ScheduledExecutorService}，JDK的{@link ScheduledFuture}设计有问题。
- * 注意：调度器什么时候响应取消信号，是不确定的。
+ * 注意：
+ * 1.调度器什么时候响应取消信号，是不确定的。
+ * 2.定时任务可通过{@link TaskResultException}返回结果。
  *
  * @author wjybxx
  * date - 2024/1/9

@@ -283,8 +283,10 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
             RunTask();
         }
         catch (Exception ex) {
-            if (ex == ErrorCodeException.SUCCESS) {
-                promise.Internal_TrySetResult(default);
+            // 通过异常传递结果
+            if (ex is TaskResultException resultException) {
+                T? result = resultException.Cast<T>();
+                promise.Internal_TrySetResult(result);
                 return false;
             }
             ThreadUtil.RecoveryInterrupted(ex);

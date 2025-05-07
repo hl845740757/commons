@@ -22,6 +22,9 @@ namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 提供定时任务支持的Executor
+///
+/// 1.调度器什么时候响应取消信号，是不确定的。
+/// 2.定时任务可通过<see cref="TaskResultException"/>返回结果。
 /// </summary>
 public interface IScheduledExecutorService : IExecutorService
 {

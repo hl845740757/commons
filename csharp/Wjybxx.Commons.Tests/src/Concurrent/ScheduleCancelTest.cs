@@ -85,7 +85,7 @@ public class ScheduleCancelTest
         MutableInt counter = new MutableInt(0);
         ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewAction(() => {
             if (counter.IncrementAndGet() > 5) {
-                throw ErrorCodeException.SUCCESS;
+                throw new TaskResultException(null);
             }
         });
         builder.SetFixedDelay(0, 10);

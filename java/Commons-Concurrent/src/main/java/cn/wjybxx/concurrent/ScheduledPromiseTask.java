@@ -21,7 +21,6 @@ import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.collection.IndexedElement;
 import cn.wjybxx.base.concurrent.CancelCodes;
 import cn.wjybxx.base.concurrent.StacklessCancellationException;
-import cn.wjybxx.base.ex.ErrorCodeException;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 
 import javax.annotation.Nonnull;
@@ -281,8 +280,10 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         try {
             runTask();
         } catch (Throwable ex) {
-            if (ex == ErrorCodeException.SUCCESS) {
-                promise.trySetResult(null);
+            // 通过异常传递结果
+            if (ex instanceof TaskResultException taskResultException) {
+                @SuppressWarnings("unchecked") V result = (V) taskResultException.getResult();
+                promise.trySetResult(result);
                 return false;
             }
             ThreadUtils.recoveryInterrupted(ex);
