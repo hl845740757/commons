@@ -59,6 +59,11 @@ LinkedDictionary特殊接口示例：
     }
 ```
 
+### 1.3.0
+
+1. 增加了组件模式统一接口：`IEntity`和`IComponent`
+2. 修改TimeProvider的方法名
+
 ### 1.2.0
 
 1. 新增无界数组队列`ArrayDeque`，以方便统一Java和C#代码

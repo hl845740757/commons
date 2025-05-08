@@ -951,15 +951,13 @@ public sealed class CodeWriter
         EmitTypeName(attributeSpec.type, true);
         if (!CodeBlock.IsNullOrEmpty(attributeSpec.constructor) || attributeSpec.props.Count > 0) {
             Emit("(");
-            if (!CodeBlock.IsNullOrEmpty(attributeSpec.constructor)) {
+            bool hasConstructor = !CodeBlock.IsNullOrEmpty(attributeSpec.constructor);
+            if (hasConstructor) {
                 Emit(attributeSpec.constructor!);
-            }
-            if (attributeSpec.props.Count > 0) {
-                Emit(", ");
             }
             for (int i = 0; i < attributeSpec.props.Count; i++) {
                 KeyValuePair<string, CodeBlock> pair = attributeSpec.props[i];
-                if (i > 0) Emit(", ");
+                if (hasConstructor || i > 0) Emit(", ");
                 Emit(pair.Key);
                 Emit(" = ");
                 Emit(pair.Value);

@@ -25,6 +25,7 @@
 5. `ValueFuture`转`IFuture`时保留工作线程，帮助死锁检测。
 6. `PromiseTask`，`SchedulePromiseTask`加入池化逻辑。
 7. `CancelTokenSource`监听优化，监听节点`Completion`池化。
+8. `SchedulePromiseTask`周期性任务支持通过异常返回结果。
 
 ### 1.2.1
 

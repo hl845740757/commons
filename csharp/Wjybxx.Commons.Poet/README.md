@@ -134,6 +134,21 @@ Poet包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
     }
 ```
 
-## Roslyn支持
+## 版本号同步
 
-为让Poet包可以在任意场景使用，我将程序集进行了拆分，由`Wjybxx.Commons.Apt`对Roslyn进行支持。
+注意：该程序集总是和`Wjybxx.Commons.Apt`版本号保持一致，不论该程序集是否发生变化。
+
+## ReleaseNotes
+
+### 1.3.1
+
+bug fix
+
+1.修复attribute无构造器时，生成代码会多一个逗号问题
+
+### 1.3.0
+
+1. Poet从Commons.Apt中拆分出来，成为独立的无依赖的程序集 -- 不再依赖Commons.Core项目。
+2. 修改了属性`PropertySepc`的Modifier管理，拆分为明确的`getter`和`setter`
+3. 统一工厂方法为`Get`
+4. TypeName为Roslyn做了一些兼容支持

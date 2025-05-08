@@ -1127,7 +1127,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         return -1;
     }
 
-    /** 访问所有的子节点(含hook节点) */
+    /** 访问所有的子节点(含hook节点) -- 只访问运行时数据，不访问配置数据 */
     public abstract void visitChildren(TaskVisitor<? super T> visitor, Object param);
 
     /** 子节点的数量（仅包括普通意义上的child，不包括钩子任务） */

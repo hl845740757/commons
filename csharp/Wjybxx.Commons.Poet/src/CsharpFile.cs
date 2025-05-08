@@ -35,6 +35,10 @@ public class CsharpFile
         this.nestedSpecs = Util.ToImmutableList(builder.nestedSpecs);
     }
 
+    /// <summary>
+    /// </summary>
+    /// <param name="name">文件名，不含cs后缀</param>
+    /// <returns></returns>
     public static Builder NewBuilder(string name) => new Builder(name);
 
     public class Builder
