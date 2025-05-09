@@ -16,6 +16,7 @@
 
 #endregion
 
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Wjybxx.Dson.Text
@@ -48,6 +49,10 @@ public sealed class LineInfo
     public int endPos;
     /** 行在字符流中的状态 -- endPos是否到达行尾 */
     public int state = StateScan;
+#nullable disable
+    /** 原始行数据(外部缓存) -- 不包含换行符 */
+    public string rawLine;
+#nullable enable
 
     public LineInfo(int ln, int startPos, int endPos) {
         this.ln = ln;
@@ -56,11 +61,13 @@ public sealed class LineInfo
     }
 
     /** 当前行是否已扫描完成 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsScanCompleted() {
         return state != StateScan;
     }
 
     /** 最后一个可读取的位置 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int LastReadablePosition() {
         return LastReadablePosition(state, endPos);
     }
@@ -97,7 +104,7 @@ public sealed class LineInfo
 
     #region equals
 
-    public override bool Equals(object o) {
+    public override bool Equals(object? o) {
         return this == o;
     }
 
@@ -114,6 +121,7 @@ public sealed class LineInfo
             .Append(", startPos=").Append(startPos)
             .Append(", endPos=").Append(endPos)
             .Append(", state=").Append(state)
+            .Append(", rawLine=").Append(rawLine)
             .Append('}').ToString();
     }
 }

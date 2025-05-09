@@ -47,6 +47,8 @@ public final class LineInfo {
     public int endPos;
     /** 行在字符流中的状态 -- endPos是否到达行尾 */
     public int state = STATE_SCAN;
+    /** 关联的原始行（外部缓存）-- 不包含换行符 */
+    public String rawLine;
 
     public LineInfo(int ln, int startPos, int endPos) {
         this.ln = ln;
@@ -95,24 +97,25 @@ public final class LineInfo {
     }
 
     @Override
-    public final boolean equals(Object o) {
+    public boolean equals(Object o) {
         return this == o;
     }
 
     @Override
-    public final int hashCode() {
+    public int hashCode() {
         return ln;
     }
 
     @Nonnull
     @Override
-    public final String toString() {
+    public String toString() {
         return new StringBuilder(64)
                 .append("LineInfo{")
                 .append("ln=").append(ln)
                 .append(", startPos=").append(startPos)
                 .append(", endPos=").append(endPos)
                 .append(", state=").append(state)
+                .append(", rawLine=").append(rawLine)
                 .append('}').toString();
     }
 

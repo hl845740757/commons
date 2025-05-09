@@ -1,4 +1,5 @@
 #region LICENSE
+
 // Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +13,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #endregion
 
 using NUnit.Framework;
@@ -34,11 +36,34 @@ public class TypeInfoTest2
         Assert.IsTrue(type.IsAbstract);
         Assert.IsTrue(type.IsSealed);
     }
-    
+
     [Test]
     public void TestMetadataName() {
         Type unboundedType = typeof(Dictionary<,>);
         Console.WriteLine(unboundedType.Name);
         Assert.IsTrue(unboundedType.Name.EndsWith("`2"));
+    }
+
+    /// <summary>
+    /// 测试子类向超类传递泛型参数后，超类是否是泛型定义类
+    /// </summary>
+    [Test]
+    public void TestBaseType() {
+        Type type = typeof(ChildType<,>);
+        Console.WriteLine(type.BaseType);
+    }
+
+    private abstract class BaseType<T, U>
+    {
+        private T value;
+
+        public T Value {
+            get => value;
+            set => this.value = value;
+        }
+    }
+
+    private abstract class ChildType<T, U> : BaseType<List<T>, U>
+    {
     }
 }

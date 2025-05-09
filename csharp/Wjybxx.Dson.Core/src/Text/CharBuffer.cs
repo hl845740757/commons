@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
 using Wjybxx.Commons.IO;
 
@@ -37,53 +38,103 @@ internal class CharBuffer
         this.array = buffer ?? throw new ArgumentNullException(nameof(buffer));
     }
 
-    public int Capacity => array.Length;
+    /// <summary>
+    /// 当前容量
+    /// </summary>
+    public int Capacity {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => array.Length;
+    }
 
-    public bool IsReadable => ridx < widx;
+    /// <summary>
+    /// 当前是否可读
+    /// </summary>
+    public bool IsReadable {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => ridx < widx;
+    }
 
-    public bool IsWritable => widx < array.Length;
+    /// <summary>
+    /// 当前是否可写
+    /// </summary>
+    public bool IsWritable {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => widx < array.Length;
+    }
 
-    public int WritableChars => array.Length - widx;
+    /// <summary>
+    /// 可写字节数
+    /// </summary>
+    public int WritableChars {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => array.Length - widx;
+    }
 
-    public int ReadableChars => Math.Max(0, widx - ridx);
+    /// <summary>
+    /// 可读字节数
+    /// </summary>
+    public int ReadableChars {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => Math.Max(0, widx - ridx);
+    }
 
-    /** Length为可读字节数 */
-    public int Length => Math.Max(0, widx - ridx);
-
+    /// <summary>
+    /// 获取指定位置的字符
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public char CharAt(int index) {
         return array[ridx + index];
     }
 
     #region 读写
 
+    /// <summary>
+    /// 读取一个char
+    /// </summary>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public char Read() {
         if (ridx == widx) throw new InternalBufferOverflowException();
         return array[ridx++];
     }
 
+    /// <summary>
+    /// 撤销一次读
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Unread() {
         if (ridx == 0) throw new InternalBufferOverflowException();
         ridx--;
     }
 
+    /// <summary>
+    /// 写入一个char
+    /// </summary>
+    /// <param name="c"></param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(char c) {
-        if (widx == array.Length) {
-            throw new InternalBufferOverflowException();
-        }
+        if (widx == array.Length) throw new InternalBufferOverflowException();
         array[widx++] = c;
     }
 
+    /// <summary>
+    /// 写入多个char
+    /// </summary>
+    /// <param name="chars"></param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Write(char[] chars) {
-        if (chars.Length == 0) {
-            return;
-        }
-        if (widx + chars.Length > array.Length) {
-            throw new InternalBufferOverflowException();
-        }
-        Array.Copy(chars, 0, array, widx, chars.Length);
-        widx += chars.Length;
+        Write(chars, 0, chars.Length);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="chars">要写入的Buffer</param>
+    /// <param name="offset">数据偏移</param>
+    /// <param name="len">数据长度</param>
+    /// <exception cref="InternalBufferOverflowException"></exception>
     public void Write(char[] chars, int offset, int len) {
         if (len == 0) {
             return;
@@ -96,12 +147,12 @@ internal class CharBuffer
         widx += len;
     }
 
-    /**
-     * 将给定buffer中的可读字符写入到当前buffer中
-     * 给定的buffer的读索引将更新，当前buffer的写索引将更新
-     *
-     * @return 写入的字符数；返回0时可能是因为当前buffer已满，或给定的buffer无可读字符
-     */
+    /// <summary>
+    /// 将给定buffer中的可读字符写入到当前buffer中
+    /// 给定的buffer的读索引将更新，当前buffer的写索引将更新
+    /// </summary>
+    /// <param name="charBuffer"></param>
+    /// <returns>写入的字符数；返回0时可能是因为当前buffer已满，或给定的buffer无可读字符</returns>
     public int Write(CharBuffer charBuffer) {
         int n = Math.Min(WritableChars, charBuffer.ReadableChars);
         if (n == 0) {
@@ -116,14 +167,17 @@ internal class CharBuffer
 
     #region 索引调整
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddRidx(int count) {
         SetRidx(ridx + count);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddWidx(int count) {
         SetWidx(widx + count);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetRidx(int ridx) {
         if (ridx < 0 || ridx > widx) {
             throw new ArgumentException("ridx overflow");
@@ -131,6 +185,7 @@ internal class CharBuffer
         this.ridx = ridx;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetWidx(int widx) {
         if (widx < ridx || widx > array.Length) {
             throw new ArgumentException("widx overflow");

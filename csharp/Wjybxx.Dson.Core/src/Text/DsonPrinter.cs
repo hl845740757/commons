@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Wjybxx.Commons.IO;
 using Wjybxx.Commons.Pool;
@@ -29,9 +30,6 @@ namespace Wjybxx.Dson.Text
 /// </summary>
 public class DsonPrinter : IDisposable
 {
-    /** 默认共享的缩进缓存 -- 4空格 */
-    private static readonly char[] sharedIndentionArray = "    ".ToCharArray();
-
 #nullable disable
     private readonly DsonTextWriterSettings _settings;
     private readonly TextWriter _writer;
@@ -41,9 +39,6 @@ public class DsonPrinter : IDisposable
     private StringBuilder _builder;
     /** 是否是Writer内部的builder */
     private readonly bool _backingBuilder;
-
-    /** 缩进字符缓存，减少字符串构建 */
-    private char[] _indentionArray = sharedIndentionArray;
     /** 结构体缩进 -- 默认的body缩进 */
     private int _structIndent;
 
@@ -72,15 +67,24 @@ public class DsonPrinter : IDisposable
     public TextWriter Writer => _writer;
 
     /** 当前行号 - 初始1 */
-    public int Ln => _ln;
+    public int Ln {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _ln;
+    }
 
     /** 当前列数 - 初始0 */
-    public int Column => _column;
+    public int Column {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _column;
+    }
 
     /// <summary>
     /// 格式化输出时body开始列号
     /// </summary>
-    public int PrettyBodyColum => _structIndent;
+    public int PrettyBodyColum {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _structIndent;
+    }
 
     #endregion
 
@@ -103,18 +107,21 @@ public class DsonPrinter : IDisposable
     }
 
     /** 打印高平面码点 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PrintHpmCodePoint(char high, char low) {
         _builder.Append(high);
         _builder.Append(low);
         _column += 1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Print(char[] cBuffer) {
         foreach (char c in cBuffer) {
             Print(c);
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Print(char[] cBuffer, int offset, int len) {
         ByteBufferUtil.CheckBuffer(cBuffer.Length, offset, len);
         for (int idx = offset, end = offset + len; idx < end; idx++) {
@@ -122,6 +129,8 @@ public class DsonPrinter : IDisposable
         }
     }
 
+    /** 打印普通字符串，会检查字符中的tab符号 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Print(string text) {
         for (int idx = 0, end = text.Length; idx < end; idx++) {
             Print(text[idx]);
@@ -129,36 +138,42 @@ public class DsonPrinter : IDisposable
     }
 
     /** c必须是安全字符，不可以是tab和换行符 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FastPrint(char c) {
         _builder.Append(c);
         _column++;
     }
 
     /** @param cBuffer 内容中无tab字符 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FastPrint(ReadOnlySpan<char> cBuffer) {
         _builder.Append(cBuffer);
         _column += cBuffer.Length;
     }
 
     /** @param cBuffer 内容中无tab字符 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FastPrint(char[] cBuffer) {
         _builder.Append(cBuffer);
         _column += cBuffer.Length;
     }
 
     /** @param cBuffer 内容中无tab字符 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FastPrint(char[] cBuffer, int offset, int count) {
         _builder.Append(cBuffer, offset, count);
         _column += count; // c#是count...
     }
 
     /** @param text 内容中无tab字符 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FastPrint(string text) {
         _builder.Append(text);
         _column += text.Length;
     }
 
     /** @param text 内容中无tab字符 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void FastPrintRange(string text, int start, int count) {
         _builder.Append(text, start, count);
         _column += count; // c#是count...
@@ -168,38 +183,45 @@ public class DsonPrinter : IDisposable
 
     #region dson
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PrintBeginObject() {
         _builder.Append('{');
         _column += 1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PrintEndObject() {
         _builder.Append('}');
         _column += 1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PrintBeginArray() {
         _builder.Append('[');
         _column += 1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PrintEndArray() {
         _builder.Append(']');
         _column += 1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PrintBeginHeader() {
         _builder.Append("@{");
         _column += 2;
     }
 
     /** 打印冒号 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PrintColon() {
         _builder.Append(':');
         _column += 1;
     }
 
     /** 打印逗号 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PrintComma() {
         _builder.Append(',');
         _column += 1;
@@ -275,52 +297,36 @@ public class DsonPrinter : IDisposable
     }
 
     /** 打印全部缩进 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PrintIndent() {
         PrintSpaces(_structIndent);
     }
 
     /** 打印一个空格 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PrintSpace() {
         _builder.Append(' ');
         _column += 1;
     }
 
-    /** 打印多个空格 -- char可以静默转int，改名安全些 */
+    /** 打印多个空格 */
     public void PrintSpaces(int count) {
-        if (count < 0) throw new ArgumentException(nameof(count));
-        if (count == 0) return;
-        if (count <= _indentionArray.Length) {
-            _builder.Append(_indentionArray, 0, count);
-        } else {
-            char[] chars = new char[count];
-            Array.Fill(chars, ' ');
-            _builder.Append(chars);
-            // 尝试缓存下来
-            if (count - _indentionArray.Length <= 8) {
-                _indentionArray = chars;
-            }
-        }
+        if (count < 1) return;
+        _builder.Append(' ', count);
         _column += count;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Indent() {
         _structIndent += 2;
-        UpdateIndent();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Retract() {
         if (_structIndent < 2) {
             throw new InvalidOperationException("indent must be called before retract");
         }
         _structIndent -= 2;
-        UpdateIndent();
-    }
-
-    private void UpdateIndent() {
-        if (_structIndent > _indentionArray.Length) {
-            _indentionArray = new char[_structIndent];
-            Array.Fill(_indentionArray, ' ');
-        }
     }
 
     #endregion

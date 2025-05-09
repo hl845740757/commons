@@ -49,9 +49,7 @@ final class StringCharStream extends AbstractCharStream {
 
     @Override
     protected void checkUnreadOverFlow(int position) {
-        if (position < 0 || position >= buffer.length()) {
-            throw bufferOverFlow(position);
-        }
+        if (position < 0) throw bufferOverFlow(position);
     }
 
     @Override

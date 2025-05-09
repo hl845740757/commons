@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Wjybxx.Dson.Text
@@ -71,11 +72,11 @@ public interface IDsonCharStream : IDisposable
     /// <value></value>
     LineInfo? CurLine { get; }
 
-    /**
-  * 获取行号
-  * 1.初始0，表示尚未开始
-  * 2.初始行号可能不为1，部分输入流可能是截断的
-  */
+    /// <summary>
+    /// 获取行号
+    /// 1.初始0，表示尚未开始
+    /// 2.初始行号可能不为1，部分输入流可能是截断的
+    /// </summary>
     int Ln {
         get {
             LineInfo curLine = CurLine;
@@ -83,11 +84,11 @@ public interface IDsonCharStream : IDisposable
         }
     }
 
-    /**
-     * 获取列号
-     * 1. 初始0，表示尚未开始
-     * 2. 正式值从1开始。
-     */
+    /// <summary>
+    /// 获取列号
+    /// 1.初始0，表示尚未开始
+    /// 2.正式值从1开始。
+    /// </summary>
     int Column {
         get {
             LineInfo curLine = CurLine;
@@ -107,7 +108,11 @@ public interface IDsonCharStream : IDisposable
 
     #region 工厂方法
 
-    /** 创建一个基于string的字符流 */
+    /// <summary>
+    /// 创建一个基于string的字符流
+    /// </summary>
+    /// <param name="dsonString"></param>
+    /// <returns></returns>
     public static IDsonCharStream NewCharStream(string dsonString) {
         return new StringCharStream(dsonString);
     }
@@ -120,6 +125,21 @@ public interface IDsonCharStream : IDisposable
     /// <returns></returns>
     public static IDsonCharStream NewBufferedCharStream(TextReader reader, bool autoClose = true) {
         return new BufferedCharStream(reader, autoClose);
+    }
+
+    /// <summary>
+    /// 创建一个已提前解析为行的字符流
+    /// </summary>
+    /// <param name="lines"></param>
+    /// <returns></returns>
+    public static IDsonCharStream NewPreparedCharStream(IList<LineInfo> lines) {
+        for (int index = 0; index < lines.Count; index++) {
+            var lineInfo = lines[index];
+            if (lineInfo.rawLine == null || !lineInfo.IsScanCompleted()) {
+                throw new ArgumentException(lineInfo.ToString());
+            }
+        }
+        return new PreparedCharStream(lines);
     }
 
     #endregion

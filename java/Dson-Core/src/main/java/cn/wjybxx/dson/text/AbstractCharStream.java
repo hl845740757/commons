@@ -25,7 +25,7 @@ import java.util.Objects;
  */
 public abstract class AbstractCharStream implements DsonCharStream {
 
-    private final List<LineInfo> lines = new ArrayList<>();
+    private final ArrayList<LineInfo> lines = new ArrayList<>();
     private LineInfo curLine;
     private boolean readingContent = false;
     private int position = -1;
@@ -39,9 +39,17 @@ public abstract class AbstractCharStream implements DsonCharStream {
         this.position = position;
     }
 
-    protected final void addLine(LineInfo lineInfo) {
-        Objects.requireNonNull(lineInfo);
-        lines.add(lineInfo);
+    protected final void addLines(List<LineInfo> newLines) {
+        lines.ensureCapacity(lines.size() + newLines.size());
+        for (LineInfo lineInfo : newLines) {
+            if (lineInfo == null) throw new NullPointerException("lineInfo");
+            lines.add(lineInfo);
+        }
+    }
+
+    protected final void addLine(LineInfo newLine) {
+        Objects.requireNonNull(newLine);
+        lines.add(newLine);
     }
 
     @Override
@@ -232,7 +240,7 @@ public abstract class AbstractCharStream implements DsonCharStream {
     protected abstract int charAt(LineInfo curLine, int position);
 
     /**
-     * 检测是否可以回退到指定位置
+     * 检测是否可以回退到指定位置(指定位置是否还在缓存中)
      *
      * @throws DsonParseException 如果不可回退到指定位置
      */

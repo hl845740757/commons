@@ -24,6 +24,7 @@ import cn.wjybxx.dson.text.*;
 
 import javax.annotation.Nullable;
 import java.io.Reader;
+import java.util.List;
 
 /**
  * dson的辅助工具类，二进制流工具类{@link DsonLites}
@@ -530,6 +531,9 @@ public final class Dsons {
         return new DsonScanner(DsonCharStream.newBufferedCharStream(reader, autoClose));
     }
 
+    public static DsonScanner newLinesScanner(List<LineInfo> lineInfos) {
+        return new DsonScanner(DsonCharStream.newPreparedCharStream(lineInfos));
+    }
     // endregion
 
 }

@@ -41,7 +41,7 @@ internal static class CodedUtil
     private const long LONG_CODED_MASK6 = -1L << 43;
     private const long LONG_CODED_MASK7 = -1L << 50;
     private const long LONG_CODED_MASK8 = -1L << 57;
-    
+
     public const int MAX_VAR_INT32_LENGTH = 5; // 7 * 5 = 35
     public const int MAX_VAR_INT64_LENGTH = 10; // 7 * 9 = 63
     public const int MAX_VAR_FLOAT32_LENGTH = 5; // 8 + 7 * 4

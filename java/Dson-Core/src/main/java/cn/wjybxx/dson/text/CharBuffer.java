@@ -102,16 +102,14 @@ class CharBuffer implements CharSequence {
     }
 
     public void write(char[] chars) {
-        if (chars.length == 0) {
-            return;
-        }
-        if (widx + chars.length > array.length) {
-            throw new BufferOverflowException();
-        }
-        System.arraycopy(chars, 0, array, widx, chars.length);
-        widx += chars.length;
+        write(chars, 0, chars.length);
     }
 
+    /**
+     * @param chars  要写入的buffer
+     * @param offset 数据偏移
+     * @param len    数据长度
+     */
     public void write(char[] chars, int offset, int len) {
         if (len == 0) {
             return;

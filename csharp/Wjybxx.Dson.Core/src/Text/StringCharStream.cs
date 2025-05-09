@@ -43,9 +43,7 @@ class StringCharStream : AbstractCharStream
     }
 
     protected override void CheckUnreadOverFlow(int position) {
-        if (position < 0 || position >= _buffer!.Length) {
-            throw BufferOverFlow(position);
-        }
+        if (position < 0) throw BufferOverFlow(position);
     }
 
     protected override void ScanMoreChars(LineInfo line) {

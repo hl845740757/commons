@@ -22,7 +22,6 @@ import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.io.DsonIOException;
 
 import java.io.Writer;
-import java.util.Arrays;
 
 /**
  * 该接口与{@link DsonScanner}对应
@@ -34,9 +33,6 @@ import java.util.Arrays;
 @SuppressWarnings("unused")
 public final class DsonPrinter implements AutoCloseable {
 
-    /** 默认共享的缩进缓存 -- 4空格 */
-    private static final char[] sharedIndentionArray = "    ".toCharArray();
-
     private final DsonTextWriterSettings settings;
     private final Writer writer;
     private final boolean autoClose;
@@ -45,9 +41,6 @@ public final class DsonPrinter implements AutoCloseable {
     private StringBuilder builder;
     /** 是否是Writer内部的builder */
     private final boolean backingBuilder;
-
-    /** 缩进字符缓存，减少字符串构建 */
-    private char[] indentionArray = sharedIndentionArray;
     /** 结构体缩进 -- 默认的body缩进 */
     private int structIndent = 0;
 
@@ -292,27 +285,18 @@ public final class DsonPrinter implements AutoCloseable {
         column += 1;
     }
 
-    /** 打印指定数量的空格 -- char可以静默转int，改名安全些 */
+    /** 打印指定数量的空格 */
     public void printSpaces(int count) {
-        if (count < 0) throw new IllegalArgumentException();
-        if (count == 0) return;
-        if (count <= indentionArray.length) {
-            builder.append(indentionArray, 0, count);
-        } else {
-            char[] chars = new char[count];
-            Arrays.fill(chars, ' ');
-            builder.append(chars);
-            // 尝试缓存下来
-            if (count - indentionArray.length <= 8) {
-                indentionArray = chars;
-            }
+        if (count < 1) return;
+        builder.ensureCapacity(builder.length() + count);
+        for (int i = count - 1; i >= 0; i--) {
+            builder.append(' ');
         }
         column += count;
     }
 
     public void indent() {
         structIndent += 2;
-        updateIndent();
     }
 
     public void retract() {
@@ -320,15 +304,8 @@ public final class DsonPrinter implements AutoCloseable {
             throw new IllegalStateException("indent must be called before retract");
         }
         structIndent -= 2;
-        updateIndent();
     }
 
-    private void updateIndent() {
-        if (structIndent > indentionArray.length) {
-            indentionArray = new char[structIndent];
-            Arrays.fill(indentionArray, ' ');
-        }
-    }
     // endregion
 
     // region io

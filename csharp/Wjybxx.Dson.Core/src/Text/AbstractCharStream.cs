@@ -27,7 +27,7 @@ namespace Wjybxx.Dson.Text
 /// </summary>
 public abstract class AbstractCharStream : IDsonCharStream
 {
-    private readonly List<LineInfo> _lines = new List<LineInfo>();
+    private readonly List<LineInfo> _lines = new List<LineInfo>(10);
     private LineInfo? _curLine;
     private bool _readingContent = false;
     private int _position = -1;
@@ -41,9 +41,17 @@ public abstract class AbstractCharStream : IDsonCharStream
         _position = position;
     }
 
-    protected void AddLine(LineInfo lineInfo) {
-        if (lineInfo == null) throw new ArgumentNullException(nameof(lineInfo));
-        _lines.Add(lineInfo);
+    protected void AddLines(IList<LineInfo> newLines) {
+        _lines.EnsureCapacity(_lines.Count + newLines.Count);
+        foreach (LineInfo newLine in newLines) {
+            if (newLine == null) throw new NullReferenceException("newLine");
+            _lines.Add(newLine);
+        }
+    }
+
+    protected void AddLine(LineInfo newLine) {
+        if (newLine == null) throw new ArgumentNullException(nameof(newLine));
+        _lines.Add(newLine);
     }
 
     public int Read() {
@@ -231,7 +239,7 @@ public abstract class AbstractCharStream : IDsonCharStream
     protected abstract int CharAt(LineInfo curLine, int position);
 
     /// <summary>
-    /// 检测是否可以回退到指定位置
+    /// 检测是否可以回退到指定位置（目标位置数据是否还在缓存中）
     /// </summary>
     /// <param name="position"></param>
     /// <exception cref="DsonParseException">如果不可回退到指定位置</exception>

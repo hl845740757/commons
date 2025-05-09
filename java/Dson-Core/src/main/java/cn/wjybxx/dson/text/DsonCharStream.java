@@ -17,6 +17,7 @@
 package cn.wjybxx.dson.text;
 
 import java.io.Reader;
+import java.util.List;
 
 /**
  * Dson字符流输入
@@ -115,6 +116,15 @@ public interface DsonCharStream extends AutoCloseable {
         return new BufferedCharStream(reader, autoClose);
     }
 
+    static DsonCharStream newPreparedCharStream(List<LineInfo> lineInfos) {
+        for (int idx = 0; idx < lineInfos.size(); idx++) {
+            LineInfo lineInfo = lineInfos.get(idx);
+            if (lineInfo.rawLine == null || !lineInfo.isScanCompleted()) {
+                throw new IllegalArgumentException(lineInfo.toString());
+            }
+        }
+        return new PreparedCharStream(lineInfos);
+    }
     // endregion
 
     @Override

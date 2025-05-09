@@ -119,12 +119,16 @@ public class ClassName : TypeName
 
     /// <summary>
     /// 是否是泛型定义类
+    /// （注意：该测试不准确）
     /// </summary>
-    public bool IsGenericTypeDefinition => IsGenericType && GetTypeVariableCount() > 0;
+    [Obsolete("cannot be trusted")]
+    public bool IsGenericTypeDefinition => IsGenericType && GetTypeVariableCount() == typeArguments.Count;
 
     /// <summary>
-    /// 是否是已构造泛型（具体泛型）
+    /// 是否是已构造泛型
+    /// （注意：该测试不准确）
     /// </summary>
+    [Obsolete("cannot be trusted")]
     public bool IsConstructedGenericType => IsGenericType && GetTypeVariableCount() == 0;
 
     /// <summary>
