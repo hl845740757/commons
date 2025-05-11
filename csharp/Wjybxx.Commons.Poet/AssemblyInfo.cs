@@ -18,4 +18,6 @@
 
 using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("Wjybxx.Commons.Apt")]
 [assembly: InternalsVisibleTo("Wjybxx.Commons.Tests")]
+[assembly: InternalsVisibleTo("Wjybxx.Dson.Apt")]

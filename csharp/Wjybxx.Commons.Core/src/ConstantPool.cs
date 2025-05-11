@@ -25,8 +25,6 @@ namespace Wjybxx.Commons
 {
 /// <summary>
 /// 常量对象池
-///
-/// ps: 常量池的接口使用频率并不是太高，使用 lock + Dictionary 足够。
 /// </summary>
 /// <typeparam name="TConstant"></typeparam>
 public class ConstantPool<TConstant> where TConstant : class, IConstant

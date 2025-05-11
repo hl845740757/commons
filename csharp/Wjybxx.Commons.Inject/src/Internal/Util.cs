@@ -42,7 +42,7 @@ internal static class Util
         // 当方法被重写时，应当调用子类的方法，因此从子类查起
         List<Type> types = FlatInherit(type, reverse: false);
         foreach (Type curType in types) {
-            MethodInfo methodInfo = curType.GetMethods(BindingFlags.FlattenHierarchy
+            MethodInfo methodInfo = curType.GetMethods(BindingFlags.DeclaredOnly
                                                        | BindingFlags.Public | BindingFlags.NonPublic
                                                        | BindingFlags.Instance)
                 .FirstOrDefault(e => e.IsDefined(typeof(InjectOnCreateAttribute)));

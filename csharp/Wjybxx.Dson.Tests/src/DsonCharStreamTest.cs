@@ -134,7 +134,7 @@ public class DsonCharStreamTest
     }
 
     private static List<LineInfo> toPreparedLines() {
-        List<string> tokenLines = tokenString.Lines();
+        List<string> tokenLines = ObjectUtil.Lines(tokenString);
         List<LineInfo> result = new(tokenLines.Count);
         // java换行符默认是LF，C#是CRLF...
         int state = LineInfo.StateCrLf;

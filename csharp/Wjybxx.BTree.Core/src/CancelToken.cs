@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Concurrent;
@@ -26,12 +25,14 @@ namespace Wjybxx.BTree
 {
 /// <summary>
 /// 行为树模块使用的取消令牌
+///
 /// 1.行为树模块需要的功能不多，且需要进行一些特殊的优化，因此去除对Concurrent模块的依赖。
 /// 2.关于取消码的设计，可查看<see cref="CancelCodes"/>类。
 /// 3.继承<see cref="ICancelTokenListener"/>是为了方便通知子Token。
 /// 4.在行为树模块，Task在运行期间最多只应该添加一次监听。
 /// 5.Task在处理取消信号时不需要调用该方法来删除自己，令牌会先删除Listener再通知。
-/// 
+///
+/// PS：该类是允许继承的，用户可以通过子类实现并发库的ICancelToken接口
 /// </summary>
 public class CancelToken : ICancelTokenListener
 {

@@ -157,18 +157,6 @@ public readonly struct TaskResult<T>
         _ex = ex;
     }
 
-    /// <summary>
-    /// 装箱结果
-    /// </summary>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TaskResult Box() {
-        if (_ex != null) {
-            return TaskResult.InternalFromException(_ex);
-        }
-        return TaskResult.FromResult(_result);
-    }
-
     #region factory
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -251,6 +239,18 @@ public readonly struct TaskResult<T>
     /// <returns></returns>
     public ValueFuture<T> AsFuture() {
         return _ex != null ? ValueFuture<T>.InternalFromException(_ex) : ValueFuture<T>.FromResult(_result);
+    }
+
+    /// <summary>
+    /// 装箱结果
+    /// </summary>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TaskResult Box() {
+        if (_ex != null) {
+            return TaskResult.InternalFromException(_ex);
+        }
+        return TaskResult.FromResult(_result);
     }
 
     /// <summary>

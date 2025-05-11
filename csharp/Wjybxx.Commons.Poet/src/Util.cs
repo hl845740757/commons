@@ -28,6 +28,8 @@ namespace Wjybxx.Commons.Poet
 {
 /// <summary>
 /// 该文件主要包含从commons-core拷贝来的方法，方便代码生成器库使用
+///
+/// 这里的扩展方法不能是public的，否则会和commons库的扩展方法冲突。
 /// </summary>
 public static partial class Util
 {
@@ -64,7 +66,7 @@ public static partial class Util
     /// <param name="end">结束索引 exclusive</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string Substring2(this string value, int start, int end) {
+    internal static string Substring2(this string value, int start, int end) {
         return value.Substring(start, end - start);
     }
 
@@ -75,7 +77,7 @@ public static partial class Util
     /// <param name="start">开始索引 inclusive</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string Substring2(this string value, int start) {
+    internal static string Substring2(this string value, int start) {
         return value.Substring(start);
     }
 
@@ -209,7 +211,7 @@ public static partial class Util
     /// </summary>
     /// <param name="str"></param>
     /// <returns></returns>
-    public static List<string> Lines(this string str) {
+    public static List<string> Lines(string str) {
         List<string> result = new List<string>();
         using (StringReader reader = new StringReader(str)) {
             string line;
@@ -279,7 +281,7 @@ public static partial class Util
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Count<T>(ICollection<T>? self) => self == null ? 0 : self.Count;
 
-    public static void AddAll<T>(this ICollection<T> self, IEnumerable<T> other) {
+    internal static void AddAll<T>(this ICollection<T> self, IEnumerable<T> other) {
         if (self == null) throw new ArgumentNullException(nameof(self));
         if (other == null) throw new ArgumentNullException(nameof(other));
         foreach (T e in other) {
@@ -287,14 +289,14 @@ public static partial class Util
         }
     }
 
-    public static void TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key, TValue value) where TKey : notnull {
+    internal static void TryAdd<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key, TValue value) where TKey : notnull {
         if (self == null) throw new ArgumentNullException(nameof(self));
         if (!self.ContainsKey(key)) {
             self[key] = value;
         }
     }
 
-    public static void PutAll<TKey, TValue>(this IDictionary<TKey, TValue> self, IEnumerable<KeyValuePair<TKey, TValue>> pairs) {
+    internal static void PutAll<TKey, TValue>(this IDictionary<TKey, TValue> self, IEnumerable<KeyValuePair<TKey, TValue>> pairs) {
         if (self == null) throw new ArgumentNullException(nameof(self));
         if (pairs == null) throw new ArgumentNullException(nameof(pairs));
         foreach (KeyValuePair<TKey, TValue> pair in pairs) {
@@ -302,7 +304,7 @@ public static partial class Util
         }
     }
 
-    public static bool TryPeek<T>(this Stack<T> stack, out T r) {
+    internal static bool TryPeek<T>(this Stack<T> stack, out T r) {
         if (stack.Count > 0) {
             r = stack.Peek();
             return true;

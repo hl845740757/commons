@@ -1221,7 +1221,7 @@ public sealed class CodeWriter
         }
 
         bool first = true;
-        foreach (string line in s.Lines()) {
+        foreach (string line in Util.Lines(s)) {
             if (!first) {
                 Internal_EmitNewLine();
             }

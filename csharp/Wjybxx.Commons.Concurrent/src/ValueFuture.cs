@@ -467,13 +467,12 @@ public readonly struct ValueFuture<T>
     public bool IsWrapper => _future != null;
 
     /// <summary>
-    /// 转换为ValueFuture，可选择是否追踪最终结果。
-    /// 如果选择追踪最终结果，可以再通过<see cref="ValueFuture.GetAwaitable(IExecutor, SuppressedTypes, int)"/>
-    /// 装箱统一处理结果。
+    /// 装箱为非泛型的<see cref="ValueFuture"/>
+    /// 如果选择追踪最终结果，可以再通过<see cref="ValueFuture.GetAwaitable(IExecutor, SuppressedTypes, int)"/>统一处理结果。
     /// </summary>
     /// <param name="requireResult">是否需要最终结果</param>
     /// <returns></returns>
-    public ValueFuture ToVoid(bool requireResult = false) {
+    public ValueFuture Box(bool requireResult = true) {
         if (_future == null) {
             if (_ex == null) {
                 return ValueFuture.FromResult(requireResult ? _result : null);

@@ -335,7 +335,7 @@ public static class ObjectUtil
     /// </summary>
     /// <param name="str"></param>
     /// <returns></returns>
-    public static List<string> Lines(this string str) {
+    public static List<string> Lines(string str) {
         List<string> result = new List<string>();
         using (StringReader reader = new StringReader(str)) {
             string line;

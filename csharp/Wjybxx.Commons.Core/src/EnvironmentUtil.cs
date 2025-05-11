@@ -140,7 +140,7 @@ public static class EnvironmentUtil
     /// <param name="def"></param>
     /// <returns></returns>
     public static bool ToBoolean(string? value, bool def) {
-        if (string.IsNullOrEmpty(value)) {
+        if (string.IsNullOrWhiteSpace(value)) {
             return def;
         }
         value = value.Trim().ToLower(); // 固定转小写

@@ -49,8 +49,11 @@ public class TypeInfoTest2
     /// </summary>
     [Test]
     public void TestBaseType() {
-        Type type = typeof(ChildType<,>);
-        Console.WriteLine(type.BaseType);
+        Type baseType = typeof(ChildType1<,>).BaseType;
+        Console.WriteLine(baseType);
+
+        Type nestedType = typeof(BaseType<,>.NestedType);
+        Console.WriteLine(nestedType);
     }
 
     private abstract class BaseType<T, U>
@@ -61,9 +64,17 @@ public class TypeInfoTest2
             get => value;
             set => this.value = value;
         }
-    }
 
-    private abstract class ChildType<T, U> : BaseType<List<T>, U>
+        public class NestedType
+        {
+        }
+    }
+    // 不修改泛型参数
+    private class ChildType1<T, U> : BaseType<T, U>
+    {
+    }
+    // 修改泛型参数
+    private class ChildType2<T, U> : BaseType<List<T>, U>
     {
     }
 }
