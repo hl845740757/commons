@@ -36,6 +36,11 @@ public class GeneratedAttribute : Attribute
     public string? Version { get; set; }
 
     /// <summary>
+    /// 文件应当归属的程序集
+    /// （dotnet是多进程构建的，有时候文件会被生成到其它程序集目录下....）
+    /// </summary>
+    public string? Assembly { get; set; }
+    /// <summary>
     /// 生成文件的时间，该文件主要用于Debug
     /// (有时候发现生成的文件没有变化，但又不确定是否是最新的文件)
     /// </summary>

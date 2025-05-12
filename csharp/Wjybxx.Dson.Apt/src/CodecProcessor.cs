@@ -88,8 +88,6 @@ public class CodecProcessor : IIncrementalGenerator
     internal static readonly ClassName typeName_ObjectStyle = AptUtils.ClassNameOfCanonicalName(CNAME_ObjectStyle);
     internal static readonly ClassName typeName_NumberStyles = AptUtils.ClassNameOfCanonicalName(CNAME_NumberStyles);
 
-    private static readonly AttributeSpec processorInfoAnnotation = AptUtils.NewProcessorInfoAnnotation(typeof(CodecProcessor));
-
     #endregion
 
 #nullable disable
@@ -127,6 +125,7 @@ public class CodecProcessor : IIncrementalGenerator
 
     private SourceProductionContext sourceProductionContext;
     private Compilation compilation;
+    private AttributeSpec processorInfoAnnotation;
     private readonly CodeWriter _codeWriter = new CodeWriter();
 
     #endregion
@@ -140,6 +139,8 @@ public class CodecProcessor : IIncrementalGenerator
         if (anno_DsonSerializable != null) return;
         this.sourceProductionContext = sourceProductionContext;
         this.compilation = compilation;
+        this.processorInfoAnnotation = AptUtils.NewProcessorInfoAnnotation(typeof(CodecProcessor),
+            assembly: compilation.Assembly.Identity.Name);
 
         // dson
         anno_DsonSerializable = compilation.GetTypeByMetadataName(CNAME_SERIALIZABLE);
@@ -405,7 +406,7 @@ public class CodecProcessor : IIncrementalGenerator
         HashSet<FieldKey> fieldKeys = new HashSet<FieldKey>();
         fieldKeys.AddAll(reflectionFieldDic.Keys);
         fieldKeys.AddAll(compilationFieldDic.Keys);
-        
+
         List<AptFieldInfo> allFields = new List<AptFieldInfo>(fieldKeys.Count);
         foreach (FieldKey key in fieldKeys) {
             reflectionFieldDic.TryGetValue(key, out FieldInfo? fieldInfo);

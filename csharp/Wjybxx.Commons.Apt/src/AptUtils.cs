@@ -49,11 +49,18 @@ public static class AptUtils
     /// </summary>
     /// <param name="type">生成器的类型信息</param>
     /// <param name="version">生成器的版本</param>
+    /// <param name="assembly">归属的程序集</param>
     /// <param name="dateTime">执行时间</param>
     /// <returns></returns>
-    public static AttributeSpec NewProcessorInfoAnnotation(Type type, string? version = null, DateTime? dateTime = null) {
+    public static AttributeSpec NewProcessorInfoAnnotation(Type type,
+                                                           string? version = null,
+                                                           string? assembly = null,
+                                                           DateTime? dateTime = null) {
         var builder = AttributeSpec.NewBuilder(clsName_GeneratedAttribute)
             .Constructor(CodeBlock.Of("$S", type.ToString()));
+        if (assembly != null) {
+            builder.AddMember("Assembly", "$S", assembly);
+        }
         if (version != null) {
             builder.AddMember("Version", "$S", version);
         }
