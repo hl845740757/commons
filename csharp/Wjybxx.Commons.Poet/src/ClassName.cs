@@ -34,6 +34,7 @@ namespace Wjybxx.Commons.Poet
 public class ClassName : TypeName
 {
     // 一些常用ClassName
+    public static readonly ClassName ENUM = InternalGet(typeof(Enum));
     public static readonly ClassName VALUE_TYPE = InternalGet(typeof(ValueType));
     public static readonly ClassName NULLABLE = InternalGet(typeof(Nullable<>));
     public static readonly ClassName INT_PTR = InternalGet(typeof(IntPtr));
@@ -41,11 +42,15 @@ public class ClassName : TypeName
     public static readonly ClassName DATETIME = InternalGet(typeof(DateTime));
     public static readonly ClassName DELEGATE = InternalGet(typeof(Delegate));
 
-    public static readonly ClassName ENUM = InternalGet(typeof(Enum));
     public static readonly ClassName ATTRIBUTE = InternalGet(typeof(Attribute));
     public static readonly ClassName SERIALIZABLE = InternalGet(typeof(SerializableAttribute));
     public static readonly ClassName NON_SERIALIZED = InternalGet(typeof(NonSerializedAttribute));
     public static readonly ClassName OPTIONAL = InternalGet(typeof(OptionalAttribute));
+
+    /// <summary>
+    /// 外部类类名<see cref="Type.DeclaringType"/>
+    /// </summary>
+    public readonly ClassName? enclosingClassName;
 
     /// <summary>
     /// namespace
@@ -53,15 +58,16 @@ public class ClassName : TypeName
     /// </summary>
     public readonly string ns;
     /// <summary>
-    /// 外部类类名<see cref="Type.DeclaringType"/>
-    /// </summary>
-    public readonly ClassName? enclosingClassName;
-    /// <summary>
     /// 类简单名。
     /// 简单名是我们编码时的名字，不包含反引号和泛型参数个数信息。
     /// <code>Dictionary</code>
     /// </summary>
     public readonly string simpleName;
+    /// <summary>
+    /// 类型关键字
+    /// </summary>
+    internal readonly string? keyword;
+
     /// <summary>
     /// 所有泛型参数（包含从外部类拷贝来的）
     /// </summary>
@@ -71,16 +77,32 @@ public class ClassName : TypeName
     /// </summary>
     public readonly IList<TypeName> declaredTypeArguments;
 
-    private ClassName(string ns, ClassName? enclosingClassName, string simpleName, IList<TypeName>? typeArguments,
-                      TypeNameAttributes attributes = TypeNameAttributes.None)
-        : base(attributes) {
-        if (string.IsNullOrWhiteSpace(ns)) throw new ArgumentException("namespace cant be blank");
-        if (simpleName.EndsWith("[]")) throw new ArgumentException("SimpleName cant be array name");
-
+    /// <summary>
+    /// 用于构建系统内建类型
+    /// </summary>
+    /// <param name="ns"></param>
+    /// <param name="simpleName"></param>
+    /// <param name="keyword"></param>
+    internal ClassName(string ns, string simpleName, string keyword) {
         this.ns = ns;
-        this.enclosingClassName = enclosingClassName;
-        this.simpleName = simpleName ?? throw new ArgumentNullException(nameof(simpleName));
-        this.typeArguments = Util.ToImmutableList(typeArguments);
+        this.simpleName = simpleName;
+        this.keyword = keyword;
+        this.typeArguments = ImmutableList<TypeName>.Empty;
+        this.declaredTypeArguments = ImmutableList<TypeName>.Empty;
+    }
+
+    private ClassName(in Builder builder)
+        : base(builder.Attributes) {
+        string ns = builder.Namespace;
+        string simpleName = builder.Name;
+        if (string.IsNullOrWhiteSpace(ns)) throw new ArgumentException("namespace cant be blank");
+        if (string.IsNullOrWhiteSpace(simpleName)) throw new ArgumentException("simpleName cant be blank");
+
+        this.enclosingClassName = builder.EnclosingClassName;
+        this.ns = ns;
+        this.simpleName = simpleName;
+        this.keyword = builder.Keyword;
+        this.typeArguments = Util.ToImmutableList(builder.TypeArguments);
         // 节选当前类定义的泛型参数个数
         if (this.typeArguments.Count == 0
             || this.enclosingClassName == null
@@ -101,35 +123,14 @@ public class ClassName : TypeName
     #region props
 
     /// <summary>
-    /// 获取类型变量个数（未指定类型个数）
+    /// 是否是系统的<see cref="Nullable{T}"/>结构体
     /// </summary>
-    /// <returns></returns>
-    private int GetTypeVariableCount() {
-        int c = 0;
-        foreach (TypeName typeArgument in typeArguments) {
-            if (typeArgument is TypeVariableName) c++;
-        }
-        return c;
-    }
+    public bool IsNullableType => simpleName == "Nullable" && ns == "System";
 
     /// <summary>
     /// 是否是泛型类
     /// </summary>
     public bool IsGenericType => typeArguments.Count > 0;
-
-    /// <summary>
-    /// 是否是泛型定义类
-    /// （注意：该测试不准确）
-    /// </summary>
-    [Obsolete("cannot be trusted")]
-    public bool IsGenericTypeDefinition => IsGenericType && GetTypeVariableCount() == typeArguments.Count;
-
-    /// <summary>
-    /// 是否是已构造泛型
-    /// （注意：该测试不准确）
-    /// </summary>
-    [Obsolete("cannot be trusted")]
-    public bool IsConstructedGenericType => IsGenericType && GetTypeVariableCount() == 0;
 
     /// <summary>
     /// 是否是未绑定泛型(typeof未指定泛型参数 -- 所有泛型参数为空)
@@ -148,16 +149,6 @@ public class ClassName : TypeName
     }
 
     /// <summary>
-    /// 是否是系统的<see cref="Nullable{T}"/>结构体
-    /// </summary>
-    public bool IsNullableType => simpleName == "Nullable" && ns == "System";
-
-    /// <summary>
-    /// 是否是系统的<see cref="ValueType"/>类型
-    /// </summary>
-    private bool IsValueTypeName => simpleName == "ValueType" && ns == "System";
-
-    /// <summary>
     /// 获取顶层类类名
     /// 如果当前类是顶层类，则返回自己
     /// </summary>
@@ -174,6 +165,11 @@ public class ClassName : TypeName
     #endregion
 
     #region overrides
+
+    /// <summary>
+    /// 类型关键字
+    /// </summary>
+    public override string? Internal_Keyword => keyword;
 
     /// <summary>
     /// 获取运行时的反射类型名
@@ -248,7 +244,15 @@ public class ClassName : TypeName
     public override TypeName WithAttributes(TypeNameAttributes attributes) {
 #endif
         if (this.attributes == attributes) return this;
-        return new ClassName(ns, enclosingClassName, simpleName, typeArguments, attributes);
+        return new Builder()
+        {
+            EnclosingClassName = enclosingClassName,
+            Namespace = ns,
+            Name = simpleName,
+            TypeArguments = typeArguments,
+            Attributes = attributes,
+            Keyword = Internal_Keyword // 需要保留关键字
+        }.Build();
     }
 
 #if NET6_0_OR_GREATER
@@ -258,14 +262,30 @@ public class ClassName : TypeName
 #endif
         if (typeArguments.Count == 0) {
             if (!attributes.IsIntersect(TypeNameAttributes.NullableReferenceType)) return this;
-            return Get(ns, simpleName, null, attributes.Unset(TypeNameAttributes.NullableReferenceType));
+            return new Builder()
+            {
+                EnclosingClassName = enclosingClassName,
+                Namespace = ns,
+                Name = simpleName,
+                TypeArguments = typeArguments,
+                Attributes = attributes.Unset(TypeNameAttributes.NullableReferenceType),
+                Keyword = Internal_Keyword // 需要保留关键字
+            }.Build();
         }
         // 不再做过多测试，直接构建新对象
         List<TypeName> tempTypeArguments = new List<TypeName>(typeArguments.Count);
         foreach (TypeName typeArgument in typeArguments) {
             tempTypeArguments.Add(typeArgument.RemoveAllNullableAttribute());
         }
-        return Get(ns, simpleName, tempTypeArguments, attributes.Unset(TypeNameAttributes.NullableReferenceType));
+        return new Builder()
+        {
+            EnclosingClassName = enclosingClassName,
+            Namespace = ns,
+            Name = simpleName,
+            TypeArguments = tempTypeArguments,
+            Attributes = attributes.Unset(TypeNameAttributes.NullableReferenceType),
+            Keyword = Internal_Keyword // 需要保留关键字
+        }.Build();
     }
 
     #endregion
@@ -279,25 +299,34 @@ public class ClassName : TypeName
         if (typeArguments.Length != this.typeArguments.Count) {
             throw new ArgumentException();
         }
-        return new ClassName(ns, enclosingClassName, simpleName, typeArguments, attributes); // 需保留attributes
+        return new Builder()
+        {
+            EnclosingClassName = enclosingClassName,
+            Namespace = ns,
+            Name = simpleName,
+            TypeArguments = typeArguments,
+            Attributes = attributes
+        }.Build();
     }
 
     /// <summary>
-    /// 构建真实泛型。
+    /// 替换当前类声明的泛型参数。
     /// 注意：必须从外部类开始构造，参数只接收该类显式定义的泛型参数。
     /// </summary>
-    /// <param name="actualTypeArguments">长度必须等于类显式</param>
+    /// <param name="typeArguments">长度必须等于类显式声明的泛型变量个数</param>
     /// <returns></returns>
-    public ClassName WithActualTypeVariables(params TypeName[] actualTypeArguments) {
-        if (actualTypeArguments.Length != declaredTypeArguments.Count) {
+    public ClassName WithDeclaredTypeVariables(params TypeName[] typeArguments) {
+        if (typeArguments.Length != declaredTypeArguments.Count) {
             throw new ArgumentException();
         }
-        if (enclosingClassName == null || enclosingClassName.typeArguments.Count == 0) {
-            return new ClassName(ns, enclosingClassName, simpleName, actualTypeArguments, attributes); // 需保留attributes
-        } else {
-            List<TypeName> typeArguments = Util.Concat(enclosingClassName.typeArguments, actualTypeArguments);
-            return new ClassName(ns, enclosingClassName, simpleName, typeArguments, attributes);
-        }
+        return new Builder()
+        {
+            EnclosingClassName = enclosingClassName,
+            Namespace = ns,
+            Name = simpleName,
+            TypeArguments = Util.Concat(enclosingClassName?.typeArguments, typeArguments),
+            Attributes = attributes
+        }.Build();
     }
 
     /// <summary>
@@ -309,7 +338,14 @@ public class ClassName : TypeName
     /// <returns></returns>
     public ClassName PeerClass(string name, IList<TypeName>? typeArguments = null,
                                TypeNameAttributes attributes = TypeNameAttributes.None) {
-        return new ClassName(ns, enclosingClassName, name, typeArguments, attributes);
+        return new Builder()
+        {
+            EnclosingClassName = enclosingClassName,
+            Namespace = ns,
+            Name = name,
+            TypeArguments = typeArguments,
+            Attributes = attributes
+        }.Build();
     }
 
     /// <summary>
@@ -326,22 +362,54 @@ public class ClassName : TypeName
         if (inheritTypeArguments) {
             typeArguments = Util.Concat(this.typeArguments, typeArguments);
         }
-        return new ClassName(ns, this, name, typeArguments, attributes);
+        return new Builder()
+        {
+            EnclosingClassName = this,
+            Namespace = ns,
+            Name = name,
+            TypeArguments = typeArguments,
+            Attributes = attributes
+        }.Build();
     }
 
     #region Get/Parse
 
     /// <summary>
     /// 创建一个ClassName
+    ///(更复杂的构建请使用Builder)
+    /// </summary>
+    /// <param name="ns">命名空间</param>
+    /// <param name="simpleName">类简单名</param>
+    /// <param name="typeArguments">泛型参数</param>
+    /// <returns></returns>
+    public static ClassName Get(string ns, string simpleName, params TypeName[] typeArguments) {
+        return new Builder()
+        {
+            Namespace = ns,
+            Name = simpleName,
+            TypeArguments = typeArguments,
+        }.Build();
+    }
+
+    /// <summary>
+    /// 创建一个ClassName
+    /// (更复杂的构建请使用Builder)
     /// </summary>
     /// <param name="ns">命名空间</param>
     /// <param name="simpleName">类简单名</param>
     /// <param name="typeArguments">泛型参数</param>
     /// <param name="attributes">属性</param>
     /// <returns></returns>
-    public static ClassName Get(string ns, string simpleName, IList<TypeName>? typeArguments = null,
+    public static ClassName Get(string ns, string simpleName,
+                                IList<TypeName>? typeArguments = null,
                                 TypeNameAttributes attributes = TypeNameAttributes.None) {
-        return new ClassName(ns, null, simpleName, typeArguments, attributes);
+        return new Builder()
+        {
+            Namespace = ns,
+            Name = simpleName,
+            TypeArguments = typeArguments,
+            Attributes = attributes
+        }.Build();
     }
 
     /// <summary>
@@ -354,6 +422,30 @@ public class ClassName : TypeName
         if (type.Namespace == null || type.IsArray || type.IsGenericParameter || type.IsPrimitive) {
             throw new ArgumentException("invalid type: " + type);
         }
+        // 基础类型
+        if (type == typeof(void)) return VOID;
+        if (type.IsPrimitive) {
+            if (type == typeof(int)) return INT;
+            if (type == typeof(uint)) return UINT;
+            if (type == typeof(long)) return LONG;
+            if (type == typeof(ulong)) return ULONG;
+            if (type == typeof(float)) return FLOAT;
+            if (type == typeof(double)) return DOUBLE;
+
+            if (type == typeof(bool)) return BOOL;
+            if (type == typeof(byte)) return BYTE;
+            if (type == typeof(sbyte)) return SBYTE;
+            if (type == typeof(short)) return SHORT;
+            if (type == typeof(ushort)) return USHORT;
+            if (type == typeof(char)) return CHAR;
+            if (type == typeof(decimal)) return DECIMAL;
+            throw new ArgumentException("unsupported primitive type: " + type);
+        }
+        // 特殊引用类型
+        if (type == typeof(string)) return STRING;
+        if (type == typeof(object)) return OBJECT;
+
+        if (type == typeof(Enum)) return ENUM;
         if (type == typeof(ValueType)) return VALUE_TYPE;
         if (type == typeof(Nullable<>)) return NULLABLE;
         if (type == typeof(IntPtr)) return INT_PTR;
@@ -383,7 +475,13 @@ public class ClassName : TypeName
             ClassName outerClassName = Get(type.DeclaringType!);
             return outerClassName.NestedClass(name, genericArgumentNames, false);
         }
-        return new ClassName(type.Namespace!, null, name, genericArgumentNames);
+        return new Builder()
+        {
+            EnclosingClassName = null,
+            Namespace = type.Namespace!,
+            Name = name,
+            TypeArguments = genericArgumentNames
+        }.Build();
     }
 
     #endregion
@@ -419,5 +517,38 @@ public class ClassName : TypeName
     }
 
     #endregion
+
+    public struct Builder
+    {
+        /// <summary>
+        /// 外部类类名<see cref="Type.DeclaringType"/>
+        /// </summary>
+        public ClassName? EnclosingClassName { get; set; }
+        /// <summary>
+        /// 命名空间
+        /// </summary>
+        public string Namespace { get; set; }
+        /// <summary>
+        /// 简单名
+        /// </summary>
+        public string Name { get; set; }
+        /// <summary>
+        /// 泛型参数
+        /// </summary>
+        public IList<TypeName>? TypeArguments { get; set; }
+        /// <summary>
+        /// 属性
+        /// </summary>
+        public TypeNameAttributes Attributes { get; set; }
+
+        /// <summary>
+        /// 关键字
+        /// </summary>
+        internal string? Keyword { get; set; }
+
+        public ClassName Build() {
+            return new ClassName(in this);
+        }
+    }
 }
 }

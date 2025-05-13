@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -26,63 +27,33 @@ namespace Wjybxx.Commons.Poet
 /// （这里的实现并不完整，只用于简单的代码生成）
 /// （继承是为了节省内存，否则需要实现为标签类）
 /// </summary>
-public class TypeName : IEquatable<TypeName>
+public abstract class TypeName : IEquatable<TypeName>
 {
-    private readonly string? keyword;
     public readonly TypeNameAttributes attributes;
-
     private string? cachedString;
 
-    private TypeName(string keyword, TypeNameAttributes attributes = TypeNameAttributes.None) {
-        this.keyword = keyword;
-        this.attributes = attributes;
-    }
-
-    internal TypeName(TypeNameAttributes attributes) {
-        this.keyword = null;
+    internal TypeName(TypeNameAttributes attributes = TypeNameAttributes.None) {
         this.attributes = attributes;
     }
 
     /// <summary>
+    /// 类型关键字
     /// 一般业务不要依赖该属性，只应该用在生成代码时
     /// </summary>
-    public string? Internal_Keyword => keyword;
+    public virtual string? Internal_Keyword => null;
 
     /// <summary>
     /// 是否是基础类型
     /// </summary>
     /// <returns></returns>
-    public bool IsPrimitive() => keyword != null && primitiveTypeKeywords.Contains(keyword);
+    public bool IsPrimitive => (Internal_Keyword != null) && primitiveTypeKeywords.Contains(Internal_Keyword);
 
     /// <summary>
-    /// 获取类型运行时的字符串名
+    /// 获取类型运行时的字符串名，可用于反射加载类型
     /// </summary>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public virtual string ReflectionName() {
-        return keyword switch
-        {
-            "int" => typeof(int).ToString(),
-            "uint" => typeof(uint).ToString(),
-            "long" => typeof(long).ToString(),
-            "ulong" => typeof(ulong).ToString(),
-            "float" => typeof(float).ToString(),
-            "double" => typeof(double).ToString(),
-
-            "bool" => typeof(bool).ToString(),
-            "byte" => typeof(byte).ToString(),
-            "sbyte" => typeof(sbyte).ToString(),
-            "short" => typeof(short).ToString(),
-            "ushort" => typeof(ushort).ToString(),
-            "char" => typeof(char).ToString(),
-            "decimal" => typeof(decimal).ToString(),
-
-            "string" => typeof(string).ToString(),
-            "object" => typeof(object).ToString(),
-            "void" => typeof(void).ToString(),
-            _ => throw new InvalidOperationException()
-        };
-    }
+    public abstract string ReflectionName();
 
     /// <summary>
     /// 注意：ToString影响Equals测试
@@ -96,10 +67,7 @@ public class TypeName : IEquatable<TypeName>
     }
 
     /** 注意：ToString影响Equals测试 */
-    protected virtual string ToStringImpl() {
-        if (keyword == null) throw new InvalidOperationException();
-        return $"{GetType().Name}, keyword: {keyword}";
-    }
+    protected abstract string ToStringImpl();
 
     /// <summary>
     /// 增加约束<see cref="TypeNameAttributes"/>
@@ -107,12 +75,7 @@ public class TypeName : IEquatable<TypeName>
     /// </summary>
     /// <param name="attributes"></param>
     /// <returns>如果attributes和当前attributes相同，可返回自身</returns>
-    public virtual TypeName WithAttributes(TypeNameAttributes attributes) {
-        if (keyword != null) {
-            return this.attributes == attributes ? this : new TypeName(keyword, attributes);
-        }
-        throw new NotImplementedException();
-    }
+    public abstract TypeName WithAttributes(TypeNameAttributes attributes);
 
     /// <summary>
     /// 删除所有的Nullable信息
@@ -120,13 +83,7 @@ public class TypeName : IEquatable<TypeName>
     /// 原因：<code>typeof(string?)</code>是非法的，禁止在typeof中使用Nullable注解。
     /// </summary>
     /// <returns>如果当前不包含nullable信息，可返回自身</returns>
-    public virtual TypeName RemoveAllNullableAttribute() {
-        if (keyword != null) {
-            if (!attributes.IsIntersect(TypeNameAttributes.NullableReferenceType)) return this;
-            return new TypeName(keyword, attributes.Unset(TypeNameAttributes.NullableReferenceType));
-        }
-        throw new NotImplementedException();
-    }
+    public abstract TypeName RemoveAllNullableAttribute();
 
     #region equals
 
@@ -183,28 +140,6 @@ public class TypeName : IEquatable<TypeName>
         if (type.IsGenericParameter) {
             return TypeVariableName.Get(type);
         }
-        // 基础类型
-        if (type == typeof(void)) return VOID;
-        if (type.IsPrimitive) {
-            if (type == typeof(int)) return INT;
-            if (type == typeof(uint)) return UINT;
-            if (type == typeof(long)) return LONG;
-            if (type == typeof(ulong)) return ULONG;
-            if (type == typeof(float)) return FLOAT;
-            if (type == typeof(double)) return DOUBLE;
-
-            if (type == typeof(bool)) return BOOL;
-            if (type == typeof(byte)) return BYTE;
-            if (type == typeof(sbyte)) return SBYTE;
-            if (type == typeof(short)) return SHORT;
-            if (type == typeof(ushort)) return USHORT;
-            if (type == typeof(char)) return CHAR;
-            if (type == typeof(decimal)) return DECIMAL;
-            throw new ArgumentException("unsupported primitive type: " + type);
-        }
-        // 特殊引用类型
-        if (type == typeof(string)) return STRING;
-        if (type == typeof(object)) return OBJECT;
         return ClassName.Get(type);
     }
 
@@ -212,24 +147,25 @@ public class TypeName : IEquatable<TypeName>
 
     #region consts
 
-    public static readonly TypeName INT = new TypeName("int");
-    public static readonly TypeName UINT = new TypeName("uint");
-    public static readonly TypeName LONG = new TypeName("long");
-    public static readonly TypeName ULONG = new TypeName("ulong");
-    public static readonly TypeName FLOAT = new TypeName("float");
-    public static readonly TypeName DOUBLE = new TypeName("double");
+    // C#与Java不同，基础类型也是正常的类型；所以基础类型其实也应该使用ClassName
+    public static readonly ClassName INT = new ClassName("System", "Int32", "int");
+    public static readonly ClassName UINT = new ClassName("System", "UInt32", "uint");
+    public static readonly ClassName LONG = new ClassName("System", "Int64", "long");
+    public static readonly ClassName ULONG = new ClassName("System", "UInt64", "ulong");
+    public static readonly ClassName FLOAT = new ClassName("System", "Single", "float");
+    public static readonly ClassName DOUBLE = new ClassName("System", "Double", "double");
 
-    public static readonly TypeName BOOL = new TypeName("bool");
-    public static readonly TypeName BYTE = new TypeName("byte");
-    public static readonly TypeName SBYTE = new TypeName("sbyte");
-    public static readonly TypeName SHORT = new TypeName("short");
-    public static readonly TypeName USHORT = new TypeName("ushort");
-    public static readonly TypeName CHAR = new TypeName("char");
-    public static readonly TypeName DECIMAL = new TypeName("decimal");
+    public static readonly ClassName BOOL = new ClassName("System", "Bool", "bool");
+    public static readonly ClassName BYTE = new ClassName("System", "Byte", "byte");
+    public static readonly ClassName SBYTE = new ClassName("System", "SByte", "sbyte");
+    public static readonly ClassName SHORT = new ClassName("System", "Int16", "short");
+    public static readonly ClassName USHORT = new ClassName("System", "UInt16", "ushort");
+    public static readonly ClassName CHAR = new ClassName("System", "Char", "char");
+    public static readonly ClassName DECIMAL = new ClassName("System", "Decimal", "decimal");
 
-    public static readonly TypeName STRING = new TypeName("string");
-    public static readonly TypeName OBJECT = new TypeName("object");
-    public static readonly TypeName VOID = new TypeName("void"); // void不可作为泛型参数
+    public static readonly ClassName STRING = new ClassName("System", "String", "string");
+    public static readonly ClassName OBJECT = new ClassName("System", "Object", "object");
+    public static readonly ClassName VOID = new ClassName("System", "Void", "void");
 
     /// <summary>
     /// 非基础类型的关键字

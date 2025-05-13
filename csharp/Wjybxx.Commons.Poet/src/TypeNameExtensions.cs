@@ -64,7 +64,7 @@ public static class TypeNameExtensions
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ClassName MakeNullableType(this TypeName typeName) {
-        return ClassName.NULLABLE.WithActualTypeVariables(typeName);
+        return ClassName.NULLABLE.WithTypeVariables(typeName);
     }
 
     #endregion

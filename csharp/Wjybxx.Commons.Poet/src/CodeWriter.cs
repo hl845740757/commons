@@ -1123,10 +1123,14 @@ public sealed class CodeWriter
             typeName = nullable.typeArguments[0];
         }
         if (typeName is ClassName className) {
-            // 内部类总是打印外部类名，简化逻辑
             while (true) {
+                if (className.Internal_Keyword != null) {
+                    typeNameStack.Push(className.Internal_Keyword);
+                    break;
+                }
+                // 打印泛型参数--栈结构，反向打印
                 if (className.declaredTypeArguments.Count > 0) {
-                    typeNameStack.Push(">"); // 反向打印
+                    typeNameStack.Push(">");
                     for (int index = className.declaredTypeArguments.Count - 1; index >= 0; index--) {
                         TypeName typeArgument = className.declaredTypeArguments[index];
                         CollectTypeName(typeArgument, typeNameStack, false);
@@ -1151,6 +1155,7 @@ public sealed class CodeWriter
                 typeNameStack.Push(".");
                 className = className.enclosingClassName;
             }
+            // 记录命名空间
             if (importableNamespaces.TryGetValue(className.ns, out string? alias) && alias != null) {
                 // 有命名空间别名时，使用别名引用Type
                 typeNameStack.Push(".");
@@ -1163,8 +1168,6 @@ public sealed class CodeWriter
             }
         } else if (typeName is TypeVariableName typeVariableName) {
             typeNameStack.Push(typeVariableName.name);
-        } else {
-            typeNameStack.Push(typeName.Internal_Keyword!);
         }
     }
 
