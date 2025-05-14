@@ -32,31 +32,21 @@ public class MacroSpec : ISpecification, IEquatable<MacroSpec>
     /// </summary>
     public readonly string name;
     /// <summary>
-    /// 宏参数
+    /// 宏参数(可能为空字符串-合法)
     /// </summary>
     public readonly IList<string> arguments;
-
-    public MacroSpec(string name, IList<string>? arguments = null) {
-        this.name = name ?? throw new ArgumentNullException(nameof(name));
-        this.arguments = Util.ToImmutableList(arguments);
-    }
 
     public MacroSpec(string name, params string[] arguments) {
         this.name = name ?? throw new ArgumentNullException(nameof(name));
         this.arguments = Util.ToImmutableList(arguments);
     }
 
-    private void CheckArguments() {
-        // 参数为空字符串是安全的
-        foreach (string argument in arguments) {
-            if (string.IsNullOrWhiteSpace(argument)) {
-                throw new ArgumentException("argument cant be blank");
-            }
-        }
-    }
-
     public string Name => name;
     public SpecType SpecType => SpecType.Macro;
+
+    public static MacroSpec Get(string name, params string[] arguments) {
+        return new MacroSpec(name, arguments);
+    }
 
     #region equals
 

@@ -443,13 +443,13 @@ public sealed class CodeWriter
             }
 
             Emit(typeSpec.name);
-            EmitTypeVariables(typeSpec.typeVariables);
+            EmitTypeVariables(typeSpec.typeParameters);
             EmitBaseClasses(typeSpec);
 
             // 泛型变量约束
-            if (HasConstraints(typeSpec.typeVariables)) {
+            if (HasConstraints(typeSpec.typeParameters)) {
                 EmitIfLastCharNot(' ');
-                EmitTypeVariableConstraints(typeSpec.typeVariables);
+                EmitTypeParameterConstraints(typeSpec.typeParameters);
                 Emit(" ");
             }
 
@@ -653,13 +653,13 @@ public sealed class CodeWriter
                 Emit(".");
             }
             Emit(methodSpec.name);
-            EmitTypeVariables(methodSpec.typeVariables);
+            EmitTypeVariables(methodSpec.typeParameters);
             EmitMethodParameters(methodSpec);
 
             // 泛型变量约束
-            if (HasConstraints(methodSpec.typeVariables)) {
+            if (HasConstraints(methodSpec.typeParameters)) {
                 Emit(" ");
-                EmitTypeVariableConstraints(methodSpec.typeVariables);
+                EmitTypeParameterConstraints(methodSpec.typeParameters);
             }
 
             if (delegator
@@ -846,21 +846,21 @@ public sealed class CodeWriter
     /// 发射泛型变量的定义。
     /// 注意，C#的泛型变量定义和约束是分开的。
     /// </summary>
-    /// <param name="typeVariables"></param>
-    private void EmitTypeVariables(IList<TypeVariableName> typeVariables) {
-        if (typeVariables.Count == 0) return;
+    /// <param name="typeParameters"></param>
+    private void EmitTypeVariables(IList<TypeParameterSpec> typeParameters) {
+        if (typeParameters.Count == 0) return;
 
         Emit("<");
         bool firstTypeVariable = true;
-        for (var i = 0; i < typeVariables.Count; i++) {
-            TypeVariableName typeVariable = typeVariables[i];
+        for (var i = 0; i < typeParameters.Count; i++) {
+            TypeParameterSpec typeParameter = typeParameters[i];
             if (!firstTypeVariable) Emit(", ");
-            if ((typeVariable.attributes & TypeNameAttributes.VarianceIn) != 0) {
+            if ((typeParameter.constraints & TypeParameterConstraints.VarianceIn) != 0) {
                 Emit("in ");
-            } else if ((typeVariable.attributes & TypeNameAttributes.VarianceOut) != 0) {
+            } else if ((typeParameter.constraints & TypeParameterConstraints.VarianceOut) != 0) {
                 Emit("out ");
             }
-            Emit("$L", typeVariable.name);
+            Emit("$L", typeParameter.name);
             firstTypeVariable = false;
         }
         Emit(">");
@@ -869,13 +869,11 @@ public sealed class CodeWriter
     /// <summary>
     /// 是否包含泛型变量约束
     /// </summary>
-    /// <param name="typeVariables"></param>
+    /// <param name="typeParameters"></param>
     /// <returns></returns>
-    private bool HasConstraints(IList<TypeVariableName> typeVariables) {
-        foreach (TypeVariableName typeVariable in typeVariables) {
-            if (typeVariable.HasConstraints()) {
-                return true;
-            }
+    private bool HasConstraints(IList<TypeParameterSpec> typeParameters) {
+        foreach (TypeParameterSpec typeParameter in typeParameters) {
+            if (typeParameter.HasConstraints) return true;
         }
         return false;
     }
@@ -883,49 +881,49 @@ public sealed class CodeWriter
     /// <summary>
     /// 发射泛型变量的约束
     /// </summary>
-    /// <param name="typeVariables"></param>
-    private void EmitTypeVariableConstraints(IList<TypeVariableName> typeVariables) {
-        if (typeVariables.Count == 0) return;
+    /// <param name="typeParameters"></param>
+    private void EmitTypeParameterConstraints(IList<TypeParameterSpec> typeParameters) {
+        if (typeParameters.Count == 0) return;
 
-        for (int i = 0; i < typeVariables.Count; i++) {
-            TypeVariableName typeVariable = typeVariables[i];
-            if (typeVariable.HasConstraints()) {
-                EmitTypeVariableConstraints(typeVariable);
+        for (int i = 0; i < typeParameters.Count; i++) {
+            TypeParameterSpec typeParameter = typeParameters[i];
+            if (typeParameter.HasConstraints) {
+                EmitTypeParameterConstraints(typeParameter);
             }
         }
     }
 
     /// <summary>
     /// 发射单个泛型变量的约束。
-    /// 不能直接调用<see cref="TypeVariableName.ConstraintsToString"/>，需要优化TypeName的输出。
+    /// 不能直接调用<see cref="TypeParameterSpec.ConstraintsToString"/>，需要优化TypeName的输出。
     /// </summary>
-    private void EmitTypeVariableConstraints(TypeVariableName typeVariable) {
-        if (typeVariable.attributes == 0 && typeVariable.bounds.Count == 0) {
+    private void EmitTypeParameterConstraints(TypeParameterSpec typeParameter) {
+        if (typeParameter.constraints == 0 && typeParameter.bounds.Count == 0) {
             return;
         }
-        Emit("where $L : ", typeVariable.name);
-        if ((typeVariable.attributes & TypeNameAttributes.ValueTypeConstraint) != 0) {
+        Emit("where $L : ", typeParameter.name);
+        if ((typeParameter.constraints & TypeParameterConstraints.ValueTypeConstraint) != 0) {
             Emit("struct");
             return;
         }
 
         int count = 0;
-        if ((typeVariable.attributes & TypeNameAttributes.ReferenceTypeConstraint) != 0) {
+        if ((typeParameter.constraints & TypeParameterConstraints.ReferenceTypeConstraint) != 0) {
             Emit("class");
-            if ((typeVariable.attributes & TypeNameAttributes.NullableReferenceType) != 0) {
+            if ((typeParameter.constraints & TypeParameterConstraints.NullableReferenceType) != 0) {
                 Emit("?");
             }
             count++;
         }
-        if ((typeVariable.attributes & TypeNameAttributes.NotNullableReferenceType) != 0) {
+        if ((typeParameter.constraints & TypeParameterConstraints.NotNullableReferenceType) != 0) {
             if (count++ > 0) Emit(", ");
             Emit("notnull");
         }
-        if ((typeVariable.attributes & TypeNameAttributes.DefaultConstructorConstraint) != 0) {
+        if ((typeParameter.constraints & TypeParameterConstraints.DefaultConstructorConstraint) != 0) {
             if (count++ > 0) Emit(", ");
             Emit("new()");
         }
-        foreach (TypeName bound in typeVariable.bounds) {
+        foreach (TypeName bound in typeParameter.bounds) {
             if (count++ > 0) Emit(", ");
             EmitTypeName(bound); // 打印优化的TypeName
         }
@@ -1123,16 +1121,17 @@ public sealed class CodeWriter
             typeName = nullable.typeArguments[0];
         }
         if (typeName is ClassName className) {
+            ClassName current = className;
             while (true) {
-                if (className.Internal_Keyword != null) {
-                    typeNameStack.Push(className.Internal_Keyword);
+                if (current.Keyword != null) {
+                    typeNameStack.Push(current.Keyword);
                     break;
                 }
                 // 打印泛型参数--栈结构，反向打印
-                if (className.declaredTypeArguments.Count > 0) {
+                if (current.declaredTypeArguments.Count > 0) {
                     typeNameStack.Push(">");
-                    for (int index = className.declaredTypeArguments.Count - 1; index >= 0; index--) {
-                        TypeName typeArgument = className.declaredTypeArguments[index];
+                    for (int index = current.declaredTypeArguments.Count - 1; index >= 0; index--) {
+                        TypeName typeArgument = current.declaredTypeArguments[index];
                         CollectTypeName(typeArgument, typeNameStack, false);
                         if (index > 0) {
                             typeNameStack.Push(", ");
@@ -1143,31 +1142,31 @@ public sealed class CodeWriter
                 // 处理注解特殊语法...C#这些不必要的语法真的让人冒火
                 if (typeNameStack.Count == 0
                     && isAttribute
-                    && className.simpleName.EndsWith("Attribute")) {
-                    string shortcutName = className.simpleName.Substring(0, className.simpleName.Length - 9);
+                    && current.simpleName.EndsWith("Attribute")) {
+                    string shortcutName = current.simpleName.Substring(0, current.simpleName.Length - 9);
                     typeNameStack.Push(shortcutName);
                 } else {
-                    typeNameStack.Push(className.simpleName);
+                    typeNameStack.Push(current.simpleName);
                 }
-                if (className.enclosingClassName == null) {
+                if (current.enclosingClassName == null) {
                     break;
                 }
                 typeNameStack.Push(".");
-                className = className.enclosingClassName;
+                current = current.enclosingClassName;
             }
             // 记录命名空间
-            if (importableNamespaces.TryGetValue(className.ns, out string? alias) && alias != null) {
+            if (importableNamespaces.TryGetValue(current.ns, out string? alias) && alias != null) {
                 // 有命名空间别名时，使用别名引用Type
                 typeNameStack.Push(".");
                 typeNameStack.Push(alias);
-            } else if (typeName.Internal_Keyword == null
+            } else if (className.Keyword == null
                        && namespaceStack.TryPeek(out NamespaceSpec? namespaceSpec)
-                       && namespaceSpec.name != className.ns) {
+                       && namespaceSpec.name != current.ns) {
                 // 基于关键字时不引入system，同命名空间下时也不引入
-                importableNamespaces.TryAdd(className.ns, null);
+                importableNamespaces.TryAdd(current.ns, null);
             }
-        } else if (typeName is TypeVariableName typeVariableName) {
-            typeNameStack.Push(typeVariableName.name);
+        } else if (typeName is TypeParameterName typeParameterName) {
+            typeNameStack.Push(typeParameterName.name);
         }
     }
 

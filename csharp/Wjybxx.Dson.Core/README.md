@@ -8,6 +8,10 @@
 2. Dson.Codec: Codec模块提供了基于Dson的对象序列化实现(ORM)。
 3. Dson.Apt: Apt模块处理Codec模块约定的注解，为目标类生成编解码类(Codec)。
 
+## 版本号同步
+
+注意：`Wjybxx.Dson.Core`,`Wjybxx.Dson.Codec`,`Wjybxx.Dson.Apt` 三个程序集的版本号总是保持一致，任一程序集修改，其它程序集版本号也会修改。
+
 ## 简单使用指南
 
 这里只介绍Dson-Core模块的功能，有关对象序列化的说明请跳转`Dson.Codec`模块。

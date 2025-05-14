@@ -7,6 +7,10 @@ ps: Readme文档暂时复制了Java的内容，Csharp的序列化将包含Java�
 传送门[Java-Code](https://github.com/hl845740757/Dson/blob/dev/java/DsonCodec.md)。
 (建议多阅读源码文档和测试用例，这里的文档不一定及时更新)
 
+## 版本号同步
+
+注意：`Wjybxx.Dson.Core`,`Wjybxx.Dson.Codec`,`Wjybxx.Dson.Apt` 三个程序集的版本号总是保持一致，任一程序集修改，其它程序集版本号也会修改。
+
 ## 特性一览
 
 1. **支持泛型**

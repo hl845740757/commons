@@ -35,7 +35,7 @@ public class MethodSpec : ISpecification
     public readonly IList<AttributeSpec> attributes;
 
     public readonly TypeName? explicitBaseType; // 显式实现的接口
-    public readonly IList<TypeVariableName> typeVariables; // 泛型参数
+    public readonly IList<TypeParameterSpec> typeParameters; // 泛型参数
     public readonly TypeName returnType; // 返回值类型
     public readonly IList<ParameterSpec> parameters; // 方法参数
     public readonly bool isVarargs; // 是否变长参数(params T[] args)
@@ -54,7 +54,7 @@ public class MethodSpec : ISpecification
 
         explicitBaseType = builder.explicitBaseType;
         returnType = builder.returnType;
-        typeVariables = Util.ToImmutableList(builder.typeVariables);
+        typeParameters = Util.ToImmutableList(builder.typeParameters);
         parameters = Util.ToImmutableList(builder.parameters);
         isVarargs = builder.isVarargs;
         isExtensionMethod = builder.isExtensionMethod;
@@ -94,7 +94,7 @@ public class MethodSpec : ISpecification
         Builder builder = new Builder(kind, name, modifiers)
             .AddDocument(document)
             .AddAttributes(attributes)
-            .AddTypeVariables(typeVariables)
+            .AddTypeParameters(typeParameters)
             .Returns(returnType)
             .AddParameters(parameters);
         builder.explicitBaseType = explicitBaseType;
@@ -151,7 +151,7 @@ public class MethodSpec : ISpecification
         if (methodInfo.IsGenericMethodDefinition) {
             Type[] genericArguments = methodInfo.GetGenericArguments();
             foreach (Type genericArgument in genericArguments) {
-                builder.AddTypeVariable(TypeVariableName.Get(genericArgument));
+                builder.AddTypeParameter(TypeParameterSpec.Get(genericArgument));
             }
         }
     }
@@ -174,12 +174,12 @@ public class MethodSpec : ISpecification
         public Modifiers modifiers;
         public readonly CodeBlock.Builder document = CodeBlock.NewBuilder();
         public readonly CodeBlock.Builder headerCode = CodeBlock.NewBuilder();
-        public readonly List<AttributeSpec> attributes = new List<AttributeSpec>();
+        public readonly List<AttributeSpec> attributes = new();
 
         public TypeName? explicitBaseType;
-        public readonly List<TypeVariableName> typeVariables = new List<TypeVariableName>();
+        public readonly List<TypeParameterSpec> typeParameters = new();
         public TypeName returnType = TypeName.VOID;
-        public readonly List<ParameterSpec> parameters = new List<ParameterSpec>();
+        public readonly List<ParameterSpec> parameters = new();
         public bool isVarargs;
         public bool isExtensionMethod;
 
@@ -263,18 +263,18 @@ public class MethodSpec : ISpecification
         }
         //
 
-        public Builder AddTypeVariables(IEnumerable<TypeVariableName?> typeVariables) {
-            if (typeVariables == null) throw new ArgumentNullException(nameof(typeVariables));
-            foreach (TypeVariableName? typeVariable in typeVariables) {
-                Util.CheckArgument(typeVariable != null, "typeVariable == null");
-                this.typeVariables.Add(typeVariable);
+        public Builder AddTypeParameters(IEnumerable<TypeParameterSpec> typeParameters) {
+            if (typeParameters == null) throw new ArgumentNullException(nameof(typeParameters));
+            foreach (TypeParameterSpec typeParameter in typeParameters) {
+                Util.CheckNotNull(typeParameter, "typeVariable");
+                this.typeParameters.Add(typeParameter);
             }
             return this;
         }
 
-        public Builder AddTypeVariable(TypeVariableName typeVariable) {
-            if (typeVariable == null) throw new ArgumentNullException(nameof(typeVariable));
-            typeVariables.Add(typeVariable);
+        public Builder AddTypeParameter(TypeParameterSpec typeParameter) {
+            if (typeParameter == null) throw new ArgumentNullException(nameof(typeParameter));
+            typeParameters.Add(typeParameter);
             return this;
         }
 

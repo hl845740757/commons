@@ -41,7 +41,7 @@ public class TypeSpec : ISpecification
     public readonly CodeBlock headerCode; // 文档后，类定义前的自定义代码
     public readonly IList<AttributeSpec> attributes; // 这里仅表示非宏管理注解
 
-    public readonly IList<TypeVariableName> typeVariables; // 泛型参数
+    public readonly IList<TypeParameterSpec> typeParameters; // 泛型参数
     public readonly IList<TypeName> baseClasses; // 超类和接口
     public readonly IList<ISpecification> nestedSpecs; // 所有的嵌套元素
 
@@ -53,7 +53,7 @@ public class TypeSpec : ISpecification
         headerCode = builder.headerCode.Build();
         attributes = Util.ToImmutableList(builder.attributes);
 
-        typeVariables = Util.ToImmutableList(builder.typeVariables);
+        typeParameters = Util.ToImmutableList(builder.typeParameters);
         baseClasses = Util.ToImmutableList(builder.baseClasses);
         nestedSpecs = Util.ToImmutableList(builder.nestedSpecs);
 
@@ -128,7 +128,7 @@ public class TypeSpec : ISpecification
             .AddDocument(document)
             .AddHeaderCode(headerCode)
             .AddAttributes(attributes)
-            .AddTypeVariables(typeVariables)
+            .AddTypeParameters(typeParameters)
             .AddBaseClasses(baseClasses)
             .AddSpecs(nestedSpecs);
     }
@@ -142,11 +142,11 @@ public class TypeSpec : ISpecification
         public Modifiers modifiers;
         public readonly CodeBlock.Builder document = CodeBlock.NewBuilder();
         public readonly CodeBlock.Builder headerCode = CodeBlock.NewBuilder();
-        public readonly List<AttributeSpec> attributes = new List<AttributeSpec>();
+        public readonly List<AttributeSpec> attributes = new();
 
-        public readonly List<TypeName> baseClasses = new List<TypeName>();
-        public readonly List<TypeVariableName> typeVariables = new List<TypeVariableName>();
-        public readonly List<ISpecification> nestedSpecs = new List<ISpecification>();
+        public readonly List<TypeName> baseClasses = new();
+        public readonly List<TypeParameterSpec> typeParameters = new();
+        public readonly List<ISpecification> nestedSpecs = new();
 
         internal Builder(Kind kind, string name) {
             this.kind = kind;
@@ -218,22 +218,26 @@ public class TypeSpec : ISpecification
             return this;
         }
 
-        #region base-classes
+        #region type-parameter
 
-        public Builder AddTypeVariables(IEnumerable<TypeVariableName?> typeVariables) {
-            if (typeVariables == null) throw new ArgumentNullException(nameof(typeVariables));
-            foreach (TypeVariableName? typeVariable in typeVariables) {
-                Util.CheckArgument(typeVariable != null, "typeVariable == null");
-                this.typeVariables.Add(typeVariable);
+        public Builder AddTypeParameters(IEnumerable<TypeParameterSpec> typeParameters) {
+            if (typeParameters == null) throw new ArgumentNullException(nameof(typeParameters));
+            foreach (TypeParameterSpec typeParameter in typeParameters) {
+                Util.CheckNotNull(typeParameter, "typeVariable");
+                this.typeParameters.Add(typeParameter);
             }
             return this;
         }
 
-        public Builder AddTypeVariable(TypeVariableName typeVariable) {
-            if (typeVariable == null) throw new ArgumentNullException(nameof(typeVariable));
-            typeVariables.Add(typeVariable);
+        public Builder AddTypeParameter(TypeParameterSpec typeParameter) {
+            if (typeParameter == null) throw new ArgumentNullException(nameof(typeParameter));
+            typeParameters.Add(typeParameter);
             return this;
         }
+
+        #endregion
+
+        #region base-classes
 
         public Builder AddBaseClasses(IEnumerable<TypeName?> baseClasses) {
             if (baseClasses == null) throw new ArgumentNullException(nameof(baseClasses));

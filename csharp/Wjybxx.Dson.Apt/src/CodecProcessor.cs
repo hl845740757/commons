@@ -494,9 +494,8 @@ public class CodecProcessor : IIncrementalGenerator
             .AddBaseClass(AptUtils.ParseType(superDeclaredType));
 
         // 拷贝泛型参数 -- Codec泛型参数和原始类型泛型参数相同
-        ClassName srcClassName = (ClassName)AptUtils.ParseType(type);
-        foreach (TypeName typeArgument in srcClassName.typeArguments) {
-            context.typeBuilder.AddTypeVariable((TypeVariableName)typeArgument);
+        foreach (ITypeParameterSymbol typeParameter in type.TypeParameters) {
+            context.typeBuilder.AddTypeParameter(AptUtils.CopyTypeParameter(typeParameter));
         }
     }
 

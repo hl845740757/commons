@@ -73,6 +73,20 @@ public class ImportSpec : IEquatable<ImportSpec>, ISpecification
         return new ImportSpec(name + "." + childName, alias);
     }
 
+    /// <summary>
+    /// 创建一个普通导入
+    /// </summary>
+    public static ImportSpec Get(string name, string? alias = null) {
+        return new ImportSpec(name, alias);
+    }
+
+    /// <summary>
+    /// 创建一个静态导入
+    /// </summary>
+    public static ImportSpec GetStatic(string name) {
+        return new ImportSpec(name, null, true);
+    }
+
     #region equals
 
     public bool Equals(ImportSpec? other) {

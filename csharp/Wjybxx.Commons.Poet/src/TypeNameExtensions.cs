@@ -64,7 +64,7 @@ public static class TypeNameExtensions
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ClassName MakeNullableType(this TypeName typeName) {
-        return ClassName.NULLABLE.WithTypeVariables(typeName);
+        return ClassName.NULLABLE.WithTypeArguments(typeName);
     }
 
     #endregion
@@ -144,6 +144,21 @@ public static class TypeNameExtensions
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TypeNameAttributes Unset(this TypeNameAttributes self, TypeNameAttributes other) {
+        return self & ~other;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsIntersect(this TypeParameterConstraints self, TypeParameterConstraints other) {
+        return (self & other) != 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static TypeParameterConstraints Set(this TypeParameterConstraints self, TypeParameterConstraints other) {
+        return self | other;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static TypeParameterConstraints Unset(this TypeParameterConstraints self, TypeParameterConstraints other) {
         return self & ~other;
     }
 }

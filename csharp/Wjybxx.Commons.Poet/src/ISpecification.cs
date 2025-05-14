@@ -88,5 +88,9 @@ public enum SpecType : byte
     /// 任意代码
     /// </summary>
     CodeBlock,
+    /// <summary>
+    /// 类型变量（泛型变量）
+    /// </summary>
+    TypeParameter,
 }
 }

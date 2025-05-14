@@ -140,6 +140,14 @@ Poet包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
 
 ## ReleaseNotes
 
+### 1.4.0
+
+1. 删除`TypeVariableName`，新增`TypeParameterSpec`和`TypeParameterName`，新的Name仅表达对泛型变量的引用，不包含泛型约束条件。
+2. `TypeName`变更为抽象类，基础类型也由`ClassName`表达。
+
+在之前的版本中，`TypeName`是参照JavaPoet实现的；但随着使用的增多，发现JavaPoet的`TypeVariableName`设计问题很大。
+`TypeName`的初衷是对目标类型的引用，但`TypeVariableName`却包含了对泛型变量的约束，这导致了一些复杂的问题。
+
 ### 1.3.1
 
 bug fix

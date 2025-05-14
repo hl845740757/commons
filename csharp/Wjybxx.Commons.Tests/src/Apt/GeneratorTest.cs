@@ -66,8 +66,8 @@ public class GeneratorTest
     private static TypeSpec BuildIndexerType() {
         return TypeSpec.NewClassBuilder("MyDictionary")
             .AddModifiers(Modifiers.Public)
-            .AddTypeVariable(TypeVariableName.Get("TKey"))
-            .AddTypeVariable(TypeVariableName.Get("TValue"))
+            .AddTypeParameter(TypeParameterSpec.Get("TKey"))
+            .AddTypeParameter(TypeParameterSpec.Get("TValue"))
             .AddProperty(PropertySpec.Overriding(typeof(IDictionary<,>).GetProperties()[0])
                 .Build())
             .Build();
@@ -77,8 +77,8 @@ public class GeneratorTest
         return TypeSpec.NewDelegator(MethodSpec.NewMethodBuilder("Apply")
             .AddModifiers(Modifiers.Public)
             .Returns(TypeName.INT)
-            .AddTypeVariable(TypeVariableName.Get("T"))
-            .AddParameter(TypeVariableName.Get("T"), "obj")
+            .AddTypeParameter(TypeParameterSpec.Get("T"))
+            .AddParameter(TypeParameterName.Get("T"), "obj")
             .Build());
     }
 

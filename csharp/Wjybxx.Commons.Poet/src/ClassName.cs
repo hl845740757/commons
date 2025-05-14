@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.Poet
 /// 注意：
 /// 1.无法通过名字判断是否是结构体或引用类型。
 /// 2.ClassName始终通过<see cref="WithAttributes"/>方法设置属性，避免工厂方法参数过多。
-/// 3.要想输出未构造泛型的typeof，可使用空名字的<see cref="TypeVariableName"/>。
+/// 3.要想输出未构造泛型的typeof，可使用空名字的<see cref="TypeParameterName"/>。
 /// </summary>
 public class ClassName : TypeName
 {
@@ -139,8 +139,8 @@ public class ClassName : TypeName
         get {
             if (!IsGenericType) return false;
             foreach (TypeName typeArgument in typeArguments) {
-                if (typeArgument is not TypeVariableName typeVariableName
-                    || !string.IsNullOrEmpty(typeVariableName.name)) {
+                if (typeArgument is not TypeParameterName typeParameterName
+                    || !string.IsNullOrEmpty(typeParameterName.name)) {
                     return false;
                 }
             }
@@ -169,7 +169,7 @@ public class ClassName : TypeName
     /// <summary>
     /// 类型关键字
     /// </summary>
-    public override string? Internal_Keyword => keyword;
+    public string? Keyword => keyword;
 
     /// <summary>
     /// 获取运行时的反射类型名
@@ -216,9 +216,9 @@ public class ClassName : TypeName
     }
 
     /// <summary>
-    /// 对于未构造泛型，ToString会在反射名的基础上追加泛型变量的约束，以确保唯一性
+    /// 对于未构造泛型，ToString会在反射名的基础上追加泛型变量的属性，以确保唯一性
     /// <code>System.Nullable`1[System.Int32]</code>
-    /// <code>System.Nullable`1[T] where T : struct</code>
+    /// <code>System.Nullable`1[T], typeArgumentAttrs: [None]</code>
     /// </summary>
     /// <returns></returns>
     protected override string ToStringImpl() {
@@ -226,15 +226,16 @@ public class ClassName : TypeName
         sb.Append(GetType().Name);
         sb.Append(", reflectionName: ");
         sb.Append(ReflectionName()); // 避免ToString外部类信息
-        // 追加泛型约束
+        // 追加泛型变量的attributes
+        sb.Append(", typeArgumentAttrs: [");
         for (int i = 0; i < typeArguments.Count; i++) {
-            if (typeArguments[i] is TypeVariableName typeVariableName && typeVariableName.HasConstraints()) {
-                sb.Append(" where ");
-                sb.Append(typeVariableName.name);
-                sb.Append(" : ");
-                sb.Append(typeVariableName.ConstraintsToString());
+            TypeName typeArgument = typeArguments[i];
+            if (i > 0) {
+                sb.Append(',');
             }
+            sb.Append(typeArgument.attributes);
         }
+        sb.Append(']');
         return sb.ToString();
     }
 
@@ -251,7 +252,7 @@ public class ClassName : TypeName
             Name = simpleName,
             TypeArguments = typeArguments,
             Attributes = attributes,
-            Keyword = Internal_Keyword // 需要保留关键字
+            Keyword = Keyword // 需要保留关键字
         }.Build();
     }
 
@@ -269,7 +270,7 @@ public class ClassName : TypeName
                 Name = simpleName,
                 TypeArguments = typeArguments,
                 Attributes = attributes.Unset(TypeNameAttributes.NullableReferenceType),
-                Keyword = Internal_Keyword // 需要保留关键字
+                Keyword = Keyword // 需要保留关键字
             }.Build();
         }
         // 不再做过多测试，直接构建新对象
@@ -284,7 +285,7 @@ public class ClassName : TypeName
             Name = simpleName,
             TypeArguments = tempTypeArguments,
             Attributes = attributes.Unset(TypeNameAttributes.NullableReferenceType),
-            Keyword = Internal_Keyword // 需要保留关键字
+            Keyword = Keyword // 需要保留关键字
         }.Build();
     }
 
@@ -295,7 +296,7 @@ public class ClassName : TypeName
     /// </summary>
     /// <param name="typeArguments">新的泛型参数列表</param>
     /// <returns></returns>
-    public ClassName WithTypeVariables(params TypeName[] typeArguments) {
+    public ClassName WithTypeArguments(params TypeName[] typeArguments) {
         if (typeArguments.Length != this.typeArguments.Count) {
             throw new ArgumentException();
         }
@@ -315,7 +316,7 @@ public class ClassName : TypeName
     /// </summary>
     /// <param name="typeArguments">长度必须等于类显式声明的泛型变量个数</param>
     /// <returns></returns>
-    public ClassName WithDeclaredTypeVariables(params TypeName[] typeArguments) {
+    public ClassName WithDeclaredTypeArguments(params TypeName[] typeArguments) {
         if (typeArguments.Length != declaredTypeArguments.Count) {
             throw new ArgumentException();
         }
@@ -334,13 +335,17 @@ public class ClassName : TypeName
     /// </summary>
     /// <param name="name">类简单名</param>
     /// <param name="typeArguments">泛型参数</param>
+    /// <param name="inheritTypeArguments">是否继承外部类泛型参数</param>
     /// <param name="attributes">额外属性</param>
     /// <returns></returns>
     public ClassName PeerClass(string name, IList<TypeName>? typeArguments = null,
+                               bool inheritTypeArguments = true,
                                TypeNameAttributes attributes = TypeNameAttributes.None) {
+        if (enclosingClassName != null) {
+            return enclosingClassName.NestedClass(name, typeArguments, inheritTypeArguments, attributes);
+        }
         return new Builder()
         {
-            EnclosingClassName = enclosingClassName,
             Namespace = ns,
             Name = name,
             TypeArguments = typeArguments,
@@ -354,10 +359,11 @@ public class ClassName : TypeName
     /// </summary>
     /// <param name="name">类简单名</param>
     /// <param name="typeArguments">子类的泛型参数</param>
-    /// <param name="inheritTypeArguments">是否继承泛型参数</param>
+    /// <param name="inheritTypeArguments">是否继承外部类泛型参数</param>
     /// <param name="attributes">嵌套类的属性</param>
     /// <returns></returns>
-    public ClassName NestedClass(string name, IList<TypeName>? typeArguments = null, bool inheritTypeArguments = true,
+    public ClassName NestedClass(string name, IList<TypeName>? typeArguments = null,
+                                 bool inheritTypeArguments = true,
                                  TypeNameAttributes attributes = TypeNameAttributes.None) {
         if (inheritTypeArguments) {
             typeArguments = Util.Concat(this.typeArguments, typeArguments);
@@ -486,38 +492,6 @@ public class ClassName : TypeName
 
     #endregion
 
-    #region emit
-
-    // import问题
-    // 对于Java来说，导入的粒度是类，因此在写文件时要根据ClassName判断是否是某个类的内部类，从而决定是否import
-    // 但对C#来说，导入没有问题
-
-    /// <summary>
-    /// 判断目标类型是否是当前类的直接内部类。
-    ///
-    /// 虽然C#没有导入问题，但和Java一样，对于直接内部类，访问时最好是去除外部类前缀。
-    /// 这是个可选优化项，不影响代码的正确性。
-    /// </summary>
-    /// <param name="className"></param>
-    /// <returns></returns>
-    public bool IsDirectNestedClass(ClassName className) {
-        if (className.enclosingClassName == null) {
-            return false;
-        }
-        return Equals(className.enclosingClassName);
-    }
-
-    private List<ClassName> EnclosingClasses() {
-        List<ClassName> result = new List<ClassName>();
-        for (ClassName c = this; c != null; c = c.enclosingClassName) {
-            result.Add(c);
-        }
-        result.Reverse();
-        return result;
-    }
-
-    #endregion
-
     public struct Builder
     {
         /// <summary>
@@ -533,7 +507,7 @@ public class ClassName : TypeName
         /// </summary>
         public string Name { get; set; }
         /// <summary>
-        /// 泛型参数
+        /// 泛型参数，需要包含外部类的泛型参数
         /// </summary>
         public IList<TypeName>? TypeArguments { get; set; }
         /// <summary>

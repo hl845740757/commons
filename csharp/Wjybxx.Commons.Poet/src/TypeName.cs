@@ -18,12 +18,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Wjybxx.Commons.Poet
 {
 /// <summary>
-/// 类型名，TypeName用于表示对其它类型的引用。
+/// 类型名，TypeName用于表示对其它类型的引用 -- 不可包含Nullable以外的信息。
 /// （这里的实现并不完整，只用于简单的代码生成）
 /// （继承是为了节省内存，否则需要实现为标签类）
 /// </summary>
@@ -37,16 +36,10 @@ public abstract class TypeName : IEquatable<TypeName>
     }
 
     /// <summary>
-    /// 类型关键字
-    /// 一般业务不要依赖该属性，只应该用在生成代码时
-    /// </summary>
-    public virtual string? Internal_Keyword => null;
-
-    /// <summary>
     /// 是否是基础类型
     /// </summary>
     /// <returns></returns>
-    public bool IsPrimitive => (Internal_Keyword != null) && primitiveTypeKeywords.Contains(Internal_Keyword);
+    public bool IsPrimitive => (this is ClassName className) && primitiveTypeKeywords.Contains(className.keyword);
 
     /// <summary>
     /// 获取类型运行时的字符串名，可用于反射加载类型
@@ -138,7 +131,7 @@ public abstract class TypeName : IEquatable<TypeName>
         }
         // 泛型参数
         if (type.IsGenericParameter) {
-            return TypeVariableName.Get(type);
+            return TypeParameterName.Get(type);
         }
         return ClassName.Get(type);
     }

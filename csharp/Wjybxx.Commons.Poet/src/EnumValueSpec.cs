@@ -22,9 +22,8 @@ namespace Wjybxx.Commons.Poet
 {
 /// <summary>
 /// 表示一个枚举值定义
-/// (equals默认不比较文档)
 /// </summary>
-public class EnumValueSpec : IEquatable<EnumValueSpec>, ISpecification
+public class EnumValueSpec : ISpecification
 {
     /** 枚举名 */
     public readonly string name;
@@ -42,7 +41,15 @@ public class EnumValueSpec : IEquatable<EnumValueSpec>, ISpecification
     public string Name => name;
     public SpecType SpecType => SpecType.EnumValue;
 
+    public override string ToString() {
+        return $"{nameof(name)}: {name}, {nameof(number)}: {number}";
+    }
+
     #region builder
+
+    public static EnumValueSpec Get(string name, int? number = null) {
+        return new EnumValueSpec(name, number);
+    }
 
     public static Builder NewBuilder(string name, int? number = null) {
         return new Builder(name, number);
@@ -51,31 +58,6 @@ public class EnumValueSpec : IEquatable<EnumValueSpec>, ISpecification
     public Builder ToBuilder() {
         return new Builder(name, number)
             .AddDocument(document);
-    }
-
-    #endregion
-
-    #region equals
-
-    public bool Equals(EnumValueSpec? other) {
-        if (ReferenceEquals(null, other)) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return name == other.name && number == other.number;
-    }
-
-    public override bool Equals(object? obj) {
-        if (ReferenceEquals(null, obj)) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != this.GetType()) return false;
-        return Equals((EnumValueSpec)obj);
-    }
-
-    public override int GetHashCode() {
-        return (name.GetHashCode() * 397) ^ number.GetHashCode();
-    }
-
-    public override string ToString() {
-        return $"{nameof(name)}: {name}, {nameof(number)}: {number}";
     }
 
     #endregion

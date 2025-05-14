@@ -540,7 +540,7 @@ public static class AptUtils
             int typeArgumentsLength = typeSymbol.OriginalDefinition.TypeArguments.Length;
             genericArgumentNames = new List<TypeName>(typeArgumentsLength);
             for (int i = 0; i < typeArgumentsLength; i++) {
-                genericArgumentNames.Add(TypeVariableName.Empty);
+                genericArgumentNames.Add(TypeParameterName.Empty);
             }
         } else if (typeSymbol.IsGenericType) {
             ImmutableArray<ITypeSymbol> genericArguments = typeSymbol.TypeArguments;
@@ -588,43 +588,9 @@ public static class AptUtils
     /// <summary>
     /// 解析泛型变量
     /// </summary>
-    public static TypeVariableName ParseTypeParameter(ITypeParameterSymbol typeParameterSymbol) {
-        TypeNameAttributes attributes = TypeNameAttributes.None;
-        // In Out
-        if (typeParameterSymbol.Variance == VarianceKind.In) {
-            attributes |= TypeNameAttributes.VarianceIn;
-        } else if (typeParameterSymbol.Variance == VarianceKind.Out) {
-            attributes |= TypeNameAttributes.VarianceOut;
-        }
-        // Nullable
-        if (typeParameterSymbol.HasNotNullConstraint) {
-            attributes |= TypeNameAttributes.NotNullableReferenceType;
-        } else if (typeParameterSymbol.IsNullableAnnotated()) {
-            attributes |= TypeNameAttributes.NullableReferenceType;
-        }
-        // 类型约束
-        if (typeParameterSymbol.HasReferenceTypeConstraint) {
-            attributes |= TypeNameAttributes.ReferenceTypeConstraint;
-        }
-        if (typeParameterSymbol.HasValueTypeConstraint) {
-            attributes |= TypeNameAttributes.ValueTypeConstraint;
-        }
-        if (typeParameterSymbol.HasConstructorConstraint) {
-            attributes |= TypeNameAttributes.DefaultConstructorConstraint;
-        }
-        // 上界
-        ImmutableArray<ITypeSymbol> constraintTypes = typeParameterSymbol.ConstraintTypes;
-        ImmutableArray<NullableAnnotation> nullableAnnotations = typeParameterSymbol.ConstraintNullableAnnotations;
-        if (constraintTypes.Length == 0) {
-            return TypeVariableName.Get(typeParameterSymbol.Name, attributes);
-        }
-        List<TypeName> bounds = new List<TypeName>(constraintTypes.Length);
-        for (int index = 0; index < constraintTypes.Length; index++) {
-            ITypeSymbol constraintType = constraintTypes[index];
-            TypeName bound = ParseType(constraintType).AddAttributes(nullableAnnotations[index].ToTypeNameAttributes());
-            bounds.Add(bound);
-        }
-        return TypeVariableName.Get(typeParameterSymbol.Name, bounds, attributes);
+    public static TypeParameterName ParseTypeParameter(ITypeParameterSymbol typeParameterSymbol) {
+        TypeNameAttributes attributes = typeParameterSymbol.NullableAnnotation.ToTypeNameAttributes();
+        return TypeParameterName.Get(typeParameterSymbol.Name, attributes);
     }
 
     #endregion
@@ -698,7 +664,7 @@ public static class AptUtils
         }
         builder.AddModifiers(modifiers);
         // 拷贝泛型参数
-        CopyTypeVariables(builder, methodInfo);
+        CopyTypeParameters(builder, methodInfo);
         // 拷贝返回值
         builder.Returns(ParseMethodReturnType(methodInfo));
         // 拷贝方法参数
@@ -710,12 +676,12 @@ public static class AptUtils
     }
 
     /// <summary>
-    /// 拷贝泛型参数
+    /// 拷贝方法泛型参数
     /// </summary>
-    public static void CopyTypeVariables(MethodSpec.Builder builder, IMethodSymbol methodInfo) {
+    public static void CopyTypeParameters(MethodSpec.Builder builder, IMethodSymbol methodInfo) {
         ImmutableArray<ITypeParameterSymbol> typeParameterSymbols = methodInfo.TypeParameters;
         foreach (ITypeParameterSymbol typeParameterSymbol in typeParameterSymbols) {
-            builder.AddTypeVariable(ParseTypeParameter(typeParameterSymbol));
+            builder.AddTypeParameter(CopyTypeParameter(typeParameterSymbol));
         }
     }
 
@@ -726,11 +692,16 @@ public static class AptUtils
     /// </summary>
     public static void CopyParameters(MethodSpec.Builder builder, IMethodSymbol methodInfo) {
         foreach (IParameterSymbol parameter in methodInfo.Parameters) {
-            builder.AddParameter(ParseMethodParameter(parameter));
+            builder.AddParameter(CopyParameter(parameter));
         }
     }
 
-    public static ParameterSpec ParseMethodParameter(IParameterSymbol parameterInfo) {
+    /// <summary>
+    /// 拷贝方法参数
+    /// </summary>
+    /// <param name="parameterInfo"></param>
+    /// <returns></returns>
+    public static ParameterSpec CopyParameter(IParameterSymbol parameterInfo) {
         var builder = ParameterSpec.NewBuilder(ParseMethodParameterType(parameterInfo), parameterInfo.Name);
         // 处理默认值问题，值类型如果返回null需要使用default代替
         if (parameterInfo.HasExplicitDefaultValue) {
@@ -744,6 +715,53 @@ public static class AptUtils
             }
         }
         return builder.Build();
+    }
+
+    /// <summary>
+    /// 解析泛型变量
+    /// </summary>
+    public static TypeParameterSpec CopyTypeParameter(ITypeParameterSymbol typeParameterSymbol) {
+        TypeParameterConstraints attributes = TypeParameterConstraints.None;
+        // In Out
+        if (typeParameterSymbol.Variance == VarianceKind.In) {
+            attributes |= TypeParameterConstraints.VarianceIn;
+        } else if (typeParameterSymbol.Variance == VarianceKind.Out) {
+            attributes |= TypeParameterConstraints.VarianceOut;
+        }
+        // Nullable
+        if (typeParameterSymbol.HasNotNullConstraint) {
+            attributes |= TypeParameterConstraints.NotNullableReferenceType;
+        } else if (typeParameterSymbol.IsNullableAnnotated()) {
+            attributes |= TypeParameterConstraints.NullableReferenceType;
+        }
+        // 类型约束
+        if (typeParameterSymbol.HasReferenceTypeConstraint) {
+            attributes |= TypeParameterConstraints.ReferenceTypeConstraint;
+        }
+        if (typeParameterSymbol.HasValueTypeConstraint) {
+            attributes |= TypeParameterConstraints.ValueTypeConstraint;
+        }
+        if (typeParameterSymbol.HasConstructorConstraint) {
+            attributes |= TypeParameterConstraints.DefaultConstructorConstraint;
+        }
+        // 上界
+        ImmutableArray<ITypeSymbol> constraintTypes = typeParameterSymbol.ConstraintTypes;
+        ImmutableArray<NullableAnnotation> nullableAnnotations = typeParameterSymbol.ConstraintNullableAnnotations;
+        if (constraintTypes.Length == 0) {
+            return TypeParameterSpec.Get(typeParameterSymbol.Name, attributes);
+        }
+        List<TypeName> bounds = new List<TypeName>(constraintTypes.Length);
+        for (int index = 0; index < constraintTypes.Length; index++) {
+            ITypeSymbol constraintType = constraintTypes[index];
+            // 需要剔除object和ValueType
+            if (constraintType.SpecialType == SpecialType.System_Object
+                || constraintType.SpecialType == SpecialType.System_ValueType) {
+                continue;
+            }
+            TypeName bound = ParseType(constraintType).AddAttributes(nullableAnnotations[index].ToTypeNameAttributes());
+            bounds.Add(bound);
+        }
+        return TypeParameterSpec.Get(typeParameterSymbol.Name, attributes, bounds);
     }
 
     #endregion

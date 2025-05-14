@@ -17,7 +17,6 @@
 #endregion
 
 using System;
-using System.Reflection;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -38,40 +37,5 @@ public enum TypeNameAttributes
     /// 注意： NRT并不是真正的类型，而是注解(属性)，在运行时无效；但使用注解来标记类型实在不方便，因此我们存储在TypeName上。
     /// </summary>
     NullableReferenceType = 0x0001,
-    /// <summary>
-    /// 非空引用类型 -- 用于泛型约束(notnull)
-    /// 
-    /// 注意：非空引用类型也不是真正的类型,，而是注解(属性)，在运行时无效。
-    /// </summary>
-    NotNullableReferenceType = 0x002,
-
-    #region 泛型变量约束
-
-    /// <summary>
-    /// 引用类型约束
-    /// <see cref="GenericParameterAttributes.ReferenceTypeConstraint"/>
-    /// </summary>
-    ReferenceTypeConstraint = 0x0004,
-    /// <summary>
-    /// 值类型约束
-    /// <see cref="GenericParameterAttributes.NotNullableValueTypeConstraint"/>
-    /// </summary>
-    ValueTypeConstraint = 0x0008,
-    /// <summary>
-    /// 默认构造器约束
-    /// <see cref="GenericParameterAttributes.DefaultConstructorConstraint"/>
-    /// </summary>
-    DefaultConstructorConstraint = 0x0010,
-
-    /// <summary>
-    /// 泛型变量包含in修饰符
-    /// </summary>
-    VarianceIn = 0x0020,
-    /// <summary>
-    /// 泛型变量包含out修饰符
-    /// </summary>
-    VarianceOut = 0x0040,
-
-    #endregion
 }
 }

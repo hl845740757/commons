@@ -5,8 +5,15 @@ Dson.Apt是为Dson.Codec提供的工具，用于生成目标类的编解码类�
 
 PS：Dson.Apt的最佳应用是`Btree.Codec`模块，行为树的所有Codec都是通过Apt自动生成的，而非手动编写的。
 
+## 版本号同步
+
+注意：`Wjybxx.Dson.Core`,`Wjybxx.Dson.Codec`,`Wjybxx.Dson.Apt` 三个程序集的版本号总是保持一致，任一程序集修改，其它程序集版本号也会修改。
 
 ## ReleaseNotes
+
+### 2.4.2
+
+适配Commons.Poet改动
 
 ### 2.4.0
 
