@@ -2,6 +2,10 @@
 
 Core模块包含一些基础的工具类和注解，这些基础工具和注解被其它所有模块依赖。
 
+## 版本号同步
+
+注意：`Wjybxx.Commons.Core`,`Wjybxx.Commons.Inject`,`Wjybxx.Commons.Concurrent` 三个程序集的版本号总是保持一致，任一程序集修改，其它程序集版本号也会修改。
+
 ## Collections
 
 Core的主要内容是集合库，但凡C#的基础集合库好用一点，我也不至于自己造轮子，实现的集合类：

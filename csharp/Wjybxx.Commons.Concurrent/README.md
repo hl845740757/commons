@@ -4,6 +4,11 @@
 2. 提供了基于Disruptor的高性能EventLoop实现。
 3. 提供了ValueFutureTask -- 类比系统库的ValueTask。
 
+## 版本号同步
+
+注意：`Wjybxx.Commons.Core`,`Wjybxx.Commons.Inject`,`Wjybxx.Commons.Concurrent` 三个程序集的版本号总是保持一致，任一程序集修改，其它程序集版本号也会修改。
+
+
 ## C#系统并发库缺陷
 
 个人使用C#系统库有几点很难受：
