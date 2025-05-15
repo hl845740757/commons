@@ -292,6 +292,22 @@ public class ClassName : TypeName
     #endregion
 
     /// <summary>
+    /// 增加泛型参数--用于泛型定义类型
+    /// </summary>
+    /// <param name="typeArguments">新的泛型参数列表</param>
+    /// <returns></returns>
+    public ClassName AddTypeArguments(params TypeName[] typeArguments) {
+        return new Builder()
+        {
+            EnclosingClassName = enclosingClassName,
+            Namespace = ns,
+            Name = simpleName,
+            TypeArguments = Util.Concat(this.typeArguments, typeArguments),
+            Attributes = attributes
+        }.Build();
+    }
+
+    /// <summary>
     /// 替换所有的泛型参数（长度必须一致）。
     /// </summary>
     /// <param name="typeArguments">新的泛型参数列表</param>

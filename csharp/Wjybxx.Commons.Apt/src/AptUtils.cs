@@ -381,6 +381,54 @@ public static class AptUtils
     }
 
     /// <summary>
+    /// 查找属性的指定值
+    /// </summary>
+    /// <param name="attributeData">注解</param>
+    /// <param name="propertyName">属性名</param>
+    /// <param name="def">默认值</param>
+    /// <returns></returns>
+    public static int GetAttributeValueValue(AttributeData attributeData, string propertyName, int def) {
+        foreach (var pair in attributeData.NamedArguments) {
+            if (pair.Key == propertyName) {
+                return (int)pair.Value.Value!;
+            }
+        }
+        return def;
+    }
+
+    /// <summary>
+    /// 查找属性的指定值
+    /// </summary>
+    /// <param name="attributeData">注解</param>
+    /// <param name="propertyName">属性名</param>
+    /// <param name="def">默认值</param>
+    /// <returns></returns>
+    public static bool GetAttributeValueValue(AttributeData attributeData, string propertyName, bool def) {
+        foreach (var pair in attributeData.NamedArguments) {
+            if (pair.Key == propertyName) {
+                return (bool)pair.Value.Value!;
+            }
+        }
+        return def;
+    }
+
+    /// <summary>
+    /// 查找属性的指定值
+    /// </summary>
+    /// <param name="attributeData">注解</param>
+    /// <param name="propertyName">属性名</param>
+    /// <param name="def">默认值</param>
+    /// <returns></returns>
+    public static object? GetAttributeValueValue(AttributeData attributeData, string propertyName, object? def) {
+        foreach (var pair in attributeData.NamedArguments) {
+            if (pair.Key == propertyName) {
+                return pair.Value.Value;
+            }
+        }
+        return def;
+    }
+
+    /// <summary>
     /// 注意：不适用数组
     /// </summary>
     /// <param name="typedConstant"></param>

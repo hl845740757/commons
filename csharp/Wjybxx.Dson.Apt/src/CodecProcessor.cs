@@ -189,6 +189,7 @@ public class CodecProcessor : IIncrementalGenerator
                 (node, _) => node);
             context.RegisterSourceOutput(provider, (a, b) => {
                 try {
+                    EnsureInited(a, b.SemanticModel.Compilation);
                     if (IsBuildingAssemblyNode(b)) {
                         ProcessDirectType(a, b);
                     }
@@ -205,6 +206,7 @@ public class CodecProcessor : IIncrementalGenerator
                 (node, _) => node);
             context.RegisterSourceOutput(provider, (a, b) => {
                 try {
+                    EnsureInited(a, b.SemanticModel.Compilation);
                     if (IsBuildingAssemblyNode(b)) {
                         ProcessLinkerGroup(a, b);
                     }
@@ -221,6 +223,7 @@ public class CodecProcessor : IIncrementalGenerator
                 (node, _) => node);
             context.RegisterSourceOutput(provider, (a, b) => {
                 try {
+                    EnsureInited(a, b.SemanticModel.Compilation);
                     if (IsBuildingAssemblyNode(b)) {
                         ProcessLinkerBean(a, b);
                     }
@@ -247,7 +250,6 @@ public class CodecProcessor : IIncrementalGenerator
     /// 不是为自己生成，当前类是Codec配置类，为绑定的类型生成
     /// </summary>
     private void ProcessLinkerBean(SourceProductionContext sourceProductionContext, GeneratorAttributeSyntaxContext node) {
-        EnsureInited(sourceProductionContext, node.SemanticModel.Compilation);
         AttributeData linkerBeanAttribute = AptUtils.GetAttribute(node.Attributes, CNAME_CODEC_LINKER_BEAN);
         Debug.Assert(linkerBeanAttribute != null);
 
@@ -302,7 +304,6 @@ public class CodecProcessor : IIncrementalGenerator
     /// <param name="sourceProductionContext"></param>
     /// <param name="node"></param>
     private void ProcessLinkerGroup(SourceProductionContext sourceProductionContext, GeneratorAttributeSyntaxContext node) {
-        EnsureInited(sourceProductionContext, node.SemanticModel.Compilation);
         AttributeData linkerGroupAttribute = AptUtils.GetAttribute(node.Attributes, CNAME_CODEC_LINKER_GROUP);
         Debug.Assert(linkerGroupAttribute != null);
         //
@@ -342,7 +343,6 @@ public class CodecProcessor : IIncrementalGenerator
     }
 
     private void ProcessDirectType(SourceProductionContext sourceProductionContext, GeneratorAttributeSyntaxContext node) {
-        EnsureInited(sourceProductionContext, node.SemanticModel.Compilation);
         AttributeData serializableAttribute = AptUtils.GetAttribute(node.Attributes, CNAME_SERIALIZABLE);
         Debug.Assert(serializableAttribute != null);
 
@@ -581,7 +581,7 @@ public class CodecProcessor : IIncrementalGenerator
         if (aptClassProps.ContainsHookMethod(MNAME_NEW_INSTANCE)) {
             return;
         }
-        if (BeanUtils.ContainsNoArgsConstructor(typeSymbol)
+        if (ContainsNoArgsConstructor(typeSymbol)
             || ContainsReaderConstructor(typeSymbol)
             || ContainsNewInstanceMethod(typeSymbol)) {
             return;
@@ -597,14 +597,22 @@ public class CodecProcessor : IIncrementalGenerator
 
     /** 是否包含 T(Reader reader) 构造方法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool ContainsReaderConstructor(INamedTypeSymbol typeElement) {
-        return BeanUtils.ContainsOneArgsConstructor(typeElement, type_DsonReader);
+    internal bool ContainsNoArgsConstructor(INamedTypeSymbol typeSymbol) {
+        IMethodSymbol constructor = BeanUtils.GetNoArgsConstructor(typeSymbol);
+        return constructor != null && constructor.IsPublic();
+    }
+    
+    /** 是否包含 T(Reader reader) 构造方法 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool ContainsReaderConstructor(INamedTypeSymbol typeSymbol) {
+        IMethodSymbol constructor = BeanUtils.GetOneArgsConstructor(typeSymbol, type_DsonReader);
+        return constructor != null && constructor.IsPublic();
     }
 
     /** 是否包含 newInstance(reader) 静态解码方法 -- 只能从当前类型查询 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool ContainsNewInstanceMethod(INamedTypeSymbol typeElement) {
-        List<ISymbol> staticMembers = typeElement.GetMembers()
+    internal bool ContainsNewInstanceMethod(INamedTypeSymbol typeSymbol) {
+        List<ISymbol> staticMembers = typeSymbol.GetMembers()
             .Where(e => e.IsStatic && e.Kind == SymbolKind.Method)
             .ToList();
         return ContainsHookMethod(staticMembers, MNAME_NEW_INSTANCE, type_DsonReader);
