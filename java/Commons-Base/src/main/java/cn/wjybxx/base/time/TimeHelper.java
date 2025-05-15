@@ -97,7 +97,7 @@ public class TimeHelper {
      * @return 本地时区下的天数
      */
     public int toEpochDay(long epochMilli) {
-        return toEpochDay(epochMilli, false);
+        return toEpochDay(epochMilli, true);
     }
 
     /**
@@ -110,10 +110,8 @@ public class TimeHelper {
     public int toEpochDay(long epochMilli, boolean ceil) {
         // 为节省开销，这段代码参考自{@link java.time.LocalDate#ofInstant(Instant, ZoneId)}
         final long localSecond = (epochMilli / 1000) + zoneOffset.getTotalSeconds();
-        final long localEpochDay = ceil
-                ? Math.ceilDiv(localSecond, TimeUtils.SECONDS_PER_DAY)
-                : Math.floorDiv(localSecond, TimeUtils.SECONDS_PER_DAY);
-        return Math.toIntExact(localEpochDay); // 暂时仍使用int
+        final int localEpochDay = (int) (localSecond / TimeUtils.SECONDS_PER_DAY);
+        return ceil ? localEpochDay + 1 : localEpochDay;
     }
 
     /**

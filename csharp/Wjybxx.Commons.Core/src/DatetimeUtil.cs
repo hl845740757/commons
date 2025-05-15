@@ -184,14 +184,15 @@ public static class DatetimeUtil
 
     /// <summary>
     /// 获取总天数
+    ///
+    /// 第一天的时候有点歧义，算0算1不好定，让用户决定
     /// </summary>
     /// <param name="dateTime"></param>
     /// <param name="ceil">是否向上取整</param>
     /// <returns></returns>
-    public static int TotalDays(in DateTime dateTime, bool ceil) {
-        long day = Math.DivRem(dateTime.Ticks, TicksPerDay, out long rem);
-        if (ceil && rem > 0) day++;
-        return (int)day;
+    public static int TotalDays(in DateTime dateTime, bool ceil = true) {
+        int day = (int)(dateTime.Ticks / TicksPerDay);
+        return ceil ? day + 1 : day;
     }
 
     /// <summary>

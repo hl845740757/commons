@@ -88,9 +88,9 @@ public sealed class TimeHelper
     /// 注意：第一天的返回值默认是0，参数控制
     /// </summary>
     /// <param name="epochMilli">毫秒时间</param>
-    /// <param name="ceil">是否向上取整</param>
+    /// <param name="ceil"></param>
     /// <returns>本地时区下的天数</returns>
-    public int ToEpochDay(long epochMilli, bool ceil = false) {
+    public int ToEpochDay(long epochMilli, bool ceil = true) {
         DateTime localDateTime = DateTime.UnixEpoch.AddMilliseconds(epochMilli + offset * 1000L);
         return DatetimeUtil.TotalDays(localDateTime, ceil);
     }
