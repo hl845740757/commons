@@ -152,7 +152,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         reader.SetEnableNameIntern(false); // 禁用字典的name池化
 
         IDictionary<K, V> result = factory != null ? (IDictionary<K, V>)factory() : NewDictionary();
-        if (reader.Options.writeMapAsDocument) {
+        if (reader.CurrentDsonType == DsonType.Object) {
             if (keyKind == KeyKind.Int32) {
                 ReadDictionaryInt(reader, (IDictionary<int, V>)result);
             } else if (keyKind == KeyKind.Int64) {

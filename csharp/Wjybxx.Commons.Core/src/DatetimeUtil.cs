@@ -18,6 +18,7 @@
 
 using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Wjybxx.Commons
@@ -93,6 +94,18 @@ public static class DatetimeUtil
 #endif
 
     /// <summary>
+    /// 获取星期对应的数字，星期一为1，星期天为7
+    ///
+    /// C#和Java的旧代码都是0开始，巨恶心人...
+    /// </summary>
+    /// <param name="dayOfWeek"></param>
+    /// <returns></returns>
+    public static int GetNumber(this DayOfWeek dayOfWeek) {
+        int r = (int)dayOfWeek;
+        return r == 0 ? 7 : r + 1;
+    }
+
+    /// <summary>
     /// 获取当前的Unix时间戳(毫秒)
     /// </summary>
     /// <returns></returns>
@@ -113,6 +126,7 @@ public static class DatetimeUtil
     /// </summary>
     /// <param name="dateTime">日期时间</param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int LengthOfMonth(in DateTime dateTime) {
         return DateTime.DaysInMonth(dateTime.Year, dateTime.Month);
     }
@@ -124,6 +138,7 @@ public static class DatetimeUtil
     /// </summary>
     /// <param name="dateTime"></param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long ToEpochSeconds(in DateTime dateTime) {
         return (long)dateTime.Subtract(DateTime.UnixEpoch).TotalSeconds;
     }
@@ -133,6 +148,7 @@ public static class DatetimeUtil
     /// </summary>
     /// <param name="dateTime"></param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long ToEpochMillis(in DateTime dateTime) {
         return (long)dateTime.Subtract(DateTime.UnixEpoch).TotalMilliseconds;
     }
@@ -141,8 +157,19 @@ public static class DatetimeUtil
     /// 将unix时间戳转为UTC时间
     /// </summary>
     /// <param name="epochMillis">unix时间戳</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DateTime ToDateTime(long epochMillis) {
         return DateTime.UnixEpoch.AddMilliseconds(epochMillis);
+    }
+
+    /// <summary>
+    /// 本地时间转Unix纪元时间
+    /// </summary>
+    /// <param name="dateTime">本地时间</param>
+    /// <param name="offset">时区偏移</param>
+    /// <returns></returns>
+    public static long ToEpochMillis(in DateTime dateTime, in TimeSpan offset) {
+        return (long)dateTime.Subtract(DateTime.UnixEpoch).TotalMilliseconds - (long)offset.TotalMilliseconds;
     }
 
     /// <summary>
@@ -153,6 +180,18 @@ public static class DatetimeUtil
     /// <returns></returns>
     public static DateTime ToLocalDateTime(long epochMillis, TimeSpan offset) {
         return DateTime.UnixEpoch.AddMilliseconds(epochMillis + offset.TotalMilliseconds);
+    }
+
+    /// <summary>
+    /// 获取总天数
+    /// </summary>
+    /// <param name="dateTime"></param>
+    /// <param name="ceil">是否向上取整</param>
+    /// <returns></returns>
+    public static int TotalDays(in DateTime dateTime, bool ceil) {
+        long day = Math.DivRem(dateTime.Ticks, TicksPerDay, out long rem);
+        if (ceil && rem > 0) day++;
+        return (int)day;
     }
 
     /// <summary>

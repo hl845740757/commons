@@ -79,6 +79,8 @@ public class TimeHelper {
         return zoneOffset.getTotalSeconds() * 1000L;
     }
 
+    // region 时间戳和datetime转换
+
     /**
      * 将{@link LocalDateTime}转换为时区无关的毫秒时间戳。
      * 注意：如果不是该类返回的{@link LocalDateTime}，则可能在时区上出现故障。
@@ -94,10 +96,23 @@ public class TimeHelper {
      * @param epochMilli 毫秒时间
      * @return 本地时区下的天数
      */
-    public int toLocalEpochDay(long epochMilli) {
+    public int toEpochDay(long epochMilli) {
+        return toEpochDay(epochMilli, false);
+    }
+
+    /**
+     * 计算在本地时区下的纪元天数
+     *
+     * @param epochMilli 毫秒时间
+     * @param ceil       是否向上取整
+     * @return 本地时区下的天数
+     */
+    public int toEpochDay(long epochMilli, boolean ceil) {
         // 为节省开销，这段代码参考自{@link java.time.LocalDate#ofInstant(Instant, ZoneId)}
         final long localSecond = (epochMilli / 1000) + zoneOffset.getTotalSeconds();
-        final long localEpochDay = Math.floorDiv(localSecond, TimeUtils.SECONDS_PER_DAY);
+        final long localEpochDay = ceil
+                ? Math.ceilDiv(localSecond, TimeUtils.SECONDS_PER_DAY)
+                : Math.floorDiv(localSecond, TimeUtils.SECONDS_PER_DAY);
         return Math.toIntExact(localEpochDay); // 暂时仍使用int
     }
 
@@ -107,21 +122,24 @@ public class TimeHelper {
      * @param epochMilli 毫秒时间
      * @return LocalDateTime
      */
-    public LocalDateTime toLocalDateTime(long epochMilli) {
+    public LocalDateTime toDateTime(long epochMilli) {
         final long extraMilli = epochMilli % 1000;
         final int nanoOfSecond = (int) (extraMilli * TimeUtils.NANOS_PER_MILLI);
         return LocalDateTime.ofEpochSecond(epochMilli / 1000, nanoOfSecond, zoneOffset);
     }
 
     /**
-     * 将毫秒时间转换为{@link LocalDateTime}，并忽略毫秒。
+     * 将毫秒时间转换为{@link LocalDateTime}，并忽略毫秒部分。
      *
      * @param epochMilli 毫秒时间
      * @return LocalDateTime
      */
-    public LocalDateTime toLocalDateTimeIgnoreMs(long epochMilli) {
+    public LocalDateTime toDateTimeIgnoreMs(long epochMilli) {
         return LocalDateTime.ofEpochSecond(epochMilli / 1000, 0, zoneOffset);
     }
+    // endregion
+
+    // region parse-format
 
     /**
      * 将 毫秒时间 格式化为 默认字符串格式{@link TimeUtils#DEFAULT_PATTERN}
@@ -141,7 +159,7 @@ public class TimeHelper {
      * @return 格式化后的字符串表示
      */
     public String formatTime(long epochMilli, DateTimeFormatter formatter) {
-        LocalDateTime localDateTime = toLocalDateTime(epochMilli);
+        LocalDateTime localDateTime = toDateTime(epochMilli);
         return formatter.format(localDateTime);
     }
 
@@ -164,12 +182,15 @@ public class TimeHelper {
     public long parseTimeMillis(String dateString, DateTimeFormatter formatter) {
         return toEpochMillis(LocalDateTime.parse(dateString, formatter));
     }
+    // endregion
+
+    // region util
 
     /**
      * 获取当天特定小时的时间戳
      */
     public long getTimeHourOfToday(long epochMilli, int hour) {
-        final LocalDateTime localDateTime = toLocalDateTimeIgnoreMs(epochMilli)
+        final LocalDateTime localDateTime = toDateTimeIgnoreMs(epochMilli)
                 .with(LocalTime.of(hour, 0));
         return toEpochMillis(localDateTime);
     }
@@ -180,8 +201,8 @@ public class TimeHelper {
      * @param epochMilli 指定时间戳，用于确定日期
      * @return midnight of special day
      */
-    public long getTimeBeginOfToday(long epochMilli) {
-        final LocalDateTime localDateTime = toLocalDateTimeIgnoreMs(epochMilli)
+    public long getBeginOfToday(long epochMilli) {
+        final LocalDateTime localDateTime = toDateTimeIgnoreMs(epochMilli)
                 .with(TimeUtils.START_OF_DAY);
         return toEpochMillis(localDateTime);
     }
@@ -192,8 +213,8 @@ public class TimeHelper {
      * @param epochMilli 指定时间戳，用于确定日期
      * @return end time of special day
      */
-    public long getTimeEndOfToday(long epochMilli) {
-        final LocalDateTime localDateTime = toLocalDateTimeIgnoreMs(epochMilli)
+    public long getEndOfToday(long epochMilli) {
+        final LocalDateTime localDateTime = toDateTimeIgnoreMs(epochMilli)
                 .with(TimeUtils.END_OF_DAY);
         return toEpochMillis(localDateTime);
     }
@@ -203,8 +224,8 @@ public class TimeHelper {
      *
      * @param epochMilli 指定时间戳，用于确定所在的周
      */
-    public long getTimeBeginOfWeek(long epochMilli) {
-        final LocalDateTime startOfDay = toLocalDateTimeIgnoreMs(epochMilli)
+    public long getBeginOfWeek(long epochMilli) {
+        final LocalDateTime startOfDay = toDateTimeIgnoreMs(epochMilli)
                 .with(TimeUtils.START_OF_DAY);
         final int deltaDay = startOfDay.getDayOfWeek().getValue() - DayOfWeek.MONDAY.getValue();
         return toEpochMillis(startOfDay) - (deltaDay * TimeUtils.MILLIS_PER_DAY);
@@ -215,16 +236,16 @@ public class TimeHelper {
      *
      * @param epochMilli 指定时间戳，用于确定所在的周
      */
-    public long getTimeEndOfWeek(long epochMilli) {
-        return getTimeBeginOfWeek(epochMilli) + TimeUtils.MILLIS_PER_WEEK - 1;
+    public long getEndOfWeek(long epochMilli) {
+        return getBeginOfWeek(epochMilli) + TimeUtils.MILLIS_PER_WEEK - 1;
     }
 
     /**
      * 获取本月的开始时间戳
      * 本月第一天的 00:00:00.000
      */
-    public long getTimeBeginOfMonth(long epochMilli) {
-        final LocalDateTime firstDayOfMonth = toLocalDateTimeIgnoreMs(epochMilli)
+    public long getBeginOfMonth(long epochMilli) {
+        final LocalDateTime firstDayOfMonth = toDateTimeIgnoreMs(epochMilli)
                 .with(TimeUtils.START_OF_DAY)
                 .withDayOfMonth(1);
         return toEpochMillis(firstDayOfMonth);
@@ -234,8 +255,8 @@ public class TimeHelper {
      * 获取本月的结束时间戳
      * 本月最后一天的23:59:59.999
      */
-    public long getTimeEndOfMonth(long epochMilli) {
-        final LocalDateTime endOfDay = toLocalDateTimeIgnoreMs(epochMilli).with(TimeUtils.END_OF_DAY);
+    public long getEndOfMonth(long epochMilli) {
+        final LocalDateTime endOfDay = toDateTimeIgnoreMs(epochMilli).with(TimeUtils.END_OF_DAY);
         final LocalDateTime lastDayOfMonth = endOfDay.withDayOfMonth(TimeUtils.lengthOfMonth(endOfDay));
         return toEpochMillis(lastDayOfMonth);
     }
@@ -245,8 +266,8 @@ public class TimeHelper {
      *
      * @param deltaMonth 月份差值
      */
-    public long getTimeBeginOfMonth(long epochMilli, int deltaMonth) {
-        final LocalDateTime firstDayOfNextMonth = toLocalDateTimeIgnoreMs(epochMilli)
+    public long getBeginOfMonth(long epochMilli, int deltaMonth) {
+        final LocalDateTime firstDayOfNextMonth = toDateTimeIgnoreMs(epochMilli)
                 .with(TimeUtils.START_OF_DAY)
                 .withDayOfMonth(1) // 放在加月份前面，可以避免奇怪的语义
                 .plusMonths(deltaMonth);
@@ -258,8 +279,8 @@ public class TimeHelper {
      *
      * @param deltaMonth 月份差值
      */
-    public long getTimeEndOfMonth(long epochMilli, int deltaMonth) {
-        final LocalDateTime firstDayOfNextMonth = toLocalDateTimeIgnoreMs(epochMilli)
+    public long getEndOfMonth(long epochMilli, int deltaMonth) {
+        final LocalDateTime firstDayOfNextMonth = toDateTimeIgnoreMs(epochMilli)
                 .with(TimeUtils.END_OF_DAY)
                 .withDayOfMonth(1) // 放在加月份前面，可以避免奇怪的语义
                 .plusMonths(deltaMonth);
@@ -277,7 +298,7 @@ public class TimeHelper {
      * @return true/false，如果是同一天则返回true，否则返回false。
      */
     public boolean isSameDay(long time1, long time2) {
-        return toLocalEpochDay(time1) == toLocalEpochDay(time2);
+        return toEpochDay(time1) == toEpochDay(time2);
     }
 
     /**
@@ -288,7 +309,7 @@ public class TimeHelper {
      * @return >=0,同一天返回0，否则返回值大于0
      */
     public int differDays(long time1, long time2) {
-        return Math.abs(toLocalEpochDay(time1) - toLocalEpochDay(time2));
+        return Math.abs(toEpochDay(time1) - toEpochDay(time2));
     }
 
     /**
@@ -299,7 +320,7 @@ public class TimeHelper {
      * @return true/false，如果是同一周则返回true，否则返回false。
      */
     public boolean isSameWeek(long time1, long time2) {
-        return getTimeBeginOfWeek(time1) == getTimeBeginOfWeek(time2);
+        return getBeginOfWeek(time1) == getBeginOfWeek(time2);
     }
 
     /**
@@ -310,9 +331,10 @@ public class TimeHelper {
      * @return >=0,同一周返回0，否则返回值大于0
      */
     public int differWeeks(long time1, long time2) {
-        final long deltaTime = getTimeBeginOfWeek(time1) - getTimeBeginOfWeek(time2);
+        final long deltaTime = getBeginOfWeek(time1) - getBeginOfWeek(time2);
         return (int) Math.abs(deltaTime / TimeUtils.MILLIS_PER_WEEK);
     }
+    // endregion
 
     /**
      * 组合下来4中格式：

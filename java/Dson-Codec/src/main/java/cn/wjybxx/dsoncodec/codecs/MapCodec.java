@@ -152,7 +152,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
         //
         Map<K, V> result = factory != null ? factory.get() : newMap();
-        if (reader.options().writeMapAsDocument) {
+        if (reader.getCurrentDsonType() == DsonType.OBJECT) {
             reader.readStartObject();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
