@@ -122,6 +122,10 @@ public class ForwardFuture<T> : IFuture<T>
         return future.ExceptionNow(throwIfCancelled);
     }
 
+    public object ExceptionOrDispatchInfoNow() {
+        return future.ExceptionOrDispatchInfoNow();
+    }
+
     public T Get() {
         return future.Get();
     }

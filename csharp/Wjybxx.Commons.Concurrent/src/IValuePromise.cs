@@ -50,7 +50,8 @@ public interface IValuePromise
     /// <summary>
     /// 返回原始的异常数据
     /// 
-    /// 返回值类型：<see cref="OperationCanceledException"/>或<see cref="ExceptionDispatchInfo"/>
+    /// 返回值类型：<see cref="OperationCanceledException"/>或<see cref="ExceptionDispatchInfo"/>，
+    /// 用于解决C#异常信息传递开销问题。
     /// </summary>
     /// <param name="reentryId"></param>
     /// <param name="ignoreReentrant"></param>

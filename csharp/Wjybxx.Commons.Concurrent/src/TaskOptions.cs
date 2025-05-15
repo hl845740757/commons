@@ -109,7 +109,12 @@ public static class TaskOptions
     /// 抑制await抛出失败异常(性能因素)
     /// </summary>
     public const int SUPPRESS_ERROR_THROW = 1 << 26;
-
+    
+    /// <summary>
+    /// 抑制await抛出异常(性能因素)
+    /// </summary>
+    public const int SUPPRESS_ALL_THROW = SUPPRESS_CANCELLATION_THROW | SUPPRESS_ERROR_THROW;
+    
     #region util
 
     /** 优先级的存储偏移量 */

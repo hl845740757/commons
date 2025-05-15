@@ -40,7 +40,7 @@ public readonly struct TaskResult
     /** 通过工厂方法创建 */
     private TaskResult(object? result, object? ex) {
         _result = result;
-        _ex = ex;
+        _ex = ex == null ? null : AbstractPromise.WrapException(ex);
     }
 
     #region factory
@@ -107,6 +107,7 @@ public readonly struct TaskResult
 #nullable enable
     /// <summary>
     /// 获取任务关联的异常，成功的情况下返回null
+    /// (应当避免多次调用)
     /// </summary>
     public Exception? Exception {
         get {
@@ -154,7 +155,7 @@ public readonly struct TaskResult<T>
     /** 通过工厂方法创建 */
     private TaskResult(T result, object? ex) {
         _result = result;
-        _ex = ex;
+        _ex = ex == null ? null : AbstractPromise.WrapException(ex);
     }
 
     #region factory
@@ -220,6 +221,7 @@ public readonly struct TaskResult<T>
 #nullable enable
     /// <summary>
     /// 获取任务关联的异常，成功的情况下返回null
+    /// (应当避免多次调用)
     /// </summary>
     public Exception? Exception {
         get {

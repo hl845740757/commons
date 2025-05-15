@@ -15,8 +15,8 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-        <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+<!--        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>-->
+<!--        <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>-->
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

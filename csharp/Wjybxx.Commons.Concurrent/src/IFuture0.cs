@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -106,6 +107,15 @@ public interface IFuture
     /// <exception cref="IllegalStateException">如果任务不是失败完成状态</exception>
     /// <returns></returns>
     Exception ExceptionNow(bool throwIfCancelled = true);
+
+    /// <summary>
+    /// 返回原始的异常数据
+    /// 
+    /// 返回值类型：<see cref="OperationCanceledException"/>或<see cref="ExceptionDispatchInfo"/>，
+    /// 用于解决C#异常信息传递开销问题。
+    /// </summary>
+    /// <returns></returns>
+    object ExceptionOrDispatchInfoNow();
 
     /// <summary>
     /// 如果任务失败，则抛出异常

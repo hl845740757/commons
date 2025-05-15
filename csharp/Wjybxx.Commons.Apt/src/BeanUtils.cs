@@ -60,15 +60,12 @@ public static class BeanUtils
     }
 
     /// <summary>
-    /// 
+    /// 是否包含无参构造方法
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
     public static bool ContainsNoArgsConstructor(INamedTypeSymbol type) {
-        foreach (var methodSymbol in type.InstanceConstructors) {
-            if (methodSymbol.Parameters.Length == 0) return true;
-        }
-        return false;
+        return GetNoArgsConstructor(type) != null;
     }
 
     /// <summary>
@@ -78,13 +75,24 @@ public static class BeanUtils
     /// <param name="argType"></param>
     /// <returns></returns>
     public static bool ContainsOneArgsConstructor(INamedTypeSymbol type, ITypeSymbol argType) {
+        return GetOneArgsConstructor(type, argType) != null;
+    }
+
+    public static IMethodSymbol? GetNoArgsConstructor(INamedTypeSymbol type, bool onlyPublic = false) {
+        foreach (var methodSymbol in type.InstanceConstructors) {
+            if (methodSymbol.Parameters.Length == 0) return methodSymbol;
+        }
+        return null;
+    }
+
+    public static IMethodSymbol? GetOneArgsConstructor(INamedTypeSymbol type, ITypeSymbol argType) {
         // TODO 参数如果是未构造泛型是否有问题
         SymbolEqualityComparer comparer = SymbolEqualityComparer.Default;
         foreach (var methodSymbol in type.InstanceConstructors) {
             if (methodSymbol.Parameters.Length != 1) continue;
-            if (argType.Equals(methodSymbol.Parameters[0], comparer)) return true;
+            if (argType.Equals(methodSymbol.Parameters[0], comparer)) return methodSymbol;
         }
-        return false;
+        return null;
     }
 
     #endregion

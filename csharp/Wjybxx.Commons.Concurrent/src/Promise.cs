@@ -109,15 +109,15 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         _ex = null; // store fence
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void SetExecutor(IExecutor e) {
+        _executor = e;
+    }
+
     /// <summary>
     /// Promise进入了完成状态，子类可清理不再需要的数据，不可执行其它逻辑
     /// </summary>
     protected virtual void OnCompleted() {
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void SetExecutor(IExecutor e) {
-        _executor = e;
     }
 
     private bool InternalSetResult(T? result) {
@@ -316,6 +316,10 @@ public class Promise<T> : AbstractPromise, IPromise<T>
 
     public Exception ExceptionNow(bool throwIfCancelled = true) {
         return ExceptionNow(PollState(), _ex, throwIfCancelled);
+    }
+
+    public object ExceptionOrDispatchInfoNow() {
+        return ExceptionOrDispatchInfoNow(PollState(), _ex);
     }
 
     public void ThrowIfFailedOrCancelled() {

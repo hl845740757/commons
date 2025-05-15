@@ -257,7 +257,7 @@ public readonly struct ValueFuture
         } else {
             IFuture future = (IFuture)_future;
             if (suppressedTypes.IsSuppressible(future.Status)) {
-                return TaskResult.FromException(future.ExceptionNow(false));
+                return TaskResult.InternalFromException(future.ExceptionOrDispatchInfoNow());
             }
             if (requireResult) {
                 return TaskResult.FromResult(future.Get());
@@ -545,7 +545,7 @@ public readonly struct ValueFuture<T>
         } else {
             IFuture<T> future = (IFuture<T>)_future;
             if (suppressedTypes.IsSuppressible(future.Status)) {
-                return TaskResult<T>.InternalFromException(future.ExceptionNow(false));
+                return TaskResult<T>.InternalFromException(future.ExceptionOrDispatchInfoNow());
             }
             return TaskResult<T>.FromResult(future.Get());
         }

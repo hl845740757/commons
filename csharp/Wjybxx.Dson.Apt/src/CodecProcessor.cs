@@ -136,7 +136,7 @@ public class CodecProcessor : IIncrementalGenerator
     #region init
 
     private void EnsureInited(SourceProductionContext sourceProductionContext, Compilation compilation) {
-        if (anno_DsonSerializable != null) return;
+        if (this.compilation != null) return;
         this.sourceProductionContext = sourceProductionContext;
         this.compilation = compilation;
         this.processorInfoAnnotation = AptUtils.NewProcessorInfoAnnotation(typeof(CodecProcessor),
@@ -170,17 +170,15 @@ public class CodecProcessor : IIncrementalGenerator
         type_ObjectStyle = compilation.GetTypeByMetadataName(CNAME_ObjectStyle);
     }
 
-    private void ReportDiagnostic(DiagnosticDescriptor descriptor, ISymbol? symbol, params object[] args) {
+    private void ReportDiagnostic(DiagnosticSeverity severity, ISymbol? symbol, int code, string msgFormat, params object[] args) {
         Location? location = symbol == null ? null : symbol.GetFirstLocation();
+        DiagnosticDescriptor descriptor = new DiagnosticDescriptor("DsonApt" + code, "", msgFormat, "DsonApt", severity, true);
         sourceProductionContext.ReportDiagnostic(Diagnostic.Create(descriptor, location, args));
     }
 
     private void ReportException(Exception ex, ISymbol? symbol) {
-        ReportDiagnostic(new DiagnosticDescriptor("DS0001",
-                "Exception",
-                "Generator Code Caught Exception message: {0}, stackTrace: {1}", "DsonCodec",
-                DiagnosticSeverity.Error, true),
-            symbol, ex.Message, ex.StackTrace);
+        ReportDiagnostic(DiagnosticSeverity.Error, symbol, 0001, "Generator Caught Exception message: {0}, stackTrace: {1}",
+            ex.Message, ex.StackTrace);
     }
 
     public void Initialize(IncrementalGeneratorInitializationContext context) {
@@ -232,6 +230,13 @@ public class CodecProcessor : IIncrementalGenerator
                 }
             });
         }
+    }
+
+    private static bool IsBuildingAssemblyNode(GeneratorAttributeSyntaxContext node) {
+        IAssemblySymbol buildingAssembly = node.SemanticModel.Compilation.Assembly;
+        IAssemblySymbol nodeAssembly = node.TargetSymbol.ContainingAssembly;
+        return buildingAssembly.Name == nodeAssembly.Name;
+        // return nodeAssembly.Equals(buildingAssembly, SymbolEqualityComparer.Default);
     }
 
     #endregion
@@ -334,13 +339,6 @@ public class CodecProcessor : IIncrementalGenerator
                 GenericCodec(context);
             }
         }
-    }
-
-    private static bool IsBuildingAssemblyNode(GeneratorAttributeSyntaxContext node) {
-        IAssemblySymbol buildingAssembly = node.SemanticModel.Compilation.Assembly;
-        IAssemblySymbol nodeAssembly = node.TargetSymbol.ContainingAssembly;
-        return buildingAssembly.Name == nodeAssembly.Name;
-        // return nodeAssembly.Equals(buildingAssembly, SymbolEqualityComparer.Default);
     }
 
     private void ProcessDirectType(SourceProductionContext sourceProductionContext, GeneratorAttributeSyntaxContext node) {
@@ -551,15 +549,10 @@ public class CodecProcessor : IIncrementalGenerator
         if (!CanSetDirectly(fieldInfo)
             && string.IsNullOrWhiteSpace(aptFieldProps.setter)
             && !fieldInfo.HasPublicSetter) {
-            //
-            ReportDiagnostic(new DiagnosticDescriptor(
-                    id: "DC1001",
-                    title: "Setter Absent",
-                    messageFormat: "auto write field {0} must be public or contains a public setter",
-                    category: "DsonCodec",
-                    DiagnosticSeverity.Error,
-                    isEnabledByDefault: true),
-                fieldInfo.fieldSymbol, fieldInfo.Name);
+            // 由于可能是超类的字段，symbol可能为null，所以格式化文本中追加字段名
+            ReportDiagnostic(DiagnosticSeverity.Error, fieldInfo.fieldSymbol, 1001,
+                "auto read field {0} must be public or contains a public getter",
+                fieldInfo.Name);
         }
     }
 
@@ -572,15 +565,10 @@ public class CodecProcessor : IIncrementalGenerator
         if (!CanGetDirectly(fieldInfo)
             && string.IsNullOrWhiteSpace(aptFieldProps.getter)
             && !fieldInfo.HasPublicGetter) {
-            //
-            ReportDiagnostic(new DiagnosticDescriptor(
-                    id: "DC1002",
-                    title: "Getter Absent",
-                    messageFormat: "auto write field {0} must be public or contains a public getter",
-                    category: "DsonCodec",
-                    DiagnosticSeverity.Error,
-                    isEnabledByDefault: true),
-                fieldInfo.fieldSymbol, fieldInfo.Name);
+            // 由于可能是超类的字段，symbol可能为null，所以格式化文本中追加字段名
+            ReportDiagnostic(DiagnosticSeverity.Error, fieldInfo.fieldSymbol, 1002,
+                "auto write field {0} must be public or contains a public setter",
+                fieldInfo.Name);
         }
     }
 
@@ -598,14 +586,9 @@ public class CodecProcessor : IIncrementalGenerator
             || ContainsNewInstanceMethod(typeSymbol)) {
             return;
         }
-        ReportDiagnostic(new DiagnosticDescriptor(
-                id: "DC1003",
-                title: "Constructor Absent",
-                messageFormat: "SerializableClass {0} must contains no-args constructor or reader-args constructor!",
-                category: "DsonCodec",
-                DiagnosticSeverity.Error,
-                isEnabledByDefault: true),
-            typeSymbol, typeSymbol.Name);
+        //
+        ReportDiagnostic(DiagnosticSeverity.Error, typeSymbol, 1003,
+            "SerializableClass must contains public no-args constructor or reader-args constructor!");
     }
 
     #endregion
