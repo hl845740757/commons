@@ -95,8 +95,18 @@ public interface IValuePromise
     /// <summary>
     /// 转换为普通的Future
     /// 需要支持死锁检测
+    /// <param name="reentryId">重入id，校验是否被重用</param>
     /// </summary>
     IFuture AsFuture(int reentryId);
+
+    /// <summary>
+    /// 转换为装箱后普通的Future
+    /// 需要支持死锁检测
+    /// </summary>
+    /// <param name="reentryId">重入id，校验是否被重用</param>
+    /// <typeparam name="U">下游输出类型</typeparam>
+    /// <returns></returns>
+    IFuture<U> AsFuture<U>(int reentryId);
 
     /// <summary>
     /// 用户不需要结果，Promise进入完成状态时即可回收

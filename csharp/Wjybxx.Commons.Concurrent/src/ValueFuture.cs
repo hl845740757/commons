@@ -168,11 +168,10 @@ public readonly struct ValueFuture
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
             return Promise<object>.FromException(dispatchInfo);
         }
-        if (_future is IFuture future) {
-            return future;
+        if (_future is IValuePromise valuePromise) {
+            return valuePromise.AsFuture(_reentryId);
         }
-        IValuePromise valuePromise = (IValuePromise)_future;
-        return valuePromise.AsFuture(_reentryId);
+        return (IFuture)_future;
     }
 
     /// <summary>
@@ -214,10 +213,10 @@ public readonly struct ValueFuture
         }
         if (_future is IValuePromise valuePromise) {
             valuePromise.GetVoidResult(_reentryId);
-        } else {
-            IFuture future = (IFuture)_future;
-            future.ThrowIfFailedOrCancelled();
+            return;
         }
+        IFuture future = (IFuture)_future;
+        future.ThrowIfFailedOrCancelled();
     }
 
     /// <summary>
@@ -254,17 +253,16 @@ public readonly struct ValueFuture
                 valuePromise.GetVoidResult(_reentryId);
                 return default;
             }
+        }
+        IFuture future = (IFuture)_future;
+        if (suppressedTypes.IsSuppressible(future.Status)) {
+            return TaskResult.InternalFromException(future.ExceptionOrDispatchInfoNow());
+        }
+        if (requireResult) {
+            return TaskResult.FromResult(future.Get());
         } else {
-            IFuture future = (IFuture)_future;
-            if (suppressedTypes.IsSuppressible(future.Status)) {
-                return TaskResult.InternalFromException(future.ExceptionOrDispatchInfoNow());
-            }
-            if (requireResult) {
-                return TaskResult.FromResult(future.Get());
-            } else {
-                future.ThrowIfFailedOrCancelled();
-                return default;
-            }
+            future.ThrowIfFailedOrCancelled();
+            return default;
         }
     }
 
@@ -333,6 +331,13 @@ public readonly struct ValueFuture<T>
         _ex = null;
     }
 
+    private ValueFuture(IValuePromise<object> future, int reentryId) {
+        _future = future ?? throw new ArgumentNullException(nameof(future));
+        _reentryId = reentryId;
+        _result = default;
+        _ex = null;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaiter<T> GetAwaiter() => new(this);
 
@@ -352,7 +357,7 @@ public readonly struct ValueFuture<T>
     #region factory
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ValueFuture<T> FromResult(T result) {
+    public static ValueFuture<T> FromResult(T? result) {
         return new ValueFuture<T>(result, null);
     }
 
@@ -378,6 +383,21 @@ public readonly struct ValueFuture<T>
     internal static ValueFuture<T> InternalFromException(object ex) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
         return new ValueFuture<T>(default, ex);
+    }
+
+    /// <summary>
+    /// 以不安全的方式创建一个future
+    ///
+    /// Q：该方法的作用？
+    /// A：虽然<see cref="IValuePromise{T}"/>是池化的对象，但如果每一个泛型类型都使用独立的对象池，那么内存空间的利用率是低效的；
+    /// 在CS的网络通信中，如RPC，结果类型通常是引用类型，为每个引用类型维护单独的对象池会造成大量不必要的浪费。
+    /// 在这类场景，我们可以在底层总是使用object类型，而返回给用户的<see cref="ValueFuture{T}"/>是具体类型，从而优化对象的利用效率。
+    /// </summary>
+    /// <param name="future"></param>
+    /// <param name="reentryId"></param>
+    /// <returns></returns>
+    public static ValueFuture<T> UnsafeCreate(IValuePromise<object> future, int reentryId) {
+        return new ValueFuture<T>(future, reentryId);
     }
 
     #endregion
@@ -443,11 +463,13 @@ public readonly struct ValueFuture<T>
             ExceptionDispatchInfo dispatchInfo = (ExceptionDispatchInfo)_ex;
             return Promise<T>.FromException(dispatchInfo);
         }
-        if (_future is IFuture<T> future) {
-            return future;
+        if (_future is IValuePromise<T> valuePromise) {
+            return valuePromise.AsFuture(_reentryId);
         }
-        IValuePromise<T> valuePromise = (IValuePromise<T>)_future;
-        return valuePromise.AsFuture(_reentryId);
+        if (_future is IValuePromise<object> unsafePromise) {
+            return unsafePromise.AsFuture<T>(_reentryId);
+        }
+        return (IFuture<T>)_future;
     }
 
     /// <summary>
@@ -479,10 +501,10 @@ public readonly struct ValueFuture<T>
             }
             return ValueFuture.InternalFromException(_ex);
         }
-        if (_future is IFuture future) {
-            return new ValueFuture(future);
+        if (_future is IValuePromise valuePromise) {
+            return new ValueFuture(valuePromise, _reentryId);
         }
-        return new ValueFuture((IValuePromise)_future, _reentryId);
+        return new ValueFuture((IFuture)_future);
     }
 
     #region internal
@@ -508,10 +530,12 @@ public readonly struct ValueFuture<T>
         }
         if (_future is IValuePromise<T> valuePromise) {
             return valuePromise.GetResult(_reentryId);
-        } else {
-            IFuture<T> future = (IFuture<T>)_future;
-            return future.Get();
         }
+        if (_future is IValuePromise<object> unsafePromise) {
+            return (T)unsafePromise.GetResult(_reentryId);
+        }
+        IFuture<T> future = (IFuture<T>)_future;
+        return future.Get();
     }
 
     /// <summary>
@@ -542,13 +566,18 @@ public readonly struct ValueFuture<T>
                 return TaskResult<T>.InternalFromException(valuePromise.GetExceptionOrDispatchInfo(_reentryId));
             }
             return TaskResult<T>.FromResult(valuePromise.GetResult(_reentryId));
-        } else {
-            IFuture<T> future = (IFuture<T>)_future;
-            if (suppressedTypes.IsSuppressible(future.Status)) {
-                return TaskResult<T>.InternalFromException(future.ExceptionOrDispatchInfoNow());
-            }
-            return TaskResult<T>.FromResult(future.Get());
         }
+        if (_future is IValuePromise<object> unsafePromise) {
+            if (suppressedTypes.IsSuppressible(unsafePromise.GetStatus(_reentryId))) {
+                return TaskResult<T>.InternalFromException(unsafePromise.GetExceptionOrDispatchInfo(_reentryId));
+            }
+            return TaskResult<T>.FromResult((T)unsafePromise.GetResult(_reentryId));
+        }
+        IFuture<T> future = (IFuture<T>)_future;
+        if (suppressedTypes.IsSuppressible(future.Status)) {
+            return TaskResult<T>.InternalFromException(future.ExceptionOrDispatchInfoNow());
+        }
+        return TaskResult<T>.FromResult(future.Get());
     }
 
     internal void OnCompleted(Action action, IExecutor? executor, int options) {
@@ -556,14 +585,14 @@ public readonly struct ValueFuture<T>
             throw new IllegalStateException();
         }
         if (action == null) throw new ArgumentNullException(nameof(action));
-        if (_future is IValuePromise<T> valuePromise) {
+        if (_future is IValuePromise valuePromise) {
             if (executor != null) {
                 valuePromise.OnCompletedAsync(_reentryId, executor, ValueFuture.invoker, action, options);
             } else {
                 valuePromise.OnCompleted(_reentryId, ValueFuture.invoker, action, options);
             }
         } else {
-            IFuture<T> future = (IFuture<T>)_future;
+            IFuture future = (IFuture)_future;
             if (executor != null) {
                 future.OnCompletedAsync(executor, ValueFuture.invoker, action, options);
             } else {

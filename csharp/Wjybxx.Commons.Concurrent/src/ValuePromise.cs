@@ -362,6 +362,35 @@ public class ValuePromise<T> : IValuePromise<T>
         return r;
     }
 
+    public IFuture<U> AsFuture<U>(int reentryId) {
+        // 当前的T可能是超类型，如object，因此无法简单检测类型转换的安全性
+        ValidateReentryId(reentryId);
+        TaskStatus status = Status;
+        switch (status) {
+            case TaskStatus.Success: {
+                T result = GetResult(reentryId); // 触发回收
+                U? castR = (U?)(object?)result;
+                return Promise<U>.FromResult(castR);
+            }
+            case TaskStatus.Cancelled: {
+                Exception ex = GetException(reentryId); // 触发回收-可能是子类异常
+                return ex.GetType() == typeof(OperationCanceledException)
+                    ? Promise<U>.CANCELLED
+                    : Promise<U>.FromException(ex);
+            }
+            case TaskStatus.Failed: {
+                object ex = GetExceptionOrDispatchInfo(reentryId);
+                return Promise<U>.FromException((ExceptionDispatchInfo)ex);
+            }
+            default: {
+                // 添加回调
+                Promise<U> promise = new Promise<U>(_executor);
+                SetCompletion(TYPE_SET_PROMISE_U, promise, null, null, 0);
+                return promise;
+            }
+        }
+    }
+
     public IFuture<T> AsFuture(int reentryId) {
         ValidateReentryId(reentryId);
         TaskStatus status = Status;
@@ -383,7 +412,7 @@ public class ValuePromise<T> : IValuePromise<T>
             default: {
                 // 添加回调
                 Promise<T> promise = new Promise<T>(_executor);
-                SetCompletion(TYPE_SET_PROMISE, promise, null, null, 0);
+                SetCompletion(TYPE_SET_PROMISE_T, promise, null, null, 0);
                 return promise;
             }
         }
@@ -521,8 +550,8 @@ public class ValuePromise<T> : IValuePromise<T>
 
     private const int TYPE_RUN = 0;
     private const int TYPE_RUN_CTX = 1;
-    private const int TYPE_SET_VOID_PROMISE = 2;
-    private const int TYPE_SET_PROMISE = 3;
+    private const int TYPE_SET_PROMISE_U = 2;
+    private const int TYPE_SET_PROMISE_T = 3;
     private const int TYPE_FORGET = 4;
 
     /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
@@ -630,10 +659,11 @@ public class ValuePromise<T> : IValuePromise<T>
                         action(state);
                         break;
                     }
-                    case TYPE_SET_VOID_PROMISE: {
-                        IPromise<int> output = (IPromise<int>)this.action;
+                    case TYPE_SET_PROMISE_U: {
+                        // 装箱
+                        IPromise output = (IPromise)this.action;
                         if (input.Status == TaskStatus.Success) {
-                            output.TrySetResult(0);
+                            output.TrySetResult(input.ResultNow());
                         } else {
                             output.TrySetException(input.ExceptionNow(false));
                         }
@@ -641,7 +671,8 @@ public class ValuePromise<T> : IValuePromise<T>
                         input.PrepareToRecycle();
                         break;
                     }
-                    case TYPE_SET_PROMISE: {
+                    case TYPE_SET_PROMISE_T: {
+                        // 非装箱
                         IPromise<T> output = (IPromise<T>)this.action;
                         if (input.Status == TaskStatus.Success) {
                             output.TrySetResult(input.ResultNow());

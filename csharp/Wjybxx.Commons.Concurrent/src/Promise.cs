@@ -78,7 +78,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         }
     }
 
-    public static Promise<T> FromResult(T result, IExecutor? executor = null) {
+    public static Promise<T> FromResult(T? result, IExecutor? executor = null) {
         return new Promise<T>(executor, result, null);
     }
 
