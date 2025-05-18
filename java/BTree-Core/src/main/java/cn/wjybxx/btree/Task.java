@@ -16,6 +16,8 @@
 package cn.wjybxx.btree;
 
 import cn.wjybxx.base.MathCommon;
+import cn.wjybxx.base.concurrent.ICancelToken;
+import cn.wjybxx.base.concurrent.ICancelTokenListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -464,7 +466,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 注意：如果未启动自动监听，手动监听时也建议绑定到该方法
      */
     @Override
-    public void onCancelRequested(CancelToken cancelToken) {
+    public void onCancelRequested(ICancelToken cancelToken, Object ctx) {
         if (isRunning()) setCompleted(TaskStatus.CANCELLED, false);
     }
 

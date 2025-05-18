@@ -22,7 +22,7 @@ public readonly struct TaskAwaiter<T> : ICriticalNotifyCompletion where T : clas
     public bool IsCompleted => taskEntry.IsCompleted;
 
     // 2. GetResult
-    // TaskEntry不抛出一次
+    // TaskEntry不抛出异常
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void GetResult() {
         if (reentryId != taskEntry.ReentryId) {

@@ -20,7 +20,8 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
-using static Wjybxx.BTree.TaskOptions;
+using Wjybxx.Commons.Concurrent;
+using static Wjybxx.BTree.TaskAttributes;
 
 namespace Wjybxx.BTree
 {
@@ -131,7 +132,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 2.在运行期间不应该变动
     /// 3.高8位为流程控制特征值，会在任务运行前拷贝到ctl -- 以支持在编辑器导中指定Task的运行特征。
     /// 4.用户可以通过flags来识别child，以判断是否处理child的结果
-    /// ps：<see cref="TaskOptions"/>
+    /// ps：<see cref="TaskAttributes"/>
     /// </summary>
     protected int flags;
 
@@ -467,7 +468,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 注意：如果未启动自动监听，手动监听时也建议绑定到该方法
     /// </summary>
     /// <param name="cancelToken">进入取消状态的取消令牌</param>
-    public virtual void OnCancelRequested(CancelToken cancelToken) {
+    /// <param name="ctx">监听取消信号时的传入的参数</param>
+    public virtual void OnCancelRequested(ICancelToken cancelToken, object ctx) {
         if (IsRunning) SetCompleted(TaskStatus.CANCELLED, false);
     }
 

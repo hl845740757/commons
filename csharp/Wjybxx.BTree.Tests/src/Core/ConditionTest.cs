@@ -43,7 +43,7 @@ public class ConditionTest
         for (int i = 0; i < failCount; i++) {
             switch (BtreeTestUtil.random.Next(3)) {
                 case 0: {
-                    branch.GetChild(i).Flags = TaskOptions.MASK_INVERTED_GUARD;
+                    branch.GetChild(i).Flags = TaskAttributes.MASK_INVERTED_GUARD;
                     break;
                 }
                 case 1: {

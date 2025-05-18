@@ -23,7 +23,7 @@ namespace Wjybxx.BTree
 ///
 /// 通过静态导入引入到Task类，以避免重复定义
 /// </summary>
-public static class TaskOptions
+public static class TaskAttributes
 {
     // Ctl属性--运行时属性
     public const int MASK_SLOW_START = 1 << 24;
