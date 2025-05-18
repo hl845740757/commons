@@ -15,6 +15,7 @@
  */
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.ICancelToken;
 import cn.wjybxx.base.function.TriConsumer;
 import cn.wjybxx.base.function.TriFunction;
 

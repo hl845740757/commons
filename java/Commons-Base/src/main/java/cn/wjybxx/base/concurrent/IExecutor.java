@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2023-2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.concurrent;
+package cn.wjybxx.base.concurrent;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -24,7 +23,7 @@ import java.util.concurrent.RejectedExecutionException;
  * {@link IExecutor}在{@link Executor}的基础上增加了调度选项。
  * <p>
  * 该接口需要保持较高的抽象，因此将submit之类的方法下沉到子接口。如果需要获取任务结果，
- * 可通过{@link ExecutorUtils#submitFunc(Executor, Callable)}这类工具方法实现。
+ * 可通过{@code ExecutorUtils.submitFunc(Executor, Callable)}这类工具方法实现。
  *
  * @author wjybxx
  * date - 2024/1/9
@@ -61,6 +60,6 @@ public interface IExecutor extends Executor {
      * @implNote 实现类如果不支持选项，应该保守调度。
      */
     default void execute(Runnable command, int options) {
-        execute(ExecutorUtils.toTask(command, options));
+        execute(ExecutorCoreUtils.toTask(command, options));
     }
 }

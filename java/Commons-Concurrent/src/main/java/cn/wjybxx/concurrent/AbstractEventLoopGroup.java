@@ -16,6 +16,8 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.ICancelToken;
+
 import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.List;

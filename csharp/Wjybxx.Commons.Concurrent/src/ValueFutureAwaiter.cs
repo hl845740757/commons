@@ -38,7 +38,7 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
     /// <param name="options"></param>
     public ValueFutureAwaiter(ValueFuture future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = EventLoopUtil.GetAwaiterExecutor(executor);
+        _executor = ExecutorSynchronizationContext.GetAwaitExecutor(executor);
         _options = options;
     }
 
@@ -47,8 +47,7 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
     public bool IsCompleted {
         get {
             if (!_future.IsCompleted) return false;
-            if (_executor == null) return true;
-            return ExecutorUtil.IsInlinable(_executor, _options);
+            return ExecutorCoreUtil.IsInlinable(_executor, _options);
         }
     }
 
@@ -90,7 +89,7 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="options"></param>
     public ValueFutureAwaiter(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = EventLoopUtil.GetAwaiterExecutor(executor);
+        _executor = ExecutorSynchronizationContext.GetAwaitExecutor(executor);
         _options = options;
     }
 
@@ -99,8 +98,7 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
     public bool IsCompleted {
         get {
             if (!_future.IsCompleted) return false;
-            if (_executor == null) return true;
-            return ExecutorUtil.IsInlinable(_executor, _options);
+            return ExecutorCoreUtil.IsInlinable(_executor, _options);
         }
     }
 

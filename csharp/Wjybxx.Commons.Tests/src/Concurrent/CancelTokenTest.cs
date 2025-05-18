@@ -228,7 +228,7 @@ public class CancelTokenTest
         }
 
 
-        public void OnCancelRequested(ICancelToken cancelToken, object? ctx) {
+        public void OnCancelRequested(ICancelToken cancelToken, object ctx) {
             listener.Invoke(cancelToken);
         }
     }
@@ -317,7 +317,7 @@ public class CancelTokenTest
             throw new IllegalStateException();
         }
 
-        ICancelTokenSource cts = new CancelTokenSource();
+        CancelTokenSource cts = new CancelTokenSource();
         cts.CancelAfter(1, 100);
 
         Thread thread = Thread.CurrentThread;
@@ -337,7 +337,7 @@ public class CancelTokenTest
     #endregion
 
 
-    #region UniCts
+    #region code
 
     [Test]
     public void testCancelCode() {
@@ -387,5 +387,14 @@ public class CancelTokenTest
         Thread.Sleep(1000);
     }
 
+    [Test]
+    public async ValueFuture testAwait() {
+        CancelTokenSource cts = new CancelTokenSource();
+        globalEventLoop.Execute(() => cts.Cancel(1));
+        await globalEventLoop;
+        int code = await cts;
+        Assert.AreEqual(1, code);
+    }
+    
     #endregion
 }

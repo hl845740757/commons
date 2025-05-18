@@ -16,6 +16,8 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.IExecutor;
+import cn.wjybxx.base.concurrent.ImmediateExecutor;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
@@ -29,7 +31,7 @@ public class FutureLoggerTest {
     @Test
     void testTrace() {
         FutureLogger.setLogLevel(Level.TRACE);
-        IExecutor executor = Runnable::run;
+        IExecutor executor = ImmediateExecutor.INST;
         ExecutorUtils.submitFunc(executor, () -> {
             throw new RuntimeException("Trace");
         });
@@ -38,7 +40,7 @@ public class FutureLoggerTest {
     @Test
     void testWarn() {
         FutureLogger.setLogLevel(Level.WARN);
-        IExecutor executor = Runnable::run;
+        IExecutor executor = ImmediateExecutor.INST;
         ExecutorUtils.submitFunc(executor, () -> {
             throw new RuntimeException("Warn");
         });

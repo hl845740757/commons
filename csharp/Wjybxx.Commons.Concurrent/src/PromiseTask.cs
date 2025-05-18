@@ -160,7 +160,7 @@ public class PromiseTask<T> : IFutureTask
     /** 获取上下文中的取消令牌 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected ICancelToken GetCancelToken() {
-        return ExecutorUtil.GetCancelToken(ctx, options);
+        return ExecutorCoreUtil.GetCancelToken(ctx, options);
     }
 
     /** 运行可直接得出结果的任务 */

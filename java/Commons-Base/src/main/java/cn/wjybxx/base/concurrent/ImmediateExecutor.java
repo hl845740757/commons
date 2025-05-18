@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2023-2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,26 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.concurrent;
+package cn.wjybxx.base.concurrent;
 
 /**
- * 该接口用于特殊需求时减少闭包
- *
  * @author wjybxx
- * date - 2024/1/15
+ * date - 2025/5/16
  */
-public interface ICancelTokenListener {
+public final class ImmediateExecutor implements IExecutor {
 
-    void onCancelRequested(ICancelToken cancelToken, Object ctx);
+    public static final ImmediateExecutor INST = new ImmediateExecutor();
 
+    private ImmediateExecutor() {
+    }
+
+    @Override
+    public void execute(Runnable command) {
+        command.run();
+    }
+
+    @Override
+    public void execute(Runnable command, int options) {
+        command.run();
+    }
 }

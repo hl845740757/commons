@@ -166,7 +166,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
 
     @Override
     public void clear() {
-        if (len == 0) {
+        if (elementCount == 0) {
             return;
         }
         for (int idx = 0, len = this.len; idx < len; idx++) {

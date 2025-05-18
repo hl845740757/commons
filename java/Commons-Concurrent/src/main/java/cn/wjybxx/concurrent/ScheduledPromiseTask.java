@@ -20,7 +20,9 @@ import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.collection.IndexedElement;
 import cn.wjybxx.base.concurrent.CancelCodes;
+import cn.wjybxx.base.concurrent.ICancelToken;
 import cn.wjybxx.base.concurrent.StacklessCancellationException;
+import cn.wjybxx.base.concurrent.TaskOptions;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 
 import javax.annotation.Nonnull;
@@ -127,7 +129,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     }
 
     /** 获取任务的调度类型 */
-    public int getScheduleType() {
+    private int getScheduleType() {
         return (ctl & MASK_SCHEDULE_TYPE) >> OFFSET_SCHEDULE_TYPE;
     }
 
@@ -136,14 +138,24 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         ctl |= (scheduleType << OFFSET_SCHEDULE_TYPE);
     }
 
-    /** 获取任务所属的队列id */
+    /** 设置任务的优先级 */
     public int getPriority() {
-        return (ctl & TaskOptions.MASK_PRIORITY);
+        return TaskOptions.getPriority(options);
     }
 
-    /** @param priority 任务的优先级，范围 [0, 15] */
+    /** @param priority 任务的优先级，范围 [0, 31] */
     public void setPriority(int priority) {
-        ctl = TaskOptions.setPriority(ctl, priority);
+        options = TaskOptions.setPriority(options, priority);
+    }
+
+    /** 设置任务的调度阶段 */
+    public int getSchedulePhase() {
+        return TaskOptions.getSchedulePhase(options);
+    }
+
+    /** @param priority 任务的调度阶段，范围 [0, 31] */
+    public void setSchedulePhase(int priority) {
+        options = TaskOptions.setSchedulePhase(options, priority);
     }
 
     /** 任务是否触发过 -- 通常用于降低优先级 */
@@ -331,13 +343,13 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     // region cancel
 
-    /** 监听取消令牌中的取消信号 */
+    /** 监听取消令牌中的取消信号 -- 理论上由helper来监听更好 */
     private void registerCancellation() {
         // java端放弃监听future的完成事件，延迟删除
         // 注意：监听需要回调给Helper，参数为taskId -- 不能回调给自己，否则可能对象复用bug
         ICancelToken cancelToken = getCancelToken();
         if (cancelToken.canBeCancelled()) {
-            cancelRegistration = cancelToken.thenNotify(helper, getId());
+            cancelRegistration = cancelToken.thenNotify(helper, id);
         }
     }
 

@@ -16,6 +16,7 @@
 
 #endregion
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -46,6 +47,10 @@ public class ImmediateExecutor : IExecutor
 
     public void Execute(ITask task) {
         task.Run();
+    }
+
+    public void Execute(Action action, int options = 0) {
+        Execute(ExecutorCoreUtil.ToTask(action, options));
     }
 }
 }

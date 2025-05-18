@@ -18,7 +18,6 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -40,7 +39,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public FutureAwaiter(IFuture future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = EventLoopUtil.GetAwaiterExecutor(executor);
+        _executor = ExecutorSynchronizationContext.GetAwaitExecutor(executor);
         _options = options;
     }
 
@@ -49,8 +48,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     public bool IsCompleted {
         get {
             if (!_future.IsCompleted) return false;
-            if (_executor == null) return true;
-            return ExecutorUtil.IsInlinable(_executor, _options);
+            return ExecutorCoreUtil.IsInlinable(_executor, _options);
         }
     }
 
@@ -110,7 +108,7 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public FutureAwaiter(IFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = EventLoopUtil.GetAwaiterExecutor(executor);
+        _executor = ExecutorSynchronizationContext.GetAwaitExecutor(executor);
         _options = options;
     }
 
@@ -119,8 +117,7 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     public bool IsCompleted {
         get {
             if (!_future.IsCompleted) return false;
-            if (_executor == null) return true;
-            return ExecutorUtil.IsInlinable(_executor, _options);
+            return ExecutorCoreUtil.IsInlinable(_executor, _options);
         }
     }
 

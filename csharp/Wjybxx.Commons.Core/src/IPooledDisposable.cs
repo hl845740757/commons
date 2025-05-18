@@ -23,6 +23,17 @@ namespace Wjybxx.Commons
 /// </summary>
 public interface IPooledDisposable
 {
-    void Dispose(int reentryId);
+    /// <summary>
+    /// 查询资源对象是否已退出当前生命周期
+    /// </summary>
+    /// <param name="reentryId"></param>
+    /// <returns></returns>
+    bool IsDisposed(long reentryId);
+
+    /// <summary>
+    /// 关闭资源
+    /// </summary>
+    /// <param name="reentryId"></param>
+    void Dispose(long reentryId);
 }
 }

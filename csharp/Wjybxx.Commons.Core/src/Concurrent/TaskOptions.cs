@@ -27,6 +27,17 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public static class TaskOptions
 {
+    /** 优先级的存储偏移量 */
+    public const int OFFSET_PRIORITY = 8;
+    /** 优先级的存储偏移量 */
+    public const int OFFSET_SCHEDULE_PHASE = 13;
+
+    /** 优先级的最大值 */
+    public const int MAX_PRIORITY = 31;
+    /** 调度阶段的最大值 */
+    public const int MAX_SCHEDULE_PHASE = 31;
+
+
     /// <summary>
     /// 调度器使用的控制标识位(低8位)
     /// 调度器会擦除掉用户的低8位，存储调度器的信息
@@ -34,66 +45,53 @@ public static class TaskOptions
     public const int MASK_CTL_RESERVED = 0xFF;
 
     /// <summary>
-    /// 延时任务的优先级，取值[0, 15]。
+    /// 延时任务的优先级，取值[0, 31]。
     /// 1. 当任务的触发时间相同时，按照优先级排序，值越低优先级越高。
     /// 2. 由于0需要表示未设置优先级，因此Executor会对值进行偏移，通常而言是减1。
     /// 3. 优先级值的约定取决于各自的实现。
     /// </summary>
-    [Beta] public const int MASK_PRIORITY = 0x0F00;
+    [Beta] public const int MASK_PRIORITY = MAX_PRIORITY << OFFSET_PRIORITY;
     /// <summary>
-    /// 任务的调度阶段，取值[0, 15]。
+    /// 任务的调度阶段，取值[0, 31]。
     /// 1. 用于指定异步任务的调度时机。
-    /// 2. 主要用于{@link EventLoop}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
+    /// 2. 主要用于<see cref="ISingleThreadExecutor"/>这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
     ///</summary>
-    [Beta] public const int MASK_SCHEDULE_PHASE = 0xF000;
+    [Beta] public const int MASK_SCHEDULE_PHASE = MAX_SCHEDULE_PHASE << OFFSET_SCHEDULE_PHASE;
 
     /// <summary>
     /// 事件循环在执行该任务前必须先处理一次定时任务队列。
     /// 1. EventLoop收到具有该特征的任务时，需要更新时间戳，尝试执行该任务之前的所有定时任务。
     /// 2. 该选项不一定能保证时序，因为存在时序依赖的任务可能同时提交成功。
     ///</summary>
-    public const int SCHEDULE_BARRIER = 1 << 16;
+    public const int SCHEDULE_BARRIER = 1 << 18;
 
     /// <summary>
     /// 本地序（可以与其它线程无序）
     /// 对于EventLoop内部的任务，启用该特征值可跳过全局队列，这在EventLoop是有界的情况下可以避免死锁或阻塞。
     ///</summary>
-    public const int LOCAL_ORDER = 1 << 17;
+    public const int LOCAL_ORDER = 1 << 19;
 
     /// <summary>
     /// 唤醒事件循环线程
     /// 事件循环线程可能阻塞某些操作上，如果一个任务需要EventLoop及时处理，则可以启用该选项唤醒线程。
     ///</summary>
-    public const int WAKEUP_THREAD = 1 << 18;
+    public const int WAKEUP_THREAD = 1 << 20;
 
     /// <summary>
     /// 延时任务：在出现异常后继续执行。
     /// 1. 只适用无需结果的周期性任务 -- 分时任务会失败。
     /// 2. 如果需要取消任务，需通过取消令牌实现。
     ///</summary>
-    public const int CAUGHT_EXCEPTION = 1 << 19;
+    public const int CAUGHT_EXCEPTION = 1 << 21;
     /// <summary>
     /// 延时任务：在执行任务前检测超时
     /// 1. 也就是说在已经超时的情况下不执行任务。
     /// 2. 在执行后一定会检测一次超时。
     ///</summary>
-    public const int TIMEOUT_BEFORE_RUN = 1 << 20;
-    /// <summary>
-    /// 延时任务：监听来自future的取消信号
-    /// 
-    /// ps:监听取消信号的目的在于及时从队列中删除任务。
-    ///</summary>
-    private const int LISTEN_FUTURE_CANCEL = 1 << 21;
-    /// <summary>
-    /// 延时任务：监听取消令牌中的取消信号
-    ///
-    /// ps:监听取消信号的目的在于及时从队列中删除任务。
-    /// </summary>
-    public const int LISTEN_CTS_CANCEL = 22;
+    public const int TIMEOUT_BEFORE_RUN = 1 << 22;
 
     /// <summary>
     /// 如果一个异步任务当前已在目标<see cref="ISingleThreadExecutor"/>线程，则立即执行，而不提交任务。
-    /// 仅用于{@link ICompletionStage}
     ///</summary>
     public const int STAGE_TRY_INLINE = 1 << 23;
     /// <summary>
@@ -102,30 +100,28 @@ public static class TaskOptions
     /// </summary>
     public const int STAGE_UNCANCELLABLE_CTX = 1 << 24;
     /// <summary>
+    /// 监听用户上下文中包含的取消令牌
+    /// 
+    /// 1.该选项用于延时任务或监听器列表管理。
+    /// 2.如果调度器默认不会监听CTX中的取消令牌，那么应当响应用户的该选项。
+    /// </summary>
+    public const int STAGE_LISTEN_CANCEL_TOKEN = 1 << 25;
+
+    /// <summary>
     /// 抑制await抛出取消异常(性能因素)
     /// </summary>
-    public const int SUPPRESS_CANCELLATION_THROW = 1 << 25;
+    public const int SUPPRESS_CANCELLATION_THROW = 1 << 26;
     /// <summary>
     /// 抑制await抛出失败异常(性能因素)
     /// </summary>
-    public const int SUPPRESS_ERROR_THROW = 1 << 26;
-    
+    public const int SUPPRESS_ERROR_THROW = 1 << 27;
+
     /// <summary>
     /// 抑制await抛出异常(性能因素)
     /// </summary>
     public const int SUPPRESS_ALL_THROW = SUPPRESS_CANCELLATION_THROW | SUPPRESS_ERROR_THROW;
-    
+
     #region util
-
-    /** 优先级的存储偏移量 */
-    public const int OFFSET_PRIORITY = 8;
-    /** 优先级的存储偏移量 */
-    public const int OFFSET_SCHEDULE_PHASE = 12;
-
-    /** 优先级的最大值 */
-    public const int MAX_PRIORITY = 15;
-    /** 调度阶段的最大值 */
-    public const int MAX_SCHEDULE_PHASE = 15;
 
     /// <summary>
     /// 是否启用了所有选项
@@ -182,8 +178,7 @@ public static class TaskOptions
             return (flags & ~option);
         }
     }
-
-
+    
     /// <summary>
     /// 获取任务的优先级
     /// </summary>
@@ -191,7 +186,7 @@ public static class TaskOptions
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int GetPriority(int options) {
-        return options & MASK_PRIORITY;
+        return (options & MASK_PRIORITY) >> OFFSET_PRIORITY;
     }
 
     /// <summary>
@@ -206,7 +201,7 @@ public static class TaskOptions
             throw new ArgumentException("priority: " + priority);
         }
         options &= ~MASK_PRIORITY;
-        options |= priority;
+        options |= (priority << OFFSET_PRIORITY);
         return options;
     }
 

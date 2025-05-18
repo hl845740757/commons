@@ -28,9 +28,10 @@ public interface ICancelTokenListener
 #nullable disable
     /// <summary>
     /// 该方法在取消令牌收到取消信号时执行
+    /// 
     /// </summary>
     /// <param name="cancelToken">收到取消信号的令牌</param>
-    /// <param name="ctx"></param>
+    /// <param name="ctx">回调上下文，默认会检查ctx中的取消信号</param>
     void OnCancelRequested(ICancelToken cancelToken, object ctx);
 }
 }

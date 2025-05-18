@@ -19,7 +19,6 @@
 using System;
 using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
-using Wjybxx.Commons.Ex;
 using Wjybxx.Commons.Pool;
 using static Wjybxx.Commons.Concurrent.PromiseTask;
 using static Wjybxx.Commons.Concurrent.TaskBuilder;
@@ -155,12 +154,21 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     }
 
     /// <summary>
-    /// 任务的优先级，范围 [0, 15]
+    /// 任务的优先级，范围 [0, 31]
     /// </summary>
     /// <exception cref="ArgumentException"></exception>
     public int Priority {
-        get => ctl & TaskOptions.MASK_PRIORITY;
-        set => ctl = TaskOptions.SetPriority(ctl, value);
+        get => TaskOptions.GetPriority(options);
+        set => options = TaskOptions.SetPriority(options, value);
+    }
+
+    /// <summary>
+    /// 任务的调度阶段，范围 [0, 31]
+    /// </summary>
+    /// <exception cref="ArgumentException"></exception>
+    public int SchedulePhase {
+        get => TaskOptions.GetSchedulePhase(options);
+        set => options = TaskOptions.SetSchedulePhase(options, value);
     }
 
     /** 任务是否已调度过，通常用于降低优先级 */
@@ -331,7 +339,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         }
     }
 
-    /** 监听取消令牌中的取消信号 */
+    /** 监听取消令牌中的取消信号 -- 理论上由helper来监听更好 */
     private void RegisterCancellation() {
         // C# 的future中无取消方法，因此只需要监听取消令牌
         // 注意：监听需要回调给Helper，参数为taskId -- 不能回调给自己，否则可能对象复用bug

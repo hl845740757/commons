@@ -17,6 +17,7 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.concurrent.BetterCancellationException;
+import cn.wjybxx.base.concurrent.ICancelToken;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;

@@ -19,11 +19,10 @@ package cn.wjybxx.concurrent;
 import cn.wjybxx.base.IPooledCloseable;
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.Registration;
-import cn.wjybxx.base.concurrent.BetterCancellationException;
-import cn.wjybxx.base.concurrent.CancelCodeBuilder;
-import cn.wjybxx.base.concurrent.CancelCodes;
+import cn.wjybxx.base.concurrent.*;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 
+import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.Objects;
@@ -31,15 +30,15 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
  * 取消令牌源由任务的创建者（发起者）持有，具备取消权限。
- * <h3>实现说明</h3>
- * 这里的实现是{@link Promise}的翻版，但不同的是：取消令牌需要支持删除监听，而且取消令牌存在频繁增删监听的情况！
- * 由于实现高效且安全的删除并不容易，这里暂时采用延迟删除的方案。
+ * <p>
+ * 与{@link Promise}的实现差异：
+ * 1.监听器列表为双向链表，通过锁互斥。
+ * 2.监听器的通知未做栈深度优化，因为与监听器列表的删除冲突。
  *
  * @author wjybxx
  * date - 2024/1/8
@@ -48,19 +47,12 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     private static final IEventLoop delayer = GlobalEventLoop.INST;
 
-    /**
-     * 取消码
-     * - 0表示未收到取消信号
-     * - 非0表示收到取消信号
-     */
     @SuppressWarnings("unused")
     private volatile int code;
-    /**
-     * 当前对象上的所有监听器，使用栈方式存储
-     * 如果{@code stack}为{@link #TOMBSTONE}，表明当前Future已完成，且正在进行通知，或已通知完毕。
-     */
     @SuppressWarnings("unused")
-    private volatile Completion stack;
+    private volatile int lock;
+    private Completion _head;
+    private Completion _tail;
 
     public CancelTokenSource() {
 
@@ -126,7 +118,12 @@ public final class CancelTokenSource implements ICancelTokenSource {
                 : CancelCodes.REASON_DEFAULT);
     }
 
-    @Override
+    /**
+     * 在一段时间后发送取消命令
+     *
+     * @param cancelCode        取消码
+     * @param millisecondsDelay 延迟时间(毫秒) -- 单线程版的话，真实单位取决于约定。
+     */
     public void cancelAfter(int cancelCode, long millisecondsDelay) {
         cancelAfter(cancelCode, millisecondsDelay, TimeUnit.MILLISECONDS, delayer);
     }
@@ -134,12 +131,23 @@ public final class CancelTokenSource implements ICancelTokenSource {
     /**
      * 在一段时间后发送取消命令
      * (将由默认的调度器调度)
+     *
+     * @param cancelCode 取消码
+     * @param delay      延迟时间
+     * @param timeUnit   时间单位
      */
-    @Override
     public void cancelAfter(int cancelCode, long delay, TimeUnit timeUnit) {
         cancelAfter(cancelCode, delay, timeUnit, delayer);
     }
 
+    /**
+     * 在一段时间后发送取消命令
+     *
+     * @param cancelCode 取消码
+     * @param delay      延迟时间
+     * @param timeUnit   时间单位
+     * @param executor   调度器
+     */
     public void cancelAfter(int cancelCode, long delay, TimeUnit timeUnit, ScheduledExecutorService executor) {
         if (executor == null) throw new IllegalArgumentException("delayer is null");
         if (this.code == 0) {
@@ -256,10 +264,8 @@ public final class CancelTokenSource implements ICancelTokenSource {
             Completion.fireNow(this, TYPE_ACCEPT, action, null);
             return Registration.CLOSED;
         }
-        Completion completion = getComplete(executor, options, this, TYPE_ACCEPT, action, null);
-        // 需要在Push前拿到_rid
-        Registration registration = new Registration(completion, completion.rid);
-        return pushCompletion(completion) ? registration : Registration.CLOSED;
+        Completion completion = getCompletion(executor, options, this, TYPE_ACCEPT, action, null);
+        return pushCompletion(completion);
     }
 
     // endregion
@@ -295,10 +301,8 @@ public final class CancelTokenSource implements ICancelTokenSource {
             Completion.fireNow(this, TYPE_ACCEPT_CTX, action, ctx);
             return Registration.CLOSED;
         }
-        Completion completion = getComplete(executor, options, this, TYPE_ACCEPT_CTX, action, ctx);
-        // 需要在Push前拿到_rid
-        Registration registration = new Registration(completion, completion.rid);
-        return pushCompletion(completion) ? registration : Registration.CLOSED;
+        Completion completion = getCompletion(executor, options, this, TYPE_ACCEPT_CTX, action, ctx);
+        return pushCompletion(completion);
     }
 
     // endregion
@@ -333,10 +337,8 @@ public final class CancelTokenSource implements ICancelTokenSource {
             Completion.fireNow(this, TYPE_RUN, action, null);
             return Registration.CLOSED;
         }
-        Completion completion = getComplete(executor, options, this, TYPE_RUN, action, null);
-        // 需要在Push前拿到_rid
-        Registration registration = new Registration(completion, completion.rid);
-        return pushCompletion(completion) ? registration : Registration.CLOSED;
+        Completion completion = getCompletion(executor, options, this, TYPE_RUN, action, null);
+        return pushCompletion(completion);
     }
 
     // endregion
@@ -371,10 +373,8 @@ public final class CancelTokenSource implements ICancelTokenSource {
             Completion.fireNow(this, TYPE_RUN_CTX, action, ctx);
             return Registration.CLOSED;
         }
-        Completion completion = getComplete(executor, options, this, TYPE_RUN_CTX, action, ctx);
-        // 需要在Push前拿到_rid
-        Registration registration = new Registration(completion, completion.rid);
-        return pushCompletion(completion) ? registration : Registration.CLOSED;
+        Completion completion = getCompletion(executor, options, this, TYPE_RUN_CTX, action, ctx);
+        return pushCompletion(completion);
     }
 
     // endregion
@@ -408,10 +408,8 @@ public final class CancelTokenSource implements ICancelTokenSource {
             Completion.fireNow(this, TYPE_NOTIFY, listener, ctx);
             return Registration.CLOSED;
         }
-        Completion completion = getComplete(executor, options, this, TYPE_NOTIFY, listener, ctx);
-        // 需要在Push前拿到_rid
-        Registration registration = new Registration(completion, completion.rid);
-        return pushCompletion(completion) ? registration : Registration.CLOSED;
+        Completion completion = getCompletion(executor, options, this, TYPE_NOTIFY, listener, ctx);
+        return pushCompletion(completion);
     }
 
     // endregion
@@ -446,10 +444,8 @@ public final class CancelTokenSource implements ICancelTokenSource {
             Completion.fireNow(this, TYPE_TRANSFER, child, null);
             return Registration.CLOSED;
         }
-        Completion completion = getComplete(executor, options, this, TYPE_TRANSFER, child, null);
-        // 需要在Push前拿到_rid
-        Registration registration = new Registration(completion, completion.rid);
-        return pushCompletion(completion) ? registration : Registration.CLOSED;
+        Completion completion = getCompletion(executor, options, this, TYPE_TRANSFER, child, null);
+        return pushCompletion(completion);
     }
 
     // endregion
@@ -459,15 +455,15 @@ public final class CancelTokenSource implements ICancelTokenSource {
     // region core
 
     private static final VarHandle VH_CODE;
-    private static final VarHandle VH_STACK;
-    private static final VarHandle VH_RID;
+    private static final VarHandle VH_CTS_LOCK;
+    private static final VarHandle VH_NODE_LOCK;
 
     static {
         try {
             MethodHandles.Lookup l = MethodHandles.lookup();
             VH_CODE = l.findVarHandle(CancelTokenSource.class, "code", int.class);
-            VH_STACK = l.findVarHandle(CancelTokenSource.class, "stack", Completion.class);
-            VH_RID = l.findVarHandle(Completion.class, "rid", int.class);
+            VH_CTS_LOCK = l.findVarHandle(CancelTokenSource.class, "lock", int.class);
+            VH_NODE_LOCK = l.findVarHandle(Completion.class, "lock", int.class);
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -476,7 +472,6 @@ public final class CancelTokenSource implements ICancelTokenSource {
     private static final int SYNC = Promise.SYNC;
     private static final int ASYNC = Promise.ASYNC;
     private static final int NESTED = Promise.NESTED;
-    private static final Executor CLAIMED = Promise.CLAIMED;
 
     /** @return preCode */
     private int internalCancel(int cancelCode) {
@@ -484,79 +479,136 @@ public final class CancelTokenSource implements ICancelTokenSource {
         return (int) VH_CODE.compareAndExchange(this, 0, cancelCode);
     }
 
-    /** @return 是否压栈成功 */
-    private boolean pushCompletion(Completion newHead) {
+    private void enterLock() {
+        while (!VH_CTS_LOCK.compareAndSet(this, 0, 1)) {
+            Thread.onSpinWait();
+        }
+    }
+
+    private void exitLock() {
+        assert (lock == 1);
+        VH_CTS_LOCK.setVolatile(this, 0);
+    }
+
+    private Registration pushCompletion(Completion newHead) {
+        ICancelToken cancelToken = ExecutorCoreUtils.getCancelToken(newHead.ctx, newHead.options);
+        if (cancelToken.isCancelRequested()) {
+            return Registration.CLOSED;
+        }
         if (isCancelRequested()) {
             newHead.tryFire(SYNC);
-            return false;
+            return Registration.CLOSED;
         }
-        Completion expectedHead = stack;
-        Completion realHead;
-        while (expectedHead != TOMBSTONE) {
-            newHead.next = expectedHead;
-            realHead = (Completion) VH_STACK.compareAndExchange(this, expectedHead, newHead);
-            if (realHead == expectedHead) { // success
-                return true;
+
+        Registration registration;
+        enterLock();
+        outer:
+        try {
+            if (isCancelRequested()) {
+                registration = Registration.CLOSED;
+                break outer;
             }
-            expectedHead = realHead; // retry
+            // 双向绑定
+            if (_head != null) {
+                newHead.next = _head;
+                _head.prev = newHead;
+            }
+            _head = newHead;
+            if (_tail == null) {
+                _tail = newHead;
+            }
+            registration = new Registration(newHead, newHead.rid);
+        } finally {
+            exitLock();
         }
-        newHead.next = null;
-        newHead.tryFire(SYNC);
-        return false;
+        if (!registration.hasResource()) {
+            newHead.tryFire(SYNC);
+        } else {
+            // 如果目标令牌是池化的对象，可能添加到目标CTS新的生命周期，导致内存泄漏...真想处理这个问题，需要使用可重入锁
+            if (cancelToken.canBeCancelled() &&
+                    TaskOptions.isEnabled(newHead.options, TaskOptions.STAGE_LISTEN_CANCEL_TOKEN)) {
+                cancelToken.thenRun(INVOKER, registration, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+            }
+        }
+        return registration;
+    }
+
+    @Nullable
+    private Completion popCompletion() {
+        enterLock();
+        try {
+            Completion head = _head;
+            if (head == null) {
+                return null;
+            }
+            _head = head.next;
+            if (_tail == head) {
+                _tail = null;
+            }
+            // 解除双向绑定
+            if (_head != null) {
+                head.next = null;
+                _head.prev = null;
+            }
+            assert head.prev == null;
+            return head;
+        } finally {
+            exitLock();
+        }
+    }
+
+    /**
+     * 如果返回true，则应该由调用方触发回收
+     * <p>
+     * 注意：虽然node的前后置是由当前锁维护可见性的，但source不是，因此应当在Node的锁内调用。
+     *
+     * @return 是否删除成功
+     */
+    private boolean removeCompletion(Completion node) {
+        enterLock();
+        try {
+            Completion prev = node.prev;
+            Completion next = node.next;
+            boolean contains;
+            if (prev == null) {
+                contains = node == _head;
+            } else if (next == null) {
+                contains = node == _tail;
+            } else {
+                contains = true;
+            }
+            if (!contains) {
+                return false;
+            }
+            // fixPointers
+            if (_head == _tail) {
+                _head = _tail = null;
+            } else if (node == _head) {
+                _head = next;
+                next.prev = null;
+            } else if (node == _tail) {
+                _tail = prev;
+                prev.next = null;
+            } else {
+                prev.next = next;
+                next.prev = prev;
+            }
+            // help gc
+            node.prev = null;
+            node.next = null;
+            return true;
+        } finally {
+            exitLock();
+        }
     }
 
     private static void postComplete(CancelTokenSource source) {
-        Completion next = null;
-        outer:
-        while (true) {
-            next = clearListeners(source, next);
-
-            while (next != null) {
-                Completion curr = next;
-                next = next.next;
-                curr.next = null; // help gc
-
-                source = curr.tryFire(NESTED);
-                if (source != null) {
-                    continue outer;
-                }
-            }
-            break;
+        Completion next;
+        while ((next = source.popCompletion()) != null) {
+            next.tryFire(SYNC);
         }
     }
 
-    private static Completion clearListeners(CancelTokenSource source, Completion onto) {
-        Completion head = source.stack;
-        while (true) {
-            if (head == TOMBSTONE) {
-                return onto;
-            }
-            Completion realHead = (Completion) VH_STACK.compareAndExchange(source, head, TOMBSTONE);
-            if (realHead == head) {
-                break;
-            }
-            head = realHead;
-        }
-
-        Completion ontoHead = onto;
-        while (head != null) {
-            Completion tmpHead = head;
-            head = head.next;
-
-            tmpHead.next = ontoHead;
-            ontoHead = tmpHead;
-        }
-        return ontoHead;
-    }
-
-    private static boolean tryInline(Completion completion, Executor e, int options) {
-        // 尝试内联
-        if (ExecutorUtils.isInlinable(e, options)) {
-            return true;
-        }
-        e.execute(completion);
-        return false;
-    }
     // endregion
 
     // region completion
@@ -570,23 +622,21 @@ public final class CancelTokenSource implements ICancelTokenSource {
 
     /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
     private static final int MASK_TASK_TYPE = 0x0F;
+    /** 已加入异步队列 -- 不能被立即销毁；必须由TryFire销毁 */
+    private static final int MASK_ASYNC_FIRING = 0x10;
 
-    private static final Completion TOMBSTONE = new Completion();
     private static final ConcurrentObjectPool<Completion> POOL = new ConcurrentObjectPool<>(Completion::new,
             Completion::reset, TaskPoolConfig.getPoolSize(TaskPoolType.CTS_COMPLETION));
 
     /** 申请一个{@link Completion}对象 */
-    private static Completion getComplete(Executor executor, int options, CancelTokenSource source,
-                                          int type, Object action, Object ctx) {
+    private static Completion getCompletion(Executor executor, int options, CancelTokenSource source,
+                                            int type, Object action, Object ctx) {
         // 去除用户的低位，记录type
         options &= (~TaskOptions.MASK_CTL_RESERVED);
         options |= type;
 
         Completion completion = POOL.acquire();
-        int rid = completion.rid + 1;
-        completion.rid = rid;
-        completion.fireId = rid;
-
+        completion.rid++; // 从池中取出时也加1
         completion.executor = executor;
         completion.options = options;
         completion.source = source;
@@ -595,29 +645,38 @@ public final class CancelTokenSource implements ICancelTokenSource {
         return completion;
     }
 
-    /** 为简化逻辑，我们总是在触发回调的时候才回收对象 */
+    /** 用于关闭监听器 */
+    private static final Consumer<Object> INVOKER = ctx -> {
+        Registration registration = (Registration) ctx;
+        registration.close();
+    };
+
+    /**
+     * 回收的时机：
+     * 1.如果已进入异步派发阶段，则由{@code tryFire(ASYNC)}负责回收
+     * 2.如果尚未进入异步派发阶段，则由{@link #removeCompletion(Completion)}成功的一方负责回收。
+     */
     private static class Completion implements ITask, IPooledCloseable {
 
-        /** 非volatile，由栈顶的cas更新保证可见性 */
+        /** 非volatile，可见性由{@link CancelTokenSource#lock}保证 */
+        Completion prev;
         Completion next;
+
         /** 重入id -- 只增不减 */
-        volatile int rid;
-        /**
-         * cts添加回调时的{@link #rid}快照
-         * 1.该值永不清理，用于识别能否进行通知
-         * 2.{@link #tryFire(int)}方法需要通过该值竞争更新{@link #rid}
-         * 3.{@link #close(int)}方法通过用户持有的rid竞争更新{@link #rid}
-         */
-        int fireId;
+        int rid;
+        /** 互斥锁 */
+        int lock;
 
         CancelTokenSource source;
         Executor executor;
-        /** 任务的调度选项，包含任务的类型 */
-        int options;
+        int options; // 包含任务类型信息
         Object action;
         Object ctx;
 
         protected void reset() {
+            assert prev == null && next == null;
+            assert lock == 1;
+
             rid++; // 池化时+1，volatile安全
             source = null;
             executor = null;
@@ -636,44 +695,51 @@ public final class CancelTokenSource implements ICancelTokenSource {
             tryFire(ASYNC);
         }
 
-        /** 可参考{@link Promise}中的该方法 */
-        public final boolean claim() {
-            Executor e = this.executor;
-            if (e == CLAIMED) {
-                return true;
-            }
-            this.executor = CLAIMED;
-            if (e == null) {
-                return true;
-            }
-            return tryInline(this, e, options);
-        }
+        public void tryFire(int mode) {
+            // 如果走到这里，当前Completion一定未被回收，但action可能已被清理，即已收到取消信号
+            CancelTokenSource source;
+            Executor executor;
+            int options;
+            Object action;
+            Object ctx;
 
-        private boolean tryIncrementRid(int reentryId) {
-            return VH_RID.compareAndSet(this, reentryId, reentryId + 1);
-        }
+            enterLock();
+            boolean fire; // 没有goto，我们使用bool标记
+            try {
+                options = this.options;
+                action = this.action;
+                ctx = this.ctx;
+                // 如果已收到取消信号，则直接回收
+                if (action == null || ExecutorCoreUtils.isCancelRequested(ctx, options)) {
+                    POOL.release(this);
+                    return;
+                }
+                source = this.source;
+                executor = this.executor;
 
-        public CancelTokenSource tryFire(int mode) {
-            outer:
-            {
-                // 同步Fire时，必须先竞争Action - 如果竞争失败，需要等待Close调用结束
-                if (mode <= 0 && !tryIncrementRid(fireId)) {
-                    while (rid != fireId + 2) { // 等待close完毕，不能使用小于测试(可能越界)
-                        LockSupport.parkNanos(1);
-                    }
-                    break outer;
+                // 如果是同步模式，需要claim -- 与Future的实现不同，我们在锁外提交任务以避免阻塞，但需要先标记
+                if (mode <= 0 && !ExecutorCoreUtils.isInlinable(executor, options)) {
+                    this.options |= MASK_ASYNC_FIRING;
+                    this.executor = null;
+                    fire = false;
+                } else {
+                    // 数据已拷贝到临时变量；在锁内回收，锁外执行
+                    POOL.release(this);
+                    fire = true;
                 }
-                if (ExecutorUtils.isCancelRequested(ctx, options)) {
-                    break outer;
-                }
-                if (mode <= 0 && !claim()) {
-                    return null; // 下次执行
-                }
-                assert action != null;
+            } finally {
+                exitLock();
+            }
+            // 在锁外执行回调和提交任务
+            if (fire) {
                 fireNow(source, options, action, ctx);
+                return;
             }
-            POOL.release(this);
-            return null;
+            try {
+                executor.execute(this);
+            } catch (Exception ex) {
+                FutureLogger.logCause(ex);
+            }
         }
 
         @SuppressWarnings("unchecked")
@@ -716,16 +782,44 @@ public final class CancelTokenSource implements ICancelTokenSource {
             }
         }
 
+        @Override
+        public boolean isClosed(long reentryId) {
+            enterLock();
+            try {
+                return reentryId != rid;
+            } finally {
+                exitLock();
+            }
+        }
 
         @Override
-        public final void close(int reentryId) {
-            if (tryIncrementRid(reentryId)) {
-                // 这里只释放action资源
-                action = null;
-                ctx = null;
-                // 更新为+2表示关闭完毕
-                rid = reentryId + 2;
+        public final void close(long reentryId) {
+            enterLock();
+            try {
+                // 只有rid匹配时，才能保证数据有效性 -- action为null表示已执行回调
+                if (rid != reentryId || this.action == null) {
+                    return;
+                }
+                this.action = null;
+                this.ctx = null;
+                // 如果当前未进入异步执行，尝试立即回收 -- 可能正处于TryFire等待锁的状态，因此删除可能会失败
+                if ((options & MASK_ASYNC_FIRING) == 0 && source.removeCompletion(this)) {
+                    POOL.release(this);
+                }
+            } finally {
+                exitLock();
             }
+        }
+
+        private void enterLock() {
+            while (!VH_NODE_LOCK.compareAndSet(this, 0, 1)) {
+                Thread.onSpinWait();
+            }
+        }
+
+        private void exitLock() {
+            assert (lock == 1);
+            VH_NODE_LOCK.setVolatile(this, 0);
         }
     }
     // endregion

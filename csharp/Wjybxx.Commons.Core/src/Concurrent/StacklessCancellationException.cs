@@ -17,13 +17,14 @@
 #endregion
 
 using System;
+using Wjybxx.Commons.Ex;
 
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 不打印堆栈的取消异常
 /// </summary>
-public sealed class StacklessCancellationException : BetterCancellationException
+public sealed class StacklessCancellationException : BetterCancellationException, NoLogRequiredException
 {
     // c# 的异常不适合单例，会导致堆栈冲突
     public static StacklessCancellationException Default => new StacklessCancellationException(1);

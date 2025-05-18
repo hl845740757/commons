@@ -20,6 +20,7 @@ import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.concurrent.CancelCodeBuilder;
 import cn.wjybxx.base.concurrent.CancelCodes;
+import cn.wjybxx.base.concurrent.ICancelTokenSource;
 import cn.wjybxx.base.mutable.MutableInt;
 import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
@@ -323,7 +324,7 @@ public class CancelTokenTest {
 
     @Test
     void testDelayInterrupt() {
-        ICancelTokenSource cts = new CancelTokenSource();
+        CancelTokenSource cts = new CancelTokenSource();
         cts.cancelAfter(1, 100, TimeUnit.MILLISECONDS);
 
         Thread thread = Thread.currentThread();

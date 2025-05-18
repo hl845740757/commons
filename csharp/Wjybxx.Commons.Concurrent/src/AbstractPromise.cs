@@ -129,6 +129,10 @@ public abstract class AbstractPromise
         public void Execute(ITask task) {
             throw new NotImplementedException();
         }
+
+        public void Execute(Action action, int options = 0) {
+            throw new NotImplementedException();
+        }
     }
 
     /// <summary>
@@ -228,16 +232,6 @@ public abstract class AbstractPromise
     #region util
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool TryInline(Completion completion, IExecutor e, int options) {
-        // 尝试内联
-        if (ExecutorUtil.IsInlinable(e, options)) {
-            return true;
-        }
-        e.Execute(completion);
-        return false;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Promise<U>? PostFire<U>(Promise<U> output, int mode, bool setCompleted) {
         if (!setCompleted) { // 未竞争成功
             return null;
@@ -267,12 +261,12 @@ public abstract class AbstractPromise
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static Exception UnwrapException(object ex) {
+    internal static Exception UnwrapException(object ex, bool restore = true) {
         if (ex == null || ex == EX_COMPUTING || ex == EX_SUCCESS) {
             throw new InvalidOperationException();
         }
         if (ex is ExceptionDispatchInfo dispatchInfo) {
-            return ExceptionUtil.RestoreStackTrace(dispatchInfo);
+            return restore ? ExceptionUtil.RestoreStackTrace(dispatchInfo) : dispatchInfo.SourceException;
         }
         return (Exception)ex; // 取消
     }
@@ -326,7 +320,6 @@ public abstract class AbstractPromise
         /// <summary>
         /// 用于池化
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual void Reset() {
             next = null;
         }
@@ -412,15 +405,16 @@ public abstract class AbstractPromise
                 return true;
             }
             this.executor = CLAIMED;
-            if (e != null) {
-                return TryInline(this, e, options);
+            if (!ExecutorCoreUtil.IsInlinable(e, options)) {
+                e.Execute(this);
+                return false;
             }
             return true;
         }
 
         public override AbstractPromise? TryFire(int mode) {
             {
-                if (ExecutorUtil.IsCancelRequested(state, options)) {
+                if (ExecutorCoreUtil.IsCancelRequested(state, options)) {
                     goto outer;
                 }
                 // 异步模式下已经claim

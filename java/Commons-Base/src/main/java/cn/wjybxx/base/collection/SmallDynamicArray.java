@@ -160,7 +160,7 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
 
     @Override
     public void clear() {
-        if (len == 0) {
+        if (elementsMask == 0) {
             return;
         }
         Arrays.fill(elements, 0, len, null);

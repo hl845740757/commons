@@ -21,6 +21,16 @@ using System;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
+/// 取消令牌
+///
+/// <h3>监听器管理</h3>
+/// 用户除了可以通过返回的<see cref="Registration"/>删除监听器外，
+/// 还可以通过调度选项<see cref="TaskOptions.STAGE_LISTEN_CANCEL_TOKEN"/>要求当前取消令牌监听用户上下文中的取消令牌，
+/// 以及时删除不再需要执行的回调 -- 可以实现批量删除。
+///
+/// 差异的源头：
+/// 取消令牌可能永远不会收到取消信号，而这可能是正常的需求，因此用户的监听器必须及时从监听器列表删除；
+/// 虽然不及时删除不会导致逻辑错误，但会导致内存泄漏。
 /// 
 /// </summary>
 public interface ICancelToken

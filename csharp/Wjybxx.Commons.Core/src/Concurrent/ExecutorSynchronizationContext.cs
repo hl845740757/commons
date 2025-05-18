@@ -17,12 +17,15 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 用于适配为<see cref="SynchronizationContext"/>
+/// 用于适配为<see cref="SynchronizationContext"/>。
+///
+/// C#的这个同步上下文设计真的跟屎一样，线程控制麻烦的要死
 /// </summary>
 public class ExecutorSynchronizationContext : SynchronizationContext
 {
@@ -36,6 +39,23 @@ public class ExecutorSynchronizationContext : SynchronizationContext
     /// 用于await获取
     /// </summary>
     public IExecutor Executor => _executor;
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public new static ExecutorSynchronizationContext? Current => SynchronizationContext.Current as ExecutorSynchronizationContext;
+
+    /// <summary>
+    /// 获取用于执行await回调的线程
+    /// </summary>
+    /// <param name="executor"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IExecutor? GetAwaitExecutor(IExecutor? executor) {
+        if (executor != null) return executor;
+        var context = SynchronizationContext.Current as ExecutorSynchronizationContext;
+        return context != null ? context._executor : null;
+    }
 
     public override void Post(SendOrPostCallback d, object? state) {
         // 不能随意内联，否则可能导致时序错误

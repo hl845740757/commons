@@ -17,7 +17,7 @@
 #endregion
 
 using System;
-using System.Threading;
+using System.Reflection;
 using Wjybxx.Commons.Fx;
 
 namespace Wjybxx.Commons.Concurrent
@@ -25,7 +25,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 该工具类主要用于暴露特殊接口给其它程序集
 /// </summary>
-public static class EventLoopUtil
+public static class EventLoopModuleUtil
 {
     #region module
 
@@ -66,36 +66,32 @@ public static class EventLoopUtil
         return module.InvokeDestroy();
     }
 
-    #endregion
-
-    #region syncContext
-
-    /// <summary>
-    /// C#的这个同步上下文简直屎一般的设计，将自己发布为静态变量，方便一时，后悔一生。
-    /// 当大家习惯了Await总是隐式回调到当前线程的时候，严重影响了扩展性，总是要兼容这个垃圾设计。
-    /// await应该支持显式传参，传递要回调的线程。
-    /// </summary>
-    private static readonly ThreadLocal<IExecutor> localSyncContext = new();
-
-    /// <summary>
-    /// 获取当前线程的同步上下文
-    /// </summary>
-    public static IExecutor? Current => localSyncContext.Value;
-
-    /// <summary>
-    /// 设置当前线程的同步上下文
-    /// </summary>
-    public static void SetExecutor(IExecutor? context) {
-        localSyncContext.Value = context;
+    /** 是否重写了<see cref="Wjybxx.Commons.Concurrent.IEventLoopModule.FixedUpdate()"/>方法 */
+    public static bool IsOverrideFixedUpdate(IEventLoopModule module) {
+        return IsOverride(module.GetType(), "FixedUpdate", Array.Empty<Type>());
     }
 
-    /// <summary>
-    /// 获取用于回调的线程
-    /// </summary>
-    /// <param name="executor"></param>
-    /// <returns></returns>
-    public static IExecutor? GetAwaiterExecutor(IExecutor? executor) {
-        return executor ?? localSyncContext.Value;
+    /** 是否重写了<see cref="Wjybxx.Commons.Concurrent.IEventLoopModule.Update()"/>方法 */
+    public static bool IsOverrideUpdate(IEventLoopModule module) {
+        return IsOverride(module.GetType(), "Update", Array.Empty<Type>());
+    }
+
+    /** 是否重写了<see cref="Wjybxx.Commons.Concurrent.IEventLoopModule.LateUpdate()"/>方法 */
+    public static bool IsOverrideLateUpdate(IEventLoopModule module) {
+        return IsOverride(module.GetType(), "LateUpdate", Array.Empty<Type>());
+    }
+
+    /** 是否重写了某个方法 */
+    private static bool IsOverride(Type currentType, string methodName, params Type[] paramTypes) {
+        MethodInfo? methodInfo = currentType.GetMethod(methodName,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            binder: null, paramTypes, modifiers: null);
+        if (methodInfo == null) {
+            return true;
+        }
+        // 抽象类覆盖了所有的接口方法，因此是测试抽象类
+        Type declaringType = methodInfo.DeclaringType!;
+        return declaringType != typeof(EventLoopModule);
     }
 
     #endregion

@@ -141,7 +141,7 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
     }
 
     public void Clear() {
-        if (len == 0) {
+        if (elementsMask == 0) {
             return;
         }
         ArrayUtil.Fill2(elements, 0, len, null);

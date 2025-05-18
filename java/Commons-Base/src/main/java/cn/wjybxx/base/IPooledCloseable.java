@@ -24,5 +24,10 @@ package cn.wjybxx.base;
  */
 public interface IPooledCloseable {
 
-    void close(int reentryId);
+    /** 查询资源对象是否已退出当前生命周期 */
+    boolean isClosed(long reentryId);
+
+    /** 关闭资源 */
+    void close(long reentryId);
+
 }

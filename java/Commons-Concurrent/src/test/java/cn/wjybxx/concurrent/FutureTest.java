@@ -16,6 +16,9 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.IExecutor;
+import cn.wjybxx.base.concurrent.ImmediateExecutor;
+import cn.wjybxx.base.concurrent.TaskOptions;
 import cn.wjybxx.base.function.FunctionUtils;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +42,7 @@ public class FutureTest {
                     .build())
             .build();
 
-    private static final IExecutor immediateExecutor = Runnable::run;
+    private static final IExecutor immediateExecutor = ImmediateExecutor.INST;
 
     @BeforeEach
     void setUp() {

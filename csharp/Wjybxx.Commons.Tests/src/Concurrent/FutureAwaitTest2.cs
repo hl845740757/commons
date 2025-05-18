@@ -23,7 +23,7 @@ using Wjybxx.Commons.Concurrent;
 namespace Commons.Tests.Concurrent;
 
 /// <summary>
-/// 我们调整了<see cref="ValueFutureAwaiter"/>的实现，会查询<see cref="EventLoopUtil.Current"/>，
+/// 我们调整了<see cref="ValueFutureAwaiter"/>的实现，会查询<see cref="EventLoopModuleUtil.Current"/>，
 /// 我们现在在多线程环境测试一下。
 /// </summary>
 public class FutureAwaitTest2

@@ -64,6 +64,10 @@ public abstract class AbstractEventLoopGroup : IEventLoopGroup
         Select().Execute(task);
     }
 
+    public virtual void Execute(Action action, int options = 0) {
+        Select().Execute(action, options);
+    }
+
     public virtual IPromise<T> NewPromise<T>() => new Promise<T>(this);
 
     public virtual IPromise<int> NewPromise() => new Promise<int>(this);

@@ -17,13 +17,12 @@
 package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.ThreadUtils;
-import cn.wjybxx.base.annotation.Internal;
+import cn.wjybxx.base.concurrent.*;
 import cn.wjybxx.base.function.TriFunction;
 import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.base.time.CachedTimeProvider;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.Objects;
 import java.util.concurrent.*;
@@ -288,10 +287,6 @@ public class ExecutorUtils {
 
     // region eventloop
 
-    public static boolean inEventLoop(@Nullable Executor executor) {
-        return executor instanceof SingleThreadExecutor eventLoop && eventLoop.inEventLoop();
-    }
-
     public static void ensureInEventLoop(SingleThreadExecutor eventLoop) {
         if (!eventLoop.inEventLoop()) {
             throw new GuardedOperationException("Must be called from EventLoop thread");
@@ -444,22 +439,22 @@ public class ExecutorUtils {
     // region execute
 
     public static void execute(Executor executor, Runnable action, ICancelToken cancelToken) {
-        ITask futureTask = toTask(action, cancelToken, 0);
+        ITask futureTask = ExecutorCoreUtils.toTask(action, cancelToken, 0);
         executor.execute(futureTask);
     }
 
     public static void execute(Executor executor, Runnable action, ICancelToken cancelToken, int options) {
-        ITask futureTask = toTask(action, cancelToken, options);
+        ITask futureTask = ExecutorCoreUtils.toTask(action, cancelToken, options);
         executor.execute(futureTask);
     }
 
     public static void execute(Executor executor, Consumer<Object> action, Object ctx) {
-        ITask futureTask = toTask(action, ctx, 0);
+        ITask futureTask = ExecutorCoreUtils.toTask(action, ctx, 0);
         executor.execute(futureTask);
     }
 
     public static void execute(IExecutor executor, Consumer<Object> action, Object ctx, int options) {
-        ITask futureTask = toTask(action, ctx, options);
+        ITask futureTask = ExecutorCoreUtils.toTask(action, ctx, options);
         executor.execute(futureTask);
     }
 
@@ -493,67 +488,6 @@ public class ExecutorUtils {
 
     // endregion
 
-    // region task适配
-
-    public static ITask toTask(Runnable action, int options) {
-        // 注意：不论options是否为0都需要封装，否则action为ITask类型时将产生错误
-        Objects.requireNonNull(action, "action");
-        return new Task1(action, options);
-    }
-
-    public static ITask toTask(Runnable action, ICancelToken cancelToken, int options) {
-        Objects.requireNonNull(action, "action");
-        return new Task2(action, cancelToken, options);
-    }
-
-    public static ITask toTask(Consumer<Object> action, Object ctx, int options) {
-        Objects.requireNonNull(action, "action");
-        return new Task3(action, ctx, options);
-    }
-
-    // endregion
-
-    // region internal
-
-    /** 获取上下文中的取消令牌 */
-    @Internal
-    public static ICancelToken getCancelToken(Object ctx, int options) {
-        if (ctx == null || TaskOptions.isEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
-            return ICancelToken.NONE;
-        }
-        if (ctx instanceof ICancelToken cancelToken) {
-            return cancelToken;
-        }
-        if (ctx instanceof IContext ctx2) {
-            return ctx2.cancelToken();
-        }
-        return ICancelToken.NONE;
-    }
-
-    /** 获取上下文中的取消信号 */
-    @Internal
-    public static boolean isCancelRequested(Object ctx, int options) {
-        if (ctx == null || TaskOptions.isEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
-            return false;
-        }
-        if (ctx instanceof ICancelToken cancelToken) {
-            return cancelToken.isCancelRequested();
-        }
-        if (ctx instanceof IContext ctx2) {
-            return ctx2.cancelToken().isCancelRequested();
-        }
-        return false;
-    }
-
-    /** 任务是否可以内联执行 */
-    @Internal
-    public static boolean isInlinable(Executor e, int options) {
-        return TaskOptions.isEnabled(options, TaskOptions.STAGE_TRY_INLINE)
-                && e instanceof SingleThreadExecutor eventLoop
-                && eventLoop.inEventLoop();
-    }
-
-    // endregion
 
     // region 适配类
 
@@ -589,94 +523,6 @@ public class ExecutorUtils {
         }
     }
 
-    private static class Task1 implements ITask {
-
-        private Runnable action;
-        private final int options;
-
-        public Task1(Runnable action, int options) {
-            this.action = action;
-            this.options = options;
-        }
-
-        @Override
-        public int getOptions() {
-            return options;
-        }
-
-        @Override
-        public void run() {
-            Runnable action = this.action;
-            {
-                this.action = null;
-            }
-            action.run();
-        }
-    }
-
-    private static class Task2 implements ITask {
-
-        private Runnable action;
-        private ICancelToken cancelToken;
-        private final int options;
-
-        public Task2(Runnable action, ICancelToken cancelToken, int options) {
-            this.action = action;
-            this.cancelToken = cancelToken;
-            this.options = options;
-        }
-
-        @Override
-        public int getOptions() {
-            return options;
-        }
-
-        @Override
-        public void run() {
-            Runnable action = this.action;
-            ICancelToken cancelToken = this.cancelToken;
-            {
-                this.action = null;
-                this.cancelToken = null;
-            }
-            if (cancelToken != null && cancelToken.isCancelRequested()) {
-                return; // 抛出异常没有意义，检测信号即可
-            }
-            action.run();
-        }
-    }
-
-    private static class Task3 implements ITask {
-
-        private Consumer<Object> action;
-        private Object ctx;
-        private final int options;
-
-        public Task3(Consumer<Object> action, Object ctx, int options) {
-            this.action = action;
-            this.ctx = ctx;
-            this.options = options;
-        }
-
-        @Override
-        public int getOptions() {
-            return options;
-        }
-
-        @Override
-        public void run() {
-            Consumer<Object> action = this.action;
-            Object ctx = this.ctx;
-            {
-                this.action = null;
-                this.ctx = null;
-            }
-            if (isCancelRequested(ctx, options)) {
-                return;
-            }
-            action.accept(ctx);
-        }
-    }
     // endregion
 
 }

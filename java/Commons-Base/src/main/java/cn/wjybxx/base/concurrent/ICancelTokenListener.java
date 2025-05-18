@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 wjybxx(845740757@qq.com)
+ * Copyright 2023-2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.btree;
+package cn.wjybxx.base.concurrent;
 
 /**
+ * 该接口用于特殊需求时减少闭包
+ *
  * @author wjybxx
- * date - 2024/7/14
+ * date - 2024/1/15
  */
 public interface ICancelTokenListener {
 
     /**
      * 该方法在取消令牌收到取消信号时执行
-     * 注意：由于取消令牌支持复用，如果监听器不能立即响应取消请求，则应当将取消码保存为局部变量。
      *
      * @param cancelToken 收到取消信号的令牌
+     * @param ctx         回调上下文，如果是{@link ICancelToken}和{@link IContext}，则默认会检查取消信号
      */
-    void onCancelRequested(CancelToken cancelToken);
+    void onCancelRequested(ICancelToken cancelToken, Object ctx);
+
 }

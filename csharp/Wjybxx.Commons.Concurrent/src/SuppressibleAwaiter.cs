@@ -40,7 +40,7 @@ public readonly struct SuppressibleAwaiter : ICriticalNotifyCompletion
     /// <param name="requireResult">是否需要获取最终结果</param>
     public SuppressibleAwaiter(ValueFuture future, IExecutor? executor, int options, bool requireResult) {
         _future = future;
-        _executor = EventLoopUtil.GetAwaiterExecutor(executor);
+        _executor = ExecutorSynchronizationContext.GetAwaitExecutor(executor);
         _options = options;
         _requireResult = requireResult;
     }
@@ -50,8 +50,7 @@ public readonly struct SuppressibleAwaiter : ICriticalNotifyCompletion
     public bool IsCompleted {
         get {
             if (!_future.IsCompleted) return false;
-            if (_executor == null) return true;
-            return ExecutorUtil.IsInlinable(_executor, _options);
+            return ExecutorCoreUtil.IsInlinable(_executor, _options);
         }
     }
 
@@ -93,7 +92,7 @@ public readonly struct SuppressibleAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="options"></param>
     public SuppressibleAwaiter(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = EventLoopUtil.GetAwaiterExecutor(executor);
+        _executor = ExecutorSynchronizationContext.GetAwaitExecutor(executor);
         _options = options;
     }
 
@@ -102,8 +101,7 @@ public readonly struct SuppressibleAwaiter<T> : ICriticalNotifyCompletion
     public bool IsCompleted {
         get {
             if (!_future.IsCompleted) return false;
-            if (_executor == null) return true;
-            return ExecutorUtil.IsInlinable(_executor, _options);
+            return ExecutorCoreUtil.IsInlinable(_executor, _options);
         }
     }
 

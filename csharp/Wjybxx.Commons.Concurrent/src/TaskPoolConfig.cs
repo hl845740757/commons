@@ -25,9 +25,9 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public static class TaskPoolConfig
 {
-    private static volatile Func<TaskPoolType, Type, int>? poolSizeCalculator;
+    private static volatile Func<TaskPoolType, Type, Type, int>? poolSizeCalculator;
 
-    public static Func<TaskPoolType, Type, int>? PoolSizeCalculator {
+    public static Func<TaskPoolType, Type, Type, int>? PoolSizeCalculator {
         get => poolSizeCalculator;
         set => poolSizeCalculator = value;
     }
@@ -40,9 +40,9 @@ public static class TaskPoolConfig
     /// <param name="poolType">对象池类型</param>
     /// <typeparam name="T">对象的泛型参数类型</typeparam>
     public static int GetPoolSize<T>(TaskPoolType poolType) {
-        Func<TaskPoolType, Type, int> func = poolSizeCalculator;
+        Func<TaskPoolType, Type, Type, int> func = poolSizeCalculator;
         if (func != null) {
-            return Math.Max(0, func.Invoke(poolType, typeof(T)));
+            return func.Invoke(poolType, typeof(T), null);
         }
         // 通常使用int代替void，而object适用装箱场景
         bool isIntOrObject = typeof(T) == typeof(int) || typeof(T) == typeof(object);
@@ -51,9 +51,24 @@ public static class TaskPoolConfig
             return isIntOrObject ? 1000 : 50;
         }
         if (poolType == TaskPoolType.CtsCompletion) {
-            return 500; // 不区分泛型
+            return 500; // 非泛型类
         }
         return isIntOrObject ? 100 : 20;
+    }
+
+    /// <summary>
+    /// 具有双泛型参数的对象池（主要指协程）
+    /// </summary>
+    /// <param name="poolType"></param>
+    /// <typeparam name="T">第一个泛型参数</typeparam>
+    /// <typeparam name="U">第二个泛型参数</typeparam>
+    /// <returns></returns>
+    public static int GetPoolSize<T, U>(TaskPoolType poolType) {
+        Func<TaskPoolType, Type, Type, int> func = poolSizeCalculator;
+        if (func != null) {
+            return func.Invoke(poolType, typeof(T), typeof(U));
+        }
+        return 100;
     }
 }
 

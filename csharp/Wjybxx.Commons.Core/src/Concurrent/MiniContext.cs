@@ -50,9 +50,5 @@ public sealed class MiniContext : IContext
     public static MiniContext OfState(object? state, ICancelToken cancelToken) {
         return new MiniContext(state, cancelToken);
     }
-
-    public IContext ToSharable() {
-        return SHARABLE;
-    }
 }
 }

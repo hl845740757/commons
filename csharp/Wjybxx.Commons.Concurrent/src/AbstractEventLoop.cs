@@ -60,11 +60,11 @@ public abstract class AbstractEventLoop : IEventLoop
         // 需要update的模块缓存
         _updateModuleList = copiedModuleList
             .Where(e => e.Cid.IsPrivateScript)
-            .Where(EventLoopModule.IsOverrideUpdate)
+            .Where(EventLoopModuleUtil.IsOverrideUpdate)
             .ToImmutableList2();
         _lateUpdateModuleList = copiedModuleList
             .Where(e => e.Cid.IsPrivateScript)
-            .Where(EventLoopModule.IsOverrideLateUpdate)
+            .Where(EventLoopModuleUtil.IsOverrideLateUpdate)
             .ToImmutableList2();
     }
 
@@ -153,7 +153,7 @@ public abstract class AbstractEventLoop : IEventLoop
     public abstract void Execute(ITask task);
 
     public virtual void Execute(Action action, int options = 0) {
-        Execute(ExecutorUtil.ToTask(action, options));
+        Execute(ExecutorCoreUtil.ToTask(action, options));
     }
 
     #endregion

@@ -147,7 +147,7 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
     }
 
     public void Clear() {
-        if (len == 0) {
+        if (elementCount == 0) {
             return;
         }
         for (int idx = 0, len = this.len; idx < len; idx++) {

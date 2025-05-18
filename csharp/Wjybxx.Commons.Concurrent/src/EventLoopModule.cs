@@ -24,7 +24,7 @@ using Wjybxx.Commons.Fx;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 第三方程序集需要自定义调度时，可使用<see cref="EventLoopUtil"/>中的方法调用
+/// 第三方程序集需要自定义调度时，可使用<see cref="EventLoopModuleUtil"/>中的方法调用
 /// Unity下不继承MonoBehavior，因为我们要自己调度。
 /// </summary>
 public abstract class EventLoopModule : IEventLoopModule
@@ -164,43 +164,6 @@ public abstract class EventLoopModule : IEventLoopModule
     }
 
     public virtual void Stop() {
-    }
-
-    #endregion
-
-#nullable enable
-
-    #region util
-
-    /** 是否重写了<see cref="Wjybxx.Commons.Concurrent.IEventLoopModule.FixedUpdate()"/>方法 */
-    public static bool IsOverrideFixedUpdate(IEventLoopModule module) {
-        return IsOverride(module.GetType(), "FixedUpdate", Array.Empty<Type>());
-    }
-
-    /** 是否重写了<see cref="Wjybxx.Commons.Concurrent.IEventLoopModule.Update()"/>方法 */
-    public static bool IsOverrideUpdate(IEventLoopModule module) {
-        return IsOverride(module.GetType(), "Update", Array.Empty<Type>());
-    }
-
-    /** 是否重写了<see cref="Wjybxx.Commons.Concurrent.IEventLoopModule.LateUpdate()"/>方法 */
-    public static bool IsOverrideLateUpdate(IEventLoopModule module) {
-        return IsOverride(module.GetType(), "LateUpdate", Array.Empty<Type>());
-    }
-
-    /** 是否重写了某个方法 */
-    private static bool IsOverride(Type handlerType, string methodName, params Type[] paramTypes) {
-        MethodInfo? methodInfo = handlerType.GetMethod(methodName,
-            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-            binder: null, paramTypes, modifiers: null);
-        if (methodInfo == null) {
-            return true;
-        }
-        // 抽象类覆盖了所有的接口方法，因此是测试抽象类
-        Type declaringType = methodInfo.DeclaringType!;
-        if (declaringType.IsGenericType) {
-            return declaringType.GetGenericTypeDefinition() != typeof(EventLoopModule);
-        }
-        return declaringType != typeof(EventLoopModule);
     }
 
     #endregion

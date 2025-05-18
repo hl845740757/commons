@@ -34,13 +34,23 @@ public readonly struct Registration : IRegistration, IEquatable<Registration>
     /// <summary>
     /// 资源的重入id（版本id）
     /// </summary>
-    private readonly int _rid;
+    private readonly long _rid;
 
-    public Registration(IPooledDisposable? res, int rid) {
+    public Registration(IPooledDisposable? res, long rid) {
         _res = res;
         _rid = rid;
     }
 
+    /// <summary>
+    /// 是否绑定了资源对象
+    /// </summary>
+    public bool HasResource => _res != null;
+    
+    /// <summary>
+    /// 资源对象是否已销毁 -- 是否已退出当前生命周期
+    /// </summary>
+    public bool IsDisposed => _res == null || _res.IsDisposed(_rid);
+    
     public void Dispose() {
         _res?.Dispose(_rid);
     }
@@ -54,7 +64,7 @@ public readonly struct Registration : IRegistration, IEquatable<Registration>
     }
 
     public override int GetHashCode() {
-        return ((_res != null ? _res.GetHashCode() : 0) * 397) ^ _rid;
+        return ((_res != null ? _res.GetHashCode() : 0) * 397) ^ _rid.GetHashCode();
     }
 
     public static bool operator ==(Registration left, Registration right) {

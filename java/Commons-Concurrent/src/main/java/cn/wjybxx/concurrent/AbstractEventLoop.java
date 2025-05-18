@@ -16,6 +16,7 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.ICancelToken;
 import cn.wjybxx.base.fx.ComponentId;
 import cn.wjybxx.base.fx.IComponent;
 import org.slf4j.Logger;
@@ -62,11 +63,11 @@ public abstract class AbstractEventLoop implements IEventLoop {
         // 需要Update的模块缓存
         this.updateModuleList = copiedModuleList.stream()
                 .filter(e -> e.getCid().isPrivateScript())
-                .filter(EventLoopModule::isOverrideUpdate)
+                .filter(EventLoopModuleUtils::isOverrideUpdate)
                 .toList();
         this.lateUpdateModuleList = copiedModuleList.stream()
                 .filter(e -> e.getCid().isPrivateScript())
-                .filter(EventLoopModule::isOverrideLateUpdate)
+                .filter(EventLoopModuleUtils::isOverrideLateUpdate)
                 .toList();
     }
 

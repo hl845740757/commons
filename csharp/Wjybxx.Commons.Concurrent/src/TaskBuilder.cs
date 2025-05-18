@@ -163,20 +163,6 @@ public struct TaskBuilder<T>
     }
 
     /// <summary>
-    /// 任务绑定的取消令牌
-    /// </summary>
-    /// <exception cref="IllegalStateException"></exception>
-    public ICancelToken? CancelToken {
-        get => IsTaskAcceptContext ? null : (ICancelToken)ctx;
-        set {
-            if (IsTaskAcceptContext) {
-                throw new IllegalStateException();
-            }
-            this.ctx = value ?? ICancelToken.NONE;
-        }
-    }
-
-    /// <summary>
     /// 启用选项
     /// </summary>
     /// <param name="optionMask"></param>

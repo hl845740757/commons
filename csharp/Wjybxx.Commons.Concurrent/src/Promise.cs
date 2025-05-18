@@ -824,8 +824,9 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                 throw StacklessCancellationException.Default;
             }
             this.executor = CLAIMED;
-            if (e != null) {
-                return TryInline(this, e, options);
+            if (!ExecutorCoreUtil.IsInlinable(e, options)) {
+                e.Execute(this);
+                return false;
             }
             return true;
         }
@@ -882,7 +883,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorCoreUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -936,7 +937,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorCoreUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -990,7 +991,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorCoreUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1045,7 +1046,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorCoreUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1100,7 +1101,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorCoreUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1150,7 +1151,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorCoreUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1201,7 +1202,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorCoreUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1251,7 +1252,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorCoreUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1302,7 +1303,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorCoreUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1353,7 +1354,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorCoreUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1400,7 +1401,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
                     setCompleted = false;
                     goto outer;
                 }
-                ICancelToken cancelToken = ExecutorUtil.GetCancelToken(ctx, options);
+                ICancelToken cancelToken = ExecutorCoreUtil.GetCancelToken(ctx, options);
                 if (cancelToken.IsCancelRequested) {
                     setCompleted = output.CompleteCancelled(cancelToken);
                     goto outer;
@@ -1458,13 +1459,14 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         }
 
         protected bool Claim() {
-            IExecutor e = this.executor;
+            IExecutor? e = this.executor;
             if (e == CLAIMED) {
                 return true;
             }
             this.executor = CLAIMED;
-            if (e != null) {
-                return TryInline(this, e, options);
+            if (!ExecutorCoreUtil.IsInlinable(e, options)) {
+                e.Execute(this);
+                return false;
             }
             return true;
         }
@@ -1472,7 +1474,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         public override AbstractPromise? TryFire(int mode) {
             Promise<T>? input = this.input;
             {
-                if (ExecutorUtil.IsCancelRequested(ctx, options)) {
+                if (ExecutorCoreUtil.IsCancelRequested(ctx, options)) {
                     goto outer;
                 }
                 // 异步模式下已经claim

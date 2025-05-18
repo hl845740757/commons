@@ -26,6 +26,10 @@ namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 取消令牌
+///
+/// 与<see cref="Promise{T}"/>的实现差异：
+/// 1.监听器列表为双向链表，通过锁互斥。
+/// 2.监听器的通知未做栈深度优化，因为与监听器列表的删除冲突。
 /// </summary>
 public sealed class CancelTokenSource : ICancelTokenSource
 {
@@ -35,7 +39,9 @@ public sealed class CancelTokenSource : ICancelTokenSource
     private static readonly IScheduledExecutorService _delayer = GlobalEventLoop.Inst;
 
     private volatile int code;
-    private volatile Completion? stack;
+    private int _lock; // 维护双向链表
+    private Completion? _head;
+    private Completion? _tail;
 
     public CancelTokenSource() {
     }
@@ -66,14 +72,31 @@ public sealed class CancelTokenSource : ICancelTokenSource
         return true;
     }
 
+    /// <summary>
+    /// 在一段时间后发送取消命令
+    /// </summary>
+    /// <param name="cancelCode">取消码</param>
+    /// <param name="millisecondsDelay">延迟时间(毫秒)</param>
     public void CancelAfter(int cancelCode, long millisecondsDelay) {
         CancelAfter(cancelCode, TimeSpan.FromMilliseconds(millisecondsDelay), _delayer);
     }
 
+    /// <summary>
+    /// 在一段时间后发送取消命令
+    /// </summary>
+    /// <param name="cancelCode">取消码</param>
+    /// <param name="timeSpan">延迟时间</param>
     public void CancelAfter(int cancelCode, TimeSpan timeSpan) {
         CancelAfter(cancelCode, timeSpan, _delayer);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="cancelCode">取消码</param>
+    /// <param name="timeSpan">延迟时间</param>
+    /// <param name="delayer">调度器</param>
+    /// <exception cref="ArgumentNullException"></exception>
     public void CancelAfter(int cancelCode, TimeSpan timeSpan, IScheduledExecutorService delayer) {
         if (delayer == null) throw new ArgumentNullException(nameof(delayer));
         ScheduledTaskBuilder<int> builder = ScheduledTaskBuilder.NewTask(new Canceller(this, cancelCode));
@@ -136,10 +159,8 @@ public sealed class CancelTokenSource : ICancelTokenSource
             Completion.FireNow(this, TYPE_ACCEPT, action, null);
             return Registration.Closed;
         }
-        Completion completion = GetComplete(executor, options, this, TYPE_ACCEPT, action, null);
-        // 需要在Push前拿到_rid
-        Registration registration = new Registration(completion, completion._rid);
-        return PushCompletion(completion) ? registration : Registration.Closed;
+        Completion completion = GetCompletion(executor, options, this, TYPE_ACCEPT, action, null);
+        return PushCompletion(completion);
     }
 
     #endregion
@@ -161,10 +182,8 @@ public sealed class CancelTokenSource : ICancelTokenSource
             Completion.FireNow(this, TYPE_ACCEPT_CTX, action, state);
             return Registration.Closed;
         }
-        Completion completion = GetComplete(executor, options, this, TYPE_ACCEPT_CTX, action, state);
-        // 需要在Push前拿到_rid
-        Registration registration = new Registration(completion, completion._rid);
-        return PushCompletion(completion) ? registration : Registration.Closed;
+        Completion completion = GetCompletion(executor, options, this, TYPE_ACCEPT_CTX, action, state);
+        return PushCompletion(completion);
     }
 
     #endregion
@@ -186,10 +205,8 @@ public sealed class CancelTokenSource : ICancelTokenSource
             Completion.FireNow(this, TYPE_RUN, action, null);
             return Registration.Closed;
         }
-        Completion completion = GetComplete(executor, options, this, TYPE_RUN, action, null);
-        // 需要在Push前拿到_rid
-        Registration registration = new Registration(completion, completion._rid);
-        return PushCompletion(completion) ? registration : Registration.Closed;
+        Completion completion = GetCompletion(executor, options, this, TYPE_RUN, action, null);
+        return PushCompletion(completion);
     }
 
     #endregion
@@ -211,10 +228,8 @@ public sealed class CancelTokenSource : ICancelTokenSource
             Completion.FireNow(this, TYPE_RUN_CTX, action, state);
             return Registration.Closed;
         }
-        Completion completion = GetComplete(executor, options, this, TYPE_RUN_CTX, action, state);
-        // 需要在Push前拿到_rid
-        Registration registration = new Registration(completion, completion._rid);
-        return PushCompletion(completion) ? registration : Registration.Closed;
+        Completion completion = GetCompletion(executor, options, this, TYPE_RUN_CTX, action, state);
+        return PushCompletion(completion);
     }
 
     #endregion
@@ -236,10 +251,8 @@ public sealed class CancelTokenSource : ICancelTokenSource
             Completion.FireNow(this, TYPE_NOTIFY, listener, ctx);
             return Registration.Closed;
         }
-        Completion completion = GetComplete(executor, options, this, TYPE_NOTIFY, listener, ctx);
-        // 需要在Push前拿到_rid
-        Registration registration = new Registration(completion, completion._rid);
-        return PushCompletion(completion) ? registration : Registration.Closed;
+        Completion completion = GetCompletion(executor, options, this, TYPE_NOTIFY, listener, ctx);
+        return PushCompletion(completion);
     }
 
     #endregion
@@ -261,10 +274,8 @@ public sealed class CancelTokenSource : ICancelTokenSource
             Completion.FireNow(this, TYPE_TRANSFER, child, null);
             return Registration.Closed;
         }
-        Completion completion = GetComplete(executor, options, this, TYPE_TRANSFER, child, null);
-        // 需要在Push前拿到_rid
-        Registration registration = new Registration(completion, completion._rid);
-        return PushCompletion(completion) ? registration : Registration.Closed;
+        Completion completion = GetCompletion(executor, options, this, TYPE_TRANSFER, child, null);
+        return PushCompletion(completion);
     }
 
     #endregion
@@ -273,8 +284,6 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     #region core
 
-    /** 用于表示任务已申领权限 */
-    private static readonly IExecutor CLAIMED = AbstractPromise.CLAIMED;
     private const int SYNC = AbstractPromise.SYNC;
     private const int ASYNC = AbstractPromise.ASYNC;
     private const int NESTED = AbstractPromise.NESTED;
@@ -285,76 +294,140 @@ public sealed class CancelTokenSource : ICancelTokenSource
         return Interlocked.CompareExchange(ref code, cancelCode, 0);
     }
 
-    private bool PushCompletion(Completion newHead) {
+    private void EnterLock() {
+        SpinWait spinWait = default;
+        if (Interlocked.CompareExchange(ref _lock, 1, 0) != 0) {
+            spinWait.SpinOnce();
+        }
+    }
+
+    private void ExitLock() {
+        Debug.Assert(_lock == 1);
+        Volatile.Write(ref _lock, 0);
+    }
+
+    private Registration PushCompletion(Completion newHead) {
+        var cancelToken = ExecutorCoreUtil.GetCancelToken(newHead.ctx, newHead.options);
+        if (cancelToken.IsCancelRequested) {
+            return default;
+        }
         if (IsCancelRequested) {
             newHead.TryFire(SYNC);
-            return false;
+            return default;
         }
-        Completion expectedHead = stack;
-        Completion realHead;
-        while (expectedHead != TOMBSTONE) {
-            newHead.next = expectedHead;
-            realHead = Interlocked.CompareExchange(ref this.stack, newHead, expectedHead);
-            if (realHead == expectedHead) { // success
-                return true;
+        Registration registration;
+        EnterLock();
+        try {
+            if (IsCancelRequested) {
+                registration = default;
+                goto outer;
             }
-            expectedHead = realHead; // retry
+            // 双向绑定
+            if (_head != null) {
+                newHead.next = _head;
+                _head.prev = newHead;
+            }
+            _head = newHead;
+            if (_tail == null) {
+                _tail = newHead;
+            }
+            registration = new Registration(newHead, newHead._rid);
         }
-        newHead.next = null;
-        newHead.TryFire(SYNC);
-        return false;
+        finally {
+            ExitLock();
+        }
+        outer:
+        if (!registration.HasResource) {
+            newHead.TryFire(SYNC);
+        } else {
+            // 如果目标令牌是池化的对象，这里可能添加到目标CTS新的生命周期，导致内存泄漏...真想处理这个问题，需要使用可重入锁
+            if (cancelToken.CanBeCancelled
+                && TaskOptions.IsEnabled(newHead.options, TaskOptions.STAGE_LISTEN_CANCEL_TOKEN)) {
+                cancelToken.ThenRun(INVOKER, registration, TaskOptions.STAGE_UNCANCELLABLE_CTX);
+            }
+        }
+        return registration;
+    }
+
+    /// <summary>
+    /// 弹出一个回调
+    /// </summary>
+    /// <returns></returns>
+    private Completion? PopCompletion() {
+        EnterLock();
+        try {
+            Completion head = _head;
+            if (head == null) {
+                return null;
+            }
+            _head = head.next;
+            if (_tail == head) {
+                _tail = null;
+            }
+            // 解除双向绑定
+            if (_head != null) {
+                head.next = null;
+                _head.prev = null;
+            }
+            Debug.Assert(head.prev == null);
+            return head;
+        }
+        finally {
+            ExitLock();
+        }
+    }
+
+    /// <summary>
+    /// 如果返回true，则应该由调用方触发回收
+    ///
+    /// 注意：虽然node的前后置是由当前锁维护可见性的，但source不是，因此应当在Node的锁内调用。
+    /// </summary>
+    /// <param name="node"></param>
+    /// <returns>是否删除成功</returns>
+    private bool RemoveCompletion(Completion node) {
+        EnterLock();
+        try {
+            Completion prev = node.prev;
+            Completion next = node.next;
+            bool contains;
+            if (prev == null) {
+                contains = node == _head;
+            } else if (next == null) {
+                contains = node == _tail;
+            } else {
+                contains = true;
+            }
+            if (!contains) {
+                return false;
+            }
+            // fixPointers
+            if (_head == _tail) {
+                _head = _tail = null;
+            } else if (node == _head) {
+                _head = next;
+                next!.prev = null;
+            } else if (node == _tail) {
+                _tail = prev;
+                prev!.next = null;
+            } else {
+                prev!.next = next;
+                next!.prev = prev;
+            }
+            // help gc
+            node.prev = null;
+            node.next = null;
+            return true;
+        }
+        finally {
+            ExitLock();
+        }
     }
 
     private static void PostComplete(CancelTokenSource source) {
-        Completion next = null;
-        outer:
-        while (true) {
-            next = ClearListeners(source, next);
-
-            while (next != null) {
-                Completion curr = next;
-                next = next.next;
-                curr.next = null; // help gc
-
-                source = curr.TryFire(NESTED);
-                if (source != null) {
-                    goto outer;
-                }
-            }
-            break;
+        Completion next;
+        while ((next = source.PopCompletion()) != null) {
+            next.TryFire(SYNC);
         }
-    }
-
-    private static Completion? ClearListeners(CancelTokenSource source, Completion? onto) {
-        Completion head = source.stack;
-        while (true) {
-            if (head == TOMBSTONE) {
-                return onto;
-            }
-            Completion realHead = Interlocked.CompareExchange(ref source.stack, TOMBSTONE, head);
-            if (realHead == head) {
-                break;
-            }
-            head = realHead;
-        }
-        Completion ontoHead = onto;
-        while (head != null) {
-            Completion tmpHead = head;
-            head = head.next;
-
-            tmpHead.next = ontoHead;
-            ontoHead = tmpHead;
-        }
-        return ontoHead;
-    }
-
-    private static bool TryInline(Completion completion, IExecutor e, int options) {
-        // 尝试内联
-        if (ExecutorUtil.IsInlinable(e, options)) {
-            return true;
-        }
-        e.Execute(completion);
-        return false;
     }
 
     #endregion
@@ -370,24 +443,21 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
     private const int MASK_TASK_TYPE = 0x0F;
+    /** 已加入异步队列 -- 不能被立即销毁；必须由TryFire销毁 */
+    private const int MASK_ASYNC_FIRING = 0x10;
 
-
-    private static readonly Completion TOMBSTONE = new Completion();
     private static readonly ConcurrentObjectPool<Completion> POOL = new(
         () => new Completion(), c => c.Reset(), TaskPoolConfig.GetPoolSize<int>(TaskPoolType.CtsCompletion));
 
-    /**  申请一个<see cref="Completion"/>实例 */
-    private static Completion GetComplete(IExecutor? executor, int options, CancelTokenSource source,
-                                          int type, object action, object? ctx) {
+
+    private static Completion GetCompletion(IExecutor? executor, int options, CancelTokenSource source,
+                                            int type, object action, object? ctx) {
         // 去除用户的低位，记录type
         options &= (~TaskOptions.MASK_CTL_RESERVED);
         options |= type;
 
         Completion completion = POOL.Acquire();
-        int rid = completion._rid + 1;
-        completion._rid = rid;
-        completion._fireId = rid;
-
+        completion._rid++; // 从池中取出时也加1
         completion.executor = executor;
         completion.options = options;
         completion.source = source;
@@ -396,24 +466,33 @@ public sealed class CancelTokenSource : ICancelTokenSource
         return completion;
     }
 
-    /** 为简化逻辑，我们总是在触发回调的时候才回收对象 */
+    /// <summary>
+    /// 用于关闭监听器
+    /// </summary>
+    private static readonly Action<object> INVOKER = (ctx => {
+        Registration registration = (Registration)ctx;
+        registration.Dispose();
+    });
+
+    /// <summary>
+    /// 回收的时机：
+    /// 1.如果已进入异步派发阶段，则由{@code TryFire(ASYNC)}负责回收
+    /// 2.如果尚未进入异步派发阶段，则由<see cref="CancelTokenSource.RemoveCompletion"/>成功的一方负责回收。
+    /// </summary>
     private sealed class Completion : ITask, IPooledDisposable
     {
-        /** 非volatile，由栈顶的cas更新保证可见性 */
+        /** 前后置的可见性由<see cref="CancelTokenSource._lock"/>保护 */
+        internal Completion? prev;
         internal Completion? next;
-        /** 重入id -- 只增不减 */
-        internal volatile int _rid;
-        /// <summary>
-        /// cts添加回调时的<see cref="_rid"/>快照
-        /// 1.该值永不清理，用于识别能否进行通知
-        /// 2.<see cref="TryFire"/>方法需要通过该值竞争更新<see cref="_rid"/>
-        /// 3.<see cref="Dispose"/>方法通过用户持有的rid竞争更新<see cref="_rid"/>
-        /// </summary>
-        internal int _fireId;
+
+        /** 重入id -- 只增不减；需要在锁的保护下更新，即归还到池需要在锁的保护下 */
+        internal int _rid;
+        /** 派发和回收的通知锁 */
+        internal int _lock;
 
 #nullable disable
         /// <summary>
-        /// 关联的取消令牌
+        /// 关联的取消令牌--从取消令牌上删除时仍需要保留
         /// </summary>
         internal CancelTokenSource source;
         /// <summary>
@@ -424,7 +503,6 @@ public sealed class CancelTokenSource : ICancelTokenSource
         /// 任务的调度选项，包含任务的类型
         /// </summary>
         internal int options;
-#nullable enable
         /// <summary>
         /// 用户回调
         /// </summary>
@@ -433,13 +511,16 @@ public sealed class CancelTokenSource : ICancelTokenSource
         /// 回调关联的参数
         /// </summary>
         internal object? ctx;
+#nullable enable
 
         internal void Reset() {
-            _rid++; // 池化时+1，volatile安全
-            source = null!;
+            Debug.Assert(prev == null && next == null);
+            Debug.Assert(_lock == 1);
+            _rid++; // 池化时+1
+            source = null;
             executor = null;
             options = 0;
-            action = null!;
+            action = null;
             ctx = null;
         }
 
@@ -449,45 +530,53 @@ public sealed class CancelTokenSource : ICancelTokenSource
             TryFire(ASYNC);
         }
 
-        private bool Claim() {
-            IExecutor e = this.executor;
-            if (e == CLAIMED) {
-                return true;
-            }
-            this.executor = CLAIMED;
-            if (e != null) {
-                return TryInline(this, e, options);
-            }
-            return true;
-        }
+        internal void TryFire(int mode) {
+            // 如果走到这里，当前Completion一定未被回收，但action可能已被清理，即已收到取消信号
+            CancelTokenSource source;
+            IExecutor executor;
+            int options;
+            object? action;
+            object? ctx;
 
-        /** 尝试竞争重入id */
-        private bool TryIncrementRid(int reentryId) {
-            return reentryId == _rid
-                   && Interlocked.CompareExchange(ref _rid, reentryId + 1, reentryId) == reentryId;
-        }
+            EnterLock();
+            bool fire;
+            try {
+                options = this.options;
+                action = this.action;
+                ctx = this.ctx;
+                // 如果已收到取消信号，则直接回收
+                if (action == null || ExecutorCoreUtil.IsCancelRequested(ctx, options)) {
+                    POOL.Release(this);
+                    return;
+                }
+                source = this.source;
+                executor = this.executor;
 
-        internal CancelTokenSource? TryFire(int mode) {
-            {
-                // 同步Fire时，必须先竞争Action - 如果竞争失败，需要等待Close调用结束
-                if (mode <= 0 && !TryIncrementRid(_fireId)) {
-                    while (_rid != _fireId + 2) { // // 等待close完毕，不能使用小于测试(可能越界)
-                        Thread.SpinWait(1);
-                    }
-                    goto outer;
+                // 如果是同步模式，需要claim -- 与Future的实现不同，我们在锁外提交任务以避免阻塞，但需要先标记
+                if (mode <= 0 && !ExecutorCoreUtil.IsInlinable(executor, options)) {
+                    this.options |= MASK_ASYNC_FIRING;
+                    this.executor = null;
+                    fire = false;
+                } else {
+                    // 数据已拷贝到临时变量；在锁内回收，锁外执行
+                    POOL.Release(this);
+                    fire = true;
                 }
-                if (ExecutorUtil.IsCancelRequested(ctx, options)) {
-                    goto outer;
-                }
-                if (mode <= 0 && !Claim()) {
-                    return null; // 下次执行
-                }
-                Debug.Assert(action != null);
+            }
+            finally {
+                ExitLock();
+            }
+            // 在锁外执行回调和提交任务
+            if (fire) {
                 FireNow(source, options, action, ctx);
+                return;
             }
-            outer:
-            POOL.Release(this);
-            return null;
+            try {
+                executor.Execute(this);
+            }
+            catch (Exception ex) {
+                FutureLogger.LogCause(ex);
+            }
         }
 
         internal static void FireNow(CancelTokenSource source,
@@ -536,18 +625,45 @@ public sealed class CancelTokenSource : ICancelTokenSource
             }
         }
 
-        /// <summary>
-        /// 关闭监听器
-        /// </summary>
-        /// <param name="reentryId">重入id</param>
-        public void Dispose(int reentryId) {
-            if (TryIncrementRid(reentryId)) {
-                // 这里只释放action资源
-                this.action = null!;
-                this.ctx = null;
-                // 更新为+2表示关闭完毕
-                _rid = reentryId + 2;
+        public bool IsDisposed(long reentryId) {
+            EnterLock();
+            try {
+                return reentryId != _rid;
             }
+            finally {
+                ExitLock();
+            }
+        }
+
+        public void Dispose(long reentryId) {
+            EnterLock();
+            try {
+                // 只有rid匹配时，才能保证数据有效性 -- action为null表示已执行回调
+                if (_rid != reentryId || this.action == null) {
+                    return;
+                }
+                this.action = null;
+                this.ctx = null;
+                // 如果当前未进入异步执行，尝试立即回收 -- 可能正处于TryFire等待锁的状态，因此删除可能会失败
+                if ((options & MASK_ASYNC_FIRING) == 0 && source.RemoveCompletion(this)) {
+                    POOL.Release(this);
+                }
+            }
+            finally {
+                ExitLock();
+            }
+        }
+
+        internal void EnterLock() {
+            SpinWait spinWait = default;
+            if (Interlocked.CompareExchange(ref _lock, 1, 0) != 0) {
+                spinWait.SpinOnce();
+            }
+        }
+
+        internal void ExitLock() {
+            Debug.Assert(_lock == 1);
+            Volatile.Write(ref _lock, 0);
         }
     }
 

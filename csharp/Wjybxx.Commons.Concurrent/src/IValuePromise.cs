@@ -104,7 +104,7 @@ public interface IValuePromise
     /// 需要支持死锁检测
     /// </summary>
     /// <param name="reentryId">重入id，校验是否被重用</param>
-    /// <typeparam name="U">下游输出类型</typeparam>
+    /// <typeparam name="U">下游输入类型</typeparam>
     /// <returns></returns>
     IFuture<U> AsFuture<U>(int reentryId);
 

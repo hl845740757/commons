@@ -16,12 +16,12 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.concurrent.SingleThreadExecutor;
 import cn.wjybxx.base.fx.IEntity;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.Objects;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * 事件循环

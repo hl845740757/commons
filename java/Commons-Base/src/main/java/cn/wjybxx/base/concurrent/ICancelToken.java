@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 wjybxx(845740757@qq.com)
+ * Copyright 2023-2025 wjybxx(845740757@qq.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.concurrent;
+package cn.wjybxx.base.concurrent;
 
 import cn.wjybxx.base.IRegistration;
-import cn.wjybxx.base.concurrent.BetterCancellationException;
-import cn.wjybxx.base.concurrent.CancelCodes;
-import cn.wjybxx.base.concurrent.StacklessCancellationException;
+import cn.wjybxx.base.Registration;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
@@ -63,6 +61,15 @@ import java.util.function.Consumer;
  * <h3>监听器</h3>
  * 1. accept系列方法表示接收token参数；run方法表示不接收token参数；
  * 2. async表示目标action需要异步执行，方法的首个参数为executor；
+ *
+ * <h3>监听器管理</h3>
+ * 用户除了可以通过返回的{@link Registration}删除监听器外，
+ * 还可以通过调度选项{@link TaskOptions#STAGE_LISTEN_CANCEL_TOKEN}要求当前取消令牌监听用户上下文中的取消令牌，
+ * 以及时删除不再需要执行的回调 -- 可以实现批量删除。
+ * <p>
+ * 差异的源头：
+ * 取消令牌可能永远不会收到取消信号，而这可能是正常的需求，因此用户的监听器必须及时从监听器列表删除；
+ * 虽然不及时删除不会导致逻辑错误，但会导致内存泄漏。
  *
  * @author wjybxx
  * date - 2024/1/8

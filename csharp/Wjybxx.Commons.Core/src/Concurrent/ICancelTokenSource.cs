@@ -34,20 +34,6 @@ public interface ICancelTokenSource : ICancelToken
     bool Cancel(int cancelCode = CancelCodes.REASON_DEFAULT);
 
     /// <summary>
-    /// 在一段时间后发送取消命令
-    /// </summary>
-    /// <param name="cancelCode">取消码</param>
-    /// <param name="millisecondsDelay">延迟时间(毫秒) -- 单线程版的话，真实单位取决于约定。</param>
-    void CancelAfter(int cancelCode, long millisecondsDelay);
-
-    /// <summary>
-    /// 在一段时间后发送取消命令
-    /// </summary>
-    /// <param name="cancelCode">取消码</param>
-    /// <param name="timeSpan">延迟时间</param>
-    void CancelAfter(int cancelCode, TimeSpan timeSpan);
-
-    /// <summary>
     /// 创建一个同类型实例。
     /// 1.原型对象，避免具体类型依赖。
     /// 2.默认情况下，其它上下文应当拷贝。

@@ -199,7 +199,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         if (command == null) throw new ArgumentNullException(nameof(command));
         long sequence = NextSequence(1);
         if (sequence < 0) {
-            rejectedExecutionHandler.Rejected(ExecutorUtil.ToTask(command, options), this);
+            rejectedExecutionHandler.Rejected(ExecutorCoreUtil.ToTask(command, options), this);
             return;
         }
         PublishTask(command, sequence, options);
@@ -326,7 +326,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long NextSequence(int size) {
         if (IsShuttingDown) {
             return -1;
@@ -590,7 +589,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     private void MainLoopEntry() {
         // 设置同步上下文，使得EventLoop创建的Task的下游任务默认继续在EventLoop上执行
         SynchronizationContext.SetSynchronizationContext(AsSyncContext());
-        EventLoopUtil.SetExecutor(this);
         try {
             UpdateTickTime();
             if (!runningPromise.TrySetComputing()) {
@@ -641,7 +639,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
                     terminationPromise.TrySetResult(0);
                 }
                 // 清理同步上下文
-                EventLoopUtil.SetExecutor(null);
                 SynchronizationContext.SetSynchronizationContext(null);
             }
         }
