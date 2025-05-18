@@ -190,7 +190,6 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
         } finally {
             listeners.endItr();
         }
-        listeners.clear();
     }
 
     //endregion
@@ -663,7 +662,7 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
 
         @Override
         public boolean isClosed(long reentryId) {
-            return reentryId != rid;
+            return reentryId != rid || this.action == null;
         }
 
         @Override

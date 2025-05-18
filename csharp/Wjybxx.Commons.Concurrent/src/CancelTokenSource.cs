@@ -628,7 +628,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
         public bool IsDisposed(long reentryId) {
             EnterLock();
             try {
-                return reentryId != _rid;
+                return reentryId != _rid || this.action == null;
             }
             finally {
                 ExitLock();

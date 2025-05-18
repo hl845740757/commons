@@ -24,7 +24,8 @@ namespace Wjybxx.Commons
 public interface IPooledDisposable
 {
     /// <summary>
-    /// 查询资源对象是否已退出当前生命周期
+    /// 查询资源对象是否已退出当前生命周期。
+    /// 注意：关联的资源已被销毁，不代表已归还到资源池。
     /// </summary>
     /// <param name="reentryId"></param>
     /// <returns></returns>

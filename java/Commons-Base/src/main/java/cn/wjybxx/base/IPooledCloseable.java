@@ -24,7 +24,10 @@ package cn.wjybxx.base;
  */
 public interface IPooledCloseable {
 
-    /** 查询资源对象是否已退出当前生命周期 */
+    /**
+     * 查询资源对象是否已退出当前生命周期
+     * 注意：关联的资源已被销毁，不代表已归还到资源池。
+     */
     boolean isClosed(long reentryId);
 
     /** 关闭资源 */

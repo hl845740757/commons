@@ -409,7 +409,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
         Registration registration = new Registration(newHead, newHead._rid);
         listeners.Add(newHead);
 
-        if (cancelToken.CanBeCancelled 
+        if (cancelToken.CanBeCancelled
             && TaskOptions.IsEnabled(newHead.options, TaskOptions.STAGE_LISTEN_CANCEL_TOKEN)) {
             cancelToken.ThenRun(INVOKER, registration, TaskOptions.STAGE_UNCANCELLABLE_CTX);
         }
@@ -470,7 +470,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
         Registration registration = (Registration)ctx;
         registration.Dispose();
     });
-    
+
     private sealed class Completion : ITask, ICancelTokenListener, IPooledDisposable
     {
         /** 重入id -- 只增不减 */
@@ -609,7 +609,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
         }
 
         public bool IsDisposed(long reentryId) {
-            return reentryId != _rid;
+            return reentryId != _rid || this.action == null;
         }
 
         public void Dispose(long reentryId) {

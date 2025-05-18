@@ -786,7 +786,7 @@ public final class CancelTokenSource implements ICancelTokenSource {
         public boolean isClosed(long reentryId) {
             enterLock();
             try {
-                return reentryId != rid;
+                return rid != reentryId || this.action == null;
             } finally {
                 exitLock();
             }
