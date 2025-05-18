@@ -37,6 +37,15 @@ LinkedDictionary特殊接口示例：
 
 ## ReleaseNotes
 
+### 1.4.0
+
+1. 将取消令牌相关接口挪到Core包，以支持行为树模块实现相关接口
+
+### 1.3.0
+
+1. 增加了组件模式统一接口：`IEntity`和`IComponent`
+2. 修改TimeProvider的方法名
+
 ### 1.2.1
 
 1. fix LinkedHashSet和LinkedDictionary中`FixPointers`方法head维护错误..
@@ -62,11 +71,6 @@ LinkedDictionary特殊接口示例：
         // ...
     }
 ```
-
-### 1.3.0
-
-1. 增加了组件模式统一接口：`IEntity`和`IComponent`
-2. 修改TimeProvider的方法名
 
 ### 1.2.0
 

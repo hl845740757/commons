@@ -42,7 +42,10 @@ public abstract class AbstractCharStream : IDsonCharStream
     }
 
     protected void AddLines(IList<LineInfo> newLines) {
+        // unity下可能无该方法
+#if NET6_0_OR_GREATER
         _lines.EnsureCapacity(_lines.Count + newLines.Count);
+#endif
         foreach (LineInfo newLine in newLines) {
             if (newLine == null) throw new NullReferenceException("newLine");
             _lines.Add(newLine);
