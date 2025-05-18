@@ -174,12 +174,27 @@ public static class DatetimeUtil
 
     /// <summary>
     /// 将unix时间戳转为本地时间
+    /// 
+    /// 注意：返回的日期类型为<see cref="DateTimeKind.Unspecified"/>，而不是<see cref="DateTimeKind.Local"/>，
+    /// 因为Local有特殊，比如ToString，这会导致许多事情不符合预期。
+    ///
+    /// PS：C#这狗屎的时间API简直了...
     /// </summary>
     /// <param name="epochMillis">unix时间戳</param>
     /// <param name="offset">时区偏移</param>
     /// <returns></returns>
     public static DateTime ToLocalDateTime(long epochMillis, TimeSpan offset) {
-        return DateTime.UnixEpoch.AddMilliseconds(epochMillis + offset.TotalMilliseconds);
+        DateTime dateTime = DateTime.UnixEpoch.AddMilliseconds(epochMillis + offset.TotalMilliseconds);
+        return new DateTime(dateTime.Ticks, DateTimeKind.Unspecified);
+    }
+
+    /// <summary>
+    /// 转换为非特殊类型DateTime
+    /// </summary>
+    /// <param name="dateTime"></param>
+    /// <returns></returns>
+    public static DateTime Unspecified(this DateTime dateTime) {
+        return new DateTime(dateTime.Ticks, DateTimeKind.Unspecified);
     }
 
     /// <summary>
