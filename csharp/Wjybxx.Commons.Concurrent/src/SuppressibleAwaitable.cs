@@ -27,7 +27,7 @@ namespace Wjybxx.Commons.Concurrent
 public readonly struct SuppressibleAwaitable
 {
     private readonly ValueFuture _future;
-    private readonly IExecutor _executor;
+    private readonly IExecutor? _executor;
     private readonly int _options;
     private readonly bool _requireResult;
 
@@ -35,9 +35,9 @@ public readonly struct SuppressibleAwaitable
     /// <param name="executor">回调线程</param>
     /// <param name="options">调度选项</param>
     /// <param name="requireResult">是否需要获取最终结果</param>
-    public SuppressibleAwaitable(ValueFuture future, IExecutor executor, int options, bool requireResult) {
+    public SuppressibleAwaitable(ValueFuture future, IExecutor? executor, int options, bool requireResult) {
         _future = future;
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _executor = executor;
         _options = options;
         _requireResult = requireResult;
     }
@@ -80,12 +80,12 @@ public readonly struct SuppressibleAwaitable
 public readonly struct SuppressibleAwaitable<T>
 {
     private readonly ValueFuture<T> _future;
-    private readonly IExecutor _executor;
+    private readonly IExecutor? _executor;
     private readonly int _options;
 
-    public SuppressibleAwaitable(ValueFuture<T> future, IExecutor executor, int options) {
+    public SuppressibleAwaitable(ValueFuture<T> future, IExecutor? executor, int options) {
         _future = future;
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _executor = executor;
         _options = options;
     }
 

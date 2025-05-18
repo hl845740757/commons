@@ -35,7 +35,7 @@ public readonly struct CancelTokenAwaiter : ICriticalNotifyCompletion
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public CancelTokenAwaiter(ICancelToken cancelToken, IExecutor? executor = null, int options = 0) {
         _cts = cancelToken ?? throw new ArgumentNullException(nameof(cancelToken));
-        _executor = ExecutorSynchronizationContext.GetAwaitExecutor(executor);
+        _executor = executor;
         _options = options;
     }
 

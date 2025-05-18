@@ -27,12 +27,12 @@ namespace Wjybxx.Commons.Concurrent
 public readonly struct ValueFutureAwaitable
 {
     private readonly ValueFuture _future;
-    private readonly IExecutor _executor;
+    private readonly IExecutor? _executor;
     private readonly int _options;
 
-    public ValueFutureAwaitable(ValueFuture future, IExecutor executor, int options) {
+    public ValueFutureAwaitable(ValueFuture future, IExecutor? executor, int options) {
         _future = future;
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _executor = executor;
         _options = options;
     }
 
@@ -64,12 +64,12 @@ public readonly struct ValueFutureAwaitable
 public readonly struct ValueFutureAwaitable<T>
 {
     private readonly ValueFuture<T> _future;
-    private readonly IExecutor _executor;
+    private readonly IExecutor? _executor;
     private readonly int _options;
 
-    public ValueFutureAwaitable(ValueFuture<T> future, IExecutor executor, int options) {
+    public ValueFutureAwaitable(ValueFuture<T> future, IExecutor? executor, int options) {
         _future = future;
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _executor = executor;
         _options = options;
     }
 

@@ -27,7 +27,7 @@ namespace Wjybxx.Commons.Concurrent
 public readonly struct FutureAwaitable
 {
     private readonly IFuture _future;
-    private readonly IExecutor _executor;
+    private readonly IExecutor? _executor;
     private readonly int _options;
 
     /// <summary>
@@ -36,9 +36,9 @@ public readonly struct FutureAwaitable
     /// <param name="future">future</param>
     /// <param name="executor">awaiter的回调线程</param>
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
-    public FutureAwaitable(IFuture future, IExecutor executor, int options) {
+    public FutureAwaitable(IFuture future, IExecutor? executor, int options) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _executor = executor;
         _options = options;
     }
 
@@ -52,7 +52,7 @@ public readonly struct FutureAwaitable
 public readonly struct FutureAwaitable<T>
 {
     private readonly IFuture<T> _future;
-    private readonly IExecutor _executor;
+    private readonly IExecutor? _executor;
     private readonly int _options;
 
     /// <summary>
@@ -61,9 +61,9 @@ public readonly struct FutureAwaitable<T>
     /// <param name="future">future</param>
     /// <param name="executor">awaiter的回调线程</param>
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
-    public FutureAwaitable(IFuture<T> future, IExecutor executor, int options) {
+    public FutureAwaitable(IFuture<T> future, IExecutor? executor, int options) {
         _future = future ?? throw new ArgumentNullException(nameof(future));
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+        _executor = executor;
         _options = options;
     }
 

@@ -37,7 +37,7 @@ public readonly struct CancelTokenAwaitable
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public CancelTokenAwaitable(ICancelToken cancelToken, IExecutor? executor, int options) {
         _cts = cancelToken ?? throw new ArgumentNullException(nameof(cancelToken));
-        _executor = ExecutorSynchronizationContext.GetAwaitExecutor(executor);
+        _executor = executor;
         _options = options;
     }
 

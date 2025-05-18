@@ -38,7 +38,7 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
     /// <param name="options"></param>
     public ValueFutureAwaiter(ValueFuture future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = ExecutorSynchronizationContext.GetAwaitExecutor(executor);
+        _executor = executor;
         _options = options;
     }
 
@@ -89,7 +89,7 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="options"></param>
     public ValueFutureAwaiter(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = ExecutorSynchronizationContext.GetAwaitExecutor(executor);
+        _executor = executor;
         _options = options;
     }
 

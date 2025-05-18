@@ -39,7 +39,7 @@ public readonly struct FutureAwaiter : ICriticalNotifyCompletion
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public FutureAwaiter(IFuture future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = ExecutorSynchronizationContext.GetAwaitExecutor(executor);
+        _executor = executor;
         _options = options;
     }
 
@@ -108,7 +108,7 @@ public readonly struct FutureAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public FutureAwaiter(IFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
-        _executor = ExecutorSynchronizationContext.GetAwaitExecutor(executor);
+        _executor = executor;
         _options = options;
     }
 

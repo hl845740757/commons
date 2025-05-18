@@ -65,7 +65,7 @@ public readonly struct ValueFuture
     /// <see cref="IFuture.GetAwaitable"/>
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ValueFutureAwaitable GetAwaitable(IExecutor executor, int options = 0) => new(this, executor, options);
+    public ValueFutureAwaitable GetAwaitable(IExecutor? executor, int options = 0) => new(this, executor, options);
 
     /// <summary>
     /// <see cref="IFuture.GetAwaitable"/>
@@ -76,7 +76,7 @@ public readonly struct ValueFuture
     /// <param name="requireResult">是否需要返回结果</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public SuppressibleAwaitable GetAwaitable(IExecutor executor, SuppressedTypes suppressedTypes, int options = 0,
+    public SuppressibleAwaitable GetAwaitable(IExecutor? executor, SuppressedTypes suppressedTypes, int options = 0,
                                               bool requireResult = false) =>
         new(this, executor, (int)suppressedTypes | options, requireResult);
 
@@ -351,13 +351,13 @@ public readonly struct ValueFuture<T>
     /// <see cref="IFuture.GetAwaitable"/>
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ValueFutureAwaitable<T> GetAwaitable(IExecutor executor, int options = 0) => new(this, executor, options);
+    public ValueFutureAwaitable<T> GetAwaitable(IExecutor? executor, int options = 0) => new(this, executor, options);
 
     /// <summary>
     /// <see cref="IFuture.GetAwaitable"/>
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public SuppressibleAwaitable<T> GetAwaitable(IExecutor executor, SuppressedTypes suppressedTypes, int options = 0) =>
+    public SuppressibleAwaitable<T> GetAwaitable(IExecutor? executor, SuppressedTypes suppressedTypes, int options = 0) =>
         new(this, executor, (int)suppressedTypes | options);
 
     #region factory
