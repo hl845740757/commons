@@ -70,9 +70,15 @@ public readonly struct ValueFuture
     /// <summary>
     /// <see cref="IFuture.GetAwaitable"/>
     /// </summary>
+    /// <param name="executor">回调线程</param>
+    /// <param name="suppressedTypes">需要压栈的异常</param>
+    /// <param name="options">调度选项</param>
+    /// <param name="requireResult">是否需要返回结果</param>
+    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public SuppressibleAwaitable GetAwaitable(IExecutor executor, SuppressedTypes suppressedTypes, int options = 0) =>
-        new(this, executor, (int)suppressedTypes | options, false);
+    public SuppressibleAwaitable GetAwaitable(IExecutor executor, SuppressedTypes suppressedTypes, int options = 0,
+                                              bool requireResult = false) =>
+        new(this, executor, (int)suppressedTypes | options, requireResult);
 
     #region factory
 
