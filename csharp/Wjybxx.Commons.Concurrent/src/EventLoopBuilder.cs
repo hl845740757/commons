@@ -34,7 +34,7 @@ public abstract class EventLoopBuilder<T> where T : IAgentEvent
     private ThreadFactory? _threadFactory;
 
     private long consumerId;
-    private IEventLoopAgent<T>? _agent = EmptyAgent<T>.Inst;
+    private IEventLoopAgent<T>? _agent;
     private readonly List<EventLoopModule> _moduleList = new List<EventLoopModule>();
     private int _batchSize = 1024;
 

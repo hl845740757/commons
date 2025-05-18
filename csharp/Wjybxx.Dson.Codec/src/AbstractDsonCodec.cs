@@ -30,13 +30,20 @@ internal static class AbstractDsonCodec
     private static readonly ConcurrentDictionary<Type, bool> cache = new ConcurrentDictionary<Type, bool>();
 
     public static bool IsOverwriteBeforeEncode(Type type) {
-        type = type.GetGenericTypeDefinition();
+        if (type.IsGenericType) {
+            type = type.GetGenericTypeDefinition();
+        }
         if (cache.TryGetValue(type, out bool r)) {
             return r;
         }
         MethodInfo methodInfo = type.GetMethod("BeforeEncode", BindingFlags.NonPublic | BindingFlags.Instance);
         if (methodInfo == null) throw new AssertionError();
-        r = methodInfo.DeclaringType!.GetGenericTypeDefinition() != typeof(AbstractDsonCodec<>);
+
+        Type declaringType = methodInfo.DeclaringType!;
+        if (declaringType.IsGenericType) {
+            declaringType = declaringType.GetGenericTypeDefinition();
+        }
+        r = declaringType != typeof(AbstractDsonCodec<>);
         cache.TryAdd(type, r);
         return r;
     }
