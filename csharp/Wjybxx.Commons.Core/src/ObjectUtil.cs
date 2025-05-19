@@ -48,20 +48,24 @@ public static class ObjectUtil
         return obj == null ? def : obj;
     }
 
-    /// <summary>
-    /// 0转为默认值
-    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int ZeroToDef(int value, int def) {
         return value == 0 ? def : value;
     }
 
-    /// <summary>
-    /// 0转为默认值
-    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long ZeroToDef(long value, long def) {
         return value == 0 ? def : value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsIntersect(this int value, int other) {
+        return (value & other) != 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsIntersect(this long value, long other) {
+        return (value & other) != 0;
     }
 
     /// <summary>
@@ -74,7 +78,7 @@ public static class ObjectUtil
 
     /// <summary>
     /// 系统tick对应的毫秒时间戳
-    /// 注意：不是Unix时间戳！
+    /// 注意：不是Unix时间戳！不是Unix时间戳！不是Unix时间戳！
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

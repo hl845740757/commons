@@ -54,18 +54,26 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
         return new ImmutableList<T>(source);
     }
 
-    public static ImmutableList<T> CreateRange(IEnumerable<T> source) {
+    public static ImmutableList<T> CreateRange(IEnumerable<T> source, IComparer<T>? comparer = null) {
+        if (source == null) throw new ArgumentNullException(nameof(source));
         T[] array = source as T[];
         if (array != null) {
-            return new ImmutableList<T>(array, true);
+            array = ArrayUtil.CopyOf(array);
         } else {
             // 对于受信任的集合，不再二次拷贝
             array = source.ToArray();
-            bool trusted = source is List<T>
-                           || source is HashSet<T>
-                           || source is LinkedHashSet<T>;
-            return new ImmutableList<T>(array, !trusted);
+            if (!IsTrustedCollection(source)) {
+                array = ArrayUtil.CopyOf(array);
+            }
         }
+        if (comparer != null) {
+            Array.Sort(array, comparer);
+        }
+        return new ImmutableList<T>(array, false);
+    }
+
+    private static bool IsTrustedCollection(IEnumerable<T> source) {
+        return source is List<T> || source is HashSet<T> || source is LinkedHashSet<T>;
     }
 
     #endregion

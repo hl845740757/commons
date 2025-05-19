@@ -8,7 +8,6 @@
 
 注意：`Wjybxx.Commons.Core`,`Wjybxx.Commons.Inject`,`Wjybxx.Commons.Concurrent` 三个程序集的版本号总是保持一致，任一程序集修改，其它程序集版本号也会修改。
 
-
 ## C#系统并发库缺陷
 
 个人使用C#系统库有几点很难受：
@@ -21,7 +20,12 @@
 
 ## ReleaseNotes
 
-### 1.3.0
+### 1.4.0
+
+1. 取消令牌相关接口挪至Commons.Core程序集，使得行为树程序集可实现`ICancelToken`。
+2. 取消令牌监听器管理优化，及时从监听器列表删除被取消的，避免内存泄漏问题。
+
+### 1.3.x
 
 1. `EventLoop`模块化，大幅增强`DisruptorEventLoop`。
 2. `IFuture`取消对上下文的类型约束，默认为object。
@@ -31,6 +35,8 @@
 6. `PromiseTask`，`SchedulePromiseTask`加入池化逻辑。
 7. `CancelTokenSource`监听优化，监听节点`Completion`池化。
 8. `SchedulePromiseTask`周期性任务支持通过异常返回结果。
+
+PS： `1.3.x`未发布正式版，因为Commons.Core这期间升级了版本。
 
 ### 1.2.1
 
