@@ -39,18 +39,18 @@ class PreparedCharStream : AbstractCharStream
         return _rawLines == null;
     }
 
-    protected override int CharAt(LineInfo curLine, int position) {
+    protected override int CharAt(ref LineInfo curLine, int position) {
         return curLine.rawLine[position - curLine.startPos];
     }
 
     protected override void CheckUnreadOverFlow(int position) {
     }
 
-    protected override void ScanMoreChars(LineInfo line) {
+    protected override void ScanMoreChars(ref LineInfo curLine) {
         throw new InvalidOperationException();
     }
 
-    protected override bool ScanNextLine() {
+    protected override bool ScanNextLine(in LineInfo curLine) {
         return false;
     }
 

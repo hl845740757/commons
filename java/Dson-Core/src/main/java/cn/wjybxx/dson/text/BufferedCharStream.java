@@ -21,6 +21,7 @@ import cn.wjybxx.base.pool.ArrayPool;
 import cn.wjybxx.base.pool.ConcurrentArrayPool;
 import cn.wjybxx.dson.io.DsonIOException;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Objects;
@@ -138,21 +139,21 @@ final class BufferedCharStream extends AbstractCharStream {
 
     /** 该方法一直读到指定行读取完毕，或缓冲区满(不一定扩容) */
     @Override
-    protected void scanMoreChars(LineInfo line) {
+    protected void scanMoreChars(LineInfo curLine) {
         discardReadChars();
         CharBuffer buffer = this.buffer;
         CharBuffer nextBuffer = this.nextBuffer;
         try {
             // >= 2 是为了处理\r\n换行符，避免读入单个\r不知如何处理
-            while (!line.isScanCompleted() && buffer.writableChars() >= 2) {
+            while (!curLine.isScanCompleted() && buffer.writableChars() >= 2) {
                 readToBuffer(nextBuffer);
                 while (nextBuffer.isReadable() && buffer.writableChars() >= 2) {
                     char c = nextBuffer.read();
-                    line.endPos++;
+                    curLine.endPos++;
                     buffer.write(c);
 
                     if (c == '\n') { // LF
-                        line.state = LineInfo.STATE_LF;
+                        curLine.state = LineInfo.STATE_LF;
                         return;
                     }
                     if (c == '\r') {
@@ -162,20 +163,20 @@ final class BufferedCharStream extends AbstractCharStream {
                         }
                         if (!nextBuffer.isReadable()) {
                             assert readerEof;
-                            line.state = LineInfo.STATE_EOF;
+                            curLine.state = LineInfo.STATE_EOF;
                             return;
                         }
                         c = nextBuffer.read();
-                        line.endPos++;
+                        curLine.endPos++;
                         buffer.write(c);
                         if (c == '\n') { // CRLF
-                            line.state = LineInfo.STATE_CRLF;
+                            curLine.state = LineInfo.STATE_CRLF;
                             return;
                         }
                     }
                 }
                 if (readerEof && !nextBuffer.isReadable()) {
-                    line.state = LineInfo.STATE_EOF;
+                    curLine.state = LineInfo.STATE_EOF;
                     return;
                 }
             }
@@ -204,11 +205,10 @@ final class BufferedCharStream extends AbstractCharStream {
     }
 
     @Override
-    protected boolean scanNextLine() {
+    protected boolean scanNextLine(@Nullable LineInfo curLine) {
         if (readerEof && !nextBuffer.isReadable()) {
             return false;
         }
-        LineInfo curLine = getCurLine();
         final int ln;
         final int startPos;
         if (curLine == null) {

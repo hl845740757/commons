@@ -64,52 +64,38 @@ public class DsonCharStreamTest
             @sL 这是一行长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长的纯文本
             """"; // 换行结束与不换行是不同的
 
+    /** 测试3种CharStream实现的相等性 */
     [Test]
-    public void testLineEquals() {
-        List<LineInfo> lines1 = new(32);
-        List<LineInfo> lines2 = new(32);
-        List<LineInfo> lines3 = new(32);
-        using (IDsonCharStream charStream = IDsonCharStream.NewCharStream(tokenString)) {
-            pullToList(charStream, lines1);
-        }
-        using (IDsonCharStream charStream = IDsonCharStream.NewBufferedCharStream(new StringReader(tokenString))) {
-            pullToList(charStream, lines2);
-        }
-        using (IDsonCharStream charStream = IDsonCharStream.NewPreparedCharStream(toPreparedLines())) {
-            pullToList(charStream, lines3);
-        }
-        Assert.AreEqual(lines1.Count, lines2.Count);
-        Assert.AreEqual(lines1.Count, lines3.Count);
-
-        int size = lines1.Count - 1;
-        for (int i = 0; i < size; i++) {
-            LineInfo lineInfo1 = lines1[i];
-            LineInfo lineInfo2 = lines2[i];
-            LineInfo lineInfo3 = lines3[i];
-            Assert.IsTrue(baseEquals(lineInfo1, lineInfo2), "{0}, {1}", lineInfo1, lineInfo2);
-            Assert.IsTrue(baseEquals(lineInfo1, lineInfo3), "{0}, {1}", lineInfo1, lineInfo3);
-        }
-    }
-
-    public bool baseEquals(LineInfo self, LineInfo lineInfo) {
-        if (self == lineInfo) return true;
-
-        if (self.state != lineInfo.state) return false;
-        if (self.ln != lineInfo.ln) return false;
-        if (self.startPos != lineInfo.startPos) return false;
-        if (self.endPos != lineInfo.endPos) return false;
-        return true;
-    }
-
-    private static void pullToList(IDsonCharStream buffer, List<LineInfo> outList) {
-        int c;
-        while ((c = buffer.Read()) != -1) {
-            if (buffer.Position == 0) {
-                outList.Add(buffer.CurLine);
-            } else if (c == -2) {
-                outList.Add(buffer.CurLine);
+    public void testCharStreamEquals() {
+        int c1;
+        int c2;
+        int c3;
+        bool unread = false;
+        int lastChar = -1;
+        using IDsonCharStream charStream = IDsonCharStream.NewCharStream(tokenString);
+        using IDsonCharStream bufferedCharStream = IDsonCharStream.NewBufferedCharStream(new StringReader(tokenString));
+        using IDsonCharStream preparedCharStream = IDsonCharStream.NewPreparedCharStream(toPreparedLines());
+        while ((c1 = charStream.Read()) != -1) {
+            c2 = bufferedCharStream.Read();
+            c3 = preparedCharStream.Read();
+            Assert.AreEqual(c1, c2);
+            Assert.AreEqual(c1, c3);
+            if (unread) {
+                Assert.AreEqual(lastChar, c1);
+            }
+            if (!unread && Random.Shared.Next(2) == 1) {
+                lastChar = c1;
+                unread = true;
+                charStream.Unread();
+                bufferedCharStream.Unread();
+                preparedCharStream.Unread();
+            } else {
+                lastChar = -1;
+                unread = false;
             }
         }
+        Assert.AreEqual(-1, bufferedCharStream.Read());
+        Assert.AreEqual(-1, preparedCharStream.Read());
     }
 
     [Test]

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Dson.Text
 {
@@ -27,10 +28,14 @@ namespace Wjybxx.Dson.Text
 /// </summary>
 public abstract class AbstractCharStream : IDsonCharStream
 {
-    private readonly List<LineInfo> _lines = new List<LineInfo>(10);
-    private LineInfo? _curLine;
-    private bool _readingContent = false;
+    private readonly List<LineInfo> _lines = new(10);
+    /// <summary>
+    /// 在Line为值类型情况下，该字段的作用：避免每次从lines中取值时产生拷贝。
+    /// 不过，由于curLine是副本，因此每次调用<see cref="ScanMoreChars"/>后，都应当写回到lines。
+    /// </summary>
+    private LineInfo _curLine;
     private int _position = -1;
+    private bool _readingContent = false;
     private bool _eof = false;
 
     internal AbstractCharStream() {
@@ -47,13 +52,13 @@ public abstract class AbstractCharStream : IDsonCharStream
         _lines.EnsureCapacity(_lines.Count + newLines.Count);
 #endif
         foreach (LineInfo newLine in newLines) {
-            if (newLine == null) throw new NullReferenceException("newLine");
+            if (newLine.IsNull) throw new NullReferenceException("newLine");
             _lines.Add(newLine);
         }
     }
 
     protected void AddLine(LineInfo newLine) {
-        if (newLine == null) throw new ArgumentNullException(nameof(newLine));
+        if (newLine.IsNull) throw new ArgumentNullException(nameof(newLine));
         _lines.Add(newLine);
     }
 
@@ -61,32 +66,33 @@ public abstract class AbstractCharStream : IDsonCharStream
         if (IsClosed()) throw new DsonParseException("Trying to read after closed");
         if (_eof) throw new DsonParseException("Trying to read past eof");
 
-        LineInfo curLine = this._curLine;
-        if (curLine == null) {
-            if (_lines.Count == 0 && !ScanNextLine()) {
+        ref LineInfo curLine = ref _curLine;
+        if (curLine.IsNull) {
+            if (_lines.Count == 0 && !ScanNextLine(in curLine)) {
                 _eof = true;
                 return -1;
             }
-            curLine = _lines[0];
-            OnReadNextLine(curLine);
+            LineInfo nextLine = _lines[0];
+            OnReadNextLine(nextLine);
             return -2;
         }
         // 到达当前扫描部分的尾部，扫描更多的字符 - 不测试readingContent也没问题
         if (_position == curLine.endPos && !curLine.IsScanCompleted()) {
-            ScanMoreChars(curLine); // 要么读取到一个输入，要么行扫描完毕
+            ScanMoreChars(ref curLine); // 要么读取到一个输入，要么行扫描完毕
+            WriteBack(in curLine); // 写回到Lines
             Debug.Assert(_position < curLine.endPos || curLine.IsScanCompleted());
         }
         if (curLine.IsScanCompleted()) {
             if (_readingContent) {
                 if (_position >= curLine.LastReadablePosition()) { // 读完或已在行尾(unread)
-                    return OnReadEndOfLine(curLine);
+                    return OnReadEndOfLine(ref curLine);
                 } else {
                     _position++;
                 }
             } else if (curLine.HasContent()) {
                 _readingContent = true;
             } else {
-                return OnReadEndOfLine(curLine);
+                return OnReadEndOfLine(ref curLine);
             }
         } else {
             if (_readingContent) {
@@ -95,22 +101,29 @@ public abstract class AbstractCharStream : IDsonCharStream
                 _readingContent = true;
             }
         }
-        return CharAt(curLine, _position);
+        return CharAt(ref curLine, _position);
     }
 
-    private int OnReadEndOfLine(LineInfo curLine) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void WriteBack(in LineInfo curLine) {
+        int idx = IndexOfCurLine(_lines, in curLine);
+        _lines[idx] = curLine;
+    }
+
+    /** 当前行的数据读取完毕 */
+    private int OnReadEndOfLine(ref LineInfo curLine) {
         // 这里不可以修改position，否则unread可能出错
         if (curLine.state == LineInfo.StateEof) {
             _eof = true;
             return -1;
         }
-        int index = IndexOfCurLine(_lines, curLine);
-        if (index + 1 == _lines.Count && !ScanNextLine()) {
+        int index = IndexOfCurLine(_lines, in curLine);
+        if (index + 1 == _lines.Count && !ScanNextLine(in curLine)) {
             _eof = true;
             return -1;
         }
-        curLine = _lines[index + 1];
-        OnReadNextLine(curLine);
+        LineInfo nextLine = _lines[index + 1];
+        OnReadNextLine(nextLine);
         return -2;
     }
 
@@ -119,7 +132,7 @@ public abstract class AbstractCharStream : IDsonCharStream
         this._curLine = nextLine;
         this._readingContent = false;
         this._position = nextLine.startPos;
-        DiscardReadLines(_lines, nextLine); // 清除部分缓存
+        DiscardReadLines(_lines, in nextLine); // 清除部分缓存
     }
 
     private void OnBackToPreLine(LineInfo preLine) {
@@ -141,8 +154,8 @@ public abstract class AbstractCharStream : IDsonCharStream
             _eof = false;
             return -1;
         }
-        LineInfo curLine = this._curLine;
-        if (curLine == null) {
+        ref LineInfo curLine = ref _curLine;
+        if (curLine.IsNull) {
             throw new InvalidOperationException("read must be called before unread.");
         }
         // 当前行回退 -- 需要检测是否回退到bufferStartPos之前
@@ -156,14 +169,10 @@ public abstract class AbstractCharStream : IDsonCharStream
             return 0;
         }
         // 尝试回退到上一行，需要检测上一行的最后一个可读字符是否溢出
-        int index = IndexOfCurLine(_lines, curLine);
+        int index = IndexOfCurLine(_lines, in curLine);
         if (index > 0) {
             LineInfo preLine = _lines[index - 1];
-            if (preLine.HasContent()) {
-                CheckUnreadOverFlow(preLine.LastReadablePosition());
-            } else {
-                CheckUnreadOverFlow(preLine.startPos);
-            }
+            CheckUnreadOverFlow(preLine.endPos);
             OnBackToPreLine(preLine);
             return -2;
         } else {
@@ -171,7 +180,7 @@ public abstract class AbstractCharStream : IDsonCharStream
                 throw BufferOverFlow(_position);
             }
             // 回退到初始状态
-            this._curLine = null;
+            this._curLine = default;
             this._readingContent = false;
             this._position = -1;
             return 0;
@@ -179,12 +188,14 @@ public abstract class AbstractCharStream : IDsonCharStream
     }
 
     public void SkipLine() {
-        LineInfo curLine = this._curLine;
-        if (curLine == null) throw new InvalidOperationException();
+        ref LineInfo curLine = ref _curLine;
+        if (curLine.IsNull) throw new InvalidOperationException();
         while (!curLine.IsScanCompleted()) {
             _position = curLine.endPos;
-            ScanMoreChars(curLine);
+            ScanMoreChars(ref curLine);
         }
+        WriteBack(in curLine);
+
         if (curLine.HasContent()) {
             _readingContent = true;
             _position = curLine.LastReadablePosition();
@@ -192,12 +203,13 @@ public abstract class AbstractCharStream : IDsonCharStream
     }
 
     public int Position => _position;
-
-    public LineInfo? CurLine => _curLine;
+    public int Ln => _curLine.ln;
+    public int Column => _curLine.IsNull ? 0 : (_position - _curLine.startPos + 1);
 
     //
 
-    protected static int IndexOfCurLine(List<LineInfo> lines, LineInfo curLine) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int IndexOfCurLine(List<LineInfo> lines, in LineInfo curLine) {
         return curLine.ln - lines[0].ln;
     }
 
@@ -216,14 +228,14 @@ public abstract class AbstractCharStream : IDsonCharStream
     /** 获取首行行号，基于Reader时可能不是第一行开始 */
     protected virtual int FirstLn => 1;
 
-    /** 丢弃部分已读的行，减少内存占用 */
-    protected void DiscardReadLines(List<LineInfo> lines, LineInfo? curLine) {
-        if (curLine == null) {
+    /** 丢弃部分已读的行，减少内存占用 -- 如果注释行很多，这可能有问题 */
+    protected void DiscardReadLines(List<LineInfo> lines, in LineInfo curLine) {
+        if (curLine.IsNull) {
             return;
         }
-        int idx = IndexOfCurLine(lines, curLine);
-        if (idx >= 10) {
-            lines.RemoveRange(0, 5);
+        int idx = IndexOfCurLine(lines, in curLine);
+        if (idx >= 20) {
+            lines.RemoveRange(0, 10);
         }
     }
 
@@ -239,7 +251,7 @@ public abstract class AbstractCharStream : IDsonCharStream
     /// <param name="curLine">当前读取的行</param>
     /// <param name="position">全局位置</param>
     /// <returns></returns>
-    protected abstract int CharAt(LineInfo curLine, int position);
+    protected abstract int CharAt(ref LineInfo curLine, int position);
 
     /// <summary>
     /// 检测是否可以回退到指定位置（目标位置数据是否还在缓存中）
@@ -257,17 +269,18 @@ public abstract class AbstractCharStream : IDsonCharStream
 
     /// <summary>
     /// 扫描更多的字符
-    /// 注意：要么读取到一个输入，要么行扫描完毕
+    /// 注意：要么读取到一个输入，要么行扫描完毕。
     /// </summary>
-    /// <param name="line">要扫描的行，可能是当前行，也可能是下一行</param>
+    /// <param name="curLine">要扫描的行，可能是当前行，也可能是下一行</param>
     /// <exception cref="DsonParseException">如果缓冲区已满</exception>
-    protected abstract void ScanMoreChars(LineInfo line);
+    protected abstract void ScanMoreChars(ref LineInfo curLine);
 
     /// <summary>
     /// 尝试扫描下一行（可以扫描多行）
     /// </summary>
+    /// <param name="curLine"></param>
     /// <returns>如果扫描到新的一行则返回true</returns>
-    protected abstract bool ScanNextLine();
+    protected abstract bool ScanNextLine(in LineInfo curLine);
 
     public abstract void Dispose();
 }

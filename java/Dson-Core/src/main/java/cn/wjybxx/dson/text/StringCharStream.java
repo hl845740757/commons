@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dson.text;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
@@ -53,16 +54,15 @@ final class StringCharStream extends AbstractCharStream {
     }
 
     @Override
-    protected void scanMoreChars(LineInfo line) {
+    protected void scanMoreChars(LineInfo curLine) {
 
     }
 
     @Override
-    protected boolean scanNextLine() {
+    protected boolean scanNextLine(@Nullable LineInfo curLine) {
         CharSequence buffer = this.buffer;
         int bufferLength = buffer.length();
 
-        LineInfo curLine = getCurLine();
         final int startPos;
         final int ln;
         if (curLine == null) {

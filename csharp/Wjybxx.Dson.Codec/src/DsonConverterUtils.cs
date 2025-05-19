@@ -54,7 +54,7 @@ public static class DsonConverterUtils
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeOfCollection) {
             return true;
         }
-        
+
         Type target = type.GetInterface(typeOfCollection.FullName!);
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
@@ -73,7 +73,7 @@ public static class DsonConverterUtils
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeOfList) {
             return true;
         }
-        
+
         Type target = type.GetInterface(typeOfList.FullName!);
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
@@ -92,7 +92,7 @@ public static class DsonConverterUtils
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeOfSet) {
             return true;
         }
-        
+
         Type target = type.GetInterface(typeOfSet.FullName!);
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
@@ -111,7 +111,7 @@ public static class DsonConverterUtils
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeOfDictionary) {
             return true;
         }
-        
+
         Type target = type.GetInterface(typeOfDictionary.FullName!);
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
@@ -130,7 +130,7 @@ public static class DsonConverterUtils
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeOfSet) {
             return true;
         }
-        
+
         Type target = type.GetInterface(typeOfSet.FullName!);
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();
@@ -149,7 +149,7 @@ public static class DsonConverterUtils
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeOfDictionary) {
             return true;
         }
-        
+
         Type target = type.GetInterface(typeOfDictionary.FullName!);
         if (target != null) {
             if (!target.IsGenericTypeDefinition) target = target.GetGenericTypeDefinition();

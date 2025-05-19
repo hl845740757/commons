@@ -65,36 +65,22 @@ public interface IDsonCharStream : IDisposable
     /// </summary>
     /// <value></value>
     int Position { get; }
-
-    /// <summary>
-    /// 获取当前行数据
-    /// </summary>
-    /// <value></value>
-    LineInfo? CurLine { get; }
-
+    
     /// <summary>
     /// 获取行号
     /// 1.初始0，表示尚未开始
     /// 2.初始行号可能不为1，部分输入流可能是截断的
     /// </summary>
-    int Ln {
-        get {
-            LineInfo curLine = CurLine;
-            return curLine == null ? 0 : curLine.ln;
-        }
-    }
-
+    int Ln { get; }
+    
     /// <summary>
     /// 获取列号
     /// 1.初始0，表示尚未开始
     /// 2.正式值从1开始。
+    ///
+    /// 用于处理文本缩进
     /// </summary>
-    int Column {
-        get {
-            LineInfo curLine = CurLine;
-            return curLine == null ? 0 : (Position - curLine.startPos + 1);
-        }
-    }
+    int Column { get; }
 
     /// <summary>
     /// 丢弃指定位置之前的缓存

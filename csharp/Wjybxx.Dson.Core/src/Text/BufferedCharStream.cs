@@ -76,7 +76,7 @@ class BufferedCharStream : AbstractCharStream
         return _reader == null;
     }
 
-    protected override int CharAt(LineInfo curLine, int position) {
+    protected override int CharAt(ref LineInfo curLine, int position) {
         int ridx = position - _bufferStartPos;
         return _buffer.CharAt(ridx);
     }
@@ -120,21 +120,21 @@ class BufferedCharStream : AbstractCharStream
     }
 
     /** 该方法一直读到指定行读取完毕，或缓冲区满(不一定扩容) */
-    protected override void ScanMoreChars(LineInfo line) {
+    protected override void ScanMoreChars(ref LineInfo curLine) {
         DiscardReadChars();
         CharBuffer buffer = this._buffer;
         CharBuffer nextBuffer = this._nextBuffer;
         try {
             // >= 2 是为了处理\r\n换行符，避免读入单个\r不知如何处理
-            while (!line.IsScanCompleted() && buffer.WritableChars >= 2) {
+            while (!curLine.IsScanCompleted() && buffer.WritableChars >= 2) {
                 ReadToBuffer(nextBuffer);
                 while (nextBuffer.IsReadable && buffer.WritableChars >= 2) {
                     char c = nextBuffer.Read();
-                    line.endPos++;
+                    curLine.endPos++;
                     buffer.Write(c);
 
                     if (c == '\n') { // LF
-                        line.state = LineInfo.StateLf;
+                        curLine.state = LineInfo.StateLf;
                         return;
                     }
                     if (c == '\r') {
@@ -144,20 +144,20 @@ class BufferedCharStream : AbstractCharStream
                         }
                         if (!nextBuffer.IsReadable) {
                             Debug.Assert(_readerEof);
-                            line.state = LineInfo.StateEof;
+                            curLine.state = LineInfo.StateEof;
                             return;
                         }
                         c = nextBuffer.Read();
-                        line.endPos++;
+                        curLine.endPos++;
                         buffer.Write(c);
                         if (c == '\n') { // CRLF
-                            line.state = LineInfo.StateCrLf;
+                            curLine.state = LineInfo.StateCrLf;
                             return;
                         }
                     }
                 }
                 if (_readerEof && !nextBuffer.IsReadable) {
-                    line.state = LineInfo.StateEof;
+                    curLine.state = LineInfo.StateEof;
                     return;
                 }
             }
@@ -185,14 +185,13 @@ class BufferedCharStream : AbstractCharStream
         }
     }
 
-    protected override bool ScanNextLine() {
+    protected override bool ScanNextLine(in LineInfo curLine) {
         if (_readerEof && !_nextBuffer.IsReadable) {
             return false;
         }
-        LineInfo? curLine = CurLine;
         int ln;
         int startPos;
-        if (curLine == null) {
+        if (curLine.IsNull) {
             ln = FirstLn;
             startPos = 0;
         } else {
@@ -202,7 +201,7 @@ class BufferedCharStream : AbstractCharStream
 
         // startPos指向的是下一个位置，而endPos是在scan的时候增加，因此endPos需要回退一个位置
         LineInfo tempLine = new LineInfo(ln, startPos, startPos - 1);
-        ScanMoreChars(tempLine);
+        ScanMoreChars(ref tempLine);
         if (tempLine.startPos > tempLine.endPos) { // 无效行，没有输入
             return false;
         }

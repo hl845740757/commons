@@ -67,29 +67,20 @@ public interface DsonCharStream extends AutoCloseable {
     int getPosition();
 
     /**
-     * 获取当前行数据
-     */
-    LineInfo getCurLine();
-
-    /**
      * 获取行号
      * 1.初始0，表示尚未开始
      * 2.初始行号可能不为1，部分输入流可能是截断的
      */
-    default int getLn() {
-        LineInfo curLine = getCurLine();
-        return curLine == null ? 0 : curLine.ln;
-    }
+    int getLn();
 
     /**
      * 获取列号
      * 1. 初始0，表示尚未开始
-     * 2. 正式值从1开始。
+     * 2. 正式值从1开始
+     * <p>
+     * 用于处理文本对齐
      */
-    default int getColumn() {
-        LineInfo curLine = getCurLine();
-        return curLine == null ? 0 : (getPosition() - curLine.startPos + 1);
-    }
+    int getColumn();
 
     /**
      * 丢弃指定位置之前的缓存

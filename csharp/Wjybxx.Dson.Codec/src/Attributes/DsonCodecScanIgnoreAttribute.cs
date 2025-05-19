@@ -27,6 +27,5 @@ namespace Wjybxx.Dson.Codec.Attributes
 [AttributeUsage(AttributeTargets.Class)]
 public class DsonCodecScanIgnoreAttribute : Attribute
 {
-    
 }
 }

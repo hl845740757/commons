@@ -16,6 +16,7 @@
 
 package cn.wjybxx.dson.text;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -50,12 +51,12 @@ public class PreparedCharStream extends AbstractCharStream {
     }
 
     @Override
-    protected void scanMoreChars(LineInfo line) {
+    protected void scanMoreChars(LineInfo curLine) {
         throw new AssertionError();
     }
 
     @Override
-    protected boolean scanNextLine() {
+    protected boolean scanNextLine(@Nullable LineInfo curLine) {
         return false;
     }
 

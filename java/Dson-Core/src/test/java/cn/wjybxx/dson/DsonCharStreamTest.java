@@ -95,80 +95,39 @@ public class DsonCharStreamTest {
 //        Assertions.assertEquals(tokenString, sb.toString());
 //    }
 
-    /** 测试两种CharStream实现的相等性 */
+    /** 测试3种CharStream实现的相等性 */
     @Test
     void testCharStreamEquals() {
         int c1;
         int c2;
+        int c3;
         boolean unread = false;
-        int c3 = -1;
-        try (DsonCharStream charStream = DsonCharStream.newCharStream(tokenString);
-             DsonCharStream bufferedCharStream = DsonCharStream.newBufferedCharStream(new StringReader(tokenString))) {
+        int lastChar = -1;
+
+        DsonCharStream charStream = DsonCharStream.newCharStream(tokenString);
+        DsonCharStream bufferedCharStream = DsonCharStream.newBufferedCharStream(new StringReader(tokenString));
+        DsonCharStream preparedCharStream = DsonCharStream.newPreparedCharStream(toPreparedLines());
+        try (charStream; bufferedCharStream; preparedCharStream) {
             while ((c1 = charStream.read()) != -1) {
                 c2 = bufferedCharStream.read();
+                c3 = preparedCharStream.read();
                 Assertions.assertEquals(c1, c2);
+                Assertions.assertEquals(c1, c3);
                 if (unread) {
-                    Assertions.assertEquals(c3, c1);
+                    Assertions.assertEquals(lastChar, c1);
                 }
                 if (!unread && RandomUtils.nextBoolean()) {
-                    c3 = c1;
+                    lastChar = c1;
                     unread = true;
                     charStream.unread();
                     bufferedCharStream.unread();
+                    preparedCharStream.unread();
                 } else {
-                    c3 = -1;
+                    lastChar = -1;
                     unread = false;
                 }
             }
             Assertions.assertEquals(-1, bufferedCharStream.read());
-        }
-    }
-
-    @Test
-    void testLineEquals() {
-        List<LineInfo> lines1 = new ArrayList<>(32);
-        List<LineInfo> lines2 = new ArrayList<>(32);
-        List<LineInfo> lines3 = new ArrayList<>(32);
-        try (DsonCharStream charStream = DsonCharStream.newCharStream(tokenString)) {
-            pullToList(charStream, lines1);
-        }
-        try (DsonCharStream charStream = DsonCharStream.newBufferedCharStream(new StringReader(tokenString))) {
-            pullToList(charStream, lines2);
-        }
-        try (DsonCharStream charStream = DsonCharStream.newPreparedCharStream(toPreparedLines())) {
-            pullToList(charStream, lines3);
-        }
-        Assertions.assertEquals(lines1.size(), lines2.size());
-        Assertions.assertEquals(lines1.size(), lines3.size());
-
-        int size = lines1.size() - 1;
-        for (int i = 0; i < size; i++) {
-            LineInfo lineInfo1 = lines1.get(i);
-            LineInfo lineInfo2 = lines2.get(i);
-            LineInfo lineInfo3 = lines3.get(i);
-            Assertions.assertTrue(baseEquals(lineInfo1, lineInfo2), () -> lineInfo1.toString() + ", " + lineInfo2.toString());
-            Assertions.assertTrue(baseEquals(lineInfo1, lineInfo3), () -> lineInfo1.toString() + ", " + lineInfo3.toString());
-        }
-    }
-
-    public boolean baseEquals(LineInfo self, LineInfo lineInfo) {
-        if (self == lineInfo) return true;
-
-        if (self.state != lineInfo.state) return false;
-        if (self.ln != lineInfo.ln) return false;
-        if (self.startPos != lineInfo.startPos) return false;
-        if (self.endPos != lineInfo.endPos) return false;
-        return true;
-    }
-
-    private static void pullToList(DsonCharStream buffer, List<LineInfo> outList) {
-        int c;
-        while ((c = buffer.read()) != -1) {
-            if (buffer.getPosition() == 0) {
-                outList.add(buffer.getCurLine());
-            } else if (c == -2) {
-                outList.add(buffer.getCurLine());
-            }
         }
     }
 

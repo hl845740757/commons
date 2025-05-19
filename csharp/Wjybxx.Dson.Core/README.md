@@ -146,3 +146,16 @@ PS：其实Writer的目标就是尽可能和我们的书写格式一致。
    offset: +08:00}
    }
 ```
+
+## ReleaseNotes
+
+### 2.5.x
+
+1. `LineInfo` 修改为值类型，减少文本扫描过程中的GC
+2. `IDsonCharStream` 中删除获取当前行信息的接口
+
+### 2.4.x
+
+1. 删除`IDsonWriter`和`IDsonReader`接口对`FieldNumber`的依赖，允许直接使用int32作为key。
+2. Dson-Apt改为基于`SourceGenerator`编译时生成代码
+3. 修复了Dson-Codec中部分Bug

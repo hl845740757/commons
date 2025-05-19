@@ -97,14 +97,6 @@ public final class LineInfo {
         return startPos <= endPos; // 适用eof
     }
 
-    /** 当前已扫描部分长度 */
-    public int lineLength() {
-        if (endPos < startPos) {
-            return 0;
-        }
-        return endPos - startPos + 1;
-    }
-
     @Override
     public boolean equals(Object o) {
         return this == o;

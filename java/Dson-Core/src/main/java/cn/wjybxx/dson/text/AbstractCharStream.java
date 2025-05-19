@@ -15,6 +15,7 @@
  */
 package cn.wjybxx.dson.text;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -57,14 +58,14 @@ public abstract class AbstractCharStream implements DsonCharStream {
         if (isClosed()) throw new DsonParseException("Trying to read after closed");
         if (eof) throw new DsonParseException("Trying to read past eof");
 
-        LineInfo curLine = this.curLine;
+        final LineInfo curLine = this.curLine;
         if (curLine == null) {
-            if (lines.isEmpty() && !scanNextLine()) {
+            if (lines.isEmpty() && !scanNextLine(null)) {
                 eof = true;
                 return -1;
             }
-            curLine = lines.get(0);
-            onReadNextLine(curLine);
+            LineInfo nextLine = lines.get(0);
+            onReadNextLine(nextLine);
             return -2;
         }
         // 到达当前扫描部分的尾部，扫描更多的字符 - 不测试readingContent也没问题
@@ -94,23 +95,23 @@ public abstract class AbstractCharStream implements DsonCharStream {
         return charAt(curLine, position);
     }
 
-    private int onReadEndOfLine(LineInfo curLine) {
+    private int onReadEndOfLine(final LineInfo curLine) {
         // 这里不可以修改position，否则unread可能出错
         if (curLine.state == LineInfo.STATE_EOF) {
             eof = true;
             return -1;
         }
         int index = indexOfCurLine(lines, curLine);
-        if (index + 1 == lines.size() && !scanNextLine()) {
+        if (index + 1 == lines.size() && !scanNextLine(curLine)) {
             eof = true;
             return -1;
         }
-        curLine = lines.get(index + 1);
-        onReadNextLine(curLine);
+        LineInfo nextLine = lines.get(index + 1);
+        onReadNextLine(nextLine);
         return -2;
     }
 
-    private void onReadNextLine(LineInfo nextLine) {
+    private void onReadNextLine(final LineInfo nextLine) {
         assert nextLine.isScanCompleted() || nextLine.hasContent();
         this.curLine = nextLine;
         this.readingContent = false;
@@ -156,11 +157,7 @@ public abstract class AbstractCharStream implements DsonCharStream {
         int index = indexOfCurLine(lines, curLine);
         if (index > 0) {
             LineInfo preLine = lines.get(index - 1);
-            if (preLine.hasContent()) {
-                checkUnreadOverFlow(preLine.lastReadablePosition());
-            } else {
-                checkUnreadOverFlow(preLine.startPos);
-            }
+            checkUnreadOverFlow(preLine.endPos);
             onBackToPreLine(preLine);
             return -2;
         } else {
@@ -195,8 +192,13 @@ public abstract class AbstractCharStream implements DsonCharStream {
     }
 
     @Override
-    public LineInfo getCurLine() {
-        return curLine;
+    public int getLn() {
+        return curLine == null ? 0 : curLine.ln;
+    }
+
+    @Override
+    public int getColumn() {
+        return curLine == null ? 0 : (position - curLine.startPos + 1);
     }
 
     //
@@ -222,14 +224,14 @@ public abstract class AbstractCharStream implements DsonCharStream {
         return 1;
     }
 
-    /** 丢弃部分已读的行，减少内存占用 */
+    /** 丢弃部分已读的行，减少内存占用 -- 如果注释行很多，这可能有问题 */
     protected void discardReadLines(List<LineInfo> lines, LineInfo curLine) {
         if (curLine == null) {
             return;
         }
         int idx = indexOfCurLine(lines, curLine);
-        if (idx >= 10) {
-            lines.subList(0, 5).clear();
+        if (idx >= 20) {
+            lines.subList(0, 10).clear();
         }
     }
 
@@ -247,13 +249,13 @@ public abstract class AbstractCharStream implements DsonCharStream {
     protected abstract void checkUnreadOverFlow(int position);
 
     /**
-     * @param line 要扫描的行，可能是当前行，也可能是下一行
+     * @param curLine 要扫描的行(指向最新位置)
      * @throws DsonParseException 如果缓冲区已满
      * @apiNote 要么读取到一个输入，要么行扫描完毕
      */
-    protected abstract void scanMoreChars(LineInfo line);
+    protected abstract void scanMoreChars(LineInfo curLine);
 
     /** @return 如果扫描到新的一行则返回true */
-    protected abstract boolean scanNextLine();
+    protected abstract boolean scanNextLine(@Nullable LineInfo curLine);
 
 }

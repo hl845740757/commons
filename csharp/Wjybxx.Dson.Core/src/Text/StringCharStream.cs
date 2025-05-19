@@ -38,7 +38,7 @@ class StringCharStream : AbstractCharStream
         return _buffer == null;
     }
 
-    protected override int CharAt(LineInfo curLine, int position) {
+    protected override int CharAt(ref LineInfo curLine, int position) {
         return _buffer![position];
     }
 
@@ -46,17 +46,16 @@ class StringCharStream : AbstractCharStream
         if (position < 0) throw BufferOverFlow(position);
     }
 
-    protected override void ScanMoreChars(LineInfo line) {
+    protected override void ScanMoreChars(ref LineInfo curLine) {
     }
 
-    protected override bool ScanNextLine() {
+    protected override bool ScanNextLine(in LineInfo curLine) {
         string buffer = this._buffer;
         int bufferLength = buffer.Length;
 
-        LineInfo? curLine = CurLine;
         int startPos;
         int ln;
-        if (curLine == null) {
+        if (curLine.IsNull) {
             ln = FirstLn;
             startPos = 0;
         } else {

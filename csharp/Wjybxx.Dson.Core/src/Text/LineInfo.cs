@@ -24,7 +24,7 @@ namespace Wjybxx.Dson.Text
 /// <summary>
 /// Dson文本行扫描信息
 /// </summary>
-public sealed class LineInfo
+public struct LineInfo
 {
     /** 扫描中 */
     public const int StateScan = 0;
@@ -35,7 +35,7 @@ public sealed class LineInfo
     /** 扫描到文件尾 */
     public const int StateEof = 3;
 
-    /** 行号 */
+    /** 行号，1-based */
     public readonly int ln;
     /** 行全局起始位置， 0-based */
     public readonly int startPos;
@@ -48,7 +48,7 @@ public sealed class LineInfo
      */
     public int endPos;
     /** 行在字符流中的状态 -- endPos是否到达行尾 */
-    public int state = StateScan;
+    public int state;
 #nullable disable
     /** 原始行数据(外部缓存) -- 不包含换行符 */
     public readonly string rawLine;
@@ -58,6 +58,7 @@ public sealed class LineInfo
         this.ln = ln;
         this.startPos = startPos;
         this.endPos = endPos;
+        this.state = StateScan;
         this.rawLine = null;
     }
 
@@ -67,6 +68,12 @@ public sealed class LineInfo
         this.endPos = endPos;
         this.state = state;
         this.rawLine = rawLine;
+    }
+
+    /** 是否是无效行 */
+    internal bool IsNull {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => ln == 0;
     }
 
     /** 当前行是否已扫描完成 */
@@ -102,26 +109,6 @@ public sealed class LineInfo
         }
         return startPos <= endPos; // 适用eof
     }
-
-    /** 当前已扫描部分长度 */
-    public int LineLength() {
-        if (endPos < startPos) {
-            return 0;
-        }
-        return endPos - startPos + 1;
-    }
-
-    #region equals
-
-    public override bool Equals(object? o) {
-        return this == o;
-    }
-
-    public override int GetHashCode() {
-        return ln;
-    }
-
-    #endregion
 
     public override string ToString() {
         return new StringBuilder(64)
