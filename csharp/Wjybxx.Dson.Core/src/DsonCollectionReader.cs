@@ -53,6 +53,26 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         SetContext(context);
     }
 
+    private DsonCollectionReader(DsonReaderSettings settings, DsonValue dsonValue, bool ignore)
+        : base(settings) {
+        if (dsonValue == null) throw new ArgumentNullException(nameof(dsonValue));
+        // 这里仍然是标准的数组上下文，但我们使用单值迭代器避免额外的封装开销
+        Context context = NewContext(null, DsonContextType.TopLevel, DsonTypes.INVALID);
+        context.header = null;
+        context.arrayIterator.SetBaseIterator(new SingleValueEnumerator<DsonValue>(dsonValue));
+        SetContext(context);
+    }
+
+    /// <summary>
+    /// 适用读取顶层集合的单个值的情况
+    /// </summary>
+    /// <param name="settings"></param>
+    /// <param name="dsonValue"></param>
+    /// <returns></returns>
+    public static DsonCollectionReader<TName> UnsafeCreate(DsonReaderSettings settings, DsonValue dsonValue) {
+        return new DsonCollectionReader<TName>(settings, dsonValue, true);
+    }
+
     /// <summary>
     /// 设置key的迭代顺序。
     /// 注意：这期间不能触发<see cref="PeekDsonType"/>等可能导致mark的操作，

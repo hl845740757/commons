@@ -144,7 +144,7 @@ public class DefaultDsonConverter : IDsonConverter
         Debug.Assert(dsonReader is not DsonCollectionReader<string>);
         // 如果要优化gc的话，需要传入DsonObject和DsonArray的对象池... 这和外部缓存DsonValue是两个优化
         DsonValue dsonValue = Dsons.ReadTopDsonValue(dsonReader) ?? throw new DsonCodecException("eof");
-        return new DsonCollectionReader<string>(options.binReaderSettings, new DsonArray<string>().Append(dsonValue));
+        return DsonCollectionReader<string>.UnsafeCreate(options.binReaderSettings, dsonValue);
     }
 
     #endregion
@@ -203,9 +203,8 @@ public class DefaultDsonConverter : IDsonConverter
         if (!source.DsonType.IsContainer()) {
             throw new ArgumentException("value must be container");
         }
-        DsonArray<string> dsonArray = new DsonArray<string>(1).Append(source);
         DsonCollectionReader<string> objectReader =
-            new DsonCollectionReader<string>(options.binReaderSettings, dsonArray);
+            DsonCollectionReader<string>.UnsafeCreate(options.binReaderSettings, source);
         using IDsonObjectReader wrapper = new BufferedDsonObjectReader(this, objectReader);
         return wrapper.ReadObject(null, declaredType, factory);
     }

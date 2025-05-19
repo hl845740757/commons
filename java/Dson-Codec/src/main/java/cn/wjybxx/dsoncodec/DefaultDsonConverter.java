@@ -158,7 +158,7 @@ class DefaultDsonConverter implements DsonConverter {
     private DsonCollectionReader toDsonCollectionReader(DsonReader dsonReader) {
         assert !(dsonReader instanceof DsonCollectionReader);
         DsonValue dsonValue = Dsons.readTopDsonValue(dsonReader);
-        return new DsonCollectionReader(options.binReaderSettings, new DsonArray<String>().append(dsonValue));
+        return DsonCollectionReader.unsafeCreate(options.binReaderSettings, dsonValue);
     }
     // endregion
 
@@ -220,9 +220,8 @@ class DefaultDsonConverter implements DsonConverter {
         if (!source.getDsonType().isContainer()) {
             throw new IllegalArgumentException("value must be container");
         }
-        DsonArray<String> dsonArray = new DsonArray<String>(1).append(source);
         try (DsonObjectReader wrapper = new BufferedDsonObjectReader(this,
-                new DsonCollectionReader(options.binReaderSettings, dsonArray))) {
+                DsonCollectionReader.unsafeCreate(options.binReaderSettings, source))) {
             return wrapper.readObject(null, declaredType, factory);
         }
     }

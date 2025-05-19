@@ -18,6 +18,7 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.ext.MarkableIterator;
+import cn.wjybxx.dson.ext.SingleValueIterator;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.types.*;
@@ -41,6 +42,22 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         context.header = !dsonArray.getHeader().isEmpty() ? dsonArray.getHeader() : null;
         context.arrayIterator.setBaseIterator(dsonArray.iterator());
         setContext(context);
+    }
+
+    private DsonCollectionReader(DsonReaderSettings settings, DsonValue dsonValue, boolean ignore) {
+        super(settings);
+        Objects.requireNonNull(dsonValue);
+
+        // 这里仍然是标准的数组上下文，但我们使用单值迭代器避免额外的封装开销
+        Context context = newContext(null, DsonContextType.TOP_LEVEL, null);
+        context.header = null;
+        context.arrayIterator.setBaseIterator(new SingleValueIterator<>(dsonValue));
+        setContext(context);
+    }
+
+    /** 适用读取顶层集合的单个值的情况 */
+    public static DsonCollectionReader unsafeCreate(DsonReaderSettings settings, DsonValue dsonValue) {
+        return new DsonCollectionReader(settings, dsonValue, true);
     }
 
     /**
