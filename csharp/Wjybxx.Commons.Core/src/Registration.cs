@@ -45,12 +45,12 @@ public readonly struct Registration : IRegistration, IEquatable<Registration>
     /// 是否绑定了资源对象
     /// </summary>
     public bool HasResource => _res != null;
-    
+
     /// <summary>
     /// 资源对象是否已销毁 -- 是否已退出当前生命周期
     /// </summary>
     public bool IsDisposed => _res == null || _res.IsDisposed(_rid);
-    
+
     public void Dispose() {
         _res?.Dispose(_rid);
     }

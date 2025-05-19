@@ -42,6 +42,10 @@ public readonly struct FutureAwaitable
         _options = options;
     }
 
+    public IFuture Future => _future;
+    public IExecutor? Executor => _executor;
+    public int Options => _options;
+
     public FutureAwaiter GetAwaiter() => new FutureAwaiter(_future, _executor, _options);
 }
 
@@ -66,6 +70,10 @@ public readonly struct FutureAwaitable<T>
         _executor = executor;
         _options = options;
     }
+
+    public IFuture<T> Future => _future;
+    public IExecutor? Executor => _executor;
+    public int Options => _options;
 
     public FutureAwaiter<T> GetAwaiter() => new FutureAwaiter<T>(_future, _executor, _options);
 }

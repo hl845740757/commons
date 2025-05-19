@@ -42,6 +42,11 @@ public readonly struct SuppressibleAwaitable
         _requireResult = requireResult;
     }
 
+    public ValueFuture Future => _future;
+    public IExecutor? Executor => _executor;
+    public int Options => _options;
+    public bool RequireResult => _requireResult;
+
     /// <summary>
     /// 增加调度选项
     /// </summary>
@@ -66,7 +71,7 @@ public readonly struct SuppressibleAwaitable
     /// </summary>
     /// <param name="requireResult"></param>
     /// <returns></returns>
-    public SuppressibleAwaitable RequireResult(bool requireResult = true) {
+    public SuppressibleAwaitable WithRequireResult(bool requireResult = true) {
         return new SuppressibleAwaitable(_future, _executor, _options, requireResult);
     }
 
@@ -88,6 +93,10 @@ public readonly struct SuppressibleAwaitable<T>
         _executor = executor;
         _options = options;
     }
+
+    public ValueFuture<T> Future => _future;
+    public IExecutor? Executor => _executor;
+    public int Options => _options;
 
     /// <summary>
     /// 增加调度选项

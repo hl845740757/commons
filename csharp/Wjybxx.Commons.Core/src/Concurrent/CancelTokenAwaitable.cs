@@ -25,7 +25,7 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public readonly struct CancelTokenAwaitable
 {
-    private readonly ICancelToken _cts;
+    private readonly ICancelToken _cancelToken;
     private readonly IExecutor? _executor;
     private readonly int _options;
 
@@ -36,11 +36,15 @@ public readonly struct CancelTokenAwaitable
     /// <param name="executor">awaiter的回调线程</param>
     /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     public CancelTokenAwaitable(ICancelToken cancelToken, IExecutor? executor, int options) {
-        _cts = cancelToken ?? throw new ArgumentNullException(nameof(cancelToken));
+        _cancelToken = cancelToken ?? throw new ArgumentNullException(nameof(cancelToken));
         _executor = executor;
         _options = options;
     }
 
-    public CancelTokenAwaiter GetAwaiter() => new CancelTokenAwaiter(_cts, _executor, _options);
+    public ICancelToken CancelToken => _cancelToken;
+    public IExecutor? Executor => _executor;
+    public int Options => _options;
+
+    public CancelTokenAwaiter GetAwaiter() => new CancelTokenAwaiter(_cancelToken, _executor, _options);
 }
 }

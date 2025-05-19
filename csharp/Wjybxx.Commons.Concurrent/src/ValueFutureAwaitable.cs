@@ -36,6 +36,10 @@ public readonly struct ValueFutureAwaitable
         _options = options;
     }
 
+    public ValueFuture Future => _future;
+    public IExecutor? Executor => _executor;
+    public int Options => _options;
+
     /// <summary>
     /// 增加调度选项
     /// </summary>
@@ -72,6 +76,10 @@ public readonly struct ValueFutureAwaitable<T>
         _executor = executor;
         _options = options;
     }
+
+    public ValueFuture<T> Future => _future;
+    public IExecutor? Executor => _executor;
+    public int Options => _options;
 
     /// <summary>
     /// 增加调度选项

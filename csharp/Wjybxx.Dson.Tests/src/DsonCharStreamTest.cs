@@ -139,17 +139,18 @@ public class DsonCharStreamTest
         // java换行符默认是LF，C#是CRLF...
         int state = LineInfo.StateCrLf;
         for (int idx = 0; idx < tokenLines.Count; idx++) {
-            String line = tokenLines[idx];
+            string line = tokenLines[idx];
             LineInfo lineInfo;
             if (idx == 0) {
-                lineInfo = new LineInfo(1, 0, line.Length + 1); // length就是换行符位置
+                int endPos = line.Length + 1; // length就是换行符位置
+                lineInfo = new LineInfo(1, 0, endPos, state, line);
             } else {
                 LineInfo preLine = result[idx - 1];
                 int startPos = preLine.endPos + 1; // 换行符的下一个位置
-                int endPos = startPos + line.Length + 1; // length就是换行符位置
-                lineInfo = new LineInfo(idx + 1, startPos, endPos);
+                int endPos = startPos + line.Length + 1;
+                lineInfo = new LineInfo(idx + 1, startPos, endPos,
+                    state, line);
             }
-            lineInfo.rawLine = line;
             lineInfo.state = state;
             result.Add(lineInfo);
         }

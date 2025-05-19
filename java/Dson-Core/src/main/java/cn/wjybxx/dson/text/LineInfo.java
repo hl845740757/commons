@@ -48,12 +48,21 @@ public final class LineInfo {
     /** 行在字符流中的状态 -- endPos是否到达行尾 */
     public int state = STATE_SCAN;
     /** 关联的原始行（外部缓存）-- 不包含换行符 */
-    public String rawLine;
+    public final String rawLine;
 
     public LineInfo(int ln, int startPos, int endPos) {
         this.ln = ln;
         this.startPos = startPos;
         this.endPos = endPos;
+        this.rawLine = null;
+    }
+
+    public LineInfo(int ln, int startPos, int endPos, int state, String rawLine) {
+        this.ln = ln;
+        this.startPos = startPos;
+        this.rawLine = rawLine;
+        this.endPos = endPos;
+        this.state = state;
     }
 
     /** 当前行是否已扫描完成 */

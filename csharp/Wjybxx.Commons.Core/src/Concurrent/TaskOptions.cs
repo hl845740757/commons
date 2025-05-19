@@ -178,7 +178,7 @@ public static class TaskOptions
             return (flags & ~option);
         }
     }
-    
+
     /// <summary>
     /// 获取任务的优先级
     /// </summary>

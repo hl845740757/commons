@@ -28,17 +28,21 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public readonly struct TaskAwaitable
 {
-    private readonly Task _future;
-    private readonly IExecutor _executor;
-    private readonly int _options;
+    public readonly Task _task;
+    public readonly IExecutor _executor;
+    public readonly int _options;
 
     public TaskAwaitable(Task future, IExecutor executor, int options) {
-        _future = future ?? throw new ArgumentNullException(nameof(future));
+        _task = future ?? throw new ArgumentNullException(nameof(future));
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _options = options;
     }
 
-    public Awaiter GetAwaiter() => new Awaiter(_future, _executor, _options);
+    public Task Task => _task;
+    public IExecutor Executor => _executor;
+    public int Options => _options;
+
+    public Awaiter GetAwaiter() => new Awaiter(_task, _executor, _options);
 
     public readonly struct Awaiter : ICriticalNotifyCompletion
     {
@@ -90,17 +94,21 @@ public readonly struct TaskAwaitable
 /// </summary>
 public readonly struct TaskAwaitable<T>
 {
-    private readonly Task<T> _future;
+    private readonly Task<T> _task;
     private readonly IExecutor _executor;
     private readonly int _options;
 
     public TaskAwaitable(Task<T> future, IExecutor executor, int options) {
-        _future = future ?? throw new ArgumentNullException(nameof(future));
+        _task = future ?? throw new ArgumentNullException(nameof(future));
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _options = options;
     }
 
-    public Awaiter GetAwaiter() => new Awaiter(_future, _executor, _options);
+    public Task<T> Task => _task;
+    public IExecutor Executor => _executor;
+    public int Options => _options;
+
+    public Awaiter GetAwaiter() => new Awaiter(_task, _executor, _options);
 
     public readonly struct Awaiter : ICriticalNotifyCompletion
     {

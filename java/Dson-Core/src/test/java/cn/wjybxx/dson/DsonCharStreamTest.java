@@ -197,19 +197,19 @@ public class DsonCharStreamTest {
         List<String> tokenLines = tokenString.lines().toList();
         List<LineInfo> result = new ArrayList<>(tokenLines.size());
         // 换行符默认是LF
+        int state = LineInfo.STATE_LF;
         for (int idx = 0; idx < tokenLines.size(); idx++) {
             String line = tokenLines.get(idx);
             LineInfo lineInfo;
             if (idx == 0) {
-                lineInfo = new LineInfo(1, 0, line.length()); // length就是换行符位置
+                int endPos = line.length();// length就是换行符位置
+                lineInfo = new LineInfo(1, 0, endPos, state, line);
             } else {
                 LineInfo preLine = result.get(idx - 1);
                 int startPos = preLine.endPos + 1; // 换行符的下一个位置
-                int endPos = startPos + line.length(); // length就是换行符位置
-                lineInfo = new LineInfo(idx + 1, startPos, endPos);
+                int endPos = startPos + line.length();
+                lineInfo = new LineInfo(idx + 1, startPos, endPos, state, line);
             }
-            lineInfo.rawLine = line;
-            lineInfo.state = LineInfo.STATE_LF;
             result.add(lineInfo);
         }
         return result;

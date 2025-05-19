@@ -51,13 +51,22 @@ public sealed class LineInfo
     public int state = StateScan;
 #nullable disable
     /** 原始行数据(外部缓存) -- 不包含换行符 */
-    public string rawLine;
+    public readonly string rawLine;
 #nullable enable
 
     public LineInfo(int ln, int startPos, int endPos) {
         this.ln = ln;
         this.startPos = startPos;
         this.endPos = endPos;
+        this.rawLine = null;
+    }
+
+    public LineInfo(int ln, int startPos, int endPos, int state, string rawLine) {
+        this.ln = ln;
+        this.startPos = startPos;
+        this.endPos = endPos;
+        this.state = state;
+        this.rawLine = rawLine;
     }
 
     /** 当前行是否已扫描完成 */
