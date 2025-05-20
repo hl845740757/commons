@@ -57,8 +57,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     private const int MASK_INHERITED_BLACKBOARD = 1 << 10;
     private const int MASK_INHERITED_PROPS = 1 << 11;
     private const int MASK_INHERITED_CANCEL_TOKEN = 1 << 12;
-    private const int MASK_STOP_EXIT = 1 << 13;
-    private const int MASK_STILLBORN = 1 << 14;
+    private const int MASK_STILLBORN = 1 << 13;
+    private const int MASK_DISABLE_EXECUTE = 1 << 14;
     private const int MASK_DISABLE_NOTIFY = 1 << 15;
     internal const int MASK_CHECKING_GUARD = 1 << 16;
     private const int MASK_NOT_ACTIVE_SELF = 1 << 17;
@@ -69,6 +69,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     private const int MASK_GUARD_BASE_OPTIONS = MASK_CHECKING_GUARD | MASK_MANUAL_CHECK_CANCEL;
     /** enter前相关options */
     private const int MASK_BEFORE_ENTER_OPTIONS = MASK_AUTO_LISTEN_CANCEL | MASK_AUTO_RESET_CHILDREN;
+    /** 禁用execute的options */
+    private const int MASK_DISABLE_EXECUTE_OPTIONS = MASK_NOT_ACTIVE_IN_HIERARCHY | MASK_DISABLE_EXECUTE;
 
 #nullable disable
     /** 任务树的入口(缓存以避免递归查找) */
@@ -669,7 +671,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         return (ctl & MASK_STILLBORN) != 0;
     }
 
-    /** 当前是否是条件检查上下文 */
+    /** 当前是否是条件检查上下文 -- 优化条件检测的递归问题 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsCheckingGuard() {
         return (ctl & MASK_CHECKING_GUARD) != 0;
@@ -680,6 +682,18 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     private static bool CheckSlowStart(int ctl) {
         // 条件节点不可延迟启动；其它情况下只有用户请求延迟启动的Task才可延迟启动
         return (ctl & (MASK_CHECKING_GUARD | MASK_SLOW_START)) == MASK_SLOW_START;
+    }
+
+    /// <summary>
+    /// 是否需要执行<see cref="Execute"/>方法（即事件驱动）
+    ///
+    /// 1.Task可以在每次Execute的时候将自己标记为不需要Execute，直到发生某件事件时，如数据变化，再启用一次Execute。
+    /// 2.该属性和IsActive属于两个维度，Task可能处于Active但不需要Execute的状态。
+    /// </summary>
+    public bool NeedExecute {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => (flags & MASK_DISABLE_EXECUTE) == 0;
+        set => SetFlagsBit(MASK_DISABLE_EXECUTE, !value);
     }
 
     #endregion
@@ -813,7 +827,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                 return;
             }
         }
-        if (CheckSlowStart(ctl)) { // 需要使用最新的ctl
+        // 需要使用最新的ctl
+        if (CheckSlowStart(ctl) || (ctl & MASK_DISABLE_EXECUTE_OPTIONS) != 0) {
             if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
                 control.OnChildRunning(this, true);
             }
@@ -842,7 +857,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     public void Template_Execute(bool fromControl) {
         Debug.Assert(status == TaskStatus.RUNNING);
         // 事件驱动下无法精确判断是否是心跳走到这里，因此只要处于非激活状态就拒绝父节点请求(装死)
-        if (fromControl && (ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
+        if (fromControl && (ctl & MASK_DISABLE_EXECUTE_OPTIONS) != 0) {
             return;
         }
         if (cancelToken.IsCancelRequested && IsAutoCheckCancel) {
@@ -872,7 +887,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Template_ExecuteInlined(ref TaskInlineHelper<T> helper, Task<T> source) {
         Debug.Assert(status == TaskStatus.RUNNING && this != source);
-        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
+        if ((ctl & MASK_DISABLE_EXECUTE_OPTIONS) != 0) {
             return;
         }
         // 如果source收到取消信号，则被内联的节点的子节点也一定收到取消信号

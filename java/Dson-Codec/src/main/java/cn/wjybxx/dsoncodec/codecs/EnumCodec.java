@@ -18,12 +18,13 @@ package cn.wjybxx.dsoncodec.codecs;
 
 import cn.wjybxx.base.EnumLite;
 import cn.wjybxx.base.ObjectUtils;
+import cn.wjybxx.base.TypeInfo;
+import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dsoncodec.DsonCodecException;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 import cn.wjybxx.dsoncodec.annotations.DsonProperty;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -150,7 +151,7 @@ public final class EnumCodec<T extends Enum<T>> implements IEnumCodec<T> {
 
     @Override
     public T readObject(DsonObjectReader reader, Supplier<? extends T> factory) {
-        if (reader.options().writeEnumAsString) {
+        if (reader.getCurrentDsonType() == DsonType.STRING) {
             String name = reader.readString(null);
             EnumValueInfo<T> valueInfo = name2EnumMap.get(name);
             if (valueInfo != null) {

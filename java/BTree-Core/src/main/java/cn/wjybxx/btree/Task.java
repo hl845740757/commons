@@ -55,8 +55,8 @@ public abstract class Task<T> implements ICancelTokenListener {
     private static final int MASK_INHERITED_BLACKBOARD = 1 << 10;
     private static final int MASK_INHERITED_PROPS = 1 << 11;
     private static final int MASK_INHERITED_CANCEL_TOKEN = 1 << 12;
-    private static final int MASK_STOP_EXIT = 1 << 13;
-    private static final int MASK_STILLBORN = 1 << 14;
+    private static final int MASK_STILLBORN = 1 << 13;
+    private static final int MASK_DISABLE_EXECUTE = 1 << 14;
     private final int MASK_DISABLE_NOTIFY = 1 << 15;
     static final int MASK_CHECKING_GUARD = 1 << 16;
     private static final int MASK_NOT_ACTIVE_SELF = 1 << 17;
@@ -78,6 +78,8 @@ public abstract class Task<T> implements ICancelTokenListener {
     private static final int MASK_GUARD_BASE_OPTIONS = MASK_CHECKING_GUARD | MASK_MANUAL_CHECK_CANCEL;
     /** enter前相关options */
     private static final int MASK_BEFORE_ENTER_OPTIONS = MASK_AUTO_LISTEN_CANCEL | MASK_AUTO_RESET_CHILDREN;
+    /** 禁用execute的options */
+    private static final int MASK_DISABLE_EXECUTE_OPTIONS = MASK_NOT_ACTIVE_IN_HIERARCHY | MASK_DISABLE_EXECUTE;
 
     /** 任务树的入口(缓存以避免递归查找) */
     transient TaskEntry<T> taskEntry;
@@ -676,6 +678,20 @@ public abstract class Task<T> implements ICancelTokenListener {
         return (ctl & (MASK_CHECKING_GUARD | MASK_SLOW_START)) == MASK_SLOW_START;
     }
 
+    /**
+     * 是否需要执行{@link #execute()}方法
+     * <p>
+     * 1.Task可以在每次Execute的时候将自己标记为不需要Execute，直到发生某件事件时，如数据变化，再启用一次Execute。
+     * 2.该属性和IsActive属于两个维度，Task可能处于Active但不需要Execute的状态。
+     */
+    public final void setNeedExecute(boolean value) {
+        setCtlBit(MASK_DISABLE_EXECUTE, !value); // 取反
+    }
+
+    public final boolean isNeedExecute() {
+        return (ctl & MASK_DISABLE_EXECUTE) == 0;
+    }
+
     // endregion
 
     // region options
@@ -821,7 +837,8 @@ public abstract class Task<T> implements ICancelTokenListener {
                 return;
             }
         }
-        if (checkSlowStart(ctl)) { // 需要使用最新的ctl
+        // 需要使用最新的ctl
+        if (checkSlowStart(ctl) || (ctl & MASK_DISABLE_EXECUTE_OPTIONS) != 0) {
             if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
                 control.onChildRunning(this, true);
             }
@@ -850,7 +867,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     public final void template_execute(boolean fromControl) {
         assert status == TaskStatus.RUNNING;
         // 事件驱动下无法精确判断是否是心跳走到这里，因此只要处于非激活状态就拒绝父节点请求(装死)
-        if (fromControl && (ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
+        if (fromControl && (ctl & MASK_DISABLE_EXECUTE_OPTIONS) != 0) {
             return;
         }
         if (cancelToken.isCancelRequested() && isAutoCheckCancel()) {
@@ -880,7 +897,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      */
     public final void template_executeInlined(TaskInlineHelper<T> helper, Task<T> source) {
         assert status == TaskStatus.RUNNING;
-        if ((ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) != 0) {
+        if ((ctl & MASK_DISABLE_EXECUTE_OPTIONS) != 0) {
             return;
         }
         // 如果source收到取消信号，则被内联的节点的子节点也一定收到取消信号

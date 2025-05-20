@@ -108,7 +108,7 @@ public class Projection
     /// 
     /// </summary>
     /// <param name="projectInfo">Dson文本格式的投影信息</param>
-    public Projection(String projectInfo)
+    public Projection(string projectInfo)
         : this(Dsons.FromDson(projectInfo).AsObject()) {
     }
 
@@ -116,10 +116,9 @@ public class Projection
     /// 
     /// </summary>
     /// <param name="projectInfo">结构化的投影信息</param>
-    public Projection(DsonObject<String> projectInfo) {
+    public Projection(DsonObject<string> projectInfo) {
         root = ParseNode(projectInfo);
     }
-
 
     /// <summary>
     /// 将指定Dson文本进行投影
