@@ -16,17 +16,19 @@
 
 #endregion
 
+using System;
+using System.IO;
 using System.Text.Json;
+using System.Threading;
 using MongoDB.Bson;
 using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
-using NUnit.Framework;
 using Wjybxx.Commons.Pool;
 using Wjybxx.Commons.Time;
-using Wjybxx.Dson.Codec.Attributes;
+using Wjybxx.Dson;
 using Wjybxx.Dson.Text;
 
-namespace Wjybxx.Dson.Tests;
+namespace Wjybxx.Benchmarks;
 
 /// <summary>
 /// 测试读写文件的性能（Release|AnyCPU）
@@ -51,7 +53,6 @@ namespace Wjybxx.Dson.Tests;
 /// </summary>
 public class BigFileTest
 {
-    [Test]
     public void TestReadWriteFile() {
         if (!File.Exists("D:\\Test.json")) {
             return;

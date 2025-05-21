@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Dson.Text
 {
@@ -34,10 +35,12 @@ class StringCharStream : AbstractCharStream
         _buffer = null;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected override bool IsClosed() {
         return _buffer == null;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected override int CharAt(ref LineInfo curLine, int position) {
         return _buffer![position];
     }

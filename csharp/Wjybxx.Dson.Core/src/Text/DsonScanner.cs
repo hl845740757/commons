@@ -36,6 +36,7 @@ public sealed class DsonScanner : IDisposable
     private static readonly IObjectPool<StringBuilder> STRING_BUILDER_POOL = ConcurrentObjectPool.SharedStringBuilderPool;
 
 #nullable disable
+    // 转换为AbstractCharStream是否可以提升性能？实测基本无变化
     private IDsonCharStream _charStream;
     private StringBuilder _pooledStringBuilder;
     private readonly char[] _hexBuffer = new char[4];

@@ -19,6 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -192,9 +193,29 @@ public readonly struct ValueFuture
     }
 
     /// <summary>
-    /// 是否是Future的包装类
+    /// 拆箱（小心使用）
     /// </summary>
-    public bool IsWrapper => _future != null;
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    [Beta("不安全")]
+    public ValueFuture<T> Unbox<T>(bool allowUnsafe = true) {
+        if (_future == null) {
+            if (_ex == null) {
+                return ValueFuture<T>.FromResult((T)_result);
+            }
+            return ValueFuture<T>.InternalFromException(_ex);
+        }
+        if (_future is IValuePromise<T> valuePromise) {
+            return new ValueFuture<T>(valuePromise, _reentryId);
+        }
+        if (_future is IFuture<T> future) {
+            return new ValueFuture<T>(future);
+        }
+        if (allowUnsafe && _future is IValuePromise<object> unsafePromise) {
+            return ValueFuture<T>.UnsafeCreate(unsafePromise, _reentryId);
+        }
+        throw new InvalidOperationException();
+    }
 
     #region internal
 
@@ -488,11 +509,6 @@ public readonly struct ValueFuture<T>
             valuePromise.Forget(_reentryId);
         }
     }
-
-    /// <summary>
-    /// 是否是Future的包装类
-    /// </summary>
-    public bool IsWrapper => _future != null;
 
     /// <summary>
     /// 装箱为非泛型的<see cref="ValueFuture"/>

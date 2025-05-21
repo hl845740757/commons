@@ -26,7 +26,8 @@ import java.util.Objects;
  */
 public abstract class AbstractCharStream implements DsonCharStream {
 
-    private final ArrayList<LineInfo> lines = new ArrayList<>();
+    private static final int MAX_LINED = 20;
+    private final ArrayList<LineInfo> lines = new ArrayList<>(MAX_LINED);
     private LineInfo curLine;
     private boolean readingContent = false;
     private int position = -1;
@@ -139,7 +140,7 @@ public abstract class AbstractCharStream implements DsonCharStream {
             eof = false;
             return -1;
         }
-        LineInfo curLine = this.curLine;
+        final LineInfo curLine = this.curLine;
         if (curLine == null) {
             throw new IllegalStateException("read must be called before unread.");
         }
@@ -230,8 +231,8 @@ public abstract class AbstractCharStream implements DsonCharStream {
             return;
         }
         int idx = indexOfCurLine(lines, curLine);
-        if (idx >= 20) {
-            lines.subList(0, 10).clear();
+        if (idx >= MAX_LINED) {
+            lines.subList(0, MAX_LINED / 2).clear();
         }
     }
 

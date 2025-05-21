@@ -28,7 +28,8 @@ namespace Wjybxx.Dson.Text
 /// </summary>
 public abstract class AbstractCharStream : IDsonCharStream
 {
-    private readonly List<LineInfo> _lines = new(10);
+    private const int MAX_LINES = 20;
+    private readonly List<LineInfo> _lines = new(MAX_LINES);
     /// <summary>
     /// 在Line为值类型情况下，该字段的作用：避免每次从lines中取值时产生拷贝。
     /// 不过，由于curLine是副本，因此每次调用<see cref="ScanMoreChars"/>后，都应当写回到lines。
@@ -234,8 +235,8 @@ public abstract class AbstractCharStream : IDsonCharStream
             return;
         }
         int idx = IndexOfCurLine(lines, in curLine);
-        if (idx >= 20) {
-            lines.RemoveRange(0, 10);
+        if (idx >= MAX_LINES) {
+            lines.RemoveRange(0, MAX_LINES / 2);
         }
     }
 
