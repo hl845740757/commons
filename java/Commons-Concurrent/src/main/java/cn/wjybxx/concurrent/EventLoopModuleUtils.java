@@ -54,6 +54,16 @@ public class EventLoopModuleUtils {
         return module.invokeDestroy();
     }
 
+    /** 是否重写了{@link IEventLoopModule#earlyUpdate()}方法 */
+    public static boolean isOverrideEarlyUpdate(IEventLoopModule module) {
+        try {
+            Method method = module.getClass().getMethod("earlyUpdate", ArrayUtils.EMPTY_CLASS_ARRAY);
+            return !method.getDeclaringClass().isInterface();
+        } catch (NoSuchMethodException ignore) {
+            return false;
+        }
+    }
+
     /** 是否重写了{@link IEventLoopModule#update()}方法 */
     public static boolean isOverrideUpdate(IEventLoopModule module) {
         try {

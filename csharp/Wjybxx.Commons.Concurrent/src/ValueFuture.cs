@@ -81,6 +81,14 @@ public readonly struct ValueFuture
                                               bool requireResult = false) =>
         new(this, executor, (int)suppressedTypes | options, requireResult);
 
+    /// <summary>
+    /// <see cref="IFuture.GetAwaitable"/>
+    /// 我们在大量的场景仅仅想禁用取消异常，因此提供快捷方法
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public SuppressibleAwaitable GetAwaitable(SuppressedTypes suppressedTypes, bool requireResult = false) =>
+        new(this, null, (int)suppressedTypes, requireResult);
+
     #region factory
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -381,6 +389,12 @@ public readonly struct ValueFuture<T>
     public SuppressibleAwaitable<T> GetAwaitable(IExecutor? executor, SuppressedTypes suppressedTypes, int options = 0) =>
         new(this, executor, (int)suppressedTypes | options);
 
+    /// <summary>
+    /// 我们在大量的场景仅仅想禁用取消异常，因此提供快捷方法
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public SuppressibleAwaitable<T> GetAwaitable(SuppressedTypes suppressedTypes) => new(this, null, (int)suppressedTypes);
+    
     #region factory
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -512,7 +526,7 @@ public readonly struct ValueFuture<T>
 
     /// <summary>
     /// 装箱为非泛型的<see cref="ValueFuture"/>
-    /// 如果选择追踪最终结果，可以再通过<see cref="ValueFuture.GetAwaitable(IExecutor, SuppressedTypes, int)"/>统一处理结果。
+    /// 如果选择追踪最终结果，可以再通过<see cref="ValueFuture.GetAwaitable(SuppressedTypes, bool)"/>统一处理结果。
     /// </summary>
     /// <param name="requireResult">是否需要最终结果</param>
     /// <returns></returns>

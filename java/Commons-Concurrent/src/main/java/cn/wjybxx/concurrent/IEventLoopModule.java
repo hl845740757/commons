@@ -26,9 +26,14 @@ import cn.wjybxx.base.fx.IComponent;
  * 否则只调用{@link #onReady()}和{@link #onDestroy()}方法。
  * 2.执行顺序为
  * {@link #onReady()}、{@link #resolveDependence()}、
- * {@link #start()}、{@link #update()}、{@link #stop()}、
+ * {@link #start()}、
+ * {@link #earlyUpdate()}、{@link #update()}、{@link #lateUpdate()}、
+ * {@link #stop()}、
  * {@link #onDestroy()}
  * 3.如果支持{@link IAgentEvent}。可以实现{@link IAgentEventHandler}
+ * <p>
+ * 注意：这里的Update和游戏业务中的Update概念并不相同，游戏World中的FixedUpdate、Update、LateUpdate应当在Update场景的时候自行封装；
+ * 但服务器通常可以直接使用这三个方法...
  *
  * @author wjybxx
  * date - 2023/11/17
@@ -58,6 +63,17 @@ public interface IEventLoopModule extends IComponent {
     }
 
     /**
+     * 该方法在所有module的{@link #update()}之前调用
+     * <p>
+     * Worker每帧会调用调用所有模块的EarlyUpdate方法
+     * 注意：只有重写了该方法的类才会被每帧调用。
+     * 注意：这里的{@code Update}和游戏业务中的{@code Update}概念并不相同。
+     */
+    default void earlyUpdate() throws Exception {
+
+    }
+
+    /**
      * Worker每帧会调用调用所有模块的Update方法
      * 注意：只有重写了该方法的类才会被每帧调用。
      */
@@ -66,6 +82,8 @@ public interface IEventLoopModule extends IComponent {
     }
 
     /**
+     * 在放在在所有module的{@link #update()}之后调用
+     * <p>
      * Worker每帧会调用调用所有模块的LateUpdate方法
      * 注意：只有重写了该方法的类才会被每帧调用。
      */

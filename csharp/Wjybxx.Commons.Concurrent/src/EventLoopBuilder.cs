@@ -120,6 +120,7 @@ public class DisruptorEventLoopBuilder<T> : EventLoopBuilder<T> where T : IAgent
     private EventSequencer<T> eventSequencer;
     private WaitStrategy waitStrategy;
     private bool publishValueEventWithCopy;
+#nullable enable
 
     public DisruptorEventLoopBuilder() {
     }

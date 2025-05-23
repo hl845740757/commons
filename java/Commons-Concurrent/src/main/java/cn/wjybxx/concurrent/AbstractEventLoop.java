@@ -46,6 +46,8 @@ public abstract class AbstractEventLoop implements IEventLoop {
     protected final List<EventLoopModule> moduleList;
     /** 高速缓存的模块列表 -- jdk的List不支持有null元素，我们使用数组，不可对外暴露 */
     private final EventLoopModule[] indexedModuleList;
+    /** 重写了earlyUpdate方法的模块 */
+    protected final List<EventLoopModule> earlyUpdateModuleList;
     /** 重写了update方法的模块 */
     protected final List<EventLoopModule> updateModuleList;
     /** 重写了lateUpdate方法的模块 */
@@ -61,6 +63,10 @@ public abstract class AbstractEventLoop implements IEventLoop {
         this.indexedModuleList = toIndexedArray(copiedModuleList);
 
         // 需要Update的模块缓存
+        this.earlyUpdateModuleList = copiedModuleList.stream()
+                .filter(e -> e.getCid().isPrivateScript())
+                .filter(EventLoopModuleUtils::isOverrideEarlyUpdate)
+                .toList();
         this.updateModuleList = copiedModuleList.stream()
                 .filter(e -> e.getCid().isPrivateScript())
                 .filter(EventLoopModuleUtils::isOverrideUpdate)

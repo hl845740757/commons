@@ -28,7 +28,7 @@ namespace Wjybxx.Disruptor
 /// 1. 先尝试自旋等待一定次数。
 /// 2. 然后尝试yield方式自旋一定次数。
 /// 3. 然后sleep等待一定次数。
-/// 4. 如果数据仍不可用，抛出<see cref="TimeoutException"/>
+/// 4. 如果数据仍不可用，返回超时（sequence-1）。
 ///
 /// 注意：在Windows下，如果要保证计时器的稳定，可能需要调整系统时间的更新频率<code>WinApi.TimeBeginPeriod(1)</code>
 /// </summary>

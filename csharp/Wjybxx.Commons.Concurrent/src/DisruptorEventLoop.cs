@@ -547,6 +547,15 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         long tickTime = this.TickTime;
         while (agent.CheckMainLoop(tickTime)) {
             agent.BeforeMainLoop(tickTime);
+            for (int i = 0; i < _earlyUpdateModuleList.Count; i++) {
+                EventLoopModule module = _earlyUpdateModuleList[i];
+                try {
+                    module.EarlyUpdate();
+                }
+                catch (Exception ex) {
+                    logger.Info(ex, "module.earlyUpdate caught exception");
+                }
+            }
             for (int i = 0; i < _updateModuleList.Count; i++) {
                 EventLoopModule module = _updateModuleList[i];
                 try {

@@ -18,4 +18,6 @@
 
 using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("Wjybxx.BigCat.Core")]
+[assembly: InternalsVisibleTo("Wjybxx.BigCat.Unity")]
 [assembly: InternalsVisibleTo("Wjybxx.Commons.Tests")]

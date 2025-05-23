@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Wjybxx.Commons
@@ -27,6 +28,7 @@ namespace Wjybxx.Commons
 public static class ThreadUtil
 {
     /** 如果是中断异常，则恢复线程中断状态，否则不产生效用 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void RecoveryInterrupted(Exception t) {
         if (t is ThreadInterruptedException) {
             Thread.CurrentThread.Interrupt();

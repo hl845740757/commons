@@ -42,6 +42,8 @@ public abstract class AbstractEventLoop : IEventLoop
     protected readonly ImmutableList<EventLoopModule> _moduleList;
     /** 高速缓存的模块列表 */
     protected readonly ImmutableList<EventLoopModule?> _indexedModuleList;
+    /** 重写了earlyUpdate方法的模块 */
+    protected readonly ImmutableList<EventLoopModule> _earlyUpdateModuleList;
     /** 重写了update方法的模块 */
     protected readonly ImmutableList<EventLoopModule> _updateModuleList;
     /** 重写了lateUpdate方法的模块 */
@@ -58,6 +60,10 @@ public abstract class AbstractEventLoop : IEventLoop
         _moduleList = copiedModuleList.ToImmutableList2();
         _indexedModuleList = ToIndexedArray(copiedModuleList).ToImmutableList2();
         // 需要update的模块缓存
+        _earlyUpdateModuleList = copiedModuleList
+            .Where(e => e.Cid.IsPrivateScript)
+            .Where(EventLoopModuleUtil.IsOverrideEarlyUpdate)
+            .ToImmutableList2();
         _updateModuleList = copiedModuleList
             .Where(e => e.Cid.IsPrivateScript)
             .Where(EventLoopModuleUtil.IsOverrideUpdate)

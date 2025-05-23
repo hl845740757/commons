@@ -66,9 +66,9 @@ public static class EventLoopModuleUtil
         return module.InvokeDestroy();
     }
 
-    /** 是否重写了<see cref="Wjybxx.Commons.Concurrent.IEventLoopModule.FixedUpdate()"/>方法 */
-    public static bool IsOverrideFixedUpdate(IEventLoopModule module) {
-        return IsOverride(module.GetType(), "FixedUpdate", Array.Empty<Type>());
+    /** 是否重写了<see cref="IEventLoopModule.EarlyUpdate"/>方法 */
+    public static bool IsOverrideEarlyUpdate(IEventLoopModule module) {
+        return IsOverride(module.GetType(), "EarlyUpdate", Array.Empty<Type>());
     }
 
     /** 是否重写了<see cref="Wjybxx.Commons.Concurrent.IEventLoopModule.Update()"/>方法 */

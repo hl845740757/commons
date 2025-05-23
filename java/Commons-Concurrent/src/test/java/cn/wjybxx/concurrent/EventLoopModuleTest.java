@@ -69,6 +69,7 @@ public class EventLoopModuleTest {
             // 行为组件非0
             BehaviorModule behaviorModule = eventLoop.getComponent(behaviorCid);
             Assertions.assertTrue(behaviorModule.onReadyInvoked);
+            Assertions.assertNotEquals(behaviorModule.earlyUpdate, 0);
             Assertions.assertNotEquals(behaviorModule.updateCount, 0);
             Assertions.assertNotEquals(behaviorModule.lastUpdateCount, 0);
             Assertions.assertNotEquals(behaviorModule.eventCount, 0);
@@ -133,6 +134,7 @@ public class EventLoopModuleTest {
     private static class BehaviorModule extends EventLoopModule implements IAgentEventHandler<AgentEvent> {
 
         boolean onReadyInvoked;
+        long earlyUpdate;
         long updateCount;
         long lastUpdateCount;
         int eventCount;
@@ -148,6 +150,11 @@ public class EventLoopModuleTest {
         @Override
         public void start() {
             eventLoop.subscribe(1, this);
+        }
+
+        @Override
+        public void earlyUpdate() throws Exception {
+            earlyUpdate++;
         }
 
         @Override

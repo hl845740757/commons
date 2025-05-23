@@ -21,8 +21,19 @@ using Wjybxx.Commons.Fx;
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 事件循环的模块
-/// 该接口在最抽象层仅仅作为标记接口
+/// 事件循环的模块，亦即EventLoop的组件
+/// 1.只有为<see cref="ComponentKind.Script"/>类型时才会被事件循环特殊调度，
+/// 否则只调用<see cref="IComponent.OnReady"/>和<see cref="IComponent.OnDestroy"/>方法。
+/// 2.执行顺序为
+/// <see cref="IComponent.OnReady"/>、<see cref="ResolveDependence"/>
+/// <see cref="Start"/>、
+/// <see cref="EarlyUpdate"/><see cref="Update"/><see cref="LateUpdate"/>
+/// <see cref="Stop"/>、
+/// <see cref="IComponent.OnDestroy"/>。
+/// 3.如果支持<see cref="IAgentEvent"/>，<see cref="IAgentEventHandler{T}"/>
+///
+/// 注意：这里的Update和游戏业务中的Update概念并不相同，游戏World中的FixedUpdate、Update、LateUpdate应当在Update场景的时候自行封装；
+/// 但服务器通常可以直接使用这三个方法...
 /// </summary>
 public interface IEventLoopModule : IComponent
 {
@@ -47,9 +58,12 @@ public interface IEventLoopModule : IComponent
     }
 
     /// <summary>
-    /// Unity项目才应该实现该接口
+    /// 该方法在所有Module的<see cref="Update"/>之前调用。
+    ///
+    /// Worker每帧会调用调用所有模块的EarlyUpdate方法
+    /// 注意：只有重写了该方法的类才会被每帧调用。
     /// </summary>
-    void FixedUpdate() {
+    void EarlyUpdate() {
     }
 
     /// <summary>
@@ -60,6 +74,8 @@ public interface IEventLoopModule : IComponent
     }
 
     /// <summary>
+    /// 该方法在所有Module的<see cref="Update"/>之后调用。
+    /// 
     /// Worker每帧会调用调用所有模块的LateUpdate方法
     /// 注意：只有重写了该方法的类才会被每帧调用。
     /// </summary>

@@ -532,6 +532,14 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         long tickTime = this.tickTime;
         while (agent.checkMainLoop(tickTime)) {
             agent.beforeMainLoop(tickTime);
+            for (int i = 0; i < earlyUpdateModuleList.size(); i++) {
+                EventLoopModule module = earlyUpdateModuleList.get(i);
+                try {
+                    module.earlyUpdate();
+                } catch (Throwable ex) {
+                    logger.info("module.earlyUpdate caught exception", ex);
+                }
+            }
             for (int i = 0; i < updateModuleList.size(); i++) {
                 EventLoopModule module = updateModuleList.get(i);
                 try {

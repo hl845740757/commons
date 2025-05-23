@@ -154,7 +154,7 @@ public abstract class EventLoopModule : IEventLoopModule
     public virtual void Start() {
     }
 
-    public virtual void FixedUpdate() {
+    public virtual void EarlyUpdate() {
     }
 
     public virtual void Update() {

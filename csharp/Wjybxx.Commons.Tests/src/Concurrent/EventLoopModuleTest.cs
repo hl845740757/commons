@@ -63,6 +63,7 @@ public class EventLoopModuleTest
             // 行为组件非0
             BehaviorModule behaviorModule = eventLoop.GetComponent(behaviorCid);
             Assert.IsTrue(behaviorModule.onReadyInvoked);
+            Assert.AreNotEqual(behaviorModule.earlyUpdateCount, 0);
             Assert.AreNotEqual(behaviorModule.updateCount, 0);
             Assert.AreNotEqual(behaviorModule.lastUpdateCount, 0);
             Assert.AreNotEqual(behaviorModule.eventCount, 0);
@@ -120,6 +121,7 @@ public class EventLoopModuleTest
     private class BehaviorModule : EventLoopModule, IAgentEventHandler<AgentEvent>
     {
         internal bool onReadyInvoked;
+        internal long earlyUpdateCount;
         internal long updateCount;
         internal long lastUpdateCount;
         internal int eventCount;
@@ -132,6 +134,10 @@ public class EventLoopModuleTest
 
         public override void Start() {
             eventLoop.Subscribe(1, this);
+        }
+
+        public override void EarlyUpdate() {
+            earlyUpdateCount++;
         }
 
         public override void Update() {
