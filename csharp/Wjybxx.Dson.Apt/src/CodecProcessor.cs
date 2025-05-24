@@ -24,6 +24,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Wjybxx.Commons.Apt;
 using Wjybxx.Commons.Poet;
 using ClassName = Wjybxx.Commons.Poet.ClassName;
@@ -35,10 +36,13 @@ namespace Wjybxx.Dson.Apt
 /// <code>DsonSerializableAttribute</code>注解处理器
 ///
 /// 1.最终序列化的都是字段，自动属性只是定义字段的快捷方法，自动属性字段的编码名默认为属性名。
-/// 2.C#的代码生成器处理和Java不太一样 
+/// 2.C#的代码生成器处理和Java不太一样
+///
+/// 最初的实现为<code>IIncrementalGenerator</code>，但考虑到Unity兼容问题，Roslyn依赖降级为<code>改为3.8.0</code>，
+/// 便只能实现为<see cref="ISourceGenerator"/>
 /// </summary>
 [Generator]
-public class CodecProcessor : IIncrementalGenerator
+public class CodecProcessor : ISourceGenerator
 {
     #region consts
 
@@ -123,7 +127,7 @@ public class CodecProcessor : IIncrementalGenerator
     internal INamedTypeSymbol type_StringStyle;
     internal INamedTypeSymbol type_ObjectStyle;
 
-    private SourceProductionContext sourceProductionContext;
+    private GeneratorExecutionContext sourceProductionContext;
     private Compilation compilation;
     private AttributeSpec processorInfoAnnotation;
     private readonly CodeWriter _codeWriter = new CodeWriter();
@@ -135,7 +139,7 @@ public class CodecProcessor : IIncrementalGenerator
 
     #region init
 
-    private void EnsureInited(SourceProductionContext sourceProductionContext, Compilation compilation) {
+    private void EnsureInited(GeneratorExecutionContext sourceProductionContext, Compilation compilation) {
         if (this.compilation != null) return;
         this.sourceProductionContext = sourceProductionContext;
         this.compilation = compilation;
@@ -181,65 +185,64 @@ public class CodecProcessor : IIncrementalGenerator
             ex.Message, ex.StackTrace);
     }
 
-    public void Initialize(IncrementalGeneratorInitializationContext context) {
-        // DsonSerializable
-        {
-            var provider = context.SyntaxProvider.ForAttributeWithMetadataName(CNAME_SERIALIZABLE,
-                (node, _) => node.GetLocation().IsInSource,
-                (node, _) => node);
-            context.RegisterSourceOutput(provider, (a, b) => {
-                try {
-                    EnsureInited(a, b.SemanticModel.Compilation);
-                    if (IsBuildingAssemblyNode(b)) {
-                        ProcessDirectType(a, b);
-                    }
-                }
-                catch (Exception ex) {
-                    ReportException(ex, b.TargetSymbol);
-                }
-            });
+    public void Initialize(GeneratorInitializationContext context) {
+        context.RegisterForSyntaxNotifications(() => new OptionsSyntaxReceiver());
+    }
+
+    public void Execute(GeneratorExecutionContext context) {
+        EnsureInited(context, context.Compilation);
+        if (context.SyntaxReceiver is not OptionsSyntaxReceiver optionsSyntaxReceiver) {
+            return;
         }
-        // LinkerGroup
-        {
-            var provider = context.SyntaxProvider.ForAttributeWithMetadataName(CNAME_CODEC_LINKER_GROUP,
-                (node, _) => node.GetLocation().IsInSource,
-                (node, _) => node);
-            context.RegisterSourceOutput(provider, (a, b) => {
-                try {
-                    EnsureInited(a, b.SemanticModel.Compilation);
-                    if (IsBuildingAssemblyNode(b)) {
-                        ProcessLinkerGroup(a, b);
-                    }
+        foreach (var declarationSyntax in optionsSyntaxReceiver.typeDeclarationNodes) {
+            var semanticModel = context.Compilation.GetSemanticModel(declarationSyntax.SyntaxTree);
+            var typeSymbol = semanticModel.GetDeclaredSymbol(declarationSyntax) as INamedTypeSymbol;
+            if (typeSymbol == null) {
+                continue;
+            }
+            if (!IsBuildingAssemblyNode(typeSymbol)) {
+                continue;
+            }
+            try {
+                AttributeData linkerBeanAttribute = AptUtils.GetAttribute(typeSymbol.GetAttributes(), CNAME_CODEC_LINKER_BEAN);
+                if (linkerBeanAttribute != null) {
+                    ProcessLinkerBean(typeSymbol, linkerBeanAttribute);
+                    continue;
                 }
-                catch (Exception ex) {
-                    ReportException(ex, b.TargetSymbol);
+                AttributeData linkerGroupAttribute = AptUtils.GetAttribute(typeSymbol.GetAttributes(), CNAME_CODEC_LINKER_GROUP);
+                if (linkerGroupAttribute != null) {
+                    ProcessLinkerGroup(typeSymbol, linkerGroupAttribute);
+                    continue;
                 }
-            });
-        }
-        // LinkerBean
-        {
-            var provider = context.SyntaxProvider.ForAttributeWithMetadataName(CNAME_CODEC_LINKER_BEAN,
-                (node, _) => node.GetLocation().IsInSource,
-                (node, _) => node);
-            context.RegisterSourceOutput(provider, (a, b) => {
-                try {
-                    EnsureInited(a, b.SemanticModel.Compilation);
-                    if (IsBuildingAssemblyNode(b)) {
-                        ProcessLinkerBean(a, b);
-                    }
+                AttributeData serializableAttribute = AptUtils.GetAttribute(typeSymbol.GetAttributes(), CNAME_SERIALIZABLE);
+                if (serializableAttribute != null) {
+                    ProcessDirectType(typeSymbol, serializableAttribute);
+                    continue;
                 }
-                catch (Exception ex) {
-                    ReportException(ex, b.TargetSymbol);
-                }
-            });
+            }
+            catch (Exception ex) {
+                ReportException(ex, typeSymbol);
+            }
         }
     }
 
-    private static bool IsBuildingAssemblyNode(GeneratorAttributeSyntaxContext node) {
-        IAssemblySymbol buildingAssembly = node.SemanticModel.Compilation.Assembly;
-        IAssemblySymbol nodeAssembly = node.TargetSymbol.ContainingAssembly;
+    private bool IsBuildingAssemblyNode(INamedTypeSymbol typeSymbol) {
+        IAssemblySymbol buildingAssembly = compilation.Assembly;
+        IAssemblySymbol nodeAssembly = typeSymbol.ContainingAssembly;
         return buildingAssembly.Name == nodeAssembly.Name;
         // return nodeAssembly.Equals(buildingAssembly, SymbolEqualityComparer.Default);
+    }
+
+    private class OptionsSyntaxReceiver : ISyntaxReceiver
+    {
+        public readonly List<TypeDeclarationSyntax> typeDeclarationNodes = new();
+
+        public void OnVisitSyntaxNode(SyntaxNode syntaxNode) {
+            // 3.8.0 API太原始了...我们把所有有注解的类型都扫描进去，然后在Execute的时候通过语义模型处理
+            if (syntaxNode is TypeDeclarationSyntax classDecl && classDecl.AttributeLists.Count > 0) {
+                typeDeclarationNodes.Add(classDecl);
+            }
+        }
     }
 
     #endregion
@@ -249,14 +252,10 @@ public class CodecProcessor : IIncrementalGenerator
     /// <summary>
     /// 不是为自己生成，当前类是Codec配置类，为绑定的类型生成
     /// </summary>
-    private void ProcessLinkerBean(SourceProductionContext sourceProductionContext, GeneratorAttributeSyntaxContext node) {
-        AttributeData linkerBeanAttribute = AptUtils.GetAttribute(node.Attributes, CNAME_CODEC_LINKER_BEAN);
-        Debug.Assert(linkerBeanAttribute != null);
-
+    private void ProcessLinkerBean(INamedTypeSymbol linkerBeanType, AttributeData linkerBeanAttribute) {
         // Target是构造函数参数，而Namespace是属性参数
-        INamedTypeSymbol linkerBeanType = (INamedTypeSymbol)node.TargetSymbol;
         INamedTypeSymbol targetType = (INamedTypeSymbol)linkerBeanAttribute.ConstructorArguments[0].Value;
-        string outNamespace = GetOutputNamespace((INamedTypeSymbol)node.TargetSymbol, linkerBeanAttribute);
+        string outNamespace = GetOutputNamespace(linkerBeanType, linkerBeanAttribute);
         AptClassProps aptClassProps = AptClassProps.Parse(linkerBeanAttribute);
 
         // 创建模拟数据
@@ -301,13 +300,7 @@ public class CodecProcessor : IIncrementalGenerator
     /// <summary>
     /// 不是为自己生成，当前类是配置类，为字段类型生成
     /// </summary>
-    /// <param name="sourceProductionContext"></param>
-    /// <param name="node"></param>
-    private void ProcessLinkerGroup(SourceProductionContext sourceProductionContext, GeneratorAttributeSyntaxContext node) {
-        AttributeData linkerGroupAttribute = AptUtils.GetAttribute(node.Attributes, CNAME_CODEC_LINKER_GROUP);
-        Debug.Assert(linkerGroupAttribute != null);
-        //
-        INamedTypeSymbol linkerGroupType = (INamedTypeSymbol)node.TargetSymbol;
+    private void ProcessLinkerGroup(INamedTypeSymbol linkerGroupType, AttributeData linkerGroupAttribute) {
         string outNamespace = GetOutputNamespace(linkerGroupType, linkerGroupAttribute);
         // 扫描LinkerGroup的字段
         List<IFieldSymbol> linkerGroupFields = BeanUtils.GetAllMembersWithInherit(linkerGroupType, new List<SymbolKind>() { SymbolKind.Field })
@@ -342,11 +335,8 @@ public class CodecProcessor : IIncrementalGenerator
         }
     }
 
-    private void ProcessDirectType(SourceProductionContext sourceProductionContext, GeneratorAttributeSyntaxContext node) {
-        AttributeData serializableAttribute = AptUtils.GetAttribute(node.Attributes, CNAME_SERIALIZABLE);
-        Debug.Assert(serializableAttribute != null);
-
-        Context context = new Context(node.TargetSymbol as INamedTypeSymbol);
+    private void ProcessDirectType(INamedTypeSymbol typeSymbol, AttributeData serializableAttribute) {
+        Context context = new Context(typeSymbol);
         CacheFields(context);
         CacheFieldProps(context);
         context.aptClassProps = AptClassProps.Parse(serializableAttribute);
@@ -601,7 +591,7 @@ public class CodecProcessor : IIncrementalGenerator
         IMethodSymbol constructor = BeanUtils.GetNoArgsConstructor(typeSymbol);
         return constructor != null && constructor.IsPublic();
     }
-    
+
     /** 是否包含 T(Reader reader) 构造方法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool ContainsReaderConstructor(INamedTypeSymbol typeSymbol) {

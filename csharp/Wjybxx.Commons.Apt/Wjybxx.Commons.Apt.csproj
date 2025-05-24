@@ -6,7 +6,7 @@
         <LangVersion>9</LangVersion>
         <RootNamespace>Wjybxx.Commons.Apt</RootNamespace>
         <PackageId>Wjybxx.Commons.Apt</PackageId>
-        <PackageVersion>1.4.1</PackageVersion>
+        <PackageVersion>1.4.2</PackageVersion>
 
         <Title>Wjybxx.Commons.Apt</Title>
         <Description>注解处理器工具</Description>
@@ -41,8 +41,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.3.1" />
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" />
+        <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.8.0" PrivateAssets="all" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" PrivateAssets="all" />
     </ItemGroup>
 
     <ItemGroup>
