@@ -100,28 +100,18 @@ public static class AptUtils
 
         string proxyName;
         if (type.DeclaringType == null) {
-            proxyName = type.Name + suffix; // TopLevel
+            proxyName = Util.GetSimpleName(type) + suffix; // TopLevel
         } else {
             // 内部类，避免与其它的内部类冲突，不能使用简单名
             // Q: 为什么不使用$符合?
             // A: 因为生成的工具类都是外部类，不是内部类。
             List<string> simpleNames = new List<string>(3);
-            simpleNames.Add(type.Name);
+            simpleNames.Add(Util.GetSimpleName(type));
             while ((type = type.DeclaringType) != null) {
-                simpleNames.Add(type.Name);
+                simpleNames.Add(Util.GetSimpleName(type));
             }
             simpleNames.Reverse();
             proxyName = string.Join("_", simpleNames) + suffix;
-        }
-        // Type.Name 会包含反引号，我们需要去除
-        if (proxyName.IndexOf('`') >= 0) {
-            StringBuilder builder = new StringBuilder(proxyName.Length);
-            for (var i = 0; i < proxyName.Length; i++) {
-                if (proxyName[i] != '`') {
-                    builder.Append(proxyName[i]);
-                }
-            }
-            proxyName = builder.ToString();
         }
         return proxyName;
     }

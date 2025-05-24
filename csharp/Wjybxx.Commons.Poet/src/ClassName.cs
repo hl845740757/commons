@@ -441,7 +441,7 @@ public class ClassName : TypeName
     /// <returns></returns>
     public new static ClassName Get(Type type) {
         if (type == null) throw new ArgumentNullException(nameof(type));
-        if (type.Namespace == null || type.IsArray || type.IsGenericParameter || type.IsPrimitive) {
+        if (type.Namespace == null || type.IsArray || type.IsGenericParameter) {
             throw new ArgumentException("invalid type: " + type);
         }
         // 基础类型

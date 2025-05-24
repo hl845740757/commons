@@ -1,0 +1,6 @@
+# DsonApt反射版
+
+该工具主要用于Unity项目，Unity下不能自由编辑csproj文件，无法达成和普通dotnet项目一样的配置，导致无法为第三方程序集生成Codec；
+因此在Unity下我们通过反射为第三方程序集生成Codec.
+
+PS：本来不想

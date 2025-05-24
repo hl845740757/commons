@@ -1,16 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <ImplicitUsings>disable</ImplicitUsings>
+        <ImplicitUsings>false</ImplicitUsings>
         <Nullable>annotations</Nullable>
         <LangVersion>9</LangVersion>
-        <RootNamespace>Wjybxx.Commons.Apt</RootNamespace>
-        <PackageId>Wjybxx.Commons.Apt</PackageId>
-        <PackageVersion>1.4.3</PackageVersion>
+        <RootNamespace>Wjybxx.Dson.Apt2</RootNamespace>
 
-        <Title>Wjybxx.Commons.Apt</Title>
-        <Description>注解处理器工具</Description>
-        <PackageTags>wjybxx;SourceGenerator;Javapoet</PackageTags>
+        <AssemblyName>Wjybxx.Dson.Apt2</AssemblyName>
+        <PackageId>Wjybxx.Dson.Apt2</PackageId>
+        <PackageVersion>2.5.0-rc1</PackageVersion>
+
+        <Title>Wjybxx.Dson</Title>
+        <Description>基于反射的Codec生成器</Description>
+        <PackageTags>wjybxx;dson;json</PackageTags>
 
         <Authors>wjybxx(845740757@qq.com)</Authors>
         <Owners>wjybxx(845740757@qq.com)</Owners>
@@ -25,7 +27,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <EmbedAllSources>true</EmbedAllSources>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <TargetFrameworks>netstandard2.0;net6.0;net8.0;</TargetFrameworks>
+        <TargetFrameworks>net6.0;net8.0;</TargetFrameworks>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -41,11 +43,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.8.0" PrivateAssets="all" />
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" PrivateAssets="all" />
+        <ProjectReference Include="..\Wjybxx.Commons.Poet\Wjybxx.Commons.Poet.csproj" />
+        <ProjectReference Include="..\Wjybxx.Dson.Core\Wjybxx.Dson.Core.csproj" />
+        <ProjectReference Include="..\Wjybxx.Dson.Codec\Wjybxx.Dson.Codec.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Wjybxx.Commons.Poet\Wjybxx.Commons.Poet.csproj" />
-    </ItemGroup>
 </Project>

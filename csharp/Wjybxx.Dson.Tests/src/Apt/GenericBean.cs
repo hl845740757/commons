@@ -1,6 +1,5 @@
 #region LICENSE
-
-// Copyright 2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,19 +12,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 #endregion
-
-using Wjybxx.Commons.Collections;
-using Wjybxx.Dson.Codec.Attributes;
 
 namespace Wjybxx.Dson.Tests.Apt;
 
-[DsonCodecLinkerGroup]
-public class LinkerGroupExample
+/// <summary>
+/// 测试泛型类
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public class GenericBean<T> where T : struct 
 {
-#nullable disable
-    public ThirdPartyBean thirdPartyBean;
-    // 测试泛型类
-    public GenericBean<int> g;
+    
 }

@@ -32,6 +32,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Commons.Apt", "Wjybx
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Benchmarks", "Wjybxx.Benchmarks\Wjybxx.Benchmarks.csproj", "{F53C5897-D834-4FB8-9E3B-50AFB7C428A0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wjybxx.Dson.Apt2", "Wjybxx.Dson.Apt2\Wjybxx.Dson.Apt2.csproj", "{70410A1A-606C-444C-BEC5-2DA1E67F3306}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -102,5 +104,9 @@ Global
 		{F53C5897-D834-4FB8-9E3B-50AFB7C428A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F53C5897-D834-4FB8-9E3B-50AFB7C428A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F53C5897-D834-4FB8-9E3B-50AFB7C428A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70410A1A-606C-444C-BEC5-2DA1E67F3306}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70410A1A-606C-444C-BEC5-2DA1E67F3306}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70410A1A-606C-444C-BEC5-2DA1E67F3306}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70410A1A-606C-444C-BEC5-2DA1E67F3306}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

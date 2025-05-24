@@ -1,6 +1,6 @@
 #region LICENSE
 
-// Copyright 2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,17 +21,102 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Microsoft.CodeAnalysis;
+using System.Text;
 using Wjybxx.Commons.Poet;
 
-namespace Wjybxx.Commons.Apt
+namespace Wjybxx.Dson.Apt2
 {
-/// <summary>
-///
-/// </summary>
-public static class BeanUtils
+internal static class AptUtils
 {
-    #region constructors
+    #region apt-util
+
+    private static readonly ClassName clsName_GeneratedAttribute = ClassName.Get("Wjybxx.Commons.Attributes", "GeneratedAttribute");
+    private static readonly ClassName clsName_SourceFileRef = ClassName.Get("Wjybxx.Commons.Attributes", "SourceFileRefAttribute");
+
+    /// <summary>
+    /// 为生成代码的注解处理器创建一个通用注解
+    /// </summary>
+    /// <param name="type">生成器的类型信息</param>
+    /// <param name="version">生成器的版本</param>
+    /// <param name="assembly">归属的程序集</param>
+    /// <param name="dateTime">执行时间</param>
+    /// <returns></returns>
+    public static AttributeSpec NewProcessorInfoAnnotation(Type type,
+                                                           string? version = null,
+                                                           string? assembly = null,
+                                                           DateTime? dateTime = null) {
+        var builder = AttributeSpec.NewBuilder(clsName_GeneratedAttribute)
+            .Constructor(CodeBlock.Of("$S", type.ToString()));
+        if (assembly != null) {
+            builder.AddMember("Assembly", "$S", assembly);
+        }
+        if (version != null) {
+            builder.AddMember("Version", "$S", version);
+        }
+        if (dateTime != null) {
+            builder.AddMember("DateTime", "$S", dateTime.Value.ToString("s"));
+        }
+        return builder.Build();
+    }
+
+    /// <summary>
+    /// 添加指向源代码文件的引用，方便查看文件依赖
+    /// </summary>
+    /// <param name="sourceFileTypeName"></param>
+    /// <returns></returns>
+    public static AttributeSpec NewSourceFileRefAnnotation(TypeName sourceFileTypeName) {
+        return AttributeSpec.NewBuilder(clsName_SourceFileRef)
+            .Constructor(CodeBlock.Of("typeof($T)", sourceFileTypeName))
+            .Build();
+    }
+
+    /**
+     * 将继承体系展开，不包含实现的接口。
+     * （超类在后，包含object）
+     */
+    public static List<Type> FlatInherit(Type type) {
+        List<Type> result = new List<Type>(4);
+        result.Add(type);
+        while ((type = type.BaseType) != null) {
+            result.Add(type);
+        }
+        return result;
+    }
+
+    /**
+     * 将继承体系展开，并逆序返回，不包含实现的接口。
+     * （超类在前，包含object）
+     */
+    public static List<Type> FlatInheritAndReverse(Type type) {
+        List<Type> result = FlatInherit(type);
+        result.Reverse();
+        return result;
+    }
+
+    public static string GetProxyClassName(Type type, string? suffix = null) {
+        if (suffix == null) suffix = "";
+
+        string proxyName;
+        if (type.DeclaringType == null) {
+            proxyName = Util.GetSimpleName(type) + suffix; // TopLevel
+        } else {
+            // 内部类，避免与其它的内部类冲突，不能使用简单名
+            // Q: 为什么不使用$符合?
+            // A: 因为生成的工具类都是外部类，不是内部类。
+            List<string> simpleNames = new List<string>(3);
+            simpleNames.Add(Util.GetSimpleName(type));
+            while ((type = type.DeclaringType) != null) {
+                simpleNames.Add(Util.GetSimpleName(type));
+            }
+            simpleNames.Reverse();
+            proxyName = string.Join("_", simpleNames) + suffix;
+        }
+        return proxyName;
+    }
+
+    #endregion
+
+    #region bean-utils
 
     /// <summary>
     /// 是否包含无参构造方法
@@ -67,46 +152,6 @@ public static class BeanUtils
     }
 
     /// <summary>
-    /// 是否包含无参构造方法
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    public static bool ContainsNoArgsConstructor(INamedTypeSymbol type) {
-        return GetNoArgsConstructor(type) != null;
-    }
-
-    /// <summary>
-    /// 是否包含给定参数类型的构造方法
-    /// </summary>
-    /// <param name="type"></param>
-    /// <param name="argType"></param>
-    /// <returns></returns>
-    public static bool ContainsOneArgsConstructor(INamedTypeSymbol type, ITypeSymbol argType) {
-        return GetOneArgsConstructor(type, argType) != null;
-    }
-
-    public static IMethodSymbol? GetNoArgsConstructor(INamedTypeSymbol type, bool _ = false) {
-        foreach (var methodSymbol in type.InstanceConstructors) {
-            if (methodSymbol.Parameters.Length == 0) return methodSymbol;
-        }
-        return null;
-    }
-
-    public static IMethodSymbol? GetOneArgsConstructor(INamedTypeSymbol type, ITypeSymbol argType) {
-        // TODO 参数如果是未构造泛型是否有问题
-        SymbolEqualityComparer comparer = SymbolEqualityComparer.Default;
-        foreach (var methodSymbol in type.InstanceConstructors) {
-            if (methodSymbol.Parameters.Length != 1) continue;
-            if (argType.Equals(methodSymbol.Parameters[0], comparer)) return methodSymbol;
-        }
-        return null;
-    }
-
-    #endregion
-
-    #region get-members
-
-    /// <summary>
     /// 获取类的所有字段和方法，包含继承得到的字段和方法和属性。
     /// (查询的开销较大，用户应当缓存结果)
     /// </summary>
@@ -117,70 +162,13 @@ public static class BeanUtils
                                                                                                  | MemberTypes.Property
                                                                                                  | MemberTypes.Method) {
         // FlattenHierarchy 不能拉取到超类的private字段
-        return AptUtils.FlatInheritAndReverse(type)
+        return FlatInheritAndReverse(type)
             .SelectMany(e => e.GetMembers(BindingFlags.DeclaredOnly
                                           | BindingFlags.Public | BindingFlags.NonPublic
                                           | BindingFlags.Static | BindingFlags.Instance))
             .Where(e => (e.MemberType & memberTypes) != 0)
             .ToList();
     }
-
-    /// <summary>
-    /// 获取类的所有成员
-    /// (查询的开销较大，用户应当缓存结果)
-    /// (未指定类型列表时，默认返回字段、方法、属性)
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    public static List<ISymbol> GetAllMembersWithInherit(INamedTypeSymbol type) {
-        return GetAllMembersWithInherit(type, new List<SymbolKind>()
-        {
-            SymbolKind.Field, SymbolKind.Method, SymbolKind.Property
-        });
-    }
-
-    /// <summary>
-    /// 获取类的所有成员
-    /// (查询的开销较大，用户应当缓存结果)
-    /// </summary>
-    /// <param name="type"></param>
-    /// <param name="kinds"></param>
-    /// <returns></returns>
-    public static List<ISymbol> GetAllMembersWithInherit(INamedTypeSymbol type, List<SymbolKind> kinds) {
-        return AptUtils.FlatInheritAndReverse(type)
-            .SelectMany(typeSymbol => typeSymbol.GetMembers().Where(e => kinds.Contains(e.Kind)))
-            .ToList();
-    }
-
-    /// <summary>
-    /// 获取第一个指定名称的成员
-    /// </summary>
-    /// <param name="typeSymbol"></param>
-    /// <param name="name"></param>
-    /// <returns></returns>
-    public static ISymbol? GetFirstMember(this INamedTypeSymbol typeSymbol, string name) {
-        foreach (ISymbol member in typeSymbol.GetMembers()) {
-            if (member.Name == name) return member;
-        }
-        return null;
-    }
-
-    /// <summary>
-    /// 获取第一个指定名称的方法
-    /// </summary>
-    /// <param name="typeSymbol"></param>
-    /// <param name="name"></param>
-    /// <returns></returns>
-    public static IMethodSymbol? GetFirstMethod(this INamedTypeSymbol typeSymbol, string name) {
-        foreach (ISymbol member in typeSymbol.GetMembers()) {
-            if (member.Kind == SymbolKind.Method && member.Name == name) return (IMethodSymbol?)member;
-        }
-        return null;
-    }
-
-    #endregion
-
-    #region fields-props
 
     /// <summary>
     /// 查询字段关联的属性(支持非public)
@@ -193,34 +181,6 @@ public static class BeanUtils
         string propertyName = PropertyNameOfField(fieldInfo.Name);
         return allMembers.Where(e => e.MemberType == MemberTypes.Property)
             .Cast<PropertyInfo>()
-            .FirstOrDefault(e => e.Name == propertyName);
-    }
-
-    /// <summary>
-    /// 查询字段关联的属性(支持非public)
-    /// </summary>
-    /// <param name="fieldInfo"></param>
-    /// <param name="allMembers"></param>
-    /// <returns></returns>
-    public static IPropertySymbol? FindProperty(IFieldSymbol fieldInfo,
-                                                List<ISymbol> allMembers) {
-        string propertyName = PropertyNameOfField(fieldInfo.Name);
-        return allMembers.Where(e => e.Kind == SymbolKind.Property)
-            .Cast<IPropertySymbol>()
-            .FirstOrDefault(e => e.Name == propertyName);
-    }
-
-    /// <summary>
-    /// 查询字段关联的属性(支持非public)
-    /// </summary>
-    /// <param name="fieldName"></param>
-    /// <param name="allMembers"></param>
-    /// <returns></returns>
-    public static IPropertySymbol? FindProperty(string fieldName,
-                                                List<ISymbol> allMembers) {
-        string propertyName = PropertyNameOfField(fieldName);
-        return allMembers.Where(e => e.Kind == SymbolKind.Property)
-            .Cast<IPropertySymbol>()
             .FirstOrDefault(e => e.Name == propertyName);
     }
 
@@ -255,25 +215,6 @@ public static class BeanUtils
             }
             case PropertyInfo propertyInfo: {
                 return propertyInfo.PropertyType;
-            }
-            default: {
-                throw new InvalidOperationException();
-            }
-        }
-    }
-
-    /// <summary>
-    /// 获取关联的字段类型
-    /// </summary>
-    /// <param name="memberInfo"></param>
-    /// <returns></returns>
-    public static ITypeSymbol GetFieldType(ISymbol memberInfo) {
-        switch (memberInfo) {
-            case IFieldSymbol fieldInfo: {
-                return fieldInfo.Type;
-            }
-            case IPropertySymbol propertyInfo: {
-                return propertyInfo.Type;
             }
             default: {
                 throw new InvalidOperationException();
@@ -318,6 +259,10 @@ public static class BeanUtils
         }
         MethodInfo setMethod = propertyInfo.SetMethod!;
         return setMethod.IsStatic;
+    }
+
+    public static MethodInfo? GetFirstMethod(this Type type, string name) {
+        return type.GetMethod(name);
     }
 
     #endregion

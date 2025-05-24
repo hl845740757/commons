@@ -402,9 +402,8 @@ public class CodecProcessor : ISourceGenerator
             IPropertySymbol propertySymbol = BeanUtils.FindProperty(key.fieldName, context.allMembers);
 
             AptFieldInfo aptFieldInfo = new AptFieldInfo(fieldInfo, fieldSymbol, propertySymbol);
-            ITypeSymbol? fieldType = aptFieldInfo.FieldType;
-            if (fieldType != null) {
-                aptFieldInfo.typeName = AptUtils.ParseType(fieldType).RemoveAllNullableAttribute();
+            if (aptFieldInfo.FieldType != null) {
+                aptFieldInfo.typeName = AptUtils.ParseType(aptFieldInfo.FieldType).RemoveAllNullableAttribute();
             }
             allFields.Add(aptFieldInfo);
         }
@@ -585,7 +584,7 @@ public class CodecProcessor : ISourceGenerator
 
     #region 钩子查询
 
-    /** 是否包含 T(Reader reader) 构造方法 */
+    /** 是否包含无参构造方法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool ContainsNoArgsConstructor(INamedTypeSymbol typeSymbol) {
         IMethodSymbol constructor = BeanUtils.GetNoArgsConstructor(typeSymbol);
@@ -602,9 +601,8 @@ public class CodecProcessor : ISourceGenerator
     /** 是否包含 newInstance(reader) 静态解码方法 -- 只能从当前类型查询 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool ContainsNewInstanceMethod(INamedTypeSymbol typeSymbol) {
-        List<ISymbol> staticMembers = typeSymbol.GetMembers()
-            .Where(e => e.IsStatic && e.Kind == SymbolKind.Method)
-            .ToList();
+        IEnumerable<ISymbol> staticMembers = typeSymbol.GetMembers()
+            .Where(e => e.IsStatic && e.Kind == SymbolKind.Method);
         return ContainsHookMethod(staticMembers, MNAME_NEW_INSTANCE, type_DsonReader);
     }
 
