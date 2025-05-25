@@ -248,13 +248,10 @@ public class CodecProcessor extends MyAbstractProcessor {
             cacheFieldProps(linkerBeanContext);
 
             // 由于FieldKey包含了声明字段的类型，因此LinkerBean无法直接映射，我们只能按字段的简单名匹配
-            for (VariableElement field : context.allFields) {
-                for (Map.Entry<VariableElement, AptFieldProps> entry : linkerBeanContext.fieldPropsMap.entrySet()) {
-                    String fieldName = field.getEnclosingElement().getSimpleName().toString();
-                    if (fieldName.equals(entry.getKey().getSimpleName().toString())) {
-                        context.fieldPropsMap.put(field, entry.getValue());
-                        break;
-                    }
+            for (AptFieldInfo fieldInfo : context.allFields) {
+                AptFieldProps fieldProps = linkerBeanContext.findFieldProps(fieldInfo.name);
+                if (fieldProps != null) {
+                    context.fieldPropsMap.put(fieldInfo, fieldProps);
                 }
             }
         }
@@ -346,25 +343,34 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     private void cacheFields(Context context) {
         context.allMembers = BeanUtils.getAllFieldsAndMethodsWithInherit(context.typeElement);
-        context.allFields = context.allMembers.stream()
-                .filter(e -> e.getKind() == ElementKind.FIELD && !e.getModifiers().contains(Modifier.STATIC))
-                .map(e -> (VariableElement) e)
-                .toList();
+        List<AptFieldInfo> allFields = new ArrayList<>();
+        for (Element member : context.allMembers) {
+            if (member.getKind() != ElementKind.FIELD || member.getModifiers().contains(Modifier.STATIC)) {
+                continue;
+            }
+            VariableElement variableElement = (VariableElement) member;
+            ExecutableElement publicGetter = BeanUtils.findPublicGetter(typeUtils, variableElement, context.allMembers);
+            ExecutableElement publicSetter = BeanUtils.findPublicSetter(typeUtils, variableElement, context.allMembers);
+            TypeName typeName = TypeName.get(variableElement.asType());
+
+            allFields.add(new AptFieldInfo(variableElement, publicGetter, publicSetter, typeName));
+        }
+        context.allFields = allFields;
     }
 
     private void cacheFieldProps(Context context) {
-        for (VariableElement variableElement : context.allFields) {
-            AptFieldProps aptFieldProps = AptFieldProps.parse(typeUtils, variableElement, anno_DsonProperty);
+        for (AptFieldInfo fieldInfo : context.allFields) {
+            AptFieldProps aptFieldProps = AptFieldProps.parse(typeUtils, fieldInfo.element, anno_DsonProperty);
             // dsonIgnore
-            aptFieldProps.parseIgnore(typeUtils, variableElement, anno_DsonIgnore);
+            aptFieldProps.parseIgnore(typeUtils, fieldInfo.element, anno_DsonIgnore);
             // 修正一下EnumSet和EnumMap，可以减少不必要的麻烦 -- 其实也可以测试是否是final类型
-            TypeMirror fieldTypeMirror = variableElement.asType();
+            TypeMirror fieldTypeMirror = fieldInfo.element.asType();
             if (aptFieldProps.implMirror == null
                     && fieldTypeMirror.getKind() == TypeKind.DECLARED
                     && (isEnumSet(fieldTypeMirror) || isEnumMap(fieldTypeMirror))) {
                 aptFieldProps.implMirror = fieldTypeMirror;
             }
-            context.fieldPropsMap.put(variableElement, aptFieldProps);
+            context.fieldPropsMap.put(fieldInfo, aptFieldProps);
         }
     }
 
@@ -429,48 +435,48 @@ public class CodecProcessor extends MyAbstractProcessor {
                 .filter(e -> e.getKind() == ElementKind.METHOD && !e.getModifiers().contains(Modifier.STATIC))
                 .toList();
 
-        for (VariableElement variableElement : context.allFields) {
-            final AptFieldProps aptFieldProps = context.fieldPropsMap.get(variableElement);
-            if (!isSerializableField(variableElement, instMethodList, aptFieldProps)) {
+        for (AptFieldInfo fieldInfo : context.allFields) {
+            final AptFieldProps aptFieldProps = context.fieldPropsMap.get(fieldInfo);
+            if (!isSerializableField(fieldInfo, aptFieldProps)) {
                 continue;
             }
-            context.serialFields.add(variableElement);
+            context.serialFields.add(fieldInfo);
 
-            if (isAutoWriteField(variableElement, aptClassProps, aptFieldProps)) {
-                checkAutoWriteField(variableElement, aptFieldProps, allMembers, typeElement);
+            if (isAutoWriteField(fieldInfo, aptClassProps, aptFieldProps)) {
+                checkAutoWriteField(fieldInfo, aptFieldProps, allMembers, typeElement);
             }
-            if (isAutoReadField(variableElement, aptClassProps, aptFieldProps)) {
-                checkAutoReadField(variableElement, aptFieldProps, allMembers, typeElement);
+            if (isAutoReadField(fieldInfo, aptClassProps, aptFieldProps)) {
+                checkAutoReadField(fieldInfo, aptFieldProps, allMembers, typeElement);
             }
         }
     }
 
-    private void checkAutoReadField(VariableElement variableElement, AptFieldProps aptFieldProps,
+    private void checkAutoReadField(AptFieldInfo fieldInfo, AptFieldProps aptFieldProps,
                                     List<? extends Element> allMembers, TypeElement typeElement) {
         if (!AptUtils.isBlank(aptFieldProps.readProxy)) {
             return;
         }
         // 工具读：需要提供可直接赋值或非private的setter方法
         if (AptUtils.isBlank(aptFieldProps.setter)
-                && !canSetDirectly(variableElement)
-                && findPublicSetter(variableElement, allMembers) == null) {
+                && !canSetDirectly(fieldInfo)
+                && !fieldInfo.hasPublicSetter()) {
             messager.printMessage(Diagnostic.Kind.ERROR,
-                    String.format("auto read field (%s) must be public or contains a public getter", variableElement.getSimpleName()),
+                    String.format("auto read field (%s) must be public or contains a public setter", fieldInfo.name),
                     typeElement); // 可能无法定位到超类字段，因此打印到Type
         }
     }
 
-    private void checkAutoWriteField(VariableElement variableElement, AptFieldProps aptFieldProps,
+    private void checkAutoWriteField(AptFieldInfo fieldInfo, AptFieldProps aptFieldProps,
                                      List<? extends Element> allMembers, TypeElement typeElement) {
         if (!AptUtils.isBlank(aptFieldProps.writeProxy)) {
             return;
         }
         // 工具写：需要提供可直接取值或包含非private的getter方法
         if (AptUtils.isBlank(aptFieldProps.getter)
-                && !canGetDirectly(variableElement)
-                && findPublicGetter(variableElement, allMembers) == null) {
+                && !canGetDirectly(fieldInfo)
+                && !fieldInfo.hasPublicGetter()) {
             messager.printMessage(Diagnostic.Kind.ERROR,
-                    String.format("auto write field (%s) must be public or contains a public getter", variableElement.getSimpleName()),
+                    String.format("auto write field (%s) must be public or contains a public getter", fieldInfo.name),
                     typeElement); // 可能无法定位到超类字段，因此打印到Type
         }
     }
@@ -551,42 +557,24 @@ public class CodecProcessor extends MyAbstractProcessor {
     /**
      * 测试是否可以直接读取字段。
      *
-     * @param variableElement 类字段，可能是继承的字段
+     * @param fieldInfo 类字段，可能是继承的字段
      * @return 如果可直接取值，则返回true
      */
-    public boolean canGetDirectly(final VariableElement variableElement) {
-        return variableElement.getModifiers().contains(Modifier.PUBLIC);
+    public boolean canGetDirectly(final AptFieldInfo fieldInfo) {
+        return fieldInfo.getModifiers().contains(Modifier.PUBLIC);
     }
 
     /**
      * 测试是否可以直接写字段。
      *
-     * @param variableElement 类字段，可能是继承的字段
+     * @param fieldInfo 类字段，可能是继承的字段
      * @return 如果可直接赋值，则返回true
      */
-    public boolean canSetDirectly(final VariableElement variableElement) {
-        if (variableElement.getModifiers().contains(Modifier.FINAL)) {
+    public boolean canSetDirectly(final AptFieldInfo fieldInfo) {
+        if (fieldInfo.getModifiers().contains(Modifier.FINAL)) {
             return false;
         }
-        return variableElement.getModifiers().contains(Modifier.PUBLIC);
-    }
-
-    /**
-     * 查找非private的getter方法
-     *
-     * @param allMethodWithInherit 所有的字段和方法，可能在父类中
-     */
-    public ExecutableElement findPublicGetter(final VariableElement variableElement, final List<? extends Element> allMethodWithInherit) {
-        return BeanUtils.findPublicGetter(typeUtils, variableElement, allMethodWithInherit);
-    }
-
-    /**
-     * 查找非private的setter方法
-     *
-     * @param allMethodWithInherit 所有的字段和方法，可能在父类中
-     */
-    public ExecutableElement findPublicSetter(final VariableElement variableElement, final List<? extends Element> allMethodWithInherit) {
-        return BeanUtils.findPublicSetter(typeUtils, variableElement, allMethodWithInherit);
+        return fieldInfo.getModifiers().contains(Modifier.PUBLIC);
     }
 
     /**
@@ -594,59 +582,58 @@ public class CodecProcessor extends MyAbstractProcessor {
      * 1.默认只序列化 public 字段
      * 2.默认忽略 transient 字段
      */
-    private boolean isSerializableField(VariableElement variableElement, List<? extends Element> instMethodList, AptFieldProps aptFieldProps) {
-        if (variableElement.getModifiers().contains(Modifier.STATIC)) {
+    private boolean isSerializableField(AptFieldInfo fieldInfo, AptFieldProps aptFieldProps) {
+        if (fieldInfo.getModifiers().contains(Modifier.STATIC)) {
             return false;
         }
         // 有注解的情况下，取决于注解的值 -- 取反。。。
         Boolean ignore = aptFieldProps.ignore;
         if (ignore != null) return !ignore;
         // 无注解的情况下，默认忽略 transient 字段
-        if (variableElement.getModifiers().contains(Modifier.TRANSIENT)) {
+        if (fieldInfo.getModifiers().contains(Modifier.TRANSIENT)) {
             return false;
         }
         // 判断public和getter/setter
-        if (variableElement.getModifiers().contains(Modifier.PUBLIC)) {
+        if (fieldInfo.getModifiers().contains(Modifier.PUBLIC)) {
             return true;
         }
         // setter更容易失败
-        return BeanUtils.containsPublicSetter(typeUtils, variableElement, instMethodList)
-                && BeanUtils.containsPublicGetter(typeUtils, variableElement, instMethodList);
+        return fieldInfo.hasPublicGetter() && fieldInfo.hasPublicSetter();
     }
 
     /** 是否是托管写的字段 */
-    boolean isAutoWriteField(VariableElement variableElement, AptClassProps aptClassProps, AptFieldProps aptFieldProps) {
+    boolean isAutoWriteField(AptFieldInfo fieldInfo, AptClassProps aptClassProps, AptFieldProps aptFieldProps) {
         if (aptClassProps.isSingleton()) {
             return false;
         }
         // 优先判断skip属性
-        if (isSkipFields(variableElement, aptClassProps)) {
+        if (isSkipFields(fieldInfo, aptClassProps)) {
             return false;
         }
         return true;
     }
 
     /** 是否是托管读的字段 */
-    boolean isAutoReadField(VariableElement variableElement, AptClassProps aptClassProps, AptFieldProps aptFieldProps) {
+    boolean isAutoReadField(AptFieldInfo fieldInfo, AptClassProps aptClassProps, AptFieldProps aptFieldProps) {
         if (aptClassProps.isSingleton()) {
             return false;
         }
         // final必定或构造方法读
-        if (variableElement.getModifiers().contains(Modifier.FINAL)) {
+        if (fieldInfo.getModifiers().contains(Modifier.FINAL)) {
             return false;
         }
         // 优先判断skip属性
-        if (isSkipFields(variableElement, aptClassProps)) {
+        if (isSkipFields(fieldInfo, aptClassProps)) {
             return false;
         }
         return true;
     }
 
-    private boolean isSkipFields(VariableElement variableElement, AptClassProps aptClassProps) {
+    private boolean isSkipFields(AptFieldInfo fieldInfo, AptClassProps aptClassProps) {
         if (aptClassProps.skipFields.isEmpty()) {
             return false;
         }
-        String fieldName = variableElement.getSimpleName().toString();
+        String fieldName = fieldInfo.name;
         if (aptClassProps.skipFields.contains(fieldName)) {
             return true; // 完全匹配
         }
@@ -654,7 +641,7 @@ public class CodecProcessor extends MyAbstractProcessor {
             return false; // 简单名不存在
         }
         // 测试SimpleClassName和FullClassName
-        TypeElement declaredTypeElement = (TypeElement) variableElement.getEnclosingElement();
+        TypeElement declaredTypeElement = (TypeElement) fieldInfo.element.getEnclosingElement();
         String simpleClassName = declaredTypeElement.getSimpleName().toString();
         if (aptClassProps.skipFields.contains(simpleClassName + "." + fieldName)) {
             return true;

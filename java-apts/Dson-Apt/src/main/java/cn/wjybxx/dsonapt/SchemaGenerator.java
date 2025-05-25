@@ -25,7 +25,6 @@ import com.squareup.javapoet.TypeName;
 
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.*;
 import javax.tools.Diagnostic;
 import java.util.ArrayList;
@@ -82,23 +81,23 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
 
     // region typeArgs
 
-    private List<FieldSpec> genFactoryFields(List<VariableElement> allSerialFields) {
+    private List<FieldSpec> genFactoryFields(List<AptFieldInfo> allSerialFields) {
         List<FieldSpec> typeFieldList = new ArrayList<>(allSerialFields.size());
-        for (VariableElement variableElement : allSerialFields) {
-            AptFieldProps fieldProps = context.fieldPropsMap.get(variableElement);
+        for (AptFieldInfo fieldInfo : allSerialFields) {
+            AptFieldProps fieldProps = context.fieldPropsMap.get(fieldInfo);
             if (fieldProps.implMirror != null) {
-                typeFieldList.add(genFactoryField(variableElement, fieldProps.implMirror));
+                typeFieldList.add(genFactoryField(fieldInfo, fieldProps.implMirror));
             }
         }
         return typeFieldList;
     }
 
-    private FieldSpec genFactoryField(VariableElement variableElement, TypeMirror implMirror) {
+    private FieldSpec genFactoryField(AptFieldInfo fieldInfo, TypeMirror implMirror) {
         // 暂不擦除泛型 -- 我们约定禁止字段出现未定义泛型，如：List<T>
         // public static final Supplier<Map<String, Object>> factories_map = HashMap::new;
-        TypeMirror typeMirror = variableElement.asType();
+        TypeMirror typeMirror = fieldInfo.element.asType();
         ParameterizedTypeName fieldTypeName = ParameterizedTypeName.get(AptUtils.CLSNAME_SUPPLIER, TypeName.get(typeMirror));
-        String factoryFieldName = factoryFieldName(variableElement.getSimpleName().toString());
+        String factoryFieldName = factoryFieldName(fieldInfo.name);
 
         FieldSpec.Builder builder = FieldSpec.builder(fieldTypeName, factoryFieldName, AptUtils.PUBLIC_STATIC_FINAL);
         if (processor.isEnumMap(implMirror)) {
@@ -119,9 +118,9 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
         return builder.build();
     }
 
-    private List<FieldSpec> genTypeFields(List<VariableElement> allSerialFields) {
+    private List<FieldSpec> genTypeFields(List<AptFieldInfo> allSerialFields) {
         return allSerialFields.stream()
-                .filter(e -> needTypeInfoFields(e.asType()))
+                .filter(e -> needTypeInfoFields(e.element.asType()))
                 .map(this::genTypeField)
                 .toList();
     }
@@ -133,10 +132,10 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
                 || processor.isByteArray(typeMirror));
     }
 
-    private FieldSpec genTypeField(VariableElement variableElement) {
+    private FieldSpec genTypeField(AptFieldInfo fieldInfo) {
         // public static final TypeInfo types_name = TypeInfo.of();
-        TypeMirror typeMirror = variableElement.asType();
-        String typeInfoFieldName = typeInfoFieldName(variableElement.getSimpleName().toString());
+        TypeMirror typeMirror = fieldInfo.element.asType();
+        String typeInfoFieldName = typeInfoFieldName(fieldInfo.name);
 
         FieldSpec.Builder builder = FieldSpec.builder(typeName_TypeInfo, typeInfoFieldName, AptUtils.PUBLIC_STATIC_FINAL);
         // 需要递归构建
@@ -218,13 +217,13 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
     // region names
 
     private List<FieldSpec> genNameFields() {
-        final List<VariableElement> serialFields = context.serialFields;
+        final List<AptFieldInfo> serialFields = context.serialFields;
         final Set<String> dsonNameSet = new HashSet<>((int) (serialFields.size() * 1.35f));
         final List<FieldSpec> fieldSpecList = new ArrayList<>(serialFields.size());
 
-        for (VariableElement variableElement : serialFields) {
-            AptFieldProps properties = context.fieldPropsMap.get(variableElement);
-            String fieldName = variableElement.getSimpleName().toString();
+        for (AptFieldInfo fieldInfo : serialFields) {
+            AptFieldProps properties = context.fieldPropsMap.get(fieldInfo);
+            String fieldName = fieldInfo.name;
             String dsonName;
             if (!AptUtils.isBlank(properties.name)) {
                 dsonName = properties.name.trim();
@@ -234,7 +233,7 @@ class SchemaGenerator extends AbstractGenerator<CodecProcessor> {
             if (!dsonNameSet.add(dsonName)) {
                 messager.printMessage(Diagnostic.Kind.ERROR,
                         String.format("dsonName is duplicate, dsonName %s", dsonName),
-                        variableElement);
+                        fieldInfo.element);
                 continue;
             }
             fieldSpecList.add(FieldSpec.builder(AptUtils.CLSNAME_STRING, nameFileName(fieldName), AptUtils.PUBLIC_STATIC_FINAL)

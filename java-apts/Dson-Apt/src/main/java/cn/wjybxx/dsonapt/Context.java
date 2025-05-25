@@ -22,12 +22,8 @@ import com.squareup.javapoet.TypeSpec;
 import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author wjybxx
@@ -39,12 +35,12 @@ class Context {
     final Element linkerElement;
     // region cache
     List<? extends Element> allMembers; // 所有的字段和方法缓存
-    List<VariableElement> allFields; // 所有的实例字段缓存
+    List<AptFieldInfo> allFields; // 所有的实例字段缓存
 
     AptClassProps aptClassProps; // 类注解缓存
     List<AnnotationSpec> additionalAnnotations; // 生成代码附加注解
-    final Map<VariableElement, AptFieldProps> fieldPropsMap = new HashMap<>(); // 字段的注解缓存
-    final List<VariableElement> serialFields = new ArrayList<>(); // 所有可序列化字段缓存，检测类型数据时写入
+    final Map<AptFieldInfo, AptFieldProps> fieldPropsMap = new HashMap<>(); // 字段的注解缓存
+    final List<AptFieldInfo> serialFields = new ArrayList<>(); // 所有可序列化字段缓存，检测类型数据时写入
     // endregion
 
     TypeSpec.Builder typeBuilder;
@@ -54,5 +50,12 @@ class Context {
     public Context(TypeElement typeElement, @Nullable Element linkerElement) {
         this.typeElement = typeElement;
         this.linkerElement = linkerElement;
+    }
+
+    AptFieldProps findFieldProps(String name) {
+        for (var entry : fieldPropsMap.entrySet()) {
+            if (Objects.equals(entry.getKey().name, name)) return entry.getValue();
+        }
+        return null;
     }
 }

@@ -24,7 +24,6 @@ import com.squareup.javapoet.*;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -98,13 +97,13 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
             genWriteObjectMethod(aptClassProps);
             genReadObjectMethod(aptClassProps);
             // 普通字段读写
-            for (VariableElement variableElement : context.serialFields) {
-                final AptFieldProps aptFieldProps = context.fieldPropsMap.get(variableElement);
-                if (processor.isAutoWriteField(variableElement, aptClassProps, aptFieldProps)) {
-                    addWriteStatement(variableElement, aptFieldProps, aptClassProps);
+            for (AptFieldInfo fieldInfo : context.serialFields) {
+                final AptFieldProps aptFieldProps = context.fieldPropsMap.get(fieldInfo);
+                if (processor.isAutoWriteField(fieldInfo, aptClassProps, aptFieldProps)) {
+                    addWriteStatement(fieldInfo, aptFieldProps, aptClassProps);
                 }
-                if (processor.isAutoReadField(variableElement, aptClassProps, aptFieldProps)) {
-                    addReadStatement(variableElement, aptFieldProps, aptClassProps);
+                if (processor.isAutoReadField(fieldInfo, aptClassProps, aptFieldProps)) {
+                    addReadStatement(fieldInfo, aptFieldProps, aptClassProps);
                 }
             }
         }
@@ -268,8 +267,8 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     // endregion
 
     // region field
-    private void addReadStatement(VariableElement variableElement, AptFieldProps fieldProps, AptClassProps aptClassProps) {
-        final String fieldName = variableElement.getSimpleName().toString();
+    private void addReadStatement(AptFieldInfo fieldInfo, AptFieldProps fieldProps, AptClassProps aptClassProps) {
+        final String fieldName = fieldInfo.name;
         MethodSpec.Builder builder = readFieldsMethodBuilder;
         if (!AptUtils.isBlank(fieldProps.readProxy)) { // 自定义读
             if (aptClassProps.codecProxyTypeElement != null) {
@@ -284,8 +283,8 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         // 文本中存在相应字段的情况下才读取
         builder.addCode("if (reader.readName($L)) ", serialName(fieldName));
 
-        final String readMethodName = getReadMethodName(variableElement);
-        final ExecutableElement setterMethod = processor.findPublicSetter(variableElement, allMembers);
+        final String readMethodName = getReadMethodName(fieldInfo);
+        final ExecutableElement setterMethod = fieldInfo.setterMethod;
         // 优先用setter，否则直接赋值
         boolean hasCustomSetter = !AptUtils.isBlank(fieldProps.setter);
         if (hasCustomSetter || setterMethod != null) {
@@ -316,8 +315,8 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         }
     }
 
-    private void addWriteStatement(VariableElement variableElement, AptFieldProps fieldProps, AptClassProps aptClassProps) {
-        final String fieldName = variableElement.getSimpleName().toString();
+    private void addWriteStatement(AptFieldInfo fieldInfo, AptFieldProps fieldProps, AptClassProps aptClassProps) {
+        final String fieldName = fieldInfo.name;
         MethodSpec.Builder builder = this.writeFieldsMethodBuilder;
         if (!AptUtils.isBlank(fieldProps.writeProxy)) { // 自定义写
             if (aptClassProps.codecProxyTypeElement != null) {
@@ -331,7 +330,8 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         // 优先用getter，否则直接访问
         String fieldAccess;
         boolean hasCustomGetter = !AptUtils.isBlank(fieldProps.getter);
-        ExecutableElement getterMethod = processor.findPublicGetter(variableElement, allMembers);
+        ExecutableElement getterMethod = fieldInfo.getterMethod;
+        ;
         if (hasCustomGetter) {
             fieldAccess = fieldProps.getter + "()";
         } else if (getterMethod != null) {
@@ -341,8 +341,8 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         }
 
         // 处理数字 -- 需追加NumberStyle
-        final String writeMethodName = getWriteMethodName(variableElement);
-        if (AptUtils.isPrimitiveNumber(variableElement.asType())) {
+        final String writeMethodName = getWriteMethodName(fieldInfo);
+        if (AptUtils.isPrimitiveNumber(fieldInfo.element.asType())) {
             // writer.writeInt(names_fieldName, inst.field, NumberStyle.SIMPLE)
             builder.addStatement("writer.$L($L, inst.$L, $T.$L)",
                     writeMethodName, serialName(fieldName), fieldAccess,
@@ -396,8 +396,8 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     }
 
     /** 获取writer写字段的方法名 */
-    private String getWriteMethodName(VariableElement variableElement) {
-        TypeMirror typeMirror = variableElement.asType();
+    private String getWriteMethodName(AptFieldInfo fieldInfo) {
+        TypeMirror typeMirror = fieldInfo.element.asType();
         if (isPrimitiveType(typeMirror)) {
             return primitiveWriteMethodNameMap.get(typeMirror.getKind());
         }
@@ -423,8 +423,8 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     }
 
     /** 获取reader读字段的方法名 */
-    private String getReadMethodName(VariableElement variableElement) {
-        TypeMirror typeMirror = variableElement.asType();
+    private String getReadMethodName(AptFieldInfo fieldInfo) {
+        TypeMirror typeMirror = fieldInfo.element.asType();
         if (isPrimitiveType(typeMirror)) {
             return primitiveReadMethodNameMap.get(typeMirror.getKind());
         }
