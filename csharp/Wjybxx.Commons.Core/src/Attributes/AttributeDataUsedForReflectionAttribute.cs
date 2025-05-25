@@ -1,6 +1,6 @@
 #region LICENSE
 
-// Copyright 2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,20 +16,17 @@
 
 #endregion
 
-using Wjybxx.BTree;
-using Wjybxx.Commons.Collections;
-using Wjybxx.Dson.Codec.Attributes;
-using Wjybxx.Dson.Types;
+using System;
 
-namespace Wjybxx.Dson.Tests.Apt;
-
-[DsonCodecLinkerGroup]
-public class LinkerGroupExample
+namespace Wjybxx.Commons.Attributes
 {
-#nullable disable
-    public ThirdPartyBean thirdPartyBean;
-    // 测试泛型类
-    public GenericBean<int> g;
-    // 测试无法加载的程序集 -- 警告
-    public ExtInt32 _extInt32;
+/// <summary>
+/// 该注解用于标记注解数据用于反射时，在编译时需要被忽略。
+/// </summary>
+[AttributeUsage(AttributeTargets.All)]
+public sealed class AttributeDataUsedForReflectionAttribute : Attribute
+{
+    public AttributeDataUsedForReflectionAttribute() {
+    }
+}
 }

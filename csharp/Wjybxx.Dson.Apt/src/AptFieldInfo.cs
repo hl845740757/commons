@@ -36,14 +36,13 @@ internal sealed class AptFieldInfo : IEquatable<AptFieldInfo>
     /// 反射数据
     ///
     /// 1.如果是外部程序集类型的字段，则该字段有值
-    /// 2.该字段是由泛型原型类查找得到的，因为编译时不能确定泛型参数。
-    /// 3.该字段只用于获取注解（Attribute），不能用于类型判断。
+    /// 2.该字段只用于获取注解（Attribute），不能用于类型判断。
     /// </summary>
     public readonly FieldInfo? fieldInfo;
     /// <summary>
     /// 字段编译期数据
     /// 1.如果是当前程序集类型的字段，则该字段有值；
-    /// 2.如果是外部程序集类型的public和protected字段，则该字段也有值；
+    /// 2.该字段只用于获取注解（Attribute），不能用于类型判断。
     /// </summary>
     public readonly IFieldSymbol? fieldSymbol;
     /// <summary>

@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Dson.Codec.Attributes
 {
@@ -28,8 +29,9 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 4. 字段的读写代理将映射到【LinkerBean】中的静态方法。
 /// 5. <see cref="DsonSerializableAttribute"/>中提到的钩子方法也将映射到【LinkerBean】中的静态方法。
 /// 6. 如果是泛型类，使用其泛型定义类声明，且当前配置类需要保持相同的泛型参数。
-/// 7. C#端存在自动属性，字段映射字段，属性映射属性 —— 都按名字匹配。
-///
+/// 7. C#端存在自动属性，【字段映射字段，属性映射属性】 —— 都按名字匹配。
+/// 8. 如果通过反射为第三方程序集生成代码，可通过<see cref="AttributeDataUsedForReflectionAttribute"/>告知APT在编译时忽略。
+/// 
 /// 注意：Linker类不应该存在继承关系，否则可能导致方法绑定错误。
 /// <pre><code>
 ///  class BeanCodecLinker {

@@ -34,6 +34,10 @@ internal class Context
     /// 要处理的类型
     /// </summary>
     public readonly INamedTypeSymbol type;
+    /// <summary>
+    /// 配置类
+    /// </summary>
+    public readonly ISymbol linkerSymbol;
 
     #region Cache
 
@@ -78,8 +82,16 @@ internal class Context
 
     #endregion
 
-    public Context(INamedTypeSymbol type) {
+    public Context(INamedTypeSymbol type, ISymbol? linkerSymbol) {
         this.type = type ?? throw new ArgumentNullException(nameof(type));
+        this.linkerSymbol = linkerSymbol;
+    }
+
+    public AptFieldProps? FindFieldProps(string name) {
+        foreach (var pair in fieldPropsMap) {
+            if (pair.Key.Name == name) return pair.Value;
+        }
+        return null;
     }
 }
 }

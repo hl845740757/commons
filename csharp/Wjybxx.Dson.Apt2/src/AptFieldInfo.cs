@@ -93,10 +93,16 @@ internal class AptFieldInfo : IEquatable<AptFieldInfo>
     public FieldKey FieldKey => new FieldKey(Util.GetSimpleName(fieldInfo.DeclaringType!), fieldInfo.Name);
 
     public Attribute? GetAttribute(Type type) {
+        if (Util.IsAutoPropertyField(fieldInfo.Name)) {
+            return propertyInfo!.GetCustomAttribute(type, false);
+        }
         return fieldInfo.GetCustomAttribute(type);
     }
 
     public T? GetAttribute<T>() where T : Attribute {
+        if (Util.IsAutoPropertyField(fieldInfo.Name)) {
+            return propertyInfo!.GetCustomAttribute<T>(false);
+        }
         return fieldInfo.GetCustomAttribute<T>();
     }
 

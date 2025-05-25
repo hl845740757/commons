@@ -39,7 +39,10 @@ namespace Wjybxx.Dson.Apt
 /// 2.C#的代码生成器处理和Java不太一样
 ///
 /// 最初的实现为<code>IIncrementalGenerator</code>，但考虑到Unity兼容问题，Roslyn依赖降级为<code>改为3.8.0</code>，
-/// 便只能实现为<see cref="ISourceGenerator"/>
+/// 便只能实现为<see cref="ISourceGenerator"/>。
+///
+/// Q：为什么在编译时不能加载第三方程序集时，我们要生成不完整的codec代码？
+/// A：这允许用户再通过反射为第三方类型生成Codec，然后再组装起来构成最终的Codec。
 /// </summary>
 [Generator]
 public class CodecProcessor : ISourceGenerator
@@ -129,6 +132,7 @@ public class CodecProcessor : ISourceGenerator
 
     private GeneratorExecutionContext sourceProductionContext;
     private Compilation compilation;
+    private string buildingAssemblyName;
     private AttributeSpec processorInfoAnnotation;
     private readonly CodeWriter _codeWriter = new CodeWriter();
 
@@ -143,8 +147,9 @@ public class CodecProcessor : ISourceGenerator
         if (this.compilation != null) return;
         this.sourceProductionContext = sourceProductionContext;
         this.compilation = compilation;
+        this.buildingAssemblyName = compilation.Assembly.Identity.Name;
         this.processorInfoAnnotation = AptUtils.NewProcessorInfoAnnotation(typeof(CodecProcessor),
-            assembly: compilation.Assembly.Identity.Name);
+            assembly: buildingAssemblyName);
 
         // dson
         anno_DsonSerializable = compilation.GetTypeByMetadataName(CNAME_SERIALIZABLE);
@@ -203,6 +208,9 @@ public class CodecProcessor : ISourceGenerator
             if (!IsBuildingAssemblyNode(typeSymbol)) {
                 continue;
             }
+            if (AptUtils.HasUsedForReflectionAttribute(typeSymbol.GetAttributes())) {
+                continue;
+            }
             try {
                 AttributeData linkerBeanAttribute = AptUtils.GetAttribute(typeSymbol.GetAttributes(), CNAME_CODEC_LINKER_BEAN);
                 if (linkerBeanAttribute != null) {
@@ -259,7 +267,7 @@ public class CodecProcessor : ISourceGenerator
         AptClassProps aptClassProps = AptClassProps.Parse(linkerBeanAttribute);
 
         // 创建模拟数据
-        Context context = new Context(targetType);
+        Context context = new Context(targetType, linkerBeanType);
         context.outputNamespace = outNamespace;
         context.aptClassProps = aptClassProps;
         context.additionalAnnotations = GetAdditionalAnnotations(aptClassProps);
@@ -267,18 +275,15 @@ public class CodecProcessor : ISourceGenerator
         CacheFieldProps(context);
         // 修正字段的Props —— 将LinkerBean上的注解信息转移到目标类
         {
-            Context linkerBeanContext = new Context(linkerBeanType);
+            Context linkerBeanContext = new Context(linkerBeanType, null);
             CacheFields(linkerBeanContext);
             CacheFieldProps(linkerBeanContext);
 
-            // 按name缓存，提高效率
-            Dictionary<FieldKey, AptFieldProps> fieldName2FieldPropsMap = new(linkerBeanContext.fieldPropsMap.Count);
-            foreach (KeyValuePair<AptFieldInfo, AptFieldProps> pair in linkerBeanContext.fieldPropsMap) {
-                fieldName2FieldPropsMap[pair.Key.FieldKey] = pair.Value;
-            }
+            // 由于FieldKey包含了声明字段的类型，因此LinkerBean无法直接映射，我们只能按字段的简单名匹配
             foreach (AptFieldInfo fieldInfo in context.allFields) {
-                if (fieldName2FieldPropsMap.TryGetValue(fieldInfo.FieldKey, out AptFieldProps? aptFieldProps)) {
-                    context.fieldPropsMap[fieldInfo] = aptFieldProps;
+                AptFieldProps? fieldProps = linkerBeanContext.FindFieldProps(fieldInfo.Name);
+                if (fieldProps != null) {
+                    context.fieldPropsMap[fieldInfo] = fieldProps;
                 }
             }
         }
@@ -302,23 +307,23 @@ public class CodecProcessor : ISourceGenerator
     /// </summary>
     private void ProcessLinkerGroup(INamedTypeSymbol linkerGroupType, AttributeData linkerGroupAttribute) {
         string outNamespace = GetOutputNamespace(linkerGroupType, linkerGroupAttribute);
-        // 扫描LinkerGroup的字段
-        List<IFieldSymbol> linkerGroupFields = BeanUtils.GetAllMembersWithInherit(linkerGroupType, new List<SymbolKind>() { SymbolKind.Field })
-            .Cast<IFieldSymbol>()
-            .ToList();
+        IEnumerable<IFieldSymbol> linkerGroupFields = BeanUtils
+            .GetAllMembersWithInherit(linkerGroupType, new List<SymbolKind>() { SymbolKind.Field })
+            .Cast<IFieldSymbol>();
+        //
         foreach (IFieldSymbol fieldSymbol in linkerGroupFields) {
+            // 检查类型合法性
+            INamedTypeSymbol targetType = fieldSymbol.Type as INamedTypeSymbol;
+            if (targetType == null) continue;
             // 查找字段的配置
             AttributeData linkerAttribute = AptUtils.GetAttribute(fieldSymbol.GetAttributes(), CNAME_CODEC_LINKER);
             AptClassProps aptClassProps = AptClassProps.Parse(linkerAttribute);
-
             // 泛型字段需要转换为泛型定义类 -- 不能连接到特殊类型
-            INamedTypeSymbol targetType = fieldSymbol.Type as INamedTypeSymbol;
-            if (targetType == null) continue;
             if (targetType.IsGenericType) {
                 targetType = targetType.OriginalDefinition;
             }
             // 创建模拟数据
-            Context context = new Context(targetType);
+            Context context = new Context(targetType, fieldSymbol);
             context.outputNamespace = outNamespace;
             context.aptClassProps = aptClassProps;
             context.additionalAnnotations = GetAdditionalAnnotations(aptClassProps);
@@ -336,7 +341,7 @@ public class CodecProcessor : ISourceGenerator
     }
 
     private void ProcessDirectType(INamedTypeSymbol typeSymbol, AttributeData serializableAttribute) {
-        Context context = new Context(typeSymbol);
+        Context context = new Context(typeSymbol, null);
         CacheFields(context);
         CacheFieldProps(context);
         context.aptClassProps = AptClassProps.Parse(serializableAttribute);
@@ -378,17 +383,23 @@ public class CodecProcessor : ISourceGenerator
 
     private void CacheFields(Context context) {
         context.allMembers = BeanUtils.GetAllMembersWithInherit(context.type);
-
-        // 反射字段
-        Dictionary<FieldKey, FieldInfo> reflectionFieldDic = GetReflectionFields(context.type)
-            .ToDictionary(e => new FieldKey(Util.GetSimpleName(e.DeclaringType!), e.Name), e => e);
-        // 编译字段
-        Dictionary<FieldKey, IFieldSymbol> compilationFieldDic = new Dictionary<FieldKey, IFieldSymbol>(context.allMembers.Count);
+        // 反射字段--第三方程序集字段
+        Dictionary<FieldKey, FieldInfo> reflectionFieldDic = new();
+        foreach (var fieldInfo in GetReflectionFields(context.type)) {
+            if (fieldInfo.IsStatic) continue;
+            var fieldKey = new FieldKey(Util.GetSimpleName(fieldInfo.DeclaringType!), fieldInfo.Name);
+            reflectionFieldDic.Add(fieldKey, fieldInfo);
+        }
+        // 编译字段--当前程序集字段
+        Dictionary<FieldKey, IFieldSymbol> compilationFieldDic = new();
         foreach (ISymbol symbol in context.allMembers) {
-            if (symbol.Kind != SymbolKind.Field) continue;
+            if (symbol.Kind != SymbolKind.Field || symbol.IsStatic) continue;
             IFieldSymbol fieldSymbol = (IFieldSymbol)symbol;
+            if (!IsBuildingAssemblyNode(fieldSymbol.ContainingType)) {
+                continue;
+            }
             FieldKey key = new FieldKey(fieldSymbol.ContainingType.Name, fieldSymbol.Name);
-            compilationFieldDic.Add(key, fieldSymbol); // 使用add，如果出现重复可以发现
+            compilationFieldDic.Add(key, fieldSymbol);
         }
         // 合并信息
         HashSet<FieldKey> fieldKeys = new HashSet<FieldKey>();
@@ -399,6 +410,7 @@ public class CodecProcessor : ISourceGenerator
         foreach (FieldKey key in fieldKeys) {
             reflectionFieldDic.TryGetValue(key, out FieldInfo? fieldInfo);
             compilationFieldDic.TryGetValue(key, out IFieldSymbol? fieldSymbol);
+            // props只需要访问public权限的，因此无需特殊处理
             IPropertySymbol propertySymbol = BeanUtils.FindProperty(key.fieldName, context.allMembers);
 
             AptFieldInfo aptFieldInfo = new AptFieldInfo(fieldInfo, fieldSymbol, propertySymbol);
@@ -410,30 +422,40 @@ public class CodecProcessor : ISourceGenerator
         context.allFields = allFields;
     }
 
-    private List<FieldInfo> GetReflectionFields(INamedTypeSymbol typeSymbol) {
-        string buildingAssemblyName = compilation.Assembly.Identity.Name;
+    /** 返回Null表示没有依赖的第三方程序集 */
+    private string? GetThirdPartyAssemblyName(INamedTypeSymbol typeSymbol,
+                                              out INamedTypeSymbol? thirdPartyType) {
         int index = 0;
-        List<INamedTypeSymbol> namedTypeSymbols = AptUtils.FlatInheritAndReverse(typeSymbol);
+        List<INamedTypeSymbol> namedTypeSymbols = AptUtils.FlatInherit(typeSymbol);
         for (; index < namedTypeSymbols.Count; index++) {
             INamedTypeSymbol namedTypeSymbol = namedTypeSymbols[index];
             string typeAssemblyName = namedTypeSymbol.ContainingAssembly.Name;
-            if (typeAssemblyName == buildingAssemblyName) {
+            if (typeAssemblyName != buildingAssemblyName) {
                 break;
             }
         }
-        if (index > 0) {
-            INamedTypeSymbol namedTypeSymbol = namedTypeSymbols[index - 1];
-            string typeAssemblyName = namedTypeSymbol.ContainingAssembly.Name;
-            string path = $"{AptUtils.GetFullMetadataName(namedTypeSymbol)}, {typeAssemblyName}";
-            Type reflectType = Type.GetType(path);
-            if (reflectType == null) {
-                throw new Exception($"load assembly failed: {typeAssemblyName}");
-            }
-            return BeanUtils.GetAllMembersWithInherit(reflectType, MemberTypes.Field)
-                .Cast<FieldInfo>()
-                .ToList();
+        if (index < namedTypeSymbols.Count) {
+            INamedTypeSymbol namedTypeSymbol = namedTypeSymbols[index];
+            thirdPartyType = namedTypeSymbol;
+            return namedTypeSymbol.ContainingAssembly.Name;
         }
-        return new List<FieldInfo>();
+        thirdPartyType = null;
+        return null;
+    }
+
+    private List<FieldInfo> GetReflectionFields(INamedTypeSymbol typeSymbol) {
+        string assemblyName = GetThirdPartyAssemblyName(typeSymbol, out INamedTypeSymbol thirdPartyType);
+        if (assemblyName == null) {
+            return new List<FieldInfo>();
+        }
+        string typePath = $"{AptUtils.GetFullMetadataName(thirdPartyType!)}, {assemblyName}";
+        Type reflectType = Type.GetType(typePath, false);
+        if (reflectType == null) {
+            return new List<FieldInfo>();
+        }
+        return BeanUtils.GetAllMembersWithInherit(reflectType, MemberTypes.Field)
+            .Cast<FieldInfo>()
+            .ToList();
     }
 
     private void CacheFieldProps(Context context) {
@@ -506,6 +528,7 @@ public class CodecProcessor : ISourceGenerator
         }
         INamedTypeSymbol targetType = context.type;
         CheckConstructor(targetType, aptClassProps);
+        CheckThirdPartyAssembly(targetType, context.linkerSymbol);
 
         List<ISymbol> allMembers = context.allMembers;
         List<ISymbol> instMethodWithInherit = allMembers
@@ -515,7 +538,7 @@ public class CodecProcessor : ISourceGenerator
 
         foreach (AptFieldInfo fieldInfo in context.allFields) {
             AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
-            if (!IsSerializableField(fieldInfo, instMethodWithInherit, aptFieldProps!)) {
+            if (!IsSerializableField(fieldInfo, aptFieldProps!)) {
                 continue;
             }
             context.serialFields.Add(fieldInfo);
@@ -578,6 +601,19 @@ public class CodecProcessor : ISourceGenerator
         //
         ReportDiagnostic(DiagnosticSeverity.Error, typeSymbol, 1003,
             "SerializableClass must contains public no-args constructor or reader-args constructor!");
+    }
+
+    private void CheckThirdPartyAssembly(INamedTypeSymbol typeSymbol, ISymbol? linkerSymbol) {
+        string assemblyName = GetThirdPartyAssemblyName(typeSymbol, out INamedTypeSymbol thirdPartyType);
+        if (assemblyName == null) {
+            return;
+        }
+        string typePath = $"{AptUtils.GetFullMetadataName(thirdPartyType!)}, {assemblyName}";
+        if (Type.GetType(typePath, false) == null) {
+            ReportDiagnostic(DiagnosticSeverity.Warning, linkerSymbol, 1004,
+                "The assembly '{0}' of '{1}' cannot be loaded, the generated codec maybe partial",
+                assemblyName, thirdPartyType!.Name);
+        }
     }
 
     #endregion
@@ -678,7 +714,7 @@ public class CodecProcessor : ISourceGenerator
      * 1.默认只序列化 public 字段
      * 2.默认忽略 <see cref="NonSerializedAttribute"/> 字段
      */
-    internal bool IsSerializableField(AptFieldInfo fieldInfo, List<ISymbol> allMethodWithInherit, AptFieldProps aptFieldProps) {
+    internal bool IsSerializableField(AptFieldInfo fieldInfo, AptFieldProps aptFieldProps) {
         if (fieldInfo.FieldType == null) return false;
         if (fieldInfo.IsStatic) return false;
         // 有注解的情况取决于注解的值，需取反 -- 注解已提前解析

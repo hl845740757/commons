@@ -235,7 +235,7 @@ public class CodecProcessor extends MyAbstractProcessor {
 
         // 创建模拟数据
         TypeElement targetTypeElement = (TypeElement) targetType.asElement();
-        Context context = new Context(targetTypeElement);
+        Context context = new Context(targetTypeElement, linkerBeanType);
         context.outPackage = outPackage;
         context.aptClassProps = aptClassProps;
         context.additionalAnnotations = getAdditionalAnnotations(aptClassProps);
@@ -243,22 +243,18 @@ public class CodecProcessor extends MyAbstractProcessor {
         cacheFieldProps(context);
         // 修正字段的Props注解 —— 将LinkerBean上的注解信息转移到目标类
         {
-            Context linkerBeanContext = new Context(linkerBeanType);
+            Context linkerBeanContext = new Context(linkerBeanType, null);
             cacheFields(linkerBeanContext);
             cacheFieldProps(linkerBeanContext);
 
-            // 按name缓存，提高效率
-            Map<FieldKey, AptFieldProps> fieldName2FieldPropsMap = HashMap.newHashMap(linkerBeanContext.fieldPropsMap.size());
-            for (Map.Entry<VariableElement, AptFieldProps> entry : linkerBeanContext.fieldPropsMap.entrySet()) {
-                VariableElement field = entry.getKey();
-                FieldKey fieldKey = new FieldKey(field.getEnclosingElement().getSimpleName().toString(), field.getSimpleName().toString());
-                fieldName2FieldPropsMap.put(fieldKey, entry.getValue());
-            }
+            // 由于FieldKey包含了声明字段的类型，因此LinkerBean无法直接映射，我们只能按字段的简单名匹配
             for (VariableElement field : context.allFields) {
-                FieldKey fieldKey = new FieldKey(field.getEnclosingElement().getSimpleName().toString(), field.getSimpleName().toString());
-                AptFieldProps aptFieldProps = fieldName2FieldPropsMap.get(fieldKey);
-                if (aptFieldProps != null) {
-                    context.fieldPropsMap.put(field, aptFieldProps);
+                for (Map.Entry<VariableElement, AptFieldProps> entry : linkerBeanContext.fieldPropsMap.entrySet()) {
+                    String fieldName = field.getEnclosingElement().getSimpleName().toString();
+                    if (fieldName.equals(entry.getKey().getSimpleName().toString())) {
+                        context.fieldPropsMap.put(field, entry.getValue());
+                        break;
+                    }
                 }
             }
         }
@@ -280,7 +276,6 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     private void processLinkerGroup(TypeElement groupTypeElement, AnnotationMirror linkerGroupAnnoMirror) {
         final String outPackage = getOutputPackage(groupTypeElement, linkerGroupAnnoMirror);
-
         for (VariableElement variableElement : BeanUtils.getAllFieldsWithInherit(groupTypeElement)) {
             DeclaredType targetType = AptUtils.findDeclaredType(variableElement.asType());
             if (targetType == null) {
@@ -295,7 +290,7 @@ public class CodecProcessor extends MyAbstractProcessor {
 
             // 创建模拟数据
             TypeElement typeElement = (TypeElement) targetType.asElement();
-            Context context = new Context(typeElement);
+            Context context = new Context(typeElement, variableElement);
             context.outPackage = outPackage;
             context.aptClassProps = aptClassProps;
             context.additionalAnnotations = getAdditionalAnnotations(aptClassProps);
@@ -313,7 +308,7 @@ public class CodecProcessor extends MyAbstractProcessor {
     }
 
     private void processDirectType(TypeElement typeElement, AnnotationMirror dsonSerialAnnoMirror) {
-        Context context = new Context(typeElement);
+        Context context = new Context(typeElement, null);
         context.aptClassProps = AptClassProps.parse(dsonSerialAnnoMirror);
         context.additionalAnnotations = getAdditionalAnnotations(context.aptClassProps);
         cacheFields(context);

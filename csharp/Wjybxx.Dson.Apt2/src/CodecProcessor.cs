@@ -200,14 +200,11 @@ public class CodecProcessor
             CacheFields(linkerBeanContext);
             CacheFieldProps(linkerBeanContext);
 
-            // 按name缓存，提高效率
-            Dictionary<FieldKey, AptFieldProps> fieldName2FieldPropsMap = new(linkerBeanContext.fieldPropsMap.Count);
-            foreach (KeyValuePair<AptFieldInfo, AptFieldProps> pair in linkerBeanContext.fieldPropsMap) {
-                fieldName2FieldPropsMap[pair.Key.FieldKey] = pair.Value;
-            }
+            // 由于FieldKey包含了声明字段的类型，因此LinkerBean无法直接映射，我们只能按字段的简单名匹配
             foreach (AptFieldInfo fieldInfo in context.allFields) {
-                if (fieldName2FieldPropsMap.TryGetValue(fieldInfo.FieldKey, out AptFieldProps? aptFieldProps)) {
-                    context.fieldPropsMap[fieldInfo] = aptFieldProps;
+                AptFieldProps? fieldProps = linkerBeanContext.FindFieldProps(fieldInfo.Name);
+                if (fieldProps != null) {
+                    context.fieldPropsMap[fieldInfo] = fieldProps;
                 }
             }
         }

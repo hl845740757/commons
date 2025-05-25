@@ -43,6 +43,7 @@ public static class AptUtils
 {
     private static readonly ClassName clsName_GeneratedAttribute = ClassName.Get("Wjybxx.Commons.Attributes", "GeneratedAttribute");
     private static readonly ClassName clsName_SourceFileRef = ClassName.Get("Wjybxx.Commons.Attributes", "SourceFileRefAttribute");
+    public const string CNAME_AttributeDataUsedForReflectionAttribute = "Wjybxx.Commons.Attributes.AttributeDataUsedForReflectionAttribute";
 
     /// <summary>
     /// 为生成代码的注解处理器创建一个通用注解
@@ -330,6 +331,15 @@ public static class AptUtils
     #region attribute-data
 
     /// <summary>
+    /// 是否包含用于反射时的注解
+    /// </summary>
+    /// <param name="attributeDataArray"></param>
+    /// <returns></returns>
+    public static bool HasUsedForReflectionAttribute(ImmutableArray<AttributeData> attributeDataArray) {
+        return GetAttribute(attributeDataArray, CNAME_AttributeDataUsedForReflectionAttribute) != null;
+    }
+
+    /// <summary>
     /// 查找指定的属性
     /// </summary>
     public static AttributeData? GetAttribute(ImmutableArray<AttributeData> attributeDataArray, INamedTypeSymbol attributeClass) {
@@ -560,8 +570,8 @@ public static class AptUtils
             case SpecialType.System_Char: return USHORT;
             case SpecialType.System_Decimal: return DECIMAL;
 
-            case SpecialType.System_String: return typeSymbol.IsNullableAnnotated() ? STRING.MakeNullableType() : STRING;
-            case SpecialType.System_Object: return typeSymbol.IsNullableAnnotated() ? OBJECT.MakeNullableType() : OBJECT;
+            case SpecialType.System_String: return typeSymbol.IsNullableAnnotated() ? NRT_STRING : STRING;
+            case SpecialType.System_Object: return typeSymbol.IsNullableAnnotated() ? NRT_OBJECT : OBJECT;
             case SpecialType.System_Void: return VOID;
 
             case SpecialType.System_ValueType: return ClassName.VALUE_TYPE;

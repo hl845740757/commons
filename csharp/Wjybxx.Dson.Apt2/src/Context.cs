@@ -82,5 +82,12 @@ internal class Context
     public Context(Type type) {
         this.type = type ?? throw new ArgumentNullException(nameof(type));
     }
+
+    public AptFieldProps? FindFieldProps(string name) {
+        foreach (var pair in fieldPropsMap) {
+            if (pair.Key.Name == name) return pair.Value;
+        }
+        return null;
+    }
 }
 }

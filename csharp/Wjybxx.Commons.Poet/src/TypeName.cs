@@ -160,6 +160,9 @@ public abstract class TypeName : IEquatable<TypeName>
     public static readonly ClassName OBJECT = new ClassName("System", "Object", "object");
     public static readonly ClassName VOID = new ClassName("System", "Void", "void");
 
+    public static readonly ClassName NRT_STRING = (ClassName)STRING.WithAttributes(TypeNameAttributes.NullableReferenceType);
+    public static readonly ClassName NRT_OBJECT = (ClassName)OBJECT.WithAttributes(TypeNameAttributes.NullableReferenceType);
+
     /// <summary>
     /// 非基础类型的关键字
     /// </summary>

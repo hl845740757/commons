@@ -73,15 +73,6 @@ internal class AptClassProps
     }
 
     /// <summary>
-    /// 获取指定的钩子方法（或属性）
-    /// </summary>
-    /// <param name="methodName"></param>
-    /// <returns></returns>
-    public ISymbol? GetHookMethod(string methodName) {
-        return codecProxyType?.GetFirstMember(methodName);
-    }
-
-    /// <summary>
     /// 解析注解
     /// </summary>
     /// <param name="attributeData"></param>

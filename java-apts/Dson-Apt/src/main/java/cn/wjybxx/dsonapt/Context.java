@@ -19,6 +19,7 @@ package cn.wjybxx.dsonapt;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.TypeSpec;
 
+import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -35,6 +36,7 @@ import java.util.Map;
 class Context {
 
     final TypeElement typeElement;
+    final Element linkerElement;
     // region cache
     List<? extends Element> allMembers; // 所有的字段和方法缓存
     List<VariableElement> allFields; // 所有的实例字段缓存
@@ -49,7 +51,8 @@ class Context {
     DeclaredType superDeclaredType;
     String outPackage; // 输出目录
 
-    public Context(TypeElement typeElement) {
+    public Context(TypeElement typeElement, @Nullable Element linkerElement) {
         this.typeElement = typeElement;
+        this.linkerElement = linkerElement;
     }
 }

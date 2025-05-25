@@ -76,12 +76,6 @@ internal class AptClassProps
             BindingFlags.Public | BindingFlags.Static).Length > 0;
     }
 
-    public MethodInfo? GetFirstMethod(string methodName) {
-        if (codecProxyType == null) return null;
-        return codecProxyType.GetMethod(methodName,
-            BindingFlags.Public | BindingFlags.Static);
-    }
-
     public static AptClassProps Parse(DsonSerializableAttribute? attribute) {
         if (attribute == null) {
             return new AptClassProps();
