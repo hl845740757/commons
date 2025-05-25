@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using Wjybxx.Commons.Collections;
-using Wjybxx.Commons.Inject.Attributes;
 
 namespace Wjybxx.Commons.Inject
 {
@@ -83,6 +82,10 @@ internal class Injector : IInjector
 
     public object? GetInstance(Type serviceType, string? name, bool optional = false) {
         if (serviceType == null) throw new ArgumentNullException(nameof(serviceType));
+        // 允许注入容器
+        if (serviceType == typeof(IInjector) && name == null) {
+            return this;
+        }
         ServiceKey key = new ServiceKey(serviceType, name);
         try {
             if (service2BeanInfoDic.TryGetValue(key, out BeanInfo beanInfo)) {

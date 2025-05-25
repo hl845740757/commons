@@ -43,7 +43,7 @@ public static class AptUtils
 {
     private static readonly ClassName clsName_GeneratedAttribute = ClassName.Get("Wjybxx.Commons.Attributes", "GeneratedAttribute");
     private static readonly ClassName clsName_SourceFileRef = ClassName.Get("Wjybxx.Commons.Attributes", "SourceFileRefAttribute");
-    public const string CNAME_AttributeDataUsedForReflectionAttribute = "Wjybxx.Commons.Attributes.AttributeDataUsedForReflectionAttribute";
+    public const string CNAME_UsedForReflectionAttribute = "Wjybxx.Commons.Attributes.UsedForReflectionBasedGeneratorAttribute";
 
     /// <summary>
     /// 为生成代码的注解处理器创建一个通用注解
@@ -336,7 +336,7 @@ public static class AptUtils
     /// <param name="attributeDataArray"></param>
     /// <returns></returns>
     public static bool HasUsedForReflectionAttribute(ImmutableArray<AttributeData> attributeDataArray) {
-        return GetAttribute(attributeDataArray, CNAME_AttributeDataUsedForReflectionAttribute) != null;
+        return GetAttribute(attributeDataArray, CNAME_UsedForReflectionAttribute) != null;
     }
 
     /// <summary>

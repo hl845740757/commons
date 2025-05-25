@@ -381,14 +381,9 @@ public class CodecProcessor
         CheckConstructor(targetType, aptClassProps);
 
         List<MemberInfo> allMembers = context.allMembers;
-        List<MemberInfo> instMethodWithInherit = allMembers
-            .Where(e => (e.MemberType & MemberTypes.Method) != 0 || (e.MemberType & MemberTypes.Property) != 0)
-            .Where(e => !AptUtils.IsStaticMember(e))
-            .ToList();
-
         foreach (AptFieldInfo fieldInfo in context.allFields) {
             AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
-            if (!IsSerializableField(fieldInfo, instMethodWithInherit, aptFieldProps!)) {
+            if (!IsSerializableField(fieldInfo, aptFieldProps!)) {
                 continue;
             }
             context.serialFields.Add(fieldInfo);
@@ -536,7 +531,7 @@ public class CodecProcessor
      * 1.默认只序列化 public 字段
      * 2.默认忽略 <see cref="NonSerializedAttribute"/> 字段
      */
-    internal bool IsSerializableField(AptFieldInfo fieldInfo, List<MemberInfo> allMethodWithInherit, AptFieldProps aptFieldProps) {
+    internal bool IsSerializableField(AptFieldInfo fieldInfo, AptFieldProps aptFieldProps) {
         if (fieldInfo.IsStatic) return false;
         // 有注解的情况取决于注解的值，需取反 -- 注解已提前解析
         if (aptFieldProps.ignore.HasValue) {

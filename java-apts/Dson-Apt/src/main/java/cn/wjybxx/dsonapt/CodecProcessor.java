@@ -431,10 +431,6 @@ public class CodecProcessor extends MyAbstractProcessor {
         checkConstructor(typeElement, aptClassProps);
 
         final List<? extends Element> allMembers = context.allMembers;
-        final List<? extends Element> instMethodList = context.allMembers.stream()
-                .filter(e -> e.getKind() == ElementKind.METHOD && !e.getModifiers().contains(Modifier.STATIC))
-                .toList();
-
         for (AptFieldInfo fieldInfo : context.allFields) {
             final AptFieldProps aptFieldProps = context.fieldPropsMap.get(fieldInfo);
             if (!isSerializableField(fieldInfo, aptFieldProps)) {

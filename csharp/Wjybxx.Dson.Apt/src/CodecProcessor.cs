@@ -531,11 +531,6 @@ public class CodecProcessor : ISourceGenerator
         CheckThirdPartyAssembly(targetType, context.linkerSymbol);
 
         List<ISymbol> allMembers = context.allMembers;
-        List<ISymbol> instMethodWithInherit = allMembers
-            .Where(e => e.Kind == SymbolKind.Method || e.Kind == SymbolKind.Property)
-            .Where(e => !e.IsStatic)
-            .ToList();
-
         foreach (AptFieldInfo fieldInfo in context.allFields) {
             AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
             if (!IsSerializableField(fieldInfo, aptFieldProps!)) {

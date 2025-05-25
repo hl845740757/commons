@@ -54,3 +54,4 @@ temp-*
 
 # C#生成文件
 csharp/*/Generated
+unity/UserSettings/

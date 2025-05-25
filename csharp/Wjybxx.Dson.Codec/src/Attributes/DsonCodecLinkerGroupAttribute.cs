@@ -27,7 +27,7 @@ namespace Wjybxx.Dson.Codec.Attributes
 ///
 /// 1.每一个字段表示一个需要序列化的类型。
 /// 2.需要为目标类型定义特殊属性时，可使用<see cref="DsonCodecLinkerAttribute"/>注解。
-/// 3.如果通过反射为第三方程序集生成代码，可通过<see cref="AttributeDataUsedForReflectionAttribute"/>告知APT在编译时忽略。
+/// 3.如果通过反射为第三方程序集生成代码，可通过<see cref="UsedForReflectionBasedGeneratorAttribute"/>告知APT在编译时忽略。
 /// </summary>
 [AttributeUsage(AttributeTargets.Class)]
 [Serializable]

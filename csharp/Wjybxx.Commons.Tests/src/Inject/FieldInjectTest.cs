@@ -37,6 +37,7 @@ public class FieldInjectTest
         Assert.NotNull(logicModule.service1);
         Assert.NotNull(logicModule.service2);
         Assert.IsNull(logicModule.service3);
+        Assert.AreSame(injector, logicModule.injector);
 
         Assert.NotNull(logicModule.Props1);
         Assert.NotNull(logicModule.Props2);
@@ -72,6 +73,9 @@ public class FieldInjectTest
 
         [Inject(true)]
         public IService3? service3;
+
+        [Inject]
+        public IInjector injector; // 注入容器
 
         [Inject] public IService1 Props1 { get; private set; }
 

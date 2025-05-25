@@ -24,9 +24,9 @@ namespace Wjybxx.Commons.Attributes
 /// 该注解用于标记注解数据用于反射时，在编译时需要被忽略。
 /// </summary>
 [AttributeUsage(AttributeTargets.All)]
-public sealed class AttributeDataUsedForReflectionAttribute : Attribute
+public sealed class UsedForReflectionBasedGeneratorAttribute : Attribute
 {
-    public AttributeDataUsedForReflectionAttribute() {
+    public UsedForReflectionBasedGeneratorAttribute() {
     }
 }
 }
