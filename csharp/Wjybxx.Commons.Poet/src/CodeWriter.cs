@@ -358,8 +358,14 @@ public sealed class CodeWriter
     /// </summary>
     /// <param name="macroSpec"></param>
     private void EmitMacro(MacroSpec macroSpec) {
+        // 要求必须是行首...
+        EmitIfLastCharNot('\n');
         // 宏不能换行
-        Emit("#$L $L", macroSpec.name, string.Join(" ", macroSpec.arguments));
+        if (macroSpec.arguments.Count == 0) {
+            Emit("#$L", macroSpec.name);
+        } else {
+            Emit("#$L $L", macroSpec.name, string.Join(" ", macroSpec.arguments));
+        }
         Emit("\n");
     }
 

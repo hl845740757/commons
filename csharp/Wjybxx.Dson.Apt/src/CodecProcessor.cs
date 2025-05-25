@@ -195,6 +195,10 @@ public class CodecProcessor : ISourceGenerator
     }
 
     public void Execute(GeneratorExecutionContext context) {
+        // 在Unity下可能会处理其它程序集的文件...
+        if (context.Compilation.GetTypeByMetadataName(CNAME_SERIALIZABLE) == null) {
+            return;
+        }
         EnsureInited(context, context.Compilation);
         if (context.SyntaxReceiver is not OptionsSyntaxReceiver optionsSyntaxReceiver) {
             return;
@@ -558,7 +562,7 @@ public class CodecProcessor : ISourceGenerator
             && !fieldInfo.HasPublicSetter) {
             // 由于可能是超类的字段，symbol可能为null，所以格式化文本中追加字段名
             ReportDiagnostic(DiagnosticSeverity.Error, fieldInfo.fieldSymbol, 1001,
-                "auto read field {0} must be public or contains a public getter",
+                "auto read field {0} must be public or contains a public setter",
                 fieldInfo.Name);
         }
     }
@@ -574,7 +578,7 @@ public class CodecProcessor : ISourceGenerator
             && !fieldInfo.HasPublicGetter) {
             // 由于可能是超类的字段，symbol可能为null，所以格式化文本中追加字段名
             ReportDiagnostic(DiagnosticSeverity.Error, fieldInfo.fieldSymbol, 1002,
-                "auto write field {0} must be public or contains a public setter",
+                "auto write field {0} must be public or contains a public getter",
                 fieldInfo.Name);
         }
     }
@@ -601,6 +605,10 @@ public class CodecProcessor : ISourceGenerator
     private void CheckThirdPartyAssembly(INamedTypeSymbol typeSymbol, ISymbol? linkerSymbol) {
         string assemblyName = GetThirdPartyAssemblyName(typeSymbol, out INamedTypeSymbol thirdPartyType);
         if (assemblyName == null) {
+            return;
+        }
+        // 其实可以测试一下是否是系统库，但在Unity下可能兼容性不够好
+        if (thirdPartyType!.SpecialType != SpecialType.None) {
             return;
         }
         string typePath = $"{AptUtils.GetFullMetadataName(thirdPartyType!)}, {assemblyName}";
