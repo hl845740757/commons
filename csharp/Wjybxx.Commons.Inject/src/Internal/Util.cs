@@ -39,33 +39,38 @@ internal static class Util
     /// <param name="type"></param>
     /// <returns></returns>
     public static MethodInfo? FindOnActiveMethod(Type type) {
-        // 当方法被重写时，应当调用子类的方法，因此从子类查起
+        return FindAnnotatedMethod(type, typeof(InjectOnCreateAttribute));
+    }
+
+    /// <summary>
+    /// 查找对象销毁钩子方法
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    public static MethodInfo? FindOnDisposeMethod(Type type) {
+        return FindAnnotatedMethod(type, typeof(InjectOnDisposeAttribute));
+    }
+
+    /// <summary>
+    /// 查找具有特定注解的钩子方法
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="attributeType"></param>
+    /// <returns></returns>
+    private static MethodInfo? FindAnnotatedMethod(Type type, Type attributeType) {
+        const BindingFlags bindFlags = BindingFlags.DeclaredOnly
+                                       | BindingFlags.Public | BindingFlags.NonPublic
+                                       | BindingFlags.Instance;
+        // 子类方法优先
         List<Type> types = FlatInherit(type, reverse: false);
         foreach (Type curType in types) {
-            MethodInfo methodInfo = curType.GetMethods(BindingFlags.DeclaredOnly
-                                                       | BindingFlags.Public | BindingFlags.NonPublic
-                                                       | BindingFlags.Instance)
-                .FirstOrDefault(e => e.IsDefined(typeof(InjectOnCreateAttribute)));
+            MethodInfo methodInfo = curType.GetMethods(bindFlags)
+                .FirstOrDefault(e => e.IsDefined(attributeType));
             if (methodInfo != null) {
                 return methodInfo;
             }
         }
         return null;
-    }
-
-    /// <summary>
-    /// 查找构造器注入点
-    /// </summary>
-    /// <param name="injectionPoints"></param>
-    /// <returns></returns>
-    public static InjectionPoint? FindConstructor(ImmutableList<InjectionPoint> injectionPoints) {
-        if (injectionPoints.Count == 0) {
-            return null;
-        }
-        InjectionPoint injectionPoint = injectionPoints[0];
-        return injectionPoint.memberInfo.MemberType == MemberTypes.Constructor
-            ? injectionPoint
-            : null;
     }
 
     /// <summary>
@@ -80,62 +85,73 @@ internal static class Util
             throw new ArgumentException($"{entryType} is not constructedGenericType");
         }
         List<InjectionPoint> result = new List<InjectionPoint>();
-
         // 构造函数只查询当前类，且只查询第一个
         ConstructorInfo? constructorInfo = entryType
             .GetConstructors()
             .FirstOrDefault(e => e.IsDefined(typeof(InjectAttribute)));
         if (constructorInfo != null) {
-            ParameterInfo[] parameterInfos = constructorInfo.GetParameters();
-            List<Dependency> dependencies = new List<Dependency>(parameterInfos.Length);
-            for (int i = 0; i < parameterInfos.Length; i++) {
-                Dependency dependency = ParseDependency(parameterInfos[i], i);
-                dependencies.Add(dependency);
-            }
-            result.Add(new InjectionPoint(constructorInfo, dependencies));
+            result.Add(CreateInjectPoint(constructorInfo));
         }
-        // 从root开始，自上而下查找属性和字段 -- 不支持静态注入
+        // 字段、属性、方法，从基类开始注入
         List<Type> types = FlatInherit(entryType, reverse: true);
         foreach (Type curType in types) {
             MemberInfo[] memberInfos = curType.GetMembers(BindingFlags.DeclaredOnly
                                                           | BindingFlags.Public | BindingFlags.NonPublic
                                                           | BindingFlags.Instance);
             foreach (MemberInfo memberInfo in memberInfos) {
-                if (memberInfo.MemberType != MemberTypes.Field && memberInfo.MemberType != MemberTypes.Property) {
+                if (!memberInfo.IsDefined(typeof(InjectAttribute))
+                    || memberInfo.MemberType == MemberTypes.Constructor) {
                     continue; // 可能有构造函数
                 }
-                if (!memberInfo.IsDefined(typeof(InjectAttribute))) {
-                    continue; // 不包含注解
-                }
                 if (memberInfo is PropertyInfo propertyInfo && propertyInfo.SetMethod == null) {
-                    continue; // 其实用户没定义set方法时，反射是可以拿到字段进行注入的，但没必要
+                    continue; // 忽略没有Set方法的属性 -- 可以在编译时加警告...
                 }
-                Dependency dependency = ParseDependency(memberInfo);
-                result.Add(new InjectionPoint(memberInfo, dependency));
+                result.Add(CreateInjectPoint(memberInfo));
             }
         }
         return result.ToImmutableList2();
     }
 
-    /// <summary>
-    /// 解析字段和属性的依赖
-    /// </summary>
-    /// <param name="memberInfo"></param>
-    /// <returns></returns>
-    public static Dependency ParseDependency(MemberInfo memberInfo) {
-        ImmutableList<InjectAttribute> injectAttributes = memberInfo.GetCustomAttributes<InjectAttribute>().ToImmutableList2();
-        return new Dependency(GetFieldType(memberInfo), injectAttributes, -1);
+    private static InjectionPoint CreateInjectPoint(MemberInfo memberInfo) {
+        switch (memberInfo.MemberType) {
+            case MemberTypes.Field: {
+                FieldInfo fieldInfo = (FieldInfo)memberInfo;
+                return new InjectionPoint(memberInfo, ParseDependency(memberInfo, fieldInfo.FieldType));
+            }
+            case MemberTypes.Property: {
+                PropertyInfo fieldInfo = (PropertyInfo)memberInfo;
+                return new InjectionPoint(memberInfo, ParseDependency(memberInfo, fieldInfo.PropertyType));
+            }
+            case MemberTypes.Constructor:
+            case MemberTypes.Method: {
+                MethodBase methodBase = (MethodBase)memberInfo;
+                return new InjectionPoint(memberInfo, ParseDependencies(methodBase.GetParameters()));
+            }
+            default: throw new InvalidOperationException();
+        }
     }
 
     /// <summary>
-    /// 解析方法参数的依赖
+    /// 解析字段和属性的依赖
     /// </summary>
-    /// <param name="parameterInfo"></param>
-    /// <param name="index"></param>
-    /// <returns></returns>
-    public static Dependency ParseDependency(ParameterInfo parameterInfo, int index) {
-        ImmutableList<InjectAttribute> injectAttributes = parameterInfo.GetCustomAttributes<InjectAttribute>().ToImmutableList2();
-        return new Dependency(parameterInfo.ParameterType, injectAttributes, index);
+    private static Dependency ParseDependency(MemberInfo memberInfo, Type fieldType) {
+        ImmutableList<InjectAttribute> injectAttributes = memberInfo.GetCustomAttributes<InjectAttribute>().ToImmutableList2();
+        return new Dependency(fieldType, GetServiceType(fieldType), injectAttributes, -1);
+    }
+
+    /// <summary>
+    /// 解析方法的依赖
+    /// </summary>·
+    private static List<Dependency> ParseDependencies(ParameterInfo[] parameterInfos) {
+        List<Dependency> dependencies = new List<Dependency>(parameterInfos.Length);
+        for (int index = 0; index < parameterInfos.Length; index++) {
+            ParameterInfo parameterInfo = parameterInfos[index];
+            Type fieldType = parameterInfo.ParameterType;
+
+            ImmutableList<InjectAttribute> injectAttributes = parameterInfo.GetCustomAttributes<InjectAttribute>().ToImmutableList2();
+            dependencies.Add(new Dependency(fieldType, GetServiceType(fieldType), injectAttributes, index));
+        }
+        return dependencies;
     }
 
     /// <summary>
@@ -149,13 +165,11 @@ internal static class Util
         Type typeOfObject = typeof(object);
 
         List<Type> result = new List<Type>();
-        while (true) {
+        do {
             result.Add(type);
             type = type.BaseType;
-            if (type == null || type == typeOfObject) {
-                break;
-            }
-        }
+        } while (type != null && type != typeOfObject);
+
         if (reverse) {
             result.Reverse();
         }
@@ -164,6 +178,33 @@ internal static class Util
 
     #endregion
 
+    /// <summary>
+    /// 是否是List类型
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsList(Type type) {
+        if (type.IsGenericType) {
+            type = type.GetGenericTypeDefinition();
+        }
+        return type == typeof(IList<>) ||
+               type.GetInterface(typeof(IList<>).FullName!) != null;
+    }
+
+    /// <summary>
+    /// 是否是字典类型
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsDictionary(Type type) {
+        if (type.IsGenericType) {
+            type = type.GetGenericTypeDefinition();
+        }
+        return type == typeof(IDictionary<,>)
+               || type.GetInterface(typeof(IDictionary<,>).FullName!) != null;
+    }
 
     /// <summary>
     /// 获取List和字典的Add方法
@@ -182,44 +223,6 @@ internal static class Util
     }
 
     /// <summary>
-    /// 是否是List类型
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsList(Type type) {
-        return type.GetInterface(typeof(IList<>).FullName!) != null;
-    }
-
-    /// <summary>
-    /// 是否是字典类型
-    /// </summary>
-    /// <param name="type"></param>
-    /// <returns></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsDictionary(Type type) {
-        return type.GetInterface(typeof(IDictionary<,>).FullName!) != null;
-    }
-
-    /// <summary>
-    /// 获取关联字段的类型
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Type GetFieldType(MemberInfo memberInfo) {
-        switch (memberInfo.MemberType) {
-            case MemberTypes.Field: {
-                FieldInfo fieldInfo = (FieldInfo)memberInfo;
-                return fieldInfo.FieldType;
-            }
-            case MemberTypes.Property: {
-                PropertyInfo propertyInfo = (PropertyInfo)memberInfo;
-                return propertyInfo.PropertyType;
-            }
-            default: throw new AssertionError();
-        }
-    }
-
-    /// <summary>
     /// 根据字段的声明类型，获取字段依赖的服务类型
     /// </summary>
     /// <returns></returns>
@@ -235,6 +238,16 @@ internal static class Util
             return fieldType.GetGenericArguments()[1];
         }
         return fieldType;
+    }
+
+    /// <summary>
+    /// 转换为不可变List
+    /// </summary>
+    /// <param name="list"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static ImmutableList<T> ToImmutableList<T>(IList<T>? list) {
+        return list == null ? ImmutableList<T>.Empty : ImmutableList<T>.CreateRange(list);
     }
 }
 }

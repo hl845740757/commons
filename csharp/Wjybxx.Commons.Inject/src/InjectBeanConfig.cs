@@ -57,6 +57,11 @@ public sealed class InjectBeanConfig : IEquatable<InjectBeanConfig>
     /// </summary>
     public readonly InjectScope scope;
     /// <summary>
+    /// 绑定的服务信息
+    /// </summary>
+    public readonly ImmutableList<ServiceKey> serviceKeys;
+
+    /// <summary>
     /// 绑定的实例，单例有效
     ///
     /// 如果提前指定了实例，则不需要框架层进行注入；如果仅仅是指定工厂，我们也进行字段和属性注入
@@ -77,10 +82,6 @@ public sealed class InjectBeanConfig : IEquatable<InjectBeanConfig>
     /// 2.委托必须是无状态的，直接根据服务的泛型参数构建实现类 -- 以允许并发调用
     /// </summary>
     public readonly Func<Type, Type>? implTypeMaker;
-    /// <summary>
-    /// 绑定的服务信息
-    /// </summary>
-    public readonly ImmutableList<ServiceKey> serviceKeys;
 
     /// <summary>
     /// 
@@ -88,17 +89,13 @@ public sealed class InjectBeanConfig : IEquatable<InjectBeanConfig>
     /// <param name="builder"></param>
     internal InjectBeanConfig(in InjectBeanConfigBuilder builder) {
         this.configId = Interlocked.Increment(ref sequencer);
-        this.implType = builder.implType ?? throw new ArgumentException("invalid builder");
+        this.implType = builder.implType;
         this.scope = builder.scope;
+        this.serviceKeys = Util.ToImmutableList(builder.serviceKeys);
+
         this.instance = builder.instance;
         this.factory = builder.factory;
         this.implTypeMaker = builder.implTypeMaker;
-
-        if (CollectionUtil.IsNullOrEmpty(builder.serviceKeys)) {
-            this.serviceKeys = ImmutableList<ServiceKey>.Empty;
-        } else {
-            this.serviceKeys = builder.serviceKeys.ToImmutableList2();
-        }
     }
 
     #region equals

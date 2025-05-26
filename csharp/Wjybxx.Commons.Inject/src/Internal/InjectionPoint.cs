@@ -29,11 +29,13 @@ internal sealed class InjectionPoint
 {
     /// <summary>
     /// 成员
-    /// <see cref="FieldInfo"/><see cref="PropertyInfo"/><see cref="ConstructorInfo"/>
+    /// <see cref="FieldInfo"/><see cref="PropertyInfo"/>
+    /// <see cref="ConstructorInfo"/><see cref="MethodInfo"/>
     /// </summary>
     public readonly MemberInfo memberInfo;
     /// <summary>
     /// 成员的依赖
+    /// 构造函数和普通方法可能有多个依赖
     /// </summary>
     public readonly ImmutableList<Dependency> dependencies;
 
@@ -44,9 +46,9 @@ internal sealed class InjectionPoint
         dependency.injectionPoint = this;
     }
 
-    public InjectionPoint(MemberInfo memberInfo, IEnumerable<Dependency> dependencies) {
+    public InjectionPoint(MemberInfo memberInfo, List<Dependency> dependencies) {
         this.memberInfo = memberInfo;
-        this.dependencies = dependencies.ToImmutableList2();
+        this.dependencies = ImmutableList<Dependency>.CreateRange(dependencies);
         // 双向绑定
         foreach (Dependency dependency in this.dependencies) {
             dependency.injectionPoint = this;

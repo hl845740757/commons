@@ -50,6 +50,11 @@ internal class Injector : IInjector
     /// 注意：多个Service可能映射到同一个<see cref="BeanInfo"/>
     /// </summary>
     private readonly ConcurrentDictionary<ServiceKey, BeanInfo> service2BeanInfoDic = new();
+    /// <summary>
+    /// 注入的类型缓存
+    /// (理论上这个数据是可以全局缓存的)
+    /// </summary>
+    private readonly ConcurrentDictionary<Type, InjectionType> injectionTypeDic = new();
 
     public Injector(Injector? parent, Dictionary<ServiceKey, InjectBeanConfig> configDic) {
         this.parent = parent;
@@ -62,7 +67,10 @@ internal class Injector : IInjector
             if (config.implType.IsGenericTypeDefinition) {
                 continue;
             }
-            BeanInfo beanInfo = new BeanInfo(config, config.implType, config.instance);
+            InjectionType injectionType = new InjectionType(config.implType);
+            injectionTypeDic.TryAdd(config.implType, injectionType);
+
+            BeanInfo beanInfo = new BeanInfo(config, config.implType, config.instance, injectionType);
             BeanInfoKey beanInfoKey = new BeanInfoKey(config.configId, config.implType);
             beanInfoDic.TryAdd(beanInfoKey, beanInfo);
         }
@@ -126,12 +134,22 @@ internal class Injector : IInjector
         return parent.GetInstance(serviceType, name, optional);
     }
 
+    public void InjectMembers(object instance) {
+        if (instance == null) throw new ArgumentNullException(nameof(instance));
+        InjectionType injectionType = GetOrCreateInjectionType(instance.GetType());
+        InjectMembers(instance, injectionType);
+    }
+
     public IInjector CreateChild(IEnumerable<IInjectModule> modules) {
         Binder binder = new Binder(this);
         foreach (IInjectModule module in modules) {
             module.Configure(binder);
         }
         return binder.Build();
+    }
+
+    public void Dispose() {
+        // 暂不实现
     }
 
     #region internal
@@ -154,6 +172,19 @@ internal class Injector : IInjector
     }
 
     /// <summary>
+    /// 动态创建<see cref="InjectionType"/>
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    private InjectionType GetOrCreateInjectionType(Type type) {
+        if (!injectionTypeDic.TryGetValue(type, out InjectionType r)) {
+            r = new InjectionType(type);
+            injectionTypeDic.TryAdd(type, r);
+        }
+        return r;
+    }
+
+    /// <summary>
     /// 动态创建泛型的BeanInfo
     /// </summary>
     private BeanInfo GetOrCreateBeanInfo(Type implType, InjectBeanConfig config) {
@@ -161,12 +192,12 @@ internal class Injector : IInjector
         if (beanInfoDic.TryGetValue(key, out BeanInfo beanInfo)) {
             return beanInfo;
         }
-        beanInfo = new BeanInfo(config, implType, null);
+        InjectionType injectionType = GetOrCreateInjectionType(implType);
+        beanInfo = new BeanInfo(config, implType, null, injectionType);
         if (!beanInfoDic.TryAdd(key, beanInfo)) {
             beanInfoDic.TryGetValue(key, out beanInfo); // 不可覆盖既有实例
-            Debug.Assert(beanInfo != null);
         }
-        return beanInfo;
+        return beanInfo!;
     }
 
     /// <summary>
@@ -194,13 +225,11 @@ internal class Injector : IInjector
                 }
                 // 在注入属性前需要先发布出去，因为可能存在延时的循环依赖
                 beanInfo.instance = r;
-                InjectMembers(r, beanInfo);
-                beanInfo.onCreateHook?.Invoke(r, Array.Empty<object>());
+                InjectMembers(r, beanInfo.injectionType);
             }
         } else {
             r = CreateInstance(serviceType, beanInfo);
-            InjectMembers(r, beanInfo);
-            beanInfo.onCreateHook?.Invoke(r, Array.Empty<object>());
+            InjectMembers(r, beanInfo.injectionType);
         }
         return r;
     }
@@ -208,20 +237,38 @@ internal class Injector : IInjector
     /// <summary>
     /// 为instance注入字段和属性
     /// </summary>
-    private void InjectMembers(object instance, BeanInfo beanInfo) {
-        foreach (InjectionPoint injectionPoint in beanInfo.injectionPoints) {
+    private void InjectMembers(object instance, InjectionType injectionType) {
+        foreach (InjectionPoint injectionPoint in injectionType.injectionPoints) {
             MemberInfo memberInfo = injectionPoint.memberInfo;
-            if (memberInfo.MemberType == MemberTypes.Field) {
-                FieldInfo fieldInfo = (FieldInfo)memberInfo;
-                object dependencyInst = ResolverDependency(injectionPoint.dependencies[0]);
-                fieldInfo.SetValue(instance, dependencyInst);
-            } else if (memberInfo.MemberType == MemberTypes.Property) {
-                PropertyInfo propertyInfo = (PropertyInfo)memberInfo;
-                object dependencyInst = ResolverDependency(injectionPoint.dependencies[0]);
-                propertyInfo.SetValue(instance, dependencyInst);
-            } else {
-                Debug.Assert(memberInfo.MemberType == MemberTypes.Constructor);
+            switch (memberInfo.MemberType) {
+                case MemberTypes.Field: {
+                    FieldInfo fieldInfo = (FieldInfo)memberInfo;
+                    object dependencyInst = ResolverDependency(injectionPoint.dependencies[0]);
+                    fieldInfo.SetValue(instance, dependencyInst);
+                    break;
+                }
+                case MemberTypes.Property: {
+                    PropertyInfo propertyInfo = (PropertyInfo)memberInfo;
+                    object dependencyInst = ResolverDependency(injectionPoint.dependencies[0]);
+                    propertyInfo.SetValue(instance, dependencyInst);
+                    break;
+                }
+                case MemberTypes.Method: {
+                    MethodInfo methodInfo = (MethodInfo)injectionPoint.memberInfo;
+                    object[] parameters = new object[injectionPoint.dependencies.Count];
+                    foreach (Dependency dependency in injectionPoint.dependencies) {
+                        parameters[dependency.parameterIndex] = ResolverDependency(dependency);
+                    }
+                    methodInfo.Invoke(instance, parameters);
+                    break;
+                }
+                default:
+                    Debug.Assert(memberInfo.MemberType == MemberTypes.Constructor);
+                    break;
             }
+        }
+        if (injectionType.onCreateHook != null) {
+            injectionType.onCreateHook.Invoke(instance, Array.Empty<object>());
         }
     }
 
@@ -234,7 +281,7 @@ internal class Injector : IInjector
             if (factory != null) {
                 return factory(serviceType, beanInfo.implType);
             }
-            InjectionPoint constructorPoint = Util.FindConstructor(beanInfo.injectionPoints);
+            InjectionPoint constructorPoint = beanInfo.injectionType.ConstructorInjectionPoint;
             if (constructorPoint == null) {
                 return Activator.CreateInstance(beanInfo.implType) ?? throw new InjectionException("Activator.CreateInstance failed");
             }

@@ -66,9 +66,10 @@ internal sealed class Dependency
     /// </summary>
     public readonly MethodInfo? addMethod;
 
-    public Dependency(Type fieldType, ImmutableList<InjectAttribute> injectAttributes, int parameterIndex) {
+    public Dependency(Type fieldType, Type serviceType,
+                      ImmutableList<InjectAttribute> injectAttributes, int parameterIndex) {
         this.fieldType = fieldType ?? throw new ArgumentNullException(nameof(fieldType));
-        this.serviceType = Util.GetServiceType(fieldType);
+        this.serviceType = serviceType;
         this.injectAttributes = injectAttributes;
         this.parameterIndex = parameterIndex;
 

@@ -38,9 +38,12 @@ namespace Wjybxx.Commons.Inject.Attributes
 /// [Inject("json")]
 /// SerializeMgr serializeMgr;
 /// </code>
+///
+/// <h3>普通方法注入</h3>
+/// 相比通过多个属性的方式注入依赖，通过方法可以一次性注入多个依赖，可以支持用户在方法中检查约束
 /// </summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Parameter
-                | AttributeTargets.Constructor, AllowMultiple = true)]
+                | AttributeTargets.Constructor | AttributeTargets.Method, AllowMultiple = true)]
 public sealed class InjectAttribute : Attribute
 {
     /// <summary>

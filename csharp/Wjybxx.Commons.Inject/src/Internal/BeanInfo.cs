@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.Reflection;
 using Wjybxx.Commons.Collections;
 
@@ -49,33 +50,22 @@ internal sealed class BeanInfo
     public volatile object? instance;
     /// <summary>
     /// 当前正在创建的服务类型
+    /// (用于检测构造时的循环依赖)
     /// </summary>
     public Type? creatingServiceType;
 
     /// <summary>
-    /// 实现类的注入点
+    /// 关联的注入类型信息
     /// </summary>
-    public readonly ImmutableList<InjectionPoint> injectionPoints;
-    /// <summary>
-    /// 实体被创建后的钩子方法
-    /// </summary>
-    public readonly MethodInfo? onCreateHook;
+    public readonly InjectionType injectionType;
 
-    public BeanInfo(InjectBeanConfig config, Type implType, object? instance) {
-        if (implType.IsGenericTypeDefinition) {
-            throw new ArgumentException("implType.IsGenericTypeDefinition");
-        }
+    public BeanInfo(InjectBeanConfig config, Type implType, object? instance,
+                    InjectionType injectionType) {
+        Debug.Assert(implType == injectionType.type);
         this.config = config;
         this.implType = implType;
         this.instance = instance;
-
-        if (instance != null) {
-            this.injectionPoints = ImmutableList<InjectionPoint>.Empty;
-            this.onCreateHook = null;
-        } else {
-            this.injectionPoints = Util.GetInjectPoints(implType);
-            this.onCreateHook = Util.FindOnActiveMethod(implType);
-        }
+        this.injectionType = injectionType;
     }
 }
 }

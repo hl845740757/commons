@@ -39,6 +39,11 @@ public struct InjectBeanConfigBuilder
     /// </summary>
     public InjectScope scope;
     /// <summary>
+    /// 绑定的服务信息
+    /// </summary>
+    public List<ServiceKey>? serviceKeys;
+
+    /// <summary>
     /// 绑定的实例，单例有效
     /// </summary>
     public object? instance;
@@ -53,10 +58,6 @@ public struct InjectBeanConfigBuilder
     /// 用于解决服务类的泛型参数不能直接转移到实现类的情况
     /// </summary>
     public Func<Type, Type>? implTypeMaker;
-    /// <summary>
-    /// 绑定的服务信息
-    /// </summary>
-    public List<ServiceKey>? serviceKeys;
 
     public InjectBeanConfigBuilder(Type implType) : this() {
         this.implType = implType ?? throw new ArgumentNullException(nameof(implType));

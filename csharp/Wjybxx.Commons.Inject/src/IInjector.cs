@@ -35,7 +35,7 @@ namespace Wjybxx.Commons.Inject
 /// 默认实现通过<see cref="InjectorExtensions"/>创建
 /// </summary>
 [ThreadSafe]
-public interface IInjector
+public interface IInjector : IDisposable
 {
     /// <summary>
     /// 获取指定实例
@@ -46,6 +46,13 @@ public interface IInjector
     /// <exception cref="InjectionException">如果获取实例出现错误</exception>
     /// <returns></returns>
     object? GetInstance(Type serviceType, string? name, bool optional = false);
+
+    /// <summary>
+    /// 注入给定实例上的依赖
+    /// (用于为容器管理外的对象注入依赖，如传统的单例对象，临时构建的对象)
+    /// </summary>
+    /// <param name="instance">需要解析依赖的实例</param>
+    void InjectMembers(object instance);
 
     /// <summary>
     /// 创建子注射器
