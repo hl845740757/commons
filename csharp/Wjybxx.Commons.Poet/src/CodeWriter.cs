@@ -46,7 +46,7 @@ public sealed class CodeWriter
     private bool document = false;
     /** 当前是否正在写入注释 -- 双斜杠 */
     private bool comment = false;
-    /** 当前是否处于新行 */
+    /** 是否必须以新行结束 */
     private bool trailingNewline = false;
 
     /** 缩进等级 */
@@ -358,8 +358,10 @@ public sealed class CodeWriter
     /// </summary>
     /// <param name="macroSpec"></param>
     private void EmitMacro(MacroSpec macroSpec) {
-        // 要求必须是行首...
-        EmitIfLastCharNot('\n');
+        // 要求必须是行首，但一行不应该换行...
+        if (!codeOut.IsBlankLine) {
+            Emit("\n");
+        }
         // 宏不能换行
         if (macroSpec.arguments.Count == 0) {
             Emit("#$L", macroSpec.name);

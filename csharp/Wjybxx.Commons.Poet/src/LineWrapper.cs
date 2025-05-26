@@ -27,7 +27,7 @@ namespace Wjybxx.Commons.Poet
 internal class LineWrapper
 {
     /// <summary>
-    /// Reset不自动重置，由外部充值
+    /// Reset不自动重置，由外部重置
     /// </summary>
     public readonly StringBuilder codeOut;
     /// <summary>
@@ -73,6 +73,19 @@ internal class LineWrapper
     /// 最后一个写入的字符串
     /// </summary>
     public char LastChar => codeOut.Length == 0 ? (char)0 : codeOut[codeOut.Length - 1];
+
+    /// <summary>
+    /// 当前是否是空白行
+    /// </summary>
+    /// <returns></returns>
+    public bool IsBlankLine {
+        get {
+            for (int i = 0; i < codeOut.Length; i++) {
+                if (!char.IsWhiteSpace(codeOut[i])) return false;
+            }
+            return true;
+        }
+    }
 
     /// <summary>
     /// 追加文本内容
