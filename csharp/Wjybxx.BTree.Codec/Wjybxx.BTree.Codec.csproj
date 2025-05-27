@@ -28,7 +28,7 @@
         <EmbedAllSources>true</EmbedAllSources>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <TargetFrameworks>net6.0;net8.0;</TargetFrameworks>
-        <!-- 指定生成文件目录，这样我们才可以拷贝unity；编译时需要排除生成文件目录.... -->
+        
         <!-- 想避免其它程序集的文件生成到该目录下，可以关闭其它程序集的Emit -->
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
         <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>

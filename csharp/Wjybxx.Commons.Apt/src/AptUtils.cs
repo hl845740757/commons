@@ -20,6 +20,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -451,7 +452,15 @@ public static class AptUtils
     /// <param name="target"></param>
     /// <returns></returns>
     public static bool IsSameType(this ITypeSymbol self, ITypeSymbol target) {
-        return self.Equals(target, SymbolEqualityComparer.Default);
+        // 启动debugger时，明明是同一个类型但Equals会返回false，不知道底层到底产生了什么差别，临时修补
+        //
+        // parameters[0] GetType: Microsoft.CodeAnalysis.CSharp.Symbols.PublicModel.NonErrorNamedTypeSymbol, OriginDef: Wjybxx.BigCat.Fx.RpcContext<T>, Underlay: Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE.PENamedTypeSymbol+PENamedTypeSymbolGeneric, Display: Wjybxx.BigCat.Fx.RpcContext<T>
+        // type_Context GetType: Microsoft.CodeAnalysis.CSharp.Symbols.PublicModel.NonErrorNamedTypeSymbol, OriginDef: Wjybxx.BigCat.Fx.RpcContext<T>, Underlay: Microsoft.CodeAnalysis.CSharp.Symbols.Metadata.PE.PENamedTypeSymbol+PENamedTypeSymbolGeneric, Display: Wjybxx.BigCat.Fx.RpcContext<T>
+        //
+        // RefEquals: False
+        // Equals: False
+        return self.ToDisplayString() == target.ToDisplayString();
+        // return self.Equals(target, SymbolEqualityComparer.Default);
     }
 
     /// <summary>
@@ -461,29 +470,49 @@ public static class AptUtils
     /// <param name="target"></param>
     /// <returns></returns>
     public static bool IsSubTypeOf(this ITypeSymbol self, ITypeSymbol target) {
-        SymbolEqualityComparer comparer = SymbolEqualityComparer.Default;
-        if (self.Equals(target, comparer)) {
+        string targetDisplay = target.ToDisplayString();
+        if (self.ToDisplayString() == targetDisplay) {
             return true;
         }
-        // 结构体也可以实现接口
         if (target.TypeKind == TypeKind.Interface) {
             foreach (INamedTypeSymbol baseType in self.AllInterfaces) {
-                if (baseType.Equals(target, comparer)) return true;
+                if (baseType.ToDisplayString() == targetDisplay) return true;
             }
             return false;
         }
         if (target.TypeKind != TypeKind.Class) {
             return false;
         }
-        // 现在目标类型只能是class
         {
             INamedTypeSymbol baseType = self.BaseType;
             while (baseType != null) {
-                if (baseType.Equals(target, comparer)) return true;
+                if (baseType.ToDisplayString() == targetDisplay) return true;
                 baseType = baseType.BaseType;
             }
         }
         return false;
+        // SymbolEqualityComparer comparer = SymbolEqualityComparer.Default;
+        // if (self.Equals(target, comparer)) {
+        //     return true;
+        // }
+        // // 结构体也可以实现接口
+        // if (target.TypeKind == TypeKind.Interface) {
+        //     foreach (INamedTypeSymbol baseType in self.AllInterfaces) {
+        //         if (baseType.Equals(target, comparer)) return true;
+        //     }
+        //     return false;
+        // }
+        // if (target.TypeKind != TypeKind.Class) {
+        //     return false;
+        // }
+        // {
+        //     INamedTypeSymbol baseType = self.BaseType;
+        //     while (baseType != null) {
+        //         if (baseType.Equals(target, comparer)) return true;
+        //         baseType = baseType.BaseType;
+        //     }
+        // }
+        // return false;
     }
 
     /// <summary>

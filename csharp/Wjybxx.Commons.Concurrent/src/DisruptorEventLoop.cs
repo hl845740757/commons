@@ -688,15 +688,20 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
                 if (IsShuttingDown) {
                     break;
                 }
-                logger.Warn(e, "receive a confusing signal");
+                logger.Warn(e, "receive a confusing interrupt signal");
             }
             catch (AlertException e) {
                 if (IsShuttingDown) {
                     break;
                 }
-                logger.Warn(e, "receive a confusing signal");
+                logger.Warn(e, "receive a confusing alert signal");
             }
             catch (Exception e) {
+                // unity下可能由特殊异常触发关闭
+                if (IsShutdown) {
+                    logger.Warn(e, "receive a confusing exception signal");
+                    break;
+                }
                 // 不好的等待策略实现
                 logger.Error(e, "bad waitStrategy impl");
             }
