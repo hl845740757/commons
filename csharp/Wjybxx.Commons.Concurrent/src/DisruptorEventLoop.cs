@@ -614,7 +614,9 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
             }
         }
         catch (Exception e) {
-            logger.Error(e, "thread exit due to exception!");
+            if (e is not ThreadAbortException) { // unity直接中断线程
+                logger.Error(e, "thread exit due to exception!");
+            }
             if (!runningPromise.IsCompleted) { // 启动失败
                 runningPromise.TrySetException(new StartFailedException("StartFailed", e));
             }
@@ -696,12 +698,11 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
                 }
                 logger.Warn(e, "receive a confusing alert signal");
             }
+            catch (ThreadAbortException) {
+                ShutdownNow(); // unity下直接中断线程
+                break;
+            }
             catch (Exception e) {
-                // unity下可能由特殊异常触发关闭
-                if (IsShuttingDown) {
-                    logger.Warn(e, "receive a confusing exception signal");
-                    break;
-                }
                 // 不好的等待策略实现
                 logger.Error(e, "bad waitStrategy impl");
             }
