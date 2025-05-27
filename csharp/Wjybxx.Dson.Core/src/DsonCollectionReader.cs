@@ -322,10 +322,10 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         context.header = null;
         if (context.dsonObject != null) {
             context.objectIterator.Dispose();
-            context.objectIterator.SetBaseIterator(ISequentialEnumerator<KeyValuePair<TName, DsonValue>>.Empty);
+            context.objectIterator.SetBaseIterator(EmptyEnumerator<KeyValuePair<TName, DsonValue>>.Instance);
         } else {
             context.arrayIterator.Dispose();
-            context.arrayIterator.SetBaseIterator(ISequentialEnumerator<DsonValue>.Empty);
+            context.arrayIterator.SetBaseIterator(EmptyEnumerator<DsonValue>.Instance);
         }
     }
 
@@ -360,7 +360,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         protected internal DsonHeader<TName> header;
         /** 如果不为null，则表示读取Header和Object上下文 */
         protected internal AbstractDsonObject<TName> dsonObject;
-        /** 迭代器和Context一起缓存 -- 这里传<see cref="ISequentialEnumerator{T}.Empty"/>会引发unity崩溃！ */
+        /** 迭代器和Context一起缓存 -- 这里传<see cref="ISequentialEnumerator{T}.Empty"/>会引发unity崩溃！*/
         protected internal MarkableIterator<KeyValuePair<TName, DsonValue>> objectIterator = new(null);
         protected internal MarkableIterator<DsonValue> arrayIterator = new(null);
 
