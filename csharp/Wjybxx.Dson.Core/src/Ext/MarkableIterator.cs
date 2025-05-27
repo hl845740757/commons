@@ -46,16 +46,16 @@ public struct MarkableIterator<T> : ISequentialEnumerator<T>
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="baseIterator">外部迭代器</param>
+    /// <param name="baseIterator">外部迭代器；如果是池化的对象，可以先传入null</param>
     /// <param name="buffer">buffer，方便外部池化</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public MarkableIterator(IEnumerator<T> baseIterator, List<T>? buffer = null) {
+    public MarkableIterator(IEnumerator<T>? baseIterator, List<T>? buffer = null) {
         if (buffer == null) {
             buffer = new List<T>();
         } else if (buffer.Count > 0) {
             throw new ArgumentException("buffer is not empty");
         }
-        this._baseIterator = baseIterator ?? throw new ArgumentNullException(nameof(baseIterator));
+        this._baseIterator = baseIterator;
         this._marking = false;
 
         this._buffer = buffer;
@@ -79,6 +79,9 @@ public struct MarkableIterator<T> : ISequentialEnumerator<T>
     /// <returns></returns>
     public bool IsClean() => _buffer != null && _buffer.IsEmpty();
 
+    /// <summary>
+    /// 用于复用当前iterator
+    /// </summary>
     public void SetBaseIterator(IEnumerator<T> baseIterator) {
         if (baseIterator == null) throw new ArgumentNullException(nameof(baseIterator));
         if (!IsClean()) {

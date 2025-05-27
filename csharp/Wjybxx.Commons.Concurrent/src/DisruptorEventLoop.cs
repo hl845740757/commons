@@ -698,7 +698,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
             }
             catch (Exception e) {
                 // unity下可能由特殊异常触发关闭
-                if (IsShutdown) {
+                if (IsShuttingDown) {
                     logger.Warn(e, "receive a confusing exception signal");
                     break;
                 }

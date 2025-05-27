@@ -360,10 +360,9 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         protected internal DsonHeader<TName> header;
         /** 如果不为null，则表示读取Header和Object上下文 */
         protected internal AbstractDsonObject<TName> dsonObject;
-        /** 迭代器和Context一起缓存 */
-        protected internal MarkableIterator<KeyValuePair<TName, DsonValue>> objectIterator =
-            new(ISequentialEnumerator<KeyValuePair<TName, DsonValue>>.Empty);
-        protected internal MarkableIterator<DsonValue> arrayIterator = new(ISequentialEnumerator<DsonValue>.Empty);
+        /** 迭代器和Context一起缓存 -- 这里传<see cref="ISequentialEnumerator{T}.Empty"/>会引发unity崩溃！ */
+        protected internal MarkableIterator<KeyValuePair<TName, DsonValue>> objectIterator = new(null);
+        protected internal MarkableIterator<DsonValue> arrayIterator = new(null);
 
         /** 按照外部key迭代 -- 避免再封装一层增加开销 */
         private ISequentialEnumerator<TName> keyItr;
