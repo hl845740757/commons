@@ -74,6 +74,8 @@ public class DsonTexts {
     private static final Set<String> parseableStrings = Set.of("true", "false",
             "null", "undefine",
             "NaN", "Infinity", "-Infinity");
+    /** 数字相关的字符 */
+    private static final BitSet parseableCharSet = new BitSet(128);
 
     /**
      * 规定哪些不安全较为容易，规定哪些安全反而不容易
@@ -93,6 +95,11 @@ public class DsonTexts {
         unsafePrintCharSet.or(unsafeCharSet);
         for (char c : reservedTokenCharArray) {
             unsafePrintCharSet.set(c, true);
+        }
+        // 可解析的数字相关字符
+        char[] parseableCharArray = "0123456789Ee.+-".toCharArray();
+        for (char c : parseableCharArray) {
+            parseableCharSet.set(c);
         }
     }
 
@@ -133,13 +140,24 @@ public class DsonTexts {
         if (parseableStrings.contains(value)) { // 特殊字符串值
             return false;
         }
+
+        boolean hasExponent = false;
+        boolean maybeParsable = true;
         for (int i = 0; i < value.length(); i++) { // 这遍历的不是unicode码点，但不影响
             char c = value.charAt(i);
             if (isUnsafePrintChar(c)) {
                 return false;
             }
+            if (c == 'e' || c == 'E') {
+                hasExponent = true;
+            } else if (!parseableCharSet.get(c)) {
+                maybeParsable = false;
+            }
         }
-        if (isParsable(value)) { // 可解析的数字类型，这个开销大放最后检测
+        if (maybeParsable && isParsable(value)) {
+            return false;
+        }
+        if (maybeParsable && hasExponent && isScientificNotation(value)) {
             return false;
         }
         return true;
@@ -283,6 +301,32 @@ public class DsonTexts {
         } finally {
             ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.release(sb);
         }
+    }
+
+    /** 简单判断是否可能是科学计数法数字 */
+    private static boolean isScientificNotation(String input) {
+        boolean hasExponent = false;
+        boolean hasDigitBeforeE = false;
+        boolean hasDigitAfterE = false;
+
+        for (int i = 0, len = input.length(); i < len; i++) {
+            char c = input.charAt(i);
+            if (Character.isDigit(c)) {
+                if (!hasExponent) {
+                    hasDigitBeforeE = true;
+                } else {
+                    hasDigitAfterE = true;
+                }
+            } else if (c == 'E' || c == 'e') {
+                if (hasExponent || !hasDigitBeforeE) {
+                    return false; // 重复 E 或 E 前无数字
+                }
+                hasExponent = true;
+            } else if (c != '+' && c != '-' && c != '.') {
+                return false;
+            }
+        }
+        return hasExponent && hasDigitAfterE;
     }
 
     // endregion

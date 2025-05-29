@@ -76,6 +76,8 @@ public static class DsonTexts
         "null", "undefine",
         "NaN", "Infinity", "-Infinity"
     }.ToImmutableLinkedHashSet();
+    /** 数字相关的字符 */
+    private static readonly BitArray parseableCharSet = new BitArray(128);
 
     /**
      * 规定哪些不安全较为容易，规定哪些安全反而不容易
@@ -144,13 +146,23 @@ public static class DsonTexts
         if (parseableStrings.Contains(value)) {
             return false; // 特殊字符串值
         }
+        bool hasExponent = false;
+        bool maybeParsable = true;
         for (int i = 0; i < value.Length; i++) { // 这遍历的不是unicode码点，但不影响
             char c = value[i];
             if (IsUnsafePrintChar(c)) {
                 return false;
             }
+            if (c == 'e' || c == 'E') {
+                hasExponent = true;
+            } else if (!parseableCharSet[c]) {
+                maybeParsable = false;
+            }
         }
-        if (IsParsable(value)) { // 是否是可解析的数字类型，这个开销大放最后检测
+        if (maybeParsable && IsParsable(value)) {
+            return false;
+        }
+        if (maybeParsable && hasExponent && IsScientificNotation(value)) {
             return false;
         }
         return true;
@@ -323,6 +335,31 @@ public static class DsonTexts
             }
         }
         return sb.ToString();
+    }
+
+    /** 简单判断是否可能是科学计数法数字 */
+    private static bool IsScientificNotation(string input) {
+        bool hasExponent = false;
+        bool hasDigitBeforeE = false;
+        bool hasDigitAfterE = false;
+        for (int i = 0; i < input.Length; i++) {
+            char c = input[i];
+            if (char.IsDigit(c)) {
+                if (!hasExponent) {
+                    hasDigitBeforeE = true;
+                } else {
+                    hasDigitAfterE = true;
+                }
+            } else if (c == 'E' || c == 'e') {
+                if (hasExponent || !hasDigitBeforeE) {
+                    return false; // 重复 E 或 E 前无数字
+                }
+                hasExponent = true;
+            } else if (c != '+' && c != '-' && c != '.') {
+                return false; // 非法字符
+            }
+        }
+        return hasExponent && hasDigitAfterE;
     }
 
     #endregion

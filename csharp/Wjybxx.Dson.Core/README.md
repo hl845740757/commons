@@ -149,6 +149,20 @@ PS：其实Writer的目标就是尽可能和我们的书写格式一致。
 
 ## ReleaseNotes
 
+### 2.5.1
+
+1. Fix Unity下创建`DsonCollectionReader`时会崩溃的问题
+
+```csharp
+   private class Context<TName> : ISequentialEnumerator<KeyValuePair<TName, DsonValue>> {
+        
+        public Context() {
+            // Unity下，在泛型类中访问具有值类型参数的泛型接口将引发崩溃
+            var enumerator = ISequentialEnumerator<KeyValuePair<TName, DsonValue>>.Empty;
+        }
+   }
+```
+
 ### 2.5.x
 
 1. `LineInfo` 修改为值类型，减少文本扫描过程中的GC
