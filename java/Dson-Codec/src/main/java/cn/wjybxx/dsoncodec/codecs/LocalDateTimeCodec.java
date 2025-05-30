@@ -16,12 +16,12 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.types.ExtDateTime;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 
 import javax.annotation.Nonnull;
@@ -54,7 +54,7 @@ public class LocalDateTimeCodec implements DsonCodec<LocalDateTime> {
     }
 
     @Override
-    public LocalDateTime readObject(DsonObjectReader reader, Supplier<? extends LocalDateTime> factory) {
+    public LocalDateTime readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends LocalDateTime> factory) {
         ExtDateTime dateTime = reader.readExtDateTime(null);
         return LocalDateTime.ofEpochSecond(dateTime.getSeconds(), dateTime.getNanos(), ZoneOffset.UTC);
     }

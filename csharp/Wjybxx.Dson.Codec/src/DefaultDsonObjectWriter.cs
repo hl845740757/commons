@@ -17,7 +17,9 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Wjybxx.Commons;
 using Wjybxx.Dson.IO;
 using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
@@ -244,21 +246,23 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
     public string EncodeKey<T>(T key) {
         if (key == null) throw new ArgumentNullException(nameof(key));
         if (key is string sv) return sv;
-        if (key is int iv) return iv.ToString();
-        if (key is long lv) return lv.ToString();
-        if (key is uint uiv) return uiv.ToString();
-        if (key is ulong ulv) return ulv.ToString();
 
-        Type type = key.GetType();
-        DsonCodecImpl<T> codecImpl = converter.CodecRegistry.GetEncoder(type) as DsonCodecImpl<T>;
-        if (codecImpl == null || !codecImpl.IsEnumCodec) {
-            throw DsonCodecException.UnsupportedType(type);
-        }
-        if (converter.Options.writeEnumAsString) {
+        Type typeOfKey = key.GetType();
+        if (typeOfKey.IsEnum) {
+            DsonCodecImpl<T> codecImpl = converter.CodecRegistry.GetEncoder(typeOfKey) as DsonCodecImpl<T>;
+            if (codecImpl == null) {
+                throw new IllegalStateException();
+            }
             return codecImpl.GetName(key);
-        } else {
-            return codecImpl.GetNumber(key).ToString();
         }
+        return key switch
+        {
+            int iv => iv.ToString(),
+            long lv => lv.ToString(),
+            uint uiv => uiv.ToString(),
+            ulong ulv => ulv.ToString(),
+            _ => throw DsonCodecException.UnsupportedType(typeOfKey)
+        };
     }
 
     public void Flush() {

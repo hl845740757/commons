@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Commons;
 using Wjybxx.Dson.Text;
 using Wjybxx.Dson.Types;
 
@@ -127,16 +128,16 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
             }
             // 避免结构体装箱
             if (codec is DsonCodecImpl<T> codecImpl) {
-                return codecImpl.ReadObject(this, factory);
+                return codecImpl.ReadObject(this, declaredType, factory);
             } else {
-                return (T)codec.ReadObject2(this, factory);
+                return (T)codec.ReadObject2(this, declaredType, factory);
             }
         }
         // 非容器类型 -- Dson内建结构，Enum，Const等
         {
             DsonCodecImpl<T> codec = (DsonCodecImpl<T>)converter.CodecRegistry.GetDecoder(declaredType)!;
             if (codec != null) {
-                return codec.ReadObject(this, factory);
+                return codec.ReadObject(this, declaredType, factory);
             }
         }
         // 考虑DsonValue
@@ -217,6 +218,14 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         if (type == typeof(string) || type == typeof(object)) {
             return (T)(object)keyString;
         }
+        if (type.IsEnum) {
+            DsonCodecImpl<T> codec = (DsonCodecImpl<T>)converter.CodecRegistry.GetDecoder(type)!;
+            if (codec.ForName(keyString, out T result)) {
+                return result;
+            }
+            throw DsonCodecException.EnumAbsent(type, keyString);
+        }
+
         // 使用func以避免装箱
         if (type == typeof(int)) {
             Func<string, T> func = (Func<string, T>)parseInt;
@@ -234,23 +243,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
             Func<string, T> func = (Func<string, T>)parseUlong;
             return func.Invoke(keyString);
         }
-        // 处理枚举类型
-        DsonCodecImpl<T> codec = (DsonCodecImpl<T>)converter.CodecRegistry.GetDecoder(type)!;
-        if (codec == null || !codec.IsEnumCodec) {
-            throw DsonCodecException.UnsupportedKeyType(type);
-        }
-        T result;
-        if (converter.Options.writeEnumAsString) {
-            if (codec.ForName(keyString, out result)) {
-                return result;
-            }
-        } else {
-            int number = int.Parse(keyString);
-            if (codec.ForNumber(number, out result)) {
-                return result;
-            }
-        }
-        throw DsonCodecException.EnumAbsent(type, keyString);
+        throw DsonCodecException.UnsupportedKeyType(type);
     }
 
     public void SetEnableNameIntern(bool? value) {
@@ -278,19 +271,22 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         } else {
             reader.ReadStartArray();
         }
-        string clsName;
+        string clsName = "";
         DsonType nextDsonType = reader.PeekDsonType();
         if (nextDsonType == DsonType.Header) {
             reader.ReadDsonType();
             reader.ReadStartHeader();
-            clsName = reader.ReadString(DsonHeaders.Names_ClassName);
-            if (clsName.LastIndexOf(' ') < 0) {
-                clsName = string.Intern(clsName); // 池化
+            // 允许header包含其它数据
+            while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                if (reader.ReadName() == DsonHeaders.Names_ClassName) {
+                    clsName = reader.ReadString(null);
+                    clsName = string.Intern(clsName); // 池化
+                    break;
+                }
+                reader.SkipValue();
             }
             reader.SkipToEndOfObject();
             reader.ReadEndHeader();
-        } else {
-            clsName = "";
         }
         reader.BackToWaitStart();
         return clsName;

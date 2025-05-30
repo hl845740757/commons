@@ -27,76 +27,30 @@ import java.util.Map;
  */
 public class MapEncodeProxy<V> {
 
-    /**
-     * 将字典写为普通文档
-     * {@code
-     * { K1: V1, K2: V2, K3: V3... }
-     * }
-     */
-    public static final int MODE_DOCUMENT = 0;
-    /**
-     * 将字典写为普通数组
-     * {@code
-     * [K, V, K2, V2, K3, V3...]
-     * }
-     */
-    public static final int MODE_ARRAY = 1;
-    /**
-     * 将Pair写为子数组
-     * {@code
-     * [[K1, V1], [K2, V2], [K3, V3]...]
-     * }
-     */
-    public static final int MODE_PAIR_AS_ARRAY = 2;
-    /**
-     * 将Pair写为子文档
-     * {@code
-     * [{K1: V1}, {K2: V2}, {K3: V3}...]
-     * }
-     */
-    public static final int MODE_PAIR_AS_DOCUMENT = 3;
-
-    private int mode = MODE_DOCUMENT;
+    private MapEncodePolicy policy = MapEncodePolicy.DOCUMENT;
     private Collection<Map.Entry<String, V>> entries;
 
     public MapEncodeProxy() {
     }
 
-    public int getMode() {
-        return mode;
+    public MapEncodeProxy(MapEncodePolicy policy) {
+        this.policy = policy;
     }
 
-    /** 将字典写为普通文档 */
-    public MapEncodeProxy<V> setWriteAsDocument() {
-        mode = MODE_DOCUMENT;
-        return this;
+    public void setPolicy(MapEncodePolicy policy) {
+        this.policy = policy;
     }
 
-    /** 将字典写为普通数组 */
-    public MapEncodeProxy<V> setWriteAsArray() {
-        mode = MODE_ARRAY;
-        return this;
-    }
-
-    /** 将Pair写为子数组 -- 外部将写为数组 */
-    public MapEncodeProxy<V> setWritePairAsArray() {
-        mode = MODE_PAIR_AS_ARRAY;
-        return this;
-    }
-
-    /** 将Pair写为子文档 -- 外部将写为数组 */
-    public MapEncodeProxy<V> setWritePairAsDocument() {
-        mode = MODE_PAIR_AS_DOCUMENT;
-        return this;
+    public MapEncodePolicy getPolicy() {
+        return policy;
     }
 
     public Collection<Map.Entry<String, V>> getEntries() {
         return entries;
     }
 
-    public MapEncodeProxy<V> setEntries(Collection<Map.Entry<String, V>> entries) {
+    public void setEntries(Collection<Map.Entry<String, V>> entries) {
         this.entries = entries;
-        return this;
     }
 
 }

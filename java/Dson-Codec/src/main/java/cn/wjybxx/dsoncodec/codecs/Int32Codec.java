@@ -16,12 +16,12 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 
 import javax.annotation.Nonnull;
@@ -54,7 +54,7 @@ public class Int32Codec implements DsonCodec<Integer> {
     }
 
     @Override
-    public Integer readObject(DsonObjectReader reader, Supplier<? extends Integer> factory) {
+    public Integer readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Integer> factory) {
         return reader.readInt(null);
     }
 

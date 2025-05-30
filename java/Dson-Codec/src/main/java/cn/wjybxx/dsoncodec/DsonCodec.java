@@ -80,9 +80,10 @@ public interface DsonCodec<T> {
      * <p>
      * 注意：name在外部已读取，因此基础类型读取value时name传null。
      *
-     * @param factory 实例工厂
+     * @param declaredType 对象的声明类型(判断是否可以转不可变等)
+     * @param factory      实例工厂
      */
-    T readObject(DsonObjectReader reader, Supplier<? extends T> factory);
+    T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory);
 
     /**
      * 该方法用于告知{@link DsonCodecImpl}是否自动调用以下方法:

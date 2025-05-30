@@ -16,12 +16,12 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.types.Timestamp;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
@@ -49,7 +49,7 @@ public class TimestampCodec implements DsonCodec<Timestamp> {
     }
 
     @Override
-    public Timestamp readObject(DsonObjectReader reader, Supplier<? extends Timestamp> factory) {
+    public Timestamp readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Timestamp> factory) {
         return reader.readTimestamp(null);
     }
 }

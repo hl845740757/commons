@@ -31,11 +31,11 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
         IEnumerable<KeyValuePair<string, V>> entries = inst.Entries ?? throw new NullReferenceException("inst.Entries");
         Type encoderType = typeof(DictionaryEncodeProxy<V>);
 
-        switch (inst.Mode) {
-            default: {
+        switch (inst.Policy) {
+            case MapEncodePolicy.Document: {
                 writer.WriteStartObject(style, encoderType, declaredType); // 字典写为普通文档
                 foreach (KeyValuePair<string, V> pair in entries) {
-                    string keyString = writer.EncodeKey(pair.Key);
+                    string keyString = pair.Key;
                     V value = pair.Value;
                     if (value == null) {
                         // 字典写为普通对象时，必须写入null，否则containsKey会异常；要强制写入null，必须先写入name
@@ -48,29 +48,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                 writer.WriteEndObject();
                 break;
             }
-            case DictionaryEncodeProxy.MODE_ARRAY: {
-                writer.WriteStartArray(style, encoderType, declaredType); // 整个字典写为数组
-                foreach (KeyValuePair<string, V> pair in entries) {
-                    writer.WriteString(null, pair.Key);
-                    writer.WriteObject(null, pair.Value);
-                }
-                writer.WriteEndArray();
-                break;
-            }
-            case DictionaryEncodeProxy.MODE_PAIR_AS_ARRAY: {
-                writer.WriteStartArray(style, encoderType, declaredType);
-                foreach (KeyValuePair<string, V> pair in entries) {
-                    writer.WriteStartArray(ObjectStyle.Flow); // pair写为子数组-没有类型
-                    {
-                        writer.WriteString(null, pair.Key);
-                        writer.WriteObject(null, pair.Value);
-                    }
-                    writer.WriteEndArray();
-                }
-                writer.WriteEndArray();
-                break;
-            }
-            case DictionaryEncodeProxy.MODE_PAIR_AS_DOCUMENT: {
+            case MapEncodePolicy.PairAsDocument: {
                 writer.WriteStartArray(style, encoderType, declaredType);
                 foreach (KeyValuePair<string, V> pair in entries) {
                     writer.WriteStartObject(ObjectStyle.Flow); // pair写为子文档-没有类型
@@ -83,10 +61,34 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                 writer.WriteEndArray();
                 break;
             }
+
+            case MapEncodePolicy.PairAsArray: {
+                writer.WriteStartArray(style, encoderType, declaredType);
+                foreach (KeyValuePair<string, V> pair in entries) {
+                    writer.WriteStartArray(ObjectStyle.Flow); // pair写为子数组-没有类型
+                    {
+                        writer.WriteString(null, pair.Key);
+                        writer.WriteObject(null, pair.Value);
+                    }
+                    writer.WriteEndArray();
+                }
+                writer.WriteEndArray();
+                break;
+            }
+            case MapEncodePolicy.Array:
+            default: {
+                writer.WriteStartArray(style, encoderType, declaredType); // 整个字典写为数组
+                foreach (KeyValuePair<string, V> pair in entries) {
+                    writer.WriteString(null, pair.Key);
+                    writer.WriteObject(null, pair.Value);
+                }
+                writer.WriteEndArray();
+                break;
+            }
         }
     }
 
-    public DictionaryEncodeProxy<V> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+    public DictionaryEncodeProxy<V> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         reader.SetEnableNameIntern(false); // 禁用字典的name池化
 
         List<KeyValuePair<string, V>> entries = new List<KeyValuePair<string, V>>();
@@ -95,11 +97,11 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
 
         DsonType currentDsonType = reader.CurrentDsonType;
         if (currentDsonType == DsonType.Object) {
-            result.SetWriteAsDocument();
+            result.Policy = MapEncodePolicy.Document;
             reader.ReadStartObject();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 string key = reader.ReadName();
-                V value = reader.ReadObject<V>(key);
+                V value = reader.ReadObject<V>(null);
                 entries.Add(new KeyValuePair<string, V>(key, value));
             }
             reader.ReadEndObject();
@@ -108,17 +110,22 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
             reader.ReadStartArray();
             DsonType firstDsonType = reader.ReadDsonType();
             switch (firstDsonType) {
-                case DsonType.String: { // 整个字典写为数组
-                    result.SetWriteAsArray();
+                case DsonType.EndOfObject: break; // 没有元素
+                case DsonType.Object: { // Pair为子文档
+                    result.Policy = MapEncodePolicy.PairAsDocument;
                     do {
-                        string key = reader.ReadString(null);
-                        V value = reader.ReadObject<V>(null);
-                        entries.Add(new KeyValuePair<string, V>(key, value));
+                        reader.ReadStartObject();
+                        {
+                            string key = reader.ReadName();
+                            V value = reader.ReadObject<V>(null);
+                            entries.Add(new KeyValuePair<string, V>(key, value));
+                        }
+                        reader.ReadEndObject();
                     } while (reader.ReadDsonType() != DsonType.EndOfObject);
                     break;
                 }
                 case DsonType.Array: { // Pair为子数组
-                    result.SetWritePairAsArray();
+                    result.Policy = MapEncodePolicy.PairAsArray;
                     do {
                         reader.ReadStartArray();
                         {
@@ -131,16 +138,12 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                     } while (reader.ReadDsonType() != DsonType.EndOfObject);
                     break;
                 }
-                case DsonType.Object: { // Pair为子文档
-                    result.SetWritePairAsArray();
+                default: { // 整个字典写为数组
+                    result.Policy = MapEncodePolicy.Array;
                     do {
-                        reader.ReadStartObject();
-                        {
-                            string key = reader.ReadName();
-                            V value = reader.ReadObject<V>(null);
-                            entries.Add(new KeyValuePair<string, V>(key, value));
-                        }
-                        reader.ReadEndObject();
+                        string key = reader.ReadString(null);
+                        V value = reader.ReadObject<V>(null);
+                        entries.Add(new KeyValuePair<string, V>(key, value));
                     } while (reader.ReadDsonType() != DsonType.EndOfObject);
                     break;
                 }

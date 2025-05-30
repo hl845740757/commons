@@ -20,75 +20,26 @@ using System.Collections.Generic;
 
 namespace Wjybxx.Dson.Codec
 {
-public class DictionaryEncodeProxy
-{
-    /**
-     * 将字典写为普通文档
-     * {@code
-     * { K1: V1, K2: V2, K3: V3... }
-     * }
-     */
-    public const int MODE_DOCUMENT = 0;
-    /**
-     * 将字典写为普通数组
-     * {@code
-     * [K, V, K2, V2, K3, V3...]
-     * }
-     */
-    public const int MODE_ARRAY = 1;
-    /**
-     * 将Pair写为子数组
-     * {@code
-     * [[K1, V1], [K2, V2], [K3, V3]...]
-     * }
-     */
-    public const int MODE_PAIR_AS_ARRAY = 2;
-    /**
-     * 将Pair写为子文档
-     * {@code
-     * [{K1: V1}, {K2: V2}, {K3: V3}...]
-     * }
-     */
-    public const int MODE_PAIR_AS_DOCUMENT = 3;
-}
-
 /// <summary>
 /// 字典编码代理
 /// </summary>
-public class DictionaryEncodeProxy<V> : DictionaryEncodeProxy
+public class DictionaryEncodeProxy<V>
 {
-    private int mode = MODE_DOCUMENT;
-    private IEnumerable<KeyValuePair<string, V>>? entries;
+    private MapEncodePolicy _policy;
+    private IEnumerable<KeyValuePair<string, V>>? _entries;
 
-    public int Mode => mode;
+    public DictionaryEncodeProxy(MapEncodePolicy policy = MapEncodePolicy.Document) {
+        this._policy = policy;
+    }
+
+    public MapEncodePolicy Policy {
+        get => _policy;
+        set => _policy = value;
+    }
 
     public IEnumerable<KeyValuePair<string, V>>? Entries {
-        get => entries;
-        set => entries = value;
-    }
-
-    /** 将字典写为普通文档 */
-    public DictionaryEncodeProxy<V> SetWriteAsDocument() {
-        mode = MODE_DOCUMENT;
-        return this;
-    }
-
-    /** 将字典写为普通数组 */
-    public DictionaryEncodeProxy<V> SetWriteAsArray() {
-        mode = MODE_ARRAY;
-        return this;
-    }
-
-    /** 将Pair写为子数组 -- 外部将写为数组 */
-    public DictionaryEncodeProxy<V> SetWritePairAsArray() {
-        mode = MODE_PAIR_AS_ARRAY;
-        return this;
-    }
-
-    /** 将Pair写为子文档 -- 外部将写为数组 */
-    public DictionaryEncodeProxy<V> SetWritePairAsDocument() {
-        mode = MODE_PAIR_AS_DOCUMENT;
-        return this;
+        get => _entries;
+        set => _entries = value;
     }
 }
 }

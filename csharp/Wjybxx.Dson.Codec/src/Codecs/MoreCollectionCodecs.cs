@@ -44,7 +44,7 @@ public static class MoreCollectionCodecs
             }
         }
 
-        public Stack<T> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public Stack<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             List<T> list = EnumerableCodec<T>.ReadAsList(reader);
             // Stack并未实现ICollection接口，另外我们需要保持与序列化之前相同的顺序，需要将list反向转换为Stack
             Stack<T> result = new Stack<T>(list.Count);
@@ -69,7 +69,7 @@ public static class MoreCollectionCodecs
             }
         }
 
-        public Queue<T> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public Queue<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             // Queue重复编码，避免不必要的拷贝
             Queue<T> result = new Queue<T>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -100,7 +100,7 @@ public static class MoreCollectionCodecs
             }
         }
 
-        public IList<int> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public IList<int> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             IList<int> result = new List<int>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 int value = reader.ReadInt(null);
@@ -128,7 +128,7 @@ public static class MoreCollectionCodecs
             }
         }
 
-        public IList<long> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public IList<long> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             IList<long> result = new List<long>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 long value = reader.ReadLong(null);
@@ -156,7 +156,7 @@ public static class MoreCollectionCodecs
             }
         }
 
-        public IList<float> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public IList<float> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             IList<float> result = new List<float>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 float value = reader.ReadFloat(null);
@@ -184,7 +184,7 @@ public static class MoreCollectionCodecs
             }
         }
 
-        public IList<double> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public IList<double> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             IList<double> result = new List<double>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 double value = reader.ReadDouble(null);
@@ -212,7 +212,7 @@ public static class MoreCollectionCodecs
             }
         }
 
-        public IList<bool> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public IList<bool> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             IList<bool> result = new List<bool>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 bool value = reader.ReadBool(null);
@@ -240,7 +240,7 @@ public static class MoreCollectionCodecs
             }
         }
 
-        public IList<string> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public IList<string> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             IList<string> result = new List<string>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 string value = reader.ReadString(null);
@@ -268,7 +268,7 @@ public static class MoreCollectionCodecs
             }
         }
 
-        public IList<uint> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public IList<uint> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             IList<uint> result = new List<uint>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 uint value = reader.ReadUint(null);
@@ -296,7 +296,7 @@ public static class MoreCollectionCodecs
             }
         }
 
-        public IList<ulong> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public IList<ulong> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             IList<ulong> result = new List<ulong>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 ulong value = reader.ReadUlong(null);

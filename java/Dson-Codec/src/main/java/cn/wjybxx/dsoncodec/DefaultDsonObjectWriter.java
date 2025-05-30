@@ -263,18 +263,15 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         if (key instanceof String str) {
             return str;
         }
+        if (keyType.isEnum()) {
+            @SuppressWarnings("unchecked") var codecImpl = (DsonCodecImpl<T>) converter.codecRegistry().getEncoder(keyType);
+            assert codecImpl != null;
+            return codecImpl.getName(key);
+        }
         if ((key instanceof Integer) || (key instanceof Long)) {
             return key.toString();
         }
-        @SuppressWarnings("unchecked") var codecImpl = (DsonCodecImpl<T>) converter.codecRegistry().getEncoder(keyType);
-        if (codecImpl == null || !codecImpl.isEnumCodec()) {
-            throw DsonCodecException.unsupportedType(key.getClass());
-        }
-        if (converter.options().writeEnumAsString) {
-            return codecImpl.getName(key);
-        } else {
-            return Integer.toString(codecImpl.getNumber(key));
-        }
+        throw DsonCodecException.unsupportedType(key.getClass());
     }
 
     @Override

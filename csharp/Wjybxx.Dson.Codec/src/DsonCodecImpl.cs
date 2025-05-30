@@ -35,7 +35,7 @@ public abstract class DsonCodecImpl
     // 解决泛型协变逆变问题 - 不会导致装箱，但会多一次cast
     public abstract void WriteObject2(IDsonObjectWriter writer, object inst, Type declaredType, ObjectStyle style);
 
-    public abstract object ReadObject2(IDsonObjectReader reader, Func<object>? factory);
+    public abstract object ReadObject2(IDsonObjectReader reader, Type declaredType, Func<object>? factory);
 
     /** 创建Impl实例 */
     internal static DsonCodecImpl CreateInstance(IDsonCodec codec) {
@@ -80,8 +80,8 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
         WriteObject(writer, (T)inst, declaredType, style);
     }
 
-    public override object ReadObject2(IDsonObjectReader reader, Func<object>? factory) {
-        return ReadObject(reader, factory);
+    public override object ReadObject2(IDsonObjectReader reader, Type declaredType, Func<object>? factory) {
+        return ReadObject(reader, declaredType, factory);
     }
 
     /// <summary>
@@ -113,23 +113,24 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     /// 
     /// </summary>
     /// <param name="reader">reader</param>
+    /// <param name="declaredType"></param>
     /// <param name="factory">实例工厂</param>
     /// <returns></returns>
-    public T ReadObject(IDsonObjectReader reader, Func<object>? factory) {
+    public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory) {
         if (_autoStart) {
             T result;
             if (_writeAsArray) {
                 reader.ReadStartArray();
-                result = _codec.ReadObject(reader, factory);
+                result = _codec.ReadObject(reader, declaredType, factory);
                 reader.ReadEndArray();
             } else {
                 reader.ReadStartObject();
-                result = _codec.ReadObject(reader, factory);
+                result = _codec.ReadObject(reader,declaredType,  factory);
                 reader.ReadEndObject();
             }
             return result;
         } else {
-            return _codec.ReadObject(reader, factory);
+            return _codec.ReadObject(reader, declaredType, factory);
         }
     }
 

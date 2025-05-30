@@ -19,7 +19,10 @@ package cn.wjybxx.dsoncodec.fastutil;
 import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dsoncodec.*;
+import cn.wjybxx.dsoncodec.DsonCodec;
+import cn.wjybxx.dsoncodec.DsonConverterUtils;
+import cn.wjybxx.dsoncodec.DsonObjectReader;
+import cn.wjybxx.dsoncodec.DsonObjectWriter;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleCollection;
 import it.unimi.dsi.fastutil.doubles.DoubleImmutableList;
@@ -71,7 +74,7 @@ public class DoubleCollectionCodec implements DsonCodec<DoubleCollection> {
     }
 
     @Override
-    public DoubleCollection readObject(DsonObjectReader reader, Supplier<? extends DoubleCollection> factory) {
+    public DoubleCollection readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends DoubleCollection> factory) {
         DoubleCollection result = factory != null ? factory.get() : newCollection();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readDouble(null));

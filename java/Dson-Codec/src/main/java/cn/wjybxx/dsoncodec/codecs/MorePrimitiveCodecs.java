@@ -16,12 +16,12 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
@@ -54,7 +54,7 @@ public final class MorePrimitiveCodecs {
         }
 
         @Override
-        public Short readObject(DsonObjectReader reader, Supplier<? extends Short> factory) {
+        public Short readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Short> factory) {
             return (short) reader.readInt(null);
         }
     }
@@ -79,7 +79,7 @@ public final class MorePrimitiveCodecs {
         }
 
         @Override
-        public Byte readObject(DsonObjectReader reader, Supplier<? extends Byte> factory) {
+        public Byte readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Byte> factory) {
             return (byte) reader.readInt(null);
         }
     }
@@ -104,7 +104,7 @@ public final class MorePrimitiveCodecs {
         }
 
         @Override
-        public Character readObject(DsonObjectReader reader, Supplier<? extends Character> factory) {
+        public Character readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Character> factory) {
             return (char) reader.readInt(null);
         }
     }

@@ -30,7 +30,7 @@ public class BinaryCodec : IDsonCodec<Binary>
         writer.WriteBinary(null, inst);
     }
 
-    public Binary ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+    public Binary ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         return reader.ReadBinary(null);
     }
 }

@@ -124,7 +124,7 @@ public class LazyCodecTest {
         }
 
         @Override
-        public MyStruct readObject(DsonObjectReader reader, Supplier<? extends MyStruct> factory) {
+        public MyStruct readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends MyStruct> factory) {
             String strVal = reader.readString("strVal");
             Object nestStruct;
             if (role == Role.ROUTER) {

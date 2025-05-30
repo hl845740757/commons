@@ -16,12 +16,12 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 
 import javax.annotation.Nonnull;
@@ -51,7 +51,7 @@ public class DoubleCodec implements DsonCodec<Double> {
     }
 
     @Override
-    public Double readObject(DsonObjectReader reader, Supplier<? extends Double> factory) {
+    public Double readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Double> factory) {
         return reader.readDouble(null);
     }
 

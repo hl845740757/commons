@@ -19,7 +19,10 @@ package cn.wjybxx.dsoncodec.fastutil;
 import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dsoncodec.*;
+import cn.wjybxx.dsoncodec.DsonCodec;
+import cn.wjybxx.dsoncodec.DsonConverterUtils;
+import cn.wjybxx.dsoncodec.DsonObjectReader;
+import cn.wjybxx.dsoncodec.DsonObjectWriter;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatCollection;
 import it.unimi.dsi.fastutil.floats.FloatImmutableList;
@@ -71,7 +74,7 @@ public class FloatCollectionCodec implements DsonCodec<FloatCollection> {
     }
 
     @Override
-    public FloatCollection readObject(DsonObjectReader reader, Supplier<? extends FloatCollection> factory) {
+    public FloatCollection readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends FloatCollection> factory) {
         FloatCollection result = factory != null ? factory.get() : newCollection();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readFloat(null));

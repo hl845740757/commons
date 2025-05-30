@@ -54,7 +54,7 @@ public class Int2ObjectMapCodecTest {
                 .addGenericCodec(TypeInfo.of(Int2ObjectOpenHashMap.class, Object.class), Int2ObjectMapCodec.class, Int2ObjectOpenHashMap.class);
 
         ConverterOptions options = ConverterOptions.DEFAULT.toBuilder()
-                .setWriteMapAsDocument(true)
+                .setMapEncodePolicy(MapEncodePolicy.DOCUMENT)
                 .build();
         converter = new DsonConverterBuilder()
                 .addTypeMetas(typeMetas)

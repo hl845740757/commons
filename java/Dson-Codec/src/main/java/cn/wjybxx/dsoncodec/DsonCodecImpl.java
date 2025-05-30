@@ -93,17 +93,17 @@ public final class DsonCodecImpl<T> {
             if (writeAsArray) {
                 reader.readStartArray();
                 reader.setEncoderType(encoderType);
-                result = codec.readObject(reader, factory);
+                result = codec.readObject(reader, declaredType, factory);
                 reader.readEndArray();
             } else {
                 reader.readStartObject();
                 reader.setEncoderType(encoderType);
-                result = codec.readObject(reader, factory);
+                result = codec.readObject(reader, declaredType, factory);
                 reader.readEndObject();
             }
             return result;
         } else {
-            return codec.readObject(reader, factory);
+            return codec.readObject(reader, declaredType, factory);
         }
     }
 

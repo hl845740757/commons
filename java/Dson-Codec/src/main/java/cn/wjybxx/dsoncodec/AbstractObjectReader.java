@@ -261,11 +261,11 @@ abstract class AbstractObjectReader implements DsonObjectReader {
             throw DsonCodecException.unsupportedKeyType(keyDeclared);
         }
         T result;
-        if (converter.options().writeEnumAsString) {
-            result = codec.forName(keyString);
-        } else {
+        if (DsonTexts.isParsable(keyString)) {
             int number = Integer.parseInt(keyString);
             result = codec.forNumber(number);
+        } else {
+            result = codec.forName(keyString);
         }
         if (result == null) {
             throw DsonCodecException.enumAbsent(keyDeclared, keyString);
@@ -301,19 +301,22 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         } else {
             reader.readStartArray();
         }
-        String clsName;
+        String clsName = "";
         DsonType nextDsonType = reader.peekDsonType();
         if (nextDsonType == DsonType.HEADER) {
             reader.readDsonType();
             reader.readStartHeader();
-            clsName = reader.readString(DsonHeader.NAMES_CLASS_NAME);
-            if (clsName.lastIndexOf(' ') < 0) {
-                clsName = clsName.intern(); // 池化
+            // 允许header包含其它数据
+            while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
+                if (reader.readName().equals(DsonHeader.NAMES_CLASS_NAME)) {
+                    clsName = reader.readString(null);
+                    clsName = clsName.intern(); // 池化
+                    break;
+                }
+                reader.skipValue();
             }
             reader.skipToEndOfObject();
             reader.readEndHeader();
-        } else {
-            clsName = "";
         }
         reader.backToWaitStart();
         return clsName;

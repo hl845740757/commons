@@ -16,12 +16,12 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.types.Timestamp;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 
 import javax.annotation.Nonnull;
@@ -52,7 +52,7 @@ public class InstantCodec implements DsonCodec<Instant> {
     }
 
     @Override
-    public Instant readObject(DsonObjectReader reader, Supplier<? extends Instant> factory) {
+    public Instant readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Instant> factory) {
         Timestamp timestamp = reader.readTimestamp(null);
         return Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos());
     }

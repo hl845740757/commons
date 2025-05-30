@@ -186,7 +186,7 @@ class CodecStructs {
         }
 
         @Override
-        public MyStruct readObject(DsonObjectReader reader, Supplier<? extends MyStruct> factory) {
+        public MyStruct readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends MyStruct> factory) {
             reader.readStartObject("nestStruct");
             NestStruct nestStruct = new NestStruct(
                     reader.readInt("intVal"),

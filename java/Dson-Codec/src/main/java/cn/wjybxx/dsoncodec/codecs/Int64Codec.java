@@ -16,12 +16,12 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 
 import javax.annotation.Nonnull;
@@ -53,7 +53,7 @@ public class Int64Codec implements DsonCodec<Long> {
     }
 
     @Override
-    public Long readObject(DsonObjectReader reader, Supplier<? extends Long> factory) {
+    public Long readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Long> factory) {
         return reader.readLong(null);
     }
 

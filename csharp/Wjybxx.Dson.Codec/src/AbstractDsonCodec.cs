@@ -95,7 +95,7 @@ public abstract class AbstractDsonCodec<T> : IDsonCodec<T>
     #region Read
 
     [StableName]
-    public T ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+    public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         // cast失败则抛出异常，不能测试类型导致隐藏错误
         T inst = factory != null ? (T)factory() : NewInstance(reader);
         ReadFields(reader, ref inst);

@@ -20,7 +20,10 @@ import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dsoncodec.*;
+import cn.wjybxx.dsoncodec.DsonCodec;
+import cn.wjybxx.dsoncodec.DsonConverterUtils;
+import cn.wjybxx.dsoncodec.DsonObjectReader;
+import cn.wjybxx.dsoncodec.DsonObjectWriter;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 
 import javax.annotation.Nonnull;
@@ -99,7 +102,10 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
         };
     }
 
-    protected Collection<E> toImmutable(Collection<E> result) {
+    protected Collection<E> toImmutable(TypeInfo declaredType, Collection<E> result) {
+        if (!declaredType.rawType.isInterface()) {
+            return result;
+        }
         if (result instanceof LinkedHashSet<E> linkedHashSet) {
             return Collections.unmodifiableSet(linkedHashSet);
         }
@@ -123,14 +129,14 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
     }
 
     @Override
-    public Collection<E> readObject(DsonObjectReader reader, Supplier<? extends Collection<E>> factory) {
+    public Collection<E> readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Collection<E>> factory) {
         TypeInfo elementTypeInfo = encoderType.typeArgs.get(0);
 
         Collection<E> result = factory != null ? factory.get() : newCollection();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readObject(null, elementTypeInfo));
         }
-        return reader.options().readAsImmutable ? toImmutable(result) : result;
+        return reader.options().readAsImmutable ? toImmutable(declaredType, result) : result;
     }
 
 }

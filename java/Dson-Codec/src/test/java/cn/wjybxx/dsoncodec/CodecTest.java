@@ -67,7 +67,7 @@ public class CodecTest {
     @Test
     void docCodecTest() {
         ConverterOptions options = ConverterOptions.newBuilder()
-                .setWriteMapAsDocument(true)
+                .setMapEncodePolicy(MapEncodePolicy.DOCUMENT)
                 .setWriteEnumAsString(true)
                 .build();
         DsonConverter converter = new DsonConverterBuilder()

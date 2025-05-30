@@ -18,6 +18,7 @@ package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.base.TypeInfo;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
@@ -31,24 +32,45 @@ import java.util.Map;
  */
 public class MapAsObjectTest {
 
-    @Test
-    void test() {
+    private static DsonConverter converter;
+
+    @BeforeAll
+    static void setUp() {
         ConverterOptions options = ConverterOptions.newBuilder()
-                .setWriteMapAsDocument(true)
+                .setMapEncodePolicy(MapEncodePolicy.DOCUMENT)
                 .build();
 
-        DsonConverter converter = new DsonConverterBuilder()
+        converter = new DsonConverterBuilder()
                 .setOptions(options)
                 .build();
+    }
+
+    @Test
+    void test() {
 
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("one", "1");
         map.put("two", 2.0); // 默认解码是double
 
-        String dson = converter.writeAsDson(map);
-//        System.out.println(dson);
+        TypeInfo declaredType = TypeInfo.of(Map.class, TypeInfo.STRING, TypeInfo.OBJECT);
+        String dson = converter.writeAsDson(map, declaredType);
+        System.out.println(dson);
 
-        LinkedHashMap<String, Object> copied = converter.readFromDson(dson, TypeInfo.STRING_LINKED_HASHMAP);
+        LinkedHashMap<String, Object> copied = converter.readFromDson(dson, declaredType);
+        Assertions.assertEquals(map, copied);
+    }
+
+    @Test
+    void testInt() {
+        Map<Integer, Object> map = new LinkedHashMap<>();
+        map.put(1, "1");
+        map.put(2, 2.0); // 默认解码是double
+
+        TypeInfo declaredType = TypeInfo.of(Map.class, TypeInfo.INT, TypeInfo.OBJECT);
+        String dson = converter.writeAsDson(map, declaredType);
+        System.out.println(dson);
+
+        LinkedHashMap<Integer, Object> copied = converter.readFromDson(dson, declaredType);
         Assertions.assertEquals(map, copied);
     }
 }

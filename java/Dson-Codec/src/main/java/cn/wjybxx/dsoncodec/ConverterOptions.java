@@ -54,24 +54,13 @@ public class ConverterOptions {
      */
     public final boolean appendNull;
     /**
-     * 是否把Map编码为普通对象（文档）
-     * 1.只在文档编解码中生效(DsonCodec)
-     * 2.如果要将一个Map结构编码为普通对象，<b>Key的运行时必须和声明类型相同</b>，且只支持String、Integer、Long、Enum。
-     * 3.在不启用该选项的情况下，用户可通过字段写代理将字段转换为{@link MapEncodeProxy}，实现更精确的控制。
-     *
-     * <h3>Map不是Object</h3>
-     * 本质上讲，Map是数组，而不是普通的Object，因为标准的Map是允许复杂key的，因此Map默认应该序列化为数组。但存在两个特殊的场景：
-     * 1.与脚本语言通信
-     * 脚本语言通常没有静态语言中的字典结构，由object充当，但object不支持复杂的key作为键，通常仅支持数字和字符串作为key。
-     * 因此在与脚本语言通信时，要求将Map序列化为简单的object。
-     * 2.配置文件读写
-     * 配置文件通常是无类型的，因此读取到内存中通常是一个字典结构；程序在输出配置文件时，同样需要将字典结构输出为object结构。
+     * 字典的编码策略
      */
-    public final boolean writeMapAsDocument;
+    public final MapEncodePolicy mapEncodePolicy;
     /**
      * 是否将枚举写为字符串
-     * 1.只在文档编码中生效(DsonCodec)
-     * 2.对字典的Key也生效
+     * 1.不适用字典的Key，当字典需要被编码为Document时，枚举将固定输出为字符串。
+     * 2.通常不建议开启，兼容性不好；如果个别字段的字典想定制编码，可通过字段编解码代理实现。
      */
     public final boolean writeEnumAsString;
     /**
@@ -126,7 +115,7 @@ public class ConverterOptions {
         this.typeWritePolicy = builder.typeWritePolicy;
         this.appendDef = builder.appendDef;
         this.appendNull = builder.appendNull;
-        this.writeMapAsDocument = builder.writeMapAsDocument;
+        this.mapEncodePolicy = builder.mapEncodePolicy;
         this.writeEnumAsString = builder.writeEnumAsString;
         this.randomRead = builder.randomRead;
         this.readAsImmutable = builder.readAsImmutable;
@@ -159,7 +148,7 @@ public class ConverterOptions {
         builder.typeWritePolicy = typeWritePolicy;
         builder.appendDef = appendDef;
         builder.appendNull = appendNull;
-        builder.writeMapAsDocument = writeMapAsDocument;
+        builder.mapEncodePolicy = mapEncodePolicy;
         builder.writeEnumAsString = writeEnumAsString;
         builder.randomRead = randomRead;
         builder.readAsImmutable = readAsImmutable;
@@ -191,7 +180,7 @@ public class ConverterOptions {
         private TypeWritePolicy typeWritePolicy = TypeWritePolicy.OPTIMIZED;
         private boolean appendDef = true;
         private boolean appendNull = true;
-        private boolean writeMapAsDocument = false;
+        private MapEncodePolicy mapEncodePolicy = MapEncodePolicy.ARRAY;
         private boolean writeEnumAsString = false;
         private boolean randomRead = true;
         private boolean enableBeforeEncode = false;
@@ -242,12 +231,12 @@ public class ConverterOptions {
             return this;
         }
 
-        public boolean isWriteMapAsDocument() {
-            return writeMapAsDocument;
+        public MapEncodePolicy getMapEncodePolicy() {
+            return mapEncodePolicy;
         }
 
-        public Builder setWriteMapAsDocument(boolean writeMapAsDocument) {
-            this.writeMapAsDocument = writeMapAsDocument;
+        public Builder setMapEncodePolicy(MapEncodePolicy mapEncodePolicy) {
+            this.mapEncodePolicy = mapEncodePolicy;
             return this;
         }
 

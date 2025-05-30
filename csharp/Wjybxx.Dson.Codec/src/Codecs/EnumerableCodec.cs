@@ -50,7 +50,7 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
     /// <param name="reader">reader</param>
     /// <param name="factory">支持factory为集合类型</param>
     /// <returns></returns>
-    public IEnumerable<T> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+    public IEnumerable<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         if (factory != null) {
             ICollection<T> result = factory() as ICollection<T> ?? new List<T>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {

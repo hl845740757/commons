@@ -107,7 +107,7 @@ public class CodecTest
         }
 
         ConverterOptions.Builder builder = converter.Options.ToBuilder();
-        builder.WriteMapAsDocument = true;
+        builder.MapEncodePolicy = MapEncodePolicy.Document;
 
         IDsonConverter converter2 = converter.WithOptions(builder.Build());
 

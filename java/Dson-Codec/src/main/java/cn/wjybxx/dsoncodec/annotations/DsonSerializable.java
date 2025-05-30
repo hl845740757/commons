@@ -18,11 +18,11 @@ package cn.wjybxx.dsoncodec.annotations;
 
 import cn.wjybxx.base.EnumLite;
 import cn.wjybxx.base.EnumUtils;
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonCodecRegistry;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
-import cn.wjybxx.base.TypeInfo;
 
 import java.lang.annotation.*;
 

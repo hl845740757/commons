@@ -42,6 +42,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
     protected final TypeInfo encoderType;
     protected final Supplier<? extends Map<K, V>> factory;
     private final FactoryKind factoryKind;
+    private final KeyKind keyKind;
 
     public MapCodec(TypeInfo encoderType) {
         this(encoderType, null);
@@ -58,6 +59,16 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         this.encoderType = encoderType;
         this.factory = factory;
         this.factoryKind = factory == null ? computeFactoryKind(encoderType) : FactoryKind.Unknown;
+        this.keyKind = computeKeyKind(encoderType);
+    }
+
+    private static KeyKind computeKeyKind(TypeInfo typeInfo) {
+        TypeInfo keyType = typeInfo.typeArgs.get(0);
+        if (keyType.rawType == Integer.class || keyType.rawType == int.class) return KeyKind.Int32;
+        if (keyType.rawType == Long.class || keyType.rawType == long.class) return KeyKind.Int64;
+        if (keyType.rawType == String.class) return KeyKind.String;
+        if (keyType.isEnum()) return KeyKind.Enum;
+        return KeyKind.Generic;
     }
 
     private static FactoryKind computeFactoryKind(TypeInfo typeInfo) {
@@ -76,6 +87,14 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         Unknown,
         EnumMap,
         ConcurrentMap,
+    }
+
+    private enum KeyKind {
+        Generic,
+        Int32,
+        Int64,
+        String,
+        Enum,
     }
 
     // 需要动态处理是否写为文档
@@ -104,7 +123,10 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         };
     }
 
-    protected Map<K, V> toImmutable(Map<K, V> result) {
+    protected Map<K, V> toImmutable(TypeInfo declaredType, Map<K, V> result) {
+        if (!declaredType.rawType.isInterface()) {
+            return result;
+        }
         if (result instanceof LinkedHashMap<K, V> linkedHashMap) {
             return Collections.unmodifiableMap(linkedHashMap);
         }
@@ -114,63 +136,357 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         return CollectionUtils.toImmutableLinkedHashMap(result);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void writeObject(DsonObjectWriter writer, Map<K, V> inst, TypeInfo declaredType, ObjectStyle style) {
-        TypeInfo keyTypeInfo = encoderType.typeArgs.get(0);
-        TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
-
-        var entrySet = inst.entrySet();
-        if (writer.options().writeMapAsDocument) {
-            writer.writeStartObject(style, encoderType, declaredType);
-            for (Map.Entry<K, V> entry : entrySet) {
-                String keyString = writer.encodeKey(entry.getKey(), keyTypeInfo);
-                V value = entry.getValue();
-                if (value == null) {
-                    // map写为普通的Object的时候，必须要写入Null，否则containsKey会异常；要强制写入Null必须先写入Name
-                    writer.writeName(keyString);
-                    writer.writeNull(keyString);
-                } else {
-                    writer.writeObject(keyString, value, valueTypeInfo, null);
-                }
-            }
-            writer.writeEndObject();
+        if (keyKind == KeyKind.Int32) {
+            writeDictionaryInt(writer, (Map<Integer, V>) inst, declaredType, style);
+        } else if (keyKind == KeyKind.Int64) {
+            writeDictionaryLong(writer, (Map<Long, V>) inst, declaredType, style);
         } else {
-            writer.writeStartArray(style, encoderType, declaredType);
-            for (Map.Entry<K, V> entry : entrySet) {
-                writer.writeObject(null, entry.getKey(), keyTypeInfo, null);
-                writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
-            }
-            writer.writeEndArray();
+            writeDictionaryObject(writer, inst, declaredType, style);
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Map<K, V> readObject(DsonObjectReader reader, Supplier<? extends Map<K, V>> factory) {
+    public Map<K, V> readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Map<K, V>> factory) {
         reader.setEnableNameIntern(false); // 禁用字典的name池化
 
+        Map<K, V> result = factory != null ? factory.get() : newMap();
+        if (keyKind == KeyKind.Int32) {
+            readDictionaryInt(reader, (Map<Integer, V>) result);
+        } else if (keyKind == KeyKind.Int64) {
+            readDictionaryLong(reader, (Map<Long, V>) result);
+        } else {
+            readDictionaryObject(reader, result);
+        }
+        return reader.options().readAsImmutable ? toImmutable(declaredType, result) : result;
+    }
+
+    // region int
+
+    private void writeDictionaryInt(DsonObjectWriter writer, Map<Integer, V> inst, TypeInfo declaredType, ObjectStyle style) {
+//        TypeInfo keyTypeInfo = encoderType.typeArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
+        switch (writer.options().mapEncodePolicy) {
+            case DOCUMENT -> {
+                writer.writeStartObject(style, encoderType, declaredType);
+                for (Map.Entry<Integer, V> entry : inst.entrySet()) {
+                    String keyString = entry.getKey().toString();
+                    writer.writeName(keyString); // 确保Null会被写入
+                    writer.writeObject(keyString, entry.getValue(), valueTypeInfo, null);
+                }
+                writer.writeEndObject();
+            }
+            case PAIR_AS_DOCUMENT -> {
+                writer.writeStartArray(style, encoderType, declaredType);
+                for (Map.Entry<Integer, V> entry : inst.entrySet()) {
+                    writer.writeStartObject(ObjectStyle.FLOW); // pair写为子文档-没有类型
+                    {
+                        String keyString = entry.getKey().toString();
+                        writer.writeName(keyString); // 确保写入null
+                        writer.writeObject(keyString, entry.getValue(), valueTypeInfo);
+                    }
+                    writer.writeEndObject();
+                }
+                writer.writeEndArray();
+            }
+            case PAIR_AS_ARRAY -> {
+                writer.writeStartArray(style, encoderType, declaredType);
+                for (Map.Entry<Integer, V> entry : inst.entrySet()) {
+                    writer.writeStartArray(ObjectStyle.FLOW); // pair写为子数组-没有类型
+                    {
+                        writer.writeInt(null, entry.getKey()); // key不可以为null
+                        writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
+                    }
+                    writer.writeEndArray();
+                }
+                writer.writeEndArray();
+            }
+            case ARRAY -> {
+                writer.writeStartArray(style, encoderType, declaredType);
+                for (Map.Entry<Integer, V> entry : inst.entrySet()) {
+                    writer.writeInt(null, entry.getKey()); // key不可以为null
+                    writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
+                }
+                writer.writeEndArray();
+            }
+        }
+    }
+
+    private void readDictionaryInt(DsonObjectReader reader, Map<Integer, V> result) {
         TypeInfo keyTypeInfo = encoderType.typeArgs.get(0);
         TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
         //
-        Map<K, V> result = factory != null ? factory.get() : newMap();
         if (reader.getCurrentDsonType() == DsonType.OBJECT) {
             reader.readStartObject();
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
-                K key = reader.decodeKey(keyString, keyTypeInfo);
-                V value = reader.readObject(keyString, valueTypeInfo);
+                Integer key = Integer.parseInt(keyString);
+                V value = reader.readObject(null, valueTypeInfo);
                 result.put(key, value);
             }
             reader.readEndObject();
         } else {
             reader.readStartArray();
-            while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
-                K key = reader.readObject(null, keyTypeInfo);
-                V value = reader.readObject(null, valueTypeInfo);
-                result.put(key, value);
+            DsonType firstDsonType = reader.readDsonType();
+            switch (firstDsonType) {
+                case END_OF_OBJECT -> {} // 没有元素
+                case OBJECT -> { // Pair为子文档
+                    do {
+                        reader.readStartObject();
+                        {
+                            String keyString = reader.readName();
+                            Integer key = Integer.parseInt(keyString);
+                            V value = reader.readObject(null, valueTypeInfo);
+                            result.put(key, value);
+                        }
+                        reader.readEndObject();
+                    } while (reader.readDsonType() != DsonType.END_OF_OBJECT);
+                }
+                case ARRAY -> { // Pair为子数组
+                    do {
+                        reader.readStartArray();
+                        {
+                            Integer key = reader.readInt(null);
+                            V value = reader.readObject(null, valueTypeInfo);
+                            result.put(key, value);
+                        }
+                        reader.readEndArray();
+                    } while (reader.readDsonType() != DsonType.END_OF_OBJECT);
+                }
+                default -> {
+                    // 整个字典写为数组
+                    do {
+                        Integer key = reader.readInt(null);
+                        V value = reader.readObject(null, valueTypeInfo);
+                        result.put(key, value);
+                    } while (reader.readDsonType() != DsonType.END_OF_OBJECT);
+                }
             }
             reader.readEndArray();
         }
-        return reader.options().readAsImmutable ? toImmutable(result) : result;
     }
 
+    // endregion
+
+    // region int64
+    private void writeDictionaryLong(DsonObjectWriter writer, Map<Long, V> inst, TypeInfo declaredType, ObjectStyle style) {
+//        TypeInfo keyTypeInfo = encoderType.typeArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
+        switch (writer.options().mapEncodePolicy) {
+            case DOCUMENT -> {
+                writer.writeStartObject(style, encoderType, declaredType);
+                for (Map.Entry<Long, V> entry : inst.entrySet()) {
+                    String keyString = entry.getKey().toString();
+                    writer.writeName(keyString); // 确保Null会被写入
+                    writer.writeObject(keyString, entry.getValue(), valueTypeInfo, null);
+                }
+                writer.writeEndObject();
+            }
+            case PAIR_AS_DOCUMENT -> {
+                writer.writeStartArray(style, encoderType, declaredType);
+                for (Map.Entry<Long, V> entry : inst.entrySet()) {
+                    writer.writeStartObject(ObjectStyle.FLOW); // pair写为子文档-没有类型
+                    {
+                        String keyString = entry.getKey().toString();
+                        writer.writeName(keyString); // 确保写入null
+                        writer.writeObject(keyString, entry.getValue(), valueTypeInfo);
+                    }
+                    writer.writeEndObject();
+                }
+                writer.writeEndArray();
+            }
+            case PAIR_AS_ARRAY -> {
+                writer.writeStartArray(style, encoderType, declaredType);
+                for (Map.Entry<Long, V> entry : inst.entrySet()) {
+                    writer.writeStartArray(ObjectStyle.FLOW); // pair写为子数组-没有类型
+                    {
+                        writer.writeLong(null, entry.getKey()); // key不可以为null
+                        writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
+                    }
+                    writer.writeEndArray();
+                }
+                writer.writeEndArray();
+            }
+            case ARRAY -> {
+                writer.writeStartArray(style, encoderType, declaredType);
+                for (Map.Entry<Long, V> entry : inst.entrySet()) {
+                    writer.writeLong(null, entry.getKey()); // key不可以为null
+                    writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
+                }
+                writer.writeEndArray();
+            }
+        }
+    }
+
+    private void readDictionaryLong(DsonObjectReader reader, Map<Long, V> result) {
+        TypeInfo keyTypeInfo = encoderType.typeArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
+        //
+        if (reader.getCurrentDsonType() == DsonType.OBJECT) {
+            reader.readStartObject();
+            while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
+                String keyString = reader.readName();
+                Long key = Long.parseLong(keyString);
+                V value = reader.readObject(null, valueTypeInfo);
+                result.put(key, value);
+            }
+            reader.readEndObject();
+        } else {
+            reader.readStartArray();
+            DsonType firstDsonType = reader.readDsonType();
+            switch (firstDsonType) {
+                case END_OF_OBJECT -> {} // 没有元素
+                case OBJECT -> { // Pair为子文档
+                    do {
+                        reader.readStartObject();
+                        {
+                            String keyString = reader.readName();
+                            Long key = Long.parseLong(keyString);
+                            V value = reader.readObject(null, valueTypeInfo);
+                            result.put(key, value);
+                        }
+                        reader.readEndObject();
+                    } while (reader.readDsonType() != DsonType.END_OF_OBJECT);
+                }
+                case ARRAY -> { // Pair为子数组
+                    do {
+                        reader.readStartArray();
+                        {
+                            Long key = reader.readLong(null);
+                            V value = reader.readObject(null, valueTypeInfo);
+                            result.put(key, value);
+                        }
+                        reader.readEndArray();
+                    } while (reader.readDsonType() != DsonType.END_OF_OBJECT);
+                }
+                default -> {
+                    // 整个字典写为数组
+                    do {
+                        Long key = reader.readLong(null);
+                        V value = reader.readObject(null, valueTypeInfo);
+                        result.put(key, value);
+                    } while (reader.readDsonType() != DsonType.END_OF_OBJECT);
+                }
+            }
+            reader.readEndArray();
+        }
+    }
+    // endregion
+
+    // region object
+    private void writeDictionaryObject(DsonObjectWriter writer, Map<K, V> inst, TypeInfo declaredType, ObjectStyle style) {
+        TypeInfo keyTypeInfo = encoderType.typeArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
+        // policy修正
+        MapEncodePolicy policy = writer.options().mapEncodePolicy;
+        if (keyKind == KeyKind.Generic) {
+            if (policy == MapEncodePolicy.DOCUMENT) {
+                policy = MapEncodePolicy.ARRAY;
+            } else if (policy == MapEncodePolicy.PAIR_AS_DOCUMENT) {
+                policy = MapEncodePolicy.PAIR_AS_ARRAY;
+            }
+        }
+        switch (policy) {
+            case DOCUMENT -> {
+                writer.writeStartObject(style, encoderType, declaredType);
+                for (Map.Entry<K, V> entry : inst.entrySet()) {
+                    String keyString = writer.encodeKey(entry.getKey(), keyTypeInfo);
+                    writer.writeName(keyString); // 确保Null会被写入
+                    writer.writeObject(keyString, entry.getValue(), valueTypeInfo, null);
+                }
+                writer.writeEndObject();
+            }
+            case PAIR_AS_DOCUMENT -> {
+                writer.writeStartArray(style, encoderType, declaredType);
+                for (Map.Entry<K, V> entry : inst.entrySet()) {
+                    writer.writeStartObject(ObjectStyle.FLOW); // pair写为子文档-没有类型
+                    {
+                        String keyString = writer.encodeKey(entry.getKey(), keyTypeInfo);
+                        writer.writeName(keyString); // 确保写入null
+                        writer.writeObject(keyString, entry.getValue(), valueTypeInfo);
+                    }
+                    writer.writeEndObject();
+                }
+                writer.writeEndArray();
+            }
+            case PAIR_AS_ARRAY -> {
+                writer.writeStartArray(style, encoderType, declaredType);
+                for (Map.Entry<K, V> entry : inst.entrySet()) {
+                    writer.writeStartArray(ObjectStyle.FLOW); // pair写为子数组-没有类型
+                    {
+                        writer.writeObject(null, entry.getKey(), keyTypeInfo);
+                        writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
+                    }
+                    writer.writeEndArray();
+                }
+                writer.writeEndArray();
+            }
+            case ARRAY -> {
+                writer.writeStartArray(style, encoderType, declaredType);
+                for (Map.Entry<K, V> entry : inst.entrySet()) {
+                    writer.writeObject(null, entry.getKey(), keyTypeInfo, null);
+                    writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
+                }
+                writer.writeEndArray();
+            }
+        }
+    }
+
+    private void readDictionaryObject(DsonObjectReader reader, Map<K, V> result) {
+        TypeInfo keyTypeInfo = encoderType.typeArgs.get(0);
+        TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
+        //
+        if (reader.getCurrentDsonType() == DsonType.OBJECT) {
+            reader.readStartObject();
+            while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
+                String keyString = reader.readName();
+                K key = reader.decodeKey(keyString, keyTypeInfo);
+                V value = reader.readObject(null, valueTypeInfo);
+                result.put(key, value);
+            }
+            reader.readEndObject();
+        } else {
+            reader.readStartArray();
+            DsonType firstDsonType = reader.readDsonType();
+            switch (firstDsonType) {
+                case END_OF_OBJECT -> {} // 没有元素
+                case OBJECT -> { // Pair为子文档
+                    do {
+                        reader.readStartObject();
+                        {
+                            String keyString = reader.readName();
+                            K key = reader.decodeKey(keyString, keyTypeInfo);
+                            V value = reader.readObject(null, valueTypeInfo);
+                            result.put(key, value);
+                        }
+                        reader.readEndObject();
+                    } while (reader.readDsonType() != DsonType.END_OF_OBJECT);
+                }
+                case ARRAY -> { // Pair为子数组
+                    do {
+                        reader.readStartArray();
+                        {
+                            K key = reader.readObject(null, keyTypeInfo);
+                            V value = reader.readObject(null, valueTypeInfo);
+                            result.put(key, value);
+                        }
+                        reader.readEndArray();
+                    } while (reader.readDsonType() != DsonType.END_OF_OBJECT);
+                }
+                default -> {
+                    // 整个字典写为数组
+                    do {
+                        K key = reader.readObject(null, keyTypeInfo);
+                        V value = reader.readObject(null, valueTypeInfo);
+                        result.put(key, value);
+                    } while (reader.readDsonType() != DsonType.END_OF_OBJECT);
+                }
+            }
+            reader.readEndArray();
+        }
+    }
+    // endregion
 }

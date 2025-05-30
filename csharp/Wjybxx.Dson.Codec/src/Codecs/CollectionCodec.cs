@@ -85,11 +85,12 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         };
     }
 
-    protected virtual ICollection<T> ToImmutable(ICollection<T> result) {
-        if (result is ISet<T> || result is IGenericSet<T>) {
-            return ImmutableLinkedHastSet<T>.CreateRange(result); // 暂时进行了类型兼容，否则难搞...
+    protected virtual ICollection<T> ToImmutable(Type declaredType, ICollection<T> result) {
+        if (declaredType.IsInterface
+            || declaredType.GetGenericTypeDefinition() == typeof(ImmutableLinkedHastSet<>)) {
+            return ImmutableLinkedHastSet<T>.CreateRange(result);
         }
-        return ImmutableList<T>.CreateRange(result);
+        return result;
     }
 
     public void WriteObject(IDsonObjectWriter writer, in ICollection<T> inst, Type declaredType, ObjectStyle style) {
@@ -98,13 +99,13 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         }
     }
 
-    public ICollection<T> ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+    public ICollection<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         ICollection<T> result = factory != null ? (ICollection<T>)factory() : NewCollection();
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             T value = reader.ReadObject<T>(null);
             result.Add(value);
         }
-        return reader.Options.readAsImmutable ? ToImmutable(result) : result;
+        return reader.Options.readAsImmutable ? ToImmutable(declaredType, result) : result;
     }
 }
 }

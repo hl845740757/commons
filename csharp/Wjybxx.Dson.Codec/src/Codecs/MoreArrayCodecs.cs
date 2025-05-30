@@ -37,7 +37,7 @@ public static class MoreArrayCodecs
             writer.WriteBinary(null, Binary.CopyFrom(inst)); // 默认拷贝
         }
 
-        public byte[] ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public byte[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             Binary binary = reader.ReadBinary(reader.CurrentName);
             return binary.UnsafeBuffer;
         }
@@ -51,7 +51,7 @@ public static class MoreArrayCodecs
             }
         }
 
-        public int[] ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public int[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<int> result = new List<int>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -70,7 +70,7 @@ public static class MoreArrayCodecs
             }
         }
 
-        public long[] ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public long[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<long> result = new List<long>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -89,7 +89,7 @@ public static class MoreArrayCodecs
             }
         }
 
-        public float[] ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public float[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<float> result = new List<float>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -108,7 +108,7 @@ public static class MoreArrayCodecs
             }
         }
 
-        public double[] ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public double[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<double> result = new List<double>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -127,7 +127,7 @@ public static class MoreArrayCodecs
             }
         }
 
-        public bool[] ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public bool[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<bool> result = new List<bool>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -146,7 +146,7 @@ public static class MoreArrayCodecs
             }
         }
 
-        public string[] ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public string[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<string> result = new List<string>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -165,7 +165,7 @@ public static class MoreArrayCodecs
             }
         }
 
-        public uint[] ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public uint[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<uint> result = new List<uint>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
@@ -184,7 +184,7 @@ public static class MoreArrayCodecs
             }
         }
 
-        public ulong[] ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+        public ulong[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             // 由于长度未知，只能先存储为List再转...
             List<ulong> result = new List<ulong>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {

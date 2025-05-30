@@ -35,7 +35,7 @@ public class DefaultValueTest {
     @Test
     void docTest() {
         ConverterOptions options = ConverterOptions.newBuilder()
-                .setWriteMapAsDocument(true)
+                .setMapEncodePolicy(MapEncodePolicy.DOCUMENT)
                 .setAppendDef(false)
                 .build();
 

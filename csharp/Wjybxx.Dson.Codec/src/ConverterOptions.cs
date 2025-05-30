@@ -49,26 +49,16 @@ public class ConverterOptions
     /// </summary>
     public readonly bool appendNull;
     /// <summary>
-    /// 是否把Map(字典)编码为普通对象（文档）
-    /// 1.只在文档编解码中生效
-    /// 2.如果要将一个Map结构编码为普通对象，<b>Key的运行时必须和声明类型相同</b>，且只支持String、Integer、Long、Enum。
-    /// 3.在不启用该选项的情况下，用户可通过字段写代理将字段转换为<see cref="DictionaryEncodeProxy{V}"/>，实现更精确的控制。
-    ///
-    /// <h3>Map不是Object</h3>
-    /// 本质上讲，Map是数组，而不是普通的Object，因为标准的Map是允许复杂key的，因此Map默认应该序列化为数组。但存在两个特殊的场景：
-    /// 1.与脚本语言通信
-    /// 脚本语言通常没有静态语言中的字典结构，由object充当，但object不支持复杂的key作为键，通常仅支持数字和字符串作为key。
-    /// 因此在与脚本语言通信时，要求将Map序列化为简单的object。
-    /// 2.配置文件读写
-    /// 配置文件通常是无类型的，因此读取到内存中通常是一个字典结构；程序在输出配置文件时，同样需要将字典结构输出为object结构。
+    /// 字典的编码策略
     /// </summary>
-    public readonly bool writeMapAsDocument;
+    public readonly MapEncodePolicy mapEncodePolicy;
     /// <summary>
     /// 是否将枚举写为字符串
-    /// 1.只在文档编码中生效(DsonCodec)
-    /// 2.对字典的Key也生效
+    /// 1.不适用字典的Key，当字典需要被编码为Document时，枚举将固定输出为字符串。
+    /// 2.通常不建议开启，兼容性不好；如果个别字段的字典想定制编码，可通过字段编解码代理实现。
     /// </summary>
     public readonly bool writeEnumAsString;
+
     /// <summary>
     /// 是否启用随机读
     /// 启用随机读会增加较多的开销，需要先读取为中间结构，再解码为对象；但启用随机读的数据兼容性更好。
@@ -126,7 +116,7 @@ public class ConverterOptions
         this.typeWritePolicy = builder.TypeWritePolicy;
         this.appendDef = builder.AppendDef;
         this.appendNull = builder.AppendNull;
-        this.writeMapAsDocument = builder.WriteMapAsDocument;
+        this.mapEncodePolicy = builder.MapEncodePolicy;
         this.writeEnumAsString = builder.WriteEnumAsString;
         this.randomRead = builder.RandomRead;
         this.readAsImmutable = builder.ReadAsImmutable;
@@ -158,7 +148,7 @@ public class ConverterOptions
         builder.TypeWritePolicy = typeWritePolicy;
         builder.AppendDef = appendDef;
         builder.AppendNull = appendNull;
-        builder.WriteMapAsDocument = writeMapAsDocument;
+        builder.MapEncodePolicy = mapEncodePolicy;
         builder.WriteEnumAsString = writeEnumAsString;
         builder.RandomRead = randomRead;
         builder.ReadAsImmutable = readAsImmutable;
@@ -191,7 +181,7 @@ public class ConverterOptions
         public TypeWritePolicy TypeWritePolicy { get; set; } = TypeWritePolicy.Optimized;
         public bool AppendDef { get; set; } = true;
         public bool AppendNull { get; set; } = true;
-        public bool WriteMapAsDocument { get; set; } = false;
+        public MapEncodePolicy MapEncodePolicy { get; set; } = MapEncodePolicy.Array;
         public bool WriteEnumAsString { get; set; } = false;
         public bool RandomRead { get; set; } = true;
         public bool ReadAsImmutable { get; set; } = false;

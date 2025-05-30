@@ -19,7 +19,10 @@ package cn.wjybxx.dsoncodec.fastutil;
 import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
-import cn.wjybxx.dsoncodec.*;
+import cn.wjybxx.dsoncodec.DsonCodec;
+import cn.wjybxx.dsoncodec.DsonConverterUtils;
+import cn.wjybxx.dsoncodec.DsonObjectReader;
+import cn.wjybxx.dsoncodec.DsonObjectWriter;
 import it.unimi.dsi.fastutil.longs.*;
 
 import javax.annotation.Nonnull;
@@ -76,7 +79,7 @@ public class LongCollectionCodec implements DsonCodec<LongCollection> {
     }
 
     @Override
-    public LongCollection readObject(DsonObjectReader reader, Supplier<? extends LongCollection> factory) {
+    public LongCollection readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends LongCollection> factory) {
         LongCollection result = factory != null ? factory.get() : newCollection();
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readLong(null));

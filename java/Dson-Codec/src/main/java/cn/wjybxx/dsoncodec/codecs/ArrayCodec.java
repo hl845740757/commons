@@ -16,12 +16,12 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Array;
@@ -69,7 +69,7 @@ public final class ArrayCodec<T> implements DsonCodec<T[]> {
     }
 
     @Override
-    public T[] readObject(DsonObjectReader reader, Supplier<? extends T[]> factory) {
+    public T[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T[]> factory) {
         TypeInfo elementTypeInfo = this.elementTypeInfo;
 
         // 由于长度未知，只能先存储为List再转...

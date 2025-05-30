@@ -65,7 +65,7 @@ public abstract class AbstractDsonCodec<T> implements DsonCodec<T> {
     // region read
 
     @Override
-    public T readObject(DsonObjectReader reader, Supplier<? extends T> factory) {
+    public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
         final T instance = factory != null ? factory.get() : newInstance(reader);
         readFields(reader, instance);
         if (reader.options().enableAfterDecode) {

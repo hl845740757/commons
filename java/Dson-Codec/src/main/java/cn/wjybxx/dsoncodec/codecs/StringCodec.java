@@ -16,12 +16,12 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 
 import javax.annotation.Nonnull;
@@ -51,7 +51,7 @@ public class StringCodec implements DsonCodec<String> {
     }
 
     @Override
-    public String readObject(DsonObjectReader reader, Supplier<? extends String> factory) {
+    public String readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends String> factory) {
         return reader.readString(null);
     }
 

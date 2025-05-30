@@ -150,7 +150,7 @@ public class DsonTexts {
             }
             if (c == 'e' || c == 'E') {
                 hasExponent = true;
-            } else if (!parseableCharSet.get(c)) {
+            } else if (c > 127 || !parseableCharSet.get(c)) {
                 maybeParsable = false;
             }
         }

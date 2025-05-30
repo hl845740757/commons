@@ -31,7 +31,7 @@ public class Vector3Codec : IDsonCodec<Vector3>
         writer.WriteFloat("z", inst.Z);
     }
 
-    public Vector3 ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+    public Vector3 ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         return new Vector3(
             reader.ReadFloat("x"),
             reader.ReadFloat("y"),

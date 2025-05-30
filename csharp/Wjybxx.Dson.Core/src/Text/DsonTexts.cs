@@ -98,6 +98,11 @@ public static class DsonTexts
         foreach (char c in reservedTokenCharArray) {
             unsafePrintCharSet.Set(c, true);
         }
+        // 可解析的数字相关字符
+        char[] parseableCharArray = "0123456789Ee.+-".ToCharArray();
+        foreach (char c in parseableCharArray) {
+            parseableCharSet.Set(c, true);
+        }
     }
 
     /** 添加全局不安全字符 */
@@ -155,7 +160,7 @@ public static class DsonTexts
             }
             if (c == 'e' || c == 'E') {
                 hasExponent = true;
-            } else if (!parseableCharSet[c]) {
+            } else if (c > 127 || !parseableCharSet.Get(c)) {
                 maybeParsable = false;
             }
         }

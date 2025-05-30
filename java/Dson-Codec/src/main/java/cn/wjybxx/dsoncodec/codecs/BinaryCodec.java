@@ -16,12 +16,12 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.types.Binary;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 
 import javax.annotation.Nonnull;
@@ -51,7 +51,7 @@ public class BinaryCodec implements DsonCodec<Binary> {
     }
 
     @Override
-    public Binary readObject(DsonObjectReader reader, Supplier<? extends Binary> factory) {
+    public Binary readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Binary> factory) {
         return reader.readBinary(null);
     }
 }

@@ -67,6 +67,7 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
     private readonly Dictionary<T, EnumValueInfo<T>> _value2EnumDic;
     private readonly Dictionary<int, EnumValueInfo<T>> _number2EnumDic;
     private readonly Dictionary<string, EnumValueInfo<T>> _name2EnumDic;
+    private readonly bool _isFlags;
 
     /// <summary>
     /// 
@@ -76,6 +77,7 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
         _value2EnumDic = new Dictionary<T, EnumValueInfo<T>>(valueInfos.Count);
         _number2EnumDic = new Dictionary<int, EnumValueInfo<T>>(valueInfos.Count);
         _name2EnumDic = new Dictionary<string, EnumValueInfo<T>>(valueInfos.Count);
+        _isFlags = typeof(T).IsDefined(typeof(FlagsAttribute));
 
         foreach (EnumValueInfo<T> valueInfo in valueInfos) {
             _value2EnumDic[valueInfo.value] = valueInfo;
@@ -90,6 +92,7 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
         _value2EnumDic = new Dictionary<T, EnumValueInfo<T>>(values.Length);
         _number2EnumDic = new Dictionary<int, EnumValueInfo<T>>(values.Length);
         _name2EnumDic = new Dictionary<string, EnumValueInfo<T>>(values.Length);
+        _isFlags = typeof(T).IsDefined(typeof(FlagsAttribute));
 
         FieldInfo[] enumFields = typeof(T).GetFields();
         for (int idx = 0; idx < values.Length; idx++) {
@@ -164,7 +167,7 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
         }
     }
 
-    public T ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+    public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         if (reader.CurrentDsonType == DsonType.String) {
             string name = reader.ReadString(null);
             if (_name2EnumDic.TryGetValue(name, out EnumValueInfo<T> valueInfo)) {

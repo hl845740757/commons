@@ -35,7 +35,7 @@ public sealed class ArrayCodec<T> : IDsonCodec<T[]>
         }
     }
 
-    public T[] ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+    public T[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         // 由于长度未知，只能先存储为List再转...
         List<T> result = new List<T>();
         while (reader.ReadDsonType() != DsonType.EndOfObject) {

@@ -40,7 +40,7 @@ public class NullableCodec<T> : IDsonCodec<T?> where T : struct
         }
     }
 
-    public T? ReadObject(IDsonObjectReader reader, Func<object>? factory = null) {
+    public T? ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         return reader.ReadObject<T>(null, null);
     }
 }

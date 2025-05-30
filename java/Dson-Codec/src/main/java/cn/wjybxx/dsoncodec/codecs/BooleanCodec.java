@@ -16,11 +16,11 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 
 import javax.annotation.Nonnull;
@@ -50,7 +50,7 @@ public class BooleanCodec implements DsonCodec<Boolean> {
     }
 
     @Override
-    public Boolean readObject(DsonObjectReader reader, Supplier<? extends Boolean> factory) {
+    public Boolean readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Boolean> factory) {
         return reader.readBoolean(null);
     }
 

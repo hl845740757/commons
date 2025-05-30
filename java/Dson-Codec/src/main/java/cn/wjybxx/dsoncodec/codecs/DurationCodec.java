@@ -16,12 +16,12 @@
 
 package cn.wjybxx.dsoncodec.codecs;
 
+import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.types.Timestamp;
 import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dsoncodec.annotations.DsonCodecScanIgnore;
 
 import javax.annotation.Nonnull;
@@ -52,7 +52,7 @@ public class DurationCodec implements DsonCodec<Duration> {
     }
 
     @Override
-    public Duration readObject(DsonObjectReader reader, Supplier<? extends Duration> factory) {
+    public Duration readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Duration> factory) {
         Timestamp timestamp = reader.readTimestamp(null);
         return Duration.ofSeconds(timestamp.getSeconds(), timestamp.getNanos());
     }

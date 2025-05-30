@@ -100,8 +100,9 @@ public interface IDsonCodec<T> : IDsonCodec
     /// 注意：name在外部已读取，因此基础类型读取value时name传null。
     /// </summary>
     /// <param name="reader">reader</param>
+    /// <param name="declaredType">对象的声明类型(判断是否可以转不可变等)</param>
     /// <param name="factory">实例工厂</param>
     /// <returns></returns>
-    T ReadObject(IDsonObjectReader reader, Func<object>? factory = null);
+    T ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null);
 }
 }
