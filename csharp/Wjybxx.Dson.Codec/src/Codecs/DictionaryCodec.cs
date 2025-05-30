@@ -107,8 +107,11 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
     }
 
     protected virtual IDictionary<K, V> ToImmutable(Type declaredType, IDictionary<K, V> dictionary) {
-        if (declaredType.IsInterface
-            || declaredType.GetGenericTypeDefinition() == typeof(ImmutableLinkedDictionary<,>)) {
+        if (declaredType.IsInterface) {
+            return ImmutableLinkedDictionary<K, V>.CreateRange(dictionary);
+        }
+        if (declaredType.IsGenericType
+            && declaredType.GetGenericTypeDefinition() == typeof(ImmutableLinkedDictionary<,>)) {
             return ImmutableLinkedDictionary<K, V>.CreateRange(dictionary);
         }
         return dictionary;
@@ -243,6 +246,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                     do {
                         reader.ReadStartObject();
                         {
+                            reader.ReadDsonType();
                             int key = int.Parse(reader.ReadName());
                             V value = reader.ReadObject<V>(null);
                             result[key] = value;
@@ -354,6 +358,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                     do {
                         reader.ReadStartObject();
                         {
+                            reader.ReadDsonType();
                             long key = long.Parse(reader.ReadName());
                             V value = reader.ReadObject<V>(null);
                             result[key] = value;
@@ -465,6 +470,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                     do {
                         reader.ReadStartObject();
                         {
+                            reader.ReadDsonType();
                             uint key = uint.Parse(reader.ReadName());
                             V value = reader.ReadObject<V>(null);
                             result[key] = value;
@@ -588,6 +594,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                     do {
                         reader.ReadStartObject();
                         {
+                            reader.ReadDsonType();
                             ulong key = ulong.Parse(reader.ReadName());
                             V value = reader.ReadObject<V>(null);
                             result[key] = value;
@@ -698,6 +705,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                     do {
                         reader.ReadStartObject();
                         {
+                            reader.ReadDsonType();
                             K key = reader.DecodeKey<K>(reader.ReadName());
                             V value = reader.ReadObject<V>(null);
                             result[key] = value;

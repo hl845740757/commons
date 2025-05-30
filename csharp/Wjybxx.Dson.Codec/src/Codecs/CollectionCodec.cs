@@ -86,9 +86,21 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
     }
 
     protected virtual ICollection<T> ToImmutable(Type declaredType, ICollection<T> result) {
-        if (declaredType.IsInterface
-            || declaredType.GetGenericTypeDefinition() == typeof(ImmutableLinkedHastSet<>)) {
-            return ImmutableLinkedHastSet<T>.CreateRange(result);
+        if (declaredType.IsInterface) {
+            if (DsonConverterUtils.IsSet(declaredType)) {
+                return ImmutableLinkedHastSet<T>.CreateRange(result);
+            }
+            if (DsonConverterUtils.IsList(declaredType)) {
+                return ImmutableList<T>.CreateRange(result);
+            }
+        }
+        if (declaredType.IsGenericType) {
+            if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableLinkedHastSet<>)) {
+                return ImmutableLinkedHastSet<T>.CreateRange(result);
+            }
+            if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableList<>)) {
+                return ImmutableList<T>.CreateRange(result);
+            }
         }
         return result;
     }

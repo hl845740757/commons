@@ -90,7 +90,7 @@ public class DsonTextWriterSettings extends DsonWriterSettings {
          * 通常用于非UTF8文本的移植
          */
         private boolean unicodeChar = false;
-        /** 自动模式下无引号字符串的最大长度 -- 过大会降低序列化速度 */
+        /** 自动模式下无引号字符串的最大长度 -- 过大会降低序列化速度，也会影响换行的精确性 */
         private int maxLengthOfUnquoteString = 20;
         /** 目标Writer是{@link StringBuilderWriter}时是否直接访问底层的Builder代替额外的分配，这可以节省大量的开销 */
         private boolean accessBackingBuilder = true;

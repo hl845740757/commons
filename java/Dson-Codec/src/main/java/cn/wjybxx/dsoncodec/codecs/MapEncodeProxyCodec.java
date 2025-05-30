@@ -134,6 +134,7 @@ public class MapEncodeProxyCodec<V> implements DsonCodec<MapEncodeProxy<V>> {
                     do {
                         reader.readStartObject();
                         {
+                            reader.readDsonType();
                             String key = reader.readName();
                             V value = reader.readObject(null, valueTypeInfo);
                             entries.add(Tuple2.of(key, value));

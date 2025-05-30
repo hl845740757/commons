@@ -237,6 +237,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                     do {
                         reader.readStartObject();
                         {
+                            reader.readDsonType();
                             String keyString = reader.readName();
                             Integer key = Integer.parseInt(keyString);
                             V value = reader.readObject(null, valueTypeInfo);
@@ -343,6 +344,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                     do {
                         reader.readStartObject();
                         {
+                            reader.readDsonType();
                             String keyString = reader.readName();
                             Long key = Long.parseLong(keyString);
                             V value = reader.readObject(null, valueTypeInfo);
@@ -457,6 +459,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                     do {
                         reader.readStartObject();
                         {
+                            reader.readDsonType();
                             String keyString = reader.readName();
                             K key = reader.decodeKey(keyString, keyTypeInfo);
                             V value = reader.readObject(null, valueTypeInfo);

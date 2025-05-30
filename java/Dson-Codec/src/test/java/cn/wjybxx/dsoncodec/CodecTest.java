@@ -20,12 +20,10 @@ import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.text.ObjectStyle;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
 
 /**
  * 基础读写测试
@@ -35,10 +33,77 @@ import java.util.Random;
  */
 public class CodecTest {
 
-    private CodecStructs.MyStruct myStruct;
+    private static DsonConverter converter;
 
-    @BeforeEach
-    void setUp() {
+    @BeforeAll
+    static void setUp() {
+        ConverterOptions options = ConverterOptions.newBuilder()
+                .setMapEncodePolicy(MapEncodePolicy.DOCUMENT)
+                .setWriteEnumAsString(true)
+                .build();
+        converter = new DsonConverterBuilder()
+                .addTypeMetas(
+                        TypeMeta.of(CodecStructs.MyStruct.class, ObjectStyle.INDENT, "MyStruct"),
+                        TypeMeta.of(Sex.class, ObjectStyle.INDENT, "Sex"),
+                        TypeMeta.of(Vector3.class, ObjectStyle.FLOW, "Vector3", "V3")
+                ).addCodecs(
+                        new CodecStructs.MyStructCodec(),
+                        new Vector3.Vector3Codec()
+                ).setOptions(options)
+                .build();
+    }
+
+    @Test
+    public void TestDictionaryVector3() {
+        TestDictionaryVector3(MapEncodePolicy.ARRAY);
+    }
+
+    @Test
+    public void TestDictionaryVector3AsDocument() {
+        TestDictionaryVector3(MapEncodePolicy.DOCUMENT);
+    }
+
+    @Test
+    public void TestDictionaryVector3AsPairDocument() {
+        TestDictionaryVector3(MapEncodePolicy.PAIR_AS_DOCUMENT);
+    }
+
+    @Test
+    public void TestDictionaryVector3AsPariArray() {
+        TestDictionaryVector3(MapEncodePolicy.PAIR_AS_ARRAY);
+    }
+
+    private void TestDictionaryVector3(MapEncodePolicy mapEncodePolicy) {
+        Map<Integer, Vector3> dictionary = new LinkedHashMap<Integer, Vector3>();
+        for (int i = 1; i <= 5; i++) {
+            dictionary.put(i, new Vector3(i - 0.5f, i, i + 0.5f));
+        }
+
+        ConverterOptions.Builder builder = converter.options().toBuilder();
+        builder.setMapEncodePolicy(mapEncodePolicy);
+        DsonConverter converter2 = converter.withOptions(builder.build());
+
+        TypeInfo declaredType = TypeInfo.of(Map.class, TypeInfo.BOXED_INT, TypeInfo.of(Vector3.class));
+        // 和C#的测试不同，我们这里需要传入Key和Value的信息，否则Key会被识别为Object
+        String dson = converter2.writeAsDson(dictionary, declaredType);
+        System.out.println(dson);
+
+        Map<Integer, Vector3> copied = converter2.readFromDson(dson, declaredType);
+        Assertions.assertEquals(copied, dictionary);
+    }
+
+    @Test
+    void docCodecTest() {
+        CodecStructs.MyStruct myStruct = createStruct();
+        String dsonString = converter.writeAsDson(myStruct);
+        System.out.println(dsonString);
+
+        TypeInfo typeInfo = TypeInfo.of(CodecStructs.MyStruct.class);
+        CodecStructs.MyStruct clonedObject = converter.cloneObject(myStruct, typeInfo, typeInfo);
+        Assertions.assertEquals(myStruct, clonedObject);
+    }
+
+    private static CodecStructs.MyStruct createStruct() {
         Random random = new Random();
         CodecStructs.NestStruct nestStruct = new CodecStructs.NestStruct(random.nextInt(), random.nextLong(),
                 random.nextFloat() * 100, random.nextDouble() * 100);
@@ -60,30 +125,6 @@ public class CodecTest {
 
         myStruct.map.put(String.valueOf(myStruct.intVal), random.nextFloat() * 100);
         myStruct.map.put(String.valueOf(myStruct.longVal), random.nextDouble() * 100);
-
-        this.myStruct = myStruct;
+        return myStruct;
     }
-
-    @Test
-    void docCodecTest() {
-        ConverterOptions options = ConverterOptions.newBuilder()
-                .setMapEncodePolicy(MapEncodePolicy.DOCUMENT)
-                .setWriteEnumAsString(true)
-                .build();
-        DsonConverter converter = new DsonConverterBuilder()
-                .addTypeMetas(
-                        TypeMeta.of(CodecStructs.MyStruct.class, ObjectStyle.INDENT, "MyStruct"),
-                        TypeMeta.of(Sex.class, ObjectStyle.INDENT, "Sex")
-                ).addCodecs(
-                        new CodecStructs.MyStructCodec()
-                ).setOptions(options)
-                .build();
-        String dsonString = converter.writeAsDson(myStruct);
-        System.out.println(dsonString);
-
-        TypeInfo typeInfo = TypeInfo.of(CodecStructs.MyStruct.class);
-        CodecStructs.MyStruct clonedObject = converter.cloneObject(myStruct, typeInfo, typeInfo);
-        Assertions.assertEquals(myStruct, clonedObject);
-    }
-
 }

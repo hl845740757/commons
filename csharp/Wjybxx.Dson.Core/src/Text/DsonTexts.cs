@@ -144,7 +144,7 @@ public static class DsonTexts
      * 其实并不建议底层默认判断是否可以不加引号，用户可以根据自己的数据决定是否加引号，比如；guid可能就是可以不加引号的
      * 这里的计算是保守的，保守一些不容易出错，因为情况太多，否则既难以保证正确性，性能也差。
      */
-    public static bool CanUnquoteString(string value, int maxLengthOfUnquoteString) {
+    public static bool CanUnquoteString(string value, int maxLengthOfUnquoteString, bool isName) {
         if (value.Length == 0 || value.Length > maxLengthOfUnquoteString) {
             return false; // 长字符串都加引号，避免不必要的计算
         }
@@ -152,7 +152,7 @@ public static class DsonTexts
             return false; // 特殊字符串值
         }
         bool hasExponent = false;
-        bool maybeParsable = true;
+        bool maybeNumber = true;
         for (int i = 0; i < value.Length; i++) { // 这遍历的不是unicode码点，但不影响
             char c = value[i];
             if (IsUnsafePrintChar(c)) {
@@ -161,16 +161,14 @@ public static class DsonTexts
             if (c == 'e' || c == 'E') {
                 hasExponent = true;
             } else if (c > 127 || !parseableCharSet.Get(c)) {
-                maybeParsable = false;
+                maybeNumber = false;
             }
         }
-        if (maybeParsable && IsParsable(value)) {
-            return false;
+        if (isName || !maybeNumber) {
+            return true;
         }
-        if (maybeParsable && hasExponent && IsScientificNotation(value)) {
-            return false;
-        }
-        return true;
+        bool isNumber = hasExponent ? IsScientificNotation(value) : IsParsable(value);
+        return !isNumber;
     }
 
     /** 是否是ASCII码中的可打印字符构成的文本 */

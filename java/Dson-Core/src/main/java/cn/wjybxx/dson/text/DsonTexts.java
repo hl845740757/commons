@@ -133,7 +133,7 @@ public class DsonTexts {
      * 其实并不建议底层默认判断是否可以不加引号，用户可以根据自己的数据决定是否加引号，比如；guid可能就是可以不加引号的
      * 这里的计算是保守的，保守一些不容易出错，因为情况太多，否则既难以保证正确性，性能也差。
      */
-    public static boolean canUnquoteString(String value, int maxLengthOfUnquoteString) {
+    public static boolean canUnquoteString(String value, int maxLengthOfUnquoteString, boolean isName) {
         if (value.isEmpty() || value.length() > maxLengthOfUnquoteString) { // 长字符串都加引号，避免不必要的计算
             return false;
         }
@@ -142,7 +142,7 @@ public class DsonTexts {
         }
 
         boolean hasExponent = false;
-        boolean maybeParsable = true;
+        boolean maybeNumber = true;
         for (int i = 0; i < value.length(); i++) { // 这遍历的不是unicode码点，但不影响
             char c = value.charAt(i);
             if (isUnsafePrintChar(c)) {
@@ -151,16 +151,14 @@ public class DsonTexts {
             if (c == 'e' || c == 'E') {
                 hasExponent = true;
             } else if (c > 127 || !parseableCharSet.get(c)) {
-                maybeParsable = false;
+                maybeNumber = false;
             }
         }
-        if (maybeParsable && isParsable(value)) {
-            return false;
+        if (isName || !maybeNumber) {
+            return true;
         }
-        if (maybeParsable && hasExponent && isScientificNotation(value)) {
-            return false;
-        }
-        return true;
+        boolean isNumber = hasExponent ? isScientificNotation(value) : isParsable(value);
+        return !isNumber;
     }
 
     /** 是否是ASCII码中的可打印字符构成的文本 */

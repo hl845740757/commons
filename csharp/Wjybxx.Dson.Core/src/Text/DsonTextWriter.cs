@@ -113,7 +113,12 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         }
 
         if (context.contextType.IsObjectLike()) {
-            PrintString(printer, context.curName, StringStyle.AutoQuote);
+            string curName = context.curName;
+            if (CanPrintAsUnquote(curName, _settings, true)) {
+                printer.FastPrint(curName);
+            } else {
+                PrintEscaped(curName);
+            }
             printer.Print(": ");
         }
         context.count++;
@@ -123,7 +128,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         DsonTextWriterSettings settings = this._settings;
         switch (style) {
             case StringStyle.Auto: {
-                if (CanPrintAsUnquote(value, settings)) {
+                if (CanPrintAsUnquote(value, settings, false)) {
                     printer.FastPrint(value);
                 } else if (CanPrintAsText(value, settings)) {
                     PrintText(value);
@@ -133,7 +138,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
                 break;
             }
             case StringStyle.AutoQuote: {
-                if (CanPrintAsUnquote(value, settings)) {
+                if (CanPrintAsUnquote(value, settings, false)) {
                     printer.FastPrint(value);
                 } else {
                     PrintEscaped(value);
@@ -173,8 +178,8 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool CanPrintAsUnquote(string str, DsonTextWriterSettings settings) {
-        return DsonTexts.CanUnquoteString(str, settings.maxLengthOfUnquoteString)
+    private static bool CanPrintAsUnquote(string str, DsonTextWriterSettings settings, bool isName) {
+        return DsonTexts.CanUnquoteString(str, settings.maxLengthOfUnquoteString, isName)
                && (!settings.unicodeChar || DsonTexts.IsAsciiText(str));
     }
 

@@ -130,7 +130,12 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             printer.print(' ');
         }
         if (context.contextType.isObjectLike()) {
-            printString(printer, context.curName, StringStyle.AUTO_QUOTE);
+            String curName = context.curName;
+            if (canPrintAsUnquote(curName, settings, true)) {
+                printer.fastPrint(curName);
+            } else {
+                printEscaped(curName);
+            }
             printer.fastPrint(": ");
         }
         context.count++;
@@ -140,7 +145,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         final DsonTextWriterSettings settings = this.settings;
         switch (style) {
             case AUTO -> {
-                if (canPrintAsUnquote(value, settings)) {
+                if (canPrintAsUnquote(value, settings, false)) {
                     printer.fastPrint(value);
                 } else if (canPrintAsText(value, settings)) {
                     printText(value);
@@ -149,7 +154,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
                 }
             }
             case AUTO_QUOTE -> {
-                if (canPrintAsUnquote(value, settings)) {
+                if (canPrintAsUnquote(value, settings, false)) {
                     printer.fastPrint(value);
                 } else {
                     printEscaped(value);
@@ -182,8 +187,8 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         }
     }
 
-    private static boolean canPrintAsUnquote(String str, DsonTextWriterSettings settings) {
-        return DsonTexts.canUnquoteString(str, settings.maxLengthOfUnquoteString)
+    private static boolean canPrintAsUnquote(String str, DsonTextWriterSettings settings, boolean isName) {
+        return DsonTexts.canUnquoteString(str, settings.maxLengthOfUnquoteString, isName)
                 && (!settings.unicodeChar || DsonTexts.isASCIIText(str));
     }
 

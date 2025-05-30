@@ -116,6 +116,7 @@ public class DictionaryEncodeProxyCodec<V> : IDsonCodec<DictionaryEncodeProxy<V>
                     do {
                         reader.ReadStartObject();
                         {
+                            reader.ReadDsonType();
                             string key = reader.ReadName();
                             V value = reader.ReadObject<V>(null);
                             entries.Add(new KeyValuePair<string, V>(key, value));

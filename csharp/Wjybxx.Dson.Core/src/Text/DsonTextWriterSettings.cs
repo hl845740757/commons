@@ -98,7 +98,7 @@ public class DsonTextWriterSettings : DsonWriterSettings
          */
         public bool UnicodeChar { get; set; } = false;
 
-        /** 自动模式下无引号字符串的最大长度 -- 过大会降低序列化速度 */
+        /** 自动模式下无引号字符串的最大长度 -- 过大会降低序列化速度，也会影响换行的精确性 */
         public int MaxLengthOfUnquoteString { get; set; } = 20;
 
         /** 如果目标Writer是<see cref="StringWriter"/>，是否直接访问底层的Builder代替额外的分配，这可以节省大量的开销。 */
