@@ -59,6 +59,20 @@ public static partial class CollectionUtil
                || behavior == DequeOverflowBehavior.DiscardTail;
     }
 
+    /** 确保集合的空间足够 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void EnsureCapacity<T>(this IGenericCollection<T> self, int capacity) {
+        if (self.Count < capacity) {
+            self.AdjustCapacity(capacity);
+        }
+    }
+
+    /** 收缩空间 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void TrimExcess<T>(this IGenericCollection<T> self, int capacity = -1) {
+        self.AdjustCapacity(capacity <= self.Count ? self.Count : capacity);
+    }
+
     #region collection
 
     /// <summary>

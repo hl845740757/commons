@@ -506,7 +506,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     #region core
 
     private static IEqualityComparer<TValue> ValComparer => EqualityComparer<TValue>.Default;
-    private static bool IsKeyValueType = typeof(TKey).IsValueType;
+    private static readonly bool IsKeyValueType = typeof(TKey).IsValueType;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int KeyHash(TKey key, IEqualityComparer<TKey> keyComparer) {

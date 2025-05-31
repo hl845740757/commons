@@ -310,7 +310,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
 
     #region core
 
-    private static bool IsKeyValueType = typeof(TKey).IsValueType;
+    private static readonly bool IsKeyValueType = typeof(TKey).IsValueType;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int KeyHash(TKey key, IEqualityComparer<TKey> keyComparer) {

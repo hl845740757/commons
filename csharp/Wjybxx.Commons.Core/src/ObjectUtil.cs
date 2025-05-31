@@ -68,6 +68,11 @@ public static class ObjectUtil
         return (value & other) != 0;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool NextBool(this Random rnd) {
+        return rnd.Next(0, 2) == 1;
+    }
+
     /// <summary>
     /// 获取系统的tick数
     /// (稳定值与平台无关)

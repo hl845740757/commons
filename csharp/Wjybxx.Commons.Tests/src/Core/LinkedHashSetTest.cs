@@ -82,7 +82,7 @@ public class LinkedHashSetTest
             Random.Shared.NextBytes(buffer);
             string next = Convert.ToHexString(buffer);
             string key = Random.Shared.Next(0, 10) == 0 ? null : next; // 随机使用nullKey
-            
+
             // 还需要测试AddFirst
             if (linkedHashSet.Add(key)) {
                 keyList.Add(key);
@@ -155,6 +155,77 @@ public class LinkedHashSetTest
             hashSet.AdjustCapacity(10000);
             string[] copiedArray3 = hashSet.ToArray();
             ArrayUtil.Equals(rawArray, copiedArray3);
+        }
+    }
+
+
+    [Test]
+    public void TestMoveToFirst() {
+        const int expectedCount = 10;
+        List<int> keyList = new List<int>(expectedCount);
+        LinkedHashSet<int> keySet = new LinkedHashSet<int>(expectedCount);
+        // 连续的List更利于观察
+        for (int i = 0; i < expectedCount; i++) {
+            keyList.Add(i);
+            keySet.Add(i);
+        }
+        for (int i = 0; i < expectedCount * 10; i++) {
+            int idx1 = Random.Shared.Next(expectedCount);
+            int key1 = keyList[idx1];
+            
+            keyList.RemoveAt(idx1);
+            if (Random.Shared.NextBool()) {
+                keyList.Insert(0, key1); // addFirst
+                keySet.AddFirst(key1);
+            } else {
+                keyList.Add(key1); // addLast
+                keySet.AddLast(key1);
+            }
+        }
+        int index = 0;
+        foreach (int realKey in keySet) {
+            int expectedKey = keyList[index++];
+            Assert.That(realKey, Is.EqualTo(expectedKey));
+        }
+    }
+
+    [Test]
+    public void TestMoveAfter() {
+        const int expectedCount = 10;
+        List<int> keyList = new List<int>(expectedCount);
+        LinkedHashSet<int> keySet = new LinkedHashSet<int>(expectedCount);
+        // 连续的List更利于观察
+        for (int i = 0; i < expectedCount; i++) {
+            keyList.Add(i);
+            keySet.Add(i);
+        }
+        // while (hashSet.Count < expectedCount) {
+        //     int next = Random.Shared.Next();
+        //     if (hashSet.Add(next)) {
+        //         keyList.Add(next);
+        //     }
+        // }
+        for (int i = 0; i < expectedCount * 10; i++) {
+            int idx1 = Random.Shared.Next(expectedCount);
+            int idx2 = Random.Shared.Next(expectedCount);
+            if (idx1 == idx2) continue;
+
+            int key1 = keyList[idx1];
+            int key2 = keyList[idx2];
+            keyList.RemoveAt(idx1);
+            if (idx1 < idx2) {
+                keyList.Insert(idx2, key1); // 插到key2后面 -- idx2前移了1位
+                keySet.MoveToAfter(key1, key2);
+            } else {
+                keyList.Insert(idx2, key1); // 插到key2前面 -- idx2未移动
+                keySet.MoveToBefore(key1, key2);
+            }
+        }
+
+        int index = 0;
+        foreach (int realKey in keySet) {
+            int expectedKey = keyList[index++];
+            Assert.That(realKey, Is.EqualTo(expectedKey));
         }
     }
 }

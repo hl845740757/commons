@@ -182,4 +182,70 @@ public class LinkedDictionaryTest
         dictionary.Remove(null);
         Assert.That(dictionary.PeekFirstKey(), Is.EqualTo("key1"));
     }
+    
+    
+    [Test]
+    public void TestMoveToFirst() {
+        const int expectedCount = 10;
+        List<int> keyList = new List<int>(expectedCount);
+        LinkedDictionary<int, int> keySet = new LinkedDictionary<int, int>(expectedCount);
+        // 连续的List更利于观察
+        for (int i = 0; i < expectedCount; i++) {
+            keyList.Add(i);
+            keySet.Add(i, i);
+        }
+        for (int i = 0; i < expectedCount * 10; i++) {
+            int idx1 = Random.Shared.Next(expectedCount);
+            int key1 = keyList[idx1];
+            
+            keyList.RemoveAt(idx1);
+            if (Random.Shared.NextBool()) {
+                keyList.Insert(0, key1); // addFirst
+                keySet.PutFirst(key1, key1);
+            } else {
+                keyList.Add(key1); // addLast
+                keySet.PutLast(key1, key1);
+            }
+        }
+        int index = 0;
+        foreach (int realKey in keySet.Keys) {
+            int expectedKey = keyList[index++];
+            Assert.That(realKey, Is.EqualTo(expectedKey));
+        }
+    }
+    
+    [Test]
+    public void TestMoveAfter() {
+        const int expectedCount = 100;
+        List<int> keyList = new List<int>(expectedCount);
+        LinkedDictionary<int, int> keySet = new (expectedCount);
+        while (keySet.Count < expectedCount) {
+            int next = Random.Shared.Next();
+            if (keySet.Put(next, next).IsInsert) {
+                keyList.Add(next);
+            }
+        }
+        for (int i = 0; i < expectedCount * 10; i++) {
+            int idx1 = Random.Shared.Next(expectedCount);
+            int idx2 = Random.Shared.Next(expectedCount);
+            if (idx1 == idx2) continue;
+
+            int key1 = keyList[idx1];
+            int key2 = keyList[idx2];
+            keyList.RemoveAt(idx1);
+            if (idx1 < idx2) {
+                keyList.Insert(idx2, key1); // 插到key2后面 -- idx2前移了1位
+                keySet.MoveToAfter(key1, key2);
+            } else {
+                keyList.Insert(idx2, key1); // 插到key2前面 -- idx2未移动
+                keySet.MoveToBefore(key1, key2);
+            }
+        }
+        
+        int index = 0;
+        foreach (int realKey in keySet.Keys) {
+            int expectedKey = keyList[index++];
+            Assert.That(realKey, Is.EqualTo(expectedKey));
+        }
+    }
 }

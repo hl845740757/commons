@@ -187,7 +187,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
             return false;
         }
         ref Node node = ref _table[index];
-        RemoveNode(in node);
+        RemoveNode(ref node);
         return true;
     }
 
@@ -198,7 +198,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         }
         ref Node node = ref _table[oldHead];
         TKey key = node.key;
-        RemoveNode(in node);
+        RemoveNode(ref node);
         return key;
     }
 
@@ -210,7 +210,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         }
         ref Node node = ref _table[oldHead];
         key = node.key;
-        RemoveNode(in node);
+        RemoveNode(ref node);
         return true;
     }
 
@@ -221,7 +221,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         }
         ref Node node = ref _table[oldTail];
         TKey key = node.key;
-        RemoveNode(in node);
+        RemoveNode(ref node);
         return key;
     }
 
@@ -233,7 +233,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         }
         ref Node node = ref _table[oldTail];
         key = node.key;
-        RemoveNode(in node);
+        RemoveNode(ref node);
         return true;
     }
 
@@ -253,6 +253,148 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     #endregion
 
     #region sp
+
+    /// <summary>
+    /// 将给定key添加到目标key之后
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="targetKey"></param>
+    /// <exception cref="ArgumentException"></exception>
+    public void AddAfter(TKey key, TKey targetKey) {
+        if (!Contains(targetKey)) {
+            throw new KeyNotFoundException(nameof(targetKey));
+        }
+        if (_keyComparer.Equals(key, targetKey)) {
+            throw new ArgumentException("key == targetKey");
+        }
+        // 此处不进行任何优化，因为插入过程中Node的索引可能变化
+        TryInsert(key, InsertionOrder.Default, InsertionBehavior.None);
+        MoveToAfter(key, targetKey);
+    }
+
+    /// <summary>
+    /// 将给定key添加到目标key之前
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="targetKey"></param>
+    /// <exception cref="ArgumentException"></exception>
+    public void AddBefore(TKey key, TKey targetKey) {
+        if (!Contains(targetKey)) {
+            throw new KeyNotFoundException(nameof(targetKey));
+        }
+        if (_keyComparer.Equals(key, targetKey)) {
+            throw new ArgumentException("key == targetKey");
+        }
+        // 此处不进行任何优化，因为插入过程中Node的索引可能变化
+        TryInsert(key, InsertionOrder.Default, InsertionBehavior.None);
+        MoveToBefore(key, targetKey);
+    }
+
+    /// <summary>
+    /// 将Key移动到首部
+    /// </summary>
+    /// <param name="key"></param>
+    /// <exception cref="KeyNotFoundException"></exception>
+    public void MoveToFirst(TKey key) {
+        int index = Find(key, KeyHash(key, _keyComparer));
+        if (index < 0) {
+            throw ThrowHelper.KeyNotFoundException(key);
+        }
+        if (index == _head) {
+            return;
+        }
+        ref Node node = ref _table[index];
+        MoveToFirst(ref node);
+    }
+
+    /// <summary>
+    /// 将Key移动到尾部
+    /// </summary>
+    /// <param name="key"></param>
+    /// <exception cref="KeyNotFoundException"></exception>
+    public void MoveToLast(TKey key) {
+        int index = Find(key, KeyHash(key, _keyComparer));
+        if (index < 0) {
+            throw ThrowHelper.KeyNotFoundException(key);
+        }
+        if (index == _tail) {
+            return;
+        }
+        ref Node node = ref _table[index];
+        MoveToLast(ref node);
+    }
+
+    /// <summary>
+    /// 将指定key的元素移动到给定Key之后
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="targetKey"></param>
+    public void MoveToAfter(TKey key, TKey targetKey) {
+        int index = Find(key, KeyHash(key, _keyComparer));
+        if (index < 0) {
+            throw ThrowHelper.KeyNotFoundException(key);
+        }
+        int index2 = Find(targetKey, KeyHash(targetKey, _keyComparer));
+        if (index2 < 0) {
+            throw ThrowHelper.KeyNotFoundException(targetKey);
+        }
+        if (index == index2) {
+            throw new InvalidOperationException("key == target");
+        }
+        ref Node node = ref _table[index];
+        if (node.prev == index2) {
+            return;
+        }
+        if (index2 == _tail) {
+            MoveToLast(ref node);
+            return;
+        }
+        _version++;
+        FixPointers(ref node); // 从原始节点解除引用
+
+        ref Node targetNode = ref _table[index2];
+        ref Node nextNode = ref _table[targetNode.next];
+        nextNode.prev = index;
+        node.next = nextNode.index;
+        node.prev = index2;
+        targetNode.next = index;
+    }
+
+    /// <summary>
+    /// 将指定key的元素移动到给定Key之前
+    /// </summary>
+    /// <param name="key"></param>
+    /// <param name="targetKey"></param>
+    public void MoveToBefore(TKey key, TKey targetKey) {
+        int index = Find(key, KeyHash(key, _keyComparer));
+        if (index < 0) {
+            throw ThrowHelper.KeyNotFoundException(key);
+        }
+        int index2 = Find(targetKey, KeyHash(targetKey, _keyComparer));
+        if (index2 < 0) {
+            throw ThrowHelper.KeyNotFoundException(targetKey);
+        }
+        if (index == index2) {
+            throw new InvalidOperationException("key == target");
+        }
+        ref Node node = ref _table[index];
+        if (node.next == index2) {
+            return;
+        }
+        if (index2 == _head) {
+            MoveToFirst(ref node);
+            return;
+        }
+        _version++;
+        FixPointers(ref node); // 从原始节点解除引用
+
+        ref Node targetNode = ref _table[index2];
+        ref Node prevNode = ref _table[targetNode.prev];
+        prevNode.next = index;
+        node.prev = prevNode.index;
+        node.next = index2;
+        targetNode.prev = index;
+    }
 
     /// <summary>
     /// 查询指定键的后一个键
@@ -382,7 +524,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
 
     #region core
 
-    private static bool IsKeyValueType = typeof(TKey).IsValueType;
+    private static readonly bool IsKeyValueType = typeof(TKey).IsValueType;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int KeyHash(TKey key, IEqualityComparer<TKey> keyComparer) {
@@ -469,16 +611,13 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     }
 
     /** 如果是insert则返回true */
-    private bool TryInsert(TKey key, InsertionOrder order, InsertionBehavior behavior) {
+    private bool TryInsert(TKey key, InsertionOrder order, InsertionBehavior _) {
         if (_table == null) {
             _table = new Node[_mask + 2];
         }
         int hash = KeyHash(key, _keyComparer);
         int pos = Find(key, hash);
         if (pos >= 0) {
-            if (behavior == InsertionBehavior.ThrowOnExisting) {
-                throw new InvalidOperationException("AddingDuplicateWithKey: " + key);
-            }
             return false;
         }
 
@@ -564,11 +703,11 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
 
     /** 删除指定节点 -- 该方法为通用情况；需要处理Head和Tail的情况 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void RemoveNode(in Node node) {
+    private void RemoveNode(ref Node node) {
         _count--;
         _version++;
 
-        FixPointers(in node);
+        FixPointers(ref node);
         ShiftKeys(node.index);
     }
 
@@ -615,7 +754,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     /// 在调用该方法前需要先更新count和version，在Node真正删除后才可清理Node数据
     /// </summary>
     /// <param name="node">要解除引用的节点</param>
-    private void FixPointers(in Node node) {
+    private void FixPointers(ref Node node) {
         int pos = node.index;
         if (_count == 0) {
             _head = _tail = -1;
@@ -636,6 +775,8 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
             prevNode.next = node.next;
             nextNode.prev = node.prev;
         }
+        node.next = -1;
+        node.prev = -1;
     }
 
     /// <summary>
@@ -672,17 +813,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         if (pos == _head) {
             return;
         }
-        // 先断开链接，再插入到首部
-        if (pos == _tail) {
-            _tail = node.prev;
-            ref Node prevNode = ref _table[node.prev];
-            prevNode.next = -1;
-        } else {
-            ref Node prevNode = ref _table[node.prev];
-            ref Node nextNode = ref _table[node.next];
-            prevNode.next = node.next;
-            nextNode.prev = node.prev;
-        }
+        FixPointers(ref node);
 
         ref Node oldHead = ref _table[_head];
         oldHead.prev = pos;
@@ -696,17 +827,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         if (pos == _tail) {
             return;
         }
-        // 先断开链接，再插入到尾部
-        if (pos == _head) {
-            _head = node.next;
-            ref Node nextNode = ref _table[node.next];
-            nextNode.prev = -1;
-        } else {
-            ref Node prevNode = ref _table[node.prev];
-            ref Node nextNode = ref _table[node.next];
-            prevNode.next = node.next;
-            nextNode.prev = node.prev;
-        }
+        FixPointers(ref node);
 
         ref Node oldTail = ref _table[_tail];
         oldTail.next = pos;
@@ -765,7 +886,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
             if (_currNode.IsNull()) {
                 throw new InvalidOperationException("AlreadyRemoved");
             }
-            _hashSet.RemoveNode(_currNode);
+            _hashSet.RemoveNode(ref _currNode);
             _currNode = default;
             _version = _hashSet._version;
         }
