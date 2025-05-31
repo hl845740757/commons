@@ -111,17 +111,26 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
     #region keys/values
 
-    public IGenericCollection<TKey> Keys => CachedKeys();
-    public IGenericCollection<TValue> Values => CachedValues();
-
+    [DebuggerHidden] IGenericCollection<TKey> IGenericDictionary<TKey, TValue>.Keys => Keys;
+    [DebuggerHidden] IGenericCollection<TValue> IGenericDictionary<TKey, TValue>.Values => Values;
     [DebuggerHidden] ICollection<TKey> IDictionary<TKey, TValue>.Keys => CachedKeys();
     [DebuggerHidden] ICollection<TValue> IDictionary<TKey, TValue>.Values => CachedValues();
     [DebuggerHidden] IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => CachedKeys();
     [DebuggerHidden] IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => CachedValues();
 
-    public ISequencedCollection<TKey> SequencedKeys(bool reversed = false) => CachedKeys(reversed);
+    [DebuggerHidden] ISequencedCollection<TKey> ISequencedDictionary<TKey, TValue>.SequencedKeys(bool reversed) {
+        return SequencedKeys(reversed);
+    }
 
-    public ISequencedCollection<TValue> SequencedValues(bool reversed = false) => CachedValues(reversed);
+    [DebuggerHidden] ISequencedCollection<TValue> ISequencedDictionary<TKey, TValue>.SequencedValues(bool reversed) {
+        return SequencedValues(reversed);
+    }
+
+    public KeyCollection Keys => CachedKeys();
+    public ValueCollection Values => CachedValues();
+
+    public KeyCollection SequencedKeys(bool reversed = false) => CachedKeys(reversed);
+    public ValueCollection SequencedValues(bool reversed = false) => CachedValues(reversed);
 
     private KeyCollection CachedKeys(bool reversed = false) {
         if (reversed) {
@@ -531,8 +540,11 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     /// </summary>
     /// <exception cref="ArgumentException"></exception>
     public PutResult<TValue> PutAfter(TKey key, TValue value, TKey targetKey) {
-        if (!ContainsKey(targetKey) || _keyComparer.Equals(key, targetKey)) {
-            throw new ArgumentException("key not found or same key", nameof(targetKey));
+        if (!ContainsKey(targetKey)) {
+            throw new KeyNotFoundException(nameof(targetKey));
+        }
+        if (_keyComparer.Equals(key, targetKey)) {
+            throw new ArgumentException("key == targetKey");
         }
         PutResult<TValue> r = TryPut(key, value, PutBehavior.None);
         MoveToAfter(key, targetKey);
@@ -544,8 +556,11 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     /// </summary>
     /// <exception cref="ArgumentException"></exception>
     public PutResult<TValue> PutBefore(TKey key, TValue value, TKey targetKey) {
-        if (!ContainsKey(targetKey) || _keyComparer.Equals(key, targetKey)) {
-            throw new ArgumentException("key not found or same key", nameof(targetKey));
+        if (!ContainsKey(targetKey)) {
+            throw new KeyNotFoundException(nameof(targetKey));
+        }
+        if (_keyComparer.Equals(key, targetKey)) {
+            throw new ArgumentException("key == targetKey");
         }
         PutResult<TValue> r = TryPut(key, value, PutBehavior.None);
         MoveToBefore(key, targetKey);
@@ -1143,12 +1158,12 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
     #region view
 
-    private abstract class AbstractViewCollection<T> : ISequencedCollection<T>
+    public abstract class AbstractViewCollection<T>
     {
         protected readonly LinkedDictionary<TKey, TValue> _dictionary;
         protected readonly bool _reversed;
 
-        protected AbstractViewCollection(LinkedDictionary<TKey, TValue> dictionary, bool reversed) {
+        internal AbstractViewCollection(LinkedDictionary<TKey, TValue> dictionary, bool reversed) {
             _dictionary = dictionary;
             _reversed = reversed;
         }
@@ -1173,11 +1188,11 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 
         #region itr
 
-        public abstract ISequencedCollection<T> Reversed();
-
-        public abstract IEnumerator<T> GetEnumerator();
-
-        public abstract IEnumerator<T> GetReversedEnumerator();
+        // public abstract ISequencedCollection<T> Reversed();
+        //
+        // public abstract IEnumerator<T> GetEnumerator();
+        //
+        // public abstract IEnumerator<T> GetReversedEnumerator();
 
         public abstract void CopyTo(T[] array, int arrayIndex, bool reversed = false);
 
@@ -1228,9 +1243,9 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         #endregion
     }
 
-    private class KeyCollection : AbstractViewCollection<TKey>, ISequencedCollection<TKey>
+    public class KeyCollection : AbstractViewCollection<TKey>, ISequencedCollection<TKey>
     {
-        public KeyCollection(LinkedDictionary<TKey, TValue> dictionary, bool reversed)
+        internal KeyCollection(LinkedDictionary<TKey, TValue> dictionary, bool reversed)
             : base(dictionary, reversed) {
         }
 
@@ -1254,22 +1269,38 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             _dictionary.CopyKeysTo(array, arrayIndex, _reversed ^ reversed);
         }
 
-        public override ISequencedCollection<TKey> Reversed() {
+        #region itr
+
+        public KeyCollection Reversed() {
             return _dictionary.CachedKeys(_reversed);
         }
 
-        public override IEnumerator<TKey> GetEnumerator() {
+        public KeyEnumerator GetEnumerator() {
             return new KeyEnumerator(_dictionary, _reversed);
         }
 
-        public override IEnumerator<TKey> GetReversedEnumerator() {
+        public KeyEnumerator GetReversedEnumerator() {
             return new KeyEnumerator(_dictionary, !_reversed);
         }
+
+        IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator() {
+            return GetEnumerator();
+        }
+
+        ISequencedCollection<TKey> ISequencedCollection<TKey>.Reversed() {
+            return Reversed();
+        }
+
+        IEnumerator<TKey> ISequencedCollection<TKey>.GetReversedEnumerator() {
+            return GetReversedEnumerator();
+        }
+
+        #endregion
     }
 
-    private class ValueCollection : AbstractViewCollection<TValue>
+    public class ValueCollection : AbstractViewCollection<TValue>, ISequencedCollection<TValue>
     {
-        public ValueCollection(LinkedDictionary<TKey, TValue> dictionary, bool reversed)
+        internal ValueCollection(LinkedDictionary<TKey, TValue> dictionary, bool reversed)
             : base(dictionary, reversed) {
         }
 
@@ -1309,17 +1340,33 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
             _dictionary.CopyValuesTo(array, arrayIndex, _reversed ^ reversed);
         }
 
-        public override ISequencedCollection<TValue> Reversed() {
+        #region itr
+
+        public ValueCollection Reversed() {
             return _dictionary.CachedValues(_reversed);
         }
 
-        public override IEnumerator<TValue> GetEnumerator() {
+        public ValueEnumerator GetEnumerator() {
             return new ValueEnumerator(_dictionary, _reversed);
         }
 
-        public override IEnumerator<TValue> GetReversedEnumerator() {
+        public ValueEnumerator GetReversedEnumerator() {
             return new ValueEnumerator(_dictionary, !_reversed);
         }
+
+        IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator() {
+            return GetEnumerator();
+        }
+
+        ISequencedCollection<TValue> ISequencedCollection<TValue>.Reversed() {
+            return Reversed();
+        }
+
+        IEnumerator<TValue> ISequencedCollection<TValue>.GetReversedEnumerator() {
+            return GetReversedEnumerator();
+        }
+
+        #endregion
     }
 
     #endregion

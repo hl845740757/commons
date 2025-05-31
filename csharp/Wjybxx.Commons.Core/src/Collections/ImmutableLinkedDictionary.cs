@@ -119,17 +119,28 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     public bool IsReadOnly => true;
     public int Count => _count;
     public bool IsEmpty => _count == 0;
-
-    public IGenericCollection<TKey> Keys => CachedKeys();
-    public IGenericCollection<TValue> Values => CachedValues();
+    
+    [DebuggerHidden] IGenericCollection<TKey> IGenericDictionary<TKey, TValue>.Keys => Keys;
+    [DebuggerHidden] IGenericCollection<TValue> IGenericDictionary<TKey, TValue>.Values => Values;
     [DebuggerHidden] ICollection<TKey> IDictionary<TKey, TValue>.Keys => CachedKeys();
     [DebuggerHidden] ICollection<TValue> IDictionary<TKey, TValue>.Values => CachedValues();
     [DebuggerHidden] IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys => CachedKeys();
     [DebuggerHidden] IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values => CachedValues();
 
-    public ISequencedCollection<TKey> SequencedKeys(bool reversed = false) => CachedKeys(reversed);
+    [DebuggerHidden] ISequencedCollection<TKey> ISequencedDictionary<TKey, TValue>.SequencedKeys(bool reversed) {
+        return SequencedKeys(reversed);
+    }
 
-    public ISequencedCollection<TValue> SequencedValues(bool reversed = false) => CachedValues(reversed);
+    [DebuggerHidden] ISequencedCollection<TValue> ISequencedDictionary<TKey, TValue>.SequencedValues(bool reversed) {
+        return SequencedValues(reversed);
+    }
+
+    public KeyCollection Keys => CachedKeys();
+    public ValueCollection Values => CachedValues();
+
+    public KeyCollection SequencedKeys(bool reversed = false) => CachedKeys(reversed);
+
+    public ValueCollection SequencedValues(bool reversed = false) => CachedValues(reversed);
 
     private KeyCollection CachedKeys(bool reversed = false) {
         if (reversed) {
@@ -561,12 +572,12 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     #region view
 
-    private abstract class AbstractViewCollection<T> : ISequencedCollection<T>
+    public abstract class AbstractViewCollection<T>
     {
         protected readonly ImmutableLinkedDictionary<TKey, TValue> _dictionary;
         protected readonly bool _reversed;
 
-        protected AbstractViewCollection(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed) {
+        internal AbstractViewCollection(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed) {
             _dictionary = dictionary;
             _reversed = reversed;
         }
@@ -591,11 +602,11 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
         #region itr
 
-        public abstract ISequencedCollection<T> Reversed();
-
-        public abstract IEnumerator<T> GetEnumerator();
-
-        public abstract IEnumerator<T> GetReversedEnumerator();
+        // public abstract ISequencedCollection<T> Reversed();
+        //
+        // public abstract IEnumerator<T> GetEnumerator();
+        //
+        // public abstract IEnumerator<T> GetReversedEnumerator();
 
         public abstract void CopyTo(T[] array, int arrayIndex, bool reversed = false);
 
@@ -646,9 +657,9 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
         #endregion
     }
 
-    private class KeyCollection : AbstractViewCollection<TKey>, ISequencedCollection<TKey>
+    public sealed class KeyCollection : AbstractViewCollection<TKey>, ISequencedCollection<TKey>
     {
-        public KeyCollection(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed)
+        internal KeyCollection(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed)
             : base(dictionary, reversed) {
         }
 
@@ -672,22 +683,38 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
             _dictionary.CopyKeysTo(array, arrayIndex, _reversed ^ reversed);
         }
 
-        public override ISequencedCollection<TKey> Reversed() {
+        #region itr
+
+        public KeyCollection Reversed() {
             return _dictionary.CachedKeys(_reversed);
         }
 
-        public override IEnumerator<TKey> GetEnumerator() {
+        public KeyEnumerator GetEnumerator() {
             return new KeyEnumerator(_dictionary, _reversed);
         }
 
-        public override IEnumerator<TKey> GetReversedEnumerator() {
+        public KeyEnumerator GetReversedEnumerator() {
             return new KeyEnumerator(_dictionary, !_reversed);
         }
+
+        IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator() {
+            return GetEnumerator();
+        }
+
+        ISequencedCollection<TKey> ISequencedCollection<TKey>.Reversed() {
+            return Reversed();
+        }
+
+        IEnumerator<TKey> ISequencedCollection<TKey>.GetReversedEnumerator() {
+            return GetReversedEnumerator();
+        }
+
+        #endregion
     }
 
-    private class ValueCollection : AbstractViewCollection<TValue>
+    public sealed class ValueCollection : AbstractViewCollection<TValue>, ISequencedCollection<TValue>
     {
-        public ValueCollection(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed)
+        internal ValueCollection(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed)
             : base(dictionary, reversed) {
         }
 
@@ -727,17 +754,33 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
             _dictionary.CopyValuesTo(array, arrayIndex, _reversed ^ reversed);
         }
 
-        public override ISequencedCollection<TValue> Reversed() {
+        #region itr
+
+        public ValueCollection Reversed() {
             return _dictionary.CachedValues(_reversed);
         }
 
-        public override IEnumerator<TValue> GetEnumerator() {
+        public ValueEnumerator GetEnumerator() {
             return new ValueEnumerator(_dictionary, _reversed);
         }
 
-        public override IEnumerator<TValue> GetReversedEnumerator() {
+        public ValueEnumerator GetReversedEnumerator() {
             return new ValueEnumerator(_dictionary, !_reversed);
         }
+
+        IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator() {
+            return GetEnumerator();
+        }
+
+        ISequencedCollection<TValue> ISequencedCollection<TValue>.Reversed() {
+            return Reversed();
+        }
+
+        IEnumerator<TValue> ISequencedCollection<TValue>.GetReversedEnumerator() {
+            return GetReversedEnumerator();
+        }
+
+        #endregion
     }
 
     #endregion

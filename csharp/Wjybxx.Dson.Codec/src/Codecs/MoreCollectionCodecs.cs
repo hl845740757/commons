@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Text;
 
@@ -84,6 +85,16 @@ public static class MoreCollectionCodecs
 
     #region 特化List
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static IList<T> ToImmutable<T>(IList<T> list, Type declaredType) {
+        // 需要确保ImmutableList能赋值给声明类型
+        if (declaredType.IsInterface
+            || (declaredType.IsGenericType && (declaredType.GetGenericTypeDefinition() == typeof(ImmutableList<>)))) {
+            return ImmutableList<T>.CreateRange(list);
+        }
+        return list;
+    }
+
     public class IntListCodec : IDsonCodec<IList<int>>
     {
         private readonly Type typeInfo;
@@ -107,7 +118,7 @@ public static class MoreCollectionCodecs
                 result.Add(value);
             }
             return reader.Options.readAsImmutable
-                ? ImmutableList<int>.CreateRange(result)
+                ? ToImmutable(result, declaredType)
                 : result;
         }
     }
@@ -135,7 +146,7 @@ public static class MoreCollectionCodecs
                 result.Add(value);
             }
             return reader.Options.readAsImmutable
-                ? ImmutableList<long>.CreateRange(result)
+                ? ToImmutable(result, declaredType)
                 : result;
         }
     }
@@ -163,7 +174,7 @@ public static class MoreCollectionCodecs
                 result.Add(value);
             }
             return reader.Options.readAsImmutable
-                ? ImmutableList<float>.CreateRange(result)
+                ? ToImmutable(result, declaredType)
                 : result;
         }
     }
@@ -191,7 +202,7 @@ public static class MoreCollectionCodecs
                 result.Add(value);
             }
             return reader.Options.readAsImmutable
-                ? ImmutableList<double>.CreateRange(result)
+                ? ToImmutable(result, declaredType)
                 : result;
         }
     }
@@ -219,7 +230,7 @@ public static class MoreCollectionCodecs
                 result.Add(value);
             }
             return reader.Options.readAsImmutable
-                ? ImmutableList<bool>.CreateRange(result)
+                ? ToImmutable(result, declaredType)
                 : result;
         }
     }
@@ -247,7 +258,7 @@ public static class MoreCollectionCodecs
                 result.Add(value);
             }
             return reader.Options.readAsImmutable
-                ? ImmutableList<string>.CreateRange(result)
+                ? ToImmutable(result, declaredType)
                 : result;
         }
     }
@@ -275,7 +286,7 @@ public static class MoreCollectionCodecs
                 result.Add(value);
             }
             return reader.Options.readAsImmutable
-                ? ImmutableList<uint>.CreateRange(result)
+                ? ToImmutable(result, declaredType)
                 : result;
         }
     }
@@ -303,7 +314,7 @@ public static class MoreCollectionCodecs
                 result.Add(value);
             }
             return reader.Options.readAsImmutable
-                ? ImmutableList<ulong>.CreateRange(result)
+                ? ToImmutable(result, declaredType)
                 : result;
         }
     }
