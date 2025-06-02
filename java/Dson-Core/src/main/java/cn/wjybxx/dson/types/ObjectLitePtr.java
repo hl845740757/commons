@@ -30,6 +30,8 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 public class ObjectLitePtr {
 
+    public static final ObjectLitePtr EMPTY = new ObjectLitePtr(0);
+
     /** 引用对象的本地id -- 如果目标对象是容器中的一员，该值是其容器内编号 */
     private final long localId;
     /** 引用对象所属的命名空间 */
@@ -50,7 +52,7 @@ public class ObjectLitePtr {
     public ObjectLitePtr(long localId, String namespace, byte type, byte policy) {
         if (localId < 0) throw new IllegalArgumentException("localId cant be negative, v: " + localId);
         this.localId = localId;
-        this.namespace = namespace == null ? "" : namespace;
+        this.namespace = namespace;
         this.type = type;
         this.policy = policy;
 

@@ -16,6 +16,8 @@
 
 package cn.wjybxx.dson.types;
 
+import cn.wjybxx.base.ArrayUtils;
+
 import java.util.Arrays;
 import java.util.HexFormat;
 
@@ -28,6 +30,8 @@ import java.util.HexFormat;
  * date - 2023/4/19
  */
 public final class Binary {
+
+    public static final Binary EMPTY = new Binary(ArrayUtils.EMPTY_BYTE_ARRAY);
 
     private final byte[] data;
     private int hash;

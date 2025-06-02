@@ -26,6 +26,8 @@ namespace Wjybxx.Dson
 /// </summary>
 public class DsonBinary : DsonValue, IEquatable<DsonBinary>
 {
+    public static readonly DsonBinary EMPTY = new DsonBinary(Binary.EMPTY);
+
     private readonly Binary _binary;
 
     public DsonBinary(Binary binary) {

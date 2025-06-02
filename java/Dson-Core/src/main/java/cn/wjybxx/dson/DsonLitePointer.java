@@ -27,6 +27,8 @@ import java.util.Objects;
  */
 public class DsonLitePointer extends DsonValue {
 
+    public static final DsonLitePointer EMPTY = new DsonLitePointer(ObjectLitePtr.EMPTY);
+
     private final ObjectLitePtr value;
 
     public DsonLitePointer(ObjectLitePtr value) {

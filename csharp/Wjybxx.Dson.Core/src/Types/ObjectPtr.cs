@@ -29,7 +29,8 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     public const int MaskNamespace = 1;
     public const int MaskType = 1 << 1;
     public const int MaskPolicy = 1 << 2;
-
+    
+#nullable disable
     /** 引用对象的本地id - 如果目标对象是容器中的一员，该值是其容器内编号 */
     public string LocalId { get; }
     /** 引用对象所属的命名空间 */
@@ -38,10 +39,11 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     public byte Type { get; }
     /** 引用的解析策略 -- 自定义解析规则 */
     public byte Policy { get; }
-
+#nullable enable
+    
     public ObjectPtr(string? localId, string? ns = null, byte type = 0, byte policy = 0) {
-        this.LocalId = localId ?? "";
-        this.Namespace = ns ?? "";
+        this.LocalId = localId;
+        this.Namespace = ns;
         this.Type = type;
         this.Policy = policy;
 

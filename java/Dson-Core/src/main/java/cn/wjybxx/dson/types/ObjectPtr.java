@@ -31,6 +31,8 @@ import java.util.Objects;
 @Immutable
 public final class ObjectPtr {
 
+    public static final ObjectPtr EMPTY = new ObjectPtr(null);
+
     public static final int MASK_NAMESPACE = 1;
     public static final int MASK_TYPE = 1 << 1;
     public static final int MASK_POLICY = 1 << 2;
@@ -53,8 +55,8 @@ public final class ObjectPtr {
     }
 
     public ObjectPtr(String localId, String namespace, byte type, byte policy) {
-        this.localId = ObjectUtils.nullToDef(localId, "");
-        this.namespace = ObjectUtils.nullToDef(namespace, "");
+        this.localId = localId;
+        this.namespace = namespace;
         this.type = type;
         this.policy = policy;
 

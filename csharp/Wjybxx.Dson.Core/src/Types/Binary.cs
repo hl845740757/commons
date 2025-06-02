@@ -27,6 +27,8 @@ namespace Wjybxx.Dson.Types
 /// </summary>
 public struct Binary : IEquatable<Binary>
 {
+    public static readonly Binary EMPTY = new Binary(Array.Empty<byte>());
+
     private readonly byte[] _data;
     private int _hash;
 

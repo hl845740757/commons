@@ -26,6 +26,8 @@ namespace Wjybxx.Dson
 /// </summary>
 public class DsonPointer : DsonValue, IEquatable<DsonPointer>
 {
+    public static readonly DsonPointer EMPTY = new DsonPointer(default);
+
     private readonly ObjectPtr _value;
 
     public DsonPointer(in ObjectPtr value) {

@@ -31,6 +31,8 @@ import java.util.Objects;
  */
 public class DsonBinary extends DsonValue {
 
+    public static final DsonBinary EMPTY  = new DsonBinary(Binary.EMPTY);
+
     private final Binary binary;
 
     public DsonBinary(Binary binary) {

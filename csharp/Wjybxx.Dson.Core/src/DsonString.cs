@@ -23,6 +23,8 @@ namespace Wjybxx.Dson
 {
 public class DsonString : DsonValue, IEquatable<DsonString>, IComparable<DsonString>, IComparable
 {
+    public static readonly DsonString EMPTY = new DsonString(string.Empty);
+
     private readonly string _value;
 
     public DsonString(string value) {
@@ -69,22 +71,6 @@ public class DsonString : DsonValue, IEquatable<DsonString>, IComparable<DsonStr
         if (ReferenceEquals(null, obj)) return 1;
         if (ReferenceEquals(this, obj)) return 0;
         return obj is DsonString other ? CompareTo(other) : throw new ArgumentException($"Object must be of type {nameof(DsonString)}");
-    }
-
-    public static bool operator <(DsonString? left, DsonString? right) {
-        return Comparer<DsonString>.Default.Compare(left, right) < 0;
-    }
-
-    public static bool operator >(DsonString? left, DsonString? right) {
-        return Comparer<DsonString>.Default.Compare(left, right) > 0;
-    }
-
-    public static bool operator <=(DsonString? left, DsonString? right) {
-        return Comparer<DsonString>.Default.Compare(left, right) <= 0;
-    }
-
-    public static bool operator >=(DsonString? left, DsonString? right) {
-        return Comparer<DsonString>.Default.Compare(left, right) >= 0;
     }
 
     #endregion

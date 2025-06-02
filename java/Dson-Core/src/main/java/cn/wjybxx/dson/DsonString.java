@@ -25,6 +25,8 @@ import java.util.Objects;
  */
 public final class DsonString extends DsonValue implements Comparable<DsonString> {
 
+    public static final DsonString EMPTY = new DsonString("");
+
     private final String value;
 
     public DsonString(String value) {

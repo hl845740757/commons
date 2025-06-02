@@ -27,6 +27,8 @@ import java.util.Objects;
  */
 public final class DsonPointer extends DsonValue {
 
+    public static final DsonPointer EMPTY = new DsonPointer(ObjectPtr.EMPTY);
+
     private final ObjectPtr value;
 
     public DsonPointer(ObjectPtr value) {

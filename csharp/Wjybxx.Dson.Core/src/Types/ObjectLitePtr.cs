@@ -27,6 +27,7 @@ namespace Wjybxx.Dson.Types
 /// </summary>
 public readonly struct ObjectLitePtr : IEquatable<ObjectLitePtr>
 {
+#nullable disable
     /** 引用对象的本地id - 如果目标对象是容器中的一员，该值是其容器内编号 */
     public long LocalId { get; }
     /** 引用对象所属的命名空间 */
@@ -35,11 +36,12 @@ public readonly struct ObjectLitePtr : IEquatable<ObjectLitePtr>
     public byte Type { get; }
     /** 引用的解析策略 -- 自定义解析规则 */
     public byte Policy { get; }
+#nullable enable
 
     public ObjectLitePtr(long localId, string? ns = null, byte type = 0, byte policy = 0) {
         if (localId < 0) throw new ArgumentException("localId cant be negative, v: " + localId);
         this.LocalId = localId;
-        this.Namespace = ns ?? "";
+        this.Namespace = ns;
         this.Type = type;
         this.Policy = policy;
 

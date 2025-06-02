@@ -23,6 +23,8 @@ namespace Wjybxx.Dson
 {
 public class DsonLitePointer : DsonValue, IEquatable<DsonLitePointer>
 {
+    public static readonly DsonLitePointer EMPTY = new DsonLitePointer(default);
+
     private readonly ObjectLitePtr _value;
 
     public DsonLitePointer(in ObjectLitePtr value) {
