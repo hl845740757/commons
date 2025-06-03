@@ -97,7 +97,8 @@ public static class DsonReaderUtils
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WritePtr(IDsonOutput output, in ObjectPtr objectPtr) {
-        output.WriteString(objectPtr.LocalId);
+        string localId = objectPtr.LocalId ?? "";
+        output.WriteString(localId);
         if (objectPtr.HasNamespace) {
             output.WriteString(objectPtr.Namespace);
         }

@@ -439,7 +439,8 @@ public final class DsonTextReader extends AbstractDsonReader {
         if (DsonTexts.LABEL_PTR.equals(clsName)) {// @ptr localId
             DsonToken nextToken = popToken();
             ensureStringsToken(context, nextToken);
-            pushNextValue(new ObjectPtr(nextToken.stringValue()));
+            String localId = nextToken.nullableStringValue();
+            pushNextValue(new ObjectPtr(localId));
             return DsonType.POINTER;
         }
         if (DsonTexts.LABEL_LITE_PTR.equals(clsName)) { // @lptr localId

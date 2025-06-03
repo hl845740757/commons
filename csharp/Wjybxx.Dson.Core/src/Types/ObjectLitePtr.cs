@@ -41,7 +41,7 @@ public readonly struct ObjectLitePtr : IEquatable<ObjectLitePtr>
     public ObjectLitePtr(long localId, string? ns = null, byte type = 0, byte policy = 0) {
         if (localId < 0) throw new ArgumentException("localId cant be negative, v: " + localId);
         this.LocalId = localId;
-        this.Namespace = ns;
+        this.Namespace = ObjectUtil.EmptyToDef(ns, null);
         this.Type = type;
         this.Policy = policy;
 
@@ -69,7 +69,11 @@ public readonly struct ObjectLitePtr : IEquatable<ObjectLitePtr>
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(LocalId, Namespace, Type, Policy);
+        int hashCode = LocalId.GetHashCode();
+        hashCode = (hashCode * 397) ^ (Namespace != null ? Namespace.GetHashCode() : 0);
+        hashCode = (hashCode * 397) ^ Type.GetHashCode();
+        hashCode = (hashCode * 397) ^ Policy.GetHashCode();
+        return hashCode;
     }
 
     public static bool operator ==(ObjectLitePtr left, ObjectLitePtr right) {

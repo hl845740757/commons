@@ -55,8 +55,9 @@ public final class ObjectPtr {
     }
 
     public ObjectPtr(String localId, String namespace, byte type, byte policy) {
-        this.localId = localId;
-        this.namespace = namespace;
+        // 空字符串转null而不是null转空字符串，以兼容default构建的实例
+        this.localId = ObjectUtils.emptyToDef(localId, null);
+        this.namespace = ObjectUtils.emptyToDef(namespace, null);
         this.type = type;
         this.policy = policy;
 
@@ -106,21 +107,21 @@ public final class ObjectPtr {
         if (o == null || getClass() != o.getClass()) return false;
 
         ObjectPtr objectPtr = (ObjectPtr) o;
-
-        if (type != objectPtr.type) return false;
-        if (policy != objectPtr.policy) return false;
-        if (!Objects.equals(namespace, objectPtr.namespace)) return false;
-        return Objects.equals(localId, objectPtr.localId);
+        return type == objectPtr.type
+                && policy == objectPtr.policy
+                && Objects.equals(localId, objectPtr.localId)
+                && Objects.equals(namespace, objectPtr.namespace);
     }
 
     @Override
     public int hashCode() {
-        int result = namespace != null ? namespace.hashCode() : 0;
-        result = 31 * result + (localId != null ? localId.hashCode() : 0);
+        int result = Objects.hashCode(localId);
+        result = 31 * result + Objects.hashCode(namespace);
         result = 31 * result + type;
         result = 31 * result + policy;
         return result;
     }
+
     // endregion
 
     @Override

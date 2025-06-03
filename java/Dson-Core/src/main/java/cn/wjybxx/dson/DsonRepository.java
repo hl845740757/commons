@@ -112,6 +112,9 @@ public class DsonRepository {
                 DsonValue value = entry.getValue();
                 if (value.getDsonType() == DsonType.POINTER) {
                     ObjectPtr objectPtr = value.asPointer();
+                    if (objectPtr.isEmpty()) {
+                        continue;
+                    }
                     DsonValue targetObj = indexMap.get(objectPtr.getLocalId());
                     if (targetObj != null) {
                         entry.setValue(targetObj);
@@ -125,6 +128,9 @@ public class DsonRepository {
                 DsonValue value = dsonArray.get(i);
                 if (value.getDsonType() == DsonType.POINTER) {
                     ObjectPtr objectPtr = value.asPointer();
+                    if (objectPtr.isEmpty()) {
+                        continue;
+                    }
                     DsonValue targetObj = indexMap.get(objectPtr.getLocalId());
                     if (targetObj != null) {
                         dsonArray.set(i, targetObj);

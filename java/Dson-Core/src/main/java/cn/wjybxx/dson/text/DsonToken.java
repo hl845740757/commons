@@ -45,6 +45,15 @@ public class DsonToken {
         return (String) value;
     }
 
+    /** 将value转换为字符串值；如果字符串是无引号字符串null，则返回null */
+    public String nullableStringValue() {
+        String str = (String) this.value;
+        if (type == DsonTokenType.UNQUOTE_STRING && "null".equals(str)) {
+            return null;
+        }
+        return str;
+    }
+
     // region equals
     public boolean fullEquals(DsonToken dsonToken) {
         if (this == dsonToken) {

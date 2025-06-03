@@ -155,6 +155,9 @@ public class DsonRepository
                 DsonValue value = entry.Value;
                 if (value.DsonType == DsonType.Pointer) {
                     ObjectPtr objectPtr = value.AsPointer();
+                    if (objectPtr.IsEmpty) {
+                        continue;
+                    }
                     if (_indexMap.TryGetValue(objectPtr.LocalId, out DsonValue targetObj)) {
                         dsonObject[entry.Key] = targetObj; // 迭代时覆盖值是安全的
                     }
@@ -167,6 +170,9 @@ public class DsonRepository
                 DsonValue value = dsonArray[i];
                 if (value.DsonType == DsonType.Pointer) {
                     ObjectPtr objectPtr = value.AsPointer();
+                    if (objectPtr.IsEmpty) {
+                        continue;
+                    }
                     if (_indexMap.TryGetValue(objectPtr.LocalId, out DsonValue targetObj)) {
                         dsonArray[i] = targetObj;
                     }

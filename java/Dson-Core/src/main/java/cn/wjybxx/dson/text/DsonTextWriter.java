@@ -446,6 +446,10 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         DsonPrinter printer = this.printer;
         int softLineLength = this.settings.softLineLength;
         writeCurrentName(printer, DsonType.POINTER);
+        if (objectPtr.isEmpty()) {
+            printer.fastPrint("@ptr null"); // 空指针打印为null
+            return;
+        }
         if (objectPtr.canBeAbbreviated()) {
             printer.fastPrint("@ptr "); // 只有localId时简写
             printString(printer, objectPtr.getLocalId(), StringStyle.AUTO_QUOTE);

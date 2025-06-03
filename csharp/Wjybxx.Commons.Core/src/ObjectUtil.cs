@@ -130,7 +130,7 @@ public static class ObjectUtil
     public static int Length(string? value) {
         return value?.Length ?? 0;
     }
-
+#nullable disable
     /// <summary>
     /// 如果字符串为null或空字符串，则转为默认字符串
     /// </summary>
@@ -152,7 +152,7 @@ public static class ObjectUtil
     public static string BlankToDef(string value, string def) {
         return string.IsNullOrWhiteSpace(value) ? def : value;
     }
-
+#nullable enable
     /// <summary>
     /// 首字母大写
     /// </summary>

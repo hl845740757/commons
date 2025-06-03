@@ -29,7 +29,7 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     public const int MaskNamespace = 1;
     public const int MaskType = 1 << 1;
     public const int MaskPolicy = 1 << 2;
-    
+
 #nullable disable
     /** 引用对象的本地id - 如果目标对象是容器中的一员，该值是其容器内编号 */
     public string LocalId { get; }
@@ -40,10 +40,11 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     /** 引用的解析策略 -- 自定义解析规则 */
     public byte Policy { get; }
 #nullable enable
-    
+
     public ObjectPtr(string? localId, string? ns = null, byte type = 0, byte policy = 0) {
-        this.LocalId = localId;
-        this.Namespace = ns;
+        // 空字符串转null而不是null转空字符串，以兼容default构建的实例
+        this.LocalId = ObjectUtil.EmptyToDef(localId, null);
+        this.Namespace = ObjectUtil.EmptyToDef(ns, null);
         this.Type = type;
         this.Policy = policy;
 
@@ -71,7 +72,11 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(LocalId, Namespace, Type, Policy);
+        int hashCode = (LocalId != null ? LocalId.GetHashCode() : 0);
+        hashCode = (hashCode * 397) ^ (Namespace != null ? Namespace.GetHashCode() : 0);
+        hashCode = (hashCode * 397) ^ Type.GetHashCode();
+        hashCode = (hashCode * 397) ^ Policy.GetHashCode();
+        return hashCode;
     }
 
     public static bool operator ==(ObjectPtr left, ObjectPtr right) {

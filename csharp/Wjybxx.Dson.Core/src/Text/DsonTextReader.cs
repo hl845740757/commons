@@ -463,9 +463,10 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (DsonTexts.LabelPtr == clsName) { // @ref localId
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context, nextToken);
+            string localId = nextToken.NullableStringValue();
             PushNextValue(new UnionValue(DsonType.Pointer)
             {
-                ObjectPtr = new ObjectPtr(nextToken.StringValue())
+                ObjectPtr = new ObjectPtr(localId)
             });
             return DsonType.Pointer;
         }

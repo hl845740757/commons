@@ -85,7 +85,8 @@ public class DsonReaderUtils {
     }
 
     public static void writePtr(DsonOutput output, ObjectPtr objectPtr) {
-        output.writeString(objectPtr.getLocalId());
+        String localId = objectPtr.getLocalId();
+        output.writeString(localId == null ? "" : localId);
         if (objectPtr.hasNamespace()) {
             output.writeString(objectPtr.getNamespace());
         }

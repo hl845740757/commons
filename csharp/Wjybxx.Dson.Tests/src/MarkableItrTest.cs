@@ -32,7 +32,7 @@ public class MarkableItrTest
             .Append("url", new DsonString("http://www.wjybxx.cn"))
             .Append("time", new DsonInt64(DatetimeUtil.ToEpochMillis(DateTime.UtcNow) + Random.Shared.NextInt64(1, 1000)));
 
-        DsonTextReader textReader = new DsonTextReader(DsonTextReaderSettings.Default, ReaderTest.DsonString);
+        DsonTextReader textReader = new DsonTextReader(DsonTextReaderSettings.Default, DsonTextReaderTest.DsonString);
         DsonArray<string> collection = Dsons.ReadCollection(textReader);
         obj1.Append("wrapped1", collection);
         obj1.Append("wrapped2", Dsons.FromDson(FormatTest.DsonString));

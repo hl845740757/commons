@@ -26,7 +26,7 @@ namespace Wjybxx.Dson.Tests;
 /// <summary>
 /// 测试三种Reader/Writer实现之间的等效性
 /// </summary>
-public class ReaderTest
+public class DsonTextReaderTest
 {
     // c#10还不支持 """，因此转为@格式
     internal const string DsonString = """
@@ -47,7 +47,8 @@ public class ReaderTest
               ptr1: @ptr 17630eb4f916148b,
               ptr2: {@ptr ns: 16148b3b4e7b8923d398, localId: 10001},
               lptr1: @lptr 10001,
-              lptr2: {@lptr ns: global, localId: 10001}
+              lptr2: {@lptr ns: global, localId: 10001},
+              ptr: @ptr null
             },
             [@{localId: "10001"}
               @bin "FFFE",

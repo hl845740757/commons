@@ -52,7 +52,16 @@ public readonly struct DsonToken : IEquatable<DsonToken>
     public string StringValue() {
         return (string)value.objValue!;
     }
-
+    
+    /** 将value转换为字符串值；如果字符串是无引号字符串null，则返回null */
+    public string? NullableStringValue() {
+        string str = (string)this.value.objValue;
+        if (type == DsonTokenType.UnquoteString && "null" == str) {
+            return null;
+        }
+        return str;
+    }
+    
     #region equals
 
     // Equals默认不比较位置

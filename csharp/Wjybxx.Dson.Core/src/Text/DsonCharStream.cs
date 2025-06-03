@@ -65,14 +65,14 @@ public interface IDsonCharStream : IDisposable
     /// </summary>
     /// <value></value>
     int Position { get; }
-    
+
     /// <summary>
     /// 获取行号
     /// 1.初始0，表示尚未开始
     /// 2.初始行号可能不为1，部分输入流可能是截断的
     /// </summary>
     int Ln { get; }
-    
+
     /// <summary>
     /// 获取列号
     /// 1.初始0，表示尚未开始

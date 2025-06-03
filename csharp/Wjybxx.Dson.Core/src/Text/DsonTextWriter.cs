@@ -428,6 +428,10 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         DsonPrinter printer = this._printer;
         int softLineLength = this._settings.softLineLength;
         WriteCurrentName(printer, DsonType.Pointer);
+        if (objectPtr.IsEmpty) {
+            printer.FastPrint("@ptr null"); // 空指针打印为null
+            return;
+        }
         if (objectPtr.CanBeAbbreviated) {
             printer.FastPrint("@ptr "); // 只有localId时简写
             PrintString(printer, objectPtr.LocalId, StringStyle.AutoQuote);

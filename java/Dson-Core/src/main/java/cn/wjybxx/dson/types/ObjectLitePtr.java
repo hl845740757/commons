@@ -19,6 +19,7 @@ package cn.wjybxx.dson.types;
 import cn.wjybxx.base.ObjectUtils;
 
 import javax.annotation.concurrent.Immutable;
+import java.util.Objects;
 
 /**
  * 对象轻量指针，
@@ -52,7 +53,7 @@ public class ObjectLitePtr {
     public ObjectLitePtr(long localId, String namespace, byte type, byte policy) {
         if (localId < 0) throw new IllegalArgumentException("localId cant be negative, v: " + localId);
         this.localId = localId;
-        this.namespace = namespace;
+        this.namespace = ObjectUtils.emptyToDef(namespace, null);
         this.type = type;
         this.policy = policy;
 
@@ -100,18 +101,17 @@ public class ObjectLitePtr {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        ObjectLitePtr objectLitePtr = (ObjectLitePtr) o;
-
-        if (localId != objectLitePtr.localId) return false;
-        if (type != objectLitePtr.type) return false;
-        if (policy != objectLitePtr.policy) return false;
-        return namespace.equals(objectLitePtr.namespace);
+        ObjectLitePtr that = (ObjectLitePtr) o;
+        return localId == that.localId
+                && type == that.type
+                && policy == that.policy
+                && Objects.equals(namespace, that.namespace);
     }
 
     @Override
     public int hashCode() {
-        int result = (int) (localId ^ (localId >>> 32));
-        result = 31 * result + namespace.hashCode();
+        int result = Long.hashCode(localId);
+        result = 31 * result + Objects.hashCode(namespace);
         result = 31 * result + type;
         result = 31 * result + policy;
         return result;
