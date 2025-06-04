@@ -1,5 +1,6 @@
 package cn.wjybxx.dson;
 
+import cn.wjybxx.dson.text.DsonTexts;
 import cn.wjybxx.dson.text.ObjectStyle;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -43,5 +44,12 @@ public class DsonEscapeTest {
         Assertions.assertEquals(regExp, reg3.getValue());
 
         System.out.println(Dsons.toDson(value, ObjectStyle.INDENT));
+    }
+
+    @Test
+    void test2() {
+        String escaped = DsonTexts.escape(regExp);
+        String unescaped = DsonTexts.unescape(escaped);
+        Assertions.assertEquals(regExp, unescaped);
     }
 }

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Pool;
@@ -472,7 +473,7 @@ public sealed class DsonScanner : IDisposable
             if (c == '"') { // 结束
                 return;
             } else if (c == '\\') { // 处理转义字符
-                DoEscape(buffer, sb);
+                DoUnescape(buffer, sb);
             } else {
                 sb.Append((char)c);
             }
@@ -662,7 +663,7 @@ public sealed class DsonScanner : IDisposable
         int c;
         while ((c = buffer.Read()) >= 0) {
             if (c == '\\') {
-                DoEscape(buffer, sb);
+                DoUnescape(buffer, sb);
             } else {
                 sb.Append((char)c);
             }
@@ -719,13 +720,13 @@ public sealed class DsonScanner : IDisposable
         return LineHead.Comment;
     }
 
-    private void DoEscape(IDsonCharStream buffer, StringBuilder sb) {
+    private void DoUnescape(IDsonCharStream buffer, StringBuilder sb) {
         int position = Position;
-        int c = ReadEscapeChar(buffer, position);
+        int c = ReadEscapedChar(buffer, position);
         switch (c) {
             case '"':
                 sb.Append('"');
-                break; // 双引号字符串下，双引号需要转义
+                break;
             case '\\':
                 sb.Append('\\');
                 break;
@@ -747,12 +748,12 @@ public sealed class DsonScanner : IDisposable
             case 'u': {
                 // unicode字符，char是2字节，固定编码为4个16进制数，从高到底
                 char[] hexBuffer = this._hexBuffer;
-                hexBuffer[0] = (char)ReadEscapeChar(buffer, position);
-                hexBuffer[1] = (char)ReadEscapeChar(buffer, position);
-                hexBuffer[2] = (char)ReadEscapeChar(buffer, position);
-                hexBuffer[3] = (char)ReadEscapeChar(buffer, position);
-                string hex = new string(hexBuffer);
-                sb.Append((char)Convert.ToInt32(hex, 16));
+                hexBuffer[0] = (char)ReadEscapedChar(buffer, position);
+                hexBuffer[1] = (char)ReadEscapedChar(buffer, position);
+                hexBuffer[2] = (char)ReadEscapedChar(buffer, position);
+                hexBuffer[3] = (char)ReadEscapedChar(buffer, position);
+                int value = DsonTexts.ParseNumberFormHexString(hexBuffer);
+                sb.Append((char)value);
                 break;
             }
             default: throw InvalidEscapeSequence(c, Position);
@@ -760,7 +761,8 @@ public sealed class DsonScanner : IDisposable
     }
 
     /** 读取下一个要转义的字符 -- 只能换行到合并行 */
-    private int ReadEscapeChar(IDsonCharStream buffer, int position) {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int ReadEscapedChar(IDsonCharStream buffer, int position) {
         int c = buffer.Read();
         if (c >= 0) {
             return c;

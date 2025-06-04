@@ -122,6 +122,20 @@ public static class ObjectUtil
     }
 
     /// <summary>
+    /// 使用java风格追加字符串
+    /// </summary>
+    /// <param name="sb">sb</param>
+    /// <param name="value">要追加的字符串</param>
+    /// <param name="start">开始索引 inclusive</param>
+    /// <param name="end">结束索引 exclusive</param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static StringBuilder Append2(this StringBuilder sb, string value, int start, int end) {
+        sb.Append(value, start, end - start);
+        return sb;
+    }
+
+    /// <summary>
     /// 获取字符串的长度，如果字符为null，则返回0
     /// </summary>
     /// <param name="value"></param>

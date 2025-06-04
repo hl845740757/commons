@@ -453,7 +453,7 @@ public final class DsonScanner implements AutoCloseable {
             if (c == '"') { // 结束
                 return;
             } else if (c == '\\') { // 处理转义字符
-                doEscape(buffer, sb);
+                doUnescape(buffer, sb);
             } else {
                 sb.append((char) c);
             }
@@ -644,7 +644,7 @@ public final class DsonScanner implements AutoCloseable {
         int c;
         while ((c = buffer.read()) >= 0) {
             if (c == '\\') {
-                doEscape(buffer, sb);
+                doUnescape(buffer, sb);
             } else {
                 sb.append((char) c);
             }
@@ -700,11 +700,11 @@ public final class DsonScanner implements AutoCloseable {
         return LineHead.COMMENT;
     }
 
-    private void doEscape(DsonCharStream buffer, StringBuilder sb) {
+    private void doUnescape(DsonCharStream buffer, StringBuilder sb) {
         final int position = getPosition();
-        final int c = readEscapeChar(buffer, position);
+        final int c = readEscapedChar(buffer, position);
         switch (c) {
-            case '"' -> sb.append('"'); // 双引号字符串下，双引号需要转义
+            case '"' -> sb.append('"');
             case '\\' -> sb.append('\\');
             case 'b' -> sb.append('\b');
             case 'f' -> sb.append('\f');
@@ -715,10 +715,10 @@ public final class DsonScanner implements AutoCloseable {
                 // unicode字符，char是2字节，固定编码为4个16进制数，从高到底
                 CharBuffer hexBuffer = this.hexBuffer;
                 hexBuffer.clear();
-                hexBuffer.write((char) readEscapeChar(buffer, position));
-                hexBuffer.write((char) readEscapeChar(buffer, position));
-                hexBuffer.write((char) readEscapeChar(buffer, position));
-                hexBuffer.write((char) readEscapeChar(buffer, position));
+                hexBuffer.write((char) readEscapedChar(buffer, position));
+                hexBuffer.write((char) readEscapedChar(buffer, position));
+                hexBuffer.write((char) readEscapedChar(buffer, position));
+                hexBuffer.write((char) readEscapedChar(buffer, position));
                 sb.append((char) Integer.parseInt(hexBuffer, 0, 4, 16));
             }
             default -> throw invalidEscapeSequence(c, position);
@@ -726,7 +726,7 @@ public final class DsonScanner implements AutoCloseable {
     }
 
     /** 读取下一个要转义的字符 */
-    private static int readEscapeChar(DsonCharStream buffer, int position) {
+    private static int readEscapedChar(DsonCharStream buffer, int position) {
         int c = buffer.read();
         if (c >= 0) {
             return c;

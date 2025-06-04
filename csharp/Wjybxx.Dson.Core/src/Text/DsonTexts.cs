@@ -21,6 +21,7 @@ using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Internal;
 
@@ -180,6 +181,129 @@ public static class DsonTexts
             }
         }
         return true;
+    }
+
+    /// <summary>
+    /// 对文本进行转义，使其成为合法的dson字符串
+    /// </summary>
+    /// <param name="text">要转义的文本</param>
+    /// <param name="unicodeChar">是否转义为Unicode字符</param>
+    /// <returns></returns>
+    public static string Escape(string text, bool unicodeChar = false) {
+        if (text == null) throw new ArgumentNullException(nameof(text));
+        StringBuilder sb = GetCachedBuilder();
+        sb.Append('"');
+        foreach (char c in text) {
+            switch (c) {
+                case '\"':
+                    sb.Append('\\');
+                    sb.Append('"');
+                    break;
+                case '\\':
+                    sb.Append('\\');
+                    sb.Append('\\');
+                    break;
+                case '\b':
+                    sb.Append('\\');
+                    sb.Append('b');
+                    break;
+                case '\f':
+                    sb.Append('\\');
+                    sb.Append('f');
+                    break;
+                case '\n':
+                    sb.Append('\\');
+                    sb.Append('n');
+                    break;
+                case '\r':
+                    sb.Append('\\');
+                    sb.Append('r');
+                    break;
+                case '\t':
+                    sb.Append('\\');
+                    sb.Append('t');
+                    break;
+                default: {
+                    if (unicodeChar && (c < 32 || c > 126)) {
+                        sb.Append('\\');
+                        sb.Append('u');
+                        sb.Append((0x10000 + c).ToString("X"), 1, 4);
+                    } else {
+                        sb.Append(c);
+                    }
+                    break;
+                }
+            }
+        }
+        sb.Append('"');
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// 将转义后的dson文本转换为正常文本
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public static string Unescape(string text) {
+        int len = text.Length;
+        if (len < 2 || text[0] != '"' || text[len - 1] != '"') {
+            throw new ArgumentException("Invalid text");
+        }
+        StringBuilder sb = GetCachedBuilder();
+        char[] hexBuffer = new char[4];
+        for (int i = 1; i < len - 1;) {
+            char c = text[i++];
+            if (c != '\\') {
+                sb.Append(c);
+                continue;
+            }
+            c = text[i++];
+            switch (c) {
+                case '"':
+                    sb.Append('"');
+                    break;
+                case '\\':
+                    sb.Append('\\');
+                    break;
+                case 'b':
+                    sb.Append('\b');
+                    break;
+                case 'f':
+                    sb.Append('\f');
+                    break;
+                case 'n':
+                    sb.Append('\n');
+                    break;
+                case 'r':
+                    sb.Append('\r');
+                    break;
+                case 't':
+                    sb.Append('\t');
+                    break;
+                case 'u': {
+                    // unicode字符，char是2字节，固定编码为4个16进制数，从高到底
+                    hexBuffer[0] = text[i++];
+                    hexBuffer[1] = text[i++];
+                    hexBuffer[2] = text[i++];
+                    hexBuffer[3] = text[i++];
+                    int value = ParseNumberFormHexString(hexBuffer);
+                    sb.Append((char)value);
+                    break;
+                }
+                default:
+                    throw new ArgumentException("Invalid text");
+            }
+        }
+        return sb.ToString();
+    }
+
+    internal static int ParseNumberFormHexString(char[] hexBuffer) {
+        int a = CharUtil.HexCharToNumber(hexBuffer[0]);
+        int b = CharUtil.HexCharToNumber(hexBuffer[1]);
+        int c = CharUtil.HexCharToNumber(hexBuffer[2]);
+        int d = CharUtil.HexCharToNumber(hexBuffer[3]);
+        return a << 12 | b << 8 | c << 4 | d;
     }
 
     #region bool/null

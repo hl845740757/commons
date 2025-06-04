@@ -171,6 +171,111 @@ public class DsonTexts {
         return true;
     }
 
+    /** 对文本进行转义，使其成为合法的dson字符串 */
+    public static String escape(String text) {
+        return escape(text, false);
+    }
+
+    /**
+     * 对文本进行转义，使其成为合法的dson字符串
+     *
+     * @param text        要转义的文本
+     * @param unicodeChar 是否转义为unicode字符
+     * @return 转义后的字符串
+     */
+    public static String escape(String text, boolean unicodeChar) {
+        StringBuilder sb = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.acquire();
+        sb.append('"');
+        for (int i = 0, len = text.length(); i < len; i++) {
+            char c = text.charAt(i);
+            switch (c) {
+                case '\"' -> {
+                    sb.append('\\');
+                    sb.append('"');
+                }
+                case '\\' -> {
+                    sb.append('\\');
+                    sb.append('\\');
+                }
+                case '\b' -> {
+                    sb.append('\\');
+                    sb.append('b');
+                }
+                case '\f' -> {
+                    sb.append('\\');
+                    sb.append('f');
+                }
+                case '\n' -> {
+                    sb.append('\\');
+                    sb.append('n');
+                }
+                case '\r' -> {
+                    sb.append('\\');
+                    sb.append('r');
+                }
+                case '\t' -> {
+                    sb.append('\\');
+                    sb.append('t');
+                }
+                default -> {
+                    if (unicodeChar && (c < 32 || c > 126)) {
+                        sb.append('\\');
+                        sb.append('u');
+                        sb.append(Integer.toHexString(0x10000 + (int) c), 1, 5);
+                    } else {
+                        sb.append(c);
+                    }
+                }
+            }
+        }
+        sb.append('"');
+        String r = sb.toString();
+        ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.release(sb);
+        return r;
+    }
+
+    /** 将转义后的dson文本转换为正常文本 */
+    public static String unescape(String text) {
+        int len = text.length();
+        if (len < 2 || text.charAt(0) != '"' || text.charAt(len - 1) != '"') {
+            throw new IllegalArgumentException("Invalid text");
+        }
+        StringBuilder sb = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.acquire();
+        CharBuffer hexBuffer = new CharBuffer(4);
+        try {
+            for (int i = 1; i < len - 1; ) {
+                char c = text.charAt(i++);
+                if (c != '\\') {
+                    sb.append(c);
+                    continue;
+                }
+                c = text.charAt(i++);
+                switch (c) {
+                    case '"' -> sb.append('"');
+                    case '\\' -> sb.append('\\');
+                    case 'b' -> sb.append('\b');
+                    case 'f' -> sb.append('\f');
+                    case 'n' -> sb.append('\n');
+                    case 'r' -> sb.append('\r');
+                    case 't' -> sb.append('\t');
+                    case 'u' -> {
+                        // unicode字符，char是2字节，固定编码为4个16进制数，从高到底
+                        hexBuffer.clear();
+                        hexBuffer.write(text.charAt(i++));
+                        hexBuffer.write(text.charAt(i++));
+                        hexBuffer.write(text.charAt(i++));
+                        hexBuffer.write(text.charAt(i++));
+                        sb.append((char) Integer.parseInt(hexBuffer, 0, 4, 16));
+                    }
+                    default -> throw new IllegalArgumentException("Invalid text");
+                }
+            }
+            return sb.toString();
+        } finally {
+            ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.release(sb);
+        }
+    }
+
     // region bool/null
 
     public static boolean parseBool(String str) {

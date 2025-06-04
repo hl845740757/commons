@@ -66,4 +66,19 @@ public class EscapeTest
 
         Console.WriteLine(value.ToDson());
     }
+
+    [Test]
+    public void TestEscapeString() {
+        string escapedString = DsonTexts.Escape(RegExp);
+        string unescaped = DsonTexts.Unescape(escapedString);
+        Assert.That(unescaped, Is.EqualTo(RegExp));
+    }
+
+    [Test]
+    public void TestParseHexNumber() {
+        char[] hexBuffer = "4e00".ToCharArray();
+        int number = DsonTexts.ParseNumberFormHexString(hexBuffer);
+        int number2 = int.Parse("4e00", System.Globalization.NumberStyles.HexNumber);
+        Assert.That(number, Is.EqualTo(number2));
+    }
 }
