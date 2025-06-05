@@ -137,7 +137,12 @@ public abstract class AbstractDsonObject<TK> : DsonValue, IGenericDictionary<TK,
     }
 
     public override int GetHashCode() {
-        return _valueMap.GetHashCode();
+        int hashCode = 1;
+        foreach (var pair in _valueMap) {
+            hashCode = (hashCode * 397) ^ pair.Key.GetHashCode();
+            hashCode = (hashCode * 397) ^ pair.Value.GetHashCode();
+        }
+        return hashCode;
     }
 
     public static bool operator ==(AbstractDsonObject<TK>? left, AbstractDsonObject<TK>? right) {

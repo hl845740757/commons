@@ -105,7 +105,7 @@ public final class DsonTextWriter extends AbstractDsonWriter {
             return;
         }
         // 处理value之间分隔符-换行之前
-        if (context.count > 0) {
+        if (context.contextType != DsonContextType.TOP_LEVEL && context.count > 0) {
             printer.print(',');
         }
         // 先处理长度超出，再处理缩进

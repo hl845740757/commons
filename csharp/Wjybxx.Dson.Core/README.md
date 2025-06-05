@@ -154,7 +154,9 @@ PS：其实Writer的目标就是尽可能和我们的书写格式一致。
 1. Fix Unity下创建`DsonCollectionReader`时会崩溃的问题
 2. `DsonInt32`、`DsonInt64`、`DsonFloat`、`DsonDouble`、`DsonString`增加常量对象
 3. 增加字符串转义和取消转义工具方法：`DsonTexts.Escape`、`DsonTexts.Unescape`
-4. Dson-Codec值类型兼容改善，`EnumCodec`支持Flags类型。
+4. Dson-Codec值类型兼容改善，`EnumCodec`支持Flags类型
+5. 重写`DsonObject`和`DsonArray`的HashCode方法
+6. 顶层对象之间不打印逗号分隔符(顶层对象之间可以无分隔符)
 
 ```csharp
    private class Context<TName> : ISequentialEnumerator<KeyValuePair<TName, DsonValue>> {

@@ -87,7 +87,7 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
             return;
         }
         // 处理value之间分隔符
-        if (context.count > 0) {
+        if (context.contextType != DsonContextType.TopLevel && context.count > 0) {
             printer.Print(',');
         }
         // 先处理长度超出，再处理缩进

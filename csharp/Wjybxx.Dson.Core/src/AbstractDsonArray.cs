@@ -128,7 +128,11 @@ public abstract class AbstractDsonArray : DsonValue, IList<DsonValue>, IEquatabl
     }
 
     public override int GetHashCode() {
-        return _values.GetHashCode();
+        int hashCode = 1;
+        foreach (DsonValue dsonValue in _values) {
+            hashCode = (hashCode * 397) ^ dsonValue.GetHashCode();
+        }
+        return hashCode;
     }
 
     public static bool operator ==(AbstractDsonArray? left, AbstractDsonArray? right) {
