@@ -128,6 +128,10 @@ public class DsonTexts {
         return unsafePrintCharSet.get(c) || Character.isWhitespace(c);
     }
 
+    public static boolean canUnquoteString(String value, int maxLengthOfUnquoteString) {
+        return canUnquoteString(value, maxLengthOfUnquoteString, false);
+    }
+
     /**
      * 是否可省略字符串的引号
      * 其实并不建议底层默认判断是否可以不加引号，用户可以根据自己的数据决定是否加引号，比如；guid可能就是可以不加引号的

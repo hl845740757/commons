@@ -130,6 +130,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     public ValueCollection Values => CachedValues();
 
     public KeyCollection SequencedKeys(bool reversed = false) => CachedKeys(reversed);
+
     public ValueCollection SequencedValues(bool reversed = false) => CachedValues(reversed);
 
     private KeyCollection CachedKeys(bool reversed = false) {

@@ -122,6 +122,7 @@ final class DsonCodecHelper {
         DsonType dsonType = readOrGetDsonType(reader);
         return switch (dsonType) {
             case STRING -> reader.readString(name);
+            case BINARY -> reader.readBinary(name).toHexString();
             case NULL -> {
                 reader.readNull(name);
                 yield null;
@@ -153,6 +154,7 @@ final class DsonCodecHelper {
     static ObjectPtr readPtr(DsonReader reader, String name) {
         DsonType dsonType = readOrGetDsonType(reader);
         return switch (dsonType) {
+            case INT64 -> new ObjectPtr(reader.readString(name));
             case POINTER -> reader.readPtr(name);
             case NULL -> {
                 reader.readNull(name);
@@ -165,6 +167,8 @@ final class DsonCodecHelper {
     static ObjectLitePtr readLitePtr(DsonReader reader, String name) {
         DsonType dsonType = readOrGetDsonType(reader);
         return switch (dsonType) {
+            case INT32 -> new ObjectLitePtr(reader.readInt32(name));
+            case INT64 -> new ObjectLitePtr(reader.readInt64(name));
             case LITE_POINTER -> reader.readLitePtr(name);
             case NULL -> {
                 reader.readNull(name);
@@ -177,6 +181,8 @@ final class DsonCodecHelper {
     static ExtDateTime readDateTime(DsonReader reader, String name) {
         DsonType dsonType = readOrGetDsonType(reader);
         return switch (dsonType) {
+            case INT64 -> new ExtDateTime(reader.readInt64(name));
+            case STRING -> ExtDateTime.parse(reader.readString(name));
             case DATETIME -> reader.readDateTime(name);
             case NULL -> {
                 reader.readNull(name);
@@ -189,6 +195,7 @@ final class DsonCodecHelper {
     static Timestamp readTimestamp(DsonReader reader, String name) {
         DsonType dsonType = readOrGetDsonType(reader);
         return switch (dsonType) {
+            case INT64 -> new Timestamp(reader.readInt64(name));
             case TIMESTAMP -> reader.readTimestamp(name);
             case NULL -> {
                 reader.readNull(name);

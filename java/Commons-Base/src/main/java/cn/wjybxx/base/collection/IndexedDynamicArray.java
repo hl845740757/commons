@@ -126,7 +126,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
     @Override
     public void insert(int index, E e) {
         requireNonNullAndNotContains(e);
-        Objects.checkIndex(index, len); // 还是要求index已存在更好
+        Objects.checkIndex(index, len + 1);
         ensureNotIterating();
         if (len == elements.length) {
             ensureCapacity(len + 1);

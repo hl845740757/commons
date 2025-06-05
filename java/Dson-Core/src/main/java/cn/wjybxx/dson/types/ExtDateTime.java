@@ -190,6 +190,11 @@ public final class ExtDateTime {
 
     // region parse/format
 
+    /** @return 固定格式 yyyy-MM-dd'T'HH:mm:ss */
+    public static String formatDateTime(long epochSecond) {
+        return formatDate(epochSecond) + "T" + formatTime(epochSecond);
+    }
+
     /** @return 固定格式 yyyy-MM-dd */
     public static String formatDate(long epochSecond) {
         return LocalDateTime.ofEpochSecond(epochSecond, 0, ZoneOffset.UTC)
@@ -205,14 +210,19 @@ public final class ExtDateTime {
                 .substring(0, 8);
     }
 
-    /** @return 固定格式 yyyy-MM-dd'T'HH:mm:ss */
-    public static String formatDateTime(long epochSecond) {
-        return formatDate(epochSecond) + "T" + formatTime(epochSecond);
+    /** @param dateTimeString 限定格式 yyyy-MM-dd'T'HH:mm:ss */
+    public static ExtDateTime parse(String dateTimeString) {
+        LocalDateTime dateTime = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME);
+        return ofDateTime(dateTime);
+    }
+
+    /** @param dateTimeString 限定格式 yyyy-MM-dd'T'HH:mm:ss */
+    public static LocalDateTime parseDateTime(String dateTimeString) {
+        return LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_DATE_TIME);
     }
 
     /** @param dateString 限定格式 yyyy-MM-dd */
     public static LocalDate parseDate(String dateString) {
-//        if (dateString.length() != 10) throw new IllegalArgumentException("invalid dateString " + dateString);
         return LocalDate.parse(dateString, DateTimeFormatter.ISO_DATE);
     }
 
@@ -220,11 +230,6 @@ public final class ExtDateTime {
     public static LocalTime parseTime(String timeString) {
         if (timeString.length() != 8) throw new IllegalArgumentException("invalid timeString " + timeString);
         return LocalTime.parse(timeString, DateTimeFormatter.ISO_TIME);
-    }
-
-    /** @param timeString 限定格式 yyyy-MM-dd'T'HH:mm:ss */
-    public static LocalDateTime parseDateTime(String timeString) {
-        return LocalDateTime.parse(timeString, DateTimeFormatter.ISO_DATE_TIME);
     }
 
     /**

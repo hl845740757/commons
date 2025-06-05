@@ -93,13 +93,12 @@ public interface IDynamicArray<E> where E : class
 
     /// <summary>
     /// 插入元素
-    /// 不论是否正在迭代，len一定会增加。
     /// 
     /// </summary>
-    /// <param name="index">要插入的位置，小于length</param>
+    /// <param name="index">要插入的位置，小于等于length</param>
     /// <param name="e">要插入的元素</param>
     /// <exception cref="NullReferenceException">如果e为null</exception>
-    /// <exception cref="IllegalStateException">如果e为null</exception>
+    /// <exception cref="IllegalStateException">如果当前正在迭代</exception>
     void Insert(int index, E e);
 
     /// <summary>

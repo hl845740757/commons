@@ -119,7 +119,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     public bool IsReadOnly => true;
     public int Count => _count;
     public bool IsEmpty => _count == 0;
-    
+
     [DebuggerHidden] IGenericCollection<TKey> IGenericDictionary<TKey, TValue>.Keys => Keys;
     [DebuggerHidden] IGenericCollection<TValue> IGenericDictionary<TKey, TValue>.Values => Values;
     [DebuggerHidden] ICollection<TKey> IDictionary<TKey, TValue>.Keys => CachedKeys();

@@ -91,9 +91,8 @@ public interface DynamicArray<E> {
 
     /**
      * 插入元素
-     * 不论是否正在迭代，length一定会增加。
      *
-     * @param index 要插入的位置，小于length
+     * @param index 要插入的位置，小于等于length
      * @param e     要插入的元素
      * @throws NullPointerException  如果e为null
      * @throws IllegalStateException 如果当前正在迭代

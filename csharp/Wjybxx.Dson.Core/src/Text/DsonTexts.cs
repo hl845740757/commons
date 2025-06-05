@@ -145,7 +145,7 @@ public static class DsonTexts
      * 其实并不建议底层默认判断是否可以不加引号，用户可以根据自己的数据决定是否加引号，比如；guid可能就是可以不加引号的
      * 这里的计算是保守的，保守一些不容易出错，因为情况太多，否则既难以保证正确性，性能也差。
      */
-    public static bool CanUnquoteString(string value, int maxLengthOfUnquoteString, bool isName) {
+    public static bool CanUnquoteString(string value, int maxLengthOfUnquoteString, bool isName = false) {
         if (value.Length == 0 || value.Length > maxLengthOfUnquoteString) {
             return false; // 长字符串都加引号，避免不必要的计算
         }

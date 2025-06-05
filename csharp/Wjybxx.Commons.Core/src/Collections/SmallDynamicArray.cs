@@ -106,7 +106,7 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
 
     public void Insert(int index, E e) {
         if (e == null) throw new ArgumentNullException(nameof(e));
-        ArrayUtil.CheckIndex(index, len); // 还是要求index已存在更好
+        ArrayUtil.CheckIndex(index, len + 1);
         EnsureNotIterating();
         if (len == elements.Length) {
             EnsureCapacity(len + 1);

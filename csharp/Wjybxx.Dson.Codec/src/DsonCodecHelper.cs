@@ -121,6 +121,7 @@ internal static class DsonCodecHelper
         DsonType dsonType = ReadOrGetDsonType(reader);
         switch (dsonType) {
             case DsonType.String: return reader.ReadString(name);
+            case DsonType.Binary: return reader.ReadBinary(name).ToHexString();
             case DsonType.Null: {
                 reader.ReadNull(name);
                 return null;
@@ -206,6 +207,7 @@ internal static class DsonCodecHelper
     public static ObjectPtr ReadPtr(IDsonReader<string> reader, string? name) {
         DsonType dsonType = ReadOrGetDsonType(reader);
         switch (dsonType) {
+            case DsonType.String: return new ObjectPtr(reader.ReadString(name));
             case DsonType.Pointer: return reader.ReadPtr(name);
             case DsonType.Null: {
                 reader.ReadNull(name);
@@ -219,6 +221,8 @@ internal static class DsonCodecHelper
     public static ObjectLitePtr ReadLitePtr(IDsonReader<string> reader, string? name) {
         DsonType dsonType = ReadOrGetDsonType(reader);
         switch (dsonType) {
+            case DsonType.Int32: return new ObjectLitePtr(reader.ReadInt32(name));
+            case DsonType.Int64: return new ObjectLitePtr(reader.ReadInt64(name));
             case DsonType.LitePointer: return reader.ReadLitePtr(name);
             case DsonType.Null: {
                 reader.ReadNull(name);
@@ -232,6 +236,8 @@ internal static class DsonCodecHelper
     public static ExtDateTime ReadDateTime(IDsonReader<string> reader, string? name) {
         DsonType dsonType = ReadOrGetDsonType(reader);
         switch (dsonType) {
+            case DsonType.Int64: return new ExtDateTime(reader.ReadInt64(name));
+            case DsonType.String: return ExtDateTime.Parse(reader.ReadString(name));
             case DsonType.DateTime: return reader.ReadDateTime(name);
             case DsonType.Null: {
                 reader.ReadNull(name);
@@ -245,6 +251,7 @@ internal static class DsonCodecHelper
     public static Timestamp ReadTimestamp(IDsonReader<string> reader, string? name) {
         DsonType dsonType = ReadOrGetDsonType(reader);
         switch (dsonType) {
+            case DsonType.Int64: return new Timestamp(reader.ReadInt64(name));
             case DsonType.Timestamp: return reader.ReadTimestamp(name);
             case DsonType.Null: {
                 reader.ReadNull(name);

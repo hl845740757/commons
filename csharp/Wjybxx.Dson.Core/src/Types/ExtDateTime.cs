@@ -164,6 +164,11 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
 
     #region 解析
 
+    public static ExtDateTime Parse(string datetimeString) {
+        DateTime dateTime = ParseDateTime(datetimeString);
+        return OfDateTime(in dateTime);
+    }
+    
     public static DateTime ParseDateTime(string datetimeString) {
         return DateTime.ParseExact(datetimeString, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture);
     }
