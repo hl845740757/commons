@@ -122,6 +122,10 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
             result = valueInfo.value;
             return true;
         }
+        if (_isFlags) {
+            result = (T)Enum.ToObject(typeof(T), number);
+            return true;
+        }
         result = default;
         return false;
     }
@@ -136,6 +140,9 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
     }
 
     public int GetNumber(T value) {
+        if (_isFlags) {
+            return EnumUtil.GetIntValue(value);
+        }
         if (!_value2EnumDic.TryGetValue(value, out EnumValueInfo<T> valueInfo)) {
             throw new DsonCodecException($"invalid enum value: {value}, type: {typeof(T)}");
         }
@@ -157,6 +164,10 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
     public bool AutoStartEnd => false;
 
     public void WriteObject(IDsonObjectWriter writer, in T inst, Type declaredType, ObjectStyle style) {
+        if (_isFlags && !writer.Options.writeEnumAsString) {
+            writer.WriteInt(null, EnumUtil.GetIntValue(inst));
+            return;
+        }
         if (!_value2EnumDic.TryGetValue(inst, out EnumValueInfo<T> valueInfo)) {
             throw new DsonCodecException($"invalid enum value: {inst}, type: {typeof(T)}");
         }
@@ -168,6 +179,10 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
     }
 
     public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
+        if (_isFlags && reader.CurrentDsonType == DsonType.Int32) {
+            int number = reader.ReadInt(null);
+            return (T)Enum.ToObject(typeof(T), number);
+        }
         if (reader.CurrentDsonType == DsonType.String) {
             string name = reader.ReadString(null);
             if (_name2EnumDic.TryGetValue(name, out EnumValueInfo<T> valueInfo)) {
