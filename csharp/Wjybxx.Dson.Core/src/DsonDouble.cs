@@ -26,6 +26,10 @@ namespace Wjybxx.Dson
 /// </summary>
 public sealed class DsonDouble : DsonNumber, IComparable<DsonDouble>, IEquatable<DsonDouble>, IComparable
 {
+    public static readonly DsonDouble ZERO = new DsonDouble(0);
+    public static readonly DsonDouble ONE = new DsonDouble(1);
+    public static readonly DsonDouble MINUS_ONE = new DsonDouble(-1);
+
     private readonly double _value;
 
     public DsonDouble(double value) {

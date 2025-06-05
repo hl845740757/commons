@@ -24,6 +24,10 @@ import javax.annotation.Nonnull;
  */
 public final class DsonInt32 extends DsonNumber implements Comparable<DsonInt32> {
 
+    public static final DsonInt32 ZERO = new DsonInt32(0);
+    public static final DsonInt32 ONE = new DsonInt32(1);
+    public static final DsonInt32 MINUS_ONE = new DsonInt32(-1);
+
     private final int value;
 
     public DsonInt32(int value) {

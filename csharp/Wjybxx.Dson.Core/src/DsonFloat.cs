@@ -26,6 +26,10 @@ namespace Wjybxx.Dson
 /// </summary>
 public sealed class DsonFloat : DsonNumber, IEquatable<DsonFloat>, IComparable<DsonFloat>, IComparable
 {
+    public static readonly DsonFloat ZERO = new DsonFloat(0);
+    public static readonly DsonFloat ONE = new DsonFloat(1);
+    public static readonly DsonFloat MINUS_ONE = new DsonFloat(-1);
+
     private readonly float _value;
 
     public DsonFloat(float value) {

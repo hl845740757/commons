@@ -24,6 +24,10 @@ import javax.annotation.Nonnull;
  */
 public final class DsonDouble extends DsonNumber implements Comparable<DsonDouble> {
 
+    public static final DsonDouble ZERO = new DsonDouble(0);
+    public static final DsonDouble ONE = new DsonDouble(1);
+    public static final DsonDouble MINUS_ONE = new DsonDouble(-1);
+
     private final double value;
 
     public DsonDouble(double value) {

@@ -24,6 +24,10 @@ import javax.annotation.Nonnull;
  */
 public final class DsonFloat extends DsonNumber implements Comparable<DsonFloat> {
 
+    public static final DsonFloat ZERO = new DsonFloat(0);
+    public static final DsonFloat ONE = new DsonFloat(1);
+    public static final DsonFloat MINUS_ONE = new DsonFloat(-1);
+
     private final float value;
 
     public DsonFloat(float value) {

@@ -26,6 +26,10 @@ namespace Wjybxx.Dson
 /// </summary>
 public sealed class DsonInt32 : DsonNumber, IEquatable<DsonInt32>, IComparable<DsonInt32>, IComparable
 {
+    public static readonly DsonInt32 ZERO = new DsonInt32(0);
+    public static readonly DsonInt32 ONE = new DsonInt32(1);
+    public static readonly DsonInt32 MINUS_ONE = new DsonInt32(-1);
+
     private readonly int _value;
 
     public DsonInt32(int value) {
