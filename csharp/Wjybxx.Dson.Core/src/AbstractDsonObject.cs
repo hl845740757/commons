@@ -145,14 +145,6 @@ public abstract class AbstractDsonObject<TK> : DsonValue, IGenericDictionary<TK,
         return hashCode;
     }
 
-    public static bool operator ==(AbstractDsonObject<TK>? left, AbstractDsonObject<TK>? right) {
-        return Equals(left, right);
-    }
-
-    public static bool operator !=(AbstractDsonObject<TK>? left, AbstractDsonObject<TK>? right) {
-        return !Equals(left, right);
-    }
-
     #endregion
 
     public override string ToString() {

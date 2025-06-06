@@ -172,6 +172,16 @@ public class ClassName : TypeName
     public string? Keyword => keyword;
 
     /// <summary>
+    /// 类型的元数据名
+    /// </summary>
+    public string MetaName {
+        get {
+            int c = declaredTypeArguments.Count;
+            return c == 0 ? simpleName : simpleName + "`" + c;
+        }
+    }
+
+    /// <summary>
     /// 获取运行时的反射类型名
     /// 未构造泛型：<code>System.Collections.Generic.Dictionary`2+Enumerator[TKey,TValue]</code>
     /// 已构造泛型：<code>System.Collections.Generic.Dictionary`2+Enumerator[System.String,System.Object]</code>

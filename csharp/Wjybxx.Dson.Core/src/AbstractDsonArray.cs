@@ -135,14 +135,6 @@ public abstract class AbstractDsonArray : DsonValue, IList<DsonValue>, IEquatabl
         return hashCode;
     }
 
-    public static bool operator ==(AbstractDsonArray? left, AbstractDsonArray? right) {
-        return Equals(left, right);
-    }
-
-    public static bool operator !=(AbstractDsonArray? left, AbstractDsonArray? right) {
-        return !Equals(left, right);
-    }
-
     #endregion
 
     public override string ToString() {

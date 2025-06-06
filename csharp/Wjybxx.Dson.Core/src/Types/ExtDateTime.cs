@@ -168,7 +168,7 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
         DateTime dateTime = ParseDateTime(datetimeString);
         return OfDateTime(in dateTime);
     }
-    
+
     public static DateTime ParseDateTime(string datetimeString) {
         return DateTime.ParseExact(datetimeString, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture);
     }

@@ -94,10 +94,10 @@ public static class BeanUtils
 
     public static IMethodSymbol? GetOneArgsConstructor(INamedTypeSymbol type, ITypeSymbol argType) {
         // TODO 参数如果是未构造泛型是否有问题
-        SymbolEqualityComparer comparer = SymbolEqualityComparer.Default;
         foreach (var methodSymbol in type.InstanceConstructors) {
             if (methodSymbol.Parameters.Length != 1) continue;
-            if (argType.Equals(methodSymbol.Parameters[0], comparer)) return methodSymbol;
+            ITypeSymbol parameterType = methodSymbol.Parameters[0].Type;
+            if (argType.IsSameType(parameterType)) return methodSymbol;
         }
         return null;
     }
