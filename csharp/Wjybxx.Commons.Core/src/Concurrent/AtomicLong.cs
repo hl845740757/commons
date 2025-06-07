@@ -16,6 +16,7 @@
 
 #endregion
 
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
@@ -35,30 +36,38 @@ public sealed class AtomicLong
     }
 
     public long Value {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => Volatile.Read(ref _value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set => Volatile.Write(ref _value, value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Increment() {
         return Interlocked.Increment(ref _value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long Decrement() {
         return Interlocked.Decrement(ref _value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long GetAndIncrement() {
         return Interlocked.Increment(ref _value) - 1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long GetAndDecrement() {
         return Interlocked.Decrement(ref _value) + 1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long GetAndAdd(long delta) {
         return Interlocked.Add(ref _value, delta) - delta;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long AddAndGet(long delta) {
         return Interlocked.Add(ref _value, delta);
     }
@@ -68,6 +77,7 @@ public sealed class AtomicLong
     /// </summary>
     /// <param name="value">新值</param>
     /// <returns>地址上的旧值</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long GetAndSet(long value) {
         return Interlocked.Exchange(ref _value, value);
     }
@@ -78,6 +88,7 @@ public sealed class AtomicLong
     /// <param name="newValue">要设置的值</param>
     /// <param name="expectedValue">期望值</param>
     /// <returns>如果更新成功则返回true</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool CompareAndSet(long newValue, long expectedValue) {
         return Interlocked.CompareExchange(ref _value, newValue, expectedValue) == expectedValue;
     }
@@ -88,6 +99,7 @@ public sealed class AtomicLong
     /// <param name="newValue">要设置的值</param>
     /// <param name="expectedValue">期望值</param>
     /// <returns>地址上的旧值</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long CompareAndExchange(long newValue, long expectedValue) {
         // 按照C#的编程习惯，比较数放在末；唯一的好处可能就是进行==比较时，两个值是挨着的。
         // CompareAndExchange(newValue, expectedValue) == expectedValue

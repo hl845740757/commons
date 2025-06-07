@@ -361,7 +361,7 @@ public static class ObjectUtil
     public static List<string> Lines(string str) {
         List<string> result = new List<string>();
         using (StringReader reader = new StringReader(str)) {
-            string line;
+            string? line;
             while ((line = reader.ReadLine()) != null) {
                 result.Add(line);
             }

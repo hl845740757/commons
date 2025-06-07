@@ -16,6 +16,7 @@
 
 #endregion
 
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
@@ -35,30 +36,38 @@ public sealed class AtomicInt
     }
 
     public int Value {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => _value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set => _value = value;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int Increment() {
         return Interlocked.Increment(ref _value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int Decrement() {
         return Interlocked.Decrement(ref _value);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int GetAndIncrement() {
         return Interlocked.Increment(ref _value) - 1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int GetAndDecrement() {
         return Interlocked.Decrement(ref _value) + 1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int GetAndAdd(int delta) {
         return Interlocked.Add(ref _value, delta) - delta;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int AddAndGet(int delta) {
         return Interlocked.Add(ref _value, delta);
     }
@@ -68,6 +77,7 @@ public sealed class AtomicInt
     /// </summary>
     /// <param name="value">新值</param>
     /// <returns>地址上的旧值</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int GetAndSet(int value) {
         return Interlocked.Exchange(ref _value, value);
     }
@@ -78,6 +88,7 @@ public sealed class AtomicInt
     /// <param name="newValue">要设置的值</param>
     /// <param name="expectedValue">期望值</param>
     /// <returns>如果更新成功则返回true</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool CompareAndSet(int newValue, int expectedValue) {
         return Interlocked.CompareExchange(ref _value, newValue, expectedValue) == expectedValue;
     }
@@ -88,6 +99,7 @@ public sealed class AtomicInt
     /// <param name="newValue">要设置的值</param>
     /// <param name="expectedValue">期望值</param>
     /// <returns>地址上的旧值</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int CompareAndExchange(int newValue, int expectedValue) {
         // 按照C#的编程习惯，比较数放在末；唯一的好处可能就是进行==比较时，两个值是挨着的。
         // CompareAndExchange(newValue, expectedValue) == expectedValue

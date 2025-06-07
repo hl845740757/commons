@@ -54,10 +54,7 @@ public class MutableObject<T> : IMutable<T>, IEquatable<MutableObject<T>> where 
     #region equals
 
     public bool Equals(MutableObject<T>? other) {
-        if (other == null) {
-            return false;
-        }
-        return Equals(_value, other._value);
+        return other != null && Equals(_value, other._value);
     }
 
     public override bool Equals(object? obj) {

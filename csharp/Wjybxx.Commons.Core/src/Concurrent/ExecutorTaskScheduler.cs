@@ -27,7 +27,7 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public class ExecutorTaskScheduler : TaskScheduler
 {
-    protected readonly IExecutor _executor;
+    private readonly IExecutor _executor;
 
     public ExecutorTaskScheduler(IExecutor executor) {
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
