@@ -24,6 +24,7 @@ import cn.wjybxx.dson.text.*;
 
 import javax.annotation.Nullable;
 import java.io.Reader;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -533,6 +534,10 @@ public final class Dsons {
 
     public static DsonScanner newLinesScanner(List<LineInfo> lineInfos) {
         return new DsonScanner(DsonCharStream.newPreparedCharStream(lineInfos));
+    }
+
+    public static DsonScanner newPreparedCharStream(Iterator<LineInfo> lineInfos, int nextLn) {
+        return new DsonScanner(DsonCharStream.newPreparedCharStream(lineInfos, nextLn));
     }
     // endregion
 

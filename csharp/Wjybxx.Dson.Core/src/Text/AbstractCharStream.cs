@@ -39,7 +39,7 @@ public abstract class AbstractCharStream : IDsonCharStream
     private bool _readingContent = false;
     private bool _eof = false;
 
-    internal AbstractCharStream() {
+    protected AbstractCharStream() {
     }
 
     /** 应该只在初始化时使用 */

@@ -683,6 +683,10 @@ public static class Dsons
         return new DsonScanner(IDsonCharStream.NewPreparedCharStream(lineInfos));
     }
 
+    public static DsonScanner NewLinesScanner(IEnumerator<LineInfo> lines, int nextLn) {
+        return new DsonScanner(IDsonCharStream.NewPreparedCharStream(lines, nextLn));
+    }
+
     #endregion
 }
 }

@@ -16,8 +16,11 @@
 
 package cn.wjybxx.dson.text;
 
+import cn.wjybxx.dson.io.DsonIOException;
+
 import javax.annotation.Nullable;
-import java.util.List;
+import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * 已就绪的
@@ -27,11 +30,17 @@ import java.util.List;
  */
 public class PreparedCharStream extends AbstractCharStream {
 
-    private List<LineInfo> rawLines;
+    private Iterator<LineInfo> rawLines;
+    private final int firstLn;
 
-    public PreparedCharStream(List<LineInfo> rawLines) {
-        this.rawLines = rawLines;
-        addLines(rawLines);
+    public PreparedCharStream(Iterator<LineInfo> rawLines, int firstLn) {
+        this.rawLines = Objects.requireNonNull(rawLines);
+        this.firstLn = firstLn;
+    }
+
+    @Override
+    protected int getFirstLn() {
+        return firstLn;
     }
 
     @Override
@@ -57,7 +66,15 @@ public class PreparedCharStream extends AbstractCharStream {
 
     @Override
     protected boolean scanNextLine(@Nullable LineInfo curLine) {
-        return false;
+        if (!rawLines.hasNext()) {
+            return false;
+        }
+        LineInfo lineInfo = rawLines.next();
+        if (lineInfo.rawLine == null || !lineInfo.isScanCompleted()) {
+            throw new DsonIOException("invalid line:" + lineInfo);
+        }
+        addLine(lineInfo);
+        return true;
     }
 
     @Override

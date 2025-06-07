@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using Wjybxx.Dson.IO;
 
 namespace Wjybxx.Dson.Text
 {
@@ -27,13 +28,16 @@ namespace Wjybxx.Dson.Text
 class PreparedCharStream : AbstractCharStream
 {
 #nullable disable
-    private IList<LineInfo> _rawLines;
+    private IEnumerator<LineInfo> _rawLines;
+    private int _firstLn;
 #nullable enable
 
-    public PreparedCharStream(IList<LineInfo> rawLines) {
-        this._rawLines = rawLines;
-        AddLines(rawLines);
+    public PreparedCharStream(IEnumerator<LineInfo> rawLines, int firstLn) {
+        this._rawLines = rawLines ?? throw new ArgumentNullException(nameof(rawLines));
+        this._firstLn = firstLn;
     }
+
+    protected override int FirstLn => _firstLn;
 
     protected override bool IsClosed() {
         return _rawLines == null;
@@ -51,7 +55,15 @@ class PreparedCharStream : AbstractCharStream
     }
 
     protected override bool ScanNextLine(in LineInfo curLine) {
-        return false;
+        if (!_rawLines.MoveNext()) {
+            return false;
+        }
+        LineInfo lineInfo = _rawLines.Current;
+        if (lineInfo.rawLine == null || !lineInfo.IsScanCompleted()) {
+            throw new DsonIOException("invalid line: " + lineInfo);
+        }
+        AddLine(lineInfo);
+        return true;
     }
 
     public override void Dispose() {

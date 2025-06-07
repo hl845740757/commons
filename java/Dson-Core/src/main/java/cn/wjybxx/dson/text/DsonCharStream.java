@@ -17,6 +17,7 @@
 package cn.wjybxx.dson.text;
 
 import java.io.Reader;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -108,14 +109,14 @@ public interface DsonCharStream extends AutoCloseable {
     }
 
     static DsonCharStream newPreparedCharStream(List<LineInfo> lineInfos) {
-        for (int idx = 0; idx < lineInfos.size(); idx++) {
-            LineInfo lineInfo = lineInfos.get(idx);
-            if (lineInfo.rawLine == null || !lineInfo.isScanCompleted()) {
-                throw new IllegalArgumentException(lineInfo.toString());
-            }
-        }
-        return new PreparedCharStream(lineInfos);
+        int nextLn = lineInfos.size() > 0 ? lineInfos.get(0).ln : 1;
+        return new PreparedCharStream(lineInfos.iterator(), nextLn);
     }
+
+    static DsonCharStream newPreparedCharStream(Iterator<LineInfo> lineInfos, int nextLn) {
+        return new PreparedCharStream(lineInfos, nextLn);
+    }
+    
     // endregion
 
     @Override

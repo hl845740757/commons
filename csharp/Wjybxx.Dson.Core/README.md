@@ -172,6 +172,7 @@ PS：其实Writer的目标就是尽可能和我们的书写格式一致。
 
 1. `LineInfo` 修改为值类型，减少文本扫描过程中的GC
 2. `IDsonCharStream` 中删除获取当前行信息的接口
+3. 增加了基于行迭代的CharStream
 
 ### 2.4.x
 

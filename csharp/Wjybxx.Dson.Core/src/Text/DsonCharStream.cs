@@ -119,13 +119,18 @@ public interface IDsonCharStream : IDisposable
     /// <param name="lines"></param>
     /// <returns></returns>
     public static IDsonCharStream NewPreparedCharStream(IList<LineInfo> lines) {
-        for (int index = 0; index < lines.Count; index++) {
-            var lineInfo = lines[index];
-            if (lineInfo.rawLine == null || !lineInfo.IsScanCompleted()) {
-                throw new ArgumentException(lineInfo.ToString());
-            }
-        }
-        return new PreparedCharStream(lines);
+        int nextLn = lines.Count > 0 ? lines[0].ln : 1;
+        return new PreparedCharStream(lines.GetEnumerator(), nextLn);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="lines">内容行迭代器</param>
+    /// <param name="nextLn">下一行的行号</param>
+    /// <returns></returns>
+    public static IDsonCharStream NewPreparedCharStream(IEnumerator<LineInfo> lines, int nextLn) {
+        return new PreparedCharStream(lines, nextLn);
     }
 
     #endregion
