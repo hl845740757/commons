@@ -400,21 +400,21 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     /// 查询指定键的后一个键
     /// </summary>
     /// <param name="key">当前键</param>
-    /// <param name="next">接收下一个键</param>
+    /// <param name="nextKey">接收下一个键</param>
     /// <returns>如果下一个key存在则返回true</returns>
     /// <exception cref="ThrowHelper.KeyNotFoundException">如果当前键不存在</exception>
-    public bool NextKey(TKey key, out TKey next) {
+    public bool NextKey(TKey key, out TKey nextKey) {
         int index = Find(key, KeyHash(key, _keyComparer));
         if (index < 0) {
             throw ThrowHelper.KeyNotFoundException(key);
         }
         ref Node node = ref _table[index];
         if (node.next < 0) {
-            next = default;
+            nextKey = default;
             return false;
         }
         ref Node nextNode = ref _table[node.next];
-        next = nextNode.key;
+        nextKey = nextNode.key;
         return true;
     }
 
@@ -422,21 +422,21 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     /// 查询指定键的前一个键
     /// </summary>
     /// <param name="key">当前键</param>
-    /// <param name="prev">接收前一个键</param>
+    /// <param name="prevKey">接收前一个键</param>
     /// <returns>如果前一个key存在则返回true</returns>
     /// <exception cref="ThrowHelper.KeyNotFoundException">如果当前键不存在</exception>
-    public bool PrevKey(TKey key, out TKey prev) {
+    public bool PrevKey(TKey key, out TKey prevKey) {
         int index = Find(key, KeyHash(key, _keyComparer));
         if (index < 0) {
             throw ThrowHelper.KeyNotFoundException(key);
         }
         ref Node node = ref _table[index];
         if (node.prev < 0) {
-            prev = default;
+            prevKey = default;
             return false;
         }
         ref Node nextNode = ref _table[node.prev];
-        prev = nextNode.key;
+        prevKey = nextNode.key;
         return true;
     }
 
@@ -444,26 +444,26 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         if (expectedCount < _count) {
             throw new ArgumentException($"expectedCount:{expectedCount} < count {_count}");
         }
-        int arraySize = HashCommon.ArraySize(expectedCount, _loadFactor);
-        if (arraySize <= HashCommon.DefaultInitialSize) {
+        int newArraySize = HashCommon.ArraySize(expectedCount, _loadFactor);
+        if (newArraySize <= HashCommon.DefaultInitialSize) {
             return;
         }
         int curArraySize = _mask + 1;
-        if (arraySize == curArraySize) {
+        if (newArraySize == curArraySize) {
             return;
         }
-        if (arraySize < curArraySize) {
-            if (_count > HashCommon.MaxFill(arraySize, _loadFactor)) {
+        if (newArraySize < curArraySize) {
+            if (_count > HashCommon.MaxFill(newArraySize, _loadFactor)) {
                 return; // 避免收缩后空间不足
             }
-            if (Math.Abs(arraySize - curArraySize) <= HashCommon.DefaultInitialSize) {
+            if (Math.Abs(newArraySize - curArraySize) <= HashCommon.DefaultInitialSize) {
                 return; // 避免不必要的收缩
             }
         }
         if (_table == null) {
-            _mask = arraySize - 1;
+            _mask = newArraySize - 1;
         } else {
-            Rehash(arraySize);
+            Rehash(newArraySize);
         }
     }
 
