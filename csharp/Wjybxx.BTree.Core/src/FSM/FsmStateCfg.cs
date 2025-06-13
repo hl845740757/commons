@@ -33,7 +33,7 @@ public sealed class FsmStateCfg<T> where T : class
     private string name;
     /** 状态的task的guid */
     private string guid;
-    /** 状态关联的属性(输入) */
+    /** 状态关联的属性(输入) -- 理论上也可以共享，使用guid引用 */
     private object props;
     /** 状态的task缓存 */
     [NonSerialized] private Task<T> task;

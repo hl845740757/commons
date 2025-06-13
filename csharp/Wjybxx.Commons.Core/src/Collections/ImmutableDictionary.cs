@@ -35,7 +35,7 @@ namespace Wjybxx.Commons.Collections
 /// <typeparam name="TValue"></typeparam>
 [Serializable]
 [Immutable]
-public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
+public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
 {
     /** len = 2^n + 1，额外的槽用于存储nullKey */
     private readonly Node[] _table;
@@ -51,7 +51,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     private ValueCollection? _values;
     private ReversedDictionaryView<TKey, TValue>? _reversed;
 
-    private ImmutableLinkedDictionary(KeyValuePair<TKey, TValue>[] pairArray, IEqualityComparer<TKey>? keyComparer = null) {
+    private ImmutableDictionary(KeyValuePair<TKey, TValue>[] pairArray, IEqualityComparer<TKey>? keyComparer = null) {
         if (keyComparer == null) {
             keyComparer = EqualityComparer<TKey>.Default;
         }
@@ -96,22 +96,22 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     #region factory
 
-    public static ImmutableLinkedDictionary<TKey, TValue> Empty { get; } = new(Array.Empty<KeyValuePair<TKey, TValue>>());
+    public static ImmutableDictionary<TKey, TValue> Empty { get; } = new(Array.Empty<KeyValuePair<TKey, TValue>>());
 
-    public static ImmutableLinkedDictionary<TKey, TValue> Create(TKey key, TValue value,
-                                                                 IEqualityComparer<TKey>? keyComparer = null) {
+    public static ImmutableDictionary<TKey, TValue> Create(TKey key, TValue value,
+                                                           IEqualityComparer<TKey>? keyComparer = null) {
         KeyValuePair<TKey, TValue>[] array = new[] { new KeyValuePair<TKey, TValue>(key, value) };
-        return new ImmutableLinkedDictionary<TKey, TValue>(array, keyComparer);
+        return new ImmutableDictionary<TKey, TValue>(array, keyComparer);
     }
 
-    public static ImmutableLinkedDictionary<TKey, TValue> CreateRange(IEnumerable<KeyValuePair<TKey, TValue>> source,
-                                                                      IEqualityComparer<TKey>? keyComparer = null) {
+    public static ImmutableDictionary<TKey, TValue> CreateRange(IEnumerable<KeyValuePair<TKey, TValue>> source,
+                                                                IEqualityComparer<TKey>? keyComparer = null) {
         if (source == null) throw new ArgumentNullException(nameof(source));
         KeyValuePair<TKey, TValue>[] array = source as KeyValuePair<TKey, TValue>[];
         if (array == null) {
             array = source.ToArray();
         }
-        return array.Length == 0 ? Empty : new ImmutableLinkedDictionary<TKey, TValue>(array, keyComparer);
+        return array.Length == 0 ? Empty : new ImmutableDictionary<TKey, TValue>(array, keyComparer);
     }
 
     #endregion
@@ -379,21 +379,21 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     /// 查询指定键的后一个键
     /// </summary>
     /// <param name="key">当前键</param>
-    /// <param name="next">接收下一个键</param>
+    /// <param name="nextKey">接收下一个键</param>
     /// <returns>如果下一个key存在则返回true</returns>
     /// <exception cref="ThrowHelper.KeyNotFoundException">如果当前键不存在</exception>
-    public bool NextKey(TKey key, out TKey next) {
+    public bool NextKey(TKey key, out TKey nextKey) {
         int index = Find(key, KeyHash(key, _keyComparer));
         if (index < 0) {
             throw ThrowHelper.KeyNotFoundException(key);
         }
         ref Node node = ref _table[index];
         if (node.next < 0) {
-            next = default;
+            nextKey = default;
             return false;
         }
         ref Node nextNode = ref _table[node.next];
-        next = nextNode.key;
+        nextKey = nextNode.key;
         return true;
     }
 
@@ -401,21 +401,55 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     /// 查询指定键的前一个键
     /// </summary>
     /// <param name="key">当前键</param>
-    /// <param name="prev">接收前一个键</param>
+    /// <param name="prevKey">接收前一个键</param>
     /// <returns>如果前一个key存在则返回true</returns>
     /// <exception cref="ThrowHelper.KeyNotFoundException">如果当前键不存在</exception>
-    public bool PrevKey(TKey key, out TKey prev) {
+    public bool PrevKey(TKey key, out TKey prevKey) {
         int index = Find(key, KeyHash(key, _keyComparer));
         if (index < 0) {
             throw ThrowHelper.KeyNotFoundException(key);
         }
         ref Node node = ref _table[index];
         if (node.prev < 0) {
-            prev = default;
+            prevKey = default;
             return false;
         }
         ref Node nextNode = ref _table[node.prev];
-        prev = nextNode.key;
+        prevKey = nextNode.key;
+        return true;
+    }
+
+    public bool NextKey(TKey key, out TKey nextKey, out TValue nextValue) {
+        int index = Find(key, KeyHash(key, _keyComparer));
+        if (index < 0) {
+            throw ThrowHelper.KeyNotFoundException(key);
+        }
+        ref Node node = ref _table[index];
+        if (node.next < 0) {
+            nextKey = default;
+            nextValue = default;
+            return false;
+        }
+        ref Node nextNode = ref _table[node.next];
+        nextKey = nextNode.key;
+        nextValue = nextNode.value;
+        return true;
+    }
+
+    public bool PrevKey(TKey key, out TKey prevKey, out TValue prevValue) {
+        int index = Find(key, KeyHash(key, _keyComparer));
+        if (index < 0) {
+            throw ThrowHelper.KeyNotFoundException(key);
+        }
+        ref Node node = ref _table[index];
+        if (node.prev < 0) {
+            prevKey = default;
+            prevValue = default;
+            return false;
+        }
+        ref Node nextNode = ref _table[node.prev];
+        prevKey = nextNode.key;
+        prevValue = nextNode.value;
         return true;
     }
 
@@ -574,10 +608,10 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     public abstract class AbstractViewCollection<T>
     {
-        protected readonly ImmutableLinkedDictionary<TKey, TValue> _dictionary;
+        protected readonly ImmutableDictionary<TKey, TValue> _dictionary;
         protected readonly bool _reversed;
 
-        internal AbstractViewCollection(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed) {
+        internal AbstractViewCollection(ImmutableDictionary<TKey, TValue> dictionary, bool reversed) {
             _dictionary = dictionary;
             _reversed = reversed;
         }
@@ -659,7 +693,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     public sealed class KeyCollection : AbstractViewCollection<TKey>, ISequencedCollection<TKey>
     {
-        internal KeyCollection(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed)
+        internal KeyCollection(ImmutableDictionary<TKey, TValue> dictionary, bool reversed)
             : base(dictionary, reversed) {
         }
 
@@ -714,7 +748,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
 
     public sealed class ValueCollection : AbstractViewCollection<TValue>, ISequencedCollection<TValue>
     {
-        internal ValueCollection(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed)
+        internal ValueCollection(ImmutableDictionary<TKey, TValue> dictionary, bool reversed)
             : base(dictionary, reversed) {
         }
 
@@ -792,13 +826,13 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
     /// </summary>
     private struct Enumerator
     {
-        private readonly ImmutableLinkedDictionary<TKey, TValue> _dictionary;
+        private readonly ImmutableDictionary<TKey, TValue> _dictionary;
         private readonly bool _reversed;
 
         private int _nextNode;
         internal Node _currNode;
 
-        public Enumerator(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed) {
+        public Enumerator(ImmutableDictionary<TKey, TValue> dictionary, bool reversed) {
             _dictionary = dictionary;
             _reversed = reversed;
 
@@ -833,7 +867,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
         private Enumerator _core;
         private KeyValuePair<TKey, TValue> _current;
 
-        public PairEnumerator(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed) {
+        public PairEnumerator(ImmutableDictionary<TKey, TValue> dictionary, bool reversed) {
             _core = new Enumerator(dictionary, reversed);
             _current = default;
         }
@@ -867,7 +901,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
         private Enumerator _core;
         private TKey _current;
 
-        public KeyEnumerator(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed) {
+        public KeyEnumerator(ImmutableDictionary<TKey, TValue> dictionary, bool reversed) {
             _core = new Enumerator(dictionary, reversed);
             _current = default;
         }
@@ -901,7 +935,7 @@ public sealed class ImmutableLinkedDictionary<TKey, TValue> : ISequencedDictiona
         private Enumerator _core;
         private TValue _current;
 
-        public ValueEnumerator(ImmutableLinkedDictionary<TKey, TValue> dictionary, bool reversed) {
+        public ValueEnumerator(ImmutableDictionary<TKey, TValue> dictionary, bool reversed) {
             _core = new Enumerator(dictionary, reversed);
             _current = default;
         }

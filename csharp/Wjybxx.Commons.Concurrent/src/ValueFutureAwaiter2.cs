@@ -24,7 +24,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 
 /// </summary>
-public readonly struct SuppressibleAwaiter : ICriticalNotifyCompletion
+public readonly struct ValueFutureAwaiter2 : ICriticalNotifyCompletion
 {
     private readonly ValueFuture _future;
     private readonly IExecutor? _executor;
@@ -38,7 +38,7 @@ public readonly struct SuppressibleAwaiter : ICriticalNotifyCompletion
     /// <param name="executor">回调线程</param>
     /// <param name="options">调度选项</param>
     /// <param name="requireResult">是否需要获取最终结果</param>
-    public SuppressibleAwaiter(ValueFuture future, IExecutor? executor, int options, bool requireResult) {
+    public ValueFutureAwaiter2(ValueFuture future, IExecutor? executor, int options, bool requireResult) {
         _future = future;
         _executor = executor;
         _options = options;
@@ -78,7 +78,7 @@ public readonly struct SuppressibleAwaiter : ICriticalNotifyCompletion
     }
 }
 
-public readonly struct SuppressibleAwaiter<T> : ICriticalNotifyCompletion
+public readonly struct ValueFutureAwaiter2<T> : ICriticalNotifyCompletion
 {
     private readonly ValueFuture<T> _future;
     private readonly IExecutor? _executor;
@@ -90,7 +90,7 @@ public readonly struct SuppressibleAwaiter<T> : ICriticalNotifyCompletion
     /// <param name="future"></param>
     /// <param name="executor"></param>
     /// <param name="options"></param>
-    public SuppressibleAwaiter(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
+    public ValueFutureAwaiter2(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = executor;
         _options = options;

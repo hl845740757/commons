@@ -45,8 +45,8 @@ public sealed class TypeMetaConfig
     }
 
     public TypeMetaConfig(TypeMetaConfig other) {
-        this.type2MetaDic = other.type2MetaDic.ToImmutableLinkedDictionary();
-        this.name2MetaDic = other.name2MetaDic.ToImmutableLinkedDictionary();
+        this.type2MetaDic = other.type2MetaDic.ToImmutableDictionary2();
+        this.name2MetaDic = other.name2MetaDic.ToImmutableDictionary2();
     }
 
     #region factory

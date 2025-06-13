@@ -40,7 +40,7 @@ public static class CharUtil
     /// 十进制char转number
     /// </summary>
     /// <exception cref="ArgumentException"></exception>
-    public static int DecimalCharToNumber(char c, int? index = null) {
+    public static int DecimalCharToNumber(char c) {
         // 实际上可通过减48来实现
         return c switch
         {
@@ -54,14 +54,14 @@ public static class CharUtil
             '7' => 7,
             '8' => 8,
             '9' => 9,
-            _ => throw new ArgumentException("Illegal hexadecimal character " + c + (index == null ? "" : " at index " + index))
+            _ => throw new ArgumentException("Illegal char " + c)
         };
     }
 
     /// <summary>
     /// 十六进制char转数字
     /// </summary>
-    public static int HexCharToNumber(char c, int? index = null) {
+    public static int HexCharToNumber(char c) {
         return c switch
         {
             '0' => 0,
@@ -92,7 +92,7 @@ public static class CharUtil
             //
             'f' => 15,
             'F' => 15,
-            _ => throw new ArgumentException("Illegal hexadecimal character " + c + (index == null ? "" : " at index " + index))
+            _ => throw new ArgumentException("Illegal hex char " + c)
         };
     }
 
@@ -100,9 +100,9 @@ public static class CharUtil
     /// 十进制数字转char
     /// </summary>
     /// <exception cref="ArgumentException"></exception>
-    public static char DecimalNumberToChar(int number, int? index = null) {
+    public static char DecimalNumberToChar(int number) {
         if (number < 0 || number > 9) {
-            throw new ArgumentException("Illegal hexadecimal number " + number + (index == null ? "" : " at index " + index));
+            throw new ArgumentException("Illegal number " + number);
         }
         return HEX_DIGITS_UPPER[number];
     }
@@ -110,9 +110,9 @@ public static class CharUtil
     /// <summary>
     /// 16进制数字转char
     /// </summary>
-    public static char HexNumberToChar(int number, CaseMode caseMode = CaseMode.UpperCase, int? index = null) {
+    public static char HexNumberToChar(int number, CaseMode caseMode = CaseMode.UpperCase) {
         if (number < 0 || number > 15) {
-            throw new ArgumentException("Illegal hexadecimal number " + number + (index == null ? "" : " at index " + index));
+            throw new ArgumentException("Illegal hex number " + number);
         }
         return caseMode == CaseMode.UpperCase ? HEX_DIGITS_UPPER[number] : HEX_DIGITS_LOWER[number];
     }

@@ -68,7 +68,7 @@ public static class DsonTexts
     private static readonly IGenericSet<string> builtinStructLabels = new[]
     {
         LabelPtr, LabelLitePtr, LabelDateTime, LabelTimestamp
-    }.ToImmutableLinkedHashSet();
+    }.ToImmutableSet2();
 
     /** 有特殊含义的字符串 */
     private static readonly IGenericSet<string> parseableStrings = new[]
@@ -76,7 +76,7 @@ public static class DsonTexts
         "true", "false",
         "null", "undefine",
         "NaN", "Infinity", "-Infinity"
-    }.ToImmutableLinkedHashSet();
+    }.ToImmutableSet2();
     /** 数字相关的字符 */
     private static readonly BitArray parseableCharSet = new BitArray(128);
 

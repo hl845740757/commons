@@ -30,7 +30,7 @@ public class Failure<T> : LeafTask<T> where T : class
         SetFailed(TaskStatus.ToFailure(failureStatus));
     }
 
-    protected override void OnEventImpl(object eventObj) {
+    protected override void OnEventImpl(object _) {
     }
 
     /// <summary>

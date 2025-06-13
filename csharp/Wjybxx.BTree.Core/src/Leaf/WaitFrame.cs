@@ -39,7 +39,7 @@ public class WaitFrame<T> : LeafTask<T> where T : class
         }
     }
 
-    protected override void OnEventImpl(object eventObj) {
+    protected override void OnEventImpl(object _) {
     }
 
     /// <summary>

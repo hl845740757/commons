@@ -30,7 +30,7 @@ namespace Commons.Tests.Core;
 /// 1. <see cref="HashSet{T}"/>保持插入序。
 /// 2. <see cref="ImmutableHashSet{T}"/>不能保持插入序 -- 不能保持原始Set序。
 /// 3. <see cref="Dictionary{TKey,TValue}"/>保持插入序。
-/// 4. <see cref="ImmutableDictionary{TKey,TValue}"/>不能保持插入序 -- 不能保持原始字典序。
+/// 4. <see cref="System.Collections.Immutable.ImmutableDictionary{TKey,TValue}"/>不能保持插入序 -- 不能保持原始字典序。
 /// </summary>
 public class CollectionOrderTest
 {
@@ -81,7 +81,7 @@ public class CollectionOrderTest
             keyList.Add(idx);
         }
         CollectionUtil.Shuffle(keyList);
-        ImmutableLinkedHastSet<int> hashSet = keyList.ToImmutableLinkedHashSet();
+        ImmutableSet<int> hashSet = keyList.ToImmutableSet2();
 
         // 测试正向迭代
         int index = 0;
@@ -146,7 +146,7 @@ public class CollectionOrderTest
         }
 
         var rawItr = keySet.GetEnumerator();
-        var immutableItr = keySet.ToImmutableLinkedDictionary().GetEnumerator();
+        var immutableItr = keySet.ToImmutableDictionary2().GetEnumerator();
         while (rawItr.MoveNext()) {
             immutableItr.MoveNext();
             Assert.That(rawItr.Current, Is.EqualTo(immutableItr.Current));

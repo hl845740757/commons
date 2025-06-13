@@ -39,7 +39,7 @@ public sealed class ConstantMap<T> where T : class, IConstant
         immutableValues = pool.Values.ToImmutableList2();
         immutableNames = immutableValues.Select(e => e.Name)
             .ToImmutableList2();
-        constants = immutableValues.ToImmutableLinkedDictionary(e => e.Name, e => e);
+        constants = immutableValues.ToImmutableDictionary2(e => e.Name, e => e);
     }
 
     /// <summary>

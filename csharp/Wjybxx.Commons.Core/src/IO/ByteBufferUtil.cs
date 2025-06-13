@@ -147,11 +147,10 @@ public static class ByteBufferUtil
     }
 
     /// <summary>
-    /// 大端：向buffer中写入一个UInt48
-    /// (写入long的低48位)
+    /// 大端：向buffer中写入一个Int48
     /// </summary>
-    public static void SetUInt48(byte[] buffer, int index, long value) {
-        if (!MathCommon.IsUInt48(value)) {
+    public static void SetInt48(byte[] buffer, int index, long value) {
+        if (value < MathCommon.Int48MinValue || value > MathCommon.Int48MaxValue) {
             throw new ArgumentException($"{nameof(value)}: {value}");
         }
         buffer[index] = (byte)(value >> 40);
@@ -163,10 +162,9 @@ public static class ByteBufferUtil
     }
 
     /// <summary>
-    /// 大端：从buffer中读取一个UInt48
-    /// (写入long的低48位)
+    /// 大端：从buffer中读取一个Int48
     /// </summary>
-    public static long GetUInt48(byte[] buffer, int index) {
+    public static long GetInt48(byte[] buffer, int index) {
         return (((buffer[index] & 0xffL) << 40)
                 | ((buffer[index + 1] & 0xffL) << 32)
                 | ((buffer[index + 2] & 0xffL) << 24)
@@ -292,11 +290,10 @@ public static class ByteBufferUtil
     }
 
     /// <summary>
-    /// 小端：向buffer中写入一个UInt48
-    /// (写入long的低48位)
+    /// 小端：向buffer中写入一个Int48
     /// </summary>
-    public static void SetUInt48LE(byte[] buffer, int index, long value) {
-        if (!MathCommon.IsUInt48(value)) {
+    public static void SetInt48LE(byte[] buffer, int index, long value) {
+        if (value < MathCommon.Int48MinValue || value > MathCommon.Int48MaxValue) {
             throw new ArgumentException($"{nameof(value)}: {value}");
         }
         buffer[index] = (byte)value;
@@ -308,10 +305,9 @@ public static class ByteBufferUtil
     }
 
     /// <summary>
-    /// 小端：从buffer中读取一个UInt48
-    /// (写入long的低48位)
+    /// 小端：从buffer中读取一个Int48
     /// </summary>
-    public static long GetUInt48LE(byte[] buffer, int index) {
+    public static long GetInt48LE(byte[] buffer, int index) {
         return (((buffer[index] & 0xffL))
                 | ((buffer[index + 1] & 0xffL) << 8)
                 | ((buffer[index + 2] & 0xffL) << 16)

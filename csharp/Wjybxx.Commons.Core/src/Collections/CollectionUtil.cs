@@ -265,15 +265,26 @@ public static partial class CollectionUtil
         return ImmutableList<T>.CreateRange(source, comparer);
     }
 
-    public static ImmutableLinkedHastSet<T> ToImmutableLinkedHashSet<T>(this IEnumerable<T> source, IEqualityComparer<T>? keyComparer = null) {
+    public static ImmutableSet<T> ToImmutableSet2<T>(this IEnumerable<T> source, IEqualityComparer<T>? keyComparer = null) {
         if (source == null) throw new ArgumentNullException(nameof(source));
-        if (source is ImmutableLinkedHastSet<T> hastSet) {
+        if (source is ImmutableSet<T> hastSet) {
             return hastSet;
         }
-        return ImmutableLinkedHastSet<T>.CreateRange(source, keyComparer);
+        return ImmutableSet<T>.CreateRange(source, keyComparer);
     }
 
-    public static ImmutableLinkedDictionary<TKey, TValue> ToImmutableLinkedDictionary<TSource, TKey, TValue>(
+    public static ImmutableDictionary<TKey, TValue> ToImmutableDictionary2<TKey, TValue>(
+        this IEnumerable<KeyValuePair<TKey, TValue>> source,
+        IEqualityComparer<TKey>? keyComparer = null) {
+        //
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        if (keyComparer == null && source is ImmutableDictionary<TKey, TValue> dictionary) {
+            return dictionary;
+        }
+        return ImmutableDictionary<TKey, TValue>.CreateRange(source, keyComparer);
+    }
+
+    public static ImmutableDictionary<TKey, TValue> ToImmutableDictionary2<TSource, TKey, TValue>(
         this IEnumerable<TSource> source,
         Func<TSource, TKey> keySelector,
         Func<TSource, TValue> elementSelector,
@@ -284,18 +295,7 @@ public static partial class CollectionUtil
         if (elementSelector == null) throw new ArgumentNullException(nameof(elementSelector));
 
         IEnumerable<KeyValuePair<TKey, TValue>> pairs = source.Select(e => new KeyValuePair<TKey, TValue>(keySelector(e), elementSelector(e)));
-        return ImmutableLinkedDictionary<TKey, TValue>.CreateRange(pairs, keyComparer);
-    }
-
-    public static ImmutableLinkedDictionary<TKey, TValue> ToImmutableLinkedDictionary<TKey, TValue>(
-        this IEnumerable<KeyValuePair<TKey, TValue>> source,
-        IEqualityComparer<TKey>? keyComparer = null) {
-        //
-        if (source == null) throw new ArgumentNullException(nameof(source));
-        if (keyComparer == null && source is ImmutableLinkedDictionary<TKey, TValue> dictionary) {
-            return dictionary;
-        }
-        return ImmutableLinkedDictionary<TKey, TValue>.CreateRange(source, keyComparer);
+        return ImmutableDictionary<TKey, TValue>.CreateRange(pairs, keyComparer);
     }
 
     #endregion

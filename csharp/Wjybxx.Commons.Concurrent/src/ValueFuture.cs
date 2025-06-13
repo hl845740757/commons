@@ -77,7 +77,7 @@ public readonly struct ValueFuture
     /// <param name="requireResult">是否需要返回结果</param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public SuppressibleAwaitable GetAwaitable(IExecutor? executor, SuppressedTypes suppressedTypes, int options = 0,
+    public ValueFutureAwaitable2 GetAwaitable(IExecutor? executor, SuppressedTypes suppressedTypes, int options = 0,
                                               bool requireResult = false) =>
         new(this, executor, (int)suppressedTypes | options, requireResult);
 
@@ -86,7 +86,7 @@ public readonly struct ValueFuture
     /// 我们在大量的场景仅仅想禁用取消异常，因此提供快捷方法
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public SuppressibleAwaitable GetAwaitable(SuppressedTypes suppressedTypes, bool requireResult = false) =>
+    public ValueFutureAwaitable2 GetAwaitable(SuppressedTypes suppressedTypes, bool requireResult = false) =>
         new(this, null, (int)suppressedTypes, requireResult);
 
     #region factory
@@ -386,15 +386,15 @@ public readonly struct ValueFuture<T>
     /// <see cref="IFuture.GetAwaitable"/>
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public SuppressibleAwaitable<T> GetAwaitable(IExecutor? executor, SuppressedTypes suppressedTypes, int options = 0) =>
+    public ValueFutureAwaitable2<T> GetAwaitable(IExecutor? executor, SuppressedTypes suppressedTypes, int options = 0) =>
         new(this, executor, (int)suppressedTypes | options);
 
     /// <summary>
     /// 我们在大量的场景仅仅想禁用取消异常，因此提供快捷方法
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public SuppressibleAwaitable<T> GetAwaitable(SuppressedTypes suppressedTypes) => new(this, null, (int)suppressedTypes);
-    
+    public ValueFutureAwaitable2<T> GetAwaitable(SuppressedTypes suppressedTypes) => new(this, null, (int)suppressedTypes);
+
     #region factory
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

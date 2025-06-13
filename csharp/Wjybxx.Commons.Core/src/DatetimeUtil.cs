@@ -394,7 +394,7 @@ public static class DatetimeUtil
         int hours, minutes, seconds;
         switch (offsetString.Length) {
             case 2: { // ±H
-                hours = CharUtil.DecimalCharToNumber(offsetString[1], 1);
+                hours = CharUtil.DecimalCharToNumber(offsetString[1]);
                 minutes = 0;
                 seconds = 0;
                 break;

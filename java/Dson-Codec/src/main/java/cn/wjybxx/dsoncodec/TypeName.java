@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base;
+package cn.wjybxx.dsoncodec;
 
+import cn.wjybxx.base.ArrayUtils;
+import cn.wjybxx.base.CollectionUtils;
 import cn.wjybxx.base.mutable.MutableInt;
 
 import javax.annotation.concurrent.Immutable;

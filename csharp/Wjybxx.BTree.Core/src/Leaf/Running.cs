@@ -27,7 +27,7 @@ public class Running<T> : LeafTask<T> where T : class
     protected override void Execute() {
     }
 
-    protected override void OnEventImpl(object eventObj) {
+    protected override void OnEventImpl(object _) {
     }
 }
 }

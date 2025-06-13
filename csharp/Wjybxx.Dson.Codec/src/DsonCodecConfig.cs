@@ -66,12 +66,12 @@ public sealed class DsonCodecConfig
 
     private DsonCodecConfig(DsonCodecConfig other) {
         // 避免依赖系统库的不可变集合，导致无法引入unity
-        this.encoderDic = other.encoderDic.ToImmutableLinkedDictionary();
-        this.decoderDic = other.decoderDic.ToImmutableLinkedDictionary();
-        this.genericEncoderDic = other.genericEncoderDic.ToImmutableLinkedDictionary();
-        this.genericDecoderDic = other.genericDecoderDic.ToImmutableLinkedDictionary();
+        this.encoderDic = other.encoderDic.ToImmutableDictionary2();
+        this.decoderDic = other.decoderDic.ToImmutableDictionary2();
+        this.genericEncoderDic = other.genericEncoderDic.ToImmutableDictionary2();
+        this.genericDecoderDic = other.genericDecoderDic.ToImmutableDictionary2();
         this.casters = other.casters.ToImmutableList2();
-        this.optimizedTypes = other.optimizedTypes.ToImmutableLinkedDictionary();
+        this.optimizedTypes = other.optimizedTypes.ToImmutableDictionary2();
     }
 
     public IDictionary<Type, IDsonCodec> GetEncoderDic() => encoderDic;

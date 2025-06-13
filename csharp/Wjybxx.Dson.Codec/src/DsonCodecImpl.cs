@@ -125,7 +125,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
                 reader.ReadEndArray();
             } else {
                 reader.ReadStartObject();
-                result = _codec.ReadObject(reader,declaredType,  factory);
+                result = _codec.ReadObject(reader, declaredType, factory);
                 reader.ReadEndObject();
             }
             return result;

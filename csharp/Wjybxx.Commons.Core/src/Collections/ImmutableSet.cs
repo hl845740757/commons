@@ -38,9 +38,9 @@ namespace Wjybxx.Commons.Collections
 [Serializable]
 [Immutable]
 #if NET6_0_OR_GREATER
-public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet<TKey>
+public sealed class ImmutableSet<TKey> : ISequencedSet<TKey>, ISet<TKey>, IReadOnlySet<TKey>
 #else
-public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
+public sealed class ImmutableSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
 #endif
 {
     /** len = 2^n + 1，额外的槽用于存储nullKey */
@@ -54,7 +54,7 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
     private readonly IEqualityComparer<TKey> _keyComparer;
     private ReversedSequenceSetView<TKey>? _reversed;
 
-    private ImmutableLinkedHastSet(TKey[] keyArray, IEqualityComparer<TKey>? keyComparer = null) {
+    private ImmutableSet(TKey[] keyArray, IEqualityComparer<TKey>? keyComparer = null) {
         if (keyComparer == null) {
             keyComparer = EqualityComparer<TKey>.Default;
         }
@@ -96,19 +96,19 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
 
     #region factory
 
-    public static ImmutableLinkedHastSet<TKey> Empty { get; } = new ImmutableLinkedHastSet<TKey>(Array.Empty<TKey>());
+    public static ImmutableSet<TKey> Empty { get; } = new ImmutableSet<TKey>(Array.Empty<TKey>());
 
-    public static ImmutableLinkedHastSet<TKey> Create(TKey source, IEqualityComparer<TKey>? keyComparer = null) {
-        return new ImmutableLinkedHastSet<TKey>(new[] { source }, keyComparer);
+    public static ImmutableSet<TKey> Create(TKey source, IEqualityComparer<TKey>? keyComparer = null) {
+        return new ImmutableSet<TKey>(new[] { source }, keyComparer);
     }
 
-    public static ImmutableLinkedHastSet<TKey> CreateRange(IEnumerable<TKey> source, IEqualityComparer<TKey>? keyComparer = null) {
+    public static ImmutableSet<TKey> CreateRange(IEnumerable<TKey> source, IEqualityComparer<TKey>? keyComparer = null) {
         if (source == null) throw new ArgumentNullException(nameof(source));
         TKey[] array = source as TKey[];
         if (array == null) {
             array = source.ToArray();
         }
-        return array.Length == 0 ? Empty : new ImmutableLinkedHastSet<TKey>(array, keyComparer);
+        return array.Length == 0 ? Empty : new ImmutableSet<TKey>(array, keyComparer);
     }
 
     #endregion
@@ -211,21 +211,21 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
     /// 查询指定键的后一个键
     /// </summary>
     /// <param name="key">当前键</param>
-    /// <param name="next">接收下一个键</param>
+    /// <param name="nextKey">接收下一个键</param>
     /// <returns>如果下一个key存在则返回true</returns>
     /// <exception cref="ThrowHelper.KeyNotFoundException">如果当前键不存在</exception>
-    public bool NextKey(TKey key, out TKey next) {
+    public bool NextKey(TKey key, out TKey nextKey) {
         int index = Find(key, KeyHash(key, _keyComparer));
         if (index < 0) {
             throw ThrowHelper.KeyNotFoundException(key);
         }
         ref Node node = ref _table[index];
         if (node.next < 0) {
-            next = default;
+            nextKey = default;
             return false;
         }
         ref Node nextNode = ref _table[node.next];
-        next = nextNode.key;
+        nextKey = nextNode.key;
         return true;
     }
 
@@ -233,21 +233,21 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
     /// 查询指定键的前一个键
     /// </summary>
     /// <param name="key">当前键</param>
-    /// <param name="prev">接收前一个键</param>
+    /// <param name="prevKey">接收前一个键</param>
     /// <returns>如果前一个key存在则返回true</returns>
     /// <exception cref="ThrowHelper.KeyNotFoundException">如果当前键不存在</exception>
-    public bool PrevKey(TKey key, out TKey prev) {
+    public bool PrevKey(TKey key, out TKey prevKey) {
         int index = Find(key, KeyHash(key, _keyComparer));
         if (index < 0) {
             throw ThrowHelper.KeyNotFoundException(key);
         }
         ref Node node = ref _table[index];
         if (node.prev < 0) {
-            prev = default;
+            prevKey = default;
             return false;
         }
         ref Node nextNode = ref _table[node.prev];
-        prev = nextNode.key;
+        prevKey = nextNode.key;
         return true;
     }
 
@@ -367,13 +367,13 @@ public sealed class ImmutableLinkedHastSet<TKey> : ISequencedSet<TKey>, ISet<TKe
 
     public struct Enumerator : ISequentialEnumerator<TKey>
     {
-        private readonly ImmutableLinkedHastSet<TKey> _hashSet;
+        private readonly ImmutableSet<TKey> _hashSet;
         private readonly bool _reversed;
 
         private int _nextNode;
         private TKey _current;
 
-        internal Enumerator(ImmutableLinkedHastSet<TKey> hashSet, bool reversed) {
+        internal Enumerator(ImmutableSet<TKey> hashSet, bool reversed) {
             _hashSet = hashSet;
             _reversed = reversed;
 

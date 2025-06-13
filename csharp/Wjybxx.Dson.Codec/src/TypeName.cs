@@ -20,10 +20,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
 
-namespace Wjybxx.Commons
+namespace Wjybxx.Dson.Codec
 {
 /// <summary>
 /// 结构化的类型名

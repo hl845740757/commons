@@ -18,6 +18,7 @@
 
 using NUnit.Framework;
 using Wjybxx.Commons;
+using Wjybxx.Dson.Codec;
 using Wjybxx.Dson.Tests.Apt;
 
 namespace Wjybxx.Dson.Tests;

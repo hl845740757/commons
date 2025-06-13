@@ -41,12 +41,16 @@ LinkedDictionary特殊接口示例：
 
 1. 为`LinkedDictionary`和`LinkedHashSet`增加了`MoveToAfter`和`MoveToBefore`接口。
 2. fix `LinkedDictionary`和`LinkedHashSet`中的 `MoveToLast`和`MoveToFirst`实现。
-3. 开放了`LinkedDictionary`内部的`KeyCollection`和`ValueCollection`，以避免通过Keys和Value迭代时的装箱
-4. 增加`Regulator`工具。
+3. 开放了`LinkedDictionary`内部的`KeyCollection`和`ValueCollection`，以避免通过Keys和Value迭代时的装箱。
+4. 重命名不可变集合，旧命名太长。
+   1. `ImmutableLinkedDictionary` => `ImmutableDictionary`
+   2. `ImmutableLinkedHashSet` => `ImmutableSet`
 
 ### 1.4.0
 
 1. 将取消令牌相关接口挪到Core包，以支持行为树模块实现相关接口
+
+PS：其实挪完还是有点别扭。
 
 ### 1.3.0
 

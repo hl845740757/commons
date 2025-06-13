@@ -28,7 +28,7 @@ public class Success<T> : LeafTask<T> where T : class
         SetSuccess();
     }
 
-    protected override void OnEventImpl(object eventObj) {
+    protected override void OnEventImpl(object _) {
     }
 }
 }

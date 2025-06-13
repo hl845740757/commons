@@ -108,11 +108,11 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
 
     protected virtual IDictionary<K, V> ToImmutable(Type declaredType, IDictionary<K, V> dictionary) {
         if (declaredType.IsInterface) {
-            return ImmutableLinkedDictionary<K, V>.CreateRange(dictionary);
+            return ImmutableDictionary<K, V>.CreateRange(dictionary);
         }
         if (declaredType.IsGenericType
-            && declaredType.GetGenericTypeDefinition() == typeof(ImmutableLinkedDictionary<,>)) {
-            return ImmutableLinkedDictionary<K, V>.CreateRange(dictionary);
+            && declaredType.GetGenericTypeDefinition() == typeof(ImmutableDictionary<,>)) {
+            return ImmutableDictionary<K, V>.CreateRange(dictionary);
         }
         return dictionary;
     }

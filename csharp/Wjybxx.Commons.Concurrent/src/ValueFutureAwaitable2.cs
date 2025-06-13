@@ -24,7 +24,7 @@ namespace Wjybxx.Commons.Concurrent
 /// 用于绑定回调线程和禁止异常抛出
 /// 注意：不可手动获取<see cref="GetAwaiter"/>。
 /// </summary>
-public readonly struct SuppressibleAwaitable
+public readonly struct ValueFutureAwaitable2
 {
     private readonly ValueFuture _future;
     private readonly IExecutor? _executor;
@@ -35,7 +35,7 @@ public readonly struct SuppressibleAwaitable
     /// <param name="executor">回调线程</param>
     /// <param name="options">调度选项</param>
     /// <param name="requireResult">是否需要获取最终结果</param>
-    public SuppressibleAwaitable(ValueFuture future, IExecutor? executor, int options, bool requireResult) {
+    public ValueFutureAwaitable2(ValueFuture future, IExecutor? executor, int options, bool requireResult) {
         _future = future;
         _executor = executor;
         _options = options;
@@ -52,8 +52,8 @@ public readonly struct SuppressibleAwaitable
     /// </summary>
     /// <param name="options"></param>
     /// <returns></returns>
-    public SuppressibleAwaitable AddOptions(int options) {
-        return new SuppressibleAwaitable(_future, _executor, _options | options, _requireResult);
+    public ValueFutureAwaitable2 AddOptions(int options) {
+        return new ValueFutureAwaitable2(_future, _executor, _options | options, _requireResult);
     }
 
     /// <summary>
@@ -61,9 +61,9 @@ public readonly struct SuppressibleAwaitable
     /// </summary>
     /// <param name="options"></param>
     /// <returns></returns>
-    public SuppressibleAwaitable WithOptions(int options) {
+    public ValueFutureAwaitable2 WithOptions(int options) {
         int suppressed = _options & (int)SuppressedTypes.All;
-        return new SuppressibleAwaitable(_future, _executor, suppressed | options, _requireResult);
+        return new ValueFutureAwaitable2(_future, _executor, suppressed | options, _requireResult);
     }
 
     /// <summary>
@@ -71,24 +71,24 @@ public readonly struct SuppressibleAwaitable
     /// </summary>
     /// <param name="requireResult"></param>
     /// <returns></returns>
-    public SuppressibleAwaitable WithRequireResult(bool requireResult = true) {
-        return new SuppressibleAwaitable(_future, _executor, _options, requireResult);
+    public ValueFutureAwaitable2 WithRequireResult(bool requireResult = true) {
+        return new ValueFutureAwaitable2(_future, _executor, _options, requireResult);
     }
 
-    public SuppressibleAwaiter GetAwaiter() => new(_future, _executor, _options, _requireResult);
+    public ValueFutureAwaiter2 GetAwaiter() => new(_future, _executor, _options, _requireResult);
 }
 
 /// <summary>
 /// 用于绑定回调线程
 /// 注意：不可手动获取<see cref="GetAwaiter"/>。
 /// </summary>
-public readonly struct SuppressibleAwaitable<T>
+public readonly struct ValueFutureAwaitable2<T>
 {
     private readonly ValueFuture<T> _future;
     private readonly IExecutor? _executor;
     private readonly int _options;
 
-    public SuppressibleAwaitable(ValueFuture<T> future, IExecutor? executor, int options) {
+    public ValueFutureAwaitable2(ValueFuture<T> future, IExecutor? executor, int options) {
         _future = future;
         _executor = executor;
         _options = options;
@@ -103,8 +103,8 @@ public readonly struct SuppressibleAwaitable<T>
     /// </summary>
     /// <param name="options"></param>
     /// <returns></returns>
-    public SuppressibleAwaitable<T> AddOptions(int options) {
-        return new SuppressibleAwaitable<T>(_future, _executor, _options | options);
+    public ValueFutureAwaitable2<T> AddOptions(int options) {
+        return new ValueFutureAwaitable2<T>(_future, _executor, _options | options);
     }
 
     /// <summary>
@@ -112,11 +112,11 @@ public readonly struct SuppressibleAwaitable<T>
     /// </summary>
     /// <param name="options"></param>
     /// <returns></returns>
-    public SuppressibleAwaitable<T> WithOptions(int options) {
+    public ValueFutureAwaitable2<T> WithOptions(int options) {
         int suppressed = _options & (int)SuppressedTypes.All;
-        return new SuppressibleAwaitable<T>(_future, _executor, suppressed | options);
+        return new ValueFutureAwaitable2<T>(_future, _executor, suppressed | options);
     }
 
-    public SuppressibleAwaiter<T> GetAwaiter() => new(_future, _executor, _options);
+    public ValueFutureAwaiter2<T> GetAwaiter() => new(_future, _executor, _options);
 }
 }
