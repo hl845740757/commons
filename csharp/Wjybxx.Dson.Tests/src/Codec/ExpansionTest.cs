@@ -36,7 +36,7 @@ public class ExpansionTest
     private static readonly byte[] _buffer = new byte[2048];
     private static IDsonOutput _output;
     private static DsonOutputs.ArrayDsonOutput _arrayOutput;
-
+    
     [SetUp]
     public void SetUp() {
         Array.Clear(_buffer);
@@ -89,14 +89,13 @@ public class ExpansionTest
         }
     }
 
-
     public static string GenerateString(Random rand, int length,
                                         bool includeSymbols = false, bool includeChinese = false) {
         var sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
             int choice = rand.Next(0, 100);
             if (includeChinese && choice < 20) {
-                // 20%概率生成汉字  -- 这概率是体育老师教的
+                // 20%概率生成汉字 -- 这概率是体育老师教的
                 sb.Append((char)rand.Next(0x4E00, 0x9FA5));
             } else if (includeSymbols && choice < 40) {
                 // 20%概率生成符号
