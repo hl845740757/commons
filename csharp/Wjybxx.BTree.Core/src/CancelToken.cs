@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Wjybxx.Commons;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Collections;
@@ -366,29 +365,6 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
 
     #endregion
 
-    #region uni-transfer
-
-    public Registration ThenTransferTo(ICancelTokenSource child, int options = 0) {
-        return PushUniTransfer(null, child, options);
-    }
-
-    public Registration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
-        if (executor == null) throw new ArgumentNullException(nameof(executor));
-        return PushUniTransfer(executor, child, options);
-    }
-
-    private Registration PushUniTransfer(IExecutor? executor, ICancelTokenSource child, int options) {
-        if (child == null) throw new ArgumentNullException(nameof(child));
-        if (IsCancelRequested && executor == null) {
-            Completion.FireNow(this, TYPE_TRANSFER, child, null);
-            return Registration.Closed;
-        }
-        Completion completion = GetCompletion(executor, options, this, TYPE_TRANSFER, child, null);
-        return PushCompletion(completion);
-    }
-
-    #endregion
-
     #endregion
 
     #region core
@@ -398,7 +374,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
     private const int NESTED = -1;
 
     private Registration PushCompletion(Completion newHead) {
-        var cancelToken = ExecutorCoreUtil.GetCancelToken(newHead.ctx, newHead.options);
+        var cancelToken = ExecutorUtil.GetCancelToken(newHead.ctx, newHead.options);
         if (cancelToken.IsCancelRequested) {
             return default;
         }
@@ -532,7 +508,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
                 action = this.action;
                 ctx = this.ctx;
                 // 如果已收到取消信号，则直接回收
-                if (action == null || ExecutorCoreUtil.IsCancelRequested(ctx, options)) {
+                if (action == null || ExecutorUtil.IsCancelRequested(ctx, options)) {
                     ReleaseCompletion(this);
                     return;
                 }
@@ -540,7 +516,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
                 executor = this.executor;
 
                 // 如果是同步模式，需要claim=
-                if (mode <= 0 && !ExecutorCoreUtil.IsInlinable(executor, options)) {
+                if (mode <= 0 && !ExecutorUtil.IsInlinable(executor, options)) {
                     this.options |= MASK_ASYNC_FIRING;
                     this.executor = null;
                     fire = false;
@@ -590,12 +566,6 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
                     case TYPE_NOTIFY: {
                         ICancelTokenListener action = (ICancelTokenListener)rawAction;
                         action.OnCancelRequested(source, ctx);
-                        break;
-                    }
-                    case TYPE_TRANSFER: {
-                        // 这里本来有一个递归优化，为简化逻辑删除了
-                        ICancelTokenSource action = (ICancelTokenSource)rawAction;
-                        action.Cancel(source.code);
                         break;
                     }
                     default: {

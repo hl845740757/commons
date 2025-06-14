@@ -16,8 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.ICancelTokenListener;
-
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 

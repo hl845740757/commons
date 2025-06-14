@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -134,7 +133,7 @@ public class CodecProcessor : ISourceGenerator
     private Compilation compilation;
     private string buildingAssemblyName;
     private AttributeSpec processorInfoAnnotation;
-    private readonly CodeWriter _codeWriter = new CodeWriter();
+    private readonly CodeWriter _codeWriter = new CodeWriter(indent:"    ");
 
     #endregion
 
@@ -381,6 +380,7 @@ public class CodecProcessor : ISourceGenerator
             .Build();
 
         _codeWriter.Reset();
+        _codeWriter.IndentInsideNamespace = false;
         sourceProductionContext.AddSource(context.typeBuilder.name,
             _codeWriter.Write(csharpFile));
     }

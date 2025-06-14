@@ -86,15 +86,7 @@ sealed class UncancellableToken : ICancelToken
     public Registration ThenNotifyAsync(IExecutor executor, ICancelTokenListener action, object? ctx, int options = 0) {
         return Registration.Closed;
     }
-
-    public Registration ThenTransferTo(ICancelTokenSource child, int options = 0) {
-        return Registration.Closed;
-    }
-
-    public Registration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0) {
-        return Registration.Closed;
-    }
-
+    
     #endregion
 }
 }

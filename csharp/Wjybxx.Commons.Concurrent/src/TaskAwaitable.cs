@@ -61,7 +61,7 @@ public readonly struct TaskAwaitable
         // 1.IsCompleted
         // IsCompleted只在Start后调用一次，EventLoop可以通过接口查询是否已在线程中
         public bool IsCompleted => _future.IsCompleted
-                                   && ExecutorCoreUtil.IsInlinable(_executor, _options);
+                                   && ExecutorUtil.IsInlinable(_executor, _options);
 
         // 2. GetResult
         // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中 -- 不可手动调用
@@ -127,7 +127,7 @@ public readonly struct TaskAwaitable<T>
         // 1.IsCompleted
         // IsCompleted只在Start后调用一次，EventLoop可以通过接口查询是否已在线程中
         public bool IsCompleted => _future.IsCompleted
-                                   && ExecutorCoreUtil.IsInlinable(_executor, _options);
+                                   && ExecutorUtil.IsInlinable(_executor, _options);
 
         // 2. GetResult
         // 状态机只在IsCompleted为true时，和OnCompleted后调用GetResult，因此在目标线程中 -- 不可手动调用

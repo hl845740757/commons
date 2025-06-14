@@ -16,8 +16,8 @@
 package cn.wjybxx.btree;
 
 import cn.wjybxx.base.MathCommon;
-import cn.wjybxx.base.concurrent.ICancelToken;
-import cn.wjybxx.base.concurrent.ICancelTokenListener;
+import cn.wjybxx.concurrent.ICancelToken;
+import cn.wjybxx.concurrent.ICancelTokenListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

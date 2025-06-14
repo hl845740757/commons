@@ -117,27 +117,6 @@ public interface IEventLoop : IEventLoopGroup, ISingleThreadExecutor, IEntity
     bool IExecutorService.IsTerminated => State >= EventLoopState.Terminated;
 
     #endregion
-
-    /// <summary>
-    /// 测试是否在事件循环线程内，如果不在事件循环线程内则抛出异常
-    /// </summary>
-    /// <exception cref="GuardedOperationException"></exception>
-    void EnsureInEventLoop() {
-        if (!InEventLoop()) {
-            throw new GuardedOperationException();
-        }
-    }
-
-    /// <summary>
-    /// 测试是否在事件循环线程内，如果不在事件循环线程内则抛出异常
-    /// </summary>
-    /// <exception cref="GuardedOperationException"></exception>
-    void EnsureInEventLoop(string method) {
-        if (method == null) throw new ArgumentNullException(nameof(method));
-        if (!InEventLoop()) {
-            throw new GuardedOperationException("Calling " + method + " must in the EventLoop");
-        }
-    }
 }
 
 /// <summary>

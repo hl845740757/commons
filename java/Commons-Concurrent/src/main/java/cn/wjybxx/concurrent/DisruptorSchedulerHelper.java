@@ -18,8 +18,6 @@ package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.collection.DefaultIndexedPriorityQueue;
 import cn.wjybxx.base.collection.IndexedPriorityQueue;
-import cn.wjybxx.base.concurrent.CancelCodes;
-import cn.wjybxx.base.concurrent.ICancelToken;
 
 import java.util.concurrent.TimeUnit;
 

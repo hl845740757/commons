@@ -16,9 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.ICancelToken;
-import cn.wjybxx.base.concurrent.TaskOptions;
-
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Objects;
 import java.util.concurrent.Callable;

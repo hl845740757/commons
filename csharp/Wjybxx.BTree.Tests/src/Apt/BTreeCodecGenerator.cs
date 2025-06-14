@@ -16,14 +16,16 @@
 
 #endregion
 
-using System.Numerics;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using NUnit.Framework;
 using Wjybxx.BTreeCodec;
 using Wjybxx.Dson.Apt2;
 using Wjybxx.Dson.Codec.Attributes;
 
 #pragma warning disable CS0169
-namespace Wjybxx.Dson.Tests.Apt2;
+namespace BTree.Tests.Apt;
 
 /// <summary>
 /// 反射为行为树库生成Codec
@@ -33,7 +35,7 @@ public class BTreeCodecGenerator
 {
     [Test]
     public void Test() {
-        string directory = GetDirectory("bin") + "/../Generated";
+        string directory = GetDirectory("bin") + "/../../Wjybxx.BTree.Codec/src/Generated";
         if (!Directory.Exists(directory)) {
             Directory.CreateDirectory(directory);
         }

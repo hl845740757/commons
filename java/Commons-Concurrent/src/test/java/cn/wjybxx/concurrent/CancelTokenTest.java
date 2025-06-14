@@ -18,9 +18,6 @@ package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.MathCommon;
-import cn.wjybxx.base.concurrent.CancelCodeBuilder;
-import cn.wjybxx.base.concurrent.CancelCodes;
-import cn.wjybxx.base.concurrent.ICancelTokenSource;
 import cn.wjybxx.base.mutable.MutableInt;
 import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
@@ -225,23 +222,6 @@ public class CancelTokenTest {
             cts.cancel(1);
             Assertions.assertNotNull(signal.getValue());
         }
-    }
-
-    @RepeatedTest(4)
-    void testTransferTo() {
-        final MutableObject<String> signal = new MutableObject<>();
-        ICancelTokenSource child = newTokenSource();
-        {
-            child.thenRun(() -> {
-                signal.setValue("cancelled");
-            });
-            Assertions.assertNull(signal.getValue());
-        }
-        ICancelTokenSource cts = newTokenSource();
-        cts.thenTransferTo(child);
-        cts.cancel(1);
-
-        Assertions.assertNotNull(signal.getValue());
     }
 
     // endregion

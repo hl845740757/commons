@@ -405,7 +405,7 @@ public abstract class AbstractPromise
                 return true;
             }
             this.executor = CLAIMED;
-            if (!ExecutorCoreUtil.IsInlinable(e, options)) {
+            if (!ExecutorUtil.IsInlinable(e, options)) {
                 e.Execute(this);
                 return false;
             }
@@ -414,7 +414,7 @@ public abstract class AbstractPromise
 
         public override AbstractPromise? TryFire(int mode) {
             {
-                if (ExecutorCoreUtil.IsCancelRequested(state, options)) {
+                if (ExecutorUtil.IsCancelRequested(state, options)) {
                     goto outer;
                 }
                 // 异步模式下已经claim

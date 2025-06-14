@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.concurrent;
+package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.Registration;
@@ -212,28 +212,6 @@ public interface ICancelToken {
     IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx);
 
     IRegistration thenNotifyAsync(Executor executor, ICancelTokenListener action, Object ctx, int options);
-
-    // endregion
-
-    // region transferTo
-
-    /**
-     * 该接口用于方便构建子上下文
-     * 1.子token会在当前token进入取消状态时被取消
-     * 2.该接口本质是一个快捷方法，但允许子类优化
-     * <p>
-     * 注意：在Future体系下，child是上游任务；而在行为树这类体系下，child是下游任务。
-     *
-     * @param child   接收结果的子token
-     * @param options 调度选项
-     */
-    IRegistration thenTransferTo(ICancelTokenSource child, int options);
-
-    IRegistration thenTransferTo(ICancelTokenSource child);
-
-    IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child);
-
-    IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child, int options);
 
     // endregion
 

@@ -16,8 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.IExecutor;
-import cn.wjybxx.base.concurrent.ImmediateExecutor;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 

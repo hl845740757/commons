@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.concurrent;
+package cn.wjybxx.concurrent;
 
 /**
  * @author wjybxx

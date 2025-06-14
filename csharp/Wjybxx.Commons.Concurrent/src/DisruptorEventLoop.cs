@@ -199,7 +199,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         if (command == null) throw new ArgumentNullException(nameof(command));
         long sequence = NextSequence(1);
         if (sequence < 0) {
-            rejectedExecutionHandler.Rejected(ExecutorCoreUtil.ToTask(command, options), this);
+            rejectedExecutionHandler.Rejected(ExecutorUtil.ToTask(command, options), this);
             return;
         }
         PublishTask(command, sequence, options);

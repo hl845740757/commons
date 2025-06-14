@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.concurrent;
+package cn.wjybxx.concurrent;
 
+import java.util.Objects;
 import java.util.concurrent.Executor;
 
 /**
@@ -58,4 +59,18 @@ public interface SingleThreadExecutor extends Executor {
      */
     boolean inEventLoop(Thread thread);
 
+    /** @throws GuardedOperationException 如果当前不在EventLoop所在线程 */
+    default void ensureInEventLoop() {
+        if (!inEventLoop()) {
+            throw new GuardedOperationException();
+        }
+    }
+
+    /** @throws GuardedOperationException 如果当前不在EventLoop所在线程 */
+    default void ensureInEventLoop(String method) {
+        Objects.requireNonNull(method);
+        if (!inEventLoop()) {
+            throw new GuardedOperationException("Calling " + method + " must in the EventLoop");
+        }
+    }
 }

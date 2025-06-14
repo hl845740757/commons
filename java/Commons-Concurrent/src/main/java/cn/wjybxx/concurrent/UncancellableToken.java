@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.concurrent;
+package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.IRegistration;
 
@@ -165,24 +165,5 @@ final class UncancellableToken implements ICancelToken {
         return TOMBSTONE;
     }
 
-    @Override
-    public IRegistration thenTransferTo(ICancelTokenSource child, int options) {
-        return TOMBSTONE;
-    }
-
-    @Override
-    public IRegistration thenTransferTo(ICancelTokenSource child) {
-        return TOMBSTONE;
-    }
-
-    @Override
-    public IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child) {
-        return TOMBSTONE;
-    }
-
-    @Override
-    public IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child, int options) {
-        return TOMBSTONE;
-    }
     // endregion
 }

@@ -50,7 +50,7 @@ public class ImmediateExecutor : IExecutor
     }
 
     public void Execute(Action action, int options = 0) {
-        Execute(ExecutorCoreUtil.ToTask(action, options));
+        Execute(ExecutorUtil.ToTask(action, options));
     }
 }
 }

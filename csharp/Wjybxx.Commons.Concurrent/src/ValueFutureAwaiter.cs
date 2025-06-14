@@ -47,7 +47,7 @@ public readonly struct ValueFutureAwaiter : ICriticalNotifyCompletion
     public bool IsCompleted {
         get {
             if (!_future.IsCompleted) return false;
-            return ExecutorCoreUtil.IsInlinable(_executor, _options);
+            return ExecutorUtil.IsInlinable(_executor, _options);
         }
     }
 
@@ -98,7 +98,7 @@ public readonly struct ValueFutureAwaiter<T> : ICriticalNotifyCompletion
     public bool IsCompleted {
         get {
             if (!_future.IsCompleted) return false;
-            return ExecutorCoreUtil.IsInlinable(_executor, _options);
+            return ExecutorUtil.IsInlinable(_executor, _options);
         }
     }
 

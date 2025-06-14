@@ -16,9 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.IExecutor;
-import cn.wjybxx.base.concurrent.ImmediateExecutor;
-import cn.wjybxx.base.concurrent.TaskOptions;
 import cn.wjybxx.base.function.FunctionUtils;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
 import org.apache.commons.lang3.StringUtils;

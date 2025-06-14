@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.concurrent;
+package cn.wjybxx.concurrent;
 
 /**
  * 取消令牌源由任务的创建者（发起者）持有，具备取消权限。

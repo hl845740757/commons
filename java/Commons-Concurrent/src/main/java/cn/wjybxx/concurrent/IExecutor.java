@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.base.concurrent;
+package cn.wjybxx.concurrent;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
@@ -60,6 +60,6 @@ public interface IExecutor extends Executor {
      * @implNote 实现类如果不支持选项，应该保守调度。
      */
     default void execute(Runnable command, int options) {
-        execute(ExecutorCoreUtils.toTask(command, options));
+        execute(ExecutorUtils.toTask(command, options));
     }
 }

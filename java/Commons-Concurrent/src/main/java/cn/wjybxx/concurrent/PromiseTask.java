@@ -16,9 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.ExecutorCoreUtils;
-import cn.wjybxx.base.concurrent.ICancelToken;
-import cn.wjybxx.base.concurrent.TaskOptions;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 
 import java.util.Objects;
@@ -130,7 +127,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
 
     /** 获取关联的取消令牌 */
     protected final ICancelToken getCancelToken() {
-        return ExecutorCoreUtils.getCancelToken(ctx, options);
+        return ExecutorUtils.getCancelToken(ctx, options);
     }
 
     /** 运行其它类型任务 */

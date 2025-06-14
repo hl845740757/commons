@@ -204,21 +204,6 @@ public class CancelTokenTest
         }
     }
 
-    [Test] [Repeat(4)]
-    public void testTransferTo() {
-        MutableObject<string> signal = new MutableObject<string>();
-        ICancelTokenSource child = newTokenSource();
-        {
-            child.ThenRun(() => { signal.Value = "cancelled"; });
-            Assert.IsNull(signal.Value);
-        }
-        ICancelTokenSource cts = newTokenSource();
-        cts.ThenTransferTo(child);
-        cts.Cancel(1);
-
-        Assert.IsNotNull(signal.Value);
-    }
-
     private class Listener : ICancelTokenListener
     {
         private readonly Action<ICancelToken> listener;
@@ -395,6 +380,6 @@ public class CancelTokenTest
         int code = await cts;
         Assert.AreEqual(1, code);
     }
-    
+
     #endregion
 }

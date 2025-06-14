@@ -16,9 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.ICancelToken;
-import cn.wjybxx.base.concurrent.SingleThreadExecutor;
-
 import javax.annotation.Nullable;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;

@@ -44,7 +44,7 @@ public readonly struct CancelTokenAwaiter : ICriticalNotifyCompletion
     public bool IsCompleted {
         get {
             if (!_cts.IsCancelRequested) return false;
-            return ExecutorCoreUtil.IsInlinable(_executor, _options);
+            return ExecutorUtil.IsInlinable(_executor, _options);
         }
     }
 

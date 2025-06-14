@@ -153,19 +153,6 @@ public interface ICancelToken
 
     // endregion
 
-    // region transferTo
-
-    /**
-     * 该接口用于方便构建子上下文
-     * 1.子token会在当前token进入取消状态时被取消
-     * 2.该接口本质是一个快捷方法，但允许子类优化
-     */
-    Registration ThenTransferTo(ICancelTokenSource child, int options = 0);
-
-    Registration ThenTransferToAsync(IExecutor executor, ICancelTokenSource child, int options = 0);
-
-    // endregion
-
     #endregion
 }
 }

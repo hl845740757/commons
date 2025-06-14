@@ -159,7 +159,7 @@ public abstract class AbstractEventLoop : IEventLoop
     public abstract void Execute(ITask task);
 
     public virtual void Execute(Action action, int options = 0) {
-        Execute(ExecutorCoreUtil.ToTask(action, options));
+        Execute(ExecutorUtil.ToTask(action, options));
     }
 
     #endregion

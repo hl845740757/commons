@@ -157,6 +157,41 @@ public static class ExecutorUtil
 
     #endregion
 
+    #region event-loop
+
+    /// <summary>
+    /// 用于支持<code>await executor</code>语法
+    /// </summary>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ExecutorAwaiter GetAwaiter(this IExecutor executor) => new ExecutorAwaiter(executor);
+
+    /// <summary>
+    /// 测试Executor是否是事件循环，且当前线程是否在事件循环线程内
+    /// </summary>
+    /// <param name="e"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool InEventLoop(IExecutor e) {
+        return e is ISingleThreadExecutor eventLoop && eventLoop.InEventLoop();
+    }
+
+    public static void EnsureInEventLoop(IExecutor executor) {
+        if (executor is ISingleThreadExecutor eventLoop && eventLoop.InEventLoop()) {
+            return;
+        }
+        throw new GuardedOperationException("Must be called from EventLoop thread");
+    }
+
+    public static void EnsureInEventLoop(IExecutor executor, string msg) {
+        if (executor is ISingleThreadExecutor eventLoop && eventLoop.InEventLoop()) {
+            return;
+        }
+        throw new GuardedOperationException(msg);
+    }
+
+    #endregion
+
     #region factory
 
     public static IPromise<T> NewPromise<T>(IExecutor? executor = null) {
@@ -230,17 +265,17 @@ public static class ExecutorUtil
     #region execute
 
     public static void Execute(this IExecutor executor, Action action, ICancelToken? cancelToken, int options) {
-        ITask task = ExecutorCoreUtil.ToTask(action, cancelToken, options);
+        ITask task = ToTask(action, cancelToken, options);
         executor.Execute(task);
     }
 
     public static void Execute(this IExecutor executor, Action<object> action, object? ctx, int options) {
-        ITask task = ExecutorCoreUtil.ToTask(action, ctx, options);
+        ITask task = ToTask(action, ctx, options);
         executor.Execute(task);
     }
 
     public static void Execute(this IExecutor executor, Action action, CancellationToken cancellationToken, int options = 0) {
-        ITask task = ExecutorCoreUtil.ToTask(action, cancellationToken, options);
+        ITask task = ToTask(action, cancellationToken, options);
         executor.Execute(task);
     }
 
@@ -263,6 +298,87 @@ public static class ExecutorUtil
     }
 
     #endregion
+    
+        #region cancel-token
+
+    /// <summary>
+    /// 获取在指定线程上执行回调的Awaiter
+    /// 
+    /// c#的编译器并未支持该功能，因此需要用户显式调用该方法再await，示例如下：
+    /// <code>
+    ///     // await后的代码将在eventLoop线程执行
+    ///     await future.GetAwaitable(eventLoop); 
+    /// 
+    ///     // 如果future是在eventLoop线程完成的，则同步执行await后的代码，不通过提交异步任务切换线程 
+    ///     await future.GetAwaitable(eventLoop, TaskOption.STAGE_TRY_INLINE);
+    /// </code>
+    /// </summary>
+    /// <param name="cts">要等待的取消令牌</param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static CancelTokenAwaitable GetAwaitable(this ICancelToken cts, IExecutor? executor, int options = 0) {
+        return new CancelTokenAwaitable(cts, executor, options);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static CancelTokenAwaiter GetAwaiter(this ICancelToken cts) {
+        return new CancelTokenAwaiter(cts, null, 0);
+    }
+
+    /// <summary>
+    /// 获取ctx中的取消令牌
+    /// </summary>
+    /// <param name="ctx"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    public static ICancelToken GetCancelToken(object? ctx, int options) {
+        if (ctx == null || TaskOptions.IsEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
+            return ICancelToken.NONE;
+        }
+        if (ctx is ICancelToken cts) {
+            return cts;
+        }
+        if (ctx is IContext ctx2) {
+            return ctx2.CancelToken;
+        }
+        return ICancelToken.NONE;
+    }
+
+    /// <summary>
+    /// 查询ctx中的取消令牌是否收到了取消信号
+    /// </summary>
+    /// <param name="ctx"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    public static bool IsCancelRequested(object? ctx, int options) {
+        if (ctx == null || TaskOptions.IsEnabled(options, TaskOptions.STAGE_UNCANCELLABLE_CTX)) {
+            return false;
+        }
+        if (ctx is ICancelToken cts) {
+            return cts.IsCancelRequested;
+        }
+        if (ctx is IContext ctx2) {
+            return ctx2.CancelToken.IsCancelRequested;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 判断是否可以不提交任务，而是立即执行
+    /// </summary>
+    /// <param name="e"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsInlinable(IExecutor? e, int options) {
+        if (e == null) return true;
+        return TaskOptions.IsEnabled(options, TaskOptions.STAGE_TRY_INLINE)
+               && e is ISingleThreadExecutor eventLoop
+               && eventLoop.InEventLoop();
+    }
+
+    #endregion
 
     #region internal
 
@@ -282,6 +398,133 @@ public static class ExecutorUtil
 
     #endregion
 
+    #region box
+
+    public static ITask ToTask(Action action, int options = 0) {
+        if (action == null) throw new ArgumentNullException(nameof(action));
+        return new ActionWrapper1(action, options);
+    }
+
+    public static ITask ToTask(Action action, ICancelToken? cancelToken, int options = 0) {
+        if (action == null) throw new ArgumentNullException(nameof(action));
+        if (cancelToken == null) throw new ArgumentNullException(nameof(cancelToken));
+        return new ActionWrapper2(action, cancelToken, options);
+    }
+
+    public static ITask ToTask(Action<object> action, object? ctx, int options = 0) {
+        if (action == null) throw new ArgumentNullException(nameof(action));
+        return new ActionWrapper3(action, ctx, options);
+    }
+
+    public static ITask ToTask(Action action, CancellationToken cancelToken, int options = 0) {
+        if (action == null) throw new ArgumentNullException(nameof(action));
+        return new ActionWrapper4(action, cancelToken, options);
+    }
+
+    #endregion
+
+    #region box-class
+
+    private class ActionWrapper1 : ITask
+    {
+        private readonly Action action;
+        private readonly int options;
+
+        public ActionWrapper1(Action action, int options) {
+            this.action = action;
+            this.options = options;
+        }
+
+        public int Options => options;
+
+        public void Run() {
+            action();
+        }
+
+        public override string ToString() {
+            return $"{nameof(action)}: {action}, {nameof(options)}: {options}";
+        }
+    }
+
+    private class ActionWrapper2 : ITask
+    {
+        private readonly Action action;
+        private readonly ICancelToken? cancelToken;
+        private readonly int options;
+
+        public ActionWrapper2(Action action, ICancelToken? cancelToken, int options) {
+            this.action = action;
+            this.cancelToken = cancelToken;
+            this.options = options;
+        }
+
+        public int Options => options;
+
+        public void Run() {
+            if (cancelToken != null && cancelToken.IsCancelRequested) {
+                return;
+            }
+            action();
+        }
+
+        public override string ToString() {
+            return $"{nameof(action)}: {action}, {nameof(options)}: {options}";
+        }
+    }
+
+    private class ActionWrapper3 : ITask
+    {
+        private readonly Action<object> action;
+        private readonly object? ctx;
+        private readonly int options;
+
+        public ActionWrapper3(Action<object> action, object? ctx, int options) {
+            this.action = action;
+            this.ctx = ctx;
+            this.options = options;
+        }
+
+        public int Options => options;
+
+        public void Run() {
+            if (IsCancelRequested(ctx, options)) {
+                return;
+            }
+            action(ctx);
+        }
+
+        public override string ToString() {
+            return $"{nameof(action)}: {action}, {nameof(options)}: {options}";
+        }
+    }
+
+    private class ActionWrapper4 : ITask
+    {
+        private readonly Action action;
+        private readonly CancellationToken cancelToken;
+        private readonly int options;
+
+        public ActionWrapper4(Action action, CancellationToken cancelToken, int options) {
+            this.action = action;
+            this.cancelToken = cancelToken;
+            this.options = options;
+        }
+
+        public int Options => options;
+
+        public void Run() {
+            if (cancelToken.IsCancellationRequested) {
+                return;
+            }
+            action();
+        }
+
+        public override string ToString() {
+            return $"{nameof(action)}: {action}, {nameof(options)}: {options}";
+        }
+    }
+
+    #endregion
 
     #region future_helper
 

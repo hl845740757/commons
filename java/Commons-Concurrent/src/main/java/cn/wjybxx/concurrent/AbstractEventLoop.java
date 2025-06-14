@@ -16,7 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.ICancelToken;
 import cn.wjybxx.base.fx.ComponentId;
 import cn.wjybxx.base.fx.IComponent;
 import org.slf4j.Logger;

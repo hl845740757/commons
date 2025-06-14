@@ -63,7 +63,7 @@ public interface IExecutor
     /// <param name="action">要执行的任务</param>
     /// <param name="options">任务的调度特征值，见<see cref="TaskOptions"/></param>
     void Execute(Action action, int options = 0) {
-        Execute(ExecutorCoreUtil.ToTask(action, options));
+        Execute(ExecutorUtil.ToTask(action, options));
     }
 }
 }

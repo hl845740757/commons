@@ -49,7 +49,6 @@ public class CodecProcessor extends MyAbstractProcessor {
     private static final String CNAME_Timestamp = "cn.wjybxx.dson.types.Timestamp";
     // commons
     private static final String CNAME_TypeInfo = "cn.wjybxx.base.TypeInfo";
-    private static final String CNAME_TypeName = "cn.wjybxx.base.TypeName";
 
     // Dson
     private static final String CNAME_SERIALIZABLE = "cn.wjybxx.dsoncodec.annotations.DsonSerializable";

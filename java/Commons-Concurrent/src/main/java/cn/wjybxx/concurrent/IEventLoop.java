@@ -16,12 +16,10 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.SingleThreadExecutor;
 import cn.wjybxx.base.fx.IEntity;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
-import java.util.Objects;
 
 /**
  * 事件循环
@@ -109,22 +107,4 @@ public interface IEventLoop extends IEventLoopGroup, SingleThreadExecutor, IEnti
 
     /** 是否处于运行状态 */
     boolean isRunning();
-
-    // region util
-
-    /** @throws GuardedOperationException 如果当前不在EventLoop所在线程 */
-    default void ensureInEventLoop() {
-        if (!inEventLoop()) {
-            throw new GuardedOperationException();
-        }
-    }
-
-    /** @throws GuardedOperationException 如果当前不在EventLoop所在线程 */
-    default void ensureInEventLoop(String method) {
-        Objects.requireNonNull(method);
-        if (!inEventLoop()) {
-            throw new GuardedOperationException("Calling " + method + " must in the EventLoop");
-        }
-    }
-    // endregion
 }

@@ -622,7 +622,7 @@ public class ValuePromise<T> : IValuePromise<T>
                 return true;
             }
             this.executor = CLAIMED;
-            if (!ExecutorCoreUtil.IsInlinable(e, options)) {
+            if (!ExecutorUtil.IsInlinable(e, options)) {
                 e.Execute(this);
                 return false;
             }
@@ -630,7 +630,7 @@ public class ValuePromise<T> : IValuePromise<T>
         }
 
         public void TryFire(int mode) {
-            if (ExecutorCoreUtil.IsCancelRequested(state, options)) {
+            if (ExecutorUtil.IsCancelRequested(state, options)) {
                 return;
             }
             // 异步模式下已经claim

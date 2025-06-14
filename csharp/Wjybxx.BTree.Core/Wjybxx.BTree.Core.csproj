@@ -8,7 +8,7 @@
         
         <AssemblyName>Wjybxx.BTree.Core</AssemblyName>
         <PackageId>Wjybxx.BTree.Core</PackageId>
-        <PackageVersion>2.3.0</PackageVersion>
+        <PackageVersion>2.3.1</PackageVersion>
 
         <Title>Wjybxx.BTree.Core</Title>
         <Description>BTree-非典型的高性能行为树实现</Description>
@@ -44,5 +44,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
+        <ProjectReference Include="..\Wjybxx.Commons.Concurrent\Wjybxx.Commons.Concurrent.csproj" />
     </ItemGroup>
 </Project>

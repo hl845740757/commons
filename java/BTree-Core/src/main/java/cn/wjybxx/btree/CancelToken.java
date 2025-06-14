@@ -20,7 +20,7 @@ import cn.wjybxx.base.IPooledCloseable;
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.Registration;
 import cn.wjybxx.base.collection.SmallDynamicArray;
-import cn.wjybxx.base.concurrent.*;
+import cn.wjybxx.concurrent.*;
 
 import java.util.ArrayDeque;
 import java.util.Objects;
@@ -430,42 +430,6 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
 
     // endregion
 
-    // region uni-transferTo
-
-    @Override
-    public IRegistration thenTransferTo(ICancelTokenSource child) {
-        return uniTransferTo(null, child, 0);
-    }
-
-    @Override
-    public IRegistration thenTransferTo(ICancelTokenSource child, int options) {
-        return uniTransferTo(null, child, options);
-    }
-
-    @Override
-    public IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child) {
-        Objects.requireNonNull(executor, "executor");
-        return uniTransferTo(executor, child, 0);
-    }
-
-    @Override
-    public IRegistration thenTransferToAsync(Executor executor, ICancelTokenSource child, int options) {
-        Objects.requireNonNull(executor, "executor");
-        return uniTransferTo(executor, child, options);
-    }
-
-    private IRegistration uniTransferTo(Executor executor, ICancelTokenSource child, int options) {
-        Objects.requireNonNull(child, "child");
-        if (isCancelRequested() && executor == null) {
-            Completion.fireNow(this, TYPE_TRANSFER, child, null);
-            return Registration.CLOSED;
-        }
-        Completion completion = getCompletion(executor, options, this, TYPE_TRANSFER, child, null);
-        return pushCompletion(completion);
-    }
-
-    // endregion
-
     // endregion
 
     // region core
@@ -475,7 +439,7 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
     private static final int NESTED = -1;
 
     private Registration pushCompletion(Completion newHead) {
-        ICancelToken cancelToken = ExecutorCoreUtils.getCancelToken(newHead.ctx, newHead.options);
+        ICancelToken cancelToken = ExecutorUtils.getCancelToken(newHead.ctx, newHead.options);
         if (cancelToken.isCancelRequested()) {
             return Registration.CLOSED;
         }
@@ -591,7 +555,7 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
                 action = this.action;
                 ctx = this.ctx;
                 // 如果已收到取消信号，则直接回收
-                if (action == null || ExecutorCoreUtils.isCancelRequested(ctx, options)) {
+                if (action == null || ExecutorUtils.isCancelRequested(ctx, options)) {
                     releaseCompletion(this);
                     return;
                 }
@@ -599,7 +563,7 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
                 executor = this.executor;
 
                 // 如果是同步模式，需要claim=
-                if (mode <= 0 && !ExecutorCoreUtils.isInlinable(executor, options)) {
+                if (mode <= 0 && !ExecutorUtils.isInlinable(executor, options)) {
                     this.options |= MASK_ASYNC_FIRING;
                     this.executor = null;
                     fire = false;
@@ -645,11 +609,6 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
                     case TYPE_NOTIFY -> {
                         ICancelTokenListener action = (ICancelTokenListener) rawAction;
                         action.onCancelRequested(source, ctx);
-                    }
-                    case TYPE_TRANSFER -> {
-                        // 这里本来有一个递归优化，为简化逻辑删除了
-                        ICancelTokenSource action = (ICancelTokenSource) rawAction;
-                        action.cancel(source.code);
                     }
                     default -> {
                         throw new IllegalStateException();

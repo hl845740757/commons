@@ -100,7 +100,7 @@ public class CodecProcessor
     internal Type type_DsonCodec;
     internal Type type_AbstractCodec;
 
-    private readonly CodeWriter _codeWriter = new CodeWriter();
+    private readonly CodeWriter _codeWriter = new CodeWriter(indent:"    ");
     private readonly UTF8Encoding _utf8Encoding = new UTF8Encoding(false);
 
     /** 每个程序集初始化一次 */
@@ -293,6 +293,7 @@ public class CodecProcessor
             .Build();
 
         _codeWriter.Reset();
+        _codeWriter.IndentInsideNamespace = false;
         File.WriteAllText(csharpFileOutDir + "/" + csharpFile.name + ".cs",
             _codeWriter.Write(csharpFile),
             _utf8Encoding);

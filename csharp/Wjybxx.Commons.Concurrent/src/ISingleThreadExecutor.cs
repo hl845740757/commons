@@ -16,6 +16,7 @@
 
 #endregion
 
+using System;
 using System.Threading;
 
 namespace Wjybxx.Commons.Concurrent
@@ -54,5 +55,26 @@ public interface ISingleThreadExecutor : IExecutor
     /// </summary>
     /// <param name="thread">要测试的线程</param>
     bool InEventLoop(Thread thread);
+    
+    /// <summary>
+    /// 测试是否在事件循环线程内，如果不在事件循环线程内则抛出异常
+    /// </summary>
+    /// <exception cref="GuardedOperationException"></exception>
+    void EnsureInEventLoop() {
+        if (!InEventLoop()) {
+            throw new GuardedOperationException();
+        }
+    }
+
+    /// <summary>
+    /// 测试是否在事件循环线程内，如果不在事件循环线程内则抛出异常
+    /// </summary>
+    /// <exception cref="GuardedOperationException"></exception>
+    void EnsureInEventLoop(string method) {
+        if (method == null) throw new ArgumentNullException(nameof(method));
+        if (!InEventLoop()) {
+            throw new GuardedOperationException("Calling " + method + " must in the EventLoop");
+        }
+    }
 }
 }

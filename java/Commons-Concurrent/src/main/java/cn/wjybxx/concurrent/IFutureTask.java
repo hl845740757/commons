@@ -16,8 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.ITask;
-
 /**
  * FutureTask是Executor压入的可获取结果的任务类型
  * 1.该接口暴露给Executor的扩展类，不是用户使用的类。

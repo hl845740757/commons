@@ -36,13 +36,13 @@ namespace Wjybxx.BTreeCodec
 ///
 /// 运行时可通过该类型定位<see cref="Assembly"/>，获取程序集下的所有的Codec。
 /// </summary>
-[DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTreeCodec.Codecs")]
+[DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTree.Codecs")]
 public class BtreeCodecLinker
 {
 #nullable disable
     public TaskEntry<object> taskEntry;
 
-    [DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTreeCodec.Codecs")]
+    [DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTree.Codecs")]
     public class FsmLinker
     {
         private ChangeStateTask<object> changeStateTask;
@@ -58,7 +58,7 @@ public class BtreeCodecLinker
         private UndoStateMachineHandler<object> _undoStateMachineHandler;
     }
 
-    [DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTreeCodec.Codecs")]
+    [DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTree.Codecs")]
     public class BranchLinker
     {
         private ActiveSelector<object> activeSelector;
@@ -73,7 +73,7 @@ public class BtreeCodecLinker
         private Switch<object> switchTask;
     }
 
-    [DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTreeCodec.Codecs")]
+    [DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTree.Codecs")]
     public class JoinPolicyLinker
     {
         [DsonCodecLinker(Singleton = "GetInstance")]
@@ -90,7 +90,7 @@ public class BtreeCodecLinker
         private JoinSelectorN<object> joinSelectorN;
     }
 
-    [DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTreeCodec.Codecs")]
+    [DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTree.Codecs")]
     public class DecoratorLinker
     {
         private AlwaysCheckGuard<object> alwaysCheckGuard;
@@ -106,7 +106,7 @@ public class BtreeCodecLinker
         private UntilSuccess<object> untilSuccess;
     }
 
-    [DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTreeCodec.Codecs")]
+    [DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTree.Codecs")]
     public class LeafLinker
     {
         private Failure<object> failure;

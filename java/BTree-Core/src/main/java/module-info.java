@@ -7,6 +7,7 @@ module wjybxx.btree.core {
     requires org.slf4j;
 
     requires transitive wjybxx.commons.base;
+    requires transitive wjybxx.commons.concurrent;
 
     exports cn.wjybxx.btree;
     exports cn.wjybxx.btree.branch;

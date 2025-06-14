@@ -16,9 +16,6 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.concurrent.BetterCancellationException;
-import cn.wjybxx.base.concurrent.ICancelToken;
-
 import javax.annotation.concurrent.NotThreadSafe;
 import java.util.Objects;
 import java.util.concurrent.Callable;
