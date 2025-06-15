@@ -339,6 +339,13 @@ public static class DsonTexts
         if (str.Length == 0) {
             throw new ArgumentException("NumberFormatException:" + rawStr);
         }
+        if (str.IndexOf('|') > 0) { // A | B | C
+            int value = 0;
+            foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
+                value |= int.Parse(e);
+            }
+            return value;
+        }
         int lookOffset;
         int sign;
         char firstChar = str[0];
@@ -374,6 +381,13 @@ public static class DsonTexts
         string str = DeleteUnderline(rawStr);
         if (str.Length == 0) {
             throw new ArgumentException("NumberFormatException:" + rawStr);
+        }
+        if (str.IndexOf('|') > 0) { // A | B | C
+            long value = 0;
+            foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
+                value |= long.Parse(e);
+            }
+            return value;
         }
         int lookOffset;
         int sign;

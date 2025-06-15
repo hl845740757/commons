@@ -23,6 +23,7 @@ import cn.wjybxx.dson.internal.CommonsLang3;
 import java.util.BitSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Dson的文本表示法
@@ -307,10 +308,19 @@ public class DsonTexts {
         return CommonsLang3.isParsable(str);
     }
 
+    private static final Pattern SPLIT_PATTERN = Pattern.compile("\\|");
+
     public static int parseInt32(String rawStr) {
         String str = deleteUnderline(rawStr);
         if (str.isEmpty()) {
             throw new NumberFormatException(rawStr);
+        }
+        if (str.indexOf('|') > 0) { // A | B | C
+            int value = 0;
+            for (String e : SPLIT_PATTERN.split(rawStr)) {
+                value |= Integer.parseInt(e.trim());
+            }
+            return value;
         }
         int lookOffset;
         int sign;
@@ -341,6 +351,13 @@ public class DsonTexts {
         String str = deleteUnderline(rawStr);
         if (str.isEmpty()) {
             throw new NumberFormatException(rawStr);
+        }
+        if (str.indexOf('|') > 0) { // A | B | C
+            long value = 0;
+            for (String e : SPLIT_PATTERN.split(rawStr)) {
+                value |= Long.parseLong(e.trim());
+            }
+            return value;
         }
         int lookOffset;
         int sign;
