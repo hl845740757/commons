@@ -341,9 +341,15 @@ public static class DsonTexts
         }
         if (str.IndexOf('|') > 0) { // A | B | C
             int value = 0;
+#if UNITY_2021_3_OR_NEWER
+            foreach (string e in str.Split('|')) {
+                value |= int.Parse(e.Trim());
+            }
+#else
             foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
                 value |= int.Parse(e);
             }
+#endif
             return value;
         }
         int lookOffset;
@@ -384,9 +390,15 @@ public static class DsonTexts
         }
         if (str.IndexOf('|') > 0) { // A | B | C
             long value = 0;
+#if UNITY_2021_3_OR_NEWER
+            foreach (string e in str.Split('|')) {
+                value |= long.Parse(e.Trim());
+            }
+#else
             foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
                 value |= long.Parse(e);
             }
+#endif
             return value;
         }
         int lookOffset;

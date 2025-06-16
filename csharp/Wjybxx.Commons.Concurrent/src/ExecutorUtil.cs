@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -298,8 +297,8 @@ public static class ExecutorUtil
     }
 
     #endregion
-    
-        #region cancel-token
+
+    #region cancel-token
 
     /// <summary>
     /// 获取在指定线程上执行回调的Awaiter

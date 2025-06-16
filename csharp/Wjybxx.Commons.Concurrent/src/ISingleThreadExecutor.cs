@@ -55,7 +55,7 @@ public interface ISingleThreadExecutor : IExecutor
     /// </summary>
     /// <param name="thread">要测试的线程</param>
     bool InEventLoop(Thread thread);
-    
+
     /// <summary>
     /// 测试是否在事件循环线程内，如果不在事件循环线程内则抛出异常
     /// </summary>
