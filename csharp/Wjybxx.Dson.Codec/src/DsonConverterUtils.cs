@@ -158,6 +158,19 @@ public static class DsonConverterUtils
         return false;
     }
 
+    /// <summary>
+    /// 获取Codec类关联的解码类型
+    /// </summary>
+    /// <param name="codecType"></param>
+    /// <returns></returns>
+    public static Type GetEncoderType(Type codecType) {
+        Type type = codecType.GetInterface(typeof(IDsonCodec<>).Name);
+        if (type == null) {
+            throw new ArgumentException($"Type {codecType} is not a DsonCodec");
+        }
+        return type.GetGenericArguments()[0];
+    }
+
     #endregion
 
     // 对于Converter，泛型方法只是辅助编码的方法
@@ -390,7 +403,7 @@ public static class DsonConverterUtils
     public static void WriteUShort(this IDsonObjectWriter writer, string? name, ushort value, INumberStyle style) {
         writer.WriteInt(name, value, style);
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteSByte(this IDsonObjectWriter writer, string? name, sbyte value) {
         writer.WriteInt(name, value, NumberStyles.Simple);

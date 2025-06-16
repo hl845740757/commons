@@ -561,6 +561,7 @@ public sealed class CodeWriter
             }
             if (propertySpec.hasSetter) {
                 if (propertySpec.hasGetter) {
+                    Emit(" ");
                     EmitModifiers(propertySpec.setterModifiers, indent: false);
                 }
                 Emit(" set;");
@@ -639,9 +640,11 @@ public sealed class CodeWriter
             EmitMethodParameters(methodSpec);
             // 调用其它构造方法 -- 固定换行
             if (!CodeBlock.IsNullOrEmpty(methodSpec.constructorInvoker)) {
+                Indent();
                 Emit("\n");
-                Emit(" : ");
+                Emit(": ");
                 Emit(methodSpec.constructorInvoker!);
+                Unindent();
             }
             Emit(" ");
             EmitMethodBody(methodSpec);

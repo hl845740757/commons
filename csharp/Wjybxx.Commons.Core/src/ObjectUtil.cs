@@ -41,6 +41,13 @@ public static class ObjectUtil
     }
 
     /// <summary>
+    /// C#默认的bool的ToString是大写开头....
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public static string ToString2(this bool value) => value ? "true" : "false";
+
+    /// <summary>
     /// 如果参数为null，则转为给定的默认值
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
