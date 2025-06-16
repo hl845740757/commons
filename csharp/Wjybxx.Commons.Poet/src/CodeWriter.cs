@@ -561,7 +561,7 @@ public sealed class CodeWriter
             }
             if (propertySpec.hasSetter) {
                 if (propertySpec.hasGetter) {
-                    EmitModifiers(propertySpec.setterModifiers);
+                    EmitModifiers(propertySpec.setterModifiers, indent: false);
                 }
                 Emit(" set;");
             }
@@ -578,11 +578,11 @@ public sealed class CodeWriter
             {
                 Indent();
                 if (!CodeBlock.IsNullOrEmpty(propertySpec.getter)) {
-                    EmitGetterSetter(propertySpec.getter!, 1);
+                    EmitGetterSetter(propertySpec.getter!, true);
                 }
                 if (!CodeBlock.IsNullOrEmpty(propertySpec.setter)) {
                     EmitModifiers(propertySpec.setterModifiers);
-                    EmitGetterSetter(propertySpec.setter!, 2);
+                    EmitGetterSetter(propertySpec.setter!, false);
                 }
                 Unindent();
             }
@@ -590,9 +590,9 @@ public sealed class CodeWriter
         }
     }
 
-    private void EmitGetterSetter(CodeBlock codeBlock, int kind) {
+    private void EmitGetterSetter(CodeBlock codeBlock, bool isGetter) {
         if (codeBlock.expressionStyle) {
-            if (kind == 1) {
+            if (isGetter) {
                 Emit("get => ");
             } else {
                 Emit("set => ");
@@ -601,7 +601,7 @@ public sealed class CodeWriter
             EmitIfLastCharNot(';'); // 代码可能包含';'
             Emit("\n");
         } else {
-            if (kind == 1) {
+            if (isGetter) {
                 Emit("get {\n");
             } else {
                 Emit("set {\n");
@@ -767,8 +767,9 @@ public sealed class CodeWriter
     /// </summary>
     /// <param name="modifiers"></param>
     /// <param name="delegatorMethod"></param>
+    /// <param name="indent"></param>
     /// <returns></returns>
-    private bool EmitModifiers(Modifiers modifiers, bool delegatorMethod = false) {
+    private bool EmitModifiers(Modifiers modifiers, bool delegatorMethod = false, bool indent = true) {
         List<string> modifierList = _pooledModifierList;
         modifierList.Clear();
 
@@ -842,7 +843,9 @@ public sealed class CodeWriter
         }
 
         Emit("$L", string.Join(" ", modifierList));
-        Emit(" ");
+        if (indent) {
+            Emit(" ");
+        }
         return true;
     }
 

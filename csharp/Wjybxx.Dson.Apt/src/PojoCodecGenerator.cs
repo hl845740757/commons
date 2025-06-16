@@ -467,24 +467,23 @@ internal class PojoCodecGenerator
     static PojoCodecGenerator() {
         Dictionary<SpecialType, string> type2KeywordDic = new Dictionary<SpecialType, string>()
         {
-            { SpecialType.System_Int32, "int" },
-            { SpecialType.System_Int64, "long" },
-            { SpecialType.System_Single, "float" },
-            { SpecialType.System_Double, "double" },
-            { SpecialType.System_Boolean, "bool" },
+            { SpecialType.System_Int32, "Int" },
+            { SpecialType.System_Int64, "Long" },
+            { SpecialType.System_Single, "Float" },
+            { SpecialType.System_Double, "Double" },
+            { SpecialType.System_Boolean, "Bool" },
 
-            { SpecialType.System_UInt32, "uint" },
-            { SpecialType.System_UInt64, "ulong" },
-            { SpecialType.System_Byte, "byte" },
-            { SpecialType.System_SByte, "sbyte" },
-            { SpecialType.System_Int16, "short" },
-            { SpecialType.System_UInt16, "ushort" },
-            { SpecialType.System_Char, "char" },
+            { SpecialType.System_UInt32, "UInt" },
+            { SpecialType.System_UInt64, "ULong" },
+            { SpecialType.System_Byte, "Byte" },
+            { SpecialType.System_SByte, "SByte" },
+            { SpecialType.System_Int16, "Short" },
+            { SpecialType.System_UInt16, "UShort" },
+            { SpecialType.System_Char, "Char" },
         };
         foreach (KeyValuePair<SpecialType, string> pair in type2KeywordDic) {
-            string name = Util.FirstCharToUpperCase(pair.Value);
-            primitiveReadMethodNameMap[pair.Key] = "Read" + name;
-            primitiveWriteMethodNameMap[pair.Key] = "Write" + name;
+            primitiveReadMethodNameMap[pair.Key] = "Read" + pair.Value;
+            primitiveWriteMethodNameMap[pair.Key] = "Write" + pair.Value;
         }
     }
 

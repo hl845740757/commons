@@ -107,6 +107,9 @@ public sealed class ImmutableDictionary<TKey, TValue> : ISequencedDictionary<TKe
     public static ImmutableDictionary<TKey, TValue> CreateRange(IEnumerable<KeyValuePair<TKey, TValue>> source,
                                                                 IEqualityComparer<TKey>? keyComparer = null) {
         if (source == null) throw new ArgumentNullException(nameof(source));
+        if (keyComparer == null && source is ImmutableDictionary<TKey, TValue> dictionary) {
+            return dictionary;
+        }
         KeyValuePair<TKey, TValue>[] array = source as KeyValuePair<TKey, TValue>[];
         if (array == null) {
             array = source.ToArray();

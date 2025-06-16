@@ -88,9 +88,12 @@ public static class MoreCollectionCodecs
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static IList<T> ToImmutable<T>(IList<T> list, Type declaredType) {
         // 需要确保ImmutableList能赋值给声明类型
-        if (declaredType.IsInterface
-            || (declaredType.IsGenericType && (declaredType.GetGenericTypeDefinition() == typeof(ImmutableList<>)))) {
-            return ImmutableList<T>.CreateRange(list);
+        if (declaredType.IsGenericType) {
+            if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableList<>)
+                || declaredType.GetGenericTypeDefinition() == typeof(ISet<>)
+                || declaredType.GetGenericTypeDefinition() == typeof(IGenericSet<>)) {
+                return ImmutableList<T>.CreateRange(list);
+            }
         }
         return list;
     }
@@ -275,14 +278,14 @@ public static class MoreCollectionCodecs
 
         public void WriteObject(IDsonObjectWriter writer, in IList<uint> inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Count; i++) {
-                writer.WriteUint(null, inst[i]);
+                writer.WriteUInt(null, inst[i]);
             }
         }
 
         public IList<uint> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             IList<uint> result = new List<uint>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                uint value = reader.ReadUint(null);
+                uint value = reader.ReadUInt(null);
                 result.Add(value);
             }
             return reader.Options.readAsImmutable
@@ -303,14 +306,14 @@ public static class MoreCollectionCodecs
 
         public void WriteObject(IDsonObjectWriter writer, in IList<ulong> inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Count; i++) {
-                writer.WriteUlong(null, inst[i]);
+                writer.WriteULong(null, inst[i]);
             }
         }
 
         public IList<ulong> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             IList<ulong> result = new List<ulong>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                ulong value = reader.ReadUlong(null);
+                ulong value = reader.ReadULong(null);
                 result.Add(value);
             }
             return reader.Options.readAsImmutable

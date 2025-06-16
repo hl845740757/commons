@@ -250,22 +250,22 @@ public static class DsonConverterUtils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static uint ReadUint(this IDsonObjectReader reader, string? name) {
+    public static uint ReadUInt(this IDsonObjectReader reader, string? name) {
         return (uint)reader.ReadInt(name);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ulong ReadUlong(this IDsonObjectReader reader, string? name) {
+    public static ulong ReadULong(this IDsonObjectReader reader, string? name) {
         return (ulong)reader.ReadLong(name);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ushort ReadUshort(this IDsonObjectReader reader, string? name) {
+    public static ushort ReadUShort(this IDsonObjectReader reader, string? name) {
         return (ushort)reader.ReadInt(name);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static sbyte ReadSbyte(this IDsonObjectReader reader, string? name) {
+    public static sbyte ReadSByte(this IDsonObjectReader reader, string? name) {
         return (sbyte)reader.ReadInt(name);
     }
 
@@ -362,22 +362,22 @@ public static class DsonConverterUtils
 
     // unsigned
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteUint(this IDsonObjectWriter writer, string? name, uint value) {
+    public static void WriteUInt(this IDsonObjectWriter writer, string? name, uint value) {
         writer.WriteInt(name, (int)value, NumberStyles.Unsigned);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteUint(this IDsonObjectWriter writer, string? name, uint value, INumberStyle style) {
+    public static void WriteUInt(this IDsonObjectWriter writer, string? name, uint value, INumberStyle style) {
         writer.WriteInt(name, (int)value, style);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteUlong(this IDsonObjectWriter writer, string? name, ulong value) {
+    public static void WriteULong(this IDsonObjectWriter writer, string? name, ulong value) {
         writer.WriteLong(name, (long)value, NumberStyles.Unsigned);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteUlong(this IDsonObjectWriter writer, string? name, ulong value, INumberStyle style) {
+    public static void WriteULong(this IDsonObjectWriter writer, string? name, ulong value, INumberStyle style) {
         writer.WriteLong(name, (long)value, style);
     }
 
@@ -388,6 +388,16 @@ public static class DsonConverterUtils
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WriteUShort(this IDsonObjectWriter writer, string? name, ushort value, INumberStyle style) {
+        writer.WriteInt(name, value, style);
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteSByte(this IDsonObjectWriter writer, string? name, sbyte value) {
+        writer.WriteInt(name, value, NumberStyles.Simple);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void WriteSByte(this IDsonObjectWriter writer, string? name, sbyte value, INumberStyle style) {
         writer.WriteInt(name, value, style);
     }
 

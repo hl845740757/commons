@@ -167,6 +167,12 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 break;
             }
         }
+        // 处理默认的不可变集合
+        if (declaredType.IsGenericType) {
+            if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableDictionary<,>)) {
+                return result.ToImmutableDictionary2();
+            }
+        }
         return reader.Options.readAsImmutable ? ToImmutable(declaredType, result) : result;
     }
 
@@ -429,7 +435,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 foreach (KeyValuePair<uint, V> pair in inst) {
                     writer.WriteStartArray(ObjectStyle.Flow); // pair写为子数组-没有类型
                     {
-                        writer.WriteUint(null, pair.Key);
+                        writer.WriteUInt(null, pair.Key);
                         writer.WriteObject(null, pair.Value);
                     }
                     writer.WriteEndArray();
@@ -441,7 +447,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             default: {
                 writer.WriteStartArray(style, encoderType, declaredType); // 整个字典写为数组
                 foreach (KeyValuePair<uint, V> pair in inst) {
-                    writer.WriteUint(null, pair.Key);
+                    writer.WriteUInt(null, pair.Key);
                     writer.WriteObject(null, pair.Value);
                 }
                 writer.WriteEndArray();
@@ -483,7 +489,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                     do {
                         reader.ReadStartArray();
                         {
-                            uint key = reader.ReadUint(null);
+                            uint key = reader.ReadUInt(null);
                             V value = reader.ReadObject<V>(null);
                             result[key] = value;
                         }
@@ -493,7 +499,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 }
                 default: { // 整个字典写为数组
                     do {
-                        uint key = reader.ReadUint(null);
+                        uint key = reader.ReadUInt(null);
                         V value = reader.ReadObject<V>(null);
                         result[key] = value;
                     } while (reader.ReadDsonType() != DsonType.EndOfObject);
@@ -541,7 +547,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 foreach (KeyValuePair<ulong, V> pair in inst) {
                     writer.WriteStartArray(ObjectStyle.Flow); // pair写为子数组-没有类型
                     {
-                        writer.WriteUlong(null, pair.Key);
+                        writer.WriteULong(null, pair.Key);
                         writer.WriteObject(null, pair.Value);
                     }
                     writer.WriteEndArray();
@@ -553,7 +559,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             default: {
                 writer.WriteStartArray(style, encoderType, declaredType); // 整个字典写为数组
                 foreach (KeyValuePair<ulong, V> pair in inst) {
-                    writer.WriteUlong(null, pair.Key);
+                    writer.WriteULong(null, pair.Key);
                     writer.WriteObject(null, pair.Value);
                 }
                 writer.WriteEndArray();
@@ -582,7 +588,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                     do {
                         reader.ReadStartArray();
                         {
-                            ulong key = reader.ReadUlong(null);
+                            ulong key = reader.ReadULong(null);
                             V value = reader.ReadObject<V>(null);
                             result[key] = value;
                         }
@@ -605,7 +611,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 }
                 default: { // 整个字典写为数组
                     do {
-                        ulong key = reader.ReadUlong(null);
+                        ulong key = reader.ReadULong(null);
                         V value = reader.ReadObject<V>(null);
                         result[key] = value;
                     } while (reader.ReadDsonType() != DsonType.EndOfObject);

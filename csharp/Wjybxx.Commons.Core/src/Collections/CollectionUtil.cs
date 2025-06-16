@@ -258,29 +258,16 @@ public static partial class CollectionUtil
     #region linq
 
     public static ImmutableList<T> ToImmutableList2<T>(this IEnumerable<T> source, IComparer<T>? comparer = null) {
-        if (source == null) throw new ArgumentNullException(nameof(source));
-        if (comparer == null && source is ImmutableList<T> list) {
-            return list;
-        }
         return ImmutableList<T>.CreateRange(source, comparer);
     }
 
     public static ImmutableSet<T> ToImmutableSet2<T>(this IEnumerable<T> source, IEqualityComparer<T>? keyComparer = null) {
-        if (source == null) throw new ArgumentNullException(nameof(source));
-        if (source is ImmutableSet<T> hastSet) {
-            return hastSet;
-        }
         return ImmutableSet<T>.CreateRange(source, keyComparer);
     }
 
     public static ImmutableDictionary<TKey, TValue> ToImmutableDictionary2<TKey, TValue>(
         this IEnumerable<KeyValuePair<TKey, TValue>> source,
         IEqualityComparer<TKey>? keyComparer = null) {
-        //
-        if (source == null) throw new ArgumentNullException(nameof(source));
-        if (keyComparer == null && source is ImmutableDictionary<TKey, TValue> dictionary) {
-            return dictionary;
-        }
         return ImmutableDictionary<TKey, TValue>.CreateRange(source, keyComparer);
     }
 

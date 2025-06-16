@@ -117,6 +117,15 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
             T value = reader.ReadObject<T>(null);
             result.Add(value);
         }
+        // 处理默认的不可变集合
+        if (declaredType.IsGenericType) {
+            if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableList<>)) {
+                return result.ToImmutableList2();
+            }
+            if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableSet<>)) {
+                return result.ToImmutableSet2();
+            }
+        }
         return reader.Options.readAsImmutable ? ToImmutable(declaredType, result) : result;
     }
 }

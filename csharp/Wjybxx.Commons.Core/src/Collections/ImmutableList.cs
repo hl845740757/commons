@@ -56,6 +56,9 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
 
     public static ImmutableList<T> CreateRange(IEnumerable<T> source, IComparer<T>? comparer = null) {
         if (source == null) throw new ArgumentNullException(nameof(source));
+        if (comparer == null && source is ImmutableList<T> list) {
+            return list;
+        }
         T[] array = source as T[];
         if (array != null) {
             array = ArrayUtil.CopyOf(array);

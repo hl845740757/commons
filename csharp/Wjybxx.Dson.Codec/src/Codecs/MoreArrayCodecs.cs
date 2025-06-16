@@ -161,7 +161,7 @@ public static class MoreArrayCodecs
     {
         public void WriteObject(IDsonObjectWriter writer, in uint[] inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Length; i++) {
-                writer.WriteUint(null, inst[i]);
+                writer.WriteUInt(null, inst[i]);
             }
         }
 
@@ -169,7 +169,7 @@ public static class MoreArrayCodecs
             // 由于长度未知，只能先存储为List再转...
             List<uint> result = new List<uint>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                uint value = reader.ReadUint(null);
+                uint value = reader.ReadUInt(null);
                 result.Add(value);
             }
             return result.ToArray();
@@ -180,7 +180,7 @@ public static class MoreArrayCodecs
     {
         public void WriteObject(IDsonObjectWriter writer, in ulong[] inst, Type declaredType, ObjectStyle style) {
             for (int i = 0; i < inst.Length; i++) {
-                writer.WriteUlong(null, inst[i]);
+                writer.WriteULong(null, inst[i]);
             }
         }
 
@@ -188,7 +188,7 @@ public static class MoreArrayCodecs
             // 由于长度未知，只能先存储为List再转...
             List<ulong> result = new List<ulong>();
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                ulong value = reader.ReadUlong(null);
+                ulong value = reader.ReadULong(null);
                 result.Add(value);
             }
             return result.ToArray();

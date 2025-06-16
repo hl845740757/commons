@@ -469,24 +469,23 @@ internal class PojoCodecGenerator
     static PojoCodecGenerator() {
         Dictionary<Type, string> type2KeywordDic = new Dictionary<Type, string>()
         {
-            { typeof(int), "int" },
-            { typeof(long), "long" },
-            { typeof(float), "float" },
-            { typeof(double), "double" },
-            { typeof(bool), "bool" },
+            { typeof(int), "Int" },
+            { typeof(long), "Long" },
+            { typeof(float), "Float" },
+            { typeof(double), "Double" },
+            { typeof(bool), "Bool" },
 
-            { typeof(uint), "uint" },
-            { typeof(ulong), "ulong" },
-            { typeof(byte), "byte" },
-            { typeof(sbyte), "sbyte" },
-            { typeof(short), "short" },
-            { typeof(ushort), "ushort" },
-            { typeof(char), "char" },
+            { typeof(uint), "UInt" },
+            { typeof(ulong), "ULong" },
+            { typeof(byte), "Byte" },
+            { typeof(sbyte), "SByte" },
+            { typeof(short), "Short" },
+            { typeof(ushort), "UShort" },
+            { typeof(char), "Char" },
         };
         foreach (KeyValuePair<Type, string> pair in type2KeywordDic) {
-            string name = Util.FirstCharToUpperCase(pair.Value);
-            primitiveReadMethodNameMap[pair.Key] = "Read" + name;
-            primitiveWriteMethodNameMap[pair.Key] = "Write" + name;
+            primitiveReadMethodNameMap[pair.Key] = "Read" + pair.Value;
+            primitiveWriteMethodNameMap[pair.Key] = "Write" + pair.Value;
         }
 
         numberTypes.AddAll(new[]

@@ -104,6 +104,9 @@ public sealed class ImmutableSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
 
     public static ImmutableSet<TKey> CreateRange(IEnumerable<TKey> source, IEqualityComparer<TKey>? keyComparer = null) {
         if (source == null) throw new ArgumentNullException(nameof(source));
+        if (keyComparer == null && source is ImmutableSet<TKey> immutableSet) {
+            return immutableSet;
+        }
         TKey[] array = source as TKey[];
         if (array == null) {
             array = source.ToArray();
