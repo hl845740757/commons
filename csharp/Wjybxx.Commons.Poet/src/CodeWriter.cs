@@ -1103,6 +1103,23 @@ public sealed class CodeWriter
             }
             typeName = refTypeName.targetType;
         }
+        // (int min, int max)
+        if (typeName is RecordTypeName recordTypeName) {
+            Emit("(");
+            for (int index = 0; index < recordTypeName.elements.Count; index++) {
+                if (index > 0) {
+                    Emit(", ");
+                }
+                RecordElement element = recordTypeName.elements[index];
+                EmitTypeName(element.type);
+                if (!string.IsNullOrWhiteSpace(element.name)) {
+                    Emit(" ");
+                    Emit(element.name);
+                }
+            }
+            Emit(")");
+            return;
+        }
         Stack<string> typeNameStack = pooledTypeNameStack;
         typeNameStack.Clear();
 

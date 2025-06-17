@@ -151,6 +151,18 @@ public class GeneratorTest
                 .AddParameter(TypeName.INT.MakeByRefType(), "a")
                 .AddParameter(TypeName.INT.MakeByRefType(ByRefTypeName.Kind.In), "b")
                 .Build())
+            .AddSpec(MethodSpec.NewMethodBuilder("MinMax")
+                .AddDocument("测试返回元组")
+                .AddModifiers(Modifiers.Public)
+                .Returns(RecordTypeName.Get(new List<RecordElement>()
+                {
+                    new RecordElement(TypeName.INT, "min"),
+                    new RecordElement(TypeName.INT, "max")
+                }))
+                .AddParameter(TypeName.INT, "a")
+                .AddParameter(TypeName.INT, "b")
+                .Code(CodeBlock.Of("a < b ? (a, b) : (b, a)").WithExpressionStyle())
+                .Build())
             .Build();
         return classType;
     }

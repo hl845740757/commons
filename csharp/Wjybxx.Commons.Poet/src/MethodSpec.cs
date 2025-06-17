@@ -205,7 +205,7 @@ public class MethodSpec : ISpecification
         /// <param name="forceBuildCode">代码块为空的情况下是否也构建代码</param>
         /// <returns></returns>
         public MethodSpec Build(bool forceBuildCode = false) {
-            if (code == null && (forceBuildCode || !codeBuilder.IsEmpty)) {
+            if (code == null && (forceBuildCode || !codeBuilder.IsEmpty || kind == Kind.Constructor)) {
                 code = codeBuilder.Build();
             }
             return new MethodSpec(this);

@@ -340,17 +340,7 @@ public static class DsonTexts
             throw new ArgumentException("NumberFormatException:" + rawStr);
         }
         if (str.IndexOf('|') > 0) { // A | B | C
-            int value = 0;
-#if UNITY_2021_3_OR_NEWER
-            foreach (string e in str.Split('|')) {
-                value |= int.Parse(e.Trim());
-            }
-#else
-            foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
-                value |= int.Parse(e);
-            }
-#endif
-            return value;
+            return ParseInt32Flags(str);
         }
         int lookOffset;
         int sign;
@@ -389,17 +379,7 @@ public static class DsonTexts
             throw new ArgumentException("NumberFormatException:" + rawStr);
         }
         if (str.IndexOf('|') > 0) { // A | B | C
-            long value = 0;
-#if UNITY_2021_3_OR_NEWER
-            foreach (string e in str.Split('|')) {
-                value |= long.Parse(e.Trim());
-            }
-#else
-            foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
-                value |= long.Parse(e);
-            }
-#endif
-            return value;
+            return ParseInt64Flags(str);
         }
         int lookOffset;
         int sign;
@@ -430,6 +410,34 @@ public static class DsonTexts
         } else {
             return sign * (long)ulong.Parse(str);
         }
+    }
+
+    private static int ParseInt32Flags(string str) {
+        int value = 0;
+#if NET6_0_OR_GREATER
+        foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
+            value |= int.Parse(e);
+        }
+#else
+        foreach (string e in str.Split('|')) {
+            value |= int.Parse(e.Trim());
+        }
+#endif
+        return value;
+    }
+
+    private static long ParseInt64Flags(string str) {
+        long value = 0;
+#if NET6_0_OR_GREATER
+        foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
+            value |= long.Parse(e);
+        }
+#else
+        foreach (string e in str.Split('|')) {
+            value |= long.Parse(e.Trim());
+        }
+#endif
+        return value;
     }
 
     public static float ParseFloat(string rawStr) {

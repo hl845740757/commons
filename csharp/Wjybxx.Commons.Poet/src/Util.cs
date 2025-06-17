@@ -346,7 +346,6 @@ public static partial class Util
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static IList<T> ToImmutableList<T>(IEnumerable<T>? collection) {
         if (collection == null) return ImmutableList<T>.Empty;
-        if (collection is ImmutableList<T> immutableList) return immutableList;
         return ImmutableList<T>.CreateRange(collection);
     }
 

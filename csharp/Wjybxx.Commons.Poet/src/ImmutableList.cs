@@ -51,8 +51,10 @@ internal sealed class ImmutableList<T> : IList<T>
     }
 
     public static ImmutableList<T> CreateRange(IEnumerable<T> source) {
-        T[] array = source as T[];
-        if (array != null) {
+        if (source is ImmutableList<T> immutableList) {
+            return immutableList;
+        }
+        if (source is T[] array) {
             return new ImmutableList<T>(array, true);
         } else {
             return new ImmutableList<T>(source.ToArray(), true);

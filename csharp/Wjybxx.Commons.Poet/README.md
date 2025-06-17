@@ -140,6 +140,17 @@ Poet包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
 
 ## ReleaseNotes
 
+### 1.5.0
+
+1. 增加了元组类型支持
+
+```csharp
+  /// <summary>
+  /// 测试返回元组
+  /// </summary>
+  public (int min, int max) MinMax(int a, int b) => a < b ? (a, b) : (b, a);
+```
+
 ### 1.4.0
 
 1. 删除`TypeVariableName`，新增`TypeParameterSpec`和`TypeParameterName`，新的Name仅表达对泛型变量的引用，不包含泛型约束条件。

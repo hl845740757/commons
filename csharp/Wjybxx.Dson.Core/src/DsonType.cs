@@ -56,16 +56,22 @@ public enum DsonType : sbyte
     Timestamp = 14,
 
     /// <summary>
-    /// 对象头信息，与Object类型编码格式类似
-    /// 但header不可以再直接嵌入header
+    /// 对象头
+    /// 注：header不可以再直接嵌入header。
+    ///
+    /// 与Object类型编码格式类似，但大括号前有一个'@'符号
+    /// <code>@{k1: v1, k2: v2}</code>
     /// </summary>
     Header = 29,
     /// <summary>
-    /// 数组(v,v,v...)
+    /// 数组
+    /// <code>[v1, v2, v3]</code>
     /// </summary>
     Array = 30,
     /// <summary>
-    /// 普通对象(k,v,k,v...)
+    /// 
+    /// 普通对象
+    /// <code>{k1: v1, k2: v2}</code>
     /// </summary>
     Object = 31,
 }
