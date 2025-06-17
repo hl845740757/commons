@@ -424,76 +424,43 @@ public sealed class CodeWriter
         Emit(typeSpec.headerCode, true);
         EmitAttributes(typeSpec.attributes);
 
+        EmitModifiers(typeSpec.modifiers);
+        Emit(TypeSpec.GetTypeKeyword(typeSpec.kind));
+        Emit(" ");
+
         if (typeSpec.IsMethodLike) {
+            MethodSpec methodSpec = (MethodSpec)typeSpec.nestedSpecs[0];
             if (typeSpec.kind == TypeSpec.Kind.Delegator) {
-                MethodSpec methodSpec = (MethodSpec)typeSpec.nestedSpecs[0];
-                EmitMethod(methodSpec, true);
-            } else {
-                EmitModifiers(typeSpec.modifiers);
-                if (typeSpec.kind == TypeSpec.Kind.RecordClass) {
-                    Emit("record ");
-                } else {
-                    Emit("record struct ");
-                }
-                Emit(typeSpec.name);
-                EmitTypeVariables(typeSpec.typeParameters);
-                // 字段(int a, int b)
-                Emit("(");
-                int index = 0;
-                foreach (FieldSpec fieldSpec in typeSpec.nestedSpecs.Cast<FieldSpec>()) {
-                    if (index++ > 0) {
-                        Emit(", ");
-                    }
-                    EmitTypeName(fieldSpec.type);
-                    Emit(" ");
-                    Emit(fieldSpec.name);
-                }
-                Emit(")");
-                // 泛型变量约束
-                if (HasConstraints(typeSpec.typeParameters)) {
-                    EmitIfLastCharNot(' ');
-                    EmitTypeParameterConstraints(typeSpec.typeParameters);
-                    Emit(" ");
-                }
+                EmitMethodCore(methodSpec);
                 Emit(";");
+            } else {
+                EmitMethodCore(methodSpec);
+                if (typeSpec.nestedSpecs.Count == 1) {
+                    Emit(";");
+                    return;
+                }
+                // 打印其它内部元素 -- 需要缩进
+                Emit("\n{");
+                {
+                    Indent();
+                    for (int index = 1; index < typeSpec.nestedSpecs.Count; index++) {
+                        ISpecification nestedSpec = typeSpec.nestedSpecs[index];
+                        EmitSpec(nestedSpec);
+                    }
+                    Unindent();
+                }
+                Emit("}\n"); // 每个元素末尾都默认换行
             }
         } else {
-            EmitModifiers(typeSpec.modifiers);
-            switch (typeSpec.kind) {
-                case TypeSpec.Kind.Class: {
-                    Emit("class ");
-                    break;
-                }
-                case TypeSpec.Kind.Struct: {
-                    Emit("struct ");
-                    break;
-                }
-                case TypeSpec.Kind.Interface: {
-                    Emit("interface ");
-                    break;
-                }
-                case TypeSpec.Kind.Enum: {
-                    Emit("enum ");
-                    break;
-                }
-                case TypeSpec.Kind.RefStruct: {
-                    Emit("ref struct ");
-                    break;
-                }
-                default: throw new InvalidOperationException();
-            }
-
             Emit(typeSpec.name);
             EmitTypeVariables(typeSpec.typeParameters);
             EmitBaseClasses(typeSpec);
-
             // 泛型变量约束
             if (HasConstraints(typeSpec.typeParameters)) {
                 EmitIfLastCharNot(' ');
                 EmitTypeParameterConstraints(typeSpec.typeParameters);
                 Emit(" ");
             }
-
             // 打印内部元素 -- 需要缩进
             Emit("\n{");
             {
@@ -505,7 +472,6 @@ public sealed class CodeWriter
             }
             Emit("}\n"); // 每个元素末尾都默认换行
         }
-
         if (!ReferenceEquals(typeSpecStack.Pop(), typeSpec)) {
             throw new InvalidOperationException();
         }
@@ -653,10 +619,7 @@ public sealed class CodeWriter
 
     #region method
 
-    private void EmitMethod(MethodSpec methodSpec, bool delegator = false) {
-        if (methodSpec.IsConstructor && delegator) {
-            throw new InvalidOperationException();
-        }
+    private void EmitMethod(MethodSpec methodSpec) {
         Emit("\n"); // 方法前空一行
         EmitDocument(methodSpec.document);
         Emit(methodSpec.headerCode, true);
@@ -685,29 +648,13 @@ public sealed class CodeWriter
             // public Sum<T1, T2>(T1 arg1, T2 arg2) where T1 {}
             // 显式实现时，不能有修饰符
             if (methodSpec.explicitBaseType == null) {
-                EmitModifiers(methodSpec.modifiers, delegator);
+                EmitModifiers(methodSpec.modifiers);
             }
             // 返回值
             EmitTypeName(methodSpec.returnType);
             Emit(" ");
-
-            // 显式实现时，指定接口类型
-            if (methodSpec.explicitBaseType != null) {
-                EmitTypeName(methodSpec.explicitBaseType);
-                Emit(".");
-            }
-            Emit(methodSpec.name);
-            EmitTypeVariables(methodSpec.typeParameters);
-            EmitMethodParameters(methodSpec);
-
-            // 泛型变量约束
-            if (HasConstraints(methodSpec.typeParameters)) {
-                Emit(" ");
-                EmitTypeParameterConstraints(methodSpec.typeParameters);
-            }
-
-            if (delegator
-                || methodSpec.code == null
+            EmitMethodCore(methodSpec);
+            if (methodSpec.code == null
                 || (methodSpec.modifiers & Modifiers.Abstract) != 0
                 || (methodSpec.modifiers & Modifiers.Extern) != 0) {
                 Emit(";");
@@ -717,6 +664,22 @@ public sealed class CodeWriter
             }
         }
         Emit("\n"); // 每个元素末尾都默认换行
+    }
+
+    /// <summary>
+    /// 打印方法的公共代码
+    /// </summary>
+    /// <param name="methodSpec"></param>
+    private void EmitMethodCore(MethodSpec methodSpec) {
+        Emit(methodSpec.name);
+        EmitTypeVariables(methodSpec.typeParameters);
+        EmitMethodParameters(methodSpec);
+
+        // 泛型变量约束
+        if (HasConstraints(methodSpec.typeParameters)) {
+            Emit(" ");
+            EmitTypeParameterConstraints(methodSpec.typeParameters);
+        }
     }
 
     private void EmitMethodParameters(MethodSpec methodSpec) {
@@ -802,10 +765,9 @@ public sealed class CodeWriter
     /// 写入修饰符后，尾部固定会写入一个空格。
     /// </summary>
     /// <param name="modifiers"></param>
-    /// <param name="delegatorMethod"></param>
     /// <param name="indent"></param>
     /// <returns></returns>
-    private bool EmitModifiers(Modifiers modifiers, bool delegatorMethod = false, bool indent = true) {
+    private bool EmitModifiers(Modifiers modifiers, bool indent = true) {
         List<string> modifierList = _pooledModifierList;
         modifierList.Clear();
 
@@ -821,12 +783,7 @@ public sealed class CodeWriter
         if ((modifiers & Modifiers.Private) != 0) {
             modifierList.Add("private");
         }
-        if (delegatorMethod) {
-            modifierList.Add("delegate");
-            if ((modifiers & Modifiers.Unsafe) != 0) {
-                modifierList.Add("unsafe");
-            }
-        } else {
+        {
             // public new static extern unsafe
             if ((modifiers & Modifiers.Hide) != 0) {
                 modifierList.Add("new");

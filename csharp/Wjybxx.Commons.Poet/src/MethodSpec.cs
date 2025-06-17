@@ -87,7 +87,16 @@ public class MethodSpec : ISpecification
     }
 
     public static Builder NewConstructorBuilder() {
-        return new Builder(Kind.Constructor, "<init>");
+        return new Builder(Kind.Constructor, ".ctor");
+    }
+
+    /// <summary>
+    /// 该方法用于支持record类型
+    /// </summary>
+    /// <param name="typeName"></param>
+    /// <returns></returns>
+    public static Builder NewConstructorBuilder(string typeName) {
+        return new Builder(Kind.Constructor, typeName);
     }
 
     public Builder ToBuilder() {

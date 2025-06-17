@@ -58,7 +58,7 @@ public class TypeSpec : ISpecification
         nestedSpecs = Util.ToImmutableList(builder.nestedSpecs);
 
         // 委托检查
-        if (kind == Kind.Delegator) {
+        if (IsMethodLike) {
             if (nestedSpecs.Count != 1 || nestedSpecs[0].SpecType != SpecType.Method) {
                 throw new InvalidOperationException("Delegator method is absent");
             }
@@ -72,6 +72,27 @@ public class TypeSpec : ISpecification
     /// 类型是否类似方法
     /// </summary>
     public bool IsMethodLike => kind == Kind.Delegator || kind == Kind.RecordClass || kind == Kind.RecordStruct;
+
+    /// <summary>
+    /// 获取类型关联的关键字
+    /// </summary>
+    /// <param name="kind"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    public static string GetTypeKeyword(Kind kind) {
+        return kind switch
+        {
+            Kind.Class => "class",
+            Kind.Struct => "struct",
+            Kind.Enum => "enum",
+            Kind.Interface => "interface",
+            Kind.Delegator => "delegate",
+            Kind.RefStruct => "ref struct",
+            Kind.RecordClass => "record",
+            Kind.RecordStruct => "record",
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+        };
+    }
 
     public enum Kind
     {
@@ -90,14 +111,12 @@ public class TypeSpec : ISpecification
         RefStruct = 5,
         /// <summary>
         /// record class
-        /// 嵌套元素只能是字段
         /// </summary>
-        RecordClass = 5,
+        RecordClass = 6,
         /// <summary>
         /// record struct
-        /// 嵌套元素只能是字段
         /// </summary>
-        RecordStruct = 6,
+        RecordStruct = 7,
     }
 
     #region builder
@@ -131,6 +150,7 @@ public class TypeSpec : ISpecification
         if (methodSpec == null) throw new ArgumentNullException(nameof(methodSpec));
         return new Builder(Kind.Delegator, methodSpec.name)
             .AddSpec(methodSpec)
+            .AddModifiers(methodSpec.modifiers)
             .AddDocument(methodSpec.document)
             .AddHeaderCode(methodSpec.headerCode)
             .AddAttributes(methodSpec.attributes);
@@ -140,12 +160,22 @@ public class TypeSpec : ISpecification
         return NewDelegatorBuilder(methodSpec).Build();
     }
 
-    public static Builder NewRecordBuilder(string name) {
-        return NewBuilder(name, Kind.RecordClass);
+    public static Builder NewRecordBuilder(MethodSpec methodSpec) {
+        return NewBuilder(methodSpec.name, Kind.RecordClass)
+            .AddSpec(methodSpec)
+            .AddModifiers(methodSpec.modifiers)
+            .AddDocument(methodSpec.document)
+            .AddHeaderCode(methodSpec.headerCode)
+            .AddAttributes(methodSpec.attributes);
     }
 
-    public static Builder NewRecordStructBuilder(string name) {
-        return NewBuilder(name, Kind.RecordStruct);
+    public static Builder NewRecordStructBuilder(MethodSpec methodSpec) {
+        return NewBuilder(methodSpec.name, Kind.RecordStruct)
+            .AddSpec(methodSpec)
+            .AddModifiers(methodSpec.modifiers)
+            .AddDocument(methodSpec.document)
+            .AddHeaderCode(methodSpec.headerCode)
+            .AddAttributes(methodSpec.attributes);
     }
 
     public Builder ToBuilder() {

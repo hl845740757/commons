@@ -72,17 +72,19 @@ public class GeneratorTest
                 .Build())
             .Build();
     }
-    
+
     private static TypeSpec BuildRecordType() {
         // public record MinMax<T>(T min, T max);
-        return TypeSpec.NewRecordBuilder("MinMax")
-            .AddModifiers(Modifiers.Public)
-            .AddTypeParameter(TypeParameterSpec.Get("T"))
-            .AddSpec(FieldSpec.NewBuilder(TypeParameterName.Get("T"), "min").Build())
-            .AddSpec(FieldSpec.NewBuilder(TypeParameterName.Get("T"), "max").Build())
+        return TypeSpec.NewRecordBuilder(MethodSpec.NewMethodBuilder("MinMax")
+                .AddModifiers(Modifiers.Public)
+                .Returns(TypeName.INT)
+                .AddTypeParameter(TypeParameterSpec.Get("T"))
+                .AddParameter(TypeParameterName.Get("T"), "min")
+                .AddParameter(TypeParameterName.Get("T"), "max")
+                .Build())
             .Build();
     }
-    
+
     private static TypeSpec BuildDelegatorType() {
         // public delegate int Apply<T>(T obj);
         return TypeSpec.NewDelegator(MethodSpec.NewMethodBuilder("Apply")
