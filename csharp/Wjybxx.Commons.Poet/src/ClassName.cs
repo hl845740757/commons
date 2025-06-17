@@ -364,8 +364,7 @@ public class ClassName : TypeName
     /// <param name="inheritTypeArguments">是否继承外部类泛型参数</param>
     /// <param name="attributes">额外属性</param>
     /// <returns></returns>
-    public ClassName PeerClass(string name, IList<TypeName>? typeArguments = null,
-                               bool inheritTypeArguments = true,
+    public ClassName PeerClass(string name, IList<TypeName>? typeArguments = null, bool inheritTypeArguments = true,
                                TypeNameAttributes attributes = TypeNameAttributes.None) {
         if (enclosingClassName != null) {
             return enclosingClassName.NestedClass(name, typeArguments, inheritTypeArguments, attributes);
@@ -388,8 +387,7 @@ public class ClassName : TypeName
     /// <param name="inheritTypeArguments">是否继承外部类泛型参数</param>
     /// <param name="attributes">嵌套类的属性</param>
     /// <returns></returns>
-    public ClassName NestedClass(string name, IList<TypeName>? typeArguments = null,
-                                 bool inheritTypeArguments = true,
+    public ClassName NestedClass(string name, IList<TypeName>? typeArguments = null, bool inheritTypeArguments = true,
                                  TypeNameAttributes attributes = TypeNameAttributes.None) {
         if (inheritTypeArguments) {
             typeArguments = Util.Concat(this.typeArguments, typeArguments);
@@ -432,8 +430,7 @@ public class ClassName : TypeName
     /// <param name="typeArguments">泛型参数</param>
     /// <param name="attributes">属性</param>
     /// <returns></returns>
-    public static ClassName Get(string ns, string simpleName,
-                                IList<TypeName>? typeArguments = null,
+    public static ClassName Get(string ns, string simpleName, IList<TypeName>? typeArguments = null,
                                 TypeNameAttributes attributes = TypeNameAttributes.None) {
         return new Builder()
         {

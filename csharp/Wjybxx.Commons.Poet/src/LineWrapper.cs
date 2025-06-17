@@ -43,6 +43,10 @@ internal class LineWrapper
     /// </summary>
     private readonly StringBuilder buffer = new StringBuilder();
     /// <summary>
+    /// 当前行号
+    /// </summary>
+    private int ln;
+    /// <summary>
     /// 当前行的字符数，包含已写入<see cref="codeOut"/>的字符。
     /// </summary>
     private int column = 0;
@@ -64,10 +68,16 @@ internal class LineWrapper
     public void Reset() {
         nullWriter = false;
         buffer.Clear();
+        ln = 1;
         column = 0;
         indentLevel = -1;
         nextFlush = null;
     }
+
+    /// <summary>
+    /// 当前行号
+    /// </summary>
+    public int Ln => ln;
 
     /// <summary>
     /// 最后一个写入的字符串
@@ -111,9 +121,12 @@ internal class LineWrapper
 
         codeOut.Append(s);
         int lastNewline = s.LastIndexOf('\n');
-        column = lastNewline != -1
-            ? s.Length - lastNewline - 1
-            : column + s.Length;
+        if (lastNewline != -1) {
+            ln++;
+            column = s.Length - lastNewline - 1;
+        } else {
+            column += s.Length;
+        }
     }
 
     /// <summary>
@@ -155,6 +168,7 @@ internal class LineWrapper
                 for (int i = 0; i < indentLevel; i++) {
                     codeOut.Append(indent);
                 }
+                ln++;
                 column = indentLevel <= 0 ? 0 : indentLevel * indent.Length;
                 column += buffer.Length;
                 break;

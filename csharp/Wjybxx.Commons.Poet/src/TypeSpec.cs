@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Poet
 {
 /// <summary>
 /// 表示一个类型
-///
+/// 
 /// 1.C#没有静态代码块，取而代之的是静态构造函数。
 /// 2.C#由于有宏，因此字段和方法等可能有多个同名定义。。。
 /// 3.C#由于有宏，using/import也不能安全自动推导 -- 可以设定开关。
@@ -68,6 +68,11 @@ public class TypeSpec : ISpecification
     public string Name => name;
     public SpecType SpecType => SpecType.Type;
 
+    /// <summary>
+    /// 类型是否类似方法
+    /// </summary>
+    public bool IsMethodLike => kind == Kind.Delegator || kind == Kind.RecordClass || kind == Kind.RecordStruct;
+
     public enum Kind
     {
         Class = 0,
@@ -83,6 +88,16 @@ public class TypeSpec : ISpecification
         /// ref struct
         /// </summary>
         RefStruct = 5,
+        /// <summary>
+        /// record class
+        /// 嵌套元素只能是字段
+        /// </summary>
+        RecordClass = 5,
+        /// <summary>
+        /// record struct
+        /// 嵌套元素只能是字段
+        /// </summary>
+        RecordStruct = 6,
     }
 
     #region builder
@@ -115,11 +130,22 @@ public class TypeSpec : ISpecification
     public static Builder NewDelegatorBuilder(MethodSpec methodSpec) {
         if (methodSpec == null) throw new ArgumentNullException(nameof(methodSpec));
         return new Builder(Kind.Delegator, methodSpec.name)
-            .AddMethod(methodSpec);
+            .AddSpec(methodSpec)
+            .AddDocument(methodSpec.document)
+            .AddHeaderCode(methodSpec.headerCode)
+            .AddAttributes(methodSpec.attributes);
     }
 
     public static TypeSpec NewDelegator(MethodSpec methodSpec) {
         return NewDelegatorBuilder(methodSpec).Build();
+    }
+
+    public static Builder NewRecordBuilder(string name) {
+        return NewBuilder(name, Kind.RecordClass);
+    }
+
+    public static Builder NewRecordStructBuilder(string name) {
+        return NewBuilder(name, Kind.RecordStruct);
     }
 
     public Builder ToBuilder() {

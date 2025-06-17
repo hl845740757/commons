@@ -35,12 +35,11 @@ public class GeneratorTest
     private static List<ISpecification> NewLicenseRegion() {
         List<ISpecification> result = new List<ISpecification>(3);
         result.Add(new MacroSpec("region", "LICENSE"));
+        result.Add(new CodeBlockSpec(CodeBlock.Of("\n")));
         result.Add(new CodeBlockSpec(CodeBlock.NewBuilder()
-            .AddNewLine()
             .AddLiteral("Copyright 2024 wjybxx(845740757@qq.com)")
             .AddNewLine(2)
             .AddLiteral("Licensed under the Apache License, Version 2.0 (the \"License\");")
-            .AddNewLine()
             .Build(), CodeBlockSpec.Kind.Comment));
         result.Add(new MacroSpec("endregion", "LICENSE"));
         return result;
@@ -50,11 +49,12 @@ public class GeneratorTest
     public void GenerateBean() {
         TypeSpec classType = BuildClassType();
         TypeSpec delegatorType = BuildDelegatorType(); //测试委托打印
+        TypeSpec recordType = BuildRecordType();
         TypeSpec indexerType = BuildIndexerType(); //测试索引器属性
 
         CsharpFile csharpFile = CsharpFile.NewBuilder("ClassBean")
             .AddSpecs(NewLicenseRegion())
-            .AddSpec(NamespaceSpec.Of("Wjybxx.Commons.Apt", classType, delegatorType, indexerType))
+            .AddSpec(NamespaceSpec.Of("Wjybxx.Commons.Apt", classType, delegatorType, recordType, indexerType))
             .Build();
 
         CodeWriter codeWriter = new CodeWriter();
@@ -72,8 +72,19 @@ public class GeneratorTest
                 .Build())
             .Build();
     }
-
+    
+    private static TypeSpec BuildRecordType() {
+        // public record MinMax<T>(T min, T max);
+        return TypeSpec.NewRecordBuilder("MinMax")
+            .AddModifiers(Modifiers.Public)
+            .AddTypeParameter(TypeParameterSpec.Get("T"))
+            .AddSpec(FieldSpec.NewBuilder(TypeParameterName.Get("T"), "min").Build())
+            .AddSpec(FieldSpec.NewBuilder(TypeParameterName.Get("T"), "max").Build())
+            .Build();
+    }
+    
     private static TypeSpec BuildDelegatorType() {
+        // public delegate int Apply<T>(T obj);
         return TypeSpec.NewDelegator(MethodSpec.NewMethodBuilder("Apply")
             .AddModifiers(Modifiers.Public)
             .Returns(TypeName.INT)
@@ -154,10 +165,10 @@ public class GeneratorTest
             .AddSpec(MethodSpec.NewMethodBuilder("MinMax")
                 .AddDocument("测试返回元组")
                 .AddModifiers(Modifiers.Public)
-                .Returns(RecordTypeName.Get(new List<RecordElement>()
+                .Returns(TupleTypeName.Get(new List<TupleElement>()
                 {
-                    new RecordElement(TypeName.INT, "min"),
-                    new RecordElement(TypeName.INT, "max")
+                    new TupleElement(TypeName.INT, "min"),
+                    new TupleElement(TypeName.INT, "max")
                 }))
                 .AddParameter(TypeName.INT, "a")
                 .AddParameter(TypeName.INT, "b")

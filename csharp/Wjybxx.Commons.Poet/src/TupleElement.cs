@@ -23,26 +23,26 @@ namespace Wjybxx.Commons.Poet
 /// <summary>
 /// Record的成员
 /// </summary>
-public readonly struct RecordElement : IEquatable<RecordElement>
+public readonly struct TupleElement : IEquatable<TupleElement>
 {
     public readonly TypeName type;
     public readonly string? name;
 
-    public RecordElement(TypeName type, string? name = null) {
+    public TupleElement(TypeName type, string? name = null) {
         this.type = type ?? throw new ArgumentNullException(nameof(type));
         this.name = name;
     }
 
-    public RecordElement RemoveNullableAttribute() {
-        return new RecordElement(type.RemoveAllNullableAttribute(), name);
+    public TupleElement RemoveNullableAttribute() {
+        return new TupleElement(type.RemoveAllNullableAttribute(), name);
     }
 
-    public bool Equals(RecordElement other) {
+    public bool Equals(TupleElement other) {
         return type.Equals(other.type) && name == other.name;
     }
 
     public override bool Equals(object? obj) {
-        return obj is RecordElement other && Equals(other);
+        return obj is TupleElement other && Equals(other);
     }
 
     public override int GetHashCode() {
@@ -51,6 +51,14 @@ public readonly struct RecordElement : IEquatable<RecordElement>
 
     public override string ToString() {
         return $"{nameof(type)}: {type}, {nameof(name)}: {name}";
+    }
+
+    public static bool operator ==(TupleElement left, TupleElement right) {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(TupleElement left, TupleElement right) {
+        return !(left == right);
     }
 }
 }

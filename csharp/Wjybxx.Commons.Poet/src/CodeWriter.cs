@@ -196,8 +196,9 @@ public sealed class CodeWriter
         for (int i = 0; i < firstIndex; i++) {
             EmitSpec(csharpFile.nestedSpecs[i]);
         }
-
-        Emit("\n");
+        if (firstIndex > 0) {
+            Emit("\n");
+        }
         // 写额外导入
         foreach (KeyValuePair<string, string?> pair in importableNamespaces) {
             EmitImport(new ImportSpec(pair.Key, pair.Value));
@@ -359,7 +360,7 @@ public sealed class CodeWriter
     /// <param name="macroSpec"></param>
     private void EmitMacro(MacroSpec macroSpec) {
         // 要求必须是行首，但一行不应该换行...
-        if (!codeOut.IsBlankLine) {
+        if (codeOut.Ln > 1) {
             Emit("\n");
         }
         // 宏不能换行
@@ -423,8 +424,39 @@ public sealed class CodeWriter
         Emit(typeSpec.headerCode, true);
         EmitAttributes(typeSpec.attributes);
 
-        if (typeSpec.kind == TypeSpec.Kind.Delegator) {
-            EmitMethod((MethodSpec)typeSpec.nestedSpecs[0], true);
+        if (typeSpec.IsMethodLike) {
+            if (typeSpec.kind == TypeSpec.Kind.Delegator) {
+                MethodSpec methodSpec = (MethodSpec)typeSpec.nestedSpecs[0];
+                EmitMethod(methodSpec, true);
+            } else {
+                EmitModifiers(typeSpec.modifiers);
+                if (typeSpec.kind == TypeSpec.Kind.RecordClass) {
+                    Emit("record ");
+                } else {
+                    Emit("record struct ");
+                }
+                Emit(typeSpec.name);
+                EmitTypeVariables(typeSpec.typeParameters);
+                // 字段(int a, int b)
+                Emit("(");
+                int index = 0;
+                foreach (FieldSpec fieldSpec in typeSpec.nestedSpecs.Cast<FieldSpec>()) {
+                    if (index++ > 0) {
+                        Emit(", ");
+                    }
+                    EmitTypeName(fieldSpec.type);
+                    Emit(" ");
+                    Emit(fieldSpec.name);
+                }
+                Emit(")");
+                // 泛型变量约束
+                if (HasConstraints(typeSpec.typeParameters)) {
+                    EmitIfLastCharNot(' ');
+                    EmitTypeParameterConstraints(typeSpec.typeParameters);
+                    Emit(" ");
+                }
+                Emit(";");
+            }
         } else {
             EmitModifiers(typeSpec.modifiers);
             switch (typeSpec.kind) {
@@ -448,6 +480,7 @@ public sealed class CodeWriter
                     Emit("ref struct ");
                     break;
                 }
+                default: throw new InvalidOperationException();
             }
 
             Emit(typeSpec.name);
@@ -1104,13 +1137,13 @@ public sealed class CodeWriter
             typeName = refTypeName.targetType;
         }
         // (int min, int max)
-        if (typeName is RecordTypeName recordTypeName) {
+        if (typeName is TupleTypeName recordTypeName) {
             Emit("(");
             for (int index = 0; index < recordTypeName.elements.Count; index++) {
                 if (index > 0) {
                     Emit(", ");
                 }
-                RecordElement element = recordTypeName.elements[index];
+                TupleElement element = recordTypeName.elements[index];
                 EmitTypeName(element.type);
                 if (!string.IsNullOrWhiteSpace(element.name)) {
                     Emit(" ");

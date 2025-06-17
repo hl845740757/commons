@@ -27,11 +27,11 @@ namespace Wjybxx.Commons.Poet
 ///
 /// 元组其实超出了类型引用的范畴...
 /// </summary>
-public class RecordTypeName : TypeName
+public class TupleTypeName : TypeName
 {
-    public readonly IList<RecordElement> elements;
+    public readonly IList<TupleElement> elements;
 
-    private RecordTypeName(IList<RecordElement> elements, TypeNameAttributes attributes = TypeNameAttributes.None)
+    private TupleTypeName(IList<TupleElement> elements, TypeNameAttributes attributes = TypeNameAttributes.None)
         : base(attributes) {
         this.elements = Util.ToImmutableList(elements);
     }
@@ -49,7 +49,7 @@ public class RecordTypeName : TypeName
             if (index > 0) {
                 sb.Append(", ");
             }
-            RecordElement element = elements[index];
+            TupleElement element = elements[index];
             sb.Append(element.type.ReflectionName());
             if (!string.IsNullOrWhiteSpace(element.name)) {
                 sb.Append(' ');
@@ -68,7 +68,7 @@ public class RecordTypeName : TypeName
             if (index > 0) {
                 sb.Append(", ");
             }
-            RecordElement element = elements[index];
+            TupleElement element = elements[index];
             sb.Append(element.type);
             if (!string.IsNullOrWhiteSpace(element.name)) {
                 sb.Append(' ');
@@ -80,41 +80,41 @@ public class RecordTypeName : TypeName
     }
 
 #if NET6_0_OR_GREATER
-    public override RecordTypeName WithAttributes(TypeNameAttributes attributes) {
+    public override TupleTypeName WithAttributes(TypeNameAttributes attributes) {
 #else
     public override TypeName WithAttributes(TypeNameAttributes attributes) {
 #endif
         if (this.attributes == attributes) return this;
-        return new RecordTypeName(elements, attributes);
+        return new TupleTypeName(elements, attributes);
     }
 
 #if NET6_0_OR_GREATER
-    public override RecordTypeName RemoveAllNullableAttribute() {
+    public override TupleTypeName RemoveAllNullableAttribute() {
 #else
     public override TypeName RemoveAllNullableAttribute() {
 #endif
-        List<RecordElement> tempElements = new List<RecordElement>(elements.Count);
-        foreach (RecordElement element in elements) {
+        List<TupleElement> tempElements = new List<TupleElement>(elements.Count);
+        foreach (TupleElement element in elements) {
             tempElements.Add(element.RemoveNullableAttribute());
         }
-        return new RecordTypeName(tempElements, attributes.Unset(TypeNameAttributes.NullableReferenceType));
+        return new TupleTypeName(tempElements, attributes.Unset(TypeNameAttributes.NullableReferenceType));
     }
 
     #endregion
 
     #region Parse/Get
 
-    public static RecordTypeName Get(IList<RecordElement> elements, TypeNameAttributes attributes = TypeNameAttributes.None) {
-        return new RecordTypeName(elements, attributes);
+    public static TupleTypeName Get(IList<TupleElement> elements, TypeNameAttributes attributes = TypeNameAttributes.None) {
+        return new TupleTypeName(elements, attributes);
     }
 
-    public static RecordTypeName Get(Dictionary<Type, string?> elementMap,
+    public static TupleTypeName Get(Dictionary<Type, string?> elementMap,
                                      TypeNameAttributes attributes = TypeNameAttributes.None) {
-        List<RecordElement> list = new List<RecordElement>(elementMap.Count);
+        List<TupleElement> list = new List<TupleElement>(elementMap.Count);
         foreach (var pair in elementMap) {
-            list.Add(new RecordElement(TypeName.Get(pair.Key), pair.Value));
+            list.Add(new TupleElement(TypeName.Get(pair.Key), pair.Value));
         }
-        return new RecordTypeName(list, attributes);
+        return new TupleTypeName(list, attributes);
     }
 
     #endregion

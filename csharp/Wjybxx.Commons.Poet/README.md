@@ -142,7 +142,7 @@ Poet包是[javapoet](https://github.com/square/javapoet)仓库的移植版。
 
 ### 1.5.0
 
-1. 增加了元组类型支持
+1. 增加了元组和记录类型支持
 
 ```csharp
   /// <summary>
