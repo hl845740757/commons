@@ -30,7 +30,7 @@ public static partial class Util
     #region 字面量
 
     /** 将给定char转换为字符串字面量 -- c#其实包含 @ 字面量字符串 */
-    internal static string CharacterLiteralWithoutSingleQuotes(char c) {
+    private static string CharacterLiteralWithoutSingleQuotes(char c) {
         switch (c) {
             case '\b': return "\\b"; /* \u0008: backspace (BS) */
             case '\t': return "\\t"; /* \u0009: horizontal tab (HT) */
@@ -75,7 +75,7 @@ public static partial class Util
     /// <summary>
     /// 将char转为unicode转义字符
     /// </summary>
-    internal static string CharToUnicodeString(char c) {
+    private static string CharToUnicodeString(char c) {
         int v = 0x10000 + (int)c;
         return "\\u" + v.ToString("X").Substring2(1, 5);
     }

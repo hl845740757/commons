@@ -65,7 +65,7 @@ public class BetterIndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : 
         _count = 0;
     }
 
-    public bool Contains(T item) {
+    public bool Contains(T? item) {
         if (item == null) {
             return false;
         }
@@ -131,7 +131,7 @@ public class BetterIndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : 
 
     #endregion
 
-    public bool Remove(T item) {
+    public bool Remove(T? item) {
         if (item == null) {
             return false;
         }

@@ -21,7 +21,7 @@ using System;
 namespace Wjybxx.Commons.Pool
 {
 /// <summary>
-/// 该结构用于将try-finally语句转换为using语句。
+/// 该结构用于将try-finally语句转换为using语句，减少嵌套层次。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public readonly struct ReleaseHelper<T> : IDisposable where T : class

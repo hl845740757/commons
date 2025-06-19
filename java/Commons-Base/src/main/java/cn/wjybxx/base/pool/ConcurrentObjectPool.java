@@ -49,39 +49,39 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
             sb -> sb.capacity() >= 1024 && sb.capacity() <= SBP_MAX_CAPACITY);
 
     private final Supplier<? extends T> factory;
-    private final Consumer<? super T> resetHandler;
+    private final Consumer<? super T> cleaner;
     private final Predicate<? super T> filter;
     private final MpmcObjectBucket<T> freeObjects;
 
     /**
      * @param factory      对象创建工厂
-     * @param resetHandler 重置方法
+     * @param cleaner 重置方法
      */
-    public ConcurrentObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler) {
-        this(factory, resetHandler, DEFAULT_POOL_SIZE, null);
+    public ConcurrentObjectPool(Supplier<? extends T> factory, Consumer<? super T> cleaner) {
+        this(factory, cleaner, DEFAULT_POOL_SIZE, null);
     }
 
     /**
      * @param factory      对象创建工厂
-     * @param resetHandler 重置方法
+     * @param cleaner 重置方法
      * @param poolSize     缓存池大小；0表示不缓存对象
      */
-    public ConcurrentObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler, int poolSize) {
-        this(factory, resetHandler, poolSize, null);
+    public ConcurrentObjectPool(Supplier<? extends T> factory, Consumer<? super T> cleaner, int poolSize) {
+        this(factory, cleaner, poolSize, null);
     }
 
     /**
      * @param factory      对象创建工厂
-     * @param resetHandler 重置方法
+     * @param cleaner 重置方法
      * @param poolSize     缓存池大小；0表示不缓存对象
      * @param filter       对象回收过滤器
      */
-    public ConcurrentObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler, int poolSize, Predicate<? super T> filter) {
+    public ConcurrentObjectPool(Supplier<? extends T> factory, Consumer<? super T> cleaner, int poolSize, Predicate<? super T> filter) {
         if (poolSize < 0) {
             throw new IllegalArgumentException("poolSize: " + poolSize);
         }
         this.factory = Objects.requireNonNull(factory, "factory");
-        this.resetHandler = ObjectUtils.nullToDef(resetHandler, FunctionUtils.emptyConsumer());
+        this.cleaner = ObjectUtils.nullToDef(cleaner, FunctionUtils.emptyConsumer());
         this.filter = filter;
         this.freeObjects = new MpmcObjectBucket<>(poolSize);
     }
@@ -116,7 +116,7 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
         if (obj == null) {
             throw new IllegalArgumentException("obj cannot be null.");
         }
-        resetHandler.accept(obj);
+        cleaner.accept(obj);
         if (filter == null || filter.test(obj)) {
             freeObjects.offer(obj);
         }

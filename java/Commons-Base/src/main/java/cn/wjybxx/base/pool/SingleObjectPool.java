@@ -35,17 +35,17 @@ import java.util.function.Supplier;
 public class SingleObjectPool<T> implements ObjectPool<T> {
 
     private final Supplier<? extends T> factory;
-    private final Consumer<? super T> resetHandler;
+    private final Consumer<? super T> cleaner;
     private final Predicate<? super T> filter;
     private T value;
 
-    public SingleObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler) {
-        this(factory, resetHandler, null);
+    public SingleObjectPool(Supplier<? extends T> factory, Consumer<? super T> cleaner) {
+        this(factory, cleaner, null);
     }
 
-    public SingleObjectPool(Supplier<? extends T> factory, Consumer<? super T> resetHandler, Predicate<? super T> filter) {
+    public SingleObjectPool(Supplier<? extends T> factory, Consumer<? super T> cleaner, Predicate<? super T> filter) {
         this.factory = Objects.requireNonNull(factory, "factory");
-        this.resetHandler = ObjectUtils.nullToDef(resetHandler, FunctionUtils.emptyConsumer());
+        this.cleaner = ObjectUtils.nullToDef(cleaner, FunctionUtils.emptyConsumer());
         this.filter = filter;
     }
 
@@ -71,7 +71,7 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
             throw new IllegalArgumentException("object cannot be null.");
         }
         assert obj != this.value;
-        resetHandler.accept(obj);
+        cleaner.accept(obj);
         if (filter == null || filter.test(obj)) {
             this.value = obj;
         }

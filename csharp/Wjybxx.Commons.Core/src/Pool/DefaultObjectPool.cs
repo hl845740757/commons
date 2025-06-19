@@ -38,7 +38,7 @@ public class DefaultObjectPool<T> : IObjectPool<T>
     private static readonly Action<T> DO_NOTHING = _ => { };
 
     private readonly Func<T> _factory;
-    private readonly Action<T> _resetHandler;
+    private readonly Action<T> _cleaner;
     private readonly Func<T, bool>? _filter;
 
     private readonly int _poolSize;
@@ -48,12 +48,12 @@ public class DefaultObjectPool<T> : IObjectPool<T>
     /// 
     /// </summary>
     /// <param name="factory">对象创建工厂</param>
-    /// <param name="resetHandler">重置方法</param>
+    /// <param name="cleaner">重置方法</param>
     /// <param name="poolSize">池大小；0表示不缓存对象</param>
     /// <param name="filter">回收对象的过滤器</param>
-    public DefaultObjectPool(Func<T> factory, Action<T>? resetHandler, int poolSize = 64, Func<T, bool>? filter = null) {
+    public DefaultObjectPool(Func<T> factory, Action<T>? cleaner, int poolSize = 64, Func<T, bool>? filter = null) {
         this._factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        this._resetHandler = resetHandler ?? DO_NOTHING;
+        this._cleaner = cleaner ?? DO_NOTHING;
         this._poolSize = poolSize;
         this._filter = filter;
         this._freeObjects = new Stack<T>(Math.Clamp(poolSize, 0, 10));
@@ -73,7 +73,7 @@ public class DefaultObjectPool<T> : IObjectPool<T>
             throw new ArgumentException("object cannot be null.");
         }
         // 先调用reset，避免reset出现异常导致添加脏对象到缓存池中 -- 断言是否在池中还是有较大开销
-        _resetHandler(obj);
+        _cleaner(obj);
         if (_freeObjects.Count < _poolSize && (_filter == null || _filter.Invoke(obj))) {
             _freeObjects.Push(obj);
         }
@@ -84,7 +84,7 @@ public class DefaultObjectPool<T> : IObjectPool<T>
             throw new ArgumentException("objects cannot be null.");
         }
         Stack<T> freeObjects = this._freeObjects;
-        Action<T> resetPolicy = this._resetHandler;
+        Action<T> resetPolicy = this._cleaner;
         Func<T, bool>? filter = this._filter;
         int poolSize = this._poolSize;
 

@@ -50,6 +50,7 @@ public interface IInjector : IDisposable
     /// <summary>
     /// 注入给定实例上的依赖
     /// (用于为容器管理外的对象注入依赖，如传统的单例对象，临时构建的对象)
+    /// (Unity下常用于为MonoBehaviour注入非Unity组件依赖)
     /// </summary>
     /// <param name="instance">需要解析依赖的实例</param>
     void InjectMembers(object instance);

@@ -33,7 +33,7 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
     private static readonly Action<T> DO_NOTHING = _ => { };
 
     private readonly Func<T> _factory;
-    private readonly Action<T> _resetHandler;
+    private readonly Action<T> _cleaner;
     private readonly Func<T, bool>? _filter;
     private T? _value;
 
@@ -46,7 +46,7 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
     /// <exception cref="ArgumentNullException"></exception>
     public SingleObjectPool(Func<T> factory, Action<T>? resetHandler, Func<T, bool>? filter = null) {
         this._factory = factory ?? throw new ArgumentNullException(nameof(factory));
-        this._resetHandler = resetHandler ?? DO_NOTHING;
+        this._cleaner = resetHandler ?? DO_NOTHING;
         this._filter = filter;
     }
 
@@ -65,7 +65,7 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
             throw new ArgumentException("object cannot be null.");
         }
         Debug.Assert(obj != this._value);
-        _resetHandler(obj);
+        _cleaner(obj);
         if (_filter == null || _filter.Invoke(obj)) {
             this._value = obj;
         }

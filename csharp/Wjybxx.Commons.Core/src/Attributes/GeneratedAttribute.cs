@@ -46,6 +46,10 @@ public class GeneratedAttribute : Attribute
     /// </summary>
     public string? DateTime { get; set; }
 
+    public GeneratedAttribute() {
+        this.processor = "Unknown";
+    }
+
     public GeneratedAttribute(string processor) {
         this.processor = processor ?? throw new ArgumentNullException(nameof(processor));
     }
