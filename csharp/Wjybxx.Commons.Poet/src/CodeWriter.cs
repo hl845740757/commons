@@ -899,7 +899,6 @@ public sealed class CodeWriter
 
     /// <summary>
     /// 发射单个泛型变量的约束。
-    /// 不能直接调用<see cref="TypeParameterSpec.ConstraintsToString"/>，需要优化TypeName的输出。
     /// </summary>
     private void EmitTypeParameterConstraints(TypeParameterSpec typeParameter) {
         if (typeParameter.constraints == 0 && typeParameter.bounds.Count == 0) {
@@ -923,13 +922,14 @@ public sealed class CodeWriter
             if (count++ > 0) Emit(", ");
             Emit("notnull");
         }
-        if ((typeParameter.constraints & TypeParameterConstraints.DefaultConstructorConstraint) != 0) {
-            if (count++ > 0) Emit(", ");
-            Emit("new()");
-        }
         foreach (TypeName bound in typeParameter.bounds) {
             if (count++ > 0) Emit(", ");
             EmitTypeName(bound); // 打印优化的TypeName
+        }
+        // new() 需要放最后...
+        if ((typeParameter.constraints & TypeParameterConstraints.DefaultConstructorConstraint) != 0) {
+            if (count++ > 0) Emit(", ");
+            Emit("new()");
         }
     }
 
