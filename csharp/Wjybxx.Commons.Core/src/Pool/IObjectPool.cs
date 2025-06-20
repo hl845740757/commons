@@ -42,29 +42,6 @@ public interface IObjectPool<T>
     void Release(T obj);
 
     /// <summary>
-    /// 将对象放入缓存池
-    /// </summary>
-    /// <param name="objects"></param>
-    void ReleaseAll(IEnumerable<T?> objects) {
-        if (objects is List<T> arrayList) { // struct enumerator
-            for (int i = 0, n = arrayList.Count; i < n; i++) {
-                T obj = arrayList[i];
-                if (null == obj) {
-                    continue;
-                }
-                Release(obj);
-            }
-        } else {
-            foreach (T obj in objects) {
-                if (null == obj) {
-                    continue;
-                }
-                Release(obj);
-            }
-        }
-    }
-
-    /// <summary>
     /// 删除此池中的所有对象
     /// （如果属于特殊资源，可不清理）
     /// </summary>

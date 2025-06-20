@@ -16,6 +16,8 @@
 
 #endregion
 
+using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons.Pool
@@ -47,6 +49,32 @@ public static class PoolExtensions
     public static ReleaseHelper<T[]> Acquire<T>(this IArrayPool<T> pool, int minLen, out T[] r) {
         r = pool.Acquire(minLen);
         return new ReleaseHelper<T[]>(pool, r);
+    }
+
+    /// <summary>
+    /// 批量归还对象
+    /// </summary>
+    /// <param name="pool"></param>
+    /// <param name="objects"></param>
+    /// <typeparam name="T"></typeparam>
+    public static void ReleaseAll<T>(this IObjectPool<T> pool, IEnumerable<T?> objects) {
+        if (pool == null) throw new ArgumentNullException(nameof(pool));
+        if (objects is List<T> arrayList) { // struct enumerator
+            for (int i = 0, n = arrayList.Count; i < n; i++) {
+                T obj = arrayList[i];
+                if (null == obj) {
+                    continue;
+                }
+                pool.Release(obj);
+            }
+        } else {
+            foreach (T obj in objects) {
+                if (null == obj) {
+                    continue;
+                }
+                pool.Release(obj);
+            }
+        }
     }
 }
 }
