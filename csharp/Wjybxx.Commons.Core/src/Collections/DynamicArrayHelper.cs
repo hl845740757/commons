@@ -95,7 +95,7 @@ internal static class DynamicArrayHelper
         long word = elementsMask[wordIndex];
         int index = bitIndex & 63;
         long high = (word << 1) & (-1L << (index + 1)); // [0, index] 全0，使index位为0
-        long lower = (word) & ((1L << index) - 1); // [0, index -1] 全1
+        long lower = (word) & ((1L << index) - 1); // [0, index -1] 全1，index为63溢出也正确
         elementsMask[wordIndex] = high | lower;
     }
 

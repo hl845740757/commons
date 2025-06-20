@@ -46,7 +46,7 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
     /// 
     /// </summary>
     /// <param name="initCapacity">初始空间大小</param>
-    /// <param name="nullFactor">null元素的比重；</param>
+    /// <param name="nullFactor">null元素的比重</param>
     public SmallDynamicArray(int initCapacity, float nullFactor = 0.25f) {
         this.elements = initCapacity == 0 ? Array.Empty<E>() : new E[initCapacity];
         this.nullFactor = Math.Max(0, nullFactor);
@@ -218,7 +218,13 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
 
     public int NullCount => len - MathCommon.BitCount(elementsMask);
 
-    public bool ContainsNull => len > 0 && elementsMask == 0;
+    public bool ContainsNull {
+        get {
+            if (len == 0) return false;
+            long expected = len == 64 ? -1 : (1L << len) - 1; // 后n位全1
+            return (elementsMask & expected) != expected;
+        }
+    }
 
     #endregion
 

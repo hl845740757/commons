@@ -253,7 +253,9 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
 
     @Override
     public boolean containsNull() {
-        return len > 0 && elementsMask == 0;
+        if (len == 0) return false;
+        long expected = len == 64 ? -1 : (1L << len) - 1; // 后n位全1
+        return (elementsMask & expected) != expected;
     }
 
     // endregion
