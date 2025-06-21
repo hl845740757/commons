@@ -39,21 +39,21 @@ public final class ConcurrentArrayPool<T> implements ArrayPool<T> {
     /** 全局共享字节数组池 */
     public static final ConcurrentArrayPool<byte[]> SHARED_BYTE_ARRAY_POOL = newBuilder(byte[].class)
             .setClear(false)
-            .setDefCapacity(SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedByteArrayPool.DefCapacity", 4096))
-            .setMaxCapacity(SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedByteArrayPool.MaxCapacity", 512 * 1024))
-            .setArrayGrowFactor(SystemPropsUtils.getDouble("Wjybxx.Commons.IO.SharedByteArrayPool.ArrayGrowFactor", 1.5))
-            .setFirstBucketLength(SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedByteArrayPool.FirstBucketLength", 50))
-            .setBucketGrowFactor(SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedByteArrayPool.BucketGrowFactor", 1))
+            .setDefCapacity(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedByteArrayPool.DefCapacity", 4096))
+            .setMaxCapacity(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedByteArrayPool.MaxCapacity", 512 * 1024))
+            .setArrayGrowFactor(SystemPropsUtils.getDouble("Wjybxx.Commons.Pool.SharedByteArrayPool.ArrayGrowFactor", 1.5))
+            .setFirstBucketLength(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedByteArrayPool.FirstBucketLength", 50))
+            .setBucketGrowFactor(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedByteArrayPool.BucketGrowFactor", 1))
             .build();
 
     /** 全局共享char数组池 -- charArray的使用频率稍低 */
     public static final ConcurrentArrayPool<char[]> SHARED_CHAR_ARRAY_POOL = newBuilder(char[].class)
             .setClear(false)
-            .setDefCapacity(SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedCharArrayPool.DefCapacity", 1024))
-            .setMaxCapacity(SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedCharArrayPool.MaxCapacity", 64 * 1024))
-            .setArrayGrowFactor(SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedCharArrayPool.ArrayGrowFactor", 64 * 1024))
-            .setFirstBucketLength(SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedCharArrayPool.FirstBucketLength", 50))
-            .setBucketGrowFactor(SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedCharArrayPool.BucketGrowFactor", 1))
+            .setDefCapacity(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedCharArrayPool.DefCapacity", 1024))
+            .setMaxCapacity(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedCharArrayPool.MaxCapacity", 64 * 1024))
+            .setArrayGrowFactor(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedCharArrayPool.ArrayGrowFactor", 64 * 1024))
+            .setFirstBucketLength(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedCharArrayPool.FirstBucketLength", 50))
+            .setBucketGrowFactor(SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedCharArrayPool.BucketGrowFactor", 1))
             .build();
 
     private final Class<T> arrayType;

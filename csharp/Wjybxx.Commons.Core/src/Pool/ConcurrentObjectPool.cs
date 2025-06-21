@@ -27,13 +27,13 @@ namespace Wjybxx.Commons.Pool
 /// </summary>
 public abstract class ConcurrentObjectPool
 {
-    private static readonly int SBP_MAX_CAPACITY = EnvironmentUtil.GetIntVar("Wjybxx.Commons.Pool.StringBuilderPool.MaxCapacity", 64 * 1024);
-    private static readonly int SBP_SIZE = EnvironmentUtil.GetIntVar("Wjybxx.Commons.Pool.StringBuilderPool.PoolSize", 64);
+    private static readonly int SBP_MAX_CAPACITY = EnvironmentUtil.GetIntVar("Wjybxx.Commons.Pool.SharedStringBuilderPool.MaxCapacity", 64 * 1024);
+    private static readonly int SBP_POOL_SIZE = EnvironmentUtil.GetIntVar("Wjybxx.Commons.Pool.SharedStringBuilderPool.PoolSize", 64);
 
     /** 默认的全局StringBuilderPool */
     public static readonly ConcurrentObjectPool<StringBuilder> SharedStringBuilderPool =
         new(() => new StringBuilder(1024), builder => builder.Clear(),
-            SBP_SIZE,
+            SBP_POOL_SIZE,
             builder => builder.Capacity >= 1024 && builder.Capacity <= SBP_MAX_CAPACITY);
 
     /// <summary>

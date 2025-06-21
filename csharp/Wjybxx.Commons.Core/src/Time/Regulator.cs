@@ -23,6 +23,7 @@ namespace Wjybxx.Commons.Time
 /// <summary>
 /// 频率调节器 - 可理解为轮询式Timer调度器。
 /// 它使用Timer的调度算法，但Timer是回调式的，Regulator是轮询式的。
+/// (局部使用时可以实现为值类型)
 /// </summary>
 public sealed class Regulator
 {

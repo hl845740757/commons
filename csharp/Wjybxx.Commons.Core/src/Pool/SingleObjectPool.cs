@@ -61,9 +61,7 @@ public class SingleObjectPool<T> : IObjectPool<T> where T : class
     }
 
     public void Release(T obj) {
-        if (obj == null) {
-            throw new ArgumentException("object cannot be null.");
-        }
+        if (obj == null) throw new ArgumentNullException(nameof(obj));
         Debug.Assert(obj != this._value);
         _cleaner(obj);
         if (_filter == null || _filter.Invoke(obj)) {

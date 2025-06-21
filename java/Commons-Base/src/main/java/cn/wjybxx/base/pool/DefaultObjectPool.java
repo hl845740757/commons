@@ -16,7 +16,6 @@
 
 package cn.wjybxx.base.pool;
 
-import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.function.FunctionUtils;
 
@@ -57,19 +56,19 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
     }
 
     /**
-     * @param factory      对象创建工厂
-     * @param cleaner 重置方法
-     * @param poolSize     缓存池大小；0表示不缓存对象
+     * @param factory  对象创建工厂
+     * @param cleaner  重置方法
+     * @param poolSize 缓存池大小；0表示不缓存对象
      */
     public DefaultObjectPool(Supplier<? extends T> factory, Consumer<? super T> cleaner, int poolSize) {
         this(factory, cleaner, poolSize, null);
     }
 
     /**
-     * @param factory      对象创建工厂
-     * @param cleaner 重置方法
-     * @param poolSize     缓存池大小；0表示不缓存对象
-     * @param filter       对象回收过滤器
+     * @param factory  对象创建工厂
+     * @param cleaner  重置方法
+     * @param poolSize 缓存池大小；0表示不缓存对象
+     * @param filter   对象回收过滤器
      */
     public DefaultObjectPool(Supplier<? extends T> factory, Consumer<? super T> cleaner, int poolSize, Predicate<? super T> filter) {
         if (poolSize < 0) {
@@ -80,7 +79,7 @@ public final class DefaultObjectPool<T> implements ObjectPool<T> {
         this.filter = filter;
 
         this.poolSize = poolSize;
-        this.freeObjects = new ArrayList<>(MathCommon.clamp(poolSize, 0, 10));
+        this.freeObjects = new ArrayList<>(poolSize / 2);
     }
 
     /** 获取池大小 */

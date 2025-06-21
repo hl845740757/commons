@@ -88,36 +88,36 @@ public static class PoolUtil
     public static readonly Func<StringBuilder> stringBuilderFactory = () => new StringBuilder();
     public static readonly Action<StringBuilder> stringBuilderCleaner = sb => sb.Clear();
 
-    public static DefaultObjectPool<StringBuilder> NewStringBuilderPool(int poolSize) {
-        return new DefaultObjectPool<StringBuilder>(stringBuilderFactory, stringBuilderCleaner, poolSize);
+    public static ObjectPool<StringBuilder> NewStringBuilderPool(int poolSize) {
+        return new ObjectPool<StringBuilder>(stringBuilderFactory, stringBuilderCleaner, poolSize);
     }
 
-    public static DefaultObjectPool<List<T>> NewListPool<T>(int poolSize) {
-        return new DefaultObjectPool<List<T>>(PoolUtil<T>.listFactory, PoolUtil<T>.cleaner, poolSize);
+    public static ObjectPool<List<T>> NewListPool<T>(int poolSize) {
+        return new ObjectPool<List<T>>(PoolUtil<T>.listFactory, PoolUtil<T>.cleaner, poolSize);
     }
 
-    public static DefaultObjectPool<HashSet<T>> NewHashSetPool<T>(int poolSize) {
-        return new DefaultObjectPool<HashSet<T>>(PoolUtil<T>.hashSetFactory, PoolUtil<T>.cleaner, poolSize);
+    public static ObjectPool<HashSet<T>> NewHashSetPool<T>(int poolSize) {
+        return new ObjectPool<HashSet<T>>(PoolUtil<T>.hashSetFactory, PoolUtil<T>.cleaner, poolSize);
     }
 
-    public static DefaultObjectPool<LinkedHashSet<T>> NewLinkedHashSetPool<T>(int poolSize) {
-        return new DefaultObjectPool<LinkedHashSet<T>>(PoolUtil<T>.linkedHashSetFactory, PoolUtil<T>.cleaner, poolSize);
+    public static ObjectPool<LinkedHashSet<T>> NewLinkedHashSetPool<T>(int poolSize) {
+        return new ObjectPool<LinkedHashSet<T>>(PoolUtil<T>.linkedHashSetFactory, PoolUtil<T>.cleaner, poolSize);
     }
 
-    public static DefaultObjectPool<Queue<T>> NewQueuePool<T>(int poolSize) {
-        return new DefaultObjectPool<Queue<T>>(PoolUtil<T>.queueFactory, PoolUtil<T>.queueCleaner, poolSize);
+    public static ObjectPool<Queue<T>> NewQueuePool<T>(int poolSize) {
+        return new ObjectPool<Queue<T>>(PoolUtil<T>.queueFactory, PoolUtil<T>.queueCleaner, poolSize);
     }
 
-    public static DefaultObjectPool<Stack<T>> NewStackPool<T>(int poolSize) {
-        return new DefaultObjectPool<Stack<T>>(PoolUtil<T>.stackFactory, PoolUtil<T>.stackCleaner, poolSize);
+    public static ObjectPool<Stack<T>> NewStackPool<T>(int poolSize) {
+        return new ObjectPool<Stack<T>>(PoolUtil<T>.stackFactory, PoolUtil<T>.stackCleaner, poolSize);
     }
 
-    public static DefaultObjectPool<Dictionary<K, V>> NewDictionaryPool<K, V>(int poolSize) {
-        return new DefaultObjectPool<Dictionary<K, V>>(PoolUtil<K, V>.dictionaryFactory, PoolUtil<K, V>.cleaner, poolSize);
+    public static ObjectPool<Dictionary<K, V>> NewDictionaryPool<K, V>(int poolSize) {
+        return new ObjectPool<Dictionary<K, V>>(PoolUtil<K, V>.dictionaryFactory, PoolUtil<K, V>.cleaner, poolSize);
     }
 
-    public static DefaultObjectPool<LinkedDictionary<K, V>> NewLinkedDictionaryPool<K, V>(int poolSize) {
-        return new DefaultObjectPool<LinkedDictionary<K, V>>(PoolUtil<K, V>.linkedDictionaryFactory, PoolUtil<K, V>.cleaner, poolSize);
+    public static ObjectPool<LinkedDictionary<K, V>> NewLinkedDictionaryPool<K, V>(int poolSize) {
+        return new ObjectPool<LinkedDictionary<K, V>>(PoolUtil<K, V>.linkedDictionaryFactory, PoolUtil<K, V>.cleaner, poolSize);
     }
 
     #endregion

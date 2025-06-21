@@ -38,14 +38,14 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
 
     private static final int DEFAULT_POOL_SIZE = 64;
 
-    private static final int SBP_MAX_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedStringBuilderPool.MaxCapacity", 64 * 1024);
-    private static final int SBP_SIZE = SystemPropsUtils.getInt("Wjybxx.Commons.IO.SharedStringBuilderPool.PoolSize", 64);
+    private static final int SBP_MAX_CAPACITY = SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedStringBuilderPool.MaxCapacity", 64 * 1024);
+    private static final int SBP_POOL_SIZE = SystemPropsUtils.getInt("Wjybxx.Commons.Pool.SharedStringBuilderPool.PoolSize", 64);
 
     /** 全局共享的{@link StringBuilder}池 */
     public static final ConcurrentObjectPool<StringBuilder> SHARED_STRING_BUILDER_POOL = new ConcurrentObjectPool<>(
             () -> new StringBuilder(1024),
             sb -> sb.setLength(0),
-            SBP_SIZE,
+            SBP_POOL_SIZE,
             sb -> sb.capacity() >= 1024 && sb.capacity() <= SBP_MAX_CAPACITY);
 
     private final Supplier<? extends T> factory;
@@ -54,7 +54,7 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
     private final MpmcObjectBucket<T> freeObjects;
 
     /**
-     * @param factory      对象创建工厂
+     * @param factory 对象创建工厂
      * @param cleaner 重置方法
      */
     public ConcurrentObjectPool(Supplier<? extends T> factory, Consumer<? super T> cleaner) {
@@ -62,19 +62,19 @@ public final class ConcurrentObjectPool<T> implements ObjectPool<T> {
     }
 
     /**
-     * @param factory      对象创建工厂
-     * @param cleaner 重置方法
-     * @param poolSize     缓存池大小；0表示不缓存对象
+     * @param factory  对象创建工厂
+     * @param cleaner  重置方法
+     * @param poolSize 缓存池大小；0表示不缓存对象
      */
     public ConcurrentObjectPool(Supplier<? extends T> factory, Consumer<? super T> cleaner, int poolSize) {
         this(factory, cleaner, poolSize, null);
     }
 
     /**
-     * @param factory      对象创建工厂
-     * @param cleaner 重置方法
-     * @param poolSize     缓存池大小；0表示不缓存对象
-     * @param filter       对象回收过滤器
+     * @param factory  对象创建工厂
+     * @param cleaner  重置方法
+     * @param poolSize 缓存池大小；0表示不缓存对象
+     * @param filter   对象回收过滤器
      */
     public ConcurrentObjectPool(Supplier<? extends T> factory, Consumer<? super T> cleaner, int poolSize, Predicate<? super T> filter) {
         if (poolSize < 0) {
