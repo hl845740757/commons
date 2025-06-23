@@ -1232,6 +1232,7 @@ public sealed class CodeWriter
     /// </summary>
     /// <param name="s"></param>
     private void Emit(string s) {
+        if (s.Length == 0) return;
         // 对单行字符串做下优化，避免不必要的Lines调用
         if (s.LastIndexOf('\n') < 0) {
             Internal_Emit(s);

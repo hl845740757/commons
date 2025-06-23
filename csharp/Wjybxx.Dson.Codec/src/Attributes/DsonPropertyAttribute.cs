@@ -51,6 +51,14 @@ public class DsonPropertyAttribute : Attribute
     /// </summary>
     [StableName] public string? Setter { get; set; }
 
+    /// <summary>
+    /// 是否是不可变对象(集合)
+    ///
+    /// 1.使用该属性时，字段应当声明为接口类型，或Commons中的不可变集合类型。
+    /// 2.非集合类型请使用字段读写代理自行处理。
+    /// </summary>
+    [StableName] public bool IsImmutable { get; set; }
+
     #region style
 
     /// <summary>

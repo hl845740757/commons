@@ -16,6 +16,7 @@
 
 #endregion
 
+using Wjybxx.Commons.Attributes;
 using Wjybxx.Dson.Codec;
 using Wjybxx.Dson.Codec.Attributes;
 using Wjybxx.Dson.Text;
@@ -107,7 +108,7 @@ public class BeanExample : BaseTypeExample
     /// <summary>
     /// 测试泛型集合
     /// </summary>
-    [DsonProperty(Impl = typeof(HashSet<>), ObjectStyle = ObjectStyle.Flow)]
+    [DsonProperty(Impl = typeof(HashSet<>), ObjectStyle = ObjectStyle.Flow, IsImmutable = true)]
     public ISet<string>? hashSet2;
 
     /// <summary>

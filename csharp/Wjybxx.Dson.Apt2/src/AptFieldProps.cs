@@ -42,6 +42,8 @@ internal class AptFieldProps
     public string? getter;
     /** 赋值方法 */
     public string? setter;
+    /** 是否不可变 */
+    public bool isImmutable;
 
     /** 实现类 -- 会被替换（修正泛型参数） */
     private Type? implType;
@@ -63,11 +65,6 @@ internal class AptFieldProps
     public bool? ignore;
 #nullable enable
 
-
-    #region 委托--使得生成器代码尽可能保持一致
-
-    #endregion
-
     public static AptFieldProps Parse(AptFieldInfo fieldInfo) {
         DsonPropertyAttribute? attribute = fieldInfo.GetAttribute<DsonPropertyAttribute>();
         if (attribute == null) {
@@ -77,6 +74,7 @@ internal class AptFieldProps
         props.name = attribute.Name;
         props.getter = attribute.Getter;
         props.setter = attribute.Setter;
+        props.isImmutable = attribute.IsImmutable;
 
         props.numberStyle = EnumUtil.GetName(attribute.NumberStyle)!;
         props.stringStyle = EnumUtil.GetName(attribute.StringStyle)!;

@@ -40,6 +40,8 @@ internal class AptFieldProps
     public string? getter;
     /** 赋值方法 */
     public string? setter;
+    /** 是否不可变 */
+    public bool isImmutable;
 
     /** 实现类 -- 会被替换（修正泛型参数） */
     private INamedTypeSymbol? implType;
@@ -91,6 +93,7 @@ internal class AptFieldProps
         props.name = GetStringValue(attributeData, "Name", props.name);
         props.getter = GetStringValue(attributeData, "Getter", props.getter);
         props.setter = GetStringValue(attributeData, "Setter", props.setter);
+        props.isImmutable = GetBoolValue(attributeData, "IsImmutable", props.isImmutable);
 
         // props.dsonType = GetStringValue(attributeData, "DsonType", props.dsonType);
         // props.dsonSubType = GetIntValue(attributeData, "DsonSubType", props.dsonSubType);
@@ -152,6 +155,15 @@ internal class AptFieldProps
         return defValue;
     }
 
+    private static bool GetBoolValue(AttributeData attributeData, string propertyName, bool defValue) {
+        if (AptUtils.GetAttributeValue(attributeData, propertyName, out TypedConstant typedConstant)) {
+            if (typedConstant.Value is bool value) {
+                return value;
+            }
+        }
+        return defValue;
+    }
+
     #endregion
 
     #region parse-reflection
@@ -161,6 +173,7 @@ internal class AptFieldProps
     private static PropertyInfo refPropertyName;
     private static PropertyInfo refPropertyGetter;
     private static PropertyInfo refPropertySetter;
+    private static PropertyInfo refPropertyImmutable;
 
     private static PropertyInfo refPropertyNumberStyle;
     private static PropertyInfo refPropertyStringStyle;
@@ -188,6 +201,7 @@ internal class AptFieldProps
             refPropertyName = type.GetProperty("Name");
             refPropertyGetter = type.GetProperty("Getter");
             refPropertySetter = type.GetProperty("Setter");
+            refPropertyImmutable = type.GetProperty("IsImmutable");
 
             refPropertyNumberStyle = type.GetProperty("NumberStyle");
             refPropertyStringStyle = type.GetProperty("StringStyle");
@@ -223,6 +237,7 @@ internal class AptFieldProps
         props.name = (string)refPropertyName.GetValue(attribute);
         props.getter = (string)refPropertyGetter.GetValue(attribute);
         props.setter = (string)refPropertySetter.GetValue(attribute);
+        props.isImmutable = (bool)refPropertyImmutable.GetValue(attribute);
 
         props.numberStyle = AptUtils.GetEnumName(typeNumberStyle, (int)refPropertyNumberStyle.GetValue(attribute));
         props.stringStyle = AptUtils.GetEnumName(typeStringStyle, (int)refPropertyStringStyle.GetValue(attribute));

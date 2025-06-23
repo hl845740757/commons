@@ -53,6 +53,8 @@ class AptFieldProps {
     public String getter;
     /** 赋值方法 */
     public String setter;
+    /** 是否不可变 */
+    public boolean isImmutable;
 
     /** 实现类 */
     public TypeMirror implMirror;
@@ -82,6 +84,7 @@ class AptFieldProps {
         props.name = getStringValue(annoValueMap, "name", null);
         props.getter = getStringValue(annoValueMap, "getter", null);
         props.setter = getStringValue(annoValueMap, "setter", null);
+        props.isImmutable = getBoolValue(annoValueMap, "isImmutable", false);
 
         props.numberStyle = getEnumConstantName(annoValueMap, "numberStyle", props.numberStyle);
         props.stringStyle = getEnumConstantName(annoValueMap, "stringStyle", props.stringStyle);

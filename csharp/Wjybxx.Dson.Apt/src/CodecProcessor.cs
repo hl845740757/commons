@@ -61,6 +61,11 @@ public class CodecProcessor : ISourceGenerator
     private const string CNAME_TypeInfo = "Wjybxx.Commons.TypeInfo";
     private const string CNAME_TypeName = "Wjybxx.Commons.TypeName";
 
+    private const string CNAME_COLLECTION_UTIL = "Wjybxx.Commons.Collections.CollectionUtil";
+    private const string CNAME_IList = "System.Collections.Generic.IList`1";
+    private const string CNAME_ISet = "System.Collections.Generic.ISet`1";
+    private const string CNAME_IDictionary = "System.Collections.Generic.IDictionary`2";
+
     // dson
     private const string CNAME_SERIALIZABLE = "Wjybxx.Dson.Codec.Attributes.DsonSerializableAttribute";
     internal const string CNAME_PROPERTY = "Wjybxx.Dson.Codec.Attributes.DsonPropertyAttribute";
@@ -88,6 +93,7 @@ public class CodecProcessor : ISourceGenerator
     internal const string MNAME_READ_FIELDS = "ReadFields";
     internal const string MNAME_AFTER_DECODE = "AfterDecode";
 
+    internal static readonly ClassName typeName_CollectionUtil = AptUtils.ClassNameOfCanonicalName(CNAME_COLLECTION_UTIL);
     internal static readonly ClassName typeName_WireType = AptUtils.ClassNameOfCanonicalName(CNAME_WireType);
     internal static readonly ClassName typeName_NumberStyle = AptUtils.ClassNameOfCanonicalName(CNAME_NumberStyle);
     internal static readonly ClassName typeName_StringStyle = AptUtils.ClassNameOfCanonicalName(CNAME_StringStyle);
@@ -124,6 +130,10 @@ public class CodecProcessor : ISourceGenerator
     internal INamedTypeSymbol type_LitePtr;
     internal INamedTypeSymbol type_LocalDateTime;
     internal INamedTypeSymbol type_Timestamp;
+    
+    internal INamedTypeSymbol type_ILIST;
+    internal INamedTypeSymbol type_ISET;
+    internal INamedTypeSymbol type_IDICTIONARY;
 
     internal INamedTypeSymbol type_NumberStyle;
     internal INamedTypeSymbol type_StringStyle;
@@ -133,7 +143,7 @@ public class CodecProcessor : ISourceGenerator
     private Compilation compilation;
     private string buildingAssemblyName;
     private AttributeSpec processorInfoAnnotation;
-    private readonly CodeWriter _codeWriter = new CodeWriter(indent:"    ");
+    private readonly CodeWriter _codeWriter = new CodeWriter(indent: "    ");
 
     #endregion
 
@@ -172,6 +182,10 @@ public class CodecProcessor : ISourceGenerator
         type_Ptr = compilation.GetTypeByMetadataName(CNAME_ObjectPtr);
         type_LitePtr = compilation.GetTypeByMetadataName(CNAME_ObjectLitePtr);
         type_Timestamp = compilation.GetTypeByMetadataName(CNAME_Timestamp);
+        
+        type_ILIST = compilation.GetSpecialType(SpecialType.System_Collections_Generic_IList_T);
+        type_ISET = compilation.GetTypeByMetadataName(CNAME_ISet);
+        type_IDICTIONARY = compilation.GetTypeByMetadataName(CNAME_IDictionary);
 
         type_NumberStyle = compilation.GetTypeByMetadataName(CNAME_NumberStyle);
         type_StringStyle = compilation.GetTypeByMetadataName(CNAME_StringStyle);

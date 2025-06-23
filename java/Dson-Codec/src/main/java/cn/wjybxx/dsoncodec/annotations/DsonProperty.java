@@ -70,6 +70,9 @@ public @interface DsonProperty {
     /** 指定字段的setter方法 */
     String setter() default "";
 
+    /** 是否是不可变对象（集合） */
+    boolean isImmutable() default false;
+
     // endregion
 
     // region style

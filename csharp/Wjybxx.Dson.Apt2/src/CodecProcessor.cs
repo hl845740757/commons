@@ -57,6 +57,7 @@ public class CodecProcessor
     internal const string MNAME_READ_FIELDS = "ReadFields";
     internal const string MNAME_AFTER_DECODE = "AfterDecode";
 
+    internal static readonly ClassName typeName_CollectionUtil = ClassName.Get(typeof(CollectionUtil));
     internal static readonly ClassName typeName_WireType = ClassName.Get(typeof(WireType));
     internal static readonly ClassName typeName_NumberStyle = ClassName.Get(typeof(NumberStyle));
     internal static readonly ClassName typeName_StringStyle = ClassName.Get(typeof(StringStyle));
@@ -100,7 +101,7 @@ public class CodecProcessor
     internal Type type_DsonCodec;
     internal Type type_AbstractCodec;
 
-    private readonly CodeWriter _codeWriter = new CodeWriter(indent:"    ");
+    private readonly CodeWriter _codeWriter = new CodeWriter(indent: "    ");
     private readonly UTF8Encoding _utf8Encoding = new UTF8Encoding(false);
 
     /** 每个程序集初始化一次 */
