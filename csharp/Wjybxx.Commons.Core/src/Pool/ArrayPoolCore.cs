@@ -103,15 +103,12 @@ internal static class ArrayPoolCore
     /// <param name="arrayLength">期望的数组大小</param>
     /// <returns></returns>
     public static int BucketIndexOfArray(int[] capacityArray, int arrayLength) {
-        int index = ArrayUtil.BinarySearch(capacityArray, arrayLength);
-        if (index < 0) {
-            // 不匹配的情况下再校验合法性
-            if (arrayLength > capacityArray[capacityArray.Length - 1]) {
-                return -1;
-            }
-            index = (index + 1) * -1;
+        if (arrayLength < capacityArray[0] / 4
+            || arrayLength > capacityArray[capacityArray.Length - 1]) {
+            return -1;
         }
-        return index;
+        int index = ArrayUtil.BinarySearch(capacityArray, arrayLength);
+        return index < 0 ? (index + 1) * -1 : index;
     }
 }
 }

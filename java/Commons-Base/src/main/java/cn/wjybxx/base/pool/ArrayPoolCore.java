@@ -150,14 +150,11 @@ final class ArrayPoolCore {
      * @return 所属的chunk的索引，-1表示不存在匹配的空间
      */
     public static int bucketIndexOfArray(int[] capacityArray, int arrayLength) {
-        int index = Arrays.binarySearch(capacityArray, arrayLength);
-        if (index < 0) {
-            // 不匹配的情况下再校验合法性
-            if (arrayLength > capacityArray[capacityArray.length - 1]) {
-                return -1;
-            }
-            index = (index + 1) * -1;
+        if (arrayLength < capacityArray[0] / 4
+                || arrayLength > capacityArray[capacityArray.length - 1]) {
+            return -1;
         }
-        return index;
+        int index = Arrays.binarySearch(capacityArray, arrayLength);
+        return index < 0 ? (index + 1) * -1 : index;
     }
 }

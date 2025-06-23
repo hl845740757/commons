@@ -20,6 +20,7 @@ namespace Wjybxx.Dson.Text
 {
 /// <summary>
 /// 该枚举仅用于代码生成工具，用户直接使用<see cref="NumberStyles"/>
+/// (需要保持枚举名和<see cref="NumberStyles"/>中的属性相同)
 /// </summary>
 public enum NumberStyle : byte
 {

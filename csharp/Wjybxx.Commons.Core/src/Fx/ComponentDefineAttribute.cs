@@ -26,7 +26,7 @@ namespace Wjybxx.Commons.Fx
 /// 2.可以通过额外的注解附加信息，需要定制解析器
 /// 3.组件id解析重定向，请使用<see cref="ComponentRedirectAttribute"/>
 /// </summary>
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, Inherited = false)]
 public class ComponentDefineAttribute : Attribute
 {
     /// <summary>

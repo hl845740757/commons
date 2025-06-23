@@ -56,7 +56,7 @@ public enum DsonTokenType
     Double,
     /** 显式声明 '@b' */
     Bool,
-    /** 显式声明 双引号 或 '@s' 或 '@ss' */
+    /** 显式声明 双引号 或 '@s' 或 '@sL' */
     String,
     /** 显式声明 '@N' */
     Null,

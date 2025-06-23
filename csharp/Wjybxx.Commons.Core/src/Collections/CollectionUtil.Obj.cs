@@ -125,7 +125,7 @@ public static partial class CollectionUtil
     /// <param name="collection"></param>
     /// <typeparam name="TKey"></typeparam>
     /// <returns></returns>
-    public static int ContentHashCode<TKey>(ICollection<TKey>? collection) {
+    public static int HashCode<TKey>(ICollection<TKey>? collection) {
         if (collection == null) return 0;
         int r = 0;
         if (typeof(TKey).IsValueType) {

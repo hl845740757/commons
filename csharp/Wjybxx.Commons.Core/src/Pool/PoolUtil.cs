@@ -121,6 +121,52 @@ public static class PoolUtil
     }
 
     #endregion
+
+    #region 集合辅助方法
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static List<T> ClearAndReturn<T>(this List<T> list) {
+        list.Clear();
+        return list;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static HashSet<T> ClearAndReturn<T>(this HashSet<T> hashSet) {
+        hashSet.Clear();
+        return hashSet;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static LinkedHashSet<T> ClearAndReturn<T>(this LinkedHashSet<T> hashSet) {
+        hashSet.Clear();
+        return hashSet;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Queue<T> ClearAndReturn<T>(this Queue<T> queue) {
+        queue.Clear();
+        return queue;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Stack<T> ClearAndReturn<T>(this Stack<T> stack) {
+        stack.Clear();
+        return stack;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Dictionary<K, V> ClearAndReturn<K, V>(this Dictionary<K, V> dictionary) {
+        dictionary.Clear();
+        return dictionary;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static LinkedDictionary<K, V> ClearAndReturn<K, V>(this LinkedDictionary<K, V> dictionary) {
+        dictionary.Clear();
+        return dictionary;
+    }
+
+    #endregion
 }
 
 public static class PoolUtil<T>
@@ -140,6 +186,6 @@ public static class PoolUtil<K, V>
 {
     public static readonly Func<Dictionary<K, V>> dictionaryFactory = () => new Dictionary<K, V>();
     public static readonly Func<LinkedDictionary<K, V>> linkedDictionaryFactory = () => new LinkedDictionary<K, V>();
-    public static readonly Action<IDictionary<K, V>> cleaner = list => list.Clear();
+    public static readonly Action<IDictionary<K, V>> cleaner = dictionary => dictionary.Clear();
 }
 }

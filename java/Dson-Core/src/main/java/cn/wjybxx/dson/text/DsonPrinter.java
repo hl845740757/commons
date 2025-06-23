@@ -18,6 +18,7 @@ package cn.wjybxx.dson.text;
 
 import cn.wjybxx.base.io.ByteBufferUtils;
 import cn.wjybxx.base.io.StringBuilderWriter;
+import cn.wjybxx.base.pool.ConcurrentArrayPool;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.io.DsonIOException;
 
@@ -33,6 +34,7 @@ import java.io.Writer;
 @SuppressWarnings("unused")
 public final class DsonPrinter implements AutoCloseable {
 
+    private static final int FLUSH_THRESHOLD = 1024;
     private final DsonTextWriterSettings settings;
     private final Writer writer;
     private final boolean autoClose;
@@ -267,7 +269,7 @@ public final class DsonPrinter implements AutoCloseable {
     /** 换行 */
     public void println() {
         builder.append(settings.lineSeparator);
-        if (builder.length() >= 4096) {
+        if (builder.length() >= FLUSH_THRESHOLD) {
             flush(); // 如果每一行都flush，在数量大的情况下会产生大量的io操作，降低性能
         }
         ln++;
@@ -316,13 +318,17 @@ public final class DsonPrinter implements AutoCloseable {
         }
         try {
             StringBuilder builder = this.builder;
-            if (builder.length() > 0) {
-                // 显式转cBuffer，避免toString的额外开销
-                char[] cBuffer = new char[builder.length()];
-                builder.getChars(0, cBuffer.length, cBuffer, 0);
-
-                writer.write(cBuffer, 0, cBuffer.length);
-                builder.setLength(0);
+            int length = builder.length();
+            if (length > 0) {
+                char[] cBuffer = ConcurrentArrayPool.SHARED_CHAR_ARRAY_POOL.acquire(length);
+                try {
+                    // 显式转cBuffer，避免toString的额外开销
+                    builder.getChars(0, length, cBuffer, 0);
+                    writer.write(cBuffer, 0, length);
+                    builder.setLength(0);
+                } finally {
+                    ConcurrentArrayPool.SHARED_CHAR_ARRAY_POOL.release(cBuffer);
+                }
             }
             writer.flush();
         } catch (Exception e) {

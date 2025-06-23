@@ -21,7 +21,7 @@ using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Dson.Text
 {
-class StringCharStream : AbstractCharStream
+internal class StringCharStream : AbstractCharStream
 {
 #nullable disable
     private string _buffer;

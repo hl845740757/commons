@@ -17,24 +17,24 @@
 package cn.wjybxx.dson.text;
 
 import cn.wjybxx.base.ObjectUtils;
-import cn.wjybxx.base.pool.ConcurrentObjectPool;
-import cn.wjybxx.base.pool.ObjectPool;
 
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
 
 /**
+ * Dson文本扫描器
+ *
  * @author wjybxx
  * date - 2023/6/2
  */
 public final class DsonScanner implements AutoCloseable {
 
     private static final List<DsonTokenType> STRING_TOKEN_TYPES = List.of(DsonTokenType.STRING, DsonTokenType.UNQUOTE_STRING);
-    private static final ObjectPool<StringBuilder> STRING_BUILDER_POOL = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL;
 
     private DsonCharStream charStream;
-    private StringBuilder pooledStringBuilder;
+    // 不从共享池申请StringBuilder，因为这里的StringBuilder都很小
+    private final StringBuilder pooledStringBuilder = new StringBuilder(64);
     private final CharBuffer hexBuffer = new CharBuffer(4);
 
     public DsonScanner(CharSequence dson) {
@@ -43,7 +43,6 @@ public final class DsonScanner implements AutoCloseable {
 
     public DsonScanner(DsonCharStream charStream) {
         this.charStream = Objects.requireNonNull(charStream);
-        this.pooledStringBuilder = STRING_BUILDER_POOL.acquire();
     }
 
     @Override
@@ -51,10 +50,6 @@ public final class DsonScanner implements AutoCloseable {
         if (charStream != null) {
             charStream.close();
             charStream = null;
-        }
-        if (pooledStringBuilder != null) {
-            STRING_BUILDER_POOL.release(pooledStringBuilder);
-            pooledStringBuilder = null;
         }
     }
 

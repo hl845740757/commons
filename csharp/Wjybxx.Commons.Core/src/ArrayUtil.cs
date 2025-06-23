@@ -481,7 +481,7 @@ public static class ArrayUtil
     /// 交换两个位置的元素
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Swap<T>(T[] list, int i, int j) {
+    public static void Swap<T>(this T[] list, int i, int j) {
         T a = list[i];
         T b = list[j];
         list[i] = b;
@@ -492,7 +492,7 @@ public static class ArrayUtil
     /// 交换两个位置的元素
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Swap<T>(Span<T> list, int i, int j) {
+    public static void Swap<T>(this Span<T> list, int i, int j) {
         T a = list[i];
         T b = list[j];
         list[i] = b;

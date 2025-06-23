@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Pool
 [Obsolete("Use ObjectPool instead.")]
 public class DefaultObjectPool<T> : ObjectPool<T>
 {
-    public DefaultObjectPool(Func<T> factory, Action<T>? cleaner, int poolSize = 64, Func<T, bool>? filter = null) 
+    public DefaultObjectPool(Func<T> factory, Action<T>? cleaner, int poolSize = 64, Func<T, bool>? filter = null)
         : base(factory, cleaner, poolSize, filter) {
     }
 }

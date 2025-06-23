@@ -65,17 +65,18 @@ public static class DsonTexts
     public const char HeadSwitchMode = '^';
 
     /** 所有内建值类型标签 */
-    private static readonly IGenericSet<string> builtinStructLabels = new[]
+    private static readonly ImmutableSet<string> builtinStructLabels = new[]
     {
         LabelPtr, LabelLitePtr, LabelDateTime, LabelTimestamp
     }.ToImmutableSet2();
 
     /** 有特殊含义的字符串 */
-    private static readonly IGenericSet<string> parseableStrings = new[]
+    private static readonly ImmutableSet<string> parseableStrings = new[]
     {
         "true", "false",
         "null", "undefine",
-        "NaN", "Infinity", "-Infinity"
+        "NaN", "Infinity", "-Infinity",
+        "0", "1", "-1" // 0和1出现的频次高
     }.ToImmutableSet2();
     /** 数字相关的字符 */
     private static readonly BitArray parseableCharSet = new BitArray(128);
@@ -192,6 +193,7 @@ public static class DsonTexts
     public static string Escape(string text, bool unicodeChar = false) {
         if (text == null) throw new ArgumentNullException(nameof(text));
         StringBuilder sb = GetCachedBuilder();
+        sb.EnsureCapacity(text.Length);
         sb.Append('"');
         foreach (char c in text) {
             switch (c) {
@@ -251,6 +253,7 @@ public static class DsonTexts
             throw new ArgumentException("Invalid text");
         }
         StringBuilder sb = GetCachedBuilder();
+        sb.EnsureCapacity(text.Length);
         char[] hexBuffer = new char[4];
         for (int i = 1; i < len - 1;) {
             char c = text[i++];
@@ -482,6 +485,7 @@ public static class DsonTexts
             throw new ArgumentException(str); // 首尾不能下划线
         }
         StringBuilder sb = GetCachedBuilder();
+        sb.EnsureCapacity(str.Length);
         bool hasUnderline = false;
         for (int i = 0; i < length; i++) {
             char c = str[i];

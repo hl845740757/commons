@@ -24,7 +24,7 @@ using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.Dson.Text
 {
-class BufferedCharStream : AbstractCharStream
+internal class BufferedCharStream : AbstractCharStream
 {
     private const int MinBufferSize = 32;
     /** 行首前面超过空白字符太多是有问题的 */

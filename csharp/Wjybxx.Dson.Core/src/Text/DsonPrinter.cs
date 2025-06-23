@@ -30,6 +30,7 @@ namespace Wjybxx.Dson.Text
 /// </summary>
 public class DsonPrinter : IDisposable
 {
+    private const int FLUSH_THRESHOLD = 1024;
 #nullable disable
     private readonly DsonTextWriterSettings _settings;
     private readonly TextWriter _writer;
@@ -288,7 +289,7 @@ public class DsonPrinter : IDisposable
     /** 换行 */
     public void Println() {
         _builder.Append(_settings.lineSeparator);
-        if (_builder.Length >= 4096) {
+        if (_builder.Length >= FLUSH_THRESHOLD) {
             Flush(); // 如果每一行都flush，在数量大的情况下会产生大量的io操作，降低性能
         }
         // Flush();
@@ -337,10 +338,9 @@ public class DsonPrinter : IDisposable
         if (_backingBuilder) {
             return;
         }
-        StringBuilder builder = this._builder;
-        if (builder.Length > 0) {
+        if (_builder.Length > 0) {
             _writer.Write(this._builder);
-            builder.Length = 0;
+            _builder.Length = 0;
         }
         _writer.Flush();
     }

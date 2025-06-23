@@ -34,12 +34,12 @@ public sealed class DsonScanner : IDisposable
 {
     private static readonly List<DsonTokenType> STRING_TOKEN_TYPES =
         CollectionUtil.NewList(DsonTokenType.String, DsonTokenType.UnquoteString);
-    private static readonly IObjectPool<StringBuilder> STRING_BUILDER_POOL = ConcurrentObjectPool.SharedStringBuilderPool;
 
 #nullable disable
     // 转换为AbstractCharStream是否可以提升性能？实测基本无变化
     private IDsonCharStream _charStream;
-    private StringBuilder _pooledStringBuilder;
+    // 不从共享池申请StringBuilder，因为这里的StringBuilder都很小
+    private readonly StringBuilder _pooledStringBuilder = new StringBuilder(64);
     private readonly char[] _hexBuffer = new char[4];
 #nullable enable
 
@@ -49,17 +49,12 @@ public sealed class DsonScanner : IDisposable
 
     public DsonScanner(IDsonCharStream charStream) {
         _charStream = charStream ?? throw new ArgumentNullException(nameof(charStream));
-        _pooledStringBuilder = STRING_BUILDER_POOL.Acquire();
     }
 
     public void Dispose() {
         if (_charStream != null) {
             _charStream.Dispose();
             _charStream = null;
-        }
-        if (_pooledStringBuilder != null) {
-            STRING_BUILDER_POOL.Release(_pooledStringBuilder);
-            _pooledStringBuilder = null;
         }
     }
 

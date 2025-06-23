@@ -72,9 +72,11 @@ public class DsonTexts {
     );
 
     /** 有特殊含义的字符串 */
-    private static final Set<String> parseableStrings = Set.of("true", "false",
+    private static final Set<String> parseableStrings = Set.of(
+            "true", "false",
             "null", "undefine",
-            "NaN", "Infinity", "-Infinity");
+            "NaN", "Infinity", "-Infinity",
+            "0", "1", "-1"); // 0和1出现的频次高
     /** 数字相关的字符 */
     private static final BitSet parseableCharSet = new BitSet(128);
 
@@ -190,6 +192,7 @@ public class DsonTexts {
      */
     public static String escape(String text, boolean unicodeChar) {
         StringBuilder sb = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.acquire();
+        sb.ensureCapacity(text.length());
         sb.append('"');
         for (int i = 0, len = text.length(); i < len; i++) {
             char c = text.charAt(i);
@@ -246,6 +249,7 @@ public class DsonTexts {
             throw new IllegalArgumentException("Invalid text");
         }
         StringBuilder sb = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.acquire();
+        sb.ensureCapacity(text.length());
         CharBuffer hexBuffer = new CharBuffer(4);
         try {
             for (int i = 1; i < len - 1; ) {
@@ -308,19 +312,13 @@ public class DsonTexts {
         return CommonsLang3.isParsable(str);
     }
 
-    private static final Pattern SPLIT_PATTERN = Pattern.compile("\\|");
-
     public static int parseInt32(String rawStr) {
         String str = deleteUnderline(rawStr);
         if (str.isEmpty()) {
             throw new NumberFormatException(rawStr);
         }
         if (str.indexOf('|') > 0) { // A | B | C
-            int value = 0;
-            for (String e : SPLIT_PATTERN.split(rawStr)) {
-                value |= Integer.parseInt(e.trim());
-            }
-            return value;
+            return parseInt32Flags(rawStr);
         }
         int lookOffset;
         int sign;
@@ -353,11 +351,7 @@ public class DsonTexts {
             throw new NumberFormatException(rawStr);
         }
         if (str.indexOf('|') > 0) { // A | B | C
-            long value = 0;
-            for (String e : SPLIT_PATTERN.split(rawStr)) {
-                value |= Long.parseLong(e.trim());
-            }
-            return value;
+            return parseInt64Flags(rawStr);
         }
         int lookOffset;
         int sign;
@@ -382,6 +376,24 @@ public class DsonTexts {
             }
         }
         return sign * Long.parseUnsignedLong(str, lookOffset, str.length(), 10);
+    }
+
+    private static final Pattern SPLIT_PATTERN = Pattern.compile("\\|");
+
+    private static int parseInt32Flags(String rawStr) {
+        int value = 0;
+        for (String e : SPLIT_PATTERN.split(rawStr)) {
+            value |= Integer.parseInt(e.trim());
+        }
+        return value;
+    }
+
+    private static long parseInt64Flags(String rawStr) {
+        long value = 0;
+        for (String e : SPLIT_PATTERN.split(rawStr)) {
+            value |= Long.parseLong(e.trim());
+        }
+        return value;
     }
 
     public static float parseFloat(String rawStr) {
@@ -409,6 +421,7 @@ public class DsonTexts {
             throw new NumberFormatException(str);
         }
         StringBuilder sb = ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.acquire();
+        sb.ensureCapacity(str.length());
         try {
             boolean hasUnderline = false;
             for (int i = 0; i < length; i++) {

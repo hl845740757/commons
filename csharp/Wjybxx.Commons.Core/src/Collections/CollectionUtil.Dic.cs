@@ -59,6 +59,7 @@ public static partial class CollectionUtil
 
     /// <summary>
     /// 如果key存在，则返回key关联的value；如果key不存在，则执行给定的action，并将value放入字典；
+    /// (适用于非并发字典)
     /// </summary>
     public static TValue ComputeIfAbsent<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, Func<TKey, TValue> action) {
         if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));

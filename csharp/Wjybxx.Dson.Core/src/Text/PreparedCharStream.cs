@@ -25,7 +25,7 @@ namespace Wjybxx.Dson.Text
 /// <summary>
 /// 提前就绪的字符流
 /// </summary>
-class PreparedCharStream : AbstractCharStream
+internal class PreparedCharStream : AbstractCharStream
 {
 #nullable disable
     private IEnumerator<LineInfo> _rawLines;

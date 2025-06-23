@@ -121,7 +121,16 @@ public static partial class CollectionUtil
         return LastIndexOf(list, element, 0, list.Count, comparer);
     }
 
-    /** 查对象在数组中的下标 */
+    /// <summary>
+    /// 查对象在数组中的下标
+    /// </summary>
+    /// <param name="list"></param>
+    /// <param name="element">要查找的元素</param>
+    /// <param name="start">包含</param>
+    /// <param name="end">不包含</param>
+    /// <param name="comparer">equals实现</param>
+    /// <typeparam name="T"></typeparam>
+    /// <exception cref="ArgumentNullException"></exception>
     public static int IndexOf<T>(IList<T> list, T element, int start, int end, IEqualityComparer<T> comparer = null) {
         if (list == null) throw new ArgumentNullException(nameof(list));
         if (!typeof(T).IsValueType && element == null) {
@@ -143,7 +152,16 @@ public static partial class CollectionUtil
         return -1;
     }
 
-    /** 反向查对象在数组中的下标 */
+    /// <summary>
+    /// 反向查对象在数组中的下标
+    /// </summary>
+    /// <param name="list"></param>
+    /// <param name="element">要查找的元素</param>
+    /// <param name="start">包含</param>
+    /// <param name="end">不包含</param>
+    /// <param name="comparer">equals实现</param>
+    /// <typeparam name="T"></typeparam>
+    /// <exception cref="ArgumentNullException"></exception>
     public static int LastIndexOf<T>(IList<T> list, T element, int start, int end, IEqualityComparer<T> comparer = null) {
         if (!typeof(T).IsValueType && element == null) {
             for (int i = end - 1; i >= start; i--) {
