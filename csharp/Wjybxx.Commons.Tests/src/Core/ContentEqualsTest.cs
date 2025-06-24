@@ -43,7 +43,7 @@ public class ContentEqualsTest
         LinkedHashSet<string> linkedHashSet = new LinkedHashSet<string>();
         CollectionUtil.AddAll(linkedHashSet, elements);
 
-        Assert.True(linkedHashSet.ContentEquals(hashSet));
+        Assert.True(CollectionUtil.DataEquals(linkedHashSet, hashSet));
     }
 
     [Repeat(10)]
@@ -67,6 +67,6 @@ public class ContentEqualsTest
         foreach (var pair in pairs) {
             linkedDictionary[pair.Key] = pair.Value;
         }
-        Assert.True(CollectionUtil.ContentEquals(linkedDictionary, dictionary));
+        Assert.True(CollectionUtil.DataEquals(linkedDictionary, dictionary));
     }
 }

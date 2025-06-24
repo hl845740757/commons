@@ -743,6 +743,8 @@ public sealed class CodeWriter
     #region enumvalue
 
     private void EmitEnumValue(EnumValueSpec enumValueSpec) {
+        // 发射空代码确保位于新行
+        Emit(CodeBlock.Empty, true);
         if (!enumValueSpec.document.IsEmpty) {
             EmitDocument(enumValueSpec.document);
         }
@@ -888,11 +890,34 @@ public sealed class CodeWriter
     /// <param name="typeParameters"></param>
     private void EmitTypeParameterConstraints(IList<TypeParameterSpec> typeParameters) {
         if (typeParameters.Count == 0) return;
-
+        // 如果有多个变量存在约束，则每行输出一个
+        int c = 0;
         for (int i = 0; i < typeParameters.Count; i++) {
             TypeParameterSpec typeParameter = typeParameters[i];
             if (typeParameter.HasConstraints) {
-                EmitTypeParameterConstraints(typeParameter);
+                c++;
+            }
+        }
+        if (c == 0) {
+            return;
+        }
+        if (c > 1) {
+            Indent();
+            for (int i = 0; i < typeParameters.Count; i++) {
+                TypeParameterSpec typeParameter = typeParameters[i];
+                if (typeParameter.HasConstraints) {
+                    Emit("\n");
+                    EmitIndentation();
+                    EmitTypeParameterConstraints(typeParameter);
+                }
+            }
+            Unindent();
+        } else {
+            for (int i = 0; i < typeParameters.Count; i++) {
+                TypeParameterSpec typeParameter = typeParameters[i];
+                if (typeParameter.HasConstraints) {
+                    EmitTypeParameterConstraints(typeParameter);
+                }
             }
         }
     }

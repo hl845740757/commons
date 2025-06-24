@@ -308,6 +308,12 @@ public class CodeBlock
 
         #region 控制流
 
+        public Builder BeginControlFlow() {
+            Add(" {\n");
+            Indent();
+            return this;
+        }
+
         public Builder BeginControlFlow(string controlFlow, params object?[] args) {
             Add(controlFlow + " {\n", args);
             Indent();

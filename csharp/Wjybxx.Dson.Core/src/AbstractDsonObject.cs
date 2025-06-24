@@ -125,8 +125,8 @@ public abstract class AbstractDsonObject<TK> : DsonValue, IGenericDictionary<TK,
     public bool Equals(AbstractDsonObject<TK>? other) {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
-        // C#的集合默认都是未实现Equals的，因此无法准确的判断内容Equals
-        return _valueMap.SequenceEqual(other._valueMap);
+        // C#的集合默认都是未实现Equals的，因此我们调用DataEquals
+        return CollectionUtil.DataEquals(_valueMap, other._valueMap);
     }
 
     public override bool Equals(object? obj) {

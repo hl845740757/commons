@@ -115,7 +115,8 @@ public enum Modifiers
 
     /// <summary>
     /// 操作符重载（方法名即符号）
-    /// C#的操作符重载是生成了特殊的方法名来实现的，但我们使用Modifier更简单点，也更容易扩展
+    /// C#的操作符重载是生成了特殊的方法名来实现的，但我们使用Modifier更简单点，也更容易扩展；
+    /// 如果想避免歧义，可使用<see cref="CodeBlockSpec"/>重写操作符。
     /// </summary>
     Operator = 0x10000,
     /// <summary>

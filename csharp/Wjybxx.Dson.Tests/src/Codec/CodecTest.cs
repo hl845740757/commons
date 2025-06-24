@@ -120,7 +120,7 @@ public class CodecTest
         Console.WriteLine(dson);
 
         IDictionary<int, Vector3> copied = converter2.ReadFromDson<IDictionary<int, Vector3>>(dson, () => new Dictionary<int, Vector3>());
-        Assert.IsTrue(CollectionUtil.ContentEquals(copied, dictionary));
+        Assert.IsTrue(CollectionUtil.DataEquals(copied, dictionary));
     } 
 
     /// <summary>
@@ -138,7 +138,7 @@ public class CodecTest
         Console.WriteLine(dson);
 
         IDictionary<int, Vector3?> copied = converter.ReadFromDson<IDictionary<int, Vector3?>>(dson, () => new Dictionary<int, Vector3?>());
-        Assert.IsTrue(CollectionUtil.ContentEquals(copied, dictionary));
+        Assert.IsTrue(CollectionUtil.DataEquals(copied, dictionary));
     }
 
     /// <summary>
@@ -159,6 +159,6 @@ public class CodecTest
 
         IDsonConverter converter2 = converter.WithOptions(builder.Build());
         IDictionary<int, Vector3> copied = converter2.ReadFromDson<IDictionary<int, Vector3>>(dson, () => new Dictionary<int, Vector3>());
-        Assert.IsTrue(CollectionUtil.ContentEquals(copied, dictionary));
+        Assert.IsTrue(CollectionUtil.DataEquals(copied, dictionary));
     }
 }

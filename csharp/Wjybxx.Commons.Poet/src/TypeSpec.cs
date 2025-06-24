@@ -408,6 +408,20 @@ public class TypeSpec : ISpecification
 
         #endregion
 
+        #region code
+
+        public Builder AddCode(CodeBlock codeBlock) {
+            nestedSpecs.Add(new CodeBlockSpec(codeBlock));
+            return this;
+        }
+
+        public Builder AddComment(CodeBlock codeBlock) {
+            nestedSpecs.Add(new CodeBlockSpec(codeBlock, CodeBlockSpec.Kind.Comment));
+            return this;
+        }
+
+        #endregion
+
         #region nestedTypes
 
         public Builder AddTypes(IEnumerable<TypeSpec> nestedTypes) {

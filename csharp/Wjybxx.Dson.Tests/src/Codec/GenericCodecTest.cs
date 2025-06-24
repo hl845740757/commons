@@ -69,6 +69,6 @@ public class GenericCodecTest
         Console.WriteLine(dson);
 
         MyDictionary<int, Vector3> copied = converter.ReadFromDson<MyDictionary<int, Vector3>>(dson);
-        Assert.IsTrue(CollectionUtil.ContentEquals(copied.dictionary, myDic.dictionary));
+        Assert.IsTrue(CollectionUtil.DataEquals(copied.dictionary, myDic.dictionary));
     }
 }

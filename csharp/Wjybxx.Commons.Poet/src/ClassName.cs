@@ -324,7 +324,7 @@ public class ClassName : TypeName
     /// <returns></returns>
     public ClassName WithTypeArguments(params TypeName[] typeArguments) {
         if (typeArguments.Length != this.typeArguments.Count) {
-            throw new ArgumentException();
+            throw new ArgumentException("typeArguments.Length != this.typeArguments.Count");
         }
         return new Builder()
         {
@@ -344,7 +344,7 @@ public class ClassName : TypeName
     /// <returns></returns>
     public ClassName WithDeclaredTypeArguments(params TypeName[] typeArguments) {
         if (typeArguments.Length != declaredTypeArguments.Count) {
-            throw new ArgumentException();
+            throw new ArgumentException("typeArguments.Length != declaredTypeArguments.Count");
         }
         return new Builder()
         {
