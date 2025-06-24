@@ -323,6 +323,7 @@ internal class PojoCodecGenerator
     }
 
     private string? GetToImmutableMethodName(Type fieldType) {
+        if (fieldType.Name.StartsWith("Immutable")) return null; // 避免再套一层
         if (DsonConverterUtils.IsSet(fieldType)) return "ToImmutableSet2";
         if (DsonConverterUtils.IsList(fieldType)) return "ToImmutableList2";
         if (DsonConverterUtils.IsDictionary(fieldType)) return "ToImmutableDictionary2";

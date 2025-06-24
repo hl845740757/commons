@@ -302,10 +302,10 @@ public static class DsonTexts
     }
 
     internal static int ParseNumberFormHexString(char[] hexBuffer) {
-        int a = CharUtil.HexCharToNumber(hexBuffer[0]);
-        int b = CharUtil.HexCharToNumber(hexBuffer[1]);
-        int c = CharUtil.HexCharToNumber(hexBuffer[2]);
-        int d = CharUtil.HexCharToNumber(hexBuffer[3]);
+        int a = CharUtil.ToHexNumber(hexBuffer[0]);
+        int b = CharUtil.ToHexNumber(hexBuffer[1]);
+        int c = CharUtil.ToHexNumber(hexBuffer[2]);
+        int d = CharUtil.ToHexNumber(hexBuffer[3]);
         return a << 12 | b << 8 | c << 4 | d;
     }
 

@@ -322,6 +322,7 @@ internal class PojoCodecGenerator
 
     private string? GetToImmutableMethodName(ITypeSymbol fieldType) {
         ITypeSymbol originalDefinition = fieldType.OriginalDefinition;
+        if (originalDefinition.Name.StartsWith("Immutable")) return null; // 避免再套一层
         if (originalDefinition.IsSubTypeOf(processor.type_ISET)) return "ToImmutableSet2";
         if (originalDefinition.IsSubTypeOf(processor.type_ILIST)) return "ToImmutableList2";
         if (originalDefinition.IsSubTypeOf(processor.type_IDICTIONARY)) return "ToImmutableDictionary2";

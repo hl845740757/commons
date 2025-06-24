@@ -122,7 +122,7 @@ public @interface DsonSerializable {
 
     /**
      * 声明不需要自动序列化的字段（自身或超类的）
-     * 注意：skip仅仅表示不自动读，被跳过的字段仍然会占用字段编号和name！
+     * 注意：skip仅仅表示不自动读写，被跳过的字段仍然会占用字段编号和name！
      * <p>
      * 该属性主要用户处理继承得来的不能直接序列化的字段，以避免编译时检查不通过（无法自动序列化）。
      * 跳过这些字段后，你可以在解析构造方法、readObject、writeObject方法中处理。
@@ -136,9 +136,10 @@ public @interface DsonSerializable {
      *   }
      * }
      * </pre>
-     * 1. 如果fieldName不包含点号，则认为是{@code FieldName}格式，即只通过字段名定位。
-     * 2. 如果fieldName包含1个点号，则认为是{@code ClassSimpleName.FieldName}格式，即通过类的简单名定位。
-     * 3. 如果fieldName包含多个点号，则认为是{@code ClassCanonicalName.FieldName}格式，即通过类的全限定名定位（内部类也使用点号分割）。
+     * 1.如果fieldName不包含点号，则认为是{@code FieldName}格式，即只通过字段名定位。
+     * 2.如果fieldName包含1个点号，则认为是{@code ClassSimpleName.FieldName}格式，即通过类的简单名定位。
+     * 3.如果fieldName包含多个点号，则认为是{@code ClassCanonicalName.FieldName}格式，即通过类的全限定名定位（内部类也使用点号分割）。
+     * 4.如果包含星号('*')，表示所有字段跳过
      */
     String[] skipFields() default {};
 

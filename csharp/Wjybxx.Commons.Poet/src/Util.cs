@@ -487,6 +487,8 @@ public static partial class Util
 
     /// <summary>
     /// 获取类型的简单名 -- 不包含泛型参数个数信息
+    ///
+    /// <code>Dictionary`2[int32, string] => Dictionary</code>
     /// </summary>
     /// <param name="namedType"></param>
     /// <returns></returns>
@@ -494,6 +496,23 @@ public static partial class Util
         string name = namedType.Name;
         int index = name.LastIndexOf('`');
         return index > 0 ? name.Substring2(0, index) : name;
+    }
+
+    /// <summary>
+    /// 获取类型的元数据名 -- 包含泛型参数个数信息
+    ///
+    /// <code>Dictionary`2[int32, string] => Dictionary`2</code>
+    /// </summary>
+    /// <param name="namedType"></param>
+    /// <returns></returns>
+    public static string GetMetaName(Type namedType) {
+        string name = namedType.Name;
+        int index = name.LastIndexOf('`');
+        if (index < 0) {
+            return name;
+        }
+        int spIndex = name.IndexOf('[', index);
+        return name.Substring(0, spIndex).TrimEnd();
     }
 
     /// <summary>

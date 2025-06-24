@@ -582,6 +582,9 @@ public class CodecProcessor
         if (aptClassProps.skipFields.Count == 0) {
             return false;
         }
+        if (aptClassProps.skipFields.Contains("*")) {
+            return true;
+        }
         // 如果是自动属性，则使用属性名
         string fieldName;
         if (fieldInfo.IsAutoPropertyField) {

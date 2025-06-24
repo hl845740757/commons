@@ -181,7 +181,7 @@ internal static class AptUtils
         string propertyName = PropertyNameOfField(fieldInfo.Name);
         return allMembers.Where(e => e.MemberType == MemberTypes.Property)
             .Cast<PropertyInfo>()
-            .FirstOrDefault(e => e.Name == propertyName);
+            .FirstOrDefault(e => e.Name == propertyName && fieldInfo.FieldType == e.PropertyType);
     }
 
     /// <summary>

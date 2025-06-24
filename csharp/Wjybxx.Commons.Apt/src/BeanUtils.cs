@@ -193,7 +193,7 @@ public static class BeanUtils
         string propertyName = PropertyNameOfField(fieldInfo.Name);
         return allMembers.Where(e => e.MemberType == MemberTypes.Property)
             .Cast<PropertyInfo>()
-            .FirstOrDefault(e => e.Name == propertyName);
+            .FirstOrDefault(e => e.Name == propertyName && e.PropertyType == fieldInfo.FieldType);
     }
 
     /// <summary>
@@ -207,11 +207,25 @@ public static class BeanUtils
         string propertyName = PropertyNameOfField(fieldInfo.Name);
         return allMembers.Where(e => e.Kind == SymbolKind.Property)
             .Cast<IPropertySymbol>()
+            .FirstOrDefault(e => e.Name == propertyName && e.Type.IsSameType(fieldInfo.Type));
+    }
+
+    /// <summary>
+    /// 通过名字查询属性 -- 应当校验属性的类型
+    /// </summary>
+    /// <param name="fieldName"></param>
+    /// <param name="allMembers"></param>
+    /// <returns></returns>
+    public static PropertyInfo? FindProperty(string fieldName,
+                                             List<MemberInfo> allMembers) {
+        string propertyName = PropertyNameOfField(fieldName);
+        return allMembers.Where(e => e.MemberType == MemberTypes.Property)
+            .Cast<PropertyInfo>()
             .FirstOrDefault(e => e.Name == propertyName);
     }
 
     /// <summary>
-    /// 查询字段关联的属性(支持非public)
+    /// 通过名字查询属性 -- 应当校验属性的类型
     /// </summary>
     /// <param name="fieldName"></param>
     /// <param name="allMembers"></param>

@@ -130,7 +130,7 @@ public class CodecProcessor : ISourceGenerator
     internal INamedTypeSymbol type_LitePtr;
     internal INamedTypeSymbol type_LocalDateTime;
     internal INamedTypeSymbol type_Timestamp;
-    
+
     internal INamedTypeSymbol type_ILIST;
     internal INamedTypeSymbol type_ISET;
     internal INamedTypeSymbol type_IDICTIONARY;
@@ -182,7 +182,7 @@ public class CodecProcessor : ISourceGenerator
         type_Ptr = compilation.GetTypeByMetadataName(CNAME_ObjectPtr);
         type_LitePtr = compilation.GetTypeByMetadataName(CNAME_ObjectLitePtr);
         type_Timestamp = compilation.GetTypeByMetadataName(CNAME_Timestamp);
-        
+
         type_ILIST = compilation.GetSpecialType(SpecialType.System_Collections_Generic_IList_T);
         type_ISET = compilation.GetTypeByMetadataName(CNAME_ISet);
         type_IDICTIONARY = compilation.GetTypeByMetadataName(CNAME_IDictionary);
@@ -403,8 +403,16 @@ public class CodecProcessor : ISourceGenerator
         context.allMembers = BeanUtils.GetAllMembersWithInherit(context.type);
         // 反射字段--第三方程序集字段
         Dictionary<FieldKey, FieldInfo> reflectionFieldDic = new();
-        foreach (var fieldInfo in GetReflectionFields(context.type)) {
+        List<MemberInfo> reflectionMembers = GetReflectionMembers(context.type);
+        foreach (MemberInfo memberInfo in reflectionMembers) {
+            if (memberInfo.MemberType != MemberTypes.Field) continue;
+            FieldInfo fieldInfo = (FieldInfo)memberInfo;
             if (fieldInfo.IsStatic) continue;
+            // 检查属性 -- 属性类型和字段类型不同的跳过
+            PropertyInfo propertyInfo = BeanUtils.FindProperty(fieldInfo.Name, reflectionMembers);
+            if (propertyInfo != null && propertyInfo.PropertyType != fieldInfo.FieldType) {
+                continue;
+            }
             var fieldKey = new FieldKey(Util.GetSimpleName(fieldInfo.DeclaringType!), fieldInfo.Name);
             reflectionFieldDic.Add(fieldKey, fieldInfo);
         }
@@ -414,6 +422,11 @@ public class CodecProcessor : ISourceGenerator
             if (symbol.Kind != SymbolKind.Field || symbol.IsStatic) continue;
             IFieldSymbol fieldSymbol = (IFieldSymbol)symbol;
             if (!IsBuildingAssemblyNode(fieldSymbol.ContainingType)) {
+                continue;
+            }
+            // 检查属性 -- 属性类型和字段类型不同的跳过
+            IPropertySymbol propertySymbol = BeanUtils.FindProperty(fieldSymbol.Name, context.allMembers);
+            if (propertySymbol != null && fieldSymbol.Type.IsSameType(propertySymbol.Type)) {
                 continue;
             }
             FieldKey key = new FieldKey(fieldSymbol.ContainingType.Name, fieldSymbol.Name);
@@ -440,6 +453,20 @@ public class CodecProcessor : ISourceGenerator
         context.allFields = allFields;
     }
 
+    private List<MemberInfo> GetReflectionMembers(INamedTypeSymbol typeSymbol) {
+        string assemblyName = GetThirdPartyAssemblyName(typeSymbol, out INamedTypeSymbol thirdPartyType);
+        if (assemblyName == null) {
+            return new List<MemberInfo>();
+        }
+        string typePath = $"{AptUtils.GetFullMetadataName(thirdPartyType!)}, {assemblyName}";
+        Type reflectType = Type.GetType(typePath, false);
+        if (reflectType == null) {
+            return new List<MemberInfo>();
+        }
+        return BeanUtils.GetAllMembersWithInherit(reflectType, MemberTypes.Field | MemberTypes.Property)
+            .ToList();
+    }
+
     /** 返回Null表示没有依赖的第三方程序集 */
     private string? GetThirdPartyAssemblyName(INamedTypeSymbol typeSymbol,
                                               out INamedTypeSymbol? thirdPartyType) {
@@ -459,21 +486,6 @@ public class CodecProcessor : ISourceGenerator
         }
         thirdPartyType = null;
         return null;
-    }
-
-    private List<FieldInfo> GetReflectionFields(INamedTypeSymbol typeSymbol) {
-        string assemblyName = GetThirdPartyAssemblyName(typeSymbol, out INamedTypeSymbol thirdPartyType);
-        if (assemblyName == null) {
-            return new List<FieldInfo>();
-        }
-        string typePath = $"{AptUtils.GetFullMetadataName(thirdPartyType!)}, {assemblyName}";
-        Type reflectType = Type.GetType(typePath, false);
-        if (reflectType == null) {
-            return new List<FieldInfo>();
-        }
-        return BeanUtils.GetAllMembersWithInherit(reflectType, MemberTypes.Field)
-            .Cast<FieldInfo>()
-            .ToList();
     }
 
     private void CacheFieldProps(Context context) {
@@ -780,6 +792,9 @@ public class CodecProcessor : ISourceGenerator
     private static bool IsSkipField(AptFieldInfo fieldInfo, AptClassProps aptClassProps, AptFieldProps aptFieldProps) {
         if (aptClassProps.skipFields.Count == 0) {
             return false;
+        }
+        if (aptClassProps.skipFields.Contains("*")) {
+            return true;
         }
         // 如果是自动属性，则使用属性名
         string fieldName;

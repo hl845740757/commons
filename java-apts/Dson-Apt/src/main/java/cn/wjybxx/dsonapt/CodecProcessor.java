@@ -628,6 +628,9 @@ public class CodecProcessor extends MyAbstractProcessor {
         if (aptClassProps.skipFields.isEmpty()) {
             return false;
         }
+        if (aptClassProps.skipFields.contains("*")) {
+            return true;
+        }
         String fieldName = fieldInfo.name;
         if (aptClassProps.skipFields.contains(fieldName)) {
             return true; // 完全匹配

@@ -394,7 +394,7 @@ public static class DatetimeUtil
         int hours, minutes, seconds;
         switch (offsetString.Length) {
             case 2: { // ±H
-                hours = CharUtil.DecimalCharToNumber(offsetString[1]);
+                hours = CharUtil.ToNumber(offsetString[1]);
                 minutes = 0;
                 seconds = 0;
                 break;
@@ -432,8 +432,8 @@ public static class DatetimeUtil
         if (precededByColon && timeString[pos - 1] != ':') {
             throw new ArgumentException("Invalid time string: " + timeString);
         }
-        return CharUtil.DecimalCharToNumber(timeString[pos]) * 10
-               + CharUtil.DecimalCharToNumber(timeString[pos + 1]);
+        return CharUtil.ToNumber(timeString[pos]) * 10
+               + CharUtil.ToNumber(timeString[pos + 1]);
     }
 
     /// <summary>
