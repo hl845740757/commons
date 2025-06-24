@@ -23,8 +23,8 @@ import java.util.HexFormat;
 
 /**
  * 你通常不应该修改data中的数据。
- * 该类难以实现不可变对象，虽然我们可以封装为ByteArray，
- * 但许多接口都是基于byte[]的，封装会导致难以与其它接口协作。
+ * 该类难以实现不可变对象，虽然我们可以封装为ByteArray，但许多接口都是基于byte[]的，封装会导致难以与其它接口协作。
+ * 用户应当避免修改改对象的数据，把它当做不可变对象使用。
  *
  * @author wjybxx
  * date - 2023/4/19
@@ -72,8 +72,7 @@ public final class Binary {
     public int hashCode() {
         int r = this.hash;
         if (r == 0) {
-            r = Arrays.hashCode(data);
-            this.hash = r;
+            r = this.hash = Arrays.hashCode(data);
         }
         return r;
     }

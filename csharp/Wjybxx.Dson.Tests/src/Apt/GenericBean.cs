@@ -1,4 +1,5 @@
 #region LICENSE
+
 // Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,15 +13,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #endregion
 
 namespace Wjybxx.Dson.Tests.Apt;
 
 /// <summary>
 /// 测试泛型类
+/// 
+/// 测试泛型类的属性和字段类是泛型时，APT检测是否正确
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public class GenericBean<T> where T : struct 
+public class GenericBean<T> where T : struct
 {
-    
+    private T value;
+
+    public T Value {
+        get => value;
+        set => this.value = value;
+    }
 }

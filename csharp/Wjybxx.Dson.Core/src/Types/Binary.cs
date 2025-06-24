@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
 using Wjybxx.Dson.Internal;
 
@@ -24,6 +25,8 @@ namespace Wjybxx.Dson.Types
 {
 /// <summary>
 /// 二进制数据
+/// （该类难以实现不可变对象，虽然我们可以封装为ByteArray，但许多接口都是基于byte[]的，封装会导致难以与其它接口协作。）
+/// （用户应当避免修改改对象的数据，把它当做不可变对象使用。）
 /// </summary>
 public struct Binary : IEquatable<Binary>
 {
@@ -37,7 +40,10 @@ public struct Binary : IEquatable<Binary>
         this._hash = 0;
     }
 
-    /** 创建一个拷贝 */
+    /// <summary>
+    /// 创建一个拷贝
+    /// </summary>
+    /// <returns></returns>
     public readonly Binary DeepCopy() {
         return new Binary((byte[])_data.Clone());
     }
@@ -46,7 +52,10 @@ public struct Binary : IEquatable<Binary>
     /// 获取指定下标字节
     /// </summary>
     /// <param name="index"></param>
-    public byte this[int index] => _data[index];
+    public byte this[int index] {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _data[index];
+    }
 
     /// <summary>
     /// 字节数组长度
@@ -61,16 +70,7 @@ public struct Binary : IEquatable<Binary>
     #region equals
 
     public bool Equals(Binary other) {
-        if (_data == other._data) {
-            return true;
-        }
-        if (IsNull || other.IsNull) {
-            return false;
-        }
-        // 可以直接比较内存bit
-        ReadOnlySpan<byte> first = _data;
-        ReadOnlySpan<byte> second = other._data;
-        return first.SequenceEqual(second);
+        return ArrayUtil.Equals(_data, other._data);
     }
 
     public override bool Equals(object? obj) {
@@ -80,15 +80,7 @@ public struct Binary : IEquatable<Binary>
     public override int GetHashCode() {
         int r = _hash;
         if (r == 0) {
-            r = this._hash = HashCode(_data);
-        }
-        return r;
-    }
-
-    private static int HashCode(byte[] data) {
-        int r = 1;
-        for (int i = 0; i < data.Length; i++) {
-            r = r * 31 + data[i];
+            r = _hash = ArrayUtil.HashCode(_data);
         }
         return r;
     }
@@ -100,6 +92,12 @@ public struct Binary : IEquatable<Binary>
     }
 
     #region MyRegion
+
+    /// <summary>
+    /// 转换为只读的Span -- 可用于IO
+    /// </summary>
+    /// <returns></returns>
+    public ReadOnlySpan<byte> AsSpan() => new ReadOnlySpan<byte>(_data);
 
     /// <summary>
     /// 转换为字节数组

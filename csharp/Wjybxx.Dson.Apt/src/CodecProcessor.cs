@@ -426,7 +426,7 @@ public class CodecProcessor : ISourceGenerator
             }
             // 检查属性 -- 属性类型和字段类型不同的跳过
             IPropertySymbol propertySymbol = BeanUtils.FindProperty(fieldSymbol.Name, context.allMembers);
-            if (propertySymbol != null && fieldSymbol.Type.IsSameType(propertySymbol.Type)) {
+            if (propertySymbol != null && !fieldSymbol.Type.IsSameType(propertySymbol.Type)) {
                 continue;
             }
             FieldKey key = new FieldKey(fieldSymbol.ContainingType.Name, fieldSymbol.Name);

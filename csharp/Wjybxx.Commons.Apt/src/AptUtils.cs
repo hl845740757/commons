@@ -459,7 +459,9 @@ public static class AptUtils
         //
         // RefEquals: False
         // Equals: False
-        return self.ToDisplayString() == target.ToDisplayString();
+        return ReferenceEquals(self, target)
+               || self.Equals(target, SymbolEqualityComparer.Default)
+               || self.ToDisplayString() == target.ToDisplayString();
         // return self.Equals(target, SymbolEqualityComparer.Default);
     }
 
@@ -471,48 +473,32 @@ public static class AptUtils
     /// <returns></returns>
     public static bool IsSubTypeOf(this ITypeSymbol self, ITypeSymbol target) {
         string targetDisplay = target.ToDisplayString();
-        if (self.ToDisplayString() == targetDisplay) {
+        if (IsSameType(self, target, targetDisplay)) {
             return true;
         }
+        // 结构体和Class都可以实现接口
         if (target.TypeKind == TypeKind.Interface) {
             foreach (INamedTypeSymbol baseType in self.AllInterfaces) {
-                if (baseType.ToDisplayString() == targetDisplay) return true;
+                if (IsSameType(baseType, target, targetDisplay)) return true;
             }
             return false;
         }
-        if (target.TypeKind != TypeKind.Class) {
-            return false;
-        }
+        // 结构体也是有隐式超类的
         {
             INamedTypeSymbol baseType = self.BaseType;
             while (baseType != null) {
-                if (baseType.ToDisplayString() == targetDisplay) return true;
+                if (IsSameType(baseType, target, targetDisplay)) return true;
                 baseType = baseType.BaseType;
             }
         }
         return false;
-        // SymbolEqualityComparer comparer = SymbolEqualityComparer.Default;
-        // if (self.Equals(target, comparer)) {
-        //     return true;
-        // }
-        // // 结构体也可以实现接口
-        // if (target.TypeKind == TypeKind.Interface) {
-        //     foreach (INamedTypeSymbol baseType in self.AllInterfaces) {
-        //         if (baseType.Equals(target, comparer)) return true;
-        //     }
-        //     return false;
-        // }
-        // if (target.TypeKind != TypeKind.Class) {
-        //     return false;
-        // }
-        // {
-        //     INamedTypeSymbol baseType = self.BaseType;
-        //     while (baseType != null) {
-        //         if (baseType.Equals(target, comparer)) return true;
-        //         baseType = baseType.BaseType;
-        //     }
-        // }
-        // return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsSameType(ITypeSymbol self, ITypeSymbol target, string targetDisplay) {
+        return ReferenceEquals(self, target)
+               || self.Equals(target, SymbolEqualityComparer.Default)
+               || self.ToDisplayString() == targetDisplay;
     }
 
     /// <summary>
