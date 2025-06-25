@@ -419,13 +419,12 @@ public static class DsonTexts
         int value = 0;
 #if NET6_0_OR_GREATER
         foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
-            value |= int.Parse(e);
-        }
 #else
         foreach (string e in str.Split('|')) {
-            value |= int.Parse(e.Trim());
-        }
+            e = e.Trim();
 #endif
+            value |= int.Parse(e);
+        }
         return value;
     }
 
@@ -433,13 +432,12 @@ public static class DsonTexts
         long value = 0;
 #if NET6_0_OR_GREATER
         foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
-            value |= long.Parse(e);
-        }
 #else
         foreach (string e in str.Split('|')) {
-            value |= long.Parse(e.Trim());
-        }
+            e = e.Trim();
 #endif
+            value |= long.Parse(e);
+        }
         return value;
     }
 

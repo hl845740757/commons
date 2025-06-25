@@ -44,7 +44,7 @@ public class MethodSpec : ISpecification
     public readonly CodeBlock? code; // 方法体(委托一定没有，接口可能有，也可能没有)
     public readonly CodeBlock? constructorInvoker; // 调用其它构造方法的代码
 
-    public MethodSpec(Builder builder) {
+    private MethodSpec(Builder builder) {
         kind = builder.kind;
         name = builder.name;
         modifiers = builder.modifiers;
@@ -350,6 +350,11 @@ public class MethodSpec : ISpecification
             if (codeBlock == null) throw new ArgumentNullException(nameof(codeBlock));
             if (this.constructorInvoker != null) throw new InvalidOperationException("constructorInvoker was already set");
             this.constructorInvoker = codeBlock;
+            return this;
+        }
+
+        public Builder ConstructorInvoker(string format, params object?[] args) {
+            ConstructorInvoker(CodeBlock.Of(format, args));
             return this;
         }
     }

@@ -91,7 +91,7 @@ public static partial class CollectionUtil
     /// <param name="other"></param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    public static bool SequenceEquals<T>(ICollection<T>? self, ICollection<T>? other) {
+    public static bool SequenceEqual<T>(ICollection<T>? self, ICollection<T>? other) {
         if (ReferenceEquals(self, other)) return true;
         if (self == null || other == null) return false;
         return self.SequenceEqual(other);
@@ -101,7 +101,7 @@ public static partial class CollectionUtil
     /// 比较字典的相等性
     /// (主要服务与代码生成，辅助处理null)
     /// </summary>
-    public static bool SequenceEquals<TKey, TValue>(IDictionary<TKey, TValue>? self, IDictionary<TKey, TValue>? other) {
+    public static bool SequenceEqual<TKey, TValue>(IDictionary<TKey, TValue>? self, IDictionary<TKey, TValue>? other) {
         if (ReferenceEquals(self, other)) return true;
         if (self == null || other == null) return false;
         // 转成元组执行值相等 -- 元组有更高效的Equals实现

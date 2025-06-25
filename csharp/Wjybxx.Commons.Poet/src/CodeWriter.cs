@@ -743,11 +743,9 @@ public sealed class CodeWriter
     #region enumvalue
 
     private void EmitEnumValue(EnumValueSpec enumValueSpec) {
-        // 发射空代码确保位于新行
-        Emit(CodeBlock.Empty, true);
-        if (!enumValueSpec.document.IsEmpty) {
-            EmitDocument(enumValueSpec.document);
-        }
+        EmitDocument(enumValueSpec.document);
+        Emit(CodeBlock.Empty, true); // 发射空代码确保位于新行
+        EmitAttributes(enumValueSpec.attributes);
         if (!enumValueSpec.number.HasValue) {
             Emit("$L,", enumValueSpec.name);
         } else {
@@ -1200,12 +1198,15 @@ public sealed class CodeWriter
                 typeNameStack.Push(".");
                 current = current.enclosingClassName;
             }
-            // 记录命名空间
+            if (string.IsNullOrWhiteSpace(current.ns)) {
+                return;
+            }
+            // 记录命名空间 -- current现在是顶层类
             if (importableNamespaces.TryGetValue(current.ns, out string? alias) && alias != null) {
                 // 有命名空间别名时，使用别名引用Type
                 typeNameStack.Push(".");
                 typeNameStack.Push(alias);
-            } else if (className.Keyword == null
+            } else if (current.Keyword == null
                        && namespaceStack.TryPeek(out NamespaceSpec? namespaceSpec)
                        && namespaceSpec.name != current.ns) {
                 // 基于关键字时不引入system，同命名空间下时也不引入

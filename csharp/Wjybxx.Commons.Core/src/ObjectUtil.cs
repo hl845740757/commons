@@ -376,6 +376,25 @@ public static class ObjectUtil
         return result;
     }
 
+    /// <summary>
+    /// 拆分字符串，并对返回的结果进行Trim
+    /// </summary>
+    /// <param name="str"></param>
+    /// <param name="c"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string[] SplitAndTrim(string str, char c) {
+#if NET6_0_OR_GREATER
+        return str.Split(c, StringSplitOptions.TrimEntries);
+#else
+        string[] result = str.Split(c);
+        for (int i = 0; i < result.Length; i++) {
+            result[i] = result[i].Trim();
+        }
+        return result;
+#endif
+    }
+
     #endregion
 }
 }

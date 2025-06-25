@@ -253,7 +253,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             if (codecImpl == null) {
                 throw new IllegalStateException();
             }
-            return codecImpl.GetName(key);
+            return codecImpl.GetNumber(key).ToString();
         }
         return key switch
         {

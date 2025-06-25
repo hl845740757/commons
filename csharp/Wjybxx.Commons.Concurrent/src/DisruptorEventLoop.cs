@@ -542,8 +542,8 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         }
     }
 
-    /** 迭代所有模块 */
-    protected void UpdateModules() {
+    /** 迭代所有模块 -- 重写该方法可实现自己的协程调度 */
+    protected virtual void UpdateModules() {
         long tickTime = this.TickTime;
         while (agent.CheckMainLoop(tickTime)) {
             agent.BeforeMainLoop(tickTime);
@@ -578,6 +578,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OnInternalEvent(long curSequence, ref T evt) {
         int type = evt.Type;
         if (type == TYPE_REMOVE_SCHEDULE) {

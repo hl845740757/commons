@@ -57,5 +57,21 @@ public class CodeBlockSpec : ISpecification
         /// </summary>
         Document,
     }
+
+    #region builder/get
+
+    public CodeBlockSpec WithKind(Kind kind) {
+        return new CodeBlockSpec(code, kind);
+    }
+
+    public static CodeBlockSpec Get(CodeBlock code, Kind kind = Kind.Code) {
+        return new CodeBlockSpec(code, kind);
+    }
+
+    public static CodeBlockSpec Get(string format, params object?[] args) {
+        return new CodeBlockSpec(CodeBlock.Of(format, args));
+    }
+
+    #endregion
 }
 }

@@ -53,6 +53,8 @@ public class ImportSpec : IEquatable<ImportSpec>, ISpecification
     public string Name => name;
     public SpecType SpecType => SpecType.Import;
 
+    #region builder/get
+
     /// <summary>
     /// 设置静态导入
     /// </summary>
@@ -86,6 +88,8 @@ public class ImportSpec : IEquatable<ImportSpec>, ISpecification
     public static ImportSpec GetStatic(string name) {
         return new ImportSpec(name, null, true);
     }
+
+    #endregion
 
     #region equals
 

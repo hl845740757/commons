@@ -50,63 +50,6 @@ public static partial class CollectionUtil
 
     #endregion
 
-    #region equals/hashcode
-
-    public static bool SequenceEqual<T>(IList<T>? lhs, IList<T>? rhs) where T : class {
-        if (ReferenceEquals(lhs, rhs)) return true;
-        if (lhs == null || rhs == null) return false;
-        int count = lhs.Count;
-        if (count != rhs.Count) return false;
-        for (int idx = 0; idx < count; idx++) {
-            if (!Equals(lhs[idx], rhs[idx])) return false;
-        }
-        return true;
-    }
-
-    public static bool SequenceEqual<T>(IList<T>? lhs, IList<T>? rhs, IEqualityComparer<T> comparer) {
-        if (ReferenceEquals(lhs, rhs)) return true;
-        if (lhs == null || rhs == null) return false;
-        int count = lhs.Count;
-        if (count != rhs.Count) return false;
-        for (int idx = 0; idx < count; idx++) {
-            if (!comparer.Equals(lhs[idx], rhs[idx])) return false;
-        }
-        return true;
-    }
-
-    public static int HashCode<T>(IList<T?>? list) where T : class {
-        if (list == null) {
-            return 0;
-        }
-        int r = 1;
-        for (int i = 0; i < list.Count; i++) {
-            T e = list[i];
-            r = r * 31 + (e == null ? 0 : e.GetHashCode());
-        }
-        return r;
-    }
-
-    public static int HashCode<T>(IList<T?>? list, IEqualityComparer<T> hashFunc) {
-        if (list == null) {
-            return 0;
-        }
-        int r = 1;
-        if (typeof(T).IsValueType) {
-            for (int i = 0; i < list.Count; i++) {
-                T e = list[i];
-                r = r * 31 + hashFunc.GetHashCode(e);
-            }
-        } else {
-            for (int i = 0; i < list.Count; i++) {
-                T e = list[i];
-                r = r * 31 + (e == null ? 0 : hashFunc.GetHashCode(e));
-            }
-        }
-        return r;
-    }
-
-    #endregion
-
 #nullable disable
 
     #region index

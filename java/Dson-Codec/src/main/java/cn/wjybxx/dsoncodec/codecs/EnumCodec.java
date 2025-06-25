@@ -81,15 +81,9 @@ public final class EnumCodec<T extends Enum<T>> implements IEnumCodec<T> {
         for (int idx = 0; idx < enumConstants.length; idx++) {
             T value = enumConstants[idx];
             int number = value instanceof EnumLite enumLite ? enumLite.getNumber() : value.ordinal();
-
             // 可通过注解指定DsonName -- java的枚举常量在所有其它字段之前
             DsonProperty annotation = enumFields[idx].getAnnotation(DsonProperty.class);
-            String name;
-            if (annotation != null && !ObjectUtils.isBlank(annotation.name())) {
-                name = annotation.name();
-            } else {
-                name = value.name();
-            }
+            String name = annotation != null && !ObjectUtils.isBlank(annotation.name()) ? annotation.name() : value.name();
 
             EnumValueInfo<T> valueInfo = new EnumValueInfo<>(value, number, name);
             value2EnumMap.put(valueInfo.value, valueInfo);

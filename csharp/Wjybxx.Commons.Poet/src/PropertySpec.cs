@@ -45,7 +45,7 @@ public class PropertySpec : ISpecification
     public readonly bool hasGetter; // 是否有getter
     public readonly bool hasSetter; // 是否有setter
 
-    public PropertySpec(Builder builder) {
+    private PropertySpec(Builder builder) {
         type = builder.type;
         name = builder.name;
         indexType = builder.indexType;

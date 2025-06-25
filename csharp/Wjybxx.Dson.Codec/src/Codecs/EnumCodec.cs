@@ -73,11 +73,12 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
     /// 
     /// </summary>
     /// <param name="valueInfos">枚举值信息，允许自定义枚举序列化数据</param>
-    public EnumCodec(List<EnumValueInfo<T>> valueInfos) {
+    /// <param name="isFlags">是否是Flags类型</param>
+    public EnumCodec(List<EnumValueInfo<T>> valueInfos, bool? isFlags = null) {
         _value2EnumDic = new Dictionary<T, EnumValueInfo<T>>(valueInfos.Count);
         _number2EnumDic = new Dictionary<int, EnumValueInfo<T>>(valueInfos.Count);
         _name2EnumDic = new Dictionary<string, EnumValueInfo<T>>(valueInfos.Count);
-        _isFlags = typeof(T).IsDefined(typeof(FlagsAttribute));
+        _isFlags = isFlags ?? typeof(T).IsDefined(typeof(FlagsAttribute));
 
         foreach (EnumValueInfo<T> valueInfo in valueInfos) {
             _value2EnumDic[valueInfo.value] = valueInfo;
@@ -98,15 +99,9 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
         for (int idx = 0; idx < values.Length; idx++) {
             T value = values[idx];
             int number = EnumUtil.GetIntValue(value);
-
             // 可通过注解指定DsonName -- 第一个元素是占位符，查询枚举关联的Field时需要+1
             DsonPropertyAttribute attribute = enumFields[idx + 1].GetCustomAttribute<DsonPropertyAttribute>();
-            string name;
-            if (attribute != null && !string.IsNullOrWhiteSpace(attribute.Name)) {
-                name = attribute.Name;
-            } else {
-                name = names[idx];
-            }
+            string name = attribute != null && !string.IsNullOrWhiteSpace(attribute.Name) ? attribute.Name : names[idx];
 
             EnumValueInfo<T> valueInfo = new EnumValueInfo<T>(value, number, name);
             _value2EnumDic[valueInfo.value] = valueInfo;
@@ -188,6 +183,10 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
             if (_name2EnumDic.TryGetValue(name, out EnumValueInfo<T> valueInfo)) {
                 return valueInfo.value;
             }
+            if (name.Contains('|')) {
+                int number = ParseFlags(name);
+                return (T)Enum.ToObject(typeof(T), number);
+            }
             throw new DsonCodecException($"invalid enum value: {name}, type: {typeof(T)}");
         } else {
             int number = reader.ReadInt(null);
@@ -197,6 +196,28 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
             // 不做number转enum支持 -- 存在跨语言兼容性问题
             throw new DsonCodecException($"invalid enum value: {number}, type: {typeof(T)}");
         }
+    }
+
+    private int ParseFlags(string str) {
+        int value = 0;
+#if NET6_0_OR_GREATER
+        foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
+#else
+        foreach (string e in str.Split('|')) {
+            e = e.Trim();
+#endif
+            // 枚举Flags更常见的应当是name
+            if (_name2EnumDic.TryGetValue(e, out EnumValueInfo<T> valueInfo)) {
+                value |= valueInfo.number;
+                continue;
+            }
+            if (int.TryParse(e, out int number)) {
+                value |= number;
+                continue;
+            }
+            throw new DsonCodecException($"invalid enum value: {e}, type: {typeof(T)}");
+        }
+        return value;
     }
 }
 }

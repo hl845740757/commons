@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 
 namespace Wjybxx.Commons.Poet
 {
@@ -31,11 +32,21 @@ public class EnumValueSpec : ISpecification
     public readonly int? number;
     /** 枚举的注释 */
     public readonly CodeBlock document;
+    /** 枚举的注解 */
+    public readonly IList<AttributeSpec> attributes;
 
     public EnumValueSpec(string name, int? number = null, CodeBlock? document = null) {
         this.name = name ?? throw new ArgumentNullException(nameof(name));
         this.number = number;
         this.document = document ?? CodeBlock.Empty;
+        this.attributes = Util.EmptyList<AttributeSpec>();
+    }
+
+    private EnumValueSpec(Builder builder) {
+        this.name = builder.name;
+        this.number = builder.number;
+        this.document = builder.document.Build();
+        this.attributes = Util.ToImmutableList(builder.attributes);
     }
 
     public string Name => name;
@@ -47,8 +58,8 @@ public class EnumValueSpec : ISpecification
 
     #region builder
 
-    public static EnumValueSpec Get(string name, int? number = null) {
-        return new EnumValueSpec(name, number);
+    public static EnumValueSpec Get(string name, int? number = null, CodeBlock? document = null) {
+        return new EnumValueSpec(name, number, document);
     }
 
     public static Builder NewBuilder(string name, int? number = null) {
@@ -57,7 +68,8 @@ public class EnumValueSpec : ISpecification
 
     public Builder ToBuilder() {
         return new Builder(name, number)
-            .AddDocument(document);
+            .AddDocument(document)
+            .AddAttributes(attributes);
     }
 
     #endregion
@@ -67,6 +79,7 @@ public class EnumValueSpec : ISpecification
         public readonly string name;
         public readonly int? number;
         public readonly CodeBlock.Builder document = CodeBlock.NewBuilder();
+        public readonly List<AttributeSpec> attributes = new List<AttributeSpec>();
 
         internal Builder(string name, int? number) {
             this.name = name ?? throw new ArgumentNullException(nameof(name));
@@ -74,7 +87,7 @@ public class EnumValueSpec : ISpecification
         }
 
         public EnumValueSpec Build() {
-            return new EnumValueSpec(name, number, document.Build());
+            return new EnumValueSpec(this);
         }
 
         public Builder AddDocument(string format, params object?[] args) {
@@ -84,6 +97,27 @@ public class EnumValueSpec : ISpecification
 
         public Builder AddDocument(CodeBlock codeBlock) {
             document.Add(codeBlock);
+            return this;
+        }
+        
+        public Builder AddAttribute(AttributeSpec attributeSpec) {
+            if (attributeSpec == null) throw new ArgumentNullException(nameof(attributeSpec));
+            this.attributes.Add(attributeSpec);
+            return this;
+        }
+
+        public Builder AddAttribute(ClassName attributeSpec) {
+            if (attributeSpec == null) throw new ArgumentNullException(nameof(attributeSpec));
+            this.attributes.Add(AttributeSpec.NewBuilder(attributeSpec).Build());
+            return this;
+        }
+
+        public Builder AddAttributes(IEnumerable<AttributeSpec> attributeSpecs) {
+            if (attributeSpecs == null) throw new ArgumentNullException(nameof(attributeSpecs));
+            foreach (AttributeSpec spec in attributeSpecs) {
+                if (spec == null) throw new ArgumentException("null element");
+                this.attributes.Add(spec);
+            }
             return this;
         }
     }
