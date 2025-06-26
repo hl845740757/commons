@@ -161,9 +161,9 @@ public static partial class CollectionUtil
     /// （暂不递归）
     /// </summary>
     [Beta]
-    public static string ToString<T>(IEnumerable<T>? collection) {
+    public static string ToString<T>(IEnumerable<T>? collection, StringBuilder? sb = null) {
         if (collection == null) return "null";
-        StringBuilder sb = new StringBuilder(64);
+        sb ??= new StringBuilder(32);
         sb.Append('[');
         bool first = true;
         foreach (T value in collection) {
@@ -172,11 +172,7 @@ public static partial class CollectionUtil
             } else {
                 sb.Append(',');
             }
-            if (value == null) {
-                sb.Append("null");
-            } else {
-                sb.Append(value.ToString());
-            }
+            sb.Append(value == null ? "null" : value.ToString()); // 系统库默认的约定是null不打印
         }
         sb.Append(']');
         return sb.ToString();
@@ -190,9 +186,9 @@ public static partial class CollectionUtil
     /// </code>
     /// </summary>
     [Beta]
-    public static string ToString<TKey, TValue>(IDictionary<TKey, TValue>? dictionary) {
+    public static string ToString<TKey, TValue>(IDictionary<TKey, TValue>? dictionary, StringBuilder? sb = null) {
         if (dictionary == null) return "null";
-        StringBuilder sb = new StringBuilder(64);
+        sb ??= new StringBuilder(64);
         sb.Append('[');
         bool first = true;
         foreach (KeyValuePair<TKey, TValue> pair in dictionary) {
@@ -202,17 +198,9 @@ public static partial class CollectionUtil
                 sb.Append(',');
             }
             sb.Append('[');
-            if (pair.Key == null) {
-                sb.Append("null=");
-            } else {
-                sb.Append(pair.Key.ToString());
-                sb.Append('=');
-            }
-            if (pair.Value == null) {
-                sb.Append("null");
-            } else {
-                sb.Append(pair.Value.ToString());
-            }
+            sb.Append(pair.Key == null ? "null" : pair.Key.ToString());
+            sb.Append(':');
+            sb.Append(pair.Value == null ? "null" : pair.Value.ToString()); // 系统库默认的约定是null不打印
             sb.Append(']');
         }
         sb.Append(']');

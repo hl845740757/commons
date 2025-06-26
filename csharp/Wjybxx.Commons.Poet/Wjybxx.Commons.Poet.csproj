@@ -9,8 +9,8 @@
         <PackageVersion>1.5.0-rc1</PackageVersion>
 
         <Title>Wjybxx.Commons.Poet</Title>
-        <Description>结构化代码生成工具</Description>
-        <PackageTags>wjybxx;SourceGenerator;Javapoet</PackageTags>
+        <Description>参照Javapoet实现的代码生成工具，可能是最好的csharp代码生成器</Description>
+        <PackageTags>wjybxx;SourceGenerator;Javapoet;CsharpPoet</PackageTags>
 
         <Authors>wjybxx(845740757@qq.com)</Authors>
         <Owners>wjybxx(845740757@qq.com)</Owners>
