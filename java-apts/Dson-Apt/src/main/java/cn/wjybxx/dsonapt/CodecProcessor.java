@@ -44,6 +44,8 @@ public class CodecProcessor extends MyAbstractProcessor {
     private static final String CNAME_NumberStyle = "cn.wjybxx.dson.text.NumberStyle";
     private static final String CNAME_StringStyle = "cn.wjybxx.dson.text.StringStyle";
     private static final String CNAME_ObjectStyle = "cn.wjybxx.dson.text.ObjectStyle";
+
+    private static final String CNAME_Binary = "cn.wjybxx.dson.types.Binary";
     private static final String CNAME_ObjectPtr = "cn.wjybxx.dson.types.ObjectPtr";
     private static final String CNAME_ObjectLitePtr = "cn.wjybxx.dson.types.ObjectLitePtr";
     private static final String CNAME_Timestamp = "cn.wjybxx.dson.types.Timestamp";
@@ -115,6 +117,7 @@ public class CodecProcessor extends MyAbstractProcessor {
     public TypeMirror type_String;
     public TypeMirror type_Object;
     public TypeMirror type_LocalDateTime;
+    public TypeMirror type_Binary;
     public TypeMirror type_Ptr;
     public TypeMirror type_LitePtr;
     public TypeMirror type_Timestamp;
@@ -169,6 +172,7 @@ public class CodecProcessor extends MyAbstractProcessor {
         type_String = elementUtils.getTypeElement(String.class.getCanonicalName()).asType();
         type_Object = elementUtils.getTypeElement(Object.class.getCanonicalName()).asType();
         type_LocalDateTime = elementUtils.getTypeElement(LocalDateTime.class.getCanonicalName()).asType();
+        type_Binary =elementUtils.getTypeElement(CNAME_Binary).asType();
         type_Ptr = elementUtils.getTypeElement(CNAME_ObjectPtr).asType();
         type_LitePtr = elementUtils.getTypeElement(CNAME_ObjectLitePtr).asType();
         type_Timestamp = elementUtils.getTypeElement(CNAME_Timestamp).asType();
@@ -679,6 +683,10 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     protected boolean isString(TypeMirror typeMirror) {
         return typeUtils.isSameType(typeMirror, type_String);
+    }
+
+    protected boolean isBinary(TypeMirror typeMirror) {
+        return typeUtils.isSameType(typeMirror, type_Binary);
     }
 
     protected boolean isObjectPtr(TypeMirror typeMirror) {

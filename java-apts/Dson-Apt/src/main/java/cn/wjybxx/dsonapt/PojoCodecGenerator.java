@@ -419,6 +419,9 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         if (processor.isByteArray(typeMirror)) {
             return MNAME_WRITE_BYTES;
         }
+        if (processor.isBinary(typeMirror)) {
+            return MNAME_WRITE_BINARY;
+        }
         if (processor.isObjectPtr(typeMirror)) {
             return MNAME_WRITE_PTR;
         }
@@ -446,6 +449,9 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         if (processor.isByteArray(typeMirror)) {
             return MNAME_READ_BYTES;
         }
+        if (processor.isBinary(typeMirror)) {
+            return MNAME_READ_BINARY;
+        }
         if (processor.isObjectPtr(typeMirror)) {
             return MNAME_READ_PTR;
         }
@@ -469,6 +475,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private static final String MNAME_READ_BYTES = "readBytes";
     private static final String MNAME_READ_OBJECT = "readObject";
 
+    private static final String MNAME_READ_BINARY = "readBinary";
     private static final String MNAME_READ_PTR = "readPtr";
     private static final String MNAME_READ_LITE_PTR = "readLitePtr";
     private static final String MNAME_READ_DATETIME = "readDateTime";
@@ -478,6 +485,7 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private static final String MNAME_WRITE_BYTES = "writeBytes";
     private static final String MNAME_WRITE_OBJECT = "writeObject";
 
+    private static final String MNAME_WRITE_BINARY = "writeBinary";
     private static final String MNAME_WRITE_PTR = "writePtr";
     private static final String MNAME_WRITE_LITE_PTR = "writeLitePtr";
     private static final String MNAME_WRITE_DATETIME = "writeDateTime";

@@ -164,6 +164,20 @@ public static partial class CollectionUtil
     public static string ToString<T>(IEnumerable<T>? collection, StringBuilder? sb = null) {
         if (collection == null) return "null";
         sb ??= new StringBuilder(32);
+        ToStringHelper(collection, sb);
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// 打印集合的详细信息
+    /// （暂不递归）
+    /// </summary>
+    [Beta]
+    public static void ToStringHelper<T>(IEnumerable<T>? collection, StringBuilder sb) {
+        if (collection == null) {
+            sb.Append("null");
+            return;
+        }
         sb.Append('[');
         bool first = true;
         foreach (T value in collection) {
@@ -175,7 +189,6 @@ public static partial class CollectionUtil
             sb.Append(value == null ? "null" : value.ToString()); // 系统库默认的约定是null不打印
         }
         sb.Append(']');
-        return sb.ToString();
     }
 
     /// <summary>
@@ -189,6 +202,16 @@ public static partial class CollectionUtil
     public static string ToString<TKey, TValue>(IDictionary<TKey, TValue>? dictionary, StringBuilder? sb = null) {
         if (dictionary == null) return "null";
         sb ??= new StringBuilder(64);
+        ToStringHelper(dictionary, sb);
+        return sb.ToString();
+    }
+
+    [Beta]
+    public static void ToStringHelper<TKey, TValue>(IDictionary<TKey, TValue>? dictionary, StringBuilder sb) {
+        if (dictionary == null) {
+            sb.Append("null");
+            return;
+        }
         sb.Append('[');
         bool first = true;
         foreach (KeyValuePair<TKey, TValue> pair in dictionary) {
@@ -204,7 +227,6 @@ public static partial class CollectionUtil
             sb.Append(']');
         }
         sb.Append(']');
-        return sb.ToString();
     }
 
     #endregion

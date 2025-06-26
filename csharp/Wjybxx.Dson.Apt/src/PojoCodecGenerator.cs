@@ -432,6 +432,9 @@ internal class PojoCodecGenerator
         if (fieldType.IsByteArray()) {
             return MNAME_WRITE_BYTES;
         }
+        if (fieldType.IsSameType(processor.type_Binary)) {
+            return MNAME_WRITE_BINARY;
+        }
         if (fieldType.IsSameType(processor.type_Ptr)) {
             return MNAME_WRITE_PTR;
         }
@@ -459,6 +462,9 @@ internal class PojoCodecGenerator
         if (fieldType.IsByteArray()) {
             return MNAME_READ_BYTES;
         }
+        if (fieldType.IsSameType(processor.type_Binary)) {
+            return MNAME_READ_BINARY;
+        }
         if (fieldType.IsSameType(processor.type_Ptr)) {
             return MNAME_READ_PTR;
         }
@@ -476,6 +482,7 @@ internal class PojoCodecGenerator
 
     private const string MNAME_READ_STRING = "ReadString";
     private const string MNAME_READ_BYTES = "ReadBytes";
+    private const string MNAME_READ_BINARY = "ReadBinary";
     private const string MNAME_READ_OBJECT = "ReadObject";
 
     private const string MNAME_READ_PTR = "ReadPtr";
@@ -485,6 +492,7 @@ internal class PojoCodecGenerator
 
     private const string MNAME_WRITE_STRING = "WriteString";
     private const string MNAME_WRITE_BYTES = "WriteBytes";
+    private const string MNAME_WRITE_BINARY = "WriteBinary";
     private const string MNAME_WRITE_OBJECT = "WriteObject";
 
     private const string MNAME_WRITE_PTR = "WritePtr";
