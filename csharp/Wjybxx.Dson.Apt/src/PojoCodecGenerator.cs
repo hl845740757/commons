@@ -45,8 +45,8 @@ internal class PojoCodecGenerator
     private bool containsNewInstanceMethod;
     private bool containsReadObjectMethod;
     private bool containsWriteObjectMethod;
-    private bool containsBeforeEncodeMethod;
-    private bool containsAfterDecodeMethod;
+    private (bool contains, int argCount) containsBeforeEncodeMethod;
+    private (bool contains, int argCount) containsAfterDecodeMethod;
 
     private MethodSpec.Builder newInstanceMethodBuilder;
     private MethodSpec.Builder readFieldsMethodBuilder;
@@ -185,10 +185,16 @@ internal class PojoCodecGenerator
                 return true;
             }
         } else {
-            if (containsBeforeEncodeMethod) {
-                // inst.BeforeEncode(writer.Options);
-                beforeEncodeMethodBuilder.codeBuilder.AddStatement("inst.$L(writer.Options)",
-                    CodecProcessor.MNAME_BEFORE_ENCODE);
+            if (containsBeforeEncodeMethod.contains) {
+                if (containsBeforeEncodeMethod.argCount == 1) {
+                    // inst.BeforeEncode(writer.Options);
+                    beforeEncodeMethodBuilder.codeBuilder.AddStatement("inst.$L(writer.Options)",
+                        CodecProcessor.MNAME_BEFORE_ENCODE);
+                } else {
+                    // inst.BeforeEncode();
+                    beforeEncodeMethodBuilder.codeBuilder.AddStatement("inst.$L()",
+                        CodecProcessor.MNAME_BEFORE_ENCODE);
+                }
                 return true;
             }
         }
@@ -208,10 +214,16 @@ internal class PojoCodecGenerator
                 return true;
             }
         } else {
-            if (containsAfterDecodeMethod) {
-                // inst.AfterDecode(reader.Options);
-                afterDecodeMethodBuilder.codeBuilder.AddStatement("inst.$L(reader.Options)",
-                    CodecProcessor.MNAME_AFTER_DECODE);
+            if (containsAfterDecodeMethod.contains) {
+                if (containsAfterDecodeMethod.argCount == 1) {
+                    // inst.AfterDecode(reader.Options);
+                    afterDecodeMethodBuilder.codeBuilder.AddStatement("inst.$L(reader.Options)",
+                        CodecProcessor.MNAME_AFTER_DECODE);
+                } else {
+                    // inst.AfterDecode();
+                    afterDecodeMethodBuilder.codeBuilder.AddStatement("inst.$L()",
+                        CodecProcessor.MNAME_AFTER_DECODE);
+                }
                 return true;
             }
         }

@@ -467,30 +467,43 @@ public class CodecProcessor
     }
 
     /** 是否包含 readerObject(reader) 实例方法 */
-    internal bool ContainsReadObjectMethod(List<MemberInfo> allFieldsAndMethodWithInherit) {
-        return ContainsHookMethod(allFieldsAndMethodWithInherit, MNAME_READ_OBJECT, type_DsonReader);
+    internal bool ContainsReadObjectMethod(List<MemberInfo> allMembers) {
+        return ContainsHookMethod(allMembers, MNAME_READ_OBJECT, type_DsonReader);
     }
 
     /** 是否包含 writeObject(writer) 实例方法 */
-    internal bool ContainsWriteObjectMethod(List<MemberInfo> allFieldsAndMethodWithInherit) {
-        return ContainsHookMethod(allFieldsAndMethodWithInherit, MNAME_WRITE_OBJECT, type_DsonWriter);
+    internal bool ContainsWriteObjectMethod(List<MemberInfo> allMembers) {
+        return ContainsHookMethod(allMembers, MNAME_WRITE_OBJECT, type_DsonWriter);
     }
 
+
     /** 是否包含 beforeEncode 实例方法 */
-    internal bool ContainsBeforeEncodeMethod(List<MemberInfo> allFieldsAndMethodWithInherit) {
-        return ContainsHookMethod(allFieldsAndMethodWithInherit, MNAME_BEFORE_ENCODE, type_Options);
+    internal (bool contains, int argCount) ContainsBeforeEncodeMethod(List<MemberInfo> allMembers) {
+        if (ContainsHookMethod(allMembers, MNAME_BEFORE_ENCODE, type_Options)) {
+            return (true, 1);
+        }
+        if (ContainsNoArgsHookMethod(allMembers, MNAME_BEFORE_ENCODE)) {
+            return (true, 0);
+        }
+        return (false, 0);
     }
 
     /** 是否包含 afterDecode 实例方法 */
-    internal bool ContainsAfterDecodeMethod(List<MemberInfo> allFieldsAndMethodWithInherit) {
-        return ContainsHookMethod(allFieldsAndMethodWithInherit, MNAME_AFTER_DECODE, type_Options);
+    internal (bool contains, int argCount) ContainsAfterDecodeMethod(List<MemberInfo> allMembers) {
+        if (ContainsHookMethod(allMembers, MNAME_AFTER_DECODE, type_Options)) {
+            return (true, 1);
+        }
+        if (ContainsNoArgsHookMethod(allMembers, MNAME_AFTER_DECODE)) {
+            return (true, 0);
+        }
+        return (false, 0);
     }
 
     /** 是否包含指定参数的钩子方法 */
-    private bool ContainsHookMethod(IEnumerable<MemberInfo> allFieldsAndMethodWithInherit, string methodName, Type argType) {
-        return allFieldsAndMethodWithInherit
+    private bool ContainsHookMethod(IEnumerable<MemberInfo> allMembers, string methodName, Type argType) {
+        return allMembers
             .Where(e => e.MemberType == MemberTypes.Method)
-            .Select(e => (MethodInfo)e)
+            .Cast<MethodInfo>()
             .Any(e => {
                 if (!e.IsPublic || e.Name != methodName) {
                     return false;
@@ -500,6 +513,18 @@ public class CodecProcessor
                     return false;
                 }
                 return parameterInfos[0].ParameterType == argType;
+            });
+    }
+
+    private bool ContainsNoArgsHookMethod(IEnumerable<MemberInfo> allMembers, string methodName) {
+        return allMembers
+            .Where(e => e.MemberType == MemberTypes.Method)
+            .Cast<MethodInfo>()
+            .Any(e => {
+                if (!e.IsPublic || e.Name != methodName) {
+                    return false;
+                }
+                return e.GetParameters().Length == 0;
             });
     }
 

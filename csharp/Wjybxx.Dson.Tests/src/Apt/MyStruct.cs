@@ -30,6 +30,11 @@ public struct MyStruct
     public float x;
     public float y;
 
+    // 接收options参数
     public void BeforeEncode(ConverterOptions options) {
+    }
+    
+    // 实例方法钩子支持无参
+    public void AfterDecode() {
     }
 }

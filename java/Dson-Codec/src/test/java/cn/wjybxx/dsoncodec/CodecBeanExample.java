@@ -95,7 +95,9 @@ public class CodecBeanExample {
     public void readCustom(DsonObjectReader reader, String name) {
 
     }
+    //
 
+    /** 实例方法钩子options可选 */
     public void beforeEncode(ConverterOptions options) {
 
     }
@@ -113,7 +115,8 @@ public class CodecBeanExample {
 
     }
 
-    public void afterDecode(ConverterOptions options) {
+    /** 实例方法钩子支持无参 */
+    public void afterDecode() {
         if (age < 1) throw new IllegalStateException();
     }
 

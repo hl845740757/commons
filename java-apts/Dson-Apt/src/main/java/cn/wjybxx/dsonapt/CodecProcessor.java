@@ -526,13 +526,25 @@ public class CodecProcessor extends MyAbstractProcessor {
     }
 
     /** 是否包含 beforeEncode 实例方法 */
-    public boolean containsBeforeEncodeMethod(List<? extends Element> allMembers) {
-        return containsHookMethod(allMembers, MNAME_BEFORE_ENCODE, typeMirror_Options);
+    public Map.Entry<Boolean, Integer> containsBeforeEncodeMethod(List<? extends Element> allMembers) {
+        if (containsHookMethod(allMembers, MNAME_BEFORE_ENCODE, typeMirror_Options)) {
+            return Map.entry(true, 1);
+        }
+        if (containsNoArgHookMethod(allMembers, MNAME_BEFORE_ENCODE)) {
+            return Map.entry(true, 0);
+        }
+        return Map.entry(false, 0);
     }
 
     /** 是否包含 afterDecode 实例方法 */
-    public boolean containsAfterDecodeMethod(List<? extends Element> allMembers) {
-        return containsHookMethod(allMembers, MNAME_AFTER_DECODE, typeMirror_Options);
+    public Map.Entry<Boolean, Integer> containsAfterDecodeMethod(List<? extends Element> allMembers) {
+        if (containsHookMethod(allMembers, MNAME_AFTER_DECODE, typeMirror_Options)) {
+            return Map.entry(true, 1);
+        }
+        if (containsNoArgHookMethod(allMembers, MNAME_AFTER_DECODE)) {
+            return Map.entry(true, 0);
+        }
+        return Map.entry(false, 0);
     }
 
     private boolean containsHookMethod(List<? extends Element> allMembers, String methodName, TypeMirror argTypeMirror) {
@@ -540,9 +552,18 @@ public class CodecProcessor extends MyAbstractProcessor {
                 .filter(e -> e.getKind() == ElementKind.METHOD)
                 .map(e -> (ExecutableElement) e)
                 .anyMatch(e -> e.getModifiers().contains(Modifier.PUBLIC)
-                        && e.getSimpleName().toString().equals(methodName)
                         && e.getParameters().size() > 0 // 有时可能需要多个参数
+                        && e.getSimpleName().toString().equals(methodName)
                         && AptUtils.isSameTypeIgnoreTypeParameter(typeUtils, e.getParameters().get(0).asType(), argTypeMirror));
+    }
+
+    private boolean containsNoArgHookMethod(List<? extends Element> allMembers, String methodName) {
+        return allMembers.stream()
+                .filter(e -> e.getKind() == ElementKind.METHOD)
+                .map(e -> (ExecutableElement) e)
+                .anyMatch(e -> e.getModifiers().contains(Modifier.PUBLIC)
+                        && e.getParameters().size() == 0 // 有时可能需要多个参数
+                        && e.getSimpleName().toString().equals(methodName));
     }
 
     // endregion

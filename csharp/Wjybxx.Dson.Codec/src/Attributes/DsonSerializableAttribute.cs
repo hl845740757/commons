@@ -37,7 +37,7 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 
 /// 普通类钩子方法：
 /// 1. 如果类提供了非私有的<code>ClassName(IDsonObjectReader)</code>的单参构造方法，将自动调用 -- 该方法可用于final和忽略字段。
-/// 2. 如果类提供了静态的<code>newInstance(IDsonObjectReader)</code>方法，将自动调用 -- 优先级高于构造方法。
+/// 2. 如果类提供了静态的<code>NewInstance(IDsonObjectReader)</code>方法，将自动调用 -- 优先级高于构造方法。
 /// 3. 如果类提供了非私有的<code>AfterDecode(ConverterOptions)</code>方法，且在options中启用，则自动调用 -- 通常用于数据转换，或构建缓存字段。
 /// 4. 如果类提供了非私有的<code>BeforeEncode(ConverterOptions)</code>方法，且在options中启用，则自动调用 -- 通常用于数据转换。
 /// 5. 如果类提供了非私有的<code>ReadObject(IDsonObjectReader)</code>方法，将自动调用 -- 该方法可用于忽略字段。
@@ -45,15 +45,15 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 7. 如果是通过<see cref="DsonCodecLinkerBeanAttribute"/>配置的类，这些方法都需要转换为静态方法。
 ///
 /// <pre><code>
-///   public void BeforeEncode(ConverterOptions options){}
-///   public void WriteObject(DsonObjectWriter writer){}
-///
-///   public static Bean newInstance(DsonObjectReader reader){}
+///   public static Bean NewInstance(DsonObjectReader reader){}
 ///   public void ReadObject(DsonObjectReader reader){}
-///   public void AfterDecode(ConverterOptions options){}
-///
-///   public void WriteField1(DsonObjectWriter writer, String dsonName){}
+///   public void AfterDecode(ConverterOptions options){} // 实例方法支持无参
+/// 
+///   public void BeforeEncode(ConverterOptions options){} // 实例方法支持无参
+///   public void WriteObject(DsonObjectWriter writer){}
+/// 
 ///   public void ReadField1(DsonObjectReader reader, String dsonName){}
+///   public void WriteField1(DsonObjectWriter writer, String dsonName){}
 /// </code></pre>
 ///
 /// <h3>序列化的字段</h3>

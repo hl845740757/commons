@@ -103,26 +103,22 @@ public static class ArrayUtil
     }
     // HashCode
 
-    public static int HashCode<T>(T?[]? array) where T : class {
+    public static int HashCode<T>(T?[]? array) {
         if (array == null) {
             return 0;
         }
         int r = 1;
-        for (int i = 0; i < array.Length; i++) {
-            T e = array[i];
-            r = r * 31 + (e == null ? 0 : e.GetHashCode());
-        }
-        return r;
-    }
-
-    public static int HashCode<T>(T?[]? array, Func<T, int> hashFunc) {
-        if (array == null) {
-            return 0;
-        }
-        int r = 1;
-        for (int i = 0; i < array.Length; i++) {
-            T e = array[i];
-            r = r * 31 + hashFunc(e);
+        if (typeof(T).IsValueType) { // Nullable<T>也是安全的
+            EqualityComparer<T> comparer = EqualityComparer<T>.Default;
+            for (int i = 0; i < array.Length; i++) {
+                T e = array[i];
+                r = r * 31 + comparer.GetHashCode(e);
+            }
+        } else {
+            for (int i = 0; i < array.Length; i++) {
+                T e = array[i];
+                r = r * 31 + (e == null ? 0 : e.GetHashCode());
+            }
         }
         return r;
     }

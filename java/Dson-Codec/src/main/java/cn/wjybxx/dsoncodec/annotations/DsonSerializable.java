@@ -48,15 +48,15 @@ import java.lang.annotation.*;
  * 7. 如果是通过{@link DsonCodecLinkerBean}配置的类，这些方法都需要转换为静态方法。
  *
  * <pre> {@code
- *      public void beforeEncode(ConverterOptions options){}
- *      public void writeObject(DsonObjectWriter writer){}
- *
  *      public static Bean newInstance(DsonObjectReader reader, TypeInfo encoderType){}
  *      public void readObject(DsonObjectReader reader){}
- *      public void afterDecode(ConverterOptions options){}
+ *      public void afterDecode(ConverterOptions options){} // 实例方法支持无参
  *
- *      public void writeField1(DsonObjectWriter writer, String dsonName){}
+ *      public void beforeEncode(ConverterOptions options){} // 实例方法支持无参
+ *      public void writeObject(DsonObjectWriter writer){}
+ *
  *      public void readField1(DsonObjectReader reader, String dsonName){}
+ *      public void writeField1(DsonObjectWriter writer, String dsonName){}
  * }</pre>
  * ps：如果要更好的支持泛型，似乎应该将TypeInfo传入...
  *

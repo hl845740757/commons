@@ -685,30 +685,45 @@ public class CodecProcessor : ISourceGenerator
 
     /** 是否包含 beforeEncode 实例方法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool ContainsBeforeEncodeMethod(List<ISymbol> allMembers) {
-        return ContainsHookMethod(allMembers, MNAME_BEFORE_ENCODE, type_Options);
+    internal (bool contains, int argCount) ContainsBeforeEncodeMethod(List<ISymbol> allMembers) {
+        if (ContainsHookMethod(allMembers, MNAME_BEFORE_ENCODE, type_Options)) {
+            return (true, 1);
+        }
+        if (ContainsNoArgsHookMethod(allMembers, MNAME_BEFORE_ENCODE)) {
+            return (true, 0);
+        }
+        return (false, 0);
     }
 
     /** 是否包含 afterDecode 实例方法 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal bool ContainsAfterDecodeMethod(List<ISymbol> allMembers) {
-        return ContainsHookMethod(allMembers, MNAME_AFTER_DECODE, type_Options);
+    internal (bool contains, int argCount) ContainsAfterDecodeMethod(List<ISymbol> allMembers) {
+        if (ContainsHookMethod(allMembers, MNAME_AFTER_DECODE, type_Options)) {
+            return (true, 1);
+        }
+        if (ContainsNoArgsHookMethod(allMembers, MNAME_AFTER_DECODE)) {
+            return (true, 0);
+        }
+        return (false, 0);
     }
 
     /** 是否包含指定参数的钩子方法 */
     private bool ContainsHookMethod(IEnumerable<ISymbol> allMembers, string methodName, ITypeSymbol argType) {
         return allMembers.Where(e => e.Kind == SymbolKind.Method)
             .Cast<IMethodSymbol>()
-            .Any(symbol => {
-                if (!symbol.IsPublic() || symbol.Name != methodName) {
-                    return false;
-                }
-                ImmutableArray<IParameterSymbol> parameters = symbol.Parameters;
-                if (parameters.Length == 0) {
-                    return false;
-                }
-                return parameters[0].Type.IsSubTypeOf(argType);
-            });
+            .Any(symbol => symbol.IsPublic()
+                           && symbol.Parameters.Length > 0
+                           && symbol.Name == methodName
+                           && symbol.Parameters[0].Type.IsSubTypeOf(argType));
+    }
+
+    /** 是否包含无参的钩子方法 */
+    private bool ContainsNoArgsHookMethod(IEnumerable<ISymbol> allMembers, string methodName) {
+        return allMembers.Where(e => e.Kind == SymbolKind.Method)
+            .Cast<IMethodSymbol>()
+            .Any(symbol => symbol.IsPublic()
+                           && symbol.Parameters.Length == 0
+                           && symbol.Name == methodName);
     }
 
     #endregion

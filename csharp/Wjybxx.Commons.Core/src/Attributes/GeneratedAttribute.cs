@@ -23,13 +23,13 @@ namespace Wjybxx.Commons.Attributes
 /// <summary>
 /// 用于标注类文件是生成的
 /// </summary>
-[AttributeUsage(AttributeTargets.All)]
+[AttributeUsage(AttributeTargets.All, Inherited = false)]
 public class GeneratedAttribute : Attribute
 {
     /// <summary>
     /// 生成类文件的处理器的限定名
     /// </summary>
-    public readonly string processor;
+    public string Processor { get; }
     /// <summary>
     /// 生成器的版本
     /// </summary>
@@ -47,11 +47,11 @@ public class GeneratedAttribute : Attribute
     public string? DateTime { get; set; }
 
     public GeneratedAttribute() {
-        this.processor = "Unknown";
+        this.Processor = "Unknown";
     }
 
     public GeneratedAttribute(string processor) {
-        this.processor = processor ?? throw new ArgumentNullException(nameof(processor));
+        this.Processor = processor ?? throw new ArgumentNullException(nameof(processor));
     }
 }
 }

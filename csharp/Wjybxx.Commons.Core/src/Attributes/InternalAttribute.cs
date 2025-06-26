@@ -24,6 +24,7 @@ namespace Wjybxx.Commons.Attributes
 /// 用于标准接口仅限内部使用
 /// （C#的接口不能定义internal方法 -- 不能实现...）
 /// </summary>
+[AttributeUsage(AttributeTargets.All, Inherited = false)]
 public sealed class InternalAttribute : Attribute
 {
 }

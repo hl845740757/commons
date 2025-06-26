@@ -46,8 +46,8 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
     private boolean containsNewInstanceMethod;
     private boolean containsReadObjectMethod;
     private boolean containsWriteObjectMethod;
-    private boolean containsBeforeEncodeMethod;
-    private boolean containsAfterDecodeMethod;
+    private Map.Entry<Boolean, Integer> containsBeforeEncodeMethod;
+    private Map.Entry<Boolean, Integer> containsAfterDecodeMethod;
 
     private MethodSpec.Builder newInstanceMethodBuilder;
     private MethodSpec.Builder readFieldsMethodBuilder;
@@ -196,10 +196,16 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
                 return true;
             }
         } else {
-            if (containsBeforeEncodeMethod) {
-                // inst.beforeEncode(writer.options());
-                beforeEncodeMethodBuilder.addStatement("inst.$L(writer.options())",
-                        CodecProcessor.MNAME_BEFORE_ENCODE);
+            if (containsBeforeEncodeMethod.getKey()) {
+                if (containsBeforeEncodeMethod.getValue() > 0) {
+                    // inst.beforeEncode(writer.options());
+                    beforeEncodeMethodBuilder.addStatement("inst.$L(writer.options())",
+                            CodecProcessor.MNAME_BEFORE_ENCODE);
+                } else {
+                    // inst.beforeEncode();
+                    beforeEncodeMethodBuilder.addStatement("inst.$L()",
+                            CodecProcessor.MNAME_BEFORE_ENCODE);
+                }
                 return true;
             }
         }
@@ -216,10 +222,16 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
                 return true;
             }
         } else {
-            if (containsAfterDecodeMethod) {
-                // inst.afterDecode(reader.options());
-                afterDecodeMethodBuilder.addStatement("inst.$L(reader.options())",
-                        CodecProcessor.MNAME_AFTER_DECODE);
+            if (containsAfterDecodeMethod.getKey()) {
+                if (containsAfterDecodeMethod.getValue() > 0) {
+                    // inst.afterDecode(reader.options());
+                    afterDecodeMethodBuilder.addStatement("inst.$L(reader.options())",
+                            CodecProcessor.MNAME_AFTER_DECODE);
+                } else {
+                    // inst.afterDecode();
+                    afterDecodeMethodBuilder.addStatement("inst.$L()",
+                            CodecProcessor.MNAME_AFTER_DECODE);
+                }
                 return true;
             }
         }

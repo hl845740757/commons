@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Attributes
 /// <summary>
 /// 该属性用于为字段和方法等定义别名
 /// </summary>
-[AttributeUsage(AttributeTargets.All)]
+[AttributeUsage(AttributeTargets.All, Inherited = false)]
 public class AliasAttribute : Attribute
 {
     /// <summary>

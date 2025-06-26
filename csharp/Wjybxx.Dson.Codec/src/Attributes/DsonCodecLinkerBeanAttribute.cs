@@ -39,19 +39,22 @@ namespace Wjybxx.Dson.Codec.Attributes
 ///      MyBean field2;
 ///
 ///      // Class
-///      public static void BeforeEncode(MyBean instance, ConverterOptions options){}
-///      public static void WriteObject(MyBean instance, IDsonObjectWriter writer){}
 ///      public static MyBean NewInstance(IDsonObjectReader reader){}
 ///      public static void ReadObject(MyBean instance, IDsonObjectReader reader){}
 ///      public static void AfterDecode(MyBean instance, ConverterOptions options){}
+/// 
+///      public static void BeforeEncode(MyBean instance, ConverterOptions options){}
+///      public static void WriteObject(MyBean instance, IDsonObjectWriter writer){}
+///      public static void ReadField1(MyBean instance, IDsonObjectReader reader, String dsonName){}
+///      public static void WriteField1(MyBean instance, IDsonObjectWriter writer, String dsonName){}
+/// 
 ///      // 结构体需要使用ref和in
-///      public static void BeforeEncode(ref MyBean instance, ConverterOptions options){}
-///      public static void WriteObject(in MyBean instance, IDsonObjectWriter writer){}
+///      public static MyBean NewInstance(IDsonObjectReader reader){}
 ///      public static void ReadObject(ref MyBean instance, IDsonObjectReader reader){}
 ///      public static void AfterDecode(ref MyBean instance, ConverterOptions options){}
 /// 
-///      public static void WriteField1(MyBean instance, IDsonObjectWriter writer, String dsonName){}
-///      public static void ReadField1(MyBean instance, IDsonObjectReader reader, String dsonName){}
+///      public static void BeforeEncode(ref MyBean instance, ConverterOptions options){}
+///      public static void WriteObject(in MyBean instance, IDsonObjectWriter writer){}
 ///  }
 /// </code></pre>
 ///
