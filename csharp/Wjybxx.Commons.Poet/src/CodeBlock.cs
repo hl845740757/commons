@@ -92,6 +92,10 @@ public class CodeBlock
     /// 空代码块
     /// </summary>
     public static CodeBlock Empty { get; } = new CodeBlock();
+    /// <summary>
+    /// 换行代码块
+    /// </summary>
+    public static CodeBlock NewLine { get; } = NewBuilder().AddNewLine().Build();
 
     public override string ToString() {
         return Util.ToString(formatParts); // TODO

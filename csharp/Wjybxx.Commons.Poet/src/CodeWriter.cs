@@ -419,6 +419,9 @@ public sealed class CodeWriter
 
     private void EmitType(TypeSpec typeSpec) {
         typeSpecStack.Push(typeSpec);
+        if (typeSpecStack.Count > 1) {
+            Emit("\n");
+        }
 
         EmitDocument(typeSpec.document);
         Emit(typeSpec.headerCode, true);
@@ -517,7 +520,7 @@ public sealed class CodeWriter
             Emit(" = ");
             Emit(fieldSpec.initializer!);
         }
-        EmitIfLastCharNot(';'); // 代码可能包含';'
+        EmitIfLastCharNot(';'); // 代码可能未包含';'
         Emit("\n");
     }
 
@@ -569,9 +572,16 @@ public sealed class CodeWriter
             if (!CodeBlock.IsNullOrEmpty(propertySpec.initializer)) {
                 Emit(" = ");
                 Emit(propertySpec.initializer!);
-                EmitIfLastCharNot(';'); // 代码可能包含';'
+                EmitIfLastCharNot(';'); // 代码可能未包含';'
             }
             Emit("\n");
+        } else if (!CodeBlock.IsNullOrEmpty(propertySpec.getter)
+                   && CodeBlock.IsNullOrEmpty(propertySpec.setter)
+                   && propertySpec.getter!.expressionStyle) {
+            //
+            Emit("=> ");
+            Emit(propertySpec.getter);
+            EmitIfLastCharNot(';'); // 代码可能未包含';'
         } else {
             // 包含getter/setter代码块 -- 不可以包含初始化块，且必须都是代码块
             Emit("{\n");
@@ -598,7 +608,7 @@ public sealed class CodeWriter
                 Emit("set => ");
             }
             Emit(codeBlock);
-            EmitIfLastCharNot(';'); // 代码可能包含';'
+            EmitIfLastCharNot(';'); // 代码可能未包含';'
             Emit("\n");
         } else {
             if (isGetter) {
@@ -726,7 +736,7 @@ public sealed class CodeWriter
         if (methodSpec.code!.expressionStyle) {
             Emit("=> ");
             Emit(methodSpec.code);
-            EmitIfLastCharNot(';'); // 代码可能包含';'
+            EmitIfLastCharNot(';'); // 代码可能未包含';'
             return;
         }
         Emit("{\n");
@@ -856,7 +866,7 @@ public sealed class CodeWriter
 
         Emit("<");
         bool firstTypeVariable = true;
-        for (var i = 0; i < typeParameters.Count; i++) {
+        for (int i = 0; i < typeParameters.Count; i++) {
             TypeParameterSpec typeParameter = typeParameters[i];
             if (!firstTypeVariable) Emit(", ");
             if ((typeParameter.constraints & TypeParameterConstraints.VarianceIn) != 0) {
@@ -999,12 +1009,7 @@ public sealed class CodeWriter
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void Emit(string format, params object?[] args) {
-        Emit(CodeBlock.Of(format, args), false);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Emit(CodeBlock codeBlock) {
-        Emit(codeBlock, false);
+        Emit(CodeBlock.Of(format, args)); // 需要先解析Parts
     }
 
     /// <summary>
@@ -1013,7 +1018,7 @@ public sealed class CodeWriter
     /// </summary>
     /// <param name="codeBlock">要写的代码块</param>
     /// <param name="ensureTrailingNewline">是否末尾必须处于新行</param>
-    private void Emit(CodeBlock codeBlock, bool ensureTrailingNewline) {
+    private void Emit(CodeBlock codeBlock, bool ensureTrailingNewline = false) {
         IList<string> formatParts = codeBlock.formatParts;
         IList<object?> objectArgs = codeBlock.args;
 

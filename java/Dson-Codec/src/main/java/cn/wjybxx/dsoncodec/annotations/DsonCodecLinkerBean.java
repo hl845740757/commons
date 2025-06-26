@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
  *
  *      public static void beforeEncode(MyBean inst, ConverterOptions options){}
  *      public static void writeObject(MyBean inst, DsonObjectWriter writer){}
- *      
+ *
  *      public static void readField1(MyBean inst, DsonObjectReader reader, String dsonName){}
  *      public static void writeField1(MyBean inst, DsonObjectWriter writer, String dsonName){}
  *  }
