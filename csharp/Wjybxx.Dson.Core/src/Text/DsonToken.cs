@@ -75,7 +75,6 @@ public readonly struct DsonToken : IEquatable<DsonToken>
     }
 
     public override int GetHashCode() {
-        // 不处理字节数组hash，是因为我们并不会将Token放入Set
         return HashCode.Combine((int)type, value);
     }
 

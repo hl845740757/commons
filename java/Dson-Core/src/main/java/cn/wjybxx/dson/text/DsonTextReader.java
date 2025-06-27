@@ -838,8 +838,9 @@ public final class DsonTextReader extends AbstractDsonReader {
 
     @Override
     protected Binary doReadBinary() {
-        byte[] bytes = (byte[]) Objects.requireNonNull(popNextValue());
-        return Binary.unsafeWrap(bytes);
+        Binary binary = (Binary) popNextValue();
+        Objects.requireNonNull(binary);
+        return binary;
     }
 
     @Override

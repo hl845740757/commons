@@ -24,6 +24,7 @@ using System.Text;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Pool;
 using Wjybxx.Dson.Internal;
+using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Text
 {
@@ -394,15 +395,14 @@ public sealed class DsonScanner : IDisposable
     }
 
     /** 扫描字节数组 */
-    private byte[]? ScanBinary(bool skipValue) {
+    private Binary? ScanBinary(bool skipValue) {
         StringBuilder sb = GetCachedStringBuilder();
         int firstChar = SkipWhitespace();
         if (firstChar != '"') {
             throw new DsonParseException("invalid binary format, position: " + Position);
         }
         ScanString(sb);
-        // 为什么不使用栈上分配Span来解决？因为字节数组可能很大，栈上分配空间可能有问题
-        return skipValue ? null : CommonsLang3.DecodeHex(sb);
+        return skipValue ? null : Binary.FromHexString(sb);
     }
 
     /// <summary>

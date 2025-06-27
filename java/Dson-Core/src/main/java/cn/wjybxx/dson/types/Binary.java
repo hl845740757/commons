@@ -20,6 +20,7 @@ import cn.wjybxx.base.ArrayUtils;
 
 import java.util.Arrays;
 import java.util.HexFormat;
+import java.util.Objects;
 
 /**
  * 你通常不应该修改data中的数据。
@@ -108,6 +109,12 @@ public final class Binary {
         return new Binary(bytes);
     }
 
+    /** 从16进制字符串解析 */
+    public static Binary fromHexString(CharSequence hexString) {
+        Objects.requireNonNull(hexString);
+        return new Binary(HexFormat.of().parseHex(hexString));
+    }
+
     public static Binary copyFrom(byte[] bytes) {
         return copyFrom(bytes, 0, bytes.length);
     }
@@ -125,5 +132,6 @@ public final class Binary {
     public void copyTo(int selfOffset, byte[] target, int offset, int size) {
         System.arraycopy(data, selfOffset, target, offset, size);
     }
+
     // endregion
 }

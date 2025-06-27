@@ -399,7 +399,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
             if (dsonObject != null) {
                 objectIterator.Mark();
             } else {
-                arrayIterator!.Mark();
+                arrayIterator.Mark();
             }
         }
 
@@ -407,22 +407,22 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
             if (dsonObject != null) {
                 objectIterator.Reset();
             } else {
-                arrayIterator!.Reset();
+                arrayIterator.Reset();
             }
         }
 
         public DsonValue NextValue() {
-            return arrayIterator!.HasNext() ? arrayIterator.Next() : null;
+            return arrayIterator.HasNext() ? arrayIterator.Next() : null;
         }
 
         public KeyValuePair<TName, DsonValue>? NextElement() {
-            return objectIterator!.HasNext() ? objectIterator.Next() : null;
+            return objectIterator.HasNext() ? objectIterator.Next() : null;
         }
 
         // key-itr
         public void SetKeyItr(ISequentialEnumerator<TName> keyItr, DsonValue defValue) {
             if (dsonObject == null) throw new InvalidOperationException();
-            if (objectIterator!.IsMarking) throw new InvalidOperationException("reader is in marking state");
+            if (objectIterator.IsMarking) throw new InvalidOperationException("reader is in marking state");
 
             this.keyItr = keyItr;
             this.defValue = defValue;

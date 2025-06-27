@@ -102,8 +102,8 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.WriteBinary(name, bytes, offset, len);
     }
 
-    public void WriteBinary(string? name, Binary binary) {
-        if (binary.IsNull) {
+    public void WriteBinary(string? name, Binary? binary) {
+        if (binary == null) {
             WriteNull(name);
         } else {
             writer.WriteBinary(name, binary);

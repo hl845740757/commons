@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Wjybxx.Commons;
 using Wjybxx.Dson.Internal;
 
@@ -26,9 +27,9 @@ namespace Wjybxx.Dson.Types
 /// <summary>
 /// 二进制数据
 /// （该类难以实现不可变对象，虽然我们可以封装为ByteArray，但许多接口都是基于byte[]的，封装会导致难以与其它接口协作。）
-/// （用户应当避免修改改对象的数据，把它当做不可变对象使用。）
+/// （用户应当避免修改该对象的数据，把它当做不可变对象使用。）
 /// </summary>
-public struct Binary : IEquatable<Binary>
+public sealed class Binary
 {
     public static readonly Binary EMPTY = new Binary(Array.Empty<byte>());
 
@@ -44,7 +45,7 @@ public struct Binary : IEquatable<Binary>
     /// 创建一个拷贝
     /// </summary>
     /// <returns></returns>
-    public readonly Binary DeepCopy() {
+    public Binary DeepCopy() {
         return new Binary((byte[])_data.Clone());
     }
 
@@ -62,19 +63,12 @@ public struct Binary : IEquatable<Binary>
     /// </summary>
     public int Length => _data.Length;
 
-    /// <summary>
-    /// default构造的情况下_data为null
-    /// </summary>
-    public bool IsNull => _data == null;
 
     #region equals
 
-    public bool Equals(Binary other) {
-        return ArrayUtil.Equals(_data, other._data);
-    }
-
     public override bool Equals(object? obj) {
-        return obj is Binary other && Equals(other);
+        if (ReferenceEquals(this, obj)) return true;
+        return obj is Binary other && ArrayUtil.Equals(_data, other._data);
     }
 
     public override int GetHashCode() {
@@ -118,6 +112,14 @@ public struct Binary : IEquatable<Binary>
 
     public static Binary UnsafeWrap(byte[] value) {
         return new Binary(value);
+    }
+
+    public static Binary FromHexString(string hexString) {
+        return new Binary(CommonsLang3.DecodeHex(hexString));
+    }
+    
+    public static Binary FromHexString(StringBuilder hexString) {
+        return new Binary(CommonsLang3.DecodeHex(hexString));
     }
 
     public static Binary CopyFrom(byte[] bytes) {

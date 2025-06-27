@@ -73,22 +73,14 @@ public class DsonToken {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
+        // 字节数组已提前解析为Binary
         DsonToken dsonToken = (DsonToken) o;
-
-        if (type != dsonToken.type) return false;
-        // value可能是字节数组...需要处理以保证测试用例通过
-        if (type == DsonTokenType.BINARY) {
-            byte[] src = (byte[]) value;
-            byte[] dest = (byte[]) dsonToken.value;
-            return Arrays.equals(src, dest);
-        }
-        return Objects.equals(value, dsonToken.value);
+        return type == dsonToken.type
+                && Objects.equals(value, dsonToken.value);
     }
 
     @Override
     public int hashCode() {
-        // 不处理字节数组hash，是因为我们并不会将Token放入Set
         int result = type.hashCode();
         result = 31 * result + (value != null ? value.hashCode() : 0);
         return result;

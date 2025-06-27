@@ -118,11 +118,6 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.LitePointer: return ObjectLitePtr.Equals(other.ObjectLitePtr);
             case DsonType.DateTime: return DateTime.Equals(other.DateTime);
             case DsonType.Timestamp: return Timestamp.Equals(other.Timestamp);
-            case DsonType.Binary: { // 数组特殊处理
-                byte[] lhs = (byte[])objValue;
-                byte[] rhs = (byte[])other.objValue;
-                return ArrayUtil.Equals(lhs, rhs);
-            }
             default:
                 return Equals(objValue, other.objValue);
         }
@@ -147,7 +142,6 @@ public struct UnionValue : IEquatable<UnionValue>
             DsonType.LitePointer => ObjectLitePtr.GetHashCode(),
             DsonType.DateTime => DateTime.GetHashCode(),
             DsonType.Timestamp => Timestamp.GetHashCode(),
-            DsonType.Binary => ArrayUtil.HashCode((byte[])objValue), // 数组特殊处理
             _ => objValue == null ? 0 : objValue.GetHashCode()
         };
         return r * 31 + vhash;
@@ -173,7 +167,6 @@ public struct UnionValue : IEquatable<UnionValue>
             case DsonType.LitePointer: return $"Type: {type}, Value: {ObjectLitePtr}";
             case DsonType.DateTime: return $"Type: {type}, Value: {DateTime}";
             case DsonType.Timestamp: return $"Type: {type}, Value: {Timestamp}";
-            case DsonType.Binary: return $"Type: {type}, Value: {CommonsLang3.ToHexString((byte[])objValue)}";
             default:
                 return $"Type: {type}, Value: {objValue}";
         }

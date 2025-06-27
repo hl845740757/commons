@@ -180,7 +180,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
     }
 
     public void WriteBinary(TName name, Binary binary) {
-        if (binary.IsNull) {
+        if (binary == null) {
             throw new ArgumentNullException(nameof(binary));
         }
         AdvanceToValueState(name);

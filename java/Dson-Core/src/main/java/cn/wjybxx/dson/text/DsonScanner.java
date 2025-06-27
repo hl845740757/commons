@@ -17,8 +17,8 @@
 package cn.wjybxx.dson.text;
 
 import cn.wjybxx.base.ObjectUtils;
+import cn.wjybxx.dson.types.Binary;
 
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
 
@@ -376,15 +376,14 @@ public final class DsonScanner implements AutoCloseable {
     }
 
     /** 扫描字节数组 */
-    private byte[] scanBinary(boolean skipValue) {
+    private Binary scanBinary(boolean skipValue) {
         StringBuilder sb = getCachedStringBuilder();
         final int firstChar = skipWhitespace();
         if (firstChar != '"') {
             throw new DsonParseException("invalid binary format, position: " + getPosition());
         }
         scanString(sb);
-        // 可直接根据StringBuilder解析字节数组 -- 避免额外字符串构建
-        return skipValue ? null : HexFormat.of().parseHex(sb);
+        return skipValue ? null : Binary.fromHexString(sb);
     }
 
     /**

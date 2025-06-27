@@ -49,7 +49,7 @@ public interface IDsonObjectWriter : IDisposable
     void WriteBytes(string? name, byte[] bytes, int offset, int len);
 
     /** Binary默认为可共享对象 */
-    void WriteBinary(string? name, Binary binary);
+    void WriteBinary(string? name, Binary? binary);
 
     // 内建结构体
     void WritePtr(string? name, in ObjectPtr objectPtr);

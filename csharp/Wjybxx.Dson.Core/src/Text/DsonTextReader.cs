@@ -935,7 +935,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (value.type != DsonType.Binary) {
             throw new InvalidOperationException();
         }
-        return Binary.UnsafeWrap((byte[])value.objValue);
+        return (Binary)value.objValue;
     }
 
     protected override ObjectPtr DoReadPtr() {
