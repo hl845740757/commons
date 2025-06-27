@@ -82,6 +82,8 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     private int queueIndex = IIndexedElement.IndexNotFound;
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
     private Registration cancelRegistration;
+    /** 异步任务的结果 */
+    private ValueFuture<T> asyncResult;
 #nullable enable
 
     private ScheduledPromiseTask() {
@@ -206,6 +208,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         countdown = 0;
         helper = null;
         cancelRegistration = default;
+        asyncResult = default;
     }
 
     public void Cancel(int code) {
@@ -281,14 +284,26 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         } else if (!promise.IsComputing) {
             return false;
         }
-
         if (TaskOptions.IsEnabled(options, TaskOptions.TIMEOUT_BEFORE_RUN)
             && HasTimeout && deadline <= tickTime) {
             promise.Internal_TrySetException(StacklessCancellationException.Timeout);
             return false;
         }
         try {
-            RunTask();
+            if (TaskType == TYPE_ASYNC_TASK) {
+                if (firstTrigger) {
+                    Func<AsyncTaskContext, ValueFuture<T>> task = (Func<AsyncTaskContext, ValueFuture<T>>)this.task;
+                    AsyncTaskContext context = new AsyncTaskContext(helper, ctx);
+                    asyncResult = task(context);
+                }
+                if (asyncResult.IsCompleted) {
+                    TaskResult<T> result = asyncResult.GetResult(SuppressedTypes.All);
+                    promise.Internal_TrySetResult(result);
+                    return false;
+                }
+            } else {
+                RunTask();
+            }
         }
         catch (Exception ex) {
             // 通过异常传递结果

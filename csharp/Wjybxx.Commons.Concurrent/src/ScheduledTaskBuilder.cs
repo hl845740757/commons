@@ -74,6 +74,22 @@ public interface ScheduledTaskBuilder : TaskBuilder
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
+    /// <summary>
+    /// 创建一个异步任务
+    /// 
+    /// 异步任务必须是周期性任务，事件循环会定期检查任务是否完成，默认每0.1秒检查一次。
+    /// (这只是一个简单的类协程任务实现，真实的协程任务由用户扩展 -- 因为调度需求不能统一)
+    /// </summary>
+    /// <param name="task"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public new static ScheduledTaskBuilder<T> NewAsyncTask<T>(Func<AsyncTaskContext, ValueFuture<T>> task) {
+        TaskBuilder<T> taskBuilder = TaskBuilder.NewAsyncTask(task);
+        ScheduledTaskBuilder<T> builder = new ScheduledTaskBuilder<T>(ref taskBuilder);
+        builder.SetFixedDelay(0, 100, TimeSpan.FromMilliseconds(1));
+        return builder;
+    }
+
     #endregion
 }
 
@@ -183,6 +199,9 @@ public struct ScheduledTaskBuilder<T>
     /// </summary>
     /// <param name="delay">触发延迟</param>
     public void SetOnlyOnce(long delay) {
+        if (Type == TaskBuilder.TYPE_ASYNC_TASK) {
+            throw new InvalidOperationException();
+        }
         this.scheduleType = ScheduledTaskBuilder.SCHEDULE_ONCE;
         this.initialDelay = delay;
         this.period = default;

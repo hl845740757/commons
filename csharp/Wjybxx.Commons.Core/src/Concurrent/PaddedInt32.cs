@@ -34,7 +34,7 @@ public struct PaddedInt32
     [FieldOffset(64 - 4)]
     private int _value;
 
-    [FieldOffset(120 - 8)]
+    [FieldOffset(124 - 8)]
     private readonly long rhsPadding;
 
     public PaddedInt32(int value) {

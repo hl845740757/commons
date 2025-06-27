@@ -133,8 +133,8 @@ public class ValuePromise<T> : IValuePromise<T>
         return false;
     }
 
-    private bool InternalSetException(Exception exception) {
-        object result = WrapException(exception);
+    private bool InternalSetException(object ex) {
+        object result = ex is ExceptionDispatchInfo ? ex : AbstractPromise.WrapException(ex);
         // Debug.Assert(exception != null);
         // 先测试Pending状态 -- 如果大多数任务都是先更新为Computing状态，则先测试Computing有优势，暂不优化
         object? preEx = Interlocked.CompareExchange(ref _ex, result, null);
@@ -207,27 +207,15 @@ public class ValuePromise<T> : IValuePromise<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private object ExceptionOrDispatchInfoNow() {
-        return AbstractPromise.ExceptionOrDispatchInfoNow(PollState(), _ex);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool Internal_TrySetComputing() {
         object? preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
         return preState == null;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private TaskStatus Internal_TrySetComputing2() {
+    internal TaskStatus Internal_TrySetComputing2() {
         object? preState = Interlocked.CompareExchange(ref _ex, EX_COMPUTING, null);
         return (TaskStatus)PeekState(preState);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Internal_SetComputing() {
-        if (!Internal_TrySetComputing()) {
-            throw new IllegalStateException("Already computing");
-        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -237,13 +225,6 @@ public class ValuePromise<T> : IValuePromise<T>
             return true;
         }
         return false;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Internal_SetResult(T? result) {
-        if (!Internal_TrySetResult(result)) {
-            throw new IllegalStateException("Already complete");
-        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -258,13 +239,6 @@ public class ValuePromise<T> : IValuePromise<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Internal_SetException(Exception cause) {
-        if (!Internal_TrySetException(cause)) {
-            throw new IllegalStateException("Already complete");
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool Internal_TrySetCancelled(int cancelCode) {
         if (InternalSetException(StacklessCancellationException.InstOf(cancelCode))) {
             PostComplete();
@@ -273,11 +247,15 @@ public class ValuePromise<T> : IValuePromise<T>
         return false;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void Internal_SetCancelled(int cancelCode) {
-        if (!Internal_TrySetCancelled(cancelCode)) {
-            throw new IllegalStateException("Already complete");
+    internal bool Internal_TrySetResult(TaskResult<T> result) {
+        if (result.IsSucceeded) {
+            return Internal_TrySetResult(result.Result);
         }
+        if (InternalSetException(result.ExceptionOrDispatchInfo!)) {
+            PostComplete(); // 这里不打印日志，因为前面已经打印过，这里直接以原始信息完成
+            return true;
+        }
+        return false;
     }
 
     #endregion
@@ -308,7 +286,7 @@ public class ValuePromise<T> : IValuePromise<T>
 
     public object GetExceptionOrDispatchInfo(int reentryId, bool ignoreReentrant = false) {
         ValidateReentryId(reentryId, ignoreReentrant);
-        object ex = ExceptionOrDispatchInfoNow();
+        object ex = AbstractPromise.ExceptionOrDispatchInfoNow(PollState(), _ex);
         // GetResult以后归还到池
         if (!ignoreReentrant) {
             PrepareToRecycle();
@@ -511,7 +489,9 @@ public class ValuePromise<T> : IValuePromise<T>
 
     public void SetComputing(int reentryId) {
         ValidateReentryId(reentryId);
-        Internal_SetComputing();
+        if (!Internal_TrySetComputing()) {
+            throw new IllegalStateException("Already computing");
+        }
     }
 
     public bool TrySetResult(int reentryId, T result) {
@@ -521,7 +501,9 @@ public class ValuePromise<T> : IValuePromise<T>
 
     public void SetResult(int reentryId, T result) {
         ValidateReentryId(reentryId);
-        Internal_SetResult(result);
+        if (!Internal_TrySetResult(result)) {
+            throw new IllegalStateException("Already complete");
+        }
     }
 
     public bool TrySetException(int reentryId, Exception cause) {
@@ -531,7 +513,9 @@ public class ValuePromise<T> : IValuePromise<T>
 
     public void SetException(int reentryId, Exception cause) {
         ValidateReentryId(reentryId);
-        Internal_SetException(cause);
+        if (!Internal_TrySetException(cause)) {
+            throw new IllegalStateException("Already complete");
+        }
     }
 
     public bool TrySetCancelled(int reentryId, int cancelCode) {
@@ -541,7 +525,9 @@ public class ValuePromise<T> : IValuePromise<T>
 
     public void SetCancelled(int reentryId, int cancelCode) {
         ValidateReentryId(reentryId);
-        Internal_SetCancelled(cancelCode);
+        if (!Internal_TrySetCancelled(cancelCode)) {
+            throw new IllegalStateException("Already complete");
+        }
     }
 
     #endregion

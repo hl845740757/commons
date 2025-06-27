@@ -17,8 +17,10 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Wjybxx.Commons.Collections;
+using Wjybxx.Commons.Pool;
 
 namespace Wjybxx.Commons.Concurrent
 {
@@ -27,9 +29,16 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
     private readonly IDisruptorEventLoop<T> _eventLoop;
     private readonly IndexedPriorityQueue<IScheduledFutureTask> _taskQueue;
 
+    private long _nextCommandId;
+    private readonly IndexedPriorityQueue<AsyncCommand> _commandQueue;
+    private readonly ObjectPool<AsyncCommand> _commandPool;
+
     public DisruptorSchedulerHelper(IDisruptorEventLoop<T> eventLoop) {
         _eventLoop = eventLoop ?? throw new ArgumentNullException(nameof(eventLoop));
         _taskQueue = new IndexedPriorityQueue<IScheduledFutureTask>(new ScheduledTaskComparator(), 64);
+
+        _commandQueue = new IndexedPriorityQueue<AsyncCommand>(new CommandComparer(), 64);
+        _commandPool = new ObjectPool<AsyncCommand>(AsyncCommand.Factory, AsyncCommand.Cleaner);
     }
 
     #region core
@@ -43,11 +52,11 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
     public void Update(long tickTime, bool shuttingDownMode) {
         IndexedPriorityQueue<IScheduledFutureTask> taskQueue = this._taskQueue;
         IDisruptorEventLoop<T> eventLoop = this._eventLoop;
-
+        // 检测正常定时任务
         IScheduledFutureTask futureTask;
         while (taskQueue.TryPeekHead(out futureTask) && !eventLoop.IsShutdown) {
             if (tickTime < futureTask.NextTriggerTime) {
-                return;
+                break;
             }
             taskQueue.Dequeue();
             if (shuttingDownMode) {
@@ -63,6 +72,21 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
                     taskQueue.Enqueue(futureTask);
                 }
             }
+        }
+        // 检测异步任务辅助命令
+        IndexedPriorityQueue<AsyncCommand> commandQueue = this._commandQueue;
+        AsyncCommand command;
+        while (commandQueue.TryPeekHead(out command) && !eventLoop.IsShutdown) {
+            if (tickTime < command.triggerTime) {
+                break;
+            }
+            commandQueue.Dequeue();
+            if (command.cancelToken != null && command.cancelToken.IsCancelRequested) {
+                command.promise.Internal_TrySetCancelled(command.cancelToken.CancelCode);
+            } else {
+                command.promise.Internal_TrySetResult(0);
+            }
+            _commandPool.Release(command);
         }
     }
 
@@ -105,6 +129,28 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         }
     }
 
+    public ValueFuture Delay(TimeSpan timeSpan, ICancelToken? cancelToken) {
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(_eventLoop);
+        // 跨线程时直接走正常的任务提交
+        if (!_eventLoop.InEventLoop()) {
+            ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(EMPTY_ACTION, cancelToken, 0, promise, timeSpan);
+            _eventLoop.Execute(promiseTask);
+            return promise.VoidFuture;
+        }
+        // 当前在线程中时，走开销更小的command -- 更多情况
+        long triggerTime = TickTime + Normalize(1, timeSpan);
+        if (triggerTime < _eventLoop.TickTime) {
+            return default;
+        }
+        AsyncCommand command = _commandPool.Acquire();
+        command.id = _nextCommandId++;
+        command.triggerTime = triggerTime;
+        command.cancelToken = cancelToken;
+        command.promise = promise;
+        _commandQueue.Enqueue(command);
+        return promise.VoidFuture;
+    }
+
     /// <summary>
     /// 删除指定id的任务
     /// </summary>
@@ -139,6 +185,8 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
 
     public bool IsShutdown => _eventLoop.IsShutdown;
 
+    public IEventLoop EventLoop => _eventLoop;
+
     public bool InEventLoop() => _eventLoop.InEventLoop();
 
     public long Normalize(long worldTime, TimeSpan timeUnit) {
@@ -150,5 +198,64 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
     }
 
     #endregion
+
+    private static readonly Action EMPTY_ACTION = () => { };
+
+    private class AsyncCommand : IIndexedElement
+    {
+        public static Func<AsyncCommand> Factory { get; } = () => new AsyncCommand();
+        public static Action<AsyncCommand> Cleaner { get; } = e => e.Reset();
+#nullable disable
+        private int qIndex = -1;
+        internal long id;
+        internal long triggerTime;
+        internal ValuePromise<int> promise;
+        internal ICancelToken? cancelToken;
+#nullable enable
+
+        public void Init(long id, long triggerTime, ValuePromise<int> promise, ICancelToken? cancelToken) {
+            this.id = id;
+            this.triggerTime = triggerTime;
+            this.promise = promise;
+            this.cancelToken = cancelToken;
+        }
+
+        public void Reset() {
+            qIndex = -1;
+            id = 0;
+            triggerTime = 0;
+            promise = null;
+            cancelToken = null;
+        }
+
+        public int CollectionIndex(object collection) {
+            return qIndex;
+        }
+
+        public void CollectionIndex(object collection, int index) {
+            qIndex = index;
+        }
+    }
+
+    private class CommandComparer : IComparer<AsyncCommand>
+    {
+        public int Compare(AsyncCommand? lhs, AsyncCommand? rhs) {
+            if (lhs == null) throw new ArgumentNullException(nameof(lhs));
+            if (rhs == null) throw new ArgumentNullException(nameof(rhs));
+            if (ReferenceEquals(lhs, rhs)) {
+                return 0;
+            }
+            int r = lhs.triggerTime.CompareTo(rhs.triggerTime);
+            if (r != 0) {
+                return r;
+            }
+            // 再按id排序
+            r = lhs.id.CompareTo(rhs.id);
+            if (r == 0) {
+                throw new InvalidOperationException($"lhs.id: {lhs.id}, rhs.id: {rhs.id}");
+            }
+            return r;
+        }
+    }
 }
 }

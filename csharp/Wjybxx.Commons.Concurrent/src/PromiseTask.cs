@@ -103,9 +103,9 @@ public class PromiseTask<T> : IFutureTask
 {
 #nullable disable
     /** 用户的委托 */
-    private object task;
+    internal object task;
     /** 任务的上下文 */
-    private object ctx;
+    internal object ctx;
     /** 任务的调度选项 */
     protected int options;
     /** 任务关联的promise -- 不会返回给用户 */
