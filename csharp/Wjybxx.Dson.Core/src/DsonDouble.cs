@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using static Wjybxx.Dson.DsonInt32;
 
 namespace Wjybxx.Dson
 {
@@ -26,10 +27,6 @@ namespace Wjybxx.Dson
 /// </summary>
 public sealed class DsonDouble : DsonNumber, IComparable<DsonDouble>, IEquatable<DsonDouble>, IComparable
 {
-    public static readonly DsonDouble ZERO = new DsonDouble(0);
-    public static readonly DsonDouble ONE = new DsonDouble(1);
-    public static readonly DsonDouble MINUS_ONE = new DsonDouble(-1);
-
     private readonly double _value;
 
     public DsonDouble(double value) {
@@ -104,5 +101,35 @@ public sealed class DsonDouble : DsonNumber, IComparable<DsonDouble>, IEquatable
     public override string ToString() {
         return $"{nameof(DsonType)}: {DsonType}, {nameof(_value)}: {_value}";
     }
+
+    #region 池化
+
+    /// <summary>
+    /// Q：为什么double要池化？
+    /// A：因为数字的默认解析类型是double。
+    /// </summary>
+    private static readonly DsonDouble[] POOL = new DsonDouble[POOL_END - POOL_START + 1];
+    public static readonly DsonDouble ZERO = ValueOf(0);
+    public static readonly DsonDouble ONE = ValueOf(1);
+    public static readonly DsonDouble MINUS_ONE = ValueOf(-1);
+
+    static DsonDouble() {
+        for (int i = POOL_START; i <= POOL_END; i++) {
+            POOL[i - POOL_START] = new DsonDouble(i);
+        }
+    }
+
+    public static DsonDouble ValueOf(double dValue) {
+        int value = (int)dValue;
+        if (value != dValue) { // 非整数
+            return new DsonDouble(dValue);
+        }
+        if (value < POOL_START || value > POOL_END) {
+            return new DsonDouble(value);
+        }
+        return POOL[value - POOL_START];
+    }
+
+    #endregion
 }
 }

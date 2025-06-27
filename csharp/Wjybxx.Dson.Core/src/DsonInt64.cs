@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using static Wjybxx.Dson.DsonInt32;
 
 namespace Wjybxx.Dson
 {
@@ -26,10 +27,6 @@ namespace Wjybxx.Dson
 /// </summary>
 public sealed class DsonInt64 : DsonNumber, IEquatable<DsonInt64>, IComparable<DsonInt64>, IComparable
 {
-    public static readonly DsonInt64 ZERO = new DsonInt64(0);
-    public static readonly DsonInt64 ONE = new DsonInt64(1);
-    public static readonly DsonInt64 MINUS_ONE = new DsonInt64(-1);
-
     private readonly long _value;
 
     public DsonInt64(long value) {
@@ -104,5 +101,28 @@ public sealed class DsonInt64 : DsonNumber, IEquatable<DsonInt64>, IComparable<D
     public override string ToString() {
         return $"{nameof(DsonType)}: {DsonType}, {nameof(_value)}: {_value}";
     }
+
+    #region 池化
+
+    // 注意初始化顺序
+    private static readonly DsonInt64[] POOL = new DsonInt64[POOL_END - POOL_START + 1];
+    public static readonly DsonInt64 ZERO = ValueOf(0);
+    public static readonly DsonInt64 ONE = ValueOf(1);
+    public static readonly DsonInt64 MINUS_ONE = ValueOf(-1);
+    
+    static DsonInt64() {
+        for (int i = POOL_START; i <= POOL_END; i++) {
+            POOL[i - POOL_START] = new DsonInt64(i);
+        }
+    }
+
+    public static DsonInt64 ValueOf(long value) {
+        if (value < POOL_START || value > POOL_END) {
+            return new DsonInt64(value);
+        }
+        return POOL[(int)value - POOL_START];
+    }
+
+    #endregion
 }
 }

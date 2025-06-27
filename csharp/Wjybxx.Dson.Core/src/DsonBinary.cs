@@ -28,13 +28,13 @@ public class DsonBinary : DsonValue, IEquatable<DsonBinary>
 {
     public static readonly DsonBinary EMPTY = new DsonBinary(Binary.EMPTY);
 
-    private readonly Binary _binary;
+    private readonly Binary _value;
 
-    public DsonBinary(Binary binary) {
-        _binary = binary;
+    public DsonBinary(Binary value) {
+        _value = value;
     }
 
-    public Binary Binary => _binary;
+    public Binary Value => _value;
 
     public override DsonType DsonType => DsonType.Binary;
 
@@ -43,7 +43,7 @@ public class DsonBinary : DsonValue, IEquatable<DsonBinary>
     /// </summary>
     /// <returns></returns>
     public DsonBinary DeepCopy() {
-        return new DsonBinary(_binary.DeepCopy());
+        return new DsonBinary(_value.DeepCopy());
     }
 
     #region equals
@@ -51,7 +51,7 @@ public class DsonBinary : DsonValue, IEquatable<DsonBinary>
     public bool Equals(DsonBinary? other) {
         if (ReferenceEquals(null, other)) return false;
         if (ReferenceEquals(this, other)) return true;
-        return _binary.Equals(other._binary);
+        return _value.Equals(other._value);
     }
 
     public override bool Equals(object? obj) {
@@ -62,7 +62,7 @@ public class DsonBinary : DsonValue, IEquatable<DsonBinary>
     }
 
     public override int GetHashCode() {
-        return _binary.GetHashCode();
+        return _value.GetHashCode();
     }
 
     public static bool operator ==(DsonBinary? left, DsonBinary? right) {
@@ -76,7 +76,7 @@ public class DsonBinary : DsonValue, IEquatable<DsonBinary>
     #endregion
 
     public override string ToString() {
-        return $"{nameof(DsonType)}: {DsonType}, {nameof(_binary)}: {_binary}";
+        return $"{nameof(DsonType)}: {DsonType}, {nameof(_value)}: {_value}";
     }
 }
 }

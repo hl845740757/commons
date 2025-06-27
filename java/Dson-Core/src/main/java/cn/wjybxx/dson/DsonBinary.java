@@ -33,14 +33,14 @@ public class DsonBinary extends DsonValue {
 
     public static final DsonBinary EMPTY = new DsonBinary(Binary.EMPTY);
 
-    private final Binary binary;
+    private final Binary value;
 
-    public DsonBinary(Binary binary) {
-        this.binary = Objects.requireNonNull(binary);
+    public DsonBinary(Binary value) {
+        this.value = Objects.requireNonNull(value);
     }
 
-    public Binary binary() {
-        return binary;
+    public Binary getValue() {
+        return value;
     }
 
     @Nonnull
@@ -51,7 +51,7 @@ public class DsonBinary extends DsonValue {
 
     /** 创建一个拷贝 */
     public DsonBinary deepCopy() {
-        return new DsonBinary(binary.deepCopy());
+        return new DsonBinary(value.deepCopy());
     }
 
     //region equals
@@ -62,12 +62,12 @@ public class DsonBinary extends DsonValue {
         if (o == null || getClass() != o.getClass()) return false;
 
         DsonBinary that = (DsonBinary) o;
-        return binary.equals(that.binary);
+        return value.equals(that.value);
     }
 
     @Override
     public int hashCode() {
-        return binary.hashCode();
+        return value.hashCode();
     }
 
     // endregion
@@ -75,7 +75,7 @@ public class DsonBinary extends DsonValue {
     @Override
     public String toString() {
         return "DsonBinary{" +
-                "binary=" + binary +
+                "binary=" + value +
                 '}';
     }
 }

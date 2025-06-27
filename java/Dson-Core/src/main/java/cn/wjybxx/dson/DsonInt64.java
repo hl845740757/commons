@@ -18,15 +18,14 @@ package cn.wjybxx.dson;
 
 import javax.annotation.Nonnull;
 
+import static cn.wjybxx.dson.DsonInt32.POOL_END;
+import static cn.wjybxx.dson.DsonInt32.POOL_START;
+
 /**
  * @author wjybxx
  * date - 2023/4/19
  */
 public final class DsonInt64 extends DsonNumber implements Comparable<DsonInt64> {
-
-    public static final DsonInt64 ZERO = new DsonInt64(0);
-    public static final DsonInt64 ONE = new DsonInt64(1);
-    public static final DsonInt64 MINUS_ONE = new DsonInt64(-1);
 
     private final long value;
 
@@ -99,4 +98,26 @@ public final class DsonInt64 extends DsonNumber implements Comparable<DsonInt64>
                 "value=" + value +
                 '}';
     }
+
+    // region 池化管理
+
+    // 注意初始化顺序
+    private static final DsonInt64[] POOL = new DsonInt64[POOL_END - POOL_START + 1];
+    public static final DsonInt64 ZERO = valueOf(0);
+    public static final DsonInt64 ONE = valueOf(1);
+    public static final DsonInt64 MINUS_ONE = valueOf(-1);
+
+    static {
+        for (int i = POOL_START; i <= POOL_END; i++) {
+            POOL[i - POOL_START] = new DsonInt64(i);
+        }
+    }
+
+    public static DsonInt64 valueOf(long value) {
+        if (value < POOL_START || value > POOL_END) {
+            return new DsonInt64(value);
+        }
+        return POOL[(int) value - POOL_START];
+    }
+    // endregion
 }

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Dson
 {
@@ -26,10 +27,6 @@ namespace Wjybxx.Dson
 /// </summary>
 public sealed class DsonInt32 : DsonNumber, IEquatable<DsonInt32>, IComparable<DsonInt32>, IComparable
 {
-    public static readonly DsonInt32 ZERO = new DsonInt32(0);
-    public static readonly DsonInt32 ONE = new DsonInt32(1);
-    public static readonly DsonInt32 MINUS_ONE = new DsonInt32(-1);
-
     private readonly int _value;
 
     public DsonInt32(int value) {
@@ -104,5 +101,31 @@ public sealed class DsonInt32 : DsonNumber, IEquatable<DsonInt32>, IComparable<D
     public override string ToString() {
         return $"{nameof(DsonType)}: {DsonType}, {nameof(_value)}: {_value}";
     }
+
+    #region 池化管理
+
+    internal const int POOL_START = -9;
+    internal const int POOL_END = 127;
+    // 注意初始化顺序
+    private static readonly DsonInt32[] POOL = new DsonInt32[POOL_END - POOL_START + 1];
+    public static readonly DsonInt32 ZERO = ValueOf(0);
+    public static readonly DsonInt32 ONE = ValueOf(1);
+    public static readonly DsonInt32 MINUS_ONE = ValueOf(-1);
+
+    static DsonInt32() {
+        for (int i = POOL_START; i <= POOL_END; i++) {
+            POOL[i - POOL_START] = new DsonInt32(i);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DsonInt32 ValueOf(int value) {
+        if (value < POOL_START || value > POOL_END) {
+            return new DsonInt32(value);
+        }
+        return POOL[value - POOL_START];
+    }
+
+    #endregion
 }
 }

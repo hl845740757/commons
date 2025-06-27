@@ -55,7 +55,7 @@ public abstract class DsonValue {
     }
 
     public Binary asBinary() {
-        return ((DsonBinary) this).binary();
+        return ((DsonBinary) this).getValue();
     }
 
     public ObjectPtr asPointer() {

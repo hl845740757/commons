@@ -116,7 +116,7 @@ public interface DsonCharStream extends AutoCloseable {
     static DsonCharStream newPreparedCharStream(Iterator<LineInfo> lineInfos, int nextLn) {
         return new PreparedCharStream(lineInfos, nextLn);
     }
-    
+
     // endregion
 
     @Override

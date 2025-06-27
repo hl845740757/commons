@@ -473,11 +473,11 @@ public static class Dsons
         reader.SkipName();
         TName name = default;
         switch (dsonType) {
-            case DsonType.Int32: return new DsonInt32(reader.ReadInt32(name));
-            case DsonType.Int64: return new DsonInt64(reader.ReadInt64(name));
-            case DsonType.Float: return new DsonFloat(reader.ReadFloat(name));
-            case DsonType.Double: return new DsonDouble(reader.ReadDouble(name));
-            case DsonType.Bool: return new DsonBool(reader.ReadBool(name));
+            case DsonType.Int32: return DsonInt32.ValueOf(reader.ReadInt32(name));
+            case DsonType.Int64: return DsonInt64.ValueOf(reader.ReadInt64(name));
+            case DsonType.Float: return DsonFloat.ValueOf(reader.ReadFloat(name));
+            case DsonType.Double: return DsonDouble.ValueOf(reader.ReadDouble(name));
+            case DsonType.Bool: return DsonBool.ValueOf(reader.ReadBool(name));
             case DsonType.String: return new DsonString(reader.ReadString(name));
             case DsonType.Null: {
                 reader.ReadNull(name);

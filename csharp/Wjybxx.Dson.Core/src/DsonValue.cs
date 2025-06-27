@@ -41,7 +41,7 @@ public abstract class DsonValue
 
     public string AsString() => ((DsonString)this).Value;
 
-    public Binary AsBinary() => ((DsonBinary)this).Binary;
+    public Binary AsBinary() => ((DsonBinary)this).Value;
 
     public ObjectPtr AsPointer() => ((DsonPointer)this).Value;
 

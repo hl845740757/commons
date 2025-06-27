@@ -24,10 +24,6 @@ import javax.annotation.Nonnull;
  */
 public final class DsonInt32 extends DsonNumber implements Comparable<DsonInt32> {
 
-    public static final DsonInt32 ZERO = new DsonInt32(0);
-    public static final DsonInt32 ONE = new DsonInt32(1);
-    public static final DsonInt32 MINUS_ONE = new DsonInt32(-1);
-
     private final int value;
 
     public DsonInt32(int value) {
@@ -99,4 +95,28 @@ public final class DsonInt32 extends DsonNumber implements Comparable<DsonInt32>
                 "value=" + value +
                 '}';
     }
+
+    // region 池化管理
+
+    static final int POOL_START = -9;
+    static final int POOL_END = 127;
+    // 注意初始化顺序
+    private static final DsonInt32[] POOL = new DsonInt32[POOL_END - POOL_START + 1];
+    public static final DsonInt32 ZERO = valueOf(0);
+    public static final DsonInt32 ONE = valueOf(1);
+    public static final DsonInt32 MINUS_ONE = valueOf(-1);
+
+    static {
+        for (int i = POOL_START; i <= POOL_END; i++) {
+            POOL[i - POOL_START] = new DsonInt32(i);
+        }
+    }
+
+    public static DsonInt32 valueOf(int value) {
+        if (value < POOL_START || value > POOL_END) {
+            return new DsonInt32(value);
+        }
+        return POOL[value - POOL_START];
+    }
+    // endregion
 }

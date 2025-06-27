@@ -255,11 +255,11 @@ public class DsonLites {
         reader.skipName();
         final int name = 0;
         return switch (dsonType) {
-            case INT32 -> new DsonInt32(reader.readInt32(name));
-            case INT64 -> new DsonInt64(reader.readInt64(name));
-            case FLOAT -> new DsonFloat(reader.readFloat(name));
-            case DOUBLE -> new DsonDouble(reader.readDouble(name));
-            case BOOL -> new DsonBool(reader.readBool(name));
+            case INT32 -> DsonInt32.valueOf(reader.readInt32(name));
+            case INT64 -> DsonInt64.valueOf(reader.readInt64(name));
+            case FLOAT -> DsonFloat.valueOf(reader.readFloat(name));
+            case DOUBLE -> DsonDouble.valueOf(reader.readDouble(name));
+            case BOOL -> DsonBool.valueOf(reader.readBool(name));
             case STRING -> new DsonString(reader.readString(name));
             case NULL -> {
                 reader.readNull(name);

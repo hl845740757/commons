@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Dson
 {
@@ -26,10 +27,6 @@ namespace Wjybxx.Dson
 /// </summary>
 public sealed class DsonFloat : DsonNumber, IEquatable<DsonFloat>, IComparable<DsonFloat>, IComparable
 {
-    public static readonly DsonFloat ZERO = new DsonFloat(0);
-    public static readonly DsonFloat ONE = new DsonFloat(1);
-    public static readonly DsonFloat MINUS_ONE = new DsonFloat(-1);
-
     private readonly float _value;
 
     public DsonFloat(float value) {
@@ -104,5 +101,35 @@ public sealed class DsonFloat : DsonNumber, IEquatable<DsonFloat>, IComparable<D
     public override string ToString() {
         return $"{nameof(DsonType)}: {DsonType}, {nameof(_value)}: {_value}";
     }
+
+    #region 池化管理
+
+    private const int POOL_START = -9;
+    private const int POOL_END = 9;
+    /** Float只缓存常见的几个整数值 */
+    private static readonly DsonFloat[] POOL = new DsonFloat[POOL_END - POOL_START + 1];
+    public static readonly DsonFloat ZERO = ValueOf(0);
+    public static readonly DsonFloat ONE = ValueOf(1);
+    public static readonly DsonFloat MINUS_ONE = ValueOf(-1);
+
+    static DsonFloat() {
+        for (int i = POOL_START; i <= POOL_END; i++) {
+            POOL[i - POOL_START] = new DsonFloat(i);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DsonFloat ValueOf(float fValue) {
+        int value = (int)fValue;
+        if (value != fValue) { // 非整数
+            return new DsonFloat(fValue);
+        }
+        if (value < POOL_START || value > POOL_END) {
+            return new DsonFloat(value);
+        }
+        return POOL[value - POOL_START];
+    }
+
+    #endregion
 }
 }

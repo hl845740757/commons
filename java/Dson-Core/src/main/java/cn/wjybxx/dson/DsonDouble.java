@@ -18,15 +18,14 @@ package cn.wjybxx.dson;
 
 import javax.annotation.Nonnull;
 
+import static cn.wjybxx.dson.DsonInt32.POOL_END;
+import static cn.wjybxx.dson.DsonInt32.POOL_START;
+
 /**
  * @author wjybxx
  * date - 2023/4/19
  */
 public final class DsonDouble extends DsonNumber implements Comparable<DsonDouble> {
-
-    public static final DsonDouble ZERO = new DsonDouble(0);
-    public static final DsonDouble ONE = new DsonDouble(1);
-    public static final DsonDouble MINUS_ONE = new DsonDouble(-1);
 
     private final double value;
 
@@ -98,4 +97,33 @@ public final class DsonDouble extends DsonNumber implements Comparable<DsonDoubl
                 "value=" + value +
                 '}';
     }
+
+    // region 池化管理
+
+    /**
+     * Q：为什么double要池化？
+     * A：因为数字的默认解析类型是double。
+     */
+    private static final DsonDouble[] POOL = new DsonDouble[POOL_END - POOL_START + 1];
+    public static final DsonDouble ZERO = valueOf(0);
+    public static final DsonDouble ONE = valueOf(1);
+    public static final DsonDouble MINUS_ONE = valueOf(-1);
+
+    static {
+        for (int i = POOL_START; i <= POOL_END; i++) {
+            POOL[i - POOL_START] = new DsonDouble(i);
+        }
+    }
+
+    public static DsonDouble valueOf(double dValue) {
+        int value = (int) dValue;
+        if (value != dValue) {// 非整数
+            return new DsonDouble(dValue);
+        }
+        if (value < POOL_START || value > POOL_END) {
+            return new DsonDouble(value);
+        }
+        return POOL[value - POOL_START];
+    }
+    // endregion
 }

@@ -24,10 +24,6 @@ import javax.annotation.Nonnull;
  */
 public final class DsonFloat extends DsonNumber implements Comparable<DsonFloat> {
 
-    public static final DsonFloat ZERO = new DsonFloat(0);
-    public static final DsonFloat ONE = new DsonFloat(1);
-    public static final DsonFloat MINUS_ONE = new DsonFloat(-1);
-
     private final float value;
 
     public DsonFloat(float value) {
@@ -98,5 +94,31 @@ public final class DsonFloat extends DsonNumber implements Comparable<DsonFloat>
         return "DsonFloat{" +
                 "value=" + value +
                 '}';
+    }
+
+    private static final int POOL_START = -9;
+    private static final int POOL_END = 9;
+    /** Float只缓存常见的几个整数值 */
+    private static final DsonFloat[] POOL = new DsonFloat[POOL_END - POOL_START + 1];
+
+    public static final DsonFloat ZERO = valueOf(0);
+    public static final DsonFloat ONE = valueOf(1);
+    public static final DsonFloat MINUS_ONE = valueOf(-1);
+
+    static {
+        for (int i = POOL_START; i <= POOL_END; i++) {
+            POOL[i - POOL_START] = new DsonFloat(i);
+        }
+    }
+
+    public static DsonFloat valueOf(float fValue) {
+        int value = (int) fValue;
+        if (value != fValue) { // 非整数
+            return new DsonFloat(fValue);
+        }
+        if (value < POOL_START || value > POOL_END) {
+            return new DsonFloat(value);
+        }
+        return POOL[value - POOL_START];
     }
 }
