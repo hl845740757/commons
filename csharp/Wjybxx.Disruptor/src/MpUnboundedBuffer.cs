@@ -19,11 +19,17 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 #pragma warning disable CS0169
 namespace Wjybxx.Disruptor
 {
+/// <summary>
+/// class启用内存填充需要显示应用<see cref="LayoutKind.Sequential"/>
+/// </summary>
+/// <typeparam name="E"></typeparam>
+[StructLayout(LayoutKind.Sequential)]
 public abstract class MpUnboundedBufferFields<E>
 {
 #nullable disable
@@ -31,7 +37,7 @@ public abstract class MpUnboundedBufferFields<E>
     internal static readonly MpUnboundedBufferChunk<E> ROTATION = new MpUnboundedBufferChunk<E>(0, -2, null);
 
     // region padding
-    private long p1, p2, p3, p4, p5, p6, p7, p8;
+    private Padding64 _p1;
     // endregion
 
     /**
@@ -42,14 +48,14 @@ public abstract class MpUnboundedBufferFields<E>
     private volatile MpUnboundedBufferChunk<E> headChunk;
 
     // region padding
-    private long p11, p12, p13, p14, p15, p16, p17, p18;
+    private Padding64 _p2;
     // endregion
 
     /** 用于竞争更新head */
     private volatile int headLock = 0;
 
     // region padding
-    private long p21, p22, p23, p24, p25, p26, p27, p28;
+    private Padding64 _p3;
     // endregion
 
     /**
@@ -68,9 +74,8 @@ public abstract class MpUnboundedBufferFields<E>
     private volatile MpUnboundedBufferChunk<E> producerChunk;
 
     // region padding
-    private long p31, p32, p33, p34, p35, p36, p37, p38;
+    private Padding64 _p4;
     // endregion
-
 
     /** loadVolatileProducerChunk */
     internal MpUnboundedBufferChunk<E> LvProducerChunk() {

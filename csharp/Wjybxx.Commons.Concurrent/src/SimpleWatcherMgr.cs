@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.InteropServices;
 
 #pragma warning disable CS0169
 
@@ -28,16 +29,15 @@ namespace Wjybxx.Commons.Concurrent
 /// (泛型类不能显式定于内存布局)
 /// </summary>
 /// <typeparam name="E"></typeparam>
+[StructLayout(LayoutKind.Sequential)]
 public sealed class SimpleWatcherMgr<E> : WatcherMgr<E>
 {
     // 填充
-    private long p1, p2, p3, p4, p5, p6, p7, p8;
-
+    private readonly Padding64 _p1;
     /** 常见方案：synchronized写，volatile读 */
     private volatile Watcher<E>? _watcher;
-
     // 填充
-    private long p11, p12, p13, p14, p15, p16, p17, p18;
+    private readonly Padding64 _p2;
 
     public void Watch(Watcher<E> watcher) {
         if (watcher == null) throw new ArgumentNullException(nameof(watcher));

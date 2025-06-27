@@ -18,7 +18,9 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
+using Wjybxx.Commons.Concurrent;
 
 #pragma warning disable CS0169
 
@@ -30,6 +32,7 @@ namespace Wjybxx.Commons.Pool
 /// (这里的算法参照了Disruptor模块的实现，但针对对象池进行了特殊的修改，但没有做极致的优化)
 /// (泛型类不能显式定于内存布局)
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public sealed class MpmcObjectBucket<T>
 {
     /** 桶的大小 -- 不一定为2的幂 */
@@ -44,21 +47,21 @@ public sealed class MpmcObjectBucket<T>
     private readonly long[] consumed;
 
     // region padding
-    private long p11, p12, p13, p14, p15, p16, p17;
+    private readonly Padding56 _p1;
     // endregion
 
     /** 生产者索引 -- volatile读写 */
     private long producerIndex = -1;
 
     // region padding
-    private long p21, p22, p23, p24, p25, p26, p27;
+    private readonly Padding56 _p2;
     // endregion
 
     /** 消费者索引 -- volatile读写 */
     private long consumerIndex = -1;
 
     // region padding
-    private long p31, p32, p33, p34, p35, p36, p37;
+    private readonly Padding56 _p3;
     // endregion
 
     public MpmcObjectBucket(int length) {

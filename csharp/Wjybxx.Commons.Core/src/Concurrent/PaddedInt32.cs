@@ -1,6 +1,6 @@
-﻿#region LICENSE
+#region LICENSE
 
-// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,101 +20,98 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-#pragma warning disable CS0169
-namespace Wjybxx.Disruptor
+namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 序列，用于追踪RingBuffer和EventProcessor的进度，表示生产/消费进度。
-///
-/// <see cref="FieldOffsetAttribute"/>较为适合这种没有继承关系的，字段数又比较少的类型。
+/// 用于多线程下
 /// </summary>
 [StructLayout(LayoutKind.Explicit)]
-public sealed class Sequence
+public struct PaddedInt32
 {
-    private const long INITIAL_VALUE = -1L;
-
     [FieldOffset(0)]
-    private long lhsPadding;
+    private readonly long lhsPadding;
 
-    [FieldOffset(64 - 8)]
-    private long _value;
+    [FieldOffset(64 - 4)]
+    private int _value;
 
     [FieldOffset(120 - 8)]
-    private long rhsPadding;
+    private readonly long rhsPadding;
 
-    public Sequence(long value = INITIAL_VALUE) {
-        this._value = value;
+    public PaddedInt32(int value) {
+        _value = value;
+        lhsPadding = 0;
+        rhsPadding = 0;
     }
 
     /** volatile读 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long GetVolatile() {
+    public int GetVolatile() {
         return Volatile.Read(ref _value);
     }
 
     /** volatile写 - 会插入写屏障，且尝试刷新缓存 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetVolatile(long value) {
+    public void SetVolatile(int value) {
         Volatile.Write(ref _value, value);
     }
 
     /** acquire模式读 - 会插入读屏障 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long GetAcquire() {
+    public int GetAcquire() {
         return Volatile.Read(ref _value); // C#暂无acquire和release内存语言支持
     }
 
     /** release模式写 - 会插入写屏障，但不立即刷新缓存 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetRelease(long value) {
+    public void SetRelease(int value) {
         Volatile.Write(ref _value, value); // C#暂无acquire和release内存语言支持
     }
 
     /** 无内存语义读 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long GetPlain() {
+    public int GetPlain() {
         return _value;
     }
 
     /** 无内存语义写 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetPlain(long value) {
+    public void SetPlain(int value) {
         _value = value;
     }
 
     /** 原子+1 并返回+1 后的结果 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long IncrementAndGet() {
-        return AddAndGet(1L);
+    public int IncrementAndGet() {
+        return AddAndGet(1);
     }
 
     /** 原子+1 并返回+1 前的结果 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long GetAndIncrement() {
-        return GetAndAdd(1L);
+    public int GetAndIncrement() {
+        return GetAndAdd(1);
     }
 
     /** 原子-1 并返回-1 后的结果 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long DecrementAndGet() {
-        return AddAndGet(-1L);
+    public int DecrementAndGet() {
+        return AddAndGet(-1);
     }
 
     /** 原子-1 并返回-1 前的结果 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long GetAndDecrement() {
-        return GetAndAdd(-1L);
+    public int GetAndDecrement() {
+        return GetAndAdd(-1);
     }
 
     /** 原子加上给定数并返回增加后的值 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long AddAndGet(long increment) {
+    public int AddAndGet(int increment) {
         return Interlocked.Add(ref _value, increment);
     }
 
     /** 原子加上给定数并返回增加前的值 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long GetAndAdd(long increment) {
+    public int GetAndAdd(int increment) {
         return Interlocked.Add(ref _value, increment) - increment;
     }
 
@@ -124,7 +121,7 @@ public sealed class Sequence
     /// <param name="value">新值</param>
     /// <returns>地址上的旧值</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long Exchange(long value) {
+    public int Exchange(int value) {
         return Interlocked.Exchange(ref _value, value);
     }
 
@@ -135,7 +132,7 @@ public sealed class Sequence
     /// <param name="newValue"></param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool CompareAndSet(long expectedValue, long newValue) {
+    public bool CompareAndSet(int expectedValue, int newValue) {
         return Interlocked.CompareExchange(ref _value, newValue, expectedValue) == expectedValue;
     }
 
@@ -146,7 +143,7 @@ public sealed class Sequence
     /// <param name="newValue">要设置的值</param>
     /// <returns>地址上的旧值</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long CompareAndExchange(long expectedValue, long newValue) {
+    public int CompareAndExchange(int expectedValue, int newValue) {
         // 按照C#的编程习惯，比较数放在末；唯一的好处可能就是进行==比较时，两个值是挨着的。
         // CompareAndExchange(newValue, expectedValue) == expectedValue
         return Interlocked.CompareExchange(ref _value, newValue, expectedValue);

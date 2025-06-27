@@ -27,11 +27,12 @@ namespace Wjybxx.Disruptor
 /// <summary>
 /// 单生产者序号分配器
 /// （由用户保证不会并发的申请序号）
+/// （这里的内存填充其实未正确生效，但该实现极少使用）
 /// </summary>
 public sealed class SingleProducerSequencer : RingBufferSequencer
 {
     // region padding
-    private long p1, p2, p3, p4, p5, p6, p7;
+    private readonly Padding56 _p1;
     // endregion
 
     /// <summary>
@@ -55,7 +56,7 @@ public sealed class SingleProducerSequencer : RingBufferSequencer
     private long cachedGating = SequenceBarrier.INITIAL_SEQUENCE;
 
     // region padding
-    private long p11, p12, p13, p14, p15, p16, p17;
+    private readonly Padding56 _p2;
     // endregion
 
     public SingleProducerSequencer(int bufferSize, int spinIterations, WaitStrategy waitStrategy, SequenceBlocker? blocker)

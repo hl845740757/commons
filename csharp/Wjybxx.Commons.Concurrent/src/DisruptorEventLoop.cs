@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Wjybxx.Commons.Attributes;
 using Wjybxx.Commons.Fx;
@@ -62,12 +63,9 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     /** 删除延时任务，参数列表为：taskId */
     internal const int TYPE_REMOVE_SCHEDULE = -1;
 
-    // 填充开始 - 字段定义顺序不要随意调整
-    private long p1, p2, p3, p4, p5, p6, p7;
     /** 线程本地时间 -- 时间的更新频率极高，进行缓存行填充隔离；使用volatile读写 */
-    private long _tickTime;
-    private long p11, p12, p13, p14, p15, p16, p17, p18;
-    /** 线程状态 -- 下面的final字段充当缓存行填充 */
+    private PaddedInt64 _tickTime;
+    /** 线程状态 -- 变化频率低，不填充 */
     private volatile int state = ST_UNSTARTED;
 
     /** 事件队列 */
@@ -112,7 +110,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         : base(builder.Parent, builder.ModuleList) {
         ThreadFactory threadFactory = builder.ThreadFactory ?? throw new ArgumentException("builder.ThreadFactory");
 
-        this._tickTime = ObjectUtil.SystemTicks();
+        this._tickTime.SetVolatile(ObjectUtil.SystemTicks());
         this.eventSequencer = builder.EventSequencer ?? throw new ArgumentException("builder.EventSequencer");
         this.dataProvider = eventSequencer.DataProvider;
         this.schedulerHelper = new DisruptorSchedulerHelper<T>(this);
@@ -152,13 +150,13 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
 
     public override long TickTime {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Volatile.Read(ref _tickTime);
+        get => _tickTime.GetVolatile();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private long UpdateTickTime() {
         long tickTime = ObjectUtil.SystemTicks();
-        Volatile.Write(ref _tickTime, tickTime);
+        _tickTime.SetVolatile(tickTime);
         return tickTime;
     }
 

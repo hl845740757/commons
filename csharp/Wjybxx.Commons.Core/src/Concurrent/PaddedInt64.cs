@@ -1,6 +1,6 @@
-﻿#region LICENSE
+#region LICENSE
 
-// Copyright 2023-2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,30 +20,27 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-#pragma warning disable CS0169
-namespace Wjybxx.Disruptor
+namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 序列，用于追踪RingBuffer和EventProcessor的进度，表示生产/消费进度。
-///
-/// <see cref="FieldOffsetAttribute"/>较为适合这种没有继承关系的，字段数又比较少的类型。
+/// 用于多线程下
 /// </summary>
 [StructLayout(LayoutKind.Explicit)]
-public sealed class Sequence
+public struct PaddedInt64
 {
-    private const long INITIAL_VALUE = -1L;
-
     [FieldOffset(0)]
-    private long lhsPadding;
+    private readonly long lhsPadding;
 
     [FieldOffset(64 - 8)]
     private long _value;
 
     [FieldOffset(120 - 8)]
-    private long rhsPadding;
+    private readonly long rhsPadding;
 
-    public Sequence(long value = INITIAL_VALUE) {
-        this._value = value;
+    public PaddedInt64(long value) {
+        _value = value;
+        lhsPadding = 0;
+        rhsPadding = 0;
     }
 
     /** volatile读 */

@@ -18,6 +18,7 @@
 
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 #pragma warning disable CS0169
 
@@ -27,13 +28,14 @@ namespace Wjybxx.Disruptor
 /// 环形缓冲区
 /// </summary>
 /// <typeparam name="E"></typeparam>
+[StructLayout(LayoutKind.Sequential)]
 public sealed class RingBuffer<E> : DataProvider<E>
 {
     /** 前后缓存行填充的元素元素 */
     private const int BUFFER_PAD = 16;
 
     // region padding
-    private long p1, p2, p3, p4, p5, p6, p7;
+    private readonly Padding56 _p1;
     // endregion
 
     /**
@@ -52,7 +54,7 @@ public sealed class RingBuffer<E> : DataProvider<E>
     private readonly long bufferLength;
 
     // region padding
-    private long p11, p12, p13, p14, p15, p16, p17;
+    private readonly Padding56 _p2;
     // endregion
 
     public RingBuffer(Func<E> eventFactory, int bufferLength) {

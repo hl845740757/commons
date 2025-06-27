@@ -51,6 +51,16 @@ public interface IEventLoopAgent<T> : IAgentEventHandler<T> where T : IAgentEven
     void Wakeup() {
     }
 
+    /// <summary>
+    /// 执行协程调度
+    ///
+    /// 该接口用于业务事件循环实现自定义协程调度，并发库默认不调度该方法。
+    /// </summary>
+    /// <param name="phase">阶段</param>
+    void ScheduleCoroutine(int phase) {
+
+    }
+
     #region 事件循环
 
     //

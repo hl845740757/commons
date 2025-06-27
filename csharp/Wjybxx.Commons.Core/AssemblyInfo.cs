@@ -18,4 +18,5 @@
 
 using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("Wjybxx.Commons.Concurrent")]
 [assembly: InternalsVisibleTo("Wjybxx.Commons.Tests")]
