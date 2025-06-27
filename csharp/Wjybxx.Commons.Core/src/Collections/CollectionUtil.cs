@@ -113,7 +113,7 @@ public static partial class CollectionUtil
         if (self == null) throw new ArgumentNullException(nameof(self));
         if (items == null) throw new ArgumentNullException(nameof(items));
         if (self is IGenericCollection<T> generic) {
-            int itemsCount = PredicateCount(items);
+            int itemsCount = PredicateCount(items) ?? 0;
             if (itemsCount > 0) {
                 generic.AdjustCapacity(generic.Count + itemsCount);
             }
@@ -207,7 +207,7 @@ public static partial class CollectionUtil
         if (self == null) throw new ArgumentNullException(nameof(self));
         if (pairs == null) throw new ArgumentNullException(nameof(pairs));
         if (self is IGenericDictionary<TKey, TValue> generic) {
-            int itemsCount = PredicateCount(pairs);
+            int itemsCount = PredicateCount(pairs) ?? 0;
             if (itemsCount > 0) {
                 generic.AdjustCapacity(generic.Count + itemsCount);
             }
@@ -224,7 +224,7 @@ public static partial class CollectionUtil
         if (self == null) throw new ArgumentNullException(nameof(self));
         if (pairs == null) throw new ArgumentNullException(nameof(pairs));
         if (self is IGenericDictionary<TKey, TValue> generic) {
-            int itemsCount = PredicateCount(pairs);
+            int itemsCount = PredicateCount(pairs) ?? 0;
             if (itemsCount > 0) {
                 generic.AdjustCapacity(generic.Count + itemsCount);
             }
@@ -242,15 +242,17 @@ public static partial class CollectionUtil
         return self.TryGetValue(key, out TValue value) ? value : defValue;
     }
 
-    /** 简单测试items的数量，返回-1表示未知 */
-    private static int PredicateCount<T>(IEnumerable<T> items) {
+    /// <summary>
+    /// 预测集合的大小
+    /// </summary>
+    internal static int? PredicateCount<T>(IEnumerable<T> items) {
         if (items is ICollection<T> other1) { // C#的数组实现了ICollection...
             return other1.Count;
         }
         if (items is IReadOnlyCollection<T> other2) {
             return other2.Count;
         }
-        return -1;
+        return null;
     }
 
     #endregion

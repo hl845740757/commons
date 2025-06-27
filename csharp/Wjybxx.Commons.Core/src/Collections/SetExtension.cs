@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.Collections
 public static class SetExtension
 {
     // other可能是Readonly类型接口
-    internal static int GetCount<T>(IEnumerable<T> enumerable) {
+    private static int GetCount<T>(IEnumerable<T> enumerable) {
         if (enumerable == null) throw new ArgumentNullException(nameof(enumerable));
         if (enumerable is ICollection<T> collection) {
             return collection.Count;

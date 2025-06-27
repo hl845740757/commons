@@ -34,7 +34,7 @@ import java.util.Map;
 public class DsonHeader<K> extends AbstractDsonObject<K> {
 
     public DsonHeader() {
-        this(new LinkedHashMap<>(4));
+        super(2);
     }
 
     public DsonHeader(Map<K, DsonValue> valueMap) {

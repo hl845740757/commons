@@ -31,7 +31,12 @@ public abstract class AbstractDsonObject<TK> : DsonValue, IGenericDictionary<TK,
 {
     protected readonly IGenericDictionary<TK, DsonValue> _valueMap;
 
-    public AbstractDsonObject(IGenericDictionary<TK, DsonValue> valueMap) {
+    protected AbstractDsonObject(int expectCount = 0) {
+        if (expectCount == 0) expectCount = 8;
+        _valueMap = new LinkedDictionary<TK, DsonValue>(expectCount);
+    }
+    
+    protected AbstractDsonObject(IGenericDictionary<TK, DsonValue> valueMap) {
         _valueMap = valueMap ?? throw new ArgumentNullException(nameof(valueMap));
     }
 

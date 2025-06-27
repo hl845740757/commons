@@ -18,8 +18,6 @@ package cn.wjybxx.dson;
 
 import javax.annotation.Nonnull;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author wjybxx
@@ -27,23 +25,20 @@ import java.util.Objects;
  */
 public class DsonObject<K> extends AbstractDsonObject<K> {
 
-    private final DsonHeader<K> header;
+    // TODO 怎么优化下Header的开销?
+    private final DsonHeader<K> header = new DsonHeader<>();
 
     public DsonObject() {
-        this(new LinkedHashMap<>(8), new DsonHeader<>());
+        super(0);
     }
 
     public DsonObject(int expectedSize) {
-        this(new LinkedHashMap<>(expectedSize), new DsonHeader<>());
+        super(expectedSize);
     }
 
     public DsonObject(DsonObject<K> src) { // 需要拷贝
-        this(new LinkedHashMap<>(src.valueMap), new DsonHeader<>(src.getHeader()));
-    }
-
-    private DsonObject(Map<K, DsonValue> valueMap, DsonHeader<K> header) {
-        super(valueMap);
-        this.header = Objects.requireNonNull(header);
+        super(new LinkedHashMap<>(src.valueMap));
+        header.putAll(src.header);
     }
 
     @Nonnull

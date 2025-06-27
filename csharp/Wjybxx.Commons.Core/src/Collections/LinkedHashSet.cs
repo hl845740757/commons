@@ -70,13 +70,6 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
         : this(0, HashCommon.DefaultLoadFactor) {
     }
 
-    public LinkedHashSet(ICollection<TKey> src)
-        : this(src.Count, HashCommon.DefaultLoadFactor) {
-        foreach (var key in src) {
-            Add(key);
-        }
-    }
-
     public LinkedHashSet(IEqualityComparer<TKey> comparer)
         : this(0, HashCommon.DefaultLoadFactor, comparer) {
     }
@@ -87,7 +80,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     /// <param name="expectedCount">期望存储的元素个数，而不是直接的容量</param>
     /// <param name="loadFactor">有效负载因子</param>
     /// <param name="keyComparer">可用于避免Key比较时装箱</param>
-    public LinkedHashSet(int expectedCount, float loadFactor = 0.75f,
+    public LinkedHashSet(int expectedCount, float loadFactor = HashCommon.DefaultLoadFactor,
                          IEqualityComparer<TKey>? keyComparer = null) {
         if (expectedCount < 0) throw new ArgumentException("The expected number of elements must be nonnegative");
         HashCommon.CheckLoadFactor(loadFactor);
@@ -98,6 +91,13 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
             expectedCount = HashCommon.DefaultInitialSize;
         }
         _mask = HashCommon.ArraySize(expectedCount, loadFactor) - 1;
+    }
+
+    public LinkedHashSet(IEnumerable<TKey> src)
+        : this(CollectionUtil.PredicateCount(src) ?? 0, HashCommon.DefaultLoadFactor) {
+        foreach (var key in src) {
+            Add(key);
+        }
     }
 
     public bool IsReadOnly => false;

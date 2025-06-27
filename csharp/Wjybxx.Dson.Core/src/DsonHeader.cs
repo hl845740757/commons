@@ -17,6 +17,7 @@
 #endregion
 
 using System.Collections.Generic;
+using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Internal;
 
 namespace Wjybxx.Dson
@@ -31,11 +32,11 @@ namespace Wjybxx.Dson
 public class DsonHeader<TK> : AbstractDsonObject<TK>
 {
     public DsonHeader()
-        : base(DsonInternals.NewLinkedDictionary<TK>(2)) {
+        : base(2) {
     }
 
     public DsonHeader(IDictionary<TK, DsonValue> valueMap)
-        : base(DsonInternals.NewLinkedDictionary(valueMap)) {
+        : base(new LinkedDictionary<TK, DsonValue>(valueMap)) {
     }
 
     public override DsonType DsonType => DsonType.Header;

@@ -18,8 +18,6 @@ package cn.wjybxx.dson;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import java.util.RandomAccess;
 
 /**
@@ -28,23 +26,18 @@ import java.util.RandomAccess;
  */
 public class DsonArray<K> extends AbstractDsonArray implements RandomAccess {
 
-    private final DsonHeader<K> header;
+    private final DsonHeader<K> header = new DsonHeader<>();
 
     public DsonArray() {
-        this(new ArrayList<>(), new DsonHeader<>());
     }
 
     public DsonArray(int initCapacity) {
-        this(new ArrayList<>(initCapacity), new DsonHeader<>());
+        super(initCapacity);
     }
 
     public DsonArray(DsonArray<K> src) { // 需要拷贝
-        this(new ArrayList<>(src.values), new DsonHeader<>(src.getHeader()));
-    }
-
-    private DsonArray(List<DsonValue> values, DsonHeader<K> header) {
-        super(values);
-        this.header = Objects.requireNonNull(header);
+        super(new ArrayList<>(src.values));
+        header.putAll(src.getHeader());
     }
 
     @Nonnull
@@ -69,21 +62,30 @@ public class DsonArray<K> extends AbstractDsonArray implements RandomAccess {
      */
     public DsonArray<K> slice(int skip) {
         if (skip < 0) throw new IllegalArgumentException("skip cant be negative");
+        //
         if (skip >= values.size()) {
             return new DsonArray<>(0);
         }
-        List<DsonValue> dsonValues = new ArrayList<>(values.subList(skip, values.size()));
-        return new DsonArray<>(dsonValues, new DsonHeader<>());
+        DsonArray<K> result = new DsonArray<>(values.size() - skip);
+        for (int index = skip; index < values.size(); index++) {
+            result.add(values.get(index));
+        }
+        return result;
     }
 
     public DsonArray<K> slice(int skip, int count) {
         if (skip < 0) throw new IllegalArgumentException("skip cant be negative");
+        if (count < 0) throw new IllegalArgumentException("count cant be negative");
+        //
         if (skip >= values.size()) {
             return new DsonArray<>(0);
         }
         int endIndex = Math.min(values.size(), skip + count);
-        List<DsonValue> dsonValues = new ArrayList<>(values.subList(skip, endIndex));
-        return new DsonArray<>(dsonValues, new DsonHeader<>());
+        DsonArray<K> result = new DsonArray<>(endIndex - skip);
+        for (int index = skip; index < endIndex; index++) {
+            result.add(values.get(index));
+        }
+        return result;
     }
 
     @Override

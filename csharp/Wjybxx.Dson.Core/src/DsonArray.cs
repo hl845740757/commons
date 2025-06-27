@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Dson
 {
@@ -28,23 +29,17 @@ namespace Wjybxx.Dson
 /// <typeparam name="TK">header的key类型</typeparam>
 public class DsonArray<TK> : AbstractDsonArray
 {
-    private readonly DsonHeader<TK> _header;
+    private readonly DsonHeader<TK> _header = new DsonHeader<TK>();
 
-    public DsonArray()
-        : this(new List<DsonValue>(), new DsonHeader<TK>()) {
-    }
-
-    public DsonArray(int capacity)
-        : this(new List<DsonValue>(capacity), new DsonHeader<TK>()) {
+    public DsonArray(int initCapacity = 0)
+        : base(initCapacity) {
     }
 
     public DsonArray(DsonArray<TK> src) // 需要拷贝
-        : this(new List<DsonValue>(src._values), new DsonHeader<TK>(src._header)) {
-    }
-
-    private DsonArray(IList<DsonValue> values, DsonHeader<TK> header)
-        : base(values) {
-        _header = header;
+        : base(new List<DsonValue>(src._values)) {
+        if (src._header.Count > 0) {
+            _header.PutAll(src._header);
+        }
     }
 
     public override DsonType DsonType => DsonType.Array;
@@ -62,33 +57,29 @@ public class DsonArray<TK> : AbstractDsonArray
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
     public DsonArray<TK> Slice(int skip) {
-        if (skip < 0) {
-            throw new ArgumentException("skip cant be negative");
+        if (skip < 0) throw new ArgumentException("skip cant be negative");
+        if (skip >= _values.Count) return new DsonArray<TK>();
+        //
+        DsonArray<TK> result = new DsonArray<TK>(_values.Count - skip);
+        for (int index = skip; index < _values.Count; index++) {
+            result.Add(_values[index]);
         }
-        if (skip >= _values.Count) {
-            return new DsonArray<TK>(0);
-        }
-        List<DsonValue> slice = _values.Skip(skip).ToList();
-        return new DsonArray<TK>(slice, new DsonHeader<TK>());
+        return result;
     }
 
     public DsonArray<TK> Slice(int skip, int count) {
-        if (skip < 0) {
-            throw new ArgumentException("skip cant be negative");
-        }
-        if (count < 0) {
-            throw new ArgumentException("count cant be negative");
-        }
+        if (skip < 0) throw new ArgumentException("skip cant be negative");
+        if (count < 0) throw new ArgumentException("count cant be negative");
+        //
         if (skip >= _values.Count) {
-            return new DsonArray<TK>(0);
+            return new DsonArray<TK>();
         }
-        List<DsonValue> slice;
-        if (_values.Count <= skip + count) {
-            slice = _values.Skip(skip).ToList();
-        } else {
-            slice = _values.Skip(skip).Take(count).ToList();
+        int endIndex = Math.Min(skip + count, _values.Count);
+        DsonArray<TK> result = new DsonArray<TK>(endIndex - skip);
+        for (int index = skip; index < endIndex; index++) {
+            result.Add(_values[index]);
         }
-        return new DsonArray<TK>(slice, new DsonHeader<TK>());
+        return result;
     }
 
     public override string ToString() {

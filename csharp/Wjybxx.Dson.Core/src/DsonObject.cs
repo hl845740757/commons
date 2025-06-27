@@ -26,23 +26,18 @@ namespace Wjybxx.Dson
 /// </summary>
 public class DsonObject<TK> : AbstractDsonObject<TK>
 {
-    private readonly DsonHeader<TK> _header;
+    // TODO 如何降低Header的开销
+    private readonly DsonHeader<TK> _header = new DsonHeader<TK>();
 
-    public DsonObject()
-        : this(DsonInternals.NewLinkedDictionary<TK>(), new DsonHeader<TK>()) {
-    }
-
-    public DsonObject(int capacity)
-        : this(DsonInternals.NewLinkedDictionary<TK>(capacity), new DsonHeader<TK>()) {
+    public DsonObject(int capacity = 0) 
+        : base(capacity) {
     }
 
     public DsonObject(DsonObject<TK> src) // 需要拷贝
-        : this(DsonInternals.NewLinkedDictionary(src), new DsonHeader<TK>(src._header)) {
-    }
-
-    private DsonObject(IGenericDictionary<TK, DsonValue> valueMap, DsonHeader<TK> header)
-        : base(valueMap) {
-        _header = header;
+        : base(src.Count) {
+        if (src._header.Count > 0) {
+            _header.PutAll(src._header);
+        }
     }
 
     public override DsonType DsonType => DsonType.Object;

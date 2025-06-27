@@ -57,43 +57,5 @@ internal static class DsonInternals
         }
         throw new InvalidCastException("Cant cast TName to string or int, type: " + typeof(TName));
     }
-
-    #region 集合Util
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static IGenericDictionary<TK, DsonValue> NewLinkedDictionary<TK>(int capacity = 0) {
-        return new LinkedDictionary<TK, DsonValue>(capacity);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static IGenericDictionary<TK, DsonValue> NewLinkedDictionary<TK>(IDictionary<TK, DsonValue> src) {
-        if (src == null) throw new ArgumentNullException(nameof(src));
-        var dictionary = new LinkedDictionary<TK, DsonValue>();
-        dictionary.PutAll(src);
-        return dictionary;
-    }
-
-    public static string ToString<T>(ICollection<T> collection) {
-        if (collection == null) throw new ArgumentNullException(nameof(collection));
-        StringBuilder sb = new StringBuilder(64);
-        sb.Append('[');
-        bool first = true;
-        foreach (T value in collection) {
-            if (first) {
-                first = false;
-            } else {
-                sb.Append(',');
-            }
-            if (value == null) {
-                sb.Append("null");
-            } else {
-                sb.Append(value.ToString());
-            }
-        }
-        sb.Append(']');
-        return sb.ToString();
-    }
-
-    #endregion
 }
 }

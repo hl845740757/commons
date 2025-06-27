@@ -15,6 +15,14 @@ public abstract class AbstractDsonArray extends DsonValue implements List<DsonVa
 
     final List<DsonValue> values;
 
+    AbstractDsonArray() {
+        this.values = new ArrayList<>();
+    }
+
+    AbstractDsonArray(int expectCount) {
+        this.values = new ArrayList<>(expectCount);
+    }
+
     AbstractDsonArray(List<DsonValue> values) {
         Objects.requireNonNull(values);
         this.values = values;

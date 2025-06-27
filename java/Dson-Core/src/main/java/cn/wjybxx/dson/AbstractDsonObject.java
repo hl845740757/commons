@@ -13,6 +13,11 @@ public abstract class AbstractDsonObject<K> extends DsonValue implements Map<K, 
 
     final Map<K, DsonValue> valueMap;
 
+    AbstractDsonObject(int expectCount) {
+        if (expectCount == 0) expectCount = 8;
+        this.valueMap = LinkedHashMap.newLinkedHashMap(expectCount);
+    }
+
     AbstractDsonObject(Map<K, DsonValue> valueMap) {
         Objects.requireNonNull(valueMap);
         this.valueMap = valueMap;
