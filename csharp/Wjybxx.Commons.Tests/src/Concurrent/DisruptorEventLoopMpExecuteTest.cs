@@ -52,7 +52,7 @@ public class DisruptorEventLoopMpExecuteTest
         consumer = new DisruptorEventLoopBuilder<AgentEvent>()
         {
             ThreadFactory = new DefaultThreadFactory("consumer"),
-            EventSequencer = new RingBufferEventSequencer<AgentEvent>.Builder(() => new AgentEvent()).Build(),
+            EventSequencer = new RingBufferEventSequencer<AgentEvent>.Builder(AgentEvent.FACTORY).Build(),
             Agent = agent
         }.Build();
 
@@ -84,7 +84,7 @@ public class DisruptorEventLoopMpExecuteTest
         consumer = new DisruptorEventLoopBuilder<AgentEvent>()
         {
             ThreadFactory = new DefaultThreadFactory("consumer"),
-            EventSequencer = new MpUnboundedEventSequencer<AgentEvent>.Builder(() => new AgentEvent()).Build(),
+            EventSequencer = new MpUnboundedEventSequencer<AgentEvent>.Builder(AgentEvent.FACTORY).Build(),
             Agent = agent
         }.Build();
 

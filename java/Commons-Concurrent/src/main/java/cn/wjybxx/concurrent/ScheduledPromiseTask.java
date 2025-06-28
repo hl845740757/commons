@@ -94,18 +94,22 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
      * 事件循环在将任务插入到队列时调用该方法初始化任务
      *
      * @param helper 事件循环的helper
-     * @param id     任务的id
      */
-    public void inject(ISchedulerHelper helper, long id) {
+    public void inject(ISchedulerHelper helper) {
         this.helper = helper;
-        this.id = id;
         this.nextTriggerTime = helper.triggerTime(nextTriggerTime, TimeUnit.NANOSECONDS);
         if (isPeriodic()) {
             this.period = helper.triggerPeriod(period, TimeUnit.NANOSECONDS);
         }
+        // 这里第二次读取TickTime，Deadline可能大于预期值，问题不大
         if (hasTimeout()) {
             this.deadline = helper.triggerTime(deadline, TimeUnit.NANOSECONDS);
         }
+    }
+
+    /** 添加到队列之前赋值id */
+    public void setId(long id) {
+        this.id = id;
     }
     // endregion
 

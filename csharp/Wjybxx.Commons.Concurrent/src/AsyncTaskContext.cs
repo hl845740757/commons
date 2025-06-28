@@ -37,7 +37,9 @@ public readonly struct AsyncTaskContext
 
     /// <summary>
     /// 任务关联的事件循环
-    /// (可直接await切换到事件循环线程)
+    ///
+    /// 1.可通过await切换到事件循环线程，<code>await EventLoop</code>
+    /// 2.可通过<see cref="IEventLoop.ScheduleAction"/>实现跨线程Sleep
     /// </summary>
     public IEventLoop EventLoop => _helper.EventLoop;
 
@@ -47,15 +49,20 @@ public readonly struct AsyncTaskContext
     public object Context => _ctx;
 
     /// <summary>
+    /// 让出CPU，下一次事件循环的时候返回的Future进行完成状态
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="GuardedOperationException">如果当前不在事件循环线程</exception>
+    public ValueFuture Yield() => _helper.Sleep(TimeSpan.Zero, null);
+
+    /// <summary>
     /// 等待一段时间再次执行
-    /// 
-    /// 1.如果当前在其它线程，会在EventLoop线程醒来。
-    /// 2.延迟时间小于0非法
     /// </summary>
     /// <param name="timeSpan"></param>
     /// <param name="cancelToken"></param>
-    public ValueFuture Delay(TimeSpan timeSpan, ICancelToken? cancelToken = null) {
-        return _helper.Delay(timeSpan, cancelToken);
+    /// <exception cref="GuardedOperationException">如果当前不在事件循环线程</exception>
+    public ValueFuture Sleep(TimeSpan timeSpan, ICancelToken? cancelToken = null) {
+        return _helper.Sleep(timeSpan, cancelToken);
     }
 }
 }

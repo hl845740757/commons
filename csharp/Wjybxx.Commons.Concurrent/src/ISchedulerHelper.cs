@@ -80,7 +80,7 @@ public interface ISchedulerHelper : ICancelTokenListener
     /// <param name="timeSpan"></param>
     /// <param name="cancelToken"></param>
     /// <returns></returns>
-    ValueFuture Delay(TimeSpan timeSpan, ICancelToken? cancelToken);
+    ValueFuture Sleep(TimeSpan timeSpan, ICancelToken? cancelToken);
     
     /** 计算任务的触发时间 -- 允许修正 */
     long TriggerTime(long delay, TimeSpan timeUnit) {

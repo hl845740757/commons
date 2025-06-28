@@ -37,10 +37,9 @@ public class AsyncTaskTest
 
     private static async ValueFuture<int> AsyncMethod(AsyncTaskContext context) {
         int r = 0;
-        //
-        while (r++ < 11) {
+        for (; r < 10; r++) {
             long start = ObjectUtil.SystemTickMillis();
-            await context.Delay(TimeSpan.FromMilliseconds(100));
+            await context.Sleep(TimeSpan.FromMilliseconds(100));
             long end = ObjectUtil.SystemTickMillis();
             Console.WriteLine("costTime: " + (end - start));
         }

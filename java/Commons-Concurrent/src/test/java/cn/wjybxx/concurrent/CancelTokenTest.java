@@ -18,6 +18,8 @@ package cn.wjybxx.concurrent;
 
 import cn.wjybxx.base.IRegistration;
 import cn.wjybxx.base.MathCommon;
+import cn.wjybxx.base.Registration;
+import cn.wjybxx.base.ThreadUtils;
 import cn.wjybxx.base.mutable.MutableInt;
 import cn.wjybxx.base.mutable.MutableObject;
 import cn.wjybxx.disruptor.RingBufferEventSequencer;
@@ -346,6 +348,23 @@ public class CancelTokenTest {
         Assertions.assertEquals(reason, CancelCodes.getReason(realCode));
         Assertions.assertEquals(degree, CancelCodes.getDegree(realCode));
         Assertions.assertTrue(CancelCodes.isInterruptible(realCode));
+    }
+    // endregion
+
+    // region 池化
+
+    @Test
+    public void testPool() {
+        for (int i = 0; i < 1000; i++) {
+            CancelTokenSource cts = new CancelTokenSource();
+            IRegistration registration = cts.thenRun(() -> { });
+            // 主线程关闭，子线程通知
+            globalEventLoop.execute(() -> cts.cancel(1));
+            registration.close();
+
+            cts.thenRun(() -> { });
+        }
+        ThreadUtils.sleepQuietly(1000);
     }
     // endregion
 }

@@ -32,6 +32,10 @@ public struct AgentEvent : IAgentEvent
     public object? obj1;
     public object? obj2;
 
+    public AgentEvent(int type) : this() {
+        this.type = type;
+    }
+
     /// <summary>
     /// 构造函数将type声明为可选值，会导致不被调用构造函数
     /// </summary>
@@ -40,10 +44,6 @@ public struct AgentEvent : IAgentEvent
         r.type = IAgentEvent.TYPE_INVALID;
         return r;
     };
-
-    public AgentEvent(int type) : this() {
-        this.type = type;
-    }
 
     public int Type {
         get => type;

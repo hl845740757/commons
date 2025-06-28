@@ -96,7 +96,7 @@ public static class ObjectUtil
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long SystemTickMillis() => (long)(Stopwatch.GetTimestamp() * s_tickFrequency / 10000L);
+    public static long SystemTickMillis() => (long)(Stopwatch.GetTimestamp() * s_tickFrequency / 10000d);
 
     /// <summary>
     /// 'Frequency'存储的是在当前平台上，1秒对应多少个原始tick -- 依赖平台。

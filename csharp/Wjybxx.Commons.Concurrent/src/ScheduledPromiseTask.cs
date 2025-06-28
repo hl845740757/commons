@@ -28,7 +28,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 接口用于定义常量和工具方法
 /// </summary>
-public interface ScheduledPromiseTask
+public static class ScheduledPromiseTask
 {
     #region factory
 
@@ -123,15 +123,14 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     /// 事件循环在将任务插入到队列时调用该方法初始化任务
     /// </summary>
     /// <param name="helper">事件循环的helper</param>
-    /// <param name="id">任务的id</param>
-    public void Inject(ISchedulerHelper helper, long id) {
-        this.id = id;
+    public void Inject(ISchedulerHelper helper) {
         this.helper = helper;
         TimeSpan timeUnit = new TimeSpan(1);
         this.nextTriggerTime = helper.TriggerTime(nextTriggerTime, timeUnit);
         if (IsPeriodic) {
             this.period = helper.TriggerPeriod(period, timeUnit);
         }
+        // 这里第二次读取TickTime，Deadline可能大于预期值，问题不大
         if (HasTimeout) {
             this.deadline = helper.TriggerTime(deadline, timeUnit);
         }

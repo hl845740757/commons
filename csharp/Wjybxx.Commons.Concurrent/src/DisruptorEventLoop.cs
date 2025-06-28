@@ -185,10 +185,18 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
 
     public override void Execute(ITask task) {
         if (task == null) throw new ArgumentNullException(nameof(task));
+        // 在申请序号之前注入Helper（初始化任务的调度时间，避免被阻塞导致延迟）
+        IScheduledFutureTask? promiseTask = task as IScheduledFutureTask;
+        if (promiseTask != null) {
+            promiseTask.Inject(schedulerHelper);
+        }
         long sequence = NextSequence(1);
         if (sequence < 0) {
             rejectedExecutionHandler.Rejected(task, this);
             return;
+        }
+        if (promiseTask != null) {
+            promiseTask.Id = sequence; // nice
         }
         PublishTask(task, sequence, task.Options);
     }
@@ -223,15 +231,13 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     /// <param name="sequence"></param>
     /// <param name="options"></param>
     private void PublishTask(object task, long sequence, int options) {
+        if (task == null) throw new ArgumentNullException(nameof(task));
         if (publishValueEventWithCopy) {
             T eventObj = default;
             try {
                 eventObj!.Type = 0;
                 eventObj.Obj1 = task;
                 eventObj.Options = options;
-                if (task is IScheduledFutureTask futureTask) {
-                    futureTask.Inject(schedulerHelper, sequence); // nice
-                }
             }
             finally {
                 eventSequencer.Publish(sequence, in eventObj);
@@ -242,9 +248,6 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
                 eventObj.Type = 0;
                 eventObj.Obj1 = task;
                 eventObj.Options = options;
-                if (task is IScheduledFutureTask futureTask) {
-                    futureTask.Inject(schedulerHelper, sequence); // nice
-                }
             }
             finally {
                 eventSequencer.Publish(sequence);
@@ -722,7 +725,10 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
             int type = eventObj.Type;
             try {
                 if (type == 0) {
-                    if (eventObj.Obj1 is Action action) {
+                    if (eventObj.Obj1 == null) {
+                        // 由于c#支持值类型，用户设置错工厂容易导致该问题
+                        logger.Warn("bad event factory");
+                    } else if (eventObj.Obj1 is Action action) {
                         action();
                     } else {
                         ITask task = (ITask)eventObj.Obj1;

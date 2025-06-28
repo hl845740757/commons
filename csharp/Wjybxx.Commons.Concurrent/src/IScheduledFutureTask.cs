@@ -36,14 +36,13 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     /// 初始化
     /// </summary>
     /// <param name="helper"></param>
-    /// <param name="id"></param>
-    void Inject(ISchedulerHelper helper, long id);
+    void Inject(ISchedulerHelper helper);
 
     /// <summary>
     /// 任务的唯一id，不同的任务之间id不可重复
     /// (执行清理后应该为0)
     /// </summary>
-    long Id { get; }
+    long Id { get; set; }
 
     /// <summary>
     /// 是否是周期性任务

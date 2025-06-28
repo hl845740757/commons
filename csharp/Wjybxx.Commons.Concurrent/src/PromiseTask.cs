@@ -29,7 +29,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 接口用于定义常量和工具方法
 /// </summary>
-public interface PromiseTask
+public static class PromiseTask
 {
     // 低8位和TaskOptions保持一致，以方便继承数据
     /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */

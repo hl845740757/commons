@@ -129,22 +129,16 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         }
     }
 
-    public ValueFuture Delay(TimeSpan timeSpan, ICancelToken? cancelToken) {
-        ValuePromise<int> promise = ValuePromise<int>.Acquire(_eventLoop);
-        // 跨线程时直接走正常的任务提交
+    public ValueFuture Sleep(TimeSpan timeSpan, ICancelToken? cancelToken) {
         if (!_eventLoop.InEventLoop()) {
-            ScheduledPromiseTask<int> promiseTask = ScheduledPromiseTask.OfAction(EMPTY_ACTION, cancelToken, 0, promise, timeSpan);
-            _eventLoop.Execute(promiseTask);
-            return promise.VoidFuture;
+            throw new GuardedOperationException();
         }
-        // 当前在线程中时，走开销更小的command -- 更多情况
-        long triggerTime = TickTime + Normalize(1, timeSpan);
-        if (triggerTime < _eventLoop.TickTime) {
-            return default;
-        }
+        long delay = Math.Max(0, Normalize(1, timeSpan)); // delay最小为0
+        ValuePromise<int> promise = ValuePromise<int>.Acquire(_eventLoop);
+        
         AsyncCommand command = _commandPool.Acquire();
         command.id = _nextCommandId++;
-        command.triggerTime = triggerTime;
+        command.triggerTime = _eventLoop.TickTime + delay;
         command.cancelToken = cancelToken;
         command.promise = promise;
         _commandQueue.Enqueue(command);

@@ -273,7 +273,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
     private void EnterLock() {
         SpinWait spinWait = default;
-        if (Interlocked.CompareExchange(ref _lock, 1, 0) != 0) {
+        while (Interlocked.CompareExchange(ref _lock, 1, 0) != 0) {
             spinWait.SpinOnce();
         }
     }
@@ -627,7 +627,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
 
         internal void EnterLock() {
             SpinWait spinWait = default;
-            if (Interlocked.CompareExchange(ref _lock, 1, 0) != 0) {
+            while (Interlocked.CompareExchange(ref _lock, 1, 0) != 0) {
                 spinWait.SpinOnce();
             }
         }

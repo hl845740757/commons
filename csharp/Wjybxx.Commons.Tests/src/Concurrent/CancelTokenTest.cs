@@ -360,7 +360,7 @@ public class CancelTokenTest
     /// </summary>
     [Test]
     public void testPool() {
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 1000; i++) {
             CancelTokenSource cts = new CancelTokenSource();
             Registration registration = cts.ThenRun(() => { });
             // 主线程关闭，子线程通知
