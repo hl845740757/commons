@@ -117,7 +117,7 @@ public sealed class Binary
     public static Binary FromHexString(string hexString) {
         return new Binary(CommonsLang3.DecodeHex(hexString));
     }
-    
+
     public static Binary FromHexString(StringBuilder hexString) {
         return new Binary(CommonsLang3.DecodeHex(hexString));
     }

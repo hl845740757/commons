@@ -200,12 +200,7 @@ public sealed class EnumCodec<T> : IEnumCodec<T> where T : struct, Enum
 
     private int ParseFlags(string str) {
         int value = 0;
-#if NET6_0_OR_GREATER
-        foreach (string e in str.Split('|', StringSplitOptions.TrimEntries)) {
-#else
-        foreach (string e in str.Split('|')) {
-            e = e.Trim();
-#endif
+        foreach (string e in ObjectUtil.SplitAndTrim(str, '|')) {
             // 枚举Flags更常见的应当是name
             if (_name2EnumDic.TryGetValue(e, out EnumValueInfo<T> valueInfo)) {
                 value |= valueInfo.number;

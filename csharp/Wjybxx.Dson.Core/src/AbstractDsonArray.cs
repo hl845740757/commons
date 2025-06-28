@@ -33,7 +33,7 @@ public abstract class AbstractDsonArray : DsonValue, IList<DsonValue>, IEquatabl
     protected AbstractDsonArray(int expectCount = 0) {
         _values = new List<DsonValue>(expectCount);
     }
-    
+
     protected AbstractDsonArray(IList<DsonValue> values) {
         _values = values ?? throw new ArgumentNullException(nameof(values));
     }
