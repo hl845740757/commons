@@ -93,6 +93,8 @@ public interface IDsonObjectWriter : IDisposable
 
     #region 流程
 
+    IDsonConverter Converter { get; }
+
     ConverterOptions Options { get; }
 
     string CurrentName { get; }

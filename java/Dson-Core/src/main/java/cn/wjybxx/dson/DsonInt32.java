@@ -102,14 +102,17 @@ public final class DsonInt32 extends DsonNumber implements Comparable<DsonInt32>
     static final int POOL_END = 127;
     // 注意初始化顺序
     private static final DsonInt32[] POOL = new DsonInt32[POOL_END - POOL_START + 1];
-    public static final DsonInt32 ZERO = valueOf(0);
-    public static final DsonInt32 ONE = valueOf(1);
-    public static final DsonInt32 MINUS_ONE = valueOf(-1);
+    public static final DsonInt32 ZERO;
+    public static final DsonInt32 ONE;
+    public static final DsonInt32 MINUS_ONE;
 
     static {
         for (int i = POOL_START; i <= POOL_END; i++) {
             POOL[i - POOL_START] = new DsonInt32(i);
         }
+        ZERO = valueOf(0);
+        ONE = valueOf(1);
+        MINUS_ONE = valueOf(-1);
     }
 
     public static DsonInt32 valueOf(int value) {

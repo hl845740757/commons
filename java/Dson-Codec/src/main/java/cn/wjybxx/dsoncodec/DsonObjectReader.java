@@ -93,6 +93,8 @@ public interface DsonObjectReader extends AutoCloseable {
 
     // region 流程
 
+    DsonConverter converter();
+
     ConverterOptions options();
 
     DsonContextType getContextType();

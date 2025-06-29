@@ -106,14 +106,17 @@ public sealed class DsonInt64 : DsonNumber, IEquatable<DsonInt64>, IComparable<D
 
     // 注意初始化顺序
     private static readonly DsonInt64[] POOL = new DsonInt64[POOL_END - POOL_START + 1];
-    public static readonly DsonInt64 ZERO = ValueOf(0);
-    public static readonly DsonInt64 ONE = ValueOf(1);
-    public static readonly DsonInt64 MINUS_ONE = ValueOf(-1);
+    public static readonly DsonInt64 ZERO;
+    public static readonly DsonInt64 ONE;
+    public static readonly DsonInt64 MINUS_ONE;
 
     static DsonInt64() {
         for (int i = POOL_START; i <= POOL_END; i++) {
             POOL[i - POOL_START] = new DsonInt64(i);
         }
+        ZERO = ValueOf(0);
+        ONE = ValueOf(1);
+        MINUS_ONE = ValueOf(-1);
     }
 
     public static DsonInt64 ValueOf(long value) {

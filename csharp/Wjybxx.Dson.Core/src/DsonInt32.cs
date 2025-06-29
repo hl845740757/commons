@@ -108,14 +108,17 @@ public sealed class DsonInt32 : DsonNumber, IEquatable<DsonInt32>, IComparable<D
     internal const int POOL_END = 127;
     // 注意初始化顺序
     private static readonly DsonInt32[] POOL = new DsonInt32[POOL_END - POOL_START + 1];
-    public static readonly DsonInt32 ZERO = ValueOf(0);
-    public static readonly DsonInt32 ONE = ValueOf(1);
-    public static readonly DsonInt32 MINUS_ONE = ValueOf(-1);
+    public static readonly DsonInt32 ZERO;
+    public static readonly DsonInt32 ONE;
+    public static readonly DsonInt32 MINUS_ONE;
 
     static DsonInt32() {
         for (int i = POOL_START; i <= POOL_END; i++) {
             POOL[i - POOL_START] = new DsonInt32(i);
         }
+        ZERO = ValueOf(0);
+        ONE = ValueOf(1);
+        MINUS_ONE = ValueOf(-1);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

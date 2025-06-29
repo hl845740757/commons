@@ -198,6 +198,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
 
     #region 流程
 
+    public IDsonConverter Converter => converter;
     public ConverterOptions Options => converter.Options;
     public string CurrentName => writer.CurrentName;
 

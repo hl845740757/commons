@@ -109,14 +109,17 @@ public sealed class DsonDouble : DsonNumber, IComparable<DsonDouble>, IEquatable
     /// A：因为数字的默认解析类型是double。
     /// </summary>
     private static readonly DsonDouble[] POOL = new DsonDouble[POOL_END - POOL_START + 1];
-    public static readonly DsonDouble ZERO = ValueOf(0);
-    public static readonly DsonDouble ONE = ValueOf(1);
-    public static readonly DsonDouble MINUS_ONE = ValueOf(-1);
+    public static readonly DsonDouble ZERO;
+    public static readonly DsonDouble ONE;
+    public static readonly DsonDouble MINUS_ONE;
 
     static DsonDouble() {
         for (int i = POOL_START; i <= POOL_END; i++) {
             POOL[i - POOL_START] = new DsonDouble(i);
         }
+        ZERO = ValueOf(0);
+        ONE = ValueOf(1);
+        MINUS_ONE = ValueOf(-1);
     }
 
     public static DsonDouble ValueOf(double dValue) {

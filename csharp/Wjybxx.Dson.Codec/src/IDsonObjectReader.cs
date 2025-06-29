@@ -92,6 +92,8 @@ public interface IDsonObjectReader : IDisposable
 
     #region 流程
 
+    IDsonConverter Converter { get; }
+
     ConverterOptions Options { get; }
 
     DsonContextType ContextType { get; }

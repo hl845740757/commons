@@ -100,15 +100,17 @@ public final class DsonFloat extends DsonNumber implements Comparable<DsonFloat>
     private static final int POOL_END = 9;
     /** Float只缓存常见的几个整数值 */
     private static final DsonFloat[] POOL = new DsonFloat[POOL_END - POOL_START + 1];
-
-    public static final DsonFloat ZERO = valueOf(0);
-    public static final DsonFloat ONE = valueOf(1);
-    public static final DsonFloat MINUS_ONE = valueOf(-1);
+    public static final DsonFloat ZERO;
+    public static final DsonFloat ONE;
+    public static final DsonFloat MINUS_ONE;
 
     static {
         for (int i = POOL_START; i <= POOL_END; i++) {
             POOL[i - POOL_START] = new DsonFloat(i);
         }
+        ZERO = valueOf(0);
+        ONE = valueOf(1);
+        MINUS_ONE = valueOf(-1);
     }
 
     public static DsonFloat valueOf(float fValue) {

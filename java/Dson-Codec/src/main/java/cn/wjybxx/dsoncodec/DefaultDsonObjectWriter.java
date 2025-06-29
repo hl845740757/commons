@@ -202,6 +202,11 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     // region 流程
 
     @Override
+    public DsonConverter converter() {
+        return converter;
+    }
+
+    @Override
     public ConverterOptions options() {
         return converter.options();
     }

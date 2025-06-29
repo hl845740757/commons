@@ -105,14 +105,17 @@ public final class DsonDouble extends DsonNumber implements Comparable<DsonDoubl
      * A：因为数字的默认解析类型是double。
      */
     private static final DsonDouble[] POOL = new DsonDouble[POOL_END - POOL_START + 1];
-    public static final DsonDouble ZERO = valueOf(0);
-    public static final DsonDouble ONE = valueOf(1);
-    public static final DsonDouble MINUS_ONE = valueOf(-1);
+    public static final DsonDouble ZERO;
+    public static final DsonDouble ONE;
+    public static final DsonDouble MINUS_ONE;
 
     static {
         for (int i = POOL_START; i <= POOL_END; i++) {
             POOL[i - POOL_START] = new DsonDouble(i);
         }
+        ZERO = valueOf(0);
+        ONE = valueOf(1);
+        MINUS_ONE = valueOf(-1);
     }
 
     public static DsonDouble valueOf(double dValue) {

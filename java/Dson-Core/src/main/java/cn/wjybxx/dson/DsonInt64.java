@@ -103,14 +103,17 @@ public final class DsonInt64 extends DsonNumber implements Comparable<DsonInt64>
 
     // 注意初始化顺序
     private static final DsonInt64[] POOL = new DsonInt64[POOL_END - POOL_START + 1];
-    public static final DsonInt64 ZERO = valueOf(0);
-    public static final DsonInt64 ONE = valueOf(1);
-    public static final DsonInt64 MINUS_ONE = valueOf(-1);
+    public static final DsonInt64 ZERO;
+    public static final DsonInt64 ONE;
+    public static final DsonInt64 MINUS_ONE;
 
     static {
         for (int i = POOL_START; i <= POOL_END; i++) {
             POOL[i - POOL_START] = new DsonInt64(i);
         }
+        ZERO = valueOf(0);
+        ONE = valueOf(1);
+        MINUS_ONE = valueOf(-1);
     }
 
     public static DsonInt64 valueOf(long value) {

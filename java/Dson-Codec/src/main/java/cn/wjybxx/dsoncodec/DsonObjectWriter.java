@@ -104,6 +104,8 @@ public interface DsonObjectWriter extends AutoCloseable {
 
     // region 流程
 
+    DsonConverter converter();
+
     ConverterOptions options();
 
     String getCurrentName();
