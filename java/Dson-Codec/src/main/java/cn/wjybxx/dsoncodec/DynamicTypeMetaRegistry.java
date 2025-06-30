@@ -37,9 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
     private final TypeMetaConfig basicRegistry;
-    /** clsName解析缓存 */
-    private final ConcurrentHashMap<String, TypeName> classNamePool = new ConcurrentHashMap<>(1024);
-
     private final ConcurrentHashMap<TypeInfo, TypeMeta> type2MetaDic = new ConcurrentHashMap<>(1024);
     private final ConcurrentHashMap<String, TypeMeta> name2MetaDic = new ConcurrentHashMap<>(1024);
 
@@ -75,7 +72,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             }
             style = rawTypeMeta.style; // 保留泛型类的Style
         }
-        TypeName typeName = classNameOfType(type); // 放前方可检测泛型
+        TypeName typeName = nameOfType(type); // 放前方可检测泛型
         String mainClsName = typeName.toString();
 
         // 动态生成TypeMeta并缓存下来
@@ -100,9 +97,9 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             return typeMeta;
         }
         // 走到这里，通常意味着clsName是数组或泛型 -- 别名可能导致断言失败
-        TypeName typeName = parseName(clsName);
+        TypeName typeName = TypeName.parse(clsName);
 //        assert typeName.isArray() || typeName.isGeneric()
-        TypeInfo type = typeOfClassName(typeName);
+        TypeInfo type = typeOfName(typeName);
 
         // 通过Type初始化TypeMeta，我们尽量合并TypeMeta -- clsName包含空白时不缓存
         typeMeta = ofType(type);
@@ -131,33 +128,17 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
 
     // region internal
 
-    private TypeName parseName(String clsName) {
-        Objects.requireNonNull(clsName);
-        TypeName typeName = classNamePool.get(clsName);
-        if (typeName != null) {
-            return typeName;
-        }
-        // 程序生成的clsName通常是紧凑的，不包含空白字符(缩进)的，因此可以安全缓存；
-        // 如果clsName包含空白字符，通常是用户手写的，缓存有一定的风险性 —— 可能产生恶意缓存
-        if (ObjectUtils.containsWhitespace(clsName)) {
-            return TypeName.parse(clsName);
-        }
-        typeName = TypeName.parse(clsName);
-        classNamePool.put(clsName, typeName);
-        return typeName;
-    }
-
     /**
      * 根据Type查找对应的ClassName。
      * 1.由于类型存在别名，一个Type的ClassName可能有很多个，且泛型参数还会导致组合，导致更多的类型名，但动态生成时我们只生成确定的一种。
      * 2.解析的开销较大，需要缓存最终结果。
      * 3.Java禁止递归的泛型
      */
-    private TypeName classNameOfType(TypeInfo type) {
+    private TypeName nameOfType(TypeInfo type) {
         if (type.isArrayType()) {
             TypeInfo rootElementType = TypeInfo.of(ArrayUtils.getRootComponentType(type.rawType), type.typeArgs);
             int arrayRank = ArrayUtils.getArrayRank(type.rawType);
-            String clsName = classNameOfType(rootElementType) + ArrayUtils.arrayRankSymbol(arrayRank);
+            String clsName = nameOfType(rootElementType) + ArrayUtils.arrayRankSymbol(arrayRank);
             return new TypeName(clsName);
         }
         if (type.isGenericType()) {
@@ -169,7 +150,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             List<TypeInfo> genericTypeArgs = type.typeArgs;
             List<TypeName> typeArgTypeNames = new ArrayList<>(genericTypeArgs.size());
             for (TypeInfo genericTypeArg : genericTypeArgs) {
-                typeArgTypeNames.add(classNameOfType(genericTypeArg));
+                typeArgTypeNames.add(nameOfType(genericTypeArg));
             }
             return new TypeName(typeMeta.mainClsName(), typeArgTypeNames);
         }
@@ -189,13 +170,13 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
      * 2.解析的开销较大，需要缓存最终结果。
      * 3.Java禁止递归的泛型
      */
-    private TypeInfo typeOfClassName(TypeName typeName) {
+    private TypeInfo typeOfName(TypeName typeName) {
         // 先解析泛型类，再构建数组
         int arrayRank = typeName.getArrayRank();
         TypeInfo result;
         if (arrayRank > 0) {
             // 获取数组根元素的类型
-            result = typeOfClassName(new TypeName(typeName.getRootElement(), typeName.typeArgs));
+            result = typeOfName(new TypeName(typeName.getRootElement(), typeName.typeArgs));
         } else {
             // 解析泛型原型 —— 泛型原型类必须存在于用户的注册表中
             TypeMeta typeMeta = basicRegistry.ofName(typeName.name);
@@ -208,7 +189,7 @@ public final class DynamicTypeMetaRegistry implements TypeMetaRegistry {
             if (typeArgsCount > 0) {
                 TypeInfo[] typeArgs = new TypeInfo[typeArgsCount];
                 for (int index = 0; index < typeArgsCount; index++) {
-                    typeArgs[index] = typeOfClassName(typeName.typeArgs.get(index));
+                    typeArgs[index] = typeOfName(typeName.typeArgs.get(index));
                 }
                 result = TypeInfo.of(result.rawType, typeArgs);
             }

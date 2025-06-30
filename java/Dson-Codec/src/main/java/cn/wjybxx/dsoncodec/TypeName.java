@@ -70,7 +70,7 @@ public final class TypeName {
 
     public TypeName(String name, List<TypeName> typeArgs) {
         this.name = Objects.requireNonNull(name, "clsName");
-        this.typeArgs = typeArgs == null ? List.of() : List.copyOf(typeArgs);
+        this.typeArgs = (typeArgs != null && typeArgs.size() > 0) ? List.copyOf(typeArgs) : List.of();
     }
 
     // region 基础查询

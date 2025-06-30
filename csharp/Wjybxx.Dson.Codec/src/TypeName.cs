@@ -69,7 +69,7 @@ public sealed class TypeName : IEquatable<TypeName>
 
     public TypeName(string clsName, IList<TypeName>? typeArgs = null) {
         this.name = clsName ?? throw new ArgumentNullException(nameof(clsName));
-        this.typeArgs = typeArgs?.ToImmutableList2() ?? ImmutableList<TypeName>.Empty;
+        this.typeArgs = (typeArgs != null && typeArgs.Count > 0) ? typeArgs.ToImmutableList2() : ImmutableList<TypeName>.Empty;
         this._hashcode = 0;
     }
 

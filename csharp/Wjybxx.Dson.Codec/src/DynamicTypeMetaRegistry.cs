@@ -33,10 +33,6 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
     /// 用户的原始的类型元数据
     /// </summary>
     private readonly TypeMetaConfig _config;
-    /// <summary>
-    /// clsName的解析结果缓存
-    /// </summary>
-    private readonly ConcurrentDictionary<string, TypeName> classNamePool = new ConcurrentDictionary<string, TypeName>();
     private readonly ConcurrentDictionary<Type, TypeMeta> type2MetaDic = new ConcurrentDictionary<Type, TypeMeta>();
     private readonly ConcurrentDictionary<string, TypeMeta> name2MetaDic = new ConcurrentDictionary<string, TypeMeta>();
 
@@ -74,7 +70,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             }
             style = rawTypeMeta.style; // 保留泛型类的Style
         }
-        TypeName typeName = ClassNameOfType(type); // 放前方可检测泛型
+        TypeName typeName = NameOfType(type); // 放前方可检测泛型
         string mainClsName = typeName.ToString();
 
         // 需要动态生成TypeMeta并缓存下来
@@ -97,9 +93,9 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             return typeMeta;
         }
         // 走到这里，通常意味着clsName是数组或泛型 -- 别名可能导致断言失败
-        TypeName typeName = ParseName(clsName);
+        TypeName typeName = TypeName.Parse(clsName);
         // Debug.Assert(className.IsArray || className.IsGeneric);
-        Type type = TypeOfClassName(typeName);
+        Type type = TypeOfName(typeName);
 
         // 通过Type初始化TypeMeta，我们尽量合并TypeMeta -- clsName包含空白时不缓存
         typeMeta = OfType(type);
@@ -128,21 +124,6 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
 
     #region internal
 
-    private TypeName ParseName(string clsName) {
-        if (clsName == null) throw new ArgumentNullException(nameof(clsName));
-        if (classNamePool.TryGetValue(clsName, out TypeName result)) {
-            return result;
-        }
-        // 程序生成的clsName通常是紧凑的，不包含空白字符(缩进)的，因此可以安全缓存；
-        // 如果clsName包含空白字符，通常是用户手写的，缓存有一定的风险性 —— 可能产生恶意缓存
-        if (ObjectUtil.ContainsWhitespace(clsName)) {
-            return TypeName.Parse(clsName);
-        }
-        result = TypeName.Parse(clsName);
-        classNamePool.TryAdd(clsName, result);
-        return result;
-    }
-
     /// <summary>
     /// 根据Type查找对应的ClassName。
     /// 1.由于类型存在别名，一个Type的ClassName可能有很多个，且泛型参数还会导致组合，导致更多的类型名，但动态生成时我们只生成确定的一种。
@@ -150,11 +131,11 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
     /// </summary>
     /// <param name="type"></param>
     /// <returns></returns>
-    private TypeName ClassNameOfType(Type type) {
+    private TypeName NameOfType(Type type) {
         if (type.IsArray) {
             Type rootElementType = ArrayUtil.GetRootElementType(type);
             int arrayRank = ArrayUtil.GetArrayRank(type);
-            string clsName = ClassNameOfType(rootElementType) + ArrayUtil.ArrayRankSymbol(arrayRank);
+            string clsName = NameOfType(rootElementType) + ArrayUtil.ArrayRankSymbol(arrayRank);
             return new TypeName(clsName);
         }
         if (type.IsGenericType) {
@@ -166,7 +147,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             Type[] genericTypeArgs = type.GenericTypeArguments; // 真实泛型参数
             List<TypeName> typeArgClassNames = new List<TypeName>(genericTypeArgs.Length);
             foreach (Type genericTypeArg in genericTypeArgs) {
-                typeArgClassNames.Add(ClassNameOfType(genericTypeArg));
+                typeArgClassNames.Add(NameOfType(genericTypeArg));
             }
             return new TypeName(typeMeta.MainClsName, typeArgClassNames);
         }
@@ -185,13 +166,13 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
     /// 1.ClassName到Type之间是多对一关系。
     /// 2.解析的开销较大，需要缓存最终结果。
     /// </summary>
-    private Type TypeOfClassName(TypeName typeName) {
+    private Type TypeOfName(TypeName typeName) {
         // 先解析泛型类，再构建数组
         int arrayRank = typeName.ArrayRank;
         Type result;
         if (arrayRank > 0) {
             // 获取数组根元素的类型
-            result = TypeOfClassName(new TypeName(typeName.RootElement, typeName.typeArgs));
+            result = TypeOfName(new TypeName(typeName.RootElement, typeName.typeArgs));
         } else {
             // 解析泛型原型 —— 泛型原型类必须存在于用户的注册表中
             TypeMeta typeMeta = _config.OfName(typeName.name);
@@ -204,7 +185,7 @@ public sealed class DynamicTypeMetaRegistry : ITypeMetaRegistry
             if (typeArgsCount > 0) {
                 Type[] typeArgs = new Type[typeArgsCount];
                 for (int index = 0; index < typeArgsCount; index++) {
-                    typeArgs[index] = TypeOfClassName(typeName.typeArgs[index]);
+                    typeArgs[index] = TypeOfName(typeName.typeArgs[index]);
                 }
                 result = result.MakeGenericType(typeArgs);
             }
