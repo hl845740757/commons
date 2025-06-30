@@ -229,9 +229,9 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
     public override void WriteSimpleHeader(string clsName) {
         WriteStartHeader(ObjectStyle.Flow);
         if (_textWriter != null) {
-            _textWriter.WriteString(DsonHeaders.Names_ClassName, clsName);
+            _textWriter.WriteString(DsonHeader.Names_ClassName, clsName);
         } else {
-            _binWriter.WriteString(DsonHeaders.Numbers_ClassName, clsName);
+            _binWriter.WriteString(DsonHeader.Numbers_ClassName, clsName);
         }
         WriteEndHeader();
     }

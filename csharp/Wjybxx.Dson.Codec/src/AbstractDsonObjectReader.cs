@@ -119,6 +119,10 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
             reader.ReadNull(name);
             return default;
         }
+        // 当声明类型是DsonValue类型时，需要保留Header
+        if (typeof(DsonValue).IsAssignableFrom(declaredType)) {
+            return (T)(object)Dsons.ReadDsonValue(reader);
+        }
         // 容器类型只能通过codec解码；Flags编码为Int/String数组的情况下，需要自定义Field读写代理处理
         if (dsonType.IsContainer()) {
             string clsName = ReadClsName(dsonType);
@@ -139,10 +143,6 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
             if (codec != null) {
                 return codec.ReadObject(this, declaredType, factory);
             }
-        }
-        // 考虑DsonValue
-        if (typeof(DsonValue).IsAssignableFrom(declaredType)) {
-            return (T)(object)Dsons.ReadDsonValue(reader);
         }
         // 默认类型转换-声明类型可能是个抽象类型，eg：Number
         return (T)DsonCodecHelper.ReadDsonValueValue(reader, name);
@@ -279,7 +279,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
             reader.ReadStartHeader();
             // 允许header包含其它数据
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                if (reader.ReadName() == DsonHeaders.Names_ClassName) {
+                if (reader.ReadName() == DsonHeader.Names_ClassName) {
                     clsName = reader.ReadString(null);
                     clsName = string.Intern(clsName); // 池化
                     break;

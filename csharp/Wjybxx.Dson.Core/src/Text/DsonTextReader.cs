@@ -39,7 +39,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         CollectionUtil.NewList(DsonTokenType.Comma, DsonTokenType.EndObject, DsonTokenType.EndArray);
 
     private static readonly DsonToken TOKEN_BEGIN_HEADER = new DsonToken(DsonTokenType.BeginHeader, "@{", -1);
-    private static readonly DsonToken TOKEN_CLASSNAME = new DsonToken(DsonTokenType.UnquoteString, DsonHeaders.Names_ClassName, -1);
+    private static readonly DsonToken TOKEN_CLASSNAME = new DsonToken(DsonTokenType.UnquoteString, DsonHeader.Names_ClassName, -1);
     private static readonly DsonToken TOKEN_COLON = new DsonToken(DsonTokenType.Colon, ":", -1);
     private static readonly DsonToken TOKEN_END_OBJECT = new DsonToken(DsonTokenType.EndObject, "}", -1);
 
@@ -346,10 +346,10 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         // 处理header的特殊属性依赖
         if (context.contextType == DsonContextType.Header) {
             switch (_nextName) {
-                case DsonHeaders.Names_ClassName:
+                case DsonHeader.Names_ClassName:
                     PushNextValue(new UnionValue(DsonType.String, unquotedString));
                     return DsonType.String;
-                case DsonHeaders.Names_LocalId: {
+                case DsonHeader.Names_LocalId: {
                     return ParseLocalId(unquotedString);
                 }
             }

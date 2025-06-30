@@ -328,9 +328,9 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
     public virtual void WriteSimpleHeader(string clsName) {
         WriteStartHeader(ObjectStyle.Flow);
         if (this is AbstractDsonWriter<string> writer1) {
-            writer1.WriteString(DsonHeaders.Names_ClassName, clsName);
+            writer1.WriteString(DsonHeader.Names_ClassName, clsName);
         } else if (this is AbstractDsonWriter<int> writer2) {
-            writer2.WriteString(DsonHeaders.Numbers_ClassName, clsName);
+            writer2.WriteString(DsonHeader.Numbers_ClassName, clsName);
         } else {
             throw new AssertionError();
         }

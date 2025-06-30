@@ -383,7 +383,7 @@ public static class Dsons
 
     public static void WriteHeader<TName>(IDsonWriter<TName> writer, DsonHeader<TName> header) where TName : IEquatable<TName> {
         if (header.Count == 1) {
-            if (header is DsonHeader<string> header1 && header1.TryGetValue(DsonHeaders.Names_ClassName, out DsonValue clsName)) {
+            if (header is DsonHeader<string> header1 && header1.TryGetValue(DsonHeader.Names_ClassName, out DsonValue clsName)) {
                 writer.WriteSimpleHeader(clsName.AsString()); // header只包含clsName时打印为简单模式
                 return;
             }
@@ -645,7 +645,7 @@ public static class Dsons
         } else {
             return null;
         }
-        if (header.TryGetValue(DsonHeaders.Names_ClassName, out DsonValue wrapped)) {
+        if (header.TryGetValue(DsonHeader.Names_ClassName, out DsonValue wrapped)) {
             return wrapped is DsonString dsonString ? dsonString.Value : null;
         }
         return null;
@@ -661,7 +661,7 @@ public static class Dsons
         } else {
             return null;
         }
-        if (header.TryGetValue(DsonHeaders.Names_LocalId, out DsonValue wrapped)) {
+        if (header.TryGetValue(DsonHeader.Names_LocalId, out DsonValue wrapped)) {
             return wrapped is DsonString dsonString ? dsonString.Value : null;
         }
         return null;

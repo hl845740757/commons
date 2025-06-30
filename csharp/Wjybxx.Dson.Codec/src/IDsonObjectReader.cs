@@ -70,7 +70,8 @@ public interface IDsonObjectReader : IDisposable
     /// 注意：
     /// 1. 该方法对于无法精确解析的对象，可能返回一个不兼容的类型。
     /// 2. 目标类型可以与写入类型不一致，甚至无继承关系，只要数据格式兼容即可 —— 投影。
-    /// 3. 由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
+    /// 3. 如果声明类型是的<see cref="DsonValue"/>类型，将保留对象头信息。
+    /// 4. 由于声明类型并不能总是通过泛型参数获取，因此需要外部显式传入 —— 反射。
     /// </summary>
     /// <param name="name">字段的名字，数组元素和顶层对象的name可为null或空字符串</param>
     /// <param name="declaredType">对象的声明类型</param>

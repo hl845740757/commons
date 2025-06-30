@@ -18,7 +18,6 @@
 
 using System.Collections.Generic;
 using Wjybxx.Commons.Collections;
-using Wjybxx.Dson.Internal;
 
 namespace Wjybxx.Dson
 {
@@ -50,14 +49,16 @@ public class DsonHeader<TK> : AbstractDsonObject<TK>
 /// <summary>
 /// 定义DsonHeader常量
 /// </summary>
-public static class DsonHeaders
+public static class DsonHeader
 {
     // header常见属性名
     public const string Names_ClassName = "clsName";
     public const string Names_LocalId = "localId";
+    public const string Names_Count = "count";
 
     // header常见属性名的编号
     public const int Numbers_ClassName = 1;
     public const int Numbers_LocalId = 2;
+    public const int Numbers_Count = 3;
 }
 }

@@ -78,6 +78,7 @@ public interface DsonObjectReader extends AutoCloseable {
      * 注意：
      * 1. 该方法对于无法精确解析的对象，可能返回一个不兼容的类型。
      * 2. 目标类型可以与写入类型不一致，甚至无继承关系，只要数据格式兼容即可 —— 投影。
+     * 3. 如果声明类型是的{@link cn.wjybxx.dson.DsonValue}类型，将保留对象头信息。
      *
      * @param name         数组内元素传null或空字符串
      * @param declaredType 对象声明类型信息

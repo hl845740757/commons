@@ -134,6 +134,10 @@ abstract class AbstractObjectReader implements DsonObjectReader {
             reader.readNull(name);
             return (T) DsonConverterUtils.getDefaultValue(rawType);
         }
+        // 当声明类型是DsonValue类型时，需要保留Header
+        if (DsonValue.class.isAssignableFrom(rawType)) {
+            return (T) Dsons.readDsonValue(reader);
+        }
         // 容器类型只能通过codec解码；Flags编码为Int/String数组的情况下，需要自定义Field读写代理处理
         if (dsonType.isContainer()) {
             String clsName = readClsName(dsonType);
@@ -143,16 +147,12 @@ abstract class AbstractObjectReader implements DsonObjectReader {
             }
             return codec.readObject(this, declaredType, factory);
         }
-        // 非容器类型 -- Dson内建结构，Enum，Const
+        // 非容器类型 -- Dson内建结构，Enum，Const等
         {
             DsonCodecImpl<T> codec = (DsonCodecImpl<T>) converter.codecRegistry().getDecoder(declaredType);
             if (codec != null) {
                 return codec.readObject(this, declaredType, factory);
             }
-        }
-        // 考虑DsonValue
-        if (DsonValue.class.isAssignableFrom(rawType)) {
-            return rawType.cast(Dsons.readDsonValue(reader));
         }
         // 默认类型转换-声明类型可能是个抽象类型，eg：Number
         return (T) DsonCodecHelper.readDsonValueValue(reader, name);
