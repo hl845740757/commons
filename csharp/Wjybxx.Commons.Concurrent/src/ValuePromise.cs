@@ -248,11 +248,11 @@ public class ValuePromise<T> : IValuePromise<T>
     }
 
     internal bool Internal_TrySetResult(TaskResult<T> result) {
-        if (result.IsSucceeded) {
-            return Internal_TrySetResult(result.Result);
-        }
-        if (InternalSetException(result.ExceptionOrDispatchInfo!)) {
-            PostComplete(); // 这里不打印日志，因为前面已经打印过，这里直接以原始信息完成
+        result.Deconstruct(out T r, out object? ex);
+        // 这里失败不打印日志，因为前面的Future已经打印过，这里直接以原始信息完成 -- CompleteRelay
+        bool success = ex == null ? InternalSetResult(r) : InternalSetException(ex);
+        if (success) {
+            PostComplete();
             return true;
         }
         return false;

@@ -122,17 +122,18 @@ public readonly struct TaskResult
     }
 
     /// <summary>
-    /// 转换为Future
+    /// 拆箱
     /// </summary>
+    /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    public ValueFuture AsFuture() {
-        return _ex != null ? ValueFuture.InternalFromException(_ex) : ValueFuture.FromResult(_result);
+    public TaskResult<T> Unbox<T>() {
+        return _ex != null ? TaskResult<T>.InternalFromException(_ex) : TaskResult<T>.FromResult((T)_result!);
     }
 
-    /// <summary>
-    /// 获取内部的异常数据
-    /// </summary>
-    internal object? ExceptionOrDispatchInfo => _ex;
+    internal void Deconstruct(out object? result, out object? ex) {
+        result = _result;
+        ex = _ex;
+    }
 }
 
 /// <summary>
@@ -236,28 +237,17 @@ public readonly struct TaskResult<T>
     }
 
     /// <summary>
-    /// 转换为Future
-    /// </summary>
-    /// <returns></returns>
-    public ValueFuture<T> AsFuture() {
-        return _ex != null ? ValueFuture<T>.InternalFromException(_ex) : ValueFuture<T>.FromResult(_result);
-    }
-
-    /// <summary>
     /// 装箱结果
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TaskResult Box() {
-        if (_ex != null) {
-            return TaskResult.InternalFromException(_ex);
-        }
-        return TaskResult.FromResult(_result);
+        return _ex != null ? TaskResult.InternalFromException(_ex) : TaskResult.FromResult(_result);
     }
 
-    /// <summary>
-    /// 获取内部的异常数据
-    /// </summary>
-    internal object? ExceptionOrDispatchInfo => _ex;
+    internal void Deconstruct(out T result, out object? ex) {
+        result = _result;
+        ex = _ex;
+    }
 }
 }

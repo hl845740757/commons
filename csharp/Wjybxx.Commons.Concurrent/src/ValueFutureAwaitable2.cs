@@ -32,10 +32,10 @@ public readonly struct ValueFutureAwaitable2
     private readonly bool _requireResult;
 
     /// <param name="future">future</param>
+    /// <param name="requireResult">是否需要获取最终结果</param>
     /// <param name="executor">回调线程</param>
     /// <param name="options">调度选项</param>
-    /// <param name="requireResult">是否需要获取最终结果</param>
-    public ValueFutureAwaitable2(ValueFuture future, IExecutor? executor, int options, bool requireResult) {
+    public ValueFutureAwaitable2(ValueFuture future, bool requireResult, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = executor;
         _options = options;
@@ -53,7 +53,7 @@ public readonly struct ValueFutureAwaitable2
     /// <param name="options"></param>
     /// <returns></returns>
     public ValueFutureAwaitable2 AddOptions(int options) {
-        return new ValueFutureAwaitable2(_future, _executor, _options | options, _requireResult);
+        return new ValueFutureAwaitable2(_future, _requireResult, _executor, _options | options);
     }
 
     /// <summary>
@@ -63,7 +63,7 @@ public readonly struct ValueFutureAwaitable2
     /// <returns></returns>
     public ValueFutureAwaitable2 WithOptions(int options) {
         int suppressed = _options & (int)SuppressedTypes.All;
-        return new ValueFutureAwaitable2(_future, _executor, suppressed | options, _requireResult);
+        return new ValueFutureAwaitable2(_future, _requireResult, _executor, suppressed | options);
     }
 
     /// <summary>
@@ -72,10 +72,10 @@ public readonly struct ValueFutureAwaitable2
     /// <param name="requireResult"></param>
     /// <returns></returns>
     public ValueFutureAwaitable2 WithRequireResult(bool requireResult = true) {
-        return new ValueFutureAwaitable2(_future, _executor, _options, requireResult);
+        return new ValueFutureAwaitable2(_future, requireResult, _executor, _options);
     }
 
-    public ValueFutureAwaiter2 GetAwaiter() => new(_future, _executor, _options, _requireResult);
+    public ValueFutureAwaiter2 GetAwaiter() => new(_future, _requireResult, _executor, _options);
 }
 
 /// <summary>
@@ -88,7 +88,7 @@ public readonly struct ValueFutureAwaitable2<T>
     private readonly IExecutor? _executor;
     private readonly int _options;
 
-    public ValueFutureAwaitable2(ValueFuture<T> future, IExecutor? executor, int options) {
+    public ValueFutureAwaitable2(ValueFuture<T> future, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = executor;
         _options = options;

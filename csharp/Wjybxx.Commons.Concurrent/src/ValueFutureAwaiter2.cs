@@ -35,10 +35,10 @@ public readonly struct ValueFutureAwaiter2 : ICriticalNotifyCompletion
     /// 
     /// </summary>
     /// <param name="future">future</param>
+    /// <param name="requireResult">是否需要获取最终结果</param>
     /// <param name="executor">回调线程</param>
     /// <param name="options">调度选项</param>
-    /// <param name="requireResult">是否需要获取最终结果</param>
-    public ValueFutureAwaiter2(ValueFuture future, IExecutor? executor, int options, bool requireResult) {
+    public ValueFutureAwaiter2(ValueFuture future, bool requireResult, IExecutor? executor = null, int options = 0) {
         _future = future;
         _executor = executor;
         _options = options;

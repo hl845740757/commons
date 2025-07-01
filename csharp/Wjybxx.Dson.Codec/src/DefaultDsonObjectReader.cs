@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Dson.IO;
 
 namespace Wjybxx.Dson.Codec
 {
@@ -42,9 +43,12 @@ public class DefaultDsonObjectReader : AbstractDsonObjectReader
             }
             return reader.CurrentDsonType != DsonType.EndOfObject;
         }
-        // object
+        // object -- 顺序读的情况下，名字不匹配统一抛出异常
         if (reader.IsAtValue) {
-            return name == null || reader.CurrentName == name;
+            if (name == null || reader.CurrentName == name) {
+                return true;
+            }
+            throw DsonIOException.UnexpectedName(name, reader.CurrentName); 
         }
         if (name == null) throw new ArgumentNullException(nameof(name));
         if (reader.IsAtType) {

@@ -62,6 +62,10 @@ public readonly struct ValueFuture
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaiter GetAwaiter() => new(this);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ValueFutureAwaiter2 GetAwaiter(SuppressedTypes suppressedTypes, bool requireResult = false)
+        => new(this, requireResult, null, (int)suppressedTypes);
+
     /// <summary>
     /// <see cref="IFuture.GetAwaitable"/>
     /// </summary>
@@ -79,7 +83,7 @@ public readonly struct ValueFuture
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaitable2 GetAwaitable(IExecutor? executor, SuppressedTypes suppressedTypes, int options = 0,
                                               bool requireResult = false) =>
-        new(this, executor, (int)suppressedTypes | options, requireResult);
+        new(this, requireResult, executor, (int)suppressedTypes | options);
 
     /// <summary>
     /// <see cref="IFuture.GetAwaitable"/>
@@ -87,7 +91,7 @@ public readonly struct ValueFuture
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaitable2 GetAwaitable(SuppressedTypes suppressedTypes, bool requireResult = false) =>
-        new(this, null, (int)suppressedTypes, requireResult);
+        new(this, requireResult, null, (int)suppressedTypes);
 
     #region factory
 
@@ -112,6 +116,12 @@ public readonly struct ValueFuture
     public static ValueFuture FromCancelled(int cancelCode = 1) {
         Exception ex = StacklessCancellationException.InstOf(cancelCode);
         return new ValueFuture(null, ex);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ValueFuture FromTaskResult(TaskResult taskResult) {
+        taskResult.Deconstruct(out object? result, out object? ex);
+        return new ValueFuture(result, ex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -187,6 +197,23 @@ public readonly struct ValueFuture
             return valuePromise.AsFuture(_reentryId);
         }
         return (IFuture)_future;
+    }
+
+    /// <summary>
+    /// 持久化结果
+    /// 
+    /// 1.只能在任务已完成的状态下调用
+    /// 2.该方法可以释放Future的引用
+    /// </summary>
+    /// <param name="requireResult">是否保留结果</param>
+    /// <returns></returns>
+    public ValueFuture Memorize(bool requireResult = false) {
+        if (!IsCompleted) {
+            throw new InvalidOperationException();
+        }
+        TaskResult taskResult = GetResult(SuppressedTypes.All, requireResult);
+        taskResult.Deconstruct(out object? result, out object? ex);
+        return new ValueFuture(result, ex);
     }
 
     /// <summary>
@@ -376,6 +403,10 @@ public readonly struct ValueFuture<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueFutureAwaiter<T> GetAwaiter() => new(this);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ValueFutureAwaiter2<T> GetAwaiter(SuppressedTypes suppressedTypes)
+        => new(this, null, (int)suppressedTypes);
+
     /// <summary>
     /// <see cref="IFuture.GetAwaitable"/>
     /// </summary>
@@ -418,6 +449,12 @@ public readonly struct ValueFuture<T>
     public static ValueFuture<T> FromCancelled(int cancelCode = 1) {
         Exception ex = StacklessCancellationException.InstOf(cancelCode);
         return new ValueFuture<T>(default, ex);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ValueFuture<T> FromTaskResult(TaskResult<T> taskResult) {
+        taskResult.Deconstruct(out T result, out object? ex);
+        return new ValueFuture<T>(result, ex);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -511,6 +548,21 @@ public readonly struct ValueFuture<T>
             return unsafePromise.AsFuture<T>(_reentryId);
         }
         return (IFuture<T>)_future;
+    }
+
+    /// <summary>
+    /// 持久化结果
+    /// 
+    /// 1.只能在任务已完成的状态下调用
+    /// 2.该方法可以释放Future的引用
+    /// </summary>
+    public ValueFuture<T> Memorize() {
+        if (!IsCompleted) {
+            throw new InvalidOperationException();
+        }
+        TaskResult<T> taskResult = GetResult(SuppressedTypes.All);
+        taskResult.Deconstruct(out T result, out object? ex);
+        return new ValueFuture<T>(result, ex);
     }
 
     /// <summary>

@@ -19,6 +19,7 @@ package cn.wjybxx.dsoncodec;
 import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.DsonReader;
 import cn.wjybxx.dson.DsonType;
+import cn.wjybxx.dson.io.DsonIOException;
 
 import java.util.Objects;
 
@@ -48,9 +49,12 @@ final class DefaultDsonObjectReader extends AbstractObjectReader implements Dson
             }
             return reader.getCurrentDsonType() != DsonType.END_OF_OBJECT;
         }
-        // object
+        // object -- 顺序读的情况下，名字不匹配统一抛出异常
         if (reader.isAtValue()) {
-            return name == null || reader.getCurrentName().equals(name);
+            if (name == null || reader.getCurrentName().equals(name)) {
+                return true;
+            }
+            throw DsonIOException.unexpectedName(name, reader.getCurrentName());
         }
         Objects.requireNonNull(name, "name");
         if (reader.isAtType()) {
