@@ -102,12 +102,13 @@ public @interface DsonSerializable {
      * 序列化时的类型名。
      * 1.第一个元素为默认名。
      * 2.支持多个以支持别名。
-     * 3.APT不解析该字段 - Codec无需持有该信息。
+     * 3.不包含泛型参数信息，元数据名。
+     * 4.APT不解析该字段 - Codec无需持有该信息。
      * <p>
      * Q：为什么是个数组？
      * A：这允许定义别名，以支持简写 -- 比如：'@Vector3' 可以简写为 '@V3'；而数字id通常不需要该支持。
      */
-    String[] className() default {};
+    String[] names() default {};
 
     /** 序列化时的缩进格式 */
     ObjectStyle style() default ObjectStyle.INDENT;

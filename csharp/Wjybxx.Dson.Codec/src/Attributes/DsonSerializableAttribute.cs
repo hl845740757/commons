@@ -94,8 +94,10 @@ public class DsonSerializableAttribute : Attribute
     ///
     /// 1.第一个元素为默认名。
     /// 2.支持多个以支持别名。
+    /// 3.不包含泛型参数信息，元数据名。
+    /// 4.APT不解析该字段 - Codec无需持有该信息。
     /// </summary>
-    public string[] ClassNames { get; set; } = Array.Empty<string>();
+    public string[] Names { get; set; } = Array.Empty<string>();
 
     /// <summary>
     /// 编码的布局样式
