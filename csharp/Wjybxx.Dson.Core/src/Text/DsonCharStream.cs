@@ -88,7 +88,7 @@ public interface IDsonCharStream : IDisposable
     /// 注意：并不是只有调用该接口的时候才触发丢弃字符，Stream为了控制内存在{@link #read()}的时候是可能丢弃字符的。
     /// </summary>
     /// <param name="position">已读取位置，该位置的字符需要保留；position可能是一个估测值，因此position小于等于0则不处理</param>
-    void DiscardReadChars(int position) {
+    void ReadComplete(int position) {
 //        assert position <= getPosition();
     }
 

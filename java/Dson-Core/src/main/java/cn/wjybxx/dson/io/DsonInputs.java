@@ -257,10 +257,10 @@ public class DsonInputs {
         }
 
         @Override
-        public int getFixed32(int pos) {
+        public int getUInt32(int pos) {
             ByteBufferUtils.checkBuffer(rawLimit - rawOffset, pos, 4);
             int bufferPos = rawOffset + pos;
-            return ByteBufferUtils.getInt32LE(buffer, bufferPos);
+            return CodedUtils.readUInt32(buffer, bufferPos, newPos);
         }
 
         @Override
@@ -290,6 +290,11 @@ public class DsonInputs {
         @Override
         public boolean isAtEnd() {
             return bufferPos >= posLimit;
+        }
+
+        @Override
+        public void readComplete(int safePosition) {
+
         }
 
         @Override

@@ -91,10 +91,10 @@ public class DsonOutputs {
                 // 注意：申请得到的buffer的长度可能大于capacity，因此可能大于maxCapacity
                 byte[] newBuffer = bufferPool.acquire(capacity);
                 System.arraycopy(buffer, 0, newBuffer, 0, bufferPos);
-                // 勿调整顺序!
+                //
+                bufferPool.release(buffer);
                 buffer = newBuffer;
                 posLimit = newBuffer.length;
-                bufferPool.release(buffer);
                 return;
             }
             throw new DsonIOException("BytesLimited, PosLimit: %d, position: %d, required: %d"
@@ -102,12 +102,6 @@ public class DsonOutputs {
         }
 
         //region basic
-
-        @Override
-        public void writeRawByte(int value) {
-            ensureCapacity(1);
-            buffer[bufferPos++] = (byte) value;
-        }
 
         @Override
         public void writeRawByte(byte value) {
@@ -215,11 +209,6 @@ public class DsonOutputs {
         // region sp
 
         @Override
-        public int spaceLeft() {
-            return bufferPool != null ? rawLimit - bufferPos : posLimit - bufferPos;
-        }
-
-        @Override
         public int getPosition() {
             return bufferPos - rawOffset;
         }
@@ -231,25 +220,29 @@ public class DsonOutputs {
         }
 
         @Override
-        public void setByte(int pos, byte value) {
-            ByteBufferUtils.checkBuffer(rawLimit - rawOffset, pos, 1);
-            int bufferPos = rawOffset + pos;
-            buffer[bufferPos] = value;
-        }
-
-        @Override
         public void setFixedInt16(int pos, int value) {
             ByteBufferUtils.checkBuffer(rawLimit - rawOffset, pos, 4);
             int bufferPos = rawOffset + pos;
-            ByteBufferUtils.setInt16LE(buffer, bufferPos, (short) value);
+            CodedUtils.writeFixed16(buffer, bufferPos, (short) value);
         }
 
         @Override
         public void setFixedInt32(int pos, int value) {
             ByteBufferUtils.checkBuffer(rawLimit - rawOffset, pos, 4);
             int bufferPos = rawOffset + pos;
-            ByteBufferUtils.setInt32LE(buffer, bufferPos, value);
+            CodedUtils.writeFixed32(buffer, bufferPos, value);
         }
+
+        @Override
+        public int spaceLeft() {
+            return bufferPool != null ? rawLimit - bufferPos : posLimit - bufferPos;
+        }
+
+        @Override
+        public void writeComplete(int safePosition) {
+
+        }
+
         // endregion
 
         @Override

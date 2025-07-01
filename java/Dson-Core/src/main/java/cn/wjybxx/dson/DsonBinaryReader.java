@@ -205,6 +205,11 @@ public final class DsonBinaryReader extends AbstractDsonReader {
         this.recursionDepth--;
         setContext(context.parent);
         returnContext(context);
+
+        // 告知可释放缓存
+        if (getContext().contextType == DsonContextType.TOP_LEVEL) {
+            input.readComplete(input.getPosition());
+        }
     }
 
     // endregion

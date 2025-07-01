@@ -75,11 +75,6 @@ public interface Converter {
      */
     <T> T read(DsonChunk chunk, TypeInfo declaredType, @Nullable Supplier<? extends T> factory);
 
-    // defaults
-
-
-    // endregion
-
     // region 快捷方法
 
     default byte[] write(Object value) {

@@ -265,7 +265,7 @@ public abstract class AbstractCharStream : IDsonCharStream
     /// 丢弃指定位置以前已读的字节
     /// </summary>
     /// <param name="position"></param>
-    public virtual void DiscardReadChars(int position) {
+    public virtual void ReadComplete(int position) {
     }
 
     /// <summary>

@@ -19,6 +19,7 @@ package cn.wjybxx.dson.text;
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.internal.CommonsLang3;
+import cn.wjybxx.dson.internal.Utf8Util;
 
 import java.util.BitSet;
 import java.util.Objects;
@@ -283,6 +284,11 @@ public class DsonTexts {
         } finally {
             ConcurrentObjectPool.SHARED_STRING_BUILDER_POOL.release(sb);
         }
+    }
+
+    /** 获取字符串的utf8编码长度 -- 主要用于测试 */
+    public static int getUtf8Length(String str) {
+        return Utf8Util.utf8Length(str);
     }
 
     // region bool/null

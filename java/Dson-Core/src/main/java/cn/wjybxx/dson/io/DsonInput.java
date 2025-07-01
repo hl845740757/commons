@@ -85,30 +85,18 @@ public interface DsonInput extends AutoCloseable {
 
     /**
      * 从指定位置读取一个byte
-     * 相比先{@link #setPosition(int)}再{@link #readRawByte()}的方式，该接口更容易优化实现
+     * (不会修改当前索引)
      */
-    default byte getByte(int readerIndex) {
-        int oldPosition = getPosition();
-        setPosition(readerIndex);
-        byte value = readRawByte();
-        setPosition(oldPosition);
-        return value;
-    }
+    byte getByte(int readerIndex);
 
     /**
-     * 从指定位置读取一个fix32类型整数
-     * 相比先{@link #setPosition(int)}再{@link #readFixed32()}的方式，该接口更容易优化实现
+     * 从指定位置读取一个UInt32类型值 -- 该接口预留以后读取subType
+     * (不会修改当前索引)
      */
-    default int getFixed32(int readerIndex) {
-        int oldPosition = getPosition();
-        setPosition(readerIndex);
-        int value = readFixed32();
-        setPosition(oldPosition);
-        return value;
-    }
+    int getUInt32(int readerIndex);
 
     /**
-     * 限制接下来可读取的字节数
+     * 限制接下来可读取的字节数(读取容器对象时调用)
      *
      * @param byteLimit 可用字节数
      * @return oldLimit 前一次设置的限制点；业务层避免使用
@@ -127,6 +115,12 @@ public interface DsonInput extends AutoCloseable {
 
     /** @return 是否达到输入流的末端 */
     boolean isAtEnd();
+
+    /**
+     * 不需要再回滚到前面的位置
+     * 由于我们存在SetPosition和随机读逻辑，为避免用户一直缓存数据，我们通过该接口告诉实现类，可以释放一部分缓存
+     */
+    void readComplete(int safePosition);
 
     // endregion
 

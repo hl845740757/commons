@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+using Wjybxx.Dson.IO;
 using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson.Codec
@@ -29,6 +30,23 @@ public interface IDsonConverter : IConverter
 {
     #region convert
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="value">要序列化的对象</param>
+    /// <param name="declaredType">对象的声明类型</param>
+    /// <param name="output">输出流</param>
+    void Write(object value, Type declaredType, IDsonOutput output);
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="declaredType"></param>
+    /// <param name="factory"></param>
+    /// <returns></returns>
+    object Read(IDsonInput input, Type declaredType, Func<object>? factory = null);
+    
     /// <summary>
     /// 将一个对象转换为字节数组
     /// 
@@ -84,7 +102,7 @@ public interface IDsonConverter : IConverter
     /// <param name="declaredType"></param>
     /// <param name="factory">实例工厂</param>
     object ReadFromDsonValue(DsonValue source, Type declaredType, Func<object>? factory = null);
-
+    
     /// <summary>
     /// 将Dson源解码为DsonValue中间对象 -- 只读取一个顶层对象。
     ///
@@ -94,6 +112,13 @@ public interface IDsonConverter : IConverter
     /// <param name="source">输入流</param>
     /// <returns></returns>
     DsonValue ReadAsDsonValue(TextReader source);
+    
+    /// <summary>
+    /// 将Dson源解码为DsonValue中间对象
+    /// </summary>
+    /// <param name="source">输入流</param>
+    /// <returns></returns>
+    DsonValue ReadAsDsonValue(IDsonInput source);
 
     #endregion
 

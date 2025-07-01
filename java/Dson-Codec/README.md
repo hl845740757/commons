@@ -19,7 +19,7 @@ ps:
 5. **字段级别的读写代理** -- 核心功能。
 6. 序列化钩子方法
 7. 单例支持
-8. 为外部库类生成Codec
+8. **为外部库类生成Codec**
 9. 外部静态代理
 
 ## 有限泛型支持
@@ -35,23 +35,7 @@ ps:
 对于基础类型 int32,int64,float,double,bool，可以通过`Options.appendDef`控制是否写入写入默认值；
 对于引用类型，可以通过`Options.appendNull`控制是否写入null值。
 
-如果数据结构中有大量的可选属性（默认值），那么不写入默认只和null可以很好的压缩数据包。
-
-## 指定数字字段的编码格式
-
-Dson集成了Protobuf的组件，支持数字的`varint`、`unit`、`sint`、`fixed`4种编码格式，你可以简单的通过`DsonProperty`注解声明
-字段的编码格式，而且**修改编码格式不会导致兼容性问题**，eg：
-
-```
-    @DsonProperty(wireType = WireType.UINT)
-    public int age;
-    
-    // 生成的编码代码
-    writer.writeInt(names_age, instance.age, WireType.UINT);
-    writer.writeString(names_name, instance.name);
-```
-
-示例中的int类型的age字段，在编码时将使用uint格式编码。
+如果数据结构中有大量的可选属性（默认值），那么不写入默认值和null可以很好的压缩数据包。
 
 ## 指定多态字段的实现
 
@@ -59,7 +43,7 @@ Dson集成了Protobuf的组件，支持数字的`varint`、`unit`、`sint`、`fi
 
 ```
     @DsonProperty(impl = EnumMap.class)
-    public Map<Sex, String> sex2NameMap3;
+    public Map<Sex, String> map3;
 ```
 
 上面的这个Map字段在解码时就会解码为EnumMap。**具体类型的集合和Map，通常不需要指定实现类**，但也是可以指定的，eg：
@@ -167,14 +151,20 @@ Dson提供了`newInstance`、`constructor`、`afterDecode`、`beforeEncode`、`w
 Dson在`DsonClassProps`注解中提供了`singleton`属性，当用户指定`singleton`属性时，生成的Codec将简单调用给定方法返回共享实例。
 
 ```java
-
-@DsonClassProps(singleton = "getInstance")
-@DsonSerializable
+@DsonSerializable(singleton = "getInstance")
 public class SingletonTest {
     private static final SingletonTest INST = new SingletonTest("wjybxx", 29);
 
     public static SingletonTest getInstance() {
         return INST;
+    }
+}
+// 生成的codec代码
+@Generated("cn.wjybxx.dsonapt.CodecProcessor")
+public final class SingletonTestCodec extends AbstractDsonCodec<SingletonTest> {
+    @Override
+    protected SingletonTest newInstance(DsonObjectReader reader) {
+        return SingletonTest.getInstance();
     }
 }
 ```
@@ -184,7 +174,7 @@ public class SingletonTest {
 APT除了支持为项目中的类生成Codec外，还支持为外部库的类生成Codec，通过`DsonCodecLinkerGroup`和`DsonCodecLinker`两个注解实现。
 
 ```java
-
+// Btree-Codec模块中的配置类
 @DsonCodecLinkerGroup(outputPackage = "cn.wjybxx.btree.fsm")
 private static class FsmLinker {
     @DsonCodecLinker(props = @DsonClassProps)

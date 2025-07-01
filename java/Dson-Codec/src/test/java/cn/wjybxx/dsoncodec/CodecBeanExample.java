@@ -42,11 +42,11 @@ public class CodecBeanExample {
     public int age;
     public String name;
 
-    public Map<Integer, String> age2NameMap;
-    public Map<Sex, String> sex2NameMap1;
-    public EnumMap<Sex, String> sex2NameMap2;
+    public Map<Integer, String> map;
+    public Map<Sex, String> map1;
+    public EnumMap<Sex, String> map2;
     @DsonProperty(impl = EnumMap.class)
-    public Map<Sex, String> sex2NameMap3;
+    public Map<Sex, String> map3;
 
     public Set<Sex> sexSet1;
     public EnumSet<Sex> sexSet2;

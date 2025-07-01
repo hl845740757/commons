@@ -35,7 +35,7 @@ public static class DsonInputs
     /// <param name="buffer"></param>
     /// <returns></returns>
     public static IDsonInput NewInstance(byte[] buffer) {
-        return new ArrayDsonInput(buffer, 0, buffer.Length);
+        return new ArrayInput(buffer, 0, buffer.Length);
     }
 
     /// <summary>
@@ -46,10 +46,10 @@ public static class DsonInputs
     /// <param name="length">buffer有效长度</param>
     /// <returns></returns>
     public static IDsonInput NewInstance(byte[] buffer, int offset, int length) {
-        return new ArrayDsonInput(buffer, offset, length);
+        return new ArrayInput(buffer, offset, length);
     }
 
-    private class ArrayDsonInput : IDsonInput
+    private class ArrayInput : IDsonInput
     {
         private readonly byte[] _buffer;
         private readonly int _rawOffset;
@@ -58,7 +58,7 @@ public static class DsonInputs
         private int _bufferPos;
         private int _posLimit;
 
-        internal ArrayDsonInput(byte[] buffer, int offset, int length) {
+        internal ArrayInput(byte[] buffer, int offset, int length) {
             ByteBufferUtil.CheckBuffer(buffer, offset, length);
             this._buffer = buffer;
             this._rawOffset = offset;
@@ -259,10 +259,10 @@ public static class DsonInputs
             return _buffer[bufferPos];
         }
 
-        public int GetFixed32(int pos) {
+        public int GetUInt32(int pos) {
             ByteBufferUtil.CheckBuffer(_rawLimit - _rawOffset, pos, 4);
             int bufferPos = _rawOffset + pos;
-            return ByteBufferUtil.GetInt32LE(_buffer, bufferPos);
+            return CodedUtil.ReadUInt32(_buffer, bufferPos, out int _);
         }
 
         public int PushLimit(int byteLimit) {
@@ -285,6 +285,9 @@ public static class DsonInputs
         public int GetBytesUntilLimit() => (_posLimit - _bufferPos);
 
         public bool IsAtEnd() => _bufferPos >= _posLimit;
+
+        public void ReadComplete(int safePosition) {
+        }
 
         #endregion
 

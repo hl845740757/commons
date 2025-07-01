@@ -25,6 +25,7 @@ import cn.wjybxx.dson.text.DsonTextWriter;
 import cn.wjybxx.dson.text.ObjectStyle;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Arrays;
@@ -119,6 +120,19 @@ class DefaultDsonConverter implements DsonConverter {
     }
 
     @Override
+    public void write(Object value, TypeInfo declaredType, DsonOutput output) {
+        Objects.requireNonNull(value);
+        Objects.requireNonNull(output, "output");
+        encodeObject(output, value, declaredType);
+    }
+
+    @Override
+    public <T> T read(DsonInput input, TypeInfo declaredType, @Nullable Supplier<? extends T> factory) {
+        Objects.requireNonNull(input, "input");
+        return decodeObject(input, declaredType, factory);
+    }
+
+    @Override
     public <T> T cloneObject(Object value, TypeInfo declaredType, TypeInfo targetType, Supplier<? extends T> factory) {
         if (value == null) return null;
         try (var outputStream = DsonOutputs.newInstance(options.bufferPool, options.bufferLength, options.maxBufferLength)) {
@@ -128,7 +142,6 @@ class DefaultDsonConverter implements DsonConverter {
             return decodeObject(inputStream, targetType, factory);
         }
     }
-
 
     /** 注意：由外部销毁输出流 */
     private void encodeObject(DsonOutput outputStream, Object value, TypeInfo typeInfo) {
@@ -232,5 +245,13 @@ class DefaultDsonConverter implements DsonConverter {
             return Dsons.readTopDsonValue(textReader);
         }
     }
+
+    @Override
+    public DsonValue readAsDsonValue(DsonInput source) {
+        try (DsonReader binaryReader = new DsonBinaryReader(options.binReaderSettings, source, false)) {
+            return Dsons.readTopDsonValue(binaryReader);
+        }
+    }
+
     // endregion
 }

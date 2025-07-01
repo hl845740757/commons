@@ -102,22 +102,22 @@ public interface IDsonInput : IDisposable
 
     /// <summary>
     /// 获取指定索引位置的字节
-    /// 不会导致读索引变更
+    /// (不会导致读索引变更)
     /// </summary>
     /// <param name="pos"></param>
     /// <returns></returns>
     byte GetByte(int pos);
 
     /// <summary>
-    /// 从指定位置读取4个字节为int
-    /// 不会导致读索引变更
+    /// 从指定位置读取一个UInt32类型值
+    /// (不会导致读索引变更 -- 该接口预留以后读取subType)
     /// </summary>
     /// <param name="pos"></param>
     /// <returns></returns>
-    int GetFixed32(int pos);
+    int GetUInt32(int pos);
 
     /// <summary>
-    /// 限制接下来可读取的字节数
+    /// 限制接下来可读取的字节数(读取容器对象时调用)
     /// </summary>
     /// <param name="byteLimit">可用字节数</param>
     /// <returns>用于恢复Limit的token；用户应避免使用</returns>
@@ -140,6 +140,13 @@ public interface IDsonInput : IDisposable
     /// </summary>
     /// <returns>如果到达流的末尾则返回true</returns>
     bool IsAtEnd();
+
+    /// <summary>
+    /// 不需要再回滚到前面的位置
+    ///
+    /// 由于我们存在SetPosition和随机读逻辑，为避免用户总是缓存数据，我们通过该接口告诉实现类，可以释放一部分缓存
+    /// </summary>
+    void ReadComplete(int safePosition);
 
     #endregion
 }

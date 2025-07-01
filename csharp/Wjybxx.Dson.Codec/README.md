@@ -20,7 +20,7 @@ ps: Readme文档暂时复制了Java的内容，Csharp的序列化将包含Java�
 5. **字段级别的读写代理(核心功能)**(apt)
 6. 序列化钩子方法(apt)
 7. 单例支持(apt)
-8. 为外部库类生成Codec(apt)
+8. **为外部库类生成Codec**(apt)
 9. 外部静态代理(apt)
 
 不支持的特性：
@@ -28,7 +28,7 @@ ps: Readme文档暂时复制了Java的内容，Csharp的序列化将包含Java�
 1. 默认不支持对象图序列化
 2. 不支持委托类型。
 
-## 有限泛型支持
+## 泛型支持
 
 Csharp是真实泛型，为方便使用，Dson库对泛型支持了完整支持 —— 使用上有点配置工作量。  
 支持泛型的优点：
@@ -44,31 +44,18 @@ Csharp是真实泛型，为方便使用，Dson库对泛型支持了完整支持 
 对于基础类型 int32,int64,float,double,bool，可以通过`Options.appendDef`控制是否写入写入默认值；
 对于引用类型，可以通过`Options.appendNull`控制是否写入null值。
 
-如果数据结构中有大量的可选属性（默认值），那么不写入默认只和null可以很好的压缩数据包。
-
-## 指定数字字段的编码格式
-
-Dson集成了Protobuf的组件，支持数字的`varint`、`unit`、`sint`、`fixed`4种编码格式，你可以简单的通过`DsonProperty`注解声明
-字段的编码格式，而且**修改编码格式不会导致兼容性问题**，eg：
-
-```
-    @DsonProperty(wireType = WireType.Uint)
-    public int age;
-    
-    // 生成的编码代码
-    writer.WriteInt(names_age, inst.age, WireType.Uint);
-    writer.WriteString(names_name, inst.name);
-```
-
-示例中的int类型的age字段，在编码时将使用uint格式编码。
+如果数据结构中有大量的可选属性（默认值），那么不写入默认值和null可以很好的压缩数据包。
 
 ## 指定多态字段的实现
 
 以字典的解码为例，一般序列化框架只能反序列化为`Dictionary<K,V>`，限制了业务对数据结构的引用；但Dson支持你指定字段的实现类，eg：
 
-```
-    @DsonProperty(impl = typeof(LinkedDictionary<,>))
-    public IDictionary<Sex, String> sex2NameMap3;
+```csharp
+    /// <summary>
+    /// 测试泛型字典
+    /// </summary>
+    [DsonProperty(Impl = typeof(LinkedDictionary<,>), ObjectStyle = ObjectStyle.Flow, IsImmutable = true)]
+    public IDictionary<int, string>? dictionary;
 ```
 
 上面的这个字典字段在解码时就会解码为`LinkedDictionary`。
@@ -85,17 +72,20 @@ Dson的理念是：**能托管的逻辑就让生成的代码负责，用户只�
 
 ps: 字段读写代理几乎可实现`DsonProperty`提供的其它所有功能。
 
-```
-    @DsonProperty(writeProxy = "WriteCustom", readProxy = "readCustom")
-    public Object custom;
-
-    // 定义了钩子方法后，生成的Codec代码会自动调用
-    public void WriteCustom(DsonObjectWriter writer, String name) {
-        writer.WriteObject(custom, TypeArgInfo.OBJECT);
+```csharp
+    /// <summary>
+    /// 测试自动属性
+    /// </summary>
+    [DsonProperty(WriteProxy = "WriteType", ReadProxy = "ReadType")]
+    public int Type { get; set; }
+    
+    // 方法会被生成的代码自动调用
+    public void WriteType(IDsonObjectWriter writer, string dsonName) {
+        writer.WriteInt(dsonName, Type);
     }
 
-    public void ReadCustom(DsonObjectReader reader, String name) {
-        this.custom = reader.ReadObject(TypeArgInfo.OBJECT);
+    public void ReadType(IDsonObjectReader reader, string dsonName) {
+        Type = reader.ReadInt(dsonName);
     }
 ```
 
@@ -103,14 +93,15 @@ ps: 字段读写代理几乎可实现`DsonProperty`提供的其它所有功能�
 生成的代码就会在编解码custom的时候调用用户的方法，下面是生成的代码节选：
 
 ```
-    // 解码方法
-    inst.currencyMap1 = reader.ReadObject(names_currencyMap1, types_currencyMap1);
-    inst.currencyMap2 = reader.ReadObject(names_currencyMap2, types_currencyMap2);
-    inst.ReadCustom(reader, names_custom);
-    // 编码方法
-    writer.WriteObject(names_currencyMap1, inst.currencyMap1, types_currencyMap1);
-    writer.WriteObject(names_currencyMap2, inst.currencyMap2, types_currencyMap2);
-    inst.WriteCustom(writer, names_custom);
+    protected override void WriteFields(IDsonObjectWriter writer, in BeanExample inst) {
+        inst.WriteObject(writer);
+        writer.WriteInt(names_value, inst.Value, NumberStyles.Simple);
+        writer.WriteString(names_name, inst.Name, StringStyle.Auto);
+        writer.WriteInt(names_age, inst.Age, NumberStyles.Simple);
+        inst.WriteType(writer, names_Type);
+        writer.WriteObject(names_hashSet, inst.hashSet, null);
+        writer.WriteObject(names_hashSet2, inst.hashSet2, null);
+    }
 ```
 
 ## 序列化钩子方法
@@ -125,7 +116,7 @@ Dson提供了`WriteObject`、`ReadObject`、`Constructor`、`AfterDecode`、`Bef
 
 注意，这里仍然遵从前面的编码指导，你只需要处理特殊的字段，其它字段交给生成的代码处理即可。
 
-```
+```csharp
     // 序列化前钩子
     public void BeforeEncode(ConverterOptions options) {
     }
@@ -139,27 +130,38 @@ Dson提供了`WriteObject`、`ReadObject`、`Constructor`、`AfterDecode`、`Bef
     public void AfterDecode(ConverterOptions options) {
         if (age < 1) throw new IllegalStateException();
     }
-   
     // 字段读写钩子
-    public void WriteCustom(DsonObjectWriter writer, String name) {
+    public void WriteCustom(IDsonObjectWriter writer, String name) {
     }
-    public void ReadCustom(DsonObjectReader reader, String name) {
+    public void ReadCustom(IDsonObjectReader reader, String name) {
     }
 ```
 
 ## 单例支持
 
-Dson在`ClassImpl`注解中提供了`singleton`属性，当用户指定`singleton`属性时，生成的Codec将简单调用给定方法返回共享实例。
+Dson在`DsonSerializable`注解中提供了`Singleton`属性，当用户指定`Singleton`属性时，生成的Codec将简单调用给定方法返回共享实例。
 
-```java
+```csharp
+// 原始类
+[DsonSerializable(Singleton = "Inst")]
+public class SingletonTest
+{
+    public readonly int age;
+    public readonly string name;
 
-@ClassImpl(singleton = "getInstance")
-@DsonSerializable
-public class SingletonTest {
-    private static final SingletonTest INST = new SingletonTest("wjybxx", 29);
+    private SingletonTest(int age, string name) {
+        this.age = age;
+        this.name = name;
+    }
 
-    public static SingletonTest getInstance() {
-        return INST;
+    public static SingletonTest Inst { get; } = new SingletonTest(30, "wjybxx");
+}
+// 生成的Codec代码
+[Generated("Wjybxx.Dson.Apt.CodecProcessor", Assembly = "Wjybxx.Dson.Tests")]
+public sealed class SingletonTestCodec : AbstractDsonCodec<SingletonTest> 
+{
+   protected override SingletonTest NewInstance(IDsonObjectReader reader) {
+        return SingletonTest.Inst;
     }
 }
 ```
@@ -168,14 +170,15 @@ public class SingletonTest {
 
 APT除了支持为项目中的类生成Codec外，还支持为外部库的类生成Codec，通过`CodecLinkerGroup`和`CodecLinker`两个注解实现。
 
-```java
-
-@CodecLinkerGroup(outputPackage = "cn.wjybxx.btree.fsm")
-private static class FsmLinker {
-    @CodecLinker(classImpl = @ClassImpl)
-    private ChangeStateTask<?> changeStateTask;
-    @CodecLinker(classImpl = @ClassImpl)
-    private StateMachineTask<?> stateMachineTask;
+```csharp
+// Btree-Codec模块中的配置类
+[DsonCodecLinkerGroup(OutputNamespace = "Wjybxx.BTree.Codecs")]
+public class FsmLinker
+{
+    private ChangeStateTask<object> changeStateTask;
+    private StateMachineTask<object> stateMachineTask;
+    private StackStateMachineTask<object> stackStateMachine;
+    private FsmStateCfg<object> fsmStateCfg;
 }
 ```
 
@@ -187,16 +190,29 @@ ps: 该注解的最佳实例可见[BTree-Codec](https://github.com/hl845740757/B
 实现外部静态代理。  
 `CodecLinkerBean`支持除构造函数以外的所有钩子，包括字段的读写代理。
 
-```
-@CodecLinkerBean(value = ThirdPartyBean2.class)
-public class CodecLinkerBeanTest {
+```csharp
+[DsonCodecLinkerBean(typeof(ThirdPartyBean2))]
+public class LinkerBeanExample
+    /// <summary>
+    /// 测试读写代理
+    /// </summary>
+    [DsonProperty(WriteProxy = "WriteAge", ReadProxy = "ReadAge")]
+    private int age;
+    /// <summary>
+    /// 只匹配类型
+    /// </summary>
+    [DsonProperty(StringStyle = StringStyle.Unquote)]
+    public string name;
 
-    @DsonProperty(wireType = WireType.UINT)
-    private ThirdPartyBean2 age;
+    // 字段读写代理 -- 由生成的代码调用
+    public static void WriteAge(ThirdPartyBean2 inst, IDsonObjectWriter writer, string name) {
+        writer.WriteInt(name, inst.Age);
+    }
 
-    @DsonProperty(stringStyle = StringStyle.AUTO_QUOTE)
-    private ThirdPartyBean2 name;
-
+    public static void ReadAge(ThirdPartyBean2 inst, IDsonObjectReader reader, string name) {
+        inst.Age = reader.ReadInt(name);
+    }    
+    
     // 这些钩子方法，生成的代码会自动调用
     public static void BeforeEncode(ThirdPartyBean2 inst, ConverterOptions options) {
     }

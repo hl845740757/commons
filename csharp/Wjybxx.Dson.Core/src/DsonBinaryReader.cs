@@ -197,6 +197,11 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
         this.recursionDepth--;
         SetContext(context.parent!);
         ReturnContext(context);
+
+        // 告知可释放缓存
+        if (GetContext().contextType == DsonContextType.TopLevel) {
+            _input.ReadComplete(_input.Position);
+        }
     }
 
     #endregion

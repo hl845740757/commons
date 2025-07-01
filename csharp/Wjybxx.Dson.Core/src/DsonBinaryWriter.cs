@@ -210,7 +210,7 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
         int len;
         if (context.contextType == DsonContextType.Header) {
             len = _output.Position - preWritten - 2;
-            if (len > 65535) throw new DsonIOException("header is too large");
+            if (len > 0xFFFF) throw new DsonIOException("header is too large");
             _output.SetFixed16(preWritten, len);
         } else {
             len = _output.Position - preWritten - 4;
@@ -220,6 +220,11 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
         this.recursionDepth--;
         SetContext(context.Parent);
         ReturnContext(context);
+        
+        // 告知可释放缓存
+        if (GetContext().contextType == DsonContextType.TopLevel) {
+            _output.WriteComplete(_output.Position);
+        }
     }
 
     #endregion

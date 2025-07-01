@@ -106,7 +106,7 @@ final class BufferedCharStream extends AbstractCharStream {
     }
 
     @Override
-    public void discardReadChars(int position) {
+    public void readComplete(int position) {
         if (position <= 0 || position >= getPosition()) {
             return;
         }
@@ -121,7 +121,7 @@ final class BufferedCharStream extends AbstractCharStream {
         CharBuffer buffer = this.buffer;
         // 已读部分达75%时丢弃50%(保留最近的25%)；这里不根据具体的数字来进行丢弃，减少不必要的数组拷贝
         if (getPosition() - bufferStartPos >= buffer.capacity() * 0.75f) {
-            discardReadChars((int) (bufferStartPos + buffer.capacity() * 0.25d));
+            readComplete((int) (bufferStartPos + buffer.capacity() * 0.25d));
         }
         // 如果可写空间不足，则尝试扩容
         if (buffer.writableChars() <= 4

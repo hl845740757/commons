@@ -29,7 +29,7 @@ namespace Wjybxx.Dson.Tests.Apt;
 public class LinkerBeanExample
 {
     /// <summary>
-    /// 
+    /// 测试读写代理
     /// </summary>
     [DsonProperty(WriteProxy = "WriteAge", ReadProxy = "ReadAge")]
     private int age;

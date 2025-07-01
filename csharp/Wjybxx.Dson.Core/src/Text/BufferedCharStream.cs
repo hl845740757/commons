@@ -88,7 +88,7 @@ internal class BufferedCharStream : AbstractCharStream
         }
     }
 
-    public override void DiscardReadChars(int position) {
+    public override void ReadComplete(int position) {
         if (position <= 0 || position >= Position) {
             return;
         }
@@ -103,7 +103,7 @@ internal class BufferedCharStream : AbstractCharStream
         CharBuffer buffer = this._buffer;
         // 已读部分达75%时丢弃50%(保留最近的25%)；这里不根据具体的数字来进行丢弃，减少不必要的数组拷贝
         if (Position - _bufferStartPos >= buffer.Capacity * 0.75f) {
-            DiscardReadChars((int)(_bufferStartPos + buffer.Capacity * 0.25d));
+            ReadComplete((int)(_bufferStartPos + buffer.Capacity * 0.25d));
         }
         // 如果可写空间不足，则尝试扩容
         if (buffer.WritableChars <= 4

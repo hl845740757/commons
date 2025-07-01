@@ -219,7 +219,7 @@ public class DsonBinaryWriter extends AbstractDsonWriter {
         int len;
         if (context.contextType == DsonContextType.HEADER) {
             len = output.getPosition() - preWritten - 2;
-            if (len >= 65535) throw new DsonIOException("header is too large");
+            if (len >= 0xFFFF) throw new DsonIOException("header is too large");
             output.setFixedInt16(preWritten, len);
         } else {
             len = output.getPosition() - preWritten - 4;
@@ -229,6 +229,11 @@ public class DsonBinaryWriter extends AbstractDsonWriter {
         this.recursionDepth--;
         setContext(context.parent);
         returnContext(context);
+
+        // 告知可释放缓存
+        if (getContext().contextType == DsonContextType.TOP_LEVEL) {
+            output.writeComplete(output.getPosition());
+        }
     }
 
     // endregion

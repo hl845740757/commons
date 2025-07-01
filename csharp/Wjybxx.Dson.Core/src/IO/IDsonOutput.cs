@@ -31,11 +31,6 @@ public interface IDsonOutput : IDisposable
 
     void WriteRawByte(byte value);
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void WriteRawByte(int value) {
-        WriteRawByte((byte)value);
-    }
-
     void WriteFixed16(int value);
 
     void WriteUInt32(int value);
@@ -105,24 +100,13 @@ public interface IDsonOutput : IDisposable
     #region Special
 
     /// <summary>
-    /// 剩余可写空间
-    /// </summary>
-    int SpaceLeft { get; }
-
-    /// <summary>
     /// 当前写索引(也等于写入的字节数)
     /// </summary>
     int Position { get; set; }
 
     /// <summary>
-    /// 在指定位置写入一个byte
-    /// </summary>
-    /// <param name="pos">写索引</param>
-    /// <param name="value">value</param>
-    void SetByte(int pos, byte value);
-
-    /// <summary>
     /// 在指定索引位置以Fixed16格式写入一个int值
+    /// (不会修改当前索引)
     /// </summary>
     /// <param name="pos">写索引</param>
     /// <param name="value">value</param>
@@ -130,12 +114,24 @@ public interface IDsonOutput : IDisposable
 
     /// <summary>
     /// 在指定索引位置以Fixed32格式写入一个int值
-    /// 该方法可能有较大的开销，不宜频繁使用
+    /// (不会修改当前索引)
     /// </summary>
     /// <param name="pos">写索引</param>
     /// <param name="value">value</param>
     void SetFixed32(int pos, int value);
+    
+    /// <summary>
+    /// 剩余可写空间
+    /// </summary>
+    int SpaceLeft { get; }
 
+    /// <summary>
+    /// 不需要再回滚到前面的位置
+    ///
+    /// 由于我们存在SetPosition和随机写逻辑，为避免用户总是缓存数据，我们通过该接口告诉实现类，可以释放一部分缓存
+    /// </summary>
+    void WriteComplete(int safePosition);
+    
     void Flush();
 
     #endregion

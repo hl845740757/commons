@@ -31,7 +31,7 @@ namespace Wjybxx.Dson.IO
 public static class DsonOutputs
 {
     public static IDsonOutput NewInstance(byte[] buffer) {
-        return new ArrayDsonOutput(buffer, 0, buffer.Length);
+        return new ArrayOutput(buffer, 0, buffer.Length);
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ public static class DsonOutputs
     /// <param name="length">buffer有效长度</param>
     /// <returns></returns>
     public static IDsonOutput NewInstance(byte[] buffer, int offset, int length) {
-        return new ArrayDsonOutput(buffer, offset, length);
+        return new ArrayOutput(buffer, offset, length);
     }
 
     /// <summary>
@@ -52,18 +52,18 @@ public static class DsonOutputs
     /// <param name="initCapacity">初始空间</param>
     /// <param name="maxCapacity">最大空间</param>
     /// <returns></returns>
-    public static ArrayDsonOutput NewInstance(IArrayPool<byte> bufferPool, int initCapacity, int maxCapacity) {
+    public static ArrayOutput NewInstance(IArrayPool<byte> bufferPool, int initCapacity, int maxCapacity) {
         if (maxCapacity < initCapacity) {
             throw new ArgumentException($"initCapacity: {initCapacity}, maxCapacity: {maxCapacity}");
         }
         byte[] buffer = bufferPool.Acquire(initCapacity);
-        return new ArrayDsonOutput(buffer, bufferPool, maxCapacity);
+        return new ArrayOutput(buffer, bufferPool, maxCapacity);
     }
 
     /// <summary>
     /// 注意：是用户持有该对象的引用，因此不能内部隐式池化。
     /// </summary>
-    public class ArrayDsonOutput : IDsonOutput
+    public class ArrayOutput : IDsonOutput
     {
         private byte[] _buffer;
         private readonly int _rawOffset;
@@ -73,7 +73,7 @@ public static class DsonOutputs
         private int _bufferPos; // 当前写位置
         private int _posLimit; // 当前限制位置-不可写入位置
 
-        internal ArrayDsonOutput(byte[] buffer, int offset, int length) {
+        internal ArrayOutput(byte[] buffer, int offset, int length) {
             ByteBufferUtil.CheckBuffer(buffer, offset, length);
             this._buffer = buffer;
             this._rawOffset = offset;
@@ -83,7 +83,7 @@ public static class DsonOutputs
             this._posLimit = offset + length;
         }
 
-        internal ArrayDsonOutput(byte[] buffer, IArrayPool<byte> bufferPool, int maxCapacity) {
+        internal ArrayOutput(byte[] buffer, IArrayPool<byte> bufferPool, int maxCapacity) {
             _buffer = buffer;
             _bufferPool = bufferPool;
             _rawOffset = 0;
@@ -107,10 +107,10 @@ public static class DsonOutputs
                 // 注意：申请得到的buffer的长度可能大于capacity，因此可能大于maxCapacity
                 byte[] newBuffer = _bufferPool.Acquire(capacity);
                 Array.Copy(_buffer, 0, newBuffer, 0, _bufferPos);
-                // 勿调整顺序!
+                //
+                _bufferPool.Release(_buffer);
                 _buffer = newBuffer;
                 _posLimit = newBuffer.Length;
-                _bufferPool.Release(_buffer);
                 return;
             }
             throw new DsonIOException($"BytesLimited, PosLimit: {_posLimit}, position: {_bufferPos}, required: {required}");
@@ -209,10 +209,6 @@ public static class DsonOutputs
 
         #region Special
 
-        public int SpaceLeft => _bufferPool != null
-            ? -_rawLimit - _bufferPos
-            : _posLimit - _bufferPos;
-
         public int Position {
             get => _bufferPos - _rawOffset;
             set {
@@ -230,13 +226,21 @@ public static class DsonOutputs
         public void SetFixed16(int pos, int value) {
             ByteBufferUtil.CheckBuffer(_rawLimit - _rawOffset, pos, 2);
             int bufferPos = _rawOffset + pos;
-            ByteBufferUtil.SetInt16LE(_buffer, bufferPos, (short)value);
+            CodedUtil.WriteFixed16(_buffer, bufferPos, (short)value);
         }
 
         public void SetFixed32(int pos, int value) {
             ByteBufferUtil.CheckBuffer(_rawLimit - _rawOffset, pos, 4);
             int bufferPos = _rawOffset + pos;
-            ByteBufferUtil.SetInt32LE(_buffer, bufferPos, value);
+            CodedUtil.WriteFixed32(_buffer, bufferPos, value);
+        }
+
+        public int SpaceLeft => _bufferPool != null
+            ? -_rawLimit - _bufferPos
+            : _posLimit - _bufferPos;
+
+        public void WriteComplete(int safePosition) {
+
         }
 
         #endregion

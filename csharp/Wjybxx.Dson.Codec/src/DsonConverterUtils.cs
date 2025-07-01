@@ -214,6 +214,16 @@ public static class DsonConverterUtils
     #region dson-converter
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Write<T>(this IDsonConverter converter, T value, IDsonOutput output) {
+        converter.Write(value, typeof(T), output);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Read<T>(this IDsonConverter converter, IDsonInput source, Func<object>? factory = null) {
+        return (T)converter.Read(source, typeof(T), factory);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string WriteAsDson<T>(this IDsonConverter converter, T value, ObjectStyle? style = null) {
         return converter.WriteAsDson(value, typeof(T), style);
     }

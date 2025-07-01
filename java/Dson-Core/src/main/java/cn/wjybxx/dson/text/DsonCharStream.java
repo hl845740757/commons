@@ -90,7 +90,7 @@ public interface DsonCharStream extends AutoCloseable {
      *
      * @param position 已读取位置，该位置的字符需要保留；position可能是一个估测值，因此position小于等于0则不处理
      */
-    default void discardReadChars(int position) {
+    default void readComplete(int position) {
 //        assert position <= getPosition();
     }
 

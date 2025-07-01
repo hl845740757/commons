@@ -102,6 +102,17 @@ public class DefaultDsonConverter : IDsonConverter
         return result;
     }
 
+    public void Write(object value, Type declaredType, IDsonOutput output) {
+        if (value == null) throw new ArgumentNullException(nameof(value));
+        if (output == null) throw new ArgumentNullException(nameof(output));
+        EncodeObject(output, value, declaredType);
+    }
+
+    public object Read(IDsonInput input, Type declaredType, Func<object>? factory = null) {
+        if (input == null) throw new ArgumentNullException(nameof(input));
+        return DecodeObject(input, declaredType, factory);
+    }
+
     public object CloneObject(object? value, Type declaredType, Type targetType, Func<object>? factory = null) {
         if (value == null) return null!;
         if (value.GetType().IsValueType) return value;
@@ -211,6 +222,11 @@ public class DefaultDsonConverter : IDsonConverter
 
     public DsonValue ReadAsDsonValue(TextReader source) {
         using DsonTextReader textReader = new DsonTextReader(options.textReaderSettings, Dsons.NewStreamScanner(source, false));
+        return Dsons.ReadTopDsonValue(textReader)!;
+    }
+
+    public DsonValue ReadAsDsonValue(IDsonInput source) {
+        using DsonBinaryReader<string> textReader = new DsonBinaryReader<string>(options.textReaderSettings, source, false);
         return Dsons.ReadTopDsonValue(textReader)!;
     }
 

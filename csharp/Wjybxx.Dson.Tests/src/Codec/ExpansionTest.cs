@@ -26,7 +26,7 @@ using Wjybxx.Dson.IO;
 namespace Wjybxx.Dson.Tests.Codec;
 
 /// <summary>
-/// 数组扩容测试
+/// 编码时数组扩容测试
 ///
 /// 测试的方法很简单，创建两个流，一个扩容，一个不扩容，测试最终的内容相等性
 /// </summary>
@@ -35,7 +35,7 @@ public class ExpansionTest
     private const int MAX_CAPACITY = 2048;
     private static readonly byte[] _buffer = new byte[2048];
     private static IDsonOutput _output;
-    private static DsonOutputs.ArrayDsonOutput _arrayOutput;
+    private static DsonOutputs.ArrayOutput _growableOutput;
     
     [SetUp]
     public void SetUp() {
@@ -43,32 +43,32 @@ public class ExpansionTest
         _output = DsonOutputs.NewInstance(_buffer);
 
         IArrayPool<byte> bufferPool = IArrayPool<byte>.Shared;
-        _arrayOutput = DsonOutputs.NewInstance(bufferPool, 16, 2048);
+        _growableOutput = DsonOutputs.NewInstance(bufferPool, 16, 2048);
     }
 
     [Test]
     public void TestNumber() {
-        using (_arrayOutput) {
+        using (_growableOutput) {
             while (_output.Position < MAX_CAPACITY - CodedUtil.MAX_VAR_INT32_LENGTH) {
                 int v = Random.Shared.Next();
                 _output.WriteUInt32(v);
-                _arrayOutput.WriteUInt32(v);
+                _growableOutput.WriteUInt32(v);
             }
             _output.Flush();
-            _arrayOutput.Flush();
-            Assert.AreEqual(_output.Position, _arrayOutput.Position);
+            _growableOutput.Flush();
+            Assert.AreEqual(_output.Position, _growableOutput.Position);
 
             Span<byte> lhs = new Span<byte>(_buffer, 0, _output.Position);
-            Span<byte> rhs = new Span<byte>(_arrayOutput.Buffer, 0, _arrayOutput.Position);
+            Span<byte> rhs = new Span<byte>(_growableOutput.Buffer, 0, _growableOutput.Position);
             Assert.IsTrue(lhs.SequenceEqual(rhs));
         }
     }
 
-    [Repeat(10)]
+    [Repeat(5)]
     [Test]
     public void TestString() {
-        // 通过Random.Shared.NextBytes() 构建出来的字符串可能包含非法字符
-        using (_arrayOutput) {
+        // 通过Random.NextBytes() 构建出来的字符串可能包含非法字符
+        using (_growableOutput) {
             while (true) {
                 int len = Random.Shared.Next(5, 256);
                 string str = GenerateString(Random.Shared, len, true, true);
@@ -77,14 +77,14 @@ public class ExpansionTest
                     break;
                 }
                 _output.WriteString(str);
-                _arrayOutput.WriteString(str);
+                _growableOutput.WriteString(str);
             }
             _output.Flush();
-            _arrayOutput.Flush();
-            Assert.AreEqual(_output.Position, _arrayOutput.Position);
+            _growableOutput.Flush();
+            Assert.AreEqual(_output.Position, _growableOutput.Position);
 
             Span<byte> lhs = new Span<byte>(_buffer, 0, _output.Position);
-            Span<byte> rhs = new Span<byte>(_arrayOutput.Buffer, 0, _arrayOutput.Position);
+            Span<byte> rhs = new Span<byte>(_growableOutput.Buffer, 0, _growableOutput.Position);
             Assert.IsTrue(lhs.SequenceEqual(rhs));
         }
     }

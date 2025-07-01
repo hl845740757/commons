@@ -20,6 +20,8 @@ import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.DsonArray;
 import cn.wjybxx.dson.DsonObject;
 import cn.wjybxx.dson.DsonValue;
+import cn.wjybxx.dson.io.DsonInput;
+import cn.wjybxx.dson.io.DsonOutput;
 import cn.wjybxx.dson.text.ObjectStyle;
 
 import javax.annotation.Nonnull;
@@ -59,7 +61,25 @@ public interface DsonConverter extends Converter {
     // region 文本编解码
 
     /**
-     * 将一个对象写入源
+     * 将对象写入输出流
+     *
+     * @param value        要编码的值
+     * @param declaredType 对象的类型信息
+     * @param output       输出流
+     */
+    void write(Object value, TypeInfo declaredType, DsonOutput output);
+
+    /**
+     * 从输入流中读取一个值
+     *
+     * @param input        输入流
+     * @param declaredType 对象的类型信息
+     * @param factory      对象工厂
+     */
+    <T> T read(DsonInput input, TypeInfo declaredType, @Nullable Supplier<? extends T> factory);
+
+    /**
+     * 将一个对象编码为dson文本
      * 如果对象的运行时类型和{@link TypeInfo#rawType}一致，则会省去编码结果中的类型信息，
      *
      * @param declaredType 对象的类型信息
@@ -121,9 +141,16 @@ public interface DsonConverter extends Converter {
      */
     DsonValue readAsDsonValue(Reader source);
 
+    /** 将Dson源解码为DsonValue中间对象 */
+    DsonValue readAsDsonValue(DsonInput source);
+
     // endregion
 
     // region 快捷方法
+
+    default <T> T read(DsonInput input, TypeInfo declaredType) {
+        return read(input, declaredType, null);
+    }
 
     default String writeAsDson(Object value) { // 默认写入类型信息
         return writeAsDson(value, TypeInfo.OBJECT, (ObjectStyle) null);

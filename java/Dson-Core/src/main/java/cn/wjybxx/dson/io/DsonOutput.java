@@ -29,10 +29,6 @@ public interface DsonOutput extends AutoCloseable {
     // region basic
     void writeRawByte(byte value);
 
-    default void writeRawByte(int value) {
-        writeRawByte((byte) value);
-    }
-
     void writeFixed16(int value);
 
     //
@@ -80,9 +76,6 @@ public interface DsonOutput extends AutoCloseable {
 
     // region advance
 
-    /** 剩余可写空间 */
-    int spaceLeft();
-
     /** 当前写索引位置 - 已写字节数 */
     int getPosition();
 
@@ -93,32 +86,26 @@ public interface DsonOutput extends AutoCloseable {
      */
     void setPosition(final int writerIndex);
 
-    /** 在指定索引位置写入一个byte */
-    void setByte(final int writerIndex, byte value);
+    /**
+     * 在指定索引位置以Fixed16格式写入一个int值
+     * (不会修改当前索引)
+     */
+    void setFixedInt16(final int writerIndex, int value);
 
     /**
-     * 在指定索引位置以Fixed16格式写入一个int值。
-     * 1.该方法可能有较大的开销，不宜频繁使用
-     * 2.相比先{@link #setPosition(int)}再{@link #writeFixed16(int)}的方式，该接口更容易优化实现。
+     * 在指定索引位置以Fixed32格式写入一个int值
+     * (不会修改当前索引)
      */
-    default void setFixedInt16(final int writerIndex, int value) {
-        int oldPosition = getPosition();
-        setPosition(writerIndex);
-        writeFixed16(value);
-        setPosition(oldPosition);
-    }
+    void setFixedInt32(final int writerIndex, int value);
+
+    /** 剩余可写空间 */
+    int spaceLeft();
 
     /**
-     * 在指定索引位置以Fixed32格式写入一个int值。
-     * 1.该方法可能有较大的开销，不宜频繁使用
-     * 2.相比先{@link #setPosition(int)}再{@link #writeFixed32(int)}的方式，该接口更容易优化实现。
+     * 不需要再回滚到前面的位置
+     * 由于我们存在SetPosition和随机写逻辑，为避免用户一直缓存数据，我们通过该接口告诉实现类，可以释放一部分缓存
      */
-    default void setFixedInt32(final int writerIndex, int value) {
-        int oldPosition = getPosition();
-        setPosition(writerIndex);
-        writeFixed32(value);
-        setPosition(oldPosition);
-    }
+    void writeComplete(int safePosition);
 
     /** 刷新缓冲区 */
     void flush();

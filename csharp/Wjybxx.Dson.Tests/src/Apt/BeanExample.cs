@@ -17,6 +17,7 @@
 #endregion
 
 using Wjybxx.Commons.Attributes;
+using Wjybxx.Commons.Collections;
 using Wjybxx.Dson.Codec;
 using Wjybxx.Dson.Codec.Attributes;
 using Wjybxx.Dson.Text;
@@ -112,15 +113,21 @@ public class BeanExample : BaseTypeExample
     public ISet<string>? hashSet2;
 
     /// <summary>
-    /// 测试字段忽略
+    /// 测试泛型字典
     /// </summary>
-    [DsonIgnore()]
-    public HashSet<string>? ignoreSet;
+    [DsonProperty(Impl = typeof(LinkedDictionary<,>), ObjectStyle = ObjectStyle.Flow, IsImmutable = true)]
+    public IDictionary<int, string>? dictionary;
 
     /// <summary>
     /// 测试字段忽略
     /// </summary>
-    [NonSerialized] public HashSet<string>? ignoreSet2;
+    [DsonIgnore]
+    public HashSet<string>? ignoreSet;
+    /// <summary>
+    /// 测试字段忽略
+    /// </summary>
+    [NonSerialized]
+    public HashSet<string>? ignoreSet2;
 
     public void WriteType(IDsonObjectWriter writer, string dsonName) {
         writer.WriteInt(dsonName, Type);
