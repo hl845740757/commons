@@ -20,7 +20,7 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-namespace Wjybxx.Commons
+namespace Wjybxx.Commons.Logger
 {
 public static class SerilogHelper
 {
@@ -36,7 +36,7 @@ public static class SerilogHelper
             .AddJsonFile(appSettingsPath)
             .Build();
 
-        ILogger logger = new LoggerConfiguration()
+        Serilog.ILogger logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
             .CreateLogger();
 

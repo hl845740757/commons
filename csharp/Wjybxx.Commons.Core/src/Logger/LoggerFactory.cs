@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Reflection;
 using System.Text;
 
 namespace Wjybxx.Commons.Logger
@@ -30,11 +31,16 @@ public static class LoggerFactory
     /** C#不推荐锁定class，容易导致死锁问题... */
     private static readonly object _lockObject = new object();
 
-#if UNITY_2021_3_OR_NEWER
-    private static volatile ILoggerFactory provider = UnityLoggerFactory.Inst;
-#else
     private static volatile ILoggerFactory provider = ConsoleLoggerFactory.Inst;
-#endif
+
+    static LoggerFactory() {
+        // 如果存在UnityLogger程序集，则证明是Unity环境
+        Type type = Type.GetType("Wjybxx.Commons.Logger.UnityLoggerFactory, Wjybxx.Logger.Unity");
+        if (type != null) {
+            PropertyInfo propertyInfo = type.GetProperty("Inst", BindingFlags.Public | BindingFlags.Static);
+            provider = (ILoggerFactory)propertyInfo!.GetValue(null) ?? throw new InvalidOperationException("UnityLoggerFactory.Inst is null");
+        }
+    }
 
     #region GetLogger
 

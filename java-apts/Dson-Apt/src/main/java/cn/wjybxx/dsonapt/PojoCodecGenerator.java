@@ -413,27 +413,13 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         if (isPrimitiveType(typeMirror)) {
             return primitiveWriteMethodNameMap.get(typeMirror.getKind());
         }
-        if (processor.isString(typeMirror)) {
-            return MNAME_WRITE_STRING;
-        }
-        if (processor.isByteArray(typeMirror)) {
-            return MNAME_WRITE_BYTES;
-        }
-        if (processor.isBinary(typeMirror)) {
-            return MNAME_WRITE_BINARY;
-        }
-        if (processor.isObjectPtr(typeMirror)) {
-            return MNAME_WRITE_PTR;
-        }
-        if (processor.isObjectLitePtr(typeMirror)) {
-            return MNAME_WRITE_LITE_PTR;
-        }
-        if (processor.isLocalDateTime(typeMirror)) {
-            return MNAME_WRITE_DATETIME;
-        }
-        if (processor.isTimestamp(typeMirror)) {
-            return MNAME_WRITE_TIMESTAMP;
-        }
+        if (processor.isString(typeMirror)) return MNAME_WRITE_STRING;
+        if (processor.isByteArray(typeMirror)) return MNAME_WRITE_BYTES;
+        if (processor.isBinary(typeMirror)) return MNAME_WRITE_BINARY;
+        if (processor.isObjectPtr(typeMirror)) return MNAME_WRITE_PTR;
+        if (processor.isObjectLitePtr(typeMirror)) return MNAME_WRITE_LITE_PTR;
+        if (processor.isLocalDateTime(typeMirror)) return MNAME_WRITE_DATETIME;
+        if (processor.isTimestamp(typeMirror)) return MNAME_WRITE_TIMESTAMP;
         return MNAME_WRITE_OBJECT;
     }
 
@@ -443,27 +429,13 @@ class PojoCodecGenerator extends AbstractGenerator<CodecProcessor> {
         if (isPrimitiveType(typeMirror)) {
             return primitiveReadMethodNameMap.get(typeMirror.getKind());
         }
-        if (processor.isString(typeMirror)) {
-            return MNAME_READ_STRING;
-        }
-        if (processor.isByteArray(typeMirror)) {
-            return MNAME_READ_BYTES;
-        }
-        if (processor.isBinary(typeMirror)) {
-            return MNAME_READ_BINARY;
-        }
-        if (processor.isObjectPtr(typeMirror)) {
-            return MNAME_READ_PTR;
-        }
-        if (processor.isObjectLitePtr(typeMirror)) {
-            return MNAME_READ_LITE_PTR;
-        }
-        if (processor.isLocalDateTime(typeMirror)) {
-            return MNAME_READ_DATETIME;
-        }
-        if (processor.isTimestamp(typeMirror)) {
-            return MNAME_READ_TIMESTAMP;
-        }
+        if (processor.isString(typeMirror)) return MNAME_READ_STRING;
+        if (processor.isByteArray(typeMirror)) return MNAME_READ_BYTES;
+        if (processor.isBinary(typeMirror)) return MNAME_READ_BINARY;
+        if (processor.isObjectPtr(typeMirror)) return MNAME_READ_PTR;
+        if (processor.isObjectLitePtr(typeMirror)) return MNAME_READ_LITE_PTR;
+        if (processor.isLocalDateTime(typeMirror)) return MNAME_READ_DATETIME;
+        if (processor.isTimestamp(typeMirror)) return MNAME_READ_TIMESTAMP;
         return MNAME_READ_OBJECT;
     }
 

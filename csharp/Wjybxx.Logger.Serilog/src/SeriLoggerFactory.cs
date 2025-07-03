@@ -18,18 +18,16 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
-using Wjybxx.Commons.Logger;
-using ILogger = Wjybxx.Commons.Logger.ILogger;
+using Serilogger = Serilog.ILogger;
 
-namespace Wjybxx.Commons
+namespace Wjybxx.Commons.Logger
 {
 /// <summary>
 /// Serilog似乎不能创建多个实例?
 /// </summary>
 public sealed class SeriLoggerFactory : ILoggerFactory
 {
-    private readonly Serilog.ILogger _logger;
+    private readonly Serilogger _logger;
     private readonly bool _appendName;
     /// <summary>
     /// 所有的Logger
@@ -42,7 +40,7 @@ public sealed class SeriLoggerFactory : ILoggerFactory
     /// <param name="logger">serilog</param>
     /// <param name="appendName">是否在日志前面追加name</param>
     /// <exception cref="ArgumentNullException"></exception>
-    public SeriLoggerFactory(Serilog.ILogger logger, bool appendName = false) {
+    public SeriLoggerFactory(Serilogger logger, bool appendName = false) {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _appendName = appendName;
     }
@@ -50,7 +48,7 @@ public sealed class SeriLoggerFactory : ILoggerFactory
     /// <summary>
     /// 全局logger
     /// </summary>
-    public Serilog.ILogger GlobalLogger => _logger;
+    public Serilogger GlobalLogger => _logger;
 
     public void Dispose() {
         _loggerMap.Clear();

@@ -19,20 +19,20 @@
 using System;
 using System.Runtime.CompilerServices;
 using Serilog.Events;
-using Wjybxx.Commons.Logger;
+using Serilogger = Serilog.ILogger;
 
-namespace Wjybxx.Commons
+namespace Wjybxx.Commons.Logger
 {
 /// <summary>
 /// Serilog适配器
 /// </summary>
 internal sealed class SeriLogger : ILogger
 {
-    private readonly Serilog.ILogger _logger;
+    private readonly Serilogger _logger;
     private readonly string _name;
     private readonly bool _appendName;
 
-    public SeriLogger(Serilog.ILogger logger, string name, bool appendName) {
+    public SeriLogger(Serilogger logger, string name, bool appendName) {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _name = name ?? throw new ArgumentNullException(nameof(name));
         _appendName = appendName;

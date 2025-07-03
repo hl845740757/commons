@@ -426,27 +426,13 @@ internal class PojoCodecGenerator
         if (primitiveWriteMethodNameMap.TryGetValue(fieldType.SpecialType, out string? r)) {
             return r;
         }
-        if (fieldType.SpecialType == SpecialType.System_String) {
-            return MNAME_WRITE_STRING;
-        }
-        if (fieldType.IsByteArray()) {
-            return MNAME_WRITE_BYTES;
-        }
-        if (fieldType.IsSameType(processor.type_Binary)) {
-            return MNAME_WRITE_BINARY;
-        }
-        if (fieldType.IsSameType(processor.type_Ptr)) {
-            return MNAME_WRITE_PTR;
-        }
-        if (fieldType.IsSameType(processor.type_LitePtr)) {
-            return MNAME_WRITE_LITE_PTR;
-        }
-        if (fieldType.SpecialType == SpecialType.System_DateTime) {
-            return MNAME_WRITE_DATETIME;
-        }
-        if (fieldType.IsSameType(processor.type_Timestamp)) {
-            return MNAME_WRITE_TIMESTAMP;
-        }
+        if (fieldType.SpecialType == SpecialType.System_String) return MNAME_WRITE_STRING;
+        if (fieldType.IsByteArray()) return MNAME_WRITE_BYTES;
+        if (fieldType.IsSameType(processor.type_Binary)) return MNAME_WRITE_BINARY;
+        if (fieldType.IsSameType(processor.type_Ptr)) return MNAME_WRITE_PTR;
+        if (fieldType.IsSameType(processor.type_LitePtr)) return MNAME_WRITE_LITE_PTR;
+        if (fieldType.SpecialType == SpecialType.System_DateTime) return MNAME_WRITE_DATETIME;
+        if (fieldType.IsSameType(processor.type_Timestamp)) return MNAME_WRITE_TIMESTAMP;
         return MNAME_WRITE_OBJECT;
     }
 
@@ -456,27 +442,13 @@ internal class PojoCodecGenerator
         if (primitiveReadMethodNameMap.TryGetValue(fieldType.SpecialType, out string? r)) {
             return r;
         }
-        if (fieldType.SpecialType == SpecialType.System_String) {
-            return MNAME_READ_STRING;
-        }
-        if (fieldType.IsByteArray()) {
-            return MNAME_READ_BYTES;
-        }
-        if (fieldType.IsSameType(processor.type_Binary)) {
-            return MNAME_READ_BINARY;
-        }
-        if (fieldType.IsSameType(processor.type_Ptr)) {
-            return MNAME_READ_PTR;
-        }
-        if (fieldType.IsSameType(processor.type_LitePtr)) {
-            return MNAME_READ_LITE_PTR;
-        }
-        if (fieldType.SpecialType == SpecialType.System_DateTime) {
-            return MNAME_READ_DATETIME;
-        }
-        if (fieldType.IsSameType(processor.type_Timestamp)) {
-            return MNAME_READ_TIMESTAMP;
-        }
+        if (fieldType.SpecialType == SpecialType.System_String) return MNAME_READ_STRING;
+        if (fieldType.IsByteArray()) return MNAME_READ_BYTES;
+        if (fieldType.IsSameType(processor.type_Binary)) return MNAME_READ_BINARY;
+        if (fieldType.IsSameType(processor.type_Ptr)) return MNAME_READ_PTR;
+        if (fieldType.IsSameType(processor.type_LitePtr)) return MNAME_READ_LITE_PTR;
+        if (fieldType.SpecialType == SpecialType.System_DateTime) return MNAME_READ_DATETIME;
+        if (fieldType.IsSameType(processor.type_Timestamp)) return MNAME_READ_TIMESTAMP;
         return MNAME_READ_OBJECT;
     }
 

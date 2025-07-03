@@ -411,7 +411,6 @@ internal class PojoCodecGenerator
         }
     }
 
-
     private static string SerialName(string fieldName) {
         return SchemaGenerator.GetNameFieldName(fieldName);
     }
@@ -426,27 +425,13 @@ internal class PojoCodecGenerator
         if (fieldType.IsPrimitive) {
             return primitiveWriteMethodNameMap[fieldType];
         }
-        if (fieldType == typeof(string)) {
-            return MNAME_WRITE_STRING;
-        }
-        if (fieldType == typeof(byte[])) {
-            return MNAME_WRITE_BYTES;
-        }
-        if (fieldType == typeof(Binary)) {
-            return MNAME_WRITE_BINARY;
-        }
-        if (fieldType == typeof(ObjectPtr)) {
-            return MNAME_WRITE_PTR;
-        }
-        if (fieldType == typeof(ObjectLitePtr)) {
-            return MNAME_WRITE_LITE_PTR;
-        }
-        if (fieldType == typeof(DateTime)) {
-            return MNAME_WRITE_DATETIME;
-        }
-        if (fieldType == typeof(Timestamp)) {
-            return MNAME_WRITE_TIMESTAMP;
-        }
+        if (fieldType == typeof(string)) return MNAME_WRITE_STRING;
+        if (fieldType == typeof(byte[])) return MNAME_WRITE_BYTES;
+        if (fieldType == typeof(Binary)) return MNAME_WRITE_BINARY;
+        if (fieldType == typeof(ObjectPtr)) return MNAME_WRITE_PTR;
+        if (fieldType == typeof(ObjectLitePtr)) return MNAME_WRITE_LITE_PTR;
+        if (fieldType == typeof(DateTime)) return MNAME_WRITE_DATETIME;
+        if (fieldType == typeof(Timestamp)) return MNAME_WRITE_TIMESTAMP;
         return MNAME_WRITE_OBJECT;
     }
 
@@ -456,27 +441,13 @@ internal class PojoCodecGenerator
         if (fieldType.IsPrimitive) {
             return primitiveReadMethodNameMap[fieldType];
         }
-        if (fieldType == typeof(string)) {
-            return MNAME_READ_STRING;
-        }
-        if (fieldType == typeof(byte[])) {
-            return MNAME_READ_BYTES;
-        }
-        if (fieldType == typeof(Binary)) {
-            return MNAME_READ_BINARY;
-        }
-        if (fieldType == typeof(ObjectPtr)) {
-            return MNAME_READ_PTR;
-        }
-        if (fieldType == typeof(ObjectLitePtr)) {
-            return MNAME_READ_LITE_PTR;
-        }
-        if (fieldType == typeof(DateTime)) { // 系统库日期时间
-            return MNAME_READ_DATETIME;
-        }
-        if (fieldType == typeof(Timestamp)) {
-            return MNAME_READ_TIMESTAMP;
-        }
+        if (fieldType == typeof(string)) return MNAME_READ_STRING;
+        if (fieldType == typeof(byte[])) return MNAME_READ_BYTES;
+        if (fieldType == typeof(Binary)) return MNAME_READ_BINARY;
+        if (fieldType == typeof(ObjectPtr)) return MNAME_READ_PTR;
+        if (fieldType == typeof(ObjectLitePtr)) return MNAME_READ_LITE_PTR;
+        if (fieldType == typeof(DateTime)) return MNAME_READ_DATETIME; // 系统库日期时间
+        if (fieldType == typeof(Timestamp)) return MNAME_READ_TIMESTAMP;
         return MNAME_READ_OBJECT;
     }
 

@@ -4,19 +4,19 @@
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>annotations</Nullable>
         <LangVersion>9</LangVersion> <!-- 为兼容unity我们使用c#9 -->
-        <RootNamespace>Wjybxx.Commons.Logger</RootNamespace>
+        <RootNamespace>Wjybxx.Logger.Unity</RootNamespace>
 
-        <AssemblyName>Wjybxx.Logger.Serilog</AssemblyName>
-        <PackageId>Wjybxx.Logger.Serilog</PackageId>
-        <PackageVersion>1.4.0</PackageVersion>
+        <AssemblyName>Wjybxx.Logger.Unity</AssemblyName>
+        <PackageId>Wjybxx.Logger.Unity</PackageId>
+        <PackageVersion>1.0.0</PackageVersion>
 
-        <Title>Wjybxx.Logger.Serilog</Title>
-        <Description>Serilog适配器</Description>
-        <PackageTags>wjybxx;</PackageTags>
+        <Title>Wjybxx.Logger.Unity</Title>
+        <Description>依赖注入库</Description>
+        <PackageTags>wjybxx;logger;</PackageTags>
 
         <Authors>wjybxx(845740757@qq.com)</Authors>
         <Owners>wjybxx(845740757@qq.com)</Owners>
-        <Copyright>Copyright 2023-2024 wjybxx(845740757@qq.com)</Copyright>
+        <Copyright>Copyright 2025 wjybxx(845740757@qq.com)</Copyright>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/hl845740757/commons</PackageProjectUrl>
         <PackageReleaseNotes>https://github.com/hl845740757/commons/releases</PackageReleaseNotes>
@@ -43,18 +43,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Serilog" Version="4.0.1" />
-        <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
-        <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.2" />
-        <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
-        <PackageReference Include="Serilog.Enrichers.Process" Version="3.0.0" />
-        <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
-        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-        <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
+        <ProjectReference Include="..\Wjybxx.Commons.Core\Wjybxx.Commons.Core.csproj" />
     </ItemGroup>
 
 </Project>
