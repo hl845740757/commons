@@ -19,6 +19,7 @@ package cn.wjybxx.dsoncodec;
 import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.text.INumberStyle;
+import cn.wjybxx.dson.text.NumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
 import cn.wjybxx.dson.types.*;
@@ -243,7 +244,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
                 }
                 writer.writeString(DsonHeader.NAMES_CLASS_NAME, typeMeta.mainClsName(), StringStyle.AUTO_QUOTE);
             }
-            writer.writeInt32(DsonHeader.NAMES_COUNT, count);
+            writer.writeInt32(DsonHeader.NAMES_COUNT, count, NumberStyle.SIMPLE);
             writer.writeEndHeader();
         }
     }

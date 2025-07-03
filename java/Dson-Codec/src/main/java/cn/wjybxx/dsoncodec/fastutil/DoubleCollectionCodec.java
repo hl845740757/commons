@@ -23,9 +23,7 @@ import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonConverterUtils;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.doubles.DoubleCollection;
-import it.unimi.dsi.fastutil.doubles.DoubleImmutableList;
+import it.unimi.dsi.fastutil.doubles.*;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
@@ -59,26 +57,42 @@ public class DoubleCollectionCodec implements DsonCodec<DoubleCollection> {
         return typeInfo;
     }
 
-    protected DoubleCollection newCollection() {
-        if (factory != null) {
-            return factory.get();
+    @Override
+    public boolean autoStartEnd() {
+        return false;
+    }
+
+    protected DoubleCollection newCollection(Supplier<? extends DoubleCollection> userFactory, int count) {
+        if (userFactory != null) return userFactory.get();
+        if (factory != null) return factory.get();
+        return new DoubleArrayList(count);
+    }
+
+    private static DoubleCollection toImmutable(DoubleCollection result, TypeInfo declaredType) {
+        if (!declaredType.rawType.isInterface()) return result;
+        if (result instanceof DoubleList) {
+            return new DoubleImmutableList(result);
         }
-        return new DoubleArrayList();
+        return DoubleCollections.unmodifiable(result);
     }
 
     @Override
     public void writeObject(DsonObjectWriter writer, DoubleCollection inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeStartArray(style, getEncoderType(), declaredType, inst.size());
         for (var itr = inst.iterator(); itr.hasNext(); ) {
             writer.writeDouble(null, itr.nextDouble());
         }
+        writer.writeEndArray();
     }
 
     @Override
     public DoubleCollection readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends DoubleCollection> factory) {
-        DoubleCollection result = factory != null ? factory.get() : newCollection();
+        int count = reader.readStartArray();
+        DoubleCollection result = newCollection(factory, count);
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readDouble(null));
         }
-        return reader.options().readAsImmutable ? new DoubleImmutableList(result) : result;
+        reader.readEndArray();
+        return reader.options().readAsImmutable ? toImmutable(result, declaredType) : result;
     }
 }

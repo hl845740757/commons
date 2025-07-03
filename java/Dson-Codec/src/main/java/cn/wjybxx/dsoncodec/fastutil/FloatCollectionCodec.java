@@ -23,9 +23,7 @@ import cn.wjybxx.dsoncodec.DsonCodec;
 import cn.wjybxx.dsoncodec.DsonConverterUtils;
 import cn.wjybxx.dsoncodec.DsonObjectReader;
 import cn.wjybxx.dsoncodec.DsonObjectWriter;
-import it.unimi.dsi.fastutil.floats.FloatArrayList;
-import it.unimi.dsi.fastutil.floats.FloatCollection;
-import it.unimi.dsi.fastutil.floats.FloatImmutableList;
+import it.unimi.dsi.fastutil.floats.*;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
@@ -59,26 +57,42 @@ public class FloatCollectionCodec implements DsonCodec<FloatCollection> {
         return typeInfo;
     }
 
-    protected FloatCollection newCollection() {
-        if (factory != null) {
-            return factory.get();
+    @Override
+    public boolean autoStartEnd() {
+        return false;
+    }
+
+    protected FloatCollection newCollection(Supplier<? extends FloatCollection> userFactory, int count) {
+        if (userFactory != null) return userFactory.get();
+        if (factory != null) return factory.get();
+        return new FloatArrayList(count);
+    }
+
+    private static FloatCollection toImmutable(FloatCollection result, TypeInfo declaredType) {
+        if (!declaredType.rawType.isInterface()) return result;
+        if (result instanceof FloatList) {
+            return new FloatImmutableList(result);
         }
-        return new FloatArrayList();
+        return FloatCollections.unmodifiable(result);
     }
 
     @Override
     public void writeObject(DsonObjectWriter writer, FloatCollection inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeStartArray(style, getEncoderType(), declaredType, inst.size());
         for (var itr = inst.iterator(); itr.hasNext(); ) {
             writer.writeFloat(null, itr.nextFloat());
         }
+        writer.writeEndArray();
     }
 
     @Override
     public FloatCollection readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends FloatCollection> factory) {
-        FloatCollection result = factory != null ? factory.get() : newCollection();
+        int count = reader.readStartArray();
+        FloatCollection result = newCollection(factory, count);
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readFloat(null));
         }
-        return reader.options().readAsImmutable ? new FloatImmutableList(result) : result;
+        reader.readEndArray();
+        return reader.options().readAsImmutable ? toImmutable(result, declaredType) : result;
     }
 }

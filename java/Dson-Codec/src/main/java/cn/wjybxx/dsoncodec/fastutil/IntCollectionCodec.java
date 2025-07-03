@@ -55,12 +55,22 @@ public class IntCollectionCodec implements DsonCodec<IntCollection> {
         return typeInfo;
     }
 
-    protected IntCollection newCollection() {
-        if (factory != null) return factory.get();
-        return isSet ? new IntLinkedOpenHashSet() : new IntArrayList();
+    @Override
+    public boolean autoStartEnd() {
+        return false;
     }
 
-    private static IntCollection toImmutable(IntCollection result) {
+    protected IntCollection newCollection(Supplier<? extends IntCollection> userFactory, int count) {
+        if (userFactory != null) return userFactory.get();
+        if (factory != null) return factory.get();
+        if (isSet) {
+            return count > 0 ? new IntLinkedOpenHashSet(count) : new IntLinkedOpenHashSet();
+        }
+        return new IntArrayList(count);
+    }
+
+    private static IntCollection toImmutable(IntCollection result, TypeInfo declaredType) {
+        if (!declaredType.rawType.isInterface()) return result;
         if (result instanceof IntSet intSet) {
             return IntSets.unmodifiable(intSet);
         }
@@ -69,17 +79,21 @@ public class IntCollectionCodec implements DsonCodec<IntCollection> {
 
     @Override
     public void writeObject(DsonObjectWriter writer, IntCollection inst, TypeInfo declaredType, ObjectStyle style) {
+        writer.writeStartArray(style, getEncoderType(), declaredType, inst.size());
         for (var itr = inst.iterator(); itr.hasNext(); ) {
             writer.writeInt(null, itr.nextInt());
         }
+        writer.writeEndArray();
     }
 
     @Override
     public IntCollection readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends IntCollection> factory) {
-        IntCollection result = factory != null ? factory.get() : newCollection();
+        int count = reader.readStartArray();
+        IntCollection result = newCollection(factory, count);
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readInt(null));
         }
-        return reader.options().readAsImmutable ? toImmutable(result) : result;
+        reader.readEndArray();
+        return reader.options().readAsImmutable ? toImmutable(result, declaredType) : result;
     }
 }

@@ -26,6 +26,7 @@ import cn.wjybxx.dsoncodec.DsonObjectWriter;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
@@ -53,20 +54,29 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
         this.factory = factory;
     }
 
-    @Override
-    public boolean autoStartEnd() {
-        return false;
-    }
-
     @Nonnull
     @Override
     public TypeInfo getEncoderType() {
         return encoderType;
     }
 
-    private Long2ObjectMap<V> newMap() {
+    @Override
+    public boolean autoStartEnd() {
+        return false;
+    }
+
+    private Long2ObjectMap<V> newMap(Supplier<? extends Long2ObjectMap<V>> userFactory, int count) {
+        if (userFactory != null) return userFactory.get();
         if (factory != null) return factory.get();
-        return new Long2ObjectLinkedOpenHashMap<>();
+        if (encoderType.rawType == Long2ObjectOpenHashMap.class) {
+            return count > 0 ? new Long2ObjectOpenHashMap<>(count) : new Long2ObjectOpenHashMap<>();
+        }
+        return count > 0 ? new Long2ObjectLinkedOpenHashMap<>(count) : new Long2ObjectOpenHashMap<>();
+    }
+
+    private static <V> Long2ObjectMap<V> toImmutable(Long2ObjectMap<V> result, TypeInfo declaredType) {
+        if (!declaredType.rawType.isInterface()) return result;
+        return Long2ObjectMaps.unmodifiable(result);
     }
 
     @Override
@@ -75,7 +85,7 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
 
         switch (writer.options().mapEncodePolicy) {
             case DOCUMENT -> {
-                writer.writeStartObject(style, encoderType, declaredType);
+                writer.writeStartObject(style, encoderType, declaredType, inst.size());
                 for (var itr = Long2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                     Long2ObjectMap.Entry<V> entry = itr.next();
                     String keyString = Long.toString(entry.getLongKey());
@@ -85,7 +95,7 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
                 writer.writeEndObject();
             }
             case PAIR_AS_DOCUMENT -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (var itr = Long2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                     Long2ObjectMap.Entry<V> entry = itr.next();
                     writer.writeStartObject(ObjectStyle.FLOW); // pair写为子文档-没有类型
@@ -99,7 +109,7 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
                 writer.writeEndArray();
             }
             case PAIR_AS_ARRAY -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (var itr = Long2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                     Long2ObjectMap.Entry<V> entry = itr.next();
                     writer.writeStartArray(ObjectStyle.FLOW); // pair写为子数组-没有类型
@@ -112,7 +122,7 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
                 writer.writeEndArray();
             }
             case ARRAY -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (var itr = Long2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                     Long2ObjectMap.Entry<V> entry = itr.next();
                     writer.writeLong(null, entry.getLongKey());
@@ -128,9 +138,11 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
         reader.setEnableNameIntern(false); // 禁用字典的name池化
         TypeInfo valueTypeInfo = encoderType.typeArgs.get(0);
 
-        Long2ObjectMap<V> result = factory != null ? factory.get() : newMap();
+        Long2ObjectMap<V> result;
         if (reader.getCurrentDsonType() == DsonType.OBJECT) {
-            reader.readStartObject();
+            int count = reader.readStartObject();
+            result = newMap(factory, count);
+            //
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
                 long key = Long.parseLong(keyString);
@@ -139,7 +151,9 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
             }
             reader.readEndObject();
         } else {
-            reader.readStartArray();
+            int count = reader.readStartArray();
+            result = newMap(factory, count);
+            //
             DsonType firstDsonType = reader.readDsonType();
             switch (firstDsonType) {
                 case END_OF_OBJECT -> {} // 没有元素
@@ -177,6 +191,6 @@ public class Long2ObjectMapCodec<V> implements DsonCodec<Long2ObjectMap<V>> {
             }
             reader.readEndArray();
         }
-        return reader.options().readAsImmutable ? Long2ObjectMaps.unmodifiable(result) : result;
+        return reader.options().readAsImmutable ? toImmutable(result, declaredType) : result;
     }
 }

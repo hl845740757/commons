@@ -229,7 +229,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
                 }
                 writer.WriteString(DsonHeader.Names_ClassName, typeMeta.MainClsName, StringStyle.AutoQuote);
             }
-            writer.WriteInt32(DsonHeader.Names_Count, count);
+            writer.WriteInt32(DsonHeader.Names_Count, count, NumberStyles.Simple);
             writer.WriteEndHeader();
         }
     }

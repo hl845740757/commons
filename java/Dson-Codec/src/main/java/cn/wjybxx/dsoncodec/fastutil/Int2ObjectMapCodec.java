@@ -26,6 +26,7 @@ import cn.wjybxx.dsoncodec.DsonObjectWriter;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
@@ -52,20 +53,30 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
         this.factory = factory;
     }
 
-    @Override
-    public boolean autoStartEnd() {
-        return false;
-    }
-
     @Nonnull
     @Override
     public TypeInfo getEncoderType() {
         return encoderType;
     }
 
-    protected Int2ObjectMap<V> newMap() {
+    @Override
+    public boolean autoStartEnd() {
+        return false;
+    }
+
+    protected Int2ObjectMap<V> newMap(Supplier<? extends Int2ObjectMap<V>> userFactory, int count) {
+        if (userFactory != null) return userFactory.get();
         if (factory != null) return factory.get();
-        return new Int2ObjectLinkedOpenHashMap<>();
+        if (encoderType.rawType == Int2ObjectOpenHashMap.class) {
+            return count > 0 ? new Int2ObjectOpenHashMap<>(count) : new Int2ObjectOpenHashMap<>();
+        }
+        return count > 0 ? new Int2ObjectLinkedOpenHashMap<>(count) : new Int2ObjectLinkedOpenHashMap<>();
+    }
+
+
+    private static <V> Int2ObjectMap<V> toImmutable(Int2ObjectMap<V> result, TypeInfo declaredType) {
+        if (!declaredType.rawType.isInterface()) return result;
+        return Int2ObjectMaps.unmodifiable(result);
     }
 
     @Override
@@ -74,7 +85,7 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
 
         switch (writer.options().mapEncodePolicy) {
             case DOCUMENT -> {
-                writer.writeStartObject(style, encoderType, declaredType);
+                writer.writeStartObject(style, encoderType, declaredType, inst.size());
                 for (var itr = Int2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                     Int2ObjectMap.Entry<V> entry = itr.next();
                     String keyString = Integer.toString(entry.getIntKey());
@@ -84,7 +95,7 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
                 writer.writeEndObject();
             }
             case PAIR_AS_DOCUMENT -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (var itr = Int2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                     Int2ObjectMap.Entry<V> entry = itr.next();
                     writer.writeStartObject(ObjectStyle.FLOW); // pair写为子文档-没有类型
@@ -98,7 +109,7 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
                 writer.writeEndArray();
             }
             case PAIR_AS_ARRAY -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (var itr = Int2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                     Int2ObjectMap.Entry<V> entry = itr.next();
                     writer.writeStartArray(ObjectStyle.FLOW); // pair写为子数组-没有类型
@@ -111,7 +122,7 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
                 writer.writeEndArray();
             }
             case ARRAY -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (var itr = Int2ObjectMaps.fastIterator(inst); itr.hasNext(); ) {
                     Int2ObjectMap.Entry<V> entry = itr.next();
                     writer.writeInt(null, entry.getIntKey());
@@ -127,9 +138,11 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
         reader.setEnableNameIntern(false); // 禁用字典的name池化
         TypeInfo valueTypeInfo = encoderType.typeArgs.get(0);
 
-        Int2ObjectMap<V> result = factory != null ? factory.get() : newMap();
+        Int2ObjectMap<V> result;
         if (reader.getCurrentDsonType() == DsonType.OBJECT) {
-            reader.readStartObject();
+            int count = reader.readStartObject();
+            result = newMap(factory, count);
+            //
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
                 int key = Integer.parseInt(keyString);
@@ -138,7 +151,9 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
             }
             reader.readEndObject();
         } else {
-            reader.readStartArray();
+            int count = reader.readStartArray();
+            result = newMap(factory, count);
+
             DsonType firstDsonType = reader.readDsonType();
             switch (firstDsonType) {
                 case END_OF_OBJECT -> {} // 没有元素
@@ -176,6 +191,6 @@ public class Int2ObjectMapCodec<V> implements DsonCodec<Int2ObjectMap<V>> {
             }
             reader.readEndArray();
         }
-        return reader.options().readAsImmutable ? Int2ObjectMaps.unmodifiable(result) : result;
+        return reader.options().readAsImmutable ? toImmutable(result, declaredType) : result;
     }
 }
