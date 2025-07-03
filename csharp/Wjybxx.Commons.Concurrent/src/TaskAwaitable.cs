@@ -46,7 +46,7 @@ public readonly struct TaskAwaitable
 
     public readonly struct Awaiter : ICriticalNotifyCompletion
     {
-        private static readonly Action<Task, object> Invoker = (_, state) => ((Action)state).Invoke();
+        private static readonly Action<Task, object> invoker = (_, state) => ((Action)state).Invoke();
 
         private readonly Task _future;
         private readonly IExecutor _executor;
@@ -78,12 +78,12 @@ public readonly struct TaskAwaitable
         /// <param name="continuation">回调任务</param>
         public void OnCompleted(Action continuation) {
             if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-            _future.ContinueWith(Invoker, continuation, _executor.AsScheduler());
+            _future.ContinueWith(invoker, continuation, _executor.AsScheduler());
         }
 
         public void UnsafeOnCompleted(Action continuation) {
             if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-            _future.ContinueWith(Invoker, continuation, _executor.AsScheduler());
+            _future.ContinueWith(invoker, continuation, _executor.AsScheduler());
         }
     }
 }
@@ -112,7 +112,7 @@ public readonly struct TaskAwaitable<T>
 
     public readonly struct Awaiter : ICriticalNotifyCompletion
     {
-        private static readonly Action<Task<T>, object> Invoker = (_, state) => ((Action)state).Invoke();
+        private static readonly Action<Task<T>, object> invoker = (_, state) => ((Action)state).Invoke();
 
         private readonly Task<T> _future;
         private readonly IExecutor _executor;
@@ -144,12 +144,12 @@ public readonly struct TaskAwaitable<T>
         /// <param name="continuation">回调任务</param>
         public void OnCompleted(Action continuation) {
             if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-            _future.ContinueWith(Invoker, continuation, _executor.AsScheduler());
+            _future.ContinueWith(invoker, continuation, _executor.AsScheduler());
         }
 
         public void UnsafeOnCompleted(Action continuation) {
             if (continuation == null) throw new ArgumentNullException(nameof(continuation));
-            _future.ContinueWith(Invoker, continuation, _executor.AsScheduler());
+            _future.ContinueWith(invoker, continuation, _executor.AsScheduler());
         }
     }
 }

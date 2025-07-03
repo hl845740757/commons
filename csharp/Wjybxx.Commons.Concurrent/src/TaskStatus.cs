@@ -16,8 +16,6 @@
 
 #endregion
 
-using System.Runtime.CompilerServices;
-
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
@@ -39,23 +37,5 @@ public enum TaskStatus : byte
 
     /** 任务被取消 - 完成状态 */
     Cancelled = 4
-}
-
-/// <summary>
-/// Future状态枚举的扩展
-/// </summary>
-public static class StatusExtensions
-{
-    /** 是否表示完成状态 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsCompleted(this TaskStatus state) {
-        return state >= TaskStatus.Success;
-    }
-
-    /** 是否表示失败或被取消 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsFailedOrCancelled(this TaskStatus state) {
-        return state >= TaskStatus.Failed;
-    }
 }
 }

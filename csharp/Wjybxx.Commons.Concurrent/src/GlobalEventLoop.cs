@@ -35,7 +35,7 @@ public sealed class GlobalEventLoop : DisruptorEventLoop<AgentEvent>
             {
                 WaitStrategy = new TimeoutSleepingWaitStrategy(10, 1, 10), // 等待策略需要支持超时，否则无法调度定时任务
                 ChunkLength = 1024,
-                MaxPooledChunks = 1
+                MaxPooledChunks = 2
             }
             .Build(),
         PublishValueEventWithCopy = true

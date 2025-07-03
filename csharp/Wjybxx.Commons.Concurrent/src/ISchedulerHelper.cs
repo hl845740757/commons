@@ -81,7 +81,7 @@ public interface ISchedulerHelper : ICancelTokenListener
     /// <param name="cancelToken"></param>
     /// <returns></returns>
     ValueFuture Sleep(TimeSpan timeSpan, ICancelToken? cancelToken);
-    
+
     /** 计算任务的触发时间 -- 允许修正 */
     long TriggerTime(long delay, TimeSpan timeUnit) {
         if (delay <= 0) return TickTime;

@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 由于结构体不能继承，我们通过接口来定义常量。
 /// </summary>
-public interface TaskBuilder
+public static class TaskBuilder
 {
     /// <summary>
     /// 表示委托类型为<see cref="Action"/>

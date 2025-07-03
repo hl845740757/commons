@@ -41,7 +41,7 @@ public sealed class FutureCombiner
             throw new IllegalStateException("Adding futures is not allowed after finished adding");
         }
         ++futureCount;
-        future.OnCompleted(Invoker, childrenListener, 0);
+        future.OnCompleted(invoker, childrenListener, 0);
         return this;
     }
 
@@ -147,7 +147,7 @@ public sealed class FutureCombiner
     }
 
     /** 避免过多的闭包 */
-    private static readonly Action<IFuture, object> Invoker = (future, state) => {
+    private static readonly Action<IFuture, object> invoker = (future, state) => {
         ChildListener childListener = (ChildListener)state;
         childListener.Accept(future);
     };

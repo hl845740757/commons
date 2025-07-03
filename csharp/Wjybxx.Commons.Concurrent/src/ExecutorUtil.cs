@@ -29,6 +29,92 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public static class ExecutorUtil
 {
+    #region extension
+
+    /// <summary>
+    /// 获取用于等待的Awaiter
+    /// 1. await时，如果Future已进入完成状态，回调在当前线程执行 —— C#语言机制。
+    /// 2. 如果Future尚未进入完成状态，则默认在使Future进入完成状态的线程执行回调，即同步执行回调。
+    /// </summary>
+    /// <returns></returns>
+    public static FutureAwaiter GetAwaiter(this IFuture future) {
+        return new FutureAwaiter(future);
+    }
+
+    /// <summary>
+    /// 获取在指定线程上执行回调的Awaitable对象。
+    /// 
+    /// c#的编译器并未支持该功能，因此需要用户显式调用该方法再await，示例如下：
+    /// <code>
+    ///     // await后的代码将在eventLoop线程执行
+    ///     await future.GetAwaitable(eventLoop); 
+    /// 
+    ///     // 如果future是在eventLoop线程完成的，则同步执行await后的代码，不通过提交异步任务切换线程 
+    ///     await future.GetAwaitable(eventLoop, TaskOption.STAGE_TRY_INLINE);
+    /// </code>
+    /// </summary>
+    /// <param name="future">future</param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
+    /// <returns></returns>
+    public static FutureAwaitable GetAwaitable(this IFuture future, IExecutor executor, int options = 0) {
+        return new FutureAwaitable(future, executor, options);
+    }
+
+    /// <summary>
+    /// 获取用于等待的Awaiter
+    /// 1. await时，如果Future已进入完成状态，回调在当前线程执行 —— C#语言机制。
+    /// 2. 如果Future尚未进入完成状态，则默认在使Future进入完成状态的线程执行回调，即同步执行回调。
+    ///
+    /// ps：await语法底层的实现，导致我们无法精确控制await的回调线程；必须在Executor上进行等待才可确保线程。
+    /// </summary>
+    /// <returns></returns>
+    public static FutureAwaiter<T> GetAwaiter<T>(this IFuture<T> future) {
+        return new FutureAwaiter<T>(future);
+    }
+
+    /// <summary>
+    /// 获取在指定线程上执行回调的Awaiter
+    /// 
+    /// c#的编译器并未支持该功能，因此需要用户显式调用该方法再await，示例如下：
+    /// <code>
+    ///     // await后的代码将在eventLoop线程执行
+    ///     await future.GetAwaitable(eventLoop); 
+    /// 
+    ///     // 如果future是在eventLoop线程完成的，则同步执行await后的代码，不通过提交异步任务切换线程 
+    ///     await future.GetAwaitable(eventLoop, TaskOption.STAGE_TRY_INLINE);
+    /// </code>
+    /// </summary>
+    /// <param name="future">future</param>
+    /// <param name="executor">awaiter的回调线程</param>
+    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
+    /// <returns></returns>
+    public static FutureAwaitable<T> GetAwaitable<T>(this IFuture<T> future, IExecutor executor, int options = 0) {
+        return new FutureAwaitable<T>(future, executor, options);
+    }
+
+    /// <summary>
+    /// 是否表示完成状态
+    /// </summary>
+    /// <param name="state"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsCompleted(this TaskStatus state) {
+        return state >= TaskStatus.Success;
+    }
+
+    /// <summary>
+    /// 是否表示失败或被取消
+    /// </summary>
+    /// <param name="state"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsFailedOrCancelled(this TaskStatus state) {
+        return state >= TaskStatus.Failed;
+    }
+
+    #endregion
+
     #region exception
 
     /// <summary>
@@ -116,19 +202,9 @@ public static class ExecutorUtil
 
     /// <summary>
     /// 获取在指定线程上执行回调的Awaiter
-    /// 
-    /// c#的编译器并未支持该功能，因此需要用户显式调用该方法再await，示例如下：
-    /// <code>
-    ///     // await后的代码将在eventLoop线程执行
-    ///     await future.GetAwaitable(eventLoop); 
-    /// 
-    ///     // 如果future是在eventLoop线程完成的，则同步执行await后的代码，不通过提交异步任务切换线程 
-    ///     await future.GetAwaitable(eventLoop, TaskOption.STAGE_TRY_INLINE);
-    /// </code>
+    ///
+    /// <see cref="GetAwaitable(IFuture, IExecutor, int)"/>
     /// </summary>
-    /// <param name="task">要等待的Task</param>
-    /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TaskAwaitable GetAwaitable(this Task task, IExecutor executor, int options = 0) {
         return new TaskAwaitable(task, executor, options);
@@ -136,19 +212,9 @@ public static class ExecutorUtil
 
     /// <summary>
     /// 获取在指定线程上执行回调的Awaiter
-    /// 
-    /// c#的编译器并未支持该功能，因此需要用户显式调用该方法再await，示例如下：
-    /// <code>
-    ///     // await后的代码将在eventLoop线程执行
-    ///     await future.GetAwaitable(eventLoop); 
-    /// 
-    ///     // 如果future是在eventLoop线程完成的，则同步执行await后的代码，不通过提交异步任务切换线程 
-    ///     await future.GetAwaitable(eventLoop, TaskOption.STAGE_TRY_INLINE);
-    /// </code>
+    ///
+    /// <see cref="GetAwaitable(IFuture, IExecutor, int)"/>
     /// </summary>
-    /// <param name="task">要等待的Task</param>
-    /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TaskAwaitable<T> GetAwaitable<T>(this Task<T> task, IExecutor executor, int options = 0) {
         return new TaskAwaitable<T>(task, executor, options);
@@ -175,32 +241,54 @@ public static class ExecutorUtil
         return e is ISingleThreadExecutor eventLoop && eventLoop.InEventLoop();
     }
 
-    public static void EnsureInEventLoop(IExecutor executor) {
-        if (executor is ISingleThreadExecutor eventLoop && eventLoop.InEventLoop()) {
-            return;
+    /// <summary>
+    /// 如果当前不在事件循环线程则抛出异常
+    /// </summary>
+    /// <exception cref="GuardedOperationException"></exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void EnsureInEventLoop(this ISingleThreadExecutor eventLoop) {
+        if (!eventLoop.InEventLoop()) {
+            throw new GuardedOperationException("Method must be called from eventLoop thread");
         }
-        throw new GuardedOperationException("Must be called from EventLoop thread");
     }
 
-    public static void EnsureInEventLoop(IExecutor executor, string msg) {
-        if (executor is ISingleThreadExecutor eventLoop && eventLoop.InEventLoop()) {
-            return;
+    /// <summary>
+    /// 如果当前不在事件循环线程则抛出异常
+    /// </summary>
+    /// <exception cref="GuardedOperationException"></exception>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void EnsureInEventLoop(this ISingleThreadExecutor eventLoop, string method) {
+        if (!eventLoop.InEventLoop()) {
+            throw new GuardedOperationException("The " + method + " must be called from eventLoop thread");
         }
-        throw new GuardedOperationException(msg);
+    }
+
+    /// <summary>
+    /// 如果当前在事件循环异常则抛出异常
+    /// </summary>
+    /// <exception cref="BlockingOperationException"></exception>
+    public static void ThrowIfInEventLoop(this ISingleThreadExecutor eventLoop, string method) {
+        if (method == null) throw new ArgumentNullException(nameof(method));
+        if (eventLoop.InEventLoop()) {
+            throw new BlockingOperationException("Calling " + method + " from within the eventLoop is not allowed");
+        }
     }
 
     #endregion
 
     #region factory
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static IPromise<T> NewPromise<T>(IExecutor? executor = null) {
         return new Promise<T>(executor);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static IPromise<int> NewPromise(IExecutor? executor = null) {
         return new Promise<int>(executor);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static FutureCombiner NewCombiner() {
         return new FutureCombiner();
     }

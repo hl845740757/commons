@@ -131,27 +131,6 @@ public abstract class AbstractEventLoop : IEventLoop
         return TerminationFuture.Await(timeout);
     }
 
-    public void EnsureInEventLoop() {
-        if (!InEventLoop()) {
-            throw new GuardedOperationException();
-        }
-    }
-
-    public void EnsureInEventLoop(string method) {
-        if (method == null) throw new ArgumentNullException(nameof(method));
-        if (!InEventLoop()) {
-            throw new GuardedOperationException("Calling " + method + " must in the EventLoop");
-        }
-    }
-
-    /** 如果当前在事件循环异常则抛出异常 */
-    public void ThrowIfInEventLoop(string method) {
-        if (method == null) throw new ArgumentNullException(nameof(method));
-        if (InEventLoop()) {
-            throw new BlockingOperationException("Calling " + method + " from within the EventLoop is not allowed");
-        }
-    }
-
     #endregion
 
     #region Execute

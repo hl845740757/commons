@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 使用接口定义常量
 /// </summary>
-public interface ScheduledTaskBuilder : TaskBuilder
+public static class ScheduledTaskBuilder
 {
     /** 执行一次 */
     public const byte SCHEDULE_ONCE = 0;
@@ -49,27 +49,27 @@ public interface ScheduledTaskBuilder : TaskBuilder
 
     #region factory
 
-    public new static ScheduledTaskBuilder<int> NewAction(Action task, ICancelToken? cancelToken = null) {
+    public static ScheduledTaskBuilder<int> NewAction(Action task, ICancelToken? cancelToken = null) {
         TaskBuilder<int> taskBuilder = TaskBuilder.NewAction(task, cancelToken);
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
-    public new static ScheduledTaskBuilder<int> NewAction(Action<object> task, object ctx) {
+    public static ScheduledTaskBuilder<int> NewAction(Action<object> task, object ctx) {
         TaskBuilder<int> taskBuilder = TaskBuilder.NewAction(task, ctx);
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
 
-    public new static ScheduledTaskBuilder<T> NewFunc<T>(Func<T> task, ICancelToken? cancelToken = null) {
+    public static ScheduledTaskBuilder<T> NewFunc<T>(Func<T> task, ICancelToken? cancelToken = null) {
         TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task, cancelToken);
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
-    public new static ScheduledTaskBuilder<T> NewFunc<T>(Func<object, T> task, object ctx) {
+    public static ScheduledTaskBuilder<T> NewFunc<T>(Func<object, T> task, object ctx) {
         TaskBuilder<T> taskBuilder = TaskBuilder.NewFunc(task, ctx);
         return new ScheduledTaskBuilder<T>(ref taskBuilder);
     }
 
-    public new static ScheduledTaskBuilder<int> NewTask(ITask task) {
+    public static ScheduledTaskBuilder<int> NewTask(ITask task) {
         TaskBuilder<int> taskBuilder = TaskBuilder.NewTask(task);
         return new ScheduledTaskBuilder<int>(ref taskBuilder);
     }
@@ -83,7 +83,7 @@ public interface ScheduledTaskBuilder : TaskBuilder
     /// <param name="task"></param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    public new static ScheduledTaskBuilder<T> NewAsyncTask<T>(Func<AsyncTaskContext, ValueFuture<T>> task) {
+    public static ScheduledTaskBuilder<T> NewAsyncTask<T>(Func<AsyncTaskContext, ValueFuture<T>> task) {
         TaskBuilder<T> taskBuilder = TaskBuilder.NewAsyncTask(task);
         ScheduledTaskBuilder<T> builder = new ScheduledTaskBuilder<T>(ref taskBuilder);
         builder.SetFixedDelay(0, 100, TimeSpan.FromMilliseconds(1));

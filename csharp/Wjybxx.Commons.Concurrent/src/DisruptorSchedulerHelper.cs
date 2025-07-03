@@ -37,7 +37,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         _eventLoop = eventLoop ?? throw new ArgumentNullException(nameof(eventLoop));
         _taskQueue = new IndexedPriorityQueue<IScheduledFutureTask>(new ScheduledTaskComparator(), 64);
 
-        _commandQueue = new IndexedPriorityQueue<AsyncCommand>(new CommandComparer(), 64);
+        _commandQueue = new IndexedPriorityQueue<AsyncCommand>(new AsyncCommandComparer(), 64);
         _commandPool = new ObjectPool<AsyncCommand>(AsyncCommand.Factory, AsyncCommand.Cleaner);
     }
 
@@ -135,7 +135,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         }
         long delay = Math.Max(0, Normalize(1, timeSpan)); // delay最小为0
         ValuePromise<int> promise = ValuePromise<int>.Acquire(_eventLoop);
-        
+
         AsyncCommand command = _commandPool.Acquire();
         command.id = _nextCommandId++;
         command.triggerTime = _eventLoop.TickTime + delay;
@@ -169,6 +169,8 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         while (_taskQueue.TryDequeue(out futureTask)) {
             futureTask.Cancel(CancelCodes.REASON_SHUTDOWN);
         }
+        _commandQueue.Clear();
+        _commandPool.Clear();
     }
 
     #endregion
@@ -192,64 +194,5 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
     }
 
     #endregion
-
-    private static readonly Action EMPTY_ACTION = () => { };
-
-    private class AsyncCommand : IIndexedElement
-    {
-        public static Func<AsyncCommand> Factory { get; } = () => new AsyncCommand();
-        public static Action<AsyncCommand> Cleaner { get; } = e => e.Reset();
-#nullable disable
-        private int qIndex = -1;
-        internal long id;
-        internal long triggerTime;
-        internal ValuePromise<int> promise;
-        internal ICancelToken? cancelToken;
-#nullable enable
-
-        public void Init(long id, long triggerTime, ValuePromise<int> promise, ICancelToken? cancelToken) {
-            this.id = id;
-            this.triggerTime = triggerTime;
-            this.promise = promise;
-            this.cancelToken = cancelToken;
-        }
-
-        public void Reset() {
-            qIndex = -1;
-            id = 0;
-            triggerTime = 0;
-            promise = null;
-            cancelToken = null;
-        }
-
-        public int CollectionIndex(object collection) {
-            return qIndex;
-        }
-
-        public void CollectionIndex(object collection, int index) {
-            qIndex = index;
-        }
-    }
-
-    private class CommandComparer : IComparer<AsyncCommand>
-    {
-        public int Compare(AsyncCommand? lhs, AsyncCommand? rhs) {
-            if (lhs == null) throw new ArgumentNullException(nameof(lhs));
-            if (rhs == null) throw new ArgumentNullException(nameof(rhs));
-            if (ReferenceEquals(lhs, rhs)) {
-                return 0;
-            }
-            int r = lhs.triggerTime.CompareTo(rhs.triggerTime);
-            if (r != 0) {
-                return r;
-            }
-            // 再按id排序
-            r = lhs.id.CompareTo(rhs.id);
-            if (r == 0) {
-                throw new InvalidOperationException($"lhs.id: {lhs.id}, rhs.id: {rhs.id}");
-            }
-            return r;
-        }
-    }
 }
 }

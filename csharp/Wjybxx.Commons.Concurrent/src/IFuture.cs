@@ -101,35 +101,6 @@ public interface IFuture<T> : IFuture
     #region asyncbuilder
 
     /// <summary>
-    /// 获取用于等待的Awaiter
-    /// 1. await时，如果Future已进入完成状态，回调在当前线程执行 —— C#语言机制。
-    /// 2. 如果Future尚未进入完成状态，则默认在使Future进入完成状态的线程执行回调，即同步执行回调。
-    ///
-    /// ps：await语法底层的实现，导致我们无法精确控制await的回调线程；必须在Executor上进行等待才可确保线程。
-    /// </summary>
-    /// <returns></returns>
-    new FutureAwaiter<T> GetAwaiter() {
-        return new FutureAwaiter<T>(this);
-    }
-
-    /// <summary>
-    /// 获取在指定线程上执行回调的Awaiter
-    ///
-    /// c#的编译器并未支持该功能，因此需要用户显式调用该方法再await，示例如下：
-    /// <code>
-    ///     // await后的代码将在eventLoop线程执行
-    ///     await future.GetAwaitable(eventLoop); 
-    ///
-    ///     // 如果future是在eventLoop线程完成的，则同步执行await后的代码，不通过提交异步任务切换线程 
-    ///     await future.GetAwaitable(eventLoop, TaskOption.STAGE_TRY_INLINE);
-    /// </code>
-    /// </summary>
-    /// <param name="executor">awaiter的回调线程</param>
-    /// <param name="options">awaiter的调度选项，重要参数<see cref="TaskOptions.STAGE_TRY_INLINE"/></param>
-    /// <returns></returns>
-    new FutureAwaitable<T> GetAwaitable(IExecutor executor, int options = 0) => new FutureAwaitable<T>(this, executor, options);
-
-    /// <summary>
     /// 添加一个监听器
     /// 1. 该接口通常应该由<see cref="FutureAwaiter{T}"/>调用。
     /// </summary>
