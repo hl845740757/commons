@@ -68,8 +68,8 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         }
     }
 
-    public Binary ReadBinary(string? name) {
-        return ReadName(name) ? DsonCodecHelper.ReadBinary(reader, name) : default;
+    public Binary? ReadBinary(string? name) {
+        return ReadName(name) ? DsonCodecHelper.ReadBinary(reader, name) : null;
     }
 
     public ObjectPtr ReadPtr(string? name) {
@@ -113,19 +113,34 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         if (!ReadName(name)) { //  字段不存在，返回默认值
             return default;
         }
-        IDsonReader<string> reader = this.reader;
         DsonType dsonType = reader.CurrentDsonType;
         if (dsonType == DsonType.Null) { // null直接返回
             reader.ReadNull(name);
             return default;
         }
+        // Nullable读代理 -- 需要在null之后
+        bool isNullable = declaredType.IsValueType
+                          && declaredType.IsGenericType
+                          && declaredType.GetGenericTypeDefinition() == typeof(Nullable<>);
+        if (isNullable) {
+            DsonCodecImpl<T> nullableCodec = converter.CodecRegistry.GetEncoder(declaredType) as DsonCodecImpl<T>;
+            if (nullableCodec == null) {
+                throw DsonCodecException.UnsupportedType(declaredType);
+            }
+            return nullableCodec.ReadObject(this, declaredType, factory);
+        }
+
         // 当声明类型是DsonValue类型时，需要保留Header
         if (typeof(DsonValue).IsAssignableFrom(declaredType)) {
             return (T)(object)Dsons.ReadDsonValue(reader);
         }
         // 容器类型只能通过codec解码；Flags编码为Int/String数组的情况下，需要自定义Field读写代理处理
         if (dsonType.IsContainer()) {
-            string clsName = ReadClsName(dsonType);
+            string clsName = null;
+            if (!reader.IsWaitingStart()) {
+                ReadHeader(dsonType, out clsName, out int count);
+                BackToWaitStart(clsName, count);
+            }
             DsonCodecImpl codec = FindObjectDecoder(declaredType, factory, clsName);
             if (codec == null) {
                 throw DsonCodecException.Incompatible(declaredType, clsName);
@@ -169,11 +184,13 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
     public DsonType CurrentDsonType => reader.CurrentDsonType;
     public string CurrentName => reader.CurrentName;
 
-    public virtual void ReadStartObject() {
-        if (reader.IsAtType) { // 顶层对象适配
-            reader.ReadDsonType();
-        }
+    protected virtual void BackToWaitStart(string? clsName, int count) {
+        reader.BackToWaitStart();
+    }
+
+    public virtual int ReadStartObject() {
         reader.ReadStartObject();
+        return 0;
     }
 
     public virtual void ReadEndObject() {
@@ -181,11 +198,9 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         reader.ReadEndObject();
     }
 
-    public virtual void ReadStartArray() {
-        if (reader.IsAtType) { // 顶层对象适配
-            reader.ReadDsonType();
-        }
+    public virtual int ReadStartArray() {
         reader.ReadStartArray();
+        return 0;
     }
 
     public virtual void ReadEndArray() {
@@ -262,38 +277,36 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
         reader.Dispose();
     }
 
-    private string ReadClsName(DsonType dsonType) {
+    protected void ReadHeader(DsonType dsonType, out string? clsName, out int count) {
         IDsonReader<string> reader = this.reader;
-        if (reader.HasWaitingStartContext()) {
-            return ""; // 已读取header，当前可能触发了读代理
-        }
         if (dsonType == DsonType.Object) {
             reader.ReadStartObject();
         } else {
             reader.ReadStartArray();
         }
-        string clsName = "";
-        DsonType nextDsonType = reader.PeekDsonType();
-        if (nextDsonType == DsonType.Header) {
-            reader.ReadDsonType();
-            reader.ReadStartHeader();
-            // 允许header包含其它数据
-            while (reader.ReadDsonType() != DsonType.EndOfObject) {
-                if (reader.ReadName() == DsonHeader.Names_ClassName) {
-                    clsName = reader.ReadString(null);
-                    clsName = string.Intern(clsName); // 池化
-                    break;
-                }
-                reader.SkipValue();
+        clsName = null;
+        count = 0;
+        if (reader.PeekDsonType() != DsonType.Header) return;
+        //
+        reader.ReadDsonType();
+        reader.ReadStartHeader();
+        while (reader.ReadDsonType() != DsonType.EndOfObject) {
+            if (reader.ReadName() == DsonHeader.Names_ClassName) {
+                clsName = reader.ReadString(null);
+                clsName = string.Intern(clsName); // 池化
+                continue;
             }
-            reader.SkipToEndOfObject();
-            reader.ReadEndHeader();
+            if (reader.CurrentName == DsonHeader.Names_Count) {
+                count = DsonCodecHelper.ReadInt(reader, null); // 文本下可能是double
+                continue;
+            }
+            reader.SkipValue();
         }
-        reader.BackToWaitStart();
-        return clsName;
+        reader.SkipToEndOfObject();
+        reader.ReadEndHeader();
     }
 
-    private DsonCodecImpl? FindObjectDecoder<T>(Type declaredType, Func<T>? factory, string clsName) {
+    private DsonCodecImpl? FindObjectDecoder<T>(Type declaredType, Func<T>? factory, string? clsName) {
         // factory不为null时，直接按照声明类型查找 -- factory创建的实例可能和写入的真实类型不兼容
         if (factory != null) {
             return converter.CodecRegistry.GetDecoder(declaredType);

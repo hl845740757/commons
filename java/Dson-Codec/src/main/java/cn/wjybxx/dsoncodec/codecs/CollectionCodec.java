@@ -87,18 +87,23 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
         return encoderType;
     }
 
-    /** {@link #encoderType}一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
+    @Override
+    public boolean autoStartEnd() {
+        return false;
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
-    protected Collection<E> newCollection() {
+    protected Collection<E> newCollection(Supplier<? extends Collection<E>> userFactory, int count) {
+        if (userFactory != null) return userFactory.get();
         if (factory != null) return factory.get();
         return switch (factoryKind) {
             case EnumSet -> {
                 TypeInfo elementTypeInfo = encoderType.typeArgs.get(0);
                 yield EnumSet.noneOf((Class) elementTypeInfo.rawType);
             }
-            case LinkedHashSet -> new LinkedHashSet<>();
+            case LinkedHashSet -> count > 0 ? LinkedHashSet.newLinkedHashSet(count) : new LinkedHashSet<>();
             case ArrayDeque -> new ArrayDeque<>();
-            default -> new ArrayList<>();
+            default -> new ArrayList<>(count);
         };
     }
 
@@ -122,20 +127,23 @@ public class CollectionCodec<E> implements DsonCodec<Collection<E>> {
     @Override
     public void writeObject(DsonObjectWriter writer, Collection<E> inst, TypeInfo declaredType, ObjectStyle style) {
         TypeInfo elementTypeInfo = encoderType.typeArgs.get(0);
-
+        writer.writeStartArray(style, encoderType, declaredType, inst.size());
         for (E e : inst) {
             writer.writeObject(null, e, elementTypeInfo, null);
         }
+        writer.writeEndArray();
     }
 
     @Override
     public Collection<E> readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Collection<E>> factory) {
         TypeInfo elementTypeInfo = encoderType.typeArgs.get(0);
 
-        Collection<E> result = factory != null ? factory.get() : newCollection();
+        int count = reader.readStartArray();
+        Collection<E> result = newCollection(factory, count);
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             result.add(reader.readObject(null, elementTypeInfo));
         }
+        reader.readEndArray();
         return reader.options().readAsImmutable ? toImmutable(declaredType, result) : result;
     }
 

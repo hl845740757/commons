@@ -178,7 +178,7 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
             if (writer.IsAtName) { // 写入name
                 writer.WriteName(name);
             }
-            ObjectStyle castStyle = style ?? FindObjectStyle(codec.GetEncoderType()); // 可能是超类的codec
+            ObjectStyle castStyle = style ?? FindObjectStyle(codec); // 可能是超类的codec
             if (codec is DsonCodecImpl<T> codecImpl) {
                 codecImpl.WriteObject(this, in value, declaredType, castStyle);
             } else {
@@ -207,15 +207,30 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.WriteName(name);
     }
 
-    public void WriteTypeInfo(Type encoderType, Type declaredType) {
+    public void WriteTypeInfo(Type encoderType, Type declaredType, int count = -1) {
         TypeWritePolicy policy = converter.Options.typeWritePolicy;
-        if ((policy == TypeWritePolicy.Optimized && !typeWriteHelper.IsOptimizable(encoderType, declaredType))
-            || policy == TypeWritePolicy.Always) {
+        bool typed = (policy == TypeWritePolicy.Optimized && !typeWriteHelper.IsOptimizable(encoderType, declaredType))
+                     || policy == TypeWritePolicy.Always;
+        if (!typed && count < 0) {
+            return;
+        }
+        if (count < 0) {
             TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(encoderType);
             if (typeMeta == null) {
                 throw new DsonCodecException($"typeMeta of encoderType: {encoderType} is absent");
             }
             writer.WriteSimpleHeader(typeMeta.MainClsName);
+        } else {
+            writer.WriteStartHeader();
+            if (typed) {
+                TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(encoderType);
+                if (typeMeta == null) {
+                    throw new DsonCodecException($"typeMeta of encoderType: {encoderType} is absent");
+                }
+                writer.WriteString(DsonHeader.Names_ClassName, typeMeta.MainClsName, StringStyle.AutoQuote);
+            }
+            writer.WriteInt32(DsonHeader.Names_Count, count);
+            writer.WriteEndHeader();
         }
     }
 
@@ -274,10 +289,15 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         writer.Dispose();
     }
 
-    /** 允许泛型参数不同时走不同的style */
-    private ObjectStyle FindObjectStyle(Type type) {
-        TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(type);
-        return typeMeta != null ? typeMeta.style : ObjectStyle.Indent;
+    private ObjectStyle FindObjectStyle(DsonCodecImpl codecImpl) {
+        ObjectStyle? style = codecImpl.Style;
+        if (style != null) {
+            return style.Value;
+        }
+        TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(codecImpl.GetEncoderType());
+        style = typeMeta != null ? typeMeta.style : ObjectStyle.Indent;
+        codecImpl.Style = style;
+        return style.Value;
     }
 
     #endregion

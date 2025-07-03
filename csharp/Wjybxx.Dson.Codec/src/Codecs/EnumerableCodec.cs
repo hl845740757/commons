@@ -36,38 +36,46 @@ public class EnumerableCodec<T> : IDsonCodec<IEnumerable<T>>
 
     public Type GetEncoderType() => encoderType;
 
-    public virtual bool IsWriteAsArray => true;
+    public bool AutoStartEnd => false;
 
     public void WriteObject(IDsonObjectWriter writer, in IEnumerable<T> inst, Type declaredType, ObjectStyle style) {
+        writer.WriteStartArray(style, inst.GetType(), declaredType, -1);
+        ;
         foreach (T value in inst) {
             writer.WriteObject<T>(null, in value);
         }
+        writer.WriteEndArray();
     }
 
     /// <summary>
     /// <inheritdoc cref="IDsonCodec{T}.ReadObject"/>
     /// </summary>
     /// <param name="reader">reader</param>
+    /// <param name="declaredType">对象的声明类型</param>
     /// <param name="factory">支持factory为集合类型</param>
     /// <returns></returns>
     public IEnumerable<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         if (factory != null) {
-            ICollection<T> result = factory() as ICollection<T> ?? new List<T>();
+            int count = reader.ReadStartArray();
+            ICollection<T> result = factory() as ICollection<T> ?? new List<T>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 T value = reader.ReadObject<T>(null);
                 result.Add(value);
             }
+            reader.ReadEndArray();
             return result;
         }
         return ReadAsList(reader);
     }
 
     public static List<T> ReadAsList(IDsonObjectReader reader) {
-        List<T> result = new List<T>();
+        int count = reader.ReadStartArray();
+        List<T> result = new List<T>(count);
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             T value = reader.ReadObject<T>(null);
             result.Add(value);
         }
+        reader.ReadEndArray();
         return result;
     }
 }

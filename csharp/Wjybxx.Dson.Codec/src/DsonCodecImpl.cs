@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Diagnostics;
 using System.Reflection;
 using Wjybxx.Dson.Codec.Codecs;
 using Wjybxx.Dson.Text;
@@ -29,6 +30,8 @@ namespace Wjybxx.Dson.Codec
 public abstract class DsonCodecImpl
 {
     public abstract IDsonCodec GetCodec();
+
+    internal abstract ObjectStyle? Style { get; set; }
 
     public abstract Type GetEncoderType();
 
@@ -59,6 +62,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     private readonly bool _autoStart;
     private readonly bool _writeAsArray;
     private readonly IEnumCodec<T>? _enumCodec;
+    private ObjectStyle? _style; // Style查询缓存，该缓存在多线程下是无害的
 
     internal DsonCodecImpl(IDsonCodec<T> codec) {
         _codec = codec;
@@ -70,6 +74,11 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
 
     public override IDsonCodec GetCodec() {
         return _codec;
+    }
+
+    internal override ObjectStyle? Style {
+        get => _style;
+        set => _style = value;
     }
 
     public override Type GetEncoderType() {
@@ -93,7 +102,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     /// <param name="style">编码风格</param>
     public void WriteObject(IDsonObjectWriter writer, in T inst, Type declaredType, ObjectStyle style) {
         if (_autoStart) {
-            if (_writeAsArray) {
+            if (_writeAsArray || writer.Options.writeObjectAsArray) {
                 writer.WriteStartArray(style);
                 writer.WriteTypeInfo(_encoderType, declaredType);
                 _codec.WriteObject(writer, in inst, declaredType, style);
@@ -119,7 +128,7 @@ public sealed class DsonCodecImpl<T> : DsonCodecImpl
     public T ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory) {
         if (_autoStart) {
             T result;
-            if (_writeAsArray) {
+            if (reader.CurrentDsonType == DsonType.Array) {
                 reader.ReadStartArray();
                 result = _codec.ReadObject(reader, declaredType, factory);
                 reader.ReadEndArray();

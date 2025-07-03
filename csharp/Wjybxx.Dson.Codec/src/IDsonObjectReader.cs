@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using Wjybxx.Dson.Types;
 
 namespace Wjybxx.Dson.Codec
@@ -128,11 +129,23 @@ public interface IDsonObjectReader : IDisposable
 
     string CurrentName { get; }
 
-    void ReadStartObject();
+    /// <summary>
+    /// 注意：count不一定是准确值，不可以根据count判断输入流是否结束！
+    /// 在使用Dson文本配置数据的情况下，Count可能未被正确维护。
+    /// 该值的唯一作用就是更好的初始化<see cref="List{T}"/>和<see cref="Dictionary{TKey,TValue}"/>的空间。
+    /// </summary>
+    /// <returns>对象头中的count，如果未写入也返回0，以方便初始化</returns>
+    int ReadStartObject();
 
     void ReadEndObject();
 
-    void ReadStartArray();
+    /// <summary>
+    /// 注意：count不一定是准确值，不可以根据count判断输入流是否结束！
+    /// 在使用Dson文本配置数据的情况下，Count可能未被正确维护。
+    /// 该值的唯一作用就是更好的初始化<see cref="List{T}"/>和<see cref="Dictionary{TKey,TValue}"/>的空间。
+    /// </summary>
+    /// <returns>对象头中的count，如果未写入也返回0，以方便初始化</returns>
+    int ReadStartArray();
 
     void ReadEndArray();
 

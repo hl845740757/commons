@@ -123,12 +123,25 @@ public interface DsonObjectReader extends AutoCloseable {
 
     String getCurrentName();
 
-    /** typeInfo用于传递给嵌套对象，以及暂存到Context */
-    void readStartObject();
+    /**
+     * 注意：count不一定是准确值，不可以根据count判断输入流是否结束！
+     * 在使用Dson文本配置数据的情况下，Count可能未被正确维护。
+     * 该值的唯一作用就是更好的初始化{@link java.util.List}和{@link java.util.Map}的空间。
+     *
+     * @return 对象头中的count，如果未写入也返回0，以方便初始化
+     */
+    int readStartObject();
 
     void readEndObject();
 
-    void readStartArray();
+    /**
+     * 注意：count不一定是准确值，不可以根据count判断输入流是否结束！
+     * 在使用Dson文本配置数据的情况下，Count可能未被正确维护。
+     * 该值的唯一作用就是更好的初始化{@link java.util.List}和{@link java.util.Map}的空间。
+     *
+     * @return 对象头中的count，如果未写入也返回0，以方便初始化
+     */
+    int readStartArray();
 
     void readEndArray();
 
@@ -152,7 +165,7 @@ public interface DsonObjectReader extends AutoCloseable {
     /**
      * 设置当前对象的encoderType
      * 1.java特殊支持，用于读写Object/Array期间查询当前对象的类型信息
-     * 2.应当在readStartObject/Array以后调用
+     * 2.应当在readStartObject/Array以后调用 -- 以精确设置到当前上下文
      */
     void setEncoderType(TypeInfo encoderType);
 

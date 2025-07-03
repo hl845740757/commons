@@ -109,9 +109,9 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         return encoderType;
     }
 
-    /** {@link #encoderType}一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private Map<K, V> newMap() {
+    private Map<K, V> newMap(Supplier<? extends Map<K, V>> userFactory, int count) {
+        if (userFactory != null) return userFactory.get();
         if (factory != null) return factory.get();
         return switch (factoryKind) {
             case EnumMap -> {
@@ -119,7 +119,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                 yield new EnumMap((Class) elementTypeInfo.rawType);
             }
             case ConcurrentMap -> new ConcurrentHashMap<>();
-            default -> new LinkedHashMap<>();
+            default -> count > 0 ? LinkedHashMap.newLinkedHashMap(count) : new LinkedHashMap<>();
         };
     }
 
@@ -152,14 +152,13 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
     @Override
     public Map<K, V> readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends Map<K, V>> factory) {
         reader.setEnableNameIntern(false); // 禁用字典的name池化
-
-        Map<K, V> result = factory != null ? factory.get() : newMap();
+        Map<K, V> result;
         if (keyKind == KeyKind.Int32) {
-            readDictionaryInt(reader, (Map<Integer, V>) result);
+            result = (Map<K, V>) readDictionaryInt(reader, factory);
         } else if (keyKind == KeyKind.Int64) {
-            readDictionaryLong(reader, (Map<Long, V>) result);
+            result = (Map<K, V>) readDictionaryLong(reader, factory);
         } else {
-            readDictionaryObject(reader, result);
+            result = readDictionaryObject(reader, factory);
         }
         return reader.options().readAsImmutable ? toImmutable(declaredType, result) : result;
     }
@@ -171,7 +170,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
         switch (writer.options().mapEncodePolicy) {
             case DOCUMENT -> {
-                writer.writeStartObject(style, encoderType, declaredType);
+                writer.writeStartObject(style, encoderType, declaredType, inst.size());
                 for (Map.Entry<Integer, V> entry : inst.entrySet()) {
                     String keyString = entry.getKey().toString();
                     writer.writeName(keyString); // 确保Null会被写入
@@ -180,7 +179,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                 writer.writeEndObject();
             }
             case PAIR_AS_DOCUMENT -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (Map.Entry<Integer, V> entry : inst.entrySet()) {
                     writer.writeStartObject(ObjectStyle.FLOW); // pair写为子文档-没有类型
                     {
@@ -193,7 +192,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                 writer.writeEndArray();
             }
             case PAIR_AS_ARRAY -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (Map.Entry<Integer, V> entry : inst.entrySet()) {
                     writer.writeStartArray(ObjectStyle.FLOW); // pair写为子数组-没有类型
                     {
@@ -205,7 +204,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                 writer.writeEndArray();
             }
             case ARRAY -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (Map.Entry<Integer, V> entry : inst.entrySet()) {
                     writer.writeInt(null, entry.getKey()); // key不可以为null
                     writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
@@ -215,12 +214,16 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         }
     }
 
-    private void readDictionaryInt(DsonObjectReader reader, Map<Integer, V> result) {
+    @SuppressWarnings("unchecked")
+    private Map<Integer, V> readDictionaryInt(DsonObjectReader reader, Supplier<? extends Map<K, V>> factory) {
         TypeInfo keyTypeInfo = encoderType.typeArgs.get(0);
         TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
         //
+        Map<Integer, V> result;
         if (reader.getCurrentDsonType() == DsonType.OBJECT) {
-            reader.readStartObject();
+            int count = reader.readStartObject();
+            result = (Map<Integer, V>) newMap(factory, count);
+            //
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
                 Integer key = Integer.parseInt(keyString);
@@ -229,7 +232,9 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
             }
             reader.readEndObject();
         } else {
-            reader.readStartArray();
+            int count = reader.readStartArray();
+            result = (Map<Integer, V>) newMap(factory, count);
+            //
             DsonType firstDsonType = reader.readDsonType();
             switch (firstDsonType) {
                 case END_OF_OBJECT -> {} // 没有元素
@@ -268,6 +273,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
             }
             reader.readEndArray();
         }
+        return result;
     }
 
     // endregion
@@ -278,7 +284,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
         switch (writer.options().mapEncodePolicy) {
             case DOCUMENT -> {
-                writer.writeStartObject(style, encoderType, declaredType);
+                writer.writeStartObject(style, encoderType, declaredType, inst.size());
                 for (Map.Entry<Long, V> entry : inst.entrySet()) {
                     String keyString = entry.getKey().toString();
                     writer.writeName(keyString); // 确保Null会被写入
@@ -287,7 +293,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                 writer.writeEndObject();
             }
             case PAIR_AS_DOCUMENT -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (Map.Entry<Long, V> entry : inst.entrySet()) {
                     writer.writeStartObject(ObjectStyle.FLOW); // pair写为子文档-没有类型
                     {
@@ -300,7 +306,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                 writer.writeEndArray();
             }
             case PAIR_AS_ARRAY -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (Map.Entry<Long, V> entry : inst.entrySet()) {
                     writer.writeStartArray(ObjectStyle.FLOW); // pair写为子数组-没有类型
                     {
@@ -312,7 +318,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                 writer.writeEndArray();
             }
             case ARRAY -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (Map.Entry<Long, V> entry : inst.entrySet()) {
                     writer.writeLong(null, entry.getKey()); // key不可以为null
                     writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
@@ -322,12 +328,16 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         }
     }
 
-    private void readDictionaryLong(DsonObjectReader reader, Map<Long, V> result) {
+    @SuppressWarnings("unchecked")
+    private Map<Long, V> readDictionaryLong(DsonObjectReader reader, Supplier<? extends Map<K, V>> factory) {
         TypeInfo keyTypeInfo = encoderType.typeArgs.get(0);
         TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
         //
+        Map<Long, V> result;
         if (reader.getCurrentDsonType() == DsonType.OBJECT) {
-            reader.readStartObject();
+            int count = reader.readStartObject();
+            result = (Map<Long, V>) newMap(factory, count);
+            //
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
                 Long key = Long.parseLong(keyString);
@@ -336,7 +346,9 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
             }
             reader.readEndObject();
         } else {
-            reader.readStartArray();
+            int count = reader.readStartArray();
+            result = (Map<Long, V>) newMap(factory, count);
+            //
             DsonType firstDsonType = reader.readDsonType();
             switch (firstDsonType) {
                 case END_OF_OBJECT -> {} // 没有元素
@@ -375,6 +387,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
             }
             reader.readEndArray();
         }
+        return result;
     }
     // endregion
 
@@ -393,7 +406,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         }
         switch (policy) {
             case DOCUMENT -> {
-                writer.writeStartObject(style, encoderType, declaredType);
+                writer.writeStartObject(style, encoderType, declaredType, inst.size());
                 for (Map.Entry<K, V> entry : inst.entrySet()) {
                     String keyString = writer.encodeKey(entry.getKey(), keyTypeInfo);
                     writer.writeName(keyString); // 确保Null会被写入
@@ -402,7 +415,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                 writer.writeEndObject();
             }
             case PAIR_AS_DOCUMENT -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (Map.Entry<K, V> entry : inst.entrySet()) {
                     writer.writeStartObject(ObjectStyle.FLOW); // pair写为子文档-没有类型
                     {
@@ -415,7 +428,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                 writer.writeEndArray();
             }
             case PAIR_AS_ARRAY -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (Map.Entry<K, V> entry : inst.entrySet()) {
                     writer.writeStartArray(ObjectStyle.FLOW); // pair写为子数组-没有类型
                     {
@@ -427,7 +440,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
                 writer.writeEndArray();
             }
             case ARRAY -> {
-                writer.writeStartArray(style, encoderType, declaredType);
+                writer.writeStartArray(style, encoderType, declaredType, inst.size());
                 for (Map.Entry<K, V> entry : inst.entrySet()) {
                     writer.writeObject(null, entry.getKey(), keyTypeInfo, null);
                     writer.writeObject(null, entry.getValue(), valueTypeInfo, null);
@@ -437,12 +450,15 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
         }
     }
 
-    private void readDictionaryObject(DsonObjectReader reader, Map<K, V> result) {
+    private Map<K, V> readDictionaryObject(DsonObjectReader reader, Supplier<? extends Map<K, V>> factory) {
         TypeInfo keyTypeInfo = encoderType.typeArgs.get(0);
         TypeInfo valueTypeInfo = encoderType.typeArgs.get(1);
         //
+        Map<K, V> result;
         if (reader.getCurrentDsonType() == DsonType.OBJECT) {
-            reader.readStartObject();
+            int count = reader.readStartObject();
+            result = newMap(factory, count);
+            //
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 String keyString = reader.readName();
                 K key = reader.decodeKey(keyString, keyTypeInfo);
@@ -451,7 +467,9 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
             }
             reader.readEndObject();
         } else {
-            reader.readStartArray();
+            int count = reader.readStartArray();
+            result = newMap(factory, count);
+            //
             DsonType firstDsonType = reader.readDsonType();
             switch (firstDsonType) {
                 case END_OF_OBJECT -> {} // 没有元素
@@ -490,6 +508,7 @@ public class MapCodec<K, V> implements DsonCodec<Map<K, V>> {
             }
             reader.readEndArray();
         }
+        return result;
     }
     // endregion
 }

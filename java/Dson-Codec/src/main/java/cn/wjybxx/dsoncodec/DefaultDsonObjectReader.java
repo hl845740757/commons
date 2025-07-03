@@ -32,6 +32,8 @@ import java.util.Objects;
  */
 final class DefaultDsonObjectReader extends AbstractObjectReader implements DsonObjectReader {
 
+    private int count;
+
     public DefaultDsonObjectReader(DsonConverter converter, DsonReader reader) {
         super(converter, reader);
     }
@@ -68,6 +70,32 @@ final class DefaultDsonObjectReader extends AbstractObjectReader implements Dson
         }
         reader.readName(name);
         return true;
+    }
+
+    @Override
+    protected void backToWaitStart(TypeHeader header) {
+        this.count = header.count;
+        reader.backToWaitStart();
+    }
+
+    @Override
+    public int readStartObject() {
+        if (!reader.isWaitingStart()) { // 尚未读取header
+            this.count = readHeader(DsonType.OBJECT).count;
+        } else {
+            reader.readStartObject();
+        }
+        return count;
+    }
+
+    @Override
+    public int readStartArray() {
+        if (!reader.isWaitingStart()) { // 尚未读取header
+            this.count = readHeader(DsonType.ARRAY).count;
+        } else {
+            reader.readStartArray();
+        }
+        return count;
     }
 
     @Override

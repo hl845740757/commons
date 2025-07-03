@@ -55,7 +55,7 @@ public class DsonCodecException : DsonIOException
         return new DsonCodecException($"Incompatible data format, expected {expected}, dsonType {dsonType}");
     }
 
-    public static DsonCodecException Incompatible(Type declared, string classId) {
+    public static DsonCodecException Incompatible(Type declared, string? classId) {
         return new DsonCodecException($"Incompatible data format, declaredType {declared}, classId {classId}");
     }
 }

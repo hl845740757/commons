@@ -38,11 +38,15 @@ public static class MoreCollectionCodecs
     /// <typeparam name="T"></typeparam>
     public class StackCodec<T> : IDsonCodec<Stack<T>>
     {
+        public bool AutoStartEnd => false;
+
         public void WriteObject(IDsonObjectWriter writer, in Stack<T> inst, Type declaredType, ObjectStyle style) {
             // 重复编码以避免Itr装箱
+            writer.WriteStartArray(style, inst.GetType(), declaredType, inst.Count);
             foreach (T item in inst) {
                 writer.WriteObject<T>(null, in item);
             }
+            writer.WriteEndArray();
         }
 
         public Stack<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
@@ -63,20 +67,26 @@ public static class MoreCollectionCodecs
     /// <typeparam name="T"></typeparam>
     public class QueueCodec<T> : IDsonCodec<Queue<T>>
     {
+        public bool AutoStartEnd => false;
+
         public void WriteObject(IDsonObjectWriter writer, in Queue<T> inst, Type declaredType, ObjectStyle style) {
             // 重复编码以避免Itr装箱
+            writer.WriteStartArray(style, inst.GetType(), declaredType, inst.Count);
             foreach (T item in inst) {
                 writer.WriteObject<T>(null, in item);
             }
+            writer.WriteEndArray();
         }
 
         public Queue<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
             // Queue重复编码，避免不必要的拷贝
-            Queue<T> result = new Queue<T>();
+            int count = reader.ReadStartArray();
+            Queue<T> result = new Queue<T>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 T value = reader.ReadObject<T>(null);
                 result.Enqueue(value);
             }
+            reader.ReadEndArray();
             return result;
         }
     }
@@ -108,18 +118,25 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
+        public bool AutoStartEnd => false;
+
         public void WriteObject(IDsonObjectWriter writer, in IList<int> inst, Type declaredType, ObjectStyle style) {
+            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteInt(null, inst[i]);
             }
+            writer.WriteEndArray();
         }
 
         public IList<int> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            IList<int> result = new List<int>();
+            int count = reader.ReadStartArray();
+            IList<int> result = new List<int>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 int value = reader.ReadInt(null);
                 result.Add(value);
             }
+            reader.ReadEndArray();
+            //
             return reader.Options.readAsImmutable
                 ? ToImmutable(result, declaredType)
                 : result;
@@ -136,18 +153,25 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
+        public bool AutoStartEnd => false;
+
         public void WriteObject(IDsonObjectWriter writer, in IList<long> inst, Type declaredType, ObjectStyle style) {
+            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteLong(null, inst[i]);
             }
+            writer.WriteEndArray();
         }
 
         public IList<long> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            IList<long> result = new List<long>();
+            int count = reader.ReadStartArray();
+            IList<long> result = new List<long>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 long value = reader.ReadLong(null);
                 result.Add(value);
             }
+            reader.ReadEndArray();
+            //
             return reader.Options.readAsImmutable
                 ? ToImmutable(result, declaredType)
                 : result;
@@ -164,18 +188,25 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
+        public bool AutoStartEnd => false;
+
         public void WriteObject(IDsonObjectWriter writer, in IList<float> inst, Type declaredType, ObjectStyle style) {
+            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteFloat(null, inst[i]);
             }
+            writer.WriteEndArray();
         }
 
         public IList<float> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            IList<float> result = new List<float>();
+            int count = reader.ReadStartArray();
+            IList<float> result = new List<float>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 float value = reader.ReadFloat(null);
                 result.Add(value);
             }
+            reader.ReadEndArray();
+            //
             return reader.Options.readAsImmutable
                 ? ToImmutable(result, declaredType)
                 : result;
@@ -192,18 +223,25 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
+        public bool AutoStartEnd => false;
+
         public void WriteObject(IDsonObjectWriter writer, in IList<double> inst, Type declaredType, ObjectStyle style) {
+            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteDouble(null, inst[i]);
             }
+            writer.WriteEndArray();
         }
 
         public IList<double> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            IList<double> result = new List<double>();
+            int count = reader.ReadStartArray();
+            IList<double> result = new List<double>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 double value = reader.ReadDouble(null);
                 result.Add(value);
             }
+            reader.ReadEndArray();
+            //
             return reader.Options.readAsImmutable
                 ? ToImmutable(result, declaredType)
                 : result;
@@ -220,18 +258,25 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
+        public bool AutoStartEnd => false;
+
         public void WriteObject(IDsonObjectWriter writer, in IList<bool> inst, Type declaredType, ObjectStyle style) {
+            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteBool(null, inst[i]);
             }
+            writer.WriteEndArray();
         }
 
         public IList<bool> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            IList<bool> result = new List<bool>();
+            int count = reader.ReadStartArray();
+            IList<bool> result = new List<bool>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 bool value = reader.ReadBool(null);
                 result.Add(value);
             }
+            reader.ReadEndArray();
+            //
             return reader.Options.readAsImmutable
                 ? ToImmutable(result, declaredType)
                 : result;
@@ -248,18 +293,25 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
+        public bool AutoStartEnd => false;
+
         public void WriteObject(IDsonObjectWriter writer, in IList<string> inst, Type declaredType, ObjectStyle style) {
+            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteString(null, inst[i]);
             }
+            writer.WriteEndArray();
         }
 
         public IList<string> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            IList<string> result = new List<string>();
+            int count = reader.ReadStartArray();
+            IList<string> result = new List<string>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 string value = reader.ReadString(null);
                 result.Add(value);
             }
+            reader.ReadEndArray();
+            //
             return reader.Options.readAsImmutable
                 ? ToImmutable(result, declaredType)
                 : result;
@@ -276,18 +328,25 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
+        public bool AutoStartEnd => false;
+
         public void WriteObject(IDsonObjectWriter writer, in IList<uint> inst, Type declaredType, ObjectStyle style) {
+            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteUInt(null, inst[i]);
             }
+            writer.WriteEndArray();
         }
 
         public IList<uint> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            IList<uint> result = new List<uint>();
+            int count = reader.ReadStartArray();
+            IList<uint> result = new List<uint>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 uint value = reader.ReadUInt(null);
                 result.Add(value);
             }
+            reader.ReadEndArray();
+            //
             return reader.Options.readAsImmutable
                 ? ToImmutable(result, declaredType)
                 : result;
@@ -304,18 +363,25 @@ public static class MoreCollectionCodecs
 
         public Type GetEncoderType() => typeInfo;
 
+        public bool AutoStartEnd => false;
+
         public void WriteObject(IDsonObjectWriter writer, in IList<ulong> inst, Type declaredType, ObjectStyle style) {
+            writer.WriteStartArray(style, typeInfo, declaredType, inst.Count);
             for (int i = 0; i < inst.Count; i++) {
                 writer.WriteULong(null, inst[i]);
             }
+            writer.WriteEndArray();
         }
 
         public IList<ulong> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-            IList<ulong> result = new List<ulong>();
+            int count = reader.ReadStartArray();
+            IList<ulong> result = new List<ulong>(count);
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 ulong value = reader.ReadULong(null);
                 result.Add(value);
             }
+            reader.ReadEndArray();
+            //
             return reader.Options.readAsImmutable
                 ? ToImmutable(result, declaredType)
                 : result;

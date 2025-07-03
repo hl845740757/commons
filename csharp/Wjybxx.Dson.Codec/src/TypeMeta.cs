@@ -28,9 +28,11 @@ namespace Wjybxx.Dson.Codec
 {
 /// <summary>
 /// 类型元数据
+/// 不使用Schema这样的东西，是因为Schema包含的信息太多，难以手动维护。
 ///
 /// 1.1个Class可以有多个ClassName(即允许别名)，以支持简写；但一个ClassName只能映射到一个Class。
 /// 2.在文档型编解码中，可读性是比较重要的，因此不要一味追求简短。
+/// 3.支持为特定泛型预先设置name和style。
 /// </summary>
 [Immutable]
 public sealed class TypeMeta : IEquatable<TypeMeta>

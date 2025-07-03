@@ -59,24 +59,11 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
         if (comparer == null && source is ImmutableList<T> list) {
             return list;
         }
-        T[] array = source as T[];
-        if (array != null) {
-            array = ArrayUtil.CopyOf(array);
-        } else {
-            // 对于受信任的集合，不再二次拷贝
-            array = source.ToArray();
-            if (!IsTrustedCollection(source)) {
-                array = ArrayUtil.CopyOf(array);
-            }
-        }
+        T[] array = source.ToArray(); // LINQ的ToArray是新数组
         if (comparer != null) {
             Array.Sort(array, comparer);
         }
         return new ImmutableList<T>(array, false);
-    }
-
-    private static bool IsTrustedCollection(IEnumerable<T> source) {
-        return source is List<T> || source is HashSet<T> || source is LinkedHashSet<T>;
     }
 
     #endregion

@@ -90,19 +90,18 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         Enum
     }
 
-    /** 字典需要自行控制start/end，和是否写为数组 */
-    public bool AutoStartEnd => false;
-
     public Type GetEncoderType() => encoderType;
 
-    /** <see cref="encoderType"/>一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
-    private IDictionary<K, V> NewDictionary() {
-        if (factory != null) return factory.Invoke();
+    public bool AutoStartEnd => false;
+
+    private IDictionary<K, V> NewDictionary(Func<object>? userFactory, int count) {
+        if (userFactory != null) return (IDictionary<K, V>)userFactory();
+        if (this.factory != null) return this.factory();
         return factoryKind switch
         {
-            FactoryKind.LinkedDictionary => new LinkedDictionary<K, V>(),
+            FactoryKind.LinkedDictionary => new LinkedDictionary<K, V>(count),
             FactoryKind.ConcurrentDictionary => new ConcurrentDictionary<K, V>(),
-            _ => new Dictionary<K, V>()
+            _ => new Dictionary<K, V>(count)
         };
     }
 
@@ -144,26 +143,26 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
 
     public IDictionary<K, V> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
         reader.SetEnableNameIntern(false); // 禁用字典的name池化
-        IDictionary<K, V> result = factory != null ? (IDictionary<K, V>)factory() : NewDictionary();
+        IDictionary<K, V> result;
         switch (keyKind) {
             case KeyKind.Int32: {
-                ReadDictionaryInt(reader, (IDictionary<int, V>)result);
+                result = (IDictionary<K, V>)ReadDictionaryInt(reader, factory);
                 break;
             }
             case KeyKind.Int64: {
-                ReadDictionaryLong(reader, (IDictionary<long, V>)result);
+                result = (IDictionary<K, V>)ReadDictionaryLong(reader, factory);
                 break;
             }
             case KeyKind.Uint32: {
-                ReadDictionaryUInt(reader, (IDictionary<uint, V>)result);
+                result = (IDictionary<K, V>)ReadDictionaryUInt(reader, factory);
                 break;
             }
             case KeyKind.Uint64: {
-                ReadDictionaryULong(reader, (IDictionary<ulong, V>)result);
+                result = (IDictionary<K, V>)ReadDictionaryULong(reader, factory);
                 break;
             }
             default: {
-                ReadDictionaryObject(reader, result);
+                result = ReadDictionaryObject(reader, factory);
                 break;
             }
         }
@@ -182,7 +181,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                                     Type declaredType, ObjectStyle style) {
         switch (writer.Options.mapEncodePolicy) {
             case MapEncodePolicy.Document: {
-                writer.WriteStartObject(style, encoderType, declaredType); // 字典写为普通文档
+                writer.WriteStartObject(style, encoderType, declaredType, inst.Count); // 字典写为普通文档
                 foreach (KeyValuePair<int, V> pair in inst) {
                     string keyString = pair.Key.ToString();
                     writer.WriteName(keyString); // 确保null会被写入
@@ -192,7 +191,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 break;
             }
             case MapEncodePolicy.PairAsDocument: {
-                writer.WriteStartArray(style, encoderType, declaredType);
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count);
                 foreach (KeyValuePair<int, V> pair in inst) {
                     writer.WriteStartObject(ObjectStyle.Flow); // pair写为子文档-没有类型
                     {
@@ -207,7 +206,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
 
             case MapEncodePolicy.PairAsArray: {
-                writer.WriteStartArray(style, encoderType, declaredType);
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count);
                 foreach (KeyValuePair<int, V> pair in inst) {
                     writer.WriteStartArray(ObjectStyle.Flow); // pair写为子数组-没有类型
                     {
@@ -221,7 +220,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             case MapEncodePolicy.Array:
             default: {
-                writer.WriteStartArray(style, encoderType, declaredType); // 整个字典写为数组
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count); // 整个字典写为数组
                 foreach (KeyValuePair<int, V> pair in inst) {
                     writer.WriteInt(null, pair.Key);
                     writer.WriteObject(null, pair.Value);
@@ -232,10 +231,13 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         }
     }
 
-    private void ReadDictionaryInt(IDsonObjectReader reader, IDictionary<int, V> result) {
+    private IDictionary<int, V> ReadDictionaryInt(IDsonObjectReader reader, Func<object>? factory) {
         DsonType currentDsonType = reader.CurrentDsonType;
+        IDictionary<int, V> result;
         if (currentDsonType == DsonType.Object) {
-            reader.ReadStartObject();
+            int count = reader.ReadStartObject();
+            result = (IDictionary<int, V>)NewDictionary(factory, count);
+            //
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 int key = int.Parse(reader.ReadName());
                 V value = reader.ReadObject<V>(null);
@@ -243,8 +245,9 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             reader.ReadEndObject();
         } else {
-            Debug.Assert(currentDsonType == DsonType.Array);
-            reader.ReadStartArray();
+            int count = reader.ReadStartArray();
+            result = (IDictionary<int, V>)NewDictionary(factory, count);
+            //
             DsonType firstDsonType = reader.ReadDsonType();
             switch (firstDsonType) {
                 case DsonType.EndOfObject: break; // 没有元素
@@ -284,6 +287,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             reader.ReadEndArray();
         }
+        return result;
     }
 
     #endregion
@@ -294,7 +298,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                                      Type declaredType, ObjectStyle style) {
         switch (writer.Options.mapEncodePolicy) {
             case MapEncodePolicy.Document: {
-                writer.WriteStartObject(style, encoderType, declaredType); // 字典写为普通文档
+                writer.WriteStartObject(style, encoderType, declaredType, inst.Count); // 字典写为普通文档
                 foreach (KeyValuePair<long, V> pair in inst) {
                     string keyString = pair.Key.ToString();
                     writer.WriteName(keyString); // 确保null会被写入
@@ -304,7 +308,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 break;
             }
             case MapEncodePolicy.PairAsDocument: {
-                writer.WriteStartArray(style, encoderType, declaredType);
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count);
                 foreach (KeyValuePair<long, V> pair in inst) {
                     writer.WriteStartObject(ObjectStyle.Flow); // pair写为子文档-没有类型
                     {
@@ -319,7 +323,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
 
             case MapEncodePolicy.PairAsArray: {
-                writer.WriteStartArray(style, encoderType, declaredType);
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count);
                 foreach (KeyValuePair<long, V> pair in inst) {
                     writer.WriteStartArray(ObjectStyle.Flow); // pair写为子数组-没有类型
                     {
@@ -333,7 +337,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             case MapEncodePolicy.Array:
             default: {
-                writer.WriteStartArray(style, encoderType, declaredType); // 整个字典写为数组
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count); // 整个字典写为数组
                 foreach (KeyValuePair<long, V> pair in inst) {
                     writer.WriteLong(null, pair.Key);
                     writer.WriteObject(null, pair.Value);
@@ -344,10 +348,13 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         }
     }
 
-    private void ReadDictionaryLong(IDsonObjectReader reader, IDictionary<long, V> result) {
+    private IDictionary<long, V> ReadDictionaryLong(IDsonObjectReader reader, Func<object>? factory) {
         DsonType currentDsonType = reader.CurrentDsonType;
+        IDictionary<long, V> result;
         if (currentDsonType == DsonType.Object) {
-            reader.ReadStartObject();
+            int count = reader.ReadStartObject();
+            result = (IDictionary<long, V>)NewDictionary(factory, count);
+            //
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 long key = long.Parse(reader.ReadName());
                 V value = reader.ReadObject<V>(null);
@@ -355,8 +362,9 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             reader.ReadEndObject();
         } else {
-            Debug.Assert(currentDsonType == DsonType.Array);
-            reader.ReadStartArray();
+            int count = reader.ReadStartArray();
+            result = (IDictionary<long, V>)NewDictionary(factory, count);
+            //
             DsonType firstDsonType = reader.ReadDsonType();
             switch (firstDsonType) {
                 case DsonType.EndOfObject: break; // 没有元素
@@ -396,6 +404,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             reader.ReadEndArray();
         }
+        return result;
     }
 
     #endregion
@@ -406,7 +415,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                                      Type declaredType, ObjectStyle style) {
         switch (writer.Options.mapEncodePolicy) {
             case MapEncodePolicy.Document: {
-                writer.WriteStartObject(style, encoderType, declaredType); // 字典写为普通文档
+                writer.WriteStartObject(style, encoderType, declaredType, inst.Count); // 字典写为普通文档
                 foreach (KeyValuePair<uint, V> pair in inst) {
                     string keyString = pair.Key.ToString();
                     writer.WriteName(keyString); // 确保null会被写入
@@ -416,7 +425,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 break;
             }
             case MapEncodePolicy.PairAsDocument: {
-                writer.WriteStartArray(style, encoderType, declaredType);
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count);
                 foreach (KeyValuePair<uint, V> pair in inst) {
                     writer.WriteStartObject(ObjectStyle.Flow); // pair写为子文档-没有类型
                     {
@@ -431,7 +440,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
 
             case MapEncodePolicy.PairAsArray: {
-                writer.WriteStartArray(style, encoderType, declaredType);
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count);
                 foreach (KeyValuePair<uint, V> pair in inst) {
                     writer.WriteStartArray(ObjectStyle.Flow); // pair写为子数组-没有类型
                     {
@@ -445,7 +454,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             case MapEncodePolicy.Array:
             default: {
-                writer.WriteStartArray(style, encoderType, declaredType); // 整个字典写为数组
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count); // 整个字典写为数组
                 foreach (KeyValuePair<uint, V> pair in inst) {
                     writer.WriteUInt(null, pair.Key);
                     writer.WriteObject(null, pair.Value);
@@ -456,10 +465,13 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         }
     }
 
-    private void ReadDictionaryUInt(IDsonObjectReader reader, IDictionary<uint, V> result) {
+    private IDictionary<uint, V> ReadDictionaryUInt(IDsonObjectReader reader, Func<object>? factory) {
         DsonType currentDsonType = reader.CurrentDsonType;
+        IDictionary<uint, V> result;
         if (currentDsonType == DsonType.Object) {
-            reader.ReadStartObject();
+            int count = reader.ReadStartObject();
+            result = (IDictionary<uint, V>)NewDictionary(factory, count);
+            //
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 uint key = uint.Parse(reader.ReadName());
                 V value = reader.ReadObject<V>(null);
@@ -467,8 +479,9 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             reader.ReadEndObject();
         } else {
-            Debug.Assert(currentDsonType == DsonType.Array);
-            reader.ReadStartArray();
+            int count = reader.ReadStartArray();
+            result = (IDictionary<uint, V>)NewDictionary(factory, count);
+            //
             DsonType firstDsonType = reader.ReadDsonType();
             switch (firstDsonType) {
                 case DsonType.EndOfObject: break; // 没有元素
@@ -508,6 +521,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             reader.ReadEndArray();
         }
+        return result;
     }
 
     #endregion
@@ -518,7 +532,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                                       Type declaredType, ObjectStyle style) {
         switch (writer.Options.mapEncodePolicy) {
             case MapEncodePolicy.Document: {
-                writer.WriteStartObject(style, encoderType, declaredType); // 字典写为普通文档
+                writer.WriteStartObject(style, encoderType, declaredType, inst.Count); // 字典写为普通文档
                 foreach (KeyValuePair<ulong, V> pair in inst) {
                     string keyString = pair.Key.ToString();
                     writer.WriteName(keyString); // 确保null会被写入
@@ -528,7 +542,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 break;
             }
             case MapEncodePolicy.PairAsDocument: {
-                writer.WriteStartArray(style, encoderType, declaredType);
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count);
                 foreach (KeyValuePair<ulong, V> pair in inst) {
                     writer.WriteStartObject(ObjectStyle.Flow); // pair写为子文档-没有类型
                     {
@@ -543,7 +557,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
 
             case MapEncodePolicy.PairAsArray: {
-                writer.WriteStartArray(style, encoderType, declaredType);
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count);
                 foreach (KeyValuePair<ulong, V> pair in inst) {
                     writer.WriteStartArray(ObjectStyle.Flow); // pair写为子数组-没有类型
                     {
@@ -557,7 +571,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             case MapEncodePolicy.Array:
             default: {
-                writer.WriteStartArray(style, encoderType, declaredType); // 整个字典写为数组
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count); // 整个字典写为数组
                 foreach (KeyValuePair<ulong, V> pair in inst) {
                     writer.WriteULong(null, pair.Key);
                     writer.WriteObject(null, pair.Value);
@@ -568,10 +582,13 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         }
     }
 
-    private void ReadDictionaryULong(IDsonObjectReader reader, IDictionary<ulong, V> result) {
+    private IDictionary<ulong, V> ReadDictionaryULong(IDsonObjectReader reader, Func<object>? factory) {
         DsonType currentDsonType = reader.CurrentDsonType;
+        IDictionary<ulong, V> result;
         if (currentDsonType == DsonType.Object) {
-            reader.ReadStartObject();
+            int count = reader.ReadStartObject();
+            result = (IDictionary<ulong, V>)NewDictionary(factory, count);
+            //
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 ulong key = ulong.Parse(reader.ReadName());
                 V value = reader.ReadObject<V>(null);
@@ -579,8 +596,9 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             reader.ReadEndObject();
         } else {
-            Debug.Assert(currentDsonType == DsonType.Array);
-            reader.ReadStartArray();
+            int count = reader.ReadStartArray();
+            result = (IDictionary<ulong, V>)NewDictionary(factory, count);
+            //
             DsonType firstDsonType = reader.ReadDsonType();
             switch (firstDsonType) {
                 case DsonType.EndOfObject: break; // 没有元素
@@ -620,6 +638,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             reader.ReadEndArray();
         }
+        return result;
     }
 
     #endregion
@@ -642,7 +661,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         }
         switch (policy) {
             case MapEncodePolicy.Document: {
-                writer.WriteStartObject(style, encoderType, declaredType); // 字典写为普通文档
+                writer.WriteStartObject(style, encoderType, declaredType, inst.Count); // 字典写为普通文档
                 foreach (KeyValuePair<K, V> pair in inst) {
                     string keyString = writer.EncodeKey(pair.Key);
                     writer.WriteName(keyString); // 确保null会被写入
@@ -652,7 +671,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 break;
             }
             case MapEncodePolicy.PairAsDocument: {
-                writer.WriteStartArray(style, encoderType, declaredType);
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count);
                 foreach (KeyValuePair<K, V> pair in inst) {
                     writer.WriteStartObject(ObjectStyle.Flow); // pair写为子文档-没有类型
                     {
@@ -666,7 +685,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
                 break;
             }
             case MapEncodePolicy.PairAsArray: {
-                writer.WriteStartArray(style, encoderType, declaredType);
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count);
                 foreach (KeyValuePair<K, V> pair in inst) {
                     writer.WriteStartArray(ObjectStyle.Flow); // pair写为子数组-没有类型
                     {
@@ -680,7 +699,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             case MapEncodePolicy.Array:
             default: {
-                writer.WriteStartArray(style, encoderType, declaredType); // 整个字典写为数组
+                writer.WriteStartArray(style, encoderType, declaredType, inst.Count); // 整个字典写为数组
                 foreach (KeyValuePair<K, V> pair in inst) {
                     writer.WriteObject(null, pair.Key);
                     writer.WriteObject(null, pair.Value);
@@ -691,10 +710,13 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
         }
     }
 
-    private void ReadDictionaryObject(IDsonObjectReader reader, IDictionary<K, V> result) {
+    private IDictionary<K, V> ReadDictionaryObject(IDsonObjectReader reader, Func<object>? factory) {
         DsonType currentDsonType = reader.CurrentDsonType;
+        IDictionary<K, V> result;
         if (currentDsonType == DsonType.Object) {
-            reader.ReadStartObject();
+            int count = reader.ReadStartObject();
+            result = NewDictionary(factory, count);
+            //
             while (reader.ReadDsonType() != DsonType.EndOfObject) {
                 K key = reader.DecodeKey<K>(reader.ReadName());
                 V value = reader.ReadObject<V>(null);
@@ -702,8 +724,9 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             reader.ReadEndObject();
         } else {
-            Debug.Assert(currentDsonType == DsonType.Array);
-            reader.ReadStartArray();
+            int count = reader.ReadStartArray();
+            result = NewDictionary(factory, count);
+            //
             DsonType firstDsonType = reader.ReadDsonType();
             switch (firstDsonType) {
                 case DsonType.EndOfObject: break; // 没有元素
@@ -743,6 +766,7 @@ public class DictionaryCodec<K, V> : IDsonCodec<IDictionary<K, V>>
             }
             reader.ReadEndArray();
         }
+        return result;
     }
 
     #endregion

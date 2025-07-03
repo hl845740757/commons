@@ -54,10 +54,18 @@ public class ConverterOptions
     public readonly MapEncodePolicy mapEncodePolicy;
     /// <summary>
     /// 是否将枚举写为字符串
-    /// 1.不适用字典的Key，当字典需要被编码为Document时，枚举将固定输出为数字。
+    /// 1.不适用字典的Key，当字典需要被编码为Document时，枚举将固定输出为数字 -- 可通过字段编解码代码自定义格式化。
     /// 2.通常不建议开启，兼容性不好；如果个别字段的字典想定制编码，可通过字段编解码代理实现。
     /// </summary>
     public readonly bool writeEnumAsString;
+    /// <summary>
+    /// 是否将普通object编码为数组
+    /// 1.如果开启该选项，将不写入object的字段名，只是顺序写入object的所有字段值。
+    /// 2.这可以避免大量的字符串编解码，从而提升性能 - 适用于非持久化场景。
+    /// 3.该选项仅对<see cref="IDsonCodec.AutoStartEnd"/>为true的编码器有效。
+    /// 4.不可以有基于name进行Switch编解码的codec。
+    /// </summary>
+    public readonly bool writeObjectAsArray;
 
     /// <summary>
     /// 是否启用随机读
@@ -82,7 +90,7 @@ public class ConverterOptions
     public readonly bool enableBeforeEncode;
     /// <summary>
     /// 是否启用AfterDecode钩子方法。
-    ///  默认启用！因为我们假设afterDecode仅依赖自身数据。
+    /// 默认启用！因为我们假设afterDecode仅依赖自身数据。
     /// <code>
     /// public void AfterDecode(ConverterOptions) {}
     /// </code>
@@ -118,6 +126,8 @@ public class ConverterOptions
         this.appendNull = builder.AppendNull;
         this.mapEncodePolicy = builder.MapEncodePolicy;
         this.writeEnumAsString = builder.WriteEnumAsString;
+        this.writeObjectAsArray = builder.WriteObjectAsArray;
+
         this.randomRead = builder.RandomRead;
         this.readAsImmutable = builder.ReadAsImmutable;
         this.enableBeforeEncode = builder.EnableBeforeEncode;
@@ -150,6 +160,8 @@ public class ConverterOptions
         builder.AppendNull = appendNull;
         builder.MapEncodePolicy = mapEncodePolicy;
         builder.WriteEnumAsString = writeEnumAsString;
+        builder.WriteObjectAsArray = writeObjectAsArray;
+
         builder.RandomRead = randomRead;
         builder.ReadAsImmutable = readAsImmutable;
         builder.EnableBeforeEncode = enableBeforeEncode;
@@ -183,6 +195,7 @@ public class ConverterOptions
         public bool AppendNull { get; set; } = true;
         public MapEncodePolicy MapEncodePolicy { get; set; } = MapEncodePolicy.Array;
         public bool WriteEnumAsString { get; set; } = false;
+        public bool WriteObjectAsArray { get; set; } = false;
         public bool RandomRead { get; set; } = true;
         public bool ReadAsImmutable { get; set; } = false;
         public bool EnableBeforeEncode { get; set; } = false;

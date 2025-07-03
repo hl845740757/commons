@@ -111,7 +111,8 @@ public interface IDsonObjectWriter : IDisposable
     /// </summary>
     /// <param name="encoderType">编码器绑定的类型，要写入的类型信息</param>
     /// <param name="declaredType">对象的声明类型，用于测试是否写入类型信息</param>
-    void WriteTypeInfo(Type encoderType, Type declaredType);
+    /// <param name="count">元素的数量</param>
+    void WriteTypeInfo(Type encoderType, Type declaredType, int count = -1);
 
     void WriteStartObject(ObjectStyle style);
 

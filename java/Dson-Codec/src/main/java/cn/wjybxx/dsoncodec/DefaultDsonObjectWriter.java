@@ -17,10 +17,7 @@
 package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.base.TypeInfo;
-import cn.wjybxx.dson.DsonType;
-import cn.wjybxx.dson.DsonValue;
-import cn.wjybxx.dson.DsonWriter;
-import cn.wjybxx.dson.Dsons;
+import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.text.INumberStyle;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dson.text.StringStyle;
@@ -185,7 +182,7 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
             if (writer.isAtName()) { // 写入name
                 writer.writeName(name);
             }
-            if (style == null) style = findObjectStyle(codec.getEncoderType()); // 可能是超类的Codec
+            if (style == null) style = findObjectStyle(codec); // 可能是超类的Codec
             codec.writeObject(this, value, declaredType, style);
             return;
         }
@@ -222,17 +219,32 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
     }
 
     @Override
-    public void writeTypeInfo(TypeInfo encoderType, TypeInfo declaredType) {
+    public void writeTypeInfo(TypeInfo encoderType, TypeInfo declaredType, int count) {
         writer.attach(encoderType);
 
         TypeWritePolicy policy = converter.options().typeWritePolicy;
-        if ((policy == TypeWritePolicy.OPTIMIZED && !typeWriteHelper.isOptimizable(encoderType, declaredType))
-                || policy == TypeWritePolicy.ALWAYS) {
+        boolean typed = (policy == TypeWritePolicy.OPTIMIZED && !typeWriteHelper.isOptimizable(encoderType, declaredType))
+                || policy == TypeWritePolicy.ALWAYS;
+        if (!typed && count < 0) {
+            return;
+        }
+        if (count < 0) {
             TypeMeta typeMeta = converter.typeMetaRegistry().ofType(encoderType);
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta of encoderType: %s is absent".formatted(encoderType));
             }
             writer.writeSimpleHeader(typeMeta.mainClsName());
+        } else {
+            writer.writeStartHeader(ObjectStyle.FLOW);
+            if (typed) {
+                TypeMeta typeMeta = converter.typeMetaRegistry().ofType(encoderType);
+                if (typeMeta == null) {
+                    throw new DsonCodecException("typeMeta of encoderType: %s is absent".formatted(encoderType));
+                }
+                writer.writeString(DsonHeader.NAMES_CLASS_NAME, typeMeta.mainClsName(), StringStyle.AUTO_QUOTE);
+            }
+            writer.writeInt32(DsonHeader.NAMES_COUNT, count);
+            writer.writeEndHeader();
         }
     }
 
@@ -299,10 +311,15 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         writer.close();
     }
 
-    /** 允许泛型参数不同时走不同的style */
-    private ObjectStyle findObjectStyle(TypeInfo encoderType) {
-        final TypeMeta typeMeta = converter.typeMetaRegistry().ofType(encoderType);
-        return typeMeta != null ? typeMeta.style : ObjectStyle.INDENT;
+    private ObjectStyle findObjectStyle(DsonCodecImpl<?> codec) {
+        ObjectStyle style = codec.getStyle();
+        if (style != null) {
+            return style;
+        }
+        final TypeMeta typeMeta = converter.typeMetaRegistry().ofType(codec.getEncoderType());
+        style = typeMeta != null ? typeMeta.style : ObjectStyle.INDENT;
+        codec.setStyle(style);
+        return style;
     }
 
     /** 计算对象的运行时类型信息 */

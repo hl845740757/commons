@@ -76,18 +76,28 @@ public final class MoreArrayCodecs {
         }
 
         @Override
+        public boolean autoStartEnd() {
+            return false;
+        }
+
+        @Override
         public void writeObject(DsonObjectWriter writer, int[] inst, TypeInfo declaredType, ObjectStyle style) {
+            writer.writeStartArray(style, getEncoderType(), declaredType, inst.length);
             for (int e : inst) {
                 writer.writeInt(null, e);
             }
+            writer.writeEndArray();
         }
 
         @Override
         public int[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends int[]> factory) {
-            IntArrayList result = new IntArrayList();
+            // count非精确值，不可以直接创建数组
+            int count = reader.readStartArray();
+            IntArrayList result = new IntArrayList(count);
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readInt(null));
             }
+            reader.readEndArray();
             return result.toIntArray();
         }
     }
@@ -102,18 +112,28 @@ public final class MoreArrayCodecs {
         }
 
         @Override
+        public boolean autoStartEnd() {
+            return false;
+        }
+
+        @Override
         public void writeObject(DsonObjectWriter writer, long[] inst, TypeInfo declaredType, ObjectStyle style) {
+            writer.writeStartArray(style, getEncoderType(), declaredType, inst.length);
             for (long e : inst) {
                 writer.writeLong(null, e);
             }
+            writer.writeEndArray();
         }
 
         @Override
         public long[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends long[]> factory) {
-            LongArrayList result = new LongArrayList();
+            // count非精确值，不可以直接创建数组
+            int count = reader.readStartArray();
+            LongArrayList result = new LongArrayList(count);
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readLong(null));
             }
+            reader.readEndArray();
             return result.toLongArray();
         }
     }
@@ -128,18 +148,28 @@ public final class MoreArrayCodecs {
         }
 
         @Override
+        public boolean autoStartEnd() {
+            return false;
+        }
+
+        @Override
         public void writeObject(DsonObjectWriter writer, float[] inst, TypeInfo declaredType, ObjectStyle style) {
+            writer.writeStartArray(style, getEncoderType(), declaredType, inst.length);
             for (float e : inst) {
                 writer.writeFloat(null, e, NumberStyle.SIMPLE);
             }
+            writer.writeEndArray();
         }
 
         @Override
         public float[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends float[]> factory) {
-            FloatArrayList result = new FloatArrayList();
+            // count非精确值，不可以直接创建数组
+            int count = reader.readStartArray();
+            FloatArrayList result = new FloatArrayList(count);
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readFloat(null));
             }
+            reader.readEndArray();
             return result.toFloatArray();
         }
     }
@@ -154,18 +184,28 @@ public final class MoreArrayCodecs {
         }
 
         @Override
+        public boolean autoStartEnd() {
+            return false;
+        }
+
+        @Override
         public void writeObject(DsonObjectWriter writer, double[] inst, TypeInfo declaredType, ObjectStyle style) {
+            writer.writeStartArray(style, getEncoderType(), declaredType, inst.length);
             for (double e : inst) {
                 writer.writeDouble(null, e, NumberStyle.SIMPLE);
             }
+            writer.writeEndArray();
         }
 
         @Override
         public double[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends double[]> factory) {
-            DoubleArrayList result = new DoubleArrayList();
+            // count非精确值，不可以直接创建数组
+            int count = reader.readStartArray();
+            DoubleArrayList result = new DoubleArrayList(count);
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readDouble(null));
             }
+            reader.readEndArray();
             return result.toDoubleArray();
         }
     }
@@ -180,19 +220,29 @@ public final class MoreArrayCodecs {
         }
 
         @Override
+        public boolean autoStartEnd() {
+            return false;
+        }
+
+        @Override
         public void writeObject(DsonObjectWriter writer, boolean[] inst, TypeInfo declaredType, ObjectStyle style) {
+            writer.writeStartArray(style, getEncoderType(), declaredType, inst.length);
             for (boolean e : inst) {
                 writer.writeBoolean(null, e);
             }
+            writer.writeEndArray();
         }
 
         @Override
         public boolean[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends boolean[]> factory) {
-            IntList result = new IntArrayList();
+            // count非精确值，不可以直接创建数组
+            int count = reader.readStartArray();
+            IntList result = new IntArrayList(count);
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 int v = reader.readBoolean(null) ? 1 : 0;
                 result.add(v);
             }
+            reader.readEndArray();
             // 手动转换
             boolean[] array = new boolean[result.size()];
             for (int i = 0; i < result.size(); i++) {
@@ -212,18 +262,28 @@ public final class MoreArrayCodecs {
         }
 
         @Override
+        public boolean autoStartEnd() {
+            return false;
+        }
+
+        @Override
         public void writeObject(DsonObjectWriter writer, String[] inst, TypeInfo declaredType, ObjectStyle style) {
+            writer.writeStartArray(style, getEncoderType(), declaredType, inst.length);
             for (String e : inst) {
                 writer.writeString(null, e, StringStyle.AUTO);
             }
+            writer.writeEndArray();
         }
 
         @Override
         public String[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends String[]> factory) {
-            ArrayList<String> result = new ArrayList<>();
+            // count非精确值，不可以直接创建数组
+            int count = reader.readStartArray();
+            ArrayList<String> result = new ArrayList<>(count);
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readString(null));
             }
+            reader.readEndArray();
             String[] array = new String[result.size()];
             return result.toArray(array);
         }
@@ -239,18 +299,28 @@ public final class MoreArrayCodecs {
         }
 
         @Override
+        public boolean autoStartEnd() {
+            return false;
+        }
+
+        @Override
         public void writeObject(DsonObjectWriter writer, short[] inst, TypeInfo declaredType, ObjectStyle style) {
+            writer.writeStartArray(style, getEncoderType(), declaredType, inst.length);
             for (short e : inst) {
                 writer.writeShort(null, e);
             }
+            writer.writeEndArray();
         }
 
         @Override
         public short[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends short[]> factory) {
-            ShortArrayList result = new ShortArrayList();
+            // count非精确值，不可以直接创建数组
+            int count = reader.readStartArray();
+            ShortArrayList result = new ShortArrayList(count);
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readShort(null));
             }
+            reader.readEndArray();
             return result.toShortArray();
         }
     }
@@ -265,18 +335,28 @@ public final class MoreArrayCodecs {
         }
 
         @Override
+        public boolean autoStartEnd() {
+            return false;
+        }
+
+        @Override
         public void writeObject(DsonObjectWriter writer, char[] inst, TypeInfo declaredType, ObjectStyle style) {
+            writer.writeStartArray(style, getEncoderType(), declaredType, inst.length);
             for (char e : inst) {
                 writer.writeChar(null, e);
             }
+            writer.writeEndArray();
         }
 
         @Override
         public char[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends char[]> factory) {
-            CharArrayList result = new CharArrayList();
+            // count非精确值，不可以直接创建数组
+            int count = reader.readStartArray();
+            CharArrayList result = new CharArrayList(count);
             while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
                 result.add(reader.readChar(null));
             }
+            reader.readEndArray();
             return result.toCharArray();
         }
     }

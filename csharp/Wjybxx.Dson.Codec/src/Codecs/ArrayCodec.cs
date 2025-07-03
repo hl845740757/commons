@@ -29,19 +29,25 @@ namespace Wjybxx.Dson.Codec.Codecs
 /// <typeparam name="T"></typeparam>
 public sealed class ArrayCodec<T> : IDsonCodec<T[]>
 {
+    public bool AutoStartEnd => false;
+
     public void WriteObject(IDsonObjectWriter writer, in T[] inst, Type declaredType, ObjectStyle style) {
+        writer.WriteStartArray(style, inst.GetType(), declaredType, inst.Length);
         for (int i = 0; i < inst.Length; i++) {
             writer.WriteObject(null, inst[i]);
         }
+        writer.WriteEndArray();
     }
 
     public T[] ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        // 由于长度未知，只能先存储为List再转...
-        List<T> result = new List<T>();
+        // count非精确值，不可以直接创建数组
+        int count = reader.ReadStartArray();
+        List<T> result = new List<T>(count);
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             T value = reader.ReadObject<T>(null);
             result.Add(value);
         }
+        reader.ReadEndArray();
         return result.ToArray();
     }
 }

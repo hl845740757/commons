@@ -426,9 +426,9 @@ public static class DsonConverterUtils
 
     // 流程
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteStartObject(this IDsonObjectWriter writer, ObjectStyle style, Type encoderType, Type declaredType) {
+    public static void WriteStartObject(this IDsonObjectWriter writer, ObjectStyle style, Type encoderType, Type declaredType, int count = -1) {
         writer.WriteStartObject(style);
-        writer.WriteTypeInfo(encoderType, declaredType);
+        writer.WriteTypeInfo(encoderType, declaredType, count);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -438,16 +438,16 @@ public static class DsonConverterUtils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteStartObject(this IDsonObjectWriter writer, string name, ObjectStyle style, Type encoderType, Type declaredType) {
+    public static void WriteStartObject(this IDsonObjectWriter writer, string name, ObjectStyle style, Type encoderType, Type declaredType, int count = -1) {
         writer.WriteName(name);
         writer.WriteStartObject(style);
-        writer.WriteTypeInfo(encoderType, declaredType);
+        writer.WriteTypeInfo(encoderType, declaredType, count);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteStartArray(this IDsonObjectWriter writer, ObjectStyle style, Type encoderType, Type declaredType) {
+    public static void WriteStartArray(this IDsonObjectWriter writer, ObjectStyle style, Type encoderType, Type declaredType, int count = -1) {
         writer.WriteStartArray(style);
-        writer.WriteTypeInfo(encoderType, declaredType);
+        writer.WriteTypeInfo(encoderType, declaredType, count);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -457,10 +457,10 @@ public static class DsonConverterUtils
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void WriteStartArray(this IDsonObjectWriter writer, string name, ObjectStyle style, Type encoderType, Type declaredType) {
+    public static void WriteStartArray(this IDsonObjectWriter writer, string name, ObjectStyle style, Type encoderType, Type declaredType, int count = -1) {
         writer.WriteName(name);
         writer.WriteStartArray(style);
-        writer.WriteTypeInfo(encoderType, declaredType);
+        writer.WriteTypeInfo(encoderType, declaredType, count);
     }
 
     #endregion

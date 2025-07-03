@@ -59,10 +59,19 @@ public class ConverterOptions {
     public final MapEncodePolicy mapEncodePolicy;
     /**
      * 是否将枚举写为字符串
-     * 1.不适用字典的Key，当字典需要被编码为Document时，枚举将固定输出为数字。
+     * 1.不适用字典的Key，当字典需要被编码为Document时，枚举将固定输出为数字 -- 可通过字段编解码代码自定义格式化。
      * 2.通常不建议开启，兼容性不好；如果个别字段的字典想定制编码，可通过字段编解码代理实现。
      */
     public final boolean writeEnumAsString;
+    /**
+     * 是否将普通object编码为数组
+     * 1.如果开启该选项，将不写入object的字段名，只是顺序写入object的所有字段值。
+     * 2.这可以避免大量的字符串编解码，从而提升性能 - 适用于非持久化场景。
+     * 3.该选项仅对{@link DsonCodec#autoStartEnd()}为true的编码器有效。
+     * 4.不可以有基于name进行Switch编解码的codec。
+     */
+    public final boolean writeObjectAsArray;
+
     /**
      * 是否启用随机读。
      * 启用随机读会增加较多的开销，需要先读取为中间结构，再解码为对象；但启用随机读的数据兼容性更好。
@@ -117,6 +126,8 @@ public class ConverterOptions {
         this.appendNull = builder.appendNull;
         this.mapEncodePolicy = builder.mapEncodePolicy;
         this.writeEnumAsString = builder.writeEnumAsString;
+        this.writeObjectAsArray = builder.writeObjectAsArray;
+
         this.randomRead = builder.randomRead;
         this.readAsImmutable = builder.readAsImmutable;
         this.enableBeforeEncode = builder.enableBeforeEncode;
@@ -150,6 +161,8 @@ public class ConverterOptions {
         builder.appendNull = appendNull;
         builder.mapEncodePolicy = mapEncodePolicy;
         builder.writeEnumAsString = writeEnumAsString;
+        builder.writeObjectAsArray = writeObjectAsArray;
+
         builder.randomRead = randomRead;
         builder.readAsImmutable = readAsImmutable;
         builder.enableBeforeEncode = enableBeforeEncode;
@@ -182,6 +195,7 @@ public class ConverterOptions {
         private boolean appendNull = true;
         private MapEncodePolicy mapEncodePolicy = MapEncodePolicy.ARRAY;
         private boolean writeEnumAsString = false;
+        private boolean writeObjectAsArray = false;
         private boolean randomRead = true;
         private boolean enableBeforeEncode = false;
         private boolean enableAfterDecode = true;
@@ -246,6 +260,15 @@ public class ConverterOptions {
 
         public Builder setWriteEnumAsString(boolean writeEnumAsString) {
             this.writeEnumAsString = writeEnumAsString;
+            return this;
+        }
+
+        public boolean isWriteObjectAsArray() {
+            return writeObjectAsArray;
+        }
+
+        public Builder setWriteObjectAsArray(boolean writeObjectAsArray) {
+            this.writeObjectAsArray = writeObjectAsArray;
             return this;
         }
 

@@ -17,6 +17,7 @@
 package cn.wjybxx.dsoncodec;
 
 import cn.wjybxx.base.TypeInfo;
+import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.text.ObjectStyle;
 import cn.wjybxx.dsoncodec.codecs.IEnumCodec;
 
@@ -36,6 +37,8 @@ public final class DsonCodecImpl<T> {
     private final boolean writeAsArray;
     private final IEnumCodec<T> enumCodec;
 
+    private ObjectStyle style = null; // Style查询缓存，该缓存在多线程下是无害的
+
     DsonCodecImpl(DsonCodec<T> codec) {
         this.encoderType = Objects.requireNonNull(codec.getEncoderType());
         this.codec = codec;
@@ -43,8 +46,7 @@ public final class DsonCodecImpl<T> {
         this.writeAsArray = autoStart && codec.isWriteAsArray();
 
         if (codec instanceof IEnumCodec<?>) {
-            @SuppressWarnings("unchecked") IEnumCodec<T> enumCodec = (IEnumCodec<T>) codec;
-            this.enumCodec = enumCodec;
+            this.enumCodec = (IEnumCodec<T>) codec;
         } else {
             this.enumCodec = null;
         }
@@ -52,6 +54,14 @@ public final class DsonCodecImpl<T> {
 
     public DsonCodec<T> getCodec() {
         return codec;
+    }
+
+    ObjectStyle getStyle() {
+        return style;
+    }
+
+    void setStyle(ObjectStyle style) {
+        this.style = style;
     }
 
     @Nonnull
@@ -65,7 +75,7 @@ public final class DsonCodecImpl<T> {
      */
     public void writeObject(DsonObjectWriter writer, T inst, TypeInfo declaredType, ObjectStyle style) {
         if (autoStart) {
-            if (writeAsArray) {
+            if (writeAsArray || writer.options().writeObjectAsArray) {
                 writer.writeStartArray(style);
                 writer.writeTypeInfo(encoderType, declaredType);
                 codec.writeObject(writer, inst, declaredType, style);
@@ -90,7 +100,7 @@ public final class DsonCodecImpl<T> {
     public T readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T> factory) {
         if (autoStart) {
             T result;
-            if (writeAsArray) {
+            if (reader.getCurrentDsonType() == DsonType.ARRAY) {
                 reader.readStartArray();
                 reader.setEncoderType(encoderType);
                 result = codec.readObject(reader, declaredType, factory);

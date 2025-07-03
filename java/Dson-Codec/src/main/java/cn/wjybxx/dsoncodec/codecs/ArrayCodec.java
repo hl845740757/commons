@@ -54,8 +54,8 @@ public final class ArrayCodec<T> implements DsonCodec<T[]> {
     }
 
     @Override
-    public boolean isWriteAsArray() {
-        return true;
+    public boolean autoStartEnd() {
+        return false;
     }
 
     @Override
@@ -63,21 +63,25 @@ public final class ArrayCodec<T> implements DsonCodec<T[]> {
         // declaredType只影响inst是否写入类型，不影响数组元素是否写入类型
         TypeInfo elementTypeInfo = this.elementTypeInfo;
 
+        writer.writeStartArray(style, encoderType, declaredType, inst.length);
         for (int i = 0; i < inst.length; i++) {
             writer.writeObject(null, inst[i], elementTypeInfo);
         }
+        writer.writeEndArray();
     }
 
     @Override
     public T[] readObject(DsonObjectReader reader, TypeInfo declaredType, Supplier<? extends T[]> factory) {
         TypeInfo elementTypeInfo = this.elementTypeInfo;
-
-        // 由于长度未知，只能先存储为List再转...
-        List<T> result = new ArrayList<>();
+        // count非精确值，不可以直接创建数组
+        int count = reader.readStartArray();
+        List<T> result = new ArrayList<>(count);
         while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
             T value = reader.readObject(null, elementTypeInfo, null);
             result.add(value);
         }
+        reader.readEndArray();
+
         @SuppressWarnings("unchecked") T[] array = (T[]) Array.newInstance(elementTypeInfo.rawType, result.size());
         result.toArray(array);
         return array;

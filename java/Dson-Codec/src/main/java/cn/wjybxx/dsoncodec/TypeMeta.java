@@ -27,11 +27,11 @@ import java.util.Objects;
 /**
  * 类型的元数据
  * 不使用Schema这样的东西，是因为Schema包含的信息太多，难以手动维护。
- * 另外，Schema是属于Codec的一部分，是低层次的数据，而TypeMeta是更高层的配置。
  * <p>
  * 1.1个Class可以有多个ClassName(即允许别名)，以支持简写；但一个ClassName只能映射到一个Class。
  * 2.在文档型编解码中，可读性是比较重要的，因此不要一味追求简短。
  * 3.使用{@link TypeInfo}以支持写入泛型信息，供支持泛型的语言使用。
+ * 4.支持为特定泛型预先设置name和style。
  *
  * @author wjybxx
  * date - 2023/7/29

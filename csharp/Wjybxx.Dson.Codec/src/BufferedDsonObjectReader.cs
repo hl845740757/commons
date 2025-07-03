@@ -55,9 +55,9 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
         if (name == null) throw new ArgumentNullException(nameof(name));
         if (reader.IsAtType) {
             // 用户尚未调用readDsonType，可指定下一个key的值
-            KeyIterator keyItr = (KeyIterator)reader.Attachment();
-            if (keyItr.keySet.Contains(name)) {
-                keyItr.SetNext(name);
+            Context context = (Context)reader.Attachment();
+            if (context.Contains(name)) {
+                context.SetNext(name);
                 reader.ReadDsonType();
                 reader.ReadName();
                 return true;
@@ -71,22 +71,36 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
         }
     }
 
-    public override void ReadStartObject() {
-        base.ReadStartObject();
-
+    public override int ReadStartObject() {
         DsonCollectionReader<string> reader = (DsonCollectionReader<string>)this.reader;
-        KeyIterator keyItr = new KeyIterator(reader.Keys(), keySetPool.Acquire());
-        reader.SetKeyItr(keyItr, DsonNull.NULL);
-        reader.Attach(keyItr);
+        if (!reader.IsWaitingStart()) { // 尚未读取header
+            ReadHeader(DsonType.Object, out string? _, out int _);
+        } else {
+            reader.ReadStartObject();
+        }
+        Context context = contextPool.Acquire();
+        context.SetKeySet(reader.Keys());
+        reader.SetKeyItr(context, DsonNull.NULL);
+        reader.Attach(context);
+        return reader.Count;
     }
 
     public override void ReadEndObject() {
         // 需要在readEndObject之前保存下来
-        KeyIterator ketItr = (KeyIterator)reader.Attachment();
+        Context context = (Context)reader.Attachment();
         base.ReadEndObject();
 
-        keySetPool.Release(ketItr.keyQueue);
-        ketItr.keyQueue = null!;
+        contextPool.Release(context);
+    }
+
+    public override int ReadStartArray() {
+        DsonCollectionReader<string> reader = (DsonCollectionReader<string>)this.reader;
+        if (!reader.IsWaitingStart()) { // 尚未读取header
+            ReadHeader(DsonType.Array, out string? _, out int _);
+        } else {
+            reader.ReadStartArray();
+        }
+        return reader.Count;
     }
 
     /// <summary>
@@ -94,20 +108,19 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
     /// 虽然多数情况下我们都是按照写入的顺序读取，但当Key不存在的时候，Deque删除元素的效率很差。
     /// 考虑到这块尚不稳定，因此不开放给用户设置。
     /// </summary>
-    private static readonly ConcurrentObjectPool<LinkedHashSet<string>> keySetPool = new ConcurrentObjectPool<LinkedHashSet<string>>(
-        () => new LinkedHashSet<string>(16), hashset => hashset.Clear(), 256);
+    private static readonly ConcurrentObjectPool<Context> contextPool = new ConcurrentObjectPool<Context>(
+        () => new Context(), context => context.Dispose(), 256);
 
-    private class KeyIterator : ISequentialEnumerator<string>
+#nullable disable
+    private class Context : ISequentialEnumerator<string>
     {
-        internal readonly ICollection<string> keySet;
-        internal LinkedHashSet<string> keyQueue;
+        private readonly LinkedHashSet<string> keyQueue = new LinkedHashSet<string>();
+        private ICollection<string> _keySet;
         private string? _current;
 
-        public KeyIterator(ICollection<string> keySet, LinkedHashSet<string> keyQueue) {
-            this.keySet = keySet;
-            this.keyQueue = keyQueue;
-
-            foreach (string name in this.keySet) {
+        public void SetKeySet(ICollection<string> keySet) {
+            this._keySet = keySet;
+            foreach (string name in this._keySet) {
                 keyQueue.Add(name);
             }
         }
@@ -119,6 +132,8 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
             }
             keyQueue.AddFirst(nextName);
         }
+
+        public bool Contains(string name) => _keySet.Contains(name);
 
         public bool HasNext() {
             return !keyQueue.IsEmpty;
@@ -132,10 +147,13 @@ internal class BufferedDsonObjectReader : AbstractDsonObjectReader
         }
 
         public void Dispose() {
+            keyQueue.Clear();
+            _keySet = null!;
+            _current = null!;
         }
 
-        public string Current => _current;
-        object IEnumerator.Current => Current;
+        public string? Current => _current;
+        object? IEnumerator.Current => Current;
     }
 }
 }

@@ -50,15 +50,15 @@ internal sealed class ImmutableList<T> : IList<T>
         return new ImmutableList<T>(source);
     }
 
-    public static ImmutableList<T> CreateRange(IEnumerable<T> source) {
+    public static ImmutableList<T> CreateRange(IEnumerable<T> source, IComparer<T>? comparer = null) {
         if (source is ImmutableList<T> immutableList) {
             return immutableList;
         }
-        if (source is T[] array) {
-            return new ImmutableList<T>(array, true);
-        } else {
-            return new ImmutableList<T>(source.ToArray(), true);
+        T[] array = source.ToArray(); // LINQ的ToArray是新数组
+        if (comparer != null) {
+            Array.Sort(array, comparer);
         }
+        return new ImmutableList<T>(array, false);
     }
 
     #endregion

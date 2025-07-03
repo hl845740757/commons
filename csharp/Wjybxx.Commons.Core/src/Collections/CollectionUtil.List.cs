@@ -475,6 +475,20 @@ public static partial class CollectionUtil
         return result;
     }
 
+    /// <summary>
+    /// 将List转换为Stack
+    /// </summary>
+    /// <param name="list"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static Stack<T> ToStack<T>(IList<T> list) {
+        Stack<T> stack = new Stack<T>(list.Count);
+        for (int idx = list.Count - 1; idx >= 0; idx--) {
+            stack.Push(list[idx]);
+        }
+        return stack;
+    }
+
     #endregion
 }
 }

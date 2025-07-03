@@ -27,6 +27,8 @@ namespace Wjybxx.Dson.Codec
 /// </summary>
 public class DefaultDsonObjectReader : AbstractDsonObjectReader
 {
+    private int _count;
+
     public DefaultDsonObjectReader(IDsonConverter converter, IDsonReader<string> reader)
         : base(converter, reader) {
     }
@@ -48,7 +50,7 @@ public class DefaultDsonObjectReader : AbstractDsonObjectReader
             if (name == null || reader.CurrentName == name) {
                 return true;
             }
-            throw DsonIOException.UnexpectedName(name, reader.CurrentName); 
+            throw DsonIOException.UnexpectedName(name, reader.CurrentName);
         }
         if (name == null) throw new ArgumentNullException(nameof(name));
         if (reader.IsAtType) {
@@ -62,6 +64,29 @@ public class DefaultDsonObjectReader : AbstractDsonObjectReader
         }
         reader.ReadName(name);
         return true;
+    }
+
+    protected override void BackToWaitStart(string? clsName, int count) {
+        _count = count;
+        reader.BackToWaitStart();
+    }
+
+    public override int ReadStartObject() {
+        if (!reader.IsWaitingStart()) { // 尚未读取header
+            ReadHeader(DsonType.Object, out string? _, out _count);
+        } else {
+            reader.ReadStartObject();
+        }
+        return _count;
+    }
+
+    public override int ReadStartArray() {
+        if (!reader.IsWaitingStart()) { // 尚未读取header
+            ReadHeader(DsonType.Array, out string? _, out _count);
+        } else {
+            reader.ReadStartArray();
+        }
+        return _count;
     }
 }
 }

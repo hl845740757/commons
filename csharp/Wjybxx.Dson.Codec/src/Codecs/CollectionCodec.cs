@@ -56,9 +56,12 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
             || typeInfo == typeof(HashSet<T>)) {
             return FactoryKind.HashSet;
         }
-        if (typeInfo == typeof(IDeque<T>)
-            || typeInfo == typeof(MultiChunkDeque<T>)) {
-            return FactoryKind.Dequeue;
+        // Dequeue
+        if (typeInfo == typeof(MultiChunkDeque<T>)) {
+            return FactoryKind.MultiChunkDequeue;
+        }
+        if (typeInfo == typeof(IDeque<T>) || typeInfo == typeof(ArrayDeque<>)) {
+            return FactoryKind.ArrayDequeue;
         }
         return FactoryKind.Unknown;
     }
@@ -68,20 +71,24 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
         Unknown,
         HashSet,
         LinkedHashSet,
-        Dequeue
+        ArrayDequeue,
+        MultiChunkDequeue,
     }
 
     public Type GetEncoderType() => encoderType;
 
-    /** <see cref="encoderType"/>一定是用户declaredType的子类型，因此创建实例时不依赖declaredType */
-    private ICollection<T> NewCollection() {
+    public bool AutoStartEnd => false;
+
+    private ICollection<T> NewCollection(Func<object>? userFactory, int count) {
+        if (userFactory != null) return (ICollection<T>)userFactory();
         if (factory != null) return factory();
         return factoryKind switch
         {
-            FactoryKind.HashSet => new HashSet<T>(),
-            FactoryKind.LinkedHashSet => new LinkedHashSet<T>(),
-            FactoryKind.Dequeue => new MultiChunkDeque<T>(),
-            _ => new List<T>()
+            FactoryKind.HashSet => new HashSet<T>(count),
+            FactoryKind.LinkedHashSet => new LinkedHashSet<T>(count),
+            FactoryKind.ArrayDequeue => new ArrayDeque<T>(),
+            FactoryKind.MultiChunkDequeue => new MultiChunkDeque<T>(),
+            _ => new List<T>(count)
         };
     }
 
@@ -106,17 +113,22 @@ public class CollectionCodec<T> : IDsonCodec<ICollection<T>>
     }
 
     public void WriteObject(IDsonObjectWriter writer, in ICollection<T> inst, Type declaredType, ObjectStyle style) {
+        writer.WriteStartArray(style);
+        writer.WriteTypeInfo(encoderType, declaredType, inst.Count);
         foreach (T value in inst) {
             writer.WriteObject(null, in value); // value向上转型为T
         }
+        writer.WriteEndArray();
     }
 
     public ICollection<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
-        ICollection<T> result = factory != null ? (ICollection<T>)factory() : NewCollection();
+        int count = reader.ReadStartArray();
+        ICollection<T> result = NewCollection(factory, count);
         while (reader.ReadDsonType() != DsonType.EndOfObject) {
             T value = reader.ReadObject<T>(null);
             result.Add(value);
         }
+        reader.ReadEndArray();
         // 处理默认的不可变集合
         if (declaredType.IsGenericType) {
             if (declaredType.GetGenericTypeDefinition() == typeof(ImmutableList<>)) {

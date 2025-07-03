@@ -128,7 +128,6 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         if (!readName(name)) { // 字段不存在，返回默认值
             return (T) DsonConverterUtils.getDefaultValue(rawType);
         }
-        DsonReader reader = this.reader;
         DsonType dsonType = reader.getCurrentDsonType();
         if (dsonType == DsonType.NULL) { // null直接返回
             reader.readNull(name);
@@ -140,7 +139,12 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         }
         // 容器类型只能通过codec解码；Flags编码为Int/String数组的情况下，需要自定义Field读写代理处理
         if (dsonType.isContainer()) {
-            String clsName = readClsName(dsonType);
+            String clsName = null;
+            if (!reader.isWaitingStart()) {
+                TypeHeader header = readHeader(dsonType);
+                clsName = header.clsName;
+                backToWaitStart(header);
+            }
             @SuppressWarnings("unchecked") DsonCodecImpl<T> codec = (DsonCodecImpl<T>) findObjectDecoder(declaredType, factory, clsName);
             if (codec == null) {
                 throw DsonCodecException.incompatible(declaredType.rawType, clsName);
@@ -198,12 +202,14 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         return reader.getCurrentName();
     }
 
+    protected void backToWaitStart(TypeHeader header) {
+        reader.backToWaitStart();
+    }
+
     @Override
-    public void readStartObject() {
-        if (reader.isAtType()) { // 顶层对象适配
-            reader.readDsonType();
-        }
+    public int readStartObject() {
         reader.readStartObject();
+        return 0;
     }
 
     @Override
@@ -213,11 +219,9 @@ abstract class AbstractObjectReader implements DsonObjectReader {
     }
 
     @Override
-    public void readStartArray() {
-        if (reader.isAtType()) { // 顶层对象适配
-            reader.readDsonType();
-        }
+    public int readStartArray() {
         reader.readStartArray();
+        return 0;
     }
 
     @Override
@@ -296,35 +300,32 @@ abstract class AbstractObjectReader implements DsonObjectReader {
         reader.close();
     }
 
-    private String readClsName(DsonType dsonType) {
+    final TypeHeader readHeader(DsonType dsonType) {
         DsonReader reader = this.reader;
-        if (reader.hasWaitingStartContext()) {
-            return ""; // 已读取header，当前可能触发了读代理
-        }
         if (dsonType == DsonType.OBJECT) {
             reader.readStartObject();
         } else {
             reader.readStartArray();
         }
-        String clsName = "";
-        DsonType nextDsonType = reader.peekDsonType();
-        if (nextDsonType == DsonType.HEADER) {
-            reader.readDsonType();
-            reader.readStartHeader();
-            // 允许header包含其它数据
-            while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
-                if (reader.readName().equals(DsonHeader.NAMES_CLASS_NAME)) {
-                    clsName = reader.readString(null);
-                    clsName = clsName.intern(); // 池化
-                    break;
-                }
+        if (reader.peekDsonType() != DsonType.HEADER) return TypeHeader.EMPTY;
+        String clsName = null;
+        int count = 0;
+        //
+        reader.readDsonType();
+        reader.readStartHeader();
+        while (reader.readDsonType() != DsonType.END_OF_OBJECT) {
+            String name = reader.readName();
+            if (name.equals(DsonHeader.NAMES_CLASS_NAME)) {
+                clsName = reader.readString(null).intern(); // 池化
+            } else if (name.equals(DsonHeader.NAMES_COUNT)) {
+                count = DsonCodecHelper.readInt(reader, null); // 文本下可能是double
+            } else {
                 reader.skipValue();
             }
-            reader.skipToEndOfObject();
-            reader.readEndHeader();
         }
-        reader.backToWaitStart();
-        return clsName;
+        reader.skipToEndOfObject();
+        reader.readEndHeader();
+        return new TypeHeader(clsName, count);
     }
 
     private DsonCodecImpl<?> findObjectDecoder(TypeInfo declaredType, Supplier<?> factory, String clsName) {
