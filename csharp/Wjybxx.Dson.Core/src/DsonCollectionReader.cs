@@ -49,6 +49,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
         Context context = NewContext(null, DsonContextType.TopLevel, DsonTypes.INVALID);
         context.header = dsonArray.Header.Count > 0 ? dsonArray.Header : null;
+        context.container = dsonArray;
         context.arrayIterator.SetBaseIterator(dsonArray.GetEnumerator());
         SetContext(context);
     }
@@ -59,6 +60,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         // 这里仍然是标准的数组上下文，但我们使用单值迭代器避免额外的封装开销
         Context context = NewContext(null, DsonContextType.TopLevel, DsonTypes.INVALID);
         context.header = null;
+        context.container = dsonValue;
         context.arrayIterator.SetBaseIterator(new SingleValueEnumerator<DsonValue>(dsonValue));
         SetContext(context);
     }
@@ -84,9 +86,6 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         if (keyItr == null) throw new ArgumentNullException(nameof(keyItr));
         if (defValue == null) throw new ArgumentNullException(nameof(defValue));
         Context context = GetContext();
-        if (context.dsonObject == null) {
-            throw DsonIOException.ContextError(CollectionUtil.NewList(DsonContextType.Object, DsonContextType.Header), context.contextType);
-        }
         context.SetKeyItr(keyItr, defValue);
     }
 
@@ -98,10 +97,27 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
     /// <exception cref="DsonIOException"></exception>
     public ICollection<TName> Keys() {
         Context context = GetContext();
-        if (context.dsonObject == null) {
-            throw DsonIOException.ContextError(CollectionUtil.NewList(DsonContextType.Object, DsonContextType.Header), context.contextType);
+        return context.container.DsonType switch
+        {
+            DsonType.Header => context.container.AsHeader<TName>().Keys,
+            DsonType.Object => context.container.AsObject<TName>().Keys,
+            _ => throw new InvalidOperationException(),
+        };
+    }
+
+    /// <summary>
+    /// 获取当前容器的大小
+    /// </summary>
+    public int Count {
+        get {
+            Context context = GetContext();
+            return context.container.DsonType switch
+            {
+                DsonType.Header => context.container.AsHeader<TName>().Count,
+                DsonType.Object => context.container.AsObject<TName>().Count,
+                _ => context.container.AsArray<TName>().Count,
+            };
         }
-        return context.dsonObject.Keys;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -277,16 +293,17 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         if (dsonValue.DsonType == DsonType.Object) {
             DsonObject<TName> dsonObject = dsonValue.AsObject<TName>();
             newContext.header = dsonObject.Header.Count > 0 ? dsonObject.Header : null;
-            newContext.dsonObject = dsonObject;
+            newContext.container = dsonObject;
             newContext.objectIterator.SetBaseIterator(dsonObject.GetEnumerator());
         } else if (dsonValue.DsonType == DsonType.Array) {
             DsonArray<TName> dsonArray = dsonValue.AsArray<TName>();
             newContext.header = dsonArray.Header.Count > 0 ? dsonArray.Header : null;
+            newContext.container = dsonArray;
             newContext.arrayIterator.SetBaseIterator(dsonArray.GetEnumerator());
         } else {
             // header
             DsonHeader<TName> header = dsonValue.AsHeader<TName>();
-            newContext.dsonObject = header;
+            newContext.container = header;
             newContext.objectIterator.SetBaseIterator(header.GetEnumerator());
         }
         newContext.name = currentName;
@@ -323,19 +340,19 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         //
         Context context = GetContext();
         context.header = null;
-        if (context.dsonObject != null) {
-            context.objectIterator.Dispose();
-            context.objectIterator.SetBaseIterator(EmptyEnumerator<KeyValuePair<TName, DsonValue>>.Instance);
-        } else {
+        if (context.container.DsonType == DsonType.Array) {
             context.arrayIterator.Dispose();
             context.arrayIterator.SetBaseIterator(EmptyEnumerator<DsonValue>.Instance);
+        } else {
+            context.objectIterator.Dispose();
+            context.objectIterator.SetBaseIterator(EmptyEnumerator<KeyValuePair<TName, DsonValue>>.Instance);
         }
     }
 
     protected override byte[] DoReadValueAsBytes() {
         throw new InvalidOperationException("Unsupported operation");
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ClearWaitStartContext() {
         Context context = (Context)waitStartContext;
@@ -370,8 +387,8 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
     {
         /** 如果不为null，则表示需要先读取header */
         protected internal DsonHeader<TName> header;
-        /** 如果不为null，则表示读取Header和Object上下文 */
-        protected internal AbstractDsonObject<TName> dsonObject;
+        /** 当前读取的容器 */
+        protected internal DsonValue container;
         /** 迭代器和Context一起缓存 -- 这里传<see cref="ISequentialEnumerator{T}.Empty"/>会引发unity崩溃！*/
         protected internal MarkableIterator<KeyValuePair<TName, DsonValue>> objectIterator = new(null);
         protected internal MarkableIterator<DsonValue> arrayIterator = new(null);
@@ -389,7 +406,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         public override void Reset() {
             base.Reset();
             header = null;
-            dsonObject = null;
+            container = null;
             objectIterator.Dispose();
             arrayIterator.Dispose();
             keyItr = null;
@@ -401,25 +418,25 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
             if (keyItr != null) {
                 return keyItr.HasNext();
             }
-            if (dsonObject != null) {
-                return objectIterator.HasNext();
+            if (container.DsonType == DsonType.Array) {
+                return arrayIterator.HasNext();
             }
-            return arrayIterator.HasNext();
+            return objectIterator.HasNext();
         }
 
         public void MarkItr() {
-            if (dsonObject != null) {
-                objectIterator.Mark();
-            } else {
+            if (container.DsonType == DsonType.Array) {
                 arrayIterator.Mark();
+            } else {
+                objectIterator.Mark();
             }
         }
 
         public void ResetItr() {
-            if (dsonObject != null) {
-                objectIterator.Reset();
-            } else {
+            if (container.DsonType == DsonType.Array) {
                 arrayIterator.Reset();
+            } else {
+                objectIterator.Reset();
             }
         }
 
@@ -433,7 +450,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
         // key-itr
         public void SetKeyItr(ISequentialEnumerator<TName> keyItr, DsonValue defValue) {
-            if (dsonObject == null) throw new InvalidOperationException();
+            if (container.DsonType == DsonType.Array) throw new InvalidOperationException("container is not an object");
             if (objectIterator.IsMarking) throw new InvalidOperationException("reader is in marking state");
 
             this.keyItr = keyItr;
@@ -449,6 +466,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         public KeyValuePair<TName, DsonValue> Current {
             get {
                 TName key = keyItr.Current;
+                AbstractDsonObject<TName> dsonObject = (AbstractDsonObject<TName>)container;
                 if (dsonObject.TryGetValue(key!, out DsonValue dsonValue)) {
                     return new KeyValuePair<TName, DsonValue>(key, dsonValue);
                 } else {

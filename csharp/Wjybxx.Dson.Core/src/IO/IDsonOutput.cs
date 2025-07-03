@@ -119,7 +119,7 @@ public interface IDsonOutput : IDisposable
     /// <param name="pos">写索引</param>
     /// <param name="value">value</param>
     void SetFixed32(int pos, int value);
-    
+
     /// <summary>
     /// 剩余可写空间
     /// </summary>
@@ -131,7 +131,7 @@ public interface IDsonOutput : IDisposable
     /// 由于我们存在SetPosition和随机写逻辑，为避免用户总是缓存数据，我们通过该接口告诉实现类，可以释放一部分缓存
     /// </summary>
     void WriteComplete(int safePosition);
-    
+
     void Flush();
 
     #endregion

@@ -20,7 +20,6 @@ import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.ext.MarkableIterator;
 import cn.wjybxx.dson.ext.SingleValueIterator;
 import cn.wjybxx.dson.internal.DsonInternals;
-import cn.wjybxx.dson.io.DsonIOException;
 import cn.wjybxx.dson.types.*;
 
 import java.util.*;
@@ -40,6 +39,7 @@ public final class DsonCollectionReader extends AbstractDsonReader {
 
         Context context = newContext(null, DsonContextType.TOP_LEVEL, null);
         context.header = !dsonArray.getHeader().isEmpty() ? dsonArray.getHeader() : null;
+        context.container = dsonArray;
         context.arrayIterator.setBaseIterator(dsonArray.iterator());
         setContext(context);
     }
@@ -51,6 +51,7 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         // 这里仍然是标准的数组上下文，但我们使用单值迭代器避免额外的封装开销
         Context context = newContext(null, DsonContextType.TOP_LEVEL, null);
         context.header = null;
+        context.container = dsonValue;
         context.arrayIterator.setBaseIterator(new SingleValueIterator<>(dsonValue));
         setContext(context);
     }
@@ -71,9 +72,6 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         Objects.requireNonNull(keyItr);
         Objects.requireNonNull(defValue);
         Context context = getContext();
-        if (context.dsonObject == null) {
-            throw DsonIOException.contextError(List.of(DsonContextType.OBJECT, DsonContextType.HEADER), context.contextType);
-        }
         context.setKeyItr(keyItr, defValue);
     }
 
@@ -83,10 +81,22 @@ public final class DsonCollectionReader extends AbstractDsonReader {
      */
     public Set<String> getkeySet() {
         Context context = getContext();
-        if (context.dsonObject == null) {
-            throw DsonIOException.contextError(List.of(DsonContextType.OBJECT, DsonContextType.HEADER), context.contextType);
-        }
-        return context.dsonObject.keySet();
+        return switch (context.container.getDsonType()) {
+            case HEADER -> context.container.asHeader().keySet();
+            case OBJECT -> context.container.asObject().keySet();
+            default -> throw new IllegalStateException();
+        };
+    }
+
+    /** 获取当前容器的大小 */
+    public int count() {
+        Context context = getContext();
+        return switch (context.container.getDsonType()) {
+            case HEADER -> context.container.asHeader().size();
+            case OBJECT -> context.container.asObject().size();
+            case ARRAY -> context.container.asArray().size();
+            default -> throw new AssertionError();
+        };
     }
 
     @Override
@@ -274,16 +284,17 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         if (dsonValue.getDsonType() == DsonType.OBJECT) {
             DsonObject<String> dsonObject = dsonValue.asObject();
             newContext.header = !dsonObject.getHeader().isEmpty() ? dsonObject.getHeader() : null;
-            newContext.dsonObject = dsonObject;
+            newContext.container = dsonObject;
             newContext.objectIterator.setBaseIterator(dsonObject.entrySet().iterator());
         } else if (dsonValue.getDsonType() == DsonType.ARRAY) {
             DsonArray<String> dsonArray = dsonValue.asArray();
             newContext.header = !dsonArray.getHeader().isEmpty() ? dsonArray.getHeader() : null;
+            newContext.container = dsonArray;
             newContext.arrayIterator.setBaseIterator(dsonArray.iterator());
         } else {
             // header
             DsonHeader<String> header = dsonValue.asHeader();
-            newContext.dsonObject = header;
+            newContext.container = header;
             newContext.objectIterator.setBaseIterator(header.entrySet().iterator());
         }
         newContext.name = currentName;
@@ -324,12 +335,12 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         //
         Context context = getContext();
         context.header = null;
-        if (context.dsonObject != null) {
-            context.objectIterator.close();
-            context.objectIterator.setBaseIterator(Collections.emptyIterator());
-        } else {
+        if (context.container.getDsonType() == DsonType.ARRAY) {
             context.arrayIterator.close();
             context.arrayIterator.setBaseIterator(Collections.emptyIterator());
+        } else {
+            context.objectIterator.close();
+            context.objectIterator.setBaseIterator(Collections.emptyIterator());
         }
     }
 
@@ -368,11 +379,11 @@ public final class DsonCollectionReader extends AbstractDsonReader {
 
         /** 如果不为null，则表示需要先读取header */
         private DsonHeader<String> header;
-        /** 如果不为null，则表示读取Header和Object上下文 */
-        private AbstractDsonObject<String> dsonObject;
+        /** 当前读取的容器 */
+        private DsonValue container;
         /** 迭代器和Context一起缓存 */
-        private final MarkableIterator<Map.Entry<String, DsonValue>> objectIterator = new MarkableIterator<>(Collections.emptyIterator());
-        private final MarkableIterator<DsonValue> arrayIterator = new MarkableIterator<>(Collections.emptyIterator());
+        private final MarkableIterator<Map.Entry<String, DsonValue>> objectIterator = new MarkableIterator<>(null);
+        private final MarkableIterator<DsonValue> arrayIterator = new MarkableIterator<>(null);
 
         /** 按照外部key迭代 -- 避免再封装一层增加开销 */
         private Iterator<String> keyItr;
@@ -390,7 +401,7 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         public void reset() {
             super.reset();
             header = null;
-            dsonObject = null;
+            container = null;
             objectIterator.close();
             arrayIterator.close();
             keyItr = null;
@@ -403,25 +414,25 @@ public final class DsonCollectionReader extends AbstractDsonReader {
             if (keyItr != null) {
                 return keyItr.hasNext();
             }
-            if (dsonObject != null) {
-                return objectIterator.hasNext();
+            if (container.getDsonType() == DsonType.ARRAY) {
+                return arrayIterator.hasNext();
             }
-            return arrayIterator.hasNext();
+            return objectIterator.hasNext();
         }
 
         public void markItr() {
-            if (dsonObject != null) {
-                objectIterator.mark();
-            } else {
+            if (container.getDsonType() == DsonType.ARRAY) {
                 arrayIterator.mark();
+            } else {
+                objectIterator.mark();
             }
         }
 
         public void resetItr() {
-            if (dsonObject != null) {
-                objectIterator.reset();
-            } else {
+            if (container.getDsonType() == DsonType.ARRAY) {
                 arrayIterator.reset();
+            } else {
+                objectIterator.reset();
             }
         }
 
@@ -436,7 +447,8 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         // key-itr
 
         public void setKeyItr(Iterator<String> keyItr, DsonValue defValue) {
-            if (dsonObject == null) throw new IllegalStateException();
+            if (container.getDsonType() == DsonType.ARRAY)
+                throw new IllegalStateException("container is not an object");
             if (objectIterator.isMarking()) throw new IllegalStateException("reader is in marking state");
 
             this.keyItr = keyItr;
@@ -448,7 +460,7 @@ public final class DsonCollectionReader extends AbstractDsonReader {
         @Override
         public Map.Entry<String, DsonValue> next() {
             String key = keyItr.next();
-            DsonValue dsonValue = dsonObject.get(key);
+            DsonValue dsonValue = container.asObject().get(key);
             if (dsonValue == null) {
                 return Map.entry(key, defValue);
             } else {

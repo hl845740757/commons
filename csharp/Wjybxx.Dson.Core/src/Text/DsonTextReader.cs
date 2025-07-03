@@ -1067,7 +1067,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         // Text的Reader和Writer实现最好相同，要么都不支持，要么都支持
         throw new DsonIOException("UnsupportedOperation");
     }
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ClearWaitStartContext() {
         Context context = (Context)waitStartContext;
@@ -1097,7 +1097,6 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         contextPool.Release(context);
     }
 
-#nullable disable
 #pragma warning disable CS0628
     protected new class Context : AbstractDsonReader<string>.Context
     {

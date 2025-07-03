@@ -220,7 +220,7 @@ public sealed class DsonBinaryWriter<TName> : AbstractDsonWriter<TName> where TN
         this.recursionDepth--;
         SetContext(context.Parent);
         ReturnContext(context);
-        
+
         // 告知可释放缓存
         if (GetContext().contextType == DsonContextType.TopLevel) {
             _output.WriteComplete(_output.Position);

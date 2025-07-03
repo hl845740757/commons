@@ -52,7 +52,7 @@ public final class MarkableIterator<E> implements Iterator<E>, AutoCloseable {
         } else if (buffer.size() > 0) {
             throw new IllegalArgumentException("buffer is not empty");
         }
-        this.baseIterator = Objects.requireNonNull(baseIterator);
+        this.baseIterator = baseIterator;
         this.marking = false;
         this.buffer = buffer;
         this.bufferIndex = 0;
