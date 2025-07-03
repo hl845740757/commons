@@ -1003,6 +1003,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
 
     protected override void DoSkipValue() {
         PopNextValue();
+        ClearWaitStartContext();
         switch (currentDsonType) {
             case DsonType.Header:
             case DsonType.Object:
@@ -1014,6 +1015,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     }
 
     protected override void DoSkipToEndOfObject() {
+        ClearWaitStartContext();
         DsonToken endToken;
         if (IsAtType) {
             endToken = SkipStack(1);
@@ -1064,6 +1066,15 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     protected override byte[] DoReadValueAsBytes() {
         // Text的Reader和Writer实现最好相同，要么都不支持，要么都支持
         throw new DsonIOException("UnsupportedOperation");
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ClearWaitStartContext() {
+        Context context = (Context)waitStartContext;
+        if (context != null) {
+            waitStartContext = null;
+            ReturnContext(context);
+        }
     }
 
     #endregion

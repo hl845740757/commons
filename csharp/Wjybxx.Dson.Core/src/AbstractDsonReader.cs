@@ -67,6 +67,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     #region state
 
     public DsonContextType ContextType => context.contextType;
+    public int ContextDepth => recursionDepth;
 
     public DsonType CurrentDsonType {
         get {
@@ -345,7 +346,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         ReadEndContainer(DsonContextType.Header);
     }
 
-    public bool HasWaitingStartContext() {
+    public bool IsWaitingStart() {
         return waitStartContext != null;
     }
 
@@ -447,8 +448,8 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         if (context.state != DsonReaderState.Value) {
             throw InvalidState(CollectionUtil.NewList(DsonReaderState.Value));
         }
-        waitStartContext = null;
         DoSkipValue();
+        Debug.Assert(waitStartContext == null);
         SetNextState();
     }
 
@@ -461,8 +462,8 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
             Debug.Assert(context.state == DsonReaderState.WaitEndObject);
             return;
         }
-        waitStartContext = null;
         DoSkipToEndOfObject();
+        Debug.Assert(waitStartContext == null);
         SetNextState();
         ReadDsonType(); // end of object
         Debug.Assert(currentDsonType == DsonType.EndOfObject);
@@ -472,6 +473,7 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
         AdvanceToValueState(name, DsonTypes.INVALID);
         DsonReaderUtils.CheckReadValueAsBytes(currentDsonType);
         byte[] data = DoReadValueAsBytes();
+        Debug.Assert(waitStartContext == null);
         SetNextState();
         return data;
     }

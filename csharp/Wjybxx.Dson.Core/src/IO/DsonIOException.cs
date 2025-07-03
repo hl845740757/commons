@@ -91,9 +91,19 @@ public class DsonIOException : Exception
         return new DsonIOException($"Unexpected subType, expected {expected}, but found {subType}");
     }
 
+    public static DsonIOException InvalidState(DsonContextType contextType, DsonReaderState expected, DsonReaderState state) {
+        return new DsonIOException($"invalid state, contextType {contextType}, " +
+                                   $"expected {expected}, but found {state}.");
+    }
+
     public static DsonIOException InvalidState(DsonContextType contextType, IList<DsonReaderState> expected, DsonReaderState state) {
         return new DsonIOException($"invalid state, contextType {contextType}, " +
                                    $"expected {CollectionUtil.ToString(expected)}, but found {state}.");
+    }
+
+    public static DsonIOException InvalidState(DsonContextType contextType, DsonWriterState expected, DsonWriterState state) {
+        return new DsonIOException($"invalid state, contextType {contextType}, " +
+                                   $"expected {expected}, but found {state}.");
     }
 
     public static DsonIOException InvalidState(DsonContextType contextType, IList<DsonWriterState> expected, DsonWriterState state) {

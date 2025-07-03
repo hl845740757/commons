@@ -78,6 +78,11 @@ public abstract class AbstractDsonReader implements DsonReader {
         return context.contextType;
     }
 
+    @Override
+    public int getContextDepth() {
+        return recursionDepth;
+    }
+
     @Nonnull
     @Override
     public DsonType getCurrentDsonType() {
@@ -369,7 +374,7 @@ public abstract class AbstractDsonReader implements DsonReader {
     }
 
     @Override
-    public boolean hasWaitingStartContext() {
+    public boolean isWaitingStart() {
         return waitStartContext != null;
     }
 
@@ -476,8 +481,8 @@ public abstract class AbstractDsonReader implements DsonReader {
         if (context.state != DsonReaderState.VALUE) {
             throw invalidState(List.of(DsonReaderState.VALUE));
         }
-        waitStartContext = null;
         doSkipValue();
+        assert waitStartContext == null;
         setNextState();
     }
 
@@ -491,8 +496,8 @@ public abstract class AbstractDsonReader implements DsonReader {
             assert context.state == DsonReaderState.WAIT_END_OBJECT;
             return;
         }
-        waitStartContext = null;
         doSkipToEndOfObject();
+        assert waitStartContext == null;
         setNextState();
         readDsonType(); // end of object
         assert currentDsonType == DsonType.END_OF_OBJECT;
@@ -503,6 +508,7 @@ public abstract class AbstractDsonReader implements DsonReader {
         advanceToValueState(name, null);
         DsonReaderUtils.checkReadValueAsBytes(currentDsonType);
         byte[] data = doReadValueAsBytes();
+        assert waitStartContext == null;
         setNextState();
         return data;
     }

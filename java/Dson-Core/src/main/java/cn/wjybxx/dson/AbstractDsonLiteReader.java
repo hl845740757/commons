@@ -75,6 +75,11 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
         return context.contextType;
     }
 
+    @Override
+    public int getContextDepth() {
+        return recursionDepth;
+    }
+
     @Nonnull
     @Override
     public DsonType getCurrentDsonType() {
@@ -363,7 +368,7 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
     }
 
     @Override
-    public boolean hasWaitingStartContext() {
+    public boolean isWaitingStart() {
         return waitStartContext != null;
     }
 
@@ -469,8 +474,8 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
         if (context.state != DsonReaderState.VALUE) {
             throw invalidState(List.of(DsonReaderState.VALUE));
         }
-        waitStartContext = null;
         doSkipValue();
+        assert waitStartContext == null;
         setNextState();
     }
 
@@ -484,23 +489,11 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
             assert context.state == DsonReaderState.WAIT_END_OBJECT;
             return;
         }
-        waitStartContext = null;
         doSkipToEndOfObject();
+        assert waitStartContext == null;
         setNextState();
         readDsonType(); // end of object
         assert currentDsonType == DsonType.END_OF_OBJECT;
-    }
-
-    @Override
-    public Number readNumber(int name) {
-        advanceToValueState(name, null);
-        return switch (currentDsonType) {
-            case INT32 -> readInt32(name);
-            case INT64 -> readInt64(name);
-            case FLOAT -> readFloat(name);
-            case DOUBLE -> readDouble(name);
-            default -> throw DsonIOException.dsonTypeMismatch(DsonType.DOUBLE, currentDsonType);
-        };
     }
 
     @Override
@@ -508,6 +501,7 @@ public abstract class AbstractDsonLiteReader implements DsonLiteReader {
         advanceToValueState(name, null);
         DsonReaderUtils.checkReadValueAsBytes(currentDsonType);
         byte[] data = doReadValueAsBytes();
+        assert waitStartContext == null;
         setNextState();
         return data;
     }

@@ -900,6 +900,7 @@ public final class DsonTextReader extends AbstractDsonReader {
     @Override
     protected void doSkipValue() {
         popNextValue();
+        clearWaitStartContext();
         switch (currentDsonType) {
             case HEADER, OBJECT, ARRAY -> skipStack(1);
         }
@@ -907,6 +908,7 @@ public final class DsonTextReader extends AbstractDsonReader {
 
     @Override
     protected void doSkipToEndOfObject() {
+        clearWaitStartContext();
         DsonToken endToken;
         if (isAtType()) {
             endToken = skipStack(1);
@@ -943,6 +945,14 @@ public final class DsonTextReader extends AbstractDsonReader {
     protected byte[] doReadValueAsBytes() {
         // Text的Reader和Writer实现最好相同，要么都不支持，要么都支持
         throw new UnsupportedOperationException();
+    }
+
+    private void clearWaitStartContext() {
+        Context context = (Context) waitStartContext;
+        if (context != null) {
+            waitStartContext = null;
+            returnContext(context);
+        }
     }
 
     // endregion

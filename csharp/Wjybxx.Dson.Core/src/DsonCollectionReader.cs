@@ -315,9 +315,12 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
     protected override void DoSkipValue() {
         PopNextValue();
+        ClearWaitStartContext();
     }
 
     protected override void DoSkipToEndOfObject() {
+        ClearWaitStartContext();
+        //
         Context context = GetContext();
         context.header = null;
         if (context.dsonObject != null) {
@@ -331,6 +334,15 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
     protected override byte[] DoReadValueAsBytes() {
         throw new InvalidOperationException("Unsupported operation");
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ClearWaitStartContext() {
+        Context context = (Context)waitStartContext;
+        if (context != null) {
+            waitStartContext = null;
+            ReturnContext(context);
+        }
     }
 
     #endregion

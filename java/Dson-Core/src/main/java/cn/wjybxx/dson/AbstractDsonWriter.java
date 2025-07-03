@@ -67,6 +67,11 @@ public abstract class AbstractDsonWriter implements DsonWriter {
     }
 
     @Override
+    public int getContextDepth() {
+        return recursionDepth;
+    }
+
+    @Override
     public String getCurrentName() {
         Context context = this.context;
         if (context.state != DsonWriterState.VALUE) {

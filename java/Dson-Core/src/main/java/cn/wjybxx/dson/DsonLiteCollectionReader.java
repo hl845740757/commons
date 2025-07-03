@@ -291,10 +291,13 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
     @Override
     protected void doSkipValue() {
         popNextValue();
+        clearWaitStartContext();
     }
 
     @Override
     protected void doSkipToEndOfObject() {
+        clearWaitStartContext();
+        //
         Context context = getContext();
         context.header = null;
         if (context.dsonObject != null) {
@@ -309,6 +312,14 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
     @Override
     protected byte[] doReadValueAsBytes() {
         throw new UnsupportedOperationException();
+    }
+
+    private void clearWaitStartContext() {
+        Context context = (Context)waitStartContext;
+        if (context != null) {
+            waitStartContext = null;
+            returnContext(context);
+        }
     }
 
     // endregion

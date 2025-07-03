@@ -227,19 +227,29 @@ public final class DsonBinaryReader extends AbstractDsonReader {
 
     @Override
     protected void doSkipValue() {
+        clearWaitStartContext();
         DsonReaderUtils.skipValue(input, getContextType(), currentDsonType, currentWireType, currentWireTypeBits);
     }
 
     @Override
     protected void doSkipToEndOfObject() {
+        clearWaitStartContext();
         DsonReaderUtils.skipToEndOfObject(input);
     }
 
     @Override
     protected byte[] doReadValueAsBytes() {
+        clearWaitStartContext();
         return DsonReaderUtils.readValueAsBytes(input, currentDsonType);
     }
 
+    private void clearWaitStartContext() {
+        Context context = (Context) waitStartContext;
+        if (context != null) {
+            waitStartContext = null;
+            returnContext(context);
+        }
+    }
     // endregion
 
     // region context

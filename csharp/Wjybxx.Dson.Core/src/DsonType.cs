@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using Wjybxx.Commons;
 
 namespace Wjybxx.Dson
@@ -118,21 +119,25 @@ public static class DsonTypes
     }
 
     /** DsonType是否表示容器类型；header不属于普通意义上的容器 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsContainer(this DsonType dsonType) {
         return dsonType == DsonType.Object || dsonType == DsonType.Array;
     }
 
     /** DsonType是否是容器类型或Header */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsContainerOrHeader(this DsonType dsonType) {
         return dsonType == DsonType.Object || dsonType == DsonType.Array || dsonType == DsonType.Header;
     }
 
     /** Dson是否是KV结构 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsObjectLike(this DsonType dsonType) {
         return dsonType == DsonType.Object || dsonType == DsonType.Header;
     }
 
     /** 通过Number获取对应的枚举 */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DsonType ForNumber(int number) {
         return LOOK_UP[number];
     }

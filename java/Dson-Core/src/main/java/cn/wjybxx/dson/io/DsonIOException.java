@@ -105,7 +105,17 @@ public class DsonIOException extends RuntimeException {
         return new DsonIOException(String.format("Unexpected subType, expected %d, but found %d", expected, subType));
     }
 
+    public static DsonIOException invalidState(DsonContextType contextType, DsonReaderState expected, DsonReaderState state) {
+        return new DsonIOException(String.format("invalid state, contextType %s, expected %s, but found %s.",
+                contextType, expected, state));
+    }
+
     public static DsonIOException invalidState(DsonContextType contextType, List<DsonReaderState> expected, DsonReaderState state) {
+        return new DsonIOException(String.format("invalid state, contextType %s, expected %s, but found %s.",
+                contextType, expected, state));
+    }
+
+    public static DsonIOException invalidState(DsonContextType contextType, DsonWriterState expected, DsonWriterState state) {
         return new DsonIOException(String.format("invalid state, contextType %s, expected %s, but found %s.",
                 contextType, expected, state));
     }

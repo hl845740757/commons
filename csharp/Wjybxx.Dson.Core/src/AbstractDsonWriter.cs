@@ -66,6 +66,7 @@ public abstract class AbstractDsonWriter<TName> : IDsonWriter<TName> where TName
     #region state
 
     public DsonContextType ContextType => context.contextType;
+    public int ContextDepth => recursionDepth;
 
     public TName CurrentName {
         get {

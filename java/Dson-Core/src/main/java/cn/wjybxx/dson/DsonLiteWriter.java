@@ -42,6 +42,9 @@ public interface DsonLiteWriter extends AutoCloseable {
     /** 获取当前上下文的类型 */
     DsonContextType getContextType();
 
+    /** 当前上下文深度 */
+    int getContextDepth();
+
     /** 获取当前写入的name -- 如果先调用WriteName */
     int getCurrentName();
 

@@ -221,15 +221,27 @@ public sealed class DsonBinaryReader<TName> : AbstractDsonReader<TName> where TN
     }
 
     protected override void DoSkipValue() {
+        ClearWaitStartContext();
         DsonReaderUtils.SkipValue(_input, ContextType, currentDsonType, currentWireType, currentWireTypeBits);
     }
 
     protected override void DoSkipToEndOfObject() {
+        ClearWaitStartContext();
         DsonReaderUtils.SkipToEndOfObject(_input);
     }
 
     protected override byte[] DoReadValueAsBytes() {
+        ClearWaitStartContext();
         return DsonReaderUtils.ReadValueAsBytes(_input, currentDsonType);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ClearWaitStartContext() {
+        Context context = (Context)waitStartContext;
+        if (context != null) {
+            waitStartContext = null;
+            ReturnContext(context);
+        }
     }
 
     #endregion

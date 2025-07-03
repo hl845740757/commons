@@ -41,6 +41,11 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     /// 获取当前上下文的类型
     /// </summary>
     DsonContextType ContextType { get; }
+    
+    /// <summary>
+    /// 当前的上下文深度
+    /// </summary>
+    int ContextDepth { get; }
 
     /// <summary>
     /// 获取当前写入的name -- 如果先调用WriteName
