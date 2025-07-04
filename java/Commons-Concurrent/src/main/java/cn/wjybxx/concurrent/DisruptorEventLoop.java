@@ -478,8 +478,8 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         }
         // 解决模块之间的依赖
         for (EventLoopModule module : moduleList) {
-            if (!module.getCid().isPrivateScript()) {
-                continue;
+            if (module.getCid().shared) {
+                continue; // 共享组件
             }
             module.resolveDependence();
         }
@@ -562,6 +562,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
             }
             agent.afterMainLoop(tickTime);
         }
+        agent.customUpdate(tickTime);
     }
 
     private void onInternalEvent(long curSequence, T event) throws Exception {

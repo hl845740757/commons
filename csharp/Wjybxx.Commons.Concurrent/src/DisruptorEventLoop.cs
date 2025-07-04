@@ -490,8 +490,8 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         }
         // 解决模块之间的依赖
         foreach (EventLoopModule module in _moduleList) {
-            if (!module.Cid.IsPrivateScript) {
-                continue;
+            if (module.Cid.Shared) {
+                continue; // 共享组件
             }
             module.ResolveDependence();
         }
@@ -577,6 +577,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
             }
             agent.AfterMainLoop(tickTime);
         }
+        agent.CustomUpdate(tickTime);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

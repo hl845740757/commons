@@ -23,7 +23,7 @@ import cn.wjybxx.base.fx.IComponent;
 /**
  * 事件循环的模块，亦即EventLoop的组件
  * 1.只有为{@link ComponentKind#SCRIPT}类型时才会被事件循环特殊调度，
- * 否则只调用{@link #onReady()}和{@link #onDestroy()}方法。
+ * 否则只调用{@link #onReady()}、{@link #onDestroy()}和{@link #resolveDependence()}方法。
  * 2.执行顺序为
  * {@link #onReady()}、{@link #resolveDependence()}、
  * {@link #start()}、

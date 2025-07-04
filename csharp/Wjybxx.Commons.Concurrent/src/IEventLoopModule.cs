@@ -23,7 +23,7 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 事件循环的模块，亦即EventLoop的组件
 /// 1.只有为<see cref="ComponentKind.Script"/>类型时才会被事件循环特殊调度，
-/// 否则只调用<see cref="IComponent.OnReady"/>和<see cref="IComponent.OnDestroy"/>方法。
+/// 否则只调用<see cref="IComponent.OnReady"/>、<see cref="IComponent.OnDestroy"/>和<see cref="ResolveDependence"/>方法。
 /// 2.执行顺序为
 /// <see cref="IComponent.OnReady"/>、<see cref="ResolveDependence"/>
 /// <see cref="Start"/>、

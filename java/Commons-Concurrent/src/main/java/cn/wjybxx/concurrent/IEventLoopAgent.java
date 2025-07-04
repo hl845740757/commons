@@ -97,6 +97,11 @@ public interface IEventLoopAgent<T extends IAgentEvent> extends IAgentEventHandl
 
     }
 
+    /** 自定义Update -- 在主循环外调用，用于实现不同频率的其它Update */
+    default void customUpdate(long threadTime) {
+
+    }
+
     /** 在停止所有Module前调用 */
     default void beforeEventLoopShutdown() {
     }

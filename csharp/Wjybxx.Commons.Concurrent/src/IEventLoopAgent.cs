@@ -98,6 +98,11 @@ public interface IEventLoopAgent<T> : IAgentEventHandler<T> where T : IAgentEven
     void AfterMainLoop(long threadTime) {
     }
 
+    /** 自定义Update -- 在主循环外调用，用于实现不同频率的其它Update */
+    void CustomUpdate(long threadTime) {
+
+    }
+
     /** 在停止所有Module前调用 */
     void BeforeEventLoopShutdown() {
     }
