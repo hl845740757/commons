@@ -40,6 +40,7 @@ public abstract class AbstractDsonWriter implements DsonWriter {
         this.settings = Objects.requireNonNull(settings, "settings");
     }
 
+    @Override
     public DsonWriterSettings getSettings() {
         return settings;
     }

@@ -16,7 +16,10 @@
 
 package cn.wjybxx.dson;
 
+import cn.wjybxx.dson.text.NumberStyle;
+
 import javax.annotation.concurrent.Immutable;
+import java.util.Objects;
 
 /**
  * @author wjybxx
@@ -29,10 +32,12 @@ public class DsonWriterSettings {
 
     public final int recursionLimit;
     public final boolean autoClose;
+    public final NumberStyle numberStyle;
 
     protected DsonWriterSettings(Builder builder) {
         this.recursionLimit = Math.max(1, builder.recursionLimit);
         this.autoClose = builder.autoClose;
+        this.numberStyle = Objects.requireNonNull(builder.numberStyle);
     }
 
     public static Builder newBuilder() {
@@ -45,6 +50,8 @@ public class DsonWriterSettings {
         private int recursionLimit = 32;
         /** 是否自动关闭底层的输入输出流 */
         private boolean autoClose = true;
+        /** 默认的数字编码格式 -- 默认Typed以精确反序列化，打印配置文件时可改用Simple */
+        private NumberStyle numberStyle = NumberStyle.TYPED;
 
         protected Builder() {
         }
@@ -64,6 +71,15 @@ public class DsonWriterSettings {
 
         public Builder setAutoClose(boolean autoClose) {
             this.autoClose = autoClose;
+            return this;
+        }
+
+        public NumberStyle getNumberStyle() {
+            return numberStyle;
+        }
+
+        public Builder setNumberStyle(NumberStyle numberStyle) {
+            this.numberStyle = numberStyle;
             return this;
         }
 

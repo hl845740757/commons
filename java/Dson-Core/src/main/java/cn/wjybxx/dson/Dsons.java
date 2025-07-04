@@ -300,9 +300,9 @@ public final class Dsons {
             writer.writeName(name);
         }
         switch (dsonValue.getDsonType()) {
-            case INT32 -> writer.writeInt32(name, dsonValue.asInt32(), NumberStyle.TYPED); // 必须能精确反序列化
-            case INT64 -> writer.writeInt64(name, dsonValue.asInt64(), NumberStyle.TYPED);
-            case FLOAT -> writer.writeFloat(name, dsonValue.asFloat(), NumberStyle.TYPED);
+            case INT32 -> writer.writeInt32(name, dsonValue.asInt32(), writer.getSettings().numberStyle);
+            case INT64 -> writer.writeInt64(name, dsonValue.asInt64(), writer.getSettings().numberStyle);
+            case FLOAT -> writer.writeFloat(name, dsonValue.asFloat(), writer.getSettings().numberStyle);
             case DOUBLE -> writer.writeDouble(name, dsonValue.asDouble(), NumberStyle.SIMPLE);
             case BOOL -> writer.writeBool(name, dsonValue.asBool());
             case STRING -> writer.writeString(name, dsonValue.asString(), StringStyle.AUTO);

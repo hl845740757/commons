@@ -18,12 +18,10 @@ package cn.wjybxx.dson.text;
 
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.DsonType;
-import cn.wjybxx.dson.internal.CommonsLang3;
+import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.internal.Utf8Util;
 
-import java.util.BitSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -73,11 +71,7 @@ public class DsonTexts {
     );
 
     /** 有特殊含义的字符串 */
-    private static final Set<String> parseableStrings = Set.of(
-            "true", "false",
-            "null", "undefine",
-            "NaN", "Infinity", "-Infinity",
-            "0", "1", "-1"); // 0和1出现的频次高
+    private static final Set<String> parseableStrings;
     /** 数字相关的字符 */
     private static final BitSet parseableCharSet = new BitSet(128);
 
@@ -90,6 +84,17 @@ public class DsonTexts {
     private static final BitSet unsafePrintCharSet = new BitSet(128);
 
     static {
+        List<String> tempList = new ArrayList<>(50);
+        Collections.addAll(tempList,
+                "true", "false",
+                "null", "undefine",
+                "NaN", "Infinity", "-Infinity");
+        // 将常见数字加入缓存
+        for (int number = -1; number < 10; number++) {
+            tempList.add(Integer.toString(number));
+        }
+        parseableStrings = Set.copyOf(tempList);
+
         char[] tokenCharArray = "{}[],:/@\"\\".toCharArray();
         for (char c : tokenCharArray) {
             unsafeCharSet.set(c);
@@ -145,7 +150,7 @@ public class DsonTexts {
         if (value.isEmpty() || value.length() > maxLengthOfUnquoteString) { // 长字符串都加引号，避免不必要的计算
             return false;
         }
-        if (parseableStrings.contains(value)) { // 特殊字符串值
+        if (!isName && parseableStrings.contains(value)) { // 特殊字符串值
             return false;
         }
 
@@ -315,7 +320,7 @@ public class DsonTexts {
         if (length == 0 || length > 67 + 16) { // 最长也不应该比二进制格式长，16是下划线预留
             return false;
         }
-        return CommonsLang3.isParsable(str);
+        return DsonInternals.isParsable(str);
     }
 
     public static int parseInt32(String rawStr) {

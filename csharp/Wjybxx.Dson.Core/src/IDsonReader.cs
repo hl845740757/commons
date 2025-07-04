@@ -244,6 +244,11 @@ public interface IDsonReader<TName> : IDisposable where TName : IEquatable<TName
     object Attachment();
 
     /// <summary>
+    /// 关联的配置
+    /// </summary>
+    DsonReaderSettings Settings { get; }
+
+    /// <summary>
     /// 读操作指导
     /// </summary>
     /// <returns></returns>

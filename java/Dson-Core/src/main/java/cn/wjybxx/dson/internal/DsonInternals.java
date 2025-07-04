@@ -16,6 +16,9 @@
 
 package cn.wjybxx.dson.internal;
 
+import cn.wjybxx.base.ObjectUtils;
+import cn.wjybxx.dson.io.DsonIOException;
+
 /**
  * 存放一些基础的工具方法，不想定义过多的小类，减少维护量
  *
@@ -29,14 +32,96 @@ public class DsonInternals {
     /** 垂直制表符号 - java不支持... */
     public static final char CHAR_VERTICAL_TAB = '\u000b';
 
-    /** 是否设置了任意bit */
-    public static boolean isAnySet(int flags, int mask) {
-        return (flags & mask) != 0;
-    }
-
     /** 是否设置了mask关联的所有bit */
     public static boolean isSet(int value, int mask) {
         return (value & mask) == mask;
     }
 
+    // region commons-lang3
+
+    public static boolean isParsable(String str) {
+        if (ObjectUtils.isEmpty(str)) {
+            return false;
+        }
+        if (str.charAt(str.length() - 1) == '.') {
+            return false;
+        }
+        if (str.charAt(0) == '-') {
+            if (str.length() == 1) {
+                return false;
+            }
+            return withDecimalsParsing(str, 1);
+        }
+        return withDecimalsParsing(str, 0);
+    }
+
+    private static boolean withDecimalsParsing(final String str, final int beginIdx) {
+        int decimalPoints = 0;
+        for (int i = beginIdx; i < str.length(); i++) {
+            final boolean isDecimalPoint = str.charAt(i) == '.';
+            if (isDecimalPoint) {
+                decimalPoints++;
+            }
+            if (decimalPoints > 1) {
+                return false;
+            }
+            if (!isDecimalPoint && !Character.isDigit(str.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static final char[] DIGITS_UPPER = {
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'A', 'B', 'C', 'D', 'E', 'F'};
+
+    public static void encodeHex(final byte[] data, final int dataOffset, final int dataLen,
+                                 final char[] outBuffer, final int outOffset) {
+        char[] toDigits = DIGITS_UPPER;
+        for (int i = dataOffset, j = outOffset; i < dataOffset + dataLen; i++) {
+            outBuffer[j++] = toDigits[(0xF0 & data[i]) >>> 4]; // 高4位
+            outBuffer[j++] = toDigits[0x0F & data[i]]; // 低4位
+        }
+    }
+
+    public static byte[] decodeHex(char[] data) {
+        final int dateLen = data.length;
+        if ((dateLen & 0x01) != 0) {
+            throw new DsonIOException("string length not even: " + data.length);
+        }
+        byte[] result = new byte[dateLen >> 1];
+        // two characters form the hex value.
+        for (int i = 0, j = 0; j < dateLen; i++) {
+            int f = toDigit(data[j], j) << 4;
+            j++;
+            f = f | toDigit(data[j], j);
+            j++;
+            result[i] = (byte) (f & 0xFF);
+        }
+        return result;
+    }
+
+    private static int toDigit(final char c, final int index) {
+        return switch (c) {
+            case '0' -> 0;
+            case '1' -> 1;
+            case '2' -> 2;
+            case '3' -> 3;
+            case '4' -> 4;
+            case '5' -> 5;
+            case '6' -> 6;
+            case '7' -> 7;
+            case '8' -> 8;
+            case '9' -> 9;
+            case 'a', 'A' -> 10;
+            case 'b', 'B' -> 11;
+            case 'c', 'C' -> 12;
+            case 'd', 'D' -> 13;
+            case 'e', 'E' -> 14;
+            case 'f', 'F' -> 15;
+            default -> throw new DsonIOException("Illegal hexadecimal character " + c + " at index " + index);
+        };
+    }
+    // endregion
 }

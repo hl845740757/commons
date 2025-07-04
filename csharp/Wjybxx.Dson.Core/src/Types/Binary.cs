@@ -82,7 +82,7 @@ public sealed class Binary
     #endregion
 
     public override string ToString() {
-        return $"{nameof(_data)}: {CommonsLang3.ToHexString(_data)}";
+        return $"{nameof(_data)}: {DsonInternals.ToHexString(_data)}";
     }
 
     #region MyRegion
@@ -103,7 +103,7 @@ public sealed class Binary
     /// 转换为16进制字符串
     /// </summary>
     /// <returns></returns>
-    public string ToHexString() => CommonsLang3.ToHexString(_data);
+    public string ToHexString() => DsonInternals.ToHexString(_data);
 
     /// <summary>
     /// 获取底层的字节数组，一般业务不应该访问，否则可能破坏不可变约束
@@ -115,11 +115,11 @@ public sealed class Binary
     }
 
     public static Binary FromHexString(string hexString) {
-        return new Binary(CommonsLang3.DecodeHex(hexString));
+        return new Binary(DsonInternals.DecodeHex(hexString));
     }
 
     public static Binary FromHexString(StringBuilder hexString) {
-        return new Binary(CommonsLang3.DecodeHex(hexString));
+        return new Binary(DsonInternals.DecodeHex(hexString));
     }
 
     public static Binary CopyFrom(byte[] bytes) {

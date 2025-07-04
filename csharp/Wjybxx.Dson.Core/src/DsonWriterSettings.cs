@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using Wjybxx.Dson.Text;
 
 namespace Wjybxx.Dson
 {
@@ -29,10 +30,12 @@ public class DsonWriterSettings
 
     public readonly int recursionLimit;
     public readonly bool autoClose;
+    public readonly INumberStyle numberStyle;
 
     public DsonWriterSettings(Builder builder) {
         this.recursionLimit = Math.Max(1, builder.RecursionLimit);
         this.autoClose = builder.AutoClose;
+        this.numberStyle = builder.NumberStyle;
     }
 
     public static Builder NewBuilder() {
@@ -45,6 +48,8 @@ public class DsonWriterSettings
         public int RecursionLimit { get; set; } = 32;
         /** 是否自动关闭底层的输入输出流 */
         public bool AutoClose { get; set; } = true;
+        /** 默认的数字编码格式 -- 默认Typed以精确反序列化，打印配置文件时可改用Simple */
+        public INumberStyle NumberStyle { get; set; } = NumberStyles.Typed;
 
         public Builder() {
         }

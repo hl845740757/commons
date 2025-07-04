@@ -417,13 +417,13 @@ public static class Dsons
         }
         switch (dsonValue.DsonType) {
             case DsonType.Int32:
-                writer.WriteInt32(name, dsonValue.AsInt32(), NumberStyles.Typed); // 必须能精确反序列化
+                writer.WriteInt32(name, dsonValue.AsInt32(), writer.Settings.numberStyle);
                 break;
             case DsonType.Int64:
-                writer.WriteInt64(name, dsonValue.AsInt64(), NumberStyles.Typed);
+                writer.WriteInt64(name, dsonValue.AsInt64(), writer.Settings.numberStyle);
                 break;
             case DsonType.Float:
-                writer.WriteFloat(name, dsonValue.AsFloat(), NumberStyles.Typed);
+                writer.WriteFloat(name, dsonValue.AsFloat(), writer.Settings.numberStyle);
                 break;
             case DsonType.Double:
                 writer.WriteDouble(name, dsonValue.AsDouble(), NumberStyles.Simple);

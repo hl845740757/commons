@@ -193,6 +193,9 @@ public interface DsonWriter extends AutoCloseable {
 
     Object attachment();
 
+    /** 配置 */
+    DsonWriterSettings getSettings();
+
     // endregion
 
 }

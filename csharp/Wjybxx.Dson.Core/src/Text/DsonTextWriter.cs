@@ -310,13 +310,13 @@ public sealed class DsonTextWriter : AbstractDsonWriter<string>
         int loop = length / segment;
         for (int i = 0; i < loop; i++) {
             CheckLineLength(printer, softLineLength);
-            CommonsLang3.EncodeHex(buffer, offset + i * segment, segment, cBuffer);
+            DsonInternals.EncodeHex(buffer, offset + i * segment, segment, cBuffer);
             printer.FastPrint(cBuffer);
         }
         int remain = length - loop * segment;
         if (remain > 0) {
             CheckLineLength(printer, softLineLength);
-            CommonsLang3.EncodeHex(buffer, offset + loop * segment, remain, cBuffer);
+            DsonInternals.EncodeHex(buffer, offset + loop * segment, remain, cBuffer);
             printer.FastPrint(cBuffer.Slice(0, remain * 2));
         }
         printer.Print('"');

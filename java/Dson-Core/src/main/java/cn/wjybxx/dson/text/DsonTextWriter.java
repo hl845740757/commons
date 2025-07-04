@@ -21,7 +21,6 @@ import cn.wjybxx.dson.AbstractDsonWriter;
 import cn.wjybxx.dson.DsonContextType;
 import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.DsonWriterState;
-import cn.wjybxx.dson.internal.CommonsLang3;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.types.*;
 
@@ -318,13 +317,13 @@ public final class DsonTextWriter extends AbstractDsonWriter {
         int loop = length / segment;
         for (int i = 0; i < loop; i++) {
             checkLineLength(printer, softLineLength);
-            CommonsLang3.encodeHex(buffer, offset + i * segment, segment, cBuffer, 0);
+            DsonInternals.encodeHex(buffer, offset + i * segment, segment, cBuffer, 0);
             printer.fastPrint(cBuffer, 0, cBuffer.length);
         }
         int remain = length - loop * segment;
         if (remain > 0) {
             checkLineLength(printer, softLineLength);
-            CommonsLang3.encodeHex(buffer, offset + loop * segment, remain, cBuffer, 0);
+            DsonInternals.encodeHex(buffer, offset + loop * segment, remain, cBuffer, 0);
             printer.fastPrint(cBuffer, 0, remain * 2);
         }
         printer.print('"');

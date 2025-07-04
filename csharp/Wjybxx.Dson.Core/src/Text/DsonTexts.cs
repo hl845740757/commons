@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -71,13 +72,7 @@ public static class DsonTexts
     }.ToImmutableSet2();
 
     /** 有特殊含义的字符串 */
-    private static readonly ImmutableSet<string> parseableStrings = new[]
-    {
-        "true", "false",
-        "null", "undefine",
-        "NaN", "Infinity", "-Infinity",
-        "0", "1", "-1" // 0和1出现的频次高
-    }.ToImmutableSet2();
+    private static readonly ImmutableSet<string> parseableStrings;
     /** 数字相关的字符 */
     private static readonly BitArray parseableCharSet = new BitArray(128);
 
@@ -90,6 +85,18 @@ public static class DsonTexts
     private static readonly BitArray unsafePrintCharSet = new BitArray(128);
 
     static DsonTexts() {
+        List<string> tempList = new List<string>(50)
+        {
+            "true", "false",
+            "null", "undefine",
+            "NaN", "Infinity", "-Infinity"
+        };
+        // 将常见数字加入缓存
+        for (int number = -1; number < 10; number++) {
+            tempList.Add(number.ToString());
+        }
+        parseableStrings = tempList.ToImmutableSet2();
+
         char[] tokenCharArray = "{}[],:/@\"\\".ToCharArray();
         foreach (char c in tokenCharArray) {
             unsafeCharSet.Set(c, true);
@@ -150,7 +157,7 @@ public static class DsonTexts
         if (value.Length == 0 || value.Length > maxLengthOfUnquoteString) {
             return false; // 长字符串都加引号，避免不必要的计算
         }
-        if (parseableStrings.Contains(value)) {
+        if (!isName && parseableStrings.Contains(value)) {
             return false; // 特殊字符串值
         }
         bool hasExponent = false;
@@ -334,7 +341,7 @@ public static class DsonTexts
         if (length == 0 || length > 67 + 16) {
             return false; // 最长也不应该比二进制格式长，16是下划线预留
         }
-        return CommonsLang3.IsParsable(str);
+        return DsonInternals.IsParsable(str);
     }
 
     public static int ParseInt32(string rawStr) {

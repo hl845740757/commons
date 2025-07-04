@@ -219,6 +219,11 @@ public interface IDsonWriter<TName> : IDisposable where TName : IEquatable<TName
     /// <returns></returns>
     object Attachment();
 
+    /// <summary>
+    /// 关联的配置
+    /// </summary>
+    DsonWriterSettings Settings { get; }
+
     #endregion
 }
 }

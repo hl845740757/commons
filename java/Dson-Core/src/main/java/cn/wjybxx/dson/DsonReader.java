@@ -214,6 +214,9 @@ public interface DsonReader extends AutoCloseable {
 
     Object attachment();
 
+    /** 配置 */
+    DsonReaderSettings getSettings();
+
     /** 读操作指导 */
     DsonReaderGuide whatShouldIDo();
 

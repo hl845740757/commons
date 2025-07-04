@@ -66,7 +66,7 @@ public readonly struct ExtDateTime : IEquatable<ExtDateTime>
         if ((enables & MaskAll) != enables) {
             throw new ArgumentException("invalid enables: " + enables);
         }
-        if (seconds != 0 && !DsonInternals.IsAnySet(enables, MaskDatetime)) {
+        if (seconds != 0 && (enables & MaskDatetime) == 0) {
             throw new ArgumentException("date and time are disabled, but seconds is not 0");
         }
         if (nanos != 0 && !DsonInternals.IsSet(enables, MaskTime)) {

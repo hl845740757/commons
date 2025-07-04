@@ -49,6 +49,7 @@ public abstract class AbstractDsonReader implements DsonReader {
         this.settings = Objects.requireNonNull(settings, "settings");
     }
 
+    @Override
     public DsonReaderSettings getSettings() {
         return settings;
     }
