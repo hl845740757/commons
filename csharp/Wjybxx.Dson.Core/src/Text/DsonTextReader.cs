@@ -352,44 +352,32 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                 case DsonHeader.Names_LocalId: {
                     return ParseLocalId(unquotedString);
                 }
+                case DsonHeader.Names_Count: {
+                    return ParseCount(unquotedString);
+                }
             }
         }
         // 处理类型传递
         if (context.compClsNameToken.HasValue) {
             switch (context.compClsNameToken.Value.StringValue()) {
                 case DsonTexts.LabelInt32: {
-                    PushNextValue(new UnionValue(DsonType.Int32)
-                    {
-                        iValue = DsonTexts.ParseInt32(unquotedString)
-                    });
+                    PushNextValue(UnionValue.OfInt32(DsonTexts.ParseInt32(unquotedString)));
                     return DsonType.Int32;
                 }
                 case DsonTexts.LabelInt64: {
-                    PushNextValue(new UnionValue(DsonType.Int64)
-                    {
-                        lValue = DsonTexts.ParseInt64(unquotedString)
-                    });
+                    PushNextValue(UnionValue.OfInt64(DsonTexts.ParseInt64(unquotedString)));
                     return DsonType.Int64;
                 }
                 case DsonTexts.LabelFloat: {
-                    PushNextValue(new UnionValue(DsonType.Float)
-                    {
-                        fValue = DsonTexts.ParseFloat(unquotedString)
-                    });
+                    PushNextValue(UnionValue.OfFloat(DsonTexts.ParseFloat(unquotedString)));
                     return DsonType.Float;
                 }
                 case DsonTexts.LabelDouble: {
-                    PushNextValue(new UnionValue(DsonType.Double)
-                    {
-                        dValue = DsonTexts.ParseDouble(unquotedString)
-                    });
+                    PushNextValue(UnionValue.OfDouble(DsonTexts.ParseDouble(unquotedString)));
                     return DsonType.Double;
                 }
                 case DsonTexts.LabelBool: {
-                    PushNextValue(new UnionValue(DsonType.Bool)
-                    {
-                        bValue = DsonTexts.ParseBool(unquotedString)
-                    });
+                    PushNextValue(UnionValue.OfBool(DsonTexts.ParseBool(unquotedString)));
                     return DsonType.Bool;
                 }
                 case DsonTexts.LabelString: {
@@ -397,8 +385,8 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                     return DsonType.String;
                 }
                 case DsonTexts.LabelBinary: {
-                    byte[] bytes = CommonsLang3.FromHexString(unquotedString);
-                    PushNextValue(new UnionValue(DsonType.Binary, bytes)); // 直接压入bytes避免Binary再装箱
+                    Binary binary = Binary.FromHexString(unquotedString);
+                    PushNextValue(UnionValue.OfBinary(binary));
                     return DsonType.Binary;
                 }
             }
@@ -407,10 +395,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         // 处理特殊值解析
         bool isTrueString = "true" == unquotedString;
         if (isTrueString || "false" == unquotedString) {
-            PushNextValue(new UnionValue(DsonType.Bool)
-            {
-                bValue = isTrueString
-            });
+            PushNextValue(UnionValue.OfBool(isTrueString));
             return DsonType.Bool;
         }
         if ("null" == unquotedString) {
@@ -418,30 +403,35 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             return DsonType.Null;
         }
         if (DsonTexts.IsParsable(unquotedString)) {
-            PushNextValue(new UnionValue(DsonType.Double)
-            {
-                dValue = DsonTexts.ParseDouble(unquotedString)
-            });
+            PushNextValue(UnionValue.OfDouble(DsonTexts.ParseDouble(unquotedString)));
             return DsonType.Double;
         }
         PushNextValue(new UnionValue(DsonType.String, unquotedString));
         return DsonType.String;
     }
 
-    private DsonType ParseLocalId(string unquotedString) {
-        switch (Settings.localIdType) {
+    private DsonType ParseCount(string unquotedString) {
+        switch (Settings.countType) {
             case DsonType.Int32: {
-                PushNextValue(new UnionValue(DsonType.Int32)
-                {
-                    iValue = DsonTexts.ParseInt32(unquotedString)
-                });
+                PushNextValue(UnionValue.OfInt32(DsonTexts.ParseInt32(unquotedString)));
                 return DsonType.Int32;
             }
             case DsonType.Int64: {
-                PushNextValue(new UnionValue(DsonType.Int64)
-                {
-                    lValue = DsonTexts.ParseInt64(unquotedString)
-                });
+                PushNextValue(UnionValue.OfInt64(DsonTexts.ParseInt64(unquotedString)));
+                return DsonType.Int64;
+            }
+            default: throw new AssertionError();
+        }
+    }
+
+    private DsonType ParseLocalId(string unquotedString) {
+        switch (Settings.localIdType) {
+            case DsonType.Int32: {
+                PushNextValue(UnionValue.OfInt32(DsonTexts.ParseInt32(unquotedString)));
+                return DsonType.Int32;
+            }
+            case DsonType.Int64: {
+                PushNextValue(UnionValue.OfInt64(DsonTexts.ParseInt64(unquotedString)));
                 return DsonType.Int64;
             }
             default: {
@@ -464,37 +454,25 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context, nextToken);
             string localId = nextToken.NullableStringValue();
-            PushNextValue(new UnionValue(DsonType.Pointer)
-            {
-                ObjectPtr = new ObjectPtr(localId)
-            });
+            PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(localId)));
             return DsonType.Pointer;
         }
         if (DsonTexts.LabelLitePtr == clsName) { // @ptr localId
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context, nextToken);
             long localId = DsonTexts.ParseInt64(nextToken.StringValue());
-            PushNextValue(new UnionValue(DsonType.LitePointer)
-            {
-                ObjectLitePtr = new ObjectLitePtr(localId)
-            });
+            PushNextValue(UnionValue.OfObjectLitePtr(new ObjectLitePtr(localId)));
             return DsonType.LitePointer;
         }
         if (DsonTexts.LabelDateTime == clsName) { // @dt uuuu-MM-dd'T'HH:mm:ss
             DateTime dateTime = ExtDateTime.ParseDateTime(ScanStringUtilComma());
-            PushNextValue(new UnionValue(DsonType.DateTime)
-            {
-                DateTime = ExtDateTime.OfDateTime(in dateTime)
-            });
+            PushNextValue(UnionValue.OfDateTime(ExtDateTime.OfDateTime(in dateTime)));
             return DsonType.DateTime;
         }
         if (DsonTexts.LabelTimestamp == clsName) { // @ts seconds
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context, nextToken);
-            PushNextValue(new UnionValue(DsonType.Timestamp)
-            {
-                Timestamp = Timestamp.Parse(nextToken.StringValue())
-            });
+            PushNextValue(UnionValue.OfTimestamp(Timestamp.Parse(nextToken.StringValue())));
             return DsonType.Timestamp;
         }
         throw DsonIOException.InvalidTokenType(context.contextType, valueToken);
@@ -518,31 +496,19 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         string clsName = headerToken.StringValue();
         switch (clsName) {
             case DsonTexts.LabelPtr: {
-                PushNextValue(new UnionValue(DsonType.Pointer)
-                {
-                    ObjectPtr = ScanPtr(context)
-                });
+                PushNextValue(UnionValue.OfObjectPtr(ScanPtr(context)));
                 return DsonType.Pointer;
             }
             case DsonTexts.LabelLitePtr: {
-                PushNextValue(new UnionValue(DsonType.LitePointer)
-                {
-                    ObjectLitePtr = ScanLitePtr(context)
-                });
+                PushNextValue(UnionValue.OfObjectLitePtr(ScanLitePtr(context)));
                 return DsonType.LitePointer;
             }
             case DsonTexts.LabelDateTime: {
-                PushNextValue(new UnionValue(DsonType.DateTime)
-                {
-                    DateTime = ScanDateTime(context)
-                });
+                PushNextValue(UnionValue.OfDateTime(ScanDateTime(context)));
                 return DsonType.DateTime;
             }
             case DsonTexts.LabelTimestamp: {
-                PushNextValue(new UnionValue(DsonType.Timestamp)
-                {
-                    Timestamp = ScanTimestamp(context)
-                });
+                PushNextValue(UnionValue.OfTimestamp(ScanTimestamp(context)));
                 return DsonType.Timestamp;
             }
             default: {

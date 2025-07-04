@@ -211,10 +211,10 @@ public class DefaultDsonObjectWriter : IDsonObjectWriter
         TypeWritePolicy policy = converter.Options.typeWritePolicy;
         bool typed = (policy == TypeWritePolicy.Optimized && !typeWriteHelper.IsOptimizable(encoderType, declaredType))
                      || policy == TypeWritePolicy.Always;
-        if (!typed && count < 0) {
+        if (!typed && count < 1) { // count为0也没写入必要
             return;
         }
-        if (count < 0) {
+        if (count < 1) {
             TypeMeta typeMeta = converter.TypeMetaRegistry.OfType(encoderType);
             if (typeMeta == null) {
                 throw new DsonCodecException($"typeMeta of encoderType: {encoderType} is absent");

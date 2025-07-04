@@ -30,7 +30,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.ArrayDeque;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
 
@@ -355,6 +354,9 @@ public final class DsonTextReader extends AbstractDsonReader {
                 case DsonHeader.NAMES_LOCAL_ID -> {
                     return parseLocalId(unquotedString);
                 }
+                case DsonHeader.NAMES_COUNT -> {
+                    return parseCount(unquotedString);
+                }
             }
         }
         // 处理类型传递
@@ -385,8 +387,8 @@ public final class DsonTextReader extends AbstractDsonReader {
                     return DsonType.STRING;
                 }
                 case DsonTexts.LABEL_BINARY -> {
-                    byte[] bytes = HexFormat.of().parseHex(unquotedString);
-                    pushNextValue(bytes); // 直接压入bytes
+                    Binary binary = Binary.fromHexString(unquotedString);
+                    pushNextValue(binary);
                     return DsonType.BINARY;
                 }
             }
@@ -408,6 +410,20 @@ public final class DsonTextReader extends AbstractDsonReader {
         }
         pushNextValue(unquotedString);
         return DsonType.STRING;
+    }
+
+    private DsonType parseCount(String unquotedString) {
+        switch (getSettings().countType) {
+            case INT32 -> {
+                pushNextValue(DsonTexts.parseInt32(unquotedString));
+                return DsonType.INT32;
+            }
+            case INT64 -> {
+                pushNextValue(DsonTexts.parseInt64(unquotedString));
+                return DsonType.INT64;
+            }
+            default -> throw new AssertionError();
+        }
     }
 
     private DsonType parseLocalId(String unquotedString) {

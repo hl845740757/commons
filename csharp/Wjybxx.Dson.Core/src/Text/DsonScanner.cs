@@ -279,10 +279,7 @@ public sealed class DsonScanner : IDisposable
                 if (skipValue) {
                     return new DsonToken(DsonTokenType.Int32, null, Position);
                 }
-                UnionValue value = new UnionValue(DsonType.Int32)
-                {
-                    iValue = DsonTexts.ParseInt32(nextToken.StringValue())
-                };
+                UnionValue value = UnionValue.OfInt32(DsonTexts.ParseInt32(nextToken.StringValue()));
                 return new DsonToken(DsonTokenType.Int32, in value, Position);
             }
             case DsonTexts.LabelInt64: {
@@ -291,10 +288,7 @@ public sealed class DsonScanner : IDisposable
                 if (skipValue) {
                     return new DsonToken(DsonTokenType.Int64, null, Position);
                 }
-                UnionValue value = new UnionValue(DsonType.Int64)
-                {
-                    lValue = DsonTexts.ParseInt64(nextToken.StringValue())
-                };
+                UnionValue value = UnionValue.OfInt64(DsonTexts.ParseInt64(nextToken.StringValue()));
                 return new DsonToken(DsonTokenType.Int64, in value, Position);
             }
             case DsonTexts.LabelFloat: {
@@ -303,10 +297,7 @@ public sealed class DsonScanner : IDisposable
                 if (skipValue) {
                     return new DsonToken(DsonTokenType.Float, null, Position);
                 }
-                UnionValue value = new UnionValue(DsonType.Float)
-                {
-                    fValue = DsonTexts.ParseFloat(nextToken.StringValue())
-                };
+                UnionValue value = UnionValue.OfFloat(DsonTexts.ParseFloat(nextToken.StringValue()));
                 return new DsonToken(DsonTokenType.Float, in value, Position);
             }
             case DsonTexts.LabelDouble: {
@@ -315,10 +306,7 @@ public sealed class DsonScanner : IDisposable
                 if (skipValue) {
                     return new DsonToken(DsonTokenType.Double, null, Position);
                 }
-                UnionValue value = new UnionValue(DsonType.Double)
-                {
-                    dValue = DsonTexts.ParseDouble(nextToken.StringValue())
-                };
+                UnionValue value = UnionValue.OfDouble(DsonTexts.ParseDouble(nextToken.StringValue()));
                 return new DsonToken(DsonTokenType.Double, in value, Position);
             }
             case DsonTexts.LabelBool: {
@@ -327,10 +315,7 @@ public sealed class DsonScanner : IDisposable
                 if (skipValue) {
                     return new DsonToken(DsonTokenType.Bool, null, Position);
                 }
-                UnionValue value = new UnionValue(DsonType.Bool)
-                {
-                    bValue = DsonTexts.ParseBool(nextToken.StringValue())
-                };
+                UnionValue value = UnionValue.OfBool(DsonTexts.ParseBool(nextToken.StringValue()));
                 return new DsonToken(DsonTokenType.Bool, in value, Position);
             }
             case DsonTexts.LabelNull: {
@@ -351,7 +336,7 @@ public sealed class DsonScanner : IDisposable
                 return new DsonToken(DsonTokenType.String, ScanSingleLineText(skipValue), Position);
             }
             case DsonTexts.LabelBinary: {
-                UnionValue value = new UnionValue(DsonType.Binary, ScanBinary(skipValue));
+                UnionValue value = UnionValue.OfBinary(ScanBinary(skipValue));
                 return new DsonToken(DsonTokenType.Binary, value, Position);
             }
         }

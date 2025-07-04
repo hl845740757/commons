@@ -28,14 +28,20 @@ public class DsonTextReaderSettings : DsonReaderSettings
     public new static DsonTextReaderSettings Default { get; } = (DsonTextReaderSettings)NewBuilder().Build();
 
     public readonly DsonType localIdType;
+    public readonly DsonType countType;
 
     public DsonTextReaderSettings(Builder builder) : base(builder) {
         localIdType = builder.LocalIdType;
+        countType = builder.CountType;
 
         if (localIdType != DsonType.Int32
             && localIdType != DsonType.Int64
             && localIdType != DsonType.String) {
             throw new ArgumentException("invalid localIdType: " + localIdType);
+        }
+        if (countType != DsonType.Int32
+            && countType != DsonType.Int64) {
+            throw new ArgumentException("invalid countType: " + countType);
         }
     }
 
@@ -47,6 +53,8 @@ public class DsonTextReaderSettings : DsonReaderSettings
     {
         /** localId的类型 -- 限制int32、int64、string */
         public DsonType LocalIdType { get; set; } = DsonType.String;
+        /** count的类型 -- 限制int32、int64 */
+        public DsonType CountType { get; set; } = DsonType.Int32;
 
         public Builder() {
         }

@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Wjybxx.Commons;
 using Wjybxx.Dson.Internal;
@@ -57,6 +58,65 @@ public struct UnionValue : IEquatable<UnionValue>
         this.type = type;
         this.objValue = objValue;
     }
+
+    #region factory
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfInt32(int value) {
+        return new UnionValue(DsonType.Int32) { iValue = value };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfInt64(long value) {
+        return new UnionValue(DsonType.Int64) { lValue = value };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfFloat(float value) {
+        return new UnionValue(DsonType.Float) { fValue = value };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfDouble(double value) {
+        return new UnionValue(DsonType.Double) { dValue = value };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfBool(bool value) {
+        return new UnionValue(DsonType.Bool) { bValue = value };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfString(string value) {
+        return new UnionValue(DsonType.String, value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfBinary(Binary value) {
+        return new UnionValue(DsonType.Binary, value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfObjectPtr(in ObjectPtr value) {
+        return new UnionValue(DsonType.Pointer) { ObjectPtr = value };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfObjectLitePtr(in ObjectLitePtr value) {
+        return new UnionValue(DsonType.LitePointer) { ObjectLitePtr = value };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfDateTime(in ExtDateTime value) {
+        return new UnionValue(DsonType.DateTime) { DateTime = value };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static UnionValue OfTimestamp(in Timestamp value) {
+        return new UnionValue(DsonType.Timestamp) { Timestamp = value };
+    }
+
+    #endregion
 
     #region converter
 

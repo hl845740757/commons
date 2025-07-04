@@ -18,6 +18,7 @@ package cn.wjybxx.dson;
 
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
 import cn.wjybxx.dson.ext.MarkableIterator;
+import cn.wjybxx.dson.ext.SingleValueIterator;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.types.*;
 
@@ -31,6 +32,7 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
 
     private int nextName = 0; // 0是无效值
     private DsonValue nextValue;
+    private final boolean unsafeTop;
 
     public DsonLiteCollectionReader(DsonReaderSettings settings, DsonArray<Integer> dsonArray) {
         super(settings);
@@ -39,7 +41,27 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
         context.header = !dsonArray.getHeader().isEmpty() ? dsonArray.getHeader() : null;
         context.container = dsonArray;
         context.arrayIterator.setBaseIterator(dsonArray.iterator());
+        unsafeTop = false;
         setContext(context);
+    }
+
+    private DsonLiteCollectionReader(DsonReaderSettings settings, DsonValue dsonValue, boolean ignore) {
+        super(settings);
+        Objects.requireNonNull(dsonValue);
+
+        // 这里仍然是标准的数组上下文，但我们使用单值迭代器避免额外的封装开销
+        Context context = newContext(null, DsonContextType.TOP_LEVEL, null);
+        context.header = null;
+        context.container = dsonValue;
+        context.arrayIterator.setBaseIterator(new SingleValueIterator<>(dsonValue));
+        unsafeTop = true;
+        setContext(context);
+    }
+
+    /** 适用读取顶层集合的单个值的情况 */
+    public static DsonLiteCollectionReader unsafeCreate(DsonReaderSettings settings, DsonValue dsonValue) {
+        return new DsonLiteCollectionReader(settings, dsonValue, true);
+
     }
 
     /**
@@ -56,7 +78,7 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
 
     public Set<Integer> getkeySet() {
         Context context = getContext();
-        return switch (context.container.getDsonType()) {
+        return switch (context.contextType) {
             case HEADER -> context.container.asHeaderLite().keySet();
             case OBJECT -> context.container.asObjectLite().keySet();
             default -> throw new IllegalStateException();
@@ -66,10 +88,11 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
     /** 获取当前容器的大小 */
     public int count() {
         Context context = getContext();
-        return switch (context.container.getDsonType()) {
+        return switch (context.contextType) {
             case HEADER -> context.container.asHeaderLite().size();
             case OBJECT -> context.container.asObjectLite().size();
             case ARRAY -> context.container.asArrayLite().size();
+            case TOP_LEVEL -> unsafeTop ? 1 : context.container.asArrayLite().size();
             default -> throw new AssertionError();
         };
     }
@@ -310,7 +333,7 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
         //
         Context context = getContext();
         context.header = null;
-        if (context.container.getDsonType() == DsonType.ARRAY) {
+        if (context.contextType.isArrayLike()) {
             context.arrayIterator.close();
             context.arrayIterator.setBaseIterator(Collections.emptyIterator());
         } else {
@@ -354,7 +377,7 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
 
         /** 如果不为null，则表示需要先读取header */
         private DsonHeader<Integer> header;
-        /** 当前读取的容器 */
+        /** 当前读取的容器 -- 顶层对象不一定是array */
         private DsonValue container;
         /** 随着Context池化 */
         private final MarkableIterator<Map.Entry<Integer, DsonValue>> objectIterator = new MarkableIterator<>(null);
@@ -389,14 +412,14 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
             if (keyItr != null) {
                 return keyItr.hasNext();
             }
-            if (container.getDsonType() == DsonType.ARRAY) {
+            if (contextType.isArrayLike()) {
                 return arrayIterator.hasNext();
             }
             return objectIterator.hasNext();
         }
 
         public void markItr() {
-            if (container.getDsonType() == DsonType.ARRAY) {
+            if (contextType.isArrayLike()) {
                 arrayIterator.mark();
             } else {
                 objectIterator.mark();
@@ -404,7 +427,7 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
         }
 
         public void resetItr() {
-            if (container.getDsonType() == DsonType.ARRAY) {
+            if (contextType.isArrayLike()) {
                 arrayIterator.reset();
             } else {
                 objectIterator.reset();
@@ -422,8 +445,7 @@ public final class DsonLiteCollectionReader extends AbstractDsonLiteReader {
         // key-itr
 
         public void setKeyItr(Iterator<Integer> keyItr, DsonValue defValue) {
-            if (container.getDsonType() == DsonType.ARRAY)
-                throw new IllegalStateException("container is not an object");
+            if (contextType.isArrayLike()) throw new IllegalStateException("container is not an object");
             if (objectIterator.isMarking()) throw new IllegalStateException("reader is in marking state");
 
             this.keyItr = keyItr;

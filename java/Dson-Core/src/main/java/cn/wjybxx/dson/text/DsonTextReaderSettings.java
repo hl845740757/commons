@@ -30,15 +30,21 @@ public class DsonTextReaderSettings extends DsonReaderSettings {
     public static final DsonTextReaderSettings DEFAULT = newBuilder().build();
 
     public final DsonType localIdType;
+    public final DsonType countType;
 
     protected DsonTextReaderSettings(Builder builder) {
         super(builder);
         localIdType = Objects.requireNonNull(builder.localIdType);
+        countType = Objects.requireNonNull(builder.countType);
 
         if (localIdType != DsonType.INT32
                 && localIdType != DsonType.INT64
                 && localIdType != DsonType.STRING) {
             throw new IllegalArgumentException("invalid localIdType: " + localIdType);
+        }
+        if (countType != DsonType.INT32
+                && countType != DsonType.INT64) {
+            throw new IllegalArgumentException("invalid countType: " + countType);
         }
     }
 
@@ -49,6 +55,8 @@ public class DsonTextReaderSettings extends DsonReaderSettings {
     public static class Builder extends DsonReaderSettings.Builder {
         /** localId的类型 -- 限制int32、int64、string */
         private DsonType localIdType = DsonType.STRING;
+        /** count的类型 -- 限制int32、int64 */
+        private DsonType countType = DsonType.INT32;
 
         protected Builder() {
         }
@@ -59,6 +67,15 @@ public class DsonTextReaderSettings extends DsonReaderSettings {
 
         public Builder setLocalIdType(DsonType localIdType) {
             this.localIdType = localIdType;
+            return this;
+        }
+
+        public DsonType getCountType() {
+            return countType;
+        }
+
+        public Builder setCountType(DsonType countType) {
+            this.countType = countType;
             return this;
         }
 

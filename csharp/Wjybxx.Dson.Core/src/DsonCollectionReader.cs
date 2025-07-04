@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Pool;
 using Wjybxx.Dson.Ext;
@@ -37,6 +38,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 #nullable disable
     private TName _nextName;
     private DsonValue _nextValue;
+    private readonly bool _unsafeTop;
 
     /// <summary>
     /// 
@@ -62,6 +64,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         context.header = null;
         context.container = dsonValue;
         context.arrayIterator.SetBaseIterator(new SingleValueEnumerator<DsonValue>(dsonValue));
+        _unsafeTop = true;
         SetContext(context);
     }
 
@@ -97,10 +100,10 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
     /// <exception cref="DsonIOException"></exception>
     public ICollection<TName> Keys() {
         Context context = GetContext();
-        return context.container.DsonType switch
+        return context.contextType switch
         {
-            DsonType.Header => context.container.AsHeader<TName>().Keys,
-            DsonType.Object => context.container.AsObject<TName>().Keys,
+            DsonContextType.Header => context.container.AsHeader<TName>().Keys,
+            DsonContextType.Object => context.container.AsObject<TName>().Keys,
             _ => throw new InvalidOperationException(),
         };
     }
@@ -111,11 +114,13 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
     public int Count {
         get {
             Context context = GetContext();
-            return context.container.DsonType switch
+            return context.contextType switch
             {
-                DsonType.Header => context.container.AsHeader<TName>().Count,
-                DsonType.Object => context.container.AsObject<TName>().Count,
-                _ => context.container.AsArray<TName>().Count,
+                DsonContextType.Header => context.container.AsHeader<TName>().Count,
+                DsonContextType.Object => context.container.AsObject<TName>().Count,
+                DsonContextType.Array => context.container.AsArray<TName>().Count,
+                DsonContextType.TopLevel => _unsafeTop ? 1 : context.container.AsArray<TName>().Count,
+                _ => throw new AssertionError()
             };
         }
     }
@@ -340,7 +345,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         //
         Context context = GetContext();
         context.header = null;
-        if (context.container.DsonType == DsonType.Array) {
+        if (context.contextType.IsArrayLike()) {
             context.arrayIterator.Dispose();
             context.arrayIterator.SetBaseIterator(EmptyEnumerator<DsonValue>.Instance);
         } else {
@@ -387,7 +392,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
     {
         /** 如果不为null，则表示需要先读取header */
         protected internal DsonHeader<TName> header;
-        /** 当前读取的容器 */
+        /** 当前读取的容器 -- 顶层对象不一定是Array */
         protected internal DsonValue container;
         /** 迭代器和Context一起缓存 -- 这里传<see cref="ISequentialEnumerator{T}.Empty"/>会引发unity崩溃！*/
         protected internal MarkableIterator<KeyValuePair<TName, DsonValue>> objectIterator = new(null);
@@ -418,14 +423,14 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
             if (keyItr != null) {
                 return keyItr.HasNext();
             }
-            if (container.DsonType == DsonType.Array) {
+            if (contextType.IsArrayLike()) {
                 return arrayIterator.HasNext();
             }
             return objectIterator.HasNext();
         }
 
         public void MarkItr() {
-            if (container.DsonType == DsonType.Array) {
+            if (contextType.IsArrayLike()) {
                 arrayIterator.Mark();
             } else {
                 objectIterator.Mark();
@@ -433,7 +438,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
         }
 
         public void ResetItr() {
-            if (container.DsonType == DsonType.Array) {
+            if (contextType.IsArrayLike()) {
                 arrayIterator.Reset();
             } else {
                 objectIterator.Reset();
@@ -450,7 +455,7 @@ public sealed class DsonCollectionReader<TName> : AbstractDsonReader<TName> wher
 
         // key-itr
         public void SetKeyItr(ISequentialEnumerator<TName> keyItr, DsonValue defValue) {
-            if (container.DsonType == DsonType.Array) throw new InvalidOperationException("container is not an object");
+            if (contextType.IsArrayLike()) throw new InvalidOperationException("container is not an object");
             if (objectIterator.IsMarking) throw new InvalidOperationException("reader is in marking state");
 
             this.keyItr = keyItr;

@@ -226,10 +226,10 @@ final class DefaultDsonObjectWriter implements DsonObjectWriter {
         TypeWritePolicy policy = converter.options().typeWritePolicy;
         boolean typed = (policy == TypeWritePolicy.OPTIMIZED && !typeWriteHelper.isOptimizable(encoderType, declaredType))
                 || policy == TypeWritePolicy.ALWAYS;
-        if (!typed && count < 0) {
+        if (!typed && count < 1) { // count为0也没写入必要
             return;
         }
-        if (count < 0) {
+        if (count < 1) {
             TypeMeta typeMeta = converter.typeMetaRegistry().ofType(encoderType);
             if (typeMeta == null) {
                 throw new DsonCodecException("typeMeta of encoderType: %s is absent".formatted(encoderType));

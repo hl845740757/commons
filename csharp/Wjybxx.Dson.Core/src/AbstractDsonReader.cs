@@ -369,6 +369,9 @@ public abstract class AbstractDsonReader<TName> : IDsonReader<TName> where TName
     private void ReadStartContainer(DsonContextType contextType, DsonType dsonType) {
         Context waitStartContext = this.waitStartContext;
         if (waitStartContext != null) {
+            if (waitStartContext.contextType != contextType) {
+                throw DsonIOException.ContextError(waitStartContext.contextType, contextType);
+            }
             this.waitStartContext = null;
             // 模拟ReadStart
             recursionDepth++;
