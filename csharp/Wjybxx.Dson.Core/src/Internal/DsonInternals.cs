@@ -19,6 +19,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Wjybxx.Commons.Pool; // unity
 using Wjybxx.Dson.IO;
 
 namespace Wjybxx.Dson.Internal

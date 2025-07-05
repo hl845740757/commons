@@ -52,7 +52,7 @@ public class CodecProcessor : ISourceGenerator
     private const string CNAME_NumberStyle = "Wjybxx.Dson.Text.NumberStyle";
     private const string CNAME_StringStyle = "Wjybxx.Dson.Text.StringStyle";
     private const string CNAME_ObjectStyle = "Wjybxx.Dson.Text.ObjectStyle";
-    
+
     private const string CNAME_Binary = "Wjybxx.Dson.Types.Binary";
     private const string CNAME_ObjectPtr = "Wjybxx.Dson.Types.ObjectPtr";
     private const string CNAME_ObjectLitePtr = "Wjybxx.Dson.Types.ObjectLitePtr";

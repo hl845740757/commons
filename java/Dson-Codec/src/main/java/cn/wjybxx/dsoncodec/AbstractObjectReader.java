@@ -21,7 +21,6 @@ import cn.wjybxx.base.TypeInfo;
 import cn.wjybxx.dson.*;
 import cn.wjybxx.dson.text.DsonTextReader;
 import cn.wjybxx.dson.text.DsonTexts;
-import cn.wjybxx.dson.text.DsonToken;
 import cn.wjybxx.dson.types.*;
 
 import javax.annotation.Nonnull;
@@ -290,8 +289,7 @@ abstract class AbstractObjectReader implements DsonObjectReader {
     @Override
     public void setComponentType(DsonType dsonType) {
         if (reader instanceof DsonTextReader textReader) {
-            DsonToken token = DsonTexts.clsNameTokenOfType(dsonType);
-            textReader.setCompClsNameToken(token);
+            textReader.setComponentType(dsonType);
         }
     }
 

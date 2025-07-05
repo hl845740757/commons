@@ -268,8 +268,7 @@ public abstract class AbstractDsonObjectReader : IDsonObjectReader
 
     public void SetComponentType(DsonType dsonType) {
         if (reader is DsonTextReader textReader) {
-            DsonToken token = DsonTexts.ClsNameTokenOfType(dsonType);
-            textReader.SetCompClsNameToken(token);
+            textReader.SetComponentType(dsonType);
         }
     }
 

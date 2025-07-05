@@ -62,6 +62,7 @@ public final class DsonTextReader extends AbstractDsonReader {
     private boolean marking;
     private final ArrayDeque<DsonToken> pushedTokenQueue = new ArrayDeque<>(6); // 缓存的Token
     private final ArrayDeque<DsonToken> markedTokenQueue = new ArrayDeque<>(6);
+    private StringBuilder _sb; // 日期扫描缓存
 
     public DsonTextReader(DsonTextReaderSettings settings, CharSequence dsonString) {
         this(settings, new DsonScanner(dsonString));
@@ -85,11 +86,10 @@ public final class DsonTextReader extends AbstractDsonReader {
 
     /**
      * 用于动态指定成员数据类型
-     * 1.这对于精确解析数组元素和Object的字段十分有用 -- 比如解析一个{@code Vector3}的时候就可以指定字段的默认类型为float。
-     * 2.辅助方法见：{@link DsonTexts#clsNameTokenOfType(DsonType)}
+     * 这对于精确解析数组元素和Object的字段十分有用 -- 比如解析一个{@code Vector3}的时候就可以指定字段的默认类型为float。
      */
-    public void setCompClsNameToken(DsonToken dsonToken) {
-        getContext().compClsNameToken = dsonToken;
+    public void setComponentType(DsonType dsonType) {
+        getContext().componentType = dsonType;
     }
 
     @Override
@@ -352,48 +352,17 @@ public final class DsonTextReader extends AbstractDsonReader {
                     return DsonType.STRING;
                 }
                 case DsonHeader.NAMES_LOCAL_ID -> {
-                    return parseLocalId(unquotedString);
+                    return parseUnquoteString(getSettings().localIdType, unquotedString);
                 }
                 case DsonHeader.NAMES_COUNT -> {
-                    return parseCount(unquotedString);
+                    return parseUnquoteString(getSettings().countType, unquotedString);
                 }
             }
         }
         // 处理类型传递
-        if (context.compClsNameToken != null) {
-            switch (context.compClsNameToken.stringValue()) {
-                case DsonTexts.LABEL_INT32 -> {
-                    pushNextValue(DsonTexts.parseInt32(unquotedString));
-                    return DsonType.INT32;
-                }
-                case DsonTexts.LABEL_INT64 -> {
-                    pushNextValue(DsonTexts.parseInt64(unquotedString));
-                    return DsonType.INT64;
-                }
-                case DsonTexts.LABEL_FLOAT -> {
-                    pushNextValue(DsonTexts.parseFloat(unquotedString));
-                    return DsonType.FLOAT;
-                }
-                case DsonTexts.LABEL_DOUBLE -> {
-                    pushNextValue(DsonTexts.parseDouble(unquotedString));
-                    return DsonType.DOUBLE;
-                }
-                case DsonTexts.LABEL_BOOL -> {
-                    pushNextValue(DsonTexts.parseBool(unquotedString));
-                    return DsonType.BOOL;
-                }
-                case DsonTexts.LABEL_STRING -> {
-                    pushNextValue(unquotedString);
-                    return DsonType.STRING;
-                }
-                case DsonTexts.LABEL_BINARY -> {
-                    Binary binary = Binary.fromHexString(unquotedString);
-                    pushNextValue(binary);
-                    return DsonType.BINARY;
-                }
-            }
+        if (context.componentType != DsonType.END_OF_OBJECT) {
+            return parseUnquoteString(context.componentType, unquotedString);
         }
-
         // 处理特殊值解析
         boolean isTrueString = "true".equals(unquotedString);
         if (isTrueString || "false".equals(unquotedString)) {
@@ -412,35 +381,36 @@ public final class DsonTextReader extends AbstractDsonReader {
         return DsonType.STRING;
     }
 
-    private DsonType parseCount(String unquotedString) {
-        switch (getSettings().countType) {
-            case INT32 -> {
-                pushNextValue(DsonTexts.parseInt32(unquotedString));
-                return DsonType.INT32;
+    private DsonType parseUnquoteString(DsonType dsonType, String unquotedString) {
+        switch (dsonType) {
+            case INT32 -> pushNextValue(DsonTexts.parseInt32(unquotedString));
+            case INT64 -> pushNextValue(DsonTexts.parseInt64(unquotedString));
+            case FLOAT -> pushNextValue(DsonTexts.parseFloat(unquotedString));
+            case DOUBLE -> pushNextValue(DsonTexts.parseDouble(unquotedString));
+            case BOOL -> pushNextValue(DsonTexts.parseBool(unquotedString));
+            case STRING -> pushNextValue(unquotedString);
+            case BINARY -> {
+                Binary binary = Binary.fromHexString(unquotedString);
+                pushNextValue(binary);
             }
-            case INT64 -> {
-                pushNextValue(DsonTexts.parseInt64(unquotedString));
-                return DsonType.INT64;
+            case POINTER -> {
+                pushNextValue(new ObjectPtr(unquotedString));
             }
-            default -> throw new AssertionError();
+            case LITE_POINTER -> {
+                long localId = DsonTexts.parseInt64(unquotedString);
+                pushNextValue(new ObjectLitePtr(localId));
+            }
+            case DATETIME -> {
+                LocalDateTime dateTime = ExtDateTime.parseDateTime(unquotedString); // 这里其实不应该走到
+                pushNextValue(ExtDateTime.ofDateTime(dateTime));
+            }
+            case TIMESTAMP -> {
+                Timestamp timestamp = Timestamp.parse(unquotedString);
+                pushNextValue(timestamp);
+            }
+            default -> throw DsonIOException.invalidDsonType(context.contextType, dsonType);
         }
-    }
-
-    private DsonType parseLocalId(String unquotedString) {
-        switch (getSettings().localIdType) {
-            case INT32 -> {
-                pushNextValue(DsonTexts.parseInt32(unquotedString));
-                return DsonType.INT32;
-            }
-            case INT64 -> {
-                pushNextValue(DsonTexts.parseInt64(unquotedString));
-                return DsonType.INT64;
-            }
-            default -> {
-                pushNextValue(unquotedString);
-                return DsonType.STRING;
-            }
-        }
+        return dsonType;
     }
 
     /** 处理内置结构体的单值语法糖 */
@@ -729,7 +699,12 @@ public final class DsonTextReader extends AbstractDsonReader {
 
     /** 扫描string，直到遇见逗号或结束符 */
     private String scanStringUtilComma() {
-        StringBuilder sb = new StringBuilder(12);
+        if (_sb == null) {
+            _sb = new StringBuilder(16);
+        } else {
+            _sb.setLength(0);
+        }
+        StringBuilder sb = _sb;
         while (true) {
             DsonToken valueToken = popToken();
             switch (valueToken.type) {
@@ -994,8 +969,8 @@ public final class DsonTextReader extends AbstractDsonReader {
         int headerCount = 0;
         /** 元素计数，判断冒号 */
         int count;
-        /** 数组/Object成员的类型 - token类型可直接复用；header的该属性是用于注释外层对象的 */
-        DsonToken compClsNameToken;
+        /** 数组/Object成员的类型 */
+        DsonType componentType = DsonType.END_OF_OBJECT;
 
         public Context() {
         }
@@ -1004,7 +979,7 @@ public final class DsonTextReader extends AbstractDsonReader {
             super.reset();
             headerCount = 0;
             count = 0;
-            compClsNameToken = null;
+            componentType = DsonType.END_OF_OBJECT;
         }
 
         @Override

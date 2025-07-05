@@ -72,7 +72,12 @@ public static class DsonTexts
     }.ToImmutableSet2();
 
     /** 有特殊含义的字符串 */
-    private static readonly ImmutableSet<string> parseableStrings;
+    private static readonly ImmutableSet<string> parseableStrings = new[]
+    {
+        "true", "false",
+        "null", "undefine",
+        "NaN", "Infinity", "-Infinity"
+    }.ToImmutableSet2();
     /** 数字相关的字符 */
     private static readonly BitArray parseableCharSet = new BitArray(128);
 
@@ -85,18 +90,6 @@ public static class DsonTexts
     private static readonly BitArray unsafePrintCharSet = new BitArray(128);
 
     static DsonTexts() {
-        List<string> tempList = new List<string>(50)
-        {
-            "true", "false",
-            "null", "undefine",
-            "NaN", "Infinity", "-Infinity"
-        };
-        // 将常见数字加入缓存
-        for (int number = -1; number < 10; number++) {
-            tempList.Add(number.ToString());
-        }
-        parseableStrings = tempList.ToImmutableSet2();
-
         char[] tokenCharArray = "{}[],:/@\"\\".ToCharArray();
         foreach (char c in tokenCharArray) {
             unsafeCharSet.Set(c, true);
@@ -533,43 +526,5 @@ public static class DsonTexts
     }
 
     #endregion
-
-    /** 获取类型名对应的Token类型 */
-    public static DsonTokenType TokenTypeOfClsName(string label) {
-        if (label == null) throw new ArgumentNullException(nameof(label));
-        return label switch
-        {
-            LabelInt32 => DsonTokenType.Int32,
-            LabelInt64 => DsonTokenType.Int64,
-            LabelFloat => DsonTokenType.Float,
-            LabelDouble => DsonTokenType.Double,
-            LabelBool => DsonTokenType.Bool,
-            LabelString => DsonTokenType.String,
-            LabelStringLine => DsonTokenType.String,
-            LabelNull => DsonTokenType.Null,
-            LabelBinary => DsonTokenType.Binary,
-            _ => builtinStructLabels.Contains(label) ? DsonTokenType.BuiltinStruct : DsonTokenType.SimpleHeader
-        };
-    }
-
-    /** 获取dsonType关联的无位置Token */
-    public static DsonToken ClsNameTokenOfType(DsonType dsonType) {
-        return dsonType switch
-        {
-            DsonType.Int32 => new DsonToken(DsonTokenType.Int32, LabelInt32, -1),
-            DsonType.Int64 => new DsonToken(DsonTokenType.Int64, LabelInt64, -1),
-            DsonType.Float => new DsonToken(DsonTokenType.Float, LabelFloat, -1),
-            DsonType.Double => new DsonToken(DsonTokenType.Double, LabelDouble, -1),
-            DsonType.Bool => new DsonToken(DsonTokenType.Bool, LabelBool, -1),
-            DsonType.String => new DsonToken(DsonTokenType.String, LabelString, -1),
-            DsonType.Null => new DsonToken(DsonTokenType.Null, LabelNull, -1),
-            DsonType.Binary => new DsonToken(DsonTokenType.Binary, LabelBinary, -1),
-            DsonType.Pointer => new DsonToken(DsonTokenType.BuiltinStruct, LabelPtr, -1),
-            DsonType.LitePointer => new DsonToken(DsonTokenType.BuiltinStruct, LabelLitePtr, -1),
-            DsonType.DateTime => new DsonToken(DsonTokenType.BuiltinStruct, LabelDateTime, -1),
-            DsonType.Timestamp => new DsonToken(DsonTokenType.BuiltinStruct, LabelTimestamp, -1),
-            _ => throw new ArgumentException(nameof(dsonType))
-        };
-    }
 }
 }

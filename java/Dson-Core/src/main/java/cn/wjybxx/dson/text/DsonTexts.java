@@ -17,11 +17,11 @@
 package cn.wjybxx.dson.text;
 
 import cn.wjybxx.base.pool.ConcurrentObjectPool;
-import cn.wjybxx.dson.DsonType;
 import cn.wjybxx.dson.internal.DsonInternals;
 import cn.wjybxx.dson.internal.Utf8Util;
 
-import java.util.*;
+import java.util.BitSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -71,7 +71,9 @@ public class DsonTexts {
     );
 
     /** 有特殊含义的字符串 */
-    private static final Set<String> parseableStrings;
+    private static final Set<String> parseableStrings = Set.of("true", "false",
+            "null", "undefine",
+            "NaN", "Infinity", "-Infinity");
     /** 数字相关的字符 */
     private static final BitSet parseableCharSet = new BitSet(128);
 
@@ -84,17 +86,6 @@ public class DsonTexts {
     private static final BitSet unsafePrintCharSet = new BitSet(128);
 
     static {
-        List<String> tempList = new ArrayList<>(50);
-        Collections.addAll(tempList,
-                "true", "false",
-                "null", "undefine",
-                "NaN", "Infinity", "-Infinity");
-        // 将常见数字加入缓存
-        for (int number = -1; number < 10; number++) {
-            tempList.add(Integer.toString(number));
-        }
-        parseableStrings = Set.copyOf(tempList);
-
         char[] tokenCharArray = "{}[],:/@\"\\".toCharArray();
         for (char c : tokenCharArray) {
             unsafeCharSet.set(c);
@@ -478,45 +469,4 @@ public class DsonTexts {
     }
 
     // endregion
-
-    /** 获取类型名对应的Token类型 */
-    public static DsonTokenType tokenTypeOfClsName(String label) {
-        Objects.requireNonNull(label);
-        return switch (label) {
-            case LABEL_INT32 -> DsonTokenType.INT32;
-            case LABEL_INT64 -> DsonTokenType.INT64;
-            case LABEL_FLOAT -> DsonTokenType.FLOAT;
-            case LABEL_DOUBLE -> DsonTokenType.DOUBLE;
-            case LABEL_BOOL -> DsonTokenType.BOOL;
-            case LABEL_STRING, LABEL_STRING_LINE -> DsonTokenType.STRING;
-            case LABEL_NULL -> DsonTokenType.NULL;
-            case LABEL_BINARY -> DsonTokenType.BINARY;
-            default -> {
-                if (builtinStructLabels.contains(label)) {
-                    yield DsonTokenType.BUILTIN_STRUCT;
-                }
-                yield DsonTokenType.SIMPLE_HEADER;
-            }
-        };
-    }
-
-    /** 获取dsonType关联的无位置Token */
-    public static DsonToken clsNameTokenOfType(DsonType dsonType) {
-        return switch (dsonType) {
-            case INT32 -> new DsonToken(DsonTokenType.INT32, LABEL_INT32, -1);
-            case INT64 -> new DsonToken(DsonTokenType.INT64, LABEL_INT64, -1);
-            case FLOAT -> new DsonToken(DsonTokenType.FLOAT, LABEL_FLOAT, -1);
-            case DOUBLE -> new DsonToken(DsonTokenType.DOUBLE, LABEL_DOUBLE, -1);
-            case BOOL -> new DsonToken(DsonTokenType.BOOL, LABEL_BOOL, -1);
-            case STRING -> new DsonToken(DsonTokenType.STRING, LABEL_STRING, -1);
-            case NULL -> new DsonToken(DsonTokenType.NULL, LABEL_NULL, -1);
-            case BINARY -> new DsonToken(DsonTokenType.BINARY, LABEL_BINARY, -1);
-            case POINTER -> new DsonToken(DsonTokenType.BUILTIN_STRUCT, LABEL_PTR, -1);
-            case LITE_POINTER -> new DsonToken(DsonTokenType.BUILTIN_STRUCT, LABEL_LITE_PTR, -1);
-            case DATETIME -> new DsonToken(DsonTokenType.BUILTIN_STRUCT, LABEL_DATETIME, -1);
-            case TIMESTAMP -> new DsonToken(DsonTokenType.BUILTIN_STRUCT, LABEL_TIMESTAMP, -1);
-            default -> throw new IllegalArgumentException();
-        };
-    }
-
 }

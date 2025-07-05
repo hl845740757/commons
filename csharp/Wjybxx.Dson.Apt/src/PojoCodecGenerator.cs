@@ -312,33 +312,14 @@ internal class PojoCodecGenerator
             TypeName fieldTypeName = fieldInfo.typeName!;
             // 读对象时要传入类型信息和Factory -- C#还要传泛型参数；name在前面已读，因此这里传入null
             // inst.name = reader.readObject<Type>(names_name, factories_name)
-            string? toImmutableMethod;
-            if (fieldProps.isImmutable && (toImmutableMethod = GetToImmutableMethodName(fieldInfo.FieldType!)) != null) {
-                // 需要动态引入Util类，因此不能使用扩展方法
-                builder.codeBuilder.AddStatement("inst.$L = $T.$L(reader.$L<$T>(null, $L))",
-                    fieldAccess,
-                    CodecProcessor.typeName_CollectionUtil, toImmutableMethod,
-                    readMethodName, fieldTypeName,
-                    fieldProps.implTypeName == null ? "null" : SerialFactory(fieldName));
-            } else {
-                builder.codeBuilder.AddStatement("inst.$L = reader.$L<$T>(null, $L)",
-                    fieldAccess, readMethodName, fieldTypeName,
-                    fieldProps.implTypeName == null ? "null" : SerialFactory(fieldName));
-            }
+            builder.codeBuilder.AddStatement("inst.$L = reader.$L<$T>(null, $L)",
+                fieldAccess, readMethodName, fieldTypeName,
+                fieldProps.implTypeName == null ? "null" : SerialFactory(fieldName));
         } else {
             // inst.name = reader.readString(names_name)
             builder.codeBuilder.AddStatement("inst.$L = reader.$L(null)",
                 fieldAccess, readMethodName);
         }
-    }
-
-    private string? GetToImmutableMethodName(ITypeSymbol fieldType) {
-        ITypeSymbol originalDefinition = fieldType.OriginalDefinition;
-        if (originalDefinition.Name.StartsWith("Immutable")) return null; // 避免再套一层
-        if (originalDefinition.IsSubTypeOf(processor.type_ISET)) return "ToImmutableSet2";
-        if (originalDefinition.IsSubTypeOf(processor.type_ILIST)) return "ToImmutableList2";
-        if (originalDefinition.IsSubTypeOf(processor.type_IDICTIONARY)) return "ToImmutableDictionary2";
-        return null; // 不支持的类型
     }
 
     private void AddWriteStatement(AptFieldInfo fieldInfo, AptFieldProps fieldProps, AptClassProps aptClassProps) {

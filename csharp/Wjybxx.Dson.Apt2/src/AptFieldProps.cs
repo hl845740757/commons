@@ -42,8 +42,6 @@ internal class AptFieldProps
     public string? getter;
     /** 赋值方法 */
     public string? setter;
-    /** 是否不可变 */
-    public bool isImmutable;
 
     /** 实现类 -- 会被替换（修正泛型参数） */
     private Type? implType;
@@ -74,7 +72,6 @@ internal class AptFieldProps
         props.name = attribute.Name;
         props.getter = attribute.Getter;
         props.setter = attribute.Setter;
-        props.isImmutable = attribute.IsImmutable;
 
         props.numberStyle = EnumUtil.GetName(attribute.NumberStyle)!;
         props.stringStyle = EnumUtil.GetName(attribute.StringStyle)!;

@@ -51,6 +51,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
     private bool _marking;
     private readonly Stack<DsonToken> _pushedTokenQueue = new Stack<DsonToken>(6); // 缓存的Token
     private readonly List<DsonToken> _markedTokenQueue = new List<DsonToken>(6); // C#没有现成的Deque，我们拿List实现
+    private StringBuilder _sb; // 日期扫描缓存
 
     public DsonTextReader(DsonTextReaderSettings settings, string dsonString)
         : this(settings, new DsonScanner(dsonString)) {
@@ -70,11 +71,10 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
 
     /**
      * 用于动态指定成员数据类型
-     * 1.这对于精确解析数组元素和Object的字段十分有用 -- 比如解析一个{@code Vector3}的时候就可以指定字段的默认类型为float。
-     * 2.辅助方法见：{@link DsonTexts#clsNameTokenOfType(DsonType)}
+     * 这对于精确解析数组元素和Object的字段十分有用 -- 比如解析一个{@code Vector3}的时候就可以指定字段的默认类型为float。
      */
-    public void SetCompClsNameToken(DsonToken? dsonToken) {
-        GetContext().compClsNameToken = dsonToken;
+    public void SetComponentType(DsonType componentType) {
+        GetContext().componentType = componentType;
     }
 
     public new DsonTextReaderSettings Settings => (DsonTextReaderSettings)settings;
@@ -350,48 +350,17 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
                     PushNextValue(new UnionValue(DsonType.String, unquotedString));
                     return DsonType.String;
                 case DsonHeader.Names_LocalId: {
-                    return ParseLocalId(unquotedString);
+                    return ParseUnquoteString(Settings.localIdType, valueToken.StringValue());
                 }
                 case DsonHeader.Names_Count: {
-                    return ParseCount(unquotedString);
+                    return ParseUnquoteString(Settings.countType, valueToken.StringValue());
                 }
             }
         }
         // 处理类型传递
-        if (context.compClsNameToken.HasValue) {
-            switch (context.compClsNameToken.Value.StringValue()) {
-                case DsonTexts.LabelInt32: {
-                    PushNextValue(UnionValue.OfInt32(DsonTexts.ParseInt32(unquotedString)));
-                    return DsonType.Int32;
-                }
-                case DsonTexts.LabelInt64: {
-                    PushNextValue(UnionValue.OfInt64(DsonTexts.ParseInt64(unquotedString)));
-                    return DsonType.Int64;
-                }
-                case DsonTexts.LabelFloat: {
-                    PushNextValue(UnionValue.OfFloat(DsonTexts.ParseFloat(unquotedString)));
-                    return DsonType.Float;
-                }
-                case DsonTexts.LabelDouble: {
-                    PushNextValue(UnionValue.OfDouble(DsonTexts.ParseDouble(unquotedString)));
-                    return DsonType.Double;
-                }
-                case DsonTexts.LabelBool: {
-                    PushNextValue(UnionValue.OfBool(DsonTexts.ParseBool(unquotedString)));
-                    return DsonType.Bool;
-                }
-                case DsonTexts.LabelString: {
-                    PushNextValue(new UnionValue(DsonType.String, unquotedString));
-                    return DsonType.String;
-                }
-                case DsonTexts.LabelBinary: {
-                    Binary binary = Binary.FromHexString(unquotedString);
-                    PushNextValue(UnionValue.OfBinary(binary));
-                    return DsonType.Binary;
-                }
-            }
+        if (context.componentType != DsonType.EndOfObject) {
+            return ParseUnquoteString(context.componentType, valueToken.StringValue());
         }
-
         // 处理特殊值解析
         bool isTrueString = "true" == unquotedString;
         if (isTrueString || "false" == unquotedString) {
@@ -410,35 +379,59 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         return DsonType.String;
     }
 
-    private DsonType ParseCount(string unquotedString) {
-        switch (Settings.countType) {
+    private DsonType ParseUnquoteString(DsonType dsonType, string unquotedString) {
+        switch (dsonType) {
             case DsonType.Int32: {
                 PushNextValue(UnionValue.OfInt32(DsonTexts.ParseInt32(unquotedString)));
-                return DsonType.Int32;
+                break;
             }
             case DsonType.Int64: {
                 PushNextValue(UnionValue.OfInt64(DsonTexts.ParseInt64(unquotedString)));
-                return DsonType.Int64;
+                break;
             }
-            default: throw new AssertionError();
-        }
-    }
-
-    private DsonType ParseLocalId(string unquotedString) {
-        switch (Settings.localIdType) {
-            case DsonType.Int32: {
-                PushNextValue(UnionValue.OfInt32(DsonTexts.ParseInt32(unquotedString)));
-                return DsonType.Int32;
+            case DsonType.Float: {
+                PushNextValue(UnionValue.OfFloat(DsonTexts.ParseFloat(unquotedString)));
+                break;
             }
-            case DsonType.Int64: {
-                PushNextValue(UnionValue.OfInt64(DsonTexts.ParseInt64(unquotedString)));
-                return DsonType.Int64;
+            case DsonType.Double: {
+                PushNextValue(UnionValue.OfDouble(DsonTexts.ParseDouble(unquotedString)));
+                break;
             }
-            default: {
+            case DsonType.Bool: {
+                PushNextValue(UnionValue.OfBool(DsonTexts.ParseBool(unquotedString)));
+                break;
+            }
+            case DsonType.String: {
                 PushNextValue(new UnionValue(DsonType.String, unquotedString));
-                return DsonType.String;
+                break;
             }
+            case DsonType.Binary: {
+                Binary binary = Binary.FromHexString(unquotedString);
+                PushNextValue(UnionValue.OfBinary(binary));
+                break;
+            }
+            case DsonType.Pointer: {
+                PushNextValue(UnionValue.OfObjectPtr(new ObjectPtr(unquotedString)));
+                break;
+            }
+            case DsonType.LitePointer: {
+                long localId = DsonTexts.ParseInt64(unquotedString);
+                PushNextValue(UnionValue.OfObjectLitePtr(new ObjectLitePtr(localId)));
+                break;
+            }
+            case DsonType.DateTime: {
+                DateTime dateTime = ExtDateTime.ParseDateTime(unquotedString); // 这里其实不应该走到
+                PushNextValue(UnionValue.OfDateTime(ExtDateTime.OfDateTime(in dateTime)));
+                break;
+            }
+            case DsonType.Timestamp: {
+                Timestamp timestamp = Timestamp.Parse(unquotedString);
+                PushNextValue(UnionValue.OfTimestamp(in timestamp));
+                break;
+            }
+            default: throw DsonIOException.InvalidDsonType(context.contextType, dsonType);
         }
+        return dsonType;
     }
 
     /** 处理内置结构体的单值语法糖 */
@@ -472,7 +465,8 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         if (DsonTexts.LabelTimestamp == clsName) { // @ts seconds
             DsonToken nextToken = PopToken();
             EnsureStringsToken(context, nextToken);
-            PushNextValue(UnionValue.OfTimestamp(Timestamp.Parse(nextToken.StringValue())));
+            Timestamp timestamp = Timestamp.Parse(nextToken.StringValue());
+            PushNextValue(UnionValue.OfTimestamp(in timestamp));
             return DsonType.Timestamp;
         }
         throw DsonIOException.InvalidTokenType(context.contextType, valueToken);
@@ -741,7 +735,12 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
 
     /** 扫描string，直到遇见逗号或结束符 */
     private string ScanStringUtilComma() {
-        StringBuilder sb = new StringBuilder(12);
+        if (_sb == null) {
+            _sb = new StringBuilder();
+        } else {
+            _sb.Clear();
+        }
+        StringBuilder sb = _sb;
         while (true) {
             DsonToken valueToken = PopToken();
             switch (valueToken.type) {
@@ -1071,7 +1070,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
         /** 元素计数，判断冒号 */
         internal int count;
         /** 数组/Object成员的类型 - token类型可直接复用；header的该属性是用于注释外层对象的 */
-        internal DsonToken? compClsNameToken;
+        internal DsonType componentType = DsonType.EndOfObject;
 
         public Context() {
         }
@@ -1082,7 +1081,7 @@ public sealed class DsonTextReader : AbstractDsonReader<string>
             base.Reset();
             headerCount = 0;
             count = 0;
-            compClsNameToken = null;
+            componentType = DsonType.EndOfObject;
         }
     }
 

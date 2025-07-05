@@ -109,13 +109,18 @@ public class BeanExample : BaseTypeExample
     /// <summary>
     /// 测试泛型集合
     /// </summary>
-    [DsonProperty(Impl = typeof(HashSet<>), ObjectStyle = ObjectStyle.Flow, IsImmutable = true)]
+    [DsonProperty(Impl = typeof(HashSet<>), ObjectStyle = ObjectStyle.Flow)]
     public ISet<string>? hashSet2;
+    /// <summary>
+    /// 测试不可变集合
+    /// </summary>
+    [DsonProperty(ObjectStyle = ObjectStyle.Flow)]
+    public ImmutableSet<string>? hashSet3;
 
     /// <summary>
     /// 测试泛型字典
     /// </summary>
-    [DsonProperty(Impl = typeof(LinkedDictionary<,>), ObjectStyle = ObjectStyle.Flow, IsImmutable = true)]
+    [DsonProperty(Impl = typeof(LinkedDictionary<,>), ObjectStyle = ObjectStyle.Flow)]
     public IDictionary<int, string>? dictionary;
 
     /// <summary>
