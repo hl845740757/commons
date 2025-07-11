@@ -94,7 +94,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
         }
         _mask = HashCommon.ArraySize(expectedCount, loadFactor) - 1;
     }
-    
+
     public LinkedDictionary(IDictionary<TKey, TValue> dictionary)
         : this(dictionary.Count, HashCommon.DefaultLoadFactor) {
         foreach (var pair in dictionary) {

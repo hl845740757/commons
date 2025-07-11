@@ -267,7 +267,7 @@ public static partial class CollectionUtil
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BinarySearch<T>(IList<T> array, T value, Comparer<T> comparer) {
+    public static int BinarySearch<T>(IList<T> array, T value, IComparer<T> comparer) {
         return ArraySortHelper.BinarySearch(array, 0, array.Count, value, comparer);
     }
 
@@ -276,13 +276,13 @@ public static partial class CollectionUtil
     /// </summary>
     /// <param name="array">数组</param>
     /// <param name="value">要查找的元素</param>
-    /// <param name="comparer">比较器</param>
+    /// <param name="comparer">比较器，参数为mid</param>
     /// <param name="fromIndex">包含</param>
     /// <param name="toIndex">不包含</param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BinarySearch<T>(IList<T> array, T value, Comparer<T> comparer, int fromIndex, int toIndex) {
+    public static int BinarySearch<T>(IList<T> array, T value, IComparer<T> comparer, int fromIndex, int toIndex) {
         ArrayUtil.RangeCheck(array.Count, fromIndex, toIndex);
         return ArraySortHelper.BinarySearch(array, fromIndex, toIndex, value, comparer);
     }
@@ -290,8 +290,8 @@ public static partial class CollectionUtil
     /// <summary>
     /// 自定义二分查找(适用无法构建T时)
     /// </summary>
-    /// <param name="array"></param>
-    /// <param name="comparer">比较器</param>
+    /// <param name="array">数组</param>
+    /// <param name="comparer">比较器，参数为mid</param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -487,6 +487,21 @@ public static partial class CollectionUtil
             stack.Push(list[idx]);
         }
         return stack;
+    }
+
+    /// <summary>
+    /// 确保List的空间足够
+    /// 
+    /// 注：用于Unity项目
+    /// </summary>
+    /// <param name="list">list</param>
+    /// <param name="capacity"></param>
+    /// <typeparam name="T"></typeparam>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void EnsureCapacity<T>(List<T> list, int capacity) {
+        if (list.Capacity < capacity) {
+            list.Capacity = capacity;
+        }
     }
 
     #endregion

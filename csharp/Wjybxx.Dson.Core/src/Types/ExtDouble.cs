@@ -23,7 +23,7 @@ namespace Wjybxx.Dson.Types
 /// <summary>
 /// 具有类型标签的双精度浮点数
 /// </summary>
-public readonly struct ExtDouble : IEquatable<ExtDouble>, IComparable<ExtDouble>, IComparable
+public readonly struct ExtDouble : IEquatable<ExtDouble>
 {
     private readonly int _type;
     private readonly bool _hasVal; // 比较时放前面
@@ -65,35 +65,6 @@ public readonly struct ExtDouble : IEquatable<ExtDouble>, IComparable<ExtDouble>
 
     public static bool operator !=(ExtDouble left, ExtDouble right) {
         return !left.Equals(right);
-    }
-
-    public int CompareTo(ExtDouble other) {
-        var typeComparison = _type.CompareTo(other._type);
-        if (typeComparison != 0) return typeComparison;
-        var hasValComparison = _hasVal.CompareTo(other._hasVal);
-        if (hasValComparison != 0) return hasValComparison;
-        return _value.CompareTo(other._value);
-    }
-
-    public int CompareTo(object? obj) {
-        if (ReferenceEquals(null, obj)) return 1;
-        return obj is ExtDouble other ? CompareTo(other) : throw new ArgumentException($"Object must be of type {nameof(ExtDouble)}");
-    }
-
-    public static bool operator <(ExtDouble left, ExtDouble right) {
-        return left.CompareTo(right) < 0;
-    }
-
-    public static bool operator >(ExtDouble left, ExtDouble right) {
-        return left.CompareTo(right) > 0;
-    }
-
-    public static bool operator <=(ExtDouble left, ExtDouble right) {
-        return left.CompareTo(right) <= 0;
-    }
-
-    public static bool operator >=(ExtDouble left, ExtDouble right) {
-        return left.CompareTo(right) >= 0;
     }
 
     #endregion

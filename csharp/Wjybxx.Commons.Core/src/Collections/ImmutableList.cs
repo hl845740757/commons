@@ -63,7 +63,7 @@ public sealed class ImmutableList<T> : IList<T>, ISequencedCollection<T>
         if (comparer != null) {
             Array.Sort(array, comparer);
         }
-        return new ImmutableList<T>(array, false);
+        return array.Length == 0 ? Empty : new ImmutableList<T>(array, false);
     }
 
     #endregion

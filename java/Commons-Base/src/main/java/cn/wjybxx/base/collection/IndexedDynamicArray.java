@@ -145,7 +145,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
     @Override
     public boolean remove(E e) {
         if (e == null) return false;
-        int i = indexOf(e);
+        int i = helper.collectionIndex(this, e);
         if (i >= 0) {
             set(i, null);
             return true;
@@ -156,7 +156,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
     @Override
     public boolean removeRef(E e) {
         if (e == null) return false;
-        int i = indexOfRef(e);
+        int i = helper.collectionIndex(this, e);
         if (i >= 0) {
             set(i, null);
             return true;

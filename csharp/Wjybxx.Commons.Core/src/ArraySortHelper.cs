@@ -59,7 +59,7 @@ internal static class ArraySortHelper
     /// 如果comparer返回的是 any.CompareTo(mid)，适用递减数组
     /// </summary>
     public static int BinarySearch<T>(T[] a, int fromIndex, int toIndex,
-                                      T key, Comparer<T> c) {
+                                      T key, IComparer<T> c) {
         int low = fromIndex;
         int high = toIndex - 1;
 
@@ -109,7 +109,7 @@ internal static class ArraySortHelper
     /// 如果comparer返回的是 any.CompareTo(mid)，适用递减数组
     /// </summary>
     public static int BinarySearch<T>(IList<T> a, int fromIndex, int toIndex,
-                                      T key, Comparer<T> c) {
+                                      T key, IComparer<T> c) {
         int low = fromIndex;
         int high = toIndex - 1;
 

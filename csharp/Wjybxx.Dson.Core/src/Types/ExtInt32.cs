@@ -23,7 +23,7 @@ namespace Wjybxx.Dson.Types
 /// <summary>
 /// 具有类型标签的Int32
 /// </summary>
-public readonly struct ExtInt32 : IEquatable<ExtInt32>, IComparable<ExtInt32>, IComparable
+public readonly struct ExtInt32 : IEquatable<ExtInt32>
 {
     private readonly int _type;
     private readonly bool _hasVal; // 比较时放前面
@@ -65,35 +65,6 @@ public readonly struct ExtInt32 : IEquatable<ExtInt32>, IComparable<ExtInt32>, I
 
     public static bool operator !=(ExtInt32 left, ExtInt32 right) {
         return !left.Equals(right);
-    }
-
-    public int CompareTo(ExtInt32 other) {
-        var typeComparison = _type.CompareTo(other._type);
-        if (typeComparison != 0) return typeComparison;
-        var hasValComparison = _hasVal.CompareTo(other._hasVal);
-        if (hasValComparison != 0) return hasValComparison;
-        return _value.CompareTo(other._value);
-    }
-
-    public int CompareTo(object? obj) {
-        if (ReferenceEquals(null, obj)) return 1;
-        return obj is ExtInt32 other ? CompareTo(other) : throw new ArgumentException($"Object must be of type {nameof(ExtInt32)}");
-    }
-
-    public static bool operator <(ExtInt32 left, ExtInt32 right) {
-        return left.CompareTo(right) < 0;
-    }
-
-    public static bool operator >(ExtInt32 left, ExtInt32 right) {
-        return left.CompareTo(right) > 0;
-    }
-
-    public static bool operator <=(ExtInt32 left, ExtInt32 right) {
-        return left.CompareTo(right) <= 0;
-    }
-
-    public static bool operator >=(ExtInt32 left, ExtInt32 right) {
-        return left.CompareTo(right) >= 0;
     }
 
     #endregion

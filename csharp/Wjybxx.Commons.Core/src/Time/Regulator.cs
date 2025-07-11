@@ -47,23 +47,23 @@ public sealed class Regulator
      * 在存储已触发次数的情况下还使用上次更新的时间戳，这使得可以在运行的过程中修改间隔，该实现是有状态的。
      * 注意：允许为负数，外部赋值什么就是什么。
      */
-    private long lastUpdateTime;
+    private long triggerTime;
     /** 两次执行之间的间隔 */
     private long deltaTime;
     /** 已触发次数 */
-    private int count;
+    private int triggerCount;
 
     /** 关联的上下文 */
     private object context;
 
-    private Regulator(byte type, long firstDelay, long period, long lastUpdateTime) {
+    private Regulator(byte type, long firstDelay, long period, long triggerTime) {
         this.type = type;
         this.firstDelay = firstDelay;
         this.period = period;
 
-        this.lastUpdateTime = lastUpdateTime;
+        this.triggerTime = triggerTime;
         this.deltaTime = 0;
-        this.count = 0;
+        this.triggerCount = 0;
     }
 
     private static long CheckFirstDelay(byte type, long firstDelay) {
@@ -119,9 +119,9 @@ public sealed class Regulator
     /// <param name="curTime">当前时间</param>
     /// <returns>this</returns>
     public Regulator Restart(long curTime) {
-        lastUpdateTime = curTime;
+        triggerTime = curTime;
         deltaTime = 0;
-        count = 0;
+        triggerCount = 0;
         return this;
     }
 
@@ -131,9 +131,9 @@ public sealed class Regulator
     /// <param name="curTime">当前时间</param>
     /// <returns>如果应该执行一次update或者tick，则返回true，否则返回false</returns>
     public bool IsReady(long curTime) {
-        bool ready = count == 0
-            ? (curTime - lastUpdateTime >= firstDelay)
-            : (period > 0 && (curTime - lastUpdateTime >= period));
+        bool ready = triggerCount == 0
+            ? (curTime - triggerTime >= firstDelay)
+            : (period > 0 && (curTime - triggerTime >= period));
         if (ready) {
             InternalUpdate(curTime);
             return true;
@@ -154,19 +154,19 @@ public sealed class Regulator
     private void InternalUpdate(long curTime) {
         if (type == FIX_DELAY || type == ONCE) {
             // 使用真实时间计算，但deltaTime也不能小于0
-            deltaTime = Math.Max(0, curTime - lastUpdateTime);
-            lastUpdateTime = curTime;
+            deltaTime = Math.Max(0, curTime - triggerTime);
+            triggerTime = curTime;
         } else {
             // 固定频率执行时，一切都是逻辑时间
-            if (count == 0) {
+            if (triggerCount == 0) {
                 deltaTime = firstDelay;
-                lastUpdateTime += firstDelay;
+                triggerTime += firstDelay;
             } else {
                 deltaTime = period;
-                lastUpdateTime += period;
+                triggerTime += period;
             }
         }
-        count++;
+        triggerCount++;
     }
 
     /// <summary>
@@ -175,10 +175,10 @@ public sealed class Regulator
     /// <param name="curTime">当前事件</param>
     /// <returns></returns>
     public long GetDelay(long curTime) {
-        if (count == 0) {
-            return Math.Max(0, curTime - lastUpdateTime - firstDelay);
+        if (triggerCount == 0) {
+            return Math.Max(0, curTime - triggerTime - firstDelay);
         }
-        return Math.Max(0, curTime - lastUpdateTime - period);
+        return Math.Max(0, curTime - triggerTime - period);
     }
 
     /// <summary>
@@ -186,7 +186,7 @@ public sealed class Regulator
     /// </summary>
     /// <param name="curTime"></param>
     public void CorrectTime(long curTime) {
-        this.lastUpdateTime = curTime;
+        this.triggerTime = curTime;
     }
 
     /// <summary>
@@ -199,7 +199,7 @@ public sealed class Regulator
     /// 它的具体含义取悦于更新时使用的{@code curTime}的含义。
     /// </summary>
     /// <value></value>
-    public long LastUpdateTime => lastUpdateTime;
+    public long TriggerTime => triggerTime;
 
     /// <summary>
     /// 如果是固定频率的调节器，应该使用<see cref="Period"/>获取更新间隔。
@@ -211,7 +211,7 @@ public sealed class Regulator
     /// <summary>
     /// 已触发次数
     /// </summary>
-    public int Count => count;
+    public int TriggerCount => triggerCount;
 
     /// <summary>
     /// 任务关联的上下文

@@ -133,7 +133,7 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
 
     public bool Remove(E? e) {
         if (e == null) return false;
-        int i = IndexOf(e);
+        int i = helper.CollectionIndex(this, e);
         if (i >= 0) {
             Set(i, null);
             return true;
@@ -143,7 +143,7 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
 
     public bool RemoveRef(E? e) {
         if (e == null) return false;
-        int i = IndexOfRef(e);
+        int i = helper.CollectionIndex(this, e);
         if (i >= 0) {
             Set(i, null);
             return true;

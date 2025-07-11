@@ -23,7 +23,7 @@ namespace Wjybxx.Dson.Types
 /// <summary>
 /// 具有类型标签的字符串
 /// </summary>
-public readonly struct ExtString : IEquatable<ExtString>, IComparable<ExtString>, IComparable
+public readonly struct ExtString : IEquatable<ExtString>
 {
     public const int MaskType = 1;
     public const int MaskValue = 1 << 1;
@@ -64,33 +64,6 @@ public readonly struct ExtString : IEquatable<ExtString>, IComparable<ExtString>
 
     public static bool operator !=(ExtString left, ExtString right) {
         return !left.Equals(right);
-    }
-
-    public int CompareTo(ExtString other) {
-        var typeComparison = _type.CompareTo(other._type);
-        if (typeComparison != 0) return typeComparison;
-        return string.Compare(_value, other._value, StringComparison.Ordinal);
-    }
-
-    public int CompareTo(object? obj) {
-        if (ReferenceEquals(null, obj)) return 1;
-        return obj is ExtString other ? CompareTo(other) : throw new ArgumentException($"Object must be of type {nameof(ExtString)}");
-    }
-
-    public static bool operator <(ExtString left, ExtString right) {
-        return left.CompareTo(right) < 0;
-    }
-
-    public static bool operator >(ExtString left, ExtString right) {
-        return left.CompareTo(right) > 0;
-    }
-
-    public static bool operator <=(ExtString left, ExtString right) {
-        return left.CompareTo(right) <= 0;
-    }
-
-    public static bool operator >=(ExtString left, ExtString right) {
-        return left.CompareTo(right) >= 0;
     }
 
     #endregion

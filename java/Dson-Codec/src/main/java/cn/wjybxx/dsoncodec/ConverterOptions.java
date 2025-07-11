@@ -69,6 +69,7 @@ public class ConverterOptions {
      * 2.这可以避免大量的字符串编解码，从而提升性能 - 适用于非持久化场景。
      * 3.该选项仅对{@link DsonCodec#autoStartEnd()}为true的编码器有效。
      * 4.不可以有基于name进行Switch编解码的codec。
+	 * 5.对象字段不可以有特殊的初始值 -- 否则会被反序列化覆盖。
      */
     public final boolean writeObjectAsArray;
 

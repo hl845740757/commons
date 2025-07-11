@@ -363,7 +363,7 @@ public static class ArrayUtil
     /// </summary>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BinarySearch<T>(T[] array, T value, Comparer<T> comparer) {
+    public static int BinarySearch<T>(T[] array, T value, IComparer<T> comparer) {
         return ArraySortHelper.BinarySearch(array, 0, array.Length, value, comparer);
     }
 
@@ -378,7 +378,7 @@ public static class ArrayUtil
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int BinarySearch<T>(T[] array, T value, Comparer<T> comparer, int fromIndex, int toIndex) {
+    public static int BinarySearch<T>(T[] array, T value, IComparer<T> comparer, int fromIndex, int toIndex) {
         RangeCheck(array.Length, fromIndex, toIndex);
         return ArraySortHelper.BinarySearch(array, fromIndex, toIndex, value, comparer);
     }
@@ -387,7 +387,7 @@ public static class ArrayUtil
     /// 自定义二分查找(适用无法构建T时)
     /// </summary>
     /// <param name="array"></param>
-    /// <param name="comparer">比较器</param>
+    /// <param name="comparer">比较器，参数为mid</param>
     /// <typeparam name="T">mid</typeparam>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -399,7 +399,7 @@ public static class ArrayUtil
     /// 自定义二分查找(适用无法构建T时)
     /// </summary>
     /// <param name="array">数组</param>
-    /// <param name="comparer">比较器</param>
+    /// <param name="comparer">比较器，参数为mid</param>
     /// <param name="fromIndex">包含</param>
     /// <param name="toIndex">不包含</param>
     /// <typeparam name="T">mid</typeparam>
