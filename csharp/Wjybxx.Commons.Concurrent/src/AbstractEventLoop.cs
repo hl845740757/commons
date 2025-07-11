@@ -253,9 +253,8 @@ public abstract class AbstractEventLoop : IEventLoop
         return new List<IComponent>(_moduleList);
     }
 
-    public int GetComponents(List<IComponent> outList) {
+    public void GetComponents(List<IComponent> outList) {
         outList.AddRange(_moduleList);
-        return _moduleList.Count;
     }
 
     public int CountComponent() {
@@ -268,7 +267,7 @@ public abstract class AbstractEventLoop : IEventLoop
         IComponent? comp;
         if (cid.index < _indexedModuleList.Count
             && (comp = _indexedModuleList[cid.index]) != null
-            && comp.Cid.IsSubtypeOf(cid)) {
+            && ReferenceEquals(comp.Cid, cid)) {
             return (T)comp;
         }
         return null;
@@ -286,13 +285,12 @@ public abstract class AbstractEventLoop : IEventLoop
         return new List<T>(1) { component };
     }
 
-    public int GetComponents<T>(ComponentId<T> cid, List<T> outList) where T : class {
+    public void GetComponents<T>(ComponentId<T> cid, List<T> outList) where T : class {
         T component = GetComponent(cid);
         if (component == null) {
-            return 0;
+            return;
         }
         outList.Add(component);
-        return 1;
     }
 
     public T DelComponent<T>(ComponentId<T> cid) where T : class {
@@ -323,7 +321,7 @@ public abstract class AbstractEventLoop : IEventLoop
         IComponent? comp;
         if (cid.index < _indexedModuleList.Count
             && (comp = _indexedModuleList[cid.index]) != null
-            && comp.Cid.IsSubtypeOf(cid)) {
+            && ReferenceEquals(comp.Cid, cid)) {
             return comp;
         }
         return null;
@@ -341,13 +339,12 @@ public abstract class AbstractEventLoop : IEventLoop
         return new List<IComponent>(1) { component };
     }
 
-    public int GetComponents(ComponentId cid, List<IComponent> outList) {
+    public void GetComponents(ComponentId cid, List<IComponent> outList) {
         IComponent component = GetComponent(cid);
         if (component == null) {
-            return 0;
+            return;
         }
         outList.Add(component);
-        return 1;
     }
 
     public IComponent DelComponent(ComponentId cid) {

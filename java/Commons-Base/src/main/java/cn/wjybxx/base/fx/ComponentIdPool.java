@@ -116,7 +116,7 @@ public final class ComponentIdPool {
      * @return 可能是超类的组件id
      */
     @SuppressWarnings("unchecked")
-    public <T> ComponentId<? super T> valueOf(Class<T> clazz) {
+    public <T> ComponentId<T> valueOf(Class<T> clazz) {
         Objects.requireNonNull(clazz, "clazz");
         // 先从缓存中查询
         ComponentId<?> cid = class2CidMap.get(clazz);

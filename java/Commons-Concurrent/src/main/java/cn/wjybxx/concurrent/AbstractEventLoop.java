@@ -357,9 +357,8 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     @Override
-    public final int getComponents(List<IComponent> outList) {
+    public final void getComponents(List<IComponent> outList) {
         outList.addAll(moduleList);
-        return moduleList.size();
     }
 
     @Override
@@ -373,7 +372,7 @@ public abstract class AbstractEventLoop implements IEventLoop {
         IComponent comp;
         if (cid.index < indexedModuleList.length
                 && (comp = indexedModuleList[cid.index]) != null
-                && comp.getCid().isSubtypeOf(cid)) {
+                && comp.getCid() == cid) {
             return (T) comp;
         }
         return null;
@@ -396,13 +395,12 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     @Override
-    public final <T> int getComponents(ComponentId<T> cid, List<? super T> outList) {
+    public final <T> void getComponents(ComponentId<T> cid, List<? super T> outList) {
         T component = getComponent(cid);
         if (component == null) {
-            return 0;
+            return;
         }
         outList.add(component);
-        return 1;
     }
 
     @Override

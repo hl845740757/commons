@@ -42,7 +42,7 @@ public interface IEntity
     IList<IComponent> GetComponents();
 
     /** 获取所有的组件 -- 可使用外部的List */
-    int GetComponents(List<IComponent> outList);
+    void GetComponents(List<IComponent> outList);
 
     /** 获取当前组件数量 */
     int CountComponent();
@@ -61,7 +61,7 @@ public interface IEntity
     List<T> GetComponents<T>(ComponentId<T> cid) where T : class;
 
     /** 获取指定组件id关联的所有组件，返回返回的组件数量 */
-    int GetComponents<T>(ComponentId<T> cid, List<T> outList) where T : class;
+    void GetComponents<T>(ComponentId<T> cid, List<T> outList) where T : class;
 
     /** 删除指定组件id关联的第一个组件 -- 可能不支持通过该接口删除 */
     T DelComponent<T>(ComponentId<T> cid) where T : class;
@@ -94,7 +94,7 @@ public interface IEntity
     List<IComponent> GetComponents(ComponentId cid);
 
     /** 获取指定组件id关联的所有组件，返回返回的组件数量 */
-    int GetComponents(ComponentId cid, List<IComponent> outList);
+    void GetComponents(ComponentId cid, List<IComponent> outList);
 
     /** 删除指定组件id关联的第一个组件 -- 可能不支持通过该接口删除 */
     IComponent DelComponent(ComponentId cid);

@@ -62,10 +62,7 @@ public @interface ComponentDefine {
      * 组件的超类型
      * 1.用于对齐缓存索引{@link ComponentId#index}，使得可以通过超类组件ID查询子类组件。
      * 2.指向同一个超类型的组件，共享同一个Index。
-     * 3.如果实体支持同类型组件挂载多个，不可使用该特性。
-     * 4.如果实体支持同类型组件挂载多个，更建议将超类定义为组件，子类型不定义为组件 —— 手动进行类型转换，否则会产生诸多问题。
-     * <p>
-     * 组件重定向：{@link ComponentRedirect}
+     * 3.如果实体支持同类型组件挂载多个，不可使用该特性，而是使用{@link ComponentRedirect}。
      */
     Class<?> baseType() default Object.class;
 }
