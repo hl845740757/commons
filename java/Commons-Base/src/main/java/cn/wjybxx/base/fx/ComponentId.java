@@ -20,19 +20,22 @@ import cn.wjybxx.base.AbstractConstant;
 import cn.wjybxx.base.Constant;
 import cn.wjybxx.base.ObjectUtils;
 
+import javax.annotation.concurrent.Immutable;
 import java.util.Objects;
 
 /**
  * 组件id
  * <p>
  * 1.可通过{@link ComponentDefine}定义组件的信息
- * 2.是否和Entity同生命周期（禁止提前删除），是属于组件实例的属性，并非这一类组件的共同属性。
+ * 2.组件ID用于定义组件的元数据，应当保持不可变。
+ * 3.是否和Entity同生命周期（禁止提前删除），是属于组件实例的属性，并非这一类组件的共同属性。
  *
  * @param <T> 组件的类型，主要用于编码提示
  * @author wjybxx
  * date - 2024/6/22
  */
-public class ComponentId<T extends IComponent> extends AbstractConstant {
+@Immutable
+public class ComponentId<T> extends AbstractConstant {
 
     /** 高速缓存下标 */
     public final int index;
@@ -42,11 +45,15 @@ public class ComponentId<T extends IComponent> extends AbstractConstant {
     public final boolean shared;
     /** 最大可挂载数量 */
     public final int maxCount;
-    /** 启用的函数，扫描重写的方法计算得到 */
+    /** 启用的函数，扫描重写的方法计算得到 -- 存在继承的情况下不可使用该值 */
     public final long enableFuncs;
+    /** 超类组件id -- 即当前组件可充当目标组件 */
+    public final ComponentId<?> baseId;
 
     /** 业务自定义flags */
     public final long flags;
+    /** 用于分组的键 */
+    public final int groupKey;
     /** 挂载路径 */
     public final String mountPath;
     /** 用户扩展数据 -- 必须的不可变的 */
@@ -61,8 +68,10 @@ public class ComponentId<T extends IComponent> extends AbstractConstant {
         this.shared = builder.shared;
         this.maxCount = Math.max(1, builder.maxCount);
         this.enableFuncs = builder.enableFuncs;
+        this.baseId = builder.baseId;
 
         this.flags = builder.flags;
+        this.groupKey = builder.groupKey;
         this.mountPath = ObjectUtils.blankToDef(builder.mountPath, null);
         this.extraInfo = builder.extraInfo;
     }
@@ -72,11 +81,26 @@ public class ComponentId<T extends IComponent> extends AbstractConstant {
         return !shared && kind == ComponentKind.SCRIPT;
     }
 
-    public static <T extends IComponent> Builder<T> newBuilder(String name) {
+    /** 是否是目标的子类型 */
+    public final boolean isSubtypeOf(ComponentId<?> other) {
+        if (this == other) {
+            return true;
+        }
+        ComponentId<?> tempBaseId = this.baseId;
+        while (tempBaseId != null) {
+            if (tempBaseId == other) {
+                return true;
+            }
+            tempBaseId = tempBaseId.baseId;
+        }
+        return false;
+    }
+
+    public static <T> Builder<T> newBuilder(String name) {
         return new Builder<>(name);
     }
 
-    public static class Builder<T extends IComponent> extends Constant.Builder<ComponentId<T>> {
+    public static class Builder<T> extends Constant.Builder<ComponentId<T>> {
         /** 组件类型，默认为需要框架调度的脚本 */
         private ComponentKind kind = ComponentKind.SCRIPT;
         /** 是否可共享 */
@@ -85,9 +109,13 @@ public class ComponentId<T extends IComponent> extends AbstractConstant {
         private int maxCount = 1;
         /** 启用的函数，扫描重写的方法计算得到 */
         private long enableFuncs;
+        /** 超类组件id */
+        private ComponentId<?> baseId;
 
         /** 业务自定义flags */
         private long flags;
+        /** 用于分组的键 */
+        private int groupKey;
         /** 挂载路径 */
         private String mountPath;
         /** 用户扩展数据 -- 必须的不可变的 */
@@ -148,6 +176,15 @@ public class ComponentId<T extends IComponent> extends AbstractConstant {
             return this;
         }
 
+        public int getGroupKey() {
+            return groupKey;
+        }
+
+        public Builder<T> setGroupKey(int groupKey) {
+            this.groupKey = groupKey;
+            return this;
+        }
+
         public String getMountPath() {
             return mountPath;
         }
@@ -163,6 +200,15 @@ public class ComponentId<T extends IComponent> extends AbstractConstant {
 
         public Builder<T> setExtraInfo(Object extraInfo) {
             this.extraInfo = extraInfo;
+            return this;
+        }
+
+        public ComponentId<?> getBaseId() {
+            return baseId;
+        }
+
+        public Builder<T> setBaseId(ComponentId<?> baseId) {
+            this.baseId = baseId;
             return this;
         }
     }

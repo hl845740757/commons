@@ -49,7 +49,7 @@ public partial interface IConstant
         /// 获取分配的高速缓存索引 -- -1表示未设置。
         /// 注意：<see cref="ConstantPool{T}"/>仅仅分配index，而真正的实现在于常量的使用者。
         /// </summary>
-        public int CacheIndex { get; }
+        public int CacheIndex { get; set; }
 
         /// <summary>
         /// 设置是否需要分配高速缓存索引
@@ -87,15 +87,13 @@ public partial interface IConstant
         /// </summary>
         /// <param name="poolId">声明常量的池</param>
         /// <param name="id">分配的常量id</param>
-        /// <param name="cacheIndex">分配的缓存索引</param>
         /// <exception cref="IllegalStateException"></exception>
-        internal void SetId(string poolId, int id, int cacheIndex = -1) {
+        internal void SetId(string poolId, int id) {
             if (_id.HasValue) {
                 throw new IllegalStateException("id cannot be initialized repeatedly");
             }
             _id = id;
             _poolId = poolId;
-            _cacheIndex = cacheIndex;
         }
 
         public int GetIdOrThrow() {
@@ -136,7 +134,10 @@ public partial interface IConstant
         /// 获取分配的高速缓存索引 -- -1表示未设置。
         /// 注意：<see cref="ConstantPool{T}"/>仅仅分配index，而真正的实现在于常量的使用者。
         /// </summary>
-        public int CacheIndex => _cacheIndex;
+        public int CacheIndex {
+            get => _cacheIndex;
+            set => _cacheIndex = value;
+        }
 
         /// <summary>
         /// 设置是否需要分配高速缓存索引

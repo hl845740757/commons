@@ -82,17 +82,15 @@ public interface Constant extends Comparable<Constant> {
         /**
          * 设置常量的id - 该方法由常量池调用
          *
-         * @param poolId     声明常量的池
-         * @param id         分配的常量id
-         * @param cacheIndex 分配的缓存索引，-1表示未设置
+         * @param poolId 声明常量的池
+         * @param id     分配的常量id
          */
-        public void setId(String poolId, int id, int cacheIndex) {
+        public void setId(String poolId, int id) {
             if (this.id != null) {
                 throw new IllegalStateException("id cannot be initialized repeatedly");
             }
             this.poolId = poolId;
             this.id = id;
-            this.cacheIndex = cacheIndex;
         }
 
         public int getIdOrThrow() {
@@ -122,6 +120,11 @@ public interface Constant extends Comparable<Constant> {
          */
         public int getCacheIndex() {
             return cacheIndex;
+        }
+
+        public Builder<T> setCacheIndex(int cacheIndex) {
+            this.cacheIndex = cacheIndex;
+            return this;
         }
 
         public boolean isRequireCacheIndex() {

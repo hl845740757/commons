@@ -23,33 +23,41 @@ namespace Wjybxx.Commons.Fx
 /// </summary>
 public enum ComponentStatus
 {
-    /**
-     * 刚刚创建，尚未添加到实体
-     */
+    /// <summary>
+    /// 刚刚创建，尚未添加到实体
+    /// </summary>
     New = 0,
-    /**
-     * 已添加到实体，等待启动；非脚本组件会直接进入{@link #STOPPED}的状态
-     */
+    /// <summary>
+    /// 已添加到实体，等待启动；非脚本组件会直接进入<see cref="Stopped"/>的状态
+    /// </summary>
     Ready = 1,
-    /**
-     * 正在启动中，脚本组件在调用Start方法前进入该状态
-     */
+
+    /// <summary>
+    /// 正在启动中，脚本组件在调用Start方法前进入该状态
+    /// </summary>
     Starting = 2,
-    /**
-     * 运行状态，脚本组件在调用Start成功后会进入该状态。
-     */
+    /// <summary>
+    /// 运行状态，脚本组件在调用Start成功后会进入该状态。
+    /// </summary>
     Running = 3,
-    /**
-     * 停止中，脚本组件在调用Stop方法前进入该状态
-     */
-    Stopping = 4,
-    /**
-     * 成功停止，非脚本组件会直接到该状态，脚本组件在调用Stop方法后会进入该状态
-     */
-    Stopped = 5,
-    /**
-     * 已从实体上删除
-     */
-    Destroyed = 6
+
+    /// <summary>
+    /// 暂停状态，暂停状态下脚本将停止Update
+    /// </summary>
+    Pausing = 4,
+
+    /// <summary>
+    /// 停止中，脚本组件在调用Stop方法前进入该状态
+    /// </summary>
+    Stopping = 5,
+    /// <summary>
+    /// 成功停止，非脚本组件会直接到该状态，脚本组件在调用Stop方法后会进入该状态
+    /// </summary>
+    Stopped = 6,
+
+    /// <summary>
+    /// 已从实体上删除
+    /// </summary>
+    Destroyed = 7
 }
 }

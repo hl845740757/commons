@@ -480,7 +480,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     protected void StartModules() {
         // 模块的部分数据初始化 - OnReady
         foreach (EventLoopModule module in _moduleList) {
-            if (module.Cid.Shared) {
+            if (module.Cid.shared) {
                 continue; // 共享组件
             }
             if (module.Entity != null) {
@@ -490,7 +490,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         }
         // 解决模块之间的依赖
         foreach (EventLoopModule module in _moduleList) {
-            if (module.Cid.Shared) {
+            if (module.Cid.shared) {
                 continue; // 共享组件
             }
             module.ResolveDependence();
@@ -530,7 +530,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
     protected void DestroyModules() {
         // 顺序销毁 -- 组件之间不能有时序依赖
         foreach (EventLoopModule module in _moduleList) {
-            if (module.Cid.Shared) {
+            if (module.Cid.shared) {
                 continue;
             }
             if (module.Status == ComponentStatus.New) {

@@ -17,8 +17,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace Wjybxx.Commons
 {
@@ -30,11 +28,13 @@ public abstract class AbstractConstant : IConstant
     private readonly int _id;
     private readonly string _name;
     private readonly string _poolId;
+    private readonly int _hash;
 
     protected AbstractConstant(IConstant.IBuilder builder) {
         _id = builder.GetIdOrThrow();
         _name = builder.Name;
         _poolId = builder.PoolId ?? throw new ArgumentException("PoolId");
+        _hash = HashCode.Combine(_hash, _name, _poolId); // 稳定hash值
     }
 
     public int Id => _id;
@@ -64,20 +64,8 @@ public abstract class AbstractConstant : IConstant
         return ReferenceEquals(this, other);
     }
 
-    /// <summary>
-    /// 不对hashcode做优化 -- 理论上使用_id是合适的。
-    /// </summary>
-    /// <returns></returns>
     public sealed override int GetHashCode() {
-        return RuntimeHelpers.GetHashCode(this);
-    }
-
-    public static bool operator ==(AbstractConstant? left, AbstractConstant? right) {
-        return ReferenceEquals(left, right);
-    }
-
-    public static bool operator !=(AbstractConstant? left, AbstractConstant? right) {
-        return !ReferenceEquals(left, right);
+        return _hash;
     }
 
     #endregion
@@ -105,22 +93,6 @@ public abstract class AbstractConstant : IConstant
             return 1;
         }
         throw new IllegalStateException($"failed to compare two different constants, this: {Name}, that: {other.Name}");
-    }
-
-    public static bool operator <(AbstractConstant? left, AbstractConstant? right) {
-        return Comparer<AbstractConstant>.Default.Compare(left, right) < 0;
-    }
-
-    public static bool operator >(AbstractConstant? left, AbstractConstant? right) {
-        return Comparer<AbstractConstant>.Default.Compare(left, right) > 0;
-    }
-
-    public static bool operator <=(AbstractConstant? left, AbstractConstant? right) {
-        return Comparer<AbstractConstant>.Default.Compare(left, right) <= 0;
-    }
-
-    public static bool operator >=(AbstractConstant? left, AbstractConstant? right) {
-        return Comparer<AbstractConstant>.Default.Compare(left, right) >= 0;
     }
 
     #endregion

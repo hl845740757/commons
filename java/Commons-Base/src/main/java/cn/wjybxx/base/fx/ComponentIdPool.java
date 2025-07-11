@@ -20,9 +20,10 @@ import cn.wjybxx.base.ConstantMap;
 import cn.wjybxx.base.ConstantPool;
 import cn.wjybxx.base.ObjectUtils;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * 组件id池
@@ -35,11 +36,11 @@ import java.util.function.Function;
 public final class ComponentIdPool {
 
     private final ConstantPool<ComponentId<?>> pool;
-    private final Function<Class<?>, ComponentId.Builder<?>> cidParser;
+    private final BiFunction<ComponentIdPool, Class<?>, ComponentId.Builder<?>> cidParser;
     private final ConcurrentHashMap<Class<?>, ComponentId<?>> class2CidMap = new ConcurrentHashMap<>();
 
     private ComponentIdPool(ConstantPool<ComponentId<?>> pool,
-                            Function<Class<?>, ComponentId.Builder<?>> cidParser) {
+                            BiFunction<ComponentIdPool, Class<?>, ComponentId.Builder<?>> cidParser) {
         this.pool = pool;
         this.cidParser = cidParser;
     }
@@ -50,7 +51,7 @@ public final class ComponentIdPool {
     }
 
     /** 创建一个新的池：即新的命名空间 */
-    public static ComponentIdPool newPool(Function<Class<?>, ComponentId.Builder<?>> cidParser) {
+    public static ComponentIdPool newPool(BiFunction<ComponentIdPool, Class<?>, ComponentId.Builder<?>> cidParser) {
         return new ComponentIdPool(ConstantPool.newPool(null), cidParser);
     }
 
@@ -58,13 +59,13 @@ public final class ComponentIdPool {
 
     /** 构建一个组件id */
     @SuppressWarnings("unchecked")
-    public <T extends IComponent> ComponentId<T> create(ComponentId.Builder<T> builder) {
+    public <T> ComponentId<T> create(ComponentId.Builder<T> builder) {
         return (ComponentId<T>) pool.newInstance(builder);
     }
 
     /** 创建或使用既有的组件id */
     @SuppressWarnings("unchecked")
-    public <T extends IComponent> ComponentId<T> valueOf(ComponentId.Builder<T> builder) {
+    public <T> ComponentId<T> valueOf(ComponentId.Builder<T> builder) {
         return (ComponentId<T>) pool.valueOf(builder);
     }
 
@@ -96,16 +97,26 @@ public final class ComponentIdPool {
         return pool.newConstantMap();
     }
 
+    /** 组件id数量 */
+    public int size() {
+        return pool.size();
+    }
+
+    /** 所有的组件id -- 快照 */
+    public List<ComponentId<?>> values() {
+        return pool.values();
+    }
+
     // endregion
 
     /**
-     * 通过类型信息解析组件的id
+     * 获取类型关联的组件Id
      *
      * @param clazz 应该使用超类的class查询，否则可能导致异常
      * @return 可能是超类的组件id
      */
     @SuppressWarnings("unchecked")
-    public <T extends IComponent> ComponentId<? super T> valueOf(Class<T> clazz) {
+    public <T> ComponentId<? super T> valueOf(Class<T> clazz) {
         Objects.requireNonNull(clazz, "clazz");
         // 先从缓存中查询
         ComponentId<?> cid = class2CidMap.get(clazz);
@@ -114,15 +125,15 @@ public final class ComponentIdPool {
         }
         // 优先处理重定向
         ComponentRedirect annotationRedirect = clazz.getAnnotation(ComponentRedirect.class);
-        if (annotationRedirect != null) {
-            cid = valueOf((Class<? extends IComponent>) annotationRedirect.value());
+        if (annotationRedirect != null && annotationRedirect.value() != clazz) {
+            cid = valueOf((Class<?>) annotationRedirect.value());
             class2CidMap.put(clazz, cid);
             return (ComponentId<T>) cid;
         }
         // 通过builder查询
         ComponentId.Builder<T> builder;
         if (cidParser != null) {
-            builder = (ComponentId.Builder<T>) cidParser.apply(clazz);
+            builder = (ComponentId.Builder<T>) cidParser.apply(this, clazz);
         } else {
             ComponentDefine annotationDefine = clazz.getAnnotation(ComponentDefine.class);
             if (annotationDefine == null) {
@@ -137,7 +148,14 @@ public final class ComponentIdPool {
                         .setShared(annotationDefine.shared())
                         .setMaxCount(annotationDefine.maxCount())
                         .setFlags(annotationDefine.flags())
+                        .setGroupKey(annotationDefine.groupKey())
                         .setMountPath(annotationDefine.mountPath());
+                //
+                if (annotationDefine.baseType() != Object.class) {
+                    ComponentId<?> baseComponentId = valueOf(annotationDefine.baseType());
+                    builder.setBaseId(baseComponentId);
+                    builder.setCacheIndex(baseComponentId.index);
+                }
             }
         }
         cid = pool.valueOf(builder);

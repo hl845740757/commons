@@ -57,6 +57,11 @@ public class ComponentDefineAttribute : Attribute
     public int Flags { get; set; } = 0;
 
     /// <summary>
+    /// 用户自定义分组键
+    /// </summary>
+    public int GroupKey { get; set; } = 0;
+
+    /// <summary>
     /// 挂载路径
     /// </summary>
     public string? MountPath { get; set; }
@@ -65,5 +70,17 @@ public class ComponentDefineAttribute : Attribute
     /// 自定义切面数据 -- 用于自定义解析
     /// </summary>
     public string? CustomData { get; set; }
+
+    /// <summary>
+    /// 组件的超类型
+    ///
+    /// 1.用于对齐缓存索引<see cref="ComponentId.index"/>，使得可以通过超类组件ID查询子类组件。
+    /// 2.指向同一个超类型的组件，共享同一个Index。
+    /// 3.如果实体支持同类型组件挂载多个，不可使用该特性。
+    /// 4.如果实体支持同类型组件挂载多个，更建议将超类定义为组件，子类型不定义为组件 —— 手动进行类型转换，否则会产生诸多问题。
+    ///
+    /// 组件重定向：：<see cref="ComponentRedirectAttribute"/>
+    /// </summary>
+    public Type? BaseType { get; set; }
 }
 }

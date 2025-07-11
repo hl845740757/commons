@@ -52,7 +52,7 @@ public abstract class EventLoopModule : IEventLoopModule
         this._status = ComponentStatus.Ready;
         this.OnReady();
         // 非脚本组件，直接进入完成状态
-        if (Cid.Kind != ComponentKind.Script) {
+        if (Cid.kind != ComponentKind.Script) {
             this._status = ComponentStatus.Stopped;
         }
     }
@@ -104,7 +104,7 @@ public abstract class EventLoopModule : IEventLoopModule
 
     /** 是否是脚本组件 */
     private bool IsScript() {
-        return Cid.Kind == ComponentKind.Script;
+        return Cid.kind == ComponentKind.Script;
     }
 
     #endregion

@@ -52,28 +52,28 @@ public interface IEntity
     #region cid-泛型
 
     /** 获取指定组件id关联的第一个组件 */
-    T GetComponent<T>(ComponentId<T> cid) where T : IComponent;
+    T GetComponent<T>(ComponentId<T> cid) where T : class;
 
     /** 获取指定组件id关联的最后一个组件 */
-    T GetLastComponent<T>(ComponentId<T> cid) where T : IComponent;
+    T GetLastComponent<T>(ComponentId<T> cid) where T : class;
 
     /** 获取指定组件id关联的所有组件 */
-    List<T> GetComponents<T>(ComponentId<T> cid) where T : IComponent;
+    List<T> GetComponents<T>(ComponentId<T> cid) where T : class;
 
     /** 获取指定组件id关联的所有组件，返回返回的组件数量 */
-    int GetComponents<T>(ComponentId<T> cid, List<T> outList) where T : IComponent;
+    int GetComponents<T>(ComponentId<T> cid, List<T> outList) where T : class;
 
     /** 删除指定组件id关联的第一个组件 -- 可能不支持通过该接口删除 */
-    T DelComponent<T>(ComponentId<T> cid) where T : IComponent;
+    T DelComponent<T>(ComponentId<T> cid) where T : class;
 
     /** 删除指定组件id关联的最后一个组件 -- 可能不支持通过该接口删除 */
-    T DelLastComponent<T>(ComponentId<T> cid) where T : IComponent;
+    T DelLastComponent<T>(ComponentId<T> cid) where T : class;
 
     /** 删除指定组件id关联的所有组件 -- 可能不支持通过该接口删除 */
-    List<T> DelComponents<T>(ComponentId<T> cid) where T : IComponent;
+    List<T> DelComponents<T>(ComponentId<T> cid) where T : class;
 
     /** 删除指定组件id关联的所有组件，返回删除的组件数量 */
-    int DelComponents<T>(ComponentId<T> cid, List<T> outList) where T : IComponent;
+    int DelComponents<T>(ComponentId<T> cid, List<T> outList) where T : class;
 
     /** 统计指定组件id关联的组件数 */
     int CountComponent(ComponentId cid);

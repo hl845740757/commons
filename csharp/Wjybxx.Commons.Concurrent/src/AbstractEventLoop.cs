@@ -244,7 +244,7 @@ public abstract class AbstractEventLoop : IEventLoop
     }
 
     public bool ContainsComponent(IComponent comp) {
-        int index = comp.Cid.Index;
+        int index = comp.Cid.index;
         return index < _indexedModuleList.Count && _indexedModuleList[index] == comp;
     }
 
@@ -264,21 +264,21 @@ public abstract class AbstractEventLoop : IEventLoop
 
     #region 泛型
 
-    public T GetComponent<T>(ComponentId<T> cid) where T : IComponent {
+    public T? GetComponent<T>(ComponentId<T> cid) where T : class {
         IComponent? comp;
-        if (cid.Index < _indexedModuleList.Count
-            && (comp = _indexedModuleList[cid.Index]) != null
-            && ReferenceEquals(comp.Cid, cid)) {
+        if (cid.index < _indexedModuleList.Count
+            && (comp = _indexedModuleList[cid.index]) != null
+            && comp.Cid.IsSubtypeOf(cid)) {
             return (T)comp;
         }
-        return default;
+        return null;
     }
 
-    public T GetLastComponent<T>(ComponentId<T> cid) where T : IComponent {
+    public T? GetLastComponent<T>(ComponentId<T> cid) where T : class {
         return GetComponent(cid);
     }
 
-    public List<T> GetComponents<T>(ComponentId<T> cid) where T : IComponent {
+    public List<T> GetComponents<T>(ComponentId<T> cid) where T : class {
         T component = GetComponent(cid);
         if (component == null) {
             return new List<T>(0);
@@ -286,7 +286,7 @@ public abstract class AbstractEventLoop : IEventLoop
         return new List<T>(1) { component };
     }
 
-    public int GetComponents<T>(ComponentId<T> cid, List<T> outList) where T : IComponent {
+    public int GetComponents<T>(ComponentId<T> cid, List<T> outList) where T : class {
         T component = GetComponent(cid);
         if (component == null) {
             return 0;
@@ -295,19 +295,19 @@ public abstract class AbstractEventLoop : IEventLoop
         return 1;
     }
 
-    public T DelComponent<T>(ComponentId<T> cid) where T : IComponent {
+    public T DelComponent<T>(ComponentId<T> cid) where T : class {
         throw new NotImplementedException();
     }
 
-    public T DelLastComponent<T>(ComponentId<T> cid) where T : IComponent {
+    public T DelLastComponent<T>(ComponentId<T> cid) where T : class {
         throw new NotImplementedException();
     }
 
-    public List<T> DelComponents<T>(ComponentId<T> cid) where T : IComponent {
+    public List<T> DelComponents<T>(ComponentId<T> cid) where T : class {
         throw new NotImplementedException();
     }
 
-    public int DelComponents<T>(ComponentId<T> cid, List<T> outList) where T : IComponent {
+    public int DelComponents<T>(ComponentId<T> cid, List<T> outList) where T : class {
         throw new NotImplementedException();
     }
 
@@ -321,9 +321,9 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public IComponent? GetComponent(ComponentId cid) {
         IComponent? comp;
-        if (cid.Index < _indexedModuleList.Count
-            && (comp = _indexedModuleList[cid.Index]) != null
-            && ReferenceEquals(comp.Cid, cid)) {
+        if (cid.index < _indexedModuleList.Count
+            && (comp = _indexedModuleList[cid.index]) != null
+            && comp.Cid.IsSubtypeOf(cid)) {
             return comp;
         }
         return null;
@@ -378,16 +378,16 @@ public abstract class AbstractEventLoop : IEventLoop
             return Array.Empty<EventLoopModule>();
         }
         int maxIndex = moduleList
-            .Select(e => e.Cid.Index)
+            .Select(e => e.Cid.index)
             .Max();
 
         EventLoopModule[] result = new EventLoopModule[maxIndex + 1];
         foreach (EventLoopModule module in moduleList) {
-            EventLoopModule exist = result[module.Cid.Index];
+            EventLoopModule exist = result[module.Cid.index];
             if (exist != null) {
                 throw new IllegalStateException("module is duplicate, cid: " + module.Cid);
             }
-            result[module.Cid.Index] = module;
+            result[module.Cid.index] = module;
         }
         return result;
     }

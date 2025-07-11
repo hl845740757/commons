@@ -352,7 +352,7 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     @Override
-    public final List<? extends IComponent> getComponents() {
+    public final List<?> getComponents() {
         return moduleList;
     }
 
@@ -369,23 +369,23 @@ public abstract class AbstractEventLoop implements IEventLoop {
 
     @SuppressWarnings("unchecked")
     @Override
-    public final <T extends IComponent> T getComponent(ComponentId<T> cid) {
+    public final <T> T getComponent(ComponentId<T> cid) {
         IComponent comp;
         if (cid.index < indexedModuleList.length
                 && (comp = indexedModuleList[cid.index]) != null
-                && comp.getCid() == cid) {
+                && comp.getCid().isSubtypeOf(cid)) {
             return (T) comp;
         }
         return null;
     }
 
     @Override
-    public final <T extends IComponent> T getLastComponent(ComponentId<T> cid) {
+    public final <T> T getLastComponent(ComponentId<T> cid) {
         return getComponent(cid);
     }
 
     @Override
-    public final <T extends IComponent> List<T> getComponents(ComponentId<T> cid) {
+    public final <T> List<T> getComponents(ComponentId<T> cid) {
         T component = getComponent(cid);
         if (component == null) {
             return new ArrayList<>();
@@ -396,7 +396,7 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     @Override
-    public final <T extends IComponent> int getComponents(ComponentId<T> cid, List<? super T> outList) {
+    public final <T> int getComponents(ComponentId<T> cid, List<? super T> outList) {
         T component = getComponent(cid);
         if (component == null) {
             return 0;
@@ -406,22 +406,22 @@ public abstract class AbstractEventLoop implements IEventLoop {
     }
 
     @Override
-    public final <T extends IComponent> T delComponent(ComponentId<T> cid) {
+    public final <T> T delComponent(ComponentId<T> cid) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public final <T extends IComponent> T delLastComponent(ComponentId<T> cid) {
+    public final <T> T delLastComponent(ComponentId<T> cid) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public final <T extends IComponent> List<T> delComponents(ComponentId<T> cid) {
+    public final <T> List<T> delComponents(ComponentId<T> cid) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public final <T extends IComponent> int delComponents(ComponentId<T> cid, List<? super T> outList) {
+    public final <T> int delComponents(ComponentId<T> cid, List<? super T> outList) {
         throw new UnsupportedOperationException();
     }
 

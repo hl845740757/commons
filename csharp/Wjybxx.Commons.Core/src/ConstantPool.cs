@@ -220,11 +220,11 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
     private TConstant NewConstant(IConstant.Builder<TConstant> builder) {
         string name = builder.Name;
         int nextId = Interlocked.Increment(ref _idGenerator) - 1;
-        int cacheIndex = builder.RequireCacheIndex
-            ? Interlocked.Increment(ref _cacheIndexGenerator) - 1
-            : -1;
-        builder.SetId(poolId, nextId, cacheIndex);
-
+        builder.SetId(poolId, nextId);
+        //
+        if (builder.CacheIndex < 0 && builder.RequireCacheIndex) {
+            builder.CacheIndex = Interlocked.Increment(ref _cacheIndexGenerator) - 1;
+        }
         TConstant constant = builder.Build();
         if (constant.Name != name
             || constant.Id != nextId

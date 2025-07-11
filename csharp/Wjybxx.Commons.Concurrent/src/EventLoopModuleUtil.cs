@@ -87,7 +87,7 @@ public static class EventLoopModuleUtil
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             binder: null, paramTypes, modifiers: null);
         if (methodInfo == null) {
-            return true;
+            return false;
         }
         // 抽象类覆盖了所有的接口方法，因此是测试抽象类
         Type declaringType = methodInfo.DeclaringType!;

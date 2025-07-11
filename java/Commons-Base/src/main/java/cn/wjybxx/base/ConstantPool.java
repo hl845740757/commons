@@ -226,9 +226,11 @@ public class ConstantPool<T extends Constant> {
     @SuppressWarnings("StringEquality")
     private T newConstant(Constant.Builder<? extends T> builder) {
         final int id = idGenerator.getAndIncrement();
-        final int cacheIndex = builder.isRequireCacheIndex() ? cacheIndexGenerator.getAndIncrement() : -1;
-        builder.setId(poolId, id, cacheIndex);
-
+        builder.setId(poolId, id);
+        //
+        if (builder.getCacheIndex() < 0 && builder.isRequireCacheIndex()) {
+            builder.setCacheIndex(cacheIndexGenerator.getAndIncrement());
+        }
         final T result = builder.build();
         // 校验实现
         Objects.requireNonNull(result, "result");

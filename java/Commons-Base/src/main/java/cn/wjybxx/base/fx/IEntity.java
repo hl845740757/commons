@@ -41,7 +41,7 @@ public interface IEntity {
     boolean containsComponent(IComponent comp);
 
     /** 实体绑定的所有组件 - 这通常是个快照，只有运行期不可变的实体，可以共享List */
-    List<? extends IComponent> getComponents();
+    List<?> getComponents();
 
     /** 获取所有的组件 -- 可使用外部的List */
     int getComponents(List<IComponent> outList);
@@ -54,28 +54,28 @@ public interface IEntity {
     // region cid
 
     /** 获取指定组件id关联的第一个组件 */
-    <T extends IComponent> T getComponent(ComponentId<T> cid);
+    <T> T getComponent(ComponentId<T> cid);
 
     /** 获取指定组件id关联的最后一个组件 */
-    <T extends IComponent> T getLastComponent(ComponentId<T> cid);
+    <T> T getLastComponent(ComponentId<T> cid);
 
     /** 获取指定组件id关联的所有组件 */
-    <T extends IComponent> List<T> getComponents(ComponentId<T> cid);
+    <T> List<T> getComponents(ComponentId<T> cid);
 
     /** 获取指定组件id关联的所有组件，返回返回的组件数量 */
-    <T extends IComponent> int getComponents(ComponentId<T> cid, List<? super T> outList);
+    <T> int getComponents(ComponentId<T> cid, List<? super T> outList);
 
     /** 删除指定组件id关联的第一个组件 -- 可能不支持通过该接口删除 */
-    <T extends IComponent> T delComponent(ComponentId<T> cid);
+    <T> T delComponent(ComponentId<T> cid);
 
     /** 删除指定组件id关联的最后一个组件 -- 可能不支持通过该接口删除 */
-    <T extends IComponent> T delLastComponent(ComponentId<T> cid);
+    <T> T delLastComponent(ComponentId<T> cid);
 
     /** 删除指定组件id关联的所有组件 -- 可能不支持通过该接口删除 */
-    <T extends IComponent> List<T> delComponents(ComponentId<T> cid);
+    <T> List<T> delComponents(ComponentId<T> cid);
 
     /** 删除指定组件id关联的所有组件，返回删除的组件数量 */
-    <T extends IComponent> int delComponents(ComponentId<T> cid, List<? super T> outList);
+    <T> int delComponents(ComponentId<T> cid, List<? super T> outList);
 
     /** 统计指定组件id关联的组件数 */
     int countComponent(ComponentId<?> cid);

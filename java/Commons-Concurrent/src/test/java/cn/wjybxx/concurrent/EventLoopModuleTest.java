@@ -34,12 +34,8 @@ import org.junit.jupiter.api.Test;
 public class EventLoopModuleTest {
 
     private static IEventLoop eventLoop;
-    @SuppressWarnings("unchecked")
-    private static final ComponentId<DataModule> dataCid =
-            (ComponentId<DataModule>) IEventLoopModule.GLOBAL.valueOf(DataModule.class);
-    @SuppressWarnings("unchecked")
-    private static final ComponentId<BehaviorModule> behaviorCid =
-            (ComponentId<BehaviorModule>) IEventLoopModule.GLOBAL.valueOf(BehaviorModule.class);
+    private static final ComponentId<DataModule> dataCid = IEventLoopModule.GLOBAL.valueOf(DataModule.class);
+    private static final ComponentId<BehaviorModule> behaviorCid = IEventLoopModule.GLOBAL.valueOf(BehaviorModule.class);
 
     @BeforeEach
     void setUp() {

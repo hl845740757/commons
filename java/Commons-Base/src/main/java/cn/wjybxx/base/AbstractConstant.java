@@ -31,11 +31,14 @@ public abstract class AbstractConstant implements Constant {
     private final String name;
     /** 声明常量的池 */
     private final String poolId;
+    /** hash值缓存 */
+    private final int hash;
 
     protected AbstractConstant(Builder<?> builder) {
         this.id = builder.getIdOrThrow();
         this.name = Objects.requireNonNull(builder.getName());
         this.poolId = Objects.requireNonNull(builder.getPoolId(), "poolId");
+        this.hash = id * 31 + ObjectUtils.hashCode(name, poolId); // 稳定hash值
     }
 
     @Override
@@ -63,13 +66,11 @@ public abstract class AbstractConstant implements Constant {
 
     @Override
     public final int hashCode() {
-        // 不对hashCode做任何假设
-        return super.hashCode();
+        return hash;
     }
 
     @Override
     public final boolean equals(Object obj) {
-        // 只使用 == 比较相等性
         return this == obj;
     }
 

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace Wjybxx.Commons.Fx
@@ -30,11 +31,11 @@ namespace Wjybxx.Commons.Fx
 public sealed class ComponentIdPool
 {
     private readonly ConstantPool<ComponentId> pool;
-    private readonly Func<Type, ComponentId.IBuilder>? cidParser;
+    private readonly Func<ComponentIdPool, Type, ComponentId.IBuilder>? cidParser;
     private readonly ConcurrentDictionary<Type, ComponentId> class2CidMap = new();
 
     public ComponentIdPool(ConstantPool<ComponentId> pool,
-                           Func<Type, ComponentId.IBuilder>? cidParser) {
+                           Func<ComponentIdPool, Type, ComponentId.IBuilder>? cidParser) {
         this.pool = pool;
         this.cidParser = cidParser;
     }
@@ -53,12 +54,12 @@ public sealed class ComponentIdPool
     /// </summary>
     /// <param name="cidParser">id解析器</param>
     /// <returns></returns>
-    public static ComponentIdPool NewPool(Func<Type, ComponentId.IBuilder> cidParser) {
+    public static ComponentIdPool NewPool(Func<ComponentIdPool, Type, ComponentId.IBuilder> cidParser) {
         return new ComponentIdPool(ConstantPool<ComponentId>.NewPool(null), cidParser);
     }
 
     /** 构建一个组件id */
-    public ComponentId<T> Create<T>(ComponentId.Builder<T> builder) where T : IComponent {
+    public ComponentId<T> Create<T>(ComponentId.Builder<T> builder) {
         return (ComponentId<T>)pool.NewInstance(builder);
     }
 
@@ -68,7 +69,7 @@ public sealed class ComponentIdPool
     }
 
     /** 创建或使用既有的组件id */
-    public ComponentId<T> ValueOf<T>(ComponentId.Builder<T> builder) where T : IComponent {
+    public ComponentId<T> ValueOf<T>(ComponentId.Builder<T> builder) {
         return (ComponentId<T>)pool.ValueOf(builder);
     }
 
@@ -97,12 +98,29 @@ public sealed class ComponentIdPool
         return pool.NewConstantMap();
     }
 
+    /** 组件id数量 */
+    public int Count => pool.Count;
+
+    /** 所有的组件id -- 快照 */
+    public List<ComponentId> Values => pool.Values;
+
     #endregion
 
     /// <summary>
-    /// 主要用于运行时获取对应的组件id
+    /// 获取类型关联的组件Id
+    ///
+    /// 注意：T不可以包含<see cref="ComponentRedirectAttribute"/>注解，否则类型转换可能失败。
     /// </summary>
-    /// <param name="type"></param>
+    /// <typeparam name="T">组件类型</typeparam>
+    /// <returns></returns>
+    public ComponentId<T> ValueOf<T>() {
+        return (ComponentId<T>)ValueOf(typeof(T));
+    }
+
+    /// <summary>
+    /// 获取类型关联的组件Id
+    /// </summary>
+    /// <param name="type">组件类型</param>
     /// <returns>返回的可能是超类的组件id</returns>
     public ComponentId ValueOf(Type type) {
         if (type == null) throw new ArgumentNullException(nameof(type));
@@ -112,7 +130,7 @@ public sealed class ComponentIdPool
         }
         // 优先处理重定向
         ComponentRedirectAttribute componentRedirect = type.GetCustomAttribute<ComponentRedirectAttribute>();
-        if (componentRedirect != null) {
+        if (componentRedirect != null && componentRedirect.baseType != type) {
             cid = ValueOf(componentRedirect.baseType);
             class2CidMap.TryAdd(type, cid);
             return cid;
@@ -120,7 +138,8 @@ public sealed class ComponentIdPool
         // 通过builder构建
         ComponentId.IBuilder builder;
         if (cidParser != null) {
-            builder = cidParser.Invoke(type);
+            // 传入this以支持解析器获取其它组件id信息
+            builder = cidParser.Invoke(this, type);
         } else {
             // 泛型类，在自动处理的情况下指向同一个组件id
             ComponentDefineAttribute componentDefine = type.GetCustomAttribute<ComponentDefineAttribute>();
@@ -137,7 +156,14 @@ public sealed class ComponentIdPool
                 builder.Shared = componentDefine.Shared;
                 builder.MaxCount = componentDefine.MaxCount;
                 builder.Flags = componentDefine.Flags;
+                builder.GroupKey = componentDefine.GroupKey;
                 builder.MountPath = componentDefine.MountPath;
+                // 继承基类的缓存索引
+                if (componentDefine.BaseType != null) {
+                    ComponentId baseComponentId = ValueOf(componentDefine.BaseType);
+                    builder.BaseId = baseComponentId;
+                    builder.CacheIndex = baseComponentId.index;
+                }
             }
         }
         cid = pool.ValueOf(builder);

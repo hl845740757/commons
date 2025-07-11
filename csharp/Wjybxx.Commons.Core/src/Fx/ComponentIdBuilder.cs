@@ -19,7 +19,7 @@
 #pragma warning disable CS0108
 namespace Wjybxx.Commons.Fx
 {
-public partial interface ComponentId
+public partial class ComponentId
 {
     /// <summary>
     /// 接口描述组件Builder具备的数据
@@ -33,7 +33,9 @@ public partial interface ComponentId
 
         public long Flags { get; set; }
         public string? MountPath { get; set; }
+        public int GroupKey { get; set; }
         public object ExtraInfo { get; set; }
+        public ComponentId? BaseId { get; set; }
     }
 
     /// <summary>
@@ -41,7 +43,7 @@ public partial interface ComponentId
     /// （这里不能声明为泛型的<see cref="ComponentId"/>，规则太复杂）
     /// </summary>
     /// <typeparam name="T">组件的类型</typeparam>
-    public class Builder<T> : IConstant.Builder<ComponentId>, IBuilder where T : IComponent
+    public class Builder<T> : IConstant.Builder<ComponentId>, IBuilder
     {
 #nullable disable
         /** 组件类型，默认为需要框架调度的脚本 */
@@ -52,11 +54,15 @@ public partial interface ComponentId
         private int maxCount = 1;
         /** 启用的函数，扫描重写的方法计算得到 */
         private long enableFuncs;
+        /** 超类组件id */
+        private ComponentId? baseId;
 
         /** 业务自定义flags */
         private long flags;
         /** 挂载路径 */
         private string mountPath;
+        /** 用于分组的键 */
+        private int groupKey;
         /** 用户扩展数据 -- 必须的不可变的 */
         private object extraInfo;
 
@@ -98,6 +104,10 @@ public partial interface ComponentId
             get => flags;
             set => flags = value;
         }
+        public int GroupKey {
+            get => groupKey;
+            set => groupKey = value;
+        }
         public string MountPath {
             get => mountPath;
             set => mountPath = value;
@@ -105,6 +115,10 @@ public partial interface ComponentId
         public object ExtraInfo {
             get => extraInfo;
             set => extraInfo = value;
+        }
+        public ComponentId BaseId {
+            get => baseId;
+            set => baseId = value;
         }
 
         #endregion

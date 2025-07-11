@@ -29,10 +29,8 @@ namespace Commons.Tests.Concurrent;
 public class EventLoopModuleTest
 {
     private static IEventLoop eventLoop;
-    private static ComponentId<DataModule> dataCid =
-        (ComponentId<DataModule>)IEventLoopModule.GLOBAL.ValueOf(typeof(DataModule));
-    private static ComponentId<BehaviorModule> behaviorCid =
-        (ComponentId<BehaviorModule>)IEventLoopModule.GLOBAL.ValueOf(typeof(BehaviorModule));
+    private static ComponentId<DataModule> dataCid = IEventLoopModule.GLOBAL.ValueOf<DataModule>();
+    private static ComponentId<BehaviorModule> behaviorCid = IEventLoopModule.GLOBAL.ValueOf<BehaviorModule>();
 
     [SetUp]
     public void SetUp() {
