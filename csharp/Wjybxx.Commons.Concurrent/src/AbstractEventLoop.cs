@@ -244,7 +244,7 @@ public abstract class AbstractEventLoop : IEventLoop
     }
 
     public bool ContainsComponent(IComponent comp) {
-        int index = comp.Cid.index;
+        int index = comp.Cid.cacheIndex;
         return index < _indexedModuleList.Count && _indexedModuleList[index] == comp;
     }
 
@@ -265,8 +265,8 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public T? GetComponent<T>(ComponentId<T> cid) where T : class {
         IComponent? comp;
-        if (cid.index < _indexedModuleList.Count
-            && (comp = _indexedModuleList[cid.index]) != null
+        if (cid.cacheIndex < _indexedModuleList.Count
+            && (comp = _indexedModuleList[cid.cacheIndex]) != null
             && ReferenceEquals(comp.Cid, cid)) {
             return (T)comp;
         }
@@ -319,8 +319,8 @@ public abstract class AbstractEventLoop : IEventLoop
 
     public IComponent? GetComponent(ComponentId cid) {
         IComponent? comp;
-        if (cid.index < _indexedModuleList.Count
-            && (comp = _indexedModuleList[cid.index]) != null
+        if (cid.cacheIndex < _indexedModuleList.Count
+            && (comp = _indexedModuleList[cid.cacheIndex]) != null
             && ReferenceEquals(comp.Cid, cid)) {
             return comp;
         }
@@ -375,16 +375,16 @@ public abstract class AbstractEventLoop : IEventLoop
             return Array.Empty<EventLoopModule>();
         }
         int maxIndex = moduleList
-            .Select(e => e.Cid.index)
+            .Select(e => e.Cid.cacheIndex)
             .Max();
 
         EventLoopModule[] result = new EventLoopModule[maxIndex + 1];
         foreach (EventLoopModule module in moduleList) {
-            EventLoopModule exist = result[module.Cid.index];
+            EventLoopModule exist = result[module.Cid.cacheIndex];
             if (exist != null) {
                 throw new IllegalStateException("module is duplicate, cid: " + module.Cid);
             }
-            result[module.Cid.index] = module;
+            result[module.Cid.cacheIndex] = module;
         }
         return result;
     }

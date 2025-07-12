@@ -42,17 +42,23 @@ public enum ComponentStatus
     Running = 3,
 
     /// <summary>
+    /// 挂起状态，挂起状态下不会被Update
+    /// (是否支持取决于实体对组件的调度策略)
+    /// </summary>
+    Suspended = 4,
+    
+    /// <summary>
     /// 停止中，脚本组件在调用Stop方法前进入该状态
     /// </summary>
-    Stopping = 4,
+    Stopping = 5,
     /// <summary>
     /// 成功停止，非脚本组件会直接到该状态，脚本组件在调用Stop方法后会进入该状态
     /// </summary>
-    Stopped = 5,
+    Stopped = 6,
 
     /// <summary>
     /// 已从实体上删除
     /// </summary>
-    Destroyed = 6
+    Destroyed = 7
 }
 }

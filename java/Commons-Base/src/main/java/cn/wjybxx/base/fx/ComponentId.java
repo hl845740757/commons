@@ -38,7 +38,7 @@ import java.util.Objects;
 public class ComponentId<T> extends AbstractConstant {
 
     /** 高速缓存下标 */
-    public final int index;
+    public final int cacheIndex;
     /** 组件类型 */
     public final ComponentKind kind;
     /** 是否是共享组件 -- 通常共享组件的所有方法都不被框架调用；甚至不会被注入实体的引用 */
@@ -61,7 +61,7 @@ public class ComponentId<T> extends AbstractConstant {
     protected ComponentId(Builder<T> builder) {
         super(builder);
         assert builder.getCacheIndex() >= 0;
-        this.index = builder.getCacheIndex();
+        this.cacheIndex = builder.getCacheIndex();
         this.kind = Objects.requireNonNull(builder.kind, "kind");
         this.shared = builder.shared;
         this.maxCount = Math.max(1, builder.maxCount);

@@ -17,10 +17,7 @@
 package cn.wjybxx.base;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,7 +49,9 @@ public class ConstantPool<T extends Constant> {
 
     private final String poolId = UUID.randomUUID().toString();
     private final AtomicInteger idGenerator;
-    private final AtomicInteger cacheIndexGenerator = new AtomicInteger(0);
+
+    private final HashSet<Integer> cacheIndexSet = HashSet.newHashSet(10);
+    private int cacheIndexGenerator = 0; // 锁保护
 
     private ConstantPool(ConstantFactory<? extends T> factory, int firstId) {
         this.factory = factory;
@@ -227,9 +226,19 @@ public class ConstantPool<T extends Constant> {
     private T newConstant(Constant.Builder<? extends T> builder) {
         final int id = idGenerator.getAndIncrement();
         builder.setId(poolId, id);
-        //
-        if (builder.getCacheIndex() < 0 && builder.isRequireCacheIndex()) {
-            builder.setCacheIndex(cacheIndexGenerator.getAndIncrement());
+        // 需要确保自动分配的Index和用户分配的Index不会产生冲突
+        if (builder.getCacheIndex() >= 0 || builder.isRequireCacheIndex()) {
+            synchronized (cacheIndexSet) {
+                if (builder.getCacheIndex() >= 0) {
+                    cacheIndexSet.add(builder.getCacheIndex());
+                } else {
+                    int cacheIndex = cacheIndexGenerator++;
+                    while (!cacheIndexSet.add(cacheIndex)) {
+                        cacheIndex = cacheIndexGenerator++;
+                    }
+                    builder.setCacheIndex(cacheIndex);
+                }
+            }
         }
         final T result = builder.build();
         // 校验实现

@@ -36,7 +36,7 @@ public partial class ComponentId : AbstractConstant
 {
 #nullable disable
     /** 高速缓存下标 */
-    public readonly int index;
+    public readonly int cacheIndex;
     /** 组件类型 */
     public readonly ComponentKind kind;
     /** 是否是共享组件 -- 通常共享组件的所有方法都不被框架调用；甚至不会被注入实体的引用 */
@@ -58,7 +58,7 @@ public partial class ComponentId : AbstractConstant
     protected ComponentId(IBuilder builder)
         : base(builder) {
         Debug.Assert(builder.CacheIndex >= 0);
-        this.index = builder.CacheIndex;
+        this.cacheIndex = builder.CacheIndex;
         this.kind = builder.Kind;
         this.shared = builder.Shared;
         this.maxCount = Math.Max(1, builder.MaxCount);

@@ -347,7 +347,7 @@ public abstract class AbstractEventLoop implements IEventLoop {
 
     @Override
     public final boolean containsComponent(IComponent comp) {
-        int index = comp.getCid().index;
+        int index = comp.getCid().cacheIndex;
         return index < indexedModuleList.length && indexedModuleList[index] == comp;
     }
 
@@ -370,8 +370,8 @@ public abstract class AbstractEventLoop implements IEventLoop {
     @Override
     public final <T> T getComponent(ComponentId<T> cid) {
         IComponent comp;
-        if (cid.index < indexedModuleList.length
-                && (comp = indexedModuleList[cid.index]) != null
+        if (cid.cacheIndex < indexedModuleList.length
+                && (comp = indexedModuleList[cid.cacheIndex]) != null
                 && comp.getCid() == cid) {
             return (T) comp;
         }
@@ -446,17 +446,17 @@ public abstract class AbstractEventLoop implements IEventLoop {
             return new EventLoopModule[0];
         }
         int maxIndex = moduleList.stream()
-                .mapToInt(e -> e.getCid().index)
+                .mapToInt(e -> e.getCid().cacheIndex)
                 .max()
                 .orElseThrow();
 
         EventLoopModule[] result = new EventLoopModule[maxIndex + 1];
         for (EventLoopModule module : moduleList) {
-            EventLoopModule exist = result[module.getCid().index];
+            EventLoopModule exist = result[module.getCid().cacheIndex];
             if (exist != null) {
                 throw new IllegalStateException("module is duplicate, cid: " + module.getCid());
             }
-            result[module.getCid().index] = module;
+            result[module.getCid().cacheIndex] = module;
         }
         return result;
     }

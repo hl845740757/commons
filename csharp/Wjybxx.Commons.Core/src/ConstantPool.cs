@@ -34,7 +34,9 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
 
     private readonly string poolId = Guid.NewGuid().ToString();
     private volatile int _idGenerator;
-    private volatile int _cacheIndexGenerator;
+
+    private readonly HashSet<int> _cacheIndexSet = new(); // 锁保护
+    private int _cacheIndexGenerator; // 锁保护
 
     private ConstantPool(ConstantFactory<TConstant>? factory, int firstId) {
         _factory = factory;
@@ -221,9 +223,19 @@ public class ConstantPool<TConstant> where TConstant : class, IConstant
         string name = builder.Name;
         int nextId = Interlocked.Increment(ref _idGenerator) - 1;
         builder.SetId(poolId, nextId);
-        //
-        if (builder.CacheIndex < 0 && builder.RequireCacheIndex) {
-            builder.CacheIndex = Interlocked.Increment(ref _cacheIndexGenerator) - 1;
+        // 需要确保自动分配的Index和用户分配的Index不会产生冲突
+        if (builder.CacheIndex >= 0 || builder.RequireCacheIndex) {
+            lock (_cacheIndexSet) {
+                if (builder.CacheIndex >= 0) {
+                    _cacheIndexSet.Add(builder.CacheIndex);
+                } else {
+                    int cacheIndex = _cacheIndexGenerator++;
+                    while (!_cacheIndexSet.Add(cacheIndex)) {
+                        cacheIndex = _cacheIndexGenerator++;
+                    }
+                    builder.CacheIndex = cacheIndex;
+                }
+            }
         }
         TConstant constant = builder.Build();
         if (constant.Name != name

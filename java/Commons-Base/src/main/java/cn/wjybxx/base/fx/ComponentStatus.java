@@ -48,18 +48,24 @@ public enum ComponentStatus implements EnumLite {
     RUNNING(3),
 
     /**
+     * 挂起状态，挂起状态下不会被Update
+     * (是否支持取决于实体对组件的调度策略)
+     */
+    SUSPENDED(4),
+
+    /**
      * 停止中，脚本组件在调用Stop方法前进入该状态
      */
-    STOPPING(4),
+    STOPPING(5),
     /**
      * 成功停止，非脚本组件会直接到该状态，脚本组件在调用Stop方法后会进入该状态
      */
-    STOPPED(5),
+    STOPPED(6),
 
     /**
      * 已从实体上删除
      */
-    DESTROYED(6);
+    DESTROYED(7);
 
     private final int number;
 

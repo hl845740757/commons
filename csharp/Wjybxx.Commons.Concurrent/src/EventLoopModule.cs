@@ -75,10 +75,12 @@ public abstract class EventLoopModule : IEventLoopModule
     /** 调用{@link #start()}方法 */
     internal Exception? InvokeStart() {
         Debug.Assert(IsScript());
+        _status = ComponentStatus.Starting;
         try {
-            _status = ComponentStatus.Starting;
             Start();
-            _status = ComponentStatus.Running;
+            if (_status == ComponentStatus.Starting) {
+                _status = ComponentStatus.Running;
+            }
             return null;
         }
         catch (Exception ex) {
@@ -89,8 +91,8 @@ public abstract class EventLoopModule : IEventLoopModule
     /** 调用{@link #stop()}方法 */
     internal Exception? InvokeStop() {
         Debug.Assert(IsScript());
+        _status = ComponentStatus.Stopping;
         try {
-            _status = ComponentStatus.Stopping;
             Stop();
             return null;
         }

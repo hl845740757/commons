@@ -76,10 +76,12 @@ public abstract class EventLoopModule implements IEventLoopModule {
     /** 调用{@link #start()}方法 */
     final Throwable invokeStart() {
         assert isScript();
+        status = ComponentStatus.STARTING;
         try {
-            status = ComponentStatus.STARTING;
             start();
-            status = ComponentStatus.RUNNING;
+            if (status == ComponentStatus.STARTING) {
+                status = ComponentStatus.RUNNING;
+            }
             return null;
         } catch (Throwable ex) {
             return ex;
@@ -89,8 +91,8 @@ public abstract class EventLoopModule implements IEventLoopModule {
     /** 调用{@link #stop()}方法 */
     final Throwable invokeStop() {
         assert isScript();
+        status = ComponentStatus.STOPPING;
         try {
-            status = ComponentStatus.STOPPING;
             stop();
             return null;
         } catch (Throwable ex) {
