@@ -23,6 +23,8 @@ import java.lang.annotation.Target;
 
 /**
  * 表示字段在序列化为文档的过程中忽略或加入
+ * 1.transient字段默认不序列化
+ * 2.没有public的getter或setter的private字段默认不序列化
  *
  * @author wjybxx
  * date 2023/3/31

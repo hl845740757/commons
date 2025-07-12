@@ -371,7 +371,7 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
         if (nullFactor == 1) {
             return nullCount == len;
         }
-        return nullCount >= 4 && nullCount >= len * nullFactor;
+        return nullCount > 0 && nullCount >= len * nullFactor;
     }
 
     private void removeNullElements() {

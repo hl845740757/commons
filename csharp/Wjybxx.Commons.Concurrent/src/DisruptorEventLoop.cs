@@ -481,17 +481,16 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         // 模块的部分数据初始化 - OnReady
         foreach (EventLoopModule module in _moduleList) {
             if (module.Cid.shared) {
-                continue; // 共享组件
+                continue;
             }
-            if (module.Entity != null) {
-                continue; // 通常是主模块提前完成了绑定
+            if (module.Status == ComponentStatus.New) {
+                module.SetEventLoop(this);
             }
-            module.SetEventLoop(this);
         }
         // 解决模块之间的依赖
         foreach (EventLoopModule module in _moduleList) {
-            if (module.Cid.shared) {
-                continue; // 共享组件
+            if (module.Cid.shared || module.Cid.kind == ComponentKind.Data) {
+                continue;
             }
             module.ResolveDependence();
         }

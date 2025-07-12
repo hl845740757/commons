@@ -330,7 +330,7 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool IsCompressionNeeded() {
-        return DynamicArrayHelper.IsCompressionNeeded(nullFactor, len, elementCount);
+        return elementCount < len && DynamicArrayHelper.IsCompressionNeeded(nullFactor, len, elementCount);
     }
 
     private void RemoveNullElements() {

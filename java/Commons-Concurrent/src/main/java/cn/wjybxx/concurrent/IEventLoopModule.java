@@ -49,7 +49,9 @@ public interface IEventLoopModule extends IComponent {
 
     /**
      * 处理依赖问题
-     * 事件循环会在启动所有的模块之前调用该方法，此时所有的模块已执行{@link #onReady()}
+     * <p>
+     * 1.事件循环会在启动所有的模块之前调用该方法，此时所有的模块已执行{@link #onReady()}。
+     * 2.数据组件不执行该方法。
      */
     default void resolveDependence() {
 

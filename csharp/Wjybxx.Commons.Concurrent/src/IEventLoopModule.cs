@@ -46,7 +46,9 @@ public interface IEventLoopModule : IComponent
 
     /// <summary>
     /// 处理依赖问题
-    /// 事件循环会在启动所有的模块之前调用该方法，此时所有的模块已执行<see cref="IComponent.OnReady"/>
+    ///
+    /// 1.事件循环会在启动所有的模块之前调用该方法，此时所有的模块已执行<see cref="IComponent.OnReady"/>。
+    /// 2.数据组件不执行该方法。
     /// </summary>
     void ResolveDependence() {
     }

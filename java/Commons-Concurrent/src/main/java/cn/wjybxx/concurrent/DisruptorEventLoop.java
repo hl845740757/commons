@@ -20,6 +20,7 @@ import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.annotation.Beta;
 import cn.wjybxx.base.annotation.VisibleForTesting;
+import cn.wjybxx.base.fx.ComponentKind;
 import cn.wjybxx.base.fx.ComponentStatus;
 import cn.wjybxx.disruptor.*;
 
@@ -469,17 +470,16 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         // 模块的部分数据初始化 - OnReady
         for (EventLoopModule module : moduleList) {
             if (module.getCid().shared) {
-                continue; // 共享组件
+                continue;
             }
-            if (module.getEntity() != null) {
-                continue; // 通常是主模块提前完成了绑定
+            if (module.getStatus() == ComponentStatus.NEW) {
+                module.setEventLoop(this);
             }
-            module.setEventLoop(this);
         }
         // 解决模块之间的依赖
         for (EventLoopModule module : moduleList) {
-            if (module.getCid().shared) {
-                continue; // 共享组件
+            if (module.getCid().shared || module.getCid().kind == ComponentKind.DATA) {
+                continue;
             }
             module.resolveDependence();
         }

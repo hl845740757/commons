@@ -42,22 +42,17 @@ public enum ComponentStatus
     Running = 3,
 
     /// <summary>
-    /// 暂停状态，暂停状态下脚本将停止Update
-    /// </summary>
-    Pausing = 4,
-
-    /// <summary>
     /// 停止中，脚本组件在调用Stop方法前进入该状态
     /// </summary>
-    Stopping = 5,
+    Stopping = 4,
     /// <summary>
     /// 成功停止，非脚本组件会直接到该状态，脚本组件在调用Stop方法后会进入该状态
     /// </summary>
-    Stopped = 6,
+    Stopped = 5,
 
     /// <summary>
     /// 已从实体上删除
     /// </summary>
-    Destroyed = 7
+    Destroyed = 6
 }
 }

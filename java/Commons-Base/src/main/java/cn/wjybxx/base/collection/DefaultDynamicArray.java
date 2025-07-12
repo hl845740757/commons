@@ -356,7 +356,7 @@ public final class DefaultDynamicArray<E> implements DynamicArray<E> {
     }
 
     private boolean isCompressionNeeded() {
-        return DynamicArrayHelper.isCompressionNeeded(nullFactor, len, elementCount);
+        return elementCount < len && DynamicArrayHelper.isCompressionNeeded(nullFactor, len, elementCount);
     }
 
     private void removeNullElements() {

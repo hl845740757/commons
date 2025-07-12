@@ -24,7 +24,7 @@ namespace Wjybxx.Dson.Codec.Attributes
 /// 该注解用于标注一个字段是否需要被忽略
 ///
 /// 1. 有<see cref="NonSerializedAttribute"/>注解的字段默认不被序列化
-/// 2. private字段默认不序列化
+/// 2. 没有public的getter或setter的private字段默认不序列化
 /// 3. 属性默认都是不序列化的，通过该注解可将属性序列化
 /// </summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
