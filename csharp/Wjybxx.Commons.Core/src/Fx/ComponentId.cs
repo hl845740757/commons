@@ -43,10 +43,8 @@ public partial class ComponentId : AbstractConstant
     public readonly bool shared;
     /** 最大可挂载数量 */
     public readonly int maxCount;
-    /** 启用的函数，扫描重写的方法计算得到 -- 存在继承的情况下不可使用该值 */
-    public readonly long enableFuncs;
-    /** 超类组件id -- 即当前组件可充当目标组件 */
-    public readonly ComponentId baseId;
+    /** 启用的函数，扫描重写的方法计算得到 -- 允许组件继承的情况下不可使用该值 */
+    public readonly int enableFuncs;
 
     /** 业务自定义flags */
     public readonly long flags;
@@ -65,7 +63,6 @@ public partial class ComponentId : AbstractConstant
         this.shared = builder.Shared;
         this.maxCount = Math.Max(1, builder.MaxCount);
         this.enableFuncs = builder.EnableFuncs;
-        this.baseId = builder.BaseId;
 
         this.flags = builder.Flags;
         this.groupKey = builder.GroupKey;
@@ -75,22 +72,6 @@ public partial class ComponentId : AbstractConstant
 
     /** 是否是私有脚本 --- 需要被框架调度 */
     public bool IsPrivateScript => !shared && kind == ComponentKind.Script;
-
-    /** 是否是目标组件的子类型 */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsSubtypeOf(ComponentId other) {
-        if (ReferenceEquals(this, other)) {
-            return true;
-        }
-        ComponentId tempBaseId = this.baseId;
-        while (tempBaseId != null) {
-            if (ReferenceEquals(tempBaseId, other)) {
-                return true;
-            }
-            tempBaseId = tempBaseId.baseId;
-        }
-        return false;
-    }
 
     /// <summary>
     /// 创建一个Builder

@@ -155,15 +155,10 @@ public sealed class ComponentIdPool
                 builder.Kind = componentDefine.Kind;
                 builder.Shared = componentDefine.Shared;
                 builder.MaxCount = componentDefine.MaxCount;
+                builder.CacheIndex = componentDefine.CacheIndex;
                 builder.Flags = componentDefine.Flags;
                 builder.GroupKey = componentDefine.GroupKey;
                 builder.MountPath = componentDefine.MountPath;
-                // 继承基类的缓存索引
-                if (componentDefine.BaseType != null) {
-                    ComponentId baseComponentId = ValueOf(componentDefine.BaseType);
-                    builder.BaseId = baseComponentId;
-                    builder.CacheIndex = baseComponentId.index;
-                }
             }
         }
         cid = pool.ValueOf(builder);

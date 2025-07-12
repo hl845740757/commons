@@ -23,7 +23,7 @@ import java.lang.annotation.Target;
 
 /**
  * 组件重定向注解。
- * 用于子类告知框架应当使用它的哪个超类来解析{@link ComponentId}
+ * 用于子类告知框架应当使用它的哪个超类来解析{@link ComponentId}，从而实现多态。
  *
  * @author wjybxx
  * date - 2025/3/27

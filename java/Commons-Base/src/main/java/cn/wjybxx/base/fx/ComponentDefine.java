@@ -16,20 +16,19 @@
 
 package cn.wjybxx.base.fx;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * 默认的组件id定义注解
- * 1.该注解不会被继承，使用子类的Class查询得到的将是另一个组件id。
- * 2.可以通过额外的注解附加信息，需要定制解析器
- * 3.组件id解析重定向，请使用{@link ComponentRedirect}
+ * 1.可以通过额外的注解附加信息，需要定制解析器
+ * 2.组件id解析重定向，请使用{@link ComponentRedirect}
+ * <p>
+ * 注：最新实现下，该注解是默认被继承的，但仅限于Class。
  *
  * @author wjybxx
  * date - 2025/3/26
  */
+@Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ComponentDefine {
@@ -46,6 +45,9 @@ public @interface ComponentDefine {
     /** 最大组件数 */
     int maxCount() default 1;
 
+    /** 高速缓存下标 */
+    int cacheIndex() default -1;
+
     /** 用户自定义flags */
     int flags() default 0;
 
@@ -57,12 +59,4 @@ public @interface ComponentDefine {
 
     /** 自定义切面数据 -- 用于自定义解析 */
     String customData() default "";
-
-    /**
-     * 组件的超类型
-     * 1.用于对齐缓存索引{@link ComponentId#index}，使得可以通过超类组件ID查询子类组件。
-     * 2.指向同一个超类型的组件，共享同一个Index。
-     * 3.如果实体支持同类型组件挂载多个，不可使用该特性，而是使用{@link ComponentRedirect}。
-     */
-    Class<?> baseType() default Object.class;
 }

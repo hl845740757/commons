@@ -45,10 +45,8 @@ public class ComponentId<T> extends AbstractConstant {
     public final boolean shared;
     /** 最大可挂载数量 */
     public final int maxCount;
-    /** 启用的函数，扫描重写的方法计算得到 -- 存在继承的情况下不可使用该值 */
-    public final long enableFuncs;
-    /** 超类组件id -- 即当前组件可充当目标组件 */
-    public final ComponentId<?> baseId;
+    /** 启用的函数，扫描重写的方法计算得到 -- 允许组件继承的情况下不可使用该值 */
+    public final int enableFuncs;
 
     /** 业务自定义flags */
     public final long flags;
@@ -68,7 +66,6 @@ public class ComponentId<T> extends AbstractConstant {
         this.shared = builder.shared;
         this.maxCount = Math.max(1, builder.maxCount);
         this.enableFuncs = builder.enableFuncs;
-        this.baseId = builder.baseId;
 
         this.flags = builder.flags;
         this.groupKey = builder.groupKey;
@@ -79,21 +76,6 @@ public class ComponentId<T> extends AbstractConstant {
     /** 是否是私有脚本 --- 需要被框架调度 */
     public final boolean isPrivateScript() {
         return !shared && kind == ComponentKind.SCRIPT;
-    }
-
-    /** 是否是目标的子类型 */
-    public final boolean isSubtypeOf(ComponentId<?> other) {
-        if (this == other) {
-            return true;
-        }
-        ComponentId<?> tempBaseId = this.baseId;
-        while (tempBaseId != null) {
-            if (tempBaseId == other) {
-                return true;
-            }
-            tempBaseId = tempBaseId.baseId;
-        }
-        return false;
     }
 
     public static <T> Builder<T> newBuilder(String name) {
@@ -108,9 +90,7 @@ public class ComponentId<T> extends AbstractConstant {
         /** 最大可挂载数量 */
         private int maxCount = 1;
         /** 启用的函数，扫描重写的方法计算得到 */
-        private long enableFuncs;
-        /** 超类组件id */
-        private ComponentId<?> baseId;
+        private int enableFuncs;
 
         /** 业务自定义flags */
         private long flags;
@@ -158,11 +138,11 @@ public class ComponentId<T> extends AbstractConstant {
             return this;
         }
 
-        public long getEnableFuncs() {
+        public int getEnableFuncs() {
             return enableFuncs;
         }
 
-        public Builder<T> setEnableFuncs(long enableFuncs) {
+        public Builder<T> setEnableFuncs(int enableFuncs) {
             this.enableFuncs = enableFuncs;
             return this;
         }
@@ -200,15 +180,6 @@ public class ComponentId<T> extends AbstractConstant {
 
         public Builder<T> setExtraInfo(Object extraInfo) {
             this.extraInfo = extraInfo;
-            return this;
-        }
-
-        public ComponentId<?> getBaseId() {
-            return baseId;
-        }
-
-        public Builder<T> setBaseId(ComponentId<?> baseId) {
-            this.baseId = baseId;
             return this;
         }
     }

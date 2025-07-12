@@ -29,13 +29,12 @@ public partial class ComponentId
         public ComponentKind Kind { get; set; }
         public bool Shared { get; set; }
         public int MaxCount { get; set; }
-        public long EnableFuncs { get; set; }
+        public int EnableFuncs { get; set; }
 
         public long Flags { get; set; }
         public string? MountPath { get; set; }
         public int GroupKey { get; set; }
         public object ExtraInfo { get; set; }
-        public ComponentId? BaseId { get; set; }
     }
 
     /// <summary>
@@ -53,9 +52,7 @@ public partial class ComponentId
         /** 最大可挂载数量 */
         private int maxCount = 1;
         /** 启用的函数，扫描重写的方法计算得到 */
-        private long enableFuncs;
-        /** 超类组件id */
-        private ComponentId? baseId;
+        private int enableFuncs;
 
         /** 业务自定义flags */
         private long flags;
@@ -96,7 +93,7 @@ public partial class ComponentId
             get => maxCount;
             set => maxCount = value;
         }
-        public long EnableFuncs {
+        public int EnableFuncs {
             get => enableFuncs;
             set => enableFuncs = value;
         }
@@ -115,10 +112,6 @@ public partial class ComponentId
         public object ExtraInfo {
             get => extraInfo;
             set => extraInfo = value;
-        }
-        public ComponentId BaseId {
-            get => baseId;
-            set => baseId = value;
         }
 
         #endregion

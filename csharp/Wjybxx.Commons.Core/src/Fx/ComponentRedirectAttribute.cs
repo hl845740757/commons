@@ -22,7 +22,8 @@ namespace Wjybxx.Commons.Fx
 {
 /// <summary>
 /// 组件重定向注解。
-/// 用于子类告知框架应当使用它的哪个超类来解析<see cref="ComponentId"/>
+/// 
+/// 用于子类告知框架应当使用它的哪个超类来解析<see cref="ComponentId"/>，从而实现多态。
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
 public sealed class ComponentRedirectAttribute : Attribute

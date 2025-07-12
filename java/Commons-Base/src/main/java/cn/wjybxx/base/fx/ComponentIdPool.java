@@ -151,11 +151,7 @@ public final class ComponentIdPool {
                         .setGroupKey(annotationDefine.groupKey())
                         .setMountPath(annotationDefine.mountPath());
                 //
-                if (annotationDefine.baseType() != Object.class) {
-                    ComponentId<?> baseComponentId = valueOf(annotationDefine.baseType());
-                    builder.setBaseId(baseComponentId);
-                    builder.setCacheIndex(baseComponentId.index);
-                }
+                builder.setCacheIndex(annotationDefine.cacheIndex());
             }
         }
         cid = pool.valueOf(builder);
