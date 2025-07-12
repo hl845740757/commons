@@ -374,7 +374,7 @@ public abstract class AbstractPromise
         protected int options;
         private Action<object> action;
         private object state;
-#nullable enable
+#nullable restore
 
         private MoveNextCompletion() {
         }

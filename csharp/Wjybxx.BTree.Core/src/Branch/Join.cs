@@ -31,7 +31,7 @@ public class Join<T> : ParallelBranch<T> where T : class
     [NonSerialized] protected int completedCount;
     /** 成功完成的子节点 */
     [NonSerialized] protected int succeededCount;
-#nullable enable
+#nullable restore
 
     public Join() {
     }

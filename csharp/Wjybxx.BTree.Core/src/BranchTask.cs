@@ -31,7 +31,7 @@ public abstract class BranchTask<T> : Task<T> where T : class
 {
 #nullable disable
     protected List<Task<T>> children;
-#nullable enable
+#nullable restore
 
     protected BranchTask() {
         children = new List<Task<T>>();

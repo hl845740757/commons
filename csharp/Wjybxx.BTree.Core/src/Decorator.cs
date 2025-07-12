@@ -37,7 +37,7 @@ public abstract class Decorator<T> : Task<T> where T : class
     /// </summary>
     [NonSerialized]
     protected TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<T>();
-#nullable enable
+#nullable restore
 
     public Decorator() {
     }

@@ -47,7 +47,7 @@ public class DsonPrinter : IDisposable
     private int _ln;
     /** 当前列号 */
     private int _column;
-#nullable enable
+#nullable restore
 
     public DsonPrinter(DsonTextWriterSettings settings, TextWriter writer, bool? autoClose = null) {
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));

@@ -27,7 +27,7 @@ public class SubtreeRef<T> : Decorator<T> where T : class
 {
 #nullable disable
     private string subtreeName;
-#nullable enable
+#nullable restore
 
     public SubtreeRef() {
     }

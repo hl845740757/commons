@@ -56,7 +56,7 @@ public abstract class ParallelBranch<T> : BranchTask<T> where T : class
     public static ParallelChildHelper<T> GetChildHelper(Task<T> child) {
         return (ParallelChildHelper<T>)child.ControlData;
     }
-#nullable enable
+#nullable restore
 
     /// <summary>
     /// 初始化child关联的helper

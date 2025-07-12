@@ -1442,7 +1442,7 @@ public class Promise<T> : AbstractPromise, IPromise<T>
         private Promise<T> input;
         private object action;
         private object ctx;
-#nullable enable
+#nullable restore
 
         internal UniOnCompleted(IExecutor? executor, int options, Promise<T> input,
                                 object action, object? ctx) {

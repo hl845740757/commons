@@ -62,7 +62,7 @@ internal class PojoCodecGenerator
         this.typeBuilder = context.typeBuilder;
         this.allMembers = context.allMembers;
     }
-#nullable enable
+#nullable restore
 
     public void Execute() {
         Init();

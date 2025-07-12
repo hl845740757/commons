@@ -53,7 +53,7 @@ public struct TaskInlineHelper<T> where T : class
     [NonSerialized] private Task<T> inlinedChild;
     /** 被内联的子节点的重入id */
     [NonSerialized] private int inlinedReentryId;
-#nullable enable
+#nullable restore
 
     /** 获取被内联运行的子节点 */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

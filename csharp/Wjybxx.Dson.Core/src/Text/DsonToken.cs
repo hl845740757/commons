@@ -34,7 +34,7 @@ public readonly struct DsonToken : IEquatable<DsonToken>
     public readonly UnionValue value;
     /** token所在的位置，-1表示动态生成的token */
     public readonly int pos;
-#nullable enable
+#nullable restore
     public DsonToken(DsonTokenType type, in UnionValue value, int pos) {
         this.type = type;
         this.value = value;

@@ -40,7 +40,7 @@ internal class AptFieldInfo : IEquatable<AptFieldInfo>
     /// 注意：去除了NRT信息<see cref="TypeName.RemoveAllNullableAttribute"/>
     /// </summary>
     public TypeName typeName;
-#nullable enable
+#nullable restore
 
     public AptFieldInfo(FieldInfo fieldInfo, PropertyInfo? propertyInfo) {
         this.fieldInfo = fieldInfo;

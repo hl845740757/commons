@@ -36,7 +36,7 @@ public readonly struct ObjectLitePtr : IEquatable<ObjectLitePtr>
     public byte Type { get; }
     /** 引用的解析策略 -- 自定义解析规则 */
     public byte Policy { get; }
-#nullable enable
+#nullable restore
 
     public ObjectLitePtr(long localId, string? ns = null, byte type = 0, byte policy = 0) {
         if (localId < 0) throw new ArgumentException("localId cant be negative, v: " + localId);

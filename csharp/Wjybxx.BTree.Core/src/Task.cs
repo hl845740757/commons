@@ -186,7 +186,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     #endregion
 
-#nullable enable
+#nullable restore
 
     #region status
 
@@ -256,7 +256,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
             return taskEntry.Entity;
         }
     }
-#nullable enable
+#nullable restore
 
     /// <summary>
     /// 运行的帧数
@@ -1158,7 +1158,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /** @return index对应的child */
     protected abstract Task<T> RemoveChildImpl(int index);
-#nullable enable
+#nullable restore
 
     #endregion
 

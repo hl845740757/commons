@@ -42,7 +42,7 @@ public sealed class DsonScanner : IDisposable
     // 不从共享池申请StringBuilder，因为这里的StringBuilder都很小
     private readonly StringBuilder _pooledStringBuilder = new StringBuilder(64);
     private readonly char[] _hexBuffer = new char[4];
-#nullable enable
+#nullable restore
 
     public DsonScanner(string dson)
         : this(IDsonCharStream.NewCharStream(dson)) {

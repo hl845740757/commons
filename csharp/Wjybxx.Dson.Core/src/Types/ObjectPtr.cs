@@ -39,7 +39,7 @@ public readonly struct ObjectPtr : IEquatable<ObjectPtr>
     public byte Type { get; }
     /** 引用的解析策略 -- 自定义解析规则 */
     public byte Policy { get; }
-#nullable enable
+#nullable restore
 
     public ObjectPtr(string? localId, string? ns = null, byte type = 0, byte policy = 0) {
         // 空字符串转null而不是null转空字符串，以兼容default构建的实例

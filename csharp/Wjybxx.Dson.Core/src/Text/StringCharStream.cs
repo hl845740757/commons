@@ -25,7 +25,7 @@ internal class StringCharStream : AbstractCharStream
 {
 #nullable disable
     private string _buffer;
-#nullable enable
+#nullable restore
 
     public StringCharStream(string buffer) {
         this._buffer = buffer ?? throw new ArgumentNullException(nameof(buffer));

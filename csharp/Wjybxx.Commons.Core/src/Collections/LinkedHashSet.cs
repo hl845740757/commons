@@ -50,7 +50,7 @@ public class LinkedHashSet<TKey> : ISequencedSet<TKey>, ISet<TKey>
     private Node[] _table;
     private int _head = -1;
     private int _tail = -1;
-#nullable enable
+#nullable restore
 
     /** 有效元素数量 */
     private int _count;

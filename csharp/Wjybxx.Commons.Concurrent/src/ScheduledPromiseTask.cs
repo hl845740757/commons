@@ -84,7 +84,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     private Registration cancelRegistration;
     /** 异步任务的结果 */
     private ValueFuture<T> asyncResult;
-#nullable enable
+#nullable restore
 
     private ScheduledPromiseTask() {
     }

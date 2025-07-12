@@ -107,7 +107,7 @@ public class CodecProcessor
     /** 每个程序集初始化一次 */
     private readonly AttributeSpec processorInfoAnnotation = AptUtils.NewProcessorInfoAnnotation(typeof(CodecProcessor));
 
-#nullable enable
+#nullable restore
 
     #endregion
 

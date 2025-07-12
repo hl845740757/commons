@@ -61,7 +61,7 @@ internal class AptFieldProps
     /// 是否不序列化 -- 非null表示注解指定了值
     /// </summary>
     public bool? ignore;
-#nullable enable
+#nullable restore
 
     public static AptFieldProps Parse(AptFieldInfo fieldInfo) {
         DsonPropertyAttribute? attribute = fieldInfo.GetAttribute<DsonPropertyAttribute>();

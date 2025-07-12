@@ -52,7 +52,7 @@ public struct LineInfo
 #nullable disable
     /** 原始行数据(外部缓存) -- 不包含换行符 */
     public readonly string rawLine;
-#nullable enable
+#nullable restore
 
     public LineInfo(int ln, int startPos, int endPos) {
         this.ln = ln;

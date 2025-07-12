@@ -160,7 +160,7 @@ public struct UnionValue : IEquatable<UnionValue>
 
     #endregion
 
-#nullable enable
+#nullable restore
 
     public bool Equals(UnionValue other) {
         if (type != other.type) {

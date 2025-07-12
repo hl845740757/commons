@@ -104,7 +104,7 @@ public readonly struct TaskResult
             return _result;
         }
     }
-#nullable enable
+#nullable restore
     /// <summary>
     /// 获取任务关联的异常，成功的情况下返回null
     /// (应当避免多次调用)
@@ -219,7 +219,7 @@ public readonly struct TaskResult<T>
             return _result;
         }
     }
-#nullable enable
+#nullable restore
     /// <summary>
     /// 获取任务关联的异常，成功的情况下返回null
     /// (应当避免多次调用)

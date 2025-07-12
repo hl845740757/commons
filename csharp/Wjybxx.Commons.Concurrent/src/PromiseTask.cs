@@ -112,7 +112,7 @@ public class PromiseTask<T> : IFutureTask
     protected ValuePromise<T> promise;
     /** 任务的控制标记 */
     protected int ctl;
-#nullable enable
+#nullable restore
 
     protected PromiseTask() {
     }

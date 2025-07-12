@@ -25,7 +25,7 @@ using static Wjybxx.Commons.Concurrent.AbstractPromise;
 
 namespace Wjybxx.Commons.Concurrent
 {
-#nullable enable
+#nullable restore
 
 /// <summary>
 ///
@@ -41,7 +41,7 @@ public class ValuePromise<T> : IValuePromise<T>
     /// 任务的结果
     /// </summary>
     private T _result;
-#nullable enable
+#nullable restore
     ///<summary>
     /// 任务失败完成时的结果，也包含了任务的状态。
     /// 
@@ -585,7 +585,7 @@ public class ValuePromise<T> : IValuePromise<T>
         /// 回调参数
         /// </summary>
         internal object state;
-#nullable enable
+#nullable restore
 
         public void Reset() {
             input = null;

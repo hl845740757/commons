@@ -87,7 +87,7 @@ public class BigStringTest
     {
         Indent = true
     };
-#nullable enable
+#nullable restore
 
     /// <summary>
     /// benchmark好像构建了独立的环境，似乎创建了另一个Type，

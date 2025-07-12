@@ -58,7 +58,7 @@ internal sealed class AptFieldInfo : IEquatable<AptFieldInfo>
     /// 注意：去除了NRT信息<see cref="TypeName.RemoveAllNullableAttribute"/>
     /// </summary>
     public TypeName typeName;
-#nullable enable
+#nullable restore
 
     public AptFieldInfo(FieldInfo? fieldInfo, IFieldSymbol? fieldSymbol, IPropertySymbol? propertySymbol) {
         if (fieldInfo == null && fieldSymbol == null) {

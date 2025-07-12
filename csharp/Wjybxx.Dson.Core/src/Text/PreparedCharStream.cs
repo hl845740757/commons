@@ -30,7 +30,7 @@ internal class PreparedCharStream : AbstractCharStream
 #nullable disable
     private IEnumerator<LineInfo> _rawLines;
     private int _firstLn;
-#nullable enable
+#nullable restore
 
     public PreparedCharStream(IEnumerator<LineInfo> rawLines, int firstLn) {
         this._rawLines = rawLines ?? throw new ArgumentNullException(nameof(rawLines));

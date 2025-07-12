@@ -41,7 +41,7 @@ public abstract class SingleRunningChildBranch<T> : BranchTask<T> where T : clas
     /// </summary>
     [NonSerialized]
     protected TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<T>();
-#nullable enable
+#nullable restore
 
     protected SingleRunningChildBranch() {
     }

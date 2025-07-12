@@ -316,7 +316,7 @@ public static partial class CollectionUtil
 
     #endregion
 
-#nullable enable
+#nullable restore
 
     #region peek
 

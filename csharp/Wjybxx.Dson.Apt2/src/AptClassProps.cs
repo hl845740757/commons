@@ -55,7 +55,7 @@ internal class AptClassProps
     /// 代理类的TypeName
     /// </summary>
     public TypeName? codecProxyClassName;
-#nullable enable
+#nullable restore
 
     public AptClassProps() {
     }

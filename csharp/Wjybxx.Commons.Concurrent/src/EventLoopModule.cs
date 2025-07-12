@@ -33,7 +33,7 @@ public abstract class EventLoopModule : IEventLoopModule
     private IEventLoop _eventLoop;
     private ComponentId _cid;
     private ComponentStatus _status = ComponentStatus.New;
-#nullable enable
+#nullable restore
 
     #region internal
 

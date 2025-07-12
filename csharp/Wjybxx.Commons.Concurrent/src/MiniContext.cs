@@ -35,7 +35,7 @@ public sealed class MiniContext : IContext
     /// 取消令牌 -- 如果未指定，则默认赋值为<see cref="ICancelToken.NONE"/>
     /// </summary>
     public ICancelToken CancelToken { get; }
-#nullable enable
+#nullable restore
 
     private MiniContext(object? state, ICancelToken? cancelToken) {
         State = state;

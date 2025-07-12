@@ -49,7 +49,7 @@ public class LinkedDictionary<TKey, TValue> : ISequencedDictionary<TKey, TValue>
     private Node[] _table;
     private int _head = -1;
     private int _tail = -1;
-#nullable enable
+#nullable restore
     /** 有效元素数量 */
     private int _count;
     /** 版本号 -- 发生结构性变化的时候增加，即增加和删除元素的时候；替换Key的Value不增加版本号 */

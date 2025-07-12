@@ -63,7 +63,7 @@ public sealed class CodeWriter
     /// 当前要Emit的文件
     /// </summary>
     private CsharpFile csharpFile;
-#nullable enable
+#nullable restore
     /// <summary>
     /// 动态解析的命名空间
     /// </summary>

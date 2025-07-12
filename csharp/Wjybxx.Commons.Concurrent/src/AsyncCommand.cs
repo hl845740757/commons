@@ -37,7 +37,7 @@ internal class AsyncCommand : IIndexedElement
     internal long triggerTime;
     internal ValuePromise<int> promise;
     internal ICancelToken? cancelToken;
-#nullable enable
+#nullable restore
 
     private void Reset() {
         qIndex = -1;

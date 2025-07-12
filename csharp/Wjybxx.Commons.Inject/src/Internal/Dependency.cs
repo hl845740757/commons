@@ -34,7 +34,7 @@ internal sealed class Dependency
     /// 关联的依赖注入点，延迟赋值
     /// </summary>
     internal InjectionPoint injectionPoint;
-#nullable enable
+#nullable restore
     /// <summary>
     /// 字段/属性/参数类型，未拆解的；可能是List或字典
     /// </summary>

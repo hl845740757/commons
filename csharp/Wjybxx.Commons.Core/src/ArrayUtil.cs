@@ -494,7 +494,7 @@ public static class ArrayUtil
         list[i] = b;
         list[j] = a;
     }
-#nullable enable
+#nullable restore
 
     /// <summary>
     /// 洗牌算法

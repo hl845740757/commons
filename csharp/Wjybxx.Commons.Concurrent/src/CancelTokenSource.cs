@@ -488,7 +488,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
         /// 回调关联的参数
         /// </summary>
         internal object? ctx;
-#nullable enable
+#nullable restore
 
         internal void Reset() {
             Debug.Assert(prev == null && next == null);

@@ -39,7 +39,7 @@ internal class BufferedCharStream : AbstractCharStream
     private CharBuffer _buffer;
     /** reader批量读取数据到该buffer，然后再读取到当前buffer -- 缓冲的缓冲，减少io操作 */
     private CharBuffer _nextBuffer;
-#nullable enable
+#nullable restore
 
     /** buffer全局开始位置 */
     private int _bufferStartPos;

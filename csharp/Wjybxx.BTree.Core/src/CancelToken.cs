@@ -473,7 +473,7 @@ public class CancelToken : ICancelTokenSource, ICancelTokenListener
         /// 回调关联的参数
         /// </summary>
         internal object? ctx;
-#nullable enable
+#nullable restore
 
         internal void Reset() {
             _rid++; // 池化时+1

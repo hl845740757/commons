@@ -57,7 +57,7 @@ internal class AptFieldProps
 
     /** 是否忽略 -- 非null表示注解指定了值 */
     public bool? ignore;
-#nullable enable
+#nullable restore
 
     /// <summary>
     /// 
@@ -215,7 +215,7 @@ internal class AptFieldProps
             refPropertyIgnoreValue = type.GetProperty("Value");
         }
     }
-#nullable enable
+#nullable restore
 
     /// <summary>
     /// 走到这里，证明是解析第三方程序集中某Class的字段，证明第三方程序集引用了Dson-Codec库，

@@ -174,7 +174,7 @@ public static class ObjectUtil
     public static string BlankToDef(string value, string def) {
         return string.IsNullOrWhiteSpace(value) ? def : value;
     }
-#nullable enable
+#nullable restore
     /// <summary>
     /// 首字母大写
     /// </summary>
