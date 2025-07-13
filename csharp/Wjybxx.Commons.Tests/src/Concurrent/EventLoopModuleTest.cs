@@ -55,11 +55,12 @@ public class EventLoopModuleTest
         try {
             // 数据组件为0
             DataModule dataModule = eventLoop.GetComponent(dataCid);
-            Assert.IsTrue(dataModule.onReadyInvoked);
+            Assert.IsTrue(dataModule.awakeInvoked);
             Assert.AreEqual(dataModule.updateCount, 0);
             Assert.AreEqual(dataModule.lastUpdateCount, 0);
             // 行为组件非0
             BehaviorModule behaviorModule = eventLoop.GetComponent(behaviorCid);
+            Assert.IsTrue(behaviorModule.awakeInvoked);
             Assert.IsTrue(behaviorModule.onReadyInvoked);
             Assert.AreNotEqual(behaviorModule.earlyUpdateCount, 0);
             Assert.AreNotEqual(behaviorModule.updateCount, 0);
@@ -98,12 +99,12 @@ public class EventLoopModuleTest
     [ComponentDefine(Kind = ComponentKind.Data)]
     private class DataModule : EventLoopModule
     {
-        internal bool onReadyInvoked;
+        internal bool awakeInvoked;
         internal long updateCount;
         internal long lastUpdateCount;
 
-        public override void OnReady() {
-            onReadyInvoked = true;
+        public override void OnAwake() {
+            awakeInvoked = true;
         }
 
         public override void Update() {
@@ -118,6 +119,7 @@ public class EventLoopModuleTest
     [ComponentDefine(Kind = ComponentKind.Script)]
     private class BehaviorModule : EventLoopModule, IAgentEventHandler<AgentEvent>
     {
+        internal bool awakeInvoked;
         internal bool onReadyInvoked;
         internal long earlyUpdateCount;
         internal long updateCount;
@@ -125,9 +127,13 @@ public class EventLoopModuleTest
         internal int eventCount;
         DisruptorEventLoop<AgentEvent> eventLoop;
 
-        public override void OnReady() {
-            onReadyInvoked = true;
+        public override void OnAwake() {
+            awakeInvoked = true;
             eventLoop = (Entity as DisruptorEventLoop<AgentEvent>)!;
+        }
+
+        public override void ResolveDependence() {
+            onReadyInvoked = true;
         }
 
         public override void Start() {

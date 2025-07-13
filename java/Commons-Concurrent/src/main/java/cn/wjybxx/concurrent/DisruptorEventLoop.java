@@ -20,7 +20,6 @@ import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.annotation.Beta;
 import cn.wjybxx.base.annotation.VisibleForTesting;
-import cn.wjybxx.base.fx.ComponentKind;
 import cn.wjybxx.base.fx.ComponentStatus;
 import cn.wjybxx.disruptor.*;
 
@@ -467,7 +466,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
 
     /** 启动所有模块 */
     protected final void startModules() throws Throwable {
-        // 模块的部分数据初始化 - OnReady
+        // 模块的部分数据初始化
         for (EventLoopModule module : moduleList) {
             if (module.getCid().shared) {
                 continue;
@@ -478,7 +477,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
         }
         // 解决模块之间的依赖
         for (EventLoopModule module : moduleList) {
-            if (module.getCid().shared || module.getCid().kind == ComponentKind.DATA) {
+            if (!module.getCid().isPrivateScript()) {
                 continue;
             }
             module.resolveDependence();
@@ -503,8 +502,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
             if (!module.getCid().isPrivateScript()) {
                 continue;
             }
-            if (module.getStatus() != ComponentStatus.STARTING
-                    && module.getStatus() != ComponentStatus.RUNNING) {
+            if (module.getStatus() != ComponentStatus.RUNNING) {
                 continue; // 未启动
             }
             Throwable ex = module.invokeStop();

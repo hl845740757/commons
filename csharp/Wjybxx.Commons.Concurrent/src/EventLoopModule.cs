@@ -42,25 +42,21 @@ public abstract class EventLoopModule : IEventLoopModule
         this._status = status;
     }
 
-    /** 设置EventLoop 会触发{@link #onReady()}事件 */
+    /** 设置EventLoop 会触发{@link #onAwake()}事件 */
     internal void SetEventLoop(IEventLoop eventLoop) {
         if (eventLoop == null) throw new ArgumentNullException(nameof(eventLoop));
         if (this._eventLoop != null) {
             throw new IllegalStateException("already bind");
         }
         this._eventLoop = eventLoop;
-        this._status = ComponentStatus.Ready;
-        this.OnReady();
-        // 非脚本组件，直接进入完成状态
-        if (Cid.kind != ComponentKind.Script) {
-            this._status = ComponentStatus.Stopped;
-        }
+        this._status = ComponentStatus.Initialized;
+        this.OnAwake();
     }
 
     /** 调用{@link #onDestroy()}方法 */
     internal Exception? InvokeDestroy() {
+        _status = ComponentStatus.Destroyed;
         try {
-            _status = ComponentStatus.Destroyed;
             OnDestroy();
             return null;
         }
@@ -75,12 +71,9 @@ public abstract class EventLoopModule : IEventLoopModule
     /** 调用{@link #start()}方法 */
     internal Exception? InvokeStart() {
         Debug.Assert(IsScript());
-        _status = ComponentStatus.Starting;
+        _status = ComponentStatus.Running;
         try {
             Start();
-            if (_status == ComponentStatus.Starting) {
-                _status = ComponentStatus.Running;
-            }
             return null;
         }
         catch (Exception ex) {
@@ -91,16 +84,13 @@ public abstract class EventLoopModule : IEventLoopModule
     /** 调用{@link #stop()}方法 */
     internal Exception? InvokeStop() {
         Debug.Assert(IsScript());
-        _status = ComponentStatus.Stopping;
+        _status = ComponentStatus.Terminated;
         try {
             Stop();
             return null;
         }
         catch (Exception ex) {
             return ex;
-        }
-        finally {
-            _status = ComponentStatus.Stopped;
         }
     }
 
@@ -144,7 +134,7 @@ public abstract class EventLoopModule : IEventLoopModule
 
     // 不定义访问不了...
 
-    public virtual void OnReady() {
+    public virtual void OnAwake() {
     }
 
     public virtual void OnDestroy() {

@@ -478,7 +478,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
 
     /** 启动所有模块 */
     protected void StartModules() {
-        // 模块的部分数据初始化 - OnReady
+        // 模块的部分数据初始化
         foreach (EventLoopModule module in _moduleList) {
             if (module.Cid.shared) {
                 continue;
@@ -489,7 +489,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
         }
         // 解决模块之间的依赖
         foreach (EventLoopModule module in _moduleList) {
-            if (module.Cid.shared || module.Cid.kind == ComponentKind.Data) {
+            if (!module.Cid.IsPrivateScript) {
                 continue;
             }
             module.ResolveDependence();
@@ -514,8 +514,7 @@ public class DisruptorEventLoop<T> : AbstractEventLoop, IDisruptorEventLoop<T> w
             if (!module.Cid.IsPrivateScript) {
                 continue;
             }
-            if (module.Status != ComponentStatus.Starting
-                && module.Status != ComponentStatus.Running) {
+            if (module.Status != ComponentStatus.Running) {
                 continue; // 未启动
             }
             Exception? ex = module.InvokeStop();

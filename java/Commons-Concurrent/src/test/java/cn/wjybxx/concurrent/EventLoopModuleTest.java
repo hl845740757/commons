@@ -59,11 +59,12 @@ public class EventLoopModuleTest {
         try {
             // 数据组件为0
             DataModule dataModule = eventLoop.getComponent(dataCid);
-            Assertions.assertTrue(dataModule.onReadyInvoked);
+            Assertions.assertTrue(dataModule.awakeInvoked);
             Assertions.assertEquals(dataModule.updateCount, 0);
             Assertions.assertEquals(dataModule.lastUpdateCount, 0);
             // 行为组件非0
             BehaviorModule behaviorModule = eventLoop.getComponent(behaviorCid);
+            Assertions.assertTrue(behaviorModule.awakeInvoked);
             Assertions.assertTrue(behaviorModule.onReadyInvoked);
             Assertions.assertNotEquals(behaviorModule.earlyUpdate, 0);
             Assertions.assertNotEquals(behaviorModule.updateCount, 0);
@@ -106,13 +107,13 @@ public class EventLoopModuleTest {
     @ComponentDefine(kind = ComponentKind.DATA)
     private static class DataModule extends EventLoopModule {
 
-        boolean onReadyInvoked;
+        boolean awakeInvoked;
         long updateCount;
         long lastUpdateCount;
 
         @Override
-        public void onReady() {
-            onReadyInvoked = true;
+        public void onAwake() {
+            awakeInvoked = true;
         }
 
         @Override
@@ -129,6 +130,7 @@ public class EventLoopModuleTest {
     @ComponentDefine(kind = ComponentKind.SCRIPT)
     private static class BehaviorModule extends EventLoopModule implements IAgentEventHandler<AgentEvent> {
 
+        boolean awakeInvoked;
         boolean onReadyInvoked;
         long earlyUpdate;
         long updateCount;
@@ -137,10 +139,15 @@ public class EventLoopModuleTest {
         DisruptorEventLoop<AgentEvent> eventLoop;
 
         @Override
-        public void onReady() {
+        public void onAwake() {
             @SuppressWarnings("unchecked") var eventLoop = (DisruptorEventLoop<AgentEvent>) getEntity();
-            this.onReadyInvoked = true;
+            this.awakeInvoked = true;
             this.eventLoop = eventLoop;
+        }
+
+        @Override
+        public void resolveDependence() {
+            onReadyInvoked = true;
         }
 
         @Override

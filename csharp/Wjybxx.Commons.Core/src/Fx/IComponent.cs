@@ -54,7 +54,7 @@ public interface IComponent
     /// 2.该方法的设计初衷是处理反序列化的数据兼容性问题（成员可能不是正常构造的）
     /// 3.组件之间不应该有顺序依赖
     /// </summary>
-    void OnReady() {
+    void OnAwake() {
     }
 
     /// <summary>

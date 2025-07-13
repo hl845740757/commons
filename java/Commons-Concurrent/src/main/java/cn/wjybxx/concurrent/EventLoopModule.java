@@ -45,25 +45,21 @@ public abstract class EventLoopModule implements IEventLoopModule {
         this.status = status;
     }
 
-    /** 设置EventLoop 会触发{@link #onReady()}事件 */
+    /** 设置EventLoop 会触发{@link #onAwake()}事件 */
     final void setEventLoop(IEventLoop eventLoop) {
         Objects.requireNonNull(eventLoop, "eventLoop");
         if (this.eventLoop != null) {
             throw new IllegalStateException("already bind");
         }
         this.eventLoop = eventLoop;
-        this.status = ComponentStatus.READY;
-        this.onReady();
-        // 非脚本组件，直接进入完成状态
-        if (getCid().kind != ComponentKind.SCRIPT) {
-            this.status = ComponentStatus.STOPPED;
-        }
+        this.status = ComponentStatus.INITIALIZED;
+        this.onAwake();
     }
 
     /** 调用{@link #onDestroy()}方法 */
     final Throwable invokeDestroy() {
+        status = ComponentStatus.DESTROYED;
         try {
-            status = ComponentStatus.DESTROYED;
             onDestroy();
             return null;
         } catch (Throwable ex) {
@@ -76,12 +72,9 @@ public abstract class EventLoopModule implements IEventLoopModule {
     /** 调用{@link #start()}方法 */
     final Throwable invokeStart() {
         assert isScript();
-        status = ComponentStatus.STARTING;
+        status = ComponentStatus.RUNNING;
         try {
             start();
-            if (status == ComponentStatus.STARTING) {
-                status = ComponentStatus.RUNNING;
-            }
             return null;
         } catch (Throwable ex) {
             return ex;
@@ -91,14 +84,12 @@ public abstract class EventLoopModule implements IEventLoopModule {
     /** 调用{@link #stop()}方法 */
     final Throwable invokeStop() {
         assert isScript();
-        status = ComponentStatus.STOPPING;
+        status = ComponentStatus.TERMINATED;
         try {
             stop();
             return null;
         } catch (Throwable ex) {
             return ex;
-        } finally {
-            status = ComponentStatus.STOPPED;
         }
     }
 

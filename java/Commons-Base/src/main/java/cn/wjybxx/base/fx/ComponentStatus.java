@@ -34,38 +34,33 @@ public enum ComponentStatus implements EnumLite {
      */
     NEW(0),
     /**
-     * 已添加到实体，等待启动；非脚本组件会直接进入{@link #STOPPED}的状态
+     * 已添加到实体，已完成基本的初始化
      */
-    READY(1),
+    INITIALIZED(1),
 
     /**
-     * 正在启动中，脚本组件在调用Start方法前进入该状态
+     * 就绪状态，等待Start
+     * (只有支持延迟启动脚本的情况下才会进入状态)
      */
-    STARTING(2),
+    READY(2),
     /**
      * 运行状态，脚本组件在调用Start成功后会进入该状态。
      */
     RUNNING(3),
-
     /**
      * 挂起状态，挂起状态下不会被Update
      * (是否支持取决于实体对组件的调度策略)
      */
     SUSPENDED(4),
-
     /**
-     * 停止中，脚本组件在调用Stop方法前进入该状态
+     * 运行结束
      */
-    STOPPING(5),
-    /**
-     * 成功停止，非脚本组件会直接到该状态，脚本组件在调用Stop方法后会进入该状态
-     */
-    STOPPED(6),
+    TERMINATED(5),
 
     /**
      * 已从实体上删除
      */
-    DESTROYED(7);
+    DESTROYED(6);
 
     private final int number;
 

@@ -28,37 +28,32 @@ public enum ComponentStatus
     /// </summary>
     New = 0,
     /// <summary>
-    /// 已添加到实体，等待启动；非脚本组件会直接进入<see cref="Stopped"/>的状态
+    /// 已添加到实体，已完成初始化
     /// </summary>
-    Ready = 1,
+    Initialized = 1,
 
     /// <summary>
-    /// 正在启动中，脚本组件在调用Start方法前进入该状态
+    /// 已就绪，等待Start
+    /// (只有支持延迟启动脚本的情况下才会进入状态)
     /// </summary>
-    Starting = 2,
+    Ready = 2,
     /// <summary>
     /// 运行状态，脚本组件在调用Start成功后会进入该状态。
     /// </summary>
     Running = 3,
-
     /// <summary>
     /// 挂起状态，挂起状态下不会被Update
     /// (是否支持取决于实体对组件的调度策略)
     /// </summary>
     Suspended = 4,
-    
     /// <summary>
-    /// 停止中，脚本组件在调用Stop方法前进入该状态
+    /// 运行结束
     /// </summary>
-    Stopping = 5,
-    /// <summary>
-    /// 成功停止，非脚本组件会直接到该状态，脚本组件在调用Stop方法后会进入该状态
-    /// </summary>
-    Stopped = 6,
+    Terminated = 5,
 
     /// <summary>
     /// 已从实体上删除
     /// </summary>
-    Destroyed = 7
+    Destroyed = 6
 }
 }

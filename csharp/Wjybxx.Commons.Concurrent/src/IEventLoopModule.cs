@@ -23,14 +23,14 @@ namespace Wjybxx.Commons.Concurrent
 /// <summary>
 /// 事件循环的模块，亦即EventLoop的组件
 /// 1.只有为<see cref="ComponentKind.Script"/>类型时才会被事件循环特殊调度，
-/// 否则只调用<see cref="IComponent.OnReady"/>、<see cref="IComponent.OnDestroy"/>和<see cref="ResolveDependence"/>方法。
+/// 否则只调用<see cref="IComponent.OnAwake"/>、<see cref="IComponent.OnDestroy"/>。
 /// 2.执行顺序为
-/// <see cref="IComponent.OnReady"/>、<see cref="ResolveDependence"/>
+/// <see cref="IComponent.OnAwake"/>、<see cref="ResolveDependence"/>
 /// <see cref="Start"/>、
 /// <see cref="EarlyUpdate"/><see cref="Update"/><see cref="LateUpdate"/>
 /// <see cref="Stop"/>、
 /// <see cref="IComponent.OnDestroy"/>。
-/// 3.如果支持<see cref="IAgentEvent"/>，<see cref="IAgentEventHandler{T}"/>
+/// 4.如果支持<see cref="IAgentEvent"/>，<see cref="IAgentEventHandler{T}"/>
 ///
 /// 注意：这里的Update和游戏业务中的Update概念并不相同，游戏World中的FixedUpdate、Update、LateUpdate应当在Update场景的时候自行封装；
 /// 但服务器通常可以直接使用这三个方法...
@@ -45,10 +45,9 @@ public interface IEventLoopModule : IComponent
     new IEventLoop Entity { get; }
 
     /// <summary>
-    /// 处理依赖问题
+    /// 解析依赖
     ///
-    /// 1.事件循环会在启动所有的模块之前调用该方法，此时所有的模块已执行<see cref="IComponent.OnReady"/>。
-    /// 2.数据组件不执行该方法。
+    /// 事件循环会在启动所有的模块之前调用该方法，此时所有的模块已执行<see cref="IComponent.OnAwake"/>。
     /// </summary>
     void ResolveDependence() {
     }
