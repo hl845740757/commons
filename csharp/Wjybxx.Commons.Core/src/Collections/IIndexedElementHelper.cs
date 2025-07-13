@@ -40,7 +40,7 @@ public interface IIndexedElementHelper<in T>
     /// </summary>
     /// <param name="collection">关联的集合 </param>
     /// <param name="element">目标元素</param>
-    /// <param name="index">新的索引；-1 表示从集合中删除</param>
+    /// <param name="index">如果是删除元素，则索引为-1</param>
     public void CollectionIndex(object collection, T element, int index);
 }
 }

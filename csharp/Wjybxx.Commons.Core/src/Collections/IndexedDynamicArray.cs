@@ -131,6 +131,53 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
         len++;
     }
 
+    /// <summary>
+    /// 将元素移动到指定下标，可避免产生remove事件
+    /// </summary>
+    public void MoveTo(E e, int newIndex) {
+        if (e == null) throw new ArgumentNullException(nameof(e));
+        ArrayUtil.CheckIndex(newIndex, len);
+        EnsureNotIterating();
+
+        int preIndex = helper.CollectionIndex(this, e);
+        if (preIndex == IndexNotFound) throw new ArgumentException();
+        if (preIndex == newIndex) {
+            return;
+        }
+        // 先将元素挪动到数组尾部，避免外部感知为删除事件，也避免移动期间index重复
+        E[] elements = this.elements;
+        helper.CollectionIndex(this, e, len); // 假移动，以避免扩容
+
+        if (preIndex < newIndex) {
+            // preIndex后面的元素前移
+            for (int idx = preIndex; idx < newIndex; idx++) {
+                E next = elements[idx + 1];
+                elements[idx] = next;
+                if (next != null) {
+                    helper.CollectionIndex(this, next, idx);
+                    SetBit(idx, true);
+                } else {
+                    SetBit(idx, false);
+                }
+            }
+        } else {
+            // preIndex前面的元素后移
+            for (int idx = preIndex; idx > newIndex; idx--) {
+                E prev = elements[idx - 1];
+                elements[idx] = prev;
+                if (prev != null) {
+                    helper.CollectionIndex(this, prev, idx);
+                    SetBit(idx, true);
+                } else {
+                    SetBit(idx, false);
+                }
+            }
+        }
+        elements[newIndex] = e;
+        helper.CollectionIndex(this, e, newIndex);
+        SetBit(newIndex, true);
+    }
+
     public bool Remove(E? e) {
         if (e == null) return false;
         int i = helper.CollectionIndex(this, e);
@@ -330,6 +377,11 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
         } else {
             elementsMask[WordIndex(index)] &= ~(1L << index);
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool GetBit(int index) {
+        return (elementsMask[WordIndex(index)] & 1L << index) != 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -345,6 +345,10 @@ public final class DefaultDynamicArray<E> implements DynamicArray<E> {
         }
     }
 
+    private boolean getBit(int index) {
+        return (elementsMask[wordIndex(index)] & 1L << index) != 0;
+    }
+
     private void insertBit(int bitIndex) {
         DynamicArrayHelper.insertBit(elementsMask, len, bitIndex);
     }

@@ -315,6 +315,11 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
             elementsMask[WordIndex(index)] &= ~(1L << index);
         }
     }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool GetBit(int index) {
+        return (elementsMask[WordIndex(index)] & 1L << index) != 0;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void InsertBit(int bitIndex) {

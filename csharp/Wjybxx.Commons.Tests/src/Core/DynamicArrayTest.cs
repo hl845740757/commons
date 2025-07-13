@@ -29,7 +29,7 @@ public class DynamicArrayTest
 {
     private static int capacity = 64;
     private static int repeat;
-    
+
     private static IDynamicArray<Indexed> dynamicArray;
     private static Indexed[] valArray;
     private static Dictionary<int, Indexed> cacheMap = new(1000);
@@ -122,7 +122,7 @@ public class DynamicArrayTest
         Assert.AreEqual(arrayList.Count, dynamicArray.ElementCount);
         // Assert.Equals(arrayList, dynamicArray.ToList());
         Assert.IsTrue(arrayList.SequenceEqual(dynamicArray.ToList()));
-        
+
         // 插入
         foreach (Indexed val in removedList) {
             int index = Random.Shared.Next(arrayList.Count);
@@ -133,10 +133,43 @@ public class DynamicArrayTest
         Assert.IsTrue(arrayList.SequenceEqual(dynamicArray.ToList()));
     }
 
+    [Repeat(2)]
+    [Test]
+    public void testMove() {
+        cacheMap.Clear(); // 默认的缓存数据会导致异常--添加到了另一个队列
+
+        int capacity = 16;
+        IndexedDynamicArray<Indexed> dynamicArray = new IndexedDynamicArray<Indexed>(Helper.INST, capacity / 3);
+        for (int i = 0; i < capacity; i++) {
+            dynamicArray.Add(ValueOf(i));
+        }
+        // 随机移动一半元素
+        List<Indexed> arrayList = dynamicArray.ToList();
+        List<Indexed> moveList = new List<Indexed>(arrayList);
+        CollectionUtil.Shuffle(moveList);
+        moveList.RemoveRange(0, moveList.Count / 2);
+
+        foreach (Indexed value in moveList) {
+            int prevIndex = value.qIndex;
+            int index = Random.Shared.Next(arrayList.Count);
+            dynamicArray.MoveTo(value, index);
+
+            if (prevIndex == index) {
+                continue;
+            }
+            arrayList.Remove(value); // 先删除再插入
+            arrayList.Insert(index, value);
+        }
+
+        Assert.AreEqual(arrayList.Count, dynamicArray.ElementCount);
+        // Assert.Equals(arrayList, dynamicArray.ToList());
+        Assert.IsTrue(arrayList.SequenceEqual(dynamicArray.ToList()));
+    }
+
     #region MyRegion
 
-    private class Helper : IIndexedElementHelper<Indexed> {
-
+    private class Helper : IIndexedElementHelper<Indexed>
+    {
         internal static readonly Helper INST = new Helper();
 
         public int CollectionIndex(Object collection, Indexed element) {
@@ -147,7 +180,7 @@ public class DynamicArrayTest
             element.qIndex = index;
         }
     }
-    
+
     private class Indexed : IEquatable<Indexed>
     {
         internal readonly int val;
@@ -186,6 +219,6 @@ public class DynamicArrayTest
             return $"{nameof(val)}: {val}, {nameof(qIndex)}: {qIndex}";
         }
     }
-    #endregion
 
+    #endregion
 }

@@ -142,6 +142,51 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
         len++;
     }
 
+    /** 将元素移动到指定下标，可避免产生remove事件 */
+    public void moveTo(E e, int newIndex) {
+        Objects.requireNonNull(e);
+        Objects.checkIndex(newIndex, len);
+        ensureNotIterating();
+
+        int preIndex = helper.collectionIndex(this, e);
+        if (preIndex == INDEX_NOT_FOUND) throw new IllegalArgumentException();
+        if (preIndex == newIndex) {
+            return;
+        }
+        // 先将元素挪动到数组尾部，避免外部感知为删除事件，也避免移动期间index重复
+        @SuppressWarnings("unchecked") E[] elements = (E[])this.elements;
+        helper.collectionIndex(this, e, len); // 假移动，以避免扩容
+
+        if (preIndex < newIndex) {
+            // preIndex后面的元素前移
+            for (int idx = preIndex; idx < newIndex; idx++) {
+                E next = elements[idx + 1];
+                elements[idx] = next;
+                if (next != null) {
+                    helper.collectionIndex(this, next, idx);
+                    setBit(idx, true);
+                } else {
+                    setBit(idx, false);
+                }
+            }
+        } else {
+            // preIndex前面的元素后移
+            for (int idx = preIndex; idx > newIndex; idx--) {
+                E prev = elements[idx - 1];
+                elements[idx] = prev;
+                if (prev != null) {
+                    helper.collectionIndex(this, prev, idx);
+                    setBit(idx, true);
+                } else {
+                    setBit(idx, false);
+                }
+            }
+        }
+        elements[newIndex] = e;
+        helper.collectionIndex(this, e, newIndex);
+        setBit(newIndex, true);
+    }
+
     @Override
     public boolean remove(E e) {
         if (e == null) return false;
@@ -362,6 +407,10 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
         } else {
             elementsMask[wordIndex(index)] &= ~(1L << index);
         }
+    }
+
+    private boolean getBit(int index) {
+        return (elementsMask[wordIndex(index)] & 1L << index) != 0;
     }
 
     private void insertBit(int bitIndex) {
