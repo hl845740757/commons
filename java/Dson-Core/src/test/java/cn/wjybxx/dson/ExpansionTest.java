@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cn.wjybxx.dsoncodec;
+package cn.wjybxx.dson;
 
 import cn.wjybxx.base.MathCommon;
 import cn.wjybxx.base.pool.ArrayPool;

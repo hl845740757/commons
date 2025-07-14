@@ -84,13 +84,16 @@ public abstract class EventLoopModule : IEventLoopModule
     /** 调用{@link #stop()}方法 */
     internal Exception? InvokeStop() {
         Debug.Assert(IsScript());
-        _status = ComponentStatus.Terminated;
+        _status = ComponentStatus.Shutdown;
         try {
             Stop();
             return null;
         }
         catch (Exception ex) {
             return ex;
+        }
+        finally {
+            _status = ComponentStatus.Terminated;
         }
     }
 

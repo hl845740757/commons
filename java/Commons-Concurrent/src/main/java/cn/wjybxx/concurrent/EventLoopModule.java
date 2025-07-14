@@ -84,12 +84,14 @@ public abstract class EventLoopModule implements IEventLoopModule {
     /** 调用{@link #stop()}方法 */
     final Throwable invokeStop() {
         assert isScript();
-        status = ComponentStatus.TERMINATED;
+        status = ComponentStatus.SHUTDOWN;
         try {
             stop();
             return null;
         } catch (Throwable ex) {
             return ex;
+        } finally {
+            status = ComponentStatus.TERMINATED;
         }
     }
 
