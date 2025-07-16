@@ -61,7 +61,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     private const int MASK_DISABLE_EXECUTE = 1 << 14;
     private const int MASK_DISABLE_NOTIFY = 1 << 15;
     internal const int MASK_CHECKING_GUARD = 1 << 16;
-    private const int MASK_NOT_ACTIVE_SELF = 1 << 17;
+    internal const int MASK_NOT_ACTIVE_SELF = 1 << 17;
     private const int MASK_NOT_ACTIVE_IN_HIERARCHY = 1 << 18;
     private const int MASK_REGISTERED_LISTENER = 1 << 19;
 
@@ -550,12 +550,18 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// <summary>
     /// 当前节点自身是否为active状态，
     /// </summary>
-    public bool IsActiveSelf => (ctl & MASK_NOT_ACTIVE_SELF) == 0;
+    public bool IsActiveSelf {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => (ctl & MASK_NOT_ACTIVE_SELF) == 0;
+    }
 
     /// <summary>
     /// 当前节点及其所有父节点是否都为active状态
     /// </summary>
-    public bool IsActiveInHierarchy => (ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) == 0;
+    public bool IsActiveInHierarchy {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => (ctl & MASK_NOT_ACTIVE_IN_HIERARCHY) == 0;
+    }
 
     /// <summary>
     /// 修改节点的active状态
@@ -682,20 +688,6 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     private static bool CheckSlowStart(int ctl) {
         // 条件节点不可延迟启动；其它情况下只有用户请求延迟启动的Task才可延迟启动
         return (ctl & (MASK_CHECKING_GUARD | MASK_SLOW_START)) == MASK_SLOW_START;
-    }
-
-    /// <summary>
-    /// 是否需要执行<see cref="Execute"/>方法（即事件驱动）
-    ///
-    /// 1.Task可以在每次Execute的时候将自己标记为不需要Execute，直到发生某件事件时，如数据变化，再启用一次Execute。
-    /// 2.该属性和IsActive属于两个维度，Task可能处于Active但不需要Execute的状态。
-    /// 3.如果期望Start的时候不执行Execute，请查看<see cref="IsSlowStart"/>。
-    /// 4.该属性通常仅适用于叶子节点，否则可能导致Bug。
-    /// </summary>
-    public bool NeedExecute {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => (flags & MASK_DISABLE_EXECUTE) == 0;
-        set => SetFlagsBit(MASK_DISABLE_EXECUTE, !value);
     }
 
     #endregion
@@ -1218,7 +1210,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /** 设置ctl的bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void SetCtlBit(int mask, bool enable) {
+    internal void SetCtlBit(int mask, bool enable) {
         if (enable) {
             ctl |= mask;
         } else {

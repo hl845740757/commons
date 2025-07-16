@@ -59,7 +59,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     private static final int MASK_DISABLE_EXECUTE = 1 << 14;
     private final int MASK_DISABLE_NOTIFY = 1 << 15;
     static final int MASK_CHECKING_GUARD = 1 << 16;
-    private static final int MASK_NOT_ACTIVE_SELF = 1 << 17;
+    static final int MASK_NOT_ACTIVE_SELF = 1 << 17;
     private static final int MASK_NOT_ACTIVE_IN_HIERARCHY = 1 << 18;
     private static final int MASK_REGISTERED_LISTENER = 1 << 19;
 
@@ -677,23 +677,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         // 条件节点不可延迟启动；其它情况下只有用户请求延迟启动的Task才可延迟启动
         return (ctl & (MASK_CHECKING_GUARD | MASK_SLOW_START)) == MASK_SLOW_START;
     }
-
-    /**
-     * 是否需要执行{@link #execute()}方法
-     * <p>
-     * 1.Task可以在每次Execute的时候将自己标记为不需要Execute，直到发生某件事件时，如数据变化，再启用一次Execute。
-     * 2.该属性和IsActive属于两个维度，Task可能处于Active但不需要Execute的状态。
-     * 3.如果期望Start的时候不执行Execute，请查看{@link #isSlowStart()}。
-     * 4.该属性通常仅适用于叶子节点，否则可能导致Bug。
-     */
-    public final void setNeedExecute(boolean value) {
-        setCtlBit(MASK_DISABLE_EXECUTE, !value); // 取反
-    }
-
-    public final boolean isNeedExecute() {
-        return (ctl & MASK_DISABLE_EXECUTE) == 0;
-    }
-
+    
     // endregion
 
     // region options
@@ -1220,7 +1204,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     }
 
     /** 设置ctl的bit */
-    private void setCtlBit(int mask, boolean enable) {
+    final void setCtlBit(int mask, boolean enable) {
         if (enable) {
             ctl |= mask;
         } else {

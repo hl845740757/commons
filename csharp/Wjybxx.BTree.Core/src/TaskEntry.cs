@@ -56,7 +56,7 @@ public class TaskEntry<T> : Task<T> where T : class
     [NonSerialized] protected TaskInlineHelper<T> inlineHelper = new TaskInlineHelper<T>();
 
     public TaskEntry()
-        : this(null, null, default) {
+        : this(null, null, null) {
     }
 
     public TaskEntry(string? name, Task<T>? rootTask, T? blackboard,
@@ -150,6 +150,9 @@ public class TaskEntry<T> : Task<T> where T : class
     public void UpdateInlined(int curFrame) {
         this.curFrame = curFrame;
         if (IsRunning) {
+            if (!IsActiveInHierarchy) {
+                return;
+            }
             // 内联Execute逻辑
             Task<T>? inlinedChild = inlineHelper.GetInlinedChild();
             if (inlinedChild != null) {
@@ -170,6 +173,15 @@ public class TaskEntry<T> : Task<T> where T : class
         Debug.Assert(IsInited());
         Template_Start(null, MASK_CHECKING_GUARD); // entry本身不是条件节点
         return IsSucceeded;
+    }
+
+    /** 在行为树场景，我们绝大多数情况下不需要层次化的Active管理 */
+    public void SetActiveSelf(bool value) {
+        if (IsActiveSelf == value) return;
+        SetCtlBit(MASK_NOT_ACTIVE_SELF, !value); // 取反
+        if (IsRunning && handler != null) {
+            handler.OnActiveChanged(this);
+        }
     }
 
     protected override void Enter(int reentryId) {

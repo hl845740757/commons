@@ -158,6 +158,9 @@ public class TaskEntry<T> extends Task<T> {
     public void updateInlined(int curFrame) {
         this.curFrame = curFrame;
         if (isRunning()) {
+            if (!isActiveInHierarchy()) {
+                return;
+            }
             // 内联Execute逻辑
             Task<T> inlinedChild = inlineHelper.getInlinedChild();
             if (inlinedChild != null) {
@@ -178,6 +181,15 @@ public class TaskEntry<T> extends Task<T> {
         assert isInited();
         template_start(null, MASK_CHECKING_GUARD); // entry本身不是条件节点
         return isSucceeded();
+    }
+
+    /** 在行为树场景，我们绝大多数情况下不需要层次化的Active管理 */
+    public void setActiveSelf(boolean value) {
+        if (isActiveSelf() == value) return;
+        setCtlBit(MASK_NOT_ACTIVE_SELF, !value);
+        if (isRunning() && handler != null) {
+            handler.onActiveChanged(this);
+        }
     }
 
     @Override
