@@ -58,15 +58,9 @@ public class BitFlags {
     }
 
     /** 是否设置了指定下标的bit */
-    public static boolean isSetAt(int flags, int idx) {
+    public static boolean GetAt(int flags, int idx) {
         int mask = 1 << idx;
         return (flags & mask) != 0;
-    }
-
-    /** 是否未设置指定下标的bit */
-    public static boolean isNotSetAt(int flags, int idx) {
-        int mask = 1 << idx;
-        return (flags & mask) == 0;
     }
 
     /** 设置指定下标的bit */
@@ -131,15 +125,9 @@ public class BitFlags {
     }
 
     /** 是否设置了指定下标的bit */
-    public static boolean isSetAt(long flags, int idx) {
+    public static boolean GetAt(long flags, int idx) {
         long mask = 1L << idx;
         return (flags & mask) != 0;
-    }
-
-    /** 是否未设置指定下标的bit */
-    public static boolean isNotSetAt(long flags, int idx) {
-        long mask = 1L << idx;
-        return (flags & mask) == 0;
     }
 
     /** 设置指定下标的bit */

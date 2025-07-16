@@ -27,26 +27,30 @@ namespace Wjybxx.Dson.Text
 {
 /// <summary>
 /// 用于避免对值类型装箱
+/// 内存开销：40字节
 /// </summary>
 [StructLayout(LayoutKind.Explicit)]
 public struct UnionValue : IEquatable<UnionValue>
 {
 #nullable disable
     // 值的类型 -- 偷懒方案，Object表示任意类型
+    // 由于内存对齐的原因，为避免内存浪费，我们在double前面插入三个byte类型值
     [FieldOffset(0)] public DsonType type;
+    [FieldOffset(1)] public byte b1;
+    [FieldOffset(2)] public byte b2;
+    [FieldOffset(3)] public byte b3;
     // 固定8个字节
-    [FieldOffset(1)] public int iValue;
-    [FieldOffset(1)] public long lValue;
-    [FieldOffset(1)] public float fValue;
-    [FieldOffset(1)] public double dValue;
-    [FieldOffset(1)] public bool bValue;
+    [FieldOffset(4)] public int iValue;
+    [FieldOffset(4)] public long lValue; // localId, seconds
+    [FieldOffset(4)] public float fValue;
+    [FieldOffset(4)] public double dValue;
+    [FieldOffset(4)] public bool bValue;
 
-    // 3个扩展int值，支持DateTime、TimeStamp、ObjectPtr、ObjectLitePtr
-    [FieldOffset(9)] public int v2; // nanos, type
-    [FieldOffset(13)] public int v3; // offset, policy
-    [FieldOffset(17)] public int v4; // enables
+    // 2个扩展int值，支持DateTime、TimeStamp
+    [FieldOffset(12)] public int v2; // nanos
+    [FieldOffset(16)] public int v3; // offset
 
-    // 由于内存对齐的原因，引用类型需要偏移24 -- 所以上面的v4可以声明为int
+    // 由于内存对齐的原因，引用类型需要偏移24
     [FieldOffset(24)] public object objValue; // localId, string, bytes
     [FieldOffset(32)] public object objValue2; // namespace
 
@@ -121,32 +125,32 @@ public struct UnionValue : IEquatable<UnionValue>
     #region converter
 
     public ObjectPtr ObjectPtr {
-        get => new ObjectPtr((string)objValue, (string)objValue2, (byte)v2, (byte)v3);
+        get => new ObjectPtr((string)objValue, (string)objValue2, b1, b2);
         set {
             objValue = value.LocalId;
             objValue2 = value.Namespace; // 固定value2
-            v2 = value.Type;
-            v3 = value.Policy;
+            b1 = value.Type;
+            b2 = value.Policy;
         }
     }
 
     public ObjectLitePtr ObjectLitePtr {
-        get => new ObjectLitePtr(lValue, (string)objValue2, (byte)v2, (byte)v3);
+        get => new ObjectLitePtr(lValue, (string)objValue2, b1, b2);
         set {
             lValue = value.LocalId;
             objValue2 = value.Namespace; // 固定value2
-            v2 = value.Type;
-            v3 = value.Policy;
+            b1 = value.Type;
+            b2 = value.Policy;
         }
     }
 
     public ExtDateTime DateTime {
-        get => new ExtDateTime(lValue, v2, v3, (byte)v4);
+        get => new ExtDateTime(lValue, v2, v3, b1);
         set {
             lValue = value.Seconds;
             v2 = value.Nanos;
             v3 = value.Offset;
-            v4 = value.Enables;
+            b1 = value.Enables;
         }
     }
 

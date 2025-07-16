@@ -28,9 +28,9 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public readonly struct TaskAwaitable
 {
-    public readonly Task _task;
-    public readonly IExecutor _executor;
-    public readonly int _options;
+    private readonly Task _task;
+    private readonly IExecutor _executor;
+    private readonly int _options;
 
     public TaskAwaitable(Task future, IExecutor executor, int options) {
         _task = future ?? throw new ArgumentNullException(nameof(future));

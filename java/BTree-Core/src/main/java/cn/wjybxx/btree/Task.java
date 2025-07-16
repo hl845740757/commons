@@ -683,6 +683,8 @@ public abstract class Task<T> implements ICancelTokenListener {
      * <p>
      * 1.Task可以在每次Execute的时候将自己标记为不需要Execute，直到发生某件事件时，如数据变化，再启用一次Execute。
      * 2.该属性和IsActive属于两个维度，Task可能处于Active但不需要Execute的状态。
+     * 3.如果期望Start的时候不执行Execute，请查看{@link #isSlowStart()}。
+     * 4.该属性通常仅适用于叶子节点，否则可能导致Bug。
      */
     public final void setNeedExecute(boolean value) {
         setCtlBit(MASK_DISABLE_EXECUTE, !value); // 取反
@@ -837,8 +839,8 @@ public abstract class Task<T> implements ICancelTokenListener {
                 return;
             }
         }
-        // 需要使用最新的ctl
-        if (checkSlowStart(ctl) || (ctl & MASK_DISABLE_EXECUTE_OPTIONS) != 0) {
+        // 需要使用最新的ctl - 这里只能测试Task主动设置的属性
+        if (checkSlowStart(ctl)) {
             if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
                 control.onChildRunning(this, true);
             }

@@ -61,18 +61,11 @@ public static class BitFlags
         }
     }
 
-    /** 是否设置了指定下标的bit */
+    /** 获取指定下标的bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsSetAt(int flags, int idx) {
+    public static bool GetAt(int flags, int idx) {
         int mask = 1 << idx;
         return (flags & mask) != 0;
-    }
-
-    /** 是否未设置指定下标的bit */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsNotSetAt(int flags, int idx) {
-        int mask = 1 << idx;
-        return (flags & mask) == 0;
     }
 
     /** 设置指定下标的bit */
@@ -162,18 +155,11 @@ public static class BitFlags
         }
     }
 
-    /** 是否设置了指定下标的bit */
+    /** 获取指定下标的bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsSetAt(long flags, int idx) {
+    public static bool GetAt(long flags, int idx) {
         long mask = 1L << idx;
         return (flags & mask) != 0;
-    }
-
-    /** 是否未设置指定下标的bit */
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsNotSetAt(long flags, int idx) {
-        long mask = 1L << idx;
-        return (flags & mask) == 0;
     }
 
     /** 设置指定下标的bit */

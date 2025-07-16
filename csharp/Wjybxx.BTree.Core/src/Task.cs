@@ -689,6 +689,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     ///
     /// 1.Task可以在每次Execute的时候将自己标记为不需要Execute，直到发生某件事件时，如数据变化，再启用一次Execute。
     /// 2.该属性和IsActive属于两个维度，Task可能处于Active但不需要Execute的状态。
+    /// 3.如果期望Start的时候不执行Execute，请查看<see cref="IsSlowStart"/>。
+    /// 4.该属性通常仅适用于叶子节点，否则可能导致Bug。
     /// </summary>
     public bool NeedExecute {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -827,8 +829,8 @@ public abstract class Task<T> : ICancelTokenListener where T : class
                 return;
             }
         }
-        // 需要使用最新的ctl
-        if (CheckSlowStart(ctl) || (ctl & MASK_DISABLE_EXECUTE_OPTIONS) != 0) {
+        // 需要使用最新的ctl - 这里只能测试Task主动设置的属性
+        if (CheckSlowStart(ctl)) {
             if ((initMask & MASK_DISABLE_NOTIFY) == 0 && control != null) {
                 control.OnChildRunning(this, true);
             }
