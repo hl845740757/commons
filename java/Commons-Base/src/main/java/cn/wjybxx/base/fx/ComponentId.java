@@ -45,13 +45,11 @@ public class ComponentId<T> extends AbstractConstant {
     public final boolean shared;
     /** 最大可挂载数量 */
     public final int maxCount;
-    /** 启用的函数，扫描重写的方法计算得到 -- 允许组件继承的情况下不可使用该值 */
-    public final int enableFuncs;
+    /** 更新顺序 */
+    public final int updateOrder;
 
     /** 业务自定义flags */
     public final long flags;
-    /** 用于分组的键 */
-    public final int groupKey;
     /** 挂载路径 */
     public final String mountPath;
     /** 用户扩展数据 -- 必须的不可变的 */
@@ -61,14 +59,13 @@ public class ComponentId<T> extends AbstractConstant {
     protected ComponentId(Builder<T> builder) {
         super(builder);
         assert builder.getCacheIndex() >= 0;
-        this.cacheIndex = builder.getCacheIndex();
         this.kind = Objects.requireNonNull(builder.kind, "kind");
         this.shared = builder.shared;
         this.maxCount = Math.max(1, builder.maxCount);
-        this.enableFuncs = builder.enableFuncs;
+        this.cacheIndex = builder.getCacheIndex();
+        this.updateOrder = builder.updateOrder;
 
         this.flags = builder.flags;
-        this.groupKey = builder.groupKey;
         this.mountPath = ObjectUtils.blankToDef(builder.mountPath, null);
         this.extraInfo = builder.extraInfo;
     }
@@ -89,13 +86,11 @@ public class ComponentId<T> extends AbstractConstant {
         private boolean shared = false;
         /** 最大可挂载数量 */
         private int maxCount = 1;
-        /** 启用的函数，扫描重写的方法计算得到 */
-        private int enableFuncs;
+        /** 用于分组的键 */
+        private int updateOrder = -1;
 
         /** 业务自定义flags */
         private long flags;
-        /** 用于分组的键 */
-        private int groupKey;
         /** 挂载路径 */
         private String mountPath;
         /** 用户扩展数据 -- 必须的不可变的 */
@@ -138,12 +133,12 @@ public class ComponentId<T> extends AbstractConstant {
             return this;
         }
 
-        public int getEnableFuncs() {
-            return enableFuncs;
+        public int getUpdateOrder() {
+            return updateOrder;
         }
 
-        public Builder<T> setEnableFuncs(int enableFuncs) {
-            this.enableFuncs = enableFuncs;
+        public Builder<T> setUpdateOrder(int updateOrder) {
+            this.updateOrder = updateOrder;
             return this;
         }
 
@@ -153,15 +148,6 @@ public class ComponentId<T> extends AbstractConstant {
 
         public Builder<T> setFlags(long flags) {
             this.flags = flags;
-            return this;
-        }
-
-        public int getGroupKey() {
-            return groupKey;
-        }
-
-        public Builder<T> setGroupKey(int groupKey) {
-            this.groupKey = groupKey;
             return this;
         }
 

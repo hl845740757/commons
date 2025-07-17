@@ -18,7 +18,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using Wjybxx.Commons.Attributes;
 
 namespace Wjybxx.Commons.Fx
@@ -35,21 +34,19 @@ namespace Wjybxx.Commons.Fx
 public partial class ComponentId : AbstractConstant
 {
 #nullable disable
-    /** 高速缓存下标 */
-    public readonly int cacheIndex;
     /** 组件类型 */
     public readonly ComponentKind kind;
     /** 是否是共享组件 -- 通常共享组件的所有方法都不被框架调用；甚至不会被注入实体的引用 */
     public readonly bool shared;
     /** 最大可挂载数量 */
     public readonly int maxCount;
-    /** 启用的函数，扫描重写的方法计算得到 -- 允许组件继承的情况下不可使用该值 */
-    public readonly int enableFuncs;
+    /** 高速缓存下标 */
+    public readonly int cacheIndex;
+    /** 更新顺序 */
+    public readonly int updateOrder;
 
     /** 业务自定义flags */
     public readonly long flags;
-    /** 用于分组的键 */
-    public readonly int groupKey;
     /** 挂载路径 */
     public readonly string mountPath;
     /** 用户扩展数据 -- 必须的不可变的 */
@@ -58,14 +55,13 @@ public partial class ComponentId : AbstractConstant
     protected ComponentId(IBuilder builder)
         : base(builder) {
         Debug.Assert(builder.CacheIndex >= 0);
-        this.cacheIndex = builder.CacheIndex;
         this.kind = builder.Kind;
         this.shared = builder.Shared;
         this.maxCount = Math.Max(1, builder.MaxCount);
-        this.enableFuncs = builder.EnableFuncs;
+        this.cacheIndex = builder.CacheIndex;
+        this.updateOrder = builder.UpdateOrder;
 
         this.flags = builder.Flags;
-        this.groupKey = builder.GroupKey;
         this.mountPath = builder.MountPath;
         this.extraInfo = builder.ExtraInfo;
     }

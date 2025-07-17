@@ -20,9 +20,7 @@ import java.util.List;
 
 /**
  * 组件模式的实体抽象
- * <p>
- * Q：需要提供根据{@link Class}查询组件的接口吗？
- * A：不需要！用户可以根据{@link Class}查询关联的组件id，再来查询。
+ * 注：这只是个参考抽象。
  *
  * @author wjybxx
  * date - 2024/6/22

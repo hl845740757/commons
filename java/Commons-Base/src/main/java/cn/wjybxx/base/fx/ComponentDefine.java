@@ -48,11 +48,11 @@ public @interface ComponentDefine {
     /** 高速缓存下标 */
     int cacheIndex() default -1;
 
+    /** 更新顺序 */
+    int updateOrder() default -1;
+
     /** 用户自定义flags */
     int flags() default 0;
-
-    /** 用户自定义分组键 */
-    int groupKey() default 0;
 
     /** 挂载路径 */
     String mountPath() default "";

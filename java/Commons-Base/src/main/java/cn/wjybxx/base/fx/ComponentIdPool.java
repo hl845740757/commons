@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 /**
  * 组件id池
@@ -109,14 +110,19 @@ public final class ComponentIdPool {
 
     // endregion
 
+    public <T> ComponentId<T> valueOf(Class<T> clazz) {
+        return valueOf(clazz, null);
+    }
+
     /**
      * 获取类型关联的组件Id
      *
-     * @param clazz 应该使用超类的class查询，否则可能导致异常
+     * @param clazz       应该使用超类的class查询，否则可能导致异常
+     * @param interceptor 拦截器，主要用于解决冲突；修正cacheIndex等
      * @return 可能是超类的组件id
      */
     @SuppressWarnings("unchecked")
-    public <T> ComponentId<T> valueOf(Class<T> clazz) {
+    public <T> ComponentId<T> valueOf(Class<T> clazz, Consumer<ComponentId.Builder<?>> interceptor) {
         Objects.requireNonNull(clazz, "clazz");
         // 先从缓存中查询
         ComponentId<?> cid = class2CidMap.get(clazz);
@@ -126,7 +132,7 @@ public final class ComponentIdPool {
         // 优先处理重定向
         ComponentRedirect annotationRedirect = clazz.getAnnotation(ComponentRedirect.class);
         if (annotationRedirect != null && annotationRedirect.value() != clazz) {
-            cid = valueOf((Class<?>) annotationRedirect.value());
+            cid = valueOf((Class<?>) annotationRedirect.value(), interceptor);
             class2CidMap.put(clazz, cid);
             return (ComponentId<T>) cid;
         }
@@ -143,16 +149,17 @@ public final class ComponentIdPool {
                 if (ObjectUtils.isBlank(compName)) {
                     compName = clazz.getSimpleName();
                 }
-                builder = ComponentId.<T>newBuilder(compName)
-                        .setKind(annotationDefine.kind())
-                        .setShared(annotationDefine.shared())
-                        .setMaxCount(annotationDefine.maxCount())
-                        .setFlags(annotationDefine.flags())
-                        .setGroupKey(annotationDefine.groupKey())
-                        .setMountPath(annotationDefine.mountPath());
-                //
+                builder = ComponentId.<T>newBuilder(compName);
+                builder.setKind(annotationDefine.kind());
+                builder.setShared(annotationDefine.shared());
+                builder.setMaxCount(annotationDefine.maxCount());
                 builder.setCacheIndex(annotationDefine.cacheIndex());
+                builder.setUpdateOrder(annotationDefine.updateOrder());
+                //
+                builder.setFlags(annotationDefine.flags());
+                builder.setMountPath(annotationDefine.mountPath());
             }
+            if (interceptor != null) interceptor.accept(builder);
         }
         cid = pool.valueOf(builder);
         class2CidMap.put(clazz, cid);

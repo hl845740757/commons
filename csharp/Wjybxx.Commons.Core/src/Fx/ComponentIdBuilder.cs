@@ -29,11 +29,10 @@ public partial class ComponentId
         public ComponentKind Kind { get; set; }
         public bool Shared { get; set; }
         public int MaxCount { get; set; }
-        public int EnableFuncs { get; set; }
+        public int UpdateOrder { get; set; }
 
         public long Flags { get; set; }
         public string? MountPath { get; set; }
-        public int GroupKey { get; set; }
         public object ExtraInfo { get; set; }
     }
 
@@ -51,15 +50,13 @@ public partial class ComponentId
         private bool shared = false;
         /** 最大可挂载数量 */
         private int maxCount = 1;
-        /** 启用的函数，扫描重写的方法计算得到 */
-        private int enableFuncs;
+        /** 更新顺序 */
+        private int updateOrder = -1;
 
         /** 业务自定义flags */
         private long flags;
         /** 挂载路径 */
         private string mountPath;
-        /** 用于分组的键 */
-        private int groupKey;
         /** 用户扩展数据 -- 必须的不可变的 */
         private object extraInfo;
 
@@ -93,17 +90,14 @@ public partial class ComponentId
             get => maxCount;
             set => maxCount = value;
         }
-        public int EnableFuncs {
-            get => enableFuncs;
-            set => enableFuncs = value;
+        public int UpdateOrder {
+            get => updateOrder;
+            set => updateOrder = value;
         }
+
         public long Flags {
             get => flags;
             set => flags = value;
-        }
-        public int GroupKey {
-            get => groupKey;
-            set => groupKey = value;
         }
         public string MountPath {
             get => mountPath;

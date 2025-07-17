@@ -23,7 +23,8 @@ namespace Wjybxx.Commons.Fx
 {
 /// <summary>
 /// 组件模式的实体抽象
-/// 
+///
+/// 注：这只是个参考抽象。
 /// </summary>
 public interface IEntity
 {

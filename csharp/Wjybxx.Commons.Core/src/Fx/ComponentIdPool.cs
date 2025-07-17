@@ -112,17 +112,19 @@ public sealed class ComponentIdPool
     /// 注意：T不可以包含<see cref="ComponentRedirectAttribute"/>注解，否则类型转换可能失败。
     /// </summary>
     /// <typeparam name="T">组件类型</typeparam>
+    /// <param name="interceptor">拦截器，主要用于解决冲突</param>
     /// <returns></returns>
-    public ComponentId<T> ValueOf<T>() {
-        return (ComponentId<T>)ValueOf(typeof(T));
+    public ComponentId<T> ValueOf<T>(Action<ComponentId.IBuilder>? interceptor = null) {
+        return (ComponentId<T>)ValueOf(typeof(T), interceptor);
     }
 
     /// <summary>
     /// 获取类型关联的组件Id
     /// </summary>
     /// <param name="type">组件类型</param>
+    /// <param name="interceptor">拦截器，主要用于解决冲突；修正cacheIndex等</param>
     /// <returns>返回的可能是超类的组件id</returns>
-    public ComponentId ValueOf(Type type) {
+    public ComponentId ValueOf(Type type, Action<ComponentId.IBuilder>? interceptor = null) {
         if (type == null) throw new ArgumentNullException(nameof(type));
         // 先从缓存中查询
         if (class2CidMap.TryGetValue(type, out ComponentId cid)) {
@@ -131,7 +133,7 @@ public sealed class ComponentIdPool
         // 优先处理重定向
         ComponentRedirectAttribute componentRedirect = type.GetCustomAttribute<ComponentRedirectAttribute>();
         if (componentRedirect != null && componentRedirect.baseType != type) {
-            cid = ValueOf(componentRedirect.baseType);
+            cid = ValueOf(componentRedirect.baseType, interceptor);
             class2CidMap.TryAdd(type, cid);
             return cid;
         }
@@ -156,10 +158,13 @@ public sealed class ComponentIdPool
                 builder.Shared = componentDefine.Shared;
                 builder.MaxCount = componentDefine.MaxCount;
                 builder.CacheIndex = componentDefine.CacheIndex;
+                builder.UpdateOrder = componentDefine.UpdateOrder;
+                //
                 builder.Flags = componentDefine.Flags;
-                builder.GroupKey = componentDefine.GroupKey;
                 builder.MountPath = componentDefine.MountPath;
             }
+            //
+            interceptor?.Invoke(builder);
         }
         cid = pool.ValueOf(builder);
         class2CidMap.TryAdd(type, cid);

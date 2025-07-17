@@ -58,14 +58,14 @@ public class ComponentDefineAttribute : Attribute
     public int CacheIndex { get; set; } = -1;
 
     /// <summary>
+    /// 更新顺序
+    /// </summary>
+    public int UpdateOrder { get; set; } = -1;
+
+    /// <summary>
     /// 用户自定义flags
     /// </summary>
     public int Flags { get; set; } = 0;
-
-    /// <summary>
-    /// 用户自定义分组键
-    /// </summary>
-    public int GroupKey { get; set; } = 0;
 
     /// <summary>
     /// 挂载路径
