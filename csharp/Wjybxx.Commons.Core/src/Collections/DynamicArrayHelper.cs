@@ -37,11 +37,11 @@ internal static class DynamicArrayHelper
     }
 
     public static bool IsCompressionNeeded(float nullFactor, int len, int elementCount) {
-        if (nullFactor == 0) return true;
-        if (nullFactor > 1) return false;
+        if (nullFactor == 0f) return true;
+        if (nullFactor > 1f) return false;
 
         int nullCount = len - elementCount;
-        if (nullFactor == 1) {
+        if (nullFactor == 1f) {
             return nullCount == len;
         }
         return nullCount > 0 && nullCount >= len * nullFactor;

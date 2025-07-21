@@ -364,11 +364,11 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
 
     private boolean isCompressionNeeded() {
         float nullFactor = this.nullFactor;
-        if (nullFactor == 0) return true;
-        if (nullFactor > 1) return false;
+        if (nullFactor == 0f) return true;
+        if (nullFactor > 1f) return false;
 
         int nullCount = len - elementCount();
-        if (nullFactor == 1) {
+        if (nullFactor == 1f) {
             return nullCount == len;
         }
         return nullCount > 0 && nullCount >= len * nullFactor;

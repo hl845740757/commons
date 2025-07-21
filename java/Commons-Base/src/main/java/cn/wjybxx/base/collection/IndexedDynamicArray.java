@@ -346,7 +346,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
         }
 
         // 较快的成长速度
-        int grow = Math.max(16, oldCapacity >> 1);
+        int grow = Math.max(8, oldCapacity >> 1);
         int newCapacity = MathCommon.clamp((long) oldCapacity + grow, minCapacity, MAX_CAPACITY);
         elements = Arrays.copyOf(elements, newCapacity);
         if (wordCount(oldCapacity) < wordCount(newCapacity)) {

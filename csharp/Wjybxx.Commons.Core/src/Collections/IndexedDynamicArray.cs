@@ -317,7 +317,7 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
         }
 
         // 较快的成长速度
-        int grow = Math.Max(16, oldCapacity >> 1);
+        int grow = Math.Max(8, oldCapacity >> 1);
         int newCapacity = MathCommon.Clamp((long)oldCapacity + grow, minCapacity, MAX_CAPACITY);
         elements = ArrayUtil.CopyOf(elements, 0, newCapacity);
         if (WordCount(oldCapacity) < WordCount(newCapacity)) {
