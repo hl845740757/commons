@@ -91,6 +91,72 @@ public static class MoreCollectionCodecs
         }
     }
 
+    public class SmallDynamicArrayCodec<T> : IDsonCodec<SmallDynamicArray<T>> where T : class
+    {
+        public bool AutoStartEnd => false;
+
+        public void WriteObject(IDsonObjectWriter writer, in SmallDynamicArray<T> inst, Type declaredType, ObjectStyle style) {
+            writer.WriteStartArray(style, inst.GetType(), declaredType, inst.ElementCount);
+            inst.BeginItr();
+            try {
+                for (int i = 0, len = inst.Length; i < len; i++) {
+                    T item = inst[i];
+                    if (item != null) {
+                        writer.WriteObject(null, item);
+                    }
+                }
+            }
+            finally {
+                inst.EndItr();
+            }
+            writer.WriteEndArray();
+        }
+
+        public SmallDynamicArray<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
+            int count = reader.ReadStartArray();
+            SmallDynamicArray<T> result = new SmallDynamicArray<T>(count);
+            while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                T value = reader.ReadObject<T>(null);
+                result.Add(value);
+            }
+            reader.ReadEndArray();
+            return result;
+        }
+    }
+
+    public class DynamicArrayCodec<T> : IDsonCodec<DynamicArray<T>> where T : class
+    {
+        public bool AutoStartEnd => false;
+
+        public void WriteObject(IDsonObjectWriter writer, in DynamicArray<T> inst, Type declaredType, ObjectStyle style) {
+            writer.WriteStartArray(style, inst.GetType(), declaredType, inst.ElementCount);
+            inst.BeginItr();
+            try {
+                for (int i = 0, len = inst.Length; i < len; i++) {
+                    T item = inst[i];
+                    if (item != null) {
+                        writer.WriteObject(null, item);
+                    }
+                }
+            }
+            finally {
+                inst.EndItr();
+            }
+            writer.WriteEndArray();
+        }
+
+        public DynamicArray<T> ReadObject(IDsonObjectReader reader, Type declaredType, Func<object>? factory = null) {
+            int count = reader.ReadStartArray();
+            DynamicArray<T> result = new DynamicArray<T>(count);
+            while (reader.ReadDsonType() != DsonType.EndOfObject) {
+                T value = reader.ReadObject<T>(null);
+                result.Add(value);
+            }
+            reader.ReadEndArray();
+            return result;
+        }
+    }
+
     #endregion
 
     #region 特化List

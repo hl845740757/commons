@@ -469,6 +469,9 @@ public sealed class DsonCodecConfig
         //
         config.AddGenericCodec(typeof(Stack<>), typeof(MoreCollectionCodecs.StackCodec<>));
         config.AddGenericCodec(typeof(Queue<>), typeof(MoreCollectionCodecs.QueueCodec<>));
+        //
+        config.AddGenericCodec(typeof(SmallDynamicArray<>), typeof(MoreCollectionCodecs.SmallDynamicArrayCodec<>));
+        config.AddGenericCodec(typeof(DynamicArray<>), typeof(MoreCollectionCodecs.DynamicArrayCodec<>));
 
         // IDictionary接口不指定工厂，根据options动态分配实现
         config.AddGenericCodec(typeof(IDictionary<,>), typeof(DictionaryCodec<,>));

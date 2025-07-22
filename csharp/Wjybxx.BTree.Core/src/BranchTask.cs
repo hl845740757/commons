@@ -25,6 +25,8 @@ namespace Wjybxx.BTree
 {
 /// <summary>
 /// 分支节点抽象
+///
+/// 注：子类Update的可能是另一个List，因此子节点管理方法更改为虚方法。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public abstract class BranchTask<T> : Task<T> where T : class
@@ -104,20 +106,20 @@ public abstract class BranchTask<T> : Task<T> where T : class
 
     public override int ChildCount => children.Count;
 
-    public sealed override Task<T> GetChild(int index) {
+    public override Task<T> GetChild(int index) {
         return children[index];
     }
 
-    protected sealed override int AddChildImpl(Task<T> task) {
+    protected override int AddChildImpl(Task<T> task) {
         children.Add(task);
         return children.Count - 1;
     }
 
-    protected sealed override Task<T> SetChildImpl(int index, Task<T> task) {
+    protected override Task<T> SetChildImpl(int index, Task<T> task) {
         return children[index] = task;
     }
 
-    protected sealed override Task<T> RemoveChildImpl(int index) {
+    protected override Task<T> RemoveChildImpl(int index) {
         Task<T> child = children[index];
         children.RemoveAt(index);
         return child;

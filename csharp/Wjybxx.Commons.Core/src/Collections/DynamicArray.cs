@@ -30,9 +30,6 @@ namespace Wjybxx.Commons.Collections
 /// <typeparam name="E"></typeparam>
 public class DynamicArray<E> : IDynamicArray<E> where E : class
 {
-    private const long WORD_MASK = -1;
-    private const int ADDRESS_BITS_PER_WORD = 6;
-
     private E?[] elements;
     private long[] elementsMask;
     private readonly float nullFactor;

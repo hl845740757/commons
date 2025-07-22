@@ -26,6 +26,8 @@ import java.util.Objects;
 
 /**
  * 分支任务（可能有多个子节点）
+ * <p>
+ * 注：子类Update的可能是另一个List，因此子节点管理方法更改为虚方法。
  *
  * @author wjybxx
  * date - 2023/11/25
@@ -102,28 +104,28 @@ public abstract class BranchTask<T> extends Task<T> {
     }
 
     @Override
-    public final int getChildCount() {
+    public int getChildCount() {
         return children.size();
     }
 
     @Override
-    public final Task<T> getChild(int index) {
+    public Task<T> getChild(int index) {
         return children.get(index);
     }
 
     @Override
-    protected final int addChildImpl(Task<T> task) {
+    protected int addChildImpl(Task<T> task) {
         children.add(task);
         return children.size() - 1;
     }
 
     @Override
-    protected final Task<T> setChildImpl(int index, Task<T> task) {
+    protected Task<T> setChildImpl(int index, Task<T> task) {
         return children.set(index, task);
     }
 
     @Override
-    protected final Task<T> removeChildImpl(int index) {
+    protected Task<T> removeChildImpl(int index) {
         return children.remove(index);
     }
 
