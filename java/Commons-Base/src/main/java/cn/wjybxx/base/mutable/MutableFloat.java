@@ -77,8 +77,13 @@ public class MutableFloat extends Number implements MutableNumber<Float>, Compar
 
     // endregion
 
-
     // region op
+
+    public float getAndSet(float value) {
+        float r = this.value;
+        this.value = value;
+        return r;
+    }
 
     /** 加上操作数 */
     public void add(final float operand) {

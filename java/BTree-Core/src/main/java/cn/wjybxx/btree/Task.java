@@ -677,7 +677,7 @@ public abstract class Task<T> implements ICancelTokenListener {
         // 条件节点不可延迟启动；其它情况下只有用户请求延迟启动的Task才可延迟启动
         return (ctl & (MASK_CHECKING_GUARD | MASK_SLOW_START)) == MASK_SLOW_START;
     }
-    
+
     // endregion
 
     // region options
@@ -1201,6 +1201,11 @@ public abstract class Task<T> implements ICancelTokenListener {
         if (task != null && task.status != TaskStatus.NEW) {
             task.resetForRestart();
         }
+    }
+
+    /** 获取ctl的bit */
+    final boolean getCtlBit(int mask) {
+        return (ctl & mask) != 0;
     }
 
     /** 设置ctl的bit */

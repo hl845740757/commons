@@ -1,6 +1,5 @@
 #region LICENSE
-
-// Copyright 2024 wjybxx(845740757@qq.com)
+// Copyright 2025 wjybxx(845740757@qq.com)
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,27 +12,28 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 #endregion
 
-namespace Wjybxx.Commons.Mutable
+namespace Wjybxx.Commons
 {
 /// <summary>
-/// 可变数字类型
+/// 引用计数的对象
 /// </summary>
-/// <typeparam name="T"></typeparam>
-public interface IMutableNumber<T> : IMutable<T>
+public interface IReferenceCounted
 {
-    /** 将value转为int */
-    int IntValue { get; }
+    /// <summary>
+    /// 当前引用计数
+    /// </summary>
+    int RefCount { get; }
 
-    /** 将value转long */
-    long LongValue { get; }
+    /// <summary>
+    /// 增加引用计数
+    /// </summary>
+    void Retain(int count = 1);
 
-    /** 将value转float */
-    float FloatValue { get; }
-
-    /** 将value转double */
-    double DoubleValue { get; }
+    /// <summary>
+    /// 减少引用计数
+    /// </summary>
+    void Release(int count = 1);
 }
 }

@@ -24,7 +24,7 @@ namespace Wjybxx.Commons.Mutable
 /// <summary>
 /// 可变Int32
 /// </summary>
-public class MutableLong : IMutableNumber<long>, IEquatable<MutableLong>, IComparable<MutableLong>
+public class MutableLong : INumber, IEquatable<MutableLong>, IComparable<MutableLong>
 {
     private long _value;
 
@@ -43,6 +43,12 @@ public class MutableLong : IMutableNumber<long>, IEquatable<MutableLong>, ICompa
     public double DoubleValue => _value;
 
     #region op
+
+    public long GetAndSet(long value) {
+        long r = _value;
+        _value = value;
+        return r;
+    }
 
     /** 加上操作数 */
     public void Add(long operand) {
@@ -100,22 +106,6 @@ public class MutableLong : IMutableNumber<long>, IEquatable<MutableLong>, ICompa
         if (ReferenceEquals(this, other)) return 0;
         if (ReferenceEquals(null, other)) return 1;
         return _value.CompareTo(other._value);
-    }
-
-    public static bool operator <(MutableLong? left, MutableLong? right) {
-        return Comparer<MutableLong>.Default.Compare(left, right) < 0;
-    }
-
-    public static bool operator >(MutableLong? left, MutableLong? right) {
-        return Comparer<MutableLong>.Default.Compare(left, right) > 0;
-    }
-
-    public static bool operator <=(MutableLong? left, MutableLong? right) {
-        return Comparer<MutableLong>.Default.Compare(left, right) <= 0;
-    }
-
-    public static bool operator >=(MutableLong? left, MutableLong? right) {
-        return Comparer<MutableLong>.Default.Compare(left, right) >= 0;
     }
 
     #endregion

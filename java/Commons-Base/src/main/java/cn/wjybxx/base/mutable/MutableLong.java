@@ -77,8 +77,13 @@ public class MutableLong extends Number implements MutableNumber<Long>, Comparab
 
     // endregion
 
-
     // region op
+
+    public long getAndSet(long value) {
+        long r = this.value;
+        this.value = value;
+        return r;
+    }
 
     /** 加上操作数 */
     public void add(final long operand) {

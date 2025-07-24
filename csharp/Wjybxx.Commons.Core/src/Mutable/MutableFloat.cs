@@ -24,7 +24,7 @@ namespace Wjybxx.Commons.Mutable
 /// <summary>
 /// 可变Int32
 /// </summary>
-public class MutableFloat : IMutableNumber<float>, IEquatable<MutableFloat>, IComparable<MutableFloat>
+public class MutableFloat : INumber, IEquatable<MutableFloat>, IComparable<MutableFloat>
 {
     private float _value;
 
@@ -43,6 +43,12 @@ public class MutableFloat : IMutableNumber<float>, IEquatable<MutableFloat>, ICo
     public double DoubleValue => _value;
 
     #region op
+
+    public float GetAndSet(float value) {
+        float r = _value;
+        _value = value;
+        return r;
+    }
 
     /** 加上操作数 */
     public void Add(float operand) {
@@ -100,22 +106,6 @@ public class MutableFloat : IMutableNumber<float>, IEquatable<MutableFloat>, ICo
         if (ReferenceEquals(this, other)) return 0;
         if (ReferenceEquals(null, other)) return 1;
         return _value.CompareTo(other._value);
-    }
-
-    public static bool operator <(MutableFloat? left, MutableFloat? right) {
-        return Comparer<MutableFloat>.Default.Compare(left, right) < 0;
-    }
-
-    public static bool operator >(MutableFloat? left, MutableFloat? right) {
-        return Comparer<MutableFloat>.Default.Compare(left, right) > 0;
-    }
-
-    public static bool operator <=(MutableFloat? left, MutableFloat? right) {
-        return Comparer<MutableFloat>.Default.Compare(left, right) <= 0;
-    }
-
-    public static bool operator >=(MutableFloat? left, MutableFloat? right) {
-        return Comparer<MutableFloat>.Default.Compare(left, right) >= 0;
     }
 
     #endregion

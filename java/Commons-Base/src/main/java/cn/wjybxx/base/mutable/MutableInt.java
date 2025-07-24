@@ -77,8 +77,13 @@ public class MutableInt extends Number implements MutableNumber<Integer>, Compar
 
     // endregion
 
-
     // region op
+
+    public int getAndSet(int value) {
+        int r = this.value;
+        this.value = value;
+        return r;
+    }
 
     /** 加上操作数 */
     public void add(final int operand) {

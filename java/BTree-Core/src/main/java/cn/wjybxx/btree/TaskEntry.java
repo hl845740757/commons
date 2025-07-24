@@ -158,7 +158,7 @@ public class TaskEntry<T> extends Task<T> {
     public void updateInlined(int curFrame) {
         this.curFrame = curFrame;
         if (isRunning()) {
-            if (!isActiveInHierarchy()) {
+            if (getCtlBit(MASK_NOT_ACTIVE_SELF)) {
                 return;
             }
             // 内联Execute逻辑

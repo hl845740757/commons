@@ -1208,6 +1208,12 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
     }
 
+    /** 获取ctl的bit  */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool GetCtlBit(int mask) {
+        return (ctl & mask) != 0;
+    }
+
     /** 设置ctl的bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SetCtlBit(int mask, bool enable) {

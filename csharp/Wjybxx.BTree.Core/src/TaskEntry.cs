@@ -150,7 +150,7 @@ public class TaskEntry<T> : Task<T> where T : class
     public void UpdateInlined(int curFrame) {
         this.curFrame = curFrame;
         if (IsRunning) {
-            if (!IsActiveInHierarchy) {
+            if (GetCtlBit(MASK_NOT_ACTIVE_SELF)) {
                 return;
             }
             // 内联Execute逻辑

@@ -77,8 +77,13 @@ public class MutableDouble extends Number implements MutableNumber<Double>, Comp
 
     // endregion
 
-
     // region op
+
+    public double getAndSet(double value) {
+        double r = this.value;
+        this.value = value;
+        return r;
+    }
 
     /** 加上操作数 */
     public void add(final double operand) {

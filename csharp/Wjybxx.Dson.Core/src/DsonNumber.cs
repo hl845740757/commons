@@ -16,12 +16,14 @@
 
 #endregion
 
+using Wjybxx.Commons;
+
 namespace Wjybxx.Dson
 {
 /// <summary>
 /// Dson数字类型抽象
 /// </summary>
-public abstract class DsonNumber : DsonValue
+public abstract class DsonNumber : DsonValue, INumber
 {
     /** 将value转为int */
     public abstract int IntValue { get; }
