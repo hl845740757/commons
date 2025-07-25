@@ -19,7 +19,11 @@ import cn.wjybxx.base.ObjectUtils;
 import cn.wjybxx.base.function.FunctionUtils;
 
 import javax.annotation.concurrent.NotThreadSafe;
+import javax.annotation.concurrent.ThreadSafe;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.util.Objects;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -31,13 +35,13 @@ import java.util.function.Supplier;
  * @author wjybxx
  * date 2023/4/1
  */
-@NotThreadSafe
+@ThreadSafe
 public class SingleObjectPool<T> implements ObjectPool<T> {
 
     private final Supplier<? extends T> factory;
     private final Consumer<? super T> cleaner;
     private final Predicate<? super T> filter;
-    private T value;
+    private volatile T value;
 
     public SingleObjectPool(Supplier<? extends T> factory, Consumer<? super T> cleaner) {
         this(factory, cleaner, null);
@@ -56,13 +60,11 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
 
     @Override
     public T acquire() {
-        T result = this.value;
-        if (result != null) {
-            this.value = null;
-        } else {
-            result = factory.get();
+        T result = value;
+        if (VH_VALUE.compareAndSet(this, result, null)) {
+            return result;
         }
-        return result;
+        return factory.get();
     }
 
     @Override
@@ -70,7 +72,7 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
         if (obj == null) {
             throw new IllegalArgumentException("object cannot be null.");
         }
-        assert obj != this.value;
+//        assert obj != this.value;
         cleaner.accept(obj);
         if (filter == null || filter.test(obj)) {
             this.value = obj;
@@ -82,4 +84,17 @@ public class SingleObjectPool<T> implements ObjectPool<T> {
         value = null;
     }
 
+    private static final VarHandle VH_VALUE;
+
+    static {
+        try {
+            MethodHandles.Lookup l = MethodHandles.lookup();
+            VH_VALUE = l.findVarHandle(SingleObjectPool.class, "value", Object.class);
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+        // Reduce the risk of rare disastrous classloading in first call to
+        // LockSupport.park: https://bugs.openjdk.java.net/browse/JDK-8074773
+        Class<?> ensureLoaded = LockSupport.class;
+    }
 }

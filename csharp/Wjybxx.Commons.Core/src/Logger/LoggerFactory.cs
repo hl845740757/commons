@@ -42,6 +42,17 @@ public static class LoggerFactory
         }
     }
 
+    /// <summary>
+    /// 设置日志工厂的提供器
+    /// (虽然SPI看起来很好，但用户主动注入则更为灵活)
+    /// </summary>
+    public static void SetLoggerProvider(ILoggerFactory provider) {
+        if (provider == null) throw new ArgumentNullException(nameof(provider));
+        lock (_lockObject) {
+            LoggerFactory.provider = provider;
+        }
+    }
+
     #region GetLogger
 
     /// <summary>
@@ -94,21 +105,6 @@ public static class LoggerFactory
             }
         }
         return sb.ToString();
-    }
-
-    #endregion
-
-    #region mgr
-
-    /// <summary>
-    /// 设置日志工厂的提供器
-    /// (虽然SPI看起来很好，但用户主动注入则更为灵活)
-    /// </summary>
-    public static void SetLoggerProvider(ILoggerFactory provider) {
-        if (provider == null) throw new ArgumentNullException(nameof(provider));
-        lock (_lockObject) {
-            LoggerFactory.provider = provider;
-        }
     }
 
     #endregion
