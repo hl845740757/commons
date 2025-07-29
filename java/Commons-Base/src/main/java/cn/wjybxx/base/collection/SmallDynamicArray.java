@@ -46,7 +46,7 @@ public final class SmallDynamicArray<E> implements DynamicArray<E> {
     private int recursionDepth;
 
     public SmallDynamicArray(int initCapacity) {
-        this(initCapacity, 0.25f);
+        this(initCapacity, 0);
     }
 
     /**

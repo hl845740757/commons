@@ -42,12 +42,15 @@ public class SmallDynamicArray<E> : IDynamicArray<E> where E : class
     private int len;
     private int recursionDepth;
 
+    public SmallDynamicArray() : this(0) {
+    }
+
     /// <summary>
     /// 
     /// </summary>
     /// <param name="initCapacity">初始空间大小</param>
     /// <param name="nullFactor">null元素的比重</param>
-    public SmallDynamicArray(int initCapacity, float nullFactor = 0.25f) {
+    public SmallDynamicArray(int initCapacity, float nullFactor = 0) {
         this.elements = initCapacity == 0 ? Array.Empty<E>() : new E[initCapacity];
         this.nullFactor = Math.Max(0, nullFactor);
     }

@@ -38,11 +38,10 @@ public class DynamicArray<E> : IDynamicArray<E> where E : class
     private int elementCount;
     private int recursionDepth;
 
-    public DynamicArray(int initCapacity)
-        : this(initCapacity, 0.125f) { // 避免迭代时大量的null
+    public DynamicArray() : this(8) {
     }
 
-    public DynamicArray(int initCapacity, float nullFactor) {
+    public DynamicArray(int initCapacity, float nullFactor = 0) { //避免迭代时大量的null
         this.elements = new E[initCapacity];
         this.elementsMask = new long[WordCount(initCapacity)];
         this.nullFactor = Math.Max(0, nullFactor);

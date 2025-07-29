@@ -46,7 +46,7 @@ public final class DefaultDynamicArray<E> implements DynamicArray<E> {
     private int recursionDepth;
 
     public DefaultDynamicArray(int initCapacity) {
-        this(initCapacity, 0.125f); // 避免迭代时大量的null
+        this(initCapacity, 0);
     }
 
     public DefaultDynamicArray(int initCapacity, float nullFactor) {

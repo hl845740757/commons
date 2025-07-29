@@ -48,7 +48,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
     private int recursionDepth;
 
     public IndexedDynamicArray(IndexedElementHelper<? super E> helper, int initCapacity) {
-        this(helper, initCapacity, 0.125f); // 避免迭代时大量的null
+        this(helper, initCapacity, 0);
     }
 
     public IndexedDynamicArray(IndexedElementHelper<? super E> helper, int initCapacity, float nullFactor) {
@@ -154,7 +154,7 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
             return;
         }
         // 先将元素挪动到数组尾部，避免外部感知为删除事件，也避免移动期间index重复
-        @SuppressWarnings("unchecked") E[] elements = (E[])this.elements;
+        @SuppressWarnings("unchecked") E[] elements = (E[]) this.elements;
         helper.collectionIndex(this, e, len); // 假移动，以避免扩容
 
         if (preIndex < newIndex) {

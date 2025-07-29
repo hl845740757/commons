@@ -41,11 +41,7 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
     private int elementCount;
     private int recursionDepth;
 
-    public IndexedDynamicArray(IIndexedElementHelper<E> helper, int initCapacity)
-        : this(helper, initCapacity, 0.125f) { // 避免迭代时大量的null
-    }
-
-    public IndexedDynamicArray(IIndexedElementHelper<E> helper, int initCapacity, float nullFactor) {
+    public IndexedDynamicArray(IIndexedElementHelper<E> helper, int initCapacity = 8, float nullFactor = 0) {
         this.helper = helper ?? throw new ArgumentNullException(nameof(helper));
         this.elements = new E[initCapacity];
         this.elementsMask = new long[WordCount(initCapacity)];
