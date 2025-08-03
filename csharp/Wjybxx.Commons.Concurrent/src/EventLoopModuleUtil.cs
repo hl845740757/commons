@@ -48,22 +48,22 @@ public static class EventLoopModuleUtil
     /// 调用模块的Start方法
     /// </summary>
     /// <param name="module"></param>
-    public static Exception? InvokeStart(EventLoopModule module) {
-        return module.InvokeStart();
+    public static void InvokeStart(EventLoopModule module) {
+        module.InvokeStart();
     }
 
     /// <summary>
     /// 调用模块的Stop方法
     /// </summary>
-    public static Exception? InvokeStop(EventLoopModule module) {
-        return module.InvokeStop();
+    public static void InvokeStop(EventLoopModule module) {
+        module.InvokeStop();
     }
 
     /// <summary>
     /// 调用模块的OnDestroy方法
     /// </summary>
-    public static Exception? InvokeDestroy(EventLoopModule module) {
-        return module.InvokeDestroy();
+    public static void InvokeDestroy(EventLoopModule module) {
+        module.InvokeDestroy();
     }
 
     /** 是否重写了<see cref="IEventLoopModule.EarlyUpdate"/>方法 */

@@ -33,6 +33,12 @@ public static class BitFlags
         return (flags & mask) != 0;
     }
 
+    /** 是否设置了mask关联的任意bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool Get(int flags, int mask) {
+        return (flags & mask) != 0;
+    }
+
     /** 是否设置了mask关联的所有bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsSet(int flags, int mask) {
@@ -124,6 +130,12 @@ public static class BitFlags
     /** 是否设置了mask关联的任意bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsIntersect(long flags, long mask) {
+        return (flags & mask) != 0;
+    }
+
+    /** 是否设置了mask关联的任意bit */
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool Get(long flags, long mask) {
         return (flags & mask) != 0;
     }
 

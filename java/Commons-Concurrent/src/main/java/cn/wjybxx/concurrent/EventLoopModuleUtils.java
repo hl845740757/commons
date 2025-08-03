@@ -40,18 +40,18 @@ public class EventLoopModuleUtils {
     }
 
     /** 调用模块的Start方法 */
-    public static Throwable InvokeStart(EventLoopModule module) {
-        return module.invokeStart();
+    public static void InvokeStart(EventLoopModule module) {
+        module.invokeStart();
     }
 
     /** 调用模块的Stop方法 */
-    public static Throwable InvokeStop(EventLoopModule module) {
-        return module.invokeStop();
+    public static void InvokeStop(EventLoopModule module) {
+        module.invokeStop();
     }
 
     /** 调用模块的OnDestroy方法 */
-    public static Throwable InvokeDestroy(EventLoopModule module) {
-        return module.invokeDestroy();
+    public static void InvokeDestroy(EventLoopModule module) {
+        module.invokeDestroy();
     }
 
     /** 是否重写了{@link IEventLoopModule#earlyUpdate()}方法 */

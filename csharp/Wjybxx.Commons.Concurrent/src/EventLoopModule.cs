@@ -53,44 +53,27 @@ public abstract class EventLoopModule : IEventLoopModule
         this.OnAwake();
     }
 
-    /** 调用{@link #onDestroy()}方法 */
-    internal Exception? InvokeDestroy() {
+    internal void InvokeDestroy() {
         _status = ComponentStatus.Destroyed;
         try {
             OnDestroy();
-            return null;
-        }
-        catch (Exception ex) {
-            return ex;
         }
         finally {
             _eventLoop = null;
         }
     }
 
-    /** 调用{@link #start()}方法 */
-    internal Exception? InvokeStart() {
+    internal void InvokeStart() {
         Debug.Assert(IsScript());
         _status = ComponentStatus.Running;
-        try {
-            Start();
-            return null;
-        }
-        catch (Exception ex) {
-            return ex;
-        }
+        Start();
     }
 
-    /** 调用{@link #stop()}方法 */
-    internal Exception? InvokeStop() {
+    internal void InvokeStop() {
         Debug.Assert(IsScript());
         _status = ComponentStatus.Shutdown;
         try {
             Stop();
-            return null;
-        }
-        catch (Exception ex) {
-            return ex;
         }
         finally {
             _status = ComponentStatus.Terminated;

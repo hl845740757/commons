@@ -56,40 +56,26 @@ public abstract class EventLoopModule implements IEventLoopModule {
         this.onAwake();
     }
 
-    /** 调用{@link #onDestroy()}方法 */
-    final Throwable invokeDestroy() {
+    final void invokeDestroy() {
         status = ComponentStatus.DESTROYED;
         try {
             onDestroy();
-            return null;
-        } catch (Throwable ex) {
-            return ex;
         } finally {
             eventLoop = null;
         }
     }
 
-    /** 调用{@link #start()}方法 */
-    final Throwable invokeStart() {
+    final void invokeStart() {
         assert isScript();
         status = ComponentStatus.RUNNING;
-        try {
-            start();
-            return null;
-        } catch (Throwable ex) {
-            return ex;
-        }
+        start();
     }
 
-    /** 调用{@link #stop()}方法 */
-    final Throwable invokeStop() {
+    final void invokeStop() {
         assert isScript();
         status = ComponentStatus.SHUTDOWN;
         try {
             stop();
-            return null;
-        } catch (Throwable ex) {
-            return ex;
         } finally {
             status = ComponentStatus.TERMINATED;
         }

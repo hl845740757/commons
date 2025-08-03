@@ -487,10 +487,7 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
             if (!module.getCid().isPrivateScript()) {
                 continue;
             }
-            Throwable ex = module.invokeStart();
-            if (ex != null) {
-                throw ex;
-            }
+            module.invokeStart();
         }
     }
 
@@ -505,8 +502,9 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
             if (module.getStatus() != ComponentStatus.RUNNING) {
                 continue; // 未启动
             }
-            Throwable ex = module.invokeStop();
-            if (ex != null) { // stop异常记录下来，继续停止其它模块
+            try {
+                module.invokeStop();
+            } catch (Throwable ex) {
                 logger.warn("stop module caught exception", ex);
             }
         }
@@ -522,8 +520,9 @@ public class DisruptorEventLoop<T extends IAgentEvent> extends AbstractEventLoop
             if (module.getStatus() == ComponentStatus.NEW) {
                 continue; // 未执行OnReady
             }
-            Throwable ex = module.invokeDestroy();
-            if (ex != null) { // destroy异常记录下来，继续销毁其它模块
+            try {
+                module.invokeDestroy();
+            } catch (Throwable ex) {
                 logger.warn("module.destroy caught exception", ex);
             }
         }

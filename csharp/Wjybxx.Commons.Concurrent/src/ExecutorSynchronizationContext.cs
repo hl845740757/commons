@@ -23,8 +23,9 @@ namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
 /// 用于适配为<see cref="SynchronizationContext"/>。
-///
-/// C#的这个同步上下文设计真的跟屎一样，线程控制麻烦的要死
+/// 
+/// 注：在Unity线程可能无法获取的Executor的引用。
+/// PS：C#的这个同步上下文设计真的跟屎一样，线程控制麻烦的要死。
 /// </summary>
 public class ExecutorSynchronizationContext : SynchronizationContext
 {
