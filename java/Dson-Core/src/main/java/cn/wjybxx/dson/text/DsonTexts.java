@@ -271,7 +271,8 @@ public class DsonTexts {
                         hexBuffer.write(text.charAt(i++));
                         hexBuffer.write(text.charAt(i++));
                         hexBuffer.write(text.charAt(i++));
-                        sb.append((char) Integer.parseInt(hexBuffer, 0, 4, 16));
+                        int codePoint = Integer.parseInt(hexBuffer, 0, 4, 16);
+                        sb.appendCodePoint(codePoint);
                     }
                     default -> throw new IllegalArgumentException("Invalid text");
                 }

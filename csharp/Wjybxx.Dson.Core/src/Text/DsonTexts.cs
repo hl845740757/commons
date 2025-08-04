@@ -290,8 +290,8 @@ public static class DsonTexts
                     hexBuffer[1] = text[i++];
                     hexBuffer[2] = text[i++];
                     hexBuffer[3] = text[i++];
-                    int value = ParseNumberFormHexString(hexBuffer);
-                    sb.Append((char)value);
+                    int codePoint = ParseNumberFormHexString(hexBuffer);
+                    sb.AppendCodePoint(codePoint);
                     break;
                 }
                 default:

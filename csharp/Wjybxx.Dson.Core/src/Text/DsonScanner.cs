@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Wjybxx.Commons;
 using Wjybxx.Commons.Collections;
 using Wjybxx.Commons.Pool;
 using Wjybxx.Dson.Internal;
@@ -732,8 +733,8 @@ public sealed class DsonScanner : IDisposable
                 hexBuffer[1] = (char)ReadEscapedChar(buffer, position);
                 hexBuffer[2] = (char)ReadEscapedChar(buffer, position);
                 hexBuffer[3] = (char)ReadEscapedChar(buffer, position);
-                int value = DsonTexts.ParseNumberFormHexString(hexBuffer);
-                sb.Append((char)value);
+                int codePoint = DsonTexts.ParseNumberFormHexString(hexBuffer);
+                sb.AppendCodePoint(codePoint);
                 break;
             }
             default: throw InvalidEscapeSequence(c, Position);

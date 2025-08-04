@@ -144,6 +144,20 @@ public static class ObjectUtil
     }
 
     /// <summary>
+    /// 追加unicode码点
+    /// </summary>
+    /// <param name="sb"></param>
+    /// <param name="codePoint">unicode码点</param>
+    public static StringBuilder AppendCodePoint(this StringBuilder sb, int codePoint) {
+        if (codePoint < 65536) {
+            sb.Append((char)codePoint);
+        } else {
+            sb.Append(char.ConvertFromUtf32(codePoint));
+        }
+        return sb;
+    }
+
+    /// <summary>
     /// 获取字符串的长度，如果字符为null，则返回0
     /// </summary>
     /// <param name="value"></param>

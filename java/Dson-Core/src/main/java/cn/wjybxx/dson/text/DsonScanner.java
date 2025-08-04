@@ -713,7 +713,8 @@ public final class DsonScanner implements AutoCloseable {
                 hexBuffer.write((char) readEscapedChar(buffer, position));
                 hexBuffer.write((char) readEscapedChar(buffer, position));
                 hexBuffer.write((char) readEscapedChar(buffer, position));
-                sb.append((char) Integer.parseInt(hexBuffer, 0, 4, 16));
+                int codePoint = Integer.parseInt(hexBuffer, 0, 4, 16);
+                sb.appendCodePoint(codePoint);
             }
             default -> throw invalidEscapeSequence(c, position);
         }
