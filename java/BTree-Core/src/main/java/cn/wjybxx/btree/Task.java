@@ -71,6 +71,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     public static final int MASK_BREAK_INLINE = 1 << 28;
     // flags属性--静态属性
     public static final int MASK_INVERTED_GUARD = 1 << 29;
+    public static final int MASK_HOOK_TASK = 1 << 30;
     /** 高8位为流程控制特征值（对外开放） */
     public static final int MASK_CONTROL_FLOW_OPTIONS = (-1) << 24;
 
@@ -285,6 +286,7 @@ public abstract class Task<T> implements ICancelTokenListener {
 
     public final void setPrevStatus(int prevStatus) {
         prevStatus = MathCommon.clamp(prevStatus, 0, TaskStatus.MAX_PREV_STATUS);
+        ctl &= ~MASK_PREV_STATUS; // 去除旧值
         ctl |= (prevStatus << OFFSET_PREV_STATUS);
     }
 
@@ -354,12 +356,12 @@ public abstract class Task<T> implements ICancelTokenListener {
      * 1.该方法仅适用于control测试child的guard失败，令child在未运行的情况下直接失败的情况。
      * 2.对于运行中的child，如果发现child的guard失败，不能继续运行，应当取消子节点的执行（stop）。
      *
-     * @param control 由于task未运行，其control可能尚未赋值，因此要传入
-     * @param isHook  是否是钩子任务，钩子任务则禁用回调
+     * @param control       由于task未运行，其control可能尚未赋值，因此要传入
+     * @param disableNotify 是否禁用回调
      */
-    public final void setGuardFailed(Task<T> control, boolean isHook) {
+    public final void setGuardFailed(Task<T> control, boolean disableNotify) {
         assert status != TaskStatus.RUNNING;
-        setCtlBit(MASK_DISABLE_NOTIFY, isHook); // 需要覆盖旧值
+        setCtlBit(MASK_DISABLE_NOTIFY, disableNotify); // 需要覆盖旧值
         setControl(control);
         setCompleted(TaskStatus.GUARD_FAILED, false);
     }
@@ -769,6 +771,19 @@ public abstract class Task<T> implements ICancelTokenListener {
         return (flags & MASK_INVERTED_GUARD) != 0;
     }
 
+    /**
+     * task是否是钩子任务
+     * 1.用于辅助处理{@link #onChildRunning(Task, boolean)}和{@link #onChildCompleted(Task)}事件。
+     * 2.该属性需要显式设置才可使用。
+     */
+    public final void setHookTask(boolean value) {
+        setFlagsBit(MASK_HOOK_TASK, value);
+    }
+
+    public final boolean isHookTask() {
+        return (flags & MASK_HOOK_TASK) != 0;
+    }
+
 
     // endregion
 
@@ -913,7 +928,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     /**
      * 启动子节点
      *
-     * @param child      普通子节点，或需要接收通知的钩子任务
+     * @param child      子节点或钩子
      * @param checkGuard 是否检查子节点的前置条件
      */
     public final void template_startChild(Task<T> child, boolean checkGuard) {
@@ -926,19 +941,23 @@ public abstract class Task<T> implements ICancelTokenListener {
     }
 
     /**
-     * 启动钩子节点
-     * 1.钩子任务不会触发{@link #onChildRunning(Task, boolean)}和{@link #onChildCompleted(Task)}
-     * 2.前置条件其实是特殊的钩子任务
-     * 3.条件分支通常不应该有钩子任务
+     * 启动子节点
+     * 1.禁用回调是指不触发{@link #onChildRunning(Task, boolean)}和{@link #onChildCompleted(Task)}。
+     * 2.可通过设置{@link #setHookTask(boolean)}辅助处理回调事件。
      *
-     * @param hook       钩子任务，或不需要接收事件通知的子节点
-     * @param checkGuard 是否检查子节点的前置条件
+     * @param child         子节点或钩子
+     * @param checkGuard    是否检查子节点的前置条件
+     * @param disableNotify 是否禁用回调
      */
-    public final void template_startHook(Task<T> hook, boolean checkGuard) {
-        if (!checkGuard || hook.guard == null || template_checkGuard(hook.guard)) {
-            hook.template_start(this, MASK_DISABLE_NOTIFY);
+    public final void template_startChild(Task<T> child, boolean checkGuard, boolean disableNotify) {
+        if (!checkGuard || child.guard == null || template_checkGuard(child.guard)) {
+            int initMask = disableNotify ? MASK_DISABLE_NOTIFY : 0;
+            if ((ctl & MASK_CHECKING_GUARD) != 0) {
+                initMask |= MASK_GUARD_BASE_OPTIONS;
+            }
+            child.template_start(this, initMask);
         } else {
-            hook.setGuardFailed(this, true);
+            child.setGuardFailed(this, disableNotify);
         }
     }
 
@@ -1218,7 +1237,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     }
 
     /** 设置flags的bit */
-    private void setFlagsBit(int mask, boolean enable) {
+    public final void setFlagsBit(int mask, boolean enable) {
         if (enable) {
             flags |= mask;
         } else {

@@ -283,6 +283,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         get => (ctl & MASK_PREV_STATUS) >> OFFSET_PREV_STATUS;
         set {
             value = Math.Clamp(value, 0, TaskStatus.MAX_PREV_STATUS);
+            ctl &= ~MASK_PREV_STATUS; // 去除旧值
             ctl |= (value << OFFSET_PREV_STATUS);
         }
     }
@@ -353,11 +354,11 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// 2.对于运行中的child，如果发现child的guard失败，不能继续运行，应当取消子节点的执行（stop）。
     /// </summary>
     /// <param name="control">由于task未运行，其control可能尚未赋值，因此要传入</param>
-    /// <param name="isHook">是否是钩子任务，钩子任务则禁用回调</param>
+    /// <param name="disableNotify">是否禁用回调</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetGuardFailed(Task<T> control, bool isHook) {
+    public void SetGuardFailed(Task<T> control, bool disableNotify) {
         Debug.Assert(this.status != TaskStatus.RUNNING);
-        SetCtlBit(MASK_DISABLE_NOTIFY, isHook); // 需要覆盖旧值
+        SetCtlBit(MASK_DISABLE_NOTIFY, disableNotify); // 需要覆盖旧值
         SetControl(control);
         SetCompleted(TaskStatus.GUARD_FAILED, false);
     }
@@ -768,6 +769,17 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         set => SetFlagsBit(MASK_INVERTED_GUARD, value);
     }
 
+    /// <summary>
+    /// 是否是钩子任务
+    /// 1.用于辅助处理<see cref="OnChildRunning"/>和<see cref="OnChildCompleted"/>事件。
+    /// 2.该属性需要显式设置才可使用。
+    /// </summary>
+    public bool IsHookTask {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => (flags & MASK_HOOK_TASK) != 0;
+        set => SetFlagsBit(MASK_HOOK_TASK, value);
+    }
+
     #endregion
 
     #region 模板方法
@@ -913,7 +925,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     /// <summary>
     /// 启动子节点
     /// </summary>
-    /// <param name="child">普通子节点，或需要接收通知的钩子任务</param>
+    /// <param name="child">子节点或钩子</param>
     /// <param name="checkGuard">是否检查子节点的前置条件</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Template_StartChild(Task<T> child, bool checkGuard) {
@@ -926,19 +938,25 @@ public abstract class Task<T> : ICancelTokenListener where T : class
     }
 
     /// <summary>
-    /// 启动钩子节点
-    /// 1.钩子任务不会触发<see cref="OnChildRunning"/>和<see cref="OnChildCompleted"/>
-    /// 2.前置条件其实是特殊的钩子任务
-    /// 3.条件分支通常不应该有钩子任务
+    /// 启动子节点
+    ///
+    /// 注：
+    /// 1.禁用回调是指不触发<see cref="OnChildRunning"/>和<see cref="OnChildCompleted"/>。
+    /// 2.可以通过设置<see cref="IsHookTask"/>属性辅助处理回调事件。
     /// </summary>
-    /// <param name="hook">钩子任务，或不需要接收事件通知的子节点</param>
+    /// <param name="child">子节点或钩子</param>
     /// <param name="checkGuard">是否检查子节点的前置条件</param>
+    /// <param name="disableNotify">是否禁用回调</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Template_StartHook(Task<T> hook, bool checkGuard) {
-        if (!checkGuard || hook.guard == null || Template_CheckGuard(hook.guard)) {
-            hook.Template_Start(this, MASK_DISABLE_NOTIFY);
+    public void Template_StartChild(Task<T> child, bool checkGuard, bool disableNotify) {
+        if (!checkGuard || child.guard == null || Template_CheckGuard(child.guard)) {
+            int initMask = disableNotify ? MASK_DISABLE_NOTIFY : 0;
+            if ((ctl & MASK_CHECKING_GUARD) != 0) {
+                initMask |= MASK_GUARD_BASE_OPTIONS;
+            }
+            child.Template_Start(this, initMask);
         } else {
-            hook.SetGuardFailed(this, true);
+            child.SetGuardFailed(this, disableNotify);
         }
     }
 
@@ -1226,7 +1244,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     /** 设置flags的bit */
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void SetFlagsBit(int mask, bool enable) {
+    public void SetFlagsBit(int mask, bool enable) {
         if (enable) {
             flags |= mask;
         } else {

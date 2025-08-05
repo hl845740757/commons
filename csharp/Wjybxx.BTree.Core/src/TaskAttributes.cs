@@ -33,6 +33,7 @@ public static class TaskAttributes
     public const int MASK_BREAK_INLINE = 1 << 28;
     // Flags属性--静态属性
     public const int MASK_INVERTED_GUARD = 1 << 29;
+    public const int MASK_HOOK_TASK = 1 << 30;
     /** 高8位为流程控制特征值（对外开放）*/
     public const int MASK_CONTROL_FLOW_OPTIONS = (-1) << 24;
 }
