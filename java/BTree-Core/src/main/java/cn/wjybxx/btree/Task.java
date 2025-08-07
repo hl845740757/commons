@@ -153,6 +153,12 @@ public abstract class Task<T> implements ICancelTokenListener {
         return taskEntry;
     }
 
+    /** 允许提前绑定TaskEntry，以访问环境数据 */
+    public void setTaskEntry(TaskEntry<T> taskEntry) {
+        if (this == this.taskEntry) throw new RuntimeException();
+        this.taskEntry = taskEntry;
+    }
+
     public final Task<T> getControl() {
         return control;
     }
@@ -1050,7 +1056,7 @@ public abstract class Task<T> implements ICancelTokenListener {
     public final void setControl(Task<T> control) {
         assert control != this;
         if (this == taskEntry) {
-            throw new Error();
+            throw new RuntimeException();
         }
         this.taskEntry = Objects.requireNonNull(control.taskEntry);
         this.control = control;
@@ -1062,7 +1068,7 @@ public abstract class Task<T> implements ICancelTokenListener {
      */
     public final void unsetControl() {
         if (this == taskEntry) {
-            throw new Error();
+            throw new RuntimeException();
         }
         this.taskEntry = null;
         this.control = null;

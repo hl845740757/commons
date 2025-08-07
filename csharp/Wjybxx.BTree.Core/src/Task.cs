@@ -144,7 +144,14 @@ public abstract class Task<T> : ICancelTokenListener where T : class
 
     #region props
 
-    public TaskEntry<T> TaskEntry => taskEntry;
+    /** 允许提前绑定TaskEntry，以支持访问环境数据 */
+    public TaskEntry<T> TaskEntry {
+        get => taskEntry;
+        set {
+            if (this == this.taskEntry) throw new InvalidOperationException();
+            taskEntry = value;
+        }
+    }
 
     public Task<T> Control => control;
 
@@ -1068,7 +1075,7 @@ public abstract class Task<T> : ICancelTokenListener where T : class
         }
         this.taskEntry = null;
         this.control = null;
-        this.blackboard = default;
+        this.blackboard = null;
         this.sharedProps = null;
         this.cancelToken = null;
         this.controlData = null;

@@ -36,7 +36,7 @@ public sealed class FutureLogger
     /// <summary>
     /// 获取日志处理器
     /// </summary>
-    public static ILogHandler? GetHandler => _handler;
+    public static ILogHandler? GetHandler() => _handler;
 
     /// <summary>
     /// 设置日志处理器
