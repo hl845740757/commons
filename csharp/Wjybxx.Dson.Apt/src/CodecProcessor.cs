@@ -58,6 +58,7 @@ public class CodecProcessor : ISourceGenerator
     private const string CNAME_ObjectLitePtr = "Wjybxx.Dson.Types.ObjectLitePtr";
     private const string CNAME_Timestamp = "Wjybxx.Dson.Types.Timestamp";
     private const string CNAME_NumberStyles = "Wjybxx.Dson.Text.NumberStyles"; // 生成器直接指向工具类
+    private const string CNAME_ContextType = "Wjybxx.Dson.DsonContextType"; // 生成器直接指向工具类
 
     private const string CNAME_NonSerialize = "System.NonSerializedAttribute";
     private const string CNAME_TypeInfo = "Wjybxx.Commons.TypeInfo";
@@ -101,6 +102,7 @@ public class CodecProcessor : ISourceGenerator
     internal static readonly ClassName typeName_StringStyle = AptUtils.ClassNameOfCanonicalName(CNAME_StringStyle);
     internal static readonly ClassName typeName_ObjectStyle = AptUtils.ClassNameOfCanonicalName(CNAME_ObjectStyle);
     internal static readonly ClassName typeName_NumberStyles = AptUtils.ClassNameOfCanonicalName(CNAME_NumberStyles);
+    internal static readonly ClassName typeName_ContextType = AptUtils.ClassNameOfCanonicalName(CNAME_ContextType);
 
     #endregion
 

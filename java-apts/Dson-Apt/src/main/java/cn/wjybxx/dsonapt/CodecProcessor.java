@@ -44,6 +44,8 @@ public class CodecProcessor extends MyAbstractProcessor {
     private static final String CNAME_NumberStyle = "cn.wjybxx.dson.text.NumberStyle";
     private static final String CNAME_StringStyle = "cn.wjybxx.dson.text.StringStyle";
     private static final String CNAME_ObjectStyle = "cn.wjybxx.dson.text.ObjectStyle";
+    private static final String CNAME_ContextType = "cn.wjybxx.dson.DsonContextType";
+    private static final String CNAME_DsonType = "cn.wjybxx.dson.DsonType";
 
     private static final String CNAME_Binary = "cn.wjybxx.dson.types.Binary";
     private static final String CNAME_ObjectPtr = "cn.wjybxx.dson.types.ObjectPtr";
@@ -85,6 +87,8 @@ public class CodecProcessor extends MyAbstractProcessor {
     public static final ClassName typeName_NumberStyle = AptUtils.classNameOfCanonicalName(CNAME_NumberStyle);
     public static final ClassName typeName_StringStyle = AptUtils.classNameOfCanonicalName(CNAME_StringStyle);
     public static final ClassName typeName_ObjectStyle = AptUtils.classNameOfCanonicalName(CNAME_ObjectStyle);
+    public static final ClassName typeName_ContextType = AptUtils.classNameOfCanonicalName(CNAME_ContextType);
+    public static final ClassName typeName_DsonType = AptUtils.classNameOfCanonicalName(CNAME_DsonType);
 
     //endregion
 
@@ -172,7 +176,7 @@ public class CodecProcessor extends MyAbstractProcessor {
         type_String = elementUtils.getTypeElement(String.class.getCanonicalName()).asType();
         type_Object = elementUtils.getTypeElement(Object.class.getCanonicalName()).asType();
         type_LocalDateTime = elementUtils.getTypeElement(LocalDateTime.class.getCanonicalName()).asType();
-        type_Binary =elementUtils.getTypeElement(CNAME_Binary).asType();
+        type_Binary = elementUtils.getTypeElement(CNAME_Binary).asType();
         type_Ptr = elementUtils.getTypeElement(CNAME_ObjectPtr).asType();
         type_LitePtr = elementUtils.getTypeElement(CNAME_ObjectLitePtr).asType();
         type_Timestamp = elementUtils.getTypeElement(CNAME_Timestamp).asType();

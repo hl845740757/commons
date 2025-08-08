@@ -96,15 +96,8 @@ internal class PojoCodecGenerator
             GenWriteObjectMethod(aptClassProps);
             GenReadObjectMethod(aptClassProps);
             // 普通字段读写
-            foreach (AptFieldInfo? fieldInfo in context.serialFields) {
-                AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
-                if (processor.IsAutoWriteField(fieldInfo, aptClassProps, aptFieldProps)) {
-                    AddWriteStatement(fieldInfo, aptFieldProps, aptClassProps);
-                }
-                if (processor.IsAutoReadField(fieldInfo, aptClassProps, aptFieldProps)) {
-                    AddReadStatement(fieldInfo, aptFieldProps, aptClassProps);
-                }
-            }
+            GenWriteFieldsMethod();
+            GenReadFieldsMethod();
         }
         // 控制方法生成顺序
         // GetEncoderType
@@ -282,24 +275,57 @@ internal class PojoCodecGenerator
 
     #region field
 
+    private void GenReadFieldsMethod() {
+        AptClassProps aptClassProps = context.aptClassProps;
+        CodeBlock.Builder codeBuilder = readFieldsMethodBuilder.codeBuilder;
+        codeBuilder.BeginControlFlow("if (reader.ContextType == $T.Array)", CodecProcessor.typeName_ContextType);
+        // array格式
+        foreach (AptFieldInfo? fieldInfo in context.serialFields) {
+            AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
+            if (!processor.IsAutoReadField(fieldInfo, aptClassProps, aptFieldProps)) {
+                continue;
+            }
+            AddReadStatement(fieldInfo, aptFieldProps, aptClassProps);
+            codeBuilder.AddStatement("");
+        }
+        codeBuilder.AddStatement("return"); // 减少缩进
+        codeBuilder.EndControlFlow();
+
+        // Object格式
+        codeBuilder.BeginControlFlow("while (reader.ReadDsonType() != DsonType.EndOfObject)");
+        codeBuilder.BeginControlFlow("switch (reader.ReadName())");
+        foreach (AptFieldInfo? fieldInfo in context.serialFields) {
+            AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
+            if (!processor.IsAutoReadField(fieldInfo, aptClassProps, aptFieldProps)) {
+                continue;
+            }
+            codeBuilder.Add("case $L: ", SerialName(fieldInfo.Name));
+            AddReadStatement(fieldInfo, aptFieldProps, aptClassProps);
+            codeBuilder.AddStatement("; break");
+        }
+        // codeBuilder.AddStatement("default: break");
+        codeBuilder.EndControlFlow();
+        codeBuilder.EndControlFlow();
+    }
+
     private void AddReadStatement(AptFieldInfo fieldInfo, AptFieldProps fieldProps, AptClassProps aptClassProps) {
         MethodSpec.Builder builder = readFieldsMethodBuilder;
         string fieldName = fieldInfo.Name;
+
+        // 自定义读 -- 传入name以支持处理多个字段
         string? readProxy = fieldProps.readProxy;
-        if (!string.IsNullOrWhiteSpace(readProxy)) { // 自定义读
+        if (!string.IsNullOrWhiteSpace(readProxy)) {
             if (aptClassProps.codecProxyType != null) {
                 // CodexProxy.ReadName(inst, reader, dsonName) 方法名是CodecProxy指定的，因此应当存在，不做校验
-                builder.codeBuilder.AddStatement("$T.$L(inst, reader, $L)",
+                builder.codeBuilder.Add("$T.$L(inst, reader, $L)",
                     aptClassProps.codecProxyClassName, readProxy, SerialName(fieldName));
             } else {
                 // inst.ReadName(reader, dsonName)
-                builder.codeBuilder.AddStatement("inst.$L(reader, $L)",
+                builder.codeBuilder.Add("inst.$L(reader, $L)",
                     readProxy, SerialName(fieldName));
             }
             return;
         }
-        // 只有字段存在的情况下才读取
-        builder.codeBuilder.Add("if (reader.ReadName($L)) ", SerialName(fieldName));
 
         string readMethodName = GetReadMethodName(fieldInfo);
         // 优先用setter，否则直接赋值 -- C#的属性和字段样式一致
@@ -314,13 +340,23 @@ internal class PojoCodecGenerator
             TypeName fieldTypeName = fieldInfo.typeName!;
             // 读对象时要传入类型信息和Factory -- C#还要传泛型参数；name在前面已读，因此这里传入null
             // inst.name = reader.readObject<Type>(names_name, factories_name)
-            builder.codeBuilder.AddStatement("inst.$L = reader.$L<$T>(null, $L)",
+            builder.codeBuilder.Add("inst.$L = reader.$L<$T>(null, $L)",
                 fieldAccess, readMethodName, fieldTypeName,
                 fieldProps.implTypeName == null ? "null" : SerialFactory(fieldName));
         } else {
             // inst.name = reader.readString(names_name)
-            builder.codeBuilder.AddStatement("inst.$L = reader.$L(null)",
+            builder.codeBuilder.Add("inst.$L = reader.$L(null)",
                 fieldAccess, readMethodName);
+        }
+    }
+
+    private void GenWriteFieldsMethod() {
+        AptClassProps aptClassProps = context.aptClassProps;
+        foreach (AptFieldInfo? fieldInfo in context.serialFields) {
+            AptFieldProps aptFieldProps = context.fieldPropsMap[fieldInfo];
+            if (processor.IsAutoWriteField(fieldInfo, aptClassProps, aptFieldProps)) {
+                AddWriteStatement(fieldInfo, aptFieldProps, aptClassProps);
+            }
         }
     }
 

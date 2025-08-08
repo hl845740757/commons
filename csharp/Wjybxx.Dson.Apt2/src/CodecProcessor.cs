@@ -63,6 +63,7 @@ public class CodecProcessor
     internal static readonly ClassName typeName_StringStyle = ClassName.Get(typeof(StringStyle));
     internal static readonly ClassName typeName_ObjectStyle = ClassName.Get(typeof(ObjectStyle));
     internal static readonly ClassName typeName_NumberStyles = ClassName.Get(typeof(NumberStyles));
+    internal static readonly ClassName typeName_ContextType = ClassName.Get(typeof(DsonContextType));
 
     #endregion
 
