@@ -19,7 +19,6 @@
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Wjybxx.Commons.Apt;
-using Wjybxx.Commons.Poet;
 
 namespace Wjybxx.Dson.Apt
 {
@@ -46,31 +45,13 @@ internal class AptClassProps
     /// </summary>
     public readonly List<INamedTypeSymbol> additionalAnnotations = new();
 
-    /// <summary>
-    /// 编解码代理类
-    /// </summary>
-    public INamedTypeSymbol? codecProxyType;
-    /// <summary>
-    /// 代理类的TypeName
-    /// </summary>
-    public TypeName? codecProxyClassName;
-
-    internal AptClassProps() {
+    public AptClassProps() {
     }
 
     /// <summary>
     /// 是否是单例类型
     /// </summary>
     public bool IsSingleton => !string.IsNullOrWhiteSpace(singleton);
-
-    /// <summary>
-    /// 是否包含指定的钩子方法（或属性）
-    /// </summary>
-    /// <param name="methodName"></param>
-    /// <returns></returns>
-    public bool ContainsHookMethod(string methodName) {
-        return codecProxyType?.GetFirstMember(methodName) != null;
-    }
 
     /// <summary>
     /// 解析注解

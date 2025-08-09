@@ -17,12 +17,11 @@
 package cn.wjybxx.dsonapt;
 
 import cn.wjybxx.apt.AptUtils;
-import com.squareup.javapoet.TypeName;
 
-import javax.lang.model.element.*;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.type.TypeMirror;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,24 +42,12 @@ class AptClassProps {
     /** 需要为生成类附加的注解 -- Class数组 */
     public List<TypeMirror> additionalAnnotations = List.of();
 
-    /** 编解码代理类 -- LinkerBean */
-    public transient TypeElement codecProxyTypeElement;
-    public transient TypeName codecProxyClassName;
-
     public AptClassProps() {
     }
 
     /** 要编码的类型是否指定了单例方法 */
     public boolean isSingleton() {
         return !AptUtils.isBlank(singleton);
-    }
-
-    /** 静态代理类是佛包含指定名称的钩子方法 */
-    public boolean containsHookMethod(String methodName) {
-        if (codecProxyTypeElement == null) return false;
-        return codecProxyTypeElement.getEnclosedElements().stream()
-                .filter(e -> e.getKind() == ElementKind.METHOD && e.getModifiers().contains(Modifier.STATIC))
-                .anyMatch(e -> Objects.equals(methodName, e.getSimpleName().toString()));
     }
 
     public static AptClassProps parse(AnnotationMirror annotationMirror) {

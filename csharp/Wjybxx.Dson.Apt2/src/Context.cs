@@ -36,6 +36,10 @@ internal class Context
     /// 要处理的类型
     /// </summary>
     public readonly Type type;
+    /// <summary>
+    /// 配置类，也是代理类
+    /// </summary>
+    public Context linkerContext;
 
     #region Cache
 
@@ -76,11 +80,13 @@ internal class Context
     public Type superDeclaredType;
     public TypeSpec.Builder typeBuilder;
     public string outputNamespace;
+    public ClassName rawTypeName;
 
     #endregion
 
     public Context(Type type) {
         this.type = type ?? throw new ArgumentNullException(nameof(type));
+        this.rawTypeName = ClassName.Get(type);
     }
 
     public AptFieldProps? FindFieldProps(string name) {
@@ -88,6 +94,17 @@ internal class Context
             if (pair.Key.Name == name) return pair.Value;
         }
         return null;
+    }
+
+    public bool ContainsHookMethod(string name) {
+        foreach (MemberInfo member in allMembers) {
+            if (member.MemberType == MemberTypes.Method 
+                && AptUtils.IsStaticMember(member) 
+                && member.Name == name) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 }

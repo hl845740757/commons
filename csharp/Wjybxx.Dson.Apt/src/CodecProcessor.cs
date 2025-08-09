@@ -309,11 +309,7 @@ public class CodecProcessor : ISourceGenerator
                     context.fieldPropsMap[fieldInfo] = fieldProps;
                 }
             }
-        }
-        // 绑定CodecProxy
-        {
-            aptClassProps.codecProxyType = linkerBeanType;
-            aptClassProps.codecProxyClassName = AptUtils.ParseType(linkerBeanType);
+            context.linkerContext = linkerBeanContext;
         }
         // 检查数据
         {
@@ -562,9 +558,8 @@ public class CodecProcessor : ISourceGenerator
         if (aptClassProps.IsSingleton) {
             return;
         }
-        INamedTypeSymbol targetType = context.type;
-        CheckConstructor(targetType, aptClassProps);
-        CheckThirdPartyAssembly(targetType, context.linkerSymbol);
+        CheckConstructor(context);
+        CheckThirdPartyAssembly(context);
 
         List<ISymbol> allMembers = context.allMembers;
         foreach (AptFieldInfo fieldInfo in context.allFields) {
@@ -616,12 +611,14 @@ public class CodecProcessor : ISourceGenerator
     }
 
     /** 检查是否包含无参构造方法或解析构造方法 */
-    private void CheckConstructor(INamedTypeSymbol typeSymbol, AptClassProps aptClassProps) {
+    private void CheckConstructor(Context context) {
+        INamedTypeSymbol typeSymbol = context.type;
         if (typeSymbol.IsAbstract || typeSymbol.IsValueType) {
             return;
         }
         // 静态代理包含NewInstance方法
-        if (aptClassProps.ContainsHookMethod(MNAME_NEW_INSTANCE)) {
+        if (context.linkerContext != null
+            && context.linkerContext.ContainsHookMethod(MNAME_NEW_INSTANCE)) {
             return;
         }
         if (ContainsNoArgsConstructor(typeSymbol)
@@ -634,7 +631,8 @@ public class CodecProcessor : ISourceGenerator
             "SerializableClass must contains public no-args constructor or reader-args constructor!");
     }
 
-    private void CheckThirdPartyAssembly(INamedTypeSymbol typeSymbol, ISymbol? linkerSymbol) {
+    private void CheckThirdPartyAssembly(Context context) {
+        INamedTypeSymbol typeSymbol = context.type;
         string assemblyName = GetThirdPartyAssemblyName(typeSymbol, out INamedTypeSymbol thirdPartyType);
         if (assemblyName == null) {
             return;
@@ -645,7 +643,7 @@ public class CodecProcessor : ISourceGenerator
         }
         string typePath = $"{AptUtils.GetFullMetadataName(thirdPartyType!)}, {assemblyName}";
         if (Type.GetType(typePath, false) == null) {
-            ReportDiagnostic(DiagnosticSeverity.Warning, linkerSymbol, 1004,
+            ReportDiagnostic(DiagnosticSeverity.Warning, context.linkerSymbol, 1004,
                 "The assembly '{0}' of '{1}' cannot be loaded, the generated codec maybe partial",
                 assemblyName, thirdPartyType!.Name);
         }

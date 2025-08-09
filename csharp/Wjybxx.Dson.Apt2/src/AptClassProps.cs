@@ -18,8 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using Wjybxx.Commons.Poet;
 using Wjybxx.Dson.Codec.Attributes;
 
 namespace Wjybxx.Dson.Apt2
@@ -46,15 +44,6 @@ internal class AptClassProps
     /// 为生成代码附加的注解(只支持无参注解)
     /// </summary>
     public readonly List<Type> additionalAnnotations = new();
-
-    /// <summary>
-    /// 编解码代理类
-    /// </summary>
-    public Type? codecProxyType;
-    /// <summary>
-    /// 代理类的TypeName
-    /// </summary>
-    public TypeName? codecProxyClassName;
 #nullable restore
 
     public AptClassProps() {
@@ -64,17 +53,6 @@ internal class AptClassProps
     /// 是否是单例类型
     /// </summary>
     public bool IsSingleton => !string.IsNullOrWhiteSpace(singleton);
-
-    /// <summary>
-    /// 是否包含指定的钩子方法（或属性）
-    /// </summary>
-    /// <param name="methodName"></param>
-    /// <returns></returns>
-    public bool ContainsHookMethod(string methodName) {
-        if (codecProxyType == null) return false;
-        return codecProxyType.GetMember(methodName,
-            BindingFlags.Public | BindingFlags.Static).Length > 0;
-    }
 
     public static AptClassProps Parse(DsonSerializableAttribute? attribute) {
         if (attribute == null) {

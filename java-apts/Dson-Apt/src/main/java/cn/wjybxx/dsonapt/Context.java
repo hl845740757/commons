@@ -17,10 +17,13 @@
 package cn.wjybxx.dsonapt;
 
 import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeSpec;
 
 import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import java.util.*;
@@ -31,31 +34,47 @@ import java.util.*;
  */
 class Context {
 
-    final TypeElement typeElement;
-    final Element linkerElement;
-    // region cache
-    List<? extends Element> allMembers; // 所有的字段和方法缓存
-    List<AptFieldInfo> allFields; // 所有的实例字段缓存
+    public final TypeElement typeElement;
+    public final Element linkerElement;
+    public Context linkerContext;
 
-    AptClassProps aptClassProps; // 类注解缓存
-    List<AnnotationSpec> additionalAnnotations; // 生成代码附加注解
-    final Map<AptFieldInfo, AptFieldProps> fieldPropsMap = new HashMap<>(); // 字段的注解缓存
-    final List<AptFieldInfo> serialFields = new ArrayList<>(); // 所有可序列化字段缓存，检测类型数据时写入
+    // region cache
+    public List<? extends Element> allMembers; // 所有的字段和方法缓存
+    public List<AptFieldInfo> allFields; // 所有的实例字段缓存
+
+    public AptClassProps aptClassProps; // 类注解缓存
+    public List<AnnotationSpec> additionalAnnotations; // 生成代码附加注解
+    public final Map<AptFieldInfo, AptFieldProps> fieldPropsMap = new HashMap<>(); // 字段的注解缓存
+    public final List<AptFieldInfo> serialFields = new ArrayList<>(); // 所有可序列化字段缓存，检测类型数据时写入
     // endregion
 
-    TypeSpec.Builder typeBuilder;
-    DeclaredType superDeclaredType;
-    String outPackage; // 输出目录
+    public TypeSpec.Builder typeBuilder;
+    public DeclaredType superDeclaredType;
+    public String outPackage; // 输出目录
+    public ClassName rawTypeName;
 
     public Context(TypeElement typeElement, @Nullable Element linkerElement) {
         this.typeElement = typeElement;
         this.linkerElement = linkerElement;
+        this.rawTypeName = ClassName.get(typeElement);
     }
 
-    AptFieldProps findFieldProps(String name) {
+    public AptFieldProps findFieldProps(String name) {
         for (var entry : fieldPropsMap.entrySet()) {
             if (Objects.equals(entry.getKey().name, name)) return entry.getValue();
         }
         return null;
     }
+
+    public boolean containsHookMethod(String name) {
+        for (Element member : allMembers) {
+            if (member.getKind() == ElementKind.METHOD
+                    && member.getModifiers().contains(Modifier.STATIC)
+                    && Objects.equals(member.getSimpleName().toString(), name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

@@ -261,12 +261,7 @@ public class CodecProcessor extends MyAbstractProcessor {
                     context.fieldPropsMap.put(fieldInfo, fieldProps);
                 }
             }
-        }
-        // 绑定CodecProxy
-        {
-            TypeMirror linkerBeanTypeMirror = linkerBeanType.asType();
-            aptClassProps.codecProxyTypeElement = linkerBeanType;
-            aptClassProps.codecProxyClassName = TypeName.get(typeUtils.erasure(linkerBeanTypeMirror));
+            context.linkerContext = linkerBeanContext;
         }
         // 检查数据
         {
@@ -419,23 +414,17 @@ public class CodecProcessor extends MyAbstractProcessor {
 
     // endregion
 
+    // region check
     private void checkTypeElement(Context context) {
         TypeElement typeElement = context.typeElement;
         if (typeElement.getKind() != ElementKind.CLASS) {
             return; // Enum
         }
-        checkNormalClass(context);
-    }
-
-    // region 普通类检查
-
-    private void checkNormalClass(Context context) {
         final AptClassProps aptClassProps = context.aptClassProps;
         if (aptClassProps.isSingleton()) {
             return;
         }
-        TypeElement typeElement = context.typeElement;
-        checkConstructor(typeElement, aptClassProps);
+        checkConstructor(context);
 
         final List<? extends Element> allMembers = context.allMembers;
         for (AptFieldInfo fieldInfo : context.allFields) {
@@ -485,12 +474,14 @@ public class CodecProcessor extends MyAbstractProcessor {
     }
 
     /** 检查是否包含无参构造方法或解析构造方法 */
-    private void checkConstructor(TypeElement typeElement, AptClassProps aptClassProps) {
+    private void checkConstructor(Context context) {
+        TypeElement typeElement = context.typeElement;
         if (typeElement.getModifiers().contains(Modifier.ABSTRACT)) {
             return;
         }
         // 静态类包含nesInstance代理方法
-        if (aptClassProps.containsHookMethod(CodecProcessor.MNAME_NEW_INSTANCE)) {
+        if (context.linkerContext != null
+                && context.linkerContext.containsHookMethod(CodecProcessor.MNAME_NEW_INSTANCE)) {
             return;
         }
         if (BeanUtils.containsNoArgsConstructor(typeElement)

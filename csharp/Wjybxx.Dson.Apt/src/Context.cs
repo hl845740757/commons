@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
+using Wjybxx.Commons.Apt;
 using Wjybxx.Commons.Poet;
 
 namespace Wjybxx.Dson.Apt
@@ -35,9 +36,13 @@ internal class Context
     /// </summary>
     public readonly INamedTypeSymbol type;
     /// <summary>
-    /// 配置类
+    /// 关联的符号
     /// </summary>
     public readonly ISymbol linkerSymbol;
+    /// <summary>
+    /// 配置类，也是代理类
+    /// </summary>
+    public Context linkerContext;
 
     #region Cache
 
@@ -79,12 +84,14 @@ internal class Context
     public INamedTypeSymbol superDeclaredType;
     public TypeSpec.Builder typeBuilder;
     public string outputNamespace;
+    public ClassName rawTypeName;
 
     #endregion
 
     public Context(INamedTypeSymbol type, ISymbol? linkerSymbol) {
         this.type = type ?? throw new ArgumentNullException(nameof(type));
         this.linkerSymbol = linkerSymbol;
+        this.rawTypeName = (ClassName)AptUtils.ParseType(type);
     }
 
     public AptFieldProps? FindFieldProps(string name) {
@@ -92,6 +99,17 @@ internal class Context
             if (pair.Key.Name == name) return pair.Value;
         }
         return null;
+    }
+
+    public bool ContainsHookMethod(string name) {
+        foreach (ISymbol member in allMembers) {
+            if (member.Kind == SymbolKind.Method
+                && member.IsStatic
+                && member.Name == name) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 }

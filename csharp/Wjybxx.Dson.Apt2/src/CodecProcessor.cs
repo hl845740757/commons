@@ -209,11 +209,7 @@ public class CodecProcessor
                     context.fieldPropsMap[fieldInfo] = fieldProps;
                 }
             }
-        }
-        // 绑定CodecProxy
-        {
-            aptClassProps.codecProxyType = linkerBeanType;
-            aptClassProps.codecProxyClassName = ClassName.Get(linkerBeanType);
+            context.linkerContext = linkerBeanContext;
         }
         // 检查数据
         {
@@ -380,8 +376,7 @@ public class CodecProcessor
         if (aptClassProps.IsSingleton) {
             return;
         }
-        Type targetType = context.type;
-        CheckConstructor(targetType, aptClassProps);
+        CheckConstructor(context);
 
         List<MemberInfo> allMembers = context.allMembers;
         foreach (AptFieldInfo fieldInfo in context.allFields) {
@@ -429,12 +424,14 @@ public class CodecProcessor
     }
 
     /** 检查是否包含无参构造方法或解析构造方法 */
-    private void CheckConstructor(Type typeElement, AptClassProps aptClassProps) {
+    private void CheckConstructor(Context context) {
+        Type typeElement = context.type;
         if (typeElement.IsAbstract || typeElement.IsValueType) {
             return;
         }
         // 静态代理包含NewInstance方法
-        if (aptClassProps.ContainsHookMethod(MNAME_NEW_INSTANCE)) {
+        if (context.linkerContext != null
+            && context.linkerContext.ContainsHookMethod(MNAME_NEW_INSTANCE)) {
             return;
         }
         if (ContainsNoArgsConstructor(typeElement)
