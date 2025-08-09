@@ -5,6 +5,7 @@ using Wjybxx.BTree.Branch;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.Dson.Text;
+using Wjybxx.Dson;
 using Wjybxx.BTree;
 using System.Collections.Generic;
 
@@ -42,15 +43,31 @@ public sealed class FixedSwitchCodec<T> : AbstractDsonCodec<FixedSwitch<T>> wher
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref FixedSwitch<T> inst) {
-        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
-        if (reader.ReadName(names_children)) inst.Children = reader.ReadObject<List<Task<T>>>(null, null);
-        if (reader.ReadName(names_handler)) inst.Handler = reader.ReadObject<ISwitchHandler<T>>(null, null);
-        if (reader.ReadName(names_branch1)) inst.Branch1 = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_branch2)) inst.Branch2 = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_branch3)) inst.Branch3 = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_branch4)) inst.Branch4 = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_branch5)) inst.Branch5 = reader.ReadObject<Task<T>>(null, null);
+        if (reader.ContextType == DsonContextType.Array) {
+            inst.Guard = reader.ReadObject<Task<T>>(null, null);
+            inst.Flags = reader.ReadInt(null);
+            inst.Children = reader.ReadObject<List<Task<T>>>(null, null);
+            inst.Handler = reader.ReadObject<ISwitchHandler<T>>(null, null);
+            inst.Branch1 = reader.ReadObject<Task<T>>(null, null);
+            inst.Branch2 = reader.ReadObject<Task<T>>(null, null);
+            inst.Branch3 = reader.ReadObject<Task<T>>(null, null);
+            inst.Branch4 = reader.ReadObject<Task<T>>(null, null);
+            inst.Branch5 = reader.ReadObject<Task<T>>(null, null);
+            return;
+        }
+        while (reader.ReadDsonType() != DsonType.EndOfObject) {
+            switch (reader.ReadName()) {
+                case names_guard: inst.Guard = reader.ReadObject<Task<T>>(null, null); break;
+                case names_flags: inst.Flags = reader.ReadInt(null); break;
+                case names_children: inst.Children = reader.ReadObject<List<Task<T>>>(null, null); break;
+                case names_handler: inst.Handler = reader.ReadObject<ISwitchHandler<T>>(null, null); break;
+                case names_branch1: inst.Branch1 = reader.ReadObject<Task<T>>(null, null); break;
+                case names_branch2: inst.Branch2 = reader.ReadObject<Task<T>>(null, null); break;
+                case names_branch3: inst.Branch3 = reader.ReadObject<Task<T>>(null, null); break;
+                case names_branch4: inst.Branch4 = reader.ReadObject<Task<T>>(null, null); break;
+                case names_branch5: inst.Branch5 = reader.ReadObject<Task<T>>(null, null); break;
+            }
+        }
     }
 }
 }

@@ -5,6 +5,7 @@ using Wjybxx.BTree.Leaf;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.Dson.Text;
+using Wjybxx.Dson;
 using Wjybxx.BTree;
 
 namespace Wjybxx.BTree.Codecs
@@ -29,9 +30,19 @@ public sealed class WaitFrameCodec<T> : AbstractDsonCodec<WaitFrame<T>> where T 
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref WaitFrame<T> inst) {
-        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
-        if (reader.ReadName(names_required)) inst.Required = reader.ReadInt(null);
+        if (reader.ContextType == DsonContextType.Array) {
+            inst.Guard = reader.ReadObject<Task<T>>(null, null);
+            inst.Flags = reader.ReadInt(null);
+            inst.Required = reader.ReadInt(null);
+            return;
+        }
+        while (reader.ReadDsonType() != DsonType.EndOfObject) {
+            switch (reader.ReadName()) {
+                case names_guard: inst.Guard = reader.ReadObject<Task<T>>(null, null); break;
+                case names_flags: inst.Flags = reader.ReadInt(null); break;
+                case names_required: inst.Required = reader.ReadInt(null); break;
+            }
+        }
     }
 }
 }

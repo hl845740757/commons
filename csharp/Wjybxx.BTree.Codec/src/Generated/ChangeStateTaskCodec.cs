@@ -5,6 +5,7 @@ using Wjybxx.BTree.FSM;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.Dson.Text;
+using Wjybxx.Dson;
 using Wjybxx.BTree;
 
 namespace Wjybxx.BTree.Codecs
@@ -37,13 +38,27 @@ public sealed class ChangeStateTaskCodec<T> : AbstractDsonCodec<ChangeStateTask<
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref ChangeStateTask<T> inst) {
-        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
-        if (reader.ReadName(names_nextStateGuid)) inst.NextStateGuid = reader.ReadString(null);
-        if (reader.ReadName(names_stateProps)) inst.StateProps = reader.ReadObject<object>(null, null);
-        if (reader.ReadName(names_machineName)) inst.MachineName = reader.ReadString(null);
-        if (reader.ReadName(names_delayMode)) inst.DelayMode = reader.ReadByte(null);
-        if (reader.ReadName(names_delayArg)) inst.DelayArg = reader.ReadInt(null);
+        if (reader.ContextType == DsonContextType.Array) {
+            inst.Guard = reader.ReadObject<Task<T>>(null, null);
+            inst.Flags = reader.ReadInt(null);
+            inst.NextStateGuid = reader.ReadString(null);
+            inst.StateProps = reader.ReadObject<object>(null, null);
+            inst.MachineName = reader.ReadString(null);
+            inst.DelayMode = reader.ReadByte(null);
+            inst.DelayArg = reader.ReadInt(null);
+            return;
+        }
+        while (reader.ReadDsonType() != DsonType.EndOfObject) {
+            switch (reader.ReadName()) {
+                case names_guard: inst.Guard = reader.ReadObject<Task<T>>(null, null); break;
+                case names_flags: inst.Flags = reader.ReadInt(null); break;
+                case names_nextStateGuid: inst.NextStateGuid = reader.ReadString(null); break;
+                case names_stateProps: inst.StateProps = reader.ReadObject<object>(null, null); break;
+                case names_machineName: inst.MachineName = reader.ReadString(null); break;
+                case names_delayMode: inst.DelayMode = reader.ReadByte(null); break;
+                case names_delayArg: inst.DelayArg = reader.ReadInt(null); break;
+            }
+        }
     }
 }
 }

@@ -5,6 +5,7 @@ using Wjybxx.BTree.FSM;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.Dson.Text;
+using Wjybxx.Dson;
 
 namespace Wjybxx.BTree.Codecs
 {
@@ -28,9 +29,19 @@ public sealed class FsmStateCfgCodec<T> : AbstractDsonCodec<FsmStateCfg<T>> wher
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref FsmStateCfg<T> inst) {
-        if (reader.ReadName(names_name)) inst.Name = reader.ReadString(null);
-        if (reader.ReadName(names_guid)) inst.Guid = reader.ReadString(null);
-        if (reader.ReadName(names_props)) inst.Props = reader.ReadObject<object>(null, null);
+        if (reader.ContextType == DsonContextType.Array) {
+            inst.Name = reader.ReadString(null);
+            inst.Guid = reader.ReadString(null);
+            inst.Props = reader.ReadObject<object>(null, null);
+            return;
+        }
+        while (reader.ReadDsonType() != DsonType.EndOfObject) {
+            switch (reader.ReadName()) {
+                case names_name: inst.Name = reader.ReadString(null); break;
+                case names_guid: inst.Guid = reader.ReadString(null); break;
+                case names_props: inst.Props = reader.ReadObject<object>(null, null); break;
+            }
+        }
     }
 }
 }

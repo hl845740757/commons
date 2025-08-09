@@ -5,6 +5,7 @@ using Wjybxx.BTree.Decorator;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.Dson.Text;
+using Wjybxx.Dson;
 using Wjybxx.BTree;
 
 namespace Wjybxx.BTree.Codecs
@@ -31,10 +32,21 @@ public sealed class UntilFailCodec<T> : AbstractDsonCodec<UntilFail<T>> where T 
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref UntilFail<T> inst) {
-        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
-        if (reader.ReadName(names_child)) inst.Child = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_maxLoop)) inst.MaxLoop = reader.ReadInt(null);
+        if (reader.ContextType == DsonContextType.Array) {
+            inst.Guard = reader.ReadObject<Task<T>>(null, null);
+            inst.Flags = reader.ReadInt(null);
+            inst.Child = reader.ReadObject<Task<T>>(null, null);
+            inst.MaxLoop = reader.ReadInt(null);
+            return;
+        }
+        while (reader.ReadDsonType() != DsonType.EndOfObject) {
+            switch (reader.ReadName()) {
+                case names_guard: inst.Guard = reader.ReadObject<Task<T>>(null, null); break;
+                case names_flags: inst.Flags = reader.ReadInt(null); break;
+                case names_child: inst.Child = reader.ReadObject<Task<T>>(null, null); break;
+                case names_maxLoop: inst.MaxLoop = reader.ReadInt(null); break;
+            }
+        }
     }
 }
 }

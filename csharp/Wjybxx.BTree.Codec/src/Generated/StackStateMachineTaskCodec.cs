@@ -5,6 +5,7 @@ using Wjybxx.BTree.FSM;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.Dson.Text;
+using Wjybxx.Dson;
 using Wjybxx.BTree;
 using System.Collections.Generic;
 
@@ -42,15 +43,31 @@ public sealed class StackStateMachineTaskCodec<T> : AbstractDsonCodec<StackState
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref StackStateMachineTask<T> inst) {
-        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
-        if (reader.ReadName(names_child)) inst.Child = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_name)) inst.Name = reader.ReadString(null);
-        if (reader.ReadName(names_initStateName)) inst.InitStateName = reader.ReadString(null);
-        if (reader.ReadName(names_stateCfgs)) inst.StateCfgs = reader.ReadObject<List<FsmStateCfg<T>>>(null, null);
-        if (reader.ReadName(names_handler)) inst.Handler = reader.ReadObject<IStateMachineHandler<T>>(null, null);
-        if (reader.ReadName(names_undoQueueCapacity)) inst.UndoQueueCapacity = reader.ReadInt(null);
-        if (reader.ReadName(names_redoQueueCapacity)) inst.RedoQueueCapacity = reader.ReadInt(null);
+        if (reader.ContextType == DsonContextType.Array) {
+            inst.Guard = reader.ReadObject<Task<T>>(null, null);
+            inst.Flags = reader.ReadInt(null);
+            inst.Child = reader.ReadObject<Task<T>>(null, null);
+            inst.Name = reader.ReadString(null);
+            inst.InitStateName = reader.ReadString(null);
+            inst.StateCfgs = reader.ReadObject<List<FsmStateCfg<T>>>(null, null);
+            inst.Handler = reader.ReadObject<IStateMachineHandler<T>>(null, null);
+            inst.UndoQueueCapacity = reader.ReadInt(null);
+            inst.RedoQueueCapacity = reader.ReadInt(null);
+            return;
+        }
+        while (reader.ReadDsonType() != DsonType.EndOfObject) {
+            switch (reader.ReadName()) {
+                case names_guard: inst.Guard = reader.ReadObject<Task<T>>(null, null); break;
+                case names_flags: inst.Flags = reader.ReadInt(null); break;
+                case names_child: inst.Child = reader.ReadObject<Task<T>>(null, null); break;
+                case names_name: inst.Name = reader.ReadString(null); break;
+                case names_initStateName: inst.InitStateName = reader.ReadString(null); break;
+                case names_stateCfgs: inst.StateCfgs = reader.ReadObject<List<FsmStateCfg<T>>>(null, null); break;
+                case names_handler: inst.Handler = reader.ReadObject<IStateMachineHandler<T>>(null, null); break;
+                case names_undoQueueCapacity: inst.UndoQueueCapacity = reader.ReadInt(null); break;
+                case names_redoQueueCapacity: inst.RedoQueueCapacity = reader.ReadInt(null); break;
+            }
+        }
     }
 }
 }

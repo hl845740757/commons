@@ -5,6 +5,7 @@ using Wjybxx.BTree.Branch;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.Dson.Text;
+using Wjybxx.Dson;
 using Wjybxx.BTree;
 using System.Collections.Generic;
 
@@ -32,10 +33,21 @@ public sealed class SwitchCodec<T> : AbstractDsonCodec<Switch<T>> where T : clas
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref Switch<T> inst) {
-        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
-        if (reader.ReadName(names_children)) inst.Children = reader.ReadObject<List<Task<T>>>(null, null);
-        if (reader.ReadName(names_handler)) inst.Handler = reader.ReadObject<ISwitchHandler<T>>(null, null);
+        if (reader.ContextType == DsonContextType.Array) {
+            inst.Guard = reader.ReadObject<Task<T>>(null, null);
+            inst.Flags = reader.ReadInt(null);
+            inst.Children = reader.ReadObject<List<Task<T>>>(null, null);
+            inst.Handler = reader.ReadObject<ISwitchHandler<T>>(null, null);
+            return;
+        }
+        while (reader.ReadDsonType() != DsonType.EndOfObject) {
+            switch (reader.ReadName()) {
+                case names_guard: inst.Guard = reader.ReadObject<Task<T>>(null, null); break;
+                case names_flags: inst.Flags = reader.ReadInt(null); break;
+                case names_children: inst.Children = reader.ReadObject<List<Task<T>>>(null, null); break;
+                case names_handler: inst.Handler = reader.ReadObject<ISwitchHandler<T>>(null, null); break;
+            }
+        }
     }
 }
 }

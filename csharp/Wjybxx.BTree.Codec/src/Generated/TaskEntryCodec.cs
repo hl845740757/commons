@@ -5,6 +5,7 @@ using Wjybxx.BTree;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.Dson.Text;
+using Wjybxx.Dson;
 
 namespace Wjybxx.BTree.Codecs
 {
@@ -32,11 +33,23 @@ public sealed class TaskEntryCodec<T> : AbstractDsonCodec<TaskEntry<T>> where T 
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref TaskEntry<T> inst) {
-        if (reader.ReadName(names_guard)) inst.Guard = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_flags)) inst.Flags = reader.ReadInt(null);
-        if (reader.ReadName(names_name)) inst.Name = reader.ReadString(null);
-        if (reader.ReadName(names_rootTask)) inst.RootTask = reader.ReadObject<Task<T>>(null, null);
-        if (reader.ReadName(names_type)) inst.Type = reader.ReadByte(null);
+        if (reader.ContextType == DsonContextType.Array) {
+            inst.Guard = reader.ReadObject<Task<T>>(null, null);
+            inst.Flags = reader.ReadInt(null);
+            inst.Name = reader.ReadString(null);
+            inst.RootTask = reader.ReadObject<Task<T>>(null, null);
+            inst.Type = reader.ReadByte(null);
+            return;
+        }
+        while (reader.ReadDsonType() != DsonType.EndOfObject) {
+            switch (reader.ReadName()) {
+                case names_guard: inst.Guard = reader.ReadObject<Task<T>>(null, null); break;
+                case names_flags: inst.Flags = reader.ReadInt(null); break;
+                case names_name: inst.Name = reader.ReadString(null); break;
+                case names_rootTask: inst.RootTask = reader.ReadObject<Task<T>>(null, null); break;
+                case names_type: inst.Type = reader.ReadByte(null); break;
+            }
+        }
     }
 }
 }

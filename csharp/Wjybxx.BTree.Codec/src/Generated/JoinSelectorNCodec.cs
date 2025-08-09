@@ -5,6 +5,7 @@ using Wjybxx.BTree.Branch.Join;
 using Wjybxx.Dson.Codec;
 using System;
 using Wjybxx.Dson.Text;
+using Wjybxx.Dson;
 
 namespace Wjybxx.BTree.Codecs
 {
@@ -28,9 +29,19 @@ public sealed class JoinSelectorNCodec<T> : AbstractDsonCodec<JoinSelectorN<T>> 
     }
 
     protected override void ReadFields(IDsonObjectReader reader, ref JoinSelectorN<T> inst) {
-        if (reader.ReadName(names_required)) inst.Required = reader.ReadInt(null);
-        if (reader.ReadName(names_failFast)) inst.FailFast = reader.ReadBool(null);
-        if (reader.ReadName(names_sequence)) inst.Sequence = reader.ReadInt(null);
+        if (reader.ContextType == DsonContextType.Array) {
+            inst.Required = reader.ReadInt(null);
+            inst.FailFast = reader.ReadBool(null);
+            inst.Sequence = reader.ReadInt(null);
+            return;
+        }
+        while (reader.ReadDsonType() != DsonType.EndOfObject) {
+            switch (reader.ReadName()) {
+                case names_required: inst.Required = reader.ReadInt(null); break;
+                case names_failFast: inst.FailFast = reader.ReadBool(null); break;
+                case names_sequence: inst.Sequence = reader.ReadInt(null); break;
+            }
+        }
     }
 }
 }
