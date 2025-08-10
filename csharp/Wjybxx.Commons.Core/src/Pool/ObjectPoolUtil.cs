@@ -24,7 +24,7 @@ using Wjybxx.Commons.Collections;
 
 namespace Wjybxx.Commons.Pool
 {
-public static class PoolUtil
+public static class ObjectPoolUtil
 {
     #region 扩展方法
 
@@ -93,31 +93,31 @@ public static class PoolUtil
     }
 
     public static ObjectPool<List<T>> NewListPool<T>(int poolSize) {
-        return new ObjectPool<List<T>>(PoolUtil<T>.listFactory, PoolUtil<T>.cleaner, poolSize);
+        return new ObjectPool<List<T>>(ObjectPoolUtil<T>.listFactory, ObjectPoolUtil<T>.cleaner, poolSize);
     }
 
     public static ObjectPool<HashSet<T>> NewHashSetPool<T>(int poolSize) {
-        return new ObjectPool<HashSet<T>>(PoolUtil<T>.hashSetFactory, PoolUtil<T>.cleaner, poolSize);
+        return new ObjectPool<HashSet<T>>(ObjectPoolUtil<T>.hashSetFactory, ObjectPoolUtil<T>.cleaner, poolSize);
     }
 
     public static ObjectPool<LinkedHashSet<T>> NewLinkedHashSetPool<T>(int poolSize) {
-        return new ObjectPool<LinkedHashSet<T>>(PoolUtil<T>.linkedHashSetFactory, PoolUtil<T>.cleaner, poolSize);
+        return new ObjectPool<LinkedHashSet<T>>(ObjectPoolUtil<T>.linkedHashSetFactory, ObjectPoolUtil<T>.cleaner, poolSize);
     }
 
     public static ObjectPool<Queue<T>> NewQueuePool<T>(int poolSize) {
-        return new ObjectPool<Queue<T>>(PoolUtil<T>.queueFactory, PoolUtil<T>.queueCleaner, poolSize);
+        return new ObjectPool<Queue<T>>(ObjectPoolUtil<T>.queueFactory, ObjectPoolUtil<T>.queueCleaner, poolSize);
     }
 
     public static ObjectPool<Stack<T>> NewStackPool<T>(int poolSize) {
-        return new ObjectPool<Stack<T>>(PoolUtil<T>.stackFactory, PoolUtil<T>.stackCleaner, poolSize);
+        return new ObjectPool<Stack<T>>(ObjectPoolUtil<T>.stackFactory, ObjectPoolUtil<T>.stackCleaner, poolSize);
     }
 
     public static ObjectPool<Dictionary<K, V>> NewDictionaryPool<K, V>(int poolSize) {
-        return new ObjectPool<Dictionary<K, V>>(PoolUtil<K, V>.dictionaryFactory, PoolUtil<K, V>.cleaner, poolSize);
+        return new ObjectPool<Dictionary<K, V>>(ObjectPoolUtil<K, V>.dictionaryFactory, ObjectPoolUtil<K, V>.cleaner, poolSize);
     }
 
     public static ObjectPool<LinkedDictionary<K, V>> NewLinkedDictionaryPool<K, V>(int poolSize) {
-        return new ObjectPool<LinkedDictionary<K, V>>(PoolUtil<K, V>.linkedDictionaryFactory, PoolUtil<K, V>.cleaner, poolSize);
+        return new ObjectPool<LinkedDictionary<K, V>>(ObjectPoolUtil<K, V>.linkedDictionaryFactory, ObjectPoolUtil<K, V>.cleaner, poolSize);
     }
 
     #endregion
@@ -169,7 +169,7 @@ public static class PoolUtil
     #endregion
 }
 
-public static class PoolUtil<T>
+public static class ObjectPoolUtil<T>
 {
     public static readonly Func<List<T>> listFactory = () => new List<T>();
     public static readonly Func<HashSet<T>> hashSetFactory = () => new HashSet<T>();
@@ -182,7 +182,7 @@ public static class PoolUtil<T>
     public static readonly Action<Stack<T>> stackCleaner = stack => stack.Clear();
 }
 
-public static class PoolUtil<K, V>
+public static class ObjectPoolUtil<K, V>
 {
     public static readonly Func<Dictionary<K, V>> dictionaryFactory = () => new Dictionary<K, V>();
     public static readonly Func<LinkedDictionary<K, V>> linkedDictionaryFactory = () => new LinkedDictionary<K, V>();
