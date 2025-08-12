@@ -109,10 +109,9 @@ public static class ArrayUtil
         }
         int r = 1;
         if (typeof(T).IsValueType) { // Nullable<T>也是安全的
-            EqualityComparer<T> comparer = EqualityComparer<T>.Default;
             for (int i = 0; i < array.Length; i++) {
                 T e = array[i];
-                r = r * 31 + comparer.GetHashCode(e);
+                r = r * 31 + e!.GetHashCode();
             }
         } else {
             for (int i = 0; i < array.Length; i++) {

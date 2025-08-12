@@ -123,9 +123,8 @@ public static partial class CollectionUtil
         if (collection == null) return 0;
         int r = 1;
         if (typeof(T).IsValueType) { // Nullable<T>也是安全的
-            EqualityComparer<T> comparer = EqualityComparer<T>.Default;
             foreach (T key in collection) {
-                r = r * 31 + (key == null ? 0 : comparer.GetHashCode(key));
+                r = r * 31 + key!.GetHashCode();
             }
         } else {
             foreach (T key in collection) {

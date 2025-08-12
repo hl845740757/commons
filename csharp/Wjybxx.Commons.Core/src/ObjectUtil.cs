@@ -103,6 +103,24 @@ public static class ObjectUtil
     /// </summary>
     private static readonly double s_tickFrequency = (double)TimeSpan.TicksPerSecond / Stopwatch.Frequency;
 
+    /// <summary>
+    /// 是否是可空类型（引用类型或<see cref="Nullable{T}"/>）
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsNullableType(Type type) {
+        if (!type.IsValueType) return true;
+        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsNullableType<T>() {
+        Type type = typeof(T);
+        if (!type.IsValueType) return true;
+        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+    }
+
     #region string
 
     /// <summary>
@@ -360,19 +378,6 @@ public static class ObjectUtil
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static string GetUtf8String(byte[] data) {
         return Encoding.UTF8.GetString(data);
-    }
-
-    /// <summary>
-    /// 获取跨语言统一的HashCode
-    /// </summary>
-    /// <param name="s"></param>
-    /// <returns></returns>
-    public static int GetUnifiedHashCode(this string s) {
-        int r = 0;
-        for (int i = 0; i < s.Length; i++) {
-            r = r * 31 + s[i];
-        }
-        return r;
     }
 
     /// <summary>
