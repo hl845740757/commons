@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using Wjybxx.Commons.Fx;
 
 namespace Wjybxx.Commons.Concurrent
@@ -54,7 +55,7 @@ namespace Wjybxx.Commons.Concurrent
 /// 2. 如果在{@link EventLoop}上执行阻塞或死循环操作，则可能导致死锁，或大量任务超时。
 /// 3. 如果{@link EventLoop}支持自定义等待策略，要小心选择或实现，可能导致定时任务不能被及时执行。 
 /// </summary>
-public interface IEventLoop : IEventLoopGroup, ISingleThreadExecutor, IEntity
+public interface IEventLoop : IEventLoopGroup, ISingleThreadExecutor
 {
     /// <summary>
     /// 返回该EventLoop线程所在的线程组（管理该EventLoop的容器）。
@@ -115,6 +116,42 @@ public interface IEventLoop : IEventLoopGroup, ISingleThreadExecutor, IEntity
     /// 事件循环是否已完全关闭
     /// </summary>
     bool IExecutorService.IsTerminated => State >= EventLoopState.Terminated;
+
+    #endregion
+
+    #region 组件模式
+
+    /// <summary>
+    /// 获取所有组件
+    /// </summary>
+    /// <returns></returns>
+    List<IEventLoopModule> GetComponents();
+
+    /// <summary>
+    /// 获取所有组件
+    /// </summary>
+    /// <param name="outList"></param>
+    void GetComponents(List<IEventLoopModule> outList);
+
+    /// <summary>
+    /// 当前组件数量
+    /// </summary>
+    int ComponentCount { get; }
+
+    /// <summary>
+    /// 获取指定id的组件
+    /// </summary>
+    T GetComponent<T>(ComponentId<T> cid) where T : class;
+
+    /// <summary>
+    /// 获取指定id的组件
+    /// </summary>
+    IEventLoopModule GetComponent(ComponentId cid);
+
+    /// <summary>
+    /// 是否包含指定组件
+    /// </summary>
+    bool ContainsComponent(IEventLoopModule comp);
 
     #endregion
 }

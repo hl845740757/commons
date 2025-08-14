@@ -235,135 +235,42 @@ public abstract class AbstractEventLoop : IEventLoop
 
     #region 组件模式
 
-    public void AddComponent(IComponent comp) {
-        throw new NotImplementedException();
+    // ReSharper disable PossibleUnintendedReferenceComparison
+
+    public List<IEventLoopModule> GetComponents() {
+        return new List<IEventLoopModule>(_moduleList);
     }
 
-    public bool DelComponent(IComponent comp) {
-        throw new NotImplementedException();
-    }
-
-    public bool ContainsComponent(IComponent comp) {
-        int index = comp.Cid.cacheIndex;
-        return index < _indexedModuleList.Count && _indexedModuleList[index] == comp;
-    }
-
-    public IList<IComponent> GetComponents() {
-        // .net8 才支持泛型协变
-        return new List<IComponent>(_moduleList);
-    }
-
-    public void GetComponents(List<IComponent> outList) {
+    public void GetComponents(List<IEventLoopModule> outList) {
         outList.AddRange(_moduleList);
     }
 
-    public int CountComponent() {
-        return _moduleList.Count;
-    }
-
-    #region 泛型
+    public int ComponentCount => _moduleList.Count;
 
     public T? GetComponent<T>(ComponentId<T> cid) where T : class {
-        IComponent? comp;
+        IEventLoopModule? comp;
         if (cid.cacheIndex < _indexedModuleList.Count
             && (comp = _indexedModuleList[cid.cacheIndex]) != null
-            && ReferenceEquals(comp.Cid, cid)) {
+            && comp.Cid == cid) {
             return (T)comp;
         }
         return null;
     }
 
-    public T? GetLastComponent<T>(ComponentId<T> cid) where T : class {
-        return GetComponent(cid);
-    }
-
-    public List<T> GetComponents<T>(ComponentId<T> cid) where T : class {
-        T component = GetComponent(cid);
-        if (component == null) {
-            return new List<T>(0);
-        }
-        return new List<T>(1) { component };
-    }
-
-    public void GetComponents<T>(ComponentId<T> cid, List<T> outList) where T : class {
-        T component = GetComponent(cid);
-        if (component == null) {
-            return;
-        }
-        outList.Add(component);
-    }
-
-    public T DelComponent<T>(ComponentId<T> cid) where T : class {
-        throw new NotImplementedException();
-    }
-
-    public T DelLastComponent<T>(ComponentId<T> cid) where T : class {
-        throw new NotImplementedException();
-    }
-
-    public List<T> DelComponents<T>(ComponentId<T> cid) where T : class {
-        throw new NotImplementedException();
-    }
-
-    public int DelComponents<T>(ComponentId<T> cid, List<T> outList) where T : class {
-        throw new NotImplementedException();
-    }
-
-    #endregion
-
-    #region 非泛型
-
-    public int CountComponent(ComponentId cid) {
-        return GetComponent(cid) == null ? 0 : 1;
-    }
-
-    public IComponent? GetComponent(ComponentId cid) {
-        IComponent? comp;
+    public IEventLoopModule? GetComponent(ComponentId cid) {
+        IEventLoopModule? comp;
         if (cid.cacheIndex < _indexedModuleList.Count
             && (comp = _indexedModuleList[cid.cacheIndex]) != null
-            && ReferenceEquals(comp.Cid, cid)) {
+            && comp.Cid == cid) {
             return comp;
         }
         return null;
     }
 
-    public IComponent? GetLastComponent(ComponentId cid) {
-        return GetComponent(cid);
+    public bool ContainsComponent(IEventLoopModule comp) {
+        int index = comp.Cid.cacheIndex;
+        return index < _indexedModuleList.Count && _indexedModuleList[index] == comp;
     }
-
-    public List<IComponent> GetComponents(ComponentId cid) {
-        IComponent component = GetComponent(cid);
-        if (component == null) {
-            return new List<IComponent>(0);
-        }
-        return new List<IComponent>(1) { component };
-    }
-
-    public void GetComponents(ComponentId cid, List<IComponent> outList) {
-        IComponent component = GetComponent(cid);
-        if (component == null) {
-            return;
-        }
-        outList.Add(component);
-    }
-
-    public IComponent DelComponent(ComponentId cid) {
-        throw new NotImplementedException();
-    }
-
-    public IComponent DelLastComponent(ComponentId cid) {
-        throw new NotImplementedException();
-    }
-
-    public List<IComponent> DelComponents(ComponentId cid) {
-        throw new NotImplementedException();
-    }
-
-    public int DelComponents(ComponentId cid, List<IComponent> outList) {
-        throw new NotImplementedException();
-    }
-
-    #endregion
 
     #endregion
 

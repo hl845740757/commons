@@ -39,13 +39,13 @@ public interface IEntity {
     boolean containsComponent(IComponent comp);
 
     /** 实体绑定的所有组件 - 这通常是个快照，只有运行期不可变的实体，可以共享List */
-    List<?> getComponents();
+    List<? extends IComponent> getComponents();
 
     /** 获取所有的组件 -- 可使用外部的List */
     void getComponents(List<IComponent> outList);
 
     /** 获取当前组件数量 */
-    int countComponent();
+    int getComponentCount();
 
     // endregion
 

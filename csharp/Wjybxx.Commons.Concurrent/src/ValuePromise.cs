@@ -74,6 +74,15 @@ public class ValuePromise<T> : IValuePromise<T>
     }
 
     /// <summary>
+    /// 测试对象是否已被回收
+    /// </summary>
+    /// <param name="rid"></param>
+    /// <returns></returns>
+    public bool IsRecycled(int rid) {
+        return rid != _reentryId;
+    }
+
+    /// <summary>
     /// 当前重入id
     /// </summary>
     internal int ReentryId => _reentryId;
@@ -82,14 +91,9 @@ public class ValuePromise<T> : IValuePromise<T>
     /// 增加重入id(重用对象时调用)
     /// </summary>
     /// <returns>增加后的值</returns>
-    protected int IncReentryId() {
+    internal int IncReentryId() {
         return ++_reentryId;
     }
-
-    /// <summary>
-    /// 任务绑定的线程，检测死锁
-    /// </summary>
-    public IExecutor? Executor => _executor;
 
     /// <summary>
     /// 重置数据
@@ -690,8 +694,10 @@ public class ValuePromise<T> : IValuePromise<T>
             TaskPoolConfig.GetPoolSize<T>(TaskPoolType.ValuePromise));
 
     /// <summary>
-    /// 申请一个对象，使用完毕后会自动归还
-    /// 如果没有回调添加，可使用<see cref="Forget"/>触发。
+    /// 申请一个Promise对象
+    ///
+    /// 1.如果没有回调添加，可使用<see cref="Forget"/>触发回收。
+    /// 2.如果Promise不会发布给其它对象，则可以使用该方法申请对象。
     /// </summary>
     /// <param name="executor">任务关联的线程</param>
     /// <returns></returns>
@@ -704,6 +710,9 @@ public class ValuePromise<T> : IValuePromise<T>
 
     /// <summary>
     /// 该接口用于外部库申请ValuePromise
+    ///
+    /// 1.如果没有回调添加，可使用<see cref="Forget"/>触发回收。
+    /// 2.如果Promise可能有多个持有者，则需要持有rid。
     /// </summary>
     /// <param name="rid">接收Promise的重入版本id</param>
     /// <param name="executor">任务关联的线程</param>

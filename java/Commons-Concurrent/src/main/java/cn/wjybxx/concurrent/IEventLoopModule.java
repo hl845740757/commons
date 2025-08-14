@@ -16,9 +16,12 @@
 
 package cn.wjybxx.concurrent;
 
+import cn.wjybxx.base.fx.ComponentId;
 import cn.wjybxx.base.fx.ComponentIdPool;
 import cn.wjybxx.base.fx.ComponentKind;
-import cn.wjybxx.base.fx.IComponent;
+import cn.wjybxx.base.fx.ComponentStatus;
+
+import javax.annotation.Nonnull;
 
 /**
  * 事件循环的模块，亦即EventLoop的组件
@@ -38,14 +41,53 @@ import cn.wjybxx.base.fx.IComponent;
  * @author wjybxx
  * date - 2023/11/17
  */
-public interface IEventLoopModule extends IComponent {
+public interface IEventLoopModule {
 
     /** 事件循环的全局组件id池 */
     ComponentIdPool GLOBAL = ComponentIdPool.newPool();
 
-    /** 修正返回值类型 */
-    @Override
-    IEventLoop getEntity();
+    /** 获取绑定的事件循环，尚未挂载时为null */
+    IEventLoop getEventLoop();
+
+    /**
+     * 获取组件id
+     * 注意：组件在添加到实体后，组件id必须保持稳定
+     */
+    @Nonnull
+    ComponentId<?> getCid();
+
+    /**
+     * 设置组件id
+     * 注意：
+     * 1.只有初始状态下可以设置
+     * 2.泛型类如果想指向不同的组件id，必须手动设置组件id
+     *
+     * @throws IllegalStateException 如果组件不是{@link ComponentStatus#NEW}状态
+     */
+    void setCid(ComponentId<?> cid);
+
+    /** 获取组件的状态 */
+    ComponentStatus getStatus();
+
+    /**
+     * 组件在挂载到实体后调用；
+     * 1.只能初始化自己的数据，不应该访问其它组件。
+     * 2.该方法的设计初衷是处理反序列化的数据兼容性问题（成员可能不是正常构造的）
+     * 3.组件之间不应该有顺序依赖
+     */
+    default void onAwake() {
+
+    }
+
+    /**
+     * 从实体上删除时调用；
+     * 1.只负责销毁自身的资源，数据也可能有较大的资源引用，因此也需要OnDestroy方法。
+     * 2.只有挂载到实体上的组件会执行该方法。
+     * 3.组件之间不应该有顺序依赖
+     */
+    default void onDestroy() {
+
+    }
 
     /**
      * 解析依赖

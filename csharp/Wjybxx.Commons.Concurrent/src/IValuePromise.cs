@@ -24,6 +24,14 @@ namespace Wjybxx.Commons.Concurrent
 {
 public interface IValuePromise
 {
+    /// <summary>
+    /// Promise是否已回收
+    /// （是否已进入新的生命周期）
+    /// </summary>
+    /// <param name="rid"></param>
+    /// <returns></returns>
+    bool IsRecycled(int rid);
+
     #region future
 
     /// <summary>

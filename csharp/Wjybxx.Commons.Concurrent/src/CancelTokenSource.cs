@@ -317,7 +317,7 @@ public sealed class CancelTokenSource : ICancelTokenSource
         if (!registration.HasResource) {
             newHead.TryFire(SYNC);
         } else {
-            // 如果目标令牌是池化的对象，这里可能添加到目标CTS新的生命周期，导致内存泄漏...真想处理这个问题，需要使用可重入锁
+            // 如果目标令牌是池化的对象，这里可能添加到目标CTS新的生命周期，导致内存泄漏...不过，并发库的CTS是不能重用的
             if (cancelToken.CanBeCancelled
                 && TaskOptions.IsEnabled(newHead.options, TaskOptions.STAGE_LISTEN_CANCEL_TOKEN)) {
                 cancelToken.ThenRun(INVOKER, registration, TaskOptions.STAGE_UNCANCELLABLE_CTX);

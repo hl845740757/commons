@@ -31,6 +31,9 @@ public interface IComponent {
     /** 获取组件挂载的实体，尚未挂载的情况下返回null */
     IEntity getEntity();
 
+    /** 获取组件的状态 */
+    ComponentStatus getStatus();
+
     /**
      * 获取组件id
      * 注意：组件在添加到实体后，组件id必须保持稳定
@@ -47,9 +50,6 @@ public interface IComponent {
      * @throws IllegalStateException 如果组件不是{@link ComponentStatus#NEW}状态
      */
     void setCid(ComponentId<?> cid);
-
-    /** 获取组件的状态 */
-    ComponentStatus getStatus();
 
     /**
      * 组件在挂载到实体后调用；

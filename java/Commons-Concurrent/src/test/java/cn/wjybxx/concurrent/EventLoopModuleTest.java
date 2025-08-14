@@ -140,7 +140,7 @@ public class EventLoopModuleTest {
 
         @Override
         public void onAwake() {
-            @SuppressWarnings("unchecked") var eventLoop = (DisruptorEventLoop<AgentEvent>) getEntity();
+            @SuppressWarnings("unchecked") var eventLoop = (DisruptorEventLoop<AgentEvent>) getEventLoop();
             this.awakeInvoked = true;
             this.eventLoop = eventLoop;
         }

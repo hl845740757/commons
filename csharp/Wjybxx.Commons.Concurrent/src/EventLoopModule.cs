@@ -91,6 +91,9 @@ public abstract class EventLoopModule : IEventLoopModule
 
     #region 默认实现
 
+    public IEventLoop EventLoop => _eventLoop;
+    public ComponentStatus Status => _status;
+
     public ComponentId Cid {
         get {
             if (_cid == null) {
@@ -110,9 +113,6 @@ public abstract class EventLoopModule : IEventLoopModule
     protected virtual ComponentId ParseCid() {
         return IEventLoopModule.GLOBAL.ValueOf(GetType());
     }
-
-    public IEventLoop Entity => _eventLoop;
-    public ComponentStatus Status => _status;
 
     #endregion
 

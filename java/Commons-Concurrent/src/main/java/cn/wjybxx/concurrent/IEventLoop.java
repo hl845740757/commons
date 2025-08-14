@@ -16,10 +16,12 @@
 
 package cn.wjybxx.concurrent;
 
-import cn.wjybxx.base.fx.IEntity;
+import cn.wjybxx.base.fx.ComponentId;
+import cn.wjybxx.base.fx.IComponent;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import java.util.List;
 
 /**
  * 事件循环
@@ -60,7 +62,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * date 2023/4/7
  */
 @ThreadSafe
-public interface IEventLoop extends IEventLoopGroup, SingleThreadExecutor, IEntity {
+public interface IEventLoop extends IEventLoopGroup, SingleThreadExecutor {
 
     /**
      * 返回该EventLoop线程所在的线程组（管理该EventLoop的容器）。
@@ -107,4 +109,22 @@ public interface IEventLoop extends IEventLoopGroup, SingleThreadExecutor, IEnti
 
     /** 是否处于运行状态 */
     boolean isRunning();
+
+    // region 组件模式
+
+    /** 获取所有组件 */
+    List<? extends IEventLoopModule> getComponents();
+
+    /** 获取所有组件 */
+    void getComponents(List<IEventLoopModule> outList);
+
+    /** 当前组件数量 */
+    int getComponentCount();
+
+    /** 获取指定id的组件 */
+    <T> T getComponent(ComponentId<T> cid);
+
+    /** 是否包含指定组件 */
+    boolean containsComponent(IComponent comp);
+    // endregion
 }

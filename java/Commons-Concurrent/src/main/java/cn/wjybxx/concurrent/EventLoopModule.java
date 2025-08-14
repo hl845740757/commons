@@ -89,6 +89,16 @@ public abstract class EventLoopModule implements IEventLoopModule {
 
     // region 默认实现
 
+    @Override
+    public IEventLoop getEventLoop() {
+        return eventLoop;
+    }
+
+    @Override
+    public final ComponentStatus getStatus() {
+        return status;
+    }
+
     @Nonnull
     @Override
     public final ComponentId<?> getCid() {
@@ -110,16 +120,6 @@ public abstract class EventLoopModule implements IEventLoopModule {
     /** 解析组件id -- 允许重写方法，从另外的池解析组件id */
     protected ComponentId<?> parseCid() {
         return IEventLoopModule.GLOBAL.valueOf(getClass());
-    }
-
-    @Override
-    public IEventLoop getEntity() {
-        return eventLoop;
-    }
-
-    @Override
-    public final ComponentStatus getStatus() {
-        return status;
     }
 
     // endregion

@@ -129,7 +129,7 @@ public class EventLoopModuleTest
 
         public override void OnAwake() {
             awakeInvoked = true;
-            eventLoop = (Entity as DisruptorEventLoop<AgentEvent>)!;
+            eventLoop = (EventLoop as DisruptorEventLoop<AgentEvent>)!;
         }
 
         public override void ResolveDependence() {
