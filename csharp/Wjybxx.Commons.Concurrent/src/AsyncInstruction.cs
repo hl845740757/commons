@@ -26,10 +26,10 @@ namespace Wjybxx.Commons.Concurrent
 /// 异步操作命令
 /// (以后再扩展其它行为)
 /// </summary>
-internal class AsyncCommand : IIndexedElement
+internal sealed class AsyncInstruction : IIndexedElement
 {
-    public static Func<AsyncCommand> Factory { get; } = () => new AsyncCommand();
-    public static Action<AsyncCommand> Cleaner { get; } = e => e.Reset();
+    public static Func<AsyncInstruction> Factory { get; } = () => new AsyncInstruction();
+    public static Action<AsyncInstruction> Cleaner { get; } = e => e.Reset();
 
 #nullable disable
     private int qIndex = -1;
@@ -56,9 +56,11 @@ internal class AsyncCommand : IIndexedElement
     }
 }
 
-internal class AsyncCommandComparer : IComparer<AsyncCommand>
+internal class InstructionComparer : IComparer<AsyncInstruction>
 {
-    public int Compare(AsyncCommand? lhs, AsyncCommand? rhs) {
+    public static readonly InstructionComparer Inst = new InstructionComparer();
+
+    public int Compare(AsyncInstruction? lhs, AsyncInstruction? rhs) {
         if (lhs == null) throw new ArgumentNullException(nameof(lhs));
         if (rhs == null) throw new ArgumentNullException(nameof(rhs));
         if (ReferenceEquals(lhs, rhs)) {

@@ -29,16 +29,16 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
     private readonly IDisruptorEventLoop<T> _eventLoop;
     private readonly IndexedPriorityQueue<IScheduledFutureTask> _taskQueue;
 
-    private long _nextCommandId;
-    private readonly IndexedPriorityQueue<AsyncCommand> _commandQueue;
-    private readonly ObjectPool<AsyncCommand> _commandPool;
+    private long _nextInstructionId;
+    private readonly IndexedPriorityQueue<AsyncInstruction> _instructionQueue;
+    private readonly ObjectPool<AsyncInstruction> _instructionPool;
 
     public DisruptorSchedulerHelper(IDisruptorEventLoop<T> eventLoop) {
         _eventLoop = eventLoop ?? throw new ArgumentNullException(nameof(eventLoop));
         _taskQueue = new IndexedPriorityQueue<IScheduledFutureTask>(new ScheduledTaskComparator(), 64);
 
-        _commandQueue = new IndexedPriorityQueue<AsyncCommand>(new AsyncCommandComparer(), 64);
-        _commandPool = new ObjectPool<AsyncCommand>(AsyncCommand.Factory, AsyncCommand.Cleaner);
+        _instructionQueue = new IndexedPriorityQueue<AsyncInstruction>(InstructionComparer.Inst, 64);
+        _instructionPool = new ObjectPool<AsyncInstruction>(AsyncInstruction.Factory, AsyncInstruction.Cleaner);
     }
 
     #region core
@@ -74,19 +74,19 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
             }
         }
         // 检测异步任务辅助命令
-        IndexedPriorityQueue<AsyncCommand> commandQueue = this._commandQueue;
-        AsyncCommand command;
-        while (commandQueue.TryPeekHead(out command) && !eventLoop.IsShutdown) {
-            if (tickTime < command.triggerTime) {
+        IndexedPriorityQueue<AsyncInstruction> instructionQueue = this._instructionQueue;
+        AsyncInstruction instruction;
+        while (instructionQueue.TryPeekHead(out instruction) && !eventLoop.IsShutdown) {
+            if (tickTime < instruction.triggerTime) {
                 break;
             }
-            commandQueue.Dequeue();
-            if (command.cancelToken != null && command.cancelToken.IsCancelRequested) {
-                command.promise.Internal_TrySetCancelled(command.cancelToken.CancelCode);
+            instructionQueue.Dequeue();
+            if (instruction.cancelToken != null && instruction.cancelToken.IsCancelRequested) {
+                instruction.promise.Internal_TrySetCancelled(instruction.cancelToken.CancelCode);
             } else {
-                command.promise.Internal_TrySetResult(0);
+                instruction.promise.Internal_TrySetResult(0);
             }
-            _commandPool.Release(command);
+            _instructionPool.Release(instruction);
         }
     }
 
@@ -136,12 +136,12 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         long delay = Math.Max(0, Normalize(1, timeSpan)); // delay最小为0
         ValuePromise<int> promise = ValuePromise<int>.Acquire(_eventLoop);
 
-        AsyncCommand command = _commandPool.Acquire();
-        command.id = _nextCommandId++;
-        command.triggerTime = _eventLoop.TickTime + delay;
-        command.cancelToken = cancelToken;
-        command.promise = promise;
-        _commandQueue.Enqueue(command);
+        AsyncInstruction instruction = _instructionPool.Acquire();
+        instruction.id = _nextInstructionId++;
+        instruction.triggerTime = _eventLoop.TickTime + delay;
+        instruction.cancelToken = cancelToken;
+        instruction.promise = promise;
+        _instructionQueue.Enqueue(instruction);
         return promise.VoidFuture;
     }
 
@@ -169,8 +169,8 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         while (_taskQueue.TryDequeue(out futureTask)) {
             futureTask.Cancel(CancelCodes.REASON_SHUTDOWN);
         }
-        _commandQueue.Clear();
-        _commandPool.Clear();
+        _instructionQueue.Clear();
+        _instructionPool.Clear();
     }
 
     #endregion
