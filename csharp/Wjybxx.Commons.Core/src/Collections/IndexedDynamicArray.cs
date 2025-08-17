@@ -48,6 +48,8 @@ public class IndexedDynamicArray<E> : IDynamicArray<E> where E : class
         this.nullFactor = Math.Max(0, nullFactor);
     }
 
+    public IIndexedElementHelper<E> Helper => helper;
+
     #region itr
 
     public bool IsIterating => recursionDepth > 0;

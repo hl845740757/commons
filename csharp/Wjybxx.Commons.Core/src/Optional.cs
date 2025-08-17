@@ -79,7 +79,7 @@ public readonly struct Optional<T>
     /// 隐式创建对象
     /// </summary>
     /// <param name="value"></param>
-    /// <returns></returns>\
+    /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Optional<T>(T value) {
         return new Optional<T>(value);

@@ -42,6 +42,7 @@ public class BetterIndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : 
         this._items = new T[initCapacity];
     }
 
+    public IIndexedElementHelper<T> Helper => _helper;
     public bool IsReadOnly => false;
     public int Count => _count;
     public bool IsEmpty => _count == 0;
@@ -241,6 +242,9 @@ public class BetterIndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : 
     }
 
     private void BubbleDown(int k, T node) {
+        IComparer<T> comparator = _comparator;
+        IIndexedElementHelper<T> helper = _helper;
+        //
         T[] items = _items;
         int half = _count >> 1;
         while (k < half) {
@@ -249,42 +253,45 @@ public class BetterIndexedPriorityQueue<T> : IIndexedPriorityQueue<T> where T : 
 
             // 找到最小的子节点，如果父节点大于最小子节点，则与最小子节点交换
             int iRightChild = iChild + 1;
-            if (iRightChild < _count && _comparator.Compare(child, items[iRightChild]) > 0) {
+            if (iRightChild < _count && comparator.Compare(child, items[iRightChild]) > 0) {
                 child = items[iChild = iRightChild];
             }
-            if (_comparator.Compare(node, child) <= 0) {
+            if (comparator.Compare(node, child) <= 0) {
                 break;
             }
 
             items[k] = child;
-            _helper.CollectionIndex(this, child, k);
+            helper.CollectionIndex(this, child, k);
 
             k = iChild;
         }
 
         items[k] = node;
-        _helper.CollectionIndex(this, node, k);
+        helper.CollectionIndex(this, node, k);
     }
 
     private void BubbleUp(int k, T node) {
+        IComparer<T> comparator = _comparator;
+        IIndexedElementHelper<T> helper = _helper;
+        //
         T[] items = _items;
         while (k > 0) {
             int iParent = (k - 1) >> 1;
             T parent = items[iParent];
 
             // 如果node小于父节点，则node要与父节点进行交换
-            if (_comparator.Compare(node, parent) >= 0) {
+            if (comparator.Compare(node, parent) >= 0) {
                 break;
             }
 
             items[k] = parent;
-            _helper.CollectionIndex(this, parent, k);
+            helper.CollectionIndex(this, parent, k);
 
             k = iParent;
         }
 
         items[k] = node;
-        _helper.CollectionIndex(this, node, k);
+        helper.CollectionIndex(this, node, k);
     }
 
     /** 这里暂没有按照优先级迭代，实现较为麻烦；由于未有序迭代，这里也没支持删除 */

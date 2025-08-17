@@ -52,7 +52,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     /** 用于避免具体类型依赖 */
     private ISchedulerHelper helper;
     /** 在队列中的下标 */
-    private int queueIndex = INDEX_NOT_FOUND;
+    private int qIndex = INDEX_NOT_FOUND;
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
     private IRegistration cancelRegistration;
 
@@ -170,12 +170,12 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     @Override
     public int collectionIndex(Object collection) {
-        return queueIndex;
+        return qIndex;
     }
 
     @Override
     public void collectionIndex(Object collection, int index) {
-        this.queueIndex = index;
+        this.qIndex = index;
     }
 
     private boolean hasTimeout() {
@@ -281,11 +281,6 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
                 return false;
             }
         } else if (!promise.isComputing()) {
-            return false;
-        }
-        if (TaskOptions.isEnabled(options, TaskOptions.TIMEOUT_BEFORE_RUN)
-                && hasTimeout() && deadline <= tickTime) {
-            promise.trySetException(StacklessCancellationException.TIMEOUT);
             return false;
         }
 
@@ -411,7 +406,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
      * 注意：该对象不可返回给用户！该对象不可返回给用户！该对象不可返回给用户！
      *
      * @param taskType 任务类型 -- 注意上下文的类型
-     * @param task     用户的任务，支持的类型见{@link TaskBuilder#taskType(Object)}
+     * @param task     用户的任务，支持的类型见{@link TaskBuilder}
      * @param ctx      任务关联的上下文
      * @param options  任务的调度选项
      * @param promise  任务关联的promise

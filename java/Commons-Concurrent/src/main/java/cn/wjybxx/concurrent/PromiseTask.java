@@ -33,6 +33,12 @@ import java.util.function.Function;
  */
 public class PromiseTask<V> implements IFutureTask<V> {
 
+    // region 常量
+    /** 任务类型的偏移量 */
+    public static final int OFFSET_TASK_TYPE = 8;
+    /** 调度类型的偏移量 - 理论上3个Bit足够 */
+    public static final int OFFSET_SCHEDULE_TYPE = 12;
+
     // 低8位和TaskOptions保持一致，以方便继承数据
     /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
     public static final int MASK_TASK_TYPE = 0x0F00;
@@ -49,11 +55,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
     public static final int MASK_STARTED = 1 << 19;
     /** 延时任务是否已停止 */
     public static final int MASK_STOPPED = 1 << 20;
-
-    /** 任务类型的偏移量 */
-    public static final int OFFSET_TASK_TYPE = 8;
-    /** 调度类型的偏移量 */
-    public static final int OFFSET_SCHEDULE_TYPE = 12;
+    // endregion
 
     /** 用户的任务 */
     private Object task;
@@ -78,7 +80,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
         this.options = options;
         this.promise = Objects.requireNonNull(promise, "promise");
 
-        this.ctl = (options & TaskOptions.MASK_CTL_RESERVED);
+//        this.ctl = (options & TaskOptions.MASK_CTL_RESERVED);
         this.ctl |= (taskType << OFFSET_TASK_TYPE);
     }
 
@@ -209,7 +211,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
      * 注意：该对象不可返回给用户！该对象不可返回给用户！该对象不可返回给用户！
      *
      * @param taskType 任务类型 -- 注意上下文的类型
-     * @param task     用户的任务，支持的类型见{@link TaskBuilder#taskType(Object)}
+     * @param task     用户的任务，支持的类型见{@link TaskBuilder}
      * @param ctx      任务关联的上下文
      * @param options  任务的调度选项
      * @param promise  任务关联的promise

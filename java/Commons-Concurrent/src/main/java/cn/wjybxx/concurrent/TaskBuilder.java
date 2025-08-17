@@ -87,23 +87,6 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         return new TaskBuilder<>(TYPE_FUNC_CTX, task, ctx);
     }
 
-    /** 计算任务的类型 */
-    public static int taskType(Object task) {
-        Objects.requireNonNull(task);
-        if (task instanceof Runnable) {
-            return TYPE_ACTION;
-        }
-        if (task instanceof Consumer<?>) {
-            return TYPE_ACTION_CTX;
-        }
-        if (task instanceof Callable<?>) {
-            return TYPE_FUNC;
-        }
-        if (task instanceof Function<?, ?>) {
-            return TYPE_FUNC_CTX;
-        }
-        throw new IllegalArgumentException("unsupported task type: " + task.getClass());
-    }
 
     /** 任务是否接收context类型参数 */
     public static boolean isTaskAcceptContext(int type) {
@@ -142,20 +125,6 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
         this.ctx = ctx;
         return this;
     }
-
-    /** 任务绑定的取消令牌 */
-    public ICancelToken getCancelToken() {
-        return isTaskAcceptContext(type) ? null : (ICancelToken) ctx;
-    }
-
-    public TaskBuilder<V> setCancelToken(ICancelToken cancelToken) {
-        if (isTaskAcceptContext(type)) {
-            throw new IllegalStateException();
-        }
-        this.ctx = cancelToken == null ? ICancelToken.NONE : cancelToken;
-        return this;
-    }
-
     // endregion
 
     // region options

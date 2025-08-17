@@ -19,7 +19,7 @@
 namespace Wjybxx.Commons.Concurrent
 {
 /// <summary>
-/// 只包含取消令牌的context，该类实例通常不暴露给用户的Action
+/// 只包含取消令牌的context
 /// </summary>
 public sealed class MiniContext : IContext
 {

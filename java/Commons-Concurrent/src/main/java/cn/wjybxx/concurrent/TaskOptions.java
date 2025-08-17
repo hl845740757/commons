@@ -36,7 +36,6 @@ public final class TaskOptions {
     /** 调度阶段的最大值 */
     public static final int MAX_SCHEDULE_PHASE = 31;
 
-
     /**
      * 调度器使用的控制标识位(低8位)
      * 调度器会擦除掉用户的低8位，存储调度器的信息

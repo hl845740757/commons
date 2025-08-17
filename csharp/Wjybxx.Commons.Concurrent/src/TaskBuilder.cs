@@ -79,48 +79,6 @@ public static class TaskBuilder
     }
 
     #endregion
-
-    /// <summary>
-    /// 计算Task的类型
-    /// </summary>
-    /// <param name="task"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
-    public static int TaskType(object task) {
-        if (task is Action) {
-            return TYPE_ACTION;
-        }
-        if (task is ITask) {
-            return TYPE_TASK;
-        }
-        Type type = task.GetType();
-        if (type.IsGenericType) {
-            Type genericTypeDefinition = type.GetGenericTypeDefinition();
-            if (genericTypeDefinition == typeof(Action<>) && type.GenericTypeArguments[0] == typeof(object)) {
-                return TYPE_ACTION_CTX;
-            }
-            if (genericTypeDefinition == typeof(Func<>)) {
-                return TYPE_FUNC;
-            }
-            if (genericTypeDefinition == typeof(Func<,>) && type.GenericTypeArguments[0] == typeof(object)) {
-                return TYPE_FUNC_CTX;
-            }
-        }
-        throw new ArgumentException("unsupported task type: " + type);
-    }
-
-    /** 任务是否接收context类型参数 */
-    public static bool IsTaskAcceptContext(int type) {
-        switch (type) {
-            case TYPE_ACTION_CTX:
-            case TYPE_FUNC_CTX: {
-                return true;
-            }
-            default: {
-                return false;
-            }
-        }
-    }
 }
 
 /// <summary>
@@ -156,11 +114,6 @@ public struct TaskBuilder<T>
     /// 委托
     /// </summary>
     public object Task => task;
-
-    /// <summary>
-    /// 任务是否接收context类型参数
-    /// </summary>
-    public bool IsTaskAcceptContext => TaskBuilder.IsTaskAcceptContext(type);
 
     /// <summary>
     /// 任务的上下文

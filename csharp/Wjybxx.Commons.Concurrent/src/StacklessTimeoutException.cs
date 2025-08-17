@@ -27,7 +27,7 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public class StacklessTimeoutException : TimeoutException
 {
-    // C#的异常不适合单例
+    // C#的异常不适合单例，会导致堆栈冲突
     public static StacklessTimeoutException Inst => new StacklessTimeoutException();
 
     public StacklessTimeoutException() {

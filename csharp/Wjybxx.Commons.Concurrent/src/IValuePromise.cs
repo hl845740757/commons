@@ -26,7 +26,7 @@ public interface IValuePromise
 {
     /// <summary>
     /// Promise是否已回收
-    /// （是否已进入新的生命周期）
+    /// （是否已进入新的生命周期，限任务的调度者使用）
     /// </summary>
     /// <param name="rid"></param>
     /// <returns></returns>

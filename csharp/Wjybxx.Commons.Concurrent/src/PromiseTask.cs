@@ -31,6 +31,11 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public static class PromiseTask
 {
+    /** 任务类型的偏移量 */
+    public const int OFFSET_TASK_TYPE = 8;
+    /** 调度类型的偏移量 - 理论上3个Bit足够 */
+    public const int OFFSET_SCHEDULE_TYPE = 12;
+
     // 低8位和TaskOptions保持一致，以方便继承数据
     /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
     public const int MASK_TASK_TYPE = 0x0F00;
@@ -47,11 +52,6 @@ public static class PromiseTask
     public const int MASK_STARTED = 1 << 19;
     /** 任务是否已停止 */
     public const int MASK_STOPPED = 1 << 20;
-
-    /** 任务类型的偏移量 */
-    public const int OFFSET_TASK_TYPE = 8;
-    /** 调度类型的偏移量 */
-    public const int OFFSET_SCHEDULE_TYPE = 12;
 
     #region factory
 
@@ -123,7 +123,7 @@ public class PromiseTask<T> : IFutureTask
         this.options = options;
         this.promise = promise ?? throw new ArgumentNullException(nameof(promise));
 
-        this.ctl = (options & TaskOptions.MASK_CTL_RESERVED);
+        // this.ctl = (options & TaskOptions.MASK_CTL_RESERVED);
         this.ctl |= (taskType << PromiseTask.OFFSET_TASK_TYPE);
     }
 

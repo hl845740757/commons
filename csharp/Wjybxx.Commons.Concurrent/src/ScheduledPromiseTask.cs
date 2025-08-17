@@ -59,6 +59,8 @@ public static class ScheduledPromiseTask
 /// 1.该类的数据是（部分）开放的，以支持不同的扩展。
 /// 2.未继承<see cref="ValuePromise{T}"/>，各执行各的池化
 /// 3.该对象不可返回给用户！否则可能导致内存泄漏，复用错误。
+///
+/// TODO 或可不继承<see cref="PromiseTask{T}"/>，而是统一装箱结果。
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTask, IIndexedElement
@@ -79,7 +81,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     /** 用于避免具体类型依赖 */
     private ISchedulerHelper helper;
     /** 在队列中的下标 */
-    private int queueIndex = IIndexedElement.IndexNotFound;
+    private int qIndex = IIndexedElement.IndexNotFound;
     /** 接收用户取消信号的句柄 -- 延时任务需要及时删除任务 */
     private Registration cancelRegistration;
     /** 异步任务的结果 */
@@ -178,11 +180,11 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     public bool IsPeriodic => ScheduleType != 0;
 
     public int CollectionIndex(object collection) {
-        return queueIndex;
+        return qIndex;
     }
 
     public void CollectionIndex(object collection, int index) {
-        this.queueIndex = index;
+        this.qIndex = index;
     }
 
     private bool HasTimeout => (ctl & MASK_HAS_DEADLINE) != 0;
@@ -281,11 +283,6 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
                 return false;
             }
         } else if (!promise.IsComputing) {
-            return false;
-        }
-        if (TaskOptions.IsEnabled(options, TaskOptions.TIMEOUT_BEFORE_RUN)
-            && HasTimeout && deadline <= tickTime) {
-            promise.Internal_TrySetException(StacklessCancellationException.Timeout);
             return false;
         }
         try {

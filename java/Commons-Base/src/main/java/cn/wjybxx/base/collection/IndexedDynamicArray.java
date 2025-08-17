@@ -58,6 +58,10 @@ public final class IndexedDynamicArray<E> implements DynamicArray<E> {
         this.nullFactor = Math.max(0, nullFactor);
     }
 
+    public IndexedElementHelper<? super E> getHelper() {
+        return helper;
+    }
+
     // region itr
     @Override
     public boolean isIterating() {

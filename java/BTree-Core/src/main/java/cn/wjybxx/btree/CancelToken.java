@@ -465,7 +465,6 @@ public class CancelToken implements ICancelTokenSource, ICancelTokenListener {
     private static final int TYPE_RUN = 2;
     private static final int TYPE_RUN_CTX = 3;
     private static final int TYPE_NOTIFY = 4;
-    private static final int TYPE_TRANSFER = 5;
 
     /** 任务类型的掩码 -- 4bit，最大16种，可省去大量的instanceof测试 */
     private static final int MASK_TASK_TYPE = 0x0F;

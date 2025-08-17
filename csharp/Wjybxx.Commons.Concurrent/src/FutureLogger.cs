@@ -32,16 +32,17 @@ public sealed class FutureLogger
     /// Future异常日志处理器
     /// </summary>
     private static volatile ILogHandler? _handler;
-
     /// <summary>
-    /// 获取日志处理器
+    /// 默认日志等级
     /// </summary>
+    private static volatile Level logLevel = Level.Warn;
+
+    public static Level GetLogLevel() => logLevel;
+
+    public static void SetLogLevel(Level value) => logLevel = value;
+
     public static ILogHandler? GetHandler() => _handler;
 
-    /// <summary>
-    /// 设置日志处理器
-    /// </summary>
-    /// <param name="handler"></param>
     public static void SetHandler(ILogHandler? handler) {
         _handler = handler;
     }
@@ -53,13 +54,13 @@ public sealed class FutureLogger
     /// <param name="message">信息</param>
     public static void LogCause(Exception ex, string? message = null) {
         if (ex == null) throw new ArgumentNullException(nameof(ex));
-        message = message ?? "Future caught an exception";
+        message = message ?? "Task caught exception";
         try {
             if (_handler != null) {
                 _handler.LogCause(ex, message);
-            } else {
-                logger.Info(ex, message);
+                return;
             }
+            logger.Log(logLevel, ex, message);
         }
         catch (Exception) {
             // 该接口不能出现异常，这里的异常只能被丢弃

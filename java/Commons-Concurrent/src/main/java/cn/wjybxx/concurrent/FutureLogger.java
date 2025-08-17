@@ -52,15 +52,14 @@ public final class FutureLogger {
      * 如果继续使用{@link CompletableFuture}，那么安全的方式就是继承它，然后将用户的每一个Action都封装一层，在其抛出异常时先记录日志，再抛出。
      * 但这种方式代码丑陋且低效。
      */
-    private static volatile Level logLevel = Level.INFO;
     private static volatile LogHandler handler;
+    private static volatile Level logLevel = Level.INFO;
     private static final Set<Class<?>> noLogRequiredExceptions = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     public static Level getLogLevel() {
         return logLevel;
     }
 
-    /** @param logLevel 日志等级 */
     public static void setLogLevel(Level logLevel) {
         FutureLogger.logLevel = Objects.requireNonNull(logLevel);
     }
@@ -69,7 +68,6 @@ public final class FutureLogger {
         return handler;
     }
 
-    /** 设置异常处理器 */
     public static void setHandler(LogHandler handler) {
         FutureLogger.handler = handler;
     }
@@ -119,7 +117,7 @@ public final class FutureLogger {
 
     public static void logCause(Throwable ex, String message) {
         Objects.requireNonNull(ex);
-        if (message == null) message = "future completed with exception";
+        if (message == null) message = "task caught exception";
 
         Level logLevel = ex instanceof VirtualMachineError ? Level.ERROR : FutureLogger.logLevel;
         if (!logger.isEnabledForLevel(logLevel) || !testException(ex)) {

@@ -96,7 +96,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     }
 
     public static void validatePeriod(long period) {
-        if (period == 0) {
+        if (period <= 0) {
             throw new IllegalArgumentException("period: 0 (expected: != 0)");
         }
     }
@@ -292,13 +292,6 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         super.setCtx(ctx);
         return this;
     }
-
-    @Override
-    public TaskBuilder<V> setCancelToken(ICancelToken cancelToken) {
-        super.setCancelToken(cancelToken);
-        return this;
-    }
-
     // endregion
 
     // endregion

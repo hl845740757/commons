@@ -69,6 +69,10 @@ public class BetterIndexedPriorityQueue<T>
         this.queue = elements;
     }
 
+    public IndexedElementHelper<? super T> getHelper() {
+        return helper;
+    }
+
     @Override
     public int size() {
         return size;
@@ -226,6 +230,9 @@ public class BetterIndexedPriorityQueue<T>
     }
 
     private void bubbleDown(int k, T node) {
+        final Comparator<? super T> comparator = this.comparator;
+        final IndexedElementHelper<? super T> helper = this.helper;
+        //
         final T[] queue = this.queue;
         final int half = size >>> 1;
         while (k < half) {
@@ -252,6 +259,9 @@ public class BetterIndexedPriorityQueue<T>
     }
 
     private void bubbleUp(int k, T node) {
+        final Comparator<? super T> comparator = this.comparator;
+        final IndexedElementHelper<? super T> helper = this.helper;
+        //
         final T[] queue = this.queue;
         while (k > 0) {
             int iParent = (k - 1) >>> 1;

@@ -34,19 +34,6 @@ public static class ScheduledTaskBuilder
     /** 动态延迟 -- 每次执行后计算下一次的延迟 */
     public const byte SCHEDULE_DYNAMIC_DELAY = 3;
 
-    /** 适用于禁止初始延迟小于0的情况 */
-    public static void ValidateInitialDelay(long initialDelay) {
-        if (initialDelay < 0) {
-            throw new ArgumentException($"initialDelay: {initialDelay} (expected: >= 0)");
-        }
-    }
-
-    public static void ValidatePeriod(long period) {
-        if (period == 0) {
-            throw new ArgumentException("period: 0 (expected: != 0)");
-        }
-    }
-
     #region factory
 
     public static ScheduledTaskBuilder<int> NewAction(Action task, ICancelToken? cancelToken = null) {
@@ -88,6 +75,23 @@ public static class ScheduledTaskBuilder
         ScheduledTaskBuilder<T> builder = new ScheduledTaskBuilder<T>(ref taskBuilder);
         builder.SetFixedDelay(0, 100, TimeSpan.FromMilliseconds(1));
         return builder;
+    }
+
+    #endregion
+
+    #region 校验
+
+    /** 适用于禁止初始延迟小于0的情况 */
+    public static void ValidateInitialDelay(long initialDelay) {
+        if (initialDelay < 0) {
+            throw new ArgumentException($"initialDelay: {initialDelay} (expected: >= 0)");
+        }
+    }
+
+    public static void ValidatePeriod(long period) {
+        if (period <= 0) {
+            throw new ArgumentException("period: 0 (expected: != 0)");
+        }
     }
 
     #endregion
@@ -204,7 +208,7 @@ public struct ScheduledTaskBuilder<T>
         }
         this.scheduleType = ScheduledTaskBuilder.SCHEDULE_ONCE;
         this.initialDelay = delay;
-        this.period = default;
+        this.period = 0;
     }
 
     /// <summary>
