@@ -40,7 +40,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
     private long id = -1;
     /** 提前计算的，逻辑上的下次触发时间 - 非volatile，不对用户开放 */
-    private long nextTriggerTime;
+    private long triggerTime;
     /** 任务的执行间隔 - 不再有特殊意义 */
     private long period;
 
@@ -66,7 +66,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
                       long firstDelay, TimeUnit timeUnit) {
         init(taskType, action, ctx, options, promise);
         // 时间戳先保存为nanos单位
-        this.nextTriggerTime = timeUnit.toNanos(firstDelay);
+        this.triggerTime = timeUnit.toNanos(firstDelay);
         this.period = 0;
     }
 
@@ -75,10 +75,11 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         setScheduleType(builder.getScheduleType());
         // 时间戳先保存为nanos单位
         TimeUnit timeUnit = builder.getTimeUnit();
-        this.nextTriggerTime = timeUnit.toNanos(builder.getInitialDelay());
+        this.triggerTime = timeUnit.toNanos(builder.getInitialDelay());
         this.period = timeUnit.toNanos(builder.getPeriod());
         // 初始化周期任务数据
         if (builder.isPeriodic()) {
+            if (period < 0) throw new RuntimeException("period: " + period);
             if (builder.hasTimeout()) {
                 ctl |= PromiseTask.MASK_HAS_DEADLINE;
                 this.deadline = timeUnit.toNanos(builder.getTimeout());
@@ -97,12 +98,12 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
      */
     public void inject(ISchedulerHelper helper) {
         this.helper = helper;
-        this.nextTriggerTime = helper.triggerTime(nextTriggerTime, TimeUnit.NANOSECONDS);
+        this.triggerTime = helper.triggerTime(triggerTime, TimeUnit.NANOSECONDS);
         if (isPeriodic()) {
             this.period = helper.triggerPeriod(period, TimeUnit.NANOSECONDS);
         }
         // 这里第二次读取TickTime，Deadline可能大于预期值，问题不大
-        if (hasTimeout()) {
+        if (hasDeadline()) {
             this.deadline = helper.triggerTime(deadline, TimeUnit.NANOSECONDS);
         }
     }
@@ -119,13 +120,13 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         return id;
     }
 
-    public long getNextTriggerTime() {
-        return nextTriggerTime;
+    public long getTriggerTime() {
+        return triggerTime;
     }
 
     /** 保留set以允许外部调整优先级 */
-    public void setNextTriggerTime(long nextTriggerTime) {
-        this.nextTriggerTime = nextTriggerTime;
+    public void setTriggerTime(long triggerTime) {
+        this.triggerTime = triggerTime;
     }
 
     /** 获取任务的调度类型 */
@@ -148,16 +149,6 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         options = TaskOptions.setPriority(options, priority);
     }
 
-    /** 设置任务的调度阶段 */
-    public int getSchedulePhase() {
-        return TaskOptions.getSchedulePhase(options);
-    }
-
-    /** @param priority 任务的调度阶段，范围 [0, 31] */
-    public void setSchedulePhase(int priority) {
-        options = TaskOptions.setSchedulePhase(options, priority);
-    }
-
     /** 任务是否触发过 -- 通常用于降低优先级 */
     public boolean isTriggered() {
         return (ctl & MASK_TRIGGERED) != 0;
@@ -178,11 +169,11 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         this.qIndex = index;
     }
 
-    private boolean hasTimeout() {
+    private boolean hasDeadline() {
         return (ctl & PromiseTask.MASK_HAS_DEADLINE) != 0;
     }
 
-    private boolean hasCountLimit() {
+    private boolean hasCountdown() {
         return (ctl & PromiseTask.MASK_HAS_COUNTDOWN) != 0;
     }
 
@@ -200,7 +191,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     protected void reset() {
         super.reset();
         id = -1;
-        nextTriggerTime = 0;
+        triggerTime = 0;
         period = 0;
         deadline = 0;
         countdown = 0;
@@ -262,20 +253,28 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         if (firstTrigger) {
             ctl |= MASK_TRIGGERED;
         }
-
-        final int scheduleType = getScheduleType();
-        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
-            super.runImpl(); // 不能调用基类的Run
-            return false;
-        }
-
+        // 先检测取消
         IPromise<V> promise = this.promise;
         ICancelToken cancelToken = getCancelToken();
-        // 检测取消信号 -- 为兼容，还要检测来自future的取消，即isComputing...
         if (cancelToken.isCancelRequested()) {
             trySetCancelled(promise, cancelToken);
             return false;
         }
+        // 一次性任务 -- 不能调用基类的Run
+        final int scheduleType = getScheduleType();
+        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
+            if (!promise.trySetComputing()) {
+                return false;
+            }
+            try {
+                V result = runTask();
+                promise.trySetResult(result);
+            } catch (Throwable e) {
+                promise.trySetException(e);
+            }
+            return false;
+        }
+        // 周期性任务
         if (firstTrigger) {
             if (!promise.trySetComputing()) {
                 return false;
@@ -306,12 +305,12 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
             return false;
         }
         // 未被取消的情况下检测超时
-        if (hasTimeout() && deadline <= tickTime) {
+        if (hasDeadline() && deadline <= tickTime) {
             promise.trySetException(StacklessCancellationException.TIMEOUT);
             return false;
         }
         // 检测次数限制
-        if (hasCountLimit() && (--countdown < 1)) {
+        if (hasCountdown() && (--countdown < 1)) {
             promise.trySetException(StacklessCancellationException.TRIGGER_COUNT_LIMIT);
             return false;
         }
@@ -327,11 +326,11 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
     }
 
     private void setNextRunTime(long tickTime, int scheduleType) {
-        long maxDelay = hasTimeout() ? (deadline - tickTime) : Long.MAX_VALUE;
+        long maxDelay = hasDeadline() ? (deadline - tickTime) : Long.MAX_VALUE;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
-            nextTriggerTime = nextTriggerTime + Math.clamp(period, 1, maxDelay); // 逻辑时间
+            triggerTime = triggerTime + Math.min(period, maxDelay); // 逻辑时间
         } else {
-            nextTriggerTime = tickTime + Math.clamp(period, 1, maxDelay); // 真实时间
+            triggerTime = tickTime + Math.min(period, maxDelay); // 真实时间
         }
     }
     // endregion
@@ -361,7 +360,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
 
     @Override
     public long getDelay(@Nonnull TimeUnit unit) {
-        return helper.getDelay(nextTriggerTime, unit);
+        return helper.getDelay(triggerTime, unit);
     }
 
     @Override
@@ -373,7 +372,7 @@ public final class ScheduledPromiseTask<V> extends PromiseTask<V>
         if (other == this) {
             return 0;
         }
-        int r = Long.compare(nextTriggerTime, other.nextTriggerTime);
+        int r = Long.compare(triggerTime, other.triggerTime);
         if (r != 0) {
             return r;
         }

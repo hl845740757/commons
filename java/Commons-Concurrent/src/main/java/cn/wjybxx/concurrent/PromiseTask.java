@@ -164,11 +164,6 @@ public class PromiseTask<V> implements IFutureTask<V> {
     /** 子类不要直接调用该方法，该方法会触发回收 */
     @Override
     public void run() {
-        runImpl();
-        prepareToRecycle();
-    }
-
-    protected final void runImpl() {
         IPromise<V> promise = this.promise;
         ICancelToken cancelToken = getCancelToken();
         if (cancelToken.isCancelRequested()) {
@@ -184,6 +179,7 @@ public class PromiseTask<V> implements IFutureTask<V> {
         } catch (Throwable e) {
             promise.trySetException(e);
         }
+        prepareToRecycle();
     }
 
     // region util

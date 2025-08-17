@@ -53,7 +53,7 @@ public interface IScheduledFutureTask : IFutureTask, IIndexedElement
     /// 下次触发时间
     /// (保留set以允许外部调整优先级)
     /// </summary>
-    long NextTriggerTime { get; set; }
+    long TriggerTime { get; set; }
 
     /// <summary>
     /// 是否已完成首次触发(通常用于降低优先级)
@@ -93,7 +93,7 @@ public sealed class ScheduledTaskComparator : IComparer<IScheduledFutureTask>
         if (ReferenceEquals(lhs, rhs)) {
             return 0;
         }
-        int r = lhs.NextTriggerTime.CompareTo(rhs.NextTriggerTime);
+        int r = lhs.TriggerTime.CompareTo(rhs.TriggerTime);
         if (r != 0) {
             return r;
         }

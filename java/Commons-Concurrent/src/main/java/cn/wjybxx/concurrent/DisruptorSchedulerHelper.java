@@ -49,7 +49,7 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
 
         ScheduledPromiseTask<?> futureTask;
         while ((futureTask = taskQueue.peek()) != null && !eventLoop.isShutdown()) {
-            if (tickTime < futureTask.getNextTriggerTime()) {
+            if (tickTime < futureTask.getTriggerTime()) {
                 return;
             }
             taskQueue.poll();
@@ -73,7 +73,7 @@ public class DisruptorSchedulerHelper implements ISchedulerHelper {
     public void doSchedule(ScheduledPromiseTask<?> futureTask) {
         assert eventLoop.inEventLoop() && futureTask.getId() >= 0;
         long tickTime = eventLoop.tickTime();
-        if (tickTime < futureTask.getNextTriggerTime()) {
+        if (tickTime < futureTask.getTriggerTime()) {
             taskQueue.add(futureTask);
             return;
         }

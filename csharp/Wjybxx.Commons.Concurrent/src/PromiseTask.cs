@@ -198,14 +198,6 @@ public class PromiseTask<T> : IFutureTask
 
     /** 子类不要调用该方法，会导致自动回收 */
     public virtual void Run() {
-        RunImpl();
-        PrepareToRecycle();
-    }
-
-    /// <summary>
-    /// 支持
-    /// </summary>
-    protected void RunImpl() {
         ValuePromise<T> promise = this.promise;
         ICancelToken cancelToken = GetCancelToken();
         if (cancelToken.IsCancelRequested) {
@@ -222,6 +214,7 @@ public class PromiseTask<T> : IFutureTask
         catch (Exception e) {
             promise.Internal_TrySetException(e);
         }
+        PrepareToRecycle();
     }
 
     #region util

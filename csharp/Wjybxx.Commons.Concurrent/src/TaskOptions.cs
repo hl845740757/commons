@@ -27,21 +27,16 @@ namespace Wjybxx.Commons.Concurrent
 /// </summary>
 public static class TaskOptions
 {
-    /** 优先级的存储偏移量 */
-    public const int OFFSET_PRIORITY = 8;
-    /** 优先级的存储偏移量 */
-    public const int OFFSET_SCHEDULE_PHASE = 13;
-
-    /** 优先级的最大值 */
-    public const int MAX_PRIORITY = 31;
-    /** 调度阶段的最大值 */
-    public const int MAX_SCHEDULE_PHASE = 31;
-
     /// <summary>
     /// 调度器使用的控制标识位(低8位)
     /// 调度器会擦除掉用户的低8位，存储调度器的信息
     /// </summary>
     public const int MASK_CTL_RESERVED = 0xFF;
+
+    /** 优先级的存储偏移量 */
+    public const int OFFSET_PRIORITY = 8;
+    /** 优先级的最大值 */
+    public const int MAX_PRIORITY = 31;
 
     /// <summary>
     /// 延时任务的优先级，取值[0, 31]。
@@ -49,13 +44,28 @@ public static class TaskOptions
     /// 2. 由于0需要表示未设置优先级，因此Executor会对值进行偏移，通常而言是减1。
     /// 3. 优先级值的约定取决于各自的实现。
     /// </summary>
-    [Beta] public const int MASK_PRIORITY = MAX_PRIORITY << OFFSET_PRIORITY;
+    public const int MASK_PRIORITY = MAX_PRIORITY << OFFSET_PRIORITY;
+
     /// <summary>
-    /// 任务的调度阶段，取值[0, 31]。
-    /// 1. 用于指定异步任务的调度时机。
-    /// 2. 主要用于<see cref="ISingleThreadExecutor"/>这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
+    /// 延时任务：包含次数限制
+    /// </summary>
+    public const int MASK_HAS_COUNT_LIMIT = 1 << 14; // 预留1位给优先级
+    /// <summary>
+    /// 延时任务：包含超时时间（执行时间限制）
+    /// </summary>
+    public const int MASK_HAS_TIMEOUT = 1 << 15;
+    /// <summary>
+    /// 延时任务：在执行任务前检测超时
+    /// 1. 也就是说在已经超时的情况下不执行任务。
+    /// 2. 在执行后一定会检测一次超时。
     ///</summary>
-    [Beta] public const int MASK_SCHEDULE_PHASE = MAX_SCHEDULE_PHASE << OFFSET_SCHEDULE_PHASE;
+    public const int TIMEOUT_BEFORE_RUN = 1 << 16;
+    /// <summary>
+    /// 延时任务：在出现异常后继续执行。
+    /// 1. 只适用无需结果的周期性任务 -- 分时任务会失败。
+    /// 2. 如果需要取消任务，需通过取消令牌实现。
+    ///</summary>
+    public const int CAUGHT_EXCEPTION = 1 << 17;
 
     /// <summary>
     /// 事件循环在执行该任务前必须先处理一次定时任务队列。
@@ -63,13 +73,11 @@ public static class TaskOptions
     /// 2. 该选项不一定能保证时序，因为存在时序依赖的任务可能同时提交成功。
     ///</summary>
     public const int SCHEDULE_BARRIER = 1 << 18;
-
     /// <summary>
     /// 本地序（可以与其它线程无序）
     /// 对于EventLoop内部的任务，启用该特征值可跳过全局队列，这在EventLoop是有界的情况下可以避免死锁或阻塞。
     ///</summary>
     public const int LOCAL_ORDER = 1 << 19;
-
     /// <summary>
     /// 唤醒事件循环线程
     /// 事件循环线程可能阻塞某些操作上，如果一个任务需要EventLoop及时处理，则可以启用该选项唤醒线程。
@@ -77,34 +85,21 @@ public static class TaskOptions
     public const int WAKEUP_THREAD = 1 << 20;
 
     /// <summary>
-    /// 延时任务：在出现异常后继续执行。
-    /// 1. 只适用无需结果的周期性任务 -- 分时任务会失败。
-    /// 2. 如果需要取消任务，需通过取消令牌实现。
-    ///</summary>
-    public const int CAUGHT_EXCEPTION = 1 << 21;
-    /// <summary>
-    /// 延时任务：在执行任务前检测超时
-    /// 1. 也就是说在已经超时的情况下不执行任务。
-    /// 2. 在执行后一定会检测一次超时。
-    ///</summary>
-    public const int TIMEOUT_BEFORE_RUN = 1 << 22;
-
-    /// <summary>
     /// 如果一个异步任务当前已在目标<see cref="ISingleThreadExecutor"/>线程，则立即执行，而不提交任务。
     ///</summary>
-    public const int STAGE_TRY_INLINE = 1 << 23;
+    public const int STAGE_TRY_INLINE = 1 << 21;
     /// <summary>
     /// 默认情况下，Stage会在触发回调之前检测ctx否为<see cref="IContext"/>和<see cref="ICancelToken"/>类型，并检测取消信号。
     /// 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
     /// </summary>
-    public const int STAGE_UNCANCELLABLE_CTX = 1 << 24;
+    public const int STAGE_UNCANCELLABLE_CTX = 1 << 22;
     /// <summary>
     /// 监听用户上下文中包含的取消令牌
     /// 
     /// 1.该选项用于延时任务或监听器列表管理。
     /// 2.如果调度器默认不会监听CTX中的取消令牌，那么应当响应用户的该选项。
     /// </summary>
-    public const int STAGE_LISTEN_CANCEL_TOKEN = 1 << 25;
+    public const int STAGE_LISTEN_CANCEL_TOKEN = 1 << 23;
 
     /// <summary>
     /// 抑制await抛出取消异常(性能因素)
@@ -201,30 +196,6 @@ public static class TaskOptions
         }
         options &= ~MASK_PRIORITY;
         options |= (priority << OFFSET_PRIORITY);
-        return options;
-    }
-
-    /// <summary>
-    /// 获取任务的调度阶段
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int GetSchedulePhase(int options) {
-        return (options & MASK_SCHEDULE_PHASE) >> OFFSET_SCHEDULE_PHASE;
-    }
-
-    /// <summary>
-    /// 设置调度阶段
-    /// </summary>
-    /// <param name="options">当前options</param>
-    /// <param name="phase">调度阶段</param>
-    /// <returns>新的options</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int SetSchedulePhase(int options, int phase) {
-        if (phase < 0 || phase > MAX_SCHEDULE_PHASE) {
-            throw new ArgumentException("phase: " + phase);
-        }
-        options &= ~MASK_SCHEDULE_PHASE;
-        options |= (phase << OFFSET_SCHEDULE_PHASE);
         return options;
     }
 

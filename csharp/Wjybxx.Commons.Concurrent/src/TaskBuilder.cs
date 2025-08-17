@@ -124,6 +124,23 @@ public struct TaskBuilder<T>
     }
 
     /// <summary>
+    /// 最终options
+    /// </summary>
+    public int Options {
+        get => options;
+        set => options = value;
+    }
+
+    /// <summary>
+    /// 是否启用了某选项
+    /// </summary>
+    /// <param name="optionMask"></param>
+    /// <returns></returns>
+    public bool IsEnabled(int optionMask) {
+        return (options & optionMask) != 0;
+    }
+
+    /// <summary>
     /// 启用选项
     /// </summary>
     /// <param name="optionMask"></param>
@@ -140,27 +157,11 @@ public struct TaskBuilder<T>
     }
 
     /// <summary>
-    /// 设置任务的调度阶段
-    /// </summary>
-    public int SchedulePhase {
-        get => TaskOptions.GetSchedulePhase(options);
-        set => options = TaskOptions.SetSchedulePhase(options, value);
-    }
-
-    /// <summary>
     /// 设置任务的优先级
     /// </summary>
     public int Priority {
         get => TaskOptions.GetPriority(options);
         set => options = TaskOptions.SetPriority(options, value);
-    }
-
-    /// <summary>
-    /// 最终options
-    /// </summary>
-    public int Options {
-        get => options;
-        set => options = value;
     }
 }
 }

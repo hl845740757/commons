@@ -129,6 +129,11 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
 
     // region options
 
+    /** 是否启用了某选项 */
+    public boolean isEnabled(int taskOption) {
+        return (options & taskOption) != 0;
+    }
+
     /** 启用选项 */
     public TaskBuilder<V> enable(int taskOption) {
         this.options = TaskOptions.enable(options, taskOption);
@@ -138,17 +143,6 @@ public sealed class TaskBuilder<V> permits ScheduledTaskBuilder {
     /** 禁用选项 */
     public TaskBuilder<V> disable(int taskOption) {
         this.options = TaskOptions.disable(options, taskOption);
-        return this;
-    }
-
-    /** 获取任务的阶段 */
-    public int getSchedulePhase() {
-        return TaskOptions.getSchedulePhase(options);
-    }
-
-    /** @param phase 任务的调度阶段 */
-    public TaskBuilder<V> setSchedulePhase(int phase) {
-        this.options = TaskOptions.setSchedulePhase(options, phase);
         return this;
     }
 

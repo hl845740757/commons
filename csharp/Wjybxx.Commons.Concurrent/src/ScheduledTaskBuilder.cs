@@ -110,19 +110,17 @@ public struct ScheduledTaskBuilder<T>
     private long initialDelay;
     private long period;
     private long timeout;
-    /** 时间单位 -- 默认毫秒 */
+    private int _countLimit;
     private TimeSpan _timeUnit;
-    /** 执行次数限制 */
-    private int countLimit;
 
     internal ScheduledTaskBuilder(ref TaskBuilder<T> core) {
         _core = core;
         scheduleType = 0;
         initialDelay = 0;
         period = 0;
-        timeout = -1;
+        timeout = 0;
+        _countLimit = 0;
         _timeUnit = TimeSpan.FromMilliseconds(1);
-        countLimit = -1;
     }
 
     #region 代理
@@ -142,6 +140,15 @@ public struct ScheduledTaskBuilder<T>
     }
 
     /// <summary>
+    /// 是否启用了某选项
+    /// </summary>
+    /// <param name="optionMask"></param>
+    /// <returns></returns>
+    public bool IsEnabled(int optionMask) {
+        return _core.IsEnabled(optionMask);
+    }
+
+    /// <summary>
     /// 启用特定任务选项
     /// </summary>
     /// <param name="taskOption"></param>
@@ -158,14 +165,6 @@ public struct ScheduledTaskBuilder<T>
     }
 
     /// <summary>
-    /// 设置任务的调度阶段
-    /// </summary>
-    public int SchedulePhase {
-        get => _core.SchedulePhase;
-        set => _core.SchedulePhase = value;
-    }
-
-    /// <summary>
     /// 设置任务的优先级
     /// </summary>
     public int Priority {
@@ -177,25 +176,31 @@ public struct ScheduledTaskBuilder<T>
 
     #region schedule
 
-    public byte ScheduleType => scheduleType;
-
-    public long InitialDelay => initialDelay;
-
-    public long Period => period;
-
+    /// <summary>
+    /// 时间单位（默认毫秒）
+    /// </summary>
+    /// <exception cref="ArgumentException"></exception>
     public TimeSpan TimeUnit {
         get => _timeUnit;
         set {
-            if (value.Ticks <= 0) {
+            if (value.Ticks < 1) {
                 throw new ArgumentException("invalid timeunit");
             }
             _timeUnit = value;
         }
     }
 
-    /** 是否是周期性任务 */
-    public bool IsPeriodic => scheduleType != 0;
+    public byte ScheduleType => scheduleType;
+    public long InitialDelay => initialDelay;
+    public long Period => period;
 
+    /// <summary>
+    /// 是否是周期性任务
+    /// </summary>
+    public bool IsPeriodic => scheduleType != 0;
+    /// <summary>
+    /// 是否是一次性任务
+    /// </summary>
     public bool IsOnlyOnce => scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE;
 
     /// <summary>
@@ -275,13 +280,11 @@ public struct ScheduledTaskBuilder<T>
     /// <summary>
     /// 是否设置了超时时间
     /// </summary>
-    public bool HasTimeout => timeout >= 0;
+    public bool HasTimeout => _core.IsEnabled(TaskOptions.MASK_HAS_TIMEOUT);
 
     /// <summary>
-    /// 1. -1表示无限制，大于等于0表示有限制
-    /// 2. 默认只在执行任务后检查是否超时，以确保至少会执行一次
-    /// 3. 超时是一个不准确的调度，不保证超时后能立即结束
-    /// 4. 达到截止时间后任务将被取消<see cref="BetterCancellationException"/> -- 任何的主动退出都使用取消。
+    /// 1. 默认只在执行任务后检查是否超时，以确保至少会执行一次
+    /// 2. 达到截止时间后任务将被取消<see cref="BetterCancellationException"/> -- 任何的主动退出都使用取消。
     ///
     /// PS：使用取消异常是为了避免捕获堆栈，Future只对取消异常进行了优化。
     /// </summary>
@@ -289,10 +292,11 @@ public struct ScheduledTaskBuilder<T>
     public long Timeout {
         get => timeout;
         set {
-            if (value < -1) {
-                throw new ArgumentException("invalid timeout: " + timeout);
+            if (value < 0) {
+                throw new ArgumentException("invalid timeout: " + value);
             }
             timeout = value;
+            _core.Enable(TaskOptions.MASK_HAS_TIMEOUT);
         }
     }
 
@@ -310,22 +314,29 @@ public struct ScheduledTaskBuilder<T>
         } else {
             this.timeout = Math.Max(0, initialDelay + (count - 1) * Period);
         }
+        Enable(TaskOptions.MASK_HAS_TIMEOUT);
     }
 
     /// <summary>
+    /// 是否包含执行次数限制
+    /// </summary>
+    public bool HasCountLimit => _core.IsEnabled(TaskOptions.MASK_HAS_COUNT_LIMIT);
+
+    /// <summary>
     /// 设置任务的执行次数限制
-    /// 1. -1表示无限制，大于0表示有限制，0非法
-    /// 2. 到达执行上限后任务将被取消<see cref="BetterCancellationException"/> -- 任何的主动退出都使用取消。
     ///
-    /// PS：使用取消异常是为了避免捕获堆栈，Future只对取消异常进行了优化。
+    /// 注：
+    /// 1.到达执行上限后任务将被取消<see cref="BetterCancellationException"/> -- 任何的主动退出都使用取消。
+    /// 2.使用取消异常是为了避免捕获堆栈，Future只对取消异常进行了优化。
     /// </summary>
     public int CountLimit {
-        get => countLimit;
+        get => _countLimit;
         set {
-            if (value <= 0 && value != -1) {
-                throw new ArgumentException("invalid countLimit: " + countLimit);
+            if (value < 1) {
+                throw new ArgumentException("invalid count limit: " + value);
             }
-            countLimit = value;
+            _countLimit = value;
+            _core.Enable(TaskOptions.MASK_HAS_COUNT_LIMIT);
         }
     }
 

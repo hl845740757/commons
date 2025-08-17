@@ -26,21 +26,16 @@ import cn.wjybxx.base.annotation.Beta;
  */
 public final class TaskOptions {
 
-    /** 优先级的存储偏移量 */
-    public static final int OFFSET_PRIORITY = 8;
-    /** 优先级的存储偏移量 */
-    public static final int OFFSET_SCHEDULE_PHASE = 13;
-
-    /** 优先级的最大值 */
-    public static final int MAX_PRIORITY = 31;
-    /** 调度阶段的最大值 */
-    public static final int MAX_SCHEDULE_PHASE = 31;
-
     /**
      * 调度器使用的控制标识位(低8位)
      * 调度器会擦除掉用户的低8位，存储调度器的信息
      */
     public static final int MASK_CTL_RESERVED = 0xFF;
+
+    /** 优先级的存储偏移量 */
+    public static final int OFFSET_PRIORITY = 8;
+    /** 优先级的最大值 */
+    public static final int MAX_PRIORITY = 31;
 
     /**
      * 延时任务的优先级，取值[0, 31]
@@ -50,13 +45,27 @@ public final class TaskOptions {
      */
     @Beta
     public static final int MASK_PRIORITY = MAX_PRIORITY << OFFSET_PRIORITY;
+
     /**
-     * 任务的调度阶段，取值[0, 31]。
-     * 1. 用于指定异步任务的调度时机。
-     * 2. 主要用于{@link SingleThreadExecutor}这类单线程的Executor -- 尤其是游戏这类分阶段的事件循环。
+     * 延时任务：包含次数限制
      */
-    @Beta
-    public static final int MASK_SCHEDULE_PHASE = MAX_SCHEDULE_PHASE << OFFSET_SCHEDULE_PHASE;
+    public static final int MASK_HAS_COUNTDOWN = 1 << 14; // 预留1位给优先级
+    /**
+     * 延时任务：包含超时时间（执行时间限制）
+     */
+    public static final int MASK_HAS_TIMEOUT = 1 << 15;
+    /**
+     * 延时任务：在执行任务前检测超时
+     * 1. 也就是说在已经超时的情况下不执行任务。
+     * 2. 在执行后一定会检测一次超时。
+     */
+    public static final int TIMEOUT_BEFORE_RUN = 1 << 16;
+    /**
+     * 延时任务：在出现异常后继续执行。
+     * 1.只适用无需结果的周期性任务 -- 分时任务会失败。
+     * 2.如果需要取消任务，需通过取消令牌实现。
+     */
+    public static final int CAUGHT_EXCEPTION = 1 << 17;
 
     /**
      * 事件循环在执行该任务前必须先处理一次定时任务队列。
@@ -69,7 +78,6 @@ public final class TaskOptions {
      * 对于EventLoop内部的任务，启用该特征值可跳过全局队列，这在EventLoop是有界的情况下可以避免死锁或阻塞。
      */
     public static final int LOCAL_ORDER = 1 << 19;
-
     /**
      * 唤醒事件循环线程
      * 事件循环线程可能阻塞某些操作上，如果一个任务需要EventLoop及时处理，则可以启用该选项唤醒线程。
@@ -77,34 +85,21 @@ public final class TaskOptions {
     public static final int WAKEUP_THREAD = 1 << 20;
 
     /**
-     * 延时任务：在出现异常后继续执行。
-     * 1.只适用无需结果的周期性任务 -- 分时任务会失败。
-     * 2.如果需要取消任务，需通过取消令牌实现。
-     */
-    public static final int CAUGHT_EXCEPTION = 1 << 21;
-    /**
-     * 延时任务：在执行任务前检测超时
-     * 1. 也就是说在已经超时的情况下不执行任务。
-     * 2. 在执行后一定会检测一次超时。
-     */
-    public static final int TIMEOUT_BEFORE_RUN = 1 << 22;
-
-    /**
      * 如果一个异步任务当前已在目标{@link SingleThreadExecutor}线程，则立即执行，而不提交任务。
      */
-    public static final int STAGE_TRY_INLINE = 1 << 23;
+    public static final int STAGE_TRY_INLINE = 1 << 21;
     /**
      * 默认情况下，Stage会在触发回调之前检测ctx否为{@link IContext}或{@link ICancelToken}类型，并检测取消信号。
      * 用户如果不期望Stage进行检查，可启用该选项关闭自动检测。
      */
-    public static final int STAGE_UNCANCELLABLE_CTX = 1 << 24;
+    public static final int STAGE_UNCANCELLABLE_CTX = 1 << 22;
     /**
      * 监听用户上下文中包含的取消令牌
      * <p>
      * 1.该选项用于延时任务或监听器列表管理。
      * 2.如果调度器默认不会监听CTX中的取消令牌，那么应当响应用户的该选项。
      */
-    public static final int STAGE_LISTEN_CANCEL_TOKEN = 1 << 25;
+    public static final int STAGE_LISTEN_CANCEL_TOKEN = 1 << 23;
 
     /**
      * C#：抑制await抛出取消异常(性能因素)
@@ -162,22 +157,6 @@ public final class TaskOptions {
         }
         options &= ~MASK_PRIORITY;
         options |= (priority << OFFSET_PRIORITY);
-        return options;
-    }
-
-
-    /** 获取任务的调度阶段 */
-    public static int getSchedulePhase(int options) {
-        return (options & MASK_SCHEDULE_PHASE) >> OFFSET_SCHEDULE_PHASE;
-    }
-
-    /** 设置任务的调度阶段 */
-    public static int setSchedulePhase(int options, int phase) {
-        if (phase < 0 || phase > MAX_SCHEDULE_PHASE) {
-            throw new IllegalArgumentException("phase: " + phase);
-        }
-        options &= ~MASK_SCHEDULE_PHASE;
-        options |= (phase << OFFSET_SCHEDULE_PHASE);
         return options;
     }
 

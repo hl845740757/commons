@@ -69,7 +69,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     /** 任务的唯一id - 如果构造时未传入，要小心可见性问题 */
     private long id = -1;
     /** 提前计算的，逻辑上的下次触发时间 - 非volatile，不对用户开放 */
-    private long nextTriggerTime;
+    private long triggerTime;
     /** 任务的执行间隔 - 不再有特殊意义 */
     private long period;
 
@@ -97,7 +97,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     internal void Init(int taskType, object action, object? ctx, int options,
                        ValuePromise<T> promise, TimeSpan delay) {
         base.Init(taskType, action, ctx, options, promise);
-        this.nextTriggerTime = delay.Ticks; // 先记录为Tick数
+        this.triggerTime = delay.Ticks; // 先记录为Tick数
         this.period = 0;
     }
 
@@ -106,15 +106,16 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         ScheduleType = builder.ScheduleType;
         // 时间戳先保存为ticks单位
         long timeUnit = builder.TimeUnit.Ticks;
-        this.nextTriggerTime = builder.InitialDelay * timeUnit;
+        this.triggerTime = builder.InitialDelay * timeUnit;
         this.period = builder.Period * timeUnit;
         // 初始化周期任务数据
         if (builder.IsPeriodic) {
-            if (builder.Timeout != -1) {
+            if (period <= 0) throw new Exception("period: " + period);
+            if (builder.HasTimeout) {
                 ctl |= MASK_HAS_DEADLINE;
                 this.deadline = builder.Timeout * timeUnit;
             }
-            if (builder.CountLimit != -1) {
+            if (builder.HasCountLimit) {
                 ctl |= MASK_HAS_COUNTDOWN;
                 this.countdown = builder.CountLimit;
             }
@@ -128,12 +129,12 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     public void Inject(ISchedulerHelper helper) {
         this.helper = helper;
         TimeSpan timeUnit = new TimeSpan(1);
-        this.nextTriggerTime = helper.TriggerTime(nextTriggerTime, timeUnit);
+        this.triggerTime = helper.TriggerTime(triggerTime, timeUnit);
         if (IsPeriodic) {
             this.period = helper.TriggerPeriod(period, timeUnit);
         }
         // 这里第二次读取TickTime，Deadline可能大于预期值，问题不大
-        if (HasTimeout) {
+        if (HasDeadline) {
             this.deadline = helper.TriggerTime(deadline, timeUnit);
         }
     }
@@ -145,9 +146,9 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         set => id = value;
     }
 
-    public long NextTriggerTime {
-        get => nextTriggerTime;
-        set => nextTriggerTime = value;
+    public long TriggerTime {
+        get => triggerTime;
+        set => triggerTime = value;
     }
 
     /** 任务的调度类型 -- 应该在添加到队列之前设置 */
@@ -165,16 +166,6 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         set => options = TaskOptions.SetPriority(options, value);
     }
 
-    /// <summary>
-    /// 任务的调度阶段，范围 [0, 31]
-    /// </summary>
-    /// <exception cref="ArgumentException"></exception>
-    public int SchedulePhase {
-        get => TaskOptions.GetSchedulePhase(options);
-        set => options = TaskOptions.SetSchedulePhase(options, value);
-    }
-
-    /** 任务是否已调度过，通常用于降低优先级 */
     public bool IsTriggered => (ctl & MASK_TRIGGERED) != 0;
 
     public bool IsPeriodic => ScheduleType != 0;
@@ -187,9 +178,9 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         this.qIndex = index;
     }
 
-    private bool HasTimeout => (ctl & MASK_HAS_DEADLINE) != 0;
+    private bool HasDeadline => (ctl & MASK_HAS_DEADLINE) != 0;
 
-    private bool HasCountLimit => (ctl & MASK_HAS_COUNTDOWN) != 0;
+    private bool HasCountdown => (ctl & MASK_HAS_COUNTDOWN) != 0;
 
     #endregion
 
@@ -203,7 +194,7 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     protected override void Reset() {
         base.Reset();
         id = -1;
-        nextTriggerTime = 0;
+        triggerTime = 0;
         period = 0;
         deadline = 0;
         countdown = 0;
@@ -264,20 +255,29 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
         if (firstTrigger) {
             ctl |= MASK_TRIGGERED;
         }
-
-        int scheduleType = ScheduleType;
-        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
-            base.RunImpl(); // 不能调用基类的Run
-            return false;
-        }
-
+        // 先检测取消
         ValuePromise<T> promise = this.promise;
         ICancelToken cancelToken = GetCancelToken();
-        // 为兼容，还要检测来自future的取消，即isComputing...
         if (cancelToken.IsCancelRequested) {
             TrySetCancelled(promise, cancelToken);
             return false;
         }
+        // 一次性任务 -- 不能调用基类的Run
+        int scheduleType = ScheduleType;
+        if (scheduleType == ScheduledTaskBuilder.SCHEDULE_ONCE) {
+            if (!promise.Internal_TrySetComputing()) {
+                return false;
+            }
+            try {
+                T value = RunTask();
+                promise.Internal_TrySetResult(value);
+            }
+            catch (Exception e) {
+                promise.Internal_TrySetException(e);
+            }
+            return false;
+        }
+        // 周期性任务
         if (firstTrigger) {
             if (!promise.Internal_TrySetComputing()) {
                 return false;
@@ -321,12 +321,12 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
             return false;
         }
         // 未被取消的情况下检测超时
-        if (HasTimeout && deadline <= tickTime) {
+        if (HasDeadline && deadline <= tickTime) {
             promise.Internal_TrySetException(StacklessCancellationException.Timeout);
             return false;
         }
         // 检测次数限制
-        if (HasCountLimit && (--countdown < 1)) {
+        if (HasCountdown && (--countdown < 1)) {
             promise.Internal_TrySetException(StacklessCancellationException.TriggerCountLimit);
             return false;
         }
@@ -342,11 +342,11 @@ public sealed class ScheduledPromiseTask<T> : PromiseTask<T>, IScheduledFutureTa
     }
 
     private void SetNextRunTime(long tickTime, int scheduleType) {
-        long maxDelay = HasTimeout ? (deadline - tickTime) : long.MaxValue;
+        long maxDelay = HasDeadline ? (deadline - tickTime) : long.MaxValue;
         if (scheduleType == ScheduledTaskBuilder.SCHEDULE_FIXED_RATE) {
-            nextTriggerTime = nextTriggerTime + Math.Clamp(period, 1, maxDelay); // 逻辑时间
+            triggerTime = triggerTime + Math.Min(period, maxDelay); // 逻辑时间
         } else {
-            nextTriggerTime = tickTime + Math.Clamp(period, 1, maxDelay); // 真实时间
+            triggerTime = tickTime + Math.Min(period, maxDelay); // 真实时间
         }
     }
 

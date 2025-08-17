@@ -45,9 +45,9 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     private byte scheduleType = 0;
     private long initialDelay;
     private long period;
-    private long timeout = -1;
+    private long timeout;
+    private int countLimit;
     private TimeUnit timeUnit = TimeUnit.MILLISECONDS;
-    private int countLimit = -1;
 
     private ScheduledTaskBuilder(int type, Object task) {
         super(type, task);
@@ -104,6 +104,15 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     // endregion
 
     // region 调度方式
+
+    public TimeUnit getTimeUnit() {
+        return timeUnit;
+    }
+
+    public ScheduledTaskBuilder<V> setTimeUnit(TimeUnit timeUnit) {
+        this.timeUnit = Objects.requireNonNull(timeUnit);
+        return this;
+    }
 
     public int getScheduleType() {
         return scheduleType;
@@ -177,7 +186,7 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
 
     /** 是否设置了超时时间 */
     public boolean hasTimeout() {
-        return timeout != -1;
+        return isEnabled(TaskOptions.MASK_HAS_TIMEOUT);
     }
 
     public long getTimeout() {
@@ -187,17 +196,15 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     /**
      * 设置周期性任务的超时时间（非分时任务也可以）
      * <p>
-     * 注意：
-     * 1. -1表示无限制，大于等于0表示有限制
-     * 2. 默认只在执行任务后检查是否超时，以确保至少会执行一次
-     * 3. 超时是一个不准确的调度，不保证超时后能立即结束
-     * 4. 达到截止时间后任务任务将被取消{@link BetterCancellationException} -- 任何的主动退出都使用取消。
+     * 1. 默认只在执行任务后检查是否超时，以确保至少会执行一次
+     * 2. 达到截止时间后任务任务将被取消{@link BetterCancellationException} -- 任何的主动退出都使用取消。
      */
     public ScheduledTaskBuilder<V> setTimeout(long timeout) {
-        if (timeout < -1) {
+        if (timeout < 0) {
             throw new IllegalArgumentException("invalid timeout " + timeout);
         }
         this.timeout = timeout;
+        enable(TaskOptions.MASK_HAS_TIMEOUT);
         return this;
     }
 
@@ -217,12 +224,13 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
         } else {
             this.timeout = Math.max(0, initialDelay + (count - 1) * period);
         }
+        enable(TaskOptions.MASK_HAS_TIMEOUT);
         return this;
     }
 
     /** 是否设置了次数限制 */
     public boolean hasCountLimit() {
-        return countLimit != -1;
+        return isEnabled(TaskOptions.MASK_HAS_COUNTDOWN);
     }
 
     public int getCountLimit() {
@@ -231,26 +239,18 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
 
     /**
      * 设置任务的执行次数限制
-     * 1. -1表示无限制，大于0表示有限制，0非法
-     * 2. 到达执行上限后任务将被取消{@link BetterCancellationException} -- 任何的主动退出都使用取消。
+     * <p>
+     * 1.到达执行上限后任务将被取消{@link BetterCancellationException} -- 任何的主动退出都使用取消。
+     * 2.使用取消异常是为了避免捕获堆栈，Future只对取消异常进行了优化
      *
      * @param countLimit 次数限制
      */
     public ScheduledTaskBuilder<V> setCountLimit(int countLimit) {
-        if (countLimit <= 0 && countLimit != -1) {
-            throw new IllegalArgumentException("invalid countLimit " + countLimit);
+        if (countLimit < 1) {
+            throw new IllegalArgumentException("invalid count " + countLimit);
         }
         this.countLimit = countLimit;
-        return this;
-    }
-
-    public TimeUnit getTimeUnit() {
-        return timeUnit;
-    }
-
-    /** 设置时间单位 */
-    public ScheduledTaskBuilder<V> setTimeUnit(TimeUnit timeUnit) {
-        this.timeUnit = Objects.requireNonNull(timeUnit);
+        enable(TaskOptions.MASK_HAS_COUNTDOWN);
         return this;
     }
 
@@ -267,12 +267,6 @@ public final class ScheduledTaskBuilder<V> extends TaskBuilder<V> {
     @Override
     public ScheduledTaskBuilder<V> disable(int taskOption) {
         super.disable(taskOption);
-        return this;
-    }
-
-    @Override
-    public ScheduledTaskBuilder<V> setSchedulePhase(int phase) {
-        super.setSchedulePhase(phase);
         return this;
     }
 

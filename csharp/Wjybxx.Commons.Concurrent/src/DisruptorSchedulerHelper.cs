@@ -55,7 +55,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
         // 检测正常定时任务
         IScheduledFutureTask futureTask;
         while (taskQueue.TryPeekHead(out futureTask) && !eventLoop.IsShutdown) {
-            if (tickTime < futureTask.NextTriggerTime) {
+            if (tickTime < futureTask.TriggerTime) {
                 break;
             }
             taskQueue.Dequeue();
@@ -93,7 +93,7 @@ public class DisruptorSchedulerHelper<T> : ISchedulerHelper where T : IAgentEven
     public void DoSchedule(IScheduledFutureTask futureTask) {
         Debug.Assert(_eventLoop.InEventLoop() && futureTask.Id >= 0);
         long tickTime = _eventLoop.TickTime;
-        if (tickTime < futureTask.NextTriggerTime) {
+        if (tickTime < futureTask.TriggerTime) {
             _taskQueue.Enqueue(futureTask);
             return;
         }
