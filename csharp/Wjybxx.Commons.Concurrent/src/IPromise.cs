@@ -115,13 +115,13 @@ public interface IPromise<T> : IFuture<T>, IPromise
     #region 接口适配
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    bool IPromise.TrySetResult(object result) {
-        return TrySetResult((T)result);
+    bool IPromise.TrySetResult(object? result) {
+        return TrySetResult(result == null ? default : (T)result);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void IPromise.SetResult(object result) {
-        SetResult((T)result);
+    void IPromise.SetResult(object? result) {
+        SetResult(result == null ? default : (T)result);
     }
 
     #endregion

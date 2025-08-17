@@ -236,7 +236,8 @@ public readonly struct ValueFuture
     public ValueFuture<T> Unbox<T>(bool allowUnsafe = true) {
         if (_future == null) {
             if (_ex == null) {
-                return ValueFuture<T>.FromResult((T)_result);
+                T r = _result == null ? default : (T)_result;
+                return ValueFuture<T>.FromResult(r);
             }
             return ValueFuture<T>.InternalFromException(_ex);
         }
@@ -620,7 +621,8 @@ public readonly struct ValueFuture<T>
             return valuePromise.GetResult(_reentryId);
         }
         if (_future is IValuePromise<object> unsafePromise) {
-            return (T)unsafePromise.GetResult(_reentryId);
+            object result = unsafePromise.GetResult(_reentryId);
+            return result == null ? default : (T)result;
         }
         IFuture<T> future = (IFuture<T>)_future;
         return future.Get();
@@ -659,7 +661,8 @@ public readonly struct ValueFuture<T>
             if (suppressedTypes.IsSuppressible(unsafePromise.GetStatus(_reentryId))) {
                 return TaskResult<T>.InternalFromException(unsafePromise.GetExceptionOrDispatchInfo(_reentryId));
             }
-            return TaskResult<T>.FromResult((T)unsafePromise.GetResult(_reentryId));
+            object result = unsafePromise.GetResult(_reentryId);
+            return TaskResult<T>.FromResult(result == null ? default : (T)result);
         }
         IFuture<T> future = (IFuture<T>)_future;
         if (suppressedTypes.IsSuppressible(future.Status)) {

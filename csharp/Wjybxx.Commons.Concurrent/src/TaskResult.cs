@@ -130,7 +130,9 @@ public readonly struct TaskResult
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
     public TaskResult<T> Unbox<T>() {
-        return _ex != null ? TaskResult<T>.InternalFromException(_ex) : TaskResult<T>.FromResult((T)_result!);
+        return _ex != null
+            ? TaskResult<T>.InternalFromException(_ex)
+            : TaskResult<T>.FromResult(_result == null ? default : (T)_result);
     }
 
     internal void Deconstruct(out object? result, out object? ex) {

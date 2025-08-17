@@ -148,14 +148,14 @@ public interface IValuePromise
     /// <summary>
     /// 尝试将future置为成功完成状态，如果future已进入完成状态，则返回false
     /// </summary>
-    bool TrySetResult(int reentryId, object result);
+    bool TrySetResult(int reentryId, object? result);
 
     /// <summary>
     /// 将future置为成功完成状态，如果future已进入完成状态，则抛出<see cref="IllegalStateException"/>
     /// </summary>
     /// <exception cref="IllegalStateException">如果Future已完成</exception>
     /// <exception cref="InvalidCastException">如果数据类型不兼容</exception>
-    void SetResult(int reentryId, object result);
+    void SetResult(int reentryId, object? result);
 
     /// <summary>
     /// 尝试将future置为失败完成状态，如果future已进入完成状态，则返回false
@@ -241,13 +241,13 @@ public interface IValuePromise<T> : IValuePromise
     #region 接口适配
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    bool IValuePromise.TrySetResult(int reentryId, object result) {
-        return TrySetResult(reentryId, (T)result);
+    bool IValuePromise.TrySetResult(int reentryId, object? result) {
+        return TrySetResult(reentryId, result == null ? default : (T)result);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void IValuePromise.SetResult(int reentryId, object result) {
-        SetResult(reentryId, (T)result);
+    void IValuePromise.SetResult(int reentryId, object? result) {
+        SetResult(reentryId, result == null ? default : (T)result);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

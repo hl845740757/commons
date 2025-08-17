@@ -34,9 +34,6 @@ namespace Wjybxx.Disruptor
 ///
 /// Q: 生产者为什么没有{@link ConsumerBarrier#alert()}信号？
 /// A：我们将生产者归属于外部系统，而将消费者归属于内部系统。生产者可能仅有部分逻辑与{@link Sequencer}相关，我们不能使用alert信号来中断或终止生产者。
-///
-/// PS：C#由于支持nullable，因此申请失败时返回null，代码可读性更好。
-/// 
 /// </summary>
 public interface ProducerBarrier : SequenceBarrier
 {
